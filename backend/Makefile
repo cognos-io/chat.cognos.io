@@ -62,10 +62,15 @@ build:
 	# Include additional build steps, like TypeScript, SCSS or Tailwind compilation here...
 	go build -o=/tmp/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 
-## run: run the  application
+## run: run the application
 .PHONY: run
 run: build
-	/tmp/bin/${BINARY_NAME}
+	/tmp/bin/${BINARY_NAME} serve
+
+## run: run the application with the test database to add data for testing
+.PHONY: run/test
+run/test: build
+	/tmp/bin/${BINARY_NAME} --dir testdata/pb_data serve
 
 ## run/live: run the application with reloading on file changes
 .PHONY: run/live
