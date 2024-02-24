@@ -54,10 +54,7 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	// so we can create the various Repos without panic'ing
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		// Separate into collection services
-		messageRepo, err := chat.NewPocketBaseMessageRepo(app)
-		if err != nil {
-			panic(err)
-		}
+		messageRepo := chat.NewPocketBaseMessageRepo(app)
 
 		addPocketBaseRoutes(app, app.Logger(), config, openaiClient, messageRepo)
 

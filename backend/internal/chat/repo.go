@@ -57,13 +57,13 @@ func (r *PocketBaseMessageRepo) PersistMessage(receiverPublicKey [32]byte, messa
 	return form.Submit()
 }
 
-func NewPocketBaseMessageRepo(app core.App) (*PocketBaseMessageRepo, error) {
+func NewPocketBaseMessageRepo(app core.App) *PocketBaseMessageRepo {
 	collection, err := app.Dao().FindCollectionByNameOrId("messages")
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	return &PocketBaseMessageRepo{
 		app:        app,
 		collection: collection,
-	}, nil
+	}
 }
