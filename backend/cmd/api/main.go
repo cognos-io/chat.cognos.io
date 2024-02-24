@@ -50,9 +50,9 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		openaiClient,
 	)
 
-	// Have to use OnAfterBootstrap to ensure that the app is fully initialized incl. the DB
+	// Have to use OnBeforeServe to ensure that the app is fully initialized incl. the DB
 	// so we can create the various Repos without panic'ing
-	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
+	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		// Separate into collection services
 		messageRepo, err := chat.NewPocketBaseMessageRepo(app)
 		if err != nil {
