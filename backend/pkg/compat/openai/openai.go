@@ -71,7 +71,7 @@ func EchoHandler(logger *slog.Logger, openaiClient *oai.Client, messageRepo chat
 			Content:        plainTextRequestMessage,
 		}
 
-		err := messageRepo.PersistMessage(receiverPublicKey, &requestMessage)
+		err := messageRepo.EncryptAndPersistMessage(receiverPublicKey, &requestMessage)
 		if err != nil {
 			logger.Error("Failed to save request message", "err", err)
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to save request message", err)
@@ -137,7 +137,7 @@ func EchoHandler(logger *slog.Logger, openaiClient *oai.Client, messageRepo chat
 			ConversationID: req.Metadata.Cognos.ConversationID,
 			Content:        plainTextResponseMessage,
 		}
-		err = messageRepo.PersistMessage(receiverPublicKey, &responseMessage)
+		err = messageRepo.EncryptAndPersistMessage(receiverPublicKey, &responseMessage)
 		if err != nil {
 			logger.Error("Failed to save response message", "err", err)
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to save response message", err)

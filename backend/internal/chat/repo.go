@@ -37,7 +37,7 @@ func EncryptMessage(plainTextMessage string, receiverPublicKey [32]byte) (base64
 }
 
 type MessageRepo interface {
-	PersistMessage(receiverPublicKey [32]byte, message *PlainTextMessage) error
+	EncryptAndPersistMessage(receiverPublicKey [32]byte, message *PlainTextMessage) error
 }
 
 type PocketBaseMessageRepo struct {
@@ -45,14 +45,21 @@ type PocketBaseMessageRepo struct {
 	collection *models.Collection
 }
 
-// PersistMessage persists a message in the repository.
+// EncryptAndPersistMessage persists a message in the repository.
 // It takes the receiver's public key and the plain text message as parameters.
 // The receiver public key can be a conversation key or a user's public key.
 // Returns an error if there was a problem persisting the message.
-func (r *PocketBaseMessageRepo) PersistMessage(receiverPublicKey [32]byte, message *PlainTextMessage) error {
+func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(receiverPublicKey [32]byte, message *PlainTextMessage) error {
+	encryptedMessage, encryptedSymmetricKey, err := EncryptMessage(message.Content, receiverPublicKey)
+	if err != nil {
+		return err
+	}
 	record := models.NewRecord(r.collection)
 	form := forms.NewRecordUpsert(r.app, record)
-	form.LoadData(map[string]any{})
+	form.LoadData(map[string]any{
+		"data": encryptedMessage,
+		"key":  encryptedSymmetricKey,
+	})
 
 	return form.Submit()
 }
