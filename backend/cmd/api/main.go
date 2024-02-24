@@ -8,10 +8,13 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+	oai "github.com/sashabaranov/go-openai"
 
 	_ "github.com/cognos-io/chat.cognos.io/backend/db/migrations" // import migration files
 )
@@ -19,13 +22,9 @@ import (
 func NewServer(
 	logger *slog.Logger,
 	config *config.APIConfig,
+	openaiClient *oai.Client,
 ) *pocketbase.PocketBase {
 	app := pocketbase.New()
-
-	addPocketBaseRoutes(app, logger, config)
-
-	// Add SoftDelete hook
-	hooks.SoftDelete(app)
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		Dir:         "./db/migrations", // path to migration files
@@ -43,10 +42,31 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	config := config.MustLoadAPIConfig()
 
+	openaiClient := oai.NewClient(config.OpenAIAPIKey)
+
 	app := NewServer(
 		logger,
 		config,
+		openaiClient,
 	)
+
+	// Have to use OnAfterBootstrap to ensure that the app is fully initialized incl. the DB
+	// so we can create the various Repos without panic'ing
+	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
+		// Separate into collection services
+		messageRepo, err := chat.NewPocketBaseMessageRepo(app)
+		if err != nil {
+			panic(err)
+		}
+
+		addPocketBaseRoutes(app, app.Logger(), config, openaiClient, messageRepo)
+
+		// Add SoftDelete hook
+		hooks.SoftDelete(app)
+
+		return nil
+
+	})
 
 	return app.Start()
 

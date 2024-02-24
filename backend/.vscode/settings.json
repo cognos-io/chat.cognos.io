@@ -1,4 +1,23 @@
 {
-  "cSpell.words": ["cognos", "pocketbase"],
-  "cSpell.ignoreWords": ["Automigrate", "migratecmd"]
+  "cSpell.words": [
+    "ciphertext",
+    "cognos",
+    "compat",
+    "ewan",
+    "Ollama",
+    "openai",
+    "pocketbase",
+    "secretbox"
+  ],
+  "cSpell.ignoreWords": [
+    "AIAPI",
+    "Automigrate",
+    "Upsert",
+    "aimodel",
+    "knadh",
+    "koanf",
+    "labstack",
+    "migratecmd",
+    "sashabaranov"
+  ]
 }

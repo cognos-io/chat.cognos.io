@@ -22,4 +22,4 @@
 go.work
 
 # Don't include the pb_data directory
-pb_data 
+pb_data/
