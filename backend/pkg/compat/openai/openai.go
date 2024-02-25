@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/apis"
@@ -48,8 +49,18 @@ func NewError(code int, message string) oai.ErrorResponse {
 	return oai.ErrorResponse{Error: &oai.APIError{Type: errorType, Message: message}}
 }
 
-func EchoHandler(logger *slog.Logger, openaiClient *oai.Client, messageRepo chat.MessageRepo) echo.HandlerFunc {
+func EchoHandler(
+	logger *slog.Logger,
+	openaiClient *oai.Client,
+	messageRepo chat.MessageRepo,
+	keyPairRepo auth.KeyPairRepo,
+) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		owner := auth.ExtractUser(c)
+		if owner == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
 		// Parse the incoming request
 		var req ChatCompletionRequestWithMetadata
 		if err := c.Bind(&req); err != nil {
@@ -57,21 +68,31 @@ func EchoHandler(logger *slog.Logger, openaiClient *oai.Client, messageRepo chat
 		}
 
 		// Validate the incoming request
-		// TODO(ewan): Add validation for the incoming request
+		if req.Metadata.Cognos.ConversationID == "" {
+			return apis.NewBadRequestError("Conversation ID is required", nil)
+		}
+		// TODO(ewan): Add more validation for the incoming request
 
-		receiverPublicKey := [32]byte{} // TODO(ewan): Get the conversations public key
+		// Get the public key of the conversation
+		receiverPublicKey, err := keyPairRepo.ConversationPublicKey(req.Metadata.Cognos.ConversationID)
+		if errors.Is(err, auth.ErrNoKeyPair) {
+			return apis.NewNotFoundError("Conversation public key not found", nil)
+		}
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to get conversation public key", err)
+		}
 
 		// Encrypt and persist the incoming message
 		messages := req.Messages
 		plainTextRequestMessage := messages[len(messages)-1].Content // Use the last message as there could be system and previous system & user messages
 
 		requestMessage := chat.PlainTextMessage{
-			OwnerID:        "TODO", // TODO: Get the owner ID
+			OwnerID:        owner.ID,
 			ConversationID: req.Metadata.Cognos.ConversationID,
 			Content:        plainTextRequestMessage,
 		}
 
-		err := messageRepo.EncryptAndPersistMessage(receiverPublicKey, &requestMessage)
+		err = messageRepo.EncryptAndPersistMessage(receiverPublicKey, &requestMessage)
 		if err != nil {
 			logger.Error("Failed to save request message", "err", err)
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to save request message", err)
@@ -133,7 +154,7 @@ func EchoHandler(logger *slog.Logger, openaiClient *oai.Client, messageRepo chat
 		logger.Info(plainTextResponseMessage)
 
 		responseMessage := chat.PlainTextMessage{
-			OwnerID:        "TODO", // TODO: Get the owner ID
+			OwnerID:        owner.ID,
 			ConversationID: req.Metadata.Cognos.ConversationID,
 			Content:        plainTextResponseMessage,
 		}

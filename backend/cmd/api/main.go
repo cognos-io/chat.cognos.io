@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
@@ -55,8 +56,17 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		// Separate into collection services
 		messageRepo := chat.NewPocketBaseMessageRepo(app)
+		keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
 
-		addPocketBaseRoutes(app, app.Logger(), config, openaiClient, messageRepo)
+		addPocketBaseRoutes(
+			e,
+			app,
+			app.Logger(),
+			config,
+			openaiClient,
+			messageRepo,
+			keyPairRepo,
+		)
 
 		// Add SoftDelete hook
 		hooks.SoftDelete(app)
