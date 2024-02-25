@@ -18,12 +18,37 @@ http POST https://api.openai.com/v1/chat/completions \
     stream:=true
 ```
 
+### Authenticate
+
+Get a token to authenticate.
+
+```
+http POST :8090/api/collections/users/auth-with-password \
+    identity="test@example.com" \
+    password="password"
+```
+
+Pipe to `jq` to get the `token`.
+
+```
+http POST :8090/api/collections/users/auth-with-password \
+    identity="test@example.com" \
+    password="password" | jq -r .token
+```
+
+```
+export AUTH_TOKEN=$(http POST :8090/api/collections/users/auth-with-password \
+    identity="test@example.com" \
+    password="password" | jq -r .token)
+```
+
 ### Send a message to localhost
 
 **Note:** `metadata` will be stripped off before sending to upstream OpenAI compatible API.
 
 ```
 http POST :8090/v1/chat/completions \
+    Authorization:"Bearer $AUTH_TOKEN" \
     model="gpt-3.5-turbo" \
     messages:='[{"role": "user", "content": "Say this is a test!"}]' \
     stream:=true \
