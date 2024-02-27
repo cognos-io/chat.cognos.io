@@ -6,6 +6,7 @@
     "ewan",
     "Ollama",
     "openai",
+    "OWASP",
     "pocketbase",
     "secretbox",
     "testdata"
@@ -19,6 +20,7 @@
     "koanf",
     "labstack",
     "migratecmd",
+    "nekxd",
     "sashabaranov"
   ]
 }
