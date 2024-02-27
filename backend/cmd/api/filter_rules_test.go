@@ -13,11 +13,16 @@
  *     - As a user with a record token trying to access another users data
  *
  * That means each collection should have at least 15 tests.
+ *
+ * Useful reference: https://github.com/presentator/presentator/blob/7200691263d5438d167118e1d013e2ac2de7390e/api_users_test.go
  */
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -25,6 +30,9 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/pocketbase/pocketbase/tests"
 	"github.com/pocketbase/pocketbase/tokens"
+	"golang.org/x/crypto/argon2"
+	"golang.org/x/crypto/nacl/box"
+	"golang.org/x/crypto/nacl/secretbox"
 )
 
 const testDataDir = "../../testdata/pb_data"
@@ -57,18 +65,98 @@ func setupTestApp(t *testing.T) *tests.TestApp {
 	return app
 }
 
+func hashVaultPassword(vaultPassword, userEmail string) [32]byte {
+	hashedPassword := argon2.IDKey([]byte(vaultPassword), []byte(userEmail), 2, 19*1024, 1, 32)
+	var vaultPasswordKey [32]byte
+	copy(vaultPasswordKey[:], hashedPassword)
+
+	return vaultPasswordKey
+}
+
+func generateNonce() [24]byte {
+	// Generate a nonce
+	var nonce [24]byte
+	if _, err := io.ReadFull(rand.Reader, nonce[:]); err != nil {
+		panic(err)
+	}
+	return nonce
+}
+
 func TestConversationFilterRules(t *testing.T) {
 	t.Parallel()
 
-	const collectionName = "conversations"
+	const (
+		conversationTitle = "Test Conversation"
+		collectionName    = "conversations"
+		// Get this info from the pre-populated test DB
+		userEmail     = "test1@example.com"
+		vaultPassword = "Eegev5eiyahjohghaingahtho8uxu3oh" // Used for decrypting the secret key
+	)
 	url := fmt.Sprintf("/api/collections/%s/records", collectionName)
+
+	app := setupTestApp(t)
+	defer app.Cleanup()
+
+	// Retrieve key pair for the user
+	userRecord, err := app.Dao().FindAuthRecordByEmail("users", userEmail)
+	if err != nil {
+		t.Fatal(err)
+	}
+	userKeyPairRecord, err := app.Dao().FindFirstRecordByData("user_key_pairs", "user", userRecord.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	userPublicKeyStr := userKeyPairRecord.GetString("public_key")
+	userPublicKeyBytes, err := base64.StdEncoding.DecodeString(userPublicKeyStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var userPublicKey [32]byte
+	copy(userPublicKey[:], userPublicKeyBytes)
+	userEncryptedSecretKeyStr := userKeyPairRecord.GetString("secret_key")
+	userEncryptedSecretKeyBytes, err := base64.StdEncoding.DecodeString(userEncryptedSecretKeyStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Hash the vault password with Argon2id
+	hashedVaultPassword := hashVaultPassword(vaultPassword, userEmail)
+
+	// Decrypt the secret key with the hashed vault password
+	// When you decrypt, you must use the same nonce and key you used to
+	// encrypt the message. One way to achieve this is to store the nonce
+	// alongside the encrypted message. Above, we stored the nonce in the first
+	// 24 bytes of the encrypted text.
+	var decryptNonce [24]byte
+	copy(decryptNonce[:], userEncryptedSecretKeyBytes[:24])
+	decryptedSecretKey, ok := secretbox.Open(nil, userEncryptedSecretKeyBytes[24:], &decryptNonce, &hashedVaultPassword)
+	if !ok {
+		t.Fatal("Failed to decrypt the secret key")
+	}
+	var userSecretKey [32]byte
+	copy(userSecretKey[:], decryptedSecretKey)
+
+	// Generate a key pair for the conversation
+	conversationPublicKey, conversationSecretKey, err := box.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Generate a nonce
+	nonce := generateNonce()
+
+	// Encrypt the private key with the user's public key
+	encryptedConversationSecretKey, err := box.SealAnonymous(nonce[:], conversationSecretKey[:], &userPublicKey, rand.Reader)
 
 	recordToken, err := generateRecordToken("users", "test1@example.com")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Useful reference: https://github.com/presentator/presentator/blob/7200691263d5438d167118e1d013e2ac2de7390e/api_users_test.go
+	nonce = generateNonce()
+
+	encryptedTitleBytes := box.Seal(nonce[:], []byte(conversationTitle), &nonce, conversationPublicKey, &userSecretKey)
+	encryptedTitle := base64.StdEncoding.EncodeToString(encryptedTitleBytes)
+
 	scenarios := []tests.ApiScenario{
 		{
 			Name:            "list conversations as guest",
