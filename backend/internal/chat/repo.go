@@ -73,6 +73,10 @@ func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 		return err
 	}
 
+	if err != nil {
+		return err
+	}
+
 	return form.Submit()
 }
 
