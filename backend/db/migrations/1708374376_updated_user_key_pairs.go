@@ -20,7 +20,7 @@ func init() {
 
 		// add
 		new_user_id := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "ohmtgv8t",
 			"name": "user_id",
@@ -36,6 +36,9 @@ func init() {
 				"displayFields": null
 			}
 		}`), new_user_id)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(new_user_id)
 
 		return dao.SaveCollection(collection)

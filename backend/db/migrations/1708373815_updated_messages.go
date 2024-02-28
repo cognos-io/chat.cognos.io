@@ -20,7 +20,7 @@ func init() {
 
 		// add
 		new_parent_id := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "nciypmmv",
 			"name": "parent_id",
@@ -36,6 +36,9 @@ func init() {
 				"displayFields": null
 			}
 		}`), new_parent_id)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(new_parent_id)
 
 		return dao.SaveCollection(collection)
