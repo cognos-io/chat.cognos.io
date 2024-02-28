@@ -66,7 +66,12 @@ func setupTestApp(t *testing.T) *tests.TestApp {
 }
 
 func hashVaultPassword(vaultPassword, userEmail string) [32]byte {
-	hashedPassword := argon2.IDKey([]byte(vaultPassword), []byte(userEmail), 2, 19*1024, 1, 32)
+	hashedPassword := argon2.IDKey(
+		[]byte(vaultPassword),
+		[]byte(userEmail),
+		2, 19*1024, 1,
+		32,
+	)
 	var vaultPasswordKey [32]byte
 	copy(vaultPasswordKey[:], hashedPassword)
 
@@ -128,7 +133,13 @@ func TestConversationFilterRules(t *testing.T) {
 	// 24 bytes of the encrypted text.
 	var decryptNonce [24]byte
 	copy(decryptNonce[:], userEncryptedSecretKeyBytes[:24])
-	decryptedSecretKey, ok := secretbox.Open(nil, userEncryptedSecretKeyBytes[24:], &decryptNonce, &hashedVaultPassword)
+
+	decryptedSecretKey, ok := secretbox.Open(
+		nil,
+		userEncryptedSecretKeyBytes[24:],
+		&decryptNonce,
+		&hashedVaultPassword,
+	)
 	if !ok {
 		t.Fatal("Failed to decrypt the secret key")
 	}
@@ -145,16 +156,26 @@ func TestConversationFilterRules(t *testing.T) {
 	nonce := generateNonce()
 
 	// Encrypt the private key with the user's public key
-	encryptedConversationSecretKey, err := box.SealAnonymous(nonce[:], conversationSecretKey[:], &userPublicKey, rand.Reader)
+	encryptedConversationSecretKey, err := box.SealAnonymous(
+		nonce[:],
+		conversationSecretKey[:],
+		&userPublicKey, rand.Reader,
+	)
 
-	recordToken, err := generateRecordToken("users", "test1@example.com")
+	recordToken, err := generateRecordToken("users", userEmail)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	nonce = generateNonce()
 
-	encryptedTitleBytes := box.Seal(nonce[:], []byte(conversationTitle), &nonce, conversationPublicKey, &userSecretKey)
+	encryptedTitleBytes := box.Seal(
+		nonce[:],
+		[]byte(conversationTitle),
+		&nonce,
+		conversationPublicKey,
+		&userSecretKey,
+	)
 	encryptedTitle := base64.StdEncoding.EncodeToString(encryptedTitleBytes)
 
 	scenarios := []tests.ApiScenario{
