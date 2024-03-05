@@ -34,10 +34,13 @@ func SoftDelete(app core.App) {
 		record := models.NewRecord(collection)
 
 		form := forms.NewRecordUpsert(app, record)
-		form.LoadData(map[string]any{
+		err = form.LoadData(map[string]any{
 			"collection": e.Collection.Name,
 			"record":     e.Record,
 		})
+		if err != nil {
+			return err
+		}
 
 		return form.Submit()
 	})

@@ -20,7 +20,7 @@ func init() {
 
 		// add
 		new_key := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "r9wj7pqo",
 			"name": "key",
@@ -34,11 +34,14 @@ func init() {
 				"pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
 			}
 		}`), new_key)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(new_key)
 
 		// update
 		edit_data := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "msxvlyrc",
 			"name": "data",
@@ -52,6 +55,9 @@ func init() {
 				"pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
 			}
 		}`), edit_data)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(edit_data)
 
 		return dao.SaveCollection(collection)
@@ -68,7 +74,7 @@ func init() {
 
 		// update
 		edit_data := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "msxvlyrc",
 			"name": "data",
@@ -82,6 +88,9 @@ func init() {
 				"pattern": ""
 			}
 		}`), edit_data)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(edit_data)
 
 		return dao.SaveCollection(collection)

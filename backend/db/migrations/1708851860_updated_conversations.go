@@ -20,7 +20,7 @@ func init() {
 
 		// update
 		edit_creator := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "9j9ur6uc",
 			"name": "creator",
@@ -36,6 +36,9 @@ func init() {
 				"displayFields": null
 			}
 		}`), edit_creator)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(edit_creator)
 
 		return dao.SaveCollection(collection)
@@ -49,7 +52,7 @@ func init() {
 
 		// update
 		edit_creator := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "9j9ur6uc",
 			"name": "creator_id",
@@ -65,6 +68,9 @@ func init() {
 				"displayFields": null
 			}
 		}`), edit_creator)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(edit_creator)
 
 		return dao.SaveCollection(collection)

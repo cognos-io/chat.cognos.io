@@ -20,7 +20,7 @@ func init() {
 
 		// update
 		edit_conversation := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "vy8bto8z",
 			"name": "conversation",
@@ -36,6 +36,9 @@ func init() {
 				"displayFields": null
 			}
 		}`), edit_conversation)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(edit_conversation)
 
 		return dao.SaveCollection(collection)
@@ -49,7 +52,7 @@ func init() {
 
 		// update
 		edit_conversation := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "vy8bto8z",
 			"name": "conversation_id",
@@ -65,6 +68,9 @@ func init() {
 				"displayFields": null
 			}
 		}`), edit_conversation)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(edit_conversation)
 
 		return dao.SaveCollection(collection)

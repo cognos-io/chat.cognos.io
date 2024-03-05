@@ -136,7 +136,11 @@ func EchoHandler(
 			chunk, err := stream.Recv()
 			if errors.Is(err, io.EOF) {
 				// stream has finished
-				respWriter.Write([]byte("data: [DONE]\n\n"))
+				_, err = respWriter.Write([]byte("data: [DONE]\n\n"))
+				if err != nil {
+					logger.Error("Failed to write error to response", "err", err)
+					return err
+				}
 				c.Response().Flush()
 				break
 			}

@@ -65,10 +65,13 @@ func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 	}
 	record := models.NewRecord(r.collection)
 	form := forms.NewRecordUpsert(r.app, record)
-	form.LoadData(map[string]any{
+	err = form.LoadData(map[string]any{
 		"data": encryptedMessage,
 		"key":  encryptedSymmetricKey,
 	})
+	if err != nil {
+		return err
+	}
 
 	return form.Submit()
 }

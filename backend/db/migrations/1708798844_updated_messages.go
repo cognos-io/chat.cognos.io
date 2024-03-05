@@ -20,7 +20,7 @@ func init() {
 
 		// add
 		new_key := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "8l6lqqqv",
 			"name": "key",
@@ -34,11 +34,14 @@ func init() {
 				"pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
 			}
 		}`), new_key)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(new_key)
 
 		// update
 		edit_data := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "wbuzpppe",
 			"name": "data",
@@ -52,11 +55,14 @@ func init() {
 				"pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
 			}
 		}`), edit_data)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(edit_data)
 
 		// update
 		edit_thread_id := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "rqegjuus",
 			"name": "thread_id",
@@ -72,6 +78,9 @@ func init() {
 				"displayFields": null
 			}
 		}`), edit_thread_id)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(edit_thread_id)
 
 		return dao.SaveCollection(collection)
@@ -88,7 +97,7 @@ func init() {
 
 		// update
 		edit_data := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "wbuzpppe",
 			"name": "data",
@@ -102,11 +111,14 @@ func init() {
 				"pattern": ""
 			}
 		}`), edit_data)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(edit_data)
 
 		// update
 		edit_thread_id := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "rqegjuus",
 			"name": "thread_id",
@@ -122,6 +134,9 @@ func init() {
 				"displayFields": null
 			}
 		}`), edit_thread_id)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(edit_thread_id)
 
 		return dao.SaveCollection(collection)

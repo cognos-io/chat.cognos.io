@@ -32,7 +32,7 @@ func init() {
 
 		// add
 		del_secret_key := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "o7wsynwi",
 			"name": "secret_key",
@@ -46,6 +46,9 @@ func init() {
 				"pattern": ""
 			}
 		}`), del_secret_key)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(del_secret_key)
 
 		return dao.SaveCollection(collection)

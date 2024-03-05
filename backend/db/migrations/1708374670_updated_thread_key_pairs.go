@@ -23,7 +23,7 @@ func init() {
 
 		// add
 		new_thread_id := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "vy8bto8z",
 			"name": "thread_id",
@@ -39,6 +39,9 @@ func init() {
 				"displayFields": null
 			}
 		}`), new_thread_id)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(new_thread_id)
 
 		return dao.SaveCollection(collection)
@@ -52,7 +55,7 @@ func init() {
 
 		// add
 		del_conversation := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "aefq0xyr",
 			"name": "conversation",
@@ -68,6 +71,9 @@ func init() {
 				"displayFields": null
 			}
 		}`), del_conversation)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(del_conversation)
 
 		// remove

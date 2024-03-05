@@ -20,7 +20,7 @@ func init() {
 
 		// update
 		edit_secret_key := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "naos08c4",
 			"name": "secret_key",
@@ -34,6 +34,9 @@ func init() {
 				"pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
 			}
 		}`), edit_secret_key)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(edit_secret_key)
 
 		return dao.SaveCollection(collection)
@@ -47,7 +50,7 @@ func init() {
 
 		// update
 		edit_secret_key := &schema.SchemaField{}
-		json.Unmarshal([]byte(`{
+		err = json.Unmarshal([]byte(`{
 			"system": false,
 			"id": "naos08c4",
 			"name": "secret_key",
@@ -61,6 +64,9 @@ func init() {
 				"pattern": ""
 			}
 		}`), edit_secret_key)
+		if err != nil {
+			return err
+		}
 		collection.Schema.AddField(edit_secret_key)
 
 		return dao.SaveCollection(collection)
