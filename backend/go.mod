@@ -1,6 +1,6 @@
 module github.com/cognos-io/chat.cognos.io/backend
 
-go 1.22.0
+go 1.22.1
 
 require (
 	github.com/knadh/koanf/parsers/yaml v0.1.0
@@ -9,7 +9,7 @@ require (
 	github.com/knadh/koanf/v2 v2.1.0
 	github.com/labstack/echo/v5 v5.0.0-20230722203903-ec5b858dab61
 	github.com/pocketbase/dbx v1.10.1
-	github.com/pocketbase/pocketbase v0.22.0
+	github.com/pocketbase/pocketbase v0.22.2
 	github.com/sashabaranov/go-openai v1.20.0
 	golang.org/x/crypto v0.19.0
 )
