@@ -45,6 +45,25 @@ audit:
 # DEVELOPMENT
 # ==================================================================================== #
 
+## lint: run linters
+.PHONY: lint
+lint:
+	golangci-lint run ./...
+
+## lint/fix: run linters and fix issues
+.PHONY: lint/fix
+lint/fix:
+	golangci-lint run --fix ./...
+
+.PHONY lines
+lines:
+	golines -w ./...
+
+## fmt: format code
+.PHONY: fmt
+fmt: tidy lines
+	gofumpt -l -w ./...
+
 ## test: run all tests
 .PHONY: test
 test:
