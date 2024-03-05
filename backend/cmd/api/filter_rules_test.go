@@ -158,11 +158,14 @@ func TestConversationFilterRules(t *testing.T) {
 	nonce := generateNonce()
 
 	// Encrypt the private key with the user's public key
-	encryptedConversationSecretKey, err := box.SealAnonymous(
+	_, err = box.SealAnonymous(
 		nonce[:],
 		conversationSecretKey[:],
 		&userPublicKey, rand.Reader,
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	recordToken, err := generateRecordToken("users", userEmail)
 	if err != nil {
@@ -178,7 +181,7 @@ func TestConversationFilterRules(t *testing.T) {
 		conversationPublicKey,
 		&userSecretKey,
 	)
-	encryptedTitle := base64.StdEncoding.EncodeToString(encryptedTitleBytes)
+	_ = base64.StdEncoding.EncodeToString(encryptedTitleBytes)
 
 	scenarios := []tests.ApiScenario{
 		{

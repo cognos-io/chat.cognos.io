@@ -63,7 +63,7 @@ func bindAppHooks(app core.App, config *config.APIConfig, openaiClient *oai.Clie
 }
 
 func run(ctx context.Context, w io.Writer, args []string) error {
-	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
+	_, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
