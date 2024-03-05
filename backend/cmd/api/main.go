@@ -38,7 +38,6 @@ func NewServer(
 // bindAppHooks is PocketBase specific. We add our additional routes and hooks here.
 // We extract as its own function so it can be reused in tests.
 func bindAppHooks(app core.App, config *config.APIConfig, openaiClient *oai.Client) {
-
 	// Have to use OnBeforeServe to ensure that the app is fully initialized incl. the DB
 	// so we can create the various Repos without panic'ing
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
@@ -60,12 +59,10 @@ func bindAppHooks(app core.App, config *config.APIConfig, openaiClient *oai.Clie
 		hooks.SoftDelete(app)
 
 		return nil
-
 	})
 }
 
 func run(ctx context.Context, w io.Writer, args []string) error {
-
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
@@ -83,7 +80,6 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	bindAppHooks(app, config, openaiClient)
 
 	return app.Start()
-
 }
 
 func main() {

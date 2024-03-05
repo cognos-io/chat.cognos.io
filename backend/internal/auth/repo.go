@@ -8,9 +8,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
-var (
-	ErrNoKeyPair = errors.New("no key pair found")
-)
+var ErrNoKeyPair = errors.New("no key pair found")
 
 type KeyPair struct {
 	ID        string `db:"id"`

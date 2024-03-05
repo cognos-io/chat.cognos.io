@@ -32,7 +32,6 @@ func AsymmetricEncrypt(recipientPublicKey [32]byte, message []byte) (ciphertext 
 	ciphertext, err = box.SealAnonymous([]byte{}, message, &recipientPublicKey, rand.Reader)
 
 	return ciphertext, err
-
 }
 
 // SymmetricEncrypt encrypts the given message using symmetric key encryption.
