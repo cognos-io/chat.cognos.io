@@ -24,5 +24,17 @@
     "sashabaranov"
   ],
   "go.lintTool": "golangci-lint",
-  "go.lintFlags": ["--fast"]
+  "go.lintFlags": ["--fast"],
+  "go.useLanguageServer": true,
+  "gopls": {
+    "formatting.gofumpt": true
+  },
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": "\\.go$",
+        "cmd": "golines ${file} -w"
+      }
+    ]
+  }
 }
