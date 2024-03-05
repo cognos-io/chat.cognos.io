@@ -74,12 +74,18 @@ func EchoHandler(
 		// TODO(ewan): Add more validation for the incoming request
 
 		// Get the public key of the conversation
-		receiverPublicKey, err := keyPairRepo.ConversationPublicKey(req.Metadata.Cognos.ConversationID)
+		receiverPublicKey, err := keyPairRepo.ConversationPublicKey(
+			req.Metadata.Cognos.ConversationID,
+		)
 		if errors.Is(err, auth.ErrNoKeyPair) {
 			return apis.NewNotFoundError("Conversation public key not found", nil)
 		}
 		if err != nil {
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to get conversation public key", err)
+			return apis.NewApiError(
+				http.StatusInternalServerError,
+				"Failed to get conversation public key",
+				err,
+			)
 		}
 
 		// Encrypt and persist the incoming message
@@ -95,13 +101,24 @@ func EchoHandler(
 		err = messageRepo.EncryptAndPersistMessage(receiverPublicKey, &requestMessage)
 		if err != nil {
 			logger.Error("Failed to save request message", "err", err)
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to save request message", err)
+			return apis.NewApiError(
+				http.StatusInternalServerError,
+				"Failed to save request message",
+				err,
+			)
 		}
 
 		// Forward the request to OpenAI
-		stream, err := openaiClient.CreateChatCompletionStream(c.Request().Context(), req.ChatCompletionRequest)
+		stream, err := openaiClient.CreateChatCompletionStream(
+			c.Request().Context(),
+			req.ChatCompletionRequest,
+		)
 		if err != nil {
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to create chat completion stream", err)
+			return apis.NewApiError(
+				http.StatusInternalServerError,
+				"Failed to create chat completion stream",
+				err,
+			)
 		}
 		defer stream.Close()
 
@@ -161,7 +178,11 @@ func EchoHandler(
 		err = messageRepo.EncryptAndPersistMessage(receiverPublicKey, &responseMessage)
 		if err != nil {
 			logger.Error("Failed to save response message", "err", err)
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to save response message", err)
+			return apis.NewApiError(
+				http.StatusInternalServerError,
+				"Failed to save response message",
+				err,
+			)
 		}
 
 		return nil

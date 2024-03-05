@@ -15,8 +15,16 @@ import (
 func main() {
 	// Read the user email and vault password from the CLI
 	// TODO(ewan): Change this to use a UserID instead
-	userEmail := flag.String("email", "", "User email address (used as a salt for the vault password hash)")
-	vaultPassword := flag.String("password", "", "Vault password. Hashed and used to encrypt the secret key")
+	userEmail := flag.String(
+		"email",
+		"",
+		"User email address (used as a salt for the vault password hash)",
+	)
+	vaultPassword := flag.String(
+		"password",
+		"",
+		"Vault password. Hashed and used to encrypt the secret key",
+	)
 	flag.Parse()
 
 	if *userEmail == "" || *vaultPassword == "" {

@@ -1,21 +1,22 @@
 /*
- * These tests check the API rules and filters for the PocketBase collections.
- * To ensure proper rule coverage, we should ensure we're checking the following:
- * 	   - List/Search
- *     - View
- *     - Create
- *     - Update
- *     - Delete
- *
- * For each of these operations we should check the following:
- *     - As a guest (non-authenticated user)
- *     - As a user with a record token
- *     - As a user with a record token trying to access another users data
- *
- * That means each collection should have at least 15 tests.
- *
- * Useful reference: https://github.com/presentator/presentator/blob/7200691263d5438d167118e1d013e2ac2de7390e/api_users_test.go
- */
+  - These tests check the API rules and filters for the PocketBase collections.
+  - To ensure proper rule coverage, we should ensure we're checking the following:
+  - - List/Search
+  - - View
+  - - Create
+  - - Update
+  - - Delete
+    *
+  - For each of these operations we should check the following:
+  - - As a guest (non-authenticated user)
+  - - As a user with a record token
+  - - As a user with a record token trying to access another users data
+    *
+  - That means each collection should have at least 15 tests.
+    *
+
+- Useful reference: https://github.com/presentator/presentator/blob/7200691263d5438d167118e1d013e2ac2de7390e/api_users_test.go
+*/
 package main
 
 import (
@@ -107,7 +108,8 @@ func TestConversationFilterRules(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	userKeyPairRecord, err := app.Dao().FindFirstRecordByData("user_key_pairs", "user", userRecord.Id)
+	userKeyPairRecord, err := app.Dao().
+		FindFirstRecordByData("user_key_pairs", "user", userRecord.Id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -350,9 +352,12 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 				"public_key": "im-not-a-valid-key",
 				"secret_key": "%s"
 			}`, userId, userEncryptedSecretKey)),
-			ExpectedStatus:  http.StatusBadRequest,
-			ExpectedContent: []string{`data":{"public_key":`, `"message":"Must be at least 32 character(s)."`},
-			TestAppFactory:  setupTestApp,
+			ExpectedStatus: http.StatusBadRequest,
+			ExpectedContent: []string{
+				`data":{"public_key":`,
+				`"message":"Must be at least 32 character(s)."`,
+			},
+			TestAppFactory: setupTestApp,
 		},
 		{
 			Name:   "create another users key pair via user token",

@@ -16,7 +16,9 @@ func init() {
 			return err
 		}
 
-		collection.CreateRule = types.Pointer("@request.auth.id != \"\" && \n@request.auth.id = @request.data.user &&\n// Additional validation\n@request.data.id:isset = false &&\n@request.data.created:isset = false &&\n@request.data.updated:isset = false &&\n@request.data.public_key:isset = true &&\n@request.data.secret_key:isset = true")
+		collection.CreateRule = types.Pointer(
+			"@request.auth.id != \"\" && \n@request.auth.id = @request.data.user &&\n// Additional validation\n@request.data.id:isset = false &&\n@request.data.created:isset = false &&\n@request.data.updated:isset = false &&\n@request.data.public_key:isset = true &&\n@request.data.secret_key:isset = true",
+		)
 
 		return dao.SaveCollection(collection)
 	}, func(db dbx.Builder) error {
@@ -27,7 +29,9 @@ func init() {
 			return err
 		}
 
-		collection.CreateRule = types.Pointer("@request.auth.id != \"\" && \n@request.auth.id = @request.data.user")
+		collection.CreateRule = types.Pointer(
+			"@request.auth.id != \"\" && \n@request.auth.id = @request.data.user",
+		)
 
 		return dao.SaveCollection(collection)
 	})

@@ -16,7 +16,9 @@ func init() {
 			return err
 		}
 
-		collection.ViewRule = types.Pointer("@request.auth.id != \"\" &&\n@collection.participants.conversation = conversation &&\n@collection.participants.user = @request.auth.id &&\n(@collection.participants.role = 'Editor' || @collection.participants.role = 'Admin')")
+		collection.ViewRule = types.Pointer(
+			"@request.auth.id != \"\" &&\n@collection.participants.conversation = conversation &&\n@collection.participants.user = @request.auth.id &&\n(@collection.participants.role = 'Editor' || @collection.participants.role = 'Admin')",
+		)
 
 		return dao.SaveCollection(collection)
 	}, func(db dbx.Builder) error {

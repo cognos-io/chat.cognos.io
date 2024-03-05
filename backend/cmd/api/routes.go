@@ -13,7 +13,19 @@ import (
 )
 
 // addPocketBaseRoutes adds additional routes to the PocketBase app.
-func addPocketBaseRoutes(e *core.ServeEvent, app core.App, logger *slog.Logger, config *config.APIConfig, openaiClient *oai.Client, messageRepo chat.MessageRepo, keyPairRepo auth.KeyPairRepo) {
+func addPocketBaseRoutes(
+	e *core.ServeEvent,
+	app core.App,
+	logger *slog.Logger,
+	config *config.APIConfig,
+	openaiClient *oai.Client,
+	messageRepo chat.MessageRepo,
+	keyPairRepo auth.KeyPairRepo,
+) {
 	// https://platform.openai.com/docs/api-reference/chat/create
-	e.Router.POST("/v1/chat/completions", openai.EchoHandler(logger, openaiClient, messageRepo, keyPairRepo), apis.RequireRecordAuth())
+	e.Router.POST(
+		"/v1/chat/completions",
+		openai.EchoHandler(logger, openaiClient, messageRepo, keyPairRepo),
+		apis.RequireRecordAuth(),
+	)
 }

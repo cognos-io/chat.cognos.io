@@ -16,11 +16,17 @@ func init() {
 			return err
 		}
 
-		collection.ListRule = types.Pointer("@request.auth.id != \"\" && \n@request.auth.id = user.id")
+		collection.ListRule = types.Pointer(
+			"@request.auth.id != \"\" && \n@request.auth.id = user.id",
+		)
 
-		collection.ViewRule = types.Pointer("@request.auth.id != \"\" && \n@request.auth.id = user.id")
+		collection.ViewRule = types.Pointer(
+			"@request.auth.id != \"\" && \n@request.auth.id = user.id",
+		)
 
-		collection.CreateRule = types.Pointer("@request.auth.id != \"\" && \n@request.auth.id = @request.data.user")
+		collection.CreateRule = types.Pointer(
+			"@request.auth.id != \"\" && \n@request.auth.id = @request.data.user",
+		)
 
 		return dao.SaveCollection(collection)
 	}, func(db dbx.Builder) error {
@@ -33,9 +39,13 @@ func init() {
 
 		collection.ListRule = nil
 
-		collection.ViewRule = types.Pointer("@request.auth.id != \"\" && \n@request.auth.id = @request.data.user_id")
+		collection.ViewRule = types.Pointer(
+			"@request.auth.id != \"\" && \n@request.auth.id = @request.data.user_id",
+		)
 
-		collection.CreateRule = types.Pointer("@request.auth.id != \"\" && \n@request.auth.id = @request.data.user_id")
+		collection.CreateRule = types.Pointer(
+			"@request.auth.id != \"\" && \n@request.auth.id = @request.data.user_id",
+		)
 
 		return dao.SaveCollection(collection)
 	})
