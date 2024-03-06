@@ -55,14 +55,14 @@ lint:
 lint/fix:
 	golangci-lint run --fix ./...
 
-.PHONY lines
-lines:
-	golines -w ./...
+.PHONY: lines
+lines: tidy
+	go run github.com/segmentio/golines@latest -w -m 88 .
 
 ## fmt: format code
 .PHONY: fmt
 fmt: tidy lines
-	gofumpt -l -w ./...
+	go run mvdan.cc/gofumpt@latest -l -w .
 
 ## test: run all tests
 .PHONY: test
