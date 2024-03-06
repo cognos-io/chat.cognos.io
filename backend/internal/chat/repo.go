@@ -24,23 +24,33 @@ func EncryptMessage(
 	receiverPublicKey [32]byte,
 ) (base64EncryptedMessage, base64EncryptedSymmetricKey string, err error) {
 	// Symmetrically encrypt the request message with a random key
-	symmetricKey, encryptedMessage, err := crypto.SymmetricEncrypt([]byte(plainTextMessage))
+	symmetricKey, encryptedMessage, err := crypto.SymmetricEncrypt(
+		[]byte(plainTextMessage),
+	)
 	if err != nil {
 		return "", "", err
 	}
 	// Asymmetrically encrypt the symmetric key with the receiver's public key
-	encryptedSymmetricKey, err := crypto.AsymmetricEncrypt(receiverPublicKey, symmetricKey[:])
+	encryptedSymmetricKey, err := crypto.AsymmetricEncrypt(
+		receiverPublicKey,
+		symmetricKey[:],
+	)
 	if err != nil {
 		return "", "", err
 	}
 	// Return the base64 encoded encrypted message and symmetric key
 	base64EncryptedMessage = base64.StdEncoding.EncodeToString(encryptedMessage)
-	base64EncryptedSymmetricKey = base64.StdEncoding.EncodeToString(encryptedSymmetricKey)
+	base64EncryptedSymmetricKey = base64.StdEncoding.EncodeToString(
+		encryptedSymmetricKey,
+	)
 	return
 }
 
 type MessageRepo interface {
-	EncryptAndPersistMessage(receiverPublicKey [32]byte, message *PlainTextMessage) error
+	EncryptAndPersistMessage(
+		receiverPublicKey [32]byte,
+		message *PlainTextMessage,
+	) error
 }
 
 type PocketBaseMessageRepo struct {

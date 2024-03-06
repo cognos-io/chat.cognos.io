@@ -26,7 +26,9 @@ type PocketBaseKeyPairRepo struct {
 }
 
 // ConversationPublicKey returns the public key for the given conversation.
-func (r *PocketBaseKeyPairRepo) ConversationPublicKey(conversationID string) ([32]byte, error) {
+func (r *PocketBaseKeyPairRepo) ConversationPublicKey(
+	conversationID string,
+) ([32]byte, error) {
 	const collectionName = "conversation_public_keys"
 
 	records, err := r.app.Dao().FindRecordsByFilter(collectionName,

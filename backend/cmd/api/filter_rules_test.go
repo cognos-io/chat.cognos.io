@@ -121,7 +121,9 @@ func TestConversationFilterRules(t *testing.T) {
 	var userPublicKey [32]byte
 	copy(userPublicKey[:], userPublicKeyBytes)
 	userEncryptedSecretKeyStr := userKeyPairRecord.GetString("secret_key")
-	userEncryptedSecretKeyBytes, err := base64.StdEncoding.DecodeString(userEncryptedSecretKeyStr)
+	userEncryptedSecretKeyBytes, err := base64.StdEncoding.DecodeString(
+		userEncryptedSecretKeyStr,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -26,10 +26,18 @@ func NewSymmetricKey() ([32]byte, error) {
 // We don't provide a sender private key here as this will be randomly generated.
 // It uses the NaCl box to perform the encryption.
 // The ciphertext is returned along with any error that occurred during the encryption process.
-func AsymmetricEncrypt(recipientPublicKey [32]byte, message []byte) (ciphertext []byte, err error) {
+func AsymmetricEncrypt(
+	recipientPublicKey [32]byte,
+	message []byte,
+) (ciphertext []byte, err error) {
 	// NaCl box uses the nonce and public key to encrypt the message
 	// https://pkg.go.dev/golang.org/x/crypto@v0.19.0/nacl/box
-	ciphertext, err = box.SealAnonymous([]byte{}, message, &recipientPublicKey, rand.Reader)
+	ciphertext, err = box.SealAnonymous(
+		[]byte{},
+		message,
+		&recipientPublicKey,
+		rand.Reader,
+	)
 
 	return ciphertext, err
 }
@@ -39,7 +47,9 @@ func AsymmetricEncrypt(recipientPublicKey [32]byte, message []byte) (ciphertext 
 // using NaCl secretbox algorithm.
 // The encrypted ciphertext and the generated symmetric key are returned.
 // If any error occurs during the encryption process, it is also returned.
-func SymmetricEncrypt(message []byte) (symmetricKey [32]byte, ciphertext []byte, err error) {
+func SymmetricEncrypt(
+	message []byte,
+) (symmetricKey [32]byte, ciphertext []byte, err error) {
 	// Generate our random secret key
 	symmetricKey, err = NewSymmetricKey()
 	if err != nil {

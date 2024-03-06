@@ -35,7 +35,9 @@ func init() {
 
 		collection.ViewRule = types.Pointer("@request.auth.id = @request.data.user_id")
 
-		collection.CreateRule = types.Pointer("@request.auth.id = @request.data.user_id")
+		collection.CreateRule = types.Pointer(
+			"@request.auth.id = @request.data.user_id",
+		)
 
 		return dao.SaveCollection(collection)
 	})

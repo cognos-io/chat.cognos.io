@@ -34,7 +34,14 @@ func main() {
 	// Hash the vault password with Argon2id
 	// Using OWASP recommendations for Argon2id
 	// https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
-	hashedPassword := argon2.IDKey([]byte(*vaultPassword), []byte(*userEmail), 2, 19*1024, 1, 32)
+	hashedPassword := argon2.IDKey(
+		[]byte(*vaultPassword),
+		[]byte(*userEmail),
+		2,
+		19*1024,
+		1,
+		32,
+	)
 	var vaultPasswordKey [32]byte
 	copy(vaultPasswordKey[:], hashedPassword)
 
@@ -51,7 +58,12 @@ func main() {
 	}
 
 	// Encrypt the secret key with the hashed vault password
-	encryptedSecKeyBytes := secretbox.Seal(nonce[:], secKeyBytes[:], &nonce, &vaultPasswordKey)
+	encryptedSecKeyBytes := secretbox.Seal(
+		nonce[:],
+		secKeyBytes[:],
+		&nonce,
+		&vaultPasswordKey,
+	)
 
 	// Encode the public key and encrypted secret key as base64 strings
 	pubKeyString := base64.StdEncoding.EncodeToString(pubKeyBytes[:])

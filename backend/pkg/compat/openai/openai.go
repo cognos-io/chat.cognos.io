@@ -162,7 +162,9 @@ func EchoHandler(
 				return err
 			}
 
-			_, err = respWriter.Write(append(append(headerData, marshalledChunk...), newLine...))
+			_, err = respWriter.Write(
+				append(append(headerData, marshalledChunk...), newLine...),
+			)
 			if err != nil {
 				logger.Error("Failed to write to response", "err", err)
 				return err
