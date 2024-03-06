@@ -33,7 +33,7 @@
     "commands": [
       {
         "match": "\\.go$",
-        "cmd": "golines ${file} -w -m 88"
+        "cmd": "go run github.com/segmentio/golines@latest ${file} -w -m 88"
       }
     ]
   }
