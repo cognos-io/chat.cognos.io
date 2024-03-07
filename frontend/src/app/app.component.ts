@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 
-import PocketBase from 'pocketbase';
+import { AuthService } from './services/auth.service';
+import { take } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -13,24 +14,25 @@ import PocketBase from 'pocketbase';
 })
 export class AppComponent implements OnInit {
   title = 'frontend';
-  private readonly pb: PocketBase;
 
-  constructor() {
-    this.pb = new PocketBase('http://127.0.0.1:8090');
-  }
+  private auth = inject(AuthService);
+
+  constructor() {}
 
   async onLogin() {
-    const authData = await this.pb.collection('users').authWithOAuth2({
-      provider: 'oidc',
-      scopes: ['openid', 'offline_access'],
-    });
-    console.log(this.pb.authStore.isValid);
-    console.log(this.pb.authStore.token);
-    console.log(this.pb.authStore.model?.['id']);
+    this.auth.loginWithOry().pipe(take(1)).subscribe();
+
+    // console.log(this.pb.authStore.isValid);
+    // console.log(this.pb.authStore.token);
+    // console.log(this.pb.authStore.model?.['id']);
+  }
+
+  onLogout() {
+    this.auth.logout();
   }
 
   ngOnInit(): void {
-    console.log(this.pb.authStore.isValid);
-    console.log(this.pb.authStore.token);
+    // console.log(this.pb.authStore.isValid);
+    // console.log(this.pb.authStore.token);
   }
 }
