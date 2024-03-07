@@ -1,1 +1,4 @@
-export const environment = {};
+export const environment = {
+  isDevelopment: false, // Has to be explicitly enabled
+  pocketbaseBaseUrl: 'http://localhost:8090',
+};
