@@ -1,5 +1,7 @@
 package proxy
 
+import "context"
+
 type ProxyConfig struct {
 	BaseURL                string // Base URL of the upstream server
 	CompletePath           string // Path for the `complete` endpoint
@@ -8,4 +10,18 @@ type ProxyConfig struct {
 	StreamChatCompletePath string // Path for the `stream-chat-complete` endpoint
 }
 
-type Upstream interface{}
+type ChatCompletionRequest struct {
+	Messages  []string `json:"messages"`
+	MaxTokens int      `json:"max_tokens"`
+	Stream    bool     `json:"stream"`
+}
+
+type ChatCompletionResponse struct{}
+
+type Upstream interface {
+	ChatCompletion(
+		ctx context.Context,
+		config *ProxyConfig,
+		request ChatCompletionRequest,
+	) (ChatCompletionResponse, error)
+}
