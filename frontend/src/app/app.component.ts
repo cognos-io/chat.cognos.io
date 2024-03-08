@@ -1,9 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 
 import { AuthService } from './services/auth.service';
-import { take } from 'rxjs';
 
 @Component({
   selector: 'app-root',

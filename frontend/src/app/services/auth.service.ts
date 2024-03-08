@@ -88,8 +88,8 @@ export class AuthService implements OnDestroy {
   });
 
   // selectors
-  status = this.state.status();
-  user = this.state.user();
+  status = this.state.status;
+  user = this.state.user;
 
   constructor() {
     this.pb = new PocketBase(environment.pocketbaseBaseUrl);
@@ -97,7 +97,7 @@ export class AuthService implements OnDestroy {
     // Listen for changes in the auth store
     this.storeUnsubscribe = this.pb.authStore.onChange((token, model) => {
       this.$user.next(model);
-    });
+    }, true);
   }
 
   listAuthMethods(): Observable<AuthMethodsList> {

@@ -1,0 +1,16 @@
+import { inject } from '@angular/core';
+import { Router, CanActivateFn } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+export const authGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  if (authService.user()) {
+    return true;
+  }
+
+  const router = inject(Router);
+
+  // TODO(ewan): Add the 'next' query parameter to the login URL
+  // to redirect user back to where they were going
+  return router.parseUrl(`auth/login`);
+};
