@@ -35,14 +35,14 @@ export class AuthService implements OnDestroy {
   private readonly storeUnsubscribe: () => void;
 
   // sources
-  readonly $login = new Subject();
-  readonly $logout = new Subject();
+  readonly login$ = new Subject();
+  readonly logout$ = new Subject();
 
   private readonly $user = new Subject<AuthUser>();
-  private readonly $userAuthenticating = this.$login.pipe(
+  private readonly $userAuthenticating = this.login$.pipe(
     switchMap(() => this.loginWithOry())
   );
-  private readonly $userLoggingOut = this.$logout.pipe(
+  private readonly $userLoggingOut = this.logout$.pipe(
     switchMap(() => of(this.pb.authStore.clear()))
   );
 
