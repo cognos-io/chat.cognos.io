@@ -12,27 +12,10 @@ import { take } from 'rxjs';
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
   title = 'frontend';
 
-  private auth = inject(AuthService);
+  public auth = inject(AuthService);
 
   constructor() {}
-
-  async onLogin() {
-    this.auth.loginWithOry().pipe(take(1)).subscribe();
-
-    // console.log(this.pb.authStore.isValid);
-    // console.log(this.pb.authStore.token);
-    // console.log(this.pb.authStore.model?.['id']);
-  }
-
-  onLogout() {
-    this.auth.logout();
-  }
-
-  ngOnInit(): void {
-    // console.log(this.pb.authStore.isValid);
-    // console.log(this.pb.authStore.token);
-  }
 }

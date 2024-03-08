@@ -1,2 +1,1 @@
-export interface User {
-}
+export interface UserCredentials {}

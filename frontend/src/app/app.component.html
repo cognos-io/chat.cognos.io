@@ -1,2 +1,2 @@
-<button (click)="onLogin()">Login</button>
-<button (click)="onLogout()">Logout</button>
+<button (click)="auth.$login.next($event)">Login</button>
+<button (click)="auth.$logout.next($event)">Logout</button>

@@ -1,3 +1,4 @@
 {
-  "cSpell.words": ["cognos", "oidc", "pocketbase"]
+  "cSpell.words": ["cognos", "oidc", "pocketbase"],
+  "cSpell.ignoreWords": ["ngxtension"]
 }
