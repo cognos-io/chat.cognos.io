@@ -4,6 +4,7 @@
     "cognos",
     "compat",
     "ewan",
+    "oidc",
     "Ollama",
     "openai",
     "OWASP",
@@ -21,7 +22,8 @@
     "labstack",
     "migratecmd",
     "nekxd",
-    "sashabaranov"
+    "sashabaranov",
+    "userinfo"
   ],
   "go.lintTool": "golangci-lint",
   "go.lintFlags": ["--fast"],
