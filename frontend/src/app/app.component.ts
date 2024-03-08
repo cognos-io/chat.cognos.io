@@ -15,6 +15,4 @@ export class AppComponent {
   title = 'frontend';
 
   public auth = inject(AuthService);
-
-  constructor() {}
 }

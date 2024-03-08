@@ -50,6 +50,9 @@ export class AuthService implements OnDestroy {
   private state = signalSlice({
     initialState: initialState,
     sources: [
+      this.login$.pipe(
+        map(() => ({ status: 'authenticating' as LoginStatus }))
+      ),
       // When user emits, if we have a user, we are authenticated
       this.$user.pipe(
         map((response: AuthUser) => {
@@ -65,7 +68,7 @@ export class AuthService implements OnDestroy {
       this.$userAuthenticating.pipe(
         map(() => {
           return {
-            status: 'authenticating' as LoginStatus,
+            status: 'success' as LoginStatus,
           };
         }),
         catchError(() => {

@@ -1,4 +1,3 @@
-<button (click)="auth.login$.next($event)">Login</button>
-<button (click)="auth.logout$.next($event)">Logout</button>
-
 <router-outlet></router-outlet>
+
+<div [attr.data-pb-user-id]="auth.user()?.['id']"></div>
