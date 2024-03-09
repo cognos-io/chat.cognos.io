@@ -11,6 +11,7 @@ import {
 } from 'rxjs';
 import { environment } from '../../environments/environment.development';
 import { signalSlice } from 'ngxtension/signal-slice';
+import { filterNil } from 'ngxtension/filter-nil';
 
 export type LoginStatus = 'pending' | 'authenticating' | 'success' | 'error';
 
@@ -19,11 +20,13 @@ export type AuthUser = AuthModel | null | undefined;
 interface AuthState {
   status: LoginStatus;
   user: AuthUser;
+  oryId: string;
 }
 
 const initialState: AuthState = {
   status: 'pending',
   user: null,
+  oryId: '',
 };
 
 @Injectable({
@@ -55,14 +58,19 @@ export class AuthService implements OnDestroy {
       ),
       // When user emits, if we have a user, we are authenticated
       this.$user.pipe(
-        map((response: AuthUser) => {
-          return {
-            status: response
-              ? ('success' as LoginStatus)
-              : ('pending' as LoginStatus),
-            user: response,
-          };
-        })
+        switchMap((response: AuthUser) =>
+          this.fetchOryId(response?.['id']).pipe(
+            map((oryId: string) => {
+              return {
+                status: response
+                  ? ('success' as LoginStatus)
+                  : ('pending' as LoginStatus),
+                user: response,
+                oryId,
+              };
+            })
+          )
+        )
       ),
       // When login emits, we are authenticating
       this.$userAuthenticating.pipe(
@@ -84,6 +92,7 @@ export class AuthService implements OnDestroy {
           return {
             status: 'pending' as LoginStatus,
             user: null,
+            oryId: '',
           };
         })
       ),
@@ -93,6 +102,7 @@ export class AuthService implements OnDestroy {
   // selectors
   status = this.state.status;
   user = this.state.user;
+  oryId = this.state.oryId;
 
   constructor() {
     this.pb = new PocketBase(environment.pocketbaseBaseUrl);
@@ -114,6 +124,18 @@ export class AuthService implements OnDestroy {
         provider: 'oidc',
         scopes: ['openid', 'offline_access'],
       })
+    );
+  }
+
+  fetchOryId(userId: string) {
+    return from(
+      this.pb.collection(this.authCollection).listExternalAuths(userId)
+    ).pipe(
+      map((auths) => {
+        return auths.find((auth) => auth.provider === 'oidc');
+      }),
+      filterNil(),
+      map((auth) => auth.providerId)
     );
   }
 
