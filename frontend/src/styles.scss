@@ -15,7 +15,7 @@
 $frontend-theme: matx.define-theme(
   (
     color: (
-      theme-type: light,
+      theme-type: "dark",
       primary: matx.$m3-green-palette,
     ),
     typography: (
