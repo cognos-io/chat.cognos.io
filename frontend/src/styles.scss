@@ -1,5 +1,45 @@
-// Supports weights 100-900
-@import '@fontsource-variable/public-sans';
+// Custom Theming for Angular Material
+// For more information: https://material.angular.io/guide/theming
+@use "@angular/material" as mat;
+// Material 3 M3 support
+@use "@angular/material-experimental" as matx;
 
-html, body { height: 100%; }
-body { margin: 0; font-family: "Public Sans Variable", "Helvetica Neue", sans-serif; }
+// Include the common styles for Angular Material. We include this here so that you only
+// have to load a single css file for Angular Material in your app.
+// Be sure that you only ever include this mixin once!
+@include mat.core();
+
+// https://material.angular.io/guide/material-3
+// Create the theme object. A theme consists of configurations for individual
+// theming systems such as "color" or "typography".
+$frontend-theme: matx.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: matx.$m3-green-palette,
+    ),
+    typography: (
+      brand-family: "Public Sans Variable",
+      bold-weight: 900,
+    ),
+    density: (
+      scale: 0,
+    ),
+  )
+);
+
+// Supports weights 100-900
+@import "@fontsource-variable/public-sans";
+
+html {
+  @include mat.all-component-themes($frontend-theme);
+}
+
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: "Public Sans Variable", "Helvetica Neue", sans-serif;
+}
