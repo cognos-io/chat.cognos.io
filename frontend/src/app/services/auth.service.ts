@@ -58,14 +58,20 @@ export class AuthService implements OnDestroy {
       ),
       // When user emits, if we have a user, we are authenticated
       this.$user.pipe(
+        map((response: AuthUser) => {
+          return {
+            status: response
+              ? ('success' as LoginStatus)
+              : ('pending' as LoginStatus),
+            user: response,
+          };
+        })
+      ),
+      this.$user.pipe(
         switchMap((response: AuthUser) =>
           this.fetchOryId(response?.['id']).pipe(
             map((oryId: string) => {
               return {
-                status: response
-                  ? ('success' as LoginStatus)
-                  : ('pending' as LoginStatus),
-                user: response,
                 oryId,
               };
             })
