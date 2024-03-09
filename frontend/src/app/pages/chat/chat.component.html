@@ -1,17 +1,20 @@
-<div class="container" [class.is-mobile]="isMobile()">
-  <mat-toolbar>
+<div class="wrapper" [class.is-mobile]="isMobile()">
+  <mat-toolbar color="primary" class="toolbar">
     <button mat-icon-button (click)="sideNav.toggle()">
       <mat-icon>menu</mat-icon>
     </button>
   </mat-toolbar>
-</div>
-<mat-sidenav-container class="page" [style.marginTop.px]="isMobile() ? 56 : 0">
-  <mat-sidenav
-    #sideNav
-    [mode]="isMobile() ? 'over' : 'side'"
-    [fixedInViewport]="isMobile()"
-    fixedTopGap="56"
-    >Sidenav</mat-sidenav
+  <mat-sidenav-container
+    class="page sidenav-container"
+    [style.marginTop.px]="isMobile() ? 56 : 0"
   >
-  <mat-sidenav-content>Content</mat-sidenav-content>
-</mat-sidenav-container>
+    <mat-sidenav
+      #sideNav
+      [mode]="isMobile() ? 'over' : 'side'"
+      [fixedInViewport]="isMobile()"
+      fixedTopGap="56"
+      >Sidenav</mat-sidenav
+    >
+    <mat-sidenav-content>Content</mat-sidenav-content>
+  </mat-sidenav-container>
+</div>
