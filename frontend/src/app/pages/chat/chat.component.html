@@ -1,7 +1,7 @@
 <div class="wrapper" [class.is-mobile]="isMobile()">
-  <mat-toolbar color="primary" class="toolbar">
+  <mat-toolbar color="primary" class="toolbar" role="heading">
     <button mat-icon-button (click)="sideNav.toggle()">
-      <mat-icon>menu</mat-icon>
+      <mat-icon color="secondary">menu</mat-icon>
     </button>
   </mat-toolbar>
   <mat-sidenav-container
@@ -12,9 +12,11 @@
       #sideNav
       [mode]="isMobile() ? 'over' : 'side'"
       [fixedInViewport]="isMobile()"
+      [opened]="!isMobile()"
       fixedTopGap="56"
+      role="navigation"
       >Sidenav</mat-sidenav
     >
-    <mat-sidenav-content>Content</mat-sidenav-content>
+    <mat-sidenav-content role="main">Content</mat-sidenav-content>
   </mat-sidenav-container>
 </div>
