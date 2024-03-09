@@ -1,6 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import PocketBase, { AuthMethodsList, AuthModel } from 'pocketbase';
 import {
+  EMPTY,
   Observable,
   Subject,
   catchError,
@@ -134,6 +135,9 @@ export class AuthService implements OnDestroy {
   }
 
   fetchOryId(userId: string) {
+    if (!userId || userId === '') {
+      return EMPTY;
+    }
     return from(
       this.pb.collection(this.authCollection).listExternalAuths(userId)
     ).pipe(

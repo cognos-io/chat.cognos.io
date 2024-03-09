@@ -1,0 +1,32 @@
+mat-sidenav {
+  width: 300px;
+}
+
+.page {
+  height: 100vh;
+  height: 100svh;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.sidenav-container {
+  flex: 1;
+}
+
+.is-mobile {
+  .toolbar {
+    position: fixed;
+    z-index: 2;
+  }
+  .sidenav-container {
+    flex: 1 0 auto;
+  }
+}

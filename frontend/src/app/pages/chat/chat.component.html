@@ -1,1 +1,22 @@
-<p>chat works!</p>
+<div class="wrapper" [class.is-mobile]="isMobile()">
+  <mat-toolbar color="primary" class="toolbar" role="heading">
+    <button mat-icon-button (click)="sideNav.toggle()">
+      <mat-icon color="secondary">menu</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-sidenav-container
+    class="page sidenav-container"
+    [style.marginTop.px]="isMobile() ? 56 : 0"
+  >
+    <mat-sidenav
+      #sideNav
+      [mode]="isMobile() ? 'over' : 'side'"
+      [fixedInViewport]="isMobile()"
+      [opened]="!isMobile()"
+      fixedTopGap="56"
+      role="navigation"
+      >Sidenav</mat-sidenav
+    >
+    <mat-sidenav-content role="main">Content</mat-sidenav-content>
+  </mat-sidenav-container>
+</div>
