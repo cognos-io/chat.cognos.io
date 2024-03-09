@@ -1,3 +1,6 @@
 <router-outlet></router-outlet>
 
-<div [attr.data-pb-user-id]="auth.user()?.['id']"></div>
+<div
+  [attr.data-pb-user-id]="auth.user()?.['id']"
+  [attr.data-pb-ory-id]="auth.oryId()"
+></div>
