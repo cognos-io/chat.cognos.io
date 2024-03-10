@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import PocketBase, { AuthMethodsList, AuthModel } from 'pocketbase';
 import {
   EMPTY,
@@ -35,7 +35,7 @@ const initialState: AuthState = {
 })
 export class AuthService implements OnDestroy {
   private readonly authCollection: string = 'users';
-  private readonly pb: PocketBase;
+  private readonly pb: PocketBase = inject(PocketBase);
   private readonly storeUnsubscribe: () => void;
 
   // sources
@@ -112,8 +112,6 @@ export class AuthService implements OnDestroy {
   oryId = this.state.oryId;
 
   constructor() {
-    this.pb = new PocketBase(environment.pocketbaseBaseUrl);
-
     // Listen for changes in the auth store
     this.storeUnsubscribe = this.pb.authStore.onChange((token, model) => {
       this.$user.next(model);
