@@ -6,6 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
+    "typegen": "pocketbase-typegen --db ../backend/pb_data/data.db --out ./src/app/types/pocketbase-types.ts",
     "test": "ng test"
   },
   "private": true,
