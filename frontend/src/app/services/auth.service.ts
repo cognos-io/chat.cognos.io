@@ -52,7 +52,7 @@ export class AuthService implements OnDestroy {
 
   // state
   private state = signalSlice({
-    initialState: initialState,
+    initialState,
     sources: [
       this.login$.pipe(
         map(() => ({ status: 'authenticating' as LoginStatus }))
