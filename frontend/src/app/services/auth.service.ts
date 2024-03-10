@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import PocketBase, { AuthMethodsList, AuthModel } from 'pocketbase';
 import {
   EMPTY,
@@ -10,9 +10,9 @@ import {
   of,
   switchMap,
 } from 'rxjs';
-import { environment } from '../../environments/environment.development';
 import { signalSlice } from 'ngxtension/signal-slice';
 import { filterNil } from 'ngxtension/filter-nil';
+import { TypedPocketBase } from '../types/pocketbase-types';
 
 export type LoginStatus = 'pending' | 'authenticating' | 'success' | 'error';
 
@@ -34,8 +34,8 @@ const initialState: AuthState = {
   providedIn: 'root',
 })
 export class AuthService implements OnDestroy {
-  private readonly authCollection: string = 'users';
-  private readonly pb: PocketBase;
+  private readonly authCollection = 'users';
+  private readonly pb: TypedPocketBase = inject(PocketBase);
   private readonly storeUnsubscribe: () => void;
 
   // sources
@@ -112,8 +112,6 @@ export class AuthService implements OnDestroy {
   oryId = this.state.oryId;
 
   constructor() {
-    this.pb = new PocketBase(environment.pocketbaseBaseUrl);
-
     // Listen for changes in the auth store
     this.storeUnsubscribe = this.pb.authStore.onChange((token, model) => {
       this.$user.next(model);
