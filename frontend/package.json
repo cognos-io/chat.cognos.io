@@ -28,6 +28,7 @@
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "tweetnacl": "^1.0.3",
+    "zod": "^3.22.4",
     "zone.js": "~0.14.2"
   },
   "devDependencies": {
