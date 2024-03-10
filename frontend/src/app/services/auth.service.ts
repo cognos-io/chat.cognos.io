@@ -10,9 +10,9 @@ import {
   of,
   switchMap,
 } from 'rxjs';
-import { environment } from '../../environments/environment.development';
 import { signalSlice } from 'ngxtension/signal-slice';
 import { filterNil } from 'ngxtension/filter-nil';
+import { TypedPocketBase } from '../types/pocketbase-types';
 
 export type LoginStatus = 'pending' | 'authenticating' | 'success' | 'error';
 
@@ -34,8 +34,8 @@ const initialState: AuthState = {
   providedIn: 'root',
 })
 export class AuthService implements OnDestroy {
-  private readonly authCollection: string = 'users';
-  private readonly pb: PocketBase = inject(PocketBase);
+  private readonly authCollection = 'users';
+  private readonly pb: TypedPocketBase = inject(PocketBase);
   private readonly storeUnsubscribe: () => void;
 
   // sources
