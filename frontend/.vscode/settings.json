@@ -1,8 +1,10 @@
 {
   "cSpell.words": [
+    "ciphertext",
     "cognos",
     "datetime",
     "ewan",
+    "libsodium",
     "oidc",
     "pocketbase",
     "tweetnacl",
@@ -10,6 +12,7 @@
   ],
   "cSpell.ignoreWords": [
     "auths",
+    "blakejs",
     "devkit",
     "fontsource",
     "matx",
