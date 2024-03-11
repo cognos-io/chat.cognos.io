@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Subject, from, of, switchMap } from 'rxjs';
+import { Observable, Subject, from, map, of, switchMap } from 'rxjs';
 import { TypedPocketBase } from '../types/pocketbase-types';
 import PocketBase from 'pocketbase';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -12,6 +12,8 @@ import {
 } from '../interfaces/conversation';
 import { AuthService } from './auth.service';
 import { KeyPair } from '../interfaces/key-pair';
+import { Base64 } from 'js-base64';
+import { VaultService } from './vault.service';
 
 interface ConversationState {
   conversationRecords: Array<ConversationRecord>;
@@ -28,9 +30,14 @@ const initialState: ConversationState = {
 })
 export class ConversationService {
   private readonly cryptoService = inject(CryptoService);
+  private readonly vaultService = inject(VaultService);
+
   private readonly pbConversationCollection = 'conversations';
+  private readonly pbConversationPublicKeysCollection =
+    'conversation_public_keys';
   private readonly pbConversationSecretKeyCollection =
     'conversation_secret_keys';
+
   private readonly pb: TypedPocketBase = inject(PocketBase);
   private readonly auth = inject(AuthService);
 
@@ -149,6 +156,60 @@ export class ConversationService {
     return this.cryptoService.sharedKey(
       userPublicKey,
       conversationKeyPair.secretKey
+    );
+  }
+
+  fetchConversationPublicKey(conversationId: string): Observable<Uint8Array> {
+    const filter = this.pb.filter('conversation={:conversationId}', {
+      conversationId,
+    });
+
+    return from(
+      this.pb
+        .collection(this.pbConversationPublicKeysCollection)
+        .getFirstListItem(filter)
+    ).pipe(map((record) => Base64.toUint8Array(record.public_key)));
+  }
+
+  fetchConversationSecretKey(conversationId: string): Observable<Uint8Array> {
+    const filter = this.pb.filter(
+      'conversation={:conversationId} && user={:userId}',
+      {
+        conversationId,
+        userId: this.auth.user()?.['id'],
+      }
+    );
+
+    return from(
+      this.pb
+        .collection(this.pbConversationSecretKeyCollection)
+        .getFirstListItem(filter)
+    ).pipe(
+      // Decode the encrypted base64 secret key
+      map((record) => Base64.toUint8Array(record.secret_key))
+    );
+  }
+
+  fetchConversationKeyPair(conversationId: string): Observable<KeyPair> {
+    return this.fetchConversationPublicKey(conversationId).pipe(
+      switchMap((publicKey) =>
+        this.fetchConversationSecretKey(conversationId).pipe(
+          map((secretKey) => {
+            const sharedKey = this.cryptoService.sharedKey(
+              publicKey,
+              this.vaultService.secretKey()
+            );
+            const decryptedSecretKey = this.cryptoService.openBox(
+              secretKey,
+              sharedKey
+            );
+            return {
+              publicKey,
+              secretKey: decryptedSecretKey,
+            };
+          })
+        )
+      )
     );
   }
 }
