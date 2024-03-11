@@ -145,20 +145,6 @@ export class ConversationService {
     );
   }
 
-  /**
-   * sharedKeyWithUser - Generates a shared key for the given user and conversation.
-   *
-   * @param conversationKeyPair (KeyPair) - the conversation's key pair
-   * @param userPublicKey (Uint8Array) - the user's public key
-   * @returns
-   */
-  sharedKeyWithUser(conversationKeyPair: KeyPair, userPublicKey: Uint8Array) {
-    return this.cryptoService.sharedKey(
-      userPublicKey,
-      conversationKeyPair.secretKey
-    );
-  }
-
   fetchConversationPublicKey(conversationId: string): Observable<Uint8Array> {
     const filter = this.pb.filter('conversation={:conversationId}', {
       conversationId,
