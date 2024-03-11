@@ -198,4 +198,38 @@ export class ConversationService {
       )
     );
   }
+
+  saveConversationKeyPair(
+    conversationId: string,
+    conversationKeyPair: KeyPair
+  ): Observable<KeyPair> {
+    return from(
+      this.pb.collection(this.pbConversationPublicKeysCollection).create({
+        conversation: conversationId,
+        public_key: Base64.fromUint8Array(conversationKeyPair.publicKey),
+      })
+    ).pipe(
+      switchMap(() => {
+        const sharedKey = this.cryptoService.sharedKey(
+          conversationKeyPair.publicKey,
+          this.vaultService.secretKey()
+        );
+        const encryptedSecretKey = this.cryptoService.box(
+          conversationKeyPair.secretKey,
+          sharedKey
+        );
+        return from(
+          this.pb.collection(this.pbConversationSecretKeyCollection).create({
+            conversation: conversationId,
+            secret_key: Base64.fromUint8Array(encryptedSecretKey),
+            user: this.auth.user()?.['id'],
+          })
+        ).pipe(
+          switchMap(() => {
+            return of(conversationKeyPair);
+          })
+        );
+      })
+    );
+  }
 }
