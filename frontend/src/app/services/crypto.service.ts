@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import nacl from 'tweetnacl';
 import { KeyPair } from '../interfaces/key-pair';
-import { blake2b } from 'blakejs';
 
 @Injectable({
   providedIn: 'root',
@@ -11,14 +10,23 @@ export class CryptoService {
     return nacl.box.keyPair();
   }
 
+  /**
+   * box - Encrypts a message using the
+   * receiver's public key and the sender's secret key.
+   *
+   * @param message
+   * @param receiverPublicKey
+   * @param senderKeyPair
+   * @returns
+   */
   box(
-    message: string,
+    message: Uint8Array,
     receiverPublicKey: Uint8Array,
     senderKeyPair: KeyPair
   ): Uint8Array {
     const nonce = nacl.randomBytes(nacl.box.nonceLength);
     const ciphertext = nacl.box(
-      new TextEncoder().encode(message),
+      message,
       nonce,
       receiverPublicKey,
       senderKeyPair.secretKey
@@ -32,53 +40,32 @@ export class CryptoService {
   }
 
   /**
-   * Implementation of a libsodium sealed box that generates an ephemeral key pair
-   * and uses it to encrypt a message for a recipient.
+   * openBox - Decrypts a message using the sender's
+   * public key and the receiver's secret key.
    *
-   * The format of a sealed box is:
-   * ephemeral_pk ‖ box(m, recipient_pk, ephemeral_sk, nonce=blake2b(ephemeral_pk ‖ recipient_pk))
-   *
-   * @param message (string) the plaintext message to encrypt
-   * @param receiverPublicKey (Uint8Array) the public key of the recipient
-   * @returns (Uint8Array) the full message (ephemeralKeyPair.publicKey ‖ ciphertext)
+   * @param cipherText
+   * @param senderPublicKey
+   * @param receiverKeyPair
+   * @returns
    */
-  sealedBox(message: string, receiverPublicKey: Uint8Array): Uint8Array {
-    const ephemeralKeyPair = this.newKeyPair();
+  openBox(
+    cipherText: Uint8Array,
+    senderPublicKey: Uint8Array,
+    receiverKeyPair: KeyPair
+  ): Uint8Array {
+    const nonce = cipherText.slice(0, nacl.box.nonceLength);
+    const ciphertext = cipherText.slice(nacl.box.nonceLength);
+    const decrypted = nacl.box.open(
+      ciphertext,
+      nonce,
+      senderPublicKey,
+      receiverKeyPair.secretKey
+    );
 
-    try {
-      const nonce = sealedBoxNonce(
-        ephemeralKeyPair.publicKey,
-        receiverPublicKey
-      );
-
-      const ciphertext = nacl.box(
-        new TextEncoder().encode(message),
-        nonce,
-        receiverPublicKey,
-        ephemeralKeyPair.secretKey
-      );
-
-      const fullMessage = new Uint8Array(
-        ephemeralKeyPair.publicKey.length + ciphertext.length
-      );
-      fullMessage.set(ephemeralKeyPair.publicKey);
-      fullMessage.set(ciphertext, ephemeralKeyPair.publicKey.length);
-
-      return fullMessage;
-    } finally {
-      ephemeralKeyPair.secretKey.fill(0);
+    if (decrypted === null) {
+      throw new Error('Could not decrypt message');
     }
+
+    return decrypted;
   }
 }
-
-const sealedBoxNonce = (
-  ephemeralPublicKey: Uint8Array,
-  receiverPublicKey: Uint8Array
-): Uint8Array => {
-  const combined = new Uint8Array(
-    ephemeralPublicKey.length + receiverPublicKey.length
-  );
-  combined.set(ephemeralPublicKey);
-  combined.set(receiverPublicKey, ephemeralPublicKey.length);
-  return blake2b(combined, undefined, nacl.box.nonceLength);
-};
