@@ -22,22 +22,12 @@ export class CryptoService {
    * receiver's public key and the sender's secret key.
    *
    * @param message
-   * @param receiverPublicKey
-   * @param senderKeyPair
+   * @param sharedKey
    * @returns
    */
-  box(
-    message: Uint8Array,
-    receiverPublicKey: Uint8Array,
-    senderKeyPair: KeyPair
-  ): Uint8Array {
+  box(message: Uint8Array, sharedKey: Uint8Array): Uint8Array {
     const nonce = nacl.randomBytes(nacl.box.nonceLength);
-    const ciphertext = nacl.box(
-      message,
-      nonce,
-      receiverPublicKey,
-      senderKeyPair.secretKey
-    );
+    const ciphertext = nacl.box.after(message, nonce, sharedKey);
 
     const fullMessage = new Uint8Array(nonce.length + ciphertext.length);
     fullMessage.set(nonce);
@@ -51,23 +41,13 @@ export class CryptoService {
    * public key and the receiver's secret key.
    *
    * @param cipherText
-   * @param senderPublicKey
-   * @param receiverKeyPair
+   * @param sharedKey
    * @returns
    */
-  openBox(
-    cipherText: Uint8Array,
-    senderPublicKey: Uint8Array,
-    receiverKeyPair: KeyPair
-  ): Uint8Array {
+  openBox(cipherText: Uint8Array, sharedKey: Uint8Array): Uint8Array {
     const nonce = cipherText.slice(0, nacl.box.nonceLength);
     const ciphertext = cipherText.slice(nacl.box.nonceLength);
-    const decrypted = nacl.box.open(
-      ciphertext,
-      nonce,
-      senderPublicKey,
-      receiverKeyPair.secretKey
-    );
+    const decrypted = nacl.box.open.after(ciphertext, nonce, sharedKey);
 
     if (decrypted === null) {
       throw new Error('Could not decrypt message');
