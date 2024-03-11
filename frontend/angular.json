@@ -79,7 +79,8 @@
           "builder": "@angular-devkit/build-angular:jest",
           "options": {
             "polyfills": ["zone.js", "zone.js/testing"],
-            "tsConfig": "tsconfig.spec.json"
+            "tsConfig": "tsconfig.spec.json",
+            "include": ["src/**/*.spec.ts"]
           }
         }
       }
