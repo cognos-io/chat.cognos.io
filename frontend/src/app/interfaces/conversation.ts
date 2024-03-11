@@ -32,9 +32,8 @@ export type ConversationData = z.infer<typeof ConversationData>;
 export const parseConversationData = (
   decryptedBase64Data: Uint8Array
 ): ConversationData => {
-  return ConversationData.parse(
-    JSON.parse(Base64.fromUint8Array(decryptedBase64Data))
-  );
+  const dataBase64String = new TextDecoder().decode(decryptedBase64Data);
+  return ConversationData.parse(JSON.parse(Base64.decode(dataBase64String)));
 };
 
 /**
@@ -47,7 +46,8 @@ export const parseConversationData = (
 export const serializeConversationData = (
   data: ConversationData
 ): Uint8Array => {
-  return Base64.toUint8Array(JSON.stringify(ConversationData.parse(data)));
+  const serialized = JSON.stringify(ConversationData.parse(data));
+  return new TextEncoder().encode(Base64.encode(serialized));
 };
 
 export interface Conversation {
