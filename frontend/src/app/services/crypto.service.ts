@@ -11,6 +11,13 @@ export class CryptoService {
   }
 
   /**
+   * sharedKey - Generates a shared key from a public key and a secret key.
+   */
+  sharedKey(publicKey: Uint8Array, secretKey: Uint8Array): Uint8Array {
+    return nacl.box.before(publicKey, secretKey);
+  }
+
+  /**
    * box - Encrypts a message using the
    * receiver's public key and the sender's secret key.
    *
