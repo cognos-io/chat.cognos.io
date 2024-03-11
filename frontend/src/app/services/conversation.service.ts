@@ -5,6 +5,7 @@ import PocketBase from 'pocketbase';
 import { signalSlice } from 'ngxtension/signal-slice';
 import { CryptoService } from './crypto.service';
 import {
+  Conversation,
   ConversationData,
   ConversationRecord,
   parseConversationData,
@@ -17,12 +18,12 @@ import { VaultService } from './vault.service';
 
 interface ConversationState {
   conversationRecords: Array<ConversationRecord>;
-  selectedConversationId: string;
+  selectedConversation: Conversation | null;
 }
 
 const initialState: ConversationState = {
   conversationRecords: [],
-  selectedConversationId: '',
+  selectedConversation: null,
 };
 
 @Injectable({
@@ -42,60 +43,78 @@ export class ConversationService {
   private readonly auth = inject(AuthService);
 
   // sources
-  readonly newConversation$ = new Subject<string>(); // plaintext conversation title
-  private readonly $newConversation = this.newConversation$.pipe(
-    // When a new conversation is requested, generate a new key pair
-    switchMap((conversationTitle) => of(this.cryptoService.newKeyPair()))
-  );
+  readonly selectConversation$ = new Subject<string>(); // conversationId
+  readonly newConversation$ = new Subject<ConversationData>();
 
   // state
   private state = signalSlice({
     initialState,
-    sources: [],
-    selectors: (state) => ({
-      conversation: () =>
-        state
-          .conversationRecords()
-          .find(
-            (conversation) => conversation.id === state.selectedConversationId()
-          ),
-    }),
+    sources: [
+      this.newConversation$.pipe(
+        switchMap((data) =>
+          this.createConversation(data).pipe(
+            map((conversation) => ({ selectedConversation: conversation }))
+          )
+        )
+      ),
+      this.selectConversation$.pipe(
+        switchMap((conversationId) =>
+          this.fetchConversation(conversationId).pipe(
+            map((conversation) => {
+              return {
+                selectedConversation: conversation,
+              };
+            })
+          )
+        )
+      ),
+    ],
   });
 
   // selectors
-  readonly conversation = this.state.conversation;
+  readonly conversation = this.state.selectedConversation;
 
   /**
    * Creates a conversation in the PocketBase backend.
    *
-   * @param conversation (Conversation)
-   * @returns
+   * @param conversation (ConversationData)
+   * @returns (Observable<string>) - the id of the new conversation
    */
-  //   private createConversation(plaintextTitle: string) {
-  //     // Generate a new key pair for the conversation
-  //     const conversationKeyPair = this.cryptoService.newKeyPair();
+  private createConversation(data: ConversationData): Observable<Conversation> {
+    // Generate a new key pair for the conversation
+    const conversationKeyPair = this.cryptoService.newKeyPair();
 
-  //     // Encrypt the title with the conversation public key
-  //     const encryptedTitleBytes = this.cryptoService.sealedBox(
-  //       plaintextTitle,
-  //       conversationKeyPair.publicKey
-  //     );
+    // Use the conversation key pair to encrypt the conversation data
+    const encryptedData = this.encryptConversationData(
+      data,
+      conversationKeyPair
+    );
 
-  //     // Encrypt the conversation secret key with the user's public key
-
-  //     // Create the conversation in the backend
-
-  //     // Save the conversation public key in the backend
-
-  //     // Save the conversation secret key in the backend
-
-  //     return from(
-  //       this.pb.collection(this.pbConversationCollection).create({
-  //         data: conversation.data,
-  //         creator: conversation.creatorId,
-  //       })
-  //     );
-  //   }
+    // Create the conversation in the backend with the encrypted data
+    return from(
+      this.pb.collection(this.pbConversationCollection).create({
+        data: Base64.fromUint8Array(encryptedData),
+        creator: this.auth.user()?.['id'],
+      })
+    ).pipe(
+      switchMap((record) => {
+        // Save the conversation key pair in the backend
+        return this.saveConversationKeyPair(
+          record.id,
+          conversationKeyPair
+        ).pipe(
+          // Return the newly created conversation
+          map(() => {
+            return {
+              record,
+              decryptedData: data,
+              keyPair: conversationKeyPair,
+            };
+          })
+        );
+      })
+    );
+  }
 
   /**
    * encryptConversationData -
@@ -230,6 +249,24 @@ export class ConversationService {
           })
         );
       })
+    );
+  }
+
+  fetchConversation(conversationId: string): Observable<Conversation> {
+    return from(
+      this.pb.collection(this.pbConversationCollection).getOne(conversationId)
+    ).pipe(
+      switchMap((record) =>
+        this.fetchConversationKeyPair(conversationId).pipe(
+          map((keyPair) => {
+            return {
+              record,
+              decryptedData: this.decryptConversationData(record, keyPair),
+              keyPair,
+            };
+          })
+        )
+      )
     );
   }
 }
