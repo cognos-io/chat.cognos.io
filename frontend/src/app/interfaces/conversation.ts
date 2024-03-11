@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Base64 } from 'js-base64';
+import { KeyPair } from './key-pair';
 
 /**
  * ConversationRecord is a record of a conversation in the PocketBase backend.
@@ -48,3 +49,9 @@ export const serializeConversationData = (
 ): Uint8Array => {
   return Base64.toUint8Array(JSON.stringify(ConversationData.parse(data)));
 };
+
+export interface Conversation {
+  record: ConversationRecord;
+  decryptedData: ConversationData;
+  keyPair: KeyPair;
+}
