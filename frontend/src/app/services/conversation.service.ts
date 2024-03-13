@@ -119,8 +119,9 @@ export class ConversationService {
   /**
    * encryptConversationData -
    *
-   * @param data
-   * @returns
+   * @param data (ConversationData)
+   * @param conversationKeyPair (KeyPair)
+   * @returns (Uint8Array)
    */
   encryptConversationData(
     data: ConversationData,
@@ -136,26 +137,27 @@ export class ConversationService {
    * decryptConversationData - given a conversation record, decrypts the data and
    * returns a ConversationData object.
    *
-   * @param data
-   * @returns
+   * @param record (ConversationRecord)
+   * @param conversationKeyPair (KeyPair)
+   * @returns (ConversationData)
    */
   decryptConversationData(
     record: ConversationRecord,
     conversationKeyPair: KeyPair
   ): ConversationData {
     const sharedSecret = this.sharedKey(conversationKeyPair);
-    const decryptedDataBase64 = this.cryptoService.openBox(
+    const decryptedData = this.cryptoService.openBox(
       new TextEncoder().encode(record.data),
       sharedSecret
     );
-    return parseConversationData(decryptedDataBase64);
+    return parseConversationData(decryptedData);
   }
 
   /**
    * sharedKey - Generates a shared key for the given conversation.
    *
    * @param conversationKeyPair (KeyPair) - the conversation's key pair
-   * @returns
+   * @returns (Uint8Array) - the shared key
    */
   sharedKey(conversationKeyPair: KeyPair): Uint8Array {
     return this.cryptoService.sharedKey(
@@ -164,6 +166,13 @@ export class ConversationService {
     );
   }
 
+  /**
+   * fetchConversationPublicKey - fetches the public key for a conversation from
+   * the PocketBase backend.
+   *
+   * @param conversationId (string)
+   * @returns (Observable<Uint8Array>)
+   */
   fetchConversationPublicKey(conversationId: string): Observable<Uint8Array> {
     const filter = this.pb.filter('conversation={:conversationId}', {
       conversationId,
@@ -176,6 +185,13 @@ export class ConversationService {
     ).pipe(map((record) => Base64.toUint8Array(record.public_key)));
   }
 
+  /**
+   * fetchConversationSecretKey - fetches the secret key for a conversation from
+   * the PocketBase backend.
+   *
+   * @param conversationId (string)
+   * @returns (Observable<Uint8Array>)
+   */
   fetchConversationSecretKey(conversationId: string): Observable<Uint8Array> {
     const filter = this.pb.filter(
       'conversation={:conversationId} && user={:userId}',
@@ -195,6 +211,13 @@ export class ConversationService {
     );
   }
 
+  /**
+   * fetchConversationKeyPair - fetches the key pair for a conversation from the
+   * PocketBase backend.
+   *
+   * @param conversationId (string)
+   * @returns (Observable<KeyPair>)
+   */
   fetchConversationKeyPair(conversationId: string): Observable<KeyPair> {
     return this.fetchConversationPublicKey(conversationId).pipe(
       switchMap((publicKey) =>
@@ -218,6 +241,14 @@ export class ConversationService {
     );
   }
 
+  /**
+   * saveConversationKeyPair - saves the key pair for a conversation in the
+   * PocketBase backend.
+   *
+   * @param conversationId (string)
+   * @param conversationKeyPair (KeyPair)
+   * @returns (Observable<KeyPair>)
+   */
   saveConversationKeyPair(
     conversationId: string,
     conversationKeyPair: KeyPair
@@ -252,10 +283,13 @@ export class ConversationService {
     );
   }
 
+  /**
+   * fetchConversations - fetches a specific conversation from the PocketBase backend.
+   *
+   * @returns (Observable<Conversation>)
+   */
   fetchConversation(conversationId: string): Observable<Conversation> {
-    return from(
-      this.pb.collection(this.pbConversationCollection).getOne(conversationId)
-    ).pipe(
+    return this.fetchConversationRecord(conversationId).pipe(
       switchMap((record) =>
         this.fetchConversationKeyPair(conversationId).pipe(
           map((keyPair) => {
@@ -267,6 +301,31 @@ export class ConversationService {
           })
         )
       )
+    );
+  }
+
+  /**
+   * fetchConversationRecord - fetches a specific conversation record from the PocketBase
+   * backend.
+   *
+   * @returns (Observable<ConversationRecord>)
+   */
+  fetchConversationRecord(
+    conversationId: string
+  ): Observable<ConversationRecord> {
+    return from(
+      this.pb.collection(this.pbConversationCollection).getOne(conversationId)
+    );
+  }
+
+  /**
+   * fetchConversationRecords - fetches all conversation records from the PocketBase backend.
+   *
+   * @returns (Observable<Array<ConversationRecord>>)
+   */
+  fetchConversationRecords(): Observable<Array<ConversationRecord>> {
+    return from(
+      this.pb.collection(this.pbConversationCollection).getFullList()
     );
   }
 }
