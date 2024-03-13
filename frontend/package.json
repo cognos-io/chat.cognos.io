@@ -25,6 +25,7 @@
     "@angular/router": "^17.0.0",
     "@fontsource-variable/public-sans": "^5.0.17",
     "blakejs": "^1.2.1",
+    "bootstrap-icons": "^1.11.3",
     "js-base64": "^3.7.7",
     "ngxtension": "^2.1.0",
     "pocketbase": "^0.21.1",
