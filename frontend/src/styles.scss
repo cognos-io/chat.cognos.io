@@ -28,6 +28,14 @@ $theme: matx.define-theme(
   )
 );
 
+mat-icon.bi {
+  font-size: 1rem !important;
+  line-height: 1.125rem !important;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
 // Supports weights 100-900
 @import "@fontsource-variable/public-sans";
 
