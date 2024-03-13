@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 import { Observable, Subject, from, map, of, switchMap } from 'rxjs';
 import { TypedPocketBase } from '../types/pocketbase-types';
 import PocketBase from 'pocketbase';
@@ -17,13 +17,15 @@ import { Base64 } from 'js-base64';
 import { VaultService } from './vault.service';
 
 interface ConversationState {
-  conversationRecords: Array<ConversationRecord>;
+  conversations: Array<Conversation>;
   selectedConversation: Conversation | null;
+  filter: string;
 }
 
 const initialState: ConversationState = {
-  conversationRecords: [],
+  conversations: [],
   selectedConversation: null,
+  filter: '',
 };
 
 @Injectable({
@@ -45,18 +47,23 @@ export class ConversationService {
   // sources
   readonly selectConversation$ = new Subject<string>(); // conversationId
   readonly newConversation$ = new Subject<ConversationData>();
+  readonly filter$ = new Subject<string>();
 
   // state
   private state = signalSlice({
     initialState,
     sources: [
+      // When newConversation emits, create a new conversation
       this.newConversation$.pipe(
         switchMap((data) =>
           this.createConversation(data).pipe(
-            map((conversation) => ({ selectedConversation: conversation }))
+            map((conversation) => {
+              return { selectedConversation: conversation };
+            })
           )
         )
       ),
+      // When selectConversation emits, fetch the conversation details
       this.selectConversation$.pipe(
         switchMap((conversationId) =>
           this.fetchConversation(conversationId).pipe(
@@ -68,7 +75,35 @@ export class ConversationService {
           )
         )
       ),
+      // When filter emits, apply the filter
+      this.filter$.pipe(
+        map((filter) => {
+          return { filter };
+        })
+      ),
     ],
+    selectors: (state) => {
+      const filteredConversations = computed(() => {
+        const filter = state.filter().trim().toLowerCase();
+        if (filter === '') return state.conversations();
+
+        return state
+          .conversations()
+          .filter((conversation) =>
+            conversation.decryptedData.title.toLowerCase().includes(filter)
+          );
+      });
+
+      return {
+        filteredConversations,
+        orderedConversations: () => {
+          return filteredConversations().sort((a, b) => {
+            // Sort the conversations by the most recently updated
+            return b.record.updated.localeCompare(a.record.created);
+          });
+        },
+      };
+    },
   });
 
   // selectors
