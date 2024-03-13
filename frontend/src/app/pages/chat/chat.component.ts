@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ConversationService } from '../../services/conversation.service';
 
 @Component({
   selector: 'app-chat',
@@ -22,6 +23,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class ChatComponent {
   private readonly breakpointObserver = inject(BreakpointObserver);
+
+  readonly conversationService = inject(ConversationService);
 
   isMobile = signal(false);
 
