@@ -1,5 +1,5 @@
 import { Injectable, computed, inject } from '@angular/core';
-import { Observable, Subject, from, map, of, switchMap } from 'rxjs';
+import { Observable, Subject, forkJoin, from, map, of, switchMap } from 'rxjs';
 import { TypedPocketBase } from '../types/pocketbase-types';
 import PocketBase from 'pocketbase';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -54,24 +54,32 @@ export class ConversationService {
     initialState,
     sources: [
       // When newConversation emits, create a new conversation
-      this.newConversation$.pipe(
-        switchMap((data) =>
-          this.createConversation(data).pipe(
-            map((conversation) => {
-              return { selectedConversation: conversation };
-            })
+      (state) =>
+        this.newConversation$.pipe(
+          switchMap((data) =>
+            this.createConversation(data).pipe(
+              map((conversation) => {
+                return {
+                  selectedConversation: conversation,
+                  conversations: [conversation, ...state().conversations],
+                };
+              })
+            )
           )
-        )
-      ),
+        ),
       // When selectConversation emits, fetch the conversation details
       this.selectConversation$.pipe(
         switchMap((conversationId) =>
-          this.fetchConversation(conversationId).pipe(
-            map((conversation) => {
-              return {
-                selectedConversation: conversation,
-              };
-            })
+          this.fetchConversationRecord(conversationId).pipe(
+            switchMap((record) =>
+              this.fetchConversation(record).pipe(
+                map((conversation) => {
+                  return {
+                    selectedConversation: conversation,
+                  };
+                })
+              )
+            )
           )
         )
       ),
@@ -79,6 +87,12 @@ export class ConversationService {
       this.filter$.pipe(
         map((filter) => {
           return { filter };
+        })
+      ),
+      // load all conversations
+      this.fetchConversations().pipe(
+        map((conversations) => {
+          return { conversations };
         })
       ),
     ],
@@ -98,6 +112,7 @@ export class ConversationService {
         filteredConversations,
         orderedConversations: () => {
           return filteredConversations().sort((a, b) => {
+            // TODO(ewan): Include the most recent message
             // Sort the conversations by the most recently updated
             return b.record.updated.localeCompare(a.record.created);
           });
@@ -108,6 +123,7 @@ export class ConversationService {
 
   // selectors
   readonly conversation = this.state.selectedConversation;
+  readonly conversationList = this.state.orderedConversations;
 
   /**
    * Creates a conversation in the PocketBase backend.
@@ -152,7 +168,8 @@ export class ConversationService {
   }
 
   /**
-   * encryptConversationData -
+   * encryptConversationData - given a ConversationData object and a conversation key
+   * pair, encrypts the data and returns the encrypted binary data.
    *
    * @param data (ConversationData)
    * @param conversationKeyPair (KeyPair)
@@ -323,18 +340,28 @@ export class ConversationService {
    *
    * @returns (Observable<Conversation>)
    */
-  fetchConversation(conversationId: string): Observable<Conversation> {
-    return this.fetchConversationRecord(conversationId).pipe(
-      switchMap((record) =>
-        this.fetchConversationKeyPair(conversationId).pipe(
-          map((keyPair) => {
-            return {
-              record,
-              decryptedData: this.decryptConversationData(record, keyPair),
-              keyPair,
-            };
-          })
-        )
+  fetchConversation(record: ConversationRecord): Observable<Conversation> {
+    return this.fetchConversationKeyPair(record.id).pipe(
+      map((keyPair) => {
+        return {
+          record,
+          decryptedData: this.decryptConversationData(record, keyPair),
+          keyPair,
+        };
+      })
+    );
+  }
+
+  /**
+   * fetchConversations - fetches all conversations from the PocketBase backend and
+   * the key pair for each.
+   *
+   * @returns (Observable<Array<Conversation>>)
+   */
+  fetchConversations(): Observable<Array<Conversation>> {
+    return from(this.fetchConversationRecords()).pipe(
+      switchMap((records) =>
+        forkJoin(records.map((record) => this.fetchConversation(record)))
       )
     );
   }
