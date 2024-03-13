@@ -23,31 +23,31 @@ export const ConversationData = z.object({
 export type ConversationData = z.infer<typeof ConversationData>;
 
 /**
- * parseConversationData - takes a decrypted base64 string
+ * parseConversationData - takes a decrypted string
  * and returns a ConversationData object.
  *
- * @param decryptedBase64Data
+ * @param decryptedData (Uint8Array) JSON string
  * @returns
  */
 export const parseConversationData = (
-  decryptedBase64Data: Uint8Array
+  decryptedData: Uint8Array
 ): ConversationData => {
-  const dataBase64String = new TextDecoder().decode(decryptedBase64Data);
-  return ConversationData.parse(JSON.parse(Base64.decode(dataBase64String)));
+  const dataString = new TextDecoder().decode(decryptedData);
+  return ConversationData.parse(JSON.parse(dataString));
 };
 
 /**
  * serializeConversationData - takes a ConversationData object
- * and returns a base64 encoded JSON representation.
+ * and returns a binary representation of the object string.
  *
- * @param data
- * @returns
+ * @param data (ConversationData) object to serialize
+ * @returns (Uint8Array) encoded JSON representation
  */
 export const serializeConversationData = (
   data: ConversationData
 ): Uint8Array => {
   const serialized = JSON.stringify(ConversationData.parse(data));
-  return new TextEncoder().encode(Base64.encode(serialized));
+  return new TextEncoder().encode(serialized);
 };
 
 export interface Conversation {
