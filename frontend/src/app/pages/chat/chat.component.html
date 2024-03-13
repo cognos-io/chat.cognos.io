@@ -1,7 +1,7 @@
 <div class="wrapper" [class.is-mobile]="isMobile()">
   <mat-toolbar color="primary" class="toolbar" role="heading">
     <button mat-icon-button (click)="sideNav.toggle()">
-      <mat-icon color="secondary">menu</mat-icon>
+      <mat-icon color="secondary" fontSet="bi" fontIcon="bi-list"></mat-icon>
     </button>
   </mat-toolbar>
   <mat-sidenav-container
@@ -18,7 +18,7 @@
     >
       <div class="sidebar">
         <button mat-button color="primary">
-          <mat-icon>library_add</mat-icon>
+          <mat-icon fontSet="bi" fontIcon="bi-plus-circle-fill"></mat-icon>
           <ng-container i18n="button|action to create a new conversation">
             New conversation
           </ng-container>
