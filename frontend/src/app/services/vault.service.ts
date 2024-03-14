@@ -81,9 +81,16 @@ export class VaultService {
                 if (!keyPairRecord) {
                   return EMPTY;
                 }
-                return of(
-                  this.unpackKeyPairRecord(keyPairRecord, hashedVaultPassword)
-                ).pipe(map((keyPair) => ({ keyPair })));
+                try {
+                  const keyPair = this.unpackKeyPairRecord(
+                    keyPairRecord,
+                    hashedVaultPassword
+                  );
+                  return of({ keyPair });
+                } catch (error) {
+                  console.error('Error unpacking key pair record', error);
+                  return EMPTY;
+                }
               })
             )
           )
