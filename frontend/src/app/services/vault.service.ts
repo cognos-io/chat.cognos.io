@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { signalSlice } from 'ngxtension/signal-slice';
-import loadArgon2idWasm from 'argon2id';
+import setupWasm from 'argon2id/lib/setup';
 import { AuthService } from './auth.service';
 import PocketBase from 'pocketbase';
 import {
@@ -35,6 +35,19 @@ const initialState: VaultState = {
 const argon2idMemory = 19456; // 19MiB
 const argon2idIterationCount = 2;
 const argon2idParallelism = 1;
+
+const setupWasmInstance = setupWasm(
+  (importObject) =>
+    WebAssembly.instantiateStreaming(
+      fetch('/assets/wasm/argon2id/simd.wasm'),
+      importObject
+    ),
+  (importObject) =>
+    WebAssembly.instantiateStreaming(
+      fetch('/assets/wasm/argon2id/no-simd.wasm'),
+      importObject
+    )
+);
 
 @Injectable({
   providedIn: 'root',
@@ -95,7 +108,7 @@ export class VaultService {
   hashVaultPassword(rawPassword: string): Observable<Uint8Array> {
     const encoder = new TextEncoder();
 
-    return from(loadArgon2idWasm()).pipe(
+    return from(setupWasmInstance).pipe(
       map((argon2id) =>
         argon2id({
           password: encoder.encode(rawPassword),
