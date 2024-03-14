@@ -15,7 +15,7 @@
 $theme: matx.define-theme(
   (
     color: (
-      theme-type: "dark",
+      theme-type: "light",
       primary: matx.$m3-green-palette,
     ),
     typography: (
@@ -27,6 +27,19 @@ $theme: matx.define-theme(
     ),
   )
 );
+
+mat-icon.bi {
+  font-size: 1rem !important;
+  line-height: 1.125rem !important;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.backdrop-blur {
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(0.5rem);
+}
 
 // Supports weights 100-900
 @import "@fontsource-variable/public-sans";

@@ -41,18 +41,18 @@ export type AuthSystemFields<T = never> = {
 // Record types for each collection
 
 export type ConversationPublicKeysRecord = {
-	conversation?: RecordIdString
+	conversation: RecordIdString
 	public_key?: string
 }
 
 export type ConversationSecretKeysRecord = {
-	conversation?: RecordIdString
+	conversation: RecordIdString
 	secret_key?: string
-	user?: RecordIdString
+	user: RecordIdString
 }
 
 export type ConversationsRecord = {
-	creator?: RecordIdString
+	creator: RecordIdString
 	data: string
 }
 

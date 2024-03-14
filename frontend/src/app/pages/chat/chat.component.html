@@ -1,11 +1,11 @@
 <div class="wrapper" [class.is-mobile]="isMobile()">
   <mat-toolbar color="primary" class="toolbar" role="heading">
     <button mat-icon-button (click)="sideNav.toggle()">
-      <mat-icon color="secondary">menu</mat-icon>
+      <mat-icon color="secondary" fontSet="bi" fontIcon="bi-list"></mat-icon>
     </button>
   </mat-toolbar>
   <mat-sidenav-container
-    class="page sidenav-container"
+    class="page sidebar-container"
     [style.marginTop.px]="isMobile() ? 56 : 0"
   >
     <mat-sidenav
@@ -15,8 +15,34 @@
       [opened]="!isMobile()"
       fixedTopGap="56"
       role="navigation"
-      >Sidenav</mat-sidenav
     >
+      <div class="sidebar">
+        <button
+          mat-button
+          color="primary"
+          (click)="
+            conversationService.newConversation$.next({
+              title: 'new conversation'
+            })
+          "
+        >
+          <mat-icon fontSet="bi" fontIcon="bi-plus-circle-fill"></mat-icon>
+          <ng-container i18n="button|action to create a new conversation">
+            New conversation
+          </ng-container>
+        </button>
+        <mat-nav-list>
+          <p mat-subheader>Recent</p>
+          <mat-list-item>
+            <span matListItemTitle>Example conversation</span>
+            <span matListItemLine
+              >This is some long text that gives an impression of a
+              conversation</span
+            >
+          </mat-list-item>
+        </mat-nav-list>
+      </div>
+    </mat-sidenav>
     <mat-sidenav-content role="main">Content</mat-sidenav-content>
   </mat-sidenav-container>
 </div>

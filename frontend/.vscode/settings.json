@@ -1,4 +1,24 @@
 {
-  "cSpell.words": ["cognos", "ewan", "oidc", "pocketbase", "typegen"],
-  "cSpell.ignoreWords": ["auths", "devkit", "fontsource", "matx", "ngxtension"]
+  "cSpell.words": [
+    "ciphertext",
+    "cognos",
+    "datetime",
+    "ewan",
+    "libsodium",
+    "oidc",
+    "OWASP",
+    "pocketbase",
+    "tweetnacl",
+    "typegen"
+  ],
+  "cSpell.ignoreWords": [
+    "auths",
+    "blakejs",
+    "devkit",
+    "fontsource",
+    "matx",
+    "nacl",
+    "ngxtension",
+    "secretbox"
+  ]
 }
