@@ -1,5 +1,16 @@
 import { Injectable, computed, inject } from '@angular/core';
-import { Observable, Subject, forkJoin, from, map, of, switchMap } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  Subject,
+  catchError,
+  forkJoin,
+  from,
+  map,
+  of,
+  switchMap,
+  throwError,
+} from 'rxjs';
 import { TypedPocketBase } from '../types/pocketbase-types';
 import PocketBase from 'pocketbase';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -61,6 +72,10 @@ export class ConversationService {
         this.newConversation$.pipe(
           switchMap((data) =>
             this.createConversation(data).pipe(
+              catchError((error) => {
+                console.error(error);
+                return EMPTY;
+              }),
               map((conversation) => {
                 return {
                   selectedConversation: conversation,
@@ -135,6 +150,12 @@ export class ConversationService {
    * @returns (Observable<string>) - the id of the new conversation
    */
   private createConversation(data: ConversationData): Observable<Conversation> {
+    // We have to have a user secret key to create a conversation
+    const userSecretKey = this.vaultService.keyPair()?.secretKey;
+    if (!userSecretKey) {
+      return throwError(() => UserSecretKeyNotFoundError);
+    }
+
     // Generate a new key pair for the conversation
     const conversationKeyPair = this.cryptoService.newKeyPair();
 
