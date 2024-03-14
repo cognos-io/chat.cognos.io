@@ -21,15 +21,12 @@ import nacl from 'tweetnacl';
 import { Base64 } from 'js-base64';
 
 interface VaultState {
-  keyPair: KeyPair;
+  keyPair: KeyPair | undefined;
   keyPairRecord: UserKeyPairsRecord | null | undefined; // null means the record does not exist
 }
 
 const initialState: VaultState = {
-  keyPair: {
-    secretKey: new Uint8Array(),
-    publicKey: new Uint8Array(),
-  },
+  keyPair: undefined,
   keyPairRecord: undefined,
 };
 

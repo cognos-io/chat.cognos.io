@@ -16,6 +16,10 @@ import { KeyPair } from '../interfaces/key-pair';
 import { Base64 } from 'js-base64';
 import { VaultService } from './vault.service';
 
+export const UserSecretKeyNotFoundError = new Error(
+  'User secret key not found'
+);
+
 interface ConversationState {
   conversations: Array<Conversation>;
   selectedConversation: Conversation | null;
@@ -32,17 +36,16 @@ const initialState: ConversationState = {
   providedIn: 'root',
 })
 export class ConversationService {
+  private readonly pb: TypedPocketBase = inject(PocketBase);
   private readonly cryptoService = inject(CryptoService);
   private readonly vaultService = inject(VaultService);
+  private readonly auth = inject(AuthService);
 
   private readonly pbConversationCollection = 'conversations';
   private readonly pbConversationPublicKeysCollection =
     'conversation_public_keys';
   private readonly pbConversationSecretKeyCollection =
     'conversation_secret_keys';
-
-  private readonly pb: TypedPocketBase = inject(PocketBase);
-  private readonly auth = inject(AuthService);
 
   // sources
   readonly selectConversation$ = new Subject<string>(); // conversationId
@@ -275,9 +278,13 @@ export class ConversationService {
       switchMap((publicKey) =>
         this.fetchConversationSecretKey(conversationId).pipe(
           map((secretKey) => {
+            const userSecretKey = this.vaultService.keyPair()?.secretKey;
+            if (!userSecretKey) {
+              throw UserSecretKeyNotFoundError;
+            }
             const sharedKey = this.cryptoService.sharedKey(
               publicKey,
-              this.vaultService.secretKey()
+              userSecretKey
             );
             const decryptedSecretKey = this.cryptoService.openBox(
               secretKey,
@@ -312,9 +319,13 @@ export class ConversationService {
       })
     ).pipe(
       switchMap(() => {
+        const userSecretKey = this.vaultService.keyPair()?.secretKey;
+        if (!userSecretKey) {
+          throw UserSecretKeyNotFoundError;
+        }
         const sharedKey = this.cryptoService.sharedKey(
           conversationKeyPair.publicKey,
-          this.vaultService.secretKey()
+          userSecretKey
         );
         const encryptedSecretKey = this.cryptoService.box(
           conversationKeyPair.secretKey,
