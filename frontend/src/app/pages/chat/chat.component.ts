@@ -8,7 +8,11 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ConversationService } from '../../services/conversation.service';
 import { VaultService } from '../../services/vault.service';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { VaultPasswordDialogComponent } from '../../components/vault-password-dialog/vault-password-dialog.component';
 
 @Component({
@@ -30,14 +34,17 @@ export class ChatComponent {
   private readonly dialog = inject(MatDialog);
 
   // show the vault password dialog if we don't have a key pair
+  private dialogRef: MatDialogRef<VaultPasswordDialogComponent> | undefined;
   private readonly vaultUnlockEffect = effect(() => {
     if (!this.vaultService.keyPair()) {
-      this.dialog.open(VaultPasswordDialogComponent, {
+      this.dialogRef = this.dialog.open(VaultPasswordDialogComponent, {
         disableClose: true,
         backdropClass: 'backdrop-blur',
         height: '400px',
         width: '600px',
       });
+    } else {
+      this.dialogRef?.close();
     }
   });
 
