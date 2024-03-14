@@ -99,7 +99,7 @@ run/live:
 		--build.bin "/tmp/bin/${BINARY_NAME}" \
 		--build.args_bin "serve" \
 		--build.delay "100" \
-		--build.exclude_dir "" \
+		--build.exclude_dir "db/migrations" \
 		--build.include_ext "go, tpl, tmpl, html, css, scss, js, ts, sql, jpeg, jpg, gif, png, bmp, svg, webp, ico" \
 		--misc.clean_on_exit "true"
 
