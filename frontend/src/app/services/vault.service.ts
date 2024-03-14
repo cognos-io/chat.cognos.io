@@ -173,12 +173,16 @@ export class VaultService {
 
     const publicKeyBase64 = Base64.fromUint8Array(keyPair.publicKey);
     const encryptedSecretKeyBase64 = Base64.fromUint8Array(encryptedSecretKey);
+    const keyPairRecordData: Partial<UserKeyPairsRecord> = {
+      public_key: publicKeyBase64,
+      secret_key: encryptedSecretKeyBase64,
+      user: this.authService.user()?.['id'],
+    };
 
     return from(
-      this.pb.collection(this.pbUserKeyPairsCollection).create({
-        public_key: publicKeyBase64,
-        secret_key: encryptedSecretKeyBase64,
-      })
+      this.pb
+        .collection(this.pbUserKeyPairsCollection)
+        .create(keyPairRecordData)
     ).pipe(switchMap(() => of(keyPair)));
   }
 }
