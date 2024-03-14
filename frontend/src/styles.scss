@@ -36,6 +36,11 @@ mat-icon.bi {
   align-items: center;
 }
 
+.backdrop-blur {
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(0.5rem);
+}
+
 // Supports weights 100-900
 @import "@fontsource-variable/public-sans";
 
