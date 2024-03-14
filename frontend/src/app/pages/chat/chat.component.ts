@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,11 +7,15 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ConversationService } from '../../services/conversation.service';
+import { VaultService } from '../../services/vault.service';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { VaultPasswordDialogComponent } from '../../components/vault-password-dialog/vault-password-dialog.component';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
   imports: [
+    MatDialogModule,
     MatToolbarModule,
     MatButtonModule,
     MatIconModule,
@@ -23,8 +27,22 @@ import { ConversationService } from '../../services/conversation.service';
 })
 export class ChatComponent {
   private readonly breakpointObserver = inject(BreakpointObserver);
+  private readonly dialog = inject(MatDialog);
+
+  // show the vault password dialog if we don't have a key pair
+  private readonly vaultUnlockEffect = effect(() => {
+    if (!this.vaultService.keyPair()) {
+      this.dialog.open(VaultPasswordDialogComponent, {
+        disableClose: true,
+        backdropClass: 'backdrop-blur',
+        height: '400px',
+        width: '600px',
+      });
+    }
+  });
 
   readonly conversationService = inject(ConversationService);
+  readonly vaultService = inject(VaultService);
 
   isMobile = signal(false);
 
