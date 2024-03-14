@@ -136,24 +136,6 @@ export class VaultService {
     return this.cryptoService.secretBox(rawSecretKey, vaultPassword);
   }
 
-  fetchUserKeyPair(rawVaultPassword: Uint8Array): Observable<KeyPair> {
-    return this.fetchUserKeyPairRecord().pipe(
-      map((keyRecord) => {
-        const publicKey = Base64.toUint8Array(keyRecord.public_key);
-        const encryptedSecretKey = Base64.toUint8Array(keyRecord.secret_key);
-        const decryptedSecretKey = this.decryptSecretKey(
-          encryptedSecretKey,
-          rawVaultPassword
-        );
-
-        return {
-          publicKey,
-          secretKey: decryptedSecretKey,
-        };
-      })
-    );
-  }
-
   unpackKeyPairRecord(
     keyPairRecord: UserKeyPairsRecord,
     hashedVaultPassword: Uint8Array
