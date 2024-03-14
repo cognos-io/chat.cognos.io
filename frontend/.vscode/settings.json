@@ -6,6 +6,7 @@
     "ewan",
     "libsodium",
     "oidc",
+    "OWASP",
     "pocketbase",
     "tweetnacl",
     "typegen"
@@ -17,6 +18,7 @@
     "fontsource",
     "matx",
     "nacl",
-    "ngxtension"
+    "ngxtension",
+    "secretbox"
   ]
 }
