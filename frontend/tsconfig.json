@@ -28,7 +28,6 @@
       "@interfaces/*": ["app/interfaces/*"],
       "@pages/*": ["app/pages/*"],
       "@services/*": ["app/services/*"],
-      "@types/*": ["app/types/*"],
       "@environments/*": ["environments/*"]
     },
     "skipLibCheck": true,
