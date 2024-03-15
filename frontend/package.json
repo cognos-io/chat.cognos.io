@@ -62,6 +62,7 @@
       "^@angular/(.*)$",
       "^pocketbase(.*)$",
       "^rxjs(.*)$",
+      "<THIRD_PARTY_MODULES>",
       "^@app/(.*)$",
       "^@components/(.*)$",
       "^@environments/(.*)$",
