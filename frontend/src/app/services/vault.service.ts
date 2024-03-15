@@ -25,6 +25,7 @@ import { KeyPair } from '@interfaces/key-pair';
 
 import { AuthService } from './auth.service';
 import { CryptoService } from './crypto.service';
+import { ErrorService } from './error.service';
 
 interface VaultState {
   keyPair: KeyPair | undefined;
@@ -61,6 +62,7 @@ const setupWasmInstance = setupWasm(
 export class VaultService {
   private readonly pb: TypedPocketBase = inject(PocketBase);
   private readonly cryptoService = inject(CryptoService);
+  private readonly _errorService = inject(ErrorService);
   private readonly authService = inject(AuthService);
 
   private readonly pbUserKeyPairsCollection = 'user_key_pairs';
@@ -95,6 +97,9 @@ export class VaultService {
                   return of({ keyPair });
                 } catch (error) {
                   console.error('Error unpacking key pair record', error);
+                  this._errorService.alert(
+                    'Error unlocking vault. Please check your vault password try again. If this continues to fail try refreshing the page or trying again later.',
+                  );
                   return EMPTY;
                 }
               }),

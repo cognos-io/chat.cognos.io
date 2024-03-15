@@ -28,6 +28,27 @@ $theme: matx.define-theme(
   )
 );
 
+// Supports weights 100-900
+@import '@fontsource-variable/public-sans';
+
+:root {
+  --error-bg-color: #{mat.get-theme-color($theme, 'error', 90)};
+  --error-text-color: #{mat.get-theme-color($theme, 'error', 30)};
+}
+
+html {
+  @include mat.all-component-themes($theme);
+}
+
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: 'Public Sans Variable', 'Helvetica Neue', sans-serif;
+}
+
 mat-icon.bi {
   font-size: 1rem !important;
   line-height: 1.125rem !important;
@@ -41,18 +62,7 @@ mat-icon.bi {
   backdrop-filter: blur(0.5rem);
 }
 
-// Supports weights 100-900
-@import '@fontsource-variable/public-sans';
-
-html {
-  @include mat.all-component-themes($theme);
-}
-
-html,
-body {
-  height: 100%;
-}
-body {
-  margin: 0;
-  font-family: 'Public Sans Variable', 'Helvetica Neue', sans-serif;
+.error-snackbar {
+  --mdc-snackbar-container-color: var(--error-bg-color);
+  --mdc-snackbar-supporting-text-color: var(--error-text-color);
 }
