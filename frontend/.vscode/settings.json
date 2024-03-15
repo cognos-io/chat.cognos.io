@@ -19,6 +19,7 @@
     "matx",
     "nacl",
     "ngxtension",
-    "secretbox"
+    "secretbox",
+    "trivago"
   ]
 }
