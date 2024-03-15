@@ -1,5 +1,6 @@
-import { z } from 'zod';
 import { Base64 } from 'js-base64';
+import { z } from 'zod';
+
 import { KeyPair } from './key-pair';
 
 /**
@@ -29,9 +30,7 @@ export type ConversationData = z.infer<typeof ConversationData>;
  * @param decryptedData (Uint8Array) JSON string
  * @returns
  */
-export const parseConversationData = (
-  decryptedData: Uint8Array
-): ConversationData => {
+export const parseConversationData = (decryptedData: Uint8Array): ConversationData => {
   const dataString = new TextDecoder().decode(decryptedData);
   return ConversationData.parse(JSON.parse(dataString));
 };
@@ -43,9 +42,7 @@ export const parseConversationData = (
  * @param data (ConversationData) object to serialize
  * @returns (Uint8Array) encoded JSON representation
  */
-export const serializeConversationData = (
-  data: ConversationData
-): Uint8Array => {
+export const serializeConversationData = (data: ConversationData): Uint8Array => {
   const serialized = JSON.stringify(ConversationData.parse(data));
   return new TextEncoder().encode(serialized);
 };
