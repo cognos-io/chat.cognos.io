@@ -1,8 +1,8 @@
 // Custom Theming for Angular Material
 // For more information: https://material.angular.io/guide/theming
-@use "@angular/material" as mat;
+@use '@angular/material' as mat;
 // Material 3 M3 support
-@use "@angular/material-experimental" as matx;
+@use '@angular/material-experimental' as matx;
 
 // Include the common styles for Angular Material. We include this here so that you only
 // have to load a single css file for Angular Material in your app.
@@ -15,11 +15,11 @@
 $theme: matx.define-theme(
   (
     color: (
-      theme-type: "light",
+      theme-type: 'light',
       primary: matx.$m3-green-palette,
     ),
     typography: (
-      brand-family: "Public Sans Variable",
+      brand-family: 'Public Sans Variable',
       bold-weight: 900,
     ),
     density: (
@@ -42,7 +42,7 @@ mat-icon.bi {
 }
 
 // Supports weights 100-900
-@import "@fontsource-variable/public-sans";
+@import '@fontsource-variable/public-sans';
 
 html {
   @include mat.all-component-themes($theme);
@@ -54,5 +54,5 @@ body {
 }
 body {
   margin: 0;
-  font-family: "Public Sans Variable", "Helvetica Neue", sans-serif;
+  font-family: 'Public Sans Variable', 'Helvetica Neue', sans-serif;
 }

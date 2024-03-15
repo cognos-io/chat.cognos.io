@@ -1,17 +1,12 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
+
 import PocketBase, { AuthMethodsList, AuthModel } from 'pocketbase';
-import {
-  EMPTY,
-  Observable,
-  Subject,
-  catchError,
-  from,
-  map,
-  of,
-  switchMap,
-} from 'rxjs';
-import { signalSlice } from 'ngxtension/signal-slice';
+
+import { EMPTY, Observable, Subject, catchError, from, map, of, switchMap } from 'rxjs';
+
 import { filterNil } from 'ngxtension/filter-nil';
+import { signalSlice } from 'ngxtension/signal-slice';
+
 import { TypedPocketBase } from '../types/pocketbase-types';
 
 export type LoginStatus = 'pending' | 'authenticating' | 'success' | 'error';
@@ -44,29 +39,25 @@ export class AuthService implements OnDestroy {
 
   private readonly $user = new Subject<AuthUser>();
   private readonly $userAuthenticating = this.login$.pipe(
-    switchMap(() => this.loginWithOry())
+    switchMap(() => this.loginWithOry()),
   );
   private readonly $userLoggingOut = this.logout$.pipe(
-    switchMap(() => of(this.pb.authStore.clear()))
+    switchMap(() => of(this.pb.authStore.clear())),
   );
 
   // state
   private state = signalSlice({
     initialState,
     sources: [
-      this.login$.pipe(
-        map(() => ({ status: 'authenticating' as LoginStatus }))
-      ),
+      this.login$.pipe(map(() => ({ status: 'authenticating' as LoginStatus }))),
       // When user emits, if we have a user, we are authenticated
       this.$user.pipe(
         map((response: AuthUser) => {
           return {
-            status: response
-              ? ('success' as LoginStatus)
-              : ('pending' as LoginStatus),
+            status: response ? ('success' as LoginStatus) : ('pending' as LoginStatus),
             user: response,
           };
-        })
+        }),
       ),
       this.$user.pipe(
         switchMap((response: AuthUser) =>
@@ -75,9 +66,9 @@ export class AuthService implements OnDestroy {
               return {
                 oryId,
               };
-            })
-          )
-        )
+            }),
+          ),
+        ),
       ),
       // When login emits, we are authenticating
       this.$userAuthenticating.pipe(
@@ -91,7 +82,7 @@ export class AuthService implements OnDestroy {
             status: 'error' as LoginStatus,
             user: null,
           });
-        })
+        }),
       ),
       // When logout emits, we are pending
       this.$userLoggingOut.pipe(
@@ -101,7 +92,7 @@ export class AuthService implements OnDestroy {
             user: null,
             oryId: '',
           };
-        })
+        }),
       ),
     ],
   });
@@ -128,7 +119,7 @@ export class AuthService implements OnDestroy {
         // Make sure OIDC provider is configured in PocketBase for Ory
         provider: 'oidc',
         scopes: ['openid', 'offline_access'],
-      })
+      }),
     );
   }
 
@@ -136,14 +127,12 @@ export class AuthService implements OnDestroy {
     if (!userId || userId === '') {
       return EMPTY;
     }
-    return from(
-      this.pb.collection(this.authCollection).listExternalAuths(userId)
-    ).pipe(
+    return from(this.pb.collection(this.authCollection).listExternalAuths(userId)).pipe(
       map((auths) => {
         return auths.find((auth) => auth.provider === 'oidc');
       }),
       filterNil(),
-      map((auth) => auth.providerId)
+      map((auth) => auth.providerId),
     );
   }
 

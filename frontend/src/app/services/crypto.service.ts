@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
+
 import nacl from 'tweetnacl';
+
 import { KeyPair } from '../interfaces/key-pair';
 
 @Injectable({
