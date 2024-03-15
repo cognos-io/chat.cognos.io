@@ -19,6 +19,8 @@
     "matx",
     "nacl",
     "ngxtension",
+    "popd",
+    "pushd",
     "secretbox",
     "trivago"
   ]
