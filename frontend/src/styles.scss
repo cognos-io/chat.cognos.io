@@ -66,3 +66,15 @@ mat-icon.bi {
   --mdc-snackbar-container-color: var(--error-bg-color);
   --mdc-snackbar-supporting-text-color: var(--error-text-color);
 }
+
+button {
+  &.mat-error {
+    @include mat.button-color($theme, $color-variant: error);
+  }
+  &.mat-tertiary {
+    @include mat.button-color($theme, $color-variant: tertiary);
+  }
+  &.mat-secondary {
+    @include mat.button-color($theme, $color-variant: secondary);
+  }
+}

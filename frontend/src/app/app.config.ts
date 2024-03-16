@@ -1,4 +1,5 @@
 import { ApplicationConfig } from '@angular/core';
+import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter } from '@angular/router';
 
@@ -12,5 +13,9 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     providePocketbase(),
     IconService,
+    {
+      provide: MAT_DIALOG_DEFAULT_OPTIONS,
+      useValue: { backdropClass: 'backdrop-blur', width: '600px' },
+    },
   ],
 };

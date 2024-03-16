@@ -16,7 +16,7 @@ func init() {
 			return err
 		}
 
-		collection.CreateRule = types.Pointer("// logged in\n@request.auth.id != \"\" \n// data validation\n  && @request.data.creator = @request.auth.id\n  && @request.data.data:isset = true\n&& @request.data.id:isset = false\n&& @request.data.created:isset = false\n&& @request.data.updated:isset = false")
+		collection.DeleteRule = types.Pointer("// logged in\n@request.auth.id != \"\" \n&& creator ?= @request.auth.id")
 
 		return dao.SaveCollection(collection)
 	}, func(db dbx.Builder) error {
@@ -27,7 +27,7 @@ func init() {
 			return err
 		}
 
-		collection.CreateRule = nil
+		collection.DeleteRule = nil
 
 		return dao.SaveCollection(collection)
 	})

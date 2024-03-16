@@ -73,6 +73,7 @@ export class ConversationService {
   readonly selectConversation$ = new Subject<string>(); // conversationId
   readonly newConversation$ = new Subject<ConversationData>();
   readonly filter$ = new Subject<string>();
+  readonly deleteConversation$ = new Subject<string>(); // conversationId
 
   // state
   private state = signalSlice({
@@ -125,6 +126,31 @@ export class ConversationService {
           return { conversations };
         }),
       ),
+      // When deleteConversation emits, delete the conversation
+      (state) =>
+        this.deleteConversation$.pipe(
+          switchMap((conversationId) =>
+            this.deleteConversation(conversationId).pipe(
+              catchError((error) => {
+                console.error(error);
+                return EMPTY;
+              }),
+              map(() => {
+                let selectedConversation = state().selectedConversation;
+                // deselect the conversation if it's the one being deleted
+                if (selectedConversation?.record.id === conversationId) {
+                  selectedConversation = null;
+                }
+                return {
+                  conversations: state().conversations.filter(
+                    (conversation) => conversation.record.id !== conversationId,
+                  ),
+                  selectedConversation,
+                };
+              }),
+            ),
+          ),
+        ),
     ],
     selectors: (state) => {
       const filteredConversations = computed(() => {
@@ -422,5 +448,11 @@ export class ConversationService {
    */
   fetchConversationRecords(): Observable<Array<ConversationRecord>> {
     return from(this.pb.collection(this.pbConversationCollection).getFullList());
+  }
+
+  deleteConversation(conversationId: string): Observable<boolean> {
+    return from(
+      this.pb.collection(this.pbConversationCollection).delete(conversationId),
+    );
   }
 }

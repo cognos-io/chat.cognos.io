@@ -21,6 +21,8 @@ import nacl from 'tweetnacl';
 
 import { TypedPocketBase, UserKeyPairsRecord } from '@app/types/pocketbase-types';
 
+import { environment } from '@environments/environment';
+
 import { KeyPair } from '@interfaces/key-pair';
 
 import { AuthService } from './auth.service';
@@ -122,6 +124,13 @@ export class VaultService {
 
   // selectors
   keyPair = this.state.keyPair;
+
+  constructor() {
+    if (environment.isDevelopment) {
+      console.log('Using local vault password');
+      this.rawVaultPassword$.next(environment.localVaultPassword);
+    }
+  }
 
   hashVaultPassword(rawPassword: string): Observable<Uint8Array> {
     const encoder = new TextEncoder();

@@ -8,6 +8,15 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/chat/chat.component').then((m) => m.ChatComponent),
     canActivate: [authGuard],
+    children: [
+      {
+        path: 'c/:conversationId',
+        loadComponent: () =>
+          import(
+            './components/chat/conversation-detail/conversation-detail.component'
+          ).then((m) => m.ConversationDetailComponent),
+      },
+    ],
   },
   {
     path: 'auth',

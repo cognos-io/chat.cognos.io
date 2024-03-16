@@ -11,67 +11,65 @@ import (
 
 func init() {
 	m.Register(func(db dbx.Builder) error {
-		dao := daos.New(db)
+		dao := daos.New(db);
 
-		collection, err := dao.FindCollectionByNameOrId("3v0m8v3xtw1286r")
+		collection, err := dao.FindCollectionByNameOrId("kx3ewd64kz2os37")
 		if err != nil {
 			return err
 		}
 
 		// update
-		edit_conversation := &schema.SchemaField{}
-		err = json.Unmarshal([]byte(`{
+		edit_user := &schema.SchemaField{}
+		if err := json.Unmarshal([]byte(`{
 			"system": false,
-			"id": "vy8bto8z",
-			"name": "conversation",
+			"id": "ohmtgv8t",
+			"name": "user",
 			"type": "relation",
-			"required": false,
+			"required": true,
 			"presentable": false,
 			"unique": false,
 			"options": {
-				"collectionId": "23wjzzeeb4qilr9",
+				"collectionId": "_pb_users_auth_",
 				"cascadeDelete": true,
 				"minSelect": null,
 				"maxSelect": 1,
 				"displayFields": null
 			}
-		}`), edit_conversation)
-		if err != nil {
+		}`), edit_user); err != nil {
 			return err
 		}
-		collection.Schema.AddField(edit_conversation)
+		collection.Schema.AddField(edit_user)
 
 		return dao.SaveCollection(collection)
 	}, func(db dbx.Builder) error {
-		dao := daos.New(db)
+		dao := daos.New(db);
 
-		collection, err := dao.FindCollectionByNameOrId("3v0m8v3xtw1286r")
+		collection, err := dao.FindCollectionByNameOrId("kx3ewd64kz2os37")
 		if err != nil {
 			return err
 		}
 
 		// update
-		edit_conversation := &schema.SchemaField{}
-		err = json.Unmarshal([]byte(`{
+		edit_user := &schema.SchemaField{}
+		if err := json.Unmarshal([]byte(`{
 			"system": false,
-			"id": "vy8bto8z",
-			"name": "conversation_id",
+			"id": "ohmtgv8t",
+			"name": "user",
 			"type": "relation",
 			"required": false,
 			"presentable": false,
 			"unique": false,
 			"options": {
-				"collectionId": "23wjzzeeb4qilr9",
-				"cascadeDelete": true,
+				"collectionId": "_pb_users_auth_",
+				"cascadeDelete": false,
 				"minSelect": null,
 				"maxSelect": 1,
 				"displayFields": null
 			}
-		}`), edit_conversation)
-		if err != nil {
+		}`), edit_user); err != nil {
 			return err
 		}
-		collection.Schema.AddField(edit_conversation)
+		collection.Schema.AddField(edit_user)
 
 		return dao.SaveCollection(collection)
 	})
