@@ -36,7 +36,11 @@
             conversation of conversationService.conversationList();
             track conversation.record.id
           ) {
-            <mat-list-item>
+            <mat-list-item
+              #tooltip="matTooltip"
+              [matTooltip]="conversation.decryptedData.title"
+              matTooltipPosition="after"
+            >
               <span matListItemTitle>{{ conversation.decryptedData.title }}</span>
               <span matListItemLine
                 >This is some long text that gives an impression of a conversation</span
