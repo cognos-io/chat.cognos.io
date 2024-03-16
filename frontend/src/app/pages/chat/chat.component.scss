@@ -1,3 +1,5 @@
+@import 'include-media/dist/include-media';
+
 mat-sidenav {
   width: 300px;
 }
@@ -39,8 +41,25 @@ mat-sidenav {
   gap: 1rem;
 }
 
+@include media('>=tablet') {
+  .conversation-list-item-actions {
+    opacity: 0;
+  }
+
+  .conversation-list-item {
+    &:hover {
+      .conversation-list-item-actions {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+.conversation-list-item {
+  transition: all 150ms ease-in;
+}
+
 .conversation-list-item-actions {
-  opacity: 0;
   display: flex;
   flex-direction: column;
 
@@ -48,13 +67,5 @@ mat-sidenav {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-  }
-}
-
-.conversation-list-item {
-  &:hover {
-    .conversation-list-item-actions {
-      opacity: 1;
-    }
   }
 }
