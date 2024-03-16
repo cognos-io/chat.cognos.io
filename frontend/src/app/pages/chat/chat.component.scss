@@ -38,3 +38,23 @@ mat-sidenav {
   padding: 1rem;
   gap: 1rem;
 }
+
+.conversation-list-item-actions {
+  opacity: 0;
+  display: flex;
+  flex-direction: column;
+
+  .actions-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.conversation-list-item {
+  &:hover {
+    .conversation-list-item-actions {
+      opacity: 1;
+    }
+  }
+}

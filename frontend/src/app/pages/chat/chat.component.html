@@ -37,19 +37,30 @@
             track conversation.record.id
           ) {
             <mat-list-item
+              class="conversation-list-item"
               #tooltip="matTooltip"
               [matTooltip]="conversation.decryptedData.title"
               matTooltipPosition="after"
             >
-              <span matListItemTitle>{{ conversation.decryptedData.title }}</span>
-              <span matListItemLine
-                >This is some long text that gives an impression of a conversation</span
-              >
+              <a [routerLink]="['c', conversation.record.id]" matListItemTitle>{{
+                conversation.decryptedData.title
+              }}</a>
+              <div matListItemMeta class="conversation-list-item-actions">
+                <button
+                  (click)="onEditConversation(conversation.record.id)"
+                  mat-icon-button
+                  class="actions-button"
+                >
+                  <mat-icon fontSet="bi" fontIcon="bi-three-dots-vertical"></mat-icon>
+                </button>
+              </div>
             </mat-list-item>
           }
         </mat-nav-list>
       </div>
     </mat-sidenav>
-    <mat-sidenav-content role="main">Content</mat-sidenav-content>
+    <mat-sidenav-content role="main">
+      <router-outlet></router-outlet>
+    </mat-sidenav-content>
   </mat-sidenav-container>
 </div>
