@@ -1,1 +1,16 @@
-<p>edit-conversation-dialog works!</p>
+<h2 mat-dialog-title="">Edit conversation</h2>
+<mat-dialog-content>
+  <p>Here you can edit and delete your conversation</p>
+  <mat-dialog-actions>
+    <button
+      (click)="conversationService.deleteConversation$.next(data.conversationId)"
+      mat-button=""
+      color="error"
+      style="margin-right: auto"
+    >
+      <mat-icon fontSet="bi" fontIcon="bi-trash"></mat-icon>
+      Delete
+    </button>
+    <button mat-button="" mat-dialog-close="" color="secondary">Cancel</button>
+  </mat-dialog-actions>
+</mat-dialog-content>
