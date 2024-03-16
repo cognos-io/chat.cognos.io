@@ -1,1 +1,10 @@
-<p>confirmation-dialog works!</p>
+<h2 mat-dialog-title="">Just checking</h2>
+<mat-dialog-content class="mat-typography">
+  <p>
+    {{ data.message }}
+  </p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close color="error">No</button>
+  <button mat-button [mat-dialog-close]="true" cdkFocusInitial>Yes</button>
+</mat-dialog-actions>
