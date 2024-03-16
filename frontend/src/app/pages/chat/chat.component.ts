@@ -10,7 +10,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 
 import { Subject, takeUntil } from 'rxjs';
 
@@ -44,6 +44,7 @@ export class ChatComponent implements OnDestroy {
 
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly dialog = inject(MatDialog);
+  private readonly router = inject(Router);
 
   // show the vault password dialog if we don't have a key pair
   private dialogRef: MatDialogRef<VaultPasswordDialogComponent> | undefined;
@@ -82,7 +83,7 @@ export class ChatComponent implements OnDestroy {
     });
   }
 
-  openDeleteConfirmationDialog(conversationId: string) {
+  onDeleteConversation(conversationId: string) {
     this.dialog
       .open(ConfirmationDialogComponent, {
         data: {
@@ -94,6 +95,7 @@ export class ChatComponent implements OnDestroy {
       .subscribe((result: boolean) => {
         if (result) {
           this.conversationService.deleteConversation$.next(conversationId);
+          this.router.navigate(['/']);
         }
       });
   }
