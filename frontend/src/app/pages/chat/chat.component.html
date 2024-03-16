@@ -61,11 +61,17 @@
                 <mat-icon fontSet="bi" fontIcon="bi-pin-angle"></mat-icon>
                 Pin
               </button>
-              <button mat-menu-item="">
+              <button
+                mat-menu-item=""
+                (click)="onEditConversation(conversation.record.id)"
+              >
                 <mat-icon fontSet="bi" fontIcon="bi-pencil-square"></mat-icon>
                 Edit
               </button>
-              <button mat-menu-item="">
+              <button
+                mat-menu-item=""
+                (click)="openDeleteConfirmationDialog(conversation.record.id)"
+              >
                 <mat-icon fontSet="bi" fontIcon="bi-trash"></mat-icon>
                 Delete
               </button>

@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -12,6 +12,9 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
 
+import { Subject, takeUntil } from 'rxjs';
+
+import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 
 import { VaultPasswordDialogComponent } from '../../components/vault-password-dialog/vault-password-dialog.component';
@@ -36,7 +39,9 @@ import { VaultService } from '../../services/vault.service';
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
 })
-export class ChatComponent {
+export class ChatComponent implements OnDestroy {
+  private readonly _destroyed$ = new Subject<void>();
+
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly dialog = inject(MatDialog);
 
@@ -64,11 +69,32 @@ export class ChatComponent {
       .subscribe((result) => this.isMobile.set(result.matches));
   }
 
+  ngOnDestroy(): void {
+    this._destroyed$.next();
+    this._destroyed$.complete();
+  }
+
   onEditConversation(conversationId: string) {
     this.dialog.open(EditConversationDialogComponent, {
       data: {
         conversationId,
       },
     });
+  }
+
+  openDeleteConfirmationDialog(conversationId: string) {
+    this.dialog
+      .open(ConfirmationDialogComponent, {
+        data: {
+          message: 'Are you sure you want to delete this conversation?',
+        },
+      })
+      .afterClosed()
+      .pipe(takeUntil(this._destroyed$))
+      .subscribe((result: boolean) => {
+        if (result) {
+          this.conversationService.deleteConversation$.next(conversationId);
+        }
+      });
   }
 }
