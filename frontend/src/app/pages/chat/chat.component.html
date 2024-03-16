@@ -47,14 +47,29 @@
               }}</a>
               <div matListItemMeta class="conversation-list-item-actions">
                 <button
-                  (click)="onEditConversation(conversation.record.id)"
                   mat-icon-button
                   class="actions-button"
+                  [matMenuTriggerFor]="menu"
+                  aria-label="Open conversation menu"
                 >
                   <mat-icon fontSet="bi" fontIcon="bi-three-dots-vertical"></mat-icon>
                 </button>
               </div>
             </mat-list-item>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item="">
+                <mat-icon fontSet="bi" fontIcon="bi-pin-angle"></mat-icon>
+                Pin
+              </button>
+              <button mat-menu-item="">
+                <mat-icon fontSet="bi" fontIcon="bi-pencil-square"></mat-icon>
+                Edit
+              </button>
+              <button mat-menu-item="">
+                <mat-icon fontSet="bi" fontIcon="bi-trash"></mat-icon>
+                Delete
+              </button>
+            </mat-menu>
           }
         </mat-nav-list>
       </div>

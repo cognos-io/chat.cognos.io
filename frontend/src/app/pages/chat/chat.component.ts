@@ -6,6 +6,7 @@ import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dial
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -30,6 +31,7 @@ import { VaultService } from '../../services/vault.service';
     MatListModule,
     MatTooltipModule,
     MatExpansionModule,
+    MatMenuModule,
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
