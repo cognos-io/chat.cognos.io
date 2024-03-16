@@ -42,13 +42,13 @@ export class CryptoService {
    * openBox - Decrypts a message using the sender's
    * public key and the receiver's secret key.
    *
-   * @param cipherText
+   * @param fullMessage
    * @param sharedKey
    * @returns
    */
-  openBox(cipherText: Uint8Array, sharedKey: Uint8Array): Uint8Array {
-    const nonce = cipherText.slice(0, nacl.box.nonceLength);
-    const ciphertext = cipherText.slice(nacl.box.nonceLength);
+  openBox(fullMessage: Uint8Array, sharedKey: Uint8Array): Uint8Array {
+    const nonce = fullMessage.slice(0, nacl.box.nonceLength);
+    const ciphertext = fullMessage.slice(nacl.box.nonceLength);
     const decrypted = nacl.box.open.after(ciphertext, nonce, sharedKey);
 
     if (decrypted === null) {
@@ -81,13 +81,13 @@ export class CryptoService {
    * openSecretBox - Decrypts a message using a secret key and
    * symmetric encryption.
    *
-   * @param cipherText (Uint8Array) - The encrypted message (ciphertext) including the nonce
+   * @param fullMessage (Uint8Array) - The encrypted message (ciphertext) including the nonce
    * @param key (Uint8Array) - The secret key (Uint8Array)
    * @returns (Uint8Array) - The decrypted message
    */
-  openSecretBox(cipherText: Uint8Array, key: Uint8Array): Uint8Array {
-    const nonce = cipherText.slice(0, nacl.secretbox.nonceLength);
-    const ciphertext = cipherText.slice(nacl.secretbox.nonceLength);
+  openSecretBox(fullMessage: Uint8Array, key: Uint8Array): Uint8Array {
+    const nonce = fullMessage.slice(0, nacl.secretbox.nonceLength);
+    const ciphertext = fullMessage.slice(nacl.secretbox.nonceLength);
     const decrypted = nacl.secretbox.open(ciphertext, nonce, key);
 
     if (decrypted === null) {

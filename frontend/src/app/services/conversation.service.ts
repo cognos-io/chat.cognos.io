@@ -1,4 +1,4 @@
-import { Injectable, computed, inject } from '@angular/core';
+import { Injectable, computed, effect, inject } from '@angular/core';
 
 import PocketBase from 'pocketbase';
 
@@ -17,6 +17,8 @@ import {
 
 import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
+
+import { ignorePocketbase404 } from '@app/operators/ignore-404';
 
 import {
   Conversation,
@@ -58,7 +60,16 @@ export class ConversationService {
   private readonly pbConversationPublicKeysCollection = 'conversation_public_keys';
   private readonly pbConversationSecretKeyCollection = 'conversation_secret_keys';
 
+  // Need to try decrypting conversation data when we have a key pair.
+  // Don't know a better way to do this unfortunately
+  private readonly onKeyPairChange = effect(() => {
+    if (this.vaultService.keyPair()) {
+      this._keyPairChanged$.next();
+    }
+  });
+
   // sources
+  private readonly _keyPairChanged$ = new Subject<void>();
   readonly selectConversation$ = new Subject<string>(); // conversationId
   readonly newConversation$ = new Subject<ConversationData>();
   readonly filter$ = new Subject<string>();
@@ -107,8 +118,9 @@ export class ConversationService {
           return { filter };
         }),
       ),
-      // load all conversations
-      this.fetchConversations().pipe(
+      // When the user's key pair changes, reload the conversations
+      this._keyPairChanged$.pipe(
+        switchMap(() => this.fetchConversations()),
         map((conversations) => {
           return { conversations };
         }),
@@ -217,7 +229,7 @@ export class ConversationService {
   ): ConversationData {
     const sharedSecret = this.sharedKey(conversationKeyPair);
     const decryptedData = this.cryptoService.openBox(
-      new TextEncoder().encode(record.data),
+      Base64.toUint8Array(record.data),
       sharedSecret,
     );
     return parseConversationData(decryptedData);
@@ -252,7 +264,10 @@ export class ConversationService {
       this.pb
         .collection(this.pbConversationPublicKeysCollection)
         .getFirstListItem(filter),
-    ).pipe(map((record) => Base64.toUint8Array(record.public_key)));
+    ).pipe(
+      ignorePocketbase404(),
+      map((record) => Base64.toUint8Array(record.public_key)),
+    );
   }
 
   /**
@@ -273,6 +288,7 @@ export class ConversationService {
         .collection(this.pbConversationSecretKeyCollection)
         .getFirstListItem(filter),
     ).pipe(
+      ignorePocketbase404(),
       // Decode the encrypted base64 secret key
       map((record) => Base64.toUint8Array(record.secret_key)),
     );
@@ -365,6 +381,10 @@ export class ConversationService {
           decryptedData: this.decryptConversationData(record, keyPair),
           keyPair,
         };
+      }),
+      catchError((error) => {
+        console.error('Conversation decryption failed', error);
+        return EMPTY;
       }),
     );
   }

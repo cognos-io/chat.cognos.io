@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { VaultPasswordDialogComponent } from '../../components/vault-password-dialog/vault-password-dialog.component';
 import { ConversationService } from '../../services/conversation.service';
@@ -22,6 +23,7 @@ import { VaultService } from '../../services/vault.service';
     MatIconModule,
     MatSidenavModule,
     MatListModule,
+    MatTooltipModule,
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
