@@ -28,6 +28,15 @@ $theme: matx.define-theme(
   )
 );
 
+$dark-theme: matx.define-theme(
+  (
+    color: (
+      theme-type: 'dark',
+      primary: matx.$m3-green-palette,
+    ),
+  )
+);
+
 // Supports weights 100-900
 @import '@fontsource-variable/public-sans';
 
@@ -49,14 +58,6 @@ body {
   font-family: 'Public Sans Variable', 'Helvetica Neue', sans-serif;
 }
 
-mat-icon.bi {
-  font-size: 1rem !important;
-  line-height: 1.125rem !important;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .backdrop-blur {
   background-color: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(0.5rem);
@@ -65,6 +66,27 @@ mat-icon.bi {
 .error-snackbar {
   --mdc-snackbar-container-color: var(--error-bg-color);
   --mdc-snackbar-supporting-text-color: var(--error-text-color);
+}
+
+mat-sidenav,
+mat-toolbar {
+  @include mat.all-component-colors($dark-theme);
+}
+
+mat-icon.bi {
+  font-size: 1rem !important;
+  line-height: 1.125rem !important;
+  display: inline-flex;
+}
+
+button.mdc-icon-button {
+  display: flex;
+}
+
+button.mdc-icon-button,
+mat-icon.bi {
+  align-items: center;
+  justify-content: center;
 }
 
 button {
