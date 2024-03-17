@@ -9,6 +9,7 @@
     "openai",
     "OWASP",
     "pocketbase",
+    "Ryzen",
     "secretbox",
     "testdata"
   ],
@@ -17,6 +18,7 @@
     "Automigrate",
     "Upsert",
     "aimodel",
+    "goarch",
     "knadh",
     "koanf",
     "labstack",
