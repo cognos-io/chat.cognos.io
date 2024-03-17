@@ -51,7 +51,7 @@ export type ConversationSecretKeysRecord = {
 };
 
 export type ConversationsRecord = {
-  creator: RecordIdString;
+  creator?: RecordIdString;
   data: string;
 };
 
@@ -61,9 +61,8 @@ export type DeletedRecord<Trecord = unknown> = {
 };
 
 export type MessagesRecord = {
-  conversation?: RecordIdString;
+  conversation: RecordIdString;
   data: string;
-  key: string;
   parent_message?: RecordIdString;
 };
 
@@ -81,7 +80,7 @@ export type ParticipantsRecord = {
 export type UserKeyPairsRecord = {
   public_key: string;
   secret_key: string;
-  user?: RecordIdString;
+  user: RecordIdString;
 };
 
 export type UsersRecord = {
