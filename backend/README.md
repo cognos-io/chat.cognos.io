@@ -146,6 +146,18 @@ BenchmarkSymmetricEncrypt1MB-16              471           2517422 ns/op
 BenchmarkSymmetricEncrypt10MB-16              68          18383260 ns/op
 ```
 
+Worth noting that if we were **only** using symmetric encryption (and not asymmetrically encrypting the symmetric key), the results are very different:
+
+```
+BenchmarkSymmetricEncrypt1KB-16           204798              5351 ns/op
+BenchmarkSymmetricEncrypt2KB-16           145189              7862 ns/op
+BenchmarkSymmetricEncrypt5KB-16            99870             15468 ns/op
+BenchmarkSymmetricEncrypt10KB-16           43687             26931 ns/op
+BenchmarkSymmetricEncrypt500KB-16           1008           1258649 ns/op
+BenchmarkSymmetricEncrypt1MB-16              436           2617675 ns/op
+BenchmarkSymmetricEncrypt10MB-16              61          19730876 ns/op
+```
+
 ### Conclusion
 
 We will use the 'sealed box' asymmetric encryption approach.
