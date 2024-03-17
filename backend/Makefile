@@ -75,6 +75,11 @@ test/cover:
 	go test -v -race -buildvcs -coverprofile=/tmp/coverage.out ./...
 	go tool cover -html=/tmp/coverage.out
 
+## benchmark: run all benchmarks
+.PHONY: benchmark
+benchmark:
+	go test -run=XXXX -bench=. ./...
+
 ## build: build the application
 .PHONY: build
 build:
