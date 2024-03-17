@@ -109,3 +109,47 @@ http POST :8090/v1/chat/completions \
     stream:=true \
     metadata:='{"cognos": {"conversation_id": "0524b1cc-152b-4f53-ade9-1ad8c338d2e3"}}'
 ```
+
+## Encryption benchmarks
+
+To decide on an encryption strategy for messages we wrote benchmarks to compare the following methods:
+
+1. 'Sealed box' asymmetric encryption using the conversations public key as the recipient. This method generates an ephemeral key pair and uses NaCl box under the hood to asymmetrically encrypt the data, including the ephemeral public key in the output. Decryption is done using the conversation secret key and the ephemeral public key.
+1. 'Hybrid' encryption. This method generates a random 256bit symmetric key which is used with the NaCl secretbox to encrypt the message contents. The symmetric key is then encrypted with the same 'Sealed box' asymmetric encryption detailed above. The advantages here are that the symmetric encryption should be a lot faster than the asymmetric encryption (which is only used for a small message - the symmetric key).
+
+Benchmarks are found in the `internal/crypto/encrypt_benchmark_test.go` file.
+
+### Results
+
+We compared encryption of messages (with random content) of various lengths.
+
+Interestingly the results are not as different as I would have expected with a consistent ±10% between the methods (example output below).
+
+```
+goos: linux
+goarch: amd64
+pkg: github.com/cognos-io/chat.cognos.io/backend/internal/crypto
+cpu: AMD Ryzen 7 3700X 8-Core Processor
+BenchmarkAsymmetricEncrypt1KB-16           12063             99801 ns/op
+BenchmarkAsymmetricEncrypt2KB-16           10000            112588 ns/op
+BenchmarkAsymmetricEncrypt5KB-16            8796            128814 ns/op
+BenchmarkAsymmetricEncrypt10KB-16           7284            180291 ns/op
+BenchmarkAsymmetricEncrypt500KB-16           835           1373146 ns/op
+BenchmarkAsymmetricEncrypt1MB-16             447           2585302 ns/op
+BenchmarkAsymmetricEncrypt10MB-16             63          22883566 ns/op
+BenchmarkSymmetricEncrypt1KB-16            11070            109244 ns/op
+BenchmarkSymmetricEncrypt2KB-16            10000            108873 ns/op
+BenchmarkSymmetricEncrypt5KB-16             9358            135506 ns/op
+BenchmarkSymmetricEncrypt10KB-16           10000            156142 ns/op
+BenchmarkSymmetricEncrypt500KB-16            801           1369121 ns/op
+BenchmarkSymmetricEncrypt1MB-16              471           2517422 ns/op
+BenchmarkSymmetricEncrypt10MB-16              68          18383260 ns/op
+```
+
+### Conclusion
+
+We will use the 'sealed box' asymmetric encryption approach.
+
+While the 'hybrid' approach is a little faster it does include additional complexity having to use two encryption approaches on both the server and the client. As the difference is not huge it doesn't make sense to over complicate things at this time.
+
+(I also have a theory that this also requires less from the source of randomness which may become a bottleneck but that's purely a hypothetical)
