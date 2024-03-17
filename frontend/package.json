@@ -66,6 +66,7 @@
       "^pocketbase(.*)$",
       "^rxjs(.*)$",
       "<THIRD_PARTY_MODULES>",
+      "^@cognos/(.*)$",
       "^@app/(.*)$",
       "^@components/(.*)$",
       "^@environments/(.*)$",
