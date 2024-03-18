@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 
+import { blake2b } from 'blakejs';
 import nacl from 'tweetnacl';
 
 import { KeyPair } from '../interfaces/key-pair';
@@ -52,7 +53,7 @@ export class CryptoService {
     const decrypted = nacl.box.open.after(ciphertext, nonce, sharedKey);
 
     if (decrypted === null) {
-      throw new Error('Could not decrypt message');
+      throw new Error('Could not open box');
     }
 
     return decrypted;
@@ -91,9 +92,41 @@ export class CryptoService {
     const decrypted = nacl.secretbox.open(ciphertext, nonce, key);
 
     if (decrypted === null) {
-      throw new Error('Could not decrypt message');
+      throw new Error('Could not open secret box');
     }
 
     return decrypted;
+  }
+
+  /**
+   * openSealedBox - Decrypts a sealed box message using the receiver's key pair.
+   *
+   * @param sealedBox (Uint8Array) - The encrypted message (ciphertext) including the nonce and the public key (nacl.box.publicKeyLength)
+   * @param myKeyPair (KeyPair) - The key pair of the receiver (publicKey and secretKey
+   * @returns (Uint8Array) - The decrypted message (plaintext)
+   */
+  openSealedBox(sealedBox: Uint8Array, myKeyPair: KeyPair): Uint8Array {
+    // Sealed boxes look like this:
+    // ephemeral_pk ‖ box(m, recipient_pk, ephemeral_sk, nonce=blake2b(ephemeral_pk ‖ recipient_pk))
+    const theirPublicKey = sealedBox.slice(0, nacl.box.publicKeyLength);
+    const ciphertext = sealedBox.slice(nacl.box.publicKeyLength);
+
+    const keys = new Uint8Array(theirPublicKey.length + myKeyPair.publicKey.length);
+    keys.set(theirPublicKey);
+    keys.set(myKeyPair.publicKey, theirPublicKey.length);
+
+    const nonce = blake2b(keys, undefined, nacl.secretbox.nonceLength);
+
+    const decryptedMessage = nacl.box.open(
+      ciphertext,
+      nonce,
+      theirPublicKey,
+      myKeyPair.secretKey,
+    );
+    if (decryptedMessage === null) {
+      throw new Error('Could not open sealed box');
+    }
+
+    return decryptedMessage;
   }
 }
