@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { MessagesRecord } from '@app/types/pocketbase-types';
+
 export const MessageDataVersion = z.enum(['1']);
 export type MessageDataVersion = z.infer<typeof MessageDataVersion>;
 
@@ -15,3 +17,20 @@ export const MessageData = z.object({
   content: z.string(), // the message content
 });
 export type MessageData = z.infer<typeof MessageData>;
+
+/**
+ * parseMessageData - takes a decrypted string
+ * and returns a MessageData object.
+ *
+ * @param decryptedData (Uint8Array) decrypted bytes
+ * @returns (MessageData) parsed message data
+ */
+export const parseMessageData = (decryptedData: Uint8Array): MessageData => {
+  const dataString = new TextDecoder().decode(decryptedData);
+  return MessageData.parse(JSON.parse(dataString));
+};
+
+export interface Message {
+  record: MessagesRecord;
+  decryptedData: MessageData;
+}
