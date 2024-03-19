@@ -1,0 +1,12 @@
+.conversation-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  margin: 0 auto;
+  padding: var(--chat-container-padding);
+
+  height: 100%;
+  width: calc(100% - 2 * var(--chat-container-padding));
+  max-width: calc(var(--chat-container-width) + 2 * var(--chat-container-padding));
+}

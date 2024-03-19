@@ -1,1 +1,44 @@
-<p>message-form works!</p>
+<form class="message-form" [formGroup]="messageForm" (submit)="sendMessage()">
+  <mat-form-field class="w-full">
+    <mat-label>Chat to an AI</mat-label>
+    <textarea
+      formControlName="message"
+      cdkTextareaAutosize
+      name="message-form"
+      id="message-form"
+      matInput
+      placeholder="Teach me about..."
+      (keydown.control.enter)="sendMessage()"
+    ></textarea>
+    @if (messageForm.valid) {
+      <button type="submit" matSuffix mat-icon-button="">
+        <mat-icon fontSet="bi" fontIcon="bi-send-fill"></mat-icon>
+      </button>
+    }
+  </mat-form-field>
+</form>
+
+<div class="flex flex-col md:flex-row md:items-center justify-between">
+  <span class="italic hidden md:block">
+    @if (isMac) {
+      Cmd
+    } @else {
+      Ctrl
+    }
+    +Enter to send</span
+  >
+  <div class="flex flex-col md:flex-row items-center">
+    <div>
+      <span class="italic">Using agent</span>
+      <button class="mx-2" mat-button (click)="openAgentSelector()">
+        {{ agentService.selectedAgent().name }}
+      </button>
+    </div>
+    <div>
+      <span class="italic">powered by</span>
+      <button class="mx-2" mat-button (click)="openModelSelector()">
+        {{ modelService.selectedModel().name }}
+      </button>
+    </div>
+  </div>
+</div>
