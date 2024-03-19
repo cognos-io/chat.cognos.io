@@ -5,6 +5,12 @@ import { Component } from '@angular/core';
   standalone: true,
   imports: [],
   templateUrl: './message-list.component.html',
-  styleUrl: './message-list.component.scss',
+  styles: `
+    .message-list-wrapper {
+      padding: 1rem 0;
+    }
+  `,
 })
-export class MessageListComponent {}
+export class MessageListComponent {
+  public messages = new Array(100).fill(0).map((_, i) => `Message ${i}`);
+}

@@ -38,6 +38,9 @@ export class MessageService {
   private readonly pbMessagesCollection = this.pb.collection('messages');
 
   // sources
+  public readonly sendMessage$ = new Subject<{
+    message?: string;
+  }>();
   private readonly selectedConversation$ = new Subject<string>();
   // When the conversation changes, load the messages for the new conversation
   private readonly messagesForConversation$ = this.selectedConversation$.pipe(
@@ -84,5 +87,13 @@ export class MessageService {
       record,
       decryptedData: parseMessageData(decryptedData),
     };
+  }
+
+  private sendMessage(
+    message: string,
+    conversationId: string,
+  ): Observable<MessagesRecord> {
+    console.log(message, conversationId);
+    return from(this.pbMessagesCollection.create());
   }
 }

@@ -4,9 +4,13 @@ import { signalSlice } from 'ngxtension/signal-slice';
 
 import { Agent } from '@app/interfaces/agent';
 
-interface AgentState {}
+interface AgentState {
+  agentList: Agent[];
+}
 
-const initialState: AgentState = {};
+const initialState: AgentState = {
+  agentList: [],
+};
 
 @Injectable({
   providedIn: 'root',
