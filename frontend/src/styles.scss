@@ -40,9 +40,16 @@ $dark-theme: matx.define-theme(
 // Supports weights 100-900
 @import '@fontsource-variable/public-sans';
 
+// also enable tailwind utilities
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --error-bg-color: #{mat.get-theme-color($theme, 'error', 90)};
   --error-text-color: #{mat.get-theme-color($theme, 'error', 30)};
+  --chat-container-width: 80ch;
+  --chat-container-padding: 1rem;
 }
 
 html {
@@ -99,4 +106,8 @@ button {
   &.mat-secondary {
     @include mat.button-color($theme, $color-variant: secondary);
   }
+}
+
+.debug * {
+  outline: 1px solid red;
 }
