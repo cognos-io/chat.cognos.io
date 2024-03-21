@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase from 'pocketbase';
 
@@ -124,6 +125,7 @@ export class VaultService {
 
   // selectors
   keyPair = this.state.keyPair;
+  keyPair$ = toObservable(this.keyPair);
 
   constructor() {
     if (environment.isDevelopment) {
