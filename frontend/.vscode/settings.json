@@ -6,6 +6,7 @@
     "ewan",
     "libsodium",
     "oidc",
+    "openai",
     "OWASP",
     "pocketbase",
     "tweetnacl",
