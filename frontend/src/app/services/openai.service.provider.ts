@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
 
+import { environment } from '@environments/environment';
+
 const openAiFactory = () => {
   return new OpenAI({
-    apiKey: '',
+    apiKey: environment.openaiApiKey,
   });
 };
 
