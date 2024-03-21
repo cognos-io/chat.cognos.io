@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
 import { IconService } from './services/icon.service';
+import { provideOpenAi } from './services/openai.service.provider';
 import { providePocketbase } from './services/pocketbase.service.provider';
 
 export const appConfig: ApplicationConfig = {
@@ -12,6 +13,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideAnimationsAsync(),
     providePocketbase(),
+    provideOpenAi(),
     IconService,
     {
       provide: MAT_DIALOG_DEFAULT_OPTIONS,
