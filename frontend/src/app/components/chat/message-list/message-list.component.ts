@@ -1,9 +1,11 @@
 import { Component } from '@angular/core';
 
+import { MessageListItemComponent } from '../message-list-item/message-list-item.component';
+
 @Component({
   selector: 'app-message-list',
   standalone: true,
-  imports: [],
+  imports: [MessageListItemComponent],
   templateUrl: './message-list.component.html',
   styles: `
     .message-list-wrapper {

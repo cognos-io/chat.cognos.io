@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-model-selector',
   standalone: true,
   imports: [],
-  templateUrl: './model-selector.component.html',
-  styleUrl: './model-selector.component.scss',
+  template: ` <h2>Choose a model</h2> `,
+  styles: ``,
 })
 export class ModelSelectorComponent {}
