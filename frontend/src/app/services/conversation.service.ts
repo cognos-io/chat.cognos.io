@@ -224,7 +224,7 @@ export class ConversationService {
    * @param conversationKeyPair (KeyPair)
    * @returns (Uint8Array)
    */
-  encryptConversationData(
+  private encryptConversationData(
     data: ConversationData,
     conversationKeyPair: KeyPair,
   ): Uint8Array {
@@ -242,7 +242,7 @@ export class ConversationService {
    * @param conversationKeyPair (KeyPair)
    * @returns (ConversationData)
    */
-  decryptConversationData(
+  private decryptConversationData(
     record: ConversationRecord,
     conversationKeyPair: KeyPair,
   ): ConversationData {
@@ -260,7 +260,7 @@ export class ConversationService {
    * @param conversationKeyPair (KeyPair) - the conversation's key pair
    * @returns (Uint8Array) - the shared key
    */
-  sharedKey(conversationKeyPair: KeyPair): Uint8Array {
+  private sharedKey(conversationKeyPair: KeyPair): Uint8Array {
     return this.cryptoService.sharedKey(
       conversationKeyPair.publicKey,
       conversationKeyPair.secretKey,
@@ -274,7 +274,7 @@ export class ConversationService {
    * @param conversationId (string)
    * @returns (Observable<Uint8Array>)
    */
-  fetchConversationPublicKey(conversationId: string): Observable<Uint8Array> {
+  private fetchConversationPublicKey(conversationId: string): Observable<Uint8Array> {
     const filter = this.pb.filter('conversation={:conversationId}', {
       conversationId,
     });
@@ -296,7 +296,7 @@ export class ConversationService {
    * @param conversationId (string)
    * @returns (Observable<Uint8Array>)
    */
-  fetchConversationSecretKey(conversationId: string): Observable<Uint8Array> {
+  private fetchConversationSecretKey(conversationId: string): Observable<Uint8Array> {
     const filter = this.pb.filter('conversation={:conversationId} && user={:userId}', {
       conversationId,
       userId: this.auth.user()?.['id'],
@@ -320,7 +320,7 @@ export class ConversationService {
    * @param conversationId (string)
    * @returns (Observable<KeyPair>)
    */
-  fetchConversationKeyPair(conversationId: string): Observable<KeyPair> {
+  private fetchConversationKeyPair(conversationId: string): Observable<KeyPair> {
     return this.fetchConversationPublicKey(conversationId).pipe(
       switchMap((publicKey) =>
         this.fetchConversationSecretKey(conversationId).pipe(
@@ -349,7 +349,7 @@ export class ConversationService {
    * @param conversationKeyPair (KeyPair)
    * @returns (Observable<KeyPair>)
    */
-  saveConversationKeyPair(
+  private saveConversationKeyPair(
     conversationId: string,
     conversationKeyPair: KeyPair,
   ): Observable<KeyPair> {
@@ -392,7 +392,7 @@ export class ConversationService {
    *
    * @returns (Observable<Conversation>)
    */
-  fetchConversation(record: ConversationRecord): Observable<Conversation> {
+  private fetchConversation(record: ConversationRecord): Observable<Conversation> {
     return this.fetchConversationKeyPair(record.id).pipe(
       map((keyPair) => {
         return {
@@ -414,7 +414,7 @@ export class ConversationService {
    *
    * @returns (Observable<Array<Conversation>>)
    */
-  fetchConversations(): Observable<Array<Conversation>> {
+  private fetchConversations(): Observable<Array<Conversation>> {
     return from(this.fetchConversationRecords()).pipe(
       switchMap((records) =>
         forkJoin(records.map((record) => this.fetchConversation(record))),
@@ -428,7 +428,9 @@ export class ConversationService {
    *
    * @returns (Observable<ConversationRecord>)
    */
-  fetchConversationRecord(conversationId: string): Observable<ConversationRecord> {
+  private fetchConversationRecord(
+    conversationId: string,
+  ): Observable<ConversationRecord> {
     return from(
       this.pb.collection(this.pbConversationCollection).getOne(conversationId),
     );
@@ -439,11 +441,11 @@ export class ConversationService {
    *
    * @returns (Observable<Array<ConversationRecord>>)
    */
-  fetchConversationRecords(): Observable<Array<ConversationRecord>> {
+  private fetchConversationRecords(): Observable<Array<ConversationRecord>> {
     return from(this.pb.collection(this.pbConversationCollection).getFullList());
   }
 
-  deleteConversation(conversationId: string): Observable<boolean> {
+  private deleteConversation(conversationId: string): Observable<boolean> {
     return from(
       this.pb.collection(this.pbConversationCollection).delete(conversationId),
     );
