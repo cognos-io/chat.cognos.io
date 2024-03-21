@@ -1,4 +1,5 @@
 import { Injectable, computed, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase from 'pocketbase';
 
@@ -170,6 +171,7 @@ export class ConversationService {
 
   // selectors
   readonly conversation = this.state.selectedConversation;
+  readonly conversation$ = toObservable(this.conversation);
   readonly conversationList = this.state.orderedConversations;
 
   /**
