@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, OnDestroy, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -46,17 +46,7 @@ export class ChatComponent implements OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
 
-  // show the vault password dialog if we don't have a key pair
   private dialogRef: MatDialogRef<VaultPasswordDialogComponent> | undefined;
-  private readonly vaultUnlockEffect = effect(() => {
-    if (!this.vaultService.keyPair()) {
-      this.dialogRef = this.dialog.open(VaultPasswordDialogComponent, {
-        disableClose: true,
-      });
-    } else {
-      this.dialogRef?.close();
-    }
-  });
 
   readonly conversationService = inject(ConversationService);
   readonly vaultService = inject(VaultService);
@@ -68,6 +58,16 @@ export class ChatComponent implements OnDestroy {
       .observe([Breakpoints.Handset])
       .pipe(takeUntilDestroyed())
       .subscribe((result) => this.isMobile.set(result.matches));
+    // show the vault password dialog if we don't have a key pair
+    this.vaultService.keyPair$.pipe(takeUntilDestroyed()).subscribe((keyPair) => {
+      if (keyPair) {
+        this.dialogRef?.close();
+      } else {
+        this.dialogRef = this.dialog.open(VaultPasswordDialogComponent, {
+          disableClose: true,
+        });
+      }
+    });
   }
 
   ngOnDestroy(): void {
