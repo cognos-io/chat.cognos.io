@@ -8,6 +8,7 @@ import {
   Observable,
   Subject,
   catchError,
+  combineLatest,
   filter,
   forkJoin,
   from,
@@ -18,6 +19,7 @@ import {
 } from 'rxjs';
 
 import { Base64 } from 'js-base64';
+import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
 
 import { ignorePocketbase404 } from '@app/operators/ignore-404';
@@ -92,24 +94,28 @@ export class ConversationService {
         ),
       // When selectConversation emits, fetch the conversation details
       (state) =>
-        this.selectConversation$.pipe(
-          filter(
-            (conversationId) =>
-              conversationId !== state().selectedConversation?.record.id,
+        combineLatest([
+          this.vaultService.keyPair$.pipe(filterNil()),
+          this.selectConversation$.pipe(
+            filter(
+              (conversationId) =>
+                conversationId !== state().selectedConversation?.record.id,
+            ),
           ),
-          switchMap((conversationId) =>
-            this.fetchConversationRecord(conversationId).pipe(
-              switchMap((record) =>
-                this.fetchConversation(record).pipe(
+        ]).pipe(
+          switchMap(([, conversationId]) => {
+            return this.fetchConversationRecord(conversationId).pipe(
+              switchMap((record) => {
+                return this.fetchConversation(record).pipe(
                   map((conversation) => {
                     return {
                       selectedConversation: conversation,
                     };
                   }),
-                ),
-              ),
-            ),
-          ),
+                );
+              }),
+            );
+          }),
         ),
       // When filter emits, apply the filter
       this.filter$.pipe(
@@ -119,7 +125,7 @@ export class ConversationService {
       ),
       // When the user's key pair changes, reload the conversations
       this.vaultService.keyPair$.pipe(
-        switchMap(() => this.fetchConversations()),
+        switchMap((keyPair) => (keyPair ? this.fetchConversations() : [])),
         map((conversations) => {
           return { conversations };
         }),
