@@ -99,4 +99,8 @@ export class ChatComponent implements OnDestroy {
         }
       });
   }
+
+  onPinConversation(conversationId: string) {
+    console.log('pinning conversation', conversationId);
+  }
 }

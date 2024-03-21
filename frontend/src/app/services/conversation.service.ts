@@ -8,6 +8,7 @@ import {
   Observable,
   Subject,
   catchError,
+  filter,
   forkJoin,
   from,
   map,
@@ -90,21 +91,26 @@ export class ConversationService {
           ),
         ),
       // When selectConversation emits, fetch the conversation details
-      this.selectConversation$.pipe(
-        switchMap((conversationId) =>
-          this.fetchConversationRecord(conversationId).pipe(
-            switchMap((record) =>
-              this.fetchConversation(record).pipe(
-                map((conversation) => {
-                  return {
-                    selectedConversation: conversation,
-                  };
-                }),
+      (state) =>
+        this.selectConversation$.pipe(
+          filter(
+            (conversationId) =>
+              conversationId !== state().selectedConversation?.record.id,
+          ),
+          switchMap((conversationId) =>
+            this.fetchConversationRecord(conversationId).pipe(
+              switchMap((record) =>
+                this.fetchConversation(record).pipe(
+                  map((conversation) => {
+                    return {
+                      selectedConversation: conversation,
+                    };
+                  }),
+                ),
               ),
             ),
           ),
         ),
-      ),
       // When filter emits, apply the filter
       this.filter$.pipe(
         map((filter) => {

@@ -1,4 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase, { AuthMethodsList, AuthModel } from 'pocketbase';
 
@@ -100,6 +101,7 @@ export class AuthService implements OnDestroy {
   // selectors
   status = this.state.status;
   user = this.state.user;
+  user$ = toObservable(this.user);
   oryId = this.state.oryId;
 
   constructor() {

@@ -57,7 +57,10 @@
               </div>
             </mat-list-item>
             <mat-menu #menu="matMenu">
-              <button mat-menu-item="">
+              <button
+                mat-menu-item=""
+                (click)="onPinConversation(conversation.record.id)"
+              >
                 <mat-icon fontSet="bi" fontIcon="bi-pin-angle"></mat-icon>
                 Pin
               </button>

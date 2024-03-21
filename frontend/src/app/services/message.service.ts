@@ -1,11 +1,14 @@
-import { Injectable, computed, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase, { ListResult } from 'pocketbase';
 
-import { Observable, Subject, from, map, switchMap } from 'rxjs';
+import { EMPTY, Observable, Subject, combineLatest, from, map, switchMap } from 'rxjs';
 
 import { Base64 } from 'js-base64';
+import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
+import OpenAI from 'openai';
 
 import { Message, parseMessageData } from '@app/interfaces/message';
 import {
@@ -16,15 +19,14 @@ import {
 
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
+import { VaultService } from './vault.service';
 
 interface MessageState {
-  conversations: {
-    [conversationId: string]: Message[];
-  };
+  messages: Message[];
 }
 
 const initialState: MessageState = {
-  conversations: {},
+  messages: [],
 };
 
 @Injectable({
@@ -34,6 +36,8 @@ export class MessageService {
   private readonly pb: TypedPocketBase = inject(PocketBase);
   private readonly cryptoService = inject(CryptoService);
   private readonly conversationService = inject(ConversationService);
+  private readonly vaultService = inject(VaultService);
+  private readonly openAi = inject(OpenAI);
 
   private readonly pbMessagesCollection = this.pb.collection('messages');
 
@@ -46,34 +50,43 @@ export class MessageService {
   private readonly state = signalSlice({
     initialState,
     sources: [
-      // when the conversation changes, load the messages
+      // messages need a key pair, and a conversation
+      combineLatest([
+        this.vaultService.keyPair$.pipe(filterNil()),
+        this.conversationService.conversation$.pipe(filterNil()),
+      ]).pipe(
+        switchMap(([, conversation]) => {
+          return this.loadMessages(conversation.record.id).pipe(
+            map((messages) => {
+              return {
+                messages,
+              };
+            }),
+          );
+        }),
+      ),
+      // when a message is sent, add it to the list of messages
       (state) =>
-        this.conversationService.selectConversation$.pipe(
-          switchMap((conversationId) =>
-            this.loadMessages(conversationId).pipe(
-              map((messages) => {
+        this.sendMessage$.pipe(
+          switchMap(({ message }) => {
+            if (!message) {
+              return EMPTY;
+            }
+            return this.sendMessage(message).pipe(
+              map(() => {
                 return {
-                  conversations: {
-                    ...state().conversations,
-                    [conversationId]: messages,
-                  },
+                  messages: state().messages,
                 };
               }),
-            ),
-          ),
+            );
+          }),
         ),
     ],
   });
 
   // selectors
-  public readonly messages = computed(() => {
-    const conversationId = this.conversationService.conversation()?.record.id;
-    if (!conversationId) {
-      return [];
-    }
-    const messages = this.state().conversations[conversationId];
-    return messages || [];
-  });
+  public readonly messages = this.state.messages;
+  public readonly messages$ = toObservable(this.messages);
 
   // helper methods
   private fetchMessages(
@@ -128,11 +141,23 @@ export class MessageService {
     );
   }
 
-  private sendMessage(
-    message: string,
-    conversationId: string,
-  ): Observable<MessagesRecord> {
-    console.log(message, conversationId);
-    return from(this.pbMessagesCollection.create());
+  private sendMessage(message: string): Observable<void> {
+    const conversation = this.conversationService.conversation();
+    if (!conversation) {
+      throw new Error('No conversation selected');
+    }
+
+    return from(
+      this.openAi.chat.completions.create({
+        messages: [{ role: 'user', content: message }],
+        model: 'davinci',
+        metadata: {
+          cognos: {
+            agentSlug: 'simple-assistant',
+            conversationId: conversation.record.id,
+          },
+        },
+      }),
+    );
   }
 }
