@@ -4,7 +4,7 @@ import { environment } from '@environments/environment';
 
 const openAiFactory = () => {
   return new OpenAI({
-    baseURL: environment.pocketbaseBaseUrl,
+    baseURL: `${environment.pocketbaseBaseUrl}/v1`,
     apiKey: environment.openaiApiKey,
     dangerouslyAllowBrowser: true,
   });
