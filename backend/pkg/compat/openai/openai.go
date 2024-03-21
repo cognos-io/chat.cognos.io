@@ -71,7 +71,6 @@ func EchoHandler(
 		if req.Metadata.Cognos.ConversationID == "" {
 			return apis.NewBadRequestError("Conversation ID is required", nil)
 		}
-		// TODO(ewan): Add more validation for the incoming request
 
 		// Get the public key of the conversation
 		receiverPublicKey, err := keyPairRepo.ConversationPublicKey(
