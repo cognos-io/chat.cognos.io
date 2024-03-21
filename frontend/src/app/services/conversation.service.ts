@@ -1,4 +1,4 @@
-import { Injectable, computed, effect, inject } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 
 import PocketBase from 'pocketbase';
 
@@ -60,16 +60,7 @@ export class ConversationService {
   private readonly pbConversationPublicKeysCollection = 'conversation_public_keys';
   private readonly pbConversationSecretKeyCollection = 'conversation_secret_keys';
 
-  // Need to try decrypting conversation data when we have a key pair.
-  // Don't know a better way to do this unfortunately
-  private readonly onKeyPairChange = effect(() => {
-    if (this.vaultService.keyPair()) {
-      this._keyPairChanged$.next();
-    }
-  });
-
   // sources
-  private readonly _keyPairChanged$ = new Subject<void>();
   readonly selectConversation$ = new Subject<string>(); // conversationId
   readonly newConversation$ = new Subject<ConversationData>();
   readonly filter$ = new Subject<string>();
@@ -120,7 +111,7 @@ export class ConversationService {
         }),
       ),
       // When the user's key pair changes, reload the conversations
-      this._keyPairChanged$.pipe(
+      this.vaultService.keyPair$.pipe(
         switchMap(() => this.fetchConversations()),
         map((conversations) => {
           return { conversations };
