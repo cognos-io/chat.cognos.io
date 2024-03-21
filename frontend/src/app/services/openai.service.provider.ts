@@ -6,6 +6,7 @@ const openAiFactory = () => {
   return new OpenAI({
     baseURL: environment.pocketbaseBaseUrl,
     apiKey: environment.openaiApiKey,
+    dangerouslyAllowBrowser: true,
   });
 };
 
