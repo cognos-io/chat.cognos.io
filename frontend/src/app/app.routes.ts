@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './guards/auth.guard';
+import { messageResolver } from './resolvers/message.resolver';
 
 export const routes: Routes = [
   {
@@ -15,6 +16,9 @@ export const routes: Routes = [
           import(
             './components/chat/conversation-detail/conversation-detail.component'
           ).then((m) => m.ConversationDetailComponent),
+        resolve: {
+          messages: messageResolver,
+        },
       },
     ],
   },
