@@ -1,5 +1,9 @@
 <div class="message-list-wrapper">
   @for (i of messages; track i) {
     <app-message-list-item></app-message-list-item>
+  } @empty {
+    <div class="empty-message">
+      <p>No messages yet</p>
+    </div>
   }
 </div>

@@ -10,9 +10,14 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
   styles: `
     .message-list-wrapper {
       padding: 1rem 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
     }
   `,
 })
 export class MessageListComponent {
-  public messages = new Array(100).fill(0).map((_, i) => `Message ${i}`);
+  public messages = [];
 }
