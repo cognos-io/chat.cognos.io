@@ -1,8 +1,8 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 
 import PocketBase, { ListResult } from 'pocketbase';
 
-import { Observable, Subject, from, switchMap } from 'rxjs';
+import { Observable, Subject, from, map, switchMap } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -41,19 +41,39 @@ export class MessageService {
   public readonly sendMessage$ = new Subject<{
     message?: string;
   }>();
-  private readonly selectedConversation$ = new Subject<string>();
-  // When the conversation changes, load the messages for the new conversation
-  private readonly messagesForConversation$ = this.selectedConversation$.pipe(
-    switchMap((conversationId) => this.fetchMessages(conversationId)),
-  );
 
   // state
   private readonly state = signalSlice({
     initialState,
-    sources: [],
+    sources: [
+      // when the conversation changes, load the messages
+      (state) =>
+        this.conversationService.selectConversation$.pipe(
+          switchMap((conversationId) =>
+            this.loadMessages(conversationId).pipe(
+              map((messages) => {
+                return {
+                  conversations: {
+                    ...state().conversations,
+                    [conversationId]: messages,
+                  },
+                };
+              }),
+            ),
+          ),
+        ),
+    ],
   });
 
   // selectors
+  public readonly messages = computed(() => {
+    const conversationId = this.conversationService.conversation()?.record.id;
+    if (!conversationId) {
+      return [];
+    }
+    const messages = this.state().conversations[conversationId];
+    return messages || [];
+  });
 
   // helper methods
   private fetchMessages(
@@ -78,15 +98,34 @@ export class MessageService {
       throw new Error('No conversation selected');
     }
 
-    const decryptedData = this.cryptoService.openSealedBox(
-      Base64.toUint8Array(base64EncryptedData),
-      conversation.keyPair,
-    );
+    try {
+      const decryptedData = this.cryptoService.openSealedBox(
+        Base64.toUint8Array(base64EncryptedData),
+        conversation.keyPair,
+      );
 
-    return {
-      record,
-      decryptedData: parseMessageData(decryptedData),
-    };
+      return {
+        record,
+        decryptedData: parseMessageData(decryptedData),
+      };
+    } catch (error) {
+      // Show to the user the message failed to decrypt
+      console.error('Message decryption failed', error);
+      return {
+        record,
+        decryptedData: {
+          content: 'Failed to decrypt message',
+        },
+      };
+    }
+  }
+
+  private loadMessages(conversationId: string): Observable<Message[]> {
+    return this.fetchMessages(conversationId).pipe(
+      map((response) => {
+        return response.items.map((record) => this.decryptMessage(record));
+      }),
+    );
   }
 
   private sendMessage(
