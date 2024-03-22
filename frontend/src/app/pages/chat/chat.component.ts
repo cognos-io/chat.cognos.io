@@ -43,8 +43,8 @@ export class ChatComponent implements OnDestroy {
 
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly dialog = inject(MatDialog);
-  private readonly router = inject(Router);
 
+  readonly router = inject(Router);
   readonly conversationService = inject(ConversationService);
   readonly vaultService = inject(VaultService);
 

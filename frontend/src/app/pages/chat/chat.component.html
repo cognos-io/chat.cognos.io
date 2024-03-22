@@ -17,15 +17,7 @@
       role="navigation"
     >
       <div class="sidebar">
-        <button
-          mat-button
-          color="primary"
-          (click)="
-            conversationService.newConversation$.next({
-              title: 'new conversation'
-            })
-          "
-        >
+        <button mat-button color="primary" (click)="router.navigateByUrl('')">
           <mat-icon fontSet="bi" fontIcon="bi-plus-circle-fill"></mat-icon>
           <ng-container i18n="button|action to create a new conversation">
             New conversation
