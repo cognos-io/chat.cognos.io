@@ -4,6 +4,7 @@
     "cognos",
     "datetime",
     "ewan",
+    "keypair",
     "libsodium",
     "oidc",
     "openai",
