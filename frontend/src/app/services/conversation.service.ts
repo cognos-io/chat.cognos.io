@@ -8,7 +8,6 @@ import {
   Observable,
   Subject,
   catchError,
-  filter,
   forkJoin,
   from,
   map,
@@ -39,13 +38,13 @@ export const UserSecretKeyNotFoundError = new Error('User secret key not found')
 
 interface ConversationState {
   conversations: Array<Conversation>;
-  selectedConversation: Conversation | null;
+  selectedConversationId: string;
   filter: string;
 }
 
 const initialState: ConversationState = {
   conversations: [],
-  selectedConversation: null,
+  selectedConversationId: '',
   filter: '',
 };
 
@@ -91,21 +90,13 @@ export class ConversationService {
           ),
         ),
       // When selectConversation emits, fetch the conversation details
-      (state) =>
-        this.selectConversation$.pipe(
-          filter(
-            (conversationId) =>
-              conversationId !== state().selectedConversation?.record.id,
-          ),
-          map((conversationId) => {
-            const conversation = state().conversations.find(
-              (conversation) => conversation.record.id === conversationId,
-            );
-            return {
-              selectedConversation: conversation,
-            };
-          }),
-        ),
+      this.selectConversation$.pipe(
+        map((conversationId) => {
+          return {
+            selectedConversationId: conversationId,
+          };
+        }),
+      ),
       // When filter emits, apply the filter
       this.filter$.pipe(
         map((filter) => {
@@ -129,16 +120,16 @@ export class ConversationService {
                 return EMPTY;
               }),
               map(() => {
-                let selectedConversation = state().selectedConversation;
-                // deselect the conversation if it's the one being deleted
-                if (selectedConversation?.record.id === conversationId) {
-                  selectedConversation = null;
+                let selectedConversationId = state().selectedConversationId;
+                if (conversationId === selectedConversationId) {
+                  selectedConversationId = '';
                 }
+
                 return {
                   conversations: state().conversations.filter(
                     (conversation) => conversation.record.id !== conversationId,
                   ),
-                  selectedConversation,
+                  selectedConversationId,
                 };
               }),
             ),
@@ -165,6 +156,12 @@ export class ConversationService {
             // Sort the conversations by the most recently updated
             return b.record.updated.localeCompare(a.record.created);
           });
+        },
+        selectedConversation: () => {
+          const selectedConversationId = state.selectedConversationId();
+          return state
+            .conversations()
+            .find((conversation) => conversation.record.id === selectedConversationId);
         },
       };
     },

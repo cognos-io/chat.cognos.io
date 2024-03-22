@@ -3,10 +3,9 @@ import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase, { ListResult } from 'pocketbase';
 
-import { EMPTY, Observable, Subject, combineLatest, from, map, switchMap } from 'rxjs';
+import { EMPTY, Observable, Subject, from, map, switchMap } from 'rxjs';
 
 import { Base64 } from 'js-base64';
-import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
 import OpenAI from 'openai';
 
@@ -19,7 +18,6 @@ import {
 
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
-import { VaultService } from './vault.service';
 
 interface MessageState {
   messages: Message[];
@@ -36,7 +34,6 @@ export class MessageService {
   private readonly pb: TypedPocketBase = inject(PocketBase);
   private readonly cryptoService = inject(CryptoService);
   private readonly conversationService = inject(ConversationService);
-  private readonly vaultService = inject(VaultService);
   private readonly openAi = inject(OpenAI);
 
   private readonly pbMessagesCollection = this.pb.collection('messages');
@@ -51,11 +48,11 @@ export class MessageService {
     initialState,
     sources: [
       // messages need a key pair, and a conversation
-      combineLatest([
-        this.vaultService.keyPair$.pipe(filterNil()),
-        this.conversationService.conversation$.pipe(filterNil()),
-      ]).pipe(
-        switchMap(([, conversation]) => {
+      this.conversationService.conversation$.pipe(
+        switchMap((conversation) => {
+          if (!conversation) {
+            return EMPTY;
+          }
           return this.loadMessages(conversation.record.id).pipe(
             map((messages) => {
               return {
