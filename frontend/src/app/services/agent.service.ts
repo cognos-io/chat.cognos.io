@@ -23,9 +23,9 @@ export class AgentService {
 
   // selectors
   public selectedAgent = signal<Agent>({
-    id: 'openai:gpt-3.5-turbo',
-    name: 'Open AI - GPT 3.5 Turbo',
-    slug: 'open-ai---gpt-35-turbo',
+    id: 'cognos:simple-assistant',
+    name: 'Cognos - A simple assistant',
+    slug: 'cognos--simple-assistant',
     description: 'This is the first agent',
   });
 }

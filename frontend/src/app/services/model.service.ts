@@ -23,8 +23,9 @@ export class ModelService {
 
   // selectors
   public selectedModel = signal<Model>({
-    name: 'Model 1',
-    slug: 'model-1',
+    id: 'openai:gpt-3.5-turbo',
+    name: 'Open AI - GPT 3.5 Turbo',
+    slug: 'open-ai---gpt-35-turbo',
     description: 'This is the first model',
   });
 }
