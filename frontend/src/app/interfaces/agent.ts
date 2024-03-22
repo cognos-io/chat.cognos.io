@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const Agent = z.object({
+  id: z.string(),
   name: z.string(),
   slug: z.string(),
   description: z.string(),
