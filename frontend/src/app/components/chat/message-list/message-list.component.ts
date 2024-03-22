@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
+
+import { Message } from '@app/interfaces/message';
 
 import { MessageListItemComponent } from '../message-list-item/message-list-item.component';
 
@@ -19,5 +21,5 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
   `,
 })
 export class MessageListComponent {
-  public messages = [];
+  @Input() messages: Message[] = [];
 }

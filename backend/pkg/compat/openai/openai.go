@@ -191,8 +191,6 @@ func EchoHandler(
 		}
 
 		// Encrypt and persist the response
-		logger.Info(plainTextResponseMessage)
-
 		responseMessage := chat.PlainTextMessage{
 			OwnerID:        owner.ID,
 			ConversationID: req.Metadata.Cognos.ConversationID,
