@@ -3,6 +3,8 @@ import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 
+import { provideMarkdown } from 'ngx-markdown';
+
 import { routes } from './app.routes';
 import { IconService } from './services/icon.service';
 import { provideOpenAi } from './services/openai.service.provider';
@@ -12,6 +14,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes, withComponentInputBinding()),
     provideAnimationsAsync(),
+    provideMarkdown(),
     providePocketbase(),
     provideOpenAi(),
     IconService,
