@@ -69,7 +69,7 @@ export class MessageService {
       (state) =>
         this.sendMessage$.pipe(
           switchMap(({ message }) => {
-            if (!message) {
+            if (message === undefined) {
               return EMPTY;
             }
             return this.sendMessage(message).pipe(
@@ -150,11 +150,11 @@ export class MessageService {
     return from(
       this.openAi.chat.completions.create({
         messages: [{ role: 'user', content: message }],
-        model: 'davinci',
+        model: 'gpt-3.5-turbo',
         metadata: {
           cognos: {
-            agentSlug: 'simple-assistant',
-            conversationId: conversation.record.id,
+            agent_slug: 'simple-assistant',
+            conversation_id: conversation.record.id,
           },
         },
       }),
