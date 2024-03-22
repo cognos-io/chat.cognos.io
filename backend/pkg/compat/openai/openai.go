@@ -107,69 +107,87 @@ func EchoHandler(
 			)
 		}
 
-		// Forward the request to OpenAI
-		stream, err := openaiClient.CreateChatCompletionStream(
-			c.Request().Context(),
-			req.ChatCompletionRequest,
-		)
-		if err != nil {
-			return apis.NewApiError(
-				http.StatusInternalServerError,
-				"Failed to create chat completion stream",
-				err,
-			)
-		}
-		defer stream.Close()
-
 		plainTextResponseMessage := ""
 
-		// Set the headers for the response
-		c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
-		c.Response().Header().Set(echo.HeaderConnection, "keep-alive")
-		c.Response().Header().Set(echo.HeaderCacheControl, "no-cache")
+		if req.ChatCompletionRequest.Stream {
+			// Forward the request to OpenAI
+			stream, err := openaiClient.CreateChatCompletionStream(
+				c.Request().Context(),
+				req.ChatCompletionRequest,
+			)
+			if err != nil {
+				return apis.NewApiError(
+					http.StatusInternalServerError,
+					"Failed to create chat completion stream",
+					err,
+				)
+			}
+			defer stream.Close()
 
-		respWriter := c.Response().Unwrap()
+			// Set the headers for the response
+			c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+			c.Response().Header().Set(echo.HeaderConnection, "keep-alive")
+			c.Response().Header().Set(echo.HeaderCacheControl, "no-cache")
 
-		// Gather the response chunks
-		for {
-			chunk, err := stream.Recv()
-			if errors.Is(err, io.EOF) {
-				// stream has finished
-				_, err = respWriter.Write([]byte("data: [DONE]\n\n"))
+			respWriter := c.Response().Unwrap()
+
+			// Gather the response chunks
+			for {
+				chunk, err := stream.Recv()
+				if errors.Is(err, io.EOF) {
+					// stream has finished
+					_, err = respWriter.Write([]byte("data: [DONE]\n\n"))
+					if err != nil {
+						logger.Error("Failed to write error to response", "err", err)
+						return err
+					}
+					c.Response().Flush()
+					break
+				}
+
 				if err != nil {
-					logger.Error("Failed to write error to response", "err", err)
+					// stream has errored
+					logger.Error("Failed to read from stream", "err", err)
 					return err
 				}
-				c.Response().Flush()
-				break
-			}
 
+				// Construct our plaintext response that will be encrypted and saved
+				plainTextResponseMessage += chunk.Choices[0].Delta.Content
+
+				// Re-marshal the response to send to the client
+				marshalledChunk, err := json.Marshal(chunk)
+				if err != nil {
+					// handle error
+					logger.Error("Failed to marshal chunk", "err", err)
+					return err
+				}
+
+				_, err = respWriter.Write(
+					append(append(headerData, marshalledChunk...), newLine...),
+				)
+				if err != nil {
+					logger.Error("Failed to write to response", "err", err)
+					return err
+				}
+
+				c.Response().Flush()
+			}
+		} else {
+			// Forward the request to OpenAI
+			resp, err := openaiClient.CreateChatCompletion(
+				c.Request().Context(),
+				req.ChatCompletionRequest,
+			)
 			if err != nil {
-				// stream has errored
-				logger.Error("Failed to read from stream", "err", err)
-				return err
+				return apis.NewApiError(
+					http.StatusInternalServerError,
+					"Failed to create chat completion",
+					err,
+				)
 			}
 
 			// Construct our plaintext response that will be encrypted and saved
-			plainTextResponseMessage += chunk.Choices[0].Delta.Content
-
-			// Re-marshal the response to send to the client
-			marshalledChunk, err := json.Marshal(chunk)
-			if err != nil {
-				// handle error
-				logger.Error("Failed to marshal chunk", "err", err)
-				return err
-			}
-
-			_, err = respWriter.Write(
-				append(append(headerData, marshalledChunk...), newLine...),
-			)
-			if err != nil {
-				logger.Error("Failed to write to response", "err", err)
-				return err
-			}
-
-			c.Response().Flush()
+			plainTextResponseMessage = resp.Choices[0].Message.Content
 		}
 
 		// Encrypt and persist the response

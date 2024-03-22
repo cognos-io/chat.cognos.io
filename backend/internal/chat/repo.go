@@ -71,7 +71,8 @@ func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 	record := models.NewRecord(r.collection)
 	form := forms.NewRecordUpsert(r.app, record)
 	err = form.LoadData(map[string]any{
-		"data": base64EncryptedMessage,
+		"data":         base64EncryptedMessage,
+		"conversation": message.ConversationID,
 	})
 	if err != nil {
 		return err
