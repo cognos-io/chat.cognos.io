@@ -2,7 +2,7 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
@@ -17,7 +17,6 @@ import { Subject, takeUntil } from 'rxjs';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 
-import { VaultPasswordDialogComponent } from '../../components/vault-password-dialog/vault-password-dialog.component';
 import { ConversationService } from '../../services/conversation.service';
 import { VaultService } from '../../services/vault.service';
 
@@ -46,8 +45,6 @@ export class ChatComponent implements OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
 
-  private dialogRef: MatDialogRef<VaultPasswordDialogComponent> | undefined;
-
   readonly conversationService = inject(ConversationService);
   readonly vaultService = inject(VaultService);
 
@@ -58,16 +55,6 @@ export class ChatComponent implements OnDestroy {
       .observe([Breakpoints.Handset])
       .pipe(takeUntilDestroyed())
       .subscribe((result) => this.isMobile.set(result.matches));
-    // show the vault password dialog if we don't have a key pair
-    this.vaultService.keyPair$.pipe(takeUntilDestroyed()).subscribe((keyPair) => {
-      if (keyPair) {
-        this.dialogRef?.close();
-      } else {
-        this.dialogRef = this.dialog.open(VaultPasswordDialogComponent, {
-          disableClose: true,
-        });
-      }
-    });
   }
 
   ngOnDestroy(): void {
