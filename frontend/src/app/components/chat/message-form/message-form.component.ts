@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, PLATFORM_ID, inject } from '@angular/core';
+import { Component, OnDestroy, PLATFORM_ID, inject } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -11,7 +11,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
+import { EMPTY, ReplaySubject, switchMap, takeUntil } from 'rxjs';
+
 import { AgentService } from '@app/services/agent.service';
+import { ConversationService } from '@app/services/conversation.service';
 import { MessageService } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 
@@ -31,10 +34,12 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
   templateUrl: './message-form.component.html',
   styleUrl: './message-form.component.scss',
 })
-export class MessageFormComponent {
+export class MessageFormComponent implements OnDestroy {
   private _fb = inject(FormBuilder);
   private _bottomSheet = inject(MatBottomSheet);
   private _platformId = inject(PLATFORM_ID);
+  private _conversationService = inject(ConversationService);
+  private destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
 
   isMac = false;
   public readonly messageService = inject(MessageService);
@@ -54,6 +59,11 @@ export class MessageFormComponent {
     }
   }
 
+  ngOnDestroy(): void {
+    this.destroyed$.next(true);
+    this.destroyed$.complete();
+  }
+
   openAgentSelector() {
     this._bottomSheet.open(AgentSelectorComponent);
   }
@@ -63,8 +73,23 @@ export class MessageFormComponent {
   }
 
   sendMessage() {
-    this.messageService.sendMessage$.next(this.messageForm.value);
-    this.messageForm.reset();
+    this._conversationService.conversation$
+      .pipe(
+        takeUntil(this.destroyed$),
+        switchMap((conversation) => {
+          if (!conversation) {
+            this._conversationService.newConversation$.next({
+              title: 'New Conversation',
+            });
+            return EMPTY;
+          }
+          this.messageService.sendMessage$.next(this.messageForm.value);
+          return this.messageService.messages$;
+        }),
+      )
+      .subscribe(() => {
+        this.messageForm.reset();
+      });
   }
 
   onKeydown(event: KeyboardEvent) {
