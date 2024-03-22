@@ -2,9 +2,10 @@ import { Component, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 
-import { map } from 'rxjs';
+import { EMPTY, map, switchMap } from 'rxjs';
 
 import { ConversationService } from '@app/services/conversation.service';
+import { VaultService } from '@app/services/vault.service';
 
 import { MessageFormComponent } from '../message-form/message-form.component';
 import { MessageListComponent } from '../message-list/message-list.component';
@@ -18,20 +19,28 @@ import { MessageListComponent } from '../message-list/message-list.component';
 })
 export class ConversationDetailComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly vaultService = inject(VaultService);
   private readonly conversationService = inject(ConversationService);
 
   constructor() {
-    this.route.paramMap
+    this.vaultService.keyPair$
       .pipe(
-        map((params) => {
-          const conversationId = params.get('conversationId');
-          if (!conversationId) {
-            return;
+        switchMap((keyPair) => {
+          if (!keyPair) {
+            return EMPTY;
           }
-          this.conversationService.selectConversation$.next(conversationId);
+          return this.route.paramMap.pipe(
+            map((params) => {
+              const conversationId = params.get('conversationId');
+              if (!conversationId) {
+                return;
+              }
+              this.conversationService.selectConversation$.next(conversationId);
+            }),
+          );
         }),
+        takeUntilDestroyed(),
       )
-      .pipe(takeUntilDestroyed())
       .subscribe();
   }
 }

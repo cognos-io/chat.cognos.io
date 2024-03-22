@@ -8,7 +8,6 @@ import {
   Observable,
   Subject,
   catchError,
-  combineLatest,
   filter,
   forkJoin,
   from,
@@ -19,7 +18,6 @@ import {
 } from 'rxjs';
 
 import { Base64 } from 'js-base64';
-import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
 
 import { ignorePocketbase404 } from '@app/operators/ignore-404';
@@ -94,27 +92,18 @@ export class ConversationService {
         ),
       // When selectConversation emits, fetch the conversation details
       (state) =>
-        combineLatest([
-          this.vaultService.keyPair$.pipe(filterNil()),
-          this.selectConversation$.pipe(
-            filter(
-              (conversationId) =>
-                conversationId !== state().selectedConversation?.record.id,
-            ),
+        this.selectConversation$.pipe(
+          filter(
+            (conversationId) =>
+              conversationId !== state().selectedConversation?.record.id,
           ),
-        ]).pipe(
-          switchMap(([, conversationId]) => {
-            return this.fetchConversationRecord(conversationId).pipe(
-              switchMap((record) => {
-                return this.fetchConversation(record).pipe(
-                  map((conversation) => {
-                    return {
-                      selectedConversation: conversation,
-                    };
-                  }),
-                );
-              }),
+          map((conversationId) => {
+            const conversation = state().conversations.find(
+              (conversation) => conversation.record.id === conversationId,
             );
+            return {
+              selectedConversation: conversation,
+            };
           }),
         ),
       // When filter emits, apply the filter
