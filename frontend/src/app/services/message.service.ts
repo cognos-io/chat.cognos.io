@@ -3,7 +3,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase, { ListResult } from 'pocketbase';
 
-import { EMPTY, Observable, Subject, from, map, switchMap } from 'rxjs';
+import { EMPTY, Observable, Subject, from, map, of, switchMap } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -51,7 +51,9 @@ export class MessageService {
       this.conversationService.conversation$.pipe(
         switchMap((conversation) => {
           if (!conversation) {
-            return EMPTY;
+            return of({
+              messages: [],
+            });
           }
           return this.loadMessages(conversation.record.id).pipe(
             map((messages) => {
