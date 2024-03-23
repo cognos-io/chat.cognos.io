@@ -5,15 +5,12 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-type ProxyConfig struct {
-	BaseURL                string // Base URL of the upstream server
-	CompletePath           string // Path for the `complete` endpoint
-	StreamCompletePath     string // Path for the `stream-complete` endpoint
-	ChatCompletePath       string // Path for the `chat-complete` endpoint
-	StreamChatCompletePath string // Path for the `stream-chat-complete` endpoint
-}
-
+// Upstream is an interface that defines the methods that an upstream server must implement
 type Upstream interface {
+	// LookupModel maps our internal model names to the upstream model names
+	LookupModel(internalModel string) (string, error)
+	// ChatCompletion sends a request to the upstream server to complete a chat prompt
+	// and returns the response
 	ChatCompletion(
 		c echo.Context,
 		request openai.ChatCompletionRequest,

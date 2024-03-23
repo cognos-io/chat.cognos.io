@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
@@ -48,7 +49,7 @@ func NewError(code int, message string) oai.ErrorResponse {
 func EchoHandler(
 	config *config.APIConfig,
 	logger *slog.Logger,
-	openaiClient *oai.Client,
+	upstreamRepo proxy.UpstreamRepo,
 	messageRepo chat.MessageRepo,
 	keyPairRepo auth.KeyPairRepo,
 ) echo.HandlerFunc {
@@ -75,7 +76,18 @@ func EchoHandler(
 			return apis.NewBadRequestError("Agent ID is required", nil)
 		}
 		// Extract the upstream based on the model
-		upstream, err := proxy.ParseModelName(config, req.ChatCompletionRequest.Model)
+		modelParts := strings.Split(req.Model, "")
+		if len(modelParts) != 2 {
+			return apis.NewBadRequestError("Invalid model name", nil)
+		}
+		provider := modelParts[0]
+		model := modelParts[1]
+
+		upstream, err := upstreamRepo.Provider(provider)
+		if err != nil {
+			return apis.NewBadRequestError("Invalid provider", err)
+		}
+		req.Model, err = upstream.LookupModel(model)
 		if err != nil {
 			return apis.NewBadRequestError("Invalid model name", err)
 		}

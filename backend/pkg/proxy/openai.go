@@ -8,10 +8,14 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/sashabaranov/go-openai"
+)
+
+var (
+	headerData = []byte("data: ")
+	newLine    = []byte("\n\n")
 )
 
 type OpenAI struct {
@@ -19,10 +23,17 @@ type OpenAI struct {
 	logger *slog.Logger
 }
 
-var (
-	headerData = []byte("data: ")
-	newLine    = []byte("\n\n")
-)
+func (o *OpenAI) LookupModel(
+	internalModel string,
+) (string, error) {
+	// Map our internal model names to the upstream model names
+	switch internalModel {
+	case "gpt-3.5-turbo":
+		return openai.GPT3Dot5Turbo, nil
+	default:
+		return "", fmt.Errorf("invalid model name: %s", internalModel)
+	}
+}
 
 func (o *OpenAI) ChatCompletion(
 	c echo.Context,
@@ -112,23 +123,12 @@ func (o *OpenAI) ChatCompletion(
 	return plainTextResponseMessage, nil
 }
 
-func NewOpenAI(config *config.APIConfig, model string) (*OpenAI, error) {
-	client := openai.NewClient(config.OpenAIAPIKey)
-
-	var openAIModel string
-
-	switch model {
-	case "gpt-3.5-turbo":
-		openAIModel = openai.GPT3Dot5Turbo
-	default:
-		return nil, fmt.Errorf("invalid model name: %s", model)
-	}
-
-	fmt.Println(
-		openAIModel,
-	) // use the variable to avoid the "declared and not used" error
-
+func NewOpenAI(
+	client *openai.Client,
+	logger *slog.Logger,
+) (*OpenAI, error) {
 	return &OpenAI{
+		logger: logger,
 		client: client,
 	}, nil
 }
