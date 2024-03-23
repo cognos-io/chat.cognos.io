@@ -7,7 +7,6 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/idempotency"
-	"github.com/cognos-io/chat.cognos.io/backend/internal/middleware"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/compat/openai"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -29,12 +28,12 @@ func addPocketBaseRoutes(
 	e.Router.POST(
 		"/v1/chat/completions",
 		openai.EchoHandler(
+			config,
 			logger,
 			openaiClient,
 			messageRepo,
 			keyPairRepo,
 		),
 		apis.RequireRecordAuth(),
-		middleware.Idempotency(idempotencyRepo),
 	)
 }

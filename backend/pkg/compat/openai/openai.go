@@ -4,22 +4,17 @@
 package openai
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"log/slog"
 	"net/http"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
+	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/apis"
 	oai "github.com/sashabaranov/go-openai"
-)
-
-var (
-	headerData = []byte("data: ")
-	newLine    = []byte("\n\n")
 )
 
 // Metadata augments the OpenAI request with additional metadata
@@ -27,6 +22,7 @@ var (
 type Metadata struct {
 	Cognos struct {
 		ConversationID string `json:"conversation_id,omitempty"`
+		AgentID        string `json:"agent_id,omitempty"`
 	} `json:"cognos,omitempty"`
 }
 
@@ -50,12 +46,16 @@ func NewError(code int, message string) oai.ErrorResponse {
 }
 
 func EchoHandler(
+	config *config.APIConfig,
 	logger *slog.Logger,
 	openaiClient *oai.Client,
 	messageRepo chat.MessageRepo,
 	keyPairRepo auth.KeyPairRepo,
 ) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// -------------------------------------------------------
+		// 1. Get all the information we need from the request
+		// -------------------------------------------------------
 		owner := auth.ExtractUser(c)
 		if owner == nil {
 			return apis.NewUnauthorizedError("User not authenticated", nil)
@@ -71,7 +71,22 @@ func EchoHandler(
 		if req.Metadata.Cognos.ConversationID == "" {
 			return apis.NewBadRequestError("Conversation ID is required", nil)
 		}
+		if req.Metadata.Cognos.AgentID == "" {
+			return apis.NewBadRequestError("Agent ID is required", nil)
+		}
+		// Extract the upstream based on the model
+		upstream, err := proxy.ParseModelName(config, req.ChatCompletionRequest.Model)
+		if err != nil {
+			return apis.NewBadRequestError("Invalid model name", err)
+		}
+		// Check the user has permission to write to this conversation
 
+		// Lookup the agent
+		// Check user has permission to access the agent
+
+		// -------------------------------------------------------
+		// 2. Process the request
+		// -------------------------------------------------------
 		// Get the public key of the conversation
 		receiverPublicKey, err := keyPairRepo.ConversationPublicKey(
 			req.Metadata.Cognos.ConversationID,
@@ -107,90 +122,27 @@ func EchoHandler(
 			)
 		}
 
-		plainTextResponseMessage := ""
-
-		if req.ChatCompletionRequest.Stream {
-			// Forward the request to OpenAI
-			stream, err := openaiClient.CreateChatCompletionStream(
-				c.Request().Context(),
-				req.ChatCompletionRequest,
+		// -------------------------------------------------------
+		// 3. Use the selected model and agent to generate the response
+		// -------------------------------------------------------
+		plainTextResponseMessage, err := upstream.ChatCompletion(
+			c,
+			req.ChatCompletionRequest,
+		)
+		if err != nil {
+			if errors.Is(err, &apis.ApiError{}) {
+				return err
+			}
+			return apis.NewApiError(
+				http.StatusInternalServerError,
+				"Failed to process request",
+				err,
 			)
-			if err != nil {
-				return apis.NewApiError(
-					http.StatusInternalServerError,
-					"Failed to create chat completion stream",
-					err,
-				)
-			}
-			defer stream.Close()
-
-			// Set the headers for the response
-			c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
-			c.Response().Header().Set(echo.HeaderConnection, "keep-alive")
-			c.Response().Header().Set(echo.HeaderCacheControl, "no-cache")
-
-			respWriter := c.Response().Unwrap()
-
-			// Gather the response chunks
-			for {
-				chunk, err := stream.Recv()
-				if errors.Is(err, io.EOF) {
-					// stream has finished
-					_, err = respWriter.Write([]byte("data: [DONE]\n\n"))
-					if err != nil {
-						logger.Error("Failed to write error to response", "err", err)
-						return err
-					}
-					c.Response().Flush()
-					break
-				}
-
-				if err != nil {
-					// stream has errored
-					logger.Error("Failed to read from stream", "err", err)
-					return err
-				}
-
-				// Construct our plaintext response that will be encrypted and saved
-				plainTextResponseMessage += chunk.Choices[0].Delta.Content
-
-				// Re-marshal the response to send to the client
-				marshalledChunk, err := json.Marshal(chunk)
-				if err != nil {
-					// handle error
-					logger.Error("Failed to marshal chunk", "err", err)
-					return err
-				}
-
-				_, err = respWriter.Write(
-					append(append(headerData, marshalledChunk...), newLine...),
-				)
-				if err != nil {
-					logger.Error("Failed to write to response", "err", err)
-					return err
-				}
-
-				c.Response().Flush()
-			}
-		} else {
-			// Forward the request to OpenAI
-			resp, err := openaiClient.CreateChatCompletion(
-				c.Request().Context(),
-				req.ChatCompletionRequest,
-			)
-			if err != nil {
-				return apis.NewApiError(
-					http.StatusInternalServerError,
-					"Failed to create chat completion",
-					err,
-				)
-			}
-
-			// Construct our plaintext response that will be encrypted and saved
-			plainTextResponseMessage = resp.Choices[0].Message.Content
 		}
 
-		// Encrypt and persist the response
+		// -------------------------------------------------------
+		// 4. Encrypt and persist the response
+		// -------------------------------------------------------
 		responseMessage := chat.PlainTextMessage{
 			OwnerID:        owner.ID,
 			ConversationID: req.Metadata.Cognos.ConversationID,

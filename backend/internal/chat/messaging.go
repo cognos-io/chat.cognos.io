@@ -2,6 +2,8 @@ package chat
 
 type PlainTextMessage struct {
 	OwnerID        string `json:"owner_id,omitempty"`
+	AgentID        string `json:"agent_id,omitempty"`
+	ModelID        string `json:"model_id,omitempty"`
 	ConversationID string `json:"conversation_id,omitempty"`
 	Content        string `json:"content"`
 }
