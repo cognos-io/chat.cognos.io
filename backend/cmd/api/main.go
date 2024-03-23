@@ -12,6 +12,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/idempotency"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
@@ -44,6 +45,7 @@ func bindAppHooks(app core.App, config *config.APIConfig, openaiClient *oai.Clie
 		// Separate into collection services
 		messageRepo := chat.NewPocketBaseMessageRepo(app)
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
+		idempotencyRepo := idempotency.NewPocketBaseIdempotencyRepo(app)
 
 		addPocketBaseRoutes(
 			e,
@@ -53,6 +55,7 @@ func bindAppHooks(app core.App, config *config.APIConfig, openaiClient *oai.Clie
 			openaiClient,
 			messageRepo,
 			keyPairRepo,
+			idempotencyRepo,
 		)
 
 		// Add SoftDelete hook
