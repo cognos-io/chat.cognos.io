@@ -61,15 +61,15 @@ export class AuthService implements OnDestroy {
         }),
       ),
       this.$user.pipe(
-        switchMap((response: AuthUser) =>
-          this.fetchOryId(response?.['id']).pipe(
+        switchMap((response: AuthUser) => {
+          return this.fetchOryId(response?.['id']).pipe(
             map((oryId: string) => {
               return {
                 oryId,
               };
             }),
-          ),
-        ),
+          );
+        }),
       ),
       // When login emits, we are authenticating
       this.$userAuthenticating.pipe(
@@ -107,7 +107,9 @@ export class AuthService implements OnDestroy {
   constructor() {
     // Listen for changes in the auth store
     this.storeUnsubscribe = this.pb.authStore.onChange((token, model) => {
-      this.$user.next(model);
+      if (this.pb.authStore.isValid) {
+        this.$user.next(model);
+      }
     }, true);
   }
 
