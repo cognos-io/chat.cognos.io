@@ -14,8 +14,6 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
       padding: 1rem 0;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
       height: 100%;
     }
   `,
