@@ -20,28 +20,33 @@ import { Message } from '@app/interfaces/message';
   ],
   template: `
     @if (message) {
-      <li class="group flex gap-x-4 py-5 w-full">
-        <div
-          class="h-12 w-12 flex-none rounded-full bg-gray-50 flex items-center justify-center"
-        >
-          <mat-icon fontSet="bi" fontIcon="bi-robot"></mat-icon>
-        </div>
-        <div class="flex-auto flex flex-col">
-          <span class="fw-bold mb-2">Message</span>
-          <div class="message">
-            <markdown emoji>
-              {{ message.decryptedData.content }}
-            </markdown>
+      <li class="group flex flex-col gap-x-4 py-5 w-full">
+        <div class="flex items-center gap-x-4">
+          <div
+            class="h-12 w-12 flex-none rounded-full bg-gray-50 flex items-center justify-center"
+          >
+            <mat-icon fontSet="bi" fontIcon="bi-robot"></mat-icon>
           </div>
-          <div class="flex justify-end opacity-0 group-hover:opacity-100">
-            <button
-              mat-icon-button
-              matTooltip="Copy to clipboard"
-              aria-label="Button that copies the message to the clipboard"
-              [cdkCopyToClipboard]="message.decryptedData.content"
-            >
-              <mat-icon fontSet="bi" fontIcon="bi-clipboard"></mat-icon>
-            </button>
+          <span class="fw-bold">Message</span>
+        </div>
+        <div class="flex items-center gap-x-4">
+          <div class="h-12 w-12"></div>
+          <div class="flex-auto flex flex-col">
+            <div class="message">
+              <markdown emoji>
+                {{ message.decryptedData.content }}
+              </markdown>
+            </div>
+            <div class="flex justify-end opacity-0 group-hover:opacity-100">
+              <button
+                mat-icon-button
+                matTooltip="Copy to clipboard"
+                aria-label="Button that copies the message to the clipboard"
+                [cdkCopyToClipboard]="message.decryptedData.content"
+              >
+                <mat-icon fontSet="bi" fontIcon="bi-clipboard"></mat-icon>
+              </button>
+            </div>
           </div>
         </div>
       </li>
