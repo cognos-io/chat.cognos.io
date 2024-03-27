@@ -20,7 +20,7 @@ import { Message } from '@app/interfaces/message';
   ],
   template: `
     @if (message) {
-      <li class="group flex flex-col gap-x-4 py-5 w-full">
+      <li class="group flex flex-col gap-x-4 py-2 w-full">
         <div class="flex items-center gap-x-4">
           <div
             class="h-12 w-12 flex-none rounded-full bg-gray-50 flex items-center justify-center"
@@ -37,17 +37,17 @@ import { Message } from '@app/interfaces/message';
                 {{ message.decryptedData.content }}
               </markdown>
             </div>
-            <div class="flex justify-end opacity-0 group-hover:opacity-100">
-              <button
-                mat-icon-button
-                matTooltip="Copy to clipboard"
-                aria-label="Button that copies the message to the clipboard"
-                [cdkCopyToClipboard]="message.decryptedData.content"
-              >
-                <mat-icon fontSet="bi" fontIcon="bi-clipboard"></mat-icon>
-              </button>
-            </div>
           </div>
+        </div>
+        <div class="flex opacity-0 group-hover:opacity-100">
+          <button
+            mat-icon-button
+            matTooltip="Copy to clipboard"
+            aria-label="Button that copies the message to the clipboard"
+            [cdkCopyToClipboard]="message.decryptedData.content"
+          >
+            <mat-icon fontSet="bi" fontIcon="bi-clipboard"></mat-icon>
+          </button>
         </div>
       </li>
     }
