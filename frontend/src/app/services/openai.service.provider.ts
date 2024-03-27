@@ -24,6 +24,7 @@ const openAiFactory = () => {
     baseURL: `${environment.pocketbaseBaseUrl}/v1`,
     apiKey: '',
     dangerouslyAllowBrowser: true,
+    maxRetries: 0,
   });
 };
 
