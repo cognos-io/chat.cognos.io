@@ -61,6 +61,7 @@
     "pocketbase-typegen": "^1.2.1",
     "postcss": "^8.4.36",
     "prettier": "^3.2.5",
+    "prettier-plugin-tailwindcss": "^0.5.13",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
     "typescript": "~5.2.2",
@@ -90,7 +91,8 @@
     "importOrderSeparation": true,
     "importOrderSortSpecifiers": true,
     "plugins": [
-      "@trivago/prettier-plugin-sort-imports"
+      "@trivago/prettier-plugin-sort-imports",
+      "prettier-plugin-tailwindcss"
     ],
     "printWidth": 88,
     "semi": true,
