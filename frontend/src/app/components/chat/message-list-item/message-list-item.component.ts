@@ -20,26 +20,25 @@ import { Message } from '@app/interfaces/message';
   ],
   template: `
     @if (message) {
-      <li class="group flex flex-col gap-x-4 py-2 w-full">
-        <div class="flex items-center gap-x-4">
-          <div
-            class="h-12 w-12 flex-none rounded-full bg-gray-50 flex items-center justify-center"
-          >
-            <mat-icon fontSet="bi" fontIcon="bi-robot"></mat-icon>
-          </div>
-          <span class="fw-bold">Message</span>
+      <li
+        class="group grid w-full auto-rows-max grid-cols-6 items-center gap-y-2 py-2 lg:grid-cols-8"
+      >
+        <div
+          class="flex h-12 w-12 flex-none items-center justify-center justify-self-center rounded-full bg-gray-50"
+        >
+          <mat-icon fontSet="bi" fontIcon="bi-robot"></mat-icon>
         </div>
-        <div class="flex items-center gap-x-4">
-          <div class="h-12 w-12"></div>
-          <div class="flex-auto flex flex-col">
-            <div class="message">
-              <markdown emoji>
-                {{ message.decryptedData.content }}
-              </markdown>
-            </div>
-          </div>
-        </div>
-        <div class="flex opacity-0 group-hover:opacity-100">
+        <span class="fw-bold col-span-5">Message</span>
+        <article
+          class="prose col-span-5 col-end-7 prose-headings:text-xl lg:col-span-7 lg:col-end-9"
+        >
+          <markdown emoji>
+            {{ message.decryptedData.content }}
+          </markdown>
+        </article>
+        <div
+          class="col-span-5 col-end-7 flex opacity-0 group-hover:opacity-100 lg:col-span-7 lg:col-end-9"
+        >
           <button
             mat-icon-button
             matTooltip="Copy to clipboard"
