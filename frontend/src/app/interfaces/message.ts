@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { MessagesRecord } from '@app/types/pocketbase-types';
+import { MessagesResponse } from '@app/types/pocketbase-types';
 
 export const MessageDataVersion = z.enum(['1']);
 export type MessageDataVersion = z.infer<typeof MessageDataVersion>;
@@ -31,6 +31,6 @@ export const parseMessageData = (decryptedData: Uint8Array): MessageData => {
 };
 
 export interface Message {
-  record: MessagesRecord;
+  record: MessagesResponse;
   decryptedData: MessageData;
 }
