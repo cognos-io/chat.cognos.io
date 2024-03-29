@@ -37,7 +37,7 @@ import { Message } from '@app/interfaces/message';
           </markdown>
         </article>
         <div
-          class="col-span-5 col-end-7 flex opacity-0 group-hover:opacity-100 lg:col-span-7 lg:col-end-9"
+          class="col-span-5 col-end-7 flex gap-2 px-2 opacity-0 group-hover:opacity-100 lg:col-span-7 lg:col-end-9 lg:px-4"
         >
           <button
             mat-icon-button
@@ -46,6 +46,28 @@ import { Message } from '@app/interfaces/message';
             [cdkCopyToClipboard]="message.decryptedData.content"
           >
             <mat-icon fontSet="bi" fontIcon="bi-clipboard"></mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            matTooltip="Flag or report message"
+            aria-label="Button that enables flagging and reporting of messages"
+          >
+            <mat-icon fontSet="bi" fontIcon="bi-flag"></mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            matTooltip="Reply to this message"
+            aria-label="Button that enables replying to this message specifically"
+          >
+            <mat-icon fontSet="bi" fontIcon="bi-reply"></mat-icon>
+          </button>
+          <button
+            class="ml-auto"
+            mat-icon-button
+            matTooltip="Delete message"
+            aria-label="Button that deletes this message"
+          >
+            <mat-icon fontSet="bi" fontIcon="bi-trash3"></mat-icon>
           </button>
         </div>
       </li>
