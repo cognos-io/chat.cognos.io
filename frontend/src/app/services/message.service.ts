@@ -10,11 +10,7 @@ import { signalSlice } from 'ngxtension/signal-slice';
 import OpenAI from 'openai';
 
 import { Message, parseMessageData } from '@app/interfaces/message';
-import {
-  MessagesRecord,
-  MessagesResponse,
-  TypedPocketBase,
-} from '@app/types/pocketbase-types';
+import { MessagesResponse, TypedPocketBase } from '@app/types/pocketbase-types';
 
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
@@ -81,10 +77,20 @@ export class MessageService {
           }),
         ),
     ],
+    selectors: (state) => ({
+      orderedMessageList: () => {
+        const messageList = state().messages;
+        messageList.sort(
+          (a, b) =>
+            new Date(a.record.created).getTime() - new Date(b.record.created).getTime(),
+        );
+        return messageList;
+      },
+    }),
   });
 
   // selectors
-  public readonly messages = this.state.messages;
+  public readonly messages = this.state.orderedMessageList;
   public readonly messages$ = toObservable(this.messages);
 
   // helper methods
@@ -102,7 +108,7 @@ export class MessageService {
     );
   }
 
-  private decryptMessage(record: MessagesRecord): Message {
+  private decryptMessage(record: MessagesResponse): Message {
     const base64EncryptedData = record.data;
     const conversation = this.conversationService.conversation();
 
@@ -149,10 +155,11 @@ export class MessageService {
     return from(
       this.openAi.chat.completions.create({
         messages: [{ role: 'user', content: message }],
-        model: 'gpt-3.5-turbo',
+        // TODO(ewan): Make these dynamic
+        model: 'openai:gpt-3.5-turbo',
         metadata: {
           cognos: {
-            agent_slug: 'simple-assistant',
+            agent_id: 'simple-assistant',
             conversation_id: conversation.record.id,
           },
         },
