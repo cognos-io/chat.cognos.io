@@ -30,7 +30,7 @@ import { Message } from '@app/interfaces/message';
         </div>
         <span class="fw-bold col-span-5">Message</span>
         <article
-          class="prose col-span-5 col-end-7 prose-headings:text-xl lg:col-span-7 lg:col-end-9"
+          class="prose col-span-5 col-end-7 prose-headings:text-xl prose-th:text-base lg:col-span-7 lg:col-end-9"
         >
           <markdown emoji>
             {{ message.decryptedData.content }}
