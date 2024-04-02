@@ -37,7 +37,7 @@ import { Message } from '@app/interfaces/message';
           </markdown>
         </article>
         <div
-          class="col-span-5 col-end-7 flex gap-2 px-2 opacity-0 group-hover:opacity-100 lg:col-span-7 lg:col-end-9 lg:px-4"
+          class="prose col-span-5 col-end-7 flex gap-2 opacity-0 group-hover:opacity-100 lg:col-span-7 lg:col-end-9"
         >
           <button
             mat-icon-button
