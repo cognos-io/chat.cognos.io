@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-import { MessagesResponse } from '@app/types/pocketbase-types';
-
 export const MessageDataVersion = z.enum(['1']);
 export type MessageDataVersion = z.infer<typeof MessageDataVersion>;
 
@@ -15,6 +13,9 @@ export type MessageDataVersion = z.infer<typeof MessageDataVersion>;
 export const MessageData = z.object({
   version: MessageDataVersion.optional(),
   content: z.string(), // the message content
+  agent_id: z.string().optional(), // the agent used when generating the message
+  model_id: z.string().optional(), // the model used when generating the message
+  owner_id: z.string().optional(), // the user who sent the message
 });
 export type MessageData = z.infer<typeof MessageData>;
 
@@ -31,6 +32,10 @@ export const parseMessageData = (decryptedData: Uint8Array): MessageData => {
 };
 
 export interface Message {
-  record: MessagesResponse;
   decryptedData: MessageData;
+  createdAt: Date;
 }
+
+export const isMessageFromUser = (messageData: MessageData): boolean => {
+  return messageData.owner_id !== undefined && messageData.owner_id.trim() !== '';
+};

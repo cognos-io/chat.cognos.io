@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, Signal, computed, signal } from '@angular/core';
 
 import { signalSlice } from 'ngxtension/signal-slice';
 
@@ -28,4 +28,8 @@ export class AgentService {
     slug: 'cognos--simple-assistant',
     description: 'This is the first agent',
   });
+
+  public getAgent(id: string): Signal<Agent | undefined> {
+    return computed(() => this.state().agentList.find((agent) => agent.id === id));
+  }
 }

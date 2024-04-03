@@ -1,14 +1,16 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, Signal, computed, signal } from '@angular/core';
 
 import { signalSlice } from 'ngxtension/signal-slice';
 
 import { Model } from '@app/interfaces/model';
 
 interface ModelState {
+  modelList: Model[];
   selectedModel: Model | null;
 }
 
 const initialState: ModelState = {
+  modelList: [],
   selectedModel: null,
 };
 
@@ -28,4 +30,8 @@ export class ModelService {
     slug: 'open-ai---gpt-35-turbo',
     description: 'This is the first model',
   });
+
+  public getModel(id: string): Signal<Model | undefined> {
+    return computed(() => this.state().modelList.find((model) => model.id === id));
+  }
 }

@@ -1,12 +1,14 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { MarkdownComponent } from 'ngx-markdown';
 
-import { Message } from '@app/interfaces/message';
+import { Message, isMessageFromUser } from '@app/interfaces/message';
+import { AgentService } from '@app/services/agent.service';
+import { ModelService } from '@app/services/model.service';
 
 @Component({
   selector: 'app-message-list-item',
@@ -26,9 +28,9 @@ import { Message } from '@app/interfaces/message';
         <div
           class="flex h-12 w-12 flex-none items-center justify-center justify-self-center rounded-full bg-gray-50"
         >
-          <mat-icon fontSet="bi" fontIcon="bi-robot"></mat-icon>
+          <mat-icon fontSet="bi" [fontIcon]="icon"></mat-icon>
         </div>
-        <span class="fw-bold col-span-5">Message</span>
+        <span class="col-span-5 font-semibold">{{ sender }}</span>
         <article
           class="prose col-span-5 col-end-7 prose-headings:text-xl prose-th:text-base lg:col-span-7 lg:col-end-9"
         >
@@ -73,11 +75,52 @@ import { Message } from '@app/interfaces/message';
       </li>
     }
   `,
-  styles: `
-    .message-wrapper {
-    }
-  `,
+  styles: ``,
 })
 export class MessageListItemComponent {
+  private readonly _modelService = inject(ModelService);
+  private readonly _agentService = inject(AgentService);
+
   @Input() message?: Message;
+
+  get icon(): string {
+    if (!this.message) {
+      return 'bi-question-circle';
+    }
+
+    if (isMessageFromUser(this.message.decryptedData)) {
+      return 'bi-person';
+    }
+
+    return 'bi-robot';
+  }
+
+  get sender(): string {
+    if (!this.message) {
+      return 'Unknown';
+    }
+
+    if (isMessageFromUser(this.message.decryptedData)) {
+      return 'You';
+    }
+
+    const agent =
+      this.message.decryptedData.agent_id &&
+      this._agentService.getAgent(this.message.decryptedData.agent_id)();
+    const model =
+      this.message.decryptedData.model_id &&
+      this._modelService.getModel(this.message.decryptedData.model_id)();
+
+    let sender = 'Unknown';
+
+    if (model) {
+      sender = model.name;
+    }
+
+    if (agent) {
+      sender = `${agent.name} powered by ${sender}`;
+    }
+
+    return sender;
+  }
 }

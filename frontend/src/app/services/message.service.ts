@@ -63,6 +63,7 @@ export class MessageService {
       // when a message is sent, add it to the list of messages
       (state) =>
         this.sendMessage$.pipe(
+          map(({ message }) => ({ message: message?.trim() })),
           switchMap(({ message }) => {
             if (message === undefined) {
               return EMPTY;
@@ -80,10 +81,7 @@ export class MessageService {
     selectors: (state) => ({
       orderedMessageList: () => {
         const messageList = state().messages;
-        messageList.sort(
-          (a, b) =>
-            new Date(a.record.created).getTime() - new Date(b.record.created).getTime(),
-        );
+        messageList.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
         return messageList;
       },
     }),
@@ -123,14 +121,14 @@ export class MessageService {
       );
 
       return {
-        record,
+        createdAt: new Date(record.created),
         decryptedData: parseMessageData(decryptedData),
       };
     } catch (error) {
       // Show to the user the message failed to decrypt
       console.error('Message decryption failed', error);
       return {
-        record,
+        createdAt: new Date(record.created),
         decryptedData: {
           content: 'Failed to decrypt message',
         },
