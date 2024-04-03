@@ -76,7 +76,7 @@ func EchoHandler(
 			return apis.NewBadRequestError("Agent ID is required", nil)
 		}
 		// Extract the upstream based on the model
-		modelParts := strings.Split(req.Model, "")
+		modelParts := strings.Split(req.Model, ":")
 		if len(modelParts) != 2 {
 			return apis.NewBadRequestError("Invalid model name", nil)
 		}
@@ -119,12 +119,15 @@ func EchoHandler(
 		plainTextRequestMessage := messages[len(messages)-1].Content // Use the last message as there could be system and previous system & user messages
 
 		requestMessage := chat.PlainTextMessage{
-			OwnerID:        owner.ID,
-			ConversationID: req.Metadata.Cognos.ConversationID,
-			Content:        plainTextRequestMessage,
+			OwnerID: owner.ID,
+			Content: plainTextRequestMessage,
 		}
 
-		err = messageRepo.EncryptAndPersistMessage(receiverPublicKey, &requestMessage)
+		err = messageRepo.EncryptAndPersistMessage(
+			receiverPublicKey,
+			req.Metadata.Cognos.ConversationID,
+			requestMessage,
+		)
 		if err != nil {
 			logger.Error("Failed to save request message", "err", err)
 			return apis.NewApiError(
@@ -142,9 +145,7 @@ func EchoHandler(
 			req.ChatCompletionRequest,
 		)
 		if err != nil {
-			if errors.Is(err, &apis.ApiError{}) {
-				return err
-			}
+			logger.Error("Failed to process request", "err", err)
 			return apis.NewApiError(
 				http.StatusInternalServerError,
 				"Failed to process request",
@@ -156,11 +157,14 @@ func EchoHandler(
 		// 4. Encrypt and persist the response
 		// -------------------------------------------------------
 		responseMessage := chat.PlainTextMessage{
-			OwnerID:        owner.ID,
-			ConversationID: req.Metadata.Cognos.ConversationID,
-			Content:        plainTextResponseMessage,
+			OwnerID: owner.ID,
+			Content: plainTextResponseMessage,
 		}
-		err = messageRepo.EncryptAndPersistMessage(receiverPublicKey, &responseMessage)
+		err = messageRepo.EncryptAndPersistMessage(
+			receiverPublicKey,
+			req.Metadata.Cognos.ConversationID,
+			responseMessage,
+		)
 		if err != nil {
 			logger.Error("Failed to save response message", "err", err)
 			return apis.NewApiError(

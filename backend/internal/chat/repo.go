@@ -41,7 +41,8 @@ func EncryptMessageData(
 type MessageRepo interface {
 	EncryptAndPersistMessage(
 		receiverPublicKey [32]byte,
-		message *PlainTextMessage,
+		conversationID string,
+		message PlainTextMessage,
 	) error
 }
 
@@ -56,7 +57,8 @@ type PocketBaseMessageRepo struct {
 // Returns an error if there was a problem persisting the message.
 func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 	receiverPublicKey [32]byte,
-	message *PlainTextMessage,
+	conversationID string,
+	message PlainTextMessage,
 ) error {
 	m := MessageRecordData{
 		Content: message.Content,
@@ -72,7 +74,7 @@ func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 	form := forms.NewRecordUpsert(r.app, record)
 	err = form.LoadData(map[string]any{
 		"data":         base64EncryptedMessage,
-		"conversation": message.ConversationID,
+		"conversation": conversationID,
 	})
 	if err != nil {
 		return err

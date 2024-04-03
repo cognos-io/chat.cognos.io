@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"net/http"
 
 	"github.com/labstack/echo/v5"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -46,11 +44,7 @@ func (o *OpenAI) ChatCompletion(
 			req,
 		)
 		if err != nil {
-			return plainTextResponseMessage, apis.NewApiError(
-				http.StatusInternalServerError,
-				"Failed to create chat completion stream",
-				err,
-			)
+			return plainTextResponseMessage, err
 		}
 		defer stream.Close()
 
@@ -109,11 +103,7 @@ func (o *OpenAI) ChatCompletion(
 			req,
 		)
 		if err != nil {
-			return plainTextResponseMessage, apis.NewApiError(
-				http.StatusInternalServerError,
-				"Failed to create chat completion",
-				err,
-			)
+			return plainTextResponseMessage, err
 		}
 
 		// Construct our plaintext response that will be encrypted and saved
