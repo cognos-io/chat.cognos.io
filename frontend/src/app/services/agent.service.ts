@@ -1,15 +1,17 @@
-import { Injectable, Signal, computed, signal } from '@angular/core';
+import { Injectable, Signal, computed } from '@angular/core';
 
 import { signalSlice } from 'ngxtension/signal-slice';
 
-import { Agent } from '@app/interfaces/agent';
+import { Agent, defaultAgent } from '@app/interfaces/agent';
 
 interface AgentState {
   agentList: Agent[];
+  selectedAgentId: string;
 }
 
 const initialState: AgentState = {
   agentList: [],
+  selectedAgentId: '',
 };
 
 @Injectable({
@@ -22,11 +24,12 @@ export class AgentService {
   });
 
   // selectors
-  public selectedAgent = signal<Agent>({
-    id: 'cognos:simple-assistant',
-    name: 'Cognos - A simple assistant',
-    slug: 'cognos--simple-assistant',
-    description: 'This is the first agent',
+  public readonly selectedAgent = computed(() => {
+    const selectedAgent = this.state().agentList.find(
+      (agent) => agent.id === this.state().selectedAgentId,
+    );
+
+    return selectedAgent || defaultAgent;
   });
 
   public getAgent(id: string): Signal<Agent | undefined> {
