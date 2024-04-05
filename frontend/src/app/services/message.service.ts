@@ -12,6 +12,7 @@ import OpenAI from 'openai';
 import { Message, parseMessageData } from '@app/interfaces/message';
 import { MessagesResponse, TypedPocketBase } from '@app/types/pocketbase-types';
 
+import { AuthService } from './auth.service';
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 
@@ -31,6 +32,7 @@ export class MessageService {
   private readonly cryptoService = inject(CryptoService);
   private readonly conversationService = inject(ConversationService);
   private readonly openAi = inject(OpenAI);
+  private readonly _authService = inject(AuthService);
 
   private readonly pbMessagesCollection = this.pb.collection('messages');
 
@@ -61,6 +63,22 @@ export class MessageService {
         }),
       ),
       // when a message is sent, add it to the list of messages
+      (state) =>
+        this.sendMessage$.pipe(
+          map(({ message }) => {
+            const newMessage: Message = {
+              createdAt: new Date(),
+              decryptedData: {
+                content: message || '',
+                owner_id: this._authService.user()?.['id'],
+              },
+            };
+
+            return {
+              messages: [...state().messages, newMessage],
+            };
+          }),
+        ),
       (state) =>
         this.sendMessage$.pipe(
           map(({ message }) => ({ message: message?.trim() })),
