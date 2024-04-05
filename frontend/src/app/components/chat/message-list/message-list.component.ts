@@ -8,7 +8,17 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
   selector: 'app-message-list',
   standalone: true,
   imports: [MessageListItemComponent],
-  templateUrl: './message-list.component.html',
+  template: `
+    <div class="message-list-wrapper">
+      @for (message of messages; track message) {
+        <app-message-list-item [message]="message"></app-message-list-item>
+      } @empty {
+        <div class="empty-message">
+          <p>No messages yet</p>
+        </div>
+      }
+    </div>
+  `,
   styles: `
     .message-list-wrapper {
       padding: 1rem 0;
