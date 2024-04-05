@@ -28,15 +28,15 @@
             conversation of conversationService.conversationList();
             track conversation.record.id
           ) {
-            <mat-list-item
+            <a
+              mat-list-item
+              [routerLink]="['c', conversation.record.id]"
               class="conversation-list-item"
               #tooltip="matTooltip"
               [matTooltip]="conversation.decryptedData.title"
               matTooltipPosition="after"
             >
-              <a [routerLink]="['c', conversation.record.id]" matListItemTitle>{{
-                conversation.decryptedData.title
-              }}</a>
+              <p matListItemTitle>{{ conversation.decryptedData.title }}</p>
               <div matListItemMeta class="conversation-list-item-actions">
                 <button
                   mat-icon-button
@@ -47,7 +47,7 @@
                   <mat-icon fontSet="bi" fontIcon="bi-three-dots-vertical"></mat-icon>
                 </button>
               </div>
-            </mat-list-item>
+            </a>
             <mat-menu #menu="matMenu">
               <button
                 mat-menu-item=""
