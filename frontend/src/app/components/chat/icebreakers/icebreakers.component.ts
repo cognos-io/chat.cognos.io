@@ -59,12 +59,14 @@ const iceBreakers: IceBreaker[] = [
   imports: [],
   template: `<ul class="grid grid-cols-1 gap-4 lg:grid-cols-2">
     @for (ib of iceBreakers(); track ib) {
-      <li class="border-1 col-span-1 rounded-lg bg-white shadow">
+      <li
+        class="border-1 col-span-1 rounded-lg bg-white shadow transition-all duration-150 ease-in-out hover:bg-slate-50"
+      >
         <button
-          class="prose rounded-lg px-6 py-4 text-left"
+          class="prose rounded-lg px-6 py-4 text-left prose-headings:m-0"
           (click)="iceBreakerSelected.emit(ib)"
         >
-          <h2>{{ ib.title }}</h2>
+          <h4>{{ ib.title }}</h4>
           <p>{{ ib.description }}</p>
         </button>
       </li>
