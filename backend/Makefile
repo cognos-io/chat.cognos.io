@@ -3,6 +3,8 @@
 
 MAIN_PACKAGE_PATH := ./cmd/api
 BINARY_NAME := api
+# Can be changed to different versions easily
+GO_BINARY := go
 
 # ==================================================================================== #
 # HELPERS
@@ -29,17 +31,17 @@ no-dirty:
 ## tidy: format code and tidy modfile
 .PHONY: tidy
 tidy:
-	go fmt ./...
-	go mod tidy -v
+	${GO_BINARY} fmt ./...
+	${GO_BINARY} mod tidy -v
 
 ## audit: run quality control checks
 .PHONY: audit
 audit:
-	go mod verify
-	go vet ./...
-	go run honnef.co/go/tools/cmd/staticcheck@latest -checks=all,-ST1000,-U1000 ./...
-	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
-	go test -race -buildvcs -vet=off ./...
+	${GO_BINARY} mod verify
+	${GO_BINARY} vet ./...
+	${GO_BINARY} run honnef.co/go/tools/cmd/staticcheck@latest -checks=all,-ST1000,-U1000 ./...
+	${GO_BINARY} run golang.org/x/vuln/cmd/govulncheck@latest ./...
+	${GO_BINARY} test -race -buildvcs -vet=off ./...
 
 # ==================================================================================== #
 # DEVELOPMENT
@@ -57,34 +59,34 @@ lint/fix:
 
 .PHONY: lines
 lines: tidy
-	go run github.com/segmentio/golines@latest -w -m 88 .
+	${GO_BINARY} run github.com/segmentio/golines@latest -w -m 88 .
 
 ## fmt: format code
 .PHONY: fmt
 fmt: tidy lines
-	go run mvdan.cc/gofumpt@latest -l -w .
+	${GO_BINARY} run mvdan.cc/gofumpt@latest -l -w .
 
 ## test: run all tests
 .PHONY: test
 test:
-	go test -v -race -buildvcs ./...
+	${GO_BINARY} test -v -race -buildvcs ./...
 
 ## test/cover: run all tests and display coverage
 .PHONY: test/cover
 test/cover:
-	go test -v -race -buildvcs -coverprofile=/tmp/coverage.out ./...
-	go tool cover -html=/tmp/coverage.out
+	${GO_BINARY} test -v -race -buildvcs -coverprofile=/tmp/coverage.out ./...
+	${GO_BINARY} tool cover -html=/tmp/coverage.out
 
 ## benchmark: run all benchmarks
 .PHONY: benchmark
 benchmark:
-	go test -run=XXXX -bench=. ./...
+	${GO_BINARY} test -run=XXXX -bench=. ./...
 
 ## build: build the application
 .PHONY: build
 build:
 	# Include additional build steps, like TypeScript, SCSS or Tailwind compilation here...
-	go build -o=/tmp/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
+	${GO_BINARY} build -o=/tmp/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 
 ## run: run the application
 .PHONY: run
@@ -99,7 +101,7 @@ run/test: build
 ## run/live: run the application with reloading on file changes
 .PHONY: run/live
 run/live:
-	go run github.com/cosmtrek/air@v1.50.0 \
+	${GO_BINARY} run github.com/cosmtrek/air@v1.50.0 \
 		--build.cmd "make build" \
 		--build.bin "/tmp/bin/${BINARY_NAME}" \
 		--build.args_bin "serve --dev --dir ./pb_data" \
@@ -120,6 +122,6 @@ push: tidy audit no-dirty
 ## production/deploy: deploy the application to production
 .PHONY: production/deploy
 production/deploy: confirm tidy audit no-dirty
-	GOOS=linux GOARCH=amd64 go build -ldflags='-s' -o=/tmp/bin/linux_amd64/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
+	GOOS=linux GOARCH=amd64 ${GO_BINARY} build -ldflags='-s' -o=/tmp/bin/linux_amd64/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 	upx -5 /tmp/bin/linux_amd64/${BINARY_NAME}
 	# Include additional deployment steps here...
