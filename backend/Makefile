@@ -22,7 +22,7 @@ confirm:
 
 .PHONY: no-dirty
 no-dirty:
-	git diff --exit-code
+	@git diff --exit-code
 
 # ==================================================================================== #
 # QUALITY CONTROL
@@ -31,17 +31,17 @@ no-dirty:
 ## tidy: format code and tidy modfile
 .PHONY: tidy
 tidy:
-	${GO_BINARY} fmt ./...
-	${GO_BINARY} mod tidy -v
+	@${GO_BINARY} fmt ./...
+	@${GO_BINARY} mod tidy -v
 
 ## audit: run quality control checks
 .PHONY: audit
 audit:
-	${GO_BINARY} mod verify
-	${GO_BINARY} vet ./...
-	${GO_BINARY} run honnef.co/go/tools/cmd/staticcheck@latest -checks=all,-ST1000,-U1000 ./...
-	${GO_BINARY} run golang.org/x/vuln/cmd/govulncheck@latest ./...
-	${GO_BINARY} test -race -buildvcs -vet=off ./...
+	@${GO_BINARY} mod verify
+	@${GO_BINARY} vet ./...
+	@${GO_BINARY} run honnef.co/go/tools/cmd/staticcheck@latest -checks=all,-ST1000,-U1000 ./...
+	@${GO_BINARY} run golang.org/x/vuln/cmd/govulncheck@latest ./...
+	@${GO_BINARY} test -race -buildvcs -vet=off ./...
 
 # ==================================================================================== #
 # DEVELOPMENT
@@ -50,43 +50,43 @@ audit:
 ## lint: run linters
 .PHONY: lint
 lint:
-	golangci-lint run ./...
+	@golangci-lint run ./...
 
 ## lint/fix: run linters and fix issues
 .PHONY: lint/fix
 lint/fix:
-	golangci-lint run --fix ./...
+	@golangci-lint run --fix ./...
 
 .PHONY: lines
 lines: tidy
-	${GO_BINARY} run github.com/segmentio/golines@latest -w -m 88 .
+	@${GO_BINARY} run github.com/segmentio/golines@latest -w -m 88 .
 
 ## fmt: format code
 .PHONY: fmt
 fmt: tidy lines
-	${GO_BINARY} run mvdan.cc/gofumpt@latest -l -w .
+	@${GO_BINARY} run mvdan.cc/gofumpt@latest -l -w .
 
 ## test: run all tests
 .PHONY: test
 test:
-	${GO_BINARY} test -v -race -buildvcs ./...
+	@${GO_BINARY} test -v -race -buildvcs ./...
 
 ## test/cover: run all tests and display coverage
 .PHONY: test/cover
 test/cover:
-	${GO_BINARY} test -v -race -buildvcs -coverprofile=/tmp/coverage.out ./...
-	${GO_BINARY} tool cover -html=/tmp/coverage.out
+	@${GO_BINARY} test -v -race -buildvcs -coverprofile=/tmp/coverage.out ./...
+	@${GO_BINARY} tool cover -html=/tmp/coverage.out
 
 ## benchmark: run all benchmarks
 .PHONY: benchmark
 benchmark:
-	${GO_BINARY} test -run=XXXX -bench=. ./...
+	@${GO_BINARY} test -run=XXXX -bench=. ./...
 
 ## build: build the application
 .PHONY: build
 build:
 	# Include additional build steps, like TypeScript, SCSS or Tailwind compilation here...
-	${GO_BINARY} build -o=/tmp/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
+	@${GO_BINARY} build -o=/tmp/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 
 ## run: run the application
 .PHONY: run
@@ -101,7 +101,7 @@ run/test: build
 ## run/live: run the application with reloading on file changes
 .PHONY: run/live
 run/live:
-	${GO_BINARY} run github.com/cosmtrek/air@v1.50.0 \
+	@${GO_BINARY} run github.com/cosmtrek/air@v1.50.0 \
 		--build.cmd "make build" \
 		--build.bin "/tmp/bin/${BINARY_NAME}" \
 		--build.args_bin "serve --dev --dir ./pb_data" \
@@ -117,7 +117,7 @@ run/live:
 ## push: push changes to the remote Git repository
 .PHONY: push
 push: tidy audit no-dirty
-	git push
+	@git push
 
 ## production/deploy: deploy the application to production
 .PHONY: production/deploy
