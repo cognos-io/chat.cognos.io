@@ -10,6 +10,7 @@
     "openai",
     "OWASP",
     "pocketbase",
+    "tailwindcss",
     "tweetnacl",
     "typegen"
   ],
