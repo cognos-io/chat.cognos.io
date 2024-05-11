@@ -10,6 +10,7 @@ export enum Collections {
   ConversationSecretKeys = 'conversation_secret_keys',
   Conversations = 'conversations',
   Deleted = 'deleted',
+  Idempotency = 'idempotency',
   Messages = 'messages',
   Models = 'models',
   UserKeyPairs = 'user_key_pairs',
@@ -67,6 +68,13 @@ export type DeletedRecord<Trecord = unknown> = {
   record?: null | Trecord;
 };
 
+export type IdempotencyRecord<Tbody = unknown> = {
+  body?: null | Tbody;
+  idempotency_key: string;
+  status_code?: number;
+  user?: RecordIdString;
+};
+
 export type MessagesRecord = {
   conversation: RecordIdString;
   data: string;
@@ -111,6 +119,10 @@ export type DeletedResponse<Trecord = unknown, Texpand = unknown> = Required<
   DeletedRecord<Trecord>
 > &
   BaseSystemFields<Texpand>;
+export type IdempotencyResponse<Tbody = unknown, Texpand = unknown> = Required<
+  IdempotencyRecord<Tbody>
+> &
+  BaseSystemFields<Texpand>;
 export type MessagesResponse<Texpand = unknown> = Required<MessagesRecord> &
   BaseSystemFields<Texpand>;
 export type ModelsResponse<Texpand = unknown> = Required<ModelsRecord> &
@@ -128,6 +140,7 @@ export type CollectionRecords = {
   conversation_secret_keys: ConversationSecretKeysRecord;
   conversations: ConversationsRecord;
   deleted: DeletedRecord;
+  idempotency: IdempotencyRecord;
   messages: MessagesRecord;
   models: ModelsRecord;
   user_key_pairs: UserKeyPairsRecord;
@@ -140,6 +153,7 @@ export type CollectionResponses = {
   conversation_secret_keys: ConversationSecretKeysResponse;
   conversations: ConversationsResponse;
   deleted: DeletedResponse;
+  idempotency: IdempotencyResponse;
   messages: MessagesResponse;
   models: ModelsResponse;
   user_key_pairs: UserKeyPairsResponse;
@@ -159,6 +173,7 @@ export type TypedPocketBase = PocketBase & {
   ): RecordService<ConversationSecretKeysResponse>;
   collection(idOrName: 'conversations'): RecordService<ConversationsResponse>;
   collection(idOrName: 'deleted'): RecordService<DeletedResponse>;
+  collection(idOrName: 'idempotency'): RecordService<IdempotencyResponse>;
   collection(idOrName: 'messages'): RecordService<MessagesResponse>;
   collection(idOrName: 'models'): RecordService<ModelsResponse>;
   collection(idOrName: 'user_key_pairs'): RecordService<UserKeyPairsResponse>;
