@@ -16,12 +16,20 @@ import { AuthService } from './auth.service';
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 
+export enum MessageStatus {
+  None,
+  Fetching,
+  Decrypting,
+}
+
 interface MessageState {
   messages: Message[];
+  status: MessageStatus;
 }
 
 const initialState: MessageState = {
   messages: [],
+  status: MessageStatus.None,
 };
 
 @Injectable({
