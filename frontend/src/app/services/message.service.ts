@@ -12,9 +12,11 @@ import OpenAI from 'openai';
 import { Message, parseMessageData } from '@app/interfaces/message';
 import { MessagesResponse, TypedPocketBase } from '@app/types/pocketbase-types';
 
+import { AgentService } from './agent.service';
 import { AuthService } from './auth.service';
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
+import { ModelService } from './model.service';
 
 export enum MessageStatus {
   None,
@@ -36,13 +38,15 @@ const initialState: MessageState = {
   providedIn: 'root',
 })
 export class MessageService {
-  private readonly pb: TypedPocketBase = inject(PocketBase);
-  private readonly cryptoService = inject(CryptoService);
-  private readonly conversationService = inject(ConversationService);
-  private readonly openAi = inject(OpenAI);
+  private readonly _pb: TypedPocketBase = inject(PocketBase);
+  private readonly _modelService = inject(ModelService);
+  private readonly _agentService = inject(AgentService);
+  private readonly _cryptoService = inject(CryptoService);
+  private readonly _conversationService = inject(ConversationService);
+  private readonly _openAi = inject(OpenAI);
   private readonly _authService = inject(AuthService);
 
-  private readonly pbMessagesCollection = this.pb.collection('messages');
+  private readonly pbMessagesCollection = this._pb.collection('messages');
 
   // sources
   public readonly sendMessage$ = new Subject<{
@@ -54,7 +58,7 @@ export class MessageService {
     initialState,
     sources: [
       // messages need a key pair, and a conversation
-      this.conversationService.conversation$.pipe(
+      this._conversationService.conversation$.pipe(
         switchMap((conversation) => {
           if (!conversation) {
             return of({
@@ -142,14 +146,14 @@ export class MessageService {
 
   private decryptMessage(record: MessagesResponse): Message {
     const base64EncryptedData = record.data;
-    const conversation = this.conversationService.conversation();
+    const conversation = this._conversationService.conversation();
 
     if (!conversation) {
       throw new Error('No conversation selected');
     }
 
     try {
-      const decryptedData = this.cryptoService.openSealedBox(
+      const decryptedData = this._cryptoService.openSealedBox(
         Base64.toUint8Array(base64EncryptedData),
         conversation.keyPair,
       );
@@ -179,19 +183,18 @@ export class MessageService {
   }
 
   private sendMessage(message: string): Observable<OpenAI.ChatCompletion> {
-    const conversation = this.conversationService.conversation();
+    const conversation = this._conversationService.conversation();
     if (!conversation) {
       throw new Error('No conversation selected');
     }
 
     return from(
-      this.openAi.chat.completions.create({
+      this._openAi.chat.completions.create({
         messages: [{ role: 'user', content: message }],
-        // TODO(ewan): Make these dynamic
-        model: 'openai:gpt-3.5-turbo',
+        model: this._modelService.selectedModel().id,
         metadata: {
           cognos: {
-            agent_id: 'simple-assistant',
+            agent_id: this._agentService.selectedAgent().id,
             conversation_id: conversation.record.id,
           },
         },
