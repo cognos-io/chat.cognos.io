@@ -140,7 +140,7 @@ func EchoHandler(
 		// -------------------------------------------------------
 		// 3. Use the selected model and agent to generate the response
 		// -------------------------------------------------------
-		plainTextResponseMessage, err := upstream.ChatCompletion(
+		resp, plainTextResponseMessage, err := upstream.ChatCompletion(
 			c,
 			req.ChatCompletionRequest,
 		)
@@ -174,6 +174,6 @@ func EchoHandler(
 			)
 		}
 
-		return nil
+		return c.JSON(http.StatusOK, resp)
 	}
 }

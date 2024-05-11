@@ -36,7 +36,10 @@ func (o *OpenAI) LookupModel(
 func (o *OpenAI) ChatCompletion(
 	c echo.Context,
 	req openai.ChatCompletionRequest,
-) (plainTextResponseMessage string, err error) {
+) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
+	emptyResponse := openai.ChatCompletionResponse{}
+	resp := openai.ChatCompletionResponse{}
+
 	if req.Stream {
 		// Forward the request to OpenAI
 		stream, err := o.client.CreateChatCompletionStream(
@@ -44,7 +47,7 @@ func (o *OpenAI) ChatCompletion(
 			req,
 		)
 		if err != nil {
-			return plainTextResponseMessage, err
+			return emptyResponse, plainTextResponseMessage, err
 		}
 		defer stream.Close()
 
@@ -63,7 +66,7 @@ func (o *OpenAI) ChatCompletion(
 				_, err = respWriter.Write([]byte("data: [DONE]\n\n"))
 				if err != nil {
 					o.logger.Error("Failed to write error to response", "err", err)
-					return plainTextResponseMessage, err
+					return emptyResponse, plainTextResponseMessage, err
 				}
 				c.Response().Flush()
 				break
@@ -72,7 +75,7 @@ func (o *OpenAI) ChatCompletion(
 			if err != nil {
 				// stream has errored
 				o.logger.Error("Failed to read from stream", "err", err)
-				return plainTextResponseMessage, err
+				return emptyResponse, plainTextResponseMessage, err
 			}
 
 			// Construct our plaintext response that will be encrypted and saved
@@ -83,7 +86,7 @@ func (o *OpenAI) ChatCompletion(
 			if err != nil {
 				// handle error
 				o.logger.Error("Failed to marshal chunk", "err", err)
-				return plainTextResponseMessage, err
+				return emptyResponse, plainTextResponseMessage, err
 			}
 
 			_, err = respWriter.Write(
@@ -91,26 +94,26 @@ func (o *OpenAI) ChatCompletion(
 			)
 			if err != nil {
 				o.logger.Error("Failed to write to response", "err", err)
-				return plainTextResponseMessage, err
+				return emptyResponse, plainTextResponseMessage, err
 			}
 
 			c.Response().Flush()
 		}
 	} else {
 		// Forward the request to OpenAI
-		resp, err := o.client.CreateChatCompletion(
+		resp, err = o.client.CreateChatCompletion(
 			c.Request().Context(),
 			req,
 		)
 		if err != nil {
-			return plainTextResponseMessage, err
+			return emptyResponse, plainTextResponseMessage, err
 		}
 
 		// Construct our plaintext response that will be encrypted and saved
 		plainTextResponseMessage = resp.Choices[0].Message.Content
 	}
 
-	return plainTextResponseMessage, nil
+	return resp, plainTextResponseMessage, err
 }
 
 func NewOpenAI(

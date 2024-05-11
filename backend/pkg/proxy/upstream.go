@@ -14,5 +14,5 @@ type Upstream interface {
 	ChatCompletion(
 		c echo.Context,
 		request openai.ChatCompletionRequest,
-	) (plaintextResponse string, err error)
+	) (response openai.ChatCompletionResponse, plainTextRequestMessage string, err error)
 }
