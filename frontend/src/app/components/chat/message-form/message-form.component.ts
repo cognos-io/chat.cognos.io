@@ -93,11 +93,11 @@ export class MessageFormComponent implements OnDestroy {
   }
 
   onKeydown(event: KeyboardEvent) {
-    if (this.isMac) {
-      if (event.metaKey && event.key === 'Enter') {
-        this.sendMessage();
-      }
-    } else if (event.ctrlKey && event.key === 'Enter') {
+    if (this.isMac && event.metaKey && event.key === 'Enter') {
+      this.sendMessage();
+    }
+
+    if (this.isMac === false && event.ctrlKey && event.key === 'Enter') {
       this.sendMessage();
     }
   }
