@@ -1,4 +1,10 @@
-import { Component, Input } from '@angular/core';
+import {
+  AfterViewChecked,
+  Component,
+  ElementRef,
+  Input,
+  viewChildren,
+} from '@angular/core';
 
 import { Message } from '@app/interfaces/message';
 
@@ -37,6 +43,17 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
     }
   `,
 })
-export class MessageListComponent {
+export class MessageListComponent implements AfterViewChecked {
   @Input() messages: Message[] = [];
+
+  private readonly _messageListItemElements = viewChildren(MessageListItemComponent, {
+    read: ElementRef,
+  });
+
+  ngAfterViewChecked(): void {
+    const els = this._messageListItemElements();
+    if (els.length > 0) {
+      els[els.length - 1].nativeElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
 }
