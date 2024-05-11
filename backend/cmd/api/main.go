@@ -72,7 +72,7 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	defer cancel()
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	config := config.MustLoadAPIConfig()
+	config := config.MustLoadAPIConfig(logger)
 
 	openaiClient := oai.NewClient(config.OpenAIAPIKey)
 

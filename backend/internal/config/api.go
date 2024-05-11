@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/knadh/koanf/parsers/yaml"
@@ -26,7 +27,7 @@ type APIConfig struct {
 }
 
 // MustLoadAPIConfig loads the API configuration or panics if an error occurs.
-func MustLoadAPIConfig() *APIConfig {
+func MustLoadAPIConfig(logger *slog.Logger) *APIConfig {
 	var err error
 
 	k := koanf.New(".")
@@ -39,6 +40,8 @@ func MustLoadAPIConfig() *APIConfig {
 		if !pathExists(configFilePath) {
 			continue
 		}
+
+		logger.Info("loading config from file", "file", configFilePath)
 
 		err = k.Load(file.Provider(configFilePath), yaml.Parser())
 		if err != nil {
@@ -54,7 +57,11 @@ func MustLoadAPIConfig() *APIConfig {
 
 	// Unpack into our config struct
 	var c APIConfig
-	err = k.Unmarshal("", &c)
+	err = k.UnmarshalWithConf(
+		"",
+		&c,
+		koanf.UnmarshalConf{Tag: "koanf", FlatPaths: true},
+	)
 	if err != nil {
 		panic(err)
 	}
