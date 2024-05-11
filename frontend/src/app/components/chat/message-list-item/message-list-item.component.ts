@@ -24,15 +24,13 @@ import { ModelService } from '@app/services/model.service';
   ],
   template: `
     @if (message) {
-      <li
-        class="group grid w-full auto-rows-max grid-cols-6 items-center gap-y-2 py-2 lg:grid-cols-8"
-      >
+      <li class="item-grid group">
         <div
           class="flex h-12 w-12 flex-none items-center justify-center justify-self-center rounded-full bg-gray-50"
         >
           <mat-icon fontSet="bi" [fontIcon]="icon"></mat-icon>
         </div>
-        <div class="col-span-5 flex items-end justify-between">
+        <div class="item-content prose flex items-end justify-between">
           <span class="font-semibold">{{ sender }}</span>
           <span
             class="text-xs text-gray-500"
@@ -40,16 +38,12 @@ import { ModelService } from '@app/services/model.service';
             >{{ message.createdAt | date: 'short' }}</span
           >
         </div>
-        <article
-          class="prose col-span-5 col-end-7 prose-headings:text-xl prose-th:text-base lg:col-span-7 lg:col-end-9"
-        >
+        <article class="item-content prose prose-headings:text-xl prose-th:text-base">
           <markdown emoji>
             {{ message.decryptedData.content }}
           </markdown>
         </article>
-        <div
-          class="prose col-span-5 col-end-7 flex gap-2 opacity-0 group-hover:opacity-100 lg:col-span-7 lg:col-end-9"
-        >
+        <div class="item-content prose flex gap-2 opacity-0 group-hover:opacity-100">
           <button
             mat-icon-button
             matTooltip="Copy to clipboard"
@@ -84,7 +78,15 @@ import { ModelService } from '@app/services/model.service';
       </li>
     }
   `,
-  styles: ``,
+  styles: `
+    .item-grid {
+      @apply grid w-full auto-rows-max grid-cols-6 items-center gap-y-2 py-2 lg:grid-cols-8;
+    }
+
+    .item-content {
+      @apply col-span-5 col-end-7 lg:col-span-7 lg:col-end-9;
+    }
+  `,
 })
 export class MessageListItemComponent {
   private readonly _modelService = inject(ModelService);
