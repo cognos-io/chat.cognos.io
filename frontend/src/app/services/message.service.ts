@@ -77,7 +77,11 @@ export class MessageService {
       // when a message is sent, add it to the list of messages
       (state) =>
         this.sendMessage$.pipe(
+          map(({ message }) => ({ message: message?.trim() })),
           map(({ message }) => {
+            if (message === undefined || message === '') {
+              return state();
+            }
             const newMessage: Message = {
               createdAt: new Date(),
               decryptedData: {
@@ -95,7 +99,7 @@ export class MessageService {
         this.sendMessage$.pipe(
           map(({ message }) => ({ message: message?.trim() })),
           switchMap(({ message }) => {
-            if (message === undefined) {
+            if (message === undefined || message === '') {
               return EMPTY;
             }
             return this.sendMessage(message).pipe(
