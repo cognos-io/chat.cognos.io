@@ -107,7 +107,9 @@ export class MessageService {
                       decryptedData: {
                         content: resp.choices[0].message.content,
                       },
-                      createdAt: new Date(resp.created * 1000), // convert s to ms
+                      // we add 1 to the created seconds because for some reason the OpenAI API seems to round down the created timestamp
+                      // which can cause messages to be out of order if the connection is fast enough
+                      createdAt: new Date((resp.created + 1) * 1000), // convert s to ms
                     },
                   ],
                 };

@@ -1,4 +1,5 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
+import { DatePipe } from '@angular/common';
 import { Component, Input, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,6 +20,7 @@ import { ModelService } from '@app/services/model.service';
     MatButtonModule,
     MatTooltipModule,
     ClipboardModule,
+    DatePipe,
   ],
   template: `
     @if (message) {
@@ -30,7 +32,14 @@ import { ModelService } from '@app/services/model.service';
         >
           <mat-icon fontSet="bi" [fontIcon]="icon"></mat-icon>
         </div>
-        <span class="col-span-5 font-semibold">{{ sender }}</span>
+        <div class="col-span-5 flex items-end justify-between">
+          <span class="font-semibold">{{ sender }}</span>
+          <span
+            class="text-xs text-gray-500"
+            [attr.data-timestamp]="message.createdAt.getTime()"
+            >{{ message.createdAt | date: 'short' }}</span
+          >
+        </div>
         <article
           class="prose col-span-5 col-end-7 prose-headings:text-xl prose-th:text-base lg:col-span-7 lg:col-end-9"
         >
