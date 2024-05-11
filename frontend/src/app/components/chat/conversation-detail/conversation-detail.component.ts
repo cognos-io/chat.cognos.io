@@ -2,8 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, Input, inject, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { tap } from 'rxjs';
-
 import { ConversationService } from '@app/services/conversation.service';
 import { MessageService } from '@app/services/message.service';
 
@@ -54,13 +52,8 @@ export class ConversationDetailComponent {
   }
 
   constructor() {
-    this.messageService.messages$
-      .pipe(
-        takeUntilDestroyed(),
-        tap(() => console.log(this._messageListEl())),
-      )
-      .subscribe(() => {
-        this._messageListEl()?.scrollToBottom();
-      });
+    this.messageService.messages$.pipe(takeUntilDestroyed()).subscribe(() => {
+      this._messageListEl()?.scrollToBottom();
+    });
   }
 }
