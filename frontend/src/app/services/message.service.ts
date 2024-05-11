@@ -87,9 +87,17 @@ export class MessageService {
               return EMPTY;
             }
             return this.sendMessage(message).pipe(
-              map(() => {
+              map((resp: OpenAI.ChatCompletion) => {
                 return {
-                  messages: state().messages,
+                  messages: [
+                    ...state().messages,
+                    {
+                      decryptedData: {
+                        content: resp.choices[0].message.content,
+                      },
+                      createdAt: new Date(resp.created * 1000), // convert s to ms
+                    },
+                  ],
                 };
               }),
             );
@@ -162,7 +170,7 @@ export class MessageService {
     );
   }
 
-  private sendMessage(message: string): Observable<void> {
+  private sendMessage(message: string): Observable<OpenAI.ChatCompletion> {
     const conversation = this.conversationService.conversation();
     if (!conversation) {
       throw new Error('No conversation selected');
