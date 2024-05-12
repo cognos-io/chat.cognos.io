@@ -3,17 +3,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase, { ListResult } from 'pocketbase';
 
-import {
-  EMPTY,
-  Observable,
-  Subject,
-  concatMap,
-  filter,
-  from,
-  map,
-  of,
-  switchMap,
-} from 'rxjs';
+import { Observable, Subject, concatMap, filter, from, map, of, switchMap } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -58,8 +48,8 @@ export class MessageService {
   private readonly _agentService = inject(AgentService);
   private readonly _cryptoService = inject(CryptoService);
   private readonly _conversationService = inject(ConversationService);
-  private readonly _openAi = inject(OpenAI);
   private readonly _authService = inject(AuthService);
+  private readonly _openAi = inject(OpenAI);
 
   private readonly pbMessagesCollection = this._pb.collection('messages');
 
@@ -97,41 +87,35 @@ export class MessageService {
       (state) =>
         this._cleanedMessage$.pipe(
           map((raw) => {
-            const message = raw.message;
-            if (message === undefined || message === '') {
-              return state();
-            }
-            const newMessage: Message = {
-              createdAt: new Date(),
-              decryptedData: {
-                content: message,
-                owner_id: this._authService.user()?.['id'],
-              },
-            };
-
             return {
-              messages: [...state().messages, newMessage],
+              messages: [
+                ...state().messages,
+                {
+                  createdAt: new Date(),
+                  decryptedData: {
+                    content: raw.message || '',
+                    owner_id: this._authService.user()?.['id'],
+                  },
+                },
+              ],
             };
           }),
         ),
       (state) =>
         this._cleanedMessage$.pipe(
-          concatMap(({ message }) => {
-            if (message === undefined || message === '') {
-              return EMPTY;
-            }
-            return this.sendMessage(message).pipe(
-              map((resp: OpenAI.ChatCompletion) => {
+          concatMap((raw) => {
+            return this.sendMessage(raw.message || '').pipe(
+              map((resp) => {
                 return {
                   messages: [
                     ...state().messages,
                     {
+                      createdAt: new Date((resp.created + 1) * 1000),
                       decryptedData: {
                         content: resp.choices[0].message.content,
+                        agent_id: this._agentService.selectedAgent().id,
+                        model_id: this._modelService.selectedModel().id,
                       },
-                      // we add 1 to the created seconds because for some reason the OpenAI API seems to round down the created timestamp
-                      // which can cause messages to be out of order if the connection is fast enough
-                      createdAt: new Date((resp.created + 1) * 1000), // convert s to ms
                     },
                   ],
                 };

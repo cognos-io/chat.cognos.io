@@ -79,7 +79,6 @@ export class MessageFormComponent implements OnDestroy {
     if (!selectedConversation) {
       this._conversationService.newConversation$.next({
         title: 'New Conversation',
-        startingMessage: this.messageForm.value,
       });
     } else {
       this.messageService.sendMessage$.next(this.messageForm.value);
