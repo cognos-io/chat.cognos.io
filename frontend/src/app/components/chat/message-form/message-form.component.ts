@@ -11,7 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
-import { EMPTY, ReplaySubject, switchMap, takeUntil } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
 
 import { AgentService } from '@app/services/agent.service';
 import { ConversationService } from '@app/services/conversation.service';
@@ -60,6 +60,7 @@ export class MessageFormComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    console.log('destroying message form');
     this.destroyed$.next(true);
     this.destroyed$.complete();
   }
@@ -73,32 +74,16 @@ export class MessageFormComponent implements OnDestroy {
   }
 
   sendMessage() {
-    this._conversationService.conversation$
-      .pipe(
-        takeUntil(this.destroyed$),
-        switchMap((conversation) => {
-          if (!conversation) {
-            this._conversationService.newConversation$.next({
-              title: 'New Conversation',
-            });
-            return EMPTY;
-          }
-          this.messageService.sendMessage$.next(this.messageForm.value);
-          return this.messageService.messages$;
-        }),
-      )
-      .subscribe(() => {
-        this.messageForm.reset();
+    const selectedConversation = this._conversationService.conversation();
+    // Create a new conversation if one doesn't exist
+    if (!selectedConversation) {
+      this._conversationService.newConversation$.next({
+        title: 'New Conversation',
+        startingMessage: this.messageForm.value,
       });
-  }
-
-  onKeydown(event: KeyboardEvent) {
-    if (this.isMac && event.metaKey && event.key === 'Enter') {
-      this.sendMessage();
+    } else {
+      this.messageService.sendMessage$.next(this.messageForm.value);
     }
-
-    if (this.isMac === false && event.ctrlKey && event.key === 'Enter') {
-      this.sendMessage();
-    }
+    this.messageForm.reset();
   }
 }

@@ -8,7 +8,8 @@
       id="message-form"
       matInput
       placeholder="Teach me about..."
-      (keydown.control.enter)="sendMessage()"
+      (keydown.control.enter)="isMac ? undefined : sendMessage()"
+      (keydown.meta.enter)="isMac ? sendMessage() : undefined"
     ></textarea>
     @if (messageForm.valid) {
       <button type="submit" matSuffix mat-icon-button="">

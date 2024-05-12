@@ -1,6 +1,6 @@
+import { Location } from '@angular/common';
 import { Injectable, computed, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
 
 import PocketBase from 'pocketbase';
 
@@ -34,6 +34,7 @@ import { KeyPair } from '../interfaces/key-pair';
 import { TypedPocketBase } from '../types/pocketbase-types';
 import { AuthService } from './auth.service';
 import { CryptoService } from './crypto.service';
+import { MessageService } from './message.service';
 import { VaultService } from './vault.service';
 
 export const UserSecretKeyNotFoundError = new Error('User secret key not found');
@@ -58,7 +59,8 @@ export class ConversationService {
   private readonly cryptoService = inject(CryptoService);
   private readonly vaultService = inject(VaultService);
   private readonly auth = inject(AuthService);
-  private readonly _router = inject(Router);
+  private readonly location = inject(Location);
+  private readonly _messagesService = inject(MessageService);
 
   private readonly pbConversationCollection = 'conversations';
   private readonly pbConversationPublicKeysCollection = 'conversation_public_keys';
@@ -66,7 +68,11 @@ export class ConversationService {
 
   // sources
   readonly selectConversation$ = new Subject<string>(); // conversationId
-  readonly newConversation$ = new Subject<ConversationData>();
+  readonly newConversation$ = new Subject<
+    ConversationData & {
+      startingMessage?: { message?: string };
+    }
+  >();
   readonly filter$ = new Subject<string>();
   readonly deleteConversation$ = new Subject<string>(); // conversationId
 
@@ -84,13 +90,20 @@ export class ConversationService {
                 return EMPTY;
               }),
               tap((conversation) => {
-                this._router.navigate(['/', 'c', conversation.record.id]);
+                this.location.replaceState('/c/' + conversation.record.id);
               }),
-              map((conversation) => {
-                return {
-                  selectedConversation: conversation,
+              switchMap((conversation) => {
+                if (data.startingMessage) {
+                  this._messagesService.sendMessage$.next({
+                    conversationId: conversation.record.id,
+                    message: data.startingMessage.message,
+                  });
+                }
+
+                return of({
+                  selectedConversationId: conversation.record.id,
                   conversations: [conversation, ...state().conversations],
-                };
+                });
               }),
             ),
           ),

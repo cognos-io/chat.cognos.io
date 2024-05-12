@@ -34,6 +34,11 @@ const initialState: MessageState = {
   status: MessageStatus.None,
 };
 
+interface RawMessage {
+  conversationId?: string;
+  message?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -49,9 +54,7 @@ export class MessageService {
   private readonly pbMessagesCollection = this._pb.collection('messages');
 
   // sources
-  public readonly sendMessage$ = new Subject<{
-    message?: string;
-  }>();
+  public readonly sendMessage$ = new Subject<RawMessage>();
 
   // state
   private readonly state = signalSlice({
@@ -77,8 +80,9 @@ export class MessageService {
       // when a message is sent, add it to the list of messages
       (state) =>
         this.sendMessage$.pipe(
-          map(({ message }) => ({ message: message?.trim() })),
-          map(({ message }) => {
+          map((raw) => ({ ...raw, message: raw.message?.trim() })),
+          map((raw) => {
+            const message = raw.message;
             if (message === undefined || message === '') {
               return state();
             }
