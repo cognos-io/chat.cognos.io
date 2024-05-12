@@ -1,5 +1,6 @@
 import { Injectable, computed, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 
 import PocketBase from 'pocketbase';
 
@@ -13,6 +14,7 @@ import {
   map,
   of,
   switchMap,
+  tap,
   throwError,
 } from 'rxjs';
 
@@ -56,6 +58,7 @@ export class ConversationService {
   private readonly cryptoService = inject(CryptoService);
   private readonly vaultService = inject(VaultService);
   private readonly auth = inject(AuthService);
+  private readonly _router = inject(Router);
 
   private readonly pbConversationCollection = 'conversations';
   private readonly pbConversationPublicKeysCollection = 'conversation_public_keys';
@@ -79,6 +82,9 @@ export class ConversationService {
               catchError((error) => {
                 console.error(error);
                 return EMPTY;
+              }),
+              tap((conversation) => {
+                this._router.navigate(['/', 'c', conversation.record.id]);
               }),
               map((conversation) => {
                 return {
