@@ -3,7 +3,17 @@ import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase, { ListResult } from 'pocketbase';
 
-import { EMPTY, Observable, Subject, from, map, of, switchMap } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  Subject,
+  concatMap,
+  filter,
+  from,
+  map,
+  of,
+  switchMap,
+} from 'rxjs';
 
 import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -55,12 +65,17 @@ export class MessageService {
 
   // sources
   public readonly sendMessage$ = new Subject<RawMessage>();
+  private readonly _cleanedMessage$ = this.sendMessage$.pipe(
+    map((raw) => ({ ...raw, message: raw.message?.trim() })),
+    filter(({ message }) => message !== undefined && message !== ''),
+  );
 
   // state
   private readonly state = signalSlice({
     initialState,
     sources: [
       // messages need a key pair, and a conversation
+      // when the conversation changes, load the messages from the backend
       this._conversationService.conversation$.pipe(
         switchMap((conversation) => {
           if (!conversation) {
@@ -77,10 +92,10 @@ export class MessageService {
           );
         }),
       ),
-      // when a message is sent, add it to the list of messages
+
+      // when a message is sent, add it to the list of messages and send it to our upstream API
       (state) =>
-        this.sendMessage$.pipe(
-          map((raw) => ({ ...raw, message: raw.message?.trim() })),
+        this._cleanedMessage$.pipe(
           map((raw) => {
             const message = raw.message;
             if (message === undefined || message === '') {
@@ -89,7 +104,7 @@ export class MessageService {
             const newMessage: Message = {
               createdAt: new Date(),
               decryptedData: {
-                content: message || '',
+                content: message,
                 owner_id: this._authService.user()?.['id'],
               },
             };
@@ -100,9 +115,8 @@ export class MessageService {
           }),
         ),
       (state) =>
-        this.sendMessage$.pipe(
-          map(({ message }) => ({ message: message?.trim() })),
-          switchMap(({ message }) => {
+        this._cleanedMessage$.pipe(
+          concatMap(({ message }) => {
             if (message === undefined || message === '') {
               return EMPTY;
             }
