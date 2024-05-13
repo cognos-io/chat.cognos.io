@@ -123,8 +123,6 @@ export class MessageService {
             };
             const conversation = this._conversationService.conversation();
 
-            console.log('conversation', conversation);
-
             if (!conversation) {
               this._isNewConversation$.next(true);
               this._conversationService.newConversation$.next({
