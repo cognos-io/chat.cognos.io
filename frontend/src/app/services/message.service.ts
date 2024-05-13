@@ -111,72 +111,47 @@ export class MessageService {
         ),
 
       // when a message is sent, add it to the list of messages and send it to our upstream API
-      (state) =>
-        this._cleanedMessage$.pipe(
-          concatMap((raw) => {
-            const msg: Message = {
-              createdAt: new Date(),
-              decryptedData: {
-                content: raw.message || '',
-                owner_id: this._authService.user()?.['id'],
-              },
-            };
-            const conversation = this._conversationService.conversation();
+      this._cleanedMessage$.pipe(
+        concatMap((raw) => {
+          const msg: Message = {
+            createdAt: new Date(),
+            decryptedData: {
+              content: raw.message || '',
+              owner_id: this._authService.user()?.['id'],
+            },
+          };
+          const conversation = this._conversationService.conversation();
 
-            if (!conversation) {
-              this._isNewConversation$.next(true);
-              this._conversationService.newConversation$.next({
-                title: 'New Conversation',
-              });
-              return this._conversationService.conversation$.pipe(
-                filterNil(),
-                tap(() => {
-                  this.state.addMessage(msg);
-                }),
-                concatMap(() => {
-                  return this.sendMessage(raw.message || '').pipe(
-                    map((resp) => {
-                      return {
-                        messages: [
-                          ...state().messages,
-                          {
-                            createdAt: new Date((resp.created + 1) * 1000),
-                            decryptedData: {
-                              content: resp.choices[0].message.content,
-                              agent_id: this._agentService.selectedAgent().id,
-                              model_id: this._modelService.selectedModel().id,
-                            },
-                          },
-                        ],
-                      };
-                    }),
-                    tap(() => this._isNewConversation$.next(false)),
-                  );
-                }),
-              );
-            }
-
-            this.state.addMessage(msg);
-
-            return this.sendMessage(raw.message || '').pipe(
-              map((resp) => {
-                return {
-                  messages: [
-                    ...state().messages,
-                    {
-                      createdAt: new Date((resp.created + 1) * 1000),
-                      decryptedData: {
-                        content: resp.choices[0].message.content,
-                        agent_id: this._agentService.selectedAgent().id,
-                        model_id: this._modelService.selectedModel().id,
-                      },
-                    },
-                  ],
-                };
+          if (!conversation) {
+            this._isNewConversation$.next(true);
+            this._conversationService.newConversation$.next({
+              title: 'New Conversation',
+            });
+            return this._conversationService.conversation$.pipe(
+              filterNil(),
+              tap(() => {
+                this.state.addMessage(msg);
+              }),
+              concatMap(() => {
+                return this.sendMessage(raw.message || '').pipe(
+                  map((resp) => {
+                    return this.saveOpenAIMessage(resp);
+                  }),
+                  tap(() => this._isNewConversation$.next(false)),
+                );
               }),
             );
-          }),
-        ),
+          }
+
+          this.state.addMessage(msg);
+
+          return this.sendMessage(raw.message || '').pipe(
+            map((resp) => {
+              return this.saveOpenAIMessage(resp);
+            }),
+          );
+        }),
+      ),
     ],
     selectors: (state) => ({
       orderedMessageList: () => {
@@ -272,5 +247,20 @@ export class MessageService {
         },
       }),
     );
+  }
+
+  private saveOpenAIMessage(resp: OpenAI.ChatCompletion): Partial<MessageState> {
+    const msg: Message = {
+      createdAt: new Date((resp.created + 1) * 1000),
+      decryptedData: {
+        content: resp.choices[0].message.content,
+        agent_id: this._agentService.selectedAgent().id,
+        model_id: this._modelService.selectedModel().id,
+      },
+    };
+
+    return {
+      messages: [...this.state().messages, msg],
+    };
   }
 }
