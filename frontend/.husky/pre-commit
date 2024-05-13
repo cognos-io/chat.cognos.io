@@ -1,6 +1,9 @@
-#!/usr/bin/env sh
+bash << EOF
+
 . "$(dirname -- "$0")/_/husky.sh"
 
 pushd ./frontend
 npm run lint-staged
 popd
+
+EOF
