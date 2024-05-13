@@ -67,6 +67,9 @@ export class ConversationService {
   // sources
   readonly selectConversation$ = new Subject<string>(); // conversationId
   readonly newConversation$ = new Subject<ConversationData>();
+  private readonly _newConversation$ = this.newConversation$.pipe(
+    map((data) => ({ ...data, title: data.title.trim() })),
+  );
   readonly filter$ = new Subject<string>();
   readonly deleteConversation$ = new Subject<string>(); // conversationId
 
@@ -76,7 +79,7 @@ export class ConversationService {
     sources: [
       // When newConversation emits, create a new conversation
       (state) =>
-        this.newConversation$.pipe(
+        this._newConversation$.pipe(
           switchMap((data) =>
             this.createConversation(data).pipe(
               catchError((error) => {
