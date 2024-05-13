@@ -3,9 +3,21 @@ import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase, { ListResult } from 'pocketbase';
 
-import { Observable, Subject, concatMap, filter, from, map, of, switchMap } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  Subject,
+  concatMap,
+  filter,
+  from,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 import { Base64 } from 'js-base64';
+import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
 import OpenAI from 'openai';
 
@@ -27,11 +39,13 @@ export enum MessageStatus {
 interface MessageState {
   messages: Message[];
   status: MessageStatus;
+  isNewConversation: boolean; // used to indicate if this is a new conversation
 }
 
 const initialState: MessageState = {
   messages: [],
   status: MessageStatus.None,
+  isNewConversation: false,
 };
 
 interface RawMessage {
@@ -59,51 +73,93 @@ export class MessageService {
     map((raw) => ({ ...raw, message: raw.message?.trim() })),
     filter(({ message }) => message !== undefined && message !== ''),
   );
+  private readonly _isNewConversation$ = new Subject<boolean>();
 
   // state
   private readonly state = signalSlice({
     initialState,
     sources: [
-      // messages need a key pair, and a conversation
-      // when the conversation changes, load the messages from the backend
-      this._conversationService.conversation$.pipe(
-        switchMap((conversation) => {
-          if (!conversation) {
-            return of({
-              messages: [],
-            });
-          }
-          return this.loadMessages(conversation.record.id).pipe(
-            map((messages) => {
-              return {
-                messages,
-              };
-            }),
-          );
+      this._isNewConversation$.pipe(
+        map((isNewConversation) => {
+          return {
+            isNewConversation,
+          };
         }),
       ),
+      // messages need a key pair, and a conversation
+      // when the conversation changes, load the messages from the backend
+      (state) =>
+        this._conversationService.conversation$.pipe(
+          switchMap((conversation) => {
+            if (!conversation) {
+              return of({
+                messages: [],
+              });
+            }
+            if (state().isNewConversation) {
+              // we don't need to load new messages if this is a new conversation
+              return EMPTY;
+            }
+            return this.loadMessages(conversation.record.id).pipe(
+              map((messages) => {
+                return {
+                  messages,
+                };
+              }),
+            );
+          }),
+        ),
 
       // when a message is sent, add it to the list of messages and send it to our upstream API
       (state) =>
         this._cleanedMessage$.pipe(
-          map((raw) => {
-            return {
-              messages: [
-                ...state().messages,
-                {
-                  createdAt: new Date(),
-                  decryptedData: {
-                    content: raw.message || '',
-                    owner_id: this._authService.user()?.['id'],
-                  },
-                },
-              ],
-            };
-          }),
-        ),
-      (state) =>
-        this._cleanedMessage$.pipe(
           concatMap((raw) => {
+            const msg: Message = {
+              createdAt: new Date(),
+              decryptedData: {
+                content: raw.message || '',
+                owner_id: this._authService.user()?.['id'],
+              },
+            };
+            const conversation = this._conversationService.conversation();
+
+            console.log('conversation', conversation);
+
+            if (!conversation) {
+              this._isNewConversation$.next(true);
+              this._conversationService.newConversation$.next({
+                title: 'New Conversation',
+              });
+              return this._conversationService.conversation$.pipe(
+                filterNil(),
+                tap(() => {
+                  this.state.addMessage(msg);
+                }),
+                concatMap(() => {
+                  return this.sendMessage(raw.message || '').pipe(
+                    map((resp) => {
+                      return {
+                        messages: [
+                          ...state().messages,
+                          {
+                            createdAt: new Date((resp.created + 1) * 1000),
+                            decryptedData: {
+                              content: resp.choices[0].message.content,
+                              agent_id: this._agentService.selectedAgent().id,
+                              model_id: this._modelService.selectedModel().id,
+                            },
+                          },
+                        ],
+                      };
+                    }),
+                    tap(() => this._isNewConversation$.next(false)),
+                  );
+                }),
+              );
+            }
+
+            this.state.addMessage(msg);
+
             return this.sendMessage(raw.message || '').pipe(
               map((resp) => {
                 return {
@@ -131,6 +187,16 @@ export class MessageService {
         return messageList;
       },
     }),
+    actionSources: {
+      addMessage: (state, action$: Observable<Message>) =>
+        action$.pipe(
+          map((message) => {
+            return {
+              messages: [...state().messages, message],
+            };
+          }),
+        ),
+    },
   });
 
   // selectors

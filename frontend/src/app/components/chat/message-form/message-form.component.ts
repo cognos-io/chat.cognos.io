@@ -74,15 +74,7 @@ export class MessageFormComponent implements OnDestroy {
   }
 
   sendMessage() {
-    const selectedConversation = this._conversationService.conversation();
-    // Create a new conversation if one doesn't exist
-    if (!selectedConversation) {
-      this._conversationService.newConversation$.next({
-        title: 'New Conversation',
-      });
-    } else {
-      this.messageService.sendMessage$.next(this.messageForm.value);
-    }
+    this.messageService.sendMessage$.next(this.messageForm.value);
     this.messageForm.reset();
   }
 }
