@@ -24,7 +24,7 @@ import { ModelService } from '@app/services/model.service';
   ],
   template: `
     @if (message) {
-      <li class="item-grid group">
+      <li class="item-grid group" [id]="message.record_id">
         <div
           class="flex h-12 w-12 flex-none items-center justify-center justify-self-center rounded-full bg-gray-50"
         >

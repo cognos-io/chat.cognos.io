@@ -32,6 +32,9 @@ export const parseMessageData = (decryptedData: Uint8Array): MessageData => {
 };
 
 export interface Message {
+  // the record id of the message but may be undefined as messages encrypted
+  //  in the backend don't currently send their IDs to the frontend
+  record_id?: string;
   decryptedData: MessageData;
   createdAt: Date;
 }
