@@ -199,26 +199,28 @@ export class MessageService {
       throw new Error('No conversation selected');
     }
 
-    try {
-      const decryptedData = this._cryptoService.openSealedBox(
-        Base64.toUint8Array(base64EncryptedData),
-        conversation.keyPair,
-      );
+    let decryptedData: Message['decryptedData'];
 
-      return {
-        createdAt: new Date(record.created),
-        decryptedData: parseMessageData(decryptedData),
-      };
+    try {
+      decryptedData = parseMessageData(
+        this._cryptoService.openSealedBox(
+          Base64.toUint8Array(base64EncryptedData),
+          conversation.keyPair,
+        ),
+      );
     } catch (error) {
       // Show to the user the message failed to decrypt
       console.error('Message decryption failed', error);
-      return {
-        createdAt: new Date(record.created),
-        decryptedData: {
-          content: 'Failed to decrypt message',
-        },
+      decryptedData = {
+        content: 'Failed to decrypt message',
       };
     }
+
+    return {
+      record_id: record.id,
+      createdAt: new Date(record.created),
+      decryptedData,
+    };
   }
 
   private loadMessages(conversationId: string): Observable<Message[]> {
