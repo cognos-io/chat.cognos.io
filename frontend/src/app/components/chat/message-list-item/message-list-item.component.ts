@@ -52,28 +52,30 @@ import { ModelService } from '@app/services/model.service';
           >
             <mat-icon fontSet="bi" fontIcon="bi-clipboard"></mat-icon>
           </button>
-          <button
-            mat-icon-button
-            matTooltip="Flag or report message"
-            aria-label="Button that enables flagging and reporting of messages"
-          >
-            <mat-icon fontSet="bi" fontIcon="bi-flag"></mat-icon>
-          </button>
-          <button
-            mat-icon-button
-            matTooltip="Reply to this message"
-            aria-label="Button that enables replying to this message specifically"
-          >
-            <mat-icon fontSet="bi" fontIcon="bi-reply"></mat-icon>
-          </button>
-          <button
-            class="ml-auto"
-            mat-icon-button
-            matTooltip="Delete message"
-            aria-label="Button that deletes this message"
-          >
-            <mat-icon fontSet="bi" fontIcon="bi-trash3"></mat-icon>
-          </button>
+          @if (message.record_id) {
+            <!-- <button
+              mat-icon-button
+              matTooltip="Flag or report message"
+              aria-label="Button that enables flagging and reporting of messages"
+            >
+              <mat-icon fontSet="bi" fontIcon="bi-flag"></mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              matTooltip="Reply to this message"
+              aria-label="Button that enables replying to this message specifically"
+            >
+              <mat-icon fontSet="bi" fontIcon="bi-reply"></mat-icon>
+            </button> -->
+            <!-- <button
+              class="ml-auto"
+              mat-icon-button
+              matTooltip="Delete message"
+              aria-label="Button that deletes this message"
+            >
+              <mat-icon fontSet="bi" fontIcon="bi-trash3"></mat-icon>
+            </button> -->
+          }
         </div>
       </li>
     }
