@@ -7,6 +7,7 @@ import {
   EMPTY,
   Observable,
   Subject,
+  catchError,
   concatMap,
   filter,
   from,
@@ -31,9 +32,12 @@ import { CryptoService } from './crypto.service';
 import { ModelService } from './model.service';
 
 export enum MessageStatus {
-  None,
-  Fetching,
-  Decrypting,
+  None, // default state
+  Fetching, // fetching message list
+  ErrorFetching, // error state
+  Decrypting, // decrypting messages
+  Sending, // sending message and waiting for AI response
+  ErrorSending, // error state
 }
 
 interface MessageState {
@@ -118,8 +122,13 @@ export class MessageService {
               return EMPTY;
             }
             return this.loadMessages(conversation.record.id).pipe(
+              catchError(() => {
+                this.state.setStatus(MessageStatus.ErrorFetching);
+                return EMPTY;
+              }),
               map((messages) => {
                 return {
+                  status: MessageStatus.None,
                   messages,
                 };
               }),
@@ -167,9 +176,12 @@ export class MessageService {
                     });
                   }),
                   map((resp) => {
-                    return this.saveOpenAIMessage(resp);
+                    return {
+                      ...this.saveOpenAIMessage(resp),
+                      isNewConversation: false,
+                      status: MessageStatus.None,
+                    };
                   }),
-                  tap(() => this._isNewConversation$.next(false)),
                 );
               }),
             );
@@ -225,17 +237,28 @@ export class MessageService {
             };
           }),
         ),
+      setStatus: (state, action$: Observable<MessageStatus>) =>
+        action$.pipe(
+          map((status) => {
+            return {
+              status,
+            };
+          }),
+        ),
     },
   });
 
   // selectors
   public readonly messages = this.state.orderedMessageList;
   public readonly messages$ = toObservable(this.messages);
+  public readonly status = this.state.status;
 
   // helper methods
   private fetchMessages(
     conversationId: string,
   ): Observable<ListResult<MessagesResponse>> {
+    this.state.setStatus(MessageStatus.Fetching);
+
     return from(
       this.pbMessagesCollection.getList(
         1, // page
@@ -281,6 +304,9 @@ export class MessageService {
 
   private loadMessages(conversationId: string): Observable<Message[]> {
     return this.fetchMessages(conversationId).pipe(
+      tap(() => {
+        this.state.setStatus(MessageStatus.Decrypting);
+      }),
       map((response) => {
         return response.items.map((record) => this.decryptMessage(record));
       }),
@@ -294,6 +320,8 @@ export class MessageService {
     if (!conversation) {
       throw new Error('No conversation selected');
     }
+
+    this.state.setStatus(MessageStatus.Sending);
 
     return from(
       this._openAi.chat.completions.create({
