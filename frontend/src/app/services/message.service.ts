@@ -54,13 +54,20 @@ interface RawMessage {
 }
 
 type CognosMetadataResponse = {
-  record_id?: string;
+  request_id?: string;
+  message_record_id?: string;
+  response_record_id?: string;
 };
 
 type ChatCompletionResponseWithMetadata = OpenAI.ChatCompletion & {
   metadata?: {
     cognos?: CognosMetadataResponse;
   };
+};
+
+type MessageRequest = {
+  requestId: string;
+  content: string;
 };
 
 @Injectable({
@@ -123,13 +130,21 @@ export class MessageService {
       // when a message is sent, add it to the list of messages and send it to our upstream API
       this._cleanedMessage$.pipe(
         concatMap((raw) => {
+          const messageRequest: MessageRequest = {
+            requestId: crypto.randomUUID(),
+            content: raw.message || '',
+          };
+
           const msg: Message = {
+            // this ID is a temporary id and we will update it when we get the response
+            record_id: messageRequest.requestId,
             createdAt: new Date(),
             decryptedData: {
               content: raw.message || '',
               owner_id: this._authService.user()?.['id'],
             },
           };
+
           const conversation = this._conversationService.conversation();
 
           if (!conversation) {
@@ -143,7 +158,14 @@ export class MessageService {
                 this.state.addMessage(msg);
               }),
               concatMap(() => {
-                return this.sendMessage(raw.message || '').pipe(
+                return this.sendMessage(messageRequest).pipe(
+                  tap((resp) => {
+                    const metadata: CognosMetadataResponse = resp.metadata?.cognos;
+                    this.state.updateMessageId({
+                      oldId: messageRequest.requestId,
+                      newId: metadata.message_record_id || '',
+                    });
+                  }),
                   map((resp) => {
                     return this.saveOpenAIMessage(resp);
                   }),
@@ -155,7 +177,14 @@ export class MessageService {
 
           this.state.addMessage(msg);
 
-          return this.sendMessage(raw.message || '').pipe(
+          return this.sendMessage(messageRequest).pipe(
+            tap((resp) => {
+              const metadata: CognosMetadataResponse = resp.metadata?.cognos;
+              this.state.updateMessageId({
+                oldId: messageRequest.requestId,
+                newId: metadata.message_record_id || '',
+              });
+            }),
             map((resp) => {
               return this.saveOpenAIMessage(resp);
             }),
@@ -176,6 +205,23 @@ export class MessageService {
           map((message) => {
             return {
               messages: [...state().messages, message],
+            };
+          }),
+        ),
+      updateMessageId: (state, action$: Observable<{ oldId: string; newId: string }>) =>
+        action$.pipe(
+          map(({ oldId, newId }) => {
+            const messages = state().messages.map((msg) => {
+              if (msg.record_id === oldId) {
+                return {
+                  ...msg,
+                  record_id: newId,
+                };
+              }
+              return msg;
+            });
+            return {
+              messages,
             };
           }),
         ),
@@ -241,7 +287,9 @@ export class MessageService {
     );
   }
 
-  private sendMessage(message: string): Observable<ChatCompletionResponseWithMetadata> {
+  private sendMessage(
+    messageRequest: MessageRequest,
+  ): Observable<ChatCompletionResponseWithMetadata> {
     const conversation = this._conversationService.conversation();
     if (!conversation) {
       throw new Error('No conversation selected');
@@ -249,10 +297,11 @@ export class MessageService {
 
     return from(
       this._openAi.chat.completions.create({
-        messages: [{ role: 'user', content: message }],
+        messages: [{ role: 'user', content: messageRequest.content }],
         model: this._modelService.selectedModel().id,
         metadata: {
           cognos: {
+            request_id: messageRequest.requestId,
             agent_id: this._agentService.selectedAgent().id,
             conversation_id: conversation.record.id,
           },
@@ -264,8 +313,9 @@ export class MessageService {
   private saveOpenAIMessage(
     resp: ChatCompletionResponseWithMetadata,
   ): Partial<MessageState> {
+    const metadata: CognosMetadataResponse = resp.metadata?.cognos;
     const msg: Message = {
-      record_id: resp.metadata?.cognos?.record_id,
+      record_id: metadata.response_record_id,
       createdAt: new Date((resp.created + 1) * 1000),
       decryptedData: {
         content: resp.choices[0].message.content,

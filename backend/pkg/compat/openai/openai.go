@@ -24,13 +24,20 @@ type RequestMetadata struct {
 	Cognos struct {
 		ConversationID string `json:"conversation_id,omitempty"`
 		AgentID        string `json:"agent_id,omitempty"`
+		RequestID      string `json:"request_id,omitempty"` // Arbitrary ID for frontend to track requests
 	} `json:"cognos,omitempty"`
 }
 
+type CognosResponseMetadata struct {
+	RequestID string `json:"request_id,omitempty"` // Sent back to the frontend to track requests
+	// ID of the message record that was created for the request
+	MessageRecordID string `json:"message_record_id,omitempty"`
+	// ID of the message record that was created for the response
+	ResponseRecordID string `json:"response_record_id,omitempty"`
+}
+
 type ResponseMetadata struct {
-	Cognos struct {
-		RecordID string `json:"record_id,omitempty"`
-	} `json:"cognos,omitempty"`
+	Cognos CognosResponseMetadata `json:"cognos,omitempty"`
 }
 
 type ChatCompletionRequestWithMetadata struct {
@@ -134,7 +141,7 @@ func EchoHandler(
 			Content: plainTextRequestMessage,
 		}
 
-		err, _ = messageRepo.EncryptAndPersistMessage(
+		err, messageRecord := messageRepo.EncryptAndPersistMessage(
 			receiverPublicKey,
 			req.Metadata.Cognos.ConversationID,
 			requestMessage,
@@ -171,7 +178,7 @@ func EchoHandler(
 			OwnerID: owner.ID,
 			Content: plainTextResponseMessage,
 		}
-		err, record := messageRepo.EncryptAndPersistMessage(
+		err, responseRecord := messageRepo.EncryptAndPersistMessage(
 			receiverPublicKey,
 			req.Metadata.Cognos.ConversationID,
 			responseMessage,
@@ -187,7 +194,11 @@ func EchoHandler(
 
 		var extendedResponse ChatCompletionResponseWithMetadata
 		extendedResponse.ChatCompletionResponse = resp
-		extendedResponse.Metadata.Cognos.RecordID = record.Id
+		extendedResponse.Metadata.Cognos = CognosResponseMetadata{
+			RequestID:        req.Metadata.Cognos.RequestID,
+			MessageRecordID:  messageRecord.Id,
+			ResponseRecordID: responseRecord.Id,
+		}
 
 		return c.JSON(http.StatusOK, extendedResponse)
 	}
