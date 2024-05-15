@@ -93,7 +93,7 @@ build:
 run: build
 	/tmp/bin/${BINARY_NAME} serve
 
-## run: run the application with the test database to add data for testing
+## run/test: run the application with the test database to add data for testing
 .PHONY: run/test
 run/test: build
 	/tmp/bin/${BINARY_NAME} --dir testdata/pb_data serve

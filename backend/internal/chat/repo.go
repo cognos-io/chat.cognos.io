@@ -2,6 +2,7 @@ package chat
 
 import (
 	"encoding/base64"
+	"encoding/json"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/crypto"
 	"github.com/pocketbase/pocketbase/core"
@@ -9,48 +10,40 @@ import (
 	"github.com/pocketbase/pocketbase/models"
 )
 
-type PlainTextMessage struct {
-	OwnerID        string `json:"owner_id,omitempty"`
-	ConversationID string `json:"conversation_id,omitempty"`
-	Content        string `json:"content"`
-}
-
-// EncryptMessage encrypts a plain text message using symmetric and asymmetric encryption.
+// EncryptMessageData encrypts a plain text message using symmetric and asymmetric encryption.
 // It takes the plain text message and the receiver's public key as input parameters.
 // The function returns the base64 encoded encrypted message and the base64 encoded encrypted symmetric key.
 // If an error occurs during the encryption process, it returns an empty string and the error.
-func EncryptMessage(
-	plainTextMessage string,
+func EncryptMessageData(
+	message MessageRecordData,
 	receiverPublicKey [32]byte,
-) (base64EncryptedMessage, base64EncryptedSymmetricKey string, err error) {
-	// Symmetrically encrypt the request message with a random key
-	symmetricKey, encryptedMessage, err := crypto.SymmetricEncrypt(
-		[]byte(plainTextMessage),
-	)
+) (base64EncryptedMessage string, err error) {
+	// Turn our message into bytes of the JSON representation
+	messageBytes, err := json.Marshal(message)
 	if err != nil {
-		return "", "", err
+		return
 	}
-	// Asymmetrically encrypt the symmetric key with the receiver's public key
-	encryptedSymmetricKey, err := crypto.AsymmetricEncrypt(
+
+	// This is essentially a NaCl sealed box which includes the ephemeral public key
+	cipherText, err := crypto.AsymmetricEncrypt(
 		receiverPublicKey,
-		symmetricKey[:],
+		messageBytes,
 	)
 	if err != nil {
-		return "", "", err
+		return
 	}
-	// Return the base64 encoded encrypted message and symmetric key
-	base64EncryptedMessage = base64.StdEncoding.EncodeToString(encryptedMessage)
-	base64EncryptedSymmetricKey = base64.StdEncoding.EncodeToString(
-		encryptedSymmetricKey,
-	)
+
+	// Return the base64 encoded encrypted message
+	base64EncryptedMessage = base64.StdEncoding.EncodeToString(cipherText)
 	return
 }
 
 type MessageRepo interface {
 	EncryptAndPersistMessage(
 		receiverPublicKey [32]byte,
-		message *PlainTextMessage,
-	) error
+		conversationID string,
+		message PlainTextMessage,
+	) (error, *models.Record)
 }
 
 type PocketBaseMessageRepo struct {
@@ -64,30 +57,30 @@ type PocketBaseMessageRepo struct {
 // Returns an error if there was a problem persisting the message.
 func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 	receiverPublicKey [32]byte,
-	message *PlainTextMessage,
-) error {
-	encryptedMessage, encryptedSymmetricKey, err := EncryptMessage(
-		message.Content,
+	conversationID string,
+	message PlainTextMessage,
+) (error, *models.Record) {
+	m := MessageRecordData{
+		Content: message.Content,
+	}
+	base64EncryptedMessage, err := EncryptMessageData(
+		m,
 		receiverPublicKey,
 	)
 	if err != nil {
-		return err
+		return err, nil
 	}
 	record := models.NewRecord(r.collection)
 	form := forms.NewRecordUpsert(r.app, record)
 	err = form.LoadData(map[string]any{
-		"data": encryptedMessage,
-		"key":  encryptedSymmetricKey,
+		"data":         base64EncryptedMessage,
+		"conversation": conversationID,
 	})
 	if err != nil {
-		return err
+		return err, nil
 	}
 
-	if err != nil {
-		return err
-	}
-
-	return form.Submit()
+	return form.Submit(), record
 }
 
 func NewPocketBaseMessageRepo(app core.App) *PocketBaseMessageRepo {

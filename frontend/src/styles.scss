@@ -28,12 +28,28 @@ $theme: matx.define-theme(
   )
 );
 
+$dark-theme: matx.define-theme(
+  (
+    color: (
+      theme-type: 'dark',
+      primary: matx.$m3-green-palette,
+    ),
+  )
+);
+
 // Supports weights 100-900
 @import '@fontsource-variable/public-sans';
+
+// also enable tailwind utilities
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --error-bg-color: #{mat.get-theme-color($theme, 'error', 90)};
   --error-text-color: #{mat.get-theme-color($theme, 'error', 30)};
+  --chat-container-width: 80ch;
+  --chat-container-padding: 1rem;
 }
 
 html {
@@ -49,14 +65,6 @@ body {
   font-family: 'Public Sans Variable', 'Helvetica Neue', sans-serif;
 }
 
-mat-icon.bi {
-  font-size: 1rem !important;
-  line-height: 1.125rem !important;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .backdrop-blur {
   background-color: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(0.5rem);
@@ -65,6 +73,27 @@ mat-icon.bi {
 .error-snackbar {
   --mdc-snackbar-container-color: var(--error-bg-color);
   --mdc-snackbar-supporting-text-color: var(--error-text-color);
+}
+
+mat-sidenav,
+mat-toolbar {
+  @include mat.all-component-colors($dark-theme);
+}
+
+mat-icon.bi {
+  font-size: 1rem !important;
+  line-height: 1.125rem !important;
+  display: inline-flex;
+}
+
+button.mdc-icon-button {
+  display: flex;
+}
+
+button.mdc-icon-button,
+mat-icon.bi {
+  align-items: center;
+  justify-content: center;
 }
 
 button {
@@ -77,4 +106,40 @@ button {
   &.mat-secondary {
     @include mat.button-color($theme, $color-variant: secondary);
   }
+}
+
+.glass {
+  backdrop-filter: blur(200px);
+}
+
+.backdrop {
+  width: 100%;
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  opacity: 1;
+
+  /*  where the real magic happens  */
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+
+  background: rgba(225, 225, 225, 0.05);
+
+  mask-image: linear-gradient(
+    rgb(0, 0, 0) 50%,
+    rgba(0, 0, 0, 0.8) 70%,
+    rgba(0, 0, 0, 0) 100%
+  );
+
+  -webkit-mask-image: linear-gradient(
+    rgb(0, 0, 0) 50%,
+    rgba(0, 0, 0, 0.8) 70%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  inset: -1rem 0;
+}
+
+// Debugging
+.debug * {
+  outline: 1px solid red;
 }

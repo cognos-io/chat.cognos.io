@@ -1,4 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase, { AuthMethodsList, AuthModel } from 'pocketbase';
 
@@ -60,15 +61,15 @@ export class AuthService implements OnDestroy {
         }),
       ),
       this.$user.pipe(
-        switchMap((response: AuthUser) =>
-          this.fetchOryId(response?.['id']).pipe(
+        switchMap((response: AuthUser) => {
+          return this.fetchOryId(response?.['id']).pipe(
             map((oryId: string) => {
               return {
                 oryId,
               };
             }),
-          ),
-        ),
+          );
+        }),
       ),
       // When login emits, we are authenticating
       this.$userAuthenticating.pipe(
@@ -100,12 +101,15 @@ export class AuthService implements OnDestroy {
   // selectors
   status = this.state.status;
   user = this.state.user;
+  user$ = toObservable(this.user);
   oryId = this.state.oryId;
 
   constructor() {
     // Listen for changes in the auth store
     this.storeUnsubscribe = this.pb.authStore.onChange((token, model) => {
-      this.$user.next(model);
+      if (this.pb.authStore.isValid) {
+        this.$user.next(model);
+      }
     }, true);
   }
 

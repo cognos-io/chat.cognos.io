@@ -6,7 +6,7 @@
   </mat-toolbar>
   <mat-sidenav-container
     class="page sidebar-container"
-    [style.marginTop.px]="isMobile() ? 56 : 0"
+    [style.paddingTop.px]="isMobile() ? 56 : 0"
   >
     <mat-sidenav
       #sideNav
@@ -17,15 +17,7 @@
       role="navigation"
     >
       <div class="sidebar">
-        <button
-          mat-button
-          color="primary"
-          (click)="
-            conversationService.newConversation$.next({
-              title: 'new conversation'
-            })
-          "
-        >
+        <button mat-button color="primary" (click)="router.navigateByUrl('')">
           <mat-icon fontSet="bi" fontIcon="bi-plus-circle-fill"></mat-icon>
           <ng-container i18n="button|action to create a new conversation">
             New conversation
@@ -36,15 +28,15 @@
             conversation of conversationService.conversationList();
             track conversation.record.id
           ) {
-            <mat-list-item
+            <a
+              mat-list-item
+              [routerLink]="['c', conversation.record.id]"
               class="conversation-list-item"
               #tooltip="matTooltip"
               [matTooltip]="conversation.decryptedData.title"
               matTooltipPosition="after"
             >
-              <a [routerLink]="['c', conversation.record.id]" matListItemTitle>{{
-                conversation.decryptedData.title
-              }}</a>
+              <p matListItemTitle>{{ conversation.decryptedData.title }}</p>
               <div matListItemMeta class="conversation-list-item-actions">
                 <button
                   mat-icon-button
@@ -55,9 +47,12 @@
                   <mat-icon fontSet="bi" fontIcon="bi-three-dots-vertical"></mat-icon>
                 </button>
               </div>
-            </mat-list-item>
+            </a>
             <mat-menu #menu="matMenu">
-              <button mat-menu-item="">
+              <button
+                mat-menu-item=""
+                (click)="onPinConversation(conversation.record.id)"
+              >
                 <mat-icon fontSet="bi" fontIcon="bi-pin-angle"></mat-icon>
                 Pin
               </button>
@@ -72,7 +67,7 @@
                 mat-menu-item=""
                 (click)="onDeleteConversation(conversation.record.id)"
               >
-                <mat-icon fontSet="bi" fontIcon="bi-trash"></mat-icon>
+                <mat-icon fontSet="bi" fontIcon="bi-trash3"></mat-icon>
                 Delete
               </button>
             </mat-menu>

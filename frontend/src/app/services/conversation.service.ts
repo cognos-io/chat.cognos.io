@@ -1,4 +1,6 @@
-import { Injectable, computed, effect, inject } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 
 import PocketBase from 'pocketbase';
 
@@ -12,6 +14,7 @@ import {
   map,
   of,
   switchMap,
+  tap,
   throwError,
 } from 'rxjs';
 
@@ -37,13 +40,13 @@ export const UserSecretKeyNotFoundError = new Error('User secret key not found')
 
 interface ConversationState {
   conversations: Array<Conversation>;
-  selectedConversation: Conversation | null;
+  selectedConversationId: string;
   filter: string;
 }
 
 const initialState: ConversationState = {
   conversations: [],
-  selectedConversation: null,
+  selectedConversationId: '',
   filter: '',
 };
 
@@ -55,23 +58,18 @@ export class ConversationService {
   private readonly cryptoService = inject(CryptoService);
   private readonly vaultService = inject(VaultService);
   private readonly auth = inject(AuthService);
+  private readonly _router = inject(Router);
 
   private readonly pbConversationCollection = 'conversations';
   private readonly pbConversationPublicKeysCollection = 'conversation_public_keys';
   private readonly pbConversationSecretKeyCollection = 'conversation_secret_keys';
 
-  // Need to try decrypting conversation data when we have a key pair.
-  // Don't know a better way to do this unfortunately
-  private readonly onKeyPairChange = effect(() => {
-    if (this.vaultService.keyPair()) {
-      this._keyPairChanged$.next();
-    }
-  });
-
   // sources
-  private readonly _keyPairChanged$ = new Subject<void>();
   readonly selectConversation$ = new Subject<string>(); // conversationId
   readonly newConversation$ = new Subject<ConversationData>();
+  private readonly _newConversation$ = this.newConversation$.pipe(
+    map((data) => ({ ...data, title: data.title.trim() })),
+  );
   readonly filter$ = new Subject<string>();
   readonly deleteConversation$ = new Subject<string>(); // conversationId
 
@@ -81,16 +79,19 @@ export class ConversationService {
     sources: [
       // When newConversation emits, create a new conversation
       (state) =>
-        this.newConversation$.pipe(
+        this._newConversation$.pipe(
           switchMap((data) =>
             this.createConversation(data).pipe(
               catchError((error) => {
                 console.error(error);
                 return EMPTY;
               }),
+              tap((conversation) => {
+                this._router.navigate(['/', 'c', conversation.record.id]);
+              }),
               map((conversation) => {
                 return {
-                  selectedConversation: conversation,
+                  selectedConversationId: conversation.record.id,
                   conversations: [conversation, ...state().conversations],
                 };
               }),
@@ -99,19 +100,11 @@ export class ConversationService {
         ),
       // When selectConversation emits, fetch the conversation details
       this.selectConversation$.pipe(
-        switchMap((conversationId) =>
-          this.fetchConversationRecord(conversationId).pipe(
-            switchMap((record) =>
-              this.fetchConversation(record).pipe(
-                map((conversation) => {
-                  return {
-                    selectedConversation: conversation,
-                  };
-                }),
-              ),
-            ),
-          ),
-        ),
+        map((conversationId) => {
+          return {
+            selectedConversationId: conversationId,
+          };
+        }),
       ),
       // When filter emits, apply the filter
       this.filter$.pipe(
@@ -120,8 +113,8 @@ export class ConversationService {
         }),
       ),
       // When the user's key pair changes, reload the conversations
-      this._keyPairChanged$.pipe(
-        switchMap(() => this.fetchConversations()),
+      this.vaultService.keyPair$.pipe(
+        switchMap((keyPair) => (keyPair ? this.fetchConversations() : [])),
         map((conversations) => {
           return { conversations };
         }),
@@ -136,16 +129,16 @@ export class ConversationService {
                 return EMPTY;
               }),
               map(() => {
-                let selectedConversation = state().selectedConversation;
-                // deselect the conversation if it's the one being deleted
-                if (selectedConversation?.record.id === conversationId) {
-                  selectedConversation = null;
+                let selectedConversationId = state().selectedConversationId;
+                if (conversationId === selectedConversationId) {
+                  selectedConversationId = '';
                 }
+
                 return {
                   conversations: state().conversations.filter(
                     (conversation) => conversation.record.id !== conversationId,
                   ),
-                  selectedConversation,
+                  selectedConversationId,
                 };
               }),
             ),
@@ -173,12 +166,19 @@ export class ConversationService {
             return b.record.updated.localeCompare(a.record.created);
           });
         },
+        selectedConversation: () => {
+          const selectedConversationId = state.selectedConversationId();
+          return state
+            .conversations()
+            .find((conversation) => conversation.record.id === selectedConversationId);
+        },
       };
     },
   });
 
   // selectors
   readonly conversation = this.state.selectedConversation;
+  readonly conversation$ = toObservable(this.conversation);
   readonly conversationList = this.state.orderedConversations;
 
   /**
@@ -231,7 +231,7 @@ export class ConversationService {
    * @param conversationKeyPair (KeyPair)
    * @returns (Uint8Array)
    */
-  encryptConversationData(
+  private encryptConversationData(
     data: ConversationData,
     conversationKeyPair: KeyPair,
   ): Uint8Array {
@@ -249,7 +249,7 @@ export class ConversationService {
    * @param conversationKeyPair (KeyPair)
    * @returns (ConversationData)
    */
-  decryptConversationData(
+  private decryptConversationData(
     record: ConversationRecord,
     conversationKeyPair: KeyPair,
   ): ConversationData {
@@ -267,7 +267,7 @@ export class ConversationService {
    * @param conversationKeyPair (KeyPair) - the conversation's key pair
    * @returns (Uint8Array) - the shared key
    */
-  sharedKey(conversationKeyPair: KeyPair): Uint8Array {
+  private sharedKey(conversationKeyPair: KeyPair): Uint8Array {
     return this.cryptoService.sharedKey(
       conversationKeyPair.publicKey,
       conversationKeyPair.secretKey,
@@ -281,7 +281,7 @@ export class ConversationService {
    * @param conversationId (string)
    * @returns (Observable<Uint8Array>)
    */
-  fetchConversationPublicKey(conversationId: string): Observable<Uint8Array> {
+  private fetchConversationPublicKey(conversationId: string): Observable<Uint8Array> {
     const filter = this.pb.filter('conversation={:conversationId}', {
       conversationId,
     });
@@ -303,7 +303,7 @@ export class ConversationService {
    * @param conversationId (string)
    * @returns (Observable<Uint8Array>)
    */
-  fetchConversationSecretKey(conversationId: string): Observable<Uint8Array> {
+  private fetchConversationSecretKey(conversationId: string): Observable<Uint8Array> {
     const filter = this.pb.filter('conversation={:conversationId} && user={:userId}', {
       conversationId,
       userId: this.auth.user()?.['id'],
@@ -327,7 +327,7 @@ export class ConversationService {
    * @param conversationId (string)
    * @returns (Observable<KeyPair>)
    */
-  fetchConversationKeyPair(conversationId: string): Observable<KeyPair> {
+  private fetchConversationKeyPair(conversationId: string): Observable<KeyPair> {
     return this.fetchConversationPublicKey(conversationId).pipe(
       switchMap((publicKey) =>
         this.fetchConversationSecretKey(conversationId).pipe(
@@ -356,7 +356,7 @@ export class ConversationService {
    * @param conversationKeyPair (KeyPair)
    * @returns (Observable<KeyPair>)
    */
-  saveConversationKeyPair(
+  private saveConversationKeyPair(
     conversationId: string,
     conversationKeyPair: KeyPair,
   ): Observable<KeyPair> {
@@ -399,7 +399,7 @@ export class ConversationService {
    *
    * @returns (Observable<Conversation>)
    */
-  fetchConversation(record: ConversationRecord): Observable<Conversation> {
+  private fetchConversation(record: ConversationRecord): Observable<Conversation> {
     return this.fetchConversationKeyPair(record.id).pipe(
       map((keyPair) => {
         return {
@@ -421,7 +421,7 @@ export class ConversationService {
    *
    * @returns (Observable<Array<Conversation>>)
    */
-  fetchConversations(): Observable<Array<Conversation>> {
+  private fetchConversations(): Observable<Array<Conversation>> {
     return from(this.fetchConversationRecords()).pipe(
       switchMap((records) =>
         forkJoin(records.map((record) => this.fetchConversation(record))),
@@ -435,7 +435,9 @@ export class ConversationService {
    *
    * @returns (Observable<ConversationRecord>)
    */
-  fetchConversationRecord(conversationId: string): Observable<ConversationRecord> {
+  private fetchConversationRecord(
+    conversationId: string,
+  ): Observable<ConversationRecord> {
     return from(
       this.pb.collection(this.pbConversationCollection).getOne(conversationId),
     );
@@ -446,11 +448,11 @@ export class ConversationService {
    *
    * @returns (Observable<Array<ConversationRecord>>)
    */
-  fetchConversationRecords(): Observable<Array<ConversationRecord>> {
+  private fetchConversationRecords(): Observable<Array<ConversationRecord>> {
     return from(this.pb.collection(this.pbConversationCollection).getFullList());
   }
 
-  deleteConversation(conversationId: string): Observable<boolean> {
+  private deleteConversation(conversationId: string): Observable<boolean> {
     return from(
       this.pb.collection(this.pbConversationCollection).delete(conversationId),
     );

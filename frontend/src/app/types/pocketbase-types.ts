@@ -5,12 +5,14 @@ import type PocketBase from 'pocketbase';
 import type { RecordService } from 'pocketbase';
 
 export enum Collections {
+  Agents = 'agents',
   ConversationPublicKeys = 'conversation_public_keys',
   ConversationSecretKeys = 'conversation_secret_keys',
   Conversations = 'conversations',
   Deleted = 'deleted',
+  Idempotency = 'idempotency',
   Messages = 'messages',
-  Participants = 'participants',
+  Models = 'models',
   UserKeyPairs = 'user_key_pairs',
   Users = 'users',
 }
@@ -39,6 +41,12 @@ export type AuthSystemFields<T = never> = {
 
 // Record types for each collection
 
+export type AgentsRecord = {
+  description: string;
+  name: string;
+  slug: string;
+};
+
 export type ConversationPublicKeysRecord = {
   conversation: RecordIdString;
   public_key?: string;
@@ -51,7 +59,7 @@ export type ConversationSecretKeysRecord = {
 };
 
 export type ConversationsRecord = {
-  creator: RecordIdString;
+  creator?: RecordIdString;
   data: string;
 };
 
@@ -60,28 +68,37 @@ export type DeletedRecord<Trecord = unknown> = {
   record?: null | Trecord;
 };
 
+export type IdempotencyRecord<Tbody = unknown> = {
+  body?: null | Tbody;
+  idempotency_key: string;
+  status_code?: number;
+  user?: RecordIdString;
+};
+
 export type MessagesRecord = {
-  conversation?: RecordIdString;
+  conversation: RecordIdString;
   data: string;
-  key: string;
   parent_message?: RecordIdString;
 };
 
-export enum ParticipantsRoleOptions {
-  'Viewer' = 'Viewer',
-  'Editor' = 'Editor',
-  'Admin' = 'Admin',
+export enum ModelsGroupOptions {
+  'Open AI' = 'Open AI',
+  'Google' = 'Google',
+  'Anthropic' = 'Anthropic',
+  'Mistral' = 'Mistral',
+  'Other' = 'Other',
 }
-export type ParticipantsRecord = {
-  conversation?: RecordIdString;
-  role?: ParticipantsRoleOptions;
-  user?: RecordIdString;
+export type ModelsRecord = {
+  description: string;
+  group: ModelsGroupOptions;
+  name: string;
+  slug: string;
 };
 
 export type UserKeyPairsRecord = {
   public_key: string;
   secret_key: string;
-  user?: RecordIdString;
+  user: RecordIdString;
 };
 
 export type UsersRecord = {
@@ -90,6 +107,8 @@ export type UsersRecord = {
 };
 
 // Response types include system fields and match responses from the PocketBase API
+export type AgentsResponse<Texpand = unknown> = Required<AgentsRecord> &
+  BaseSystemFields<Texpand>;
 export type ConversationPublicKeysResponse<Texpand = unknown> =
   Required<ConversationPublicKeysRecord> & BaseSystemFields<Texpand>;
 export type ConversationSecretKeysResponse<Texpand = unknown> =
@@ -100,9 +119,13 @@ export type DeletedResponse<Trecord = unknown, Texpand = unknown> = Required<
   DeletedRecord<Trecord>
 > &
   BaseSystemFields<Texpand>;
+export type IdempotencyResponse<Tbody = unknown, Texpand = unknown> = Required<
+  IdempotencyRecord<Tbody>
+> &
+  BaseSystemFields<Texpand>;
 export type MessagesResponse<Texpand = unknown> = Required<MessagesRecord> &
   BaseSystemFields<Texpand>;
-export type ParticipantsResponse<Texpand = unknown> = Required<ParticipantsRecord> &
+export type ModelsResponse<Texpand = unknown> = Required<ModelsRecord> &
   BaseSystemFields<Texpand>;
 export type UserKeyPairsResponse<Texpand = unknown> = Required<UserKeyPairsRecord> &
   BaseSystemFields<Texpand>;
@@ -112,23 +135,27 @@ export type UsersResponse<Texpand = unknown> = Required<UsersRecord> &
 // Types containing all Records and Responses, useful for creating typing helper functions
 
 export type CollectionRecords = {
+  agents: AgentsRecord;
   conversation_public_keys: ConversationPublicKeysRecord;
   conversation_secret_keys: ConversationSecretKeysRecord;
   conversations: ConversationsRecord;
   deleted: DeletedRecord;
+  idempotency: IdempotencyRecord;
   messages: MessagesRecord;
-  participants: ParticipantsRecord;
+  models: ModelsRecord;
   user_key_pairs: UserKeyPairsRecord;
   users: UsersRecord;
 };
 
 export type CollectionResponses = {
+  agents: AgentsResponse;
   conversation_public_keys: ConversationPublicKeysResponse;
   conversation_secret_keys: ConversationSecretKeysResponse;
   conversations: ConversationsResponse;
   deleted: DeletedResponse;
+  idempotency: IdempotencyResponse;
   messages: MessagesResponse;
-  participants: ParticipantsResponse;
+  models: ModelsResponse;
   user_key_pairs: UserKeyPairsResponse;
   users: UsersResponse;
 };
@@ -137,6 +164,7 @@ export type CollectionResponses = {
 // https://github.com/pocketbase/js-sdk#specify-typescript-definitions
 
 export type TypedPocketBase = PocketBase & {
+  collection(idOrName: 'agents'): RecordService<AgentsResponse>;
   collection(
     idOrName: 'conversation_public_keys',
   ): RecordService<ConversationPublicKeysResponse>;
@@ -145,8 +173,9 @@ export type TypedPocketBase = PocketBase & {
   ): RecordService<ConversationSecretKeysResponse>;
   collection(idOrName: 'conversations'): RecordService<ConversationsResponse>;
   collection(idOrName: 'deleted'): RecordService<DeletedResponse>;
+  collection(idOrName: 'idempotency'): RecordService<IdempotencyResponse>;
   collection(idOrName: 'messages'): RecordService<MessagesResponse>;
-  collection(idOrName: 'participants'): RecordService<ParticipantsResponse>;
+  collection(idOrName: 'models'): RecordService<ModelsResponse>;
   collection(idOrName: 'user_key_pairs'): RecordService<UserKeyPairsResponse>;
   collection(idOrName: 'users'): RecordService<UsersResponse>;
 };

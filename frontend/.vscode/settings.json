@@ -4,10 +4,13 @@
     "cognos",
     "datetime",
     "ewan",
+    "keypair",
     "libsodium",
     "oidc",
+    "openai",
     "OWASP",
     "pocketbase",
+    "tailwindcss",
     "tweetnacl",
     "typegen"
   ],

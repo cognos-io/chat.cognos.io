@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './guards/auth.guard';
+import { keyPairRequiredGuard } from './guards/keypair-required.guard';
 
 export const routes: Routes = [
   {
@@ -8,7 +9,15 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/chat/chat.component').then((m) => m.ChatComponent),
     canActivate: [authGuard],
+    canActivateChild: [keyPairRequiredGuard],
     children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import(
+            './components/chat/conversation-detail/conversation-detail.component'
+          ).then((m) => m.ConversationDetailComponent),
+      },
       {
         path: 'c/:conversationId',
         loadComponent: () =>

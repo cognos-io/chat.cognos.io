@@ -12,6 +12,8 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/idempotency"
+	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
@@ -42,17 +44,20 @@ func bindAppHooks(app core.App, config *config.APIConfig, openaiClient *oai.Clie
 	// so we can create the various Repos without panic'ing
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		// Separate into collection services
+		upstreamRepo := proxy.NewInMemoryUpstreamRepo(app.Logger(), openaiClient)
 		messageRepo := chat.NewPocketBaseMessageRepo(app)
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
+		idempotencyRepo := idempotency.NewPocketBaseIdempotencyRepo(app)
 
 		addPocketBaseRoutes(
 			e,
 			app,
 			app.Logger(),
 			config,
-			openaiClient,
+			upstreamRepo,
 			messageRepo,
 			keyPairRepo,
+			idempotencyRepo,
 		)
 
 		// Add SoftDelete hook
@@ -67,7 +72,7 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	defer cancel()
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	config := config.MustLoadAPIConfig()
+	config := config.MustLoadAPIConfig(logger)
 
 	openaiClient := oai.NewClient(config.OpenAIAPIKey)
 

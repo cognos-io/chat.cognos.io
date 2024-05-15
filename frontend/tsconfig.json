@@ -24,11 +24,11 @@
     "paths": {
       "@app/*": ["app/*"],
       "@components/*": ["app/components/*"],
+      "@environments/*": ["environments/*"],
       "@guards/*": ["app/guards/*"],
       "@interfaces/*": ["app/interfaces/*"],
       "@pages/*": ["app/pages/*"],
-      "@services/*": ["app/services/*"],
-      "@environments/*": ["environments/*"]
+      "@services/*": ["app/services/*"]
     },
     "skipLibCheck": true,
     "sourceMap": true,

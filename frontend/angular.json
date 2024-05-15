@@ -28,7 +28,7 @@
               "src/styles.scss",
               "node_modules/bootstrap-icons/font/bootstrap-icons.scss"
             ],
-            "scripts": []
+            "scripts": ["node_modules/emoji-toolkit/lib/js/joypixels.min.js"]
           },
           "configurations": {
             "production": {
@@ -96,6 +96,7 @@
     }
   },
   "cli": {
-    "schematicCollections": ["@angular-eslint/schematics"]
+    "schematicCollections": ["@angular-eslint/schematics"],
+    "analytics": false
   }
 }

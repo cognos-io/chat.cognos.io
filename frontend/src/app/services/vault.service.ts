@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase from 'pocketbase';
 
@@ -20,8 +21,6 @@ import { signalSlice } from 'ngxtension/signal-slice';
 import nacl from 'tweetnacl';
 
 import { TypedPocketBase, UserKeyPairsRecord } from '@app/types/pocketbase-types';
-
-import { environment } from '@environments/environment';
 
 import { KeyPair } from '@interfaces/key-pair';
 
@@ -124,13 +123,7 @@ export class VaultService {
 
   // selectors
   keyPair = this.state.keyPair;
-
-  constructor() {
-    if (environment.isDevelopment) {
-      console.log('Using local vault password');
-      this.rawVaultPassword$.next(environment.localVaultPassword);
-    }
-  }
+  keyPair$ = toObservable(this.keyPair);
 
   hashVaultPassword(rawPassword: string): Observable<Uint8Array> {
     const encoder = new TextEncoder();

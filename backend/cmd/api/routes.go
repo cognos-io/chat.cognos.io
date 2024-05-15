@@ -6,10 +6,11 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/idempotency"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/compat/openai"
+	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
-	oai "github.com/sashabaranov/go-openai"
 )
 
 // addPocketBaseRoutes adds additional routes to the PocketBase app.
@@ -18,14 +19,21 @@ func addPocketBaseRoutes(
 	app core.App,
 	logger *slog.Logger,
 	config *config.APIConfig,
-	openaiClient *oai.Client,
+	upstreamRepo proxy.UpstreamRepo,
 	messageRepo chat.MessageRepo,
 	keyPairRepo auth.KeyPairRepo,
+	idempotencyRepo idempotency.IdempotencyRepo,
 ) {
 	// https://platform.openai.com/docs/api-reference/chat/create
 	e.Router.POST(
 		"/v1/chat/completions",
-		openai.EchoHandler(logger, openaiClient, messageRepo, keyPairRepo),
+		openai.EchoHandler(
+			config,
+			logger,
+			upstreamRepo,
+			messageRepo,
+			keyPairRepo,
+		),
 		apis.RequireRecordAuth(),
 	)
 }
