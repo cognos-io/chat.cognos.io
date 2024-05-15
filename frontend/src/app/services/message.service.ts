@@ -179,7 +179,6 @@ export class MessageService {
                     return {
                       ...this.saveOpenAIMessage(resp),
                       isNewConversation: false,
-                      status: MessageStatus.None,
                     };
                   }),
                 );
@@ -354,6 +353,7 @@ export class MessageService {
 
     return {
       messages: [...this.state().messages, msg],
+      status: MessageStatus.None,
     };
   }
 }

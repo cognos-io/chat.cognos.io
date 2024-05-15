@@ -25,6 +25,7 @@ import { MessageListComponent } from '../message-list/message-list.component';
       <app-message-list
         class="message-container"
         [messages]="(messageService.messages$ | async) ?? []"
+        [messageSending]="isSending()"
       ></app-message-list>
       <app-message-form></app-message-form>
     }
@@ -57,6 +58,9 @@ export class ConversationDetailComponent {
   readonly messageService = inject(MessageService);
   readonly isFetching = computed(
     () => this.messageService.status() === MessageStatus.Fetching,
+  );
+  readonly isSending = computed(
+    () => this.messageService.status() === MessageStatus.Sending,
   );
 
   @Input()
