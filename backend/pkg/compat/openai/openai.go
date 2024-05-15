@@ -18,18 +18,29 @@ import (
 	oai "github.com/sashabaranov/go-openai"
 )
 
-// Metadata augments the OpenAI request with additional metadata
+// RequestMetadata augments the OpenAI request with additional metadata
 // that is specific to the Cognos platform
-type Metadata struct {
+type RequestMetadata struct {
 	Cognos struct {
 		ConversationID string `json:"conversation_id,omitempty"`
 		AgentID        string `json:"agent_id,omitempty"`
 	} `json:"cognos,omitempty"`
 }
 
+type ResponseMetadata struct {
+	Cognos struct {
+		RecordID string `json:"record_id,omitempty"`
+	} `json:"cognos,omitempty"`
+}
+
 type ChatCompletionRequestWithMetadata struct {
 	oai.ChatCompletionRequest
-	Metadata Metadata `json:"metadata,omitempty"`
+	Metadata RequestMetadata `json:"metadata,omitempty"`
+}
+
+type ChatCompletionResponseWithMetadata struct {
+	oai.ChatCompletionResponse
+	Metadata ResponseMetadata `json:"metadata,omitempty"`
 }
 
 func NewError(code int, message string) oai.ErrorResponse {
@@ -123,7 +134,7 @@ func EchoHandler(
 			Content: plainTextRequestMessage,
 		}
 
-		err = messageRepo.EncryptAndPersistMessage(
+		err, _ = messageRepo.EncryptAndPersistMessage(
 			receiverPublicKey,
 			req.Metadata.Cognos.ConversationID,
 			requestMessage,
@@ -160,7 +171,7 @@ func EchoHandler(
 			OwnerID: owner.ID,
 			Content: plainTextResponseMessage,
 		}
-		err = messageRepo.EncryptAndPersistMessage(
+		err, record := messageRepo.EncryptAndPersistMessage(
 			receiverPublicKey,
 			req.Metadata.Cognos.ConversationID,
 			responseMessage,
@@ -174,6 +185,10 @@ func EchoHandler(
 			)
 		}
 
-		return c.JSON(http.StatusOK, resp)
+		var extendedResponse ChatCompletionResponseWithMetadata
+		extendedResponse.ChatCompletionResponse = resp
+		extendedResponse.Metadata.Cognos.RecordID = record.Id
+
+		return c.JSON(http.StatusOK, extendedResponse)
 	}
 }

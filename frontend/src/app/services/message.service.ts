@@ -53,6 +53,16 @@ interface RawMessage {
   message?: string;
 }
 
+type CognosMetadataResponse = {
+  record_id?: string;
+};
+
+type ChatCompletionResponseWithMetadata = OpenAI.ChatCompletion & {
+  metadata?: {
+    cognos?: CognosMetadataResponse;
+  };
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -231,7 +241,7 @@ export class MessageService {
     );
   }
 
-  private sendMessage(message: string): Observable<OpenAI.ChatCompletion> {
+  private sendMessage(message: string): Observable<ChatCompletionResponseWithMetadata> {
     const conversation = this._conversationService.conversation();
     if (!conversation) {
       throw new Error('No conversation selected');
@@ -251,8 +261,11 @@ export class MessageService {
     );
   }
 
-  private saveOpenAIMessage(resp: OpenAI.ChatCompletion): Partial<MessageState> {
+  private saveOpenAIMessage(
+    resp: ChatCompletionResponseWithMetadata,
+  ): Partial<MessageState> {
     const msg: Message = {
+      record_id: resp.metadata?.cognos?.record_id,
       createdAt: new Date((resp.created + 1) * 1000),
       decryptedData: {
         content: resp.choices[0].message.content,
