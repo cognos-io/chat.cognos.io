@@ -1,5 +1,6 @@
 import { Component, ElementRef, Input, viewChildren } from '@angular/core';
 
+import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { Message } from '@app/interfaces/message';
 
 import { IcebreakersComponent } from '../icebreakers/icebreakers.component';
@@ -8,7 +9,7 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
 @Component({
   selector: 'app-message-list',
   standalone: true,
-  imports: [MessageListItemComponent, IcebreakersComponent],
+  imports: [MessageListItemComponent, IcebreakersComponent, LoadingIndicatorComponent],
   template: `
     <div class="message-list-wrapper">
       @for (message of messages; track message) {
@@ -25,6 +26,9 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
           </div>
           <app-icebreakers></app-icebreakers>
         </div>
+      }
+      @if (messageSending) {
+        <app-loading-indicator></app-loading-indicator>
       }
     </div>
   `,
@@ -44,6 +48,8 @@ export class MessageListComponent {
     this._messages = value;
     this.scrollToBottom();
   }
+
+  @Input() messageSending = false;
 
   get messages(): Message[] {
     return this._messages;
