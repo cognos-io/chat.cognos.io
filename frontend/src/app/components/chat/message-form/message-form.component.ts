@@ -60,7 +60,6 @@ export class MessageFormComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    console.log('destroying message form');
     this.destroyed$.next(true);
     this.destroyed$.complete();
   }
