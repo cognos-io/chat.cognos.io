@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"strings"
 
 	"github.com/labstack/echo/v5"
 	"github.com/sashabaranov/go-openai"
@@ -51,6 +52,10 @@ func (o *OpenAI) ChatCompletion(
 		}
 		defer stream.Close()
 
+		// Small optimization for building the full
+		// https://100go.co/?h=strings#under-optimized-strings-concatenation-39
+		sb := strings.Builder{}
+
 		// Set the headers for the response
 		c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
 		c.Response().Header().Set(echo.HeaderConnection, "keep-alive")
@@ -79,7 +84,7 @@ func (o *OpenAI) ChatCompletion(
 			}
 
 			// Construct our plaintext response that will be encrypted and saved
-			plainTextResponseMessage += chunk.Choices[0].Delta.Content
+			sb.WriteString(chunk.Choices[0].Delta.Content)
 
 			// Re-marshal the response to send to the client
 			marshalledChunk, err := json.Marshal(chunk)
@@ -99,6 +104,8 @@ func (o *OpenAI) ChatCompletion(
 
 			c.Response().Flush()
 		}
+
+		plainTextResponseMessage = sb.String()
 	} else {
 		// Forward the request to OpenAI
 		resp, err = o.client.CreateChatCompletion(
