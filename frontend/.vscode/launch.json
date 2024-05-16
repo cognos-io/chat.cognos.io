@@ -4,10 +4,12 @@
   "configurations": [
     {
       "name": "ng serve",
-      "type": "chrome",
+      "type": "msedge",
       "request": "launch",
-      "preLaunchTask": "npm: start",
-      "url": "http://localhost:4200/"
+      //   "preLaunchTask": "npm: start",
+      "url": "http://localhost:4200/",
+      "webRoot": "${workspaceFolder}",
+      "runtimeArgs": ["--new-window", "--auto-open-devtools-for-tabs"]
     },
     {
       "name": "ng test",

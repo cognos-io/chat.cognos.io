@@ -6,9 +6,19 @@
       "type": "npm",
       "script": "start",
       "isBackground": true,
+      //   "presentation": {
+      //     "focus": true,
+      //     "panel": "dedicated"
+      //   },
+      //   "group": {
+      //     "kind": "build",
+      //     "isDefault": true
+      //   },
       "problemMatcher": {
         "owner": "typescript",
         "pattern": "$tsc",
+        // "applyTo": "closedDocuments",
+        // "fileLocation": ["relative", "${cwd}"],
         "background": {
           "activeOnStart": true,
           "beginsPattern": {
