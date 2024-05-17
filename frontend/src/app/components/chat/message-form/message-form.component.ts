@@ -14,7 +14,6 @@ import { MatInputModule } from '@angular/material/input';
 import { ReplaySubject } from 'rxjs';
 
 import { AgentService } from '@app/services/agent.service';
-import { ConversationService } from '@app/services/conversation.service';
 import { MessageService } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 
@@ -38,7 +37,6 @@ export class MessageFormComponent implements OnDestroy {
   private _fb = inject(FormBuilder);
   private _bottomSheet = inject(MatBottomSheet);
   private _platformId = inject(PLATFORM_ID);
-  private _conversationService = inject(ConversationService);
   private destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
 
   isMac = false;
