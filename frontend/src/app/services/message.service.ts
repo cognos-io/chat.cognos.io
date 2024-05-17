@@ -14,6 +14,7 @@ import {
   map,
   of,
   switchMap,
+  take,
   tap,
 } from 'rxjs';
 
@@ -154,8 +155,9 @@ export class MessageService {
             },
           };
 
-          const conversation = this._conversationService.conversation();
+          this.state.addMessage(msg);
 
+          const conversation = this._conversationService.conversation();
           if (!conversation) {
             this._isNewConversation$.next(true);
             this._conversationService.newConversation$.next({
@@ -163,9 +165,7 @@ export class MessageService {
             });
             return this._conversationService.conversation$.pipe(
               filterNil(),
-              tap(() => {
-                this.state.addMessage(msg);
-              }),
+              take(1),
               concatMap(() => {
                 return this.sendMessage(messageRequest).pipe(
                   tap((resp) => {
@@ -185,8 +185,6 @@ export class MessageService {
               }),
             );
           }
-
-          this.state.addMessage(msg);
 
           return this.sendMessage(messageRequest).pipe(
             tap((resp) => {
