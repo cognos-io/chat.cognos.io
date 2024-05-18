@@ -54,10 +54,10 @@ const initialState: ConversationState = {
   providedIn: 'root',
 })
 export class ConversationService {
-  private readonly pb: TypedPocketBase = inject(PocketBase);
-  private readonly cryptoService = inject(CryptoService);
-  private readonly vaultService = inject(VaultService);
-  private readonly auth = inject(AuthService);
+  private readonly _pb: TypedPocketBase = inject(PocketBase);
+  private readonly _cryptoService = inject(CryptoService);
+  private readonly _vaultService = inject(VaultService);
+  private readonly _auth = inject(AuthService);
   private readonly _router = inject(Router);
 
   private readonly pbConversationCollection = 'conversations';
@@ -113,7 +113,7 @@ export class ConversationService {
         }),
       ),
       // When the user's key pair changes, reload the conversations
-      this.vaultService.keyPair$.pipe(
+      this._vaultService.keyPair$.pipe(
         switchMap((keyPair) => (keyPair ? this.fetchConversations() : [])),
         map((conversations) => {
           return { conversations };
@@ -174,12 +174,19 @@ export class ConversationService {
         },
       };
     },
+    actionSources: {},
   });
 
   // selectors
   readonly conversation = this.state.selectedConversation;
   readonly conversation$ = toObservable(this.conversation);
   readonly conversationList = this.state.orderedConversations;
+  readonly getConversation = (conversationId: string) =>
+    computed(() => {
+      return this.state
+        .conversations()
+        .find((conversation) => conversation.record.id === conversationId);
+    });
 
   /**
    * Creates a conversation in the PocketBase backend.
@@ -189,22 +196,22 @@ export class ConversationService {
    */
   private createConversation(data: ConversationData): Observable<Conversation> {
     // We have to have a user secret key to create a conversation
-    const userSecretKey = this.vaultService.keyPair()?.secretKey;
+    const userSecretKey = this._vaultService.keyPair()?.secretKey;
     if (!userSecretKey) {
       return throwError(() => UserSecretKeyNotFoundError);
     }
 
     // Generate a new key pair for the conversation
-    const conversationKeyPair = this.cryptoService.newKeyPair();
+    const conversationKeyPair = this._cryptoService.newKeyPair();
 
     // Use the conversation key pair to encrypt the conversation data
     const encryptedData = this.encryptConversationData(data, conversationKeyPair);
 
     // Create the conversation in the backend with the encrypted data
     return from(
-      this.pb.collection(this.pbConversationCollection).create({
+      this._pb.collection(this.pbConversationCollection).create({
         data: Base64.fromUint8Array(encryptedData),
-        creator: this.auth.user()?.['id'],
+        creator: this._auth.user()?.['id'],
       }),
     ).pipe(
       switchMap((record) => {
@@ -238,7 +245,7 @@ export class ConversationService {
     const plaintextData = serializeConversationData(data);
     const sharedSecret = this.sharedKey(conversationKeyPair);
 
-    return this.cryptoService.box(plaintextData, sharedSecret);
+    return this._cryptoService.box(plaintextData, sharedSecret);
   }
 
   /**
@@ -254,7 +261,7 @@ export class ConversationService {
     conversationKeyPair: KeyPair,
   ): ConversationData {
     const sharedSecret = this.sharedKey(conversationKeyPair);
-    const decryptedData = this.cryptoService.openBox(
+    const decryptedData = this._cryptoService.openBox(
       Base64.toUint8Array(record.data),
       sharedSecret,
     );
@@ -268,7 +275,7 @@ export class ConversationService {
    * @returns (Uint8Array) - the shared key
    */
   private sharedKey(conversationKeyPair: KeyPair): Uint8Array {
-    return this.cryptoService.sharedKey(
+    return this._cryptoService.sharedKey(
       conversationKeyPair.publicKey,
       conversationKeyPair.secretKey,
     );
@@ -282,12 +289,12 @@ export class ConversationService {
    * @returns (Observable<Uint8Array>)
    */
   private fetchConversationPublicKey(conversationId: string): Observable<Uint8Array> {
-    const filter = this.pb.filter('conversation={:conversationId}', {
+    const filter = this._pb.filter('conversation={:conversationId}', {
       conversationId,
     });
 
     return from(
-      this.pb
+      this._pb
         .collection(this.pbConversationPublicKeysCollection)
         .getFirstListItem(filter),
     ).pipe(
@@ -304,13 +311,13 @@ export class ConversationService {
    * @returns (Observable<Uint8Array>)
    */
   private fetchConversationSecretKey(conversationId: string): Observable<Uint8Array> {
-    const filter = this.pb.filter('conversation={:conversationId} && user={:userId}', {
+    const filter = this._pb.filter('conversation={:conversationId} && user={:userId}', {
       conversationId,
-      userId: this.auth.user()?.['id'],
+      userId: this._auth.user()?.['id'],
     });
 
     return from(
-      this.pb
+      this._pb
         .collection(this.pbConversationSecretKeyCollection)
         .getFirstListItem(filter),
     ).pipe(
@@ -332,12 +339,15 @@ export class ConversationService {
       switchMap((publicKey) =>
         this.fetchConversationSecretKey(conversationId).pipe(
           map((secretKey) => {
-            const userSecretKey = this.vaultService.keyPair()?.secretKey;
+            const userSecretKey = this._vaultService.keyPair()?.secretKey;
             if (!userSecretKey) {
               throw UserSecretKeyNotFoundError;
             }
-            const sharedKey = this.cryptoService.sharedKey(publicKey, userSecretKey);
-            const decryptedSecretKey = this.cryptoService.openBox(secretKey, sharedKey);
+            const sharedKey = this._cryptoService.sharedKey(publicKey, userSecretKey);
+            const decryptedSecretKey = this._cryptoService.openBox(
+              secretKey,
+              sharedKey,
+            );
             return {
               publicKey,
               secretKey: decryptedSecretKey,
@@ -361,29 +371,29 @@ export class ConversationService {
     conversationKeyPair: KeyPair,
   ): Observable<KeyPair> {
     return from(
-      this.pb.collection(this.pbConversationPublicKeysCollection).create({
+      this._pb.collection(this.pbConversationPublicKeysCollection).create({
         conversation: conversationId,
         public_key: Base64.fromUint8Array(conversationKeyPair.publicKey),
       }),
     ).pipe(
       switchMap(() => {
-        const userSecretKey = this.vaultService.keyPair()?.secretKey;
+        const userSecretKey = this._vaultService.keyPair()?.secretKey;
         if (!userSecretKey) {
           throw UserSecretKeyNotFoundError;
         }
-        const sharedKey = this.cryptoService.sharedKey(
+        const sharedKey = this._cryptoService.sharedKey(
           conversationKeyPair.publicKey,
           userSecretKey,
         );
-        const encryptedSecretKey = this.cryptoService.box(
+        const encryptedSecretKey = this._cryptoService.box(
           conversationKeyPair.secretKey,
           sharedKey,
         );
         return from(
-          this.pb.collection(this.pbConversationSecretKeyCollection).create({
+          this._pb.collection(this.pbConversationSecretKeyCollection).create({
             conversation: conversationId,
             secret_key: Base64.fromUint8Array(encryptedSecretKey),
-            user: this.auth.user()?.['id'],
+            user: this._auth.user()?.['id'],
           }),
         ).pipe(
           switchMap(() => {
@@ -439,7 +449,7 @@ export class ConversationService {
     conversationId: string,
   ): Observable<ConversationRecord> {
     return from(
-      this.pb.collection(this.pbConversationCollection).getOne(conversationId),
+      this._pb.collection(this.pbConversationCollection).getOne(conversationId),
     );
   }
 
@@ -449,12 +459,12 @@ export class ConversationService {
    * @returns (Observable<Array<ConversationRecord>>)
    */
   private fetchConversationRecords(): Observable<Array<ConversationRecord>> {
-    return from(this.pb.collection(this.pbConversationCollection).getFullList());
+    return from(this._pb.collection(this.pbConversationCollection).getFullList());
   }
 
   private deleteConversation(conversationId: string): Observable<boolean> {
     return from(
-      this.pb.collection(this.pbConversationCollection).delete(conversationId),
+      this._pb.collection(this.pbConversationCollection).delete(conversationId),
     );
   }
 }
