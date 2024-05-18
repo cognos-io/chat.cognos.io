@@ -10,7 +10,7 @@ interface ModelState {
 }
 
 const initialState: ModelState = {
-  modelList: [],
+  modelList: [defaultModel],
   selectedModelId: '',
 };
 

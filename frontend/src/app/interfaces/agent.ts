@@ -6,6 +6,7 @@ export const Agent = z.object({
   slug: z.string(),
   description: z.string(),
   tags: z.array(z.string()).optional(),
+  authorId: z.string(),
 });
 export type Agent = z.infer<typeof Agent>;
 
@@ -14,9 +15,10 @@ export type Agent = z.infer<typeof Agent>;
 // for whatever reason.
 const simpleAssistantAgent: Agent = {
   id: 'cognos:simple-assistant',
-  name: 'Cognos - A simple assistant',
+  name: 'A simple assistant',
   slug: 'cognos--simple-assistant',
-  description: 'This is the first agent',
+  description: 'This is a simple assistant that can help you with your questions.',
+  authorId: 'cognos',
 };
 
 export const defaultAgent = simpleAssistantAgent;

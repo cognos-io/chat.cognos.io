@@ -18,8 +18,14 @@ import (
 	oai "github.com/sashabaranov/go-openai"
 )
 
+const (
+	modelDelimiter = ":" // Delimiter used to separate the provider and model name
+)
+
 // RequestMetadata augments the OpenAI request with additional metadata
-// that is specific to the Cognos platform
+// that is specific to the Cognos platform.
+// Model ID is in the format: `provider:model` e.g. `openai:gpt-3.5-turbo` and
+// is present in the `model` field of the request.
 type RequestMetadata struct {
 	Cognos struct {
 		ConversationID string `json:"conversation_id,omitempty"`
@@ -94,7 +100,7 @@ func EchoHandler(
 			return apis.NewBadRequestError("Agent ID is required", nil)
 		}
 		// Extract the upstream based on the model
-		modelParts := strings.Split(req.Model, ":")
+		modelParts := strings.Split(req.Model, modelDelimiter)
 		if len(modelParts) != 2 {
 			return apis.NewBadRequestError("Invalid model name", nil)
 		}
@@ -136,7 +142,7 @@ func EchoHandler(
 		messages := req.Messages
 		plainTextRequestMessage := messages[len(messages)-1].Content // Use the last message as there could be system and previous system & user messages
 
-		requestMessage := chat.PlainTextMessage{
+		requestMessage := chat.MessageRecordData{
 			OwnerID: owner.ID,
 			Content: plainTextRequestMessage,
 		}
@@ -174,9 +180,13 @@ func EchoHandler(
 		// -------------------------------------------------------
 		// 4. Encrypt and persist the response
 		// -------------------------------------------------------
-		responseMessage := chat.PlainTextMessage{
-			OwnerID: owner.ID,
+		responseMessage := chat.MessageRecordData{
 			Content: plainTextResponseMessage,
+			AgentID: req.Metadata.Cognos.AgentID,
+			ModelID: strings.Join(
+				modelParts,
+				modelDelimiter,
+			), // rejoin the model parts to store the full model name
 		}
 		err, responseRecord := messageRepo.EncryptAndPersistMessage(
 			receiverPublicKey,

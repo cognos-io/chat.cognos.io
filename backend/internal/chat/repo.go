@@ -42,7 +42,7 @@ type MessageRepo interface {
 	EncryptAndPersistMessage(
 		receiverPublicKey [32]byte,
 		conversationID string,
-		message PlainTextMessage,
+		message MessageRecordData,
 	) (error, *models.Record)
 }
 
@@ -58,13 +58,10 @@ type PocketBaseMessageRepo struct {
 func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 	receiverPublicKey [32]byte,
 	conversationID string,
-	message PlainTextMessage,
+	message MessageRecordData,
 ) (error, *models.Record) {
-	m := MessageRecordData{
-		Content: message.Content,
-	}
 	base64EncryptedMessage, err := EncryptMessageData(
-		m,
+		message,
 		receiverPublicKey,
 	)
 	if err != nil {
