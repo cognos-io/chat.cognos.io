@@ -18,10 +18,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
-import { EMPTY, catchError } from 'rxjs';
+import { EMPTY, catchError, finalize } from 'rxjs';
 
 import { ConversationData } from '@app/interfaces/conversation';
 import { ConversationService } from '@app/services/conversation.service';
+import { ErrorService } from '@app/services/error.service';
 
 /**
  * A custom validator that checks if the input is not blank after trimming (i.e. it is not just whitespace)
@@ -59,10 +60,10 @@ const notBlankValidator = (): ValidatorFn => {
         <button mat-button="" mat-dialog-close="" color="secondary">Cancel</button>
         <button
           mat-button=""
-          mat-dialog-close=""
           type="submit"
           color="primary"
           [attr.form]="formId"
+          [disabled]="editForm.disabled || !editForm.valid"
         >
           Save
         </button>
@@ -71,9 +72,10 @@ const notBlankValidator = (): ValidatorFn => {
   styles: ``,
 })
 export class EditConversationDialogComponent implements OnInit {
-  private readonly dialogRef: MatDialogRef<EditConversationDialogComponent> = inject(
+  private readonly _dialogRef: MatDialogRef<EditConversationDialogComponent> = inject(
     MatDialogRef<EditConversationDialogComponent>,
   );
+  private readonly _errorService = inject(ErrorService);
 
   readonly conversationService = inject(ConversationService);
 
@@ -91,6 +93,7 @@ export class EditConversationDialogComponent implements OnInit {
   }
 
   onEditConversation() {
+    this.editForm.disable();
     const data: ConversationData = {
       title: this.editForm.value.title ?? '',
     };
@@ -98,13 +101,17 @@ export class EditConversationDialogComponent implements OnInit {
     this.conversationService
       .editConversation(this.data.conversationId, data)
       .pipe(
+        finalize(() => this.editForm.enable()),
         catchError((error) => {
+          this._errorService.alert(
+            'Unable to edit conversation, please try again later',
+          );
           console.error('Failed to edit conversation', error);
           return EMPTY;
         }),
       )
       .subscribe(() => {
-        this.dialogRef.close();
+        this._dialogRef.close();
       });
   }
 
