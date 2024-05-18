@@ -9,11 +9,13 @@ import {
   Observable,
   Subject,
   catchError,
+  concatMap,
   forkJoin,
   from,
   map,
   of,
   switchMap,
+  take,
   tap,
   throwError,
 } from 'rxjs';
@@ -174,7 +176,28 @@ export class ConversationService {
         },
       };
     },
-    actionSources: {},
+    actionSources: {
+      updateConversationRecord: (state, action$: Observable<ConversationRecord>) => {
+        return action$.pipe(
+          concatMap((data) => {
+            return this.fetchConversation(data).pipe(
+              take(1),
+              map((conversation) => {
+                const conversations = state().conversations;
+                const index = conversations.findIndex(
+                  (c) => c.record.id === conversation.record.id,
+                );
+                if (index === -1) return state();
+                conversations[index] = conversation;
+                return {
+                  conversations,
+                };
+              }),
+            );
+          }),
+        );
+      },
+    },
   });
 
   // selectors
@@ -465,6 +488,27 @@ export class ConversationService {
   private deleteConversation(conversationId: string): Observable<boolean> {
     return from(
       this._pb.collection(this.pbConversationCollection).delete(conversationId),
+    );
+  }
+
+  editConversation(id: string, data: ConversationData): Observable<ConversationRecord> {
+    // Get the keypair for the conversation
+    const conversationKeyPair = this.getConversation(id)()?.keyPair;
+    if (!conversationKeyPair) {
+      return throwError(() => new Error('Conversation key pair not found'));
+    }
+
+    // Encrypt the new data with the conversation's key pair
+    const encryptedData = this.encryptConversationData(data, conversationKeyPair);
+
+    return from(
+      this._pb.collection(this.pbConversationCollection).update(id, {
+        data: Base64.fromUint8Array(encryptedData),
+      }),
+    ).pipe(
+      tap((resp) => {
+        this.state.updateConversationRecord(resp);
+      }),
     );
   }
 }
