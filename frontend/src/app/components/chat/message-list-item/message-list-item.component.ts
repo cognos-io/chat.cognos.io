@@ -31,7 +31,13 @@ import { ModelService } from '@app/services/model.service';
           <mat-icon fontSet="bi" [fontIcon]="icon"></mat-icon>
         </div>
         <div class="item-content prose flex items-end justify-between">
-          <span class="font-semibold">{{ sender }}</span>
+          <span
+            class="font-semibold"
+            [attr.data-agent-id]="message.decryptedData.agent_id"
+            [attr.data-model-id]="message.decryptedData.model_id"
+            [attr.data-owner-id]="message.decryptedData.owner_id"
+            >{{ sender }}</span
+          >
           <span
             class="text-xs text-gray-500"
             [attr.data-timestamp]="message.createdAt.getTime()"
