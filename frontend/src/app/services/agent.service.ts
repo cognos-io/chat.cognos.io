@@ -10,7 +10,7 @@ interface AgentState {
 }
 
 const initialState: AgentState = {
-  agentList: [],
+  agentList: [defaultAgent],
   selectedAgentId: '',
 };
 
