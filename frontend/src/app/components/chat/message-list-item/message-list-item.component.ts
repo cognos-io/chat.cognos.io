@@ -7,7 +7,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { MarkdownComponent } from 'ngx-markdown';
 
+import { Agent } from '@app/interfaces/agent';
 import { Message, isMessageFromUser } from '@app/interfaces/message';
+import { Model } from '@app/interfaces/model';
 import { AgentService } from '@app/services/agent.service';
 import { ModelService } from '@app/services/model.service';
 
@@ -24,20 +26,34 @@ import { ModelService } from '@app/services/model.service';
   ],
   template: `
     @if (message) {
-      <li class="item-grid group" [id]="message.record_id">
+      <li
+        class="item-grid group"
+        [id]="message.record_id"
+        [attr.data-agent-id]="message.decryptedData.agent_id"
+        [attr.data-model-id]="message.decryptedData.model_id"
+        [attr.data-owner-id]="message.decryptedData.owner_id"
+      >
         <div
           class="flex h-12 w-12 flex-none items-center justify-center justify-self-center rounded-full bg-gray-50"
         >
           <mat-icon fontSet="bi" [fontIcon]="icon"></mat-icon>
         </div>
         <div class="item-content prose flex items-end justify-between">
-          <span
-            class="font-semibold"
-            [attr.data-agent-id]="message.decryptedData.agent_id"
-            [attr.data-model-id]="message.decryptedData.model_id"
-            [attr.data-owner-id]="message.decryptedData.owner_id"
-            >{{ sender }}</span
-          >
+          <div>
+            @if (isMessageFromUser(message.decryptedData)) {
+              <span class="font-semibold">You</span>
+            } @else {
+              @if (agent) {
+                <span class="font-semibold">{{ agent.name }}</span>
+                @if (model) {
+                  <span class="italic text-gray-500"> powered by </span>
+                }
+              }
+              @if (model) {
+                <span class="font-semibold">{{ model.name }}</span>
+              }
+            }
+          </div>
           <span
             class="text-xs text-gray-500"
             [attr.data-timestamp]="message.createdAt.getTime()"
@@ -102,6 +118,9 @@ export class MessageListItemComponent {
 
   @Input() message?: Message;
 
+  // exported for use in template
+  isMessageFromUser = isMessageFromUser;
+
   get icon(): string {
     if (!this.message) {
       return 'bi-question-circle';
@@ -114,32 +133,21 @@ export class MessageListItemComponent {
     return 'bi-robot';
   }
 
-  get sender(): string {
-    if (!this.message) {
-      return 'Unknown';
+  get agent(): Agent | undefined {
+    const agent_id = this.message?.decryptedData.agent_id;
+    if (!this.message || !agent_id) {
+      return undefined;
     }
 
-    if (isMessageFromUser(this.message.decryptedData)) {
-      return 'You';
+    return this._agentService.getAgent(agent_id)();
+  }
+
+  get model(): Model | undefined {
+    const model_id = this.message?.decryptedData.model_id;
+    if (!this.message || !model_id) {
+      return undefined;
     }
 
-    const agent =
-      this.message.decryptedData.agent_id &&
-      this._agentService.getAgent(this.message.decryptedData.agent_id)();
-    const model =
-      this.message.decryptedData.model_id &&
-      this._modelService.getModel(this.message.decryptedData.model_id)();
-
-    let sender = 'Unknown';
-
-    if (model) {
-      sender = model.name;
-    }
-
-    if (agent) {
-      sender = `${agent.name} powered by ${sender}`;
-    }
-
-    return sender;
+    return this._modelService.getModel(model_id)();
   }
 }
