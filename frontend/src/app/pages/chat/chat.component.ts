@@ -62,7 +62,7 @@ export class ChatComponent implements OnDestroy {
     this._destroyed$.complete();
   }
 
-  onEditConversation(conversationId: string) {
+  onRenameConversation(conversationId: string) {
     this.dialog.open(EditConversationDialogComponent, {
       data: {
         conversationId,

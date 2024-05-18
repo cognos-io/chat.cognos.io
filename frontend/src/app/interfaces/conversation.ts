@@ -19,7 +19,7 @@ export type ConversationRecord = z.infer<typeof ConversationRecord>;
  * ConversationData is the decrypted data object of a conversation.
  */
 export const ConversationData = z.object({
-  title: z.string(),
+  title: z.string().trim(),
 });
 export type ConversationData = z.infer<typeof ConversationData>;
 
