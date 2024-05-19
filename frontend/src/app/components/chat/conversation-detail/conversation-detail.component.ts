@@ -29,14 +29,14 @@ import { MessageListComponent } from '../message-list/message-list.component';
       <div class="relative flex h-full flex-col">
         <app-message-list
           class="message-container"
-          [messages]="(messageService.messages$ | async) ?? []"
+          [messages]="(messages | async) ?? []"
           [messageSending]="isSending()"
           [loadingMessages]="isLoadingMoreMessages()"
           (nextPage)="messageService.nextPage()"
           (atBottom)="messagesAtBottom.set($event)"
         ></app-message-list>
 
-        @if (!messagesAtBottom()) {
+        @if (!messagesAtBottom() && ((messages | async) ?? []).length !== 0) {
           <button
             mat-mini-fab
             color="tertiary"
@@ -95,6 +95,10 @@ export class ConversationDetailComponent {
   @Input()
   set conversationId(conversationId: string) {
     this._conversationService.selectConversation$.next(conversationId ?? '');
+  }
+
+  get messages() {
+    return this.messageService.messages$;
   }
 
   constructor() {
