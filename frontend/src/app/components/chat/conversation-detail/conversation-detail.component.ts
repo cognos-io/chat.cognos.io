@@ -26,6 +26,7 @@ import { MessageListComponent } from '../message-list/message-list.component';
         class="message-container"
         [messages]="(messageService.messages$ | async) ?? []"
         [messageSending]="isSending()"
+        (nextPage)="messageService.nextPage()"
       ></app-message-list>
       <app-message-form></app-message-form>
     }

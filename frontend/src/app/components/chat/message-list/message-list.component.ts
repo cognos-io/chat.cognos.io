@@ -1,8 +1,11 @@
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import {
   AfterViewInit,
   Component,
   ElementRef,
+  EventEmitter,
   Input,
+  Output,
   viewChildren,
 } from '@angular/core';
 
@@ -15,12 +18,24 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
 @Component({
   selector: 'app-message-list',
   standalone: true,
-  imports: [MessageListItemComponent, IcebreakersComponent, LoadingIndicatorComponent],
+  imports: [
+    MessageListItemComponent,
+    IcebreakersComponent,
+    LoadingIndicatorComponent,
+    ScrollingModule,
+  ],
   template: `
-    <div class="message-list-wrapper">
-      @for (message of messages; track message) {
-        <app-message-list-item [message]="message"></app-message-list-item>
-      } @empty {
+    <cdk-virtual-scroll-viewport
+      itemSize="25"
+      class="message-list-wrapper"
+      (scrolledIndexChange)="nextPage.emit()"
+    >
+      @if (messages.length > 0) {
+        <app-message-list-item
+          *cdkVirtualFor="let message of messages"
+          [message]="message"
+        ></app-message-list-item>
+      } @else {
         <div
           class="flex h-full flex-col items-center justify-between lg:mt-auto lg:h-1/2"
         >
@@ -36,7 +51,7 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
       @if (messageSending) {
         <app-loading-indicator></app-loading-indicator>
       }
-    </div>
+    </cdk-virtual-scroll-viewport>
   `,
   styles: `
     .message-list-wrapper {
@@ -56,6 +71,8 @@ export class MessageListComponent implements AfterViewInit {
   }
 
   @Input() messageSending = false;
+
+  @Output() readonly nextPage = new EventEmitter<void>();
 
   get messages(): Message[] {
     return this._messages;

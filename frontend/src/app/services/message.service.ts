@@ -45,12 +45,16 @@ interface MessageState {
   messages: Message[];
   status: MessageStatus;
   isNewConversation: boolean; // used to indicate if this is a new conversation
+  currentPage: number;
+  hasMoreMessages: boolean; // try to load more messages
 }
 
 const initialState: MessageState = {
   messages: [],
   status: MessageStatus.None,
   isNewConversation: false,
+  currentPage: 1,
+  hasMoreMessages: true,
 };
 
 interface RawMessage {
@@ -89,6 +93,8 @@ export class MessageService {
 
   private readonly pbMessagesCollection = this._pb.collection('messages');
 
+  private readonly pageSize = 5;
+
   // sources
   public readonly sendMessage$ = new Subject<RawMessage>();
   private readonly _cleanedMessage$ = this.sendMessage$.pipe(
@@ -114,23 +120,28 @@ export class MessageService {
         this._conversationService.conversation$.pipe(
           switchMap((conversation) => {
             if (!conversation) {
-              return of({
-                messages: [],
-              });
+              return of(initialState);
             }
             if (state().isNewConversation) {
               // we don't need to load new messages if this is a new conversation
-              return EMPTY;
+              return of({
+                currentPage: 1,
+                hasMoreMessages: true,
+              });
             }
-            return this.loadMessages(conversation.record.id).pipe(
+            const currentPage = 1;
+            return this.loadMessages(conversation.record.id, currentPage).pipe(
               catchError(() => {
                 this.state.setStatus(MessageStatus.ErrorFetching);
                 return EMPTY;
               }),
-              map((messages) => {
+              map((resp) => {
+                const messages = resp.items;
                 return {
-                  status: MessageStatus.None,
+                  ...initialState,
+                  currentPage,
                   messages,
+                  hasMoreMessages: resp.totalPages > currentPage,
                 };
               }),
             );
@@ -217,6 +228,35 @@ export class MessageService {
             };
           }),
         ),
+      nextPage: (state, action$) =>
+        action$.pipe(
+          concatMap(() => {
+            if (!state().hasMoreMessages) {
+              return EMPTY;
+            }
+            const conversation = this._conversationService.conversation();
+            if (!conversation) {
+              return EMPTY;
+            }
+            const newPage = state().currentPage + 1;
+
+            return this.loadMessages(conversation.record.id, newPage).pipe(
+              catchError(() => {
+                this.state.setStatus(MessageStatus.ErrorFetching);
+                return EMPTY;
+              }),
+              map((resp) => {
+                const messages = resp.items;
+                return {
+                  currentPage: newPage,
+                  status: MessageStatus.None,
+                  messages: [...messages, ...state().messages],
+                  hasMoreMessages: resp.totalPages > state().currentPage,
+                };
+              }),
+            );
+          }),
+        ),
       updateMessageId: (state, action$: Observable<{ oldId: string; newId: string }>) =>
         action$.pipe(
           map(({ oldId, newId }) => {
@@ -251,18 +291,22 @@ export class MessageService {
   public readonly status = this.state.status;
   public readonly status$ = toObservable(this.status);
 
+  public readonly nextPage = this.state.nextPage;
+
   // helper methods
   private fetchMessages(
     conversationId: string,
+    page: number,
   ): Observable<ListResult<MessagesResponse>> {
     this.state.setStatus(MessageStatus.Fetching);
 
     return from(
       this.pbMessagesCollection.getList(
-        1, // page
-        100, // pageSize
+        page, // page
+        this.pageSize, // pageSize
         {
           conversation: conversationId,
+          sort: '-created',
         },
       ),
     );
@@ -300,13 +344,19 @@ export class MessageService {
     };
   }
 
-  private loadMessages(conversationId: string): Observable<Message[]> {
-    return this.fetchMessages(conversationId).pipe(
+  private loadMessages(
+    conversationId: string,
+    page: number,
+  ): Observable<ListResult<Message>> {
+    return this.fetchMessages(conversationId, page).pipe(
       tap(() => {
         this.state.setStatus(MessageStatus.Decrypting);
       }),
       map((response) => {
-        return response.items.map((record) => this.decryptMessage(record));
+        return {
+          ...response,
+          items: response.items.map((record) => this.decryptMessage(record)),
+        };
       }),
     );
   }
