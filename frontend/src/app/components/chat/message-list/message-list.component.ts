@@ -6,7 +6,6 @@ import {
   Input,
   Output,
   viewChild,
-  viewChildren,
 } from '@angular/core';
 
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
@@ -76,17 +75,12 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
 })
 export class MessageListComponent implements AfterViewInit {
   @Input() messages: Message[] = [];
-
   @Input() messageSending = false;
-
   @Input() loadingMessages = false;
 
   @Output() readonly nextPage = new EventEmitter<void>();
 
   private readonly _wrapper = viewChild('wrapper', { read: ElementRef });
-  private readonly _messageListItemElements = viewChildren(MessageListItemComponent, {
-    read: ElementRef,
-  });
 
   scrollToBottom(smooth: boolean = true): void {
     this._wrapper()?.nativeElement.scroll({

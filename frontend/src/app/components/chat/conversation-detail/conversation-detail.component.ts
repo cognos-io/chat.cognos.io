@@ -44,7 +44,7 @@ import { MessageListComponent } from '../message-list/message-list.component';
 
         <button
           mat-mini-fab
-          color="secondary"
+          color="tertiary"
           aria-label="Scroll to bottom of conversation"
           (click)="messageListEl()?.scrollToBottom()"
           class="absolute bottom-8 right-8"
