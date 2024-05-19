@@ -2,9 +2,18 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  EventEmitter,
   Input,
-  viewChildren,
+  OnDestroy,
+  Output,
+  effect,
+  signal,
+  viewChild,
 } from '@angular/core';
+
+import { ReplaySubject, fromEvent, takeUntil, throttleTime } from 'rxjs';
+
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { Message } from '@app/interfaces/message';
@@ -15,10 +24,24 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
 @Component({
   selector: 'app-message-list',
   standalone: true,
-  imports: [MessageListItemComponent, IcebreakersComponent, LoadingIndicatorComponent],
+  imports: [
+    MessageListItemComponent,
+    IcebreakersComponent,
+    LoadingIndicatorComponent,
+    InfiniteScrollModule,
+  ],
   template: `
-    <div class="message-list-wrapper">
-      @for (message of messages; track message) {
+    <div
+      #wrapper
+      class="message-list-wrapper relative"
+      infiniteScroll
+      (scrolledUp)="onScrollUp()"
+      [scrollWindow]="false"
+    >
+      @if (loadingMessages) {
+        <app-loading-indicator></app-loading-indicator>
+      }
+      @for (message of messages; track message.record_id) {
         <app-message-list-item [message]="message"></app-message-list-item>
       } @empty {
         <div
@@ -39,43 +62,77 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
     </div>
   `,
   styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      flex-grow: 1;
+    }
+
     .message-list-wrapper {
       padding: 1rem 0;
       display: flex;
       flex-direction: column;
-      height: 100%;
+      flex-grow: 1;
+      overflow-y: auto;
     }
   `,
 })
-export class MessageListComponent implements AfterViewInit {
-  private _messages: Message[] = [];
-
-  @Input() set messages(value: Message[]) {
-    this._messages = value;
-    this.scrollToBottom();
-  }
-
+export class MessageListComponent implements AfterViewInit, OnDestroy {
+  @Input() messages: Message[] = [];
   @Input() messageSending = false;
+  @Input() loadingMessages = false;
 
-  get messages(): Message[] {
-    return this._messages;
+  @Output() readonly nextPage = new EventEmitter<void>();
+  @Output() readonly atBottom = new EventEmitter<boolean>();
+
+  private readonly _wrapper = viewChild('wrapper', { read: ElementRef });
+
+  private readonly _firstLoad = signal(true);
+  private readonly _atBottom = signal(false);
+  private destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
+
+  constructor() {
+    effect(() => {
+      this.atBottom.emit(this._atBottom());
+    });
   }
-
-  private readonly _messageListItemElements = viewChildren(MessageListItemComponent, {
-    read: ElementRef,
-  });
 
   scrollToBottom(smooth: boolean = true): void {
-    const els = this._messageListItemElements();
-    if (els.length > 0) {
-      els[els.length - 1].nativeElement.scrollIntoView({
-        behavior: smooth ? 'smooth' : 'instant',
-        alignToTop: true,
-      });
-    }
+    const wrapper = this._wrapper()?.nativeElement;
+    wrapper.scroll({
+      top: wrapper.scrollHeight,
+      left: 0,
+      behavior: smooth ? 'smooth' : 'instant',
+    });
+  }
+
+  onScrollUp(): void {
+    this.nextPage.emit();
   }
 
   ngAfterViewInit(): void {
-    this.scrollToBottom(false);
+    if (this._firstLoad()) {
+      this.scrollToBottom(false);
+      this._firstLoad.set(false);
+    }
+
+    const scroll$ = fromEvent(this._wrapper()?.nativeElement, 'scroll').pipe(
+      takeUntil(this.destroyed$),
+      throttleTime(100),
+    );
+
+    scroll$.subscribe(() => {
+      const wrapper = this._wrapper()?.nativeElement;
+      const threshold = 150;
+      const position = wrapper.scrollTop + wrapper.offsetHeight;
+      const height = wrapper.scrollHeight;
+      this._atBottom.set(position > height - threshold);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed$.next(true);
+    this.destroyed$.complete();
   }
 }

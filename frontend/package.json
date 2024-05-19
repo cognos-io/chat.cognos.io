@@ -19,6 +19,7 @@
     "include-media": "^2.0.0",
     "js-base64": "^3.7.7",
     "marked": "^9.1.6",
+    "ngx-infinite-scroll": "^17.0.0",
     "ngx-markdown": "^17.1.1",
     "ngxtension": "^3.2.0",
     "openai": "https://github.com/cognos-io/openai-node.git#cognos/fork",
@@ -119,6 +120,9 @@
   "lint-staged": {
     "*.{js,ts}": "eslint --cache --fix",
     "*.{ts,js,json,html,scss,css,md}": "prettier --write"
+  },
+  "scarfSettings": {
+    "enabled": false
   },
   "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
 }
