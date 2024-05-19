@@ -39,6 +39,7 @@ export enum MessageStatus {
   Decrypting, // decrypting messages
   Sending, // sending message and waiting for AI response
   ErrorSending, // error state
+  LoadingMoreMessages, // loading more messages
 }
 
 interface MessageState {
@@ -93,7 +94,7 @@ export class MessageService {
 
   private readonly pbMessagesCollection = this._pb.collection('messages');
 
-  private readonly pageSize = 5;
+  private readonly pageSize = 20;
 
   // sources
   public readonly sendMessage$ = new Subject<RawMessage>();
@@ -129,6 +130,9 @@ export class MessageService {
                 hasMoreMessages: true,
               });
             }
+
+            this.state.resetState();
+
             const currentPage = 1;
             return this.loadMessages(conversation.record.id, currentPage).pipe(
               catchError(() => {
@@ -238,9 +242,9 @@ export class MessageService {
             if (!conversation) {
               return EMPTY;
             }
-            const newPage = state().currentPage + 1;
+            const currentPage = state().currentPage + 1;
 
-            return this.loadMessages(conversation.record.id, newPage).pipe(
+            return this.loadMessages(conversation.record.id, currentPage).pipe(
               catchError(() => {
                 this.state.setStatus(MessageStatus.ErrorFetching);
                 return EMPTY;
@@ -248,10 +252,10 @@ export class MessageService {
               map((resp) => {
                 const messages = resp.items;
                 return {
-                  currentPage: newPage,
+                  currentPage,
                   status: MessageStatus.None,
                   messages: [...messages, ...state().messages],
-                  hasMoreMessages: resp.totalPages > state().currentPage,
+                  hasMoreMessages: resp.totalPages > currentPage,
                 };
               }),
             );
@@ -282,6 +286,12 @@ export class MessageService {
             };
           }),
         ),
+      resetState: (state, action$: Observable<void>) =>
+        action$.pipe(
+          map(() => {
+            return initialState;
+          }),
+        ),
     },
   });
 
@@ -298,7 +308,11 @@ export class MessageService {
     conversationId: string,
     page: number,
   ): Observable<ListResult<MessagesResponse>> {
-    this.state.setStatus(MessageStatus.Fetching);
+    if (this.state().messages.length === 0) {
+      this.state.setStatus(MessageStatus.Fetching);
+    } else {
+      this.state.setStatus(MessageStatus.LoadingMoreMessages);
+    }
 
     return from(
       this.pbMessagesCollection.getList(

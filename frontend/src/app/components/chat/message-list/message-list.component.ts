@@ -5,8 +5,11 @@ import {
   EventEmitter,
   Input,
   Output,
+  viewChild,
   viewChildren,
 } from '@angular/core';
+
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { Message } from '@app/interfaces/message';
@@ -17,9 +20,23 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
 @Component({
   selector: 'app-message-list',
   standalone: true,
-  imports: [MessageListItemComponent, IcebreakersComponent, LoadingIndicatorComponent],
+  imports: [
+    MessageListItemComponent,
+    IcebreakersComponent,
+    LoadingIndicatorComponent,
+    InfiniteScrollModule,
+  ],
   template: `
-    <div class="message-list-wrapper">
+    <div
+      #wrapper
+      class="message-list-wrapper relative"
+      infiniteScroll
+      (scrolledUp)="onScrollUp()"
+      [scrollWindow]="false"
+    >
+      @if (loadingMessages) {
+        <app-loading-indicator></app-loading-indicator>
+      }
       @for (message of messages; track message.record_id) {
         <app-message-list-item [message]="message"></app-message-list-item>
       } @empty {
@@ -45,6 +62,7 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
       display: flex;
       flex-direction: column;
       min-height: 100%;
+      flex-grow: 1;
     }
 
     .message-list-wrapper {
@@ -52,40 +70,37 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
       display: flex;
       flex-direction: column;
       flex-grow: 1;
+      overflow-y: auto;
     }
   `,
 })
 export class MessageListComponent implements AfterViewInit {
-  private _messages: Message[] = [];
-
-  @Input() set messages(value: Message[]) {
-    this._messages = value;
-    this.scrollToBottom();
-  }
+  @Input() messages: Message[] = [];
 
   @Input() messageSending = false;
 
+  @Input() loadingMessages = false;
+
   @Output() readonly nextPage = new EventEmitter<void>();
 
-  get messages(): Message[] {
-    return this._messages;
-  }
-
+  private readonly _wrapper = viewChild('wrapper', { read: ElementRef });
   private readonly _messageListItemElements = viewChildren(MessageListItemComponent, {
     read: ElementRef,
   });
 
   scrollToBottom(smooth: boolean = true): void {
-    const els = this._messageListItemElements();
-    if (els.length > 0) {
-      els[els.length - 1].nativeElement.scrollIntoView({
-        behavior: smooth ? 'smooth' : 'instant',
-        alignToTop: true,
-      });
-    }
+    this._wrapper()?.nativeElement.scroll({
+      top: this._wrapper()?.nativeElement.scrollHeight,
+      left: 0,
+      behavior: smooth ? 'smooth' : 'instant',
+    });
+  }
+
+  onScrollUp(): void {
+    this.nextPage.emit();
   }
 
   ngAfterViewInit(): void {
-    this.scrollToBottom(false);
+    this._wrapper()?.nativeElement;
   }
 }
