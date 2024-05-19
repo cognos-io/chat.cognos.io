@@ -2,7 +2,6 @@
   "dependencies": {
     "@angular/animations": "^17.3.8",
     "@angular/cdk": "^17.3.8",
-    "@angular/cdk-experimental": "^17.3.8",
     "@angular/common": "^17.3.8",
     "@angular/compiler": "^17.3.8",
     "@angular/core": "^17.3.8",
@@ -20,6 +19,7 @@
     "include-media": "^2.0.0",
     "js-base64": "^3.7.7",
     "marked": "^9.1.6",
+    "ngx-infinite-scroll": "^17.0.0",
     "ngx-markdown": "^17.1.1",
     "ngxtension": "^3.2.0",
     "openai": "https://github.com/cognos-io/openai-node.git#cognos/fork",
