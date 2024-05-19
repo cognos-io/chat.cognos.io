@@ -69,7 +69,8 @@ export class ConversationDetailComponent {
   }
 
   constructor() {
-    this.messageService.messages$.pipe(takeUntilDestroyed()).subscribe(() => {
+    // Scroll to bottom when something happens in these observables
+    this.messageService.sendMessage$.pipe(takeUntilDestroyed()).subscribe(() => {
       this._messageListEl()?.scrollToBottom();
     });
   }
