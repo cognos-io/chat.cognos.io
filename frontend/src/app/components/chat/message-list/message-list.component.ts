@@ -4,9 +4,14 @@ import {
   ElementRef,
   EventEmitter,
   Input,
+  OnDestroy,
   Output,
+  effect,
+  signal,
   viewChild,
 } from '@angular/core';
+
+import { ReplaySubject, fromEvent, takeUntil, throttleTime } from 'rxjs';
 
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
@@ -73,18 +78,30 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
     }
   `,
 })
-export class MessageListComponent implements AfterViewInit {
+export class MessageListComponent implements AfterViewInit, OnDestroy {
   @Input() messages: Message[] = [];
   @Input() messageSending = false;
   @Input() loadingMessages = false;
 
   @Output() readonly nextPage = new EventEmitter<void>();
+  @Output() readonly atBottom = new EventEmitter<boolean>();
 
   private readonly _wrapper = viewChild('wrapper', { read: ElementRef });
 
+  private readonly _firstLoad = signal(true);
+  private readonly _atBottom = signal(false);
+  private destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
+
+  constructor() {
+    effect(() => {
+      this.atBottom.emit(this._atBottom());
+    });
+  }
+
   scrollToBottom(smooth: boolean = true): void {
-    this._wrapper()?.nativeElement.scroll({
-      top: this._wrapper()?.nativeElement.scrollHeight,
+    const wrapper = this._wrapper()?.nativeElement;
+    wrapper.scroll({
+      top: wrapper.scrollHeight,
       left: 0,
       behavior: smooth ? 'smooth' : 'instant',
     });
@@ -95,6 +112,27 @@ export class MessageListComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this._wrapper()?.nativeElement;
+    if (this._firstLoad()) {
+      this.scrollToBottom(false);
+      this._firstLoad.set(false);
+    }
+
+    const scroll$ = fromEvent(this._wrapper()?.nativeElement, 'scroll').pipe(
+      takeUntil(this.destroyed$),
+      throttleTime(100),
+    );
+
+    scroll$.subscribe(() => {
+      const wrapper = this._wrapper()?.nativeElement;
+      const threshold = 150;
+      const position = wrapper.scrollTop + wrapper.offsetHeight;
+      const height = wrapper.scrollHeight;
+      this._atBottom.set(position > height - threshold);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed$.next(true);
+    this.destroyed$.complete();
   }
 }

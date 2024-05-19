@@ -1,12 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-  AfterViewInit,
-  Component,
-  Input,
-  computed,
-  inject,
-  viewChild,
-} from '@angular/core';
+import { Component, Input, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -40,17 +33,20 @@ import { MessageListComponent } from '../message-list/message-list.component';
           [messageSending]="isSending()"
           [loadingMessages]="isLoadingMoreMessages()"
           (nextPage)="messageService.nextPage()"
+          (atBottom)="messagesAtBottom.set($event)"
         ></app-message-list>
 
-        <button
-          mat-mini-fab
-          color="tertiary"
-          aria-label="Scroll to bottom of conversation"
-          (click)="messageListEl()?.scrollToBottom()"
-          class="absolute bottom-8 right-8"
-        >
-          <mat-icon fontSet="bi" fontIcon="bi-arrow-down"></mat-icon>
-        </button>
+        @if (!messagesAtBottom()) {
+          <button
+            mat-mini-fab
+            color="tertiary"
+            aria-label="Scroll to bottom of conversation"
+            (click)="messageListEl()?.scrollToBottom()"
+            class="absolute bottom-8 right-8"
+          >
+            <mat-icon fontSet="bi" fontIcon="bi-arrow-down"></mat-icon>
+          </button>
+        }
       </div>
       <app-message-form></app-message-form>
     }
@@ -78,7 +74,7 @@ import { MessageListComponent } from '../message-list/message-list.component';
     }
   `,
 })
-export class ConversationDetailComponent implements AfterViewInit {
+export class ConversationDetailComponent {
   private readonly _conversationService = inject(ConversationService);
 
   readonly messageListEl = viewChild(MessageListComponent);
@@ -94,6 +90,8 @@ export class ConversationDetailComponent implements AfterViewInit {
     () => this.messageService.status() === MessageStatus.LoadingMoreMessages,
   );
 
+  readonly messagesAtBottom = signal(false);
+
   @Input()
   set conversationId(conversationId: string) {
     this._conversationService.selectConversation$.next(conversationId ?? '');
@@ -104,9 +102,5 @@ export class ConversationDetailComponent implements AfterViewInit {
     this.messageService.sendMessage$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.messageListEl()?.scrollToBottom();
     });
-  }
-
-  ngAfterViewInit(): void {
-    this.messageListEl()?.scrollToBottom(false);
   }
 }
