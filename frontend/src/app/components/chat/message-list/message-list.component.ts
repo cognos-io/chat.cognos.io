@@ -1,3 +1,4 @@
+import { ScrollingModule as ExperimentalScrollingModule } from '@angular/cdk-experimental/scrolling';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import {
   AfterViewInit,
@@ -22,18 +23,16 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
     MessageListItemComponent,
     IcebreakersComponent,
     LoadingIndicatorComponent,
+    ExperimentalScrollingModule,
     ScrollingModule,
   ],
   template: `
-    <cdk-virtual-scroll-viewport
-      itemSize="25"
-      class="message-list-wrapper"
-      (scrolledIndexChange)="nextPage.emit()"
-    >
+    <cdk-virtual-scroll-viewport autosize class="message-list-wrapper">
       @if (messages.length > 0) {
         <app-message-list-item
           *cdkVirtualFor="let message of messages"
           [message]="message"
+          (scrolledIndexChange)="onIndexChange($event)"
         ></app-message-list-item>
       } @else {
         <div
@@ -54,11 +53,17 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
     </cdk-virtual-scroll-viewport>
   `,
   styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+
     .message-list-wrapper {
       padding: 1rem 0;
       display: flex;
       flex-direction: column;
-      height: 100%;
+      flex-grow: 1;
     }
   `,
 })
@@ -90,6 +95,10 @@ export class MessageListComponent implements AfterViewInit {
         alignToTop: true,
       });
     }
+  }
+
+  onIndexChange(index: Event): void {
+    console.log(index);
   }
 
   ngAfterViewInit(): void {

@@ -2,6 +2,7 @@
   "dependencies": {
     "@angular/animations": "^17.3.8",
     "@angular/cdk": "^17.3.8",
+    "@angular/cdk-experimental": "^17.3.8",
     "@angular/common": "^17.3.8",
     "@angular/compiler": "^17.3.8",
     "@angular/core": "^17.3.8",
@@ -119,6 +120,9 @@
   "lint-staged": {
     "*.{js,ts}": "eslint --cache --fix",
     "*.{ts,js,json,html,scss,css,md}": "prettier --write"
+  },
+  "scarfSettings": {
+    "enabled": false
   },
   "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
 }

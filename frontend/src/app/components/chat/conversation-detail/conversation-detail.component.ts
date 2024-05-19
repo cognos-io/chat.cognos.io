@@ -47,8 +47,6 @@ import { MessageListComponent } from '../message-list/message-list.component';
       min-height: 100px;
 
       flex-grow: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
     }
   `,
 })
