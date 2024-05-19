@@ -1,4 +1,10 @@
-import { Component, ElementRef, Input, viewChildren } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Input,
+  viewChildren,
+} from '@angular/core';
 
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { Message } from '@app/interfaces/message';
@@ -41,7 +47,7 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
     }
   `,
 })
-export class MessageListComponent {
+export class MessageListComponent implements AfterViewInit {
   private _messages: Message[] = [];
 
   @Input() set messages(value: Message[]) {
@@ -59,10 +65,17 @@ export class MessageListComponent {
     read: ElementRef,
   });
 
-  scrollToBottom(): void {
+  scrollToBottom(smooth: boolean = true): void {
     const els = this._messageListItemElements();
     if (els.length > 0) {
-      els[els.length - 1].nativeElement.scrollIntoView({ behavior: 'smooth' });
+      els[els.length - 1].nativeElement.scrollIntoView({
+        behavior: smooth ? 'smooth' : 'instant',
+        alignToTop: true,
+      });
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.scrollToBottom(false);
   }
 }

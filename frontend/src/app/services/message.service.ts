@@ -249,6 +249,7 @@ export class MessageService {
   public readonly messages = this.state.orderedMessageList;
   public readonly messages$ = toObservable(this.messages);
   public readonly status = this.state.status;
+  public readonly status$ = toObservable(this.status);
 
   // helper methods
   private fetchMessages(
