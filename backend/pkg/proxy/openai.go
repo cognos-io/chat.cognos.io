@@ -139,11 +139,11 @@ func ForwardOpenAIResponse(
 	req openai.ChatCompletionRequest,
 	logger *slog.Logger,
 	client *openai.Client,
-) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
+) (resp openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
 	emptyResponse := openai.ChatCompletionResponse{}
 
 	// Forward the request to OpenAI
-	resp, err := client.CreateChatCompletion(
+	resp, err = client.CreateChatCompletion(
 		c.Request().Context(),
 		req,
 	)
