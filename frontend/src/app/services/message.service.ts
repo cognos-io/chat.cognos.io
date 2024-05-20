@@ -21,7 +21,7 @@ import {
 import { Base64 } from 'js-base64';
 import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
-import OpenAI from 'openai';
+import { OpenAI } from 'openai';
 
 import { Message, parseMessageData } from '@app/interfaces/message';
 import { MessagesResponse, TypedPocketBase } from '@app/types/pocketbase-types';
@@ -94,7 +94,7 @@ export class MessageService {
 
   private readonly pbMessagesCollection = this._pb.collection('messages');
 
-  private readonly pageSize = 20;
+  private readonly pageSize = 100;
 
   // sources
   public readonly sendMessage$ = new Subject<RawMessage>();
@@ -192,7 +192,7 @@ export class MessageService {
                   }),
                   map((resp) => {
                     return {
-                      ...this.saveOpenAIMessage(resp),
+                      ...this.addOpenAIMessageToState(resp),
                       isNewConversation: false,
                     };
                   }),
@@ -210,7 +210,7 @@ export class MessageService {
               });
             }),
             map((resp) => {
-              return this.saveOpenAIMessage(resp);
+              return this.addOpenAIMessageToState(resp);
             }),
           );
         }),
@@ -218,8 +218,13 @@ export class MessageService {
     ],
     selectors: (state) => ({
       orderedMessageList: () => {
-        const messageList = state().messages;
+        const messageList = [...state().messages];
         messageList.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        return messageList;
+      },
+      reverseOrderedMessageList: () => {
+        const messageList = [...state().messages];
+        messageList.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         return messageList;
       },
     }),
@@ -385,9 +390,12 @@ export class MessageService {
 
     this.state.setStatus(MessageStatus.Sending);
 
+    // Create a message context based on the message history
+    const messages = this.createMessageContext();
+
     return from(
       this._openAi.chat.completions.create({
-        messages: [{ role: 'user', content: messageRequest.content }],
+        messages,
         model: this._modelService.selectedModel().id,
         metadata: {
           cognos: {
@@ -400,7 +408,7 @@ export class MessageService {
     );
   }
 
-  private saveOpenAIMessage(
+  private addOpenAIMessageToState(
     resp: ChatCompletionResponseWithMetadata,
   ): Partial<MessageState> {
     const metadata: CognosMetadataResponse = resp.metadata?.cognos;
@@ -418,5 +426,45 @@ export class MessageService {
       messages: [...this.state().messages, msg],
       status: MessageStatus.None,
     };
+  }
+
+  /**
+   * Create a message context object based on the message history
+   * to be used in the OpenAI API request.
+   *
+   * As the new message has already been added to the state, we don't
+   * need to include it as a parameter here.
+   */
+  private createMessageContext(): Array<OpenAI.ChatCompletionMessageParam> {
+    const model = this._modelService.selectedModel();
+    const context: Array<OpenAI.ChatCompletionMessageParam> = [];
+
+    let usedContextLength = 0;
+    // Rather than calling a tokenizer, estimate that 1 token is 2 characters
+    const targetContextChars = model.inputContextLength * 2;
+
+    for (const message of this.state.reverseOrderedMessageList()) {
+      //  For now, rather than using tokens use characters.
+      // TODO(ewan): Use tokens instead of characters
+      const messageLength = message.decryptedData.content.length;
+
+      if (usedContextLength + messageLength >= targetContextChars) {
+        break;
+      }
+
+      // We start with the latest messages and work our way back so
+      // we need to prepend the new message to the context to ensure
+      // the order is correct.
+      context.unshift({
+        role: message.decryptedData.owner_id ? 'user' : 'assistant',
+        content: message.decryptedData.content,
+      });
+      usedContextLength += messageLength;
+
+      // TODO(ewan): If we haven't reached the max tokens,
+      // can we fetch more messages from this conversation and parse them?
+    }
+
+    return context;
   }
 }
