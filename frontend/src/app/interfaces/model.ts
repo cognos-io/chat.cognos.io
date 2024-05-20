@@ -6,6 +6,8 @@ export const Model = z.object({
   slug: z.string(),
   description: z.string(),
   tags: z.array(z.string()).optional(),
+  inputContextLength: z.number(), // How many tokens can be passed to the model
+  maxOutputTokens: z.number().optional(), // How many tokens can be generated
 });
 export type Model = z.infer<typeof Model>;
 
@@ -17,6 +19,7 @@ const openAiGpt35TurboModel: Model = {
   name: 'Open AI - GPT 3.5 Turbo',
   slug: 'open-ai---gpt-35-turbo',
   description: 'This is the first model',
+  inputContextLength: 16_385,
 };
 
 export const defaultModel = openAiGpt35TurboModel;
