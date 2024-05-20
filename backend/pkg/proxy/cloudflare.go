@@ -10,7 +10,10 @@ import (
 )
 
 var cfModelMapping = map[string]string{
-	"llama-3-8b-instruct": "@cf/meta/llama-3-8b-instruct",
+	"llama-3-8b-instruct":       "@cf/meta/llama-3-8b-instruct",
+	"phi-2":                     "@cf/microsoft/phi-2",
+	"mistral-7b-instruct-v0.2":  "@hf/mistral/mistral-7b-instruct-v0.2",
+	"deepseek-math-7b-instruct": "@cf/deepseek-ai/deepseek-math-7b-instruct",
 }
 
 func NewCloudflareOpenAIClient(config *config.APIConfig) *openai.Client {
