@@ -61,7 +61,7 @@ func setupTestApp(t *testing.T) *tests.TestApp {
 
 	testConfig := config.APIConfig{}
 
-	bindAppHooks(app, &testConfig, nil)
+	bindAppHooks(app, &testConfig, nil, nil)
 
 	return app
 }
