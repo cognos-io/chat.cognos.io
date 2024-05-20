@@ -23,7 +23,9 @@ func pathExists(path string) bool {
 }
 
 type APIConfig struct {
-	OpenAIAPIKey string `koanf:"openai.api_key"`
+	OpenAIAPIKey        string `koanf:"openai.api_key"`
+	CloudflareAccountID string `koanf:"cloudflare.account_id"`
+	CloudflareAPIKey    string `koanf:"cloudflare.api_key"`
 }
 
 // MustLoadAPIConfig loads the API configuration or panics if an error occurs.

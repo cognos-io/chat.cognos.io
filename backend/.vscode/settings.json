@@ -4,6 +4,7 @@
     "cognos",
     "compat",
     "ewan",
+    "groq",
     "idempotency",
     "oidc",
     "Ollama",

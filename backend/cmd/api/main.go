@@ -39,12 +39,21 @@ func NewServer(
 
 // bindAppHooks is PocketBase specific. We add our additional routes and hooks here.
 // We extract as its own function so it can be reused in tests.
-func bindAppHooks(app core.App, config *config.APIConfig, openaiClient *oai.Client) {
+func bindAppHooks(
+	app core.App,
+	config *config.APIConfig,
+	openaiClient *oai.Client,
+	cloudflareOpenAIClient *oai.Client,
+) {
 	// Have to use OnBeforeServe to ensure that the app is fully initialized incl. the DB
 	// so we can create the various Repos without panic'ing
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		// Separate into collection services
-		upstreamRepo := proxy.NewInMemoryUpstreamRepo(app.Logger(), openaiClient)
+		upstreamRepo := proxy.NewInMemoryUpstreamRepo(
+			app.Logger(),
+			openaiClient,
+			cloudflareOpenAIClient,
+		)
 		messageRepo := chat.NewPocketBaseMessageRepo(app)
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
 		idempotencyRepo := idempotency.NewPocketBaseIdempotencyRepo(app)
@@ -74,7 +83,11 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	config := config.MustLoadAPIConfig(logger)
 
-	openaiClient := oai.NewClient(config.OpenAIAPIKey)
+	// Clients
+	openaiClient := oai.NewClient(config.OpenAIAPIKey) // OpenAI
+	cloudflareOpenAIClient := proxy.NewCloudflareOpenAIClient(
+		config,
+	) // Cloudflare with OpenAI compatibility
 
 	app := NewServer(
 		logger,
@@ -82,7 +95,7 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		openaiClient,
 	)
 
-	bindAppHooks(app, config, openaiClient)
+	bindAppHooks(app, config, openaiClient, cloudflareOpenAIClient)
 
 	return app.Start()
 }

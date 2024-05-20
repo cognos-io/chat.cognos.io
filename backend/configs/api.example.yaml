@@ -1,3 +1,6 @@
 ---
 openai:
   api_key: "sk-1234567890abcdef"
+cloudflare:
+  api_key: "1234567890abcdef"
+  account_id: "1234567890abcdef"
