@@ -102,9 +102,11 @@ export class ConversationDetailComponent {
   }
 
   constructor() {
-    // Scroll to bottom when something happens in these observables
-    this.messageService.sendMessage$.pipe(takeUntilDestroyed()).subscribe(() => {
-      this.messageListEl()?.scrollToBottom();
+    // Scroll to bottom when messages changes if the user is already at the bottom (so not if they have scrolled up)
+    this.messageService.messages$.pipe(takeUntilDestroyed()).subscribe(() => {
+      if (this.messagesAtBottom()) {
+        setTimeout(() => this.messageListEl()?.scrollToBottom(), 0);
+      }
     });
   }
 }
