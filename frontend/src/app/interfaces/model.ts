@@ -22,4 +22,13 @@ const openAiGpt35TurboModel: Model = {
   inputContextLength: 16_385,
 };
 
+const cloudflareLlama38bInstruct: Model = {
+  id: 'cloudflare:llama-3-8b-instruct',
+  name: 'Cloudflare - Llama3 8B Instruct',
+  slug: 'cloudflare---llama3-8b-instruct',
+  description: `Meta's LLama3 8B model hosted on the Cloudflare Workers AI infrastructure`,
+  inputContextLength: 16_385,
+};
+
 export const defaultModel = openAiGpt35TurboModel;
+export const hardCodedModels = [openAiGpt35TurboModel, cloudflareLlama38bInstruct];
