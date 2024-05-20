@@ -2,7 +2,7 @@ import { Injectable, Signal, computed } from '@angular/core';
 
 import { signalSlice } from 'ngxtension/signal-slice';
 
-import { Model, defaultModel } from '@app/interfaces/model';
+import { Model, defaultModel, hardCodedModels } from '@app/interfaces/model';
 
 interface ModelState {
   modelList: Model[];
@@ -10,8 +10,8 @@ interface ModelState {
 }
 
 const initialState: ModelState = {
-  modelList: [defaultModel],
-  selectedModelId: '',
+  modelList: hardCodedModels,
+  selectedModelId: 'cloudflare:llama-3-8b-instruct',
 };
 
 @Injectable({
