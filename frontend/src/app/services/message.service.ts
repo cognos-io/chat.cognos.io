@@ -94,7 +94,7 @@ export class MessageService {
 
   private readonly pbMessagesCollection = this._pb.collection('messages');
 
-  private readonly pageSize = 20;
+  private readonly pageSize = 100;
 
   // sources
   public readonly sendMessage$ = new Subject<RawMessage>();
