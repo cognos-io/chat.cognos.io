@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { ReplaySubject, fromEvent, takeUntil, throttleTime } from 'rxjs';
+import { ReplaySubject, debounceTime, fromEvent, takeUntil } from 'rxjs';
 
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
@@ -119,7 +119,7 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
 
     const scroll$ = fromEvent(this._wrapper()?.nativeElement, 'scroll').pipe(
       takeUntil(this.destroyed$),
-      throttleTime(100),
+      debounceTime(100),
     );
 
     scroll$.subscribe(() => {
