@@ -29,14 +29,14 @@ import { MessageListComponent } from '../message-list/message-list.component';
       <div class="relative flex h-full flex-col">
         <app-message-list
           class="message-container"
-          [messages]="(messageService.messages$ | async) ?? []"
+          [messages]="(messages | async) ?? []"
           [messageSending]="isSending()"
           [loadingMessages]="isLoadingMoreMessages()"
           (nextPage)="messageService.nextPage()"
           (atBottom)="messagesAtBottom.set($event)"
         ></app-message-list>
 
-        @if (!messagesAtBottom()) {
+        @if (!messagesAtBottom() && ((messages | async) ?? []).length !== 0) {
           <button
             mat-mini-fab
             color="tertiary"
@@ -97,10 +97,16 @@ export class ConversationDetailComponent {
     this._conversationService.selectConversation$.next(conversationId ?? '');
   }
 
+  get messages() {
+    return this.messageService.messages$;
+  }
+
   constructor() {
-    // Scroll to bottom when something happens in these observables
-    this.messageService.sendMessage$.pipe(takeUntilDestroyed()).subscribe(() => {
-      this.messageListEl()?.scrollToBottom();
+    // Scroll to bottom when messages changes if the user is already at the bottom (so not if they have scrolled up)
+    this.messageService.messages$.pipe(takeUntilDestroyed()).subscribe(() => {
+      if (this.messagesAtBottom()) {
+        setTimeout(() => this.messageListEl()?.scrollToBottom(), 0);
+      }
     });
   }
 }
