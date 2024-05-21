@@ -34,8 +34,17 @@ import { ModelService } from '@app/services/model.service';
                       >
                     }
                   </p>
-                  <p class="text-gray-700">{{ model.description }}</p>
-                  <p class="mt-1 flex text-xs leading-5 text-gray-500"></p>
+                  <p class="my-2 text-gray-700">{{ model.description }}</p>
+                  @if (model.tags && model.tags.length > 0) {
+                    <div class="mt-2 flex gap-x-2">
+                      @for (tag of model.tags; track tag) {
+                        <span
+                          class="inline-flex items-center rounded-md bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-400/20"
+                          >{{ tag }}</span
+                        >
+                      }
+                    </div>
+                  }
                 </div>
               </mat-radio-button>
             </li>
