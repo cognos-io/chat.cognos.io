@@ -20,6 +20,7 @@ const openAiGpt35TurboModel: Model = {
   slug: 'open-ai---gpt-35-turbo',
   description: 'This is the first model',
   inputContextLength: 16_385,
+  tags: ['openai', 'general-purpose'],
 };
 
 const cloudflareLlama38bInstruct: Model = {
@@ -54,7 +55,7 @@ const cloudflareDeepseekMath7bInstruct: Model = {
   inputContextLength: 4_096,
 };
 
-export const defaultModel = openAiGpt35TurboModel;
+export const defaultModel = cloudflareLlama38bInstruct;
 export const hardCodedModels = [
   openAiGpt35TurboModel,
   cloudflareLlama38bInstruct,

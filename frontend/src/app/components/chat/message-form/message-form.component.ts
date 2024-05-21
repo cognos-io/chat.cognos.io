@@ -6,8 +6,8 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
@@ -28,16 +28,16 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     ReactiveFormsModule,
     MatInputModule,
     MatIconModule,
-    MatBottomSheetModule,
+    MatDialogModule,
   ],
   templateUrl: './message-form.component.html',
   styleUrl: './message-form.component.scss',
 })
 export class MessageFormComponent implements OnDestroy {
   private _fb = inject(FormBuilder);
-  private _bottomSheet = inject(MatBottomSheet);
+  private _dialog = inject(MatDialog);
   private _platformId = inject(PLATFORM_ID);
-  private destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
+  private _destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
 
   isMac = false;
   public readonly messageService = inject(MessageService);
@@ -58,16 +58,16 @@ export class MessageFormComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.destroyed$.next(true);
-    this.destroyed$.complete();
+    this._destroyed$.next(true);
+    this._destroyed$.complete();
   }
 
   openAgentSelector() {
-    this._bottomSheet.open(AgentSelectorComponent);
+    this._dialog.open(AgentSelectorComponent);
   }
 
   openModelSelector() {
-    this._bottomSheet.open(ModelSelectorComponent);
+    this._dialog.open(ModelSelectorComponent, {});
   }
 
   sendMessage() {
