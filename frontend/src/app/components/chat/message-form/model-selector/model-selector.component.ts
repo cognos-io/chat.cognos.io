@@ -4,13 +4,20 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatRadioModule } from '@angular/material/radio';
 
+import { TagComponent } from '@app/components/tag/tag.component';
 import { Model } from '@app/interfaces/model';
 import { ModelService } from '@app/services/model.service';
 
 @Component({
   selector: 'app-model-selector',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule, MatRadioModule, FormsModule],
+  imports: [
+    MatDialogModule,
+    MatButtonModule,
+    MatRadioModule,
+    FormsModule,
+    TagComponent,
+  ],
   template: ` <h2 mat-dialog-title>Pick your AI model</h2>
     <mat-dialog-content>
       <p class="my-2">
@@ -38,10 +45,7 @@ import { ModelService } from '@app/services/model.service';
                   @if (model.tags && model.tags.length > 0) {
                     <div class="mt-2 flex gap-x-2">
                       @for (tag of model.tags; track tag) {
-                        <span
-                          class="inline-flex items-center rounded-md bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-400/20"
-                          >{{ tag }}</span
-                        >
+                        <app-tag [tag]="tag"></app-tag>
                       }
                     </div>
                   }
