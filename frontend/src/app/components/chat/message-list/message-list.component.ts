@@ -7,6 +7,7 @@ import {
   OnDestroy,
   Output,
   effect,
+  inject,
   signal,
   viewChild,
 } from '@angular/core';
@@ -16,7 +17,9 @@ import { ReplaySubject, debounceTime, fromEvent, takeUntil } from 'rxjs';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
+import { IceBreaker } from '@app/interfaces/ice-breaker';
 import { Message } from '@app/interfaces/message';
+import { MessageService } from '@app/services/message.service';
 
 import { IcebreakersComponent } from '../icebreakers/icebreakers.component';
 import { MessageListItemComponent } from '../message-list-item/message-list-item.component';
@@ -53,7 +56,10 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
             <h1>👋</h1>
             <h3>You're using Cognos secure AI messaging</h3>
           </div>
-          <app-icebreakers></app-icebreakers>
+          <app-icebreakers
+            (iceBreakerSelected)="onIceBreakerSelected($event)"
+            )
+          ></app-icebreakers>
         </div>
       }
       @if (messageSending) {
@@ -88,6 +94,7 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
 
   private readonly _wrapper = viewChild('wrapper', { read: ElementRef });
 
+  private readonly _messageService = inject(MessageService);
   private readonly _firstLoad = signal(true);
   private readonly _atBottom = signal(false);
   private destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
@@ -109,6 +116,10 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
 
   onScrollUp(): void {
     this.nextPage.emit();
+  }
+
+  onIceBreakerSelected(iceBreaker: IceBreaker): void {
+    this._messageService.sendMessage$.next({ message: iceBreaker.prompt });
   }
 
   ngAfterViewInit(): void {

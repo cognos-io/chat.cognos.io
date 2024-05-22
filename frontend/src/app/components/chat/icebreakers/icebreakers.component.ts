@@ -2,11 +2,7 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-interface IceBreaker {
-  title: string;
-  description: string;
-  prompt: string;
-}
+import { IceBreaker } from '@app/interfaces/ice-breaker';
 
 const iceBreakers: IceBreaker[] = [
   {
