@@ -1,11 +1,13 @@
 import { z } from 'zod';
 
+import { Tag } from './tag';
+
 export const Agent = z.object({
   id: z.string(),
   name: z.string(),
   slug: z.string(),
   description: z.string(),
-  tags: z.array(z.string()).optional(),
+  tags: z.array(Tag).optional(),
   authorId: z.string(),
 });
 export type Agent = z.infer<typeof Agent>;
@@ -19,6 +21,7 @@ const simpleAssistantAgent: Agent = {
   slug: 'cognos--simple-assistant',
   description: 'This is a simple assistant that can help you with your questions.',
   authorId: 'cognos',
+  tags: [{ title: 'official', color: { palette: 'primary' }, featured: true }],
 };
 
 export const defaultAgent = simpleAssistantAgent;
