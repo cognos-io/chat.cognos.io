@@ -1,11 +1,13 @@
 import { z } from 'zod';
 
+import { Tag } from './tag';
+
 export const Model = z.object({
   id: z.string(),
   name: z.string(),
   slug: z.string(),
   description: z.string(),
-  tags: z.array(z.string()).optional(),
+  tags: z.array(Tag).optional(),
   inputContextLength: z.number(), // How many tokens can be passed to the model
   maxOutputTokens: z.number().optional(), // How many tokens can be generated
 });
@@ -20,7 +22,7 @@ const openAiGpt35TurboModel: Model = {
   slug: 'open-ai---gpt-35-turbo',
   description: "OpenAI's fast, inexpensive model for general-purpose use.",
   inputContextLength: 16_385,
-  tags: ['openai', 'general-purpose'],
+  tags: [{ title: 'openai' }, { title: 'general-purpose' }],
 };
 
 const cloudflareLlama38bInstruct: Model = {
@@ -29,7 +31,7 @@ const cloudflareLlama38bInstruct: Model = {
   slug: 'cloudflare---llama3-8b-instruct',
   description: `Meta's open source LLama3 8B model hosted on the Cloudflare Workers AI infrastructure`,
   inputContextLength: 8_192,
-  tags: ['meta', 'open-source'],
+  tags: [{ title: 'meta' }, { title: 'open-source' }],
 };
 
 const cloudflarePhi2: Model = {
@@ -38,7 +40,7 @@ const cloudflarePhi2: Model = {
   slug: 'cloudflare---phi-2',
   description: `Microsoft's Phi 2 model hosted on the Cloudflare Workers AI infrastructure`,
   inputContextLength: 2_048,
-  tags: ['microsoft', 'open-source'],
+  tags: [{ title: 'microsoft' }, { title: 'open-source' }],
 };
 
 const cloudflareMistral7bInstruct: Model = {
@@ -47,7 +49,7 @@ const cloudflareMistral7bInstruct: Model = {
   slug: 'cloudflare---mistral-7b-instruct-v0.2',
   description: `Mistral's Mistral 7B Instruct v0.2 model hosted on the Cloudflare Workers AI infrastructure`,
   inputContextLength: 32_768,
-  tags: ['mistral', 'open-source'],
+  tags: [{ title: 'mistral' }, { title: 'open-source' }],
 };
 
 const cloudflareDeepseekMath7bInstruct: Model = {
@@ -56,7 +58,7 @@ const cloudflareDeepseekMath7bInstruct: Model = {
   slug: 'cloudflare---deepseek-math-7b-instruct',
   description: `Deepseek AI's Deepseek Math 7B Instruct model hosted on the Cloudflare Workers AI infrastructure`,
   inputContextLength: 4_096,
-  tags: ['deepseek', 'open-source', 'maths'],
+  tags: [{ title: 'deepseek' }, { title: 'open-source' }, { title: 'maths' }],
 };
 
 export const defaultModel = cloudflareLlama38bInstruct;
