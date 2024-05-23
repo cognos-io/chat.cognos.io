@@ -58,7 +58,6 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
           </div>
           <app-icebreakers
             (iceBreakerSelected)="onIceBreakerSelected($event)"
-            )
           ></app-icebreakers>
         </div>
       }
