@@ -85,6 +85,16 @@ const iceBreakers: IceBreaker[] = [
     description: 'of technical innovation',
     prompt: `Predict a technological innovation that will transform our lives in the next 50 years. Describe the technology, how it works, and its societal impacts.`,
   },
+  {
+    title: 'Superhero origin story',
+    description: 'for a new hero',
+    prompt: `Create a new superhero with a unique origin story. Describe the hero's powers, backstory, and mission to save the world.`,
+  },
+  {
+    title: 'Intergalactic ambassador',
+    description: `negotiating between alien civilizations`,
+    prompt: `You're the first human to make contact with an alien civilization. Describe the aliens, their planet, and your plan for establishing a peaceful relationship.`,
+  },
 ];
 
 @Component({
