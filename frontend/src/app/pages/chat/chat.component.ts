@@ -14,6 +14,7 @@ import { Router, RouterModule } from '@angular/router';
 
 import { Subject, takeUntil } from 'rxjs';
 
+import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 
@@ -34,6 +35,7 @@ import { VaultService } from '../../services/vault.service';
     MatTooltipModule,
     MatExpansionModule,
     MatMenuModule,
+    CognosLogoComponent,
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
