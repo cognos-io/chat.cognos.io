@@ -34,13 +34,22 @@ const cloudflareLlama38bInstruct: Model = {
   tags: [{ title: 'meta' }, { title: 'open-source' }],
 };
 
-const cloudflarePhi2: Model = {
-  id: 'cloudflare:phi-2',
-  name: 'Cloudflare - Phi 2',
-  slug: 'cloudflare---phi-2',
-  description: `Microsoft's Phi 2 model hosted on the Cloudflare Workers AI infrastructure`,
-  inputContextLength: 2_048,
-  tags: [{ title: 'microsoft' }, { title: 'open-source' }],
+// const cloudflarePhi2: Model = {
+//   id: 'cloudflare:phi-2',
+//   name: 'Cloudflare - Phi 2',
+//   slug: 'cloudflare---phi-2',
+//   description: `Microsoft's Phi 2 model hosted on the Cloudflare Workers AI infrastructure`,
+//   inputContextLength: 2_048,
+//   tags: [{ title: 'microsoft' }, { title: 'open-source' }],
+// };
+
+const cloudflareQwen157BChat: Model = {
+  id: 'cloudflare:qwen-15-7b-chat',
+  name: 'Cloudflare - Qwen 1.5 7B Chat',
+  slug: 'cloudflare---qwen-15-7b-chat',
+  description: `Qwen's Qwen 1.5 7B Chat model hosted on the Cloudflare Workers AI infrastructure`,
+  inputContextLength: 32_768,
+  tags: [{ title: 'qwen' }, { title: 'open-source' }],
 };
 
 const cloudflareMistral7bInstruct: Model = {
@@ -65,7 +74,7 @@ export const defaultModel = cloudflareLlama38bInstruct;
 export const hardCodedModels = [
   openAiGpt35TurboModel,
   cloudflareLlama38bInstruct,
-  cloudflarePhi2,
+  cloudflareQwen157BChat,
   cloudflareMistral7bInstruct,
   cloudflareDeepseekMath7bInstruct,
 ];
