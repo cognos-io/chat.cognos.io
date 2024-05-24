@@ -25,6 +25,7 @@ import { OpenAI } from 'openai';
 
 import { Message, parseMessageData } from '@app/interfaces/message';
 import { MessagesResponse, TypedPocketBase } from '@app/types/pocketbase-types';
+import { isTimestampInMilliseconds } from '@app/utils/timestamp';
 
 import { AgentService } from './agent.service';
 import { AuthService } from './auth.service';
@@ -411,10 +412,17 @@ export class MessageService {
   private addOpenAIMessageToState(
     resp: ChatCompletionResponseWithMetadata,
   ): Partial<MessageState> {
+    let createdAt = resp.created;
+    if (isTimestampInMilliseconds(createdAt)) {
+      // Cloudflare Workers returns timestamps in milliseconds
+      // Convert to seconds for standardization with OpenAI API
+      createdAt = Math.floor(createdAt / 1000);
+    }
+
     const metadata: CognosMetadataResponse = resp.metadata?.cognos;
     const msg: Message = {
       record_id: metadata.response_record_id,
-      createdAt: new Date((resp.created + 1) * 1000),
+      createdAt: new Date((createdAt + 1) * 1000),
       decryptedData: {
         content: resp.choices[0].message.content,
         agent_id: this._agentService.selectedAgent().id,
