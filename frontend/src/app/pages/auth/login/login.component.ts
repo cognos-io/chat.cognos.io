@@ -59,7 +59,10 @@ import { AuthService } from '@services/auth.service';
               <p>
                 You are accessing the beta so please expect some imperfections, in
                 return I'll cover the costs for now (although you can
-                <a href="https://cognos.io/">subscribe</a> to contribute financially).
+                <a href="https://cognos.io/" target="_blank" rel="noreferrer"
+                  >subscribe</a
+                >
+                to contribute financially).
               </p>
               <p>
                 If you'd like to talk to me about it, just
