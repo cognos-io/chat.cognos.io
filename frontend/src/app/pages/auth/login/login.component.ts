@@ -65,7 +65,7 @@ import { AuthService } from '@services/auth.service';
                 If you'd like to talk to me about it, just
                 <a href="mailto://ewan@cognos.io">drop me an email</a>.
               </p>
-              <p>Thank you for trusting in me and happy hacking,</p>
+              <p>Thank you for trusting in me<br />and happy hacking,</p>
             </div>
             <div class="size-24 lg:size-40">
               <app-profile-picture
