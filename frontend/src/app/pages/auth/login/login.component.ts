@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
@@ -11,13 +11,14 @@ import { AuthService } from '../../../services/auth.service';
   standalone: true,
   imports: [],
   template: `
-    <button (click)="authService.login$.next($event)" [disabled]="loading()">
+    <p>If you are not automatically redirected, please click below to login:</p>
+    <button (click)="authService.login$.next(true)" [disabled]="loading()">
       Log in to Cognos
     </button>
   `,
   styles: [],
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   readonly authService: AuthService = inject(AuthService);
   private readonly _router: Router = inject(Router);
 
@@ -29,5 +30,10 @@ export class LoginComponent {
         this._router.navigate(['/']);
       }
     });
+  }
+
+  ngOnInit(): void {
+    // Try to log in as soon as we can
+    this.authService.login$.next(true);
   }
 }

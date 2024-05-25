@@ -35,7 +35,7 @@ export class AuthService implements OnDestroy {
   private readonly storeUnsubscribe: () => void;
 
   // sources
-  readonly login$ = new Subject();
+  readonly login$ = new Subject<boolean>();
   readonly logout$ = new Subject();
 
   private readonly $user = new Subject<AuthUser>();
