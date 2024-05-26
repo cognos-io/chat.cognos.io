@@ -58,8 +58,8 @@ html {
 
 html,
 body {
-  height: 100svh;
-  width: 100svw;
+  min-height: 100svh;
+  min-width: 100svw;
 }
 body {
   margin: 0;
