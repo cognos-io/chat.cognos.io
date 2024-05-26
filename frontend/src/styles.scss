@@ -12,11 +12,11 @@
 // https://material.angular.io/guide/material-3
 // Create the theme object. A theme consists of configurations for individual
 // theming systems such as "color" or "typography".
-$theme: matx.define-theme(
+$theme: mat.define-theme(
   (
     color: (
       theme-type: 'light',
-      primary: matx.$m3-green-palette,
+      primary: mat.$green-palette,
     ),
     typography: (
       brand-family: 'Public Sans Variable',
@@ -28,11 +28,11 @@ $theme: matx.define-theme(
   )
 );
 
-$dark-theme: matx.define-theme(
+$dark-theme: mat.define-theme(
   (
     color: (
       theme-type: 'dark',
-      primary: matx.$m3-green-palette,
+      primary: mat.$green-palette,
     ),
   )
 );
