@@ -30,9 +30,9 @@ const initialState: AuthState = {
   providedIn: 'root',
 })
 export class AuthService implements OnDestroy {
-  private readonly authCollection = 'users';
-  private readonly pb: TypedPocketBase = inject(PocketBase);
-  private readonly storeUnsubscribe: () => void;
+  private readonly _authCollection = 'users';
+  private readonly _pb: TypedPocketBase = inject(PocketBase);
+  private readonly _storeUnsubscribe: () => void;
 
   // sources
   readonly login$ = new Subject<boolean>();
@@ -43,7 +43,7 @@ export class AuthService implements OnDestroy {
     switchMap(() => this.loginWithOry()),
   );
   private readonly $userLoggingOut = this.logout$.pipe(
-    switchMap(() => of(this.pb.authStore.clear())),
+    switchMap(() => of(this._pb.authStore.clear())),
   );
 
   // state
@@ -106,20 +106,20 @@ export class AuthService implements OnDestroy {
 
   constructor() {
     // Listen for changes in the auth store
-    this.storeUnsubscribe = this.pb.authStore.onChange((token, model) => {
-      if (this.pb.authStore.isValid) {
+    this._storeUnsubscribe = this._pb.authStore.onChange((token, model) => {
+      if (this._pb.authStore.isValid) {
         this.$user.next(model);
       }
     }, true);
   }
 
   listAuthMethods(): Observable<AuthMethodsList> {
-    return from(this.pb.collection(this.authCollection).listAuthMethods());
+    return from(this._pb.collection(this._authCollection).listAuthMethods());
   }
 
   loginWithOry() {
     return from(
-      this.pb.collection(this.authCollection).authWithOAuth2({
+      this._pb.collection(this._authCollection).authWithOAuth2({
         // Make sure OIDC provider is configured in PocketBase for Ory
         provider: 'oidc',
         scopes: ['openid', 'offline_access'],
@@ -131,7 +131,9 @@ export class AuthService implements OnDestroy {
     if (!userId || userId === '') {
       return EMPTY;
     }
-    return from(this.pb.collection(this.authCollection).listExternalAuths(userId)).pipe(
+    return from(
+      this._pb.collection(this._authCollection).listExternalAuths(userId),
+    ).pipe(
       map((auths) => {
         return auths.find((auth) => auth.provider === 'oidc');
       }),
@@ -141,10 +143,10 @@ export class AuthService implements OnDestroy {
   }
 
   logout(): void {
-    return this.pb.authStore.clear();
+    return this._pb.authStore.clear();
   }
 
   ngOnDestroy(): void {
-    this.storeUnsubscribe();
+    this._storeUnsubscribe();
   }
 }
