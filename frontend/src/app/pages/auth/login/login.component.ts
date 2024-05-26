@@ -3,11 +3,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { Router } from '@angular/router';
 
+import { EMPTY, catchError } from 'rxjs';
+
 import { filterNil } from 'ngxtension/filter-nil';
 
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { ProfilePictureComponent } from '@app/components/team/profile-picture/profile-picture.component';
+import { ErrorService } from '@app/services/error.service';
 
 import { AuthService } from '@services/auth.service';
 
@@ -99,14 +102,26 @@ import { AuthService } from '@services/auth.service';
 export class LoginComponent {
   readonly authService: AuthService = inject(AuthService);
   private readonly _router: Router = inject(Router);
+  private readonly _errorService: ErrorService = inject(ErrorService);
 
   loading = computed(() => this.authService.status() === 'authenticating');
 
   constructor() {
-    this.authService.user$.pipe(takeUntilDestroyed(), filterNil()).subscribe((user) => {
-      if (user) {
-        this._router.navigate(['/']);
-      }
-    });
+    this.authService.user$
+      .pipe(
+        catchError(() => {
+          this._errorService.alert(
+            'Failed to fetch user, please refresh and try again.',
+          );
+          return EMPTY;
+        }),
+        takeUntilDestroyed(),
+        filterNil(),
+      )
+      .subscribe((user) => {
+        if (user) {
+          this._router.navigate(['/']);
+        }
+      });
   }
 }
