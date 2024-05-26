@@ -44,6 +44,19 @@ import { AuthService } from '@services/auth.service';
                 Log in / Sign Up
               }
             </button>
+            @if (loading()) {
+              <p class="text-sm text-gray-600">
+                <em>
+                  A popup should open to sign-in but if not
+                  <button
+                    (click)="authService.login$.next(true)"
+                    class="italic underline"
+                  >
+                    click here</button
+                  >.
+                </em>
+              </p>
+            }
           </div>
 
           <hr class="my-8" />
