@@ -9,6 +9,7 @@ import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
 
 import { TypedPocketBase } from '../types/pocketbase-types';
+import { ErrorService } from './error.service';
 
 export type LoginStatus = 'pending' | 'authenticating' | 'success' | 'error';
 
@@ -30,6 +31,7 @@ const initialState: AuthState = {
   providedIn: 'root',
 })
 export class AuthService implements OnDestroy {
+  private readonly _errorService = inject(ErrorService);
   private readonly _authCollection = 'users';
   private readonly _pb: TypedPocketBase = inject(PocketBase);
   private readonly _storeUnsubscribe: () => void;
@@ -114,7 +116,13 @@ export class AuthService implements OnDestroy {
   }
 
   listAuthMethods(): Observable<AuthMethodsList> {
-    return from(this._pb.collection(this._authCollection).listAuthMethods());
+    return from(this._pb.collection(this._authCollection).listAuthMethods()).pipe(
+      catchError((error) => {
+        this._errorService.alert('Unable to list auth methods');
+        console.error('Error listing auth methods', error);
+        return EMPTY;
+      }),
+    );
   }
 
   loginWithOry() {
@@ -124,16 +132,27 @@ export class AuthService implements OnDestroy {
         provider: 'oidc',
         scopes: ['openid', 'offline_access'],
       }),
+    ).pipe(
+      catchError((error) => {
+        this._errorService.alert('Error logging in with Ory');
+        console.error(error);
+        return of(null);
+      }),
     );
   }
 
-  fetchOryId(userId: string) {
+  fetchOryId(userId: string): Observable<string> {
     if (!userId || userId === '') {
       return EMPTY;
     }
     return from(
       this._pb.collection(this._authCollection).listExternalAuths(userId),
     ).pipe(
+      catchError((error) => {
+        this._errorService.alert('Error fetching Ory ID');
+        console.error(error);
+        return EMPTY;
+      }),
       map((auths) => {
         return auths.find((auth) => auth.provider === 'oidc');
       }),
