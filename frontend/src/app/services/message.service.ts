@@ -9,6 +9,7 @@ import {
   Subject,
   catchError,
   concatMap,
+  exhaustMap,
   filter,
   from,
   map,
@@ -155,7 +156,7 @@ export class MessageService {
 
       // when a message is sent, add it to the list of messages and send it to our upstream API
       this._cleanedMessage$.pipe(
-        concatMap((raw) => {
+        exhaustMap((raw) => {
           const messageRequest: MessageRequest = {
             requestId: crypto.randomUUID(),
             content: raw.message || '',

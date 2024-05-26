@@ -31,11 +31,13 @@ import { ErrorService } from './error.service';
 interface VaultState {
   keyPair: KeyPair | undefined;
   keyPairRecord: UserKeyPairsRecord | null | undefined; // null means the record does not exist
+  isNewKeyPair: boolean;
 }
 
 const initialState: VaultState = {
   keyPair: undefined,
   keyPairRecord: undefined,
+  isNewKeyPair: false,
 };
 
 // Argon2id parameters as recommended by the OWASP password storage cheat sheet
@@ -116,12 +118,13 @@ export class VaultService {
 
           return throwError(() => error);
         }),
-        map((keyPairRecord) => ({ keyPairRecord })),
+        map((keyPairRecord) => ({ keyPairRecord, isNewKeyPair: !keyPairRecord })),
       ),
     ],
   });
 
   // selectors
+  isNewKeyPair = this.state.isNewKeyPair;
   keyPair = this.state.keyPair;
   keyPair$ = toObservable(this.keyPair);
 

@@ -9,6 +9,7 @@ import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
 
 import { TypedPocketBase } from '../types/pocketbase-types';
+import { ErrorService } from './error.service';
 
 export type LoginStatus = 'pending' | 'authenticating' | 'success' | 'error';
 
@@ -30,12 +31,13 @@ const initialState: AuthState = {
   providedIn: 'root',
 })
 export class AuthService implements OnDestroy {
-  private readonly authCollection = 'users';
-  private readonly pb: TypedPocketBase = inject(PocketBase);
-  private readonly storeUnsubscribe: () => void;
+  private readonly _errorService = inject(ErrorService);
+  private readonly _authCollection = 'users';
+  private readonly _pb: TypedPocketBase = inject(PocketBase);
+  private readonly _storeUnsubscribe: () => void;
 
   // sources
-  readonly login$ = new Subject();
+  readonly login$ = new Subject<boolean>();
   readonly logout$ = new Subject();
 
   private readonly $user = new Subject<AuthUser>();
@@ -43,7 +45,7 @@ export class AuthService implements OnDestroy {
     switchMap(() => this.loginWithOry()),
   );
   private readonly $userLoggingOut = this.logout$.pipe(
-    switchMap(() => of(this.pb.authStore.clear())),
+    switchMap(() => of(this._pb.authStore.clear())),
   );
 
   // state
@@ -106,32 +108,51 @@ export class AuthService implements OnDestroy {
 
   constructor() {
     // Listen for changes in the auth store
-    this.storeUnsubscribe = this.pb.authStore.onChange((token, model) => {
-      if (this.pb.authStore.isValid) {
+    this._storeUnsubscribe = this._pb.authStore.onChange((token, model) => {
+      if (this._pb.authStore.isValid) {
         this.$user.next(model);
       }
     }, true);
   }
 
   listAuthMethods(): Observable<AuthMethodsList> {
-    return from(this.pb.collection(this.authCollection).listAuthMethods());
-  }
-
-  loginWithOry() {
-    return from(
-      this.pb.collection(this.authCollection).authWithOAuth2({
-        // Make sure OIDC provider is configured in PocketBase for Ory
-        provider: 'oidc',
-        scopes: ['openid', 'offline_access'],
+    return from(this._pb.collection(this._authCollection).listAuthMethods()).pipe(
+      catchError((error) => {
+        this._errorService.alert('Unable to list auth methods');
+        console.error('Error listing auth methods', error);
+        return EMPTY;
       }),
     );
   }
 
-  fetchOryId(userId: string) {
+  loginWithOry() {
+    return from(
+      this._pb.collection(this._authCollection).authWithOAuth2({
+        // Make sure OIDC provider is configured in PocketBase for Ory
+        provider: 'oidc',
+        scopes: ['openid', 'offline_access'],
+      }),
+    ).pipe(
+      catchError((error) => {
+        this._errorService.alert('Error logging in with Ory');
+        console.error(error);
+        return of(null);
+      }),
+    );
+  }
+
+  fetchOryId(userId: string): Observable<string> {
     if (!userId || userId === '') {
       return EMPTY;
     }
-    return from(this.pb.collection(this.authCollection).listExternalAuths(userId)).pipe(
+    return from(
+      this._pb.collection(this._authCollection).listExternalAuths(userId),
+    ).pipe(
+      catchError((error) => {
+        this._errorService.alert('Error fetching Ory ID');
+        console.error(error);
+        return EMPTY;
+      }),
       map((auths) => {
         return auths.find((auth) => auth.provider === 'oidc');
       }),
@@ -141,10 +162,10 @@ export class AuthService implements OnDestroy {
   }
 
   logout(): void {
-    return this.pb.authStore.clear();
+    return this._pb.authStore.clear();
   }
 
   ngOnDestroy(): void {
-    this.storeUnsubscribe();
+    this._storeUnsubscribe();
   }
 }

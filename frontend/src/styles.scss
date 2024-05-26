@@ -58,11 +58,16 @@ html {
 
 html,
 body {
-  height: 100%;
+  height: 100svh;
+  width: 100svw;
 }
 body {
   margin: 0;
   font-family: 'Public Sans Variable', 'Helvetica Neue', sans-serif;
+}
+
+body {
+  background-color: var(--mat-sidenav-content-background-color);
 }
 
 .backdrop-blur {
