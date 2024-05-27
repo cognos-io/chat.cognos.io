@@ -12,6 +12,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
+	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/apis"
@@ -76,6 +77,7 @@ func EchoHandler(
 	upstreamRepo proxy.UpstreamRepo,
 	messageRepo chat.MessageRepo,
 	keyPairRepo auth.KeyPairRepo,
+	agentRepo aiagent.AIAgentRepo,
 ) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// -------------------------------------------------------
@@ -118,6 +120,10 @@ func EchoHandler(
 		// Check the user has permission to write to this conversation
 
 		// Lookup the agent
+		agent, err := agentRepo.LookupPrompt(req.Metadata.Cognos.AgentID)
+		if err != nil {
+			return apis.NewBadRequestError("Invalid agent ID", err)
+		}
 		// Check user has permission to access the agent
 
 		// -------------------------------------------------------
@@ -138,9 +144,11 @@ func EchoHandler(
 			)
 		}
 
+		// Add the agent prompt system message to the conversation
+		req.Messages = AddSystemMessage(req.Messages, agent)
+
 		// Encrypt and persist the incoming message
-		messages := req.Messages
-		plainTextRequestMessage := messages[len(messages)-1].Content // Use the last message as there could be system and previous system & user messages
+		plainTextRequestMessage := req.Messages[len(req.Messages)-1].Content // Use the last message as there could be system and previous system & user messages
 
 		requestMessage := chat.MessageRecordData{
 			OwnerID: owner.ID,
@@ -212,4 +220,39 @@ func EchoHandler(
 
 		return c.JSON(http.StatusOK, extendedResponse)
 	}
+}
+
+func AddSystemMessage(
+	messages []oai.ChatCompletionMessage,
+	agent aiagent.Prompt,
+) []oai.ChatCompletionMessage {
+	if len(messages) == 0 {
+		return messages
+	}
+	// We should only have one system message per request to avoid confusing the AI
+	var newMessages []oai.ChatCompletionMessage
+	for _, message := range messages {
+		if message.Role != "system" {
+			newMessages = append(newMessages, message)
+		}
+	}
+
+	var systemMessage oai.ChatCompletionMessage
+	// If the first message is a system message, prioritize it as it could
+	// be the users choice from the frontend
+	if messages[0].Role == "system" {
+		systemMessage = messages[0]
+	} else {
+		// set our system message
+		systemMessage = oai.ChatCompletionMessage{
+			Role:    "system",
+			Content: agent.Content,
+		}
+		// TODO(ewan): we may also need to trim the message by the number of tokens in the prompt to fit it within the model context window
+	}
+
+	return append(
+		[]oai.ChatCompletionMessage{systemMessage},
+		messages...,
+	)
 }
