@@ -253,6 +253,6 @@ func AddSystemMessage(
 
 	return append(
 		[]oai.ChatCompletionMessage{systemMessage},
-		messages...,
+		newMessages...,
 	)
 }
