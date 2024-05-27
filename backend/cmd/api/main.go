@@ -13,6 +13,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/idempotency"
+	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -56,6 +57,7 @@ func bindAppHooks(
 		)
 		messageRepo := chat.NewPocketBaseMessageRepo(app)
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
+		aiAgentRepo := aiagent.NewInMemoryAIAgentRepo(app.Logger())
 		idempotencyRepo := idempotency.NewPocketBaseIdempotencyRepo(app)
 
 		addPocketBaseRoutes(
@@ -66,6 +68,7 @@ func bindAppHooks(
 			upstreamRepo,
 			messageRepo,
 			keyPairRepo,
+			aiAgentRepo,
 			idempotencyRepo,
 		)
 
