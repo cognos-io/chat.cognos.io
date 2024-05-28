@@ -1,5 +1,13 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, OnDestroy, PLATFORM_ID, inject } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  PLATFORM_ID,
+  computed,
+  effect,
+  inject,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormControl,
@@ -11,10 +19,10 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
-import { ReplaySubject } from 'rxjs';
+import { ReplaySubject, map } from 'rxjs';
 
 import { AgentService } from '@app/services/agent.service';
-import { MessageService } from '@app/services/message.service';
+import { MessageService, MessageStatus } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 
 import { AgentSelectorComponent } from './agent-selector/agent-selector.component';
@@ -112,6 +120,21 @@ export class MessageFormComponent implements OnDestroy {
     if (isPlatformBrowser(this._platformId)) {
       this.isMac = window.navigator.userAgent.includes('Mac');
     }
+
+    effect(() => {
+      switch (this.messageService.status()) {
+        case MessageStatus.Sending:
+          this.disableForm();
+          break;
+        case MessageStatus.None:
+          this.enableForm();
+          this.messageForm.reset();
+          break;
+        case MessageStatus.ErrorSending:
+          this.enableForm();
+          break;
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -129,6 +152,13 @@ export class MessageFormComponent implements OnDestroy {
 
   sendMessage() {
     this.messageService.sendMessage$.next(this.messageForm.value);
-    this.messageForm.reset();
+  }
+
+  disableForm() {
+    this.messageForm.disable();
+  }
+
+  enableForm() {
+    this.messageForm.enable();
   }
 }

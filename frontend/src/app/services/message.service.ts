@@ -423,6 +423,9 @@ export class MessageService {
                 'Rate limiting error, you are sending too many messages. Please wait a few seconds before sending another message.',
               );
               break;
+            default:
+              this._errorService.alert('An error occurred while sending the message.');
+              break;
           }
         }
         return EMPTY;
