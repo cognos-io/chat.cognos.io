@@ -30,8 +30,65 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     MatIconModule,
     MatDialogModule,
   ],
-  templateUrl: './message-form.component.html',
-  styleUrl: './message-form.component.scss',
+  template: `<form
+      class="message-form"
+      [formGroup]="messageForm"
+      (submit)="sendMessage()"
+    >
+      <mat-form-field class="w-full">
+        <mat-label>Chat to an AI</mat-label>
+        <textarea
+          formControlName="message"
+          cdkTextareaAutosize
+          name="message-form"
+          id="message-form"
+          matInput
+          placeholder="Teach me about..."
+          (keydown.control.enter)="isMac ? undefined : sendMessage()"
+          (keydown.meta.enter)="isMac ? sendMessage() : undefined"
+        ></textarea>
+        @if (messageForm.valid) {
+          <button type="submit" matSuffix mat-icon-button="">
+            <mat-icon fontSet="bi" fontIcon="bi-send-fill"></mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </form>
+
+    <div class="flex flex-col justify-between md:flex-row md:items-center">
+      <span class="hidden italic md:block">
+        @if (isMac) {
+          Cmd
+        } @else {
+          Ctrl
+        }
+        + Enter to send</span
+      >
+      <div class="flex flex-col items-center md:flex-row">
+        <div class="flex items-center">
+          <button class="inline-button mx-2" mat-button (click)="openAgentSelector()">
+            {{ agentService.selectedAgent().name }}
+          </button>
+        </div>
+        <div class="flex items-center">
+          <span class="italic">powered by</span>
+          <button class="inline-button mx-2" mat-button (click)="openModelSelector()">
+            {{ modelService.selectedModel().name }}
+          </button>
+        </div>
+      </div>
+    </div> `,
+  styles: `
+    .message-form {
+      width: 100%;
+
+      display: flex;
+    }
+
+    .inline-button {
+      --mdc-text-button-container-height: 20px;
+    }
+  `,
 })
 export class MessageFormComponent implements OnDestroy {
   private _fb = inject(FormBuilder);
