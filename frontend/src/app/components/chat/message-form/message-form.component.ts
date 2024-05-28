@@ -1,13 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import {
-  Component,
-  OnDestroy,
-  PLATFORM_ID,
-  computed,
-  effect,
-  inject,
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, OnDestroy, PLATFORM_ID, effect, inject } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -19,7 +11,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
-import { ReplaySubject, map } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
 
 import { AgentService } from '@app/services/agent.service';
 import { MessageService, MessageStatus } from '@app/services/message.service';
