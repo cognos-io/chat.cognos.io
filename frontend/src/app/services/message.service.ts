@@ -32,6 +32,7 @@ import { AgentService } from './agent.service';
 import { AuthService } from './auth.service';
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
+import { ErrorService } from './error.service';
 import { ModelService } from './model.service';
 
 export enum MessageStatus {
@@ -86,13 +87,14 @@ type MessageRequest = {
   providedIn: 'root',
 })
 export class MessageService {
-  private readonly _pb: TypedPocketBase = inject(PocketBase);
-  private readonly _modelService = inject(ModelService);
   private readonly _agentService = inject(AgentService);
-  private readonly _cryptoService = inject(CryptoService);
-  private readonly _conversationService = inject(ConversationService);
   private readonly _authService = inject(AuthService);
+  private readonly _conversationService = inject(ConversationService);
+  private readonly _cryptoService = inject(CryptoService);
+  private readonly _errorService = inject(ErrorService);
+  private readonly _modelService = inject(ModelService);
   private readonly _openAi = inject(OpenAI);
+  private readonly _pb: TypedPocketBase = inject(PocketBase);
 
   private readonly pbMessagesCollection = this._pb.collection('messages');
 
@@ -406,6 +408,24 @@ export class MessageService {
             conversation_id: conversation.record.id,
           },
         },
+      }),
+    ).pipe(
+      catchError((err) => {
+        // TODO(ewan): Show a message to the user that the message failed to send
+        // and add context (e.g. retry button and if there is rate limiting etc.)
+        this.state.setStatus(MessageStatus.ErrorSending);
+        console.error('Error sending message', err);
+        if (err instanceof OpenAI.APIError) {
+          switch (err.status) {
+            case 429:
+              // Rate limiting
+              this._errorService.alert(
+                'Rate limiting error, you are sending too many messages. Please wait a few seconds before sending another message.',
+              );
+              break;
+          }
+        }
+        return EMPTY;
       }),
     );
   }
