@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, OnDestroy, PLATFORM_ID, effect, inject } from '@angular/core';
+import { Component, PLATFORM_ID, effect, inject } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -10,8 +10,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-
-import { ReplaySubject } from 'rxjs';
 
 import { AgentService } from '@app/services/agent.service';
 import { MessageService, MessageStatus } from '@app/services/message.service';
@@ -90,11 +88,10 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     }
   `,
 })
-export class MessageFormComponent implements OnDestroy {
+export class MessageFormComponent {
   private _fb = inject(FormBuilder);
   private _dialog = inject(MatDialog);
   private _platformId = inject(PLATFORM_ID);
-  private _destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
 
   isMac = false;
   public readonly messageService = inject(MessageService);
@@ -127,11 +124,6 @@ export class MessageFormComponent implements OnDestroy {
           break;
       }
     });
-  }
-
-  ngOnDestroy(): void {
-    this._destroyed$.next(true);
-    this._destroyed$.complete();
   }
 
   openAgentSelector() {
