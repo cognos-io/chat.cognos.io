@@ -12,7 +12,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
 import { AgentService } from '@app/services/agent.service';
-import { MessageService, MessageStatus } from '@app/services/message.service';
+import {
+  MessageRequest,
+  MessageService,
+  MessageStatus,
+} from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 
 import { AgentSelectorComponent } from './agent-selector/agent-selector.component';
@@ -36,7 +40,7 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
       <mat-form-field class="w-full">
         <mat-label>Chat to an AI</mat-label>
         <textarea
-          formControlName="message"
+          formControlName="content"
           cdkTextareaAutosize
           name="message-form"
           id="message-form"
@@ -99,7 +103,7 @@ export class MessageFormComponent {
   public readonly modelService = inject(ModelService);
 
   messageForm = this._fb.group({
-    message: new FormControl('', {
+    content: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
     }),
@@ -135,7 +139,14 @@ export class MessageFormComponent {
   }
 
   sendMessage() {
-    this.messageService.sendMessage$.next(this.messageForm.value);
+    const content = this.messageForm.get('content');
+    if (content) {
+      const messageRequest: MessageRequest = {
+        content: content.value,
+        requestId: self.crypto.randomUUID(),
+      };
+      this.messageService.sendMessage$.next(messageRequest);
+    }
   }
 
   disableForm() {

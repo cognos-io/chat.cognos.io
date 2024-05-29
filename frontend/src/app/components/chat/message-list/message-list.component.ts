@@ -118,7 +118,10 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
   }
 
   onIceBreakerSelected(iceBreaker: IceBreaker): void {
-    this._messageService.sendMessage$.next({ message: iceBreaker.prompt });
+    this._messageService.sendMessage$.next({
+      content: iceBreaker.prompt,
+      requestId: self.crypto.randomUUID(),
+    });
   }
 
   ngAfterViewInit(): void {

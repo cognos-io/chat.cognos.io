@@ -42,6 +42,7 @@ type MessageRepo interface {
 	EncryptAndPersistMessage(
 		receiverPublicKey [32]byte,
 		conversationID string,
+		parentMessageID string,
 		message MessageRecordData,
 	) (error, *models.Record)
 }
@@ -58,6 +59,7 @@ type PocketBaseMessageRepo struct {
 func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 	receiverPublicKey [32]byte,
 	conversationID string,
+	parentMessageID string,
 	message MessageRecordData,
 ) (error, *models.Record) {
 	base64EncryptedMessage, err := EncryptMessageData(
@@ -70,8 +72,9 @@ func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 	record := models.NewRecord(r.collection)
 	form := forms.NewRecordUpsert(r.app, record)
 	err = form.LoadData(map[string]any{
-		"data":         base64EncryptedMessage,
-		"conversation": conversationID,
+		"data":           base64EncryptedMessage,
+		"conversation":   conversationID,
+		"parent_message": parentMessageID,
 	})
 	if err != nil {
 		return err, nil
