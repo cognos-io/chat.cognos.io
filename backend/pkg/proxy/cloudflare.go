@@ -3,6 +3,9 @@ package proxy
 import (
 	"fmt"
 	"log/slog"
+	"net"
+	"net/http"
+	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/labstack/echo/v5"
@@ -17,12 +20,24 @@ var cfModelMapping = map[string]string{
 	"qwen-15-7b-chat":           "@cf/qwen/qwen1.5-7b-chat-awq",
 }
 
+var cfClientTimeout = 5 * time.Minute
+
 func NewCloudflareOpenAIClient(config *config.APIConfig) *openai.Client {
 	openAIConfig := openai.DefaultConfig(config.CloudflareAPIKey)
 	openAIConfig.BaseURL = fmt.Sprintf(
 		"https://api.cloudflare.com/client/v4/accounts/%s/ai/v1",
 		config.CloudflareAccountID,
 	)
+	transport := &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   cfClientTimeout,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+	}
+	openAIConfig.HTTPClient = &http.Client{
+		Timeout:   cfClientTimeout,
+		Transport: transport,
+	}
 	return openai.NewClientWithConfig(openAIConfig)
 }
 
