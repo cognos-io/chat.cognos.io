@@ -68,13 +68,13 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
       >
       <div class="flex flex-col items-center md:flex-row">
         <div class="flex items-center">
-          <button class="inline-button mx-2" mat-button (click)="openAgentSelector()">
+          <button class="inline-button" mat-button (click)="openAgentSelector()">
             {{ agentService.selectedAgent().name }}
           </button>
         </div>
         <div class="flex items-center">
-          <span class="italic">powered by</span>
-          <button class="inline-button mx-2" mat-button (click)="openModelSelector()">
+          <span class="mx-2 italic">powered by</span>
+          <button class="inline-button" mat-button (click)="openModelSelector()">
             {{ modelService.selectedModel().name }}
           </button>
         </div>
