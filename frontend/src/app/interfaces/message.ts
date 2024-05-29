@@ -37,6 +37,7 @@ export interface Message {
   record_id?: string;
   decryptedData: MessageData;
   createdAt: Date;
+  parentMessageId?: string;
 }
 
 export const isMessageFromUser = (messageData: MessageData): boolean => {

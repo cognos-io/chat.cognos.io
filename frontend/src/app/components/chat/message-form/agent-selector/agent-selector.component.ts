@@ -41,14 +41,14 @@ import { AgentService } from '@app/services/agent.service';
             <li class="flex items-center justify-between gap-x-6 py-6">
               <mat-radio-button [value]="agent" class="flex flex-grow gap-x-4">
                 <div class="min-w-0 flex-auto">
+                  @if (agent.id === selectedAgent.id) {
+                    <span
+                      class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
+                      >Currently active</span
+                    >
+                  }
                   <p class="text-sm font-semibold leading-6 text-gray-900">
                     {{ agent.name }}
-                    @if (agent.id === selectedAgent.id) {
-                      <span
-                        class="mx-2 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
-                        >Currently active</span
-                      >
-                    }
                   </p>
                   <p class="my-2 text-gray-700">{{ agent.description }}</p>
                   @if (agent.tags && agent.tags.length > 0) {

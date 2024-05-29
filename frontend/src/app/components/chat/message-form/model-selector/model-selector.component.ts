@@ -32,14 +32,14 @@ import { ModelService } from '@app/services/model.service';
             <li class="flex items-center justify-between gap-x-6 py-5">
               <mat-radio-button [value]="model" class="flex flex-grow gap-x-4">
                 <div class="min-w-0 flex-auto">
+                  @if (model.id === selectedModel.id) {
+                    <span
+                      class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
+                      >Currently active</span
+                    >
+                  }
                   <p class="text-sm font-semibold leading-6 text-gray-900">
                     {{ model.name }}
-                    @if (model.id === selectedModel.id) {
-                      <span
-                        class="mx-2 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
-                        >Currently active</span
-                      >
-                    }
                   </p>
                   <p class="my-2 text-gray-700">{{ model.description }}</p>
                   @if (model.tags && model.tags.length > 0) {

@@ -61,13 +61,9 @@ const initialState: MessageState = {
   hasMoreMessages: true,
 };
 
-interface RawMessage {
-  conversationId?: string;
-  message?: string;
-}
-
 type CognosMetadataResponse = {
   request_id?: string;
+  parent_message_id?: string;
   message_record_id?: string;
   response_record_id?: string;
 };
@@ -78,9 +74,10 @@ type ChatCompletionResponseWithMetadata = OpenAI.ChatCompletion & {
   };
 };
 
-type MessageRequest = {
+export type MessageRequest = {
   requestId: string;
   content: string;
+  parentMessageId?: string;
 };
 
 @Injectable({
@@ -101,10 +98,10 @@ export class MessageService {
   private readonly pageSize = 100;
 
   // sources
-  public readonly sendMessage$ = new Subject<RawMessage>();
+  public readonly sendMessage$ = new Subject<MessageRequest>();
   private readonly _cleanedMessage$ = this.sendMessage$.pipe(
-    map((raw) => ({ ...raw, message: raw.message?.trim() })),
-    filter(({ message }) => message !== undefined && message !== ''),
+    map((raw) => ({ ...raw, content: raw.content?.trim() })),
+    filter(({ content }) => content !== undefined && content !== ''),
   );
   private readonly _isNewConversation$ = new Subject<boolean>();
 
@@ -158,18 +155,23 @@ export class MessageService {
 
       // when a message is sent, add it to the list of messages and send it to our upstream API
       this._cleanedMessage$.pipe(
-        exhaustMap((raw) => {
-          const messageRequest: MessageRequest = {
-            requestId: crypto.randomUUID(),
-            content: raw.message || '',
-          };
+        exhaustMap((messageRequest) => {
+          if (!messageRequest.parentMessageId) {
+            // Take the most recent message as the parent message
+            const messages = this.state.orderedMessageList();
+            const lastMessage = messages[messages.length - 1];
+            if (lastMessage) {
+              messageRequest.parentMessageId = lastMessage.record_id;
+            }
+          }
 
           const msg: Message = {
             // this ID is a temporary id and we will update it when we get the response
             record_id: messageRequest.requestId,
+            parentMessageId: messageRequest.parentMessageId,
             createdAt: new Date(),
             decryptedData: {
-              content: raw.message || '',
+              content: messageRequest.content,
               owner_id: this._authService.user()?.['id'],
             },
           };
@@ -403,6 +405,7 @@ export class MessageService {
         model: this._modelService.selectedModel().id,
         metadata: {
           cognos: {
+            parent_message_id: messageRequest.parentMessageId,
             request_id: messageRequest.requestId,
             agent_id: this._agentService.selectedAgent().id,
             conversation_id: conversation.record.id,
@@ -423,6 +426,9 @@ export class MessageService {
                 'Rate limiting error, you are sending too many messages. Please wait a few seconds before sending another message.',
               );
               break;
+            default:
+              this._errorService.alert('An error occurred while sending the message.');
+              break;
           }
         }
         return EMPTY;
@@ -442,6 +448,7 @@ export class MessageService {
 
     const metadata: CognosMetadataResponse = resp.metadata?.cognos;
     const msg: Message = {
+      parentMessageId: metadata.parent_message_id,
       record_id: metadata.response_record_id,
       createdAt: new Date((createdAt + 1) * 1000),
       decryptedData: {

@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, OnDestroy, PLATFORM_ID, inject } from '@angular/core';
+import { Component, PLATFORM_ID, effect, inject } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -11,10 +11,12 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
-import { ReplaySubject } from 'rxjs';
-
 import { AgentService } from '@app/services/agent.service';
-import { MessageService } from '@app/services/message.service';
+import {
+  MessageRequest,
+  MessageService,
+  MessageStatus,
+} from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 
 import { AgentSelectorComponent } from './agent-selector/agent-selector.component';
@@ -38,7 +40,7 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
       <mat-form-field class="w-full">
         <mat-label>Chat to an AI</mat-label>
         <textarea
-          formControlName="message"
+          formControlName="content"
           cdkTextareaAutosize
           name="message-form"
           id="message-form"
@@ -66,13 +68,13 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
       >
       <div class="flex flex-col items-center md:flex-row">
         <div class="flex items-center">
-          <button class="inline-button mx-2" mat-button (click)="openAgentSelector()">
+          <button class="inline-button" mat-button (click)="openAgentSelector()">
             {{ agentService.selectedAgent().name }}
           </button>
         </div>
         <div class="flex items-center">
-          <span class="italic">powered by</span>
-          <button class="inline-button mx-2" mat-button (click)="openModelSelector()">
+          <span class="mx-2 italic">powered by</span>
+          <button class="inline-button" mat-button (click)="openModelSelector()">
             {{ modelService.selectedModel().name }}
           </button>
         </div>
@@ -90,11 +92,10 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     }
   `,
 })
-export class MessageFormComponent implements OnDestroy {
+export class MessageFormComponent {
   private _fb = inject(FormBuilder);
   private _dialog = inject(MatDialog);
   private _platformId = inject(PLATFORM_ID);
-  private _destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
 
   isMac = false;
   public readonly messageService = inject(MessageService);
@@ -102,7 +103,7 @@ export class MessageFormComponent implements OnDestroy {
   public readonly modelService = inject(ModelService);
 
   messageForm = this._fb.group({
-    message: new FormControl('', {
+    content: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
     }),
@@ -112,11 +113,21 @@ export class MessageFormComponent implements OnDestroy {
     if (isPlatformBrowser(this._platformId)) {
       this.isMac = window.navigator.userAgent.includes('Mac');
     }
-  }
 
-  ngOnDestroy(): void {
-    this._destroyed$.next(true);
-    this._destroyed$.complete();
+    effect(() => {
+      switch (this.messageService.status()) {
+        case MessageStatus.Sending:
+          this.disableForm();
+          break;
+        case MessageStatus.None:
+          this.enableForm();
+          this.messageForm.reset();
+          break;
+        case MessageStatus.ErrorSending:
+          this.enableForm();
+          break;
+      }
+    });
   }
 
   openAgentSelector() {
@@ -128,7 +139,21 @@ export class MessageFormComponent implements OnDestroy {
   }
 
   sendMessage() {
-    this.messageService.sendMessage$.next(this.messageForm.value);
-    this.messageForm.reset();
+    const content = this.messageForm.get('content');
+    if (content) {
+      const messageRequest: MessageRequest = {
+        content: content.value,
+        requestId: self.crypto.randomUUID(),
+      };
+      this.messageService.sendMessage$.next(messageRequest);
+    }
+  }
+
+  disableForm() {
+    this.messageForm.disable();
+  }
+
+  enableForm() {
+    this.messageForm.enable();
   }
 }
