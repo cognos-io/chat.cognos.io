@@ -30,7 +30,8 @@ WORKDIR /home/appuser/
 COPY --from=builder /app/api .
 
 # Change the ownership of the /home/appuser/ directory to the root group
-RUN chown -R appuser:root /home/appuser/ && \
+RUN mkdir -p /home/appuser/pb_data && \
+    chown -R appuser:root /home/appuser/ && \
     chmod -R g=u /home/appuser/ && \
     # Allow the root group to run the application
     chmod g=u /etc/passwd
