@@ -108,7 +108,6 @@ run/docker:
 	@${DOCKER_BINARY} run \
 		--user $(shuf -i 2000-60000 -n 1):root \
 		--publish 8090:8090 \
-		--detach \
 		${DOCKER_IMAGE_NAME}:latest
 
 ## run/test: run the application with the test database to add data for testing
