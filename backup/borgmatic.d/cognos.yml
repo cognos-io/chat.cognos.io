@@ -4,6 +4,7 @@ constants:
   cognos_repo_path: ssh://r7784745@r7784745.repo.borgbase.com/./repo
 
 archive_name_format: api-cognos-io-{now}
+read_special: true # Needed for SQLite databases
 
 source_directories:
   - /source/caddy-data
