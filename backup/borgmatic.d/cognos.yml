@@ -10,8 +10,7 @@ source_directories:
   - /source/caddy-config
 
 repositories:
-    - path: "{cognos_repo_path}"
-      
+  - path: "{cognos_repo_path}"
 
 compression: lz4
 
@@ -32,19 +31,19 @@ checks:
     frequency: 1 month
 
 hooks:
-    before_backup:
-        - echo "Starting a backup job."
-    after_backup:
-        - echo "Backup created."
-    on_error:
-        - echo "Error while creating a backup."
+  before_backup:
+    - echo "Starting a backup job."
+  after_backup:
+    - echo "Backup created."
+  on_error:
+    - echo "Error while creating a backup."
 
 before_everything:
-    - echo "Starting a backup job."
+  - echo "Starting a backup job."
 after_everything:
-    - echo "Backup created."
+  - echo "Backup created."
 on_error:
-    - echo "Error while creating a backup."
+  - echo "Error while creating a backup."
 
 sqlite_databases:
   - name: api.cognos.io
