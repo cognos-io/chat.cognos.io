@@ -1,7 +1,7 @@
 constants:
   pocketbase_sqlite_path: /cognos-db/data.db
   pocketbase_logs_sqlite_path: /cognos-db/logs.db
-  cognos_repo_path: ssh://r7784745@r7784745.repo.borgbase.com/./repo
+  cognos_repo_path: ssh://z457v3sn@z457v3sn.repo.borgbase.com/./repo
 
 archive_name_format: api-cognos-io-{now}
 read_special: true # Needed for SQLite databases
