@@ -10,7 +10,7 @@ source_directories:
   - /source/caddy-config
 
 repositories:
-    - path: {cognos_repo_path}
+    - path: "{cognos_repo_path}"
       
 
 compression: lz4
@@ -48,9 +48,9 @@ on_error:
 
 sqlite_databases:
   - name: api.cognos.io
-    path: {pocketbase_sqlite_path}
+    path: "{pocketbase_sqlite_path}"
   - name: logs.api.cognos.io
-    path: {pocketbase_logs_sqlite_path}
+    path: "{pocketbase_logs_sqlite_path}"
 
 # Disable some things as we're running in append mode
 skip_actions:
