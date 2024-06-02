@@ -27,6 +27,7 @@ services:
       - backend
     volumes:
       - db-data:/home/appuser/pb_data
+      - ./backend/configs/config.yaml:/home/appuser/configs/config.yaml
 
   backup:
     image: ghcr.io/borgmatic-collective/borgmatic
