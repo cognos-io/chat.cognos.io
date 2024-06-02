@@ -36,7 +36,7 @@ services:
     volumes:
       - web-data:/source/caddy-data:ro # Caddy data
       - web-config:/source/caddy-config:ro # Caddy configuration
-      - db-data:/cognos-db:ro # Pocketbase SQLite database
+      - db-data:/cognos-db # Pocketbase SQLite database
       - ./backup/borgmatic.d:/etc/borgmatic.d:ro # Borgmatic configuration
       - /home/cognos/.ssh:/root/.ssh:ro # SSH keys for BorgBase
     depends_on:
