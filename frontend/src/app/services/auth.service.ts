@@ -126,11 +126,18 @@ export class AuthService implements OnDestroy {
   }
 
   loginWithOry() {
+    const w = window.open();
+
     return from(
       this._pb.collection(this._authCollection).authWithOAuth2({
         // Make sure OIDC provider is configured in PocketBase for Ory
         provider: 'oidc',
         scopes: ['openid', 'offline_access'],
+        urlCallback: (url) => {
+          if (w) {
+            w.location.href = url;
+          }
+        },
       }),
     ).pipe(
       catchError((error) => {
