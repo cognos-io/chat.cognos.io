@@ -31,6 +31,8 @@ services:
   backup:
     image: ghcr.io/borgmatic-collective/borgmatic
     restart: unless-stopped
+    env_file:
+      - ./backup/.env
     volumes:
       - web-data:/source/caddy-data:ro # Caddy data
       - web-config:/source/caddy-config:ro # Caddy configuration
