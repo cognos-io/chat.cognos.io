@@ -1,4 +1,15 @@
 {
-  "cSpell.words": ["cognos"],
-  "cSpell.ignoreWords": ["redir"]
+  "cSpell.words": [
+    "Borgbase",
+    "borgmatic",
+    "Caddyfile",
+    "Climacrux",
+    "cognos",
+    "Falkenstein",
+    "Hetzner",
+    "Mailgun",
+    "pocketbase",
+    "Tailscale"
+  ],
+  "cSpell.ignoreWords": ["PSAD", "redir"]
 }
