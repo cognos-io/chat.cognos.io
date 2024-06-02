@@ -1,0 +1,52 @@
+name: chat-cognos-io
+
+services:
+  web:
+    build: ./web
+    restart: unless-stopped
+    env_file:
+      - ./web/.env
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./web/Caddyfile:/etc/caddy/Caddyfile
+      - web-data:/data
+      - web-config:/config
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    user: "1001:0"
+    networks:
+      - backend
+    volumes:
+      - db-data:/home/appuser/pb_data
+
+  backup:
+    image: ghcr.io/borgmatic-collective/borgmatic
+    restart: unless-stopped
+    volumes:
+      - web-data:/source/caddy-data:ro # Caddy data
+      - web-config:/source/caddy-config:ro # Caddy configuration
+      - db-data:/cognos-db:ro # Pocketbase SQLite database
+      - ./backup/borgmatic.d:/etc/borgmatic.d:ro # Borgmatic configuration
+      - /home/cognos/.ssh:/root/.ssh:ro # SSH keys for BorgBase
+    depends_on:
+      - web
+      - backend
+
+volumes:
+  # Stores Caddy TLS certificates and other data
+  # https://caddyserver.com/docs/conventions#data-directory
+  web-data:
+  web-config:
+  db-data:
+
+networks:
+  backend:

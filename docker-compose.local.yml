@@ -1,0 +1,6 @@
+services:
+  web:
+    volumes:
+      - ./web/Caddyfile.localdev:/etc/caddy/Caddyfile
+    ports:
+      - "8090:8090"
