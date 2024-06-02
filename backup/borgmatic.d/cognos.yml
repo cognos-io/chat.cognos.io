@@ -1,0 +1,57 @@
+constants:
+  pocketbase_sqlite_path: /cognos-db/pb_data/data.db
+  pocketbase_logs_sqlite_path: /cognos-db/pb_data/logs.db
+  cognos_repo_path: ssh://r7784745@r7784745.repo.borgbase.com/./repo
+
+archive_name_format: api-cognos-io-{now}
+
+source_directories:
+  - /source/caddy-data
+  - /source/caddy-config
+
+repositories:
+    - path: {cognos_repo_path}
+      
+
+compression: lz4
+
+keep_hourly: 2
+keep_daily: 7
+keep_weekly: 4
+keep_monthly: 12
+keep_yearly: 10
+
+checks:
+  - name: repository
+    frequency: 2 weeks
+  - name: archives
+    frequency: always
+  - name: extract
+    frequency: 2 weeks
+  - name: data
+    frequency: 1 month
+
+hooks:
+    before_backup:
+        - echo "Starting a backup job."
+    after_backup:
+        - echo "Backup created."
+    on_error:
+        - echo "Error while creating a backup."
+
+before_everything:
+    - echo "Starting a backup job."
+after_everything:
+    - echo "Backup created."
+on_error:
+    - echo "Error while creating a backup."
+
+sqlite_databases:
+  - name: api.cognos.io
+    path: {pocketbase_sqlite_path}
+  - name: logs.api.cognos.io
+    path: {pocketbase_logs_sqlite_path}
+
+# Disable some things as we're running in append mode
+skip_actions:
+  - compact
