@@ -1,0 +1,17 @@
+:8090 {
+	# Redirect HTTP to HTTPS is removed for local development
+
+	request_body {
+		max_size 2MB
+	}
+
+	reverse_proxy backend:8090 {
+		transport http {
+			read_timeout 360s
+		}
+
+		header_up Host {http.reverse_proxy.upstream.hostport}
+	}
+
+	# TLS block is removed for local development
+}

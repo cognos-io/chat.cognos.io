@@ -1,0 +1,23 @@
+:80 {
+	# Redirect HTTP to HTTPS
+	redir https://{host}{uri}
+}
+
+api.cognos.io {
+	request_body {
+		max_size 2MB
+	}
+
+	reverse_proxy backend:8090 {
+		transport http {
+			read_timeout 360s
+		}
+
+		header_up Host {http.reverse_proxy.upstream.hostport}
+	}
+
+	# Enable Cloudflare DNS for this domain
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+	}
+}
