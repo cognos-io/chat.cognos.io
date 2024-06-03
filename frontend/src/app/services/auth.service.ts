@@ -38,14 +38,14 @@ export class AuthService implements OnDestroy {
 
   // sources
   readonly login$ = new Subject<boolean>();
-  readonly logout$ = new Subject();
+  readonly logout$ = new Subject<boolean>();
 
-  private readonly $user = new Subject<AuthUser>();
-  private readonly $userAuthenticating = this.login$.pipe(
+  private readonly _user$ = new Subject<AuthUser>();
+  private readonly _userAuthenticating$ = this.login$.pipe(
     switchMap(() => this.loginWithOry()),
   );
-  private readonly $userLoggingOut = this.logout$.pipe(
-    switchMap(() => of(this._pb.authStore.clear())),
+  private readonly userLoggingOut$ = this.logout$.pipe(
+    switchMap(() => of(this.logout())),
   );
 
   // state
@@ -54,7 +54,7 @@ export class AuthService implements OnDestroy {
     sources: [
       this.login$.pipe(map(() => ({ status: 'authenticating' as LoginStatus }))),
       // When user emits, if we have a user, we are authenticated
-      this.$user.pipe(
+      this._user$.pipe(
         map((response: AuthUser) => {
           return {
             status: response ? ('success' as LoginStatus) : ('pending' as LoginStatus),
@@ -62,7 +62,7 @@ export class AuthService implements OnDestroy {
           };
         }),
       ),
-      this.$user.pipe(
+      this._user$.pipe(
         switchMap((response: AuthUser) => {
           return this.fetchOryId(response?.['id']).pipe(
             map((oryId: string) => {
@@ -74,7 +74,7 @@ export class AuthService implements OnDestroy {
         }),
       ),
       // When login emits, we are authenticating
-      this.$userAuthenticating.pipe(
+      this._userAuthenticating$.pipe(
         map(() => {
           return {
             status: 'success' as LoginStatus,
@@ -88,7 +88,7 @@ export class AuthService implements OnDestroy {
         }),
       ),
       // When logout emits, we are pending
-      this.$userLoggingOut.pipe(
+      this.userLoggingOut$.pipe(
         map(() => {
           return {
             status: 'pending' as LoginStatus,
@@ -110,7 +110,7 @@ export class AuthService implements OnDestroy {
     // Listen for changes in the auth store
     this._storeUnsubscribe = this._pb.authStore.onChange((token, model) => {
       if (this._pb.authStore.isValid) {
-        this.$user.next(model);
+        this._user$.next(model);
       }
     }, true);
   }
@@ -143,6 +143,7 @@ export class AuthService implements OnDestroy {
       catchError((error) => {
         this._errorService.alert('Error logging in with Ory');
         console.error(error);
+        w?.close();
         return of(null);
       }),
     );

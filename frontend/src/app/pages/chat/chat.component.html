@@ -19,14 +19,14 @@
       fixedTopGap="56"
       role="navigation"
     >
-      <div class="sidebar">
+      <div class="sidebar h-full">
         <button mat-button color="primary" (click)="router.navigateByUrl('')">
           <mat-icon fontSet="bi" fontIcon="bi-plus-circle-fill"></mat-icon>
           <ng-container i18n="button|action to create a new conversation">
             New conversation
           </ng-container>
         </button>
-        <mat-nav-list>
+        <mat-nav-list class="flex-grow overflow-y-auto">
           @for (
             conversation of conversationService.conversationList();
             track conversation.record.id
@@ -76,6 +76,10 @@
             </mat-menu>
           }
         </mat-nav-list>
+        <button mat-button (click)="router.navigate(['', 'auth', 'logout'])">
+          <mat-icon fontSet="bi" fontIcon="bi-box-arrow-right"></mat-icon>
+          <ng-container i18n="button|action to log user out"> Logout </ng-container>
+        </button>
       </div>
     </mat-sidenav>
     <mat-sidenav-content role="main">

@@ -37,6 +37,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/auth/login/login.component').then((m) => m.LoginComponent),
       },
+      {
+        path: 'logout',
+        loadComponent: () =>
+          import('./pages/auth/logout/logout.component').then((m) => m.LogoutComponent),
+      },
     ],
   },
 ];
