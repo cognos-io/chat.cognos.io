@@ -79,6 +79,12 @@ export class ConversationService {
   private state = signalSlice({
     initialState,
     sources: [
+      // Clear conversation state when the user logs out
+      this._auth.logout$.pipe(
+        map(() => {
+          return initialState;
+        }),
+      ),
       // When newConversation emits, create a new conversation
       (state) =>
         this._newConversation$.pipe(

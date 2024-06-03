@@ -109,6 +109,13 @@ export class MessageService {
   private readonly state = signalSlice({
     initialState,
     sources: [
+      // Clear messages on logout
+      this._authService.logout$.pipe(
+        map(() => {
+          return initialState;
+        }),
+      ),
+
       this._isNewConversation$.pipe(
         map((isNewConversation) => {
           return {
