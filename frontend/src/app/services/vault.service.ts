@@ -89,7 +89,7 @@ export class VaultService {
                     map((keyPair) => ({ keyPair })),
                   );
                 }
-                if (!keyPairRecord) {
+                if (keyPairRecord === undefined) {
                   return EMPTY;
                 }
                 try {
@@ -121,7 +121,13 @@ export class VaultService {
         map((keyPairRecord) => ({ keyPairRecord, isNewKeyPair: !keyPairRecord })),
       ),
       //   Clear the state when logging out
-      this.authService.logout$.pipe(map(() => initialState)),
+      this.authService.logout$.pipe(
+        map(() => {
+          return {
+            keyPair: undefined,
+          };
+        }),
+      ),
     ],
   });
 
