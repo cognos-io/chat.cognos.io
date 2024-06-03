@@ -28,8 +28,8 @@ import { VaultService } from '../../services/vault.service';
           </p>
         } @else {
           <p>
-            Enter your vault password to unlock your chats. This is different from your
-            login password.
+            Enter your vault password to unlock your chats. Your vault password will
+            never leave your device.
           </p>
         }
       </div>
@@ -46,7 +46,7 @@ import { VaultService } from '../../services/vault.service';
         <mat-form-field>
           <mat-label i18n>Vault password</mat-label>
           <input type="password" matInput formControlName="vaultPassword" />
-          <mat-hint i18n>Your vault password will never leave your device</mat-hint>
+          <mat-hint i18n>This is different from your login password</mat-hint>
           @if (vaultPasswordForm.get('vaultPassword')?.hasError('required')) {
             <mat-error>Vault password is required</mat-error>
           }

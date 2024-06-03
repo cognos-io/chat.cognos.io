@@ -120,6 +120,8 @@ export class VaultService {
         }),
         map((keyPairRecord) => ({ keyPairRecord, isNewKeyPair: !keyPairRecord })),
       ),
+      //   Clear the state when logging out
+      this.authService.logout$.pipe(map(() => initialState)),
     ],
   });
 
