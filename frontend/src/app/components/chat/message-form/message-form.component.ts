@@ -97,6 +97,8 @@ export class MessageFormComponent {
   private _dialog = inject(MatDialog);
   private _platformId = inject(PLATFORM_ID);
 
+  private _previousMessage = '';
+
   isMac = false;
   public readonly messageService = inject(MessageService);
   public readonly agentService = inject(AgentService);
@@ -119,11 +121,13 @@ export class MessageFormComponent {
         case MessageStatus.Sending:
           this.disableForm();
           break;
-        case MessageStatus.None:
+        case MessageStatus.Success:
+          this._previousMessage = '';
           this.enableForm();
-          this.messageForm.reset();
           break;
+        case MessageStatus.None:
         case MessageStatus.ErrorSending:
+          this.messageForm.patchValue({ content: this._previousMessage });
           this.enableForm();
           break;
       }
@@ -141,11 +145,13 @@ export class MessageFormComponent {
   sendMessage() {
     const content = this.messageForm.get('content');
     if (content) {
+      this._previousMessage = content.value;
       const messageRequest: MessageRequest = {
         content: content.value,
         requestId: self.crypto.randomUUID(),
       };
       this.messageService.sendMessage$.next(messageRequest);
+      this.messageForm.reset();
     }
   }
 

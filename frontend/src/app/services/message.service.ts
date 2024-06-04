@@ -43,6 +43,7 @@ export enum MessageStatus {
   Sending, // sending message and waiting for AI response
   ErrorSending, // error state
   LoadingMoreMessages, // loading more messages
+  Success, // message sent successfully
 }
 
 interface MessageState {
@@ -450,6 +451,9 @@ export class MessageService {
         this.state.removeLastMessage();
         return EMPTY;
       }),
+      tap(() => {
+        this.state.setStatus(MessageStatus.Success);
+      }),
     );
   }
 
@@ -477,7 +481,6 @@ export class MessageService {
 
     return {
       messages: [...this.state().messages, msg],
-      status: MessageStatus.None,
     };
   }
 
