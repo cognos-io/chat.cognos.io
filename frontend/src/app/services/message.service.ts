@@ -250,6 +250,16 @@ export class MessageService {
             };
           }),
         ),
+      removeLastMessage: (state, action$: Observable<void>) =>
+        action$.pipe(
+          map(() => {
+            const messages = state().messages.slice(0, -1);
+            return {
+              messages,
+            };
+          }),
+        ),
+
       nextPage: (state, action$) =>
         action$.pipe(
           concatMap(() => {
@@ -421,8 +431,6 @@ export class MessageService {
       }),
     ).pipe(
       catchError((err) => {
-        // TODO(ewan): Show a message to the user that the message failed to send
-        // and add context (e.g. retry button and if there is rate limiting etc.)
         this.state.setStatus(MessageStatus.ErrorSending);
         console.error('Error sending message', err);
         if (err instanceof OpenAI.APIError) {
@@ -438,6 +446,8 @@ export class MessageService {
               break;
           }
         }
+        // Remove the message from the state
+        this.state.removeLastMessage();
         return EMPTY;
       }),
     );
