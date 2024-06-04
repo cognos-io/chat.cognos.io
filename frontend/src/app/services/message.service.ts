@@ -11,6 +11,7 @@ import {
   concatMap,
   exhaustMap,
   filter,
+  finalize,
   from,
   map,
   of,
@@ -197,6 +198,7 @@ export class MessageService {
               take(1),
               concatMap(() => {
                 return this.sendMessage(messageRequest).pipe(
+                  finalize(() => this._isNewConversation$.next(false)),
                   tap((resp) => {
                     const metadata: CognosMetadataResponse = resp.metadata?.cognos;
                     this.state.updateMessageId({
@@ -207,7 +209,6 @@ export class MessageService {
                   map((resp) => {
                     return {
                       ...this.addOpenAIMessageToState(resp),
-                      isNewConversation: false,
                     };
                   }),
                 );
