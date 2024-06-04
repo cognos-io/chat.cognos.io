@@ -181,6 +181,10 @@ func EchoHandler(
 		)
 		if err != nil {
 			logger.Error("Failed to process request", "err", err)
+			// Try to clean up the originally saved message
+			if err := messageRepo.DeleteMessage(messageRecord.Id); err != nil {
+				logger.Error("Failed to clean up message record", "err", err)
+			}
 			return apis.NewApiError(
 				http.StatusInternalServerError,
 				"Failed to process request",

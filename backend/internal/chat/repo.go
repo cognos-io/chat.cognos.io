@@ -45,6 +45,7 @@ type MessageRepo interface {
 		parentMessageID string,
 		message MessageRecordData,
 	) (error, *models.Record)
+	DeleteMessage(messageID string) error
 }
 
 type PocketBaseMessageRepo struct {
@@ -81,6 +82,16 @@ func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 	}
 
 	return form.Submit(), record
+}
+
+// DeleteMessage deletes a message from the repository.
+func (r *PocketBaseMessageRepo) DeleteMessage(messageID string) error {
+	record, err := r.app.Dao().FindRecordById(r.collection.Name, messageID)
+	if err != nil {
+		return err
+	}
+
+	return r.app.Dao().DeleteRecord(record)
 }
 
 func NewPocketBaseMessageRepo(app core.App) *PocketBaseMessageRepo {
