@@ -13,7 +13,7 @@ interface ModelState {
 
 const initialState: ModelState = {
   modelList: hardCodedModels,
-  selectedModelId: 'cloudflare:llama-3-8b-instruct',
+  selectedModelId: defaultModel.id,
 };
 
 @Injectable({
