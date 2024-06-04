@@ -70,7 +70,7 @@ const cloudflareDeepseekMath7bInstruct: Model = {
   tags: [{ title: 'deepseek' }, { title: 'open-source' }, { title: 'maths' }],
 };
 
-export const defaultModel = cloudflareLlama38bInstruct;
+export const defaultModel = openAiGpt35TurboModel;
 export const hardCodedModels = [
   openAiGpt35TurboModel,
   cloudflareLlama38bInstruct,
