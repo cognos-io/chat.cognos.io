@@ -16,6 +16,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/apis"
+	"github.com/pocketbase/pocketbase/models"
 	oai "github.com/sashabaranov/go-openai"
 )
 
@@ -97,9 +98,6 @@ func EchoHandler(
 		}
 
 		// Validate the incoming request
-		if req.Metadata.Cognos.ConversationID == "" {
-			return apis.NewBadRequestError("Conversation ID is required", nil)
-		}
 		if req.Metadata.Cognos.AgentID == "" {
 			return apis.NewBadRequestError("Agent ID is required", nil)
 		}
@@ -131,19 +129,32 @@ func EchoHandler(
 		// -------------------------------------------------------
 		// 2. Process the request
 		// -------------------------------------------------------
+
+		// If there is no conversation ID then we don't encrypt and persist the message.
+		// This could be useful if:
+		// - The user is using their own frontend which doesn't support conversation IDs
+		// - The message is temporary and shouldn't be persisted
+		// - The message is used to generate conversation titles
+		shouldPersist := req.Metadata.Cognos.ConversationID != ""
+
+		var messageRecord, responseRecord *models.Record
+		receiverPublicKey := [32]byte{}
+
 		// Get the public key of the conversation
-		receiverPublicKey, err := keyPairRepo.ConversationPublicKey(
-			req.Metadata.Cognos.ConversationID,
-		)
-		if errors.Is(err, auth.ErrNoKeyPair) {
-			return apis.NewNotFoundError("Conversation public key not found", nil)
-		}
-		if err != nil {
-			return apis.NewApiError(
-				http.StatusInternalServerError,
-				"Failed to get conversation public key",
-				err,
+		if shouldPersist {
+			receiverPublicKey, err = keyPairRepo.ConversationPublicKey(
+				req.Metadata.Cognos.ConversationID,
 			)
+			if errors.Is(err, auth.ErrNoKeyPair) {
+				return apis.NewNotFoundError("Conversation public key not found", nil)
+			}
+			if err != nil {
+				return apis.NewApiError(
+					http.StatusInternalServerError,
+					"Failed to get conversation public key",
+					err,
+				)
+			}
 		}
 
 		// Add the agent prompt system message to the conversation
@@ -157,19 +168,21 @@ func EchoHandler(
 			Content: plainTextRequestMessage,
 		}
 
-		err, messageRecord := messageRepo.EncryptAndPersistMessage(
-			receiverPublicKey,
-			req.Metadata.Cognos.ConversationID,
-			req.Metadata.Cognos.ParentMessageID,
-			requestMessage,
-		)
-		if err != nil {
-			logger.Error("Failed to save request message", "err", err)
-			return apis.NewApiError(
-				http.StatusInternalServerError,
-				"Failed to save request message",
-				err,
+		if shouldPersist {
+			err, messageRecord = messageRepo.EncryptAndPersistMessage(
+				receiverPublicKey,
+				req.Metadata.Cognos.ConversationID,
+				req.Metadata.Cognos.ParentMessageID,
+				requestMessage,
 			)
+			if err != nil {
+				logger.Error("Failed to save request message", "err", err)
+				return apis.NewApiError(
+					http.StatusInternalServerError,
+					"Failed to save request message",
+					err,
+				)
+			}
 		}
 
 		// -------------------------------------------------------
@@ -179,7 +192,7 @@ func EchoHandler(
 			c,
 			req.ChatCompletionRequest,
 		)
-		if err != nil {
+		if err != nil && messageRecord != nil {
 			logger.Error("Failed to process request", "err", err)
 			// Try to clean up the originally saved message
 			if err := messageRepo.DeleteMessage(messageRecord.Id); err != nil {
@@ -203,28 +216,37 @@ func EchoHandler(
 				modelDelimiter,
 			), // rejoin the model parts to store the full model name
 		}
-		err, responseRecord := messageRepo.EncryptAndPersistMessage(
-			receiverPublicKey,
-			req.Metadata.Cognos.ConversationID,
-			messageRecord.Id,
-			responseMessage,
-		)
-		if err != nil {
-			logger.Error("Failed to save response message", "err", err)
-			return apis.NewApiError(
-				http.StatusInternalServerError,
-				"Failed to save response message",
-				err,
+
+		if shouldPersist {
+			err, responseRecord = messageRepo.EncryptAndPersistMessage(
+				receiverPublicKey,
+				req.Metadata.Cognos.ConversationID,
+				messageRecord.Id,
+				responseMessage,
 			)
+			if err != nil {
+				logger.Error("Failed to save response message", "err", err)
+				return apis.NewApiError(
+					http.StatusInternalServerError,
+					"Failed to save response message",
+					err,
+				)
+			}
 		}
 
 		var extendedResponse ChatCompletionResponseWithMetadata
 		extendedResponse.ChatCompletionResponse = resp
 		extendedResponse.Metadata.Cognos = CognosResponseMetadata{
-			RequestID:        req.Metadata.Cognos.RequestID,
-			ParentMessageID:  messageRecord.Id,
-			MessageRecordID:  messageRecord.Id,
-			ResponseRecordID: responseRecord.Id,
+			RequestID: req.Metadata.Cognos.RequestID,
+		}
+
+		if messageRecord != nil {
+			extendedResponse.Metadata.Cognos.ParentMessageID = messageRecord.Id
+			extendedResponse.Metadata.Cognos.MessageRecordID = messageRecord.Id
+		}
+
+		if responseRecord != nil {
+			extendedResponse.Metadata.Cognos.ResponseRecordID = responseRecord.Id
 		}
 
 		return c.JSON(http.StatusOK, extendedResponse)
@@ -255,13 +277,13 @@ func AddSystemMessage(
 		// set our system message
 		systemMessage = oai.ChatCompletionMessage{
 			Role:    "system",
-			Content: agent.Content,
+			Content: agent.SystemMessage,
 		}
 		// TODO(ewan): we may also need to trim the message by the number of tokens in the prompt to fit it within the model context window
 	}
 
 	return append(
 		[]oai.ChatCompletionMessage{systemMessage},
-		newMessages...,
+		append(agent.Examples, newMessages...)...,
 	)
 }

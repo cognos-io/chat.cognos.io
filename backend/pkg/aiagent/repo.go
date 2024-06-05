@@ -3,12 +3,14 @@ package aiagent
 import (
 	"errors"
 	"log/slog"
+
+	oai "github.com/sashabaranov/go-openai"
 )
 
 var ErrAgentNotFound = errors.New("agent not found")
 
 var SimpleAssistant = Prompt{
-	Content: `This is very important to my career.
+	SystemMessage: `This is very important to my career.
 Before you respond take a deep breath.
 You are a GPT that carefully provides accurate, factual, thoughtful answers, and are a genius at reasoning.
 
@@ -34,13 +36,38 @@ After a response, if relevant, provide two follow-up questions worded as if I'm 
 	NumTokens: 900,
 }
 
+var GenerateConversationAgent = Prompt{
+	SystemMessage: `This is very important to my career. You are a system generating titles for conversations. When you receive a message you should generate a title for the conversation. The title should be a 3 to 5 word description of the message you receive.`,
+	Examples: []oai.ChatCompletionMessage{
+		{
+			Role:    "user",
+			Content: `Hello, how are you?`,
+		},
+		{
+			Role:    "assistant",
+			Content: `Greetings`,
+		},
+		{
+			Role:    "user",
+			Content: `What's the capital of France? I'd really like to go there some day. It has the Eiffel Tower, right?`,
+		},
+		{
+			Role:    "assistant",
+			Content: "Capital of France",
+		},
+	},
+	NumTokens: 125,
+}
+
 var hardCodedPrompts = map[string]Prompt{
-	"cognos:simple-assistant": SimpleAssistant,
+	"cognos:simple-assistant":            SimpleAssistant,
+	"cognos:generate-conversation-agent": GenerateConversationAgent,
 }
 
 type Prompt struct {
-	Content   string `json:"content"`
-	NumTokens int    `json:"num_tokens"`
+	SystemMessage string                      `json:"system_message"`
+	Examples      []oai.ChatCompletionMessage `json:"examples"`
+	NumTokens     int                         `json:"num_tokens"`
 }
 
 type AIAgentRepo interface {
