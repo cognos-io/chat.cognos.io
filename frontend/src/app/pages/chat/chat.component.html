@@ -34,13 +34,16 @@
             <a
               mat-list-item
               [routerLink]="['c', conversation.record.id]"
-              class="conversation-list-item"
+              class="conversation-list-item group"
               #tooltip="matTooltip"
               [matTooltip]="conversation.decryptedData.title"
               matTooltipPosition="after"
             >
               <p matListItemTitle>{{ conversation.decryptedData.title }}</p>
-              <div matListItemMeta class="conversation-list-item-actions">
+              <div
+                matListItemMeta
+                class="conversation-list-item-actions hidden group-hover:flex group-active:flex"
+              >
                 <button
                   mat-icon-button
                   class="actions-button"
