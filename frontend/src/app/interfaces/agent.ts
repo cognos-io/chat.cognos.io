@@ -24,4 +24,6 @@ const simpleAssistantAgent: Agent = {
   tags: [{ title: 'official', color: { palette: 'primary' }, featured: true }],
 };
 
+export const generateConversationAgentId = 'cognos:generate-conversation-agent';
+
 export const defaultAgent = simpleAssistantAgent;

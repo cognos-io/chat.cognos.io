@@ -25,6 +25,8 @@ import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
 import { OpenAI } from 'openai';
 
+import { generateConversationAgentId } from '@app/interfaces/agent';
+import { ConversationRecord } from '@app/interfaces/conversation';
 import { Message, parseMessageData } from '@app/interfaces/message';
 import { MessagesResponse, TypedPocketBase } from '@app/types/pocketbase-types';
 import { isTimestampInMilliseconds } from '@app/utils/timestamp';
@@ -196,6 +198,12 @@ export class MessageService {
             return this._conversationService.conversation$.pipe(
               filterNil(),
               take(1),
+              switchMap((newConversation) => {
+                return this.generateAndSetConversationTitle(
+                  newConversation.record.id,
+                  messageRequest.content,
+                );
+              }),
               concatMap(() => {
                 return this.sendMessage(messageRequest).pipe(
                   finalize(() => this._isNewConversation$.next(false)),
@@ -523,5 +531,45 @@ export class MessageService {
     }
 
     return context;
+  }
+
+  private generateConversationTitle(startingMessage: string): Observable<string> {
+    const conversation = this._conversationService.conversation();
+    if (!conversation) {
+      return EMPTY;
+    }
+
+    return from(
+      this._openAi.chat.completions.create({
+        max_tokens: 15,
+        messages: [{ role: 'user', content: startingMessage }],
+        model: this._modelService.selectedModel().id,
+        metadata: {
+          cognos: {
+            agent_id: generateConversationAgentId,
+            skip_persistance: true,
+          },
+        },
+      }),
+    ).pipe(
+      catchError((err) => {
+        console.error('Error generating conversation title', err);
+        return EMPTY;
+      }),
+      map((resp) => {
+        return resp.choices[0].message.content;
+      }),
+    );
+  }
+
+  private generateAndSetConversationTitle(
+    conversationId: string,
+    startingMessage: string,
+  ): Observable<ConversationRecord> {
+    return this.generateConversationTitle(startingMessage).pipe(
+      switchMap((title) => {
+        return this._conversationService.editConversation(conversationId, { title });
+      }),
+    );
   }
 }

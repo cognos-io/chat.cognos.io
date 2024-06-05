@@ -203,6 +203,22 @@ export class ConversationService {
           }),
         );
       },
+      setConversationTitle: (
+        state,
+        action$: Observable<{ id: string; title: string }>,
+      ) => {
+        return action$.pipe(
+          map(({ id, title }) => {
+            const conversations = state().conversations;
+            const index = conversations.findIndex((c) => c.record.id === id);
+            if (index === -1) return state();
+            conversations[index].decryptedData.title = title;
+            return {
+              conversations,
+            };
+          }),
+        );
+      },
     },
   });
 
@@ -216,6 +232,8 @@ export class ConversationService {
         .conversations()
         .find((conversation) => conversation.record.id === conversationId);
     });
+
+  readonly setConversationTitle = this.state.setConversationTitle;
 
   /**
    * Creates a conversation in the PocketBase backend.
