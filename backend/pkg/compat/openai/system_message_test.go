@@ -15,7 +15,7 @@ var (
 	}
 	simpleAssistantSystemMessage = oai.ChatCompletionMessage{
 		Role:    "system",
-		Content: aiagent.SimpleAssistant.Content,
+		Content: aiagent.SimpleAssistant.SystemMessage,
 	}
 	userMessage = oai.ChatCompletionMessage{
 		Role:    "user",

@@ -8,6 +8,7 @@ import {
   Observable,
   Subject,
   catchError,
+  combineLatest,
   concatMap,
   exhaustMap,
   filter,
@@ -15,6 +16,7 @@ import {
   from,
   map,
   of,
+  startWith,
   switchMap,
   take,
   tap,
@@ -25,6 +27,8 @@ import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
 import { OpenAI } from 'openai';
 
+import { generateConversationAgentId } from '@app/interfaces/agent';
+import { ConversationRecord } from '@app/interfaces/conversation';
 import { Message, parseMessageData } from '@app/interfaces/message';
 import { MessagesResponse, TypedPocketBase } from '@app/types/pocketbase-types';
 import { isTimestampInMilliseconds } from '@app/utils/timestamp';
@@ -168,6 +172,7 @@ export class MessageService {
           if (!messageRequest.parentMessageId) {
             // Take the most recent message as the parent message
             const messages = this.state.orderedMessageList();
+
             const lastMessage = messages[messages.length - 1];
             if (lastMessage) {
               messageRequest.parentMessageId = lastMessage.record_id;
@@ -188,25 +193,36 @@ export class MessageService {
           this.state.addMessage(msg);
 
           const conversation = this._conversationService.conversation();
+
           if (!conversation) {
             this._isNewConversation$.next(true);
             this._conversationService.newConversation$.next({
               title: 'New Conversation',
             });
+
             return this._conversationService.conversation$.pipe(
               filterNil(),
               take(1),
-              concatMap(() => {
-                return this.sendMessage(messageRequest).pipe(
-                  finalize(() => this._isNewConversation$.next(false)),
-                  tap((resp) => {
-                    const metadata: CognosMetadataResponse = resp.metadata?.cognos;
-                    this.state.updateMessageId({
-                      oldId: messageRequest.requestId,
-                      newId: metadata.message_record_id || '',
-                    });
-                  }),
-                  map((resp) => {
+              switchMap((newConversation) => {
+                return combineLatest([
+                  // Generate a conversation title based on the first message
+                  this.generateAndSetConversationTitle(
+                    newConversation.record.id,
+                    messageRequest.content,
+                  ).pipe(startWith(newConversation)),
+                  // And send the message
+                  this.sendMessage(messageRequest).pipe(
+                    finalize(() => this._isNewConversation$.next(false)),
+                    tap((resp) => {
+                      const metadata: CognosMetadataResponse = resp.metadata?.cognos;
+                      this.state.updateMessageId({
+                        oldId: messageRequest.requestId,
+                        newId: metadata.message_record_id || '',
+                      });
+                    }),
+                  ),
+                ]).pipe(
+                  map(([, resp]) => {
                     return {
                       ...this.addOpenAIMessageToState(resp),
                     };
@@ -523,5 +539,47 @@ export class MessageService {
     }
 
     return context;
+  }
+
+  private generateConversationTitle(startingMessage: string): Observable<string> {
+    const conversation = this._conversationService.conversation();
+    if (!conversation) {
+      return EMPTY;
+    }
+
+    return from(
+      this._openAi.chat.completions.create({
+        max_tokens: 15,
+        messages: [{ role: 'user', content: startingMessage }],
+        model: this._modelService.selectedModel().id,
+        metadata: {
+          cognos: {
+            agent_id: generateConversationAgentId,
+            skip_persistance: true,
+          },
+        },
+      }),
+    ).pipe(
+      catchError((err) => {
+        console.error('Error generating conversation title', err);
+        return EMPTY;
+      }),
+      map((resp) => {
+        return resp.choices[0].message.content;
+      }),
+    );
+  }
+
+  private generateAndSetConversationTitle(
+    conversationId: string,
+    startingMessage: string,
+  ): Observable<ConversationRecord> {
+    return this.generateConversationTitle(startingMessage).pipe(
+      switchMap((title) => {
+        // Use max the first 10 words
+        title = title.split(' ').slice(0, 10).join(' ');
+        return this._conversationService.editConversation(conversationId, { title });
+      }),
+    );
   }
 }
