@@ -568,6 +568,8 @@ export class MessageService {
   ): Observable<ConversationRecord> {
     return this.generateConversationTitle(startingMessage).pipe(
       switchMap((title) => {
+        // Use max the first 5 words
+        title = title.split(' ').slice(0, 5).join(' ');
         return this._conversationService.editConversation(conversationId, { title });
       }),
     );
