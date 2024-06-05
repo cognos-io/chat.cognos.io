@@ -539,6 +539,8 @@ export class MessageService {
       return EMPTY;
     }
 
+    this.state.setStatus(MessageStatus.Sending);
+
     return from(
       this._openAi.chat.completions.create({
         max_tokens: 15,
@@ -552,6 +554,9 @@ export class MessageService {
         },
       }),
     ).pipe(
+      finalize(() => {
+        this.state.setStatus(MessageStatus.None);
+      }),
       catchError((err) => {
         console.error('Error generating conversation title', err);
         return EMPTY;
