@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"time"
 
@@ -16,6 +18,7 @@ import (
 	"github.com/labstack/echo/v5/middleware"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/models"
 )
 
 func rateLimiterMiddleware() echo.MiddlewareFunc {
@@ -71,6 +74,62 @@ func addPocketBaseRoutes(
 			aiAgentRepo,
 		),
 		apis.RequireRecordAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.GET(
+		"/health",
+		func(ctx echo.Context) error {
+			type HealthResponse struct {
+				IsDatabaseConnected bool `json:"is_database_connected"`
+				Network             struct {
+					CanPing                bool `json:"can_ping"`
+					CanResolveDNS          bool `json:"can_resolve_dns"`
+					CanConnectOverInternet bool `json:"can_connect_over_internet"`
+				} `json:"network"`
+			}
+
+			resp := HealthResponse{}
+			status := http.StatusOK
+
+			// Database check
+			// Discussion here about how to approach this:
+			// https://github.com/pocketbase/pocketbase/discussions/5035
+			query := app.Dao().RecordQuery("users").Select("id").Limit(1)
+			records := []*models.Record{}
+			if err := query.All(&records); err != nil {
+				status = http.StatusInternalServerError
+			} else {
+				resp.IsDatabaseConnected = true
+			}
+
+			// Network checks
+			host := "www.example.com"
+
+			_, err := net.LookupHost(host)
+			if err != nil {
+				status = http.StatusInternalServerError
+			} else {
+				resp.Network.CanResolveDNS = true
+			}
+
+			conn, err := net.DialTimeout("tcp", host+":80", 2*time.Second)
+			if err != nil {
+				status = http.StatusInternalServerError
+			} else {
+				resp.Network.CanPing = true
+			}
+			defer conn.Close()
+
+			_, err = http.Get(fmt.Sprintf("https://%s", host))
+			if err != nil {
+				status = http.StatusInternalServerError
+			} else {
+				resp.Network.CanConnectOverInternet = true
+			}
+
+			return ctx.JSON(status, resp)
+		},
 		rateLimiterMiddleware(),
 	)
 }
