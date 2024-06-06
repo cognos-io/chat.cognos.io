@@ -82,7 +82,7 @@ import { AuthService } from '@services/auth.service';
               </p>
               <p>
                 If you'd like to talk to me about it, just
-                <a href="mailto://ewan@cognos.io">drop me an email</a>.
+                <a href="mailto:ewan@cognos.io">drop me an email</a>.
               </p>
               <p>Thank you for trusting in me<br />and happy hacking,</p>
             </div>
