@@ -60,6 +60,16 @@ import { AuthService } from '@services/auth.service';
                 </em>
               </p>
             }
+            <p class="prose text-balance text-center text-sm text-gray-600">
+              By signing up you are agreeing to our
+              <a
+                class="underline"
+                href="https://cognos.io/privacy-policy-and-terms/"
+                target="_blank"
+                rel="noreferrer"
+                >Privacy Policy and Terms</a
+              >.
+            </p>
           </div>
 
           <hr class="my-8" />

@@ -16,6 +16,7 @@ import { Subject, takeUntil } from 'rxjs';
 
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
+import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/contact-help-dialog.component';
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 
 import { ConversationService } from '../../services/conversation.service';
@@ -62,6 +63,10 @@ export class ChatComponent implements OnDestroy {
   ngOnDestroy(): void {
     this._destroyed$.next();
     this._destroyed$.complete();
+  }
+
+  onOpenHelpDialog() {
+    this.dialog.open(ContactHelpDialogComponent);
   }
 
   onRenameConversation(conversationId: string) {

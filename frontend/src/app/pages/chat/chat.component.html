@@ -35,7 +35,6 @@
               mat-list-item
               [routerLink]="['c', conversation.record.id]"
               class="conversation-list-item group"
-              #tooltip="matTooltip"
               [matTooltip]="conversation.decryptedData.title"
               matTooltipPosition="after"
             >
@@ -79,10 +78,23 @@
             </mat-menu>
           }
         </mat-nav-list>
-        <button mat-button (click)="router.navigate(['', 'auth', 'logout'])">
-          <mat-icon fontSet="bi" fontIcon="bi-box-arrow-right"></mat-icon>
-          <ng-container i18n="button|action to log user out"> Logout </ng-container>
-        </button>
+        <div class="flex justify-end gap-2">
+          <button
+            mat-icon-button
+            (click)="onOpenHelpDialog()"
+            matTooltip="Get help or contact me"
+          >
+            <mat-icon fontSet="bi" fontIcon="bi-question-circle"></mat-icon>
+          </button>
+
+          <button
+            mat-icon-button
+            (click)="router.navigate(['', 'auth', 'logout'])"
+            matTooltip="Logout"
+          >
+            <mat-icon fontSet="bi" fontIcon="bi-box-arrow-right"></mat-icon>
+          </button>
+        </div>
       </div>
     </mat-sidenav>
     <mat-sidenav-content role="main">
