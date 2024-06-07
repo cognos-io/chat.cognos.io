@@ -60,7 +60,7 @@ import { AuthService } from '@services/auth.service';
                 </em>
               </p>
             }
-            <p class="text-balance text-center text-sm text-gray-600">
+            <p class="prose text-balance text-center text-sm text-gray-600">
               By signing up you are agreeing to our
               <a
                 class="underline"
