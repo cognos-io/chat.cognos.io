@@ -127,6 +127,13 @@ run/live:
 		--build.include_ext "go, tpl, tmpl, html, css, scss, js, ts, sql, jpeg, jpg, gif, png, bmp, svg, webp, ico" \
 		--misc.clean_on_exit "true"
 
+## publish/docker: push the docker image to Docker Hub
+.PHONY: publish/docker
+publish/docker: build/docker
+	@GIT_COMMIT=$$(git rev-parse --short HEAD) && \
+	${DOCKER_BINARY} push ${DOCKER_IMAGE_NAME}:$$GIT_COMMIT && \
+	${DOCKER_BINARY} push ${DOCKER_IMAGE_NAME}:latest
+
 # ==================================================================================== #
 # OPERATIONS
 # ==================================================================================== #
