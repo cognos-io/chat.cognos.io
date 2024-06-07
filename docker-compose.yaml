@@ -20,7 +20,7 @@ services:
       - web-config:/config
 
   backend:
-    build: ./backend
+    image: docker.io/cognosio/api.cognos.io:latest
     restart: unless-stopped
     user: "1001:0"
     networks:
