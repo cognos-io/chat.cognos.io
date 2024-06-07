@@ -4,7 +4,7 @@
 MAIN_PACKAGE_PATH := ./cmd/api
 BINARY_NAME := api
 # Should match the repo name in Docker Hub
-DOCKER_IMAGE_NAME := api.cognos.io
+DOCKER_IMAGE_NAME := docker.io/cognosio/api.cognos.io
 # Can be changed to different versions easily
 GO_BINARY := go
 DOCKER_BINARY := docker
@@ -91,11 +91,11 @@ build:
 	# Include additional build steps, like TypeScript, SCSS or Tailwind compilation here...
 	@${GO_BINARY} build -o=/tmp/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 
-## build/docker: build the docker image
+## build/docker: build the docker image for linux/amd64,linux/arm64
 .PHONY: build/docker
 build/docker:
 	@GIT_COMMIT=$$(git rev-parse --short HEAD) && \
-	${DOCKER_BINARY} build -t ${DOCKER_IMAGE_NAME}:$$GIT_COMMIT -t ${DOCKER_IMAGE_NAME}:latest .
+	${DOCKER_BINARY} build --platform linux/amd64,linux/arm64 -t ${DOCKER_IMAGE_NAME}:$$GIT_COMMIT -t ${DOCKER_IMAGE_NAME}:latest .
 
 ## run: run the application
 .PHONY: run
