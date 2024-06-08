@@ -8,6 +8,9 @@ api.cognos.io {
 		max_size 2MB
 	}
 
+	# Don't expose the metrics endpoint
+	rewrite /metrics /404
+
 	reverse_proxy backend:8090 {
 		transport http {
 			read_timeout 360s
