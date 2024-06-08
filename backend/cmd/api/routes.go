@@ -19,6 +19,7 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func rateLimiterMiddleware() echo.MiddlewareFunc {
@@ -132,4 +133,7 @@ func addPocketBaseRoutes(
 		},
 		rateLimiterMiddleware(),
 	)
+
+	// Prometheus metrics endpoint for Grafana Alloy
+	e.Router.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 }
