@@ -29,6 +29,8 @@
     "labstack",
     "migratecmd",
     "nekxd",
+    "promauto",
+    "promhttp",
     "sashabaranov",
     "userinfo"
   ],

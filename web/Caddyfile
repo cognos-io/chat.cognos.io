@@ -3,10 +3,21 @@
 	redir https://{host}{uri}
 }
 
+:8090 {
+	reverse_proxy backend:8090 {
+		transport http {
+			read_timeout 5s
+		}
+	}
+}
+
 api.cognos.io {
 	request_body {
 		max_size 2MB
 	}
+
+	# Don't expose the metrics endpoint
+	rewrite /metrics /404
 
 	reverse_proxy backend:8090 {
 		transport http {
