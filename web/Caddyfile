@@ -3,6 +3,14 @@
 	redir https://{host}{uri}
 }
 
+:8090 {
+	reverse_proxy backend:8090 {
+		transport http {
+			read_timeout 5s
+		}
+	}
+}
+
 api.cognos.io {
 	request_body {
 		max_size 2MB
@@ -22,13 +30,5 @@ api.cognos.io {
 	# Enable Cloudflare DNS for this domain
 	tls {
 		dns cloudflare {env.CF_API_TOKEN}
-	}
-}
-
-localhost:8090 {
-	reverse_proxy backend:8090 {
-		transport http {
-			read_timeout 5s
-		}
 	}
 }
