@@ -26,5 +26,9 @@ api.cognos.io {
 }
 
 localhost:8090 {
-	reverse_proxy /metrics backend:8090
+	reverse_proxy backend:8090 {
+		transport http {
+			read_timeout 5s
+		}
+	}
 }
