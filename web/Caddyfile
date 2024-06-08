@@ -24,3 +24,7 @@ api.cognos.io {
 		dns cloudflare {env.CF_API_TOKEN}
 	}
 }
+
+localhost:8090 {
+	reverse_proxy /metrics backend:8090
+}
