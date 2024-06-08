@@ -14,8 +14,8 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"
-      - "8090:8090" # Used for localhost metrics
-      - "8090:8090/udp" # Used for localhost metrics
+      - "8080:8090" # Used for localhost metrics
+      - "8080:8090/udp" # Used for localhost metrics
     volumes:
       - ./web/Caddyfile:/etc/caddy/Caddyfile
       - web-data:/data
