@@ -39,7 +39,5 @@ RUN mkdir -p /home/appuser/pb_data && \
 # This ensures that the application can be run by any arbitrary user ID
 USER appuser
 
-EXPOSE 8090
-
 CMD ["/home/appuser/api", "serve", "--http=0.0.0.0:8090"]
 
