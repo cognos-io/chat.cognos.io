@@ -27,7 +27,6 @@ services:
     user: "1001:0"
     networks:
       - backend
-    ports:
     volumes:
       - db-data:/home/appuser/pb_data
       - ./backend/configs/api.production.yaml:/home/appuser/configs/api.production.yaml:ro
