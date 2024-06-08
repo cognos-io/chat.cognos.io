@@ -19,6 +19,8 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -135,5 +137,48 @@ func addPocketBaseRoutes(
 	)
 
 	// Prometheus metrics endpoint for Grafana Alloy
+	registerPrometheusGauge(app, logger, "users", "Number of users in the system")
+	registerPrometheusGauge(
+		app,
+		logger,
+		"conversations",
+		"Number of conversations in the system",
+	)
+	registerPrometheusGauge(
+		app,
+		logger,
+		"messages",
+		"Number of messages in the system",
+	)
+	registerPrometheusGauge(app, logger, "agents", "Number of agents in the system")
+
 	e.Router.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
+}
+
+func registerPrometheusGauge(
+	app core.App,
+	logger *slog.Logger,
+	name string,
+	help string,
+) {
+	_ = promauto.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: "cognos",
+		Subsystem: "chat",
+		Name:      name,
+		Help:      help,
+	}, func() float64 {
+		// negative value to differentiate from the zero default
+		totalCount := -1
+
+		err := app.Dao().
+			RecordQuery(name).
+			Distinct(false).
+			Select("COUNT(id)").
+			OrderBy().Row(&totalCount)
+		if err != nil {
+			logger.Error("failed to get count", "err", err)
+		}
+
+		return float64(totalCount)
+	})
 }
