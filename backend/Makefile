@@ -129,7 +129,7 @@ run/live:
 
 ## publish/docker: push the docker image to Docker Hub
 .PHONY: publish/docker
-publish/docker: build/docker
+publish/docker: no-dirty build/docker
 	@GIT_COMMIT=$$(git rev-parse --short HEAD) && \
 	${DOCKER_BINARY} push ${DOCKER_IMAGE_NAME}:$$GIT_COMMIT && \
 	${DOCKER_BINARY} push ${DOCKER_IMAGE_NAME}:latest
