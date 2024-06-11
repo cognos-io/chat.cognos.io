@@ -19,6 +19,7 @@ var (
 
 var openAIModelMapping = map[string]string{
 	"gpt-3.5-turbo": openai.GPT3Dot5Turbo,
+	"gpt-4o":        openai.GPT4o,
 }
 
 type OpenAI struct {
