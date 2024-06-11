@@ -25,6 +25,19 @@ const openAiGpt35TurboModel: Model = {
   tags: [{ title: 'openai' }, { title: 'general-purpose' }],
 };
 
+const openAiGpt4oModel: Model = {
+  id: 'openai:gpt-4o',
+  name: 'Open AI - GPT 4 Omni',
+  slug: 'open-ai---gpt-4o',
+  description: "OpenAI's GPT 4 Omni (GPT4o) model",
+  inputContextLength: 128_000,
+  tags: [
+    { title: 'openai' },
+    { title: 'general-purpose' },
+    { title: 'high-intelligence' },
+  ],
+};
+
 const cloudflareLlama38bInstruct: Model = {
   id: 'cloudflare:llama-3-8b-instruct',
   name: 'Cloudflare - Llama3 8B Instruct',
@@ -73,6 +86,7 @@ const cloudflareDeepseekMath7bInstruct: Model = {
 export const defaultModel = openAiGpt35TurboModel;
 export const hardCodedModels = [
   openAiGpt35TurboModel,
+  openAiGpt4oModel,
   cloudflareLlama38bInstruct,
   cloudflareQwen157BChat,
   cloudflareMistral7bInstruct,
