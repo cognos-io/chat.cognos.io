@@ -4,6 +4,8 @@ services:
   web:
     build: ./web
     restart: unless-stopped
+    environment:
+      CADDY_ADMIN: "0.0.0.0:2019" # Enable Caddy admin API to listen on all interfaces
     env_file:
       - ./web/.env
     cap_add:
