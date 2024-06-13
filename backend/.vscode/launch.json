@@ -10,7 +10,9 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/cmd/api",
-      "args": ["serve"]
+      // Match the same data dir as in the Makefile
+      "args": ["serve", "--dev", "--dir", "./pb_data"],
+      "cwd": "${workspaceFolder}"
     }
   ]
 }
