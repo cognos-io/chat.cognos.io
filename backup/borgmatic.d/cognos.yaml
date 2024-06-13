@@ -9,6 +9,7 @@ read_special: true # Needed for SQLite databases
 source_directories:
   - /source/caddy-data
   - /source/caddy-config
+  - /source/redis
 
 repositories:
   - path: "{cognos_repo_path}"
@@ -51,6 +52,13 @@ sqlite_databases:
     path: "{pocketbase_sqlite_path}"
   - name: logs.api.cognos.io
     path: "{pocketbase_logs_sqlite_path}"
+
+postgresql_databases:
+  - name: bricksllm
+    username: ${BRICKSLLM_RO_USER}
+    password: ${BRICKSLLM_RO_PASSWORD}
+    host: postgresql
+    port: 5432
 
 # Disable some things as we're running in append mode
 skip_actions:
