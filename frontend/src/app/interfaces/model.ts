@@ -22,7 +22,7 @@ const openAiGpt35TurboModel: Model = {
   slug: 'open-ai---gpt-35-turbo',
   description: "OpenAI's fast, inexpensive model for general-purpose use.",
   inputContextLength: 16_385,
-  tags: [{ title: 'openai' }, { title: 'general-purpose' }],
+  tags: [{ title: 'openai' }, { title: 'general-purpose' }, { title: 'fast' }],
 };
 
 const openAiGpt4oModel: Model = {
@@ -34,6 +34,34 @@ const openAiGpt4oModel: Model = {
   tags: [
     { title: 'openai' },
     { title: 'general-purpose' },
+    { title: 'high-intelligence' },
+  ],
+};
+
+const googleGemini15FlashModel: Model = {
+  id: 'google:gemini-1.5-flash',
+  name: 'Google - Gemini 1.5 Flash',
+  slug: 'google---gemini-15-flash',
+  description: `Google's Gemini 1.5 Flash model is a fast, general-purpose model with a long context.`,
+  inputContextLength: 1_048_576,
+  tags: [
+    { title: 'google' },
+    { title: 'general-purpose' },
+    { title: 'long-context' },
+    { title: 'fast' },
+  ],
+};
+
+const googleGemini15ProModel: Model = {
+  id: 'google:gemini-1.5-pro',
+  name: 'Google - Gemini 1.5 Pro',
+  slug: 'google---gemini-15-pro',
+  description: `Google's Gemini 1.5 Pro is an advanced, general purpose model with a long context. It is slower than the Flash model but has higher intelligence.`,
+  inputContextLength: 1_048_576,
+  tags: [
+    { title: 'google' },
+    { title: 'general-purpose' },
+    { title: 'long-context' },
     { title: 'high-intelligence' },
   ],
 };
@@ -62,7 +90,7 @@ const cloudflareQwen157BChat: Model = {
   slug: 'cloudflare---qwen-15-7b-chat',
   description: `Qwen's Qwen 1.5 7B Chat model hosted on the Cloudflare Workers AI infrastructure`,
   inputContextLength: 32_768,
-  tags: [{ title: 'qwen' }, { title: 'open-source' }],
+  tags: [{ title: 'qwen' }, { title: 'open-source' }, { title: 'fast' }],
 };
 
 const cloudflareMistral7bInstruct: Model = {
@@ -87,6 +115,8 @@ export const defaultModel = openAiGpt35TurboModel;
 export const hardCodedModels = [
   openAiGpt35TurboModel,
   openAiGpt4oModel,
+  googleGemini15FlashModel,
+  googleGemini15ProModel,
   cloudflareLlama38bInstruct,
   cloudflareQwen157BChat,
   cloudflareMistral7bInstruct,
