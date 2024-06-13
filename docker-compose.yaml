@@ -4,6 +4,8 @@ services:
   web:
     build: ./web
     restart: unless-stopped
+    environment:
+      CADDY_ADMIN: "0.0.0.0:2019" # Enable Caddy admin API to listen on all interfaces
     env_file:
       - ./web/.env
     cap_add:
@@ -16,6 +18,7 @@ services:
       - "443:443/udp"
       - "8090:8090" # Used for localhost metrics
       - "8090:8090/udp" # Used for localhost metrics
+      - "2019:2019" # Used for Caddy admin API
     volumes:
       - ./web/Caddyfile:/etc/caddy/Caddyfile
       - web-data:/data

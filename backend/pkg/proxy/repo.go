@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/google/generative-ai-go/genai"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -14,6 +15,7 @@ type UpstreamRepo interface {
 type InMemoryUpstreamRepo struct {
 	openAIClient           *openai.Client
 	cloudflareOpenAIClient *openai.Client
+	googleGeminiAIClient   *genai.Client
 	logger                 *slog.Logger
 }
 
@@ -23,10 +25,11 @@ func (r *InMemoryUpstreamRepo) Provider(provider string) (Upstream, error) {
 		return NewOpenAI(r.openAIClient, r.logger)
 	case "cloudflare":
 		return NewCloudflare(r.cloudflareOpenAIClient, r.logger)
+	case "google":
+		return NewGoogleGemini(r.googleGeminiAIClient, r.logger)
 	case "fireworks":
 	case "together":
 	case "anthropic":
-	case "google":
 	case "groq":
 	case "x":
 	default:
@@ -39,10 +42,12 @@ func NewInMemoryUpstreamRepo(
 	logger *slog.Logger,
 	openAIClient *openai.Client,
 	cloudflareOpenAIClient *openai.Client,
+	googleGeminiAIClient *genai.Client,
 ) *InMemoryUpstreamRepo {
 	return &InMemoryUpstreamRepo{
 		logger:                 logger,
 		openAIClient:           openAIClient,
 		cloudflareOpenAIClient: cloudflareOpenAIClient,
+		googleGeminiAIClient:   googleGeminiAIClient,
 	}
 }
