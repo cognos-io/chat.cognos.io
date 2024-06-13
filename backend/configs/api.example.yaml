@@ -6,3 +6,5 @@ cloudflare:
   account_id: ""
 google:
   api_key: ""
+anthropic:
+  api_key: ""
