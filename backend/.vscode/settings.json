@@ -23,6 +23,8 @@
     "Automigrate",
     "Upsert",
     "aimodel",
+    "cand",
+    "genai",
     "goarch",
     "knadh",
     "koanf",
