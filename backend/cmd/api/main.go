@@ -15,10 +15,12 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/idempotency"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
+	"github.com/google/generative-ai-go/genai"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 	oai "github.com/sashabaranov/go-openai"
+	"google.golang.org/api/option"
 
 	_ "github.com/cognos-io/chat.cognos.io/backend/db/migrations" // import migration files
 )
@@ -45,6 +47,7 @@ func bindAppHooks(
 	config *config.APIConfig,
 	openaiClient *oai.Client,
 	cloudflareOpenAIClient *oai.Client,
+	googleGeminiClient *genai.Client,
 ) {
 	// Have to use OnBeforeServe to ensure that the app is fully initialized incl. the DB
 	// so we can create the various Repos without panic'ing
@@ -54,6 +57,7 @@ func bindAppHooks(
 			app.Logger(),
 			openaiClient,
 			cloudflareOpenAIClient,
+			googleGeminiClient,
 		)
 		messageRepo := chat.NewPocketBaseMessageRepo(app)
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
@@ -91,6 +95,13 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	cloudflareOpenAIClient := proxy.NewCloudflareOpenAIClient(
 		config,
 	) // Cloudflare with OpenAI compatibility
+	googleGeminiClient, err := genai.NewClient(
+		ctx,
+		option.WithAPIKey(config.GoogleGeminiAPIKey),
+	) // Google Gemini
+	if err != nil {
+		return fmt.Errorf("failed to create Google Gemini client: %w", err)
+	}
 
 	app := NewServer(
 		logger,
@@ -98,7 +109,7 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		openaiClient,
 	)
 
-	bindAppHooks(app, config, openaiClient, cloudflareOpenAIClient)
+	bindAppHooks(app, config, openaiClient, cloudflareOpenAIClient, googleGeminiClient)
 
 	return app.Start()
 }
