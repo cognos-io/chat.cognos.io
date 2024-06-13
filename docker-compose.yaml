@@ -16,6 +16,7 @@ services:
       - "443:443/udp"
       - "8090:8090" # Used for localhost metrics
       - "8090:8090/udp" # Used for localhost metrics
+      - "2019:2019" # Used for Caddy admin API
     volumes:
       - ./web/Caddyfile:/etc/caddy/Caddyfile
       - web-data:/data
