@@ -16,6 +16,37 @@ export type Model = z.infer<typeof Model>;
 // This NEEDS to match the model in the backend as it's used
 // as a fallback if the models cannot be fetched from the backend
 // for whatever reason.
+const anthropicClaudeHaikuModel: Model = {
+  id: 'anthropic:claude-haiku',
+  name: 'Anthropic - Claude Haiku',
+  slug: 'anthropic---claude-haiku',
+  description: "Anthropic's Claude Haiku model",
+  inputContextLength: 200_000,
+  tags: [{ title: 'anthropic' }, { title: 'fast' }],
+};
+const anthropicClaudeSonnetModel: Model = {
+  id: 'anthropic:claude-sonnet',
+  name: 'Anthropic - Claude Sonnet',
+  slug: 'anthropic---claude-sonnet',
+  description: "Anthropic's Claude Sonnet model",
+  inputContextLength: 200_000,
+  tags: [{ title: 'anthropic' }, { title: 'general-purpose' }],
+};
+
+const anthropicClaudeOpusModel: Model = {
+  id: 'anthropic:claude-opus',
+  name: 'Anthropic - Claude Opus',
+  slug: 'anthropic---claude-opus',
+  description: "Anthropic's Claude Opus model",
+  inputContextLength: 200_000,
+  tags: [
+    { title: 'anthropic' },
+    { title: 'general-purpose' },
+    { title: 'high-intelligence' },
+    { title: 'slow' },
+  ],
+};
+
 const openAiGpt35TurboModel: Model = {
   id: 'openai:gpt-3.5-turbo',
   name: 'Open AI - GPT 3.5 Turbo',
@@ -113,10 +144,17 @@ const cloudflareDeepseekMath7bInstruct: Model = {
 
 export const defaultModel = openAiGpt35TurboModel;
 export const hardCodedModels = [
+  // Anthropic
+  anthropicClaudeHaikuModel,
+  anthropicClaudeSonnetModel,
+  anthropicClaudeOpusModel,
+  // OpenAI
   openAiGpt35TurboModel,
   openAiGpt4oModel,
+  // Google Gemini
   googleGemini15FlashModel,
   googleGemini15ProModel,
+  // Cloudflare
   cloudflareLlama38bInstruct,
   cloudflareQwen157BChat,
   cloudflareMistral7bInstruct,
