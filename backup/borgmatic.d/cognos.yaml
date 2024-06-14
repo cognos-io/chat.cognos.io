@@ -57,7 +57,7 @@ postgresql_databases:
   - name: bricksllm
     username: ${BRICKSLLM_RO_USER}
     password: ${BRICKSLLM_RO_PASSWORD}
-    host: postgresql
+    hostname: postgresql
     port: 5432
 
 # Disable some things as we're running in append mode
