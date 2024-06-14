@@ -94,10 +94,6 @@ Documenting the initial setup here and [in issue #86](https://github.com/cognos-
 - Borgbase
   - $24/year
 
-### BricksLLM
-
-We use [BricksLLM](https://github.com/bricks-cloud/BricksLLM) as a proxy to multiple models but this requires HTTP calls to set up.
-
 ## Security
 
 ### Firewall rules - Hetzner
