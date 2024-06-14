@@ -7,4 +7,5 @@ cloudflare:
 google:
   api_key: ""
 anthropic:
+  url: ""
   api_key: ""

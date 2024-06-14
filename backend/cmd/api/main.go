@@ -25,6 +25,15 @@ import (
 	_ "github.com/cognos-io/chat.cognos.io/backend/db/migrations" // import migration files
 )
 
+type appHookParams struct {
+	App                    core.App
+	Config                 *config.APIConfig
+	OpenaiClient           *oai.Client
+	CloudflareOpenAIClient *oai.Client
+	AnthropicOpenAIClient  *oai.Client
+	GoogleGeminiClient     *genai.Client
+}
+
 func NewServer(
 	logger *slog.Logger,
 	config *config.APIConfig,
@@ -43,21 +52,28 @@ func NewServer(
 // bindAppHooks is PocketBase specific. We add our additional routes and hooks here.
 // We extract as its own function so it can be reused in tests.
 func bindAppHooks(
-	app core.App,
-	config *config.APIConfig,
-	openaiClient *oai.Client,
-	cloudflareOpenAIClient *oai.Client,
-	googleGeminiClient *genai.Client,
+	params appHookParams,
 ) {
+	var (
+		app                    = params.App
+		config                 = params.Config
+		openaiClient           = params.OpenaiClient
+		cloudflareOpenAIClient = params.CloudflareOpenAIClient
+		anthropicOpenAIClient  = params.AnthropicOpenAIClient
+		googleGeminiClient     = params.GoogleGeminiClient
+	)
+
 	// Have to use OnBeforeServe to ensure that the app is fully initialized incl. the DB
 	// so we can create the various Repos without panic'ing
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		// Separate into collection services
-		upstreamRepo := proxy.NewInMemoryUpstreamRepo(
-			app.Logger(),
-			openaiClient,
-			cloudflareOpenAIClient,
-			googleGeminiClient,
+		upstreamRepo := proxy.NewInMemoryUpstreamRepo(proxy.RepoParams{
+			Logger:                 app.Logger(),
+			OpenAIClient:           openaiClient,
+			CloudflareOpenAIClient: cloudflareOpenAIClient,
+			AnthropicOpenAIClient:  anthropicOpenAIClient,
+			GoogleGeminiAIClient:   googleGeminiClient,
+		},
 		)
 		messageRepo := chat.NewPocketBaseMessageRepo(app)
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
@@ -95,6 +111,9 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	cloudflareOpenAIClient := proxy.NewCloudflareOpenAIClient(
 		config,
 	) // Cloudflare with OpenAI compatibility
+	anthropicOpenAIClient := proxy.NewAnthropicOpenAIClient(
+		config,
+	) // Anthropic via BricksLLM so can use OpenAI compatibility
 	googleGeminiClient, err := genai.NewClient(
 		ctx,
 		option.WithAPIKey(config.GoogleGeminiAPIKey),
@@ -109,7 +128,14 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		openaiClient,
 	)
 
-	bindAppHooks(app, config, openaiClient, cloudflareOpenAIClient, googleGeminiClient)
+	bindAppHooks(appHookParams{
+		App:                    app,
+		Config:                 config,
+		OpenaiClient:           openaiClient,
+		CloudflareOpenAIClient: cloudflareOpenAIClient,
+		AnthropicOpenAIClient:  anthropicOpenAIClient,
+		GoogleGeminiClient:     googleGeminiClient,
+	})
 
 	return app.Start()
 }

@@ -8,6 +8,14 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
+type RepoParams struct {
+	Logger                 *slog.Logger
+	OpenAIClient           *openai.Client
+	CloudflareOpenAIClient *openai.Client
+	AnthropicOpenAIClient  *openai.Client
+	GoogleGeminiAIClient   *genai.Client
+}
+
 type UpstreamRepo interface {
 	Provider(provider string) (Upstream, error)
 }
@@ -15,6 +23,7 @@ type UpstreamRepo interface {
 type InMemoryUpstreamRepo struct {
 	openAIClient           *openai.Client
 	cloudflareOpenAIClient *openai.Client
+	anthropicOpenAIClient  *openai.Client
 	googleGeminiAIClient   *genai.Client
 	logger                 *slog.Logger
 }
@@ -27,9 +36,10 @@ func (r *InMemoryUpstreamRepo) Provider(provider string) (Upstream, error) {
 		return NewCloudflare(r.cloudflareOpenAIClient, r.logger)
 	case "google":
 		return NewGoogleGemini(r.googleGeminiAIClient, r.logger)
+	case "anthropic":
+		return NewAnthropic(r.anthropicOpenAIClient, r.logger)
 	case "fireworks":
 	case "together":
-	case "anthropic":
 	case "groq":
 	case "x":
 	default:
@@ -38,16 +48,13 @@ func (r *InMemoryUpstreamRepo) Provider(provider string) (Upstream, error) {
 	return nil, fmt.Errorf("unable to find provider: %s", provider)
 }
 
-func NewInMemoryUpstreamRepo(
-	logger *slog.Logger,
-	openAIClient *openai.Client,
-	cloudflareOpenAIClient *openai.Client,
-	googleGeminiAIClient *genai.Client,
+func NewInMemoryUpstreamRepo(params RepoParams,
 ) *InMemoryUpstreamRepo {
 	return &InMemoryUpstreamRepo{
-		logger:                 logger,
-		openAIClient:           openAIClient,
-		cloudflareOpenAIClient: cloudflareOpenAIClient,
-		googleGeminiAIClient:   googleGeminiAIClient,
+		logger:                 params.Logger,
+		openAIClient:           params.OpenAIClient,
+		cloudflareOpenAIClient: params.CloudflareOpenAIClient,
+		anthropicOpenAIClient:  params.AnthropicOpenAIClient,
+		googleGeminiAIClient:   params.GoogleGeminiAIClient,
 	}
 }

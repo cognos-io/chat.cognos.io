@@ -28,6 +28,7 @@ type APIConfig struct {
 	CloudflareAPIKey    string `koanf:"cloudflare.api_key"`
 	GoogleGeminiAPIKey  string `koanf:"google.api_key"`
 	AnthropicAPIKey     string `koanf:"anthropic.api_key"`
+	AnthropicAPIURL     string `koanf:"anthropic.url"`
 }
 
 // MustLoadAPIConfig loads the API configuration or panics if an error occurs.

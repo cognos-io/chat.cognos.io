@@ -17,6 +17,9 @@ var cfModelMapping = map[string]string{
 	"qwen-15-7b-chat":           "@cf/qwen/qwen1.5-7b-chat-awq",
 }
 
+// compile time type checking
+var _ Upstream = (*Cloudflare)(nil)
+
 func NewCloudflareOpenAIClient(config *config.APIConfig) *openai.Client {
 	openAIConfig := openai.DefaultConfig(config.CloudflareAPIKey)
 	openAIConfig.BaseURL = fmt.Sprintf(
