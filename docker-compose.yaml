@@ -50,10 +50,7 @@ services:
       - ./backup/borgmatic.d:/etc/borgmatic.d:ro # Borgmatic configuration
       - /home/cognos/.ssh:/root/.ssh:ro # SSH keys for BorgBase
     depends_on:
-      - web
-      - backend
       - postgresql
-      - redis
 
   # BricksLLM setup
   # https://github.com/bricks-cloud/BricksLLM-Docker/blob/main/docker-compose.yml
