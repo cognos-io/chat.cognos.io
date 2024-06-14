@@ -22,6 +22,9 @@ var openAIModelMapping = map[string]string{
 	"gpt-4o":        openai.GPT4o,
 }
 
+// compile time type checking
+var _ Upstream = (*OpenAI)(nil)
+
 type OpenAI struct {
 	client *openai.Client
 	logger *slog.Logger

@@ -16,6 +16,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/google/generative-ai-go/genai"
+	"github.com/liushuangls/go-anthropic/v2"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
@@ -24,6 +25,15 @@ import (
 
 	_ "github.com/cognos-io/chat.cognos.io/backend/db/migrations" // import migration files
 )
+
+type appHookParams struct {
+	App                    core.App
+	Config                 *config.APIConfig
+	OpenaiClient           *oai.Client
+	CloudflareOpenAIClient *oai.Client
+	GoogleGeminiClient     *genai.Client
+	AnthropicClient        *anthropic.Client
+}
 
 func NewServer(
 	logger *slog.Logger,
@@ -43,21 +53,28 @@ func NewServer(
 // bindAppHooks is PocketBase specific. We add our additional routes and hooks here.
 // We extract as its own function so it can be reused in tests.
 func bindAppHooks(
-	app core.App,
-	config *config.APIConfig,
-	openaiClient *oai.Client,
-	cloudflareOpenAIClient *oai.Client,
-	googleGeminiClient *genai.Client,
+	params appHookParams,
 ) {
+	var (
+		app                    = params.App
+		config                 = params.Config
+		openaiClient           = params.OpenaiClient
+		cloudflareOpenAIClient = params.CloudflareOpenAIClient
+		googleGeminiClient     = params.GoogleGeminiClient
+		anthropicClient        = params.AnthropicClient
+	)
+
 	// Have to use OnBeforeServe to ensure that the app is fully initialized incl. the DB
 	// so we can create the various Repos without panic'ing
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		// Separate into collection services
-		upstreamRepo := proxy.NewInMemoryUpstreamRepo(
-			app.Logger(),
-			openaiClient,
-			cloudflareOpenAIClient,
-			googleGeminiClient,
+		upstreamRepo := proxy.NewInMemoryUpstreamRepo(proxy.RepoParams{
+			Logger:                 app.Logger(),
+			OpenAIClient:           openaiClient,
+			CloudflareOpenAIClient: cloudflareOpenAIClient,
+			GoogleGeminiAIClient:   googleGeminiClient,
+			AnthropicClient:        anthropicClient,
+		},
 		)
 		messageRepo := chat.NewPocketBaseMessageRepo(app)
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
@@ -102,6 +119,10 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create Google Gemini client: %w", err)
 	}
+	anthropicClient := anthropic.NewClient(
+		config.AnthropicAPIKey,
+		anthropic.WithBaseURL(config.AnthropicAPIURL),
+	) // Anthropic
 
 	app := NewServer(
 		logger,
@@ -109,7 +130,14 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		openaiClient,
 	)
 
-	bindAppHooks(app, config, openaiClient, cloudflareOpenAIClient, googleGeminiClient)
+	bindAppHooks(appHookParams{
+		App:                    app,
+		Config:                 config,
+		OpenaiClient:           openaiClient,
+		CloudflareOpenAIClient: cloudflareOpenAIClient,
+		AnthropicClient:        anthropicClient,
+		GoogleGeminiClient:     googleGeminiClient,
+	})
 
 	return app.Start()
 }

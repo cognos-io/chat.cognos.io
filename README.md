@@ -93,3 +93,62 @@ Documenting the initial setup here and [in issue #86](https://github.com/cognos-
   - $770/year
 - Borgbase
   - $24/year
+
+## Security
+
+### Firewall rules - Hetzner
+
+Our Hetzner server is behind a load balancer on a private network. The server firewall has the following rules:
+
+| Sources            | Protocol | Port | Note                        |
+| ------------------ | -------- | ---- | --------------------------- |
+| All IPv4; All IPv6 | TCP      | 80   | HTTP (to redirect to HTTPS) |
+| All IPv4; All IPv6 | TCP      | 443  | HTTPS                       |
+| Outgoing           | ALL      | ALL  | Allow all outgoing          |
+
+### Firewall rules - ufw
+
+On the server itself, we also utilize `ufw` to add an additional layer of security with the following rules:
+
+```
+$ sudo ufw status
+Status: active
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     LIMIT       Anywhere                   # allow SSH connections in
+80/tcp                     ALLOW       Anywhere                   # allow HTTP traffic in
+443                        ALLOW       Anywhere                   # allow HTTPS traffic in
+8090                       ALLOW       Anywhere                   # allow Pocketbase in
+2019                       ALLOW       Anywhere                   # allow Caddy admin API in
+8001                       ALLOW       Anywhere                   # allow BricksLLM API in
+22/tcp (v6)                LIMIT       Anywhere (v6)              # allow SSH connections in
+80/tcp (v6)                ALLOW       Anywhere (v6)              # allow HTTP traffic in
+443 (v6)                   ALLOW       Anywhere (v6)              # allow HTTPS traffic in
+8090 (v6)                  ALLOW       Anywhere (v6)              # allow Pocketbase in
+2019 (v6)                  ALLOW       Anywhere (v6)              # allow Caddy admin API in
+8001 (v6)                  ALLOW       Anywhere (v6)              # allow BricksLLM API in
+
+53                         ALLOW OUT   Anywhere                   # allow DNS calls out
+123                        ALLOW OUT   Anywhere                   # allow NTP out
+80/tcp                     ALLOW OUT   Anywhere                   # allow HTTP traffic out
+443                        ALLOW OUT   Anywhere                   # allow HTTPS traffic out
+43/tcp                     ALLOW OUT   Anywhere                   # allow whois
+25                         ALLOW OUT   Anywhere                   # allow SMTP out
+587                        ALLOW OUT   Anywhere                   # allow SMTP out
+67                         ALLOW OUT   Anywhere                   # allow the DHCP client to update
+68                         ALLOW OUT   Anywhere                   # allow the DHCP client to update
+22/tcp                     ALLOW OUT   Anywhere                   # allow SSH traffic out
+8090                       ALLOW OUT   Anywhere                   # allow Pocketbase out
+53 (v6)                    ALLOW OUT   Anywhere (v6)              # allow DNS calls out
+123 (v6)                   ALLOW OUT   Anywhere (v6)              # allow NTP out
+80/tcp (v6)                ALLOW OUT   Anywhere (v6)              # allow HTTP traffic out
+443 (v6)                   ALLOW OUT   Anywhere (v6)              # allow HTTPS traffic out
+43/tcp (v6)                ALLOW OUT   Anywhere (v6)              # allow whois
+25 (v6)                    ALLOW OUT   Anywhere (v6)              # allow SMTP out
+587 (v6)                   ALLOW OUT   Anywhere (v6)              # allow SMTP out
+67 (v6)                    ALLOW OUT   Anywhere (v6)              # allow the DHCP client to update
+68 (v6)                    ALLOW OUT   Anywhere (v6)              # allow the DHCP client to update
+22/tcp (v6)                ALLOW OUT   Anywhere (v6)              # allow SSH traffic out
+8090 (v6)                  ALLOW OUT   Anywhere (v6)              # allow Pocketbase out
+```

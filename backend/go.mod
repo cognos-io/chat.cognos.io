@@ -9,11 +9,13 @@ require (
 	github.com/knadh/koanf/providers/file v0.1.0
 	github.com/knadh/koanf/v2 v2.1.1
 	github.com/labstack/echo/v5 v5.0.0-20230722203903-ec5b858dab61
+	github.com/liushuangls/go-anthropic/v2 v2.3.0
 	github.com/pocketbase/dbx v1.10.1
 	github.com/pocketbase/pocketbase v0.22.12
 	github.com/prometheus/client_golang v1.19.1
 	github.com/sashabaranov/go-openai v1.24.1
 	golang.org/x/crypto v0.23.0
+	google.golang.org/api v0.180.0
 )
 
 require (
@@ -103,7 +105,6 @@ require (
 	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
-	google.golang.org/api v0.180.0 // indirect
 	google.golang.org/genproto v0.0.0-20240401170217-c3f982113cda // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240513163218-0867130af1f8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240509183442-62759503f434 // indirect

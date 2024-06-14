@@ -16,8 +16,6 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"
-      - "8090:8090" # Used for localhost metrics
-      - "8090:8090/udp" # Used for localhost metrics
       - "2019:2019" # Used for Caddy admin API
     volumes:
       - ./web/Caddyfile:/etc/caddy/Caddyfile
@@ -30,6 +28,9 @@ services:
     user: "1001:0"
     networks:
       - backend
+    ports:
+      - "8090:8090" # Used for localhost metrics
+      - "8090:8090/udp" # Used for localhost metrics
     volumes:
       - db-data:/home/appuser/pb_data
       - ./backend/configs/api.production.yaml:/home/appuser/configs/api.production.yaml:ro
@@ -45,9 +46,6 @@ services:
       - db-data:/cognos-db # Pocketbase SQLite database
       - ./backup/borgmatic.d:/etc/borgmatic.d:ro # Borgmatic configuration
       - /home/cognos/.ssh:/root/.ssh:ro # SSH keys for BorgBase
-    depends_on:
-      - web
-      - backend
 
 volumes:
   # Stores Caddy TLS certificates and other data

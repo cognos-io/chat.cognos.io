@@ -18,6 +18,9 @@ var googleGeminiAIModelMapping = map[string]string{
 	"gemini-1.5-flash": "models/gemini-1.5-flash",
 }
 
+// compile time type checking
+var _ Upstream = (*GoogleGemini)(nil)
+
 var googleGeminiFinishReasonToOpenAI = map[genai.FinishReason]openai.FinishReason{
 	genai.FinishReasonUnspecified: openai.FinishReasonNull,
 	genai.FinishReasonStop:        openai.FinishReasonStop,

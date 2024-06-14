@@ -11,5 +11,5 @@
     "pocketbase",
     "Tailscale"
   ],
-  "cSpell.ignoreWords": ["PSAD", "redir"]
+  "cSpell.ignoreWords": ["PSAD", "bricksllm", "redir", "whois"]
 }
