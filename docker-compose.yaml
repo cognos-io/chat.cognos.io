@@ -44,7 +44,6 @@ services:
       - web-data:/source/caddy-data:ro # Caddy data
       - web-config:/source/caddy-config:ro # Caddy configuration
       - db-data:/cognos-db # Pocketbase SQLite database
-      - redis:/source/redis:ro # Redis data
       - ./backup/borgmatic.d:/etc/borgmatic.d:ro # Borgmatic configuration
       - /home/cognos/.ssh:/root/.ssh:ro # SSH keys for BorgBase
 
