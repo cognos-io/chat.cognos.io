@@ -47,8 +47,6 @@ services:
       - redis:/source/redis:ro # Redis data
       - ./backup/borgmatic.d:/etc/borgmatic.d:ro # Borgmatic configuration
       - /home/cognos/.ssh:/root/.ssh:ro # SSH keys for BorgBase
-    depends_on:
-      - postgresql
 
 volumes:
   # Stores Caddy TLS certificates and other data
