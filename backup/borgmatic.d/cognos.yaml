@@ -53,13 +53,6 @@ sqlite_databases:
   - name: logs.api.cognos.io
     path: "{pocketbase_logs_sqlite_path}"
 
-postgresql_databases:
-  - name: bricksllm
-    username: ${BRICKSLLM_RO_USER}
-    password: ${BRICKSLLM_RO_PASSWORD}
-    hostname: postgresql
-    port: 5432
-
 # Disable some things as we're running in append mode
 skip_actions:
   - compact
