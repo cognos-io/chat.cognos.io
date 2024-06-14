@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/google/generative-ai-go/genai"
+	"github.com/liushuangls/go-anthropic/v2"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -12,7 +13,7 @@ type RepoParams struct {
 	Logger                 *slog.Logger
 	OpenAIClient           *openai.Client
 	CloudflareOpenAIClient *openai.Client
-	AnthropicOpenAIClient  *openai.Client
+	AnthropicClient        *anthropic.Client
 	GoogleGeminiAIClient   *genai.Client
 }
 
@@ -23,7 +24,7 @@ type UpstreamRepo interface {
 type InMemoryUpstreamRepo struct {
 	openAIClient           *openai.Client
 	cloudflareOpenAIClient *openai.Client
-	anthropicOpenAIClient  *openai.Client
+	anthropicClient        *anthropic.Client
 	googleGeminiAIClient   *genai.Client
 	logger                 *slog.Logger
 }
@@ -37,7 +38,7 @@ func (r *InMemoryUpstreamRepo) Provider(provider string) (Upstream, error) {
 	case "google":
 		return NewGoogleGemini(r.googleGeminiAIClient, r.logger)
 	case "anthropic":
-		return NewAnthropic(r.anthropicOpenAIClient, r.logger)
+		return NewAnthropic(r.anthropicClient, r.logger)
 	case "fireworks":
 	case "together":
 	case "groq":
@@ -54,7 +55,7 @@ func NewInMemoryUpstreamRepo(params RepoParams,
 		logger:                 params.Logger,
 		openAIClient:           params.OpenAIClient,
 		cloudflareOpenAIClient: params.CloudflareOpenAIClient,
-		anthropicOpenAIClient:  params.AnthropicOpenAIClient,
+		anthropicClient:        params.AnthropicClient,
 		googleGeminiAIClient:   params.GoogleGeminiAIClient,
 	}
 }
