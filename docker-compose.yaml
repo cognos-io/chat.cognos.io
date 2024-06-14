@@ -16,8 +16,6 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"
-      - "8090:8090" # Used for localhost metrics
-      - "8090:8090/udp" # Used for localhost metrics
       - "2019:2019" # Used for Caddy admin API
     volumes:
       - ./web/Caddyfile:/etc/caddy/Caddyfile
@@ -30,6 +28,9 @@ services:
     user: "1001:0"
     networks:
       - backend
+    ports:
+      - "8090:8090" # Used for localhost metrics
+      - "8090:8090/udp" # Used for localhost metrics
     volumes:
       - db-data:/home/appuser/pb_data
       - ./backend/configs/api.production.yaml:/home/appuser/configs/api.production.yaml:ro
@@ -63,8 +64,6 @@ services:
     restart: always
     env_file:
       - ./bricksllm/.env.redis
-    ports:
-      - "6379:6379"
     command: /opt/bitnami/scripts/redis/run.sh --save 20 1 --loglevel warning --maxmemory 256mb
     volumes:
       - redis:/bitnami/redis/data
@@ -76,8 +75,6 @@ services:
     restart: always
     env_file:
       - ./bricksllm/.env.postgresql
-    ports:
-      - "5432:5432"
     volumes:
       - postgresql:/bitnami/postgresql
       - ./bricksllm/postgresql/initdb.d:/docker-entrypoint-initdb.d
@@ -98,7 +95,6 @@ services:
       - REDIS_HOSTS=redis
     ports:
       - "8001:8001"
-      - "8002:8002"
     command:
       - "-p=strict"
       - "-m=production"
