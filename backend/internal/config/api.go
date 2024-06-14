@@ -23,13 +23,19 @@ func pathExists(path string) bool {
 }
 
 type APIConfig struct {
-	OpenAIAPIKey        string `koanf:"openai.api_key"`
+	// OpenAI
+	OpenAIAPIKey string `koanf:"openai.api_key"`
+	// Cloudflare
 	CloudflareAccountID string `koanf:"cloudflare.account_id"`
 	CloudflareAPIKey    string `koanf:"cloudflare.api_key"`
-	GoogleGeminiAPIKey  string `koanf:"google.api_key"`
-	AnthropicAPIKey     string `koanf:"anthropic.api_key"`
-	AnthropicAPIURL     string `koanf:"anthropic.url"`
-	DeepInfraAPIKey     string `koanf:"deepinfra.api_key"`
+	// Google Gemini
+	GoogleGeminiAPIKey string `koanf:"google.api_key"`
+	// Anthropic
+	AnthropicAPIKey string `koanf:"anthropic.api_key"`
+	AnthropicAPIURL string `koanf:"anthropic.url"`
+	// DeepInfra
+	DeepInfraAPIURL string `koanf:"deepinfra.url"`
+	DeepInfraAPIKey string `koanf:"deepinfra.api_key"`
 }
 
 // MustLoadAPIConfig loads the API configuration or panics if an error occurs.
