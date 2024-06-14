@@ -9,7 +9,6 @@ read_special: true # Needed for SQLite databases
 source_directories:
   - /source/caddy-data
   - /source/caddy-config
-  - /source/redis
 
 repositories:
   - path: "{cognos_repo_path}"
