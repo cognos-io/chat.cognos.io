@@ -38,8 +38,6 @@ services:
   backup:
     image: ghcr.io/borgmatic-collective/borgmatic
     restart: unless-stopped
-    networks:
-      - bricksllm
     env_file:
       - ./backup/.env
     volumes:
@@ -52,59 +50,12 @@ services:
     depends_on:
       - postgresql
 
-  # BricksLLM setup
-  # https://github.com/bricks-cloud/BricksLLM-Docker/blob/main/docker-compose.yml
-  redis:
-    image: bitnami/redis:7.0
-    networks:
-      - bricksllm
-    restart: always
-    env_file:
-      - ./bricksllm/.env.redis
-    command: /opt/bitnami/scripts/redis/run.sh --save 20 1 --loglevel warning --maxmemory 256mb
-    volumes:
-      - redis:/bitnami/redis/data
-
-  postgresql:
-    image: bitnami/postgresql:16
-    networks:
-      - bricksllm
-    restart: always
-    env_file:
-      - ./bricksllm/.env.postgresql
-    volumes:
-      - postgresql:/bitnami/postgresql
-      - ./bricksllm/postgresql/initdb.d:/docker-entrypoint-initdb.d
-
-  bricksllm:
-    depends_on:
-      - redis
-      - postgresql
-    image: luyuanxin1995/bricksllm:1
-    networks:
-      - backend
-      - bricksllm
-    restart: on-failure
-    env_file:
-      - ./bricksllm/.env.bricksllm
-    environment:
-      - POSTGRESQL_HOSTS=postgresql
-      - REDIS_HOSTS=redis
-    ports:
-      - "8001:8001"
-    command:
-      - "-p=strict"
-      - "-m=production"
-
 volumes:
   # Stores Caddy TLS certificates and other data
   # https://caddyserver.com/docs/conventions#data-directory
   web-data:
   web-config:
   db-data:
-  redis:
-  postgresql:
 
 networks:
   backend:
-  bricksllm:
