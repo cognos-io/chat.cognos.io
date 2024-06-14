@@ -9,3 +9,5 @@ google:
 anthropic:
   url: ""
   api_key: ""
+deepinfra:
+  api_key: ""

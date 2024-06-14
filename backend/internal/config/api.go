@@ -29,6 +29,7 @@ type APIConfig struct {
 	GoogleGeminiAPIKey  string `koanf:"google.api_key"`
 	AnthropicAPIKey     string `koanf:"anthropic.api_key"`
 	AnthropicAPIURL     string `koanf:"anthropic.url"`
+	DeepInfraAPIKey     string `koanf:"deepinfra.api_key"`
 }
 
 // MustLoadAPIConfig loads the API configuration or panics if an error occurs.
