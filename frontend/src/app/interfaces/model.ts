@@ -20,7 +20,7 @@ const anthropicClaudeHaikuModel: Model = {
   id: 'anthropic:claude-haiku',
   name: 'Anthropic - Claude Haiku',
   slug: 'anthropic---claude-haiku',
-  description: "Anthropic's Claude Haiku model",
+  description: "Anthropic's Claude Haiku is their fastest general purpose model.",
   inputContextLength: 200_000,
   tags: [{ title: 'anthropic' }, { title: 'fast' }],
 };
@@ -28,7 +28,8 @@ const anthropicClaudeSonnetModel: Model = {
   id: 'anthropic:claude-sonnet',
   name: 'Anthropic - Claude Sonnet',
   slug: 'anthropic---claude-sonnet',
-  description: "Anthropic's Claude Sonnet model",
+  description:
+    "Anthropic's Claude Sonnet is a mid level general purpose model balancing speed and intelligence.",
   inputContextLength: 200_000,
   tags: [{ title: 'anthropic' }, { title: 'general-purpose' }],
 };
@@ -37,7 +38,8 @@ const anthropicClaudeOpusModel: Model = {
   id: 'anthropic:claude-opus',
   name: 'Anthropic - Claude Opus',
   slug: 'anthropic---claude-opus',
-  description: "Anthropic's Claude Opus model",
+  description:
+    "Anthropic's Claude Opus is an advanced intelligence general purpose model.",
   inputContextLength: 200_000,
   tags: [
     { title: 'anthropic' },
