@@ -186,7 +186,7 @@ const deepInfraLzlv70bfp16hf: Model = {
   slug: 'deepinfra---lzlv-70b-fp16-hf',
   description:
     'A mix of models focused on creative writing such as role playing and story telling.',
-  inputContextLength: 1024,
+  inputContextLength: 8_192,
   tags: [
     { title: 'explicit' },
     { title: 'open-source' },
