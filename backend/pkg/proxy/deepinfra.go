@@ -54,11 +54,11 @@ func (d *DeepInfra) ChatCompletion(
 	return ForwardOpenAIResponse(c, req, d.logger, d.client)
 }
 
-func NewDeepInfra(client *openai.Client, logger *slog.Logger) *DeepInfra {
+func NewDeepInfra(client *openai.Client, logger *slog.Logger) (*DeepInfra, error) {
 	return &DeepInfra{
 		client: client,
 		logger: logger,
-	}
+	}, nil
 }
 
 func DeepInfraModelMapper(model string) (string, error) {
