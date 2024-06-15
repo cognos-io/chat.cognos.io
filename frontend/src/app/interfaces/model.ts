@@ -99,23 +99,109 @@ const googleGemini15ProModel: Model = {
   ],
 };
 
+const deepInfraOpenChat368B: Model = {
+  id: 'deepinfra:openchat-3.6-8b',
+  name: 'DeepInfra - OpenChat 3.6 8B',
+  slug: 'deepinfra---openchat-36-8b',
+  description:
+    'OpenChat is a LLama-3-8B fine-tune that outperforms it on multiple benchmarks.',
+  inputContextLength: 8_192,
+  tags: [{ title: 'open-source' }, { title: 'coding' }, { title: 'general-purpose' }],
+};
+const deepInfraWizardLm28x22b: Model = {
+  id: 'deepinfra:wizardlm-2-8x22b',
+  name: 'DeepInfra - WizardLM-2 8x22B',
+  slug: 'deepinfra---wizardlm-2-8x22b',
+  description:
+    'Developed at Microsoft, WizardLM-2 is a mixture of experts model that extends Mixtral-8x22B and is capable of general-purpose tasks.',
+  inputContextLength: 64_000,
+  tags: [
+    { title: 'open-source' },
+    { title: 'coding' },
+    { title: 'general-purpose' },
+    { title: 'mixture-of-experts' },
+  ],
+};
+const deepInfraGemma117bit: Model = {
+  id: 'deepinfra:gemma-1.1-7b-it',
+  name: 'DeepInfra - Gemma 1.1 7B IT',
+  slug: 'deepinfra---gemma-11-7b-it',
+  description:
+    'Developed by Google, Gemma is an open-source model that leverages the same research and technology as Google Gemini models.',
+  inputContextLength: 8_192,
+  tags: [{ title: 'open-source' }, { title: 'general-purpose' }],
+};
+const deepInfraDolphin26mixtral8x7b: Model = {
+  id: 'deepinfra:dolphin-2.6-mixtral-8x7b',
+  name: 'DeepInfra - Dolphin 2.6 Mixtral 8x7B',
+  slug: 'deepinfra---dolphin-26-mixtral-8x7b',
+  description:
+    'Dolphin is an uncensored model that is capable of general-purpose and coding tasks.',
+  inputContextLength: 16_000,
+  tags: [
+    { title: 'explicit' },
+    { title: 'open-source' },
+    { title: 'general-purpose' },
+    { title: 'coding' },
+  ],
+};
+const deepInfraChronosHermes13bv2: Model = {
+  id: 'deepinfra:chronos-hermes-13b-v2',
+  name: 'DeepInfra - Chronos Hermes 13B v2',
+  slug: 'deepinfra---chronos-hermes-13b-v2',
+  description:
+    'Optimized for creative writing tasks, Chronos Hermes is focused on chat, role play and story writing, with good reasoning and logic.',
+  inputContextLength: 4_096,
+  tags: [{ title: 'open-source' }, { title: 'creative-writing' }],
+};
+const deepInfraPhindCodeLlama34bv2: Model = {
+  id: 'deepinfra:phind-codellama-34b-v2',
+  name: 'DeepInfra - Phind CodeLLama 34B v2',
+  slug: 'deepinfra---phind-codellama-34b-v2',
+  description:
+    'Phind CodeLLama is a model optimized for coding tasks and performs well with multiple programming languages including Python, C/C++, TypeScript, Java.',
+  inputContextLength: 4_096,
+  tags: [{ title: 'open-source' }, { title: 'coding' }],
+};
+const deepInfraCodeGemma7bit: Model = {
+  id: 'deepinfra:codegemma-7b-it',
+  name: 'DeepInfra - CodeGemma 7B IT',
+  slug: 'deepinfra---codegemma-7b-it',
+  description:
+    'This model is intended to answer questions about code fragments, to generate code from natural language, or to engage in a conversation with the user about programming or technical problems.',
+  inputContextLength: 8_192,
+  tags: [{ title: 'open-source' }, { title: 'coding' }],
+};
+const deepInfraLlama38binstruct: Model = {
+  id: 'deepinfra:llama-3-8b-instruct',
+  name: 'DeepInfra - LLama 3 8B Instruct',
+  slug: 'deepinfra---llama-3-8b-instruct',
+  description: `Meta's open source LLama3 8B model hosted on the DeepInfra infrastructure`,
+  inputContextLength: 8_192,
+  tags: [{ title: 'open-source' }, { title: 'general-purpose' }],
+};
+const deepInfraLzlv70bfp16hf: Model = {
+  id: 'deepinfra:lzlv_70b_fp16_hf',
+  name: 'DeepInfra - LZLV 70B FP16 HF',
+  slug: 'deepinfra---lzlv-70b-fp16-hf',
+  description:
+    'A mix of models focused on creative writing such as role playing and story telling.',
+  inputContextLength: 1024,
+  tags: [
+    { title: 'explicit' },
+    { title: 'open-source' },
+    { title: 'creative-writing' },
+  ],
+};
+
 const cloudflareLlama38bInstruct: Model = {
   id: 'cloudflare:llama-3-8b-instruct',
   name: 'Cloudflare - Llama3 8B Instruct',
   slug: 'cloudflare---llama3-8b-instruct',
   description: `Meta's open source LLama3 8B model hosted on the Cloudflare Workers AI infrastructure`,
   inputContextLength: 8_192,
-  tags: [{ title: 'meta' }, { title: 'open-source' }],
+  tags: [{ title: 'open-source' }, { title: 'meta' }, { title: 'general-purpose' }],
 };
-
-// const cloudflarePhi2: Model = {
-//   id: 'cloudflare:phi-2',
-//   name: 'Cloudflare - Phi 2',
-//   slug: 'cloudflare---phi-2',
-//   description: `Microsoft's Phi 2 model hosted on the Cloudflare Workers AI infrastructure`,
-//   inputContextLength: 2_048,
-//   tags: [{ title: 'microsoft' }, { title: 'open-source' }],
-// };
 
 const cloudflareQwen157BChat: Model = {
   id: 'cloudflare:qwen-15-7b-chat',
@@ -123,7 +209,12 @@ const cloudflareQwen157BChat: Model = {
   slug: 'cloudflare---qwen-15-7b-chat',
   description: `Qwen's Qwen 1.5 7B Chat model hosted on the Cloudflare Workers AI infrastructure`,
   inputContextLength: 32_768,
-  tags: [{ title: 'qwen' }, { title: 'open-source' }, { title: 'fast' }],
+  tags: [
+    { title: 'open-source' },
+    { title: 'qwen' },
+    { title: 'open-source' },
+    { title: 'fast' },
+  ],
 };
 
 const cloudflareMistral7bInstruct: Model = {
@@ -141,7 +232,12 @@ const cloudflareDeepseekMath7bInstruct: Model = {
   slug: 'cloudflare---deepseek-math-7b-instruct',
   description: `Deepseek AI's Deepseek Math 7B Instruct model hosted on the Cloudflare Workers AI infrastructure`,
   inputContextLength: 4_096,
-  tags: [{ title: 'deepseek' }, { title: 'open-source' }, { title: 'maths' }],
+  tags: [
+    { title: 'open-source' },
+    { title: 'deepseek' },
+    { title: 'open-source' },
+    { title: 'maths' },
+  ],
 };
 
 export const defaultModel = openAiGpt35TurboModel;
@@ -161,4 +257,14 @@ export const hardCodedModels = [
   cloudflareQwen157BChat,
   cloudflareMistral7bInstruct,
   cloudflareDeepseekMath7bInstruct,
+  // DeepInfra
+  deepInfraOpenChat368B,
+  deepInfraWizardLm28x22b,
+  deepInfraGemma117bit,
+  deepInfraDolphin26mixtral8x7b,
+  deepInfraChronosHermes13bv2,
+  deepInfraPhindCodeLlama34bv2,
+  deepInfraCodeGemma7bit,
+  deepInfraLlama38binstruct,
+  deepInfraLzlv70bfp16hf,
 ];
