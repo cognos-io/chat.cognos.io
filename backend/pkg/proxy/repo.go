@@ -15,6 +15,7 @@ type RepoParams struct {
 	CloudflareOpenAIClient *openai.Client
 	AnthropicClient        *anthropic.Client
 	GoogleGeminiAIClient   *genai.Client
+	DeepInfraOpenAIClient  *openai.Client
 }
 
 type UpstreamRepo interface {
@@ -26,6 +27,7 @@ type InMemoryUpstreamRepo struct {
 	cloudflareOpenAIClient *openai.Client
 	anthropicClient        *anthropic.Client
 	googleGeminiAIClient   *genai.Client
+	deepinfraOpenAIClient  *openai.Client
 	logger                 *slog.Logger
 }
 
@@ -39,6 +41,8 @@ func (r *InMemoryUpstreamRepo) Provider(provider string) (Upstream, error) {
 		return NewGoogleGemini(r.googleGeminiAIClient, r.logger)
 	case "anthropic":
 		return NewAnthropic(r.anthropicClient, r.logger)
+	case "deepinfra":
+		return NewDeepInfra(r.deepinfraOpenAIClient, r.logger)
 	case "fireworks":
 	case "together":
 	case "groq":
@@ -57,5 +61,6 @@ func NewInMemoryUpstreamRepo(params RepoParams,
 		cloudflareOpenAIClient: params.CloudflareOpenAIClient,
 		anthropicClient:        params.AnthropicClient,
 		googleGeminiAIClient:   params.GoogleGeminiAIClient,
+		deepinfraOpenAIClient:  params.DeepInfraOpenAIClient,
 	}
 }

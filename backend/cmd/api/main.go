@@ -33,6 +33,7 @@ type appHookParams struct {
 	CloudflareOpenAIClient *oai.Client
 	GoogleGeminiClient     *genai.Client
 	AnthropicClient        *anthropic.Client
+	DeepinfraOpenAIClient  *oai.Client
 }
 
 func NewServer(
@@ -62,6 +63,7 @@ func bindAppHooks(
 		cloudflareOpenAIClient = params.CloudflareOpenAIClient
 		googleGeminiClient     = params.GoogleGeminiClient
 		anthropicClient        = params.AnthropicClient
+		deepinfraClient        = params.DeepinfraOpenAIClient
 	)
 
 	// Have to use OnBeforeServe to ensure that the app is fully initialized incl. the DB
@@ -74,6 +76,7 @@ func bindAppHooks(
 			CloudflareOpenAIClient: cloudflareOpenAIClient,
 			GoogleGeminiAIClient:   googleGeminiClient,
 			AnthropicClient:        anthropicClient,
+			DeepInfraOpenAIClient:  deepinfraClient,
 		},
 		)
 		messageRepo := chat.NewPocketBaseMessageRepo(app)
@@ -123,6 +126,8 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		config.AnthropicAPIKey,
 		anthropic.WithBaseURL(config.AnthropicAPIURL),
 	) // Anthropic
+	// DeepInfra
+	deepinfraClient := proxy.NewDeepInfraOpenAIClient(config)
 
 	app := NewServer(
 		logger,
@@ -137,6 +142,7 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		CloudflareOpenAIClient: cloudflareOpenAIClient,
 		AnthropicClient:        anthropicClient,
 		GoogleGeminiClient:     googleGeminiClient,
+		DeepinfraOpenAIClient:  deepinfraClient,
 	})
 
 	return app.Start()
