@@ -61,8 +61,8 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
               <h1>🥷</h1>
               <h3>Temporary chat</h3>
               <p class="text-balance">
-                Your messages will not be saved at all and if you leave this
-                conversation you will not be able to get your messages back again.
+                Your messages will not be saved and if you leave this conversation you
+                will not be able to get your messages back again.
               </p>
             } @else {
               <h1>👋</h1>
