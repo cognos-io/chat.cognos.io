@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnDestroy, effect, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -7,7 +7,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterModule } from '@angular/router';
@@ -46,12 +46,23 @@ export class ChatComponent implements OnDestroy {
 
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly dialog = inject(MatDialog);
+  private readonly _sideNav = viewChild<MatSidenav>('sideNav');
 
   readonly router = inject(Router);
   readonly conversationService = inject(ConversationService);
   readonly vaultService = inject(VaultService);
 
   isMobile = signal(false);
+
+  private readonly _ = effect(() => {
+    if (this.conversationService.isTemporaryConversation()) {
+      this._sideNav()?.close();
+    } else {
+      if (!this.isMobile()) {
+        this._sideNav()?.open();
+      }
+    }
+  });
 
   constructor() {
     this.breakpointObserver

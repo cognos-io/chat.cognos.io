@@ -44,12 +44,14 @@ interface ConversationState {
   conversations: Array<Conversation>;
   selectedConversationId: string;
   filter: string;
+  isTemporaryConversation: boolean;
 }
 
 const initialState: ConversationState = {
   conversations: [],
   selectedConversationId: '',
   filter: '',
+  isTemporaryConversation: false,
 };
 
 @Injectable({
@@ -183,6 +185,15 @@ export class ConversationService {
       };
     },
     actionSources: {
+      setIsTemporaryConversation: (state, action$: Observable<boolean>) => {
+        return action$.pipe(
+          map((isTemporaryConversation) => {
+            return {
+              isTemporaryConversation,
+            };
+          }),
+        );
+      },
       updateConversationRecord: (state, action$: Observable<ConversationRecord>) => {
         return action$.pipe(
           concatMap((data) => {
@@ -234,6 +245,8 @@ export class ConversationService {
     });
 
   readonly setConversationTitle = this.state.setConversationTitle;
+  readonly isTemporaryConversation = this.state.isTemporaryConversation;
+  readonly setIsTemporaryConversation = this.state.setIsTemporaryConversation;
 
   /**
    * Creates a conversation in the PocketBase backend.

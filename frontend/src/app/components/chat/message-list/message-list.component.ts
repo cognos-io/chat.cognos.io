@@ -11,6 +11,11 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import {
+  MatSlideToggleChange,
+  MatSlideToggleModule,
+} from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { ReplaySubject, debounceTime, fromEvent, takeUntil } from 'rxjs';
 
@@ -18,14 +23,20 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { Message } from '@app/interfaces/message';
-import { MessageService } from '@app/services/message.service';
+import { ConversationService } from '@app/services/conversation.service';
 
 import { MessageListItemComponent } from '../message-list-item/message-list-item.component';
 
 @Component({
   selector: 'app-message-list',
   standalone: true,
-  imports: [MessageListItemComponent, LoadingIndicatorComponent, InfiniteScrollModule],
+  imports: [
+    MessageListItemComponent,
+    LoadingIndicatorComponent,
+    InfiniteScrollModule,
+    MatSlideToggleModule,
+    MatTooltipModule,
+  ],
   template: `
     <div
       #wrapper
@@ -48,6 +59,15 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
           >
             <h1>👋</h1>
             <h3>You're using Cognos secure AI messaging</h3>
+          </div>
+          <div class="prose flex flex-col items-center">
+            <mat-slide-toggle (change)="onToggleTemporaryChat($event)"
+              ><span
+                class="underline decoration-dashed"
+                matTooltip="Enabling a temporary chat will mean that messages are never stored and will be deleted after the chat is closed"
+                >Temporary chat</span
+              ></mat-slide-toggle
+            >
           </div>
         </div>
       }
@@ -82,8 +102,8 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
   @Output() readonly atBottom = new EventEmitter<boolean>();
 
   private readonly _wrapper = viewChild('wrapper', { read: ElementRef });
+  private readonly _conversationService = inject(ConversationService);
 
-  private readonly _messageService = inject(MessageService);
   private readonly _firstLoad = signal(true);
   private readonly _atBottom = signal(false);
   private destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
@@ -105,6 +125,10 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
 
   onScrollUp(): void {
     this.nextPage.emit();
+  }
+
+  onToggleTemporaryChat(event: MatSlideToggleChange): void {
+    this._conversationService.setIsTemporaryConversation(event.checked);
   }
 
   ngAfterViewInit(): void {
