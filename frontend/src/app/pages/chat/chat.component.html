@@ -1,4 +1,8 @@
-<div class="wrapper" [class.is-mobile]="isMobile()">
+<div
+  class="wrapper"
+  [class.is-mobile]="isMobile()"
+  [class.is-temporary]="conversationService.isTemporaryConversation()"
+>
   <mat-toolbar color="primary" class="toolbar" role="heading">
     <button mat-icon-button (click)="sideNav.toggle()">
       <mat-icon color="secondary" fontSet="bi" fontIcon="bi-list"></mat-icon>

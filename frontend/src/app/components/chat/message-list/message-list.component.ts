@@ -57,8 +57,17 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
           <div
             class="prose flex flex-col items-center justify-center gap-4 text-center prose-headings:m-0"
           >
-            <h1>👋</h1>
-            <h3>You're using Cognos secure AI messaging</h3>
+            @if (conversationService.isTemporaryConversation()) {
+              <h1>🥷</h1>
+              <h3>Temporary chat</h3>
+              <p class="text-balance">
+                Your messages will not be saved at all and if you leave this
+                conversation you will not be able to get your messages back again.
+              </p>
+            } @else {
+              <h1>👋</h1>
+              <h3>You're using Cognos secure AI messaging</h3>
+            }
           </div>
           <div class="prose flex flex-col items-center">
             <mat-slide-toggle (change)="onToggleTemporaryChat($event)"
@@ -102,11 +111,12 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
   @Output() readonly atBottom = new EventEmitter<boolean>();
 
   private readonly _wrapper = viewChild('wrapper', { read: ElementRef });
-  private readonly _conversationService = inject(ConversationService);
 
   private readonly _firstLoad = signal(true);
   private readonly _atBottom = signal(false);
   private destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
+
+  readonly conversationService = inject(ConversationService);
 
   constructor() {
     effect(() => {
@@ -128,7 +138,7 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
   }
 
   onToggleTemporaryChat(event: MatSlideToggleChange): void {
-    this._conversationService.setIsTemporaryConversation(event.checked);
+    this.conversationService.setIsTemporaryConversation(event.checked);
   }
 
   ngAfterViewInit(): void {
