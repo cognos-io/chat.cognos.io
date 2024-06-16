@@ -113,6 +113,7 @@ export class ConversationService {
         map((conversationId) => {
           return {
             selectedConversationId: conversationId,
+            isTemporaryConversation: false,
           };
         }),
       ),
