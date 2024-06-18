@@ -350,6 +350,7 @@ export class MessageService {
   public readonly status$ = toObservable(this.status);
 
   public readonly nextPage = this.state.nextPage;
+  public readonly resetState = this.state.resetState;
 
   // helper methods
   private fetchMessages(

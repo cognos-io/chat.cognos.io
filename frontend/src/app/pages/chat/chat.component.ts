@@ -1,6 +1,11 @@
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, OnDestroy, effect, inject, signal, viewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  Component,
+  OnDestroy,
+  computed,
+  effect,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -18,6 +23,7 @@ import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.com
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/contact-help-dialog.component';
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
+import { DeviceService } from '@app/services/device.service';
 
 import { ConversationService } from '../../services/conversation.service';
 import { VaultService } from '../../services/vault.service';
@@ -44,15 +50,15 @@ import { VaultService } from '../../services/vault.service';
 export class ChatComponent implements OnDestroy {
   private readonly _destroyed$ = new Subject<void>();
 
-  private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly dialog = inject(MatDialog);
   private readonly _sideNav = viewChild<MatSidenav>('sideNav');
+  private readonly _deviceService = inject(DeviceService);
 
   readonly router = inject(Router);
   readonly conversationService = inject(ConversationService);
   readonly vaultService = inject(VaultService);
 
-  isMobile = signal(false);
+  readonly isMobile = computed(() => this._deviceService.isMobile());
 
   private readonly _ = effect(() => {
     if (this.conversationService.isTemporaryConversation()) {
@@ -63,13 +69,6 @@ export class ChatComponent implements OnDestroy {
       }
     }
   });
-
-  constructor() {
-    this.breakpointObserver
-      .observe([Breakpoints.Handset])
-      .pipe(takeUntilDestroyed())
-      .subscribe((result) => this.isMobile.set(result.matches));
-  }
 
   ngOnDestroy(): void {
     this._destroyed$.next();

@@ -48,7 +48,7 @@ import { MessageListComponent } from '../message-list/message-list.component';
           </button>
         }
       </div>
-      <div class="mx-auto w-full max-w-[70ch] pt-2">
+      <div class="mx-auto w-full max-w-[80ch] pt-2">
         <app-message-form></app-message-form>
       </div>
     }
