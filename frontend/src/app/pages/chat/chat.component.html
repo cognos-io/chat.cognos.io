@@ -4,12 +4,27 @@
   [class.is-temporary]="conversationService.isTemporaryConversation()"
 >
   <mat-toolbar class="toolbar" role="heading">
-    <button mat-icon-button (click)="sideNav.toggle()">
-      <mat-icon color="secondary" fontSet="bi" fontIcon="bi-list"></mat-icon>
-    </button>
-    <div class="flex w-full items-center justify-center md:ms-4 md:justify-start">
-      <app-cognos-logo class="-ms-10 h-6 md:ms-0"></app-cognos-logo>
-    </div>
+    <mat-toolbar-row>
+      <button mat-icon-button (click)="sideNav.toggle()">
+        <mat-icon color="secondary" fontSet="bi" fontIcon="bi-list"></mat-icon>
+      </button>
+      <div class="flex w-full items-center justify-center md:ms-4 md:justify-start">
+        <app-cognos-logo class="-ms-10 h-6 md:ms-0"></app-cognos-logo>
+      </div>
+    </mat-toolbar-row>
+    @if (isMobile()) {
+      <mat-toolbar-row style="height: auto" class="justify-end">
+        @if (canClearTemporaryMessages()) {
+          <button
+            mat-icon-button
+            matTooltip="Clears all messages. Unrecoverable."
+            (click)="onClearMessages()"
+          >
+            <mat-icon fontSet="bi" fontIcon="bi-fire"></mat-icon>
+          </button>
+        }
+      </mat-toolbar-row>
+    }
   </mat-toolbar>
   <mat-sidenav-container
     class="page sidebar-container"

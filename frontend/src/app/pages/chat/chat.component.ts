@@ -24,6 +24,7 @@ import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog
 import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/contact-help-dialog.component';
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 import { DeviceService } from '@app/services/device.service';
+import { MessageService } from '@app/services/message.service';
 
 import { ConversationService } from '../../services/conversation.service';
 import { VaultService } from '../../services/vault.service';
@@ -53,6 +54,8 @@ export class ChatComponent implements OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly _sideNav = viewChild<MatSidenav>('sideNav');
   private readonly _deviceService = inject(DeviceService);
+  private readonly _conversationService = inject(ConversationService);
+  private readonly _messageService = inject(MessageService);
 
   readonly router = inject(Router);
   readonly conversationService = inject(ConversationService);
@@ -68,6 +71,13 @@ export class ChatComponent implements OnDestroy {
         this._sideNav()?.open();
       }
     }
+  });
+
+  canClearTemporaryMessages = computed(() => {
+    return (
+      this._conversationService.isTemporaryConversation() &&
+      this._messageService.messages().length > 0
+    );
   });
 
   ngOnDestroy(): void {
@@ -106,5 +116,9 @@ export class ChatComponent implements OnDestroy {
 
   onPinConversation(conversationId: string) {
     console.log('pinning conversation', conversationId);
+  }
+
+  onClearMessages() {
+    this._messageService.resetState();
   }
 }

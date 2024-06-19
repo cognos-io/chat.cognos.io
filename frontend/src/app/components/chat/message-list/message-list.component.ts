@@ -11,6 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import {
   MatSlideToggleChange,
   MatSlideToggleModule,
@@ -36,6 +37,7 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
     InfiniteScrollModule,
     MatSlideToggleModule,
     MatTooltipModule,
+    MatIconModule,
   ],
   template: `
     <div
@@ -51,9 +53,8 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
       @for (message of messages; track message.record_id) {
         <app-message-list-item [message]="message"></app-message-list-item>
       } @empty {
-        <div
-          class="flex h-full flex-col items-center justify-between lg:mt-auto lg:h-1/2"
-        >
+        <div class="flex h-full flex-col items-center justify-between">
+          <div></div>
           <div
             class="prose flex flex-col items-center justify-center gap-4 text-center prose-headings:m-0"
           >
@@ -61,8 +62,9 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
               <h1>🥷</h1>
               <h3>Temporary chat</h3>
               <p class="text-balance">
-                Your messages will not be saved and if you leave this conversation you
-                will not be able to get your messages back again.
+                Your messages will not be saved and if you leave this conversation or
+                clear with the '<mat-icon fontSet="bi" fontIcon="bi-fire"></mat-icon>'
+                button you will not be able to get your messages back again.
               </p>
             } @else {
               <h1>👋</h1>
@@ -70,7 +72,9 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
             }
           </div>
           <div class="prose flex flex-col items-center">
-            <mat-slide-toggle (change)="onToggleTemporaryChat($event)"
+            <mat-slide-toggle
+              (change)="onToggleTemporaryChat($event)"
+              [checked]="conversationService.isTemporaryConversation()"
               ><span
                 class="underline decoration-dashed"
                 matTooltip="Enabling a temporary chat will mean that messages are never stored and will be deleted after the chat is closed"
