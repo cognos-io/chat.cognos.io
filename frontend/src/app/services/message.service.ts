@@ -194,7 +194,9 @@ export class MessageService {
 
           const conversation = this._conversationService.conversation();
 
-          if (!conversation) {
+          // Create a new conversation if there is no conversation selected
+          // and this is not a temporary conversation
+          if (!conversation && !this._conversationService.isTemporaryConversation()) {
             this._isNewConversation$.next(true);
             this._conversationService.newConversation$.next({
               title: 'New Conversation',
@@ -348,6 +350,7 @@ export class MessageService {
   public readonly status$ = toObservable(this.status);
 
   public readonly nextPage = this.state.nextPage;
+  public readonly resetState = this.state.resetState;
 
   // helper methods
   private fetchMessages(
@@ -425,7 +428,9 @@ export class MessageService {
     messageRequest: MessageRequest,
   ): Observable<ChatCompletionResponseWithMetadata> {
     const conversation = this._conversationService.conversation();
-    if (!conversation) {
+    const isTemporaryConversation = this._conversationService.isTemporaryConversation();
+
+    if (!conversation && !isTemporaryConversation) {
       throw new Error('No conversation selected');
     }
 
@@ -434,17 +439,30 @@ export class MessageService {
     // Create a message context based on the message history
     const messages = this.createMessageContext();
 
+    const messageMetadata: {
+      conversation_id?: string;
+      parent_message_id?: string;
+      request_id: string;
+      agent_id: string;
+      is_temporary_conversation?: boolean;
+    } = {
+      parent_message_id: messageRequest.parentMessageId,
+      request_id: messageRequest.requestId,
+      agent_id: this._agentService.selectedAgent().id,
+      is_temporary_conversation: isTemporaryConversation,
+    };
+
+    // appease the type checker
+    if (!isTemporaryConversation && conversation) {
+      messageMetadata.conversation_id = conversation.record.id;
+    }
+
     return from(
       this._openAi.chat.completions.create({
         messages,
         model: this._modelService.selectedModel().id,
         metadata: {
-          cognos: {
-            parent_message_id: messageRequest.parentMessageId,
-            request_id: messageRequest.requestId,
-            agent_id: this._agentService.selectedAgent().id,
-            conversation_id: conversation.record.id,
-          },
+          cognos: messageMetadata,
         },
       }),
     ).pipe(

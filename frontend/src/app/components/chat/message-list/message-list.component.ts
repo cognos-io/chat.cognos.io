@@ -11,17 +11,21 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
+import {
+  MatSlideToggleChange,
+  MatSlideToggleModule,
+} from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { ReplaySubject, debounceTime, fromEvent, takeUntil } from 'rxjs';
 
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
-import { IceBreaker } from '@app/interfaces/ice-breaker';
 import { Message } from '@app/interfaces/message';
-import { MessageService } from '@app/services/message.service';
+import { ConversationService } from '@app/services/conversation.service';
 
-import { IcebreakersComponent } from '../icebreakers/icebreakers.component';
 import { MessageListItemComponent } from '../message-list-item/message-list-item.component';
 
 @Component({
@@ -29,9 +33,11 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
   standalone: true,
   imports: [
     MessageListItemComponent,
-    IcebreakersComponent,
     LoadingIndicatorComponent,
     InfiniteScrollModule,
+    MatSlideToggleModule,
+    MatTooltipModule,
+    MatIconModule,
   ],
   template: `
     <div
@@ -47,18 +53,35 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
       @for (message of messages; track message.record_id) {
         <app-message-list-item [message]="message"></app-message-list-item>
       } @empty {
-        <div
-          class="flex h-full flex-col items-center justify-between lg:mt-auto lg:h-1/2"
-        >
+        <div class="flex h-full flex-col items-center justify-between">
+          <div></div>
           <div
             class="prose flex flex-col items-center justify-center gap-4 text-center prose-headings:m-0"
           >
-            <h1>👋</h1>
-            <h3>You're using Cognos secure AI messaging</h3>
+            @if (conversationService.isTemporaryConversation()) {
+              <h1>🥷</h1>
+              <h3>Temporary chat</h3>
+              <p class="text-balance">
+                Your messages will not be saved and if you leave this conversation or
+                clear with the '<mat-icon fontSet="bi" fontIcon="bi-fire"></mat-icon>'
+                button you will not be able to get your messages back again.
+              </p>
+            } @else {
+              <h1>👋</h1>
+              <h3>You're using Cognos secure AI messaging</h3>
+            }
           </div>
-          <app-icebreakers
-            (iceBreakerSelected)="onIceBreakerSelected($event)"
-          ></app-icebreakers>
+          <div class="prose flex flex-col items-center">
+            <mat-slide-toggle
+              (change)="onToggleTemporaryChat($event)"
+              [checked]="conversationService.isTemporaryConversation()"
+              ><span
+                class="underline decoration-dashed"
+                matTooltip="Enabling a temporary chat will mean that messages are never stored and will be deleted after the chat is closed"
+                >Temporary chat</span
+              ></mat-slide-toggle
+            >
+          </div>
         </div>
       }
       @if (messageSending) {
@@ -93,10 +116,11 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
 
   private readonly _wrapper = viewChild('wrapper', { read: ElementRef });
 
-  private readonly _messageService = inject(MessageService);
   private readonly _firstLoad = signal(true);
   private readonly _atBottom = signal(false);
   private destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
+
+  readonly conversationService = inject(ConversationService);
 
   constructor() {
     effect(() => {
@@ -117,11 +141,8 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
     this.nextPage.emit();
   }
 
-  onIceBreakerSelected(iceBreaker: IceBreaker): void {
-    this._messageService.sendMessage$.next({
-      content: iceBreaker.prompt,
-      requestId: self.crypto.randomUUID(),
-    });
+  onToggleTemporaryChat(event: MatSlideToggleChange): void {
+    this.conversationService.setIsTemporaryConversation(event.checked);
   }
 
   ngAfterViewInit(): void {

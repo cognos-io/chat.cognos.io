@@ -23,6 +23,12 @@ mat-sidenav {
   flex: 1;
 }
 
+.is-temporary {
+  .sidebar-container {
+    @apply bg-teal-50;
+  }
+}
+
 .is-mobile {
   .toolbar {
     position: fixed;

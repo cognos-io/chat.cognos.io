@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, PLATFORM_ID, effect, inject } from '@angular/core';
+import { Component, PLATFORM_ID, computed, effect, inject } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -10,8 +10,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AgentService } from '@app/services/agent.service';
+import { ConversationService } from '@app/services/conversation.service';
+import { DeviceService } from '@app/services/device.service';
 import {
   MessageRequest,
   MessageService,
@@ -31,13 +34,11 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     MatInputModule,
     MatIconModule,
     MatDialogModule,
+    MatTooltipModule,
   ],
-  template: `<form
-      class="message-form"
-      [formGroup]="messageForm"
-      (submit)="sendMessage()"
-    >
-      <mat-form-field class="w-full">
+  template: `
+    <form class="message-form gap-2" [formGroup]="messageForm" (submit)="sendMessage()">
+      <mat-form-field class="flex-grow">
         <mat-label>Chat to an AI</mat-label>
         <textarea
           formControlName="content"
@@ -49,6 +50,16 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
           (keydown.control.enter)="isMac ? undefined : sendMessage()"
           (keydown.meta.enter)="isMac ? sendMessage() : undefined"
         ></textarea>
+        @if (canClearTemporaryMessages() && !isMobile()) {
+          <button
+            mat-icon-button
+            matPrefix
+            matTooltip="Clears all messages. Unrecoverable."
+            (click)="onClearMessages()"
+          >
+            <mat-icon fontSet="bi" fontIcon="bi-fire"></mat-icon>
+          </button>
+        }
         @if (messageForm.valid) {
           <button type="submit" matSuffix mat-icon-button="">
             <mat-icon fontSet="bi" fontIcon="bi-send-fill"></mat-icon>
@@ -79,7 +90,8 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
           </button>
         </div>
       </div>
-    </div> `,
+    </div>
+  `,
   styles: `
     .message-form {
       width: 100%;
@@ -96,10 +108,14 @@ export class MessageFormComponent {
   private _fb = inject(FormBuilder);
   private _dialog = inject(MatDialog);
   private _platformId = inject(PLATFORM_ID);
+  private readonly _conversationService = inject(ConversationService);
+  private readonly _deviceService = inject(DeviceService);
 
   private _previousMessage = '';
 
   isMac = false;
+  isMobile = computed(() => this._deviceService.isMobile());
+
   public readonly messageService = inject(MessageService);
   public readonly agentService = inject(AgentService);
   public readonly modelService = inject(ModelService);
@@ -161,5 +177,16 @@ export class MessageFormComponent {
 
   enableForm() {
     this.messageForm.enable();
+  }
+
+  canClearTemporaryMessages = computed(() => {
+    return (
+      this._conversationService.isTemporaryConversation() &&
+      this.messageService.messages().length > 0
+    );
+  });
+
+  onClearMessages() {
+    this.messageService.resetState();
   }
 }

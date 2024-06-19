@@ -1,11 +1,30 @@
-<div class="wrapper" [class.is-mobile]="isMobile()">
-  <mat-toolbar color="primary" class="toolbar" role="heading">
-    <button mat-icon-button (click)="sideNav.toggle()">
-      <mat-icon color="secondary" fontSet="bi" fontIcon="bi-list"></mat-icon>
-    </button>
-    <div class="flex w-full items-center justify-center md:ms-4 md:justify-start">
-      <app-cognos-logo class="-ms-10 h-6 md:ms-0"></app-cognos-logo>
-    </div>
+<div
+  class="wrapper"
+  [class.is-mobile]="isMobile()"
+  [class.is-temporary]="conversationService.isTemporaryConversation()"
+>
+  <mat-toolbar class="toolbar" role="heading">
+    <mat-toolbar-row>
+      <button mat-icon-button (click)="sideNav.toggle()">
+        <mat-icon color="secondary" fontSet="bi" fontIcon="bi-list"></mat-icon>
+      </button>
+      <div class="flex w-full items-center justify-center md:ms-4 md:justify-start">
+        <app-cognos-logo class="-ms-10 h-6 md:ms-0"></app-cognos-logo>
+      </div>
+    </mat-toolbar-row>
+    @if (isMobile()) {
+      <mat-toolbar-row style="height: auto" class="justify-end">
+        @if (canClearTemporaryMessages()) {
+          <button
+            mat-icon-button
+            matTooltip="Clears all messages. Unrecoverable."
+            (click)="onClearMessages()"
+          >
+            <mat-icon fontSet="bi" fontIcon="bi-fire"></mat-icon>
+          </button>
+        }
+      </mat-toolbar-row>
+    }
   </mat-toolbar>
   <mat-sidenav-container
     class="page sidebar-container"
@@ -20,7 +39,7 @@
       role="navigation"
     >
       <div class="sidebar h-full">
-        <button mat-button color="primary" (click)="router.navigateByUrl('')">
+        <button mat-button (click)="onNewConversation()">
           <mat-icon fontSet="bi" fontIcon="bi-plus-circle-fill"></mat-icon>
           <ng-container i18n="button|action to create a new conversation">
             New conversation
