@@ -89,6 +89,16 @@ export class ChatComponent implements OnDestroy {
     this.dialog.open(ContactHelpDialogComponent);
   }
 
+  onNewConversation() {
+    if (this.canClearTemporaryMessages()) {
+      this._messageService.resetState();
+    }
+    // don't navigate if we're already on the new conversation page
+    if (this.router.url !== '/') {
+      this.router.navigateByUrl('/');
+    }
+  }
+
   onRenameConversation(conversationId: string) {
     this.dialog.open(EditConversationDialogComponent, {
       data: {
