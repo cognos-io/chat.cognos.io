@@ -36,7 +36,9 @@ export class AppComponent {
     browserInactive$(30 * 60 * 1000)
       .pipe(takeUntilDestroyed())
       .subscribe(() => {
-        this._router.navigate(['', 'auth', 'logout']);
+        if (this.auth.user()) {
+          this._router.navigate(['', 'auth', 'logout']);
+        }
       });
   }
 }

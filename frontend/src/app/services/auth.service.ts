@@ -113,7 +113,7 @@ export class AuthService implements OnDestroy {
     this._storeUnsubscribe = this._pb.authStore.onChange((token, model) => {
       if (this._pb.authStore.isValid) {
         this._user$.next(model);
-      } else {
+      } else if (model) {
         this._pb
           .collection(this._authCollection)
           .authRefresh()
