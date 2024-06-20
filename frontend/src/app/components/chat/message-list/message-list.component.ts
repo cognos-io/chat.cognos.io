@@ -26,6 +26,7 @@ import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loa
 import { Message } from '@app/interfaces/message';
 import { ConversationService } from '@app/services/conversation.service';
 
+import { FeatureBentoComponent } from '../feature-bento/feature-bento.component';
 import { MessageListItemComponent } from '../message-list-item/message-list-item.component';
 
 @Component({
@@ -38,6 +39,7 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
     MatSlideToggleModule,
     MatTooltipModule,
     MatIconModule,
+    FeatureBentoComponent,
   ],
   template: `
     <div
@@ -70,6 +72,7 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
               <h1>👋</h1>
               <h3>You're using Cognos secure AI messaging</h3>
             }
+            <app-feature-bento></app-feature-bento>
           </div>
           <div class="prose flex flex-col items-center">
             <mat-slide-toggle
