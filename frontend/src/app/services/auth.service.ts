@@ -1,5 +1,6 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 
 import PocketBase, { AuthMethodsList, AuthModel } from 'pocketbase';
 
@@ -35,6 +36,7 @@ export class AuthService implements OnDestroy {
   private readonly _authCollection = 'users';
   private readonly _pb: TypedPocketBase = inject(PocketBase);
   private readonly _storeUnsubscribe: () => void;
+  private readonly _router = inject(Router);
 
   // sources
   readonly login$ = new Subject<boolean>();
@@ -111,6 +113,15 @@ export class AuthService implements OnDestroy {
     this._storeUnsubscribe = this._pb.authStore.onChange((token, model) => {
       if (this._pb.authStore.isValid) {
         this._user$.next(model);
+      } else {
+        this._pb
+          .collection(this._authCollection)
+          .authRefresh()
+          .catch((error) => {
+            console.error('Error refreshing auth token', error);
+            this._errorService.alert('Error refreshing auth token');
+            this._router.navigate(['', 'auth', 'logout']);
+          });
       }
     }, true);
   }
