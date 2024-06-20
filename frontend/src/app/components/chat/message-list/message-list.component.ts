@@ -60,7 +60,7 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
           >
             @if (conversationService.isTemporaryConversation()) {
               <h1>🥷</h1>
-              <h3>Temporary chat</h3>
+              <h3>Incognito mode enabled</h3>
               <p class="text-balance">
                 Your messages will not be saved and if you leave this conversation or
                 clear with the '<mat-icon fontSet="bi" fontIcon="bi-fire"></mat-icon>'
