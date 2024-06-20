@@ -31,6 +31,18 @@ export class ModelService {
 
         return selectedModel || defaultModel;
       },
+      groupedModels: () => {
+        return state
+          .modelList()
+          .reduce<{ [key: string]: Array<Model> }>((acc, model) => {
+            const providerId = model.providerId;
+            if (!acc[providerId]) {
+              acc[providerId] = [];
+            }
+            acc[providerId].push(model);
+            return acc;
+          }, {});
+      },
     }),
     actionSources: {
       selectModel: (state, $action: Observable<string>) => {
@@ -54,6 +66,7 @@ export class ModelService {
   public modelList = this.state.modelList;
 
   public selectModel = this.state.selectModel;
+  public groupedModels = this.state.groupedModels;
 
   public getModel(id: string): Signal<Model | undefined> {
     return computed(() => this.state().modelList.find((model) => model.id === id));
