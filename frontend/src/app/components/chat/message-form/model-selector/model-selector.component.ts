@@ -31,16 +31,21 @@ import { ProviderService } from '@app/services/provider.service';
       </p>
       <h4 class="my-4 text-lg font-semibold">Available models:</h4>
 
-      <div class="flex flex-col gap-2 py-2">
+      <mat-accordion>
         @for (providerId of providerIds(); track providerId) {
           <mat-expansion-panel
             class="provider-panel"
-            expanded="true"
+            [expanded]="providerId === selectedModel.providerId"
             [ngClass]="{ active: providerId === selectedModel.providerId }"
           >
             <mat-expansion-panel-header>
-              <h5 class="text-sm font-semibold">{{ providerId }}</h5>
+              <h5 class="text-sm font-semibold">
+                {{ providerService.lookupProvider(providerId)()?.name }}
+              </h5>
             </mat-expansion-panel-header>
+            <p>
+              {{ providerService.lookupProvider(providerId)()?.description }}
+            </p>
             <ul role="list" class="divide-y divide-gray-100">
               <mat-radio-group required="true" [(ngModel)]="newModel">
                 @for (
@@ -75,7 +80,7 @@ import { ProviderService } from '@app/services/provider.service';
             </ul>
           </mat-expansion-panel>
         }
-      </div>
+      </mat-accordion>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancel</button>
@@ -101,7 +106,7 @@ import { ProviderService } from '@app/services/provider.service';
 })
 export class ModelSelectorComponent {
   readonly modelService = inject(ModelService);
-  private readonly _providerService = inject(ProviderService);
+  readonly providerService = inject(ProviderService);
 
   newModel: Model = this.modelService.selectedModel();
 
