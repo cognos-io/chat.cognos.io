@@ -1,18 +1,23 @@
+import { CommonModule } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatRadioModule } from '@angular/material/radio';
 
 import { TagComponent } from '@app/components/tag/tag.component';
 import { Model } from '@app/interfaces/model';
 import { ModelService } from '@app/services/model.service';
+import { ProviderService } from '@app/services/provider.service';
 
 @Component({
   selector: 'app-model-selector',
   standalone: true,
   imports: [
+    CommonModule,
     MatDialogModule,
+    MatExpansionModule,
     MatButtonModule,
     MatRadioModule,
     FormsModule,
@@ -26,38 +31,51 @@ import { ModelService } from '@app/services/model.service';
       </p>
       <h4 class="my-4 text-lg font-semibold">Available models:</h4>
 
-      @for (providerId of providerIds(); track providerId) {
-        <h5 class="text-sm font-semibold">{{ providerId }}</h5>
-        <ul role="list" class="divide-y divide-gray-100">
-          <mat-radio-group required="true" [(ngModel)]="newModel">
-            @for (model of modelService.groupedModels()[providerId]; track model.id) {
-              <li class="flex items-center justify-between gap-x-6 py-5">
-                <mat-radio-button [value]="model" class="flex flex-grow gap-x-4">
-                  <div class="min-w-0 flex-auto">
-                    @if (model.id === selectedModel.id) {
-                      <span
-                        class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
-                        >Currently active</span
-                      >
-                    }
-                    <p class="text-sm font-semibold leading-6 text-gray-900">
-                      {{ model.name }}
-                    </p>
-                    <p class="my-2 text-gray-700">{{ model.description }}</p>
-                    @if (model.tags && model.tags.length > 0) {
-                      <div class="mt-2 flex gap-x-2">
-                        @for (tag of model.tags; track tag) {
-                          <app-tag [tag]="tag"></app-tag>
+      <div class="flex flex-col gap-2 py-2">
+        @for (providerId of providerIds(); track providerId) {
+          <mat-expansion-panel
+            class="provider-panel"
+            expanded="true"
+            [ngClass]="{ active: providerId === selectedModel.providerId }"
+          >
+            <mat-expansion-panel-header>
+              <h5 class="text-sm font-semibold">{{ providerId }}</h5>
+            </mat-expansion-panel-header>
+            <ul role="list" class="divide-y divide-gray-100">
+              <mat-radio-group required="true" [(ngModel)]="newModel">
+                @for (
+                  model of modelService.groupedModels()[providerId];
+                  track model.id
+                ) {
+                  <li class="flex items-center justify-between gap-x-6 py-5">
+                    <mat-radio-button [value]="model" class="flex flex-grow gap-x-4">
+                      <div class="min-w-0 flex-auto">
+                        @if (model.id === selectedModel.id) {
+                          <span
+                            class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
+                            >Currently active</span
+                          >
+                        }
+                        <p class="text-sm font-semibold leading-6 text-gray-900">
+                          {{ model.name }}
+                        </p>
+                        <p class="my-2 text-gray-700">{{ model.description }}</p>
+                        @if (model.tags && model.tags.length > 0) {
+                          <div class="mt-2 flex gap-x-2">
+                            @for (tag of model.tags; track tag) {
+                              <app-tag [tag]="tag"></app-tag>
+                            }
+                          </div>
                         }
                       </div>
-                    }
-                  </div>
-                </mat-radio-button>
-              </li>
-            }
-          </mat-radio-group>
-        </ul>
-      }
+                    </mat-radio-button>
+                  </li>
+                }
+              </mat-radio-group>
+            </ul>
+          </mat-expansion-panel>
+        }
+      </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancel</button>
@@ -71,10 +89,19 @@ import { ModelService } from '@app/services/model.service';
         Select
       </button>
     </mat-dialog-actions>`,
-  styles: ``,
+  styles: `
+    mat-expansion-panel.provider-panel {
+      @apply shadow-none;
+
+      &.active {
+        @apply border border-green-600/50 shadow shadow-green-900/20 ring-green-600/20;
+      }
+    }
+  `,
 })
 export class ModelSelectorComponent {
   readonly modelService = inject(ModelService);
+  private readonly _providerService = inject(ProviderService);
 
   newModel: Model = this.modelService.selectedModel();
 
