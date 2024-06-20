@@ -7,6 +7,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -24,6 +25,18 @@ import { ModelService } from '@app/services/model.service';
 
 import { AgentSelectorComponent } from './agent-selector/agent-selector.component';
 import { ModelSelectorComponent } from './model-selector/model-selector.component';
+
+/** Error when invalid control is touched. */
+export class TouchedErrorStateMatcher implements ErrorStateMatcher {
+  isErrorState(control: FormControl | null): boolean {
+    return !!(
+      control &&
+      control.invalid &&
+      control.dirty &&
+      (control.value || '').trim().length > 0
+    );
+  }
+}
 
 @Component({
   selector: 'app-message-form',
@@ -46,6 +59,7 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
           name="message-form"
           id="message-form"
           matInput
+          [errorStateMatcher]="errorStateMatcher"
           placeholder="Teach me about..."
           (keydown.control.enter)="isMac ? undefined : sendMessage()"
           (keydown.meta.enter)="isMac ? sendMessage() : undefined"
@@ -115,6 +129,8 @@ export class MessageFormComponent {
 
   isMac = false;
   isMobile = computed(() => this._deviceService.isMobile());
+
+  public readonly errorStateMatcher = new TouchedErrorStateMatcher();
 
   public readonly messageService = inject(MessageService);
   public readonly agentService = inject(AgentService);
