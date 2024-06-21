@@ -149,9 +149,9 @@ export class FeatureBentoComponent {
   });
 
   readonly bentoItems = computed(() => {
-    // If mobile only return 3, otherwise return 5
+    // If mobile return a smaller subset
     return this._deviceService.isMobile()
-      ? this._shuffledBentoItems().slice(0, 2)
+      ? this._shuffledBentoItems().slice(0, 1)
       : this._shuffledBentoItems().slice(0, 5);
   });
 
