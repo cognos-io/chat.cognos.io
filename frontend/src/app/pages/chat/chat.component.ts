@@ -18,6 +18,7 @@ import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
+import { UserPreferencesService } from '@app/services/user-preferences.service';
 
 import { ConversationService } from '../../services/conversation.service';
 import { VaultService } from '../../services/vault.service';
@@ -48,6 +49,7 @@ export class ChatComponent implements OnDestroy {
   private readonly _deviceService = inject(DeviceService);
   private readonly _conversationService = inject(ConversationService);
   private readonly _messageService = inject(MessageService);
+  private readonly _preferencesService = inject(UserPreferencesService);
 
   readonly router = inject(Router);
   readonly conversationService = inject(ConversationService);
@@ -107,7 +109,7 @@ export class ChatComponent implements OnDestroy {
   }
 
   onPinConversation(conversationId: string) {
-    console.log('pinning conversation', conversationId);
+    this._preferencesService.pinConversation(conversationId);
   }
 
   onClearMessages() {
