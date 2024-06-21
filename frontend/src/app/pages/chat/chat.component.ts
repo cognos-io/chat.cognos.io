@@ -63,16 +63,6 @@ export class ChatComponent implements OnDestroy {
 
   readonly isMobile = computed(() => this._deviceService.isMobile());
 
-  private readonly _ = effect(() => {
-    if (this.conversationService.isTemporaryConversation()) {
-      this._sideNav()?.close();
-    } else {
-      if (!this.isMobile()) {
-        this._sideNav()?.open();
-      }
-    }
-  });
-
   canClearTemporaryMessages = computed(() => {
     return (
       this._conversationService.isTemporaryConversation() &&
