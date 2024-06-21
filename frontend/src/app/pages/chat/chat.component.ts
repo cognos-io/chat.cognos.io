@@ -1,18 +1,11 @@
-import {
-  Component,
-  OnDestroy,
-  computed,
-  effect,
-  inject,
-  viewChild,
-} from '@angular/core';
+import { Component, OnDestroy, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterModule } from '@angular/router';
@@ -52,7 +45,6 @@ export class ChatComponent implements OnDestroy {
   private readonly _destroyed$ = new Subject<void>();
 
   private readonly dialog = inject(MatDialog);
-  private readonly _sideNav = viewChild<MatSidenav>('sideNav');
   private readonly _deviceService = inject(DeviceService);
   private readonly _conversationService = inject(ConversationService);
   private readonly _messageService = inject(MessageService);
@@ -62,16 +54,6 @@ export class ChatComponent implements OnDestroy {
   readonly vaultService = inject(VaultService);
 
   readonly isMobile = computed(() => this._deviceService.isMobile());
-
-  private readonly _ = effect(() => {
-    if (this.conversationService.isTemporaryConversation()) {
-      this._sideNav()?.close();
-    } else {
-      if (!this.isMobile()) {
-        this._sideNav()?.open();
-      }
-    }
-  });
 
   canClearTemporaryMessages = computed(() => {
     return (

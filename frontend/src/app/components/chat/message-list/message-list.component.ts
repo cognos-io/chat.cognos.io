@@ -26,6 +26,7 @@ import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loa
 import { Message } from '@app/interfaces/message';
 import { ConversationService } from '@app/services/conversation.service';
 
+import { FeatureBentoComponent } from '../feature-bento/feature-bento.component';
 import { MessageListItemComponent } from '../message-list-item/message-list-item.component';
 
 @Component({
@@ -38,6 +39,7 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
     MatSlideToggleModule,
     MatTooltipModule,
     MatIconModule,
+    FeatureBentoComponent,
   ],
   template: `
     <div
@@ -53,25 +55,35 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
       @for (message of messages; track message.record_id) {
         <app-message-list-item [message]="message"></app-message-list-item>
       } @empty {
-        <div class="flex h-full flex-col items-center justify-between">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+        <div class="circle circle-3"></div>
+        <div class="flex h-full w-full flex-col items-center justify-between">
           <div></div>
-          <div
-            class="prose flex flex-col items-center justify-center gap-4 text-center prose-headings:m-0"
-          >
-            @if (conversationService.isTemporaryConversation()) {
-              <h1>🥷</h1>
-              <h3>Incognito mode enabled</h3>
-              <p class="text-balance">
-                Your messages will not be saved and if you leave this conversation or
-                clear with the '<mat-icon fontSet="bi" fontIcon="bi-fire"></mat-icon>'
-                button you will not be able to get your messages back again.
-              </p>
-            } @else {
-              <h1>👋</h1>
-              <h3>You're using Cognos secure AI messaging</h3>
-            }
-          </div>
-          <div class="prose flex flex-col items-center">
+          <div class="flex w-full flex-col items-center justify-center gap-8">
+            <app-feature-bento
+              class="w-3/4 lg:max-w-[120ch] xl:w-1/2"
+            ></app-feature-bento>
+
+            <div
+              class="prose flex flex-col items-center gap-4 text-center prose-headings:m-0"
+            >
+              @if (conversationService.isTemporaryConversation()) {
+                <h3 class="hidden md:block">🥷 Incognito mode enabled</h3>
+                <p class="text-balance">
+                  Your messages will not be saved and if you leave this conversation or
+                  clear with the '<mat-icon fontSet="bi" fontIcon="bi-fire"></mat-icon>'
+                  button you will not be able to get your messages back again.
+                </p>
+              } @else {
+                <h3 class="hidden md:block">
+                  👋 You're using Cognos secure AI messaging
+                </h3>
+                <p class="text-balance">
+                  Get started by sending a message using the box below.
+                </p>
+              }
+            </div>
             <mat-slide-toggle
               (change)="onToggleTemporaryChat($event)"
               [checked]="conversationService.isTemporaryConversation()"
@@ -90,6 +102,8 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
     </div>
   `,
   styles: `
+    @import 'include-media/dist/include-media';
+
     :host {
       display: flex;
       flex-direction: column;
@@ -103,6 +117,53 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
       flex-direction: column;
       flex-grow: 1;
       overflow-y: auto;
+    }
+
+    .circle {
+      @apply absolute rounded-full bg-gradient-to-r blur-xl;
+
+      top: var(--circle-top, unset);
+      bottom: var(--circle-bottom, unset);
+      left: var(--circle-left, unset);
+      right: var(--circle-right, unset);
+      height: var(--circle-size, 100px);
+      width: var(--circle-size, 100px);
+
+      &-1 {
+        --circle-top: 15%;
+        --circle-left: 10%;
+        --circle-size: 100px;
+
+        @apply from-cyan-500/20 to-blue-500/20;
+
+        @include media('>=tablet') {
+          --circle-size: 350px;
+        }
+      }
+
+      &-2 {
+        --circle-bottom: 5%;
+        --circle-right: 15%;
+        --circle-size: 200px;
+
+        @apply from-violet-500/20 to-fuchsia-500/20;
+
+        @include media('>=tablet') {
+          --circle-size: 400px;
+        }
+      }
+
+      &-3 {
+        --circle-top: 30%;
+        --circle-right: 10%;
+        --circle-size: 150px;
+
+        @apply from-purple-500/20 to-pink-500/20;
+
+        @include media('>=tablet') {
+          --circle-size: 350px;
+        }
+      }
     }
   `,
 })
