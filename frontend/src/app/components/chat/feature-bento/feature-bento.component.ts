@@ -9,7 +9,6 @@ interface FeatureBentoItem {
   description: {
     small: string; // small bento items
     medium: string; // medium bento items
-    large: string; // large bento items
   };
   color: string; // tailwind color
   icon: string; // bootstrap icon name
@@ -17,11 +16,10 @@ interface FeatureBentoItem {
 
 const featureBentoItems: FeatureBentoItem[] = [
   {
-    title: 'Use multiple AI models',
+    title: 'Multi-model support',
     description: {
-      small: 'Small bento 1',
-      medium: 'Medium bento 1',
-      large: 'Large bento 1',
+      small: 'Pick from a variety of AI models',
+      medium: 'Use both proprietary and open-source AI models to get the best results',
     },
     color: 'blue',
     icon: 'bi-1-circle-fill',
@@ -29,19 +27,17 @@ const featureBentoItems: FeatureBentoItem[] = [
   {
     title: 'No training on your data',
     description: {
-      small: 'Small bento 2',
-      medium: 'Medium bento 2',
-      large: 'Large bento 2',
+      small: 'Keep your data private',
+      medium: 'Your data can never be used to train future AI models',
     },
     color: 'teal',
     icon: 'bi-1-circle-fill',
   },
   {
-    title: 'Conversations encrypted',
+    title: 'Messages encrypted',
     description: {
-      small: 'Small bento 3',
-      medium: 'Medium bento 3',
-      large: 'Large bento 3',
+      small: 'Secure & private',
+      medium: 'Using strong encryption to keep your data secure & private',
     },
     color: 'violet',
     icon: 'bi-1-circle-fill',
@@ -49,9 +45,9 @@ const featureBentoItems: FeatureBentoItem[] = [
   {
     title: 'No risk of leaks',
     description: {
-      small: 'Small bento 4',
-      medium: 'Medium bento 4',
-      large: 'Large bento 4',
+      small: 'Only you can see your data',
+      medium:
+        'Only you can access your data. Without your permission, no one can access it',
     },
     color: 'blue',
     icon: 'bi-1-circle-fill',
@@ -59,9 +55,8 @@ const featureBentoItems: FeatureBentoItem[] = [
   {
     title: 'Incognito conversations',
     description: {
-      small: 'Small bento 5',
-      medium: 'Medium bento 5',
-      large: 'Large bento 5',
+      small: 'Chats never saved',
+      medium: 'Option to enter incognito mode where your chats are never saved',
     },
     color: 'teal',
     icon: 'bi-1-circle-fill',
@@ -69,9 +64,8 @@ const featureBentoItems: FeatureBentoItem[] = [
   {
     title: 'Auto account lock',
     description: {
-      small: 'Small bento 6',
-      medium: 'Medium bento 6',
-      large: 'Large bento 6',
+      small: 'Log out after inactivity',
+      medium: 'Protect your data by auto logging out after inactivity',
     },
     color: 'violet',
     icon: 'bi-1-circle-fill',
@@ -85,10 +79,10 @@ const featureBentoItems: FeatureBentoItem[] = [
   template: `<div class="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-8">
     @for (bentoItem of bentoItems(); track bentoItem.title; let index = $index) {
       <div
-        class="flex h-full flex-col justify-between rounded-lg border border-opacity-30 bg-slate-50/40 p-4 backdrop-blur-2xl transition-all md:p-8"
+        class="flex h-full flex-col justify-between gap-4 rounded-lg border border-opacity-30 bg-slate-50/40 p-4 backdrop-blur-2xl transition-all md:p-8"
         [ngClass]="{
           'col-span-2': isMediumBento(index),
-          'aspect-square': !isMediumBento(index),
+          'lg:aspect-square': !isMediumBento(index),
           blue: bentoItem.color === 'blue',
           violet: bentoItem.color === 'violet',
           teal: bentoItem.color === 'teal'
@@ -156,9 +150,9 @@ export class FeatureBentoComponent {
   });
 
   readonly bentoItems = computed(() => {
-    // If mobile only return 2, otherwise return 5
+    // If mobile only return 3, otherwise return 5
     return this._deviceService.isMobile()
-      ? this._shuffledBentoItems().slice(0, 2)
+      ? this._shuffledBentoItems().slice(0, 3)
       : this._shuffledBentoItems().slice(0, 5);
   });
 

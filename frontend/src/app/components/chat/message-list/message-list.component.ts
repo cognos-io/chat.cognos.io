@@ -104,6 +104,8 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
     </div>
   `,
   styles: `
+    @import 'include-media/dist/include-media';
+
     :host {
       display: flex;
       flex-direction: column;
@@ -132,17 +134,25 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
       &-1 {
         --circle-top: 15%;
         --circle-left: 10%;
-        --circle-size: 350px;
+        --circle-size: 100px;
 
         @apply from-cyan-500/20 to-blue-500/20;
+
+        @include media('>=tablet') {
+          --circle-size: 350px;
+        }
       }
 
       &-2 {
         --circle-bottom: 5%;
         --circle-right: 15%;
-        --circle-size: 400px;
+        --circle-size: 200px;
 
         @apply from-violet-500/20 to-fuchsia-500/20;
+
+        @include media('>=tablet') {
+          --circle-size: 400px;
+        }
       }
 
       &-3 {
@@ -151,6 +161,10 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
         --circle-size: 150px;
 
         @apply from-purple-500/20 to-pink-500/20;
+
+        @include media('>=tablet') {
+          --circle-size: 350px;
+        }
       }
     }
   `,
