@@ -82,7 +82,6 @@ const featureBentoItems: FeatureBentoItem[] = [
         class="flex h-full flex-col justify-between gap-3 rounded-lg border border-opacity-30 bg-slate-50/40 p-3 backdrop-blur-2xl transition-all md:p-8"
         [ngClass]="{
           'col-span-2': isMediumBento(index),
-          'lg:aspect-square': !isMediumBento(index),
           blue: bentoItem.color === 'blue',
           violet: bentoItem.color === 'violet',
           teal: bentoItem.color === 'teal'
