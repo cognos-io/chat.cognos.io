@@ -33,7 +33,7 @@ const featureBentoItems: FeatureBentoItem[] = [
       medium: 'Medium bento 2',
       large: 'Large bento 2',
     },
-    color: 'blue',
+    color: 'teal',
     icon: 'bi-1-circle-fill',
   },
   {
@@ -43,7 +43,7 @@ const featureBentoItems: FeatureBentoItem[] = [
       medium: 'Medium bento 3',
       large: 'Large bento 3',
     },
-    color: 'blue',
+    color: 'violet',
     icon: 'bi-1-circle-fill',
   },
   {
@@ -63,7 +63,7 @@ const featureBentoItems: FeatureBentoItem[] = [
       medium: 'Medium bento 5',
       large: 'Large bento 5',
     },
-    color: 'blue',
+    color: 'teal',
     icon: 'bi-1-circle-fill',
   },
   {
@@ -73,7 +73,7 @@ const featureBentoItems: FeatureBentoItem[] = [
       medium: 'Medium bento 6',
       large: 'Large bento 6',
     },
-    color: 'blue',
+    color: 'violet',
     icon: 'bi-1-circle-fill',
   },
 ];
@@ -85,34 +85,60 @@ const featureBentoItems: FeatureBentoItem[] = [
   template: `<div class="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-8">
     @for (bentoItem of bentoItems(); track bentoItem.title; let index = $index) {
       <div
-        class=" prose flex flex-col justify-between rounded-xl bg-white p-4 shadow prose-p:m-0 md:p-8"
+        class="flex h-full flex-col justify-between rounded-lg border border-opacity-30 bg-slate-50/40 p-4 backdrop-blur-2xl transition-all md:p-8"
         [ngClass]="{
           'col-span-2': isMediumBento(index),
-          'aspect-square': !isMediumBento(index)
+          'aspect-square': !isMediumBento(index),
+          blue: bentoItem.color === 'blue',
+          violet: bentoItem.color === 'violet',
+          teal: bentoItem.color === 'teal'
         }"
       >
-        <h3 class="text-balance text-sm">{{ bentoItem.title }}</h3>
-        <div>
-          <div
-            class="float-start mb-4 me-4 flex aspect-square items-center justify-center rounded-md px-2"
-            [ngClass]="bentoItem.color"
-          >
-            <mat-icon fontSet="bi" [fontIcon]="bentoItem.icon"></mat-icon>
+        <div
+          class="icon inline-flex aspect-square items-center justify-center self-start rounded-lg px-3 ring-4 ring-white"
+          [ngClass]="bentoItem.color"
+        >
+          <mat-icon fontSet="bi" [fontIcon]="bentoItem.icon"></mat-icon>
+        </div>
+        <div class="prose mt-auto prose-p:mb-0">
+          <h3 class="text-balance text-sm lg:text-base">{{ bentoItem.title }}</h3>
+          <div>
+            <p class="text-sm">
+              @if (isMediumBento(index)) {
+                {{ bentoItem.description.medium }}
+              } @else {
+                {{ bentoItem.description.small }}
+              }
+            </p>
           </div>
-          <p class="text-sm ">
-            @if (isMediumBento(index)) {
-              {{ bentoItem.description.medium }}
-            } @else {
-              {{ bentoItem.description.small }}
-            }
-          </p>
         </div>
       </div>
     }
   </div>`,
   styles: `
     .blue {
-      @apply bg-blue-100 text-blue-900;
+      &.icon {
+        @apply bg-blue-100 text-blue-900;
+      }
+      &:hover {
+        @apply border-blue-900;
+      }
+    }
+    .violet {
+      &.icon {
+        @apply bg-violet-100 text-violet-900;
+      }
+      &:hover {
+        @apply border-violet-900;
+      }
+    }
+    .teal {
+      &.icon {
+        @apply bg-teal-100 text-teal-900;
+      }
+      &:hover {
+        @apply border-teal-900;
+      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
