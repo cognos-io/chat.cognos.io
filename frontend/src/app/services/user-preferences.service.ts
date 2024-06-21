@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 
 import PocketBase from 'pocketbase';
 
-import { Observable, from, map } from 'rxjs';
+import { Observable, Subject, from, map, take, tap } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -36,24 +36,31 @@ export class UserPreferencesService {
   private readonly _pbUserPreferencesCollection =
     this._pb.collection('user_preferences');
 
+  private readonly _pinConversation = new Subject<string>();
+  private readonly _unpinConversation = new Subject<string>();
+
   private state = signalSlice({
     initialState,
     sources: [
       // Load user preferences from the database
       this.fetchUserPreferences(),
-    ],
-    actionSources: {
-      pinConversation: (state, action$: Observable<string>) => {
-        return action$.pipe(
+      // Pin/unpin conversation
+      // Local state management
+      (state) =>
+        this._pinConversation.pipe(
           map((conversationId) => {
             return {
               pinnedConversations: [...state().pinnedConversations, conversationId],
             };
           }),
-        );
-      },
-      unpinConversation: (state, action$: Observable<string>) => {
-        return action$.pipe(
+          tap((partialState) => {
+            this.saveUserPreferences({ ...state(), ...partialState })
+              .pipe(take(1))
+              .subscribe();
+          }),
+        ),
+      (state) =>
+        this._unpinConversation.pipe(
           map((conversationId) => {
             return {
               pinnedConversations: state().pinnedConversations.filter(
@@ -61,14 +68,22 @@ export class UserPreferencesService {
               ),
             };
           }),
-        );
-      },
-    },
+          tap((partialState) => {
+            this.saveUserPreferences({ ...state(), ...partialState })
+              .pipe(take(1))
+              .subscribe();
+          }),
+        ),
+    ],
   });
 
   // sources
-  public pinConversation = this.state.pinConversation;
-  public unpinConversation = this.state.unpinConversation;
+  public pinConversation = (conversationId: string) => {
+    this._pinConversation.next(conversationId);
+  };
+  public unpinConversation = (conversationId: string) => {
+    this._unpinConversation.next(conversationId);
+  };
 
   private encryptUserPreferencesData(data: UserPreferencesData): Uint8Array {
     const userKeyPair = this._vaultService.keyPair();
@@ -120,7 +135,8 @@ export class UserPreferencesService {
 
     return from(
       this._pbUserPreferencesCollection.create({
-        data: encryptedData,
+        user: this._authService.user()?.['id'],
+        data: Base64.fromUint8Array(encryptedData),
       }),
     ).pipe(
       map((record) => {
