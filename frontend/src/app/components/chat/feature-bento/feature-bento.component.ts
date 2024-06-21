@@ -22,7 +22,7 @@ const featureBentoItems: FeatureBentoItem[] = [
       medium: 'Use both proprietary and open-source AI models to get the best results',
     },
     color: 'blue',
-    icon: 'bi-1-circle-fill',
+    icon: 'bi-robot',
   },
   {
     title: 'No training on your data',
@@ -31,7 +31,7 @@ const featureBentoItems: FeatureBentoItem[] = [
       medium: 'Your data can never be used to train future AI models',
     },
     color: 'teal',
-    icon: 'bi-1-circle-fill',
+    icon: 'bi-ban',
   },
   {
     title: 'Messages encrypted',
@@ -40,7 +40,7 @@ const featureBentoItems: FeatureBentoItem[] = [
       medium: 'Using strong encryption to keep your data secure & private',
     },
     color: 'violet',
-    icon: 'bi-1-circle-fill',
+    icon: 'bi-shield-fill-check',
   },
   {
     title: 'No risk of leaks',
@@ -50,7 +50,7 @@ const featureBentoItems: FeatureBentoItem[] = [
         'Only you can access your data. Without your permission, no one can access it',
     },
     color: 'blue',
-    icon: 'bi-1-circle-fill',
+    icon: 'bi-eye-slash-fill',
   },
   {
     title: 'Incognito conversations',
@@ -59,7 +59,7 @@ const featureBentoItems: FeatureBentoItem[] = [
       medium: 'Option to enter incognito mode where your chats are never saved',
     },
     color: 'teal',
-    icon: 'bi-1-circle-fill',
+    icon: 'bi-incognito',
   },
   {
     title: 'Auto account lock',
@@ -68,7 +68,7 @@ const featureBentoItems: FeatureBentoItem[] = [
       medium: 'Protect your data by auto logging out after inactivity',
     },
     color: 'violet',
-    icon: 'bi-1-circle-fill',
+    icon: 'bi-key-fill',
   },
 ];
 
