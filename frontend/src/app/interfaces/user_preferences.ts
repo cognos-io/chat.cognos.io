@@ -5,6 +5,10 @@ export const UserPreferencesData = z.object({
 });
 export type UserPreferencesData = z.infer<typeof UserPreferencesData>;
 
+export const emptyPreferences: UserPreferencesData = {
+  pinnedConversations: [],
+};
+
 /**
  * parseUserPreferencesData - takes a decrypted string
  * and returns a UserPreferencesData object.
