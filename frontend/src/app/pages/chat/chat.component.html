@@ -75,10 +75,21 @@
             <mat-menu #menu="matMenu">
               <button
                 mat-menu-item=""
-                (click)="onPinConversation(conversation.record.id)"
+                (click)="onPinUnpinConversation(conversation.record.id)"
               >
-                <mat-icon fontSet="bi" fontIcon="bi-pin-angle"></mat-icon>
-                Pin
+                <mat-icon
+                  fontSet="bi"
+                  [fontIcon]="
+                    isConversationPinned(conversation.record.id)
+                      ? 'bi-pin-angle-fill'
+                      : 'bi-pin-angle'
+                  "
+                />
+                @if (isConversationPinned(conversation.record.id)) {
+                  Unpin
+                } @else {
+                  Pin
+                }
               </button>
               <button
                 mat-menu-item=""

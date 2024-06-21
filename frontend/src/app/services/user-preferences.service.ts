@@ -128,4 +128,8 @@ export class UserPreferencesService {
       }),
     );
   }
+
+  public isConversationPinned(conversationId: string): boolean {
+    return this.state().pinnedConversations.includes(conversationId);
+  }
 }

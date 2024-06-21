@@ -108,8 +108,16 @@ export class ChatComponent implements OnDestroy {
       });
   }
 
-  onPinConversation(conversationId: string) {
-    this._preferencesService.pinConversation(conversationId);
+  isConversationPinned(conversationId: string) {
+    return this._preferencesService.isConversationPinned(conversationId);
+  }
+
+  onPinUnpinConversation(conversationId: string) {
+    if (this.isConversationPinned(conversationId)) {
+      this._preferencesService.unpinConversation(conversationId);
+    } else {
+      this._preferencesService.pinConversation(conversationId);
+    }
   }
 
   onClearMessages() {
