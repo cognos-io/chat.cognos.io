@@ -50,62 +50,9 @@
             conversation of conversationService.conversationList();
             track conversation.record.id
           ) {
-            <a
-              mat-list-item
-              [routerLink]="['c', conversation.record.id]"
-              class="conversation-list-item group"
-              [matTooltip]="conversation.decryptedData.title"
-              matTooltipPosition="after"
-            >
-              <p matListItemTitle>{{ conversation.decryptedData.title }}</p>
-              <div
-                matListItemMeta
-                class="conversation-list-item-actions hidden group-hover:flex group-active:flex"
-              >
-                <button
-                  mat-icon-button
-                  class="actions-button"
-                  [matMenuTriggerFor]="menu"
-                  aria-label="Open conversation menu"
-                >
-                  <mat-icon fontSet="bi" fontIcon="bi-three-dots-vertical"></mat-icon>
-                </button>
-              </div>
-            </a>
-            <mat-menu #menu="matMenu">
-              <button
-                mat-menu-item=""
-                (click)="onPinUnpinConversation(conversation.record.id)"
-              >
-                <mat-icon
-                  fontSet="bi"
-                  [fontIcon]="
-                    isConversationPinned(conversation.record.id)
-                      ? 'bi-pin-angle-fill'
-                      : 'bi-pin-angle'
-                  "
-                />
-                @if (isConversationPinned(conversation.record.id)) {
-                  Unpin
-                } @else {
-                  Pin
-                }
-              </button>
-              <button
-                mat-menu-item=""
-                (click)="onRenameConversation(conversation.record.id)"
-              >
-                <mat-icon fontSet="bi" fontIcon="bi-pencil-square"></mat-icon>
-                Edit
-              </button>
-              <button
-                mat-menu-item=""
-                (click)="onDeleteConversation(conversation.record.id)"
-              >
-                <mat-icon fontSet="bi" fontIcon="bi-trash3"></mat-icon>
-                Delete
-              </button>
-            </mat-menu>
+            <app-conversation-list-item
+              [conversation]="conversation"
+            ></app-conversation-list-item>
           }
         </mat-nav-list>
         <div class="flex justify-end gap-2">
