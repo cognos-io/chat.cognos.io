@@ -46,8 +46,23 @@
           </ng-container>
         </button>
         <mat-nav-list class="flex-grow overflow-y-auto">
+          @if (conversationService.hasPinnedConversations()) {
+            <div mat-subheader class="text-sm">Pinned</div>
+            @for (
+              conversation of conversationService.pinnedConversations();
+              track conversation.record.id
+            ) {
+              <app-conversation-list-item
+                [conversation]="conversation"
+              ></app-conversation-list-item>
+            }
+            @if (conversationService.hasNonPinnedConversations()) {
+              <mat-divider></mat-divider>
+              <div mat-subheader class="text-sm">Other</div>
+            }
+          }
           @for (
-            conversation of conversationService.conversationList();
+            conversation of conversationService.nonPinnedConversations();
             track conversation.record.id
           ) {
             <app-conversation-list-item

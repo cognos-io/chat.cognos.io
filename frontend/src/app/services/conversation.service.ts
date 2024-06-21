@@ -263,6 +263,9 @@ export class ConversationService {
   );
 
   readonly nonPinnedConversations = this.state.nonPinnedConversations;
+  readonly hasNonPinnedConversations = computed(
+    () => this.nonPinnedConversations().length > 0,
+  );
 
   readonly getConversation = (conversationId: string) =>
     computed(() => {
