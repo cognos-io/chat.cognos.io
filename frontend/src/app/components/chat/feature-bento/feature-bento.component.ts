@@ -76,10 +76,10 @@ const featureBentoItems: FeatureBentoItem[] = [
   selector: 'app-feature-bento',
   standalone: true,
   imports: [CommonModule, MatIconModule],
-  template: `<div class="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-8">
+  template: `<div class="grid grid-cols-1 gap-3 md:grid-cols-3 lg:gap-8">
     @for (bentoItem of bentoItems(); track bentoItem.title; let index = $index) {
       <div
-        class="flex h-full flex-col justify-between gap-4 rounded-lg border border-opacity-30 bg-slate-50/40 p-4 backdrop-blur-2xl transition-all md:p-8"
+        class="flex h-full flex-col justify-between gap-3 rounded-lg border border-opacity-30 bg-slate-50/40 p-3 backdrop-blur-2xl transition-all md:p-8"
         [ngClass]="{
           'col-span-2': isMediumBento(index),
           'lg:aspect-square': !isMediumBento(index),
@@ -97,7 +97,7 @@ const featureBentoItems: FeatureBentoItem[] = [
         <div class="prose mt-auto prose-p:mb-0">
           <h3 class="text-balance text-sm lg:text-base">{{ bentoItem.title }}</h3>
           <div>
-            <p class="text-sm">
+            <p class="text-balance text-sm">
               @if (isMediumBento(index)) {
                 {{ bentoItem.description.medium }}
               } @else {
@@ -152,7 +152,7 @@ export class FeatureBentoComponent {
   readonly bentoItems = computed(() => {
     // If mobile only return 3, otherwise return 5
     return this._deviceService.isMobile()
-      ? this._shuffledBentoItems().slice(0, 3)
+      ? this._shuffledBentoItems().slice(0, 2)
       : this._shuffledBentoItems().slice(0, 5);
   });
 

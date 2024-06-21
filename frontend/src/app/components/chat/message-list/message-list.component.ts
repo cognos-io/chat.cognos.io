@@ -60,32 +60,30 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
         <div class="circle circle-3"></div>
         <div class="flex h-full w-full flex-col items-center justify-between">
           <div></div>
+          <div class="flex w-full flex-col items-center justify-center gap-8">
+            <app-feature-bento
+              class="w-3/4 lg:max-w-[120ch] xl:w-1/2"
+            ></app-feature-bento>
 
-          <app-feature-bento
-            class="w-3/4 lg:max-w-[120ch] xl:w-1/2"
-          ></app-feature-bento>
-          <!-- <div class="flex w-full flex-col items-center justify-center gap-4 md:gap-8">
             <div
-              class="prose flex flex-col items-center gap-4 text-center prose-headings:m-0 "
+              class="prose flex flex-col items-center gap-4 text-center prose-headings:m-0"
             >
               @if (conversationService.isTemporaryConversation()) {
-                <h1>🥷</h1>
-                <h3>Incognito mode enabled</h3>
+                <h3 class="hidden md:block">🥷 Incognito mode enabled</h3>
                 <p class="text-balance">
                   Your messages will not be saved and if you leave this conversation or
                   clear with the '<mat-icon fontSet="bi" fontIcon="bi-fire"></mat-icon>'
                   button you will not be able to get your messages back again.
                 </p>
               } @else {
-                <h1>👋</h1>
-                <h3>You're using Cognos secure AI messaging</h3>
+                <h3 class="hidden md:block">
+                  👋 You're using Cognos secure AI messaging
+                </h3>
+                <p class="text-balance">
+                  Get started by sending a message using the box below.
+                </p>
               }
             </div>
-            <app-feature-bento
-              class="w-full md:w-3/4 lg:max-w-[100ch] xl:w-1/2"
-            ></app-feature-bento>
-          </div> -->
-          <div class="prose flex flex-col items-center">
             <mat-slide-toggle
               (change)="onToggleTemporaryChat($event)"
               [checked]="conversationService.isTemporaryConversation()"
