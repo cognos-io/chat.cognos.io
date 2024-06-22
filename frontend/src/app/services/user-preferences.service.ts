@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 
 import PocketBase from 'pocketbase';
 
-import { EMPTY, Observable, Subject, catchError, from, map, switchMap } from 'rxjs';
+import { EMPTY, Observable, Subject, catchError, from, map, of, switchMap } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -26,7 +26,10 @@ interface UserPreferencesState extends UserPreferencesData {
   recordId: string | undefined;
 }
 
-const initialState: UserPreferencesState = { ...emptyPreferences, recordId: undefined };
+const initialState: UserPreferencesState = {
+  ...emptyPreferences,
+  recordId: undefined,
+};
 
 @Injectable({
   providedIn: 'root',
@@ -49,14 +52,15 @@ export class UserPreferencesService {
   private state = signalSlice({
     initialState,
     sources: [
-      // Clear user preferences on logout
-      this._authService.logout$.pipe(
-        map(() => {
-          return initialState;
+      // We are dependent on the key pair, so we need to wait for it to be loaded
+      this._vaultService.keyPair$.pipe(
+        switchMap((keyPair) => {
+          if (keyPair) {
+            return this.fetchUserPreferences();
+          }
+          return of(initialState);
         }),
       ),
-      // Load user preferences from the database
-      this.fetchUserPreferences(),
       // Pin conversation, local state
       (state) =>
         this._pinConversation.pipe(
