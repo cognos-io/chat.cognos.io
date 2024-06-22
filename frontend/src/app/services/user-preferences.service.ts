@@ -44,9 +44,17 @@ export class UserPreferencesService {
   private readonly _pinConversation = new Subject<string>();
   private readonly _unpinConversation = new Subject<string>();
 
+  // TODO(ewan): We need a better way to trigger the remote updating of preferences
+  // e.g. a global state state trigger that reacts to state changes, sends the newly updated state to the backend and replaces the local state with the response
   private state = signalSlice({
     initialState,
     sources: [
+      // Clear user preferences on logout
+      this._authService.logout$.pipe(
+        map(() => {
+          return initialState;
+        }),
+      ),
       // Load user preferences from the database
       this.fetchUserPreferences(),
       // Pin conversation, local state
