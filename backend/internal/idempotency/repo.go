@@ -45,12 +45,15 @@ func (r *PocketBaseIdempotencyRepo) SaveIdempotentRequest(
 
 	form := forms.NewRecordUpsert(r.app, record)
 
-	form.LoadData(map[string]any{
+	err = form.LoadData(map[string]any{
 		"user":            userID,
 		"idempotency_key": idempotencyKey,
 		"status_code":     statusCode,
 		"body":            responseBodyJSON,
 	})
+	if err != nil {
+		return err
+	}
 
 	return form.Submit()
 }
