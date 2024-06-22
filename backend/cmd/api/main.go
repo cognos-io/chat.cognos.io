@@ -19,6 +19,7 @@ import (
 	"github.com/liushuangls/go-anthropic/v2"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/models"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 	oai "github.com/sashabaranov/go-openai"
 	"google.golang.org/api/option"
@@ -101,6 +102,17 @@ func bindAppHooks(
 
 		return nil
 	})
+
+	// When a message is created then update the conversation updated time.
+	// This means the user will see the conversations they have most recently interacted with at the top of the list.
+	app.OnModelAfterCreate("messages").
+		Add(func(e *core.ModelEvent) error {
+			conversationRepo := chat.NewPocketBaseConversationRepo(app)
+
+			return conversationRepo.SetConversationUpdated(
+				e.Model.(*models.Record).GetString("conversation"),
+			)
+		})
 }
 
 func run(ctx context.Context, w io.Writer, args []string) error {

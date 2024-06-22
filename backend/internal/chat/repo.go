@@ -8,6 +8,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/forms"
 	"github.com/pocketbase/pocketbase/models"
+	"github.com/pocketbase/pocketbase/tools/types"
 )
 
 // EncryptMessageData encrypts a plain text message using symmetric and asymmetric encryption.
@@ -46,6 +47,10 @@ type MessageRepo interface {
 		message MessageRecordData,
 	) (error, *models.Record)
 	DeleteMessage(messageID string) error
+}
+
+type ConversationRepo interface {
+	SetConversationUpdated(conversationID string, updatedAt types.DateTime) error
 }
 
 type PocketBaseMessageRepo struct {
@@ -100,6 +105,35 @@ func NewPocketBaseMessageRepo(app core.App) *PocketBaseMessageRepo {
 		panic(err)
 	}
 	return &PocketBaseMessageRepo{
+		app:        app,
+		collection: collection,
+	}
+}
+
+type PocketBaseConversationRepo struct {
+	app        core.App
+	collection *models.Collection
+}
+
+// SetConversationUpdated updates the conversation's updated time.
+func (r *PocketBaseConversationRepo) SetConversationUpdated(
+	conversationID string,
+) error {
+	record, err := r.app.Dao().FindRecordById(r.collection.Name, conversationID)
+	if err != nil {
+		return err
+	}
+	record.RefreshUpdated()
+
+	return r.app.Dao().Save(record)
+}
+
+func NewPocketBaseConversationRepo(app core.App) *PocketBaseConversationRepo {
+	collection, err := app.Dao().FindCollectionByNameOrId("conversations")
+	if err != nil {
+		panic(err)
+	}
+	return &PocketBaseConversationRepo{
 		app:        app,
 		collection: collection,
 	}
