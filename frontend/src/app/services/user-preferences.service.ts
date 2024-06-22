@@ -2,7 +2,17 @@ import { Injectable, inject } from '@angular/core';
 
 import PocketBase from 'pocketbase';
 
-import { EMPTY, Observable, Subject, catchError, from, map, of, switchMap } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  Subject,
+  catchError,
+  concatMap,
+  from,
+  map,
+  of,
+  switchMap,
+} from 'rxjs';
 
 import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -87,7 +97,7 @@ export class UserPreferencesService {
       // Pin conversation, remote state
       (state) =>
         this._pinConversation.pipe(
-          switchMap((conversationId) => {
+          concatMap((conversationId) => {
             return this.upsertUserPreferences(state().recordId, {
               ...state(),
               pinnedConversations: this.addConversationIdToPinnedConversations(
@@ -100,7 +110,7 @@ export class UserPreferencesService {
       // Unpin conversation, remote state
       (state) =>
         this._unpinConversation.pipe(
-          switchMap((conversationId) => {
+          concatMap((conversationId) => {
             return this.upsertUserPreferences(state().recordId, {
               ...state(),
               pinnedConversations: state().pinnedConversations.filter(
