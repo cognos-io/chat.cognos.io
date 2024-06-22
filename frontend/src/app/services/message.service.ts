@@ -444,12 +444,10 @@ export class MessageService {
       parent_message_id?: string;
       request_id: string;
       agent_id: string;
-      is_temporary_conversation?: boolean;
     } = {
       parent_message_id: messageRequest.parentMessageId,
       request_id: messageRequest.requestId,
       agent_id: this._agentService.selectedAgent().id,
-      is_temporary_conversation: isTemporaryConversation,
     };
 
     // appease the type checker
@@ -573,7 +571,6 @@ export class MessageService {
         metadata: {
           cognos: {
             agent_id: generateConversationAgentId,
-            skip_persistance: true,
           },
         },
       }),
