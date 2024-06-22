@@ -1,10 +1,21 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
 import PocketBase, { AuthMethodsList, AuthModel } from 'pocketbase';
 
-import { EMPTY, Observable, Subject, catchError, from, map, of, switchMap } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  Subject,
+  catchError,
+  from,
+  map,
+  of,
+  repeat,
+  switchMap,
+  throwError,
+} from 'rxjs';
 
 import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -109,6 +120,12 @@ export class AuthService implements OnDestroy {
   oryId = this.state.oryId;
 
   constructor() {
+    // Regularly check and refresh token
+    this.checkAndRefreshToken()
+      //   .pipe(takeUntilDestroyed(), repeat({ delay: 1000 * 60 * 5 }))
+      .pipe(takeUntilDestroyed(), repeat({ delay: 1000 }))
+      .subscribe();
+
     // Listen for changes in the auth store
     this._storeUnsubscribe = this._pb.authStore.onChange((token, model) => {
       if (this._pb.authStore.isValid) {
@@ -186,5 +203,17 @@ export class AuthService implements OnDestroy {
 
   ngOnDestroy(): void {
     this._storeUnsubscribe();
+  }
+
+  private checkAndRefreshToken() {
+    if (!this._pb.authStore.isValid) {
+      return from(this._pb.collection(this._authCollection).authRefresh()).pipe(
+        catchError((error) => {
+          console.error('Error refreshing auth token', error);
+          return throwError(() => error);
+        }),
+      );
+    }
+    return EMPTY;
   }
 }
