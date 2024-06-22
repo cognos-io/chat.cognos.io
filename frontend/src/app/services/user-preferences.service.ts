@@ -45,7 +45,6 @@ export class UserPreferencesService {
       // Load user preferences from the database
       this.fetchUserPreferences(),
       // Pin/unpin conversation
-      // Local state management
       (state) =>
         this._pinConversation.pipe(
           map((conversationId) => {
@@ -136,6 +135,23 @@ export class UserPreferencesService {
     return from(
       this._pbUserPreferencesCollection.create({
         user: this._authService.user()?.['id'],
+        data: Base64.fromUint8Array(encryptedData),
+      }),
+    ).pipe(
+      map((record) => {
+        return this.decryptUserPreferencesData(Base64.toUint8Array(record.data));
+      }),
+    );
+  }
+
+  private updateUserPreferences(
+    recordId: string,
+    preferences: UserPreferencesData,
+  ): Observable<UserPreferencesData> {
+    const encryptedData = this.encryptUserPreferencesData(preferences);
+
+    return from(
+      this._pbUserPreferencesCollection.update(recordId, {
         data: Base64.fromUint8Array(encryptedData),
       }),
     ).pipe(
