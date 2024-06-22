@@ -14,9 +14,10 @@ import (
 const anthropicMaxTokens = 4096
 
 var anthropicModelMapping = map[string]string{
-	"claude-haiku":  anthropic.ModelClaude3Haiku20240307,
-	"claude-sonnet": anthropic.ModelClaude3Sonnet20240229,
-	"claude-opus":   anthropic.ModelClaude3Opus20240229,
+	"claude-haiku":     anthropic.ModelClaude3Haiku20240307,
+	"claude-sonnet":    anthropic.ModelClaude3Sonnet20240229,
+	"claude-opus":      anthropic.ModelClaude3Opus20240229,
+	"claude-sonnet3.5": anthropic.ModelClaude3Dot5Sonnet20240620,
 }
 
 var anthropicStopReasonToOpenAI = map[anthropic.MessagesStopReason]openai.FinishReason{

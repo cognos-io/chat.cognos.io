@@ -17,6 +17,16 @@ export type Model = z.infer<typeof Model>;
 // This NEEDS to match the model in the backend as it's used
 // as a fallback if the models cannot be fetched from the backend
 // for whatever reason.
+const anthropicClaudeSonnet3dot5Model: Model = {
+  id: 'anthropic:claude-sonnet3.5',
+  name: 'Claude Sonnet 3.5',
+  providerId: 'anthropic',
+  slug: 'anthropic---claude-sonnet-3.5',
+  description:
+    "Anthropic's Claude Sonnet 3.5 is the newest model from Anthropic that promises excellent (better than OpenAI GPT4o) performance.",
+  inputContextLength: 200_000,
+  tags: [{ title: 'general-purpose' }],
+};
 const anthropicClaudeHaikuModel: Model = {
   id: 'anthropic:claude-haiku',
   name: 'Claude Haiku',
@@ -253,6 +263,7 @@ const cloudflareDeepseekMath7bInstruct: Model = {
 export const defaultModel = openAiGpt35TurboModel;
 export const hardCodedModels = [
   // Anthropic
+  anthropicClaudeSonnet3dot5Model,
   anthropicClaudeHaikuModel,
   anthropicClaudeSonnetModel,
   anthropicClaudeOpusModel,

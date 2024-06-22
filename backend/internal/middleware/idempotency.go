@@ -40,8 +40,8 @@ func Idempotency(repo idempotency.IdempotencyRepo) echo.MiddlewareFunc {
 			if ok {
 				// If we have a response, we return it to the client.
 				c.Response().WriteHeader(statusCode)
-				c.Response().Write(responseBodyJSON)
-				return nil
+				_, err := c.Response().Write(responseBodyJSON)
+				return err
 			}
 
 			// Response
