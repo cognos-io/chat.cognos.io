@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
-import { DeviceService } from '@app/services/device.service';
+import { DeviceService, Height } from '@app/services/device.service';
 
 interface FeatureBentoItem {
   title: string;
@@ -149,13 +149,39 @@ export class FeatureBentoComponent {
   });
 
   readonly bentoItems = computed(() => {
-    // If mobile return a smaller subset
-    return this._deviceService.isMobile()
-      ? this._shuffledBentoItems().slice(0, 1)
-      : this._shuffledBentoItems().slice(0, 5);
+    let numberOfItems = 1;
+
+    if (this._deviceService.isMobile()) {
+      switch (this._deviceService.height()) {
+        case Height.Short:
+          numberOfItems = 1;
+          break;
+        case Height.Medium:
+          numberOfItems = 2;
+          break;
+        case Height.Tall:
+          numberOfItems = 3;
+          break;
+      }
+    } else {
+      switch (this._deviceService.height()) {
+        case Height.Short:
+          numberOfItems = 1;
+          break;
+        case Height.Medium:
+          numberOfItems = 5;
+          break;
+        case Height.Tall:
+          numberOfItems = 7;
+          break;
+      }
+    }
+
+    return this._shuffledBentoItems().slice(0, numberOfItems);
   });
 
   isMediumBento(index: number): boolean {
+    if (this._deviceService.isMobile()) return false;
     return index === 3 || index === 6;
   }
 }
