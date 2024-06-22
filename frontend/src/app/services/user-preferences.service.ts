@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 
 import PocketBase from 'pocketbase';
 
-import { Observable, Subject, from, map, take, tap } from 'rxjs';
+import { EMPTY, Observable, Subject, catchError, from, map, take, tap } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -20,9 +20,12 @@ import { AuthService } from './auth.service';
 import { CryptoService } from './crypto.service';
 import { VaultService } from './vault.service';
 
-interface UserPreferencesState extends UserPreferencesData {}
+interface UserPreferencesState extends UserPreferencesData {
+  // null means the record does not exist, undefined we haven't loaded it yet
+  recordId: string | undefined;
+}
 
-const initialState: UserPreferencesState = emptyPreferences;
+const initialState: UserPreferencesState = { ...emptyPreferences, recordId: undefined };
 
 @Injectable({
   providedIn: 'root',
@@ -53,7 +56,10 @@ export class UserPreferencesService {
             };
           }),
           tap((partialState) => {
-            this.saveUserPreferences({ ...state(), ...partialState })
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              ...partialState,
+            })
               .pipe(take(1))
               .subscribe();
           }),
@@ -68,7 +74,10 @@ export class UserPreferencesService {
             };
           }),
           tap((partialState) => {
-            this.saveUserPreferences({ ...state(), ...partialState })
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              ...partialState,
+            })
               .pipe(take(1))
               .subscribe();
           }),
@@ -122,9 +131,23 @@ export class UserPreferencesService {
     return from(this._pbUserPreferencesCollection.getFirstListItem(filter)).pipe(
       ignorePocketbase404(),
       map((record) => {
-        return this.decryptUserPreferencesData(Base64.toUint8Array(record.data));
+        return {
+          ...this.decryptUserPreferencesData(Base64.toUint8Array(record.data)),
+          recordId: record.id,
+        };
       }),
     );
+  }
+
+  private upsertUserPreferences(
+    recordId: string | undefined,
+    preferences: UserPreferencesData,
+  ): Observable<UserPreferencesData> {
+    if (recordId) {
+      return this.updateUserPreferences(recordId, preferences);
+    } else {
+      return this.saveUserPreferences(preferences);
+    }
   }
 
   private saveUserPreferences(
@@ -138,6 +161,10 @@ export class UserPreferencesService {
         data: Base64.fromUint8Array(encryptedData),
       }),
     ).pipe(
+      catchError((error) => {
+        console.error('Failed to save user preferences', error);
+        return EMPTY;
+      }),
       map((record) => {
         return this.decryptUserPreferencesData(Base64.toUint8Array(record.data));
       }),
@@ -155,6 +182,10 @@ export class UserPreferencesService {
         data: Base64.fromUint8Array(encryptedData),
       }),
     ).pipe(
+      catchError((error) => {
+        console.error('Failed to update user preferences', error);
+        return EMPTY;
+      }),
       map((record) => {
         return this.decryptUserPreferencesData(Base64.toUint8Array(record.data));
       }),
