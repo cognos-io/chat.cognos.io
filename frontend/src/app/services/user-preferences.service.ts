@@ -18,6 +18,7 @@ import { ignorePocketbase404 } from '@app/operators/ignore-404';
 import { TypedPocketBase } from '../types/pocketbase-types';
 import { AuthService } from './auth.service';
 import { CryptoService } from './crypto.service';
+import { ErrorService } from './error.service';
 import { VaultService } from './vault.service';
 
 interface UserPreferencesState extends UserPreferencesData {
@@ -34,6 +35,7 @@ export class UserPreferencesService {
   private readonly _pb: TypedPocketBase = inject(PocketBase);
   private readonly _cryptoService = inject(CryptoService);
   private readonly _vaultService = inject(VaultService);
+  private readonly _errorService = inject(ErrorService);
   private readonly _authService = inject(AuthService);
 
   private readonly _pbUserPreferencesCollection =
@@ -130,6 +132,11 @@ export class UserPreferencesService {
 
     return from(this._pbUserPreferencesCollection.getFirstListItem(filter)).pipe(
       ignorePocketbase404(),
+      catchError((error) => {
+        console.error('Failed to fetch user preferences', error);
+        this._errorService.alert('Failed to fetch user preferences');
+        return EMPTY;
+      }),
       map((record) => {
         return {
           ...this.decryptUserPreferencesData(Base64.toUint8Array(record.data)),
@@ -163,6 +170,7 @@ export class UserPreferencesService {
     ).pipe(
       catchError((error) => {
         console.error('Failed to save user preferences', error);
+        this._errorService.alert('Failed to save user preferences');
         return EMPTY;
       }),
       map((record) => {
@@ -184,6 +192,7 @@ export class UserPreferencesService {
     ).pipe(
       catchError((error) => {
         console.error('Failed to update user preferences', error);
+        this._errorService.alert('Failed to update user preferences');
         return EMPTY;
       }),
       map((record) => {
