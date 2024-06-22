@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 
 import PocketBase from 'pocketbase';
 
-import { EMPTY, Observable, Subject, catchError, from, map, take, tap } from 'rxjs';
+import { EMPTY, Observable, Subject, catchError, from, map, switchMap } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -15,7 +15,7 @@ import {
 } from '@app/interfaces/user_preferences';
 import { ignorePocketbase404 } from '@app/operators/ignore-404';
 
-import { TypedPocketBase } from '../types/pocketbase-types';
+import { TypedPocketBase, UserPreferencesResponse } from '../types/pocketbase-types';
 import { AuthService } from './auth.service';
 import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
@@ -49,23 +49,19 @@ export class UserPreferencesService {
     sources: [
       // Load user preferences from the database
       this.fetchUserPreferences(),
-      // Pin/unpin conversation
+      // Pin conversation, local state
       (state) =>
         this._pinConversation.pipe(
           map((conversationId) => {
             return {
-              pinnedConversations: [...state().pinnedConversations, conversationId],
+              pinnedConversations: this.addConversationIdToPinnedConversations(
+                conversationId,
+                state().pinnedConversations,
+              ),
             };
           }),
-          tap((partialState) => {
-            this.upsertUserPreferences(state().recordId, {
-              ...state(),
-              ...partialState,
-            })
-              .pipe(take(1))
-              .subscribe();
-          }),
         ),
+      // Unpin conversation, local state
       (state) =>
         this._unpinConversation.pipe(
           map((conversationId) => {
@@ -75,25 +71,59 @@ export class UserPreferencesService {
               ),
             };
           }),
-          tap((partialState) => {
-            this.upsertUserPreferences(state().recordId, {
+        ),
+      // Pin conversation, remote state
+      (state) =>
+        this._pinConversation.pipe(
+          switchMap((conversationId) => {
+            return this.upsertUserPreferences(state().recordId, {
               ...state(),
-              ...partialState,
-            })
-              .pipe(take(1))
-              .subscribe();
+              pinnedConversations: this.addConversationIdToPinnedConversations(
+                conversationId,
+                state().pinnedConversations,
+              ),
+            });
+          }),
+        ),
+      // Unpin conversation, remote state
+      (state) =>
+        this._unpinConversation.pipe(
+          switchMap((conversationId) => {
+            return this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              pinnedConversations: state().pinnedConversations.filter(
+                (id) => id !== conversationId,
+              ),
+            });
           }),
         ),
     ],
+    actionSources: {
+      pinConversation: this._pinConversation,
+      unpinConversation: this._unpinConversation,
+    },
   });
 
   // sources
   public pinConversation = (conversationId: string) => {
-    this._pinConversation.next(conversationId);
+    this.state.pinConversation(conversationId);
   };
   public unpinConversation = (conversationId: string) => {
-    this._unpinConversation.next(conversationId);
+    this.state.unpinConversation(conversationId);
   };
+
+  // private methods
+  private addConversationIdToPinnedConversations(
+    conversationId: string,
+    pinnedConversations: Array<string>,
+  ): Array<string> {
+    // Helper method that only adds the conversationId if not already in the list
+    // Returns a new array so it can be used with the state
+    if (pinnedConversations.includes(conversationId)) {
+      return [...pinnedConversations];
+    }
+    return [...pinnedConversations, conversationId];
+  }
 
   private encryptUserPreferencesData(data: UserPreferencesData): Uint8Array {
     const userKeyPair = this._vaultService.keyPair();
@@ -149,17 +179,27 @@ export class UserPreferencesService {
   private upsertUserPreferences(
     recordId: string | undefined,
     preferences: UserPreferencesData,
-  ): Observable<UserPreferencesData> {
+  ): Observable<Partial<UserPreferencesState>> {
+    let request: Observable<UserPreferencesResponse>;
     if (recordId) {
-      return this.updateUserPreferences(recordId, preferences);
+      request = this.updateUserPreferences(recordId, preferences);
     } else {
-      return this.saveUserPreferences(preferences);
+      request = this.saveUserPreferences(preferences);
     }
+
+    return request.pipe(
+      map((record) => {
+        return {
+          ...this.decryptUserPreferencesData(Base64.toUint8Array(record.data)),
+          recordId: record.id,
+        };
+      }),
+    );
   }
 
   private saveUserPreferences(
     preferences: UserPreferencesData,
-  ): Observable<UserPreferencesData> {
+  ): Observable<UserPreferencesResponse> {
     const encryptedData = this.encryptUserPreferencesData(preferences);
 
     return from(
@@ -173,16 +213,13 @@ export class UserPreferencesService {
         this._errorService.alert('Failed to save user preferences');
         return EMPTY;
       }),
-      map((record) => {
-        return this.decryptUserPreferencesData(Base64.toUint8Array(record.data));
-      }),
     );
   }
 
   private updateUserPreferences(
     recordId: string,
     preferences: UserPreferencesData,
-  ): Observable<UserPreferencesData> {
+  ): Observable<UserPreferencesResponse> {
     const encryptedData = this.encryptUserPreferencesData(preferences);
 
     return from(
@@ -194,9 +231,6 @@ export class UserPreferencesService {
         console.error('Failed to update user preferences', error);
         this._errorService.alert('Failed to update user preferences');
         return EMPTY;
-      }),
-      map((record) => {
-        return this.decryptUserPreferencesData(Base64.toUint8Array(record.data));
       }),
     );
   }
