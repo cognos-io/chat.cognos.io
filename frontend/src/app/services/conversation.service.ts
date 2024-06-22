@@ -36,6 +36,7 @@ import { KeyPair } from '../interfaces/key-pair';
 import { TypedPocketBase } from '../types/pocketbase-types';
 import { AuthService } from './auth.service';
 import { CryptoService } from './crypto.service';
+import { UserPreferencesService } from './user-preferences.service';
 import { VaultService } from './vault.service';
 
 export const UserSecretKeyNotFoundError = new Error('User secret key not found');
@@ -63,6 +64,7 @@ export class ConversationService {
   private readonly _vaultService = inject(VaultService);
   private readonly _auth = inject(AuthService);
   private readonly _router = inject(Router);
+  private readonly _userPreferencesService = inject(UserPreferencesService);
 
   private readonly pbConversationCollection = 'conversations';
   private readonly pbConversationPublicKeysCollection = 'conversation_public_keys';
@@ -168,20 +170,36 @@ export class ConversationService {
           );
       });
 
+      const orderedConversations = computed(() => {
+        return filteredConversations().sort((a, b) => {
+          // TODO(ewan): Include the most recent message
+          // Sort the conversations by the most recently updated
+          return b.record.updated.localeCompare(a.record.created);
+        });
+      });
+
       return {
         filteredConversations,
-        orderedConversations: () => {
-          return filteredConversations().sort((a, b) => {
-            // TODO(ewan): Include the most recent message
-            // Sort the conversations by the most recently updated
-            return b.record.updated.localeCompare(a.record.created);
-          });
-        },
+        orderedConversations,
         selectedConversation: () => {
           const selectedConversationId = state.selectedConversationId();
           return state
             .conversations()
             .find((conversation) => conversation.record.id === selectedConversationId);
+        },
+        pinnedConversations: () => {
+          return orderedConversations().filter((conversation) => {
+            return this._userPreferencesService.isConversationPinned(
+              conversation.record.id,
+            );
+          });
+        },
+        nonPinnedConversations: () => {
+          return orderedConversations().filter((conversation) => {
+            return !this._userPreferencesService.isConversationPinned(
+              conversation.record.id,
+            );
+          });
         },
       };
     },
@@ -238,6 +256,17 @@ export class ConversationService {
   readonly conversation = this.state.selectedConversation;
   readonly conversation$ = toObservable(this.conversation);
   readonly conversationList = this.state.orderedConversations;
+
+  readonly pinnedConversations = this.state.pinnedConversations;
+  readonly hasPinnedConversations = computed(
+    () => this.pinnedConversations().length > 0,
+  );
+
+  readonly nonPinnedConversations = this.state.nonPinnedConversations;
+  readonly hasNonPinnedConversations = computed(
+    () => this.nonPinnedConversations().length > 0,
+  );
+
   readonly getConversation = (conversationId: string) =>
     computed(() => {
       return this.state

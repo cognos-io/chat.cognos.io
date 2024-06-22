@@ -14,6 +14,7 @@ export enum Collections {
   Messages = 'messages',
   Models = 'models',
   UserKeyPairs = 'user_key_pairs',
+  UserPreferences = 'user_preferences',
   Users = 'users',
 }
 
@@ -101,6 +102,11 @@ export type UserKeyPairsRecord = {
   user: RecordIdString;
 };
 
+export type UserPreferencesRecord = {
+  data: string;
+  user: RecordIdString;
+};
+
 export type UsersRecord = {
   avatar?: string;
   name?: string;
@@ -129,6 +135,8 @@ export type ModelsResponse<Texpand = unknown> = Required<ModelsRecord> &
   BaseSystemFields<Texpand>;
 export type UserKeyPairsResponse<Texpand = unknown> = Required<UserKeyPairsRecord> &
   BaseSystemFields<Texpand>;
+export type UserPreferencesResponse<Texpand = unknown> =
+  Required<UserPreferencesRecord> & BaseSystemFields<Texpand>;
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> &
   AuthSystemFields<Texpand>;
 
@@ -144,6 +152,7 @@ export type CollectionRecords = {
   messages: MessagesRecord;
   models: ModelsRecord;
   user_key_pairs: UserKeyPairsRecord;
+  user_preferences: UserPreferencesRecord;
   users: UsersRecord;
 };
 
@@ -157,6 +166,7 @@ export type CollectionResponses = {
   messages: MessagesResponse;
   models: ModelsResponse;
   user_key_pairs: UserKeyPairsResponse;
+  user_preferences: UserPreferencesResponse;
   users: UsersResponse;
 };
 
@@ -177,5 +187,6 @@ export type TypedPocketBase = PocketBase & {
   collection(idOrName: 'messages'): RecordService<MessagesResponse>;
   collection(idOrName: 'models'): RecordService<ModelsResponse>;
   collection(idOrName: 'user_key_pairs'): RecordService<UserKeyPairsResponse>;
+  collection(idOrName: 'user_preferences'): RecordService<UserPreferencesResponse>;
   collection(idOrName: 'users'): RecordService<UsersResponse>;
 };

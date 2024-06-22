@@ -61,9 +61,7 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
         <div class="flex h-full w-full flex-col items-center justify-between">
           <div></div>
           <div class="flex w-full flex-col items-center justify-center gap-8">
-            <app-feature-bento
-              class="w-3/4 lg:max-w-[120ch] xl:w-1/2"
-            ></app-feature-bento>
+            <app-feature-bento class="w-3/4 xl:max-w-[120ch]"></app-feature-bento>
 
             <div
               class="prose flex flex-col items-center gap-4 text-center prose-headings:m-0"

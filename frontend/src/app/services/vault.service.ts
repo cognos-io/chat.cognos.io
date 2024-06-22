@@ -63,10 +63,10 @@ const setupWasmInstance = setupWasm(
   providedIn: 'root',
 })
 export class VaultService {
-  private readonly pb: TypedPocketBase = inject(PocketBase);
-  private readonly cryptoService = inject(CryptoService);
+  private readonly _pb: TypedPocketBase = inject(PocketBase);
+  private readonly _cryptoService = inject(CryptoService);
   private readonly _errorService = inject(ErrorService);
-  private readonly authService = inject(AuthService);
+  private readonly _authService = inject(AuthService);
 
   private readonly pbUserKeyPairsCollection = 'user_key_pairs';
 
@@ -121,7 +121,7 @@ export class VaultService {
         map((keyPairRecord) => ({ keyPairRecord, isNewKeyPair: !keyPairRecord })),
       ),
       //   Clear the state when logging out
-      this.authService.logout$.pipe(
+      this._authService.logout$.pipe(
         map(() => {
           return {
             keyPair: undefined,
@@ -143,7 +143,7 @@ export class VaultService {
       map((argon2id) =>
         argon2id({
           password: encoder.encode(rawPassword),
-          salt: encoder.encode(this.authService.oryId()),
+          salt: encoder.encode(this._authService.oryId()),
           parallelism: argon2idParallelism,
           passes: argon2idIterationCount,
           memorySize: argon2idMemory,
@@ -154,12 +154,12 @@ export class VaultService {
   }
 
   fetchUserKeyPairRecord(): Observable<UserKeyPairsRecord> {
-    const filter = this.pb.filter('user={:user}', {
-      user: this.authService.user()?.['id'],
+    const filter = this._pb.filter('user={:user}', {
+      user: this._authService.user()?.['id'],
     });
 
     return from(
-      this.pb.collection(this.pbUserKeyPairsCollection).getFirstListItem(filter),
+      this._pb.collection(this.pbUserKeyPairsCollection).getFirstListItem(filter),
     );
   }
 
@@ -167,11 +167,11 @@ export class VaultService {
     encryptedSecretKey: Uint8Array,
     vaultPassword: Uint8Array,
   ): Uint8Array {
-    return this.cryptoService.openSecretBox(encryptedSecretKey, vaultPassword);
+    return this._cryptoService.openSecretBox(encryptedSecretKey, vaultPassword);
   }
 
   encryptSecretKey(rawSecretKey: Uint8Array, vaultPassword: Uint8Array): Uint8Array {
-    return this.cryptoService.secretBox(rawSecretKey, vaultPassword);
+    return this._cryptoService.secretBox(rawSecretKey, vaultPassword);
   }
 
   unpackKeyPairRecord(
@@ -192,7 +192,7 @@ export class VaultService {
   }
 
   createNewUserKeyPair(hashedVaultPassword: Uint8Array): Observable<KeyPair> {
-    const keyPair = this.cryptoService.newKeyPair();
+    const keyPair = this._cryptoService.newKeyPair();
 
     const encryptedSecretKey = this.encryptSecretKey(
       keyPair.secretKey,
@@ -204,11 +204,11 @@ export class VaultService {
     const keyPairRecordData: Partial<UserKeyPairsRecord> = {
       public_key: publicKeyBase64,
       secret_key: encryptedSecretKeyBase64,
-      user: this.authService.user()?.['id'],
+      user: this._authService.user()?.['id'],
     };
 
     return from(
-      this.pb.collection(this.pbUserKeyPairsCollection).create(keyPairRecordData),
+      this._pb.collection(this.pbUserKeyPairsCollection).create(keyPairRecordData),
     ).pipe(switchMap(() => of(keyPair)));
   }
 }

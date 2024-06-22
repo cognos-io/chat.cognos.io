@@ -46,55 +46,28 @@
           </ng-container>
         </button>
         <mat-nav-list class="flex-grow overflow-y-auto">
+          @if (conversationService.hasPinnedConversations()) {
+            <div mat-subheader class="text-sm">Pinned</div>
+            @for (
+              conversation of conversationService.pinnedConversations();
+              track conversation.record.id
+            ) {
+              <app-conversation-list-item
+                [conversation]="conversation"
+              ></app-conversation-list-item>
+            }
+            @if (conversationService.hasNonPinnedConversations()) {
+              <mat-divider></mat-divider>
+              <div mat-subheader class="text-sm">Recent</div>
+            }
+          }
           @for (
-            conversation of conversationService.conversationList();
+            conversation of conversationService.nonPinnedConversations();
             track conversation.record.id
           ) {
-            <a
-              mat-list-item
-              [routerLink]="['c', conversation.record.id]"
-              class="conversation-list-item group"
-              [matTooltip]="conversation.decryptedData.title"
-              matTooltipPosition="after"
-            >
-              <p matListItemTitle>{{ conversation.decryptedData.title }}</p>
-              <div
-                matListItemMeta
-                class="conversation-list-item-actions hidden group-hover:flex group-active:flex"
-              >
-                <button
-                  mat-icon-button
-                  class="actions-button"
-                  [matMenuTriggerFor]="menu"
-                  aria-label="Open conversation menu"
-                >
-                  <mat-icon fontSet="bi" fontIcon="bi-three-dots-vertical"></mat-icon>
-                </button>
-              </div>
-            </a>
-            <mat-menu #menu="matMenu">
-              <!-- <button
-                mat-menu-item=""
-                (click)="onPinConversation(conversation.record.id)"
-              >
-                <mat-icon fontSet="bi" fontIcon="bi-pin-angle"></mat-icon>
-                Pin
-              </button> -->
-              <button
-                mat-menu-item=""
-                (click)="onRenameConversation(conversation.record.id)"
-              >
-                <mat-icon fontSet="bi" fontIcon="bi-pencil-square"></mat-icon>
-                Edit
-              </button>
-              <button
-                mat-menu-item=""
-                (click)="onDeleteConversation(conversation.record.id)"
-              >
-                <mat-icon fontSet="bi" fontIcon="bi-trash3"></mat-icon>
-                Delete
-              </button>
-            </mat-menu>
+            <app-conversation-list-item
+              [conversation]="conversation"
+            ></app-conversation-list-item>
           }
         </mat-nav-list>
         <div class="flex justify-end gap-2">
