@@ -166,7 +166,7 @@ export class FeatureBentoComponent {
     } else {
       switch (this._deviceService.height()) {
         case Height.Short:
-          numberOfItems = 1;
+          numberOfItems = 3;
           break;
         case Height.Medium:
           numberOfItems = 5;
