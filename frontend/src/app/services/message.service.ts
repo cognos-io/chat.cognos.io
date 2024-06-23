@@ -548,6 +548,12 @@ export class MessageService {
       context.unshift({
         role: message.decryptedData.owner_id ? 'user' : 'assistant',
         content: message.decryptedData.content,
+        // Adding a name can help the message differentiate participants
+        // Prioritize: userId of who sent it -> agent -> model
+        name:
+          message.decryptedData.owner_id ??
+          this._agentService.getAgent(message.decryptedData.agent_id).name ??
+          this._modelService.getModel(message.decryptedData.model_id).name,
       });
       usedContextLength += messageLength;
 
