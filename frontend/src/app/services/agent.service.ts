@@ -1,4 +1,4 @@
-import { Injectable, Signal, computed } from '@angular/core';
+import { Injectable, Signal, computed, signal } from '@angular/core';
 
 import { Observable, map } from 'rxjs';
 
@@ -55,7 +55,10 @@ export class AgentService {
 
   public selectAgent = this.state.selectAgent;
 
-  public getAgent(id: string): Signal<Agent | undefined> {
+  public getAgent(id: string | undefined): Signal<Agent | undefined> {
+    if (!id) {
+      return signal(undefined);
+    }
     return computed(() => this.state().agentList.find((agent) => agent.id === id));
   }
 }

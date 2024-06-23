@@ -1,4 +1,4 @@
-import { Injectable, Signal, computed } from '@angular/core';
+import { Injectable, Signal, computed, signal } from '@angular/core';
 
 import { Observable, map } from 'rxjs';
 
@@ -68,7 +68,10 @@ export class ModelService {
   public selectModel = this.state.selectModel;
   public groupedModels = this.state.groupedModels;
 
-  public getModel(id: string): Signal<Model | undefined> {
+  public getModel(id?: string): Signal<Model | undefined> {
+    if (!id) {
+      return signal(undefined);
+    }
     return computed(() => this.state().modelList.find((model) => model.id === id));
   }
 }

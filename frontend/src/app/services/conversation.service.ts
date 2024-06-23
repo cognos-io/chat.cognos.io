@@ -174,7 +174,7 @@ export class ConversationService {
         return filteredConversations().sort((a, b) => {
           // TODO(ewan): Include the most recent message
           // Sort the conversations by the most recently updated
-          return b.record.updated.localeCompare(a.record.created);
+          return b.record.updated.localeCompare(a.record.updated);
         });
       });
 
@@ -249,6 +249,18 @@ export class ConversationService {
           }),
         );
       },
+      updateConversationUpdatedTimeNow: (state, $: Observable<{ id: string }>) =>
+        $.pipe(
+          map(({ id }) => {
+            const conversations = state().conversations;
+            const index = conversations.findIndex((c) => c.record.id === id);
+            if (index === -1) return state();
+            conversations[index].record.updated = new Date().toISOString();
+            return {
+              conversations: [...conversations],
+            };
+          }),
+        ),
     },
   });
 
@@ -277,6 +289,9 @@ export class ConversationService {
   readonly setConversationTitle = this.state.setConversationTitle;
   readonly isTemporaryConversation = this.state.isTemporaryConversation;
   readonly setIsTemporaryConversation = this.state.setIsTemporaryConversation;
+
+  readonly updateConversationUpdatedTimeNow =
+    this.state.updateConversationUpdatedTimeNow;
 
   /**
    * Creates a conversation in the PocketBase backend.

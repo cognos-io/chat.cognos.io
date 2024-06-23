@@ -168,6 +168,15 @@ export class MessageService {
 
       // when a message is sent, add it to the list of messages and send it to our upstream API
       this._cleanedMessage$.pipe(
+        tap(() => {
+          const conversation = this._conversationService.conversation();
+          if (!conversation) {
+            return;
+          }
+          this._conversationService.updateConversationUpdatedTimeNow({
+            id: conversation.record.id,
+          });
+        }),
         exhaustMap((messageRequest) => {
           if (!messageRequest.parentMessageId) {
             // Take the most recent message as the parent message
@@ -548,6 +557,12 @@ export class MessageService {
       context.unshift({
         role: message.decryptedData.owner_id ? 'user' : 'assistant',
         content: message.decryptedData.content,
+        // Adding a name can help the message differentiate participants
+        // Prioritize: userId of who sent it -> agent -> model
+        name:
+          message.decryptedData.owner_id ??
+          this._agentService.getAgent(message.decryptedData.agent_id).name ??
+          this._modelService.getModel(message.decryptedData.model_id).name,
       });
       usedContextLength += messageLength;
 
