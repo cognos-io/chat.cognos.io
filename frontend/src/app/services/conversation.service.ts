@@ -174,7 +174,7 @@ export class ConversationService {
         return filteredConversations().sort((a, b) => {
           // TODO(ewan): Include the most recent message
           // Sort the conversations by the most recently updated
-          return b.record.updated.localeCompare(a.record.created);
+          return b.record.updated.localeCompare(a.record.updated);
         });
       });
 
