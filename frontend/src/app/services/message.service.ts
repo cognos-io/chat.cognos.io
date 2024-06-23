@@ -168,6 +168,15 @@ export class MessageService {
 
       // when a message is sent, add it to the list of messages and send it to our upstream API
       this._cleanedMessage$.pipe(
+        tap(() => {
+          const conversation = this._conversationService.conversation();
+          if (!conversation) {
+            return;
+          }
+          this._conversationService.updateConversationUpdatedTimeNow({
+            id: conversation.record.id,
+          });
+        }),
         exhaustMap((messageRequest) => {
           if (!messageRequest.parentMessageId) {
             // Take the most recent message as the parent message
