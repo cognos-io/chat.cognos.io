@@ -97,6 +97,9 @@ func EchoHandler(
 		if err := c.Bind(&req); err != nil {
 			return apis.NewBadRequestError("Failed to read request data", err)
 		}
+		// Add the user ID to the request. It's nothing personal but is used to help
+		// identify abuse of our AI providers
+		req.User = owner.ID
 
 		// Validate the incoming request
 		if req.Metadata.Cognos.AgentID == "" {
