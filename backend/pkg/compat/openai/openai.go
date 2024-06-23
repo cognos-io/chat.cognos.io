@@ -30,11 +30,10 @@ const (
 // is present in the `model` field of the request.
 type RequestMetadata struct {
 	Cognos struct {
-		ParentMessageID         string `json:"parent_message_id,omitempty"`
-		ConversationID          string `json:"conversation_id,omitempty"`
-		AgentID                 string `json:"agent_id,omitempty"`
-		RequestID               string `json:"request_id,omitempty"` // Arbitrary ID for frontend to track requests
-		IsTemporaryConversation bool   `json:"is_temporary_conversation,omitempty"`
+		ParentMessageID string `json:"parent_message_id,omitempty"`
+		ConversationID  string `json:"conversation_id,omitempty"`
+		AgentID         string `json:"agent_id,omitempty"`
+		RequestID       string `json:"request_id,omitempty"` // Arbitrary ID for frontend to track requests
 	} `json:"cognos,omitempty"`
 }
 
@@ -139,9 +138,7 @@ func EchoHandler(
 		// - The user is using their own frontend which doesn't support conversation IDs
 		// - The message is temporary and shouldn't be persisted
 		// - The message is used to generate conversation titles
-		// Avoid saving if this is a temporary conversation
-		shouldPersist := !req.Metadata.Cognos.IsTemporaryConversation ||
-			req.Metadata.Cognos.ConversationID != ""
+		shouldPersist := req.Metadata.Cognos.ConversationID != ""
 
 		var messageRecord, responseRecord *models.Record
 		receiverPublicKey := [32]byte{}

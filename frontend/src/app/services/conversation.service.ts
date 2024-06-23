@@ -187,20 +187,20 @@ export class ConversationService {
             .conversations()
             .find((conversation) => conversation.record.id === selectedConversationId);
         },
-        pinnedConversations: () => {
+        pinnedConversations: computed(() => {
           return orderedConversations().filter((conversation) => {
             return this._userPreferencesService.isConversationPinned(
               conversation.record.id,
             );
           });
-        },
-        nonPinnedConversations: () => {
+        }),
+        nonPinnedConversations: computed(() => {
           return orderedConversations().filter((conversation) => {
             return !this._userPreferencesService.isConversationPinned(
               conversation.record.id,
             );
           });
-        },
+        }),
       };
     },
     actionSources: {
@@ -226,7 +226,7 @@ export class ConversationService {
                 if (index === -1) return state();
                 conversations[index] = conversation;
                 return {
-                  conversations,
+                  conversations: [...conversations],
                 };
               }),
             );

@@ -444,12 +444,10 @@ export class MessageService {
       parent_message_id?: string;
       request_id: string;
       agent_id: string;
-      is_temporary_conversation?: boolean;
     } = {
       parent_message_id: messageRequest.parentMessageId,
       request_id: messageRequest.requestId,
       agent_id: this._agentService.selectedAgent().id,
-      is_temporary_conversation: isTemporaryConversation,
     };
 
     // appease the type checker
@@ -502,6 +500,7 @@ export class MessageService {
       createdAt = Math.floor(createdAt / 1000);
     }
 
+    // TODO(ewan): Better handle errors. E.g. request fails or success but resp.choices is null
     const metadata: CognosMetadataResponse = resp.metadata?.cognos;
     const msg: Message = {
       parentMessageId: metadata.parent_message_id,
@@ -559,7 +558,9 @@ export class MessageService {
     return context;
   }
 
-  private generateConversationTitle(startingMessage: string): Observable<string> {
+  private generateConversationTitle(
+    startingMessage: string,
+  ): Observable<string | null> {
     const conversation = this._conversationService.conversation();
     if (!conversation) {
       return EMPTY;
@@ -573,7 +574,6 @@ export class MessageService {
         metadata: {
           cognos: {
             agent_id: generateConversationAgentId,
-            skip_persistance: true,
           },
         },
       }),
@@ -583,7 +583,10 @@ export class MessageService {
         return EMPTY;
       }),
       map((resp) => {
-        return resp.choices[0].message.content;
+        if (resp.choices) {
+          return resp.choices[0].message.content;
+        }
+        return null;
       }),
     );
   }
@@ -593,6 +596,7 @@ export class MessageService {
     startingMessage: string,
   ): Observable<ConversationRecord> {
     return this.generateConversationTitle(startingMessage).pipe(
+      filterNil(),
       switchMap((title) => {
         // Use max the first 10 words
         title = title.split(' ').slice(0, 10).join(' ');
