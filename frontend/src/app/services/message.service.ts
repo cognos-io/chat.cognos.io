@@ -225,10 +225,12 @@ export class MessageService {
                   this.sendMessage(messageRequest).pipe(
                     finalize(() => this._isNewConversation$.next(false)),
                     tap((resp) => {
-                      const metadata: CognosMetadataResponse = resp.metadata?.cognos;
+                      const metadata: CognosMetadataResponse | undefined =
+                        resp.metadata?.cognos;
+
                       this.state.updateMessageId({
                         oldId: messageRequest.requestId,
-                        newId: metadata.message_record_id || '',
+                        newId: metadata?.message_record_id ?? '',
                       });
                     }),
                   ),
@@ -245,10 +247,11 @@ export class MessageService {
 
           return this.sendMessage(messageRequest).pipe(
             tap((resp) => {
-              const metadata: CognosMetadataResponse = resp.metadata?.cognos;
+              const metadata: CognosMetadataResponse | undefined =
+                resp.metadata?.cognos;
               this.state.updateMessageId({
                 oldId: messageRequest.requestId,
-                newId: metadata.message_record_id || '',
+                newId: metadata?.message_record_id ?? '',
               });
             }),
             map((resp) => {
@@ -471,7 +474,7 @@ export class MessageService {
         metadata: {
           cognos: messageMetadata,
         },
-      }),
+      } as OpenAI.ChatCompletionCreateParamsNonStreaming),
     ).pipe(
       catchError((err) => {
         this.state.setStatus(MessageStatus.ErrorSending);
@@ -510,10 +513,11 @@ export class MessageService {
     }
 
     // TODO(ewan): Better handle errors. E.g. request fails or success but resp.choices is null
-    const metadata: CognosMetadataResponse = resp.metadata?.cognos;
+    const metadata: CognosMetadataResponse | undefined = resp.metadata?.cognos;
+
     const msg: Message = {
-      parentMessageId: metadata.parent_message_id,
-      record_id: metadata.response_record_id,
+      parentMessageId: metadata?.parent_message_id,
+      record_id: metadata?.response_record_id,
       createdAt: new Date((createdAt + 1) * 1000),
       decryptedData: {
         content: resp.choices[0].message.content,
@@ -591,7 +595,7 @@ export class MessageService {
             agent_id: generateConversationAgentId,
           },
         },
-      }),
+      } as OpenAI.ChatCompletionCreateParamsNonStreaming),
     ).pipe(
       catchError((err) => {
         console.error('Error generating conversation title', err);
