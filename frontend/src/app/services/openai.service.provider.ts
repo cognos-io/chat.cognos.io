@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import PocketBase from 'pocketbase';
 
 import OpenAI from 'openai';
-import { Headers } from 'openai/dist/core';
+import { Headers } from 'openai/core';
 
 import { TypedPocketBase } from '@app/types/pocketbase-types';
 
