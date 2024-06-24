@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /
+
+User-agent: AdsBot
+Disallow: /
+
+User-agent: GPTBot
+Disallow: /
