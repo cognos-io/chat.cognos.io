@@ -38,6 +38,7 @@ import { UserPreferencesService } from '@app/services/user-preferences.service';
       class="conversation-list-item group"
       [matTooltip]="conversation.decryptedData.title"
       matTooltipPosition="after"
+      matTooltipTouchGestures="off"
     >
       <p matListItemTitle>{{ conversation.decryptedData.title }}</p>
       <div

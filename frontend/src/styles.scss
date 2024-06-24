@@ -144,6 +144,11 @@ button {
   inset: -1rem 0;
 }
 
+// Fix for sidebar not scrolling on mobile
+.mat-tooltip-trigger {
+  touch-action: auto !important;
+}
+
 // Debugging
 .debug * {
   outline: 1px solid red;
