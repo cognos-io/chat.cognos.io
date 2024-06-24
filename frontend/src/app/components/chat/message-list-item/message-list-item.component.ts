@@ -66,14 +66,16 @@ import { ModelService } from '@app/services/model.service';
           </markdown>
         </article>
         <div class="item-content prose flex gap-2 opacity-0 group-hover:opacity-100">
-          <button
-            mat-icon-button
-            matTooltip="Copy to clipboard"
-            aria-label="Button that copies the message to the clipboard"
-            [cdkCopyToClipboard]="message.decryptedData.content"
-          >
-            <mat-icon fontSet="bi" fontIcon="bi-clipboard"></mat-icon>
-          </button>
+          @if (message.decryptedData.content) {
+            <button
+              mat-icon-button
+              matTooltip="Copy to clipboard"
+              aria-label="Button that copies the message to the clipboard"
+              [cdkCopyToClipboard]="message.decryptedData.content"
+            >
+              <mat-icon fontSet="bi" fontIcon="bi-clipboard"></mat-icon>
+            </button>
+          }
           @if (message.record_id) {
             <!-- <button
               mat-icon-button
