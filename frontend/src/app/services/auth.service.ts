@@ -13,8 +13,10 @@ import {
   map,
   of,
   repeat,
+  retry,
   switchMap,
   throwError,
+  timer,
 } from 'rxjs';
 
 import { filterNil } from 'ngxtension/filter-nil';
@@ -122,8 +124,19 @@ export class AuthService implements OnDestroy {
   constructor() {
     // Regularly check and refresh token
     this.checkAndRefreshToken()
-      //   .pipe(takeUntilDestroyed(), repeat({ delay: 1000 * 60 * 5 }))
-      .pipe(takeUntilDestroyed(), repeat({ delay: 1000 }))
+      .pipe(
+        takeUntilDestroyed(),
+        repeat({ delay: 1000 * 60 * 5 }),
+        retry({
+          count: 5,
+          // exponential backoff
+          delay: (_error, retryIndex) => {
+            const interval = 500;
+            const delay = Math.pow(2, retryIndex - 1) * interval;
+            return timer(delay);
+          },
+        }),
+      )
       .subscribe();
 
     // Listen for changes in the auth store
@@ -206,14 +219,16 @@ export class AuthService implements OnDestroy {
   }
 
   private checkAndRefreshToken() {
-    if (!this._pb.authStore.isValid) {
-      return from(this._pb.collection(this._authCollection).authRefresh()).pipe(
-        catchError((error) => {
-          console.error('Error refreshing auth token', error);
-          return throwError(() => error);
-        }),
-      );
+    if (this.user() === null) {
+      return EMPTY;
     }
-    return EMPTY;
+    // Remove the check of the authStore.isValid because apparently
+    // a token can be valid in the client but error when used
+    return from(this._pb.collection(this._authCollection).authRefresh()).pipe(
+      catchError((error) => {
+        console.error('Error refreshing auth token', error);
+        return throwError(() => error);
+      }),
+    );
   }
 }
