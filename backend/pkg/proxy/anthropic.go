@@ -48,6 +48,7 @@ func (a *Anthropic) ChatCompletion(
 	anthropicReq := anthropic.MessagesRequest{
 		Model:       req.Model,
 		Stream:      req.Stream,
+		MaxTokens:   req.MaxTokens,
 		Temperature: &req.Temperature,
 		TopP:        &req.TopP,
 	}
