@@ -547,6 +547,10 @@ export class MessageService {
     const targetContextChars = model.inputContextLength * 2;
 
     for (const message of this.state.reverseOrderedMessageList()) {
+      if (!message.decryptedData.content) {
+        continue;
+      }
+
       //  For now, rather than using tokens use characters.
       // TODO(ewan): Use tokens instead of characters
       const messageLength = message.decryptedData.content.length;
