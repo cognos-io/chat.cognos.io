@@ -13,7 +13,7 @@ require (
 	github.com/pocketbase/dbx v1.10.1
 	github.com/pocketbase/pocketbase v0.22.14
 	github.com/prometheus/client_golang v1.19.1
-	github.com/sashabaranov/go-openai v1.24.1
+	github.com/sashabaranov/go-openai v1.26.0
 	golang.org/x/crypto v0.24.0
 	google.golang.org/api v0.184.0
 )
