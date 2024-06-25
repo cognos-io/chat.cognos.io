@@ -39,6 +39,10 @@ import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
 import { ModelService } from './model.service';
+import {
+  ChatCompletionResponseWithMetadata,
+  CognosMetadataResponse,
+} from './openai.service.provider';
 
 export enum MessageStatus {
   None, // default state
@@ -65,19 +69,6 @@ const initialState: MessageState = {
   isNewConversation: false,
   currentPage: 1,
   hasMoreMessages: true,
-};
-
-type CognosMetadataResponse = {
-  request_id?: string;
-  parent_message_id?: string;
-  message_record_id?: string;
-  response_record_id?: string;
-};
-
-type ChatCompletionResponseWithMetadata = OpenAI.ChatCompletion & {
-  metadata?: {
-    cognos?: CognosMetadataResponse;
-  };
 };
 
 export type MessageRequest = {
@@ -225,10 +216,12 @@ export class MessageService {
                   this.sendMessage(messageRequest).pipe(
                     finalize(() => this._isNewConversation$.next(false)),
                     tap((resp) => {
-                      const metadata: CognosMetadataResponse = resp.metadata?.cognos;
+                      const metadata: CognosMetadataResponse | undefined =
+                        resp.metadata?.cognos;
+
                       this.state.updateMessageId({
                         oldId: messageRequest.requestId,
-                        newId: metadata.message_record_id || '',
+                        newId: metadata?.message_record_id ?? '',
                       });
                     }),
                   ),
@@ -245,10 +238,11 @@ export class MessageService {
 
           return this.sendMessage(messageRequest).pipe(
             tap((resp) => {
-              const metadata: CognosMetadataResponse = resp.metadata?.cognos;
+              const metadata: CognosMetadataResponse | undefined =
+                resp.metadata?.cognos;
               this.state.updateMessageId({
                 oldId: messageRequest.requestId,
-                newId: metadata.message_record_id || '',
+                newId: metadata?.message_record_id ?? '',
               });
             }),
             map((resp) => {
@@ -471,7 +465,7 @@ export class MessageService {
         metadata: {
           cognos: messageMetadata,
         },
-      }),
+      } as OpenAI.ChatCompletionCreateParamsNonStreaming),
     ).pipe(
       catchError((err) => {
         this.state.setStatus(MessageStatus.ErrorSending);
@@ -510,10 +504,11 @@ export class MessageService {
     }
 
     // TODO(ewan): Better handle errors. E.g. request fails or success but resp.choices is null
-    const metadata: CognosMetadataResponse = resp.metadata?.cognos;
+    const metadata: CognosMetadataResponse | undefined = resp.metadata?.cognos;
+
     const msg: Message = {
-      parentMessageId: metadata.parent_message_id,
-      record_id: metadata.response_record_id,
+      parentMessageId: metadata?.parent_message_id,
+      record_id: metadata?.response_record_id,
       createdAt: new Date((createdAt + 1) * 1000),
       decryptedData: {
         content: resp.choices[0].message.content,
@@ -543,6 +538,10 @@ export class MessageService {
     const targetContextChars = model.inputContextLength * 2;
 
     for (const message of this.state.reverseOrderedMessageList()) {
+      if (!message.decryptedData.content) {
+        continue;
+      }
+
       //  For now, rather than using tokens use characters.
       // TODO(ewan): Use tokens instead of characters
       const messageLength = message.decryptedData.content.length;
@@ -591,7 +590,7 @@ export class MessageService {
             agent_id: generateConversationAgentId,
           },
         },
-      }),
+      } as OpenAI.ChatCompletionCreateParamsNonStreaming),
     ).pipe(
       catchError((err) => {
         console.error('Error generating conversation title', err);
