@@ -16,11 +16,20 @@ export interface CognosMetadataResponse {
   response_record_id?: string;
 }
 
-export interface ChatCompletionResponseWithMetadata extends OpenAI.ChatCompletion {
+interface CognosMetadataExtension {
   metadata?: {
     cognos?: CognosMetadataResponse;
   };
 }
+
+// Extend OpenAI.ChatCompletion to include metadata
+export interface ChatCompletionResponseWithMetadata
+  extends OpenAI.ChatCompletion,
+    CognosMetadataExtension {}
+
+export interface ChatCompletionChunkWithMetadata
+  extends OpenAI.ChatCompletionChunk,
+    CognosMetadataExtension {}
 
 export class CognosOpenAI extends OpenAI {
   private readonly pb: TypedPocketBase = inject(PocketBase);
