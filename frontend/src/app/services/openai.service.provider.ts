@@ -9,6 +9,19 @@ import { TypedPocketBase } from '@app/types/pocketbase-types';
 
 import { environment } from '@environments/environment';
 
+export interface CognosMetadataResponse {
+  request_id?: string;
+  parent_message_id?: string;
+  message_record_id?: string;
+  response_record_id?: string;
+}
+
+export interface ChatCompletionResponseWithMetadata extends OpenAI.ChatCompletion {
+  metadata?: {
+    cognos?: CognosMetadataResponse;
+  };
+}
+
 export class CognosOpenAI extends OpenAI {
   private readonly pb: TypedPocketBase = inject(PocketBase);
 

@@ -39,6 +39,10 @@ import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
 import { ModelService } from './model.service';
+import {
+  ChatCompletionResponseWithMetadata,
+  CognosMetadataResponse,
+} from './openai.service.provider';
 
 export enum MessageStatus {
   None, // default state
@@ -65,19 +69,6 @@ const initialState: MessageState = {
   isNewConversation: false,
   currentPage: 1,
   hasMoreMessages: true,
-};
-
-type CognosMetadataResponse = {
-  request_id?: string;
-  parent_message_id?: string;
-  message_record_id?: string;
-  response_record_id?: string;
-};
-
-type ChatCompletionResponseWithMetadata = OpenAI.ChatCompletion & {
-  metadata?: {
-    cognos?: CognosMetadataResponse;
-  };
 };
 
 export type MessageRequest = {
