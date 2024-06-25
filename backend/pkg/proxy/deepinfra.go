@@ -46,9 +46,21 @@ func (d *DeepInfra) ChatCompletion(
 	req openai.ChatCompletionRequest,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
 	if req.Stream {
-		return StreamOpenAIResponse(c, req, d.logger, d.client)
+		err = fmt.Errorf("streaming is enabled for this request")
+		return
 	}
 	return ForwardOpenAIResponse(c, req, d.logger, d.client)
+}
+
+func (d *DeepInfra) ChatCompletionStream(
+	c echo.Context,
+	req openai.ChatCompletionRequest,
+) (response openai.ChatCompletionStreamResponse, plainTextResponseMessage string, err error) {
+	if !req.Stream {
+		err = fmt.Errorf("streaming is not enabled for this request")
+		return
+	}
+	return StreamOpenAIResponse(c, req, d.logger, d.client)
 }
 
 func NewDeepInfra(client *openai.Client, logger *slog.Logger) (*DeepInfra, error) {

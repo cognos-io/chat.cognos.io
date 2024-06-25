@@ -113,6 +113,14 @@ func (g *GoogleGemini) ChatCompletion(
 	return GeminiResponseToOpenAIResponse(resp), sb.String(), nil
 }
 
+func (g *GoogleGemini) ChatCompletionStream(
+	c echo.Context,
+	req openai.ChatCompletionRequest,
+) (response openai.ChatCompletionStreamResponse, plainTextResponseMessage string, err error) {
+	err = fmt.Errorf("streaming is not enabled for this request")
+	return
+}
+
 func NewGoogleGemini(
 	client *genai.Client,
 	logger *slog.Logger,

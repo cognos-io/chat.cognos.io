@@ -51,10 +51,14 @@ func (cf *Cloudflare) ChatCompletion(
 	c echo.Context,
 	req openai.ChatCompletionRequest,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
-	if req.Stream {
-		return StreamOpenAIResponse(c, req, cf.logger, cf.client)
-	}
 	return ForwardOpenAIResponse(c, req, cf.logger, cf.client)
+}
+
+func (cf *Cloudflare) ChatCompletionStream(
+	c echo.Context,
+	req openai.ChatCompletionRequest,
+) (response openai.ChatCompletionStreamResponse, plainTextResponseMessage string, err error) {
+	return StreamOpenAIResponse(c, req, cf.logger, cf.client)
 }
 
 func NewCloudflare(

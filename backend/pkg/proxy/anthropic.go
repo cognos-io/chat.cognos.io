@@ -102,6 +102,14 @@ func (a *Anthropic) ChatCompletion(
 	return AnthropicResponseToOpenAIResponse(resp), sb.String(), nil
 }
 
+func (a *Anthropic) ChatCompletionStream(
+	c echo.Context,
+	req openai.ChatCompletionRequest,
+) (response openai.ChatCompletionStreamResponse, plainTextResponseMessage string, err error) {
+	err = fmt.Errorf("streaming is not enabled for this request")
+	return
+}
+
 func NewAnthropic(
 	client *anthropic.Client,
 	logger *slog.Logger,
