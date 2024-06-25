@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	headerData = []byte("data: ")
-	newLine    = []byte("\n\n")
+	HeaderData = []byte("data: ")
+	NewLine    = []byte("\n\n")
 )
 
 var openAIModelMapping = map[string]string{
@@ -41,9 +41,21 @@ func (o *OpenAI) ChatCompletion(
 	req openai.ChatCompletionRequest,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
 	if req.Stream {
-		return StreamOpenAIResponse(c, req, o.logger, o.client)
+		err = fmt.Errorf("streaming is enabled for this request")
+		return
 	}
 	return ForwardOpenAIResponse(c, req, o.logger, o.client)
+}
+
+func (o *OpenAI) ChatCompletionStream(
+	c echo.Context,
+	req openai.ChatCompletionRequest,
+) (response openai.ChatCompletionStreamResponse, plainTextResponseMessage string, err error) {
+	if !req.Stream {
+		err = fmt.Errorf("streaming is not enabled for this request")
+		return
+	}
+	return StreamOpenAIResponse(c, req, o.logger, o.client)
 }
 
 func NewOpenAI(
@@ -68,8 +80,8 @@ func StreamOpenAIResponse(
 	req openai.ChatCompletionRequest,
 	logger *slog.Logger,
 	client *openai.Client,
-) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
-	emptyResponse := openai.ChatCompletionResponse{}
+) (response openai.ChatCompletionStreamResponse, plainTextResponseMessage string, err error) {
+	emptyResponse := openai.ChatCompletionStreamResponse{}
 	// Forward the request to OpenAI
 	stream, err := client.CreateChatCompletionStream(
 		c.Request().Context(),
@@ -80,7 +92,7 @@ func StreamOpenAIResponse(
 	}
 	defer stream.Close()
 
-	// Small optimization for building the full
+	// Small optimization for building the full message
 	// https://100go.co/?h=strings#under-optimized-strings-concatenation-39
 	sb := strings.Builder{}
 
@@ -96,12 +108,7 @@ func StreamOpenAIResponse(
 		chunk, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
 			// stream has finished
-			_, err = respWriter.Write([]byte("data: [DONE]\n\n"))
-			if err != nil {
-				logger.Error("Failed to write error to response", "err", err)
-				return emptyResponse, plainTextResponseMessage, err
-			}
-			c.Response().Flush()
+			// We avoid sending a DONE message here because we also need to add the metadata message
 			break
 		}
 
@@ -123,7 +130,7 @@ func StreamOpenAIResponse(
 		}
 
 		_, err = respWriter.Write(
-			append(append(headerData, marshalledChunk...), newLine...),
+			append(append(HeaderData, marshalledChunk...), NewLine...),
 		)
 		if err != nil {
 			logger.Error("Failed to write to response", "err", err)

@@ -461,11 +461,12 @@ export class MessageService {
     return from(
       this._openAi.chat.completions.create({
         messages,
+        stream: true,
         model: this._modelService.selectedModel().id,
         metadata: {
           cognos: messageMetadata,
         },
-      } as OpenAI.ChatCompletionCreateParamsNonStreaming),
+      } as OpenAI.ChatCompletionCreateParamsStreaming),
     ).pipe(
       catchError((err) => {
         this.state.setStatus(MessageStatus.ErrorSending);

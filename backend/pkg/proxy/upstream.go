@@ -15,4 +15,10 @@ type Upstream interface {
 		c echo.Context,
 		request openai.ChatCompletionRequest,
 	) (response openai.ChatCompletionResponse, plainTextRequestMessage string, err error)
+	// ChatCompletionStream sends a request to the upstream server to complete a chat prompt
+	// and returns the response in a streaming fashion
+	ChatCompletionStream(
+		c echo.Context,
+		request openai.ChatCompletionRequest,
+	) (response openai.ChatCompletionStreamResponse, plainTextRequestMessage string, err error)
 }

@@ -4,6 +4,7 @@
 package openai
 
 import (
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -60,6 +61,11 @@ type ChatCompletionResponseWithMetadata struct {
 	Metadata ResponseMetadata `json:"metadata,omitempty"`
 }
 
+type ChatCompletionStreamResponseWithMetadata struct {
+	oai.ChatCompletionStreamResponse
+	Metadata ResponseMetadata `json:"metadata,omitempty"`
+}
+
 func NewError(code int, message string) oai.ErrorResponse {
 	var errorType string
 	switch code {
@@ -72,6 +78,29 @@ func NewError(code int, message string) oai.ErrorResponse {
 	}
 
 	return oai.ErrorResponse{Error: &oai.APIError{Type: errorType, Message: message}}
+}
+
+func validateRequest(c echo.Context) (*ChatCompletionRequestWithMetadata, error) {
+	owner := auth.ExtractUser(c)
+	if owner == nil {
+		return nil, apis.NewUnauthorizedError("User not authenticated", nil)
+	}
+
+	// Parse the incoming request
+	var req ChatCompletionRequestWithMetadata
+	if err := c.Bind(&req); err != nil {
+		return nil, apis.NewBadRequestError("Failed to read request data", err)
+	}
+
+	// Add the user ID to the request. It's nothing personal but is used to help
+	// identify abuse of our AI providers
+	req.User = owner.ID
+
+	if req.Metadata.Cognos.AgentID == "" {
+		return nil, apis.NewBadRequestError("Agent ID is required", nil)
+	}
+
+	return &req, nil
 }
 
 func EchoHandler(
@@ -87,23 +116,11 @@ func EchoHandler(
 		// 1. Get all the information we need from the request
 		// -------------------------------------------------------
 		owner := auth.ExtractUser(c)
-		if owner == nil {
-			return apis.NewUnauthorizedError("User not authenticated", nil)
+		req, err := validateRequest(c)
+		if err != nil {
+			return err
 		}
 
-		// Parse the incoming request
-		var req ChatCompletionRequestWithMetadata
-		if err := c.Bind(&req); err != nil {
-			return apis.NewBadRequestError("Failed to read request data", err)
-		}
-		// Add the user ID to the request. It's nothing personal but is used to help
-		// identify abuse of our AI providers
-		req.User = owner.ID
-
-		// Validate the incoming request
-		if req.Metadata.Cognos.AgentID == "" {
-			return apis.NewBadRequestError("Agent ID is required", nil)
-		}
 		// Extract the upstream based on the model
 		modelParts := strings.Split(req.Model, modelDelimiter)
 		if len(modelParts) != 2 {
@@ -128,6 +145,7 @@ func EchoHandler(
 			return apis.NewBadRequestError("Invalid agent ID", err)
 		}
 		// Check user has permission to access the agent
+		// TODO(ewan)
 
 		// -------------------------------------------------------
 		// 2. Process the request
@@ -164,7 +182,8 @@ func EchoHandler(
 		req.Messages = AddSystemMessage(req.Messages, agent)
 
 		// Encrypt and persist the incoming message
-		plainTextRequestMessage := req.Messages[len(req.Messages)-1].Content // Use the last message as there could be system and previous system & user messages
+		// Use the last message as there could be system and previous system & user messages
+		plainTextRequestMessage := req.Messages[len(req.Messages)-1].Content
 
 		requestMessage := chat.MessageRecordData{
 			OwnerID: owner.ID,
@@ -191,68 +210,165 @@ func EchoHandler(
 		// -------------------------------------------------------
 		// 3. Use the selected model and agent to generate the response
 		// -------------------------------------------------------
-		resp, plainTextResponseMessage, err := upstream.ChatCompletion(
-			c,
-			req.ChatCompletionRequest,
-		)
-		if err != nil && messageRecord != nil {
-			logger.Error("Failed to process request", "err", err)
-			// Try to clean up the originally saved message
-			if err := messageRepo.DeleteMessage(messageRecord.Id); err != nil {
-				logger.Error("Failed to clean up message record", "err", err)
-			}
-			return apis.NewApiError(
-				http.StatusInternalServerError,
-				"Failed to process request",
-				err,
-			)
-		}
-
-		// -------------------------------------------------------
-		// 4. Encrypt and persist the response
-		// -------------------------------------------------------
-		responseMessage := chat.MessageRecordData{
-			Content: plainTextResponseMessage,
-			AgentID: req.Metadata.Cognos.AgentID,
-			ModelID: strings.Join(
-				modelParts,
-				modelDelimiter,
-			), // rejoin the model parts to store the full model name
-		}
-
-		if shouldPersist {
-			err, responseRecord = messageRepo.EncryptAndPersistMessage(
-				receiverPublicKey,
-				req.Metadata.Cognos.ConversationID,
-				messageRecord.Id,
-				responseMessage,
+		if req.Stream {
+			resp, plainTextResponseMessage, err := upstream.ChatCompletionStream(
+				c,
+				req.ChatCompletionRequest,
 			)
 			if err != nil {
-				logger.Error("Failed to save response message", "err", err)
+				logger.Error("Failed to process request", "err", err)
+				// Try to clean up the originally saved message
+				if err := messageRepo.DeleteMessage(messageRecord.Id); err != nil {
+					logger.Error("Failed to clean up message record", "err", err)
+				}
 				return apis.NewApiError(
 					http.StatusInternalServerError,
-					"Failed to save response message",
+					"Failed to process request",
 					err,
 				)
 			}
-		}
 
-		var extendedResponse ChatCompletionResponseWithMetadata
-		extendedResponse.ChatCompletionResponse = resp
-		extendedResponse.Metadata.Cognos = CognosResponseMetadata{
-			RequestID: req.Metadata.Cognos.RequestID,
-		}
+			// -------------------------------------------------------
+			// 4. Encrypt and persist the response
+			// -------------------------------------------------------
+			responseMessage := chat.MessageRecordData{
+				Content: plainTextResponseMessage,
+				AgentID: req.Metadata.Cognos.AgentID,
+				ModelID: strings.Join(
+					modelParts,
+					modelDelimiter,
+				), // rejoin the model parts to store the full model name
+			}
 
-		if messageRecord != nil {
-			extendedResponse.Metadata.Cognos.ParentMessageID = messageRecord.Id
-			extendedResponse.Metadata.Cognos.MessageRecordID = messageRecord.Id
-		}
+			if shouldPersist {
+				err, responseRecord = messageRepo.EncryptAndPersistMessage(
+					receiverPublicKey,
+					req.Metadata.Cognos.ConversationID,
+					messageRecord.Id,
+					responseMessage,
+				)
+				if err != nil {
+					logger.Error("Failed to save response message", "err", err)
+					return apis.NewApiError(
+						http.StatusInternalServerError,
+						"Failed to save response message",
+						err,
+					)
+				}
+			}
 
-		if responseRecord != nil {
-			extendedResponse.Metadata.Cognos.ResponseRecordID = responseRecord.Id
-		}
+			respWriter := c.Response().Unwrap()
 
-		return c.JSON(http.StatusOK, extendedResponse)
+			// Write back our metadata
+			var extendedResponse ChatCompletionStreamResponseWithMetadata
+			extendedResponse.ChatCompletionStreamResponse = resp
+			extendedResponse.Metadata.Cognos = CognosResponseMetadata{
+				RequestID: req.Metadata.Cognos.RequestID,
+			}
+
+			if messageRecord != nil {
+				extendedResponse.Metadata.Cognos.ParentMessageID = messageRecord.Id
+				extendedResponse.Metadata.Cognos.MessageRecordID = messageRecord.Id
+			}
+
+			if responseRecord != nil {
+				extendedResponse.Metadata.Cognos.ResponseRecordID = responseRecord.Id
+			}
+
+			// Write the response back to the client
+			marshalledChunk, err := json.Marshal(extendedResponse)
+			if err != nil {
+				logger.Error("Failed to marshal response", "err", err)
+				return apis.NewApiError(
+					http.StatusInternalServerError,
+					"Failed to marshal response",
+					err,
+				)
+			}
+			_, err = respWriter.Write(
+				append(
+					append(proxy.HeaderData, marshalledChunk...),
+					proxy.NewLine...),
+			)
+			if err != nil {
+				logger.Error("Failed to write metadata response to client", "err", err)
+				return err
+			}
+
+			// Finally write back the response
+			_, err = respWriter.Write(
+				append(append(proxy.HeaderData, []byte("[DONE]")...), proxy.NewLine...),
+			)
+			if err != nil {
+				logger.Error("Failed to write error to response", "err", err)
+				return err
+			}
+
+			c.Response().Flush()
+			return err
+		} else {
+			resp, plainTextResponseMessage, err := upstream.ChatCompletion(
+				c,
+				req.ChatCompletionRequest,
+			)
+
+			if err != nil && messageRecord != nil {
+				logger.Error("Failed to process request", "err", err)
+				// Try to clean up the originally saved message
+				if err := messageRepo.DeleteMessage(messageRecord.Id); err != nil {
+					logger.Error("Failed to clean up message record", "err", err)
+				}
+				return apis.NewApiError(
+					http.StatusInternalServerError,
+					"Failed to process request",
+					err,
+				)
+			}
+
+			// -------------------------------------------------------
+			// 4. Encrypt and persist the response
+			// -------------------------------------------------------
+			responseMessage := chat.MessageRecordData{
+				Content: plainTextResponseMessage,
+				AgentID: req.Metadata.Cognos.AgentID,
+				ModelID: strings.Join(
+					modelParts,
+					modelDelimiter,
+				), // rejoin the model parts to store the full model name
+			}
+
+			if shouldPersist {
+				err, responseRecord = messageRepo.EncryptAndPersistMessage(
+					receiverPublicKey,
+					req.Metadata.Cognos.ConversationID,
+					messageRecord.Id,
+					responseMessage,
+				)
+				if err != nil {
+					logger.Error("Failed to save response message", "err", err)
+					return apis.NewApiError(
+						http.StatusInternalServerError,
+						"Failed to save response message",
+						err,
+					)
+				}
+			}
+			var extendedResponse ChatCompletionResponseWithMetadata
+			extendedResponse.ChatCompletionResponse = resp
+			extendedResponse.Metadata.Cognos = CognosResponseMetadata{
+				RequestID: req.Metadata.Cognos.RequestID,
+			}
+
+			if messageRecord != nil {
+				extendedResponse.Metadata.Cognos.ParentMessageID = messageRecord.Id
+				extendedResponse.Metadata.Cognos.MessageRecordID = messageRecord.Id
+			}
+
+			if responseRecord != nil {
+				extendedResponse.Metadata.Cognos.ResponseRecordID = responseRecord.Id
+			}
+			return c.JSON(http.StatusOK, extendedResponse)
+		}
 	}
 }
 
