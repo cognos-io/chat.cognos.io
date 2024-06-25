@@ -77,13 +77,6 @@ export type MessageRequest = {
   parentMessageId?: string;
 };
 
-// Accumulated snapshot of streaming chunks
-type MessageResponseSnapshot = {
-  requestId: string;
-  content: string;
-  metadata?: CognosMetadataResponse;
-};
-
 @Injectable({
   providedIn: 'root',
 })
@@ -224,7 +217,7 @@ export class MessageService {
                     finalize(() => this._isNewConversation$.next(false)),
                     tap((resp) => {
                       const metadata: CognosMetadataResponse | undefined =
-                        resp.metadata;
+                        resp.metadata?.cognos;
 
                       this.state.updateMessageId({
                         oldId: messageRequest.requestId,
@@ -245,7 +238,8 @@ export class MessageService {
 
           return this.sendMessage(messageRequest).pipe(
             tap((resp) => {
-              const metadata: CognosMetadataResponse | undefined = resp.metadata;
+              const metadata: CognosMetadataResponse | undefined =
+                resp.metadata?.cognos;
               this.state.updateMessageId({
                 oldId: messageRequest.requestId,
                 newId: metadata?.message_record_id ?? '',
@@ -435,7 +429,7 @@ export class MessageService {
 
   private sendMessage(
     messageRequest: MessageRequest,
-  ): Observable<MessageResponseSnapshot> {
+  ): Observable<ChatCompletionChunkWithMetadata> {
     const conversation = this._conversationService.conversation();
     const isTemporaryConversation = this._conversationService.isTemporaryConversation();
 
@@ -464,7 +458,7 @@ export class MessageService {
       messageMetadata.conversation_id = conversation.record.id;
     }
 
-    const response$ = new Subject<MessageResponseSnapshot>();
+    const response$ = new Subject<ChatCompletionChunkWithMetadata>();
 
     const stream = this._openAi.beta.chat.completions
       .stream({
@@ -475,14 +469,12 @@ export class MessageService {
           cognos: messageMetadata,
         },
       } as OpenAI.ChatCompletionCreateParamsStreaming)
-      .on('chunk', (chunk, snapshot) => {
+      .on('chunk', (chunk) => {
         // Extract the chunk metadata if present
         const c = chunk as ChatCompletionChunkWithMetadata;
-        response$.next({
-          requestId: messageRequest.requestId,
-          content: snapshot.choices[0].message.content ?? '',
-          metadata: c.metadata?.cognos,
-        });
+        // Set the request ID to the message ID to help us match the response to the message
+        c.id = messageRequest.requestId;
+        response$.next(c);
       })
       .on('end', () => response$.complete());
 
@@ -515,34 +507,49 @@ export class MessageService {
   }
 
   private addOpenAIMessageToState(
-    resp: MessageResponseSnapshot,
+    resp: ChatCompletionChunkWithMetadata,
   ): Partial<MessageState> {
-    let createdAt = resp.created;
-    if (isTimestampInMilliseconds(createdAt)) {
-      // Cloudflare Workers returns timestamps in milliseconds
-      // Convert to seconds for standardization with OpenAI API
-      createdAt = Math.floor(createdAt / 1000);
-    }
+    const messages = this.state().messages;
+
+    const existingMessageIndex = messages.findIndex(
+      (msg) => msg.request_id === resp.id,
+    );
 
     // TODO(ewan): Better handle errors. E.g. request fails or success but resp.choices is null
     const metadata: CognosMetadataResponse | undefined = resp.metadata?.cognos;
 
-    const msg: Message = {
-      parentMessageId: metadata?.parent_message_id,
-      record_id: metadata?.response_record_id,
-      createdAt: new Date((createdAt + 1) * 1000),
-      decryptedData: {
-        content: resp.choices[0].message.content,
-        agent_id: this._agentService.selectedAgent().id,
-        model_id: this._modelService.selectedModel().id,
-      },
-    };
+    if (existingMessageIndex === -1) {
+      let createdAt = resp.created;
+      // we don't have a message yet so add it to the statelet createdAt = resp.created;
+      if (isTimestampInMilliseconds(createdAt)) {
+        // Cloudflare Workers returns timestamps in milliseconds
+        // Convert to seconds for standardization with OpenAI API
+        createdAt = Math.floor(createdAt / 1000);
+      }
+
+      const msg: Message = {
+        request_id: resp.id,
+        parentMessageId: metadata?.parent_message_id,
+        record_id: metadata?.response_record_id,
+        createdAt: new Date((createdAt + 1) * 1000),
+        decryptedData: {
+          content: resp.choices[0].delta.content ?? '',
+          agent_id: this._agentService.selectedAgent().id,
+          model_id: this._modelService.selectedModel().id,
+        },
+      };
+
+      return {
+        messages: [...this.state().messages, msg],
+      };
+    }
 
     // Find the corresponding message in the state and update it
+    const msg = messages[existingMessageIndex];
+    msg.record_id = metadata?.response_record_id;
+    msg.decryptedData.content += resp.choices[0].delta.content ?? '';
 
-    return {
-      messages: [...this.state().messages, msg],
-    };
+    return { messages: [...messages] };
   }
 
   /**
