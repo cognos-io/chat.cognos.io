@@ -41,7 +41,6 @@ import { ErrorService } from './error.service';
 import { ModelService } from './model.service';
 import {
   ChatCompletionChunkWithMetadata,
-  ChatCompletionResponseWithMetadata,
   CognosMetadataResponse,
 } from './openai.service.provider';
 
