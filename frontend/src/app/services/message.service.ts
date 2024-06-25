@@ -40,6 +40,7 @@ import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
 import { ModelService } from './model.service';
 import {
+  ChatCompletionChunkWithMetadata,
   ChatCompletionResponseWithMetadata,
   CognosMetadataResponse,
 } from './openai.service.provider';
@@ -75,6 +76,13 @@ export type MessageRequest = {
   requestId: string;
   content: string;
   parentMessageId?: string;
+};
+
+// Accumulated snapshot of streaming chunks
+type MessageResponseSnapshot = {
+  requestId: string;
+  content: string;
+  metadata?: CognosMetadataResponse;
 };
 
 @Injectable({
@@ -217,7 +225,7 @@ export class MessageService {
                     finalize(() => this._isNewConversation$.next(false)),
                     tap((resp) => {
                       const metadata: CognosMetadataResponse | undefined =
-                        resp.metadata?.cognos;
+                        resp.metadata;
 
                       this.state.updateMessageId({
                         oldId: messageRequest.requestId,
@@ -238,8 +246,7 @@ export class MessageService {
 
           return this.sendMessage(messageRequest).pipe(
             tap((resp) => {
-              const metadata: CognosMetadataResponse | undefined =
-                resp.metadata?.cognos;
+              const metadata: CognosMetadataResponse | undefined = resp.metadata;
               this.state.updateMessageId({
                 oldId: messageRequest.requestId,
                 newId: metadata?.message_record_id ?? '',
@@ -429,7 +436,7 @@ export class MessageService {
 
   private sendMessage(
     messageRequest: MessageRequest,
-  ): Observable<ChatCompletionResponseWithMetadata> {
+  ): Observable<MessageResponseSnapshot> {
     const conversation = this._conversationService.conversation();
     const isTemporaryConversation = this._conversationService.isTemporaryConversation();
 
@@ -458,16 +465,29 @@ export class MessageService {
       messageMetadata.conversation_id = conversation.record.id;
     }
 
-    return from(
-      this._openAi.chat.completions.create({
+    const response$ = new Subject<MessageResponseSnapshot>();
+
+    const stream = this._openAi.beta.chat.completions
+      .stream({
         messages,
         stream: true,
         model: this._modelService.selectedModel().id,
         metadata: {
           cognos: messageMetadata,
         },
-      } as OpenAI.ChatCompletionCreateParamsStreaming),
-    ).pipe(
+      } as OpenAI.ChatCompletionCreateParamsStreaming)
+      .on('chunk', (chunk, snapshot) => {
+        // Extract the chunk metadata if present
+        const c = chunk as ChatCompletionChunkWithMetadata;
+        response$.next({
+          requestId: messageRequest.requestId,
+          content: snapshot.choices[0].message.content ?? '',
+          metadata: c.metadata?.cognos,
+        });
+      })
+      .on('end', () => response$.complete());
+
+    return from(stream).pipe(
       catchError((err) => {
         this.state.setStatus(MessageStatus.ErrorSending);
         console.error('Error sending message', err);
@@ -488,6 +508,7 @@ export class MessageService {
         this.state.removeLastMessage();
         return EMPTY;
       }),
+      exhaustMap(() => response$),
       tap(() => {
         this.state.setStatus(MessageStatus.Success);
       }),
@@ -495,7 +516,7 @@ export class MessageService {
   }
 
   private addOpenAIMessageToState(
-    resp: ChatCompletionResponseWithMetadata,
+    resp: MessageResponseSnapshot,
   ): Partial<MessageState> {
     let createdAt = resp.created;
     if (isTimestampInMilliseconds(createdAt)) {
@@ -517,6 +538,8 @@ export class MessageService {
         model_id: this._modelService.selectedModel().id,
       },
     };
+
+    // Find the corresponding message in the state and update it
 
     return {
       messages: [...this.state().messages, msg],
