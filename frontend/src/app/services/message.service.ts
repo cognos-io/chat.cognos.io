@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Signal, inject } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase, { ListResult } from 'pocketbase';
@@ -23,7 +23,6 @@ import {
 } from 'rxjs';
 
 import { Base64 } from 'js-base64';
-import { debug } from 'ngxtension/debug';
 import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
 import { OpenAI } from 'openai';
@@ -253,11 +252,12 @@ export class MessageService {
         }),
       ),
 
-      this._completionChunks$.pipe(
-        map((chunk) => {
-          return this.addOpenAIMessageToState(chunk);
-        }),
-      ),
+      (state) =>
+        this._completionChunks$.pipe(
+          map((chunk) => {
+            return this.addOpenAIMessageToState(state, chunk);
+          }),
+        ),
     ],
     selectors: (state) => ({
       orderedMessageList: () => {
@@ -322,7 +322,6 @@ export class MessageService {
       updateMessageId: (state, $: Observable<{ oldId: string; newId?: string }>) =>
         $.pipe(
           filter(({ newId }) => !!newId),
-          debug('updateMessageId'),
           map(({ oldId, newId }) => {
             const messages = state().messages.map((msg) => {
               if (msg.record_id === oldId) {
@@ -334,7 +333,7 @@ export class MessageService {
               return msg;
             });
             return {
-              messages: [...messages],
+              messages: Object.assign([], messages),
             };
           }),
         ),
@@ -517,7 +516,7 @@ export class MessageService {
       }),
       finalize(() => {
         // Replace the temporary message ID with the real message ID
-        if (responseId && metadata?.message_record_id) {
+        if (responseId && metadata?.response_record_id) {
           this.state.updateMessageId({
             oldId: responseId,
             newId: metadata.response_record_id,
@@ -531,6 +530,7 @@ export class MessageService {
   }
 
   private addOpenAIMessageToState(
+    state: Signal<MessageState>,
     resp: ChatCompletionChunkWithMetadata,
   ): Partial<MessageState> {
     if (resp.choices.length === 0) {
@@ -538,7 +538,7 @@ export class MessageService {
       return {};
     }
 
-    const messages = this.state.messages();
+    const messages = state().messages;
 
     const existingMessageIndex = messages.findIndex(
       (msg) => msg.request_id === resp.id,
@@ -559,7 +559,7 @@ export class MessageService {
       const msg: Message = {
         request_id: resp.id,
         parentMessageId: metadata?.parent_message_id,
-        record_id: metadata?.response_record_id,
+        record_id: metadata?.response_record_id ?? resp.id,
         createdAt: new Date((createdAt + 1) * 1000),
         decryptedData: {
           content: resp.choices[0].delta.content ?? '',
@@ -569,7 +569,7 @@ export class MessageService {
       };
 
       return {
-        messages: [...this.state().messages, msg],
+        messages: [...state().messages, msg],
       };
     }
 
@@ -581,7 +581,7 @@ export class MessageService {
 
     messages[existingMessageIndex] = msg;
 
-    return { messages: [...messages] };
+    return { messages: Object.assign([], messages) };
   }
 
   /**

@@ -59,7 +59,7 @@ import { UserPreferencesService } from '@app/services/user-preferences.service';
       <button mat-menu-item="" (click)="onPinUnpinConversation(conversation.record.id)">
         <mat-icon
           [ngClass]="{
-            pinned: isConversationPinned(conversation.record.id)
+            pinned: isConversationPinned(conversation.record.id),
           }"
           fontSet="bi"
           [fontIcon]="

@@ -54,7 +54,7 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
       @if (loadingMessages) {
         <app-loading-indicator></app-loading-indicator>
       }
-      @for (message of messages; track message.record_id) {
+      @for (message of messages; track messageTrackBy(message)) {
         <app-message-list-item [message]="message"></app-message-list-item>
       } @empty {
         <div class="circle circle-1"></div>
@@ -229,5 +229,23 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroyed$.next(true);
     this.destroyed$.complete();
+  }
+
+  messageTrackBy(message: Message) {
+    let trackingId = '';
+
+    if (message.request_id) {
+      trackingId += `:${message.request_id}`;
+    }
+
+    if (message.record_id) {
+      trackingId += `:${message.record_id}`;
+    }
+
+    if (message.decryptedData.content) {
+      trackingId += `:${message.decryptedData.content.length}`;
+    }
+
+    return trackingId;
   }
 }
