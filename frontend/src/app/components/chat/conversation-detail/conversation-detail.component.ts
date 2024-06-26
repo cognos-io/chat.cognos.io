@@ -29,14 +29,14 @@ import { MessageListComponent } from '../message-list/message-list.component';
       <div class="relative flex h-full flex-col">
         <app-message-list
           class="message-container"
-          [messages]="(messages | async) ?? []"
+          [messages]="messages()"
           [messageSending]="isSending()"
           [loadingMessages]="isLoadingMoreMessages()"
           (nextPage)="messageService.nextPage()"
           (atBottom)="messagesAtBottom.set($event)"
         ></app-message-list>
 
-        @if (!messagesAtBottom() && ((messages | async) ?? []).length !== 0) {
+        @if (!messagesAtBottom() && messages().length !== 0) {
           <button
             mat-mini-fab
             color="tertiary"
@@ -99,9 +99,7 @@ export class ConversationDetailComponent {
     this._conversationService.selectConversation$.next(conversationId ?? '');
   }
 
-  get messages() {
-    return this.messageService.messages$;
-  }
+  messages = computed(() => this.messageService.messages());
 
   constructor() {
     // Scroll to bottom when messages changes if the user is already at the bottom (so not if they have scrolled up)

@@ -322,6 +322,7 @@ export class MessageService {
       updateMessageId: (state, $: Observable<{ oldId: string; newId?: string }>) =>
         $.pipe(
           filter(({ newId }) => !!newId),
+          debug('updateMessageId'),
           map(({ oldId, newId }) => {
             const messages = state().messages.map((msg) => {
               if (msg.record_id === oldId) {
@@ -466,6 +467,9 @@ export class MessageService {
       messageMetadata.conversation_id = conversation.record.id;
     }
 
+    let responseId: string | undefined;
+    let metadata: CognosMetadataResponse | undefined;
+
     const stream = this._openAi.chat.completions.create({
       messages,
       stream: true,
@@ -498,18 +502,28 @@ export class MessageService {
       }),
       switchMap((response) => {
         return from(response).pipe(
-          debug('response'),
-          map((chunk) => {
+          map((chunk: ChatCompletionChunkWithMetadata) => {
             // Extract the chunk metadata if present
-            const c = chunk as ChatCompletionChunkWithMetadata;
-            // Set the request ID to the message ID to help us match the response to the message
-            c.id = messageRequest.requestId;
-            this._completionChunks$.next(c);
-            return c;
+            this._completionChunks$.next(chunk);
+            if (chunk.metadata?.cognos) {
+              metadata = chunk.metadata.cognos;
+            }
+            if (chunk.id !== '') {
+              responseId = chunk.id;
+            }
+            return chunk;
           }),
         );
       }),
       finalize(() => {
+        // Replace the temporary message ID with the real message ID
+        if (responseId && metadata?.message_record_id) {
+          this.state.updateMessageId({
+            oldId: responseId,
+            newId: metadata.response_record_id,
+          });
+        }
+
         this._completionChunks$.complete();
         this.state.setStatus(MessageStatus.Success);
       }),
