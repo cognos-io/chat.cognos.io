@@ -265,6 +265,12 @@ func EchoHandler(
 			extendedResponse.Metadata.Cognos = CognosResponseMetadata{
 				RequestID: req.Metadata.Cognos.RequestID,
 			}
+			// Initialize an empty choices array so we don't get a null value in the response which
+			// causes the OpenAI library to error
+			extendedResponse.ChatCompletionStreamResponse.Choices = make(
+				[]oai.ChatCompletionStreamChoice,
+				0,
+			)
 
 			if messageRecord != nil {
 				extendedResponse.Metadata.Cognos.ParentMessageID = messageRecord.Id
