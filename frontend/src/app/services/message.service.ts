@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase, { ListResult } from 'pocketbase';
 
@@ -23,6 +23,7 @@ import {
 } from 'rxjs';
 
 import { Base64 } from 'js-base64';
+import { debug } from 'ngxtension/debug';
 import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
 import { OpenAI } from 'openai';
@@ -161,6 +162,7 @@ export class MessageService {
 
       // when a message is sent, add it to the list of messages and send it to our upstream API
       this._cleanedMessage$.pipe(
+        takeUntilDestroyed(),
         tap(() => {
           const conversation = this._conversationService.conversation();
           if (!conversation) {
@@ -221,21 +223,16 @@ export class MessageService {
                       const metadata: CognosMetadataResponse | undefined =
                         resp.metadata?.cognos;
 
-                      if (metadata) {
-                        this.state.updateMessageId({
-                          oldId: messageRequest.requestId,
-                          newId: metadata?.message_record_id ?? '',
-                        });
-                      }
+                      this.state.updateMessageId({
+                        oldId: messageRequest.requestId,
+                        newId: metadata?.message_record_id,
+                      });
                     }),
                   ),
-                ]).pipe(
-                  map(([, resp]) => {
-                    return {
-                      ...this.addOpenAIMessageToState(resp),
-                    };
-                  }),
-                );
+                ]);
+              }),
+              map(() => {
+                return {};
               }),
             );
           }
@@ -249,16 +246,16 @@ export class MessageService {
                 newId: metadata?.message_record_id ?? '',
               });
             }),
-            map((resp) => {
-              return this.addOpenAIMessageToState(resp);
+            map(() => {
+              return {};
             }),
           );
         }),
       ),
 
       this._completionChunks$.pipe(
-        map((resp) => {
-          return this.addOpenAIMessageToState(resp);
+        map((chunk) => {
+          return this.addOpenAIMessageToState(chunk);
         }),
       ),
     ],
@@ -275,16 +272,16 @@ export class MessageService {
       },
     }),
     actionSources: {
-      addMessage: (state, action$: Observable<Message>) =>
-        action$.pipe(
+      addMessage: (state, $: Observable<Message>) =>
+        $.pipe(
           map((message) => {
             return {
               messages: [...state().messages, message],
             };
           }),
         ),
-      removeLastMessage: (state, action$: Observable<void>) =>
-        action$.pipe(
+      removeLastMessage: (state, $: Observable<void>) =>
+        $.pipe(
           map(() => {
             const messages = state().messages.slice(0, -1);
             return {
@@ -293,8 +290,8 @@ export class MessageService {
           }),
         ),
 
-      nextPage: (state, action$) =>
-        action$.pipe(
+      nextPage: (state, $) =>
+        $.pipe(
           concatMap(() => {
             if (!state().hasMoreMessages) {
               return EMPTY;
@@ -322,8 +319,9 @@ export class MessageService {
             );
           }),
         ),
-      updateMessageId: (state, action$: Observable<{ oldId: string; newId: string }>) =>
-        action$.pipe(
+      updateMessageId: (state, $: Observable<{ oldId: string; newId?: string }>) =>
+        $.pipe(
+          filter(({ newId }) => !!newId),
           map(({ oldId, newId }) => {
             const messages = state().messages.map((msg) => {
               if (msg.record_id === oldId) {
@@ -335,12 +333,12 @@ export class MessageService {
               return msg;
             });
             return {
-              messages,
+              messages: [...messages],
             };
           }),
         ),
-      setStatus: (state, action$: Observable<MessageStatus>) =>
-        action$.pipe(
+      setStatus: (state, $: Observable<MessageStatus>) =>
+        $.pipe(
           map((status) => {
             return {
               status,
@@ -468,23 +466,14 @@ export class MessageService {
       messageMetadata.conversation_id = conversation.record.id;
     }
 
-    const stream = this._openAi.beta.chat.completions
-      .stream({
-        messages,
-        stream: true,
-        model: this._modelService.selectedModel().id,
-        metadata: {
-          cognos: messageMetadata,
-        },
-      } as OpenAI.ChatCompletionCreateParamsStreaming)
-      .on('chunk', (chunk) => {
-        // Extract the chunk metadata if present
-        const c = chunk as ChatCompletionChunkWithMetadata;
-        // Set the request ID to the message ID to help us match the response to the message
-        c.id = messageRequest.requestId;
-        this._completionChunks$.next(c);
-      })
-      .on('end', () => this._completionChunks$.complete());
+    const stream = this._openAi.chat.completions.create({
+      messages,
+      stream: true,
+      model: this._modelService.selectedModel().id,
+      metadata: {
+        cognos: messageMetadata,
+      },
+    } as OpenAI.ChatCompletionCreateParamsStreaming);
 
     return from(stream).pipe(
       catchError((err) => {
@@ -507,7 +496,21 @@ export class MessageService {
         this.state.removeLastMessage();
         return EMPTY;
       }),
+      switchMap((response) => {
+        return from(response).pipe(
+          debug('response'),
+          map((chunk) => {
+            // Extract the chunk metadata if present
+            const c = chunk as ChatCompletionChunkWithMetadata;
+            // Set the request ID to the message ID to help us match the response to the message
+            c.id = messageRequest.requestId;
+            this._completionChunks$.next(c);
+            return c;
+          }),
+        );
+      }),
       finalize(() => {
+        this._completionChunks$.complete();
         this.state.setStatus(MessageStatus.Success);
       }),
     );
@@ -516,7 +519,12 @@ export class MessageService {
   private addOpenAIMessageToState(
     resp: ChatCompletionChunkWithMetadata,
   ): Partial<MessageState> {
-    const messages = this.state().messages;
+    if (resp.choices.length === 0) {
+      // No text to update
+      return {};
+    }
+
+    const messages = this.state.messages();
 
     const existingMessageIndex = messages.findIndex(
       (msg) => msg.request_id === resp.id,
@@ -551,15 +559,12 @@ export class MessageService {
       };
     }
 
-    if (resp.choices.length === 0) {
-      // No text to update
-      return {};
-    }
-
     // Find the corresponding message in the state and update it
     const msg = messages[existingMessageIndex];
     msg.record_id = metadata?.response_record_id;
     msg.decryptedData.content += resp.choices[0].delta.content ?? '';
+    msg.parentMessageId = metadata?.parent_message_id;
+
     messages[existingMessageIndex] = msg;
 
     return { messages: [...messages] };

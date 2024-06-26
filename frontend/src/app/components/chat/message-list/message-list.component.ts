@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   EventEmitter,
@@ -41,6 +42,7 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
     MatIconModule,
     FeatureBentoComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
       #wrapper
