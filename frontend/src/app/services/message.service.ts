@@ -102,6 +102,8 @@ export class MessageService {
   );
   private readonly _isNewConversation$ = new Subject<boolean>();
 
+  private readonly _completionChunks$ = new Subject<ChatCompletionChunkWithMetadata>();
+
   // state
   private readonly state = signalSlice({
     initialState,
@@ -219,10 +221,12 @@ export class MessageService {
                       const metadata: CognosMetadataResponse | undefined =
                         resp.metadata?.cognos;
 
-                      this.state.updateMessageId({
-                        oldId: messageRequest.requestId,
-                        newId: metadata?.message_record_id ?? '',
-                      });
+                      if (metadata) {
+                        this.state.updateMessageId({
+                          oldId: messageRequest.requestId,
+                          newId: metadata?.message_record_id ?? '',
+                        });
+                      }
                     }),
                   ),
                 ]).pipe(
@@ -249,6 +253,12 @@ export class MessageService {
               return this.addOpenAIMessageToState(resp);
             }),
           );
+        }),
+      ),
+
+      this._completionChunks$.pipe(
+        map((resp) => {
+          return this.addOpenAIMessageToState(resp);
         }),
       ),
     ],
@@ -458,8 +468,6 @@ export class MessageService {
       messageMetadata.conversation_id = conversation.record.id;
     }
 
-    const response$ = new Subject<ChatCompletionChunkWithMetadata>();
-
     const stream = this._openAi.beta.chat.completions
       .stream({
         messages,
@@ -474,9 +482,9 @@ export class MessageService {
         const c = chunk as ChatCompletionChunkWithMetadata;
         // Set the request ID to the message ID to help us match the response to the message
         c.id = messageRequest.requestId;
-        response$.next(c);
+        this._completionChunks$.next(c);
       })
-      .on('end', () => response$.complete());
+      .on('end', () => this._completionChunks$.complete());
 
     return from(stream).pipe(
       catchError((err) => {
@@ -499,8 +507,7 @@ export class MessageService {
         this.state.removeLastMessage();
         return EMPTY;
       }),
-      exhaustMap(() => response$),
-      tap(() => {
+      finalize(() => {
         this.state.setStatus(MessageStatus.Success);
       }),
     );
@@ -520,7 +527,7 @@ export class MessageService {
 
     if (existingMessageIndex === -1) {
       let createdAt = resp.created;
-      // we don't have a message yet so add it to the statelet createdAt = resp.created;
+      // we don't have a message yet so add it to the state
       if (isTimestampInMilliseconds(createdAt)) {
         // Cloudflare Workers returns timestamps in milliseconds
         // Convert to seconds for standardization with OpenAI API
@@ -544,10 +551,16 @@ export class MessageService {
       };
     }
 
+    if (resp.choices.length === 0) {
+      // No text to update
+      return {};
+    }
+
     // Find the corresponding message in the state and update it
     const msg = messages[existingMessageIndex];
     msg.record_id = metadata?.response_record_id;
     msg.decryptedData.content += resp.choices[0].delta.content ?? '';
+    messages[existingMessageIndex] = msg;
 
     return { messages: [...messages] };
   }
