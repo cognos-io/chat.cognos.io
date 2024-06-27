@@ -33,6 +33,7 @@ import { ModelService } from '@app/services/model.service';
         [attr.data-agent-id]="message.decryptedData.agent_id"
         [attr.data-model-id]="message.decryptedData.model_id"
         [attr.data-owner-id]="message.decryptedData.owner_id"
+        [attr.data-parent-id]="message.parentMessageId"
       >
         <div
           class="flex h-12 w-12 flex-none items-center justify-center justify-self-center rounded-full bg-gray-50"
@@ -164,10 +165,6 @@ export class MessageListItemComponent {
   }
 
   onDeleteMessage(message: Message) {
-    this._messageService.deleteMessage({
-      messageId: message.record_id,
-      deleteChildren: true,
-      deleteSiblings: true,
-    });
+    this._messageService.deleteMessage(message);
   }
 }

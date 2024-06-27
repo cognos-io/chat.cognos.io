@@ -253,17 +253,6 @@ export class MessageService {
         }),
       ),
 
-      (state) =>
-        this._deleteMessages$.pipe(
-          map((messageIds) => {
-            return {
-              messages: state().messages.filter(
-                (msg) => msg.record_id && !messageIds.includes(msg.record_id),
-              ),
-            };
-          }),
-        ),
-
       this._deleteMessages$.pipe(
         concatMap((messageIds) => {
           return this.deleteMessagesFromPocketBase(messageIds);
@@ -413,6 +402,13 @@ export class MessageService {
   public readonly nextPage = this.state.nextPage;
   public readonly resetState = this.state.resetState;
 
+  public deleteMessage(msg: Message) {
+    if (!msg.record_id) {
+      return;
+    }
+    this._deleteMessages$.next([msg.record_id]);
+  }
+
   // helper methods
   private fetchMessages(
     conversationId: string,
@@ -464,6 +460,7 @@ export class MessageService {
     return {
       record_id: record.id,
       createdAt: new Date(record.created),
+      parentMessageId: record.parent_message,
       decryptedData,
     };
   }
@@ -682,105 +679,29 @@ export class MessageService {
   ): Observable<Partial<MessageState>> {
     return from(messageIds).pipe(
       concatMap((messageId) => {
+        // This will remove the message and all it's children due to the CASCADE delete
         return from(this.pbMessagesCollection.delete(messageId)).pipe(
           map(() => {
+            // Rather than load all the messages from the server, reset the state minus affected messages
+            let messages = this.state().messages;
+
+            const idsToRemove = [messageId];
+            while (idsToRemove.length) {
+              const id = idsToRemove.pop();
+              messages = messages.filter((msg) => {
+                if (msg.parentMessageId === id && msg.record_id) {
+                  idsToRemove.push(msg.record_id);
+                }
+                return msg.record_id !== id;
+              });
+            }
+
             return {
-              messages: this.state().messages.filter(
-                (msg) => msg.record_id !== messageId,
-              ),
+              messages,
             };
           }),
         );
       }),
     );
   }
-
-  public deleteMessage({
-    messageId,
-    deleteChildren = false,
-    deleteSiblings = false,
-  }: {
-    messageId?: string;
-    deleteChildren: boolean;
-    deleteSiblings: boolean;
-  }): void {
-    if (!messageId) {
-      return;
-    }
-
-    const messages = this.messages();
-
-    // Find the specific message itself to delete
-    const requestedMessage = messages.find((msg) => msg.record_id === messageId);
-
-    if (!requestedMessage) {
-      return;
-    }
-
-    // Gather all the IDs of the messages to delete
-    const messageIdsToDelete = lookupMessageIdsToDelete({
-      messages,
-      baseMessageToDelete: requestedMessage,
-      deleteChildren,
-      deleteSiblings,
-    });
-
-    this._deleteMessages$.next(messageIdsToDelete);
-
-    return;
-  }
 }
-
-const lookupMessageIdsToDelete = ({
-  messages,
-  baseMessageToDelete,
-  deleteChildren,
-  deleteSiblings,
-}: {
-  messages: Array<Message>;
-  baseMessageToDelete: Message;
-  deleteChildren: boolean;
-  deleteSiblings: boolean;
-}): Array<string> => {
-  if (!baseMessageToDelete.record_id) {
-    return [];
-  }
-
-  const messageIdsToDelete: Array<string> = [];
-
-  for (const message of messages) {
-    // if we don't have a record_id, we can't delete it
-    if (!message.record_id) {
-      continue;
-    }
-
-    // if deleting children we need to recursively delete all children
-    if (deleteChildren && message.parentMessageId === baseMessageToDelete.record_id) {
-      messageIdsToDelete.push(
-        ...lookupMessageIdsToDelete({
-          messages,
-          baseMessageToDelete: message,
-          deleteChildren: true,
-          deleteSiblings: true,
-        }),
-      );
-    }
-
-    // if deleting siblings we need to delete all siblings that are later in time
-    if (
-      deleteSiblings &&
-      message.parentMessageId === baseMessageToDelete.parentMessageId &&
-      message.createdAt >= baseMessageToDelete.createdAt
-    ) {
-      messageIdsToDelete.push(message.record_id);
-    }
-  }
-
-  // remove any duplicates
-  messageIdsToDelete.filter((value, index, self) => self.indexOf(value) === index);
-
-  // add this to the end to ensure the base message is deleted last
-  messageIdsToDelete.push(baseMessageToDelete.record_id);
-
-  return messageIdsToDelete;
-};
