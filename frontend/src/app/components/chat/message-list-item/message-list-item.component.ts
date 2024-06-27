@@ -11,6 +11,7 @@ import { Agent } from '@app/interfaces/agent';
 import { Message, isMessageFromUser } from '@app/interfaces/message';
 import { Model } from '@app/interfaces/model';
 import { AgentService } from '@app/services/agent.service';
+import { MessageService } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 
 @Component({
@@ -98,14 +99,15 @@ import { ModelService } from '@app/services/model.service';
             >
               <mat-icon fontSet="bi" fontIcon="bi-reply"></mat-icon>
             </button> -->
-            <!-- <button
+            <button
               class="ml-auto"
               mat-icon-button
               matTooltip="Delete message"
               aria-label="Button that deletes this message"
+              (click)="onDeleteMessage(message)"
             >
               <mat-icon fontSet="bi" fontIcon="bi-trash3"></mat-icon>
-            </button> -->
+            </button>
           }
         </div>
       </li>
@@ -124,6 +126,7 @@ import { ModelService } from '@app/services/model.service';
 export class MessageListItemComponent {
   private readonly _modelService = inject(ModelService);
   private readonly _agentService = inject(AgentService);
+  private readonly _messageService = inject(MessageService);
 
   @Input() message?: Message;
 
@@ -158,5 +161,13 @@ export class MessageListItemComponent {
     }
 
     return this._modelService.getModel(model_id)();
+  }
+
+  onDeleteMessage(message: Message) {
+    this._messageService.deleteMessage({
+      messageId: message.record_id,
+      deleteChildren: true,
+      deleteSiblings: true,
+    });
   }
 }

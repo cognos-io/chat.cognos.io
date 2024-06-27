@@ -81,6 +81,7 @@ export type MessageRequest = {
   providedIn: 'root',
 })
 export class MessageService {
+  private readonly _deleteMessages$ = new Subject<Array<string>>(); // Add a list of message IDs to delete
   private readonly _agentService = inject(AgentService);
   private readonly _authService = inject(AuthService);
   private readonly _conversationService = inject(ConversationService);
@@ -251,6 +252,23 @@ export class MessageService {
           );
         }),
       ),
+
+      (state) =>
+        this._deleteMessages$.pipe(
+          map((messageIds) => {
+            return {
+              messages: state().messages.filter(
+                (msg) => msg.record_id && !messageIds.includes(msg.record_id),
+              ),
+            };
+          }),
+        ),
+
+      this._deleteMessages$.pipe(
+        concatMap((messageIds) => {
+          return this.deleteMessagesFromPocketBase(messageIds);
+        }),
+      ),
     ],
     selectors: (state) => ({
       orderedMessageList: () => {
@@ -323,6 +341,46 @@ export class MessageService {
                 };
               }
               return msg;
+            });
+            return {
+              messages,
+            };
+          }),
+        ),
+      deleteMessage: (
+        state,
+        $: Observable<{
+          messageId: string;
+          //   Delete the message and all its children (replies) (parentMessageId === messageId)
+          deleteChildren: boolean;
+          //   Delete the message and all its siblings (messages with the same parentMessageId and later in time)
+          deleteSiblings: boolean;
+        }>,
+      ) =>
+        $.pipe(
+          map(({ messageId, deleteChildren, deleteSiblings }) => {
+            let messages = state().messages;
+            messages.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+            const messageToRemove = messages.find((msg) => msg.record_id === messageId);
+
+            messages = messages.filter((msg) => {
+              if (msg.record_id === messageId) {
+                return false;
+              }
+              if (deleteChildren && msg.parentMessageId === messageId) {
+                return false;
+              }
+              // Delete the message and all messages at the same level
+              if (
+                deleteSiblings &&
+                messageToRemove &&
+                msg.parentMessageId === messageToRemove.parentMessageId &&
+                msg.createdAt >= messageToRemove.createdAt
+              ) {
+                return false;
+              }
+              return true;
             });
             return {
               messages,
@@ -618,4 +676,111 @@ export class MessageService {
       }),
     );
   }
+
+  private deleteMessagesFromPocketBase(
+    messageIds: Array<string>,
+  ): Observable<Partial<MessageState>> {
+    return from(messageIds).pipe(
+      concatMap((messageId) => {
+        return from(this.pbMessagesCollection.delete(messageId)).pipe(
+          map(() => {
+            return {
+              messages: this.state().messages.filter(
+                (msg) => msg.record_id !== messageId,
+              ),
+            };
+          }),
+        );
+      }),
+    );
+  }
+
+  public deleteMessage({
+    messageId,
+    deleteChildren = false,
+    deleteSiblings = false,
+  }: {
+    messageId?: string;
+    deleteChildren: boolean;
+    deleteSiblings: boolean;
+  }): void {
+    if (!messageId) {
+      return;
+    }
+
+    const messages = this.messages();
+
+    // Find the specific message itself to delete
+    const requestedMessage = messages.find((msg) => msg.record_id === messageId);
+
+    if (!requestedMessage) {
+      return;
+    }
+
+    // Gather all the IDs of the messages to delete
+    const messageIdsToDelete = lookupMessageIdsToDelete({
+      messages,
+      baseMessageToDelete: requestedMessage,
+      deleteChildren,
+      deleteSiblings,
+    });
+
+    this._deleteMessages$.next(messageIdsToDelete);
+
+    return;
+  }
 }
+
+const lookupMessageIdsToDelete = ({
+  messages,
+  baseMessageToDelete,
+  deleteChildren,
+  deleteSiblings,
+}: {
+  messages: Array<Message>;
+  baseMessageToDelete: Message;
+  deleteChildren: boolean;
+  deleteSiblings: boolean;
+}): Array<string> => {
+  if (!baseMessageToDelete.record_id) {
+    return [];
+  }
+
+  const messageIdsToDelete: Array<string> = [];
+
+  for (const message of messages) {
+    // if we don't have a record_id, we can't delete it
+    if (!message.record_id) {
+      continue;
+    }
+
+    // if deleting children we need to recursively delete all children
+    if (deleteChildren && message.parentMessageId === baseMessageToDelete.record_id) {
+      messageIdsToDelete.push(
+        ...lookupMessageIdsToDelete({
+          messages,
+          baseMessageToDelete: message,
+          deleteChildren: true,
+          deleteSiblings: true,
+        }),
+      );
+    }
+
+    // if deleting siblings we need to delete all siblings that are later in time
+    if (
+      deleteSiblings &&
+      message.parentMessageId === baseMessageToDelete.parentMessageId &&
+      message.createdAt >= baseMessageToDelete.createdAt
+    ) {
+      messageIdsToDelete.push(message.record_id);
+    }
+  }
+
+  // remove any duplicates
+  messageIdsToDelete.filter((value, index, self) => self.indexOf(value) === index);
+
+  // add this to the end to ensure the base message is deleted last
+  messageIdsToDelete.push(baseMessageToDelete.record_id);
+
+  return messageIdsToDelete;
+};
