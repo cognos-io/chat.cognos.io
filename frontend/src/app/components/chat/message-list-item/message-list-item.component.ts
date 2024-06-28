@@ -180,8 +180,7 @@ export class MessageListItemComponent implements OnDestroy {
     this._dialogService
       .open(ConfirmationDialogComponent, {
         data: {
-          message:
-            'Are you sure you want to delete this message and all messages that come after it?',
+          message: 'Are you sure you want to delete this message?',
         },
       })
       .afterClosed()
