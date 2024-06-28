@@ -685,16 +685,7 @@ export class MessageService {
             // Rather than load all the messages from the server, reset the state minus affected messages
             let messages = this.state().messages;
 
-            const idsToRemove = [messageId];
-            while (idsToRemove.length) {
-              const id = idsToRemove.pop();
-              messages = messages.filter((msg) => {
-                if (msg.parentMessageId === id && msg.record_id) {
-                  idsToRemove.push(msg.record_id);
-                }
-                return msg.record_id !== id;
-              });
-            }
+            messages = messages.filter((msg) => msg.record_id !== messageId);
 
             return {
               messages,
