@@ -39,9 +39,16 @@ import { ProviderService } from '@app/services/provider.service';
             [ngClass]="{ active: providerId === selectedModel.providerId }"
           >
             <mat-expansion-panel-header>
-              <h5 class="text-sm font-semibold">
+              <mat-panel-title>
                 {{ providerService.lookupProvider(providerId)()?.name }}
-              </h5>
+              </mat-panel-title>
+              @if (providerService.lookupProvider(providerId)()?.isOpenSource) {
+                <mat-panel-description>
+                  <app-tag
+                    [tag]="{ title: 'open-source', color: { palette: 'primary' } }"
+                  ></app-tag>
+                </mat-panel-description>
+              }
             </mat-expansion-panel-header>
             <p>
               {{ providerService.lookupProvider(providerId)()?.description }}
