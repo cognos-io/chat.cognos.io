@@ -1,16 +1,21 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { DatePipe } from '@angular/common';
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, OnDestroy, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
+import { Subject, takeUntil } from 'rxjs';
+
 import { MarkdownComponent } from 'ngx-markdown';
 
+import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { Agent } from '@app/interfaces/agent';
 import { Message, isMessageFromUser } from '@app/interfaces/message';
 import { Model } from '@app/interfaces/model';
 import { AgentService } from '@app/services/agent.service';
+import { MessageService } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 
 @Component({
@@ -23,6 +28,7 @@ import { ModelService } from '@app/services/model.service';
     MatTooltipModule,
     ClipboardModule,
     DatePipe,
+    MatDialogModule,
   ],
   template: `
     @if (message) {
@@ -32,6 +38,7 @@ import { ModelService } from '@app/services/model.service';
         [attr.data-agent-id]="message.decryptedData.agent_id"
         [attr.data-model-id]="message.decryptedData.model_id"
         [attr.data-owner-id]="message.decryptedData.owner_id"
+        [attr.data-parent-id]="message.parentMessageId"
       >
         <div
           class="flex h-12 w-12 flex-none items-center justify-center justify-self-center rounded-full bg-gray-50"
@@ -98,14 +105,15 @@ import { ModelService } from '@app/services/model.service';
             >
               <mat-icon fontSet="bi" fontIcon="bi-reply"></mat-icon>
             </button> -->
-            <!-- <button
+            <button
               class="ml-auto"
               mat-icon-button
               matTooltip="Delete message"
               aria-label="Button that deletes this message"
+              (click)="onDeleteMessage(message)"
             >
               <mat-icon fontSet="bi" fontIcon="bi-trash3"></mat-icon>
-            </button> -->
+            </button>
           }
         </div>
       </li>
@@ -121,9 +129,12 @@ import { ModelService } from '@app/services/model.service';
     }
   `,
 })
-export class MessageListItemComponent {
+export class MessageListItemComponent implements OnDestroy {
   private readonly _modelService = inject(ModelService);
   private readonly _agentService = inject(AgentService);
+  private readonly _messageService = inject(MessageService);
+  private readonly _dialogService = inject(MatDialog);
+  private readonly _destroyed$ = new Subject<void>();
 
   @Input() message?: Message;
 
@@ -158,5 +169,27 @@ export class MessageListItemComponent {
     }
 
     return this._modelService.getModel(model_id)();
+  }
+
+  ngOnDestroy(): void {
+    this._destroyed$.next();
+    this._destroyed$.complete();
+  }
+
+  onDeleteMessage(message: Message) {
+    this._dialogService
+      .open(ConfirmationDialogComponent, {
+        data: {
+          message:
+            'Are you sure you want to delete this message and all messages that come after it?',
+        },
+      })
+      .afterClosed()
+      .pipe(takeUntil(this._destroyed$))
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this._messageService.deleteMessage(message);
+        }
+      });
   }
 }

@@ -81,6 +81,7 @@ export type MessageRequest = {
   providedIn: 'root',
 })
 export class MessageService {
+  private readonly _deleteMessages$ = new Subject<Array<string>>(); // Add a list of message IDs to delete
   private readonly _agentService = inject(AgentService);
   private readonly _authService = inject(AuthService);
   private readonly _conversationService = inject(ConversationService);
@@ -251,6 +252,12 @@ export class MessageService {
           );
         }),
       ),
+
+      this._deleteMessages$.pipe(
+        concatMap((messageIds) => {
+          return this.deleteMessagesFromPocketBase(messageIds);
+        }),
+      ),
     ],
     selectors: (state) => ({
       orderedMessageList: () => {
@@ -329,6 +336,46 @@ export class MessageService {
             };
           }),
         ),
+      deleteMessage: (
+        state,
+        $: Observable<{
+          messageId: string;
+          //   Delete the message and all its children (replies) (parentMessageId === messageId)
+          deleteChildren: boolean;
+          //   Delete the message and all its siblings (messages with the same parentMessageId and later in time)
+          deleteSiblings: boolean;
+        }>,
+      ) =>
+        $.pipe(
+          map(({ messageId, deleteChildren, deleteSiblings }) => {
+            let messages = state().messages;
+            messages.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+            const messageToRemove = messages.find((msg) => msg.record_id === messageId);
+
+            messages = messages.filter((msg) => {
+              if (msg.record_id === messageId) {
+                return false;
+              }
+              if (deleteChildren && msg.parentMessageId === messageId) {
+                return false;
+              }
+              // Delete the message and all messages at the same level
+              if (
+                deleteSiblings &&
+                messageToRemove &&
+                msg.parentMessageId === messageToRemove.parentMessageId &&
+                msg.createdAt >= messageToRemove.createdAt
+              ) {
+                return false;
+              }
+              return true;
+            });
+            return {
+              messages,
+            };
+          }),
+        ),
       setStatus: (state, action$: Observable<MessageStatus>) =>
         action$.pipe(
           map((status) => {
@@ -354,6 +401,13 @@ export class MessageService {
 
   public readonly nextPage = this.state.nextPage;
   public readonly resetState = this.state.resetState;
+
+  public deleteMessage(msg: Message) {
+    if (!msg.record_id) {
+      return;
+    }
+    this._deleteMessages$.next([msg.record_id]);
+  }
 
   // helper methods
   private fetchMessages(
@@ -406,6 +460,7 @@ export class MessageService {
     return {
       record_id: record.id,
       createdAt: new Date(record.created),
+      parentMessageId: record.parent_message,
       decryptedData,
     };
   }
@@ -615,6 +670,37 @@ export class MessageService {
         // Use max the first 10 words
         title = title.split(' ').slice(0, 10).join(' ');
         return this._conversationService.editConversation(conversationId, { title });
+      }),
+    );
+  }
+
+  private deleteMessagesFromPocketBase(
+    messageIds: Array<string>,
+  ): Observable<Partial<MessageState>> {
+    return from(messageIds).pipe(
+      concatMap((messageId) => {
+        // This will remove the message and all it's children due to the CASCADE delete
+        return from(this.pbMessagesCollection.delete(messageId)).pipe(
+          map(() => {
+            // Rather than load all the messages from the server, reset the state minus affected messages
+            let messages = this.state().messages;
+
+            const idsToRemove = [messageId];
+            while (idsToRemove.length) {
+              const id = idsToRemove.pop();
+              messages = messages.filter((msg) => {
+                if (msg.parentMessageId === id && msg.record_id) {
+                  idsToRemove.push(msg.record_id);
+                }
+                return msg.record_id !== id;
+              });
+            }
+
+            return {
+              messages,
+            };
+          }),
+        );
       }),
     );
   }
