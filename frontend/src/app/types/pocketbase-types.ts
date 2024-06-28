@@ -59,9 +59,16 @@ export type ConversationSecretKeysRecord = {
   user: RecordIdString;
 };
 
+export enum ConversationsExpiryDurationOptions {
+  '24h' = '24h',
+  '7d' = '7d',
+  '90d' = '90d',
+  '6m' = '6m',
+}
 export type ConversationsRecord = {
   creator?: RecordIdString;
   data: string;
+  expiry_duration?: ConversationsExpiryDurationOptions;
 };
 
 export type DeletedRecord<Trecord = unknown> = {
