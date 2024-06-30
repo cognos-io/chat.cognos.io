@@ -28,6 +28,7 @@
     "cand",
     "genai",
     "goarch",
+    "gocron",
     "knadh",
     "koanf",
     "labstack",

@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
@@ -14,6 +15,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
+	"github.com/go-co-op/gocron/v2"
 	"github.com/google/generative-ai-go/genai"
 	"github.com/liushuangls/go-anthropic/v2"
 	"github.com/pocketbase/pocketbase"
@@ -34,6 +36,7 @@ type appHookParams struct {
 	GoogleGeminiClient     *genai.Client
 	AnthropicClient        *anthropic.Client
 	DeepinfraOpenAIClient  *oai.Client
+	CronScheduler          gocron.Scheduler
 }
 
 func NewServer(
@@ -113,6 +116,20 @@ func bindAppHooks(
 				e.Model.(*models.Record).GetString("conversation"),
 			)
 		})
+
+	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
+		expiredMessagesRepo := chat.NewPocketBaseMessageRepo(app)
+		_, err := cleanUpExpiredMessageJob(
+			params.CronScheduler,
+			app.Logger(),
+			expiredMessagesRepo,
+		)
+		return err
+	})
+
+	app.OnTerminate().Add(func(e *core.TerminateEvent) error {
+		return params.CronScheduler.Shutdown()
+	})
 }
 
 func run(ctx context.Context, w io.Writer, args []string) error {
@@ -121,6 +138,15 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	config := config.MustLoadAPIConfig(logger)
+
+	// Job scheduler for background tasks
+	scheduler, err := gocron.NewScheduler(
+		gocron.WithLogger(logger),
+		gocron.WithStopTimeout(3*time.Second),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create scheduler: %w", err)
+	}
 
 	// Clients
 	openaiClient := oai.NewClient(config.OpenAIAPIKey) // OpenAI
@@ -155,7 +181,11 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		AnthropicClient:        anthropicClient,
 		GoogleGeminiClient:     googleGeminiClient,
 		DeepinfraOpenAIClient:  deepinfraClient,
+		CronScheduler:          scheduler,
 	})
+
+	// start the scheduler which will run in the background
+	scheduler.Start()
 
 	return app.Start()
 }

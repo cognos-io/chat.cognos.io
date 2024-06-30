@@ -1,14 +1,17 @@
 package chat
 
 import (
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/crypto"
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/forms"
 	"github.com/pocketbase/pocketbase/models"
+	"github.com/pocketbase/pocketbase/tools/list"
 )
 
 // EncryptMessageData encrypts a plain text message using symmetric and asymmetric encryption.
@@ -98,6 +101,43 @@ func (r *PocketBaseMessageRepo) DeleteMessage(messageID string) error {
 	}
 
 	return r.app.Dao().DeleteRecord(record)
+}
+
+func (r *PocketBaseMessageRepo) FindExpiredMessages() ([]string, error) {
+	now := time.Now().UTC()
+	filter := dbx.And(
+		dbx.Not(
+			dbx.NewExp("expires = ''"),
+		),
+		dbx.NewExp("expires < {:now}", dbx.Params{"now": now}),
+	)
+
+	messageResults := []struct {
+		Id string `db:"id" json:"id"`
+	}{}
+
+	err := r.app.Dao().
+		DB().
+		Select("id").
+		From(r.collection.Name).
+		AndWhere(filter).
+		All(&messageResults)
+
+	messageIds := make([]string, len(messageResults))
+	for i, result := range messageResults {
+		messageIds[i] = result.Id
+	}
+
+	return messageIds, err
+}
+
+func (r *PocketBaseMessageRepo) CleanUpExpiredMessages(
+	messageIDs []string,
+) (sql.Result, error) {
+	return r.app.Dao().
+		DB().
+		Delete(r.collection.Name, dbx.In("id", list.ToInterfaceSlice[string](messageIDs)...)).
+		Execute()
 }
 
 func NewPocketBaseMessageRepo(app core.App) *PocketBaseMessageRepo {
