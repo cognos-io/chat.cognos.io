@@ -77,7 +77,7 @@ func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 	}
 
 	if conversation.ExpiryDuration != 0 {
-		formData["expiry_duration"] = time.Now().UTC().Add(conversation.ExpiryDuration)
+		formData["expires"] = time.Now().UTC().Add(conversation.ExpiryDuration)
 	}
 
 	record := models.NewRecord(r.collection)
