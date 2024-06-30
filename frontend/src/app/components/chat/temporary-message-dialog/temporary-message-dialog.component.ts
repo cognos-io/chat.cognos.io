@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialogModule } from '@angular/material/dialog';
 
+import { Conversation } from '@app/interfaces/conversation';
 import { DeviceService } from '@app/services/device.service';
 
 @Component({
@@ -56,4 +58,9 @@ export class TemporaryMessageDialogComponent {
     { value: '2160h', label: '90 days' },
     { value: '4320h', label: '180 days' },
   ];
+
+  public readonly conversation = input<Conversation>();
+  public readonly expirationDurationControl = new FormControl(
+    this.conversation()?.record.expiryDuration ?? '',
+  );
 }
