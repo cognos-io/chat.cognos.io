@@ -12,7 +12,6 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
-	"github.com/cognos-io/chat.cognos.io/backend/internal/idempotency"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/google/generative-ai-go/genai"
@@ -83,7 +82,7 @@ func bindAppHooks(
 		messageRepo := chat.NewPocketBaseMessageRepo(app)
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
 		aiAgentRepo := aiagent.NewInMemoryAIAgentRepo(app.Logger())
-		idempotencyRepo := idempotency.NewPocketBaseIdempotencyRepo(app)
+		conversationRepo := chat.NewPocketBaseConversationRepo(app, keyPairRepo)
 
 		addPocketBaseRoutes(
 			e,
@@ -94,7 +93,7 @@ func bindAppHooks(
 			messageRepo,
 			keyPairRepo,
 			aiAgentRepo,
-			idempotencyRepo,
+			conversationRepo,
 		)
 
 		// Add SoftDelete hook
@@ -107,7 +106,8 @@ func bindAppHooks(
 	// This means the user will see the conversations they have most recently interacted with at the top of the list.
 	app.OnModelAfterCreate("messages").
 		Add(func(e *core.ModelEvent) error {
-			conversationRepo := chat.NewPocketBaseConversationRepo(app)
+			keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
+			conversationRepo := chat.NewPocketBaseConversationRepo(app, keyPairRepo)
 
 			return conversationRepo.SetConversationUpdated(
 				e.Model.(*models.Record).GetString("conversation"),

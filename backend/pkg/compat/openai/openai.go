@@ -4,7 +4,6 @@
 package openai
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -81,6 +80,7 @@ func EchoHandler(
 	messageRepo chat.MessageRepo,
 	keyPairRepo auth.KeyPairRepo,
 	agentRepo aiagent.AIAgentRepo,
+	conversationRepo chat.ConversationRepo,
 ) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// -------------------------------------------------------
@@ -140,25 +140,20 @@ func EchoHandler(
 		// - The message is used to generate conversation titles
 		shouldPersist := req.Metadata.Cognos.ConversationID != ""
 
-		var messageRecord, responseRecord *models.Record
-		receiverPublicKey := [32]byte{}
-
-		// Get the public key of the conversation
+		var conversation chat.Conversation
 		if shouldPersist {
-			receiverPublicKey, err = keyPairRepo.ConversationPublicKey(
+			conversation, err = conversationRepo.ByID(
 				req.Metadata.Cognos.ConversationID,
 			)
-			if errors.Is(err, auth.ErrNoKeyPair) {
-				return apis.NewNotFoundError("Conversation public key not found", nil)
-			}
 			if err != nil {
-				return apis.NewApiError(
-					http.StatusInternalServerError,
-					"Failed to get conversation public key",
+				return apis.NewNotFoundError(
+					"Conversation not found or unable to load",
 					err,
 				)
 			}
 		}
+
+		var messageRecord, responseRecord *models.Record
 
 		// Add the agent prompt system message to the conversation
 		req.Messages = AddSystemMessage(req.Messages, agent)
@@ -173,8 +168,7 @@ func EchoHandler(
 
 		if shouldPersist {
 			err, messageRecord = messageRepo.EncryptAndPersistMessage(
-				receiverPublicKey,
-				req.Metadata.Cognos.ConversationID,
+				conversation,
 				req.Metadata.Cognos.ParentMessageID,
 				requestMessage,
 			)
@@ -222,8 +216,7 @@ func EchoHandler(
 
 		if shouldPersist {
 			err, responseRecord = messageRepo.EncryptAndPersistMessage(
-				receiverPublicKey,
-				req.Metadata.Cognos.ConversationID,
+				conversation,
 				messageRecord.Id,
 				responseMessage,
 			)
