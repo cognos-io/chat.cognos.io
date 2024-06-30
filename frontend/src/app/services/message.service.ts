@@ -28,9 +28,12 @@ import { signalSlice } from 'ngxtension/signal-slice';
 import { OpenAI } from 'openai';
 
 import { generateConversationAgentId } from '@app/interfaces/agent';
-import { ConversationRecord } from '@app/interfaces/conversation';
 import { Message, parseMessageData } from '@app/interfaces/message';
-import { MessagesResponse, TypedPocketBase } from '@app/types/pocketbase-types';
+import {
+  ConversationsResponse,
+  MessagesResponse,
+  TypedPocketBase,
+} from '@app/types/pocketbase-types';
 import { isTimestampInMilliseconds } from '@app/utils/timestamp';
 
 import { AgentService } from './agent.service';
@@ -663,7 +666,7 @@ export class MessageService {
   private generateAndSetConversationTitle(
     conversationId: string,
     startingMessage: string,
-  ): Observable<ConversationRecord> {
+  ): Observable<ConversationsResponse> {
     return this.generateConversationTitle(startingMessage).pipe(
       filterNil(),
       switchMap((title) => {

@@ -61,6 +61,6 @@ export class TemporaryMessageDialogComponent {
 
   public readonly conversation = input<Conversation>();
   public readonly expirationDurationControl = new FormControl(
-    this.conversation()?.record.expiryDuration ?? '',
+    this.conversation()?.record.expiry_duration ?? '',
   );
 }

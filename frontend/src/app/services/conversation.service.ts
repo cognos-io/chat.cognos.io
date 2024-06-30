@@ -28,12 +28,11 @@ import { ignorePocketbase404 } from '@app/operators/ignore-404';
 import {
   Conversation,
   ConversationData,
-  ConversationRecord,
   parseConversationData,
   serializeConversationData,
 } from '../interfaces/conversation';
 import { KeyPair } from '../interfaces/key-pair';
-import { TypedPocketBase } from '../types/pocketbase-types';
+import { ConversationsResponse, TypedPocketBase } from '../types/pocketbase-types';
 import { AuthService } from './auth.service';
 import { CryptoService } from './crypto.service';
 import { UserPreferencesService } from './user-preferences.service';
@@ -213,7 +212,7 @@ export class ConversationService {
           }),
         );
       },
-      updateConversationRecord: (state, action$: Observable<ConversationRecord>) => {
+      updateConversationRecord: (state, action$: Observable<ConversationsResponse>) => {
         return action$.pipe(
           concatMap((data) => {
             return this.fetchConversation(data).pipe(
@@ -362,7 +361,7 @@ export class ConversationService {
    * @returns (ConversationData)
    */
   private decryptConversationData(
-    record: ConversationRecord,
+    record: ConversationsResponse,
     conversationKeyPair: KeyPair,
   ): ConversationData {
     const sharedSecret = this.sharedKey(conversationKeyPair);
@@ -514,7 +513,7 @@ export class ConversationService {
    *
    * @returns (Observable<Conversation>)
    */
-  private fetchConversation(record: ConversationRecord): Observable<Conversation> {
+  private fetchConversation(record: ConversationsResponse): Observable<Conversation> {
     return this.fetchConversationKeyPair(record.id).pipe(
       map((keyPair) => {
         return {
@@ -548,11 +547,11 @@ export class ConversationService {
    * fetchConversationRecord - fetches a specific conversation record from the PocketBase
    * backend.
    *
-   * @returns (Observable<ConversationRecord>)
+   * @returns (Observable<ConversationsResponse>)
    */
   private fetchConversationRecord(
     conversationId: string,
-  ): Observable<ConversationRecord> {
+  ): Observable<ConversationsResponse> {
     return from(
       this._pb.collection(this.pbConversationCollection).getOne(conversationId),
     );
@@ -561,9 +560,9 @@ export class ConversationService {
   /**
    * fetchConversationRecords - fetches all conversation records from the PocketBase backend.
    *
-   * @returns (Observable<Array<ConversationRecord>>)
+   * @returns (Observable<Array<ConversationsResponse>>)
    */
-  private fetchConversationRecords(): Observable<Array<ConversationRecord>> {
+  private fetchConversationRecords(): Observable<Array<ConversationsResponse>> {
     return from(this._pb.collection(this.pbConversationCollection).getFullList());
   }
 
@@ -573,7 +572,10 @@ export class ConversationService {
     );
   }
 
-  editConversation(id: string, data: ConversationData): Observable<ConversationRecord> {
+  editConversation(
+    id: string,
+    data: ConversationData,
+  ): Observable<ConversationsResponse> {
     // Get the keypair for the conversation
     const conversationKeyPair = this.getConversation(id)()?.keyPair;
     if (!conversationKeyPair) {
