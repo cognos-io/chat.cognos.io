@@ -695,4 +695,32 @@ export class MessageService {
       }),
     );
   }
+
+  private keepExpiringMessage(message: Message): Observable<Partial<MessageState>> {
+    // Updates a message in the backend to remove the expiry time
+    if (!message.record_id) {
+      return EMPTY;
+    }
+
+    return from(
+      this.pbMessagesCollection.update(message.record_id, { expires: null }),
+    ).pipe(
+      map(() => {
+        return {
+          messages: this.state().messages.map((msg) => {
+            if (msg.record_id === message.record_id) {
+              return {
+                ...msg,
+                decryptedData: {
+                  ...msg.decryptedData,
+                  expires: null,
+                },
+              };
+            }
+            return msg;
+          }),
+        };
+      }),
+    );
+  }
 }
