@@ -25,6 +25,7 @@ import { ReplaySubject, debounceTime, fromEvent, takeUntil } from 'rxjs';
 
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
+import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { Message } from '@app/interfaces/message';
 import { ConversationService } from '@app/services/conversation.service';
@@ -127,6 +128,23 @@ import {
       @if (messageSending) {
         <app-loading-indicator></app-loading-indicator>
       }
+      @if (
+        conversationService.conversation() &&
+        expirationDelayValue() !== 'Off' &&
+        !conversationService.isTemporaryConversation() &&
+        expirationDelayValue() !== ''
+      ) {
+        <button
+          mat-button
+          color="primary"
+          class="mx-auto lg:w-1/2"
+          (click)="onEditConversation()"
+        >
+          <mat-icon fontSet="bi" fontIcon="bi-stopwatch-fill"></mat-icon>
+          New messages in this conversation will disappear after
+          {{ expirationDelayValue() }}
+        </button>
+      }
     </div>
   `,
   styles: `
@@ -213,9 +231,13 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
   readonly conversationService = inject(ConversationService);
 
   public readonly expirationDelayValue = computed(() => {
-    return expiringDurations.find(
-      (x) => x.value === this.conversationService.expirationDuration(),
-    )?.label;
+    let duration = this.conversationService.conversation()?.record
+      .expiry_duration as string;
+
+    if (!duration) {
+      duration = this.conversationService.expirationDuration();
+    }
+    return expiringDurations.find((x) => x.value === duration)?.label;
   });
 
   constructor() {
@@ -247,6 +269,14 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
       .afterClosed()
       .pipe(takeUntil(this.destroyed$))
       .subscribe();
+  }
+
+  onEditConversation(): void {
+    this._dialogService.open(EditConversationDialogComponent, {
+      data: {
+        conversationId: this.conversationService.conversation()?.record.id ?? '',
+      },
+    });
   }
 
   ngAfterViewInit(): void {
