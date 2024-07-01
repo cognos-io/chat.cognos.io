@@ -563,6 +563,8 @@ export class MessageService {
   private addOpenAIMessageToState(
     resp: ChatCompletionResponseWithMetadata,
   ): Partial<MessageState> {
+    const messages = this.state().messages;
+
     let createdAt = resp.created;
     if (isTimestampInMilliseconds(createdAt)) {
       // Cloudflare Workers returns timestamps in milliseconds
@@ -572,11 +574,13 @@ export class MessageService {
 
     // TODO(ewan): Better handle errors. E.g. request fails or success but resp.choices is null
     const metadata: CognosMetadataResponse | undefined = resp.metadata?.cognos;
+    const expires = metadata?.expires_at ? new Date(metadata.expires_at) : undefined;
 
     const msg: Message = {
       parentMessageId: metadata?.parent_message_id,
       record_id: metadata?.response_record_id,
       createdAt: new Date((createdAt + 1) * 1000),
+      expires: metadata?.expires_at ? expires : undefined,
       decryptedData: {
         content: resp.choices[0].message.content,
         agent_id: this._agentService.selectedAgent().id,
@@ -584,8 +588,16 @@ export class MessageService {
       },
     };
 
+    if (expires && metadata?.parent_message_id) {
+      messages.forEach((message) => {
+        if (message.record_id === metadata.parent_message_id) {
+          message.expires = expires;
+        }
+      });
+    }
+
     return {
-      messages: [...this.state().messages, msg],
+      messages: [...messages, msg],
     };
   }
 

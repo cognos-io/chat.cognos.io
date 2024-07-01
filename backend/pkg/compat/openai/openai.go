@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
@@ -43,6 +44,8 @@ type CognosResponseMetadata struct {
 	MessageRecordID string `json:"message_record_id,omitempty"`
 	// ID of the message record that was created for the response
 	ResponseRecordID string `json:"response_record_id,omitempty"`
+	// When the messages will expire
+	ExpiresAt string `json:"expires_at,omitempty"`
 }
 
 type ResponseMetadata struct {
@@ -234,6 +237,13 @@ func EchoHandler(
 		extendedResponse.ChatCompletionResponse = resp
 		extendedResponse.Metadata.Cognos = CognosResponseMetadata{
 			RequestID: req.Metadata.Cognos.RequestID,
+		}
+
+		if conversation.ExpiryDuration > 0 {
+			extendedResponse.Metadata.Cognos.ExpiresAt = time.Now().
+				UTC().
+				Add(conversation.ExpiryDuration).
+				Format(time.RFC3339)
 		}
 
 		if messageRecord != nil {
