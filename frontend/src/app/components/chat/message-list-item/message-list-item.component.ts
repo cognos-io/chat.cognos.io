@@ -204,6 +204,6 @@ export class MessageListItemComponent implements OnDestroy {
   }
 
   onKeepMessage(message: Message) {
-    // this._messageService.keepMessage(message);
+    this._messageService.keepExpiringMessage(message);
   }
 }

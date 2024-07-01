@@ -275,16 +275,16 @@ export class MessageService {
       },
     }),
     actionSources: {
-      addMessage: (state, action$: Observable<Message>) =>
-        action$.pipe(
+      addMessage: (state, $: Observable<Message>) =>
+        $.pipe(
           map((message) => {
             return {
               messages: [...state().messages, message],
             };
           }),
         ),
-      removeLastMessage: (state, action$: Observable<void>) =>
-        action$.pipe(
+      removeLastMessage: (state, $: Observable<void>) =>
+        $.pipe(
           map(() => {
             const messages = state().messages.slice(0, -1);
             return {
@@ -293,8 +293,8 @@ export class MessageService {
           }),
         ),
 
-      nextPage: (state, action$) =>
-        action$.pipe(
+      nextPage: (state, $) =>
+        $.pipe(
           concatMap(() => {
             if (!state().hasMoreMessages) {
               return EMPTY;
@@ -322,8 +322,8 @@ export class MessageService {
             );
           }),
         ),
-      updateMessageId: (state, action$: Observable<{ oldId: string; newId: string }>) =>
-        action$.pipe(
+      updateMessageId: (state, $: Observable<{ oldId: string; newId: string }>) =>
+        $.pipe(
           map(({ oldId, newId }) => {
             const messages = state().messages.map((msg) => {
               if (msg.record_id === oldId) {
@@ -379,18 +379,24 @@ export class MessageService {
             };
           }),
         ),
-      setStatus: (state, action$: Observable<MessageStatus>) =>
-        action$.pipe(
+      setStatus: (state, $: Observable<MessageStatus>) =>
+        $.pipe(
           map((status) => {
             return {
               status,
             };
           }),
         ),
-      resetState: (state, action$: Observable<void>) =>
-        action$.pipe(
+      resetState: (state, $: Observable<void>) =>
+        $.pipe(
           map(() => {
             return initialState;
+          }),
+        ),
+      keepExpiringMessage: (state, $: Observable<Message>) =>
+        $.pipe(
+          concatMap((message) => {
+            return this.keepExpiringMessageInPocketBase(message);
           }),
         ),
     },
@@ -411,6 +417,8 @@ export class MessageService {
     }
     this._deleteMessages$.next([msg.record_id]);
   }
+
+  public readonly keepExpiringMessage = this.state.keepExpiringMessage;
 
   // helper methods
   private fetchMessages(
@@ -463,6 +471,7 @@ export class MessageService {
     return {
       record_id: record.id,
       createdAt: new Date(record.created),
+      expires: record.expires ? new Date(record.expires) : undefined,
       parentMessageId: record.parent_message,
       decryptedData,
     };
@@ -703,7 +712,9 @@ export class MessageService {
     );
   }
 
-  private keepExpiringMessage(message: Message): Observable<Partial<MessageState>> {
+  private keepExpiringMessageInPocketBase(
+    message: Message,
+  ): Observable<Partial<MessageState>> {
     // Updates a message in the backend to remove the expiry time
     if (!message.record_id) {
       return EMPTY;
@@ -718,10 +729,7 @@ export class MessageService {
             if (msg.record_id === message.record_id) {
               return {
                 ...msg,
-                decryptedData: {
-                  ...msg.decryptedData,
-                  expires: null,
-                },
+                expires: undefined,
               };
             }
             return msg;
