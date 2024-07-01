@@ -7,14 +7,15 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
-	"github.com/cognos-io/chat.cognos.io/backend/internal/idempotency"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
+	"github.com/go-co-op/gocron/v2"
 	"github.com/google/generative-ai-go/genai"
 	"github.com/liushuangls/go-anthropic/v2"
 	"github.com/pocketbase/pocketbase"
@@ -35,6 +36,7 @@ type appHookParams struct {
 	GoogleGeminiClient     *genai.Client
 	AnthropicClient        *anthropic.Client
 	DeepinfraOpenAIClient  *oai.Client
+	CronScheduler          gocron.Scheduler
 }
 
 func NewServer(
@@ -83,7 +85,7 @@ func bindAppHooks(
 		messageRepo := chat.NewPocketBaseMessageRepo(app)
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
 		aiAgentRepo := aiagent.NewInMemoryAIAgentRepo(app.Logger())
-		idempotencyRepo := idempotency.NewPocketBaseIdempotencyRepo(app)
+		conversationRepo := chat.NewPocketBaseConversationRepo(app, keyPairRepo)
 
 		addPocketBaseRoutes(
 			e,
@@ -94,7 +96,7 @@ func bindAppHooks(
 			messageRepo,
 			keyPairRepo,
 			aiAgentRepo,
-			idempotencyRepo,
+			conversationRepo,
 		)
 
 		// Add SoftDelete hook
@@ -107,12 +109,27 @@ func bindAppHooks(
 	// This means the user will see the conversations they have most recently interacted with at the top of the list.
 	app.OnModelAfterCreate("messages").
 		Add(func(e *core.ModelEvent) error {
-			conversationRepo := chat.NewPocketBaseConversationRepo(app)
+			keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
+			conversationRepo := chat.NewPocketBaseConversationRepo(app, keyPairRepo)
 
 			return conversationRepo.SetConversationUpdated(
 				e.Model.(*models.Record).GetString("conversation"),
 			)
 		})
+
+	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
+		expiredMessagesRepo := chat.NewPocketBaseMessageRepo(app)
+		_, err := cleanUpExpiredMessageJob(
+			params.CronScheduler,
+			app.Logger(),
+			expiredMessagesRepo,
+		)
+		return err
+	})
+
+	app.OnTerminate().Add(func(e *core.TerminateEvent) error {
+		return params.CronScheduler.Shutdown()
+	})
 }
 
 func run(ctx context.Context, w io.Writer, args []string) error {
@@ -121,6 +138,15 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	config := config.MustLoadAPIConfig(logger)
+
+	// Job scheduler for background tasks
+	scheduler, err := gocron.NewScheduler(
+		gocron.WithLogger(logger),
+		gocron.WithStopTimeout(3*time.Second),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create scheduler: %w", err)
+	}
 
 	// Clients
 	openaiClient := oai.NewClient(config.OpenAIAPIKey) // OpenAI
@@ -155,7 +181,11 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		AnthropicClient:        anthropicClient,
 		GoogleGeminiClient:     googleGeminiClient,
 		DeepinfraOpenAIClient:  deepinfraClient,
+		CronScheduler:          scheduler,
 	})
+
+	// start the scheduler which will run in the background
+	scheduler.Start()
 
 	return app.Start()
 }

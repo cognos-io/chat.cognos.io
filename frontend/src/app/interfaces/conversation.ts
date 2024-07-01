@@ -1,19 +1,8 @@
-import { Base64 } from 'js-base64';
 import { z } from 'zod';
 
-import { KeyPair } from './key-pair';
+import { ConversationsResponse } from '@app/types/pocketbase-types';
 
-/**
- * ConversationRecord is a record of a conversation in the PocketBase backend.
- */
-export const ConversationRecord = z.object({
-  id: z.string(),
-  created: z.string().datetime(),
-  updated: z.string().datetime(),
-  data: z.string().refine(Base64.isValid), // base64 encrypted data
-  creatorId: z.string().optional(), // may be null for some reason
-});
-export type ConversationRecord = z.infer<typeof ConversationRecord>;
+import { KeyPair } from './key-pair';
 
 /**
  * ConversationData is the decrypted data object of a conversation.
@@ -48,7 +37,7 @@ export const serializeConversationData = (data: ConversationData): Uint8Array =>
 };
 
 export interface Conversation {
-  record: ConversationRecord;
+  record: ConversationsResponse;
   decryptedData: ConversationData;
   keyPair: KeyPair;
 }

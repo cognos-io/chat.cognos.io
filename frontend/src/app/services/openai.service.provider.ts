@@ -14,6 +14,7 @@ export interface CognosMetadataResponse {
   parent_message_id?: string;
   message_record_id?: string;
   response_record_id?: string;
+  expires_at?: string; // When the messages will expire in RFC1123Z format
 }
 
 export interface ChatCompletionResponseWithMetadata extends OpenAI.ChatCompletion {

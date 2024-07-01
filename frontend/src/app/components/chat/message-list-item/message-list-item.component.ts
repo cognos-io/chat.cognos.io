@@ -91,29 +91,40 @@ import { ModelService } from '@app/services/model.service';
             </button>
           }
           @if (message.record_id) {
-            <!-- <button
-              mat-icon-button
-              matTooltip="Flag or report message"
-              aria-label="Button that enables flagging and reporting of messages"
-            >
-              <mat-icon fontSet="bi" fontIcon="bi-flag"></mat-icon>
-            </button>
-            <button
-              mat-icon-button
-              matTooltip="Reply to this message"
-              aria-label="Button that enables replying to this message specifically"
-            >
-              <mat-icon fontSet="bi" fontIcon="bi-reply"></mat-icon>
-            </button> -->
-            <button
-              class="ml-auto"
-              mat-icon-button
-              matTooltip="Delete message"
-              aria-label="Button that deletes this message"
-              (click)="onDeleteMessage(message)"
-            >
-              <mat-icon fontSet="bi" fontIcon="bi-trash3"></mat-icon>
-            </button>
+            <div class="ml-auto flex gap-2">
+              @if (message.expires) {
+                <button
+                  mat-icon-button
+                  matTooltip="Keep this temporary message. It will not be automatically deleted any more."
+                  aria-label="Button that keeps this temporary message"
+                  (click)="onKeepMessage(message)"
+                >
+                  <mat-icon fontSet="bi" fontIcon="bi-life-preserver"></mat-icon>
+                </button>
+              }
+              <!-- <button
+                  mat-icon-button
+                  matTooltip="Flag or report message"
+                  aria-label="Button that enables flagging and reporting of messages"
+                >
+                  <mat-icon fontSet="bi" fontIcon="bi-flag"></mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  matTooltip="Reply to this message"
+                  aria-label="Button that enables replying to this message specifically"
+                >
+                  <mat-icon fontSet="bi" fontIcon="bi-reply"></mat-icon>
+                </button> -->
+              <button
+                mat-icon-button
+                matTooltip="Delete message"
+                aria-label="Button that deletes this message"
+                (click)="onDeleteMessage(message)"
+              >
+                <mat-icon fontSet="bi" fontIcon="bi-trash3"></mat-icon>
+              </button>
+            </div>
           }
         </div>
       </li>
@@ -180,8 +191,7 @@ export class MessageListItemComponent implements OnDestroy {
     this._dialogService
       .open(ConfirmationDialogComponent, {
         data: {
-          message:
-            'Are you sure you want to delete this message and all messages that come after it?',
+          message: 'Are you sure you want to delete this message?',
         },
       })
       .afterClosed()
@@ -191,5 +201,9 @@ export class MessageListItemComponent implements OnDestroy {
           this._messageService.deleteMessage(message);
         }
       });
+  }
+
+  onKeepMessage(message: Message) {
+    this._messageService.keepExpiringMessage(message);
   }
 }

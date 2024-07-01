@@ -10,7 +10,6 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
-	"github.com/cognos-io/chat.cognos.io/backend/internal/idempotency"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/compat/openai"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
@@ -63,7 +62,7 @@ func addPocketBaseRoutes(
 	messageRepo chat.MessageRepo,
 	keyPairRepo auth.KeyPairRepo,
 	aiAgentRepo aiagent.AIAgentRepo,
-	idempotencyRepo idempotency.IdempotencyRepo,
+	conversationRepo chat.ConversationRepo,
 ) {
 	// https://platform.openai.com/docs/api-reference/chat/create
 	e.Router.POST(
@@ -75,6 +74,7 @@ func addPocketBaseRoutes(
 			messageRepo,
 			keyPairRepo,
 			aiAgentRepo,
+			conversationRepo,
 		),
 		apis.RequireRecordAuth(),
 		rateLimiterMiddleware(),

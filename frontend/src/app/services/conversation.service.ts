@@ -28,12 +28,16 @@ import { ignorePocketbase404 } from '@app/operators/ignore-404';
 import {
   Conversation,
   ConversationData,
-  ConversationRecord,
   parseConversationData,
   serializeConversationData,
 } from '../interfaces/conversation';
 import { KeyPair } from '../interfaces/key-pair';
-import { TypedPocketBase } from '../types/pocketbase-types';
+import {
+  ConversationsExpiryDurationOptions,
+  ConversationsRecord,
+  ConversationsResponse,
+  TypedPocketBase,
+} from '../types/pocketbase-types';
 import { AuthService } from './auth.service';
 import { CryptoService } from './crypto.service';
 import { UserPreferencesService } from './user-preferences.service';
@@ -46,6 +50,7 @@ interface ConversationState {
   selectedConversationId: string;
   filter: string;
   isTemporaryConversation: boolean;
+  expirationDuration: string;
 }
 
 const initialState: ConversationState = {
@@ -53,6 +58,7 @@ const initialState: ConversationState = {
   selectedConversationId: '',
   filter: '',
   isTemporaryConversation: false,
+  expirationDuration: '',
 };
 
 @Injectable({
@@ -105,6 +111,7 @@ export class ConversationService {
                 return {
                   selectedConversationId: conversation.record.id,
                   conversations: [conversation, ...state().conversations],
+                  expirationDuration: '', // reset this after creating a conversation
                 };
               }),
             ),
@@ -204,8 +211,33 @@ export class ConversationService {
       };
     },
     actionSources: {
-      setIsTemporaryConversation: (state, action$: Observable<boolean>) => {
-        return action$.pipe(
+      setExpirationDuration: (
+        state,
+        $: Observable<{
+          id: string;
+          expirationDuration?: ConversationsExpiryDurationOptions;
+        }>,
+      ) =>
+        $.pipe(
+          map(({ id, expirationDuration }) => {
+            const conversations = state().conversations;
+            const index = conversations.findIndex((c) => c.record.id === id);
+            if (index === -1)
+              // If the conversation is not found, add it to the top level state
+              return {
+                expirationDuration,
+              };
+
+            (conversations[index].record as ConversationsRecord).expiry_duration =
+              expirationDuration;
+
+            return {
+              conversations,
+            };
+          }),
+        ),
+      setIsTemporaryConversation: (state, $: Observable<boolean>) => {
+        return $.pipe(
           map((isTemporaryConversation) => {
             return {
               isTemporaryConversation,
@@ -213,8 +245,8 @@ export class ConversationService {
           }),
         );
       },
-      updateConversationRecord: (state, action$: Observable<ConversationRecord>) => {
-        return action$.pipe(
+      updateConversationRecord: (state, $: Observable<ConversationsResponse>) => {
+        return $.pipe(
           concatMap((data) => {
             return this.fetchConversation(data).pipe(
               take(1),
@@ -233,11 +265,8 @@ export class ConversationService {
           }),
         );
       },
-      setConversationTitle: (
-        state,
-        action$: Observable<{ id: string; title: string }>,
-      ) => {
-        return action$.pipe(
+      setConversationTitle: (state, $: Observable<{ id: string; title: string }>) => {
+        return $.pipe(
           map(({ id, title }) => {
             const conversations = state().conversations;
             const index = conversations.findIndex((c) => c.record.id === id);
@@ -273,6 +302,10 @@ export class ConversationService {
   readonly hasPinnedConversations = computed(
     () => this.pinnedConversations().length > 0,
   );
+
+  // The expiration duration for this conversation
+  readonly expirationDuration = this.state.expirationDuration;
+  readonly setExpirationDuration = this.state.setExpirationDuration;
 
   readonly nonPinnedConversations = this.state.nonPinnedConversations;
   readonly hasNonPinnedConversations = computed(
@@ -317,6 +350,7 @@ export class ConversationService {
       this._pb.collection(this.pbConversationCollection).create({
         data: Base64.fromUint8Array(encryptedData),
         creator: this._auth.user()?.['id'],
+        expiry_duration: this.expirationDuration(),
       }),
     ).pipe(
       switchMap((record) => {
@@ -328,6 +362,7 @@ export class ConversationService {
               record,
               decryptedData: data,
               keyPair: conversationKeyPair,
+              expirationDuration: '',
             };
           }),
         );
@@ -362,7 +397,7 @@ export class ConversationService {
    * @returns (ConversationData)
    */
   private decryptConversationData(
-    record: ConversationRecord,
+    record: ConversationsResponse,
     conversationKeyPair: KeyPair,
   ): ConversationData {
     const sharedSecret = this.sharedKey(conversationKeyPair);
@@ -514,7 +549,7 @@ export class ConversationService {
    *
    * @returns (Observable<Conversation>)
    */
-  private fetchConversation(record: ConversationRecord): Observable<Conversation> {
+  private fetchConversation(record: ConversationsResponse): Observable<Conversation> {
     return this.fetchConversationKeyPair(record.id).pipe(
       map((keyPair) => {
         return {
@@ -548,11 +583,11 @@ export class ConversationService {
    * fetchConversationRecord - fetches a specific conversation record from the PocketBase
    * backend.
    *
-   * @returns (Observable<ConversationRecord>)
+   * @returns (Observable<ConversationsResponse>)
    */
   private fetchConversationRecord(
     conversationId: string,
-  ): Observable<ConversationRecord> {
+  ): Observable<ConversationsResponse> {
     return from(
       this._pb.collection(this.pbConversationCollection).getOne(conversationId),
     );
@@ -561,9 +596,9 @@ export class ConversationService {
   /**
    * fetchConversationRecords - fetches all conversation records from the PocketBase backend.
    *
-   * @returns (Observable<Array<ConversationRecord>>)
+   * @returns (Observable<Array<ConversationsResponse>>)
    */
-  private fetchConversationRecords(): Observable<Array<ConversationRecord>> {
+  private fetchConversationRecords(): Observable<Array<ConversationsResponse>> {
     return from(this._pb.collection(this.pbConversationCollection).getFullList());
   }
 
@@ -573,7 +608,19 @@ export class ConversationService {
     );
   }
 
-  editConversation(id: string, data: ConversationData): Observable<ConversationRecord> {
+  editConversation(
+    id: string,
+    expiryDuration: string,
+    data: ConversationData,
+  ): Observable<ConversationsResponse> {
+    // Validate the expiry duration
+    if (
+      expiryDuration !== '' &&
+      !(expiryDuration in ConversationsExpiryDurationOptions)
+    ) {
+      return throwError(() => new Error('Invalid expiry duration'));
+    }
+
     // Get the keypair for the conversation
     const conversationKeyPair = this.getConversation(id)()?.keyPair;
     if (!conversationKeyPair) {
@@ -586,6 +633,7 @@ export class ConversationService {
     return from(
       this._pb.collection(this.pbConversationCollection).update(id, {
         data: Base64.fromUint8Array(encryptedData),
+        expiry_duration: expiryDuration,
       }),
     ).pipe(
       tap((resp) => {

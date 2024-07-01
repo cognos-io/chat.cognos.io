@@ -25,6 +25,16 @@ const featureBentoItems: FeatureBentoItem[] = [
     icon: 'bi-robot',
   },
   {
+    title: 'Disappearing messages',
+    description: {
+      small: 'Set a timer for your messages',
+      medium:
+        'Set a timer for your messages to be permanently deleted after a certain time',
+    },
+    color: 'violet',
+    icon: 'bi-stopwatch-fill',
+  },
+  {
     title: 'No training on your data',
     description: {
       small: 'Keep your data private',
@@ -84,7 +94,7 @@ const featureBentoItems: FeatureBentoItem[] = [
           'col-span-2': isMediumBento(index),
           blue: bentoItem.color === 'blue',
           violet: bentoItem.color === 'violet',
-          teal: bentoItem.color === 'teal'
+          teal: bentoItem.color === 'teal',
         }"
       >
         <div

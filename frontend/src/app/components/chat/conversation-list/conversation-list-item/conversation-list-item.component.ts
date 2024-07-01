@@ -59,7 +59,7 @@ import { UserPreferencesService } from '@app/services/user-preferences.service';
       <button mat-menu-item="" (click)="onPinUnpinConversation(conversation.record.id)">
         <mat-icon
           [ngClass]="{
-            pinned: isConversationPinned(conversation.record.id)
+            pinned: isConversationPinned(conversation.record.id),
           }"
           fontSet="bi"
           [fontIcon]="
@@ -74,7 +74,7 @@ import { UserPreferencesService } from '@app/services/user-preferences.service';
           Pin
         }
       </button>
-      <button mat-menu-item="" (click)="onRenameConversation(conversation.record.id)">
+      <button mat-menu-item="" (click)="onEditConversation(conversation.record.id)">
         <mat-icon fontSet="bi" fontIcon="bi-pencil-square"></mat-icon>
         Edit
       </button>
@@ -125,7 +125,7 @@ export class ConversationListItemComponent implements OnDestroy {
 
   private readonly _preferencesService = inject(UserPreferencesService);
   private readonly _destroyed$ = new Subject<void>();
-  private readonly _dialog = inject(MatDialog);
+  private readonly _dialogService = inject(MatDialog);
   readonly router = inject(Router);
   private readonly _conversationService = inject(ConversationService);
 
@@ -134,8 +134,8 @@ export class ConversationListItemComponent implements OnDestroy {
     this._destroyed$.complete();
   }
 
-  onRenameConversation(conversationId: string) {
-    this._dialog.open(EditConversationDialogComponent, {
+  onEditConversation(conversationId: string) {
+    this._dialogService.open(EditConversationDialogComponent, {
       data: {
         conversationId,
       },
@@ -143,7 +143,7 @@ export class ConversationListItemComponent implements OnDestroy {
   }
 
   onDeleteConversation(conversationId: string) {
-    this._dialog
+    this._dialogService
       .open(ConfirmationDialogComponent, {
         data: {
           message: 'Are you sure you want to delete this conversation?',

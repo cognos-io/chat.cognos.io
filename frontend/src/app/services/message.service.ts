@@ -28,9 +28,12 @@ import { signalSlice } from 'ngxtension/signal-slice';
 import { OpenAI } from 'openai';
 
 import { generateConversationAgentId } from '@app/interfaces/agent';
-import { ConversationRecord } from '@app/interfaces/conversation';
 import { Message, parseMessageData } from '@app/interfaces/message';
-import { MessagesResponse, TypedPocketBase } from '@app/types/pocketbase-types';
+import {
+  ConversationsResponse,
+  MessagesResponse,
+  TypedPocketBase,
+} from '@app/types/pocketbase-types';
 import { isTimestampInMilliseconds } from '@app/utils/timestamp';
 
 import { AgentService } from './agent.service';
@@ -210,7 +213,7 @@ export class MessageService {
                 return combineLatest([
                   // Generate a conversation title based on the first message
                   this.generateAndSetConversationTitle(
-                    newConversation.record.id,
+                    newConversation.record,
                     messageRequest.content,
                   ).pipe(startWith(newConversation)),
                   // And send the message
@@ -272,16 +275,16 @@ export class MessageService {
       },
     }),
     actionSources: {
-      addMessage: (state, action$: Observable<Message>) =>
-        action$.pipe(
+      addMessage: (state, $: Observable<Message>) =>
+        $.pipe(
           map((message) => {
             return {
               messages: [...state().messages, message],
             };
           }),
         ),
-      removeLastMessage: (state, action$: Observable<void>) =>
-        action$.pipe(
+      removeLastMessage: (state, $: Observable<void>) =>
+        $.pipe(
           map(() => {
             const messages = state().messages.slice(0, -1);
             return {
@@ -290,8 +293,8 @@ export class MessageService {
           }),
         ),
 
-      nextPage: (state, action$) =>
-        action$.pipe(
+      nextPage: (state, $) =>
+        $.pipe(
           concatMap(() => {
             if (!state().hasMoreMessages) {
               return EMPTY;
@@ -319,8 +322,8 @@ export class MessageService {
             );
           }),
         ),
-      updateMessageId: (state, action$: Observable<{ oldId: string; newId: string }>) =>
-        action$.pipe(
+      updateMessageId: (state, $: Observable<{ oldId: string; newId: string }>) =>
+        $.pipe(
           map(({ oldId, newId }) => {
             const messages = state().messages.map((msg) => {
               if (msg.record_id === oldId) {
@@ -376,18 +379,24 @@ export class MessageService {
             };
           }),
         ),
-      setStatus: (state, action$: Observable<MessageStatus>) =>
-        action$.pipe(
+      setStatus: (state, $: Observable<MessageStatus>) =>
+        $.pipe(
           map((status) => {
             return {
               status,
             };
           }),
         ),
-      resetState: (state, action$: Observable<void>) =>
-        action$.pipe(
+      resetState: (state, $: Observable<void>) =>
+        $.pipe(
           map(() => {
             return initialState;
+          }),
+        ),
+      keepExpiringMessage: (state, $: Observable<Message>) =>
+        $.pipe(
+          concatMap((message) => {
+            return this.keepExpiringMessageInPocketBase(message);
           }),
         ),
     },
@@ -408,6 +417,8 @@ export class MessageService {
     }
     this._deleteMessages$.next([msg.record_id]);
   }
+
+  public readonly keepExpiringMessage = this.state.keepExpiringMessage;
 
   // helper methods
   private fetchMessages(
@@ -460,6 +471,7 @@ export class MessageService {
     return {
       record_id: record.id,
       createdAt: new Date(record.created),
+      expires: record.expires ? new Date(record.expires) : undefined,
       parentMessageId: record.parent_message,
       decryptedData,
     };
@@ -551,6 +563,8 @@ export class MessageService {
   private addOpenAIMessageToState(
     resp: ChatCompletionResponseWithMetadata,
   ): Partial<MessageState> {
+    const messages = this.state().messages;
+
     let createdAt = resp.created;
     if (isTimestampInMilliseconds(createdAt)) {
       // Cloudflare Workers returns timestamps in milliseconds
@@ -560,11 +574,13 @@ export class MessageService {
 
     // TODO(ewan): Better handle errors. E.g. request fails or success but resp.choices is null
     const metadata: CognosMetadataResponse | undefined = resp.metadata?.cognos;
+    const expires = metadata?.expires_at ? new Date(metadata.expires_at) : undefined;
 
     const msg: Message = {
       parentMessageId: metadata?.parent_message_id,
       record_id: metadata?.response_record_id,
       createdAt: new Date((createdAt + 1) * 1000),
+      expires: metadata?.expires_at ? expires : undefined,
       decryptedData: {
         content: resp.choices[0].message.content,
         agent_id: this._agentService.selectedAgent().id,
@@ -572,8 +588,16 @@ export class MessageService {
       },
     };
 
+    if (expires && metadata?.parent_message_id) {
+      messages.forEach((message) => {
+        if (message.record_id === metadata.parent_message_id) {
+          message.expires = expires;
+        }
+      });
+    }
+
     return {
-      messages: [...this.state().messages, msg],
+      messages: [...messages, msg],
     };
   }
 
@@ -661,15 +685,19 @@ export class MessageService {
   }
 
   private generateAndSetConversationTitle(
-    conversationId: string,
+    conversation: ConversationsResponse,
     startingMessage: string,
-  ): Observable<ConversationRecord> {
+  ): Observable<ConversationsResponse> {
     return this.generateConversationTitle(startingMessage).pipe(
       filterNil(),
       switchMap((title) => {
         // Use max the first 10 words
         title = title.split(' ').slice(0, 10).join(' ');
-        return this._conversationService.editConversation(conversationId, { title });
+        return this._conversationService.editConversation(
+          conversation.id,
+          conversation.expiry_duration,
+          { title },
+        );
       }),
     );
   }
@@ -685,22 +713,40 @@ export class MessageService {
             // Rather than load all the messages from the server, reset the state minus affected messages
             let messages = this.state().messages;
 
-            const idsToRemove = [messageId];
-            while (idsToRemove.length) {
-              const id = idsToRemove.pop();
-              messages = messages.filter((msg) => {
-                if (msg.parentMessageId === id && msg.record_id) {
-                  idsToRemove.push(msg.record_id);
-                }
-                return msg.record_id !== id;
-              });
-            }
+            messages = messages.filter((msg) => msg.record_id !== messageId);
 
             return {
               messages,
             };
           }),
         );
+      }),
+    );
+  }
+
+  private keepExpiringMessageInPocketBase(
+    message: Message,
+  ): Observable<Partial<MessageState>> {
+    // Updates a message in the backend to remove the expiry time
+    if (!message.record_id) {
+      return EMPTY;
+    }
+
+    return from(
+      this.pbMessagesCollection.update(message.record_id, { expires: null }),
+    ).pipe(
+      map(() => {
+        return {
+          messages: this.state().messages.map((msg) => {
+            if (msg.record_id === message.record_id) {
+              return {
+                ...msg,
+                expires: undefined,
+              };
+            }
+            return msg;
+          }),
+        };
       }),
     );
   }

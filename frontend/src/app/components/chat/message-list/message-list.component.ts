@@ -6,11 +6,14 @@ import {
   Input,
   OnDestroy,
   Output,
+  computed,
   effect,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import {
   MatSlideToggleChange,
@@ -22,12 +25,17 @@ import { ReplaySubject, debounceTime, fromEvent, takeUntil } from 'rxjs';
 
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
+import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { Message } from '@app/interfaces/message';
 import { ConversationService } from '@app/services/conversation.service';
 
 import { FeatureBentoComponent } from '../feature-bento/feature-bento.component';
 import { MessageListItemComponent } from '../message-list-item/message-list-item.component';
+import {
+  TemporaryMessageDialogComponent,
+  expiringDurations,
+} from '../temporary-message-dialog/temporary-message-dialog.component';
 
 @Component({
   selector: 'app-message-list',
@@ -40,6 +48,8 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
     MatTooltipModule,
     MatIconModule,
     FeatureBentoComponent,
+    MatDialogModule,
+    MatButtonModule,
   ],
   template: `
     <div
@@ -82,20 +92,58 @@ import { MessageListItemComponent } from '../message-list-item/message-list-item
                 </p>
               }
             </div>
-            <mat-slide-toggle
-              (change)="onToggleTemporaryChat($event)"
-              [checked]="conversationService.isTemporaryConversation()"
-              ><span
-                class="underline decoration-dashed"
-                matTooltip="Enabling a temporary chat will mean that messages are never stored and will be deleted after the chat is closed"
-                >Temporary chat</span
-              ></mat-slide-toggle
-            >
+            <div class="flex flex-col items-center justify-center gap-4">
+              @if (!conversationService.isTemporaryConversation()) {
+                <button
+                  class="flex items-center justify-center gap-2"
+                  mat-button
+                  color="primary"
+                  matTooltip="Set a timer for the conversation where messages will be deleted after the timer expires. You have the option to manually 'keep' messages to prevent them from being deleted."
+                  aria-label="Set a timer for the conversation where messages will be deleted after the timer expires"
+                  (click)="onDisappearingMessages()"
+                >
+                  <mat-icon fontSet="bi" fontIcon="bi-stopwatch-fill"></mat-icon>
+                  Disappearing messages:
+                  @if (expirationDelayValue()) {
+                    <span class="font-bold">{{ expirationDelayValue() }}</span>
+                  } @else {
+                    Off
+                  }
+                </button>
+              }
+
+              <mat-slide-toggle
+                (change)="onToggleTemporaryChat($event)"
+                [checked]="conversationService.isTemporaryConversation()"
+                ><span
+                  class="underline decoration-dashed"
+                  matTooltip="Enabling a temporary chat will mean that messages are never stored and will be deleted after the chat is closed"
+                  >Temporary chat</span
+                ></mat-slide-toggle
+              >
+            </div>
           </div>
         </div>
       }
       @if (messageSending) {
         <app-loading-indicator></app-loading-indicator>
+      }
+      @if (
+        conversationService.conversation() &&
+        expirationDelayValue() !== 'Off' &&
+        !conversationService.isTemporaryConversation() &&
+        expirationDelayValue() !== ''
+      ) {
+        <button
+          mat-button
+          color="primary"
+          class="mx-auto mt-2 text-balance lg:w-auto"
+          (click)="onEditConversation()"
+        >
+          <mat-icon fontSet="bi" fontIcon="bi-stopwatch-fill"></mat-icon>
+          New messages in this conversation will disappear after
+          {{ expirationDelayValue() }}
+        </button>
       }
     </div>
   `,
@@ -175,11 +223,22 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
 
   private readonly _wrapper = viewChild('wrapper', { read: ElementRef });
 
+  private readonly _dialogService = inject(MatDialog);
   private readonly _firstLoad = signal(true);
   private readonly _atBottom = signal(false);
   private destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
 
   readonly conversationService = inject(ConversationService);
+
+  public readonly expirationDelayValue = computed(() => {
+    let duration = this.conversationService.conversation()?.record
+      .expiry_duration as string;
+
+    if (!duration) {
+      duration = this.conversationService.expirationDuration();
+    }
+    return expiringDurations.find((x) => x.value === duration)?.label;
+  });
 
   constructor() {
     effect(() => {
@@ -202,6 +261,22 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
 
   onToggleTemporaryChat(event: MatSlideToggleChange): void {
     this.conversationService.setIsTemporaryConversation(event.checked);
+  }
+
+  onDisappearingMessages(): void {
+    this._dialogService
+      .open(TemporaryMessageDialogComponent)
+      .afterClosed()
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe();
+  }
+
+  onEditConversation(): void {
+    this._dialogService.open(EditConversationDialogComponent, {
+      data: {
+        conversationId: this.conversationService.conversation()?.record.id ?? '',
+      },
+    });
   }
 
   ngAfterViewInit(): void {

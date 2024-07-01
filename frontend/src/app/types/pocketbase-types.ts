@@ -59,9 +59,16 @@ export type ConversationSecretKeysRecord = {
   user: RecordIdString;
 };
 
+export enum ConversationsExpiryDurationOptions {
+  '24h' = '24h',
+  '168h' = '168h',
+  '2160h' = '2160h',
+  '4320h' = '4320h',
+}
 export type ConversationsRecord = {
   creator?: RecordIdString;
   data: string;
+  expiry_duration?: ConversationsExpiryDurationOptions;
 };
 
 export type DeletedRecord<Trecord = unknown> = {
@@ -79,6 +86,7 @@ export type IdempotencyRecord<Tbody = unknown> = {
 export type MessagesRecord = {
   conversation: RecordIdString;
   data: string;
+  expires?: IsoDateString;
   parent_message?: RecordIdString;
 };
 

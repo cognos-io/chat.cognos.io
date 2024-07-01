@@ -1,14 +1,17 @@
 package chat
 
 import (
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/crypto"
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/forms"
 	"github.com/pocketbase/pocketbase/models"
-	"github.com/pocketbase/pocketbase/tools/types"
+	"github.com/pocketbase/pocketbase/tools/list"
 )
 
 // EncryptMessageData encrypts a plain text message using symmetric and asymmetric encryption.
@@ -41,16 +44,11 @@ func EncryptMessageData(
 
 type MessageRepo interface {
 	EncryptAndPersistMessage(
-		receiverPublicKey [32]byte,
-		conversationID string,
+		conversation Conversation,
 		parentMessageID string,
 		message MessageRecordData,
 	) (error, *models.Record)
 	DeleteMessage(messageID string) error
-}
-
-type ConversationRepo interface {
-	SetConversationUpdated(conversationID string, updatedAt types.DateTime) error
 }
 
 type PocketBaseMessageRepo struct {
@@ -63,25 +61,31 @@ type PocketBaseMessageRepo struct {
 // The receiver public key can be a conversation key or a user's public key.
 // Returns an error if there was a problem persisting the message.
 func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
-	receiverPublicKey [32]byte,
-	conversationID string,
+	conversation Conversation,
 	parentMessageID string,
 	message MessageRecordData,
 ) (error, *models.Record) {
 	base64EncryptedMessage, err := EncryptMessageData(
 		message,
-		receiverPublicKey,
+		conversation.PublicKey,
 	)
 	if err != nil {
 		return err, nil
 	}
+
+	formData := map[string]any{
+		"data":           base64EncryptedMessage,
+		"conversation":   conversation.ID,
+		"parent_message": parentMessageID,
+	}
+
+	if conversation.ExpiryDuration != 0 {
+		formData["expires"] = time.Now().UTC().Add(conversation.ExpiryDuration)
+	}
+
 	record := models.NewRecord(r.collection)
 	form := forms.NewRecordUpsert(r.app, record)
-	err = form.LoadData(map[string]any{
-		"data":           base64EncryptedMessage,
-		"conversation":   conversationID,
-		"parent_message": parentMessageID,
-	})
+	err = form.LoadData(formData)
 	if err != nil {
 		return err, nil
 	}
@@ -99,41 +103,49 @@ func (r *PocketBaseMessageRepo) DeleteMessage(messageID string) error {
 	return r.app.Dao().DeleteRecord(record)
 }
 
+func (r *PocketBaseMessageRepo) FindExpiredMessages() ([]string, error) {
+	now := time.Now().UTC()
+	filter := dbx.And(
+		dbx.Not(
+			dbx.NewExp("expires = ''"),
+		),
+		dbx.NewExp("expires < {:now}", dbx.Params{"now": now}),
+	)
+
+	messageResults := []struct {
+		Id string `db:"id" json:"id"`
+	}{}
+
+	err := r.app.Dao().
+		DB().
+		Select("id").
+		From(r.collection.Name).
+		AndWhere(filter).
+		All(&messageResults)
+
+	messageIds := make([]string, len(messageResults))
+	for i, result := range messageResults {
+		messageIds[i] = result.Id
+	}
+
+	return messageIds, err
+}
+
+func (r *PocketBaseMessageRepo) CleanUpExpiredMessages(
+	messageIDs []string,
+) (sql.Result, error) {
+	return r.app.Dao().
+		DB().
+		Delete(r.collection.Name, dbx.In("id", list.ToInterfaceSlice[string](messageIDs)...)).
+		Execute()
+}
+
 func NewPocketBaseMessageRepo(app core.App) *PocketBaseMessageRepo {
 	collection, err := app.Dao().FindCollectionByNameOrId("messages")
 	if err != nil {
 		panic(err)
 	}
 	return &PocketBaseMessageRepo{
-		app:        app,
-		collection: collection,
-	}
-}
-
-type PocketBaseConversationRepo struct {
-	app        core.App
-	collection *models.Collection
-}
-
-// SetConversationUpdated updates the conversation's updated time.
-func (r *PocketBaseConversationRepo) SetConversationUpdated(
-	conversationID string,
-) error {
-	record, err := r.app.Dao().FindRecordById(r.collection.Name, conversationID)
-	if err != nil {
-		return err
-	}
-	record.RefreshUpdated()
-
-	return r.app.Dao().Save(record)
-}
-
-func NewPocketBaseConversationRepo(app core.App) *PocketBaseConversationRepo {
-	collection, err := app.Dao().FindCollectionByNameOrId("conversations")
-	if err != nil {
-		panic(err)
-	}
-	return &PocketBaseConversationRepo{
 		app:        app,
 		collection: collection,
 	}
