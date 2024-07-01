@@ -29,7 +29,7 @@ export const expiringDurations = [
   template: ` <h2 mat-dialog-title="">Disappearing messages</h2>
     <mat-dialog-content>
       <div class="flex flex-col gap-4">
-        <div class="prose">
+        <div class="prose prose-headings:mb-2 prose-headings:mt-4 prose-p:mb-2">
           <p>Make your messages disappear.</p>
           <p>
             For more privacy all new messages will disappear from this chat after the
@@ -38,19 +38,22 @@ export const expiringDurations = [
           </p>
           <p>This will not affect existing messages and can be disabled at any time.</p>
         </div>
-        <mat-button-toggle-group
-          [formControl]="expirationDurationControl"
-          name="favoriteColor"
-          aria-label="Favorite Color"
-          class="less-rounded justify-center"
-          [vertical]="deviceService.isMobile()"
-        >
-          @for (option of expiringDurations; track option.label) {
-            <mat-button-toggle [value]="option.value">{{
-              option.label
-            }}</mat-button-toggle>
-          }
-        </mat-button-toggle-group>
+
+        <div class="text-center">
+          <mat-button-toggle-group
+            [formControl]="expirationDuration"
+            name="favoriteColor"
+            aria-label="Favorite Color"
+            class="less-rounded w-full justify-center lg:w-auto"
+            [vertical]="deviceService.isMobile()"
+          >
+            @for (option of expiringDurations; track option.label) {
+              <mat-button-toggle [value]="option.value">{{
+                option.label
+              }}</mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+        </div>
       </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -72,7 +75,7 @@ export class TemporaryMessageDialogComponent {
   public readonly expiringDurations = expiringDurations;
 
   public readonly conversation = input<Conversation>();
-  public readonly expirationDurationControl = new FormControl(
+  public readonly expirationDuration = new FormControl(
     (this.conversation()?.record
       .expiry_duration as keyof typeof ConversationsExpiryDurationOptions) ?? '',
   );
@@ -80,7 +83,7 @@ export class TemporaryMessageDialogComponent {
   constructor(private _dialogRef: MatDialogRef<TemporaryMessageDialogComponent>) {}
 
   onSave() {
-    const expirationDuration = this.expirationDurationControl.value ?? '';
+    const expirationDuration = this.expirationDuration.value ?? '';
 
     this._conversationService.setExpirationDuration({
       id: this.conversation()?.record.id ?? '-1',
@@ -89,7 +92,7 @@ export class TemporaryMessageDialogComponent {
         : undefined,
     });
 
-    this._dialogRef.close(this.expirationDurationControl.value);
+    this._dialogRef.close(this.expirationDuration.value);
   }
 }
 
