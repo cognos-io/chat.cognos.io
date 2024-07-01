@@ -6,11 +6,13 @@ import {
   Input,
   OnDestroy,
   Output,
+  computed,
   effect,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import {
@@ -29,7 +31,10 @@ import { ConversationService } from '@app/services/conversation.service';
 
 import { FeatureBentoComponent } from '../feature-bento/feature-bento.component';
 import { MessageListItemComponent } from '../message-list-item/message-list-item.component';
-import { TemporaryMessageDialogComponent } from '../temporary-message-dialog/temporary-message-dialog.component';
+import {
+  TemporaryMessageDialogComponent,
+  expiringDurations,
+} from '../temporary-message-dialog/temporary-message-dialog.component';
 
 @Component({
   selector: 'app-message-list',
@@ -43,6 +48,7 @@ import { TemporaryMessageDialogComponent } from '../temporary-message-dialog/tem
     MatIconModule,
     FeatureBentoComponent,
     MatDialogModule,
+    MatButtonModule,
   ],
   template: `
     <div
@@ -86,16 +92,24 @@ import { TemporaryMessageDialogComponent } from '../temporary-message-dialog/tem
               }
             </div>
             <div class="flex flex-col items-center justify-center gap-4">
-              <button
-                class="flex items-center justify-center gap-2"
-                mat-button
-                matTooltip="Set a timer for the conversation where messages will be deleted after the timer expires. You have the option to manually 'keep' messages to prevent them from being deleted."
-                aria-label="Set a timer for the conversation where messages will be deleted after the timer expires"
-                (click)="onDisappearingMessages()"
-              >
-                <mat-icon fontSet="bi" fontIcon="bi-stopwatch-fill"></mat-icon>
-                Set disappearing messages timer
-              </button>
+              @if (!conversationService.isTemporaryConversation()) {
+                <button
+                  class="flex items-center justify-center gap-2"
+                  mat-button
+                  color="primary"
+                  matTooltip="Set a timer for the conversation where messages will be deleted after the timer expires. You have the option to manually 'keep' messages to prevent them from being deleted."
+                  aria-label="Set a timer for the conversation where messages will be deleted after the timer expires"
+                  (click)="onDisappearingMessages()"
+                >
+                  <mat-icon fontSet="bi" fontIcon="bi-stopwatch-fill"></mat-icon>
+                  Disappearing messages:
+                  @if (expirationDelayValue()) {
+                    <span class="font-bold">{{ expirationDelayValue() }}</span>
+                  } @else {
+                    Off
+                  }
+                </button>
+              }
 
               <mat-slide-toggle
                 (change)="onToggleTemporaryChat($event)"
@@ -197,6 +211,12 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
   private destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
 
   readonly conversationService = inject(ConversationService);
+
+  public readonly expirationDelayValue = computed(() => {
+    return expiringDurations.find(
+      (x) => x.value === this.conversationService.expirationDuration(),
+    )?.label;
+  });
 
   constructor() {
     effect(() => {

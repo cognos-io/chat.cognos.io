@@ -77,7 +77,8 @@ export class TemporaryMessageDialogComponent {
   public readonly conversation = input<Conversation>();
   public readonly expirationDuration = new FormControl(
     (this.conversation()?.record
-      .expiry_duration as keyof typeof ConversationsExpiryDurationOptions) ?? '',
+      .expiry_duration as keyof typeof ConversationsExpiryDurationOptions) ??
+      this._conversationService.expirationDuration(),
   );
 
   constructor(private _dialogRef: MatDialogRef<TemporaryMessageDialogComponent>) {}
