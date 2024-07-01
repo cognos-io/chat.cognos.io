@@ -25,7 +25,6 @@ import { ConversationData } from '@app/interfaces/conversation';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { ErrorService } from '@app/services/error.service';
-import { ConversationsExpiryDurationOptions } from '@app/types/pocketbase-types';
 
 import { expiringDurations } from '../chat/temporary-message-dialog/temporary-message-dialog.component';
 
