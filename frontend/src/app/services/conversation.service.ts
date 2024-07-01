@@ -609,8 +609,17 @@ export class ConversationService {
 
   editConversation(
     id: string,
+    expiryDuration: string,
     data: ConversationData,
   ): Observable<ConversationsResponse> {
+    // Validate the expiry duration
+    if (
+      expiryDuration !== '' &&
+      !(expiryDuration in ConversationsExpiryDurationOptions)
+    ) {
+      return throwError(() => new Error('Invalid expiry duration'));
+    }
+
     // Get the keypair for the conversation
     const conversationKeyPair = this.getConversation(id)()?.keyPair;
     if (!conversationKeyPair) {
@@ -623,6 +632,7 @@ export class ConversationService {
     return from(
       this._pb.collection(this.pbConversationCollection).update(id, {
         data: Base64.fromUint8Array(encryptedData),
+        expiry_duration: expiryDuration,
       }),
     ).pipe(
       tap((resp) => {

@@ -137,8 +137,10 @@ export class EditConversationDialogComponent implements OnInit {
       title: this.editForm.value.title ?? '',
     };
 
+    const expirationDuration = this.editForm.value.expirationDuration ?? '';
+
     this.conversationService
-      .editConversation(this.data.conversationId, data)
+      .editConversation(this.data.conversationId, expirationDuration, data)
       .pipe(
         finalize(() => this.editForm.enable()),
         catchError((error) => {

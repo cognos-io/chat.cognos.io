@@ -213,7 +213,7 @@ export class MessageService {
                 return combineLatest([
                   // Generate a conversation title based on the first message
                   this.generateAndSetConversationTitle(
-                    newConversation.record.id,
+                    newConversation.record,
                     messageRequest.content,
                   ).pipe(startWith(newConversation)),
                   // And send the message
@@ -664,7 +664,7 @@ export class MessageService {
   }
 
   private generateAndSetConversationTitle(
-    conversationId: string,
+    conversation: ConversationsResponse,
     startingMessage: string,
   ): Observable<ConversationsResponse> {
     return this.generateConversationTitle(startingMessage).pipe(
@@ -672,7 +672,11 @@ export class MessageService {
       switchMap((title) => {
         // Use max the first 10 words
         title = title.split(' ').slice(0, 10).join(' ');
-        return this._conversationService.editConversation(conversationId, { title });
+        return this._conversationService.editConversation(
+          conversation.id,
+          conversation.expiry_duration,
+          { title },
+        );
       }),
     );
   }
