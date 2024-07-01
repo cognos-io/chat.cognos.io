@@ -137,7 +137,7 @@ import {
         <button
           mat-button
           color="primary"
-          class="mx-auto lg:w-1/2"
+          class="mx-auto mt-2 text-balance lg:w-auto"
           (click)="onEditConversation()"
         >
           <mat-icon fontSet="bi" fontIcon="bi-stopwatch-fill"></mat-icon>
