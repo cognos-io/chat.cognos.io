@@ -111,6 +111,7 @@ export class ConversationService {
                 return {
                   selectedConversationId: conversation.record.id,
                   conversations: [conversation, ...state().conversations],
+                  expirationDuration: '', // reset this after creating a conversation
                 };
               }),
             ),
