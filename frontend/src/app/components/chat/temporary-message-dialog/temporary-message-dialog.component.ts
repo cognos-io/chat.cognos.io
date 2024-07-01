@@ -1,16 +1,31 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 
 import { Conversation } from '@app/interfaces/conversation';
+import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
+import { ConversationsExpiryDurationOptions } from '@app/types/pocketbase-types';
+
+export const expiringDurations = [
+  { value: '', label: 'Off' },
+  { value: '24h', label: '24 hours' },
+  { value: '168h', label: '7 days' },
+  { value: '2160h', label: '90 days' },
+  { value: '4320h', label: '180 days' },
+];
 
 @Component({
   selector: 'app-temporary-message-dialog',
   standalone: true,
-  imports: [MatDialogModule, MatButtonToggleModule, MatButtonModule],
+  imports: [
+    MatDialogModule,
+    MatButtonToggleModule,
+    MatButtonModule,
+    ReactiveFormsModule,
+  ],
   template: ` <h2 mat-dialog-title="">Disappearing messages</h2>
     <mat-dialog-content>
       <div class="flex flex-col gap-4">
@@ -24,6 +39,7 @@ import { DeviceService } from '@app/services/device.service';
           <p>This will not affect existing messages and can be disabled at any time.</p>
         </div>
         <mat-button-toggle-group
+          [formControl]="expirationDurationControl"
           name="favoriteColor"
           aria-label="Favorite Color"
           class="less-rounded justify-center"
@@ -39,7 +55,7 @@ import { DeviceService } from '@app/services/device.service';
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close color="error">Cancel</button>
-      <button mat-button [mat-dialog-close]="true" cdkFocusInitial>Save</button>
+      <button (click)="onSave()" mat-button cdkFocusInitial>Save</button>
     </mat-dialog-actions>`,
   styles: `
     mat-button-toggle-group.less-rounded {
@@ -49,18 +65,34 @@ import { DeviceService } from '@app/services/device.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TemporaryMessageDialogComponent {
+  private readonly _conversationService = inject(ConversationService);
+
   public readonly deviceService = inject(DeviceService);
 
-  public readonly expiringDurations = [
-    { value: '', label: 'Off' },
-    { value: '24h', label: '24 hours' },
-    { value: '168h', label: '7 days' },
-    { value: '2160h', label: '90 days' },
-    { value: '4320h', label: '180 days' },
-  ];
+  public readonly expiringDurations = expiringDurations;
 
   public readonly conversation = input<Conversation>();
   public readonly expirationDurationControl = new FormControl(
-    this.conversation()?.record.expiry_duration ?? '',
+    (this.conversation()?.record
+      .expiry_duration as keyof typeof ConversationsExpiryDurationOptions) ?? '',
   );
+
+  constructor(private _dialogRef: MatDialogRef<TemporaryMessageDialogComponent>) {}
+
+  onSave() {
+    const expirationDuration = this.expirationDurationControl.value ?? '';
+
+    this._conversationService.setExpirationDuration({
+      id: this.conversation()?.record.id ?? '-1',
+      expirationDuration: isValidExpirationDuration(expirationDuration)
+        ? (expirationDuration as ConversationsExpiryDurationOptions)
+        : undefined,
+    });
+
+    this._dialogRef.close(this.expirationDurationControl.value);
+  }
 }
+
+const isValidExpirationDuration = (value: string): boolean => {
+  return value in ConversationsExpiryDurationOptions;
+};

@@ -32,7 +32,12 @@ import {
   serializeConversationData,
 } from '../interfaces/conversation';
 import { KeyPair } from '../interfaces/key-pair';
-import { ConversationsResponse, TypedPocketBase } from '../types/pocketbase-types';
+import {
+  ConversationsExpiryDurationOptions,
+  ConversationsRecord,
+  ConversationsResponse,
+  TypedPocketBase,
+} from '../types/pocketbase-types';
 import { AuthService } from './auth.service';
 import { CryptoService } from './crypto.service';
 import { UserPreferencesService } from './user-preferences.service';
@@ -45,6 +50,7 @@ interface ConversationState {
   selectedConversationId: string;
   filter: string;
   isTemporaryConversation: boolean;
+  expirationDuration: string;
 }
 
 const initialState: ConversationState = {
@@ -52,6 +58,7 @@ const initialState: ConversationState = {
   selectedConversationId: '',
   filter: '',
   isTemporaryConversation: false,
+  expirationDuration: '',
 };
 
 @Injectable({
@@ -203,8 +210,33 @@ export class ConversationService {
       };
     },
     actionSources: {
-      setIsTemporaryConversation: (state, action$: Observable<boolean>) => {
-        return action$.pipe(
+      setExpirationDuration: (
+        state,
+        $: Observable<{
+          id: string;
+          expirationDuration?: ConversationsExpiryDurationOptions;
+        }>,
+      ) =>
+        $.pipe(
+          map(({ id, expirationDuration }) => {
+            const conversations = state().conversations;
+            const index = conversations.findIndex((c) => c.record.id === id);
+            if (index === -1)
+              // If the conversation is not found, add it to the top level state
+              return {
+                expirationDuration,
+              };
+
+            (conversations[index].record as ConversationsRecord).expiry_duration =
+              expirationDuration;
+
+            return {
+              conversations,
+            };
+          }),
+        ),
+      setIsTemporaryConversation: (state, $: Observable<boolean>) => {
+        return $.pipe(
           map((isTemporaryConversation) => {
             return {
               isTemporaryConversation,
@@ -212,8 +244,8 @@ export class ConversationService {
           }),
         );
       },
-      updateConversationRecord: (state, action$: Observable<ConversationsResponse>) => {
-        return action$.pipe(
+      updateConversationRecord: (state, $: Observable<ConversationsResponse>) => {
+        return $.pipe(
           concatMap((data) => {
             return this.fetchConversation(data).pipe(
               take(1),
@@ -232,11 +264,8 @@ export class ConversationService {
           }),
         );
       },
-      setConversationTitle: (
-        state,
-        action$: Observable<{ id: string; title: string }>,
-      ) => {
-        return action$.pipe(
+      setConversationTitle: (state, $: Observable<{ id: string; title: string }>) => {
+        return $.pipe(
           map(({ id, title }) => {
             const conversations = state().conversations;
             const index = conversations.findIndex((c) => c.record.id === id);
@@ -272,6 +301,10 @@ export class ConversationService {
   readonly hasPinnedConversations = computed(
     () => this.pinnedConversations().length > 0,
   );
+
+  // The expiration duration for this conversation
+  readonly expirationDuration = this.state.expirationDuration;
+  readonly setExpirationDuration = this.state.setExpirationDuration;
 
   readonly nonPinnedConversations = this.state.nonPinnedConversations;
   readonly hasNonPinnedConversations = computed(
@@ -316,6 +349,7 @@ export class ConversationService {
       this._pb.collection(this.pbConversationCollection).create({
         data: Base64.fromUint8Array(encryptedData),
         creator: this._auth.user()?.['id'],
+        expiry_duration: this.expirationDuration(),
       }),
     ).pipe(
       switchMap((record) => {
@@ -327,6 +361,7 @@ export class ConversationService {
               record,
               decryptedData: data,
               keyPair: conversationKeyPair,
+              expirationDuration: '',
             };
           }),
         );
