@@ -69,7 +69,7 @@ import { ModelService } from '@app/services/model.service';
         </div>
         <article class="item-content prose prose-headings:text-xl prose-th:text-base">
           @if (message.decryptedData.content) {
-            <markdown emoji>
+            <markdown emoji katex>
               {{ message.decryptedData.content }}
             </markdown>
           } @else {

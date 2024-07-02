@@ -45,11 +45,14 @@
             "styles": [
               "src/styles.scss",
               "node_modules/bootstrap-icons/font/bootstrap-icons.scss",
-              "node_modules/prismjs/themes/prism-okaidia.css"
+              "node_modules/prismjs/themes/prism-okaidia.css",
+              "node_modules/katex/dist/katex.min.css"
             ],
             "scripts": [
               "node_modules/prismjs/prism.js",
               "node_modules/emoji-toolkit/lib/js/joypixels.min.js",
+              "node_modules/katex/dist/katex.min.js",
+              "node_modules/katex/dist/contrib/auto-render.min.js",
               "node_modules/prismjs/components/prism-markup.min.js",
               "node_modules/prismjs/components/prism-markup-templating.min.js",
               "node_modules/prismjs/components/prism-javascript.min.js",
