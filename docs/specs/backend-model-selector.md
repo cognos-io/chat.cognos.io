@@ -1,6 +1,6 @@
-# Cognos Backend — Architecture Specification & Implementation Roadmap
+# Cognos Model Selection & Security Rework — Architecture Specification & Implementation Roadmap
 
-**Version:** 1.0 **Status:** Ready for development **Stack:** Go (backend), Angular (frontend),
+**Version:** 1.1 **Status:** Ready for development **Stack:** Go (backend), Angular (frontend),
 PocketBase/SQLite (primary store), DuckDB + Parquet/S3 (analytics)
 
 ---
@@ -27,6 +27,9 @@ PocketBase/SQLite (primary store), DuckDB + Parquet/S3 (analytics)
 10. [Environment Variables & Configuration](#10-environment-variables--configuration)
 11. [Testing Requirements](#11-testing-requirements)
 12. [Security & Privacy Rules](#12-security--privacy-rules)
+13. [Confirmed Decisions & Amendments (June 2026)](#13-confirmed-decisions--amendments-june-2026)
+14. [Current Codebase Index (Relevant Files)](#14-current-codebase-index-relevant-files)
+15. [Documentation Changes Required](#15-documentation-changes-required)
 
 ---
 
@@ -38,7 +41,11 @@ Cognos is an encrypted AI chat application. It works on the same privacy princip
 
 - Each user generates a **public/private key pair** on their device.
 - The **public key** is stored on the server.
-- The **private key never leaves the user's device**.
+- The **private key is encrypted client-side** and may be backed up to the server to support
+  cross-device access.
+- Unlocking a new device requires the user's **account password + Account Key**. Trusted devices
+  may cache a locally wrapped unlock blob in **IndexedDB** until the user explicitly locks the
+  account, logs out, or clears the device.
 - When a user sends a message, the server uses the user's public key to
   **encrypt the message ciphertext** before persisting it.
 - When the AI generates a response, the server uses the public key to **encrypt the response**
@@ -51,8 +58,8 @@ conversations cannot be read.
 
 ### What this document covers
 
-This document specifies the **backend rearchitecture** of Cognos. The primary goals of this work
-are:
+This document specifies the **backend and frontend rearchitecture** of Cognos. The primary goals
+of this work are:
 
 1. Introduce a **model selection system** that allows users to choose AI models based on their
    privacy preferences.
@@ -65,10 +72,9 @@ are:
 
 ### What this document does NOT cover
 
-- Frontend (Angular) implementation — a separate spec will cover the UI for model selection and
-  billing.
-- Authentication — assumed to be already working in the existing codebase.
-- Payment processing (Stripe or similar) — a separate integration task.
+- Authentication/session issuance beyond the key-management changes in this document — assumed to
+  be already working in the existing codebase.
+- Payment processing (Stripe, Paddle, or similar) — a separate integration task.
 - Deployment / infrastructure provisioning — a separate DevOps task.
 
 ---
@@ -78,8 +84,8 @@ are:
 ```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │  Angular Frontend                                                    │
-│  - Holds private key (never sent to server)                         │
-│  - Encrypts outgoing messages locally before display                │
+│  - Unlocks encrypted private key locally                            │
+│  - May cache wrapped unlock material in IndexedDB on trusted devices│
 │  - Decrypts incoming ciphertext locally                             │
 └───────────────────────────┬─────────────────────────────────────────┘
                             │ HTTPS
@@ -146,7 +152,7 @@ Add all of the following to `go.mod`. Exact versions should be pinned after init
 | AWS SDK v2 (S3)        | Parquet upload to S3     | `github.com/aws/aws-sdk-go-v2`           |
 | Apache Arrow / Parquet | Write Parquet files      | `github.com/apache/arrow/go/v17/parquet` |
 | golang.org/x/crypto    | NaCl / X25519 encryption | `golang.org/x/crypto`                    |
-| Google UUID            | UUID generation          | `github.com/google/uuid`                 |
+| Google UUID            | UUID v7 generation       | `github.com/google/uuid`                 |
 
 > **Note for lead engineer:** Confirm the exact Bifrost import path from
 > `github.com/maximhq/bifrost` before starting. The Go SDK and the HTTP gateway are separate
@@ -550,8 +556,9 @@ func providerKey(provider string) schemas.ModelProviderKey {
 ### 4.3 Encryption & Message Storage
 
 **Purpose:** After receiving a completion from Bifrost, the backend encrypts the full message
-payload (content + metadata) using the user's public key, then persists only the ciphertext. The
-private key never touches the server.
+payload (content + metadata) using the user's public key, then persists only the ciphertext.
+Plaintext private keys never touch the server, but encrypted private-key backups may be stored
+server-side to support cross-device access.
 
 **Location in codebase:** `internal/crypto/encrypt.go`, `internal/store/messages.go`
 
@@ -564,8 +571,25 @@ Cognos uses **X25519 key exchange + XSalsa20-Poly1305 encryption** (NaCl box), w
 - Asymmetric: encrypts with public key, decrypts with private key.
 
 The frontend generates key pairs using the Web Crypto API or a compatible library (TweetNaCl.js is
-standard). The public key is stored in the `users` table as base64. The private key is stored only
-in the user's browser (localStorage / IndexedDB) and never sent to the server.
+standard). The public key is stored in the `users` table as base64. The private key is encrypted
+client-side and may be backed up to the server as ciphertext to support cross-device access.
+
+#### Key backup and device unlock model
+
+The accepted key-management model for Cognos is a **1Password-style Account Key model**.
+
+- Users authenticate with their normal **account password**.
+- Each user also has a generated high-entropy **Account Key** used when unlocking new devices.
+- The server may store an **encrypted private-key backup**, but must never store or receive the
+  plaintext private key.
+- A new device requires both the **account password** and **Account Key** to unlock the encrypted
+  private key locally.
+- Trusted devices may cache a **locally wrapped unlock blob** in **IndexedDB** so users are not
+  repeatedly prompted. Do **not** use `localStorage` for key material.
+- Do **not** derive any vault or unlock key from `sha256(email + password)`.
+- Use **Argon2id** with a random per-user salt for password-based derivation.
+- **Email changes must not affect cryptographic state.**
+- **Password changes must re-wrap stored unlock material, not re-encrypt all messages.**
 
 #### Message payload structure
 
@@ -1497,6 +1521,37 @@ are complete and reviewed.
 Each phase ends with a **review checkpoint** — the lead engineer must review the output before the
 next phase begins.
 
+### Roadmap amendments after codebase review
+
+The current repository already contains a working PocketBase app, a legacy OpenAI-compatible proxy,
+server-backed key storage, and hard-coded frontend models. The implementation plan below must be
+read with these mandatory amendments:
+
+1. **Rewrite, do not adapt in place.** Replace the existing OpenAI-compatible chat path with the
+   first-party REST API described in Section 6.
+2. **Move frontend model selection to the backend catalogue.** Remove the hard-coded frontend model
+   list as the source of truth.
+3. **Keep NaCl primitives, change the key-management model.** Existing NaCl usage is close enough
+   to keep, but the storage and unlock model must be rewritten to the Account Key design described
+   in Section 13.
+4. **Start with Infomaniak only.** Seed only the approved Infomaniak model initially. Do not expose
+   Mistral, Anthropic, OpenAI, or other providers until explicitly approved.
+5. **Remove OpenAI compatibility once the new path is live.** `backend/pkg/compat/openai` and the
+   frontend `openai` browser SDK path are migration targets, not long-term architecture.
+
+Success criteria for the overall rework:
+
+1. Backend model availability is driven solely by the backend catalogue → verify: frontend renders
+   models from `/api/v1/models` with no hard-coded list required.
+2. Chat completions go through first-party Cognos endpoints only → verify: no UI path depends on
+   the OpenAI browser SDK or `/v1/chat/completions` compatibility route.
+3. Message content is stored as ciphertext only and billing/analytics never store plaintext →
+   verify: database inspection and integration tests.
+4. Cross-device unlock requires account password + Account Key, while trusted devices avoid repeated
+   prompts → verify: new-device unlock flow and trusted-device relaunch flow.
+5. Product copy accurately describes the security model → verify: README and new security doc
+   updated before merge.
+
 ---
 
 ### Phase 1 — Foundation
@@ -1513,17 +1568,18 @@ analytics.
 
 **Tasks:**
 
-| #   | Task                                                           | Package     | Notes                                                                  |
-| --- | -------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------- |
-| 1.1 | Define `Config` struct and env loading                         | `config`    | See Section 10 for all required env vars                               |
-| 1.2 | Implement `AllModels` catalogue with 4 initial models          | `catalogue` | Start with `IsActive: false` on all except Infomaniak                  |
-| 1.3 | Implement `ModelsAvailableForTier()` and `GetModelByID()`      | `catalogue` |                                                                        |
-| 1.4 | Write unit tests for catalogue filtering                       | `catalogue` | 100% coverage required                                                 |
-| 1.5 | Implement Bifrost `Client` with `NewClient()` and `Complete()` | `gateway`   |                                                                        |
-| 1.6 | Implement `GET /api/v1/models` handler                         | `handler`   | Returns tier-filtered models                                           |
-| 1.7 | Create PocketBase collections: `conversations`, `messages`     | `store`     | Via PocketBase admin UI or migration                                   |
-| 1.8 | Implement basic `POST /api/v1/conversations/{id}/complete`     | `handler`   | No encryption, no billing yet — returns plaintext response for testing |
-| 1.9 | Write integration test for complete endpoint                   | `handler`   | Use Infomaniak API key                                                 |
+| #    | Task                                                                                 | Package     | Notes                                                                  |
+| ---- | ------------------------------------------------------------------------------------ | ----------- | ---------------------------------------------------------------------- |
+| 1.1  | Define `Config` struct and env loading                                               | `config`    | See Section 10 for all required env vars                               |
+| 1.2  | Implement `AllModels` catalogue with the initial Infomaniak model only               | `catalogue` | Do not seed unapproved providers in the first cut                      |
+| 1.3  | Implement `ModelsAvailableForTier()` and `GetModelByID()`                            | `catalogue` |                                                                        |
+| 1.4  | Write unit tests for catalogue filtering                                             | `catalogue` | 100% coverage required                                                 |
+| 1.5  | Implement Bifrost `Client` with `NewClient()` and `Complete()`                       | `gateway`   |                                                                        |
+| 1.6  | Implement `GET /api/v1/models` handler                                               | `handler`   | Returns all active models plus eligibility metadata                    |
+| 1.7  | Create PocketBase collections: `conversations`, `messages`                           | `store`     | Via PocketBase admin UI or migration                                   |
+| 1.8  | Implement basic `POST /api/v1/conversations/{id}/complete`                           | `handler`   | No encryption, no billing yet — returns plaintext response for testing |
+| 1.9  | Write integration test for complete endpoint                                         | `handler`   | Use Infomaniak API key                                                 |
+| 1.10 | Remove or disable the legacy OpenAI compatibility route once replacement is verified | `handler`   | Avoid dual long-term APIs                                              |
 
 **Review checkpoint 1:** Lead engineer verifies a completion request reaches Infomaniak and returns
 a valid response. Model filtering works correctly for all three tiers.
@@ -1816,14 +1872,178 @@ Run `golangci-lint run` before every pull request. Zero lint errors permitted.
 
 These are non-negotiable. Any PR that violates these rules must be rejected.
 
-| Rule                                          | Detail                                                                                                                                           |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **No plaintext content in database**          | The `messages` table must never contain readable message text. `ciphertext` column only.                                                         |
-| **No user-identifiable content in analytics** | `usage_events` must never contain: user ID, email, conversation ID, message content, IP address.                                                 |
-| **Billing user ID isolation**                 | `billing_user_id` (from `user_billing.id`) is used in analytics — NOT `users.id`. These must never be joined from within the analytics database. |
-| **Private key never accepted**                | No endpoint may accept or log a private key. If it appears in any log, treat it as a security incident.                                          |
-| **No logging of request content**             | The `messages` array from the `/complete` request body must never be written to application logs.                                                |
-| **Balance as integer**                        | Balance must be stored as integer Rappen. Float balance storage is forbidden.                                                                    |
-| **Atomic balance deduction**                  | Balance deduction and transaction insertion must be a single atomic database operation. Never deduct and then insert separately.                 |
-| **Provider API keys in env only**             | No API keys in code, config files, or version control.                                                                                           |
-| **Data retention false for all models**       | Before adding any model to `AllModels`, confirm in writing that the provider has zero data retention.                                            |
+| Rule                                          | Detail                                                                                                                                                                                        |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No plaintext content in database**          | The `messages` table must never contain readable message text. `ciphertext` column only.                                                                                                      |
+| **No user-identifiable content in analytics** | `usage_events` must never contain: user ID, email, conversation ID, message content, IP address.                                                                                              |
+| **Billing user ID isolation**                 | `billing_user_id` (from `user_billing.id`) is used in analytics — NOT `users.id`. These must never be joined from within the analytics database.                                              |
+| **No plaintext private key accepted**         | No endpoint may accept or log a plaintext private key. Encrypted private-key backup ciphertext is allowed, but if a plaintext private key appears in any log treat it as a security incident. |
+| **No logging of request content**             | The `messages` array from the `/complete` request body must never be written to application logs.                                                                                             |
+| **Balance as integer**                        | Balance must be stored as integer Rappen. Float balance storage is forbidden.                                                                                                                 |
+| **Atomic balance deduction**                  | Balance deduction and transaction insertion must be a single atomic database operation. Never deduct and then insert separately.                                                              |
+| **Provider API keys in env only**             | No API keys in code, config files, or version control.                                                                                                                                        |
+| **Data retention false for all models**       | Before adding any model to `AllModels`, confirm in writing that the provider has zero data retention.                                                                                         |
+
+---
+
+## 13. Confirmed Decisions & Amendments (June 2026)
+
+This section is the authoritative record of decisions confirmed during planning. Where it conflicts
+with earlier wording in this document, **this section wins**.
+
+### 13.1 Scope and architecture decisions
+
+1. **Full rewrite, not a partial adaptation.**
+   - Replace the current PocketBase/OpenAI-compatible model-selection and chat path.
+   - Replace the frontend hard-coded model list with backend-driven data.
+2. **Use first-party Cognos REST endpoints.**
+   - Do not keep OpenAI compatibility as a product-facing API.
+   - The frontend should talk to Cognos endpoints directly.
+3. **Backend model catalogue is the source of truth.**
+   - Models are code-defined.
+   - The initial seed is **Infomaniak only**.
+   - Additional providers remain out of scope until explicitly approved.
+4. **Return all active models to the frontend.**
+   - `/api/v1/models` should return all active models.
+   - Include enough metadata for the UI to distinguish usable vs unavailable models (for example
+     `is_eligible` and an optional reason).
+5. **Record usage for billing rigorously.**
+   - Capture input, output, and cache token counts when available.
+   - Capture provider-reported cost when available.
+   - Otherwise derive cost from catalogue pricing and the FX rate captured at request time.
+
+### 13.2 Key-management decision
+
+Cognos will use a **1Password-style Account Key model**.
+
+- Users keep a normal **account password** for authentication.
+- Users also receive a generated high-entropy **Account Key** used to unlock new devices.
+- The server may store an **encrypted private-key backup** to support cross-device access.
+- The server must never store or receive the **plaintext private key**.
+- A **trusted device** may cache locally wrapped unlock material in **IndexedDB** so the user does
+  not need to repeatedly enter the Account Key.
+- A **new device** must require both the account password and Account Key.
+- The Account Key is the deliberate security/usability tradeoff chosen for Cognos.
+- We are explicitly **not** using the old wording “private key never leaves your device”.
+
+### 13.3 Password, email, and unlock derivation decisions
+
+- Do **not** use `sha256(email + password)` as a vault or unlock key.
+- Use **Argon2id** with a random per-user salt for password-based derivation.
+- The user's **email must not be part of cryptographic identity** in a way that makes email
+  changes destructive.
+- **Password changes** should re-wrap unlock material, not force message re-encryption.
+- If the user loses both the password and Account Key, encrypted data recovery may be impossible.
+  This is an accepted consequence of the chosen privacy posture.
+
+### 13.4 Current-state findings that affect implementation
+
+- The backend currently exposes a legacy OpenAI-compatible route in
+  `backend/pkg/compat/openai/openai.go` and wires it from `backend/cmd/api/routes.go`.
+- The frontend currently uses the `openai` browser SDK in
+  `frontend/src/app/services/openai.service.provider.ts` and
+  `frontend/src/app/services/message.service.ts`.
+- The frontend currently hard-codes the model list in `frontend/src/app/interfaces/model.ts`.
+- Current key backup and conversation-key storage live in
+  `frontend/src/app/services/vault.service.ts`,
+  `frontend/src/app/services/conversation.service.ts`, and related PocketBase collections.
+- Existing NaCl usage is worth keeping as a foundation, but the current storage and unlock flow must
+  be reworked to match the Account Key design.
+
+## 14. Current Codebase Index (Relevant Files)
+
+This is a practical lookup index for the rework.
+
+### Backend
+
+| File                                                                   | Why it matters                                                                                 |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `backend/cmd/api/main.go`                                              | PocketBase bootstrap, provider client wiring, migrations, and hook registration.               |
+| `backend/cmd/api/routes.go`                                            | Current route registration, rate limiting, and the legacy `/v1/chat/completions` path binding. |
+| `backend/pkg/compat/openai/openai.go`                                  | Legacy OpenAI-compatible chat handler to replace/remove.                                       |
+| `backend/pkg/proxy/repo.go`                                            | Current provider dispatch abstraction used by the compatibility layer.                         |
+| `backend/internal/chat/repo.go`                                        | Current message encryption/persistence path. Useful for migration and replacement.             |
+| `backend/internal/chat/messaging.go`                                   | Current plaintext message payload shape mirrored by the frontend.                              |
+| `backend/internal/chat/conversation.go`                                | Current conversation repository and conversation public-key lookup.                            |
+| `backend/internal/crypto/encrypt.go`                                   | Existing NaCl helpers. Keep primitives if still suitable.                                      |
+| `backend/internal/auth/repo.go`                                        | Current public-key and key-pair record lookups.                                                |
+| `backend/internal/config/api.go`                                       | Existing koanf config pattern to extend or replace.                                            |
+| `backend/db/migrations/1711007996_created_models.go`                   | Legacy `models` collection migration likely to be retired from the new design.                 |
+| `backend/db/migrations/1710601610_updated_user_key_pairs.go`           | Existing user key-pair storage schema that informs the Account Key redesign.                   |
+| `backend/db/migrations/1710600702_updated_conversation_secret_keys.go` | Existing conversation secret-key storage schema.                                               |
+
+### Frontend
+
+| File                                                                                       | Why it matters                                                                                   |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `frontend/src/app/interfaces/model.ts`                                                     | Current hard-coded model catalogue and fallback model definitions.                               |
+| `frontend/src/app/services/model.service.ts`                                               | Current model state and selection logic driven by hard-coded data.                               |
+| `frontend/src/app/services/message.service.ts`                                             | Current message send/decrypt path and OpenAI SDK integration.                                    |
+| `frontend/src/app/services/openai.service.provider.ts`                                     | Current browser OpenAI client wrapper to remove.                                                 |
+| `frontend/src/app/services/vault.service.ts`                                               | Current user key-pair generation, password-based wrapping, and server-backed secret-key storage. |
+| `frontend/src/app/services/conversation.service.ts`                                        | Current conversation key creation, storage, fetch, and decryption flow.                          |
+| `frontend/src/app/services/crypto.service.ts`                                              | Current TweetNaCl client crypto helpers, including sealed-box decryption.                        |
+| `frontend/src/app/interfaces/message.ts`                                                   | Frontend message payload schema mirrored from the backend.                                       |
+| `frontend/src/app/types/pocketbase-types.ts`                                               | Generated PocketBase collection typings that will need regeneration after schema changes.        |
+| `frontend/src/app/components/chat/message-form/model-selector/model-selector.component.ts` | Existing UI entrypoint for model selection.                                                      |
+
+### Documentation
+
+| File                                   | Why it matters                                                                               |
+| -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `README.md`                            | Must be updated to reflect the final security wording and architecture.                      |
+| `backend/README.md`                    | Should reflect the new backend model catalogue and API path once implemented.                |
+| `docs/specs/backend-model-selector.md` | This document; keep as the planning source of truth until implementation docs are split out. |
+
+## 15. Documentation Changes Required
+
+Documentation is part of the deliverable for this rework.
+
+### 15.1 Product wording updates
+
+Remove or rewrite claims that imply the strict old model:
+
+- Remove: **“private key never leaves your device”**
+- Replace with wording closer to:
+    - **“Your private key is encrypted client-side before backup. Cognos never stores the plaintext
+      private key.”**
+    - **“New devices require your password and Account Key to unlock your encrypted key material.”**
+    - **“Trusted devices can stay unlocked locally until you lock the account or clear the
+      device.”**
+
+### 15.2 README updates
+
+Update `README.md` so it accurately describes:
+
+- the backend-driven model catalogue
+- the first-party Cognos API (not OpenAI compatibility)
+- encrypted message storage
+- the Account Key cross-device model
+- the fact that billing/analytics record usage and cost metadata without storing plaintext content
+
+### 15.3 New security model document
+
+Write a new document under `docs/` dedicated to the security model. Recommended path:
+
+- `docs/security-model.md`
+
+That document should cover at minimum:
+
+1. threat model and trust boundaries
+2. what the server can and cannot see
+3. plaintext vs ciphertext at rest
+4. how private-key backup works
+5. Account Key onboarding and recovery expectations
+6. trusted-device unlock behaviour
+7. password change, email change, logout, and lost-device behaviour
+8. what is and is not logged
+9. billing/analytics privacy boundaries
+
+### 15.4 Frontend and backend doc follow-up
+
+After implementation, add focused docs for:
+
+- backend model catalogue operations and provider approval workflow
+- frontend model-selector data flow
+- billing and usage event pipeline
+- any consciously deferred crypto/security TODOs discovered during implementation
