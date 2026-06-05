@@ -1,5 +1,6 @@
-import { isPlatformBrowser } from '@angular/common';
+import { Dialog } from '@angular/cdk/dialog';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { isPlatformBrowser } from '@angular/common';
 import { Component, PLATFORM_ID, computed, effect, inject } from '@angular/core';
 import {
   FormBuilder,
@@ -7,7 +8,6 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Dialog } from '@angular/cdk/dialog';
 
 import {
   CognosButtonComponent,
@@ -59,47 +59,47 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
           (keydown.meta.enter)="isMac ? sendMessage() : undefined"
         ></textarea>
 
-        <div class="message-form__toolbar">
-          <div class="message-form__controls">
-            <cog-button
-              appearance="default"
-              iconAfter="chevron-down"
-              type="button"
-              (click)="openAgentSelector()"
-            >
-              {{ agentService.selectedAgent().name }}
-            </cog-button>
+        <div class="message-form__controls">
+          <cog-button
+            appearance="default"
+            iconAfter="chevron-down"
+            type="button"
+            (click)="openAgentSelector()"
+          >
+            {{ agentService.selectedAgent().name }}
+          </cog-button>
 
-            <span class="message-form__powered-by">powered by</span>
-
-            <cog-button
-              appearance="default"
-              iconAfter="chevron-down"
-              type="button"
-              (click)="openModelSelector()"
-            >
-              {{ modelService.selectedModel().name }}
-            </cog-button>
-
-            @if (canClearTemporaryMessages() && !isMobile()) {
-              <cog-icon-button
-                name="eraser"
-                title="Clear all messages"
-                type="button"
-                (click)="onClearMessages()"
-              />
-            }
-          </div>
+          <span class="message-form__powered-by">powered by</span>
 
           <cog-button
-            appearance="primary"
-            icon="send"
-            type="submit"
-            [disabled]="messageForm.disabled || !messageForm.valid"
+            appearance="default"
+            iconAfter="chevron-down"
+            type="button"
+            (click)="openModelSelector()"
           >
-            Send
+            {{ modelService.selectedModel().name }}
           </cog-button>
+
+          @if (canClearTemporaryMessages() && !isMobile()) {
+            <cog-icon-button
+              name="eraser"
+              title="Clear all messages"
+              type="button"
+              (click)="onClearMessages()"
+            />
+          }
         </div>
+
+        <cog-button
+          class="message-form__send"
+          appearance="primary"
+          icon="send"
+          title="Send"
+          type="submit"
+          [disabled]="messageForm.disabled || !messageForm.valid"
+        >
+          <span class="message-form__send-label">Send</span>
+        </cog-button>
       </div>
 
       <div class="message-form__meta">
@@ -129,6 +129,12 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     .message-form__panel {
       display: grid;
       gap: var(--cog-space-150);
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        'label    label'
+        'textarea textarea'
+        'controls send';
+      align-items: end;
       border: 2px solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface);
@@ -141,12 +147,14 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     }
 
     .message-form__label {
+      grid-area: label;
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-body-sm);
       line-height: var(--cog-lh-body-sm);
     }
 
     .message-form__textarea {
+      grid-area: textarea;
       width: 100%;
       resize: none;
       border: 0;
@@ -163,8 +171,19 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
       color: var(--cog-text-subtlest);
     }
 
-    .message-form__toolbar,
-    .message-form__controls,
+    .message-form__controls {
+      grid-area: controls;
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-100);
+      flex-wrap: wrap;
+    }
+
+    .message-form__send {
+      grid-area: send;
+      justify-self: end;
+    }
+
     .message-form__meta,
     .message-form__security {
       display: flex;
@@ -172,13 +191,8 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
       gap: var(--cog-space-100);
     }
 
-    .message-form__toolbar,
     .message-form__meta {
       justify-content: space-between;
-      flex-wrap: wrap;
-    }
-
-    .message-form__controls {
       flex-wrap: wrap;
     }
 
@@ -190,16 +204,23 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     }
 
     @media (max-width: 767px) {
-      .message-form__toolbar {
-        align-items: stretch;
+      .message-form__panel {
+        grid-template-areas:
+          'label    label'
+          'textarea send'
+          'controls controls';
       }
 
-      .message-form__controls {
-        width: 100%;
+      .message-form__powered-by {
+        display: none;
+      }
+
+      .message-form__send-label {
+        display: none;
       }
 
       .message-form__controls cog-button {
-        flex: 1 1 auto;
+        min-width: 0;
       }
     }
   `,
