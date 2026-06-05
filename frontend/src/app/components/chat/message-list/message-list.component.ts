@@ -1,3 +1,4 @@
+import { Dialog } from '@angular/cdk/dialog';
 import {
   AfterViewInit,
   Component,
@@ -12,7 +13,6 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { Dialog } from '@angular/cdk/dialog';
 
 import { ReplaySubject, debounceTime, fromEvent, takeUntil } from 'rxjs';
 
@@ -100,14 +100,14 @@ import {
                 </cog-button>
               }
 
-              <label class="message-list__toggle">
+              <span class="message-list__toggle">
                 <cog-toggle
                   [checked]="conversationService.isTemporaryConversation()"
                   label="Temporary chat"
                   (checkedChange)="onToggleTemporaryChat($event)"
                 ></cog-toggle>
                 <span>Temporary chat</span>
-              </label>
+              </span>
             </div>
           </div>
         </div>
@@ -124,7 +124,11 @@ import {
         expirationDelayValue() !== ''
       ) {
         <div class="message-list__banner">
-          <cog-button appearance="default" icon="rotate-cw" (click)="onEditConversation()">
+          <cog-button
+            appearance="default"
+            icon="rotate-cw"
+            (click)="onEditConversation()"
+          >
             New messages in this conversation will disappear after
             {{ expirationDelayValue() }}
           </cog-button>
@@ -230,6 +234,10 @@ import {
         gap: var(--cog-space-200);
       }
 
+      .message-list__bento {
+        display: none;
+      }
+
       .message-list__circle--one,
       .message-list__circle--two,
       .message-list__circle--three {
@@ -289,7 +297,9 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
   }
 
   onDisappearingMessages(): void {
-    this._dialog.open(TemporaryMessageDialogComponent, cognosDialogOptions).closed.subscribe();
+    this._dialog
+      .open(TemporaryMessageDialogComponent, cognosDialogOptions)
+      .closed.subscribe();
   }
 
   onEditConversation(): void {
