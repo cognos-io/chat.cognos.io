@@ -24,9 +24,11 @@ approach to ProtonMail which encrypts user emails.
 
 ## Tools
 
-| Use      | Don't use            |
-| -------- | -------------------- |
-| `pnpm`   | `npm`, `yarn`        |
-| `podman` | `docker`             |
-| `just`   | `make`               |
-| `mise`   | `gvm`, `nvm`, `asdf` |
+| Use       | Don't use            |
+| --------- | -------------------- |
+| `pnpm`    | `npm`, `yarn`        |
+| `podman`  | `docker`             |
+| `just`    | `make`               |
+| `mise`    | `gvm`, `nvm`, `asdf` |
+| `python3` | `python`             |
+| `uv`      | `pip`                |
