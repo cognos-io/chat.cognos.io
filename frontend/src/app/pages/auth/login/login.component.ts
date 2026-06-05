@@ -7,11 +7,10 @@ import { EMPTY, catchError } from 'rxjs';
 
 import { filterNil } from 'ngxtension/filter-nil';
 
-import { CognosButtonComponent, CognosLozengeComponent } from '@cognos/ui-angular';
+import { CognosButtonComponent } from '@cognos/ui-angular';
 
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
-import { ProfilePictureComponent } from '@app/components/team/profile-picture/profile-picture.component';
 import { ErrorService } from '@app/services/error.service';
 
 import { AuthService } from '@services/auth.service';
@@ -23,126 +22,84 @@ import { AuthService } from '@services/auth.service';
     ReactiveFormsModule,
     RouterLink,
     CognosButtonComponent,
-    CognosLozengeComponent,
     CognosLogoComponent,
     LoadingIndicatorComponent,
-    ProfilePictureComponent,
   ],
   template: `
     <div class="login-page">
       <section class="login-page__card">
-        <div class="login-page__intro">
-          <app-cognos-logo class="login-page__logo" palette="dark"></app-cognos-logo>
-          <div class="login-page__eyebrow">
-            <cog-lozenge tone="green">Private beta</cog-lozenge>
-          </div>
-          <h1 class="login-page__title">Get started with privacy-first AI</h1>
-          <p class="login-page__lead">
-            Chat with the latest models without giving up control of your data.
-          </p>
+        <app-cognos-logo class="login-page__logo" palette="dark"></app-cognos-logo>
+        <h1 class="login-page__title">Get started with privacy-first AI</h1>
+        <p class="login-page__lead">
+          Chat with the latest models without giving up control of your data.
+        </p>
 
-          <form
-            class="login-page__form"
-            [formGroup]="loginForm"
-            (ngSubmit)="onSubmit()"
+        <form class="login-page__form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+          <label class="login-page__field" for="email">
+            <span class="login-page__label">Email</span>
+            <input
+              id="email"
+              class="login-page__input"
+              formControlName="email"
+              type="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+            />
+          </label>
+
+          <label class="login-page__field" for="password">
+            <span class="login-page__label">Password</span>
+            <input
+              id="password"
+              class="login-page__input"
+              formControlName="password"
+              type="password"
+              autocomplete="current-password"
+              placeholder="••••••••"
+            />
+          </label>
+
+          <cog-button
+            appearance="primary"
+            [fullWidth]="true"
+            size="lg"
+            type="submit"
+            [disabled]="loading() || loginForm.invalid"
           >
-            <label class="login-page__field" for="email">
-              <span class="login-page__label">Email</span>
-              <input
-                id="email"
-                class="login-page__input"
-                formControlName="email"
-                type="email"
-                autocomplete="email"
-                placeholder="you@example.com"
-              />
-            </label>
+            @if (loading()) {
+              <span class="login-page__loading-copy">
+                <app-loading-indicator></app-loading-indicator>
+                Signing in…
+              </span>
+            } @else {
+              Log in
+            }
+          </cog-button>
+        </form>
 
-            <label class="login-page__field" for="password">
-              <span class="login-page__label">Password</span>
-              <input
-                id="password"
-                class="login-page__input"
-                formControlName="password"
-                type="password"
-                autocomplete="current-password"
-                placeholder="••••••••"
-              />
-            </label>
-
-            <cog-button
-              appearance="primary"
-              [fullWidth]="true"
-              size="lg"
-              type="submit"
-              [disabled]="loading() || loginForm.invalid"
-            >
-              @if (loading()) {
-                <span class="login-page__loading-copy">
-                  <app-loading-indicator></app-loading-indicator>
-                  Signing in…
-                </span>
-              } @else {
-                Log in
-              }
-            </cog-button>
-          </form>
-
-          @if (authService.status() === 'error') {
-            <p class="login-page__hint">
-              We couldn't sign you in. Check your PocketBase user email and password and
-              try again.
-            </p>
-          }
-
-          <p class="login-page__switch">
-            <a routerLink="/auth/forgot-password">Forgot your password?</a>
+        @if (authService.status() === 'error') {
+          <p class="login-page__hint">
+            We couldn't sign you in. Check your email and password and try again.
           </p>
-          <p class="login-page__switch">
-            Need an account?
-            <a routerLink="/auth/register">Register</a>
-          </p>
+        }
 
-          <p class="login-page__legal">
-            By signing up you agree to our
-            <a
-              href="https://cognos.io/privacy-policy-and-terms/"
-              rel="noreferrer"
-              target="_blank"
-              >Privacy Policy and Terms</a
-            >.
-          </p>
-        </div>
+        <p class="login-page__switch">
+          <a routerLink="/auth/forgot-password">Forgot your password?</a>
+        </p>
+        <p class="login-page__switch">
+          Need an account?
+          <a routerLink="/auth/register">Register</a>
+        </p>
 
-        <div class="login-page__founder">
-          <div class="login-page__founder-copy">
-            <p>Hi, I'm Ewan.</p>
-            <p>
-              I'm the founder and currently solo developer behind Cognos. I'm building
-              it to help people use AI in a privacy-first way.
-            </p>
-            <p>
-              You're accessing the beta so please expect some imperfections. In return,
-              I'll cover the costs for now, although you can
-              <a href="https://cognos.io/" rel="noreferrer" target="_blank"
-                >subscribe</a
-              >
-              to contribute financially.
-            </p>
-            <p>
-              If you'd like to talk to me about it, just
-              <a href="mailto:ewan@cognos.io">drop me an email</a>.
-            </p>
-            <p>Thank you for trusting me, and happy hacking.</p>
-          </div>
-
-          <div class="login-page__portrait">
-            <app-profile-picture
-              profileName="Ewan Jones"
-              profilePicturePath="assets/img/profile/profile_ewan--square.jpg"
-            ></app-profile-picture>
-          </div>
-        </div>
+        <p class="login-page__legal">
+          By signing up you agree to our
+          <a
+            href="https://cognos.io/privacy-policy-and-terms/"
+            rel="noreferrer"
+            target="_blank"
+            >Privacy Policy and Terms</a
+          >.
+        </p>
       </section>
     </div>
   `,
@@ -164,8 +121,8 @@ import { AuthService } from '@services/auth.service';
 
     .login-page__card {
       display: grid;
-      width: min(100%, 1080px);
-      gap: var(--cog-space-400);
+      width: min(100%, 460px);
+      gap: var(--cog-space-150);
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
@@ -173,9 +130,6 @@ import { AuthService } from '@services/auth.service';
       padding: var(--cog-space-400);
     }
 
-    .login-page__intro,
-    .login-page__founder,
-    .login-page__founder-copy,
     .login-page__form,
     .login-page__field {
       display: grid;
@@ -190,8 +144,7 @@ import { AuthService } from '@services/auth.service';
     .login-page__lead,
     .login-page__hint,
     .login-page__legal,
-    .login-page__switch,
-    .login-page__founder-copy p {
+    .login-page__switch {
       margin: 0;
     }
 
@@ -207,8 +160,7 @@ import { AuthService } from '@services/auth.service';
     .login-page__lead,
     .login-page__legal,
     .login-page__hint,
-    .login-page__switch,
-    .login-page__founder-copy p {
+    .login-page__switch {
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-body);
       line-height: var(--cog-lh-body);
@@ -239,8 +191,7 @@ import { AuthService } from '@services/auth.service';
     }
 
     .login-page__legal a,
-    .login-page__switch a,
-    .login-page__founder-copy a {
+    .login-page__switch a {
       color: var(--cog-link);
     }
 
@@ -252,17 +203,6 @@ import { AuthService } from '@services/auth.service';
 
     .login-page__loading-copy app-loading-indicator {
       padding: 0;
-    }
-
-    .login-page__portrait {
-      width: min(160px, 100%);
-    }
-
-    @media (min-width: 960px) {
-      .login-page__card {
-        grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
-        align-items: start;
-      }
     }
   `,
 })
