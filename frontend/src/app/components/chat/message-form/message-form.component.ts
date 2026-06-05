@@ -1,7 +1,15 @@
 import { Dialog } from '@angular/cdk/dialog';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { isPlatformBrowser } from '@angular/common';
-import { Component, PLATFORM_ID, computed, effect, inject } from '@angular/core';
+import {
+  Component,
+  PLATFORM_ID,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -35,9 +43,11 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
   imports: [
     ReactiveFormsModule,
     CdkTextareaAutosize,
+    OverlayModule,
     CognosButtonComponent,
     CognosIconButtonComponent,
     CognosIconComponent,
+    ModelSelectorComponent,
   ],
   template: `
     <form class="message-form" [formGroup]="messageForm" (submit)="sendMessage()">
@@ -61,13 +71,31 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
 
         <div class="message-form__controls">
           <cog-button
+            #modelTrigger="cdkOverlayOrigin"
+            cdkOverlayOrigin
             appearance="default"
             iconAfter="chevron-down"
             type="button"
-            (click)="openModelSelector()"
+            (click)="toggleModelSelector()"
           >
             {{ modelService.selectedModel().name }}
           </cog-button>
+
+          <ng-template
+            cdkConnectedOverlay
+            [cdkConnectedOverlayOrigin]="modelTrigger"
+            [cdkConnectedOverlayOpen]="modelSelectorOpen()"
+            [cdkConnectedOverlayHasBackdrop]="true"
+            cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+            [cdkConnectedOverlayPositions]="modelSelectorPositions"
+            (backdropClick)="closeModelSelector()"
+            (detach)="closeModelSelector()"
+            (overlayKeydown)="onOverlayKeydown($event)"
+          >
+            <app-model-selector
+              (modelSelected)="closeModelSelector()"
+            ></app-model-selector>
+          </ng-template>
 
           <cog-icon-button
             name="sparkles"
@@ -256,12 +284,41 @@ export class MessageFormComponent {
     });
   }
 
+  readonly modelSelectorOpen = signal(false);
+
+  readonly modelSelectorPositions = [
+    {
+      originX: 'start' as const,
+      originY: 'top' as const,
+      overlayX: 'start' as const,
+      overlayY: 'bottom' as const,
+      offsetY: -8,
+    },
+    {
+      originX: 'start' as const,
+      originY: 'bottom' as const,
+      overlayX: 'start' as const,
+      overlayY: 'top' as const,
+      offsetY: 8,
+    },
+  ];
+
   openAgentSelector() {
     this._dialog.open(AgentSelectorComponent, cognosDialogOptions);
   }
 
-  openModelSelector() {
-    this._dialog.open(ModelSelectorComponent, cognosDialogOptions);
+  toggleModelSelector() {
+    this.modelSelectorOpen.update((open) => !open);
+  }
+
+  closeModelSelector() {
+    this.modelSelectorOpen.set(false);
+  }
+
+  onOverlayKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      this.closeModelSelector();
+    }
   }
 
   sendMessage() {
