@@ -144,12 +144,20 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 
 	openaiClient := oai.NewClient(config.OpenAIAPIKey)
 	cloudflareOpenAIClient := proxy.NewCloudflareOpenAIClient(config)
-	googleGeminiClient, err := genai.NewClient(
-		ctx,
-		option.WithAPIKey(config.GoogleGeminiAPIKey),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create Google Gemini client: %w", err)
+
+	var googleGeminiClient *genai.Client
+	if config.GoogleGeminiAPIKey != "" {
+		googleGeminiClient, err = genai.NewClient(
+			ctx,
+			option.WithAPIKey(config.GoogleGeminiAPIKey),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create Google Gemini client: %w", err)
+		}
+	} else {
+		logger.Warn(
+			"Google Gemini API key not set, Gemini models will be unavailable",
+		)
 	}
 	anthropicClient := anthropic.NewClient(
 		config.AnthropicAPIKey,
