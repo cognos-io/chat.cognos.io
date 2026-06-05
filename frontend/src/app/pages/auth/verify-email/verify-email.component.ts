@@ -129,6 +129,26 @@ type VerificationState = 'verifying' | 'success' | 'error' | 'missing-token';
     .auth-page__switch {
       color: var(--cog-link);
     }
+
+    @media (max-width: 640px) {
+      .auth-page {
+        place-items: stretch;
+        padding: 0;
+      }
+
+      .auth-page__card {
+        width: 100%;
+        max-width: none;
+        min-height: 100svh;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
+        padding: var(--cog-space-400) var(--cog-space-300)
+          calc(env(safe-area-inset-bottom, 0px) + var(--cog-space-500));
+        align-content: end;
+      }
+    }
   `,
 })
 export class VerifyEmailComponent implements OnInit {
