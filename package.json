@@ -12,7 +12,10 @@
     "frontend:test": "pnpm --filter @cognos/chat test",
     "frontend:lint": "pnpm --filter @cognos/chat lint",
     "ui-angular:storybook": "pnpm --filter @cognos/ui-angular storybook",
-    "ui-angular:build-storybook": "pnpm --filter @cognos/ui-angular build-storybook"
+    "ui-angular:build-storybook": "pnpm --filter @cognos/ui-angular build-storybook",
+    "e2e": "pnpm --filter @cognos/e2e test",
+    "e2e:headed": "pnpm --filter @cognos/e2e test:headed",
+    "e2e:ui": "pnpm --filter @cognos/e2e test:ui"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",

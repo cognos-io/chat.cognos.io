@@ -65,3 +65,18 @@ dev: frontend backend
 
 dev-test:
     @just _dev backend-test
+
+# Run the Playwright end-to-end tests. Requires the backend running (just backend).
+[working-directory("e2e")]
+e2e:
+    @pnpm exec playwright test
+
+# Open the Playwright UI runner
+[working-directory("e2e")]
+e2e-ui:
+    @pnpm exec playwright test --ui
+
+# Install Playwright browsers (one-time setup)
+[working-directory("e2e")]
+e2e-install:
+    @pnpm exec playwright install --with-deps
