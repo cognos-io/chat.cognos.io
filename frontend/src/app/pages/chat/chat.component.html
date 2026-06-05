@@ -141,8 +141,15 @@
     [open]="drawerOpen()"
     [stickyFooter]="true"
     [title]="'Navigation'"
+    [hideTitle]="true"
     (close)="closeDrawer()"
   >
+    <app-cognos-logo
+      cogDrawerHeader
+      class="chat-shell__drawer-logo"
+      palette="dark"
+    ></app-cognos-logo>
+
     <ng-container *ngTemplateOutlet="navigationContent"></ng-container>
 
     <div cogDrawerFooter>

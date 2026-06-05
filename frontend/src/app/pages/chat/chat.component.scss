@@ -50,10 +50,15 @@
   }
 
   &__logo,
-  &__mobile-logo {
+  &__mobile-logo,
+  &__drawer-logo {
     display: block;
     width: auto;
     height: 24px;
+  }
+
+  cog-drawer &__brand {
+    display: none;
   }
 
   &__search {
