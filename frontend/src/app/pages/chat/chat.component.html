@@ -1,64 +1,74 @@
+<ng-template #navConversations>
+  <div class="chat-shell__conversation-sections">
+    @if (conversationService.hasPinnedConversations()) {
+      <section class="chat-shell__section">
+        <header class="chat-shell__section-heading">Pinned</header>
+        <div class="chat-shell__conversation-list">
+          @for (
+            conversation of conversationService.pinnedConversations();
+            track conversation.record.id
+          ) {
+            <app-conversation-list-item
+              [conversation]="conversation"
+            ></app-conversation-list-item>
+          }
+        </div>
+      </section>
+    }
+
+    @if (conversationService.hasNonPinnedConversations()) {
+      <section class="chat-shell__section">
+        <header class="chat-shell__section-heading">Recent</header>
+        <div class="chat-shell__conversation-list">
+          @for (
+            conversation of conversationService.nonPinnedConversations();
+            track conversation.record.id
+          ) {
+            <app-conversation-list-item
+              [conversation]="conversation"
+            ></app-conversation-list-item>
+          }
+        </div>
+      </section>
+    }
+  </div>
+</ng-template>
+
+<ng-template #navSearch>
+  <div class="chat-shell__search">
+    <cog-text-field
+      ariaLabel="Search conversations"
+      icon="search"
+      placeholder="Search"
+      (valueChange)="onSearchChange($event)"
+    ></cog-text-field>
+    <div class="chat-shell__search-hint">
+      <cog-icon name="laptop" [size]="14" tone="text-subtlest" />
+      <span>Searched on this device</span>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #navNewChat>
+  <cog-button
+    appearance="primary"
+    [fullWidth]="true"
+    icon="plus"
+    (click)="onNewConversation()"
+  >
+    New chat
+  </cog-button>
+</ng-template>
+
 <ng-template #navigationContent>
   <div class="chat-shell__nav">
     <div class="chat-shell__brand">
       <app-cognos-logo class="chat-shell__logo" palette="dark"></app-cognos-logo>
     </div>
 
-    <cog-button
-      appearance="primary"
-      [fullWidth]="true"
-      icon="plus"
-      (click)="onNewConversation()"
-    >
-      New chat
-    </cog-button>
-
-    <div class="chat-shell__search">
-      <cog-text-field
-        ariaLabel="Search conversations"
-        icon="search"
-        placeholder="Search"
-        (valueChange)="onSearchChange($event)"
-      ></cog-text-field>
-      <div class="chat-shell__search-hint">
-        <cog-icon name="laptop" [size]="14" tone="text-subtlest" />
-        <span>Searched on this device</span>
-      </div>
-    </div>
-
-    <div class="chat-shell__conversation-sections">
-      @if (conversationService.hasPinnedConversations()) {
-        <section class="chat-shell__section">
-          <header class="chat-shell__section-heading">Pinned</header>
-          <div class="chat-shell__conversation-list">
-            @for (
-              conversation of conversationService.pinnedConversations();
-              track conversation.record.id
-            ) {
-              <app-conversation-list-item
-                [conversation]="conversation"
-              ></app-conversation-list-item>
-            }
-          </div>
-        </section>
-      }
-
-      @if (conversationService.hasNonPinnedConversations()) {
-        <section class="chat-shell__section">
-          <header class="chat-shell__section-heading">Recent</header>
-          <div class="chat-shell__conversation-list">
-            @for (
-              conversation of conversationService.nonPinnedConversations();
-              track conversation.record.id
-            ) {
-              <app-conversation-list-item
-                [conversation]="conversation"
-              ></app-conversation-list-item>
-            }
-          </div>
-        </section>
-      }
-    </div>
+    <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
+    <ng-container *ngTemplateOutlet="navSearch"></ng-container>
+    <ng-container *ngTemplateOutlet="navConversations"></ng-container>
   </div>
 </ng-template>
 
@@ -150,7 +160,9 @@
       palette="dark"
     ></app-cognos-logo>
 
-    <ng-container *ngTemplateOutlet="navigationContent"></ng-container>
+    <div class="chat-shell__drawer-body">
+      <ng-container *ngTemplateOutlet="navConversations"></ng-container>
+    </div>
 
     <div cogDrawerFooter>
       <div class="chat-shell__drawer-footer-actions">
@@ -161,7 +173,8 @@
           Log out
         </cog-button>
       </div>
-      <ng-container *ngTemplateOutlet="securityFooter"></ng-container>
+      <ng-container *ngTemplateOutlet="navSearch"></ng-container>
+      <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
     </div>
   </cog-drawer>
 </div>

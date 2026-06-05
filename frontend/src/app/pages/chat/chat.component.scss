@@ -39,10 +39,6 @@
     padding: var(--cog-space-200);
   }
 
-  cog-drawer &__nav {
-    padding: 0;
-  }
-
   &__brand {
     display: flex;
     align-items: center;
@@ -57,8 +53,10 @@
     height: 24px;
   }
 
-  cog-drawer &__brand {
-    display: none;
+  &__drawer-body {
+    display: grid;
+    min-height: 100%;
+    padding-top: var(--cog-space-150);
   }
 
   &__search {
@@ -215,8 +213,16 @@
     display: flex;
     justify-content: flex-end;
     gap: var(--cog-space-050);
-    margin-bottom: var(--cog-space-150);
   }
+}
+
+cog-drawer [cogDrawerFooter] {
+  display: grid;
+  gap: var(--cog-space-150);
+}
+
+cog-drawer .chat-shell__search-hint {
+  display: none;
 }
 
 @media (max-width: 767px) {
