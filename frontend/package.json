@@ -50,9 +50,7 @@
     "autoprefixer": "^10.4.18",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
-    "husky": "^9.0.11",
     "jsdom": "^29.1.1",
-    "lint-staged": "^15.2.2",
     "pocketbase-typegen": "^1.2.1",
     "postcss": "^8.4.36",
     "prettier": "^3.2.5",
@@ -101,19 +99,13 @@
     "extract-i18n": "ng extract-i18n --output-path=src/locale --format=xlf2",
     "format": "prettier --write \"src/**/*.{ts,js,json,html,scss,css,md}\"",
     "lint": "ng lint --fix",
-    "lint-staged": "lint-staged",
     "ng": "ng",
     "start": "ng serve",
     "test": "ng test",
     "typegen": "pocketbase-typegen --db ../backend/pb_data/data.db --out ./src/app/types/pocketbase-types.ts",
-    "watch": "ng build --watch --configuration development",
-    "prepare": "./scripts/prepare.sh"
+    "watch": "ng build --watch --configuration development"
   },
   "version": "0.0.0",
-  "lint-staged": {
-    "*.{js,ts}": "eslint --cache --fix",
-    "*.{ts,js,json,html,scss,css,md}": "prettier --write"
-  },
   "scarfSettings": {
     "enabled": false
   },
