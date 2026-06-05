@@ -19,7 +19,9 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
   imports: [CognosIconComponent, CognosLozengeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events,@angular-eslint/template/interactive-supports-focus -->
     <div class="cog-lightbox" (click)="close.emit()">
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events,@angular-eslint/template/interactive-supports-focus -->
       <div class="cog-lightbox__header" (click)="$event.stopPropagation()">
         <div class="cog-lightbox__title-wrap">
           <cog-icon name="image" [size]="16" tone="current" />
@@ -60,6 +62,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
       </div>
 
       <div class="cog-lightbox__body">
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events,@angular-eslint/template/interactive-supports-focus -->
         <img
           class="cog-lightbox__image"
           [src]="src()"

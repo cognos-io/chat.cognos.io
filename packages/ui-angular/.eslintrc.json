@@ -19,7 +19,14 @@
         "@angular-eslint/component-selector": [
           "error",
           { "type": "element", "prefix": "cog", "style": "kebab-case" }
-        ]
+        ],
+        "@angular-eslint/no-output-native": "off"
+      }
+    },
+    {
+      "files": ["*.stories.ts"],
+      "rules": {
+        "@angular-eslint/component-selector": "off"
       }
     },
     {
