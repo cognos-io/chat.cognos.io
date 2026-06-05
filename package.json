@@ -6,11 +6,17 @@
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint",
     "test": "pnpm -r --if-present test",
+    "format": "prettier --write \"**/*.{ts,js,json,html,scss,css}\"",
     "frontend:build": "pnpm --filter @cognos/chat build",
     "frontend:start": "pnpm --filter @cognos/chat start",
     "frontend:test": "pnpm --filter @cognos/chat test",
     "frontend:lint": "pnpm --filter @cognos/chat lint",
     "ui-angular:storybook": "pnpm --filter @cognos/ui-angular storybook",
     "ui-angular:build-storybook": "pnpm --filter @cognos/ui-angular build-storybook"
+  },
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+    "prettier": "^3.2.5",
+    "prettier-plugin-tailwindcss": "^0.5.13"
   }
 }

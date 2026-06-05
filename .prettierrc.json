@@ -1,0 +1,26 @@
+{
+  "importOrder": [
+    "^@angular/(.*)$",
+    "^pocketbase(.*)$",
+    "^rxjs(.*)$",
+    "<THIRD_PARTY_MODULES>",
+    "^@cognos/(.*)$",
+    "^@app/(.*)$",
+    "^@components/(.*)$",
+    "^@environments/(.*)$",
+    "^@guards/(.*)$",
+    "^@interfaces/(.*)$",
+    "^@pages/(.*)$",
+    "^@services/(.*)$",
+    "^[./]"
+  ],
+  "importOrderParserPlugins": ["typescript", "decorators"],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true,
+  "plugins": ["@trivago/prettier-plugin-sort-imports", "prettier-plugin-tailwindcss"],
+  "printWidth": 88,
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "all"
+}

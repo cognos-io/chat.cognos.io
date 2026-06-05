@@ -1,0 +1,14 @@
+# Build artifacts
+build
+coverage
+dist
+node_modules
+
+# Backend (Go)
+backend/
+
+# pnpm
+.pnpm-store
+
+# Lockfiles
+pnpm-lock.yaml

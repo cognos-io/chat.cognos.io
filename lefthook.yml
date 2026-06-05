@@ -14,13 +14,15 @@ pre-commit:
         - ".specify/**"
         - ".cursor/**"
         - ".claude/**"
+    prettier:
+      glob: "*.{ts,js,json,html,scss,css}"
+      run: pnpm exec prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+      exclude:
+        - "backend/**"
+        - "pnpm-lock.yaml"
     frontend-eslint:
       root: "frontend/"
       glob: "*.{js,ts}"
       run: pnpm exec eslint --cache --fix {staged_files}
-      stage_fixed: true
-    frontend-prettier:
-      root: "frontend/"
-      glob: "*.{ts,js,json,html,scss,css,md}"
-      run: pnpm exec prettier --write {staged_files}
       stage_fixed: true
