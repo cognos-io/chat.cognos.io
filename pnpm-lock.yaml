@@ -195,6 +195,13 @@ importers:
       lucide:
         specifier: ^1.17.0
         version: 1.17.0
+    devDependencies:
+      eslint:
+        specifier: ^8.57.0
+        version: 8.57.1
+      eslint-config-prettier:
+        specifier: ^9.1.0
+        version: 9.1.2(eslint@8.57.1)
 
   packages/ui-angular:
     dependencies:
@@ -208,6 +215,15 @@ importers:
       '@angular-devkit/build-angular':
         specifier: ^21.2.14
         version: 21.2.14(8d441bcb51c7611081c7bbaa36ec46ef)
+      '@angular-eslint/eslint-plugin':
+        specifier: ^21.4.0
+        version: 21.4.0(@typescript-eslint/utils@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
+      '@angular-eslint/eslint-plugin-template':
+        specifier: ^21.4.0
+        version: 21.4.0(@angular-eslint/template-parser@21.4.0(eslint@8.57.1)(typescript@5.9.3))(@typescript-eslint/types@7.18.0)(@typescript-eslint/utils@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
+      '@angular-eslint/template-parser':
+        specifier: ^21.4.0
+        version: 21.4.0(eslint@8.57.1)(typescript@5.9.3)
       '@angular/build':
         specifier: ^21.2.14
         version: 21.2.14(033b521f40100adc1fa5c7bef234f860)
@@ -238,6 +254,18 @@ importers:
       '@types/node':
         specifier: ^25.9.1
         version: 25.9.1
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^7.2.0
+        version: 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
+      '@typescript-eslint/parser':
+        specifier: ^7.2.0
+        version: 7.18.0(eslint@8.57.1)(typescript@5.9.3)
+      eslint:
+        specifier: ^8.57.0
+        version: 8.57.1
+      eslint-config-prettier:
+        specifier: ^9.1.0
+        version: 9.1.2(eslint@8.57.1)
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1

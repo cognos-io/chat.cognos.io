@@ -1,14 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnInit,
   computed,
   input,
   signal,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosSourceCardComponent } from "../source-card/source-card.component";
-import type { CognosVaultFile } from "../../vault/vault.types";
+import { CognosIconComponent } from '../../icon/icon.component';
+import type { CognosVaultFile } from '../../vault/vault.types';
+import { CognosSourceCardComponent } from '../source-card/source-card.component';
 
 export type CognosSource = {
   file: CognosVaultFile;
@@ -17,7 +18,7 @@ export type CognosSource = {
 };
 
 @Component({
-  selector: "cog-sources-row",
+  selector: 'cog-sources-row',
   standalone: true,
   imports: [CognosIconComponent, CognosSourceCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,13 +29,25 @@ export type CognosSource = {
           <cog-icon name="quote" [size]="14" tone="link" />
           <span>{{ countLabel() }}</span>
         </span>
-        <cog-icon [name]="open() ? 'chevron-down' : 'chevron-right'" [size]="14" tone="link" />
+        <cog-icon
+          [name]="open() ? 'chevron-down' : 'chevron-right'"
+          [size]="14"
+          tone="link"
+        />
       </button>
 
       @if (open()) {
         <div class="cog-sources-row__list">
-          @for (source of sources(); track source.file.id + source.locator + source.quote) {
-            <cog-source-card [file]="source.file" [locator]="source.locator || ''" [quote]="source.quote || ''" [clickable]="true" />
+          @for (
+            source of sources();
+            track source.file.id + source.locator + source.quote
+          ) {
+            <cog-source-card
+              [file]="source.file"
+              [locator]="source.locator || ''"
+              [quote]="source.quote || ''"
+              [clickable]="true"
+            />
           }
         </div>
       }
@@ -84,7 +97,7 @@ export type CognosSource = {
     `,
   ],
 })
-export class CognosSourcesRowComponent {
+export class CognosSourcesRowComponent implements OnInit {
   readonly sources = input<CognosSource[]>([]);
   readonly defaultOpen = input(false);
 

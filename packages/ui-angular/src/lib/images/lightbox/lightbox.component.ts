@@ -3,17 +3,18 @@ import {
   Component,
   ElementRef,
   HostListener,
+  OnDestroy,
   afterNextRender,
   input,
   output,
   viewChild,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosLozengeComponent } from "../../primitives/lozenge/lozenge.component";
+import { CognosIconComponent } from '../../icon/icon.component';
+import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.component';
 
 @Component({
-  selector: "cog-lightbox",
+  selector: 'cog-lightbox',
   standalone: true,
   imports: [CognosIconComponent, CognosLozengeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,20 +28,44 @@ import { CognosLozengeComponent } from "../../primitives/lozenge/lozenge.compone
         </div>
 
         <div class="cog-lightbox__actions">
-          <button class="cog-lightbox__action" type="button" title="Download" aria-label="Download" (click)="download.emit()">
+          <button
+            class="cog-lightbox__action"
+            type="button"
+            title="Download"
+            aria-label="Download"
+            (click)="download.emit()"
+          >
             <cog-icon name="download" [size]="17" tone="current" />
           </button>
-          <button class="cog-lightbox__action" type="button" title="Save to Vault" aria-label="Save to Vault" (click)="saveToVault.emit()">
+          <button
+            class="cog-lightbox__action"
+            type="button"
+            title="Save to Vault"
+            aria-label="Save to Vault"
+            (click)="saveToVault.emit()"
+          >
             <cog-icon name="folder-plus" [size]="17" tone="current" />
           </button>
-          <button #closeButton class="cog-lightbox__action" type="button" title="Close" aria-label="Close" (click)="close.emit()">
+          <button
+            #closeButton
+            class="cog-lightbox__action"
+            type="button"
+            title="Close"
+            aria-label="Close"
+            (click)="close.emit()"
+          >
             <cog-icon name="x" [size]="17" tone="current" />
           </button>
         </div>
       </div>
 
       <div class="cog-lightbox__body">
-        <img class="cog-lightbox__image" [src]="src()" [alt]="name()" (click)="$event.stopPropagation()" />
+        <img
+          class="cog-lightbox__image"
+          [src]="src()"
+          [alt]="name()"
+          (click)="$event.stopPropagation()"
+        />
       </div>
     </div>
   `,
@@ -130,12 +155,14 @@ import { CognosLozengeComponent } from "../../primitives/lozenge/lozenge.compone
     `,
   ],
 })
-export class CognosLightboxComponent {
-  private readonly closeButton = viewChild<ElementRef<HTMLButtonElement>>("closeButton");
-  private readonly previousFocus = globalThis.document?.activeElement as HTMLElement | null;
+export class CognosLightboxComponent implements OnDestroy {
+  private readonly closeButton =
+    viewChild<ElementRef<HTMLButtonElement>>('closeButton');
+  private readonly previousFocus = globalThis.document
+    ?.activeElement as HTMLElement | null;
 
-  readonly src = input("");
-  readonly name = input("image.png");
+  readonly src = input('');
+  readonly name = input('image.png');
   readonly close = output<void>();
   readonly download = output<void>();
   readonly saveToVault = output<void>();
@@ -144,7 +171,7 @@ export class CognosLightboxComponent {
     afterNextRender(() => this.closeButton()?.nativeElement.focus());
   }
 
-  @HostListener("window:keydown.escape")
+  @HostListener('window:keydown.escape')
   protected onEscape(): void {
     this.close.emit();
   }
