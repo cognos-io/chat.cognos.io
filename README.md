@@ -30,10 +30,9 @@ steps to going live for posterity.
     - Verify the `sendmail.cognos.io` domain for sending emails
 - Backups:
     - Create a new backup repository and SSH key pair on BorgBase
-- Ory identity provider:
-    - Production account
-    - Verify cognos.io custom domain
-    - Create new OAuth2 client for Pocketbase backend
+- PocketBase authentication:
+    - Create or migrate users in the `users` auth collection
+    - Use built-in PocketBase email/password auth for app login
 - Backend:
     - Arm VPS on Hetzner:
         - Falkenstein region ([fastest ping](https://cloudpingtest.com/hetzner))
@@ -95,8 +94,6 @@ steps to going live for posterity.
     - $5/month + usage
 - Ghost
     - $300/year
-- Ory
-    - $770/year
 - Borgbase
     - $24/year
 

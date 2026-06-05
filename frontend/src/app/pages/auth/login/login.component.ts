@@ -1,5 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
@@ -19,11 +20,12 @@ import { AuthService } from '@services/auth.service';
   selector: 'app-login',
   standalone: true,
   imports: [
+    ReactiveFormsModule,
     CognosButtonComponent,
     CognosLozengeComponent,
     CognosLogoComponent,
-    ProfilePictureComponent,
     LoadingIndicatorComponent,
+    ProfilePictureComponent,
   ],
   template: `
     <div class="login-page">
@@ -38,30 +40,57 @@ import { AuthService } from '@services/auth.service';
             Chat with the latest models without giving up control of your data.
           </p>
 
-          <cog-button
-            appearance="primary"
-            [fullWidth]="true"
-            size="lg"
-            (click)="authService.login$.next(true)"
-            [disabled]="loading()"
+          <form
+            class="login-page__form"
+            [formGroup]="loginForm"
+            (ngSubmit)="onSubmit()"
           >
-            @if (loading()) {
-              <span class="login-page__loading-copy">
-                <app-loading-indicator></app-loading-indicator>
-                Opening sign in…
-              </span>
-            } @else {
-              Log in / Sign up
-            }
-          </cog-button>
+            <label class="login-page__field" for="email">
+              <span class="login-page__label">Email</span>
+              <input
+                id="email"
+                class="login-page__input"
+                formControlName="email"
+                type="email"
+                autocomplete="email"
+                placeholder="you@example.com"
+              />
+            </label>
 
-          @if (loading()) {
+            <label class="login-page__field" for="password">
+              <span class="login-page__label">Password</span>
+              <input
+                id="password"
+                class="login-page__input"
+                formControlName="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="••••••••"
+              />
+            </label>
+
+            <cog-button
+              appearance="primary"
+              [fullWidth]="true"
+              size="lg"
+              type="submit"
+              [disabled]="loading() || loginForm.invalid"
+            >
+              @if (loading()) {
+                <span class="login-page__loading-copy">
+                  <app-loading-indicator></app-loading-indicator>
+                  Signing in…
+                </span>
+              } @else {
+                Log in
+              }
+            </cog-button>
+          </form>
+
+          @if (authService.status() === 'error') {
             <p class="login-page__hint">
-              A popup should open to sign in. If it does not,
-              <button class="login-page__link-button" (click)="authService.login$.next(true)">
-                click here
-              </button>
-              and try again.
+              We couldn't sign you in. Check your PocketBase user email and password and
+              try again.
             </p>
           }
 
@@ -86,7 +115,9 @@ import { AuthService } from '@services/auth.service';
             <p>
               You're accessing the beta so please expect some imperfections. In return,
               I'll cover the costs for now, although you can
-              <a href="https://cognos.io/" rel="noreferrer" target="_blank">subscribe</a>
+              <a href="https://cognos.io/" rel="noreferrer" target="_blank"
+                >subscribe</a
+              >
               to contribute financially.
             </p>
             <p>
@@ -113,7 +144,8 @@ import { AuthService } from '@services/auth.service';
       min-height: 100svh;
       place-items: center;
       padding: var(--cog-space-300);
-      background: radial-gradient(
+      background:
+        radial-gradient(
           circle at top left,
           color-mix(in srgb, var(--cog-success-bg) 78%, transparent),
           transparent 35%
@@ -134,7 +166,9 @@ import { AuthService } from '@services/auth.service';
 
     .login-page__intro,
     .login-page__founder,
-    .login-page__founder-copy {
+    .login-page__founder-copy,
+    .login-page__form,
+    .login-page__field {
       display: grid;
       gap: var(--cog-space-150);
     }
@@ -170,19 +204,32 @@ import { AuthService } from '@services/auth.service';
       text-wrap: pretty;
     }
 
-    .login-page__legal a,
-    .login-page__founder-copy a,
-    .login-page__link-button {
-      color: var(--cog-link);
+    .login-page__label {
+      color: var(--cog-text);
+      font-size: var(--cog-fs-body-sm);
+      font-weight: var(--cog-fw-semibold);
+      line-height: var(--cog-lh-body-sm);
     }
 
-    .login-page__link-button {
-      border: 0;
-      background: transparent;
-      cursor: pointer;
+    .login-page__input {
+      min-height: 44px;
+      border: 2px solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-input-bg);
+      color: var(--cog-text);
+      padding: 0 var(--cog-space-150);
       font: inherit;
-      padding: 0;
-      text-decoration: underline;
+      outline: 0;
+    }
+
+    .login-page__input:focus {
+      border-color: var(--cog-brand);
+      background: var(--cog-input-bg-focus);
+    }
+
+    .login-page__legal a,
+    .login-page__founder-copy a {
+      color: var(--cog-link);
     }
 
     .login-page__loading-copy {
@@ -209,8 +256,14 @@ import { AuthService } from '@services/auth.service';
 })
 export class LoginComponent {
   readonly authService: AuthService = inject(AuthService);
-  private readonly _router: Router = inject(Router);
   private readonly _errorService: ErrorService = inject(ErrorService);
+  private readonly _fb = inject(FormBuilder);
+  private readonly _router: Router = inject(Router);
+
+  readonly loginForm = this._fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required]],
+  });
 
   loading = computed(() => this.authService.status() === 'authenticating');
 
@@ -231,5 +284,13 @@ export class LoginComponent {
           this._router.navigate(['/']);
         }
       });
+  }
+
+  onSubmit() {
+    if (this.loginForm.invalid || this.loading()) {
+      return;
+    }
+
+    this.authService.login$.next(this.loginForm.getRawValue());
   }
 }

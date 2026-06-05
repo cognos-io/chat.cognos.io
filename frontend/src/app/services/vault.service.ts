@@ -149,7 +149,7 @@ export class VaultService {
       map((argon2id) =>
         argon2id({
           password: encoder.encode(rawPassword),
-          salt: encoder.encode(this._authService.oryId()),
+          salt: encoder.encode(this._authService.email()),
           parallelism: argon2idParallelism,
           passes: argon2idIterationCount,
           memorySize: argon2idMemory,

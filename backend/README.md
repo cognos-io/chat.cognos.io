@@ -11,49 +11,14 @@ In the `configs` directory copy the `api.example.yaml` to an environment specifi
 
 ## Authentication
 
-### Ory
+We use PocketBase's built-in `users` auth collection for authentication.
 
-We use [Ory](https://ory.sh/) cloud to manage our user authentication
+### Setup
 
-#### Setup
-
-##### Ory
-
-1. In the [Ory console](https://console.ory.sh/), go to OAuth 2 and make note of the relevant
-   'Endpoints':
-   - Auth URL (ends in `/oauth2/auth`)
-   - Token URL (ends in `/oauth2/token`)
-   - User API URL (ends in `/userinfo`)
-1. Create a new OAuth2 client:
-   - Set a relevant 'Client Name'
-   - Set scopes are `openid` and `offline_access`
-   - Add relevant redirects for `/api/oauth2-redirect`
-        - e.g. `http://127.0.0.1/api/oauth2-redirect`
-   - Enable skip consent screen
-   - Supported OAuth2 flows
-        - Grant types: `Refresh token`, `Authorization code`
-        - Response types: `Code`
-        - Access token type: `Inherit from global configuration`
-   - Client authentication mechanism: `HTTP Basic Authorization`
-1. Make a note of:
-   - Client ID
-   - Client Secret
-
-##### Pocketbase
-
-Create an OpenID Connect Auth provider in the
-[pocketbase settings](http://localhost:8090/_/#/settings/auth-providers), usually the 'oidc'
-provider.
-
-Enter:
-
-- Client ID
-- Client Secret
-- Auth URL
-- Token URL
-- User API URL
-
-And set a relevant display name (e.g. `Cognos SSO`)
+1. Open the PocketBase admin UI, usually at `http://127.0.0.1:8090/_/`
+2. Create or migrate a user in the `users` auth collection
+3. Make sure the user has an email address set
+4. Use that email address and password to sign in through the frontend
 
 ## Custom tools
 
