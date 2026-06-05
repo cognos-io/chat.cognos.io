@@ -55,18 +55,26 @@ import { MessageListComponent } from '../message-list/message-list.component';
     </div>
   `,
   styles: `
-    .conversation-detail {
+    :host {
       display: flex;
-      flex-direction: column;
+      width: 100%;
       height: 100%;
       min-height: 0;
+      flex: 1;
+    }
+
+    .conversation-detail {
+      display: grid;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      grid-template-rows: minmax(0, 1fr) auto;
     }
 
     .conversation-detail__messages {
       position: relative;
       display: flex;
       min-height: 0;
-      flex: 1;
       flex-direction: column;
     }
 

@@ -30,7 +30,6 @@ import { Message } from '@app/interfaces/message';
 import { ConversationService } from '@app/services/conversation.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
-import { FeatureBentoComponent } from '../feature-bento/feature-bento.component';
 import { MessageListItemComponent } from '../message-list-item/message-list-item.component';
 import {
   TemporaryMessageDialogComponent,
@@ -44,7 +43,6 @@ import {
     MessageListItemComponent,
     LoadingIndicatorComponent,
     InfiniteScrollModule,
-    FeatureBentoComponent,
     CognosToggleComponent,
     CognosButtonComponent,
     CognosSectionMessageComponent,
@@ -70,8 +68,6 @@ import {
           <div class="message-list__circle message-list__circle--three"></div>
 
           <div class="message-list__empty">
-            <app-feature-bento class="message-list__bento"></app-feature-bento>
-
             @if (conversationService.isTemporaryConversation()) {
               <cog-section-message title="Incognito mode enabled" tone="success">
                 Your messages will not be saved. If you leave this conversation or clear
@@ -82,33 +78,33 @@ import {
                 Get started by sending a message using the composer below.
               </cog-section-message>
             }
+          </div>
 
-            <div class="message-list__empty-actions">
-              @if (!conversationService.isTemporaryConversation()) {
-                <cog-button
-                  appearance="default"
-                  icon="rotate-cw"
-                  type="button"
-                  (click)="onDisappearingMessages()"
-                >
-                  Disappearing messages:
-                  @if (expirationDelayValue()) {
-                    {{ expirationDelayValue() }}
-                  } @else {
-                    Off
-                  }
-                </cog-button>
-              }
+          <div class="message-list__empty-actions">
+            @if (!conversationService.isTemporaryConversation()) {
+              <cog-button
+                appearance="default"
+                icon="rotate-cw"
+                type="button"
+                (click)="onDisappearingMessages()"
+              >
+                Disappearing messages:
+                @if (expirationDelayValue()) {
+                  {{ expirationDelayValue() }}
+                } @else {
+                  Off
+                }
+              </cog-button>
+            }
 
-              <span class="message-list__toggle">
-                <cog-toggle
-                  [checked]="conversationService.isTemporaryConversation()"
-                  label="Temporary chat"
-                  (checkedChange)="onToggleTemporaryChat($event)"
-                ></cog-toggle>
-                <span>Temporary chat</span>
-              </span>
-            </div>
+            <span class="message-list__toggle">
+              <cog-toggle
+                [checked]="conversationService.isTemporaryConversation()"
+                label="Temporary chat"
+                (checkedChange)="onToggleTemporaryChat($event)"
+              ></cog-toggle>
+              <span>Temporary chat</span>
+            </span>
           </div>
         </div>
       }
@@ -155,11 +151,11 @@ import {
 
     .message-list__empty-shell {
       position: relative;
-      display: flex;
+      display: grid;
       min-height: 100%;
       flex: 1;
-      align-items: center;
-      justify-content: center;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: var(--cog-space-300);
       padding: var(--cog-space-300) 0;
     }
 
@@ -170,13 +166,13 @@ import {
       width: 100%;
       max-width: min(100%, 960px);
       gap: var(--cog-space-300);
-    }
-
-    .message-list__bento {
-      width: 100%;
+      align-self: start;
+      justify-self: center;
     }
 
     .message-list__empty-actions {
+      position: relative;
+      z-index: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -230,12 +226,9 @@ import {
     }
 
     @media (max-width: 767px) {
+      .message-list__empty-shell,
       .message-list__empty {
         gap: var(--cog-space-200);
-      }
-
-      .message-list__bento {
-        display: none;
       }
 
       .message-list__circle--one,
