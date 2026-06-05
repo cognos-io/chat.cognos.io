@@ -33,9 +33,14 @@
 
   &__nav {
     display: grid;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
     gap: var(--cog-space-200);
     height: 100%;
     padding: var(--cog-space-200);
+  }
+
+  cog-drawer &__nav {
+    padding: 0;
   }
 
   &__brand {
