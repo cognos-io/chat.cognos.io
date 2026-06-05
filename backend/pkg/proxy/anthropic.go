@@ -6,14 +6,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/labstack/echo/v5"
 	"github.com/liushuangls/go-anthropic/v2"
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/sashabaranov/go-openai"
 )
 
 const anthropicMaxTokens = 4096
 
-var anthropicModelMapping = map[string]string{
+var anthropicModelMapping = map[string]anthropic.Model{
 	"claude-haiku":     anthropic.ModelClaude3Haiku20240307,
 	"claude-sonnet":    anthropic.ModelClaude3Sonnet20240229,
 	"claude-opus":      anthropic.ModelClaude3Opus20240229,
@@ -38,15 +38,16 @@ type Anthropic struct {
 func (a *Anthropic) LookupModel(
 	internalModel string,
 ) (string, error) {
-	return AnthropicModelMapper(internalModel)
+	model, err := AnthropicModelMapper(internalModel)
+	return string(model), err
 }
 
 func (a *Anthropic) ChatCompletion(
-	c echo.Context,
+	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
 	anthropicReq := anthropic.MessagesRequest{
-		Model:       req.Model,
+		Model:       anthropic.Model(req.Model),
 		Stream:      req.Stream,
 		MaxTokens:   req.MaxTokens,
 		Temperature: &req.Temperature,
@@ -84,7 +85,7 @@ func (a *Anthropic) ChatCompletion(
 	}
 
 	resp, err := a.client.CreateMessages(
-		c.Request().Context(),
+		e.Request.Context(),
 		anthropicReq,
 	)
 	if err != nil {
@@ -112,7 +113,7 @@ func NewAnthropic(
 	}, nil
 }
 
-func AnthropicModelMapper(model string) (string, error) {
+func AnthropicModelMapper(model string) (anthropic.Model, error) {
 	if mappedModel, ok := anthropicModelMapping[model]; ok {
 		return mappedModel, nil
 	}

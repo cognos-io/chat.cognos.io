@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
-	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -48,13 +48,13 @@ func (cf *Cloudflare) LookupModel(
 }
 
 func (cf *Cloudflare) ChatCompletion(
-	c echo.Context,
+	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
 	if req.Stream {
-		return StreamOpenAIResponse(c, req, cf.logger, cf.client)
+		return StreamOpenAIResponse(e, req, cf.logger, cf.client)
 	}
-	return ForwardOpenAIResponse(c, req, cf.logger, cf.client)
+	return ForwardOpenAIResponse(e, req, cf.logger, cf.client)
 }
 
 func NewCloudflare(

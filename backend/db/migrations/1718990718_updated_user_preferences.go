@@ -3,16 +3,13 @@ package migrations
 import (
 	"encoding/json"
 
-	"github.com/pocketbase/dbx"
-	"github.com/pocketbase/pocketbase/daos"
+	"github.com/pocketbase/pocketbase/core"
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
 func init() {
-	m.Register(func(db dbx.Builder) error {
-		dao := daos.New(db)
-
-		collection, err := dao.FindCollectionByNameOrId("ck0wav09a3ouets")
+	m.Register(func(app core.App) error {
+		collection, err := app.FindCollectionByNameOrId("ck0wav09a3ouets")
 		if err != nil {
 			return err
 		}
@@ -23,11 +20,9 @@ func init() {
 			return err
 		}
 
-		return dao.SaveCollection(collection)
-	}, func(db dbx.Builder) error {
-		dao := daos.New(db)
-
-		collection, err := dao.FindCollectionByNameOrId("ck0wav09a3ouets")
+		return app.Save(collection)
+	}, func(app core.App) error {
+		collection, err := app.FindCollectionByNameOrId("ck0wav09a3ouets")
 		if err != nil {
 			return err
 		}
@@ -36,6 +31,6 @@ func init() {
 			return err
 		}
 
-		return dao.SaveCollection(collection)
+		return app.Save(collection)
 	})
 }

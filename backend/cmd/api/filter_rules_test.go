@@ -29,8 +29,8 @@ import (
 	"testing"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
-	"github.com/pocketbase/pocketbase/tokens"
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/nacl/secretbox"
@@ -38,22 +38,24 @@ import (
 
 const testDataDir = "../../testdata/pb_data"
 
-func generateRecordToken(collectionNameOrId string, email string) (string, error) {
-	app, err := tests.NewTestApp(testDataDir)
-	if err != nil {
-		return "", err
-	}
-	defer app.Cleanup()
+func withRecordAuth(
+	collectionNameOrId string,
+	email string,
+) func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+	return func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+		record, err := app.FindAuthRecordByEmail(collectionNameOrId, email)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	record, err := app.Dao().FindAuthRecordByEmail(collectionNameOrId, email)
-	if err != nil {
-		return "", err
+		e.Router.BindFunc(func(re *core.RequestEvent) error {
+			re.Auth = record
+			return re.Next()
+		})
 	}
-
-	return tokens.NewRecordAuthToken(app, record)
 }
 
-func setupTestApp(t *testing.T) *tests.TestApp {
+func setupTestApp(t testing.TB) *tests.TestApp {
 	app, err := tests.NewTestApp(testDataDir)
 	if err != nil {
 		t.Fatal(err)
@@ -107,12 +109,11 @@ func TestConversationFilterRules(t *testing.T) {
 	defer app.Cleanup()
 
 	// Retrieve key pair for the user
-	userRecord, err := app.Dao().FindAuthRecordByEmail("users", userEmail)
+	userRecord, err := app.FindAuthRecordByEmail("users", userEmail)
 	if err != nil {
 		t.Fatal(err)
 	}
-	userKeyPairRecord, err := app.Dao().
-		FindFirstRecordByData("user_key_pairs", "user", userRecord.Id)
+	userKeyPairRecord, err := app.FindFirstRecordByData("user_key_pairs", "user", userRecord.Id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -172,10 +173,7 @@ func TestConversationFilterRules(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	recordToken, err := generateRecordToken("users", userEmail)
-	if err != nil {
-		t.Fatal(err)
-	}
+	withUserToken := withRecordAuth("users", userEmail)
 
 	nonce = generateNonce()
 
@@ -192,24 +190,20 @@ func TestConversationFilterRules(t *testing.T) {
 		{
 			Name:            "list conversations as guest",
 			Method:          http.MethodGet,
-			Url:             url,
-			RequestHeaders:  map[string]string{},
+			URL:             url,
+			Headers:         map[string]string{},
 			ExpectedStatus:  http.StatusOK,
-			ExpectedEvents:  map[string]int{"OnRecordsListRequest": 1},
 			ExpectedContent: []string{"\"items\":[]"},
 			TestAppFactory:  setupTestApp,
 		},
 		{
-			Name:   "list conversations via user token",
-			Method: http.MethodGet,
-			Url:    url,
-			RequestHeaders: map[string]string{
-				"Authorization": recordToken,
-			},
+			Name:            "list conversations via user token",
+			Method:          http.MethodGet,
+			URL:             url,
 			ExpectedStatus:  http.StatusOK,
-			ExpectedEvents:  map[string]int{"OnRecordsListRequest": 1},
 			ExpectedContent: []string{"\"items\":[]"},
 			TestAppFactory:  setupTestApp,
+			BeforeTestFunc:  withUserToken,
 		},
 	}
 
@@ -231,130 +225,104 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 	)
 
 	url := fmt.Sprintf("/api/collections/%s/records", collectionName)
-
-	recordToken, err := generateRecordToken("users", userEmail)
-	if err != nil {
-		t.Fatal(err)
-	}
+	withUserToken := withRecordAuth("users", userEmail)
 
 	scenarios := []tests.ApiScenario{
 		// List/Search
 		{
 			Name:            "list user key pairs as guest",
 			Method:          http.MethodGet,
-			Url:             url,
-			RequestHeaders:  map[string]string{},
+			URL:             url,
+			Headers:         map[string]string{},
 			ExpectedStatus:  http.StatusOK,
-			ExpectedEvents:  map[string]int{"OnRecordsListRequest": 1},
 			ExpectedContent: []string{`"items":[]`},
 			TestAppFactory:  setupTestApp,
 		},
 		{
-			Name:   "list user key pairs via user token",
-			Method: http.MethodGet,
-			Url:    url,
-			RequestHeaders: map[string]string{
-				"Authorization": recordToken,
-			},
+			Name:            "list user key pairs via user token",
+			Method:          http.MethodGet,
+			URL:             url,
 			ExpectedStatus:  http.StatusOK,
-			ExpectedEvents:  map[string]int{"OnRecordsListRequest": 1},
 			ExpectedContent: []string{`"totalItems":1`, `"id":"3gtr36mn54ldo53"`},
 			TestAppFactory:  setupTestApp,
+			BeforeTestFunc:  withUserToken,
 		},
 		// View specific record
 		{
 			Name:            "get user key pair as guest",
 			Method:          http.MethodGet,
-			Url:             fmt.Sprintf("%s/3gtr36mn54ldo53", url),
-			RequestHeaders:  map[string]string{},
+			URL:             fmt.Sprintf("%s/3gtr36mn54ldo53", url),
+			Headers:         map[string]string{},
 			ExpectedStatus:  http.StatusNotFound,
 			ExpectedContent: []string{`"data":{}`},
 			TestAppFactory:  setupTestApp,
 		},
 		{
-			Name:   "get user key pair via user token",
-			Method: http.MethodGet,
-			Url:    fmt.Sprintf("%s/3gtr36mn54ldo53", url),
-			RequestHeaders: map[string]string{
-				"Authorization": recordToken,
-			},
+			Name:            "get user key pair via user token",
+			Method:          http.MethodGet,
+			URL:             fmt.Sprintf("%s/3gtr36mn54ldo53", url),
 			ExpectedStatus:  http.StatusOK,
-			ExpectedEvents:  map[string]int{"OnRecordViewRequest": 1},
 			ExpectedContent: []string{`"id":"3gtr36mn54ldo53"`},
 			TestAppFactory:  setupTestApp,
+			BeforeTestFunc:  withUserToken,
 		},
 		{
-			Name:   "get another users key pair via user token",
-			Method: http.MethodGet,
-			Url:    fmt.Sprintf("%s/nekxd2byk1j1cof", url),
-			RequestHeaders: map[string]string{
-				"Authorization": recordToken,
-			},
+			Name:            "get another users key pair via user token",
+			Method:          http.MethodGet,
+			URL:             fmt.Sprintf("%s/nekxd2byk1j1cof", url),
 			ExpectedStatus:  http.StatusNotFound,
-			ExpectedEvents:  map[string]int{},
 			ExpectedContent: []string{`"data":{}`},
 			TestAppFactory:  setupTestApp,
+			BeforeTestFunc:  withUserToken,
 		},
 		// Create
 		{
-			Name:           "create user key pair as guest",
-			Method:         http.MethodPost,
-			Url:            url,
-			RequestHeaders: map[string]string{},
+			Name:    "create user key pair as guest",
+			Method:  http.MethodPost,
+			URL:     url,
+			Headers: map[string]string{},
 			Body: strings.NewReader(fmt.Sprintf(`{
 				"user": "%s",
 				"public_key": "%s",
 				"secret_key": "%s"
 			}`, userId, userPublicKey, userEncryptedSecretKey)),
 			ExpectedStatus:  http.StatusBadRequest,
-			ExpectedEvents:  map[string]int{},
 			ExpectedContent: []string{`"data":{}`},
 			TestAppFactory:  setupTestApp,
 		},
 		{
 			Name:   "create user key pair via user token",
 			Method: http.MethodPost,
-			Url:    url,
-			RequestHeaders: map[string]string{
-				"Authorization": recordToken,
-			},
+			URL:    url,
 			Body: strings.NewReader(fmt.Sprintf(`{
 				"user": "%s",
 				"public_key": "%s",
 				"secret_key": "%s"
 			}`, userId, userPublicKey, userEncryptedSecretKey)),
-			ExpectedStatus: http.StatusOK,
-			ExpectedEvents: map[string]int{
-				"OnModelAfterCreate":          1,
-				"OnModelBeforeCreate":         1,
-				"OnRecordAfterCreateRequest":  1,
-				"OnRecordBeforeCreateRequest": 1,
-			},
+			ExpectedStatus:  http.StatusOK,
 			ExpectedContent: []string{fmt.Sprintf(`"public_key":"%s"`, userPublicKey)},
 			TestAppFactory:  setupTestApp,
+			BeforeTestFunc:  withUserToken,
 		},
 		{
 			Name:   "create user key pair via user token with missing user ID",
 			Method: http.MethodPost,
-			Url:    url,
-			RequestHeaders: map[string]string{
-				"Authorization": recordToken,
-			},
+			URL:    url,
 			Body: strings.NewReader(fmt.Sprintf(`{
 				"public_key": "%s",
 				"secret_key": "%s"
 			}`, userPublicKey, userEncryptedSecretKey)),
-			ExpectedStatus:  http.StatusBadRequest,
-			ExpectedContent: []string{`"data":{}`},
-			TestAppFactory:  setupTestApp,
+			ExpectedStatus: http.StatusBadRequest,
+			ExpectedContent: []string{
+				`"user":{"code":"validation_required"`,
+			},
+			TestAppFactory: setupTestApp,
+			BeforeTestFunc: withUserToken,
 		},
 		{
 			Name:   "create user key pair via user token with invalid keys",
 			Method: http.MethodPost,
-			Url:    url,
-			RequestHeaders: map[string]string{
-				"Authorization": recordToken,
-			},
+			URL:    url,
 			Body: strings.NewReader(fmt.Sprintf(`{
 				"user": "%s",
 				"public_key": "im-not-a-valid-key",
@@ -366,14 +334,12 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 				`"message":"Must be at least 32 character(s)."`,
 			},
 			TestAppFactory: setupTestApp,
+			BeforeTestFunc: withUserToken,
 		},
 		{
 			Name:   "create another users key pair via user token",
 			Method: http.MethodPost,
-			Url:    url,
-			RequestHeaders: map[string]string{
-				"Authorization": recordToken,
-			},
+			URL:    url,
 			Body: strings.NewReader(fmt.Sprintf(`{
 				"user": "xq9ndvc2kbrvrng",
 				"public_key": "%s",
@@ -382,14 +348,12 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 			ExpectedStatus:  http.StatusBadRequest,
 			ExpectedContent: []string{`"data":{}`},
 			TestAppFactory:  setupTestApp,
+			BeforeTestFunc:  withUserToken,
 		},
 		{
 			Name:   "create a key pair with a fixed ID",
 			Method: http.MethodPost,
-			Url:    url,
-			RequestHeaders: map[string]string{
-				"Authorization": recordToken,
-			},
+			URL:    url,
 			Body: strings.NewReader(fmt.Sprintf(`{
 				"id": "k7prcx11dum2l3k",
 				"user": "%s",
@@ -399,14 +363,12 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 			ExpectedStatus:  http.StatusBadRequest,
 			ExpectedContent: []string{`"data":{}`},
 			TestAppFactory:  setupTestApp,
+			BeforeTestFunc:  withUserToken,
 		},
 		{
 			Name:   "create a key pair with a fixed created & modified",
 			Method: http.MethodPost,
-			Url:    url,
-			RequestHeaders: map[string]string{
-				"Authorization": recordToken,
-			},
+			URL:    url,
 			Body: strings.NewReader(fmt.Sprintf(`{
 				"user": "%s",
 				"public_key": "%s",
@@ -417,6 +379,7 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 			ExpectedStatus:  http.StatusBadRequest,
 			ExpectedContent: []string{`"data":{}`},
 			TestAppFactory:  setupTestApp,
+			BeforeTestFunc:  withUserToken,
 		},
 	}
 

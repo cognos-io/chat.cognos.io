@@ -1,0 +1,16 @@
+pre-commit:
+  parallel: true
+  commands:
+    gitleaks:
+      glob: "*"
+      run: gitleaks protect --staged --no-banner
+    markdown-format:
+      run: uv run rumdl check --fix {staged_files}
+      stage_fixed: true
+      glob:
+        - "*.md"
+      exclude:
+        - "ai/**"
+        - ".specify/**"
+        - ".cursor/**"
+        - ".claude/**"

@@ -1,0 +1,97 @@
+# rumdl configuration file
+
+# Global configuration options
+[global]
+# List of rules to disable (uncomment and modify as needed)
+# disable = ["MD013", "MD033"]
+
+# List of rules to enable exclusively (if provided, only these rules will run)
+# enable = ["MD001", "MD003", "MD004"]
+
+# List of file/directory patterns to include for linting (if provided, only these will be linted)
+# include = [
+#    "docs/*.md",
+#    "src/**/*.md",
+#    "README.md"
+# ]
+
+# List of file/directory patterns to exclude from linting
+exclude = [
+    # Common directories to exclude
+    ".git",
+    ".github",
+    "node_modules",
+    "vendor",
+    "dist",
+    "build",
+
+    # Specific files or patterns
+    "CHANGELOG.md",
+    "LICENSE.md",
+    # Assets are often templates and may contain markdown that is not valid
+    "**/skills/**/assets/*.md",
+
+    # Vendor directory as it's out of our control
+    "_vendor"
+]
+
+# Respect .gitignore files when scanning directories (default: true)
+respect_gitignore = true
+
+# Markdown flavor/dialect (uncomment to enable)
+# Options: mkdocs, gfm, commonmark
+# flavor = "mkdocs"
+
+# Rule-specific configurations (uncomment and modify as needed)
+
+[MD003]
+style = "atx" # Heading style (atx, atx_closed, setext)
+
+[MD004]
+style = "consistent" # Unordered list style (asterisk, plus, dash, consistent)
+
+[MD007]
+indent = 4 # Unordered list indentation
+
+[MD013]
+line-length = 100       # Line length
+code-blocks = false     # Exclude code blocks from line length check
+tables = false          # Exclude tables from line length check
+headings = true         # Include headings in line length check
+reflow = true
+reflow-mode = "default"
+
+# Ordered lists: Prettier renumbers by default, but allows lazy (all 1.)
+# Use "one_or_ordered" to accept either style
+[MD029]
+style = "one_or_ordered"
+
+[MD033]
+allowed-elements = ["div", "span"]
+disallowed-elements = ["script", "iframe", "style", "link"]
+fix = true
+
+[MD041]
+level = 1  # Heading level required (1-6, default: 1)
+front-matter-title-pattern = "^(title|header|name): "  # Regex pattern to match title fields in front matter
+
+# Emphasis: Prettier normalizes italics to underscores, bold to asterisks
+[MD049]
+style = "underscore"
+
+[MD050]
+style = "asterisk"
+
+# [MD044]
+# names = ["rumdl", "Markdown", "GitHub"]  # Proper names that should be capitalized correctly
+# code-blocks = false  # Check code blocks for proper names (default: false, skips code blocks)
+
+# Format tables
+[MD060]
+enabled = true
+style = "aligned"
+
+# Sort frontmatter keys
+[MD072]
+enabled = true
+key-order = ["title", "date", "draft"]

@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
-	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -42,13 +42,13 @@ func (d *DeepInfra) LookupModel(
 }
 
 func (d *DeepInfra) ChatCompletion(
-	c echo.Context,
+	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
 	if req.Stream {
-		return StreamOpenAIResponse(c, req, d.logger, d.client)
+		return StreamOpenAIResponse(e, req, d.logger, d.client)
 	}
-	return ForwardOpenAIResponse(c, req, d.logger, d.client)
+	return ForwardOpenAIResponse(e, req, d.logger, d.client)
 }
 
 func NewDeepInfra(client *openai.Client, logger *slog.Logger) (*DeepInfra, error) {

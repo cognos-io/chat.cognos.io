@@ -4,7 +4,6 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/forms"
-	"github.com/pocketbase/pocketbase/models"
 )
 
 // IdempotencyRepo keeps track of idempotent requests to avoid duplicate processing.
@@ -36,24 +35,20 @@ func (r *PocketBaseIdempotencyRepo) SaveIdempotentRequest(
 ) error {
 	const collectionName = "idempotency"
 
-	collection, err := r.app.Dao().FindCollectionByNameOrId(collectionName)
+	collection, err := r.app.FindCollectionByNameOrId(collectionName)
 	if err != nil {
 		return err
 	}
 
-	record := models.NewRecord(collection)
+	record := core.NewRecord(collection)
 
 	form := forms.NewRecordUpsert(r.app, record)
-
-	err = form.LoadData(map[string]any{
+	form.Load(map[string]any{
 		"user":            userID,
 		"idempotency_key": idempotencyKey,
 		"status_code":     statusCode,
 		"body":            responseBodyJSON,
 	})
-	if err != nil {
-		return err
-	}
 
 	return form.Submit()
 }
@@ -63,7 +58,7 @@ func (r *PocketBaseIdempotencyRepo) CheckForIdempotentRequest(
 ) (ok bool, statusCode int, responseBodyJSON []byte) {
 	const collectionName = "idempotency"
 
-	records, err := r.app.Dao().FindRecordsByFilter(collectionName,
+	records, err := r.app.FindRecordsByFilter(collectionName,
 		"user = {:user_id} AND idempotency_key = {:idempotency_key}",
 		"-updated",
 		1,

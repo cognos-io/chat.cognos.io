@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/generative-ai-go/genai"
-	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -44,7 +44,7 @@ func (g *GoogleGemini) LookupModel(
 }
 
 func (g *GoogleGemini) ChatCompletion(
-	c echo.Context,
+	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
 	model := g.client.GenerativeModel(req.Model)
@@ -86,7 +86,7 @@ func (g *GoogleGemini) ChatCompletion(
 	}
 
 	resp, err := cs.SendMessage(
-		c.Request().Context(),
+		e.Request.Context(),
 		// Send the last message as the main message
 		genai.Text(req.Messages[len(req.Messages)-1].Content),
 	)

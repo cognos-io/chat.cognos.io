@@ -7,7 +7,9 @@ import (
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/idempotency"
-	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/hook"
+	"github.com/pocketbase/pocketbase/tools/router"
 )
 
 type bodyDumpResponseWriter struct {
@@ -19,18 +21,13 @@ func (w *bodyDumpResponseWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
-func Idempotency(repo idempotency.IdempotencyRepo) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			// Get the user ID and idempotency key from the request and
-			// if we have both, check if we have a response for this
-			owner := auth.ExtractUser(c)
-			idempotencyKey := c.Request().Header.Get("Idempotency-Key")
-
-			// If we don't have a user ID or idempotency key, we can't
-			// check for idempotency, so we just call the next handler.
+func Idempotency(repo idempotency.IdempotencyRepo) *hook.Handler[*core.RequestEvent] {
+	return &hook.Handler[*core.RequestEvent]{
+		Func: func(e *core.RequestEvent) error {
+			owner := auth.ExtractUser(e)
+			idempotencyKey := e.Request.Header.Get("Idempotency-Key")
 			if owner == nil || idempotencyKey == "" {
-				return next(c)
+				return e.Next()
 			}
 
 			ok, statusCode, responseBodyJSON := repo.CheckForIdempotentRequest(
@@ -38,37 +35,35 @@ func Idempotency(repo idempotency.IdempotencyRepo) echo.MiddlewareFunc {
 				idempotencyKey,
 			)
 			if ok {
-				// If we have a response, we return it to the client.
-				c.Response().WriteHeader(statusCode)
-				_, err := c.Response().Write(responseBodyJSON)
+				e.Response.WriteHeader(statusCode)
+				_, err := e.Response.Write(responseBodyJSON)
 				return err
 			}
 
-			// Response
 			resBody := new(bytes.Buffer)
-			mw := io.MultiWriter(c.Response().Writer, resBody)
+			mw := io.MultiWriter(e.Response, resBody)
 			writer := &bodyDumpResponseWriter{
-				ResponseWriter: c.Response().Writer,
+				ResponseWriter: e.Response,
 				Writer:         mw,
 			}
-			c.Response().Writer = writer
+			e.Response = writer
 
-			// If we don't have a response, we call the next handler.
-			if err := next(c); err != nil {
-				c.Error(err)
+			if err := e.Next(); err != nil {
+				return err
 			}
 
-			// After the next handler has been called, we can save the
-			// response and status code in the database.
-			response := c.Response()
 			responseBodyJSON = resBody.Bytes()
-			statusCode = response.Status
+			statusCode = http.StatusOK
+			if tracker, ok := e.Response.(router.StatusTracker); ok && tracker.Status() > 0 {
+				statusCode = tracker.Status()
+			}
+
 			return repo.SaveIdempotentRequest(
 				owner.ID,
 				idempotencyKey,
 				statusCode,
 				responseBodyJSON,
 			)
-		}
+		},
 	}
 }

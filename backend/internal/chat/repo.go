@@ -10,7 +10,6 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/forms"
-	"github.com/pocketbase/pocketbase/models"
 	"github.com/pocketbase/pocketbase/tools/list"
 )
 
@@ -47,13 +46,13 @@ type MessageRepo interface {
 		conversation Conversation,
 		parentMessageID string,
 		message MessageRecordData,
-	) (error, *models.Record)
+	) (error, *core.Record)
 	DeleteMessage(messageID string) error
 }
 
 type PocketBaseMessageRepo struct {
 	app        core.App
-	collection *models.Collection
+	collection *core.Collection
 }
 
 // EncryptAndPersistMessage persists a message in the repository.
@@ -64,7 +63,7 @@ func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 	conversation Conversation,
 	parentMessageID string,
 	message MessageRecordData,
-) (error, *models.Record) {
+) (error, *core.Record) {
 	base64EncryptedMessage, err := EncryptMessageData(
 		message,
 		conversation.PublicKey,
@@ -83,24 +82,21 @@ func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 		formData["expires"] = time.Now().UTC().Add(conversation.ExpiryDuration)
 	}
 
-	record := models.NewRecord(r.collection)
+	record := core.NewRecord(r.collection)
 	form := forms.NewRecordUpsert(r.app, record)
-	err = form.LoadData(formData)
-	if err != nil {
-		return err, nil
-	}
+	form.Load(formData)
 
 	return form.Submit(), record
 }
 
 // DeleteMessage deletes a message from the repository.
 func (r *PocketBaseMessageRepo) DeleteMessage(messageID string) error {
-	record, err := r.app.Dao().FindRecordById(r.collection.Name, messageID)
+	record, err := r.app.FindRecordById(r.collection.Name, messageID)
 	if err != nil {
 		return err
 	}
 
-	return r.app.Dao().DeleteRecord(record)
+	return r.app.Delete(record)
 }
 
 func (r *PocketBaseMessageRepo) FindExpiredMessages() ([]string, error) {
@@ -116,7 +112,7 @@ func (r *PocketBaseMessageRepo) FindExpiredMessages() ([]string, error) {
 		Id string `db:"id" json:"id"`
 	}{}
 
-	err := r.app.Dao().
+	err := r.app.
 		DB().
 		Select("id").
 		From(r.collection.Name).
@@ -134,14 +130,14 @@ func (r *PocketBaseMessageRepo) FindExpiredMessages() ([]string, error) {
 func (r *PocketBaseMessageRepo) CleanUpExpiredMessages(
 	messageIDs []string,
 ) (sql.Result, error) {
-	return r.app.Dao().
+	return r.app.
 		DB().
 		Delete(r.collection.Name, dbx.In("id", list.ToInterfaceSlice[string](messageIDs)...)).
 		Execute()
 }
 
 func NewPocketBaseMessageRepo(app core.App) *PocketBaseMessageRepo {
-	collection, err := app.Dao().FindCollectionByNameOrId("messages")
+	collection, err := app.FindCollectionByNameOrId("messages")
 	if err != nil {
 		panic(err)
 	}

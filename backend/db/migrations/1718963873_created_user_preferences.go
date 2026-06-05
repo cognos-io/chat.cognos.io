@@ -1,16 +1,12 @@
 package migrations
 
 import (
-	"encoding/json"
-
-	"github.com/pocketbase/dbx"
-	"github.com/pocketbase/pocketbase/daos"
+	"github.com/pocketbase/pocketbase/core"
 	m "github.com/pocketbase/pocketbase/migrations"
-	"github.com/pocketbase/pocketbase/models"
 )
 
 func init() {
-	m.Register(func(db dbx.Builder) error {
+	m.Register(func(app core.App) error {
 		jsonData := `{
 			"id": "ck0wav09a3ouets",
 			"created": "2024-06-21 09:57:53.969Z",
@@ -18,7 +14,7 @@ func init() {
 			"name": "user_preferences",
 			"type": "base",
 			"system": false,
-			"schema": [
+			"fields": [
 				{
 					"system": false,
 					"id": "a1zycynp",
@@ -53,26 +49,19 @@ func init() {
 			"indexes": [],
 			"listRule": "@request.auth.id != \"\" && \n@request.auth.id = user",
 			"viewRule": "@request.auth.id != \"\" && \n@request.auth.id = user",
-			"createRule": "@request.auth.id != \"\" && \n@request.auth.id = @request.data.user &&\n// Additional validation\n@request.data.id:isset = false &&\n@request.data.created:isset = false &&\n@request.data.updated:isset = false &&\n@request.data.data:isset = true",
+			"createRule": "@request.auth.id != \"\" && \n@request.auth.id = @request.body.user &&\n// Additional validation\n@request.body.id:isset = false &&\n@request.body.created:isset = false &&\n@request.body.updated:isset = false &&\n@request.body.data:isset = true",
 			"updateRule": "@request.auth.id != \"\" && \n@request.auth.id = user",
 			"deleteRule": "@request.auth.id != \"\" && \n@request.auth.id = user",
 			"options": {}
 		}`
 
-		collection := &models.Collection{}
-		if err := json.Unmarshal([]byte(jsonData), &collection); err != nil {
-			return err
-		}
-
-		return daos.New(db).SaveCollection(collection)
-	}, func(db dbx.Builder) error {
-		dao := daos.New(db)
-
-		collection, err := dao.FindCollectionByNameOrId("ck0wav09a3ouets")
+		return importLegacyCollections(app, jsonData, false)
+	}, func(app core.App) error {
+		collection, err := app.FindCollectionByNameOrId("ck0wav09a3ouets")
 		if err != nil {
 			return err
 		}
 
-		return dao.DeleteCollection(collection)
+		return app.Delete(collection)
 	})
 }

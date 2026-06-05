@@ -8,7 +8,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/models"
+	"github.com/pocketbase/pocketbase/forms"
 )
 
 type Conversation struct {
@@ -24,7 +24,7 @@ type ConversationRepo interface {
 
 type PocketBaseConversationRepo struct {
 	app         core.App
-	collection  *models.Collection
+	collection  *core.Collection
 	keyPairRepo auth.KeyPairRepo
 }
 
@@ -32,20 +32,22 @@ type PocketBaseConversationRepo struct {
 func (r *PocketBaseConversationRepo) SetConversationUpdated(
 	conversationID string,
 ) error {
-	record, err := r.app.Dao().FindRecordById(r.collection.Name, conversationID)
+	record, err := r.app.FindRecordById(r.collection.Name, conversationID)
 	if err != nil {
 		return err
 	}
-	record.RefreshUpdated()
+	form := forms.NewRecordUpsert(r.app, record)
+	form.GrantManagerAccess()
+	form.Load(map[string]any{"updated": time.Now().UTC()})
 
-	return r.app.Dao().Save(record)
+	return form.Submit()
 }
 
 // ByID returns a conversation by its ID.
 func (r *PocketBaseConversationRepo) ByID(id string) (Conversation, error) {
 	conversation := Conversation{}
 
-	record, err := r.app.Dao().FindRecordById(r.collection.Name, id)
+	record, err := r.app.FindRecordById(r.collection.Name, id)
 	if err != nil {
 		return conversation, err
 	}
@@ -82,7 +84,7 @@ func NewPocketBaseConversationRepo(
 	app core.App,
 	keyPairRepo auth.KeyPairRepo,
 ) *PocketBaseConversationRepo {
-	collection, err := app.Dao().FindCollectionByNameOrId("conversations")
+	collection, err := app.FindCollectionByNameOrId("conversations")
 	if err != nil {
 		panic(err)
 	}

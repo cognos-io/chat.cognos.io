@@ -1,10 +1,13 @@
 ## Useful links
 
-- [How I write HTTP services in Go after 13 years](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/) - a collection of useful tips for those writing Go services
+- [How I write HTTP services in Go after 13 years](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/)
+    - a collection of useful tips for those writing Go services
 
 ## Configuration
 
-In the `configs` directory copy the `api.example.yaml` to an environment specific file (`local`, `development`, `production`) and adjust accordingly. It will be picked up and auto loaded by the `internal/config/api.go`.
+In the `configs` directory copy the `api.example.yaml` to an environment specific file (`local`,
+`development`, `production`) and adjust accordingly. It will be picked up and auto loaded by the
+`internal/config/api.go`.
 
 ## Authentication
 
@@ -16,7 +19,8 @@ We use [Ory](https://ory.sh/) cloud to manage our user authentication
 
 ##### Ory
 
-1. In the [Ory console](https://console.ory.sh/), go to OAuth 2 and make note of the relevant 'Endpoints':
+1. In the [Ory console](https://console.ory.sh/), go to OAuth 2 and make note of the relevant
+   'Endpoints':
    - Auth URL (ends in `/oauth2/auth`)
    - Token URL (ends in `/oauth2/token`)
    - User API URL (ends in `/userinfo`)
@@ -24,12 +28,12 @@ We use [Ory](https://ory.sh/) cloud to manage our user authentication
    - Set a relevant 'Client Name'
    - Set scopes are `openid` and `offline_access`
    - Add relevant redirects for `/api/oauth2-redirect`
-     - e.g. `http://127.0.0.1/api/oauth2-redirect`
+        - e.g. `http://127.0.0.1/api/oauth2-redirect`
    - Enable skip consent screen
    - Supported OAuth2 flows
-     - Grant types: `Refresh token`, `Authorization code`
-     - Response types: `Code`
-     - Access token type: `Inherit from global configuration`
+        - Grant types: `Refresh token`, `Authorization code`
+        - Response types: `Code`
+        - Access token type: `Inherit from global configuration`
    - Client authentication mechanism: `HTTP Basic Authorization`
 1. Make a note of:
    - Client ID
@@ -37,7 +41,9 @@ We use [Ory](https://ory.sh/) cloud to manage our user authentication
 
 ##### Pocketbase
 
-Create an OpenID Connect Auth provider in the [pocketbase settings](http://localhost:8090/_/#/settings/auth-providers), usually the 'oidc' provider.
+Create an OpenID Connect Auth provider in the
+[pocketbase settings](http://localhost:8090/_/#/settings/auth-providers), usually the 'oidc'
+provider.
 
 Enter:
 
@@ -53,9 +59,10 @@ And set a relevant display name (e.g. `Cognos SSO`)
 
 ### Generate a Public Key and Encrypted Secret Key
 
-Useful when creating test users, we have provided a script to generate a public key and an encrypted private key for a given user.
+Useful when creating test users, we have provided a script to generate a public key and an encrypted
+private key for a given user.
 
-```
+```text
 go run cmd/generate-key-pair/main.go -email={{ USER_EMAIL }} -password={{ USER_VAULT_PASSWORD }}
 ```
 
@@ -65,7 +72,7 @@ The email is used for salting the hashed password
 
 ### Send a message to the OpenAI API
 
-```
+```text
 http POST https://api.openai.com/v1/chat/completions \
     Authorization:"Bearer $OPENAI_KEY" \
     model="gpt-3.5-turbo" \
@@ -77,7 +84,7 @@ http POST https://api.openai.com/v1/chat/completions \
 
 Get a token to authenticate.
 
-```
+```text
 http POST :8090/api/collections/users/auth-with-password \
     identity="test@example.com" \
     password="password"
@@ -85,13 +92,13 @@ http POST :8090/api/collections/users/auth-with-password \
 
 Pipe to `jq` to get the `token`.
 
-```
+```text
 http POST :8090/api/collections/users/auth-with-password \
     identity="test@example.com" \
     password="password" | jq -r .token
 ```
 
-```
+```text
 export AUTH_TOKEN=$(http POST :8090/api/collections/users/auth-with-password \
     identity="test@example.com" \
     password="password" | jq -r .token)
@@ -101,7 +108,7 @@ export AUTH_TOKEN=$(http POST :8090/api/collections/users/auth-with-password \
 
 **Note:** `metadata` will be stripped off before sending to upstream OpenAI compatible API.
 
-```
+```text
 http POST :8090/v1/chat/completions \
     Authorization:"Bearer $AUTH_TOKEN" \
     model="gpt-3.5-turbo" \
@@ -112,10 +119,18 @@ http POST :8090/v1/chat/completions \
 
 ## Encryption benchmarks
 
-To decide on an encryption strategy for messages we wrote benchmarks to compare the following methods:
+To decide on an encryption strategy for messages we wrote benchmarks to compare the following
+methods:
 
-1. 'Sealed box' asymmetric encryption using the conversations public key as the recipient. This method generates an ephemeral key pair and uses NaCl box under the hood to asymmetrically encrypt the data, including the ephemeral public key in the output. Decryption is done using the conversation secret key and the ephemeral public key.
-1. 'Hybrid' encryption. This method generates a random 256bit symmetric key which is used with the NaCl secretbox to encrypt the message contents. The symmetric key is then encrypted with the same 'Sealed box' asymmetric encryption detailed above. The advantages here are that the symmetric encryption should be a lot faster than the asymmetric encryption (which is only used for a small message - the symmetric key).
+1. 'Sealed box' asymmetric encryption using the conversations public key as the recipient. This
+   method generates an ephemeral key pair and uses NaCl box under the hood to asymmetrically encrypt
+   the data, including the ephemeral public key in the output. Decryption is done using the
+   conversation secret key and the ephemeral public key.
+1. 'Hybrid' encryption. This method generates a random 256bit symmetric key which is used with the
+   NaCl secretbox to encrypt the message contents. The symmetric key is then encrypted with the same
+   'Sealed box' asymmetric encryption detailed above. The advantages here are that the symmetric
+   encryption should be a lot faster than the asymmetric encryption (which is only used for a small
+   message - the symmetric key).
 
 Benchmarks are found in the `internal/crypto/encrypt_benchmark_test.go` file.
 
@@ -123,9 +138,10 @@ Benchmarks are found in the `internal/crypto/encrypt_benchmark_test.go` file.
 
 We compared encryption of messages (with random content) of various lengths.
 
-Interestingly the results are not as different as I would have expected with a consistent ±10% between the methods (example output below).
+Interestingly the results are not as different as I would have expected with a consistent ±10%
+between the methods (example output below).
 
-```
+```text
 goos: linux
 goarch: amd64
 pkg: github.com/cognos-io/chat.cognos.io/backend/internal/crypto
@@ -146,9 +162,10 @@ BenchmarkSymmetricEncrypt1MB-16              471           2517422 ns/op
 BenchmarkSymmetricEncrypt10MB-16              68          18383260 ns/op
 ```
 
-Worth noting that if we were **only** using symmetric encryption (and not asymmetrically encrypting the symmetric key), the results are very different:
+Worth noting that if we were **only** using symmetric encryption (and not asymmetrically encrypting
+the symmetric key), the results are very different:
 
-```
+```text
 BenchmarkSymmetricEncrypt1KB-16           204798              5351 ns/op
 BenchmarkSymmetricEncrypt2KB-16           145189              7862 ns/op
 BenchmarkSymmetricEncrypt5KB-16            99870             15468 ns/op
@@ -162,6 +179,9 @@ BenchmarkSymmetricEncrypt10MB-16              61          19730876 ns/op
 
 We will use the 'sealed box' asymmetric encryption approach.
 
-While the 'hybrid' approach is a little faster it does include additional complexity having to use two encryption approaches on both the server and the client. As the difference is not huge it doesn't make sense to over complicate things at this time.
+While the 'hybrid' approach is a little faster it does include additional complexity having to use
+two encryption approaches on both the server and the client. As the difference is not huge it
+doesn't make sense to over complicate things at this time.
 
-(I also have a theory that this also requires less from the source of randomness which may become a bottleneck but that's purely a hypothetical)
+(I also have a theory that this also requires less from the source of randomness which may become a
+bottleneck but that's purely a hypothetical)

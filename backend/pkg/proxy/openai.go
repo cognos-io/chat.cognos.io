@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"strings"
 
-	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -37,13 +38,13 @@ func (o *OpenAI) LookupModel(
 }
 
 func (o *OpenAI) ChatCompletion(
-	c echo.Context,
+	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
 	if req.Stream {
-		return StreamOpenAIResponse(c, req, o.logger, o.client)
+		return StreamOpenAIResponse(e, req, o.logger, o.client)
 	}
-	return ForwardOpenAIResponse(c, req, o.logger, o.client)
+	return ForwardOpenAIResponse(e, req, o.logger, o.client)
 }
 
 func NewOpenAI(
@@ -64,15 +65,14 @@ func OpenAIModelMapper(model string) (string, error) {
 }
 
 func StreamOpenAIResponse(
-	c echo.Context,
+	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,
 	logger *slog.Logger,
 	client *openai.Client,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
 	emptyResponse := openai.ChatCompletionResponse{}
-	// Forward the request to OpenAI
 	stream, err := client.CreateChatCompletionStream(
-		c.Request().Context(),
+		e.Request.Context(),
 		req,
 	)
 	if err != nil {
@@ -80,49 +80,40 @@ func StreamOpenAIResponse(
 	}
 	defer stream.Close()
 
-	// Small optimization for building the full
-	// https://100go.co/?h=strings#under-optimized-strings-concatenation-39
 	sb := strings.Builder{}
 
-	// Set the headers for the response
-	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
-	c.Response().Header().Set(echo.HeaderConnection, "keep-alive")
-	c.Response().Header().Set(echo.HeaderCacheControl, "no-cache")
+	e.Response.Header().Set("Content-Type", "text/event-stream")
+	e.Response.Header().Set("Connection", "keep-alive")
+	e.Response.Header().Set("Cache-Control", "no-cache")
 
-	respWriter := c.Response().Unwrap()
-
-	// Gather the response chunks
 	for {
 		chunk, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
-			// stream has finished
-			_, err = respWriter.Write([]byte("data: [DONE]\n\n"))
+			_, err = e.Response.Write([]byte("data: [DONE]\n\n"))
 			if err != nil {
 				logger.Error("Failed to write error to response", "err", err)
 				return emptyResponse, plainTextResponseMessage, err
 			}
-			c.Response().Flush()
+			if err := e.Flush(); err != nil && !errors.Is(err, http.ErrNotSupported) {
+				return emptyResponse, plainTextResponseMessage, err
+			}
 			break
 		}
 
 		if err != nil {
-			// stream has errored
 			logger.Error("Failed to read from stream", "err", err)
 			return emptyResponse, plainTextResponseMessage, err
 		}
 
-		// Construct our plaintext response that will be encrypted and saved
 		sb.WriteString(chunk.Choices[0].Delta.Content)
 
-		// Re-marshal the response to send to the client
 		marshalledChunk, err := json.Marshal(chunk)
 		if err != nil {
-			// handle error
 			logger.Error("Failed to marshal chunk", "err", err)
 			return emptyResponse, plainTextResponseMessage, err
 		}
 
-		_, err = respWriter.Write(
+		_, err = e.Response.Write(
 			append(append(headerData, marshalledChunk...), newLine...),
 		)
 		if err != nil {
@@ -130,7 +121,9 @@ func StreamOpenAIResponse(
 			return emptyResponse, plainTextResponseMessage, err
 		}
 
-		c.Response().Flush()
+		if err := e.Flush(); err != nil && !errors.Is(err, http.ErrNotSupported) {
+			return emptyResponse, plainTextResponseMessage, err
+		}
 	}
 
 	plainTextResponseMessage = sb.String()
@@ -139,23 +132,21 @@ func StreamOpenAIResponse(
 }
 
 func ForwardOpenAIResponse(
-	c echo.Context,
+	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,
 	logger *slog.Logger,
 	client *openai.Client,
 ) (resp openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
 	emptyResponse := openai.ChatCompletionResponse{}
 
-	// Forward the request to OpenAI
 	resp, err = client.CreateChatCompletion(
-		c.Request().Context(),
+		e.Request.Context(),
 		req,
 	)
 	if err != nil {
 		return emptyResponse, plainTextResponseMessage, err
 	}
 
-	// Construct our plaintext response that will be encrypted and saved
 	plainTextResponseMessage = resp.Choices[0].Message.Content
 
 	return

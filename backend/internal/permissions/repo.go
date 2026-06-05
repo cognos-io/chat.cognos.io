@@ -1,18 +1,15 @@
 package permissions
 
-import (
-	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/models"
-)
+import "github.com/pocketbase/pocketbase/core"
 
 type PermissionsRepo interface {
 	// HasViewPermission checks if a user has permission to access a record
 	// referred to by it's ID.
 	// If it does it returns true, and the record itself for convenience
 	HasViewPermission(
-		info *models.RequestInfo,
+		info *core.RequestInfo,
 		collectionName, recordID string,
-	) (bool, *models.Record, error)
+	) (bool, *core.Record, error)
 }
 
 type PocketBasePermissionsRepo struct {
@@ -20,15 +17,14 @@ type PocketBasePermissionsRepo struct {
 }
 
 func (r *PocketBasePermissionsRepo) HasViewPermission(
-	info *models.RequestInfo,
+	info *core.RequestInfo,
 	collectionName, recordID string,
-) (bool, *models.Record, error) {
-	record, err := r.app.Dao().FindRecordById(collectionName, recordID)
+) (bool, *core.Record, error) {
+	record, err := r.app.FindRecordById(collectionName, recordID)
 	if err != nil {
 		return false, nil, err
 	}
-	canAccess, err := r.app.Dao().
-		CanAccessRecord(record, info, record.Collection().ViewRule)
+	canAccess, err := r.app.CanAccessRecord(record, info, record.Collection().ViewRule)
 
 	return canAccess, record, err
 }

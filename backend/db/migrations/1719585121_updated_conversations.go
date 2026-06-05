@@ -1,26 +1,19 @@
 package migrations
 
 import (
-	"encoding/json"
-
-	"github.com/pocketbase/dbx"
-	"github.com/pocketbase/pocketbase/daos"
+	"github.com/pocketbase/pocketbase/core"
 	m "github.com/pocketbase/pocketbase/migrations"
-	"github.com/pocketbase/pocketbase/models/schema"
 )
 
 func init() {
-	m.Register(func(db dbx.Builder) error {
-		dao := daos.New(db)
-
-		collection, err := dao.FindCollectionByNameOrId("23wjzzeeb4qilr9")
+	m.Register(func(app core.App) error {
+		collection, err := app.FindCollectionByNameOrId("23wjzzeeb4qilr9")
 		if err != nil {
 			return err
 		}
 
 		// add
-		new_expiry_duration := &schema.SchemaField{}
-		if err := json.Unmarshal([]byte(`{
+		if err := addLegacyField(app, collection, `{
 			"system": false,
 			"id": "4jng92aq",
 			"name": "expiry_duration",
@@ -37,23 +30,20 @@ func init() {
 					"6m"
 				]
 			}
-		}`), new_expiry_duration); err != nil {
+		}`); err != nil {
 			return err
 		}
-		collection.Schema.AddField(new_expiry_duration)
 
-		return dao.SaveCollection(collection)
-	}, func(db dbx.Builder) error {
-		dao := daos.New(db)
-
-		collection, err := dao.FindCollectionByNameOrId("23wjzzeeb4qilr9")
+		return app.Save(collection)
+	}, func(app core.App) error {
+		collection, err := app.FindCollectionByNameOrId("23wjzzeeb4qilr9")
 		if err != nil {
 			return err
 		}
 
 		// remove
-		collection.Schema.RemoveField("4jng92aq")
+		collection.Fields.RemoveById("4jng92aq")
 
-		return dao.SaveCollection(collection)
+		return app.Save(collection)
 	})
 }

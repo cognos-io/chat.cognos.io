@@ -1,48 +1,30 @@
 package auth
 
-import (
-	"github.com/labstack/echo/v5"
-	"github.com/pocketbase/pocketbase/apis"
-)
+import "github.com/pocketbase/pocketbase/core"
 
 type User struct {
 	ID      string
 	IsAdmin bool
 }
 
-// IsAdmin checks if the user authenticated in the given echo.Context is an admin.
-// It returns true if the user is an admin, otherwise false.
-func IsAdmin(c echo.Context) bool {
-	info := apis.RequestInfo(c)
-	admin := info.Admin // nil if not authenticated as admin
-
-	return admin != nil
+// IsAdmin checks if the authenticated request user is an admin.
+func IsAdmin(e *core.RequestEvent) bool {
+	return e.Auth != nil && e.Auth.IsSuperuser()
 }
 
-func IsAuthenticated(c echo.Context) bool {
-	info := apis.RequestInfo(c)
-	admin := info.Admin       // nil if not authenticated as admin
-	record := info.AuthRecord // nil if not authenticated as regular auth record
-
-	return admin != nil || record != nil
+func IsAuthenticated(e *core.RequestEvent) bool {
+	return e.Auth != nil
 }
 
 // ExtractUser extracts the user from the request context.
 // Will return nil if the user is not authenticated.
-// https://pocketbase.io/docs/go-routing/#retrieving-the-current-auth-state
-func ExtractUser(c echo.Context) *User {
-	if !IsAuthenticated(c) {
+func ExtractUser(e *core.RequestEvent) *User {
+	if !IsAuthenticated(e) {
 		return nil
 	}
 
-	info := apis.RequestInfo(c)
-	admin := info.Admin       // nil if not authenticated as admin
-	record := info.AuthRecord // nil if not authenticated as regular auth record
-
-	isAdmin := admin != nil
-
 	return &User{
-		ID:      record.Id,
-		IsAdmin: isAdmin,
+		ID:      e.Auth.Id,
+		IsAdmin: e.Auth.IsSuperuser(),
 	}
 }

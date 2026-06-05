@@ -14,9 +14,8 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
-	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/apis"
-	"github.com/pocketbase/pocketbase/models"
+	"github.com/pocketbase/pocketbase/core"
 	oai "github.com/sashabaranov/go-openai"
 )
 
@@ -76,7 +75,7 @@ func NewError(code int, message string) oai.ErrorResponse {
 	return oai.ErrorResponse{Error: &oai.APIError{Type: errorType, Message: message}}
 }
 
-func EchoHandler(
+func Handler(
 	config *config.APIConfig,
 	logger *slog.Logger,
 	upstreamRepo proxy.UpstreamRepo,
@@ -84,19 +83,19 @@ func EchoHandler(
 	keyPairRepo auth.KeyPairRepo,
 	agentRepo aiagent.AIAgentRepo,
 	conversationRepo chat.ConversationRepo,
-) echo.HandlerFunc {
-	return func(c echo.Context) error {
+) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
 		// -------------------------------------------------------
 		// 1. Get all the information we need from the request
 		// -------------------------------------------------------
-		owner := auth.ExtractUser(c)
+		owner := auth.ExtractUser(e)
 		if owner == nil {
 			return apis.NewUnauthorizedError("User not authenticated", nil)
 		}
 
 		// Parse the incoming request
 		var req ChatCompletionRequestWithMetadata
-		if err := c.Bind(&req); err != nil {
+		if err := e.BindBody(&req); err != nil {
 			return apis.NewBadRequestError("Failed to read request data", err)
 		}
 		// Add the user ID to the request. It's nothing personal but is used to help
@@ -156,7 +155,7 @@ func EchoHandler(
 			}
 		}
 
-		var messageRecord, responseRecord *models.Record
+		var messageRecord, responseRecord *core.Record
 
 		// Add the agent prompt system message to the conversation
 		req.Messages = AddSystemMessage(req.Messages, agent)
@@ -189,7 +188,7 @@ func EchoHandler(
 		// 3. Use the selected model and agent to generate the response
 		// -------------------------------------------------------
 		resp, plainTextResponseMessage, err := upstream.ChatCompletion(
-			c,
+			e,
 			req.ChatCompletionRequest,
 		)
 		if err != nil && messageRecord != nil {
@@ -255,7 +254,7 @@ func EchoHandler(
 			extendedResponse.Metadata.Cognos.ResponseRecordID = responseRecord.Id
 		}
 
-		return c.JSON(http.StatusOK, extendedResponse)
+		return e.JSON(http.StatusOK, extendedResponse)
 	}
 }
 

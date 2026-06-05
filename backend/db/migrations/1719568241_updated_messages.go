@@ -1,30 +1,25 @@
 package migrations
 
 import (
-	"github.com/pocketbase/dbx"
-	"github.com/pocketbase/pocketbase/daos"
+	"github.com/pocketbase/pocketbase/core"
 	m "github.com/pocketbase/pocketbase/migrations"
 	"github.com/pocketbase/pocketbase/tools/types"
 )
 
 func init() {
-	m.Register(func(db dbx.Builder) error {
-		dao := daos.New(db)
-
-		collection, err := dao.FindCollectionByNameOrId("v893vvhgp688kie")
+	m.Register(func(app core.App) error {
+		collection, err := app.FindCollectionByNameOrId("v893vvhgp688kie")
 		if err != nil {
 			return err
 		}
 
-		collection.UpdateRule = types.Pointer("@request.auth.id != \"\"\n&& conversation.creator = @request.auth.id\n&& @request.data.data:isset = true\n&& @request.data.id:isset = false\n&& @request.data.created:isset = false\n&& @request.data.updated:isset = false\n&& @request.data.conversation:isset = false\n&& @request.data.parent_message:isset = false")
+		collection.UpdateRule = types.Pointer("@request.auth.id != \"\"\n&& conversation.creator = @request.auth.id\n&& @request.body.data:isset = true\n&& @request.body.id:isset = false\n&& @request.body.created:isset = false\n&& @request.body.updated:isset = false\n&& @request.body.conversation:isset = false\n&& @request.body.parent_message:isset = false")
 
 		collection.DeleteRule = nil
 
-		return dao.SaveCollection(collection)
-	}, func(db dbx.Builder) error {
-		dao := daos.New(db)
-
-		collection, err := dao.FindCollectionByNameOrId("v893vvhgp688kie")
+		return app.Save(collection)
+	}, func(app core.App) error {
+		collection, err := app.FindCollectionByNameOrId("v893vvhgp688kie")
 		if err != nil {
 			return err
 		}
@@ -33,6 +28,6 @@ func init() {
 
 		collection.DeleteRule = types.Pointer("@request.auth.id != \"\" \n&& conversation.creator = @request.auth.id")
 
-		return dao.SaveCollection(collection)
+		return app.Save(collection)
 	})
 }

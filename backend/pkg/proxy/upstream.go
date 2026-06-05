@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -12,7 +12,7 @@ type Upstream interface {
 	// ChatCompletion sends a request to the upstream server to complete a chat prompt
 	// and returns the response
 	ChatCompletion(
-		c echo.Context,
+		e *core.RequestEvent,
 		request openai.ChatCompletionRequest,
 	) (response openai.ChatCompletionResponse, plainTextRequestMessage string, err error)
 }

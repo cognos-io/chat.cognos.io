@@ -20,7 +20,6 @@ import (
 	"github.com/liushuangls/go-anthropic/v2"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/models"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 	oai "github.com/sashabaranov/go-openai"
 	"google.golang.org/api/option"
@@ -47,8 +46,8 @@ func NewServer(
 	app := pocketbase.New()
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
-		Dir:         "./db/migrations", // path to migration files
-		Automigrate: true,              // auto creates migration files when making collection changes
+		Dir:         "./db/migrations",
+		Automigrate: true,
 	})
 
 	return app
@@ -69,10 +68,7 @@ func bindAppHooks(
 		deepinfraClient        = params.DeepinfraOpenAIClient
 	)
 
-	// Have to use OnBeforeServe to ensure that the app is fully initialized incl. the DB
-	// so we can create the various Repos without panic'ing
-	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
-		// Separate into collection services
+	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		upstreamRepo := proxy.NewInMemoryUpstreamRepo(proxy.RepoParams{
 			Logger:                 app.Logger(),
 			OpenAIClient:           openaiClient,
@@ -80,8 +76,7 @@ func bindAppHooks(
 			GoogleGeminiAIClient:   googleGeminiClient,
 			AnthropicClient:        anthropicClient,
 			DeepInfraOpenAIClient:  deepinfraClient,
-		},
-		)
+		})
 		messageRepo := chat.NewPocketBaseMessageRepo(app)
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
 		aiAgentRepo := aiagent.NewInMemoryAIAgentRepo(app.Logger())
@@ -99,37 +94,37 @@ func bindAppHooks(
 			conversationRepo,
 		)
 
-		// Add SoftDelete hook
 		hooks.SoftDelete(app)
+
+		if params.CronScheduler != nil {
+			expiredMessagesRepo := chat.NewPocketBaseMessageRepo(app)
+			_, err := cleanUpExpiredMessageJob(
+				params.CronScheduler,
+				app.Logger(),
+				expiredMessagesRepo,
+			)
+			if err != nil {
+				return err
+			}
+		}
 
 		return nil
 	})
 
-	// When a message is created then update the conversation updated time.
-	// This means the user will see the conversations they have most recently interacted with at the top of the list.
-	app.OnModelAfterCreate("messages").
-		Add(func(e *core.ModelEvent) error {
-			keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
-			conversationRepo := chat.NewPocketBaseConversationRepo(app, keyPairRepo)
+	app.OnRecordAfterCreateSuccess("messages").BindFunc(func(e *core.RecordEvent) error {
+		keyPairRepo := auth.NewPocketBaseKeyPairRepo(e.App)
+		conversationRepo := chat.NewPocketBaseConversationRepo(e.App, keyPairRepo)
 
-			return conversationRepo.SetConversationUpdated(
-				e.Model.(*models.Record).GetString("conversation"),
-			)
-		})
-
-	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
-		expiredMessagesRepo := chat.NewPocketBaseMessageRepo(app)
-		_, err := cleanUpExpiredMessageJob(
-			params.CronScheduler,
-			app.Logger(),
-			expiredMessagesRepo,
+		return conversationRepo.SetConversationUpdated(
+			e.Record.GetString("conversation"),
 		)
-		return err
 	})
 
-	app.OnTerminate().Add(func(e *core.TerminateEvent) error {
-		return params.CronScheduler.Shutdown()
-	})
+	if params.CronScheduler != nil {
+		app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
+			return params.CronScheduler.Shutdown()
+		})
+	}
 }
 
 func run(ctx context.Context, w io.Writer, args []string) error {
@@ -139,7 +134,6 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	config := config.MustLoadAPIConfig(logger)
 
-	// Job scheduler for background tasks
 	scheduler, err := gocron.NewScheduler(
 		gocron.WithLogger(logger),
 		gocron.WithStopTimeout(3*time.Second),
@@ -148,23 +142,19 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		return fmt.Errorf("failed to create scheduler: %w", err)
 	}
 
-	// Clients
-	openaiClient := oai.NewClient(config.OpenAIAPIKey) // OpenAI
-	cloudflareOpenAIClient := proxy.NewCloudflareOpenAIClient(
-		config,
-	) // Cloudflare with OpenAI compatibility
+	openaiClient := oai.NewClient(config.OpenAIAPIKey)
+	cloudflareOpenAIClient := proxy.NewCloudflareOpenAIClient(config)
 	googleGeminiClient, err := genai.NewClient(
 		ctx,
 		option.WithAPIKey(config.GoogleGeminiAPIKey),
-	) // Google Gemini
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create Google Gemini client: %w", err)
 	}
 	anthropicClient := anthropic.NewClient(
 		config.AnthropicAPIKey,
 		anthropic.WithBaseURL(config.AnthropicAPIURL),
-	) // Anthropic
-	// DeepInfra
+	)
 	deepinfraClient := proxy.NewDeepInfraOpenAIClient(config)
 
 	app := NewServer(
@@ -184,7 +174,6 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		CronScheduler:          scheduler,
 	})
 
-	// start the scheduler which will run in the background
 	scheduler.Start()
 
 	return app.Start()

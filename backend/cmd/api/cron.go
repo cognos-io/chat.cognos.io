@@ -26,7 +26,7 @@ func cleanUpExpiredMessageJob(
 		gocron.NewTask(func(logger *slog.Logger, repo ExpiredMessagesRepo) {
 			messageIds, err := repo.FindExpiredMessages()
 			if err != nil {
-				logger.Error("failed to find expired messages", err)
+				logger.Error("failed to find expired messages", "err", err)
 				return
 			}
 
@@ -35,7 +35,7 @@ func cleanUpExpiredMessageJob(
 			}
 
 			if _, err := repo.CleanUpExpiredMessages(messageIds); err != nil {
-				logger.Error("failed to clean up expired messages", err)
+				logger.Error("failed to clean up expired messages", "err", err)
 				return
 			}
 		}, logger, expiredMessagesRepo),

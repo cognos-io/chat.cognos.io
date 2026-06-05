@@ -1,16 +1,12 @@
 package migrations
 
 import (
-	"encoding/json"
-
-	"github.com/pocketbase/dbx"
-	"github.com/pocketbase/pocketbase/daos"
+	"github.com/pocketbase/pocketbase/core"
 	m "github.com/pocketbase/pocketbase/migrations"
-	"github.com/pocketbase/pocketbase/models"
 )
 
 func init() {
-	m.Register(func(db dbx.Builder) error {
+	m.Register(func(app core.App) error {
 		jsonData := `[
 			{
 				"id": "e67leturz07k2td",
@@ -19,7 +15,7 @@ func init() {
 				"name": "deleted",
 				"type": "base",
 				"system": false,
-				"schema": [
+				"fields": [
 					{
 						"system": false,
 						"id": "fvzzhn92",
@@ -62,7 +58,7 @@ func init() {
 				"name": "conversations",
 				"type": "base",
 				"system": false,
-				"schema": [
+				"fields": [
 					{
 						"system": false,
 						"id": "msxvlyrc",
@@ -97,7 +93,7 @@ func init() {
 				"indexes": [],
 				"listRule": "@request.auth.id != \"\" &&\n// User should be a viewer, editor or Admin of the conversations\n(@collection.participants.conversation ?= id &&\n@collection.participants.user ?= @request.auth.id &&\n(@collection.participants.role = 'Viewer' || @collection.participants.role = 'Editor' ||@collection.participants.role = 'Admin')\n) || (\n  creator ?= @request.auth.id\n)",
 				"viewRule": "@request.auth.id != \"\" &&\n// User should be a viewer, editor or Admin of the conversations\n@collection.participants.conversation ?= id &&\n@collection.participants.user ?= @request.auth.id &&\n(@collection.participants.role = 'Viewer' || @collection.participants.role = 'Editor' ||@collection.participants.role = 'Admin')",
-				"createRule": "// logged in\n@request.auth.id != \"\" \n// data validation\n  && @request.data.creator = @request.auth.id\n  && @request.data.data:isset = true\n&& @request.data.id:isset = false\n&& @request.data.created:isset = false\n&& @request.data.updated:isset = false",
+				"createRule": "// logged in\n@request.auth.id != \"\" \n// data validation\n  && @request.body.creator = @request.auth.id\n  && @request.body.data:isset = true\n&& @request.body.id:isset = false\n&& @request.body.created:isset = false\n&& @request.body.updated:isset = false",
 				"updateRule": null,
 				"deleteRule": null,
 				"options": {}
@@ -109,7 +105,7 @@ func init() {
 				"name": "conversation_public_keys",
 				"type": "base",
 				"system": false,
-				"schema": [
+				"fields": [
 					{
 						"system": false,
 						"id": "knjkxmbt",
@@ -144,7 +140,7 @@ func init() {
 				"indexes": [],
 				"listRule": "// logged in\n@request.auth.id != \"\"\n// permissions\n&& (\n  @collection.participants.conversation ?= conversation\n  && @collection.participants.user ?= @request.auth.id \n  && (\n    @collection.participants.role = 'Viewer'\n    || @collection.participants.role = 'Editor'\n    ||@collection.participants.role = 'Admin'\n  )\n) || (\n  conversation.creator ?= @request.auth.id\n)",
 				"viewRule": null,
-				"createRule": "// logged in\n@request.auth.id != \"\"\n// data validation\n&& @request.data.id:isset = false\n&& @request.data.public_key:isset = true\n&& @request.data.conversation:isset = true\n&& @request.data.updated:isset = false\n&& @request.data.created:isset = false\n// permissions\n&& (\n  (@collection.participants.conversation ?= @request.data.conversation\n    && @collection.participants.user ?= @request.auth.id \n    && @collection.participants.role = 'Admin' // only admins can add keys)\n  ||\n  (@collection.conversations.id = @request.data.conversation\n    && @collection.conversations.creator = @request.auth.id // creators can also add keys)\n  )",
+				"createRule": "// logged in\n@request.auth.id != \"\"\n// data validation\n&& @request.body.id:isset = false\n&& @request.body.public_key:isset = true\n&& @request.body.conversation:isset = true\n&& @request.body.updated:isset = false\n&& @request.body.created:isset = false\n// permissions\n&& (\n  (@collection.participants.conversation ?= @request.body.conversation\n    && @collection.participants.user ?= @request.auth.id \n    && @collection.participants.role = 'Admin' // only admins can add keys)\n  ||\n  (@collection.conversations.id = @request.body.conversation\n    && @collection.conversations.creator = @request.auth.id // creators can also add keys)\n  )",
 				"updateRule": null,
 				"deleteRule": null,
 				"options": {}
@@ -156,7 +152,7 @@ func init() {
 				"name": "messages",
 				"type": "base",
 				"system": false,
-				"schema": [
+				"fields": [
 					{
 						"system": false,
 						"id": "wbuzpppe",
@@ -233,7 +229,7 @@ func init() {
 				"name": "user_key_pairs",
 				"type": "base",
 				"system": false,
-				"schema": [
+				"fields": [
 					{
 						"system": false,
 						"id": "t7gitdmt",
@@ -282,7 +278,7 @@ func init() {
 				"indexes": [],
 				"listRule": "@request.auth.id != \"\" && \n@request.auth.id = user.id",
 				"viewRule": "@request.auth.id != \"\" && \n@request.auth.id = user.id",
-				"createRule": "@request.auth.id != \"\" && \n@request.auth.id = @request.data.user &&\n// Additional validation\n@request.data.id:isset = false &&\n@request.data.created:isset = false &&\n@request.data.updated:isset = false &&\n@request.data.public_key:isset = true &&\n@request.data.secret_key:isset = true",
+				"createRule": "@request.auth.id != \"\" && \n@request.auth.id = @request.body.user &&\n// Additional validation\n@request.body.id:isset = false &&\n@request.body.created:isset = false &&\n@request.body.updated:isset = false &&\n@request.body.public_key:isset = true &&\n@request.body.secret_key:isset = true",
 				"updateRule": null,
 				"deleteRule": null,
 				"options": {}
@@ -294,7 +290,7 @@ func init() {
 				"name": "users",
 				"type": "auth",
 				"system": false,
-				"schema": [
+				"fields": [
 					{
 						"system": false,
 						"id": "users_name",
@@ -357,7 +353,7 @@ func init() {
 				"name": "conversation_secret_keys",
 				"type": "base",
 				"system": false,
-				"schema": [
+				"fields": [
 					{
 						"system": false,
 						"id": "smzrfycv",
@@ -408,7 +404,7 @@ func init() {
 				"indexes": [],
 				"listRule": "// logged in\n@request.auth.id != \"\"\n// permissions\n&& user = @request.auth.id\n&& (\n  @collection.participants.conversation ?= conversation\n  && @collection.participants.user ?= @request.auth.id \n  && (\n    @collection.participants.role = 'Viewer'\n    || @collection.participants.role = 'Editor'\n    ||@collection.participants.role = 'Admin'\n  )\n) || (\n  conversation.creator ?= @request.auth.id\n)",
 				"viewRule": null,
-				"createRule": "// logged in\n@request.auth.id != \"\"\n// data validation\n&& @request.data.id:isset = false\n&& @request.data.secret_key:isset = true\n&& @request.data.conversation:isset = true\n&& @request.data.updated:isset = false\n&& @request.data.created:isset = false\n&& @request.data.user = @request.auth.id\n// permissions\n&& (\n  (@collection.participants.conversation ?= @request.data.conversation\n    && @collection.participants.user ?= @request.auth.id \n    && @collection.participants.role = 'Admin' // only admins can add keys)\n  ||\n  (@collection.conversations.id ?= @request.data.conversation\n    && @collection.conversations.creator = @request.auth.id // creators can also add keys)\n  )",
+				"createRule": "// logged in\n@request.auth.id != \"\"\n// data validation\n&& @request.body.id:isset = false\n&& @request.body.secret_key:isset = true\n&& @request.body.conversation:isset = true\n&& @request.body.updated:isset = false\n&& @request.body.created:isset = false\n&& @request.body.user = @request.auth.id\n// permissions\n&& (\n  (@collection.participants.conversation ?= @request.body.conversation\n    && @collection.participants.user ?= @request.auth.id \n    && @collection.participants.role = 'Admin' // only admins can add keys)\n  ||\n  (@collection.conversations.id ?= @request.body.conversation\n    && @collection.conversations.creator = @request.auth.id // creators can also add keys)\n  )",
 				"updateRule": null,
 				"deleteRule": null,
 				"options": {}
@@ -420,7 +416,7 @@ func init() {
 				"name": "participants",
 				"type": "base",
 				"system": false,
-				"schema": [
+				"fields": [
 					{
 						"system": false,
 						"id": "ba8hv4fd",
@@ -483,13 +479,8 @@ func init() {
 			}
 		]`
 
-		collections := []*models.Collection{}
-		if err := json.Unmarshal([]byte(jsonData), &collections); err != nil {
-			return err
-		}
-
-		return daos.New(db).ImportCollections(collections, true, nil)
-	}, func(db dbx.Builder) error {
+		return importLegacyCollections(app, jsonData, true)
+	}, func(app core.App) error {
 		return nil
 	})
 }

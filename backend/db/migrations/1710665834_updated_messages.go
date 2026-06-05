@@ -1,20 +1,14 @@
 package migrations
 
 import (
-	"encoding/json"
-
-	"github.com/pocketbase/dbx"
-	"github.com/pocketbase/pocketbase/daos"
+	"github.com/pocketbase/pocketbase/core"
 	m "github.com/pocketbase/pocketbase/migrations"
-	"github.com/pocketbase/pocketbase/models/schema"
 	"github.com/pocketbase/pocketbase/tools/types"
 )
 
 func init() {
-	m.Register(func(db dbx.Builder) error {
-		dao := daos.New(db)
-
-		collection, err := dao.FindCollectionByNameOrId("v893vvhgp688kie")
+	m.Register(func(app core.App) error {
+		collection, err := app.FindCollectionByNameOrId("v893vvhgp688kie")
 		if err != nil {
 			return err
 		}
@@ -24,11 +18,10 @@ func init() {
 		collection.CreateRule = types.Pointer("@request.auth.id != \"\"\n&& conversation.creator = @request.auth.id\n&& (parent_message = \"\" || (parent_message.conversation = conversation))")
 
 		// remove
-		collection.Schema.RemoveField("8l6lqqqv")
+		collection.Fields.RemoveById("8l6lqqqv")
 
 		// update
-		edit_conversation := &schema.SchemaField{}
-		if err := json.Unmarshal([]byte(`{
+		if err := addLegacyField(app, collection, `{
 			"system": false,
 			"id": "rqegjuus",
 			"name": "conversation",
@@ -43,16 +36,13 @@ func init() {
 				"maxSelect": 1,
 				"displayFields": null
 			}
-		}`), edit_conversation); err != nil {
+		}`); err != nil {
 			return err
 		}
-		collection.Schema.AddField(edit_conversation)
 
-		return dao.SaveCollection(collection)
-	}, func(db dbx.Builder) error {
-		dao := daos.New(db)
-
-		collection, err := dao.FindCollectionByNameOrId("v893vvhgp688kie")
+		return app.Save(collection)
+	}, func(app core.App) error {
+		collection, err := app.FindCollectionByNameOrId("v893vvhgp688kie")
 		if err != nil {
 			return err
 		}
@@ -62,8 +52,7 @@ func init() {
 		collection.CreateRule = types.Pointer("@request.auth.id != \"\" &&\n// User is an editor or admin for the the given conversation\n@collection.participants.conversation = conversation &&\n@collection.participants.user = @request.auth.id &&\n(@collection.participants.role = 'Editor' || @collection.participants.role = 'Admin') \n// Check the parent message is also in the same conversation\n(parent_message = \"\" || (parent_message.conversation = conversation))")
 
 		// add
-		del_key := &schema.SchemaField{}
-		if err := json.Unmarshal([]byte(`{
+		if err := addLegacyField(app, collection, `{
 			"system": false,
 			"id": "8l6lqqqv",
 			"name": "key",
@@ -76,14 +65,12 @@ func init() {
 				"max": null,
 				"pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
 			}
-		}`), del_key); err != nil {
+		}`); err != nil {
 			return err
 		}
-		collection.Schema.AddField(del_key)
 
 		// update
-		edit_conversation := &schema.SchemaField{}
-		if err := json.Unmarshal([]byte(`{
+		if err := addLegacyField(app, collection, `{
 			"system": false,
 			"id": "rqegjuus",
 			"name": "conversation",
@@ -98,11 +85,10 @@ func init() {
 				"maxSelect": 1,
 				"displayFields": null
 			}
-		}`), edit_conversation); err != nil {
+		}`); err != nil {
 			return err
 		}
-		collection.Schema.AddField(edit_conversation)
 
-		return dao.SaveCollection(collection)
+		return app.Save(collection)
 	})
 }

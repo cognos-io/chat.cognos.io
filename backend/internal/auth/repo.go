@@ -31,7 +31,7 @@ func (r *PocketBaseKeyPairRepo) ConversationPublicKey(
 ) ([32]byte, error) {
 	const collectionName = "conversation_public_keys"
 
-	records, err := r.app.Dao().FindRecordsByFilter(collectionName,
+	records, err := r.app.FindRecordsByFilter(collectionName,
 		"conversation = {:conversation_id}", // filter
 		"-updated",                          // sort
 		1,                                   // limit
@@ -64,7 +64,7 @@ func (r *PocketBaseKeyPairRepo) ConversationPublicKey(
 func (r *PocketBaseKeyPairRepo) UserPublicKey(userID string) ([32]byte, error) {
 	const collectionName = "user_key_pairs"
 
-	records, err := r.app.Dao().FindRecordsByFilter(collectionName,
+	records, err := r.app.FindRecordsByFilter(collectionName,
 		"user = {:user_id}",           // filter
 		"-updated",                    // sort
 		1,                             // limit

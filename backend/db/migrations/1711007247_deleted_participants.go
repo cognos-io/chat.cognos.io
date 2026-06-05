@@ -1,25 +1,19 @@
 package migrations
 
 import (
-	"encoding/json"
-
-	"github.com/pocketbase/dbx"
-	"github.com/pocketbase/pocketbase/daos"
+	"github.com/pocketbase/pocketbase/core"
 	m "github.com/pocketbase/pocketbase/migrations"
-	"github.com/pocketbase/pocketbase/models"
 )
 
 func init() {
-	m.Register(func(db dbx.Builder) error {
-		dao := daos.New(db)
-
-		collection, err := dao.FindCollectionByNameOrId("52et2jthsxn7mjr")
+	m.Register(func(app core.App) error {
+		collection, err := app.FindCollectionByNameOrId("52et2jthsxn7mjr")
 		if err != nil {
 			return err
 		}
 
-		return dao.DeleteCollection(collection)
-	}, func(db dbx.Builder) error {
+		return app.Delete(collection)
+	}, func(app core.App) error {
 		jsonData := `{
 			"id": "52et2jthsxn7mjr",
 			"created": "2024-02-25 10:52:06.278Z",
@@ -27,7 +21,7 @@ func init() {
 			"name": "participants",
 			"type": "base",
 			"system": false,
-			"schema": [
+			"fields": [
 				{
 					"system": false,
 					"id": "ba8hv4fd",
@@ -89,11 +83,6 @@ func init() {
 			"options": {}
 		}`
 
-		collection := &models.Collection{}
-		if err := json.Unmarshal([]byte(jsonData), &collection); err != nil {
-			return err
-		}
-
-		return daos.New(db).SaveCollection(collection)
+		return importLegacyCollections(app, jsonData, false)
 	})
 }
