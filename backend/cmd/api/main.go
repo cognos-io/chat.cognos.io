@@ -108,21 +108,28 @@ func bindAppHooks(
 			}
 		}
 
-		return nil
+		return e.Next()
 	})
 
 	app.OnRecordAfterCreateSuccess("messages").BindFunc(func(e *core.RecordEvent) error {
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(e.App)
 		conversationRepo := chat.NewPocketBaseConversationRepo(e.App, keyPairRepo)
 
-		return conversationRepo.SetConversationUpdated(
+		if err := conversationRepo.SetConversationUpdated(
 			e.Record.GetString("conversation"),
-		)
+		); err != nil {
+			return err
+		}
+
+		return e.Next()
 	})
 
 	if params.CronScheduler != nil {
 		app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
-			return params.CronScheduler.Shutdown()
+			if err := params.CronScheduler.Shutdown(); err != nil {
+				return err
+			}
+			return e.Next()
 		})
 	}
 }

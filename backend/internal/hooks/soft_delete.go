@@ -22,7 +22,7 @@ func SoftDelete(app core.App) {
 
 		// Skip if the record is already deleted or in excluded collections
 		if slices.Contains(excludedCollections, e.Record.Collection().Name) {
-			return nil
+			return e.Next()
 		}
 
 		collection, err := app.FindCollectionByNameOrId(DeletedCollectionName)
@@ -38,6 +38,10 @@ func SoftDelete(app core.App) {
 			"record":     e.Record,
 		})
 
-		return form.Submit()
+		if err := form.Submit(); err != nil {
+			return err
+		}
+
+		return e.Next()
 	})
 }
