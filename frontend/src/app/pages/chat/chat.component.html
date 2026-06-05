@@ -4,7 +4,12 @@
       <app-cognos-logo class="chat-shell__logo" palette="dark"></app-cognos-logo>
     </div>
 
-    <cog-button appearance="primary" [fullWidth]="true" icon="plus" (click)="onNewConversation()">
+    <cog-button
+      appearance="primary"
+      [fullWidth]="true"
+      icon="plus"
+      (click)="onNewConversation()"
+    >
       New chat
     </cog-button>
 
@@ -74,7 +79,10 @@
   </div>
 </ng-template>
 
-<div class="chat-shell" [class.chat-shell--temporary]="conversationService.isTemporaryConversation()">
+<div
+  class="chat-shell"
+  [class.chat-shell--temporary]="conversationService.isTemporaryConversation()"
+>
   <aside class="chat-shell__sidebar">
     <ng-container *ngTemplateOutlet="navigationContent"></ng-container>
     <div class="chat-shell__sidebar-footer">
@@ -84,11 +92,20 @@
 
   <div class="chat-shell__main">
     <header class="chat-shell__mobile-bar">
-      <cog-icon-button name="menu" size="lg" title="Open navigation" (click)="openDrawer()" />
+      <cog-icon-button
+        name="menu"
+        size="lg"
+        title="Open navigation"
+        (click)="openDrawer()"
+      />
       <app-cognos-logo class="chat-shell__mobile-logo" palette="dark"></app-cognos-logo>
       <div class="chat-shell__mobile-actions">
         @if (canClearTemporaryMessages()) {
-          <cog-icon-button name="eraser" title="Clear all messages" (click)="onClearMessages()" />
+          <cog-icon-button
+            name="eraser"
+            title="Clear all messages"
+            (click)="onClearMessages()"
+          />
         }
       </div>
     </header>
@@ -105,10 +122,12 @@
 
         <div class="chat-shell__page-actions">
           @if (canClearTemporaryMessages() && !isMobile()) {
-            <cog-icon-button name="eraser" title="Clear all messages" (click)="onClearMessages()" />
+            <cog-icon-button
+              name="eraser"
+              title="Clear all messages"
+              (click)="onClearMessages()"
+            />
           }
-          <cog-icon-button name="info" title="Get help" (click)="onOpenHelpDialog()" />
-          <cog-icon-button name="x" title="Log out" (click)="onLogout()" />
         </div>
       </header>
 
