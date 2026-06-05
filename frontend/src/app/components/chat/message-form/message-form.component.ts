@@ -1,4 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { Component, PLATFORM_ID, computed, effect, inject } from '@angular/core';
 import {
   FormBuilder,
@@ -6,12 +7,13 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { ErrorStateMatcher } from '@angular/material/core';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { Dialog } from '@angular/cdk/dialog';
+
+import {
+  CognosButtonComponent,
+  CognosIconButtonComponent,
+  CognosIconComponent,
+} from '@cognos/ui-angular';
 
 import { AgentService } from '@app/services/agent.service';
 import { ConversationService } from '@app/services/conversation.service';
@@ -22,106 +24,190 @@ import {
   MessageStatus,
 } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
+import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 import { AgentSelectorComponent } from './agent-selector/agent-selector.component';
 import { ModelSelectorComponent } from './model-selector/model-selector.component';
-
-/** Error when invalid control is touched. */
-export class TouchedErrorStateMatcher implements ErrorStateMatcher {
-  isErrorState(control: FormControl | null): boolean {
-    return !!(
-      control &&
-      control.invalid &&
-      control.dirty &&
-      (control.value || '').trim().length > 0
-    );
-  }
-}
 
 @Component({
   selector: 'app-message-form',
   standalone: true,
   imports: [
-    MatButtonModule,
     ReactiveFormsModule,
-    MatInputModule,
-    MatIconModule,
-    MatDialogModule,
-    MatTooltipModule,
+    CdkTextareaAutosize,
+    CognosButtonComponent,
+    CognosIconButtonComponent,
+    CognosIconComponent,
   ],
   template: `
-    <form class="message-form gap-2" [formGroup]="messageForm" (submit)="sendMessage()">
-      <mat-form-field class="flex-grow">
-        <mat-label>Chat to an AI</mat-label>
+    <form class="message-form" [formGroup]="messageForm" (submit)="sendMessage()">
+      <div class="message-form__panel">
+        <label class="message-form__label" for="message-form">
+          Message Cognos — encrypted on this device
+        </label>
+
         <textarea
-          formControlName="content"
           cdkTextareaAutosize
-          name="message-form"
+          cdkAutosizeMaxRows="8"
+          cdkAutosizeMinRows="2"
+          class="message-form__textarea"
+          formControlName="content"
           id="message-form"
-          matInput
-          [errorStateMatcher]="errorStateMatcher"
+          name="message-form"
           placeholder="Teach me about..."
           (keydown.control.enter)="isMac ? undefined : sendMessage()"
           (keydown.meta.enter)="isMac ? sendMessage() : undefined"
         ></textarea>
-        @if (canClearTemporaryMessages() && !isMobile()) {
-          <button
-            mat-icon-button
-            matPrefix
-            matTooltip="Clears all messages. Unrecoverable."
-            (click)="onClearMessages()"
-          >
-            <mat-icon fontSet="bi" fontIcon="bi-fire"></mat-icon>
-          </button>
-        }
-        @if (messageForm.valid) {
-          <button type="submit" matSuffix mat-icon-button="">
-            <mat-icon fontSet="bi" fontIcon="bi-send-fill"></mat-icon>
-          </button>
-        }
-      </mat-form-field>
-    </form>
 
-    <div class="flex flex-col justify-between md:flex-row md:items-center">
-      <span class="hidden italic md:block">
-        @if (isMac) {
-          Cmd
-        } @else {
-          Ctrl
-        }
-        + Enter to send</span
-      >
-      <div class="flex flex-col items-center md:flex-row">
-        <div class="flex items-center">
-          <button class="inline-button" mat-button (click)="openAgentSelector()">
-            {{ agentService.selectedAgent().name }}
-          </button>
-        </div>
-        <div class="flex items-center">
-          <span class="mx-2 italic">powered by</span>
-          <button class="inline-button" mat-button (click)="openModelSelector()">
-            {{ modelService.selectedModel().name }}
-          </button>
+        <div class="message-form__toolbar">
+          <div class="message-form__controls">
+            <cog-button
+              appearance="default"
+              iconAfter="chevron-down"
+              type="button"
+              (click)="openAgentSelector()"
+            >
+              {{ agentService.selectedAgent().name }}
+            </cog-button>
+
+            <span class="message-form__powered-by">powered by</span>
+
+            <cog-button
+              appearance="default"
+              iconAfter="chevron-down"
+              type="button"
+              (click)="openModelSelector()"
+            >
+              {{ modelService.selectedModel().name }}
+            </cog-button>
+
+            @if (canClearTemporaryMessages() && !isMobile()) {
+              <cog-icon-button
+                name="eraser"
+                title="Clear all messages"
+                type="button"
+                (click)="onClearMessages()"
+              />
+            }
+          </div>
+
+          <cog-button
+            appearance="primary"
+            icon="send"
+            type="submit"
+            [disabled]="messageForm.disabled || !messageForm.valid"
+          >
+            Send
+          </cog-button>
         </div>
       </div>
-    </div>
+
+      <div class="message-form__meta">
+        <span class="message-form__security">
+          <cog-icon name="lock" [size]="12" tone="text-subtlest" />
+          <span>End-to-end encrypted · keys never leave this device</span>
+        </span>
+
+        <span class="message-form__shortcut">
+          @if (isMac) {
+            Cmd
+          } @else {
+            Ctrl
+          }
+          + Enter to send
+        </span>
+      </div>
+    </form>
   `,
   styles: `
     .message-form {
+      display: grid;
+      gap: var(--cog-space-100);
       width: 100%;
-
-      display: flex;
     }
 
-    .inline-button {
-      --mdc-text-button-container-height: 20px;
+    .message-form__panel {
+      display: grid;
+      gap: var(--cog-space-150);
+      border: 2px solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface);
+      padding: var(--cog-space-150);
+      transition: border-color var(--cog-dur-fast) var(--cog-ease-standard);
+    }
+
+    .message-form__panel:focus-within {
+      border-color: var(--cog-brand);
+    }
+
+    .message-form__label {
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm);
+      line-height: var(--cog-lh-body-sm);
+    }
+
+    .message-form__textarea {
+      width: 100%;
+      resize: none;
+      border: 0;
+      background: transparent;
+      color: var(--cog-text);
+      font: inherit;
+      font-size: 16px;
+      line-height: var(--cog-lh-body-lg);
+      outline: 0;
+      padding: 0;
+    }
+
+    .message-form__textarea::placeholder {
+      color: var(--cog-text-subtlest);
+    }
+
+    .message-form__toolbar,
+    .message-form__controls,
+    .message-form__meta,
+    .message-form__security {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-100);
+    }
+
+    .message-form__toolbar,
+    .message-form__meta {
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .message-form__controls {
+      flex-wrap: wrap;
+    }
+
+    .message-form__powered-by,
+    .message-form__meta {
+      color: var(--cog-text-subtlest);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+    }
+
+    @media (max-width: 767px) {
+      .message-form__toolbar {
+        align-items: stretch;
+      }
+
+      .message-form__controls {
+        width: 100%;
+      }
+
+      .message-form__controls cog-button {
+        flex: 1 1 auto;
+      }
     }
   `,
 })
 export class MessageFormComponent {
-  private _fb = inject(FormBuilder);
-  private _dialog = inject(MatDialog);
-  private _platformId = inject(PLATFORM_ID);
+  private readonly _dialog = inject(Dialog);
+  private readonly _fb = inject(FormBuilder);
+  private readonly _platformId = inject(PLATFORM_ID);
   private readonly _conversationService = inject(ConversationService);
   private readonly _deviceService = inject(DeviceService);
 
@@ -129,8 +215,6 @@ export class MessageFormComponent {
 
   isMac = false;
   isMobile = computed(() => this._deviceService.isMobile());
-
-  public readonly errorStateMatcher = new TouchedErrorStateMatcher();
 
   public readonly messageService = inject(MessageService);
   public readonly agentService = inject(AgentService);
@@ -167,24 +251,28 @@ export class MessageFormComponent {
   }
 
   openAgentSelector() {
-    this._dialog.open(AgentSelectorComponent);
+    this._dialog.open(AgentSelectorComponent, cognosDialogOptions);
   }
 
   openModelSelector() {
-    this._dialog.open(ModelSelectorComponent, {});
+    this._dialog.open(ModelSelectorComponent, cognosDialogOptions);
   }
 
   sendMessage() {
-    const content = this.messageForm.get('content');
-    if (content) {
-      this._previousMessage = content.value;
-      const messageRequest: MessageRequest = {
-        content: content.value,
-        requestId: self.crypto.randomUUID(),
-      };
-      this.messageService.sendMessage$.next(messageRequest);
-      this.messageForm.reset();
+    const content = this.messageForm.controls.content;
+    const contentValue = content.value ?? '';
+
+    if (content.invalid || this.messageForm.disabled) {
+      return;
     }
+
+    this._previousMessage = contentValue;
+    const messageRequest: MessageRequest = {
+      content: contentValue,
+      requestId: self.crypto.randomUUID(),
+    };
+    this.messageService.sendMessage$.next(messageRequest);
+    this.messageForm.reset();
   }
 
   disableForm() {

@@ -46,18 +46,24 @@ const argon2idMemory = 19456; // 19MiB
 const argon2idIterationCount = 2;
 const argon2idParallelism = 1;
 
-const setupWasmInstance = setupWasm(
-  (importObject) =>
-    WebAssembly.instantiateStreaming(
-      fetch('/assets/wasm/argon2id/simd.wasm'),
-      importObject,
-    ),
-  (importObject) =>
-    WebAssembly.instantiateStreaming(
-      fetch('/assets/wasm/argon2id/no-simd.wasm'),
-      importObject,
-    ),
-);
+let setupWasmInstance: ReturnType<typeof setupWasm> | undefined;
+
+const getSetupWasmInstance = () => {
+  setupWasmInstance ??= setupWasm(
+    (importObject) =>
+      WebAssembly.instantiateStreaming(
+        fetch('/assets/wasm/argon2id/simd.wasm'),
+        importObject,
+      ),
+    (importObject) =>
+      WebAssembly.instantiateStreaming(
+        fetch('/assets/wasm/argon2id/no-simd.wasm'),
+        importObject,
+      ),
+  );
+
+  return setupWasmInstance;
+};
 
 @Injectable({
   providedIn: 'root',
@@ -139,7 +145,7 @@ export class VaultService {
   hashVaultPassword(rawPassword: string): Observable<Uint8Array> {
     const encoder = new TextEncoder();
 
-    return from(setupWasmInstance).pipe(
+    return from(getSetupWasmInstance()).pipe(
       map((argon2id) =>
         argon2id({
           password: encoder.encode(rawPassword),

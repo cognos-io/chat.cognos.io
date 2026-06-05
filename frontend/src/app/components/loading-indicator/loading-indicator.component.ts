@@ -4,65 +4,56 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   selector: 'app-loading-indicator',
   standalone: true,
   imports: [],
-  template: `<div class="spinner">
-    <div class="double-bounce1"></div>
-    <div class="double-bounce2"></div>
-  </div> `,
+  template: `
+    <div class="loading-indicator" aria-label="Loading" role="status">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  `,
   styles: `
-    .spinner {
-      width: 40px;
-      height: 40px;
-
-      position: relative;
-      margin: 100px auto;
+    :host {
+      display: flex;
+      justify-content: center;
+      padding: var(--cog-space-200);
     }
 
-    .double-bounce1,
-    .double-bounce2 {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background-color: #333;
-      opacity: 0.6;
-      position: absolute;
-      top: 0;
-      left: 0;
-
-      -webkit-animation: sk-bounce 2s infinite ease-in-out;
-      animation: sk-bounce 2s infinite ease-in-out;
+    .loading-indicator {
+      display: inline-flex;
+      gap: var(--cog-space-050);
+      color: var(--cog-text-subtlest);
     }
 
-    .double-bounce2 {
-      -webkit-animation-delay: -1s;
-      animation-delay: -1s;
+    .loading-indicator span {
+      width: 8px;
+      height: 8px;
+      border-radius: var(--cog-radius-pill);
+      background: currentColor;
+      animation: loading-indicator-bounce 1s infinite var(--cog-ease-standard);
     }
 
-    @-webkit-keyframes sk-bounce {
+    .loading-indicator span:nth-child(2) {
+      animation-delay: 120ms;
+    }
+
+    .loading-indicator span:nth-child(3) {
+      animation-delay: 240ms;
+    }
+
+    @keyframes loading-indicator-bounce {
       0%,
+      80%,
       100% {
-        -webkit-transform: scale(0);
+        opacity: 0.35;
+        transform: translateY(0);
       }
-      50% {
-        -webkit-transform: scale(1);
-      }
-    }
 
-    @keyframes sk-bounce {
-      0%,
-      100% {
-        transform: scale(0);
-        -webkit-transform: scale(0);
-      }
-      50% {
-        transform: scale(1);
-        -webkit-transform: scale(1);
+      40% {
+        opacity: 1;
+        transform: translateY(-2px);
       }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoadingIndicatorComponent {
-  /**
-   * https://tobiasahlin.com/spinkit/
-   */
-}
+export class LoadingIndicatorComponent {}
