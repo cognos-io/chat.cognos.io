@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
 
@@ -21,6 +21,7 @@ import { AuthService } from '@services/auth.service';
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     CognosButtonComponent,
     CognosLozengeComponent,
     CognosLogoComponent,
@@ -93,6 +94,14 @@ import { AuthService } from '@services/auth.service';
               try again.
             </p>
           }
+
+          <p class="login-page__switch">
+            <a routerLink="/auth/forgot-password">Forgot your password?</a>
+          </p>
+          <p class="login-page__switch">
+            Need an account?
+            <a routerLink="/auth/register">Register</a>
+          </p>
 
           <p class="login-page__legal">
             By signing up you agree to our
@@ -181,6 +190,7 @@ import { AuthService } from '@services/auth.service';
     .login-page__lead,
     .login-page__hint,
     .login-page__legal,
+    .login-page__switch,
     .login-page__founder-copy p {
       margin: 0;
     }
@@ -197,6 +207,7 @@ import { AuthService } from '@services/auth.service';
     .login-page__lead,
     .login-page__legal,
     .login-page__hint,
+    .login-page__switch,
     .login-page__founder-copy p {
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-body);
@@ -228,6 +239,7 @@ import { AuthService } from '@services/auth.service';
     }
 
     .login-page__legal a,
+    .login-page__switch a,
     .login-page__founder-copy a {
       color: var(--cog-link);
     }

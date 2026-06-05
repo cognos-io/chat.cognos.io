@@ -162,6 +162,83 @@ export class AuthService implements OnDestroy {
     );
   }
 
+  register(email: string, password: string): Observable<unknown> {
+    return from(
+      this._pb
+        .collection(this._authCollection)
+        .create({ email, password, passwordConfirm: password })
+        .then(() =>
+          this._pb.collection(this._authCollection).authWithPassword(email, password),
+        ),
+    ).pipe(
+      catchError((error) => {
+        const message =
+          (error as { response?: { message?: string } })?.response?.message ??
+          'Unable to create your account';
+        this._errorService.alert(message);
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  requestPasswordReset(email: string): Observable<boolean> {
+    return from(
+      this._pb.collection(this._authCollection).requestPasswordReset(email),
+    ).pipe(
+      catchError((error) => {
+        this._errorService.alert('Unable to send password reset email');
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  confirmPasswordReset(
+    token: string,
+    password: string,
+    passwordConfirm: string,
+  ): Observable<boolean> {
+    return from(
+      this._pb
+        .collection(this._authCollection)
+        .confirmPasswordReset(token, password, passwordConfirm),
+    ).pipe(
+      catchError((error) => {
+        const message =
+          (error as { response?: { message?: string } })?.response?.message ??
+          'Unable to reset password. The link may have expired.';
+        this._errorService.alert(message);
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  requestVerification(email: string): Observable<boolean> {
+    return from(
+      this._pb.collection(this._authCollection).requestVerification(email),
+    ).pipe(
+      catchError((error) => {
+        this._errorService.alert('Unable to send verification email');
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  confirmVerification(token: string): Observable<boolean> {
+    return from(
+      this._pb.collection(this._authCollection).confirmVerification(token),
+    ).pipe(
+      catchError((error) => {
+        this._errorService.alert('Unable to verify email. The link may have expired.');
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
   logout(): void {
     return this._pb.authStore.clear();
   }
