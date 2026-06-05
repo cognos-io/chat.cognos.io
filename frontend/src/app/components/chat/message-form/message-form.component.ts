@@ -54,7 +54,7 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
           formControlName="content"
           id="message-form"
           name="message-form"
-          placeholder="Teach me about..."
+          placeholder="Message with Cognos"
           (keydown.control.enter)="isMac ? undefined : sendMessage()"
           (keydown.meta.enter)="isMac ? sendMessage() : undefined"
         ></textarea>
@@ -64,21 +64,17 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
             appearance="default"
             iconAfter="chevron-down"
             type="button"
-            (click)="openAgentSelector()"
-          >
-            {{ agentService.selectedAgent().name }}
-          </cog-button>
-
-          <span class="message-form__powered-by">powered by</span>
-
-          <cog-button
-            appearance="default"
-            iconAfter="chevron-down"
-            type="button"
             (click)="openModelSelector()"
           >
             {{ modelService.selectedModel().name }}
           </cog-button>
+
+          <cog-icon-button
+            name="sparkles"
+            title="Choose assistant — {{ agentService.selectedAgent().name }}"
+            type="button"
+            (click)="openAgentSelector()"
+          />
 
           @if (canClearTemporaryMessages() && !isMobile()) {
             <cog-icon-button
@@ -88,18 +84,18 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
               (click)="onClearMessages()"
             />
           }
-        </div>
 
-        <cog-button
-          class="message-form__send"
-          appearance="primary"
-          icon="send"
-          title="Send"
-          type="submit"
-          [disabled]="messageForm.disabled || !messageForm.valid"
-        >
-          <span class="message-form__send-label">Send</span>
-        </cog-button>
+          <cog-button
+            class="message-form__send"
+            appearance="primary"
+            icon="send"
+            title="Send"
+            type="submit"
+            [disabled]="messageForm.disabled || !messageForm.valid"
+          >
+            <span class="message-form__send-label">Send</span>
+          </cog-button>
+        </div>
       </div>
 
       <div class="message-form__meta">
@@ -127,14 +123,9 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     }
 
     .message-form__panel {
+      position: relative;
       display: grid;
       gap: var(--cog-space-150);
-      grid-template-columns: minmax(0, 1fr) auto;
-      grid-template-areas:
-        'label    label'
-        'textarea textarea'
-        'controls send';
-      align-items: end;
       border: 2px solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface);
@@ -147,14 +138,18 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     }
 
     .message-form__label {
-      grid-area: label;
-      color: var(--cog-text-subtle);
-      font-size: var(--cog-fs-body-sm);
-      line-height: var(--cog-lh-body-sm);
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     .message-form__textarea {
-      grid-area: textarea;
       width: 100%;
       resize: none;
       border: 0;
@@ -172,7 +167,6 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     }
 
     .message-form__controls {
-      grid-area: controls;
       display: flex;
       align-items: center;
       gap: var(--cog-space-100);
@@ -180,8 +174,7 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     }
 
     .message-form__send {
-      grid-area: send;
-      justify-self: end;
+      margin-left: auto;
     }
 
     .message-form__meta,
@@ -196,31 +189,23 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
       flex-wrap: wrap;
     }
 
-    .message-form__powered-by,
     .message-form__meta {
       color: var(--cog-text-subtlest);
       font-size: var(--cog-fs-caption);
       line-height: var(--cog-lh-caption);
     }
 
+    .message-form__send-label {
+      display: none;
+    }
+
     @media (max-width: 767px) {
-      .message-form__panel {
-        grid-template-areas:
-          'label    label'
-          'textarea send'
-          'controls controls';
-      }
-
-      .message-form__powered-by {
-        display: none;
-      }
-
-      .message-form__send-label {
-        display: none;
-      }
-
       .message-form__controls cog-button {
         min-width: 0;
+      }
+
+      .message-form__meta {
+        display: none;
       }
     }
   `,
