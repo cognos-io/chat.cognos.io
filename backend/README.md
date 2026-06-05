@@ -1,3 +1,19 @@
+# Security model note
+
+The backend is in the middle of a model-selection and security rework.
+
+Target direction:
+
+- first-party Cognos API endpoints instead of long-term OpenAI compatibility
+- backend-driven model catalogue
+- encrypted private-key backup with a user **Account Key** for new-device unlock
+- ciphertext-only message storage at rest
+
+See:
+
+- `../docs/security-model.md`
+- `../docs/specs/backend-model-selector.md`
+
 ## Useful links
 
 - [How I write HTTP services in Go after 13 years](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/)
@@ -13,6 +29,8 @@ In the `configs` directory copy the `api.example.yaml` to an environment specifi
 
 We use PocketBase's built-in `users` auth collection for authentication.
 
+The intended cross-device security model is documented in `../docs/security-model.md`.
+
 ### Setup
 
 1. Open the PocketBase admin UI, usually at `http://127.0.0.1:8090/_/`
@@ -27,11 +45,15 @@ We use PocketBase's built-in `users` auth collection for authentication.
 Useful when creating test users, we have provided a script to generate a public key and an encrypted
 private key for a given user.
 
+> Note: this helper reflects the legacy vault-based flow and is expected to change as the Account
+> Key model is implemented.
+
 ```text
 go run cmd/generate-key-pair/main.go -email={{ USER_EMAIL }} -password={{ USER_VAULT_PASSWORD }}
 ```
 
-The email is used for salting the hashed password
+The email is used for salting the hashed password in the current legacy flow.
+This is not the intended long-term Account Key design.
 
 ## HTTPie requests
 
