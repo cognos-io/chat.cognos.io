@@ -1,3 +1,4 @@
+import { Dialog } from '@angular/cdk/dialog';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,11 +9,11 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Dialog } from '@angular/cdk/dialog';
 import { Router, RouterModule } from '@angular/router';
 
 import {
   CognosIconButtonComponent,
+  CognosIconComponent,
   CognosMenuComponent,
   CognosMenuItem,
 } from '@cognos/ui-angular';
@@ -27,7 +28,12 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
 @Component({
   selector: 'app-conversation-list-item',
   standalone: true,
-  imports: [RouterModule, CognosIconButtonComponent, CognosMenuComponent],
+  imports: [
+    RouterModule,
+    CognosIconButtonComponent,
+    CognosIconComponent,
+    CognosMenuComponent,
+  ],
   template: `
     <div class="conversation-list-item">
       <a
@@ -43,7 +49,9 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
 
       <div class="conversation-list-item__meta">
         @if (isConversationPinned(conversation.record.id)) {
-          <span class="conversation-list-item__pin" aria-hidden="true">Pinned</span>
+          <span class="conversation-list-item__pin">
+            <cog-icon name="pin" [size]="14" tone="text-subtlest" />
+          </span>
         }
 
         <div class="conversation-list-item__menu-wrap">
@@ -119,11 +127,10 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     }
 
     .conversation-list-item__pin {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       color: var(--cog-text-subtlest);
-      font-size: var(--cog-fs-caption);
-      line-height: var(--cog-lh-caption);
-      text-transform: uppercase;
-      letter-spacing: var(--cog-ls-overline);
     }
 
     .conversation-list-item__menu-wrap {

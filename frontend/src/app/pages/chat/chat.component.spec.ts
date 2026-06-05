@@ -1,16 +1,18 @@
+import { Dialog } from '@angular/cdk/dialog';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Dialog } from '@angular/cdk/dialog';
-import { provideRouter, Router } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 
 import { Subject } from 'rxjs';
 
+import { Conversation } from '@app/interfaces/conversation';
+import { Message } from '@app/interfaces/message';
 
-import { ChatComponent } from './chat.component';
 import { ConversationService } from '../../services/conversation.service';
 import { DeviceService } from '../../services/device.service';
 import { MessageService } from '../../services/message.service';
 import { VaultService } from '../../services/vault.service';
+import { ChatComponent } from './chat.component';
 
 describe('ChatComponent', () => {
   let fixture: ComponentFixture<ChatComponent>;
@@ -18,12 +20,10 @@ describe('ChatComponent', () => {
   let router: Router;
 
   const temporaryConversation = signal(false);
-  const selectedConversation = signal<{ decryptedData: { title: string } } | undefined>(
-    undefined,
-  );
-  const pinnedConversations = signal<any[]>([]);
-  const recentConversations = signal<any[]>([]);
-  const messages = signal<any[]>([]);
+  const selectedConversation = signal<Conversation | undefined>(undefined);
+  const pinnedConversations = signal<Conversation[]>([]);
+  const recentConversations = signal<Conversation[]>([]);
+  const messages = signal<Message[]>([]);
 
   const conversationService = {
     conversation: selectedConversation,
@@ -77,6 +77,10 @@ describe('ChatComponent', () => {
 
     expect(messageService.resetState).toHaveBeenCalledTimes(1);
     expect(router.navigateByUrl).toHaveBeenCalledWith('/');
+  });
+
+  it('does not render breadcrumbs in the page header', () => {
+    expect(fixture.nativeElement.querySelector('cog-breadcrumbs')).toBeNull();
   });
 
   it('does not navigate when already on the new chat route', () => {

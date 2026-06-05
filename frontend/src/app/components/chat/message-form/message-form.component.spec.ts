@@ -1,27 +1,25 @@
+import { Dialog } from '@angular/cdk/dialog';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Dialog } from '@angular/cdk/dialog';
 
 import { Subject } from 'rxjs';
 
-
-import { MessageFormComponent } from './message-form.component';
+import { Message } from '@app/interfaces/message';
 import { AgentService } from '@app/services/agent.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
-import {
-  MessageService,
-  MessageStatus,
-} from '@app/services/message.service';
+import { MessageService, MessageStatus } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 import { VaultService } from '@app/services/vault.service';
+
+import { MessageFormComponent } from './message-form.component';
 
 describe('MessageFormComponent', () => {
   let fixture: ComponentFixture<MessageFormComponent>;
   let component: MessageFormComponent;
 
   const status = signal(MessageStatus.None);
-  const messages = signal<any[]>([]);
+  const messages = signal<Message[]>([]);
 
   const messageService = {
     status,
@@ -34,9 +32,9 @@ describe('MessageFormComponent', () => {
     status.set(MessageStatus.None);
     messages.set([]);
     vi.clearAllMocks();
-    vi
-      .spyOn(globalThis.crypto, 'randomUUID')
-      .mockReturnValue('00000000-0000-4000-8000-000000000000');
+    vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
+      '00000000-0000-4000-8000-000000000000',
+    );
 
     await TestBed.configureTestingModule({
       imports: [MessageFormComponent],

@@ -1,7 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { CognosButtonComponent, CognosDialogSurfaceComponent } from '@cognos/ui-angular';
+import {
+  CognosButtonComponent,
+  CognosDialogSurfaceComponent,
+} from '@cognos/ui-angular';
 
 import { environment } from '@environments/environment';
 
@@ -12,11 +15,7 @@ import { VaultService } from '../../services/vault.service';
   standalone: true,
   imports: [ReactiveFormsModule, CognosDialogSurfaceComponent, CognosButtonComponent],
   template: `
-    <cog-dialog-surface
-      title="Vault locked"
-      [footer]="false"
-      [dismissible]="false"
-    >
+    <cog-dialog-surface title="Vault locked" [footer]="false" [dismissible]="false">
       <div class="vault-password-dialog">
         <div class="vault-password-dialog__copy">
           @if (vaultService.isNewKeyPair()) {
@@ -54,7 +53,13 @@ import { VaultService } from '../../services/vault.service';
               >This is different from your login password</span
             >
             @if (vaultPasswordForm.get('vaultPassword')?.hasError('required')) {
-              <span class="vault-password-dialog__error">Vault password is required</span>
+              <span class="vault-password-dialog__error"
+                >Vault password is required</span
+              >
+            } @else if (vaultService.unlockError()) {
+              <span class="vault-password-dialog__error">{{
+                vaultService.unlockError()
+              }}</span>
             }
           </label>
 
@@ -74,6 +79,11 @@ import { VaultService } from '../../services/vault.service';
     </cog-dialog-surface>
   `,
   styles: `
+    :host {
+      display: block;
+      inline-size: min(640px, calc(100vw - 32px));
+    }
+
     .vault-password-dialog,
     .vault-password-dialog__copy,
     .vault-password-dialog__form,
@@ -123,6 +133,7 @@ import { VaultService } from '../../services/vault.service';
       color: var(--cog-danger);
       font-size: var(--cog-fs-caption);
       line-height: var(--cog-lh-caption);
+      text-wrap: pretty;
     }
   `,
 })
@@ -138,6 +149,7 @@ export class VaultPasswordDialogComponent {
   });
 
   submit() {
+    this.vaultService.clearUnlockError();
     this.vaultService.rawVaultPassword$.next(
       this.vaultPasswordForm.value.vaultPassword ?? '',
     );

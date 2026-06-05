@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase from 'pocketbase';
@@ -12,6 +12,7 @@ import {
   map,
   of,
   switchMap,
+  tap,
   throwError,
 } from 'rxjs';
 
@@ -26,7 +27,6 @@ import { KeyPair } from '@interfaces/key-pair';
 
 import { AuthService } from './auth.service';
 import { CryptoService } from './crypto.service';
-import { ErrorService } from './error.service';
 
 interface VaultState {
   keyPair: KeyPair | undefined;
@@ -71,13 +71,14 @@ const getSetupWasmInstance = () => {
 export class VaultService {
   private readonly _pb: TypedPocketBase = inject(PocketBase);
   private readonly _cryptoService = inject(CryptoService);
-  private readonly _errorService = inject(ErrorService);
   private readonly _authService = inject(AuthService);
 
   private readonly pbUserKeyPairsCollection = 'user_key_pairs';
 
   // sources
   readonly rawVaultPassword$ = new Subject<string>();
+
+  readonly unlockError = signal<string | null>(null);
 
   // state
   private state = signalSlice({
@@ -92,6 +93,7 @@ export class VaultService {
                 const keyPairRecord = state().keyPairRecord;
                 if (keyPairRecord === null) {
                   return this.createNewUserKeyPair(hashedVaultPassword).pipe(
+                    tap(() => this.clearUnlockError()),
                     map((keyPair) => ({ keyPair })),
                   );
                 }
@@ -103,11 +105,11 @@ export class VaultService {
                     keyPairRecord,
                     hashedVaultPassword,
                   );
+                  this.clearUnlockError();
                   return of({ keyPair });
-                } catch (error) {
-                  console.error('Error unpacking key pair record', error);
-                  this._errorService.alert(
-                    'Error unlocking vault. Please check your vault password try again. If this continues to fail try refreshing the page or trying again later.',
+                } catch {
+                  this.unlockError.set(
+                    'Error unlocking vault. Please check your vault password and try again. If this continues to fail try refreshing the page or trying again later.',
                   );
                   return EMPTY;
                 }
@@ -195,6 +197,10 @@ export class VaultService {
       publicKey,
       secretKey: decryptedSecretKey,
     };
+  }
+
+  clearUnlockError() {
+    this.unlockError.set(null);
   }
 
   createNewUserKeyPair(hashedVaultPassword: Uint8Array): Observable<KeyPair> {
