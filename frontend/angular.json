@@ -43,6 +43,7 @@
               "src/security.txt"
             ],
             "styles": [
+              "node_modules/@cognos/ui/tokens.css",
               "src/styles.scss",
               "node_modules/bootstrap-icons/font/bootstrap-icons.scss",
               "node_modules/prismjs/themes/prism-okaidia.css",

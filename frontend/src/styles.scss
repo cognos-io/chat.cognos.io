@@ -19,7 +19,7 @@ $theme: mat.define-theme(
       primary: mat.$green-palette,
     ),
     typography: (
-      brand-family: 'Public Sans Variable',
+      brand-family: system-ui,
       bold-weight: 900,
     ),
     density: (
@@ -36,9 +36,6 @@ $dark-theme: mat.define-theme(
     ),
   )
 );
-
-// Supports weights 100-900
-@import '@fontsource-variable/public-sans';
 
 // also enable tailwind utilities
 @tailwind base;
@@ -63,7 +60,7 @@ body {
 }
 body {
   margin: 0;
-  font-family: 'Public Sans Variable', 'Helvetica Neue', sans-serif;
+  font-family: var(--cog-font);
 }
 
 body {

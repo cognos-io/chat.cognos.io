@@ -1,0 +1,19 @@
+/* =========================================================================
+   Cognos Design System — optional application globals
+
+   Opt-in only. Do not import this from component packages automatically.
+   Intended for application shells, not reusable components.
+   ========================================================================= */
+
+body {
+  background: var(--cog-app-bg);
+  color: var(--cog-text);
+  font-family: var(--cog-font);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

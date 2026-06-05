@@ -1,0 +1,42 @@
+{
+  "name": "@cognos/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": [
+    "./tokens.css",
+    "./app.css",
+    "./fonts/noto-sans.css",
+    "./fonts/reddit-mono.css",
+    "./styles/tokens.css",
+    "./styles/themes.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./theme.d.ts",
+      "default": "./theme.js"
+    },
+    "./theme": {
+      "types": "./theme.d.ts",
+      "default": "./theme.js"
+    },
+    "./icons": {
+      "types": "./icons.d.ts",
+      "default": "./icons.js"
+    },
+    "./tokens.css": "./tokens.css",
+    "./app.css": "./app.css",
+    "./fonts/noto-sans.css": "./fonts/noto-sans.css",
+    "./fonts/reddit-mono.css": "./fonts/reddit-mono.css",
+    "./styles/tokens.css": "./styles/tokens.css",
+    "./styles/themes.css": "./styles/themes.css",
+    "./tokens.json": "./tokens.json",
+    "./package.json": "./package.json"
+  },
+  "style": "./tokens.css",
+  "dependencies": {
+    "@fontsource-variable/noto-sans": "^5.2.10",
+    "@fontsource-variable/reddit-mono": "^5.2.8",
+    "lucide": "^1.17.0"
+  }
+}

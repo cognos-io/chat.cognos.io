@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/**/*.ts", ".storybook/preview.ts"],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/public-api.ts",
+    "src/storybook-main.ts"
+  ]
+}

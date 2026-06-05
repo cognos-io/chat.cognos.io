@@ -1,0 +1,148 @@
+/* =========================================================================
+   Cognos Design System — semantic theme tokens
+   Usage:
+     <html data-theme="light" data-accent="emerald">
+   ========================================================================= */
+
+/* ============================ THEME: LIGHT ============================== */
+:root,
+[data-theme='light'] {
+  --cog-app-bg: #f7f8f9;
+  --cog-nav-bg: #ffffff;
+  --cog-surface: #ffffff;
+  --cog-surface-raised: #ffffff;
+  --cog-surface-sunken: #f7f8f9;
+  --cog-surface-hover: #f1f2f4;
+  --cog-surface-pressed: #dcdfe4;
+
+  --cog-text: #172b4d;
+  --cog-text-subtle: #44546f;
+  --cog-text-subtlest: #626f86;
+  --cog-text-disabled: #8590a2;
+
+  --cog-border: #dfe1e6;
+  --cog-border-bold: #b3b9c4;
+
+  --cog-input-bg: #f7f8f9;
+  --cog-input-bg-focus: #ffffff;
+
+  --cog-success: #22a06b;
+  --cog-success-bg: #dcfff1;
+  --cog-success-text: #216e4e;
+  --cog-danger: #c9372c;
+  --cog-danger-text: #ae2a19;
+  --cog-info: #0c66e4;
+  --cog-info-bg: #e9f2ff;
+  --cog-info-text: #0c66e4;
+
+  --cog-loz-neutral-bg: #dcdfe4;
+  --cog-loz-neutral-fg: #44546f;
+  --cog-loz-blue-bg: #e9f2ff;
+  --cog-loz-blue-fg: #0055cc;
+  --cog-loz-green-bg: #dcfff1;
+  --cog-loz-green-fg: #216e4e;
+  --cog-loz-purple-bg: #f3f0ff;
+  --cog-loz-purple-fg: #5e4db2;
+  --cog-loz-red-bg: #ffedeb;
+  --cog-loz-red-fg: #ae2a19;
+
+  --cog-shadow-raised:
+    0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+  --cog-shadow-overlay:
+    0 8px 12px rgba(9, 30, 66, 0.15), 0 0 1px rgba(9, 30, 66, 0.31);
+}
+
+/* ============================ THEME: DARK =============================== */
+[data-theme='dark'] {
+  --cog-app-bg: #161a1d;
+  --cog-nav-bg: #1d2125;
+  --cog-surface: #1d2125;
+  --cog-surface-raised: #22272b;
+  --cog-surface-sunken: #161a1d;
+  --cog-surface-hover: #22272b;
+  --cog-surface-pressed: #282e33;
+
+  --cog-text: #c7d1db;
+  --cog-text-subtle: #9fadbc;
+  --cog-text-subtlest: #8c9bab;
+  --cog-text-disabled: #738496;
+
+  --cog-border: #38414a;
+  --cog-border-bold: #454f59;
+
+  --cog-input-bg: #22272b;
+  --cog-input-bg-focus: #1d2125;
+
+  --cog-success: #4bce97;
+  --cog-success-bg: #164b35;
+  --cog-success-text: #7ee2b8;
+  --cog-danger: #f87168;
+  --cog-danger-text: #ff9c8f;
+  --cog-info: #579dff;
+  --cog-info-bg: #1c2b41;
+  --cog-info-text: #85b8ff;
+
+  --cog-loz-neutral-bg: #2c333a;
+  --cog-loz-neutral-fg: #9fadbc;
+  --cog-loz-blue-bg: #1c2b41;
+  --cog-loz-blue-fg: #85b8ff;
+  --cog-loz-green-bg: #164b35;
+  --cog-loz-green-fg: #7ee2b8;
+  --cog-loz-purple-bg: #2b273f;
+  --cog-loz-purple-fg: #b8acf6;
+  --cog-loz-red-bg: #5d1f1a;
+  --cog-loz-red-fg: #ff9c8f;
+
+  --cog-shadow-raised:
+    0 1px 1px rgba(3, 4, 4, 0.5), 0 0 1px rgba(3, 4, 4, 0.6);
+  --cog-shadow-overlay:
+    0 8px 12px rgba(3, 4, 4, 0.56), 0 0 1px rgba(3, 4, 4, 0.6);
+}
+
+/* ============================ ACCENT: EMERALD =========================== */
+:root,
+[data-accent='emerald'] {
+  --cog-brand: #1f845a;
+  --cog-brand-hover: #216e4e;
+  --cog-brand-pressed: #164b35;
+  --cog-on-brand: #ffffff;
+  --cog-link: #216e4e;
+  --cog-selected-bg: #dcfff1;
+  --cog-selected-text: #216e4e;
+  --cog-selected-border: #1f845a;
+}
+
+[data-theme='dark'][data-accent='emerald'],
+[data-theme='dark']:root {
+  --cog-brand: #4bce97;
+  --cog-brand-hover: #7ee2b8;
+  --cog-brand-pressed: #baf3d6;
+  --cog-on-brand: #1d2125;
+  --cog-link: #4bce97;
+  --cog-selected-bg: #143a2b;
+  --cog-selected-text: #7ee2b8;
+  --cog-selected-border: #4bce97;
+}
+
+/* ============================ ACCENT: BLUE ============================== */
+[data-accent='blue'] {
+  --cog-brand: #0c66e4;
+  --cog-brand-hover: #0055cc;
+  --cog-brand-pressed: #09326c;
+  --cog-on-brand: #ffffff;
+  --cog-link: #0c66e4;
+  --cog-selected-bg: #e9f2ff;
+  --cog-selected-text: #0c66e4;
+  --cog-selected-border: #0c66e4;
+}
+
+[data-theme='dark'][data-accent='blue'] {
+  --cog-brand: #579dff;
+  --cog-brand-hover: #85b8ff;
+  --cog-brand-pressed: #cce0ff;
+  --cog-on-brand: #1d2125;
+  --cog-link: #579dff;
+  --cog-selected-bg: #1c2b41;
+  --cog-selected-text: #85b8ff;
+  --cog-selected-border: #579dff;
+}

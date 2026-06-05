@@ -4,7 +4,24 @@ import {
   serializeConversationData,
 } from './conversation';
 
+class TestTextEncoder {
+  encode(input: string): Uint8Array {
+    return Uint8Array.from(input, (character) => character.charCodeAt(0));
+  }
+}
+
+class TestTextDecoder {
+  decode(input: Uint8Array): string {
+    return String.fromCharCode(...input);
+  }
+}
+
 describe('conversation data parse and serialize', () => {
+  beforeAll(() => {
+    globalThis.TextEncoder = TestTextEncoder as typeof TextEncoder;
+    globalThis.TextDecoder = TestTextDecoder as typeof TextDecoder;
+  });
+
   interface validTestCase {
     name: string;
     data: ConversationData;

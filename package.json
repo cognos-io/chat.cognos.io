@@ -1,0 +1,16 @@
+{
+  "name": "@cognos/workspace",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "build": "pnpm -r --if-present build",
+    "lint": "pnpm -r --if-present lint",
+    "test": "pnpm -r --if-present test",
+    "frontend:build": "pnpm --filter @cognos/chat build",
+    "frontend:start": "pnpm --filter @cognos/chat start",
+    "frontend:test": "pnpm --filter @cognos/chat test",
+    "frontend:lint": "pnpm --filter @cognos/chat lint",
+    "ui-angular:storybook": "pnpm --filter @cognos/ui-angular storybook",
+    "ui-angular:build-storybook": "pnpm --filter @cognos/ui-angular build-storybook"
+  }
+}

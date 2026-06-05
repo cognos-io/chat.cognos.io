@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cognos — Component Extension</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    background: #F7F8F9;
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  #root { min-height: 100vh; }
+  ::selection { background: rgba(31,132,90,0.20); }
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-thumb { background: rgba(9,30,66,0.20); border-radius: 8px; border: 3px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(9,30,66,0.35); border: 3px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  input::placeholder, textarea::placeholder { color: inherit; opacity: 0.7; }
+  html { scroll-behavior: smooth; }
+
+  @keyframes aFade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes aProp { from { opacity: 0; transform: translateY(-4px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes aShimmer { from { transform: translateX(-120%); } to { transform: translateX(120%); } }
+  @keyframes aBlink { 0%, 60%, 100% { opacity: 0.25; } 30% { opacity: 1; } }
+  @keyframes aToastIn { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes aBar { from { background-position: 0 0; } to { background-position: 28px 0; } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.001ms !important; } }
+</style>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#1F845A"/>
+    <rect x="28" y="36" width="44" height="34" rx="4" fill="#FFFFFF"/>
+    <path d="M38 36v-6a12 12 0 0 1 24 0v6" fill="none" stroke="#FFFFFF" stroke-width="5"/>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- Existing Cognos Atlassian build — reused, not modified -->
+<script type="text/babel" src="a-components.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+
+<!-- Component extension -->
+<script type="text/babel" src="ax-doc-kit.jsx"></script>
+<script type="text/babel" src="ax-files.jsx"></script>
+<script type="text/babel" src="ax-images.jsx"></script>
+<script type="text/babel" src="ax-vault.jsx"></script>
+<script type="text/babel" src="ax-convo.jsx"></script>
+<script type="text/babel" src="ax-app.jsx"></script>
+</body>
+</html>

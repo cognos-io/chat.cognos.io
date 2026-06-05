@@ -1,0 +1,110 @@
+/* =========================================================================
+   Cognos Design System — foundation tokens
+   Framework-agnostic CSS custom properties.
+   ========================================================================= */
+
+:root {
+  /* ----- Type families ----- */
+  --cog-font-system: system-ui, sans-serif;
+  --cog-font-atkinson: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --cog-font-inter: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  --cog-font-noto:
+    'Noto Sans Variable', 'Noto Sans', system-ui, sans-serif;
+  --cog-font: var(--cog-font-system);
+  --cog-font-mono:
+    'Reddit Mono Variable', 'Reddit Mono', 'SFMono-Regular', ui-monospace,
+    Menlo, Consolas, monospace;
+
+  /* ----- Type scale ----- */
+  --cog-fs-display: 24px;
+  --cog-lh-display: 1.2;
+  --cog-fw-display: 600;
+  --cog-ls-display: -0.01em;
+
+  --cog-fs-h-lg: 24px;
+  --cog-lh-h-lg: 1.25;
+  --cog-fw-h-lg: 600;
+  --cog-ls-h-lg: -0.01em;
+
+  --cog-fs-h-md: 20px;
+  --cog-lh-h-md: 1.3;
+  --cog-fw-h-md: 600;
+  --cog-ls-h-md: -0.003em;
+
+  --cog-fs-h-sm: 16px;
+  --cog-lh-h-sm: 1.35;
+  --cog-fw-h-sm: 600;
+  --cog-ls-h-sm: 0;
+
+  --cog-fs-body-lg: 15px;
+  --cog-lh-body-lg: 1.6;
+  --cog-fw-body-lg: 400;
+
+  --cog-fs-body: 14px;
+  --cog-lh-body: 1.45;
+  --cog-fw-body: 400;
+
+  --cog-fs-body-sm: 13px;
+  --cog-lh-body-sm: 1.45;
+  --cog-fw-body-sm: 400;
+
+  --cog-fs-caption: 12px;
+  --cog-lh-caption: 1.4;
+  --cog-fw-caption: 400;
+
+  --cog-fs-label: 14px;
+  --cog-lh-label: 1;
+  --cog-fw-label: 500;
+
+  --cog-fs-overline: 11px;
+  --cog-lh-overline: 1.4;
+  --cog-fw-overline: 700;
+  --cog-ls-overline: 0.04em;
+  --cog-tt-overline: uppercase;
+
+  --cog-fs-lozenge: 11px;
+  --cog-lh-lozenge: 1.4;
+  --cog-fw-lozenge: 700;
+  --cog-ls-lozenge: 0.02em;
+  --cog-tt-lozenge: uppercase;
+
+  /* ----- Shared weights ----- */
+  --cog-fw-regular: 400;
+  --cog-fw-medium: 500;
+  --cog-fw-semibold: 600;
+  --cog-fw-bold: 700;
+
+  /* ----- Space (8px grid, 2px base) ----- */
+  --cog-space-000: 0;
+  --cog-space-025: 2px;
+  --cog-space-050: 4px;
+  --cog-space-075: 6px;
+  --cog-space-100: 8px;
+  --cog-space-150: 12px;
+  --cog-space-200: 16px;
+  --cog-space-250: 20px;
+  --cog-space-300: 24px;
+  --cog-space-400: 32px;
+  --cog-space-500: 40px;
+  --cog-space-600: 48px;
+  --cog-space-800: 64px;
+
+  /* ----- Radius ----- */
+  --cog-radius-xs: 3px;
+  --cog-radius-sm: 4px;
+  --cog-radius-md: 8px;
+  --cog-radius-lg: 16px;
+  --cog-radius-pill: 9999px;
+
+  /* ----- Motion ----- */
+  --cog-dur-fast: 100ms;
+  --cog-dur-medium: 150ms;
+  --cog-dur-sheet: 260ms;
+  --cog-ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ----- Icon ----- */
+  --cog-icon-stroke: 2;
+
+  /* ----- Elevation ----- */
+  --cog-scrim: rgba(9, 30, 66, 0.54);
+}

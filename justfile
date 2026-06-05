@@ -7,6 +7,7 @@ install-mise:
 
 # Install all dev dependencies
 install-dev: install-mise
+    @pnpm install
     @lefthook install
 
 # Run the Go tests
@@ -24,3 +25,7 @@ _markdown-fmt:
 # Format files
 [parallel]
 fmt: _go-fmt _markdown-fmt
+
+# Run storybook for the frontend components
+storybook:
+    @pnpm --filter @cognos/ui-angular storybook

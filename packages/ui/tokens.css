@@ -1,0 +1,12 @@
+/* =========================================================================
+   Cognos Design System — default stylesheet entrypoint
+   Imports foundation tokens and semantic theme tokens.
+
+   Usage:
+     import '@cognos/ui/tokens.css';
+   ========================================================================= */
+
+@import './fonts/noto-sans.css';
+@import './fonts/reddit-mono.css';
+@import './styles/tokens.css';
+@import './styles/themes.css';

@@ -1,0 +1,45 @@
+{
+  "name": "@cognos/ui-angular",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.33.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./index.ts"
+    }
+  },
+  "scripts": {
+    "storybook": "ng run ui-angular:storybook",
+    "build-storybook": "ng run ui-angular:build-storybook",
+    "test": "ng test",
+    "test:watch": "ng run ui-angular:test --watch"
+  },
+  "peerDependencies": {
+    "@angular/common": "^21.2.16",
+    "@angular/core": "^21.2.16"
+  },
+  "dependencies": {
+    "@cognos/ui": "workspace:*",
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^21.2.14",
+    "@angular/build": "^21.2.14",
+    "@angular/cli": "^21.2.14",
+    "@angular/common": "^21.2.16",
+    "@angular/compiler": "^21.2.16",
+    "@angular/compiler-cli": "^21.2.16",
+    "@angular/core": "^21.2.16",
+    "@angular/platform-browser": "^21.2.16",
+    "@angular/platform-browser-dynamic": "^21.2.16",
+    "@storybook/angular": "^10.4.2",
+    "@types/node": "^25.9.1",
+    "jsdom": "^29.1.1",
+    "rxjs": "~7.8.0",
+    "storybook": "^10.4.2",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.8",
+    "zone.js": "~0.16.2"
+  }
+}

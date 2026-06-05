@@ -1,0 +1,58 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "projects": {
+    "ui-angular": {
+      "projectType": "library",
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "cog",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": ".angular/storybook-browser",
+            "index": "src/storybook-index.html",
+            "browser": "src/storybook-main.ts",
+            "tsConfig": "tsconfig.build.json",
+            "styles": ["../ui/tokens.css", "../ui/app.css"],
+            "assets": ["src/assets"]
+          }
+        },
+        "storybook": {
+          "builder": "@storybook/angular:start-storybook",
+          "options": {
+            "browserTarget": "ui-angular:build",
+            "configDir": ".storybook",
+            "compodoc": false,
+            "port": 6007,
+            "preserveSymlinks": true,
+            "styles": ["../ui/tokens.css", "../ui/app.css"],
+            "tsConfig": "tsconfig.storybook.json"
+          }
+        },
+        "build-storybook": {
+          "builder": "@storybook/angular:build-storybook",
+          "options": {
+            "browserTarget": "ui-angular:build",
+            "compodoc": false,
+            "configDir": ".storybook",
+            "outputDir": "storybook-static",
+            "preserveSymlinks": true,
+            "styles": ["../ui/tokens.css", "../ui/app.css"],
+            "tsConfig": "tsconfig.storybook.json"
+          }
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "buildTarget": "ui-angular:build",
+            "tsConfig": "tsconfig.spec.json",
+            "runner": "vitest",
+            "include": ["src/**/*.spec.ts"]
+          }
+        }
+      }
+    }
+  }
+}

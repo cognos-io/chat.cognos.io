@@ -1,0 +1,139 @@
+/* =========================================================================
+   Cognos Design System — tokens.css
+   Drop-in CSS custom properties for the component library.
+
+   Usage:
+     <html data-theme="light" data-accent="emerald">
+   Switch the attributes at runtime to retheme. Components read only the
+   semantic --cog-* variables below (never raw hex).
+   ========================================================================= */
+
+:root {
+  /* ----- Type ----- */
+  --cog-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --cog-font-atkinson: "Atkinson Hyperlegible", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --cog-font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --cog-font-noto: "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --cog-font-mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+
+  --cog-fs-display: 24px;  --cog-lh-display: 1.2;
+  --cog-fs-h-lg: 24px;     --cog-fs-h-md: 20px;   --cog-fs-h-sm: 16px;
+  --cog-fs-body-lg: 15px;  --cog-fs-body: 14px;   --cog-fs-body-sm: 13px;
+  --cog-fs-caption: 12px;  --cog-fs-overline: 11px;
+  --cog-fw-regular: 400;   --cog-fw-medium: 500;  --cog-fw-semibold: 600; --cog-fw-bold: 700;
+
+  /* ----- Space (8px grid, 2px base) ----- */
+  --cog-space-025: 2px;  --cog-space-050: 4px;  --cog-space-075: 6px;  --cog-space-100: 8px;
+  --cog-space-150: 12px; --cog-space-200: 16px; --cog-space-250: 20px; --cog-space-300: 24px;
+  --cog-space-400: 32px; --cog-space-500: 40px; --cog-space-600: 48px; --cog-space-800: 64px;
+
+  /* ----- Radius ----- */
+  --cog-radius-xs: 3px; --cog-radius-sm: 4px; --cog-radius-md: 8px; --cog-radius-lg: 16px; --cog-radius-pill: 9999px;
+
+  /* ----- Motion ----- */
+  --cog-dur-fast: 100ms; --cog-dur-medium: 150ms; --cog-dur-sheet: 260ms;
+  --cog-ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ----- Icon ----- */
+  --cog-icon-stroke: 2;
+
+  --cog-scrim: rgba(9, 30, 66, 0.54);
+}
+
+/* ============================ THEME: LIGHT ============================== */
+:root, [data-theme="light"] {
+  --cog-app-bg: #F7F8F9;
+  --cog-nav-bg: #FFFFFF;
+  --cog-surface: #FFFFFF;
+  --cog-surface-raised: #FFFFFF;
+  --cog-surface-sunken: #F7F8F9;
+  --cog-surface-hover: #F1F2F4;
+  --cog-surface-pressed: #DCDFE4;
+
+  --cog-text: #172B4D;
+  --cog-text-subtle: #44546F;
+  --cog-text-subtlest: #626F86;
+  --cog-text-disabled: #8590A2;
+
+  --cog-border: #DFE1E6;
+  --cog-border-bold: #B3B9C4;
+
+  --cog-input-bg: #F7F8F9;
+  --cog-input-bg-focus: #FFFFFF;
+
+  --cog-success: #22A06B; --cog-success-bg: #DCFFF1; --cog-success-text: #216E4E;
+  --cog-danger: #C9372C;  --cog-danger-text: #AE2A19;
+  --cog-info: #0C66E4;    --cog-info-bg: #E9F2FF;    --cog-info-text: #0C66E4;
+
+  --cog-loz-neutral-bg: #DCDFE4; --cog-loz-neutral-fg: #44546F;
+  --cog-loz-blue-bg: #E9F2FF;    --cog-loz-blue-fg: #0055CC;
+  --cog-loz-green-bg: #DCFFF1;   --cog-loz-green-fg: #216E4E;
+  --cog-loz-purple-bg: #F3F0FF;  --cog-loz-purple-fg: #5E4DB2;
+  --cog-loz-red-bg: #FFEDEB;     --cog-loz-red-fg: #AE2A19;
+
+  --cog-shadow-raised: 0 1px 1px rgba(9,30,66,0.25), 0 0 1px rgba(9,30,66,0.31);
+  --cog-shadow-overlay: 0 8px 12px rgba(9,30,66,0.15), 0 0 1px rgba(9,30,66,0.31);
+}
+
+/* ============================ THEME: DARK =============================== */
+[data-theme="dark"] {
+  --cog-app-bg: #161A1D;
+  --cog-nav-bg: #1D2125;
+  --cog-surface: #1D2125;
+  --cog-surface-raised: #22272B;
+  --cog-surface-sunken: #161A1D;
+  --cog-surface-hover: #22272B;
+  --cog-surface-pressed: #282E33;
+
+  --cog-text: #C7D1DB;
+  --cog-text-subtle: #9FADBC;
+  --cog-text-subtlest: #8C9BAB;
+  --cog-text-disabled: #738496;
+
+  --cog-border: #38414A;
+  --cog-border-bold: #454F59;
+
+  --cog-input-bg: #22272B;
+  --cog-input-bg-focus: #1D2125;
+
+  --cog-success: #4BCE97; --cog-success-bg: #164B35; --cog-success-text: #7EE2B8;
+  --cog-danger: #F87168;  --cog-danger-text: #FF9C8F;
+  --cog-info: #579DFF;    --cog-info-bg: #1C2B41;    --cog-info-text: #85B8FF;
+
+  --cog-loz-neutral-bg: #2C333A; --cog-loz-neutral-fg: #9FADBC;
+  --cog-loz-blue-bg: #1C2B41;    --cog-loz-blue-fg: #85B8FF;
+  --cog-loz-green-bg: #164B35;   --cog-loz-green-fg: #7EE2B8;
+  --cog-loz-purple-bg: #2B273F;  --cog-loz-purple-fg: #B8ACF6;
+  --cog-loz-red-bg: #5D1F1A;     --cog-loz-red-fg: #FF9C8F;
+
+  --cog-shadow-raised: 0 1px 1px rgba(3,4,4,0.5), 0 0 1px rgba(3,4,4,0.6);
+  --cog-shadow-overlay: 0 8px 12px rgba(3,4,4,0.56), 0 0 1px rgba(3,4,4,0.6);
+}
+
+/* ============================ ACCENT: EMERALD (default) ================= */
+:root, [data-accent="emerald"] {
+  --cog-brand: #1F845A; --cog-brand-hover: #216E4E; --cog-brand-pressed: #164B35; --cog-on-brand: #FFFFFF;
+  --cog-link: #216E4E;
+  --cog-selected-bg: #DCFFF1; --cog-selected-text: #216E4E; --cog-selected-border: #1F845A;
+}
+[data-theme="dark"][data-accent="emerald"], [data-theme="dark"]:root {
+  --cog-brand: #4BCE97; --cog-brand-hover: #7EE2B8; --cog-brand-pressed: #BAF3D6; --cog-on-brand: #1D2125;
+  --cog-link: #4BCE97;
+  --cog-selected-bg: #143A2B; --cog-selected-text: #7EE2B8; --cog-selected-border: #4BCE97;
+}
+
+/* ============================ ACCENT: BLUE ============================== */
+[data-accent="blue"] {
+  --cog-brand: #0C66E4; --cog-brand-hover: #0055CC; --cog-brand-pressed: #09326C; --cog-on-brand: #FFFFFF;
+  --cog-link: #0C66E4;
+  --cog-selected-bg: #E9F2FF; --cog-selected-text: #0C66E4; --cog-selected-border: #0C66E4;
+}
+[data-theme="dark"][data-accent="blue"] {
+  --cog-brand: #579DFF; --cog-brand-hover: #85B8FF; --cog-brand-pressed: #CCE0FF; --cog-on-brand: #1D2125;
+  --cog-link: #579DFF;
+  --cog-selected-bg: #1C2B41; --cog-selected-text: #85B8FF; --cog-selected-border: #579DFF;
+}
+
+/* base */
+body { background: var(--cog-app-bg); color: var(--cog-text); font-family: var(--cog-font); }
+@media (prefers-reduced-motion: reduce) { * { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
