@@ -176,6 +176,18 @@ interface ApiConversationSecretKeyCreateRequest {
   secret_key: string;
 }
 
+interface ApiVaultSessionResponse {
+  wrap_key: string;
+}
+
+interface ApiVaultSessionUpsertRequest {
+  wrap_key: string;
+}
+
+export interface VaultSession {
+  wrapKey: string;
+}
+
 interface ApiUserPreferencesCreateRequest {
   data: string;
 }
@@ -420,6 +432,29 @@ export class CognosApiService {
         headers: this.authHeaders(),
       },
     );
+  }
+
+  getVaultSession(): Observable<VaultSession> {
+    return this._http
+      .get<ApiVaultSessionResponse>(`${this._baseUrl}/api/v1/vault-session`, {
+        headers: this.authHeaders(),
+      })
+      .pipe(map((response) => ({ wrapKey: response.wrap_key })));
+  }
+
+  upsertVaultSession(wrapKey: string): Observable<VaultSession> {
+    const request: ApiVaultSessionUpsertRequest = { wrap_key: wrapKey };
+    return this._http
+      .put<ApiVaultSessionResponse>(`${this._baseUrl}/api/v1/vault-session`, request, {
+        headers: this.authHeaders(),
+      })
+      .pipe(map((response) => ({ wrapKey: response.wrap_key })));
+  }
+
+  deleteVaultSession(): Observable<void> {
+    return this._http.delete<void>(`${this._baseUrl}/api/v1/vault-session`, {
+      headers: this.authHeaders(),
+    });
   }
 
   updateUserPreferences(

@@ -100,6 +100,47 @@ test.describe('auth + account key flow', () => {
     await unlockAccount(page, account.password, accountKey);
   });
 
+  test('reloading the page after unlock keeps the vault unlocked', async ({ page }) => {
+    const account = makeTestAccount();
+
+    await gotoRegister(page);
+    await fillRegisterForm(page, account);
+    await submitRegister(page);
+
+    await expectAccountKeyDialogForNewUser(page);
+
+    const accountKey = await captureGeneratedAccountKey(page);
+    await copyAccountKey(page);
+    await acknowledgeAccountKey(page);
+    await createEncryptedBackup(page, account.password);
+
+    await expect(
+      page.getByLabel('Message Cognos — encrypted on this device'),
+    ).toBeVisible();
+
+    await page.reload();
+
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole('heading', { name: /unlock backup/i })).toBeHidden();
+    await expect(page.getByRole('heading', { name: /account locked/i })).toBeHidden();
+    await expect(
+      page.getByRole('heading', { name: /secure your encrypted backup/i }),
+    ).toBeHidden();
+    await expect(
+      page.getByLabel('Message Cognos — encrypted on this device'),
+    ).toBeVisible();
+
+    // Also covers reopening the app in a new tab from the same origin.
+    const newPage = await page.context().newPage();
+    await newPage.goto('/');
+    await expect(newPage).toHaveURL(/\/$/);
+    await expect(newPage.getByRole('heading', { name: /unlock backup/i })).toBeHidden();
+    await expect(
+      newPage.getByLabel('Message Cognos — encrypted on this device'),
+    ).toBeVisible();
+    await newPage.close();
+  });
+
   test('wrong login password shows an error', async ({ page }) => {
     await gotoLogin(page);
     await page.getByLabel('Email').fill('nobody@cognos-e2e.test');

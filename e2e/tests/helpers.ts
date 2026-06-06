@@ -106,7 +106,9 @@ export async function unlockAccount(
   accountKey: string,
 ): Promise<void> {
   await page.getByLabel('Account password').fill(accountPassword);
-  await page.getByLabel('Account Key').fill(accountKey);
+  const accountKeyField = page.getByLabel('Account Key');
+  await accountKeyField.click();
+  await accountKeyField.fill(accountKey);
   await page.getByRole('button', { name: /unlock encrypted backup/i }).click();
   await expect(page.getByRole('heading', { name: /unlock backup/i })).toBeHidden();
   await expect(page.getByRole('heading', { name: /account locked/i })).toBeHidden();

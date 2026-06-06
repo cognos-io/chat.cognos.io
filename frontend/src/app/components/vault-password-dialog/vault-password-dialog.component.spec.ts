@@ -121,11 +121,11 @@ describe('VaultPasswordDialogComponent', () => {
     });
   });
 
-  it('shows that trusted-device unlock is unavailable on the web', () => {
+  it('reassures users that unlock survives refresh and new tabs', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain(
-      'Trusted-device unlock is temporarily unavailable on the web',
+      'this browser stays unlocked across refreshes and new tabs',
     );
   });
 
@@ -153,7 +153,7 @@ describe('VaultPasswordDialogComponent', () => {
     expect(unlockRequest$.next).toHaveBeenCalledWith({
       accountKey: 'test-account-key',
       accountPassword: 'correct horse battery',
-      trustDevice: false,
+      trustDevice: true,
     });
   });
 });

@@ -248,6 +248,30 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(),
 	)
 
+	e.Router.GET(
+		"/api/v1/vault-session",
+		handler.VaultSessionGet(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.PUT(
+		"/api/v1/vault-session",
+		handler.VaultSessionUpsert(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.DELETE(
+		"/api/v1/vault-session",
+		handler.VaultSessionDelete(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
 	e.Router.POST(
 		"/api/v1/completions",
 		handler.Complete(completeParams),
@@ -268,6 +292,12 @@ func addPocketBaseRoutes(
 		re.Auth.RefreshTokenKey()
 		if err := app.Save(re.Auth); err != nil {
 			return err
+		}
+
+		if record, err := app.FindFirstRecordByData("vault_session_wrap_keys", "user", re.Auth.Id); err == nil {
+			if err := app.Delete(record); err != nil {
+				logger.Warn("failed to clear vault session on logout", "err", err)
+			}
 		}
 
 		return re.NoContent(http.StatusNoContent)

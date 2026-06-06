@@ -90,6 +90,14 @@ type updateUserPreferencesRequest struct {
 	Data string `json:"data"`
 }
 
+type vaultSessionRecordResponse struct {
+	WrapKey string `json:"wrap_key"`
+}
+
+type upsertVaultSessionRequest struct {
+	WrapKey string `json:"wrap_key"`
+}
+
 func UserKeyPairGet(app core.App) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		record, err := ownedUserKeyPairRecord(app, e, "")
@@ -363,6 +371,89 @@ func UserPreferencesUpdate(app core.App) func(e *core.RequestEvent) error {
 		}
 
 		return e.JSON(http.StatusOK, userPreferencesRecordToResponse(record))
+	}
+}
+
+// wrapKeyPattern bounds the wrap key to a 32-byte (256-bit) AES key encoded as
+// base64. Tightening past the generic base64 column regex keeps junk payloads
+// out without leaning on a runtime length check.
+const wrapKeyBase64Length = 44
+
+func VaultSessionGet(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		user := auth.ExtractUser(e)
+		if user == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		record, err := app.FindFirstRecordByData("vault_session_wrap_keys", "user", user.ID)
+		if err != nil {
+			return apis.NewNotFoundError("Vault session not found", err)
+		}
+
+		return e.JSON(http.StatusOK, vaultSessionRecordResponse{
+			WrapKey: record.GetString("wrap_key"),
+		})
+	}
+}
+
+func VaultSessionUpsert(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		user := auth.ExtractUser(e)
+		if user == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		var req upsertVaultSessionRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Failed to read request data", err)
+		}
+		wrapKey := strings.TrimSpace(req.WrapKey)
+		if len(wrapKey) != wrapKeyBase64Length {
+			return apis.NewBadRequestError("wrap_key must be a base64-encoded 32-byte key", nil)
+		}
+
+		record, err := app.FindFirstRecordByData("vault_session_wrap_keys", "user", user.ID)
+		if err != nil {
+			collection, err := app.FindCollectionByNameOrId("vault_session_wrap_keys")
+			if err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to load vault session collection", err)
+			}
+			record = core.NewRecord(collection)
+		}
+
+		form := forms.NewRecordUpsert(app, record)
+		form.Load(map[string]any{
+			"user":     user.ID,
+			"wrap_key": wrapKey,
+		})
+		if err := form.Submit(); err != nil {
+			return apis.NewBadRequestError("Failed to save vault session", err)
+		}
+
+		return e.JSON(http.StatusOK, vaultSessionRecordResponse{
+			WrapKey: record.GetString("wrap_key"),
+		})
+	}
+}
+
+func VaultSessionDelete(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		user := auth.ExtractUser(e)
+		if user == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		record, err := app.FindFirstRecordByData("vault_session_wrap_keys", "user", user.ID)
+		if err != nil {
+			return e.NoContent(http.StatusNoContent)
+		}
+
+		if err := app.Delete(record); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to delete vault session", err)
+		}
+
+		return e.NoContent(http.StatusNoContent)
 	}
 }
 

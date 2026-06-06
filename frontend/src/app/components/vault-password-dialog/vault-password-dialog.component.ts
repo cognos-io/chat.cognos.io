@@ -86,10 +86,9 @@ const validateUnlockForm = (
           } @else {
             <p>Enter your account password and Account Key to unlock this device.</p>
             <p>
-              Trusted-device unlock is temporarily unavailable on the web while stronger
-              local hardware-backed protection is implemented. You will need your
-              Account Key again after locking the account, logging out, or clearing
-              browser storage.
+              After you unlock, this browser stays unlocked across refreshes and new
+              tabs. You will need your Account Key again after locking the account,
+              logging out, or clearing browser storage.
             </p>
           }
         </div>
@@ -426,7 +425,7 @@ export class VaultPasswordDialogComponent {
     this.vaultService.unlockRequest$.next({
       accountKey: accountKey ?? '',
       accountPassword: accountPassword ?? '',
-      trustDevice: false,
+      trustDevice: true,
     });
   }
 }
