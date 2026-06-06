@@ -151,7 +151,9 @@ export class AuthService implements OnDestroy {
           .catch((error) => {
             console.error('Error refreshing auth token', error);
             this._errorService.alert('Error refreshing auth token');
-            this._router.navigate(['', 'auth', 'logout']);
+            if (error?.status === 401) {
+              this._router.navigate(['', 'auth', 'logout']);
+            }
           });
       }
     }, true);
