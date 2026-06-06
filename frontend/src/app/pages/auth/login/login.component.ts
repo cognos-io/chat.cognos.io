@@ -66,7 +66,7 @@ import { AuthService } from '@services/auth.service';
                 class="underline"
                 href="https://cognos.io/privacy-policy-and-terms/"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 >Privacy Policy and Terms</a
               >.
             </p>
@@ -85,7 +85,7 @@ import { AuthService } from '@services/auth.service';
               <p>
                 You are accessing the beta so please expect some imperfections, in
                 return I'll cover the costs for now (although you can
-                <a href="https://cognos.io/" target="_blank" rel="noreferrer"
+                <a href="https://cognos.io/" target="_blank" rel="noopener noreferrer"
                   >subscribe</a
                 >
                 to contribute financially).

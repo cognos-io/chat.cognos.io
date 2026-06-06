@@ -17,7 +17,7 @@ import { ProfilePictureComponent } from '../team/profile-picture/profile-picture
           <a
             href="https://www.linkedin.com/in/egjones/"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             >Ewan</a
           >
           the founder - to get direct, personalized support.
@@ -32,7 +32,7 @@ import { ProfilePictureComponent } from '../team/profile-picture/profile-picture
             <a
               class="underline"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               href="https://threema.id/NM4AVD9N"
               >NM4AVD9N</a
             >
