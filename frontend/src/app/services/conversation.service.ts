@@ -132,11 +132,18 @@ export class ConversationService {
           return { filter };
         }),
       ),
-      // When the user's key pair changes, reload the conversations
+      // When the user's key pair changes, reload or clear the conversations
       this._vaultService.keyPair$.pipe(
-        switchMap((keyPair) => (keyPair ? this.fetchConversations() : [])),
-        map((conversations) => {
-          return { conversations };
+        switchMap((keyPair) => {
+          if (!keyPair) {
+            return of(initialState);
+          }
+
+          return this.fetchConversations().pipe(
+            map((conversations) => {
+              return { conversations };
+            }),
+          );
         }),
       ),
       // When deleteConversation emits, delete the conversation

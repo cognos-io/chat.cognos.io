@@ -46,6 +46,7 @@ import {
   ChatCompletionResponseWithMetadata,
   CognosMetadataResponse,
 } from './openai.service.provider';
+import { VaultService } from './vault.service';
 
 export enum MessageStatus {
   None, // default state
@@ -92,6 +93,7 @@ export class MessageService {
   private readonly _errorService = inject(ErrorService);
   private readonly _modelService = inject(ModelService);
   private readonly _openAi = inject(OpenAI);
+  private readonly _vaultService = inject(VaultService);
   private readonly _pb: TypedPocketBase = inject(PocketBase);
 
   private readonly pbMessagesCollection = this._pb.collection('messages');
@@ -110,7 +112,16 @@ export class MessageService {
   private readonly state = signalSlice({
     initialState,
     sources: [
-      // Clear messages on logout
+      // Clear messages when the vault is cleared or the user logs out
+      this._vaultService.keyPair$.pipe(
+        map((keyPair) => {
+          if (keyPair) {
+            return {};
+          }
+
+          return initialState;
+        }),
+      ),
       this._authService.logout$.pipe(
         map(() => {
           return initialState;
