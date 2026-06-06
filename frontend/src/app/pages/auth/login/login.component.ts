@@ -1,6 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { Router } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
@@ -19,6 +22,9 @@ import { AuthService } from '@services/auth.service';
   standalone: true,
   imports: [
     MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    ReactiveFormsModule,
     CognosLogoComponent,
     ProfilePictureComponent,
     LoadingIndicatorComponent,
@@ -34,32 +40,54 @@ import { AuthService } from '@services/auth.service';
             <h2 class="mt-8 text-2xl font-bold leading-9 tracking-tight text-gray-900">
               Get started with privacy first AI
             </h2>
-            <button
-              mat-flat-button
-              class="w-full"
-              color="primary"
-              (click)="authService.login$.next(true)"
-              [disabled]="loading()"
+            <form
+              class="flex flex-col gap-4"
+              [formGroup]="loginForm"
+              (ngSubmit)="login()"
             >
-              @if (loading()) {
-                <app-loading-indicator></app-loading-indicator>
-              } @else {
-                Log in / Sign Up
-              }
-            </button>
-            @if (loading()) {
-              <p class="text-sm text-gray-600">
-                <em>
-                  A popup should open to sign-in but if not
-                  <button
-                    (click)="authService.login$.next(true)"
-                    class="italic underline"
-                  >
-                    click here</button
-                  >.
-                </em>
-              </p>
-            }
+              <mat-form-field>
+                <mat-label>Email</mat-label>
+                <input
+                  matInput
+                  type="email"
+                  formControlName="email"
+                  autocomplete="email"
+                />
+                @if (loginForm.get('email')?.hasError('required')) {
+                  <mat-error>Email is required</mat-error>
+                }
+                @if (loginForm.get('email')?.hasError('email')) {
+                  <mat-error>Enter a valid email address</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field>
+                <mat-label>Password</mat-label>
+                <input
+                  matInput
+                  type="password"
+                  formControlName="password"
+                  autocomplete="current-password"
+                />
+                @if (loginForm.get('password')?.hasError('required')) {
+                  <mat-error>Password is required</mat-error>
+                }
+              </mat-form-field>
+
+              <button
+                mat-flat-button
+                class="w-full"
+                color="primary"
+                type="submit"
+                [disabled]="loading() || !loginForm.valid"
+              >
+                @if (loading()) {
+                  <app-loading-indicator></app-loading-indicator>
+                } @else {
+                  Log in
+                }
+              </button>
+            </form>
             <p class="prose text-balance text-center text-sm text-gray-600">
               By signing up you are agreeing to our
               <a
@@ -114,7 +142,14 @@ export class LoginComponent {
   private readonly _router: Router = inject(Router);
   private readonly _errorService: ErrorService = inject(ErrorService);
 
+  private readonly _fb = inject(FormBuilder);
+
   loading = computed(() => this.authService.status() === 'authenticating');
+
+  loginForm = this._fb.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required]],
+  });
 
   constructor() {
     this.authService.user$
@@ -133,5 +168,16 @@ export class LoginComponent {
           this._router.navigate(['/']);
         }
       });
+  }
+
+  login() {
+    if (!this.loginForm.valid) {
+      return;
+    }
+
+    this.authService.login$.next({
+      email: this.loginForm.value.email ?? '',
+      password: this.loginForm.value.password ?? '',
+    });
   }
 }

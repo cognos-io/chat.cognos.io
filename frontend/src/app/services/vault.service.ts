@@ -183,7 +183,7 @@ export class VaultService {
       map((argon2id) =>
         argon2id({
           password: encoder.encode(rawPassword),
-          salt: encoder.encode(this._authService.oryId()),
+          salt: encoder.encode(this._authService.user()?.['email'] ?? ''),
           parallelism: argon2idParallelism,
           passes: argon2idIterationCount,
           memorySize: argon2idMemory,
@@ -311,8 +311,8 @@ export class VaultService {
 
   private assertTrustedUserKeyContext(keyPairRecord: UserKeyPairsResponse): void {
     const userID = this._authService.user()?.['id'];
-    const oryID = this._authService.oryId();
-    if (!userID || !oryID) {
+    const vaultSalt = this._authService.user()?.['email'];
+    if (!userID || !vaultSalt) {
       return;
     }
 
@@ -322,10 +322,12 @@ export class VaultService {
     }
 
     const context = JSON.parse(rawContext) as {
-      oryId: string;
+      oryId?: string;
       publicKeyFingerprint: string;
+      vaultSalt?: string;
     };
-    if (context.oryId !== oryID) {
+    const trustedSalt = context.vaultSalt ?? context.oryId;
+    if (trustedSalt && trustedSalt !== vaultSalt) {
       throw new Error('Trusted user key salt changed');
     }
 
@@ -339,15 +341,15 @@ export class VaultService {
 
   private persistTrustedUserKeyContext(keyPairRecord: UserKeyPairsResponse): void {
     const userID = this._authService.user()?.['id'];
-    const oryID = this._authService.oryId();
-    if (!userID || !oryID) {
+    const vaultSalt = this._authService.user()?.['email'];
+    if (!userID || !vaultSalt) {
       return;
     }
 
     localStorage.setItem(
       this.trustedUserKeyContextStorageKey(userID),
       JSON.stringify({
-        oryId: oryID,
+        vaultSalt,
         publicKeyFingerprint: Base64.fromUint8Array(
           this._cryptoService.hash(Base64.toUint8Array(keyPairRecord.public_key)),
         ),

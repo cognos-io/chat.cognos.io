@@ -2,7 +2,7 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
-import PocketBase, { AuthMethodsList, AuthModel } from 'pocketbase';
+import PocketBase, { AuthModel } from 'pocketbase';
 
 import {
   EMPTY,
@@ -20,7 +20,6 @@ import {
   timer,
 } from 'rxjs';
 
-import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
 
 import { TypedPocketBase } from '../types/pocketbase-types';
@@ -33,13 +32,11 @@ export type AuthUser = AuthModel | null | undefined;
 interface AuthState {
   status: LoginStatus;
   user: AuthUser;
-  oryId: string;
 }
 
 const initialState: AuthState = {
   status: 'pending',
   user: null,
-  oryId: '',
 };
 
 @Injectable({
@@ -53,12 +50,14 @@ export class AuthService implements OnDestroy {
   private readonly _router = inject(Router);
 
   // sources
-  readonly login$ = new Subject<boolean>();
+  readonly login$ = new Subject<{ email: string; password: string }>();
   readonly logout$ = new Subject<boolean>();
 
   private readonly _user$ = new Subject<AuthUser>();
   private readonly _userAuthenticating$ = this.login$.pipe(
-    switchMap(() => this.loginWithOry()),
+    switchMap((credentials) =>
+      this.loginWithPassword(credentials.email, credentials.password),
+    ),
   );
   private readonly userLoggingOut$ = this.logout$.pipe(
     switchMap(() => this.logout()),
@@ -76,17 +75,6 @@ export class AuthService implements OnDestroy {
             status: response ? ('success' as LoginStatus) : ('pending' as LoginStatus),
             user: response,
           };
-        }),
-      ),
-      this._user$.pipe(
-        switchMap((response: AuthUser) => {
-          return this.fetchOryId(response?.['id']).pipe(
-            map((oryId: string) => {
-              return {
-                oryId,
-              };
-            }),
-          );
         }),
       ),
       // When login emits, we are authenticating
@@ -109,7 +97,6 @@ export class AuthService implements OnDestroy {
           return {
             status: 'pending' as LoginStatus,
             user: null,
-            oryId: '',
           };
         }),
       ),
@@ -120,7 +107,6 @@ export class AuthService implements OnDestroy {
   status = this.state.status;
   user = this.state.user;
   user$ = toObservable(this.user);
-  oryId = this.state.oryId;
 
   constructor() {
     // Regularly check and refresh token
@@ -159,57 +145,15 @@ export class AuthService implements OnDestroy {
     }, true);
   }
 
-  listAuthMethods(): Observable<AuthMethodsList> {
-    return from(this._pb.collection(this._authCollection).listAuthMethods()).pipe(
-      catchError((error) => {
-        this._errorService.alert('Unable to list auth methods');
-        console.error('Error listing auth methods', error);
-        return EMPTY;
-      }),
-    );
-  }
-
-  loginWithOry() {
-    const w = window.open();
-
+  loginWithPassword(email: string, password: string) {
     return from(
-      this._pb.collection(this._authCollection).authWithOAuth2({
-        // Make sure OIDC provider is configured in PocketBase for Ory
-        provider: 'oidc',
-        scopes: ['openid', 'offline_access'],
-        urlCallback: (url) => {
-          if (w) {
-            w.location.href = url;
-          }
-        },
-      }),
+      this._pb.collection(this._authCollection).authWithPassword(email, password),
     ).pipe(
       catchError((error) => {
-        this._errorService.alert('Error logging in with Ory');
+        this._errorService.alert('Error logging in with password');
         console.error(error);
-        w?.close();
-        return of(null);
+        return throwError(() => error);
       }),
-    );
-  }
-
-  fetchOryId(userId: string): Observable<string> {
-    if (!userId || userId === '') {
-      return EMPTY;
-    }
-    return from(
-      this._pb.collection(this._authCollection).listExternalAuths(userId),
-    ).pipe(
-      catchError((error) => {
-        this._errorService.alert('Error fetching Ory ID');
-        console.error(error);
-        return EMPTY;
-      }),
-      map((auths) => {
-        return auths.find((auth) => auth.provider === 'oidc');
-      }),
-      filterNil(),
-      map((auth) => auth.providerId),
     );
   }
 

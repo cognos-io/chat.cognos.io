@@ -8,20 +8,21 @@ import (
 	"github.com/pocketbase/pocketbase/tests"
 )
 
-func TestPasswordAuthIsDisabled(t *testing.T) {
+func TestPasswordAuthWorks(t *testing.T) {
 	t.Parallel()
 
 	scenario := tests.ApiScenario{
-		Name:   "password auth disabled for users",
+		Name:   "password auth works for users",
 		Method: http.MethodPost,
 		URL:    "/api/collections/users/auth-with-password",
 		Body: strings.NewReader(`{
 			"identity": "test1@example.com",
 			"password": "password"
 		}`),
-		ExpectedStatus: http.StatusBadRequest,
+		ExpectedStatus: http.StatusOK,
 		ExpectedContent: []string{
-			`password authentication`,
+			`"token":"`,
+			`"email":"test1@example.com"`,
 		},
 		TestAppFactory: setupTestApp,
 	}
