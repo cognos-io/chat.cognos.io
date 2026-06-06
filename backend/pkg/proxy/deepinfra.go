@@ -41,6 +41,10 @@ func (d *DeepInfra) LookupModel(
 	return DeepInfraModelMapper(internalModel)
 }
 
+func (d *DeepInfra) EnsureNoRetention() error {
+	return ErrNoRetentionUnsupported
+}
+
 func (d *DeepInfra) ChatCompletion(
 	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,

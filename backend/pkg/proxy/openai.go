@@ -27,14 +27,23 @@ var openAIModelMapping = map[string]string{
 var _ Upstream = (*OpenAI)(nil)
 
 type OpenAI struct {
-	client *openai.Client
-	logger *slog.Logger
+	client              *openai.Client
+	logger              *slog.Logger
+	supportsNoRetention bool
 }
 
 func (o *OpenAI) LookupModel(
 	internalModel string,
 ) (string, error) {
 	return OpenAIModelMapper(internalModel)
+}
+
+func (o *OpenAI) EnsureNoRetention() error {
+	if !o.supportsNoRetention {
+		return ErrNoRetentionUnsupported
+	}
+
+	return nil
 }
 
 func (o *OpenAI) ChatCompletion(
@@ -54,6 +63,17 @@ func NewOpenAI(
 	return &OpenAI{
 		logger: logger,
 		client: client,
+	}, nil
+}
+
+func NewInfomaniak(
+	client *openai.Client,
+	logger *slog.Logger,
+) (*OpenAI, error) {
+	return &OpenAI{
+		logger:              logger,
+		client:              client,
+		supportsNoRetention: true,
 	}, nil
 }
 

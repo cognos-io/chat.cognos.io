@@ -32,13 +32,18 @@ func (r stubUpstreamRepo) Provider(provider string) (proxy.Upstream, error) {
 }
 
 type stubUpstream struct {
-	response oai.ChatCompletionResponse
-	text     string
-	err      error
+	response       oai.ChatCompletionResponse
+	text           string
+	err            error
+	noRetentionErr error
 }
 
 func (u stubUpstream) LookupModel(internalModel string) (string, error) {
 	return internalModel, nil
+}
+
+func (u stubUpstream) EnsureNoRetention() error {
+	return u.noRetentionErr
 }
 
 func (u stubUpstream) ChatCompletion(

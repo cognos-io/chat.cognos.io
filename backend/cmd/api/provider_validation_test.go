@@ -8,14 +8,15 @@ import (
 )
 
 type staticUpstreamRepo struct {
-	err error
+	err            error
+	noRetentionErr error
 }
 
 func (r staticUpstreamRepo) Provider(_ string) (proxy.Upstream, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
-	return stubUpstream{}, nil
+	return stubUpstream{noRetentionErr: r.noRetentionErr}, nil
 }
 
 func TestEnsureActiveProvidersAvailable(t *testing.T) {
@@ -31,6 +32,15 @@ func TestEnsureActiveProvidersAvailableReturnsProviderError(t *testing.T) {
 
 	wantErr := errors.New("provider unavailable")
 	if err := ensureActiveProvidersAvailable(staticUpstreamRepo{err: wantErr}); !errors.Is(err, wantErr) {
+		t.Fatalf("ensureActiveProvidersAvailable() error = %v, want wrapped %v", err, wantErr)
+	}
+}
+
+func TestEnsureActiveProvidersAvailableReturnsNoRetentionError(t *testing.T) {
+	t.Parallel()
+
+	wantErr := errors.New("no retention unsupported")
+	if err := ensureActiveProvidersAvailable(staticUpstreamRepo{noRetentionErr: wantErr}); !errors.Is(err, wantErr) {
 		t.Fatalf("ensureActiveProvidersAvailable() error = %v, want wrapped %v", err, wantErr)
 	}
 }

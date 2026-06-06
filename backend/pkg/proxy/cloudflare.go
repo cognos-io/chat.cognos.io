@@ -47,6 +47,10 @@ func (cf *Cloudflare) LookupModel(
 	return CloudflareModelMapper(internalModel)
 }
 
+func (cf *Cloudflare) EnsureNoRetention() error {
+	return ErrNoRetentionUnsupported
+}
+
 func (cf *Cloudflare) ChatCompletion(
 	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,

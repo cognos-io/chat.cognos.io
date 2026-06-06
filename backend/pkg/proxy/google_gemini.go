@@ -43,6 +43,10 @@ func (g *GoogleGemini) LookupModel(
 	return GoogleGeminiModelMapper(internalModel)
 }
 
+func (g *GoogleGemini) EnsureNoRetention() error {
+	return ErrNoRetentionUnsupported
+}
+
 func (g *GoogleGemini) ChatCompletion(
 	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,

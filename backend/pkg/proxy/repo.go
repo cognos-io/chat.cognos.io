@@ -41,7 +41,7 @@ func (r *InMemoryUpstreamRepo) Provider(provider string) (Upstream, error) {
 		if r.infomaniakOpenAIClient == nil {
 			return nil, fmt.Errorf("infomaniak provider is not configured")
 		}
-		return NewOpenAI(r.infomaniakOpenAIClient, r.logger)
+		return NewInfomaniak(r.infomaniakOpenAIClient, r.logger)
 	case "cloudflare":
 		return NewCloudflare(r.cloudflareOpenAIClient, r.logger)
 	case "google":

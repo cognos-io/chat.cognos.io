@@ -136,7 +136,7 @@ func normalizeLegacyCollection(collection map[string]any) {
 	}
 	if name == "users" {
 		normalized.System = false
-		normalized.OAuth2.Enabled = true
+		normalized.OAuth2.Enabled = false
 		normalized.OAuth2.MappedFields.Name = "name"
 		normalized.OAuth2.MappedFields.AvatarURL = "avatar"
 	}

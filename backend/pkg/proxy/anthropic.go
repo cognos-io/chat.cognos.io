@@ -42,6 +42,10 @@ func (a *Anthropic) LookupModel(
 	return string(model), err
 }
 
+func (a *Anthropic) EnsureNoRetention() error {
+	return ErrNoRetentionUnsupported
+}
+
 func (a *Anthropic) ChatCompletion(
 	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,

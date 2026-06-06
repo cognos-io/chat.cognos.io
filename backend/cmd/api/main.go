@@ -193,23 +193,34 @@ func bindAppHooks(
 }
 
 func ensureActiveProvidersAvailable(upstreamRepo proxy.UpstreamRepo) error {
-	seenProviders := map[string]struct{}{}
+	providers := map[string]proxy.Upstream{}
 
 	for _, model := range catalogue.ActiveModels() {
-		if _, ok := seenProviders[model.ProviderID]; ok {
-			continue
+		upstream, ok := providers[model.ProviderID]
+		if !ok {
+			var err error
+			upstream, err = upstreamRepo.Provider(model.ProviderID)
+			if err != nil {
+				return fmt.Errorf(
+					"provider %q is unavailable for model %q: %w",
+					model.ProviderID,
+					model.ID,
+					err,
+				)
+			}
+			providers[model.ProviderID] = upstream
 		}
 
-		if _, err := upstreamRepo.Provider(model.ProviderID); err != nil {
-			return fmt.Errorf(
-				"provider %q is unavailable for model %q: %w",
-				model.ProviderID,
-				model.ID,
-				err,
-			)
+		if model.RequiresNoRetention {
+			if err := upstream.EnsureNoRetention(); err != nil {
+				return fmt.Errorf(
+					"provider %q does not satisfy no-retention for model %q: %w",
+					model.ProviderID,
+					model.ID,
+					err,
+				)
+			}
 		}
-
-		seenProviders[model.ProviderID] = struct{}{}
 	}
 
 	return nil

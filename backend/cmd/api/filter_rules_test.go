@@ -36,7 +36,101 @@ import (
 	"golang.org/x/crypto/nacl/secretbox"
 )
 
-const testDataDir = "../../testdata/pb_data"
+const testDataDir = "../../testdata/seed"
+
+var testUsers = []struct {
+	ID               string
+	Email            string
+	Username         string
+	Password         string
+	PrivacyTier      string
+	PreferredModelID string
+	Verified         bool
+}{
+	{
+		ID:          "uvi8zmr78j9y5hz",
+		Email:       "test1@example.com",
+		Username:    "test1",
+		Password:    "password",
+		PrivacyTier: "eu",
+		Verified:    true,
+	},
+	{
+		ID:          "xq9ndvc2kbrvrng",
+		Email:       "test2@example.com",
+		Username:    "test2",
+		Password:    "password",
+		PrivacyTier: "eu",
+		Verified:    true,
+	},
+	{
+		ID:          "j8prcx3dum2l3kc",
+		Email:       "no_data@example.com",
+		Username:    "no-data",
+		Password:    "password",
+		PrivacyTier: "eu",
+		Verified:    true,
+	},
+}
+
+var testUserKeyPairs = []struct {
+	ID           string
+	UserID       string
+	PublicKey    string
+	SecretKey    string
+	PasswordSalt string
+	UnlockScheme string
+	RecordMAC    string
+}{
+	{
+		ID:        "3gtr36mn54ldo53",
+		UserID:    "uvi8zmr78j9y5hz",
+		PublicKey: "FaTq77hDYWu9pNLMwBlQ4Ks54BAfwz1Y7/nmyZTLkTE=",
+		SecretKey: strings.Join([]string{
+			"xi1EQyn4P+UgOuMK",
+			"CL3RPtUEMZ43VnHT",
+			"6XVxH++Dw0Y+OH+g",
+			"ihK/axp4sR7jxWWQ",
+			"zs0BIrq1L77tem6K",
+			"SZaJGqFNjtjTt89x",
+		}, ""),
+		PasswordSalt: "AAAAAAAAAAAAAAAAAAAAAA==",
+		UnlockScheme: "password_account_key_v1",
+		RecordMAC:    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+	},
+	{
+		ID:        "nekxd2byk1j1cof",
+		UserID:    "xq9ndvc2kbrvrng",
+		PublicKey: "O0juXdZBDWNKqMQrShgh7wUyijMUwboM0a7hJyQvXhU=",
+		SecretKey: strings.Join([]string{
+			"xLWVkHakuYt4QhUI",
+			"OdWznCX4VH+9n+xm",
+			"lHmBnjr8Ef6eakIX",
+			"Hj0fdHIoLLoJZS+p",
+			"cGY74Wzgbrmy1XWa",
+			"cqBWHCSpO4/UNT6Z",
+		}, ""),
+		PasswordSalt: "AAAAAAAAAAAAAAAAAAAAAA==",
+		UnlockScheme: "password_account_key_v1",
+		RecordMAC:    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+	},
+	{
+		ID:        "auylg0nr6ey77ex",
+		UserID:    "j8prcx3dum2l3kc",
+		PublicKey: "ylqC6oLD2rHUl0QkaxTlvLoHHIKp8AK42qd7jlaHqhQ=",
+		SecretKey: strings.Join([]string{
+			"vrS5BEQaboI26xYI",
+			"7xvc6koppYWWL3aO",
+			"MtUrmUEMAly/bDjp",
+			"crwL35AwxKZWQUVQ",
+			"n5hXvp9aLUiKl14k",
+			"eLgnpDUIYL2l38oW",
+		}, ""),
+		PasswordSalt: "AAAAAAAAAAAAAAAAAAAAAA==",
+		UnlockScheme: "password_account_key_v1",
+		RecordMAC:    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+	},
+}
 
 func withRecordAuth(
 	collectionNameOrId string,
@@ -74,9 +168,52 @@ func setupTestAppWithHookParams(t testing.TB, params appHookParams) *tests.TestA
 		params.Config = &testConfig
 	}
 
+	seedTestData(t, app)
 	bindAppHooks(params)
 
 	return app
+}
+
+func seedTestData(t testing.TB, app *tests.TestApp) {
+	t.Helper()
+
+	usersCollection, err := app.FindCollectionByNameOrId("users")
+	if err != nil {
+		t.Fatalf("FindCollectionByNameOrId(users) error = %v", err)
+	}
+
+	for _, seed := range testUsers {
+		record := core.NewRecord(usersCollection)
+		record.Id = seed.ID
+		record.Set("email", seed.Email)
+		record.Set("username", seed.Username)
+		record.Set("verified", seed.Verified)
+		record.Set("privacy_tier", seed.PrivacyTier)
+		record.Set("preferred_model_id", seed.PreferredModelID)
+		record.SetPassword(seed.Password)
+		if err := app.Save(record); err != nil {
+			t.Fatalf("Save(users %q) error = %v", seed.Email, err)
+		}
+	}
+
+	userKeyPairsCollection, err := app.FindCollectionByNameOrId("user_key_pairs")
+	if err != nil {
+		t.Fatalf("FindCollectionByNameOrId(user_key_pairs) error = %v", err)
+	}
+
+	for _, seed := range testUserKeyPairs {
+		record := core.NewRecord(userKeyPairsCollection)
+		record.Id = seed.ID
+		record.Set("user", seed.UserID)
+		record.Set("public_key", seed.PublicKey)
+		record.Set("secret_key", seed.SecretKey)
+		record.Set("password_salt", seed.PasswordSalt)
+		record.Set("unlock_scheme", seed.UnlockScheme)
+		record.Set("record_mac", seed.RecordMAC)
+		if err := app.Save(record); err != nil {
+			t.Fatalf("Save(user_key_pairs %q) error = %v", seed.ID, err)
+		}
+	}
 }
 
 func hashVaultPassword(vaultPassword, userEmail string) [32]byte {
@@ -107,7 +244,7 @@ func TestConversationFilterRules(t *testing.T) {
 	const (
 		conversationTitle = "Test Conversation"
 		collectionName    = "conversations"
-		// Get this info from the pre-populated test DB
+		// Seeded by setupTestApp.
 		userEmail     = "test1@example.com"
 		vaultPassword = "Eegev5eiyahjohghaingahtho8uxu3oh" // Used for decrypting the secret key
 	)
@@ -225,7 +362,7 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 
 	const (
 		collectionName = "user_key_pairs"
-		// Get this info from the pre-populated test DB
+		// Seeded by setupTestApp.
 		userEmail              = "test1@example.com"
 		userId                 = "uvi8zmr78j9y5hz"
 		userPublicKey          = "FaTq77hDYWu9pNLMwBlQ4Ks54BAfwz1Y7/nmyZTLkTE="

@@ -26,19 +26,20 @@ type Pricing struct {
 }
 
 type Model struct {
-	ID                 string        `json:"id"`
-	Name               string        `json:"name"`
-	Slug               string        `json:"slug"`
-	Description        string        `json:"description"`
-	ProviderID         string        `json:"provider_id"`
-	ProviderModelID    string        `json:"provider_model_id"`
-	PrivacyTier        PrivacyTier   `json:"privacy_tier"`
-	Tags               []Tag         `json:"tags,omitempty"`
-	ContentTypes       []ContentType `json:"content_types"`
-	InputContextTokens int           `json:"input_context_tokens"`
-	MaxOutputTokens    int           `json:"max_output_tokens,omitempty"`
-	Pricing            Pricing       `json:"pricing"`
-	IsActive           bool          `json:"-"`
+	ID                  string        `json:"id"`
+	Name                string        `json:"name"`
+	Slug                string        `json:"slug"`
+	Description         string        `json:"description"`
+	ProviderID          string        `json:"provider_id"`
+	ProviderModelID     string        `json:"provider_model_id"`
+	PrivacyTier         PrivacyTier   `json:"privacy_tier"`
+	Tags                []Tag         `json:"tags,omitempty"`
+	ContentTypes        []ContentType `json:"content_types"`
+	InputContextTokens  int           `json:"input_context_tokens"`
+	MaxOutputTokens     int           `json:"max_output_tokens,omitempty"`
+	Pricing             Pricing       `json:"pricing"`
+	RequiresNoRetention bool          `json:"-"`
+	IsActive            bool          `json:"-"`
 }
 
 var allModels = []Model{
@@ -61,7 +62,8 @@ var allModels = []Model{
 			InputUSDPerMillionTokens:  0,
 			OutputUSDPerMillionTokens: 0,
 		},
-		IsActive: true,
+		RequiresNoRetention: true,
+		IsActive:            true,
 	},
 }
 
