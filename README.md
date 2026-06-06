@@ -64,7 +64,7 @@ steps to going live for posterity.
     - Monitoring:
         - Setup Grafana Alloy to monitor server and alert on high usage
     - Pocketbase application:
-        - Git clone from GitHub using a [personal access token]() with read only access to
+        - Git clone from GitHub using a personal access token with read only access to
           `cognos/chat.cognos.io` repo:
             - `git clone https://kisamoto@github.com/cognos/chat.cognos.io.git` and enter access
               token as password
@@ -128,13 +128,11 @@ To                         Action      From
 80/tcp                     ALLOW       Anywhere                   # allow HTTP traffic in
 443                        ALLOW       Anywhere                   # allow HTTPS traffic in
 8090                       ALLOW       Anywhere                   # allow Pocketbase in
-2019                       ALLOW       Anywhere                   # allow Caddy admin API in
 8001                       ALLOW       Anywhere                   # allow BricksLLM API in
 22/tcp (v6)                LIMIT       Anywhere (v6)              # allow SSH connections in
 80/tcp (v6)                ALLOW       Anywhere (v6)              # allow HTTP traffic in
 443 (v6)                   ALLOW       Anywhere (v6)              # allow HTTPS traffic in
 8090 (v6)                  ALLOW       Anywhere (v6)              # allow Pocketbase in
-2019 (v6)                  ALLOW       Anywhere (v6)              # allow Caddy admin API in
 8001 (v6)                  ALLOW       Anywhere (v6)              # allow BricksLLM API in
 
 53                         ALLOW OUT   Anywhere                   # allow DNS calls out
