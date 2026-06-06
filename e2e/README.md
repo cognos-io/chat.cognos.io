@@ -11,6 +11,11 @@ End-to-end tests for chat.cognos.io powered by [Playwright](https://playwright.d
    just backend
    ```
 
+   The e2e suite mocks completion responses in the browser, but the backend still
+   needs enough configuration to boot with the active Infomaniak model enabled.
+   For local runs, dummy `infomaniak.api_key` and `infomaniak.product_id` values
+   in `backend/configs/api.local.yaml` are sufficient.
+
 2. **Playwright browsers installed** (one-time):
 
    ```sh
