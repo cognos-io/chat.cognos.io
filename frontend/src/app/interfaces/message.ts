@@ -13,6 +13,8 @@ export type MessageDataVersion = z.infer<typeof MessageDataVersion>;
 export const MessageData = z.object({
   version: MessageDataVersion.optional(),
   content: z.string().nullable(), // the message content
+  conversation_id: z.string().optional(),
+  parent_message_id: z.string().optional(),
   agent_id: z.string().optional(), // the agent used when generating the message
   model_id: z.string().optional(), // the model used when generating the message
   owner_id: z.string().optional(), // the user who sent the message

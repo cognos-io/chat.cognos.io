@@ -471,6 +471,19 @@ export class MessageService {
           conversation.keyPair,
         ),
       );
+
+      if (
+        decryptedData.conversation_id &&
+        decryptedData.conversation_id !== record.conversation
+      ) {
+        throw new Error('Message conversation binding mismatch');
+      }
+      if (
+        decryptedData.parent_message_id !== undefined &&
+        decryptedData.parent_message_id !== record.parent_message
+      ) {
+        throw new Error('Message parent binding mismatch');
+      }
     } catch (error) {
       // Show to the user the message failed to decrypt
       console.error('Message decryption failed', error);

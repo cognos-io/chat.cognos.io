@@ -64,6 +64,9 @@ func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 	parentMessageID string,
 	message MessageRecordData,
 ) (error, *core.Record) {
+	message.ConversationID = conversation.ID
+	message.ParentMessageID = parentMessageID
+
 	base64EncryptedMessage, err := EncryptMessageData(
 		message,
 		conversation.PublicKey,
