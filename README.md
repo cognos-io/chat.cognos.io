@@ -123,11 +123,9 @@ To                         Action      From
 22/tcp                     LIMIT       Anywhere                   # allow SSH connections in
 80/tcp                     ALLOW       Anywhere                   # allow HTTP traffic in
 443                        ALLOW       Anywhere                   # allow HTTPS traffic in
-8001                       ALLOW       Anywhere                   # allow BricksLLM API in
 22/tcp (v6)                LIMIT       Anywhere (v6)              # allow SSH connections in
 80/tcp (v6)                ALLOW       Anywhere (v6)              # allow HTTP traffic in
 443 (v6)                   ALLOW       Anywhere (v6)              # allow HTTPS traffic in
-8001 (v6)                  ALLOW       Anywhere (v6)              # allow BricksLLM API in
 
 53                         ALLOW OUT   Anywhere                   # allow DNS calls out
 123                        ALLOW OUT   Anywhere                   # allow NTP out
