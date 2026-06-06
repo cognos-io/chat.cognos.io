@@ -25,6 +25,8 @@ func TestPocketBaseAuthRateLimitsAreConfigured(t *testing.T) {
 		"*:requestVerification",
 		"*:requestPasswordReset",
 		"*:confirmPasswordReset",
+		"*:requestEmailChange",
+		"*:confirmEmailChange",
 	} {
 		if !slices.Contains(labels, want) {
 			t.Fatalf("RateLimits.Rules missing %q, got %v", want, labels)

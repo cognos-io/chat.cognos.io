@@ -11,5 +11,7 @@ func ConfigureRateLimits(app core.App) {
 		{Label: "*:requestVerification", MaxRequests: 5, Duration: 300},
 		{Label: "*:requestPasswordReset", MaxRequests: 3, Duration: 300},
 		{Label: "*:confirmPasswordReset", MaxRequests: 3, Duration: 300},
+		{Label: "*:requestEmailChange", MaxRequests: 3, Duration: 300},
+		{Label: "*:confirmEmailChange", MaxRequests: 3, Duration: 300},
 	}
 }
