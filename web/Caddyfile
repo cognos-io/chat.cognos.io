@@ -13,6 +13,20 @@ api.cognos.io {
 	respond @pocketbase_admin 404
 	rewrite /metrics /404
 
+	@allowed_origin header Origin https://app.cognos.io https://chat.cognos.io
+	@cors_preflight {
+		method OPTIONS
+		header Origin https://app.cognos.io https://chat.cognos.io
+		header Access-Control-Request-Method *
+	}
+	header @allowed_origin {
+		Access-Control-Allow-Origin {header.Origin}
+		Access-Control-Allow-Headers Authorization, Content-Type
+		Access-Control-Allow-Methods GET, POST, PATCH, PUT, DELETE, OPTIONS
+		Vary Origin
+	}
+	respond @cors_preflight 204
+
 	reverse_proxy backend:8090 {
 		transport http {
 			read_timeout 360s
