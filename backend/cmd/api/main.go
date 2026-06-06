@@ -98,6 +98,7 @@ func bindAppHooks(
 
 		hooks.SoftDelete(app)
 		hooks.EnforceSingleUserKeyPair(app)
+		hooks.ForbidPasswordReset(app)
 		hooks.ForbidUserEmailChanges(app)
 
 		if params.CronScheduler != nil {
