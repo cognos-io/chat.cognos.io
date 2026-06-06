@@ -1,0 +1,257 @@
+package handler
+
+import (
+	"errors"
+	"log/slog"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
+	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
+	compatopenai "github.com/cognos-io/chat.cognos.io/backend/pkg/compat/openai"
+	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
+	"github.com/pocketbase/pocketbase/apis"
+	"github.com/pocketbase/pocketbase/core"
+	oai "github.com/sashabaranov/go-openai"
+)
+
+type completionMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+	Name    string `json:"name,omitempty"`
+}
+
+type completeRequest struct {
+	Messages        []completionMessage `json:"messages"`
+	ModelID         string              `json:"model_id"`
+	AgentID         string              `json:"agent_id"`
+	ParentMessageID string              `json:"parent_message_id,omitempty"`
+	RequestID       string              `json:"request_id,omitempty"`
+	MaxOutputTokens int                 `json:"max_output_tokens,omitempty"`
+	Persist         *bool               `json:"persist,omitempty"`
+}
+
+type usageResponse struct {
+	InputTokens              int64   `json:"input_tokens"`
+	OutputTokens             int64   `json:"output_tokens"`
+	TotalTokens              int64   `json:"total_tokens"`
+	CacheCreationInputTokens int64   `json:"cache_creation_input_tokens"`
+	CacheReadInputTokens     int64   `json:"cache_read_input_tokens"`
+	CostUSD                  float64 `json:"cost_usd"`
+	CostCHF                  float64 `json:"cost_chf"`
+	CostRappen               int64   `json:"cost_rappen"`
+	UsedProviderCost         bool    `json:"used_provider_cost"`
+}
+
+type assistantMessageResponse struct {
+	ID              string `json:"id,omitempty"`
+	ParentMessageID string `json:"parent_message_id,omitempty"`
+	Content         string `json:"content"`
+	AgentID         string `json:"agent_id"`
+	ModelID         string `json:"model_id"`
+	CreatedAt       string `json:"created_at"`
+}
+
+type completeResponse struct {
+	RequestID        string                   `json:"request_id,omitempty"`
+	UserMessageID    string                   `json:"user_message_id,omitempty"`
+	AssistantMessage assistantMessageResponse `json:"assistant_message"`
+	ExpiresAt        string                   `json:"expires_at,omitempty"`
+	Usage            usageResponse            `json:"usage"`
+}
+
+type CompleteHandlerParams struct {
+	Logger           *slog.Logger
+	UpstreamRepo     proxy.UpstreamRepo
+	MessageRepo      chat.MessageRepo
+	ConversationRepo chat.ConversationRepo
+	AgentRepo        aiagent.AIAgentRepo
+	BillingService   *billing.Service
+}
+
+func Complete(params CompleteHandlerParams) func(e *core.RequestEvent) error {
+	return complete(params, false)
+}
+
+func CompleteConversation(params CompleteHandlerParams) func(e *core.RequestEvent) error {
+	return complete(params, true)
+}
+
+func complete(params CompleteHandlerParams, useConversationPath bool) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		owner := auth.ExtractUser(e)
+		if owner == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		var req completeRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Failed to read request data", err)
+		}
+
+		req.ModelID = strings.TrimSpace(req.ModelID)
+		req.AgentID = strings.TrimSpace(req.AgentID)
+		req.ParentMessageID = strings.TrimSpace(req.ParentMessageID)
+		req.RequestID = strings.TrimSpace(req.RequestID)
+
+		if req.ModelID == "" {
+			return apis.NewBadRequestError("Model ID is required", nil)
+		}
+		if req.AgentID == "" {
+			return apis.NewBadRequestError("Agent ID is required", nil)
+		}
+		if len(req.Messages) == 0 {
+			return apis.NewBadRequestError("At least one message is required", nil)
+		}
+
+		lastMessage := req.Messages[len(req.Messages)-1]
+		if strings.TrimSpace(lastMessage.Content) == "" {
+			return apis.NewBadRequestError("Last message content is required", nil)
+		}
+		if lastMessage.Role != "user" {
+			return apis.NewBadRequestError("Last message must have role user", nil)
+		}
+
+		model, ok := catalogue.GetModelByID(req.ModelID)
+		if !ok || !model.IsActive {
+			return apis.NewBadRequestError("Invalid model ID", nil)
+		}
+
+		userTier := catalogue.NormalizePrivacyTier(e.Auth.GetString("privacy_tier"))
+		if !catalogue.IsEligibleForTier(userTier, model.PrivacyTier) {
+			return apis.NewForbiddenError("Model is not available for the user's privacy tier", nil)
+		}
+
+		agent, err := params.AgentRepo.LookupPrompt(req.AgentID)
+		if err != nil {
+			if errors.Is(err, aiagent.ErrAgentNotFound) {
+				return apis.NewBadRequestError("Invalid agent ID", err)
+			}
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load agent", err)
+		}
+
+		conversationID := ""
+		if useConversationPath {
+			conversationID = e.Request.PathValue("conversationID")
+		}
+
+		shouldPersist := conversationID != ""
+		if req.Persist != nil {
+			shouldPersist = *req.Persist && conversationID != ""
+		}
+
+		var conversation chat.Conversation
+		if shouldPersist {
+			conversation, err = params.ConversationRepo.ByID(conversationID)
+			if err != nil {
+				return apis.NewNotFoundError("Conversation not found or unable to load", err)
+			}
+		}
+
+		upstream, err := params.UpstreamRepo.Provider(model.ProviderID)
+		if err != nil {
+			return apis.NewApiError(http.StatusServiceUnavailable, "Provider is unavailable", err)
+		}
+
+		messages := make([]oai.ChatCompletionMessage, 0, len(req.Messages))
+		for _, message := range req.Messages {
+			messages = append(messages, oai.ChatCompletionMessage{
+				Role:    message.Role,
+				Content: message.Content,
+				Name:    message.Name,
+			})
+		}
+		messages = compatopenai.AddSystemMessage(messages, agent)
+
+		var userMessageRecord *core.Record
+		if shouldPersist {
+			err, userMessageRecord = params.MessageRepo.EncryptAndPersistMessage(
+				conversation,
+				req.ParentMessageID,
+				chat.MessageRecordData{
+					OwnerID: owner.ID,
+					Content: lastMessage.Content,
+				},
+			)
+			if err != nil {
+				params.Logger.Error("failed to save request message", "err", err)
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to save request message", err)
+			}
+		}
+
+		upstreamResp, plainTextResponseMessage, err := upstream.ChatCompletion(e, oai.ChatCompletionRequest{
+			User:      owner.ID,
+			Model:     model.ProviderModelID,
+			Messages:  messages,
+			MaxTokens: req.MaxOutputTokens,
+		})
+		if err != nil {
+			if userMessageRecord != nil {
+				if deleteErr := params.MessageRepo.DeleteMessage(userMessageRecord.Id); deleteErr != nil {
+					params.Logger.Error("failed to clean up request message", "err", deleteErr)
+				}
+			}
+			return apis.NewApiError(http.StatusServiceUnavailable, "Failed to process completion", err)
+		}
+
+		var assistantMessageRecord *core.Record
+		if shouldPersist {
+			err, assistantMessageRecord = params.MessageRepo.EncryptAndPersistMessage(
+				conversation,
+				userMessageRecord.Id,
+				chat.MessageRecordData{
+					Content: plainTextResponseMessage,
+					AgentID: req.AgentID,
+					ModelID: model.ID,
+				},
+			)
+			if err != nil {
+				params.Logger.Error("failed to save response message", "err", err)
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to save response message", err)
+			}
+		}
+
+		costBreakdown := params.BillingService.CalculateCost(model, billing.Usage{
+			InputTokens:  int64(upstreamResp.Usage.PromptTokens),
+			OutputTokens: int64(upstreamResp.Usage.CompletionTokens),
+		}, 1)
+
+		response := completeResponse{
+			RequestID: req.RequestID,
+			AssistantMessage: assistantMessageResponse{
+				Content:   plainTextResponseMessage,
+				AgentID:   req.AgentID,
+				ModelID:   model.ID,
+				CreatedAt: time.Now().UTC().Format(time.RFC3339),
+			},
+			Usage: usageResponse{
+				InputTokens:              int64(upstreamResp.Usage.PromptTokens),
+				OutputTokens:             int64(upstreamResp.Usage.CompletionTokens),
+				TotalTokens:              int64(upstreamResp.Usage.TotalTokens),
+				CacheCreationInputTokens: costBreakdown.CacheCreationInputTokens,
+				CacheReadInputTokens:     costBreakdown.CacheReadInputTokens,
+				CostUSD:                  costBreakdown.CostUSD,
+				CostCHF:                  costBreakdown.CostCHF,
+				CostRappen:               costBreakdown.CostRappen,
+				UsedProviderCost:         costBreakdown.UsedProviderCost,
+			},
+		}
+
+		if userMessageRecord != nil {
+			response.UserMessageID = userMessageRecord.Id
+			response.AssistantMessage.ParentMessageID = userMessageRecord.Id
+		}
+		if assistantMessageRecord != nil {
+			response.AssistantMessage.ID = assistantMessageRecord.Id
+		}
+		if conversation.ExpiryDuration > 0 {
+			response.ExpiresAt = time.Now().UTC().Add(conversation.ExpiryDuration).Format(time.RFC3339)
+		}
+
+		return e.JSON(http.StatusOK, response)
+	}
+}

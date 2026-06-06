@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
@@ -90,10 +91,36 @@ func addPocketBaseRoutes(
 	keyPairRepo auth.KeyPairRepo,
 	aiAgentRepo aiagent.AIAgentRepo,
 	conversationRepo chat.ConversationRepo,
+	billingService *billing.Service,
 ) {
 	e.Router.GET(
 		"/api/v1/models",
 		handler.ModelsGet(),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	completeParams := handler.CompleteHandlerParams{
+		Logger:           logger,
+		UpstreamRepo:     upstreamRepo,
+		MessageRepo:      messageRepo,
+		ConversationRepo: conversationRepo,
+		AgentRepo:        aiAgentRepo,
+		BillingService:   billingService,
+	}
+
+	e.Router.POST(
+		"/api/v1/completions",
+		handler.Complete(completeParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.POST(
+		"/api/v1/conversations/{conversationID}/complete",
+		handler.CompleteConversation(completeParams),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(),

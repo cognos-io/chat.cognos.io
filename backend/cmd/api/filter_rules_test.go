@@ -56,17 +56,22 @@ func withRecordAuth(
 }
 
 func setupTestApp(t testing.TB) *tests.TestApp {
+	return setupTestAppWithHookParams(t, appHookParams{})
+}
+
+func setupTestAppWithHookParams(t testing.TB, params appHookParams) *tests.TestApp {
 	app, err := tests.NewTestApp(testDataDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	testConfig := config.APIConfig{}
+	params.App = app
+	if params.Config == nil {
+		params.Config = &testConfig
+	}
 
-	bindAppHooks(appHookParams{
-		App:    app,
-		Config: &testConfig,
-	})
+	bindAppHooks(params)
 
 	return app
 }

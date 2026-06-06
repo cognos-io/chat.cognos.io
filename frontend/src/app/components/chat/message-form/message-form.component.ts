@@ -129,7 +129,7 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
       <div class="message-form__meta">
         <span class="message-form__security">
           <cog-icon name="lock" [size]="12" tone="text-subtlest" />
-          <span>End-to-end encrypted · keys never leave this device</span>
+          <span>End-to-end encrypted · keys are encrypted before backup</span>
         </span>
 
         <span class="message-form__shortcut">

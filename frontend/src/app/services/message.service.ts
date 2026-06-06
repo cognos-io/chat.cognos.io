@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 
@@ -25,7 +26,6 @@ import {
 import { Base64 } from 'js-base64';
 import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
-import { OpenAI } from 'openai';
 
 import { generateConversationAgentId } from '@app/interfaces/agent';
 import { Message, parseMessageData } from '@app/interfaces/message';
@@ -34,18 +34,18 @@ import {
   MessagesResponse,
   TypedPocketBase,
 } from '@app/types/pocketbase-types';
-import { isTimestampInMilliseconds } from '@app/utils/timestamp';
 
 import { AgentService } from './agent.service';
 import { AuthService } from './auth.service';
+import {
+  CognosApiService,
+  CompleteResponse,
+  CompletionMessageRequest,
+} from './cognos-api.service';
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
 import { ModelService } from './model.service';
-import {
-  ChatCompletionResponseWithMetadata,
-  CognosMetadataResponse,
-} from './openai.service.provider';
 
 export enum MessageStatus {
   None, // default state
@@ -91,7 +91,7 @@ export class MessageService {
   private readonly _cryptoService = inject(CryptoService);
   private readonly _errorService = inject(ErrorService);
   private readonly _modelService = inject(ModelService);
-  private readonly _openAi = inject(OpenAI);
+  private readonly _api = inject(CognosApiService);
   private readonly _pb: TypedPocketBase = inject(PocketBase);
 
   private readonly pbMessagesCollection = this._pb.collection('messages');
@@ -220,19 +220,16 @@ export class MessageService {
                   this.sendMessage(messageRequest).pipe(
                     finalize(() => this._isNewConversation$.next(false)),
                     tap((resp) => {
-                      const metadata: CognosMetadataResponse | undefined =
-                        resp.metadata?.cognos;
-
                       this.state.updateMessageId({
                         oldId: messageRequest.requestId,
-                        newId: metadata?.message_record_id ?? '',
+                        newId: resp.userMessageId ?? '',
                       });
                     }),
                   ),
                 ]).pipe(
                   map(([, resp]) => {
                     return {
-                      ...this.addOpenAIMessageToState(resp),
+                      ...this.addCompletionMessageToState(resp),
                     };
                   }),
                 );
@@ -242,15 +239,13 @@ export class MessageService {
 
           return this.sendMessage(messageRequest).pipe(
             tap((resp) => {
-              const metadata: CognosMetadataResponse | undefined =
-                resp.metadata?.cognos;
               this.state.updateMessageId({
                 oldId: messageRequest.requestId,
-                newId: metadata?.message_record_id ?? '',
+                newId: resp.userMessageId ?? '',
               });
             }),
             map((resp) => {
-              return this.addOpenAIMessageToState(resp);
+              return this.addCompletionMessageToState(resp);
             }),
           );
         }),
@@ -494,9 +489,7 @@ export class MessageService {
     );
   }
 
-  private sendMessage(
-    messageRequest: MessageRequest,
-  ): Observable<ChatCompletionResponseWithMetadata> {
+  private sendMessage(messageRequest: MessageRequest): Observable<CompleteResponse> {
     const conversation = this._conversationService.conversation();
     const isTemporaryConversation = this._conversationService.isTemporaryConversation();
 
@@ -506,41 +499,29 @@ export class MessageService {
 
     this.state.setStatus(MessageStatus.Sending);
 
-    // Create a message context based on the message history
-    const messages = this.createMessageContext();
-
-    const messageMetadata: {
-      conversation_id?: string;
-      parent_message_id?: string;
-      request_id: string;
-      agent_id: string;
-    } = {
-      parent_message_id: messageRequest.parentMessageId,
-      request_id: messageRequest.requestId,
-      agent_id: this._agentService.selectedAgent().id,
+    const request = {
+      messages: this.createMessageContext(),
+      modelId: this._modelService.selectedModel().id,
+      agentId: this._agentService.selectedAgent().id,
+      parentMessageId: messageRequest.parentMessageId,
+      requestId: messageRequest.requestId,
     };
 
-    // appease the type checker
-    if (!isTemporaryConversation && conversation) {
-      messageMetadata.conversation_id = conversation.record.id;
-    }
+    const response$ = isTemporaryConversation
+      ? this._api.complete(request)
+      : this._api.completeConversation(conversation!.record.id, request);
 
-    return from(
-      this._openAi.chat.completions.create({
-        messages,
-        model: this._modelService.selectedModel().id,
-        metadata: {
-          cognos: messageMetadata,
-        },
-      } as OpenAI.ChatCompletionCreateParamsNonStreaming),
-    ).pipe(
-      catchError((err) => {
+    return response$.pipe(
+      catchError((err: unknown) => {
         this.state.setStatus(MessageStatus.ErrorSending);
         console.error('Error sending message', err);
-        if (err instanceof OpenAI.APIError) {
+
+        if (err instanceof HttpErrorResponse) {
           switch (err.status) {
+            case 402:
+              this._errorService.alert('Insufficient balance to send this message.');
+              break;
             case 429:
-              // Rate limiting
               this._errorService.alert(
                 'Rate limiting error, you are sending too many messages. Please wait a few seconds before sending another message.',
               );
@@ -550,7 +531,7 @@ export class MessageService {
               break;
           }
         }
-        // Remove the message from the state
+
         this.state.removeLastMessage();
         return EMPTY;
       }),
@@ -560,37 +541,25 @@ export class MessageService {
     );
   }
 
-  private addOpenAIMessageToState(
-    resp: ChatCompletionResponseWithMetadata,
-  ): Partial<MessageState> {
+  private addCompletionMessageToState(resp: CompleteResponse): Partial<MessageState> {
     const messages = this.state().messages;
-
-    let createdAt = resp.created;
-    if (isTimestampInMilliseconds(createdAt)) {
-      // Cloudflare Workers returns timestamps in milliseconds
-      // Convert to seconds for standardization with OpenAI API
-      createdAt = Math.floor(createdAt / 1000);
-    }
-
-    // TODO(ewan): Better handle errors. E.g. request fails or success but resp.choices is null
-    const metadata: CognosMetadataResponse | undefined = resp.metadata?.cognos;
-    const expires = metadata?.expires_at ? new Date(metadata.expires_at) : undefined;
+    const expires = resp.expiresAt ? new Date(resp.expiresAt) : undefined;
 
     const msg: Message = {
-      parentMessageId: metadata?.parent_message_id,
-      record_id: metadata?.response_record_id,
-      createdAt: new Date((createdAt + 1) * 1000),
-      expires: metadata?.expires_at ? expires : undefined,
+      parentMessageId: resp.assistantMessage.parentMessageId,
+      record_id: resp.assistantMessage.id,
+      createdAt: new Date(resp.assistantMessage.createdAt),
+      expires,
       decryptedData: {
-        content: resp.choices[0].message.content,
-        agent_id: this._agentService.selectedAgent().id,
-        model_id: this._modelService.selectedModel().id,
+        content: resp.assistantMessage.content,
+        agent_id: resp.assistantMessage.agentId,
+        model_id: resp.assistantMessage.modelId,
       },
     };
 
-    if (expires && metadata?.parent_message_id) {
+    if (expires && resp.assistantMessage.parentMessageId) {
       messages.forEach((message) => {
-        if (message.record_id === metadata.parent_message_id) {
+        if (message.record_id === resp.assistantMessage.parentMessageId) {
           message.expires = expires;
         }
       });
@@ -603,14 +572,14 @@ export class MessageService {
 
   /**
    * Create a message context object based on the message history
-   * to be used in the OpenAI API request.
+   * to be used in the Cognos API request.
    *
    * As the new message has already been added to the state, we don't
    * need to include it as a parameter here.
    */
-  private createMessageContext(): Array<OpenAI.ChatCompletionMessageParam> {
+  private createMessageContext(): Array<CompletionMessageRequest> {
     const model = this._modelService.selectedModel();
-    const context: Array<OpenAI.ChatCompletionMessageParam> = [];
+    const context: Array<CompletionMessageRequest> = [];
 
     let usedContextLength = 0;
     // Rather than calling a tokenizer, estimate that 1 token is 2 characters
@@ -654,34 +623,21 @@ export class MessageService {
   private generateConversationTitle(
     startingMessage: string,
   ): Observable<string | null> {
-    const conversation = this._conversationService.conversation();
-    if (!conversation) {
-      return EMPTY;
-    }
-
-    return from(
-      this._openAi.chat.completions.create({
-        max_tokens: 15,
+    return this._api
+      .complete({
+        maxOutputTokens: 15,
+        persist: false,
         messages: [{ role: 'user', content: startingMessage }],
-        model: this._modelService.selectedModel().id,
-        metadata: {
-          cognos: {
-            agent_id: generateConversationAgentId,
-          },
-        },
-      } as OpenAI.ChatCompletionCreateParamsNonStreaming),
-    ).pipe(
-      catchError((err) => {
-        console.error('Error generating conversation title', err);
-        return EMPTY;
-      }),
-      map((resp) => {
-        if (resp.choices) {
-          return resp.choices[0].message.content;
-        }
-        return null;
-      }),
-    );
+        modelId: this._modelService.selectedModel().id,
+        agentId: generateConversationAgentId,
+      })
+      .pipe(
+        catchError((err) => {
+          console.error('Error generating conversation title', err);
+          return EMPTY;
+        }),
+        map((resp) => resp.assistantMessage.content || null),
+      );
   }
 
   private generateAndSetConversationTitle(
