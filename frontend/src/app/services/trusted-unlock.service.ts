@@ -136,6 +136,21 @@ export class TrustedUnlockService {
     }
   }
 
+  async clearAllUnlockKeys(): Promise<void> {
+    const db = await this.openDatabase();
+    if (!db) {
+      return;
+    }
+
+    try {
+      const transaction = db.transaction(storeName, 'readwrite');
+      transaction.objectStore(storeName).clear();
+      await this.transactionToPromise(transaction);
+    } finally {
+      db.close();
+    }
+  }
+
   private getCrypto(): Crypto | null {
     if (typeof globalThis.crypto === 'undefined' || !globalThis.crypto.subtle) {
       return null;

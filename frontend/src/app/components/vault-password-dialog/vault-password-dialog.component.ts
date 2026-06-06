@@ -12,6 +12,7 @@ import {
   CognosDialogSurfaceComponent,
   CognosIconComponent,
   CognosLozengeComponent,
+  CognosToastService,
 } from '@cognos/ui-angular';
 
 import { environment } from '@environments/environment';
@@ -140,13 +141,19 @@ const validateUnlockForm = (
           }
 
           @if (vaultService.isNewKeyPair()) {
-            <label class="vault-password-dialog__checkbox-row">
+            <label
+              class="vault-password-dialog__checkbox-row vault-password-dialog__checkbox-row--acknowledge"
+            >
               <input formControlName="accountKeySaved" type="checkbox" />
-              <span>I saved this Account Key somewhere safe</span>
+              <span>
+                I have copied my Account Key to a safe place and acknowledge that if I
+                lose it I will also not be able to access my account.
+              </span>
             </label>
             @if (vaultForm.hasError('accountKeySavedRequired')) {
               <span class="vault-password-dialog__error"
-                >Please confirm that you saved your Account Key</span
+                >Please confirm that you copied your Account Key and accept the recovery
+                risk.</span
               >
             }
           }
@@ -297,8 +304,20 @@ const validateUnlockForm = (
       line-height: var(--cog-lh-body-sm);
     }
 
+    .vault-password-dialog__checkbox-row--acknowledge {
+      align-items: start;
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface-raised, var(--cog-surface));
+      padding: var(--cog-space-125);
+    }
+
     .vault-password-dialog__checkbox-row input {
       margin: 0;
+    }
+
+    .vault-password-dialog__checkbox-row--acknowledge input {
+      margin-top: 2px;
     }
 
     .vault-password-dialog__error {
@@ -312,6 +331,7 @@ const validateUnlockForm = (
 export class VaultPasswordDialogComponent {
   readonly vaultService = inject(VaultService);
   private readonly fb = inject(FormBuilder);
+  private readonly toastService = inject(CognosToastService);
 
   readonly title = computed(() => {
     if (this.vaultService.isNewKeyPair()) {
@@ -342,11 +362,62 @@ export class VaultPasswordDialogComponent {
 
   async copyAccountKey(): Promise<void> {
     const accountKey = this.generatedAccountKey();
-    if (!accountKey || typeof navigator === 'undefined' || !navigator.clipboard) {
+    if (!accountKey) {
       return;
     }
 
-    await navigator.clipboard.writeText(accountKey);
+    const copied = await this.copyText(accountKey);
+    if (!copied) {
+      this.toastService.notify({
+        title: 'Could not copy Account Key',
+        msg: 'Select and store the Account Key manually before you continue.',
+        tone: 'danger',
+        icon: 'shield-x',
+        duration: 4200,
+      });
+      return;
+    }
+
+    this.toastService.notify({
+      title: 'Account Key copied',
+      msg: 'Store it somewhere safe before you continue.',
+      tone: 'success',
+      icon: 'copy',
+      duration: 3200,
+    });
+  }
+
+  private async copyText(value: string): Promise<boolean> {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(value);
+        return true;
+      } catch {
+        // Fall through to the document-based copy path below.
+      }
+    }
+
+    if (typeof document === 'undefined') {
+      return false;
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    textarea.style.pointerEvents = 'none';
+    document.body.appendChild(textarea);
+    textarea.select();
+    textarea.setSelectionRange(0, value.length);
+
+    try {
+      return document.execCommand('copy');
+    } catch {
+      return false;
+    } finally {
+      document.body.removeChild(textarea);
+    }
   }
 
   submit() {

@@ -2,20 +2,26 @@ import { expect, test } from '@playwright/test';
 
 import { makeTestAccount } from './fixtures';
 import {
-  createVault,
-  expectVaultDialogForExistingUser,
-  expectVaultDialogForNewUser,
+  acknowledgeAccountKey,
+  captureGeneratedAccountKey,
+  copyAccountKey,
+  createEncryptedBackup,
+  expectAccountKeyDialogForNewUser,
+  expectLockedDialog,
+  expectUnlockDialog,
   fillLoginForm,
   fillRegisterForm,
   gotoLogin,
   gotoRegister,
+  lockFromDrawer,
   logout,
+  openMobileDrawer,
   submitLogin,
   submitRegister,
-  unlockVault,
+  unlockAccount,
 } from './helpers';
 
-test.describe('auth + vault flow', () => {
+test.describe('auth + account key flow', () => {
   test('login page links to register and forgot-password', async ({ page }) => {
     await gotoLogin(page);
 
@@ -24,7 +30,6 @@ test.describe('auth + vault flow', () => {
     await registerLink.click();
     await expect(page).toHaveURL(/\/auth\/register/);
 
-    // And back again
     await page.getByRole('link', { name: /log in/i }).click();
     await expect(page).toHaveURL(/\/auth\/login/);
 
@@ -45,32 +50,54 @@ test.describe('auth + vault flow', () => {
     await expect(page.getByRole('button', { name: /create account/i })).toBeDisabled();
   });
 
-  test('register → set vault password → logout → login → unlock vault', async ({
+  test('register → copy Account Key → acknowledge → logout → login → unlock', async ({
     page,
   }) => {
     const account = makeTestAccount();
 
-    // 1. Register
     await gotoRegister(page);
     await fillRegisterForm(page, account);
     await submitRegister(page);
 
-    // 2. New-user vault creation dialog appears (route transition is held
-    //    open by the keypair-required guard until we submit).
-    await expectVaultDialogForNewUser(page);
-    await createVault(page, account.vaultPassword);
+    await expectAccountKeyDialogForNewUser(page);
 
-    // 3. Logout
+    const accountKey = await captureGeneratedAccountKey(page);
+    await copyAccountKey(page);
+    await acknowledgeAccountKey(page);
+    await createEncryptedBackup(page, account.password);
+
     await logout(page);
 
-    // 4. Login again
     await gotoLogin(page);
     await fillLoginForm(page, account);
     await submitLogin(page);
 
-    // 5. Existing-user unlock dialog
-    await expectVaultDialogForExistingUser(page);
-    await unlockVault(page, account.vaultPassword);
+    await expectUnlockDialog(page);
+    await unlockAccount(page, account.password, accountKey);
+  });
+
+  test('lock shows a toast and requires unlock again without logging out', async ({
+    page,
+  }) => {
+    const account = makeTestAccount();
+
+    await gotoRegister(page);
+    await fillRegisterForm(page, account);
+    await submitRegister(page);
+
+    await expectAccountKeyDialogForNewUser(page);
+
+    const accountKey = await captureGeneratedAccountKey(page);
+    await copyAccountKey(page);
+    await acknowledgeAccountKey(page);
+    await createEncryptedBackup(page, account.password);
+
+    await openMobileDrawer(page);
+    await lockFromDrawer(page);
+    await expectLockedDialog(page);
+    await expect(page).toHaveURL(/\/$/);
+
+    await unlockAccount(page, account.password, accountKey);
   });
 
   test('wrong login password shows an error', async ({ page }) => {
@@ -79,7 +106,6 @@ test.describe('auth + vault flow', () => {
     await page.getByLabel('Password').fill('not-the-right-password');
     await submitLogin(page);
 
-    // The login page renders an inline hint when the auth status is 'error'.
     await expect(page.getByText(/couldn't sign you in/i)).toBeVisible();
   });
 });

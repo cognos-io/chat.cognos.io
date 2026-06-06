@@ -36,47 +36,99 @@ export async function submitLogin(page: Page): Promise<void> {
   await page.getByRole('button', { name: /^log in$/i }).click();
 }
 
-/**
- * After registration or login, the keypair-required guard blocks the route
- * transition to `/` until the vault password is provided — the URL stays on
- * the previous page while the dialog overlay is shown. We assert the dialog
- * is up, then complete it, then check the final URL separately.
- */
-export async function expectVaultDialogForNewUser(page: Page): Promise<void> {
-  await expect(page.getByRole('heading', { name: /vault locked/i })).toBeVisible();
+export async function expectAccountKeyDialogForNewUser(page: Page): Promise<void> {
   await expect(
-    page.getByText(/different from your login password/i).first(),
+    page.getByRole('heading', { name: /secure your encrypted backup/i }),
   ).toBeVisible();
-  await expect(page.getByRole('button', { name: /create vault/i })).toBeVisible();
+  await expect(page.getByText(/generated a one-time account key/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /copy account key/i })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: /create encrypted backup/i }),
+  ).toBeDisabled();
 }
 
-export async function expectVaultDialogForExistingUser(page: Page): Promise<void> {
-  await expect(page.getByRole('heading', { name: /vault locked/i })).toBeVisible();
-  await expect(page.getByText(/never leave your device/i)).toBeVisible();
-  await expect(page.getByRole('button', { name: /unlock vault/i })).toBeVisible();
+export async function expectUnlockDialog(page: Page): Promise<void> {
+  await expect(page.getByRole('heading', { name: /unlock backup/i })).toBeVisible();
+  await expect(page.getByLabel('Account password')).toBeVisible();
+  await expect(page.getByLabel('Account Key')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: /unlock encrypted backup/i }),
+  ).toBeVisible();
 }
 
-export async function setVaultPassword(
+export async function expectLockedDialog(page: Page): Promise<void> {
+  await expect(page.getByRole('heading', { name: /account locked/i })).toBeVisible();
+  await expect(page.getByText(/account locked on this device/i)).toBeVisible();
+}
+
+export async function captureGeneratedAccountKey(page: Page): Promise<string> {
+  const value = await page
+    .locator('.vault-password-dialog__account-key-value')
+    .textContent();
+  expect(value?.trim()).toBeTruthy();
+  return value!.trim();
+}
+
+export async function copyAccountKey(page: Page): Promise<void> {
+  await page.getByRole('button', { name: /copy account key/i }).click();
+  await expect(page.getByText(/account key copied/i)).toBeVisible();
+  await expect(
+    page.getByText(/store it somewhere safe before you continue/i),
+  ).toBeVisible();
+}
+
+export async function acknowledgeAccountKey(page: Page): Promise<void> {
+  await page
+    .getByRole('checkbox', {
+      name: /i have copied my account key to a safe place and acknowledge that if i lose it/i,
+    })
+    .check();
+}
+
+export async function createEncryptedBackup(
   page: Page,
-  vaultPassword: string,
+  accountPassword: string,
 ): Promise<void> {
-  // The dev environment pre-fills the dialog with 'password' — wipe it.
-  const input = page.getByLabel(/vault password/i);
-  await input.fill(vaultPassword);
-}
-
-export async function createVault(page: Page, vaultPassword: string): Promise<void> {
-  await setVaultPassword(page, vaultPassword);
-  await page.getByRole('button', { name: /create vault/i }).click();
-  await expect(page.getByRole('heading', { name: /vault locked/i })).toBeHidden();
+  await page.getByLabel('Account password').fill(accountPassword);
+  await expect(
+    page.getByRole('button', { name: /create encrypted backup/i }),
+  ).toBeEnabled();
+  await page.getByRole('button', { name: /create encrypted backup/i }).click();
+  await expect(
+    page.getByRole('heading', { name: /secure your encrypted backup/i }),
+  ).toBeHidden();
   await expect(page).toHaveURL(/\/$/);
 }
 
-export async function unlockVault(page: Page, vaultPassword: string): Promise<void> {
-  await setVaultPassword(page, vaultPassword);
-  await page.getByRole('button', { name: /unlock vault/i }).click();
-  await expect(page.getByRole('heading', { name: /vault locked/i })).toBeHidden();
+export async function unlockAccount(
+  page: Page,
+  accountPassword: string,
+  accountKey: string,
+): Promise<void> {
+  await page.getByLabel('Account password').fill(accountPassword);
+  await page.getByLabel('Account Key').fill(accountKey);
+  await page.getByRole('button', { name: /unlock encrypted backup/i }).click();
+  await expect(page.getByRole('heading', { name: /unlock backup/i })).toBeHidden();
+  await expect(page.getByRole('heading', { name: /account locked/i })).toBeHidden();
   await expect(page).toHaveURL(/\/$/);
+}
+
+export async function openMobileDrawer(page: Page): Promise<void> {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: /open navigation/i }).click();
+  await expect(page.getByRole('button', { name: /^lock$/i })).toBeVisible();
+}
+
+export async function lockFromDrawer(page: Page): Promise<void> {
+  await page.getByRole('button', { name: /^lock$/i }).click();
+  await expect(
+    page.locator('cog-toast-host').getByText(/^account locked$/i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      /this device now needs your password and account key to unlock again/i,
+    ),
+  ).toBeVisible();
 }
 
 export async function logout(page: Page): Promise<void> {

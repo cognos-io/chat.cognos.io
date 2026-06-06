@@ -199,7 +199,8 @@ On first setup, the client should:
 - generate the user's keypair
 - generate the Account Key
 - show the Account Key clearly to the user
-- require the user to save it
+- require explicit acknowledgement that they copied it to a safe place and that losing it can block
+  account recovery
 - encrypt private-key material client-side before upload
 
 ### Recovery

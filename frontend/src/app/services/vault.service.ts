@@ -114,7 +114,11 @@ export class VaultService {
                   this.wasLocked.set(false);
                   this.clearUnlockError();
                 }),
-                map((keyPair) => ({ keyPair })),
+                map(({ keyPair, keyPairRecord }) => ({
+                  keyPair,
+                  keyPairRecord,
+                  isNewKeyPair: false,
+                })),
                 catchError(() => {
                   this.unlockError.set(
                     'Error creating your encrypted backup. Please try again.',
@@ -163,9 +167,7 @@ export class VaultService {
       ),
       this.lock$.pipe(
         switchMap(() =>
-          from(
-            this._trustedUnlockService.clearUnlockKey(this._authService.user()?.['id']),
-          ).pipe(
+          from(this._trustedUnlockService.clearAllUnlockKeys()).pipe(
             map(() => {
               this.wasLocked.set(true);
               this.clearUnlockError();
@@ -178,9 +180,7 @@ export class VaultService {
       ),
       this._authService.logout$.pipe(
         switchMap(() =>
-          from(
-            this._trustedUnlockService.clearUnlockKey(this._authService.user()?.['id']),
-          ).pipe(
+          from(this._trustedUnlockService.clearAllUnlockKeys()).pipe(
             map(() => {
               this.generatedAccountKey.set(null);
               this.wasLocked.set(false);
@@ -268,7 +268,10 @@ export class VaultService {
     );
   }
 
-  private createInitialUserKeyPair(request: UnlockRequest): Observable<KeyPair> {
+  private createInitialUserKeyPair(request: UnlockRequest): Observable<{
+    keyPair: KeyPair;
+    keyPairRecord: UserKeyPairsResponse;
+  }> {
     const accountKey = this.generatedAccountKey();
     if (!accountKey) {
       return throwError(() => new Error('missing generated account key'));
@@ -292,7 +295,10 @@ export class VaultService {
     unlockKey: Uint8Array,
     passwordSalt: string,
     trustDevice: boolean,
-  ): Observable<KeyPair> {
+  ): Observable<{
+    keyPair: KeyPair;
+    keyPairRecord: UserKeyPairsResponse;
+  }> {
     const keyPair = this._cryptoService.newKeyPair();
 
     const encryptedSecretKey = this.encryptSecretKey(keyPair.secretKey, unlockKey);
@@ -310,9 +316,9 @@ export class VaultService {
     return from(
       this._pb.collection(this.pbUserKeyPairsCollection).create(keyPairRecordData),
     ).pipe(
-      switchMap(() =>
+      switchMap((keyPairRecord) =>
         from(this.persistTrustedUnlockKey(unlockKey, trustDevice)).pipe(
-          map(() => keyPair),
+          map(() => ({ keyPair, keyPairRecord })),
         ),
       ),
     );

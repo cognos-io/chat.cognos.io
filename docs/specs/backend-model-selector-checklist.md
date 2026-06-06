@@ -311,6 +311,7 @@ This is the execution checklist for the rework.
 ### Verification
 
 - [x] first device setup generates Account Key
+- [x] onboarding requires explicit acknowledgement that losing the Account Key can block recovery
 - [x] new device requires password + Account Key
 - [x] trusted device can re-open without repeated Account Key prompts
 - [x] logout clears local trusted unlock state
