@@ -263,22 +263,22 @@ This is the execution checklist for the rework.
 
 ### Existing frontend files to replace/update
 
-- [ ] `frontend/src/app/services/openai.service.provider.ts`
-    - [ ] remove browser OpenAI SDK dependency from the chat path
-- [ ] `frontend/src/app/services/message.service.ts`
-    - [ ] replace OpenAI SDK calls with first-party Cognos API calls
-    - [ ] keep local state/decryption behavior where still valid
-    - [ ] map new response schema
-- [ ] `frontend/src/app/services/conversation.service.ts`
-    - [ ] align conversation CRUD/fetch flow with first-party API
-- [ ] `frontend/src/app/types/pocketbase-types.ts`
-    - [ ] regenerate or reduce dependence after schema/API changes
+- [x] `frontend/src/app/services/openai.service.provider.ts`
+    - [x] remove browser OpenAI SDK dependency from the chat path
+- [x] `frontend/src/app/services/message.service.ts`
+    - [x] replace OpenAI SDK calls with first-party Cognos API calls
+    - [x] keep local state/decryption behavior where still valid
+    - [x] map new response schema
+- [x] `frontend/src/app/services/conversation.service.ts`
+    - [x] align conversation CRUD/fetch flow with first-party API
+- [x] `frontend/src/app/types/pocketbase-types.ts`
+    - [x] regenerate or reduce dependence after schema/API changes
 
 ### Verification
 
-- [ ] frontend sends chat requests only to Cognos endpoints
-- [ ] no production path depends on `/v1/chat/completions`
-- [ ] chat still renders decrypted history correctly
+- [x] frontend sends chat requests only to Cognos endpoints
+- [x] no production path depends on `/v1/chat/completions`
+- [x] chat still renders decrypted history correctly
 
 ---
 
@@ -286,31 +286,35 @@ This is the execution checklist for the rework.
 
 ### Existing frontend files to rewrite
 
-- [ ] `frontend/src/app/services/vault.service.ts`
-    - [ ] redesign around password + Account Key unlock
-    - [ ] remove legacy email-salted vault assumptions
-    - [ ] support trusted-device unlock state
+- [x] `frontend/src/app/services/vault.service.ts`
+    - [x] redesign around password + Account Key unlock
+    - [x] remove legacy email-salted vault assumptions
+    - [x] support trusted-device unlock state
+- [x] `frontend/src/app/services/trusted-unlock.service.ts`
+    - [x] store a wrapped trusted-device unlock blob in IndexedDB
+    - [x] keep the local wrapping key non-extractable via WebCrypto
 - [ ] `frontend/src/app/services/crypto.service.ts`
-    - [ ] add/adjust helpers needed for Account Key wrapping model
-- [ ] `frontend/src/app/services/conversation.service.ts`
-    - [ ] update any assumptions tied to old vault flow
-- [ ] auth/register/login UI files
-    - [ ] add Account Key onboarding and new-device unlock UX
-    - [ ] add trusted-device unlock behavior
+    - [ ] no changes required in the current implementation slice
+- [x] `frontend/src/app/services/conversation.service.ts`
+    - [x] update any assumptions tied to old vault flow
+- [x] auth/register/login UI files
+    - [x] add Account Key onboarding and new-device unlock UX
+    - [x] add trusted-device unlock behavior
 
 ### Backend/schema areas likely involved
 
 - [ ] `backend/internal/auth/repo.go`
     - [ ] support encrypted backup retrieval fields
-- [ ] add/update migrations for encrypted private-key backup metadata
+- [x] add/update migrations for encrypted private-key backup metadata
 - [ ] ensure no endpoint accepts plaintext private keys
 
 ### Verification
 
-- [ ] first device setup generates Account Key
-- [ ] new device requires password + Account Key
-- [ ] trusted device can re-open without repeated Account Key prompts
-- [ ] logout/lock clears local trusted unlock state
+- [x] first device setup generates Account Key
+- [x] new device requires password + Account Key
+- [x] trusted device can re-open without repeated Account Key prompts
+- [x] logout clears local trusted unlock state
+- [ ] explicit local lock control clears local trusted unlock state
 
 ---
 
@@ -322,18 +326,18 @@ This is the execution checklist for the rework.
     - [ ] remove once fully replaced
 - [ ] `backend/pkg/proxy/*`
     - [ ] remove provider adapters no longer used
-- [ ] `backend/cmd/api/routes.go`
-    - [ ] remove legacy `/v1/chat/completions` route
+- [x] `backend/cmd/api/routes.go`
+    - [x] remove legacy `/v1/chat/completions` route
 
 ### Frontend
 
-- [ ] `frontend/src/app/services/openai.service.provider.ts`
-    - [ ] delete if no longer used
-- [ ] remove `openai` SDK usage/imports everywhere
+- [x] `frontend/src/app/services/openai.service.provider.ts`
+    - [x] delete if no longer used
+- [x] remove `openai` SDK usage/imports everywhere
 
 ### Verification
 
-- [ ] repo-wide search shows no active chat-path dependency on legacy OpenAI compatibility layer
+- [x] repo-wide search shows no active chat-path dependency on legacy OpenAI compatibility layer
 
 ---
 
@@ -341,14 +345,14 @@ This is the execution checklist for the rework.
 
 ### Docs to update
 
-- [ ] `README.md`
-    - [ ] final wording after implementation lands
-- [ ] `backend/README.md`
-    - [ ] remove legacy notes once obsolete
-- [ ] `docs/security-model.md`
-    - [ ] update with final implemented details
-- [ ] `docs/specs/backend-model-selector.md`
-    - [ ] mark any decisions that changed during implementation
+- [x] `README.md`
+    - [x] final wording after implementation lands
+- [x] `backend/README.md`
+    - [x] remove legacy notes once obsolete
+- [x] `docs/security-model.md`
+    - [x] update with final implemented details
+- [x] `docs/specs/backend-model-selector.md`
+    - [x] mark any decisions that changed during implementation
 
 ### New docs likely needed
 
@@ -359,9 +363,9 @@ This is the execution checklist for the rework.
 
 ### Verification
 
-- [ ] no README/doc claims the private key never leaves the device
-- [ ] docs accurately describe Account Key behavior
-- [ ] docs match real API paths and model source of truth
+- [x] no README/doc claims the private key never leaves the device
+- [x] docs accurately describe Account Key behavior
+- [x] docs match real API paths and model source of truth
 
 ---
 
@@ -372,9 +376,11 @@ This is the execution checklist for the rework.
 - [ ] search legacy OpenAI transport usage
     - `rg -n "chat\.completions|OpenAI|/v1/chat/completions" backend frontend`
 - [ ] search old vault assumptions
-    - `rg -n "vault|user_key_pairs|conversation_secret_keys|email.*salt|secret_key" backend frontend`
+    - `rg -n "vault|user_key_pairs|conversation_secret_keys|email.*salt|secret_key" \
+      backend frontend`
 - [ ] search risky wording
-    - `rg -n "private key never leaves|vault password|OpenAI-compatible" README.md backend/README.md docs`
+    - `rg -n "private key never leaves|vault password|OpenAI-compatible" README.md \
+      backend/README.md docs`
 
 ## Final release checklist
 

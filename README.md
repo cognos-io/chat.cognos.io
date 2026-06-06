@@ -7,7 +7,8 @@ Target security model for this rework:
 - chat content is stored server-side as ciphertext only
 - private keys are encrypted client-side before backup
 - new devices require the user's password and **Account Key** to unlock encrypted key material
-- trusted devices may stay unlocked locally until the user locks the account or clears the device
+- trusted devices may stay unlocked locally via a wrapped unlock blob in IndexedDB until the user
+  logs out or clears browser storage
 
 See:
 
@@ -38,9 +39,7 @@ Notes:
 
 - the frontend development environment already points at `http://localhost:8090`
 - local backend data is served from `backend/pb_data`
-- key-management flows are currently being reworked toward the Account Key model documented in
-  `docs/security-model.md`
-- until that rework lands fully, some local flows may still reflect the older vault-based setup
+- Account Key and trusted-device behavior are documented in `docs/security-model.md`
 - see `docs/ory-to-pocketbase-auth-migration.md` for the Ory to PocketBase migration plan
 
 ## Deployment

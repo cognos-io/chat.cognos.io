@@ -16,11 +16,17 @@ import { environment } from '@environments/environment';
 
 import { VaultService } from '../../services/vault.service';
 
-const requireAccountKeyForNewUsers = (
+const validateUnlockForm = (
   control: AbstractControl,
+  isNewKeyPair: boolean,
 ): ValidationErrors | null => {
-  const accountKeySaved = control.get('accountKeySaved')?.value;
-  return accountKeySaved ? null : { accountKeySavedRequired: true };
+  if (isNewKeyPair) {
+    return control.get('accountKeySaved')?.value
+      ? null
+      : { accountKeySavedRequired: true };
+  }
+
+  return control.get('accountKey')?.value?.trim() ? null : { accountKeyRequired: true };
 };
 
 @Component({
@@ -47,19 +53,14 @@ const requireAccountKeyForNewUsers = (
               </cog-button>
             </div>
             <p>
-              Cognos never stores the plaintext Account Key. If you lose it, new-device
-              unlock may be impossible.
-            </p>
-          } @else if (vaultService.requiresAccountKey()) {
-            <p>
-              Enter your account password and Account Key to unlock this device. Trusted
-              devices can stay unlocked locally until you log out or clear browser
-              storage.
+              Cognos never stores the plaintext Account Key. If you lose it,
+              fresh-device unlock may be impossible.
             </p>
           } @else {
             <p>
-              This account is still using the legacy password-only unlock flow while we
-              migrate older encrypted backups to the Account Key model.
+              Enter your account password and Account Key to unlock this device. If you
+              trust this browser, Cognos can keep a locally wrapped unlock blob in
+              IndexedDB so you are not prompted again on every visit.
             </p>
           }
         </div>
@@ -85,7 +86,7 @@ const requireAccountKeyForNewUsers = (
             }
           </label>
 
-          @if (!vaultService.isNewKeyPair() && vaultService.requiresAccountKey()) {
+          @if (!vaultService.isNewKeyPair()) {
             <label class="vault-password-dialog__field" for="account-key">
               <span class="vault-password-dialog__label">Account Key</span>
               <input
@@ -256,23 +257,11 @@ export class VaultPasswordDialogComponent {
         environment.isDevelopment ? environment.localVaultPassword : '',
         [Validators.required, Validators.minLength(8)],
       ],
-      trustDevice: [true, [Validators.required]],
+      trustDevice: [true],
     },
     {
-      validators: (control) => {
-        if (this.vaultService.isNewKeyPair()) {
-          return requireAccountKeyForNewUsers(control);
-        }
-
-        if (
-          this.vaultService.requiresAccountKey() &&
-          !control.get('accountKey')?.value?.trim()
-        ) {
-          return { accountKeyRequired: true };
-        }
-
-        return null;
-      },
+      validators: (control) =>
+        validateUnlockForm(control, this.vaultService.isNewKeyPair()),
     },
   );
 

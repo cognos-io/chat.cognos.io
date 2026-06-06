@@ -1,6 +1,6 @@
 # Cognos Model Selection & Security Rework — Architecture Specification & Implementation Roadmap
 
-**Version:** 1.1 **Status:** Ready for development **Stack:** Go (backend), Angular (frontend),
+**Version:** 1.1 **Status:** In progress **Stack:** Go (backend), Angular (frontend),
 PocketBase/SQLite (primary store), DuckDB + Parquet/S3 (analytics)
 
 ---
@@ -44,8 +44,8 @@ Cognos is an encrypted AI chat application. It works on the same privacy princip
 - The **private key is encrypted client-side** and may be backed up to the server to support
   cross-device access.
 - Unlocking a new device requires the user's **account password + Account Key**. Trusted devices
-  may cache a locally wrapped unlock blob in **IndexedDB** until the user explicitly locks the
-  account, logs out, or clears the device.
+  may cache a locally wrapped unlock blob in **IndexedDB** until the user logs out or clears
+  browser storage.
 - When a user sends a message, the server uses the user's public key to
   **encrypt the message ciphertext** before persisting it.
 - When the AI generates a response, the server uses the public key to **encrypt the response**
@@ -585,7 +585,9 @@ The accepted key-management model for Cognos is a **1Password-style Account Key 
 - A new device requires both the **account password** and **Account Key** to unlock the encrypted
   private key locally.
 - Trusted devices may cache a **locally wrapped unlock blob** in **IndexedDB** so users are not
-  repeatedly prompted. Do **not** use `localStorage` for key material.
+  repeatedly prompted. The current implementation wraps the local unlock key with a browser-local
+  non-extractable WebCrypto AES-GCM key before persistence. Do **not** use `localStorage` for key
+  material.
 - Do **not** derive any vault or unlock key from `sha256(email + password)`.
 - Use **Argon2id** with a random per-user salt for password-based derivation.
 - **Email changes must not affect cryptographic state.**
@@ -1938,17 +1940,16 @@ Cognos will use a **1Password-style Account Key model**.
 
 ### 13.4 Current-state findings that affect implementation
 
-- The backend currently exposes a legacy OpenAI-compatible route in
-  `backend/pkg/compat/openai/openai.go` and wires it from `backend/cmd/api/routes.go`.
-- The frontend currently uses the `openai` browser SDK in
-  `frontend/src/app/services/openai.service.provider.ts` and
-  `frontend/src/app/services/message.service.ts`.
-- The frontend currently hard-codes the model list in `frontend/src/app/interfaces/model.ts`.
+- The product-facing backend completion surface now uses first-party Cognos routes; the legacy
+  `/v1/chat/completions` compatibility route has been removed.
+- The frontend chat path now uses first-party Cognos APIs instead of the browser `openai` SDK.
+- The frontend model list is now backend-driven rather than hard-coded as the primary source of
+  truth.
 - Current key backup and conversation-key storage live in
   `frontend/src/app/services/vault.service.ts`,
   `frontend/src/app/services/conversation.service.ts`, and related PocketBase collections.
-- Existing NaCl usage is worth keeping as a foundation, but the current storage and unlock flow must
-  be reworked to match the Account Key design.
+- Existing NaCl usage remains the foundation, with Account Key unlock plus wrapped trusted-device
+  storage layered on top.
 
 ## 14. Current Codebase Index (Relevant Files)
 
@@ -1956,44 +1957,44 @@ This is a practical lookup index for the rework.
 
 ### Backend
 
-| File                                                                   | Why it matters                                                                                 |
-| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `backend/cmd/api/main.go`                                              | PocketBase bootstrap, provider client wiring, migrations, and hook registration.               |
-| `backend/cmd/api/routes.go`                                            | Current route registration, rate limiting, and the legacy `/v1/chat/completions` path binding. |
-| `backend/pkg/compat/openai/openai.go`                                  | Legacy OpenAI-compatible chat handler to replace/remove.                                       |
-| `backend/pkg/proxy/repo.go`                                            | Current provider dispatch abstraction used by the compatibility layer.                         |
-| `backend/internal/chat/repo.go`                                        | Current message encryption/persistence path. Useful for migration and replacement.             |
-| `backend/internal/chat/messaging.go`                                   | Current plaintext message payload shape mirrored by the frontend.                              |
-| `backend/internal/chat/conversation.go`                                | Current conversation repository and conversation public-key lookup.                            |
-| `backend/internal/crypto/encrypt.go`                                   | Existing NaCl helpers. Keep primitives if still suitable.                                      |
-| `backend/internal/auth/repo.go`                                        | Current public-key and key-pair record lookups.                                                |
-| `backend/internal/config/api.go`                                       | Existing koanf config pattern to extend or replace.                                            |
-| `backend/db/migrations/1711007996_created_models.go`                   | Legacy `models` collection migration likely to be retired from the new design.                 |
-| `backend/db/migrations/1710601610_updated_user_key_pairs.go`           | Existing user key-pair storage schema that informs the Account Key redesign.                   |
-| `backend/db/migrations/1710600702_updated_conversation_secret_keys.go` | Existing conversation secret-key storage schema.                                               |
+| File                                                                   | Why it matters                                                                                    |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `backend/cmd/api/main.go`                                              | PocketBase bootstrap, provider client wiring, migrations, and hook registration.                  |
+| `backend/cmd/api/routes.go`                                            | Current first-party route registration and rate limiting.                                         |
+| `backend/pkg/compat/openai/openai.go`                                  | Remaining compatibility helpers/history; the product-facing `/v1/chat/completions` route is gone. |
+| `backend/pkg/proxy/repo.go`                                            | Current provider dispatch abstraction used by the compatibility layer.                            |
+| `backend/internal/chat/repo.go`                                        | Current message encryption/persistence path. Useful for migration and replacement.                |
+| `backend/internal/chat/messaging.go`                                   | Current plaintext message payload shape mirrored by the frontend.                                 |
+| `backend/internal/chat/conversation.go`                                | Current conversation repository and conversation public-key lookup.                               |
+| `backend/internal/crypto/encrypt.go`                                   | Existing NaCl helpers. Keep primitives if still suitable.                                         |
+| `backend/internal/auth/repo.go`                                        | Current public-key and key-pair record lookups.                                                   |
+| `backend/internal/config/api.go`                                       | Existing koanf config pattern to extend or replace.                                               |
+| `backend/db/migrations/1711007996_created_models.go`                   | Legacy `models` collection migration likely to be retired from the new design.                    |
+| `backend/db/migrations/1710601610_updated_user_key_pairs.go`           | Existing user key-pair storage schema that informs the Account Key redesign.                      |
+| `backend/db/migrations/1710600702_updated_conversation_secret_keys.go` | Existing conversation secret-key storage schema.                                                  |
 
 ### Frontend
 
-| File                                                                                       | Why it matters                                                                                   |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `frontend/src/app/interfaces/model.ts`                                                     | Current hard-coded model catalogue and fallback model definitions.                               |
-| `frontend/src/app/services/model.service.ts`                                               | Current model state and selection logic driven by hard-coded data.                               |
-| `frontend/src/app/services/message.service.ts`                                             | Current message send/decrypt path and OpenAI SDK integration.                                    |
-| `frontend/src/app/services/openai.service.provider.ts`                                     | Current browser OpenAI client wrapper to remove.                                                 |
-| `frontend/src/app/services/vault.service.ts`                                               | Current user key-pair generation, password-based wrapping, and server-backed secret-key storage. |
-| `frontend/src/app/services/conversation.service.ts`                                        | Current conversation key creation, storage, fetch, and decryption flow.                          |
-| `frontend/src/app/services/crypto.service.ts`                                              | Current TweetNaCl client crypto helpers, including sealed-box decryption.                        |
-| `frontend/src/app/interfaces/message.ts`                                                   | Frontend message payload schema mirrored from the backend.                                       |
-| `frontend/src/app/types/pocketbase-types.ts`                                               | Generated PocketBase collection typings that will need regeneration after schema changes.        |
-| `frontend/src/app/components/chat/message-form/model-selector/model-selector.component.ts` | Existing UI entrypoint for model selection.                                                      |
+| File                                                                                       | Why it matters                                                                            |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `frontend/src/app/interfaces/model.ts`                                                     | Current hard-coded model catalogue and fallback model definitions.                        |
+| `frontend/src/app/services/model.service.ts`                                               | Current backend-driven model state and selection logic.                                   |
+| `frontend/src/app/services/message.service.ts`                                             | Current message send/decrypt path over first-party Cognos APIs.                           |
+| `frontend/src/app/services/vault.service.ts`                                               | Current Account Key unlock flow and server-backed secret-key storage.                     |
+| `frontend/src/app/services/trusted-unlock.service.ts`                                      | Current wrapped trusted-device unlock storage in IndexedDB using WebCrypto.               |
+| `frontend/src/app/services/conversation.service.ts`                                        | Current conversation key creation, storage, fetch, and decryption flow.                   |
+| `frontend/src/app/services/crypto.service.ts`                                              | Current TweetNaCl client crypto helpers, including sealed-box decryption.                 |
+| `frontend/src/app/interfaces/message.ts`                                                   | Frontend message payload schema mirrored from the backend.                                |
+| `frontend/src/app/types/pocketbase-types.ts`                                               | Generated PocketBase collection typings that will need regeneration after schema changes. |
+| `frontend/src/app/components/chat/message-form/model-selector/model-selector.component.ts` | Existing UI entrypoint for model selection.                                               |
 
 ### Documentation
 
-| File                                   | Why it matters                                                                               |
-| -------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `README.md`                            | Must be updated to reflect the final security wording and architecture.                      |
-| `backend/README.md`                    | Should reflect the new backend model catalogue and API path once implemented.                |
-| `docs/specs/backend-model-selector.md` | This document; keep as the planning source of truth until implementation docs are split out. |
+| File                                   | Why it matters                                                                                     |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `README.md`                            | Must be updated to reflect the final security wording and architecture.                            |
+| `backend/README.md`                    | Should reflect the new backend model catalogue, first-party API path, and Account Key helper flow. |
+| `docs/specs/backend-model-selector.md` | This document; keep as the planning source of truth until implementation docs are split out.       |
 
 ## 15. Documentation Changes Required
 
@@ -2008,8 +2009,8 @@ Remove or rewrite claims that imply the strict old model:
     - **“Your private key is encrypted client-side before backup. Cognos never stores the plaintext
       private key.”**
     - **“New devices require your password and Account Key to unlock your encrypted key material.”**
-    - **“Trusted devices can stay unlocked locally until you lock the account or clear the
-      device.”**
+    - **“Trusted devices can stay unlocked locally on this browser until you log out or clear
+      browser storage.”**
 
 ### 15.2 README updates
 

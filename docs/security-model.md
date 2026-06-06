@@ -1,6 +1,6 @@
 # Cognos Security Model
 
-**Status:** Planned / source of truth for the rework
+**Status:** Implemented baseline / source of truth for the current rework state
 **Related spec:** `docs/specs/backend-model-selector.md`
 
 ## 1. Overview
@@ -169,11 +169,23 @@ Users should not need to repeatedly enter the Account Key on a device they trust
 
 Trusted devices may cache a **locally wrapped unlock blob** in **IndexedDB**.
 
+Current implementation details:
+
+- the raw unlock key is **not** stored directly as a serialized string in browser storage
+- Cognos generates a browser-local **non-extractable AES-GCM wrapping key** with WebCrypto
+- the trusted-device record stores only the wrapped unlock blob, IV, and browser-managed wrapping
+  key inside IndexedDB
+- this protects against casual offline inspection of IndexedDB contents better than storing the raw
+  unlock key directly
+- this does **not** protect against a compromised same-origin browser session or a fully compromised
+  trusted device
+
 That local cache should be cleared or invalidated when:
 
 - the user explicitly locks the account
 - the user logs out
 - the browser storage is cleared
+- the stored wrapped blob can no longer be decrypted successfully
 - the device is intentionally de-authorized in future account-management flows
 
 Do **not** use `localStorage` for key material.
@@ -219,10 +231,13 @@ Changing email must:
 
 ### Logout / lock
 
-Logging out or explicitly locking should:
+Current implementation guarantees that logging out:
 
-- remove trusted-device unlock state from the current device
-- require unlock again before local decryption resumes
+- removes trusted-device unlock state from the current device
+- requires unlock again before local decryption resumes
+
+A separate in-session "lock" control is still a product follow-up rather than part of the current
+implemented baseline.
 
 ### Lost device
 
@@ -279,7 +294,8 @@ Prefer wording like:
 - **"Your private key is encrypted client-side before backup. Cognos never stores the plaintext
   private key."**
 - **"New devices require your password and Account Key to unlock your encrypted key material."**
-- **"Trusted devices can stay unlocked locally until you lock the account or clear the device."**
+- **"Trusted devices can stay unlocked locally on this browser until you log out or clear browser
+  storage."**
 
 ## 14. Open limitations
 

@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase from 'pocketbase';
@@ -51,7 +51,6 @@ const initialState: VaultState = {
   isNewKeyPair: false,
 };
 
-const unlockSchemePasswordOnly = 'password_only_v1';
 const unlockSchemePasswordAccountKey = 'password_account_key_v1';
 
 // Argon2id parameters as recommended by the OWASP password storage cheat sheet
@@ -171,18 +170,9 @@ export class VaultService {
     ],
   });
 
-  // selectors
   isNewKeyPair = this.state.isNewKeyPair;
   keyPair = this.state.keyPair;
   keyPair$ = toObservable(this.keyPair);
-  requiresAccountKey = computed(() => {
-    const keyPairRecord = this.state.keyPairRecord();
-    if (keyPairRecord === null) {
-      return true;
-    }
-
-    return keyPairRecord?.unlock_scheme === unlockSchemePasswordAccountKey;
-  });
 
   hashSecretMaterial(
     secretMaterial: Uint8Array,
@@ -214,27 +204,21 @@ export class VaultService {
     );
   }
 
-  decryptSecretKey(
-    encryptedSecretKey: Uint8Array,
-    vaultPassword: Uint8Array,
-  ): Uint8Array {
-    return this._cryptoService.openSecretBox(encryptedSecretKey, vaultPassword);
+  decryptSecretKey(encryptedSecretKey: Uint8Array, unlockKey: Uint8Array): Uint8Array {
+    return this._cryptoService.openSecretBox(encryptedSecretKey, unlockKey);
   }
 
-  encryptSecretKey(rawSecretKey: Uint8Array, vaultPassword: Uint8Array): Uint8Array {
-    return this._cryptoService.secretBox(rawSecretKey, vaultPassword);
+  encryptSecretKey(rawSecretKey: Uint8Array, unlockKey: Uint8Array): Uint8Array {
+    return this._cryptoService.secretBox(rawSecretKey, unlockKey);
   }
 
   unpackKeyPairRecord(
     keyPairRecord: UserKeyPairsResponse,
-    hashedVaultPassword: Uint8Array,
+    unlockKey: Uint8Array,
   ): KeyPair {
     const publicKey = Base64.toUint8Array(keyPairRecord.public_key);
     const encryptedSecretKey = Base64.toUint8Array(keyPairRecord.secret_key);
-    const decryptedSecretKey = this.decryptSecretKey(
-      encryptedSecretKey,
-      hashedVaultPassword,
-    );
+    const decryptedSecretKey = this.decryptSecretKey(encryptedSecretKey, unlockKey);
 
     return {
       publicKey,
@@ -244,10 +228,6 @@ export class VaultService {
 
   clearUnlockError() {
     this.unlockError.set(null);
-  }
-
-  private buildPasswordOnlySecretMaterial(rawPassword: string): Uint8Array {
-    return new TextEncoder().encode(rawPassword);
   }
 
   private buildPasswordAccountKeySecretMaterial(
@@ -273,12 +253,7 @@ export class VaultService {
 
     return this.hashSecretMaterial(secretMaterial, passwordSalt).pipe(
       switchMap((unlockKey) =>
-        this.createNewUserKeyPair(
-          unlockKey,
-          passwordSalt,
-          unlockSchemePasswordAccountKey,
-          request.trustDevice,
-        ),
+        this.createNewUserKeyPair(unlockKey, passwordSalt, request.trustDevice),
       ),
       tap(() => this.generatedAccountKey.set(null)),
     );
@@ -287,7 +262,6 @@ export class VaultService {
   private createNewUserKeyPair(
     unlockKey: Uint8Array,
     passwordSalt: string,
-    unlockScheme: string,
     trustDevice: boolean,
   ): Observable<KeyPair> {
     const keyPair = this._cryptoService.newKeyPair();
@@ -300,7 +274,7 @@ export class VaultService {
       password_salt: passwordSalt,
       public_key: publicKeyBase64,
       secret_key: encryptedSecretKeyBase64,
-      unlock_scheme: unlockScheme,
+      unlock_scheme: unlockSchemePasswordAccountKey,
       user: this._authService.user()?.['id'],
     };
 
@@ -320,100 +294,26 @@ export class VaultService {
     keyPairRecord: UserKeyPairsResponse,
   ): Observable<KeyPair> {
     if (
-      keyPairRecord.unlock_scheme === unlockSchemePasswordAccountKey &&
-      keyPairRecord.password_salt
+      keyPairRecord.unlock_scheme !== unlockSchemePasswordAccountKey ||
+      !keyPairRecord.password_salt
     ) {
-      const secretMaterial = this.buildPasswordAccountKeySecretMaterial(
-        request.accountPassword,
-        request.accountKey,
-      );
-      return this.hashSecretMaterial(secretMaterial, keyPairRecord.password_salt).pipe(
-        map((unlockKey) => ({
-          keyPair: this.unpackKeyPairRecord(keyPairRecord, unlockKey),
-          unlockKey,
-        })),
-        switchMap(({ keyPair, unlockKey }) =>
-          from(this.persistTrustedUnlockKey(unlockKey, request.trustDevice)).pipe(
-            map(() => keyPair),
-          ),
-        ),
-      );
+      return throwError(() => new Error('invalid encrypted backup metadata'));
     }
 
-    if (keyPairRecord.password_salt) {
-      const secretMaterial = this.buildPasswordOnlySecretMaterial(
-        request.accountPassword,
-      );
-      return this.hashSecretMaterial(secretMaterial, keyPairRecord.password_salt).pipe(
-        map((unlockKey) => ({
-          keyPair: this.unpackKeyPairRecord(keyPairRecord, unlockKey),
-          unlockKey,
-        })),
-        switchMap(({ keyPair, unlockKey }) =>
-          from(this.persistTrustedUnlockKey(unlockKey, request.trustDevice)).pipe(
-            map(() => keyPair),
-          ),
-        ),
-      );
-    }
-
-    return this.hashVaultPasswordWithLegacyEmailSalt(request.accountPassword).pipe(
-      switchMap((unlockKey) => {
-        const keyPair = this.unpackKeyPairRecord(keyPairRecord, unlockKey);
-        return this.migrateLegacyUserKeyPairRecord(
-          request.accountPassword,
-          keyPairRecord,
-          keyPair,
-          request.trustDevice,
-        ).pipe(map(() => keyPair));
-      }),
+    const secretMaterial = this.buildPasswordAccountKeySecretMaterial(
+      request.accountPassword,
+      request.accountKey,
     );
-  }
-
-  private hashVaultPasswordWithLegacyEmailSalt(
-    rawPassword: string,
-  ): Observable<Uint8Array> {
-    const encoder = new TextEncoder();
-
-    return from(getSetupWasmInstance()).pipe(
-      map((argon2id) =>
-        argon2id({
-          password: encoder.encode(rawPassword),
-          salt: encoder.encode(this._authService.email()),
-          parallelism: argon2idParallelism,
-          passes: argon2idIterationCount,
-          memorySize: argon2idMemory,
-          tagLength: nacl.secretbox.keyLength,
-        }),
+    return this.hashSecretMaterial(secretMaterial, keyPairRecord.password_salt).pipe(
+      map((unlockKey) => ({
+        keyPair: this.unpackKeyPairRecord(keyPairRecord, unlockKey),
+        unlockKey,
+      })),
+      switchMap(({ keyPair, unlockKey }) =>
+        from(this.persistTrustedUnlockKey(unlockKey, request.trustDevice)).pipe(
+          map(() => keyPair),
+        ),
       ),
-    );
-  }
-
-  private migrateLegacyUserKeyPairRecord(
-    rawPassword: string,
-    keyPairRecord: UserKeyPairsResponse,
-    keyPair: KeyPair,
-    trustDevice: boolean,
-  ): Observable<unknown> {
-    const passwordSalt = this.generatePasswordSalt();
-    const secretMaterial = this.buildPasswordOnlySecretMaterial(rawPassword);
-    return this.hashSecretMaterial(secretMaterial, passwordSalt).pipe(
-      switchMap((unlockKey) => {
-        const encryptedSecretKey = this.encryptSecretKey(keyPair.secretKey, unlockKey);
-        return from(
-          this._pb.collection(this.pbUserKeyPairsCollection).update(keyPairRecord.id, {
-            password_salt: passwordSalt,
-            secret_key: Base64.fromUint8Array(encryptedSecretKey),
-            unlock_scheme: unlockSchemePasswordOnly,
-          }),
-        ).pipe(
-          switchMap(() =>
-            from(this.persistTrustedUnlockKey(unlockKey, trustDevice)).pipe(
-              map(() => undefined),
-            ),
-          ),
-        );
-      }),
     );
   }
 
@@ -435,10 +335,7 @@ export class VaultService {
     }
 
     try {
-      const keyPair = this.unpackKeyPairRecord(
-        keyPairRecord,
-        Base64.toUint8Array(storedUnlockKey),
-      );
+      const keyPair = this.unpackKeyPairRecord(keyPairRecord, storedUnlockKey);
       return { keyPair };
     } catch {
       await this._trustedUnlockService.clearUnlockKey(this._authService.user()?.['id']);
@@ -455,10 +352,14 @@ export class VaultService {
       return;
     }
 
-    await this._trustedUnlockService.setUnlockKey(
-      this._authService.user()?.['id'],
-      Base64.fromUint8Array(unlockKey),
-    );
+    try {
+      await this._trustedUnlockService.setUnlockKey(
+        this._authService.user()?.['id'],
+        unlockKey,
+      );
+    } catch {
+      await this._trustedUnlockService.clearUnlockKey(this._authService.user()?.['id']);
+    }
   }
 
   private ensureGeneratedAccountKey(): void {

@@ -27,7 +27,6 @@ describe('VaultPasswordDialogComponent', () => {
           useValue: {
             generatedAccountKey,
             isNewKeyPair: signal(false),
-            requiresAccountKey: signal(false),
             unlockError,
             unlockRequest$,
             clearUnlockError,
@@ -52,12 +51,13 @@ describe('VaultPasswordDialogComponent', () => {
 
   it('clears the unlock error before submitting unlock details', () => {
     component.vaultForm.controls.accountPassword.setValue('correct horse battery');
+    component.vaultForm.controls.accountKey.setValue('test-account-key');
 
     component.submit();
 
     expect(clearUnlockError).toHaveBeenCalledTimes(1);
     expect(unlockRequest$.next).toHaveBeenCalledWith({
-      accountKey: '',
+      accountKey: 'test-account-key',
       accountPassword: 'correct horse battery',
       trustDevice: true,
     });

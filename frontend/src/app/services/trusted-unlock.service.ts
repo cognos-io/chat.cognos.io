@@ -1,19 +1,29 @@
 import { Injectable } from '@angular/core';
 
+import { Base64 } from 'js-base64';
+
 interface TrustedUnlockRecord {
-  unlockKey: string;
+  iv?: string;
+  unlockKey?: string;
   userId: string;
+  wrappedUnlockKey?: string;
+  wrappingKey?: CryptoKey;
 }
 
 const databaseName = 'cognos-trusted-device';
 const databaseVersion = 1;
 const storeName = 'trusted_unlock_keys';
+const wrappingKeyAlgorithm = {
+  length: 256,
+  name: 'AES-GCM',
+} as const;
+const wrappingNonceBytes = 12;
 
 @Injectable({
   providedIn: 'root',
 })
 export class TrustedUnlockService {
-  async getUnlockKey(userId: string | undefined): Promise<string | null> {
+  async getUnlockKey(userId: string | undefined): Promise<Uint8Array | null> {
     if (!userId) {
       return null;
     }
@@ -29,25 +39,78 @@ export class TrustedUnlockService {
       const record = (await this.requestToPromise(request)) as
         | TrustedUnlockRecord
         | undefined;
-      return record?.unlockKey ?? null;
+
+      if (!record) {
+        return null;
+      }
+
+      if (record.unlockKey) {
+        await this.clearUnlockKey(userId);
+        return null;
+      }
+
+      if (!record.iv || !record.wrappedUnlockKey || !record.wrappingKey) {
+        await this.clearUnlockKey(userId);
+        return null;
+      }
+
+      const cryptoApi = this.getCrypto();
+      if (!cryptoApi) {
+        return null;
+      }
+
+      const plaintext = await cryptoApi.subtle.decrypt(
+        {
+          iv: new Uint8Array(Base64.toUint8Array(record.iv)),
+          name: wrappingKeyAlgorithm.name,
+        },
+        record.wrappingKey,
+        new Uint8Array(Base64.toUint8Array(record.wrappedUnlockKey)),
+      );
+
+      return new Uint8Array(plaintext);
+    } catch {
+      await this.clearUnlockKey(userId);
+      return null;
     } finally {
       db.close();
     }
   }
 
-  async setUnlockKey(userId: string | undefined, unlockKey: string): Promise<void> {
+  async setUnlockKey(userId: string | undefined, unlockKey: Uint8Array): Promise<void> {
     if (!userId) {
       return;
     }
 
     const db = await this.openDatabase();
-    if (!db) {
+    const cryptoApi = this.getCrypto();
+    if (!db || !cryptoApi) {
       return;
     }
 
     try {
+      const wrappingKey = await cryptoApi.subtle.generateKey(
+        wrappingKeyAlgorithm,
+        false,
+        ['encrypt', 'decrypt'],
+      );
+      const iv = cryptoApi.getRandomValues(new Uint8Array(wrappingNonceBytes));
+      const wrappedUnlockKey = await cryptoApi.subtle.encrypt(
+        {
+          iv,
+          name: wrappingKeyAlgorithm.name,
+        },
+        wrappingKey,
+        new Uint8Array(unlockKey),
+      );
+
       const transaction = db.transaction(storeName, 'readwrite');
-      transaction.objectStore(storeName).put({ userId, unlockKey });
+      transaction.objectStore(storeName).put({
+        iv: Base64.fromUint8Array(iv),
+        userId,
+        wrappedUnlockKey: Base64.fromUint8Array(new Uint8Array(wrappedUnlockKey)),
+        wrappingKey,
+      });
       await this.transactionToPromise(transaction);
     } finally {
       db.close();
@@ -71,6 +134,14 @@ export class TrustedUnlockService {
     } finally {
       db.close();
     }
+  }
+
+  private getCrypto(): Crypto | null {
+    if (typeof globalThis.crypto === 'undefined' || !globalThis.crypto.subtle) {
+      return null;
+    }
+
+    return globalThis.crypto;
   }
 
   private async openDatabase(): Promise<IDBDatabase | null> {

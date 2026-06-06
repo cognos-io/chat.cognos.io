@@ -6,7 +6,8 @@ Target direction:
 
 - first-party Cognos API endpoints instead of long-term OpenAI compatibility
 - backend-driven model catalogue
-- encrypted private-key backup with a user **Account Key** for new-device unlock
+- encrypted private-key backup with a user **Account Key** for new-device unlock and a wrapped
+  trusted-device blob in IndexedDB
 - ciphertext-only message storage at rest
 
 See:
@@ -45,15 +46,14 @@ The intended cross-device security model is documented in `../docs/security-mode
 Useful when creating test users, we have provided a script to generate a public key and an encrypted
 private key for a given user.
 
-> Note: this helper reflects the legacy vault-based flow and is expected to change as the Account
-> Key model is implemented.
-
 ```text
-go run cmd/generate-key-pair/main.go -password={{ USER_VAULT_PASSWORD }}
+go run cmd/generate-key-pair/main.go \
+    -password={{ USER_ACCOUNT_PASSWORD }} \
+    -account-key={{ USER_ACCOUNT_KEY }}
 ```
 
-The helper now generates a random per-user password salt and prints it alongside the encrypted
-secret key.
+If `-account-key` is omitted, the helper generates one and prints it along with the unlock scheme,
+random per-user password salt, and encrypted secret key.
 
 ## HTTPie requests
 

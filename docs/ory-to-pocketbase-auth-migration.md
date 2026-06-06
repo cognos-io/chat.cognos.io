@@ -1,5 +1,9 @@
 # Ory to PocketBase auth migration
 
+> Historical note: this document describes the earlier migration away from Ory and includes
+> superseded references to the pre-Account Key vault flow. The current security baseline is
+> documented in `docs/security-model.md`.
+
 ## Why we are doing this
 
 Cognos used to rely on Ory as an external identity provider.
@@ -20,7 +24,7 @@ After the auth change in this repo:
 
 - the frontend logs in directly against PocketBase `users`
 - Ory is no longer used by the app runtime
-- vault password hashing uses the authenticated user's **email** as the salt
+- the old email-salted vault flow described below has been superseded by the Account Key model
 
 ## Important migration rules
 
@@ -46,7 +50,9 @@ For each user we need to make sure PocketBase has:
 - a usable password
 - optional flags like `verified` if you want to preserve them
 
-If users previously signed in via Ory through PocketBase OAuth/OIDC, many of those user records may already exist in PocketBase. In that case the migration is mostly about setting a password on the existing record and validating the email.
+If users previously signed in via Ory through PocketBase OAuth/OIDC, many of those user records may
+already exist in PocketBase. In that case the migration is mostly about setting a password on the
+existing record and validating the email.
 
 ## Recommended migration process
 
@@ -78,7 +84,8 @@ For each user confirm:
 - the email is correct
 - the user id is the one referenced by their existing app data
 
-Do **not** replace these records with newly created users unless you are also reassigning all related records.
+Do **not** replace these records with newly created users unless you are also reassigning all
+related records.
 
 ## 4. Set a password on each existing user
 
@@ -96,7 +103,8 @@ The key point is that the **same user record** should now support PocketBase pas
 
 If the user already has vault-encrypted data, keep their email unchanged.
 
-Because the vault password hash uses the email as a salt, changing it may prevent the existing encrypted key material from being decrypted.
+Because the vault password hash uses the email as a salt, changing it may prevent the existing
+encrypted key material from being decrypted.
 
 If an email must change, treat that as a separate migration involving vault/keypair handling.
 
@@ -137,13 +145,15 @@ Once all users are migrated and validated:
 
 Create the PocketBase user record with the correct email and password.
 
-But note: if any existing app data was tied to a different PocketBase user id, you must remap those relations before the user will see their old data.
+But note: if any existing app data was tied to a different PocketBase user id, you must remap those
+relations before the user will see their old data.
 
 ### User email needs to change
 
 Do not treat this as a normal auth migration.
 
-Because email is part of the vault password derivation, changing the email may require re-encrypting or regenerating vault-related data.
+Because email is part of the vault password derivation, changing the email may require re-encrypting
+or regenerating vault-related data.
 
 ### User forgot their password
 

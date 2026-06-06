@@ -23,7 +23,7 @@ func init() {
 			"options": {
 				"min": null,
 				"max": null,
-				"pattern": "^(password_only_v1|password_account_key_v1)?$"
+				"pattern": "^(password_account_key_v1)?$"
 			}
 		}`); err != nil {
 			return err
