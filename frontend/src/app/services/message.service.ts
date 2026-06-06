@@ -547,7 +547,7 @@ export class MessageService {
     ).pipe(
       catchError((err) => {
         this.state.setStatus(MessageStatus.ErrorSending);
-        console.error('Error sending message', err);
+        console.error('Error sending message');
         if (err instanceof OpenAI.APIError) {
           switch (err.status) {
             case 429:
