@@ -32,3 +32,8 @@ approach to ProtonMail which encrypts user emails.
 | `mise`    | `gvm`, `nvm`, `asdf` |
 | `python3` | `python`             |
 | `uv`      | `pip`                |
+
+## Testing
+
+When testing locally, run the backend, frontend and web on non-standard ports so as not to conflict
+with other development ports.

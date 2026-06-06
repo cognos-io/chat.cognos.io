@@ -80,3 +80,7 @@ e2e-ui:
 [working-directory("e2e")]
 e2e-install:
     @pnpm exec playwright install --with-deps
+
+# Clears out local data
+dev-clean:
+    @rm -rf backend/pb_data/
