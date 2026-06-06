@@ -119,12 +119,15 @@ const validateUnlockForm = (
             <label class="vault-password-dialog__field" for="account-key">
               <span class="vault-password-dialog__label">Account Key</span>
               <input
+                #accountKeyInput
                 id="account-key"
                 class="vault-password-dialog__input vault-password-dialog__input--code"
                 formControlName="accountKey"
                 type="text"
-                autocomplete="off"
+                autocomplete="new-password"
+                readonly
                 spellcheck="false"
+                (focus)="accountKeyInput.readOnly = false"
               />
               @if (
                 vaultForm.hasError('accountKeyRequired') &&

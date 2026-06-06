@@ -129,6 +129,20 @@ describe('VaultPasswordDialogComponent', () => {
     );
   });
 
+  it('keeps the Account Key field readonly until focus and disables autocomplete', () => {
+    const accountKeyInput = fixture.nativeElement.querySelector(
+      '#account-key',
+    ) as HTMLInputElement;
+
+    expect(accountKeyInput.autocomplete).toBe('new-password');
+    expect(accountKeyInput.readOnly).toBe(true);
+
+    accountKeyInput.dispatchEvent(new FocusEvent('focus'));
+    fixture.detectChanges();
+
+    expect(accountKeyInput.readOnly).toBe(false);
+  });
+
   it('clears the unlock error before submitting unlock details', () => {
     component.vaultForm.controls.accountPassword.setValue('correct horse battery');
     component.vaultForm.controls.accountKey.setValue('test-account-key');

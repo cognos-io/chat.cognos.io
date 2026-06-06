@@ -112,11 +112,6 @@ BorgBase account if the prod host was ever shared.
 - **M-1. No password-change UI.** ❌ With password reset, email
   change, and key rotation all forbidden server-side there is no
   in-app rotation path. Pair with N-5. Blocks paid GA.
-- **M-4. Account Key autocomplete leak.** ❌
-  `<input type="text" autocomplete="off">`
-  (`vault-password-dialog.component.ts:122-131`). Switch to
-  `autocomplete="new-password"` + `readonly`-until-focus, or to a
-  paste-only `<textarea>`.
 - **M-5. Container hardening.** 🟡 Backend non-root + Compose
   `user: "1001:0"` + base versions pinned. Missing on every
   service: `read_only: true`, `cap_drop: [ALL]`,
@@ -291,8 +286,7 @@ operational and product:
 8. **N-17** Cloudflare API token via Compose secrets.
 9. **L-8** Anthropic Temperature=0 pointer bug.
 10. **M-11 / N-14** confirm + trim mermaid.
-11. **M-4** Account Key autocomplete pattern.
-12. **H-22 / M-15 follow-through**: BorgBase repo URL into
+11. **H-22 / M-15 follow-through**: BorgBase repo URL into
     secrets; consider rotating the BorgBase account.
 
 **P2 — Next 4 weeks of engineering:**
