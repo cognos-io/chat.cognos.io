@@ -127,12 +127,10 @@ To                         Action      From
 22/tcp                     LIMIT       Anywhere                   # allow SSH connections in
 80/tcp                     ALLOW       Anywhere                   # allow HTTP traffic in
 443                        ALLOW       Anywhere                   # allow HTTPS traffic in
-8090                       ALLOW       Anywhere                   # allow Pocketbase in
 8001                       ALLOW       Anywhere                   # allow BricksLLM API in
 22/tcp (v6)                LIMIT       Anywhere (v6)              # allow SSH connections in
 80/tcp (v6)                ALLOW       Anywhere (v6)              # allow HTTP traffic in
 443 (v6)                   ALLOW       Anywhere (v6)              # allow HTTPS traffic in
-8090 (v6)                  ALLOW       Anywhere (v6)              # allow Pocketbase in
 8001 (v6)                  ALLOW       Anywhere (v6)              # allow BricksLLM API in
 
 53                         ALLOW OUT   Anywhere                   # allow DNS calls out
@@ -145,7 +143,6 @@ To                         Action      From
 67                         ALLOW OUT   Anywhere                   # allow the DHCP client to update
 68                         ALLOW OUT   Anywhere                   # allow the DHCP client to update
 22/tcp                     ALLOW OUT   Anywhere                   # allow SSH traffic out
-8090                       ALLOW OUT   Anywhere                   # allow Pocketbase out
 53 (v6)                    ALLOW OUT   Anywhere (v6)              # allow DNS calls out
 123 (v6)                   ALLOW OUT   Anywhere (v6)              # allow NTP out
 80/tcp (v6)                ALLOW OUT   Anywhere (v6)              # allow HTTP traffic out
@@ -156,5 +153,4 @@ To                         Action      From
 67 (v6)                    ALLOW OUT   Anywhere (v6)              # allow the DHCP client to update
 68 (v6)                    ALLOW OUT   Anywhere (v6)              # allow the DHCP client to update
 22/tcp (v6)                ALLOW OUT   Anywhere (v6)              # allow SSH traffic out
-8090 (v6)                  ALLOW OUT   Anywhere (v6)              # allow Pocketbase out
 ```

@@ -8,7 +8,9 @@ api.cognos.io {
 		max_size 2MB
 	}
 
-	# Don't expose the metrics endpoint
+	# Don't expose the PocketBase admin or metrics endpoints
+	@pocketbase_admin path /_ /_/*
+	respond @pocketbase_admin 404
 	rewrite /metrics /404
 
 	reverse_proxy backend:8090 {
