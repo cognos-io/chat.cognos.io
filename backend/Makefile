@@ -95,7 +95,7 @@ build:
 .PHONY: build/docker
 build/docker:
 	@GIT_COMMIT=$$(git rev-parse --short HEAD) && \
-	${DOCKER_BINARY} build --platform linux/amd64,linux/arm64 -t ${DOCKER_IMAGE_NAME}:$$GIT_COMMIT -t ${DOCKER_IMAGE_NAME}:latest .
+	${DOCKER_BINARY} build --platform linux/amd64,linux/arm64 -t ${DOCKER_IMAGE_NAME}:$$GIT_COMMIT .
 
 ## run: run the application
 .PHONY: run
@@ -105,10 +105,11 @@ run: build
 ## run/docker: run the application in a non-root docker container
 .PHONY: run/docker
 run/docker:
-	@${DOCKER_BINARY} run \
+	@GIT_COMMIT=$$(git rev-parse --short HEAD) && \
+	${DOCKER_BINARY} run \
 		--user $(shuf -i 2000-60000 -n 1):root \
 		--publish 8090:8090 \
-		${DOCKER_IMAGE_NAME}:latest
+		${DOCKER_IMAGE_NAME}:$$GIT_COMMIT
 
 ## run/test: run the application with the test database to add data for testing
 .PHONY: run/test
@@ -131,8 +132,7 @@ run/live:
 .PHONY: publish/docker
 publish/docker: no-dirty build/docker
 	@GIT_COMMIT=$$(git rev-parse --short HEAD) && \
-	${DOCKER_BINARY} push ${DOCKER_IMAGE_NAME}:$$GIT_COMMIT && \
-	${DOCKER_BINARY} push ${DOCKER_IMAGE_NAME}:latest
+	${DOCKER_BINARY} push ${DOCKER_IMAGE_NAME}:$$GIT_COMMIT
 
 # ==================================================================================== #
 # OPERATIONS

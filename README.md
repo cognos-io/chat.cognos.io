@@ -8,8 +8,6 @@
    - `cd /home/cognos/chat.cognos.io`
 1. Pull down the latest changes using Git + personal access token:
    - `git pull`
-1. Pull down the latest docker images:
-   - `docker compose pull`
 1. Force a backup to Borgbase:
    - `docker compose run backup borgmatic create --verbosity 1 --list --stats`
 1. Verify the Caddyfile:
@@ -68,8 +66,6 @@ steps to going live for posterity.
           `cognos/chat.cognos.io` repo:
             - `git clone https://kisamoto@github.com/cognos/chat.cognos.io.git` and enter access
               token as password
-        - Pull the docker containers in the backend directory:
-            - `docker compose pull`
         - Bring up the docker compose infrastructure (Caddy + Pocketbase + Backups)
             - `docker compose up --build --detach`
 - Frontend:

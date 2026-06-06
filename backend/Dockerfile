@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.22 AS builder
+FROM golang:1.26.4 AS builder
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ COPY . .
 # Build the Go app
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o api ./cmd/api
 
-FROM alpine:latest
+FROM alpine:3.22.1
 
 RUN apk --no-cache add ca-certificates
 
