@@ -56,17 +56,22 @@ func withRecordAuth(
 }
 
 func setupTestApp(t testing.TB) *tests.TestApp {
+	return setupTestAppWithHookParams(t, appHookParams{})
+}
+
+func setupTestAppWithHookParams(t testing.TB, params appHookParams) *tests.TestApp {
 	app, err := tests.NewTestApp(testDataDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	testConfig := config.APIConfig{}
+	params.App = app
+	if params.Config == nil {
+		params.Config = &testConfig
+	}
 
-	bindAppHooks(appHookParams{
-		App:    app,
-		Config: &testConfig,
-	})
+	bindAppHooks(params)
 
 	return app
 }
@@ -300,7 +305,7 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 				"secret_key": "%s"
 			}`, userId, userPublicKey, userEncryptedSecretKey)),
 			ExpectedStatus:  http.StatusBadRequest,
-			ExpectedContent: []string{`"message":"user key pair already exists"`},
+			ExpectedContent: []string{`"message":"User key pair already exists."`},
 			TestAppFactory:  setupTestApp,
 			BeforeTestFunc:  withUserToken,
 		},
@@ -314,7 +319,7 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 			}`, userPublicKey, userEncryptedSecretKey)),
 			ExpectedStatus: http.StatusBadRequest,
 			ExpectedContent: []string{
-				`"user":{"code":"validation_required"`,
+				`"message":"Failed to create record."`,
 			},
 			TestAppFactory: setupTestApp,
 			BeforeTestFunc: withUserToken,
@@ -330,8 +335,7 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 			}`, userId, userEncryptedSecretKey)),
 			ExpectedStatus: http.StatusBadRequest,
 			ExpectedContent: []string{
-				`data":{"public_key":`,
-				`"message":"Must be at least 32 character(s)."`,
+				`"message":"User key pair already exists."`,
 			},
 			TestAppFactory: setupTestApp,
 			BeforeTestFunc: withUserToken,

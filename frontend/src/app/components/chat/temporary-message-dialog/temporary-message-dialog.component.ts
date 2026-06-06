@@ -1,12 +1,14 @@
+import { DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+
+import {
+  CognosButtonComponent,
+  CognosDialogSurfaceComponent,
+} from '@cognos/ui-angular';
 
 import { Conversation } from '@app/interfaces/conversation';
 import { ConversationService } from '@app/services/conversation.service';
-import { DeviceService } from '@app/services/device.service';
 import { ConversationsExpiryDurationOptions } from '@app/types/pocketbase-types';
 
 export const expiringDurations = [
@@ -20,68 +22,106 @@ export const expiringDurations = [
 @Component({
   selector: 'app-temporary-message-dialog',
   standalone: true,
-  imports: [
-    MatDialogModule,
-    MatButtonToggleModule,
-    MatButtonModule,
-    ReactiveFormsModule,
-  ],
-  template: ` <h2 mat-dialog-title="">Disappearing messages</h2>
-    <mat-dialog-content>
-      <div class="flex flex-col gap-4">
-        <div class="prose prose-headings:mb-2 prose-headings:mt-4 prose-p:mb-2">
+  imports: [ReactiveFormsModule, CognosDialogSurfaceComponent, CognosButtonComponent],
+  template: `
+    <cog-dialog-surface title="Disappearing messages" [footer]="true" (close)="close()">
+      <div class="temporary-message-dialog">
+        <div class="temporary-message-dialog__copy">
           <p>Make your messages disappear.</p>
           <p>
             For more privacy all new messages will disappear from this chat after the
-            selected duration below. You can also choose to manually keep a message
-            that's due to be deleted before it expires.
+            selected duration below. You can also manually keep a message before it
+            expires.
           </p>
           <p>This will not affect existing messages and can be disabled at any time.</p>
         </div>
 
-        <div class="text-center">
-          <mat-button-toggle-group
-            [formControl]="expirationDuration"
-            name="favoriteColor"
-            aria-label="Favorite Color"
-            class="less-rounded w-full justify-center lg:w-auto"
-            [vertical]="deviceService.isMobile()"
-          >
-            @for (option of expiringDurations; track option.label) {
-              <mat-button-toggle [value]="option.value">{{
-                option.label
-              }}</mat-button-toggle>
-            }
-          </mat-button-toggle-group>
+        <div class="temporary-message-dialog__options" role="radiogroup">
+          @for (option of expiringDurations; track option.label) {
+            <button
+              [class]="optionClass(option.value)"
+              type="button"
+              (click)="expirationDuration.setValue(option.value)"
+            >
+              {{ option.label }}
+            </button>
+          }
         </div>
       </div>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close color="error">Cancel</button>
-      <button (click)="onSave()" mat-button cdkFocusInitial>Save</button>
-    </mat-dialog-actions>`,
+
+      <div cogDialogFooter>
+        <cog-button appearance="subtle" (click)="close()">Cancel</cog-button>
+        <cog-button appearance="primary" (click)="onSave()">Save</cog-button>
+      </div>
+    </cog-dialog-surface>
+  `,
   styles: `
-    mat-button-toggle-group.less-rounded {
-      --mat-standard-button-toggle-shape: 20px;
+    .temporary-message-dialog {
+      display: grid;
+      gap: var(--cog-space-200);
+    }
+
+    .temporary-message-dialog__copy {
+      display: grid;
+      gap: var(--cog-space-100);
+      color: var(--cog-text);
+      font-size: var(--cog-fs-body);
+      line-height: var(--cog-lh-body);
+    }
+
+    .temporary-message-dialog__copy p {
+      margin: 0;
+    }
+
+    .temporary-message-dialog__options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--cog-space-100);
+    }
+
+    .temporary-message-dialog__option {
+      min-height: 40px;
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface);
+      color: var(--cog-text);
+      padding: 0 var(--cog-space-150);
+      font: inherit;
+      cursor: pointer;
+      transition:
+        background-color var(--cog-dur-fast) var(--cog-ease-standard),
+        border-color var(--cog-dur-fast) var(--cog-ease-standard),
+        color var(--cog-dur-fast) var(--cog-ease-standard);
+    }
+
+    .temporary-message-dialog__option:hover {
+      background: var(--cog-surface-hover);
+    }
+
+    .temporary-message-dialog__option--selected {
+      border-color: var(--cog-selected-border);
+      background: var(--cog-selected-bg);
+      color: var(--cog-selected-text);
+      font-weight: var(--cog-fw-semibold);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TemporaryMessageDialogComponent {
   private readonly _conversationService = inject(ConversationService);
+  private readonly _dialogRef = inject(DialogRef<string | null>);
 
-  public readonly deviceService = inject(DeviceService);
-
-  public readonly expiringDurations = expiringDurations;
-
-  public readonly conversation = input<Conversation>();
-  public readonly expirationDuration = new FormControl(
-    (this.conversation()?.record
-      .expiry_duration as keyof typeof ConversationsExpiryDurationOptions) ??
+  readonly expiringDurations = expiringDurations;
+  readonly conversation = input<Conversation>();
+  readonly expirationDuration = new FormControl<string>(
+    (this.conversation()?.record.expiry_duration as string) ??
       this._conversationService.expirationDuration(),
+    { nonNullable: true },
   );
 
-  constructor(private _dialogRef: MatDialogRef<TemporaryMessageDialogComponent>) {}
+  close() {
+    this._dialogRef.close(null);
+  }
 
   onSave() {
     const expirationDuration = this.expirationDuration.value ?? '';
@@ -93,7 +133,13 @@ export class TemporaryMessageDialogComponent {
         : undefined,
     });
 
-    this._dialogRef.close(this.expirationDuration.value);
+    this._dialogRef.close(expirationDuration);
+  }
+
+  optionClass(value: string) {
+    return this.expirationDuration.value === value
+      ? 'temporary-message-dialog__option temporary-message-dialog__option--selected'
+      : 'temporary-message-dialog__option';
   }
 }
 

@@ -34,9 +34,16 @@
     "./package.json": "./package.json"
   },
   "style": "./tokens.css",
+  "scripts": {
+    "lint": "eslint --cache --fix \"**/*.js\""
+  },
   "dependencies": {
     "@fontsource-variable/noto-sans": "^5.2.10",
     "@fontsource-variable/reddit-mono": "^5.2.8",
     "lucide": "^1.17.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0"
   }
 }

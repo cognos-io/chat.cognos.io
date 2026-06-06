@@ -23,7 +23,7 @@ func TestUserEmailChangeIsRejected(t *testing.T) {
 		}`),
 		ExpectedStatus: http.StatusBadRequest,
 		ExpectedContent: []string{
-			`"message":"email changes are not allowed"`,
+			`"message":"Email changes are not allowed."`,
 		},
 		TestAppFactory: setupTestApp,
 		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),

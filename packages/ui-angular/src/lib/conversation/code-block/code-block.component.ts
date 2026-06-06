@@ -1,14 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   input,
   signal,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosButtonComponent } from "../../button/button.component";
+import { CognosButtonComponent } from '../../button/button.component';
 
 @Component({
-  selector: "cog-code-block",
+  selector: 'cog-code-block',
   standalone: true,
   imports: [CognosButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -16,7 +17,12 @@ import { CognosButtonComponent } from "../../button/button.component";
     <section class="cog-code-block" [style.width.px]="width()">
       <header class="cog-code-block__header">
         <span class="cog-code-block__lang">{{ lang() }}</span>
-        <cog-button appearance="subtle" type="button" [icon]="copied() ? 'check' : 'copy'" (click)="copyCode()">
+        <cog-button
+          appearance="subtle"
+          type="button"
+          [icon]="copied() ? 'check' : 'copy'"
+          (click)="copyCode()"
+        >
           {{ copied() ? 'Copied' : 'Copy' }}
         </cog-button>
       </header>
@@ -70,9 +76,9 @@ import { CognosButtonComponent } from "../../button/button.component";
     `,
   ],
 })
-export class CognosCodeBlockComponent {
-  readonly code = input("");
-  readonly lang = input("text");
+export class CognosCodeBlockComponent implements OnDestroy {
+  readonly code = input('');
+  readonly lang = input('text');
   readonly width = input(480);
 
   protected readonly copied = signal(false);

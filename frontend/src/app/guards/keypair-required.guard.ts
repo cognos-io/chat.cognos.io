@@ -1,17 +1,18 @@
+import { Dialog, DialogRef } from '@angular/cdk/dialog';
 import { inject } from '@angular/core';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { CanActivateChildFn } from '@angular/router';
 
-import { of, switchMap } from 'rxjs';
+import { map, of, switchMap } from 'rxjs';
 
 import { VaultPasswordDialogComponent } from '@app/components/vault-password-dialog/vault-password-dialog.component';
 import { VaultService } from '@app/services/vault.service';
+import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 export const keyPairRequiredGuard: CanActivateChildFn = () => {
   const vaultService = inject(VaultService);
-  const dialog = inject(MatDialog);
+  const dialog = inject(Dialog);
 
-  let dialogRef: MatDialogRef<VaultPasswordDialogComponent> | undefined;
+  let dialogRef: DialogRef<unknown, VaultPasswordDialogComponent> | null = null;
 
   return vaultService.keyPair$.pipe(
     switchMap((keyPair) => {
@@ -20,12 +21,12 @@ export const keyPairRequiredGuard: CanActivateChildFn = () => {
         return of(true);
       }
 
-      // show the vault password dialog if we don't have a key pair
-      dialogRef = dialog.open(VaultPasswordDialogComponent, {
+      dialogRef ??= dialog.open(VaultPasswordDialogComponent, {
+        ...cognosDialogOptions,
         disableClose: true,
       });
 
-      return dialogRef.afterClosed();
+      return dialogRef.closed.pipe(map((result) => Boolean(result)));
     }),
   );
 };

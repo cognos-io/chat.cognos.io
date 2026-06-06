@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 import PocketBase from 'pocketbase';
@@ -12,6 +12,7 @@ import {
   map,
   of,
   switchMap,
+  tap,
   throwError,
 } from 'rxjs';
 
@@ -30,12 +31,18 @@ import { KeyPair } from '@interfaces/key-pair';
 
 import { AuthService } from './auth.service';
 import { CryptoService } from './crypto.service';
-import { ErrorService } from './error.service';
+import { TrustedUnlockService } from './trusted-unlock.service';
 
 interface VaultState {
   keyPair: KeyPair | undefined;
-  keyPairRecord: UserKeyPairsResponse | null | undefined; // null means the record does not exist
+  keyPairRecord: UserKeyPairsResponse | null | undefined;
   isNewKeyPair: boolean;
+}
+
+interface UnlockRequest {
+  accountKey: string;
+  accountPassword: string;
+  trustDevice: boolean;
 }
 
 const initialState: VaultState = {
@@ -44,15 +51,21 @@ const initialState: VaultState = {
   isNewKeyPair: false,
 };
 
-// Argon2id parameters as recommended by the OWASP password storage cheat sheet
-// https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#introduction
+const unlockSchemePasswordAccountKey = 'password_account_key_v1';
+
 const argon2idMemory = 65536; // 64MiB
 const argon2idIterationCount = 3;
 const argon2idParallelism = 1;
+const passwordSaltBytes = 16;
+const accountKeyBytes = 16;
 const simdWasmSHA384 =
   'lq17elS4aq0P0DV4bzHHzZGjjkz7/DwuX9RRNjhsw3xCqN8G5oyXjlcacOxhXZxJ';
 const noSimdWasmSHA384 =
   'CXsNdctBSGlR8eWNDhWAekxve6pGotK6LroWxyQSwEQK9iILS/gE/sKBe+Z9kJdY';
+const userKeyPairRecordMACContext = 'user_key_pair_record_v1';
+const trustedUserKeyContextPrefix = 'cognos:trusted-user-key:';
+
+let setupWasmInstance: ReturnType<typeof setupWasm> | undefined;
 
 async function instantiateVerifiedWasm(
   url: string,
@@ -71,23 +84,24 @@ async function instantiateVerifiedWasm(
   return WebAssembly.instantiate(bytes, importObject);
 }
 
-const setupWasmInstance = setupWasm(
-  (importObject) =>
-    instantiateVerifiedWasm(
-      '/assets/wasm/argon2id/simd.wasm',
-      simdWasmSHA384,
-      importObject,
-    ),
-  (importObject) =>
-    instantiateVerifiedWasm(
-      '/assets/wasm/argon2id/no-simd.wasm',
-      noSimdWasmSHA384,
-      importObject,
-    ),
-);
+const getSetupWasmInstance = () => {
+  setupWasmInstance ??= setupWasm(
+    (importObject) =>
+      instantiateVerifiedWasm(
+        '/assets/wasm/argon2id/simd.wasm',
+        simdWasmSHA384,
+        importObject,
+      ),
+    (importObject) =>
+      instantiateVerifiedWasm(
+        '/assets/wasm/argon2id/no-simd.wasm',
+        noSimdWasmSHA384,
+        importObject,
+      ),
+  );
 
-const userKeyPairRecordMACContext = 'user_key_pair_record_v1';
-const trustedUserKeyContextPrefix = 'cognos:trusted-user-key:';
+  return setupWasmInstance;
+};
 
 @Injectable({
   providedIn: 'root',
@@ -95,99 +109,130 @@ const trustedUserKeyContextPrefix = 'cognos:trusted-user-key:';
 export class VaultService {
   private readonly _pb: TypedPocketBase = inject(PocketBase);
   private readonly _cryptoService = inject(CryptoService);
-  private readonly _errorService = inject(ErrorService);
   private readonly _authService = inject(AuthService);
+  private readonly _trustedUnlockService = inject(TrustedUnlockService);
 
   private readonly pbUserKeyPairsCollection = 'user_key_pairs';
 
-  // sources
-  readonly rawVaultPassword$ = new Subject<string>();
+  readonly generatedAccountKey = signal<string | null>(null);
+  readonly wasLocked = signal(false);
+  readonly unlockRequest$ = new Subject<UnlockRequest>();
+  readonly lock$ = new Subject<void>();
+  readonly unlockError = signal<string | null>(null);
 
-  // state
   private state = signalSlice({
     initialState,
     sources: [
-      // Hash the vault password and fetch the key pair
       (state) =>
-        this.rawVaultPassword$.pipe(
-          switchMap((rawPassword) =>
-            this.hashVaultPassword(rawPassword).pipe(
-              switchMap((hashedVaultPassword) => {
-                const keyPairRecord = state().keyPairRecord;
-                if (keyPairRecord === null) {
-                  return this.createNewUserKeyPair(hashedVaultPassword).pipe(
-                    map((keyPair) => ({ keyPair })),
-                  );
-                }
-                if (keyPairRecord === undefined) {
-                  return EMPTY;
-                }
-                try {
-                  this.assertTrustedUserKeyContext(keyPairRecord);
-                  const keyPair = this.unpackKeyPairRecord(
-                    keyPairRecord,
-                    hashedVaultPassword,
-                  );
-                  this.persistTrustedUserKeyContext(keyPairRecord);
-                  if (!keyPairRecord.record_mac) {
-                    void this.backfillUserKeyPairRecordMAC(
-                      keyPairRecord,
-                      hashedVaultPassword,
-                    ).catch(() => {
-                      console.error('Failed to backfill user key pair integrity');
-                    });
-                  }
-                  return of({ keyPair });
-                } catch (error) {
-                  console.error('Error unpacking key pair record', error);
-                  this._errorService.alert(
-                    'Error unlocking vault. Please check your vault password try again. If this continues to fail try refreshing the page or trying again later.',
+        this.unlockRequest$.pipe(
+          switchMap((request) => {
+            const keyPairRecord = state().keyPairRecord;
+            if (keyPairRecord === null) {
+              return this.createInitialUserKeyPair(request).pipe(
+                tap(() => {
+                  this.wasLocked.set(false);
+                  this.clearUnlockError();
+                }),
+                map(({ keyPair, keyPairRecord: createdKeyPairRecord }) => ({
+                  keyPair,
+                  keyPairRecord: createdKeyPairRecord,
+                  isNewKeyPair: false,
+                })),
+                catchError(() => {
+                  this.unlockError.set(
+                    'Error creating your encrypted backup. Please try again.',
                   );
                   return EMPTY;
-                }
+                }),
+              );
+            }
+            if (keyPairRecord === undefined) {
+              return EMPTY;
+            }
+
+            return this.unlockExistingUserKeyPair(request, keyPairRecord).pipe(
+              tap(() => {
+                this.wasLocked.set(false);
+                this.clearUnlockError();
               }),
-            ),
-          ),
+              map((keyPair) => ({ keyPair })),
+              catchError(() => {
+                this.unlockError.set(
+                  'Error unlocking your encrypted backup. Please check your details and try again.',
+                );
+                return EMPTY;
+              }),
+            );
+          }),
         ),
-      // Fetch the key pair record
       this.fetchUserKeyPairRecord().pipe(
         catchError((error) => {
           if (error.status === 404) {
+            this.ensureGeneratedAccountKey();
             return of(null);
           }
 
           return throwError(() => error);
         }),
-        map((keyPairRecord) => ({ keyPairRecord, isNewKeyPair: !keyPairRecord })),
+        switchMap((keyPairRecord) =>
+          from(this.buildFetchedVaultState(keyPairRecord)).pipe(
+            map((nextState) => ({
+              keyPair: nextState.keyPair,
+              keyPairRecord,
+              isNewKeyPair: !keyPairRecord,
+            })),
+          ),
+        ),
       ),
-      //   Clear the state when logging out
+      this.lock$.pipe(
+        switchMap(() =>
+          from(this._trustedUnlockService.clearAllUnlockKeys()).pipe(
+            map(() => {
+              this.wasLocked.set(true);
+              this.clearUnlockError();
+              return {
+                keyPair: undefined,
+              };
+            }),
+          ),
+        ),
+      ),
       this._authService.logout$.pipe(
-        map(() => {
-          return {
-            keyPair: undefined,
-          };
-        }),
+        switchMap(() =>
+          from(this._trustedUnlockService.clearAllUnlockKeys()).pipe(
+            map(() => {
+              this.generatedAccountKey.set(null);
+              this.wasLocked.set(false);
+              this.clearUnlockError();
+              return {
+                keyPair: undefined,
+              };
+            }),
+          ),
+        ),
       ),
     ],
   });
 
-  // selectors
   isNewKeyPair = this.state.isNewKeyPair;
   keyPair = this.state.keyPair;
   keyPair$ = toObservable(this.keyPair);
 
-  hashVaultPassword(rawPassword: string): Observable<Uint8Array> {
-    const encoder = new TextEncoder();
+  hashSecretMaterial(
+    secretMaterial: Uint8Array,
+    passwordSaltBase64: string,
+  ): Observable<Uint8Array> {
+    const salt = Base64.toUint8Array(passwordSaltBase64);
 
-    return from(setupWasmInstance).pipe(
+    return from(getSetupWasmInstance()).pipe(
       map((argon2id) =>
         argon2id({
-          password: encoder.encode(rawPassword),
-          salt: encoder.encode(this._authService.user()?.['email'] ?? ''),
+          password: secretMaterial,
+          salt,
           parallelism: argon2idParallelism,
           passes: argon2idIterationCount,
           memorySize: argon2idMemory,
-          tagLength: nacl.secretbox.keyLength, // output a a hash of the same length as a secret key
+          tagLength: nacl.secretbox.keyLength,
         }),
       ),
     );
@@ -203,26 +248,20 @@ export class VaultService {
     );
   }
 
-  decryptSecretKey(
-    encryptedSecretKey: Uint8Array,
-    vaultPassword: Uint8Array,
-  ): Uint8Array {
-    return this._cryptoService.openSecretBox(encryptedSecretKey, vaultPassword);
+  decryptSecretKey(encryptedSecretKey: Uint8Array, unlockKey: Uint8Array): Uint8Array {
+    return this._cryptoService.openSecretBox(encryptedSecretKey, unlockKey);
   }
 
-  encryptSecretKey(rawSecretKey: Uint8Array, vaultPassword: Uint8Array): Uint8Array {
-    return this._cryptoService.secretBox(rawSecretKey, vaultPassword);
+  encryptSecretKey(rawSecretKey: Uint8Array, unlockKey: Uint8Array): Uint8Array {
+    return this._cryptoService.secretBox(rawSecretKey, unlockKey);
   }
 
   unpackKeyPairRecord(
     keyPairRecord: UserKeyPairsResponse,
-    hashedVaultPassword: Uint8Array,
+    unlockKey: Uint8Array,
   ): KeyPair {
     if (keyPairRecord.record_mac) {
-      const actualMAC = this.computeUserKeyPairRecordMAC(
-        keyPairRecord,
-        hashedVaultPassword,
-      );
+      const actualMAC = this.computeUserKeyPairRecordMAC(keyPairRecord, unlockKey);
       const expectedMAC = Base64.toUint8Array(keyPairRecord.record_mac);
 
       if (!this._cryptoService.equalBytes(actualMAC, expectedMAC)) {
@@ -232,10 +271,7 @@ export class VaultService {
 
     const publicKey = Base64.toUint8Array(keyPairRecord.public_key);
     const encryptedSecretKey = Base64.toUint8Array(keyPairRecord.secret_key);
-    const decryptedSecretKey = this.decryptSecretKey(
-      encryptedSecretKey,
-      hashedVaultPassword,
-    );
+    const decryptedSecretKey = this.decryptSecretKey(encryptedSecretKey, unlockKey);
 
     return {
       publicKey,
@@ -243,61 +279,233 @@ export class VaultService {
     };
   }
 
-  createNewUserKeyPair(hashedVaultPassword: Uint8Array): Observable<KeyPair> {
-    const keyPair = this._cryptoService.newKeyPair();
+  clearUnlockError() {
+    this.unlockError.set(null);
+  }
 
-    const encryptedSecretKey = this.encryptSecretKey(
-      keyPair.secretKey,
-      hashedVaultPassword,
+  lock() {
+    this.lock$.next();
+  }
+
+  private buildPasswordAccountKeySecretMaterial(
+    rawPassword: string,
+    accountKey: string,
+  ): Uint8Array {
+    return new TextEncoder().encode(
+      `${rawPassword}\u0000${this.normaliseAccountKey(accountKey)}`,
+    );
+  }
+
+  private createInitialUserKeyPair(request: UnlockRequest): Observable<{
+    keyPair: KeyPair;
+    keyPairRecord: UserKeyPairsResponse;
+  }> {
+    const accountKey = this.generatedAccountKey();
+    if (!accountKey) {
+      return throwError(() => new Error('missing generated account key'));
+    }
+
+    const passwordSalt = this.generatePasswordSalt();
+    const secretMaterial = this.buildPasswordAccountKeySecretMaterial(
+      request.accountPassword,
+      accountKey,
     );
 
+    return this.hashSecretMaterial(secretMaterial, passwordSalt).pipe(
+      switchMap((unlockKey) =>
+        this.createNewUserKeyPair(unlockKey, passwordSalt, request.trustDevice),
+      ),
+      tap(() => this.generatedAccountKey.set(null)),
+    );
+  }
+
+  private createNewUserKeyPair(
+    unlockKey: Uint8Array,
+    passwordSalt: string,
+    trustDevice: boolean,
+  ): Observable<{
+    keyPair: KeyPair;
+    keyPairRecord: UserKeyPairsResponse;
+  }> {
+    const keyPair = this._cryptoService.newKeyPair();
+
+    const encryptedSecretKey = this.encryptSecretKey(keyPair.secretKey, unlockKey);
     const publicKeyBase64 = Base64.fromUint8Array(keyPair.publicKey);
     const encryptedSecretKeyBase64 = Base64.fromUint8Array(encryptedSecretKey);
     const userID = this._authService.user()?.['id'];
     const keyPairRecordData: Partial<UserKeyPairsRecord> = {
+      password_salt: passwordSalt,
       public_key: publicKeyBase64,
       secret_key: encryptedSecretKeyBase64,
+      unlock_scheme: unlockSchemePasswordAccountKey,
       user: userID,
     };
 
     keyPairRecordData.record_mac = Base64.fromUint8Array(
       this.computeUserKeyPairRecordMAC(
         {
+          password_salt: passwordSalt,
           public_key: publicKeyBase64,
           secret_key: encryptedSecretKeyBase64,
+          unlock_scheme: unlockSchemePasswordAccountKey,
           user: userID ?? '',
         },
-        hashedVaultPassword,
+        unlockKey,
       ),
     );
 
     return from(
       this._pb.collection(this.pbUserKeyPairsCollection).create(keyPairRecordData),
-    ).pipe(switchMap(() => of(keyPair)));
+    ).pipe(
+      switchMap((keyPairRecord) =>
+        from(this.persistTrustedUnlockKey(unlockKey, trustDevice)).pipe(
+          tap(() => this.persistTrustedUserKeyContext(keyPairRecord)),
+          map(() => ({ keyPair, keyPairRecord })),
+        ),
+      ),
+    );
+  }
+
+  private unlockExistingUserKeyPair(
+    request: UnlockRequest,
+    keyPairRecord: UserKeyPairsResponse,
+  ): Observable<KeyPair> {
+    if (
+      keyPairRecord.unlock_scheme !== unlockSchemePasswordAccountKey ||
+      !keyPairRecord.password_salt
+    ) {
+      return throwError(() => new Error('invalid encrypted backup metadata'));
+    }
+
+    this.assertTrustedUserKeyContext(keyPairRecord);
+
+    const secretMaterial = this.buildPasswordAccountKeySecretMaterial(
+      request.accountPassword,
+      request.accountKey,
+    );
+    return this.hashSecretMaterial(secretMaterial, keyPairRecord.password_salt).pipe(
+      map((unlockKey) => ({
+        keyPair: this.unpackKeyPairRecord(keyPairRecord, unlockKey),
+        unlockKey,
+      })),
+      switchMap(({ keyPair, unlockKey }) =>
+        from(this.persistTrustedUnlockKey(unlockKey, request.trustDevice)).pipe(
+          tap(() => this.persistTrustedUserKeyContext(keyPairRecord)),
+          switchMap(() => {
+            if (!keyPairRecord.record_mac) {
+              return from(
+                this.backfillUserKeyPairRecordMAC(keyPairRecord, unlockKey),
+              ).pipe(map(() => keyPair));
+            }
+
+            return of(keyPair);
+          }),
+        ),
+      ),
+    );
+  }
+
+  private async buildFetchedVaultState(
+    keyPairRecord: UserKeyPairsResponse | null,
+  ): Promise<{ keyPair?: KeyPair }> {
+    if (keyPairRecord === null) {
+      this.ensureGeneratedAccountKey();
+      return {};
+    }
+
+    this.generatedAccountKey.set(null);
+
+    const storedUnlockKey = await this._trustedUnlockService.getUnlockKey(
+      this._authService.user()?.['id'],
+    );
+    if (!storedUnlockKey) {
+      return {};
+    }
+
+    try {
+      this.assertTrustedUserKeyContext(keyPairRecord);
+      const keyPair = this.unpackKeyPairRecord(keyPairRecord, storedUnlockKey);
+      this.persistTrustedUserKeyContext(keyPairRecord);
+      if (!keyPairRecord.record_mac) {
+        await this.backfillUserKeyPairRecordMAC(keyPairRecord, storedUnlockKey);
+      }
+      return { keyPair };
+    } catch {
+      await this._trustedUnlockService.clearUnlockKey(this._authService.user()?.['id']);
+      return {};
+    }
+  }
+
+  private async persistTrustedUnlockKey(
+    unlockKey: Uint8Array,
+    trustDevice: boolean,
+  ): Promise<void> {
+    if (!trustDevice) {
+      await this._trustedUnlockService.clearUnlockKey(this._authService.user()?.['id']);
+      return;
+    }
+
+    try {
+      await this._trustedUnlockService.setUnlockKey(
+        this._authService.user()?.['id'],
+        unlockKey,
+      );
+    } catch {
+      await this._trustedUnlockService.clearUnlockKey(this._authService.user()?.['id']);
+    }
+  }
+
+  private ensureGeneratedAccountKey(): void {
+    if (this.generatedAccountKey()) {
+      return;
+    }
+
+    this.generatedAccountKey.set(this.generateAccountKey());
+  }
+
+  private generatePasswordSalt(): string {
+    return Base64.fromUint8Array(nacl.randomBytes(passwordSaltBytes));
+  }
+
+  private generateAccountKey(): string {
+    const accountKey = Array.from(nacl.randomBytes(accountKeyBytes), (value) =>
+      value.toString(16).padStart(2, '0').toUpperCase(),
+    ).join('');
+
+    return accountKey.match(/.{1,4}/g)?.join('-') ?? accountKey;
+  }
+
+  private normaliseAccountKey(accountKey: string): string {
+    return accountKey.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   }
 
   private computeUserKeyPairRecordMAC(
-    keyPairRecord: Pick<UserKeyPairsRecord, 'public_key' | 'secret_key' | 'user'>,
-    hashedVaultPassword: Uint8Array,
+    keyPairRecord: Pick<
+      UserKeyPairsRecord,
+      'password_salt' | 'public_key' | 'secret_key' | 'unlock_scheme' | 'user'
+    >,
+    unlockKey: Uint8Array,
   ): Uint8Array {
     const payload = new TextEncoder().encode(
       JSON.stringify([
         userKeyPairRecordMACContext,
         keyPairRecord.user,
+        keyPairRecord.unlock_scheme ?? '',
+        keyPairRecord.password_salt ?? '',
         keyPairRecord.public_key,
         keyPairRecord.secret_key,
       ]),
     );
 
-    return this._cryptoService.mac(payload, hashedVaultPassword);
+    return this._cryptoService.mac(payload, unlockKey);
   }
 
   private async backfillUserKeyPairRecordMAC(
     keyPairRecord: UserKeyPairsResponse,
-    hashedVaultPassword: Uint8Array,
+    unlockKey: Uint8Array,
   ) {
     const record_mac = Base64.fromUint8Array(
-      this.computeUserKeyPairRecordMAC(keyPairRecord, hashedVaultPassword),
+      this.computeUserKeyPairRecordMAC(keyPairRecord, unlockKey),
     );
 
     await this._pb.collection(this.pbUserKeyPairsCollection).update(keyPairRecord.id, {
@@ -311,48 +519,62 @@ export class VaultService {
 
   private assertTrustedUserKeyContext(keyPairRecord: UserKeyPairsResponse): void {
     const userID = this._authService.user()?.['id'];
-    const vaultSalt = this._authService.user()?.['email'];
-    if (!userID || !vaultSalt) {
+    if (!userID) {
       return;
     }
 
-    const rawContext = localStorage.getItem(this.trustedUserKeyContextStorageKey(userID));
+    const rawContext = localStorage.getItem(
+      this.trustedUserKeyContextStorageKey(userID),
+    );
     if (!rawContext) {
       return;
     }
 
     const context = JSON.parse(rawContext) as {
-      oryId?: string;
-      publicKeyFingerprint: string;
-      vaultSalt?: string;
+      passwordSalt?: string;
+      publicKeyFingerprint?: string;
+      unlockScheme?: string;
     };
-    const trustedSalt = context.vaultSalt ?? context.oryId;
-    if (trustedSalt && trustedSalt !== vaultSalt) {
+
+    if (
+      context.unlockScheme &&
+      context.unlockScheme !== (keyPairRecord.unlock_scheme ?? '')
+    ) {
+      throw new Error('Trusted user key scheme changed');
+    }
+
+    if (
+      context.passwordSalt &&
+      context.passwordSalt !== (keyPairRecord.password_salt ?? '')
+    ) {
       throw new Error('Trusted user key salt changed');
     }
 
     const publicKeyFingerprint = Base64.fromUint8Array(
       this._cryptoService.hash(Base64.toUint8Array(keyPairRecord.public_key)),
     );
-    if (context.publicKeyFingerprint !== publicKeyFingerprint) {
+    if (
+      context.publicKeyFingerprint &&
+      context.publicKeyFingerprint !== publicKeyFingerprint
+    ) {
       throw new Error('Trusted user public key changed');
     }
   }
 
   private persistTrustedUserKeyContext(keyPairRecord: UserKeyPairsResponse): void {
     const userID = this._authService.user()?.['id'];
-    const vaultSalt = this._authService.user()?.['email'];
-    if (!userID || !vaultSalt) {
+    if (!userID) {
       return;
     }
 
     localStorage.setItem(
       this.trustedUserKeyContextStorageKey(userID),
       JSON.stringify({
-        vaultSalt,
+        passwordSalt: keyPairRecord.password_salt ?? '',
         publicKeyFingerprint: Base64.fromUint8Array(
           this._cryptoService.hash(Base64.toUint8Array(keyPairRecord.public_key)),
         ),
+        unlockScheme: keyPairRecord.unlock_scheme ?? '',
       }),
     );
   }

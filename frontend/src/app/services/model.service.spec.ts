@@ -1,0 +1,146 @@
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
+import PocketBase from 'pocketbase';
+
+import { BehaviorSubject } from 'rxjs';
+
+import { AuthService } from './auth.service';
+import { ModelService } from './model.service';
+
+describe('ModelService', () => {
+  let service: ModelService;
+  let httpController: HttpTestingController;
+  let authUser$: BehaviorSubject<unknown>;
+
+  beforeEach(() => {
+    authUser$ = new BehaviorSubject<unknown>(null);
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        ModelService,
+        {
+          provide: AuthService,
+          useValue: {
+            user$: authUser$,
+          },
+        },
+        {
+          provide: PocketBase,
+          useValue: {
+            authStore: {
+              token: 'test-token',
+            },
+          },
+        },
+      ],
+    });
+
+    service = TestBed.inject(ModelService);
+    httpController = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpController.verify();
+    TestBed.resetTestingModule();
+  });
+
+  it('loads the backend model catalogue after login', () => {
+    authUser$.next({ id: 'user-1' });
+
+    const request = httpController.expectOne('http://localhost:8090/api/v1/models');
+    expect(request.request.method).toBe('GET');
+    expect(request.request.headers.get('Authorization')).toBe('test-token');
+
+    request.flush({
+      privacy_tier: 'global',
+      preferred_model_id: 'llama-3-3-infomaniak',
+      models: [
+        {
+          id: 'llama-3-3-infomaniak',
+          name: 'Llama 3.3',
+          slug: 'llama-3-3-infomaniak',
+          provider_id: 'infomaniak',
+          provider_model_id: 'llama-3.3-70b-instruct',
+          description: 'Swiss-hosted model',
+          privacy_tier: 'ch_only',
+          tags: [{ title: 'general-purpose' }],
+          content_types: ['text'],
+          input_context_tokens: 128000,
+          max_output_tokens: 8192,
+          pricing: {
+            input_usd_per_million_tokens: 0,
+            output_usd_per_million_tokens: 0,
+          },
+          is_eligible: true,
+        },
+      ],
+    });
+
+    expect(service.modelList()).toHaveLength(1);
+    expect(service.selectedModel().id).toBe('llama-3-3-infomaniak');
+    expect(service.selectedModel().providerId).toBe('infomaniak');
+    expect(service.getModel('llama-3-3-infomaniak')?.name).toBe('Llama 3.3');
+  });
+
+  it('prefers the first eligible model and ignores ineligible selections', () => {
+    authUser$.next({ id: 'user-1' });
+
+    const request = httpController.expectOne('http://localhost:8090/api/v1/models');
+    request.flush({
+      privacy_tier: 'eu',
+      preferred_model_id: 'global-model',
+      models: [
+        {
+          id: 'global-model',
+          name: 'Global Model',
+          slug: 'global-model',
+          provider_id: 'other',
+          provider_model_id: 'global-model',
+          description: 'Unavailable for this user',
+          privacy_tier: 'global',
+          tags: [],
+          content_types: ['text'],
+          input_context_tokens: 32000,
+          pricing: {
+            input_usd_per_million_tokens: 1,
+            output_usd_per_million_tokens: 2,
+          },
+          is_eligible: false,
+          ineligibility_reason: 'model privacy tier exceeds user privacy tier',
+        },
+        {
+          id: 'eu-model',
+          name: 'EU Model',
+          slug: 'eu-model',
+          provider_id: 'infomaniak',
+          provider_model_id: 'eu-model',
+          description: 'Eligible model',
+          privacy_tier: 'eu',
+          tags: [],
+          content_types: ['text'],
+          input_context_tokens: 64000,
+          pricing: {
+            input_usd_per_million_tokens: 1,
+            output_usd_per_million_tokens: 2,
+          },
+          is_eligible: true,
+        },
+      ],
+    });
+
+    expect(service.selectedModel().id).toBe('eu-model');
+
+    service.selectModel('global-model');
+    expect(service.selectedModel().id).toBe('eu-model');
+
+    service.selectModel('eu-model');
+    expect(service.selectedModel().id).toBe('eu-model');
+  });
+});

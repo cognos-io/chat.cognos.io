@@ -2,14 +2,13 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
-import PocketBase, { AuthModel } from 'pocketbase';
+import PocketBase, { AuthMethodsList, AuthModel } from 'pocketbase';
 
 import {
   EMPTY,
   Observable,
   Subject,
   catchError,
-  finalize,
   from,
   map,
   of,
@@ -24,19 +23,27 @@ import { signalSlice } from 'ngxtension/signal-slice';
 
 import { TypedPocketBase } from '../types/pocketbase-types';
 import { ErrorService } from './error.service';
+import { TrustedUnlockService } from './trusted-unlock.service';
 
 export type LoginStatus = 'pending' | 'authenticating' | 'success' | 'error';
 
 export type AuthUser = AuthModel | null | undefined;
 
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
 interface AuthState {
   status: LoginStatus;
   user: AuthUser;
+  email: string;
 }
 
 const initialState: AuthState = {
   status: 'pending',
   user: null,
+  email: '',
 };
 
 @Injectable({
@@ -48,75 +55,68 @@ export class AuthService implements OnDestroy {
   private readonly _pb: TypedPocketBase = inject(PocketBase);
   private readonly _storeUnsubscribe: () => void;
   private readonly _router = inject(Router);
+  private readonly _trustedUnlockService = inject(TrustedUnlockService);
 
-  // sources
-  readonly login$ = new Subject<{ email: string; password: string }>();
+  readonly login$ = new Subject<LoginRequest>();
   readonly logout$ = new Subject<boolean>();
 
   private readonly _user$ = new Subject<AuthUser>();
   private readonly _userAuthenticating$ = this.login$.pipe(
-    switchMap((credentials) =>
-      this.loginWithPassword(credentials.email, credentials.password),
-    ),
+    switchMap(({ email, password }) => this.loginWithPassword(email, password)),
   );
   private readonly userLoggingOut$ = this.logout$.pipe(
-    switchMap(() => this.logout()),
+    switchMap(() => from(this.logout())),
   );
 
-  // state
   private state = signalSlice({
     initialState,
     sources: [
       this.login$.pipe(map(() => ({ status: 'authenticating' as LoginStatus }))),
-      // When user emits, if we have a user, we are authenticated
       this._user$.pipe(
         map((response: AuthUser) => {
           return {
             status: response ? ('success' as LoginStatus) : ('pending' as LoginStatus),
             user: response,
+            email: response?.['email'] ?? '',
           };
         }),
       ),
-      // When login emits, we are authenticating
       this._userAuthenticating$.pipe(
         map(() => {
-          return {
-            status: 'success' as LoginStatus,
-          };
+          return {};
         }),
         catchError(() => {
           return of({
             status: 'error' as LoginStatus,
             user: null,
+            email: '',
           });
         }),
       ),
-      // When logout emits, we are pending
       this.userLoggingOut$.pipe(
         map(() => {
           return {
             status: 'pending' as LoginStatus,
             user: null,
+            email: '',
           };
         }),
       ),
     ],
   });
 
-  // selectors
   status = this.state.status;
   user = this.state.user;
   user$ = toObservable(this.user);
+  email = this.state.email;
 
   constructor() {
-    // Regularly check and refresh token
     this.checkAndRefreshToken()
       .pipe(
         takeUntilDestroyed(),
         repeat({ delay: 1000 * 60 * 5 }),
         retry({
           count: 5,
-          // exponential backoff
           delay: (_error, retryIndex) => {
             const interval = 500;
             const delay = Math.pow(2, retryIndex - 1) * interval;
@@ -126,7 +126,6 @@ export class AuthService implements OnDestroy {
       )
       .subscribe();
 
-    // Listen for changes in the auth store
     this._storeUnsubscribe = this._pb.authStore.onChange((token, model) => {
       if (this._pb.authStore.isValid) {
         this._user$.next(model);
@@ -145,29 +144,118 @@ export class AuthService implements OnDestroy {
     }, true);
   }
 
+  listAuthMethods(): Observable<AuthMethodsList> {
+    return from(this._pb.collection(this._authCollection).listAuthMethods()).pipe(
+      catchError((error) => {
+        this._errorService.alert('Unable to list auth methods');
+        console.error('Error listing auth methods', error);
+        return EMPTY;
+      }),
+    );
+  }
+
   loginWithPassword(email: string, password: string) {
     return from(
       this._pb.collection(this._authCollection).authWithPassword(email, password),
     ).pipe(
       catchError((error) => {
-        this._errorService.alert('Error logging in with password');
+        this._errorService.alert('Invalid email or password');
         console.error(error);
         return throwError(() => error);
       }),
     );
   }
 
-  logout(): Observable<void> {
-    return from(this._pb.send('/v1/auth/logout', { method: 'POST' })).pipe(
+  register(email: string, password: string): Observable<unknown> {
+    return from(
+      this._pb
+        .collection(this._authCollection)
+        .create({ email, password, passwordConfirm: password })
+        .then(() =>
+          this._pb.collection(this._authCollection).authWithPassword(email, password),
+        ),
+    ).pipe(
       catchError((error) => {
-        console.error('Error logging out', error);
-        return of(undefined);
+        const message =
+          (error as { response?: { message?: string } })?.response?.message ??
+          'Unable to create your account';
+        this._errorService.alert(message);
+        console.error(error);
+        return throwError(() => error);
       }),
-      finalize(() => {
-        this._pb.authStore.clear();
-      }),
-      map(() => undefined),
     );
+  }
+
+  requestPasswordReset(email: string): Observable<boolean> {
+    return from(
+      this._pb.collection(this._authCollection).requestPasswordReset(email),
+    ).pipe(
+      catchError((error) => {
+        const message =
+          (error as { response?: { message?: string } })?.response?.message ??
+          'Unable to send password reset email';
+        this._errorService.alert(message);
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  confirmPasswordReset(
+    token: string,
+    password: string,
+    passwordConfirm: string,
+  ): Observable<boolean> {
+    return from(
+      this._pb
+        .collection(this._authCollection)
+        .confirmPasswordReset(token, password, passwordConfirm),
+    ).pipe(
+      catchError((error) => {
+        const message =
+          (error as { response?: { message?: string } })?.response?.message ??
+          'Unable to reset password. The link may have expired.';
+        this._errorService.alert(message);
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  requestVerification(email: string): Observable<boolean> {
+    return from(
+      this._pb.collection(this._authCollection).requestVerification(email),
+    ).pipe(
+      catchError((error) => {
+        this._errorService.alert('Unable to send verification email');
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  confirmVerification(token: string): Observable<boolean> {
+    return from(
+      this._pb.collection(this._authCollection).confirmVerification(token),
+    ).pipe(
+      catchError((error) => {
+        this._errorService.alert('Unable to verify email. The link may have expired.');
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  async logout(): Promise<void> {
+    await this._trustedUnlockService.clearAllUnlockKeys();
+
+    try {
+      await this._pb.send('/v1/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Error logging out', error);
+    } finally {
+      this._pb.authStore.clear();
+    }
   }
 
   ngOnDestroy(): void {
@@ -178,8 +266,7 @@ export class AuthService implements OnDestroy {
     if (this.user() === null) {
       return EMPTY;
     }
-    // Remove the check of the authStore.isValid because apparently
-    // a token can be valid in the client but error when used
+
     return from(this._pb.collection(this._authCollection).authRefresh()).pipe(
       catchError((error) => {
         console.error('Error refreshing auth token', error);

@@ -1,32 +1,41 @@
-import { NgTemplateOutlet } from "@angular/common";
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-} from "@angular/core";
+import { NgTemplateOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
+import { CognosIconComponent } from '../../icon/icon.component';
 
 @Component({
-  selector: "cog-image-thumb",
+  selector: 'cog-image-thumb',
   standalone: true,
   imports: [CognosIconComponent, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (clickable()) {
-      <button class="cog-image-thumb" [style.height.px]="height()" [style.border-radius.px]="round()" type="button" (click)="open.emit()">
+      <button
+        class="cog-image-thumb"
+        [style.height.px]="height()"
+        [style.border-radius.px]="round()"
+        type="button"
+        (click)="open.emit()"
+      >
         <ng-container [ngTemplateOutlet]="content" />
       </button>
     } @else {
-      <div class="cog-image-thumb" [style.height.px]="height()" [style.border-radius.px]="round()">
+      <div
+        class="cog-image-thumb"
+        [style.height.px]="height()"
+        [style.border-radius.px]="round()"
+      >
         <ng-container [ngTemplateOutlet]="content" />
       </div>
     }
 
     <ng-template #content>
-      <img class="cog-image-thumb__image" [class.cog-image-thumb__image--contain]="!cover()" [src]="src()" alt="" />
+      <img
+        class="cog-image-thumb__image"
+        [class.cog-image-thumb__image--contain]="!cover()"
+        [src]="src()"
+        alt=""
+      />
 
       @if (lock()) {
         <span class="cog-image-thumb__lock">
@@ -112,7 +121,7 @@ import { CognosIconComponent } from "../../icon/icon.component";
   ],
 })
 export class CognosImageThumbComponent {
-  readonly src = input("");
+  readonly src = input('');
   readonly height = input(132);
   readonly round = input(8);
   readonly cover = input(true);

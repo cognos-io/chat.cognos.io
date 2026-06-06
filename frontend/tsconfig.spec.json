@@ -2,8 +2,9 @@
 {
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "types": ["@angular/localize", "jest"]
+    "types": ["@angular/localize", "vitest/globals", "node"]
   },
   "extends": "./tsconfig.json",
-  "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
+  "files": ["../packages/ui-angular/src/public-api.ts"],
+  "include": ["src/**/*.spec.ts", "src/**/*.d.ts", "../packages/ui-angular/src/**/*.ts"]
 }

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
@@ -36,6 +37,12 @@ type appHookParams struct {
 	AnthropicClient        *anthropic.Client
 	DeepinfraOpenAIClient  *oai.Client
 	CronScheduler          gocron.Scheduler
+	UpstreamRepo           proxy.UpstreamRepo
+	MessageRepo            chat.MessageRepo
+	KeyPairRepo            auth.KeyPairRepo
+	AIAgentRepo            aiagent.AIAgentRepo
+	ConversationRepo       chat.ConversationRepo
+	BillingService         *billing.Service
 }
 
 func NewServer(
@@ -62,7 +69,6 @@ func bindAppHooks(
 
 	var (
 		app                    = params.App
-		config                 = params.Config
 		openaiClient           = params.OpenaiClient
 		cloudflareOpenAIClient = params.CloudflareOpenAIClient
 		googleGeminiClient     = params.GoogleGeminiClient
@@ -71,29 +77,52 @@ func bindAppHooks(
 	)
 
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
-		upstreamRepo := proxy.NewInMemoryUpstreamRepo(proxy.RepoParams{
-			Logger:                 app.Logger(),
-			OpenAIClient:           openaiClient,
-			CloudflareOpenAIClient: cloudflareOpenAIClient,
-			GoogleGeminiAIClient:   googleGeminiClient,
-			AnthropicClient:        anthropicClient,
-			DeepInfraOpenAIClient:  deepinfraClient,
-		})
-		messageRepo := chat.NewPocketBaseMessageRepo(app)
-		keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
-		aiAgentRepo := aiagent.NewInMemoryAIAgentRepo(app.Logger())
-		conversationRepo := chat.NewPocketBaseConversationRepo(app, keyPairRepo)
+		upstreamRepo := params.UpstreamRepo
+		if upstreamRepo == nil {
+			upstreamRepo = proxy.NewInMemoryUpstreamRepo(proxy.RepoParams{
+				Logger:                 app.Logger(),
+				OpenAIClient:           openaiClient,
+				CloudflareOpenAIClient: cloudflareOpenAIClient,
+				GoogleGeminiAIClient:   googleGeminiClient,
+				AnthropicClient:        anthropicClient,
+				DeepInfraOpenAIClient:  deepinfraClient,
+			})
+		}
+
+		keyPairRepo := params.KeyPairRepo
+		if keyPairRepo == nil {
+			keyPairRepo = auth.NewPocketBaseKeyPairRepo(app)
+		}
+
+		messageRepo := params.MessageRepo
+		if messageRepo == nil {
+			messageRepo = chat.NewPocketBaseMessageRepo(app)
+		}
+
+		aiAgentRepo := params.AIAgentRepo
+		if aiAgentRepo == nil {
+			aiAgentRepo = aiagent.NewInMemoryAIAgentRepo(app.Logger())
+		}
+
+		conversationRepo := params.ConversationRepo
+		if conversationRepo == nil {
+			conversationRepo = chat.NewPocketBaseConversationRepo(app, keyPairRepo)
+		}
+
+		billingService := params.BillingService
+		if billingService == nil {
+			billingService = billing.NewService()
+		}
 
 		addPocketBaseRoutes(
 			e,
 			app,
 			app.Logger(),
-			config,
 			upstreamRepo,
 			messageRepo,
-			keyPairRepo,
 			aiAgentRepo,
 			conversationRepo,
+			billingService,
 		)
 
 		hooks.SoftDelete(app)
@@ -123,21 +152,28 @@ func bindAppHooks(
 			}
 		}
 
-		return nil
+		return e.Next()
 	})
 
 	app.OnRecordAfterCreateSuccess("messages").BindFunc(func(e *core.RecordEvent) error {
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(e.App)
 		conversationRepo := chat.NewPocketBaseConversationRepo(e.App, keyPairRepo)
 
-		return conversationRepo.SetConversationUpdated(
+		if err := conversationRepo.SetConversationUpdated(
 			e.Record.GetString("conversation"),
-		)
+		); err != nil {
+			return err
+		}
+
+		return e.Next()
 	})
 
 	if params.CronScheduler != nil {
 		app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
-			return params.CronScheduler.Shutdown()
+			if err := params.CronScheduler.Shutdown(); err != nil {
+				return err
+			}
+			return e.Next()
 		})
 	}
 }
@@ -159,12 +195,20 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 
 	openaiClient := oai.NewClient(config.OpenAIAPIKey)
 	cloudflareOpenAIClient := proxy.NewCloudflareOpenAIClient(config)
-	googleGeminiClient, err := genai.NewClient(
-		ctx,
-		option.WithAPIKey(config.GoogleGeminiAPIKey),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create Google Gemini client: %w", err)
+
+	var googleGeminiClient *genai.Client
+	if config.GoogleGeminiAPIKey != "" {
+		googleGeminiClient, err = genai.NewClient(
+			ctx,
+			option.WithAPIKey(config.GoogleGeminiAPIKey),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create Google Gemini client: %w", err)
+		}
+	} else {
+		logger.Warn(
+			"Google Gemini API key not set, Gemini models will be unavailable",
+		)
 	}
 	anthropicClient := anthropic.NewClient(
 		config.AnthropicAPIKey,

@@ -16,71 +16,119 @@ import (
 	"golang.org/x/term"
 )
 
+const accountKeyBytes = 16
+
 func main() {
-	// Read the user email and vault password from the CLI
-	// TODO(ewan): Change this to use a UserID instead
-	userEmail := flag.String(
-		"email",
+	accountKey := flag.String(
+		"account-key",
 		"",
-		"User email address (used as a salt for the vault password hash)",
+		"Account Key. If omitted, a new one is generated and printed",
 	)
 	flag.Parse()
 
-	if *userEmail == "" {
-		log.Fatal("User email is required")
-	}
-
-	fmt.Fprint(os.Stderr, "Vault password: ")
+	fmt.Fprint(os.Stderr, "Account password: ")
 	passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
 	fmt.Fprintln(os.Stderr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	vaultPassword := strings.TrimSpace(string(passwordBytes))
-	if vaultPassword == "" {
-		log.Fatal("Vault password is required")
+	accountPassword := strings.TrimSpace(string(passwordBytes))
+	if accountPassword == "" {
+		log.Fatal("Account password is required")
 	}
 
-	// Hash the vault password with Argon2id
-	// Using OWASP recommendations for Argon2id
-	// https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
+	resolvedAccountKey := normalizeAccountKey(*accountKey)
+	if resolvedAccountKey == "" {
+		generatedAccountKey, err := generateAccountKey()
+		if err != nil {
+			log.Fatal(err)
+		}
+		resolvedAccountKey = normalizeAccountKey(generatedAccountKey)
+		log.Printf("Account Key: %s\n", generatedAccountKey)
+	} else {
+		log.Printf("Account Key: %s\n", formatAccountKey(resolvedAccountKey))
+	}
+
+	passwordSalt := make([]byte, 16)
+	if _, err := io.ReadFull(rand.Reader, passwordSalt); err != nil {
+		log.Fatal(err)
+	}
+
+	secretMaterial := []byte(accountPassword + "\x00" + resolvedAccountKey)
 	hashedPassword := argon2.IDKey(
-		[]byte(vaultPassword),
-		[]byte(*userEmail),
+		secretMaterial,
+		passwordSalt,
 		2,
 		19*1024,
 		1,
 		32,
 	)
-	var vaultPasswordKey [32]byte
-	copy(vaultPasswordKey[:], hashedPassword)
+	var unlockKey [32]byte
+	copy(unlockKey[:], hashedPassword)
 
-	// Generate a new key pair
 	pubKeyBytes, secKeyBytes, err := box.GenerateKey(rand.Reader)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Generate a nonce
 	var nonce [24]byte
 	if _, err := io.ReadFull(rand.Reader, nonce[:]); err != nil {
 		panic(err)
 	}
 
-	// Encrypt the secret key with the hashed vault password
 	encryptedSecKeyBytes := secretbox.Seal(
 		nonce[:],
 		secKeyBytes[:],
 		&nonce,
-		&vaultPasswordKey,
+		&unlockKey,
 	)
 
-	// Encode the public key and encrypted secret key as base64 strings
 	pubKeyString := base64.StdEncoding.EncodeToString(pubKeyBytes[:])
 	encryptedSecKeyString := base64.StdEncoding.EncodeToString(encryptedSecKeyBytes)
+	passwordSaltString := base64.StdEncoding.EncodeToString(passwordSalt)
 
-	// Print the public key and encrypted secret key
+	log.Printf("Unlock Scheme: password_account_key_v1\n")
+	log.Printf("Password Salt: %s\n", passwordSaltString)
 	log.Printf("Public Key: %s\n", pubKeyString)
 	log.Printf("Encrypted Secret Key: %s\n", encryptedSecKeyString)
+}
+
+func generateAccountKey() (string, error) {
+	buf := make([]byte, accountKeyBytes)
+	if _, err := io.ReadFull(rand.Reader, buf); err != nil {
+		return "", err
+	}
+
+	parts := make([]string, 0, len(buf)/2)
+	for i := 0; i < len(buf); i += 2 {
+		parts = append(parts, fmt.Sprintf("%02X%02X", buf[i], buf[i+1]))
+	}
+
+	return strings.Join(parts, "-"), nil
+}
+
+func normalizeAccountKey(accountKey string) string {
+	return strings.ToUpper(strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z':
+			return r - 32
+		case r >= 'A' && r <= 'Z':
+			return r
+		case r >= '0' && r <= '9':
+			return r
+		default:
+			return -1
+		}
+	}, accountKey))
+}
+
+func formatAccountKey(accountKey string) string {
+	groups := make([]string, 0, len(accountKey)/4)
+	for i := 0; i < len(accountKey); i += 4 {
+		end := min(i+4, len(accountKey))
+		groups = append(groups, accountKey[i:end])
+	}
+
+	return strings.Join(groups, "-")
 }

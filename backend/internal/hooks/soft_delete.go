@@ -10,7 +10,7 @@ func SoftDelete(app core.App) {
 	// Inspiration: https://brandur.org/fragments/deleted-record-insert
 	app.OnRecordDeleteRequest().BindFunc(func(e *core.RecordRequestEvent) error {
 		if !ShouldCopyDeletedRecord(e.Record.Collection().Name) {
-			return nil
+			return e.Next()
 		}
 
 		collection, err := app.FindCollectionByNameOrId(deletedCollectionName)
@@ -26,6 +26,10 @@ func SoftDelete(app core.App) {
 			"record":     e.Record,
 		})
 
-		return form.Submit()
+		if err := form.Submit(); err != nil {
+			return err
+		}
+
+		return e.Next()
 	})
 }

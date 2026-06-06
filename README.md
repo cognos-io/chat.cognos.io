@@ -1,5 +1,46 @@
 # Cognos
 
+Cognos is an encrypted AI chat application.
+
+Target security model for this rework:
+
+- chat content is stored server-side as ciphertext only
+- private keys are encrypted client-side before backup
+- new devices require the user's password and **Account Key** to unlock encrypted key material
+- trusted devices may stay unlocked locally via a wrapped unlock blob in IndexedDB until the user
+  locks the account, logs out, or clears browser storage
+
+See:
+
+- `docs/security-model.md`
+- `docs/specs/backend-model-selector.md`
+
+## Local development
+
+### Local auth setup
+
+Cognos now uses PocketBase's built-in `users` auth collection locally. No Ory setup is required.
+
+1. Install dependencies:
+   - `just install-dev`
+1. Start the app locally:
+   - `just dev`
+   - or run `just backend` and `just frontend` separately
+1. Open the PocketBase admin UI:
+   - `http://127.0.0.1:8090/_/`
+1. Sign in with an existing PocketBase admin account, or create the first superuser if PocketBase
+   prompts you to
+1. Create a user in the `users` auth collection with:
+   - an email address
+   - a password
+1. Open the frontend and log in with that email and password
+
+Notes:
+
+- the frontend development environment already points at `http://localhost:8090`
+- local backend data is served from `backend/pb_data`
+- Account Key and trusted-device behavior are documented in `docs/security-model.md`
+
 ## Deployment
 
 1. SSH into Hetzner VPS via Tailscale with the `cognos` user:
@@ -28,8 +69,9 @@ steps to going live for posterity.
     - Verify the `sendmail.cognos.io` domain for sending emails
 - Backups:
     - Create a new backup repository and SSH key pair on BorgBase
-- Authentication:
-    - PocketBase email/password auth is the live end-user auth flow
+- PocketBase authentication:
+    - Create or migrate users in the `users` auth collection
+    - Use built-in PocketBase email/password auth for app login
     - Password reset is intentionally disabled until vault recovery is implemented
 - Backend:
     - Arm VPS on Hetzner:
@@ -47,9 +89,9 @@ steps to going live for posterity.
         - Install Tailscale and start with SSH option
             - `tailscale up --ssh`
         - Create `cognos` user with `/home/cognos` directory and using bash shell with strong
-          password (for `sudo`)
+      password (for `sudo`)
         - Follow down
-          [How to secure a linux server](https://github.com/imthenachoman/How-To-Secure-A-Linux-Server)
+      [How to secure a linux server](https://github.com/imthenachoman/How-To-Secure-A-Linux-Server)
             - `sudoers` group (add `cognos` user)
             - NTP client
             - Secure `/proc`

@@ -106,9 +106,11 @@ export type ModelsRecord = {
 };
 
 export type UserKeyPairsRecord = {
+  password_salt?: string;
   public_key: string;
   record_mac?: string;
   secret_key: string;
+  unlock_scheme?: string;
   user: RecordIdString;
 };
 

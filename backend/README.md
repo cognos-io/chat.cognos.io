@@ -1,5 +1,22 @@
 # Backend
 
+## Security model note
+
+The backend is in the middle of a model-selection and security rework.
+
+Target direction:
+
+- first-party Cognos API endpoints instead of long-term OpenAI compatibility
+- backend-driven model catalogue
+- encrypted private-key backup with a user **Account Key** for new-device unlock and a wrapped
+  trusted-device blob in IndexedDB
+- ciphertext-only message storage at rest
+
+See:
+
+- `../docs/security-model.md`
+- `../docs/specs/backend-model-selector.md`
+
 ## Useful links
 
 - [How I write HTTP services in Go after 13 years](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/)
@@ -13,10 +30,19 @@ In the `configs` directory copy the `api.example.yaml` to an environment specifi
 
 ## Authentication
 
-Cognos uses PocketBase email/password auth for end-user login.
+We use PocketBase's built-in `users` auth collection for authentication.
+
+The intended cross-device security model is documented in `../docs/security-model.md`.
 
 Password reset is intentionally disabled until the app has a vault-recovery flow that can re-wrap
 user key material safely.
+
+### Setup
+
+1. Open the PocketBase admin UI, usually at `http://127.0.0.1:8090/_/`
+2. Create or migrate a user in the `users` auth collection
+3. Make sure the user has an email address set
+4. Use that email address and password to sign in through the frontend
 
 ## Custom tools
 
@@ -26,10 +52,14 @@ Useful when creating test users, we have provided a script to generate a public 
 private key for a given user.
 
 ```text
-go run cmd/generate-key-pair/main.go -email={{ USER_EMAIL }} -password={{ USER_VAULT_PASSWORD }}
+go run cmd/generate-key-pair/main.go \
+    -account-key={{ USER_ACCOUNT_KEY }}
 ```
 
-The email is used for salting the hashed password
+The helper will prompt for the account password on stdin.
+
+If `-account-key` is omitted, the helper generates one and prints it along with the unlock scheme,
+random per-user password salt, and encrypted secret key.
 
 ## HTTPie requests
 
@@ -67,17 +97,33 @@ export AUTH_TOKEN=$(http POST :8090/api/collections/users/auth-with-password \
     password="password" | jq -r .token)
 ```
 
-### Send a message to localhost
-
-**Note:** `metadata` will be stripped off before sending to upstream OpenAI compatible API.
+### List available models from localhost
 
 ```text
-http POST :8090/v1/chat/completions \
+http GET :8090/api/v1/models \
+    Authorization:"Bearer $AUTH_TOKEN"
+```
+
+### Send a temporary message to localhost
+
+```text
+http POST :8090/api/v1/completions \
     Authorization:"Bearer $AUTH_TOKEN" \
-    model="gpt-3.5-turbo" \
-    messages:='[{"role": "user", "content": "Say this is a test!"}]' \
-    stream:=true \
-    metadata:='{"cognos": {"conversation_id": "0524b1cc-152b-4f53-ade9-1ad8c338d2e3"}}'
+    model_id="llama-3-3-infomaniak" \
+    agent_id="cognos:simple-assistant" \
+    request_id="req-local-1" \
+    messages:='[{"role": "user", "content": "Say this is a test!"}]'
+```
+
+### Send a persisted conversation message to localhost
+
+```text
+http POST :8090/api/v1/conversations/{{CONVERSATION_ID}}/complete \
+    Authorization:"Bearer $AUTH_TOKEN" \
+    model_id="llama-3-3-infomaniak" \
+    agent_id="cognos:simple-assistant" \
+    request_id="req-local-2" \
+    messages:='[{"role": "user", "content": "Say this is a test!"}]'
 ```
 
 ## Encryption benchmarks

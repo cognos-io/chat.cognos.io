@@ -21,7 +21,7 @@ func TestPasswordResetRequestIsRejected(t *testing.T) {
 		}`),
 		ExpectedStatus: http.StatusBadRequest,
 		ExpectedContent: []string{
-			`"message":"password reset is unavailable until vault recovery is implemented"`,
+			`"message":"Password reset is unavailable until vault recovery is implemented."`,
 		},
 		TestAppFactory: setupTestApp,
 	}
@@ -56,7 +56,7 @@ func TestPasswordResetConfirmIsRejected(t *testing.T) {
 		}`, token)),
 		ExpectedStatus: http.StatusBadRequest,
 		ExpectedContent: []string{
-			`"message":"password reset is unavailable until vault recovery is implemented"`,
+			`"message":"Password reset is unavailable until vault recovery is implemented."`,
 		},
 		DisableTestAppCleanup: true,
 		TestAppFactory: func(testing.TB) *tests.TestApp {

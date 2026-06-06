@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
-	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
-	compatopenai "github.com/cognos-io/chat.cognos.io/backend/pkg/compat/openai"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -81,24 +81,96 @@ func addPocketBaseRoutes(
 	e *core.ServeEvent,
 	app core.App,
 	logger *slog.Logger,
-	config *config.APIConfig,
 	upstreamRepo proxy.UpstreamRepo,
 	messageRepo chat.MessageRepo,
-	keyPairRepo auth.KeyPairRepo,
 	aiAgentRepo aiagent.AIAgentRepo,
 	conversationRepo chat.ConversationRepo,
+	billingService *billing.Service,
 ) {
+	e.Router.GET(
+		"/api/v1/models",
+		handler.ModelsGet(),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.GET(
+		"/api/v1/conversations",
+		handler.ConversationsList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
 	e.Router.POST(
-		"/v1/chat/completions",
-		compatopenai.Handler(
-			config,
-			logger,
-			upstreamRepo,
-			messageRepo,
-			keyPairRepo,
-			aiAgentRepo,
-			conversationRepo,
-		),
+		"/api/v1/conversations",
+		handler.ConversationsCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/conversations/{conversationID}",
+		handler.ConversationsUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.DELETE(
+		"/api/v1/conversations/{conversationID}",
+		handler.ConversationsDelete(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.GET(
+		"/api/v1/conversations/{conversationID}/messages",
+		handler.ConversationMessagesList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/messages/{messageID}",
+		handler.MessagesUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.DELETE(
+		"/api/v1/messages/{messageID}",
+		handler.MessagesDelete(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	completeParams := handler.CompleteHandlerParams{
+		Logger:           logger,
+		UpstreamRepo:     upstreamRepo,
+		MessageRepo:      messageRepo,
+		ConversationRepo: conversationRepo,
+		AgentRepo:        aiAgentRepo,
+		BillingService:   billingService,
+	}
+
+	e.Router.POST(
+		"/api/v1/completions",
+		handler.Complete(completeParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.POST(
+		"/api/v1/conversations/{conversationID}/complete",
+		handler.CompleteConversation(completeParams),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(),
