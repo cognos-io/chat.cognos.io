@@ -24,9 +24,15 @@ export class AppComponent {
   constructor() {
     const browserInactive$ = (graceTimeMs: number): Observable<number> => {
       const activityIndicatorEvents$ = merge(
-        ...['click', 'mousemove', 'mousedown', 'scroll', 'keypress'].map((eventName) =>
-          fromEvent(document, eventName),
-        ),
+        ...[
+          'click',
+          'mousemove',
+          'mousedown',
+          'scroll',
+          'keydown',
+          'touchstart',
+          'visibilitychange',
+        ].map((eventName) => fromEvent(document, eventName)),
       );
 
       return interval(graceTimeMs).pipe(takeUntil(activityIndicatorEvents$), repeat());
