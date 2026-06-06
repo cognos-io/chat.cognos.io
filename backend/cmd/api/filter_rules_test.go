@@ -291,7 +291,7 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 			TestAppFactory:  setupTestApp,
 		},
 		{
-			Name:   "create user key pair via user token",
+			Name:   "create duplicate user key pair via user token",
 			Method: http.MethodPost,
 			URL:    url,
 			Body: strings.NewReader(fmt.Sprintf(`{
@@ -299,8 +299,8 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 				"public_key": "%s",
 				"secret_key": "%s"
 			}`, userId, userPublicKey, userEncryptedSecretKey)),
-			ExpectedStatus:  http.StatusOK,
-			ExpectedContent: []string{fmt.Sprintf(`"public_key":"%s"`, userPublicKey)},
+			ExpectedStatus:  http.StatusBadRequest,
+			ExpectedContent: []string{`"message":"user key pair already exists"`},
 			TestAppFactory:  setupTestApp,
 			BeforeTestFunc:  withUserToken,
 		},

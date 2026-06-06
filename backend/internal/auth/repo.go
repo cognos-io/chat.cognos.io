@@ -8,7 +8,10 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
-var ErrNoKeyPair = errors.New("no key pair found")
+var (
+	ErrNoKeyPair           = errors.New("no key pair found")
+	ErrMultipleUserKeyPair = errors.New("multiple user key pairs found")
+)
 
 type KeyPair struct {
 	ID        string `db:"id"`
@@ -67,7 +70,7 @@ func (r *PocketBaseKeyPairRepo) UserPublicKey(userID string) ([32]byte, error) {
 	records, err := r.app.FindRecordsByFilter(collectionName,
 		"user = {:user_id}",           // filter
 		"-updated",                    // sort
-		1,                             // limit
+		2,                             // limit
 		0,                             // offset
 		dbx.Params{"user_id": userID}, // params
 	)
@@ -77,6 +80,9 @@ func (r *PocketBaseKeyPairRepo) UserPublicKey(userID string) ([32]byte, error) {
 
 	if len(records) == 0 {
 		return [32]byte{}, ErrNoKeyPair
+	}
+	if len(records) > 1 {
+		return [32]byte{}, ErrMultipleUserKeyPair
 	}
 
 	key_pair := records[0]
