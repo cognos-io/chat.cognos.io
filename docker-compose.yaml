@@ -8,8 +8,6 @@ services:
       CADDY_ADMIN: "unix//run/caddy/admin.sock"
     env_file:
       - ./web/.env
-    cap_add:
-      - NET_ADMIN
     networks:
       - backend
     ports:
