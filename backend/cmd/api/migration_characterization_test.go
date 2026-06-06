@@ -46,6 +46,7 @@ func TestMetricsRouteWorksAcrossFreshApps(t *testing.T) {
 				"process_cpu_seconds_total",
 			},
 			TestAppFactory: setupTestApp,
+			BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
 		}
 
 		scenario.Test(t)

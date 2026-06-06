@@ -273,7 +273,7 @@ export class CognosApiService {
     }
 
     return new HttpHeaders({
-      Authorization: token,
+      Authorization: `Bearer ${token}`,
     });
   }
 

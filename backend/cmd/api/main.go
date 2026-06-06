@@ -11,6 +11,7 @@ import (
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
@@ -32,6 +33,7 @@ type appHookParams struct {
 	App                    core.App
 	Config                 *config.APIConfig
 	OpenaiClient           *oai.Client
+	InfomaniakOpenAIClient *oai.Client
 	CloudflareOpenAIClient *oai.Client
 	GoogleGeminiClient     *genai.Client
 	AnthropicClient        *anthropic.Client
@@ -70,6 +72,7 @@ func bindAppHooks(
 	var (
 		app                    = params.App
 		openaiClient           = params.OpenaiClient
+		infomaniakOpenAIClient = params.InfomaniakOpenAIClient
 		cloudflareOpenAIClient = params.CloudflareOpenAIClient
 		googleGeminiClient     = params.GoogleGeminiClient
 		anthropicClient        = params.AnthropicClient
@@ -79,14 +82,23 @@ func bindAppHooks(
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		upstreamRepo := params.UpstreamRepo
 		if upstreamRepo == nil {
+			if infomaniakOpenAIClient == nil {
+				infomaniakOpenAIClient = proxy.NewInfomaniakOpenAIClient(params.Config)
+			}
+
 			upstreamRepo = proxy.NewInMemoryUpstreamRepo(proxy.RepoParams{
 				Logger:                 app.Logger(),
 				OpenAIClient:           openaiClient,
+				InfomaniakOpenAIClient: infomaniakOpenAIClient,
 				CloudflareOpenAIClient: cloudflareOpenAIClient,
 				GoogleGeminiAIClient:   googleGeminiClient,
 				AnthropicClient:        anthropicClient,
 				DeepInfraOpenAIClient:  deepinfraClient,
 			})
+		}
+
+		if err := ensureActiveProvidersAvailable(upstreamRepo); err != nil {
+			return err
 		}
 
 		keyPairRepo := params.KeyPairRepo
@@ -127,6 +139,7 @@ func bindAppHooks(
 
 		hooks.SoftDelete(app)
 		hooks.EnforceSingleUserKeyPair(app)
+		hooks.EnforceSingleConversationPublicKey(app)
 		hooks.ForbidPasswordReset(app)
 		hooks.ForbidUserEmailChangeFlow(app)
 		hooks.ForbidUserEmailChanges(app)
@@ -179,6 +192,29 @@ func bindAppHooks(
 	}
 }
 
+func ensureActiveProvidersAvailable(upstreamRepo proxy.UpstreamRepo) error {
+	seenProviders := map[string]struct{}{}
+
+	for _, model := range catalogue.ActiveModels() {
+		if _, ok := seenProviders[model.ProviderID]; ok {
+			continue
+		}
+
+		if _, err := upstreamRepo.Provider(model.ProviderID); err != nil {
+			return fmt.Errorf(
+				"provider %q is unavailable for model %q: %w",
+				model.ProviderID,
+				model.ID,
+				err,
+			)
+		}
+
+		seenProviders[model.ProviderID] = struct{}{}
+	}
+
+	return nil
+}
+
 func run(ctx context.Context, w io.Writer, args []string) error {
 	_, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
@@ -215,6 +251,7 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		config.AnthropicAPIKey,
 		anthropic.WithBaseURL(config.AnthropicAPIURL),
 	)
+	infomaniakClient := proxy.NewInfomaniakOpenAIClient(config)
 	deepinfraClient := proxy.NewDeepInfraOpenAIClient(config)
 
 	app := NewServer(
@@ -227,6 +264,7 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		App:                    app,
 		Config:                 config,
 		OpenaiClient:           openaiClient,
+		InfomaniakOpenAIClient: infomaniakClient,
 		CloudflareOpenAIClient: cloudflareOpenAIClient,
 		AnthropicClient:        anthropicClient,
 		GoogleGeminiClient:     googleGeminiClient,

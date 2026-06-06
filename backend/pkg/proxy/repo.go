@@ -12,6 +12,7 @@ import (
 type RepoParams struct {
 	Logger                 *slog.Logger
 	OpenAIClient           *openai.Client
+	InfomaniakOpenAIClient *openai.Client
 	CloudflareOpenAIClient *openai.Client
 	AnthropicClient        *anthropic.Client
 	GoogleGeminiAIClient   *genai.Client
@@ -24,6 +25,7 @@ type UpstreamRepo interface {
 
 type InMemoryUpstreamRepo struct {
 	openAIClient           *openai.Client
+	infomaniakOpenAIClient *openai.Client
 	cloudflareOpenAIClient *openai.Client
 	anthropicClient        *anthropic.Client
 	googleGeminiAIClient   *genai.Client
@@ -35,6 +37,11 @@ func (r *InMemoryUpstreamRepo) Provider(provider string) (Upstream, error) {
 	switch provider {
 	case "openai":
 		return NewOpenAI(r.openAIClient, r.logger)
+	case "infomaniak":
+		if r.infomaniakOpenAIClient == nil {
+			return nil, fmt.Errorf("infomaniak provider is not configured")
+		}
+		return NewOpenAI(r.infomaniakOpenAIClient, r.logger)
 	case "cloudflare":
 		return NewCloudflare(r.cloudflareOpenAIClient, r.logger)
 	case "google":
@@ -61,6 +68,7 @@ func NewInMemoryUpstreamRepo(params RepoParams,
 	return &InMemoryUpstreamRepo{
 		logger:                 params.Logger,
 		openAIClient:           params.OpenAIClient,
+		infomaniakOpenAIClient: params.InfomaniakOpenAIClient,
 		cloudflareOpenAIClient: params.CloudflareOpenAIClient,
 		anthropicClient:        params.AnthropicClient,
 		googleGeminiAIClient:   params.GoogleGeminiAIClient,

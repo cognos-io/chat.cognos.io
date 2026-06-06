@@ -56,7 +56,7 @@ describe('ModelService', () => {
 
     const request = httpController.expectOne('http://localhost:8090/api/v1/models');
     expect(request.request.method).toBe('GET');
-    expect(request.request.headers.get('Authorization')).toBe('test-token');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer test-token');
 
     request.flush({
       privacy_tier: 'global',

@@ -41,7 +41,18 @@ func TestKeyIntegrityFieldsExist(t *testing.T) {
 	if conversationPublicKeys.Fields.GetByName("public_key_signature") == nil {
 		t.Fatal("conversation_public_keys missing public_key_signature field")
 	}
+	if conversationPublicKeys.CreateRule == nil {
+		t.Fatal("conversation_public_keys create rule is nil")
+	}
+	for _, want := range []string{"public_key_signature:isset = true"} {
+		if !strings.Contains(*conversationPublicKeys.CreateRule, want) {
+			t.Fatalf("conversation_public_keys create rule = %q, want substring %q", *conversationPublicKeys.CreateRule, want)
+		}
+	}
 	if conversationPublicKeys.UpdateRule == nil {
 		t.Fatal("conversation_public_keys update rule is nil")
+	}
+	if !strings.Contains(strings.Join(conversationPublicKeys.Indexes, "\n"), "idx_conversation_public_keys_conversation_unique") {
+		t.Fatalf("conversation_public_keys indexes = %v, want unique conversation index", conversationPublicKeys.Indexes)
 	}
 }

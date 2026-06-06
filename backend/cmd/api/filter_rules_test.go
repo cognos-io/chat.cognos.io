@@ -65,7 +65,10 @@ func setupTestAppWithHookParams(t testing.TB, params appHookParams) *tests.TestA
 		t.Fatal(err)
 	}
 
-	testConfig := config.APIConfig{}
+	testConfig := config.APIConfig{
+		InfomaniakAPIKey:    "test-infomaniak-key",
+		InfomaniakProductID: "test-product-id",
+	}
 	params.App = app
 	if params.Config == nil {
 		params.Config = &testConfig

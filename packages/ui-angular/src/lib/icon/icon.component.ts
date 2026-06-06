@@ -1,33 +1,38 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  afterRenderEffect,
   computed,
   input,
-} from "@angular/core";
+  viewChild,
+} from '@angular/core';
+
 import {
-  getCognosIcon,
   type CognosIconName,
   type CognosIconNode,
-} from "@cognos/ui/icons";
+  getCognosIcon,
+} from '@cognos/ui/icons';
 
 export type CognosIconSize = number;
 export type CognosIconTone =
-  | "current"
-  | "text"
-  | "text-subtle"
-  | "text-subtlest"
-  | "selected"
-  | "link"
-  | "brand"
-  | "success"
-  | "danger";
+  | 'current'
+  | 'text'
+  | 'text-subtle'
+  | 'text-subtlest'
+  | 'selected'
+  | 'link'
+  | 'brand'
+  | 'success'
+  | 'danger';
 
 @Component({
-  selector: "cog-icon",
+  selector: 'cog-icon',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <svg
+      #svg
       [class]="iconClass()"
       [style.--cog-icon-size.px]="size()"
       viewBox="0 0 24 24"
@@ -38,7 +43,6 @@ export type CognosIconTone =
       focusable="false"
       [attr.role]="title() ? 'img' : 'presentation'"
       [attr.aria-hidden]="title() ? null : 'true'"
-      [innerHTML]="svgMarkup()"
     ></svg>
   `,
   styles: [
@@ -96,20 +100,22 @@ export type CognosIconTone =
   ],
 })
 export class CognosIconComponent {
-  readonly name = input<CognosIconName>("lock");
+  readonly name = input<CognosIconName>('lock');
   readonly size = input<CognosIconSize>(16, { transform: iconSizeAttribute });
   readonly title = input<string | null>(null);
-  readonly tone = input<CognosIconTone>("current");
+  readonly tone = input<CognosIconTone>('current');
+
+  private readonly svgRef = viewChild.required<ElementRef<SVGSVGElement>>('svg');
 
   protected readonly iconClass = computed(
-    () =>
-      `cog-icon cog-icon--size-${this.size()} cog-icon--tone-${this.tone()}`,
+    () => `cog-icon cog-icon--size-${this.size()} cog-icon--tone-${this.tone()}`,
   );
 
-  protected readonly svgMarkup = computed(() => {
-    const icon = getCognosIcon(this.name());
-    return renderIconMarkup(icon, this.title());
-  });
+  constructor() {
+    afterRenderEffect(() => {
+      renderIcon(this.svgRef().nativeElement, getCognosIcon(this.name()), this.title());
+    });
+  }
 }
 
 type IconElement = CognosIconNode[number];
@@ -124,29 +130,36 @@ function iconSizeAttribute(value: unknown): CognosIconSize {
   return 16;
 }
 
-function renderIconMarkup(
+const svgNamespace = 'http://www.w3.org/2000/svg';
+
+function renderIcon(
+  svg: SVGSVGElement,
   icon: CognosIconNode,
   title: string | null,
-): string {
-  const titleMarkup = title ? `<title>${escapeHtml(title)}</title>` : "";
-  const iconMarkup = icon.map(renderIconElement).join("");
+): void {
+  svg.replaceChildren();
 
-  return `${titleMarkup}${iconMarkup}`;
+  if (title) {
+    const titleElement = svg.ownerDocument.createElementNS(svgNamespace, 'title');
+    titleElement.textContent = title;
+    svg.append(titleElement);
+  }
+
+  for (const [tag, attrs] of icon) {
+    svg.append(renderIconElement(svg, [tag, attrs]));
+  }
 }
 
-function renderIconElement([tag, attrs]: IconElement): string {
-  const attributes = Object.entries(attrs)
-    .map(([name, value]) => `${name}="${escapeHtml(String(value))}"`)
-    .join(" ");
+function renderIconElement(svg: SVGSVGElement, [tag, attrs]: IconElement): SVGElement {
+  const element = svg.ownerDocument.createElementNS(svgNamespace, tag);
 
-  return `<${tag} ${attributes}></${tag}>`;
-}
+  for (const [name, value] of Object.entries(attrs)) {
+    if (value === undefined) {
+      continue;
+    }
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("\"", "&quot;")
-    .replaceAll("'", "&#39;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+    element.setAttribute(name, String(value));
+  }
+
+  return element;
 }

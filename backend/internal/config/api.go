@@ -25,6 +25,9 @@ func pathExists(path string) bool {
 type APIConfig struct {
 	// OpenAI
 	OpenAIAPIKey string `koanf:"openai.api_key"`
+	// Infomaniak
+	InfomaniakAPIKey    string `koanf:"infomaniak.api_key"`
+	InfomaniakProductID string `koanf:"infomaniak.product_id"`
 	// Cloudflare
 	CloudflareAccountID string `koanf:"cloudflare.account_id"`
 	CloudflareAPIKey    string `koanf:"cloudflare.api_key"`

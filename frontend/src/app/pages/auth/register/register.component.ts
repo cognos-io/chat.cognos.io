@@ -123,7 +123,7 @@ const matchPassword = (control: AbstractControl): ValidationErrors | null => {
           By creating an account you agree to our
           <a
             href="https://cognos.io/privacy-policy-and-terms/"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             target="_blank"
             >Privacy Policy and Terms</a
           >.

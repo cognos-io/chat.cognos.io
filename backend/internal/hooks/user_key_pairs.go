@@ -10,7 +10,7 @@ func EnforceSingleUserKeyPair(app core.App) {
 	app.OnRecordCreateRequest("user_key_pairs").BindFunc(func(e *core.RecordRequestEvent) error {
 		userID := e.Record.GetString("user")
 		if userID == "" {
-			return e.Next()
+			return apis.NewBadRequestError("user is required", nil)
 		}
 
 		records, err := app.FindRecordsByFilter(

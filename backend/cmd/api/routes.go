@@ -239,6 +239,8 @@ func addPocketBaseRoutes(
 	e.Router.GET(
 		"/metrics",
 		apis.WrapStdHandler(promhttp.HandlerFor(registry, promhttp.HandlerOpts{})),
+	).Bind(
+		apis.RequireAuth(),
 	)
 }
 

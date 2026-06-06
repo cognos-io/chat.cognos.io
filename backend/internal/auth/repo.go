@@ -3,14 +3,16 @@ package auth
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 )
 
 var (
-	ErrNoKeyPair           = errors.New("no key pair found")
-	ErrMultipleUserKeyPair = errors.New("multiple user key pairs found")
+	ErrNoKeyPair                   = errors.New("no key pair found")
+	ErrMultipleConversationKeyPair = errors.New("multiple conversation key pairs found")
+	ErrMultipleUserKeyPair         = errors.New("multiple user key pairs found")
 )
 
 type KeyPair struct {
@@ -36,8 +38,8 @@ func (r *PocketBaseKeyPairRepo) ConversationPublicKey(
 
 	records, err := r.app.FindRecordsByFilter(collectionName,
 		"conversation = {:conversation_id}", // filter
-		"-updated",                          // sort
-		1,                                   // limit
+		"",                                  // sort
+		2,                                   // limit
 		0,                                   // offset
 		dbx.Params{"conversation_id": conversationID}, // params
 	)
@@ -48,6 +50,9 @@ func (r *PocketBaseKeyPairRepo) ConversationPublicKey(
 	if len(records) == 0 {
 		return [32]byte{}, ErrNoKeyPair
 	}
+	if len(records) > 1 {
+		return [32]byte{}, ErrMultipleConversationKeyPair
+	}
 
 	key_pair := records[0]
 	public_key := key_pair.GetString("public_key")
@@ -55,6 +60,9 @@ func (r *PocketBaseKeyPairRepo) ConversationPublicKey(
 	public_key_slice, err := base64.StdEncoding.DecodeString(public_key)
 	if err != nil {
 		return [32]byte{}, err
+	}
+	if len(public_key_slice) != 32 {
+		return [32]byte{}, fmt.Errorf("invalid conversation public key length: %d", len(public_key_slice))
 	}
 
 	var public_key_bytes [32]byte
@@ -69,7 +77,7 @@ func (r *PocketBaseKeyPairRepo) UserPublicKey(userID string) ([32]byte, error) {
 
 	records, err := r.app.FindRecordsByFilter(collectionName,
 		"user = {:user_id}",           // filter
-		"-updated",                    // sort
+		"",                            // sort
 		2,                             // limit
 		0,                             // offset
 		dbx.Params{"user_id": userID}, // params
@@ -91,6 +99,9 @@ func (r *PocketBaseKeyPairRepo) UserPublicKey(userID string) ([32]byte, error) {
 	public_key_slice, err := base64.StdEncoding.DecodeString(public_key)
 	if err != nil {
 		return [32]byte{}, err
+	}
+	if len(public_key_slice) != 32 {
+		return [32]byte{}, fmt.Errorf("invalid user public key length: %d", len(public_key_slice))
 	}
 
 	var public_key_bytes [32]byte

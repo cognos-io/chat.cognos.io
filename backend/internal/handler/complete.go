@@ -154,7 +154,12 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 
 		upstream, err := params.UpstreamRepo.Provider(model.ProviderID)
 		if err != nil {
-			return apis.NewApiError(http.StatusServiceUnavailable, "Provider is unavailable", err)
+			params.Logger.Error(
+				"upstream provider unavailable",
+				"provider", model.ProviderID,
+				"err", err,
+			)
+			return apis.NewApiError(http.StatusServiceUnavailable, "Provider is unavailable", nil)
 		}
 
 		messages := make([]oai.ChatCompletionMessage, 0, len(req.Messages))
@@ -184,7 +189,6 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 		}
 
 		upstreamResp, plainTextResponseMessage, err := upstream.ChatCompletion(e, oai.ChatCompletionRequest{
-			User:      owner.ID,
 			Model:     model.ProviderModelID,
 			Messages:  messages,
 			MaxTokens: req.MaxOutputTokens,
@@ -195,7 +199,12 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 					params.Logger.Error("failed to clean up request message", "err", deleteErr)
 				}
 			}
-			return apis.NewApiError(http.StatusServiceUnavailable, "Failed to process completion", err)
+			params.Logger.Error(
+				"completion upstream request failed",
+				"provider", model.ProviderID,
+				"err", err,
+			)
+			return apis.NewApiError(http.StatusServiceUnavailable, "Failed to process completion", nil)
 		}
 
 		var assistantMessageRecord *core.Record

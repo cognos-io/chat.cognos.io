@@ -47,11 +47,16 @@ func (a *Anthropic) ChatCompletion(
 	req openai.ChatCompletionRequest,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
 	anthropicReq := anthropic.MessagesRequest{
-		Model:       anthropic.Model(req.Model),
-		Stream:      req.Stream,
-		MaxTokens:   req.MaxTokens,
-		Temperature: &req.Temperature,
-		TopP:        &req.TopP,
+		Model:     anthropic.Model(req.Model),
+		Stream:    req.Stream,
+		MaxTokens: req.MaxTokens,
+	}
+
+	if req.Temperature != 0 {
+		anthropicReq.Temperature = &req.Temperature
+	}
+	if req.TopP != 0 {
+		anthropicReq.TopP = &req.TopP
 	}
 
 	if req.MaxTokens == 0 || req.MaxTokens > anthropicMaxTokens {

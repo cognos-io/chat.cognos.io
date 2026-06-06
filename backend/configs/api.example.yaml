@@ -1,6 +1,9 @@
 ---
 openai:
   api_key: "sk-"
+infomaniak:
+  api_key: ""
+  product_id: ""
 cloudflare:
   api_key: ""
   account_id: ""
