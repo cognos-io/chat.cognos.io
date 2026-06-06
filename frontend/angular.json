@@ -40,7 +40,8 @@
               "src/safari-pinned-tab.svg",
               "src/site.webmanifest",
               "src/robots.txt",
-              "src/security.txt"
+              "src/security.txt",
+              "src/_headers"
             ],
             "styles": [
               "node_modules/@cognos/ui/tokens.css",
