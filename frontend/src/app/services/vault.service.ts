@@ -42,8 +42,8 @@ const initialState: VaultState = {
 
 // Argon2id parameters as recommended by the OWASP password storage cheat sheet
 // https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#introduction
-const argon2idMemory = 19456; // 19MiB
-const argon2idIterationCount = 2;
+const argon2idMemory = 65536; // 64MiB
+const argon2idIterationCount = 3;
 const argon2idParallelism = 1;
 
 const setupWasmInstance = setupWasm(
