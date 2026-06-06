@@ -101,6 +101,62 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(),
 	)
 
+	e.Router.GET(
+		"/api/v1/conversations",
+		handler.ConversationsList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.POST(
+		"/api/v1/conversations",
+		handler.ConversationsCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/conversations/{conversationID}",
+		handler.ConversationsUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.DELETE(
+		"/api/v1/conversations/{conversationID}",
+		handler.ConversationsDelete(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.GET(
+		"/api/v1/conversations/{conversationID}/messages",
+		handler.ConversationMessagesList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/messages/{messageID}",
+		handler.MessagesUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.DELETE(
+		"/api/v1/messages/{messageID}",
+		handler.MessagesDelete(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
 	completeParams := handler.CompleteHandlerParams{
 		Logger:           logger,
 		UpstreamRepo:     upstreamRepo,

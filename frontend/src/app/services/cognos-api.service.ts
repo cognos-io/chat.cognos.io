@@ -5,6 +5,7 @@ import PocketBase from 'pocketbase';
 
 import { Observable, map } from 'rxjs';
 
+import { ConversationRecord } from '@app/interfaces/conversation';
 import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/model';
 
 import { environment } from '@environments/environment';
@@ -48,6 +49,24 @@ export interface CompleteResponse {
     costRappen: number;
     usedProviderCost: boolean;
   };
+}
+
+export interface MessageRecord {
+  id: string;
+  created: string;
+  updated: string;
+  data: string;
+  conversation: string;
+  parent_message?: string;
+  expires?: string;
+}
+
+export interface MessageListResponse {
+  page: number;
+  perPage: number;
+  totalItems: number;
+  totalPages: number;
+  items: MessageRecord[];
 }
 
 interface ApiPricing {
@@ -117,6 +136,15 @@ interface ApiCompleteResponse {
   };
 }
 
+interface ApiConversationRequest {
+  data: string;
+  expiry_duration?: string;
+}
+
+interface ApiMessageUpdateRequest {
+  clear_expires: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -138,6 +166,77 @@ export class CognosApiService {
         })),
         map((response) => ModelsCatalogueResponse.parse(response)),
       );
+  }
+
+  listConversations(): Observable<ConversationRecord[]> {
+    return this._http.get<ConversationRecord[]>(
+      `${this._baseUrl}/api/v1/conversations`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  createConversation(request: ApiConversationRequest): Observable<ConversationRecord> {
+    return this._http.post<ConversationRecord>(
+      `${this._baseUrl}/api/v1/conversations`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  updateConversation(
+    conversationId: string,
+    request: ApiConversationRequest,
+  ): Observable<ConversationRecord> {
+    return this._http.patch<ConversationRecord>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  deleteConversation(conversationId: string): Observable<void> {
+    return this._http.delete<void>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  listConversationMessages(
+    conversationId: string,
+    page: number,
+    pageSize: number,
+  ): Observable<MessageListResponse> {
+    return this._http.get<MessageListResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/messages?page=${page}&page_size=${pageSize}`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  updateMessage(messageId: string, clearExpires: boolean): Observable<MessageRecord> {
+    const request: ApiMessageUpdateRequest = { clear_expires: clearExpires };
+    return this._http.patch<MessageRecord>(
+      `${this._baseUrl}/api/v1/messages/${messageId}`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  deleteMessage(messageId: string): Observable<void> {
+    return this._http.delete<void>(`${this._baseUrl}/api/v1/messages/${messageId}`, {
+      headers: this.authHeaders(),
+    });
   }
 
   complete(request: CompleteRequest): Observable<CompleteResponse> {

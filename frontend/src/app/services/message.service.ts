@@ -2,8 +2,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 
-import PocketBase, { ListResult } from 'pocketbase';
-
 import {
   EMPTY,
   Observable,
@@ -29,11 +27,6 @@ import { signalSlice } from 'ngxtension/signal-slice';
 
 import { generateConversationAgentId } from '@app/interfaces/agent';
 import { Message, parseMessageData } from '@app/interfaces/message';
-import {
-  ConversationsResponse,
-  MessagesResponse,
-  TypedPocketBase,
-} from '@app/types/pocketbase-types';
 
 import { AgentService } from './agent.service';
 import { AuthService } from './auth.service';
@@ -41,6 +34,8 @@ import {
   CognosApiService,
   CompleteResponse,
   CompletionMessageRequest,
+  MessageListResponse,
+  MessageRecord,
 } from './cognos-api.service';
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
@@ -92,9 +87,6 @@ export class MessageService {
   private readonly _errorService = inject(ErrorService);
   private readonly _modelService = inject(ModelService);
   private readonly _api = inject(CognosApiService);
-  private readonly _pb: TypedPocketBase = inject(PocketBase);
-
-  private readonly pbMessagesCollection = this._pb.collection('messages');
 
   private readonly pageSize = 100;
 
@@ -253,7 +245,7 @@ export class MessageService {
 
       this._deleteMessages$.pipe(
         concatMap((messageIds) => {
-          return this.deleteMessagesFromPocketBase(messageIds);
+          return this.deleteMessages(messageIds);
         }),
       ),
     ],
@@ -391,7 +383,7 @@ export class MessageService {
       keepExpiringMessage: (state, $: Observable<Message>) =>
         $.pipe(
           concatMap((message) => {
-            return this.keepExpiringMessageInPocketBase(message);
+            return this.persistKeptExpiringMessage(message);
           }),
         ),
     },
@@ -419,26 +411,17 @@ export class MessageService {
   private fetchMessages(
     conversationId: string,
     page: number,
-  ): Observable<ListResult<MessagesResponse>> {
+  ): Observable<MessageListResponse> {
     if (this.state().messages.length === 0) {
       this.state.setStatus(MessageStatus.Fetching);
     } else {
       this.state.setStatus(MessageStatus.LoadingMoreMessages);
     }
 
-    return from(
-      this.pbMessagesCollection.getList(
-        page, // page
-        this.pageSize, // pageSize
-        {
-          conversation: conversationId,
-          sort: '-created',
-        },
-      ),
-    );
+    return this._api.listConversationMessages(conversationId, page, this.pageSize);
   }
 
-  private decryptMessage(record: MessagesResponse): Message {
+  private decryptMessage(record: MessageRecord): Message {
     const base64EncryptedData = record.data;
     const conversation = this._conversationService.conversation();
 
@@ -475,7 +458,13 @@ export class MessageService {
   private loadMessages(
     conversationId: string,
     page: number,
-  ): Observable<ListResult<Message>> {
+  ): Observable<{
+    page: number;
+    perPage: number;
+    totalItems: number;
+    totalPages: number;
+    items: Message[];
+  }> {
     return this.fetchMessages(conversationId, page).pipe(
       tap(() => {
         this.state.setStatus(MessageStatus.Decrypting);
@@ -641,9 +630,9 @@ export class MessageService {
   }
 
   private generateAndSetConversationTitle(
-    conversation: ConversationsResponse,
+    conversation: { id: string; expiry_duration?: string },
     startingMessage: string,
-  ): Observable<ConversationsResponse> {
+  ): Observable<{ id: string; expiry_duration?: string }> {
     return this.generateConversationTitle(startingMessage).pipe(
       filterNil(),
       switchMap((title) => {
@@ -651,20 +640,18 @@ export class MessageService {
         title = title.split(' ').slice(0, 10).join(' ');
         return this._conversationService.editConversation(
           conversation.id,
-          conversation.expiry_duration,
+          conversation.expiry_duration ?? '',
           { title },
         );
       }),
     );
   }
 
-  private deleteMessagesFromPocketBase(
-    messageIds: Array<string>,
-  ): Observable<Partial<MessageState>> {
+  private deleteMessages(messageIds: Array<string>): Observable<Partial<MessageState>> {
     return from(messageIds).pipe(
       concatMap((messageId) => {
         // This will remove the message and all it's children due to the CASCADE delete
-        return from(this.pbMessagesCollection.delete(messageId)).pipe(
+        return this._api.deleteMessage(messageId).pipe(
           map(() => {
             // Rather than load all the messages from the server, reset the state minus affected messages
             let messages = this.state().messages;
@@ -680,7 +667,7 @@ export class MessageService {
     );
   }
 
-  private keepExpiringMessageInPocketBase(
+  private persistKeptExpiringMessage(
     message: Message,
   ): Observable<Partial<MessageState>> {
     // Updates a message in the backend to remove the expiry time
@@ -688,9 +675,7 @@ export class MessageService {
       return EMPTY;
     }
 
-    return from(
-      this.pbMessagesCollection.update(message.record_id, { expires: null }),
-    ).pipe(
+    return this._api.updateMessage(message.record_id, true).pipe(
       map(() => {
         return {
           messages: this.state().messages.map((msg) => {

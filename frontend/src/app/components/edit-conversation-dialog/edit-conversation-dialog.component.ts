@@ -1,3 +1,4 @@
+import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { Component, OnInit, inject } from '@angular/core';
 import {
   AbstractControl,
@@ -8,11 +9,13 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 
 import { EMPTY, catchError, finalize } from 'rxjs';
 
-import { CognosButtonComponent, CognosDialogSurfaceComponent } from '@cognos/ui-angular';
+import {
+  CognosButtonComponent,
+  CognosDialogSurfaceComponent,
+} from '@cognos/ui-angular';
 
 import { ConversationData } from '@app/interfaces/conversation';
 import { ConversationService } from '@app/services/conversation.service';
@@ -226,7 +229,7 @@ export class EditConversationDialogComponent implements OnInit {
     if (conversation) {
       this.editForm.setValue({
         title: conversation.decryptedData.title,
-        expirationDuration: conversation.record.expiry_duration,
+        expirationDuration: conversation.record.expiry_duration ?? '',
       });
     }
   }
