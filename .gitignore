@@ -154,4 +154,8 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+**/pb_data/
+*.db
+*.db-*
+
 .DS_Store
