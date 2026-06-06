@@ -21,7 +21,11 @@ import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
 import nacl from 'tweetnacl';
 
-import { TypedPocketBase, UserKeyPairsRecord } from '@app/types/pocketbase-types';
+import {
+  TypedPocketBase,
+  UserKeyPairsRecord,
+  UserKeyPairsResponse,
+} from '@app/types/pocketbase-types';
 
 import { KeyPair } from '@interfaces/key-pair';
 
@@ -30,7 +34,7 @@ import { CryptoService } from './crypto.service';
 
 interface VaultState {
   keyPair: KeyPair | undefined;
-  keyPairRecord: UserKeyPairsRecord | null | undefined; // null means the record does not exist
+  keyPairRecord: UserKeyPairsResponse | null | undefined; // null means the record does not exist
   isNewKeyPair: boolean;
 }
 
@@ -45,6 +49,7 @@ const initialState: VaultState = {
 const argon2idMemory = 19456; // 19MiB
 const argon2idIterationCount = 2;
 const argon2idParallelism = 1;
+const passwordSaltBytes = 16;
 
 let setupWasmInstance: ReturnType<typeof setupWasm> | undefined;
 
@@ -87,35 +92,34 @@ export class VaultService {
       // Hash the vault password and fetch the key pair
       (state) =>
         this.rawVaultPassword$.pipe(
-          switchMap((rawPassword) =>
-            this.hashVaultPassword(rawPassword).pipe(
-              switchMap((hashedVaultPassword) => {
-                const keyPairRecord = state().keyPairRecord;
-                if (keyPairRecord === null) {
-                  return this.createNewUserKeyPair(hashedVaultPassword).pipe(
+          switchMap((rawPassword) => {
+            const keyPairRecord = state().keyPairRecord;
+            if (keyPairRecord === null) {
+              const passwordSalt = this.generatePasswordSalt();
+              return this.hashVaultPassword(rawPassword, passwordSalt).pipe(
+                switchMap((hashedVaultPassword) =>
+                  this.createNewUserKeyPair(hashedVaultPassword, passwordSalt).pipe(
                     tap(() => this.clearUnlockError()),
                     map((keyPair) => ({ keyPair })),
-                  );
-                }
-                if (keyPairRecord === undefined) {
-                  return EMPTY;
-                }
-                try {
-                  const keyPair = this.unpackKeyPairRecord(
-                    keyPairRecord,
-                    hashedVaultPassword,
-                  );
-                  this.clearUnlockError();
-                  return of({ keyPair });
-                } catch {
-                  this.unlockError.set(
-                    'Error unlocking vault. Please check your vault password and try again. If this continues to fail try refreshing the page or trying again later.',
-                  );
-                  return EMPTY;
-                }
+                  ),
+                ),
+              );
+            }
+            if (keyPairRecord === undefined) {
+              return EMPTY;
+            }
+
+            return this.unlockExistingUserKeyPair(rawPassword, keyPairRecord).pipe(
+              tap(() => this.clearUnlockError()),
+              map((keyPair) => ({ keyPair })),
+              catchError(() => {
+                this.unlockError.set(
+                  'Error unlocking vault. Please check your vault password and try again. If this continues to fail try refreshing the page or trying again later.',
+                );
+                return EMPTY;
               }),
-            ),
-          ),
+            );
+          }),
         ),
       // Fetch the key pair record
       this.fetchUserKeyPairRecord().pipe(
@@ -144,24 +148,28 @@ export class VaultService {
   keyPair = this.state.keyPair;
   keyPair$ = toObservable(this.keyPair);
 
-  hashVaultPassword(rawPassword: string): Observable<Uint8Array> {
+  hashVaultPassword(
+    rawPassword: string,
+    passwordSaltBase64: string,
+  ): Observable<Uint8Array> {
     const encoder = new TextEncoder();
+    const salt = Base64.toUint8Array(passwordSaltBase64);
 
     return from(getSetupWasmInstance()).pipe(
       map((argon2id) =>
         argon2id({
           password: encoder.encode(rawPassword),
-          salt: encoder.encode(this._authService.email()),
+          salt,
           parallelism: argon2idParallelism,
           passes: argon2idIterationCount,
           memorySize: argon2idMemory,
-          tagLength: nacl.secretbox.keyLength, // output a a hash of the same length as a secret key
+          tagLength: nacl.secretbox.keyLength,
         }),
       ),
     );
   }
 
-  fetchUserKeyPairRecord(): Observable<UserKeyPairsRecord> {
+  fetchUserKeyPairRecord(): Observable<UserKeyPairsResponse> {
     const filter = this._pb.filter('user={:user}', {
       user: this._authService.user()?.['id'],
     });
@@ -183,7 +191,7 @@ export class VaultService {
   }
 
   unpackKeyPairRecord(
-    keyPairRecord: UserKeyPairsRecord,
+    keyPairRecord: UserKeyPairsResponse,
     hashedVaultPassword: Uint8Array,
   ): KeyPair {
     const publicKey = Base64.toUint8Array(keyPairRecord.public_key);
@@ -203,7 +211,10 @@ export class VaultService {
     this.unlockError.set(null);
   }
 
-  createNewUserKeyPair(hashedVaultPassword: Uint8Array): Observable<KeyPair> {
+  createNewUserKeyPair(
+    hashedVaultPassword: Uint8Array,
+    passwordSalt: string,
+  ): Observable<KeyPair> {
     const keyPair = this._cryptoService.newKeyPair();
 
     const encryptedSecretKey = this.encryptSecretKey(
@@ -214,6 +225,7 @@ export class VaultService {
     const publicKeyBase64 = Base64.fromUint8Array(keyPair.publicKey);
     const encryptedSecretKeyBase64 = Base64.fromUint8Array(encryptedSecretKey);
     const keyPairRecordData: Partial<UserKeyPairsRecord> = {
+      password_salt: passwordSalt,
       public_key: publicKeyBase64,
       secret_key: encryptedSecretKeyBase64,
       user: this._authService.user()?.['id'],
@@ -222,5 +234,74 @@ export class VaultService {
     return from(
       this._pb.collection(this.pbUserKeyPairsCollection).create(keyPairRecordData),
     ).pipe(switchMap(() => of(keyPair)));
+  }
+
+  private unlockExistingUserKeyPair(
+    rawPassword: string,
+    keyPairRecord: UserKeyPairsResponse,
+  ): Observable<KeyPair> {
+    if (keyPairRecord.password_salt) {
+      return this.hashVaultPassword(rawPassword, keyPairRecord.password_salt).pipe(
+        map((hashedVaultPassword) =>
+          this.unpackKeyPairRecord(keyPairRecord, hashedVaultPassword),
+        ),
+      );
+    }
+
+    return this.hashVaultPasswordWithLegacyEmailSalt(rawPassword).pipe(
+      switchMap((hashedVaultPassword) => {
+        const keyPair = this.unpackKeyPairRecord(keyPairRecord, hashedVaultPassword);
+        return this.migrateLegacyUserKeyPairRecord(
+          rawPassword,
+          keyPairRecord,
+          keyPair,
+        ).pipe(map(() => keyPair));
+      }),
+    );
+  }
+
+  private hashVaultPasswordWithLegacyEmailSalt(
+    rawPassword: string,
+  ): Observable<Uint8Array> {
+    const encoder = new TextEncoder();
+
+    return from(getSetupWasmInstance()).pipe(
+      map((argon2id) =>
+        argon2id({
+          password: encoder.encode(rawPassword),
+          salt: encoder.encode(this._authService.email()),
+          parallelism: argon2idParallelism,
+          passes: argon2idIterationCount,
+          memorySize: argon2idMemory,
+          tagLength: nacl.secretbox.keyLength,
+        }),
+      ),
+    );
+  }
+
+  private migrateLegacyUserKeyPairRecord(
+    rawPassword: string,
+    keyPairRecord: UserKeyPairsResponse,
+    keyPair: KeyPair,
+  ): Observable<unknown> {
+    const passwordSalt = this.generatePasswordSalt();
+    return this.hashVaultPassword(rawPassword, passwordSalt).pipe(
+      switchMap((hashedVaultPassword) => {
+        const encryptedSecretKey = this.encryptSecretKey(
+          keyPair.secretKey,
+          hashedVaultPassword,
+        );
+        return from(
+          this._pb.collection(this.pbUserKeyPairsCollection).update(keyPairRecord.id, {
+            password_salt: passwordSalt,
+            secret_key: Base64.fromUint8Array(encryptedSecretKey),
+          }),
+        );
+      }),
+    );
+  }
+
+  private generatePasswordSalt(): string {
+    return Base64.fromUint8Array(nacl.randomBytes(passwordSaltBytes));
   }
 }

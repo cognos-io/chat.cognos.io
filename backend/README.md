@@ -49,11 +49,11 @@ private key for a given user.
 > Key model is implemented.
 
 ```text
-go run cmd/generate-key-pair/main.go -email={{ USER_EMAIL }} -password={{ USER_VAULT_PASSWORD }}
+go run cmd/generate-key-pair/main.go -password={{ USER_VAULT_PASSWORD }}
 ```
 
-The email is used for salting the hashed password in the current legacy flow.
-This is not the intended long-term Account Key design.
+The helper now generates a random per-user password salt and prints it alongside the encrypted
+secret key.
 
 ## HTTPie requests
 
@@ -91,17 +91,44 @@ export AUTH_TOKEN=$(http POST :8090/api/collections/users/auth-with-password \
     password="password" | jq -r .token)
 ```
 
-### Send a message to localhost
+### List available models from localhost
 
-**Note:** `metadata` will be stripped off before sending to upstream OpenAI compatible API.
+```text
+http GET :8090/api/v1/models \
+    Authorization:"Bearer $AUTH_TOKEN"
+```
+
+### Send a temporary message to localhost
+
+```text
+http POST :8090/api/v1/completions \
+    Authorization:"Bearer $AUTH_TOKEN" \
+    model_id="llama-3-3-infomaniak" \
+    agent_id="cognos:simple-assistant" \
+    request_id="req-local-1" \
+    messages:='[{"role": "user", "content": "Say this is a test!"}]'
+```
+
+### Send a persisted conversation message to localhost
+
+```text
+http POST :8090/api/v1/conversations/{{CONVERSATION_ID}}/complete \
+    Authorization:"Bearer $AUTH_TOKEN" \
+    model_id="llama-3-3-infomaniak" \
+    agent_id="cognos:simple-assistant" \
+    request_id="req-local-2" \
+    messages:='[{"role": "user", "content": "Say this is a test!"}]'
+```
+
+### Legacy compatibility route
+
+The old OpenAI-compatible route still exists during the migration:
 
 ```text
 http POST :8090/v1/chat/completions \
     Authorization:"Bearer $AUTH_TOKEN" \
-    model="gpt-3.5-turbo" \
-    messages:='[{"role": "user", "content": "Say this is a test!"}]' \
-    stream:=true \
-    metadata:='{"cognos": {"conversation_id": "0524b1cc-152b-4f53-ade9-1ad8c338d2e3"}}'
+    model="openai:gpt-4o" \
+    messages:='[{"role": "user", "content": "Say this is a test!"}]'
 ```
 
 ## Encryption benchmarks

@@ -13,13 +13,6 @@ import (
 )
 
 func main() {
-	// Read the user email and vault password from the CLI
-	// TODO(ewan): Change this to use a UserID instead
-	userEmail := flag.String(
-		"email",
-		"",
-		"User email address (used as a salt for the vault password hash)",
-	)
 	vaultPassword := flag.String(
 		"password",
 		"",
@@ -27,16 +20,18 @@ func main() {
 	)
 	flag.Parse()
 
-	if *userEmail == "" || *vaultPassword == "" {
-		log.Fatal("User email and vault password are required")
+	if *vaultPassword == "" {
+		log.Fatal("Vault password is required")
 	}
 
-	// Hash the vault password with Argon2id
-	// Using OWASP recommendations for Argon2id
-	// https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
+	passwordSalt := make([]byte, 16)
+	if _, err := io.ReadFull(rand.Reader, passwordSalt); err != nil {
+		log.Fatal(err)
+	}
+
 	hashedPassword := argon2.IDKey(
 		[]byte(*vaultPassword),
-		[]byte(*userEmail),
+		passwordSalt,
 		2,
 		19*1024,
 		1,
@@ -45,19 +40,16 @@ func main() {
 	var vaultPasswordKey [32]byte
 	copy(vaultPasswordKey[:], hashedPassword)
 
-	// Generate a new key pair
 	pubKeyBytes, secKeyBytes, err := box.GenerateKey(rand.Reader)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Generate a nonce
 	var nonce [24]byte
 	if _, err := io.ReadFull(rand.Reader, nonce[:]); err != nil {
 		panic(err)
 	}
 
-	// Encrypt the secret key with the hashed vault password
 	encryptedSecKeyBytes := secretbox.Seal(
 		nonce[:],
 		secKeyBytes[:],
@@ -65,11 +57,11 @@ func main() {
 		&vaultPasswordKey,
 	)
 
-	// Encode the public key and encrypted secret key as base64 strings
 	pubKeyString := base64.StdEncoding.EncodeToString(pubKeyBytes[:])
 	encryptedSecKeyString := base64.StdEncoding.EncodeToString(encryptedSecKeyBytes)
+	passwordSaltString := base64.StdEncoding.EncodeToString(passwordSalt)
 
-	// Print the public key and encrypted secret key
+	log.Printf("Password Salt: %s\n", passwordSaltString)
 	log.Printf("Public Key: %s\n", pubKeyString)
 	log.Printf("Encrypted Secret Key: %s\n", encryptedSecKeyString)
 }
