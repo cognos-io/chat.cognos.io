@@ -2,8 +2,6 @@ import { Injectable, computed, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
-import PocketBase from 'pocketbase';
-
 import {
   EMPTY,
   Observable,
@@ -33,10 +31,7 @@ import {
   serializeConversationData,
 } from '../interfaces/conversation';
 import { KeyPair } from '../interfaces/key-pair';
-import {
-  ConversationsExpiryDurationOptions,
-  TypedPocketBase,
-} from '../types/pocketbase-types';
+import { ConversationsExpiryDurationOptions } from '../types/pocketbase-types';
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
@@ -65,16 +60,12 @@ const initialState: ConversationState = {
   providedIn: 'root',
 })
 export class ConversationService {
-  private readonly _pb: TypedPocketBase = inject(PocketBase);
   private readonly _cryptoService = inject(CryptoService);
   private readonly _vaultService = inject(VaultService);
   private readonly _auth = inject(AuthService);
   private readonly _api = inject(CognosApiService);
   private readonly _router = inject(Router);
   private readonly _userPreferencesService = inject(UserPreferencesService);
-
-  private readonly pbConversationPublicKeysCollection = 'conversation_public_keys';
-  private readonly pbConversationSecretKeyCollection = 'conversation_secret_keys';
 
   // sources
   readonly selectConversation$ = new Subject<string>(); // conversationId
@@ -436,15 +427,9 @@ export class ConversationService {
   private fetchConversationPublicKeyRecord(
     conversationId: string,
   ): Observable<{ id: string; public_key: string; public_key_signature?: string }> {
-    const filter = this._pb.filter('conversation={:conversationId}', {
-      conversationId,
-    });
-
-    return from(
-      this._pb
-        .collection(this.pbConversationPublicKeysCollection)
-        .getFirstListItem(filter),
-    ).pipe(ignorePocketbase404());
+    return this._api
+      .getConversationPublicKey(conversationId)
+      .pipe(ignorePocketbase404());
   }
 
   /**
@@ -455,18 +440,8 @@ export class ConversationService {
    * @returns (Observable<Uint8Array>)
    */
   private fetchConversationSecretKey(conversationId: string): Observable<Uint8Array> {
-    const filter = this._pb.filter('conversation={:conversationId} && user={:userId}', {
-      conversationId,
-      userId: this._auth.user()?.['id'],
-    });
-
-    return from(
-      this._pb
-        .collection(this.pbConversationSecretKeyCollection)
-        .getFirstListItem(filter),
-    ).pipe(
+    return this._api.getConversationSecretKey(conversationId).pipe(
       ignorePocketbase404(),
-      // Decode the encrypted base64 secret key
       map((record) => Base64.toUint8Array(record.secret_key)),
     );
   }
@@ -499,13 +474,14 @@ export class ConversationService {
             throw new Error('Conversation public key signature mismatch');
           }
         } else {
-          void this._pb
-            .collection(this.pbConversationPublicKeysCollection)
-            .update(record.id, {
+          void this._api
+            .updateConversationPublicKey(conversationId, record.id, {
               public_key_signature: Base64.fromUint8Array(publicKeySignature),
             })
-            .catch(() => {
-              console.error('Failed to backfill conversation key signature');
+            .subscribe({
+              error: () => {
+                console.error('Failed to backfill conversation key signature');
+              },
             });
         }
 
@@ -543,9 +519,8 @@ export class ConversationService {
       throw UserSecretKeyNotFoundError;
     }
 
-    return from(
-      this._pb.collection(this.pbConversationPublicKeysCollection).create({
-        conversation: conversationId,
+    return this._api
+      .createConversationPublicKey(conversationId, {
         public_key: Base64.fromUint8Array(conversationKeyPair.publicKey),
         public_key_signature: Base64.fromUint8Array(
           this.computeConversationPublicKeySignature(
@@ -554,30 +529,28 @@ export class ConversationService {
             userSecretKey,
           ),
         ),
-      }),
-    ).pipe(
-      switchMap(() => {
-        const sharedKey = this._cryptoService.sharedKey(
-          conversationKeyPair.publicKey,
-          userSecretKey,
-        );
-        const encryptedSecretKey = this._cryptoService.box(
-          conversationKeyPair.secretKey,
-          sharedKey,
-        );
-        return from(
-          this._pb.collection(this.pbConversationSecretKeyCollection).create({
-            conversation: conversationId,
-            secret_key: Base64.fromUint8Array(encryptedSecretKey),
-            user: this._auth.user()?.['id'],
-          }),
-        ).pipe(
-          switchMap(() => {
-            return of(conversationKeyPair);
-          }),
-        );
-      }),
-    );
+      })
+      .pipe(
+        switchMap(() => {
+          const sharedKey = this._cryptoService.sharedKey(
+            conversationKeyPair.publicKey,
+            userSecretKey,
+          );
+          const encryptedSecretKey = this._cryptoService.box(
+            conversationKeyPair.secretKey,
+            sharedKey,
+          );
+          return this._api
+            .createConversationSecretKey(conversationId, {
+              secret_key: Base64.fromUint8Array(encryptedSecretKey),
+            })
+            .pipe(
+              switchMap(() => {
+                return of(conversationKeyPair);
+              }),
+            );
+        }),
+      );
   }
 
   /**

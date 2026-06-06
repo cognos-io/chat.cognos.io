@@ -160,6 +160,94 @@ func addPocketBaseRoutes(
 		BillingService:   billingService,
 	}
 
+	e.Router.GET(
+		"/api/v1/user-key-pair",
+		handler.UserKeyPairGet(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.POST(
+		"/api/v1/user-key-pair",
+		handler.UserKeyPairCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/user-key-pair/{keyPairID}",
+		handler.UserKeyPairUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.GET(
+		"/api/v1/conversations/{conversationID}/public-key",
+		handler.ConversationPublicKeyGet(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.POST(
+		"/api/v1/conversations/{conversationID}/public-key",
+		handler.ConversationPublicKeyCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/conversations/{conversationID}/public-key/{publicKeyID}",
+		handler.ConversationPublicKeyUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.GET(
+		"/api/v1/conversations/{conversationID}/secret-key",
+		handler.ConversationSecretKeyGet(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.POST(
+		"/api/v1/conversations/{conversationID}/secret-key",
+		handler.ConversationSecretKeyCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.GET(
+		"/api/v1/user-preferences",
+		handler.UserPreferencesGet(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.POST(
+		"/api/v1/user-preferences",
+		handler.UserPreferencesCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/user-preferences/{preferencesID}",
+		handler.UserPreferencesUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
 	e.Router.POST(
 		"/api/v1/completions",
 		handler.Complete(completeParams),

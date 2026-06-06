@@ -1,14 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 
-import PocketBase from 'pocketbase';
-
 import {
   EMPTY,
   Observable,
   Subject,
   catchError,
   concatMap,
-  from,
   map,
   of,
   switchMap,
@@ -25,8 +22,8 @@ import {
 } from '@app/interfaces/user_preferences';
 import { ignorePocketbase404 } from '@app/operators/ignore-404';
 
-import { TypedPocketBase, UserPreferencesResponse } from '../types/pocketbase-types';
-import { AuthService } from './auth.service';
+import { UserPreferencesResponse } from '../types/pocketbase-types';
+import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
 import { VaultService } from './vault.service';
@@ -45,14 +42,10 @@ const initialState: UserPreferencesState = {
   providedIn: 'root',
 })
 export class UserPreferencesService {
-  private readonly _pb: TypedPocketBase = inject(PocketBase);
+  private readonly _api = inject(CognosApiService);
   private readonly _cryptoService = inject(CryptoService);
   private readonly _vaultService = inject(VaultService);
   private readonly _errorService = inject(ErrorService);
-  private readonly _authService = inject(AuthService);
-
-  private readonly _pbUserPreferencesCollection =
-    this._pb.collection('user_preferences');
 
   private readonly _pinConversation = new Subject<string>();
   private readonly _unpinConversation = new Subject<string>();
@@ -231,11 +224,7 @@ export class UserPreferencesService {
   }
 
   private fetchUserPreferences(): Observable<UserPreferencesData> {
-    const filter = this._pb.filter('user={:user}', {
-      user: this._authService.user()?.['id'],
-    });
-
-    return from(this._pbUserPreferencesCollection.getFirstListItem(filter)).pipe(
+    return this._api.getUserPreferences().pipe(
       ignorePocketbase404(),
       catchError((error) => {
         console.error('Failed to fetch user preferences', error);
@@ -277,18 +266,17 @@ export class UserPreferencesService {
   ): Observable<UserPreferencesResponse> {
     const encryptedData = this.encryptUserPreferencesData(preferences);
 
-    return from(
-      this._pbUserPreferencesCollection.create({
-        user: this._authService.user()?.['id'],
+    return this._api
+      .createUserPreferences({
         data: Base64.fromUint8Array(encryptedData),
-      }),
-    ).pipe(
-      catchError((error) => {
-        console.error('Failed to save user preferences', error);
-        this._errorService.alert('Failed to save user preferences');
-        return EMPTY;
-      }),
-    );
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Failed to save user preferences', error);
+          this._errorService.alert('Failed to save user preferences');
+          return EMPTY;
+        }),
+      );
   }
 
   private updateUserPreferences(
@@ -297,17 +285,17 @@ export class UserPreferencesService {
   ): Observable<UserPreferencesResponse> {
     const encryptedData = this.encryptUserPreferencesData(preferences);
 
-    return from(
-      this._pbUserPreferencesCollection.update(recordId, {
+    return this._api
+      .updateUserPreferences(recordId, {
         data: Base64.fromUint8Array(encryptedData),
-      }),
-    ).pipe(
-      catchError((error) => {
-        console.error('Failed to update user preferences', error);
-        this._errorService.alert('Failed to update user preferences');
-        return EMPTY;
-      }),
-    );
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Failed to update user preferences', error);
+          this._errorService.alert('Failed to update user preferences');
+          return EMPTY;
+        }),
+      );
   }
 
   public isConversationPinned(conversationId: string): boolean {

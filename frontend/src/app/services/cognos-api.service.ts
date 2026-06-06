@@ -7,6 +7,12 @@ import { Observable, map } from 'rxjs';
 
 import { ConversationRecord } from '@app/interfaces/conversation';
 import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/model';
+import {
+  ConversationPublicKeysResponse,
+  ConversationSecretKeysResponse,
+  UserKeyPairsResponse,
+  UserPreferencesResponse,
+} from '@app/types/pocketbase-types';
 
 import { environment } from '@environments/environment';
 
@@ -145,6 +151,39 @@ interface ApiMessageUpdateRequest {
   clear_expires: boolean;
 }
 
+interface ApiUserKeyPairCreateRequest {
+  password_salt?: string;
+  public_key: string;
+  record_mac?: string;
+  secret_key: string;
+  unlock_scheme?: string;
+}
+
+interface ApiUserKeyPairUpdateRequest {
+  record_mac: string;
+}
+
+interface ApiConversationPublicKeyCreateRequest {
+  public_key: string;
+  public_key_signature?: string;
+}
+
+interface ApiConversationPublicKeyUpdateRequest {
+  public_key_signature: string;
+}
+
+interface ApiConversationSecretKeyCreateRequest {
+  secret_key: string;
+}
+
+interface ApiUserPreferencesCreateRequest {
+  data: string;
+}
+
+interface ApiUserPreferencesUpdateRequest {
+  data: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -264,6 +303,136 @@ export class CognosApiService {
         },
       )
       .pipe(map((response) => this.mapCompleteResponse(response)));
+  }
+
+  getUserKeyPair(): Observable<UserKeyPairsResponse> {
+    return this._http.get<UserKeyPairsResponse>(
+      `${this._baseUrl}/api/v1/user-key-pair`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  createUserKeyPair(
+    request: ApiUserKeyPairCreateRequest,
+  ): Observable<UserKeyPairsResponse> {
+    return this._http.post<UserKeyPairsResponse>(
+      `${this._baseUrl}/api/v1/user-key-pair`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  updateUserKeyPair(
+    keyPairId: string,
+    request: ApiUserKeyPairUpdateRequest,
+  ): Observable<UserKeyPairsResponse> {
+    return this._http.patch<UserKeyPairsResponse>(
+      `${this._baseUrl}/api/v1/user-key-pair/${keyPairId}`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  getConversationPublicKey(
+    conversationId: string,
+  ): Observable<ConversationPublicKeysResponse> {
+    return this._http.get<ConversationPublicKeysResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/public-key`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  createConversationPublicKey(
+    conversationId: string,
+    request: ApiConversationPublicKeyCreateRequest,
+  ): Observable<ConversationPublicKeysResponse> {
+    return this._http.post<ConversationPublicKeysResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/public-key`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  updateConversationPublicKey(
+    conversationId: string,
+    publicKeyId: string,
+    request: ApiConversationPublicKeyUpdateRequest,
+  ): Observable<ConversationPublicKeysResponse> {
+    return this._http.patch<ConversationPublicKeysResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/public-key/${publicKeyId}`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  getConversationSecretKey(
+    conversationId: string,
+  ): Observable<ConversationSecretKeysResponse> {
+    return this._http.get<ConversationSecretKeysResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/secret-key`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  createConversationSecretKey(
+    conversationId: string,
+    request: ApiConversationSecretKeyCreateRequest,
+  ): Observable<ConversationSecretKeysResponse> {
+    return this._http.post<ConversationSecretKeysResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/secret-key`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  getUserPreferences(): Observable<UserPreferencesResponse> {
+    return this._http.get<UserPreferencesResponse>(
+      `${this._baseUrl}/api/v1/user-preferences`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  createUserPreferences(
+    request: ApiUserPreferencesCreateRequest,
+  ): Observable<UserPreferencesResponse> {
+    return this._http.post<UserPreferencesResponse>(
+      `${this._baseUrl}/api/v1/user-preferences`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  updateUserPreferences(
+    preferencesId: string,
+    request: ApiUserPreferencesUpdateRequest,
+  ): Observable<UserPreferencesResponse> {
+    return this._http.patch<UserPreferencesResponse>(
+      `${this._baseUrl}/api/v1/user-preferences/${preferencesId}`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
   }
 
   private authHeaders(): HttpHeaders {

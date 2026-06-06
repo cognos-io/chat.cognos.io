@@ -1,13 +1,12 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 
-import PocketBase from 'pocketbase';
-
 import {
   EMPTY,
   Observable,
   Subject,
   catchError,
+  firstValueFrom,
   from,
   map,
   of,
@@ -21,15 +20,12 @@ import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
 import nacl from 'tweetnacl';
 
-import {
-  TypedPocketBase,
-  UserKeyPairsRecord,
-  UserKeyPairsResponse,
-} from '@app/types/pocketbase-types';
+import { UserKeyPairsRecord, UserKeyPairsResponse } from '@app/types/pocketbase-types';
 
 import { KeyPair } from '@interfaces/key-pair';
 
 import { AuthService } from './auth.service';
+import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
 import { TrustedUnlockService } from './trusted-unlock.service';
 
@@ -107,12 +103,10 @@ const getSetupWasmInstance = () => {
   providedIn: 'root',
 })
 export class VaultService {
-  private readonly _pb: TypedPocketBase = inject(PocketBase);
+  private readonly _api = inject(CognosApiService);
   private readonly _cryptoService = inject(CryptoService);
   private readonly _authService = inject(AuthService);
   private readonly _trustedUnlockService = inject(TrustedUnlockService);
-
-  private readonly pbUserKeyPairsCollection = 'user_key_pairs';
 
   readonly generatedAccountKey = signal<string | null>(null);
   readonly wasLocked = signal(false);
@@ -239,13 +233,7 @@ export class VaultService {
   }
 
   fetchUserKeyPairRecord(): Observable<UserKeyPairsResponse> {
-    const filter = this._pb.filter('user={:user}', {
-      user: this._authService.user()?.['id'],
-    });
-
-    return from(
-      this._pb.collection(this.pbUserKeyPairsCollection).getFirstListItem(filter),
-    );
+    return this._api.getUserKeyPair();
   }
 
   decryptSecretKey(encryptedSecretKey: Uint8Array, unlockKey: Uint8Array): Uint8Array {
@@ -333,30 +321,26 @@ export class VaultService {
     const publicKeyBase64 = Base64.fromUint8Array(keyPair.publicKey);
     const encryptedSecretKeyBase64 = Base64.fromUint8Array(encryptedSecretKey);
     const userID = this._authService.user()?.['id'];
-    const keyPairRecordData: Partial<UserKeyPairsRecord> = {
+    const keyPairRecordData = {
       password_salt: passwordSalt,
       public_key: publicKeyBase64,
+      record_mac: Base64.fromUint8Array(
+        this.computeUserKeyPairRecordMAC(
+          {
+            password_salt: passwordSalt,
+            public_key: publicKeyBase64,
+            secret_key: encryptedSecretKeyBase64,
+            unlock_scheme: unlockSchemePasswordAccountKey,
+            user: userID ?? '',
+          },
+          unlockKey,
+        ),
+      ),
       secret_key: encryptedSecretKeyBase64,
       unlock_scheme: unlockSchemePasswordAccountKey,
-      user: userID,
     };
 
-    keyPairRecordData.record_mac = Base64.fromUint8Array(
-      this.computeUserKeyPairRecordMAC(
-        {
-          password_salt: passwordSalt,
-          public_key: publicKeyBase64,
-          secret_key: encryptedSecretKeyBase64,
-          unlock_scheme: unlockSchemePasswordAccountKey,
-          user: userID ?? '',
-        },
-        unlockKey,
-      ),
-    );
-
-    return from(
-      this._pb.collection(this.pbUserKeyPairsCollection).create(keyPairRecordData),
-    ).pipe(
+    return this._api.createUserKeyPair(keyPairRecordData).pipe(
       switchMap((keyPairRecord) =>
         from(this.persistTrustedUnlockKey(unlockKey, trustDevice)).pipe(
           tap(() => this.persistTrustedUserKeyContext(keyPairRecord)),
@@ -508,9 +492,7 @@ export class VaultService {
       this.computeUserKeyPairRecordMAC(keyPairRecord, unlockKey),
     );
 
-    await this._pb.collection(this.pbUserKeyPairsCollection).update(keyPairRecord.id, {
-      record_mac,
-    });
+    await firstValueFrom(this._api.updateUserKeyPair(keyPairRecord.id, { record_mac }));
   }
 
   private trustedUserKeyContextStorageKey(userID: string): string {
