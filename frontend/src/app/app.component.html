@@ -1,6 +1,4 @@
 <router-outlet></router-outlet>
+<cog-toast-host></cog-toast-host>
 
-<div
-  [attr.data-pb-user-id]="auth.user()?.['id']"
-  [attr.data-pb-ory-id]="auth.oryId()"
-></div>
+<div [attr.data-pb-user-id]="auth.user()?.['id']"></div>

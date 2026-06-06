@@ -38,6 +38,9 @@ func (r *InMemoryUpstreamRepo) Provider(provider string) (Upstream, error) {
 	case "cloudflare":
 		return NewCloudflare(r.cloudflareOpenAIClient, r.logger)
 	case "google":
+		if r.googleGeminiAIClient == nil {
+			return nil, fmt.Errorf("google gemini provider is not configured")
+		}
 		return NewGoogleGemini(r.googleGeminiAIClient, r.logger)
 	case "anthropic":
 		return NewAnthropic(r.anthropicClient, r.logger)

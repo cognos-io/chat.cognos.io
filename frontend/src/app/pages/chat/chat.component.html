@@ -1,66 +1,25 @@
-<div
-  class="wrapper"
-  [class.is-mobile]="isMobile()"
-  [class.is-temporary]="conversationService.isTemporaryConversation()"
->
-  <mat-toolbar class="toolbar" role="heading">
-    <mat-toolbar-row>
-      <button mat-icon-button (click)="sideNav.toggle()">
-        <mat-icon color="secondary" fontSet="bi" fontIcon="bi-list"></mat-icon>
-      </button>
-      <div class="flex w-full items-center justify-center md:ms-4 md:justify-start">
-        <app-cognos-logo class="-ms-10 h-6 md:ms-0"></app-cognos-logo>
-      </div>
-    </mat-toolbar-row>
-    @if (isMobile()) {
-      <mat-toolbar-row style="height: auto" class="justify-end">
-        @if (canClearTemporaryMessages()) {
-          <button
-            mat-icon-button
-            matTooltip="Clears all messages. Unrecoverable."
-            (click)="onClearMessages()"
-          >
-            <mat-icon fontSet="bi" fontIcon="bi-fire"></mat-icon>
-          </button>
-        }
-      </mat-toolbar-row>
-    }
-  </mat-toolbar>
-  <mat-sidenav-container
-    class="page sidebar-container"
-    [style.paddingTop.px]="isMobile() ? 56 : 0"
-  >
-    <mat-sidenav
-      #sideNav
-      [mode]="isMobile() ? 'over' : 'side'"
-      [fixedInViewport]="isMobile()"
-      [opened]="!isMobile()"
-      fixedTopGap="56"
-      role="navigation"
-    >
-      <div class="sidebar h-full">
-        <button mat-button (click)="onNewConversation()">
-          <mat-icon fontSet="bi" fontIcon="bi-plus-circle-fill"></mat-icon>
-          <ng-container i18n="button|action to create a new conversation">
-            New conversation
-          </ng-container>
-        </button>
-        <mat-nav-list class="flex-grow overflow-y-auto">
-          @if (conversationService.hasPinnedConversations()) {
-            <div mat-subheader class="text-sm">Pinned</div>
-            @for (
-              conversation of conversationService.pinnedConversations();
-              track conversation.record.id
-            ) {
-              <app-conversation-list-item
-                [conversation]="conversation"
-              ></app-conversation-list-item>
-            }
-            @if (conversationService.hasNonPinnedConversations()) {
-              <mat-divider></mat-divider>
-              <div mat-subheader class="text-sm">Recent</div>
-            }
+<ng-template #navConversations>
+  <div class="chat-shell__conversation-sections">
+    @if (conversationService.hasPinnedConversations()) {
+      <section class="chat-shell__section">
+        <header class="chat-shell__section-heading">Pinned</header>
+        <div class="chat-shell__conversation-list">
+          @for (
+            conversation of conversationService.pinnedConversations();
+            track conversation.record.id
+          ) {
+            <app-conversation-list-item
+              [conversation]="conversation"
+            ></app-conversation-list-item>
           }
+        </div>
+      </section>
+    }
+
+    @if (conversationService.hasNonPinnedConversations()) {
+      <section class="chat-shell__section">
+        <header class="chat-shell__section-heading">Recent</header>
+        <div class="chat-shell__conversation-list">
           @for (
             conversation of conversationService.nonPinnedConversations();
             track conversation.record.id
@@ -69,28 +28,149 @@
               [conversation]="conversation"
             ></app-conversation-list-item>
           }
-        </mat-nav-list>
-        <div class="flex justify-end gap-2">
-          <button
-            mat-icon-button
-            (click)="onOpenHelpDialog()"
-            matTooltip="Get help or contact me"
-          >
-            <mat-icon fontSet="bi" fontIcon="bi-question-circle"></mat-icon>
-          </button>
-
-          <button
-            mat-icon-button
-            (click)="router.navigate(['', 'auth', 'logout'])"
-            matTooltip="Logout"
-          >
-            <mat-icon fontSet="bi" fontIcon="bi-box-arrow-right"></mat-icon>
-          </button>
         </div>
+      </section>
+    }
+  </div>
+</ng-template>
+
+<ng-template #navSearch>
+  <div class="chat-shell__search">
+    <cog-text-field
+      ariaLabel="Search conversations"
+      icon="search"
+      placeholder="Search"
+      (valueChange)="onSearchChange($event)"
+    ></cog-text-field>
+    <div class="chat-shell__search-hint">
+      <cog-icon name="laptop" [size]="14" tone="text-subtlest" />
+      <span>Searched on this device</span>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #navNewChat>
+  <cog-button
+    appearance="primary"
+    [fullWidth]="true"
+    icon="plus"
+    (click)="onNewConversation()"
+  >
+    New chat
+  </cog-button>
+</ng-template>
+
+<ng-template #navigationContent>
+  <div class="chat-shell__nav">
+    <div class="chat-shell__brand">
+      <app-cognos-logo class="chat-shell__logo" palette="dark"></app-cognos-logo>
+    </div>
+
+    <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
+    <ng-container *ngTemplateOutlet="navSearch"></ng-container>
+    <ng-container *ngTemplateOutlet="navConversations"></ng-container>
+  </div>
+</ng-template>
+
+<ng-template #securityFooter>
+  <div class="chat-shell__security-card">
+    <div class="chat-shell__security-header">
+      <span class="chat-shell__security-badge">
+        <cog-icon name="shield-check" [size]="14" tone="success" />
+      </span>
+      <div>
+        <div class="chat-shell__security-title">
+          <cog-lozenge tone="green">Encrypted</cog-lozenge>
+          <cog-lozenge tone="green">Verified</cog-lozenge>
+        </div>
+        <p class="chat-shell__security-copy">Keys stay on this device.</p>
       </div>
-    </mat-sidenav>
-    <mat-sidenav-content role="main">
-      <router-outlet></router-outlet>
-    </mat-sidenav-content>
-  </mat-sidenav-container>
+    </div>
+  </div>
+</ng-template>
+
+<div
+  class="chat-shell"
+  [class.chat-shell--temporary]="conversationService.isTemporaryConversation()"
+>
+  <aside class="chat-shell__sidebar">
+    <ng-container *ngTemplateOutlet="navigationContent"></ng-container>
+    <div class="chat-shell__sidebar-footer">
+      <ng-container *ngTemplateOutlet="securityFooter"></ng-container>
+    </div>
+  </aside>
+
+  <div class="chat-shell__main">
+    <header class="chat-shell__mobile-bar">
+      <cog-icon-button
+        name="menu"
+        size="lg"
+        title="Open navigation"
+        (click)="openDrawer()"
+      />
+      <app-cognos-logo class="chat-shell__mobile-logo" palette="dark"></app-cognos-logo>
+      <div class="chat-shell__mobile-actions">
+        @if (canClearTemporaryMessages()) {
+          <cog-icon-button
+            name="eraser"
+            title="Clear all messages"
+            (click)="onClearMessages()"
+          />
+        }
+      </div>
+    </header>
+
+    <div class="chat-shell__page">
+      <header class="chat-shell__page-header">
+        <div class="chat-shell__page-heading">
+          <h1 class="chat-shell__page-title">{{ pageTitle() }}</h1>
+        </div>
+
+        <div class="chat-shell__page-actions">
+          @if (canClearTemporaryMessages() && !isMobile()) {
+            <cog-icon-button
+              name="eraser"
+              title="Clear all messages"
+              (click)="onClearMessages()"
+            />
+          }
+        </div>
+      </header>
+
+      <main class="chat-shell__page-content" role="main">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  </div>
+
+  <cog-drawer
+    [open]="drawerOpen()"
+    [stickyFooter]="true"
+    [title]="'Navigation'"
+    [hideTitle]="true"
+    (close)="closeDrawer()"
+  >
+    <app-cognos-logo
+      cogDrawerHeader
+      class="chat-shell__drawer-logo"
+      palette="dark"
+    ></app-cognos-logo>
+
+    <div class="chat-shell__drawer-body">
+      <ng-container *ngTemplateOutlet="navConversations"></ng-container>
+    </div>
+
+    <div cogDrawerFooter>
+      <div class="chat-shell__drawer-footer-actions">
+        <cog-button appearance="subtle" type="button" (click)="onOpenHelpDialog()">
+          Help
+        </cog-button>
+        <cog-button appearance="subtle" type="button" (click)="onLogout()">
+          Log out
+        </cog-button>
+      </div>
+      <ng-container *ngTemplateOutlet="navSearch"></ng-container>
+      <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
+    </div>
+  </cog-drawer>
 </div>

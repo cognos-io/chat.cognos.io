@@ -2,11 +2,13 @@ import { z } from 'zod';
 
 export const UserPreferencesData = z.object({
   pinnedConversations: z.array(z.string()),
+  pinnedModels: z.array(z.string()).default([]),
 });
 export type UserPreferencesData = z.infer<typeof UserPreferencesData>;
 
 export const emptyPreferences: UserPreferencesData = {
   pinnedConversations: [],
+  pinnedModels: [],
 };
 
 /**

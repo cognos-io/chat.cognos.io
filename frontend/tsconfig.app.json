@@ -5,6 +5,6 @@
     "types": ["@angular/localize"]
   },
   "extends": "./tsconfig.json",
-  "files": ["src/main.ts"],
-  "include": ["src/**/*.d.ts"]
+  "files": ["src/main.ts", "../packages/ui-angular/src/public-api.ts"],
+  "include": ["src/**/*.d.ts", "../packages/ui-angular/src/**/*.ts"]
 }

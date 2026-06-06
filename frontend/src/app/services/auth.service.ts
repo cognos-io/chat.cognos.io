@@ -19,7 +19,6 @@ import {
   timer,
 } from 'rxjs';
 
-import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
 
 import { TypedPocketBase } from '../types/pocketbase-types';
@@ -29,16 +28,21 @@ export type LoginStatus = 'pending' | 'authenticating' | 'success' | 'error';
 
 export type AuthUser = AuthModel | null | undefined;
 
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
 interface AuthState {
   status: LoginStatus;
   user: AuthUser;
-  oryId: string;
+  email: string;
 }
 
 const initialState: AuthState = {
   status: 'pending',
   user: null,
-  oryId: '',
+  email: '',
 };
 
 @Injectable({
@@ -51,85 +55,66 @@ export class AuthService implements OnDestroy {
   private readonly _storeUnsubscribe: () => void;
   private readonly _router = inject(Router);
 
-  // sources
-  readonly login$ = new Subject<boolean>();
+  readonly login$ = new Subject<LoginRequest>();
   readonly logout$ = new Subject<boolean>();
 
   private readonly _user$ = new Subject<AuthUser>();
   private readonly _userAuthenticating$ = this.login$.pipe(
-    switchMap(() => this.loginWithOry()),
+    switchMap(({ email, password }) => this.loginWithPassword(email, password)),
   );
   private readonly userLoggingOut$ = this.logout$.pipe(
     switchMap(() => of(this.logout())),
   );
 
-  // state
   private state = signalSlice({
     initialState,
     sources: [
       this.login$.pipe(map(() => ({ status: 'authenticating' as LoginStatus }))),
-      // When user emits, if we have a user, we are authenticated
       this._user$.pipe(
         map((response: AuthUser) => {
           return {
             status: response ? ('success' as LoginStatus) : ('pending' as LoginStatus),
             user: response,
+            email: response?.['email'] ?? '',
           };
         }),
       ),
-      this._user$.pipe(
-        switchMap((response: AuthUser) => {
-          return this.fetchOryId(response?.['id']).pipe(
-            map((oryId: string) => {
-              return {
-                oryId,
-              };
-            }),
-          );
-        }),
-      ),
-      // When login emits, we are authenticating
       this._userAuthenticating$.pipe(
         map(() => {
-          return {
-            status: 'success' as LoginStatus,
-          };
+          return {};
         }),
         catchError(() => {
           return of({
             status: 'error' as LoginStatus,
             user: null,
+            email: '',
           });
         }),
       ),
-      // When logout emits, we are pending
       this.userLoggingOut$.pipe(
         map(() => {
           return {
             status: 'pending' as LoginStatus,
             user: null,
-            oryId: '',
+            email: '',
           };
         }),
       ),
     ],
   });
 
-  // selectors
   status = this.state.status;
   user = this.state.user;
   user$ = toObservable(this.user);
-  oryId = this.state.oryId;
+  email = this.state.email;
 
   constructor() {
-    // Regularly check and refresh token
     this.checkAndRefreshToken()
       .pipe(
         takeUntilDestroyed(),
         repeat({ delay: 1000 * 60 * 5 }),
         retry({
           count: 5,
-          // exponential backoff
           delay: (_error, retryIndex) => {
             const interval = 500;
             const delay = Math.pow(2, retryIndex - 1) * interval;
@@ -139,7 +124,6 @@ export class AuthService implements OnDestroy {
       )
       .subscribe();
 
-    // Listen for changes in the auth store
     this._storeUnsubscribe = this._pb.authStore.onChange((token, model) => {
       if (this._pb.authStore.isValid) {
         this._user$.next(model);
@@ -166,47 +150,92 @@ export class AuthService implements OnDestroy {
     );
   }
 
-  loginWithOry() {
-    const w = window.open();
-
+  loginWithPassword(email: string, password: string) {
     return from(
-      this._pb.collection(this._authCollection).authWithOAuth2({
-        // Make sure OIDC provider is configured in PocketBase for Ory
-        provider: 'oidc',
-        scopes: ['openid', 'offline_access'],
-        urlCallback: (url) => {
-          if (w) {
-            w.location.href = url;
-          }
-        },
-      }),
+      this._pb.collection(this._authCollection).authWithPassword(email, password),
     ).pipe(
       catchError((error) => {
-        this._errorService.alert('Error logging in with Ory');
+        this._errorService.alert('Invalid email or password');
         console.error(error);
-        w?.close();
-        return of(null);
+        return throwError(() => error);
       }),
     );
   }
 
-  fetchOryId(userId: string): Observable<string> {
-    if (!userId || userId === '') {
-      return EMPTY;
-    }
+  register(email: string, password: string): Observable<unknown> {
     return from(
-      this._pb.collection(this._authCollection).listExternalAuths(userId),
+      this._pb
+        .collection(this._authCollection)
+        .create({ email, password, passwordConfirm: password })
+        .then(() =>
+          this._pb.collection(this._authCollection).authWithPassword(email, password),
+        ),
     ).pipe(
       catchError((error) => {
-        this._errorService.alert('Error fetching Ory ID');
+        const message =
+          (error as { response?: { message?: string } })?.response?.message ??
+          'Unable to create your account';
+        this._errorService.alert(message);
         console.error(error);
-        return EMPTY;
+        return throwError(() => error);
       }),
-      map((auths) => {
-        return auths.find((auth) => auth.provider === 'oidc');
+    );
+  }
+
+  requestPasswordReset(email: string): Observable<boolean> {
+    return from(
+      this._pb.collection(this._authCollection).requestPasswordReset(email),
+    ).pipe(
+      catchError((error) => {
+        this._errorService.alert('Unable to send password reset email');
+        console.error(error);
+        return throwError(() => error);
       }),
-      filterNil(),
-      map((auth) => auth.providerId),
+    );
+  }
+
+  confirmPasswordReset(
+    token: string,
+    password: string,
+    passwordConfirm: string,
+  ): Observable<boolean> {
+    return from(
+      this._pb
+        .collection(this._authCollection)
+        .confirmPasswordReset(token, password, passwordConfirm),
+    ).pipe(
+      catchError((error) => {
+        const message =
+          (error as { response?: { message?: string } })?.response?.message ??
+          'Unable to reset password. The link may have expired.';
+        this._errorService.alert(message);
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  requestVerification(email: string): Observable<boolean> {
+    return from(
+      this._pb.collection(this._authCollection).requestVerification(email),
+    ).pipe(
+      catchError((error) => {
+        this._errorService.alert('Unable to send verification email');
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  confirmVerification(token: string): Observable<boolean> {
+    return from(
+      this._pb.collection(this._authCollection).confirmVerification(token),
+    ).pipe(
+      catchError((error) => {
+        this._errorService.alert('Unable to verify email. The link may have expired.');
+        console.error(error);
+        return throwError(() => error);
+      }),
     );
   }
 
@@ -222,8 +251,7 @@ export class AuthService implements OnDestroy {
     if (this.user() === null) {
       return EMPTY;
     }
-    // Remove the check of the authStore.isValid because apparently
-    // a token can be valid in the client but error when used
+
     return from(this._pb.collection(this._authCollection).authRefresh()).pipe(
       catchError((error) => {
         console.error('Error refreshing auth token', error);

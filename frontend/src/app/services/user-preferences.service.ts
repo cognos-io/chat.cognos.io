@@ -56,6 +56,8 @@ export class UserPreferencesService {
 
   private readonly _pinConversation = new Subject<string>();
   private readonly _unpinConversation = new Subject<string>();
+  private readonly _pinModel = new Subject<string>();
+  private readonly _unpinModel = new Subject<string>();
 
   // TODO(ewan): We need a better way to trigger the remote updating of preferences
   // e.g. a global state state trigger that reacts to state changes, sends the newly updated state to the backend and replaces the local state with the response
@@ -119,10 +121,50 @@ export class UserPreferencesService {
             });
           }),
         ),
+      // Pin model, local state
+      (state) =>
+        this._pinModel.pipe(
+          map((modelId) => {
+            return {
+              pinnedModels: this.addIdToList(modelId, state().pinnedModels),
+            };
+          }),
+        ),
+      // Unpin model, local state
+      (state) =>
+        this._unpinModel.pipe(
+          map((modelId) => {
+            return {
+              pinnedModels: state().pinnedModels.filter((id) => id !== modelId),
+            };
+          }),
+        ),
+      // Pin model, remote state
+      (state) =>
+        this._pinModel.pipe(
+          concatMap((modelId) => {
+            return this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              pinnedModels: this.addIdToList(modelId, state().pinnedModels),
+            });
+          }),
+        ),
+      // Unpin model, remote state
+      (state) =>
+        this._unpinModel.pipe(
+          concatMap((modelId) => {
+            return this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              pinnedModels: state().pinnedModels.filter((id) => id !== modelId),
+            });
+          }),
+        ),
     ],
     actionSources: {
       pinConversation: this._pinConversation,
       unpinConversation: this._unpinConversation,
+      pinModel: this._pinModel,
+      unpinModel: this._unpinModel,
     },
   });
 
@@ -133,18 +175,29 @@ export class UserPreferencesService {
   public unpinConversation = (conversationId: string) => {
     this.state.unpinConversation(conversationId);
   };
+  public pinModel = (modelId: string) => {
+    this.state.pinModel(modelId);
+  };
+  public unpinModel = (modelId: string) => {
+    this.state.unpinModel(modelId);
+  };
+
+  // selectors
+  public pinnedModels = this.state.pinnedModels;
 
   // private methods
   private addConversationIdToPinnedConversations(
     conversationId: string,
     pinnedConversations: Array<string>,
   ): Array<string> {
-    // Helper method that only adds the conversationId if not already in the list
-    // Returns a new array so it can be used with the state
-    if (pinnedConversations.includes(conversationId)) {
-      return [...pinnedConversations];
+    return this.addIdToList(conversationId, pinnedConversations);
+  }
+
+  private addIdToList(id: string, list: Array<string>): Array<string> {
+    if (list.includes(id)) {
+      return [...list];
     }
-    return [...pinnedConversations, conversationId];
+    return [...list, id];
   }
 
   private encryptUserPreferencesData(data: UserPreferencesData): Uint8Array {
@@ -259,5 +312,9 @@ export class UserPreferencesService {
 
   public isConversationPinned(conversationId: string): boolean {
     return this.state().pinnedConversations.includes(conversationId);
+  }
+
+  public isModelPinned(modelId: string): boolean {
+    return this.state().pinnedModels.includes(modelId);
   }
 }

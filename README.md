@@ -1,5 +1,35 @@
 # Cognos
 
+## Local development
+
+### Local auth setup
+
+Cognos now uses PocketBase's built-in `users` auth collection locally. No Ory setup is required.
+
+1. Install dependencies:
+   - `just install-dev`
+1. Start the app locally:
+   - `just dev`
+   - or run `just backend` and `just frontend` separately
+1. Open the PocketBase admin UI:
+   - `http://127.0.0.1:8090/_/`
+1. Sign in with an existing PocketBase admin account, or create the first superuser if PocketBase
+   prompts you to
+1. Create a user in the `users` auth collection with:
+   - an email address
+   - a password
+1. Open the frontend and log in with that email and password
+
+Notes:
+
+- the frontend development environment already points at `http://localhost:8090`
+- local backend data is served from `backend/pb_data`
+- on first login, if the user does not yet have a `user_key_pairs` record, the app will prompt for a
+  vault password and create one
+- if you are migrating an existing user, keep the same email address because the vault password hash
+  uses the email as a salt
+- see `docs/ory-to-pocketbase-auth-migration.md` for the Ory to PocketBase migration plan
+
 ## Deployment
 
 1. SSH into Hetzner VPS via Tailscale with the `cognos` user:
@@ -30,10 +60,9 @@ steps to going live for posterity.
     - Verify the `sendmail.cognos.io` domain for sending emails
 - Backups:
     - Create a new backup repository and SSH key pair on BorgBase
-- Ory identity provider:
-    - Production account
-    - Verify cognos.io custom domain
-    - Create new OAuth2 client for Pocketbase backend
+- PocketBase authentication:
+    - Create or migrate users in the `users` auth collection
+    - Use built-in PocketBase email/password auth for app login
 - Backend:
     - Arm VPS on Hetzner:
         - Falkenstein region ([fastest ping](https://cloudpingtest.com/hetzner))
@@ -50,9 +79,9 @@ steps to going live for posterity.
         - Install Tailscale and start with SSH option
             - `tailscale up --ssh`
         - Create `cognos` user with `/home/cognos` directory and using bash shell with strong
-          password (for `sudo`)
+      password (for `sudo`)
         - Follow down
-          [How to secure a linux server](https://github.com/imthenachoman/How-To-Secure-A-Linux-Server)
+      [How to secure a linux server](https://github.com/imthenachoman/How-To-Secure-A-Linux-Server)
             - `sudoers` group (add `cognos` user)
             - NTP client
             - Secure `/proc`
@@ -64,10 +93,10 @@ steps to going live for posterity.
     - Monitoring:
         - Setup Grafana Alloy to monitor server and alert on high usage
     - Pocketbase application:
-        - Git clone from GitHub using a [personal access token]() with read only access to
-          `cognos/chat.cognos.io` repo:
+        - Git clone from GitHub using a personal access token with read only access to
+      `cognos/chat.cognos.io` repo:
             - `git clone https://kisamoto@github.com/cognos/chat.cognos.io.git` and enter access
-              token as password
+        token as password
         - Pull the docker containers in the backend directory:
             - `docker compose pull`
         - Bring up the docker compose infrastructure (Caddy + Pocketbase + Backups)
@@ -95,8 +124,6 @@ steps to going live for posterity.
     - $5/month + usage
 - Ghost
     - $300/year
-- Ory
-    - $770/year
 - Borgbase
     - $24/year
 

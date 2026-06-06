@@ -1,157 +1,246 @@
-import { CommonModule } from '@angular/common';
+import { Dialog } from '@angular/cdk/dialog';
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  HostListener,
   Input,
-  OnDestroy,
+  computed,
   inject,
+  signal,
 } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatListModule } from '@angular/material/list';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterModule } from '@angular/router';
 
-import { Subject, takeUntil } from 'rxjs';
+import {
+  CognosIconButtonComponent,
+  CognosIconComponent,
+  CognosMenuComponent,
+  CognosMenuItem,
+} from '@cognos/ui-angular';
 
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 import { Conversation } from '@app/interfaces/conversation';
 import { ConversationService } from '@app/services/conversation.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
+import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 @Component({
   selector: 'app-conversation-list-item',
   standalone: true,
   imports: [
     RouterModule,
-    MatTooltipModule,
-    MatMenuModule,
-    MatIconModule,
-    CommonModule,
-    MatListModule,
+    CognosIconButtonComponent,
+    CognosIconComponent,
+    CognosMenuComponent,
   ],
-  template: `<a
-      mat-list-item
-      [routerLink]="['c', conversation.record.id]"
-      class="conversation-list-item group"
-      [matTooltip]="conversation.decryptedData.title"
-      matTooltipPosition="after"
-      matTooltipTouchGestures="off"
-    >
-      <p matListItemTitle>{{ conversation.decryptedData.title }}</p>
-      <div
-        matListItemMeta
-        class="conversation-list-item-actions hidden group-hover:flex group-active:flex"
+  template: `
+    <div class="conversation-list-item">
+      <a
+        class="conversation-list-item__link"
+        routerLinkActive="conversation-list-item__link--active"
+        [routerLink]="['/c', conversation.record.id]"
+        [attr.title]="conversation.decryptedData.title"
       >
-        <button
-          mat-icon-button
-          class="actions-button"
-          [matMenuTriggerFor]="menu"
-          aria-label="Open conversation menu"
-        >
-          <mat-icon fontSet="bi" fontIcon="bi-three-dots-vertical"></mat-icon>
-        </button>
-      </div>
-    </a>
-    <mat-menu #menu="matMenu">
-      <button mat-menu-item="" (click)="onPinUnpinConversation(conversation.record.id)">
-        <mat-icon
-          [ngClass]="{
-            pinned: isConversationPinned(conversation.record.id),
-          }"
-          fontSet="bi"
-          [fontIcon]="
-            isConversationPinned(conversation.record.id)
-              ? 'bi-pin-angle-fill'
-              : 'bi-pin-angle'
-          "
-        />
+        <span class="conversation-list-item__title">
+          {{ conversation.decryptedData.title }}
+        </span>
+      </a>
+
+      <div class="conversation-list-item__meta">
         @if (isConversationPinned(conversation.record.id)) {
-          Unpin
-        } @else {
-          Pin
+          <span class="conversation-list-item__pin">
+            <cog-icon name="pin" [size]="14" tone="text-subtlest" />
+          </span>
         }
-      </button>
-      <button mat-menu-item="" (click)="onEditConversation(conversation.record.id)">
-        <mat-icon fontSet="bi" fontIcon="bi-pencil-square"></mat-icon>
-        Edit
-      </button>
-      <button mat-menu-item="" (click)="onDeleteConversation(conversation.record.id)">
-        <mat-icon fontSet="bi" fontIcon="bi-trash3"></mat-icon>
-        Delete
-      </button>
-    </mat-menu> `,
-  styles: `
-    @import 'include-media/dist/include-media';
 
-    @include media('>=tablet') {
-      .conversation-list-item-actions {
-        opacity: 0;
-      }
+        <div class="conversation-list-item__menu-wrap">
+          <cog-icon-button
+            name="more-horizontal"
+            title="Open conversation menu"
+            [selected]="menuOpen()"
+            (click)="toggleMenu($event)"
+          />
 
-      .conversation-list-item {
-        &:hover {
-          .conversation-list-item-actions {
-            opacity: 1;
+          @if (menuOpen()) {
+            <div class="conversation-list-item__menu">
+              <cog-menu [items]="menuItems()" (itemSelect)="onMenuSelect($event)" />
+            </div>
           }
-        }
-      }
+        </div>
+      </div>
+    </div>
+  `,
+  styles: `
+    :host {
+      display: block;
     }
 
     .conversation-list-item {
-      transition: all 150ms ease-in;
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--cog-space-075);
+      min-height: 40px;
     }
 
-    .conversation-list-item-actions {
-      flex-direction: column;
+    .conversation-list-item__link {
+      display: block;
+      min-width: 0;
+      border-radius: var(--cog-radius-sm);
+      color: var(--cog-text);
+      padding: var(--cog-space-100) var(--cog-space-150);
+      text-decoration: none;
+      transition: background-color var(--cog-dur-fast) var(--cog-ease-standard);
+    }
 
-      .actions-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+    .conversation-list-item__link:hover {
+      background: var(--cog-surface-hover);
+    }
+
+    .conversation-list-item__link:focus-visible {
+      outline: 2px solid var(--cog-brand);
+      outline-offset: 2px;
+    }
+
+    .conversation-list-item__link--active {
+      background: var(--cog-selected-bg);
+      color: var(--cog-selected-text);
+      font-weight: var(--cog-fw-semibold);
+    }
+
+    .conversation-list-item__title {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: var(--cog-fs-body);
+      line-height: var(--cog-lh-body);
+    }
+
+    .conversation-list-item__meta {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-075);
+      justify-self: end;
+    }
+
+    .conversation-list-item__pin {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--cog-text-subtlest);
+    }
+
+    .conversation-list-item__menu-wrap {
+      position: relative;
+    }
+
+    .conversation-list-item__menu {
+      position: absolute;
+      top: calc(100% + var(--cog-space-050));
+      right: 0;
+      z-index: 10;
+    }
+
+    @media (min-width: 768px) {
+      .conversation-list-item__menu-wrap {
+        opacity: 0;
+        transition: opacity var(--cog-dur-fast) var(--cog-ease-standard);
       }
-    }
 
-    mat-icon.pinned {
-      @apply text-green-700;
+      .conversation-list-item:hover .conversation-list-item__menu-wrap,
+      .conversation-list-item:focus-within .conversation-list-item__menu-wrap,
+      .conversation-list-item__menu-wrap:has(.cog-icon-button--selected) {
+        opacity: 1;
+      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConversationListItemComponent implements OnDestroy {
+export class ConversationListItemComponent {
   @Input({ required: true }) conversation!: Conversation;
 
+  private readonly _dialog = inject(Dialog);
+  private readonly _elementRef = inject(ElementRef<HTMLElement>);
   private readonly _preferencesService = inject(UserPreferencesService);
-  private readonly _destroyed$ = new Subject<void>();
-  private readonly _dialogService = inject(MatDialog);
-  readonly router = inject(Router);
   private readonly _conversationService = inject(ConversationService);
 
-  ngOnDestroy(): void {
-    this._destroyed$.next();
-    this._destroyed$.complete();
+  readonly menuOpen = signal(false);
+  readonly router = inject(Router);
+
+  readonly menuItems = computed<CognosMenuItem[]>(() => {
+    const conversationId = this.conversation.record.id;
+    const isPinned = this.isConversationPinned(conversationId);
+
+    return [
+      {
+        title: isPinned ? 'Unpin' : 'Pin',
+        icon: 'pin',
+      },
+      {
+        title: 'Edit',
+        icon: 'pencil',
+      },
+      {
+        title: 'Delete',
+        icon: 'x',
+      },
+    ];
+  });
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target;
+
+    if (!(target instanceof Node)) {
+      return;
+    }
+
+    if (!this._elementRef.nativeElement.contains(target)) {
+      this.menuOpen.set(false);
+    }
+  }
+
+  toggleMenu(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.menuOpen.update((open) => !open);
+  }
+
+  onMenuSelect(index: number) {
+    this.menuOpen.set(false);
+
+    switch (index) {
+      case 0:
+        this.onPinUnpinConversation(this.conversation.record.id);
+        break;
+      case 1:
+        this.onEditConversation(this.conversation.record.id);
+        break;
+      case 2:
+        this.onDeleteConversation(this.conversation.record.id);
+        break;
+    }
   }
 
   onEditConversation(conversationId: string) {
-    this._dialogService.open(EditConversationDialogComponent, {
-      data: {
-        conversationId,
-      },
+    this._dialog.open(EditConversationDialogComponent, {
+      ...cognosDialogOptions,
+      data: { conversationId },
     });
   }
 
   onDeleteConversation(conversationId: string) {
-    this._dialogService
+    this._dialog
       .open(ConfirmationDialogComponent, {
+        ...cognosDialogOptions,
         data: {
           message: 'Are you sure you want to delete this conversation?',
         },
       })
-      .afterClosed()
-      .pipe(takeUntil(this._destroyed$))
-      .subscribe((result: boolean) => {
+      .closed.subscribe((result) => {
         if (result) {
           this._conversationService.deleteConversation$.next(conversationId);
           this.router.navigate(['/']);

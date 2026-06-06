@@ -4,12 +4,12 @@ import {
   computed,
   input,
   output,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-button.component";
+import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-button.component';
 
 @Component({
-  selector: "cog-drawer",
+  selector: 'cog-drawer',
   standalone: true,
   imports: [CognosIconButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,9 +23,17 @@ import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-but
           (click)="onClose()"
         ></button>
 
-        <aside [class]="drawerClass()" aria-modal="true" role="dialog">
+        <aside
+          [class]="drawerClass()"
+          [attr.aria-label]="title() || null"
+          aria-modal="true"
+          role="dialog"
+        >
           <header class="cog-drawer__header">
-            <h2 class="cog-drawer__title">{{ title() }}</h2>
+            <ng-content select="[cogDrawerHeader]" />
+            @if (title() && !hideTitle()) {
+              <h2 class="cog-drawer__title">{{ title() }}</h2>
+            }
             <cog-icon-button name="x" size="lg" title="Close" (click)="onClose()" />
           </header>
 
@@ -121,18 +129,19 @@ import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-but
 })
 export class CognosDrawerComponent {
   readonly open = input(false);
-  readonly title = input("Navigation");
+  readonly title = input('Navigation');
+  readonly hideTitle = input(false);
   readonly stickyFooter = input(false);
   readonly close = output<void>();
 
   protected readonly drawerClass = computed(() => {
-    const classes = ["cog-drawer__panel"];
+    const classes = ['cog-drawer__panel'];
 
     if (this.stickyFooter()) {
-      classes.push("cog-drawer__panel--footer");
+      classes.push('cog-drawer__panel--footer');
     }
 
-    return classes.join(" ");
+    return classes.join(' ');
   });
 
   protected onClose(): void {

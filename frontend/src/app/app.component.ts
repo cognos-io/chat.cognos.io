@@ -5,12 +5,14 @@ import { Router, RouterOutlet } from '@angular/router';
 
 import { Observable, fromEvent, interval, merge, repeat, takeUntil } from 'rxjs';
 
+import { CognosToastHostComponent } from '@cognos/ui-angular';
+
 import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet],
+  imports: [CommonModule, RouterOutlet, CognosToastHostComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
@@ -32,7 +34,6 @@ export class AppComponent {
       return interval(graceTimeMs).pipe(takeUntil(activityIndicatorEvents$), repeat());
     };
 
-    // Logout user after 30 mins of inactivity
     browserInactive$(30 * 60 * 1000)
       .pipe(takeUntilDestroyed())
       .subscribe(() => {

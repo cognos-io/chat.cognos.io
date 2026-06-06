@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 
 import { ConfirmationDialogComponent } from './confirmation-dialog.component';
 
@@ -12,7 +12,11 @@ describe('ConfirmationDialogComponent', () => {
       imports: [ConfirmationDialogComponent],
       providers: [
         {
-          provide: MAT_DIALOG_DATA,
+          provide: DialogRef,
+          useValue: { close: vi.fn() },
+        },
+        {
+          provide: DIALOG_DATA,
           useValue: {
             message: 'Are you sure?',
           },

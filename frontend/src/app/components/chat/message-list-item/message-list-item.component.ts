@@ -1,14 +1,15 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
+import { Dialog } from '@angular/cdk/dialog';
 import { DatePipe } from '@angular/common';
-import { Component, Input, OnDestroy, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
-
-import { Subject, takeUntil } from 'rxjs';
+import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
 
 import { MarkdownComponent } from 'ngx-markdown';
+
+import {
+  CognosAssistantMessageComponent,
+  CognosIconButtonComponent,
+  CognosUserMessageComponent,
+} from '@cognos/ui-angular';
 
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { Agent } from '@app/interfaces/agent';
@@ -17,186 +18,211 @@ import { Model } from '@app/interfaces/model';
 import { AgentService } from '@app/services/agent.service';
 import { MessageService } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
+import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 @Component({
   selector: 'app-message-list-item',
   standalone: true,
   imports: [
     MarkdownComponent,
-    MatIconModule,
-    MatButtonModule,
-    MatTooltipModule,
     ClipboardModule,
-    DatePipe,
-    MatDialogModule,
+    CognosAssistantMessageComponent,
+    CognosUserMessageComponent,
+    CognosIconButtonComponent,
   ],
   template: `
     @if (message) {
       <li
-        class="item-grid group"
+        class="message-list-item"
         [id]="message.record_id"
         [attr.data-agent-id]="message.decryptedData.agent_id"
         [attr.data-model-id]="message.decryptedData.model_id"
         [attr.data-owner-id]="message.decryptedData.owner_id"
         [attr.data-parent-id]="message.parentMessageId"
       >
-        <div
-          class="flex h-12 w-12 flex-none items-center justify-center justify-self-center rounded-full bg-gray-50"
-        >
-          <mat-icon fontSet="bi" [fontIcon]="icon"></mat-icon>
-        </div>
-        <div class="item-content prose flex items-end justify-between">
-          <div>
-            @if (isMessageFromUser(message.decryptedData)) {
-              <span class="font-semibold">You</span>
-            } @else {
-              @if (agent) {
-                <span class="font-semibold">{{ agent.name }}</span>
-                @if (model) {
-                  <span class="italic text-gray-500"> powered by </span>
-                }
+        @if (isMessageFromUser(message.decryptedData)) {
+          <div class="message-list-item__user">
+            <cog-user-message [meta]="userMeta()">
+              @if (message.decryptedData.content) {
+                <markdown emoji katex>
+                  {{ message.decryptedData.content }}
+                </markdown>
+              } @else {
+                <p class="message-list-item__empty">This message is empty.</p>
               }
-              @if (model) {
-                <span class="font-semibold">{{ model.name }}</span>
+            </cog-user-message>
+          </div>
+        } @else {
+          <div class="message-list-item__assistant">
+            <cog-assistant-message
+              [model]="assistantLabel()"
+              [showActions]="false"
+              [time]="messageTime()"
+            >
+              @if (message.decryptedData.content) {
+                <markdown emoji katex>
+                  {{ message.decryptedData.content }}
+                </markdown>
+              } @else {
+                <p class="message-list-item__empty">
+                  This message is empty or the AI did not generate a response, please try
+                  again.
+                </p>
               }
+            </cog-assistant-message>
+          </div>
+        }
+
+        @if (message.decryptedData.content || message.record_id) {
+          <div class="message-list-item__actions">
+            @if (message.decryptedData.content) {
+              <cog-icon-button
+                name="copy"
+                title="Copy to clipboard"
+                [cdkCopyToClipboard]="message.decryptedData.content"
+              />
+            }
+
+            @if (message.expires) {
+              <cog-icon-button
+                name="pin"
+                title="Keep this temporary message"
+                (click)="onKeepMessage(message)"
+              />
+            }
+
+            @if (message.record_id) {
+              <cog-icon-button
+                name="x"
+                title="Delete message"
+                (click)="onDeleteMessage(message)"
+              />
             }
           </div>
-          <span
-            class="text-xs text-gray-500"
-            [attr.data-timestamp]="message.createdAt.getTime()"
-            >{{ message.createdAt | date: 'short' }}</span
-          >
-        </div>
-        <article class="item-content prose prose-headings:text-xl prose-th:text-base">
-          @if (message.decryptedData.content) {
-            <markdown emoji katex>
-              {{ message.decryptedData.content }}
-            </markdown>
-          } @else {
-            <p i18n class="italic text-gray-500">
-              This message is empty or the AI did not generate a response, please try
-              again.
-            </p>
-          }
-        </article>
-        <div class="item-content prose flex gap-2 opacity-0 group-hover:opacity-100">
-          @if (message.decryptedData.content) {
-            <button
-              mat-icon-button
-              matTooltip="Copy to clipboard"
-              aria-label="Button that copies the message to the clipboard"
-              [cdkCopyToClipboard]="message.decryptedData.content"
-            >
-              <mat-icon fontSet="bi" fontIcon="bi-clipboard"></mat-icon>
-            </button>
-          }
-          @if (message.record_id) {
-            <div class="ml-auto flex gap-2">
-              @if (message.expires) {
-                <button
-                  mat-icon-button
-                  matTooltip="Keep this temporary message. It will not be automatically deleted any more."
-                  aria-label="Button that keeps this temporary message"
-                  (click)="onKeepMessage(message)"
-                >
-                  <mat-icon fontSet="bi" fontIcon="bi-life-preserver"></mat-icon>
-                </button>
-              }
-              <!-- <button
-                  mat-icon-button
-                  matTooltip="Flag or report message"
-                  aria-label="Button that enables flagging and reporting of messages"
-                >
-                  <mat-icon fontSet="bi" fontIcon="bi-flag"></mat-icon>
-                </button>
-                <button
-                  mat-icon-button
-                  matTooltip="Reply to this message"
-                  aria-label="Button that enables replying to this message specifically"
-                >
-                  <mat-icon fontSet="bi" fontIcon="bi-reply"></mat-icon>
-                </button> -->
-              <button
-                mat-icon-button
-                matTooltip="Delete message"
-                aria-label="Button that deletes this message"
-                (click)="onDeleteMessage(message)"
-              >
-                <mat-icon fontSet="bi" fontIcon="bi-trash3"></mat-icon>
-              </button>
-            </div>
-          }
-        </div>
+        }
       </li>
     }
   `,
   styles: `
-    .item-grid {
-      @apply grid w-full auto-rows-max grid-cols-6 items-center gap-y-2 py-2 lg:grid-cols-8;
+    :host {
+      display: block;
     }
 
-    .item-content {
-      @apply col-span-5 col-end-7 lg:col-span-7 lg:col-end-9;
+    .message-list-item {
+      display: grid;
+      gap: var(--cog-space-100);
+      padding-block: var(--cog-space-100);
+    }
+
+    .message-list-item__assistant,
+    .message-list-item__user {
+      min-width: 0;
+    }
+
+    .message-list-item__actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--cog-space-050);
+      opacity: 0;
+      transition: opacity var(--cog-dur-fast) var(--cog-ease-standard);
+    }
+
+    .message-list-item:hover .message-list-item__actions,
+    .message-list-item:focus-within .message-list-item__actions {
+      opacity: 1;
+    }
+
+    .message-list-item__empty {
+      margin: 0;
+      color: var(--cog-text-subtlest);
+      font-style: italic;
+    }
+
+    markdown {
+      color: inherit;
+    }
+
+    markdown :where(p, ul, ol, pre, blockquote) {
+      margin: 0 0 var(--cog-space-150);
+    }
+
+    markdown :where(p:last-child, ul:last-child, ol:last-child, pre:last-child, blockquote:last-child) {
+      margin-bottom: 0;
+    }
+
+    markdown :where(pre) {
+      overflow: auto;
+      border-radius: var(--cog-radius-sm);
+    }
+
+    markdown :where(code):not(pre code) {
+      font-family: var(--cog-font-mono);
+      font-size: 0.92em;
     }
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MessageListItemComponent implements OnDestroy {
+export class MessageListItemComponent {
   private readonly _modelService = inject(ModelService);
   private readonly _agentService = inject(AgentService);
   private readonly _messageService = inject(MessageService);
-  private readonly _dialogService = inject(MatDialog);
-  private readonly _destroyed$ = new Subject<void>();
+  private readonly _dialog = inject(Dialog);
 
   @Input() message?: Message;
 
-  // exported for use in template
   isMessageFromUser = isMessageFromUser;
 
-  get icon(): string {
-    if (!this.message) {
-      return 'bi-question-circle';
-    }
-
-    if (isMessageFromUser(this.message.decryptedData)) {
-      return 'bi-person';
-    }
-
-    return 'bi-robot';
-  }
-
   get agent(): Agent | undefined {
-    const agent_id = this.message?.decryptedData.agent_id;
-    if (!this.message || !agent_id) {
+    const agentId = this.message?.decryptedData.agent_id;
+    if (!this.message || !agentId) {
       return undefined;
     }
 
-    return this._agentService.getAgent(agent_id)();
+    return this._agentService.getAgent(agentId)();
   }
 
   get model(): Model | undefined {
-    const model_id = this.message?.decryptedData.model_id;
-    if (!this.message || !model_id) {
+    const modelId = this.message?.decryptedData.model_id;
+    if (!this.message || !modelId) {
       return undefined;
     }
 
-    return this._modelService.getModel(model_id)();
+    return this._modelService.getModel(modelId)();
   }
 
-  ngOnDestroy(): void {
-    this._destroyed$.next();
-    this._destroyed$.complete();
+  assistantLabel() {
+    if (this.agent && this.model) {
+      return `${this.agent.name} · ${this.model.name}`;
+    }
+
+    return this.agent?.name ?? this.model?.name ?? 'Cognos';
+  }
+
+  userMeta() {
+    if (!this.message) {
+      return 'Encrypted';
+    }
+
+    return `Encrypted · ${new DatePipe('en-GB').transform(this.message.createdAt, 'short') ?? ''}`;
+  }
+
+  messageTime() {
+    if (!this.message) {
+      return '';
+    }
+
+    return new DatePipe('en-GB').transform(this.message.createdAt, 'short') ?? '';
   }
 
   onDeleteMessage(message: Message) {
-    this._dialogService
+    this._dialog
       .open(ConfirmationDialogComponent, {
+        ...cognosDialogOptions,
         data: {
           message: 'Are you sure you want to delete this message?',
         },
       })
-      .afterClosed()
-      .pipe(takeUntil(this._destroyed$))
-      .subscribe((confirmed) => {
+      .closed.subscribe((confirmed) => {
         if (confirmed) {
           this._messageService.deleteMessage(message);
         }
