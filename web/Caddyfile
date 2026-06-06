@@ -19,6 +19,13 @@ api.cognos.io {
 		header Origin https://app.cognos.io https://chat.cognos.io
 		header Access-Control-Request-Method *
 	}
+	header {
+		Cross-Origin-Opener-Policy same-origin
+		Cross-Origin-Resource-Policy same-site
+		Referrer-Policy no-referrer
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Content-Type-Options nosniff
+	}
 	header @allowed_origin {
 		Access-Control-Allow-Origin {header.Origin}
 		Access-Control-Allow-Headers Authorization, Content-Type
