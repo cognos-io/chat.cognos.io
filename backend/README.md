@@ -120,17 +120,6 @@ http POST :8090/api/v1/conversations/{{CONVERSATION_ID}}/complete \
     messages:='[{"role": "user", "content": "Say this is a test!"}]'
 ```
 
-### Legacy compatibility route
-
-The old OpenAI-compatible route still exists during the migration:
-
-```text
-http POST :8090/v1/chat/completions \
-    Authorization:"Bearer $AUTH_TOKEN" \
-    model="openai:gpt-4o" \
-    messages:='[{"role": "user", "content": "Say this is a test!"}]'
-```
-
 ## Encryption benchmarks
 
 To decide on an encryption strategy for messages we wrote benchmarks to compare the following

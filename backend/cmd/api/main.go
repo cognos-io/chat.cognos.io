@@ -67,7 +67,6 @@ func bindAppHooks(
 ) {
 	var (
 		app                    = params.App
-		config                 = params.Config
 		openaiClient           = params.OpenaiClient
 		cloudflareOpenAIClient = params.CloudflareOpenAIClient
 		googleGeminiClient     = params.GoogleGeminiClient
@@ -117,10 +116,8 @@ func bindAppHooks(
 			e,
 			app,
 			app.Logger(),
-			config,
 			upstreamRepo,
 			messageRepo,
-			keyPairRepo,
 			aiAgentRepo,
 			conversationRepo,
 			billingService,
