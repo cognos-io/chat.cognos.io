@@ -92,6 +92,7 @@ export class VaultService {
   private readonly pbUserKeyPairsCollection = 'user_key_pairs';
 
   readonly generatedAccountKey = signal<string | null>(null);
+  readonly wasLocked = signal(false);
 
   // sources
   readonly unlockRequest$ = new Subject<UnlockRequest>();
@@ -109,7 +110,10 @@ export class VaultService {
             const keyPairRecord = state().keyPairRecord;
             if (keyPairRecord === null) {
               return this.createInitialUserKeyPair(request).pipe(
-                tap(() => this.clearUnlockError()),
+                tap(() => {
+                  this.wasLocked.set(false);
+                  this.clearUnlockError();
+                }),
                 map((keyPair) => ({ keyPair })),
                 catchError(() => {
                   this.unlockError.set(
@@ -124,7 +128,10 @@ export class VaultService {
             }
 
             return this.unlockExistingUserKeyPair(request, keyPairRecord).pipe(
-              tap(() => this.clearUnlockError()),
+              tap(() => {
+                this.wasLocked.set(false);
+                this.clearUnlockError();
+              }),
               map((keyPair) => ({ keyPair })),
               catchError(() => {
                 this.unlockError.set(
@@ -160,6 +167,7 @@ export class VaultService {
             this._trustedUnlockService.clearUnlockKey(this._authService.user()?.['id']),
           ).pipe(
             map(() => {
+              this.wasLocked.set(true);
               this.clearUnlockError();
               return {
                 keyPair: undefined,
@@ -175,6 +183,7 @@ export class VaultService {
           ).pipe(
             map(() => {
               this.generatedAccountKey.set(null);
+              this.wasLocked.set(false);
               this.clearUnlockError();
               return {
                 keyPair: undefined,

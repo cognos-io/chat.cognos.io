@@ -13,6 +13,7 @@ import {
   CognosIconComponent,
   CognosLozengeComponent,
   CognosTextFieldComponent,
+  CognosToastService,
 } from '@cognos/ui-angular';
 
 import { ConversationListItemComponent } from '@app/components/chat/conversation-list/conversation-list-item/conversation-list-item.component';
@@ -48,6 +49,7 @@ export class ChatComponent {
   private readonly _deviceService = inject(DeviceService);
   private readonly _dialog = inject(Dialog);
   private readonly _messageService = inject(MessageService);
+  private readonly _toastService = inject(CognosToastService);
   private readonly _vaultService = inject(VaultService);
 
   readonly router = inject(Router);
@@ -125,6 +127,13 @@ export class ChatComponent {
   onLock() {
     this.drawerOpen.set(false);
     this._vaultService.lock();
+    this._toastService.notify({
+      title: 'Account locked',
+      msg: 'This device now needs your password and Account Key to unlock again.',
+      tone: 'info',
+      icon: 'lock',
+      duration: 4200,
+    });
   }
 
   onLogout() {

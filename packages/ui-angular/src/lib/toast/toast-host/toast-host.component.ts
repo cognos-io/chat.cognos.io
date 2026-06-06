@@ -1,14 +1,10 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosToastService } from "../toast.service";
+import { CognosIconComponent } from '../../icon/icon.component';
+import { CognosToastService } from '../toast.service';
 
 @Component({
-  selector: "cog-toast-host",
+  selector: 'cog-toast-host',
   standalone: true,
   imports: [CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,13 +22,23 @@ import { CognosToastService } from "../toast.service";
               <div class="cog-toast__msg">{{ toast.msg }}</div>
             }
             @if (toast.action) {
-              <button class="cog-toast__action" type="button" (click)="toastService.runAction(toast)">
+              <button
+                class="cog-toast__action"
+                type="button"
+                (click)="toastService.runAction(toast)"
+              >
                 {{ toast.action.label }}
               </button>
             }
           </div>
 
-          <button class="cog-toast__dismiss" type="button" aria-label="Dismiss" title="Dismiss" (click)="toastService.dismiss(toast.id)">
+          <button
+            class="cog-toast__dismiss"
+            type="button"
+            aria-label="Dismiss"
+            title="Dismiss"
+            (click)="toastService.dismiss(toast.id)"
+          >
             <cog-icon name="x" [size]="14" tone="text-subtlest" />
           </button>
         </div>
@@ -45,7 +51,7 @@ import { CognosToastService } from "../toast.service";
         position: fixed;
         inset-inline: 0;
         inset-block-end: 26px;
-        z-index: 400;
+        z-index: 1200;
         pointer-events: none;
       }
 
@@ -160,18 +166,20 @@ import { CognosToastService } from "../toast.service";
 export class CognosToastHostComponent {
   protected readonly toastService = inject(CognosToastService);
 
-  protected toastClass(tone: "success" | "info" | "danger"): string {
+  protected toastClass(tone: 'success' | 'info' | 'danger'): string {
     return `cog-toast cog-toast--${tone}`;
   }
 
-  protected iconTone(tone: "success" | "info" | "danger"): "success" | "brand" | "danger" {
+  protected iconTone(
+    tone: 'success' | 'info' | 'danger',
+  ): 'success' | 'brand' | 'danger' {
     switch (tone) {
-      case "danger":
-        return "danger";
-      case "info":
-        return "brand";
+      case 'danger':
+        return 'danger';
+      case 'info':
+        return 'brand';
       default:
-        return "success";
+        return 'success';
     }
   }
 }

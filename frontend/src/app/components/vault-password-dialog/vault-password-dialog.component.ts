@@ -10,6 +10,8 @@ import {
 import {
   CognosButtonComponent,
   CognosDialogSurfaceComponent,
+  CognosIconComponent,
+  CognosLozengeComponent,
 } from '@cognos/ui-angular';
 
 import { environment } from '@environments/environment';
@@ -32,11 +34,35 @@ const validateUnlockForm = (
 @Component({
   selector: 'app-vault-password-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule, CognosDialogSurfaceComponent, CognosButtonComponent],
+  imports: [
+    ReactiveFormsModule,
+    CognosDialogSurfaceComponent,
+    CognosButtonComponent,
+    CognosIconComponent,
+    CognosLozengeComponent,
+  ],
   template: `
     <cog-dialog-surface [title]="title()" [footer]="false" [dismissible]="false">
       <div class="vault-password-dialog">
         <div class="vault-password-dialog__copy">
+          @if (!vaultService.isNewKeyPair() && vaultService.wasLocked()) {
+            <div class="vault-password-dialog__status-card">
+              <span class="vault-password-dialog__status-badge">
+                <cog-icon name="lock" [size]="16" tone="brand"></cog-icon>
+              </span>
+              <div class="vault-password-dialog__status-copy">
+                <div class="vault-password-dialog__status-title">
+                  <cog-lozenge tone="blue">Locked</cog-lozenge>
+                  <span>Account locked on this device</span>
+                </div>
+                <p>
+                  Unlock to continue. This lock only clears local trusted access and
+                  does not sign you out.
+                </p>
+              </div>
+            </div>
+          }
+
           @if (vaultService.isNewKeyPair()) {
             <p>
               Cognos generated a one-time Account Key for this encrypted backup. Save it
@@ -61,6 +87,11 @@ const validateUnlockForm = (
               Enter your account password and Account Key to unlock this device. If you
               trust this browser, Cognos can keep a locally wrapped unlock blob in
               IndexedDB so you are not prompted again on every visit.
+            </p>
+            <p>
+              The trusted-device shortcut only applies to this browser profile and can
+              be cleared at any time by locking the account, logging out, or clearing
+              browser storage.
             </p>
           }
         </div>
@@ -164,6 +195,46 @@ const validateUnlockForm = (
       text-wrap: pretty;
     }
 
+    .vault-password-dialog__status-card {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: var(--cog-space-125);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface-raised, var(--cog-surface));
+      padding: var(--cog-space-150);
+    }
+
+    .vault-password-dialog__status-badge {
+      display: inline-flex;
+      width: 32px;
+      height: 32px;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--cog-radius-pill);
+      background: var(--cog-info-bg);
+    }
+
+    .vault-password-dialog__status-copy {
+      display: grid;
+      gap: var(--cog-space-050);
+    }
+
+    .vault-password-dialog__status-copy p {
+      margin: 0;
+    }
+
+    .vault-password-dialog__status-title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--cog-space-075);
+      color: var(--cog-text);
+      font-size: var(--cog-fs-body-sm);
+      font-weight: var(--cog-fw-semibold);
+      line-height: var(--cog-lh-body-sm);
+    }
+
     .vault-password-dialog__account-key-card {
       display: grid;
       gap: var(--cog-space-100);
@@ -242,9 +313,13 @@ export class VaultPasswordDialogComponent {
   readonly vaultService = inject(VaultService);
   private readonly fb = inject(FormBuilder);
 
-  readonly title = computed(() =>
-    this.vaultService.isNewKeyPair() ? 'Secure your encrypted backup' : 'Unlock backup',
-  );
+  readonly title = computed(() => {
+    if (this.vaultService.isNewKeyPair()) {
+      return 'Secure your encrypted backup';
+    }
+
+    return this.vaultService.wasLocked() ? 'Account locked' : 'Unlock backup';
+  });
   readonly generatedAccountKey = computed(
     () => this.vaultService.generatedAccountKey() ?? '',
   );

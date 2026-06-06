@@ -5,6 +5,8 @@ import { Router, provideRouter } from '@angular/router';
 
 import { Subject } from 'rxjs';
 
+import { CognosToastService } from '@cognos/ui-angular';
+
 import { Conversation } from '@app/interfaces/conversation';
 import { Message } from '@app/interfaces/message';
 
@@ -19,6 +21,10 @@ describe('ChatComponent', () => {
   let component: ChatComponent;
   let router: Router;
   let dialogOpen: ReturnType<typeof vi.fn>;
+
+  const toastService = {
+    notify: vi.fn(),
+  };
 
   const temporaryConversation = signal(false);
   const selectedConversation = signal<Conversation | undefined>(undefined);
@@ -65,6 +71,7 @@ describe('ChatComponent', () => {
         { provide: DeviceService, useValue: { isMobile: signal(false) } },
         { provide: MessageService, useValue: messageService },
         { provide: Dialog, useValue: { open: dialogOpen } },
+        { provide: CognosToastService, useValue: toastService },
         { provide: VaultService, useValue: vaultService },
       ],
     }).compileComponents();
@@ -112,6 +119,13 @@ describe('ChatComponent', () => {
     component.onLock();
 
     expect(vaultService.lock).toHaveBeenCalledTimes(1);
+    expect(toastService.notify).toHaveBeenCalledWith({
+      title: 'Account locked',
+      msg: 'This device now needs your password and Account Key to unlock again.',
+      tone: 'info',
+      icon: 'lock',
+      duration: 4200,
+    });
     expect(component.drawerOpen()).toBe(false);
     expect(router.navigate).not.toHaveBeenCalled();
   });

@@ -10,12 +10,14 @@ describe('VaultPasswordDialogComponent', () => {
 
   const unlockError = signal<string | null>(null);
   const generatedAccountKey = signal<string | null>(null);
+  const wasLocked = signal(false);
   const unlockRequest$ = { next: vi.fn() };
   const clearUnlockError = vi.fn();
 
   beforeEach(async () => {
     unlockError.set(null);
     generatedAccountKey.set(null);
+    wasLocked.set(false);
     unlockRequest$.next.mockReset();
     clearUnlockError.mockReset();
 
@@ -27,6 +29,7 @@ describe('VaultPasswordDialogComponent', () => {
           useValue: {
             generatedAccountKey,
             isNewKeyPair: signal(false),
+            wasLocked,
             unlockError,
             unlockRequest$,
             clearUnlockError,
@@ -47,6 +50,16 @@ describe('VaultPasswordDialogComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Incorrect backup password');
+  });
+
+  it('shows a locked title when the account was explicitly locked', () => {
+    wasLocked.set(true);
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'Account locked on this device',
+    );
   });
 
   it('clears the unlock error before submitting unlock details', () => {
