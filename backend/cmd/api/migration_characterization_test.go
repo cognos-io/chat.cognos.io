@@ -107,6 +107,10 @@ func TestSoftDeleteCopiesDeletedRecord(t *testing.T) {
 			if got := deletedRecords[0].GetString("record"); !strings.Contains(got, `"id":"`+recordID+`"`) {
 				t.Fatalf("deletedRecords[0].GetString(record) = %q, want record JSON containing deleted id %q", got, recordID)
 			}
+
+			if got := deletedRecords[0].GetDateTime("deleted_at"); got.IsZero() {
+				t.Fatal("deletedRecords[0].GetDateTime(deleted_at) unexpectedly zero")
+			}
 		},
 	}
 

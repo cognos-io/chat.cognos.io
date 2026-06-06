@@ -4,10 +4,14 @@ import (
 	"slices"
 	"time"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 )
 
-const deletedCollectionName = "deleted"
+const (
+	deletedCollectionName         = "deleted"
+	deletedRecordCleanupBatchSize = 500
+)
 
 var softDeleteExcludedCollections = []string{
 	deletedCollectionName,
@@ -42,26 +46,33 @@ func NewPocketBaseDeletedRecordRepo(app core.App) *PocketBaseDeletedRecordRepo {
 }
 
 func (r *PocketBaseDeletedRecordRepo) DeleteCreatedBefore(cutoff time.Time) error {
-	records, err := r.app.FindRecordsByFilter(
-		r.collection.Name,
-		"",
-		"",
-		500,
-		0,
-	)
-	if err != nil {
-		return err
-	}
+	cutoff = cutoff.UTC()
 
-	for _, record := range records {
-		if !record.GetDateTime("created").Time().Before(cutoff.UTC()) {
-			continue
-		}
-
-		if err := r.app.Delete(record); err != nil {
+	for {
+		records, err := r.app.FindRecordsByFilter(
+			r.collection.Name,
+			"deleted_at != '' && deleted_at < {:cutoff}",
+			"",
+			deletedRecordCleanupBatchSize,
+			0,
+			dbx.Params{"cutoff": cutoff},
+		)
+		if err != nil {
 			return err
 		}
-	}
 
-	return nil
+		if len(records) == 0 {
+			return nil
+		}
+
+		for _, record := range records {
+			if err := r.app.Delete(record); err != nil {
+				return err
+			}
+		}
+
+		if len(records) < deletedRecordCleanupBatchSize {
+			return nil
+		}
+	}
 }

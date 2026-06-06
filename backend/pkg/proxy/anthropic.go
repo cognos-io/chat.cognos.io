@@ -93,10 +93,10 @@ func (a *Anthropic) ChatCompletion(
 		// TODO(ewan): Implement streaming
 	}
 
-	resp, err := a.client.CreateMessages(
-		e.Request.Context(),
-		anthropicReq,
-	)
+	ctx, cancel := withUpstreamTimeout(e.Request.Context(), req.Stream)
+	defer cancel()
+
+	resp, err := a.client.CreateMessages(ctx, anthropicReq)
 	if err != nil {
 		return response, plainTextResponseMessage, err
 	}

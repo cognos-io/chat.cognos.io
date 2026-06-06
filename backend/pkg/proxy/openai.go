@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -50,10 +51,13 @@ func (o *OpenAI) ChatCompletion(
 	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
+	ctx, cancel := withUpstreamTimeout(e.Request.Context(), req.Stream)
+	defer cancel()
+
 	if req.Stream {
-		return StreamOpenAIResponse(e, req, o.logger, o.client)
+		return StreamOpenAIResponse(ctx, e, req, o.logger, o.client)
 	}
-	return ForwardOpenAIResponse(e, req, o.logger, o.client)
+	return ForwardOpenAIResponse(ctx, req, o.client)
 }
 
 func NewOpenAI(
@@ -85,16 +89,14 @@ func OpenAIModelMapper(model string) (string, error) {
 }
 
 func StreamOpenAIResponse(
+	ctx context.Context,
 	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,
 	logger *slog.Logger,
 	client *openai.Client,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
 	emptyResponse := openai.ChatCompletionResponse{}
-	stream, err := client.CreateChatCompletionStream(
-		e.Request.Context(),
-		req,
-	)
+	stream, err := client.CreateChatCompletionStream(ctx, req)
 	if err != nil {
 		return emptyResponse, plainTextResponseMessage, err
 	}
@@ -152,17 +154,13 @@ func StreamOpenAIResponse(
 }
 
 func ForwardOpenAIResponse(
-	e *core.RequestEvent,
+	ctx context.Context,
 	req openai.ChatCompletionRequest,
-	logger *slog.Logger,
 	client *openai.Client,
 ) (resp openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
 	emptyResponse := openai.ChatCompletionResponse{}
 
-	resp, err = client.CreateChatCompletion(
-		e.Request.Context(),
-		req,
-	)
+	resp, err = client.CreateChatCompletion(ctx, req)
 	if err != nil {
 		return emptyResponse, plainTextResponseMessage, err
 	}

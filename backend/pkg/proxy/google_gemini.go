@@ -89,8 +89,11 @@ func (g *GoogleGemini) ChatCompletion(
 		// TODO(ewan): Implement streaming
 	}
 
+	ctx, cancel := withUpstreamTimeout(e.Request.Context(), req.Stream)
+	defer cancel()
+
 	resp, err := cs.SendMessage(
-		e.Request.Context(),
+		ctx,
 		// Send the last message as the main message
 		genai.Text(req.Messages[len(req.Messages)-1].Content),
 	)

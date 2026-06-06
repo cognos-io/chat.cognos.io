@@ -49,10 +49,13 @@ func (d *DeepInfra) ChatCompletion(
 	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
+	ctx, cancel := withUpstreamTimeout(e.Request.Context(), req.Stream)
+	defer cancel()
+
 	if req.Stream {
-		return StreamOpenAIResponse(e, req, d.logger, d.client)
+		return StreamOpenAIResponse(ctx, e, req, d.logger, d.client)
 	}
-	return ForwardOpenAIResponse(e, req, d.logger, d.client)
+	return ForwardOpenAIResponse(ctx, req, d.client)
 }
 
 func NewDeepInfra(client *openai.Client, logger *slog.Logger) (*DeepInfra, error) {

@@ -55,10 +55,13 @@ func (cf *Cloudflare) ChatCompletion(
 	e *core.RequestEvent,
 	req openai.ChatCompletionRequest,
 ) (response openai.ChatCompletionResponse, plainTextResponseMessage string, err error) {
+	ctx, cancel := withUpstreamTimeout(e.Request.Context(), req.Stream)
+	defer cancel()
+
 	if req.Stream {
-		return StreamOpenAIResponse(e, req, cf.logger, cf.client)
+		return StreamOpenAIResponse(ctx, e, req, cf.logger, cf.client)
 	}
-	return ForwardOpenAIResponse(e, req, cf.logger, cf.client)
+	return ForwardOpenAIResponse(ctx, req, cf.client)
 }
 
 func NewCloudflare(

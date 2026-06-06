@@ -3,6 +3,7 @@ package hooks
 import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/forms"
+	"github.com/pocketbase/pocketbase/tools/types"
 )
 
 func SoftDelete(app core.App) {
@@ -23,6 +24,7 @@ func SoftDelete(app core.App) {
 		form := forms.NewRecordUpsert(app, record)
 		form.Load(map[string]any{
 			"collection": e.Record.Collection().Name,
+			"deleted_at": types.NowDateTime(),
 			"record":     e.Record,
 		})
 
