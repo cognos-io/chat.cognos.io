@@ -366,7 +366,7 @@ cadence.
   fields) into PocketBase's ApiError. In dev mode this serializes to the
   response; in prod it logs. Fix: sanitize wrapper: fmt.Errorf("upstream
   provider error: %s", providerName), log details separately with redaction.
-- M-8. /health performs DNS + TCP + HTTPS GET to www.example.com on every
+- M-8. /health performs DNS + TCP + HTTPS GET to <https://www.example.com> on every
   probe, unauthenticated. SSRF/amplification primitive and exposes outbound
   network egress. Fix: cache or remove the external check.
 - M-9. /metrics endpoint behind only a Caddy rewrite (rewrite /metrics /404)
@@ -562,7 +562,7 @@ Sprint 4 — process & program (ongoing)
 - Live deployment configuration on Hetzner — ufw status and Hetzner LB rules
   are documented in the README but not verified against the real host. Run ss
   -ltnp and hetzner-cli load-balancer describe to confirm.
-- Cloudflare Pages live headers — verify with curl -I https://app.cognos.io/
+- Cloudflare Pages live headers — verify with curl -I <https://app.cognos.io/>
   what is actually served vs what is in this repo (which is: nothing).
 - Whether the cognosio/api.cognos.io :latest image in production actually
   matches this branch's source.
