@@ -106,6 +106,17 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(),
 	)
 
+	e.Router.POST("/v1/auth/logout", func(re *core.RequestEvent) error {
+		re.Auth.RefreshTokenKey()
+		if err := app.Save(re.Auth); err != nil {
+			return err
+		}
+
+		return re.NoContent(http.StatusNoContent)
+	}).Bind(
+		apis.RequireAuth(),
+	)
+
 	e.Router.GET(
 		"/health",
 		func(re *core.RequestEvent) error {

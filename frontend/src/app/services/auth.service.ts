@@ -9,6 +9,7 @@ import {
   Observable,
   Subject,
   catchError,
+  finalize,
   from,
   map,
   of,
@@ -60,7 +61,7 @@ export class AuthService implements OnDestroy {
     switchMap(() => this.loginWithOry()),
   );
   private readonly userLoggingOut$ = this.logout$.pipe(
-    switchMap(() => of(this.logout())),
+    switchMap(() => this.logout()),
   );
 
   // state
@@ -210,8 +211,17 @@ export class AuthService implements OnDestroy {
     );
   }
 
-  logout(): void {
-    return this._pb.authStore.clear();
+  logout(): Observable<void> {
+    return from(this._pb.send('/v1/auth/logout', { method: 'POST' })).pipe(
+      catchError((error) => {
+        console.error('Error logging out', error);
+        return of(undefined);
+      }),
+      finalize(() => {
+        this._pb.authStore.clear();
+      }),
+      map(() => undefined),
+    );
   }
 
   ngOnDestroy(): void {
