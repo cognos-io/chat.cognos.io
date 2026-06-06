@@ -58,6 +58,8 @@ func NewServer(
 func bindAppHooks(
 	params appHookParams,
 ) {
+	hooks.ConfigureRateLimits(params.App)
+
 	var (
 		app                    = params.App
 		config                 = params.Config
