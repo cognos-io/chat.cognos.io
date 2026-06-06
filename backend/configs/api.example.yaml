@@ -3,6 +3,7 @@ openai:
   api_key: "sk-"
 infomaniak:
   api_key: ""
+  url: ""
   product_id: ""
 cloudflare:
   api_key: ""

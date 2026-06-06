@@ -46,6 +46,7 @@ type APIConfig struct {
 	OpenAIAPIKey string `koanf:"openai.api_key"`
 	// Infomaniak
 	InfomaniakAPIKey    string `koanf:"infomaniak.api_key"`
+	InfomaniakAPIURL    string `koanf:"infomaniak.url"`
 	InfomaniakProductID string `koanf:"infomaniak.product_id"`
 	// Cloudflare
 	CloudflareAccountID string `koanf:"cloudflare.account_id"`
