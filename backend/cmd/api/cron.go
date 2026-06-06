@@ -13,6 +13,10 @@ type ExpiredMessagesRepo interface {
 	CleanUpExpiredMessages(messageIds []string) (sql.Result, error)
 }
 
+type DeletedRecordRepo interface {
+	DeleteCreatedBefore(cutoff time.Time) error
+}
+
 func cleanUpExpiredMessageJob(
 	scheduler gocron.Scheduler,
 	logger *slog.Logger,
@@ -39,5 +43,26 @@ func cleanUpExpiredMessageJob(
 				return
 			}
 		}, logger, expiredMessagesRepo),
+	)
+}
+
+func cleanUpDeletedRecordJob(
+	scheduler gocron.Scheduler,
+	logger *slog.Logger,
+	deletedRecordRepo DeletedRecordRepo,
+) (gocron.Job, error) {
+	const retention = 30 * 24 * time.Hour
+
+	return scheduler.NewJob(
+		gocron.DurationRandomJob(
+			1*time.Hour,
+			2*time.Hour,
+		),
+		gocron.NewTask(func(logger *slog.Logger, repo DeletedRecordRepo) {
+			cutoff := time.Now().UTC().Add(-retention)
+			if err := repo.DeleteCreatedBefore(cutoff); err != nil {
+				logger.Error("failed to clean up deleted records", "err", err)
+			}
+		}, logger, deletedRecordRepo),
 	)
 }

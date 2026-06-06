@@ -110,6 +110,16 @@ func bindAppHooks(
 			if err != nil {
 				return err
 			}
+
+			deletedRecordRepo := hooks.NewPocketBaseDeletedRecordRepo(app)
+			_, err = cleanUpDeletedRecordJob(
+				params.CronScheduler,
+				app.Logger(),
+				deletedRecordRepo,
+			)
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
