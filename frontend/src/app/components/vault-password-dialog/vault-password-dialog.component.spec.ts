@@ -9,12 +9,14 @@ describe('VaultPasswordDialogComponent', () => {
   let component: VaultPasswordDialogComponent;
 
   const unlockError = signal<string | null>(null);
-  const rawVaultPassword$ = { next: vi.fn() };
+  const generatedAccountKey = signal<string | null>(null);
+  const unlockRequest$ = { next: vi.fn() };
   const clearUnlockError = vi.fn();
 
   beforeEach(async () => {
     unlockError.set(null);
-    rawVaultPassword$.next.mockReset();
+    generatedAccountKey.set(null);
+    unlockRequest$.next.mockReset();
     clearUnlockError.mockReset();
 
     await TestBed.configureTestingModule({
@@ -23,9 +25,11 @@ describe('VaultPasswordDialogComponent', () => {
         {
           provide: VaultService,
           useValue: {
+            generatedAccountKey,
             isNewKeyPair: signal(false),
+            requiresAccountKey: signal(false),
             unlockError,
-            rawVaultPassword$,
+            unlockRequest$,
             clearUnlockError,
           },
         },
@@ -38,22 +42,24 @@ describe('VaultPasswordDialogComponent', () => {
   });
 
   it('renders the unlock error inside the dialog', () => {
-    component.vaultPasswordForm.controls.vaultPassword.setValue('incorrect-password');
-    unlockError.set('Incorrect vault password');
+    component.vaultForm.controls.accountPassword.setValue('incorrect-password');
+    unlockError.set('Incorrect backup password');
 
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Incorrect vault password');
+    expect(fixture.nativeElement.textContent).toContain('Incorrect backup password');
   });
 
-  it('clears the unlock error before submitting a vault password', () => {
-    component.vaultPasswordForm.controls.vaultPassword.setValue(
-      'correct horse battery',
-    );
+  it('clears the unlock error before submitting unlock details', () => {
+    component.vaultForm.controls.accountPassword.setValue('correct horse battery');
 
     component.submit();
 
     expect(clearUnlockError).toHaveBeenCalledTimes(1);
-    expect(rawVaultPassword$.next).toHaveBeenCalledWith('correct horse battery');
+    expect(unlockRequest$.next).toHaveBeenCalledWith({
+      accountKey: '',
+      accountPassword: 'correct horse battery',
+      trustDevice: true,
+    });
   });
 });
