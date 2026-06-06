@@ -14,11 +14,9 @@ Open items cluster into four themes:
 2. **Operational hardening**: container `read_only` / `cap_drop`,
    Cloudflare trust boundary (`trusted_proxies` + origin-IP
    lockdown).
-3. **Cryptographic protocol gaps**: client still backfills empty
-   MAC fields instead of refusing them, conversation-key MAC
-   uses the NaCl secret as the MAC key (key-separation
-   violation), Argon2 params raised without an `unlock_scheme`
-   bump.
+3. **Cryptographic protocol gaps**: conversation-key MAC uses
+   the NaCl secret as the MAC key (key-separation violation),
+   Argon2 params raised without an `unlock_scheme` bump.
 4. **Supply chain & secrets**: CI lints/tests/scans but doesn't
    push/sign/cosign; Cloudflare API token in Caddyfile env;
    BorgBase repo URL co-located with credentials; xcaddy
@@ -49,24 +47,6 @@ have prod pull by digest only. Pin base images by digest. Pin the
 Caddy DNS plugin to a release tag.
 
 ## 2. High findings
-
-### H-1 / H-14 — TOFU client-side strictness
-
-Status: 🟡 Partially fixed (server boundary closed, client still
-permissive).
-
-- Server now refuses to write `user_key_pairs` without `record_mac`
-  and `conversation_public_keys` without `public_key_signature`
-  (migrations 9 + 10).
-- Client (`vault.service.ts:251-258, 379-382, 413-415`;
-  `conversation.service.ts:496-510`) still **conditionally**
-  verifies — empty field → silent backfill of the client's own
-  MAC.
-- A database-tampering attacker (admin UI, raw SQL, future bug)
-  who bypasses createRule can still poison a fresh device.
-
-Fix: client must refuse empty `record_mac` and
-`public_key_signature` and surface an error, not backfill.
 
 ### H-5 — No MFA, weak password floor, no per-account lockout
 
@@ -193,10 +173,6 @@ BorgBase account if the prod host was ever shared.
   surface small).
 
 ## 5. Newly surfaced or unaddressed items
-
-### N-2 — Client-side TOFU strictness
-
-See H-1.
 
 ### N-3 — Conversation public-key MAC uses NaCl secret key directly
 
@@ -345,14 +321,13 @@ operational and product:
 7. **M-5** container hardening: `read_only`, `cap_drop: [ALL]`,
    `no-new-privileges`, `HEALTHCHECK`, resource limits. One PR.
 8. **N-17** Cloudflare API token via Compose secrets.
-9. **H-1 / N-2** client refuses empty MAC / signature.
-10. **N-3** key separation for the conversation-key MAC.
-11. **L-12** drop `GrantManagerAccess` from message-create hook.
-12. **M-14** anonymise `req.User` to upstream.
-13. **L-8** Anthropic Temperature=0 pointer bug.
-14. **M-11 / N-14** confirm + trim mermaid.
-15. **M-4** Account Key autocomplete pattern.
-16. **H-22 / M-15 follow-through**: BorgBase repo URL into
+9. **N-3** key separation for the conversation-key MAC.
+10. **L-12** drop `GrantManagerAccess` from message-create hook.
+11. **M-14** anonymise `req.User` to upstream.
+12. **L-8** Anthropic Temperature=0 pointer bug.
+13. **M-11 / N-14** confirm + trim mermaid.
+14. **M-4** Account Key autocomplete pattern.
+15. **H-22 / M-15 follow-through**: BorgBase repo URL into
     secrets; consider rotating the BorgBase account.
 
 **P2 — Next 4 weeks of engineering:**

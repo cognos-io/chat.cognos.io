@@ -6,7 +6,6 @@ import {
   Observable,
   Subject,
   catchError,
-  firstValueFrom,
   from,
   map,
   of,
@@ -248,13 +247,15 @@ export class VaultService {
     keyPairRecord: UserKeyPairsResponse,
     unlockKey: Uint8Array,
   ): KeyPair {
-    if (keyPairRecord.record_mac) {
-      const actualMAC = this.computeUserKeyPairRecordMAC(keyPairRecord, unlockKey);
-      const expectedMAC = Base64.toUint8Array(keyPairRecord.record_mac);
+    if (!keyPairRecord.record_mac) {
+      throw new Error('User key pair integrity metadata missing');
+    }
 
-      if (!this._cryptoService.equalBytes(actualMAC, expectedMAC)) {
-        throw new Error('User key pair integrity check failed');
-      }
+    const actualMAC = this.computeUserKeyPairRecordMAC(keyPairRecord, unlockKey);
+    const expectedMAC = Base64.toUint8Array(keyPairRecord.record_mac);
+
+    if (!this._cryptoService.equalBytes(actualMAC, expectedMAC)) {
+      throw new Error('User key pair integrity check failed');
     }
 
     const publicKey = Base64.toUint8Array(keyPairRecord.public_key);
@@ -375,15 +376,7 @@ export class VaultService {
       switchMap(({ keyPair, unlockKey }) =>
         from(this.persistTrustedUnlockKey(unlockKey, request.trustDevice)).pipe(
           tap(() => this.persistTrustedUserKeyContext(keyPairRecord)),
-          switchMap(() => {
-            if (!keyPairRecord.record_mac) {
-              return from(
-                this.backfillUserKeyPairRecordMAC(keyPairRecord, unlockKey),
-              ).pipe(map(() => keyPair));
-            }
-
-            return of(keyPair);
-          }),
+          map(() => keyPair),
         ),
       ),
     );
@@ -410,9 +403,6 @@ export class VaultService {
       this.assertTrustedUserKeyContext(keyPairRecord);
       const keyPair = this.unpackKeyPairRecord(keyPairRecord, storedUnlockKey);
       this.persistTrustedUserKeyContext(keyPairRecord);
-      if (!keyPairRecord.record_mac) {
-        await this.backfillUserKeyPairRecordMAC(keyPairRecord, storedUnlockKey);
-      }
       return { keyPair };
     } catch {
       await this._trustedUnlockService.clearUnlockKey(this._authService.user()?.['id']);
@@ -482,17 +472,6 @@ export class VaultService {
     );
 
     return this._cryptoService.mac(payload, unlockKey);
-  }
-
-  private async backfillUserKeyPairRecordMAC(
-    keyPairRecord: UserKeyPairsResponse,
-    unlockKey: Uint8Array,
-  ) {
-    const record_mac = Base64.fromUint8Array(
-      this.computeUserKeyPairRecordMAC(keyPairRecord, unlockKey),
-    );
-
-    await firstValueFrom(this._api.updateUserKeyPair(keyPairRecord.id, { record_mac }));
   }
 
   private trustedUserKeyContextStorageKey(userID: string): string {

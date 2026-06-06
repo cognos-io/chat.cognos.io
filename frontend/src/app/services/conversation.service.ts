@@ -461,28 +461,19 @@ export class ConversationService {
 
     return this.fetchConversationPublicKeyRecord(conversationId).pipe(
       switchMap((record) => {
+        if (!record.public_key_signature) {
+          throw new Error('Conversation public key signature missing');
+        }
+
         const publicKey = Base64.toUint8Array(record.public_key);
         const publicKeySignature = this.computeConversationPublicKeySignature(
           conversationId,
           publicKey,
           userSecretKey,
         );
-
-        if (record.public_key_signature) {
-          const expectedSignature = Base64.toUint8Array(record.public_key_signature);
-          if (!this._cryptoService.equalBytes(publicKeySignature, expectedSignature)) {
-            throw new Error('Conversation public key signature mismatch');
-          }
-        } else {
-          void this._api
-            .updateConversationPublicKey(conversationId, record.id, {
-              public_key_signature: Base64.fromUint8Array(publicKeySignature),
-            })
-            .subscribe({
-              error: () => {
-                console.error('Failed to backfill conversation key signature');
-              },
-            });
+        const expectedSignature = Base64.toUint8Array(record.public_key_signature);
+        if (!this._cryptoService.equalBytes(publicKeySignature, expectedSignature)) {
+          throw new Error('Conversation public key signature mismatch');
         }
 
         return this.fetchConversationSecretKey(conversationId).pipe(
