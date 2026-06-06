@@ -45,16 +45,39 @@ const initialState: VaultState = {
 const argon2idMemory = 65536; // 64MiB
 const argon2idIterationCount = 3;
 const argon2idParallelism = 1;
+const simdWasmSHA384 =
+  'lq17elS4aq0P0DV4bzHHzZGjjkz7/DwuX9RRNjhsw3xCqN8G5oyXjlcacOxhXZxJ';
+const noSimdWasmSHA384 =
+  'CXsNdctBSGlR8eWNDhWAekxve6pGotK6LroWxyQSwEQK9iILS/gE/sKBe+Z9kJdY';
+
+async function instantiateVerifiedWasm(
+  url: string,
+  expectedSHA384: string,
+  importObject: WebAssembly.Imports,
+) {
+  const response = await fetch(url);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  const digest = await crypto.subtle.digest('SHA-384', bytes);
+  const digestBase64 = Base64.fromUint8Array(new Uint8Array(digest));
+
+  if (digestBase64 !== expectedSHA384) {
+    throw new Error(`WASM digest mismatch for ${url}`);
+  }
+
+  return WebAssembly.instantiate(bytes, importObject);
+}
 
 const setupWasmInstance = setupWasm(
   (importObject) =>
-    WebAssembly.instantiateStreaming(
-      fetch('/assets/wasm/argon2id/simd.wasm'),
+    instantiateVerifiedWasm(
+      '/assets/wasm/argon2id/simd.wasm',
+      simdWasmSHA384,
       importObject,
     ),
   (importObject) =>
-    WebAssembly.instantiateStreaming(
-      fetch('/assets/wasm/argon2id/no-simd.wasm'),
+    instantiateVerifiedWasm(
+      '/assets/wasm/argon2id/no-simd.wasm',
+      noSimdWasmSHA384,
       importObject,
     ),
 );
