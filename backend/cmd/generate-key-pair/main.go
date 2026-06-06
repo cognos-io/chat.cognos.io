@@ -4,12 +4,16 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"flag"
+	"fmt"
 	"io"
 	"log"
+	"os"
+	"strings"
 
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/nacl/secretbox"
+	"golang.org/x/term"
 )
 
 func main() {
@@ -20,22 +24,29 @@ func main() {
 		"",
 		"User email address (used as a salt for the vault password hash)",
 	)
-	vaultPassword := flag.String(
-		"password",
-		"",
-		"Vault password. Hashed and used to encrypt the secret key",
-	)
 	flag.Parse()
 
-	if *userEmail == "" || *vaultPassword == "" {
-		log.Fatal("User email and vault password are required")
+	if *userEmail == "" {
+		log.Fatal("User email is required")
+	}
+
+	fmt.Fprint(os.Stderr, "Vault password: ")
+	passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Fprintln(os.Stderr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	vaultPassword := strings.TrimSpace(string(passwordBytes))
+	if vaultPassword == "" {
+		log.Fatal("Vault password is required")
 	}
 
 	// Hash the vault password with Argon2id
 	// Using OWASP recommendations for Argon2id
 	// https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
 	hashedPassword := argon2.IDKey(
-		[]byte(*vaultPassword),
+		[]byte(vaultPassword),
 		[]byte(*userEmail),
 		2,
 		19*1024,
