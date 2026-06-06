@@ -7,8 +7,8 @@ Target security model for this rework:
 - chat content is stored server-side as ciphertext only
 - private keys are encrypted client-side before backup
 - new devices require the user's password and **Account Key** to unlock encrypted key material
-- trusted devices may stay unlocked locally via a wrapped unlock blob in IndexedDB until the user
-  locks the account, logs out, or clears browser storage
+- trusted-device unlock is temporarily disabled on the web until a stronger local hardware-backed
+  protection model is in place
 
 See:
 
@@ -39,7 +39,7 @@ Notes:
 
 - the frontend development environment already points at `http://localhost:8090`
 - local backend data is served from `backend/pb_data`
-- Account Key and trusted-device behavior are documented in `docs/security-model.md`
+- Account Key and local unlock behavior are documented in `docs/security-model.md`
 
 ## Deployment
 
@@ -49,6 +49,12 @@ Notes:
    - `cd /home/cognos/chat.cognos.io`
 1. Pull down the latest changes using Git over SSH with a read-only deploy key:
    - `git pull`
+1. Ensure production runtime secrets exist on the host:
+   - `backend/.env` with non-secret backend settings such as `COGNOS_INFOMANIAK_PRODUCT_ID`
+   - `backend/secrets/infomaniak_api_key`
+   - `backup/secrets/borg_passphrase`
+   - `backup/secrets/borg_ssh_key`
+   - `backup/secrets/borg_known_hosts`
 1. Force a backup to Borgbase:
    - `docker compose run backup borgmatic create --verbosity 1 --list --stats`
 1. Verify the Caddyfile:
@@ -69,6 +75,9 @@ steps to going live for posterity.
     - Verify the `sendmail.cognos.io` domain for sending emails
 - Backups:
     - Create a new backup repository and SSH key pair on BorgBase
+    - Store the Borg passphrase, dedicated backup SSH key, and known_hosts entry as host secrets
+      under `backup/secrets/` rather than mounting the full `/home/cognos/.ssh` directory into the
+      container
 - PocketBase authentication:
     - Create or migrate users in the `users` auth collection
     - Use built-in PocketBase email/password auth for app login
@@ -106,6 +115,9 @@ steps to going live for posterity.
         - Git clone from GitHub using a read-only SSH deploy key for the
           `cognos/chat.cognos.io` repo:
             - `git clone git@github.com:cognos-io/chat.cognos.io.git`
+        - Create `backend/.env` from `backend/.env.template`
+        - Place the Infomaniak API key in `backend/secrets/infomaniak_api_key`
+        - Place BorgBase backup secrets in `backup/secrets/`
         - Bring up the docker compose infrastructure (Caddy + Pocketbase + Backups)
             - `docker compose up --build --detach`
 - Frontend:

@@ -157,5 +157,11 @@ dist
 **/pb_data/
 *.db
 *.db-*
+*.pem
+*.key
+backend/secrets/*
+!backend/secrets/.gitignore
+backup/secrets/*
+!backup/secrets/.gitignore
 
 .DS_Store

@@ -84,14 +84,11 @@ const validateUnlockForm = (
               fresh-device unlock may be impossible.
             </p>
           } @else {
+            <p>Enter your account password and Account Key to unlock this device.</p>
             <p>
-              Enter your account password and Account Key to unlock this device. If you
-              trust this browser, Cognos can keep a locally wrapped unlock blob in
-              IndexedDB so you are not prompted again on every visit.
-            </p>
-            <p>
-              The trusted-device shortcut only applies to this browser profile and can
-              be cleared at any time by locking the account, logging out, or clearing
+              Trusted-device unlock is temporarily unavailable on the web while stronger
+              local hardware-backed protection is implemented. You will need your
+              Account Key again after locking the account, logging out, or clearing
               browser storage.
             </p>
           }
@@ -157,11 +154,6 @@ const validateUnlockForm = (
               >
             }
           }
-
-          <label class="vault-password-dialog__checkbox-row">
-            <input formControlName="trustDevice" type="checkbox" />
-            <span>Keep this device unlocked on this browser</span>
-          </label>
 
           @if (vaultService.unlockError()) {
             <span class="vault-password-dialog__error">{{
@@ -352,7 +344,6 @@ export class VaultPasswordDialogComponent {
         environment.isDevelopment ? environment.localVaultPassword : '',
         [Validators.required, Validators.minLength(8)],
       ],
-      trustDevice: [true],
     },
     {
       validators: (control) =>
@@ -426,13 +417,13 @@ export class VaultPasswordDialogComponent {
       return;
     }
 
-    const { accountKey, accountPassword, trustDevice } = this.vaultForm.getRawValue();
+    const { accountKey, accountPassword } = this.vaultForm.getRawValue();
 
     this.vaultService.clearUnlockError();
     this.vaultService.unlockRequest$.next({
       accountKey: accountKey ?? '',
       accountPassword: accountPassword ?? '',
-      trustDevice: Boolean(trustDevice),
+      trustDevice: false,
     });
   }
 }

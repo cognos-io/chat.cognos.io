@@ -23,24 +23,35 @@ services:
     build: ./backend
     restart: unless-stopped
     user: "1001:0"
+    env_file:
+      - ./backend/.env
+    environment:
+      COGNOS_INFOMANIAK_API_KEY_FILE: /run/secrets/infomaniak_api_key
     networks:
       - backend
     ports: []
     volumes:
       - db-data:/home/appuser/pb_data
-      - ./backend/configs/api.production.yaml:/home/appuser/configs/api.production.yaml:ro
+    secrets:
+      - infomaniak_api_key
 
   backup:
     image: ghcr.io/borgmatic-collective/borgmatic
     restart: unless-stopped
     env_file:
       - ./backup/.env
+    environment:
+      BORG_PASSPHRASE_FILE: /run/secrets/borg_passphrase
+      BORG_RSH: ssh -i /run/secrets/borg_ssh_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/secrets/borg_known_hosts
     volumes:
       - web-data:/source/caddy-data:ro # Caddy data
       - web-config:/source/caddy-config:ro # Caddy configuration
       - db-data:/cognos-db # Pocketbase SQLite database
       - ./backup/borgmatic.d:/etc/borgmatic.d:ro # Borgmatic configuration
-      - /home/cognos/.ssh:/root/.ssh:ro # SSH keys for BorgBase
+    secrets:
+      - borg_passphrase
+      - borg_ssh_key
+      - borg_known_hosts
 
 volumes:
   # Stores Caddy TLS certificates and other data
@@ -51,3 +62,13 @@ volumes:
 
 networks:
   backend:
+
+secrets:
+  infomaniak_api_key:
+    file: ./backend/secrets/infomaniak_api_key
+  borg_passphrase:
+    file: ./backup/secrets/borg_passphrase
+  borg_ssh_key:
+    file: ./backup/secrets/borg_ssh_key
+  borg_known_hosts:
+    file: ./backup/secrets/borg_known_hosts

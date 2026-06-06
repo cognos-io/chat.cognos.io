@@ -165,20 +165,18 @@ Cognos should use well-tested primitives.
 
 ## 8. Trusted-device behavior
 
-Users should not need to repeatedly enter the Account Key on a device they trust.
+Users should not need to repeatedly enter the Account Key on a device they trust, but the web app
+must not pretend browser-local storage alone is a strong trust anchor.
 
-Trusted devices may cache a **locally wrapped unlock blob** in **IndexedDB**.
+Current posture:
 
-Current implementation details:
-
-- the raw unlock key is **not** stored directly as a serialized string in browser storage
-- Cognos generates a browser-local **non-extractable AES-GCM wrapping key** with WebCrypto
-- the trusted-device record stores only the wrapped unlock blob, IV, and browser-managed wrapping
-  key inside IndexedDB
-- this protects against casual offline inspection of IndexedDB contents better than storing the raw
-  unlock key directly
-- this does **not** protect against a compromised same-origin browser session or a fully compromised
-  trusted device
+- persistent trusted-device unlock is **disabled on the web**
+- Cognos clears any previously stored trusted-device unlock state from IndexedDB
+- the user must re-enter the Account Key after locking the account, logging out, or clearing browser
+  storage
+- a future trusted-device shortcut should rely on a stronger anchor such as hardware-backed
+  WebAuthn or an equivalent platform keystore, not a browser-origin-managed wrapping key stored
+  alongside the wrapped blob
 
 That local cache should be cleared or invalidated when:
 

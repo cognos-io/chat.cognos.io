@@ -8,8 +8,8 @@ Target direction:
 
 - first-party Cognos API endpoints instead of long-term OpenAI compatibility
 - backend-driven model catalogue
-- encrypted private-key backup with a user **Account Key** for new-device unlock and a wrapped
-  trusted-device blob in IndexedDB
+- encrypted private-key backup with a user **Account Key** for new-device unlock; persistent
+  trusted-device unlock is temporarily disabled on the web until stronger local protection exists
 - ciphertext-only message storage at rest
 
 See:
@@ -25,8 +25,11 @@ See:
 ## Configuration
 
 In the `configs` directory copy the `api.example.yaml` to an environment specific file (`local`,
-`development`, `production`) and adjust accordingly. It will be picked up and auto loaded by the
+`development`) and adjust accordingly. It will be picked up and auto loaded by the
 `internal/config/api.go`.
+
+For production, prefer `COGNOS_*` environment variables and `COGNOS_*_FILE` secret-file inputs
+instead of mounting a plaintext config file into the container.
 
 ## Authentication
 

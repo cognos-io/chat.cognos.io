@@ -8,7 +8,6 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/forms"
 )
 
 type Conversation struct {
@@ -36,11 +35,9 @@ func (r *PocketBaseConversationRepo) SetConversationUpdated(
 	if err != nil {
 		return err
 	}
-	form := forms.NewRecordUpsert(r.app, record)
-	form.GrantManagerAccess()
-	form.Load(map[string]any{"updated": time.Now().UTC()})
+	record.Set("updated", time.Now().UTC())
 
-	return form.Submit()
+	return r.app.Save(record)
 }
 
 // ByID returns a conversation by its ID.

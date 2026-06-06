@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/env"
@@ -20,6 +21,24 @@ func pathExists(path string) bool {
 		return false
 	}
 	return false
+}
+
+func readSecretFile(path string) (string, error) {
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(contents)), nil
+}
+
+func fileEnvValue(envVar string) (string, error) {
+	path := strings.TrimSpace(os.Getenv(envVar))
+	if path == "" {
+		return "", nil
+	}
+
+	return readSecretFile(path)
 }
 
 type APIConfig struct {
@@ -80,5 +99,27 @@ func MustLoadAPIConfig(logger *slog.Logger) *APIConfig {
 	if err != nil {
 		panic(err)
 	}
+
+	for _, override := range []struct {
+		envVar string
+		apply  func(string)
+	}{
+		{envVar: "COGNOS_OPENAI_API_KEY_FILE", apply: func(value string) { c.OpenAIAPIKey = value }},
+		{envVar: "COGNOS_INFOMANIAK_API_KEY_FILE", apply: func(value string) { c.InfomaniakAPIKey = value }},
+		{envVar: "COGNOS_CLOUDFLARE_API_KEY_FILE", apply: func(value string) { c.CloudflareAPIKey = value }},
+		{envVar: "COGNOS_GOOGLE_API_KEY_FILE", apply: func(value string) { c.GoogleGeminiAPIKey = value }},
+		{envVar: "COGNOS_ANTHROPIC_API_KEY_FILE", apply: func(value string) { c.AnthropicAPIKey = value }},
+		{envVar: "COGNOS_DEEPINFRA_API_KEY_FILE", apply: func(value string) { c.DeepInfraAPIKey = value }},
+	} {
+		value, err := fileEnvValue(override.envVar)
+		if err != nil {
+			panic(err)
+		}
+		if value == "" {
+			continue
+		}
+		override.apply(value)
+	}
+
 	return &c
 }
