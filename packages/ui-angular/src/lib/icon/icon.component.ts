@@ -2,10 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject,
   input,
 } from "@angular/core";
-import { DomSanitizer, type SafeHtml } from "@angular/platform-browser";
 import {
   getCognosIcon,
   type CognosIconName,
@@ -98,8 +96,6 @@ export type CognosIconTone =
   ],
 })
 export class CognosIconComponent {
-  private readonly sanitizer = inject(DomSanitizer);
-
   readonly name = input<CognosIconName>("lock");
   readonly size = input<CognosIconSize>(16, { transform: iconSizeAttribute });
   readonly title = input<string | null>(null);
@@ -110,11 +106,9 @@ export class CognosIconComponent {
       `cog-icon cog-icon--size-${this.size()} cog-icon--tone-${this.tone()}`,
   );
 
-  protected readonly svgMarkup = computed<SafeHtml>(() => {
+  protected readonly svgMarkup = computed(() => {
     const icon = getCognosIcon(this.name());
-    return this.sanitizer.bypassSecurityTrustHtml(
-      renderIconMarkup(icon, this.title()),
-    );
+    return renderIconMarkup(icon, this.title());
   });
 }
 
