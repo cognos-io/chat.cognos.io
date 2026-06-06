@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
-	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -122,11 +120,6 @@ func addPocketBaseRoutes(
 		func(re *core.RequestEvent) error {
 			type HealthResponse struct {
 				IsDatabaseConnected bool `json:"is_database_connected"`
-				Network             struct {
-					CanPing                bool `json:"can_ping"`
-					CanResolveDNS          bool `json:"can_resolve_dns"`
-					CanConnectOverInternet bool `json:"can_connect_over_internet"`
-				} `json:"network"`
 			}
 
 			resp := HealthResponse{}
@@ -136,28 +129,6 @@ func addPocketBaseRoutes(
 				status = http.StatusInternalServerError
 			} else {
 				resp.IsDatabaseConnected = true
-			}
-
-			host := "www.example.com"
-
-			if _, err := net.LookupHost(host); err != nil {
-				status = http.StatusInternalServerError
-			} else {
-				resp.Network.CanResolveDNS = true
-			}
-
-			conn, err := net.DialTimeout("tcp", host+":80", 2*time.Second)
-			if err != nil {
-				status = http.StatusInternalServerError
-			} else {
-				resp.Network.CanPing = true
-				defer conn.Close()
-			}
-
-			if _, err := http.Get(fmt.Sprintf("https://%s", host)); err != nil {
-				status = http.StatusInternalServerError
-			} else {
-				resp.Network.CanConnectOverInternet = true
 			}
 
 			return re.JSON(status, resp)
