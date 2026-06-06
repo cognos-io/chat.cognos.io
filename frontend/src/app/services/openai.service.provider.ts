@@ -28,7 +28,7 @@ export class CognosOpenAI extends OpenAI {
 
   protected override authHeaders(): Headers {
     return {
-      Authorization: this.pb.authStore.token,
+      Authorization: `Bearer ${this.pb.authStore.token}`,
     };
   }
 }
