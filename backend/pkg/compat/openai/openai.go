@@ -191,16 +191,18 @@ func Handler(
 			e,
 			req.ChatCompletionRequest,
 		)
-		if err != nil && messageRecord != nil {
-			logger.Error("Failed to process request", "err", err)
+		if err != nil {
+			logger.Error("Failed to process request", "provider", provider, "model", model)
 			// Try to clean up the originally saved message
-			if err := messageRepo.DeleteMessage(messageRecord.Id); err != nil {
-				logger.Error("Failed to clean up message record", "err", err)
+			if messageRecord != nil {
+				if err := messageRepo.DeleteMessage(messageRecord.Id); err != nil {
+					logger.Error("Failed to clean up message record", "err", err)
+				}
 			}
 			return apis.NewApiError(
-				http.StatusInternalServerError,
-				"Failed to process request",
-				err,
+				http.StatusBadGateway,
+				"Upstream provider error",
+				nil,
 			)
 		}
 
