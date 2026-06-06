@@ -18,6 +18,7 @@ func SoftDelete(app core.App) {
 		// Add other collection names here where you don't want to keep a copy of the deleted record
 		excludedCollections := []string{
 			DeletedCollectionName,
+			"user_key_pairs",
 		}
 
 		// Skip if the record is already deleted or in excluded collections
