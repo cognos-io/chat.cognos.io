@@ -94,20 +94,6 @@ Status: 🟡 Partially fixed.
 Fix (post-launch is acceptable): migrate to a memory-only store
 with refresh-on-focus, or an HttpOnly cookie via a new endpoint.
 
-### H-21 / L-12 — Last `GrantManagerAccess` in live code path
-
-Status: ❌ Not fixed (one site remaining).
-
-`/api/v1/*` consolidation via `secure_records.go` covers
-user_key_pairs / conversation_public_keys / conversation_secret_keys
-/ user_preferences. The message-create hook
-(`backend/internal/chat/conversation.go:32-43`) still uses
-`forms.NewRecordUpsert(...).GrantManagerAccess()` to bypass
-collection rules.
-
-Fix: drop `GrantManagerAccess`; rely on the now-consolidated
-handler-side ownership checks + collection rules.
-
 ### H-22 — BorgBase credentials and repo URL co-located on prod host
 
 Status: 🟡 Partially fixed.
@@ -309,12 +295,11 @@ operational and product:
 7. **M-5** container hardening: `read_only`, `cap_drop: [ALL]`,
    `no-new-privileges`, `HEALTHCHECK`, resource limits. One PR.
 8. **N-17** Cloudflare API token via Compose secrets.
-9. **L-12** drop `GrantManagerAccess` from message-create hook.
-10. **M-14** anonymise `req.User` to upstream.
-11. **L-8** Anthropic Temperature=0 pointer bug.
-12. **M-11 / N-14** confirm + trim mermaid.
-13. **M-4** Account Key autocomplete pattern.
-14. **H-22 / M-15 follow-through**: BorgBase repo URL into
+9. **M-14** anonymise `req.User` to upstream.
+10. **L-8** Anthropic Temperature=0 pointer bug.
+11. **M-11 / N-14** confirm + trim mermaid.
+12. **M-4** Account Key autocomplete pattern.
+13. **H-22 / M-15 follow-through**: BorgBase repo URL into
     secrets; consider rotating the BorgBase account.
 
 **P2 — Next 4 weeks of engineering:**
