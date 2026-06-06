@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestKeyIntegrityFieldsExist(t *testing.T) {
 	t.Parallel()
@@ -14,8 +17,21 @@ func TestKeyIntegrityFieldsExist(t *testing.T) {
 	if userKeyPairs.Fields.GetByName("record_mac") == nil {
 		t.Fatal("user_key_pairs missing record_mac field")
 	}
+	if userKeyPairs.CreateRule == nil {
+		t.Fatal("user_key_pairs create rule is nil")
+	}
+	for _, want := range []string{"password_salt:isset = true", "unlock_scheme = \"password_account_key_v1\"", "record_mac:isset = true"} {
+		if !strings.Contains(*userKeyPairs.CreateRule, want) {
+			t.Fatalf("user_key_pairs create rule = %q, want substring %q", *userKeyPairs.CreateRule, want)
+		}
+	}
 	if userKeyPairs.UpdateRule == nil {
 		t.Fatal("user_key_pairs update rule is nil")
+	}
+	for _, want := range []string{"password_salt:isset = false", "unlock_scheme:isset = false", "record_mac:isset = true"} {
+		if !strings.Contains(*userKeyPairs.UpdateRule, want) {
+			t.Fatalf("user_key_pairs update rule = %q, want substring %q", *userKeyPairs.UpdateRule, want)
+		}
 	}
 
 	conversationPublicKeys, err := app.FindCollectionByNameOrId("conversation_public_keys")

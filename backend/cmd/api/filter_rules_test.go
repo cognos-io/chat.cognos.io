@@ -302,7 +302,10 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 			Body: strings.NewReader(fmt.Sprintf(`{
 				"user": "%s",
 				"public_key": "%s",
-				"secret_key": "%s"
+				"secret_key": "%s",
+				"password_salt": "AAAAAAAAAAAAAAAAAAAAAA==",
+				"unlock_scheme": "password_account_key_v1",
+				"record_mac": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 			}`, userId, userPublicKey, userEncryptedSecretKey)),
 			ExpectedStatus:  http.StatusBadRequest,
 			ExpectedContent: []string{`"message":"User key pair already exists."`},
@@ -331,7 +334,10 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 			Body: strings.NewReader(fmt.Sprintf(`{
 				"user": "%s",
 				"public_key": "im-not-a-valid-key",
-				"secret_key": "%s"
+				"secret_key": "%s",
+				"password_salt": "AAAAAAAAAAAAAAAAAAAAAA==",
+				"unlock_scheme": "password_account_key_v1",
+				"record_mac": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 			}`, userId, userEncryptedSecretKey)),
 			ExpectedStatus: http.StatusBadRequest,
 			ExpectedContent: []string{
