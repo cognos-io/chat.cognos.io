@@ -1,3 +1,5 @@
+# Backend
+
 ## Useful links
 
 - [How I write HTTP services in Go after 13 years](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/)
@@ -11,49 +13,10 @@ In the `configs` directory copy the `api.example.yaml` to an environment specifi
 
 ## Authentication
 
-### Ory
+Cognos uses PocketBase email/password auth for end-user login.
 
-We use [Ory](https://ory.sh/) cloud to manage our user authentication
-
-#### Setup
-
-##### Ory
-
-1. In the [Ory console](https://console.ory.sh/), go to OAuth 2 and make note of the relevant
-   'Endpoints':
-   - Auth URL (ends in `/oauth2/auth`)
-   - Token URL (ends in `/oauth2/token`)
-   - User API URL (ends in `/userinfo`)
-1. Create a new OAuth2 client:
-   - Set a relevant 'Client Name'
-   - Set scopes are `openid` and `offline_access`
-   - Add relevant redirects for `/api/oauth2-redirect`
-        - e.g. `http://127.0.0.1/api/oauth2-redirect`
-   - Enable skip consent screen
-   - Supported OAuth2 flows
-        - Grant types: `Refresh token`, `Authorization code`
-        - Response types: `Code`
-        - Access token type: `Inherit from global configuration`
-   - Client authentication mechanism: `HTTP Basic Authorization`
-1. Make a note of:
-   - Client ID
-   - Client Secret
-
-##### Pocketbase
-
-Create an OpenID Connect Auth provider in the
-[pocketbase settings](http://localhost:8090/_/#/settings/auth-providers), usually the 'oidc'
-provider.
-
-Enter:
-
-- Client ID
-- Client Secret
-- Auth URL
-- Token URL
-- User API URL
-
-And set a relevant display name (e.g. `Cognos SSO`)
+Password reset is intentionally disabled until the app has a vault-recovery flow that can re-wrap
+user key material safely.
 
 ## Custom tools
 
