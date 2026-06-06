@@ -44,8 +44,8 @@ Cognos is an encrypted AI chat application. It works on the same privacy princip
 - The **private key is encrypted client-side** and may be backed up to the server to support
   cross-device access.
 - Unlocking a new device requires the user's **account password + Account Key**. Trusted devices
-  may cache a locally wrapped unlock blob in **IndexedDB** until the user logs out or clears
-  browser storage.
+  may cache a locally wrapped unlock blob in **IndexedDB** until the user locks the account, logs
+  out, or clears browser storage.
 - When a user sends a message, the server uses the user's public key to
   **encrypt the message ciphertext** before persisting it.
 - When the AI generates a response, the server uses the public key to **encrypt the response**

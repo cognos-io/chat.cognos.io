@@ -95,6 +95,7 @@ export class VaultService {
 
   // sources
   readonly unlockRequest$ = new Subject<UnlockRequest>();
+  readonly lock$ = new Subject<void>();
 
   readonly unlockError = signal<string | null>(null);
 
@@ -153,6 +154,20 @@ export class VaultService {
           ),
         ),
       ),
+      this.lock$.pipe(
+        switchMap(() =>
+          from(
+            this._trustedUnlockService.clearUnlockKey(this._authService.user()?.['id']),
+          ).pipe(
+            map(() => {
+              this.clearUnlockError();
+              return {
+                keyPair: undefined,
+              };
+            }),
+          ),
+        ),
+      ),
       this._authService.logout$.pipe(
         switchMap(() =>
           from(
@@ -160,6 +175,7 @@ export class VaultService {
           ).pipe(
             map(() => {
               this.generatedAccountKey.set(null);
+              this.clearUnlockError();
               return {
                 keyPair: undefined,
               };
@@ -228,6 +244,10 @@ export class VaultService {
 
   clearUnlockError() {
     this.unlockError.set(null);
+  }
+
+  lock() {
+    this.lock$.next();
   }
 
   private buildPasswordAccountKeySecretMaterial(

@@ -314,7 +314,7 @@ This is the execution checklist for the rework.
 - [x] new device requires password + Account Key
 - [x] trusted device can re-open without repeated Account Key prompts
 - [x] logout clears local trusted unlock state
-- [ ] explicit local lock control clears local trusted unlock state
+- [x] explicit local lock control clears local trusted unlock state
 
 ---
 

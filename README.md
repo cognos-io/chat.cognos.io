@@ -8,7 +8,7 @@ Target security model for this rework:
 - private keys are encrypted client-side before backup
 - new devices require the user's password and **Account Key** to unlock encrypted key material
 - trusted devices may stay unlocked locally via a wrapped unlock blob in IndexedDB until the user
-  logs out or clears browser storage
+  locks the account, logs out, or clears browser storage
 
 See:
 

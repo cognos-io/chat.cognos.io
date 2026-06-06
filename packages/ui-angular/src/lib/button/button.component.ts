@@ -1,35 +1,32 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-} from "@angular/core";
-import type { CognosIconName } from "@cognos/ui/icons";
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import { CognosIconComponent } from "../icon/icon.component";
+import type { CognosIconName } from '@cognos/ui/icons';
+
+import { CognosIconComponent } from '../icon/icon.component';
 
 export type CognosButtonAppearance =
-  | "primary"
-  | "default"
-  | "subtle"
-  | "link"
-  | "danger";
+  | 'primary'
+  | 'default'
+  | 'subtle'
+  | 'link'
+  | 'danger';
 
-export type CognosButtonSize = "md" | "lg";
-export type CognosButtonType = "button" | "submit" | "reset";
+export type CognosButtonSize = 'md' | 'lg';
+export type CognosButtonType = 'button' | 'submit' | 'reset';
 
 @Component({
-  selector: "cog-button",
+  selector: 'cog-button',
   standalone: true,
   imports: [CognosIconComponent],
   host: {
-    "[class.cog-button-host--full-width]": "fullWidth()",
+    '[class.cog-button-host--full-width]': 'fullWidth()',
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <button
       [class]="buttonClass()"
       [disabled]="disabled()"
+      [attr.title]="title() || null"
       [attr.type]="type()"
     >
       @if (icon()) {
@@ -168,25 +165,26 @@ export type CognosButtonType = "button" | "submit" | "reset";
   ],
 })
 export class CognosButtonComponent {
-  readonly appearance = input<CognosButtonAppearance>("default");
-  readonly size = input<CognosButtonSize>("md");
+  readonly appearance = input<CognosButtonAppearance>('default');
+  readonly size = input<CognosButtonSize>('md');
   readonly disabled = input(false);
   readonly fullWidth = input(false);
   readonly icon = input<CognosIconName | null>(null);
   readonly iconAfter = input<CognosIconName | null>(null);
-  readonly type = input<CognosButtonType>("button");
+  readonly title = input('');
+  readonly type = input<CognosButtonType>('button');
 
   protected readonly buttonClass = computed(() => {
     const classes = [
-      "cog-button",
+      'cog-button',
       `cog-button--${this.appearance()}`,
       `cog-button--${this.size()}`,
     ];
 
     if (this.fullWidth()) {
-      classes.push("cog-button--full-width");
+      classes.push('cog-button--full-width');
     }
 
-    return classes.join(" ");
+    return classes.join(' ');
   });
 }

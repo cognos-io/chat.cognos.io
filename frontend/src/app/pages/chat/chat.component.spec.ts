@@ -18,6 +18,7 @@ describe('ChatComponent', () => {
   let fixture: ComponentFixture<ChatComponent>;
   let component: ChatComponent;
   let router: Router;
+  let dialogOpen: ReturnType<typeof vi.fn>;
 
   const temporaryConversation = signal(false);
   const selectedConversation = signal<Conversation | undefined>(undefined);
@@ -40,13 +41,21 @@ describe('ChatComponent', () => {
     resetState: vi.fn(),
   };
 
+  const vaultService = {
+    keyPair$: new Subject<unknown>(),
+    lock: vi.fn(),
+  };
+
   beforeEach(async () => {
     temporaryConversation.set(false);
     selectedConversation.set(undefined);
     pinnedConversations.set([]);
     recentConversations.set([]);
     messages.set([]);
+    vaultService.keyPair$ = new Subject<unknown>();
     vi.clearAllMocks();
+
+    dialogOpen = vi.fn().mockReturnValue({ close: vi.fn() });
 
     await TestBed.configureTestingModule({
       imports: [ChatComponent],
@@ -55,8 +64,8 @@ describe('ChatComponent', () => {
         { provide: ConversationService, useValue: conversationService },
         { provide: DeviceService, useValue: { isMobile: signal(false) } },
         { provide: MessageService, useValue: messageService },
-        { provide: Dialog, useValue: { open: vi.fn() } },
-        { provide: VaultService, useValue: { keyPair$: new Subject() } },
+        { provide: Dialog, useValue: { open: dialogOpen } },
+        { provide: VaultService, useValue: vaultService },
       ],
     }).compileComponents();
 
@@ -97,9 +106,37 @@ describe('ChatComponent', () => {
     expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 
+  it('locks the local account state without logging out', () => {
+    component.drawerOpen.set(true);
+
+    component.onLock();
+
+    expect(vaultService.lock).toHaveBeenCalledTimes(1);
+    expect(component.drawerOpen()).toBe(false);
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
   it('forwards search changes to the conversation filter', () => {
     component.onSearchChange('policy');
 
     expect(conversationService.filter$.next).toHaveBeenCalledWith('policy');
+  });
+
+  it('opens the unlock dialog when the key pair becomes unavailable', () => {
+    vaultService.keyPair$.next(null);
+
+    expect(dialogOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders a lock action with the expected tooltip copy', () => {
+    component.drawerOpen.set(true);
+    fixture.detectChanges();
+
+    const lockButton = fixture.nativeElement.querySelector(
+      'button[title="Locks your account and does not log you out."]',
+    ) as HTMLButtonElement | null;
+
+    expect(lockButton).not.toBeNull();
+    expect(lockButton?.textContent).toContain('Lock');
   });
 });

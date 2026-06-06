@@ -231,13 +231,10 @@ Changing email must:
 
 ### Logout / lock
 
-Current implementation guarantees that logging out:
+Current implementation guarantees that logging out or explicitly locking the account:
 
 - removes trusted-device unlock state from the current device
 - requires unlock again before local decryption resumes
-
-A separate in-session "lock" control is still a product follow-up rather than part of the current
-implemented baseline.
 
 ### Lost device
 
@@ -294,8 +291,8 @@ Prefer wording like:
 - **"Your private key is encrypted client-side before backup. Cognos never stores the plaintext
   private key."**
 - **"New devices require your password and Account Key to unlock your encrypted key material."**
-- **"Trusted devices can stay unlocked locally on this browser until you log out or clear browser
-  storage."**
+- **"Trusted devices can stay unlocked locally on this browser until you lock the account, log
+  out, or clear browser storage."**
 
 ## 14. Open limitations
 
