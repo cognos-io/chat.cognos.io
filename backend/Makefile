@@ -3,8 +3,8 @@
 
 MAIN_PACKAGE_PATH := ./cmd/api
 BINARY_NAME := api
-# Should match the repo name in Docker Hub
-DOCKER_IMAGE_NAME := docker.io/cognosio/api.cognos.io
+# Local development image name
+DOCKER_IMAGE_NAME := chat-cognos-io-backend
 # Can be changed to different versions easily
 GO_BINARY := go
 DOCKER_BINARY := docker
@@ -127,12 +127,6 @@ run/live:
 		--build.exclude_dir "db/migrations" \
 		--build.include_ext "go, tpl, tmpl, html, css, scss, js, ts, sql, jpeg, jpg, gif, png, bmp, svg, webp, ico" \
 		--misc.clean_on_exit "true"
-
-## publish/docker: push the docker image to Docker Hub
-.PHONY: publish/docker
-publish/docker: no-dirty build/docker
-	@GIT_COMMIT=$$(git rev-parse --short HEAD) && \
-	${DOCKER_BINARY} push ${DOCKER_IMAGE_NAME}:$$GIT_COMMIT
 
 # ==================================================================================== #
 # OPERATIONS

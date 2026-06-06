@@ -47,7 +47,7 @@ Notes:
    - `ssh cognos@api-cognos-io`
 1. Go to the Cognos installation directory:
    - `cd /home/cognos/chat.cognos.io`
-1. Pull down the latest changes using Git + personal access token:
+1. Pull down the latest changes using Git over SSH with a read-only deploy key:
    - `git pull`
 1. Force a backup to Borgbase:
    - `docker compose run backup borgmatic create --verbosity 1 --list --stats`
@@ -103,10 +103,9 @@ steps to going live for posterity.
     - Monitoring:
         - Setup Grafana Alloy to monitor server and alert on high usage
     - Pocketbase application:
-        - Git clone from GitHub using a personal access token with read only access to
+        - Git clone from GitHub using a read-only SSH deploy key for the
           `cognos/chat.cognos.io` repo:
-            - `git clone https://kisamoto@github.com/cognos/chat.cognos.io.git` and enter access
-              token as password
+            - `git clone git@github.com:cognos-io/chat.cognos.io.git`
         - Bring up the docker compose infrastructure (Caddy + Pocketbase + Backups)
             - `docker compose up --build --detach`
 - Frontend:
@@ -124,8 +123,6 @@ steps to going live for posterity.
 - GitHub
     - $4/month
     - +$10/month copilot
-- Docker Hub
-    - $5/month
 - Hetzner
     - $15/month
 - Cloudflare
