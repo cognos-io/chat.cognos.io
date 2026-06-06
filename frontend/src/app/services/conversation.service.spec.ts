@@ -19,11 +19,24 @@ describe('ConversationService', () => {
     getConversationPublicKey: ReturnType<typeof vi.fn>;
     getConversationSecretKey: ReturnType<typeof vi.fn>;
   };
+  let cryptoService: {
+    equalBytes: ReturnType<typeof vi.fn>;
+    mac: ReturnType<typeof vi.fn>;
+    openBox: ReturnType<typeof vi.fn>;
+    sharedKey: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     api = {
       getConversationPublicKey: vi.fn(),
       getConversationSecretKey: vi.fn(),
+    };
+
+    cryptoService = {
+      equalBytes: vi.fn().mockReturnValue(true),
+      mac: vi.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
+      openBox: vi.fn().mockReturnValue(new Uint8Array([4])),
+      sharedKey: vi.fn().mockReturnValue(new Uint8Array([5])),
     };
 
     TestBed.configureTestingModule({
@@ -35,12 +48,7 @@ describe('ConversationService', () => {
         },
         {
           provide: CryptoService,
-          useValue: {
-            equalBytes: vi.fn().mockReturnValue(true),
-            mac: vi.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
-            openBox: vi.fn().mockReturnValue(new Uint8Array([4])),
-            sharedKey: vi.fn().mockReturnValue(new Uint8Array([5])),
-          },
+          useValue: cryptoService,
         },
         {
           provide: VaultService,
@@ -103,5 +111,51 @@ describe('ConversationService', () => {
       firstValueFrom(fetchConversationKeyPair.call(service, 'conv-1')),
     ).rejects.toThrow('Conversation public key signature missing');
     expect(api.getConversationSecretKey).not.toHaveBeenCalled();
+  });
+
+  it('derives a dedicated mac key for conversation public key signatures', () => {
+    const derivedMACKey = new Uint8Array([9, 8, 7]);
+    const signature = new Uint8Array([6, 5, 4]);
+    const publicKey = new Uint8Array([1, 2, 3]);
+    const userSecretKey = new Uint8Array([4, 5, 6]);
+
+    cryptoService.mac.mockReset();
+    cryptoService.mac.mockReturnValueOnce(derivedMACKey).mockReturnValueOnce(signature);
+
+    const computeConversationPublicKeySignature = (
+      service as unknown as Record<
+        'computeConversationPublicKeySignature',
+        (
+          conversationId: string,
+          publicKey: Uint8Array,
+          userSecretKey: Uint8Array,
+        ) => Uint8Array
+      >
+    ).computeConversationPublicKeySignature;
+
+    expect(
+      computeConversationPublicKeySignature.call(
+        service,
+        'conv-1',
+        publicKey,
+        userSecretKey,
+      ),
+    ).toEqual(signature);
+    expect(cryptoService.mac).toHaveBeenNthCalledWith(
+      1,
+      new TextEncoder().encode('cognos:conv-key-mac:v1'),
+      userSecretKey,
+    );
+    expect(cryptoService.mac).toHaveBeenNthCalledWith(
+      2,
+      new TextEncoder().encode(
+        JSON.stringify([
+          'conversation_public_key_v1',
+          'conv-1',
+          Base64.fromUint8Array(publicKey),
+        ]),
+      ),
+      derivedMACKey,
+    );
   });
 });

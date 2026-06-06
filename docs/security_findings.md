@@ -14,9 +14,8 @@ Open items cluster into four themes:
 2. **Operational hardening**: container `read_only` / `cap_drop`,
    Cloudflare trust boundary (`trusted_proxies` + origin-IP
    lockdown).
-3. **Cryptographic protocol gaps**: conversation-key MAC uses
-   the NaCl secret as the MAC key (key-separation violation),
-   Argon2 params raised without an `unlock_scheme` bump.
+3. **Cryptographic protocol gaps**: Argon2 params raised
+   without an `unlock_scheme` bump.
 4. **Supply chain & secrets**: CI lints/tests/scans but doesn't
    push/sign/cosign; Cloudflare API token in Caddyfile env;
    BorgBase repo URL co-located with credentials; xcaddy
@@ -174,17 +173,6 @@ BorgBase account if the prod host was ever shared.
 
 ## 5. Newly surfaced or unaddressed items
 
-### N-3 — Conversation public-key MAC uses NaCl secret key directly
-
-Status: ❌ Not fixed.
-`conversation.service.ts:604` passes `userSecretKey` (the
-long-term X25519 scalar used by `nacl.box`) as the blake2b MAC
-key. Cryptographically OK in this context but violates key
-separation.
-
-Fix: derive a sub-key, e.g.
-`blake2b("cognos:conv-key-mac:v1", userSecretKey)`.
-
 ### N-4 — Argon2id parameter change without `unlock_scheme` bump
 
 Status: ❌ Not fixed.
@@ -321,13 +309,12 @@ operational and product:
 7. **M-5** container hardening: `read_only`, `cap_drop: [ALL]`,
    `no-new-privileges`, `HEALTHCHECK`, resource limits. One PR.
 8. **N-17** Cloudflare API token via Compose secrets.
-9. **N-3** key separation for the conversation-key MAC.
-10. **L-12** drop `GrantManagerAccess` from message-create hook.
-11. **M-14** anonymise `req.User` to upstream.
-12. **L-8** Anthropic Temperature=0 pointer bug.
-13. **M-11 / N-14** confirm + trim mermaid.
-14. **M-4** Account Key autocomplete pattern.
-15. **H-22 / M-15 follow-through**: BorgBase repo URL into
+9. **L-12** drop `GrantManagerAccess` from message-create hook.
+10. **M-14** anonymise `req.User` to upstream.
+11. **L-8** Anthropic Temperature=0 pointer bug.
+12. **M-11 / N-14** confirm + trim mermaid.
+13. **M-4** Account Key autocomplete pattern.
+14. **H-22 / M-15 follow-through**: BorgBase repo URL into
     secrets; consider rotating the BorgBase account.
 
 **P2 — Next 4 weeks of engineering:**

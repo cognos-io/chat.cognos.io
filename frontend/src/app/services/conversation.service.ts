@@ -56,6 +56,8 @@ const initialState: ConversationState = {
   expirationDuration: '',
 };
 
+const conversationPublicKeyMACKeyContext = 'cognos:conv-key-mac:v1';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -591,8 +593,12 @@ export class ConversationService {
         Base64.fromUint8Array(publicKey),
       ]),
     );
+    const macKey = this._cryptoService.mac(
+      new TextEncoder().encode(conversationPublicKeyMACKeyContext),
+      userSecretKey,
+    );
 
-    return this._cryptoService.mac(payload, userSecretKey);
+    return this._cryptoService.mac(payload, macKey);
   }
 
   /**
