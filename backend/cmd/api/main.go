@@ -96,6 +96,7 @@ func bindAppHooks(
 
 		hooks.SoftDelete(app)
 		hooks.EnforceSingleUserKeyPair(app)
+		hooks.ForbidUserEmailChanges(app)
 
 		if params.CronScheduler != nil {
 			expiredMessagesRepo := chat.NewPocketBaseMessageRepo(app)
