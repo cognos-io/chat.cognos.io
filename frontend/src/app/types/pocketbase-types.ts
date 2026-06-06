@@ -51,6 +51,7 @@ export type AgentsRecord = {
 export type ConversationPublicKeysRecord = {
   conversation: RecordIdString;
   public_key?: string;
+  public_key_signature?: string;
 };
 
 export type ConversationSecretKeysRecord = {
@@ -106,6 +107,7 @@ export type ModelsRecord = {
 
 export type UserKeyPairsRecord = {
   public_key: string;
+  record_mac?: string;
   secret_key: string;
   user: RecordIdString;
 };

@@ -435,7 +435,9 @@ export class ConversationService {
    * @param conversationId (string)
    * @returns (Observable<Uint8Array>)
    */
-  private fetchConversationPublicKey(conversationId: string): Observable<Uint8Array> {
+  private fetchConversationPublicKeyRecord(
+    conversationId: string,
+  ): Observable<{ id: string; public_key: string; public_key_signature?: string }> {
     const filter = this._pb.filter('conversation={:conversationId}', {
       conversationId,
     });
@@ -444,10 +446,7 @@ export class ConversationService {
       this._pb
         .collection(this.pbConversationPublicKeysCollection)
         .getFirstListItem(filter),
-    ).pipe(
-      ignorePocketbase404(),
-      map((record) => Base64.toUint8Array(record.public_key)),
-    );
+    ).pipe(ignorePocketbase404());
   }
 
   /**
@@ -482,14 +481,38 @@ export class ConversationService {
    * @returns (Observable<KeyPair>)
    */
   private fetchConversationKeyPair(conversationId: string): Observable<KeyPair> {
-    return this.fetchConversationPublicKey(conversationId).pipe(
-      switchMap((publicKey) =>
-        this.fetchConversationSecretKey(conversationId).pipe(
+    const userSecretKey = this._vaultService.keyPair()?.secretKey;
+    if (!userSecretKey) {
+      throw UserSecretKeyNotFoundError;
+    }
+
+    return this.fetchConversationPublicKeyRecord(conversationId).pipe(
+      switchMap((record) => {
+        const publicKey = Base64.toUint8Array(record.public_key);
+        const publicKeySignature = this.computeConversationPublicKeySignature(
+          conversationId,
+          publicKey,
+          userSecretKey,
+        );
+
+        if (record.public_key_signature) {
+          const expectedSignature = Base64.toUint8Array(record.public_key_signature);
+          if (!this._cryptoService.equalBytes(publicKeySignature, expectedSignature)) {
+            throw new Error('Conversation public key signature mismatch');
+          }
+        } else {
+          void this._pb
+            .collection(this.pbConversationPublicKeysCollection)
+            .update(record.id, {
+              public_key_signature: Base64.fromUint8Array(publicKeySignature),
+            })
+            .catch(() => {
+              console.error('Failed to backfill conversation key signature');
+            });
+        }
+
+        return this.fetchConversationSecretKey(conversationId).pipe(
           map((secretKey) => {
-            const userSecretKey = this._vaultService.keyPair()?.secretKey;
-            if (!userSecretKey) {
-              throw UserSecretKeyNotFoundError;
-            }
             const sharedKey = this._cryptoService.sharedKey(publicKey, userSecretKey);
             const decryptedSecretKey = this._cryptoService.openBox(
               secretKey,
@@ -500,8 +523,8 @@ export class ConversationService {
               secretKey: decryptedSecretKey,
             };
           }),
-        ),
-      ),
+        );
+      }),
     );
   }
 
@@ -517,17 +540,25 @@ export class ConversationService {
     conversationId: string,
     conversationKeyPair: KeyPair,
   ): Observable<KeyPair> {
+    const userSecretKey = this._vaultService.keyPair()?.secretKey;
+    if (!userSecretKey) {
+      throw UserSecretKeyNotFoundError;
+    }
+
     return from(
       this._pb.collection(this.pbConversationPublicKeysCollection).create({
         conversation: conversationId,
         public_key: Base64.fromUint8Array(conversationKeyPair.publicKey),
+        public_key_signature: Base64.fromUint8Array(
+          this.computeConversationPublicKeySignature(
+            conversationId,
+            conversationKeyPair.publicKey,
+            userSecretKey,
+          ),
+        ),
       }),
     ).pipe(
       switchMap(() => {
-        const userSecretKey = this._vaultService.keyPair()?.secretKey;
-        if (!userSecretKey) {
-          throw UserSecretKeyNotFoundError;
-        }
         const sharedKey = this._cryptoService.sharedKey(
           conversationKeyPair.publicKey,
           userSecretKey,
@@ -584,6 +615,22 @@ export class ConversationService {
         forkJoin(records.map((record) => this.fetchConversation(record))),
       ),
     );
+  }
+
+  private computeConversationPublicKeySignature(
+    conversationId: string,
+    publicKey: Uint8Array,
+    userSecretKey: Uint8Array,
+  ): Uint8Array {
+    const payload = new TextEncoder().encode(
+      JSON.stringify([
+        'conversation_public_key_v1',
+        conversationId,
+        Base64.fromUint8Array(publicKey),
+      ]),
+    );
+
+    return this._cryptoService.mac(payload, userSecretKey);
   }
 
   /**

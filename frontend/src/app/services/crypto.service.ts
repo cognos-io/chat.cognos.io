@@ -9,6 +9,27 @@ import { KeyPair } from '../interfaces/key-pair';
   providedIn: 'root',
 })
 export class CryptoService {
+  hash(message: Uint8Array, outputLength = 32): Uint8Array {
+    return blake2b(message, undefined, outputLength);
+  }
+
+  mac(message: Uint8Array, key: Uint8Array, outputLength = 32): Uint8Array {
+    return blake2b(message, key, outputLength);
+  }
+
+  equalBytes(left: Uint8Array, right: Uint8Array): boolean {
+    if (left.length !== right.length) {
+      return false;
+    }
+
+    let diff = 0;
+    for (let i = 0; i < left.length; i += 1) {
+      diff |= left[i] ^ right[i];
+    }
+
+    return diff === 0;
+  }
+
   newKeyPair(): KeyPair {
     return nacl.box.keyPair();
   }

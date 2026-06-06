@@ -20,7 +20,11 @@ import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
 import nacl from 'tweetnacl';
 
-import { TypedPocketBase, UserKeyPairsRecord } from '@app/types/pocketbase-types';
+import {
+  TypedPocketBase,
+  UserKeyPairsRecord,
+  UserKeyPairsResponse,
+} from '@app/types/pocketbase-types';
 
 import { KeyPair } from '@interfaces/key-pair';
 
@@ -30,7 +34,7 @@ import { ErrorService } from './error.service';
 
 interface VaultState {
   keyPair: KeyPair | undefined;
-  keyPairRecord: UserKeyPairsRecord | null | undefined; // null means the record does not exist
+  keyPairRecord: UserKeyPairsResponse | null | undefined; // null means the record does not exist
   isNewKeyPair: boolean;
 }
 
@@ -82,6 +86,9 @@ const setupWasmInstance = setupWasm(
     ),
 );
 
+const userKeyPairRecordMACContext = 'user_key_pair_record_v1';
+const trustedUserKeyContextPrefix = 'cognos:trusted-user-key:';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -116,10 +123,20 @@ export class VaultService {
                   return EMPTY;
                 }
                 try {
+                  this.assertTrustedUserKeyContext(keyPairRecord);
                   const keyPair = this.unpackKeyPairRecord(
                     keyPairRecord,
                     hashedVaultPassword,
                   );
+                  this.persistTrustedUserKeyContext(keyPairRecord);
+                  if (!keyPairRecord.record_mac) {
+                    void this.backfillUserKeyPairRecordMAC(
+                      keyPairRecord,
+                      hashedVaultPassword,
+                    ).catch(() => {
+                      console.error('Failed to backfill user key pair integrity');
+                    });
+                  }
                   return of({ keyPair });
                 } catch (error) {
                   console.error('Error unpacking key pair record', error);
@@ -176,7 +193,7 @@ export class VaultService {
     );
   }
 
-  fetchUserKeyPairRecord(): Observable<UserKeyPairsRecord> {
+  fetchUserKeyPairRecord(): Observable<UserKeyPairsResponse> {
     const filter = this._pb.filter('user={:user}', {
       user: this._authService.user()?.['id'],
     });
@@ -198,9 +215,21 @@ export class VaultService {
   }
 
   unpackKeyPairRecord(
-    keyPairRecord: UserKeyPairsRecord,
+    keyPairRecord: UserKeyPairsResponse,
     hashedVaultPassword: Uint8Array,
   ): KeyPair {
+    if (keyPairRecord.record_mac) {
+      const actualMAC = this.computeUserKeyPairRecordMAC(
+        keyPairRecord,
+        hashedVaultPassword,
+      );
+      const expectedMAC = Base64.toUint8Array(keyPairRecord.record_mac);
+
+      if (!this._cryptoService.equalBytes(actualMAC, expectedMAC)) {
+        throw new Error('User key pair integrity check failed');
+      }
+    }
+
     const publicKey = Base64.toUint8Array(keyPairRecord.public_key);
     const encryptedSecretKey = Base64.toUint8Array(keyPairRecord.secret_key);
     const decryptedSecretKey = this.decryptSecretKey(
@@ -224,14 +253,105 @@ export class VaultService {
 
     const publicKeyBase64 = Base64.fromUint8Array(keyPair.publicKey);
     const encryptedSecretKeyBase64 = Base64.fromUint8Array(encryptedSecretKey);
+    const userID = this._authService.user()?.['id'];
     const keyPairRecordData: Partial<UserKeyPairsRecord> = {
       public_key: publicKeyBase64,
       secret_key: encryptedSecretKeyBase64,
-      user: this._authService.user()?.['id'],
+      user: userID,
     };
+
+    keyPairRecordData.record_mac = Base64.fromUint8Array(
+      this.computeUserKeyPairRecordMAC(
+        {
+          public_key: publicKeyBase64,
+          secret_key: encryptedSecretKeyBase64,
+          user: userID ?? '',
+        },
+        hashedVaultPassword,
+      ),
+    );
 
     return from(
       this._pb.collection(this.pbUserKeyPairsCollection).create(keyPairRecordData),
     ).pipe(switchMap(() => of(keyPair)));
+  }
+
+  private computeUserKeyPairRecordMAC(
+    keyPairRecord: Pick<UserKeyPairsRecord, 'public_key' | 'secret_key' | 'user'>,
+    hashedVaultPassword: Uint8Array,
+  ): Uint8Array {
+    const payload = new TextEncoder().encode(
+      JSON.stringify([
+        userKeyPairRecordMACContext,
+        keyPairRecord.user,
+        keyPairRecord.public_key,
+        keyPairRecord.secret_key,
+      ]),
+    );
+
+    return this._cryptoService.mac(payload, hashedVaultPassword);
+  }
+
+  private async backfillUserKeyPairRecordMAC(
+    keyPairRecord: UserKeyPairsResponse,
+    hashedVaultPassword: Uint8Array,
+  ) {
+    const record_mac = Base64.fromUint8Array(
+      this.computeUserKeyPairRecordMAC(keyPairRecord, hashedVaultPassword),
+    );
+
+    await this._pb.collection(this.pbUserKeyPairsCollection).update(keyPairRecord.id, {
+      record_mac,
+    });
+  }
+
+  private trustedUserKeyContextStorageKey(userID: string): string {
+    return `${trustedUserKeyContextPrefix}${userID}`;
+  }
+
+  private assertTrustedUserKeyContext(keyPairRecord: UserKeyPairsResponse): void {
+    const userID = this._authService.user()?.['id'];
+    const oryID = this._authService.oryId();
+    if (!userID || !oryID) {
+      return;
+    }
+
+    const rawContext = localStorage.getItem(this.trustedUserKeyContextStorageKey(userID));
+    if (!rawContext) {
+      return;
+    }
+
+    const context = JSON.parse(rawContext) as {
+      oryId: string;
+      publicKeyFingerprint: string;
+    };
+    if (context.oryId !== oryID) {
+      throw new Error('Trusted user key salt changed');
+    }
+
+    const publicKeyFingerprint = Base64.fromUint8Array(
+      this._cryptoService.hash(Base64.toUint8Array(keyPairRecord.public_key)),
+    );
+    if (context.publicKeyFingerprint !== publicKeyFingerprint) {
+      throw new Error('Trusted user public key changed');
+    }
+  }
+
+  private persistTrustedUserKeyContext(keyPairRecord: UserKeyPairsResponse): void {
+    const userID = this._authService.user()?.['id'];
+    const oryID = this._authService.oryId();
+    if (!userID || !oryID) {
+      return;
+    }
+
+    localStorage.setItem(
+      this.trustedUserKeyContextStorageKey(userID),
+      JSON.stringify({
+        oryId: oryID,
+        publicKeyFingerprint: Base64.fromUint8Array(
+          this._cryptoService.hash(Base64.toUint8Array(keyPairRecord.public_key)),
+        ),
+      }),
+    );
   }
 }
