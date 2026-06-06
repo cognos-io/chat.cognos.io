@@ -29,7 +29,9 @@ import { UserPreferencesService } from '@app/services/user-preferences.service';
               role="option"
               class="model-selector__row"
               [class.model-selector__row--active]="model.id === selectedModelId()"
+              [class.model-selector__row--disabled]="!model.isEligible"
               [attr.aria-selected]="model.id === selectedModelId()"
+              [disabled]="!model.isEligible"
               (click)="onSelectModel(model)"
             >
               <span
@@ -61,6 +63,11 @@ import { UserPreferencesService } from '@app/services/user-preferences.service';
                 <span class="model-selector__description">
                   {{ model.description }}
                 </span>
+                @if (!model.isEligible && model.ineligibilityReason) {
+                  <span class="model-selector__availability-reason">
+                    {{ model.ineligibilityReason }}
+                  </span>
+                }
               </span>
 
               @if (model.id === selectedModelId()) {
@@ -131,6 +138,16 @@ import { UserPreferencesService } from '@app/services/user-preferences.service';
     .model-selector__row--active:hover,
     .model-selector__row--active:focus-visible {
       background: var(--cog-selected-bg, rgba(46, 160, 67, 0.16));
+    }
+
+    .model-selector__row--disabled {
+      cursor: not-allowed;
+      opacity: 0.72;
+    }
+
+    .model-selector__row--disabled:hover,
+    .model-selector__row--disabled:focus-visible {
+      background: transparent;
     }
 
     .model-selector__pin {
@@ -208,6 +225,12 @@ import { UserPreferencesService } from '@app/services/user-preferences.service';
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+    }
+
+    .model-selector__availability-reason {
+      color: var(--cog-text-subtlest);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
     }
 
     .model-selector__check {

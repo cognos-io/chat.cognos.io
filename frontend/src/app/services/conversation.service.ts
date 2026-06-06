@@ -28,17 +28,17 @@ import { ignorePocketbase404 } from '@app/operators/ignore-404';
 import {
   Conversation,
   ConversationData,
+  ConversationRecord,
   parseConversationData,
   serializeConversationData,
 } from '../interfaces/conversation';
 import { KeyPair } from '../interfaces/key-pair';
 import {
   ConversationsExpiryDurationOptions,
-  ConversationsRecord,
-  ConversationsResponse,
   TypedPocketBase,
 } from '../types/pocketbase-types';
 import { AuthService } from './auth.service';
+import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
 import { UserPreferencesService } from './user-preferences.service';
 import { VaultService } from './vault.service';
@@ -69,10 +69,10 @@ export class ConversationService {
   private readonly _cryptoService = inject(CryptoService);
   private readonly _vaultService = inject(VaultService);
   private readonly _auth = inject(AuthService);
+  private readonly _api = inject(CognosApiService);
   private readonly _router = inject(Router);
   private readonly _userPreferencesService = inject(UserPreferencesService);
 
-  private readonly pbConversationCollection = 'conversations';
   private readonly pbConversationPublicKeysCollection = 'conversation_public_keys';
   private readonly pbConversationSecretKeyCollection = 'conversation_secret_keys';
 
@@ -228,8 +228,7 @@ export class ConversationService {
                 expirationDuration,
               };
 
-            (conversations[index].record as ConversationsRecord).expiry_duration =
-              expirationDuration;
+            conversations[index].record.expiry_duration = expirationDuration;
 
             return {
               conversations,
@@ -245,7 +244,7 @@ export class ConversationService {
           }),
         );
       },
-      updateConversationRecord: (state, $: Observable<ConversationsResponse>) => {
+      updateConversationRecord: (state, $: Observable<ConversationRecord>) => {
         return $.pipe(
           concatMap((data) => {
             return this.fetchConversation(data).pipe(
@@ -346,28 +345,27 @@ export class ConversationService {
     const encryptedData = this.encryptConversationData(data, conversationKeyPair);
 
     // Create the conversation in the backend with the encrypted data
-    return from(
-      this._pb.collection(this.pbConversationCollection).create({
+    return this._api
+      .createConversation({
         data: Base64.fromUint8Array(encryptedData),
-        creator: this._auth.user()?.['id'],
         expiry_duration: this.expirationDuration(),
-      }),
-    ).pipe(
-      switchMap((record) => {
-        // Save the conversation key pair in the backend
-        return this.saveConversationKeyPair(record.id, conversationKeyPair).pipe(
-          // Return the newly created conversation
-          map(() => {
-            return {
-              record,
-              decryptedData: data,
-              keyPair: conversationKeyPair,
-              expirationDuration: '',
-            };
-          }),
-        );
-      }),
-    );
+      })
+      .pipe(
+        switchMap((record) => {
+          // Save the conversation key pair in the backend
+          return this.saveConversationKeyPair(record.id, conversationKeyPair).pipe(
+            // Return the newly created conversation
+            map(() => {
+              return {
+                record,
+                decryptedData: data,
+                keyPair: conversationKeyPair,
+                expirationDuration: '',
+              };
+            }),
+          );
+        }),
+      );
   }
 
   /**
@@ -397,7 +395,7 @@ export class ConversationService {
    * @returns (ConversationData)
    */
   private decryptConversationData(
-    record: ConversationsResponse,
+    record: ConversationRecord,
     conversationKeyPair: KeyPair,
   ): ConversationData {
     const sharedSecret = this.sharedKey(conversationKeyPair);
@@ -549,7 +547,7 @@ export class ConversationService {
    *
    * @returns (Observable<Conversation>)
    */
-  private fetchConversation(record: ConversationsResponse): Observable<Conversation> {
+  private fetchConversation(record: ConversationRecord): Observable<Conversation> {
     return this.fetchConversationKeyPair(record.id).pipe(
       map((keyPair) => {
         return {
@@ -580,39 +578,23 @@ export class ConversationService {
   }
 
   /**
-   * fetchConversationRecord - fetches a specific conversation record from the PocketBase
-   * backend.
+   * fetchConversationRecords - fetches all conversation records from the backend.
    *
-   * @returns (Observable<ConversationsResponse>)
+   * @returns (Observable<Array<ConversationRecord>>)
    */
-  private fetchConversationRecord(
-    conversationId: string,
-  ): Observable<ConversationsResponse> {
-    return from(
-      this._pb.collection(this.pbConversationCollection).getOne(conversationId),
-    );
+  private fetchConversationRecords(): Observable<Array<ConversationRecord>> {
+    return this._api.listConversations();
   }
 
-  /**
-   * fetchConversationRecords - fetches all conversation records from the PocketBase backend.
-   *
-   * @returns (Observable<Array<ConversationsResponse>>)
-   */
-  private fetchConversationRecords(): Observable<Array<ConversationsResponse>> {
-    return from(this._pb.collection(this.pbConversationCollection).getFullList());
-  }
-
-  private deleteConversation(conversationId: string): Observable<boolean> {
-    return from(
-      this._pb.collection(this.pbConversationCollection).delete(conversationId),
-    );
+  private deleteConversation(conversationId: string): Observable<void> {
+    return this._api.deleteConversation(conversationId);
   }
 
   editConversation(
     id: string,
     expiryDuration: string,
     data: ConversationData,
-  ): Observable<ConversationsResponse> {
+  ): Observable<ConversationRecord> {
     // Validate the expiry duration
     if (
       expiryDuration !== '' &&
@@ -630,15 +612,15 @@ export class ConversationService {
     // Encrypt the new data with the conversation's key pair
     const encryptedData = this.encryptConversationData(data, conversationKeyPair);
 
-    return from(
-      this._pb.collection(this.pbConversationCollection).update(id, {
+    return this._api
+      .updateConversation(id, {
         data: Base64.fromUint8Array(encryptedData),
         expiry_duration: expiryDuration,
-      }),
-    ).pipe(
-      tap((resp) => {
-        this.state.updateConversationRecord(resp);
-      }),
-    );
+      })
+      .pipe(
+        tap((resp) => {
+          this.state.updateConversationRecord(resp);
+        }),
+      );
   }
 }

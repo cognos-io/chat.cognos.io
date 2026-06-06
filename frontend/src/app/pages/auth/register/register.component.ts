@@ -49,8 +49,8 @@ const matchPassword = (control: AbstractControl): ValidationErrors | null => {
         </div>
         <h1 class="auth-page__title">Create your Cognos account</h1>
         <p class="auth-page__lead">
-          Email and password is all we need for now. You can change your email or delete
-          your account at any time.
+          Start with your email and password. Right after signup, Cognos will generate
+          an Account Key for encrypted backup unlock on new devices.
         </p>
 
         <form

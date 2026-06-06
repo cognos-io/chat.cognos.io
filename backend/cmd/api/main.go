@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
@@ -36,6 +37,12 @@ type appHookParams struct {
 	AnthropicClient        *anthropic.Client
 	DeepinfraOpenAIClient  *oai.Client
 	CronScheduler          gocron.Scheduler
+	UpstreamRepo           proxy.UpstreamRepo
+	MessageRepo            chat.MessageRepo
+	KeyPairRepo            auth.KeyPairRepo
+	AIAgentRepo            aiagent.AIAgentRepo
+	ConversationRepo       chat.ConversationRepo
+	BillingService         *billing.Service
 }
 
 func NewServer(
@@ -60,7 +67,6 @@ func bindAppHooks(
 ) {
 	var (
 		app                    = params.App
-		config                 = params.Config
 		openaiClient           = params.OpenaiClient
 		cloudflareOpenAIClient = params.CloudflareOpenAIClient
 		googleGeminiClient     = params.GoogleGeminiClient
@@ -69,29 +75,52 @@ func bindAppHooks(
 	)
 
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
-		upstreamRepo := proxy.NewInMemoryUpstreamRepo(proxy.RepoParams{
-			Logger:                 app.Logger(),
-			OpenAIClient:           openaiClient,
-			CloudflareOpenAIClient: cloudflareOpenAIClient,
-			GoogleGeminiAIClient:   googleGeminiClient,
-			AnthropicClient:        anthropicClient,
-			DeepInfraOpenAIClient:  deepinfraClient,
-		})
-		messageRepo := chat.NewPocketBaseMessageRepo(app)
-		keyPairRepo := auth.NewPocketBaseKeyPairRepo(app)
-		aiAgentRepo := aiagent.NewInMemoryAIAgentRepo(app.Logger())
-		conversationRepo := chat.NewPocketBaseConversationRepo(app, keyPairRepo)
+		upstreamRepo := params.UpstreamRepo
+		if upstreamRepo == nil {
+			upstreamRepo = proxy.NewInMemoryUpstreamRepo(proxy.RepoParams{
+				Logger:                 app.Logger(),
+				OpenAIClient:           openaiClient,
+				CloudflareOpenAIClient: cloudflareOpenAIClient,
+				GoogleGeminiAIClient:   googleGeminiClient,
+				AnthropicClient:        anthropicClient,
+				DeepInfraOpenAIClient:  deepinfraClient,
+			})
+		}
+
+		keyPairRepo := params.KeyPairRepo
+		if keyPairRepo == nil {
+			keyPairRepo = auth.NewPocketBaseKeyPairRepo(app)
+		}
+
+		messageRepo := params.MessageRepo
+		if messageRepo == nil {
+			messageRepo = chat.NewPocketBaseMessageRepo(app)
+		}
+
+		aiAgentRepo := params.AIAgentRepo
+		if aiAgentRepo == nil {
+			aiAgentRepo = aiagent.NewInMemoryAIAgentRepo(app.Logger())
+		}
+
+		conversationRepo := params.ConversationRepo
+		if conversationRepo == nil {
+			conversationRepo = chat.NewPocketBaseConversationRepo(app, keyPairRepo)
+		}
+
+		billingService := params.BillingService
+		if billingService == nil {
+			billingService = billing.NewService()
+		}
 
 		addPocketBaseRoutes(
 			e,
 			app,
 			app.Logger(),
-			config,
 			upstreamRepo,
 			messageRepo,
-			keyPairRepo,
 			aiAgentRepo,
 			conversationRepo,
+			billingService,
 		)
 
 		hooks.SoftDelete(app)

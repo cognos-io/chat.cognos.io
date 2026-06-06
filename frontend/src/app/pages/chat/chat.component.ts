@@ -1,4 +1,4 @@
-import { Dialog } from '@angular/cdk/dialog';
+import { Dialog, DialogRef } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -13,13 +13,16 @@ import {
   CognosIconComponent,
   CognosLozengeComponent,
   CognosTextFieldComponent,
+  CognosToastService,
 } from '@cognos/ui-angular';
 
 import { ConversationListItemComponent } from '@app/components/chat/conversation-list/conversation-list-item/conversation-list-item.component';
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/contact-help-dialog.component';
+import { VaultPasswordDialogComponent } from '@app/components/vault-password-dialog/vault-password-dialog.component';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
+import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 import { ConversationService } from '../../services/conversation.service';
@@ -46,10 +49,15 @@ export class ChatComponent {
   private readonly _deviceService = inject(DeviceService);
   private readonly _dialog = inject(Dialog);
   private readonly _messageService = inject(MessageService);
+  private readonly _toastService = inject(CognosToastService);
+  private readonly _vaultService = inject(VaultService);
 
   readonly router = inject(Router);
   readonly conversationService = inject(ConversationService);
   readonly drawerOpen = signal(false);
+
+  private _vaultDialogRef: DialogRef<unknown, VaultPasswordDialogComponent> | null =
+    null;
 
   readonly isMobile = computed(() => this._deviceService.isMobile());
 
@@ -81,6 +89,19 @@ export class ChatComponent {
       .subscribe(() => {
         this.drawerOpen.set(false);
       });
+
+    this._vaultService.keyPair$.pipe(takeUntilDestroyed()).subscribe((keyPair) => {
+      if (keyPair) {
+        this._vaultDialogRef?.close();
+        this._vaultDialogRef = null;
+        return;
+      }
+
+      this._vaultDialogRef ??= this._dialog.open(VaultPasswordDialogComponent, {
+        ...cognosDialogOptions,
+        disableClose: true,
+      });
+    });
   }
 
   onOpenHelpDialog() {
@@ -101,6 +122,18 @@ export class ChatComponent {
 
   onClearMessages() {
     this._messageService.resetState();
+  }
+
+  onLock() {
+    this.drawerOpen.set(false);
+    this._vaultService.lock();
+    this._toastService.notify({
+      title: 'Account locked',
+      msg: 'This device now needs your password and Account Key to unlock again.',
+      tone: 'info',
+      icon: 'lock',
+      duration: 4200,
+    });
   }
 
   onLogout() {

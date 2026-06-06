@@ -1,77 +1,179 @@
-import { Component, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, computed, inject } from '@angular/core';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 
 import {
   CognosButtonComponent,
   CognosDialogSurfaceComponent,
+  CognosIconComponent,
+  CognosLozengeComponent,
+  CognosToastService,
 } from '@cognos/ui-angular';
 
 import { environment } from '@environments/environment';
 
 import { VaultService } from '../../services/vault.service';
 
+const validateUnlockForm = (
+  control: AbstractControl,
+  isNewKeyPair: boolean,
+): ValidationErrors | null => {
+  if (isNewKeyPair) {
+    return control.get('accountKeySaved')?.value
+      ? null
+      : { accountKeySavedRequired: true };
+  }
+
+  return control.get('accountKey')?.value?.trim() ? null : { accountKeyRequired: true };
+};
+
 @Component({
   selector: 'app-vault-password-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule, CognosDialogSurfaceComponent, CognosButtonComponent],
+  imports: [
+    ReactiveFormsModule,
+    CognosDialogSurfaceComponent,
+    CognosButtonComponent,
+    CognosIconComponent,
+    CognosLozengeComponent,
+  ],
   template: `
-    <cog-dialog-surface title="Vault locked" [footer]="false" [dismissible]="false">
+    <cog-dialog-surface [title]="title()" [footer]="false" [dismissible]="false">
       <div class="vault-password-dialog">
         <div class="vault-password-dialog__copy">
+          @if (!vaultService.isNewKeyPair() && vaultService.wasLocked()) {
+            <div class="vault-password-dialog__status-card">
+              <span class="vault-password-dialog__status-badge">
+                <cog-icon name="lock" [size]="16" tone="brand"></cog-icon>
+              </span>
+              <div class="vault-password-dialog__status-copy">
+                <div class="vault-password-dialog__status-title">
+                  <cog-lozenge tone="blue">Locked</cog-lozenge>
+                  <span>Account locked on this device</span>
+                </div>
+                <p>
+                  Unlock to continue. This lock only clears local trusted access and
+                  does not sign you out.
+                </p>
+              </div>
+            </div>
+          }
+
           @if (vaultService.isNewKeyPair()) {
             <p>
-              To secure your vault we require you to enter a vault password used to
-              encrypt and decrypt your chats. This is different from your login
-              password.
+              Cognos generated a one-time Account Key for this encrypted backup. Save it
+              now. New devices will need both your account password and this Account
+              Key.
             </p>
+            <div class="vault-password-dialog__account-key-card">
+              <span class="vault-password-dialog__account-key-label">Account Key</span>
+              <code class="vault-password-dialog__account-key-value">{{
+                generatedAccountKey()
+              }}</code>
+              <cog-button appearance="default" type="button" (click)="copyAccountKey()">
+                Copy Account Key
+              </cog-button>
+            </div>
             <p>
-              Make sure you keep this safe as you will not be able to access your chats
-              without it.
+              Cognos never stores the plaintext Account Key. If you lose it,
+              fresh-device unlock may be impossible.
             </p>
           } @else {
             <p>
-              Enter your vault password to unlock your chats. Your vault password will
-              never leave your device.
+              Enter your account password and Account Key to unlock this device. If you
+              trust this browser, Cognos can keep a locally wrapped unlock blob in
+              IndexedDB so you are not prompted again on every visit.
+            </p>
+            <p>
+              The trusted-device shortcut only applies to this browser profile and can
+              be cleared at any time by locking the account, logging out, or clearing
+              browser storage.
             </p>
           }
         </div>
 
         <form
           class="vault-password-dialog__form"
-          [formGroup]="vaultPasswordForm"
+          [formGroup]="vaultForm"
           (ngSubmit)="submit()"
         >
-          <label class="vault-password-dialog__field" for="vault-password">
-            <span class="vault-password-dialog__label">Vault password</span>
+          <label class="vault-password-dialog__field" for="account-password">
+            <span class="vault-password-dialog__label">Account password</span>
             <input
-              id="vault-password"
+              id="account-password"
               class="vault-password-dialog__input"
-              formControlName="vaultPassword"
+              formControlName="accountPassword"
               type="password"
+              autocomplete="current-password"
             />
-            <span class="vault-password-dialog__hint"
-              >This is different from your login password</span
-            >
-            @if (vaultPasswordForm.get('vaultPassword')?.hasError('required')) {
+            @if (vaultForm.get('accountPassword')?.hasError('required')) {
               <span class="vault-password-dialog__error"
-                >Vault password is required</span
+                >Account password is required</span
               >
-            } @else if (vaultService.unlockError()) {
-              <span class="vault-password-dialog__error">{{
-                vaultService.unlockError()
-              }}</span>
             }
           </label>
 
-          <cog-button
-            appearance="primary"
-            type="submit"
-            [disabled]="!vaultPasswordForm.valid"
-          >
+          @if (!vaultService.isNewKeyPair()) {
+            <label class="vault-password-dialog__field" for="account-key">
+              <span class="vault-password-dialog__label">Account Key</span>
+              <input
+                id="account-key"
+                class="vault-password-dialog__input vault-password-dialog__input--code"
+                formControlName="accountKey"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              @if (
+                vaultForm.hasError('accountKeyRequired') &&
+                vaultForm.get('accountKey')?.touched
+              ) {
+                <span class="vault-password-dialog__error"
+                  >Account Key is required</span
+                >
+              }
+            </label>
+          }
+
+          @if (vaultService.isNewKeyPair()) {
+            <label
+              class="vault-password-dialog__checkbox-row vault-password-dialog__checkbox-row--acknowledge"
+            >
+              <input formControlName="accountKeySaved" type="checkbox" />
+              <span>
+                I have copied my Account Key to a safe place and acknowledge that if I
+                lose it I will also not be able to access my account.
+              </span>
+            </label>
+            @if (vaultForm.hasError('accountKeySavedRequired')) {
+              <span class="vault-password-dialog__error"
+                >Please confirm that you copied your Account Key and accept the recovery
+                risk.</span
+              >
+            }
+          }
+
+          <label class="vault-password-dialog__checkbox-row">
+            <input formControlName="trustDevice" type="checkbox" />
+            <span>Keep this device unlocked on this browser</span>
+          </label>
+
+          @if (vaultService.unlockError()) {
+            <span class="vault-password-dialog__error">{{
+              vaultService.unlockError()
+            }}</span>
+          }
+
+          <cog-button appearance="primary" type="submit" [disabled]="vaultForm.invalid">
             @if (vaultService.isNewKeyPair()) {
-              Create vault
+              Create encrypted backup
             } @else {
-              Unlock vault
+              Unlock encrypted backup
             }
           </cog-button>
         </form>
@@ -100,6 +202,71 @@ import { VaultService } from '../../services/vault.service';
       text-wrap: pretty;
     }
 
+    .vault-password-dialog__status-card {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: var(--cog-space-125);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface-raised, var(--cog-surface));
+      padding: var(--cog-space-150);
+    }
+
+    .vault-password-dialog__status-badge {
+      display: inline-flex;
+      width: 32px;
+      height: 32px;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--cog-radius-pill);
+      background: var(--cog-info-bg);
+    }
+
+    .vault-password-dialog__status-copy {
+      display: grid;
+      gap: var(--cog-space-050);
+    }
+
+    .vault-password-dialog__status-copy p {
+      margin: 0;
+    }
+
+    .vault-password-dialog__status-title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--cog-space-075);
+      color: var(--cog-text);
+      font-size: var(--cog-fs-body-sm);
+      font-weight: var(--cog-fw-semibold);
+      line-height: var(--cog-lh-body-sm);
+    }
+
+    .vault-password-dialog__account-key-card {
+      display: grid;
+      gap: var(--cog-space-100);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface-raised, var(--cog-surface));
+      padding: var(--cog-space-150);
+    }
+
+    .vault-password-dialog__account-key-label {
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .vault-password-dialog__account-key-value {
+      overflow-wrap: anywhere;
+      color: var(--cog-text);
+      font-size: var(--cog-fs-body-sm);
+      font-weight: var(--cog-fw-semibold);
+      line-height: var(--cog-lh-body-sm);
+    }
+
     .vault-password-dialog__label {
       color: var(--cog-text);
       font-size: var(--cog-fs-body-sm);
@@ -118,15 +285,39 @@ import { VaultService } from '../../services/vault.service';
       outline: 0;
     }
 
+    .vault-password-dialog__input--code {
+      font-family: var(--cog-font-mono, monospace);
+      text-transform: uppercase;
+    }
+
     .vault-password-dialog__input:focus {
       border-color: var(--cog-brand);
       background: var(--cog-input-bg-focus);
     }
 
-    .vault-password-dialog__hint {
-      color: var(--cog-text-subtlest);
-      font-size: var(--cog-fs-caption);
-      line-height: var(--cog-lh-caption);
+    .vault-password-dialog__checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-100);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm);
+      line-height: var(--cog-lh-body-sm);
+    }
+
+    .vault-password-dialog__checkbox-row--acknowledge {
+      align-items: start;
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface-raised, var(--cog-surface));
+      padding: var(--cog-space-125);
+    }
+
+    .vault-password-dialog__checkbox-row input {
+      margin: 0;
+    }
+
+    .vault-password-dialog__checkbox-row--acknowledge input {
+      margin-top: 2px;
     }
 
     .vault-password-dialog__error {
@@ -138,20 +329,110 @@ import { VaultService } from '../../services/vault.service';
   `,
 })
 export class VaultPasswordDialogComponent {
-  vaultService = inject(VaultService);
-  fb = inject(FormBuilder);
+  readonly vaultService = inject(VaultService);
+  private readonly fb = inject(FormBuilder);
+  private readonly toastService = inject(CognosToastService);
 
-  vaultPasswordForm = this.fb.group({
-    vaultPassword: [
-      environment.isDevelopment ? environment.localVaultPassword : '',
-      [Validators.required, Validators.minLength(8)],
-    ],
+  readonly title = computed(() => {
+    if (this.vaultService.isNewKeyPair()) {
+      return 'Secure your encrypted backup';
+    }
+
+    return this.vaultService.wasLocked() ? 'Account locked' : 'Unlock backup';
   });
+  readonly generatedAccountKey = computed(
+    () => this.vaultService.generatedAccountKey() ?? '',
+  );
+
+  readonly vaultForm = this.fb.group(
+    {
+      accountKey: [''],
+      accountKeySaved: [false],
+      accountPassword: [
+        environment.isDevelopment ? environment.localVaultPassword : '',
+        [Validators.required, Validators.minLength(8)],
+      ],
+      trustDevice: [true],
+    },
+    {
+      validators: (control) =>
+        validateUnlockForm(control, this.vaultService.isNewKeyPair()),
+    },
+  );
+
+  async copyAccountKey(): Promise<void> {
+    const accountKey = this.generatedAccountKey();
+    if (!accountKey) {
+      return;
+    }
+
+    const copied = await this.copyText(accountKey);
+    if (!copied) {
+      this.toastService.notify({
+        title: 'Could not copy Account Key',
+        msg: 'Select and store the Account Key manually before you continue.',
+        tone: 'danger',
+        icon: 'shield-x',
+        duration: 4200,
+      });
+      return;
+    }
+
+    this.toastService.notify({
+      title: 'Account Key copied',
+      msg: 'Store it somewhere safe before you continue.',
+      tone: 'success',
+      icon: 'copy',
+      duration: 3200,
+    });
+  }
+
+  private async copyText(value: string): Promise<boolean> {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(value);
+        return true;
+      } catch {
+        // Fall through to the document-based copy path below.
+      }
+    }
+
+    if (typeof document === 'undefined') {
+      return false;
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    textarea.style.pointerEvents = 'none';
+    document.body.appendChild(textarea);
+    textarea.select();
+    textarea.setSelectionRange(0, value.length);
+
+    try {
+      return document.execCommand('copy');
+    } catch {
+      return false;
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  }
 
   submit() {
+    if (this.vaultForm.invalid) {
+      this.vaultForm.markAllAsTouched();
+      return;
+    }
+
+    const { accountKey, accountPassword, trustDevice } = this.vaultForm.getRawValue();
+
     this.vaultService.clearUnlockError();
-    this.vaultService.rawVaultPassword$.next(
-      this.vaultPasswordForm.value.vaultPassword ?? '',
-    );
+    this.vaultService.unlockRequest$.next({
+      accountKey: accountKey ?? '',
+      accountPassword: accountPassword ?? '',
+      trustDevice: Boolean(trustDevice),
+    });
   }
 }

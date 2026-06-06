@@ -31,7 +31,8 @@ import { AuthService } from '@services/auth.service';
         <app-cognos-logo class="login-page__logo" palette="dark"></app-cognos-logo>
         <h1 class="login-page__title">Get started with privacy-first AI</h1>
         <p class="login-page__lead">
-          Chat with the latest models without giving up control of your data.
+          Chat with the latest models without giving up control of your data. New
+          devices may also ask for your Account Key.
         </p>
 
         <form class="login-page__form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">

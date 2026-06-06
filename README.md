@@ -1,5 +1,20 @@
 # Cognos
 
+Cognos is an encrypted AI chat application.
+
+Target security model for this rework:
+
+- chat content is stored server-side as ciphertext only
+- private keys are encrypted client-side before backup
+- new devices require the user's password and **Account Key** to unlock encrypted key material
+- trusted devices may stay unlocked locally via a wrapped unlock blob in IndexedDB until the user
+  locks the account, logs out, or clears browser storage
+
+See:
+
+- `docs/security-model.md`
+- `docs/specs/backend-model-selector.md`
+
 ## Local development
 
 ### Local auth setup
@@ -24,10 +39,7 @@ Notes:
 
 - the frontend development environment already points at `http://localhost:8090`
 - local backend data is served from `backend/pb_data`
-- on first login, if the user does not yet have a `user_key_pairs` record, the app will prompt for a
-  vault password and create one
-- if you are migrating an existing user, keep the same email address because the vault password hash
-  uses the email as a salt
+- Account Key and trusted-device behavior are documented in `docs/security-model.md`
 - see `docs/ory-to-pocketbase-auth-migration.md` for the Ory to PocketBase migration plan
 
 ## Deployment

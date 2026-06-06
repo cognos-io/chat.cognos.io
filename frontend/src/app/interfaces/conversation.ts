@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-import { ConversationsResponse } from '@app/types/pocketbase-types';
-
 import { KeyPair } from './key-pair';
 
 /**
@@ -11,6 +9,15 @@ export const ConversationData = z.object({
   title: z.string().trim(),
 });
 export type ConversationData = z.infer<typeof ConversationData>;
+
+export interface ConversationRecord {
+  id: string;
+  created: string;
+  updated: string;
+  data: string;
+  creator?: string;
+  expiry_duration?: string;
+}
 
 /**
  * parseConversationData - takes a decrypted string
@@ -37,7 +44,7 @@ export const serializeConversationData = (data: ConversationData): Uint8Array =>
 };
 
 export interface Conversation {
-  record: ConversationsResponse;
+  record: ConversationRecord;
   decryptedData: ConversationData;
   keyPair: KeyPair;
 }

@@ -83,7 +83,7 @@
           <cog-lozenge tone="green">Encrypted</cog-lozenge>
           <cog-lozenge tone="green">Verified</cog-lozenge>
         </div>
-        <p class="chat-shell__security-copy">Keys stay on this device.</p>
+        <p class="chat-shell__security-copy">Keys are encrypted before backup.</p>
       </div>
     </div>
   </div>
@@ -164,6 +164,15 @@
       <div class="chat-shell__drawer-footer-actions">
         <cog-button appearance="subtle" type="button" (click)="onOpenHelpDialog()">
           Help
+        </cog-button>
+        <cog-button
+          appearance="subtle"
+          icon="lock"
+          title="Locks your account and does not log you out."
+          type="button"
+          (click)="onLock()"
+        >
+          Lock
         </cog-button>
         <cog-button appearance="subtle" type="button" (click)="onLogout()">
           Log out

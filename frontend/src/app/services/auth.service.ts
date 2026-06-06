@@ -23,6 +23,7 @@ import { signalSlice } from 'ngxtension/signal-slice';
 
 import { TypedPocketBase } from '../types/pocketbase-types';
 import { ErrorService } from './error.service';
+import { TrustedUnlockService } from './trusted-unlock.service';
 
 export type LoginStatus = 'pending' | 'authenticating' | 'success' | 'error';
 
@@ -54,6 +55,7 @@ export class AuthService implements OnDestroy {
   private readonly _pb: TypedPocketBase = inject(PocketBase);
   private readonly _storeUnsubscribe: () => void;
   private readonly _router = inject(Router);
+  private readonly _trustedUnlockService = inject(TrustedUnlockService);
 
   readonly login$ = new Subject<LoginRequest>();
   readonly logout$ = new Subject<boolean>();
@@ -63,7 +65,7 @@ export class AuthService implements OnDestroy {
     switchMap(({ email, password }) => this.loginWithPassword(email, password)),
   );
   private readonly userLoggingOut$ = this.logout$.pipe(
-    switchMap(() => of(this.logout())),
+    switchMap(() => from(this.logout())),
   );
 
   private state = signalSlice({
@@ -239,8 +241,9 @@ export class AuthService implements OnDestroy {
     );
   }
 
-  logout(): void {
-    return this._pb.authStore.clear();
+  async logout(): Promise<void> {
+    await this._trustedUnlockService.clearAllUnlockKeys();
+    this._pb.authStore.clear();
   }
 
   ngOnDestroy(): void {

@@ -11,20 +11,20 @@ import (
 	"github.com/pocketbase/pocketbase/tests"
 )
 
-func TestChatCompletionsRequiresAuth(t *testing.T) {
+func TestLegacyChatCompletionsRouteNotFound(t *testing.T) {
 	t.Parallel()
 
 	scenario := tests.ApiScenario{
-		Name:   "chat completions requires record auth",
+		Name:   "legacy chat completions route is not registered",
 		Method: http.MethodPost,
 		URL:    "/v1/chat/completions",
 		Body: strings.NewReader(`{
 			"model": "openai:gpt-4o",
 			"messages": [{"role": "user", "content": "hello"}]
 		}`),
-		ExpectedStatus: http.StatusUnauthorized,
+		ExpectedStatus: http.StatusNotFound,
 		ExpectedContent: []string{
-			`"message":"The request requires valid record authorization token."`,
+			`"message":"The requested resource wasn't found."`,
 		},
 		TestAppFactory: setupTestApp,
 	}
