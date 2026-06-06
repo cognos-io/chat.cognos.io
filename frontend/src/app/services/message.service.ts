@@ -640,7 +640,7 @@ export class MessageService {
         name:
           message.decryptedData.owner_id ??
           this._agentService.getAgent(message.decryptedData.agent_id).name ??
-          this._modelService.getModel(message.decryptedData.model_id).name,
+          this._modelService.getModel(message.decryptedData.model_id)?.name,
       });
       usedContextLength += messageLength;
 

@@ -65,8 +65,8 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                 </markdown>
               } @else {
                 <p class="message-list-item__empty">
-                  This message is empty or the AI did not generate a response, please try
-                  again.
+                  This message is empty or the AI did not generate a response, please
+                  try again.
                 </p>
               }
             </cog-assistant-message>
@@ -146,7 +146,14 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       margin: 0 0 var(--cog-space-150);
     }
 
-    markdown :where(p:last-child, ul:last-child, ol:last-child, pre:last-child, blockquote:last-child) {
+    markdown
+      :where(
+        p:last-child,
+        ul:last-child,
+        ol:last-child,
+        pre:last-child,
+        blockquote:last-child
+      ) {
       margin-bottom: 0;
     }
 
@@ -187,7 +194,7 @@ export class MessageListItemComponent {
       return undefined;
     }
 
-    return this._modelService.getModel(modelId)();
+    return this._modelService.getModel(modelId);
   }
 
   assistantLabel() {

@@ -1,3 +1,4 @@
+import { provideHttpClient } from '@angular/common/http';
 import { ApplicationConfig } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 
@@ -10,6 +11,7 @@ import { providePocketbase } from './services/pocketbase.service.provider';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes, withComponentInputBinding()),
+    provideHttpClient(),
     provideMarkdown(),
     providePocketbase(),
     provideOpenAi(),

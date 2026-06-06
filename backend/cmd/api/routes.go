@@ -11,6 +11,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	compatopenai "github.com/cognos-io/chat.cognos.io/backend/pkg/compat/openai"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
@@ -90,6 +91,14 @@ func addPocketBaseRoutes(
 	aiAgentRepo aiagent.AIAgentRepo,
 	conversationRepo chat.ConversationRepo,
 ) {
+	e.Router.GET(
+		"/api/v1/models",
+		handler.ModelsGet(),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(),
+	)
+
 	e.Router.POST(
 		"/v1/chat/completions",
 		compatopenai.Handler(

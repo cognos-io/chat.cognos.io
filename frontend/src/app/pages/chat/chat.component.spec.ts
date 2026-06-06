@@ -70,7 +70,13 @@ describe('ChatComponent', () => {
 
   it('clears temporary messages and navigates to root for a new chat', () => {
     temporaryConversation.set(true);
-    messages.set([{ id: '1' }]);
+    messages.set([
+      {
+        record_id: '1',
+        createdAt: new Date(),
+        decryptedData: { content: 'temporary message' },
+      },
+    ]);
     Object.defineProperty(router, 'url', { value: '/c/123', configurable: true });
 
     component.onNewConversation();
