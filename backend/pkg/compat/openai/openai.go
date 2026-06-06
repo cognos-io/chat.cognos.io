@@ -4,6 +4,8 @@
 package openai
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -61,6 +63,11 @@ type ChatCompletionResponseWithMetadata struct {
 	Metadata ResponseMetadata `json:"metadata,omitempty"`
 }
 
+func upstreamUserID(userID string) string {
+	digest := sha256.Sum256([]byte("cognos:upstream-user\x00" + userID))
+	return hex.EncodeToString(digest[:])[:16]
+}
+
 func NewError(code int, message string) oai.ErrorResponse {
 	var errorType string
 	switch code {
@@ -98,9 +105,9 @@ func Handler(
 		if err := e.BindBody(&req); err != nil {
 			return apis.NewBadRequestError("Failed to read request data", err)
 		}
-		// Add the user ID to the request. It's nothing personal but is used to help
-		// identify abuse of our AI providers
-		req.User = owner.ID
+		// Add a stable opaque user identifier to the request to help identify abuse
+		// without leaking our internal user ID scheme upstream.
+		req.User = upstreamUserID(owner.ID)
 
 		// Validate the incoming request
 		if req.Metadata.Cognos.AgentID == "" {

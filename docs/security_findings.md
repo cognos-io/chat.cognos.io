@@ -128,12 +128,6 @@ BorgBase account if the prod host was ever shared.
   `ngx-markdown@21.3.0`. Verify markdown service doesn't register
   mermaid as an extension; if not, drop via `pnpm overrides` or
   switch to a slimmer renderer.
-- **M-14. owner.ID forwarded raw to providers.** ❌
-  `backend/pkg/compat/openai/openai.go:103` passes the PocketBase
-  user ID as `req.User`. Derive a stable opaque
-  (`hex(sha256("cognos:upstream-user" || userID))[:16]`) so the
-  identifier scheme isn't leaked and so the mapping can be
-  rotated if a provider is later found to retain it.
 - **M-15. AI provider keys on host filesystem.** 🟡 Keys now via
   Compose secrets API rather than a bind-mounted YAML; still on
   disk on the host, not in a KMS. Acceptable interim for a
@@ -295,11 +289,10 @@ operational and product:
 7. **M-5** container hardening: `read_only`, `cap_drop: [ALL]`,
    `no-new-privileges`, `HEALTHCHECK`, resource limits. One PR.
 8. **N-17** Cloudflare API token via Compose secrets.
-9. **M-14** anonymise `req.User` to upstream.
-10. **L-8** Anthropic Temperature=0 pointer bug.
-11. **M-11 / N-14** confirm + trim mermaid.
-12. **M-4** Account Key autocomplete pattern.
-13. **H-22 / M-15 follow-through**: BorgBase repo URL into
+9. **L-8** Anthropic Temperature=0 pointer bug.
+10. **M-11 / N-14** confirm + trim mermaid.
+11. **M-4** Account Key autocomplete pattern.
+12. **H-22 / M-15 follow-through**: BorgBase repo URL into
     secrets; consider rotating the BorgBase account.
 
 **P2 — Next 4 weeks of engineering:**
