@@ -1,0 +1,274 @@
+import { blake2b } from 'blakejs';
+import nacl from 'tweetnacl';
+
+type AuthState = {
+  token: string;
+  model: {
+    id: string;
+    email: string;
+    collectionId: string;
+    collectionName: string;
+    verified: boolean;
+  };
+};
+
+export type VaultFixture = {
+  authState: AuthState;
+  trustedUnlockBlob: {
+    nonce: string;
+    ciphertext: string;
+  };
+  trustedUserContext: {
+    passwordSalt: string;
+    publicKeyFingerprint: string;
+    unlockScheme: string;
+  };
+  userKeyPairRecord: {
+    id: string;
+    collectionId: string;
+    collectionName: string;
+    created: string;
+    updated: string;
+    user: string;
+    password_salt: string;
+    public_key: string;
+    record_mac: string;
+    secret_key: string;
+    unlock_scheme: string;
+  };
+  vaultSession: {
+    wrap_key: string;
+  };
+  userKeyPair: nacl.BoxKeyPair;
+};
+
+export type ConversationFixture = {
+  conversationRecord: {
+    id: string;
+    created: string;
+    updated: string;
+    data: string;
+    creator: string;
+    expiry_duration?: string;
+  };
+  conversationPublicKeyRecord: {
+    id: string;
+    public_key: string;
+    public_key_signature: string;
+  };
+  conversationSecretKeyRecord: {
+    id: string;
+    secret_key: string;
+  };
+  conversationKeyPair: nacl.BoxKeyPair;
+};
+
+const textEncoder = new TextEncoder();
+
+const base64 = (bytes: Uint8Array): string => Buffer.from(bytes).toString('base64');
+
+const buildToken = (userId: string): string => {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString(
+    'base64url',
+  );
+  const payload = Buffer.from(
+    JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 60 * 60, sub: userId }),
+  ).toString('base64url');
+
+  return `${header}.${payload}.sig`;
+};
+
+const box = (message: Uint8Array, sharedKey: Uint8Array): Uint8Array => {
+  const nonce = nacl.randomBytes(nacl.box.nonceLength);
+  const ciphertext = nacl.box.after(message, nonce, sharedKey);
+  const fullMessage = new Uint8Array(nonce.length + ciphertext.length);
+  fullMessage.set(nonce);
+  fullMessage.set(ciphertext, nonce.length);
+  return fullMessage;
+};
+
+const secretBox = (message: Uint8Array, key: Uint8Array): Uint8Array => {
+  const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+  const ciphertext = nacl.secretbox(message, nonce, key);
+  const fullMessage = new Uint8Array(nonce.length + ciphertext.length);
+  fullMessage.set(nonce);
+  fullMessage.set(ciphertext, nonce.length);
+  return fullMessage;
+};
+
+const mac = (message: Uint8Array, key: Uint8Array, outputLength = 32): Uint8Array => {
+  return blake2b(message, key, outputLength);
+};
+
+const hash = (message: Uint8Array, outputLength = 32): Uint8Array => {
+  return blake2b(message, undefined, outputLength);
+};
+
+const computeRecordMAC = (
+  userId: string,
+  passwordSalt: string,
+  publicKeyBase64: string,
+  encryptedSecretKeyBase64: string,
+  unlockScheme: string,
+  unlockKey: Uint8Array,
+): string => {
+  const payload = textEncoder.encode(
+    JSON.stringify([
+      'user_key_pair_record_v1',
+      userId,
+      unlockScheme,
+      passwordSalt,
+      publicKeyBase64,
+      encryptedSecretKeyBase64,
+    ]),
+  );
+
+  return base64(mac(payload, unlockKey));
+};
+
+const conversationPublicKeySignature = (
+  conversationId: string,
+  conversationPublicKey: Uint8Array,
+  userSecretKey: Uint8Array,
+): string => {
+  const payload = textEncoder.encode(
+    JSON.stringify([
+      'conversation_public_key_v1',
+      conversationId,
+      base64(conversationPublicKey),
+    ]),
+  );
+  const macKey = mac(textEncoder.encode('cognos:conv-key-mac:v1'), userSecretKey);
+  return base64(mac(payload, macKey));
+};
+
+export const buildVaultFixture = (userId: string, email: string): VaultFixture => {
+  const unlockScheme = 'password_account_key_v1';
+  const passwordSalt = base64(nacl.randomBytes(16));
+  const userKeyPair = nacl.box.keyPair();
+  const unlockKey = nacl.randomBytes(nacl.secretbox.keyLength);
+  const encryptedSecretKey = secretBox(userKeyPair.secretKey, unlockKey);
+  const publicKeyBase64 = base64(userKeyPair.publicKey);
+  const encryptedSecretKeyBase64 = base64(encryptedSecretKey);
+  const recordMAC = computeRecordMAC(
+    userId,
+    passwordSalt,
+    publicKeyBase64,
+    encryptedSecretKeyBase64,
+    unlockScheme,
+    unlockKey,
+  );
+
+  const wrapKey = nacl.randomBytes(nacl.secretbox.keyLength);
+  const wrapNonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+  const trustedUnlockCiphertext = nacl.secretbox(unlockKey, wrapNonce, wrapKey);
+  const publicKeyFingerprint = base64(hash(userKeyPair.publicKey));
+  const now = new Date().toISOString();
+
+  return {
+    authState: {
+      token: buildToken(userId),
+      model: {
+        id: userId,
+        email,
+        collectionId: '_pb_users_auth_',
+        collectionName: 'users',
+        verified: true,
+      },
+    },
+    trustedUnlockBlob: {
+      nonce: base64(wrapNonce),
+      ciphertext: base64(trustedUnlockCiphertext),
+    },
+    trustedUserContext: {
+      passwordSalt,
+      publicKeyFingerprint,
+      unlockScheme,
+    },
+    userKeyPairRecord: {
+      id: 'ukp_e2e',
+      collectionId: 'user_key_pairs',
+      collectionName: 'user_key_pairs',
+      created: now,
+      updated: now,
+      user: userId,
+      password_salt: passwordSalt,
+      public_key: publicKeyBase64,
+      record_mac: recordMAC,
+      secret_key: encryptedSecretKeyBase64,
+      unlock_scheme: unlockScheme,
+    },
+    vaultSession: {
+      wrap_key: base64(wrapKey),
+    },
+    userKeyPair,
+  };
+};
+
+export const buildConversationFixture = (
+  userFixture: VaultFixture,
+  conversationId: string,
+  title: string,
+): ConversationFixture => {
+  const conversationKeyPair = nacl.box.keyPair();
+  const sharedConversationKey = nacl.box.before(
+    conversationKeyPair.publicKey,
+    conversationKeyPair.secretKey,
+  );
+  const encryptedConversationData = box(
+    textEncoder.encode(JSON.stringify({ title })),
+    sharedConversationKey,
+  );
+
+  const sharedUserKey = nacl.box.before(
+    conversationKeyPair.publicKey,
+    userFixture.userKeyPair.secretKey,
+  );
+  const encryptedConversationSecretKey = box(
+    conversationKeyPair.secretKey,
+    sharedUserKey,
+  );
+
+  const now = new Date().toISOString();
+
+  return {
+    conversationRecord: {
+      id: conversationId,
+      created: now,
+      updated: now,
+      data: base64(encryptedConversationData),
+      creator: userFixture.authState.model.id,
+    },
+    conversationPublicKeyRecord: {
+      id: `cpk_${conversationId}`,
+      public_key: base64(conversationKeyPair.publicKey),
+      public_key_signature: conversationPublicKeySignature(
+        conversationId,
+        conversationKeyPair.publicKey,
+        userFixture.userKeyPair.secretKey,
+      ),
+    },
+    conversationSecretKeyRecord: {
+      id: `csk_${conversationId}`,
+      secret_key: base64(encryptedConversationSecretKey),
+    },
+    conversationKeyPair,
+  };
+};
+
+export const seedAuthenticatedUnlockState = async (
+  page: { addInitScript: (...args: unknown[]) => Promise<void> },
+  fixture: VaultFixture,
+) => {
+  await page.addInitScript(({ authState, trustedUnlockBlob, trustedUserContext }) => {
+    localStorage.setItem('pocketbase_auth', JSON.stringify(authState));
+    localStorage.setItem(
+      `cognos:vault-session:${authState.model.id}`,
+      JSON.stringify(trustedUnlockBlob),
+    );
+    localStorage.setItem(
+      `cognos:trusted-user-key:${authState.model.id}`,
+      JSON.stringify(trustedUserContext),
+    );
+  }, fixture);
+};
