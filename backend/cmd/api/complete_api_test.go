@@ -178,6 +178,7 @@ func TestConversationCompletePersistsEncryptedMessages(t *testing.T) {
 func TestCompletionsTemporaryDoesNotPersistMessages(t *testing.T) {
 	t.Parallel()
 
+	providerCostUSD := 0.42
 	gatewayClient := &gateway.MockClient{
 		CompleteFunc: func(_ context.Context, req gateway.CompleteRequest) (gateway.CompleteResponse, error) {
 			if len(req.Messages) != 2 {
@@ -185,7 +186,14 @@ func TestCompletionsTemporaryDoesNotPersistMessages(t *testing.T) {
 			}
 			return gateway.CompleteResponse{
 				Message: gateway.Message{Role: "assistant", Content: "temporary reply"},
-				Usage:   gateway.Usage{InputTokens: 9, OutputTokens: 4, TotalTokens: 13},
+				Usage: gateway.Usage{
+					InputTokens:              9,
+					OutputTokens:             4,
+					TotalTokens:              13,
+					CacheCreationInputTokens: 7,
+					CacheReadInputTokens:     11,
+					ProviderCostUSD:          &providerCostUSD,
+				},
 			}, nil
 		},
 	}
@@ -205,6 +213,12 @@ func TestCompletionsTemporaryDoesNotPersistMessages(t *testing.T) {
 		ExpectedContent: []string{
 			`"request_id":"req-temp"`,
 			`"content":"temporary reply"`,
+			`"cache_creation_input_tokens":7`,
+			`"cache_read_input_tokens":11`,
+			`"cost_usd":0.42`,
+			`"cost_chf":0.42`,
+			`"cost_rappen":42`,
+			`"used_provider_cost":true`,
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{

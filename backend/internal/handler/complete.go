@@ -230,8 +230,11 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 		}
 
 		costBreakdown := params.BillingService.CalculateCost(model, billing.Usage{
-			InputTokens:  gatewayResp.Usage.InputTokens,
-			OutputTokens: gatewayResp.Usage.OutputTokens,
+			InputTokens:              gatewayResp.Usage.InputTokens,
+			OutputTokens:             gatewayResp.Usage.OutputTokens,
+			CacheCreationInputTokens: gatewayResp.Usage.CacheCreationInputTokens,
+			CacheReadInputTokens:     gatewayResp.Usage.CacheReadInputTokens,
+			ProviderCostUSD:          gatewayResp.Usage.ProviderCostUSD,
 		}, 1)
 
 		response := completeResponse{
