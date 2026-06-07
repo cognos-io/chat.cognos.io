@@ -263,6 +263,7 @@ This checklist is the living execution tracker for the rework.
 ### Existing backend files to update
 
 - [ ] `backend/internal/handler/complete.go`
+    - [x] support structured billing-restriction handler seam in tests
     - [ ] add preflight affordability check for trial / inactive contract
     - [ ] record usage
     - [ ] emit analytics
