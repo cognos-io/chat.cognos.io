@@ -1260,7 +1260,7 @@ assistant message ciphertext for the permanent record.
 
 | HTTP code                  | Condition                                             |
 | -------------------------- | ----------------------------------------------------- |
-| `402 Payment Required`     | PAYG user has insufficient balance                    |
+| `402 Payment Required`     | Trial exhausted or inactive billing state             |
 | `403 Forbidden`            | Requested model not available for user's privacy tier |
 | `404 Not Found`            | Conversation not found or user lacks access           |
 | `422 Unprocessable Entity` | `model_id` not recognised                             |
@@ -1337,8 +1337,9 @@ Client (Angular)                    Go Backend                    External
      │                          3. Validate model_id exists           │
      │                          4. Validate model is eligible         │
      │                             for user's privacy_tier            │
-     │                          5. [PAYG only] Check CanAfford()      │
-     │                             → 402 if insufficient balance      │
+     │                          5. [trial / inactive contract] Check  │
+     │                             billing gate before provider call   │
+     │                             → 402 if trial exhausted/inactive  │
      │                          6. Record start timestamp             │
      │                                   │                            │
      │                                   │  Gateway.Complete()        │

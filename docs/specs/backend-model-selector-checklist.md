@@ -326,7 +326,7 @@ This checklist is the living execution tracker for the rework.
 - [x] authenticated user creates or opens a conversation
 - [x] authenticated user sends a message and receives a response
 - [x] conversation history reload still works
-- [ ] trial/inactive billing restriction blocks sending
+- [x] trial/inactive billing restriction blocks sending
 - [x] unavailable model cannot be selected/sent
 
 ### Explicit non-goals for these tests

@@ -54,8 +54,10 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - `cd frontend && pnpm test:e2e` ✅ passes
 - `ModelService` coverage now includes login load, eligible-model fallback, no-eligible fallback,
   and logout reset
+- `MessageService` coverage now includes structured completion-error message handling for billing,
+  rate limits, and generic failures
 - browser E2E now covers high-level authenticated models-loading, send/reply, history-reload,
-  and unavailable-model guard flows via Playwright
+  unavailable-model guard, and trial/inactive billing-restriction flows via Playwright
 
 Remaining frontend build warnings are non-blocking style-budget follow-up work.
 
