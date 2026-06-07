@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
@@ -88,6 +90,7 @@ type CompleteHandlerParams struct {
 	AgentRepo           aiagent.AIAgentRepo
 	BillingService      *billing.Service
 	BillingStateRepo    billing.StateRepo
+	BillingLedgerRepo   billing.LedgerRepo
 	CompleteBillingGate CompleteBillingGateFunc
 }
 
@@ -170,6 +173,8 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			}
 		}
 
+		var billingState *billing.State
+
 		if params.CompleteBillingGate != nil {
 			restriction, err := params.CompleteBillingGate(owner, model, req)
 			if err != nil {
@@ -191,6 +196,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 				if restriction := params.BillingService.EvaluateAccess(state, estimatedCost.CostRappen); restriction != nil {
 					return e.JSON(http.StatusPaymentRequired, completeBillingRestrictionResponse(*restriction, estimatedCost.CostCHF))
 				}
+				billingState = &state
 			}
 		}
 
@@ -271,13 +277,30 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			}
 		}
 
+		const usdToCHFRate = 1.0
+
 		costBreakdown := params.BillingService.CalculateCost(model, billing.Usage{
 			InputTokens:              gatewayResp.Usage.InputTokens,
 			OutputTokens:             gatewayResp.Usage.OutputTokens,
 			CacheCreationInputTokens: gatewayResp.Usage.CacheCreationInputTokens,
 			CacheReadInputTokens:     gatewayResp.Usage.CacheReadInputTokens,
 			ProviderCostUSD:          gatewayResp.Usage.ProviderCostUSD,
-		}, 1)
+		}, usdToCHFRate)
+
+		if params.BillingLedgerRepo != nil && billingState != nil {
+			usageRecord := params.BillingService.BuildUsageRecord(*billingState, billing.BuildUsageRecordInput{
+				UserID:       owner.ID,
+				EventID:      uuid.NewString(),
+				ModelID:      model.ID,
+				Cost:         costBreakdown,
+				FXRateUSDCHF: usdToCHFRate,
+				InputTokens:  gatewayResp.Usage.InputTokens,
+				OutputTokens: gatewayResp.Usage.OutputTokens,
+			})
+			if err := params.BillingLedgerRepo.RecordUsage(usageRecord); err != nil {
+				params.Logger.Error("failed to record billing usage", "err", err)
+			}
+		}
 
 		response := completeResponse{
 			RequestID: req.RequestID,

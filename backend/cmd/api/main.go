@@ -49,6 +49,7 @@ type appHookParams struct {
 	ConversationRepo       chat.ConversationRepo
 	BillingService         *billing.Service
 	BillingStateRepo       billing.StateRepo
+	BillingLedgerRepo      billing.LedgerRepo
 	CompleteBillingGate    handler.CompleteBillingGateFunc
 }
 
@@ -146,6 +147,7 @@ func bindAppHooks(
 			conversationRepo,
 			billingService,
 			params.BillingStateRepo,
+			params.BillingLedgerRepo,
 			params.CompleteBillingGate,
 		)
 
