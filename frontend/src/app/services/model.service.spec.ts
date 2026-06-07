@@ -9,6 +9,8 @@ import PocketBase from 'pocketbase';
 
 import { BehaviorSubject } from 'rxjs';
 
+import { loadingModel } from '@app/interfaces/model';
+
 import { AuthService } from './auth.service';
 import { ModelService } from './model.service';
 
@@ -142,5 +144,91 @@ describe('ModelService', () => {
 
     service.selectModel('eu-model');
     expect(service.selectedModel().id).toBe('eu-model');
+  });
+
+  it('falls back to the first returned model when none are eligible', () => {
+    authUser$.next({ id: 'user-1' });
+
+    const request = httpController.expectOne('http://localhost:8090/api/v1/models');
+    request.flush({
+      privacy_tier: 'ch_only',
+      models: [
+        {
+          id: 'global-model',
+          name: 'Global Model',
+          slug: 'global-model',
+          provider_id: 'other',
+          provider_model_id: 'global-model',
+          description: 'Unavailable for this user',
+          privacy_tier: 'global',
+          tags: [],
+          content_types: ['text'],
+          input_context_tokens: 32000,
+          pricing: {
+            input_usd_per_million_tokens: 1,
+            output_usd_per_million_tokens: 2,
+          },
+          is_eligible: false,
+          ineligibility_reason: 'model privacy tier exceeds user privacy tier',
+        },
+        {
+          id: 'eu-model',
+          name: 'EU Model',
+          slug: 'eu-model',
+          provider_id: 'infomaniak',
+          provider_model_id: 'eu-model',
+          description: 'Also unavailable for this user',
+          privacy_tier: 'eu',
+          tags: [],
+          content_types: ['text'],
+          input_context_tokens: 64000,
+          pricing: {
+            input_usd_per_million_tokens: 1,
+            output_usd_per_million_tokens: 2,
+          },
+          is_eligible: false,
+          ineligibility_reason: 'model privacy tier exceeds user privacy tier',
+        },
+      ],
+    });
+
+    expect(service.selectedModel().id).toBe('global-model');
+  });
+
+  it('resets to the initial state after logout', () => {
+    authUser$.next({ id: 'user-1' });
+
+    const request = httpController.expectOne('http://localhost:8090/api/v1/models');
+    request.flush({
+      privacy_tier: 'global',
+      preferred_model_id: 'llama-3-3-infomaniak',
+      models: [
+        {
+          id: 'llama-3-3-infomaniak',
+          name: 'Llama 3.3',
+          slug: 'llama-3-3-infomaniak',
+          provider_id: 'infomaniak',
+          provider_model_id: 'llama-3.3-70b-instruct',
+          description: 'Swiss-hosted model',
+          privacy_tier: 'ch_only',
+          tags: [{ title: 'general-purpose' }],
+          content_types: ['text'],
+          input_context_tokens: 128000,
+          max_output_tokens: 8192,
+          pricing: {
+            input_usd_per_million_tokens: 0,
+            output_usd_per_million_tokens: 0,
+          },
+          is_eligible: true,
+        },
+      ],
+    });
+
+    expect(service.modelList()).toHaveLength(1);
+
+    authUser$.next(null);
+
+    expect(service.modelList()).toEqual([]);
+    expect(service.selectedModel()).toEqual(loadingModel);
   });
 });
