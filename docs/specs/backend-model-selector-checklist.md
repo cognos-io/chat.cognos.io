@@ -65,11 +65,12 @@ This checklist is the living execution tracker for the rework.
 - [x] run backend tests before changes
     - [x] `cd backend && go test ./...` passes
 - [x] run frontend unit tests before changes
-    - [x] baseline recorded: `cd frontend && pnpm exec ng test --watch=false` currently fails
-    - [x] current failure includes missing `src/app/guards/keypair-required.guard`
+    - [x] initial baseline failure recorded and resolved
+    - [x] `cd frontend && pnpm exec ng test --watch=false` now passes
 - [x] run frontend build before changes
-    - [x] baseline recorded: `cd frontend && pnpm build` currently fails
-    - [x] current failure includes SCSS budget overrun in `src/app/pages/chat/chat.component.scss`
+    - [x] initial baseline failure recorded and resolved
+    - [x] `cd frontend && pnpm build` now passes
+    - [x] remaining component-style budget warnings are non-blocking follow-up work
 
 ---
 
@@ -86,27 +87,27 @@ This checklist is the living execution tracker for the rework.
 
 ### Backend test targets
 
-- [ ] backend integration tests for `/api/v1/models`
-    - [ ] active model list
-    - [ ] eligibility metadata
-    - [ ] privacy-tier behaviour
+- [x] backend integration tests for `/api/v1/models`
+    - [x] active model list
+    - [x] eligibility metadata
+    - [x] privacy-tier behaviour
 - [ ] gateway contract tests
     - [ ] handler/service tests depend on a mock gateway client
-- [ ] catalogue unit tests
-    - [ ] tier filtering
-    - [ ] inactive exclusion
-    - [ ] lookup by ID
+- [x] catalogue unit tests
+    - [x] tier filtering
+    - [x] inactive exclusion
+    - [x] lookup by ID
 
 ### Frontend test targets
 
-- [ ] frontend unit test baseline is green again
+- [x] frontend unit test baseline is green again
 - [ ] high-level browser E2E baseline is green
     - [ ] authenticated user loads models from backend
 
 ### Verification
 
-- [ ] backend unit/integration tests pass for catalogue and models API
-- [ ] frontend unit tests pass
+- [x] backend unit/integration tests pass for catalogue and models API
+- [x] frontend unit tests pass
 - [ ] first browser E2E passes
 
 ---
@@ -388,13 +389,31 @@ This checklist is the living execution tracker for the rework.
 ## Useful repo-wide searches during implementation
 
 - [ ] search legacy model usage
-    - `rg -n "hardCodedModels|defaultModel|provider:model|selectedModel\(" backend frontend`
+
+```bash
+rg -n "hardCodedModels|defaultModel|provider:model|selectedModel\(" backend frontend
+```
+
 - [ ] search legacy transport / provider coupling
-    - `rg -n "chat\.completions|OpenAI|/v1/chat/completions|sashabaranov|go-openai" backend frontend`
+
+```bash
+rg -n "chat\.completions|OpenAI|/v1/chat/completions|sashabaranov|go-openai" \
+  backend frontend
+```
+
 - [ ] search conversation/thread/expiry assumptions
-    - `rg -n "parent_message|expires|conversation_public_keys|conversation_secret_keys|wrapped_key|privacy_tier" backend frontend`
+
+```bash
+rg -n "parent_message|expires|conversation_public_keys|conversation_secret_keys|wrapped_key|privacy_tier" \
+  backend frontend
+```
+
 - [ ] search risky wording
-    - `rg -n "private key never leaves|vault password|OpenAI-compatible" README.md backend/README.md docs`
+
+```bash
+rg -n "private key never leaves|vault password|OpenAI-compatible" \
+  README.md backend/README.md docs
+```
 
 ---
 

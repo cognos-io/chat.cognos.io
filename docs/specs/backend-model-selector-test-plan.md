@@ -33,7 +33,24 @@ This is the branch test plan for the rework.
 - `cd frontend && pnpm build` ❌ currently fails
     - SCSS budget error in `src/app/pages/chat/chat.component.scss`
 
-These baseline failures should be fixed early so new regressions are easier to trust.
+These baseline failures were fixed in Phase 1 so new regressions are easier to trust.
+
+## Current status after Phase 1 foundation
+
+### Backend
+
+- `cd backend && go test ./...` ✅ passes
+- `/api/v1/models` integration coverage now includes auth, active catalogue response, privacy-tier
+  handling, preferred model propagation, and unknown-tier fallback
+
+### Frontend
+
+- `cd frontend && pnpm exec ng test --watch=false` ✅ passes
+- `cd frontend && pnpm build` ✅ passes
+- `ModelService` coverage now includes login load, eligible-model fallback, no-eligible fallback,
+  and logout reset
+
+Remaining frontend build warnings are non-blocking style-budget follow-up work.
 
 ---
 
@@ -128,7 +145,7 @@ Do **not** test CSS classes, spacing, or animation details here.
 
 ### Phase 1 — Safety rails, catalogue, and gateway contract
 
-### Red
+#### Phase 1 red
 
 - add/fix backend tests for `/api/v1/models`
 - add/fix catalogue unit tests
@@ -136,13 +153,13 @@ Do **not** test CSS classes, spacing, or animation details here.
 - add first browser E2E skeleton: authenticated user loads models from backend
 - get frontend unit/build baseline under control
 
-### Green
+#### Phase 1 green
 
 - models API remains stable under tests
 - gateway interface exists and handlers depend on it
 - frontend baseline is green enough to trust future failures
 
-### Exit criteria
+#### Phase 1 exit criteria
 
 - backend catalogue/models tests pass
 - frontend unit/build pass
@@ -152,7 +169,7 @@ Do **not** test CSS classes, spacing, or animation details here.
 
 ### Phase 2 — Sharing-ready conversations and messages
 
-### Red
+#### Phase 2 red
 
 Add backend integration tests first for:
 
@@ -169,11 +186,11 @@ Add frontend/browser tests for:
 2. reloading the conversation still shows decrypted history
 3. thread/expiry behaviour does not regress at a high level
 
-### Green
+#### Phase 2 green
 
 - conversation/message rewrite satisfies all access, threading, expiry, and ciphertext tests
 
-### Exit criteria
+#### Phase 2 exit criteria
 
 - ciphertext-only persistence verified
 - participant-based access verified
@@ -185,7 +202,7 @@ Add frontend/browser tests for:
 
 ### Phase 3 — Billing, analytics, and real gateway adapter
 
-### Red
+#### Phase 3 red
 
 Add backend tests first for:
 
@@ -207,13 +224,13 @@ Add guarded real-adapter tests for:
 1. real completion succeeds against approved provider
 2. usage fields are mapped as expected from the adapter
 
-### Green
+#### Phase 3 green
 
 - billing and analytics flow pass under integration tests
 - browser E2E covers the critical failure modes
 - real adapter path is optionally verified behind env flags
 
-### Exit criteria
+#### Phase 3 exit criteria
 
 - PAYG path passes
 - flat-rate path passes
