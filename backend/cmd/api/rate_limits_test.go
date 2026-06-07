@@ -3,12 +3,15 @@ package main
 import (
 	"slices"
 	"testing"
+
+	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
 )
 
 func TestPocketBaseAuthRateLimitsAreConfigured(t *testing.T) {
 	t.Parallel()
 
 	app := setupTestApp(t)
+	hooks.ApplyRateLimits(app)
 
 	if !app.Settings().RateLimits.Enabled {
 		t.Fatal("RateLimits.Enabled = false, want true")

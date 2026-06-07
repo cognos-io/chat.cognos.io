@@ -33,15 +33,24 @@ var routeRateLimiters = struct {
 	entries: map[string]*rateLimiterEntry{},
 }
 
-func rateLimiterMiddleware() *hook.Handler[*core.RequestEvent] {
+func rateLimiterMiddleware(app core.App) *hook.Handler[*core.RequestEvent] {
+	// Order-of-magnitude budget for an active chat session: ~10 requests/min
+	// average with a generous burst for opening the app (which fires several
+	// /api/v1/* GETs in parallel on first paint).
 	const (
-		requestsPerHour = 60.0
-		burst           = 30
+		requestsPerHour = 600.0
+		burst           = 60
 		expiresIn       = 30 * time.Minute
 	)
 
+	devMode := app.IsDev()
+
 	return &hook.Handler[*core.RequestEvent]{
 		Func: func(e *core.RequestEvent) error {
+			if devMode {
+				return e.Next()
+			}
+
 			identifier := e.RealIP()
 			if user := auth.ExtractUser(e); user != nil {
 				identifier = user.ID
@@ -92,7 +101,7 @@ func addPocketBaseRoutes(
 		handler.ModelsGet(),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.GET(
@@ -100,7 +109,7 @@ func addPocketBaseRoutes(
 		handler.ConversationsList(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.POST(
@@ -108,7 +117,7 @@ func addPocketBaseRoutes(
 		handler.ConversationsCreate(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.PATCH(
@@ -116,7 +125,7 @@ func addPocketBaseRoutes(
 		handler.ConversationsUpdate(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.DELETE(
@@ -124,7 +133,7 @@ func addPocketBaseRoutes(
 		handler.ConversationsDelete(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.GET(
@@ -132,7 +141,7 @@ func addPocketBaseRoutes(
 		handler.ConversationMessagesList(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.PATCH(
@@ -140,7 +149,7 @@ func addPocketBaseRoutes(
 		handler.MessagesUpdate(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.DELETE(
@@ -148,7 +157,7 @@ func addPocketBaseRoutes(
 		handler.MessagesDelete(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	completeParams := handler.CompleteHandlerParams{
@@ -165,7 +174,7 @@ func addPocketBaseRoutes(
 		handler.UserKeyPairGet(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.POST(
@@ -173,7 +182,7 @@ func addPocketBaseRoutes(
 		handler.UserKeyPairCreate(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.PATCH(
@@ -181,7 +190,7 @@ func addPocketBaseRoutes(
 		handler.UserKeyPairUpdate(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.GET(
@@ -189,7 +198,7 @@ func addPocketBaseRoutes(
 		handler.ConversationPublicKeyGet(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.POST(
@@ -197,7 +206,7 @@ func addPocketBaseRoutes(
 		handler.ConversationPublicKeyCreate(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.PATCH(
@@ -205,7 +214,7 @@ func addPocketBaseRoutes(
 		handler.ConversationPublicKeyUpdate(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.GET(
@@ -213,7 +222,7 @@ func addPocketBaseRoutes(
 		handler.ConversationSecretKeyGet(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.POST(
@@ -221,7 +230,7 @@ func addPocketBaseRoutes(
 		handler.ConversationSecretKeyCreate(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.GET(
@@ -229,7 +238,7 @@ func addPocketBaseRoutes(
 		handler.UserPreferencesGet(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.POST(
@@ -237,7 +246,7 @@ func addPocketBaseRoutes(
 		handler.UserPreferencesCreate(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.PATCH(
@@ -245,7 +254,7 @@ func addPocketBaseRoutes(
 		handler.UserPreferencesUpdate(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.GET(
@@ -253,7 +262,7 @@ func addPocketBaseRoutes(
 		handler.VaultSessionGet(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.PUT(
@@ -261,7 +270,7 @@ func addPocketBaseRoutes(
 		handler.VaultSessionUpsert(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.DELETE(
@@ -269,7 +278,7 @@ func addPocketBaseRoutes(
 		handler.VaultSessionDelete(app),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.POST(
@@ -277,7 +286,7 @@ func addPocketBaseRoutes(
 		handler.Complete(completeParams),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.POST(
@@ -285,7 +294,7 @@ func addPocketBaseRoutes(
 		handler.CompleteConversation(completeParams),
 	).Bind(
 		apis.RequireAuth(),
-		rateLimiterMiddleware(),
+		rateLimiterMiddleware(app),
 	)
 
 	e.Router.POST("/v1/auth/logout", func(re *core.RequestEvent) error {
@@ -323,7 +332,7 @@ func addPocketBaseRoutes(
 
 			return re.JSON(status, resp)
 		},
-	).Bind(rateLimiterMiddleware())
+	).Bind(rateLimiterMiddleware(app))
 
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(
