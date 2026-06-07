@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/cognos-io/chat.cognos.io/backend/internal/analytics"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
@@ -50,6 +51,8 @@ type appHookParams struct {
 	BillingService         *billing.Service
 	BillingStateRepo       billing.StateRepo
 	BillingLedgerRepo      billing.LedgerRepo
+	FXRateProvider         billing.FXRateProvider
+	UsageEmitter           analytics.Emitter
 	CompleteBillingGate    handler.CompleteBillingGateFunc
 }
 
@@ -132,6 +135,11 @@ func bindAppHooks(
 			billingService = billing.NewService()
 		}
 
+		fxRateProvider := params.FXRateProvider
+		if fxRateProvider == nil {
+			fxRateProvider = billing.NewFallbackFXRateProvider()
+		}
+
 		gatewayClient := params.GatewayClient
 		if gatewayClient == nil {
 			gatewayClient = gateway.NewLegacyClient(upstreamRepo)
@@ -148,6 +156,8 @@ func bindAppHooks(
 			billingService,
 			params.BillingStateRepo,
 			params.BillingLedgerRepo,
+			fxRateProvider,
+			params.UsageEmitter,
 			params.CompleteBillingGate,
 		)
 

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cognos-io/chat.cognos.io/backend/internal/analytics"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
@@ -97,6 +98,8 @@ func addPocketBaseRoutes(
 	billingService *billing.Service,
 	billingStateRepo billing.StateRepo,
 	billingLedgerRepo billing.LedgerRepo,
+	fxRateProvider billing.FXRateProvider,
+	usageEmitter analytics.Emitter,
 	completeBillingGate handler.CompleteBillingGateFunc,
 ) {
 	e.Router.GET(
@@ -172,6 +175,8 @@ func addPocketBaseRoutes(
 		BillingService:      billingService,
 		BillingStateRepo:    billingStateRepo,
 		BillingLedgerRepo:   billingLedgerRepo,
+		FXRateProvider:      fxRateProvider,
+		UsageEmitter:        usageEmitter,
 		CompleteBillingGate: completeBillingGate,
 	}
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/cognos-io/chat.cognos.io/backend/internal/analytics"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
@@ -91,6 +92,8 @@ type CompleteHandlerParams struct {
 	BillingService      *billing.Service
 	BillingStateRepo    billing.StateRepo
 	BillingLedgerRepo   billing.LedgerRepo
+	FXRateProvider      billing.FXRateProvider
+	UsageEmitter        analytics.Emitter
 	CompleteBillingGate CompleteBillingGateFunc
 }
 
@@ -192,7 +195,11 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 					return apis.NewApiError(http.StatusInternalServerError, "Failed to evaluate billing access", err)
 				}
 			} else {
-				estimatedCost := params.BillingService.EstimateUpperBoundCost(model, req.MaxOutputTokens, 1)
+				estimatedCost := params.BillingService.EstimateUpperBoundCost(
+					model,
+					req.MaxOutputTokens,
+					completionUSDToCHFRate(params),
+				)
 				if restriction := params.BillingService.EvaluateAccess(state, estimatedCost.CostRappen); restriction != nil {
 					return e.JSON(http.StatusPaymentRequired, completeBillingRestrictionResponse(*restriction, estimatedCost.CostCHF))
 				}
@@ -240,6 +247,8 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			}
 		}
 
+		gatewayStartedAt := time.Now()
+
 		gatewayResp, err := params.GatewayClient.Complete(e.Request.Context(), gateway.CompleteRequest{
 			ProviderID:      model.ProviderID,
 			ProviderModelID: model.ProviderModelID,
@@ -277,7 +286,8 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			}
 		}
 
-		const usdToCHFRate = 1.0
+		usdToCHFRate := completionUSDToCHFRate(params)
+		eventID := uuid.NewString()
 
 		costBreakdown := params.BillingService.CalculateCost(model, billing.Usage{
 			InputTokens:              gatewayResp.Usage.InputTokens,
@@ -287,18 +297,41 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			ProviderCostUSD:          gatewayResp.Usage.ProviderCostUSD,
 		}, usdToCHFRate)
 
-		if params.BillingLedgerRepo != nil && billingState != nil {
-			usageRecord := params.BillingService.BuildUsageRecord(*billingState, billing.BuildUsageRecordInput{
-				UserID:       owner.ID,
-				EventID:      uuid.NewString(),
-				ModelID:      model.ID,
-				Cost:         costBreakdown,
-				FXRateUSDCHF: usdToCHFRate,
-				InputTokens:  gatewayResp.Usage.InputTokens,
-				OutputTokens: gatewayResp.Usage.OutputTokens,
-			})
-			if err := params.BillingLedgerRepo.RecordUsage(usageRecord); err != nil {
-				params.Logger.Error("failed to record billing usage", "err", err)
+		if billingState != nil {
+			if params.BillingLedgerRepo != nil {
+				usageRecord := params.BillingService.BuildUsageRecord(*billingState, billing.BuildUsageRecordInput{
+					UserID:       owner.ID,
+					EventID:      eventID,
+					ModelID:      model.ID,
+					Cost:         costBreakdown,
+					FXRateUSDCHF: usdToCHFRate,
+					InputTokens:  gatewayResp.Usage.InputTokens,
+					OutputTokens: gatewayResp.Usage.OutputTokens,
+				})
+				if err := params.BillingLedgerRepo.RecordUsage(usageRecord); err != nil {
+					params.Logger.Error("failed to record billing usage", "err", err)
+				}
+			}
+
+			if params.UsageEmitter != nil {
+				billingUserID := billingState.BillingUserID
+				if billingUserID == "" {
+					billingUserID = owner.ID
+				}
+				usageEvent := analytics.BuildUsageEvent(analytics.BuildUsageEventInput{
+					EventID:       eventID,
+					OccurredAt:    time.Now().UTC(),
+					BillingUserID: billingUserID,
+					PlanType:      billingState.PlanType,
+					Model:         model,
+					PrivacyTier:   userTier,
+					Cost:          costBreakdown,
+					FXRateUSDCHF:  usdToCHFRate,
+					LatencyMS:     time.Since(gatewayStartedAt).Milliseconds(),
+				})
+				if err := params.UsageEmitter.Emit(usageEvent); err != nil {
+					params.Logger.Error("failed to emit analytics usage event", "err", err)
+				}
 			}
 		}
 
@@ -336,6 +369,13 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 
 		return e.JSON(http.StatusOK, response)
 	}
+}
+
+func completionUSDToCHFRate(params CompleteHandlerParams) float64 {
+	if params.FXRateProvider != nil {
+		return params.FXRateProvider.USDToCHF()
+	}
+	return 1
 }
 
 func completeBillingRestrictionResponse(
