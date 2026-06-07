@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cognos-io/chat.cognos.io/backend/internal/analytics"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
@@ -264,6 +265,15 @@ type recordingLedgerRepo struct {
 
 func (r *recordingLedgerRepo) RecordUsage(record billing.UsageRecord) error {
 	r.records = append(r.records, record)
+	return nil
+}
+
+type recordingUsageEmitter struct {
+	events []analytics.UsageEvent
+}
+
+func (e *recordingUsageEmitter) Emit(event analytics.UsageEvent) error {
+	e.events = append(e.events, event)
 	return nil
 }
 
@@ -635,6 +645,172 @@ func TestCompletionsDoNotRecordUsageWhenBillingBlocksRequest(t *testing.T) {
 		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
 			if len(ledgerRepo.records) != 0 {
 				t.Fatalf("RecordUsage() count = %d, want %d", len(ledgerRepo.records), 0)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestCompletionsUseFXRateProviderForResponseAndLedger(t *testing.T) {
+	t.Parallel()
+
+	providerCostUSD := 0.42
+	ledgerRepo := &recordingLedgerRepo{}
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(_ context.Context, _ gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			return gateway.CompleteResponse{
+				Message: gateway.Message{Role: "assistant", Content: "fx reply"},
+				Usage: gateway.Usage{
+					InputTokens:     7,
+					OutputTokens:    3,
+					TotalTokens:     10,
+					ProviderCostUSD: &providerCostUSD,
+				},
+			}, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "generic completions use the configured fx rate for response and ledger values",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"agent_id":"cognos:simple-assistant",
+			"messages":[{"role":"user","content":"hello there"}]
+		}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"content":"fx reply"`,
+			`"cost_chf":0.4536`,
+			`"cost_rappen":45`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				UpstreamRepo:      stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:     gatewayClient,
+				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService:    billing.NewService(),
+				BillingLedgerRepo: ledgerRepo,
+				FXRateProvider:    billing.StaticFXRateProvider{Rate: 0.9},
+				BillingStateRepo: stubBillingStateRepo{
+					stateForUser: func(userID string) (billing.State, error) {
+						if userID != "uvi8zmr78j9y5hz" {
+							t.Fatalf("StateForUser(%q) unexpected user id", userID)
+						}
+						return billing.State{PlanType: billing.PlanTypePayG, BalanceRappen: 0}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			if len(ledgerRepo.records) != 1 {
+				t.Fatalf("RecordUsage() count = %d, want %d", len(ledgerRepo.records), 1)
+			}
+			record := ledgerRepo.records[0]
+			if record.FXRateUSDCHF != 0.9 {
+				t.Errorf("RecordUsage().FXRateUSDCHF = %f, want %f", record.FXRateUSDCHF, 0.9)
+			}
+			if record.ProviderCostRappen != 38 {
+				t.Errorf("RecordUsage().ProviderCostRappen = %d, want %d", record.ProviderCostRappen, 38)
+			}
+			if record.UserCostRappen != 45 {
+				t.Errorf("RecordUsage().UserCostRappen = %d, want %d", record.UserCostRappen, 45)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestCompletionsEmitUsageEventAfterGatewayCall(t *testing.T) {
+	t.Parallel()
+
+	providerCostUSD := 0.42
+	emitter := &recordingUsageEmitter{}
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(_ context.Context, _ gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			return gateway.CompleteResponse{
+				Message: gateway.Message{Role: "assistant", Content: "analytics reply"},
+				Usage: gateway.Usage{
+					InputTokens:              9,
+					OutputTokens:             4,
+					TotalTokens:              13,
+					CacheCreationInputTokens: 7,
+					CacheReadInputTokens:     11,
+					ProviderCostUSD:          &providerCostUSD,
+				},
+			}, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "generic completions emit an analytics usage event after provider success",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"agent_id":"cognos:simple-assistant",
+			"messages":[{"role":"user","content":"hello there"}]
+		}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"content":"analytics reply"`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:  gatewayClient,
+				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService: billing.NewService(),
+				UsageEmitter:   emitter,
+				BillingStateRepo: stubBillingStateRepo{
+					stateForUser: func(userID string) (billing.State, error) {
+						if userID != "uvi8zmr78j9y5hz" {
+							t.Fatalf("StateForUser(%q) unexpected user id", userID)
+						}
+						return billing.State{PlanType: billing.PlanTypePayG, BillingUserID: "bill_123"}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			if len(emitter.events) != 1 {
+				t.Fatalf("Emit() count = %d, want %d", len(emitter.events), 1)
+			}
+			event := emitter.events[0]
+			if event.BillingUserID != "bill_123" {
+				t.Errorf("Emit().BillingUserID = %q, want %q", event.BillingUserID, "bill_123")
+			}
+			if event.PlanType != string(billing.PlanTypePayG) {
+				t.Errorf("Emit().PlanType = %q, want %q", event.PlanType, billing.PlanTypePayG)
+			}
+			if event.ModelID != "llama-3-3-infomaniak" {
+				t.Errorf("Emit().ModelID = %q, want %q", event.ModelID, "llama-3-3-infomaniak")
+			}
+			if event.Provider != "infomaniak" {
+				t.Errorf("Emit().Provider = %q, want %q", event.Provider, "infomaniak")
+			}
+			if event.PrivacyTier != "eu" {
+				t.Errorf("Emit().PrivacyTier = %q, want %q", event.PrivacyTier, "eu")
+			}
+			if event.CacheCreationInputTokens != 7 || event.CacheReadInputTokens != 11 {
+				t.Errorf("Emit() cache tokens = (%d, %d), want (%d, %d)", event.CacheCreationInputTokens, event.CacheReadInputTokens, 7, 11)
+			}
+			if event.ProviderCostUSD != 0.42 {
+				t.Errorf("Emit().ProviderCostUSD = %f, want %f", event.ProviderCostUSD, 0.42)
+			}
+			if event.CostUSD != 0.504 {
+				t.Errorf("Emit().CostUSD = %f, want %f", event.CostUSD, 0.504)
+			}
+			if event.CostCHF != 0.504 {
+				t.Errorf("Emit().CostCHF = %f, want %f", event.CostCHF, 0.504)
+			}
+			if event.EventID == "" {
+				t.Error("Emit().EventID = empty, want non-empty")
 			}
 		},
 	}

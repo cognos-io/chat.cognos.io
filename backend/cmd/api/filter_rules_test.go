@@ -28,6 +28,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
@@ -166,6 +167,9 @@ func setupTestAppWithHookParams(t testing.TB, params appHookParams) *tests.TestA
 	params.App = app
 	if params.Config == nil {
 		params.Config = &testConfig
+	}
+	if params.FXRateProvider == nil {
+		params.FXRateProvider = billing.StaticFXRateProvider{Rate: 1}
 	}
 
 	seedTestData(t, app)
