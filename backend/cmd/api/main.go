@@ -203,6 +203,18 @@ func bindAppHooks(
 		return e.Next()
 	})
 
+	billingTrialSeedRappen := int64(billing.DefaultTrialSeedRappen)
+	if params.Config != nil && params.Config.BillingTrialSeedRappen > 0 {
+		billingTrialSeedRappen = params.Config.BillingTrialSeedRappen
+	}
+
+	app.OnRecordAfterCreateSuccess("users").BindFunc(func(e *core.RecordEvent) error {
+		if err := billing.NewPocketBaseRepo(e.App).EnsureTrialState(e.Record.Id, billingTrialSeedRappen); err != nil {
+			return err
+		}
+		return e.Next()
+	})
+
 	app.OnRecordAfterCreateSuccess("messages").BindFunc(func(e *core.RecordEvent) error {
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(e.App)
 		conversationRepo := chat.NewPocketBaseConversationRepo(e.App, keyPairRepo)

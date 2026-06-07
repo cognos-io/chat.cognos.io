@@ -59,6 +59,8 @@ type APIConfig struct {
 	// DeepInfra
 	DeepInfraAPIURL string `koanf:"deepinfra.url"`
 	DeepInfraAPIKey string `koanf:"deepinfra.api_key"`
+	// Billing
+	BillingTrialSeedRappen int64 `koanf:"billing.trial_seed_rappen"`
 }
 
 // MustLoadAPIConfig loads the API configuration or panics if an error occurs.
@@ -99,6 +101,10 @@ func MustLoadAPIConfig(logger *slog.Logger) *APIConfig {
 	)
 	if err != nil {
 		panic(err)
+	}
+
+	if c.BillingTrialSeedRappen <= 0 {
+		c.BillingTrialSeedRappen = 200
 	}
 
 	for _, override := range []struct {

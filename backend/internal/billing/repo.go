@@ -22,14 +22,7 @@ func NewPocketBaseRepo(app core.App) *PocketBaseRepo {
 }
 
 func (r *PocketBaseRepo) StateForUser(userID string) (State, error) {
-	records, err := r.app.FindRecordsByFilter(
-		userBillingCollectionName,
-		"user_id = {:user_id}",
-		"",
-		2,
-		0,
-		dbx.Params{"user_id": userID},
-	)
+	records, err := r.billingRecordsForUser(r.app, userID, 2)
 	if err != nil {
 		return State{}, err
 	}
@@ -50,6 +43,32 @@ func (r *PocketBaseRepo) StateForUser(userID string) (State, error) {
 		BalanceRappen: int64(records[0].GetInt("balance_rappen")),
 		BillingUserID: records[0].Id,
 	}, nil
+}
+
+func (r *PocketBaseRepo) EnsureTrialState(userID string, seedRappen int64) error {
+	return r.app.RunInTransaction(func(txApp core.App) error {
+		records, err := r.billingRecordsForUser(txApp, userID, 1)
+		if err != nil {
+			return err
+		}
+		if len(records) > 0 {
+			return nil
+		}
+
+		collection, err := txApp.FindCollectionByNameOrId(userBillingCollectionName)
+		if err != nil {
+			return err
+		}
+
+		seed := DefaultTrialStateSeed(time.Now().UTC(), seedRappen)
+		record := core.NewRecord(collection)
+		record.Set("user_id", userID)
+		record.Set("plan_type", string(seed.PlanType))
+		record.Set("balance_rappen", seed.BalanceRappen)
+		record.Set("trial_seed_granted_rappen", seed.TrialSeedGrantedRappen)
+		record.Set("plan_started_at", seed.PlanStartedAt)
+		return txApp.Save(record)
+	})
 }
 
 func (r *PocketBaseRepo) RecordUsage(record UsageRecord) error {
@@ -90,4 +109,15 @@ func (r *PocketBaseRepo) RecordUsage(record UsageRecord) error {
 
 		return txApp.Save(transactionRecord)
 	})
+}
+
+func (r *PocketBaseRepo) billingRecordsForUser(app core.App, userID string, limit int) ([]*core.Record, error) {
+	return app.FindRecordsByFilter(
+		userBillingCollectionName,
+		"user_id = {:user_id}",
+		"",
+		limit,
+		0,
+		dbx.Params{"user_id": userID},
+	)
 }
