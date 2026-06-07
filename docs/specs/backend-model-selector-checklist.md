@@ -80,10 +80,10 @@ This checklist is the living execution tracker for the rework.
 
 - [ ] `docs/specs/backend-model-selector-test-plan.md`
     - [ ] keep updated as tests are added and moved from red → green
-- [ ] browser E2E harness
-    - [ ] choose/install the browser E2E runner
-    - [ ] document the canonical local command
-    - [ ] run app(s) on non-standard local ports for E2E
+- [x] browser E2E harness
+    - [x] choose/install the browser E2E runner
+    - [x] document the canonical local command
+    - [x] run app(s) on non-standard local ports for E2E
 
 ### Backend test targets
 
@@ -92,6 +92,7 @@ This checklist is the living execution tracker for the rework.
     - [x] eligibility metadata
     - [x] privacy-tier behaviour
 - [ ] gateway contract tests
+    - [x] initial package-level gateway contract and mock-client tests added
     - [ ] handler/service tests depend on a mock gateway client
 - [x] catalogue unit tests
     - [x] tier filtering
@@ -101,14 +102,14 @@ This checklist is the living execution tracker for the rework.
 ### Frontend test targets
 
 - [x] frontend unit test baseline is green again
-- [ ] high-level browser E2E baseline is green
-    - [ ] authenticated user loads models from backend
+- [x] high-level browser E2E baseline is green
+    - [x] authenticated user loads models from backend
 
 ### Verification
 
 - [x] backend unit/integration tests pass for catalogue and models API
 - [x] frontend unit tests pass
-- [ ] first browser E2E passes
+- [x] first browser E2E passes
 
 ---
 

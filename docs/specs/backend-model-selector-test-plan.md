@@ -47,8 +47,10 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 
 - `cd frontend && pnpm exec ng test --watch=false` ✅ passes
 - `cd frontend && pnpm build` ✅ passes
+- `cd frontend && pnpm test:e2e` ✅ passes
 - `ModelService` coverage now includes login load, eligible-model fallback, no-eligible fallback,
   and logout reset
+- browser E2E now covers the first high-level authenticated models-loading flow via Playwright
 
 Remaining frontend build warnings are non-blocking style-budget follow-up work.
 
@@ -82,8 +84,9 @@ cd frontend && pnpm build
 
 ### Browser E2E
 
-Preferred: add a deterministic browser runner such as Playwright and document the final command here
-once installed.
+```bash
+cd frontend && pnpm test:e2e
+```
 
 ---
 
