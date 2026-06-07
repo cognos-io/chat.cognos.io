@@ -215,9 +215,9 @@ func TestCompletionsTemporaryDoesNotPersistMessages(t *testing.T) {
 			`"content":"temporary reply"`,
 			`"cache_creation_input_tokens":7`,
 			`"cache_read_input_tokens":11`,
-			`"cost_usd":0.42`,
-			`"cost_chf":0.42`,
-			`"cost_rappen":42`,
+			`"cost_usd":0.504`,
+			`"cost_chf":0.504`,
+			`"cost_rappen":50`,
 			`"used_provider_cost":true`,
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
@@ -349,6 +349,55 @@ func TestCompletionsAllowPayGUsersWhenBillingStateIsPresent(t *testing.T) {
 							t.Fatalf("StateForUser(%q) unexpected user id", userID)
 						}
 						return billing.State{PlanType: billing.PlanTypePayG, BalanceRappen: 0}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+	}
+
+	scenario.Test(t)
+}
+
+func TestCompletionsReturnTrialExhaustedBeforeGatewayCall(t *testing.T) {
+	t.Parallel()
+
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(context.Context, gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			t.Fatal("Complete() should not be called when trial credit is exhausted")
+			return gateway.CompleteResponse{}, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "generic completions return trial exhaustion before provider call",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"agent_id":"cognos:simple-assistant",
+			"messages":[{"role":"user","content":"hello there"}]
+		}`),
+		ExpectedStatus: http.StatusPaymentRequired,
+		ExpectedContent: []string{
+			`"error":"TRIAL_EXHAUSTED"`,
+			`"message":"Your free trial has been used up."`,
+			`"balance_chf":0.02`,
+			`"estimated_cost_chf":0.17`,
+			`"next_step":"subscribe"`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:  gatewayClient,
+				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService: billing.NewService(),
+				BillingStateRepo: stubBillingStateRepo{
+					stateForUser: func(userID string) (billing.State, error) {
+						if userID != "uvi8zmr78j9y5hz" {
+							t.Fatalf("StateForUser(%q) unexpected user id", userID)
+						}
+						return billing.State{PlanType: billing.PlanTypeTrial, BalanceRappen: 2}, nil
 					},
 				},
 			})
