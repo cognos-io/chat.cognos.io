@@ -234,14 +234,15 @@ This checklist is the living execution tracker for the rework.
 ### New backend packages/files
 
 - [ ] `backend/internal/billing/service.go`
-    - [ ] plan types
-    - [ ] affordability check
+    - [x] plan types
+    - [x] affordability check
     - [ ] deduction/record logic
-    - [ ] provider-cost precedence when available
+    - [x] provider-cost precedence when available
 - [ ] `backend/internal/billing/fx_rate.go`
     - [ ] cached USD→CHF rate
 - [ ] `backend/internal/billing/service_test.go`
-    - [ ] PAYG / flat-rate / insufficient-balance coverage
+    - [x] cost and access-policy coverage
+    - [ ] PAYG / unlimited ledger coverage
 - [ ] `backend/internal/analytics/event.go`
     - [ ] usage event shape
     - [ ] input/output/cache/provider-cost fields

@@ -45,8 +45,9 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - completion API tests now exercise the handler through `gateway.MockClient`
 - the first legacy proxy → internal gateway bridge is in place for completions
 - completion usage payloads now preserve cache-token metadata and provider-reported cost
-- completion API tests now cover the structured 402 billing-restriction contract before any provider
-  call
+- billing service unit coverage now includes plan access policy for trial, inactive, PAYG, and
+  unlimited states
+- completion API tests now cover repo-backed inactive billing restriction before any provider call
 - the legacy gateway bridge has unit coverage for request mapping, context propagation, and errors
 
 ### Frontend
