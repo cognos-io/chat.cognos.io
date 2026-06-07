@@ -95,6 +95,7 @@ func addPocketBaseRoutes(
 	aiAgentRepo aiagent.AIAgentRepo,
 	conversationRepo chat.ConversationRepo,
 	billingService *billing.Service,
+	billingStateRepo billing.StateRepo,
 	completeBillingGate handler.CompleteBillingGateFunc,
 ) {
 	e.Router.GET(
@@ -168,6 +169,7 @@ func addPocketBaseRoutes(
 		ConversationRepo:    conversationRepo,
 		AgentRepo:           aiAgentRepo,
 		BillingService:      billingService,
+		BillingStateRepo:    billingStateRepo,
 		CompleteBillingGate: completeBillingGate,
 	}
 

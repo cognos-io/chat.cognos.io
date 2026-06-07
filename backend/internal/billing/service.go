@@ -1,10 +1,39 @@
 package billing
 
 import (
+	"errors"
 	"math"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 )
+
+type PlanType string
+
+const (
+	PlanTypeTrial     PlanType = "trial"
+	PlanTypePayG      PlanType = "payg"
+	PlanTypeUnlimited PlanType = "unlimited"
+	PlanTypeInactive  PlanType = "inactive"
+)
+
+var ErrStateNotFound = errors.New("billing state not found")
+
+type State struct {
+	PlanType      PlanType
+	BalanceRappen int64
+}
+
+type StateRepo interface {
+	StateForUser(userID string) (State, error)
+}
+
+type AccessRestriction struct {
+	Error               string
+	Message             string
+	BalanceRappen       *int64
+	EstimatedCostRappen *int64
+	NextStep            string
+}
 
 type Usage struct {
 	InputTokens              int64
@@ -55,6 +84,29 @@ func (s *Service) CanAfford(balanceRappen, estimatedCostRappen int64) bool {
 	return balanceRappen >= estimatedCostRappen
 }
 
+func (s *Service) EvaluateAccess(state State, estimatedCostRappen int64) *AccessRestriction {
+	switch state.PlanType {
+	case PlanTypeInactive:
+		return &AccessRestriction{
+			Error:    "INACTIVE",
+			Message:  "Choose a plan to keep chatting.",
+			NextStep: "subscribe",
+		}
+	case PlanTypeTrial:
+		if estimatedCostRappen > 0 && !s.CanAfford(state.BalanceRappen, estimatedCostRappen) {
+			return &AccessRestriction{
+				Error:               "TRIAL_EXHAUSTED",
+				Message:             "Your free trial has been used up.",
+				BalanceRappen:       int64Ptr(state.BalanceRappen),
+				EstimatedCostRappen: int64Ptr(estimatedCostRappen),
+				NextStep:            "subscribe",
+			}
+		}
+	}
+
+	return nil
+}
+
 func (s *Service) costUSD(model catalogue.Model, usage Usage) float64 {
 	if usage.ProviderCostUSD != nil {
 		return *usage.ProviderCostUSD
@@ -63,4 +115,8 @@ func (s *Service) costUSD(model catalogue.Model, usage Usage) float64 {
 	inputCost := float64(usage.InputTokens) / 1_000_000 * model.Pricing.InputUSDPerMillionTokens
 	outputCost := float64(usage.OutputTokens) / 1_000_000 * model.Pricing.OutputUSDPerMillionTokens
 	return inputCost + outputCost
+}
+
+func int64Ptr(v int64) *int64 {
+	return &v
 }

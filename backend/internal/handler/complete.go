@@ -87,6 +87,7 @@ type CompleteHandlerParams struct {
 	ConversationRepo    chat.ConversationRepo
 	AgentRepo           aiagent.AIAgentRepo
 	BillingService      *billing.Service
+	BillingStateRepo    billing.StateRepo
 	CompleteBillingGate CompleteBillingGateFunc
 }
 
@@ -177,6 +178,19 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			}
 			if restriction != nil {
 				return e.JSON(http.StatusPaymentRequired, restriction)
+			}
+		} else if params.BillingStateRepo != nil && params.BillingService != nil {
+			state, err := params.BillingStateRepo.StateForUser(owner.ID)
+			if err != nil {
+				if !errors.Is(err, billing.ErrStateNotFound) {
+					params.Logger.Error("billing state lookup failed", "err", err)
+					return apis.NewApiError(http.StatusInternalServerError, "Failed to evaluate billing access", err)
+				}
+			} else {
+				estimatedCost := estimateCompletionCost(params.BillingService, model, req)
+				if restriction := params.BillingService.EvaluateAccess(state, estimatedCost.CostRappen); restriction != nil {
+					return e.JSON(http.StatusPaymentRequired, completeBillingRestrictionResponse(*restriction, estimatedCost.CostCHF))
+				}
 			}
 		}
 
@@ -299,4 +313,38 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 
 		return e.JSON(http.StatusOK, response)
 	}
+}
+
+func estimateCompletionCost(service *billing.Service, model catalogue.Model, req CompleteRequest) billing.CostBreakdown {
+	maxOutputTokens := req.MaxOutputTokens
+	if maxOutputTokens <= 0 {
+		maxOutputTokens = model.MaxOutputTokens
+	}
+
+	return service.CalculateCost(model, billing.Usage{
+		InputTokens:  int64(model.InputContextTokens),
+		OutputTokens: int64(maxOutputTokens),
+	}, 1)
+}
+
+func completeBillingRestrictionResponse(
+	restriction billing.AccessRestriction,
+	estimatedCostCHF float64,
+) CompleteBillingRestriction {
+	response := CompleteBillingRestriction{
+		Error:    restriction.Error,
+		Message:  restriction.Message,
+		NextStep: restriction.NextStep,
+	}
+	if restriction.BalanceRappen != nil {
+		balanceCHF := float64(*restriction.BalanceRappen) / 100
+		response.BalanceCHF = &balanceCHF
+	}
+	if restriction.EstimatedCostRappen != nil {
+		costCHF := float64(*restriction.EstimatedCostRappen) / 100
+		response.EstimatedCostCHF = &costCHF
+	} else if estimatedCostCHF > 0 {
+		response.EstimatedCostCHF = &estimatedCostCHF
+	}
+	return response
 }

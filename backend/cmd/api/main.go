@@ -48,6 +48,7 @@ type appHookParams struct {
 	AIAgentRepo            aiagent.AIAgentRepo
 	ConversationRepo       chat.ConversationRepo
 	BillingService         *billing.Service
+	BillingStateRepo       billing.StateRepo
 	CompleteBillingGate    handler.CompleteBillingGateFunc
 }
 
@@ -144,6 +145,7 @@ func bindAppHooks(
 			aiAgentRepo,
 			conversationRepo,
 			billingService,
+			params.BillingStateRepo,
 			params.CompleteBillingGate,
 		)
 

@@ -112,3 +112,89 @@ func TestCanAfford(t *testing.T) {
 		})
 	}
 }
+
+func TestEvaluateAccess(t *testing.T) {
+	t.Parallel()
+
+	service := NewService()
+
+	tests := []struct {
+		name                string
+		state               State
+		estimatedCostRappen int64
+		wantError           string
+		wantMessage         string
+		wantBalanceRappen   *int64
+		wantEstimatedRappen *int64
+	}{
+		{
+			name:      "inactive users must subscribe",
+			state:     State{PlanType: PlanTypeInactive},
+			wantError: "INACTIVE",
+			wantMessage: "Choose a plan to keep chatting.",
+		},
+		{
+			name:                "trial users are blocked when balance is too low",
+			state:               State{PlanType: PlanTypeTrial, BalanceRappen: 2},
+			estimatedCostRappen: 32,
+			wantError:           "TRIAL_EXHAUSTED",
+			wantMessage:         "Your free trial has been used up.",
+			wantBalanceRappen:   int64Ptr(2),
+			wantEstimatedRappen: int64Ptr(32),
+		},
+		{
+			name:                "trial users can continue when balance covers the estimate",
+			state:               State{PlanType: PlanTypeTrial, BalanceRappen: 32},
+			estimatedCostRappen: 32,
+		},
+		{
+			name:                "payg users are not blocked for funds",
+			state:               State{PlanType: PlanTypePayG, BalanceRappen: 0},
+			estimatedCostRappen: 320,
+		},
+		{
+			name:                "unlimited users are not blocked for funds",
+			state:               State{PlanType: PlanTypeUnlimited, BalanceRappen: 0},
+			estimatedCostRappen: 320,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := service.EvaluateAccess(tt.state, tt.estimatedCostRappen)
+			if tt.wantError == "" {
+				if got != nil {
+					t.Fatalf("EvaluateAccess(...) = %#v, want nil", got)
+				}
+				return
+			}
+			if got == nil {
+				t.Fatal("EvaluateAccess(...) = nil, want restriction")
+			}
+			if got.Error != tt.wantError {
+				t.Errorf("EvaluateAccess(...).Error = %q, want %q", got.Error, tt.wantError)
+			}
+			if got.Message != tt.wantMessage {
+				t.Errorf("EvaluateAccess(...).Message = %q, want %q", got.Message, tt.wantMessage)
+			}
+			if diffInt64Ptr(got.BalanceRappen, tt.wantBalanceRappen) {
+				t.Errorf("EvaluateAccess(...).BalanceRappen = %v, want %v", got.BalanceRappen, tt.wantBalanceRappen)
+			}
+			if diffInt64Ptr(got.EstimatedCostRappen, tt.wantEstimatedRappen) {
+				t.Errorf("EvaluateAccess(...).EstimatedCostRappen = %v, want %v", got.EstimatedCostRappen, tt.wantEstimatedRappen)
+			}
+			if got.NextStep != "subscribe" {
+				t.Errorf("EvaluateAccess(...).NextStep = %q, want %q", got.NextStep, "subscribe")
+			}
+		})
+	}
+}
+
+func diffInt64Ptr(got, want *int64) bool {
+	if got == nil || want == nil {
+		return got != want
+	}
+	return *got != *want
+}
