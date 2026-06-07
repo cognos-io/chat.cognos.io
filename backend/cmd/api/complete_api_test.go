@@ -305,6 +305,60 @@ func TestCompletionsReturnStructuredBillingRestrictionBeforeGatewayCall(t *testi
 	scenario.Test(t)
 }
 
+func TestCompletionsAllowPayGUsersWhenBillingStateIsPresent(t *testing.T) {
+	t.Parallel()
+
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(_ context.Context, req gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			if len(req.Messages) != 2 {
+				t.Fatalf("Complete() len(Messages) = %d, want %d", len(req.Messages), 2)
+			}
+			return gateway.CompleteResponse{
+				Message: gateway.Message{Role: "assistant", Content: "payg reply"},
+				Usage:   gateway.Usage{InputTokens: 7, OutputTokens: 3, TotalTokens: 10},
+			}, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "generic completions allow payg users without blocking for funds",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"agent_id":"cognos:simple-assistant",
+			"request_id":"req-payg",
+			"messages":[{"role":"user","content":"hello there"}]
+		}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"request_id":"req-payg"`,
+			`"content":"payg reply"`,
+			`"input_tokens":7`,
+			`"output_tokens":3`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:  gatewayClient,
+				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService: billing.NewService(),
+				BillingStateRepo: stubBillingStateRepo{
+					stateForUser: func(userID string) (billing.State, error) {
+						if userID != "uvi8zmr78j9y5hz" {
+							t.Fatalf("StateForUser(%q) unexpected user id", userID)
+						}
+						return billing.State{PlanType: billing.PlanTypePayG, BalanceRappen: 0}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+	}
+
+	scenario.Test(t)
+}
+
 func TestConversationCompleteCleansUpRequestMessageOnProviderError(t *testing.T) {
 	t.Parallel()
 
