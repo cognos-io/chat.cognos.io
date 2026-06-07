@@ -52,7 +52,10 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   append behaviour
 - completion API tests now cover repo-backed inactive and trial-exhausted billing restrictions
   before any provider call, confirm PAYG state does not block completions, apply custom FX rates,
-  emit analytics usage events, and record plan-specific usage after successful gateway calls
+  emit analytics usage events, record plan-specific usage after successful gateway calls, and use
+  the default PocketBase billing repos when no test seam is injected
+- PocketBase billing repo coverage now includes legacy `flat_rate` alias mapping, missing-state
+  handling, transactional trial balance updates, and rollback on duplicate usage event IDs
 - the legacy gateway bridge has unit coverage for request mapping, context propagation, and errors
 
 ### Frontend

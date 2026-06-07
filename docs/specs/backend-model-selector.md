@@ -1549,6 +1549,10 @@ existing chat behaviour.
 | 3.6 | Add integration tests for trial/inactive gating, PAYG/unlimited usage, and analytics payloads          | backend tests         |
 | 3.7 | Extend browser E2E to cover billing-restriction and model-eligibility UX at a high level               | frontend/e2e          |
 
+_Current implementation status:_ PocketBase-backed `user_billing` and `balance_transactions`
+repositories are now wired by default in the API app, with transactional trial-balance updates on
+usage writes and legacy `flat_rate` rows normalized to `unlimited` on read.
+
 **Review checkpoint 3:** Real provider calls, billing, and analytics all flow through the same
 contract and are covered by tests.
 

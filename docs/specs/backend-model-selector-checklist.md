@@ -239,8 +239,13 @@ This checklist is the living execution tracker for the rework.
     - [x] 20% margin on user-facing cost
     - [x] upper-bound preflight estimate for trial gate
     - [x] plan-aware usage ledger entry builder
-    - [ ] persistence-backed deduction/record logic
+    - [x] persistence-backed deduction/record logic
     - [x] provider-cost precedence when available
+- [x] `backend/internal/billing/repo.go`
+    - [x] PocketBase-backed billing state lookup
+    - [x] PocketBase-backed usage ledger writes
+    - [x] transactional trial balance update + usage row persistence
+    - [x] legacy `flat_rate` → `unlimited` alias on read
 - [ ] `backend/internal/billing/fx_rate.go`
     - [x] fallback/static USD→CHF provider seam
     - [ ] cached USD→CHF rate
@@ -266,8 +271,8 @@ This checklist is the living execution tracker for the rework.
 ### New/updated schema
 
 - [ ] add/update migrations for:
-    - [ ] `user_billing`
-    - [ ] `balance_transactions`
+    - [x] `user_billing`
+    - [x] `balance_transactions`
 
 ### Existing backend files to update
 
@@ -278,7 +283,8 @@ This checklist is the living execution tracker for the rework.
     - [x] record usage via ledger repo seam after successful completions
     - [x] emit analytics via emitter seam after successful completions
 - [ ] `backend/cmd/api/main.go`
-    - [ ] wire billing/emitter services
+    - [x] wire billing/emitter services
+    - [x] default to PocketBase billing repos when test seams are not provided
 
 ### Manual-operations note
 
@@ -291,8 +297,8 @@ This checklist is the living execution tracker for the rework.
 
 - [x] trial/inactive affordability gate test passes
 - [x] PAYG/unlimited/trial usage recording path passes without blocking completions
-- [ ] analytics payload excludes plaintext content and direct user identifiers
-- [ ] input/output/cache/provider-cost fields are recorded as supported by the active provider
+- [x] analytics payload excludes plaintext content and direct user identifiers
+- [x] input/output/cache/provider-cost fields are recorded as supported by the active provider
 
 ---
 
