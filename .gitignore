@@ -115,6 +115,8 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+frontend/playwright-report/
+frontend/test-results/
 
 # Gatsby files
 .cache/

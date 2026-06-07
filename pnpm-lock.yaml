@@ -147,6 +147,9 @@ importers:
       '@angular/localize':
         specifier: ^21.2.16
         version: 21.2.16(@angular/compiler-cli@21.2.16(@angular/compiler@21.2.16)(typescript@5.9.3))(@angular/compiler@21.2.16)
+      '@playwright/test':
+        specifier: ^1.60.0
+        version: 1.60.0
       '@tailwindcss/typography':
         specifier: ^0.5.12
         version: 0.5.19(tailwindcss@3.4.19(yaml@2.9.0))
@@ -17211,7 +17214,7 @@ snapshots:
 
   telejson@8.0.0: {}
 
-  terser-webpack-plugin@5.6.1(esbuild@0.27.3)(postcss@8.5.12)(webpack@5.105.2(esbuild@0.27.3)(postcss@8.5.12)):
+  terser-webpack-plugin@5.6.1(esbuild@0.27.3)(postcss@8.5.15)(webpack@5.105.2(esbuild@0.27.3)(postcss@8.5.12)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
@@ -17220,7 +17223,7 @@ snapshots:
       webpack: 5.105.2(esbuild@0.27.3)(postcss@8.5.15)
     optionalDependencies:
       esbuild: 0.27.3
-      postcss: 8.5.12
+      postcss: 8.5.15
 
   terser-webpack-plugin@5.6.1(esbuild@0.27.3)(postcss@8.5.15)(webpack@5.94.0(esbuild@0.27.3)(postcss@8.5.15)):
     dependencies:
@@ -17778,7 +17781,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3
-      terser-webpack-plugin: 5.6.1(esbuild@0.27.3)(postcss@8.5.12)(webpack@5.105.2(esbuild@0.27.3)(postcss@8.5.12))
+      terser-webpack-plugin: 5.6.1(esbuild@0.27.3)(postcss@8.5.15)(webpack@5.105.2(esbuild@0.27.3)(postcss@8.5.12))
       watchpack: 2.5.1
       webpack-sources: 3.5.0
     transitivePeerDependencies:
