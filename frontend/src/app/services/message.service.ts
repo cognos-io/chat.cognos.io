@@ -76,6 +76,28 @@ export type MessageRequest = {
   parentMessageId?: string;
 };
 
+type CompleteErrorBody = {
+  error?: string;
+  message?: string;
+  next_step?: string;
+};
+
+export const resolveCompletionErrorMessage = (error: HttpErrorResponse): string => {
+  switch (error.status) {
+    case 402: {
+      const body = error.error as CompleteErrorBody | null;
+      if (typeof body?.message === 'string' && body.message.trim() !== '') {
+        return body.message;
+      }
+      return 'Your account needs an active plan before you can keep chatting.';
+    }
+    case 429:
+      return 'Rate limiting error, you are sending too many messages. Please wait a few seconds before sending another message.';
+    default:
+      return 'An error occurred while sending the message.';
+  }
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -530,19 +552,7 @@ export class MessageService {
         console.error('Error sending message');
 
         if (err instanceof HttpErrorResponse) {
-          switch (err.status) {
-            case 402:
-              this._errorService.alert('Insufficient balance to send this message.');
-              break;
-            case 429:
-              this._errorService.alert(
-                'Rate limiting error, you are sending too many messages. Please wait a few seconds before sending another message.',
-              );
-              break;
-            default:
-              this._errorService.alert('An error occurred while sending the message.');
-              break;
-          }
+          this._errorService.alert(resolveCompletionErrorMessage(err));
         }
 
         this.state.removeLastMessage();
