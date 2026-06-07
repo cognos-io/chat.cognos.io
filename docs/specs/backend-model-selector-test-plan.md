@@ -42,6 +42,8 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - `cd backend && go test ./...` ✅ passes
 - `/api/v1/models` integration coverage now includes auth, active catalogue response, privacy-tier
   handling, preferred model propagation, and unknown-tier fallback
+- completion API tests now exercise the handler through `gateway.MockClient`
+- the first legacy proxy → internal gateway bridge is in place for completions
 
 ### Frontend
 

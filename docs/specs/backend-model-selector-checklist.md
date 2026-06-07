@@ -91,9 +91,9 @@ This checklist is the living execution tracker for the rework.
     - [x] active model list
     - [x] eligibility metadata
     - [x] privacy-tier behaviour
-- [ ] gateway contract tests
+- [x] gateway contract tests
     - [x] initial package-level gateway contract and mock-client tests added
-    - [ ] handler/service tests depend on a mock gateway client
+    - [x] completion API tests now depend on a mock gateway client
 - [x] catalogue unit tests
     - [x] tier filtering
     - [x] inactive exclusion
