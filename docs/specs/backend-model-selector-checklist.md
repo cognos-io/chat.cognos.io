@@ -238,14 +238,15 @@ This checklist is the living execution tracker for the rework.
     - [x] affordability check
     - [x] 20% margin on user-facing cost
     - [x] upper-bound preflight estimate for trial gate
-    - [ ] deduction/record logic
+    - [x] plan-aware usage ledger entry builder
+    - [ ] persistence-backed deduction/record logic
     - [x] provider-cost precedence when available
 - [ ] `backend/internal/billing/fx_rate.go`
     - [ ] cached USD→CHF rate
 - [ ] `backend/internal/billing/service_test.go`
     - [x] cost, margin, and access-policy coverage
     - [x] upper-bound preflight estimate coverage
-    - [ ] PAYG / unlimited ledger coverage
+    - [x] PAYG / unlimited / trial ledger entry coverage
 - [ ] `backend/internal/analytics/event.go`
     - [ ] usage event shape
     - [ ] input/output/cache/provider-cost fields
@@ -270,7 +271,7 @@ This checklist is the living execution tracker for the rework.
     - [x] support structured billing-restriction handler seam in tests
     - [x] allow PAYG users through the preflight access policy
     - [x] add preflight affordability check for trial / inactive contract
-    - [ ] record usage
+    - [x] record usage via ledger repo seam after successful completions
     - [ ] emit analytics
 - [ ] `backend/cmd/api/main.go`
     - [ ] wire billing/emitter services
@@ -285,7 +286,7 @@ This checklist is the living execution tracker for the rework.
 ### Verification
 
 - [x] trial/inactive affordability gate test passes
-- [ ] PAYG/unlimited usage recording path passes without blocking
+- [x] PAYG/unlimited/trial usage recording path passes without blocking completions
 - [ ] analytics payload excludes plaintext content and direct user identifiers
 - [ ] input/output/cache/provider-cost fields are recorded as supported by the active provider
 

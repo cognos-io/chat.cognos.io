@@ -49,6 +49,8 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   unlimited states, plus 20% margin application and upper-bound preflight estimates
 - completion API tests now cover repo-backed inactive and trial-exhausted billing restrictions
   before any provider call and confirm PAYG state does not block completions
+- billing ledger unit coverage now includes PAYG, unlimited, and trial usage entry shapes
+- completion API tests now cover plan-specific usage recording after successful gateway calls
 - the legacy gateway bridge has unit coverage for request mapping, context propagation, and errors
 
 ### Frontend
@@ -267,7 +269,7 @@ Add guarded real-adapter tests for:
 | Billing           | trial/inactive gate blocks before provider call (integration)        |
 | Billing           | 20% margin applied to user-facing completion costs                   |
 | Billing           | trial preflight uses catalogue upper-bound estimate with margin      |
-| Billing           | PAYG/unlimited usage recording follows the billing contract          |
+| Billing           | PAYG/unlimited/trial usage recording follows the billing contract    |
 | Usage             | input/output/cache/provider-cost captured when available             |
 | Analytics privacy | no plaintext content or direct identifiers                           |
 | Frontend models   | backend-driven model loading works                                   |
