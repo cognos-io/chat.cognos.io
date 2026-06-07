@@ -63,6 +63,16 @@ export type ConversationFixture = {
   conversationKeyPair: nacl.BoxKeyPair;
 };
 
+export type MessageRecordFixture = {
+  id: string;
+  created: string;
+  updated: string;
+  data: string;
+  conversation: string;
+  parent_message?: string;
+  expires?: string;
+};
+
 const textEncoder = new TextEncoder();
 
 const base64 = (bytes: Uint8Array): string => Buffer.from(bytes).toString('base64');
@@ -253,6 +263,67 @@ export const buildConversationFixture = (
       secret_key: base64(encryptedConversationSecretKey),
     },
     conversationKeyPair,
+  };
+};
+
+const sealedBox = (message: Uint8Array, recipientPublicKey: Uint8Array): Uint8Array => {
+  const ephemeralKeyPair = nacl.box.keyPair();
+  const keys = new Uint8Array(
+    ephemeralKeyPair.publicKey.length + recipientPublicKey.length,
+  );
+  keys.set(ephemeralKeyPair.publicKey);
+  keys.set(recipientPublicKey, ephemeralKeyPair.publicKey.length);
+  const nonce = blake2b(keys, undefined, nacl.secretbox.nonceLength);
+  const ciphertext = nacl.box(
+    message,
+    nonce,
+    recipientPublicKey,
+    ephemeralKeyPair.secretKey,
+  );
+
+  const fullMessage = new Uint8Array(
+    ephemeralKeyPair.publicKey.length + ciphertext.length,
+  );
+  fullMessage.set(ephemeralKeyPair.publicKey);
+  fullMessage.set(ciphertext, ephemeralKeyPair.publicKey.length);
+  return fullMessage;
+};
+
+export const buildMessageRecordFixture = (
+  conversationFixture: ConversationFixture,
+  record: {
+    id: string;
+    created: string;
+    content: string;
+    ownerId?: string;
+    agentId?: string;
+    modelId?: string;
+    parentMessageId?: string;
+    expires?: string;
+  },
+): MessageRecordFixture => {
+  const payload = {
+    content: record.content,
+    conversation_id: conversationFixture.conversationRecord.id,
+    ...(record.ownerId ? { owner_id: record.ownerId } : {}),
+    ...(record.agentId ? { agent_id: record.agentId } : {}),
+    ...(record.modelId ? { model_id: record.modelId } : {}),
+    ...(record.parentMessageId ? { parent_message_id: record.parentMessageId } : {}),
+  };
+
+  return {
+    id: record.id,
+    created: record.created,
+    updated: record.created,
+    data: base64(
+      sealedBox(
+        textEncoder.encode(JSON.stringify(payload)),
+        conversationFixture.conversationKeyPair.publicKey,
+      ),
+    ),
+    conversation: conversationFixture.conversationRecord.id,
+    ...(record.parentMessageId ? { parent_message: record.parentMessageId } : {}),
+    ...(record.expires ? { expires: record.expires } : {}),
   };
 };
 
