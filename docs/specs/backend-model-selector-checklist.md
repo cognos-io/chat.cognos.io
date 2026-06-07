@@ -242,18 +242,22 @@ This checklist is the living execution tracker for the rework.
     - [ ] persistence-backed deduction/record logic
     - [x] provider-cost precedence when available
 - [ ] `backend/internal/billing/fx_rate.go`
+    - [x] fallback/static USD→CHF provider seam
     - [ ] cached USD→CHF rate
 - [ ] `backend/internal/billing/service_test.go`
     - [x] cost, margin, and access-policy coverage
     - [x] upper-bound preflight estimate coverage
     - [x] PAYG / unlimited / trial ledger entry coverage
 - [ ] `backend/internal/analytics/event.go`
-    - [ ] usage event shape
-    - [ ] input/output/cache/provider-cost fields
+    - [x] usage event shape
+    - [x] input/output/cache/provider-cost fields
+    - [x] exclude plaintext content and direct user identifiers
 - [ ] `backend/internal/analytics/emitter.go`
+    - [x] emitter seam / recording emitter
     - [ ] buffered event writing
     - [ ] flush strategy
 - [ ] `backend/internal/analytics/emitter_test.go`
+    - [x] basic append coverage
     - [ ] serialization/flush tests
 - [ ] `backend/internal/handler/billing.go`
     - [ ] `GET /api/v1/billing`
@@ -272,7 +276,7 @@ This checklist is the living execution tracker for the rework.
     - [x] allow PAYG users through the preflight access policy
     - [x] add preflight affordability check for trial / inactive contract
     - [x] record usage via ledger repo seam after successful completions
-    - [ ] emit analytics
+    - [x] emit analytics via emitter seam after successful completions
 - [ ] `backend/cmd/api/main.go`
     - [ ] wire billing/emitter services
 

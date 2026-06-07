@@ -47,10 +47,12 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - completion usage payloads now preserve cache-token metadata and provider-reported cost
 - billing service unit coverage now includes plan access policy for trial, inactive, PAYG, and
   unlimited states, plus 20% margin application and upper-bound preflight estimates
+- billing FX-rate unit coverage now includes fallback/static USD→CHF provider behaviour
+- analytics unit coverage now includes usage-event field mapping, privacy exclusions, and emitter
+  append behaviour
 - completion API tests now cover repo-backed inactive and trial-exhausted billing restrictions
-  before any provider call and confirm PAYG state does not block completions
-- billing ledger unit coverage now includes PAYG, unlimited, and trial usage entry shapes
-- completion API tests now cover plan-specific usage recording after successful gateway calls
+  before any provider call, confirm PAYG state does not block completions, apply custom FX rates,
+  emit analytics usage events, and record plan-specific usage after successful gateway calls
 - the legacy gateway bridge has unit coverage for request mapping, context propagation, and errors
 
 ### Frontend
