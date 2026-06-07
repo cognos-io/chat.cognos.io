@@ -325,7 +325,7 @@ This checklist is the living execution tracker for the rework.
 - [x] authenticated user loads models from backend
 - [x] authenticated user creates or opens a conversation
 - [x] authenticated user sends a message and receives a response
-- [ ] conversation history reload still works
+- [x] conversation history reload still works
 - [ ] insufficient balance blocks PAYG sending
 - [ ] unavailable model cannot be selected/sent
 

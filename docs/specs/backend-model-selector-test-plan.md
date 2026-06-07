@@ -54,7 +54,8 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - `cd frontend && pnpm test:e2e` ✅ passes
 - `ModelService` coverage now includes login load, eligible-model fallback, no-eligible fallback,
   and logout reset
-- browser E2E now covers high-level authenticated models-loading and send/reply flows via Playwright
+- browser E2E now covers high-level authenticated models-loading, send/reply, and history-reload
+  flows via Playwright
 
 Remaining frontend build warnings are non-blocking style-budget follow-up work.
 
@@ -286,7 +287,7 @@ Add guarded real-adapter tests for:
 
 ### Scenario 3 — History reload
 
-- create/send once
+- sign in as a seeded user with an existing conversation and encrypted messages
 - refresh or re-open the conversation
 - verify prior messages load and render again
 
