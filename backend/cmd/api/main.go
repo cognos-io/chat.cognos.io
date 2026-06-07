@@ -135,6 +135,16 @@ func bindAppHooks(
 			billingService = billing.NewService()
 		}
 
+		billingRepo := billing.NewPocketBaseRepo(app)
+		billingStateRepo := params.BillingStateRepo
+		if billingStateRepo == nil {
+			billingStateRepo = billingRepo
+		}
+		billingLedgerRepo := params.BillingLedgerRepo
+		if billingLedgerRepo == nil {
+			billingLedgerRepo = billingRepo
+		}
+
 		fxRateProvider := params.FXRateProvider
 		if fxRateProvider == nil {
 			fxRateProvider = billing.NewFallbackFXRateProvider()
@@ -154,8 +164,8 @@ func bindAppHooks(
 			aiAgentRepo,
 			conversationRepo,
 			billingService,
-			params.BillingStateRepo,
-			params.BillingLedgerRepo,
+			billingStateRepo,
+			billingLedgerRepo,
 			fxRateProvider,
 			params.UsageEmitter,
 			params.CompleteBillingGate,
