@@ -75,3 +75,60 @@ func TestModelsGetUsesUserPrivacyTierWhenPresent(t *testing.T) {
 
 	scenario.Test(t)
 }
+
+func TestModelsGetReturnsPreferredModelIDWhenPresent(t *testing.T) {
+	t.Parallel()
+
+	scenario := tests.ApiScenario{
+		Name:           "models route returns preferred model id from auth record",
+		Method:         http.MethodGet,
+		URL:            "/api/v1/models",
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"preferred_model_id":"llama-3-3-infomaniak"`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			record, err := app.FindAuthRecordByEmail("users", "test1@example.com")
+			if err != nil {
+				t.Fatalf("FindAuthRecordByEmail(users, test1@example.com) error = %v", err)
+			}
+			record.Set("preferred_model_id", "llama-3-3-infomaniak")
+			e.Router.BindFunc(func(re *core.RequestEvent) error {
+				re.Auth = record
+				return re.Next()
+			})
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestModelsGetDefaultsUnknownPrivacyTierToEU(t *testing.T) {
+	t.Parallel()
+
+	scenario := tests.ApiScenario{
+		Name:           "models route defaults unknown privacy tier to eu",
+		Method:         http.MethodGet,
+		URL:            "/api/v1/models",
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"privacy_tier":"eu"`,
+			`"is_eligible":true`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			record, err := app.FindAuthRecordByEmail("users", "test1@example.com")
+			if err != nil {
+				t.Fatalf("FindAuthRecordByEmail(users, test1@example.com) error = %v", err)
+			}
+			record.Set("privacy_tier", "legacy")
+			e.Router.BindFunc(func(re *core.RequestEvent) error {
+				re.Auth = record
+				return re.Next()
+			})
+		},
+	}
+
+	scenario.Test(t)
+}
