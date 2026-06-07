@@ -3,11 +3,10 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
-import { Subject } from 'rxjs';
-
 import { CognosToastService } from '@cognos/ui-angular';
 
 import { Conversation } from '@app/interfaces/conversation';
+import { KeyPair } from '@app/interfaces/key-pair';
 import { Message } from '@app/interfaces/message';
 
 import { ConversationService } from '../../services/conversation.service';
@@ -47,8 +46,15 @@ describe('ChatComponent', () => {
     resetState: vi.fn(),
   };
 
+  const keyPair = signal<KeyPair | undefined>({
+    publicKey: new Uint8Array(),
+    secretKey: new Uint8Array(),
+  });
+  const isRestoring = signal(false);
+
   const vaultService = {
-    keyPair$: new Subject<unknown>(),
+    keyPair,
+    isRestoring,
     lock: vi.fn(),
   };
 
@@ -58,7 +64,8 @@ describe('ChatComponent', () => {
     pinnedConversations.set([]);
     recentConversations.set([]);
     messages.set([]);
-    vaultService.keyPair$ = new Subject<unknown>();
+    keyPair.set({ publicKey: new Uint8Array(), secretKey: new Uint8Array() });
+    isRestoring.set(false);
     vi.clearAllMocks();
 
     dialogOpen = vi.fn().mockReturnValue({ close: vi.fn() });
@@ -137,7 +144,8 @@ describe('ChatComponent', () => {
   });
 
   it('opens the unlock dialog when the key pair becomes unavailable', () => {
-    vaultService.keyPair$.next(null);
+    keyPair.set(undefined);
+    fixture.detectChanges();
 
     expect(dialogOpen).toHaveBeenCalledTimes(1);
   });

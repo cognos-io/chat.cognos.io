@@ -4,7 +4,6 @@
     min-height: 100vh;
     min-height: 100svh;
     grid-template-columns: 304px minmax(0, 1fr);
-    background: var(--cog-app-bg);
 
     &--temporary {
       .chat-shell__page {
@@ -25,6 +24,18 @@
       border-top: 1px solid var(--cog-border);
       padding: var(--cog-space-150) var(--cog-space-200);
     }
+
+    &__mobile-bar {
+      display: none;
+    }
+
+    &__page-header {
+      padding: var(--cog-space-200) var(--cog-space-300);
+    }
+
+    &__page-content {
+      padding: 0 var(--cog-space-300) var(--cog-space-300);
+    }
   }
 }
 
@@ -42,14 +53,12 @@
   &__brand {
     display: flex;
     align-items: center;
-    min-height: 32px;
   }
 
   &__logo,
   &__mobile-logo,
   &__drawer-logo {
     display: block;
-    width: auto;
     height: 24px;
   }
 
@@ -154,7 +163,6 @@
     font-size: var(--cog-fs-h-md);
     font-weight: var(--cog-fw-h-md);
     line-height: var(--cog-lh-h-md);
-    text-wrap: balance;
   }
 
   &__page-actions {
@@ -241,22 +249,6 @@ cog-drawer .chat-shell__search-hint {
   }
 }
 
-@media (min-width: 768px) {
-  .chat-shell {
-    &__mobile-bar {
-      display: none;
-    }
-
-    &__page-header {
-      padding: var(--cog-space-200) var(--cog-space-300);
-    }
-
-    &__page-content {
-      padding: 0 var(--cog-space-300) var(--cog-space-300);
-    }
-  }
-}
-
 .chat-shell__page-content > * {
   grid-area: 1 / 1;
   min-width: 0;
@@ -271,5 +263,4 @@ cog-drawer .chat-shell__search-hint {
   align-items: center;
   justify-content: center;
   background: color-mix(in srgb, var(--cog-scrim) 88%, transparent);
-  backdrop-filter: blur(8px);
 }
