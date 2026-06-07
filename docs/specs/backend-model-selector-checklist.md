@@ -246,6 +246,9 @@ This checklist is the living execution tracker for the rework.
     - [x] PocketBase-backed usage ledger writes
     - [x] transactional trial balance update + usage row persistence
     - [x] legacy `flat_rate` → `unlimited` alias on read
+    - [x] idempotent trial-state bootstrap for users missing billing rows
+- [x] `backend/internal/billing/bootstrap.go`
+    - [x] default trial-state seed builder
 - [ ] `backend/internal/billing/fx_rate.go`
     - [x] fallback/static USD→CHF provider seam
     - [ ] cached USD→CHF rate
@@ -285,6 +288,7 @@ This checklist is the living execution tracker for the rework.
 - [ ] `backend/cmd/api/main.go`
     - [x] wire billing/emitter services
     - [x] default to PocketBase billing repos when test seams are not provided
+    - [x] auto-provision trial billing state for newly created users
 
 ### Manual-operations note
 
@@ -299,6 +303,8 @@ This checklist is the living execution tracker for the rework.
 - [x] PAYG/unlimited/trial usage recording path passes without blocking completions
 - [x] analytics payload excludes plaintext content and direct user identifiers
 - [x] input/output/cache/provider-cost fields are recorded as supported by the active provider
+- [x] newly created users receive a trial billing state automatically
+- [x] configured trial seed is applied during user billing bootstrap
 
 ---
 

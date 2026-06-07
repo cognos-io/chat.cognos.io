@@ -1551,7 +1551,8 @@ existing chat behaviour.
 
 _Current implementation status:_ PocketBase-backed `user_billing` and `balance_transactions`
 repositories are now wired by default in the API app, with transactional trial-balance updates on
-usage writes and legacy `flat_rate` rows normalized to `unlimited` on read.
+usage writes, legacy `flat_rate` rows normalized to `unlimited` on read, and automatic trial
+billing bootstrap for newly created users using the configured/default seed amount.
 
 **Review checkpoint 3:** Real provider calls, billing, and analytics all flow through the same
 contract and are covered by tests.

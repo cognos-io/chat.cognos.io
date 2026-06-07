@@ -55,7 +55,10 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   emit analytics usage events, record plan-specific usage after successful gateway calls, and use
   the default PocketBase billing repos when no test seam is injected
 - PocketBase billing repo coverage now includes legacy `flat_rate` alias mapping, missing-state
-  handling, transactional trial balance updates, and rollback on duplicate usage event IDs
+  handling, transactional trial balance updates, rollback on duplicate usage event IDs, and
+  idempotent trial-state bootstrap
+- user-create hook coverage now confirms new users receive trial billing rows automatically and
+  that configured trial seed values override the default during bootstrap
 - the legacy gateway bridge has unit coverage for request mapping, context propagation, and errors
 
 ### Frontend
