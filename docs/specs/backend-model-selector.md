@@ -1477,8 +1477,9 @@ plan below must be read with these mandatory amendments:
    `expires_at` semantics.
 5. **Introduce the gateway interface first.** Bifrost may be the first adapter, but handler code
    must depend only on the Cognos gateway contract.
-6. **Ship full billing records now.** Balance top-ups and plan changes are manual for this phase,
-   but `user_billing`, `balance_transactions`, and usage accounting are in scope now.
+6. **Ship full billing records now.** Follow `docs/specs/billing.md` as the billing contract:
+   trial/inactive paths may block, while PAYG is post-paid and should not be blocked for funds.
+   `user_billing`, `balance_transactions`, and usage accounting remain in scope now.
 7. **Add browser E2E from the start.** Keep it high level and user-flow oriented.
 
 Success criteria for the overall rework:
@@ -1537,15 +1538,15 @@ existing chat behaviour.
 
 **Tasks:**
 
-| #   | Task                                                                                      | Package / Area        |
-| --- | ----------------------------------------------------------------------------------------- | --------------------- |
-| 3.1 | Implement the first real gateway adapter (Bifrost or equivalent behind the interface)     | `gateway`             |
-| 3.2 | Capture input/output/cache tokens and provider cost when available                        | `gateway` / `billing` |
-| 3.3 | Add `user_billing` and `balance_transactions` schema and repositories                     | `store`               |
-| 3.4 | Implement affordability checks, deductions, and flat-rate usage recording                 | `billing`             |
-| 3.5 | Emit anonymised analytics events with token/cache/provider-cost fields                    | `analytics`           |
-| 3.6 | Add integration tests for PAYG, flat-rate, insufficient balance, and analytics payloads   | backend tests         |
-| 3.7 | Extend browser E2E to cover insufficient balance and model-eligibility UX at a high level | frontend/e2e          |
+| #   | Task                                                                                                   | Package / Area        |
+| --- | ------------------------------------------------------------------------------------------------------ | --------------------- |
+| 3.1 | Implement the first real gateway adapter (Bifrost or equivalent behind the interface)                  | `gateway`             |
+| 3.2 | Capture input/output/cache tokens and provider cost when available                                     | `gateway` / `billing` |
+| 3.3 | Add `user_billing` and `balance_transactions` schema and repositories                                  | `store`               |
+| 3.4 | Implement trial/inactive affordability checks plus PAYG/unlimited usage recording per billing contract | `billing`             |
+| 3.5 | Emit anonymised analytics events with token/cache/provider-cost fields                                 | `analytics`           |
+| 3.6 | Add integration tests for trial/inactive gating, PAYG/unlimited usage, and analytics payloads          | backend tests         |
+| 3.7 | Extend browser E2E to cover billing-restriction and model-eligibility UX at a high level               | frontend/e2e          |
 
 **Review checkpoint 3:** Real provider calls, billing, and analytics all flow through the same
 contract and are covered by tests.
@@ -1779,7 +1780,7 @@ At minimum, add high-level browser E2E for:
 2. authenticated user creates/selects a conversation
 3. authenticated user sends a message and receives a reply
 4. conversation history reload still renders decrypted messages
-5. insufficient-balance flow blocks sending for PAYG users
+5. trial/inactive billing-restriction flow blocks sending before any completion request is made
 6. unavailable-model flow blocks sending before any completion request is made
 
 Do **not** assert on CSS classes or visual minutiae in these tests.

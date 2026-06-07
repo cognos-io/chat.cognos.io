@@ -142,7 +142,7 @@ Use for:
 
 - real high-level chat flow
 - history reload
-- insufficient balance flow
+- trial/inactive billing restriction flow
 - model eligibility flow
 
 Do **not** test CSS classes, spacing, or animation details here.
@@ -214,17 +214,18 @@ Add frontend/browser tests for:
 
 Add backend tests first for:
 
-1. PAYG affordability check blocks request before provider call
-2. PAYG deduction records correct `balance_transactions`
-3. flat-rate usage records metadata without deduction
-4. provider-reported cost wins when present
-5. fallback pricing path works when provider cost is absent
-6. analytics payload includes input/output/cache/provider-cost fields when available
-7. analytics payload excludes plaintext content, email, and conversation ID
+1. trial affordability check blocks request before provider call
+2. inactive users receive the documented 402 contract before provider call
+3. PAYG usage records correct `balance_transactions` and does not block for funds
+4. unlimited usage records metadata without deduction
+5. provider-reported cost wins when present
+6. fallback pricing path works when provider cost is absent
+7. analytics payload includes input/output/cache/provider-cost fields when available
+8. analytics payload excludes plaintext content, email, and conversation ID
 
 Add browser E2E for:
 
-1. insufficient balance blocks send for PAYG user
+1. trial/inactive billing restriction blocks send
 2. unavailable model cannot be used by the user
 
 Add guarded real-adapter tests for:
@@ -240,9 +241,9 @@ Add guarded real-adapter tests for:
 
 #### Phase 3 exit criteria
 
-- PAYG path passes
-- flat-rate path passes
-- insufficient-balance browser E2E passes
+- trial/inactive gate passes
+- PAYG/unlimited usage paths pass
+- billing-restriction browser E2E passes
 - analytics privacy assertions pass
 
 ---
@@ -257,14 +258,14 @@ Add guarded real-adapter tests for:
 | Messages          | ciphertext only at rest                                              |
 | Threading         | `parent_message_id` preserved                                        |
 | Expiry            | `expires_at` preserved                                               |
-| Billing           | PAYG deducts correctly                                               |
-| Billing           | flat-rate records usage without deduction                            |
+| Billing           | trial/inactive gate blocks before provider call                      |
+| Billing           | PAYG/unlimited usage recording follows the billing contract          |
 | Usage             | input/output/cache/provider-cost captured when available             |
 | Analytics privacy | no plaintext content or direct identifiers                           |
 | Frontend models   | backend-driven model loading works                                   |
 | Browser E2E       | send message and get response                                        |
 | Browser E2E       | history reload still works                                           |
-| Browser E2E       | insufficient balance blocks send                                     |
+| Browser E2E       | trial/inactive billing restriction blocks send                       |
 | Browser E2E       | unavailable model cannot be selected/sent                            |
 
 ---
@@ -292,9 +293,9 @@ Add guarded real-adapter tests for:
 - refresh or re-open the conversation
 - verify prior messages load and render again
 
-### Scenario 4 — Insufficient balance
+### Scenario 4 — Trial / inactive billing restriction
 
-- seed a PAYG user with insufficient balance
+- seed a user in a billing-blocked state covered by the billing contract
 - attempt to send a message
 - verify sending is blocked with the expected product behaviour
 

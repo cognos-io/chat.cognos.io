@@ -263,7 +263,7 @@ This checklist is the living execution tracker for the rework.
 ### Existing backend files to update
 
 - [ ] `backend/internal/handler/complete.go`
-    - [ ] add preflight affordability check
+    - [ ] add preflight affordability check for trial / inactive contract
     - [ ] record usage
     - [ ] emit analytics
 - [ ] `backend/cmd/api/main.go`
@@ -272,14 +272,14 @@ This checklist is the living execution tracker for the rework.
 ### Manual-operations note
 
 - [ ] operator/admin path exists to:
-    - [ ] top up PAYG balances manually
     - [ ] set/change plan type manually
     - [ ] inspect billing transactions manually
+    - [ ] grant or adjust trial credit manually
 
 ### Verification
 
-- [ ] PAYG deduction test passes
-- [ ] flat-rate path records usage without deduction
+- [ ] trial/inactive affordability gate test passes
+- [ ] PAYG/unlimited usage recording path passes without blocking
 - [ ] analytics payload excludes plaintext content and direct user identifiers
 - [ ] input/output/cache/provider-cost fields are recorded as supported by the active provider
 
@@ -326,7 +326,7 @@ This checklist is the living execution tracker for the rework.
 - [x] authenticated user creates or opens a conversation
 - [x] authenticated user sends a message and receives a response
 - [x] conversation history reload still works
-- [ ] insufficient balance blocks PAYG sending
+- [ ] trial/inactive billing restriction blocks sending
 - [x] unavailable model cannot be selected/sent
 
 ### Explicit non-goals for these tests
