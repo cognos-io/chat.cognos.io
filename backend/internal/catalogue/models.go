@@ -59,8 +59,8 @@ var allModels = []Model{
 		InputContextTokens: 128_000,
 		MaxOutputTokens:    8_192,
 		Pricing: Pricing{
-			InputUSDPerMillionTokens:  0,
-			OutputUSDPerMillionTokens: 0,
+			InputUSDPerMillionTokens:  1,
+			OutputUSDPerMillionTokens: 2,
 		},
 		RequiresNoRetention: true,
 		IsActive:            true,

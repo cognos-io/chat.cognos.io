@@ -14,6 +14,8 @@ const (
 	PlanTypePayG      PlanType = "payg"
 	PlanTypeUnlimited PlanType = "unlimited"
 	PlanTypeInactive  PlanType = "inactive"
+
+	DefaultMarginBPS = 2000
 )
 
 var ErrStateNotFound = errors.New("billing state not found")
@@ -48,16 +50,19 @@ type CostBreakdown struct {
 	OutputTokens             int64
 	CacheCreationInputTokens int64
 	CacheReadInputTokens     int64
+	ProviderCostUSD          float64
 	CostUSD                  float64
 	CostCHF                  float64
 	CostRappen               int64
 	UsedProviderCost         bool
 }
 
-type Service struct{}
+type Service struct {
+	MarginBPS int64
+}
 
 func NewService() *Service {
-	return &Service{}
+	return &Service{MarginBPS: DefaultMarginBPS}
 }
 
 func (s *Service) CalculateCost(
@@ -65,19 +70,36 @@ func (s *Service) CalculateCost(
 	usage Usage,
 	usdToCHFRate float64,
 ) CostBreakdown {
-	costUSD := s.costUSD(model, usage)
-	costCHF := costUSD * usdToCHFRate
+	providerCostUSD := s.providerCostUSD(model, usage)
+	userCostUSD := s.applyMargin(providerCostUSD)
+	costCHF := userCostUSD * usdToCHFRate
 
 	return CostBreakdown{
 		InputTokens:              usage.InputTokens,
 		OutputTokens:             usage.OutputTokens,
 		CacheCreationInputTokens: usage.CacheCreationInputTokens,
 		CacheReadInputTokens:     usage.CacheReadInputTokens,
-		CostUSD:                  costUSD,
+		ProviderCostUSD:          providerCostUSD,
+		CostUSD:                  userCostUSD,
 		CostCHF:                  costCHF,
 		CostRappen:               int64(math.Round(costCHF * 100)),
 		UsedProviderCost:         usage.ProviderCostUSD != nil,
 	}
+}
+
+func (s *Service) EstimateUpperBoundCost(
+	model catalogue.Model,
+	maxOutputTokens int,
+	usdToCHFRate float64,
+) CostBreakdown {
+	if maxOutputTokens <= 0 {
+		maxOutputTokens = model.MaxOutputTokens
+	}
+
+	return s.CalculateCost(model, Usage{
+		InputTokens:  int64(model.InputContextTokens),
+		OutputTokens: int64(maxOutputTokens),
+	}, usdToCHFRate)
 }
 
 func (s *Service) CanAfford(balanceRappen, estimatedCostRappen int64) bool {
@@ -107,7 +129,11 @@ func (s *Service) EvaluateAccess(state State, estimatedCostRappen int64) *Access
 	return nil
 }
 
-func (s *Service) costUSD(model catalogue.Model, usage Usage) float64 {
+func (s *Service) applyMargin(providerCostUSD float64) float64 {
+	return providerCostUSD * (1 + float64(s.MarginBPS)/10_000)
+}
+
+func (s *Service) providerCostUSD(model catalogue.Model, usage Usage) float64 {
 	if usage.ProviderCostUSD != nil {
 		return *usage.ProviderCostUSD
 	}

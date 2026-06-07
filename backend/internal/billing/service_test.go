@@ -11,6 +11,7 @@ func TestCalculateCostUsesProviderCostWhenAvailable(t *testing.T) {
 	t.Parallel()
 
 	providerCostUSD := 0.1234
+	wantUserCostUSD := providerCostUSD * 1.2
 	service := NewService()
 	model, ok := catalogue.GetModelByID("llama-3-3-infomaniak")
 	if !ok {
@@ -25,8 +26,11 @@ func TestCalculateCostUsesProviderCostWhenAvailable(t *testing.T) {
 		ProviderCostUSD:          &providerCostUSD,
 	}, 0.91)
 
-	if diff := math.Abs(got.CostUSD - providerCostUSD); diff > 1e-9 {
-		t.Errorf("CalculateCost(...).CostUSD = %f, want %f", got.CostUSD, providerCostUSD)
+	if diff := math.Abs(got.ProviderCostUSD - providerCostUSD); diff > 1e-9 {
+		t.Errorf("CalculateCost(...).ProviderCostUSD = %f, want %f", got.ProviderCostUSD, providerCostUSD)
+	}
+	if diff := math.Abs(got.CostUSD - wantUserCostUSD); diff > 1e-9 {
+		t.Errorf("CalculateCost(...).CostUSD = %f, want %f", got.CostUSD, wantUserCostUSD)
 	}
 	if !got.UsedProviderCost {
 		t.Error("CalculateCost(...).UsedProviderCost = false, want true")
@@ -55,12 +59,16 @@ func TestCalculateCostDerivesCostFromCataloguePricing(t *testing.T) {
 		OutputTokens: 50_000,
 	}, 0.90)
 
-	wantUSD := 1.0
-	wantCHF := 0.9
-	wantRappen := int64(90)
+	wantProviderUSD := 1.0
+	wantUserUSD := 1.2
+	wantCHF := 1.08
+	wantRappen := int64(108)
 
-	if diff := math.Abs(got.CostUSD - wantUSD); diff > 1e-9 {
-		t.Errorf("CalculateCost(...).CostUSD = %f, want %f", got.CostUSD, wantUSD)
+	if diff := math.Abs(got.ProviderCostUSD - wantProviderUSD); diff > 1e-9 {
+		t.Errorf("CalculateCost(...).ProviderCostUSD = %f, want %f", got.ProviderCostUSD, wantProviderUSD)
+	}
+	if diff := math.Abs(got.CostUSD - wantUserUSD); diff > 1e-9 {
+		t.Errorf("CalculateCost(...).CostUSD = %f, want %f", got.CostUSD, wantUserUSD)
 	}
 	if diff := math.Abs(got.CostCHF - wantCHF); diff > 1e-9 {
 		t.Errorf("CalculateCost(...).CostCHF = %f, want %f", got.CostCHF, wantCHF)
@@ -80,8 +88,38 @@ func TestCalculateCostRoundsToNearestRappen(t *testing.T) {
 	providerCostUSD := 0.105
 
 	got := service.CalculateCost(catalogue.Model{}, Usage{ProviderCostUSD: &providerCostUSD}, 1)
-	if got.CostRappen != 11 {
-		t.Errorf("CalculateCost(...).CostRappen = %d, want %d", got.CostRappen, 11)
+	if got.CostRappen != 13 {
+		t.Errorf("CalculateCost(...).CostRappen = %d, want %d", got.CostRappen, 13)
+	}
+}
+
+func TestEstimateUpperBoundCostUsesCataloguePricingAndMargin(t *testing.T) {
+	t.Parallel()
+
+	service := NewService()
+	model := catalogue.Model{
+		InputContextTokens: 128_000,
+		MaxOutputTokens:    8_192,
+		Pricing: catalogue.Pricing{
+			InputUSDPerMillionTokens:  1,
+			OutputUSDPerMillionTokens: 2,
+		},
+	}
+
+	got := service.EstimateUpperBoundCost(model, 0, 1)
+
+	wantProviderUSD := 0.144384
+	wantUserUSD := wantProviderUSD * 1.2
+	wantRappen := int64(17)
+
+	if diff := math.Abs(got.ProviderCostUSD - wantProviderUSD); diff > 1e-6 {
+		t.Errorf("EstimateUpperBoundCost(...).ProviderCostUSD = %f, want %f", got.ProviderCostUSD, wantProviderUSD)
+	}
+	if diff := math.Abs(got.CostUSD - wantUserUSD); diff > 1e-6 {
+		t.Errorf("EstimateUpperBoundCost(...).CostUSD = %f, want %f", got.CostUSD, wantUserUSD)
+	}
+	if got.CostRappen != wantRappen {
+		t.Errorf("EstimateUpperBoundCost(...).CostRappen = %d, want %d", got.CostRappen, wantRappen)
 	}
 }
 
@@ -128,9 +166,9 @@ func TestEvaluateAccess(t *testing.T) {
 		wantEstimatedRappen *int64
 	}{
 		{
-			name:      "inactive users must subscribe",
-			state:     State{PlanType: PlanTypeInactive},
-			wantError: "INACTIVE",
+			name:        "inactive users must subscribe",
+			state:       State{PlanType: PlanTypeInactive},
+			wantError:   "INACTIVE",
 			wantMessage: "Choose a plan to keep chatting.",
 		},
 		{

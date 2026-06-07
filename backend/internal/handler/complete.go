@@ -187,7 +187,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 					return apis.NewApiError(http.StatusInternalServerError, "Failed to evaluate billing access", err)
 				}
 			} else {
-				estimatedCost := estimateCompletionCost(params.BillingService, model, req)
+				estimatedCost := params.BillingService.EstimateUpperBoundCost(model, req.MaxOutputTokens, 1)
 				if restriction := params.BillingService.EvaluateAccess(state, estimatedCost.CostRappen); restriction != nil {
 					return e.JSON(http.StatusPaymentRequired, completeBillingRestrictionResponse(*restriction, estimatedCost.CostCHF))
 				}
@@ -313,18 +313,6 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 
 		return e.JSON(http.StatusOK, response)
 	}
-}
-
-func estimateCompletionCost(service *billing.Service, model catalogue.Model, req CompleteRequest) billing.CostBreakdown {
-	maxOutputTokens := req.MaxOutputTokens
-	if maxOutputTokens <= 0 {
-		maxOutputTokens = model.MaxOutputTokens
-	}
-
-	return service.CalculateCost(model, billing.Usage{
-		InputTokens:  int64(model.InputContextTokens),
-		OutputTokens: int64(maxOutputTokens),
-	}, 1)
 }
 
 func completeBillingRestrictionResponse(
