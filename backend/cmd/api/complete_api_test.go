@@ -258,6 +258,15 @@ func (r stubBillingStateRepo) StateForUser(userID string) (billing.State, error)
 	return r.stateForUser(userID)
 }
 
+type recordingLedgerRepo struct {
+	records []billing.UsageRecord
+}
+
+func (r *recordingLedgerRepo) RecordUsage(record billing.UsageRecord) error {
+	r.records = append(r.records, record)
+	return nil
+}
+
 func TestCompletionsReturnStructuredBillingRestrictionBeforeGatewayCall(t *testing.T) {
 	t.Parallel()
 
@@ -354,6 +363,280 @@ func TestCompletionsAllowPayGUsersWhenBillingStateIsPresent(t *testing.T) {
 			})
 		},
 		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+	}
+
+	scenario.Test(t)
+}
+
+func TestCompletionsRecordPayGUsageAfterGatewayCall(t *testing.T) {
+	t.Parallel()
+
+	providerCostUSD := 0.42
+	ledgerRepo := &recordingLedgerRepo{}
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(_ context.Context, _ gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			return gateway.CompleteResponse{
+				Message: gateway.Message{Role: "assistant", Content: "payg reply"},
+				Usage: gateway.Usage{
+					InputTokens:     7,
+					OutputTokens:    3,
+					TotalTokens:     10,
+					ProviderCostUSD: &providerCostUSD,
+				},
+			}, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "generic completions record payg usage after provider call",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"agent_id":"cognos:simple-assistant",
+			"messages":[{"role":"user","content":"hello there"}]
+		}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"content":"payg reply"`,
+			`"cost_rappen":50`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				UpstreamRepo:      stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:     gatewayClient,
+				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService:    billing.NewService(),
+				BillingLedgerRepo: ledgerRepo,
+				BillingStateRepo: stubBillingStateRepo{
+					stateForUser: func(userID string) (billing.State, error) {
+						if userID != "uvi8zmr78j9y5hz" {
+							t.Fatalf("StateForUser(%q) unexpected user id", userID)
+						}
+						return billing.State{PlanType: billing.PlanTypePayG, BalanceRappen: 0}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			if len(ledgerRepo.records) != 1 {
+				t.Fatalf("RecordUsage() count = %d, want %d", len(ledgerRepo.records), 1)
+			}
+			record := ledgerRepo.records[0]
+			if record.PlanType != billing.PlanTypePayG {
+				t.Errorf("RecordUsage().PlanType = %q, want %q", record.PlanType, billing.PlanTypePayG)
+			}
+			if record.AmountRappen != -50 {
+				t.Errorf("RecordUsage().AmountRappen = %d, want %d", record.AmountRappen, -50)
+			}
+			if record.UserCostRappen != 50 {
+				t.Errorf("RecordUsage().UserCostRappen = %d, want %d", record.UserCostRappen, 50)
+			}
+			if record.ProviderCostRappen != 42 {
+				t.Errorf("RecordUsage().ProviderCostRappen = %d, want %d", record.ProviderCostRappen, 42)
+			}
+			if record.BalanceAfterRappen != nil {
+				t.Errorf("RecordUsage().BalanceAfterRappen = %v, want nil", record.BalanceAfterRappen)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestCompletionsRecordUnlimitedUsageWithoutDeduction(t *testing.T) {
+	t.Parallel()
+
+	providerCostUSD := 0.42
+	ledgerRepo := &recordingLedgerRepo{}
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(_ context.Context, _ gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			return gateway.CompleteResponse{
+				Message: gateway.Message{Role: "assistant", Content: "unlimited reply"},
+				Usage: gateway.Usage{
+					InputTokens:     7,
+					OutputTokens:    3,
+					TotalTokens:     10,
+					ProviderCostUSD: &providerCostUSD,
+				},
+			}, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "generic completions record unlimited usage metadata without deduction",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"agent_id":"cognos:simple-assistant",
+			"messages":[{"role":"user","content":"hello there"}]
+		}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"content":"unlimited reply"`,
+			`"cost_rappen":50`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				UpstreamRepo:      stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:     gatewayClient,
+				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService:    billing.NewService(),
+				BillingLedgerRepo: ledgerRepo,
+				BillingStateRepo: stubBillingStateRepo{
+					stateForUser: func(userID string) (billing.State, error) {
+						if userID != "uvi8zmr78j9y5hz" {
+							t.Fatalf("StateForUser(%q) unexpected user id", userID)
+						}
+						return billing.State{PlanType: billing.PlanTypeUnlimited}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			if len(ledgerRepo.records) != 1 {
+				t.Fatalf("RecordUsage() count = %d, want %d", len(ledgerRepo.records), 1)
+			}
+			record := ledgerRepo.records[0]
+			if record.PlanType != billing.PlanTypeUnlimited {
+				t.Errorf("RecordUsage().PlanType = %q, want %q", record.PlanType, billing.PlanTypeUnlimited)
+			}
+			if record.AmountRappen != 0 {
+				t.Errorf("RecordUsage().AmountRappen = %d, want 0", record.AmountRappen)
+			}
+			if record.UserCostRappen != 50 {
+				t.Errorf("RecordUsage().UserCostRappen = %d, want %d", record.UserCostRappen, 50)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestCompletionsRecordTrialUsageAndBalanceAfter(t *testing.T) {
+	t.Parallel()
+
+	providerCostUSD := 0.10
+	ledgerRepo := &recordingLedgerRepo{}
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(_ context.Context, _ gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			return gateway.CompleteResponse{
+				Message: gateway.Message{Role: "assistant", Content: "trial reply"},
+				Usage: gateway.Usage{
+					InputTokens:     8,
+					OutputTokens:    4,
+					TotalTokens:     12,
+					ProviderCostUSD: &providerCostUSD,
+				},
+			}, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "generic completions record trial usage with balance after",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"agent_id":"cognos:simple-assistant",
+			"messages":[{"role":"user","content":"hello there"}]
+		}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"content":"trial reply"`,
+			`"cost_rappen":12`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				UpstreamRepo:      stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:     gatewayClient,
+				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService:    billing.NewService(),
+				BillingLedgerRepo: ledgerRepo,
+				BillingStateRepo: stubBillingStateRepo{
+					stateForUser: func(userID string) (billing.State, error) {
+						if userID != "uvi8zmr78j9y5hz" {
+							t.Fatalf("StateForUser(%q) unexpected user id", userID)
+						}
+						return billing.State{PlanType: billing.PlanTypeTrial, BalanceRappen: 200}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			if len(ledgerRepo.records) != 1 {
+				t.Fatalf("RecordUsage() count = %d, want %d", len(ledgerRepo.records), 1)
+			}
+			record := ledgerRepo.records[0]
+			if record.PlanType != billing.PlanTypeTrial {
+				t.Errorf("RecordUsage().PlanType = %q, want %q", record.PlanType, billing.PlanTypeTrial)
+			}
+			if record.AmountRappen != -12 {
+				t.Errorf("RecordUsage().AmountRappen = %d, want %d", record.AmountRappen, -12)
+			}
+			if record.BalanceAfterRappen == nil {
+				t.Fatal("RecordUsage().BalanceAfterRappen = nil, want non-nil")
+			}
+			if *record.BalanceAfterRappen != 188 {
+				t.Errorf("RecordUsage().BalanceAfterRappen = %d, want %d", *record.BalanceAfterRappen, 188)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestCompletionsDoNotRecordUsageWhenBillingBlocksRequest(t *testing.T) {
+	t.Parallel()
+
+	ledgerRepo := &recordingLedgerRepo{}
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(context.Context, gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			t.Fatal("Complete() should not be called when billing blocks the request")
+			return gateway.CompleteResponse{}, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "generic completions do not record usage when billing blocks the request",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"agent_id":"cognos:simple-assistant",
+			"messages":[{"role":"user","content":"hello there"}]
+		}`),
+		ExpectedStatus: http.StatusPaymentRequired,
+		ExpectedContent: []string{
+			`"error":"INACTIVE"`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				UpstreamRepo:      stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:     gatewayClient,
+				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService:    billing.NewService(),
+				BillingLedgerRepo: ledgerRepo,
+				BillingStateRepo: stubBillingStateRepo{
+					stateForUser: func(userID string) (billing.State, error) {
+						if userID != "uvi8zmr78j9y5hz" {
+							t.Fatalf("StateForUser(%q) unexpected user id", userID)
+						}
+						return billing.State{PlanType: billing.PlanTypeInactive}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			if len(ledgerRepo.records) != 0 {
+				t.Fatalf("RecordUsage() count = %d, want %d", len(ledgerRepo.records), 0)
+			}
+		},
 	}
 
 	scenario.Test(t)
