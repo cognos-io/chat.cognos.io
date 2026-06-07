@@ -9,9 +9,9 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
-	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/hook"
@@ -90,7 +90,7 @@ func addPocketBaseRoutes(
 	e *core.ServeEvent,
 	app core.App,
 	logger *slog.Logger,
-	upstreamRepo proxy.UpstreamRepo,
+	gatewayClient gateway.Client,
 	messageRepo chat.MessageRepo,
 	aiAgentRepo aiagent.AIAgentRepo,
 	conversationRepo chat.ConversationRepo,
@@ -162,7 +162,7 @@ func addPocketBaseRoutes(
 
 	completeParams := handler.CompleteHandlerParams{
 		Logger:           logger,
-		UpstreamRepo:     upstreamRepo,
+		GatewayClient:    gatewayClient,
 		MessageRepo:      messageRepo,
 		ConversationRepo: conversationRepo,
 		AgentRepo:        aiAgentRepo,

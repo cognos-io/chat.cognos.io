@@ -14,6 +14,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
@@ -40,6 +41,7 @@ type appHookParams struct {
 	DeepinfraOpenAIClient  *oai.Client
 	CronScheduler          gocron.Scheduler
 	UpstreamRepo           proxy.UpstreamRepo
+	GatewayClient          gateway.Client
 	MessageRepo            chat.MessageRepo
 	KeyPairRepo            auth.KeyPairRepo
 	AIAgentRepo            aiagent.AIAgentRepo
@@ -126,11 +128,16 @@ func bindAppHooks(
 			billingService = billing.NewService()
 		}
 
+		gatewayClient := params.GatewayClient
+		if gatewayClient == nil {
+			gatewayClient = gateway.NewLegacyClient(upstreamRepo)
+		}
+
 		addPocketBaseRoutes(
 			e,
 			app,
 			app.Logger(),
-			upstreamRepo,
+			gatewayClient,
 			messageRepo,
 			aiAgentRepo,
 			conversationRepo,

@@ -11,9 +11,9 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	compatopenai "github.com/cognos-io/chat.cognos.io/backend/pkg/compat/openai"
-	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	oai "github.com/sashabaranov/go-openai"
@@ -66,7 +66,7 @@ type completeResponse struct {
 
 type CompleteHandlerParams struct {
 	Logger           *slog.Logger
-	UpstreamRepo     proxy.UpstreamRepo
+	GatewayClient    gateway.Client
 	MessageRepo      chat.MessageRepo
 	ConversationRepo chat.ConversationRepo
 	AgentRepo        aiagent.AIAgentRepo
@@ -152,25 +152,29 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			}
 		}
 
-		upstream, err := params.UpstreamRepo.Provider(model.ProviderID)
-		if err != nil {
-			params.Logger.Error(
-				"upstream provider unavailable",
-				"provider", model.ProviderID,
-				"err", err,
-			)
+		if params.GatewayClient == nil {
+			params.Logger.Error("gateway client unavailable")
 			return apis.NewApiError(http.StatusServiceUnavailable, "Provider is unavailable", nil)
 		}
 
-		messages := make([]oai.ChatCompletionMessage, 0, len(req.Messages))
+		openAIMessages := make([]oai.ChatCompletionMessage, 0, len(req.Messages))
 		for _, message := range req.Messages {
-			messages = append(messages, oai.ChatCompletionMessage{
+			openAIMessages = append(openAIMessages, oai.ChatCompletionMessage{
 				Role:    message.Role,
 				Content: message.Content,
 				Name:    message.Name,
 			})
 		}
-		messages = compatopenai.AddSystemMessage(messages, agent)
+		openAIMessages = compatopenai.AddSystemMessage(openAIMessages, agent)
+
+		messages := make([]gateway.Message, 0, len(openAIMessages))
+		for _, message := range openAIMessages {
+			messages = append(messages, gateway.Message{
+				Role:    message.Role,
+				Content: message.Content,
+				Name:    message.Name,
+			})
+		}
 
 		var userMessageRecord *core.Record
 		if shouldPersist {
@@ -188,10 +192,11 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			}
 		}
 
-		upstreamResp, plainTextResponseMessage, err := upstream.ChatCompletion(e, oai.ChatCompletionRequest{
-			Model:     model.ProviderModelID,
-			Messages:  messages,
-			MaxTokens: req.MaxOutputTokens,
+		gatewayResp, err := params.GatewayClient.Complete(e.Request.Context(), gateway.CompleteRequest{
+			ProviderID:      model.ProviderID,
+			ProviderModelID: model.ProviderModelID,
+			Messages:        messages,
+			MaxOutputTokens: req.MaxOutputTokens,
 		})
 		if err != nil {
 			if userMessageRecord != nil {
@@ -213,7 +218,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 				conversation,
 				userMessageRecord.Id,
 				chat.MessageRecordData{
-					Content: plainTextResponseMessage,
+					Content: gatewayResp.Message.Content,
 					AgentID: req.AgentID,
 					ModelID: model.ID,
 				},
@@ -225,22 +230,22 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 		}
 
 		costBreakdown := params.BillingService.CalculateCost(model, billing.Usage{
-			InputTokens:  int64(upstreamResp.Usage.PromptTokens),
-			OutputTokens: int64(upstreamResp.Usage.CompletionTokens),
+			InputTokens:  gatewayResp.Usage.InputTokens,
+			OutputTokens: gatewayResp.Usage.OutputTokens,
 		}, 1)
 
 		response := completeResponse{
 			RequestID: req.RequestID,
 			AssistantMessage: assistantMessageResponse{
-				Content:   plainTextResponseMessage,
+				Content:   gatewayResp.Message.Content,
 				AgentID:   req.AgentID,
 				ModelID:   model.ID,
 				CreatedAt: time.Now().UTC().Format(time.RFC3339),
 			},
 			Usage: usageResponse{
-				InputTokens:              int64(upstreamResp.Usage.PromptTokens),
-				OutputTokens:             int64(upstreamResp.Usage.CompletionTokens),
-				TotalTokens:              int64(upstreamResp.Usage.TotalTokens),
+				InputTokens:              gatewayResp.Usage.InputTokens,
+				OutputTokens:             gatewayResp.Usage.OutputTokens,
+				TotalTokens:              gatewayResp.Usage.TotalTokens,
 				CacheCreationInputTokens: costBreakdown.CacheCreationInputTokens,
 				CacheReadInputTokens:     costBreakdown.CacheReadInputTokens,
 				CostUSD:                  costBreakdown.CostUSD,
