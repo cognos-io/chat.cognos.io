@@ -32,6 +32,7 @@ interface VaultState {
   keyPair: KeyPair | undefined;
   keyPairRecord: UserKeyPairsResponse | null | undefined;
   isNewKeyPair: boolean;
+  isRestoring: boolean;
 }
 
 interface UnlockRequest {
@@ -44,6 +45,7 @@ const initialState: VaultState = {
   keyPair: undefined,
   keyPairRecord: undefined,
   isNewKeyPair: false,
+  isRestoring: true,
 };
 
 const unlockSchemePasswordAccountKey = 'password_account_key_v1';
@@ -173,9 +175,11 @@ export class VaultService {
               keyPair: nextState.keyPair,
               keyPairRecord,
               isNewKeyPair: !keyPairRecord,
+              isRestoring: false,
             })),
           ),
         ),
+        catchError(() => of({ isRestoring: false })),
       ),
       this.lock$.pipe(
         switchMap(() =>
@@ -209,6 +213,7 @@ export class VaultService {
 
   isNewKeyPair = this.state.isNewKeyPair;
   keyPair = this.state.keyPair;
+  isRestoring = this.state.isRestoring;
   keyPair$ = toObservable(this.keyPair);
 
   hashSecretMaterial(

@@ -1,6 +1,6 @@
 import { Dialog, DialogRef } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 
@@ -19,6 +19,7 @@ import {
 import { ConversationListItemComponent } from '@app/components/chat/conversation-list/conversation-list-item/conversation-list-item.component';
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/contact-help-dialog.component';
+import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { VaultPasswordDialogComponent } from '@app/components/vault-password-dialog/vault-password-dialog.component';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
@@ -41,6 +42,7 @@ import { ConversationService } from '../../services/conversation.service';
     CognosLogoComponent,
     CognosTextFieldComponent,
     ConversationListItemComponent,
+    LoadingIndicatorComponent,
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
@@ -60,6 +62,9 @@ export class ChatComponent {
     null;
 
   readonly isMobile = computed(() => this._deviceService.isMobile());
+  readonly isRestoringVault = computed(
+    () => this._vaultService.isRestoring() && !this._vaultService.keyPair(),
+  );
 
   readonly pageTitle = computed(() => {
     const title = this.conversationService.conversation()?.decryptedData.title;
@@ -90,10 +95,20 @@ export class ChatComponent {
         this.drawerOpen.set(false);
       });
 
-    this._vaultService.keyPair$.pipe(takeUntilDestroyed()).subscribe((keyPair) => {
+    // Hold the unlock dialog until the persistent-session restore settles, so
+    // returning users with a valid trusted-device session never see a flash of
+    // the unlock form between page load and keyPair becoming available.
+    effect(() => {
+      const keyPair = this._vaultService.keyPair();
+      const restoring = this._vaultService.isRestoring();
+
       if (keyPair) {
         this._vaultDialogRef?.close();
         this._vaultDialogRef = null;
+        return;
+      }
+
+      if (restoring) {
         return;
       }
 

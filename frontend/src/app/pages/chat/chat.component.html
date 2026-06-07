@@ -183,3 +183,13 @@
     </div>
   </cog-drawer>
 </div>
+
+@if (isRestoringVault()) {
+  <div
+    class="chat-shell__vault-restore"
+    role="status"
+    aria-label="Restoring encrypted session"
+  >
+    <app-loading-indicator></app-loading-indicator>
+  </div>
+}

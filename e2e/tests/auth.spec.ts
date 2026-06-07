@@ -141,6 +141,103 @@ test.describe('auth + account key flow', () => {
     await newPage.close();
   });
 
+  test('reloading the page after unlock never flashes the unlock dialog', async ({
+    page,
+  }) => {
+    const account = makeTestAccount();
+
+    await gotoRegister(page);
+    await fillRegisterForm(page, account);
+    await submitRegister(page);
+
+    await expectAccountKeyDialogForNewUser(page);
+
+    const accountKey = await captureGeneratedAccountKey(page);
+    await copyAccountKey(page);
+    await acknowledgeAccountKey(page);
+    await createEncryptedBackup(page, account.password);
+    await expect(
+      page.getByLabel('Message Cognos — encrypted on this device'),
+    ).toBeVisible();
+
+    // Install a MutationObserver that runs from the very first script execution
+    // after navigation. It records every time anything from the unlock dialog
+    // appears in the DOM, so a brief flash that the post-load `toBeHidden`
+    // assertion would miss is still detectable. It also records the loading
+    // overlay so we can positively assert it was shown during the restore.
+    await page.addInitScript(() => {
+      const w = window as unknown as {
+        __unlockDialogAppearances: string[];
+        __restoreOverlaySeen: boolean;
+      };
+      w.__unlockDialogAppearances = [];
+      w.__restoreOverlaySeen = false;
+
+      const inspect = () => {
+        if (
+          document.querySelector('app-vault-password-dialog, .vault-password-dialog')
+        ) {
+          w.__unlockDialogAppearances.push('vault-password-dialog');
+        }
+        if (document.querySelector('.chat-shell__vault-restore')) {
+          w.__restoreOverlaySeen = true;
+        }
+      };
+      inspect();
+
+      const observer = new MutationObserver(inspect);
+      if (document.documentElement) {
+        observer.observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+        });
+      } else {
+        document.addEventListener(
+          'readystatechange',
+          () => {
+            observer.observe(document.documentElement, {
+              childList: true,
+              subtree: true,
+            });
+          },
+          { once: true },
+        );
+      }
+    });
+
+    // Simulate a slow network on the vault-session endpoint so any race between
+    // `isRestoring` flipping false and `keyPair` becoming available has a wide
+    // enough window to be observable in the DOM. Same for user-key-pair so the
+    // pre-fetch period is also extended.
+    await page.route('**/api/v1/vault-session', async (route) => {
+      await new Promise((r) => setTimeout(r, 600));
+      await route.continue();
+    });
+    await page.route('**/api/v1/user-key-pair', async (route) => {
+      await new Promise((r) => setTimeout(r, 600));
+      await route.continue();
+    });
+
+    await page.reload();
+
+    await expect(
+      page.getByLabel('Message Cognos — encrypted on this device'),
+    ).toBeVisible();
+
+    const { appearances, overlaySeen } = await page.evaluate(() => {
+      const w = window as unknown as {
+        __unlockDialogAppearances: string[];
+        __restoreOverlaySeen: boolean;
+      };
+      return {
+        appearances: w.__unlockDialogAppearances ?? [],
+        overlaySeen: w.__restoreOverlaySeen ?? false,
+      };
+    });
+    expect(appearances).toEqual([]);
+    expect(overlaySeen).toBe(true);
+  });
+
   test('wrong login password shows an error', async ({ page }) => {
     await gotoLogin(page);
     await page.getByLabel('Email').fill('nobody@cognos-e2e.test');

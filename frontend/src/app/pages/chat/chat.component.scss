@@ -262,3 +262,14 @@ cog-drawer .chat-shell__search-hint {
   min-width: 0;
   min-height: 0;
 }
+
+.chat-shell__vault-restore {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--cog-scrim) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
