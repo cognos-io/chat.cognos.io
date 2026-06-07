@@ -313,7 +313,7 @@ This checklist is the living execution tracker for the rework.
 - [ ] no hard-coded model list is required for normal operation
 - [ ] UI shows all active models
 - [ ] UI distinguishes selectable vs unavailable models
-- [ ] send/reply flow still renders decrypted history correctly
+- [x] send/reply flow still renders decrypted history correctly
 - [ ] thread/expiry UX still behaves correctly
 
 ---
@@ -322,9 +322,9 @@ This checklist is the living execution tracker for the rework.
 
 ### Required high-level scenarios
 
-- [ ] authenticated user loads models from backend
-- [ ] authenticated user creates or opens a conversation
-- [ ] authenticated user sends a message and receives a response
+- [x] authenticated user loads models from backend
+- [x] authenticated user creates or opens a conversation
+- [x] authenticated user sends a message and receives a response
 - [ ] conversation history reload still works
 - [ ] insufficient balance blocks PAYG sending
 - [ ] unavailable model cannot be selected/sent
@@ -337,7 +337,7 @@ This checklist is the living execution tracker for the rework.
 
 ### Verification
 
-- [ ] canonical browser E2E command passes locally
+- [x] canonical browser E2E command passes locally
 - [ ] browser E2E is stable enough for CI use
 
 ---
