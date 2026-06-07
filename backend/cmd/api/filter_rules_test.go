@@ -172,8 +172,8 @@ func setupTestAppWithHookParams(t testing.TB, params appHookParams) *tests.TestA
 		params.FXRateProvider = billing.StaticFXRateProvider{Rate: 1}
 	}
 
-	seedTestData(t, app)
 	bindAppHooks(params)
+	seedTestData(t, app)
 
 	return app
 }

@@ -19,8 +19,7 @@ func TestPocketBaseBillingRepoStateForUserMapsLegacyFlatRateAlias(t *testing.T) 
 	app := setupTestApp(t)
 	defer app.Cleanup()
 
-	seedUserBillingRecord(t, app, seedUserBillingRecordInput{
-		ID:            "billflatrate001",
+	setUserBillingRecord(t, app, seedUserBillingRecordInput{
 		UserID:        "uvi8zmr78j9y5hz",
 		PlanType:      "flat_rate",
 		BalanceRappen: 123,
@@ -31,8 +30,8 @@ func TestPocketBaseBillingRepoStateForUserMapsLegacyFlatRateAlias(t *testing.T) 
 	if err != nil {
 		t.Fatalf("StateForUser() error = %v", err)
 	}
-	if got.BillingUserID != "billflatrate001" {
-		t.Errorf("StateForUser().BillingUserID = %q, want %q", got.BillingUserID, "billflatrate001")
+	if got.BillingUserID == "" {
+		t.Error("StateForUser().BillingUserID = empty, want non-empty")
 	}
 	if got.PlanType != billing.PlanTypeUnlimited {
 		t.Errorf("StateForUser().PlanType = %q, want %q", got.PlanType, billing.PlanTypeUnlimited)
@@ -49,7 +48,7 @@ func TestPocketBaseBillingRepoStateForUserReturnsErrStateNotFound(t *testing.T) 
 	defer app.Cleanup()
 
 	repo := billing.NewPocketBaseRepo(app)
-	_, err := repo.StateForUser("j8prcx3dum2l3kc")
+	_, err := repo.StateForUser("missingbilling01")
 	if err == nil {
 		t.Fatal("StateForUser() error = nil, want ErrStateNotFound")
 	}
@@ -64,8 +63,7 @@ func TestPocketBaseBillingRepoRecordUsageUpdatesTrialBalanceAndWritesTransaction
 	app := setupTestApp(t)
 	defer app.Cleanup()
 
-	seedUserBillingRecord(t, app, seedUserBillingRecordInput{
-		ID:            "billtrialrepo01",
+	setUserBillingRecord(t, app, seedUserBillingRecordInput{
 		UserID:        "uvi8zmr78j9y5hz",
 		PlanType:      string(billing.PlanTypeTrial),
 		BalanceRappen: 200,
@@ -137,8 +135,7 @@ func TestPocketBaseBillingRepoRecordUsageRollsBackTrialBalanceOnDuplicateEventID
 	app := setupTestApp(t)
 	defer app.Cleanup()
 
-	seedUserBillingRecord(t, app, seedUserBillingRecordInput{
-		ID:            "billrollback001",
+	setUserBillingRecord(t, app, seedUserBillingRecordInput{
 		UserID:        "uvi8zmr78j9y5hz",
 		PlanType:      string(billing.PlanTypeTrial),
 		BalanceRappen: 200,
@@ -222,12 +219,6 @@ func TestCompletionsUsePocketBaseBillingReposByDefault(t *testing.T) {
 		},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			withRecordAuth("users", "test1@example.com")(t, app, e)
-			seedUserBillingRecord(t, app, seedUserBillingRecordInput{
-				ID:            "billdefault0001",
-				UserID:        "uvi8zmr78j9y5hz",
-				PlanType:      string(billing.PlanTypeTrial),
-				BalanceRappen: 200,
-			})
 		},
 		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
 			billingRecord, err := app.FindFirstRecordByData("user_billing", "user_id", "uvi8zmr78j9y5hz")
@@ -251,7 +242,6 @@ func TestCompletionsUsePocketBaseBillingReposByDefault(t *testing.T) {
 }
 
 type seedUserBillingRecordInput struct {
-	ID            string
 	UserID        string
 	PlanType      string
 	BalanceRappen int
@@ -265,21 +255,19 @@ type seedBalanceTransactionRecordInput struct {
 	AmountRappen int
 }
 
-func seedUserBillingRecord(t testing.TB, app *tests.TestApp, input seedUserBillingRecordInput) {
+func setUserBillingRecord(t testing.TB, app *tests.TestApp, input seedUserBillingRecordInput) {
 	t.Helper()
 
-	collection, err := app.FindCollectionByNameOrId("user_billing")
+	record, err := app.FindFirstRecordByData("user_billing", "user_id", input.UserID)
 	if err != nil {
-		t.Fatalf("FindCollectionByNameOrId(user_billing) error = %v", err)
+		t.Fatalf("FindFirstRecordByData(user_billing %q) error = %v", input.UserID, err)
 	}
-
-	record := core.NewRecord(collection)
-	record.Id = input.ID
-	record.Set("user_id", input.UserID)
-	record.Set("plan_type", input.PlanType)
+	if input.PlanType != "" {
+		record.Set("plan_type", input.PlanType)
+	}
 	record.Set("balance_rappen", input.BalanceRappen)
 	if err := app.Save(record); err != nil {
-		t.Fatalf("Save(user_billing %q) error = %v", input.ID, err)
+		t.Fatalf("Save(user_billing update %q) error = %v", input.UserID, err)
 	}
 }
 
