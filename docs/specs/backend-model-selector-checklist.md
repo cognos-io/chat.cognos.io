@@ -123,11 +123,11 @@ This checklist is the living execution tracker for the rework.
     - [ ] retain eligibility metadata needed by the UI
 - [ ] `backend/internal/catalogue/models_test.go`
     - [ ] expand tier/eligibility coverage if needed
-- [ ] `backend/internal/gateway/client.go`
-    - [ ] define Cognos-owned request/response/interface contract
-    - [ ] include input/output/cache/provider-cost usage fields
-- [ ] `backend/internal/gateway/mock_client.go`
-    - [ ] deterministic test double for handler/service tests
+- [x] `backend/internal/gateway/client.go`
+    - [x] define Cognos-owned request/response/interface contract
+    - [x] include input/output/cache/provider-cost usage fields
+- [x] `backend/internal/gateway/mock_client.go`
+    - [x] deterministic test double for handler/service tests
 - [ ] `backend/internal/gateway/bifrost.go`
     - [ ] add as adapter behind the interface when ready
 - [ ] `backend/internal/gateway/bifrost_test.go`
@@ -140,10 +140,10 @@ This checklist is the living execution tracker for the rework.
 
 - [ ] `backend/internal/config/api.go`
     - [ ] add config cleanly for gateway adapters and Infomaniak product ID
-- [ ] `backend/cmd/api/main.go`
-    - [ ] wire gateway interface and adapter(s)
-- [ ] `backend/cmd/api/routes.go`
-    - [ ] keep first-party model/chat routes consistent
+- [x] `backend/cmd/api/main.go`
+    - [x] wire gateway interface and adapter(s)
+- [x] `backend/cmd/api/routes.go`
+    - [x] keep first-party model/chat routes consistent
 
 ### Verification
 

@@ -44,6 +44,8 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   handling, preferred model propagation, and unknown-tier fallback
 - completion API tests now exercise the handler through `gateway.MockClient`
 - the first legacy proxy → internal gateway bridge is in place for completions
+- completion usage payloads now preserve cache-token metadata and provider-reported cost
+- the legacy gateway bridge has unit coverage for request mapping, context propagation, and errors
 
 ### Frontend
 
