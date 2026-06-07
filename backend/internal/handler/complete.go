@@ -35,6 +35,22 @@ type completeRequest struct {
 	Persist         *bool               `json:"persist,omitempty"`
 }
 
+type CompleteRequest = completeRequest
+
+type CompleteBillingRestriction struct {
+	Error            string   `json:"error"`
+	Message          string   `json:"message"`
+	BalanceCHF       *float64 `json:"balance_chf,omitempty"`
+	EstimatedCostCHF *float64 `json:"estimated_cost_chf,omitempty"`
+	NextStep         string   `json:"next_step,omitempty"`
+}
+
+type CompleteBillingGateFunc func(
+	owner *auth.User,
+	model catalogue.Model,
+	req CompleteRequest,
+) (*CompleteBillingRestriction, error)
+
 type usageResponse struct {
 	InputTokens              int64   `json:"input_tokens"`
 	OutputTokens             int64   `json:"output_tokens"`
@@ -65,12 +81,13 @@ type completeResponse struct {
 }
 
 type CompleteHandlerParams struct {
-	Logger           *slog.Logger
-	GatewayClient    gateway.Client
-	MessageRepo      chat.MessageRepo
-	ConversationRepo chat.ConversationRepo
-	AgentRepo        aiagent.AIAgentRepo
-	BillingService   *billing.Service
+	Logger              *slog.Logger
+	GatewayClient       gateway.Client
+	MessageRepo         chat.MessageRepo
+	ConversationRepo    chat.ConversationRepo
+	AgentRepo           aiagent.AIAgentRepo
+	BillingService      *billing.Service
+	CompleteBillingGate CompleteBillingGateFunc
 }
 
 func Complete(params CompleteHandlerParams) func(e *core.RequestEvent) error {
@@ -149,6 +166,17 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			conversation, err = params.ConversationRepo.ByID(conversationID)
 			if err != nil {
 				return apis.NewNotFoundError("Conversation not found or unable to load", err)
+			}
+		}
+
+		if params.CompleteBillingGate != nil {
+			restriction, err := params.CompleteBillingGate(owner, model, req)
+			if err != nil {
+				params.Logger.Error("billing gate failed", "err", err)
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to evaluate billing access", err)
+			}
+			if restriction != nil {
+				return e.JSON(http.StatusPaymentRequired, restriction)
 			}
 		}
 

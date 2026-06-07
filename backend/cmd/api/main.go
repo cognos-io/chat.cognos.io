@@ -15,6 +15,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
@@ -47,6 +48,7 @@ type appHookParams struct {
 	AIAgentRepo            aiagent.AIAgentRepo
 	ConversationRepo       chat.ConversationRepo
 	BillingService         *billing.Service
+	CompleteBillingGate    handler.CompleteBillingGateFunc
 }
 
 func NewServer(
@@ -142,6 +144,7 @@ func bindAppHooks(
 			aiAgentRepo,
 			conversationRepo,
 			billingService,
+			params.CompleteBillingGate,
 		)
 
 		hooks.SoftDelete(app)

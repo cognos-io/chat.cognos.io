@@ -9,9 +9,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/pocketbase/dbx"
@@ -250,6 +253,56 @@ func TestCompletionsTemporaryDoesNotPersistMessages(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestCompletionsReturnStructuredBillingRestrictionBeforeGatewayCall(t *testing.T) {
+	t.Parallel()
+
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(context.Context, gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			t.Fatal("Complete() should not be called when billing blocks the request")
+			return gateway.CompleteResponse{}, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "generic completions return the structured 402 billing contract",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"agent_id":"cognos:simple-assistant",
+			"messages":[{"role":"user","content":"hello there"}]
+		}`),
+		ExpectedStatus: http.StatusPaymentRequired,
+		ExpectedContent: []string{
+			`"error":"TRIAL_EXHAUSTED"`,
+			`"message":"Your free trial has been used up."`,
+			`"balance_chf":0.02`,
+			`"estimated_cost_chf":0.32`,
+			`"next_step":"subscribe"`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:  gatewayClient,
+				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService: billing.NewService(),
+				CompleteBillingGate: func(_ *auth.User, _ catalogue.Model, _ handler.CompleteRequest) (*handler.CompleteBillingRestriction, error) {
+					return &handler.CompleteBillingRestriction{
+						Error:            "TRIAL_EXHAUSTED",
+						Message:          "Your free trial has been used up.",
+						BalanceCHF:       float64Ptr(0.02),
+						EstimatedCostCHF: float64Ptr(0.32),
+						NextStep:         "subscribe",
+					}, nil
+				},
+			})
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+	}
+
+	scenario.Test(t)
+}
+
 func TestConversationCompleteCleansUpRequestMessageOnProviderError(t *testing.T) {
 	t.Parallel()
 
@@ -310,6 +363,10 @@ func TestConversationCompleteCleansUpRequestMessageOnProviderError(t *testing.T)
 	}
 
 	scenario.Test(t)
+}
+
+func float64Ptr(v float64) *float64 {
+	return &v
 }
 
 func seedConversationRecord(t testing.TB, app *tests.TestApp, conversationID string) [32]byte {

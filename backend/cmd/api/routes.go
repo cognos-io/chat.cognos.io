@@ -95,6 +95,7 @@ func addPocketBaseRoutes(
 	aiAgentRepo aiagent.AIAgentRepo,
 	conversationRepo chat.ConversationRepo,
 	billingService *billing.Service,
+	completeBillingGate handler.CompleteBillingGateFunc,
 ) {
 	e.Router.GET(
 		"/api/v1/models",
@@ -161,12 +162,13 @@ func addPocketBaseRoutes(
 	)
 
 	completeParams := handler.CompleteHandlerParams{
-		Logger:           logger,
-		GatewayClient:    gatewayClient,
-		MessageRepo:      messageRepo,
-		ConversationRepo: conversationRepo,
-		AgentRepo:        aiAgentRepo,
-		BillingService:   billingService,
+		Logger:              logger,
+		GatewayClient:       gatewayClient,
+		MessageRepo:         messageRepo,
+		ConversationRepo:    conversationRepo,
+		AgentRepo:           aiAgentRepo,
+		BillingService:      billingService,
+		CompleteBillingGate: completeBillingGate,
 	}
 
 	e.Router.GET(
