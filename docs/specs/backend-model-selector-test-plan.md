@@ -48,6 +48,7 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - billing service unit coverage now includes plan access policy for trial, inactive, PAYG, and
   unlimited states
 - completion API tests now cover repo-backed inactive billing restriction before any provider call
+  and confirm PAYG state does not block completions
 - the legacy gateway bridge has unit coverage for request mapping, context propagation, and errors
 
 ### Frontend

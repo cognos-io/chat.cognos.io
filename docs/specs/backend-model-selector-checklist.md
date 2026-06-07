@@ -265,6 +265,7 @@ This checklist is the living execution tracker for the rework.
 
 - [ ] `backend/internal/handler/complete.go`
     - [x] support structured billing-restriction handler seam in tests
+    - [x] allow PAYG users through the preflight access policy
     - [ ] add preflight affordability check for trial / inactive contract
     - [ ] record usage
     - [ ] emit analytics
