@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/pocketbase/dbx"
@@ -84,11 +86,29 @@ func TestCompletionsRequireAuth(t *testing.T) {
 func TestConversationCompletePersistsEncryptedMessages(t *testing.T) {
 	t.Parallel()
 
-	upstream := stubUpstream{
-		response: oai.ChatCompletionResponse{
-			Usage: oai.Usage{PromptTokens: 123, CompletionTokens: 45, TotalTokens: 168},
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(_ context.Context, req gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			if req.ProviderID != "infomaniak" {
+				t.Fatalf("Complete() ProviderID = %q, want %q", req.ProviderID, "infomaniak")
+			}
+			if req.ProviderModelID != "llama-3.3-70b-instruct" {
+				t.Fatalf("Complete() ProviderModelID = %q, want %q", req.ProviderModelID, "llama-3.3-70b-instruct")
+			}
+			if len(req.Messages) != 2 {
+				t.Fatalf("Complete() len(Messages) = %d, want %d", len(req.Messages), 2)
+			}
+			if req.Messages[0].Role != "system" {
+				t.Fatalf("Complete() Messages[0].Role = %q, want %q", req.Messages[0].Role, "system")
+			}
+			if req.Messages[1].Content != "hello there" {
+				t.Fatalf("Complete() Messages[1].Content = %q, want %q", req.Messages[1].Content, "hello there")
+			}
+
+			return gateway.CompleteResponse{
+				Message: gateway.Message{Role: "assistant", Content: "hello back"},
+				Usage:   gateway.Usage{InputTokens: 123, OutputTokens: 45, TotalTokens: 168},
+			}, nil
 		},
-		text: "hello back",
 	}
 
 	conversationID := "convcomp0000001"
@@ -113,7 +133,8 @@ func TestConversationCompletePersistsEncryptedMessages(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:   stubUpstreamRepo{upstream: upstream},
+				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:  gatewayClient,
 				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 				ConversationRepo: stubConversationRepo{
@@ -157,11 +178,16 @@ func TestConversationCompletePersistsEncryptedMessages(t *testing.T) {
 func TestCompletionsTemporaryDoesNotPersistMessages(t *testing.T) {
 	t.Parallel()
 
-	upstream := stubUpstream{
-		response: oai.ChatCompletionResponse{
-			Usage: oai.Usage{PromptTokens: 9, CompletionTokens: 4, TotalTokens: 13},
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(_ context.Context, req gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			if len(req.Messages) != 2 {
+				t.Fatalf("Complete() len(Messages) = %d, want %d", len(req.Messages), 2)
+			}
+			return gateway.CompleteResponse{
+				Message: gateway.Message{Role: "assistant", Content: "temporary reply"},
+				Usage:   gateway.Usage{InputTokens: 9, OutputTokens: 4, TotalTokens: 13},
+			}, nil
 		},
-		text: "temporary reply",
 	}
 	var initialCount int64
 
@@ -182,7 +208,8 @@ func TestCompletionsTemporaryDoesNotPersistMessages(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:   stubUpstreamRepo{upstream: upstream},
+				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:  gatewayClient,
 				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 			})
@@ -213,7 +240,11 @@ func TestConversationCompleteCleansUpRequestMessageOnProviderError(t *testing.T)
 	t.Parallel()
 
 	conversationID := "convcomp0000002"
-	upstream := stubUpstream{err: errors.New("provider down")}
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(context.Context, gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			return gateway.CompleteResponse{}, errors.New("provider down")
+		},
+	}
 	var conversationPublicKey [32]byte
 
 	scenario := tests.ApiScenario{
@@ -231,7 +262,8 @@ func TestConversationCompleteCleansUpRequestMessageOnProviderError(t *testing.T)
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:   stubUpstreamRepo{upstream: upstream},
+				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:  gatewayClient,
 				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 				ConversationRepo: stubConversationRepo{
