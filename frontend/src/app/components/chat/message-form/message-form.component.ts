@@ -119,7 +119,7 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
             icon="send"
             title="Send"
             type="submit"
-            [disabled]="messageForm.disabled || !messageForm.valid"
+            [disabled]="messageForm.disabled || !messageForm.valid || !canSendMessage()"
           >
             <span class="message-form__send-label">Send</span>
           </cog-button>
@@ -254,6 +254,10 @@ export class MessageFormComponent {
   public readonly agentService = inject(AgentService);
   public readonly modelService = inject(ModelService);
 
+  readonly canSendMessage = computed(
+    () => this.modelService.selectedModel().isEligible,
+  );
+
   messageForm = this._fb.group({
     content: new FormControl('', {
       nonNullable: true,
@@ -325,7 +329,7 @@ export class MessageFormComponent {
     const content = this.messageForm.controls.content;
     const contentValue = content.value ?? '';
 
-    if (content.invalid || this.messageForm.disabled) {
+    if (content.invalid || this.messageForm.disabled || !this.canSendMessage()) {
       return;
     }
 

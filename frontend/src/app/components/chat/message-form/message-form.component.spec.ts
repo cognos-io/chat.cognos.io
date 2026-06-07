@@ -21,6 +21,12 @@ describe('MessageFormComponent', () => {
   const status = signal(MessageStatus.None);
   const messages = signal<Message[]>([]);
 
+  const selectedModel = signal({
+    id: 'model-1',
+    name: 'Claude Sonnet',
+    isEligible: true,
+  });
+
   const messageService = {
     status,
     messages,
@@ -31,6 +37,7 @@ describe('MessageFormComponent', () => {
   beforeEach(async () => {
     status.set(MessageStatus.None);
     messages.set([]);
+    selectedModel.set({ id: 'model-1', name: 'Claude Sonnet', isEligible: true });
     vi.clearAllMocks();
     vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
       '00000000-0000-4000-8000-000000000000',
@@ -52,7 +59,7 @@ describe('MessageFormComponent', () => {
         { provide: MessageService, useValue: messageService },
         {
           provide: ModelService,
-          useValue: { selectedModel: signal({ id: 'model-1', name: 'Claude Sonnet' }) },
+          useValue: { selectedModel },
         },
         { provide: VaultService, useValue: { keyPair$: new Subject() } },
       ],
@@ -92,5 +99,17 @@ describe('MessageFormComponent', () => {
 
     expect(component.messageForm.disabled).toBe(false);
     expect(component.messageForm.controls.content.value).toBe('Retry me');
+  });
+
+  it('does not send when the selected model is unavailable', () => {
+    selectedModel.set({ id: 'model-2', name: 'Global Model', isEligible: false });
+    component.messageForm.controls.content.setValue('Blocked message');
+    fixture.detectChanges();
+
+    component.sendMessage();
+
+    expect(component.canSendMessage()).toBe(false);
+    expect(messageService.sendMessage$.next).not.toHaveBeenCalled();
+    expect(component.messageForm.controls.content.value).toBe('Blocked message');
   });
 });
