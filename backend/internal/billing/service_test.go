@@ -151,6 +151,44 @@ func TestCanAfford(t *testing.T) {
 	}
 }
 
+func TestParsePlanType(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		input   string
+		want    PlanType
+		wantErr bool
+	}{
+		{name: "trial", input: "trial", want: PlanTypeTrial},
+		{name: "payg", input: "payg", want: PlanTypePayG},
+		{name: "unlimited", input: "unlimited", want: PlanTypeUnlimited},
+		{name: "inactive", input: "inactive", want: PlanTypeInactive},
+		{name: "legacy flat rate alias", input: "flat_rate", want: PlanTypeUnlimited},
+		{name: "unknown", input: "nope", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := ParsePlanType(tt.input)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("ParsePlanType(%q) error = nil, want non-nil", tt.input)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("ParsePlanType(%q) error = %v", tt.input, err)
+			}
+			if got != tt.want {
+				t.Errorf("ParsePlanType(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestEvaluateAccess(t *testing.T) {
 	t.Parallel()
 
@@ -210,6 +248,7 @@ func TestEvaluateAccess(t *testing.T) {
 			}
 			if got == nil {
 				t.Fatal("EvaluateAccess(...) = nil, want restriction")
+				return
 			}
 			if got.Error != tt.wantError {
 				t.Errorf("EvaluateAccess(...).Error = %q, want %q", got.Error, tt.wantError)
