@@ -54,8 +54,8 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - `cd frontend && pnpm test:e2e` ✅ passes
 - `ModelService` coverage now includes login load, eligible-model fallback, no-eligible fallback,
   and logout reset
-- browser E2E now covers high-level authenticated models-loading, send/reply, and history-reload
-  flows via Playwright
+- browser E2E now covers high-level authenticated models-loading, send/reply, history-reload,
+  and unavailable-model guard flows via Playwright
 
 Remaining frontend build warnings are non-blocking style-budget follow-up work.
 
@@ -265,6 +265,7 @@ Add guarded real-adapter tests for:
 | Browser E2E       | send message and get response                                        |
 | Browser E2E       | history reload still works                                           |
 | Browser E2E       | insufficient balance blocks send                                     |
+| Browser E2E       | unavailable model cannot be selected/sent                            |
 
 ---
 

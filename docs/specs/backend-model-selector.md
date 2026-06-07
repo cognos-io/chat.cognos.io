@@ -1780,6 +1780,7 @@ At minimum, add high-level browser E2E for:
 3. authenticated user sends a message and receives a reply
 4. conversation history reload still renders decrypted messages
 5. insufficient-balance flow blocks sending for PAYG users
+6. unavailable-model flow blocks sending before any completion request is made
 
 Do **not** assert on CSS classes or visual minutiae in these tests.
 

@@ -297,7 +297,7 @@ This checklist is the living execution tracker for the rework.
     - [ ] support eligibility metadata
 - [ ] `frontend/src/app/components/chat/message-form/model-selector/model-selector.component.ts`
     - [ ] render backend-provided model data
-    - [ ] show unavailable models clearly
+    - [x] show unavailable models clearly
 - [ ] `frontend/src/app/components/chat/message-list-item/message-list-item.component.ts`
     - [ ] resolve assistant model labels from fetched model data
 - [ ] `frontend/src/app/services/message.service.ts`
@@ -312,7 +312,7 @@ This checklist is the living execution tracker for the rework.
 
 - [ ] no hard-coded model list is required for normal operation
 - [ ] UI shows all active models
-- [ ] UI distinguishes selectable vs unavailable models
+- [x] UI distinguishes selectable vs unavailable models
 - [x] send/reply flow still renders decrypted history correctly
 - [ ] thread/expiry UX still behaves correctly
 
@@ -327,7 +327,7 @@ This checklist is the living execution tracker for the rework.
 - [x] authenticated user sends a message and receives a response
 - [x] conversation history reload still works
 - [ ] insufficient balance blocks PAYG sending
-- [ ] unavailable model cannot be selected/sent
+- [x] unavailable model cannot be selected/sent
 
 ### Explicit non-goals for these tests
 
