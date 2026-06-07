@@ -1,6 +1,6 @@
 # Cognos Model Selection & Security Rework — Architecture Specification & Implementation Roadmap
 
-**Version:** 1.1 **Status:** In progress **Stack:** Go (backend), Angular (frontend),
+**Version:** 1.2 **Status:** In progress **Stack:** Go (backend), Angular (frontend),
 PocketBase/SQLite (primary store), DuckDB + Parquet/S3 (analytics)
 
 ---
@@ -12,7 +12,7 @@ PocketBase/SQLite (primary store), DuckDB + Parquet/S3 (analytics)
 3. [Technology Stack & Dependencies](#3-technology-stack--dependencies)
 4. [Module Definitions](#4-module-definitions)
    - 4.1 [Model Catalogue](#41-model-catalogue)
-   - 4.2 [Bifrost LLM Gateway](#42-bifrost-llm-gateway)
+   - 4.2 [Internal LLM Gateway Abstraction](#42-internal-llm-gateway-abstraction)
    - 4.3 [Encryption & Message Storage](#43-encryption--message-storage)
    - 4.4 [Billing & Balance](#44-billing--balance)
    - 4.5 [Analytics & Usage Events](#45-analytics--usage-events)
@@ -44,14 +44,14 @@ Cognos is an encrypted AI chat application. It works on the same privacy princip
 - The **private key is encrypted client-side** and may be backed up to the server to support
   cross-device access.
 - Unlocking a new device requires the user's **account password + Account Key**. Trusted devices
-  may cache a locally wrapped unlock blob in **IndexedDB** until the user locks the account, logs
-  out, or clears browser storage.
-- When a user sends a message, the server uses the user's public key to
-  **encrypt the message ciphertext** before persisting it.
-- When the AI generates a response, the server uses the public key to **encrypt the response**
-  before persisting it.
-- The user's device downloads encrypted messages and **decrypts them locally** using the private
-  key.
+  may cache a **locally wrapped unlock blob** until the user locks the account, logs out, or clears
+  browser storage.
+- Each conversation has its own **conversation-scoped key material** so the product is built for
+  future sharing from the start.
+- The backend encrypts persisted chat content with the **conversation's public encryption
+  material**, while participant access to the decrypting key material is wrapped per participant.
+- The user's device downloads encrypted messages and **decrypts them locally** after unwrapping the
+  conversation key material it is allowed to access.
 
 The result: the server stores only ciphertext. Even if the database is compromised, user
 conversations cannot be read.
@@ -63,9 +63,11 @@ of this work are:
 
 1. Introduce a **model selection system** that allows users to choose AI models based on their
    privacy preferences.
-2. Integrate **Bifrost** as a unified LLM gateway so the backend can route requests to multiple
-   providers through a single interface.
-3. Implement a **billing system** supporting pay-as-you-go (PAYG) and flat-rate subscriptions.
+2. Introduce a **Cognos-owned LLM gateway abstraction** so providers can be added or swapped
+   without changing handler code. Bifrost is the first planned adapter, not the only possible
+   implementation.
+3. Implement a **billing system** supporting pay-as-you-go (PAYG) and flat-rate subscriptions,
+   with balances and plan changes managed manually for now.
 4. Implement an **analytics pipeline** that captures token usage and costs with no user-identifiable
    content.
 5. Lay groundwork for **multi-modal support** (images, documents, audio) arriving in 3–6 months.
@@ -85,7 +87,8 @@ of this work are:
 ┌─────────────────────────────────────────────────────────────────────┐
 │  Angular Frontend                                                    │
 │  - Unlocks encrypted private key locally                            │
-│  - May cache wrapped unlock material in IndexedDB on trusted devices│
+│  - Unwraps conversation key material for accessible conversations   │
+│  - May cache a wrapped unlock blob locally on trusted devices       │
 │  - Decrypts incoming ciphertext locally                             │
 └───────────────────────────┬─────────────────────────────────────────┘
                             │ HTTPS
@@ -100,10 +103,16 @@ of this work are:
 │         │                │                 │                │        │
 │         └────────────────┴─────────────────┴────────────────┘        │
 │                          │                                            │
-│                   ┌──────▼──────┐                                    │
-│                   │   Bifrost   │  (embedded Go package)             │
-│                   │ LLM Gateway │                                    │
-│                   └──────┬──────┘                                    │
+│                ┌─────────▼─────────┐                                  │
+│                │  Gateway Client   │                                  │
+│                │  (internal iface) │                                  │
+│                └─────────┬─────────┘                                  │
+│                          │                                            │
+│                ┌─────────▼─────────┐                                  │
+│                │ Gateway Adapter   │                                  │
+│                │ (Bifrost first    │                                  │
+│                │ candidate, swappable)                               │
+│                └─────────┬─────────┘                                  │
 └──────────────────────────┼──────────────────────────────────────────┘
                            │
           ┌────────────────┼────────────────┐
@@ -116,25 +125,29 @@ of this work are:
 │  Storage Layer                                                       │
 │                                                                      │
 │  PocketBase / SQLite          DuckDB → Parquet → S3                 │
-│  ┌─────────────────────┐      ┌──────────────────────────────────┐  │
-│  │ users               │      │ usage_events                     │  │
-│  │ conversations        │      │ (anonymous, no content)          │  │
-│  │ messages (ciphertext)│      │ billing_user_id, model_id        │  │
-│  │ user_billing         │      │ tokens, cost_chf, plan_type      │  │
-│  │ balance_transactions │      └──────────────────────────────────┘  │
-│  └─────────────────────┘                                             │
+│  ┌────────────────────────┐   ┌──────────────────────────────────┐  │
+│  │ users                  │   │ usage_events                     │  │
+│  │ conversations          │   │ (anonymous, no content)          │  │
+│  │ conversation_participants│ │ billing_user_id, model_id        │  │
+│  │ conversation_access_keys│ │ tokens, cache, provider cost      │  │
+│  │ messages (ciphertext)   │ │ cost_chf, plan_type               │  │
+│  │ user_billing            │ └──────────────────────────────────┘  │
+│  │ balance_transactions    │                                        │
+│  └────────────────────────┘                                        │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Key design principles
 
-| Principle                              | Implementation                                                         |
-| -------------------------------------- | ---------------------------------------------------------------------- |
-| No plaintext user content on server    | All message content encrypted before persistence                       |
-| No user-identifiable data in analytics | Analytics events use opaque `billing_user_id` only                     |
-| Single gateway for all LLM providers   | Bifrost handles all provider routing                                   |
-| Easy model onboarding                  | Model catalogue defined in Go code, no database required               |
-| Extensible to multi-modal              | Attachment array in encrypted payload; content_type field in analytics |
+| Principle                               | Implementation                                                                 |
+| --------------------------------------- | ------------------------------------------------------------------------------ |
+| No plaintext user content at rest       | All message content encrypted before persistence                               |
+| Build for sharing now                   | Conversation-scoped key material with per-participant wrapped access           |
+| Preserve operational chat behavior      | Threading and expiry stay first-class in the schema and API                    |
+| No user-identifiable data in analytics  | Analytics events use opaque `billing_user_id` only                             |
+| Single swappable gateway abstraction    | Cognos-owned gateway interface; Bifrost is an adapter choice, not the contract |
+| Easy model onboarding                   | Model catalogue defined in Go code, no database required                       |
+| Extensible to multi-modal               | Attachment array in encrypted payload; content type fields in usage analytics  |
 
 ---
 
@@ -142,21 +155,22 @@ of this work are:
 
 ### Core dependencies (Go modules)
 
-Add all of the following to `go.mod`. Exact versions should be pinned after initial `go get`.
+Add the required dependencies to `go.mod` as each phase lands. Exact versions should be pinned
+after initial `go get`.
 
-| Dependency             | Purpose                  | Import path                              |
-| ---------------------- | ------------------------ | ---------------------------------------- |
-| Bifrost core           | LLM gateway              | `github.com/maximhq/bifrost/core`        |
-| PocketBase             | Primary database + auth  | `github.com/pocketbase/pocketbase`       |
-| DuckDB Go driver       | Analytics writes         | `github.com/marcboeker/go-duckdb`        |
-| AWS SDK v2 (S3)        | Parquet upload to S3     | `github.com/aws/aws-sdk-go-v2`           |
-| Apache Arrow / Parquet | Write Parquet files      | `github.com/apache/arrow/go/v17/parquet` |
-| golang.org/x/crypto    | NaCl / X25519 encryption | `golang.org/x/crypto`                    |
-| Google UUID            | UUID v7 generation       | `github.com/google/uuid`                 |
+| Dependency             | Purpose                                         | Import path                              |
+| ---------------------- | ----------------------------------------------- | ---------------------------------------- |
+| PocketBase             | Primary database + auth                         | `github.com/pocketbase/pocketbase`       |
+| DuckDB Go driver       | Analytics writes                                | `github.com/marcboeker/go-duckdb`        |
+| AWS SDK v2 (S3)        | Parquet upload to S3                            | `github.com/aws/aws-sdk-go-v2`           |
+| Apache Arrow / Parquet | Write Parquet files                             | `github.com/apache/arrow/go/v17/parquet` |
+| golang.org/x/crypto    | NaCl / X25519 / symmetric authenticated crypto  | `golang.org/x/crypto`                    |
+| Google UUID            | UUID v7 generation                              | `github.com/google/uuid`                 |
+| Bifrost core           | Optional first adapter behind the gateway iface | `github.com/maximhq/bifrost/core`        |
 
-> **Note for lead engineer:** Confirm the exact Bifrost import path from
-> `github.com/maximhq/bifrost` before starting. The Go SDK and the HTTP gateway are separate
-> packages within that repo. You want the Go SDK (`/core`) for embedding, not the HTTP binary.
+> **Note for lead engineer:** Do not let the external adapter define the internal contract.
+> Confirm the Bifrost import path from `github.com/maximhq/bifrost` only when implementing the
+> Bifrost adapter.
 
 ### External services
 
@@ -164,9 +178,9 @@ Add all of the following to `go.mod`. Exact versions should be pinned after init
 | --------------------- | ----------------------------- | ------------------------------------------------------------------------------------------ |
 | Infomaniak AI         | Tier 1 provider (Switzerland) | OpenAI-compatible API. Requires product ID in URL.                                         |
 | Mistral API           | Tier 2 provider (Europe)      | Standard OpenAI-compatible.                                                                |
-| Anthropic API         | Tier 3 provider               | Native Anthropic format; Bifrost translates.                                               |
+| Anthropic API         | Tier 3 provider               | Native Anthropic format; gateway adapter normalises it.                                    |
 | OpenAI API            | Tier 3 provider               | Reference format.                                                                          |
-| Google Gemini         | Tier 3 provider (optional)    | Via Bifrost.                                                                               |
+| Google Gemini         | Tier 3 provider (optional)    | Supported via a future adapter.                                                            |
 | DeepInfra             | Tier 2 provider               | No data retention. Confirm DPA before enabling.                                            |
 | S3-compatible storage | Parquet analytics files       | Use Infomaniak kDrive S3 or equivalent CH-based provider to keep analytics data sovereign. |
 
@@ -400,183 +414,127 @@ var AllModels = []Model{
 
 ---
 
-### 4.2 Bifrost LLM Gateway
+### 4.2 Internal LLM Gateway Abstraction
 
-**Purpose:** Bifrost is an open-source Go LLM gateway (Apache 2.0 licence) that provides a unified
-interface to 23+ AI providers. We embed it as a Go package — we do not run it as a separate HTTP
-server. This means all provider routing happens in-process within our Go backend.
+**Purpose:** Cognos must own the internal gateway contract. Provider routing, usage extraction,
+retry behaviour, and cost metadata must be exposed through a Cognos interface so the rest of the
+backend does not depend on Bifrost, the OpenAI SDK shape, or any other vendor package.
 
-**Repository:** `github.com/maximhq/bifrost`
-**Licence:** Apache 2.0 — fully open source, no enterprise paywall.
-**Location in codebase:** `internal/gateway/bifrost.go`
+**Primary location in codebase:** `internal/gateway/`
 
-#### Why Bifrost?
+#### Architectural rule
 
-- Written in Go — matches our stack, no Python sidecar needed.
-- Supports all required providers: Infomaniak (OpenAI-compatible), Mistral, Anthropic, OpenAI,
-  DeepInfra.
-- Normalises all provider responses to a single struct — our code never handles provider-specific
-  response formats.
-- Provides token counts in every response — essential for billing.
-- < 11 µs overhead per request.
-- Fallback and retry logic built in.
-
-#### Bifrost initialisation
+Handlers and services depend on a Cognos interface. Provider-specific logic lives behind adapters.
 
 ```go
-// internal/gateway/bifrost.go
-
+// internal/gateway/client.go
 package gateway
 
-import (
-    "context"
-    "fmt"
+import "context"
 
-    bifrost "github.com/maximhq/bifrost/core"
-    "github.com/maximhq/bifrost/core/schemas"
-    "your-module/internal/catalogue"
-    "your-module/internal/config"
-)
-
-// Client wraps the Bifrost instance and exposes a single Complete() method.
-type Client struct {
-    bf *bifrost.Bifrost
+type Message struct {
+    Role    string
+    Content string
+    Name    string
 }
 
-// NewClient initialises Bifrost with all configured providers.
-// Call this once at application startup.
-func NewClient(cfg *config.Config) (*Client, error) {
-    // Each provider is configured with its API key and base URL.
-    // Bifrost handles authentication headers automatically.
-
-    providers := []schemas.ModelProvider{
-        {
-            // Infomaniak: OpenAI-compatible, Swiss-hosted.
-            // The base URL includes the product ID from config.
-            Key:     schemas.OpenAI, // Infomaniak uses OpenAI-compatible format
-            APIKey:  cfg.InfmaniakAPIKey,
-            BaseURL: fmt.Sprintf("https://api.infomaniak.com/2/ai/%s/openai/v1", cfg.InfmaniakProductID),
-        },
-        {
-            Key:    schemas.Mistral,
-            APIKey: cfg.MistralAPIKey,
-        },
-        {
-            Key:    schemas.Anthropic,
-            APIKey: cfg.AnthropicAPIKey,
-        },
-        {
-            Key:    schemas.OpenAI,
-            APIKey: cfg.OpenAIAPIKey,
-        },
-    }
-
-    // Filter to only providers that have API keys configured.
-    // This allows running in a restricted mode (e.g. ch_only only) without panicking.
-    var configuredProviders []schemas.ModelProvider
-    for _, p := range providers {
-        if p.APIKey != "" {
-            configuredProviders = append(configuredProviders, p)
-        }
-    }
-
-    bf, err := bifrost.New(bifrost.Config{
-        Providers: configuredProviders,
-    })
-    if err != nil {
-        return nil, fmt.Errorf("failed to initialise bifrost: %w", err)
-    }
-
-    return &Client{bf: bf}, nil
-}
-
-// CompletionRequest contains everything Bifrost needs to make a completion call.
 type CompletionRequest struct {
-    Model    catalogue.Model
-    Messages []schemas.Message // Full conversation history (plaintext, received from client)
+    ModelID         string
+    ProviderID      string
+    ProviderModelID string
+    Messages        []Message
+    MaxOutputTokens int
 }
 
-// CompletionResponse contains the model's response and billing-relevant metadata.
+type Usage struct {
+    InputTokens              int64
+    OutputTokens             int64
+    CacheCreationInputTokens int64
+    CacheReadInputTokens     int64
+    ProviderCostUSD          *float64
+}
+
 type CompletionResponse struct {
-    Content      string // The AI's response text (plaintext)
-    InputTokens  int64
-    OutputTokens int64
-    ModelID      string // Echo back the model ID used
+    Content string
+    Usage   Usage
 }
 
-// Complete sends a completion request to the appropriate provider via Bifrost.
-// The caller is responsible for all encryption and persistence after this returns.
-func (c *Client) Complete(ctx context.Context, req CompletionRequest) (*CompletionResponse, error) {
-    result, err := c.bf.Chat(ctx, schemas.ChatRequest{
-        Model:    req.Model.ProviderModelID,
-        Provider: providerKey(req.Model.Provider),
-        Messages: req.Messages,
-    })
-    if err != nil {
-        return nil, fmt.Errorf("bifrost completion failed for model %s: %w", req.Model.ID, err)
-    }
-
-    if len(result.Choices) == 0 {
-        return nil, fmt.Errorf("bifrost returned empty choices for model %s", req.Model.ID)
-    }
-
-    return &CompletionResponse{
-        Content:      result.Choices[0].Message.Content,
-        InputTokens:  int64(result.Usage.PromptTokens),
-        OutputTokens: int64(result.Usage.CompletionTokens),
-        ModelID:      req.Model.ID,
-    }, nil
-}
-
-// providerKey maps our internal provider string to Bifrost's provider enum.
-// This function must be updated when new providers are added to the catalogue.
-func providerKey(provider string) schemas.ModelProviderKey {
-    switch provider {
-    case "infomaniak":
-        return schemas.OpenAI // Infomaniak is OpenAI-compatible
-    case "mistral":
-        return schemas.Mistral
-    case "anthropic":
-        return schemas.Anthropic
-    case "openai":
-        return schemas.OpenAI
-    default:
-        panic(fmt.Sprintf("unknown provider: %s — add it to gateway.providerKey()", provider))
-    }
+type Client interface {
+    Complete(ctx context.Context, req CompletionRequest) (*CompletionResponse, error)
 }
 ```
 
-> **Note for engineers:** The exact Bifrost API (struct names, method signatures) should be verified
-> against the current README at `github.com/maximhq/bifrost`. The code above reflects the intended
-> usage pattern — treat it as a blueprint, not guaranteed-compiling code until you have confirmed
-> the actual SDK interface.
+#### Initial adapter strategy
+
+Phase 1 should introduce:
+
+- `internal/gateway/client.go` — the Cognos-owned interface
+- `internal/gateway/bifrost.go` — optional first adapter implementation
+- `internal/gateway/mock_client.go` — deterministic test double for handler/service tests
+
+#### Why this order?
+
+- Keeps handler and billing code stable if Bifrost is replaced later.
+- Lets us write red/green tests against the contract first.
+- Makes it practical to support provider-specific behaviour where usage metadata differs.
+- Avoids a second architectural migration when we add or swap providers.
+
+#### Bifrost status
+
+Bifrost remains the first planned adapter because it is Go-native and supports the providers we
+care about, but it is an implementation detail behind the gateway interface — not the product
+contract.
 
 ---
 
 ### 4.3 Encryption & Message Storage
 
-**Purpose:** After receiving a completion from Bifrost, the backend encrypts the full message
-payload (content + metadata) using the user's public key, then persists only the ciphertext.
-Plaintext private keys never touch the server, but encrypted private-key backups may be stored
-server-side to support cross-device access.
+**Purpose:** Build the message system for future conversation sharing now, without changing the
+privacy posture. Persisted chat content must be encrypted with **conversation-scoped key
+material**, not directly against one user's long-term key.
 
-**Location in codebase:** `internal/crypto/encrypt.go`, `internal/store/messages.go`
+**Primary locations in codebase:** `internal/crypto/`, `internal/store/messages.go`,
+`internal/store/conversations.go`
 
-#### Encryption scheme
+#### Conversation-scoped encryption model
 
-Cognos uses **X25519 key exchange + XSalsa20-Poly1305 encryption** (NaCl box), which is:
+Cognos should treat each conversation as its own cryptographic domain.
 
-- Well-audited and widely used (same as Signal, ProtonMail internally).
-- Available in Go via `golang.org/x/crypto/nacl/box`.
-- Asymmetric: encrypts with public key, decrypts with private key.
+**Required properties:**
 
-The frontend generates key pairs using the Web Crypto API or a compatible library (TweetNaCl.js is
-standard). The public key is stored in the `users` table as base64. The private key is encrypted
-client-side and may be backed up to the server as ciphertext to support cross-device access.
+- the backend can encrypt newly persisted messages without needing a participant's private key
+- participants can decrypt conversation history locally on their devices
+- sharing a conversation later does not require re-encrypting every message for every participant
+- removing a participant rotates future access
+
+#### Preferred implementation for this codebase
+
+Because the backend must encrypt assistant responses before persistence, the simplest compatible
+implementation is:
+
+1. each conversation has **conversation key material**
+2. the backend stores the **conversation public key** and uses it to encrypt message/title
+   ciphertext at write time
+3. the conversation's decrypting secret key material is **wrapped per participant** using that
+   participant's user public key
+4. the client unwraps the conversation key material locally after unlocking the user's private key
+
+This preserves the current server-side write capability while making the access model participant
+based rather than single-user based.
+
+#### Sharing semantics
+
+- **Add participant:** wrap the current conversation decrypting key material for the new
+  participant and persist a new access record
+- **Remove participant:** rotate the conversation key material and re-wrap it only for remaining
+  participants
+- **Conversation title:** encrypt with the same conversation-scoped key material as messages
+- **Attachments:** store attachment payloads encrypted under conversation-scoped key material, with
+  the attachment reference stored in message ciphertext
 
 #### Key backup and device unlock model
 
-The accepted key-management model for Cognos is a **1Password-style Account Key model**.
+The accepted account-level key-management model remains the **1Password-style Account Key model**.
 
 - Users authenticate with their normal **account password**.
 - Each user also has a generated high-entropy **Account Key** used when unlocking new devices.
@@ -584,10 +542,6 @@ The accepted key-management model for Cognos is a **1Password-style Account Key 
   plaintext private key.
 - A new device requires both the **account password** and **Account Key** to unlock the encrypted
   private key locally.
-- Trusted devices may cache a **locally wrapped unlock blob** in **IndexedDB** so users are not
-  repeatedly prompted. The current implementation wraps the local unlock key with a browser-local
-  non-extractable WebCrypto AES-GCM key before persistence. Do **not** use `localStorage` for key
-  material.
 - Do **not** derive any vault or unlock key from `sha256(email + password)`.
 - Use **Argon2id** with a random per-user salt for password-based derivation.
 - **Email changes must not affect cryptographic state.**
@@ -599,141 +553,66 @@ Before encryption, the backend constructs this JSON payload. **This is never sto
 
 ```go
 // internal/crypto/payload.go
-
 package crypto
 
-// MessagePayload is the struct that gets JSON-encoded and then encrypted.
-// All fields here will be invisible to anyone without the user's private key.
 type MessagePayload struct {
-    // Content is the actual message text (user's message or AI response).
-    Content string `json:"content"`
-
-    // Role is "user" or "assistant".
-    Role string `json:"role"`
-
-    // ModelID is the Cognos internal model ID used for this message.
-    // Example: "claude-sonnet-4"
-    // For user messages, this is the model that will respond.
-    // For assistant messages, this is the model that generated the response.
-    ModelID string `json:"model_id"`
-
-    // Provider is the provider used. Example: "anthropic"
-    Provider string `json:"provider"`
-
-    // PrivacyTier is the user's tier at time of message. Example: "ch_only"
-    PrivacyTier string `json:"privacy_tier"`
-
-    // ContentType is "text", "image", "audio", or "document".
-    // Always "text" for now; used when multi-modal is added.
-    ContentType string `json:"content_type"`
-
-    // InputTokens is the number of input tokens consumed (assistant messages only).
-    // Zero for user messages.
-    InputTokens int64 `json:"input_tokens,omitempty"`
-
-    // OutputTokens is the number of output tokens generated (assistant messages only).
-    // Zero for user messages.
-    OutputTokens int64 `json:"output_tokens,omitempty"`
-
-    // Attachments will be populated when multi-modal support is added.
-    // For now, always an empty slice.
-    Attachments []Attachment `json:"attachments"`
+    Content         string       `json:"content"`
+    Role            string       `json:"role"`
+    ConversationID  string       `json:"conversation_id,omitempty"`
+    ParentMessageID string       `json:"parent_message_id,omitempty"`
+    ModelID         string       `json:"model_id,omitempty"`
+    Provider        string       `json:"provider,omitempty"`
+    PrivacyTier     string       `json:"privacy_tier,omitempty"`
+    ContentType     string       `json:"content_type"`
+    InputTokens     int64        `json:"input_tokens,omitempty"`
+    OutputTokens    int64        `json:"output_tokens,omitempty"`
+    CacheCreationInputTokens int64 `json:"cache_creation_input_tokens,omitempty"`
+    CacheReadInputTokens     int64 `json:"cache_read_input_tokens,omitempty"`
+    ProviderCostUSD *float64     `json:"provider_cost_usd,omitempty"`
+    Attachments     []Attachment `json:"attachments"`
 }
 
-// Attachment represents a file attached to a message.
-// Not used until Phase 4 (multi-modal), but included now so the
-// encrypted payload format is stable and does not need migration.
 type Attachment struct {
-    // Type is "image_upload", "image_generated", "audio", or "document".
-    Type string `json:"type"`
-
-    // StorageKey is the object storage key for the encrypted file.
-    // Example: "attachments/att_abc123.enc"
+    Type       string `json:"type"`
     StorageKey string `json:"storage_key"`
-
-    // MIMEType is the file's MIME type. Example: "image/webp"
-    MIMEType string `json:"mime_type"`
-
-    // SizeBytes is the file size in bytes.
-    SizeBytes int64 `json:"size_bytes"`
+    MIMEType   string `json:"mime_type"`
+    SizeBytes  int64  `json:"size_bytes"`
 }
 ```
 
-#### Encryption implementation
+#### Plaintext operational metadata that must be preserved
 
-```go
-// internal/crypto/encrypt.go
+The following fields may remain plaintext in PocketBase because they are required for server-side
+behaviour and do not reveal message content on their own:
 
-package crypto
+- `conversation_id`
+- `parent_message_id`
+- `role`
+- `sequence`
+- `created_at`
+- `expires_at`
 
-import (
-    "crypto/rand"
-    "encoding/base64"
-    "encoding/json"
-    "fmt"
-    "io"
+Everything else sensitive belongs inside ciphertext.
 
-    "golang.org/x/crypto/nacl/box"
-)
+#### Frontend decryption model
 
-// EncryptPayload takes a MessagePayload and the recipient's base64-encoded public key,
-// and returns a base64-encoded ciphertext string suitable for storing in the database.
-//
-// The server generates an ephemeral key pair for each message.
-// The ephemeral public key is prepended to the ciphertext so the client can decrypt.
-func EncryptPayload(payload *MessagePayload, recipientPublicKeyB64 string) (string, error) {
-    // Decode the recipient's public key from base64.
-    recipientPubKeyBytes, err := base64.StdEncoding.DecodeString(recipientPublicKeyB64)
-    if err != nil {
-        return "", fmt.Errorf("invalid recipient public key: %w", err)
-    }
-    if len(recipientPubKeyBytes) != 32 {
-        return "", fmt.Errorf("recipient public key must be 32 bytes, got %d", len(recipientPubKeyBytes))
-    }
-    var recipientPublicKey [32]byte
-    copy(recipientPublicKey[:], recipientPubKeyBytes)
+The Angular client must:
 
-    // Generate an ephemeral key pair for this message.
-    // The ephemeral private key is discarded after encryption (forward secrecy per message).
-    ephemeralPublicKey, ephemeralPrivateKey, err := box.GenerateKey(rand.Reader)
-    if err != nil {
-        return "", fmt.Errorf("failed to generate ephemeral key: %w", err)
-    }
+1. unlock the user's private key locally
+2. fetch the participant's wrapped conversation key material for the conversation
+3. unwrap it locally
+4. decrypt message/title ciphertext locally
 
-    // JSON-encode the payload.
-    plaintext, err := json.Marshal(payload)
-    if err != nil {
-        return "", fmt.Errorf("failed to marshal payload: %w", err)
-    }
-
-    // Generate a random nonce.
-    var nonce [24]byte
-    if _, err := io.ReadFull(rand.Reader, nonce[:]); err != nil {
-        return "", fmt.Errorf("failed to generate nonce: %w", err)
-    }
-
-    // Encrypt using NaCl box (X25519 + XSalsa20-Poly1305).
-    encrypted := box.Seal(nonce[:], plaintext, &nonce, &recipientPublicKey, ephemeralPrivateKey)
-
-    // Prepend the ephemeral public key so the client can reconstruct the shared secret.
-    // Final format: ephemeralPublicKey (32 bytes) + nonce (24 bytes) + ciphertext
-    result := append(ephemeralPublicKey[:], encrypted...)
-
-    return base64.StdEncoding.EncodeToString(result), nil
-}
-```
-
-> **Frontend note:** The Angular client must decrypt using the matching NaCl box open operation:
-> extract the ephemeral public key (first 32 bytes), extract the nonce (next 24 bytes), then call
-> `box.open()` with the user's private key and the ephemeral public key. TweetNaCl.js is the
-> recommended library.
+This keeps decryption on the client while allowing the backend to keep encrypting newly generated
+assistant messages safely.
 
 ---
 
 ### 4.4 Billing & Balance
 
 **Purpose:** Track user balances for PAYG users and record all transactions. Provide the service
-layer that deducts balance after each completion.
+layer that deducts balance after each completion. In this phase, balances and plan changes are
+managed manually by the operator — payment processing is explicitly out of scope.
 
 **Location in codebase:** `internal/billing/service.go`
 
@@ -747,14 +626,19 @@ layer that deducts balance after each completion.
 #### Cost calculation
 
 Providers charge in USD per 1 million tokens. The backend converts to CHF at the time of each
-request using a cached exchange rate (refreshed daily). The formula is:
+request using a cached exchange rate (refreshed daily).
+
+If the upstream provider returns an authoritative **provider-reported cost**, store it and use it.
+Otherwise derive cost from catalogue pricing.
 
 ```text
-cost_usd = (input_tokens / 1_000_000 * input_price_per_1m)
-         + (output_tokens / 1_000_000 * output_price_per_1m)
+if provider_cost_usd is present:
+    cost_usd = provider_cost_usd
+else:
+    cost_usd = (input_tokens / 1_000_000 * input_price_per_1m)
+             + (output_tokens / 1_000_000 * output_price_per_1m)
 
 cost_chf = cost_usd * usd_to_chf_rate
-
 cost_rappen = round(cost_chf * 100)  // Store as integer to avoid float drift
 ```
 
@@ -931,7 +815,20 @@ type UsageEvent struct {
     // OutputTokens is the number of completion tokens generated.
     OutputTokens int64 `parquet:"output_tokens"`
 
-    // CostUSD is the calculated cost in USD at the provider's listed price.
+    // CacheCreationInputTokens is the number of cache-write tokens reported by the provider.
+    CacheCreationInputTokens int64 `parquet:"cache_creation_input_tokens"`
+
+    // CacheReadInputTokens is the number of cache-read tokens reported by the provider.
+    CacheReadInputTokens int64 `parquet:"cache_read_input_tokens"`
+
+    // ProviderCostUSD is the provider-reported cost when supplied.
+    // Zero means unavailable unless UsedProviderCost is true.
+    ProviderCostUSD float64 `parquet:"provider_cost_usd"`
+
+    // UsedProviderCost indicates whether CostUSD came from the upstream provider directly.
+    UsedProviderCost bool `parquet:"used_provider_cost"`
+
+    // CostUSD is the final cost used for billing in USD.
     CostUSD float64 `parquet:"cost_usd"`
 
     // CostCHF is CostUSD converted at the FX rate captured at request time.
@@ -940,7 +837,7 @@ type UsageEvent struct {
     // FXRateUSDCHF is the USD→CHF rate used for this conversion. Stored for auditability.
     FXRateUSDCHF float64 `parquet:"fx_rate_usd_chf"`
 
-    // LatencyMS is the time in milliseconds from sending the request to Bifrost
+    // LatencyMS is the time in milliseconds from sending the request to the gateway client
     // to receiving the complete response.
     LatencyMS int64 `parquet:"latency_ms"`
 
@@ -1009,8 +906,8 @@ must implement.
 #### Storage approach for attachments
 
 Attachments are stored in encrypted form in object storage (same S3 bucket as Parquet, different
-prefix). The encryption key is derived from the user's public key. The message payload contains only
-a `storage_key` reference — the file itself is never in the database.
+prefix). They are encrypted under conversation-scoped key material. The message payload contains
+only a `storage_key` reference — the file itself is never in the database.
 
 ```text
 s3://cognos-storage/
@@ -1048,28 +945,53 @@ Add the following fields to the existing users collection:
 
 #### Table: `conversations` (new)
 
-| Field              | Type              | Nullable | Notes                                                               |
-| ------------------ | ----------------- | -------- | ------------------------------------------------------------------- |
-| `id`               | Text (PK)         | No       | UUID. Generated by backend.                                         |
-| `user_id`          | Text (FK → users) | No       |                                                                     |
-| `created_at`       | DateTime          | No       | UTC.                                                                |
-| `updated_at`       | DateTime          | No       | Updated on each new message.                                        |
-| `title_ciphertext` | Text              | Yes      | Optional encrypted conversation title. Same encryption as messages. |
+| Field              | Type              | Nullable | Notes                                                                             |
+| ------------------ | ----------------- | -------- | --------------------------------------------------------------------------------- |
+| `id`               | Text (PK)         | No       | UUID. Generated by backend.                                                       |
+| `creator_user_id`  | Text (FK → users) | No       | Creator of the conversation. Not the same thing as the full participant list.     |
+| `created_at`       | DateTime          | No       | UTC.                                                                              |
+| `updated_at`       | DateTime          | No       | Updated on each new message.                                                      |
+| `title_ciphertext` | Text              | Yes      | Optional encrypted conversation title. Same conversation key domain as messages.  |
+| `key_version`      | Integer           | No       | Monotonically increasing. Increment when participant removal forces key rotation. |
+
+#### Table: `conversation_participants` (new)
+
+| Field             | Type                      | Nullable | Notes                                                                       |
+| ----------------- | ------------------------- | -------- | --------------------------------------------------------------------------- |
+| `id`              | Text (PK)                 | No       | UUID.                                                                       |
+| `conversation_id` | Text (FK → conversations) | No       |                                                                             |
+| `user_id`         | Text (FK → users)         | No       |                                                                             |
+| `role`            | Text                      | No       | `owner`, `editor`, or `viewer` (final permission model may start narrower). |
+| `added_at`        | DateTime                  | No       | UTC.                                                                        |
+| `removed_at`      | DateTime                  | Yes      | Null while active. Set when access is revoked.                              |
+
+#### Table: `conversation_access_keys` (new)
+
+| Field                    | Type                      | Nullable | Notes                                                              |
+| ------------------------ | ------------------------- | -------- | ------------------------------------------------------------------ |
+| `id`                     | Text (PK)                 | No       | UUID.                                                              |
+| `conversation_id`        | Text (FK → conversations) | No       |                                                                    |
+| `user_id`                | Text (FK → users)         | No       | Participant receiving access.                                      |
+| `key_version`            | Integer                   | No       | Matches `conversations.key_version`.                               |
+| `wrapped_key_ciphertext` | Text                      | No       | Conversation decrypting key material wrapped for that participant. |
+| `created_at`             | DateTime                  | No       | UTC.                                                               |
 
 #### Table: `messages` (new)
 
-| Field             | Type                      | Nullable | Notes                                                                                                      |
-| ----------------- | ------------------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
-| `id`              | Text (PK)                 | No       | UUID. Generated by backend.                                                                                |
-| `conversation_id` | Text (FK → conversations) | No       |                                                                                                            |
-| `created_at`      | DateTime                  | No       | UTC, second precision only (no milliseconds — avoids timing fingerprinting).                               |
-| `role`            | Text                      | No       | `user` or `assistant`. Stored plaintext — knowing whether a message is from a user or AI is not sensitive. |
-| `ciphertext`      | Text                      | No       | Base64-encoded encrypted `MessagePayload`. See Section 4.3.                                                |
-| `sequence`        | Integer                   | No       | Message order within the conversation. Monotonically increasing.                                           |
+| Field               | Type                      | Nullable | Notes                                                                                                      |
+| ------------------- | ------------------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
+| `id`                | Text (PK)                 | No       | UUID. Generated by backend.                                                                                |
+| `conversation_id`   | Text (FK → conversations) | No       |                                                                                                            |
+| `parent_message_id` | Text (FK → messages)      | Yes      | Preserve threading. Null for root messages.                                                                |
+| `created_at`        | DateTime                  | No       | UTC, second precision only (no milliseconds — avoids timing fingerprinting).                               |
+| `expires_at`        | DateTime                  | Yes      | Preserve expiring-message behaviour. Null means non-expiring.                                              |
+| `role`              | Text                      | No       | `user` or `assistant`. Stored plaintext — knowing whether a message is from a user or AI is not sensitive. |
+| `ciphertext`        | Text                      | No       | Base64-encoded encrypted `MessagePayload`. See Section 4.3.                                                |
+| `sequence`          | Integer                   | No       | Message order within the conversation. Monotonically increasing.                                           |
 
-> **Do not add** model_id, token counts, or any other metadata fields to this table. All metadata is
-> inside `ciphertext`. The only plaintext fields are those needed for server-side operations
-> (ordering, routing).
+> **Do not add** model_id, token counts, or other sensitive metadata fields to this table.
+> Preserve only the minimal plaintext operational metadata needed for ordering, threading, expiry,
+> and routing.
 
 #### Table: `user_billing` (new)
 
@@ -1120,6 +1042,10 @@ CREATE TABLE usage_events (
     content_type        VARCHAR NOT NULL,     -- "text" | "image" | "audio" | "document"
     input_tokens        BIGINT NOT NULL,
     output_tokens       BIGINT NOT NULL,
+    cache_creation_input_tokens BIGINT NOT NULL DEFAULT 0,
+    cache_read_input_tokens     BIGINT NOT NULL DEFAULT 0,
+    provider_cost_usd   DOUBLE NOT NULL DEFAULT 0,
+    used_provider_cost  BOOLEAN NOT NULL DEFAULT FALSE,
     cost_usd            DOUBLE NOT NULL,
     cost_chf            DOUBLE NOT NULL,
     fx_rate_usd_chf     DOUBLE NOT NULL,
@@ -1193,13 +1119,14 @@ Returns the list of models available for the authenticated user's privacy tier.
 
 #### `POST /api/v1/conversations`
 
-Creates a new conversation.
+Creates a new conversation and its initial participant/access-key records.
 
 **Request body:**
 
 ```json
 {
-  "model_id": "llama-3-3-infomaniak"
+  "title_ciphertext": "base64encodedciphertexthere...",
+  "wrapped_conversation_key": "base64encodedciphertexthere..."
 }
 ```
 
@@ -1208,7 +1135,8 @@ Creates a new conversation.
 ```json
 {
   "conversation_id": "conv_abc123",
-  "created_at": "2025-09-15T14:30:22Z"
+  "created_at": "2025-09-15T14:30:22Z",
+  "key_version": 1
 }
 ```
 
@@ -1216,7 +1144,8 @@ Creates a new conversation.
 
 #### `GET /api/v1/conversations`
 
-Returns all conversations for the authenticated user (metadata only — no ciphertext).
+Returns all conversations accessible to the authenticated user (metadata only — no message
+ciphertext).
 
 **Response:**
 
@@ -1227,7 +1156,8 @@ Returns all conversations for the authenticated user (metadata only — no ciphe
       "id": "conv_abc123",
       "created_at": "2025-09-15T14:30:22Z",
       "updated_at": "2025-09-15T15:01:44Z",
-      "message_count": 12
+      "message_count": 12,
+      "key_version": 1
     }
   ]
 }
@@ -1237,7 +1167,8 @@ Returns all conversations for the authenticated user (metadata only — no ciphe
 
 #### `GET /api/v1/conversations/{id}/messages`
 
-Returns all messages in a conversation. The client decrypts each `ciphertext` locally.
+Returns all messages in a conversation. The client decrypts each `ciphertext` locally after
+unwrapping its conversation access key.
 
 **Response:**
 
@@ -1248,15 +1179,19 @@ Returns all messages in a conversation. The client decrypts each `ciphertext` lo
     {
       "id": "msg_001",
       "sequence": 1,
+      "parent_message_id": null,
       "role": "user",
       "created_at": "2025-09-15T14:30:22Z",
+      "expires_at": null,
       "ciphertext": "base64encodedciphertexthere..."
     },
     {
       "id": "msg_002",
       "sequence": 2,
+      "parent_message_id": "msg_001",
       "role": "assistant",
       "created_at": "2025-09-15T14:30:25Z",
+      "expires_at": null,
       "ciphertext": "base64encodedciphertexthere..."
     }
   ]
@@ -1276,6 +1211,7 @@ Sends a user message and receives an AI response. This is the core endpoint.
 ```json
 {
   "model_id": "llama-3-3-infomaniak",
+  "parent_message_id": "msg_002",
   "messages": [
     {
       "role": "user",
@@ -1295,30 +1231,40 @@ Sends a user message and receives an AI response. This is the core endpoint.
 
 ```json
 {
-  "message_id": "msg_003",
-  "sequence": 3,
-  "role": "assistant",
-  "created_at": "2025-09-15T14:30:25Z",
-  "ciphertext": "base64encodedciphertexthere...",
-  "model_id": "llama-3-3-infomaniak",
-  "input_tokens": 412,
-  "output_tokens": 891
+  "user_message_id": "msg_003",
+  "assistant_message": {
+    "id": "msg_004",
+    "parent_message_id": "msg_003",
+    "content": "NaCl box uses X25519 key exchange and authenticated encryption...",
+    "model_id": "llama-3-3-infomaniak",
+    "created_at": "2025-09-15T14:30:25Z"
+  },
+  "expires_at": null,
+  "usage": {
+    "input_tokens": 412,
+    "output_tokens": 891,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cost_usd": 0.00026,
+    "cost_chf": 0.00024,
+    "cost_rappen": 0,
+    "used_provider_cost": false
+  }
 }
 ```
 
-Note: `model_id`, `input_tokens`, and `output_tokens` are returned in the response plaintext so the
-UI can display them immediately without decrypting. They are also inside the ciphertext for the
-permanent record.
+Note: usage metadata is returned in plaintext for immediate UI use and also stored inside the
+assistant message ciphertext for the permanent record.
 
 **Error responses:**
 
-| HTTP code                  | Condition                                              |
-| -------------------------- | ------------------------------------------------------ |
-| `402 Payment Required`     | PAYG user has insufficient balance                     |
-| `403 Forbidden`            | Requested model not available for user's privacy tier  |
-| `404 Not Found`            | Conversation not found or does not belong to this user |
-| `422 Unprocessable Entity` | `model_id` not recognised                              |
-| `503 Service Unavailable`  | Bifrost/provider call failed after retries             |
+| HTTP code                  | Condition                                             |
+| -------------------------- | ----------------------------------------------------- |
+| `402 Payment Required`     | PAYG user has insufficient balance                    |
+| `403 Forbidden`            | Requested model not available for user's privacy tier |
+| `404 Not Found`            | Conversation not found or user lacks access           |
+| `422 Unprocessable Entity` | `model_id` not recognised                             |
+| `503 Service Unavailable`  | Gateway/provider call failed after retries            |
 
 ---
 
@@ -1386,66 +1332,57 @@ Client (Angular)                    Go Backend                    External
      │──────────────────────────────────►│                            │
      │                                   │                            │
      │                          1. Authenticate user                  │
-     │                          2. Validate model_id exists           │
-     │                          3. Validate model is eligible         │
+     │                          2. Resolve conversation access        │
+     │                             and current key_version            │
+     │                          3. Validate model_id exists           │
+     │                          4. Validate model is eligible         │
      │                             for user's privacy_tier            │
-     │                          4. [PAYG only] Check CanAfford()      │
+     │                          5. [PAYG only] Check CanAfford()      │
      │                             → 402 if insufficient balance      │
+     │                          6. Record start timestamp             │
      │                                   │                            │
-     │                          5. Record start timestamp             │
-     │                                   │                            │
-     │                                   │  Bifrost.Complete()        │
+     │                                   │  Gateway.Complete()        │
      │                                   │───────────────────────────►│
      │                                   │                            │
      │                                   │◄───────────────────────────│
      │                                   │  response text,            │
-     │                                   │  input_tokens,             │
-     │                                   │  output_tokens             │
+     │                                   │  usage, provider cost      │
      │                                   │                            │
-     │                          6. Calculate latency_ms               │
-     │                          7. Calculate cost_usd, cost_chf       │
-     │                          8. Generate event_id (UUID)           │
-     │                                   │                            │
-     │                          ┌────────┴────────┐                   │
-     │                          │ Steps 9-11 run  │                   │
-     │                          │ in parallel     │                   │
-     │                          └────────┬────────┘                   │
-     │                                   │                            │
-     │                          9. Encrypt user message payload       │
-     │                             → persist to messages table        │
-     │                                   │                            │
-     │                         10. Encrypt assistant message payload  │
-     │                             → persist to messages table        │
-     │                                   │                            │
-     │                         11. [PAYG] DeductBalance()             │
-     │                             → persist to balance_transactions  │
-     │                             [flat_rate] RecordUsage()          │
-     │                                   │                            │
-     │                         12. EmitUsageEvent()                   │
-     │                             → write to DuckDB buffer           │
-     │                                   │                            │
-     │                         13. Update conversation.updated_at     │
+     │                          7. Calculate latency_ms               │
+     │                          8. Calculate final cost_usd/chf       │
+     │                          9. Generate event_id (UUID)           │
+     │                         10. Encrypt and persist user message    │
+     │                             with conversation public key        │
+     │                             + parent_message_id + expires_at    │
+     │                         11. Encrypt and persist assistant msg   │
+     │                             with conversation public key        │
+     │                         12. Record billing transaction          │
+     │                             / deduct balance as required        │
+     │                         13. Emit usage event                   │
+     │                         14. Update conversation.updated_at     │
      │                                   │                            │
      │  200 OK                           │                            │
-     │  {ciphertext, model_id,           │                            │
-     │   input_tokens, output_tokens}    │                            │
+     │  {assistant_message, usage}       │                            │
      │◄──────────────────────────────────│                            │
      │                                   │                            │
      │  Client decrypts ciphertext       │                            │
-     │  locally using private key        │                            │
+     │  after unwrapping conversation    │                            │
+     │  key material locally             │                            │
 ```
 
 ### Critical rules for step ordering
 
-- **Step 4 (balance check) must happen before step 5 (calling Bifrost).** Never call the provider
-  and then find out the user can't afford it.
-- **Steps 9–11 must all succeed.** If any of these fail, log the error and still return the response
-  to the user — do not retry the provider call. Losing a billing record is less bad than charging a
-  user twice.
-- **Step 12 (analytics) is best-effort.** If the DuckDB write fails, log the error but do not affect
-  the response. Analytics are internal and non-critical.
+- **Balance checks happen before the provider call.** Never call the provider and then discover the
+  user is out of balance.
+- **Conversation access is resolved before persistence.** A user must not be able to write into a
+  conversation they cannot read.
+- **Threading and expiry are part of the persistence contract.** `parent_message_id` and
+  `expires_at` must survive the rewrite.
+- **Billing and message persistence must not silently drift apart.** If a provider call succeeds but
+  local persistence fails, surface the failure loudly and investigate immediately.
+- **Analytics emission is best-effort.** If the analytics write fails, log it and continue.
 - **Never persist the plaintext messages array** sent in the request body. It is used only for the
-  Bifrost call and discarded immediately after.
+  gateway call and discarded immediately after.
 
 ---
 
@@ -1463,9 +1400,10 @@ cognos-backend/
 │   │   └── models_test.go           # Unit tests: tier filtering, model lookup
 │   │
 │   ├── gateway/
-│   │   ├── bifrost.go               # Bifrost client wrapper
-│   │   ├── bifrost_test.go          # Integration tests (require API keys in env)
-│   │   └── mock_client.go           # Mock for unit tests
+│   │   ├── client.go                # Cognos-owned gateway interface and request/response types
+│   │   ├── bifrost.go               # Optional Bifrost adapter
+│   │   ├── bifrost_test.go          # Guarded adapter tests (require API keys in env)
+│   │   └── mock_client.go           # Mock for unit/integration tests
 │   │
 │   ├── crypto/
 │   │   ├── payload.go               # MessagePayload, Attachment structs
@@ -1486,6 +1424,7 @@ cognos-backend/
 │   │   ├── interface.go             # Database interface (for mocking)
 │   │   ├── messages.go              # PocketBase message read/write
 │   │   ├── conversations.go         # PocketBase conversation read/write
+│   │   ├── participants.go          # Conversation participants + wrapped access keys
 │   │   └── billing.go               # PocketBase billing read/write
 │   │
 │   ├── handler/
@@ -1525,140 +1464,99 @@ next phase begins.
 
 ### Roadmap amendments after codebase review
 
-The current repository already contains a working PocketBase app, a legacy OpenAI-compatible proxy,
-server-backed key storage, and hard-coded frontend models. The implementation plan below must be
-read with these mandatory amendments:
+The current repository already contains a working PocketBase app, a legacy provider proxy,
+conversation-key storage, server-backed key material, and first-party API routes. The implementation
+plan below must be read with these mandatory amendments:
 
-1. **Rewrite, do not adapt in place.** Replace the existing OpenAI-compatible chat path with the
-   first-party REST API described in Section 6.
-2. **Move frontend model selection to the backend catalogue.** Remove the hard-coded frontend model
-   list as the source of truth.
-3. **Keep NaCl primitives, change the key-management model.** Existing NaCl usage is close enough
-   to keep, but the storage and unlock model must be rewritten to the Account Key design described
-   in Section 13.
-4. **Start with Infomaniak only.** Seed only the approved Infomaniak model initially. Do not expose
-   Mistral, Anthropic, OpenAI, or other providers until explicitly approved.
-5. **Remove OpenAI compatibility once the new path is live.** `backend/pkg/compat/openai` and the
-   frontend `openai` browser SDK path are migration targets, not long-term architecture.
+1. **Rewrite around the first-party API surface.** Do not preserve the old compatibility shape as
+   the product contract.
+2. **Keep model selection backend-driven.** The backend catalogue remains the source of truth.
+3. **Build for sharing now.** Conversation-scoped key material with per-participant wrapping is the
+   target architecture, even before shared-conversation UX ships.
+4. **Preserve threading and expiry.** The new message schema must keep `parent_message_id` and
+   `expires_at` semantics.
+5. **Introduce the gateway interface first.** Bifrost may be the first adapter, but handler code
+   must depend only on the Cognos gateway contract.
+6. **Ship full billing records now.** Balance top-ups and plan changes are manual for this phase,
+   but `user_billing`, `balance_transactions`, and usage accounting are in scope now.
+7. **Add browser E2E from the start.** Keep it high level and user-flow oriented.
 
 Success criteria for the overall rework:
 
-1. Backend model availability is driven solely by the backend catalogue → verify: frontend renders
-   models from `/api/v1/models` with no hard-coded list required.
-2. Chat completions go through first-party Cognos endpoints only → verify: no UI path depends on
-   the OpenAI browser SDK or `/v1/chat/completions` compatibility route.
-3. Message content is stored as ciphertext only and billing/analytics never store plaintext →
-   verify: database inspection and integration tests.
-4. Cross-device unlock requires account password + Account Key, while trusted devices avoid repeated
-   prompts → verify: new-device unlock flow and trusted-device relaunch flow.
-5. Product copy accurately describes the security model → verify: README and new security doc
-   updated before merge.
+1. Backend model availability is driven solely by the backend catalogue.
+2. Chat completions go through first-party Cognos endpoints only.
+3. Message content is stored as ciphertext only while preserving threading and expiry.
+4. Conversation encryption is participant based and ready for future sharing.
+5. Billing and analytics record token/cache/provider-cost metadata without plaintext content.
+6. Cross-device unlock requires account password + Account Key.
+7. Product copy accurately describes the security model.
 
 ---
 
-### Phase 1 — Foundation
+### Phase 1 — Safety rails, catalogue, and gateway contract
 
-**Goal:** Model catalogue, Bifrost integration, and a working completion endpoint with no billing or
-analytics.
-
-**Dependencies before starting:**
-
-- [ ] Go module initialised (`go mod init`)
-- [ ] PocketBase running locally
-- [ ] At least one provider API key (recommend Infomaniak for CH-only testing)
-- [ ] Bifrost Go SDK confirmed importable (`go get github.com/maximhq/bifrost/core`)
+**Goal:** Lock in tests and interfaces before changing persistence or provider wiring.
 
 **Tasks:**
 
-| #    | Task                                                                                 | Package     | Notes                                                                  |
-| ---- | ------------------------------------------------------------------------------------ | ----------- | ---------------------------------------------------------------------- |
-| 1.1  | Define `Config` struct and env loading                                               | `config`    | See Section 10 for all required env vars                               |
-| 1.2  | Implement `AllModels` catalogue with the initial Infomaniak model only               | `catalogue` | Do not seed unapproved providers in the first cut                      |
-| 1.3  | Implement `ModelsAvailableForTier()` and `GetModelByID()`                            | `catalogue` |                                                                        |
-| 1.4  | Write unit tests for catalogue filtering                                             | `catalogue` | 100% coverage required                                                 |
-| 1.5  | Implement Bifrost `Client` with `NewClient()` and `Complete()`                       | `gateway`   |                                                                        |
-| 1.6  | Implement `GET /api/v1/models` handler                                               | `handler`   | Returns all active models plus eligibility metadata                    |
-| 1.7  | Create PocketBase collections: `conversations`, `messages`                           | `store`     | Via PocketBase admin UI or migration                                   |
-| 1.8  | Implement basic `POST /api/v1/conversations/{id}/complete`                           | `handler`   | No encryption, no billing yet — returns plaintext response for testing |
-| 1.9  | Write integration test for complete endpoint                                         | `handler`   | Use Infomaniak API key                                                 |
-| 1.10 | Remove or disable the legacy OpenAI compatibility route once replacement is verified | `handler`   | Avoid dual long-term APIs                                              |
+| #   | Task                                                                                  | Package / Area |
+| --- | ------------------------------------------------------------------------------------- | -------------- |
+| 1.1 | Record backend and frontend baseline failures/successes in the checklist              | docs           |
+| 1.2 | Define the gateway interface and deterministic test double                            | `gateway`      |
+| 1.3 | Tighten catalogue tests around privacy-tier eligibility and active-model behaviour    | `catalogue`    |
+| 1.4 | Keep `/api/v1/models` backend-driven and covered by integration tests                 | `handler`      |
+| 1.5 | Add high-level browser E2E scaffolding for login → load models → send message → reply | frontend/e2e   |
 
-**Review checkpoint 1:** Lead engineer verifies a completion request reaches Infomaniak and returns
-a valid response. Model filtering works correctly for all three tiers.
+**Review checkpoint 1:** The internal contracts are pinned by tests before architecture changes.
 
 ---
 
-### Phase 2 — Encryption & Message Storage
+### Phase 2 — Conversation sharing foundations and message rewrite
 
-**Goal:** All message content encrypted before persistence. Existing completion endpoint updated.
-
-**Dependencies before starting:**
-
-- [ ] Phase 1 review passed
-- [ ] Frontend team has confirmed the public key format (base64 X25519) and TweetNaCl.js integration
+**Goal:** Move to conversation-scoped encryption with preserved threading/expiry semantics.
 
 **Tasks:**
 
-| #   | Task                                                                  | Package   | Notes                                                               |
-| --- | --------------------------------------------------------------------- | --------- | ------------------------------------------------------------------- |
-| 2.1 | Implement `MessagePayload` and `Attachment` structs                   | `crypto`  |                                                                     |
-| 2.2 | Implement `EncryptPayload()`                                          | `crypto`  |                                                                     |
-| 2.3 | Write round-trip encryption tests                                     | `crypto`  | Encrypt then decrypt (using NaCl box.Open), verify payload equality |
-| 2.4 | Add `public_key` field to users collection                            | `store`   | Update registration flow to accept and store public key             |
-| 2.5 | Update `complete` handler to encrypt both user and assistant messages | `handler` | Follow the exact step order in Section 7                            |
-| 2.6 | Implement `GET /api/v1/conversations/{id}/messages`                   | `handler` | Returns ciphertext array                                            |
-| 2.7 | End-to-end test: encrypt on backend, decrypt using NaCl in a test     | `crypto`  |                                                                     |
+| #   | Task                                                                                  | Package / Area |
+| --- | ------------------------------------------------------------------------------------- | -------------- |
+| 2.1 | Finalise conversation/access-key schema (`conversations`, participants, wrapped keys) | `store`        |
+| 2.2 | Finalise `messages` schema with `parent_message_id`, `expires_at`, `sequence`         | `store`        |
+| 2.3 | Implement message/title encryption using conversation-scoped key material             | `crypto`       |
+| 2.4 | Update conversation/message handlers to enforce access by participant membership      | `handler`      |
+| 2.5 | Add integration tests proving ciphertext-only persistence with thread/expiry intact   | backend tests  |
+| 2.6 | Add browser E2E for conversation creation, send/reply flow, and history reload        | frontend/e2e   |
 
-**Review checkpoint 2:** Lead engineer verifies that messages in SQLite are ciphertext only.
-Decryption works correctly using a test private key. No plaintext appears in the database.
+**Review checkpoint 2:** The system is sharing-ready at the crypto/schema layer without losing
+existing chat behaviour.
 
 ---
 
-### Phase 3 — Billing & Analytics
+### Phase 3 — Gateway adapter, billing, and analytics
 
-**Goal:** PAYG balance deduction, flat-rate recording, and analytics event emission working end to
-end.
-
-**Dependencies before starting:**
-
-- [ ] Phase 2 review passed
-- [ ] S3-compatible bucket created (Infomaniak kDrive S3 recommended)
-- [ ] FX rate source decided (SNB API or ECB) and API confirmed accessible
+**Goal:** Route real provider traffic through the gateway interface and fully record usage.
 
 **Tasks:**
 
-| #    | Task                                                                            | Package     | Notes                                                                 |
-| ---- | ------------------------------------------------------------------------------- | ----------- | --------------------------------------------------------------------- |
-| 3.1  | Create PocketBase collections: `user_billing`, `balance_transactions`           | `store`     |                                                                       |
-| 3.2  | Implement `fx_rate.go` — daily cached USD→CHF rate                              | `billing`   | Fail safe: if fetch fails, use previous cached rate. Log the failure. |
-| 3.3  | Implement `BillingService` with `CanAfford()` and `DeductBalance()`             | `billing`   |                                                                       |
-| 3.4  | Write unit tests for billing service                                            | `billing`   | Test PAYG deduction, flat-rate no-deduction, insufficient balance     |
-| 3.5  | Implement `UsageEvent` struct                                                   | `analytics` |                                                                       |
-| 3.6  | Implement `Emitter` with in-memory DuckDB buffer and hourly Parquet flush       | `analytics` |                                                                       |
-| 3.7  | Implement S3 upload of Parquet files                                            | `analytics` | Use Infomaniak S3-compatible endpoint                                 |
-| 3.8  | Wire billing and analytics into `complete` handler                              | `handler`   | Follow exact step order in Section 7                                  |
-| 3.9  | Implement `GET /api/v1/billing` and `GET /api/v1/billing/transactions`          | `handler`   |                                                                       |
-| 3.10 | Implement nightly overage check job                                             | `jobs`      | Can be a cron-triggered function or standalone binary                 |
-| 3.11 | Write integration test: send 5 completions, verify balance decrements correctly | `handler`   |                                                                       |
+| #   | Task                                                                                      | Package / Area        |
+| --- | ----------------------------------------------------------------------------------------- | --------------------- |
+| 3.1 | Implement the first real gateway adapter (Bifrost or equivalent behind the interface)     | `gateway`             |
+| 3.2 | Capture input/output/cache tokens and provider cost when available                        | `gateway` / `billing` |
+| 3.3 | Add `user_billing` and `balance_transactions` schema and repositories                     | `store`               |
+| 3.4 | Implement affordability checks, deductions, and flat-rate usage recording                 | `billing`             |
+| 3.5 | Emit anonymised analytics events with token/cache/provider-cost fields                    | `analytics`           |
+| 3.6 | Add integration tests for PAYG, flat-rate, insufficient balance, and analytics payloads   | backend tests         |
+| 3.7 | Extend browser E2E to cover insufficient balance and model-eligibility UX at a high level | frontend/e2e          |
 
-**Review checkpoint 3:** Lead engineer verifies that PAYG balance decrements accurately match
-calculated costs. Analytics Parquet file can be queried via DuckDB CLI. Flat-rate users are not
-charged.
+**Review checkpoint 3:** Real provider calls, billing, and analytics all flow through the same
+contract and are covered by tests.
 
 ---
 
-### Phase 4 — Multi-modal Support
+### Phase 4 — Multi-modal support
 
 **Goal:** Add image upload, image generation, document upload, and audio transcription.
 
-**Dependencies before starting:**
-
-- [ ] Phase 3 review passed and stable in production
-- [ ] Multi-modal capable model added to catalogue (e.g. a vision model on Infomaniak or via Tier 3)
-- [ ] Object storage bucket configured for encrypted attachment storage
-- [ ] Frontend spec for multi-modal UI completed separately
-
-**Tasks:** (high-level — a separate detailed spec will be written for Phase 4)
+**Tasks:** (high level — a separate detailed spec will be written for Phase 4)
 
 | #   | Task                                                                 |
 | --- | -------------------------------------------------------------------- |
@@ -1666,7 +1564,7 @@ charged.
 | 4.2 | Implement attachment retrieval and decryption (client-side)          |
 | 4.3 | Update `complete` handler to include attachments in provider request |
 | 4.4 | Add vision model(s) to catalogue                                     |
-| 4.5 | Add audio transcription endpoint (Whisper via Infomaniak)            |
+| 4.5 | Add audio transcription endpoint (Whisper via approved provider)     |
 | 4.6 | Update analytics event emission for multi-modal fields               |
 
 ---
@@ -1826,43 +1724,64 @@ func parseInt64(s string) (int64, error) {
 
 ## 11. Testing Requirements
 
+The detailed branch test plan lives in:
+
+- `docs/specs/backend-model-selector-test-plan.md`
+
+### Testing strategy
+
+- Use **red/green TDD** for each slice.
+- Default to **integration tests** for backend request flows.
+- Use **unit tests** for security/privacy logic, billing calculation, and catalogue eligibility.
+- Add **high-level browser E2E** for user-critical flows.
+- Keep browser E2E focused on behaviour, not styling.
+
 ### Unit tests
 
-Every package must have unit tests. Minimum coverage: **80%** per package. Packages with pure
-business logic (`billing`, `catalogue`, `crypto`) must reach **100%**.
+| Area        | Required tests                                                                                                 |
+| ----------- | -------------------------------------------------------------------------------------------------------------- |
+| `catalogue` | Tier filtering, inactive exclusion, lookup by ID, eligibility across all tiers                                 |
+| `gateway`   | Adapter-independent contract tests using a mock client                                                         |
+| `crypto`    | Conversation-key wrapping/unwrapping, ciphertext round trip, invalid key handling, payload fidelity            |
+| `billing`   | PAYG deduction, flat-rate no-deduction, insufficient balance, provider-cost precedence, FX conversion accuracy |
+| `analytics` | UsageEvent serialisation, cache/provider-cost field handling, flush thresholds                                 |
 
-| Package     | Required tests                                                                                                                   |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `catalogue` | Tier filtering (all combinations), model lookup by ID, inactive model exclusion                                                  |
-| `crypto`    | Encrypt → decrypt round trip, invalid public key handling, payload JSON fidelity                                                 |
-| `billing`   | PAYG deduction correct to the Rappen, flat-rate no deduction, insufficient balance returns correct error, FX conversion accuracy |
-| `analytics` | UsageEvent struct serialises to Parquet without data loss, buffer flush triggers at correct thresholds                           |
+### Backend integration tests
 
-### Integration tests
+Backend integration tests should exercise the full first-party HTTP flow with PocketBase and mocked
+or guarded external adapters.
 
-Integration tests require real environment variables (API keys). They must be runnable with:
+| Test                      | What to verify                                                                                    |
+| ------------------------- | ------------------------------------------------------------------------------------------------- |
+| Models API                | Returns active models with eligibility metadata for the authenticated user                        |
+| Conversation/message flow | Create conversation → send message → persist ciphertext only → list messages with thread metadata |
+| Threading and expiry      | `parent_message_id` and `expires_at` survive persistence and retrieval                            |
+| Access control            | Non-participants cannot read or write a conversation                                              |
+| PAYG balance deduction    | Balance decrements by the correct amount across sequential requests                               |
+| Flat-rate accounting      | Usage is recorded without deducting balance                                                       |
+| Analytics payload privacy | No plaintext content, email, or conversation IDs leak into analytics events                       |
+
+### Guarded adapter tests
+
+Real provider adapter tests remain valuable but must be optional and explicitly gated.
 
 ```bash
 RUN_INTEGRATION_TESTS=true go test ./... -tags=integration
 ```
 
-Guard all integration tests with:
+Guard all provider tests with `RUN_INTEGRATION_TESTS=true`.
 
-```go
-func TestSomething(t *testing.T) {
-    if os.Getenv("RUN_INTEGRATION_TESTS") != "true" {
-        t.Skip("set RUN_INTEGRATION_TESTS=true to run")
-    }
-    // ...
-}
-```
+### Browser E2E
 
-| Test                   | What to verify                                                               |
-| ---------------------- | ---------------------------------------------------------------------------- |
-| Infomaniak completion  | Sends a real request, receives a real response with token counts             |
-| Full complete flow     | User message → Bifrost → encrypt both messages → check DB is ciphertext only |
-| PAYG balance deduction | Balance decrements by correct amount across 10 sequential requests           |
-| Analytics flush        | After 60 events, a Parquet file appears in S3 with correct row count         |
+At minimum, add high-level browser E2E for:
+
+1. authenticated user loads models from the backend
+2. authenticated user creates/selects a conversation
+3. authenticated user sends a message and receives a reply
+4. conversation history reload still renders decrypted messages
+5. insufficient-balance flow blocks sending for PAYG users
+
+Do **not** assert on CSS classes or visual minutiae in these tests.
 
 ### Linting
 
@@ -1896,23 +1815,29 @@ with earlier wording in this document, **this section wins**.
 ### 13.1 Scope and architecture decisions
 
 1. **Full rewrite, not a partial adaptation.**
-   - Replace the current PocketBase/OpenAI-compatible model-selection and chat path.
-   - Replace the frontend hard-coded model list with backend-driven data.
-2. **Use first-party Cognos REST endpoints.**
-   - Do not keep OpenAI compatibility as a product-facing API.
-   - The frontend should talk to Cognos endpoints directly.
-3. **Backend model catalogue is the source of truth.**
+   - Replace the current chat architecture where it blocks the new model, billing, and sharing work.
+   - Keep the first-party Cognos API surface as the product contract.
+2. **Backend model catalogue is the source of truth.**
    - Models are code-defined.
    - The initial seed is **Infomaniak only**.
    - Additional providers remain out of scope until explicitly approved.
-4. **Return all active models to the frontend.**
-   - `/api/v1/models` should return all active models.
-   - Include enough metadata for the UI to distinguish usable vs unavailable models (for example
-     `is_eligible` and an optional reason).
-5. **Record usage for billing rigorously.**
+3. **Build for conversation sharing now.**
+   - Conversation encryption is conversation-scoped, not single-user scoped.
+   - Participant access is represented by wrapped conversation key material.
+   - Participant removal requires key rotation for future access.
+4. **Preserve threading and expiring-message behaviour.**
+   - `parent_message_id` and `expires_at` remain first-class concerns in the schema, handlers, and
+     tests.
+5. **Own the gateway contract internally.**
+   - Handler/service code depends on a Cognos gateway interface.
+   - Bifrost is an adapter choice behind that interface, not the contract itself.
+6. **Record usage for billing rigorously.**
    - Capture input, output, and cache token counts when available.
    - Capture provider-reported cost when available.
    - Otherwise derive cost from catalogue pricing and the FX rate captured at request time.
+7. **Billing records ship now, payments later.**
+   - `user_billing` and `balance_transactions` are in scope now.
+   - Balances and plan changes are manually administered in this phase.
 
 ### 13.2 Key-management decision
 
@@ -1922,8 +1847,8 @@ Cognos will use a **1Password-style Account Key model**.
 - Users also receive a generated high-entropy **Account Key** used to unlock new devices.
 - The server may store an **encrypted private-key backup** to support cross-device access.
 - The server must never store or receive the **plaintext private key**.
-- A **trusted device** may cache locally wrapped unlock material in **IndexedDB** so the user does
-  not need to repeatedly enter the Account Key.
+- A **trusted device** may cache locally wrapped unlock material so the user does not need to
+  repeatedly enter the Account Key.
 - A **new device** must require both the account password and Account Key.
 - The Account Key is the deliberate security/usability tradeoff chosen for Cognos.
 - We are explicitly **not** using the old wording “private key never leaves your device”.
@@ -1977,11 +1902,11 @@ This is a practical lookup index for the rework.
 
 | File                                                                                       | Why it matters                                                                            |
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `frontend/src/app/interfaces/model.ts`                                                     | Current hard-coded model catalogue and fallback model definitions.                        |
+| `frontend/src/app/interfaces/model.ts`                                                     | Frontend model schema definitions and fallback/loading model state.                       |
 | `frontend/src/app/services/model.service.ts`                                               | Current backend-driven model state and selection logic.                                   |
 | `frontend/src/app/services/message.service.ts`                                             | Current message send/decrypt path over first-party Cognos APIs.                           |
 | `frontend/src/app/services/vault.service.ts`                                               | Current Account Key unlock flow and server-backed secret-key storage.                     |
-| `frontend/src/app/services/trusted-unlock.service.ts`                                      | Current wrapped trusted-device unlock storage in IndexedDB using WebCrypto.               |
+| `frontend/src/app/services/trusted-unlock.service.ts`                                      | Current wrapped trusted-device unlock storage implementation.                             |
 | `frontend/src/app/services/conversation.service.ts`                                        | Current conversation key creation, storage, fetch, and decryption flow.                   |
 | `frontend/src/app/services/crypto.service.ts`                                              | Current TweetNaCl client crypto helpers, including sealed-box decryption.                 |
 | `frontend/src/app/interfaces/message.ts`                                                   | Frontend message payload schema mirrored from the backend.                                |
@@ -2048,3 +1973,4 @@ After implementation, add focused docs for:
 - frontend model-selector data flow
 - billing and usage event pipeline
 - any consciously deferred crypto/security TODOs discovered during implementation
+- the maintained red/green branch test plan (`docs/specs/backend-model-selector-test-plan.md`)

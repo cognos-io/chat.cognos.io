@@ -1,20 +1,37 @@
-# Backend Model Selector & Security Rework — File-by-File Checklist
+# Backend Model Selector, Sharing-Ready Messages & Gateway Rework — Living Checklist
 
 **Related docs:**
 
 - `docs/specs/backend-model-selector.md`
+- `docs/specs/backend-model-selector-test-plan.md`
 - `docs/security-model.md`
 
-This is the execution checklist for the rework.
+This checklist is the living execution tracker for the rework.
+
+---
+
+## Confirmed decisions reflected here
+
+- [x] model catalogue remains backend-driven
+- [x] gateway is a Cognos-owned internal abstraction first
+- [x] Bifrost is an adapter choice, not the product contract
+- [x] conversation encryption is conversation-scoped and built for future sharing now
+- [x] threading must be preserved
+- [x] expiring-message behaviour must be preserved
+- [x] billing records ship now, but balances/plan changes are manually updated by the operator
+- [x] usage tracking should capture input/output/cache/provider-cost fields where available
+- [x] browser E2E is required from the start, but only at a high behavioural level
 
 ---
 
 ## Success criteria
 
 - frontend renders models from the backend, not hard-coded lists
-- chat requests use first-party Cognos endpoints, not the browser OpenAI SDK
+- chat requests use first-party Cognos endpoints only
 - only approved Infomaniak models are active in the first cut
 - message content is stored as ciphertext only
+- conversation encryption is participant-based and sharing-ready
+- threading and expiry still work after the rewrite
 - billing records token usage and cost metadata without storing plaintext content
 - new-device unlock requires password + Account Key
 - trusted devices can stay unlocked locally
@@ -26,113 +43,159 @@ This is the execution checklist for the rework.
 
 ### Docs
 
-- [ ] `docs/specs/backend-model-selector.md`
-    - [ ] confirm decisions remain aligned with implementation before coding
+- [x] `docs/specs/backend-model-selector.md`
+    - [x] updated to reflect gateway-first, sharing-ready, threading/expires, and manual-billing
+          decisions
+- [x] `docs/specs/backend-model-selector-checklist.md`
+    - [x] rewritten as the living tracker for this branch
+- [x] `docs/specs/backend-model-selector-test-plan.md`
+    - [x] added detailed red/green plan covering backend, frontend, and browser E2E
 - [ ] `docs/security-model.md`
-    - [ ] keep this in sync if implementation details change
+    - [ ] keep in sync if implementation details change
 - [ ] `README.md`
     - [ ] keep wording aligned during rollout
 - [ ] `backend/README.md`
     - [ ] update/remove legacy notes once replaced
 
-### Verification
+### Verification baseline
 
-- [ ] confirm current branch is correct
-- [ ] run backend tests before changes
-- [ ] run frontend tests/build before changes
+- [x] identify current branch
+    - [x] current branch is `feat/llm-gateway`
+- [ ] confirm current branch is the intended branch for this rework
+- [x] run backend tests before changes
+    - [x] `cd backend && go test ./...` passes
+- [x] run frontend unit tests before changes
+    - [x] baseline recorded: `cd frontend && pnpm exec ng test --watch=false` currently fails
+    - [x] current failure includes missing `src/app/guards/keypair-required.guard`
+- [x] run frontend build before changes
+    - [x] baseline recorded: `cd frontend && pnpm build` currently fails
+    - [x] current failure includes SCSS budget overrun in `src/app/pages/chat/chat.component.scss`
 
 ---
 
-## Phase 1 — Backend model catalogue and API foundation
+## Phase 1 — Test harness and red/green foundation
 
-### New backend packages/files
+### New docs / harness work
+
+- [ ] `docs/specs/backend-model-selector-test-plan.md`
+    - [ ] keep updated as tests are added and moved from red → green
+- [ ] browser E2E harness
+    - [ ] choose/install the browser E2E runner
+    - [ ] document the canonical local command
+    - [ ] run app(s) on non-standard local ports for E2E
+
+### Backend test targets
+
+- [ ] backend integration tests for `/api/v1/models`
+    - [ ] active model list
+    - [ ] eligibility metadata
+    - [ ] privacy-tier behaviour
+- [ ] gateway contract tests
+    - [ ] handler/service tests depend on a mock gateway client
+- [ ] catalogue unit tests
+    - [ ] tier filtering
+    - [ ] inactive exclusion
+    - [ ] lookup by ID
+
+### Frontend test targets
+
+- [ ] frontend unit test baseline is green again
+- [ ] high-level browser E2E baseline is green
+    - [ ] authenticated user loads models from backend
+
+### Verification
+
+- [ ] backend unit/integration tests pass for catalogue and models API
+- [ ] frontend unit tests pass
+- [ ] first browser E2E passes
+
+---
+
+## Phase 2 — Backend model catalogue and gateway contract
+
+### Backend packages/files
 
 - [ ] `backend/internal/catalogue/models.go`
-    - [ ] define `PrivacyTier`
-    - [ ] define `ContentType`
-    - [ ] define `Model`
-    - [ ] seed initial Infomaniak model only
-    - [ ] implement active/all/lookup helpers
-
+    - [ ] keep code-defined catalogue as source of truth
+    - [ ] only approved Infomaniak model(s) active initially
+    - [ ] retain eligibility metadata needed by the UI
 - [ ] `backend/internal/catalogue/models_test.go`
-    - [ ] test filtering by tier
-    - [ ] test inactive exclusion
-    - [ ] test lookup by ID
-
+    - [ ] expand tier/eligibility coverage if needed
+- [ ] `backend/internal/gateway/client.go`
+    - [ ] define Cognos-owned request/response/interface contract
+    - [ ] include input/output/cache/provider-cost usage fields
+- [ ] `backend/internal/gateway/mock_client.go`
+    - [ ] deterministic test double for handler/service tests
 - [ ] `backend/internal/gateway/bifrost.go`
-    - [ ] wrap Bifrost client
-    - [ ] configure Infomaniak provider
-    - [ ] return normalized completion + usage
-
+    - [ ] add as adapter behind the interface when ready
 - [ ] `backend/internal/gateway/bifrost_test.go`
-    - [ ] add guarded integration test path if practical
-
+    - [ ] guarded real-adapter path if practical
 - [ ] `backend/internal/handler/models.go`
-    - [ ] implement `GET /api/v1/models`
-    - [ ] return all active models
-    - [ ] include user eligibility metadata
+    - [ ] keep `GET /api/v1/models`
+    - [ ] return all active models plus eligibility metadata
 
 ### Existing backend files to update
 
 - [ ] `backend/internal/config/api.go`
-    - [ ] add new config fields for model/gateway work
-    - [ ] add Infomaniak product/config support cleanly
+    - [ ] add config cleanly for gateway adapters and Infomaniak product ID
 - [ ] `backend/cmd/api/main.go`
-    - [ ] wire new config and gateway services
+    - [ ] wire gateway interface and adapter(s)
 - [ ] `backend/cmd/api/routes.go`
-    - [ ] register first-party `/api/v1/models`
-    - [ ] begin registering new first-party chat routes
-
-### Legacy/backend cleanup targets
-
-- [ ] `backend/pkg/compat/openai/openai.go`
-    - [ ] mark as migration target
-    - [ ] remove after replacement path is verified
-- [ ] `backend/pkg/proxy/repo.go`
-    - [ ] remove or shrink once Bifrost owns provider routing
-- [ ] `backend/db/migrations/1711007996_created_models.go`
-    - [ ] decide whether legacy `models` collection is retired or left unused
+    - [ ] keep first-party model/chat routes consistent
 
 ### Verification
 
-- [ ] backend test: catalogue passes
 - [ ] request to `/api/v1/models` returns backend-driven models
-- [ ] only Infomaniak is active
+- [ ] handlers/services no longer depend on provider SDK types directly
+- [ ] only approved Infomaniak model(s) are active
 
 ---
 
-## Phase 2 — Backend conversations/messages API rewrite
+## Phase 3 — Sharing-ready conversations and messages rewrite
 
 ### New backend packages/files
 
 - [ ] `backend/internal/store/conversations.go`
-    - [ ] first-party conversation persistence helpers
+    - [ ] conversation persistence helpers
+    - [ ] key version support
 - [ ] `backend/internal/store/messages.go`
-    - [ ] message persistence helpers for new schema
+    - [ ] message persistence helpers for the new schema
+- [ ] `backend/internal/store/participants.go`
+    - [ ] participant membership and wrapped conversation key access records
 - [ ] `backend/internal/store/interface.go`
     - [ ] minimal interfaces for handler/service tests
 - [ ] `backend/internal/handler/conversations.go`
-    - [ ] `POST /api/v1/conversations`
-    - [ ] `GET /api/v1/conversations`
-    - [ ] `GET /api/v1/conversations/{id}/messages`
+    - [ ] create/list conversations by participant access
+    - [ ] list messages preserving thread/expiry metadata
 - [ ] `backend/internal/handler/complete.go`
-    - [ ] `POST /api/v1/conversations/{id}/complete`
     - [ ] validate model ID
     - [ ] validate user tier eligibility
-    - [ ] call gateway
-    - [ ] return usage metadata
+    - [ ] validate conversation access
+    - [ ] persist user + assistant messages with preserved threading/expiry behaviour
+
+### Crypto files
+
+- [ ] `backend/internal/crypto/payload.go`
+    - [ ] define final encrypted payload shape
+    - [ ] include usage metadata fields as needed
+- [ ] `backend/internal/crypto/encrypt.go`
+    - [ ] align with conversation-scoped key architecture
+    - [ ] keep NaCl-based approach
+- [ ] `backend/internal/crypto/encrypt_test.go`
+    - [ ] round-trip tests
+    - [ ] invalid key tests
+    - [ ] wrapped conversation-key access tests
 
 ### Existing backend files to update
 
-- [ ] `backend/cmd/api/routes.go`
-    - [ ] register new conversation and complete routes
-    - [ ] keep auth/rate-limit behavior consistent
+- [ ] `backend/internal/auth/repo.go`
+    - [ ] support user public-key lookup for participant key wrapping
 - [ ] `backend/internal/chat/conversation.go`
-    - [ ] either adapt into new store layer or retire
+    - [ ] adapt/migrate/retire based on new store layer
 - [ ] `backend/internal/chat/repo.go`
-    - [ ] either migrate logic into new store layer or retire
+    - [ ] adapt/migrate/retire based on new store layer
 - [ ] `backend/internal/chat/messaging.go`
-    - [ ] replace payload assumptions with new encrypted payload model
+    - [ ] replace payload assumptions with final encrypted payload model
 
 ### PocketBase migrations/schema
 
@@ -141,46 +204,26 @@ This is the execution checklist for the rework.
     - [ ] `users.privacy_tier`
     - [ ] `users.preferred_model_id`
     - [ ] `conversations`
+    - [ ] `conversation_participants`
+    - [ ] `conversation_access_keys`
     - [ ] `messages`
-- [ ] ensure server-side rules match new first-party API behavior
+- [ ] ensure server-side rules match first-party API behaviour
+
+### Behaviour that must survive
+
+- [ ] threading preserved
+    - [ ] `parent_message_id` persisted and returned
+- [ ] expiring-message behaviour preserved
+    - [ ] `expires_at` persisted and returned
+- [ ] ciphertext-only persistence preserved
+- [ ] non-participants cannot read/write the conversation
 
 ### Verification
 
 - [ ] create/list conversation works
-- [ ] complete endpoint works with Infomaniak
-- [ ] frontend-independent HTTP smoke tests pass
-
----
-
-## Phase 3 — Encryption payload and ciphertext persistence
-
-### Backend files
-
-- [ ] `backend/internal/crypto/payload.go`
-    - [ ] define encrypted payload shape
-- [ ] `backend/internal/crypto/encrypt.go`
-    - [ ] align with final message encryption format
-    - [ ] keep NaCl-based approach
-- [ ] `backend/internal/crypto/encrypt_test.go`
-    - [ ] round-trip tests
-    - [ ] invalid key tests
-- [ ] `backend/internal/crypto/encrypt_benchmark_test.go`
-    - [ ] keep only if still relevant after final format choice
-
-### Existing backend files to update
-
-- [ ] `backend/internal/auth/repo.go`
-    - [ ] support the new public-key and encrypted-backup lookup needs
-- [ ] `backend/internal/handler/complete.go`
-    - [ ] encrypt persisted user + assistant messages
-- [ ] `backend/internal/store/messages.go`
-    - [ ] persist ciphertext only
-
-### Verification
-
-- [ ] inspect DB records: no plaintext message content at rest
-- [ ] decrypt stored ciphertext in tests successfully
-- [ ] confirm logs do not include message content
+- [ ] send/reply flow works with preserved thread linkage
+- [ ] expiring messages still expire / can still be kept where applicable
+- [ ] DB inspection shows no plaintext chat content at rest
 
 ---
 
@@ -192,12 +235,14 @@ This is the execution checklist for the rework.
     - [ ] plan types
     - [ ] affordability check
     - [ ] deduction/record logic
+    - [ ] provider-cost precedence when available
 - [ ] `backend/internal/billing/fx_rate.go`
     - [ ] cached USD→CHF rate
 - [ ] `backend/internal/billing/service_test.go`
-    - [ ] PAYG / flat-rate coverage
+    - [ ] PAYG / flat-rate / insufficient-balance coverage
 - [ ] `backend/internal/analytics/event.go`
     - [ ] usage event shape
+    - [ ] input/output/cache/provider-cost fields
 - [ ] `backend/internal/analytics/emitter.go`
     - [ ] buffered event writing
     - [ ] flush strategy
@@ -222,21 +267,28 @@ This is the execution checklist for the rework.
 - [ ] `backend/cmd/api/main.go`
     - [ ] wire billing/emitter services
 
+### Manual-operations note
+
+- [ ] operator/admin path exists to:
+    - [ ] top up PAYG balances manually
+    - [ ] set/change plan type manually
+    - [ ] inspect billing transactions manually
+
 ### Verification
 
 - [ ] PAYG deduction test passes
 - [ ] flat-rate path records usage without deduction
 - [ ] analytics payload excludes plaintext content and direct user identifiers
+- [ ] input/output/cache/provider-cost fields are recorded as supported by the active provider
 
 ---
 
-## Phase 5 — Frontend model selector rewrite
+## Phase 5 — Frontend model selector and chat integration
 
-### Existing frontend files to replace/update
+### Existing frontend files to update
 
 - [ ] `frontend/src/app/interfaces/model.ts`
-    - [ ] replace hard-coded catalogue as source of truth
-    - [ ] keep only client model type/schema if needed
+    - [ ] keep only client schema/types, not source-of-truth catalogue data
 - [ ] `frontend/src/app/services/model.service.ts`
     - [ ] fetch models from backend
     - [ ] hold selected model
@@ -245,81 +297,50 @@ This is the execution checklist for the rework.
     - [ ] render backend-provided model data
     - [ ] show unavailable models clearly
 - [ ] `frontend/src/app/components/chat/message-list-item/message-list-item.component.ts`
-    - [ ] ensure assistant model labels still resolve from fetched model list
-
-### Optional frontend API additions
-
-- [ ] create a dedicated API service if needed for models/conversations/billing
+    - [ ] resolve assistant model labels from fetched model data
+- [ ] `frontend/src/app/services/message.service.ts`
+    - [ ] align with final complete response schema
+    - [ ] keep thread and expiry behaviour intact
+- [ ] `frontend/src/app/services/conversation.service.ts`
+    - [ ] align conversation access-key handling with final backend schema
+- [ ] `frontend/src/app/services/crypto.service.ts`
+    - [ ] align decryption helpers with final conversation-scoped key format
 
 ### Verification
 
 - [ ] no hard-coded model list is required for normal operation
 - [ ] UI shows all active models
 - [ ] UI distinguishes selectable vs unavailable models
+- [ ] send/reply flow still renders decrypted history correctly
+- [ ] thread/expiry UX still behaves correctly
 
 ---
 
-## Phase 6 — Frontend chat transport rewrite
+## Phase 6 — Browser E2E coverage
 
-### Existing frontend files to replace/update
+### Required high-level scenarios
 
-- [x] `frontend/src/app/services/openai.service.provider.ts`
-    - [x] remove browser OpenAI SDK dependency from the chat path
-- [x] `frontend/src/app/services/message.service.ts`
-    - [x] replace OpenAI SDK calls with first-party Cognos API calls
-    - [x] keep local state/decryption behavior where still valid
-    - [x] map new response schema
-- [x] `frontend/src/app/services/conversation.service.ts`
-    - [x] align conversation CRUD/fetch flow with first-party API
-- [x] `frontend/src/app/types/pocketbase-types.ts`
-    - [x] regenerate or reduce dependence after schema/API changes
+- [ ] authenticated user loads models from backend
+- [ ] authenticated user creates or opens a conversation
+- [ ] authenticated user sends a message and receives a response
+- [ ] conversation history reload still works
+- [ ] insufficient balance blocks PAYG sending
+- [ ] unavailable model cannot be selected/sent
+
+### Explicit non-goals for these tests
+
+- [ ] do not assert CSS classes unnecessarily
+- [ ] do not test visual styling details
+- [ ] do not over-specify animations or layout minutiae
 
 ### Verification
 
-- [x] frontend sends chat requests only to Cognos endpoints
-- [x] no production path depends on `/v1/chat/completions`
-- [x] chat still renders decrypted history correctly
+- [ ] canonical browser E2E command passes locally
+- [ ] browser E2E is stable enough for CI use
 
 ---
 
-## Phase 7 — Account Key security model on the frontend
-
-### Existing frontend files to rewrite
-
-- [x] `frontend/src/app/services/vault.service.ts`
-    - [x] redesign around password + Account Key unlock
-    - [x] remove legacy email-salted vault assumptions
-    - [x] support trusted-device unlock state
-- [x] `frontend/src/app/services/trusted-unlock.service.ts`
-    - [x] store a wrapped trusted-device unlock blob in IndexedDB
-    - [x] keep the local wrapping key non-extractable via WebCrypto
-- [ ] `frontend/src/app/services/crypto.service.ts`
-    - [ ] no changes required in the current implementation slice
-- [x] `frontend/src/app/services/conversation.service.ts`
-    - [x] update any assumptions tied to old vault flow
-- [x] auth/register/login UI files
-    - [x] add Account Key onboarding and new-device unlock UX
-    - [x] add trusted-device unlock behavior
-
-### Backend/schema areas likely involved
-
-- [ ] `backend/internal/auth/repo.go`
-    - [ ] support encrypted backup retrieval fields
-- [x] add/update migrations for encrypted private-key backup metadata
-- [ ] ensure no endpoint accepts plaintext private keys
-
-### Verification
-
-- [x] first device setup generates Account Key
-- [x] onboarding requires explicit acknowledgement that losing the Account Key can block recovery
-- [x] new device requires password + Account Key
-- [x] trusted device can re-open without repeated Account Key prompts
-- [x] logout clears local trusted unlock state
-- [x] explicit local lock control clears local trusted unlock state
-
----
-
-## Phase 8 — Legacy path removal
+## Phase 7 — Legacy path removal
 
 ### Backend
 
@@ -327,46 +348,40 @@ This is the execution checklist for the rework.
     - [ ] remove once fully replaced
 - [ ] `backend/pkg/proxy/*`
     - [ ] remove provider adapters no longer used
-- [x] `backend/cmd/api/routes.go`
-    - [x] remove legacy `/v1/chat/completions` route
+- [ ] `backend/db/migrations/1711007996_created_models.go`
+    - [ ] decide whether legacy `models` collection is retired or left unused
 
 ### Frontend
 
-- [x] `frontend/src/app/services/openai.service.provider.ts`
-    - [x] delete if no longer used
-- [x] remove `openai` SDK usage/imports everywhere
+- [ ] remove any remaining obsolete chat transport or model fallback paths
 
 ### Verification
 
-- [x] repo-wide search shows no active chat-path dependency on legacy OpenAI compatibility layer
+- [ ] repo-wide search shows no active chat-path dependency on the legacy compatibility layer
 
 ---
 
-## Phase 9 — Documentation and final wording pass
+## Phase 8 — Documentation and final wording pass
 
 ### Docs to update
 
-- [x] `README.md`
-    - [x] final wording after implementation lands
-- [x] `backend/README.md`
-    - [x] remove legacy notes once obsolete
-- [x] `docs/security-model.md`
-    - [x] update with final implemented details
-- [x] `docs/specs/backend-model-selector.md`
-    - [x] mark any decisions that changed during implementation
-
-### New docs likely needed
-
-- [ ] backend model catalogue operations doc
-- [ ] billing/analytics pipeline doc
-- [ ] frontend model-selector data-flow doc
-- [ ] crypto/account-key TODO doc if any meaningful security debt remains
+- [ ] `README.md`
+    - [ ] final wording after implementation lands
+- [ ] `backend/README.md`
+    - [ ] remove legacy notes once obsolete
+- [ ] `docs/security-model.md`
+    - [ ] update with final implemented details
+- [ ] `docs/specs/backend-model-selector.md`
+    - [ ] mark any decisions that changed during implementation
+- [ ] `docs/specs/backend-model-selector-test-plan.md`
+    - [ ] final pass so it matches the implemented suite
 
 ### Verification
 
-- [x] no README/doc claims the private key never leaves the device
-- [x] docs accurately describe Account Key behavior
-- [x] docs match real API paths and model source of truth
+- [ ] no README/doc claims the private key never leaves the device
+- [ ] docs accurately describe Account Key behaviour
+- [ ] docs accurately describe conversation sharing readiness
+- [ ] docs match real API paths and model source of truth
 
 ---
 
@@ -374,22 +389,26 @@ This is the execution checklist for the rework.
 
 - [ ] search legacy model usage
     - `rg -n "hardCodedModels|defaultModel|provider:model|selectedModel\(" backend frontend`
-- [ ] search legacy OpenAI transport usage
-    - `rg -n "chat\.completions|OpenAI|/v1/chat/completions" backend frontend`
-- [ ] search old vault assumptions
-    - `rg -n "vault|user_key_pairs|conversation_secret_keys|email.*salt|secret_key" \
-      backend frontend`
+- [ ] search legacy transport / provider coupling
+    - `rg -n "chat\.completions|OpenAI|/v1/chat/completions|sashabaranov|go-openai" backend frontend`
+- [ ] search conversation/thread/expiry assumptions
+    - `rg -n "parent_message|expires|conversation_public_keys|conversation_secret_keys|wrapped_key|privacy_tier" backend frontend`
 - [ ] search risky wording
-    - `rg -n "private key never leaves|vault password|OpenAI-compatible" README.md \
-      backend/README.md docs`
+    - `rg -n "private key never leaves|vault password|OpenAI-compatible" README.md backend/README.md docs`
+
+---
 
 ## Final release checklist
 
 - [ ] backend tests pass
-- [ ] frontend tests/build pass
+- [ ] frontend unit tests pass
+- [ ] frontend build passes
+- [ ] browser E2E passes
 - [ ] integration smoke tests pass
 - [ ] schema migrations apply cleanly on a fresh DB
 - [ ] no plaintext chat content stored at rest
-- [ ] no plaintext private key handling remains
+- [ ] threading and expiry still work
+- [ ] conversation encryption is participant-based and sharing-ready
+- [ ] billing records and analytics fields are complete for active providers
 - [ ] only approved Infomaniak model(s) are active
 - [ ] docs are updated and internally consistent
