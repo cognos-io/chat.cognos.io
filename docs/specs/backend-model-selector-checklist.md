@@ -449,6 +449,12 @@ This checklist is the living execution tracker for the rework.
     /public-key and /secret-key endpoints fully covered for auth gate, round
     trip, key_version stamping, the single-public-key-per-conversation hook,
     PATCH signature attachment by row id, and per-participant access.
+- [x] PocketBase collection-route lockdown
+    (`cmd/api/collection_rules_participants_test.go`): conversations /
+    public_keys / secret_keys / messages / participants all return 403 on
+    every operation (list/view/create/update/delete) for every caller,
+    including the owner. The participant-based authorisation lives in
+    /api/v1/*; the collection routes are the no-direct-access wall.
 
 ### Explicit non-goals for these tests
 

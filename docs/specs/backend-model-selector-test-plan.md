@@ -189,6 +189,28 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   insert in a single PocketBase transaction. The pre-existing "compensating delete"
   on participant-add failure couldn't recover when the delete itself failed; the
   transactional write removes the orphan-row failure mode entirely.
+- Chat collection rules (`conversations`, `conversation_public_keys`,
+  `conversation_secret_keys`, `messages`, `participants`) are now all set to
+  `nil` for every operation — `/api/collections/*` returns 403 for every caller
+  including the conversation owner. Production access continues through
+  `/api/v1/*` handlers which call the PocketBase app directly (bypassing
+  collection rules) after authorising via the participants repo. The natural
+  participant-subquery rewrite was attempted first but PocketBase evaluates each
+  `@collection.X.*` clause as an independent existence check (verified
+  experimentally inside `cmd/api/zz_debug_test.go` before removing it), so
+  half-strict rules would leak access to revoked participants. Locking the
+  surface is a strictly stronger guarantee.
+    - `TestChatCollectionRulesAreLocked` pins every rule on every chat
+    collection is `nil`.
+    - `TestConversationsCollectionRoutesLocked` /
+    `TestConversationPublicKeysCollectionRoutesLocked` /
+    `TestConversationSecretKeysCollectionRoutesLocked` /
+    `TestMessagesCollectionRoutesLocked` /
+    `TestParticipantsCollectionRoutesLocked` drive the live PocketBase
+    server through every operation (list/view/create/update/delete where
+    applicable) for three user personas (owner / soft-revoked editor /
+    outsider) and assert the canonical "Only superusers can perform this
+    action" 403 every time.
 - `conversation_public_keys` unique index narrowed from `(conversation)` to
   `(conversation, key_version)` (migration 1760000019). The original index
   silently blocked the rotation handler's v2 public_key insert — the e2e
