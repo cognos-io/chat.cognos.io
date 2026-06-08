@@ -33,6 +33,11 @@ const CollectionName = "participants"
 // that already exists and is active. Callers can treat it as a soft no-op.
 var ErrAlreadyParticipant = errors.New("participants: user is already a participant")
 
+// ErrParticipantNotFound is returned when a revoke targets a user with no
+// active participant row on the conversation. Distinguishing it from "the
+// conversation doesn't exist" lets handlers shape responses precisely.
+var ErrParticipantNotFound = errors.New("participants: user is not an active participant")
+
 // Membership is the read-shape of a single participant row. Wrapping fields
 // in this struct (rather than handing back *core.Record) keeps callers
 // outside this package from depending on PocketBase types.
@@ -59,6 +64,13 @@ type Repo interface {
 	// Add inserts a new active participant row. Returns ErrAlreadyParticipant
 	// if an active row already exists.
 	Add(conversationID, userID string, role Role) error
+
+	// Revoke stamps removed_at on the active participant row for the
+	// given user. Returns ErrParticipantNotFound when no active row
+	// exists. The historical row is kept as audit data — sharing
+	// rotation re-wraps the conversation key for remaining participants
+	// separately, without dropping the revoke audit trail.
+	Revoke(conversationID, userID string) error
 
 	// ListActive returns all currently-active participants of a conversation
 	// (i.e. removed_at is empty). The order is added_at ascending so the
@@ -148,6 +160,31 @@ func (r *PocketBaseRepo) Add(conversationID, userID string, role Role) error {
 	record.Set("user", userID)
 	record.Set("role", string(role))
 	record.Set("added_at", time.Now().UTC())
+	return r.app.Save(record)
+}
+
+// Revoke stamps removed_at on the matching active row. Idempotency is
+// deliberately not supported: a missing active row returns
+// ErrParticipantNotFound so callers can decide whether to surface that as
+// 404 or treat it as already-revoked.
+func (r *PocketBaseRepo) Revoke(conversationID, userID string) error {
+	if conversationID == "" {
+		return errors.New("participants: conversationID is required")
+	}
+	if userID == "" {
+		return errors.New("participants: userID is required")
+	}
+
+	record, err := r.app.FindFirstRecordByFilter(
+		CollectionName,
+		"conversation = {:conversation} && user = {:user} && removed_at = ''",
+		dbx.Params{"conversation": conversationID, "user": userID},
+	)
+	if err != nil || record == nil {
+		return ErrParticipantNotFound
+	}
+
+	record.Set("removed_at", time.Now().UTC())
 	return r.app.Save(record)
 }
 
