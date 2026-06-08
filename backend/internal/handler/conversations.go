@@ -279,6 +279,22 @@ type createParticipantRequest struct {
 	WrappedSecretKey string `json:"wrapped_secret_key"`
 }
 
+type rotateConversationKeyRequest struct {
+	PublicKey          string                        `json:"public_key"`
+	PublicKeySignature string                        `json:"public_key_signature,omitempty"`
+	WrappedSecretKeys  []rotateConversationKeyEntry  `json:"wrapped_secret_keys"`
+}
+
+type rotateConversationKeyEntry struct {
+	UserID    string `json:"user_id"`
+	SecretKey string `json:"secret_key"`
+}
+
+type rotateConversationKeyResponse struct {
+	ConversationID string `json:"conversation_id"`
+	KeyVersion     int    `json:"key_version"`
+}
+
 // ConversationParticipantsList returns the currently-active participants for
 // a conversation the caller can access. Non-participants get 404 — the same
 // shape a missing conversation would return so the response can't be used
@@ -465,6 +481,127 @@ func ConversationParticipantsRevoke(app core.App) func(e *core.RequestEvent) err
 		}
 
 		return e.NoContent(http.StatusNoContent)
+	}
+}
+
+// ConversationKeyRotate bumps the conversation's key_version, persists a
+// new conversation public key at the new version, and installs a fresh
+// per-participant wrapped secret key for every active participant. The
+// caller (Admin) must provide a wrapped secret key for EVERY current active
+// participant; missing or extra entries are rejected so the rotation can
+// never leave a participant locked out of the new generation.
+func ConversationKeyRotate(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		caller := auth.ExtractUser(e)
+		if caller == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		conversationID := e.Request.PathValue("conversationID")
+		conversationRecord, err := ownedConversationRecord(app, e, conversationID)
+		if err != nil {
+			return err
+		}
+
+		repo := participants.NewPocketBaseRepo(app)
+		callerRole, _, err := repo.ActiveRole(conversationID, caller.ID)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify caller role", err)
+		}
+		if callerRole != participants.RoleAdmin {
+			return apis.NewForbiddenError("Only conversation admins can rotate the key", nil)
+		}
+
+		var req rotateConversationKeyRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Failed to read request data", err)
+		}
+		req.PublicKey = strings.TrimSpace(req.PublicKey)
+		if req.PublicKey == "" {
+			return apis.NewBadRequestError("public_key is required", nil)
+		}
+		if len(req.WrappedSecretKeys) == 0 {
+			return apis.NewBadRequestError("wrapped_secret_keys is required", nil)
+		}
+
+		members, err := repo.ListActive(conversationID)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to enumerate conversation participants", err)
+		}
+
+		expected := make(map[string]struct{}, len(members))
+		for _, m := range members {
+			expected[m.UserID] = struct{}{}
+		}
+
+		seen := make(map[string]string, len(req.WrappedSecretKeys))
+		for _, entry := range req.WrappedSecretKeys {
+			userID := strings.TrimSpace(entry.UserID)
+			secret := strings.TrimSpace(entry.SecretKey)
+			if userID == "" || secret == "" {
+				return apis.NewBadRequestError("Each wrapped_secret_keys entry needs a non-empty user_id and secret_key", nil)
+			}
+			if _, ok := expected[userID]; !ok {
+				return apis.NewBadRequestError("wrapped_secret_keys entry targets a non-participant", nil)
+			}
+			if _, dup := seen[userID]; dup {
+				return apis.NewBadRequestError("wrapped_secret_keys contains a duplicate user_id", nil)
+			}
+			seen[userID] = secret
+		}
+		if len(seen) != len(expected) {
+			return apis.NewBadRequestError("wrapped_secret_keys must cover every active participant", nil)
+		}
+
+		newVersion := conversationRecord.GetInt("key_version")
+		if newVersion < 1 {
+			newVersion = 1
+		}
+		newVersion++
+
+		publicKeysCollection, err := app.FindCollectionByNameOrId("conversation_public_keys")
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load conversation public keys collection", err)
+		}
+		secretKeysCollection, err := app.FindCollectionByNameOrId("conversation_secret_keys")
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load conversation secret keys collection", err)
+		}
+
+		if err := app.RunInTransaction(func(txApp core.App) error {
+			conversationRecord.Set("key_version", newVersion)
+			if err := txApp.Save(conversationRecord); err != nil {
+				return err
+			}
+
+			pubRecord := core.NewRecord(publicKeysCollection)
+			pubRecord.Set("conversation", conversationID)
+			pubRecord.Set("public_key", req.PublicKey)
+			pubRecord.Set("public_key_signature", req.PublicKeySignature)
+			pubRecord.Set("key_version", newVersion)
+			if err := txApp.Save(pubRecord); err != nil {
+				return err
+			}
+
+			for userID, secret := range seen {
+				secretRecord := core.NewRecord(secretKeysCollection)
+				secretRecord.Set("conversation", conversationID)
+				secretRecord.Set("user", userID)
+				secretRecord.Set("secret_key", secret)
+				secretRecord.Set("key_version", newVersion)
+				if err := txApp.Save(secretRecord); err != nil {
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to rotate conversation key", err)
+		}
+
+		return e.JSON(http.StatusOK, rotateConversationKeyResponse{
+			ConversationID: conversationID,
+			KeyVersion:     newVersion,
+		})
 	}
 }
 
