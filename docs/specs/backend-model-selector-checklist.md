@@ -199,18 +199,24 @@ This checklist is the living execution tracker for the rework.
     - [ ] key version support
 - [ ] `backend/internal/store/messages.go`
     - [ ] message persistence helpers for the new schema
-- [ ] `backend/internal/store/participants.go`
-    - [ ] participant membership and wrapped conversation key access records
+- [x] `backend/internal/participants/repo.go` (lives under `participants` rather than `store/`,
+    same purpose: single source of truth for "is this user allowed to read this conversation")
+    - [x] `IsActive(conversationID, userID)` with `removed_at IS NULL` filter
+    - [x] `Add(conversationID, userID, role)` with duplicate-rejection via `ErrAlreadyParticipant`
+    - [ ] wrapped conversation key access records (deferred — current secret-key collection
+        carries that role implicitly today, will be folded in with the schema rewrite)
 - [ ] `backend/internal/store/interface.go`
     - [ ] minimal interfaces for handler/service tests
-- [ ] `backend/internal/handler/conversations.go`
-    - [ ] create/list conversations by participant access
-    - [ ] list messages preserving thread/expiry metadata
-- [ ] `backend/internal/handler/complete.go`
-    - [ ] validate model ID
-    - [ ] validate user tier eligibility
-    - [ ] validate conversation access
-    - [ ] persist user + assistant messages with preserved threading/expiry behaviour
+- [x] `backend/internal/handler/conversations.go`
+    - [x] create/list conversations by participant access
+    - [x] auto-seed an Admin participant for the creator on create
+    - [x] list messages preserving thread/expiry metadata (already in place; now also
+        gated on participant access via `ownedConversationRecord`)
+- [x] `backend/internal/handler/complete.go`
+    - [x] validate model ID
+    - [x] validate user tier eligibility
+    - [x] validate conversation access (participants.Repo gate before any gateway call)
+    - [x] persist user + assistant messages with preserved threading/expiry behaviour
 
 ### Crypto files
 
@@ -250,19 +256,27 @@ This checklist is the living execution tracker for the rework.
     - [ ] `users.privacy_tier`
     - [ ] `users.preferred_model_id`
     - [ ] `conversations`
-    - [ ] `conversation_participants`
-    - [ ] `conversation_access_keys`
+    - [x] `participants` (restored under the original id `52et2jthsxn7mjr` so existing
+        PocketBase access rules light up unchanged; added `added_at` / `removed_at`
+        lifecycle fields; backfilled an Admin row per existing conversation's creator)
+    - [ ] `conversation_access_keys` (deferred — `conversation_secret_keys` carries this
+        today; will land with the explicit access-key schema rewrite)
     - [ ] `messages`
 - [ ] ensure server-side rules match first-party API behaviour
 
 ### Behaviour that must survive
 
-- [ ] threading preserved
-    - [ ] `parent_message_id` persisted and returned
-- [ ] expiring-message behaviour preserved
-    - [ ] `expires_at` persisted and returned
-- [ ] ciphertext-only persistence preserved
-- [ ] non-participants cannot read/write the conversation
+- [x] threading preserved
+    - [x] `parent_message_id` persisted and returned
+- [x] expiring-message behaviour preserved
+    - [x] `expires_at` persisted and returned
+- [x] ciphertext-only persistence preserved
+- [x] non-participants cannot read/write the conversation
+    - [x] `/api/v1/conversations` list filtered to active participant rows
+    - [x] `/api/v1/conversations/{id}/messages` returns 404 to non-participants
+    - [x] `/api/v1/conversations/{id}/complete` returns 404 to non-participants (gateway
+        Complete is never called for unauthorised attempts)
+    - [x] `/api/v1/messages/{id}` PATCH/DELETE gated on participant access
 
 ### Verification
 

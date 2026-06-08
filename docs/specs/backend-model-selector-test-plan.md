@@ -119,6 +119,25 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   optional metadata field (version / conversation_id / parent_message_id / owner_id /
   agent_id / model_id) so empty values never appear in the encrypted payload, and cannot
   be opened by a non-recipient key pair
+- `participants` migration (`1760000015_restore_participants_collection.go`) now has
+  integration coverage that the collection is restored with the original id
+  `52et2jthsxn7mjr` (so existing PocketBase rules referencing `@collection.participants`
+  still resolve), exposes the `conversation`/`user`/`role`/`added_at`/`removed_at` fields,
+  enforces a unique `(conversation, user)` index, and cascades participant rows when their
+  parent conversation is deleted
+- `participants.PocketBaseRepo` now has integration coverage that `IsActive` returns false
+  for non-participants and empty args, true for an active row, and false once `removed_at`
+  is stamped (soft-revoke); `Add` returns `ErrAlreadyParticipant` for duplicate inserts so
+  callers can treat re-adding as a no-op
+- conversation handler integration coverage now pins the participant-based access path:
+  the conversations list returns shared conversations to non-creator participants, message
+  listing succeeds for non-creator participants, and creating a conversation auto-seeds an
+  Admin participant row for the creator (verified by direct PocketBase lookup)
+- completion handler integration coverage now pins that a non-participant POSTing to
+  `/api/v1/conversations/{id}/complete` receives 404 with the same body shape as a missing
+  conversation, no gateway `Complete` call happens, and no message rows are persisted —
+  closing the access leak where any authenticated user could append messages to another
+  user's conversation
 
 ### Frontend
 
