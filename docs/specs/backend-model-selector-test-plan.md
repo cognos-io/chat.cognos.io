@@ -98,6 +98,15 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - catalogue tests now pin the "only approved Infomaniak models are active" invariant — every
   ActiveModels entry must have provider `infomaniak`, `RequiresNoRetention=true`, and privacy
   tier `ch_only`
+- `aiagent.InMemoryAIAgentRepo.LookupPrompt` now has direct unit coverage for the two seeded
+  agent IDs (`cognos:simple-assistant`, `cognos:generate-conversation-agent`) and for unknown,
+  empty, whitespace-padded, case-shifted, and wrong-namespace IDs all returning
+  `ErrAgentNotFound` (exact-match invariant)
+- `CryptoService.openSealedBox` now has unit coverage for a successful libsodium-shape round
+  trip, rejection with the wrong recipient key pair, rejection of tampered ciphertext bytes,
+  and rejection when the ephemeral public-key prefix is swapped (MAC + nonce derivation must
+  both fail); `mac` now has additional coverage proving different keys produce different
+  output, and both `hash` and `mac` honour the optional `outputLength` parameter
 
 ### Frontend
 
