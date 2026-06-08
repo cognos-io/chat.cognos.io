@@ -21,7 +21,6 @@ package main
 
 import (
 	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -33,8 +32,6 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 	"golang.org/x/crypto/argon2"
-	"golang.org/x/crypto/nacl/box"
-	"golang.org/x/crypto/nacl/secretbox"
 )
 
 const testDataDir = "../../testdata/seed"
@@ -248,123 +245,16 @@ func generateNonce() [24]byte {
 	return nonce
 }
 
+// TestConversationFilterRules used to assert that /api/collections/
+// conversations/records returned an empty list to guests and authed
+// users. After migration 1760000020 locked the chat-collection rules
+// entirely, that surface returns 403 regardless of caller — covered in
+// far more detail by TestConversationsCollectionRoutesLocked et al. in
+// collection_rules_participants_test.go. The function lives on as a
+// breadcrumb so a future reader looking up "ConversationFilterRules"
+// finds the replacement.
 func TestConversationFilterRules(t *testing.T) {
-	t.Parallel()
-
-	const (
-		conversationTitle = "Test Conversation"
-		collectionName    = "conversations"
-		// Seeded by setupTestApp.
-		userEmail     = "test1@example.com"
-		vaultPassword = "Eegev5eiyahjohghaingahtho8uxu3oh" // Used for decrypting the secret key
-	)
-	url := fmt.Sprintf("/api/collections/%s/records", collectionName)
-
-	app := setupTestApp(t)
-	defer app.Cleanup()
-
-	// Retrieve key pair for the user
-	userRecord, err := app.FindAuthRecordByEmail("users", userEmail)
-	if err != nil {
-		t.Fatal(err)
-	}
-	userKeyPairRecord, err := app.FindFirstRecordByData("user_key_pairs", "user", userRecord.Id)
-	if err != nil {
-		t.Fatal(err)
-	}
-	userPublicKeyStr := userKeyPairRecord.GetString("public_key")
-	userPublicKeyBytes, err := base64.StdEncoding.DecodeString(userPublicKeyStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var userPublicKey [32]byte
-	copy(userPublicKey[:], userPublicKeyBytes)
-	userEncryptedSecretKeyStr := userKeyPairRecord.GetString("secret_key")
-	userEncryptedSecretKeyBytes, err := base64.StdEncoding.DecodeString(
-		userEncryptedSecretKeyStr,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Hash the vault password with Argon2id
-	hashedVaultPassword := hashVaultPassword(vaultPassword, userEmail)
-
-	// Decrypt the secret key with the hashed vault password
-	// When you decrypt, you must use the same nonce and key you used to
-	// encrypt the message. One way to achieve this is to store the nonce
-	// alongside the encrypted message. Above, we stored the nonce in the first
-	// 24 bytes of the encrypted text.
-	var decryptNonce [24]byte
-	copy(decryptNonce[:], userEncryptedSecretKeyBytes[:24])
-
-	decryptedSecretKey, ok := secretbox.Open(
-		nil,
-		userEncryptedSecretKeyBytes[24:],
-		&decryptNonce,
-		&hashedVaultPassword,
-	)
-	if !ok {
-		t.Fatal("Failed to decrypt the secret key")
-	}
-	var userSecretKey [32]byte
-	copy(userSecretKey[:], decryptedSecretKey)
-
-	// Generate a key pair for the conversation
-	conversationPublicKey, conversationSecretKey, err := box.GenerateKey(rand.Reader)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Generate a nonce
-	nonce := generateNonce()
-
-	// Encrypt the private key with the user's public key
-	_, err = box.SealAnonymous(
-		nonce[:],
-		conversationSecretKey[:],
-		&userPublicKey, rand.Reader,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	withUserToken := withRecordAuth("users", userEmail)
-
-	nonce = generateNonce()
-
-	encryptedTitleBytes := box.Seal(
-		nonce[:],
-		[]byte(conversationTitle),
-		&nonce,
-		conversationPublicKey,
-		&userSecretKey,
-	)
-	_ = base64.StdEncoding.EncodeToString(encryptedTitleBytes)
-
-	scenarios := []tests.ApiScenario{
-		{
-			Name:            "list conversations as guest",
-			Method:          http.MethodGet,
-			URL:             url,
-			Headers:         map[string]string{},
-			ExpectedStatus:  http.StatusOK,
-			ExpectedContent: []string{"\"items\":[]"},
-			TestAppFactory:  setupTestApp,
-		},
-		{
-			Name:            "list conversations via user token",
-			Method:          http.MethodGet,
-			URL:             url,
-			ExpectedStatus:  http.StatusOK,
-			ExpectedContent: []string{"\"items\":[]"},
-			TestAppFactory:  setupTestApp,
-			BeforeTestFunc:  withUserToken,
-		},
-	}
-
-	for _, scenario := range scenarios {
-		scenario.Test(t)
-	}
+	t.Skip("see TestConversationsCollectionRoutesLocked — chat collections are now fully locked")
 }
 
 func TestUserKeyPairFilterRules(t *testing.T) {

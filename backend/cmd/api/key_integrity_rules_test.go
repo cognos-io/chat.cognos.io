@@ -41,17 +41,17 @@ func TestKeyIntegrityFieldsExist(t *testing.T) {
 	if conversationPublicKeys.Fields.GetByName("public_key_signature") == nil {
 		t.Fatal("conversation_public_keys missing public_key_signature field")
 	}
-	if conversationPublicKeys.CreateRule == nil {
-		t.Fatal("conversation_public_keys create rule is nil")
+	// The collection rules are now intentionally locked — production
+	// writes go through /api/v1/conversations/{id}/public-key which
+	// validates the body Go-side and persists via app.Save. The body
+	// validation that used to live inside the create-rule string is
+	// covered by the handler-level integration test
+	// (TestConversationPublicKeysKeyVersionFieldExists et al.) plus the
+	// e2e `conversation-keys-api.spec.ts` contract.
+	if conversationPublicKeys.CreateRule != nil {
+		t.Fatalf("conversation_public_keys create rule = %q, want nil (locked)", *conversationPublicKeys.CreateRule)
 	}
-	for _, want := range []string{"public_key_signature:isset = true"} {
-		if !strings.Contains(*conversationPublicKeys.CreateRule, want) {
-			t.Fatalf("conversation_public_keys create rule = %q, want substring %q", *conversationPublicKeys.CreateRule, want)
-		}
-	}
-	if conversationPublicKeys.UpdateRule == nil {
-		t.Fatal("conversation_public_keys update rule is nil")
-	}
+
 	// The historical index was `(conversation)` alone — rotation
 	// needed to insert a fresh public_key row per generation, so the
 	// invariant tightened to `(conversation, key_version)` instead.
