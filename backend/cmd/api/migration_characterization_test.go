@@ -53,6 +53,20 @@ func TestMetricsRouteWorksAcrossFreshApps(t *testing.T) {
 	}
 }
 
+// TestLegacyModelsCollectionRetired pins migration 1760000021: the old
+// database-driven `models` collection is gone after migrations run, leaving
+// the Go-defined catalogue (internal/catalogue) as the single source of
+// truth surfaced by GET /api/v1/models.
+func TestLegacyModelsCollectionRetired(t *testing.T) {
+	t.Parallel()
+
+	app := setupTestApp(t)
+
+	if _, err := app.FindCollectionByNameOrId("models"); err == nil {
+		t.Fatal("FindCollectionByNameOrId(models) returned no error, want collection deleted")
+	}
+}
+
 func TestSoftDeleteCopiesDeletedRecord(t *testing.T) {
 	t.Parallel()
 
