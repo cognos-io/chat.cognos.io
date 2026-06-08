@@ -196,7 +196,8 @@ This checklist is the living execution tracker for the rework.
 
 - [ ] `backend/internal/store/conversations.go`
     - [ ] conversation persistence helpers
-    - [ ] key version support
+    - [x] key version support (column landed on `conversations` via 1760000016; surfaced
+        on every conversation API response defaulting legacy 0/NULL rows to 1)
 - [ ] `backend/internal/store/messages.go`
     - [ ] message persistence helpers for the new schema
 - [x] `backend/internal/participants/repo.go` (lives under `participants` rather than `store/`,
@@ -259,8 +260,10 @@ This checklist is the living execution tracker for the rework.
     - [x] `participants` (restored under the original id `52et2jthsxn7mjr` so existing
         PocketBase access rules light up unchanged; added `added_at` / `removed_at`
         lifecycle fields; backfilled an Admin row per existing conversation's creator)
-    - [ ] `conversation_access_keys` (deferred — `conversation_secret_keys` carries this
-        today; will land with the explicit access-key schema rewrite)
+    - [x] `conversation_access_keys` key_version contract (still riding on
+        `conversation_secret_keys` rather than a dedicated table — the column landed
+        via 1760000017 + 1760000018, stamped on create, defaulted on read, ready for
+        rotation to filter stale wrappers without dropping audit data)
     - [ ] `messages`
 - [ ] ensure server-side rules match first-party API behaviour
 

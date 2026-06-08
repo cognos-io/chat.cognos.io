@@ -138,6 +138,13 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   conversation, no gateway `Complete` call happens, and no message rows are persisted —
   closing the access leak where any authenticated user could append messages to another
   user's conversation
+- the `conversations` / `conversation_public_keys` / `conversation_secret_keys` collections
+  all carry a `key_version` column now (default 1, backfilled). Integration coverage pins
+  the field exists, `/api/v1/conversations` create/list responses report `key_version` as
+  `>=1` (legacy zero/NULL rows surface as 1), the secret-key + public-key create handlers
+  stamp the wrapped row with the conversation's current generation (verified by direct
+  PocketBase lookup after a simulated prior rotation), and the get handlers default to 1
+  for legacy rows so clients never receive an invalid generation
 
 ### Frontend
 
