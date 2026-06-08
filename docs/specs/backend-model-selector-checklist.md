@@ -170,8 +170,11 @@ This checklist is the living execution tracker for the rework.
 
 ### Existing backend files to update
 
-- [ ] `backend/internal/config/api.go`
-    - [ ] add config cleanly for gateway adapters and Infomaniak product ID
+- [x] `backend/internal/config/api.go`
+    - [x] add config cleanly for gateway adapters and Infomaniak product ID
+    - [x] env provider now maps `COGNOS_<SECTION>_<REST>` → `<section>.<rest>` so runtime
+        overrides actually populate the struct
+    - [x] env-loading regression coverage in `api_load_test.go`
 - [x] `backend/cmd/api/main.go`
     - [x] wire gateway interface and adapter(s)
 - [x] `backend/cmd/api/routes.go`

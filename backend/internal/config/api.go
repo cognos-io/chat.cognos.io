@@ -32,6 +32,30 @@ func readSecretFile(path string) (string, error) {
 	return strings.TrimSpace(string(contents)), nil
 }
 
+// configEnvPrefix is the env-var prefix Cognos expects for runtime overrides.
+// Centralising it here keeps the env provider, file-secret overrides, and any
+// future code paths in lockstep.
+const configEnvPrefix = "COGNOS_"
+
+// envKeyToConfigPath maps an environment variable like
+// "COGNOS_INFOMANIAK_PRODUCT_ID" to the koanf flat-path key
+// "infomaniak.product_id". The first underscore after the Cognos prefix
+// becomes the section delimiter; any remaining underscores stay intact so
+// identifiers like "api_key" and "trial_seed_rappen" round-trip correctly.
+//
+// Returning "" tells the env provider to ignore the variable entirely.
+func envKeyToConfigPath(envKey string) string {
+	if !strings.HasPrefix(envKey, configEnvPrefix) {
+		return ""
+	}
+	lower := strings.ToLower(strings.TrimPrefix(envKey, configEnvPrefix))
+	idx := strings.Index(lower, "_")
+	if idx == -1 {
+		return lower
+	}
+	return lower[:idx] + "." + lower[idx+1:]
+}
+
 func fileEnvValue(envVar string) (string, error) {
 	path := strings.TrimSpace(os.Getenv(envVar))
 	if path == "" {
@@ -86,8 +110,10 @@ func MustLoadAPIConfig(logger *slog.Logger) *APIConfig {
 		}
 	}
 
-	// Load from environment variables
-	err = k.Load(env.Provider("COGNOS_", ".", nil), nil)
+	// Load from environment variables. Map COGNOS_<SECTION>_<REST> to the
+	// koanf tag form <section>.<rest> while preserving any further
+	// underscores inside the key (e.g. api_key, product_id).
+	err = k.Load(env.Provider("COGNOS_", ".", envKeyToConfigPath), nil)
 	if err != nil {
 		panic(err)
 	}

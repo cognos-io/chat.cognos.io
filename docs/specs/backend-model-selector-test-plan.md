@@ -68,6 +68,9 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - `/api/v1/models` integration coverage now asserts the response never includes
   `provider_model_id`, `base_url`, or `api_key`, locking the public contract against accidental
   leaks of internal provider routing fields
+- `config.MustLoadAPIConfig` now has env-loading regression coverage that pins the
+  `COGNOS_<SECTION>_<REST>` → `<section>.<rest>` mapping for every provider key plus the billing
+  trial seed default
 
 ### Frontend
 
