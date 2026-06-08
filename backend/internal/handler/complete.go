@@ -16,10 +16,8 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
-	compatopenai "github.com/cognos-io/chat.cognos.io/backend/pkg/compat/openai"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
-	oai "github.com/sashabaranov/go-openai"
 )
 
 type completionMessage struct {
@@ -212,18 +210,18 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			return apis.NewApiError(http.StatusServiceUnavailable, "Provider is unavailable", nil)
 		}
 
-		openAIMessages := make([]oai.ChatCompletionMessage, 0, len(req.Messages))
+		agentMessages := make([]aiagent.Message, 0, len(req.Messages))
 		for _, message := range req.Messages {
-			openAIMessages = append(openAIMessages, oai.ChatCompletionMessage{
+			agentMessages = append(agentMessages, aiagent.Message{
 				Role:    message.Role,
 				Content: message.Content,
 				Name:    message.Name,
 			})
 		}
-		openAIMessages = compatopenai.AddSystemMessage(openAIMessages, agent)
+		agentMessages = aiagent.BuildMessages(agent, agentMessages)
 
-		messages := make([]gateway.Message, 0, len(openAIMessages))
-		for _, message := range openAIMessages {
+		messages := make([]gateway.Message, 0, len(agentMessages))
+		for _, message := range agentMessages {
 			messages = append(messages, gateway.Message{
 				Role:    message.Role,
 				Content: message.Content,

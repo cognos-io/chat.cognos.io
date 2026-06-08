@@ -60,6 +60,11 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - user-create hook coverage now confirms new users receive trial billing rows automatically and
   that configured trial seed values override the default during bootstrap
 - the legacy gateway bridge has unit coverage for request mapping, context propagation, and errors
+- prompt assembly logic (`aiagent.BuildMessages`) now has unit coverage for empty input, prompt
+  system-message injection, caller-supplied system-message priority, duplicate-system stripping,
+  and example placement between the system message and user turn
+- the completion handler no longer imports the OpenAI SDK directly; the legacy compat package
+  bridges only the legacy `/v1/chat/completions` proxy path
 
 ### Frontend
 

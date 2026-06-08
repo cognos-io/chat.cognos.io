@@ -3,11 +3,18 @@ package aiagent
 import (
 	"errors"
 	"log/slog"
-
-	oai "github.com/sashabaranov/go-openai"
 )
 
 var ErrAgentNotFound = errors.New("agent not found")
+
+// Message is the provider-neutral chat message shape consumed by Cognos
+// internals. Adapters convert it to whatever wire format their provider
+// requires.
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+	Name    string `json:"name,omitempty"`
+}
 
 var SimpleAssistant = Prompt{
 	SystemMessage: `This is very important to my career.
@@ -38,7 +45,7 @@ After a response, if relevant, provide two follow-up questions worded as if I'm 
 
 var GenerateConversationAgent = Prompt{
 	SystemMessage: `This is very important to my career. You are a system generating titles for conversations. When you receive a message you should generate a title for the conversation. The title should be a 3 to 5 word description of the message you receive.`,
-	Examples: []oai.ChatCompletionMessage{
+	Examples: []Message{
 		{
 			Role:    "user",
 			Content: `Hello, how are you?`,
@@ -65,9 +72,48 @@ var hardCodedPrompts = map[string]Prompt{
 }
 
 type Prompt struct {
-	SystemMessage string                      `json:"system_message"`
-	Examples      []oai.ChatCompletionMessage `json:"examples"`
-	NumTokens     int                         `json:"num_tokens"`
+	SystemMessage string    `json:"system_message"`
+	Examples      []Message `json:"examples"`
+	NumTokens     int       `json:"num_tokens"`
+}
+
+// BuildMessages prepends a system message derived from prompt to messages.
+// If messages already starts with a system message, that takes priority and
+// no further system messages are injected. All other system messages in the
+// slice are stripped to keep exactly one system message in the output.
+//
+// Agent example exchanges are inserted between the system message and the
+// caller-supplied messages, mirroring the old compat/openai behaviour.
+//
+// If messages is empty, the slice is returned unchanged so the handler can
+// fast-fail on missing input before constructing a prompt.
+func BuildMessages(prompt Prompt, messages []Message) []Message {
+	if len(messages) == 0 {
+		return messages
+	}
+
+	filtered := make([]Message, 0, len(messages))
+	for _, msg := range messages {
+		if msg.Role != "system" {
+			filtered = append(filtered, msg)
+		}
+	}
+
+	var systemMessage Message
+	if messages[0].Role == "system" {
+		systemMessage = messages[0]
+	} else {
+		systemMessage = Message{
+			Role:    "system",
+			Content: prompt.SystemMessage,
+		}
+	}
+
+	out := make([]Message, 0, 1+len(prompt.Examples)+len(filtered))
+	out = append(out, systemMessage)
+	out = append(out, prompt.Examples...)
+	out = append(out, filtered...)
+	return out
 }
 
 type AIAgentRepo interface {

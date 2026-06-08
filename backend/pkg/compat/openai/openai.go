@@ -267,6 +267,9 @@ func Handler(
 	}
 }
 
+// AddSystemMessage is the legacy /v1/chat/completions adapter that bridges
+// between OpenAI SDK message types and aiagent.BuildMessages so the new
+// gateway-aware handler and the legacy proxy share the same prompt rules.
 func AddSystemMessage(
 	messages []oai.ChatCompletionMessage,
 	agent aiagent.Prompt,
@@ -274,30 +277,24 @@ func AddSystemMessage(
 	if len(messages) == 0 {
 		return messages
 	}
-	// We should only have one system message per request to avoid confusing the AI
-	var newMessages []oai.ChatCompletionMessage
+
+	neutral := make([]aiagent.Message, 0, len(messages))
 	for _, message := range messages {
-		if message.Role != "system" {
-			newMessages = append(newMessages, message)
-		}
+		neutral = append(neutral, aiagent.Message{
+			Role:    message.Role,
+			Content: message.Content,
+			Name:    message.Name,
+		})
 	}
 
-	var systemMessage oai.ChatCompletionMessage
-	// If the first message is a system message, prioritize it as it could
-	// be the users choice from the frontend
-	if messages[0].Role == "system" {
-		systemMessage = messages[0]
-	} else {
-		// set our system message
-		systemMessage = oai.ChatCompletionMessage{
-			Role:    "system",
-			Content: agent.SystemMessage,
-		}
-		// TODO(ewan): we may also need to trim the message by the number of tokens in the prompt to fit it within the model context window
+	processed := aiagent.BuildMessages(agent, neutral)
+	out := make([]oai.ChatCompletionMessage, 0, len(processed))
+	for _, message := range processed {
+		out = append(out, oai.ChatCompletionMessage{
+			Role:    message.Role,
+			Content: message.Content,
+			Name:    message.Name,
+		})
 	}
-
-	return append(
-		[]oai.ChatCompletionMessage{systemMessage},
-		append(agent.Examples, newMessages...)...,
-	)
+	return out
 }
