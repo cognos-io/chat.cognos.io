@@ -479,10 +479,13 @@ This checklist is the living execution tracker for the rework.
 
 ### Backend
 
-- [ ] `backend/pkg/compat/openai/openai.go`
-    - [ ] remove once fully replaced
+- [x] `backend/pkg/compat/openai/*`
+    - [x] package removed; `/v1/chat/completions` route was already
+        unregistered and `TestLegacyChatCompletionsRouteNotFound`
+        pins the 404 contract
 - [ ] `backend/pkg/proxy/*`
-    - [ ] remove provider adapters no longer used
+    - [ ] still used by `gateway.LegacyClient`; remove once the Bifrost
+        adapter (or successor) lands behind the gateway interface
 - [ ] `backend/db/migrations/1711007996_created_models.go`
     - [ ] decide whether legacy `models` collection is retired or left unused
 
