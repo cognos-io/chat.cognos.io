@@ -152,7 +152,15 @@ func bindAppHooks(
 
 		fxRateProvider := params.FXRateProvider
 		if fxRateProvider == nil {
-			fxRateProvider = billing.NewFallbackFXRateProvider()
+			// Wrap the env-driven fallback in a 24h TTL cache so the
+			// completion hot path never re-reads the env on every request
+			// and stays compatible with the cached live-rate provider we
+			// will introduce alongside an upstream feed later.
+			fxRateProvider = billing.NewCachedFXRateProvider(
+				billing.NewFallbackFXRateProvider(),
+				billing.DefaultFXRateCacheTTL,
+				nil,
+			)
 		}
 
 		gatewayClient := params.GatewayClient
