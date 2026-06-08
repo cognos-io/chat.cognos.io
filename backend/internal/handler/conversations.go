@@ -251,6 +251,50 @@ func ConversationMessagesList(app core.App) func(e *core.RequestEvent) error {
 	}
 }
 
+type participantResponse struct {
+	ID             string `json:"id"`
+	ConversationID string `json:"conversation_id"`
+	UserID         string `json:"user_id"`
+	Role           string `json:"role"`
+	AddedAt        string `json:"added_at,omitempty"`
+}
+
+type listParticipantsResponse struct {
+	Participants []participantResponse `json:"participants"`
+}
+
+// ConversationParticipantsList returns the currently-active participants for
+// a conversation the caller can access. Non-participants get 404 — the same
+// shape a missing conversation would return so the response can't be used
+// to probe for conversation ids.
+func ConversationParticipantsList(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		conversationID := e.Request.PathValue("conversationID")
+		if _, err := ownedConversationRecord(app, e, conversationID); err != nil {
+			return err
+		}
+
+		repo := participants.NewPocketBaseRepo(app)
+		members, err := repo.ListActive(conversationID)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to list conversation participants", err)
+		}
+
+		out := make([]participantResponse, 0, len(members))
+		for _, m := range members {
+			out = append(out, participantResponse{
+				ID:             m.ID,
+				ConversationID: m.ConversationID,
+				UserID:         m.UserID,
+				Role:           string(m.Role),
+				AddedAt:        m.AddedAt,
+			})
+		}
+
+		return e.JSON(http.StatusOK, listParticipantsResponse{Participants: out})
+	}
+}
+
 func MessagesDelete(app core.App) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		record, err := ownedMessageRecord(app, e, e.Request.PathValue("messageID"))
