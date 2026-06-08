@@ -33,28 +33,28 @@ import (
 )
 
 type appHookParams struct {
-	App                    core.App
-	Config                 *config.APIConfig
-	OpenaiClient           *oai.Client
-	InfomaniakOpenAIClient *oai.Client
-	CloudflareOpenAIClient *oai.Client
-	GoogleGeminiClient     *genai.Client
-	AnthropicClient        *anthropic.Client
-	DeepinfraOpenAIClient  *oai.Client
-	CronScheduler          gocron.Scheduler
-	UpstreamRepo           proxy.UpstreamRepo
-	GatewayClient          gateway.Client
-	MessageRepo            chat.MessageRepo
-	KeyPairRepo            auth.KeyPairRepo
-	AIAgentRepo            aiagent.AIAgentRepo
-	ConversationRepo       chat.ConversationRepo
-	BillingService         *billing.Service
-	BillingStateRepo       billing.StateRepo
-	BillingLedgerRepo      billing.LedgerRepo
+	App                     core.App
+	Config                  *config.APIConfig
+	OpenaiClient            *oai.Client
+	InfomaniakOpenAIClient  *oai.Client
+	CloudflareOpenAIClient  *oai.Client
+	GoogleGeminiClient      *genai.Client
+	AnthropicClient         *anthropic.Client
+	DeepinfraOpenAIClient   *oai.Client
+	CronScheduler           gocron.Scheduler
+	UpstreamRepo            proxy.UpstreamRepo
+	GatewayClient           gateway.Client
+	MessageRepo             chat.MessageRepo
+	KeyPairRepo             auth.KeyPairRepo
+	AIAgentRepo             aiagent.AIAgentRepo
+	ConversationRepo        chat.ConversationRepo
+	BillingService          *billing.Service
+	BillingStateRepo        billing.StateRepo
+	BillingLedgerRepo       billing.LedgerRepo
 	BillingTransactionsRepo billing.TransactionsRepo
-	FXRateProvider         billing.FXRateProvider
-	UsageEmitter           analytics.Emitter
-	CompleteBillingGate    handler.CompleteBillingGateFunc
+	FXRateProvider          billing.FXRateProvider
+	UsageEmitter            analytics.Emitter
+	CompleteBillingGate     handler.CompleteBillingGateFunc
 }
 
 func NewServer(

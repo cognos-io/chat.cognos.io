@@ -37,17 +37,17 @@ func TestMustLoadAPIConfig_ReadsAllProviderEnvVars(t *testing.T) {
 	}
 
 	envVars := map[string]string{
-		"COGNOS_OPENAI_API_KEY":           "openai-key",
-		"COGNOS_INFOMANIAK_API_KEY":       "infomaniak-key",
-		"COGNOS_INFOMANIAK_URL":           "https://infomaniak.test/",
-		"COGNOS_INFOMANIAK_PRODUCT_ID":    "product-id",
-		"COGNOS_CLOUDFLARE_ACCOUNT_ID":    "cf-account",
-		"COGNOS_CLOUDFLARE_API_KEY":       "cf-key",
-		"COGNOS_GOOGLE_API_KEY":           "google-key",
-		"COGNOS_ANTHROPIC_API_KEY":        "anthropic-key",
-		"COGNOS_ANTHROPIC_URL":            "https://anthropic.test/",
-		"COGNOS_DEEPINFRA_URL":            "https://deepinfra.test/",
-		"COGNOS_DEEPINFRA_API_KEY":        "deepinfra-key",
+		"COGNOS_OPENAI_API_KEY":            "openai-key",
+		"COGNOS_INFOMANIAK_API_KEY":        "infomaniak-key",
+		"COGNOS_INFOMANIAK_URL":            "https://infomaniak.test/",
+		"COGNOS_INFOMANIAK_PRODUCT_ID":     "product-id",
+		"COGNOS_CLOUDFLARE_ACCOUNT_ID":     "cf-account",
+		"COGNOS_CLOUDFLARE_API_KEY":        "cf-key",
+		"COGNOS_GOOGLE_API_KEY":            "google-key",
+		"COGNOS_ANTHROPIC_API_KEY":         "anthropic-key",
+		"COGNOS_ANTHROPIC_URL":             "https://anthropic.test/",
+		"COGNOS_DEEPINFRA_URL":             "https://deepinfra.test/",
+		"COGNOS_DEEPINFRA_API_KEY":         "deepinfra-key",
 		"COGNOS_BILLING_TRIAL_SEED_RAPPEN": "500",
 	}
 	for k, v := range envVars {

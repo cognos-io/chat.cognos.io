@@ -45,8 +45,8 @@ type CachedFXRateProvider struct {
 	ttl      time.Duration
 	now      func() time.Time
 
-	mu      sync.Mutex
-	rate    float64
+	mu       sync.Mutex
+	rate     float64
 	loadedAt time.Time
 }
 
