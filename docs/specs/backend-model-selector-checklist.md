@@ -486,8 +486,10 @@ This checklist is the living execution tracker for the rework.
 - [ ] `backend/pkg/proxy/*`
     - [ ] still used by `gateway.LegacyClient`; remove once the Bifrost
         adapter (or successor) lands behind the gateway interface
-- [ ] `backend/db/migrations/1711007996_created_models.go`
-    - [ ] decide whether legacy `models` collection is retired or left unused
+- [x] `backend/db/migrations/1711007996_created_models.go`
+    - [x] retired in 1760000021 (forward-only delete); catalogue now lives
+        entirely in `internal/catalogue` and `TestLegacyModelsCollectionRetired`
+        pins the collection stays gone
 
 ### Frontend
 
