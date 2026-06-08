@@ -52,7 +52,13 @@ func TestKeyIntegrityFieldsExist(t *testing.T) {
 	if conversationPublicKeys.UpdateRule == nil {
 		t.Fatal("conversation_public_keys update rule is nil")
 	}
-	if !strings.Contains(strings.Join(conversationPublicKeys.Indexes, "\n"), "idx_conversation_public_keys_conversation_unique") {
-		t.Fatalf("conversation_public_keys indexes = %v, want unique conversation index", conversationPublicKeys.Indexes)
+	// The historical index was `(conversation)` alone — rotation
+	// needed to insert a fresh public_key row per generation, so the
+	// invariant tightened to `(conversation, key_version)` instead.
+	// The narrower index still rejects accidental duplicates within a
+	// single generation but allows the rotation flow to layer audit
+	// rows for older generations.
+	if !strings.Contains(strings.Join(conversationPublicKeys.Indexes, "\n"), "idx_conversation_public_keys_conversation_key_version_unique") {
+		t.Fatalf("conversation_public_keys indexes = %v, want unique (conversation, key_version) index", conversationPublicKeys.Indexes)
 	}
 }

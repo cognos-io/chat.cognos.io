@@ -203,6 +203,58 @@ func TestConversationKeyRotateRejectsNonParticipantEntry(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestConversationKeyRotateLayersNewPublicKeyOnTopOfV1(t *testing.T) {
+	t.Parallel()
+
+	const conversationID = "convrotate00006"
+
+	// Reproduce the production layout: a pre-existing v1 public_key row.
+	// Before the (conversation, key_version) unique index landed, the
+	// (conversation) unique index would have made the rotation handler's
+	// v2 insert fail, taking the whole transaction with it. Pin that the
+	// rotation now succeeds and the read-side filter picks the new row.
+	rotateScenario := tests.ApiScenario{
+		Name:   "rotate works when a v1 public_key row already exists",
+		Method: http.MethodPost,
+		URL:    "/api/v1/conversations/" + conversationID + "/rotate",
+		Body: strings.NewReader(`{
+			"public_key": "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP=",
+			"wrapped_secret_keys": [
+				{"user_id":"uvi8zmr78j9y5hz","secret_key":"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW="}
+			]
+		}`),
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"key_version":2`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			seedConversationPublicKeyWithID(t, app, "convpubrotv1001", conversationID)
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			records, err := app.FindRecordsByFilter(
+				"conversation_public_keys",
+				"conversation = {:c}",
+				"key_version",
+				10,
+				0,
+				dbx.Params{"c": conversationID},
+			)
+			if err != nil {
+				t.Fatalf("FindRecordsByFilter(public_keys) err=%v", err)
+			}
+			if len(records) != 2 {
+				t.Fatalf("expected 2 public_keys rows (v1 audit + v2 active), got %d", len(records))
+			}
+			versions := []int{records[0].GetInt("key_version"), records[1].GetInt("key_version")}
+			if versions[0] != 1 || versions[1] != 2 {
+				t.Fatalf("public_keys key_versions = %v, want [1 2]", versions)
+			}
+		},
+	}
+	rotateScenario.Test(t)
+}
+
 func TestConversationKeyRotateInvalidatesPreviousSecretKey(t *testing.T) {
 	t.Parallel()
 
