@@ -166,6 +166,12 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   mismatched values throw the documented errors, and the asymmetric falsy gate is pinned (empty
   `conversation_id` is ignored, empty `parent_message_id` still participates in the equality
   check so an attacker-claimed missing parent cannot rebind against a real one)
+- `MessageService.buildCompletionMessages` is now an exported pure helper with direct unit
+  coverage: the assistant message is appended with the response fields mapped onto it,
+  `expires` is omitted when the response has no `expiresAt`, present `expiresAt` propagates
+  to the parent message, the parent is cloned (never mutated in place) so signal snapshots
+  stay stable, no propagation happens when the assistant message has no parent id, and the
+  input array reference is returned unchanged
 - browser E2E now covers high-level authenticated models-loading, send/reply, history-reload,
   unavailable-model guard, trial/inactive billing-restriction flows, and auth route-link
   regression coverage via Playwright
