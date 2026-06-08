@@ -35,6 +35,17 @@ var routeRateLimiters = struct {
 	entries: map[string]*rateLimiterEntry{},
 }
 
+// resetRouteRateLimiters clears the in-process rate-limit state. Tests call
+// this from setupTestApp so the per-binary accumulator doesn't trip
+// previously-irrelevant tests once the suite grows past the burst budget.
+// Production code never invokes this — the limiter relies on the natural
+// expiry-based cleanup inside the middleware.
+func resetRouteRateLimiters() {
+	routeRateLimiters.mu.Lock()
+	routeRateLimiters.entries = map[string]*rateLimiterEntry{}
+	routeRateLimiters.mu.Unlock()
+}
+
 func rateLimiterMiddleware(app core.App) *hook.Handler[*core.RequestEvent] {
 	// Order-of-magnitude budget for an active chat session: ~10 requests/min
 	// average with a generous burst for opening the app (which fires several
@@ -193,6 +204,14 @@ func addPocketBaseRoutes(
 	e.Router.DELETE(
 		"/api/v1/conversations/{conversationID}/participants/{userID}",
 		handler.ConversationParticipantsRevoke(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/conversations/{conversationID}/rotate",
+		handler.ConversationKeyRotate(app),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),

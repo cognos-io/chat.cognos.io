@@ -155,6 +155,12 @@ func setupTestApp(t testing.TB) *tests.TestApp {
 }
 
 func setupTestAppWithHookParams(t testing.TB, params appHookParams) *tests.TestApp {
+	// The per-process rate-limiter accumulates across all tests in the
+	// binary. Once the suite grows past the burst budget, previously-
+	// independent tests start tripping each other with 429s. Clearing
+	// state per test keeps each one running against a fresh bucket.
+	resetRouteRateLimiters()
+
 	app, err := tests.NewTestApp(testDataDir)
 	if err != nil {
 		t.Fatal(err)
