@@ -76,6 +76,9 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - `/api/v1/billing/transactions` integration coverage now exercises the auth gate, newest-first
   ordering with CHF conversion, trial-row balance projection, and user-scoping so unrelated
   users' ledger rows stay hidden
+- `billing.CachedFXRateProvider` now has unit coverage for first-fetch population,
+  within-TTL cache hits, post-TTL refresh from the upstream, fallback to the default rate when
+  the upstream returns a non-positive value, and tolerance of a nil upstream wrapper
 
 ### Frontend
 

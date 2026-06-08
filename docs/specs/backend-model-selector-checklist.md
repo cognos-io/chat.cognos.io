@@ -287,7 +287,7 @@ This checklist is the living execution tracker for the rework.
     - [x] default trial-state seed builder
 - [ ] `backend/internal/billing/fx_rate.go`
     - [x] fallback/static USD→CHF provider seam
-    - [ ] cached USD→CHF rate
+    - [x] cached USD→CHF rate (wraps any upstream provider; injectable clock + TTL)
 - [ ] `backend/internal/billing/service_test.go`
     - [x] cost, margin, and access-policy coverage
     - [x] upper-bound preflight estimate coverage
