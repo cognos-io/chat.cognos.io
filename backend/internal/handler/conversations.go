@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/participants"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -62,10 +63,15 @@ func ConversationsList(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewUnauthorizedError("User not authenticated", nil)
 		}
 
-		records, err := app.FindAllRecords(
-			"conversations",
-			dbx.HashExp{"creator": user.ID},
-		)
+		conversationIDs, err := activeParticipantConversationIDs(app, user.ID)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to list conversations", err)
+		}
+		if len(conversationIDs) == 0 {
+			return e.JSON(http.StatusOK, []conversationRecordResponse{})
+		}
+
+		records, err := app.FindRecordsByIds("conversations", conversationIDs)
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to list conversations", err)
 		}
@@ -115,6 +121,18 @@ func ConversationsCreate(app core.App) func(e *core.RequestEvent) error {
 		})
 		if err := form.Submit(); err != nil {
 			return apis.NewBadRequestError("Failed to create conversation", err)
+		}
+
+		// Seed the creator as the conversation's first Admin participant. This
+		// keeps access driven by the participants table rather than a creator
+		// shortcut, so future sharing (additional participants) reuses the
+		// same access path without a handler rewrite.
+		repo := participants.NewPocketBaseRepo(app)
+		if err := repo.Add(record.Id, user.ID, participants.RoleAdmin); err != nil {
+			// Roll back the conversation row so the creator does not end up
+			// locked out of a conversation they just created.
+			_ = app.Delete(record)
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to register conversation participant", err)
 		}
 
 		return e.JSON(http.StatusCreated, conversationRecordToResponse(record))
@@ -276,7 +294,12 @@ func ownedConversationRecord(app core.App, e *core.RequestEvent, conversationID 
 	if err != nil {
 		return nil, apis.NewNotFoundError("Conversation not found", err)
 	}
-	if record.GetString("creator") != user.ID {
+	repo := participants.NewPocketBaseRepo(app)
+	active, err := repo.IsActive(conversationID, user.ID)
+	if err != nil {
+		return nil, apis.NewApiError(http.StatusInternalServerError, "Failed to verify conversation access", err)
+	}
+	if !active {
 		return nil, apis.NewNotFoundError("Conversation not found", nil)
 	}
 	return record, nil
@@ -292,14 +315,47 @@ func ownedMessageRecord(app core.App, e *core.RequestEvent, messageID string) (*
 		return nil, apis.NewNotFoundError("Message not found", err)
 	}
 	conversationID := record.GetString("conversation")
-	conversationRecord, err := app.FindRecordById("conversations", conversationID)
-	if err != nil {
+	if _, err := app.FindRecordById("conversations", conversationID); err != nil {
 		return nil, apis.NewNotFoundError("Message not found", err)
 	}
-	if conversationRecord.GetString("creator") != user.ID {
+	repo := participants.NewPocketBaseRepo(app)
+	active, err := repo.IsActive(conversationID, user.ID)
+	if err != nil {
+		return nil, apis.NewApiError(http.StatusInternalServerError, "Failed to verify message access", err)
+	}
+	if !active {
 		return nil, apis.NewNotFoundError("Message not found", nil)
 	}
 	return record, nil
+}
+
+// activeParticipantConversationIDs returns the conversation IDs the user can
+// currently access (active participant rows only). It is the read-side
+// counterpart to participants.Repo.IsActive — a dedicated helper keeps the
+// list handler from having to know the PocketBase filter syntax.
+func activeParticipantConversationIDs(app core.App, userID string) ([]string, error) {
+	if userID == "" {
+		return nil, nil
+	}
+
+	rows := []struct {
+		ConversationID string `db:"conversation"`
+	}{}
+
+	if err := app.DB().
+		Select("conversation").
+		From(participants.CollectionName).
+		Where(dbx.HashExp{"user": userID}).
+		AndWhere(dbx.NewExp("removed_at = ''")).
+		All(&rows); err != nil {
+		return nil, err
+	}
+
+	ids := make([]string, 0, len(rows))
+	for _, row := range rows {
+		ids = append(ids, row.ConversationID)
+	}
+	return ids, nil
 }
 
 func conversationRecordToResponse(record *core.Record) conversationRecordResponse {
