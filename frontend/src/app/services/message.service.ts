@@ -103,6 +103,40 @@ export const assertMessageBindings = (
   }
 };
 
+// buildCompletionMessages is the pure assistant-append step. It returns the
+// new messages array — never mutating the existing entries — so that when the
+// completion response carries an expiry, the parent message is updated via a
+// fresh object instead of an in-place write to a signal-held record.
+export const buildCompletionMessages = (
+  existing: ReadonlyArray<Message>,
+  resp: CompleteResponse,
+): Message[] => {
+  const expires = resp.expiresAt ? new Date(resp.expiresAt) : undefined;
+  const parentId = resp.assistantMessage.parentMessageId;
+
+  const assistant: Message = {
+    parentMessageId: parentId,
+    record_id: resp.assistantMessage.id,
+    createdAt: new Date(resp.assistantMessage.createdAt),
+    expires,
+    decryptedData: {
+      content: resp.assistantMessage.content,
+      agent_id: resp.assistantMessage.agentId,
+      model_id: resp.assistantMessage.modelId,
+    },
+  };
+
+  const next =
+    expires && parentId
+      ? existing.map((message) =>
+          message.record_id === parentId ? { ...message, expires } : message,
+        )
+      : [...existing];
+
+  next.push(assistant);
+  return next;
+};
+
 export const resolveCompletionErrorMessage = (error: HttpErrorResponse): string => {
   switch (error.status) {
     case 402: {
@@ -574,31 +608,8 @@ export class MessageService {
   }
 
   private addCompletionMessageToState(resp: CompleteResponse): Partial<MessageState> {
-    const messages = this.state().messages;
-    const expires = resp.expiresAt ? new Date(resp.expiresAt) : undefined;
-
-    const msg: Message = {
-      parentMessageId: resp.assistantMessage.parentMessageId,
-      record_id: resp.assistantMessage.id,
-      createdAt: new Date(resp.assistantMessage.createdAt),
-      expires,
-      decryptedData: {
-        content: resp.assistantMessage.content,
-        agent_id: resp.assistantMessage.agentId,
-        model_id: resp.assistantMessage.modelId,
-      },
-    };
-
-    if (expires && resp.assistantMessage.parentMessageId) {
-      messages.forEach((message) => {
-        if (message.record_id === resp.assistantMessage.parentMessageId) {
-          message.expires = expires;
-        }
-      });
-    }
-
     return {
-      messages: [...messages, msg],
+      messages: buildCompletionMessages(this.state().messages, resp),
     };
   }
 
