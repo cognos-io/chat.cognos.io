@@ -422,6 +422,9 @@ This checklist is the living execution tracker for the rework.
 - [x] conversation history reload still works
 - [x] trial/inactive billing restriction blocks sending
 - [x] unavailable model cannot be selected/sent
+- [x] participants + rotation API (`e2e/tests/participants-api.spec.ts`):
+    Admin lists/adds/revokes participants and rotates the key against the
+    live backend; Editor role gate blocks writes; outsider 404 leaks no id.
 
 ### Explicit non-goals for these tests
 
