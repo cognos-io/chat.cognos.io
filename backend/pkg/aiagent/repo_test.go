@@ -37,10 +37,10 @@ func TestInMemoryAIAgentRepoReturnsErrAgentNotFoundForUnknownIDs(t *testing.T) {
 		"",
 		"unknown",
 		"cognos:nonexistent",
-		"cognos:simple-assistant ",  // trailing space — exact-match only
-		" cognos:simple-assistant",  // leading space
-		"cognos:Simple-Assistant",   // case-sensitive
-		"openai:simple-assistant",   // wrong namespace
+		"cognos:simple-assistant ", // trailing space — exact-match only
+		" cognos:simple-assistant", // leading space
+		"cognos:Simple-Assistant",  // case-sensitive
+		"openai:simple-assistant",  // wrong namespace
 	} {
 		if _, err := repo.LookupPrompt(id); !errors.Is(err, ErrAgentNotFound) {
 			t.Errorf("LookupPrompt(%q) error = %v, want ErrAgentNotFound", id, err)
