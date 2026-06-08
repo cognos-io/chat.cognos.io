@@ -111,6 +111,17 @@ func addPocketBaseRoutes(
 	)
 
 	e.Router.GET(
+		"/api/v1/billing",
+		handler.BillingGet(handler.BillingGetParams{
+			Logger:    logger,
+			StateRepo: billingStateRepo,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
 		"/api/v1/conversations",
 		handler.ConversationsList(app),
 	).Bind(

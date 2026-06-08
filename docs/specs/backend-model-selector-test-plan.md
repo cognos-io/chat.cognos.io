@@ -71,6 +71,8 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - `config.MustLoadAPIConfig` now has env-loading regression coverage that pins the
   `COGNOS_<SECTION>_<REST>` → `<section>.<rest>` mapping for every provider key plus the billing
   trial seed default
+- `/api/v1/billing` integration coverage now exercises the auth gate plus trial/unlimited plan
+  payloads and the inactive fallback when no billing row exists
 
 ### Frontend
 
