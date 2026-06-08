@@ -82,6 +82,27 @@ type CompleteErrorBody = {
   next_step?: string;
 };
 
+// assertMessageBindings is the second-line defence after sealed-box decryption.
+// Even if a sealed box opens (the keypair is correct), the decrypted payload
+// must still claim to belong to the conversation and parent we read it from —
+// otherwise an attacker who swaps ciphertext across rows could rebind a message
+// into a different thread. Throwing here forces the catch in decryptMessage to
+// show the "Failed to decrypt message" placeholder instead of trusting it.
+export const assertMessageBindings = (
+  decrypted: { conversation_id?: string; parent_message_id?: string },
+  record: { conversation: string; parent_message?: string },
+): void => {
+  if (decrypted.conversation_id && decrypted.conversation_id !== record.conversation) {
+    throw new Error('Message conversation binding mismatch');
+  }
+  if (
+    decrypted.parent_message_id !== undefined &&
+    decrypted.parent_message_id !== record.parent_message
+  ) {
+    throw new Error('Message parent binding mismatch');
+  }
+};
+
 export const resolveCompletionErrorMessage = (error: HttpErrorResponse): string => {
   switch (error.status) {
     case 402: {
@@ -471,19 +492,7 @@ export class MessageService {
           conversation.keyPair,
         ),
       );
-
-      if (
-        decryptedData.conversation_id &&
-        decryptedData.conversation_id !== record.conversation
-      ) {
-        throw new Error('Message conversation binding mismatch');
-      }
-      if (
-        decryptedData.parent_message_id !== undefined &&
-        decryptedData.parent_message_id !== record.parent_message
-      ) {
-        throw new Error('Message parent binding mismatch');
-      }
+      assertMessageBindings(decryptedData, record);
     } catch (error) {
       // Show to the user the message failed to decrypt
       console.error('Message decryption failed', error);
