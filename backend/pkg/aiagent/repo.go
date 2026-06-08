@@ -83,7 +83,7 @@ type Prompt struct {
 // slice are stripped to keep exactly one system message in the output.
 //
 // Agent example exchanges are inserted between the system message and the
-// caller-supplied messages, mirroring the old compat/openai behaviour.
+// caller-supplied messages.
 //
 // If messages is empty, the slice is returned unchanged so the handler can
 // fast-fail on missing input before constructing a prompt.
