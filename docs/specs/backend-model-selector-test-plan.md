@@ -131,6 +131,16 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - `CryptoService` coverage now includes constant-time byte comparison, box/secretBox round trips,
   and tampered-ciphertext failure paths
 - `VaultService` coverage now includes user key-pair record MAC integrity checks before decryption
+- `parseConversationData` now has unit coverage for whitespace trimming, missing/non-string title
+  rejection, malformed JSON rejection, and a zod strip-extras pin so attacker-injected or stale
+  fields can never round-trip into ciphertext
+- `ignorePocketbase404` now has unit coverage for pass-through emissions, swallowing both
+  `ClientResponseError` 404s and plain shape-matching 404 errors, and rethrowing every other
+  status (including plain `Error` instances with no status) so real failures stay visible
+- `ConversationService.fetchConversationKeyPair` now has unit coverage for the signature-mismatch
+  reject path (and that the secret key fetch is skipped) plus the verified happy path that pins
+  `openBox` is called with the conversation-shared key derived from the conversation public key +
+  user secret key, not from the user key pair alone
 - browser E2E now covers high-level authenticated models-loading, send/reply, history-reload,
   unavailable-model guard, trial/inactive billing-restriction flows, and auth route-link
   regression coverage via Playwright
