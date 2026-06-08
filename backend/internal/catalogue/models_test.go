@@ -35,6 +35,27 @@ func TestActiveModels(t *testing.T) {
 	}
 }
 
+// TestActiveModelsAreApprovedInfomaniakOnly pins the spec invariant that
+// only approved Infomaniak models are active in the first cut. Any new
+// active model with a different provider — or one that does not require
+// no-retention — must be an intentional spec change with a corresponding
+// update here.
+func TestActiveModelsAreApprovedInfomaniakOnly(t *testing.T) {
+	t.Parallel()
+
+	for _, model := range ActiveModels() {
+		if model.ProviderID != "infomaniak" {
+			t.Errorf("active model %q has provider %q, want infomaniak", model.ID, model.ProviderID)
+		}
+		if !model.RequiresNoRetention {
+			t.Errorf("active model %q does not require no-retention", model.ID)
+		}
+		if model.PrivacyTier != PrivacyTierCHOnly {
+			t.Errorf("active model %q has privacy tier %q, want ch_only", model.ID, model.PrivacyTier)
+		}
+	}
+}
+
 func TestModelsAvailableForTier(t *testing.T) {
 	t.Parallel()
 

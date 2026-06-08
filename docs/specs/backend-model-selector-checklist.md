@@ -149,12 +149,13 @@ This checklist is the living execution tracker for the rework.
 
 ### Backend packages/files
 
-- [ ] `backend/internal/catalogue/models.go`
-    - [ ] keep code-defined catalogue as source of truth
-    - [ ] only approved Infomaniak model(s) active initially
-    - [ ] retain eligibility metadata needed by the UI
-- [ ] `backend/internal/catalogue/models_test.go`
-    - [ ] expand tier/eligibility coverage if needed
+- [x] `backend/internal/catalogue/models.go`
+    - [x] keep code-defined catalogue as source of truth
+    - [x] only approved Infomaniak model(s) active initially
+    - [x] retain eligibility metadata needed by the UI
+- [x] `backend/internal/catalogue/models_test.go`
+    - [x] expand tier/eligibility coverage if needed
+    - [x] pin "active models are approved Infomaniak only" invariant
 - [x] `backend/internal/gateway/client.go`
     - [x] define Cognos-owned request/response/interface contract
     - [x] include input/output/cache/provider-cost usage fields
@@ -185,7 +186,7 @@ This checklist is the living execution tracker for the rework.
 - [x] request to `/api/v1/models` returns backend-driven models
     - [x] response never leaks provider routing fields (`provider_model_id`, `base_url`, etc.)
 - [x] handlers/services no longer depend on provider SDK types directly
-- [ ] only approved Infomaniak model(s) are active
+- [x] only approved Infomaniak model(s) are active
 
 ---
 

@@ -89,6 +89,15 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   `completeBillingRestrictionResponse` copies plain fields verbatim, converts both
   `balance_rappen` and `estimated_cost_rappen` to CHF, prefers the restriction's estimate over the
   caller-supplied fallback, and leaves the estimate unset when both inputs are zero
+- handler input validators now have direct unit coverage: `parsePositiveIntOrDefault` returns the
+  fallback for empty, non-numeric, zero, negative, fractional, whitespace-padded, and
+  trailing-garbage inputs and passes through valid positive integers;
+  `isValidExpiryDuration` accepts the documented allow-list ("", 24h, 168h, 2160h, 4320h) and
+  rejects everything else, including superficially-valid time durations, casing/whitespace
+  variants, newline injection, and SQL/JS-shaped payloads
+- catalogue tests now pin the "only approved Infomaniak models are active" invariant — every
+  ActiveModels entry must have provider `infomaniak`, `RequiresNoRetention=true`, and privacy
+  tier `ch_only`
 
 ### Frontend
 
