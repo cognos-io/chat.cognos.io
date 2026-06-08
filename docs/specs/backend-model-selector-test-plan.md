@@ -271,6 +271,19 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   field names, and the ledger is scoped per user (two fresh users' ledgers share
   no transaction ids — locks the strongest privacy invariant outside the Go
   test harness).
+- `mapCompleteRequest` / `mapCompleteResponse` in
+  `cognos-api.service.ts` now have direct unit coverage
+  (`cognos-api.service.spec.ts`). The pure helpers were extracted out
+  of the `CognosApiService` class so the snake_case ↔ camelCase wire
+  contract for `/api/v1/completions` can be pinned: every
+  `usage/*` field (input_tokens, output_tokens, total_tokens,
+  cache_creation_input_tokens, cache_read_input_tokens, cost_usd,
+  cost_chf, cost_rappen, used_provider_cost), the optional top-level
+  identifiers (request_id, user_message_id, expires_at), and the
+  `used_provider_cost=false` fallback-pricing path are all exercised.
+  Before this, a backend field rename would have silently produced
+  `undefined` on the frontend (e.g. `costRappen` disappearing from
+  billing UI) with no test failure to catch it.
 - `auth.PocketBaseKeyPairRepo` now has direct integration coverage in
   `cmd/api/key_pair_repo_test.go` for both lookups:
   `UserPublicKey` returns the seeded 32-byte key on the happy path and

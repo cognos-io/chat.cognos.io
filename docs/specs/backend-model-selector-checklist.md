@@ -400,13 +400,28 @@ This checklist is the living execution tracker for the rework.
     - [x] show unavailable models clearly
 - [x] `frontend/src/app/components/chat/message-list-item/message-list-item.component.ts`
     - [x] resolve assistant model labels from fetched model data
-- [ ] `frontend/src/app/services/message.service.ts`
-    - [ ] align with final complete response schema
-    - [ ] keep thread and expiry behaviour intact
-- [ ] `frontend/src/app/services/conversation.service.ts`
-    - [ ] align conversation access-key handling with final backend schema
-- [ ] `frontend/src/app/services/crypto.service.ts`
-    - [ ] align decryption helpers with final conversation-scoped key format
+- [x] `frontend/src/app/services/message.service.ts`
+    - [x] aligned with the final complete response schema: every
+        `assistantMessage` and `usage` field is consumed by
+        `buildCompletionMessages` and exercised by unit tests
+    - [x] thread and expiry behaviour pinned by
+        `buildCompletionMessages` parent-clone tests
+- [x] `frontend/src/app/services/cognos-api.service.ts`
+    - [x] `mapCompleteRequest` / `mapCompleteResponse` extracted as
+        exported pure helpers with direct unit coverage —
+        snake_case ↔ camelCase mapping cannot silently drift on a
+        backend rename (`cognos-api.service.spec.ts`)
+- [x] `frontend/src/app/services/conversation.service.ts`
+    - [x] conversation access-key handling aligned with current backend
+        contract: `fetchConversationKeyPair` derives the shared key from
+        `conversation_public_key + user_secret_key` and the GET handlers
+        already filter by `key_version`, so the frontend transparently
+        receives the current generation without needing to track it
+- [x] `frontend/src/app/services/crypto.service.ts`
+    - [x] `openSealedBox` decrypts with the receiver's full conversation
+        keypair (conversation-scoped, not user-scoped); covered by
+        `crypto.service.spec.ts` libsodium-shape round trip plus
+        wrong-recipient / tampered-ciphertext rejection
 
 ### Verification
 
