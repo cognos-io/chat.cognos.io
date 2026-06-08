@@ -425,6 +425,13 @@ This checklist is the living execution tracker for the rework.
 - [x] participants + rotation API (`e2e/tests/participants-api.spec.ts`):
     Admin lists/adds/revokes participants and rotates the key against the
     live backend; Editor role gate blocks writes; outsider 404 leaks no id.
+- [x] models catalogue API (`e2e/tests/models-api.spec.ts`): auth gate,
+    typed shape, no provider-routing leak (`provider_model_id` /
+    `base_url` / `api_key`), `preferred_model_id` omit-on-empty contract.
+- [x] billing + transactions API (`e2e/tests/billing-api.spec.ts`): auth
+    gate on both endpoints, newly-registered users always land on a known
+    plan, CHF amounts (no Rappen leaks via field names or values), and
+    per-user ledger scoping enforced across two live users.
 
 ### Explicit non-goals for these tests
 

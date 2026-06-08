@@ -189,6 +189,19 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   insert in a single PocketBase transaction. The pre-existing "compensating delete"
   on participant-add failure couldn't recover when the delete itself failed; the
   transactional write removes the orphan-row failure mode entirely.
+- `e2e/tests/models-api.spec.ts` pins the `/api/v1/models` contract end-to-end:
+  401 for anonymous callers, typed catalogue shape with eligibility metadata for
+  authenticated callers, hard guard against the internal routing fields
+  (`provider_model_id` / `base_url` / `api_key`) ever appearing in the response,
+  and `preferred_model_id` is omitted (not serialised as null) for fresh users.
+- `e2e/tests/billing-api.spec.ts` pins the `/api/v1/billing` and
+  `/api/v1/billing/transactions` contract end-to-end: 401 for anonymous callers,
+  a newly registered user lands on a recognised `plan_type` with a non-negative
+  numeric `balance_chf`, balances stay sub-1000 (catches Rappen-as-CHF leaks),
+  the ledger response is a typed array, amounts never expose the raw `*_rappen`
+  field names, and the ledger is scoped per user (two fresh users' ledgers share
+  no transaction ids — locks the strongest privacy invariant outside the Go
+  test harness).
 - `e2e/tests/participants-api.spec.ts` exercises the participant + rotation API
   end-to-end against the live backend via Playwright's request fixture. Two
   scenarios:
