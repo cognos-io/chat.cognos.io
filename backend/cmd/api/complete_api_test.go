@@ -954,5 +954,84 @@ func seedConversationRecord(t testing.TB, app *tests.TestApp, conversationID str
 		t.Fatalf("Save(conversationRecord) error = %v", err)
 	}
 
+	// Mirror what ConversationsCreate does in production: register the
+	// creator as an Admin participant so the completion handler's access
+	// gate (participants.Repo.IsActive) accepts requests for this seeded
+	// conversation.
+	seedParticipant(t, app, conversationID, userRecord.Id, "Admin")
+
 	return *publicKey
+}
+
+func TestConversationCompleteRejectsNonParticipant(t *testing.T) {
+	t.Parallel()
+
+	conversationID := "convcomp0000003"
+	gatewayCalled := false
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(context.Context, gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			// Mark the call so we can assert it never happened — the access
+			// gate must reject the request before any provider work, both
+			// for billing safety and to avoid leaking that the conversation
+			// id is real.
+			gatewayCalled = true
+			return gateway.CompleteResponse{}, nil
+		},
+	}
+	var conversationPublicKey [32]byte
+
+	scenario := tests.ApiScenario{
+		Name:   "non-participant cannot complete against another user's conversation",
+		Method: http.MethodPost,
+		URL:    "/api/v1/conversations/" + conversationID + "/complete",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"agent_id":"cognos:simple-assistant",
+			"messages":[{"role":"user","content":"snoop"}]
+		}`),
+		ExpectedStatus: http.StatusNotFound,
+		ExpectedContent: []string{
+			`"message":"Conversation not found or unable to load."`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:  gatewayClient,
+				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService: billing.NewService(),
+				ConversationRepo: stubConversationRepo{
+					byID: func(id string) (chat.Conversation, error) {
+						return chat.Conversation{ID: id, PublicKey: conversationPublicKey}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			// test1 owns the conversation; test2 (a non-participant) tries
+			// to send a completion request against it.
+			conversationPublicKey = seedConversationRecord(t, app, conversationID)
+			withRecordAuth("users", "test2@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			if gatewayCalled {
+				t.Fatalf("gateway Complete was called: access gate must short-circuit before any provider work")
+			}
+			records, err := app.FindRecordsByFilter(
+				"messages",
+				"conversation={:conversation}",
+				"",
+				10,
+				0,
+				dbx.Params{"conversation": conversationID},
+			)
+			if err != nil {
+				t.Fatalf("FindRecordsByFilter(messages) error = %v", err)
+			}
+			if len(records) != 0 {
+				t.Fatalf("non-participant attempt persisted %d messages, want 0", len(records))
+			}
+		},
+	}
+
+	scenario.Test(t)
 }
