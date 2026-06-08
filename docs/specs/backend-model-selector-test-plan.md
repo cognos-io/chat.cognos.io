@@ -189,6 +189,20 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   insert in a single PocketBase transaction. The pre-existing "compensating delete"
   on participant-add failure couldn't recover when the delete itself failed; the
   transactional write removes the orphan-row failure mode entirely.
+- `e2e/tests/participants-api.spec.ts` exercises the participant + rotation API
+  end-to-end against the live backend via Playwright's request fixture. Two
+  scenarios:
+    - **admin can list/add/revoke + rotate** (one long journey): registers two real
+    users through PocketBase, creates a conversation as the admin, asserts the
+    auto-seeded Admin participant, checks the guest cannot see the conversation
+    pre-share, adds the guest as Editor + wrapped secret key, confirms both
+    `/conversations` and `/participants` reflect the new membership, proves the
+    Editor cannot add or revoke participants (403), rotates the key, asserts the
+    guest's secret-key GET returns the new wrapped value at `key_version=2`,
+    rejects a rotation that omits a participant (400), revokes the guest and
+    confirms they lose access, blocks self-revoke (400).
+    - **outsiders cannot probe ids**: a non-participant hits 404 on list/add/rotate
+    with the same shape a missing conversation would return.
 
 ### Frontend
 
