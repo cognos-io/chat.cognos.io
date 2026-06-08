@@ -219,11 +219,18 @@ This checklist is the living execution tracker for the rework.
     - [ ] include usage metadata fields as needed
 - [ ] `backend/internal/crypto/encrypt.go`
     - [ ] align with conversation-scoped key architecture
-    - [ ] keep NaCl-based approach
-- [ ] `backend/internal/crypto/encrypt_test.go`
-    - [ ] round-trip tests
-    - [ ] invalid key tests
-    - [ ] wrapped conversation-key access tests
+    - [x] keep NaCl-based approach
+- [x] `backend/internal/crypto/encrypt_test.go`
+    - [x] round-trip tests (asymmetric box + symmetric secretbox)
+    - [x] invalid-recipient tests (wrong-key rejection)
+    - [x] tampered-ciphertext rejection
+    - [x] nonce + key length and uniqueness invariants
+    - [ ] wrapped conversation-key access tests (deferred to Phase 3 schema work)
+- [x] `backend/internal/chat/repo_test.go`
+    - [x] `EncryptMessageData` round-trips through `box.OpenAnonymous`
+    - [x] ciphertext is non-deterministic for identical input
+    - [x] omitempty metadata fields stay out of the encrypted payload
+    - [x] wrong-recipient cannot open the encrypted message
 
 ### Existing backend files to update
 

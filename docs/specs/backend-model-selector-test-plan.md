@@ -107,6 +107,18 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   and rejection when the ephemeral public-key prefix is swapped (MAC + nonce derivation must
   both fail); `mac` now has additional coverage proving different keys produce different
   output, and both `hash` and `mac` honour the optional `outputLength` parameter
+- `crypto.NewNonce` / `NewSymmetricKey` now have unit coverage proving they return the
+  documented byte length, never an all-zero value, and a fresh value per call; `AsymmetricEncrypt`
+  round-trips through `box.OpenAnonymous`, produces non-deterministic ciphertext for the same
+  plaintext (ephemeral key varies), and cannot be opened by a non-recipient key pair;
+  `SymmetricEncrypt` round-trips through `secretbox.Open` using the nonce-prefixed layout,
+  produces a fresh key + nonce per call, and rejects tampered ciphertext bytes
+- `chat.EncryptMessageData` now has unit coverage that the JSON-then-NaCl-box envelope
+  round-trips back through `box.OpenAnonymous` into the original `MessageRecordData`,
+  produces non-deterministic ciphertext for identical input, honours `omitempty` for every
+  optional metadata field (version / conversation_id / parent_message_id / owner_id /
+  agent_id / model_id) so empty values never appear in the encrypted payload, and cannot
+  be opened by a non-recipient key pair
 
 ### Frontend
 
