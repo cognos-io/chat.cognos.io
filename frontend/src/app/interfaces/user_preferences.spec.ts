@@ -1,0 +1,100 @@
+import { beforeAll, describe, expect, it } from 'vitest';
+
+import {
+  UserPreferencesData,
+  parseUserPreferencesData,
+  serializeUserPreferencesData,
+} from './user_preferences';
+
+class TestTextEncoder {
+  encode(input: string): Uint8Array {
+    return Uint8Array.from(input, (character) => character.charCodeAt(0));
+  }
+}
+
+class TestTextDecoder {
+  decode(input: Uint8Array): string {
+    return String.fromCharCode(...input);
+  }
+}
+
+const encode = (value: string): Uint8Array => new TestTextEncoder().encode(value);
+const decode = (bytes: Uint8Array): string => new TestTextDecoder().decode(bytes);
+
+describe('parseUserPreferencesData', () => {
+  beforeAll(() => {
+    globalThis.TextEncoder = TestTextEncoder as typeof TextEncoder;
+    globalThis.TextDecoder = TestTextDecoder as typeof TextDecoder;
+  });
+
+  it('parses a fully populated payload', () => {
+    const payload = encode(
+      JSON.stringify({
+        pinnedConversations: ['conv-a', 'conv-b'],
+        pinnedModels: ['model-a'],
+      }),
+    );
+    const parsed = parseUserPreferencesData(payload);
+
+    expect(parsed.pinnedConversations).toEqual(['conv-a', 'conv-b']);
+    expect(parsed.pinnedModels).toEqual(['model-a']);
+  });
+
+  it('defaults pinnedModels to an empty array when omitted', () => {
+    const payload = encode(JSON.stringify({ pinnedConversations: ['c-1'] }));
+
+    expect(parseUserPreferencesData(payload).pinnedModels).toEqual([]);
+  });
+
+  it('rejects payloads missing pinnedConversations', () => {
+    const payload = encode(JSON.stringify({ pinnedModels: [] }));
+    expect(() => parseUserPreferencesData(payload)).toThrow();
+  });
+
+  it('rejects payloads where pinnedConversations is not an array', () => {
+    const payload = encode(JSON.stringify({ pinnedConversations: 'c-1' }));
+    expect(() => parseUserPreferencesData(payload)).toThrow();
+  });
+
+  it('rejects payloads where a pinnedConversation entry is not a string', () => {
+    const payload = encode(JSON.stringify({ pinnedConversations: ['c-1', 42] }));
+    expect(() => parseUserPreferencesData(payload)).toThrow();
+  });
+
+  it('rejects payloads that are not valid JSON', () => {
+    const payload = encode('not json');
+    expect(() => parseUserPreferencesData(payload)).toThrow();
+  });
+});
+
+describe('serializeUserPreferencesData', () => {
+  beforeAll(() => {
+    globalThis.TextEncoder = TestTextEncoder as typeof TextEncoder;
+    globalThis.TextDecoder = TestTextDecoder as typeof TextDecoder;
+  });
+
+  it('round-trips through parseUserPreferencesData', () => {
+    const original: UserPreferencesData = {
+      pinnedConversations: ['c-1', 'c-2'],
+      pinnedModels: ['m-1'],
+    };
+
+    const serialized = serializeUserPreferencesData(original);
+    expect(parseUserPreferencesData(serialized)).toEqual(original);
+  });
+
+  it('strips unknown fields so they cannot leak into ciphertext', () => {
+    const withExtras = {
+      pinnedConversations: ['c-1'],
+      pinnedModels: ['m-1'],
+      secret: 'should not be persisted',
+    } as unknown as UserPreferencesData;
+
+    const serialized = serializeUserPreferencesData(withExtras);
+    const payload = JSON.parse(decode(serialized)) as Record<string, unknown>;
+
+    expect(payload['pinnedConversations']).toEqual(['c-1']);
+    expect(payload['pinnedModels']).toEqual(['m-1']);
+    expect(payload['secret']).toBeUndefined();
+  });
+});
