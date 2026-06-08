@@ -168,6 +168,21 @@ func bindAppHooks(
 			gatewayClient = gateway.NewLegacyClient(upstreamRepo)
 		}
 
+		usageEmitter := params.UsageEmitter
+		if usageEmitter == nil {
+			// Buffer usage events in-process and forward them to a structured
+			// log sink so analytics never blocks the completion hot path and
+			// never persists plaintext content (UsageEvent excludes prompts
+			// and direct identifiers by construction).
+			usageEmitter = analytics.NewBufferedEmitter(
+				analytics.NewLoggerSink(app.Logger()),
+				analytics.DefaultBufferedEmitterBatchSize,
+				analytics.DefaultBufferedEmitterFlushInterval,
+				nil,
+				app.Logger(),
+			)
+		}
+
 		addPocketBaseRoutes(
 			e,
 			app,
@@ -181,7 +196,7 @@ func bindAppHooks(
 			billingLedgerRepo,
 			billingTransactionsRepo,
 			fxRateProvider,
-			params.UsageEmitter,
+			usageEmitter,
 			params.CompleteBillingGate,
 		)
 
