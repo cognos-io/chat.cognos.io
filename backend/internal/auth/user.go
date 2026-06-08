@@ -7,11 +7,6 @@ type User struct {
 	IsAdmin bool
 }
 
-// IsAdmin checks if the authenticated request user is an admin.
-func IsAdmin(e *core.RequestEvent) bool {
-	return e.Auth != nil && e.Auth.IsSuperuser()
-}
-
 func IsAuthenticated(e *core.RequestEvent) bool {
 	return e.Auth != nil
 }
