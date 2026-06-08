@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"math"
 	"net/http"
 	"sort"
@@ -403,6 +404,59 @@ func ConversationParticipantsAdd(app core.App) func(e *core.RequestEvent) error 
 			Role:           string(role),
 			AddedAt:        participantRecord.GetString("added_at"),
 		})
+	}
+}
+
+// ConversationParticipantsRevoke soft-removes a participant. Admin only.
+// Stamping removed_at instead of deleting the row keeps the audit trail
+// (who was once allowed, who removed them, when) and lets the rotation
+// flow invalidate the wrapped secret_keys row separately.
+func ConversationParticipantsRevoke(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		caller := auth.ExtractUser(e)
+		if caller == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		conversationID := e.Request.PathValue("conversationID")
+		if _, err := ownedConversationRecord(app, e, conversationID); err != nil {
+			return err
+		}
+
+		targetUserID := e.Request.PathValue("userID")
+		if strings.TrimSpace(targetUserID) == "" {
+			return apis.NewBadRequestError("Target user id is required", nil)
+		}
+
+		repo := participants.NewPocketBaseRepo(app)
+		callerRole, _, err := repo.ActiveRole(conversationID, caller.ID)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify caller role", err)
+		}
+		if callerRole != participants.RoleAdmin {
+			return apis.NewForbiddenError("Only conversation admins can revoke participants", nil)
+		}
+
+		if targetUserID == caller.ID {
+			// Self-revoke is intentionally blocked: an Admin removing
+			// themselves could orphan the conversation. The Admin-only
+			// gate already guarantees that any caller passing the role
+			// check is themselves an Admin, so a non-self target can
+			// never be "the last Admin" without the caller being a
+			// second Admin — there's no reachable last-Admin scenario
+			// through this endpoint. When we add a "leave conversation"
+			// UX it must protect the last-Admin invariant there.
+			return apis.NewBadRequestError("Caller cannot revoke themselves", nil)
+		}
+
+		if err := repo.Revoke(conversationID, targetUserID); err != nil {
+			if errors.Is(err, participants.ErrParticipantNotFound) {
+				return apis.NewNotFoundError("Participant not found", nil)
+			}
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to revoke participant", err)
+		}
+
+		return e.NoContent(http.StatusNoContent)
 	}
 }
 

@@ -190,6 +190,14 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	e.Router.DELETE(
+		"/api/v1/conversations/{conversationID}/participants/{userID}",
+		handler.ConversationParticipantsRevoke(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.PATCH(
 		"/api/v1/messages/{messageID}",
 		handler.MessagesUpdate(app),
