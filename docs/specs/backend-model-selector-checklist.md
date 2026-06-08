@@ -204,8 +204,11 @@ This checklist is the living execution tracker for the rework.
     same purpose: single source of truth for "is this user allowed to read this conversation")
     - [x] `IsActive(conversationID, userID)` with `removed_at IS NULL` filter
     - [x] `Add(conversationID, userID, role)` with duplicate-rejection via `ErrAlreadyParticipant`
+    - [x] `ListActive(conversationID)` returns Membership rows ordered by added_at for the
+        sharing read API (no PocketBase types leak across the package boundary)
     - [ ] wrapped conversation key access records (deferred — current secret-key collection
-        carries that role implicitly today, will be folded in with the schema rewrite)
+        carries that role today; key_version columns + read filter are in place so a
+        rotation pass slots in without a schema rewrite)
 - [ ] `backend/internal/store/interface.go`
     - [ ] minimal interfaces for handler/service tests
 - [x] `backend/internal/handler/conversations.go`

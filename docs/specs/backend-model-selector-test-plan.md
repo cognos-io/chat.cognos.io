@@ -150,6 +150,13 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   pre-rotation wrappers 404 (audit rows stay in the DB but stop round-tripping through
   the API). The PATCH-by-id path on public keys is intentionally exempt — update may need
   to refer to a historical row to attach a signature retroactively.
+- `GET /api/v1/conversations/{id}/participants` now has integration coverage for the auth
+  gate, the happy path (returns Admin + Editor when both are active members ordered by
+  added_at), the non-participant rejection path (returns the same 404 as a missing
+  conversation so the endpoint can't be used to probe ids), and that soft-revoked
+  members (with a non-empty removed_at) are filtered out while the audit row remains in
+  the DB. The repo's ListActive helper returns a Membership struct so handlers do not
+  depend on PocketBase types.
 
 ### Frontend
 
