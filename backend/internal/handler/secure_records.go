@@ -66,6 +66,11 @@ type conversationSecretKeyRecordResponse struct {
 	Conversation   string `json:"conversation"`
 	SecretKey      string `json:"secret_key,omitempty"`
 	User           string `json:"user"`
+	// KeyVersion is the conversation generation this wrapped secret key was
+	// produced against. A client that caches the secret key should also
+	// persist the version so a rotation invalidates the cache on next
+	// refresh without leaking access to participants who have been removed.
+	KeyVersion int `json:"key_version"`
 }
 
 type createConversationSecretKeyRequest struct {
@@ -272,7 +277,8 @@ func ConversationSecretKeyCreate(app core.App) func(e *core.RequestEvent) error 
 		}
 
 		conversationID := e.Request.PathValue("conversationID")
-		if _, err := ownedConversationRecord(app, e, conversationID); err != nil {
+		conversationRecord, err := ownedConversationRecord(app, e, conversationID)
+		if err != nil {
 			return err
 		}
 
@@ -289,12 +295,21 @@ func ConversationSecretKeyCreate(app core.App) func(e *core.RequestEvent) error 
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to load conversation secret keys collection", err)
 		}
 
+		// Stamp the wrapped key with the conversation's current generation
+		// so future rotation can invalidate stale wrappers without deleting
+		// the row outright (preserves the audit trail).
+		keyVersion := conversationRecord.GetInt("key_version")
+		if keyVersion < 1 {
+			keyVersion = 1
+		}
+
 		record := core.NewRecord(collection)
 		form := forms.NewRecordUpsert(app, record)
 		form.Load(map[string]any{
 			"conversation": conversationID,
 			"secret_key":   req.SecretKey,
 			"user":         user.ID,
+			"key_version":  keyVersion,
 		})
 		if err := form.Submit(); err != nil {
 			return apis.NewBadRequestError("Failed to create conversation secret key", err)
@@ -592,6 +607,10 @@ func conversationPublicKeyRecordToResponse(record *core.Record) conversationPubl
 }
 
 func conversationSecretKeyRecordToResponse(record *core.Record) conversationSecretKeyRecordResponse {
+	version := record.GetInt("key_version")
+	if version < 1 {
+		version = 1
+	}
 	return conversationSecretKeyRecordResponse{
 		ID:             record.Id,
 		Created:        record.GetString("created"),
@@ -601,6 +620,7 @@ func conversationSecretKeyRecordToResponse(record *core.Record) conversationSecr
 		Conversation:   record.GetString("conversation"),
 		SecretKey:      record.GetString("secret_key"),
 		User:           record.GetString("user"),
+		KeyVersion:     version,
 	}
 }
 
