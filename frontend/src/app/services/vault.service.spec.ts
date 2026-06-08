@@ -80,4 +80,24 @@ describe('VaultService', () => {
     ).toThrowError('User key pair integrity metadata missing');
     expect(cryptoService.openSecretBox).not.toHaveBeenCalled();
   });
+
+  it('rejects user key pair records when the record mac does not match', () => {
+    cryptoService.mac.mockReturnValue(new Uint8Array([9, 9, 9]));
+    cryptoService.equalBytes.mockReturnValue(false);
+
+    const keyPairRecord = {
+      id: 'kp-1',
+      user: 'user-1',
+      public_key: Base64.fromUint8Array(new Uint8Array([1, 2, 3])),
+      secret_key: Base64.fromUint8Array(new Uint8Array([4, 5, 6])),
+      password_salt: Base64.fromUint8Array(new Uint8Array([7, 8, 9])),
+      unlock_scheme: 'password_account_key_v1',
+      record_mac: Base64.fromUint8Array(new Uint8Array([1, 2, 3])),
+    };
+
+    expect(() =>
+      service.unpackKeyPairRecord(keyPairRecord as never, new Uint8Array([9, 9, 9])),
+    ).toThrowError('User key pair integrity check failed');
+    expect(cryptoService.openSecretBox).not.toHaveBeenCalled();
+  });
 });
