@@ -22,6 +22,11 @@ type conversationRecordResponse struct {
 	Data           string `json:"data"`
 	Creator        string `json:"creator,omitempty"`
 	ExpiryDuration string `json:"expiry_duration,omitempty"`
+	// KeyVersion is the conversation's current wrapping-key generation.
+	// Clients persist the version alongside any wrapped conversation
+	// secret-key cache so a rotation invalidates stale wrappers on the
+	// next refresh without breaking offline copies.
+	KeyVersion int `json:"key_version"`
 }
 
 type createConversationRequest struct {
@@ -118,6 +123,7 @@ func ConversationsCreate(app core.App) func(e *core.RequestEvent) error {
 			"creator":         user.ID,
 			"data":            req.Data,
 			"expiry_duration": req.ExpiryDuration,
+			"key_version":     1,
 		})
 		if err := form.Submit(); err != nil {
 			return apis.NewBadRequestError("Failed to create conversation", err)
@@ -359,6 +365,14 @@ func activeParticipantConversationIDs(app core.App, userID string) ([]string, er
 }
 
 func conversationRecordToResponse(record *core.Record) conversationRecordResponse {
+	version := record.GetInt("key_version")
+	if version < 1 {
+		// Records created before the key_version field landed have a NULL or
+		// zero column value. Treat those as the initial generation so the
+		// API contract is "always >=1" and the migration backfill stays an
+		// implementation detail.
+		version = 1
+	}
 	return conversationRecordResponse{
 		ID:             record.Id,
 		Created:        record.GetString("created"),
@@ -366,6 +380,7 @@ func conversationRecordToResponse(record *core.Record) conversationRecordRespons
 		Data:           record.GetString("data"),
 		Creator:        record.GetString("creator"),
 		ExpiryDuration: record.GetString("expiry_duration"),
+		KeyVersion:     version,
 	}
 }
 
