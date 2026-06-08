@@ -88,6 +88,18 @@ describe('ConversationService', () => {
     TestBed.resetTestingModule();
   });
 
+  const callFetchConversationKeyPair = (
+    conversationId: string,
+  ): Observable<unknown> => {
+    const fetchConversationKeyPair = (
+      service as unknown as Record<
+        'fetchConversationKeyPair',
+        (conversationId: string) => Observable<unknown>
+      >
+    ).fetchConversationKeyPair;
+    return fetchConversationKeyPair.call(service, conversationId);
+  };
+
   it('rejects conversation public keys without a signature', async () => {
     api.getConversationPublicKey.mockReturnValue(
       of({
@@ -100,17 +112,73 @@ describe('ConversationService', () => {
       of({ secret_key: Base64.fromUint8Array(new Uint8Array([4, 5, 6])) }),
     );
 
-    const fetchConversationKeyPair = (
-      service as unknown as Record<
-        'fetchConversationKeyPair',
-        (conversationId: string) => Observable<unknown>
-      >
-    ).fetchConversationKeyPair;
-
     await expect(
-      firstValueFrom(fetchConversationKeyPair.call(service, 'conv-1')),
+      firstValueFrom(callFetchConversationKeyPair('conv-1')),
     ).rejects.toThrow('Conversation public key signature missing');
     expect(api.getConversationSecretKey).not.toHaveBeenCalled();
+  });
+
+  it('rejects conversation public keys whose signature does not match', async () => {
+    api.getConversationPublicKey.mockReturnValue(
+      of({
+        id: 'pub-1',
+        public_key: Base64.fromUint8Array(new Uint8Array([1, 2, 3])),
+        public_key_signature: Base64.fromUint8Array(new Uint8Array([9, 9, 9])),
+      }),
+    );
+    api.getConversationSecretKey.mockReturnValue(
+      of({ secret_key: Base64.fromUint8Array(new Uint8Array([4, 5, 6])) }),
+    );
+    cryptoService.equalBytes.mockReturnValue(false);
+
+    await expect(
+      firstValueFrom(callFetchConversationKeyPair('conv-1')),
+    ).rejects.toThrow('Conversation public key signature mismatch');
+    expect(api.getConversationSecretKey).not.toHaveBeenCalled();
+  });
+
+  it('decrypts the conversation secret key on a verified signature', async () => {
+    const publicKeyBytes = new Uint8Array([1, 2, 3]);
+    const signatureBytes = new Uint8Array([6, 5, 4]);
+    const encryptedSecretBytes = new Uint8Array([10, 20, 30]);
+    const sharedKey = new Uint8Array([42]);
+    const decryptedSecret = new Uint8Array([99, 100, 101]);
+
+    api.getConversationPublicKey.mockReturnValue(
+      of({
+        id: 'pub-1',
+        public_key: Base64.fromUint8Array(publicKeyBytes),
+        public_key_signature: Base64.fromUint8Array(signatureBytes),
+      }),
+    );
+    api.getConversationSecretKey.mockReturnValue(
+      of({ secret_key: Base64.fromUint8Array(encryptedSecretBytes) }),
+    );
+    cryptoService.equalBytes.mockReturnValue(true);
+    cryptoService.sharedKey.mockReturnValue(sharedKey);
+    cryptoService.openBox.mockReturnValue(decryptedSecret);
+
+    const result = (await firstValueFrom(callFetchConversationKeyPair('conv-1'))) as {
+      publicKey: Uint8Array;
+      secretKey: Uint8Array;
+    };
+
+    expect(Array.from(result.publicKey)).toEqual(Array.from(publicKeyBytes));
+    expect(Array.from(result.secretKey)).toEqual(Array.from(decryptedSecret));
+    // The shared key for unwrapping the conversation secret key is derived from
+    // the *conversation* public key + the *user* secret key, not from the user
+    // key pair alone. Pin both arguments so a regression in the arg order is
+    // caught loudly.
+    expect(cryptoService.sharedKey).toHaveBeenCalledWith(
+      publicKeyBytes,
+      new Uint8Array([8]),
+    );
+    const openBoxArgs = cryptoService.openBox.mock.calls.at(-1) as [
+      Uint8Array,
+      Uint8Array,
+    ];
+    expect(Array.from(openBoxArgs[0])).toEqual(Array.from(encryptedSecretBytes));
+    expect(Array.from(openBoxArgs[1])).toEqual(Array.from(sharedKey));
   });
 
   it('derives a dedicated mac key for conversation public key signatures', () => {
