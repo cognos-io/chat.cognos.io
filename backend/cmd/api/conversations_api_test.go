@@ -431,6 +431,11 @@ func seedOwnedConversation(t testing.TB, app *tests.TestApp, conversationID stri
 	record.Id = conversationID
 	record.Set("creator", userRecord.Id)
 	record.Set("data", base64.StdEncoding.EncodeToString([]byte(`{"title":"Seeded"}`)))
+	// Mirror production: ConversationsCreate stamps key_version=1 on the
+	// fresh row so tests that rely on the conversation being on a known
+	// generation (notably the rotate tests asserting the v1 -> v2 step)
+	// don't see a 0 default.
+	record.Set("key_version", 1)
 	if err := app.Save(record); err != nil {
 		t.Fatalf("Save(conversationRecord) error = %v", err)
 	}
