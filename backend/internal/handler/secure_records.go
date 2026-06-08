@@ -510,11 +510,15 @@ func ownedUserKeyPairRecord(app core.App, e *core.RequestEvent, keyPairID string
 }
 
 func ownedConversationPublicKeyRecord(app core.App, e *core.RequestEvent, conversationID string, publicKeyID string) (*core.Record, error) {
-	if _, err := ownedConversationRecord(app, e, conversationID); err != nil {
+	conversation, err := ownedConversationRecord(app, e, conversationID)
+	if err != nil {
 		return nil, err
 	}
 
 	if publicKeyID != "" {
+		// PATCH-by-id path is used by update, which must be able to refer
+		// to an arbitrary historical row (e.g. attach a signature to an
+		// older key version). Skip the key_version filter here.
 		record, err := app.FindRecordById("conversation_public_keys", publicKeyID)
 		if err != nil {
 			return nil, apis.NewNotFoundError("Conversation public key not found", err)
@@ -525,13 +529,18 @@ func ownedConversationPublicKeyRecord(app core.App, e *core.RequestEvent, conver
 		return record, nil
 	}
 
+	// GET path returns the row for the conversation's CURRENT generation.
+	// Older key_version rows stay in the DB as audit data but never
+	// surface through this endpoint — a fresh rotation invalidates the
+	// previous public key without deleting the historical record.
+	keyVersion := currentKeyVersion(conversation)
 	records, err := app.FindRecordsByFilter(
 		"conversation_public_keys",
-		"conversation={:conversation_id}",
+		"conversation={:conversation_id} && key_version={:key_version}",
 		"",
 		1,
 		0,
-		dbx.Params{"conversation_id": conversationID},
+		dbx.Params{"conversation_id": conversationID, "key_version": keyVersion},
 	)
 	if err != nil || len(records) == 0 {
 		return nil, apis.NewNotFoundError("Conversation public key not found", err)
@@ -545,23 +554,40 @@ func ownedConversationSecretKeyRecord(app core.App, e *core.RequestEvent, conver
 	if user == nil {
 		return nil, apis.NewUnauthorizedError("User not authenticated", nil)
 	}
-	if _, err := ownedConversationRecord(app, e, conversationID); err != nil {
+	conversation, err := ownedConversationRecord(app, e, conversationID)
+	if err != nil {
 		return nil, err
 	}
 
+	// Filter the wrapped secret key by the conversation's current
+	// generation. Stale rows (older key_version values) stay in the DB
+	// as audit/history but never round-trip through the API — once a
+	// rotation happens, previous wrappers stop being usable.
+	keyVersion := currentKeyVersion(conversation)
 	records, err := app.FindRecordsByFilter(
 		"conversation_secret_keys",
-		"conversation={:conversation_id} && user={:user_id}",
+		"conversation={:conversation_id} && user={:user_id} && key_version={:key_version}",
 		"",
 		1,
 		0,
-		dbx.Params{"conversation_id": conversationID, "user_id": user.ID},
+		dbx.Params{"conversation_id": conversationID, "user_id": user.ID, "key_version": keyVersion},
 	)
 	if err != nil || len(records) == 0 {
 		return nil, apis.NewNotFoundError("Conversation secret key not found", err)
 	}
 
 	return records[0], nil
+}
+
+// currentKeyVersion returns the conversation's current generation, treating
+// any legacy 0/NULL column value as 1 so the read path stays well-defined
+// for rows persisted before the key_version columns landed.
+func currentKeyVersion(conversation *core.Record) int {
+	v := conversation.GetInt("key_version")
+	if v < 1 {
+		return 1
+	}
+	return v
 }
 
 func ownedUserPreferencesRecord(app core.App, e *core.RequestEvent, preferencesID string) (*core.Record, error) {
