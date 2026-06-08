@@ -45,7 +45,7 @@ This checklist is the living execution tracker for the rework.
 
 - [x] `docs/specs/backend-model-selector.md`
     - [x] updated to reflect gateway-first, sharing-ready, threading/expires, and manual-billing
-          decisions
+        decisions
 - [x] `docs/specs/backend-model-selector-checklist.md`
     - [x] rewritten as the living tracker for this branch
 - [x] `docs/specs/backend-model-selector-test-plan.md`
@@ -102,8 +102,33 @@ This checklist is the living execution tracker for the rework.
 ### Frontend test targets
 
 - [x] frontend unit test baseline is green again
+- [x] auth/login hot-path unit coverage
+    - [x] register + forgot-password links render on the login page
+    - [x] valid submit emits the login request
+    - [x] authenticated-user redirect back to chat is covered
+- [x] auth/register hot-path unit coverage
+    - [x] password-mismatch validation is covered directly
+    - [x] valid submit emits the register request
+    - [x] loading resets on register failure
+    - [x] authenticated-user redirect back to chat is covered
+- [x] auth service hot-path unit coverage
+    - [x] rejected login transitions into the error state with user-facing alerting
+    - [x] valid auth-store updates populate success state and remembered email
+    - [x] stale-session refresh redirects to logout on 401
+    - [x] register chains account creation into sign-in with matching password confirm
+    - [x] logout clears trusted unlock state even when the server logout request fails
+- [x] trusted unlock hot-path unit coverage
+    - [x] local encrypted unlock blobs are written only after wrap-key persistence succeeds
+    - [x] unlock keys round-trip through local storage plus server-held wrap keys
+    - [x] failed wrap-key fetches invalidate stale local blobs
+    - [x] logout-style cleanup removes all trusted-unlock blobs even on server delete failure
+- [x] user preferences hot-path unit coverage
+    - [x] encrypted preferences hydrate after the key pair becomes available
+    - [x] pin conversation deduplicates IDs before persisting
+    - [x] unpin conversation removes IDs from the persisted payload
 - [x] high-level browser E2E baseline is green
     - [x] authenticated user loads models from backend
+    - [x] auth route-link regression re-verified green after the login-page fix
 
 ### Verification
 

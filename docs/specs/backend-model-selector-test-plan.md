@@ -65,13 +65,25 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 
 - `cd frontend && pnpm exec ng test --watch=false` ✅ passes
 - `cd frontend && pnpm build` ✅ passes
-- `cd frontend && pnpm test:e2e` ✅ passes
+- `cd e2e && pnpm test` ✅ passes
 - `ModelService` coverage now includes login load, eligible-model fallback, no-eligible fallback,
   and logout reset
 - `MessageService` coverage now includes structured completion-error message handling for billing,
   rate limits, and generic failures
+- `LoginComponent` coverage now includes login-page route links plus submit and post-login redirect
+  hot paths
+- `RegisterComponent` coverage now includes password-mismatch validation, submit, failure-reset,
+  and post-login redirect hot paths
+- `AuthService` coverage now includes login error-state transitions, auth-store success-state
+  hydration, stale-session logout redirect handling, register create→sign-in chaining, and logout
+  cleanup even when the server request fails
+- `TrustedUnlockService` coverage now includes local encrypted-blob persistence, wrap-key-backed
+  recovery, stale-blob invalidation on vault-session fetch failure, and best-effort logout cleanup
+- `UserPreferencesService` coverage now includes encrypted preference hydration, pin deduplication,
+  and unpin persistence for conversation pinning
 - browser E2E now covers high-level authenticated models-loading, send/reply, history-reload,
-  unavailable-model guard, and trial/inactive billing-restriction flows via Playwright
+  unavailable-model guard, trial/inactive billing-restriction flows, and auth route-link
+  regression coverage via Playwright
 
 Remaining frontend build warnings are non-blocking style-budget follow-up work.
 
@@ -106,7 +118,7 @@ cd frontend && pnpm build
 ### Browser E2E
 
 ```bash
-cd frontend && pnpm test:e2e
+cd e2e && pnpm test
 ```
 
 ---
