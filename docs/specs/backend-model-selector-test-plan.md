@@ -271,6 +271,13 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   field names, and the ledger is scoped per user (two fresh users' ledgers share
   no transaction ids — locks the strongest privacy invariant outside the Go
   test harness).
+- `e2e/tests/logout-api.spec.ts` pins `POST /v1/auth/logout` end-to-end
+  (audit P1 gap closed). 5 scenarios: anon→401, authed→204 with empty
+  body, token rotation (the prior session token must stop authenticating
+  after logout — RefreshTokenKey is the load-bearing security guarantee),
+  vault session DELETE as a side effect (re-auth + confirm the wrap-key
+  row is gone so trusted-device unlock falls back to password+account-key),
+  and the no-vault-session case still returning 204 (not 500).
 - `mapCompleteRequest` / `mapCompleteResponse` in
   `cognos-api.service.ts` now have direct unit coverage
   (`cognos-api.service.spec.ts`). The pure helpers were extracted out
@@ -631,6 +638,64 @@ Add guarded real-adapter tests for:
 - sign in as a restricted-tier user
 - verify ineligible models are clearly unavailable
 - verify user cannot send with an ineligible model
+
+---
+
+## E2E contract coverage matrix (2026-06)
+
+Snapshot of which first-party routes are pinned and how, recorded after
+the 2026-06 audit. Update this table when adding new endpoints or moving
+gaps to covered.
+
+| Route                                                             | API contract (e2e)                    | UI flow (browser)                                                                               | Rainy day                                       |
+| ----------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| GET `/api/v1/models`                                              | ✅ `models-api.spec.ts`               | ✅ `frontend/e2e/models.spec.ts`                                                                | ✅ auth gate, no provider-routing leak          |
+| GET `/api/v1/billing`                                             | ✅ `billing-api.spec.ts`              | ✗ no frontend caller yet                                                                        | ✅ auth gate, no Rappen leak                    |
+| GET `/api/v1/billing/transactions`                                | ✅ `billing-api.spec.ts`              | ✗ no frontend caller yet                                                                        | ✅ auth gate, per-user isolation                |
+| GET `/api/v1/conversations`                                       | ✅ `conversations-api.spec.ts`        | ✅ `journeys.spec.ts`                                                                           | ✅ auth gate, per-user scope                    |
+| POST `/api/v1/conversations`                                      | ✅ `conversations-api.spec.ts`        | ✅ `journeys.spec.ts`                                                                           | ✅ expiry allow-list                            |
+| PATCH `/api/v1/conversations/{id}`                                | ✅ `conversations-api.spec.ts`        | ✅ via edit dialog (`journeys.spec.ts`)                                                         | ✅ non-participant 404, key_version preserved   |
+| DELETE `/api/v1/conversations/{id}`                               | ✅ `conversations-api.spec.ts`        | ⚠️ deferred — UI dialog flow has Playwright timing quirks; API contract is the load-bearing pin | ✅ non-participant 404                          |
+| GET `/api/v1/conversations/{id}/messages`                         | ✅ `conversations-api.spec.ts`        | ✅ `journeys.spec.ts`, `history.spec.ts`                                                        | ✅ pagination envelope, non-participant 404     |
+| PATCH `/api/v1/messages/{id}`                                     | ✅ `conversations-api.spec.ts`        | ⚠️ deferred — temp-message dialog flow not browser-tested                                       | ✅ non-participant 404                          |
+| DELETE `/api/v1/messages/{id}`                                    | ✅ `conversations-api.spec.ts`        | ⚠️ deferred                                                                                     | ✅ non-participant 404                          |
+| POST `/api/v1/completions`                                        | ✅ `completions-api.spec.ts`          | ✅ via send-message UI (`messages.spec.ts`)                                                     | ✅ missing fields, unknown ids, role validation |
+| POST `/api/v1/conversations/{id}/complete`                        | ✅ `completions-api.spec.ts`          | ✅ `journeys.spec.ts`, `messages.spec.ts`, `billing-restriction.spec.ts`                        | ✅ non-participant 404, 402 billing block       |
+| GET `/api/v1/user-key-pair`                                       | ✅ `user-state-api.spec.ts`           | ✅ `journeys.spec.ts`                                                                           | ✅ pre-create 404                               |
+| POST `/api/v1/user-key-pair`                                      | ✅ `user-state-api.spec.ts`           | ✅ `journeys.spec.ts`                                                                           | ✅ missing fields, cross-user reject            |
+| PATCH `/api/v1/user-key-pair/{id}`                                | ✅ `user-state-api.spec.ts`           | ✅ encrypted-backup creation                                                                    | ✅ cross-user reject, owner-only                |
+| GET/POST/PATCH `/api/v1/conversations/{id}/public-key`            | ✅ `conversation-keys-api.spec.ts`    | ✅ `journeys.spec.ts` (create + signature attach)                                               | ✅ second-POST blocked, non-participant 404     |
+| GET/POST `/api/v1/conversations/{id}/secret-key`                  | ✅ `conversation-keys-api.spec.ts`    | ✅ `journeys.spec.ts`                                                                           | ✅ empty-key 400, non-participant 404           |
+| GET/POST/PATCH `/api/v1/user-preferences`                         | ✅ `user-state-api.spec.ts`           | ✅ via pinning (`journeys.spec.ts`)                                                             | ✅ empty-data 400, cross-user reject            |
+| GET/PUT/DELETE `/api/v1/vault-session`                            | ✅ `user-state-api.spec.ts`           | ✅ via unlock/lock flows (`auth.spec.ts`)                                                       | ✅ wrap_key length, per-user isolation          |
+| GET `/api/v1/conversations/{id}/participants`                     | ✅ `participants-api.spec.ts`         | ✗ no UI surface yet                                                                             | ✅ auth + role gates                            |
+| POST `/api/v1/conversations/{id}/participants`                    | ✅ `participants-api.spec.ts`         | ✗ no UI surface yet                                                                             | ✅ Editor 403, validation 400                   |
+| DELETE `/api/v1/conversations/{id}/participants/{userID}`         | ✅ `participants-api.spec.ts`         | ✗ no UI surface yet                                                                             | ✅ self-revoke 400, last-Admin guard            |
+| POST `/api/v1/conversations/{id}/rotate`                          | ✅ `participants-api.spec.ts`         | ✗ no UI surface yet                                                                             | ✅ Editor 403, missing-participant 400          |
+| **POST `/v1/auth/logout`**                                        | **✅ `logout-api.spec.ts` (2026-06)** | ⚠️ implicit via UI logout helpers                                                               | ✅ token rotation + vault-session delete        |
+| `/api/collections/users/auth-with-password` etc. (PocketBase SDK) | ✗ no explicit contract test           | ✅ via UI register/login (`auth.spec.ts`)                                                       | partial                                         |
+
+### Known gaps (deferred, not blocking the branch)
+
+- **Conversation delete UI flow** — confirmation dialog clickthrough is
+  Playwright-fiddly (CDK overlay + visible-on-hover menu trigger +
+  account-key-copied toast all interact). DELETE handler is pinned at
+  the API level, so the contract guarantee is intact.
+- **Message PATCH/DELETE UI flow** — same shape of gap.
+- **Sharing UI** — participants add/list/revoke and key rotation have no
+  frontend surface yet; the backend is fully pinned (`participants-api.spec.ts`).
+- **Password reset / email verification** — frontend pages exist
+  (`pages/auth/forgot-password`, `pages/auth/reset-password`,
+  `pages/auth/verify-email`) but no browser e2e. Adding these requires
+  a mailbox shim — deferred until reset/verify is part of an active
+  rollout.
+- **Rate limit (429)** — `routes.go` enforces 600/h with a 60-burst, but
+  dev mode bypasses it. Triggering 429 in e2e would require running the
+  backend in non-dev mode against the suite, which is currently
+  out of scope for the local harness.
+- **5xx upstream-gateway failures** — completion handler error path on
+  provider outage is unit-tested but no browser e2e exercises the toast
+  copy. Deferred.
 
 ---
 
