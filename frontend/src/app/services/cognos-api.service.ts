@@ -195,6 +195,48 @@ interface ApiUserPreferencesUpdateRequest {
   data: string;
 }
 
+// mapCompleteRequest and mapCompleteResponse are exported as pure helpers so
+// the snake_case ↔ camelCase contract with the backend can be unit-tested
+// directly. Without these as pinned helpers, a backend field rename would
+// silently surface as `undefined` in CompleteResponse and the UI would
+// degrade without a test failure to catch it.
+export const mapCompleteRequest = (request: CompleteRequest): ApiCompleteRequest => ({
+  messages: request.messages,
+  model_id: request.modelId,
+  agent_id: request.agentId,
+  parent_message_id: request.parentMessageId,
+  request_id: request.requestId,
+  max_output_tokens: request.maxOutputTokens,
+  persist: request.persist,
+});
+
+export const mapCompleteResponse = (
+  response: ApiCompleteResponse,
+): CompleteResponse => ({
+  requestId: response.request_id,
+  userMessageId: response.user_message_id,
+  expiresAt: response.expires_at,
+  assistantMessage: {
+    id: response.assistant_message.id,
+    parentMessageId: response.assistant_message.parent_message_id,
+    content: response.assistant_message.content,
+    agentId: response.assistant_message.agent_id,
+    modelId: response.assistant_message.model_id,
+    createdAt: response.assistant_message.created_at,
+  },
+  usage: {
+    inputTokens: response.usage.input_tokens,
+    outputTokens: response.usage.output_tokens,
+    totalTokens: response.usage.total_tokens,
+    cacheCreationInputTokens: response.usage.cache_creation_input_tokens,
+    cacheReadInputTokens: response.usage.cache_read_input_tokens,
+    costUSD: response.usage.cost_usd,
+    costCHF: response.usage.cost_chf,
+    costRappen: response.usage.cost_rappen,
+    usedProviderCost: response.usage.used_provider_cost,
+  },
+});
+
 @Injectable({
   providedIn: 'root',
 })
@@ -481,42 +523,11 @@ export class CognosApiService {
   }
 
   private mapCompleteRequest(request: CompleteRequest): ApiCompleteRequest {
-    return {
-      messages: request.messages,
-      model_id: request.modelId,
-      agent_id: request.agentId,
-      parent_message_id: request.parentMessageId,
-      request_id: request.requestId,
-      max_output_tokens: request.maxOutputTokens,
-      persist: request.persist,
-    };
+    return mapCompleteRequest(request);
   }
 
   private mapCompleteResponse(response: ApiCompleteResponse): CompleteResponse {
-    return {
-      requestId: response.request_id,
-      userMessageId: response.user_message_id,
-      expiresAt: response.expires_at,
-      assistantMessage: {
-        id: response.assistant_message.id,
-        parentMessageId: response.assistant_message.parent_message_id,
-        content: response.assistant_message.content,
-        agentId: response.assistant_message.agent_id,
-        modelId: response.assistant_message.model_id,
-        createdAt: response.assistant_message.created_at,
-      },
-      usage: {
-        inputTokens: response.usage.input_tokens,
-        outputTokens: response.usage.output_tokens,
-        totalTokens: response.usage.total_tokens,
-        cacheCreationInputTokens: response.usage.cache_creation_input_tokens,
-        cacheReadInputTokens: response.usage.cache_read_input_tokens,
-        costUSD: response.usage.cost_usd,
-        costCHF: response.usage.cost_chf,
-        costRappen: response.usage.cost_rappen,
-        usedProviderCost: response.usage.used_provider_cost,
-      },
-    };
+    return mapCompleteResponse(response);
   }
 
   private mapModel(model: ApiModel): Model {
