@@ -120,27 +120,35 @@ func ConversationsCreate(app core.App) func(e *core.RequestEvent) error {
 		}
 
 		record := core.NewRecord(collection)
-		form := forms.NewRecordUpsert(app, record)
-		form.Load(map[string]any{
-			"creator":         user.ID,
-			"data":            req.Data,
-			"expiry_duration": req.ExpiryDuration,
-			"key_version":     1,
-		})
-		if err := form.Submit(); err != nil {
-			return apis.NewBadRequestError("Failed to create conversation", err)
+		record.Set("creator", user.ID)
+		record.Set("data", req.Data)
+		record.Set("expiry_duration", req.ExpiryDuration)
+		record.Set("key_version", 1)
+
+		participantsCollection, err := app.FindCollectionByNameOrId(participants.CollectionName)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load participants collection", err)
 		}
 
-		// Seed the creator as the conversation's first Admin participant. This
-		// keeps access driven by the participants table rather than a creator
-		// shortcut, so future sharing (additional participants) reuses the
-		// same access path without a handler rewrite.
-		repo := participants.NewPocketBaseRepo(app)
-		if err := repo.Add(record.Id, user.ID, participants.RoleAdmin); err != nil {
-			// Roll back the conversation row so the creator does not end up
-			// locked out of a conversation they just created.
-			_ = app.Delete(record)
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to register conversation participant", err)
+		// Wrap both writes in a single transaction so we never end up with a
+		// stranded conversation row whose creator has no participant entry.
+		// Pre-transaction the code tried to compensate by deleting the
+		// conversation on failure, but a follow-up delete error would have
+		// left orphan state behind. A transactional write removes that case
+		// entirely — either both rows land or neither does.
+		if err := app.RunInTransaction(func(txApp core.App) error {
+			if err := txApp.Save(record); err != nil {
+				return err
+			}
+
+			participantRecord := core.NewRecord(participantsCollection)
+			participantRecord.Set("conversation", record.Id)
+			participantRecord.Set("user", user.ID)
+			participantRecord.Set("role", string(participants.RoleAdmin))
+			participantRecord.Set("added_at", time.Now().UTC())
+			return txApp.Save(participantRecord)
+		}); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to create conversation", err)
 		}
 
 		return e.JSON(http.StatusCreated, conversationRecordToResponse(record))
