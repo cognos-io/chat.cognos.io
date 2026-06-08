@@ -141,6 +141,19 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   reject path (and that the secret key fetch is skipped) plus the verified happy path that pins
   `openBox` is called with the conversation-shared key derived from the conversation public key +
   user secret key, not from the user key pair alone
+- `parseUserPreferencesData` now has unit coverage for default `pinnedModels`, missing/non-array
+  `pinnedConversations` rejection, non-string-entry rejection, malformed JSON rejection, and a
+  zod strip-extras pin so attacker-injected fields cannot survive a serialise → ciphertext round
+  trip
+- `AgentService` now has unit coverage that the default `simple-assistant` agent is selected on
+  first load, that `selectAgent` ignores ids that are not in the agent list, that `selectedAgent`
+  falls back to the default if the selected id no longer resolves, and that `getAgent` returns an
+  undefined-signal for missing / empty ids without throwing
+- `MessageService.assertMessageBindings` is now an exported pure helper with direct unit coverage:
+  no-claim payloads pass through, matching `conversation_id` / `parent_message_id` are accepted,
+  mismatched values throw the documented errors, and the asymmetric falsy gate is pinned (empty
+  `conversation_id` is ignored, empty `parent_message_id` still participates in the equality
+  check so an attacker-claimed missing parent cannot rebind against a real one)
 - browser E2E now covers high-level authenticated models-loading, send/reply, history-reload,
   unavailable-model guard, trial/inactive billing-restriction flows, and auth route-link
   regression coverage via Playwright
