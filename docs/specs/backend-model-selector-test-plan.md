@@ -165,6 +165,13 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   writes the participant row + wrapped secret-key row atomically with the conversation's
   current key_version. The repo gained `ActiveRole(conv, user)` so the handler can
   gate on role without leaking PocketBase types.
+- `DELETE /api/v1/conversations/{id}/participants/{userID}` (sharing-revoke primitive)
+  now has integration coverage that pins: Admin soft-revokes another active
+  participant (removed_at stamped; row stays in DB for audit), Editors are denied
+  with 403, the caller is blocked from revoking themselves with a focused 400, a
+  missing target returns 404, and an Admin can revoke a co-Admin when more than
+  one Admin remains. The repo's Revoke method returns `ErrParticipantNotFound` for
+  the no-active-row case so handlers can shape the 404 directly.
 
 ### Frontend
 
