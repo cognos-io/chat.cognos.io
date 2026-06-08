@@ -103,6 +103,47 @@ export const assertMessageBindings = (
   }
 };
 
+// buildCompletionMessageContext walks the conversation newest-first and
+// produces the chronological prompt context. It enforces the per-message
+// "would push us over the input budget" stop without ever sending plaintext
+// fields we did not intend to (e.g. owner_id, agent_id, model_id are only
+// consulted to pick the role + display name and never round-trip into the
+// outgoing payload).
+export const buildCompletionMessageContext = (
+  messagesNewestFirst: ReadonlyArray<Message>,
+  inputContextTokens: number,
+  resolveAgentName: (id: string | undefined) => string | undefined,
+  resolveModelName: (id: string | undefined) => string | undefined,
+): CompletionMessageRequest[] => {
+  const context: CompletionMessageRequest[] = [];
+  // 1 token ~= 2 characters. We avoid a tokenizer dep here intentionally.
+  const targetContextChars = inputContextTokens * 2;
+  let usedContextLength = 0;
+
+  for (const message of messagesNewestFirst) {
+    const content = message.decryptedData.content;
+    if (!content) {
+      continue;
+    }
+    if (usedContextLength + content.length >= targetContextChars) {
+      break;
+    }
+
+    const ownerId = message.decryptedData.owner_id;
+    context.unshift({
+      role: ownerId ? 'user' : 'assistant',
+      content,
+      name:
+        ownerId ??
+        resolveAgentName(message.decryptedData.agent_id) ??
+        resolveModelName(message.decryptedData.model_id),
+    });
+    usedContextLength += content.length;
+  }
+
+  return context;
+};
+
 // buildCompletionMessages is the pure assistant-append step. It returns the
 // new messages array — never mutating the existing entries — so that when the
 // completion response carries an expiry, the parent message is updated via a
@@ -613,54 +654,14 @@ export class MessageService {
     };
   }
 
-  /**
-   * Create a message context object based on the message history
-   * to be used in the Cognos API request.
-   *
-   * As the new message has already been added to the state, we don't
-   * need to include it as a parameter here.
-   */
   private createMessageContext(): Array<CompletionMessageRequest> {
     const model = this._modelService.selectedModel();
-    const context: Array<CompletionMessageRequest> = [];
-
-    let usedContextLength = 0;
-    // Rather than calling a tokenizer, estimate that 1 token is 2 characters
-    const targetContextChars = model.inputContextLength * 2;
-
-    for (const message of this.state.reverseOrderedMessageList()) {
-      if (!message.decryptedData.content) {
-        continue;
-      }
-
-      //  For now, rather than using tokens use characters.
-      // TODO(ewan): Use tokens instead of characters
-      const messageLength = message.decryptedData.content.length;
-
-      if (usedContextLength + messageLength >= targetContextChars) {
-        break;
-      }
-
-      // We start with the latest messages and work our way back so
-      // we need to prepend the new message to the context to ensure
-      // the order is correct.
-      context.unshift({
-        role: message.decryptedData.owner_id ? 'user' : 'assistant',
-        content: message.decryptedData.content,
-        // Adding a name can help the message differentiate participants
-        // Prioritize: userId of who sent it -> agent -> model
-        name:
-          message.decryptedData.owner_id ??
-          this._agentService.getAgent(message.decryptedData.agent_id).name ??
-          this._modelService.getModel(message.decryptedData.model_id)?.name,
-      });
-      usedContextLength += messageLength;
-
-      // TODO(ewan): If we haven't reached the max tokens,
-      // can we fetch more messages from this conversation and parse them?
-    }
-
-    return context;
+    return buildCompletionMessageContext(
+      this.state.reverseOrderedMessageList(),
+      model.inputContextLength,
+      (id) => this._agentService.getAgent(id)()?.name,
+      (id) => this._modelService.getModel(id)?.name,
+    );
   }
 
   private generateConversationTitle(
