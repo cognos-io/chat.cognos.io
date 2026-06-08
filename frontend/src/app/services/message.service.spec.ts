@@ -7,6 +7,7 @@ import { Message } from '@app/interfaces/message';
 import { CompleteResponse } from './cognos-api.service';
 import {
   assertMessageBindings,
+  buildCompletionMessageContext,
   buildCompletionMessages,
   resolveCompletionErrorMessage,
 } from './message.service';
@@ -168,6 +169,144 @@ describe('buildCompletionMessages', () => {
     const result = buildCompletionMessages(existing, makeResponse());
     expect(result).not.toBe(existing);
     expect(existing).toHaveLength(1);
+  });
+});
+
+describe('buildCompletionMessageContext', () => {
+  const noopAgent = () => undefined;
+  const noopModel = () => undefined;
+
+  const makeMessage = (overrides: Partial<Message> = {}): Message => ({
+    record_id: overrides.record_id ?? 'm',
+    createdAt: overrides.createdAt ?? new Date('2026-01-01T00:00:00.000Z'),
+    parentMessageId: overrides.parentMessageId,
+    expires: overrides.expires,
+    decryptedData: overrides.decryptedData ?? { content: 'hi' },
+  });
+
+  it('returns an empty context when there are no messages', () => {
+    expect(buildCompletionMessageContext([], 100, noopAgent, noopModel)).toEqual([]);
+  });
+
+  it('skips messages with empty or missing content', () => {
+    const messages = [
+      makeMessage({ decryptedData: { content: '', owner_id: 'u-1' } }),
+      makeMessage({ decryptedData: { content: null, owner_id: 'u-1' } }),
+      makeMessage({ decryptedData: { content: 'real', owner_id: 'u-1' } }),
+    ];
+
+    const context = buildCompletionMessageContext(messages, 100, noopAgent, noopModel);
+    expect(context).toHaveLength(1);
+    expect(context[0]).toMatchObject({ role: 'user', content: 'real', name: 'u-1' });
+  });
+
+  it('flips chronologically: newest-first input becomes oldest-first context', () => {
+    // The conversation history is reverse-ordered (newest first) when handed
+    // in, but the LLM expects oldest-first; the unshift loop pins that flip.
+    const newest = makeMessage({ decryptedData: { content: 'reply', model_id: 'm' } });
+    const oldest = makeMessage({
+      decryptedData: { content: 'hi', owner_id: 'u-1' },
+    });
+
+    const context = buildCompletionMessageContext(
+      [newest, oldest],
+      100,
+      noopAgent,
+      noopModel,
+    );
+
+    expect(context.map((c) => c.content)).toEqual(['hi', 'reply']);
+  });
+
+  it('infers role from owner_id (user) vs missing owner_id (assistant)', () => {
+    const userMsg = makeMessage({
+      decryptedData: { content: 'hi', owner_id: 'u-1' },
+    });
+    const asstMsg = makeMessage({ decryptedData: { content: 'hello' } });
+
+    const context = buildCompletionMessageContext(
+      [asstMsg, userMsg],
+      100,
+      noopAgent,
+      noopModel,
+    );
+
+    expect(context[0]).toMatchObject({ role: 'user' });
+    expect(context[1]).toMatchObject({ role: 'assistant' });
+  });
+
+  it('prefers owner_id for the participant name', () => {
+    const msg = makeMessage({
+      decryptedData: { content: 'hi', owner_id: 'u-1', agent_id: 'a', model_id: 'm' },
+    });
+
+    const context = buildCompletionMessageContext(
+      [msg],
+      100,
+      () => 'agent-name',
+      () => 'model-name',
+    );
+
+    expect(context[0].name).toBe('u-1');
+  });
+
+  it('falls back to the agent name when owner_id is absent', () => {
+    const msg = makeMessage({
+      decryptedData: { content: 'hi', agent_id: 'a', model_id: 'm' },
+    });
+
+    const context = buildCompletionMessageContext(
+      [msg],
+      100,
+      () => 'agent-name',
+      () => 'model-name',
+    );
+
+    expect(context[0].name).toBe('agent-name');
+  });
+
+  it('falls back to the model name when neither owner_id nor agent name resolves', () => {
+    const msg = makeMessage({
+      decryptedData: { content: 'hi', agent_id: 'a', model_id: 'm' },
+    });
+
+    const context = buildCompletionMessageContext(
+      [msg],
+      100,
+      () => undefined,
+      () => 'model-name',
+    );
+
+    expect(context[0].name).toBe('model-name');
+  });
+
+  it('leaves name undefined when no resolver returns a value', () => {
+    const msg = makeMessage({ decryptedData: { content: 'hi' } });
+    const context = buildCompletionMessageContext([msg], 100, noopAgent, noopModel);
+    expect(context[0].name).toBeUndefined();
+  });
+
+  it('breaks before including the next message when the budget would overflow', () => {
+    // Budget: 10 tokens => 20 chars. First two messages fit (5 + 5 = 10);
+    // the third would push us to 15, still under — but the fourth at 20 would
+    // hit the boundary. Pin that ">=" stops *before* the overflow message.
+    const msgs = [
+      makeMessage({ decryptedData: { content: 'aaaaaaaa' } }), // 8
+      makeMessage({ decryptedData: { content: 'bbbbb' } }), // 5
+      makeMessage({ decryptedData: { content: 'ccccc' } }), // 5
+      makeMessage({ decryptedData: { content: 'ddddd' } }), // 5 — would tip
+    ];
+    const context = buildCompletionMessageContext(msgs, 10, noopAgent, noopModel);
+    // We took msgs[0..2] (8+5+5=18 < 20). msgs[3] would make it 23 >= 20.
+    expect(context.map((c) => c.content)).toEqual(['ccccc', 'bbbbb', 'aaaaaaaa']);
+  });
+
+  it('returns an empty context when even the first message exceeds the budget', () => {
+    // A pathological model with a 1-token (2-char) input budget rejects
+    // everything bigger than that — we should send nothing rather than half a
+    // message, and the caller can decide what to do.
+    const msgs = [makeMessage({ decryptedData: { content: 'too long' } })];
+    expect(buildCompletionMessageContext(msgs, 1, noopAgent, noopModel)).toEqual([]);
   });
 });
 
