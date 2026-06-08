@@ -189,11 +189,40 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   insert in a single PocketBase transaction. The pre-existing "compensating delete"
   on participant-add failure couldn't recover when the delete itself failed; the
   transactional write removes the orphan-row failure mode entirely.
+- `conversation_public_keys` unique index narrowed from `(conversation)` to
+  `(conversation, key_version)` (migration 1760000019). The original index
+  silently blocked the rotation handler's v2 public_key insert — the e2e
+  /complete spec caught it. `auth.ConversationPublicKey` was also reworked
+  to return the most-recent generation row (was: `ErrMultipleConversationKeyPair`
+  when more than one row existed). A new backend integration test seeds a
+  pre-existing v1 public_key row before rotating, proving the original layout
+  works end-to-end.
 - `e2e/tests/models-api.spec.ts` pins the `/api/v1/models` contract end-to-end:
   401 for anonymous callers, typed catalogue shape with eligibility metadata for
   authenticated callers, hard guard against the internal routing fields
   (`provider_model_id` / `base_url` / `api_key`) ever appearing in the response,
   and `preferred_model_id` is omitted (not serialised as null) for fresh users.
+- `e2e/tests/conversations-api.spec.ts` pins the conversations + messages CRUD
+  contract end-to-end: auth gate fires on every mutating route (anon GET/POST/
+  PATCH/DELETE all return 401), POST creates at `key_version: 1` and echoes the
+  ciphertext, POST rejects any `expiry_duration` outside the documented allow-list
+  (covers superficially-valid values that `time.ParseDuration` would accept),
+  GET `/conversations` is scoped per user, PATCH and DELETE return the same 404
+  to non-participants as a missing conversation (no id-existence leak), PATCH
+  preserves `key_version` (rotation is the only path that mutates it), DELETE
+  removes the row, and `/messages` list returns the documented pagination envelope.
+- `e2e/tests/completions-api.spec.ts` pins both completion endpoints against the
+  live backend + the bundled mock AI provider. Non-persisted `/completions`:
+  anon 401, valid request returns `assistant_message` + a usage block with
+  `input_tokens` / `output_tokens`, missing `model_id` / empty messages array /
+  trailing assistant role / unknown `model_id` / unknown `agent_id` all return
+  focused 400s. Persisted `/conversations/{id}/complete`: anon 401, participant
+  inside their own conversation completes and the messages list reflects both
+  the user + assistant turns, non-participant gets 404 (same shape as missing
+  conversation) and the conversation stays empty. The persisted scenarios
+  provision a placeholder `conversation_public_keys` row first — mirrors the
+  frontend's create-then-key sequence and exercises the contract that the
+  encryption envelope must be set up before completion can persist.
 - `e2e/tests/billing-api.spec.ts` pins the `/api/v1/billing` and
   `/api/v1/billing/transactions` contract end-to-end: 401 for anonymous callers,
   a newly registered user lands on a recognised `plan_type` with a non-negative

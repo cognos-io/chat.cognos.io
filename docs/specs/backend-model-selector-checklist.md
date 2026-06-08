@@ -432,6 +432,15 @@ This checklist is the living execution tracker for the rework.
     gate on both endpoints, newly-registered users always land on a known
     plan, CHF amounts (no Rappen leaks via field names or values), and
     per-user ledger scoping enforced across two live users.
+- [x] conversations + messages CRUD API (`e2e/tests/conversations-api.spec.ts`):
+    auth gate, key_version=1 on create, expiry allow-list, per-user list scope,
+    non-participant 404 on PATCH/DELETE/messages, PATCH preserves key_version,
+    DELETE removes the row, /messages pagination envelope.
+- [x] /completions + /conversations/{id}/complete API
+    (`e2e/tests/completions-api.spec.ts`): auth gate, full request-shape
+    validation, non-persisted happy path drives the mock AI provider end-to-end,
+    persisted happy path round-trips through the encryption envelope, and the
+    non-participant gate blocks message injection into another user's conversation.
 
 ### Explicit non-goals for these tests
 
