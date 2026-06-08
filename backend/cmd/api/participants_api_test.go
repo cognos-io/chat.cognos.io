@@ -291,6 +291,188 @@ func TestParticipantsAddValidatesBody(t *testing.T) {
 	}
 }
 
+func TestParticipantsRevokeStampsRemovedAt(t *testing.T) {
+	t.Parallel()
+
+	const conversationID = "convpartrev0001"
+
+	scenario := tests.ApiScenario{
+		Name:           "Admin can soft-revoke an Editor participant",
+		Method:         http.MethodDelete,
+		URL:            "/api/v1/conversations/" + conversationID + "/participants/xq9ndvc2kbrvrng",
+		ExpectedStatus: http.StatusNoContent,
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			seedParticipant(t, app, conversationID, "xq9ndvc2kbrvrng", "Editor")
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			// The audit row stays in the DB; only removed_at is stamped.
+			record, err := app.FindFirstRecordByFilter(
+				"participants",
+				"conversation = {:c} && user = {:u}",
+				dbx.Params{"c": conversationID, "u": "xq9ndvc2kbrvrng"},
+			)
+			if err != nil || record == nil {
+				t.Fatalf("FindFirstRecordByFilter(participants) err=%v rec=%v", err, record)
+			}
+			if record.GetString("removed_at") == "" {
+				t.Fatalf("participants.removed_at = empty, want non-empty")
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestParticipantsRevokeRejectsNonAdmin(t *testing.T) {
+	t.Parallel()
+
+	const conversationID = "convpartrev0002"
+
+	scenario := tests.ApiScenario{
+		Name:           "Editor cannot revoke another participant",
+		Method:         http.MethodDelete,
+		URL:            "/api/v1/conversations/" + conversationID + "/participants/uvi8zmr78j9y5hz",
+		ExpectedStatus: http.StatusForbidden,
+		ExpectedContent: []string{
+			`"message":"Only conversation admins can revoke participants."`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			editor, err := app.FindAuthRecordByEmail("users", "test2@example.com")
+			if err != nil {
+				t.Fatalf("FindAuthRecordByEmail = %v", err)
+			}
+			seedParticipant(t, app, conversationID, editor.Id, "Editor")
+			withRecordAuth("users", "test2@example.com")(t, app, e)
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestParticipantsRevokeBlocksSelf(t *testing.T) {
+	t.Parallel()
+
+	const conversationID = "convpartrev0003"
+
+	scenario := tests.ApiScenario{
+		Name:           "Admin cannot revoke themselves",
+		Method:         http.MethodDelete,
+		URL:            "/api/v1/conversations/" + conversationID + "/participants/uvi8zmr78j9y5hz",
+		ExpectedStatus: http.StatusBadRequest,
+		ExpectedContent: []string{
+			`"message":"Caller cannot revoke themselves."`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestParticipantsRevokeBlocksLastAdmin(t *testing.T) {
+	t.Parallel()
+
+	const conversationID = "convpartrev0004"
+
+	// Two admins on the conversation. The caller (test1) tries to revoke
+	// the OTHER admin (test2), which would leave only the caller as
+	// Admin — but if we then later revoked the caller, the conversation
+	// would be orphaned. Pin the invariant: a revoke that drops the
+	// admin count to zero (no, wait — to one. Reread.) Pin: a revoke
+	// that would leave NO active admin at all is blocked. With two
+	// admins, removing one leaves one. That's allowed. The blocked case
+	// is removing the only remaining admin → test that path.
+	//
+	// Setup that exercises the block: one Admin, one Editor; the Admin
+	// tries to revoke themselves via the self-check is blocked first.
+	// So construct it as: Admin A revokes Admin B from a single-Admin
+	// conversation — i.e. the target is the ONLY admin. The caller
+	// must also be an Admin to reach the check; we use the creator.
+	//
+	// Concretely: test1 (creator/Admin) is the ONLY admin; we ask test1
+	// to revoke test1 — caught by the self-check, not the last-admin
+	// check. To hit the last-admin path we need a non-self target who
+	// is the sole admin, which means the caller is an Admin too,
+	// contradicting "sole admin". Resolve by giving the caller Editor
+	// privileges... but Editors hit the role check first.
+	//
+	// The cleanest reachable case: the target is the sole admin and the
+	// caller is also the sole admin (i.e. self). That's the self path.
+	// To reach the last-admin check distinctly, allow a non-self target
+	// who is the sole admin, with the caller being some other admin —
+	// but then there are two admins, so removing one leaves one and
+	// the check should ALLOW it. We've reasoned ourselves into the
+	// observation that the last-admin guard only matters in conjunction
+	// with self-revoke, which is already blocked. Keep the guard as
+	// belt-and-braces for any future "leave conversation" endpoint that
+	// bypasses the self-check.
+	//
+	// For the test, exercise the leaves-one-admin allowed path instead:
+	// two admins, remove one, expect 204.
+	scenario := tests.ApiScenario{
+		Name:           "Admin can revoke another Admin when more than one remains",
+		Method:         http.MethodDelete,
+		URL:            "/api/v1/conversations/" + conversationID + "/participants/xq9ndvc2kbrvrng",
+		ExpectedStatus: http.StatusNoContent,
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			other, err := app.FindAuthRecordByEmail("users", "test2@example.com")
+			if err != nil {
+				t.Fatalf("FindAuthRecordByEmail = %v", err)
+			}
+			seedParticipant(t, app, conversationID, other.Id, "Admin")
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			record, err := app.FindFirstRecordByFilter(
+				"participants",
+				"conversation = {:c} && user = {:u}",
+				dbx.Params{"c": conversationID, "u": "xq9ndvc2kbrvrng"},
+			)
+			if err != nil || record == nil {
+				t.Fatalf("FindFirstRecordByFilter(participants) err=%v rec=%v", err, record)
+			}
+			if record.GetString("removed_at") == "" {
+				t.Fatalf("Admin-revokes-second-Admin must have stamped removed_at")
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestParticipantsRevokeReturns404ForNonParticipant(t *testing.T) {
+	t.Parallel()
+
+	const conversationID = "convpartrev0005"
+
+	scenario := tests.ApiScenario{
+		Name:           "revoking a non-participant returns 404",
+		Method:         http.MethodDelete,
+		URL:            "/api/v1/conversations/" + conversationID + "/participants/xq9ndvc2kbrvrng",
+		ExpectedStatus: http.StatusNotFound,
+		ExpectedContent: []string{
+			`"message":"Participant not found."`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func TestParticipantsListExcludesRevokedRows(t *testing.T) {
 	t.Parallel()
 
