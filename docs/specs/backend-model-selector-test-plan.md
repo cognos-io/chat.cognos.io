@@ -271,6 +271,21 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   field names, and the ledger is scoped per user (two fresh users' ledgers share
   no transaction ids — locks the strongest privacy invariant outside the Go
   test harness).
+- `auth.PocketBaseKeyPairRepo` now has direct integration coverage in
+  `cmd/api/key_pair_repo_test.go` for both lookups:
+  `UserPublicKey` returns the seeded 32-byte key on the happy path and
+  `ErrNoKeyPair` for an unknown user;
+  `ConversationPublicKey` round-trips a freshly inserted row, returns
+  `ErrNoKeyPair` for a conversation with no key row, and — locking the
+  contract behind fix 0681310 — returns the highest `key_version` row
+  when both a v1 and v2 generation exist (so a rotation immediately
+  invalidates the previous wrapping key without needing to delete the
+  audit row).
+- `internal/permissions` and `internal/middleware` packages removed. Both
+  had zero importers; with chat collection rules now locked to nil the
+  `PermissionsRepo.HasViewPermission` path would have authorised no one,
+  and the `LoadKeyPair` middleware was a pass-through stub. `auth.IsAdmin`
+  was also dropped for the same reason (no callers).
 - `e2e/tests/participants-api.spec.ts` exercises the participant + rotation API
   end-to-end against the live backend via Playwright's request fixture. Two
   scenarios:

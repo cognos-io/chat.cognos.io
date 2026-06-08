@@ -249,8 +249,14 @@ This checklist is the living execution tracker for the rework.
 
 ### Existing backend files to update
 
-- [ ] `backend/internal/auth/repo.go`
-    - [ ] support user public-key lookup for participant key wrapping
+- [x] `backend/internal/auth/repo.go`
+    - [x] support user public-key lookup for participant key wrapping
+        (`UserPublicKey(userID)`; `ConversationPublicKey(conversationID)`
+        returns the current generation row after rotation)
+    - [x] direct repo coverage in `cmd/api/key_pair_repo_test.go`:
+        happy-path, ErrNoKeyPair on missing record, invalid-length
+        rejection, and the current-generation contract when v1 + v2
+        public-key rows coexist
 - [ ] `backend/internal/chat/conversation.go`
     - [ ] adapt/migrate/retire based on new store layer
 - [ ] `backend/internal/chat/repo.go`
