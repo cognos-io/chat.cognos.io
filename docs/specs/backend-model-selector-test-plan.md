@@ -84,6 +84,11 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   nil-sink tolerance, and a race-detector concurrent emit/flush stress test; `LoggerSink` has
   coverage that each event is forwarded as a structured JSON payload under the
   `analytics.usage_event` message name
+- completion handler helpers now have direct unit coverage: `completionUSDToCHFRate` returns the
+  provider rate when present and falls back to 1 when no provider is wired;
+  `completeBillingRestrictionResponse` copies plain fields verbatim, converts both
+  `balance_rappen` and `estimated_cost_rappen` to CHF, prefers the restriction's estimate over the
+  caller-supplied fallback, and leaves the estimate unset when both inputs are zero
 
 ### Frontend
 
