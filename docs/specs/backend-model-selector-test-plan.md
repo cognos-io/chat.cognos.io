@@ -157,6 +157,14 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   members (with a non-empty removed_at) are filtered out while the audit row remains in
   the DB. The repo's ListActive helper returns a Membership struct so handlers do not
   depend on PocketBase types.
+- `POST /api/v1/conversations/{id}/participants` (sharing-add primitive) now has
+  integration coverage that pins the security contract: only Admin participants can
+  add (Editors are denied with 403, outsiders get the conversation-not-found 404),
+  the body validates `user_id` / `role` / `wrapped_secret_key` (each rejected with a
+  focused 400 — no database write), the target user must exist, and the happy path
+  writes the participant row + wrapped secret-key row atomically with the conversation's
+  current key_version. The repo gained `ActiveRole(conv, user)` so the handler can
+  gate on role without leaking PocketBase types.
 
 ### Frontend
 
