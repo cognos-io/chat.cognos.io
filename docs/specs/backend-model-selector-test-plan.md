@@ -202,6 +202,14 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   authenticated callers, hard guard against the internal routing fields
   (`provider_model_id` / `base_url` / `api_key`) ever appearing in the response,
   and `preferred_model_id` is omitted (not serialised as null) for fresh users.
+- `e2e/tests/conversation-keys-api.spec.ts` pins the encryption-envelope endpoints
+  end-to-end across 9 scenarios: `/public-key` (auth gate on GET/POST/PATCH,
+  POST→GET round-trip at `key_version: 1`, second-POST rejected by the create
+  hook so rotation stays the only multi-generation path, GET 404 for
+  non-participants, PATCH-by-row-id attaches a signature retroactively),
+  `/secret-key` (auth gate on GET/POST, POST→GET round-trip stamps the wrapped
+  key at the conversation's current generation, GET 404 for non-participants
+  even when the row exists, empty `secret_key` rejected with 400).
 - `e2e/tests/user-state-api.spec.ts` pins the user-state surface end-to-end across
   17 scenarios: `/user-key-pair` (auth gate, GET-before-create 404, POST/GET
   round-trip, missing-field 400, owner-only PATCH, cross-user PATCH rejected),

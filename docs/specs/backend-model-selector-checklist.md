@@ -445,6 +445,10 @@ This checklist is the living execution tracker for the rework.
     /user-key-pair, /user-preferences, /vault-session all pinned for auth gate,
     POST/GET round-trip, owner-only PATCH, cross-user reject, and the
     vault-session PUT-as-upsert contract with strict 44-char wrap_key length.
+- [x] conversation-keys API (`e2e/tests/conversation-keys-api.spec.ts`):
+    /public-key and /secret-key endpoints fully covered for auth gate, round
+    trip, key_version stamping, the single-public-key-per-conversation hook,
+    PATCH signature attachment by row id, and per-participant access.
 
 ### Explicit non-goals for these tests
 
