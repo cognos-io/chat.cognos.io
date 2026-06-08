@@ -33,6 +33,17 @@ const CollectionName = "participants"
 // that already exists and is active. Callers can treat it as a soft no-op.
 var ErrAlreadyParticipant = errors.New("participants: user is already a participant")
 
+// Membership is the read-shape of a single participant row. Wrapping fields
+// in this struct (rather than handing back *core.Record) keeps callers
+// outside this package from depending on PocketBase types.
+type Membership struct {
+	ID             string
+	ConversationID string
+	UserID         string
+	Role           Role
+	AddedAt        string
+}
+
 // Repo is the read/write surface for participant membership.
 type Repo interface {
 	// IsActive reports whether the given user currently has access to the
@@ -42,6 +53,11 @@ type Repo interface {
 	// Add inserts a new active participant row. Returns ErrAlreadyParticipant
 	// if an active row already exists.
 	Add(conversationID, userID string, role Role) error
+
+	// ListActive returns all currently-active participants of a conversation
+	// (i.e. removed_at is empty). The order is added_at ascending so the
+	// conversation creator comes first.
+	ListActive(conversationID string) ([]Membership, error)
 }
 
 // PocketBaseRepo is the production implementation backed by the PocketBase app.
@@ -108,4 +124,37 @@ func (r *PocketBaseRepo) Add(conversationID, userID string, role Role) error {
 	record.Set("role", string(role))
 	record.Set("added_at", time.Now().UTC())
 	return r.app.Save(record)
+}
+
+// ListActive returns the currently-active participants for the conversation,
+// ordered by added_at ascending so older members (notably the creator) come
+// first.
+func (r *PocketBaseRepo) ListActive(conversationID string) ([]Membership, error) {
+	if conversationID == "" {
+		return nil, nil
+	}
+
+	records, err := r.app.FindRecordsByFilter(
+		CollectionName,
+		"conversation = {:conversation} && removed_at = ''",
+		"added_at",
+		200,
+		0,
+		dbx.Params{"conversation": conversationID},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	members := make([]Membership, 0, len(records))
+	for _, record := range records {
+		members = append(members, Membership{
+			ID:             record.Id,
+			ConversationID: record.GetString("conversation"),
+			UserID:         record.GetString("user"),
+			Role:           Role(record.GetString("role")),
+			AddedAt:        record.GetString("added_at"),
+		})
+	}
+	return members, nil
 }
