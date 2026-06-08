@@ -98,6 +98,7 @@ func addPocketBaseRoutes(
 	billingService *billing.Service,
 	billingStateRepo billing.StateRepo,
 	billingLedgerRepo billing.LedgerRepo,
+	billingTransactionsRepo billing.TransactionsRepo,
 	fxRateProvider billing.FXRateProvider,
 	usageEmitter analytics.Emitter,
 	completeBillingGate handler.CompleteBillingGateFunc,
@@ -115,6 +116,17 @@ func addPocketBaseRoutes(
 		handler.BillingGet(handler.BillingGetParams{
 			Logger:    logger,
 			StateRepo: billingStateRepo,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/billing/transactions",
+		handler.BillingTransactions(handler.BillingTransactionsParams{
+			Logger:           logger,
+			TransactionsRepo: billingTransactionsRepo,
 		}),
 	).Bind(
 		apis.RequireAuth(),

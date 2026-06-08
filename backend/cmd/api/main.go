@@ -51,6 +51,7 @@ type appHookParams struct {
 	BillingService         *billing.Service
 	BillingStateRepo       billing.StateRepo
 	BillingLedgerRepo      billing.LedgerRepo
+	BillingTransactionsRepo billing.TransactionsRepo
 	FXRateProvider         billing.FXRateProvider
 	UsageEmitter           analytics.Emitter
 	CompleteBillingGate    handler.CompleteBillingGateFunc
@@ -144,6 +145,10 @@ func bindAppHooks(
 		if billingLedgerRepo == nil {
 			billingLedgerRepo = billingRepo
 		}
+		billingTransactionsRepo := params.BillingTransactionsRepo
+		if billingTransactionsRepo == nil {
+			billingTransactionsRepo = billingRepo
+		}
 
 		fxRateProvider := params.FXRateProvider
 		if fxRateProvider == nil {
@@ -166,6 +171,7 @@ func bindAppHooks(
 			billingService,
 			billingStateRepo,
 			billingLedgerRepo,
+			billingTransactionsRepo,
 			fxRateProvider,
 			params.UsageEmitter,
 			params.CompleteBillingGate,

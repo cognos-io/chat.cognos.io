@@ -73,6 +73,9 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   trial seed default
 - `/api/v1/billing` integration coverage now exercises the auth gate plus trial/unlimited plan
   payloads and the inactive fallback when no billing row exists
+- `/api/v1/billing/transactions` integration coverage now exercises the auth gate, newest-first
+  ordering with CHF conversion, trial-row balance projection, and user-scoping so unrelated
+  users' ledger rows stay hidden
 
 ### Frontend
 

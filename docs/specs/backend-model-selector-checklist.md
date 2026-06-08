@@ -303,9 +303,9 @@ This checklist is the living execution tracker for the rework.
 - [ ] `backend/internal/analytics/emitter_test.go`
     - [x] basic append coverage
     - [ ] serialization/flush tests
-- [ ] `backend/internal/handler/billing.go`
+- [x] `backend/internal/handler/billing.go`
     - [x] `GET /api/v1/billing`
-    - [ ] `GET /api/v1/billing/transactions`
+    - [x] `GET /api/v1/billing/transactions`
 
 ### New/updated schema
 
