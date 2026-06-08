@@ -1,50 +1,6 @@
-import { APIRequestContext, expect, request, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
-import { TestAccount, makeTestAccount } from './fixtures';
-
-const POCKETBASE_URL = process.env.E2E_POCKETBASE_URL ?? 'http://localhost:8090';
-
-// Registers a fresh user via PocketBase's open registration endpoint and
-// returns their authenticated request context (carrying the bearer token)
-// alongside their id + the account itself. The participant / rotation API
-// surface doesn't itself care about user encryption material, so we skip
-// the full unlock-key dance the UI tests do.
-async function provisionApiUser(): Promise<{
-  account: TestAccount;
-  userId: string;
-  api: APIRequestContext;
-}> {
-  const account = makeTestAccount();
-
-  const setup = await request.newContext({ baseURL: POCKETBASE_URL });
-
-  const created = await setup.post('/api/collections/users/records', {
-    data: {
-      email: account.email,
-      password: account.password,
-      passwordConfirm: account.password,
-    },
-  });
-  expect(created.ok(), `create user: ${created.status()} ${await created.text()}`).toBe(
-    true,
-  );
-  const createdBody = (await created.json()) as { id: string };
-
-  const authed = await setup.post('/api/collections/users/auth-with-password', {
-    data: { identity: account.email, password: account.password },
-  });
-  expect(authed.ok(), `auth: ${authed.status()} ${await authed.text()}`).toBe(true);
-  const authedBody = (await authed.json()) as { token: string; record: { id: string } };
-
-  await setup.dispose();
-
-  const api = await request.newContext({
-    baseURL: POCKETBASE_URL,
-    extraHTTPHeaders: { Authorization: `Bearer ${authedBody.token}` },
-  });
-
-  return { account, userId: authedBody.record?.id ?? createdBody.id, api };
-}
+import { provisionApiUser } from './api-helpers';
 
 // Conversation data is base64-encoded ciphertext in production; the API
 // doesn't enforce the inner shape, so a constant placeholder works for the
