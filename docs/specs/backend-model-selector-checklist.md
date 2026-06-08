@@ -350,17 +350,17 @@ This checklist is the living execution tracker for the rework.
 
 ### Existing frontend files to update
 
-- [ ] `frontend/src/app/interfaces/model.ts`
-    - [ ] keep only client schema/types, not source-of-truth catalogue data
-- [ ] `frontend/src/app/services/model.service.ts`
-    - [ ] fetch models from backend
-    - [ ] hold selected model
-    - [ ] support eligibility metadata
-- [ ] `frontend/src/app/components/chat/message-form/model-selector/model-selector.component.ts`
-    - [ ] render backend-provided model data
+- [x] `frontend/src/app/interfaces/model.ts`
+    - [x] keep only client schema/types, not source-of-truth catalogue data
+- [x] `frontend/src/app/services/model.service.ts`
+    - [x] fetch models from backend
+    - [x] hold selected model
+    - [x] support eligibility metadata
+- [x] `frontend/src/app/components/chat/message-form/model-selector/model-selector.component.ts`
+    - [x] render backend-provided model data
     - [x] show unavailable models clearly
-- [ ] `frontend/src/app/components/chat/message-list-item/message-list-item.component.ts`
-    - [ ] resolve assistant model labels from fetched model data
+- [x] `frontend/src/app/components/chat/message-list-item/message-list-item.component.ts`
+    - [x] resolve assistant model labels from fetched model data
 - [ ] `frontend/src/app/services/message.service.ts`
     - [ ] align with final complete response schema
     - [ ] keep thread and expiry behaviour intact
@@ -371,8 +371,8 @@ This checklist is the living execution tracker for the rework.
 
 ### Verification
 
-- [ ] no hard-coded model list is required for normal operation
-- [ ] UI shows all active models
+- [x] no hard-coded model list is required for normal operation
+- [x] UI shows all active models
 - [x] UI distinguishes selectable vs unavailable models
 - [x] send/reply flow still renders decrypted history correctly
 - [ ] thread/expiry UX still behaves correctly
