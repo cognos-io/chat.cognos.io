@@ -231,19 +231,21 @@ func TestParticipantsAddRejectsNonParticipant(t *testing.T) {
 }
 
 func TestParticipantsAddValidatesBody(t *testing.T) {
-	t.Parallel()
-
-	const conversationID = "convpartadd0004"
+	// Subtests share the test user so the rate limiter sees them as one
+	// burst when run in parallel; keep them sequential to avoid flakey
+	// 429s while still covering each validation branch.
 
 	cases := []struct {
 		name   string
+		convID string
 		body   string
 		status int
 		errMsg string
 	}{
 		{
-			name: "missing user_id",
-			body: `{"role":"Editor","wrapped_secret_key":"AAA="}`,
+			name:   "missing user_id",
+			convID: "convpartadd0040",
+			body:   `{"role":"Editor","wrapped_secret_key":"AAA="}`,
 			// PocketBase's apis.NewBadRequestError auto-capitalizes the
 			// first letter of the message when serialized, hence the
 			// "User_id" / "Wrapped_secret_key" expectations below.
@@ -252,18 +254,21 @@ func TestParticipantsAddValidatesBody(t *testing.T) {
 		},
 		{
 			name:   "missing wrapped_secret_key",
+			convID: "convpartadd0041",
 			body:   `{"user_id":"xq9ndvc2kbrvrng","role":"Editor"}`,
 			status: http.StatusBadRequest,
 			errMsg: `"message":"Wrapped_secret_key is required."`,
 		},
 		{
 			name:   "invalid role",
+			convID: "convpartadd0042",
 			body:   `{"user_id":"xq9ndvc2kbrvrng","role":"Sysadmin","wrapped_secret_key":"AAA="}`,
 			status: http.StatusBadRequest,
 			errMsg: `"message":"Role must be one of Admin/Editor/Viewer."`,
 		},
 		{
 			name:   "unknown user",
+			convID: "convpartadd0043",
 			body:   `{"user_id":"does-not-exist","role":"Editor","wrapped_secret_key":"AAA="}`,
 			status: http.StatusNotFound,
 			errMsg: `"message":"Target user not found."`,
@@ -272,7 +277,7 @@ func TestParticipantsAddValidatesBody(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+			conversationID := tc.convID
 			scenario := tests.ApiScenario{
 				Name:            "POST participants " + tc.name,
 				Method:          http.MethodPost,
