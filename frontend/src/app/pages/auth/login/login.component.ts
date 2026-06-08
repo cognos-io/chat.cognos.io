@@ -85,6 +85,9 @@ import { AuthService } from '@services/auth.service';
         }
 
         <p class="login-page__switch">
+          <a routerLink="/auth/forgot-password">Forgot your password?</a>
+        </p>
+        <p class="login-page__switch">
           Password reset is temporarily unavailable while encrypted vault recovery is
           being implemented.
         </p>
