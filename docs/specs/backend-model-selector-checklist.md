@@ -296,13 +296,14 @@ This checklist is the living execution tracker for the rework.
     - [x] usage event shape
     - [x] input/output/cache/provider-cost fields
     - [x] exclude plaintext content and direct user identifiers
-- [ ] `backend/internal/analytics/emitter.go`
+- [x] `backend/internal/analytics/emitter.go`
     - [x] emitter seam / recording emitter
-    - [ ] buffered event writing
-    - [ ] flush strategy
-- [ ] `backend/internal/analytics/emitter_test.go`
+    - [x] buffered event writing
+    - [x] flush strategy
+    - [x] structured-log sink default for production wiring
+- [x] `backend/internal/analytics/emitter_test.go`
     - [x] basic append coverage
-    - [ ] serialization/flush tests
+    - [x] serialization/flush tests
 - [x] `backend/internal/handler/billing.go`
     - [x] `GET /api/v1/billing`
     - [x] `GET /api/v1/billing/transactions`
@@ -325,6 +326,7 @@ This checklist is the living execution tracker for the rework.
     - [x] wire billing/emitter services
     - [x] default to PocketBase billing repos when test seams are not provided
     - [x] auto-provision trial billing state for newly created users
+    - [x] default to BufferedEmitter + LoggerSink when no UsageEmitter seam is provided
 
 ### Manual-operations note
 

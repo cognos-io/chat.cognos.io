@@ -79,6 +79,11 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - `billing.CachedFXRateProvider` now has unit coverage for first-fetch population,
   within-TTL cache hits, post-TTL refresh from the upstream, fallback to the default rate when
   the upstream returns a non-positive value, and tolerance of a nil upstream wrapper
+- `analytics.BufferedEmitter` now has unit coverage for size-triggered flush, interval-triggered
+  flush against an injectable clock, manual flush, empty-buffer no-op, drain-on-sink-error,
+  nil-sink tolerance, and a race-detector concurrent emit/flush stress test; `LoggerSink` has
+  coverage that each event is forwarded as a structured JSON payload under the
+  `analytics.usage_event` message name
 
 ### Frontend
 
