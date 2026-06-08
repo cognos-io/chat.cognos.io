@@ -1,6 +1,52 @@
 package aiagent
 
-import "testing"
+import (
+	"errors"
+	"log/slog"
+	"testing"
+)
+
+func TestInMemoryAIAgentRepoReturnsHardcodedPrompts(t *testing.T) {
+	t.Parallel()
+
+	repo := NewInMemoryAIAgentRepo(slog.Default())
+
+	prompt, err := repo.LookupPrompt("cognos:simple-assistant")
+	if err != nil {
+		t.Fatalf("LookupPrompt(simple-assistant) error = %v", err)
+	}
+	if prompt.SystemMessage != SimpleAssistant.SystemMessage {
+		t.Errorf("LookupPrompt(simple-assistant) returned a different prompt than SimpleAssistant")
+	}
+
+	titlePrompt, err := repo.LookupPrompt("cognos:generate-conversation-agent")
+	if err != nil {
+		t.Fatalf("LookupPrompt(generate-conversation-agent) error = %v", err)
+	}
+	if titlePrompt.SystemMessage != GenerateConversationAgent.SystemMessage {
+		t.Errorf("LookupPrompt(generate-conversation-agent) returned a different prompt than GenerateConversationAgent")
+	}
+}
+
+func TestInMemoryAIAgentRepoReturnsErrAgentNotFoundForUnknownIDs(t *testing.T) {
+	t.Parallel()
+
+	repo := NewInMemoryAIAgentRepo(slog.Default())
+
+	for _, id := range []string{
+		"",
+		"unknown",
+		"cognos:nonexistent",
+		"cognos:simple-assistant ",  // trailing space — exact-match only
+		" cognos:simple-assistant",  // leading space
+		"cognos:Simple-Assistant",   // case-sensitive
+		"openai:simple-assistant",   // wrong namespace
+	} {
+		if _, err := repo.LookupPrompt(id); !errors.Is(err, ErrAgentNotFound) {
+			t.Errorf("LookupPrompt(%q) error = %v, want ErrAgentNotFound", id, err)
+		}
+	}
+}
 
 func TestBuildMessages_EmptyReturnsInputUnchanged(t *testing.T) {
 	t.Parallel()
