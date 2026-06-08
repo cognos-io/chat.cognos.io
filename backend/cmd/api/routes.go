@@ -182,6 +182,14 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	e.Router.POST(
+		"/api/v1/conversations/{conversationID}/participants",
+		handler.ConversationParticipantsAdd(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.PATCH(
 		"/api/v1/messages/{messageID}",
 		handler.MessagesUpdate(app),

@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/participants"
@@ -263,6 +264,12 @@ type listParticipantsResponse struct {
 	Participants []participantResponse `json:"participants"`
 }
 
+type createParticipantRequest struct {
+	UserID           string `json:"user_id"`
+	Role             string `json:"role"`
+	WrappedSecretKey string `json:"wrapped_secret_key"`
+}
+
 // ConversationParticipantsList returns the currently-active participants for
 // a conversation the caller can access. Non-participants get 404 — the same
 // shape a missing conversation would return so the response can't be used
@@ -292,6 +299,119 @@ func ConversationParticipantsList(app core.App) func(e *core.RequestEvent) error
 		}
 
 		return e.JSON(http.StatusOK, listParticipantsResponse{Participants: out})
+	}
+}
+
+// ConversationParticipantsAdd is the sharing primitive. The caller must
+// already be an Admin participant of the conversation. The body carries the
+// target user id, the role they should be granted, and the conversation
+// secret key wrapped for that user (computed client-side). Both the
+// participants row and the wrapped key row are written inside a single
+// PocketBase transaction so a partial failure can't leave the target user
+// with access but no key (or vice versa).
+func ConversationParticipantsAdd(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		caller := auth.ExtractUser(e)
+		if caller == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		conversationID := e.Request.PathValue("conversationID")
+		conversation, err := ownedConversationRecord(app, e, conversationID)
+		if err != nil {
+			return err
+		}
+
+		repo := participants.NewPocketBaseRepo(app)
+		callerRole, _, err := repo.ActiveRole(conversationID, caller.ID)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify caller role", err)
+		}
+		if callerRole != participants.RoleAdmin {
+			// Only Admins can add participants. Anyone else (including
+			// editors) gets the same 403 as a flat-out unauthorized
+			// caller — exposing the role distinction would leak whether
+			// the caller is a member at all.
+			return apis.NewForbiddenError("Only conversation admins can add participants", nil)
+		}
+
+		var req createParticipantRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Failed to read request data", err)
+		}
+		req.UserID = strings.TrimSpace(req.UserID)
+		req.Role = strings.TrimSpace(req.Role)
+		req.WrappedSecretKey = strings.TrimSpace(req.WrappedSecretKey)
+
+		if req.UserID == "" {
+			return apis.NewBadRequestError("user_id is required", nil)
+		}
+		if req.WrappedSecretKey == "" {
+			return apis.NewBadRequestError("wrapped_secret_key is required", nil)
+		}
+		role, ok := parseParticipantRole(req.Role)
+		if !ok {
+			return apis.NewBadRequestError("role must be one of Admin/Editor/Viewer", nil)
+		}
+		if req.UserID == caller.ID {
+			return apis.NewBadRequestError("Caller cannot re-add themselves", nil)
+		}
+
+		if _, err := app.FindRecordById("users", req.UserID); err != nil {
+			return apis.NewNotFoundError("Target user not found", err)
+		}
+
+		keyVersion := conversation.GetInt("key_version")
+		if keyVersion < 1 {
+			keyVersion = 1
+		}
+
+		secretKeyCollection, err := app.FindCollectionByNameOrId("conversation_secret_keys")
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load conversation secret keys collection", err)
+		}
+		participantsCollection, err := app.FindCollectionByNameOrId(participants.CollectionName)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load participants collection", err)
+		}
+
+		participantRecord := core.NewRecord(participantsCollection)
+		participantRecord.Set("conversation", conversationID)
+		participantRecord.Set("user", req.UserID)
+		participantRecord.Set("role", string(role))
+		participantRecord.Set("added_at", time.Now().UTC())
+
+		secretKeyRecord := core.NewRecord(secretKeyCollection)
+		secretKeyRecord.Set("conversation", conversationID)
+		secretKeyRecord.Set("user", req.UserID)
+		secretKeyRecord.Set("secret_key", req.WrappedSecretKey)
+		secretKeyRecord.Set("key_version", keyVersion)
+
+		if err := app.RunInTransaction(func(txApp core.App) error {
+			if err := txApp.Save(participantRecord); err != nil {
+				return err
+			}
+			return txApp.Save(secretKeyRecord)
+		}); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to add conversation participant", err)
+		}
+
+		return e.JSON(http.StatusCreated, participantResponse{
+			ID:             participantRecord.Id,
+			ConversationID: conversationID,
+			UserID:         req.UserID,
+			Role:           string(role),
+			AddedAt:        participantRecord.GetString("added_at"),
+		})
+	}
+}
+
+func parseParticipantRole(raw string) (participants.Role, bool) {
+	switch raw {
+	case string(participants.RoleAdmin), string(participants.RoleEditor), string(participants.RoleViewer):
+		return participants.Role(raw), true
+	default:
+		return "", false
 	}
 }
 
