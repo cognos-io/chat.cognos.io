@@ -89,7 +89,6 @@ interface ApiModel {
   name: string;
   slug: string;
   provider_id: string;
-  provider_model_id: string;
   description: string;
   privacy_tier: PrivacyTier;
   tags?: ApiTag[];
@@ -526,7 +525,6 @@ export class CognosApiService {
       name: model.name,
       slug: model.slug,
       providerId: model.provider_id,
-      providerModelId: model.provider_model_id,
       description: model.description,
       privacyTier: model.privacy_tier,
       tags: model.tags ?? [],

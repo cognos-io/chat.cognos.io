@@ -31,7 +31,7 @@ type Model struct {
 	Slug                string        `json:"slug"`
 	Description         string        `json:"description"`
 	ProviderID          string        `json:"provider_id"`
-	ProviderModelID     string        `json:"provider_model_id"`
+	ProviderModelID     string        `json:"-"`
 	PrivacyTier         PrivacyTier   `json:"privacy_tier"`
 	Tags                []Tag         `json:"tags,omitempty"`
 	ContentTypes        []ContentType `json:"content_types"`

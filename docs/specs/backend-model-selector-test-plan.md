@@ -65,6 +65,9 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   and example placement between the system message and user turn
 - the completion handler no longer imports the OpenAI SDK directly; the legacy compat package
   bridges only the legacy `/v1/chat/completions` proxy path
+- `/api/v1/models` integration coverage now asserts the response never includes
+  `provider_model_id`, `base_url`, or `api_key`, locking the public contract against accidental
+  leaks of internal provider routing fields
 
 ### Frontend
 

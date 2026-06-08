@@ -179,7 +179,8 @@ This checklist is the living execution tracker for the rework.
 
 ### Verification
 
-- [ ] request to `/api/v1/models` returns backend-driven models
+- [x] request to `/api/v1/models` returns backend-driven models
+    - [x] response never leaks provider routing fields (`provider_model_id`, `base_url`, etc.)
 - [x] handlers/services no longer depend on provider SDK types directly
 - [ ] only approved Infomaniak model(s) are active
 
