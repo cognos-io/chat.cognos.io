@@ -30,7 +30,11 @@ type PocketBaseKeyPairRepo struct {
 	app core.App
 }
 
-// ConversationPublicKey returns the public key for the given conversation.
+// ConversationPublicKey returns the public key for the given conversation
+// at its CURRENT key_version. Older generations (created by previous
+// rotations) stay in the database as audit data but never round-trip
+// through this lookup — we always return the most-recent generation so a
+// rotation immediately invalidates the previous wrapping key.
 func (r *PocketBaseKeyPairRepo) ConversationPublicKey(
 	conversationID string,
 ) ([32]byte, error) {
@@ -38,8 +42,8 @@ func (r *PocketBaseKeyPairRepo) ConversationPublicKey(
 
 	records, err := r.app.FindRecordsByFilter(collectionName,
 		"conversation = {:conversation_id}", // filter
-		"",                                  // sort
-		2,                                   // limit
+		"-key_version",                      // sort: newest generation first
+		1,                                   // limit: only the current row
 		0,                                   // offset
 		dbx.Params{"conversation_id": conversationID}, // params
 	)
@@ -49,9 +53,6 @@ func (r *PocketBaseKeyPairRepo) ConversationPublicKey(
 
 	if len(records) == 0 {
 		return [32]byte{}, ErrNoKeyPair
-	}
-	if len(records) > 1 {
-		return [32]byte{}, ErrMultipleConversationKeyPair
 	}
 
 	key_pair := records[0]
