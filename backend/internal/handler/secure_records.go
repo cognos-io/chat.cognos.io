@@ -46,6 +46,11 @@ type conversationPublicKeyRecordResponse struct {
 	Conversation       string `json:"conversation"`
 	PublicKey          string `json:"public_key,omitempty"`
 	PublicKeySignature string `json:"public_key_signature,omitempty"`
+	// KeyVersion is the conversation generation that produced this public
+	// key. After a rotation, a fresh row with the new key_version is
+	// issued; older rows stay in place as audit data but no longer match
+	// the conversation's current generation.
+	KeyVersion int `json:"key_version"`
 }
 
 type createConversationPublicKeyRequest struct {
@@ -196,7 +201,8 @@ func ConversationPublicKeyGet(app core.App) func(e *core.RequestEvent) error {
 func ConversationPublicKeyCreate(app core.App) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		conversationID := e.Request.PathValue("conversationID")
-		if _, err := ownedConversationRecord(app, e, conversationID); err != nil {
+		conversationRecord, err := ownedConversationRecord(app, e, conversationID)
+		if err != nil {
 			return err
 		}
 
@@ -213,12 +219,18 @@ func ConversationPublicKeyCreate(app core.App) func(e *core.RequestEvent) error 
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to load conversation public keys collection", err)
 		}
 
+		keyVersion := conversationRecord.GetInt("key_version")
+		if keyVersion < 1 {
+			keyVersion = 1
+		}
+
 		record := core.NewRecord(collection)
 		form := forms.NewRecordUpsert(app, record)
 		form.Load(map[string]any{
 			"conversation":         conversationID,
 			"public_key":           req.PublicKey,
 			"public_key_signature": req.PublicKeySignature,
+			"key_version":          keyVersion,
 		})
 		if err := form.Submit(); err != nil {
 			return apis.NewBadRequestError("Failed to create conversation public key", err)
@@ -594,6 +606,10 @@ func userKeyPairRecordToResponse(record *core.Record) userKeyPairRecordResponse 
 }
 
 func conversationPublicKeyRecordToResponse(record *core.Record) conversationPublicKeyRecordResponse {
+	version := record.GetInt("key_version")
+	if version < 1 {
+		version = 1
+	}
 	return conversationPublicKeyRecordResponse{
 		ID:                 record.Id,
 		Created:            record.GetString("created"),
@@ -603,6 +619,7 @@ func conversationPublicKeyRecordToResponse(record *core.Record) conversationPubl
 		Conversation:       record.GetString("conversation"),
 		PublicKey:          record.GetString("public_key"),
 		PublicKeySignature: record.GetString("public_key_signature"),
+		KeyVersion:         version,
 	}
 }
 
