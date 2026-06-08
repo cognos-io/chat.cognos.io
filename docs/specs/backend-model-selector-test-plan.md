@@ -172,6 +172,17 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   to the parent message, the parent is cloned (never mutated in place) so signal snapshots
   stay stable, no propagation happens when the assistant message has no parent id, and the
   input array reference is returned unchanged
+- `MessageService.buildCompletionMessageContext` is now an exported pure helper with direct
+  unit coverage: empty input → empty context, empty/null content is skipped, newest-first
+  input is flipped to oldest-first output, role is inferred from `owner_id` (user) vs no
+  `owner_id` (assistant), the participant name resolves owner_id → agent → model with each
+  fallback pinned independently and the missing-on-all-three case staying undefined, the
+  ">=" budget check stops _before_ the overflowing message (so we never half-include one),
+  and a single first message larger than the whole input budget yields an empty context.
+  Bug fix carried in the same refactor: the previous call site read
+  `getAgent(id).name` (the Signal function's `Function.prototype.name`) instead of
+  `getAgent(id)()?.name` (the resolved agent's name), which always shadowed the model-name
+  fallback with a meaningless string — the new helper invokes the resolver correctly.
 - browser E2E now covers high-level authenticated models-loading, send/reply, history-reload,
   unavailable-model guard, trial/inactive billing-restriction flows, and auth route-link
   regression coverage via Playwright
