@@ -145,6 +145,11 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   stamp the wrapped row with the conversation's current generation (verified by direct
   PocketBase lookup after a simulated prior rotation), and the get handlers default to 1
   for legacy rows so clients never receive an invalid generation
+- the secret-key + public-key GET handlers now filter on `key_version = conversation.key_version`,
+  with integration coverage pinning that bumping the conversation's generation makes
+  pre-rotation wrappers 404 (audit rows stay in the DB but stop round-tripping through
+  the API). The PATCH-by-id path on public keys is intentionally exempt — update may need
+  to refer to a historical row to attach a signature retroactively.
 
 ### Frontend
 
