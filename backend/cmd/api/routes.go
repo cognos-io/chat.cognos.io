@@ -12,6 +12,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/participants"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -201,6 +202,7 @@ func addPocketBaseRoutes(
 		FXRateProvider:      fxRateProvider,
 		UsageEmitter:        usageEmitter,
 		CompleteBillingGate: completeBillingGate,
+		ParticipantsRepo:    participants.NewPocketBaseRepo(app),
 	}
 
 	e.Router.GET(

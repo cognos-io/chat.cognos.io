@@ -15,6 +15,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/participants"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -93,6 +94,12 @@ type CompleteHandlerParams struct {
 	FXRateProvider      billing.FXRateProvider
 	UsageEmitter        analytics.Emitter
 	CompleteBillingGate CompleteBillingGateFunc
+	// ParticipantsRepo authorises conversation-scoped completion requests.
+	// When set, /api/v1/conversations/{id}/complete returns 404 to callers
+	// who are not active participants of the target conversation. Left nil
+	// only in unit tests that have already pre-validated access by other
+	// means (the production wiring always sets it).
+	ParticipantsRepo participants.Repo
 }
 
 func Complete(params CompleteHandlerParams) func(e *core.RequestEvent) error {
@@ -168,6 +175,21 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 
 		var conversation chat.Conversation
 		if shouldPersist {
+			if params.ParticipantsRepo != nil {
+				// Authorise the caller against the conversation BEFORE we
+				// reveal whether the conversation exists. A non-participant
+				// must get the same 404 a non-existent conversation would,
+				// otherwise the response shape leaks "this ID is real."
+				active, err := params.ParticipantsRepo.IsActive(conversationID, owner.ID)
+				if err != nil {
+					params.Logger.Error("participants lookup failed", "err", err)
+					return apis.NewApiError(http.StatusInternalServerError, "Failed to verify conversation access", err)
+				}
+				if !active {
+					return apis.NewNotFoundError("Conversation not found or unable to load", nil)
+				}
+			}
+
 			conversation, err = params.ConversationRepo.ByID(conversationID)
 			if err != nil {
 				return apis.NewNotFoundError("Conversation not found or unable to load", err)
