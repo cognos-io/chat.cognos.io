@@ -286,6 +286,11 @@ func seedConversationPublicKeyWithID(t testing.TB, app *tests.TestApp, recordID,
 	record.Set("conversation", conversationID)
 	record.Set("public_key", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
 	record.Set("public_key_signature", "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=")
+	// Stamp the row with the default conversation generation. Without
+	// this, PocketBase's number-field default leaves key_version at 0,
+	// which the read-side filter (only return rows matching the
+	// conversation's current key_version) treats as a non-match.
+	record.Set("key_version", 1)
 	if err := app.Save(record); err != nil {
 		t.Fatalf("Save(conversation_public_keys) error = %v", err)
 	}
@@ -304,6 +309,7 @@ func seedConversationSecretKey(t testing.TB, app *tests.TestApp, conversationID,
 	record.Set("conversation", conversationID)
 	record.Set("secret_key", "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=")
 	record.Set("user", userID)
+	record.Set("key_version", 1)
 	if err := app.Save(record); err != nil {
 		t.Fatalf("Save(conversation_secret_keys) error = %v", err)
 	}

@@ -103,6 +103,40 @@ func TestConversationSecretKeyCreateStampsConversationKeyVersion(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestConversationSecretKeyGetIgnoresStaleVersions(t *testing.T) {
+	t.Parallel()
+
+	const conversationID = "convseckv000010"
+
+	scenario := tests.ApiScenario{
+		Name:           "get conversation secret key skips stale key_version rows",
+		Method:         http.MethodGet,
+		URL:            "/api/v1/conversations/" + conversationID + "/secret-key",
+		ExpectedStatus: http.StatusNotFound,
+		ExpectedContent: []string{
+			`"message":"Conversation secret key not found."`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			// Bump the conversation to generation 2; the seeded wrapped
+			// key is still at version 1, so the read-side filter must
+			// treat it as stale and return 404 instead of leaking the
+			// pre-rotation wrapper.
+			if _, err := app.DB().
+				NewQuery("UPDATE conversations SET key_version = 2 WHERE id = {:id}").
+				Bind(dbx.Params{"id": conversationID}).
+				Execute(); err != nil {
+				t.Fatalf("UPDATE conversations error = %v", err)
+			}
+			seedConversationSecretKey(t, app, conversationID, "uvi8zmr78j9y5hz")
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func TestConversationSecretKeyCreateDefaultsToVersionOne(t *testing.T) {
 	t.Parallel()
 

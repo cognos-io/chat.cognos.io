@@ -50,6 +50,40 @@ func TestConversationPublicKeyGetIncludesKeyVersion(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestConversationPublicKeyGetIgnoresStaleVersions(t *testing.T) {
+	t.Parallel()
+
+	const conversationID = "convpubkv000010"
+	const publicKeyID = "convpubkey00011"
+
+	scenario := tests.ApiScenario{
+		Name:           "get conversation public key skips stale key_version rows",
+		Method:         http.MethodGet,
+		URL:            "/api/v1/conversations/" + conversationID + "/public-key",
+		ExpectedStatus: http.StatusNotFound,
+		ExpectedContent: []string{
+			`"message":"Conversation public key not found."`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			// Conversation is on generation 2 but the only public_keys
+			// row is still at version 1 — the GET endpoint must treat it
+			// as stale rather than fall back to the latest available row.
+			if _, err := app.DB().
+				NewQuery("UPDATE conversations SET key_version = 2 WHERE id = {:id}").
+				Bind(dbx.Params{"id": conversationID}).
+				Execute(); err != nil {
+				t.Fatalf("UPDATE conversations error = %v", err)
+			}
+			seedConversationPublicKeyWithID(t, app, publicKeyID, conversationID)
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func TestConversationPublicKeyCreateStampsConversationKeyVersion(t *testing.T) {
 	t.Parallel()
 
