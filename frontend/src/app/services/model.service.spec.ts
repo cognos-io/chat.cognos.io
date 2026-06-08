@@ -190,6 +190,108 @@ describe('ModelService', () => {
     expect(service.selectedModel().id).toBe('global-model');
   });
 
+  it('groups loaded models by provider id', () => {
+    authUser$.next({ id: 'user-1' });
+
+    const request = httpController.expectOne('http://localhost:8090/api/v1/models');
+    request.flush({
+      privacy_tier: 'global',
+      models: [
+        {
+          id: 'infomaniak-a',
+          name: 'Infomaniak A',
+          slug: 'infomaniak-a',
+          provider_id: 'infomaniak',
+          description: '',
+          privacy_tier: 'ch_only',
+          tags: [],
+          content_types: ['text'],
+          input_context_tokens: 32000,
+          pricing: {
+            input_usd_per_million_tokens: 0,
+            output_usd_per_million_tokens: 0,
+          },
+          is_eligible: true,
+        },
+        {
+          id: 'infomaniak-b',
+          name: 'Infomaniak B',
+          slug: 'infomaniak-b',
+          provider_id: 'infomaniak',
+          description: '',
+          privacy_tier: 'ch_only',
+          tags: [],
+          content_types: ['text'],
+          input_context_tokens: 32000,
+          pricing: {
+            input_usd_per_million_tokens: 0,
+            output_usd_per_million_tokens: 0,
+          },
+          is_eligible: true,
+        },
+        {
+          id: 'other-a',
+          name: 'Other A',
+          slug: 'other-a',
+          provider_id: 'other',
+          description: '',
+          privacy_tier: 'global',
+          tags: [],
+          content_types: ['text'],
+          input_context_tokens: 32000,
+          pricing: {
+            input_usd_per_million_tokens: 0,
+            output_usd_per_million_tokens: 0,
+          },
+          is_eligible: true,
+        },
+      ],
+    });
+
+    const grouped = service.groupedModels();
+    expect(Object.keys(grouped).sort()).toEqual(['infomaniak', 'other']);
+    expect(grouped['infomaniak'].map((m) => m.id)).toEqual([
+      'infomaniak-a',
+      'infomaniak-b',
+    ]);
+    expect(grouped['other'].map((m) => m.id)).toEqual(['other-a']);
+  });
+
+  it('ignores selectModel calls for unknown model ids', () => {
+    authUser$.next({ id: 'user-1' });
+
+    const request = httpController.expectOne('http://localhost:8090/api/v1/models');
+    request.flush({
+      privacy_tier: 'global',
+      preferred_model_id: 'llama-3-3-infomaniak',
+      models: [
+        {
+          id: 'llama-3-3-infomaniak',
+          name: 'Llama 3.3',
+          slug: 'llama-3-3-infomaniak',
+          provider_id: 'infomaniak',
+          description: '',
+          privacy_tier: 'ch_only',
+          tags: [],
+          content_types: ['text'],
+          input_context_tokens: 32000,
+          pricing: {
+            input_usd_per_million_tokens: 0,
+            output_usd_per_million_tokens: 0,
+          },
+          is_eligible: true,
+        },
+      ],
+    });
+
+    expect(service.selectedModel().id).toBe('llama-3-3-infomaniak');
+
+    // An attacker-supplied or stale id must not change selection — the
+    // reducer returns {} for unknown candidates so selectedModelId stays put.
+    service.selectModel('does-not-exist');
+    expect(service.selectedModel().id).toBe('llama-3-3-infomaniak');
+  });
+
   it('resets to the initial state after logout', () => {
     authUser$.next({ id: 'user-1' });
 
