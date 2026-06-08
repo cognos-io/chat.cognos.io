@@ -126,6 +126,13 @@ This checklist is the living execution tracker for the rework.
     - [x] encrypted preferences hydrate after the key pair becomes available
     - [x] pin conversation deduplicates IDs before persisting
     - [x] unpin conversation removes IDs from the persisted payload
+- [x] crypto hot-path unit coverage
+    - [x] constant-time byte comparison rejects mismatched lengths and content
+    - [x] box and secretBox round-trip encryption paths are covered
+    - [x] tampered ciphertext and wrong-key decryption failures are covered
+- [x] vault key-pair integrity unit coverage
+    - [x] missing record mac is rejected before secret-key decryption
+    - [x] mismatched record mac is rejected before secret-key decryption
 - [x] high-level browser E2E baseline is green
     - [x] authenticated user loads models from backend
     - [x] auth route-link regression re-verified green after the login-page fix

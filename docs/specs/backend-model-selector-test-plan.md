@@ -81,6 +81,9 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   recovery, stale-blob invalidation on vault-session fetch failure, and best-effort logout cleanup
 - `UserPreferencesService` coverage now includes encrypted preference hydration, pin deduplication,
   and unpin persistence for conversation pinning
+- `CryptoService` coverage now includes constant-time byte comparison, box/secretBox round trips,
+  and tampered-ciphertext failure paths
+- `VaultService` coverage now includes user key-pair record MAC integrity checks before decryption
 - browser E2E now covers high-level authenticated models-loading, send/reply, history-reload,
   unavailable-model guard, trial/inactive billing-restriction flows, and auth route-link
   regression coverage via Playwright
