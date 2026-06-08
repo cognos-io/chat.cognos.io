@@ -38,17 +38,20 @@ func TestParticipantsRepoIsActiveTrueForAddedParticipant(t *testing.T) {
 	conversationID := "convrepoacc0002"
 	seedOwnedConversation(t, app, conversationID, "test1@example.com")
 
-	user, err := app.FindAuthRecordByEmail("users", "test1@example.com")
+	// Add a non-creator user as an Editor — this is the future-sharing path
+	// the participants table exists for, and IsActive must report true even
+	// though they are not the conversation's creator.
+	guest, err := app.FindAuthRecordByEmail("users", "test2@example.com")
 	if err != nil {
 		t.Fatalf("FindAuthRecordByEmail = %v", err)
 	}
 
 	repo := participants.NewPocketBaseRepo(app)
-	if err := repo.Add(conversationID, user.Id, participants.RoleAdmin); err != nil {
+	if err := repo.Add(conversationID, guest.Id, participants.RoleEditor); err != nil {
 		t.Fatalf("Add error = %v", err)
 	}
 
-	active, err := repo.IsActive(conversationID, user.Id)
+	active, err := repo.IsActive(conversationID, guest.Id)
 	if err != nil {
 		t.Fatalf("IsActive error = %v", err)
 	}
@@ -64,24 +67,29 @@ func TestParticipantsRepoIsActiveFalseAfterRevoke(t *testing.T) {
 	conversationID := "convrepoacc0003"
 	seedOwnedConversation(t, app, conversationID, "test1@example.com")
 
-	user, err := app.FindAuthRecordByEmail("users", "test1@example.com")
+	creator, err := app.FindAuthRecordByEmail("users", "test1@example.com")
 	if err != nil {
 		t.Fatalf("FindAuthRecordByEmail = %v", err)
 	}
 
 	repo := participants.NewPocketBaseRepo(app)
-	if err := repo.Add(conversationID, user.Id, participants.RoleAdmin); err != nil {
-		t.Fatalf("Add error = %v", err)
+	// Sanity-check that the seed put the creator in the participants table.
+	active, err := repo.IsActive(conversationID, creator.Id)
+	if err != nil {
+		t.Fatalf("IsActive(pre-revoke) error = %v", err)
+	}
+	if !active {
+		t.Fatalf("IsActive(pre-revoke) = false, want true")
 	}
 
 	// Soft-revoke by stamping removed_at on the row. IsActive must treat any
 	// non-empty removed_at as "no longer a participant" so we can keep the
 	// audit row around without granting access.
-	revokeParticipant(t, app, conversationID, user.Id)
+	revokeParticipant(t, app, conversationID, creator.Id)
 
-	active, err := repo.IsActive(conversationID, user.Id)
+	active, err = repo.IsActive(conversationID, creator.Id)
 	if err != nil {
-		t.Fatalf("IsActive error = %v", err)
+		t.Fatalf("IsActive(post-revoke) error = %v", err)
 	}
 	if active {
 		t.Fatalf("IsActive(revoked participant) = true, want false")
@@ -95,17 +103,19 @@ func TestParticipantsRepoAddRejectsDuplicate(t *testing.T) {
 	conversationID := "convrepoacc0004"
 	seedOwnedConversation(t, app, conversationID, "test1@example.com")
 
-	user, err := app.FindAuthRecordByEmail("users", "test1@example.com")
+	// Use a non-creator user so the duplicate is the result of two Add()
+	// calls (not "Add against an already-seeded creator").
+	guest, err := app.FindAuthRecordByEmail("users", "test2@example.com")
 	if err != nil {
 		t.Fatalf("FindAuthRecordByEmail = %v", err)
 	}
 
 	repo := participants.NewPocketBaseRepo(app)
-	if err := repo.Add(conversationID, user.Id, participants.RoleAdmin); err != nil {
+	if err := repo.Add(conversationID, guest.Id, participants.RoleEditor); err != nil {
 		t.Fatalf("Add(first) error = %v", err)
 	}
 
-	err = repo.Add(conversationID, user.Id, participants.RoleEditor)
+	err = repo.Add(conversationID, guest.Id, participants.RoleViewer)
 	if !errors.Is(err, participants.ErrAlreadyParticipant) {
 		t.Fatalf("Add(duplicate) = %v, want ErrAlreadyParticipant", err)
 	}

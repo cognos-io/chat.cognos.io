@@ -39,7 +39,10 @@ func TestParticipantsUniqueIndexRejectsDuplicateMembership(t *testing.T) {
 	conversationID := "convparts000001"
 	seedOwnedConversation(t, app, conversationID, "test1@example.com")
 
-	userRecord, err := app.FindAuthRecordByEmail("users", "test1@example.com")
+	// The seed inserts the creator as an Admin participant. A second row
+	// with the same (conversation, user) must be rejected by the unique
+	// index, regardless of role — that's the invariant the index pins.
+	creator, err := app.FindAuthRecordByEmail("users", "test1@example.com")
 	if err != nil {
 		t.Fatalf("FindAuthRecordByEmail = %v", err)
 	}
@@ -49,19 +52,11 @@ func TestParticipantsUniqueIndexRejectsDuplicateMembership(t *testing.T) {
 		t.Fatalf("FindCollectionByNameOrId(participants) error = %v", err)
 	}
 
-	first := core.NewRecord(collection)
-	first.Set("conversation", conversationID)
-	first.Set("user", userRecord.Id)
-	first.Set("role", "Admin")
-	if err := app.Save(first); err != nil {
-		t.Fatalf("Save(first participant) error = %v", err)
-	}
-
-	second := core.NewRecord(collection)
-	second.Set("conversation", conversationID)
-	second.Set("user", userRecord.Id)
-	second.Set("role", "Editor")
-	if err := app.Save(second); err == nil {
+	duplicate := core.NewRecord(collection)
+	duplicate.Set("conversation", conversationID)
+	duplicate.Set("user", creator.Id)
+	duplicate.Set("role", "Editor")
+	if err := app.Save(duplicate); err == nil {
 		t.Fatalf("Save(duplicate participant) error = nil, want unique-index violation")
 	}
 }
@@ -73,23 +68,18 @@ func TestParticipantsCascadeOnConversationDelete(t *testing.T) {
 
 	conversationID := "convparts000002"
 	seedOwnedConversation(t, app, conversationID, "test1@example.com")
-
-	userRecord, err := app.FindAuthRecordByEmail("users", "test1@example.com")
+	creator, err := app.FindAuthRecordByEmail("users", "test1@example.com")
 	if err != nil {
 		t.Fatalf("FindAuthRecordByEmail = %v", err)
 	}
 
-	collection, err := app.FindCollectionByNameOrId("participants")
-	if err != nil {
-		t.Fatalf("FindCollectionByNameOrId(participants) error = %v", err)
-	}
-
-	participant := core.NewRecord(collection)
-	participant.Set("conversation", conversationID)
-	participant.Set("user", userRecord.Id)
-	participant.Set("role", "Admin")
-	if err := app.Save(participant); err != nil {
-		t.Fatalf("Save(participant) error = %v", err)
+	participant, err := app.FindFirstRecordByFilter(
+		"participants",
+		"conversation = {:c} && user = {:u}",
+		map[string]any{"c": conversationID, "u": creator.Id},
+	)
+	if err != nil || participant == nil {
+		t.Fatalf("FindFirstRecordByFilter(participants) error = %v record = %v", err, participant)
 	}
 
 	conversation, err := app.FindRecordById("conversations", conversationID)
