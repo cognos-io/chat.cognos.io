@@ -126,7 +126,8 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - `cd frontend && pnpm build` ✅ passes
 - `cd e2e && pnpm test` ✅ passes
 - `ModelService` coverage now includes login load, eligible-model fallback, no-eligible fallback,
-  and logout reset
+  logout reset, grouped-by-provider derivation, and the unknown-id `selectModel` no-op so a
+  stale or attacker-supplied model id can't desync the selector against the catalogue
 - `MessageService` coverage now includes structured completion-error message handling for billing,
   rate limits, and generic failures
 - `LoginComponent` coverage now includes login-page route links plus submit and post-login redirect
