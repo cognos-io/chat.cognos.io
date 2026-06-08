@@ -50,6 +50,12 @@ type Repo interface {
 	// conversation. A row with a non-empty removed_at counts as revoked.
 	IsActive(conversationID, userID string) (bool, error)
 
+	// ActiveRole returns the role the user currently holds on the
+	// conversation. The second return is false when the user is not an
+	// active participant — callers should treat the empty Role as "no
+	// access" regardless of the bool.
+	ActiveRole(conversationID, userID string) (Role, bool, error)
+
 	// Add inserts a new active participant row. Returns ErrAlreadyParticipant
 	// if an active row already exists.
 	Add(conversationID, userID string, role Role) error
@@ -68,6 +74,25 @@ type PocketBaseRepo struct {
 // NewPocketBaseRepo wires a Repo against the running PocketBase app.
 func NewPocketBaseRepo(app core.App) *PocketBaseRepo {
 	return &PocketBaseRepo{app: app}
+}
+
+// ActiveRole returns the user's current role on the conversation. The
+// second return is false when no active row exists; in that case the Role
+// is empty and callers must treat the user as having no access.
+func (r *PocketBaseRepo) ActiveRole(conversationID, userID string) (Role, bool, error) {
+	if conversationID == "" || userID == "" {
+		return "", false, nil
+	}
+
+	record, err := r.app.FindFirstRecordByFilter(
+		CollectionName,
+		"conversation = {:conversation} && user = {:user} && removed_at = ''",
+		dbx.Params{"conversation": conversationID, "user": userID},
+	)
+	if err != nil || record == nil {
+		return "", false, nil
+	}
+	return Role(record.GetString("role")), true, nil
 }
 
 // IsActive returns true when the user has a participant row for the
