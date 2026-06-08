@@ -172,6 +172,23 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   missing target returns 404, and an Admin can revoke a co-Admin when more than
   one Admin remains. The repo's Revoke method returns `ErrParticipantNotFound` for
   the no-active-row case so handlers can shape the 404 directly.
+- `POST /api/v1/conversations/{id}/rotate` (key-rotation capstone) now has integration
+  coverage that pins: Admin rotate succeeds, bumps `conversations.key_version`,
+  persists a fresh `conversation_public_keys` row at the new generation, and
+  installs a new `conversation_secret_keys` row for every active participant — all
+  inside a single transaction. Editors are denied with 403 (no DB mutation). Payloads
+  that miss any active participant return 400 (no mutation). Payloads that target a
+  non-participant return 400. After a successful rotate, both v1 (audit) and v2
+  (active) wrapped-key rows exist for each participant, and the read-side
+  current-generation filter picks v2.
+- `setupTestApp` now resets the in-process route-rate-limiter on every call so the
+  burst budget doesn't accumulate across the test binary's lifetime — prior to this
+  fix the suite would intermittently 429 on whichever test happened to push the
+  shared counter over.
+- `ConversationsCreate` now wraps the conversation insert + creator-participant
+  insert in a single PocketBase transaction. The pre-existing "compensating delete"
+  on participant-add failure couldn't recover when the delete itself failed; the
+  transactional write removes the orphan-row failure mode entirely.
 
 ### Frontend
 

@@ -206,9 +206,14 @@ This checklist is the living execution tracker for the rework.
     - [x] `Add(conversationID, userID, role)` with duplicate-rejection via `ErrAlreadyParticipant`
     - [x] `ListActive(conversationID)` returns Membership rows ordered by added_at for the
         sharing read API (no PocketBase types leak across the package boundary)
-    - [ ] wrapped conversation key access records (deferred — current secret-key collection
-        carries that role today; key_version columns + read filter are in place so a
-        rotation pass slots in without a schema rewrite)
+    - [x] `ActiveRole(conversationID, userID)` returns the caller's current role, so
+        handlers can gate on Admin without leaking PocketBase types
+    - [x] `Revoke(conversationID, userID)` stamps removed_at; `ErrParticipantNotFound`
+        distinguishes "no active row" from "internal error" at the handler boundary
+    - [x] wrapped conversation key access records — the secret-key collection still
+        carries the role today, but `key_version` is stamped on every row and the
+        rotation endpoint bumps the generation + installs fresh wrappers atomically
+        so the contract behaves like a real access-keys table
 - [ ] `backend/internal/store/interface.go`
     - [ ] minimal interfaces for handler/service tests
 - [x] `backend/internal/handler/conversations.go`
