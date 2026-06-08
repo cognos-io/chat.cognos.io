@@ -165,6 +165,11 @@ func TestParsePlanType(t *testing.T) {
 		{name: "unlimited", input: "unlimited", want: PlanTypeUnlimited},
 		{name: "inactive", input: "inactive", want: PlanTypeInactive},
 		{name: "legacy flat rate alias", input: "flat_rate", want: PlanTypeUnlimited},
+		{name: "whitespace padded", input: "  trial  ", want: PlanTypeTrial},
+		{name: "tab padded legacy alias", input: "\tflat_rate\n", want: PlanTypeUnlimited},
+		{name: "empty rejected", input: "", wantErr: true},
+		{name: "whitespace only rejected", input: "   ", wantErr: true},
+		{name: "case mismatch rejected", input: "Trial", wantErr: true},
 		{name: "unknown", input: "nope", wantErr: true},
 	}
 
