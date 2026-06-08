@@ -202,6 +202,16 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   authenticated callers, hard guard against the internal routing fields
   (`provider_model_id` / `base_url` / `api_key`) ever appearing in the response,
   and `preferred_model_id` is omitted (not serialised as null) for fresh users.
+- `e2e/tests/user-state-api.spec.ts` pins the user-state surface end-to-end across
+  17 scenarios: `/user-key-pair` (auth gate, GET-before-create 404, POST/GET
+  round-trip, missing-field 400, owner-only PATCH, cross-user PATCH rejected),
+  `/user-preferences` (auth gate, GET-before-create 404, POST/GET/PATCH
+  round-trip on encrypted ciphertext, empty-data 400, cross-user PATCH
+  rejected), and `/vault-session` (auth gate, GET-before-upsert 404, PUT
+  upsert semantics with a second-PUT overwrite, exact 44-char base64
+  validation, DELETE removes + GET 404s, per-user isolation). Locks the
+  contract the frontend AuthService / TrustedUnlockService / VaultService /
+  UserPreferencesService all depend on.
 - `e2e/tests/conversations-api.spec.ts` pins the conversations + messages CRUD
   contract end-to-end: auth gate fires on every mutating route (anon GET/POST/
   PATCH/DELETE all return 401), POST creates at `key_version: 1` and echoes the

@@ -441,6 +441,10 @@ This checklist is the living execution tracker for the rework.
     validation, non-persisted happy path drives the mock AI provider end-to-end,
     persisted happy path round-trips through the encryption envelope, and the
     non-participant gate blocks message injection into another user's conversation.
+- [x] user-state API (`e2e/tests/user-state-api.spec.ts`):
+    /user-key-pair, /user-preferences, /vault-session all pinned for auth gate,
+    POST/GET round-trip, owner-only PATCH, cross-user reject, and the
+    vault-session PUT-as-upsert contract with strict 44-char wrap_key length.
 
 ### Explicit non-goals for these tests
 
