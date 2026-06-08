@@ -46,5 +46,14 @@ approach to ProtonMail which encrypts user emails.
 
 ## Testing
 
+Tests should cover both sunny and rainy day cases including invalid data gets handled correctly.
+
 When testing locally, run the backend, frontend and web on non-standard ports so as not to conflict
 with other development ports.
+
+### Data access
+
+It's important to write tests so that users cannot access unauthorised data. They can only have
+access to the data they are allowed (either as the owner or a team/organisation etc.).
+
+See `@backend/cmd/api/filter_rules_test.go` for examples of how this is done with Pocketbase.
