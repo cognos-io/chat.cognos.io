@@ -35,13 +35,13 @@ export default defineConfig({
     ? undefined
     : [
         {
-          command: 'node ./scripts/mock-ai-provider.mjs',
-          cwd: '.',
+          command: 'go run ./cmd/mock-ai-provider',
+          cwd: '../backend',
           url: AI_MOCK_HEALTH_URL,
           reuseExistingServer: !process.env.CI,
           stdout: 'pipe',
           stderr: 'pipe',
-          timeout: 30_000,
+          timeout: 60_000,
         },
         {
           command:

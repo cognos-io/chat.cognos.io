@@ -59,9 +59,14 @@ backend-test:
         --build.include_ext "go,tpl,tmpl,html,css,scss,js,ts,sql,jpeg,jpg,gif,png,bmp,svg,webp,ico" \
         --misc.clean_on_exit "true"
 
-# Run frontend and backend together
+# Run the OpenAI-shaped mock AI provider on 127.0.0.1:18080 (no real upstream needed)
+[working-directory("backend")]
+mock-ai:
+    @go run ./cmd/mock-ai-provider
+
+# Run frontend, backend and the mock AI provider together
 [parallel]
-dev: frontend backend
+dev: frontend backend mock-ai
 
 dev-test:
     @just _dev backend-test
