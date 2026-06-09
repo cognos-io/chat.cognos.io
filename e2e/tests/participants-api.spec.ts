@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 
 import { provisionApiUser } from './api-helpers';
 import {
+  decryptMessage,
+  encryptMessage,
   generateConversationSecret,
   generateKeyPair,
   openSealed,
@@ -400,6 +402,248 @@ test.describe('participants + rotation API', () => {
     } finally {
       await owner.api.dispose();
       await stranger.api.dispose();
+    }
+  });
+
+  test('5-user conversation: revoke, bulk-revoke, re-add and revoke again — access stays correct at every generation', async () => {
+    // End-to-end choreography proving forward secrecy across multiple
+    // membership changes. Each phase:
+    //   1. mutates membership (or starts the conversation),
+    //   2. encrypts a fresh "message" with the current conversation secret,
+    //   3. fetches each user's wrapped secret + unwraps it + decrypts the
+    //      message, then asserts who could and who couldn't.
+    //
+    // No AI gateway involvement — the test owns the conversation secret
+    // for each generation, so we can encrypt/decrypt locally with the
+    // exact same primitives the frontend would use, and verify the
+    // forward-secrecy semantic without needing the completions endpoint.
+    test.setTimeout(120_000);
+
+    const users = await Promise.all([0, 1, 2, 3, 4].map(() => provisionApiUser()));
+    const keys = users.map(() => generateKeyPair());
+
+    // Convenience: assert that user `i` cannot fetch their wrapped secret
+    // (i.e. they're no longer an active participant of the conversation).
+    async function assertNoAccess(i: number, conversationId: string) {
+      const res = await users[i].api.get(
+        `/api/v1/conversations/${conversationId}/secret-key`,
+      );
+      expect(
+        res.status(),
+        `user[${i}] should be locked out but got ${res.status()}`,
+      ).toBe(404);
+      const convList = await users[i].api.get('/api/v1/conversations');
+      const convBody = (await convList.json()) as { id: string }[];
+      expect(convBody.some((c) => c.id === conversationId)).toBe(false);
+    }
+
+    // Convenience: fetch user `i`'s wrapped secret, unwrap it, decrypt
+    // `ciphertext`, and assert it round-trips to `plaintext`. Also
+    // double-checks the key_version surfaced by the API matches the
+    // generation we expect.
+    async function assertCanDecrypt(
+      i: number,
+      conversationId: string,
+      expectedKeyVersion: number,
+      ciphertext: string,
+      plaintext: string,
+    ) {
+      const res = await users[i].api.get(
+        `/api/v1/conversations/${conversationId}/secret-key`,
+      );
+      expect(
+        res.ok(),
+        `user[${i}] /secret-key: ${res.status()} ${await res.text()}`,
+      ).toBe(true);
+      const body = (await res.json()) as { secret_key: string; key_version: number };
+      expect(body.key_version).toBe(expectedKeyVersion);
+      const unwrapped = utf8.decode(openSealed(keys[i], body.secret_key));
+      const recovered = utf8.decode(decryptMessage(unwrapped, ciphertext));
+      expect(recovered).toBe(plaintext);
+    }
+
+    try {
+      // ─── Phase A: u0 creates conversation, adds u1..u4 ──────────────
+      const createConv = await users[0].api.post('/api/v1/conversations', {
+        data: { data: CONVERSATION_DATA_B64, expiry_duration: '' },
+      });
+      expect(
+        createConv.ok(),
+        `create conv: ${createConv.status()} ${await createConv.text()}`,
+      ).toBe(true);
+      const { id: conversationId } = (await createConv.json()) as { id: string };
+
+      let conversationSecret = generateConversationSecret();
+
+      // u0 installs their own wrapped v1 secret so the GET /secret-key
+      // assertion later finds something to return.
+      const u0WrappedV1 = await users[0].api.post(
+        `/api/v1/conversations/${conversationId}/secret-key`,
+        {
+          data: {
+            secret_key: sealFor(keys[0].publicKey, utf8.encode(conversationSecret)),
+          },
+        },
+      );
+      expect(u0WrappedV1.ok()).toBe(true);
+
+      // u0 adds u1..u4 with a wrapped v1 secret each.
+      for (const i of [1, 2, 3, 4]) {
+        const addRes = await users[0].api.post(
+          `/api/v1/conversations/${conversationId}/participants`,
+          {
+            data: {
+              user_id: users[i].userId,
+              role: 'Editor',
+              wrapped_secret_key: sealFor(
+                keys[i].publicKey,
+                utf8.encode(conversationSecret),
+              ),
+            },
+          },
+        );
+        expect(
+          addRes.ok(),
+          `add u${i}: ${addRes.status()} ${await addRes.text()}`,
+        ).toBe(true);
+      }
+
+      const m1 = encryptMessage(conversationSecret, utf8.encode('Phase A message'));
+      for (const i of [0, 1, 2, 3, 4]) {
+        await assertCanDecrypt(i, conversationId, 1, m1, 'Phase A message');
+      }
+
+      // ─── Phase B: revoke u4, rotate to v2 ───────────────────────────
+      conversationSecret = generateConversationSecret();
+      const rotateB = await users[0].api.post(
+        `/api/v1/conversations/${conversationId}/rotate`,
+        {
+          data: {
+            revoked_user_ids: [users[4].userId],
+            public_key: generateKeyPair().publicKey,
+            wrapped_secret_keys: [0, 1, 2, 3].map((i) => ({
+              user_id: users[i].userId,
+              secret_key: sealFor(keys[i].publicKey, utf8.encode(conversationSecret)),
+            })),
+          },
+        },
+      );
+      expect(
+        rotateB.ok(),
+        `phase B rotate: ${rotateB.status()} ${await rotateB.text()}`,
+      ).toBe(true);
+      const rotateBBody = (await rotateB.json()) as {
+        key_version: number;
+        revoked_user_ids: string[];
+      };
+      expect(rotateBBody.key_version).toBe(2);
+      expect(rotateBBody.revoked_user_ids).toEqual([users[4].userId]);
+
+      const m2 = encryptMessage(conversationSecret, utf8.encode('Phase B message'));
+      for (const i of [0, 1, 2, 3]) {
+        await assertCanDecrypt(i, conversationId, 2, m2, 'Phase B message');
+      }
+      await assertNoAccess(4, conversationId);
+
+      // ─── Phase C: bulk revoke u2 + u3, rotate to v3 ─────────────────
+      conversationSecret = generateConversationSecret();
+      const rotateC = await users[0].api.post(
+        `/api/v1/conversations/${conversationId}/rotate`,
+        {
+          data: {
+            revoked_user_ids: [users[2].userId, users[3].userId],
+            public_key: generateKeyPair().publicKey,
+            wrapped_secret_keys: [0, 1].map((i) => ({
+              user_id: users[i].userId,
+              secret_key: sealFor(keys[i].publicKey, utf8.encode(conversationSecret)),
+            })),
+          },
+        },
+      );
+      expect(
+        rotateC.ok(),
+        `phase C rotate: ${rotateC.status()} ${await rotateC.text()}`,
+      ).toBe(true);
+      const rotateCBody = (await rotateC.json()) as {
+        key_version: number;
+        revoked_user_ids: string[];
+      };
+      expect(rotateCBody.key_version).toBe(3);
+      // Order in the response mirrors request order. We don't lean on
+      // that contract — assert the set-equality instead so future
+      // implementations that dedupe internally don't churn this test.
+      expect(rotateCBody.revoked_user_ids.sort()).toEqual(
+        [users[2].userId, users[3].userId].sort(),
+      );
+
+      const m3 = encryptMessage(conversationSecret, utf8.encode('Phase C message'));
+      for (const i of [0, 1]) {
+        await assertCanDecrypt(i, conversationId, 3, m3, 'Phase C message');
+      }
+      for (const i of [2, 3, 4]) {
+        await assertNoAccess(i, conversationId);
+      }
+
+      // ─── Phase D: re-add u2 and u4 at the current v3 generation ────
+      // Adding a participant wraps the CURRENT conversation secret for
+      // their public key. No rotation needed — adds don't bump the key.
+      for (const i of [2, 4]) {
+        const addRes = await users[0].api.post(
+          `/api/v1/conversations/${conversationId}/participants`,
+          {
+            data: {
+              user_id: users[i].userId,
+              role: 'Editor',
+              wrapped_secret_key: sealFor(
+                keys[i].publicKey,
+                utf8.encode(conversationSecret),
+              ),
+            },
+          },
+        );
+        expect(
+          addRes.ok(),
+          `re-add u${i}: ${addRes.status()} ${await addRes.text()}`,
+        ).toBe(true);
+      }
+
+      const m4 = encryptMessage(conversationSecret, utf8.encode('Phase D message'));
+      for (const i of [0, 1, 2, 4]) {
+        await assertCanDecrypt(i, conversationId, 3, m4, 'Phase D message');
+      }
+      await assertNoAccess(3, conversationId);
+
+      // ─── Phase E: revoke u1, rotate to v4 ───────────────────────────
+      conversationSecret = generateConversationSecret();
+      const rotateE = await users[0].api.post(
+        `/api/v1/conversations/${conversationId}/rotate`,
+        {
+          data: {
+            revoked_user_ids: [users[1].userId],
+            public_key: generateKeyPair().publicKey,
+            wrapped_secret_keys: [0, 2, 4].map((i) => ({
+              user_id: users[i].userId,
+              secret_key: sealFor(keys[i].publicKey, utf8.encode(conversationSecret)),
+            })),
+          },
+        },
+      );
+      expect(
+        rotateE.ok(),
+        `phase E rotate: ${rotateE.status()} ${await rotateE.text()}`,
+      ).toBe(true);
+      const rotateEBody = (await rotateE.json()) as { key_version: number };
+      expect(rotateEBody.key_version).toBe(4);
+
+      const m5 = encryptMessage(conversationSecret, utf8.encode('Phase E message'));
+      for (const i of [0, 2, 4]) {
+        await assertCanDecrypt(i, conversationId, 4, m5, 'Phase E message');
+      }
+      for (const i of [1, 3]) {
+        await assertNoAccess(i, conversationId);
+      }
+    } finally {
+      await Promise.all(users.map((u) => u.api.dispose()));
     }
   });
 });
