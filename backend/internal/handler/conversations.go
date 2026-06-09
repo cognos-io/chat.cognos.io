@@ -401,11 +401,32 @@ func ConversationParticipantsAdd(app core.App) func(e *core.RequestEvent) error 
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to load participants collection", err)
 		}
 
-		participantRecord := core.NewRecord(participantsCollection)
-		participantRecord.Set("conversation", conversationID)
-		participantRecord.Set("user", req.UserID)
+		// The participants collection has a UNIQUE(conversation, user)
+		// index. A user who was previously revoked still has a row (with
+		// removed_at stamped), so a fresh insert would 500. Look up any
+		// existing row first:
+		//   - active row → reject as duplicate add (400)
+		//   - soft-revoked row → re-activate it inside the TX below
+		//   - no row → insert fresh
+		var participantRecord *core.Record
+		existing, _ := app.FindFirstRecordByFilter(
+			participants.CollectionName,
+			"conversation = {:conversation} && user = {:user}",
+			dbx.Params{"conversation": conversationID, "user": req.UserID},
+		)
+		if existing != nil {
+			if existing.GetString("removed_at") == "" {
+				return apis.NewBadRequestError("User is already an active participant", nil)
+			}
+			participantRecord = existing
+		} else {
+			participantRecord = core.NewRecord(participantsCollection)
+			participantRecord.Set("conversation", conversationID)
+			participantRecord.Set("user", req.UserID)
+		}
 		participantRecord.Set("role", string(role))
 		participantRecord.Set("added_at", time.Now().UTC())
+		participantRecord.Set("removed_at", "")
 
 		secretKeyRecord := core.NewRecord(secretKeyCollection)
 		secretKeyRecord.Set("conversation", conversationID)

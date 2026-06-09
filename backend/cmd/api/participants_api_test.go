@@ -296,6 +296,91 @@ func TestParticipantsAddValidatesBody(t *testing.T) {
 	}
 }
 
+func TestParticipantsAddReactivatesSoftRevokedRow(t *testing.T) {
+	t.Parallel()
+
+	const conversationID = "convreadd000001"
+	const targetUser = "xq9ndvc2kbrvrng"
+
+	// A previously-revoked participant (row with removed_at stamped) must
+	// be re-addable. Without the re-activation path, the UNIQUE(conversation,
+	// user) index would 500 the insert. Verify the row is mutated in place:
+	// removed_at cleared, role refreshed, added_at refreshed.
+	scenario := tests.ApiScenario{
+		Name:   "Re-adding a soft-revoked participant re-activates the row",
+		Method: http.MethodPost,
+		URL:    "/api/v1/conversations/" + conversationID + "/participants",
+		Body: strings.NewReader(`{
+			"user_id": "` + targetUser + `",
+			"role": "Viewer",
+			"wrapped_secret_key": "RE-ADDED-WRAPPED-SECRET====================="
+		}`),
+		ExpectedStatus: http.StatusCreated,
+		ExpectedContent: []string{
+			`"role":"Viewer"`,
+			`"user_id":"` + targetUser + `"`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			seedParticipant(t, app, conversationID, targetUser, "Editor")
+			revokeParticipant(t, app, conversationID, targetUser)
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			rows, err := app.FindRecordsByFilter(
+				"participants",
+				"conversation = {:c} && user = {:u}",
+				"",
+				10, 0,
+				dbx.Params{"c": conversationID, "u": targetUser},
+			)
+			if err != nil {
+				t.Fatalf("FindRecordsByFilter err=%v", err)
+			}
+			if len(rows) != 1 {
+				t.Fatalf("expected 1 participants row (re-activated), got %d", len(rows))
+			}
+			if got := rows[0].GetString("removed_at"); got != "" {
+				t.Fatalf("removed_at = %q after re-add, want empty", got)
+			}
+			if got := rows[0].GetString("role"); got != "Viewer" {
+				t.Fatalf("role = %q after re-add, want Viewer", got)
+			}
+		},
+	}
+	scenario.Test(t)
+}
+
+func TestParticipantsAddRejectsAlreadyActive(t *testing.T) {
+	t.Parallel()
+
+	const conversationID = "convdupadd00001"
+	const targetUser = "xq9ndvc2kbrvrng"
+
+	scenario := tests.ApiScenario{
+		Name:   "Adding an already-active participant returns a focused 400",
+		Method: http.MethodPost,
+		URL:    "/api/v1/conversations/" + conversationID + "/participants",
+		Body: strings.NewReader(`{
+			"user_id": "` + targetUser + `",
+			"role": "Editor",
+			"wrapped_secret_key": "ANYTHING===================================="
+		}`),
+		ExpectedStatus: http.StatusBadRequest,
+		ExpectedContent: []string{
+			`"message":"User is already an active participant."`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			seedParticipant(t, app, conversationID, targetUser, "Editor")
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+	}
+	scenario.Test(t)
+}
+
 func TestParticipantsListExcludesRevokedRows(t *testing.T) {
 	t.Parallel()
 
