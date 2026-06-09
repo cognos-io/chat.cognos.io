@@ -121,6 +121,24 @@ describe('buildCompletionMessages', () => {
     expect(result[1].expires).toBeUndefined();
   });
 
+  it('parses PocketBase space-separated timestamps into valid dates', () => {
+    const response = makeResponse({
+      assistantMessage: {
+        id: 'asst-1',
+        parentMessageId: 'user-1',
+        content: 'hello back',
+        agentId: 'cognos:simple-assistant',
+        modelId: 'infomaniak:llama-3',
+        createdAt: '2026-01-02 03:04:05.000Z',
+      },
+    });
+
+    const assistant = buildCompletionMessages([userMessage()], response)[1];
+
+    expect(Number.isNaN(assistant.createdAt.getTime())).toBe(false);
+    expect(assistant.createdAt).toEqual(new Date('2026-01-02T03:04:05.000Z'));
+  });
+
   it('propagates expires to the parent message when present', () => {
     const existing = [userMessage()];
     const result = buildCompletionMessages(

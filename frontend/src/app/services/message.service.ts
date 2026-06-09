@@ -27,6 +27,7 @@ import { signalSlice } from 'ngxtension/signal-slice';
 
 import { generateConversationAgentId } from '@app/interfaces/agent';
 import { Message, parseMessageData } from '@app/interfaces/message';
+import { parseBackendDate } from '@app/utils/timestamp';
 
 import { AgentService } from './agent.service';
 import { AuthService } from './auth.service';
@@ -152,13 +153,13 @@ export const buildCompletionMessages = (
   existing: ReadonlyArray<Message>,
   resp: CompleteResponse,
 ): Message[] => {
-  const expires = resp.expiresAt ? new Date(resp.expiresAt) : undefined;
+  const expires = resp.expiresAt ? parseBackendDate(resp.expiresAt) : undefined;
   const parentId = resp.assistantMessage.parentMessageId;
 
   const assistant: Message = {
     parentMessageId: parentId,
     record_id: resp.assistantMessage.id,
-    createdAt: new Date(resp.assistantMessage.createdAt),
+    createdAt: parseBackendDate(resp.assistantMessage.createdAt),
     expires,
     decryptedData: {
       content: resp.assistantMessage.content,
@@ -578,8 +579,8 @@ export class MessageService {
 
     return {
       record_id: record.id,
-      createdAt: new Date(record.created),
-      expires: record.expires ? new Date(record.expires) : undefined,
+      createdAt: parseBackendDate(record.created),
+      expires: record.expires ? parseBackendDate(record.expires) : undefined,
       parentMessageId: record.parent_message,
       decryptedData,
     };
