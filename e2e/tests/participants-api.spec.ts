@@ -1,6 +1,13 @@
 import { expect, test } from '@playwright/test';
 
 import { provisionApiUser } from './api-helpers';
+import {
+  generateConversationSecret,
+  generateKeyPair,
+  openSealed,
+  sealFor,
+  utf8,
+} from './crypto-helpers';
 
 // Conversation data is base64-encoded ciphertext in production; the API
 // doesn't enforce the inner shape, so a constant placeholder works for the
@@ -9,22 +16,17 @@ const CONVERSATION_DATA_B64 = Buffer.from(
   JSON.stringify({ title: 'E2E participants suite' }),
 ).toString('base64');
 
-// Wrapped secret keys are likewise opaque ciphertext from the API's
-// perspective. Any non-empty string survives the round-trip — these tests
-// pin behaviour, not crypto correctness (the backend integration tests
-// cover the JSON-then-NaCl envelope separately). Repeated character runs
-// stay below gitleaks' entropy threshold while still being identifiable in
-// failure output.
-const WRAPPED_SECRET_FOR_ADMIN = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
-const WRAPPED_SECRET_FOR_GUEST = 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=';
-const ROTATED_WRAPPED_FOR_ADMIN = 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=';
-const ROTATED_WRAPPED_FOR_GUEST = 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD=';
-const ROTATED_CONVERSATION_PUBKEY = 'EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE=';
-
 test.describe('participants + rotation API', () => {
   test('admin can list, add, revoke participants and rotate the conversation key', async () => {
     const admin = await provisionApiUser();
     const guest = await provisionApiUser();
+    // Real keypairs per participant — wrapped secret keys must actually
+    // decrypt back to the conversation secret on the receiving side, which
+    // pins the wire format against accidental shape drift.
+    const adminKeys = generateKeyPair();
+    const guestKeys = generateKeyPair();
+    const conversationSecretV1 = generateConversationSecret();
+
     try {
       // 1. Admin creates a conversation. The backend auto-seeds an Admin
       //    participant row for the creator, so a GET right after must
@@ -70,20 +72,44 @@ test.describe('participants + rotation API', () => {
       expect(guestPreParticipants.status()).toBe(404);
 
       // 3. Admin shares: adds the guest as an Editor in one transactional
-      //    call (participant row + wrapped secret-key row).
+      //    call (participant row + wrapped secret-key row). The wrapped
+      //    value is the v1 conversation secret sealed for the guest's
+      //    public key — the guest must be able to unwrap it back to the
+      //    original bytes.
+      const wrappedForGuestV1 = sealFor(
+        guestKeys.publicKey,
+        utf8.encode(conversationSecretV1),
+      );
       const addRes = await admin.api.post(
         `/api/v1/conversations/${conversation.id}/participants`,
         {
           data: {
             user_id: guest.userId,
             role: 'Editor',
-            wrapped_secret_key: WRAPPED_SECRET_FOR_GUEST,
+            wrapped_secret_key: wrappedForGuestV1,
           },
         },
       );
       expect(addRes.ok(), `add: ${addRes.status()} ${await addRes.text()}`).toBe(true);
       const added = (await addRes.json()) as { user_id: string; role: string };
       expect(added).toMatchObject({ user_id: guest.userId, role: 'Editor' });
+
+      // Guest can fetch their wrapped secret and decrypt it back to the
+      // exact conversation secret the admin issued — this proves the
+      // round-trip end-to-end, not just the byte-for-byte storage.
+      const guestSecretV1 = await guest.api.get(
+        `/api/v1/conversations/${conversation.id}/secret-key`,
+      );
+      expect(guestSecretV1.ok()).toBe(true);
+      const guestSecretV1Body = (await guestSecretV1.json()) as {
+        secret_key: string;
+        key_version: number;
+      };
+      expect(guestSecretV1Body.key_version).toBe(1);
+      const guestRecoveredV1 = utf8.decode(
+        openSealed(guestKeys, guestSecretV1Body.secret_key),
+      );
+      expect(guestRecoveredV1).toBe(conversationSecretV1);
 
       // 4. Post-add: the guest must now see the conversation in their
       //    list, and the participants list must show both members.
@@ -119,7 +145,10 @@ test.describe('participants + rotation API', () => {
           data: {
             user_id: admin.userId,
             role: 'Viewer',
-            wrapped_secret_key: WRAPPED_SECRET_FOR_ADMIN,
+            wrapped_secret_key: sealFor(
+              adminKeys.publicKey,
+              utf8.encode(conversationSecretV1),
+            ),
           },
         },
       );
@@ -132,14 +161,30 @@ test.describe('participants + rotation API', () => {
 
       // 6. Admin rotates the conversation key. Payload must cover every
       //    active participant — both admin and guest still active here.
+      //    The new conversation keypair + per-participant wrapped secrets
+      //    are real crypto, so we can decrypt and verify on the other side.
+      const newConversationKeys = generateKeyPair();
+      const conversationSecretV2 = generateConversationSecret();
       const rotateRes = await admin.api.post(
         `/api/v1/conversations/${conversation.id}/rotate`,
         {
           data: {
-            public_key: ROTATED_CONVERSATION_PUBKEY,
+            public_key: newConversationKeys.publicKey,
             wrapped_secret_keys: [
-              { user_id: admin.userId, secret_key: ROTATED_WRAPPED_FOR_ADMIN },
-              { user_id: guest.userId, secret_key: ROTATED_WRAPPED_FOR_GUEST },
+              {
+                user_id: admin.userId,
+                secret_key: sealFor(
+                  adminKeys.publicKey,
+                  utf8.encode(conversationSecretV2),
+                ),
+              },
+              {
+                user_id: guest.userId,
+                secret_key: sealFor(
+                  guestKeys.publicKey,
+                  utf8.encode(conversationSecretV2),
+                ),
+              },
             ],
           },
         },
@@ -163,7 +208,13 @@ test.describe('participants + rotation API', () => {
         key_version: number;
       };
       expect(guestSecretKeyBody.key_version).toBe(2);
-      expect(guestSecretKeyBody.secret_key).toBe(ROTATED_WRAPPED_FOR_GUEST);
+      // Wrapped bytes change every rotation (fresh ephemeral key + fresh
+      // conversation secret), so we can't compare to the wire value — we
+      // verify by unwrapping and matching the conversation secret.
+      const guestRecoveredV2 = utf8.decode(
+        openSealed(guestKeys, guestSecretKeyBody.secret_key),
+      );
+      expect(guestRecoveredV2).toBe(conversationSecretV2);
 
       // The conversation row itself now reports the new generation.
       const conversationsAfterRotate = await admin.api.get('/api/v1/conversations');
@@ -184,9 +235,15 @@ test.describe('participants + rotation API', () => {
         `/api/v1/conversations/${conversation.id}/rotate`,
         {
           data: {
-            public_key: ROTATED_CONVERSATION_PUBKEY,
+            public_key: newConversationKeys.publicKey,
             wrapped_secret_keys: [
-              { user_id: admin.userId, secret_key: ROTATED_WRAPPED_FOR_ADMIN },
+              {
+                user_id: admin.userId,
+                secret_key: sealFor(
+                  adminKeys.publicKey,
+                  utf8.encode(conversationSecretV2),
+                ),
+              },
             ],
           },
         },
@@ -232,6 +289,9 @@ test.describe('participants + rotation API', () => {
   test('outside users cannot reach a conversation they were never added to', async () => {
     const owner = await provisionApiUser();
     const stranger = await provisionApiUser();
+    const strangerKeys = generateKeyPair();
+    const ownerKeys = generateKeyPair();
+    const conversationSecret = generateConversationSecret();
     try {
       const createConv = await owner.api.post('/api/v1/conversations', {
         data: { data: CONVERSATION_DATA_B64, expiry_duration: '' },
@@ -252,7 +312,10 @@ test.describe('participants + rotation API', () => {
           data: {
             user_id: stranger.userId,
             role: 'Editor',
-            wrapped_secret_key: WRAPPED_SECRET_FOR_GUEST,
+            wrapped_secret_key: sealFor(
+              strangerKeys.publicKey,
+              utf8.encode(conversationSecret),
+            ),
           },
         },
       );
@@ -264,9 +327,15 @@ test.describe('participants + rotation API', () => {
         `/api/v1/conversations/${conversation.id}/rotate`,
         {
           data: {
-            public_key: ROTATED_CONVERSATION_PUBKEY,
+            public_key: generateKeyPair().publicKey,
             wrapped_secret_keys: [
-              { user_id: owner.userId, secret_key: ROTATED_WRAPPED_FOR_ADMIN },
+              {
+                user_id: owner.userId,
+                secret_key: sealFor(
+                  ownerKeys.publicKey,
+                  utf8.encode(conversationSecret),
+                ),
+              },
             ],
           },
         },
