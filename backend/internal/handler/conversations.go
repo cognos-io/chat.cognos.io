@@ -280,9 +280,10 @@ type createParticipantRequest struct {
 }
 
 type rotateConversationKeyRequest struct {
-	PublicKey          string                        `json:"public_key"`
-	PublicKeySignature string                        `json:"public_key_signature,omitempty"`
-	WrappedSecretKeys  []rotateConversationKeyEntry  `json:"wrapped_secret_keys"`
+	RevokedUserIDs     []string                     `json:"revoked_user_ids,omitempty"`
+	PublicKey          string                       `json:"public_key"`
+	PublicKeySignature string                       `json:"public_key_signature,omitempty"`
+	WrappedSecretKeys  []rotateConversationKeyEntry `json:"wrapped_secret_keys"`
 }
 
 type rotateConversationKeyEntry struct {
@@ -291,8 +292,9 @@ type rotateConversationKeyEntry struct {
 }
 
 type rotateConversationKeyResponse struct {
-	ConversationID string `json:"conversation_id"`
-	KeyVersion     int    `json:"key_version"`
+	ConversationID string   `json:"conversation_id"`
+	KeyVersion     int      `json:"key_version"`
+	RevokedUserIDs []string `json:"revoked_user_ids"`
 }
 
 // ConversationParticipantsList returns the currently-active participants for
@@ -486,10 +488,17 @@ func ConversationParticipantsRevoke(app core.App) func(e *core.RequestEvent) err
 
 // ConversationKeyRotate bumps the conversation's key_version, persists a
 // new conversation public key at the new version, and installs a fresh
-// per-participant wrapped secret key for every active participant. The
-// caller (Admin) must provide a wrapped secret key for EVERY current active
-// participant; missing or extra entries are rejected so the rotation can
-// never leave a participant locked out of the new generation.
+// per-participant wrapped secret key for every participant who remains
+// active after the (optional) revocation step. Caller (Admin) must provide
+// a wrapped secret key for EVERY post-revoke active participant; missing
+// or extra entries are rejected so the rotation can never leave a
+// participant locked out of the new generation.
+//
+// When revoked_user_ids is non-empty the named users are soft-removed
+// inside the same transaction as the rotation. Bundling revoke and rotate
+// closes the forward-secrecy gap: there is no observable state where a
+// "revoked" participant retains a valid wrapped key for the current
+// generation.
 func ConversationKeyRotate(app core.App) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		caller := auth.ExtractUser(e)
@@ -524,14 +533,46 @@ func ConversationKeyRotate(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewBadRequestError("wrapped_secret_keys is required", nil)
 		}
 
+		// Normalise revoked_user_ids and reject local-only problems
+		// (duplicates, self-revoke) before touching the DB.
+		revoked := make(map[string]struct{}, len(req.RevokedUserIDs))
+		revokedOrdered := make([]string, 0, len(req.RevokedUserIDs))
+		for _, raw := range req.RevokedUserIDs {
+			userID := strings.TrimSpace(raw)
+			if userID == "" {
+				return apis.NewBadRequestError("revoked_user_ids contains an empty user_id", nil)
+			}
+			if userID == caller.ID {
+				return apis.NewBadRequestError("Caller cannot revoke themselves", nil)
+			}
+			if _, dup := revoked[userID]; dup {
+				return apis.NewBadRequestError("revoked_user_ids contains a duplicate user_id", nil)
+			}
+			revoked[userID] = struct{}{}
+			revokedOrdered = append(revokedOrdered, userID)
+		}
+
 		members, err := repo.ListActive(conversationID)
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to enumerate conversation participants", err)
 		}
 
-		expected := make(map[string]struct{}, len(members))
+		// Active set today; expected set post-revoke = active − revoked.
+		active := make(map[string]struct{}, len(members))
 		for _, m := range members {
-			expected[m.UserID] = struct{}{}
+			active[m.UserID] = struct{}{}
+		}
+		for _, userID := range revokedOrdered {
+			if _, ok := active[userID]; !ok {
+				return apis.NewNotFoundError("Participant to revoke is not active", nil)
+			}
+		}
+		expected := make(map[string]struct{}, len(members))
+		for userID := range active {
+			if _, isRevoked := revoked[userID]; isRevoked {
+				continue
+			}
+			expected[userID] = struct{}{}
 		}
 
 		seen := make(map[string]string, len(req.WrappedSecretKeys))
@@ -540,6 +581,9 @@ func ConversationKeyRotate(app core.App) func(e *core.RequestEvent) error {
 			secret := strings.TrimSpace(entry.SecretKey)
 			if userID == "" || secret == "" {
 				return apis.NewBadRequestError("Each wrapped_secret_keys entry needs a non-empty user_id and secret_key", nil)
+			}
+			if _, isRevoked := revoked[userID]; isRevoked {
+				return apis.NewBadRequestError("wrapped_secret_keys entry targets a user being revoked", nil)
 			}
 			if _, ok := expected[userID]; !ok {
 				return apis.NewBadRequestError("wrapped_secret_keys entry targets a non-participant", nil)
@@ -569,6 +613,15 @@ func ConversationKeyRotate(app core.App) func(e *core.RequestEvent) error {
 		}
 
 		if err := app.RunInTransaction(func(txApp core.App) error {
+			// Soft-revoke first, inside the same TX as the rotation so an
+			// outside observer never sees the half-revoked state.
+			txRepo := participants.NewPocketBaseRepo(txApp)
+			for _, userID := range revokedOrdered {
+				if err := txRepo.Revoke(conversationID, userID); err != nil {
+					return err
+				}
+			}
+
 			conversationRecord.Set("key_version", newVersion)
 			if err := txApp.Save(conversationRecord); err != nil {
 				return err
@@ -601,6 +654,7 @@ func ConversationKeyRotate(app core.App) func(e *core.RequestEvent) error {
 		return e.JSON(http.StatusOK, rotateConversationKeyResponse{
 			ConversationID: conversationID,
 			KeyVersion:     newVersion,
+			RevokedUserIDs: revokedOrdered,
 		})
 	}
 }
