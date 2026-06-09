@@ -154,8 +154,26 @@ test.describe('participants + rotation API', () => {
       );
       expect(editorAdd.status()).toBe(403);
 
-      const editorRevoke = await guest.api.delete(
-        `/api/v1/conversations/${conversation.id}/participants/${admin.userId}`,
+      // Revoke now flows through the rotate endpoint — an Editor attempt
+      // must hit the same 403 the standalone DELETE used to return, so
+      // role-gate parity survives the endpoint merge.
+      const editorRevoke = await guest.api.post(
+        `/api/v1/conversations/${conversation.id}/rotate`,
+        {
+          data: {
+            revoked_user_ids: [admin.userId],
+            public_key: generateKeyPair().publicKey,
+            wrapped_secret_keys: [
+              {
+                user_id: guest.userId,
+                secret_key: sealFor(
+                  guestKeys.publicKey,
+                  utf8.encode(conversationSecretV1),
+                ),
+              },
+            ],
+          },
+        },
       );
       expect(editorRevoke.status()).toBe(403);
 
@@ -250,16 +268,41 @@ test.describe('participants + rotation API', () => {
       );
       expect(rotateMissing.status()).toBe(400);
 
-      // 8. Admin revokes the guest. The audit row stays in the DB but the
-      //    guest's list/access endpoints must stop returning the
-      //    conversation.
-      const revokeRes = await admin.api.delete(
-        `/api/v1/conversations/${conversation.id}/participants/${guest.userId}`,
+      // 8. Admin revokes the guest by passing revoked_user_ids to the
+      //    rotate endpoint — the only path for removing a participant.
+      //    The same call bumps the conversation key so the guest's
+      //    previously-wrapped v2 secret can't decrypt any future message
+      //    (forward secrecy is part of the same transaction).
+      const conversationKeysV3 = generateKeyPair();
+      const conversationSecretV3 = generateConversationSecret();
+      const revokeRes = await admin.api.post(
+        `/api/v1/conversations/${conversation.id}/rotate`,
+        {
+          data: {
+            revoked_user_ids: [guest.userId],
+            public_key: conversationKeysV3.publicKey,
+            wrapped_secret_keys: [
+              {
+                user_id: admin.userId,
+                secret_key: sealFor(
+                  adminKeys.publicKey,
+                  utf8.encode(conversationSecretV3),
+                ),
+              },
+            ],
+          },
+        },
       );
       expect(
         revokeRes.ok(),
-        `revoke: ${revokeRes.status()} ${await revokeRes.text()}`,
+        `revoke+rotate: ${revokeRes.status()} ${await revokeRes.text()}`,
       ).toBe(true);
+      const revokeBody = (await revokeRes.json()) as {
+        key_version: number;
+        revoked_user_ids: string[];
+      };
+      expect(revokeBody.key_version).toBe(3);
+      expect(revokeBody.revoked_user_ids).toEqual([guest.userId]);
 
       const guestPostRevoke = await guest.api.get('/api/v1/conversations');
       const guestPostRevokeBody = (await guestPostRevoke.json()) as { id: string }[];
@@ -274,10 +317,23 @@ test.describe('participants + rotation API', () => {
       expect(adminPostRevokeBody.participants).toHaveLength(1);
       expect(adminPostRevokeBody.participants[0].user_id).toBe(admin.userId);
 
-      // 9. Self-revoke is intentionally blocked — would orphan the
-      //    conversation without explicit Admin-transfer.
-      const selfRevoke = await admin.api.delete(
-        `/api/v1/conversations/${conversation.id}/participants/${admin.userId}`,
+      // 9. Self-revoke through the rotate endpoint is intentionally
+      //    blocked — would orphan the conversation without explicit
+      //    Admin-transfer. The handler rejects before any DB mutation.
+      const selfRevoke = await admin.api.post(
+        `/api/v1/conversations/${conversation.id}/rotate`,
+        {
+          data: {
+            revoked_user_ids: [admin.userId],
+            public_key: generateKeyPair().publicKey,
+            wrapped_secret_keys: [
+              {
+                user_id: admin.userId,
+                secret_key: sealFor(adminKeys.publicKey, utf8.encode('x')),
+              },
+            ],
+          },
+        },
       );
       expect(selfRevoke.status()).toBe(400);
     } finally {

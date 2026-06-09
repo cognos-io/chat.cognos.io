@@ -165,22 +165,30 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   writes the participant row + wrapped secret-key row atomically with the conversation's
   current key_version. The repo gained `ActiveRole(conv, user)` so the handler can
   gate on role without leaking PocketBase types.
-- `DELETE /api/v1/conversations/{id}/participants/{userID}` (sharing-revoke primitive)
-  now has integration coverage that pins: Admin soft-revokes another active
-  participant (removed_at stamped; row stays in DB for audit), Editors are denied
-  with 403, the caller is blocked from revoking themselves with a focused 400, a
-  missing target returns 404, and an Admin can revoke a co-Admin when more than
-  one Admin remains. The repo's Revoke method returns `ErrParticipantNotFound` for
-  the no-active-row case so handlers can shape the 404 directly.
+- `DELETE /api/v1/conversations/{id}/participants/{userID}` has been removed —
+  revoking a participant without rotating the conversation key left a
+  forward-secrecy gap (the revoked user retained a valid wrapped secret
+  for the current generation). Revocation is now folded into the rotation
+  endpoint via the optional `revoked_user_ids[]` field. The repo's
+  `Revoke` method survives unchanged and is now driven from inside the
+  rotation transaction.
 - `POST /api/v1/conversations/{id}/rotate` (key-rotation capstone) now has integration
   coverage that pins: Admin rotate succeeds, bumps `conversations.key_version`,
   persists a fresh `conversation_public_keys` row at the new generation, and
-  installs a new `conversation_secret_keys` row for every active participant — all
-  inside a single transaction. Editors are denied with 403 (no DB mutation). Payloads
-  that miss any active participant return 400 (no mutation). Payloads that target a
-  non-participant return 400. After a successful rotate, both v1 (audit) and v2
-  (active) wrapped-key rows exist for each participant, and the read-side
-  current-generation filter picks v2.
+  installs a new `conversation_secret_keys` row for every post-revoke active
+  participant — all inside a single transaction. Editors are denied with 403 (no
+  DB mutation). Payloads that miss any active participant return 400 (no mutation).
+  Payloads that target a non-participant return 400. After a successful rotate,
+  both v1 (audit) and v2 (active) wrapped-key rows exist for each participant,
+  and the read-side current-generation filter picks v2.
+  Revoke+rotate coverage (added when the standalone DELETE was removed):
+  one or more `revoked_user_ids[]` get their `removed_at` stamped atomically with
+  the key bump (audit row intact, no v2 secret_keys row for the revoked user —
+  forward-secrecy preserved); bulk revocation of two users in one call works;
+  caller in `revoked_user_ids` is rejected with 400; a target who is not active
+  is rejected with 404; duplicates and overlap with `wrapped_secret_keys` are
+  rejected with 400; empty / omitted `revoked_user_ids` behaves as a pure
+  rotation (preserves existing behaviour).
 - `setupTestApp` now resets the in-process route-rate-limiter on every call so the
   burst budget doesn't accumulate across the test binary's lifetime — prior to this
   fix the suite would intermittently 429 on whichever test happened to push the
@@ -647,33 +655,32 @@ Snapshot of which first-party routes are pinned and how, recorded after
 the 2026-06 audit. Update this table when adding new endpoints or moving
 gaps to covered.
 
-| Route                                                             | API contract (e2e)                    | UI flow (browser)                                                                               | Rainy day                                       |
-| ----------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| GET `/api/v1/models`                                              | ✅ `models-api.spec.ts`               | ✅ `frontend/e2e/models.spec.ts`                                                                | ✅ auth gate, no provider-routing leak          |
-| GET `/api/v1/billing`                                             | ✅ `billing-api.spec.ts`              | ✗ no frontend caller yet                                                                        | ✅ auth gate, no Rappen leak                    |
-| GET `/api/v1/billing/transactions`                                | ✅ `billing-api.spec.ts`              | ✗ no frontend caller yet                                                                        | ✅ auth gate, per-user isolation                |
-| GET `/api/v1/conversations`                                       | ✅ `conversations-api.spec.ts`        | ✅ `journeys.spec.ts`                                                                           | ✅ auth gate, per-user scope                    |
-| POST `/api/v1/conversations`                                      | ✅ `conversations-api.spec.ts`        | ✅ `journeys.spec.ts`                                                                           | ✅ expiry allow-list                            |
-| PATCH `/api/v1/conversations/{id}`                                | ✅ `conversations-api.spec.ts`        | ✅ via edit dialog (`journeys.spec.ts`)                                                         | ✅ non-participant 404, key_version preserved   |
-| DELETE `/api/v1/conversations/{id}`                               | ✅ `conversations-api.spec.ts`        | ⚠️ deferred — UI dialog flow has Playwright timing quirks; API contract is the load-bearing pin | ✅ non-participant 404                          |
-| GET `/api/v1/conversations/{id}/messages`                         | ✅ `conversations-api.spec.ts`        | ✅ `journeys.spec.ts`, `history.spec.ts`                                                        | ✅ pagination envelope, non-participant 404     |
-| PATCH `/api/v1/messages/{id}`                                     | ✅ `conversations-api.spec.ts`        | ⚠️ deferred — temp-message dialog flow not browser-tested                                       | ✅ non-participant 404                          |
-| DELETE `/api/v1/messages/{id}`                                    | ✅ `conversations-api.spec.ts`        | ⚠️ deferred                                                                                     | ✅ non-participant 404                          |
-| POST `/api/v1/completions`                                        | ✅ `completions-api.spec.ts`          | ✅ via send-message UI (`messages.spec.ts`)                                                     | ✅ missing fields, unknown ids, role validation |
-| POST `/api/v1/conversations/{id}/complete`                        | ✅ `completions-api.spec.ts`          | ✅ `journeys.spec.ts`, `messages.spec.ts`, `billing-restriction.spec.ts`                        | ✅ non-participant 404, 402 billing block       |
-| GET `/api/v1/user-key-pair`                                       | ✅ `user-state-api.spec.ts`           | ✅ `journeys.spec.ts`                                                                           | ✅ pre-create 404                               |
-| POST `/api/v1/user-key-pair`                                      | ✅ `user-state-api.spec.ts`           | ✅ `journeys.spec.ts`                                                                           | ✅ missing fields, cross-user reject            |
-| PATCH `/api/v1/user-key-pair/{id}`                                | ✅ `user-state-api.spec.ts`           | ✅ encrypted-backup creation                                                                    | ✅ cross-user reject, owner-only                |
-| GET/POST/PATCH `/api/v1/conversations/{id}/public-key`            | ✅ `conversation-keys-api.spec.ts`    | ✅ `journeys.spec.ts` (create + signature attach)                                               | ✅ second-POST blocked, non-participant 404     |
-| GET/POST `/api/v1/conversations/{id}/secret-key`                  | ✅ `conversation-keys-api.spec.ts`    | ✅ `journeys.spec.ts`                                                                           | ✅ empty-key 400, non-participant 404           |
-| GET/POST/PATCH `/api/v1/user-preferences`                         | ✅ `user-state-api.spec.ts`           | ✅ via pinning (`journeys.spec.ts`)                                                             | ✅ empty-data 400, cross-user reject            |
-| GET/PUT/DELETE `/api/v1/vault-session`                            | ✅ `user-state-api.spec.ts`           | ✅ via unlock/lock flows (`auth.spec.ts`)                                                       | ✅ wrap_key length, per-user isolation          |
-| GET `/api/v1/conversations/{id}/participants`                     | ✅ `participants-api.spec.ts`         | ✗ no UI surface yet                                                                             | ✅ auth + role gates                            |
-| POST `/api/v1/conversations/{id}/participants`                    | ✅ `participants-api.spec.ts`         | ✗ no UI surface yet                                                                             | ✅ Editor 403, validation 400                   |
-| DELETE `/api/v1/conversations/{id}/participants/{userID}`         | ✅ `participants-api.spec.ts`         | ✗ no UI surface yet                                                                             | ✅ self-revoke 400, last-Admin guard            |
-| POST `/api/v1/conversations/{id}/rotate`                          | ✅ `participants-api.spec.ts`         | ✗ no UI surface yet                                                                             | ✅ Editor 403, missing-participant 400          |
-| **POST `/v1/auth/logout`**                                        | **✅ `logout-api.spec.ts` (2026-06)** | ⚠️ implicit via UI logout helpers                                                               | ✅ token rotation + vault-session delete        |
-| `/api/collections/users/auth-with-password` etc. (PocketBase SDK) | ✗ no explicit contract test           | ✅ via UI register/login (`auth.spec.ts`)                                                       | partial                                         |
+| Route                                                             | API contract (e2e)                    | UI flow (browser)                                                                               | Rainy day                                                                     |
+| ----------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| GET `/api/v1/models`                                              | ✅ `models-api.spec.ts`               | ✅ `frontend/e2e/models.spec.ts`                                                                | ✅ auth gate, no provider-routing leak                                        |
+| GET `/api/v1/billing`                                             | ✅ `billing-api.spec.ts`              | ✗ no frontend caller yet                                                                        | ✅ auth gate, no Rappen leak                                                  |
+| GET `/api/v1/billing/transactions`                                | ✅ `billing-api.spec.ts`              | ✗ no frontend caller yet                                                                        | ✅ auth gate, per-user isolation                                              |
+| GET `/api/v1/conversations`                                       | ✅ `conversations-api.spec.ts`        | ✅ `journeys.spec.ts`                                                                           | ✅ auth gate, per-user scope                                                  |
+| POST `/api/v1/conversations`                                      | ✅ `conversations-api.spec.ts`        | ✅ `journeys.spec.ts`                                                                           | ✅ expiry allow-list                                                          |
+| PATCH `/api/v1/conversations/{id}`                                | ✅ `conversations-api.spec.ts`        | ✅ via edit dialog (`journeys.spec.ts`)                                                         | ✅ non-participant 404, key_version preserved                                 |
+| DELETE `/api/v1/conversations/{id}`                               | ✅ `conversations-api.spec.ts`        | ⚠️ deferred — UI dialog flow has Playwright timing quirks; API contract is the load-bearing pin | ✅ non-participant 404                                                        |
+| GET `/api/v1/conversations/{id}/messages`                         | ✅ `conversations-api.spec.ts`        | ✅ `journeys.spec.ts`, `history.spec.ts`                                                        | ✅ pagination envelope, non-participant 404                                   |
+| PATCH `/api/v1/messages/{id}`                                     | ✅ `conversations-api.spec.ts`        | ⚠️ deferred — temp-message dialog flow not browser-tested                                       | ✅ non-participant 404                                                        |
+| DELETE `/api/v1/messages/{id}`                                    | ✅ `conversations-api.spec.ts`        | ⚠️ deferred                                                                                     | ✅ non-participant 404                                                        |
+| POST `/api/v1/completions`                                        | ✅ `completions-api.spec.ts`          | ✅ via send-message UI (`messages.spec.ts`)                                                     | ✅ missing fields, unknown ids, role validation                               |
+| POST `/api/v1/conversations/{id}/complete`                        | ✅ `completions-api.spec.ts`          | ✅ `journeys.spec.ts`, `messages.spec.ts`, `billing-restriction.spec.ts`                        | ✅ non-participant 404, 402 billing block                                     |
+| GET `/api/v1/user-key-pair`                                       | ✅ `user-state-api.spec.ts`           | ✅ `journeys.spec.ts`                                                                           | ✅ pre-create 404                                                             |
+| POST `/api/v1/user-key-pair`                                      | ✅ `user-state-api.spec.ts`           | ✅ `journeys.spec.ts`                                                                           | ✅ missing fields, cross-user reject                                          |
+| PATCH `/api/v1/user-key-pair/{id}`                                | ✅ `user-state-api.spec.ts`           | ✅ encrypted-backup creation                                                                    | ✅ cross-user reject, owner-only                                              |
+| GET/POST/PATCH `/api/v1/conversations/{id}/public-key`            | ✅ `conversation-keys-api.spec.ts`    | ✅ `journeys.spec.ts` (create + signature attach)                                               | ✅ second-POST blocked, non-participant 404                                   |
+| GET/POST `/api/v1/conversations/{id}/secret-key`                  | ✅ `conversation-keys-api.spec.ts`    | ✅ `journeys.spec.ts`                                                                           | ✅ empty-key 400, non-participant 404                                         |
+| GET/POST/PATCH `/api/v1/user-preferences`                         | ✅ `user-state-api.spec.ts`           | ✅ via pinning (`journeys.spec.ts`)                                                             | ✅ empty-data 400, cross-user reject                                          |
+| GET/PUT/DELETE `/api/v1/vault-session`                            | ✅ `user-state-api.spec.ts`           | ✅ via unlock/lock flows (`auth.spec.ts`)                                                       | ✅ wrap_key length, per-user isolation                                        |
+| GET `/api/v1/conversations/{id}/participants`                     | ✅ `participants-api.spec.ts`         | ✗ no UI surface yet                                                                             | ✅ auth + role gates                                                          |
+| POST `/api/v1/conversations/{id}/participants`                    | ✅ `participants-api.spec.ts`         | ✗ no UI surface yet                                                                             | ✅ Editor 403, validation 400                                                 |
+| POST `/api/v1/conversations/{id}/rotate`                          | ✅ `participants-api.spec.ts`         | ✗ no UI surface yet                                                                             | ✅ Editor 403, self-revoke 400, missing-participant 400, revoke+rotate atomic |
+| **POST `/v1/auth/logout`**                                        | **✅ `logout-api.spec.ts` (2026-06)** | ⚠️ implicit via UI logout helpers                                                               | ✅ token rotation + vault-session delete                                      |
+| `/api/collections/users/auth-with-password` etc. (PocketBase SDK) | ✗ no explicit contract test           | ✅ via UI register/login (`auth.spec.ts`)                                                       | partial                                                                       |
 
 ### Known gaps (deferred, not blocking the branch)
 
