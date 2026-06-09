@@ -175,6 +175,26 @@ interface ApiConversationSecretKeyCreateRequest {
   secret_key: string;
 }
 
+interface ApiRotateConversationKeyEntry {
+  user_id: string;
+  secret_key: string;
+}
+
+export interface ApiRotateConversationKeyRequest {
+  /** User ids to soft-remove inside the same transaction as the rotation. */
+  revoked_user_ids?: string[];
+  public_key: string;
+  public_key_signature?: string;
+  /** One wrapped secret per post-revoke active participant. */
+  wrapped_secret_keys: ApiRotateConversationKeyEntry[];
+}
+
+export interface ApiRotateConversationKeyResponse {
+  conversation_id: string;
+  key_version: number;
+  revoked_user_ids: string[];
+}
+
 interface ApiVaultSessionResponse {
   wrap_key: string;
 }
@@ -447,6 +467,27 @@ export class CognosApiService {
   ): Observable<ConversationSecretKeysResponse> {
     return this._http.post<ConversationSecretKeysResponse>(
       `${this._baseUrl}/api/v1/conversations/${conversationId}/secret-key`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  /**
+   * Rotate the conversation key, optionally revoking participants in the
+   * same transaction. `revoked_user_ids` may be omitted for a pure rotation
+   * (credential refresh, no membership change); when populated, the named
+   * users are soft-removed before the new wrapped secret keys are
+   * installed. The wrapped_secret_keys list must cover exactly the
+   * post-revoke active set.
+   */
+  rotateConversationKey(
+    conversationId: string,
+    request: ApiRotateConversationKeyRequest,
+  ): Observable<ApiRotateConversationKeyResponse> {
+    return this._http.post<ApiRotateConversationKeyResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/rotate`,
       request,
       {
         headers: this.authHeaders(),
