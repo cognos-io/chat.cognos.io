@@ -21,11 +21,11 @@ Guards:
 
 ```mermaid
 flowchart LR
-  A[Admin DELETE .../participants/{u}] --> B{caller=Admin?}
+  A["Admin DELETE .../participants/{u}"] --> B{"caller = Admin?"}
   B -- no --> C[403]
-  B -- yes --> D{target = caller?}
+  B -- yes --> D{"target = caller?"}
   D -- yes --> E[400 cannot revoke self]
-  D -- no --> F[UPDATE participants<br/>SET removed_at = now]
+  D -- no --> F["UPDATE participants<br/>SET removed_at = now()"]
   F --> G[204]
 ```
 
