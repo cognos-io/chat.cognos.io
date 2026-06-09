@@ -206,19 +206,24 @@ export class MessageListItemComponent {
   }
 
   userMeta() {
-    if (!this.message) {
-      return 'Encrypted';
-    }
+    const time = this.formatTimestamp(this.message?.createdAt);
 
-    return `Encrypted · ${new DatePipe('en-GB').transform(this.message.createdAt, 'short') ?? ''}`;
+    return time ? `Encrypted · ${time}` : 'Encrypted';
   }
 
   messageTime() {
-    if (!this.message) {
+    return this.formatTimestamp(this.message?.createdAt);
+  }
+
+  // formatTimestamp guards against invalid dates: DatePipe.transform throws on
+  // an Invalid Date, and an uncaught throw here aborts the whole change
+  // detection pass — blanking sibling components such as the message composer.
+  private formatTimestamp(date?: Date): string {
+    if (!date || Number.isNaN(date.getTime())) {
       return '';
     }
 
-    return new DatePipe('en-GB').transform(this.message.createdAt, 'short') ?? '';
+    return new DatePipe('en-GB').transform(date, 'short') ?? '';
   }
 
   onDeleteMessage(message: Message) {
