@@ -579,7 +579,9 @@ export class MessageService {
 
     return {
       record_id: record.id,
-      createdAt: parseBackendDate(record.created),
+      // createdAt lives inside the encrypted blob (decryptedData), not a
+      // plaintext record column — see MessageRecordData on the backend.
+      createdAt: parseBackendDate(decryptedData.created_at),
       expires: record.expires ? parseBackendDate(record.expires) : undefined,
       parentMessageId: record.parent_message,
       decryptedData,

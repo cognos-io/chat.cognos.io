@@ -58,6 +58,22 @@ describe('parseMessageData', () => {
     expect(() => parseMessageData(payload)).toThrow();
   });
 
+  it('parses the encrypted created_at timestamp', () => {
+    const payload = encode(
+      JSON.stringify({ content: 'reply', created_at: '2026-06-09T22:36:04Z' }),
+    );
+    const parsed = parseMessageData(payload);
+
+    expect(parsed.created_at).toBe('2026-06-09T22:36:04Z');
+  });
+
+  it('treats a message without created_at as valid (legacy records)', () => {
+    const payload = encode(JSON.stringify({ content: 'legacy message' }));
+    const parsed = parseMessageData(payload);
+
+    expect(parsed.created_at).toBeUndefined();
+  });
+
   it('rejects payloads with an unknown version', () => {
     const payload = encode(JSON.stringify({ content: 'x', version: '99' }));
     expect(() => parseMessageData(payload)).toThrow();

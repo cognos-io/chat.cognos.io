@@ -15,6 +15,10 @@ export const MessageData = z.object({
   content: z.string().nullable(), // the message content
   conversation_id: z.string().optional(),
   parent_message_id: z.string().optional(),
+  // RFC 3339 timestamp set by the backend inside the encrypted blob, so no
+  // message-timing metadata is stored in a plaintext column. Optional because
+  // messages created before this field existed won't carry it.
+  created_at: z.string().optional(),
   agent_id: z.string().optional(), // the agent used when generating the message
   model_id: z.string().optional(), // the model used when generating the message
   owner_id: z.string().optional(), // the user who sent the message
