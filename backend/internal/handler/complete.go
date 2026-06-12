@@ -257,8 +257,9 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 				conversation,
 				req.ParentMessageID,
 				chat.MessageRecordData{
-					OwnerID: owner.ID,
-					Content: lastMessage.Content,
+					OwnerID:   owner.ID,
+					Content:   lastMessage.Content,
+					CreatedAt: time.Now().UTC().Format(time.RFC3339),
 				},
 			)
 			if err != nil {
@@ -289,15 +290,18 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			return apis.NewApiError(http.StatusServiceUnavailable, "Failed to process completion", nil)
 		}
 
+		assistantCreatedAt := time.Now().UTC().Format(time.RFC3339)
+
 		var assistantMessageRecord *core.Record
 		if shouldPersist {
 			err, assistantMessageRecord = params.MessageRepo.EncryptAndPersistMessage(
 				conversation,
 				userMessageRecord.Id,
 				chat.MessageRecordData{
-					Content: gatewayResp.Message.Content,
-					AgentID: req.AgentID,
-					ModelID: model.ID,
+					Content:   gatewayResp.Message.Content,
+					AgentID:   req.AgentID,
+					ModelID:   model.ID,
+					CreatedAt: assistantCreatedAt,
 				},
 			)
 			if err != nil {
@@ -361,7 +365,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 				Content:   gatewayResp.Message.Content,
 				AgentID:   req.AgentID,
 				ModelID:   model.ID,
-				CreatedAt: time.Now().UTC().Format(time.RFC3339),
+				CreatedAt: assistantCreatedAt,
 			},
 			Usage: usageResponse{
 				InputTokens:              gatewayResp.Usage.InputTokens,

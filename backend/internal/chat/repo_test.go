@@ -23,6 +23,7 @@ func TestEncryptMessageDataRoundTrip(t *testing.T) {
 		Content:         "hello world",
 		ConversationID:  "conv-123",
 		ParentMessageID: "parent-456",
+		CreatedAt:       "2026-06-09T22:36:04Z",
 		OwnerID:         "user-789",
 		AgentID:         "cognos:simple-assistant",
 		ModelID:         "llama-3-3-infomaniak",
@@ -104,7 +105,7 @@ func TestEncryptMessageDataOmitsEmptyFields(t *testing.T) {
 		t.Fatal("box.OpenAnonymous(...) ok = false, want true")
 	}
 
-	for _, field := range []string{"version", "conversation_id", "parent_message_id", "owner_id", "agent_id", "model_id"} {
+	for _, field := range []string{"version", "conversation_id", "parent_message_id", "created_at", "owner_id", "agent_id", "model_id"} {
 		if strings.Contains(string(plaintext), `"`+field+`"`) {
 			t.Errorf("encrypted plaintext unexpectedly contained omitempty field %q: %s", field, plaintext)
 		}

@@ -7,6 +7,10 @@ type MessageRecordData struct {
 	Content         string `json:"content"`
 	ConversationID  string `json:"conversation_id,omitempty"`
 	ParentMessageID string `json:"parent_message_id,omitempty"`
+	// CreatedAt is an RFC 3339 timestamp of when the message was created.
+	// It lives inside the encrypted blob rather than a plaintext record
+	// column so the server persists no message-timing metadata at rest.
+	CreatedAt string `json:"created_at,omitempty"`
 	// Identifier fields for who has written the message
 	// At least one of these fields should be set
 	OwnerID string `json:"owner_id,omitempty"`
