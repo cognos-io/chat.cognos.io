@@ -116,6 +116,13 @@ test.describe('non-persisted /completions API', () => {
       const body = (await res.json()) as CompleteResponse;
 
       expect(body.assistant_message.content).toBeTruthy();
+      // created_at must be RFC 3339 (ISO-8601 with a "T") so the frontend can
+      // parse it in any browser. The persisted copy is encrypted inside the
+      // message blob; this is the value the UI renders optimistically.
+      expect(body.assistant_message.created_at).toMatch(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
+      );
+      expect(Number.isNaN(Date.parse(body.assistant_message.created_at))).toBe(false);
       expect(body.usage).toBeTruthy();
       expect(typeof body.usage.input_tokens).toBe('number');
       expect(typeof body.usage.output_tokens).toBe('number');
