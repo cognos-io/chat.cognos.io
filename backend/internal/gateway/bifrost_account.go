@@ -175,7 +175,7 @@ func infomaniakBaseURL(cfg *config.APIConfig) (string, error) {
 	if strings.TrimSpace(cfg.InfomaniakProductID) == "" {
 		return "", fmt.Errorf("infomaniak.product_id is required when infomaniak.api_key is set")
 	}
-	return fmt.Sprintf("https://api.infomaniak.com/2/ai/%s/openai/v1", strings.TrimSpace(cfg.InfomaniakProductID)), nil
+	return fmt.Sprintf("https://api.infomaniak.com/2/ai/%s/openai", strings.TrimSpace(cfg.InfomaniakProductID)), nil
 }
 
 func cloneKeys(keys []schemas.Key) []schemas.Key {
