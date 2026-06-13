@@ -1,46 +1,101 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"testing"
 
-	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
+	"github.com/maximhq/bifrost/core/schemas"
 )
 
-type staticUpstreamRepo struct {
-	err            error
-	noRetentionErr error
+type staticCatalogueService struct {
+	model catalogue.Model
+	err   error
 }
 
-func (r staticUpstreamRepo) Provider(_ string) (proxy.Upstream, error) {
-	if r.err != nil {
-		return nil, r.err
+func (s staticCatalogueService) ActiveModels(context.Context) ([]catalogue.Model, error) {
+	if s.err != nil {
+		return nil, s.err
 	}
-	return stubUpstream{noRetentionErr: r.noRetentionErr}, nil
+	if s.model.ID == "" {
+		s.model = catalogue.Model{ID: "llama-3-3-infomaniak", ProviderID: "infomaniak", NoRetention: true, IsActive: true}
+	}
+	return []catalogue.Model{s.model}, nil
 }
 
-func TestEnsureActiveProvidersAvailable(t *testing.T) {
+func (s staticCatalogueService) GetModelByID(context.Context, string) (catalogue.Model, bool, error) {
+	return catalogue.Model{}, false, nil
+}
+
+func (s staticCatalogueService) Invalidate() {}
+
+type staticAccount struct {
+	configErr error
+	keysErr   error
+	config    *schemas.ProviderConfig
+	keys      []schemas.Key
+}
+
+func (a staticAccount) GetConfiguredProviders() ([]schemas.ModelProvider, error) {
+	return nil, nil
+}
+
+func (a staticAccount) GetConfigForProvider(schemas.ModelProvider) (*schemas.ProviderConfig, error) {
+	if a.configErr != nil {
+		return nil, a.configErr
+	}
+	if a.config != nil {
+		return a.config, nil
+	}
+	return &schemas.ProviderConfig{OpenAIConfig: &schemas.OpenAIConfig{DisableStore: true}}, nil
+}
+
+func (a staticAccount) GetKeysForProvider(context.Context, schemas.ModelProvider) ([]schemas.Key, error) {
+	if a.keysErr != nil {
+		return nil, a.keysErr
+	}
+	if a.keys != nil {
+		return a.keys, nil
+	}
+	return []schemas.Key{{ID: "test-key"}}, nil
+}
+
+func TestEnsureActiveProvidersConfigured(t *testing.T) {
 	t.Parallel()
 
-	if err := ensureActiveProvidersAvailable(staticUpstreamRepo{}); err != nil {
-		t.Fatalf("ensureActiveProvidersAvailable() error = %v, want nil", err)
+	if err := ensureActiveProvidersConfigured(context.Background(), staticCatalogueService{}, staticAccount{}); err != nil {
+		t.Fatalf("ensureActiveProvidersConfigured() error = %v, want nil", err)
 	}
 }
 
-func TestEnsureActiveProvidersAvailableReturnsProviderError(t *testing.T) {
+func TestEnsureActiveProvidersConfiguredReturnsProviderError(t *testing.T) {
 	t.Parallel()
 
 	wantErr := errors.New("provider unavailable")
-	if err := ensureActiveProvidersAvailable(staticUpstreamRepo{err: wantErr}); !errors.Is(err, wantErr) {
-		t.Fatalf("ensureActiveProvidersAvailable() error = %v, want wrapped %v", err, wantErr)
+	if err := ensureActiveProvidersConfigured(context.Background(), staticCatalogueService{}, staticAccount{configErr: wantErr}); !errors.Is(err, wantErr) {
+		t.Fatalf("ensureActiveProvidersConfigured() error = %v, want wrapped %v", err, wantErr)
 	}
 }
 
-func TestEnsureActiveProvidersAvailableReturnsNoRetentionError(t *testing.T) {
+func TestEnsureActiveProvidersConfiguredReturnsMissingKeysError(t *testing.T) {
 	t.Parallel()
 
-	wantErr := errors.New("no retention unsupported")
-	if err := ensureActiveProvidersAvailable(staticUpstreamRepo{noRetentionErr: wantErr}); !errors.Is(err, wantErr) {
-		t.Fatalf("ensureActiveProvidersAvailable() error = %v, want wrapped %v", err, wantErr)
+	wantErr := errors.New("missing keys")
+	if err := ensureActiveProvidersConfigured(context.Background(), staticCatalogueService{}, staticAccount{keysErr: wantErr}); !errors.Is(err, wantErr) {
+		t.Fatalf("ensureActiveProvidersConfigured() error = %v, want wrapped %v", err, wantErr)
+	}
+}
+
+func TestEnsureActiveProvidersConfiguredRejectsOpenAIStorageForNoRetentionModels(t *testing.T) {
+	t.Parallel()
+
+	err := ensureActiveProvidersConfigured(
+		context.Background(),
+		staticCatalogueService{},
+		staticAccount{config: &schemas.ProviderConfig{OpenAIConfig: &schemas.OpenAIConfig{DisableStore: false}}},
+	)
+	if err == nil {
+		t.Fatal("ensureActiveProvidersConfigured() error = nil, want non-nil")
 	}
 }

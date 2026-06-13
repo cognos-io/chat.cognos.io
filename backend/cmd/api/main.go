@@ -23,11 +23,11 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	"github.com/google/generative-ai-go/genai"
 	"github.com/liushuangls/go-anthropic/v2"
+	bifrostschemas "github.com/maximhq/bifrost/core/schemas"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 	oai "github.com/sashabaranov/go-openai"
-	"google.golang.org/api/option"
 
 	_ "github.com/cognos-io/chat.cognos.io/backend/db/migrations" // import migration files
 )
@@ -55,6 +55,7 @@ type appHookParams struct {
 	FXRateProvider          billing.FXRateProvider
 	UsageEmitter            analytics.Emitter
 	CompleteBillingGate     handler.CompleteBillingGateFunc
+	CatalogueService        catalogue.Service
 }
 
 func NewServer(
@@ -80,35 +81,33 @@ func bindAppHooks(
 	hooks.ConfigureRateLimits(params.App)
 
 	var (
-		app                    = params.App
-		openaiClient           = params.OpenaiClient
-		infomaniakOpenAIClient = params.InfomaniakOpenAIClient
-		cloudflareOpenAIClient = params.CloudflareOpenAIClient
-		googleGeminiClient     = params.GoogleGeminiClient
-		anthropicClient        = params.AnthropicClient
-		deepinfraClient        = params.DeepinfraOpenAIClient
+		app            = params.App
+		managedGateway gateway.Client
 	)
 
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
-		upstreamRepo := params.UpstreamRepo
-		if upstreamRepo == nil {
-			if infomaniakOpenAIClient == nil {
-				infomaniakOpenAIClient = proxy.NewInfomaniakOpenAIClient(params.Config)
-			}
-
-			upstreamRepo = proxy.NewInMemoryUpstreamRepo(proxy.RepoParams{
-				Logger:                 app.Logger(),
-				OpenAIClient:           openaiClient,
-				InfomaniakOpenAIClient: infomaniakOpenAIClient,
-				CloudflareOpenAIClient: cloudflareOpenAIClient,
-				GoogleGeminiAIClient:   googleGeminiClient,
-				AnthropicClient:        anthropicClient,
-				DeepInfraOpenAIClient:  deepinfraClient,
-			})
+		catalogueService := params.CatalogueService
+		if catalogueService == nil {
+			catalogueService = catalogue.NewCachedService(
+				catalogue.NewPocketBaseRepo(app),
+				catalogue.DefaultCacheTTL,
+				nil,
+			)
 		}
 
-		if err := ensureActiveProvidersAvailable(upstreamRepo); err != nil {
-			return err
+		if params.GatewayClient == nil && managedGateway == nil {
+			account, err := gateway.NewStaticAccountFromAPIConfig(params.Config)
+			if err != nil {
+				return err
+			}
+			if err := ensureActiveProvidersConfigured(context.Background(), catalogueService, account); err != nil {
+				return err
+			}
+			managedGateway, err = gateway.NewConfiguredBifrostClient(account)
+			if err != nil {
+				return err
+			}
+			catalogueService.Invalidate()
 		}
 
 		keyPairRepo := params.KeyPairRepo
@@ -165,7 +164,7 @@ func bindAppHooks(
 
 		gatewayClient := params.GatewayClient
 		if gatewayClient == nil {
-			gatewayClient = gateway.NewLegacyClient(upstreamRepo)
+			gatewayClient = managedGateway
 		}
 
 		usageEmitter := params.UsageEmitter
@@ -187,6 +186,7 @@ func bindAppHooks(
 			e,
 			app,
 			app.Logger(),
+			catalogueService,
 			gatewayClient,
 			messageRepo,
 			aiAgentRepo,
@@ -257,48 +257,71 @@ func bindAppHooks(
 		return e.Next()
 	})
 
-	if params.CronScheduler != nil {
-		app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
+	app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
+		if managedGateway != nil {
+			if shutdowner, ok := managedGateway.(interface{ Shutdown() }); ok {
+				shutdowner.Shutdown()
+			}
+		}
+		if params.CronScheduler != nil {
 			if err := params.CronScheduler.Shutdown(); err != nil {
 				return err
 			}
-			return e.Next()
-		})
-	}
+		}
+		return e.Next()
+	})
 }
 
-func ensureActiveProvidersAvailable(upstreamRepo proxy.UpstreamRepo) error {
-	providers := map[string]proxy.Upstream{}
+func ensureActiveProvidersConfigured(
+	ctx context.Context,
+	catalogueService catalogue.Service,
+	account bifrostschemas.Account,
+) error {
+	if account == nil || catalogueService == nil {
+		return nil
+	}
 
-	for _, model := range catalogue.ActiveModels() {
-		upstream, ok := providers[model.ProviderID]
-		if !ok {
-			var err error
-			upstream, err = upstreamRepo.Provider(model.ProviderID)
-			if err != nil {
-				return fmt.Errorf(
-					"provider %q is unavailable for model %q: %w",
-					model.ProviderID,
-					model.ID,
-					err,
-				)
-			}
-			providers[model.ProviderID] = upstream
+	models, err := catalogueService.ActiveModels(ctx)
+	if err != nil {
+		return err
+	}
+
+	validatedProviders := map[string]struct{}{}
+	for _, model := range models {
+		if _, ok := validatedProviders[model.ProviderID]; ok {
+			continue
 		}
 
-		if model.RequiresNoRetention {
-			if err := upstream.EnsureNoRetention(); err != nil {
-				return fmt.Errorf(
-					"provider %q does not satisfy no-retention for model %q: %w",
-					model.ProviderID,
-					model.ID,
-					err,
-				)
-			}
+		providerKey := bifrostschemas.ModelProvider(model.ProviderID)
+		providerConfig, err := account.GetConfigForProvider(providerKey)
+		if err != nil {
+			return fmt.Errorf("provider %q is unavailable for model %q: %w", model.ProviderID, model.ID, err)
 		}
+		keys, err := account.GetKeysForProvider(ctx, providerKey)
+		if err != nil {
+			return fmt.Errorf("provider %q has no configured keys for model %q: %w", model.ProviderID, model.ID, err)
+		}
+		if len(keys) == 0 && (providerConfig.CustomProviderConfig == nil || !providerConfig.CustomProviderConfig.IsKeyLess) {
+			return fmt.Errorf("provider %q has no configured keys for model %q", model.ProviderID, model.ID)
+		}
+		if model.NoRetention && providerUsesOpenAIStore(providerConfig) {
+			return fmt.Errorf("provider %q is not configured to disable provider-side storage for model %q", model.ProviderID, model.ID)
+		}
+
+		validatedProviders[model.ProviderID] = struct{}{}
 	}
 
 	return nil
+}
+
+func providerUsesOpenAIStore(providerConfig *bifrostschemas.ProviderConfig) bool {
+	if providerConfig == nil {
+		return false
+	}
+	if providerConfig.OpenAIConfig == nil {
+		return false
+	}
+	return !providerConfig.OpenAIConfig.DisableStore
 }
 
 func run(ctx context.Context, w io.Writer, args []string) error {
@@ -316,46 +339,12 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		return fmt.Errorf("failed to create scheduler: %w", err)
 	}
 
-	openaiClient := oai.NewClient(config.OpenAIAPIKey)
-	cloudflareOpenAIClient := proxy.NewCloudflareOpenAIClient(config)
-
-	var googleGeminiClient *genai.Client
-	if config.GoogleGeminiAPIKey != "" {
-		googleGeminiClient, err = genai.NewClient(
-			ctx,
-			option.WithAPIKey(config.GoogleGeminiAPIKey),
-		)
-		if err != nil {
-			return fmt.Errorf("failed to create Google Gemini client: %w", err)
-		}
-	} else {
-		logger.Warn(
-			"Google Gemini API key not set, Gemini models will be unavailable",
-		)
-	}
-	anthropicClient := anthropic.NewClient(
-		config.AnthropicAPIKey,
-		anthropic.WithBaseURL(config.AnthropicAPIURL),
-	)
-	infomaniakClient := proxy.NewInfomaniakOpenAIClient(config)
-	deepinfraClient := proxy.NewDeepInfraOpenAIClient(config)
-
-	app := NewServer(
-		logger,
-		config,
-		openaiClient,
-	)
+	app := NewServer(logger, config, nil)
 
 	bindAppHooks(appHookParams{
-		App:                    app,
-		Config:                 config,
-		OpenaiClient:           openaiClient,
-		InfomaniakOpenAIClient: infomaniakClient,
-		CloudflareOpenAIClient: cloudflareOpenAIClient,
-		AnthropicClient:        anthropicClient,
-		GoogleGeminiClient:     googleGeminiClient,
-		DeepinfraOpenAIClient:  deepinfraClient,
-		CronScheduler:          scheduler,
+		App:           app,
+		Config:        config,
+		CronScheduler: scheduler,
 	})
 
 	scheduler.Start()
