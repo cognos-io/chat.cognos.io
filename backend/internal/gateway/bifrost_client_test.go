@@ -1,7 +1,10 @@
 package gateway
 
 import (
+	"bytes"
 	"context"
+	"log/slog"
+	"strings"
 	"testing"
 
 	"github.com/maximhq/bifrost/core/schemas"
@@ -53,7 +56,7 @@ func TestBifrostClientCompleteMapsRequestAndResponse(t *testing.T) {
 		},
 	}
 	shutdowner := &stubBifrostShutdowner{}
-	client := NewBifrostClient(requester, shutdowner, nil)
+	client := NewBifrostClient(requester, shutdowner, nil, nil)
 
 	got, err := client.Complete(context.Background(), CompleteRequest{
 		ProviderID:      "infomaniak",
@@ -126,7 +129,7 @@ func TestBifrostClientCompleteFlattensTextBlocks(t *testing.T) {
 		},
 	}
 
-	client := NewBifrostClient(requester, nil, nil)
+	client := NewBifrostClient(requester, nil, nil, nil)
 	got, err := client.Complete(context.Background(), CompleteRequest{ProviderID: "infomaniak", ProviderModelID: "model"})
 	if err != nil {
 		t.Fatalf("Complete() error = %v, want nil", err)
@@ -142,11 +145,55 @@ func TestBifrostClientCompletePropagatesBifrostError(t *testing.T) {
 	requester := &stubBifrostRequester{
 		err: &schemas.BifrostError{Error: &schemas.ErrorField{Message: "provider unavailable"}},
 	}
-	client := NewBifrostClient(requester, nil, nil)
+	client := NewBifrostClient(requester, nil, nil, nil)
 
 	_, err := client.Complete(context.Background(), CompleteRequest{ProviderID: "infomaniak", ProviderModelID: "model"})
 	if err == nil || err.Error() != "bifrost request failed: provider unavailable" {
 		t.Fatalf("Complete() error = %v, want provider unavailable", err)
+	}
+}
+
+func TestBifrostClientCompleteLogsStructuredErrorFields(t *testing.T) {
+	t.Parallel()
+
+	var logBuf bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&logBuf, nil))
+	statusCode := 404
+	errorType := "provider_error"
+	errorCode := "not_found"
+	requester := &stubBifrostRequester{
+		err: &schemas.BifrostError{
+			StatusCode: &statusCode,
+			Error: &schemas.ErrorField{
+				Type:    &errorType,
+				Code:    &errorCode,
+				Message: "provider API error: {\"error\":\"not found\"}",
+			},
+			ExtraFields: schemas.BifrostErrorExtraFields{
+				OriginalModelRequested: "google/gemma-4-31B-it",
+				ResolvedModelUsed:      "google/gemma-4-31B-it",
+			},
+		},
+	}
+	client := NewBifrostClient(requester, nil, nil, logger)
+
+	_, err := client.Complete(context.Background(), CompleteRequest{ProviderID: "infomaniak", ProviderModelID: "google/gemma-4-31B-it"})
+	if err == nil {
+		t.Fatal("Complete() error = nil, want non-nil")
+	}
+
+	for _, want := range []string{
+		"\"msg\":\"bifrost request failed\"",
+		"\"provider\":\"infomaniak\"",
+		"\"model\":\"google/gemma-4-31B-it\"",
+		"\"status_code\":404",
+		"\"error_type\":\"provider_error\"",
+		"\"error_code\":\"not_found\"",
+		"\"resolved_model_used\":\"google/gemma-4-31B-it\"",
+	} {
+		if !strings.Contains(logBuf.String(), want) {
+			t.Fatalf("log output = %s, want substring %s", logBuf.String(), want)
+		}
 	}
 }
 
@@ -163,7 +210,7 @@ func TestBifrostClientCompleteRejectsMissingConfig(t *testing.T) {
 func TestBifrostClientCompleteRejectsMissingProviderOrModel(t *testing.T) {
 	t.Parallel()
 
-	client := NewBifrostClient(&stubBifrostRequester{}, nil, nil)
+	client := NewBifrostClient(&stubBifrostRequester{}, nil, nil, nil)
 
 	cases := []CompleteRequest{{ProviderModelID: "model"}, {ProviderID: "infomaniak"}}
 	for _, req := range cases {
@@ -177,9 +224,20 @@ func TestBifrostClientCompleteRejectsMissingProviderOrModel(t *testing.T) {
 func TestNewConfiguredBifrostClientRequiresAccount(t *testing.T) {
 	t.Parallel()
 
-	_, err := NewConfiguredBifrostClient(nil)
+	_, err := NewConfiguredBifrostClient(nil, "", nil)
 	if err == nil {
 		t.Fatal("NewConfiguredBifrostClient(nil) error = nil, want non-nil")
+	}
+}
+
+func TestParseBifrostLogLevelDefaultsToError(t *testing.T) {
+	t.Parallel()
+
+	if got := parseBifrostLogLevel("unknown"); got != schemas.LogLevelError {
+		t.Fatalf("parseBifrostLogLevel(unknown) = %q, want %q", got, schemas.LogLevelError)
+	}
+	if got := parseBifrostLogLevel("debug"); got != schemas.LogLevelDebug {
+		t.Fatalf("parseBifrostLogLevel(debug) = %q, want %q", got, schemas.LogLevelDebug)
 	}
 }
 

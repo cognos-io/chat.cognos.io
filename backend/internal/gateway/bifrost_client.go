@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	bifrost "github.com/maximhq/bifrost/core"
@@ -21,17 +22,24 @@ type BifrostClient struct {
 	requester bifrostRequester
 	shutdown  bifrostShutdowner
 	account   schemas.Account
+	logger    *slog.Logger
 }
 
-func NewBifrostClient(requester bifrostRequester, shutdown bifrostShutdowner, account schemas.Account) *BifrostClient {
+func NewBifrostClient(
+	requester bifrostRequester,
+	shutdown bifrostShutdowner,
+	account schemas.Account,
+	logger *slog.Logger,
+) *BifrostClient {
 	return &BifrostClient{
 		requester: requester,
 		shutdown:  shutdown,
 		account:   account,
+		logger:    logger,
 	}
 }
 
-func NewConfiguredBifrostClient(account schemas.Account) (*BifrostClient, error) {
+func NewConfiguredBifrostClient(account schemas.Account, logLevel string, logger *slog.Logger) (*BifrostClient, error) {
 	if account == nil {
 		return nil, fmt.Errorf("bifrost account is required")
 	}
@@ -39,13 +47,13 @@ func NewConfiguredBifrostClient(account schemas.Account) (*BifrostClient, error)
 	runtime, err := bifrost.Init(context.Background(), schemas.BifrostConfig{
 		Account:         account,
 		InitialPoolSize: schemas.DefaultInitialPoolSize,
-		Logger:          bifrost.NewDefaultLogger(schemas.LogLevelError),
+		Logger:          bifrost.NewDefaultLogger(parseBifrostLogLevel(logLevel)),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return NewBifrostClient(runtime, runtime, account), nil
+	return NewBifrostClient(runtime, runtime, account, logger), nil
 }
 
 func (c *BifrostClient) Shutdown() {
@@ -98,6 +106,7 @@ func (c *BifrostClient) Complete(ctx context.Context, req CompleteRequest) (Comp
 	bifrostCtx := schemas.NewBifrostContext(ctx, schemas.NoDeadline)
 	resp, bifrostErr := c.requester.ChatCompletionRequest(bifrostCtx, chatReq)
 	if bifrostErr != nil {
+		c.logBifrostError(req, bifrostErr)
 		return CompleteResponse{}, fmt.Errorf("bifrost request failed: %s", bifrostErr.GetErrorString())
 	}
 	if resp == nil {
@@ -173,6 +182,75 @@ func cachedWriteTokens(usage *schemas.BifrostLLMUsage) int {
 			usage.PromptTokensDetails.CachedWriteTokenDetails.CachedWriteTokens1h
 	}
 	return usage.PromptTokensDetails.CachedWriteTokens
+}
+
+func (c *BifrostClient) logBifrostError(req CompleteRequest, bifrostErr *schemas.BifrostError) {
+	if c == nil || c.logger == nil || bifrostErr == nil {
+		return
+	}
+
+	attrs := []any{
+		"provider", strings.TrimSpace(req.ProviderID),
+		"model", strings.TrimSpace(req.ProviderModelID),
+		"status_code", derefInt(bifrostErr.StatusCode),
+		"error_message", errorMessage(bifrostErr),
+		"error_type", derefString(bifrostErrorType(bifrostErr)),
+		"error_code", derefString(bifrostErrorCode(bifrostErr)),
+		"original_model_requested", bifrostErr.ExtraFields.OriginalModelRequested,
+		"resolved_model_used", bifrostErr.ExtraFields.ResolvedModelUsed,
+	}
+	c.logger.Error("bifrost request failed", attrs...)
+}
+
+func parseBifrostLogLevel(level string) schemas.LogLevel {
+	switch strings.ToLower(strings.TrimSpace(level)) {
+	case string(schemas.LogLevelDebug):
+		return schemas.LogLevelDebug
+	case string(schemas.LogLevelInfo):
+		return schemas.LogLevelInfo
+	case string(schemas.LogLevelWarn):
+		return schemas.LogLevelWarn
+	default:
+		return schemas.LogLevelError
+	}
+}
+
+func bifrostErrorType(bifrostErr *schemas.BifrostError) *string {
+	if bifrostErr == nil || bifrostErr.Error == nil {
+		return nil
+	}
+	return bifrostErr.Error.Type
+}
+
+func bifrostErrorCode(bifrostErr *schemas.BifrostError) *string {
+	if bifrostErr == nil || bifrostErr.Error == nil {
+		return nil
+	}
+	return bifrostErr.Error.Code
+}
+
+func errorMessage(bifrostErr *schemas.BifrostError) string {
+	if bifrostErr == nil {
+		return ""
+	}
+	if bifrostErr.Error != nil && bifrostErr.Error.Message != "" {
+		return bifrostErr.Error.Message
+	}
+	return bifrostErr.GetErrorString()
+}
+
+func derefString(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
+}
+
+func derefInt(value *int) int {
+	if value == nil {
+		return 0
+	}
+	return *value
 }
 
 func nullableString(value string) *string {

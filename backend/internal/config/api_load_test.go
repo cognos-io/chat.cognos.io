@@ -37,6 +37,7 @@ func TestMustLoadAPIConfig_ReadsAllProviderEnvVars(t *testing.T) {
 	}
 
 	envVars := map[string]string{
+		"COGNOS_BIFROST_LOG_LEVEL":         "debug",
 		"COGNOS_OPENAI_API_KEY":            "openai-key",
 		"COGNOS_INFOMANIAK_API_KEY":        "infomaniak-key",
 		"COGNOS_INFOMANIAK_URL":            "https://infomaniak.test/",
@@ -61,6 +62,7 @@ func TestMustLoadAPIConfig_ReadsAllProviderEnvVars(t *testing.T) {
 		got   string
 		want  string
 	}{
+		{"BifrostLogLevel", cfg.BifrostLogLevel, "debug"},
 		{"OpenAIAPIKey", cfg.OpenAIAPIKey, "openai-key"},
 		{"InfomaniakAPIKey", cfg.InfomaniakAPIKey, "infomaniak-key"},
 		{"InfomaniakAPIURL", cfg.InfomaniakAPIURL, "https://infomaniak.test/"},
@@ -91,6 +93,9 @@ func TestMustLoadAPIConfig_DefaultsBillingTrialSeed(t *testing.T) {
 
 	cfg := MustLoadAPIConfig(slog.New(slog.NewTextHandler(io.Discard, nil)))
 
+	if cfg.BifrostLogLevel != "error" {
+		t.Errorf("BifrostLogLevel = %q, want %q", cfg.BifrostLogLevel, "error")
+	}
 	if cfg.BillingTrialSeedRappen != 200 {
 		t.Errorf("BillingTrialSeedRappen = %d, want 200", cfg.BillingTrialSeedRappen)
 	}

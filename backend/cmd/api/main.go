@@ -85,10 +85,11 @@ func bindAppHooks(
 			if err != nil {
 				return err
 			}
+			logBifrostProviderConfig(app.Logger(), account, bifrostschemas.ModelProvider("infomaniak"))
 			if err := ensureActiveProvidersConfigured(context.Background(), catalogueService, account); err != nil {
 				return err
 			}
-			managedGateway, err = gateway.NewConfiguredBifrostClient(account)
+			managedGateway, err = gateway.NewConfiguredBifrostClient(account, params.Config.BifrostLogLevel, app.Logger())
 			if err != nil {
 				return err
 			}
@@ -307,6 +308,30 @@ func providerUsesOpenAIStore(providerConfig *bifrostschemas.ProviderConfig) bool
 		return false
 	}
 	return !providerConfig.OpenAIConfig.DisableStore
+}
+
+func logBifrostProviderConfig(logger *slog.Logger, account bifrostschemas.Account, provider bifrostschemas.ModelProvider) {
+	if logger == nil || account == nil {
+		return
+	}
+
+	providerConfig, err := account.GetConfigForProvider(provider)
+	if err != nil || providerConfig == nil {
+		return
+	}
+
+	baseProviderType := ""
+	if providerConfig.CustomProviderConfig != nil {
+		baseProviderType = string(providerConfig.CustomProviderConfig.BaseProviderType)
+	}
+
+	logger.Info(
+		"configured bifrost provider",
+		"provider", provider,
+		"base_url", providerConfig.NetworkConfig.BaseURL,
+		"base_provider_type", baseProviderType,
+		"disable_store", providerConfig.OpenAIConfig != nil && providerConfig.OpenAIConfig.DisableStore,
+	)
 }
 
 func run(ctx context.Context, w io.Writer, args []string) error {

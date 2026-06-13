@@ -66,6 +66,8 @@ func fileEnvValue(envVar string) (string, error) {
 }
 
 type APIConfig struct {
+	// Bifrost
+	BifrostLogLevel string `koanf:"bifrost.log_level"`
 	// OpenAI
 	OpenAIAPIKey string `koanf:"openai.api_key"`
 	// Infomaniak
@@ -127,6 +129,10 @@ func MustLoadAPIConfig(logger *slog.Logger) *APIConfig {
 	)
 	if err != nil {
 		panic(err)
+	}
+
+	if strings.TrimSpace(c.BifrostLogLevel) == "" {
+		c.BifrostLogLevel = "error"
 	}
 
 	if c.BillingTrialSeedRappen <= 0 {
