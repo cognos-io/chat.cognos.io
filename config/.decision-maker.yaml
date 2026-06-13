@@ -1,0 +1,26 @@
+# Decision Maker Configuration
+# See: https://github.com/ewanmellor/decision-maker
+
+# Enable the decision maker
+enabled: true
+
+# Decision process configuration
+process:
+  # Type 1 = irreversible (high stakes, hard to undo)
+  # Type 2 = reversible (can be undone, low stakes)
+  # Default bias: favor action on Type 2 decisions
+  bias: action
+
+# LLM configuration - use 'session' to run in the current agent session
+# (no external API calls needed)
+model:
+  provider: session
+
+# Record keeping
+save_records: true
+records_dir: docs/decisions
+
+# Project context (optional, helps frame decisions)
+project:
+  name: 'Encrypted AI chat application'
+  description: '1password + protonmail + chatgpt = Cognos - an encrypted AI chat application where user chats are encrypted server side as soon as possible so only the user and people they share the chats with can decrypt'
