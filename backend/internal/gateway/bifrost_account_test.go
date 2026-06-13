@@ -29,7 +29,7 @@ func TestNewStaticAccountFromAPIConfigBuildsInfomaniakCustomProvider(t *testing.
 	if cfg.CustomProviderConfig.BaseProviderType != schemas.OpenAI {
 		t.Fatalf("BaseProviderType = %q, want %q", cfg.CustomProviderConfig.BaseProviderType, schemas.OpenAI)
 	}
-	if cfg.NetworkConfig.BaseURL != "https://api.infomaniak.com/2/ai/product-123/openai/v1" {
+	if cfg.NetworkConfig.BaseURL != "https://api.infomaniak.com/2/ai/product-123/openai" {
 		t.Fatalf("BaseURL = %q", cfg.NetworkConfig.BaseURL)
 	}
 	if cfg.OpenAIConfig == nil || !cfg.OpenAIConfig.DisableStore {
