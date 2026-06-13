@@ -112,28 +112,37 @@ test('authenticated user sends a message and receives a response', async ({ page
       });
 
       await route.fulfill({
-        json: {
-          user_message_id: 'msg_user_1',
-          assistant_message: {
-            id: 'msg_assistant_1',
-            parent_message_id: 'msg_user_1',
-            content: 'Hi from the mocked backend',
-            agent_id: 'cognos:simple-assistant',
-            model_id: 'eu-model',
-            created_at: '2026-06-07T00:00:00Z',
-          },
-          usage: {
-            input_tokens: 12,
-            output_tokens: 8,
-            total_tokens: 20,
-            cache_creation_input_tokens: 0,
-            cache_read_input_tokens: 0,
-            cost_usd: 0.02,
-            cost_chf: 0.02,
-            cost_rappen: 2,
-            used_provider_cost: true,
-          },
-        },
+        contentType: 'text/event-stream',
+        body: [
+          `data: ${JSON.stringify({ type: 'delta', delta: 'Hi from the mocked backend' })}`,
+          '',
+          `data: ${JSON.stringify({
+            type: 'complete',
+            response: {
+              user_message_id: 'msg_user_1',
+              assistant_message: {
+                id: 'msg_assistant_1',
+                parent_message_id: 'msg_user_1',
+                content: 'Hi from the mocked backend',
+                agent_id: 'cognos:simple-assistant',
+                model_id: 'eu-model',
+                created_at: '2026-06-07T00:00:00Z',
+              },
+              usage: {
+                input_tokens: 12,
+                output_tokens: 8,
+                total_tokens: 20,
+                cache_creation_input_tokens: 0,
+                cache_read_input_tokens: 0,
+                cost_usd: 0.02,
+                cost_chf: 0.02,
+                cost_rappen: 2,
+                used_provider_cost: true,
+              },
+            },
+          })}`,
+          '',
+        ].join('\n'),
       });
     },
   );

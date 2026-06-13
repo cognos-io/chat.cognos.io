@@ -9,6 +9,7 @@ import {
   catchError,
   combineLatest,
   concatMap,
+  delay,
   exhaustMap,
   filter,
   finalize,
@@ -34,6 +35,7 @@ import { AuthService } from './auth.service';
 import {
   CognosApiService,
   CompleteResponse,
+  CompleteStreamEvent,
   CompletionMessageRequest,
   MessageListResponse,
   MessageRecord,
@@ -179,6 +181,78 @@ export const buildCompletionMessages = (
   return next;
 };
 
+export const streamingAssistantMessageId = (requestId: string): string =>
+  `${requestId}:assistant`;
+
+export const applyCompletionStreamDelta = (
+  existing: ReadonlyArray<Message>,
+  request: MessageRequest,
+  delta: string,
+  agentId: string,
+  modelId: string,
+): Message[] => {
+  const assistantId = streamingAssistantMessageId(request.requestId);
+  const assistantIndex = existing.findIndex(
+    (message) => message.record_id === assistantId,
+  );
+
+  if (assistantIndex >= 0) {
+    return existing.map((message, index) =>
+      index === assistantIndex
+        ? {
+            ...message,
+            isStreaming: true,
+            decryptedData: {
+              ...message.decryptedData,
+              content: `${message.decryptedData.content ?? ''}${delta}`,
+            },
+          }
+        : message,
+    );
+  }
+
+  return [
+    ...existing,
+    {
+      record_id: assistantId,
+      parentMessageId: request.parentMessageId,
+      createdAt: new Date(),
+      isStreaming: true,
+      decryptedData: {
+        content: delta,
+        agent_id: agentId,
+        model_id: modelId,
+      },
+    },
+  ];
+};
+
+export const applyCompletionStreamResponse = (
+  existing: ReadonlyArray<Message>,
+  requestId: string,
+  resp: CompleteResponse,
+): Message[] => {
+  const messages = existing
+    .filter((message) => message.record_id !== streamingAssistantMessageId(requestId))
+    .map((message) =>
+      resp.userMessageId && message.record_id === requestId
+        ? { ...message, record_id: resp.userMessageId }
+        : message,
+    );
+
+  return buildCompletionMessages(messages, resp);
+};
+
+export const removeStreamingCompletionMessages = (
+  existing: ReadonlyArray<Message>,
+  requestId: string,
+): Message[] => {
+  const assistantId = streamingAssistantMessageId(requestId);
+  return existing.filter(
+    (message) => message.record_id !== requestId && message.record_id !== assistantId,
+  );
+};
+
 export const resolveCompletionErrorMessage = (error: HttpErrorResponse): string => {
   switch (error.status) {
     case 402: {
@@ -193,6 +267,29 @@ export const resolveCompletionErrorMessage = (error: HttpErrorResponse): string 
     default:
       return 'An error occurred while sending the message.';
   }
+};
+
+export const resolveCompletionFailureMessage = (error: unknown): string => {
+  if (error instanceof HttpErrorResponse) {
+    return resolveCompletionErrorMessage(error);
+  }
+  if (error instanceof Error && error.message.trim() !== '') {
+    return error.message;
+  }
+  return 'An error occurred while sending the message.';
+};
+
+export const splitStreamDeltaForDisplay = (delta: string, chunkSize = 3): string[] => {
+  const chars = Array.from(delta);
+  if (chars.length <= chunkSize) {
+    return [delta];
+  }
+
+  const chunks: string[] = [];
+  for (let index = 0; index < chars.length; index += chunkSize) {
+    chunks.push(chars.slice(index, index + chunkSize).join(''));
+  }
+  return chunks;
 };
 
 @Injectable({
@@ -341,35 +438,13 @@ export class MessageService {
                   // And send the message
                   this.sendMessage(messageRequest).pipe(
                     finalize(() => this._isNewConversation$.next(false)),
-                    tap((resp) => {
-                      this.state.updateMessageId({
-                        oldId: messageRequest.requestId,
-                        newId: resp.userMessageId ?? '',
-                      });
-                    }),
                   ),
-                ]).pipe(
-                  map(([, resp]) => {
-                    return {
-                      ...this.addCompletionMessageToState(resp),
-                    };
-                  }),
-                );
+                ]).pipe(map(([, state]) => state));
               }),
             );
           }
 
-          return this.sendMessage(messageRequest).pipe(
-            tap((resp) => {
-              this.state.updateMessageId({
-                oldId: messageRequest.requestId,
-                newId: resp.userMessageId ?? '',
-              });
-            }),
-            map((resp) => {
-              return this.addCompletionMessageToState(resp);
-            }),
-          );
+          return this.sendMessage(messageRequest);
         }),
       ),
 
@@ -400,16 +475,6 @@ export class MessageService {
             };
           }),
         ),
-      removeLastMessage: (state, $: Observable<void>) =>
-        $.pipe(
-          map(() => {
-            const messages = state().messages.slice(0, -1);
-            return {
-              messages,
-            };
-          }),
-        ),
-
       nextPage: (state, $) =>
         $.pipe(
           concatMap(() => {
@@ -437,23 +502,6 @@ export class MessageService {
                 };
               }),
             );
-          }),
-        ),
-      updateMessageId: (state, $: Observable<{ oldId: string; newId: string }>) =>
-        $.pipe(
-          map(({ oldId, newId }) => {
-            const messages = state().messages.map((msg) => {
-              if (msg.record_id === oldId) {
-                return {
-                  ...msg,
-                  record_id: newId,
-                };
-              }
-              return msg;
-            });
-            return {
-              messages,
-            };
           }),
         ),
       deleteMessage: (
@@ -611,7 +659,9 @@ export class MessageService {
     );
   }
 
-  private sendMessage(messageRequest: MessageRequest): Observable<CompleteResponse> {
+  private sendMessage(
+    messageRequest: MessageRequest,
+  ): Observable<Partial<MessageState>> {
     const conversation = this._conversationService.conversation();
     const isTemporaryConversation = this._conversationService.isTemporaryConversation();
 
@@ -629,32 +679,78 @@ export class MessageService {
       requestId: messageRequest.requestId,
     };
 
+    let completed = false;
+
     const response$ = isTemporaryConversation
-      ? this._api.complete(request)
-      : this._api.completeConversation(conversation!.record.id, request);
+      ? this._api.completeStream(request)
+      : this._api.completeConversationStream(conversation!.record.id, request);
 
     return response$.pipe(
-      catchError((err: unknown) => {
-        this.state.setStatus(MessageStatus.ErrorSending);
-        console.error('Error sending message');
-
-        if (err instanceof HttpErrorResponse) {
-          this._errorService.alert(resolveCompletionErrorMessage(err));
+      concatMap((event) => this.expandStreamEventForDisplay(event)),
+      map((event: CompleteStreamEvent) => {
+        switch (event.type) {
+          case 'delta':
+            return {
+              messages: applyCompletionStreamDelta(
+                this.state().messages,
+                messageRequest,
+                event.delta,
+                request.agentId,
+                request.modelId,
+              ),
+            };
+          case 'complete':
+            completed = true;
+            return {
+              status: MessageStatus.Success,
+              messages: applyCompletionStreamResponse(
+                this.state().messages,
+                messageRequest.requestId,
+                event.response,
+              ),
+            };
+          case 'error':
+            throw new Error(event.message);
         }
-
-        this.state.removeLastMessage();
-        return EMPTY;
       }),
-      tap(() => {
-        this.state.setStatus(MessageStatus.Success);
+      catchError((err: unknown) => {
+        console.error('Error sending message');
+        this._errorService.alert(resolveCompletionFailureMessage(err));
+
+        return of({
+          status: MessageStatus.ErrorSending,
+          messages: removeStreamingCompletionMessages(
+            this.state().messages,
+            messageRequest.requestId,
+          ),
+        });
+      }),
+      finalize(() => {
+        if (!completed && this.state.status() === MessageStatus.Sending) {
+          this.state.setStatus(MessageStatus.ErrorSending);
+        }
       }),
     );
   }
 
-  private addCompletionMessageToState(resp: CompleteResponse): Partial<MessageState> {
-    return {
-      messages: buildCompletionMessages(this.state().messages, resp),
-    };
+  private expandStreamEventForDisplay(
+    event: CompleteStreamEvent,
+  ): Observable<CompleteStreamEvent> {
+    if (event.type !== 'delta') {
+      return of(event);
+    }
+
+    const chunks = splitStreamDeltaForDisplay(event.delta);
+    if (chunks.length <= 1) {
+      return of(event);
+    }
+
+    return from(chunks).pipe(
+      concatMap((chunk, index) => {
+        const deltaEvent = { type: 'delta', delta: chunk } as CompleteStreamEvent;
+        return index === 0 ? of(deltaEvent) : of(deltaEvent).pipe(delay(0));
+      }),
+    );
   }
 
   private createMessageContext(): Array<CompletionMessageRequest> {

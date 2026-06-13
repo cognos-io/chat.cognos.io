@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -171,6 +172,101 @@ func TestConversationCompletePersistsEncryptedMessages(t *testing.T) {
 			conversationPublicKey = seedConversationRecord(t, app, conversationID)
 		},
 		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			records, err := app.FindRecordsByFilter(
+				"messages",
+				"conversation={:conversation}",
+				"",
+				10,
+				0,
+				dbx.Params{"conversation": conversationID},
+			)
+			if err != nil {
+				t.Fatalf("FindRecordsByFilter(messages) error = %v", err)
+			}
+			if len(records) != 2 {
+				t.Fatalf("FindRecordsByFilter(messages) len = %d, want %d", len(records), 2)
+			}
+			for i, record := range records {
+				ciphertext := record.GetString("data")
+				if strings.Contains(ciphertext, "hello there") || strings.Contains(ciphertext, "hello back") {
+					t.Fatalf("messages[%d].data contains plaintext, got %q", i, ciphertext)
+				}
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestConversationCompleteStreamPersistsEncryptedMessages(t *testing.T) {
+	t.Parallel()
+
+	gatewayClient := &gateway.MockClient{
+		CompleteStreamFunc: func(_ context.Context, req gateway.CompleteRequest) (<-chan gateway.CompleteStreamEvent, error) {
+			if req.ProviderID != "infomaniak" {
+				t.Fatalf("CompleteStream() ProviderID = %q, want %q", req.ProviderID, "infomaniak")
+			}
+			if req.ProviderModelID != "llama-3.3-70b-instruct" {
+				t.Fatalf("CompleteStream() ProviderModelID = %q, want %q", req.ProviderModelID, "llama-3.3-70b-instruct")
+			}
+			ch := make(chan gateway.CompleteStreamEvent, 3)
+			ch <- gateway.CompleteStreamEvent{Delta: "hello "}
+			ch <- gateway.CompleteStreamEvent{Delta: "back"}
+			ch <- gateway.CompleteStreamEvent{Usage: &gateway.Usage{InputTokens: 123, OutputTokens: 45, TotalTokens: 168}}
+			close(ch)
+			return ch, nil
+		},
+	}
+
+	conversationID := "convstream00001"
+	var conversationPublicKey [32]byte
+
+	scenario := tests.ApiScenario{
+		Name:           "conversation complete stream persists encrypted messages",
+		Method:         http.MethodPost,
+		URL:            "/api/v1/conversations/" + conversationID + "/complete",
+		Body:           strings.NewReader(`{"model_id":"llama-3-3-infomaniak","agent_id":"cognos:simple-assistant","request_id":"req-stream-1","messages":[{"role":"user","content":"hello there"}]}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"type":"delta","delta":"hello "`,
+			`"type":"complete"`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService: billing.NewService(),
+				ConversationRepo: stubConversationRepo{
+					byID: func(id string) (chat.Conversation, error) {
+						return chat.Conversation{ID: id, PublicKey: conversationPublicKey}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			conversationPublicKey = seedConversationRecord(t, app, conversationID)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, res *http.Response) {
+			if got := res.Header.Get("Content-Type"); got != "text/event-stream" {
+				t.Fatalf("Content-Type = %q, want %q", got, "text/event-stream")
+			}
+
+			bodyBytes, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatalf("ReadAll(stream body) error = %v", err)
+			}
+			body := string(bodyBytes)
+			if !strings.Contains(body, `data: {"type":"delta","delta":"hello "}`) {
+				t.Fatalf("stream body missing first delta, got %q", body)
+			}
+			if !strings.Contains(body, `data: {"type":"delta","delta":"back"}`) {
+				t.Fatalf("stream body missing second delta, got %q", body)
+			}
+			if !strings.Contains(body, `data: {"type":"complete"`) || !strings.Contains(body, `"content":"hello back"`) {
+				t.Fatalf("stream body missing completion payload, got %q", body)
+			}
+
 			records, err := app.FindRecordsByFilter(
 				"messages",
 				"conversation={:conversation}",

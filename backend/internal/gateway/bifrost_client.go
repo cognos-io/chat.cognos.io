@@ -12,6 +12,7 @@ import (
 
 type bifrostRequester interface {
 	ChatCompletionRequest(ctx *schemas.BifrostContext, req *schemas.BifrostChatRequest) (*schemas.BifrostChatResponse, *schemas.BifrostError)
+	ChatCompletionStreamRequest(ctx *schemas.BifrostContext, req *schemas.BifrostChatRequest) (chan *schemas.BifrostStreamChunk, *schemas.BifrostError)
 }
 
 type bifrostShutdowner interface {
@@ -74,33 +75,10 @@ func (c *BifrostClient) Complete(ctx context.Context, req CompleteRequest) (Comp
 	if c == nil || c.requester == nil {
 		return CompleteResponse{}, fmt.Errorf("bifrost client is not configured")
 	}
-	if strings.TrimSpace(req.ProviderID) == "" {
-		return CompleteResponse{}, fmt.Errorf("bifrost provider id is required")
-	}
-	if strings.TrimSpace(req.ProviderModelID) == "" {
-		return CompleteResponse{}, fmt.Errorf("bifrost model id is required")
-	}
 
-	messages := make([]schemas.ChatMessage, 0, len(req.Messages))
-	for _, message := range req.Messages {
-		content := message.Content
-		name := strings.TrimSpace(message.Name)
-		messages = append(messages, schemas.ChatMessage{
-			Name: nullableString(name),
-			Role: schemas.ChatMessageRole(message.Role),
-			Content: &schemas.ChatMessageContent{
-				ContentStr: &content,
-			},
-		})
-	}
-
-	chatReq := &schemas.BifrostChatRequest{
-		Provider: schemas.ModelProvider(req.ProviderID),
-		Model:    req.ProviderModelID,
-		Input:    messages,
-	}
-	if req.MaxOutputTokens > 0 {
-		chatReq.Params = &schemas.ChatParameters{MaxCompletionTokens: &req.MaxOutputTokens}
+	chatReq, err := c.buildChatRequest(req)
+	if err != nil {
+		return CompleteResponse{}, err
 	}
 
 	bifrostCtx := schemas.NewBifrostContext(ctx, schemas.NoDeadline)
@@ -147,6 +125,111 @@ func (c *BifrostClient) Complete(ctx context.Context, req CompleteRequest) (Comp
 			ProviderCostUSD:          providerCostUSD,
 		},
 	}, nil
+}
+
+func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest) (<-chan CompleteStreamEvent, error) {
+	if c == nil || c.requester == nil {
+		return nil, fmt.Errorf("bifrost client is not configured")
+	}
+
+	chatReq, err := c.buildChatRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	bifrostCtx := schemas.NewBifrostContext(ctx, schemas.NoDeadline)
+	stream, bifrostErr := c.requester.ChatCompletionStreamRequest(bifrostCtx, chatReq)
+	if bifrostErr != nil {
+		c.logBifrostError(req, bifrostErr)
+		return nil, fmt.Errorf("bifrost request failed: %s", bifrostErr.GetErrorString())
+	}
+	if stream == nil {
+		return nil, fmt.Errorf("bifrost returned nil stream")
+	}
+
+	out := make(chan CompleteStreamEvent)
+	go func() {
+		defer close(out)
+
+		for chunk := range stream {
+			if chunk == nil {
+				continue
+			}
+			if chunk.BifrostError != nil {
+				c.logBifrostError(req, chunk.BifrostError)
+				out <- CompleteStreamEvent{Err: fmt.Errorf("bifrost request failed: %s", chunk.BifrostError.GetErrorString())}
+				return
+			}
+			if chunk.BifrostChatResponse == nil {
+				continue
+			}
+
+			event := CompleteStreamEvent{}
+			if usage := chunk.BifrostChatResponse.Usage; usage != nil {
+				providerCostUSD := (*float64)(nil)
+				if usage.Cost != nil {
+					totalCost := usage.Cost.TotalCost
+					providerCostUSD = &totalCost
+				}
+				event.Usage = &Usage{
+					InputTokens:              int64(usage.PromptTokens),
+					OutputTokens:             int64(usage.CompletionTokens),
+					TotalTokens:              int64(usage.TotalTokens),
+					CacheCreationInputTokens: int64(cachedWriteTokens(usage)),
+					CacheReadInputTokens:     int64(cachedReadTokens(usage)),
+					ProviderCostUSD:          providerCostUSD,
+				}
+			}
+
+			for _, choice := range chunk.BifrostChatResponse.Choices {
+				if choice.ChatStreamResponseChoice == nil || choice.ChatStreamResponseChoice.Delta == nil || choice.ChatStreamResponseChoice.Delta.Content == nil {
+					continue
+				}
+				event.Delta += *choice.ChatStreamResponseChoice.Delta.Content
+			}
+
+			if event.Delta == "" && event.Usage == nil {
+				continue
+			}
+
+			out <- event
+		}
+	}()
+
+	return out, nil
+}
+
+func (c *BifrostClient) buildChatRequest(req CompleteRequest) (*schemas.BifrostChatRequest, error) {
+	if strings.TrimSpace(req.ProviderID) == "" {
+		return nil, fmt.Errorf("bifrost provider id is required")
+	}
+	if strings.TrimSpace(req.ProviderModelID) == "" {
+		return nil, fmt.Errorf("bifrost model id is required")
+	}
+
+	messages := make([]schemas.ChatMessage, 0, len(req.Messages))
+	for _, message := range req.Messages {
+		content := message.Content
+		name := strings.TrimSpace(message.Name)
+		messages = append(messages, schemas.ChatMessage{
+			Name: nullableString(name),
+			Role: schemas.ChatMessageRole(message.Role),
+			Content: &schemas.ChatMessageContent{
+				ContentStr: &content,
+			},
+		})
+	}
+
+	chatReq := &schemas.BifrostChatRequest{
+		Provider: schemas.ModelProvider(req.ProviderID),
+		Model:    req.ProviderModelID,
+		Input:    messages,
+	}
+	if req.MaxOutputTokens > 0 {
+		chatReq.Params = &schemas.ChatParameters{MaxCompletionTokens: &req.MaxOutputTokens}
+	}
+
+	return chatReq, nil
 }
 
 func extractMessageContent(message *schemas.ChatMessage) string {

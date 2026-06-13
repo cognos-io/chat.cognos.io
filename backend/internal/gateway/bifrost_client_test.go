@@ -11,9 +11,12 @@ import (
 )
 
 type stubBifrostRequester struct {
-	resp *schemas.BifrostChatResponse
-	err  *schemas.BifrostError
-	req  *schemas.BifrostChatRequest
+	resp      *schemas.BifrostChatResponse
+	err       *schemas.BifrostError
+	stream    chan *schemas.BifrostStreamChunk
+	streamErr *schemas.BifrostError
+	req       *schemas.BifrostChatRequest
+	streamReq *schemas.BifrostChatRequest
 }
 
 func (s *stubBifrostRequester) ChatCompletionRequest(
@@ -22,6 +25,14 @@ func (s *stubBifrostRequester) ChatCompletionRequest(
 ) (*schemas.BifrostChatResponse, *schemas.BifrostError) {
 	s.req = req
 	return s.resp, s.err
+}
+
+func (s *stubBifrostRequester) ChatCompletionStreamRequest(
+	_ *schemas.BifrostContext,
+	req *schemas.BifrostChatRequest,
+) (chan *schemas.BifrostStreamChunk, *schemas.BifrostError) {
+	s.streamReq = req
+	return s.stream, s.streamErr
 }
 
 type stubBifrostShutdowner struct{ called bool }

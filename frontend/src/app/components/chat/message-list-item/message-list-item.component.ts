@@ -60,9 +60,15 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
               [time]="messageTime()"
             >
               @if (message.decryptedData.content) {
-                <markdown emoji katex>
-                  {{ message.decryptedData.content }}
-                </markdown>
+                @if (message.isStreaming) {
+                  <p class="message-list-item__streaming">
+                    {{ message.decryptedData.content }}
+                  </p>
+                } @else {
+                  <markdown emoji katex>
+                    {{ message.decryptedData.content }}
+                  </markdown>
+                }
               } @else {
                 <p class="message-list-item__empty">
                   This message is empty or the AI did not generate a response, please
@@ -136,6 +142,11 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       margin: 0;
       color: var(--cog-text-subtlest);
       font-style: italic;
+    }
+
+    .message-list-item__streaming {
+      margin: 0;
+      white-space: pre-wrap;
     }
 
     markdown {

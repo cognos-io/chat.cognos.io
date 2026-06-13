@@ -6,10 +6,16 @@ import { Message } from '@app/interfaces/message';
 
 import { CompleteResponse } from './cognos-api.service';
 import {
+  applyCompletionStreamDelta,
+  applyCompletionStreamResponse,
   assertMessageBindings,
   buildCompletionMessageContext,
   buildCompletionMessages,
+  removeStreamingCompletionMessages,
   resolveCompletionErrorMessage,
+  resolveCompletionFailureMessage,
+  splitStreamDeltaForDisplay,
+  streamingAssistantMessageId,
 } from './message.service';
 
 const makeResponse = (overrides: Partial<CompleteResponse> = {}): CompleteResponse => ({
@@ -87,6 +93,25 @@ describe('resolveCompletionErrorMessage', () => {
 
     expect(resolveCompletionErrorMessage(error)).toBe(
       'An error occurred while sending the message.',
+    );
+  });
+});
+
+describe('resolveCompletionFailureMessage', () => {
+  it('reuses the HTTP-specific mapping when given an HttpErrorResponse', () => {
+    const error = new HttpErrorResponse({
+      status: 402,
+      error: { message: 'Choose a plan to keep chatting.' },
+    });
+
+    expect(resolveCompletionFailureMessage(error)).toBe(
+      'Choose a plan to keep chatting.',
+    );
+  });
+
+  it('returns a plain Error message for non-HTTP failures', () => {
+    expect(resolveCompletionFailureMessage(new Error('stream exploded'))).toBe(
+      'stream exploded',
     );
   });
 });
@@ -187,6 +212,84 @@ describe('buildCompletionMessages', () => {
     const result = buildCompletionMessages(existing, makeResponse());
     expect(result).not.toBe(existing);
     expect(existing).toHaveLength(1);
+  });
+});
+
+describe('splitStreamDeltaForDisplay', () => {
+  it('keeps short deltas intact', () => {
+    expect(splitStreamDeltaForDisplay('hi')).toEqual(['hi']);
+  });
+
+  it('splits large deltas into small display chunks', () => {
+    expect(splitStreamDeltaForDisplay('streamed')).toEqual(['str', 'eam', 'ed']);
+  });
+});
+
+describe('stream completion helpers', () => {
+  const userMessage = (): Message => ({
+    record_id: 'req-1',
+    createdAt: new Date('2026-01-02T03:04:00.000Z'),
+    decryptedData: { content: 'hello', owner_id: 'u-1' },
+  });
+
+  it('adds and appends assistant deltas to the same temporary assistant message', () => {
+    const first = applyCompletionStreamDelta(
+      [userMessage()],
+      { requestId: 'req-1', content: 'hello' },
+      'hel',
+      'agent-1',
+      'model-1',
+    );
+    const second = applyCompletionStreamDelta(
+      first,
+      { requestId: 'req-1', content: 'hello' },
+      'lo',
+      'agent-1',
+      'model-1',
+    );
+
+    expect(second).toHaveLength(2);
+    expect(second[1].record_id).toBe(streamingAssistantMessageId('req-1'));
+    expect(second[1].decryptedData.content).toBe('hello');
+    expect(second[1].isStreaming).toBe(true);
+  });
+
+  it('replaces the temporary ids with the final backend response on completion', () => {
+    const streaming = applyCompletionStreamDelta(
+      [userMessage()],
+      { requestId: 'req-1', content: 'hello' },
+      'hello back',
+      'agent-1',
+      'model-1',
+    );
+
+    const result = applyCompletionStreamResponse(
+      streaming,
+      'req-1',
+      makeResponse({ userMessageId: 'user-1' }),
+    );
+
+    expect(result[0].record_id).toBe('user-1');
+    expect(result[1].record_id).toBe('asst-1');
+    expect(result[1].decryptedData.content).toBe('hello back');
+    expect(result[1].isStreaming).toBeUndefined();
+    expect(
+      result.some(
+        (message) => message.record_id === streamingAssistantMessageId('req-1'),
+      ),
+    ).toBe(false);
+  });
+
+  it('removes optimistic stream messages after a failure', () => {
+    const streaming = applyCompletionStreamDelta(
+      [userMessage()],
+      { requestId: 'req-1', content: 'hello' },
+      'partial',
+      'agent-1',
+      'model-1',
+    );
+
+    expect(removeStreamingCompletionMessages(streaming, 'req-1')).toEqual([]);
   });
 });
 

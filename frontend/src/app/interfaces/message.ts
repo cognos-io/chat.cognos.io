@@ -45,6 +45,7 @@ export interface Message {
   createdAt: Date;
   expires?: Date;
   parentMessageId?: string;
+  isStreaming?: boolean;
 }
 
 export const isMessageFromUser = (messageData: MessageData): boolean => {

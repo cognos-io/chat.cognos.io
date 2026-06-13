@@ -1,9 +1,9 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 
 import PocketBase from 'pocketbase';
 
-import { Observable, map } from 'rxjs';
+import { Observable, Subscriber, filter, map, take } from 'rxjs';
 
 import { ConversationRecord } from '@app/interfaces/conversation';
 import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/model';
@@ -56,6 +56,20 @@ export interface CompleteResponse {
     usedProviderCost: boolean;
   };
 }
+
+export type CompleteStreamEvent =
+  | {
+      type: 'delta';
+      delta: string;
+    }
+  | {
+      type: 'complete';
+      response: CompleteResponse;
+    }
+  | {
+      type: 'error';
+      message: string;
+    };
 
 export interface MessageRecord {
   id: string;
@@ -145,6 +159,26 @@ interface ApiCompleteResponse {
     used_provider_cost: boolean;
   };
 }
+
+interface ApiCompleteStreamDeltaEvent {
+  type: 'delta';
+  delta: string;
+}
+
+interface ApiCompleteStreamCompleteEvent {
+  type: 'complete';
+  response: ApiCompleteResponse;
+}
+
+interface ApiCompleteStreamErrorEvent {
+  type: 'error';
+  message: string;
+}
+
+export type ApiCompleteStreamEvent =
+  | ApiCompleteStreamDeltaEvent
+  | ApiCompleteStreamCompleteEvent
+  | ApiCompleteStreamErrorEvent;
 
 interface ApiConversationRequest {
   data: string;
@@ -262,6 +296,30 @@ export const mapCompleteResponse = (
   },
 });
 
+export const parseCompleteStreamData = (data: string): CompleteStreamEvent => {
+  const event = JSON.parse(data) as ApiCompleteStreamEvent;
+
+  switch (event.type) {
+    case 'delta':
+      return {
+        type: 'delta',
+        delta: event.delta,
+      };
+    case 'complete':
+      return {
+        type: 'complete',
+        response: mapCompleteResponse(event.response),
+      };
+    case 'error':
+      return {
+        type: 'error',
+        message: event.message,
+      };
+    default:
+      throw new Error('Unknown completion stream event type');
+  }
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -357,30 +415,45 @@ export class CognosApiService {
   }
 
   complete(request: CompleteRequest): Observable<CompleteResponse> {
-    return this._http
-      .post<ApiCompleteResponse>(
-        `${this._baseUrl}/api/v1/completions`,
-        this.mapCompleteRequest(request),
-        {
-          headers: this.authHeaders(),
-        },
-      )
-      .pipe(map((response) => this.mapCompleteResponse(response)));
+    return this.streamCompletion(`${this._baseUrl}/api/v1/completions`, request).pipe(
+      filter(
+        (event): event is Extract<CompleteStreamEvent, { type: 'complete' }> =>
+          event.type === 'complete',
+      ),
+      map((event) => event.response),
+      take(1),
+    );
   }
 
   completeConversation(
     conversationId: string,
     request: CompleteRequest,
   ): Observable<CompleteResponse> {
-    return this._http
-      .post<ApiCompleteResponse>(
-        `${this._baseUrl}/api/v1/conversations/${conversationId}/complete`,
-        this.mapCompleteRequest(request),
-        {
-          headers: this.authHeaders(),
-        },
-      )
-      .pipe(map((response) => this.mapCompleteResponse(response)));
+    return this.streamCompletion(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/complete`,
+      request,
+    ).pipe(
+      filter(
+        (event): event is Extract<CompleteStreamEvent, { type: 'complete' }> =>
+          event.type === 'complete',
+      ),
+      map((event) => event.response),
+      take(1),
+    );
+  }
+
+  completeStream(request: CompleteRequest): Observable<CompleteStreamEvent> {
+    return this.streamCompletion(`${this._baseUrl}/api/v1/completions`, request);
+  }
+
+  completeConversationStream(
+    conversationId: string,
+    request: CompleteRequest,
+  ): Observable<CompleteStreamEvent> {
+    return this.streamCompletion(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/complete`,
+      request,
+    );
   }
 
   getUserKeyPair(): Observable<UserKeyPairsResponse> {
@@ -574,6 +647,152 @@ export class CognosApiService {
 
   private mapCompleteResponse(response: ApiCompleteResponse): CompleteResponse {
     return mapCompleteResponse(response);
+  }
+
+  private streamCompletion(
+    url: string,
+    request: CompleteRequest,
+  ): Observable<CompleteStreamEvent> {
+    return new Observable<CompleteStreamEvent>((subscriber) => {
+      const controller = new AbortController();
+
+      void (async () => {
+        try {
+          const authHeaders = this.authHeaders();
+          const requestHeaders = authHeaders
+            .keys()
+            .reduce<Record<string, string>>((headers, key) => {
+              const value = authHeaders.get(key);
+              if (value) {
+                headers[key] = value;
+              }
+              return headers;
+            }, {});
+
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              ...requestHeaders,
+              Accept: 'text/event-stream',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(this.mapCompleteRequest(request)),
+            signal: controller.signal,
+          });
+
+          if (!response.ok) {
+            let errorBody: unknown;
+            try {
+              errorBody = await response.json();
+            } catch {
+              errorBody = null;
+            }
+
+            subscriber.error(
+              new HttpErrorResponse({
+                status: response.status,
+                statusText: response.statusText,
+                url: response.url,
+                error: errorBody,
+              }),
+            );
+            return;
+          }
+
+          if (!response.body) {
+            subscriber.error(new Error('Streaming response body was empty.'));
+            return;
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          let done = false;
+          while (!done) {
+            const result = await reader.read();
+            done = result.done;
+
+            if (result.value) {
+              buffer += decoder.decode(result.value, { stream: true });
+              buffer = this.emitBufferedStreamEvents(buffer, subscriber);
+            }
+          }
+
+          buffer += decoder.decode();
+          buffer = this.emitBufferedStreamEvents(buffer, subscriber, true);
+
+          if (buffer.trim() !== '') {
+            subscriber.error(
+              new Error('Streaming response ended with an incomplete event.'),
+            );
+            return;
+          }
+
+          subscriber.complete();
+        } catch (error) {
+          subscriber.error(error);
+        }
+      })();
+
+      return () => controller.abort();
+    });
+  }
+
+  private emitBufferedStreamEvents(
+    buffer: string,
+    subscriber: Subscriber<CompleteStreamEvent>,
+    flush = false,
+  ): string {
+    let remaining = buffer;
+    let separatorIndex = remaining.indexOf('\n\n');
+
+    while (separatorIndex >= 0) {
+      const block = remaining.slice(0, separatorIndex);
+      remaining = remaining.slice(separatorIndex + 2);
+
+      const data = block
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('data:'))
+        .map((line) => line.slice('data:'.length).trimStart())
+        .join('\n');
+
+      if (data !== '') {
+        const event = parseCompleteStreamData(data);
+        if (event.type === 'error') {
+          subscriber.error(
+            new Error(event.message || 'Failed to process completion stream.'),
+          );
+          return '';
+        }
+        subscriber.next(event);
+      }
+
+      separatorIndex = remaining.indexOf('\n\n');
+    }
+
+    if (flush) {
+      const finalData = remaining
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('data:'))
+        .map((line) => line.slice('data:'.length).trimStart())
+        .join('\n');
+      if (finalData !== '') {
+        const event = parseCompleteStreamData(finalData);
+        if (event.type === 'error') {
+          subscriber.error(
+            new Error(event.message || 'Failed to process completion stream.'),
+          );
+          return '';
+        }
+        subscriber.next(event);
+      }
+      return '';
+    }
+
+    return remaining;
   }
 
   private mapModel(model: ApiModel): Model {

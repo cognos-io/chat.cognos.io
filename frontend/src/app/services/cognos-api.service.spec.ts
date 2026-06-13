@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { mapCompleteRequest, mapCompleteResponse } from './cognos-api.service';
+import {
+  mapCompleteRequest,
+  mapCompleteResponse,
+  parseCompleteStreamData,
+} from './cognos-api.service';
 
 describe('mapCompleteRequest', () => {
   it('maps camelCase request fields onto the wire snake_case shape', () => {
@@ -39,6 +43,60 @@ describe('mapCompleteRequest', () => {
     expect(wire.request_id).toBeUndefined();
     expect(wire.max_output_tokens).toBeUndefined();
     expect(wire.persist).toBeUndefined();
+  });
+});
+
+describe('parseCompleteStreamData', () => {
+  it('maps delta events without touching the payload', () => {
+    expect(parseCompleteStreamData('{"type":"delta","delta":"hello"}')).toEqual({
+      type: 'delta',
+      delta: 'hello',
+    });
+  });
+
+  it('maps complete events through the standard response mapper', () => {
+    const response = {
+      request_id: 'req-1',
+      user_message_id: 'user-1',
+      expires_at: '2026-01-03T00:00:00.000Z',
+      assistant_message: {
+        id: 'asst-1',
+        parent_message_id: 'user-1',
+        content: 'hello back',
+        agent_id: 'cognos:simple-assistant',
+        model_id: 'infomaniak:llama-3',
+        created_at: '2026-01-02T03:04:05.000Z',
+      },
+      usage: {
+        input_tokens: 12,
+        output_tokens: 34,
+        total_tokens: 46,
+        cache_creation_input_tokens: 5,
+        cache_read_input_tokens: 7,
+        cost_usd: 0.0001,
+        cost_chf: 0.00009,
+        cost_rappen: 1,
+        used_provider_cost: true,
+      },
+    };
+
+    expect(
+      parseCompleteStreamData(JSON.stringify({ type: 'complete', response })),
+    ).toEqual({
+      type: 'complete',
+      response: mapCompleteResponse(response),
+    });
+  });
+
+  it('passes stream error events through verbatim', () => {
+    expect(
+      parseCompleteStreamData(
+        '{"type":"error","message":"Failed to process completion"}',
+      ),
+    ).toEqual({
+      type: 'error',
+      message: 'Failed to process completion',
+    });
   });
 });
 

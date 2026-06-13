@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -81,6 +82,13 @@ type completeResponse struct {
 	AssistantMessage assistantMessageResponse `json:"assistant_message"`
 	ExpiresAt        string                   `json:"expires_at,omitempty"`
 	Usage            usageResponse            `json:"usage"`
+}
+
+type completeStreamResponse struct {
+	Type     string            `json:"type"`
+	Delta    string            `json:"delta,omitempty"`
+	Message  string            `json:"message,omitempty"`
+	Response *completeResponse `json:"response,omitempty"`
 }
 
 type CompleteHandlerParams struct {
@@ -275,13 +283,14 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 		}
 
 		gatewayStartedAt := time.Now()
-
-		gatewayResp, err := params.GatewayClient.Complete(e.Request.Context(), gateway.CompleteRequest{
+		gatewayReq := gateway.CompleteRequest{
 			ProviderID:      model.ProviderID,
 			ProviderModelID: model.ProviderModelID,
 			Messages:        messages,
 			MaxOutputTokens: req.MaxOutputTokens,
-		})
+		}
+
+		gatewayResp, err := streamGatewayCompletion(e, params, gatewayReq)
 		if err != nil {
 			if userMessageRecord != nil {
 				if deleteErr := params.MessageRepo.DeleteMessage(userMessageRecord.Id); deleteErr != nil {
@@ -293,7 +302,16 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 				"provider", model.ProviderID,
 				"err", err,
 			)
-			return apis.NewApiError(http.StatusServiceUnavailable, "Failed to process completion", nil)
+			if !e.Written() {
+				return apis.NewApiError(http.StatusServiceUnavailable, "Failed to process completion", nil)
+			}
+			if writeErr := writeCompleteStreamEvent(e, completeStreamResponse{
+				Type:    "error",
+				Message: "Failed to process completion",
+			}); writeErr != nil {
+				params.Logger.Error("failed to write stream error event", "err", writeErr)
+			}
+			return nil
 		}
 
 		assistantCreatedAt := time.Now().UTC().Format(time.RFC3339)
@@ -397,8 +415,74 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			response.ExpiresAt = time.Now().UTC().Add(conversation.ExpiryDuration).Format(time.RFC3339)
 		}
 
-		return e.JSON(http.StatusOK, response)
+		return writeCompleteStreamEvent(e, completeStreamResponse{
+			Type:     "complete",
+			Response: &response,
+		})
 	}
+}
+
+func streamGatewayCompletion(
+	e *core.RequestEvent,
+	params CompleteHandlerParams,
+	req gateway.CompleteRequest,
+) (gateway.CompleteResponse, error) {
+	stream, err := params.GatewayClient.CompleteStream(e.Request.Context(), req)
+	if err != nil {
+		return gateway.CompleteResponse{}, err
+	}
+
+	var builder strings.Builder
+	usage := gateway.Usage{}
+
+	for event := range stream {
+		if event.Err != nil {
+			return gateway.CompleteResponse{}, event.Err
+		}
+		if event.Delta != "" {
+			builder.WriteString(event.Delta)
+			if err := writeCompleteStreamEvent(e, completeStreamResponse{
+				Type:  "delta",
+				Delta: event.Delta,
+			}); err != nil {
+				return gateway.CompleteResponse{}, err
+			}
+		}
+		if event.Usage != nil {
+			usage = *event.Usage
+		}
+	}
+
+	return gateway.CompleteResponse{
+		Message: gateway.Message{
+			Role:    "assistant",
+			Content: builder.String(),
+		},
+		Usage: usage,
+	}, nil
+}
+
+func writeCompleteStreamEvent(e *core.RequestEvent, response completeStreamResponse) error {
+	e.Response.Header().Set("Content-Type", "text/event-stream")
+	e.Response.Header().Set("Cache-Control", "no-cache, no-transform")
+	e.Response.Header().Set("Connection", "keep-alive")
+	e.Response.Header().Set("X-Accel-Buffering", "no")
+
+	payload, err := json.Marshal(response)
+	if err != nil {
+		return err
+	}
+	if _, err := e.Response.Write([]byte("data: ")); err != nil {
+		return err
+	}
+	if _, err := e.Response.Write(payload); err != nil {
+		return err
+	}
+	if _, err := e.Response.Write([]byte("\n\n")); err != nil {
+		return err
+	}
+
+	return e.Flush()
 }
 
 func completionUSDToCHFRate(params CompleteHandlerParams) float64 {

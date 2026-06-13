@@ -156,3 +156,49 @@ func TestMockClientCompleteClonesMessages(t *testing.T) {
 		t.Fatalf("Requests[0].Messages[0].Content = %q, want %q", client.Requests[0].Messages[0].Content, "Hello")
 	}
 }
+
+func TestMockClientCompleteStreamCapturesRequestAndReturnsStubbedStream(t *testing.T) {
+	t.Parallel()
+
+	wantReq := CompleteRequest{
+		ProviderID:      "infomaniak",
+		ProviderModelID: "llama-3.3-70b-instruct",
+		Messages:        []Message{{Role: "user", Content: "Hello"}},
+	}
+
+	client := &MockClient{
+		CompleteStreamFunc: func(_ context.Context, gotReq CompleteRequest) (<-chan CompleteStreamEvent, error) {
+			if gotReq.ProviderID != wantReq.ProviderID {
+				t.Fatalf("CompleteStream() ProviderID = %q, want %q", gotReq.ProviderID, wantReq.ProviderID)
+			}
+			ch := make(chan CompleteStreamEvent, 2)
+			ch <- CompleteStreamEvent{Delta: "Hi"}
+			ch <- CompleteStreamEvent{Usage: &Usage{OutputTokens: 1}}
+			close(ch)
+			return ch, nil
+		},
+	}
+
+	stream, err := client.CompleteStream(context.Background(), wantReq)
+	if err != nil {
+		t.Fatalf("CompleteStream() error = %v, want nil", err)
+	}
+
+	var events []CompleteStreamEvent
+	for event := range stream {
+		events = append(events, event)
+	}
+
+	if len(client.Requests) != 1 {
+		t.Fatalf("len(Requests) = %d, want %d", len(client.Requests), 1)
+	}
+	if len(events) != 2 {
+		t.Fatalf("len(events) = %d, want %d", len(events), 2)
+	}
+	if events[0].Delta != "Hi" {
+		t.Fatalf("events[0].Delta = %q, want %q", events[0].Delta, "Hi")
+	}
+	if events[1].Usage == nil || events[1].Usage.OutputTokens != 1 {
+		t.Fatalf("events[1].Usage = %#v, want OutputTokens=1", events[1].Usage)
+	}
+}
