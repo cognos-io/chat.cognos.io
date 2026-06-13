@@ -31,25 +31,34 @@ approach to ProtonMail which encrypts user emails.
 - (you can also be proactive and fix something you haven't done but make it a separate commit)
 - prefer small conventional commits with a helpful title and very short description when working on
   larger tasks as code will be reviewed commit-by-commit
-- ask clarifying questions. minimise assumptions.
+- ask clarifying questions. minimise assumptions. use the decision maker skill for fast decisions
+  but ask if that also is unsure.
 
 ## Tools
 
-| Use       | Don't use            |
-| --------- | -------------------- |
-| `pnpm`    | `npm`, `yarn`        |
-| `podman`  | `docker`             |
-| `just`    | `make`               |
-| `mise`    | `gvm`, `nvm`, `asdf` |
-| `python3` | `python`             |
-| `uv`      | `pip`                |
+| Use ✅        | Do not use ❌                    |
+| ------------- | -------------------------------- |
+| `uv`          | `pip` `pipenv` etc               |
+| `just`        | `make`                           |
+| `podman`      | `docker`                         |
+| `dragonflydb` | `redis`                          |
+| `ty`          | `mypy` `pyright`                 |
+| `pnpm`        | `npm` `yarn` `bun`               |
+| `paddle`      | `stripe` `polar` `lemon squeezy` |
+| `http`        | `curl` `wget`                    |
+| `uv run`      | `python3` `python`               |
+| `mise`        | `nvm` `gvm` `asdf` etc           |
 
 ## Testing
 
-Tests should cover both sunny and rainy day cases including invalid data gets handled correctly.
+Tests should cover both sunny, rainy and edge cases including invalid data gets handled correctly
+and behaviour is expected.
 
 When testing locally, run the backend, frontend and web on non-standard ports so as not to conflict
 with other development ports.
+
+- Unit tests for hot and critical code paths
+- Red/green tests wherever possible
 
 ### Data access
 
