@@ -19,15 +19,11 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
-	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/go-co-op/gocron/v2"
-	"github.com/google/generative-ai-go/genai"
-	"github.com/liushuangls/go-anthropic/v2"
 	bifrostschemas "github.com/maximhq/bifrost/core/schemas"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
-	oai "github.com/sashabaranov/go-openai"
 
 	_ "github.com/cognos-io/chat.cognos.io/backend/db/migrations" // import migration files
 )
@@ -35,14 +31,7 @@ import (
 type appHookParams struct {
 	App                     core.App
 	Config                  *config.APIConfig
-	OpenaiClient            *oai.Client
-	InfomaniakOpenAIClient  *oai.Client
-	CloudflareOpenAIClient  *oai.Client
-	GoogleGeminiClient      *genai.Client
-	AnthropicClient         *anthropic.Client
-	DeepinfraOpenAIClient   *oai.Client
 	CronScheduler           gocron.Scheduler
-	UpstreamRepo            proxy.UpstreamRepo
 	GatewayClient           gateway.Client
 	MessageRepo             chat.MessageRepo
 	KeyPairRepo             auth.KeyPairRepo
@@ -58,11 +47,7 @@ type appHookParams struct {
 	CatalogueService        catalogue.Service
 }
 
-func NewServer(
-	logger *slog.Logger,
-	config *config.APIConfig,
-	openaiClient *oai.Client,
-) *pocketbase.PocketBase {
+func NewServer() *pocketbase.PocketBase {
 	app := pocketbase.New()
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
@@ -339,7 +324,7 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		return fmt.Errorf("failed to create scheduler: %w", err)
 	}
 
-	app := NewServer(logger, config, nil)
+	app := NewServer()
 
 	bindAppHooks(appHookParams{
 		App:           app,

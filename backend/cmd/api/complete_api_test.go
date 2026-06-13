@@ -14,47 +14,11 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
-	"github.com/cognos-io/chat.cognos.io/backend/pkg/proxy"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
-	oai "github.com/sashabaranov/go-openai"
 	"golang.org/x/crypto/nacl/box"
 )
-
-type stubUpstreamRepo struct {
-	upstream proxy.Upstream
-	err      error
-}
-
-func (r stubUpstreamRepo) Provider(provider string) (proxy.Upstream, error) {
-	if r.err != nil {
-		return nil, r.err
-	}
-	return r.upstream, nil
-}
-
-type stubUpstream struct {
-	response       oai.ChatCompletionResponse
-	text           string
-	err            error
-	noRetentionErr error
-}
-
-func (u stubUpstream) LookupModel(internalModel string) (string, error) {
-	return internalModel, nil
-}
-
-func (u stubUpstream) EnsureNoRetention() error {
-	return u.noRetentionErr
-}
-
-func (u stubUpstream) ChatCompletion(
-	_ *core.RequestEvent,
-	_ oai.ChatCompletionRequest,
-) (oai.ChatCompletionResponse, string, error) {
-	return u.response, u.text, u.err
-}
 
 type stubConversationRepo struct {
 	byID func(id string) (chat.Conversation, error)
@@ -109,7 +73,6 @@ func TestCompletionsRejectNonWhitelistedModelBeforeGatewayCall(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:  gatewayClient,
 				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
@@ -193,7 +156,6 @@ func TestConversationCompletePersistsEncryptedMessages(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:  gatewayClient,
 				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
@@ -282,7 +244,6 @@ func TestCompletionsTemporaryDoesNotPersistMessages(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:  gatewayClient,
 				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
@@ -363,7 +324,6 @@ func TestCompletionsReturnStructuredBillingRestrictionBeforeGatewayCall(t *testi
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:  gatewayClient,
 				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
@@ -417,7 +377,6 @@ func TestCompletionsAllowPayGUsersWhenBillingStateIsPresent(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:  gatewayClient,
 				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
@@ -472,7 +431,6 @@ func TestCompletionsRecordPayGUsageAfterGatewayCall(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:      stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:     gatewayClient,
 				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService:    billing.NewService(),
@@ -549,7 +507,6 @@ func TestCompletionsRecordUnlimitedUsageWithoutDeduction(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:      stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:     gatewayClient,
 				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService:    billing.NewService(),
@@ -620,7 +577,6 @@ func TestCompletionsRecordTrialUsageAndBalanceAfter(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:      stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:     gatewayClient,
 				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService:    billing.NewService(),
@@ -685,7 +641,6 @@ func TestCompletionsDoNotRecordUsageWhenBillingBlocksRequest(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:      stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:     gatewayClient,
 				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService:    billing.NewService(),
@@ -747,7 +702,6 @@ func TestCompletionsUseFXRateProviderForResponseAndLedger(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:      stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:     gatewayClient,
 				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService:    billing.NewService(),
@@ -820,7 +774,6 @@ func TestCompletionsEmitUsageEventAfterGatewayCall(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:  gatewayClient,
 				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
@@ -906,7 +859,6 @@ func TestCompletionsReturnTrialExhaustedBeforeGatewayCall(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:  gatewayClient,
 				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
@@ -952,7 +904,6 @@ func TestConversationCompleteCleansUpRequestMessageOnProviderError(t *testing.T)
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:  gatewayClient,
 				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
@@ -1054,7 +1005,6 @@ func TestConversationCompleteRejectsNonParticipant(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:  gatewayClient,
 				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),

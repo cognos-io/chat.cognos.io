@@ -211,7 +211,6 @@ func TestCompletionsUsePocketBaseBillingReposByDefault(t *testing.T) {
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
-				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
 				GatewayClient:  gatewayClient,
 				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
