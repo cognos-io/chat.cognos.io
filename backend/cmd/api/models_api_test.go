@@ -159,6 +159,108 @@ func TestModelsGetHidesProviderRoutingFields(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestModelsGetReturnsCuratedMetadataAndSkipsDisabledOrUnwhitelistedModels(t *testing.T) {
+	t.Parallel()
+
+	scenario := tests.ApiScenario{
+		Name:           "models route returns curated metadata and skips disabled catalogue entries",
+		Method:         http.MethodGet,
+		URL:            "/api/v1/models",
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"id":"oss-eu-model"`,
+			`"provider_id":"openai"`,
+			`"provider_name":"OpenAI"`,
+			`"hosting_country":"CH"`,
+			`"hosting_region":"switzerland"`,
+			`"is_open_source":true`,
+			`"no_retention":true`,
+			`"category":"residency"`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+
+			providerID := seedAIProvider(t, app, providerSeed{
+				ProviderID:        "openai",
+				Name:              "OpenAI",
+				Enabled:           true,
+				RoutingProviderID: "openai",
+			})
+			disabledProviderID := seedAIProvider(t, app, providerSeed{
+				ProviderID:        "disabled-provider",
+				Name:              "Disabled Provider",
+				Enabled:           false,
+				RoutingProviderID: "openai",
+			})
+			residencyTagID := seedAITag(t, app, tagSeed{Slug: "switzerland-extra", Title: "Switzerland", Category: "residency"})
+
+			seedAIModel(t, app, modelSeed{
+				ModelID:                   "oss-eu-model",
+				ProviderRecordID:          providerID,
+				ProviderModelID:           "openai/gpt-4o-mini",
+				Name:                      "OSS EU Model",
+				Slug:                      "oss-eu-model",
+				Description:               "Allowed curated model",
+				Enabled:                   true,
+				Whitelisted:               true,
+				PrivacyTier:               "eu",
+				HostingCountry:            "CH",
+				HostingRegion:             "switzerland",
+				NoRetention:               true,
+				IsOpenSource:              true,
+				InputContextTokens:        64000,
+				MaxOutputTokens:           4096,
+				InputUSDPerMillionTokens:  1,
+				OutputUSDPerMillionTokens: 2,
+				TagRecordIDs:              []string{residencyTagID},
+			})
+			seedAIModel(t, app, modelSeed{
+				ModelID:                   "not-whitelisted",
+				ProviderRecordID:          providerID,
+				ProviderModelID:           "openai/not-whitelisted",
+				Name:                      "Not Whitelisted",
+				Slug:                      "not-whitelisted",
+				Description:               "Should not leak",
+				Enabled:                   true,
+				Whitelisted:               false,
+				PrivacyTier:               "eu",
+				InputContextTokens:        32000,
+				InputUSDPerMillionTokens:  1,
+				OutputUSDPerMillionTokens: 2,
+			})
+			seedAIModel(t, app, modelSeed{
+				ModelID:                   "provider-disabled-model",
+				ProviderRecordID:          disabledProviderID,
+				ProviderModelID:           "openai/provider-disabled",
+				Name:                      "Provider Disabled",
+				Slug:                      "provider-disabled-model",
+				Description:               "Should not leak",
+				Enabled:                   true,
+				Whitelisted:               true,
+				PrivacyTier:               "eu",
+				InputContextTokens:        32000,
+				InputUSDPerMillionTokens:  1,
+				OutputUSDPerMillionTokens: 2,
+			})
+		},
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, res *http.Response) {
+			bodyBytes, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatalf("read response: %v", err)
+			}
+			body := string(bodyBytes)
+			for _, banned := range []string{"not-whitelisted", "provider-disabled-model"} {
+				if strings.Contains(body, banned) {
+					t.Fatalf("models response leaked %q: %s", banned, body)
+				}
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func TestModelsGetDefaultsUnknownPrivacyTierToEU(t *testing.T) {
 	t.Parallel()
 

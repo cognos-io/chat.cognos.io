@@ -89,6 +89,7 @@ interface ApiModel {
   name: string;
   slug: string;
   provider_id: string;
+  provider_name?: string;
   description: string;
   privacy_tier: PrivacyTier;
   tags?: ApiTag[];
@@ -96,6 +97,10 @@ interface ApiModel {
   input_context_tokens: number;
   max_output_tokens?: number;
   pricing: ApiPricing;
+  no_retention?: boolean;
+  is_open_source?: boolean;
+  hosting_country?: string;
+  hosting_region?: string;
   is_eligible: boolean;
   ineligibility_reason?: string;
 }
@@ -577,6 +582,7 @@ export class CognosApiService {
       name: model.name,
       slug: model.slug,
       providerId: model.provider_id,
+      providerName: model.provider_name,
       description: model.description,
       privacyTier: model.privacy_tier,
       tags: model.tags ?? [],
@@ -587,6 +593,10 @@ export class CognosApiService {
         inputUsdPerMillionTokens: model.pricing.input_usd_per_million_tokens,
         outputUsdPerMillionTokens: model.pricing.output_usd_per_million_tokens,
       },
+      noRetention: model.no_retention,
+      isOpenSource: model.is_open_source,
+      hostingCountry: model.hosting_country,
+      hostingRegion: model.hosting_region,
       isEligible: model.is_eligible,
       ineligibilityReason: model.ineligibility_reason,
     });

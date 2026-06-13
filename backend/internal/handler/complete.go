@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -84,6 +85,7 @@ type completeResponse struct {
 
 type CompleteHandlerParams struct {
 	Logger              *slog.Logger
+	CatalogueService    catalogue.Service
 	GatewayClient       gateway.Client
 	MessageRepo         chat.MessageRepo
 	ConversationRepo    chat.ConversationRepo
@@ -145,7 +147,11 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			return apis.NewBadRequestError("Last message must have role user", nil)
 		}
 
-		model, ok := catalogue.GetModelByID(req.ModelID)
+		model, ok, err := params.CatalogueService.GetModelByID(context.Background(), req.ModelID)
+		if err != nil {
+			params.Logger.Error("catalogue lookup failed", "err", err)
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load model", err)
+		}
 		if !ok || !model.IsActive {
 			return apis.NewBadRequestError("Invalid model ID", nil)
 		}

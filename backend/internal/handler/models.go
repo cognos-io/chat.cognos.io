@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
@@ -21,7 +22,7 @@ type modelsResponse struct {
 	Models           []modelResponse       `json:"models"`
 }
 
-func ModelsGet() func(e *core.RequestEvent) error {
+func ModelsGet(catalogueService catalogue.Service) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		if !auth.IsAuthenticated(e) {
 			return apis.NewUnauthorizedError("User not authenticated", nil)
@@ -30,7 +31,11 @@ func ModelsGet() func(e *core.RequestEvent) error {
 		userTier := catalogue.NormalizePrivacyTier(e.Auth.GetString("privacy_tier"))
 		preferredModelID := e.Auth.GetString("preferred_model_id")
 
-		models := catalogue.ActiveModels()
+		models, err := catalogueService.ActiveModels(context.Background())
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load models", err)
+		}
+
 		responseModels := make([]modelResponse, 0, len(models))
 		for _, model := range models {
 			isEligible := catalogue.IsEligibleForTier(userTier, model.PrivacyTier)

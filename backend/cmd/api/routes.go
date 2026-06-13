@@ -9,6 +9,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/analytics"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
@@ -103,6 +104,7 @@ func addPocketBaseRoutes(
 	e *core.ServeEvent,
 	app core.App,
 	logger *slog.Logger,
+	catalogueService catalogue.Service,
 	gatewayClient gateway.Client,
 	messageRepo chat.MessageRepo,
 	aiAgentRepo aiagent.AIAgentRepo,
@@ -117,7 +119,7 @@ func addPocketBaseRoutes(
 ) {
 	e.Router.GET(
 		"/api/v1/models",
-		handler.ModelsGet(),
+		handler.ModelsGet(catalogueService),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),
@@ -227,6 +229,7 @@ func addPocketBaseRoutes(
 
 	completeParams := handler.CompleteHandlerParams{
 		Logger:              logger,
+		CatalogueService:    catalogueService,
 		GatewayClient:       gatewayClient,
 		MessageRepo:         messageRepo,
 		ConversationRepo:    conversationRepo,

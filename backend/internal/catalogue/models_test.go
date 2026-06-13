@@ -1,83 +1,123 @@
 package catalogue
 
-import "testing"
+import (
+	"context"
+	"errors"
+	"testing"
+	"time"
+)
 
-func TestGetModelByID(t *testing.T) {
+type stubRepo struct {
+	models []Model
+	err    error
+	calls  int
+}
+
+func (r *stubRepo) ActiveModels(context.Context) ([]Model, error) {
+	r.calls++
+	if r.err != nil {
+		return nil, r.err
+	}
+	return CloneModels(r.models), nil
+}
+
+func TestCachedServiceGetModelByID(t *testing.T) {
 	t.Parallel()
 
-	got, ok := GetModelByID("llama-3-3-infomaniak")
+	repo := &stubRepo{models: []Model{{
+		ID:              "llama-3-3-infomaniak",
+		Name:            "Llama 3.3",
+		ProviderID:      "infomaniak",
+		ProviderModelID: "llama-3.3-70b-instruct",
+		PrivacyTier:     PrivacyTierCHOnly,
+		NoRetention:     true,
+		IsActive:        true,
+	}}}
+	service := NewCachedService(repo, time.Minute, func() time.Time { return time.Unix(1, 0) })
+
+	got, ok, err := service.GetModelByID(context.Background(), "llama-3-3-infomaniak")
+	if err != nil {
+		t.Fatalf("GetModelByID() error = %v, want nil", err)
+	}
 	if !ok {
-		t.Fatal("GetModelByID(llama-3-3-infomaniak) ok = false, want true")
+		t.Fatal("GetModelByID() ok = false, want true")
 	}
 	if got.ProviderID != "infomaniak" {
-		t.Errorf("GetModelByID(llama-3-3-infomaniak) provider = %q, want %q", got.ProviderID, "infomaniak")
+		t.Errorf("GetModelByID() provider = %q, want %q", got.ProviderID, "infomaniak")
+	}
+	if repo.calls != 1 {
+		t.Fatalf("ActiveModels() calls = %d, want %d", repo.calls, 1)
 	}
 }
 
-func TestGetModelByIDMissing(t *testing.T) {
+func TestCachedServiceGetModelByIDMissing(t *testing.T) {
 	t.Parallel()
 
-	_, ok := GetModelByID("missing")
+	service := NewCachedService(&stubRepo{}, time.Minute, func() time.Time { return time.Unix(1, 0) })
+
+	_, ok, err := service.GetModelByID(context.Background(), "missing")
+	if err != nil {
+		t.Fatalf("GetModelByID() error = %v, want nil", err)
+	}
 	if ok {
-		t.Fatal("GetModelByID(missing) ok = true, want false")
+		t.Fatal("GetModelByID() ok = true, want false")
 	}
 }
 
-func TestActiveModels(t *testing.T) {
+func TestCachedServiceCachesUntilTTLExpires(t *testing.T) {
 	t.Parallel()
 
-	got := ActiveModels()
-	if len(got) != 1 {
-		t.Fatalf("ActiveModels() len = %d, want %d", len(got), 1)
+	now := time.Unix(1, 0)
+	repo := &stubRepo{models: []Model{{ID: "model-a", Name: "Model A", ProviderName: "Provider"}}}
+	service := NewCachedService(repo, time.Minute, func() time.Time { return now })
+
+	if _, err := service.ActiveModels(context.Background()); err != nil {
+		t.Fatalf("ActiveModels() first call error = %v, want nil", err)
 	}
-	if !got[0].IsActive {
-		t.Errorf("ActiveModels()[0].IsActive = %t, want true", got[0].IsActive)
+	if _, err := service.ActiveModels(context.Background()); err != nil {
+		t.Fatalf("ActiveModels() second call error = %v, want nil", err)
+	}
+	if repo.calls != 1 {
+		t.Fatalf("ActiveModels() calls before ttl = %d, want %d", repo.calls, 1)
+	}
+
+	now = now.Add(2 * time.Minute)
+	if _, err := service.ActiveModels(context.Background()); err != nil {
+		t.Fatalf("ActiveModels() after ttl error = %v, want nil", err)
+	}
+	if repo.calls != 2 {
+		t.Fatalf("ActiveModels() calls after ttl = %d, want %d", repo.calls, 2)
 	}
 }
 
-// TestActiveModelsAreApprovedInfomaniakOnly pins the spec invariant that
-// only approved Infomaniak models are active in the first cut. Any new
-// active model with a different provider — or one that does not require
-// no-retention — must be an intentional spec change with a corresponding
-// update here.
-func TestActiveModelsAreApprovedInfomaniakOnly(t *testing.T) {
+func TestCachedServiceInvalidateForcesReload(t *testing.T) {
 	t.Parallel()
 
-	for _, model := range ActiveModels() {
-		if model.ProviderID != "infomaniak" {
-			t.Errorf("active model %q has provider %q, want infomaniak", model.ID, model.ProviderID)
-		}
-		if !model.RequiresNoRetention {
-			t.Errorf("active model %q does not require no-retention", model.ID)
-		}
-		if model.PrivacyTier != PrivacyTierCHOnly {
-			t.Errorf("active model %q has privacy tier %q, want ch_only", model.ID, model.PrivacyTier)
-		}
+	now := time.Unix(1, 0)
+	repo := &stubRepo{models: []Model{{ID: "model-a", Name: "Model A", ProviderName: "Provider"}}}
+	service := NewCachedService(repo, time.Hour, func() time.Time { return now })
+
+	if _, err := service.ActiveModels(context.Background()); err != nil {
+		t.Fatalf("ActiveModels() initial call error = %v, want nil", err)
+	}
+	service.Invalidate()
+	if _, err := service.ActiveModels(context.Background()); err != nil {
+		t.Fatalf("ActiveModels() after invalidate error = %v, want nil", err)
+	}
+	if repo.calls != 2 {
+		t.Fatalf("ActiveModels() calls = %d, want %d", repo.calls, 2)
 	}
 }
 
-func TestModelsAvailableForTier(t *testing.T) {
+func TestCachedServiceReturnsRepoError(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name     string
-		userTier PrivacyTier
-		wantLen  int
-	}{
-		{name: "strictest tier", userTier: PrivacyTierCHOnly, wantLen: 1},
-		{name: "eu tier", userTier: PrivacyTierEU, wantLen: 1},
-		{name: "global tier", userTier: PrivacyTierGlobal, wantLen: 1},
-	}
+	wantErr := errors.New("repo unavailable")
+	service := NewCachedService(&stubRepo{err: wantErr}, time.Minute, func() time.Time { return time.Unix(1, 0) })
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			got := ModelsAvailableForTier(tt.userTier)
-			if len(got) != tt.wantLen {
-				t.Fatalf("ModelsAvailableForTier(%q) len = %d, want %d", tt.userTier, len(got), tt.wantLen)
-			}
-		})
+	_, err := service.ActiveModels(context.Background())
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("ActiveModels() error = %v, want %v", err, wantErr)
 	}
 }
 

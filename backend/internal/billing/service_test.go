@@ -13,9 +13,11 @@ func TestCalculateCostUsesProviderCostWhenAvailable(t *testing.T) {
 	providerCostUSD := 0.1234
 	wantUserCostUSD := providerCostUSD * 1.2
 	service := NewService()
-	model, ok := catalogue.GetModelByID("llama-3-3-infomaniak")
-	if !ok {
-		t.Fatal("GetModelByID(llama-3-3-infomaniak) ok = false, want true")
+	model := catalogue.Model{
+		Pricing: catalogue.Pricing{
+			InputUSDPerMillionTokens:  1,
+			OutputUSDPerMillionTokens: 2,
+		},
 	}
 
 	got := service.CalculateCost(model, Usage{

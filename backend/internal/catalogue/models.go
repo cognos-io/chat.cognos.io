@@ -17,7 +17,9 @@ const (
 )
 
 type Tag struct {
-	Title string `json:"title"`
+	Slug     string `json:"slug,omitempty"`
+	Title    string `json:"title"`
+	Category string `json:"category,omitempty"`
 }
 
 type Pricing struct {
@@ -31,6 +33,7 @@ type Model struct {
 	Slug                string        `json:"slug"`
 	Description         string        `json:"description"`
 	ProviderID          string        `json:"provider_id"`
+	ProviderName        string        `json:"provider_name,omitempty"`
 	ProviderModelID     string        `json:"-"`
 	PrivacyTier         PrivacyTier   `json:"privacy_tier"`
 	Tags                []Tag         `json:"tags,omitempty"`
@@ -38,68 +41,16 @@ type Model struct {
 	InputContextTokens  int           `json:"input_context_tokens"`
 	MaxOutputTokens     int           `json:"max_output_tokens,omitempty"`
 	Pricing             Pricing       `json:"pricing"`
-	RequiresNoRetention bool          `json:"-"`
+	NoRetention         bool          `json:"no_retention"`
+	IsOpenSource        bool          `json:"is_open_source"`
+	HostingCountry      string        `json:"hosting_country,omitempty"`
+	HostingRegion       string        `json:"hosting_region,omitempty"`
+	ProviderDescription string        `json:"provider_description,omitempty"`
 	IsActive            bool          `json:"-"`
 }
 
-var allModels = []Model{
-	{
-		ID:              "llama-3-3-infomaniak",
-		Name:            "Llama 3.3",
-		Slug:            "llama-3-3-infomaniak",
-		Description:     "Meta's Llama 3.3 model, hosted in Switzerland by Infomaniak with no data retention.",
-		ProviderID:      "infomaniak",
-		ProviderModelID: "llama-3.3-70b-instruct",
-		PrivacyTier:     PrivacyTierCHOnly,
-		Tags: []Tag{
-			{Title: "general-purpose"},
-			{Title: "switzerland"},
-		},
-		ContentTypes:       []ContentType{ContentTypeText},
-		InputContextTokens: 128_000,
-		MaxOutputTokens:    8_192,
-		Pricing: Pricing{
-			InputUSDPerMillionTokens:  1,
-			OutputUSDPerMillionTokens: 2,
-		},
-		RequiresNoRetention: true,
-		IsActive:            true,
-	},
-}
-
-func AllModels() []Model {
-	return slices.Clone(allModels)
-}
-
-func ActiveModels() []Model {
-	models := make([]Model, 0, len(allModels))
-	for _, model := range allModels {
-		if !model.IsActive {
-			continue
-		}
-		models = append(models, model)
-	}
-	return models
-}
-
-func GetModelByID(modelID string) (Model, bool) {
-	for _, model := range allModels {
-		if model.ID == modelID {
-			return model, true
-		}
-	}
-	return Model{}, false
-}
-
-func ModelsAvailableForTier(userTier PrivacyTier) []Model {
-	models := make([]Model, 0, len(allModels))
-	for _, model := range allModels {
-		if !model.IsActive || !IsEligibleForTier(userTier, model.PrivacyTier) {
-			continue
-		}
-		models = append(models, model)
-	}
-	return models
+func CloneModels(models []Model) []Model {
+	return slices.Clone(models)
 }
 
 func IsEligibleForTier(userTier PrivacyTier, modelTier PrivacyTier) bool {

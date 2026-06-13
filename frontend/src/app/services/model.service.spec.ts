@@ -69,6 +69,7 @@ describe('ModelService', () => {
           name: 'Llama 3.3',
           slug: 'llama-3-3-infomaniak',
           provider_id: 'infomaniak',
+          provider_name: 'Infomaniak',
           description: 'Swiss-hosted model',
           privacy_tier: 'ch_only',
           tags: [{ title: 'general-purpose' }],
@@ -79,6 +80,10 @@ describe('ModelService', () => {
             input_usd_per_million_tokens: 0,
             output_usd_per_million_tokens: 0,
           },
+          no_retention: true,
+          is_open_source: true,
+          hosting_country: 'CH',
+          hosting_region: 'switzerland',
           is_eligible: true,
         },
       ],
@@ -87,6 +92,10 @@ describe('ModelService', () => {
     expect(service.modelList()).toHaveLength(1);
     expect(service.selectedModel().id).toBe('llama-3-3-infomaniak');
     expect(service.selectedModel().providerId).toBe('infomaniak');
+    expect(service.selectedModel().providerName).toBe('Infomaniak');
+    expect(service.selectedModel().noRetention).toBe(true);
+    expect(service.selectedModel().isOpenSource).toBe(true);
+    expect(service.selectedModel().hostingCountry).toBe('CH');
     expect(service.getModel('llama-3-3-infomaniak')?.name).toBe('Llama 3.3');
   });
 

@@ -84,6 +84,65 @@ func TestCompletionsRequireAuth(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestCompletionsRejectNonWhitelistedModelBeforeGatewayCall(t *testing.T) {
+	t.Parallel()
+
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(context.Context, gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			t.Fatal("Complete() should not be called for non-whitelisted models")
+			return gateway.CompleteResponse{}, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "generic completions reject curated but non-whitelisted models before gateway call",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"non-whitelisted-model",
+			"agent_id":"cognos:simple-assistant",
+			"messages":[{"role":"user","content":"hello"}]
+		}`),
+		ExpectedStatus: http.StatusBadRequest,
+		ExpectedContent: []string{
+			`"message":"Invalid model ID."`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				UpstreamRepo:   stubUpstreamRepo{upstream: stubUpstream{}},
+				GatewayClient:  gatewayClient,
+				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService: billing.NewService(),
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			providerID := seedAIProvider(t, app, providerSeed{
+				ProviderID:        "openai",
+				Name:              "OpenAI",
+				Enabled:           true,
+				RoutingProviderID: "openai",
+			})
+			seedAIModel(t, app, modelSeed{
+				ModelID:                   "non-whitelisted-model",
+				ProviderRecordID:          providerID,
+				ProviderModelID:           "openai/gpt-4o-mini",
+				Name:                      "Non Whitelisted",
+				Slug:                      "non-whitelisted-model",
+				Description:               "Should be rejected",
+				Enabled:                   true,
+				Whitelisted:               false,
+				PrivacyTier:               "eu",
+				InputContextTokens:        32000,
+				InputUSDPerMillionTokens:  1,
+				OutputUSDPerMillionTokens: 2,
+			})
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func TestConversationCompletePersistsEncryptedMessages(t *testing.T) {
 	t.Parallel()
 
