@@ -45,9 +45,15 @@ export default defineConfig({
         },
         {
           command:
-            'sh -c \'cat > configs/api.local.yaml <<"EOF"\ninfomaniak:\n  api_key: e2e-dummy-key\n  url: ' +
-            AI_MOCK_URL +
-            '\n  product_id: e2e-dummy-product\nEOF\ntrap "rm -f configs/api.local.yaml" EXIT\ngo run ./cmd/api serve --dev --dir ./pb_data\'',
+            'sh -c ' +
+            JSON.stringify(
+              [
+                'COGNOS_INFOMANIAK_API_KEY=e2e-dummy-key',
+                `COGNOS_INFOMANIAK_URL=${AI_MOCK_URL}`,
+                'COGNOS_INFOMANIAK_PRODUCT_ID=e2e-dummy-product',
+                'go run ./cmd/api serve --dev --dir ./pb_data',
+              ].join(' '),
+            ),
           cwd: '../backend',
           url: `${POCKETBASE_URL}/health`,
           reuseExistingServer: !process.env.CI,

@@ -1,10 +1,10 @@
 // mock-ai-provider is the OpenAI-shaped completions stub used by the e2e
 // suite and by `just dev` so completion requests don't need a real upstream.
 //
-// The dev/test infomaniak.url is pointed here (configs/api.local.yaml). The
-// reply is deterministic and intentionally short — the goal is to pin the
-// HTTP contract between the backend gateway and the upstream, not to
-// imitate LLM output.
+// The e2e harness points COGNOS_INFOMANIAK_URL here explicitly for the backend
+// process it launches. The reply is deterministic and intentionally short —
+// the goal is to pin the HTTP contract between the backend gateway and the
+// upstream, not to imitate LLM output.
 package main
 
 import (
