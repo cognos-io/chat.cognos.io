@@ -35,7 +35,12 @@ const notBlankValidator = (): ValidatorFn => {
   standalone: true,
   imports: [ReactiveFormsModule, CognosDialogSurfaceComponent, CognosButtonComponent],
   template: `
-    <cog-dialog-surface title="Edit conversation" [footer]="true" (close)="close()">
+    <cog-dialog-surface
+      title="Edit conversation"
+      [footer]="true"
+      [width]="560"
+      (close)="close()"
+    >
       <form [formGroup]="editForm" [id]="formId" class="edit-conversation-dialog">
         <div class="edit-conversation-dialog__field">
           <label class="edit-conversation-dialog__label" for="conversation-title">

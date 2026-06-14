@@ -24,7 +24,12 @@ export const expiringDurations = [
   standalone: true,
   imports: [ReactiveFormsModule, CognosDialogSurfaceComponent, CognosButtonComponent],
   template: `
-    <cog-dialog-surface title="Disappearing messages" [footer]="true" (close)="close()">
+    <cog-dialog-surface
+      title="Disappearing messages"
+      [footer]="true"
+      [width]="560"
+      (close)="close()"
+    >
       <div class="temporary-message-dialog">
         <div class="temporary-message-dialog__copy">
           <p>Make your messages disappear.</p>
