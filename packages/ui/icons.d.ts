@@ -20,6 +20,7 @@ export type CognosIconName =
   | 'server'
   | 'cloud'
   | 'folder'
+  | 'git-branch'
   | 'landmark'
   | 'graduation-cap'
   | 'users'
