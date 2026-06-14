@@ -113,14 +113,22 @@ type CompleteHandlerParams struct {
 }
 
 func Complete(params CompleteHandlerParams) func(e *core.RequestEvent) error {
-	return complete(params, false)
+	return complete(params, false, false)
 }
 
 func CompleteConversation(params CompleteHandlerParams) func(e *core.RequestEvent) error {
-	return complete(params, true)
+	return complete(params, true, false)
 }
 
-func complete(params CompleteHandlerParams, useConversationPath bool) func(e *core.RequestEvent) error {
+// RegenerateConversation produces a new assistant response to an EXISTING
+// message instead of persisting a fresh user turn. The new assistant message
+// is parented to req.ParentMessageID, making it a sibling branch of any
+// previous response to the same message.
+func RegenerateConversation(params CompleteHandlerParams) func(e *core.RequestEvent) error {
+	return complete(params, true, true)
+}
+
+func complete(params CompleteHandlerParams, useConversationPath bool, regenerate bool) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		owner := auth.ExtractUser(e)
 		if owner == nil {
@@ -153,6 +161,9 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 		}
 		if lastMessage.Role != "user" {
 			return apis.NewBadRequestError("Last message must have role user", nil)
+		}
+		if regenerate && req.ParentMessageID == "" {
+			return apis.NewBadRequestError("Parent message ID is required to regenerate", nil)
 		}
 
 		model, ok, err := params.CatalogueService.GetModelByID(context.Background(), req.ModelID)
@@ -265,20 +276,36 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			})
 		}
 
+		// The assistant response is parented to the freshly persisted user
+		// message in the normal flow, or to the existing message being
+		// regenerated.
+		assistantParentID := req.ParentMessageID
+
 		var userMessageRecord *core.Record
 		if shouldPersist {
-			err, userMessageRecord = params.MessageRepo.EncryptAndPersistMessage(
-				conversation,
-				req.ParentMessageID,
-				chat.MessageRecordData{
-					OwnerID:   owner.ID,
-					Content:   lastMessage.Content,
-					CreatedAt: time.Now().UTC().Format(time.RFC3339),
-				},
-			)
-			if err != nil {
-				params.Logger.Error("failed to save request message", "err", err)
-				return apis.NewApiError(http.StatusInternalServerError, "Failed to save request message", err)
+			if regenerate {
+				// Confirm the parent message exists and belongs to this
+				// conversation before we attach a sibling to it — otherwise a
+				// caller could parent a response onto another thread's message.
+				parentRecord, err := e.App.FindRecordById("messages", req.ParentMessageID)
+				if err != nil || parentRecord.GetString("conversation") != conversationID {
+					return apis.NewNotFoundError("Parent message not found or unable to load", nil)
+				}
+			} else {
+				err, userMessageRecord = params.MessageRepo.EncryptAndPersistMessage(
+					conversation,
+					req.ParentMessageID,
+					chat.MessageRecordData{
+						OwnerID:   owner.ID,
+						Content:   lastMessage.Content,
+						CreatedAt: time.Now().UTC().Format(time.RFC3339),
+					},
+				)
+				if err != nil {
+					params.Logger.Error("failed to save request message", "err", err)
+					return apis.NewApiError(http.StatusInternalServerError, "Failed to save request message", err)
+				}
+				assistantParentID = userMessageRecord.Id
 			}
 		}
 
@@ -322,7 +349,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 		if shouldPersist {
 			err, assistantMessageRecord = params.MessageRepo.EncryptAndPersistMessage(
 				conversation,
-				userMessageRecord.Id,
+				assistantParentID,
 				chat.MessageRecordData{
 					Content:   gatewayResp.Message.Content,
 					AgentID:   req.AgentID,
@@ -409,6 +436,8 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 		if userMessageRecord != nil {
 			response.UserMessageID = userMessageRecord.Id
 			response.AssistantMessage.ParentMessageID = userMessageRecord.Id
+		} else if regenerate {
+			response.AssistantMessage.ParentMessageID = req.ParentMessageID
 		}
 		if assistantMessageRecord != nil {
 			response.AssistantMessage.ID = assistantMessageRecord.Id

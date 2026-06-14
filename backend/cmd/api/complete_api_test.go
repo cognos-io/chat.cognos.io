@@ -1171,6 +1171,143 @@ func TestConversationCompleteCleansUpRequestMessageOnProviderError(t *testing.T)
 	scenario.Test(t)
 }
 
+func TestConversationRegeneratePersistsAssistantSibling(t *testing.T) {
+	t.Parallel()
+
+	gatewayClient := &gateway.MockClient{
+		CompleteStreamFunc: func(_ context.Context, _ gateway.CompleteRequest) (<-chan gateway.CompleteStreamEvent, error) {
+			ch := make(chan gateway.CompleteStreamEvent, 2)
+			ch <- gateway.CompleteStreamEvent{Delta: "fresh take"}
+			ch <- gateway.CompleteStreamEvent{Usage: &gateway.Usage{InputTokens: 10, OutputTokens: 5, TotalTokens: 15}}
+			close(ch)
+			return ch, nil
+		},
+	}
+
+	conversationID := "convregen000001"
+	parentMessageID := "msgregenparent1"
+	var conversationPublicKey [32]byte
+
+	scenario := tests.ApiScenario{
+		Name:   "regenerate persists an assistant sibling with no new user message",
+		Method: http.MethodPost,
+		URL:    "/api/v1/conversations/" + conversationID + "/regenerate",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"agent_id":"cognos:simple-assistant",
+			"request_id":"req-regen-1",
+			"parent_message_id":"msgregenparent1",
+			"messages":[{"role":"user","content":"hello there"}]
+		}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"type":"complete"`,
+			`"parent_message_id":"msgregenparent1"`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService: billing.NewService(),
+				ConversationRepo: stubConversationRepo{
+					byID: func(id string) (chat.Conversation, error) {
+						return chat.Conversation{ID: id, PublicKey: conversationPublicKey}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			conversationPublicKey = seedConversationRecord(t, app, conversationID)
+			seedMessage(t, app, parentMessageID, conversationID, false)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			records, err := app.FindRecordsByFilter(
+				"messages",
+				"conversation={:conversation}",
+				"",
+				10,
+				0,
+				dbx.Params{"conversation": conversationID},
+			)
+			if err != nil {
+				t.Fatalf("FindRecordsByFilter(messages) error = %v", err)
+			}
+			// The seeded parent plus exactly one new assistant message — no new
+			// user message is created when regenerating.
+			if len(records) != 2 {
+				t.Fatalf("FindRecordsByFilter(messages) len = %d, want %d", len(records), 2)
+			}
+			var assistant *core.Record
+			for _, record := range records {
+				if record.Id != parentMessageID {
+					assistant = record
+				}
+			}
+			if assistant == nil {
+				t.Fatal("no new assistant message was persisted")
+			}
+			if got := assistant.GetString("parent_message"); got != parentMessageID {
+				t.Fatalf("assistant parent_message = %q, want %q", got, parentMessageID)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestConversationRegenerateRejectsForeignParentMessage(t *testing.T) {
+	t.Parallel()
+
+	gatewayClient := &gateway.MockClient{
+		CompleteStreamFunc: func(_ context.Context, _ gateway.CompleteRequest) (<-chan gateway.CompleteStreamEvent, error) {
+			t.Fatal("gateway should not be called when the parent message is foreign")
+			return nil, nil
+		},
+	}
+
+	conversationID := "convregen000002"
+	otherConversationID := "convregen000003"
+	foreignMessageID := "msgforeignparen"
+	var conversationPublicKey [32]byte
+
+	scenario := tests.ApiScenario{
+		Name:   "regenerate rejects a parent message from another conversation",
+		Method: http.MethodPost,
+		URL:    "/api/v1/conversations/" + conversationID + "/regenerate",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"agent_id":"cognos:simple-assistant",
+			"request_id":"req-regen-2",
+			"parent_message_id":"msgforeignparen",
+			"messages":[{"role":"user","content":"hello there"}]
+		}`),
+		ExpectedStatus:  http.StatusNotFound,
+		ExpectedContent: []string{"Parent message not found"},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService: billing.NewService(),
+				ConversationRepo: stubConversationRepo{
+					byID: func(id string) (chat.Conversation, error) {
+						return chat.Conversation{ID: id, PublicKey: conversationPublicKey}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			conversationPublicKey = seedConversationRecord(t, app, conversationID)
+			seedConversationRecord(t, app, otherConversationID)
+			// The parent message lives in a different conversation.
+			seedMessage(t, app, foreignMessageID, otherConversationID, false)
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func seedConversationRecord(t testing.TB, app *tests.TestApp, conversationID string) [32]byte {
 	t.Helper()
 
