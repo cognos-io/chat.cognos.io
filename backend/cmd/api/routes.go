@@ -211,6 +211,40 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	e.Router.GET(
+		"/api/v1/conversations/{conversationID}/public-share",
+		handler.ConversationPublicShareGet(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/conversations/{conversationID}/public-share",
+		handler.ConversationPublicShareCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Public, unauthenticated read surface for shared conversations. Gated by
+	// the existence of a share row for the token, NOT by auth — the URL
+	// fragment (held only by the client) is what decrypts the payload. Rate
+	// limited by IP since there's no user to key on.
+	e.Router.GET(
+		"/api/v1/public/conversations/{token}",
+		handler.PublicConversationGet(app),
+	).Bind(
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/public/conversations/{token}/messages",
+		handler.PublicConversationMessagesList(app),
+	).Bind(
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.PATCH(
 		"/api/v1/messages/{messageID}",
 		handler.MessagesUpdate(app),

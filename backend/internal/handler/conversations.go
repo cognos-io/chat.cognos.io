@@ -598,6 +598,15 @@ func ConversationKeyRotate(app core.App) func(e *core.RequestEvent) error {
 				return err
 			}
 
+			// A rotation always invalidates any public link: the new
+			// generation's messages are sealed to a key the old public-share
+			// wrapper can't reach, so the link would silently stop working.
+			// Delete it here so the public URL 404s cleanly and the revoke
+			// semantics ("stop sharing" rotates) hold in one transaction.
+			if err := deleteConversationPublicShare(txApp, conversationID); err != nil {
+				return err
+			}
+
 			pubRecord := core.NewRecord(publicKeysCollection)
 			pubRecord.Set("conversation", conversationID)
 			pubRecord.Set("public_key", req.PublicKey)

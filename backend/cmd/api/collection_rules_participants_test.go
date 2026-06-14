@@ -275,6 +275,47 @@ func TestMessagesCollectionRoutesLocked(t *testing.T) {
 	}
 }
 
+func TestConversationPublicSharesCollectionRoutesLocked(t *testing.T) {
+	t.Parallel()
+
+	// Public sharing exposes a deliberately unauthenticated read surface at
+	// /api/v1/public/conversations/{token}, but the backing collection itself
+	// must stay locked — nobody should be able to enumerate share rows, mint a
+	// share, or revoke one via the raw collection API. Sharing flows through
+	// /api/v1/conversations/{id}/public-share (admin-gated).
+	const sharesRecordID = "cpsrultest00001"
+
+	for _, email := range []string{
+		"test1@example.com", "test2@example.com", "no_data@example.com",
+	} {
+		runLockedCollectionScenario(t,
+			"public_shares.list",
+			http.MethodGet,
+			"/api/collections/conversation_public_shares/records",
+			email)
+		runLockedCollectionScenario(t,
+			"public_shares.view",
+			http.MethodGet,
+			"/api/collections/conversation_public_shares/records/"+sharesRecordID,
+			email)
+		runLockedCollectionScenario(t,
+			"public_shares.create",
+			http.MethodPost,
+			"/api/collections/conversation_public_shares/records",
+			email)
+		runLockedCollectionScenario(t,
+			"public_shares.update",
+			http.MethodPatch,
+			"/api/collections/conversation_public_shares/records/"+sharesRecordID,
+			email)
+		runLockedCollectionScenario(t,
+			"public_shares.delete",
+			http.MethodDelete,
+			"/api/collections/conversation_public_shares/records/"+sharesRecordID,
+			email)
+	}
+}
+
 func TestParticipantsCollectionRoutesLocked(t *testing.T) {
 	t.Parallel()
 
