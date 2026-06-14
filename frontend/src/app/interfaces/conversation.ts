@@ -48,3 +48,31 @@ export interface Conversation {
   decryptedData: ConversationData;
   keyPair: KeyPair;
 }
+
+export const sortConversationsByUpdated = (
+  conversations: Conversation[],
+): Conversation[] => {
+  return [...conversations].sort((a, b) =>
+    b.record.updated.localeCompare(a.record.updated),
+  );
+};
+
+export const partitionConversationsByPinned = (
+  conversations: Conversation[],
+  pinnedConversationIds: readonly string[],
+): { pinned: Conversation[]; recent: Conversation[] } => {
+  const byId = new Map(
+    conversations.map((conversation) => [conversation.record.id, conversation]),
+  );
+  const pinnedSet = new Set(pinnedConversationIds);
+
+  const pinned = pinnedConversationIds
+    .map((id) => byId.get(id))
+    .filter((conversation): conversation is Conversation => conversation !== undefined);
+
+  const recent = sortConversationsByUpdated(
+    conversations.filter((conversation) => !pinnedSet.has(conversation.record.id)),
+  );
+
+  return { pinned, recent };
+};

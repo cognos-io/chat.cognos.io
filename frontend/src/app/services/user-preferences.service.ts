@@ -176,6 +176,7 @@ export class UserPreferencesService {
   };
 
   // selectors
+  public pinnedConversationIds = this.state.pinnedConversations;
   public pinnedModels = this.state.pinnedModels;
 
   // private methods
@@ -299,7 +300,7 @@ export class UserPreferencesService {
   }
 
   public isConversationPinned(conversationId: string): boolean {
-    return this.state().pinnedConversations.includes(conversationId);
+    return this.pinnedConversationIds().includes(conversationId);
   }
 
   public isModelPinned(modelId: string): boolean {

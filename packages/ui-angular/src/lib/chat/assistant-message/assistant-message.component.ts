@@ -1,21 +1,13 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-button.component";
-import { CognosLozengeComponent } from "../../primitives/lozenge/lozenge.component";
+import { CognosIconComponent } from '../../icon/icon.component';
+import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-button.component';
+import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.component';
 
 @Component({
-  selector: "cog-assistant-message",
+  selector: 'cog-assistant-message',
   standalone: true,
-  imports: [
-    CognosIconComponent,
-    CognosIconButtonComponent,
-    CognosLozengeComponent,
-  ],
+  imports: [CognosIconComponent, CognosIconButtonComponent, CognosLozengeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article class="cog-assistant-message">
@@ -91,6 +83,14 @@ import { CognosLozengeComponent } from "../../primitives/lozenge/lozenge.compone
       .cog-assistant-message__content {
         display: grid;
         gap: var(--cog-space-100);
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      @media (min-width: 768px) {
+        .cog-assistant-message__content {
+          max-width: min(88%, 620px);
+        }
       }
 
       .cog-assistant-message__header {
@@ -193,9 +193,9 @@ import { CognosLozengeComponent } from "../../primitives/lozenge/lozenge.compone
   ],
 })
 export class CognosAssistantMessageComponent {
-  readonly model = input("Cognos");
+  readonly model = input('Cognos');
   readonly encrypted = input(true);
-  readonly time = input("");
+  readonly time = input('');
   readonly sources = input(0);
   readonly typing = input(false);
   readonly showActions = input(true);

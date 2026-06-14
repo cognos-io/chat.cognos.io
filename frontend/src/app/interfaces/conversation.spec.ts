@@ -1,9 +1,12 @@
 import { beforeAll, describe, expect, it, test } from 'vitest';
 
 import {
+  Conversation,
   ConversationData,
   parseConversationData,
+  partitionConversationsByPinned,
   serializeConversationData,
+  sortConversationsByUpdated,
 } from './conversation';
 
 class TestTextEncoder {
@@ -86,5 +89,67 @@ describe('conversation data parse and serialize', () => {
 
     expect(payload['title']).toBe('extras dropped');
     expect(payload['secret']).toBeUndefined();
+  });
+});
+
+describe('conversation sidebar ordering', () => {
+  const makeConversation = (id: string, updated: string): Conversation => ({
+    record: {
+      id,
+      created: '2026-01-01T00:00:00.000Z',
+      updated,
+      data: '',
+    },
+    decryptedData: { title: id },
+    keyPair: {
+      publicKey: new Uint8Array(),
+      secretKey: new Uint8Array(),
+    },
+  });
+
+  it('sorts conversations by most recently updated first', () => {
+    const conversations = [
+      makeConversation('old', '2026-01-01T00:00:00.000Z'),
+      makeConversation('newest', '2026-01-03T00:00:00.000Z'),
+      makeConversation('middle', '2026-01-02T00:00:00.000Z'),
+    ];
+
+    expect(sortConversationsByUpdated(conversations).map((c) => c.record.id)).toEqual([
+      'newest',
+      'middle',
+      'old',
+    ]);
+  });
+
+  it('partitions pinned conversations in pin order and recent by updated time', () => {
+    const conversations = [
+      makeConversation('recent-old', '2026-01-01T00:00:00.000Z'),
+      makeConversation('pinned-b', '2026-01-02T00:00:00.000Z'),
+      makeConversation('recent-new', '2026-01-04T00:00:00.000Z'),
+      makeConversation('pinned-a', '2026-01-03T00:00:00.000Z'),
+    ];
+
+    const { pinned, recent } = partitionConversationsByPinned(conversations, [
+      'pinned-a',
+      'pinned-b',
+    ]);
+
+    expect(pinned.map((conversation) => conversation.record.id)).toEqual([
+      'pinned-a',
+      'pinned-b',
+    ]);
+    expect(recent.map((conversation) => conversation.record.id)).toEqual([
+      'recent-new',
+      'recent-old',
+    ]);
+  });
+
+  it('returns an empty pinned list when nothing is pinned', () => {
+    const conversations = [makeConversation('recent', '2026-01-01T00:00:00.000Z')];
+
+    const { pinned, recent } = partitionConversationsByPinned(conversations, []);
+
+    expect(pinned).toEqual([]);
+    expect(recent.map((conversation) => conversation.record.id)).toEqual(['recent']);
   });
 });

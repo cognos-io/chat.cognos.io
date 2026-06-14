@@ -293,6 +293,142 @@ func TestConversationCompleteStreamPersistsEncryptedMessages(t *testing.T) {
 	scenario.Test(t)
 }
 
+// disconnectAfterFirstDeltaWriter simulates a client closing the SSE
+// connection after the first streamed delta while the handler keeps
+// draining the upstream completion.
+type disconnectAfterFirstDeltaWriter struct {
+	http.ResponseWriter
+	flusher       http.Flusher
+	deltasWritten int
+}
+
+func newDisconnectAfterFirstDeltaWriter(w http.ResponseWriter) *disconnectAfterFirstDeltaWriter {
+	flusher, _ := w.(http.Flusher)
+	return &disconnectAfterFirstDeltaWriter{
+		ResponseWriter: w,
+		flusher:        flusher,
+	}
+}
+
+func (w *disconnectAfterFirstDeltaWriter) Flush() {
+	if w.flusher != nil {
+		w.flusher.Flush()
+	}
+}
+
+func (w *disconnectAfterFirstDeltaWriter) Write(p []byte) (int, error) {
+	if strings.Contains(string(p), `"type":"delta"`) {
+		w.deltasWritten++
+		if w.deltasWritten > 1 {
+			return 0, errors.New("client disconnected")
+		}
+	}
+
+	return w.ResponseWriter.Write(p)
+}
+
+func TestConversationCompleteStreamPersistsAndBillsAfterClientDisconnect(t *testing.T) {
+	t.Parallel()
+
+	ledgerRepo := &recordingLedgerRepo{}
+	conversationID := "convdisc0000001"
+	var conversationPublicKey [32]byte
+
+	gatewayClient := &gateway.MockClient{
+		CompleteStreamFunc: func(_ context.Context, req gateway.CompleteRequest) (<-chan gateway.CompleteStreamEvent, error) {
+			if req.ProviderID != "infomaniak" {
+				t.Fatalf("CompleteStream() ProviderID = %q, want %q", req.ProviderID, "infomaniak")
+			}
+			ch := make(chan gateway.CompleteStreamEvent, 3)
+			ch <- gateway.CompleteStreamEvent{Delta: "hello "}
+			ch <- gateway.CompleteStreamEvent{Delta: "back"}
+			ch <- gateway.CompleteStreamEvent{Usage: &gateway.Usage{InputTokens: 123, OutputTokens: 45, TotalTokens: 168}}
+			close(ch)
+			return ch, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:           "conversation complete stream persists and bills after client disconnect",
+		Method:         http.MethodPost,
+		URL:            "/api/v1/conversations/" + conversationID + "/complete",
+		Body:           strings.NewReader(`{"model_id":"llama-3-3-infomaniak","agent_id":"cognos:simple-assistant","request_id":"req-disc-1","messages":[{"role":"user","content":"hello there"}]}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"type":"delta","delta":"hello "`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:     gatewayClient,
+				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
+				BillingService:    billing.NewService(),
+				BillingLedgerRepo: ledgerRepo,
+				BillingStateRepo: stubBillingStateRepo{
+					stateForUser: func(userID string) (billing.State, error) {
+						if userID != "uvi8zmr78j9y5hz" {
+							t.Fatalf("StateForUser(%q) unexpected user id", userID)
+						}
+						return billing.State{PlanType: billing.PlanTypePayG, BalanceRappen: 0}, nil
+					},
+				},
+				ConversationRepo: stubConversationRepo{
+					byID: func(id string) (chat.Conversation, error) {
+						return chat.Conversation{ID: id, PublicKey: conversationPublicKey}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			conversationPublicKey = seedConversationRecord(t, app, conversationID)
+			e.Router.BindFunc(func(re *core.RequestEvent) error {
+				if strings.Contains(re.Request.URL.Path, "/complete") {
+					re.Response = newDisconnectAfterFirstDeltaWriter(re.Response)
+				}
+				return re.Next()
+			})
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, res *http.Response) {
+			bodyBytes, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatalf("ReadAll(stream body) error = %v", err)
+			}
+			body := string(bodyBytes)
+			if !strings.Contains(body, `"type":"delta","delta":"hello "`) {
+				t.Fatalf("stream body missing first delta, got %q", body)
+			}
+			if strings.Contains(body, `"type":"complete"`) {
+				t.Fatalf("stream body should not include completion after disconnect, got %q", body)
+			}
+
+			records, err := app.FindRecordsByFilter(
+				"messages",
+				"conversation={:conversation}",
+				"",
+				10,
+				0,
+				dbx.Params{"conversation": conversationID},
+			)
+			if err != nil {
+				t.Fatalf("FindRecordsByFilter(messages) error = %v", err)
+			}
+			if len(records) != 2 {
+				t.Fatalf("FindRecordsByFilter(messages) len = %d, want %d", len(records), 2)
+			}
+
+			if len(ledgerRepo.records) != 1 {
+				t.Fatalf("RecordUsage() count = %d, want %d", len(ledgerRepo.records), 1)
+			}
+			record := ledgerRepo.records[0]
+			if record.InputTokens != 123 || record.OutputTokens != 45 {
+				t.Fatalf("ledger usage = %+v, want input=123 output=45", record)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func TestCompletionsTemporaryDoesNotPersistMessages(t *testing.T) {
 	t.Parallel()
 

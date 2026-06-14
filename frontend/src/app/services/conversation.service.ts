@@ -28,7 +28,9 @@ import {
   ConversationData,
   ConversationRecord,
   parseConversationData,
+  partitionConversationsByPinned,
   serializeConversationData,
+  sortConversationsByUpdated,
 } from '../interfaces/conversation';
 import { KeyPair } from '../interfaces/key-pair';
 import { ConversationsExpiryDurationOptions } from '../types/pocketbase-types';
@@ -178,12 +180,10 @@ export class ConversationService {
       });
 
       const orderedConversations = computed(() => {
-        return filteredConversations().sort((a, b) => {
-          // TODO(ewan): Include the most recent message
-          // Sort the conversations by the most recently updated
-          return b.record.updated.localeCompare(a.record.updated);
-        });
+        return sortConversationsByUpdated(filteredConversations());
       });
+
+      const pinnedConversationIds = this._userPreferencesService.pinnedConversationIds;
 
       return {
         filteredConversations,
@@ -195,18 +195,16 @@ export class ConversationService {
             .find((conversation) => conversation.record.id === selectedConversationId);
         },
         pinnedConversations: computed(() => {
-          return orderedConversations().filter((conversation) => {
-            return this._userPreferencesService.isConversationPinned(
-              conversation.record.id,
-            );
-          });
+          return partitionConversationsByPinned(
+            orderedConversations(),
+            pinnedConversationIds(),
+          ).pinned;
         }),
         nonPinnedConversations: computed(() => {
-          return orderedConversations().filter((conversation) => {
-            return !this._userPreferencesService.isConversationPinned(
-              conversation.record.id,
-            );
-          });
+          return partitionConversationsByPinned(
+            orderedConversations(),
+            pinnedConversationIds(),
+          ).recent;
         }),
       };
     },

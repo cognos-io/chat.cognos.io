@@ -442,17 +442,26 @@ export class CognosApiService {
     );
   }
 
-  completeStream(request: CompleteRequest): Observable<CompleteStreamEvent> {
-    return this.streamCompletion(`${this._baseUrl}/api/v1/completions`, request);
+  completeStream(
+    request: CompleteRequest,
+    signal?: AbortSignal,
+  ): Observable<CompleteStreamEvent> {
+    return this.streamCompletion(
+      `${this._baseUrl}/api/v1/completions`,
+      request,
+      signal,
+    );
   }
 
   completeConversationStream(
     conversationId: string,
     request: CompleteRequest,
+    signal?: AbortSignal,
   ): Observable<CompleteStreamEvent> {
     return this.streamCompletion(
       `${this._baseUrl}/api/v1/conversations/${conversationId}/complete`,
       request,
+      signal,
     );
   }
 
@@ -652,9 +661,19 @@ export class CognosApiService {
   private streamCompletion(
     url: string,
     request: CompleteRequest,
+    externalSignal?: AbortSignal,
   ): Observable<CompleteStreamEvent> {
     return new Observable<CompleteStreamEvent>((subscriber) => {
       const controller = new AbortController();
+      const abortFromExternal = () => controller.abort();
+
+      if (externalSignal) {
+        if (externalSignal.aborted) {
+          controller.abort();
+        } else {
+          externalSignal.addEventListener('abort', abortFromExternal, { once: true });
+        }
+      }
 
       void (async () => {
         try {
@@ -735,7 +754,10 @@ export class CognosApiService {
         }
       })();
 
-      return () => controller.abort();
+      return () => {
+        externalSignal?.removeEventListener('abort', abortFromExternal);
+        controller.abort();
+      };
     });
   }
 

@@ -290,7 +290,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			MaxOutputTokens: req.MaxOutputTokens,
 		}
 
-		gatewayResp, err := streamGatewayCompletion(e, params, gatewayReq)
+		gatewayResp, clientDisconnected, err := streamGatewayCompletion(e, params, gatewayReq)
 		if err != nil {
 			if userMessageRecord != nil {
 				if deleteErr := params.MessageRepo.DeleteMessage(userMessageRecord.Id); deleteErr != nil {
@@ -305,11 +305,13 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			if !e.Written() {
 				return apis.NewApiError(http.StatusServiceUnavailable, "Failed to process completion", nil)
 			}
-			if writeErr := writeCompleteStreamEvent(e, completeStreamResponse{
-				Type:    "error",
-				Message: "Failed to process completion",
-			}); writeErr != nil {
-				params.Logger.Error("failed to write stream error event", "err", writeErr)
+			if !clientDisconnected {
+				if writeErr := writeCompleteStreamEvent(e, completeStreamResponse{
+					Type:    "error",
+					Message: "Failed to process completion",
+				}); writeErr != nil {
+					params.Logger.Error("failed to write stream error event", "err", writeErr)
+				}
 			}
 			return nil
 		}
@@ -415,6 +417,10 @@ func complete(params CompleteHandlerParams, useConversationPath bool) func(e *co
 			response.ExpiresAt = time.Now().UTC().Add(conversation.ExpiryDuration).Format(time.RFC3339)
 		}
 
+		if clientDisconnected {
+			return nil
+		}
+
 		return writeCompleteStreamEvent(e, completeStreamResponse{
 			Type:     "complete",
 			Response: &response,
@@ -426,26 +432,49 @@ func streamGatewayCompletion(
 	e *core.RequestEvent,
 	params CompleteHandlerParams,
 	req gateway.CompleteRequest,
-) (gateway.CompleteResponse, error) {
-	stream, err := params.GatewayClient.CompleteStream(e.Request.Context(), req)
+) (gateway.CompleteResponse, bool, error) {
+	// Detach from the client request context so a tab close or network drop
+	// does not cancel the upstream LLM call. We still finish the completion,
+	// persist the full assistant message, and record billing.
+	streamCtx := context.WithoutCancel(e.Request.Context())
+
+	return collectGatewayStream(streamCtx, params.GatewayClient, req, func(delta string) error {
+		return writeCompleteStreamEvent(e, completeStreamResponse{
+			Type:  "delta",
+			Delta: delta,
+		})
+	}, func(err error) {
+		params.Logger.Info("client disconnected during completion stream", "err", err)
+	})
+}
+
+func collectGatewayStream(
+	ctx context.Context,
+	client gateway.Client,
+	req gateway.CompleteRequest,
+	onDelta func(string) error,
+	onClientDisconnect func(error),
+) (gateway.CompleteResponse, bool, error) {
+	stream, err := client.CompleteStream(ctx, req)
 	if err != nil {
-		return gateway.CompleteResponse{}, err
+		return gateway.CompleteResponse{}, false, err
 	}
 
 	var builder strings.Builder
 	usage := gateway.Usage{}
+	clientDisconnected := false
 
 	for event := range stream {
 		if event.Err != nil {
-			return gateway.CompleteResponse{}, event.Err
+			return gateway.CompleteResponse{}, clientDisconnected, event.Err
 		}
 		if event.Delta != "" {
 			builder.WriteString(event.Delta)
-			if err := writeCompleteStreamEvent(e, completeStreamResponse{
-				Type:  "delta",
-				Delta: event.Delta,
-			}); err != nil {
-				return gateway.CompleteResponse{}, err
+			if !clientDisconnected {
+				if err := onDelta(event.Delta); err != nil {
+					clientDisconnected = true
+					onClientDisconnect(err)
+				}
 			}
 		}
 		if event.Usage != nil {
@@ -459,7 +488,7 @@ func streamGatewayCompletion(
 			Content: builder.String(),
 		},
 		Usage: usage,
-	}, nil
+	}, clientDisconnected, nil
 }
 
 func writeCompleteStreamEvent(e *core.RequestEvent, response completeStreamResponse) error {

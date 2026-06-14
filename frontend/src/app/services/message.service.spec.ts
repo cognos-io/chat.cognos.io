@@ -11,6 +11,7 @@ import {
   assertMessageBindings,
   buildCompletionMessageContext,
   buildCompletionMessages,
+  isCompletionAbortError,
   removeStreamingCompletionMessages,
   resolveCompletionErrorMessage,
   resolveCompletionFailureMessage,
@@ -39,6 +40,18 @@ const makeResponse = (overrides: Partial<CompleteResponse> = {}): CompleteRespon
     usedProviderCost: false,
   },
   ...overrides,
+});
+
+describe('isCompletionAbortError', () => {
+  it('detects DOMException abort errors', () => {
+    expect(isCompletionAbortError(new DOMException('aborted', 'AbortError'))).toBe(
+      true,
+    );
+  });
+
+  it('ignores regular errors', () => {
+    expect(isCompletionAbortError(new Error('network down'))).toBe(false);
+  });
 });
 
 describe('resolveCompletionErrorMessage', () => {

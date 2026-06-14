@@ -279,6 +279,13 @@ export const resolveCompletionFailureMessage = (error: unknown): string => {
   return 'An error occurred while sending the message.';
 };
 
+export const isCompletionAbortError = (error: unknown): boolean => {
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return true;
+  }
+  return error instanceof Error && error.name === 'AbortError';
+};
+
 export const splitStreamDeltaForDisplay = (delta: string, chunkSize = 3): string[] => {
   const chars = Array.from(delta);
   if (chars.length <= chunkSize) {
@@ -305,6 +312,9 @@ export class MessageService {
   private readonly _modelService = inject(ModelService);
   private readonly _api = inject(CognosApiService);
   private readonly _vaultService = inject(VaultService);
+
+  private _activeCompletionAbort: AbortController | null = null;
+  private _intentionalCompletionAbort = false;
 
   private readonly pageSize = 100;
 
@@ -348,6 +358,8 @@ export class MessageService {
       (state) =>
         this._conversationService.conversation$.pipe(
           switchMap((conversation) => {
+            this.abortActiveCompletion();
+
             if (!conversation) {
               return of(initialState);
             }
@@ -669,6 +681,12 @@ export class MessageService {
       throw new Error('No conversation selected');
     }
 
+    const originConversationId = conversation?.record.id ?? null;
+
+    this.abortActiveCompletion();
+    const abortController = new AbortController();
+    this._activeCompletionAbort = abortController;
+
     this.state.setStatus(MessageStatus.Sending);
 
     const request = {
@@ -682,12 +700,29 @@ export class MessageService {
     let completed = false;
 
     const response$ = isTemporaryConversation
-      ? this._api.completeStream(request)
-      : this._api.completeConversationStream(conversation!.record.id, request);
+      ? this._api.completeStream(request, abortController.signal)
+      : this._api.completeConversationStream(
+          originConversationId!,
+          request,
+          abortController.signal,
+        );
+
+    const shouldApplyCompletionUpdate = (): boolean => {
+      if (isTemporaryConversation) {
+        return this._conversationService.isTemporaryConversation();
+      }
+      return (
+        this._conversationService.conversation()?.record.id === originConversationId
+      );
+    };
 
     return response$.pipe(
       concatMap((event) => this.expandStreamEventForDisplay(event)),
       map((event: CompleteStreamEvent) => {
+        if (!shouldApplyCompletionUpdate()) {
+          return {};
+        }
+
         switch (event.type) {
           case 'delta':
             return {
@@ -714,8 +749,16 @@ export class MessageService {
         }
       }),
       catchError((err: unknown) => {
+        if (this.consumeIntentionalCompletionAbort() || isCompletionAbortError(err)) {
+          return EMPTY;
+        }
+
         console.error('Error sending message');
         this._errorService.alert(resolveCompletionFailureMessage(err));
+
+        if (!shouldApplyCompletionUpdate()) {
+          return EMPTY;
+        }
 
         return of({
           status: MessageStatus.ErrorSending,
@@ -726,11 +769,39 @@ export class MessageService {
         });
       }),
       finalize(() => {
-        if (!completed && this.state.status() === MessageStatus.Sending) {
+        if (this._activeCompletionAbort === abortController) {
+          this._activeCompletionAbort = null;
+        }
+        if (
+          !completed &&
+          !this._intentionalCompletionAbort &&
+          shouldApplyCompletionUpdate() &&
+          this.state.status() === MessageStatus.Sending
+        ) {
           this.state.setStatus(MessageStatus.ErrorSending);
         }
+        this.consumeIntentionalCompletionAbort();
       }),
     );
+  }
+
+  private abortActiveCompletion(): void {
+    if (!this._activeCompletionAbort) {
+      return;
+    }
+
+    this._intentionalCompletionAbort = true;
+    this._activeCompletionAbort.abort();
+    this._activeCompletionAbort = null;
+  }
+
+  private consumeIntentionalCompletionAbort(): boolean {
+    if (!this._intentionalCompletionAbort) {
+      return false;
+    }
+
+    this._intentionalCompletionAbort = false;
+    return true;
   }
 
   private expandStreamEventForDisplay(

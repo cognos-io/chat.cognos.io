@@ -1,18 +1,90 @@
----
+# Cognos API configuration (example)
+#
+# Copy this file to one or more environment-specific files in this directory:
+#   - api.local.yaml
+#   - api.development.yaml
+#   - api.production.yaml
+#
+# All matching files that exist are loaded in that order; later files override
+# earlier ones. See internal/config/api.go for the loader.
+#
+# Precedence (lowest to highest):
+#   1. configs/api.{development,production,local}.yaml
+#   2. COGNOS_* environment variables
+#   3. COGNOS_*_API_KEY_FILE secret files (env-only; not supported in YAML)
+#
+# Every value is OPTIONAL — only configure the providers you actually use.
+# Secrets (api_key fields) belong in env vars or mounted secret files in
+# production; avoid committing populated config files.
+
+# --- Bifrost ------------------------------------------------------------------
+# In-process AI gateway. Useful log levels: error, warn, info, debug.
+# Env override: COGNOS_BIFROST_LOG_LEVEL
+# Default when unset: error
+bifrost:
+  log_level: error
+
+# --- OpenAI -------------------------------------------------------------------
+# API key for OpenAI (or an OpenAI-compatible endpoint).
+# Env override: COGNOS_OPENAI_API_KEY
+# Secret file override: COGNOS_OPENAI_API_KEY_FILE
 openai:
-  api_key: "sk-"
+  api_key: ""
+
+# --- Infomaniak (OpenAI-compatible AI proxy) ----------------------------------
+# Env overrides: COGNOS_INFOMANIAK_API_KEY, COGNOS_INFOMANIAK_URL,
+#                COGNOS_INFOMANIAK_PRODUCT_ID
+# Secret file override: COGNOS_INFOMANIAK_API_KEY_FILE
+#
+# url is optional — leave empty to derive the base URL from product_id.
+# Example explicit override:
+#   url: https://api.infomaniak.com/2/ai/109300/openai
 infomaniak:
   api_key: ""
   url: ""
   product_id: ""
+
+# --- Cloudflare (Workers AI) --------------------------------------------------
+# Both account_id and api_key are required when enabling this provider.
+# Env overrides: COGNOS_CLOUDFLARE_ACCOUNT_ID, COGNOS_CLOUDFLARE_API_KEY
+# Secret file override: COGNOS_CLOUDFLARE_API_KEY_FILE
 cloudflare:
-  api_key: ""
   account_id: ""
+  api_key: ""
+
+# --- Google Gemini ------------------------------------------------------------
+# Env override: COGNOS_GOOGLE_API_KEY
+# Secret file override: COGNOS_GOOGLE_API_KEY_FILE
 google:
   api_key: ""
+
+# --- Anthropic (Claude) -------------------------------------------------------
+# Env overrides: COGNOS_ANTHROPIC_API_KEY, COGNOS_ANTHROPIC_URL
+# Secret file override: COGNOS_ANTHROPIC_API_KEY_FILE
+#
+# url is optional; defaults to the Anthropic API when empty.
+# Example override (proxy/gateway):
+#   url: https://api.anthropic.com
 anthropic:
   url: ""
   api_key: ""
+
+# --- DeepInfra ----------------------------------------------------------------
+# Env overrides: COGNOS_DEEPINFRA_API_KEY, COGNOS_DEEPINFRA_URL
+# Secret file override: COGNOS_DEEPINFRA_API_KEY_FILE
+#
+# url is optional; defaults to https://api.deepinfra.com/v1/openai when empty.
 deepinfra:
   url: ""
   api_key: ""
+
+# --- Billing ------------------------------------------------------------------
+# Starting trial balance granted to new accounts, in Swiss Rappen (centimes).
+# Must be > 0; defaults to 200 (CHF 2.00) when unset or non-positive.
+# Env override: COGNOS_BILLING_TRIAL_SEED_RAPPEN
+billing:
+  trial_seed_rappen: 200
+
+# --- Env-only (not loaded from YAML) ------------------------------------------
+# BILLING_FX_RATE_FALLBACK_USD_CHF — fallback USD→CHF rate when the live rate
+# is unavailable. Defaults to 0.88. Set via environment variable only.

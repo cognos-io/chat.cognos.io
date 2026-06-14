@@ -161,4 +161,55 @@ describe('ChatComponent', () => {
     expect(lockButton).not.toBeNull();
     expect(lockButton?.textContent).toContain('Lock');
   });
+
+  it('renders only the recent section when there are no pinned conversations', () => {
+    pinnedConversations.set([]);
+    recentConversations.set([makeConversation('recent-1', 'Recent chat')]);
+    fixture.detectChanges();
+
+    const headings = Array.from(
+      fixture.nativeElement.querySelectorAll('.chat-shell__section-heading'),
+    ).map((element: Element) => element.textContent?.trim());
+
+    expect(headings).toEqual(['Recent']);
+    expect(fixture.nativeElement.textContent).toContain('Recent chat');
+  });
+
+  it('renders pinned and recent sections when both are present', () => {
+    pinnedConversations.set([makeConversation('pinned-1', 'Pinned chat')]);
+    recentConversations.set([makeConversation('recent-1', 'Recent chat')]);
+    fixture.detectChanges();
+
+    const headings = Array.from(
+      fixture.nativeElement.querySelectorAll('.chat-shell__section-heading'),
+    ).map((element: Element) => element.textContent?.trim());
+
+    expect(headings).toEqual(['Pinned', 'Recent']);
+    expect(fixture.nativeElement.textContent).toContain('Pinned chat');
+    expect(fixture.nativeElement.textContent).toContain('Recent chat');
+  });
+
+  it('hides the pinned section when there are no pinned conversations', () => {
+    pinnedConversations.set([]);
+    recentConversations.set([makeConversation('recent-1', 'Recent chat')]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Pinned');
+  });
 });
+
+function makeConversation(id: string, title: string): Conversation {
+  return {
+    record: {
+      id,
+      created: '2026-01-01T00:00:00.000Z',
+      updated: '2026-01-02T00:00:00.000Z',
+      data: '',
+    },
+    decryptedData: { title },
+    keyPair: {
+      publicKey: new Uint8Array(),
+      secretKey: new Uint8Array(),
+    },
+  };
+}
