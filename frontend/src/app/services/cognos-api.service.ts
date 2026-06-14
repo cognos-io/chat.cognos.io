@@ -465,6 +465,21 @@ export class CognosApiService {
     );
   }
 
+  // regenerateConversationStream produces a new assistant response to an
+  // existing message (request.parentMessageId) without persisting a new user
+  // message — the response becomes a sibling branch of the previous reply.
+  regenerateConversationStream(
+    conversationId: string,
+    request: CompleteRequest,
+    signal?: AbortSignal,
+  ): Observable<CompleteStreamEvent> {
+    return this.streamCompletion(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/regenerate`,
+      request,
+      signal,
+    );
+  }
+
   getUserKeyPair(): Observable<UserKeyPairsResponse> {
     return this._http.get<UserKeyPairsResponse>(
       `${this._baseUrl}/api/v1/user-key-pair`,

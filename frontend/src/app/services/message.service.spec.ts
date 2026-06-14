@@ -12,6 +12,7 @@ import {
   buildCompletionMessageContext,
   buildCompletionMessages,
   isCompletionAbortError,
+  regenerateContextPath,
   removeStreamingCompletionMessages,
   resolveCompletionErrorMessage,
   resolveCompletionFailureMessage,
@@ -225,6 +226,38 @@ describe('buildCompletionMessages', () => {
     const result = buildCompletionMessages(existing, makeResponse());
     expect(result).not.toBe(existing);
     expect(existing).toHaveLength(1);
+  });
+});
+
+describe('regenerateContextPath', () => {
+  const node = (id: string, parentMessageId?: string): Message => ({
+    record_id: id,
+    parentMessageId,
+    createdAt: new Date(),
+    decryptedData: { content: id },
+  });
+
+  const path: Message[] = [
+    node('u1'),
+    node('a1', 'u1'),
+    node('u2', 'a1'),
+    node('a2', 'u2'),
+  ];
+
+  it('returns the path up to and including the parent message', () => {
+    // Regenerating a2 (parent u2) replies to everything through u2, excluding a2.
+    const context = regenerateContextPath(path, 'u2');
+    expect(context.map((m) => m.record_id)).toEqual(['u1', 'a1', 'u2']);
+  });
+
+  it('returns the whole path when the parent is the last message', () => {
+    const context = regenerateContextPath(path, 'a2');
+    expect(context.map((m) => m.record_id)).toEqual(['u1', 'a1', 'u2', 'a2']);
+  });
+
+  it('returns empty for a missing parent or no parent id', () => {
+    expect(regenerateContextPath(path, 'unknown')).toEqual([]);
+    expect(regenerateContextPath(path, undefined)).toEqual([]);
   });
 });
 

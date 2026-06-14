@@ -7,8 +7,10 @@ import { MarkdownComponent } from 'ngx-markdown';
 
 import {
   CognosAssistantMessageComponent,
+  CognosBranchSwitcherComponent,
   CognosIconButtonComponent,
   CognosUserMessageComponent,
+  MessageBranchInfo,
 } from '@cognos/ui-angular';
 
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
@@ -30,6 +32,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     CognosAssistantMessageComponent,
     CognosUserMessageComponent,
     CognosIconButtonComponent,
+    CognosBranchSwitcherComponent,
   ],
   template: `
     @if (message) {
@@ -42,11 +45,28 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
         [attr.data-parent-id]="message.parentMessageId"
       >
         <ng-template #messageActions>
+          @if (branchInfo(); as info) {
+            <cog-branch-switcher
+              [index]="info.index"
+              [count]="info.count"
+              (previous)="onPreviousBranch()"
+              (next)="onNextBranch()"
+            />
+          }
+
           @if (message.decryptedData.content) {
             <cog-icon-button
               name="copy"
               title="Copy to clipboard"
               [cdkCopyToClipboard]="message.decryptedData.content"
+            />
+          }
+
+          @if (canRegenerate()) {
+            <cog-icon-button
+              name="rotate-cw"
+              title="Regenerate response"
+              (click)="onRegenerate()"
             />
           }
 
@@ -69,7 +89,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
 
         @if (isMessageFromUser(message.decryptedData)) {
           <div class="message-list-item__user">
-            <cog-user-message [meta]="userMeta()">
+            <cog-user-message [meta]="userMeta()" [branchCount]="branchPointCount()">
               @if (message.decryptedData.content) {
                 <markdown emoji katex>
                   {{ message.decryptedData.content }}
@@ -91,6 +111,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
               [model]="assistantLabel()"
               [showActions]="false"
               [time]="messageTime()"
+              [branchCount]="branchPointCount()"
             >
               @if (message.decryptedData.content) {
                 @if (message.isStreaming) {
@@ -163,6 +184,48 @@ export class MessageListItemComponent {
   @Input() message?: Message;
 
   isMessageFromUser = isMessageFromUser;
+
+  // Navigation metadata when this message is one of several sibling branches.
+  branchInfo(): MessageBranchInfo | undefined {
+    return this.message ? this._messageService.branchInfo(this.message) : undefined;
+  }
+
+  // Number of direct replies/versions when this message is a branch point — the
+  // `⑂ N` tick on the parent.
+  branchPointCount(): number {
+    return (this.message && this._messageService.branchPointCount(this.message)) || 0;
+  }
+
+  // A persisted assistant message that replied to a parent can be regenerated
+  // into a new sibling branch.
+  canRegenerate(): boolean {
+    const message = this.message;
+    return (
+      !!message &&
+      !!message.record_id &&
+      !message.isStreaming &&
+      !isMessageFromUser(message.decryptedData) &&
+      !!message.parentMessageId
+    );
+  }
+
+  onRegenerate(): void {
+    if (this.message) {
+      this._messageService.regenerate(this.message);
+    }
+  }
+
+  onPreviousBranch(): void {
+    if (this.message) {
+      this._messageService.previousBranch(this.message);
+    }
+  }
+
+  onNextBranch(): void {
+    if (this.message) {
+      this._messageService.nextBranch(this.message);
+    }
+  }
 
   get agent(): Agent | undefined {
     const agentId = this.message?.decryptedData.agent_id;

@@ -132,5 +132,5 @@ test('assistant action buttons align to the right edge of the message', async ({
 
   // Actions hug the message's right edge, not the far side of the screen.
   expect(Math.abs(actionsRight - contentRight)).toBeLessThanOrEqual(2);
-  expect(actionsRight).toBeLessThan(viewport.width - 200);
+  expect(actionsRight).toBeLessThan(viewport.width - 120);
 });

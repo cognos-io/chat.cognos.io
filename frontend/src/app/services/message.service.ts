@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 import {
@@ -25,6 +25,12 @@ import {
 import { Base64 } from 'js-base64';
 import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
+
+import {
+  MessageBranchInfo,
+  MessageTreeAccessors,
+  selectActiveBranch,
+} from '@cognos/ui-angular';
 
 import { generateConversationAgentId } from '@app/interfaces/agent';
 import { Message, parseMessageData } from '@app/interfaces/message';
@@ -63,6 +69,10 @@ interface MessageState {
   isNewConversation: boolean; // used to indicate if this is a new conversation
   currentPage: number;
   hasMoreMessages: boolean; // try to load more messages
+  // branchSelections maps a parent message id to the chosen child id, so the
+  // active path through a branching conversation survives regenerations. Reset
+  // per-conversation; an absent/stale entry falls back to the newest sibling.
+  branchSelections: Record<string, string>;
 }
 
 const initialState: MessageState = {
@@ -71,6 +81,33 @@ const initialState: MessageState = {
   isNewConversation: false,
   currentPage: 1,
   hasMoreMessages: true,
+  branchSelections: {},
+};
+
+// Adapts the app's Message type to the library's generic branch resolver.
+export const messageTreeAccessors: MessageTreeAccessors<Message> = {
+  getId: (message) => message.record_id,
+  getParentId: (message) => message.parentMessageId,
+  getOrder: (message) => message.createdAt.getTime(),
+};
+
+// regenerateContextPath returns the slice of the active path up to and
+// including the parent message — the context a regenerated response replies to,
+// excluding the response being replaced and anything after it.
+export const regenerateContextPath = (
+  activePath: ReadonlyArray<Message>,
+  parentMessageId: string | undefined,
+): Message[] => {
+  if (!parentMessageId) {
+    return [];
+  }
+  const parentIndex = activePath.findIndex(
+    (message) => message.record_id === parentMessageId,
+  );
+  if (parentIndex < 0) {
+    return [];
+  }
+  return activePath.slice(0, parentIndex + 1);
 };
 
 export type MessageRequest = {
@@ -320,6 +357,7 @@ export class MessageService {
 
   // sources
   public readonly sendMessage$ = new Subject<MessageRequest>();
+  public readonly regenerateMessage$ = new Subject<Message>();
   private readonly _cleanedMessage$ = this.sendMessage$.pipe(
     map((raw) => ({ ...raw, content: raw.content?.trim() })),
     filter(({ content }) => content !== undefined && content !== ''),
@@ -405,10 +443,11 @@ export class MessageService {
         }),
         exhaustMap((messageRequest) => {
           if (!messageRequest.parentMessageId) {
-            // Take the most recent message as the parent message
-            const messages = this.state.orderedMessageList();
+            // Parent the new message to the leaf of the active branch so it
+            // continues the conversation the user is currently viewing.
+            const activePath = this.state.activeBranch().path;
 
-            const lastMessage = messages[messages.length - 1];
+            const lastMessage = activePath[activePath.length - 1];
             if (lastMessage) {
               messageRequest.parentMessageId = lastMessage.record_id;
             }
@@ -465,6 +504,11 @@ export class MessageService {
           return this.deleteMessages(messageIds);
         }),
       ),
+
+      // regenerate a fresh assistant response as a sibling branch
+      this.regenerateMessage$.pipe(
+        exhaustMap((message) => this.regenerateResponse(message)),
+      ),
     ],
     selectors: (state) => ({
       orderedMessageList: () => {
@@ -476,6 +520,27 @@ export class MessageService {
         const messageList = [...state().messages];
         messageList.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         return messageList;
+      },
+      // The single linear path shown to the user plus per-fork navigation
+      // metadata, resolved from the branching message set. Branch resolution
+      // needs stable ids to link parents and children; temporary (non-persisted)
+      // conversations have id-less assistant messages, so fall back to a plain
+      // chronological list there to avoid dropping messages.
+      activeBranch: (): {
+        path: Message[];
+        branches: Map<string, MessageBranchInfo>;
+        branchPoints: Map<string, number>;
+      } => {
+        const messages = state().messages;
+        if (!messages.every((message) => !!message.record_id)) {
+          const path = [...messages].sort(
+            (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+          );
+          return { path, branches: new Map(), branchPoints: new Map() };
+        }
+        return selectActiveBranch(messages, messageTreeAccessors, {
+          selections: state().branchSelections,
+        });
       },
     }),
     actionSources: {
@@ -556,6 +621,15 @@ export class MessageService {
             };
           }),
         ),
+      selectBranch: (state, $: Observable<{ parentKey: string; childId: string }>) =>
+        $.pipe(
+          map(({ parentKey, childId }) => ({
+            branchSelections: {
+              ...state().branchSelections,
+              [parentKey]: childId,
+            },
+          })),
+        ),
       setStatus: (state, $: Observable<MessageStatus>) =>
         $.pipe(
           map((status) => {
@@ -580,8 +654,12 @@ export class MessageService {
   });
 
   // selectors
-  public readonly messages = this.state.orderedMessageList;
+  // messages is the active path through the (possibly branching) conversation,
+  // not the raw message set — siblings off the active branch are not shown.
+  public readonly messages = computed(() => this.state.activeBranch().path);
   public readonly messages$ = toObservable(this.messages);
+  public readonly branches = computed(() => this.state.activeBranch().branches);
+  public readonly branchPoints = computed(() => this.state.activeBranch().branchPoints);
   public readonly status = this.state.status;
   public readonly status$ = toObservable(this.status);
 
@@ -593,6 +671,37 @@ export class MessageService {
       return;
     }
     this._deleteMessages$.next([msg.record_id]);
+  }
+
+  // branchInfo returns navigation metadata for a message that sits at a fork
+  // (more than one sibling), or undefined when it has none.
+  public branchInfo(message: Message): MessageBranchInfo | undefined {
+    return message.record_id ? this.branches().get(message.record_id) : undefined;
+  }
+
+  // branchPointCount returns how many direct children (replies/versions) a
+  // message has when it is a branch point, or undefined otherwise — the `⑂ N`
+  // tick in the design spec.
+  public branchPointCount(message: Message): number | undefined {
+    return message.record_id ? this.branchPoints().get(message.record_id) : undefined;
+  }
+
+  public previousBranch(message: Message): void {
+    const info = this.branchInfo(message);
+    if (info?.previousId) {
+      this.state.selectBranch({ parentKey: info.parentKey, childId: info.previousId });
+    }
+  }
+
+  public nextBranch(message: Message): void {
+    const info = this.branchInfo(message);
+    if (info?.nextId) {
+      this.state.selectBranch({ parentKey: info.parentKey, childId: info.nextId });
+    }
+  }
+
+  public regenerate(message: Message): void {
+    this.regenerateMessage$.next(message);
   }
 
   public readonly keepExpiringMessage = this.state.keepExpiringMessage;
@@ -716,6 +825,14 @@ export class MessageService {
       );
     };
 
+    // The streaming assistant placeholder is a child of the user message we just
+    // added (record_id === requestId), not of the user message's parent — so the
+    // active-path resolver threads it correctly while it streams.
+    const streamingRequest: MessageRequest = {
+      ...messageRequest,
+      parentMessageId: messageRequest.requestId,
+    };
+
     return response$.pipe(
       concatMap((event) => this.expandStreamEventForDisplay(event)),
       map((event: CompleteStreamEvent) => {
@@ -728,7 +845,7 @@ export class MessageService {
             return {
               messages: applyCompletionStreamDelta(
                 this.state().messages,
-                messageRequest,
+                streamingRequest,
                 event.delta,
                 request.agentId,
                 request.modelId,
@@ -766,6 +883,148 @@ export class MessageService {
             this.state().messages,
             messageRequest.requestId,
           ),
+        });
+      }),
+      finalize(() => {
+        if (this._activeCompletionAbort === abortController) {
+          this._activeCompletionAbort = null;
+        }
+        if (
+          !completed &&
+          !this._intentionalCompletionAbort &&
+          shouldApplyCompletionUpdate() &&
+          this.state.status() === MessageStatus.Sending
+        ) {
+          this.state.setStatus(MessageStatus.ErrorSending);
+        }
+        this.consumeIntentionalCompletionAbort();
+      }),
+    );
+  }
+
+  // regenerateResponse asks the model for a fresh reply to an existing message
+  // and threads it in as a sibling of the previous response. It reuses the same
+  // streaming machinery as sendMessage but never persists a new user turn: the
+  // assistant message is parented directly to the message being regenerated.
+  private regenerateResponse(message: Message): Observable<Partial<MessageState>> {
+    const parentId = message.parentMessageId;
+    if (!parentId) {
+      return EMPTY;
+    }
+
+    const contextPath = regenerateContextPath(this.state.activeBranch().path, parentId);
+    if (contextPath.length === 0) {
+      return EMPTY;
+    }
+
+    const conversation = this._conversationService.conversation();
+    const isTemporaryConversation = this._conversationService.isTemporaryConversation();
+    if (!conversation && !isTemporaryConversation) {
+      return EMPTY;
+    }
+    const originConversationId = conversation?.record.id ?? null;
+
+    this.abortActiveCompletion();
+    const abortController = new AbortController();
+    this._activeCompletionAbort = abortController;
+    this.state.setStatus(MessageStatus.Sending);
+
+    const requestId = self.crypto.randomUUID();
+    const request = {
+      messages: this.buildContextFromPath([...contextPath].reverse()),
+      modelId: this._modelService.selectedModel().id,
+      agentId: this._agentService.selectedAgent().id,
+      parentMessageId: parentId,
+      requestId,
+    };
+
+    // Only requestId + parentMessageId are read by the streaming helpers.
+    const streamingRequest: MessageRequest = {
+      requestId,
+      content: '',
+      parentMessageId: parentId,
+    };
+
+    let completed = false;
+
+    const response$ = isTemporaryConversation
+      ? this._api.completeStream(request, abortController.signal)
+      : this._api.regenerateConversationStream(
+          originConversationId!,
+          request,
+          abortController.signal,
+        );
+
+    const shouldApplyCompletionUpdate = (): boolean => {
+      if (isTemporaryConversation) {
+        return this._conversationService.isTemporaryConversation();
+      }
+      return (
+        this._conversationService.conversation()?.record.id === originConversationId
+      );
+    };
+
+    return response$.pipe(
+      concatMap((event) => this.expandStreamEventForDisplay(event)),
+      map((event: CompleteStreamEvent) => {
+        if (!shouldApplyCompletionUpdate()) {
+          return {};
+        }
+
+        switch (event.type) {
+          case 'delta':
+            return {
+              messages: applyCompletionStreamDelta(
+                this.state().messages,
+                streamingRequest,
+                event.delta,
+                request.agentId,
+                request.modelId,
+              ),
+              // Surface the in-progress response as the active branch.
+              branchSelections: {
+                ...this.state().branchSelections,
+                [parentId]: streamingAssistantMessageId(requestId),
+              },
+            };
+          case 'complete': {
+            completed = true;
+            const newAssistantId =
+              event.response.assistantMessage.id ??
+              streamingAssistantMessageId(requestId);
+            return {
+              status: MessageStatus.Success,
+              messages: applyCompletionStreamResponse(
+                this.state().messages,
+                requestId,
+                event.response,
+              ),
+              // Keep the freshly generated branch selected.
+              branchSelections: {
+                ...this.state().branchSelections,
+                [parentId]: newAssistantId,
+              },
+            };
+          }
+          case 'error':
+            throw new Error(event.message);
+        }
+      }),
+      catchError((err: unknown) => {
+        if (this.consumeIntentionalCompletionAbort() || isCompletionAbortError(err)) {
+          return EMPTY;
+        }
+
+        console.error('Error regenerating message');
+        this._errorService.alert(resolveCompletionFailureMessage(err));
+
+        if (!shouldApplyCompletionUpdate()) {
+          return EMPTY;
+        }
+
+        return of({
+          status: MessageStatus.ErrorSending,
+          messages: removeStreamingCompletionMessages(this.state().messages, requestId),
         });
       }),
       finalize(() => {
@@ -825,9 +1084,17 @@ export class MessageService {
   }
 
   private createMessageContext(): Array<CompletionMessageRequest> {
+    // Context follows the active branch (newest-first), so the model only sees
+    // the conversation the user is actually viewing.
+    return this.buildContextFromPath([...this.state.activeBranch().path].reverse());
+  }
+
+  private buildContextFromPath(
+    messagesNewestFirst: ReadonlyArray<Message>,
+  ): Array<CompletionMessageRequest> {
     const model = this._modelService.selectedModel();
     return buildCompletionMessageContext(
-      this.state.reverseOrderedMessageList(),
+      messagesNewestFirst,
       model.inputContextLength,
       (id) => this._agentService.getAgent(id)()?.name,
       (id) => this._modelService.getModel(id)?.name,
