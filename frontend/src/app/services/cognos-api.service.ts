@@ -237,6 +237,32 @@ export interface ApiRotateConversationKeyResponse {
   revoked_user_ids: string[];
 }
 
+interface ApiCreatePublicShareRequest {
+  public_key: string;
+  wrapped_conversation_secret_key: string;
+  share_secret: string;
+}
+
+export interface ApiCreatePublicShareResponse {
+  token: string;
+  key_version: number;
+}
+
+export interface ApiParticipantPublicShareResponse {
+  token: string;
+  public_key: string;
+  share_secret: string;
+  key_version: number;
+}
+
+export interface ApiPublicConversationResponse {
+  conversation_id: string;
+  data: string;
+  conversation_public_key: string;
+  wrapped_conversation_secret_key: string;
+  key_version: number;
+}
+
 interface ApiVaultSessionResponse {
   wrap_key: string;
 }
@@ -611,6 +637,46 @@ export class CognosApiService {
       {
         headers: this.authHeaders(),
       },
+    );
+  }
+
+  // Public sharing. Create/get require the caller to be an Admin participant
+  // (enforced server-side). The two getPublic* reads are deliberately
+  // unauthenticated — the URL fragment, never sent here, is what decrypts the
+  // payload — so they skip authHeaders entirely.
+  createPublicShare(
+    conversationId: string,
+    request: ApiCreatePublicShareRequest,
+  ): Observable<ApiCreatePublicShareResponse> {
+    return this._http.post<ApiCreatePublicShareResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/public-share`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  getPublicShare(
+    conversationId: string,
+  ): Observable<ApiParticipantPublicShareResponse> {
+    return this._http.get<ApiParticipantPublicShareResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/public-share`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  getPublicConversation(token: string): Observable<ApiPublicConversationResponse> {
+    return this._http.get<ApiPublicConversationResponse>(
+      `${this._baseUrl}/api/v1/public/conversations/${token}`,
+    );
+  }
+
+  listPublicConversationMessages(token: string): Observable<MessageListResponse> {
+    return this._http.get<MessageListResponse>(
+      `${this._baseUrl}/api/v1/public/conversations/${token}/messages`,
     );
   }
 

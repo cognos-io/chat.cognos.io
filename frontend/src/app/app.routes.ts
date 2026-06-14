@@ -26,6 +26,16 @@ export const routes: Routes = [
     ],
   },
   {
+    // Public, unauthenticated read view for a shared conversation. The token
+    // is in the path; the decryption key rides in the URL fragment (#...),
+    // which the browser never sends to the server.
+    path: 'p/:token',
+    loadComponent: () =>
+      import('./pages/public-conversation/public-conversation.component').then(
+        (m) => m.PublicConversationComponent,
+      ),
+  },
+  {
     path: 'auth',
     loadComponent: () =>
       import('./pages/auth/auth.component').then((m) => m.AuthComponent),

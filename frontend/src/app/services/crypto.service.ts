@@ -35,6 +35,16 @@ export class CryptoService {
   }
 
   /**
+   * keyPairFromSecretKey - rebuilds the full key pair from a secret key alone.
+   * Used by the public-sharing reader, which only receives the secret half in
+   * the URL fragment and must recover the matching public key to open sealed
+   * boxes addressed to it.
+   */
+  keyPairFromSecretKey(secretKey: Uint8Array): KeyPair {
+    return nacl.box.keyPair.fromSecretKey(secretKey);
+  }
+
+  /**
    * sharedKey - Generates a shared key from a public key and a secret key.
    */
   sharedKey(publicKey: Uint8Array, secretKey: Uint8Array): Uint8Array {
