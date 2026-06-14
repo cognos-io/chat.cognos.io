@@ -126,6 +126,44 @@ export class CryptoService {
    * @param myKeyPair (KeyPair) - The key pair of the receiver (publicKey and secretKey
    * @returns (Uint8Array) - The decrypted message (plaintext)
    */
+  /**
+   * createSealedBox - Encrypts a message to a recipient public key without a
+   * persistent sender identity (anonymous sender), matching the backend's
+   * AsymmetricEncrypt and the inverse of openSealedBox.
+   *
+   * Layout: ephemeral_pk ‖ box(m, recipient_pk, ephemeral_sk,
+   * nonce=blake2b(ephemeral_pk ‖ recipient_pk)).
+   *
+   * @param message (Uint8Array) - The plaintext to encrypt
+   * @param recipientPublicKey (Uint8Array) - The recipient's public key
+   * @returns (Uint8Array) - The sealed box (ephemeral public key + ciphertext)
+   */
+  createSealedBox(message: Uint8Array, recipientPublicKey: Uint8Array): Uint8Array {
+    const ephemeralKeyPair = nacl.box.keyPair();
+
+    const keys = new Uint8Array(
+      ephemeralKeyPair.publicKey.length + recipientPublicKey.length,
+    );
+    keys.set(ephemeralKeyPair.publicKey);
+    keys.set(recipientPublicKey, ephemeralKeyPair.publicKey.length);
+
+    const nonce = blake2b(keys, undefined, nacl.secretbox.nonceLength);
+    const ciphertext = nacl.box(
+      message,
+      nonce,
+      recipientPublicKey,
+      ephemeralKeyPair.secretKey,
+    );
+
+    const sealedBox = new Uint8Array(
+      ephemeralKeyPair.publicKey.length + ciphertext.length,
+    );
+    sealedBox.set(ephemeralKeyPair.publicKey);
+    sealedBox.set(ciphertext, ephemeralKeyPair.publicKey.length);
+
+    return sealedBox;
+  }
+
   openSealedBox(sealedBox: Uint8Array, myKeyPair: KeyPair): Uint8Array {
     // Sealed boxes look like this:
     // ephemeral_pk ‖ box(m, recipient_pk, ephemeral_sk, nonce=blake2b(ephemeral_pk ‖ recipient_pk))

@@ -127,6 +127,25 @@ describe('CryptoService', () => {
     expect(Array.from(decrypted)).toEqual(Array.from(plaintext));
   });
 
+  it('round-trips a sealed box created with createSealedBox', () => {
+    const recipient = service.newKeyPair();
+    const plaintext = bytes('a message tombstone payload');
+
+    const sealed = service.createSealedBox(plaintext, recipient.publicKey);
+    const decrypted = service.openSealedBox(sealed, recipient);
+
+    expect(Array.from(decrypted)).toEqual(Array.from(plaintext));
+  });
+
+  it('createSealedBox output cannot be opened by a different recipient', () => {
+    const recipient = service.newKeyPair();
+    const attacker = service.newKeyPair();
+
+    const sealed = service.createSealedBox(bytes('secret'), recipient.publicKey);
+
+    expect(() => service.openSealedBox(sealed, attacker)).toThrow();
+  });
+
   it('rejects a sealed box opened with the wrong recipient key pair', () => {
     const recipient = service.newKeyPair();
     const wrongRecipient = service.newKeyPair();
