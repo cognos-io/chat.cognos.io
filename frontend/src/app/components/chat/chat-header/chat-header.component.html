@@ -1,0 +1,53 @@
+<header class="chat-header">
+  @if (breadcrumbs().length) {
+    <cog-breadcrumbs class="chat-header__breadcrumbs" [items]="breadcrumbs()" />
+  }
+
+  <div class="chat-header__row">
+    <h1 class="chat-header__title" [attr.title]="title()">{{ title() }}</h1>
+
+    <div class="chat-header__actions">
+      <cog-avatar class="chat-header__avatar" [name]="currentUserName()" [size]="28" />
+
+      <cog-button
+        class="chat-header__share"
+        appearance="default"
+        icon="user-plus"
+        title="Sharing is coming soon"
+        [disabled]="true"
+      >
+        Share
+      </cog-button>
+
+      <cog-icon-button
+        name="shield-check"
+        title="Security & keys"
+        (click)="openSecurity()"
+      />
+
+      @if (menuItems().length) {
+        <div class="chat-header__menu-wrap">
+          <cog-icon-button
+            name="more-horizontal"
+            title="Conversation menu"
+            [selected]="menuOpen()"
+            (click)="toggleMenu($event)"
+          />
+
+          @if (menuOpen()) {
+            <div class="chat-header__menu">
+              <cog-menu [items]="menuItems()" (itemSelect)="onMenuSelect($event)" />
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</header>
+
+<cog-security-modal
+  [open]="securityOpen()"
+  [fingerprint]="fingerprint()"
+  [verified]="hasDeviceKey()"
+  (close)="closeSecurity()"
+/>

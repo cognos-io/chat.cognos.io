@@ -16,12 +16,12 @@ import {
   CognosToastService,
 } from '@cognos/ui-angular';
 
+import { ChatHeaderComponent } from '@app/components/chat/chat-header/chat-header.component';
 import { ConversationListItemComponent } from '@app/components/chat/conversation-list/conversation-list-item/conversation-list-item.component';
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/contact-help-dialog.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { VaultPasswordDialogComponent } from '@app/components/vault-password-dialog/vault-password-dialog.component';
-import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
@@ -41,6 +41,7 @@ import { ConversationService } from '../../services/conversation.service';
     CognosLozengeComponent,
     CognosLogoComponent,
     CognosTextFieldComponent,
+    ChatHeaderComponent,
     ConversationListItemComponent,
     LoadingIndicatorComponent,
   ],
@@ -48,7 +49,6 @@ import { ConversationService } from '../../services/conversation.service';
   styleUrl: './chat.component.scss',
 })
 export class ChatComponent {
-  private readonly _deviceService = inject(DeviceService);
   private readonly _dialog = inject(Dialog);
   private readonly _messageService = inject(MessageService);
   private readonly _toastService = inject(CognosToastService);
@@ -61,22 +61,9 @@ export class ChatComponent {
   private _vaultDialogRef: DialogRef<unknown, VaultPasswordDialogComponent> | null =
     null;
 
-  readonly isMobile = computed(() => this._deviceService.isMobile());
   readonly isRestoringVault = computed(
     () => this._vaultService.isRestoring() && !this._vaultService.keyPair(),
   );
-
-  readonly pageTitle = computed(() => {
-    const title = this.conversationService.conversation()?.decryptedData.title;
-
-    if (title) {
-      return title;
-    }
-
-    return this.conversationService.isTemporaryConversation()
-      ? 'Temporary chat'
-      : 'New chat';
-  });
 
   readonly canClearTemporaryMessages = computed(() => {
     return (
@@ -133,10 +120,6 @@ export class ChatComponent {
     if (this.router.url !== '/') {
       this.router.navigateByUrl('/');
     }
-  }
-
-  onClearMessages() {
-    this._messageService.resetState();
   }
 
   onLock() {

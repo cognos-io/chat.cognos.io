@@ -132,32 +132,12 @@
         (click)="openDrawer()"
       />
       <app-cognos-logo class="chat-shell__mobile-logo" palette="dark"></app-cognos-logo>
-      <div class="chat-shell__mobile-actions">
-        @if (canClearTemporaryMessages()) {
-          <cog-icon-button
-            name="eraser"
-            title="Clear all messages"
-            (click)="onClearMessages()"
-          />
-        }
-      </div>
+      <div class="chat-shell__mobile-actions"></div>
     </header>
 
     <div class="chat-shell__page">
       <header class="chat-shell__page-header">
-        <div class="chat-shell__page-heading">
-          <h1 class="chat-shell__page-title">{{ pageTitle() }}</h1>
-        </div>
-
-        <div class="chat-shell__page-actions">
-          @if (canClearTemporaryMessages() && !isMobile()) {
-            <cog-icon-button
-              name="eraser"
-              title="Clear all messages"
-              (click)="onClearMessages()"
-            />
-          }
-        </div>
+        <app-chat-header />
       </header>
 
       <main class="chat-shell__page-content" role="main">

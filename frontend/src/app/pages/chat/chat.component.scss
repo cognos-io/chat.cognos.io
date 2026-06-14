@@ -143,33 +143,7 @@
   }
 
   &__page-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--cog-space-150);
     padding: var(--cog-space-200);
-  }
-
-  &__page-heading {
-    display: grid;
-    gap: var(--cog-space-050);
-    min-width: 0;
-  }
-
-  &__page-title {
-    margin: 0;
-    color: var(--cog-text);
-    font-size: var(--cog-fs-h-md);
-    font-weight: var(--cog-fw-h-md);
-    line-height: var(--cog-lh-h-md);
-  }
-
-  &__page-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: var(--cog-space-050);
   }
 
   &__page-content {

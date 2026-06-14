@@ -1,0 +1,54 @@
+:host {
+  display: block;
+}
+
+.chat-header {
+  display: grid;
+  gap: var(--cog-space-100);
+}
+
+.chat-header__row {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-150);
+}
+
+.chat-header__title {
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--cog-text);
+  font-size: var(--cog-fs-h-md);
+  font-weight: var(--cog-fw-h-md);
+  line-height: var(--cog-lh-h-md);
+}
+
+.chat-header__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--cog-space-100);
+}
+
+.chat-header__menu-wrap {
+  position: relative;
+}
+
+.chat-header__menu {
+  position: absolute;
+  top: calc(100% + var(--cog-space-050));
+  right: 0;
+  z-index: 20;
+}
+
+// Mobile-first: the avatar and the (not-yet-functional) Share button are the
+// first things to drop on narrow screens. Security and the overflow menu stay.
+@media (max-width: 600px) {
+  .chat-header__avatar,
+  .chat-header__share {
+    display: none;
+  }
+}

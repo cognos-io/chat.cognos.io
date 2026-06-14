@@ -1,0 +1,210 @@
+import { Dialog } from '@angular/cdk/dialog';
+import { signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
+
+import { of } from 'rxjs';
+
+import { Conversation } from '@app/interfaces/conversation';
+import { KeyPair } from '@app/interfaces/key-pair';
+import { Message } from '@app/interfaces/message';
+import { AuthService } from '@app/services/auth.service';
+import { ConversationService } from '@app/services/conversation.service';
+import { CryptoService } from '@app/services/crypto.service';
+import { MessageService } from '@app/services/message.service';
+import { VaultService } from '@app/services/vault.service';
+
+import { ChatHeaderComponent } from './chat-header.component';
+
+describe('ChatHeaderComponent', () => {
+  let fixture: ComponentFixture<ChatHeaderComponent>;
+  let component: ChatHeaderComponent;
+  let router: Router;
+  let dialogOpen: ReturnType<typeof vi.fn>;
+
+  const selectedConversation = signal<Conversation | undefined>(undefined);
+  const temporaryConversation = signal(false);
+  const messages = signal<Message[]>([]);
+  const keyPair = signal<KeyPair | undefined>(undefined);
+  const email = signal('');
+
+  const deleteConversation$ = { next: vi.fn() };
+
+  const conversationService = {
+    conversation: selectedConversation,
+    isTemporaryConversation: temporaryConversation,
+    deleteConversation$,
+  };
+
+  const messageService = {
+    messages,
+    resetState: vi.fn(),
+  };
+
+  const vaultService = {
+    keyPair,
+  };
+
+  const cryptoService = {
+    hash: vi.fn(() => new Uint8Array([0x9f, 0x2a, 0x7c, 0x41, 0xdd, 0x08])),
+  };
+
+  const authService = {
+    email,
+  };
+
+  beforeEach(async () => {
+    selectedConversation.set(undefined);
+    temporaryConversation.set(false);
+    messages.set([]);
+    keyPair.set(undefined);
+    email.set('');
+    vi.clearAllMocks();
+
+    dialogOpen = vi.fn().mockReturnValue({ closed: of(true) });
+
+    await TestBed.configureTestingModule({
+      imports: [ChatHeaderComponent],
+      providers: [
+        provideRouter([]),
+        { provide: ConversationService, useValue: conversationService },
+        { provide: MessageService, useValue: messageService },
+        { provide: VaultService, useValue: vaultService },
+        { provide: CryptoService, useValue: cryptoService },
+        { provide: AuthService, useValue: authService },
+        { provide: Dialog, useValue: { open: dialogOpen } },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ChatHeaderComponent);
+    component = fixture.componentInstance;
+    router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    fixture.detectChanges();
+  });
+
+  it('falls back to "New chat" when there is no conversation', () => {
+    expect(component.title()).toBe('New chat');
+  });
+
+  it('falls back to "Temporary chat" for a temporary conversation', () => {
+    temporaryConversation.set(true);
+
+    expect(component.title()).toBe('Temporary chat');
+  });
+
+  it('shows the decrypted conversation title when present', () => {
+    selectedConversation.set(makeConversation('c-1', 'FOI request — draft reply'));
+    fixture.detectChanges();
+
+    expect(component.title()).toBe('FOI request — draft reply');
+    expect(
+      fixture.nativeElement.querySelector('.chat-header__title').textContent,
+    ).toContain('FOI request — draft reply');
+  });
+
+  it('has no overflow menu for a fresh new chat', () => {
+    expect(component.menuItems()).toEqual([]);
+    expect(fixture.nativeElement.querySelector('.chat-header__menu-wrap')).toBeNull();
+  });
+
+  it('offers rename, export and delete for a persisted conversation', () => {
+    selectedConversation.set(makeConversation('c-1', 'Saved chat'));
+    fixture.detectChanges();
+
+    const titles = component.menuItems().map((item) => item.title);
+
+    expect(titles).toEqual(['Rename', 'Export', 'Delete']);
+    expect(
+      component.menuItems().find((item) => item.title === 'Export')?.disabled,
+    ).toBe(true);
+  });
+
+  it('offers clear messages only for a temporary conversation with messages', () => {
+    temporaryConversation.set(true);
+    messages.set([makeMessage('hello')]);
+    fixture.detectChanges();
+
+    expect(component.menuItems().map((item) => item.title)).toEqual(['Clear messages']);
+  });
+
+  it('renders the device key fingerprint as grouped hex when unlocked', () => {
+    keyPair.set({ publicKey: new Uint8Array([1]), secretKey: new Uint8Array() });
+    fixture.detectChanges();
+
+    expect(component.hasDeviceKey()).toBe(true);
+    expect(component.fingerprint()).toBe('9F2A · 7C41 · DD08');
+  });
+
+  it('exposes no fingerprint while the vault is locked', () => {
+    keyPair.set(undefined);
+    fixture.detectChanges();
+
+    expect(component.hasDeviceKey()).toBe(false);
+    expect(component.fingerprint()).toBe('');
+  });
+
+  it('derives avatar initials from the user email', () => {
+    email.set('ewan.jones@livemap.ch');
+    fixture.detectChanges();
+
+    expect(component.currentUserName()).toBe('Ewan Jones');
+  });
+
+  it('toggles the security modal open and closed', () => {
+    expect(component.securityOpen()).toBe(false);
+
+    component.openSecurity();
+    fixture.detectChanges();
+    expect(component.securityOpen()).toBe(true);
+
+    component.closeSecurity();
+    expect(component.securityOpen()).toBe(false);
+  });
+
+  it('deletes the conversation after confirmation and navigates home', () => {
+    selectedConversation.set(makeConversation('c-1', 'Saved chat'));
+    fixture.detectChanges();
+
+    // Delete is the last entry for a persisted conversation.
+    component.onMenuSelect(component.menuItems().length - 1);
+
+    expect(dialogOpen).toHaveBeenCalledTimes(1);
+    expect(deleteConversation$.next).toHaveBeenCalledWith('c-1');
+    expect(router.navigate).toHaveBeenCalledWith(['/']);
+  });
+
+  it('clears messages when the clear action is selected', () => {
+    temporaryConversation.set(true);
+    messages.set([makeMessage('hello')]);
+    fixture.detectChanges();
+
+    component.onMenuSelect(0);
+
+    expect(messageService.resetState).toHaveBeenCalledTimes(1);
+  });
+});
+
+function makeConversation(id: string, title: string): Conversation {
+  return {
+    record: {
+      id,
+      created: '2026-01-01T00:00:00.000Z',
+      updated: '2026-01-02T00:00:00.000Z',
+      data: '',
+    },
+    decryptedData: { title },
+    keyPair: {
+      publicKey: new Uint8Array(),
+      secretKey: new Uint8Array(),
+    },
+  };
+}
+
+function makeMessage(content: string): Message {
+  return {
+    record_id: '1',
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    decryptedData: { content },
+  };
+}

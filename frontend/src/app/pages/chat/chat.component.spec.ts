@@ -9,7 +9,9 @@ import { Conversation } from '@app/interfaces/conversation';
 import { KeyPair } from '@app/interfaces/key-pair';
 import { Message } from '@app/interfaces/message';
 
+import { AuthService } from '../../services/auth.service';
 import { ConversationService } from '../../services/conversation.service';
+import { CryptoService } from '../../services/crypto.service';
 import { DeviceService } from '../../services/device.service';
 import { MessageService } from '../../services/message.service';
 import { UserPreferencesService } from '../../services/user-preferences.service';
@@ -84,7 +86,9 @@ describe('ChatComponent', () => {
       imports: [ChatComponent],
       providers: [
         provideRouter([]),
+        { provide: AuthService, useValue: { email: signal('') } },
         { provide: ConversationService, useValue: conversationService },
+        { provide: CryptoService, useValue: { hash: () => new Uint8Array() } },
         { provide: DeviceService, useValue: { isMobile: signal(false) } },
         { provide: MessageService, useValue: messageService },
         { provide: UserPreferencesService, useValue: userPreferencesService },
