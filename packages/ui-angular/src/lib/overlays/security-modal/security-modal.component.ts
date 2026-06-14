@@ -51,6 +51,16 @@ import { CognosModalComponent } from '../modal/modal.component';
               </p>
             </div>
           </li>
+
+          <li class="cog-security-modal__item">
+            <cog-icon name="search" [size]="20" tone="success" />
+            <div>
+              <h3 class="cog-security-modal__item-title">Search runs locally</h3>
+              <p class="cog-security-modal__item-copy">
+                Your history is searched on this device. Queries are never sent to us.
+              </p>
+            </div>
+          </li>
         </ul>
 
         <section class="cog-security-modal__caveat">

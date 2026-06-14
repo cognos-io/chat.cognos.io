@@ -22,6 +22,7 @@ describe('CognosSecurityModalComponent', () => {
 
     expect(text).toContain('Encrypted on this device');
     expect(text).toContain('Only you can read them');
+    expect(text).toContain('Search runs locally');
     expect(text).toContain('The one honest caveat');
   });
 
