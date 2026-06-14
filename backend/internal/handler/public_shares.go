@@ -163,6 +163,41 @@ func ConversationPublicShareGet(app core.App) func(e *core.RequestEvent) error {
 	}
 }
 
+// ConversationPublicShareDelete revokes a public link by deleting the share
+// row, so the public URL 404s immediately. Admin-only. It does NOT rotate the
+// conversation key — the public read endpoint is the only unauthenticated path
+// to the ciphertext, so removing the share already cuts off all future public
+// access while leaving the owner's own conversation fully readable. Idempotent:
+// revoking an unshared conversation is a no-op success.
+func ConversationPublicShareDelete(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		caller := auth.ExtractUser(e)
+		if caller == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		conversationID := e.Request.PathValue("conversationID")
+		if _, err := ownedConversationRecord(app, e, conversationID); err != nil {
+			return err
+		}
+
+		repo := participants.NewPocketBaseRepo(app)
+		callerRole, _, err := repo.ActiveRole(conversationID, caller.ID)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify caller role", err)
+		}
+		if callerRole != participants.RoleAdmin {
+			return apis.NewForbiddenError("Only conversation admins can revoke a public share", nil)
+		}
+
+		if err := deleteConversationPublicShare(app, conversationID); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to revoke public share", err)
+		}
+
+		return e.NoContent(http.StatusNoContent)
+	}
+}
+
 // PublicConversationGet is the unauthenticated entry point. Given a share
 // token, it returns the encrypted conversation data plus the conversation
 // public key and the wrapped conversation secret the anonymous reader needs.

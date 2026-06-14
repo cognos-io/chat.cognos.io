@@ -322,7 +322,7 @@ test.describe('public sharing API', () => {
     }
   });
 
-  test('revoking public access 404s the URL and rotates the conversation key', async () => {
+  test('revoking public access 404s the URL for everyone', async () => {
     const owner = await provisionApiUser();
     const ownerKeys = generateKeyPair();
 
@@ -333,7 +333,7 @@ test.describe('public sharing API', () => {
         'Soon to be private again',
       );
 
-      const { share, publicShareKeys } = await shareConversationPublicly(
+      const { share } = await shareConversationPublicly(
         owner,
         conversationId,
         conversationKeys,
@@ -345,9 +345,66 @@ test.describe('public sharing API', () => {
       expect(beforeRes.ok()).toBe(true);
       await before.dispose();
 
-      // Revoke = rotate the conversation key. The rotation re-wraps the
-      // conversation secret for every active participant (just the owner
-      // here) and tears down the public share in the same transaction.
+      // Revoke = delete the share. The public read endpoint is the only
+      // unauthenticated path to the ciphertext, so removing the share cuts off
+      // all future public access. No key rotation, so the owner keeps reading.
+      const revoke = await owner.api.delete(
+        `/api/v1/conversations/${conversationId}/public-share`,
+      );
+      expect(revoke.status(), `revoke: ${revoke.status()} ${await revoke.text()}`).toBe(
+        204,
+      );
+
+      // The public URL — token + fragment — must now 404 for everyone.
+      const anon = await newAnonymousApi();
+      try {
+        const convRes = await anon.get(`/api/v1/public/conversations/${share.token}`);
+        expect(convRes.status()).toBe(404);
+        const msgRes = await anon.get(
+          `/api/v1/public/conversations/${share.token}/messages`,
+        );
+        expect(msgRes.status()).toBe(404);
+      } finally {
+        await anon.dispose();
+      }
+
+      // The participant-facing share lookup is gone too.
+      const shareLookup = await owner.api.get(
+        `/api/v1/conversations/${conversationId}/public-share`,
+      );
+      expect(shareLookup.status()).toBe(404);
+
+      // Revoke must NOT have rotated the conversation key — the owner's own
+      // access (and all existing message ciphertext) stays intact.
+      const list = await owner.api.get('/api/v1/conversations');
+      const conv = ((await list.json()) as { id: string; key_version: number }[]).find(
+        (c) => c.id === conversationId,
+      );
+      expect(conv?.key_version).toBe(1);
+    } finally {
+      await owner.api.dispose();
+    }
+  });
+
+  test('rotating the conversation key also tears down an existing public share', async () => {
+    const owner = await provisionApiUser();
+    const ownerKeys = generateKeyPair();
+
+    try {
+      const { conversationId, conversationKeys } = await createKeyedConversation(
+        owner,
+        ownerKeys,
+        'Rotated away',
+      );
+
+      const { share } = await shareConversationPublicly(
+        owner,
+        conversationId,
+        conversationKeys,
+      );
+
+      // A rotation for any reason invalidates the share (new messages would be
+      // sealed to a key the link can't reach), so the backend drops it.
       const newConversationKeys = generateKeyPair();
       const rotate = await owner.api.post(
         `/api/v1/conversations/${conversationId}/rotate`,
@@ -369,30 +426,14 @@ test.describe('public sharing API', () => {
       expect(rotate.ok(), `rotate: ${rotate.status()} ${await rotate.text()}`).toBe(
         true,
       );
-      const rotated = (await rotate.json()) as { key_version: number };
-      expect(rotated.key_version).toBe(2);
 
-      // The public URL — token + fragment — must now 404 for everyone.
       const anon = await newAnonymousApi();
       try {
         const convRes = await anon.get(`/api/v1/public/conversations/${share.token}`);
         expect(convRes.status()).toBe(404);
-        const msgRes = await anon.get(
-          `/api/v1/public/conversations/${share.token}/messages`,
-        );
-        expect(msgRes.status()).toBe(404);
       } finally {
         await anon.dispose();
       }
-
-      // The participant-facing share lookup is gone too.
-      const shareLookup = await owner.api.get(
-        `/api/v1/conversations/${conversationId}/public-share`,
-      );
-      expect(shareLookup.status()).toBe(404);
-
-      // The fragment key is now useless even if someone kept the old URL.
-      void publicShareKeys;
     } finally {
       await owner.api.dispose();
     }

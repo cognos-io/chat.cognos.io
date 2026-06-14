@@ -85,6 +85,11 @@ type ShareState = 'checking' | 'idle' | 'shared';
             Create public link
           </cog-button>
         }
+        @if (state() === 'shared') {
+          <cog-button appearance="danger" [disabled]="working()" (click)="revoke()">
+            Stop sharing
+          </cog-button>
+        }
       </div>
     </cog-dialog-surface>
   `,
@@ -198,6 +203,31 @@ export class ShareConversationDialogComponent implements OnInit {
       .subscribe((url) => {
         this.shareUrl.set(url);
         this.state.set('shared');
+      });
+  }
+
+  revoke(): void {
+    const conversation = this._conversationService.getConversation(
+      this.data.conversationId,
+    )();
+    if (!conversation || this.working()) {
+      return;
+    }
+
+    this.working.set(true);
+    this._publicShareService
+      .revoke(conversation)
+      .pipe(
+        finalize(() => this.working.set(false)),
+        catchError(() => {
+          this._errorService.alert('Unable to stop sharing, please try again.');
+          return EMPTY;
+        }),
+      )
+      .subscribe(() => {
+        this.shareUrl.set('');
+        this.copied.set(false);
+        this.state.set('idle');
       });
   }
 

@@ -49,6 +49,12 @@ class ApiStub {
     }
     return of(this.getResponse);
   }
+
+  deletedConversationId: string | null = null;
+  deletePublicShare(conversationId: string): Observable<void> {
+    this.deletedConversationId = conversationId;
+    return of(undefined);
+  }
 }
 
 describe('PublicShareService', () => {
@@ -134,6 +140,13 @@ describe('PublicShareService', () => {
     expect(Array.from(fragmentSecret)).toEqual(
       Array.from(publicShareKeyPair.secretKey),
     );
+  });
+
+  it('revoke deletes the share for the conversation', async () => {
+    const conversation = buildConversation(crypto);
+
+    await firstValueFrom(service.revoke(conversation));
+    expect(api.deletedConversationId).toBe(conversation.record.id);
   });
 
   it('returns null when the conversation is not shared (404)', async () => {

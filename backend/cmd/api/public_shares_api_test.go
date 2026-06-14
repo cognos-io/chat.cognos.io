@@ -201,6 +201,31 @@ func TestConversationPublicShareAuthz(t *testing.T) {
 			ExpectedContent: []string{`"status":401`},
 			TestAppFactory:  seedPublicShareScenarioApp,
 		},
+		{
+			Name:           "owner (Admin) can revoke the share",
+			Method:         http.MethodDelete,
+			URL:            "/api/v1/conversations/" + shareConversationID + "/public-share",
+			ExpectedStatus: http.StatusNoContent,
+			TestAppFactory: seedPublicShareScenarioApp,
+			BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+		},
+		{
+			Name:            "active Editor cannot revoke the share (admin-only)",
+			Method:          http.MethodDelete,
+			URL:             "/api/v1/conversations/" + shareConversationID + "/public-share",
+			ExpectedStatus:  http.StatusForbidden,
+			ExpectedContent: []string{`"status":403`},
+			TestAppFactory:  seedPublicShareScenarioApp,
+			BeforeTestFunc:  withRecordAuth("users", "test2@example.com"),
+		},
+		{
+			Name:            "guest cannot revoke the share",
+			Method:          http.MethodDelete,
+			URL:             "/api/v1/conversations/" + shareConversationID + "/public-share",
+			ExpectedStatus:  http.StatusUnauthorized,
+			ExpectedContent: []string{`"status":401`},
+			TestAppFactory:  seedPublicShareScenarioApp,
+		},
 	}
 
 	for _, scenario := range scenarios {

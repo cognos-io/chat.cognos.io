@@ -668,6 +668,15 @@ export class CognosApiService {
     );
   }
 
+  deletePublicShare(conversationId: string): Observable<void> {
+    return this._http.delete<void>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/public-share`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
   getPublicConversation(token: string): Observable<ApiPublicConversationResponse> {
     return this._http.get<ApiPublicConversationResponse>(
       `${this._baseUrl}/api/v1/public/conversations/${token}`,

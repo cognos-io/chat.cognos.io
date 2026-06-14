@@ -227,6 +227,14 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	e.Router.DELETE(
+		"/api/v1/conversations/{conversationID}/public-share",
+		handler.ConversationPublicShareDelete(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	// Public, unauthenticated read surface for shared conversations. Gated by
 	// the existence of a share row for the token, NOT by auth — the URL
 	// fragment (held only by the client) is what decrypts the payload. Rate

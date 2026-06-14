@@ -68,6 +68,15 @@ export class PublicShareService {
     );
   }
 
+  // revoke deletes the share so the public URL 404s immediately. We don't
+  // rotate the conversation key: the public read endpoint is the only
+  // unauthenticated path to the ciphertext, so removing the share already cuts
+  // off all future public access while keeping the owner's conversation
+  // readable.
+  revoke(conversation: Conversation): Observable<void> {
+    return this._api.deletePublicShare(conversation.record.id);
+  }
+
   // buildShareUrl assembles /p/<token>#<url-safe-base64 secret>. The secret in
   // the fragment never reaches the server (the browser strips fragments from
   // requests), so it stays client-only by construction.
