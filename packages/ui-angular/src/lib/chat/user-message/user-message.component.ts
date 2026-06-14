@@ -15,7 +15,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
         </div>
       </div>
 
-      @if (meta() || securing()) {
+      @if (meta() || securing() || branchCount() > 1) {
         <footer class="cog-user-message__meta">
           @if (securing()) {
             <span class="cog-user-message__loader" aria-hidden="true">
@@ -23,8 +23,19 @@ import { CognosIconComponent } from '../../icon/icon.component';
             </span>
             <span>{{ securingLabel() }}</span>
           } @else {
-            <cog-icon name="lock" [size]="12" tone="text-subtlest" />
-            <span>{{ meta() }}</span>
+            @if (branchCount() > 1) {
+              <span
+                class="cog-user-message__branch"
+                [title]="branchCount() + ' versions'"
+              >
+                <cog-icon name="git-branch" [size]="12" tone="text-subtlest" />
+                {{ branchCount() }}
+              </span>
+            }
+            @if (meta()) {
+              <cog-icon name="lock" [size]="12" tone="text-subtlest" />
+              <span>{{ meta() }}</span>
+            }
           }
         </footer>
       }
@@ -48,7 +59,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
 
       .cog-user-message__bubble {
         display: grid;
-        max-width: min(88%, 620px);
+        max-width: min(88%, 740px);
         gap: var(--cog-space-100);
         border-radius: var(--cog-radius-md) var(--cog-radius-md) var(--cog-radius-xs)
           var(--cog-radius-md);
@@ -91,6 +102,14 @@ import { CognosIconComponent } from '../../icon/icon.component';
         line-height: var(--cog-lh-caption);
       }
 
+      .cog-user-message__branch {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--cog-space-025);
+        margin-inline-end: var(--cog-space-050);
+        font-variant-numeric: tabular-nums;
+      }
+
       .cog-user-message__loader {
         display: inline-flex;
         gap: 2px;
@@ -130,4 +149,7 @@ export class CognosUserMessageComponent {
   readonly meta = input('');
   readonly securing = input(false);
   readonly securingLabel = input('Securing…');
+  // Number of direct replies/versions when this message is a branch point.
+  // Renders a quiet `⑂ N` tick when greater than 1.
+  readonly branchCount = input(0);
 }

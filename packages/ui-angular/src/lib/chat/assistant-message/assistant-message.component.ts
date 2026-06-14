@@ -27,6 +27,16 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
             @if (time()) {
               <span class="cog-assistant-message__time">{{ time() }}</span>
             }
+
+            @if (branchCount() > 1) {
+              <span
+                class="cog-assistant-message__branch"
+                [title]="branchCount() + ' versions'"
+              >
+                <cog-icon name="git-branch" [size]="12" tone="text-subtle" />
+                {{ branchCount() }}
+              </span>
+            }
           </div>
 
           @if (showActions()) {
@@ -93,7 +103,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
 
       @media (min-width: 768px) {
         .cog-assistant-message__content {
-          max-width: min(88%, 620px);
+          max-width: min(88%, 740px);
         }
       }
 
@@ -122,6 +132,16 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
         color: var(--cog-text-subtlest);
         font-size: var(--cog-fs-caption);
         line-height: var(--cog-lh-caption);
+      }
+
+      .cog-assistant-message__branch {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--cog-space-025);
+        color: var(--cog-text-subtle);
+        font-size: var(--cog-fs-caption);
+        line-height: var(--cog-lh-caption);
+        font-variant-numeric: tabular-nums;
       }
 
       .cog-assistant-message__actions {
@@ -219,4 +239,7 @@ export class CognosAssistantMessageComponent {
   readonly sources = input(0);
   readonly typing = input(false);
   readonly showActions = input(true);
+  // Number of direct replies/versions when this message is a branch point.
+  // Renders a quiet `⑂ N` tick when greater than 1.
+  readonly branchCount = input(0);
 }
