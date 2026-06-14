@@ -29,6 +29,53 @@ export function generateKeyPair(): KeyPairB64 {
   return { publicKey: toB64(kp.publicKey), secretKey: toB64(kp.secretKey) };
 }
 
+// Re-derive the full keypair from a base64 secret key. The public-sharing
+// flow ships ONLY the secret half in the URL fragment, so the anonymous
+// reader rebuilds the matching public key to open sealed boxes addressed to
+// it. Mirrors nacl.box.keyPair.fromSecretKey.
+export function keyPairFromSecret(secretKeyB64: string): KeyPairB64 {
+  const kp = nacl.box.keyPair.fromSecretKey(fromB64(secretKeyB64));
+  return { publicKey: toB64(kp.publicKey), secretKey: toB64(kp.secretKey) };
+}
+
+// Authenticated box keyed by the X25519 shared secret of the two keys, with a
+// random nonce prepended. Mirrors crypto.service.ts box()/openBox() — the
+// format used for conversation data and for wrapping the conversation secret
+// key to a user. box.before(theirPub, mySec) is symmetric, so either side can
+// re-derive the same shared key.
+export function authBox(
+  theirPublicKeyB64: string,
+  mySecretKeyB64: string,
+  payload: Uint8Array,
+): string {
+  const shared = nacl.box.before(fromB64(theirPublicKeyB64), fromB64(mySecretKeyB64));
+  const nonce = nacl.randomBytes(nacl.box.nonceLength);
+  const ciphertext = nacl.box.after(payload, nonce, shared);
+
+  const full = new Uint8Array(nonce.length + ciphertext.length);
+  full.set(nonce);
+  full.set(ciphertext, nonce.length);
+  return toB64(full);
+}
+
+export function openAuthBox(
+  theirPublicKeyB64: string,
+  mySecretKeyB64: string,
+  fullB64: string,
+): Uint8Array {
+  const shared = nacl.box.before(fromB64(theirPublicKeyB64), fromB64(mySecretKeyB64));
+  const full = fromB64(fullB64);
+  const nonce = full.slice(0, nacl.box.nonceLength);
+  const ciphertext = full.slice(nacl.box.nonceLength);
+  const plain = nacl.box.open.after(ciphertext, nonce, shared);
+  if (plain === null) {
+    throw new Error(
+      'crypto-helpers: openAuthBox failed (wrong keys or tampered ciphertext)',
+    );
+  }
+  return plain;
+}
+
 // Sealed box: anonymous encryption to a recipient public key. The sender is
 // a one-shot ephemeral keypair whose public half is prepended to the
 // ciphertext, and the nonce is derived deterministically from both public
