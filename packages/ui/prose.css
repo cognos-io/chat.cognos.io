@@ -1,0 +1,223 @@
+/* =========================================================================
+   Cognos Design System — prose typography for rich rendered content
+
+   Styles markdown-rendered HTML (headings, lists, tables, code, callouts,
+   footnotes …) inside any element carrying the `.cog-prose` class. The
+   ui-angular message components add that class to their content slot.
+
+   This is global, unencapsulated CSS on purpose: markdown HTML is inserted
+   dynamically and carries no Angular view-encapsulation attributes, so
+   component-scoped selectors cannot reach it. Include this stylesheet once at
+   the application shell, alongside tokens.css.
+   ========================================================================= */
+
+.cog-prose :where(p, ul, ol, pre, blockquote, table, hr, dl, .markdown-alert) {
+  margin: 0 0 var(--cog-space-150);
+}
+
+.cog-prose
+  :where(p, ul, ol, pre, blockquote, table, hr, dl, .markdown-alert):last-child {
+  margin-bottom: 0;
+}
+
+/* Headings */
+.cog-prose :where(h1, h2, h3, h4, h5, h6) {
+  margin: var(--cog-space-250) 0 var(--cog-space-100);
+  font-weight: var(--cog-fw-semibold);
+  line-height: var(--cog-lh-h-sm);
+}
+
+.cog-prose :where(h1, h2, h3, h4, h5, h6):first-child {
+  margin-top: 0;
+}
+
+.cog-prose :where(h1) {
+  font-size: var(--cog-fs-h-lg);
+  font-weight: var(--cog-fw-h-lg);
+  line-height: var(--cog-lh-h-lg);
+}
+
+.cog-prose :where(h2) {
+  font-size: var(--cog-fs-h-md);
+  font-weight: var(--cog-fw-h-md);
+  line-height: var(--cog-lh-h-md);
+  padding-bottom: var(--cog-space-050);
+  border-bottom: 1px solid var(--cog-border);
+}
+
+.cog-prose :where(h3) {
+  font-size: var(--cog-fs-h-sm);
+  font-weight: var(--cog-fw-h-sm);
+}
+
+.cog-prose :where(h4) {
+  font-size: var(--cog-fs-body-lg);
+}
+
+.cog-prose :where(h5, h6) {
+  font-size: var(--cog-fs-body);
+}
+
+.cog-prose :where(h6) {
+  color: var(--cog-text-subtle);
+}
+
+/* Lists */
+.cog-prose :where(ul, ol) {
+  padding-inline-start: var(--cog-space-300);
+}
+
+.cog-prose :where(ul) {
+  list-style: disc;
+}
+
+.cog-prose :where(ol) {
+  list-style: decimal;
+}
+
+.cog-prose :where(li) {
+  margin-block: var(--cog-space-050);
+}
+
+.cog-prose :where(li > ul, li > ol) {
+  margin-block: var(--cog-space-050) 0;
+}
+
+/* GFM task lists */
+.cog-prose :where(li:has(> input[type='checkbox'])) {
+  list-style: none;
+  margin-inline-start: calc(-1 * var(--cog-space-250));
+}
+
+.cog-prose :where(li > input[type='checkbox']) {
+  margin-inline-end: var(--cog-space-075);
+}
+
+/* Blockquote */
+.cog-prose :where(blockquote) {
+  border-inline-start: 3px solid var(--cog-border-bold);
+  padding-inline-start: var(--cog-space-150);
+  color: var(--cog-text-subtle);
+}
+
+/* Horizontal rule */
+.cog-prose :where(hr) {
+  height: 1px;
+  border: 0;
+  background: var(--cog-border);
+}
+
+/* Links */
+.cog-prose :where(a) {
+  color: var(--cog-link);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+/* Inline code */
+.cog-prose :where(code):not(pre code) {
+  font-family: var(--cog-font-mono);
+  font-size: 0.92em;
+  padding: 0.1em 0.3em;
+  border-radius: var(--cog-radius-xs);
+  background: var(--cog-surface-sunken);
+}
+
+/* Code block */
+.cog-prose :where(pre) {
+  overflow: auto;
+  border-radius: var(--cog-radius-sm);
+}
+
+/* Tables */
+.cog-prose :where(table) {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: var(--cog-fs-body-sm);
+}
+
+.cog-prose :where(th, td) {
+  border: 1px solid var(--cog-border);
+  padding: var(--cog-space-075) var(--cog-space-100);
+  text-align: start;
+}
+
+.cog-prose :where(th) {
+  background: var(--cog-surface-sunken);
+  font-weight: var(--cog-fw-semibold);
+}
+
+/* GitHub/Obsidian callouts (marked-alert) */
+.cog-prose :where(.markdown-alert) {
+  border: 1px solid var(--cog-border);
+  border-inline-start: 3px solid var(--cog-border-bold);
+  border-radius: var(--cog-radius-sm);
+  padding: var(--cog-space-150);
+  background: var(--cog-surface-sunken);
+}
+
+.cog-prose :where(.markdown-alert) > :last-child {
+  margin-bottom: 0;
+}
+
+.cog-prose :where(.markdown-alert-title) {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-075);
+  margin-bottom: var(--cog-space-050);
+  font-weight: var(--cog-fw-semibold);
+  line-height: var(--cog-lh-body);
+}
+
+.cog-prose :where(.markdown-alert .octicon) {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  flex: none;
+}
+
+.cog-prose :where(.markdown-alert-note) {
+  border-inline-start-color: var(--cog-loz-blue-fg);
+}
+.cog-prose :where(.markdown-alert-note) .markdown-alert-title {
+  color: var(--cog-loz-blue-fg);
+}
+
+.cog-prose :where(.markdown-alert-tip) {
+  border-inline-start-color: var(--cog-loz-green-fg);
+}
+.cog-prose :where(.markdown-alert-tip) .markdown-alert-title {
+  color: var(--cog-loz-green-fg);
+}
+
+.cog-prose :where(.markdown-alert-important) {
+  border-inline-start-color: var(--cog-loz-purple-fg);
+}
+.cog-prose :where(.markdown-alert-important) .markdown-alert-title {
+  color: var(--cog-loz-purple-fg);
+}
+
+.cog-prose :where(.markdown-alert-warning, .markdown-alert-caution) {
+  border-inline-start-color: var(--cog-loz-red-fg);
+}
+.cog-prose
+  :where(.markdown-alert-warning, .markdown-alert-caution)
+  .markdown-alert-title {
+  color: var(--cog-loz-red-fg);
+}
+
+/* Footnotes (marked-footnote) */
+.cog-prose :where(.footnotes) {
+  margin-top: var(--cog-space-200);
+  border-top: 1px solid var(--cog-border);
+  padding-top: var(--cog-space-150);
+  font-size: var(--cog-fs-body-sm);
+  color: var(--cog-text-subtle);
+}
+
+.cog-prose :where([data-footnote-ref]) {
+  font-size: 0.8em;
+}

@@ -6,6 +6,7 @@
   "sideEffects": [
     "./tokens.css",
     "./app.css",
+    "./prose.css",
     "./fonts/noto-sans.css",
     "./fonts/reddit-mono.css",
     "./styles/tokens.css",
@@ -26,6 +27,7 @@
     },
     "./tokens.css": "./tokens.css",
     "./app.css": "./app.css",
+    "./prose.css": "./prose.css",
     "./fonts/noto-sans.css": "./fonts/noto-sans.css",
     "./fonts/reddit-mono.css": "./fonts/reddit-mono.css",
     "./styles/tokens.css": "./styles/tokens.css",

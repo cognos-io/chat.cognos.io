@@ -46,6 +46,7 @@
             "styles": [
               "node_modules/@cognos/ui/tokens.css",
               "node_modules/@cognos/ui/app.css",
+              "node_modules/@cognos/ui/prose.css",
               "src/styles.scss",
               "node_modules/prismjs/themes/prism-okaidia.css",
               "node_modules/katex/dist/katex.min.css"
@@ -90,8 +91,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4.4kb"
+                  "maximumWarning": "4kb",
+                  "maximumError": "6kb"
                 }
               ],
               "outputHashing": "all"

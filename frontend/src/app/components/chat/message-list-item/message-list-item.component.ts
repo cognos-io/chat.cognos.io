@@ -148,35 +148,6 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       margin: 0;
       white-space: pre-wrap;
     }
-
-    markdown {
-      color: inherit;
-    }
-
-    markdown :where(p, ul, ol, pre, blockquote) {
-      margin: 0 0 var(--cog-space-150);
-    }
-
-    markdown
-      :where(
-        p:last-child,
-        ul:last-child,
-        ol:last-child,
-        pre:last-child,
-        blockquote:last-child
-      ) {
-      margin-bottom: 0;
-    }
-
-    markdown :where(pre) {
-      overflow: auto;
-      border-radius: var(--cog-radius-sm);
-    }
-
-    markdown :where(code):not(pre code) {
-      font-family: var(--cog-font-mono);
-      font-size: 0.92em;
-    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

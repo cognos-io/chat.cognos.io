@@ -37,7 +37,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
           }
         </header>
 
-        <div class="cog-assistant-message__body">
+        <div class="cog-assistant-message__body cog-prose">
           <ng-content />
         </div>
 

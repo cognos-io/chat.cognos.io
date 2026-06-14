@@ -1,20 +1,16 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
+import { CognosIconComponent } from '../../icon/icon.component';
 
 @Component({
-  selector: "cog-user-message",
+  selector: 'cog-user-message',
   standalone: true,
   imports: [CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article class="cog-user-message">
       <div class="cog-user-message__bubble">
-        <div class="cog-user-message__body">
+        <div class="cog-user-message__body cog-prose">
           <ng-content />
         </div>
       </div>
@@ -50,8 +46,8 @@ import { CognosIconComponent } from "../../icon/icon.component";
         display: grid;
         max-width: min(88%, 620px);
         gap: var(--cog-space-100);
-        border-radius: var(--cog-radius-md) var(--cog-radius-md)
-          var(--cog-radius-xs) var(--cog-radius-md);
+        border-radius: var(--cog-radius-md) var(--cog-radius-md) var(--cog-radius-xs)
+          var(--cog-radius-md);
         background: var(--cog-selected-bg);
         padding: 14px;
         color: var(--cog-text);
@@ -110,7 +106,7 @@ import { CognosIconComponent } from "../../icon/icon.component";
   ],
 })
 export class CognosUserMessageComponent {
-  readonly meta = input("");
+  readonly meta = input('');
   readonly securing = input(false);
-  readonly securingLabel = input("Securing…");
+  readonly securingLabel = input('Securing…');
 }
