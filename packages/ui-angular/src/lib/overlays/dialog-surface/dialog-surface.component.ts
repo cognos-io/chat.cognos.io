@@ -14,7 +14,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
   imports: [CognosIconButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section [class]="surfaceClass()">
+    <section [class]="surfaceClass()" [style.--cog-dialog-surface-width]="widthVar()">
       <header class="cog-dialog-surface__header">
         <div class="cog-dialog-surface__heading">
           <h2 class="cog-dialog-surface__title">{{ title() }}</h2>
@@ -47,6 +47,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
 
       .cog-dialog-surface {
         display: grid;
+        width: var(--cog-dialog-surface-width, auto);
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
@@ -106,6 +107,12 @@ export class CognosDialogSurfaceComponent {
   readonly subtitle = input('');
   readonly footer = input(false);
   readonly dismissible = input(true);
+  /**
+   * Optional fixed width in px. When unset the surface shrinks to fit its
+   * content (capped by the dialog panel). When set it matches the panel's
+   * responsive clamp so it never overflows narrow viewports.
+   */
+  readonly width = input<number | null>(null);
   readonly close = output<void>();
 
   protected readonly surfaceClass = computed(() => {
@@ -116,6 +123,12 @@ export class CognosDialogSurfaceComponent {
     }
 
     return classes.join(' ');
+  });
+
+  protected readonly widthVar = computed(() => {
+    const width = this.width();
+
+    return width == null ? null : `min(${width}px, calc(100vw - 32px))`;
   });
 
   protected onClose(): void {

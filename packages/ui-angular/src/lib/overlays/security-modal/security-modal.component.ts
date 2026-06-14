@@ -24,7 +24,7 @@ import { CognosModalComponent } from '../modal/modal.component';
     <cog-modal
       [open]="open()"
       title="Security & keys"
-      [width]="640"
+      [width]="580"
       [stickyFooter]="true"
       (close)="onClose()"
     >
