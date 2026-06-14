@@ -33,7 +33,7 @@ import {
 } from '@cognos/ui-angular';
 
 import { generateConversationAgentId } from '@app/interfaces/agent';
-import { Message, parseMessageData } from '@app/interfaces/message';
+import { Message, MessageData, parseMessageData } from '@app/interfaces/message';
 import { parseBackendDate } from '@app/utils/timestamp';
 
 import { AgentService } from './agent.service';
@@ -90,6 +90,28 @@ export const messageTreeAccessors: MessageTreeAccessors<Message> = {
   getParentId: (message) => message.parentMessageId,
   getOrder: (message) => message.createdAt.getTime(),
 };
+
+// DELETED_MESSAGE_MARKER is the fixed, locale-independent content sent to the
+// model in place of a soft-deleted message, so the model knows a turn existed
+// there and was intentionally removed. The user-facing label is localised
+// separately in the UI.
+export const DELETED_MESSAGE_MARKER = '[message deleted]';
+
+// buildDeletedMessageData turns a message's decrypted data into a tombstone:
+// the content is dropped and a deleted flag is set, while the role, parent,
+// conversation binding and timestamp are preserved so the thread structure and
+// the model context marker stay correct.
+export const buildDeletedMessageData = (existing: MessageData): MessageData => ({
+  version: existing.version,
+  content: null,
+  conversation_id: existing.conversation_id,
+  parent_message_id: existing.parent_message_id,
+  created_at: existing.created_at,
+  agent_id: existing.agent_id,
+  model_id: existing.model_id,
+  owner_id: existing.owner_id,
+  deleted: true,
+});
 
 // regenerateContextPath returns the slice of the active path up to and
 // including the parent message — the context a regenerated response replies to,
@@ -161,7 +183,11 @@ export const buildCompletionMessageContext = (
   let usedContextLength = 0;
 
   for (const message of messagesNewestFirst) {
-    const content = message.decryptedData.content;
+    // A soft-deleted message keeps its place in the thread via a marker so the
+    // model sees that a turn was intentionally removed.
+    const content = message.decryptedData.deleted
+      ? DELETED_MESSAGE_MARKER
+      : message.decryptedData.content;
     if (!content) {
       continue;
     }
@@ -340,7 +366,7 @@ export const splitStreamDeltaForDisplay = (delta: string, chunkSize = 3): string
   providedIn: 'root',
 })
 export class MessageService {
-  private readonly _deleteMessages$ = new Subject<Array<string>>(); // Add a list of message IDs to delete
+  private readonly _softDeleteMessage$ = new Subject<Message>();
   private readonly _agentService = inject(AgentService);
   private readonly _authService = inject(AuthService);
   private readonly _conversationService = inject(ConversationService);
@@ -499,9 +525,9 @@ export class MessageService {
         }),
       ),
 
-      this._deleteMessages$.pipe(
-        concatMap((messageIds) => {
-          return this.deleteMessages(messageIds);
+      this._softDeleteMessage$.pipe(
+        concatMap((message) => {
+          return this.softDeleteMessage(message);
         }),
       ),
 
@@ -670,7 +696,7 @@ export class MessageService {
     if (!msg.record_id) {
       return;
     }
-    this._deleteMessages$.next([msg.record_id]);
+    this._softDeleteMessage$.next(msg);
   }
 
   // branchInfo returns navigation metadata for a message that sits at a fork
@@ -1139,22 +1165,43 @@ export class MessageService {
     );
   }
 
-  private deleteMessages(messageIds: Array<string>): Observable<Partial<MessageState>> {
-    return from(messageIds).pipe(
-      concatMap((messageId) => {
-        // This will remove the message and all it's children due to the CASCADE delete
-        return this._api.deleteMessage(messageId).pipe(
-          map(() => {
-            // Rather than load all the messages from the server, reset the state minus affected messages
-            let messages = this.state().messages;
+  // softDeleteMessage replaces a message's content with a re-encrypted
+  // tombstone, keeping the node (and its role/parent/timestamp) so the thread
+  // stays intact. The original ciphertext is overwritten server-side, so the
+  // real content is removed rather than merely hidden.
+  private softDeleteMessage(message: Message): Observable<Partial<MessageState>> {
+    const recordId = message.record_id;
+    if (!recordId) {
+      return EMPTY;
+    }
 
-            messages = messages.filter((msg) => msg.record_id !== messageId);
+    const tombstone = buildDeletedMessageData(message.decryptedData);
 
-            return {
-              messages,
-            };
-          }),
-        );
+    const applyLocal = (): Partial<MessageState> => ({
+      messages: this.state().messages.map((msg) =>
+        msg.record_id === recordId
+          ? { ...msg, decryptedData: tombstone, expires: undefined }
+          : msg,
+      ),
+    });
+
+    const conversation = this._conversationService.conversation();
+    if (!conversation) {
+      // Temporary (non-persisted) conversation: tombstone in memory only.
+      return of(applyLocal());
+    }
+
+    const sealed = this._cryptoService.createSealedBox(
+      new TextEncoder().encode(JSON.stringify(tombstone)),
+      conversation.keyPair.publicKey,
+    );
+
+    return this._api.softDeleteMessage(recordId, Base64.fromUint8Array(sealed)).pipe(
+      map(() => applyLocal()),
+      catchError((err) => {
+        console.error('Error deleting message');
+        this._errorService.alert(resolveCompletionFailureMessage(err));
+        return EMPTY;
       }),
     );
   }

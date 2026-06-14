@@ -78,7 +78,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
             />
           }
 
-          @if (message.record_id) {
+          @if (message.record_id && !message.decryptedData.deleted) {
             <cog-icon-button
               name="x"
               title="Delete message"
@@ -90,7 +90,11 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
         @if (isMessageFromUser(message.decryptedData)) {
           <div class="message-list-item__user">
             <cog-user-message [meta]="userMeta()" [branchCount]="branchPointCount()">
-              @if (message.decryptedData.content) {
+              @if (message.decryptedData.deleted) {
+                <p class="message-list-item__deleted" i18n="@@message.deleted">
+                  Deleted message
+                </p>
+              } @else if (message.decryptedData.content) {
                 <markdown emoji katex>
                   {{ message.decryptedData.content }}
                 </markdown>
@@ -113,7 +117,11 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
               [time]="messageTime()"
               [branchCount]="branchPointCount()"
             >
-              @if (message.decryptedData.content) {
+              @if (message.decryptedData.deleted) {
+                <p class="message-list-item__deleted" i18n="@@message.deleted">
+                  Deleted message
+                </p>
+              } @else if (message.decryptedData.content) {
                 @if (message.isStreaming) {
                   <p class="message-list-item__streaming">
                     {{ message.decryptedData.content }}
@@ -162,7 +170,8 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       gap: var(--cog-space-050);
     }
 
-    .message-list-item__empty {
+    .message-list-item__empty,
+    .message-list-item__deleted {
       margin: 0;
       color: var(--cog-text-subtlest);
       font-style: italic;
@@ -204,6 +213,7 @@ export class MessageListItemComponent {
       !!message &&
       !!message.record_id &&
       !message.isStreaming &&
+      !message.decryptedData.deleted &&
       !isMessageFromUser(message.decryptedData) &&
       !!message.parentMessageId
     );

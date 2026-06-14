@@ -186,7 +186,10 @@ interface ApiConversationRequest {
 }
 
 interface ApiMessageUpdateRequest {
-  clear_expires: boolean;
+  clear_expires?: boolean;
+  // Replacement encrypted blob, used to soft-delete by overwriting content
+  // with a re-encrypted tombstone.
+  data?: string;
 }
 
 interface ApiUserKeyPairCreateRequest {
@@ -399,6 +402,20 @@ export class CognosApiService {
 
   updateMessage(messageId: string, clearExpires: boolean): Observable<MessageRecord> {
     const request: ApiMessageUpdateRequest = { clear_expires: clearExpires };
+    return this._http.patch<MessageRecord>(
+      `${this._baseUrl}/api/v1/messages/${messageId}`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // softDeleteMessage overwrites a message's encrypted blob with a re-encrypted
+  // tombstone, removing the content while keeping the record (and its role,
+  // parent and timestamp inside the new blob).
+  softDeleteMessage(messageId: string, data: string): Observable<MessageRecord> {
+    const request: ApiMessageUpdateRequest = { data };
     return this._http.patch<MessageRecord>(
       `${this._baseUrl}/api/v1/messages/${messageId}`,
       request,

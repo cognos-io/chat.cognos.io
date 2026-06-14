@@ -6,11 +6,13 @@ import { Message } from '@app/interfaces/message';
 
 import { CompleteResponse } from './cognos-api.service';
 import {
+  DELETED_MESSAGE_MARKER,
   applyCompletionStreamDelta,
   applyCompletionStreamResponse,
   assertMessageBindings,
   buildCompletionMessageContext,
   buildCompletionMessages,
+  buildDeletedMessageData,
   isCompletionAbortError,
   regenerateContextPath,
   removeStreamingCompletionMessages,
@@ -229,6 +231,33 @@ describe('buildCompletionMessages', () => {
   });
 });
 
+describe('buildDeletedMessageData', () => {
+  it('clears content and flags deletion while preserving role and binding', () => {
+    const tombstone = buildDeletedMessageData({
+      version: '1',
+      content: 'secret reply',
+      conversation_id: 'conv-1',
+      parent_message_id: 'user-1',
+      created_at: '2026-01-02T03:04:05.000Z',
+      agent_id: 'cognos:simple-assistant',
+      model_id: 'infomaniak:llama-3',
+      owner_id: undefined,
+    });
+
+    expect(tombstone).toEqual({
+      version: '1',
+      content: null,
+      conversation_id: 'conv-1',
+      parent_message_id: 'user-1',
+      created_at: '2026-01-02T03:04:05.000Z',
+      agent_id: 'cognos:simple-assistant',
+      model_id: 'infomaniak:llama-3',
+      owner_id: undefined,
+      deleted: true,
+    });
+  });
+});
+
 describe('regenerateContextPath', () => {
   const node = (id: string, parentMessageId?: string): Message => ({
     record_id: id,
@@ -365,6 +394,19 @@ describe('buildCompletionMessageContext', () => {
     const context = buildCompletionMessageContext(messages, 100, noopAgent, noopModel);
     expect(context).toHaveLength(1);
     expect(context[0]).toMatchObject({ role: 'user', content: 'real', name: 'u-1' });
+  });
+
+  it('represents a soft-deleted message with the deletion marker, keeping role', () => {
+    const messages = [
+      makeMessage({
+        decryptedData: { content: null, owner_id: 'u-1', deleted: true },
+      }),
+    ];
+
+    const context = buildCompletionMessageContext(messages, 100, noopAgent, noopModel);
+    expect(context).toEqual([
+      { role: 'user', content: DELETED_MESSAGE_MARKER, name: 'u-1' },
+    ]);
   });
 
   it('flips chronologically: newest-first input becomes oldest-first context', () => {

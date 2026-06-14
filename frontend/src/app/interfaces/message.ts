@@ -22,6 +22,10 @@ export const MessageData = z.object({
   agent_id: z.string().optional(), // the agent used when generating the message
   model_id: z.string().optional(), // the model used when generating the message
   owner_id: z.string().optional(), // the user who sent the message
+  // Tombstone flag set when the message is soft-deleted. The content is cleared
+  // but the role/parent/timestamp are preserved so the thread structure and the
+  // LLM context marker stay correct.
+  deleted: z.boolean().optional(),
 });
 export type MessageData = z.infer<typeof MessageData>;
 
