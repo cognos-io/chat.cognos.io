@@ -60,6 +60,10 @@ type listMessagesResponse struct {
 
 type updateMessageRequest struct {
 	ClearExpires bool `json:"clear_expires"`
+	// Data, when set, replaces the encrypted message blob. Used for soft-delete:
+	// the client re-encrypts a tombstone (role preserved, content removed) and
+	// sends the new ciphertext here. The collection's base64 pattern validates it.
+	Data string `json:"data,omitempty"`
 }
 
 func ConversationsList(app core.App) func(e *core.RequestEvent) error {
@@ -661,12 +665,21 @@ func MessagesUpdate(app core.App) func(e *core.RequestEvent) error {
 		if err := e.BindBody(&req); err != nil {
 			return apis.NewBadRequestError("Failed to read request data", err)
 		}
-		if !req.ClearExpires {
-			return apis.NewBadRequestError("clear_expires must be true", nil)
+		req.Data = strings.TrimSpace(req.Data)
+		if !req.ClearExpires && req.Data == "" {
+			return apis.NewBadRequestError("clear_expires or data is required", nil)
+		}
+
+		update := map[string]any{}
+		if req.ClearExpires {
+			update["expires"] = nil
+		}
+		if req.Data != "" {
+			update["data"] = req.Data
 		}
 
 		form := forms.NewRecordUpsert(app, record)
-		form.Load(map[string]any{"expires": nil})
+		form.Load(update)
 		if err := form.Submit(); err != nil {
 			return apis.NewBadRequestError("Failed to update message", err)
 		}

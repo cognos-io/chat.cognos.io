@@ -229,6 +229,33 @@ func TestConversationMessagesAndMutations(t *testing.T) {
 	}
 	clearExpiryScenario.Test(t)
 
+	softDeleteScenario := tests.ApiScenario{
+		Name:           "replace message data with a re-encrypted tombstone",
+		Method:         http.MethodPatch,
+		URL:            "/api/v1/messages/" + messageID,
+		Body:           strings.NewReader(`{"data":"dG9tYnN0b25l"}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"id":"` + messageID + `"`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			seedMessage(t, app, messageID, conversationID, false)
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			record, err := app.FindRecordById("messages", messageID)
+			if err != nil {
+				t.Fatalf("FindRecordById(messages, %q) error = %v", messageID, err)
+			}
+			if got := record.GetString("data"); got != "dG9tYnN0b25l" {
+				t.Fatalf("messages[%q].data = %q, want the tombstone ciphertext", messageID, got)
+			}
+		},
+	}
+	softDeleteScenario.Test(t)
+
 	deleteScenario := tests.ApiScenario{
 		Name:           "delete message",
 		Method:         http.MethodDelete,
