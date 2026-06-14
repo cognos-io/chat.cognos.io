@@ -1,8 +1,9 @@
 @media (min-width: 768px) {
   .chat-shell {
     display: grid;
-    min-height: 100vh;
-    min-height: 100svh;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
     grid-template-columns: 304px minmax(0, 1fr);
 
     &--temporary {
@@ -16,8 +17,9 @@
       grid-template-rows: minmax(0, 1fr) auto;
       border-right: 1px solid var(--cog-border);
       background: var(--cog-nav-bg);
-      min-height: 100vh;
-      min-height: 100svh;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
     }
 
     &__sidebar-footer {
@@ -113,8 +115,8 @@
 
   &__main {
     grid-template-rows: auto minmax(0, 1fr);
-    min-height: 100vh;
-    min-height: 100svh;
+    height: 100%;
+    overflow: hidden;
   }
 
   &__mobile-bar {
@@ -225,8 +227,9 @@ cog-drawer .chat-shell__search-hint {
 
 @media (max-width: 767px) {
   .chat-shell {
-    min-height: 100vh;
-    min-height: 100svh;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
 
     &__sidebar {
       display: none;
