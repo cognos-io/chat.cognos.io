@@ -8,6 +8,7 @@ export * from './lib/primitives/avatar/avatar.component';
 export * from './lib/overlays/menu/menu.component';
 export * from './lib/overlays/sheet/sheet.component';
 export * from './lib/overlays/modal/modal.component';
+export * from './lib/overlays/security-modal/security-modal.component';
 export * from './lib/overlays/dialog-surface/dialog-surface.component';
 export * from './lib/navigation/nav-item/nav-item.component';
 export * from './lib/navigation/breadcrumbs/breadcrumbs.component';
