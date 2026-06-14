@@ -17,6 +17,8 @@ export * from './lib/chat/user-message/user-message.component';
 export * from './lib/chat/assistant-message/assistant-message.component';
 export * from './lib/chat/redacted-text/redacted-text.component';
 export * from './lib/chat/composer/composer.component';
+export * from './lib/chat/branch-switcher/branch-switcher.component';
+export * from './lib/chat/message-tree/message-tree';
 export * from './lib/layout/desktop-shell/desktop-shell.component';
 export * from './lib/layout/mobile-shell/mobile-shell.component';
 export * from './lib/files/file-types';
