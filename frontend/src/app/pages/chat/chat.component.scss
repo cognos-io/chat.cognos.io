@@ -25,10 +25,6 @@
       padding: var(--cog-space-150) var(--cog-space-200);
     }
 
-    &__mobile-bar {
-      display: none;
-    }
-
     &__page-header {
       padding: var(--cog-space-200) var(--cog-space-300);
     }
@@ -122,14 +118,7 @@
   }
 
   &__mobile-bar {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: var(--cog-space-100);
-    min-height: 56px;
-    border-bottom: 1px solid var(--cog-border);
-    background: var(--cog-nav-bg);
-    padding: 0 var(--cog-space-200);
+    display: none;
   }
 
   &__mobile-actions {
@@ -241,6 +230,17 @@ cog-drawer .chat-shell__search-hint {
 
     &__sidebar {
       display: none;
+    }
+
+    &__mobile-bar {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--cog-space-100);
+      min-height: 56px;
+      border-bottom: 1px solid var(--cog-border);
+      background: var(--cog-nav-bg);
+      padding: 0 var(--cog-space-200);
     }
 
     &__page-header {
