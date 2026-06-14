@@ -327,6 +327,35 @@ export const buildMessageRecordFixture = (
   };
 };
 
+// buildPublicShareFixture produces the server-side payload + URL fragment for a
+// publicly-shared conversation, mirroring what PublicShareService.share writes:
+// the conversation secret sealed to a throwaway public-share public key (so the
+// anonymous reader recovers it from the fragment). The fragment is the
+// url-safe base64 secret half, exactly as the app puts it after `#`.
+export const buildPublicShareFixture = (
+  conversationFixture: ConversationFixture,
+  token: string,
+) => {
+  const publicShareKeyPair = nacl.box.keyPair();
+  const wrappedConversationSecretKey = sealedBox(
+    conversationFixture.conversationKeyPair.secretKey,
+    publicShareKeyPair.publicKey,
+  );
+
+  return {
+    token,
+    fragment: Buffer.from(publicShareKeyPair.secretKey).toString('base64url'),
+    publicConversationResponse: {
+      conversation_id: conversationFixture.conversationRecord.id,
+      data: conversationFixture.conversationRecord.data,
+      conversation_public_key:
+        conversationFixture.conversationPublicKeyRecord.public_key,
+      wrapped_conversation_secret_key: base64(wrappedConversationSecretKey),
+      key_version: 1,
+    },
+  };
+};
+
 export const seedAuthenticatedUnlockState = async (
   page: { addInitScript: (...args: unknown[]) => Promise<void> },
   fixture: VaultFixture,

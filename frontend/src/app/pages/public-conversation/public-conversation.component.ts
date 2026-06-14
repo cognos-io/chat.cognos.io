@@ -1,7 +1,9 @@
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -10,21 +12,34 @@ import { ActivatedRoute } from '@angular/router';
 import { EMPTY, catchError, switchMap } from 'rxjs';
 
 import { Base64 } from 'js-base64';
+import { MarkdownComponent } from 'ngx-markdown';
+
+import {
+  CognosAssistantMessageComponent,
+  CognosBranchSwitcherComponent,
+  CognosUserMessageComponent,
+  type MessageBranchInfo,
+  type MessageTreeAccessors,
+  selectActiveBranch,
+} from '@cognos/ui-angular';
 
 import { parseConversationData } from '@app/interfaces/conversation';
 import { KeyPair } from '@app/interfaces/key-pair';
-import { isMessageFromUser, parseMessageData } from '@app/interfaces/message';
+import { Message, isMessageFromUser, parseMessageData } from '@app/interfaces/message';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { CryptoService } from '@app/services/crypto.service';
 import { parseBackendDate } from '@app/utils/timestamp';
 
 type ViewState = 'loading' | 'ready' | 'unavailable';
 
-interface PublicMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  createdAt: number;
-}
+// Same structural accessors the chat uses (message.service.ts) so the public
+// view resolves the active branch identically. Kept local to avoid pulling the
+// whole MessageService into this unauthenticated route's bundle.
+const publicTreeAccessors: MessageTreeAccessors<Message> = {
+  getId: (message) => message.record_id,
+  getParentId: (message) => message.parentMessageId,
+  getOrder: (message) => message.createdAt.getTime(),
+};
 
 // PublicConversationComponent is the unauthenticated read view for a shared
 // conversation. Everything is decrypted in the browser: the secret half of the
@@ -33,9 +48,21 @@ interface PublicMessage {
 // fragment, an unknown/revoked token, or any decryption failure all collapse to
 // the same neutral "link unavailable" state — we never reveal whether a token
 // once existed.
+//
+// Messages render as the active path through the branching tree (newest sibling
+// by default), with the same `⑂ N` branch-point tick and ‹ index/count ›
+// switcher the chat uses, so readers can explore branches. It's read-only —
+// no copy/delete/regenerate actions.
 @Component({
   selector: 'app-public-conversation',
   standalone: true,
+  imports: [
+    NgTemplateOutlet,
+    MarkdownComponent,
+    CognosUserMessageComponent,
+    CognosAssistantMessageComponent,
+    CognosBranchSwitcherComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <main class="public-conversation">
@@ -63,18 +90,51 @@ interface PublicMessage {
           <article class="public-conversation__content">
             <h1 class="public-conversation__title">{{ title() }}</h1>
             <ol class="public-conversation__messages">
-              @for (message of messages(); track $index) {
-                <li
-                  class="public-conversation__message"
-                  [class.public-conversation__message--user]="message.role === 'user'"
-                  [class.public-conversation__message--assistant]="
-                    message.role === 'assistant'
-                  "
-                >
-                  <span class="public-conversation__role">{{
-                    message.role === 'user' ? 'User' : 'Assistant'
-                  }}</span>
-                  <p class="public-conversation__text">{{ message.content }}</p>
+              @for (message of path(); track message.record_id) {
+                <li class="public-conversation__message">
+                  @if (isMessageFromUser(message.decryptedData)) {
+                    <cog-user-message
+                      [meta]="userMeta(message)"
+                      [branchCount]="branchPointCount(message)"
+                    >
+                      <ng-container
+                        [ngTemplateOutlet]="body"
+                        [ngTemplateOutletContext]="{ $implicit: message }"
+                      />
+                      @if (branchInfo(message); as info) {
+                        <div cogMessageActions>
+                          <cog-branch-switcher
+                            [index]="info.index"
+                            [count]="info.count"
+                            (previous)="previousBranch(message)"
+                            (next)="nextBranch(message)"
+                          />
+                        </div>
+                      }
+                    </cog-user-message>
+                  } @else {
+                    <cog-assistant-message
+                      [model]="assistantLabel(message)"
+                      [showActions]="false"
+                      [time]="messageTime(message)"
+                      [branchCount]="branchPointCount(message)"
+                    >
+                      <ng-container
+                        [ngTemplateOutlet]="body"
+                        [ngTemplateOutletContext]="{ $implicit: message }"
+                      />
+                      @if (branchInfo(message); as info) {
+                        <div cogMessageActions>
+                          <cog-branch-switcher
+                            [index]="info.index"
+                            [count]="info.count"
+                            (previous)="previousBranch(message)"
+                            (next)="nextBranch(message)"
+                          />
+                        </div>
+                      }
+                    </cog-assistant-message>
+                  }
                 </li>
               }
             </ol>
@@ -82,6 +142,18 @@ interface PublicMessage {
         }
       }
     </main>
+
+    <ng-template #body let-message>
+      @if (message.decryptedData.deleted) {
+        <p class="public-conversation__muted">Deleted message</p>
+      } @else if (message.decryptedData.content) {
+        <markdown class="public-conversation__text" emoji katex>{{
+          message.decryptedData.content
+        }}</markdown>
+      } @else {
+        <p class="public-conversation__muted">This message is empty.</p>
+      }
+    </ng-template>
   `,
   styles: `
     .public-conversation {
@@ -137,32 +209,25 @@ interface PublicMessage {
       gap: var(--cog-space-200, 16px);
     }
 
-    .public-conversation__message {
-      display: grid;
-      gap: var(--cog-space-050, 4px);
-      padding: var(--cog-space-150, 12px) var(--cog-space-200, 16px);
-      border-radius: var(--cog-radius-md, 12px);
-      background: var(--cog-surface, #f5f5f5);
-    }
-
-    .public-conversation__message--user {
-      background: var(--cog-selected-bg, #eef2ff);
-    }
-
-    .public-conversation__role {
-      font-size: var(--cog-fs-body-sm, 12px);
-      font-weight: var(--cog-fw-semibold, 600);
-      color: var(--cog-text-subtle, #6b6b6b);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+    .public-conversation__muted {
+      margin: 0;
+      color: var(--cog-text-subtlest, #9a9a9a);
+      font-style: italic;
     }
 
     .public-conversation__text {
-      margin: 0;
+      display: block;
       color: var(--cog-text, #1a1a1a);
-      white-space: pre-wrap;
       word-break: break-word;
       line-height: var(--cog-lh-body, 1.5);
+    }
+
+    .public-conversation__text :first-child {
+      margin-top: 0;
+    }
+
+    .public-conversation__text :last-child {
+      margin-bottom: 0;
     }
   `,
 })
@@ -173,7 +238,22 @@ export class PublicConversationComponent implements OnInit {
 
   readonly state = signal<ViewState>('loading');
   readonly title = signal('');
-  readonly messages = signal<PublicMessage[]>([]);
+
+  readonly isMessageFromUser = isMessageFromUser;
+
+  // The full decrypted message set, plus the per-fork branch selection (parent
+  // id -> chosen child id). The active path + branch metadata are derived from
+  // these exactly as the chat does.
+  private readonly _messages = signal<Message[]>([]);
+  private readonly _branchSelections = signal<Record<string, string>>({});
+
+  private readonly _activeBranch = computed(() =>
+    selectActiveBranch(this._messages(), publicTreeAccessors, {
+      selections: this._branchSelections(),
+    }),
+  );
+
+  readonly path = computed(() => this._activeBranch().path);
 
   ngOnInit(): void {
     const token = this._route.snapshot.paramMap.get('token');
@@ -219,7 +299,7 @@ export class PublicConversationComponent implements OnInit {
 
           return this._api.listPublicConversationMessages(token).pipe(
             switchMap((list) => {
-              this.messages.set(this.decryptMessages(list.items, conversationKeyPair));
+              this._messages.set(this.decryptMessages(list.items, conversationKeyPair));
               this.state.set('ready');
               return EMPTY;
             }),
@@ -233,30 +313,81 @@ export class PublicConversationComponent implements OnInit {
       .subscribe();
   }
 
+  branchInfo(message: Message): MessageBranchInfo | undefined {
+    return message.record_id
+      ? this._activeBranch().branches.get(message.record_id)
+      : undefined;
+  }
+
+  branchPointCount(message: Message): number {
+    return (
+      (message.record_id && this._activeBranch().branchPoints.get(message.record_id)) ||
+      0
+    );
+  }
+
+  previousBranch(message: Message): void {
+    const info = this.branchInfo(message);
+    if (info?.previousId) {
+      this.selectBranch(info.parentKey, info.previousId);
+    }
+  }
+
+  nextBranch(message: Message): void {
+    const info = this.branchInfo(message);
+    if (info?.nextId) {
+      this.selectBranch(info.parentKey, info.nextId);
+    }
+  }
+
+  assistantLabel(message: Message): string {
+    // No model catalogue on the public route — surface the stored model id, or
+    // fall back to the product name.
+    return message.decryptedData.model_id || 'Cognos';
+  }
+
+  userMeta(message: Message): string {
+    const time = this.formatTimestamp(message.createdAt);
+    return time ? `Encrypted · ${time}` : 'Encrypted';
+  }
+
+  messageTime(message: Message): string {
+    return this.formatTimestamp(message.createdAt);
+  }
+
+  private selectBranch(parentKey: string, childId: string): void {
+    this._branchSelections.update((selections) => ({
+      ...selections,
+      [parentKey]: childId,
+    }));
+  }
+
+  private formatTimestamp(date?: Date): string {
+    if (!date || Number.isNaN(date.getTime())) {
+      return '';
+    }
+    return new DatePipe('en-GB').transform(date, 'short') ?? '';
+  }
+
   private decryptMessages(
-    items: { data: string; created: string }[],
+    items: { id: string; data: string; created: string; parent_message?: string }[],
     conversationKeyPair: KeyPair,
-  ): PublicMessage[] {
-    const decrypted: PublicMessage[] = [];
+  ): Message[] {
+    const messages: Message[] = [];
 
     for (const item of items) {
       try {
-        const data = parseMessageData(
+        const decryptedData = parseMessageData(
           this._crypto.openSealedBox(
             Base64.toUint8Array(item.data),
             conversationKeyPair,
           ),
         );
-        const content = data.deleted
-          ? '[message deleted]'
-          : (data.content ?? '').trim();
-        if (!content) {
-          continue;
-        }
-        decrypted.push({
-          role: isMessageFromUser(data) ? 'user' : 'assistant',
-          content,
-          createdAt: parseBackendDate(data.created_at ?? item.created).getTime(),
+        messages.push({
+          record_id: item.id,
+          decryptedData,
+          createdAt: parseBackendDate(decryptedData.created_at ?? item.created),
+          parentMessageId: decryptedData.parent_message_id ?? item.parent_message,
         });
       } catch {
         // A single undecryptable row shouldn't blank the whole view.
@@ -264,6 +395,6 @@ export class PublicConversationComponent implements OnInit {
       }
     }
 
-    return decrypted.sort((a, b) => a.createdAt - b.createdAt);
+    return messages;
   }
 }
