@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 import {
@@ -215,6 +215,17 @@ export class VaultService {
   keyPair = this.state.keyPair;
   isRestoring = this.state.isRestoring;
   keyPair$ = toObservable(this.keyPair);
+
+  /**
+   * Canonical fingerprint of the unlocked public key — base64(blake2b(publicKey)).
+   * This is the exact value persisted in the trusted-device context, so anything
+   * displaying a fingerprint should derive from here rather than re-hashing.
+   */
+  publicKeyFingerprint = computed(() => {
+    const keyPair = this.keyPair();
+
+    return keyPair ? this.computePublicKeyFingerprint(keyPair.publicKey) : '';
+  });
 
   hashSecretMaterial(
     secretMaterial: Uint8Array,
@@ -516,8 +527,8 @@ export class VaultService {
       throw new Error('Trusted user key salt changed');
     }
 
-    const publicKeyFingerprint = Base64.fromUint8Array(
-      this._cryptoService.hash(Base64.toUint8Array(keyPairRecord.public_key)),
+    const publicKeyFingerprint = this.computePublicKeyFingerprint(
+      Base64.toUint8Array(keyPairRecord.public_key),
     );
     if (
       context.publicKeyFingerprint &&
@@ -525,6 +536,10 @@ export class VaultService {
     ) {
       throw new Error('Trusted user public key changed');
     }
+  }
+
+  private computePublicKeyFingerprint(publicKey: Uint8Array): string {
+    return Base64.fromUint8Array(this._cryptoService.hash(publicKey));
   }
 
   private persistTrustedUserKeyContext(keyPairRecord: UserKeyPairsResponse): void {
@@ -537,8 +552,8 @@ export class VaultService {
       this.trustedUserKeyContextStorageKey(userID),
       JSON.stringify({
         passwordSalt: keyPairRecord.password_salt ?? '',
-        publicKeyFingerprint: Base64.fromUint8Array(
-          this._cryptoService.hash(Base64.toUint8Array(keyPairRecord.public_key)),
+        publicKeyFingerprint: this.computePublicKeyFingerprint(
+          Base64.toUint8Array(keyPairRecord.public_key),
         ),
         unlockScheme: keyPairRecord.unlock_scheme ?? '',
       }),

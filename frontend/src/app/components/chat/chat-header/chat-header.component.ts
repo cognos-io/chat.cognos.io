@@ -10,6 +10,8 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { Base64 } from 'js-base64';
+
 import {
   CognosAvatarComponent,
   type CognosBreadcrumbItem,
@@ -25,7 +27,6 @@ import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 import { AuthService } from '@app/services/auth.service';
 import { ConversationService } from '@app/services/conversation.service';
-import { CryptoService } from '@app/services/crypto.service';
 import { MessageService } from '@app/services/message.service';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
@@ -51,7 +52,6 @@ type HeaderMenuEntry = CognosMenuItem & { action: HeaderMenuAction };
 })
 export class ChatHeaderComponent {
   private readonly _authService = inject(AuthService);
-  private readonly _cryptoService = inject(CryptoService);
   private readonly _dialog = inject(Dialog);
   private readonly _elementRef = inject(ElementRef<HTMLElement>);
   private readonly _messageService = inject(MessageService);
@@ -85,15 +85,11 @@ export class ChatHeaderComponent {
 
   readonly hasDeviceKey = computed(() => !!this._vaultService.keyPair());
 
-  readonly fingerprint = computed(() => {
-    const keyPair = this._vaultService.keyPair();
-
-    if (!keyPair) {
-      return '';
-    }
-
-    return formatFingerprint(this._cryptoService.hash(keyPair.publicKey));
-  });
+  // Format the vault's canonical fingerprint for display; never re-hash here so
+  // the value always matches the trusted-device context.
+  readonly fingerprint = computed(() =>
+    formatFingerprint(this._vaultService.publicKeyFingerprint()),
+  );
 
   private readonly _conversationId = computed(
     () => this.conversationService.conversation()?.record.id ?? null,
@@ -242,8 +238,12 @@ function displayNameFromEmail(email: string): string {
   return parts.map((part) => part[0].toUpperCase() + part.slice(1)).join(' ');
 }
 
-function formatFingerprint(bytes: Uint8Array): string {
-  const hex = Array.from(bytes.slice(0, 6))
+function formatFingerprint(base64Fingerprint: string): string {
+  if (!base64Fingerprint) {
+    return '';
+  }
+
+  const hex = Array.from(Base64.toUint8Array(base64Fingerprint).slice(0, 6))
     .map((byte) => byte.toString(16).padStart(2, '0').toUpperCase())
     .join('');
 

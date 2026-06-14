@@ -5,12 +5,13 @@ import { Router, provideRouter } from '@angular/router';
 
 import { of } from 'rxjs';
 
+import { Base64 } from 'js-base64';
+
 import { Conversation } from '@app/interfaces/conversation';
 import { KeyPair } from '@app/interfaces/key-pair';
 import { Message } from '@app/interfaces/message';
 import { AuthService } from '@app/services/auth.service';
 import { ConversationService } from '@app/services/conversation.service';
-import { CryptoService } from '@app/services/crypto.service';
 import { MessageService } from '@app/services/message.service';
 import { VaultService } from '@app/services/vault.service';
 
@@ -26,6 +27,7 @@ describe('ChatHeaderComponent', () => {
   const temporaryConversation = signal(false);
   const messages = signal<Message[]>([]);
   const keyPair = signal<KeyPair | undefined>(undefined);
+  const publicKeyFingerprint = signal('');
   const email = signal('');
 
   const deleteConversation$ = { next: vi.fn() };
@@ -43,10 +45,7 @@ describe('ChatHeaderComponent', () => {
 
   const vaultService = {
     keyPair,
-  };
-
-  const cryptoService = {
-    hash: vi.fn(() => new Uint8Array([0x9f, 0x2a, 0x7c, 0x41, 0xdd, 0x08])),
+    publicKeyFingerprint,
   };
 
   const authService = {
@@ -58,6 +57,7 @@ describe('ChatHeaderComponent', () => {
     temporaryConversation.set(false);
     messages.set([]);
     keyPair.set(undefined);
+    publicKeyFingerprint.set('');
     email.set('');
     vi.clearAllMocks();
 
@@ -70,7 +70,6 @@ describe('ChatHeaderComponent', () => {
         { provide: ConversationService, useValue: conversationService },
         { provide: MessageService, useValue: messageService },
         { provide: VaultService, useValue: vaultService },
-        { provide: CryptoService, useValue: cryptoService },
         { provide: AuthService, useValue: authService },
         { provide: Dialog, useValue: { open: dialogOpen } },
       ],
@@ -128,8 +127,11 @@ describe('ChatHeaderComponent', () => {
     expect(component.menuItems().map((item) => item.title)).toEqual(['Clear messages']);
   });
 
-  it('renders the device key fingerprint as grouped hex when unlocked', () => {
+  it('formats the vault fingerprint as grouped hex when unlocked', () => {
     keyPair.set({ publicKey: new Uint8Array([1]), secretKey: new Uint8Array() });
+    publicKeyFingerprint.set(
+      Base64.fromUint8Array(new Uint8Array([0x9f, 0x2a, 0x7c, 0x41, 0xdd, 0x08])),
+    );
     fixture.detectChanges();
 
     expect(component.hasDeviceKey()).toBe(true);
@@ -138,6 +140,7 @@ describe('ChatHeaderComponent', () => {
 
   it('exposes no fingerprint while the vault is locked', () => {
     keyPair.set(undefined);
+    publicKeyFingerprint.set('');
     fixture.detectChanges();
 
     expect(component.hasDeviceKey()).toBe(false);
