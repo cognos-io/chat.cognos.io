@@ -128,8 +128,8 @@ test('persisted conversation header exposes the title, menu, share and security'
     page.getByRole('heading', { name: 'FOI request — draft reply' }),
   ).toBeVisible();
 
-  // Share is present but not yet wired up.
-  await expect(page.getByRole('button', { name: 'Share' })).toBeDisabled();
+  // Share is active for a persisted conversation and opens the share dialog.
+  await expect(page.getByRole('button', { name: 'Share' })).toBeEnabled();
 
   // The overflow menu offers rename, a disabled export and delete.
   await page.getByRole('button', { name: 'Conversation menu', exact: true }).click();

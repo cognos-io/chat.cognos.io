@@ -25,6 +25,7 @@ import {
 
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
+import { ShareConversationDialogComponent } from '@app/components/share-conversation-dialog/share-conversation-dialog.component';
 import { AuthService } from '@app/services/auth.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { MessageService } from '@app/services/message.service';
@@ -62,6 +63,10 @@ export class ChatHeaderComponent {
 
   readonly menuOpen = signal(false);
   readonly securityOpen = signal(false);
+
+  // Sharing is only meaningful for a persisted conversation; temporary chats
+  // have nothing the server can hand to a public reader.
+  readonly canShare = computed(() => this._conversationId() !== null);
 
   readonly title = computed(() => {
     const title = this.conversationService.conversation()?.decryptedData.title;
@@ -185,6 +190,19 @@ export class ChatHeaderComponent {
 
   closeSecurity() {
     this.securityOpen.set(false);
+  }
+
+  onShare() {
+    const conversationId = this._conversationId();
+
+    if (!conversationId) {
+      return;
+    }
+
+    this._dialog.open(ShareConversationDialogComponent, {
+      ...cognosDialogOptions,
+      data: { conversationId },
+    });
   }
 
   private onRename() {
