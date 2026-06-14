@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { parseBackendDate } from '@app/utils/timestamp';
+
 import { KeyPair } from './key-pair';
 
 /**
@@ -49,12 +51,21 @@ export interface Conversation {
   keyPair: KeyPair;
 }
 
+// updatedAtMs parses a conversation's updated timestamp into milliseconds.
+// Conversations carry mixed timestamp formats — the backend serialises
+// "2006-01-02 15:04:05.000Z" (space) while an optimistic client bump writes
+// ISO-8601 "…T…". Comparing the raw strings would order by the character at
+// the date/time boundary ('T' vs ' ') before the actual time, so we compare
+// parsed instants instead.
+const updatedAtMs = (conversation: Conversation): number => {
+  const time = parseBackendDate(conversation.record.updated).getTime();
+  return Number.isNaN(time) ? 0 : time;
+};
+
 export const sortConversationsByUpdated = (
   conversations: Conversation[],
 ): Conversation[] => {
-  return [...conversations].sort((a, b) =>
-    b.record.updated.localeCompare(a.record.updated),
-  );
+  return [...conversations].sort((a, b) => updatedAtMs(b) - updatedAtMs(a));
 };
 
 export const partitionConversationsByPinned = (

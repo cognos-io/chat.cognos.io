@@ -121,6 +121,20 @@ describe('conversation sidebar ordering', () => {
     ]);
   });
 
+  it('orders by instant across mixed timestamp formats', () => {
+    // Backend serialises with a space; an optimistic client bump uses ISO "T".
+    // A naive string compare would sort the "T" form first regardless of time.
+    const conversations = [
+      makeConversation('backend-later', '2026-01-01 16:30:00.000Z'),
+      makeConversation('client-earlier', '2026-01-01T09:00:00.000Z'),
+    ];
+
+    expect(sortConversationsByUpdated(conversations).map((c) => c.record.id)).toEqual([
+      'backend-later',
+      'client-earlier',
+    ]);
+  });
+
   it('partitions pinned conversations in pin order and recent by updated time', () => {
     const conversations = [
       makeConversation('recent-old', '2026-01-01T00:00:00.000Z'),
