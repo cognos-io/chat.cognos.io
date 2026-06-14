@@ -85,3 +85,16 @@ test('mobile chat shell shows the hamburger menu', async ({ page }) => {
 
   await expect(menuButton(page)).toBeVisible();
 });
+
+test('desktop sidebar exposes the account actions', async ({ page }) => {
+  const userFixture = buildVaultFixture('user_e2e', 'e2e@example.com');
+  await seedChatRoutes(page, userFixture);
+
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto('/');
+
+  const sidebar = page.locator('.chat-shell__sidebar');
+  await expect(sidebar.getByRole('button', { name: 'Help' })).toBeVisible();
+  await expect(sidebar.getByRole('button', { name: 'Lock' })).toBeVisible();
+  await expect(sidebar.getByRole('button', { name: 'Log out' })).toBeVisible();
+});

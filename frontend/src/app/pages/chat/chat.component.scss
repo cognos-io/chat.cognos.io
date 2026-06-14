@@ -14,12 +14,21 @@
 
     &__sidebar {
       display: grid;
-      grid-template-rows: minmax(0, 1fr) auto;
+      grid-template-rows: minmax(0, 1fr) auto auto;
       border-right: 1px solid var(--cog-border);
       background: var(--cog-nav-bg);
       height: 100%;
       min-height: 0;
       overflow: hidden;
+    }
+
+    &__sidebar-actions {
+      padding: var(--cog-space-100) var(--cog-space-200) var(--cog-space-150);
+
+      .chat-shell__nav-actions {
+        justify-content: space-between;
+        width: 100%;
+      }
     }
 
     &__sidebar-footer {
@@ -209,8 +218,9 @@
     line-height: var(--cog-lh-caption);
   }
 
-  &__drawer-footer-actions {
+  &__nav-actions {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: var(--cog-space-050);
   }

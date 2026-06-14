@@ -72,6 +72,26 @@
   </div>
 </ng-template>
 
+<ng-template #navActions>
+  <div class="chat-shell__nav-actions">
+    <cog-button appearance="subtle" type="button" (click)="onOpenHelpDialog()">
+      Help
+    </cog-button>
+    <cog-button
+      appearance="subtle"
+      icon="lock"
+      title="Locks your account and does not log you out."
+      type="button"
+      (click)="onLock()"
+    >
+      Lock
+    </cog-button>
+    <cog-button appearance="subtle" type="button" (click)="onLogout()">
+      Log out
+    </cog-button>
+  </div>
+</ng-template>
+
 <ng-template #securityFooter>
   <div class="chat-shell__security-card">
     <div class="chat-shell__security-header">
@@ -95,6 +115,9 @@
 >
   <aside class="chat-shell__sidebar">
     <ng-container *ngTemplateOutlet="navigationContent"></ng-container>
+    <div class="chat-shell__sidebar-actions">
+      <ng-container *ngTemplateOutlet="navActions"></ng-container>
+    </div>
     <div class="chat-shell__sidebar-footer">
       <ng-container *ngTemplateOutlet="securityFooter"></ng-container>
     </div>
@@ -161,23 +184,7 @@
     </div>
 
     <div cogDrawerFooter>
-      <div class="chat-shell__drawer-footer-actions">
-        <cog-button appearance="subtle" type="button" (click)="onOpenHelpDialog()">
-          Help
-        </cog-button>
-        <cog-button
-          appearance="subtle"
-          icon="lock"
-          title="Locks your account and does not log you out."
-          type="button"
-          (click)="onLock()"
-        >
-          Lock
-        </cog-button>
-        <cog-button appearance="subtle" type="button" (click)="onLogout()">
-          Log out
-        </cog-button>
-      </div>
+      <ng-container *ngTemplateOutlet="navActions"></ng-container>
       <ng-container *ngTemplateOutlet="navSearch"></ng-container>
       <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
     </div>
