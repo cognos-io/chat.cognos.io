@@ -28,6 +28,10 @@ import { CognosIconComponent } from '../../icon/icon.component';
           }
         </footer>
       }
+
+      <div class="cog-user-message__actions">
+        <ng-content select="[cogMessageActions]" />
+      </div>
     </article>
   `,
   styles: [
@@ -56,6 +60,23 @@ import { CognosIconComponent } from '../../icon/icon.component';
       .cog-user-message__body {
         font-size: var(--cog-fs-body-lg);
         line-height: var(--cog-lh-body-lg);
+      }
+
+      .cog-user-message__actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: var(--cog-space-050);
+        opacity: 0;
+        transition: opacity var(--cog-dur-fast) var(--cog-ease-standard);
+      }
+
+      .cog-user-message__actions:empty {
+        display: none;
+      }
+
+      .cog-user-message:hover .cog-user-message__actions,
+      .cog-user-message:focus-within .cog-user-message__actions {
+        opacity: 1;
       }
 
       .cog-user-message__meta {

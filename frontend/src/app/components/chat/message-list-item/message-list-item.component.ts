@@ -1,6 +1,6 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { Dialog } from '@angular/cdk/dialog';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
 
 import { MarkdownComponent } from 'ngx-markdown';
@@ -26,6 +26,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
   imports: [
     MarkdownComponent,
     ClipboardModule,
+    NgTemplateOutlet,
     CognosAssistantMessageComponent,
     CognosUserMessageComponent,
     CognosIconButtonComponent,
@@ -40,6 +41,32 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
         [attr.data-owner-id]="message.decryptedData.owner_id"
         [attr.data-parent-id]="message.parentMessageId"
       >
+        <ng-template #messageActions>
+          @if (message.decryptedData.content) {
+            <cog-icon-button
+              name="copy"
+              title="Copy to clipboard"
+              [cdkCopyToClipboard]="message.decryptedData.content"
+            />
+          }
+
+          @if (message.expires) {
+            <cog-icon-button
+              name="pin"
+              title="Keep this temporary message"
+              (click)="onKeepMessage(message)"
+            />
+          }
+
+          @if (message.record_id) {
+            <cog-icon-button
+              name="x"
+              title="Delete message"
+              (click)="onDeleteMessage(message)"
+            />
+          }
+        </ng-template>
+
         @if (isMessageFromUser(message.decryptedData)) {
           <div class="message-list-item__user">
             <cog-user-message [meta]="userMeta()">
@@ -49,6 +76,12 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                 </markdown>
               } @else {
                 <p class="message-list-item__empty">This message is empty.</p>
+              }
+
+              @if (message.decryptedData.content || message.record_id) {
+                <div cogMessageActions class="message-list-item__actions">
+                  <ng-container *ngTemplateOutlet="messageActions"></ng-container>
+                </div>
               }
             </cog-user-message>
           </div>
@@ -75,35 +108,13 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                   try again.
                 </p>
               }
+
+              @if (message.decryptedData.content || message.record_id) {
+                <div cogMessageActions class="message-list-item__actions">
+                  <ng-container *ngTemplateOutlet="messageActions"></ng-container>
+                </div>
+              }
             </cog-assistant-message>
-          </div>
-        }
-
-        @if (message.decryptedData.content || message.record_id) {
-          <div class="message-list-item__actions">
-            @if (message.decryptedData.content) {
-              <cog-icon-button
-                name="copy"
-                title="Copy to clipboard"
-                [cdkCopyToClipboard]="message.decryptedData.content"
-              />
-            }
-
-            @if (message.expires) {
-              <cog-icon-button
-                name="pin"
-                title="Keep this temporary message"
-                (click)="onKeepMessage(message)"
-              />
-            }
-
-            @if (message.record_id) {
-              <cog-icon-button
-                name="x"
-                title="Delete message"
-                (click)="onDeleteMessage(message)"
-              />
-            }
           </div>
         }
       </li>
@@ -127,15 +138,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
 
     .message-list-item__actions {
       display: flex;
-      justify-content: flex-end;
       gap: var(--cog-space-050);
-      opacity: 0;
-      transition: opacity var(--cog-dur-fast) var(--cog-ease-standard);
-    }
-
-    .message-list-item:hover .message-list-item__actions,
-    .message-list-item:focus-within .message-list-item__actions {
-      opacity: 1;
     }
 
     .message-list-item__empty {

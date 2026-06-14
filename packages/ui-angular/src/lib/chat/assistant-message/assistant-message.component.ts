@@ -53,6 +53,10 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
             <span>{{ sources() }} source{{ sources() === 1 ? '' : 's' }}</span>
           </button>
         }
+
+        <div class="cog-assistant-message__footer">
+          <ng-content select="[cogMessageActions]" />
+        </div>
       </div>
     </article>
   `,
@@ -136,6 +140,22 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
         color: var(--cog-text);
         font-size: var(--cog-fs-body-lg);
         line-height: var(--cog-lh-body-lg);
+      }
+
+      .cog-assistant-message__footer {
+        display: flex;
+        justify-content: flex-end;
+        opacity: 0;
+        transition: opacity var(--cog-dur-fast) var(--cog-ease-standard);
+      }
+
+      .cog-assistant-message__footer:empty {
+        display: none;
+      }
+
+      .cog-assistant-message:hover .cog-assistant-message__footer,
+      .cog-assistant-message:focus-within .cog-assistant-message__footer {
+        opacity: 1;
       }
 
       .cog-assistant-message__typing {
