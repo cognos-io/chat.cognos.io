@@ -12,6 +12,7 @@ import { Message } from '@app/interfaces/message';
 import { ConversationService } from '../../services/conversation.service';
 import { DeviceService } from '../../services/device.service';
 import { MessageService } from '../../services/message.service';
+import { UserPreferencesService } from '../../services/user-preferences.service';
 import { VaultService } from '../../services/vault.service';
 import { ChatComponent } from './chat.component';
 
@@ -46,6 +47,15 @@ describe('ChatComponent', () => {
     resetState: vi.fn(),
   };
 
+  // The conversation list items rendered for pinned/recent conversations inject
+  // UserPreferencesService; stub it so the real API/PocketBase chain is not
+  // constructed in the component test.
+  const userPreferencesService = {
+    isConversationPinned: () => false,
+    pinConversation: vi.fn(),
+    unpinConversation: vi.fn(),
+  };
+
   const keyPair = signal<KeyPair | undefined>({
     publicKey: new Uint8Array(),
     secretKey: new Uint8Array(),
@@ -77,6 +87,7 @@ describe('ChatComponent', () => {
         { provide: ConversationService, useValue: conversationService },
         { provide: DeviceService, useValue: { isMobile: signal(false) } },
         { provide: MessageService, useValue: messageService },
+        { provide: UserPreferencesService, useValue: userPreferencesService },
         { provide: Dialog, useValue: { open: dialogOpen } },
         { provide: CognosToastService, useValue: toastService },
         { provide: VaultService, useValue: vaultService },
@@ -168,8 +179,10 @@ describe('ChatComponent', () => {
     fixture.detectChanges();
 
     const headings = Array.from(
-      fixture.nativeElement.querySelectorAll('.chat-shell__section-heading'),
-    ).map((element: Element) => element.textContent?.trim());
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '.chat-shell__section-heading',
+      ),
+    ).map((element) => element.textContent?.trim());
 
     expect(headings).toEqual(['Recent']);
     expect(fixture.nativeElement.textContent).toContain('Recent chat');
@@ -181,8 +194,10 @@ describe('ChatComponent', () => {
     fixture.detectChanges();
 
     const headings = Array.from(
-      fixture.nativeElement.querySelectorAll('.chat-shell__section-heading'),
-    ).map((element: Element) => element.textContent?.trim());
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '.chat-shell__section-heading',
+      ),
+    ).map((element) => element.textContent?.trim());
 
     expect(headings).toEqual(['Pinned', 'Recent']);
     expect(fixture.nativeElement.textContent).toContain('Pinned chat');
