@@ -198,6 +198,20 @@ func bindAppHooks(
 			}
 		}
 
+		// Plan + interval per price, for the billing dashboard.
+		paddlePlanByPrice := map[string]handler.PlanMeta{}
+		if params.Config != nil {
+			for priceID, meta := range map[string]handler.PlanMeta{
+				params.Config.PaddlePricePAYG:             {Plan: billing.PlanTypePayG, Interval: "monthly"},
+				params.Config.PaddlePriceUnlimitedMonthly: {Plan: billing.PlanTypeUnlimited, Interval: "monthly"},
+				params.Config.PaddlePriceUnlimitedAnnual:  {Plan: billing.PlanTypeUnlimited, Interval: "annual"},
+			} {
+				if priceID != "" {
+					paddlePlanByPrice[priceID] = meta
+				}
+			}
+		}
+
 		addPocketBaseRoutes(
 			e,
 			app,
@@ -218,6 +232,8 @@ func bindAppHooks(
 			paddlePrices,
 			paddleWebhookSecret,
 			paddlePriceToPlan,
+			billingRepo,
+			paddlePlanByPrice,
 		)
 
 		hooks.SoftDelete(app)

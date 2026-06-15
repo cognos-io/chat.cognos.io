@@ -3,6 +3,7 @@ package billing
 import (
 	"errors"
 	"math"
+	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 )
@@ -25,6 +26,14 @@ type State struct {
 	BalanceRappen   int64
 	TrialSeedRappen int64
 	BillingUserID   string
+
+	// Dashboard fields (zero/empty when not applicable).
+	PaddlePriceID         string
+	PlanStartedAt         time.Time
+	PlanEndsAt            time.Time // set when a cancellation is scheduled
+	CycleStartAt          time.Time // current Paddle billing cycle start
+	CycleEndAt            time.Time // renewal / next-charge boundary
+	RefundEligibleUntilAt time.Time
 }
 
 type StateRepo interface {

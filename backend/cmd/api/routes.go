@@ -121,6 +121,8 @@ func addPocketBaseRoutes(
 	paddlePrices map[string]string,
 	paddleWebhookSecret string,
 	paddlePriceToPlan map[string]billing.PlanType,
+	billingUsageRepo billing.UsageRepo,
+	paddlePlanByPrice map[string]handler.PlanMeta,
 ) {
 	// Paddle webhook: unauthenticated (verified by HMAC) and unthrottled so we
 	// never drop Paddle's retries. Bad signatures are rejected before any write.
@@ -144,8 +146,43 @@ func addPocketBaseRoutes(
 	e.Router.GET(
 		"/api/v1/billing",
 		handler.BillingGet(handler.BillingGetParams{
+			Logger:      logger,
+			StateRepo:   billingStateRepo,
+			PlanByPrice: paddlePlanByPrice,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/billing/usage",
+		handler.BillingUsage(handler.BillingUsageParams{
 			Logger:    logger,
 			StateRepo: billingStateRepo,
+			UsageRepo: billingUsageRepo,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/billing/cancel",
+		handler.BillingCancel(handler.BillingSubscriptionParams{
+			Logger: logger,
+			Client: paddleClient,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/billing/resume",
+		handler.BillingResume(handler.BillingSubscriptionParams{
+			Logger: logger,
+			Client: paddleClient,
 		}),
 	).Bind(
 		apis.RequireAuth(),

@@ -14,10 +14,13 @@ import (
 
 // fakePaddleClient records the last checkout request and returns canned values.
 type fakePaddleClient struct {
-	result paddle.CheckoutResult
-	err    error
-	gotReq paddle.CheckoutRequest
-	calls  int
+	result     paddle.CheckoutResult
+	err        error
+	gotReq     paddle.CheckoutRequest
+	calls      int
+	subErr     error
+	canceledID string
+	resumedID  string
 }
 
 func (f *fakePaddleClient) CreateCheckout(
@@ -27,6 +30,16 @@ func (f *fakePaddleClient) CreateCheckout(
 	f.calls++
 	f.gotReq = req
 	return f.result, f.err
+}
+
+func (f *fakePaddleClient) CancelSubscription(_ context.Context, id string) error {
+	f.canceledID = id
+	return f.subErr
+}
+
+func (f *fakePaddleClient) ResumeSubscription(_ context.Context, id string) error {
+	f.resumedID = id
+	return f.subErr
 }
 
 func checkoutConfig() *config.APIConfig {

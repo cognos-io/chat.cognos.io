@@ -15,10 +15,24 @@ import (
 
 const defaultBillingTransactionLimit = 50
 
+// PlanMeta describes what a Paddle price activates, so the dashboard can show
+// the interval and (when inactive) the previously-held plan.
+type PlanMeta struct {
+	Plan     billing.PlanType
+	Interval string // "monthly" | "annual" | ""
+}
+
 type billingResponse struct {
-	PlanType     billing.PlanType `json:"plan_type"`
-	BalanceCHF   float64          `json:"balance_chf"`
-	TrialSeedCHF float64          `json:"trial_seed_chf"`
+	PlanType billing.PlanType `json:"plan_type"`
+	// active | cancels_soon | inactive | trial — drives the dashboard state.
+	Status                string           `json:"status"`
+	Interval              string           `json:"interval,omitempty"`
+	BalanceCHF            float64          `json:"balance_chf"`
+	TrialSeedCHF          float64          `json:"trial_seed_chf"`
+	CycleEndAt            string           `json:"cycle_end_at,omitempty"`
+	CancelAtPeriodEnd     bool             `json:"cancel_at_period_end"`
+	RefundEligibleUntilAt string           `json:"refund_eligible_until_at,omitempty"`
+	PreviousPlanType      billing.PlanType `json:"previous_plan_type,omitempty"`
 }
 
 type billingTransaction struct {
@@ -39,6 +53,8 @@ type billingTransactionsResponse struct {
 type BillingGetParams struct {
 	Logger    *slog.Logger
 	StateRepo billing.StateRepo
+	// PlanByPrice maps a Paddle price id to its plan + interval.
+	PlanByPrice map[string]PlanMeta
 }
 
 type BillingTransactionsParams struct {
@@ -69,8 +85,8 @@ func BillingGet(params BillingGetParams) func(e *core.RequestEvent) error {
 		if err != nil {
 			if errors.Is(err, billing.ErrStateNotFound) {
 				return e.JSON(http.StatusOK, billingResponse{
-					PlanType:   billing.PlanTypeInactive,
-					BalanceCHF: 0,
+					PlanType: billing.PlanTypeInactive,
+					Status:   "inactive",
 				})
 			}
 			if params.Logger != nil {
@@ -79,12 +95,50 @@ func BillingGet(params BillingGetParams) func(e *core.RequestEvent) error {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to load billing state", err)
 		}
 
-		return e.JSON(http.StatusOK, billingResponse{
-			PlanType:     state.PlanType,
-			BalanceCHF:   float64(state.BalanceRappen) / 100,
-			TrialSeedCHF: float64(state.TrialSeedRappen) / 100,
-		})
+		return e.JSON(http.StatusOK, buildBillingResponse(state, params.PlanByPrice))
 	}
+}
+
+// buildBillingResponse derives the dashboard view from raw billing state. A
+// scheduled cancellation (plan_ends_at set while still on a paid plan) reads as
+// "cancels_soon"; once Paddle ends it the plan becomes inactive.
+func buildBillingResponse(state billing.State, planByPrice map[string]PlanMeta) billingResponse {
+	meta := planByPrice[state.PaddlePriceID]
+
+	resp := billingResponse{
+		PlanType:              state.PlanType,
+		Interval:              meta.Interval,
+		BalanceCHF:            float64(state.BalanceRappen) / 100,
+		TrialSeedCHF:          float64(state.TrialSeedRappen) / 100,
+		RefundEligibleUntilAt: formatBillingTime(state.RefundEligibleUntilAt),
+	}
+
+	switch state.PlanType {
+	case billing.PlanTypeTrial:
+		resp.Status = "trial"
+	case billing.PlanTypePayG, billing.PlanTypeUnlimited:
+		if !state.PlanEndsAt.IsZero() {
+			resp.Status = "cancels_soon"
+			resp.CancelAtPeriodEnd = true
+			resp.CycleEndAt = formatBillingTime(state.PlanEndsAt)
+		} else {
+			resp.Status = "active"
+			resp.CycleEndAt = formatBillingTime(state.CycleEndAt)
+		}
+	default:
+		resp.Status = "inactive"
+		resp.CycleEndAt = formatBillingTime(state.PlanEndsAt)
+		resp.PreviousPlanType = meta.Plan
+	}
+
+	return resp
+}
+
+func formatBillingTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.UTC().Format(time.RFC3339)
 }
 
 // BillingTransactions returns the most recent ledger entries for the
@@ -137,4 +191,77 @@ func BillingTransactions(params BillingTransactionsParams) func(e *core.RequestE
 
 		return e.JSON(http.StatusOK, response)
 	}
+}
+
+type billingUsageModel struct {
+	ModelID string  `json:"model_id"`
+	Count   int64   `json:"count"`
+	CostCHF float64 `json:"cost_chf"`
+}
+
+type billingUsageResponse struct {
+	PeriodStart  string              `json:"period_start"`
+	MessageCount int64               `json:"message_count"`
+	ByModel      []billingUsageModel `json:"by_model"`
+}
+
+type BillingUsageParams struct {
+	Logger    *slog.Logger
+	StateRepo billing.StateRepo
+	UsageRepo billing.UsageRepo
+}
+
+// BillingUsage returns the user's per-model usage for the current billing
+// period. It reads only ledger metadata (model id, counts, cost) — never
+// message content — so it's safe despite end-to-end encryption.
+func BillingUsage(params BillingUsageParams) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		owner := auth.ExtractUser(e)
+		if owner == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+		if params.UsageRepo == nil || params.StateRepo == nil {
+			return apis.NewApiError(http.StatusServiceUnavailable, "Billing is unavailable", nil)
+		}
+
+		since := usagePeriodStart(params.StateRepo, owner.ID)
+
+		summary, err := params.UsageRepo.UsageSince(owner.ID, since)
+		if err != nil {
+			if params.Logger != nil {
+				params.Logger.Error("billing usage lookup failed", "err", err)
+			}
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load usage", err)
+		}
+
+		response := billingUsageResponse{
+			PeriodStart:  since.UTC().Format(time.RFC3339),
+			MessageCount: summary.MessageCount,
+			ByModel:      make([]billingUsageModel, 0, len(summary.ByModel)),
+		}
+		for _, model := range summary.ByModel {
+			response.ByModel = append(response.ByModel, billingUsageModel{
+				ModelID: model.ModelID,
+				Count:   model.Count,
+				CostCHF: float64(model.CostRappen) / 100,
+			})
+		}
+
+		return e.JSON(http.StatusOK, response)
+	}
+}
+
+// usagePeriodStart picks the start of the usage window: the current Paddle
+// cycle if subscribed, else the plan start (trial), else a 30-day fallback.
+func usagePeriodStart(repo billing.StateRepo, userID string) time.Time {
+	state, err := repo.StateForUser(userID)
+	if err == nil {
+		if !state.CycleStartAt.IsZero() {
+			return state.CycleStartAt
+		}
+		if !state.PlanStartedAt.IsZero() {
+			return state.PlanStartedAt
+		}
+	}
+	return time.Now().UTC().AddDate(0, 0, -30)
 }

@@ -38,11 +38,18 @@ func (r *PocketBaseRepo) StateForUser(userID string) (State, error) {
 		return State{}, err
 	}
 
+	record := records[0]
 	return State{
-		PlanType:        planType,
-		BalanceRappen:   int64(records[0].GetInt("balance_rappen")),
-		TrialSeedRappen: int64(records[0].GetInt("trial_seed_granted_rappen")),
-		BillingUserID:   records[0].Id,
+		PlanType:              planType,
+		BalanceRappen:         int64(record.GetInt("balance_rappen")),
+		TrialSeedRappen:       int64(record.GetInt("trial_seed_granted_rappen")),
+		BillingUserID:         record.Id,
+		PaddlePriceID:         record.GetString("paddle_price_id"),
+		PlanStartedAt:         record.GetDateTime("plan_started_at").Time().UTC(),
+		PlanEndsAt:            record.GetDateTime("plan_ends_at").Time().UTC(),
+		CycleStartAt:          record.GetDateTime("paddle_cycle_start_at").Time().UTC(),
+		CycleEndAt:            record.GetDateTime("paddle_cycle_end_at").Time().UTC(),
+		RefundEligibleUntilAt: record.GetDateTime("refund_eligible_until_at").Time().UTC(),
 	}, nil
 }
 

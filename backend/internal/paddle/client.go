@@ -42,6 +42,11 @@ type CheckoutResult struct {
 // Client is the Paddle surface the billing handlers depend on.
 type Client interface {
 	CreateCheckout(ctx context.Context, req CheckoutRequest) (CheckoutResult, error)
+	// CancelSubscription schedules cancellation at the end of the current
+	// billing period (access continues until then).
+	CancelSubscription(ctx context.Context, subscriptionID string) error
+	// ResumeSubscription removes a scheduled cancellation.
+	ResumeSubscription(ctx context.Context, subscriptionID string) error
 }
 
 // HTTPClient talks to the real Paddle Billing API.
@@ -144,6 +149,55 @@ func (c *HTTPClient) CreateCheckout(
 		CheckoutURL:   parsed.Data.Checkout.URL,
 		CustomerID:    parsed.Data.CustomerID,
 	}, nil
+}
+
+// CancelSubscription schedules cancellation at the end of the current period.
+func (c *HTTPClient) CancelSubscription(ctx context.Context, subscriptionID string) error {
+	return c.postJSON(ctx,
+		c.BaseURL+"/subscriptions/"+subscriptionID+"/cancel",
+		map[string]any{"effective_from": "next_billing_period"},
+	)
+}
+
+// ResumeSubscription clears a scheduled cancellation.
+func (c *HTTPClient) ResumeSubscription(ctx context.Context, subscriptionID string) error {
+	return c.patchJSON(ctx,
+		c.BaseURL+"/subscriptions/"+subscriptionID,
+		map[string]any{"scheduled_change": nil},
+	)
+}
+
+func (c *HTTPClient) postJSON(ctx context.Context, url string, payload map[string]any) error {
+	return c.sendJSON(ctx, http.MethodPost, url, payload)
+}
+
+func (c *HTTPClient) patchJSON(ctx context.Context, url string, payload map[string]any) error {
+	return c.sendJSON(ctx, http.MethodPatch, url, payload)
+}
+
+func (c *HTTPClient) sendJSON(ctx context.Context, method, url string, payload map[string]any) error {
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("marshal payload: %w", err)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("build request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return fmt.Errorf("call paddle: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("paddle %s %s returned %d: %s", method, url, resp.StatusCode, snippet(respBody))
+	}
+	return nil
 }
 
 func snippet(b []byte) string {
