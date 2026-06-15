@@ -6,6 +6,7 @@ import { Subject, of, throwError } from 'rxjs';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { AuthService } from './auth.service';
 import { BillingService } from './billing.service';
 import { CognosApiService } from './cognos-api.service';
 import { ErrorService } from './error.service';
@@ -67,6 +68,7 @@ describe('BillingService.beginCheckout', () => {
           },
         },
         { provide: Router, useValue: { navigate } },
+        { provide: AuthService, useValue: { email: () => 'user@example.com' } },
         {
           provide: DOCUMENT,
           useValue: { location, defaultView: { open: windowOpen } },
@@ -135,7 +137,7 @@ describe('BillingService.beginCheckout', () => {
     service.beginCheckout('payg');
     await Promise.resolve();
 
-    expect(openCheckout).toHaveBeenCalledWith('txn_1');
+    expect(openCheckout).toHaveBeenCalledWith('txn_1', 'user@example.com');
     expect(location.href).toBe('');
     expect(service.checkoutPending()).toBe(false);
   });
@@ -182,6 +184,7 @@ describe('BillingService.openPortal', () => {
           useValue: { enabled: false, checkoutCompleted$: new Subject() },
         },
         { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: AuthService, useValue: { email: () => 'user@example.com' } },
         {
           provide: DOCUMENT,
           useValue: { location: { href: '' }, defaultView: { open: windowOpen } },

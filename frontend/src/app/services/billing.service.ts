@@ -12,6 +12,7 @@ import {
   CheckoutResponse,
   CompletionBillingRestriction,
 } from '@app/interfaces/billing';
+import { AuthService } from '@app/services/auth.service';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ErrorService } from '@app/services/error.service';
 import { PaddleService } from '@app/services/paddle.service';
@@ -35,6 +36,7 @@ export class BillingService {
   private readonly _errors = inject(ErrorService);
   private readonly _paddle = inject(PaddleService);
   private readonly _router = inject(Router);
+  private readonly _auth = inject(AuthService);
 
   private readonly _state = signal<BillingState | null>(null);
   private readonly _checkoutPending = signal(false);
@@ -140,7 +142,10 @@ export class BillingService {
   // overlay can't open it falls back to the hosted checkout page.
   private async _launchCheckout(res: CheckoutResponse): Promise<void> {
     if (res.transaction_id && this._paddle.enabled) {
-      const opened = await this._paddle.openCheckout(res.transaction_id);
+      const opened = await this._paddle.openCheckout(
+        res.transaction_id,
+        this._auth.email(),
+      );
       if (opened) {
         this._checkoutPending.set(false);
         return;
