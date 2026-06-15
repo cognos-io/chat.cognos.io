@@ -182,7 +182,7 @@ test('the settings nav opens placeholder sections', async ({ page }) => {
   });
 
   await page.goto('/account/billing');
-  await page.getByRole('link', { name: 'Account' }).click();
+  await page.getByRole('link', { name: 'Account', exact: true }).click();
 
   await expect(page).toHaveURL(/\/account\/account/);
   await expect(page.getByRole('heading', { name: 'Account' })).toBeVisible();
