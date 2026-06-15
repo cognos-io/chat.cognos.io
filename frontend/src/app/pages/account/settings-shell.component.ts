@@ -1,9 +1,21 @@
 import { Dialog } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
+
+import { filter } from 'rxjs';
 
 import {
   CognosButtonComponent,
+  CognosDrawerComponent,
+  CognosIconButtonComponent,
   CognosIconComponent,
   CognosToastService,
 } from '@cognos/ui-angular';
@@ -24,16 +36,19 @@ interface SettingsNavItem {
 }
 
 // SettingsShellComponent is the same app shell as the chat view — same width,
-// logo, account actions, and profile footer — with the conversation list +
-// search swapped for the Settings nav.
+// logo, account actions, profile footer, and the mobile hamburger-drawer — with
+// the conversation list + search swapped for the Settings nav.
 @Component({
   selector: 'app-settings-shell',
   standalone: true,
   imports: [
+    CommonModule,
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
     CognosButtonComponent,
+    CognosDrawerComponent,
+    CognosIconButtonComponent,
     CognosIconComponent,
     CognosLogoComponent,
     SidebarProfileComponent,
@@ -41,73 +56,125 @@ interface SettingsNavItem {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <ng-template #brand>
+      <div class="settings__brand">
+        <app-cognos-logo class="settings__logo" palette="dark"></app-cognos-logo>
+      </div>
+    </ng-template>
+
+    <ng-template #back>
+      <a class="settings__back" routerLink="/">
+        <cog-icon name="chevron-left" [size]="16" tone="current" />
+        Back to chats
+      </a>
+    </ng-template>
+
+    <ng-template #menu>
+      <nav class="settings__menu" aria-label="Settings">
+        <div class="settings__menu-heading">Settings</div>
+        @for (item of navItems; track item.path) {
+          <a
+            class="settings__menu-item"
+            [routerLink]="item.path"
+            routerLinkActive="settings__menu-item--active"
+          >
+            <cog-icon [name]="item.icon" [size]="18" tone="current" />
+            {{ item.label }}
+          </a>
+        }
+      </nav>
+    </ng-template>
+
+    <ng-template #actions>
+      <div class="settings__nav-actions">
+        <cog-button appearance="subtle" type="button" (click)="onOpenHelpDialog()">
+          Help
+        </cog-button>
+        <cog-button
+          appearance="subtle"
+          icon="lock"
+          title="Locks your account and does not log you out."
+          type="button"
+          (click)="onLock()"
+        >
+          Lock
+        </cog-button>
+        <cog-button appearance="subtle" type="button" (click)="onLogout()">
+          Log out
+        </cog-button>
+      </div>
+    </ng-template>
+
+    <ng-template #footer>
+      @if (billing.isTrial()) {
+        <app-trial-credit-card></app-trial-credit-card>
+      }
+      <app-sidebar-profile></app-sidebar-profile>
+    </ng-template>
+
     <div class="settings">
       <aside class="settings__sidebar">
         <div class="settings__nav">
-          <div class="settings__brand">
-            <app-cognos-logo class="settings__logo" palette="dark"></app-cognos-logo>
-          </div>
-
-          <a class="settings__back" routerLink="/">
-            <cog-icon name="chevron-left" [size]="16" tone="current" />
-            Back to chats
-          </a>
-
-          <nav class="settings__menu" aria-label="Settings">
-            <div class="settings__menu-heading">Settings</div>
-            @for (item of navItems; track item.path) {
-              <a
-                class="settings__menu-item"
-                [routerLink]="item.path"
-                routerLinkActive="settings__menu-item--active"
-              >
-                <cog-icon [name]="item.icon" [size]="18" tone="current" />
-                {{ item.label }}
-              </a>
-            }
-          </nav>
+          <ng-container *ngTemplateOutlet="brand"></ng-container>
+          <ng-container *ngTemplateOutlet="back"></ng-container>
+          <ng-container *ngTemplateOutlet="menu"></ng-container>
         </div>
-
         <div class="settings__actions">
-          <div class="settings__nav-actions">
-            <cog-button appearance="subtle" type="button" (click)="onOpenHelpDialog()">
-              Help
-            </cog-button>
-            <cog-button
-              appearance="subtle"
-              icon="lock"
-              title="Locks your account and does not log you out."
-              type="button"
-              (click)="onLock()"
-            >
-              Lock
-            </cog-button>
-            <cog-button appearance="subtle" type="button" (click)="onLogout()">
-              Log out
-            </cog-button>
-          </div>
+          <ng-container *ngTemplateOutlet="actions"></ng-container>
         </div>
-
         <div class="settings__footer">
-          @if (billing.isTrial()) {
-            <app-trial-credit-card></app-trial-credit-card>
-          }
-          <app-sidebar-profile></app-sidebar-profile>
+          <ng-container *ngTemplateOutlet="footer"></ng-container>
         </div>
       </aside>
 
-      <main class="settings__content">
-        <router-outlet></router-outlet>
-      </main>
+      <div class="settings__main">
+        <header class="settings__mobile-bar">
+          <cog-icon-button
+            name="menu"
+            size="lg"
+            title="Open navigation"
+            (click)="openDrawer()"
+          />
+          <app-cognos-logo
+            class="settings__mobile-logo"
+            palette="dark"
+          ></app-cognos-logo>
+          <div class="settings__mobile-actions"></div>
+        </header>
+
+        <main class="settings__content">
+          <router-outlet></router-outlet>
+        </main>
+      </div>
+
+      <cog-drawer
+        [open]="drawerOpen()"
+        [stickyFooter]="true"
+        title="Settings"
+        [hideTitle]="true"
+        (close)="closeDrawer()"
+      >
+        <app-cognos-logo
+          cogDrawerHeader
+          class="settings__drawer-logo"
+          palette="dark"
+        ></app-cognos-logo>
+
+        <div class="settings__drawer-body">
+          <ng-container *ngTemplateOutlet="back"></ng-container>
+          <ng-container *ngTemplateOutlet="menu"></ng-container>
+        </div>
+
+        <div cogDrawerFooter>
+          <ng-container *ngTemplateOutlet="actions"></ng-container>
+          <ng-container *ngTemplateOutlet="footer"></ng-container>
+        </div>
+      </cog-drawer>
     </div>
   `,
   styles: `
     :host {
       display: block;
-      background: var(--cog-app-bg);
-    }
-
-    .settings {
       background: var(--cog-app-bg);
     }
 
@@ -121,6 +188,7 @@ interface SettingsNavItem {
       gap: var(--cog-space-150);
       padding: var(--cog-space-200);
       min-height: 0;
+      overflow-y: auto;
     }
 
     .settings__brand {
@@ -128,7 +196,9 @@ interface SettingsNavItem {
       align-items: center;
     }
 
-    .settings__logo {
+    .settings__logo,
+    .settings__mobile-logo,
+    .settings__drawer-logo {
       display: block;
       height: 24px;
     }
@@ -201,10 +271,36 @@ interface SettingsNavItem {
       padding: var(--cog-space-150) var(--cog-space-200);
     }
 
+    .settings__main {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-height: 0;
+    }
+
+    .settings__mobile-bar {
+      display: none;
+    }
+
+    .settings__mobile-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--cog-space-050);
+    }
+
     .settings__content {
       min-height: 0;
       overflow-y: auto;
       padding: var(--cog-space-300);
+    }
+
+    cog-drawer [cogDrawerFooter] {
+      display: grid;
+      gap: var(--cog-space-150);
+    }
+
+    .settings__drawer-body {
+      display: grid;
+      gap: var(--cog-space-150);
     }
 
     @media (min-width: 768px) {
@@ -227,8 +323,25 @@ interface SettingsNavItem {
     }
 
     @media (max-width: 767px) {
+      .settings {
+        height: 100vh;
+        height: 100svh;
+        overflow: hidden;
+      }
+
       .settings__sidebar {
+        display: none;
+      }
+
+      .settings__mobile-bar {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: var(--cog-space-100);
+        min-height: 56px;
         border-bottom: 1px solid var(--cog-border);
+        background: var(--cog-nav-bg);
+        padding: 0 var(--cog-space-200);
       }
 
       .settings__content {
@@ -244,6 +357,8 @@ export class SettingsShellComponent {
   private readonly _router = inject(Router);
   public readonly billing = inject(BillingService);
 
+  readonly drawerOpen = signal(false);
+
   protected readonly navItems: SettingsNavItem[] = [
     { label: 'Account', path: 'account', icon: 'user-plus' },
     { label: 'Plan & billing', path: 'billing', icon: 'landmark' },
@@ -253,11 +368,30 @@ export class SettingsShellComponent {
     { label: 'Notifications', path: 'notifications', icon: 'mail' },
   ];
 
+  constructor() {
+    // Close the drawer after navigating, like the chat shell.
+    this._router.events
+      .pipe(
+        takeUntilDestroyed(),
+        filter((event) => event instanceof NavigationEnd),
+      )
+      .subscribe(() => this.drawerOpen.set(false));
+  }
+
+  openDrawer(): void {
+    this.drawerOpen.set(true);
+  }
+
+  closeDrawer(): void {
+    this.drawerOpen.set(false);
+  }
+
   protected onOpenHelpDialog(): void {
     this._dialog.open(ContactHelpDialogComponent, cognosDialogOptions);
   }
 
   protected onLock(): void {
+    this.drawerOpen.set(false);
     this._vaultService.lock();
     this._toastService.notify({
       title: 'Account locked',
@@ -269,6 +403,7 @@ export class SettingsShellComponent {
   }
 
   protected onLogout(): void {
+    this.drawerOpen.set(false);
     void this._router.navigate(['', 'auth', 'logout']);
   }
 }

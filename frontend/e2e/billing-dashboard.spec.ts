@@ -169,6 +169,31 @@ test('cancelling an active plan calls the cancel endpoint', async ({ page }) => 
   await canceled;
 });
 
+test('mobile settings opens the nav via the hamburger drawer', async ({ page }) => {
+  const userFixture = buildVaultFixture('user_mobile', 'mobile@example.com');
+  await seedAuth(page, userFixture);
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({
+      json: { plan_type: 'trial', status: 'trial', balance_chf: 1, trial_seed_chf: 2 },
+    });
+  });
+  await page.route(`${API}/api/v1/billing/usage`, async (route) => {
+    await route.fulfill({ json: usageJson });
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/account/billing');
+
+  // The desktop sidebar is hidden; the nav lives behind the hamburger.
+  const hamburger = page.getByRole('button', { name: 'Open navigation' });
+  await expect(hamburger).toBeVisible();
+  await hamburger.click();
+
+  // The Settings nav is now reachable in the drawer.
+  await page.getByRole('link', { name: 'Security & keys' }).click();
+  await expect(page).toHaveURL(/\/account\/security/);
+});
+
 test('the settings nav opens placeholder sections', async ({ page }) => {
   const userFixture = buildVaultFixture('user_nav', 'nav@example.com');
   await seedAuth(page, userFixture);
