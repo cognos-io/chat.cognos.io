@@ -18,6 +18,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/go-co-op/gocron/v2"
 	bifrostschemas "github.com/maximhq/bifrost/core/schemas"
@@ -45,6 +46,7 @@ type appHookParams struct {
 	UsageEmitter            analytics.Emitter
 	CompleteBillingGate     handler.CompleteBillingGateFunc
 	CatalogueService        catalogue.Service
+	PaddleClient            paddle.Client
 }
 
 func NewServer() *pocketbase.PocketBase {
@@ -168,6 +170,21 @@ func bindAppHooks(
 			)
 		}
 
+		// Paddle is optional: without an API key the checkout route returns 503
+		// rather than crashing local/dev setups that don't transact.
+		paddleClient := params.PaddleClient
+		if paddleClient == nil && params.Config != nil && params.Config.PaddleAPIKey != "" {
+			paddleClient = paddle.NewHTTPClient(params.Config.PaddleAPIBase, params.Config.PaddleAPIKey)
+		}
+		paddlePrices := map[string]string{}
+		if params.Config != nil {
+			paddlePrices = map[string]string{
+				"payg":              params.Config.PaddlePricePAYG,
+				"unlimited_monthly": params.Config.PaddlePriceUnlimitedMonthly,
+				"unlimited_annual":  params.Config.PaddlePriceUnlimitedAnnual,
+			}
+		}
+
 		addPocketBaseRoutes(
 			e,
 			app,
@@ -184,6 +201,8 @@ func bindAppHooks(
 			fxRateProvider,
 			usageEmitter,
 			params.CompleteBillingGate,
+			paddleClient,
+			paddlePrices,
 		)
 
 		hooks.SoftDelete(app)

@@ -5,7 +5,11 @@ import PocketBase from 'pocketbase';
 
 import { Observable, Subscriber, filter, map, take } from 'rxjs';
 
-import { BillingApiResponse } from '@app/interfaces/billing';
+import {
+  BillingApiResponse,
+  CheckoutRequest,
+  CheckoutResponse,
+} from '@app/interfaces/billing';
 import { ConversationRecord } from '@app/interfaces/conversation';
 import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/model';
 import {
@@ -362,6 +366,18 @@ export class CognosApiService {
     return this._http.get<BillingApiResponse>(`${this._baseUrl}/api/v1/billing`, {
       headers: this.authHeaders(),
     });
+  }
+
+  createCheckout(request: CheckoutRequest): Observable<CheckoutResponse> {
+    return this._http.post<CheckoutResponse>(
+      `${this._baseUrl}/api/v1/billing/checkout`,
+      {
+        plan: request.plan,
+        business: request.business,
+        return_url: request.returnUrl,
+      },
+      { headers: this.authHeaders() },
+    );
   }
 
   getModels(): Observable<ModelsCatalogueResponse> {

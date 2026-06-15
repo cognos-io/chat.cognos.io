@@ -13,6 +13,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/participants"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/pocketbase/pocketbase/apis"
@@ -116,6 +117,8 @@ func addPocketBaseRoutes(
 	fxRateProvider billing.FXRateProvider,
 	usageEmitter analytics.Emitter,
 	completeBillingGate handler.CompleteBillingGateFunc,
+	paddleClient paddle.Client,
+	paddlePrices map[string]string,
 ) {
 	e.Router.GET(
 		"/api/v1/models",
@@ -141,6 +144,18 @@ func addPocketBaseRoutes(
 		handler.BillingTransactions(handler.BillingTransactionsParams{
 			Logger:           logger,
 			TransactionsRepo: billingTransactionsRepo,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/billing/checkout",
+		handler.BillingCheckout(handler.BillingCheckoutParams{
+			Logger: logger,
+			Client: paddleClient,
+			Prices: paddlePrices,
 		}),
 	).Bind(
 		apis.RequireAuth(),

@@ -27,6 +27,25 @@
   color: var(--cog-text);
 }
 
+/* Activating (post-checkout) */
+.pricing__activating {
+  display: grid;
+  justify-items: center;
+  gap: var(--cog-space-150);
+  text-align: center;
+  padding: var(--cog-space-400) var(--cog-space-200);
+}
+
+.pricing__activating cog-icon {
+  animation: pricing-spin 1s linear infinite;
+}
+
+@keyframes pricing-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Intro */
 .pricing__intro {
   display: grid;

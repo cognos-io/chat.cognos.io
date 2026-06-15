@@ -5,6 +5,26 @@
 
 export type BillingPlanType = 'trial' | 'payg' | 'unlimited' | 'inactive';
 
+// The purchasable plan keys the checkout endpoint accepts (distinct from the
+// active-plan enum above — Unlimited has two billing intervals).
+export type CheckoutPlan = 'payg' | 'unlimited_monthly' | 'unlimited_annual';
+
+export interface CheckoutBusiness {
+  name: string;
+  vat_id: string;
+  country: string;
+}
+
+export interface CheckoutRequest {
+  plan: CheckoutPlan;
+  business?: CheckoutBusiness;
+  returnUrl?: string;
+}
+
+export interface CheckoutResponse {
+  checkout_url: string;
+}
+
 // BillingApiResponse is the raw `GET /api/v1/billing` payload.
 export interface BillingApiResponse {
   plan_type: BillingPlanType;

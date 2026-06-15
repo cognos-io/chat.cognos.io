@@ -85,6 +85,23 @@ deepinfra:
 billing:
   trial_seed_rappen: 200
 
+# --- Paddle (payments) --------------------------------------------------------
+# Optional: without api_key the /api/v1/billing/checkout route returns 503.
+# api_base defaults to https://api.paddle.com (use the sandbox host for testing).
+# price_* are Paddle price IDs (pri_...). Env overrides: COGNOS_PADDLE_API_BASE,
+# COGNOS_PADDLE_API_KEY, COGNOS_PADDLE_WEBHOOK_SECRET, COGNOS_PADDLE_PRICE_PAYG,
+# COGNOS_PADDLE_PRICE_PAYG_OVERAGE, COGNOS_PADDLE_PRICE_UNLIMITED_MONTHLY,
+# COGNOS_PADDLE_PRICE_UNLIMITED_ANNUAL.
+# Secret-file overrides: COGNOS_PADDLE_API_KEY_FILE, COGNOS_PADDLE_WEBHOOK_SECRET_FILE.
+paddle:
+  api_base: "https://api.paddle.com"
+  api_key: ""
+  webhook_secret: ""
+  price_payg: ""
+  price_payg_overage: ""
+  price_unlimited_monthly: ""
+  price_unlimited_annual: ""
+
 # --- Env-only (not loaded from YAML) ------------------------------------------
 # BILLING_FX_RATE_FALLBACK_USD_CHF — fallback USD→CHF rate when the live rate
 # is unavailable. Defaults to 0.88. Set via environment variable only.

@@ -87,6 +87,14 @@ type APIConfig struct {
 	DeepInfraAPIKey string `koanf:"deepinfra.api_key"`
 	// Billing
 	BillingTrialSeedRappen int64 `koanf:"billing.trial_seed_rappen"`
+	// Paddle (payments). Prices are Paddle price IDs (pri_...).
+	PaddleAPIBase               string `koanf:"paddle.api_base"`
+	PaddleAPIKey                string `koanf:"paddle.api_key"`
+	PaddleWebhookSecret         string `koanf:"paddle.webhook_secret"`
+	PaddlePricePAYG             string `koanf:"paddle.price_payg"`
+	PaddlePricePAYGOverage      string `koanf:"paddle.price_payg_overage"`
+	PaddlePriceUnlimitedMonthly string `koanf:"paddle.price_unlimited_monthly"`
+	PaddlePriceUnlimitedAnnual  string `koanf:"paddle.price_unlimited_annual"`
 }
 
 // MustLoadAPIConfig loads the API configuration or panics if an error occurs.
@@ -139,6 +147,10 @@ func MustLoadAPIConfig(logger *slog.Logger) *APIConfig {
 		c.BillingTrialSeedRappen = 200
 	}
 
+	if strings.TrimSpace(c.PaddleAPIBase) == "" {
+		c.PaddleAPIBase = "https://api.paddle.com"
+	}
+
 	for _, override := range []struct {
 		envVar string
 		apply  func(string)
@@ -149,6 +161,8 @@ func MustLoadAPIConfig(logger *slog.Logger) *APIConfig {
 		{envVar: "COGNOS_GOOGLE_API_KEY_FILE", apply: func(value string) { c.GoogleGeminiAPIKey = value }},
 		{envVar: "COGNOS_ANTHROPIC_API_KEY_FILE", apply: func(value string) { c.AnthropicAPIKey = value }},
 		{envVar: "COGNOS_DEEPINFRA_API_KEY_FILE", apply: func(value string) { c.DeepInfraAPIKey = value }},
+		{envVar: "COGNOS_PADDLE_API_KEY_FILE", apply: func(value string) { c.PaddleAPIKey = value }},
+		{envVar: "COGNOS_PADDLE_WEBHOOK_SECRET_FILE", apply: func(value string) { c.PaddleWebhookSecret = value }},
 	} {
 		value, err := fileEnvValue(override.envVar)
 		if err != nil {

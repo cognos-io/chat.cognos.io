@@ -950,6 +950,18 @@ For `trial`:
 
 ### 12.2 `POST /api/v1/billing/checkout`
 
+> **Status — implemented.** `internal/paddle` (HTTP client), the
+> `BillingCheckout` handler, and the route are live. The handler resolves the
+> plan → Paddle price, mirrors business details onto the user, forwards
+> `custom_data.user_id` + business to Paddle, returns the hosted `checkout_url`,
+> and persists the returned `paddle_customer_id`. Errors map cleanly: unknown
+> plan → 400, Paddle failure → 502, Paddle not configured → 503. The frontend
+> redirects to `checkout_url`; Paddle returns the user to
+> `/account/billing?status=activating`, where the page polls until the
+> `subscription.created` webhook (Case 5) flips the plan, then drops back to
+> chat. The `accepted plan` keys are `payg`, `unlimited_monthly`,
+> `unlimited_annual`.
+
 Body:
 
 ```json
