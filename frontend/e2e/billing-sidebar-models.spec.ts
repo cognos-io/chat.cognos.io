@@ -108,7 +108,17 @@ test('the sidebar profile button shows the plan and routes to billing', async ({
 
   await page.route(`${API}/api/v1/billing`, async (route) => {
     await route.fulfill({
-      json: { plan_type: 'trial', balance_chf: 0.32, trial_seed_chf: 2.0 },
+      json: {
+        plan_type: 'trial',
+        status: 'trial',
+        balance_chf: 0.32,
+        trial_seed_chf: 2.0,
+      },
+    });
+  });
+  await page.route(`${API}/api/v1/billing/usage`, async (route) => {
+    await route.fulfill({
+      json: { period_start: '2026-06-01T00:00:00Z', message_count: 0, by_model: [] },
     });
   });
 
@@ -124,9 +134,8 @@ test('the sidebar profile button shows the plan and routes to billing', async ({
 
   await profile.click();
   await expect(page).toHaveURL(/\/account\/billing/);
-  await expect(
-    page.getByRole('heading', { name: 'Keep going, privately' }),
-  ).toBeVisible();
+  // Profile opens the billing dashboard (not the pricing page).
+  await expect(page.getByRole('heading', { name: 'Plan & billing' })).toBeVisible();
 });
 
 test('the model selector tags models with low/medium/high cost tiers', async ({

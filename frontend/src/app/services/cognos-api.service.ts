@@ -9,6 +9,7 @@ import {
   BillingApiResponse,
   CheckoutRequest,
   CheckoutResponse,
+  UsageResponse,
 } from '@app/interfaces/billing';
 import { ConversationRecord } from '@app/interfaces/conversation';
 import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/model';
@@ -366,6 +367,28 @@ export class CognosApiService {
     return this._http.get<BillingApiResponse>(`${this._baseUrl}/api/v1/billing`, {
       headers: this.authHeaders(),
     });
+  }
+
+  getBillingUsage(): Observable<UsageResponse> {
+    return this._http.get<UsageResponse>(`${this._baseUrl}/api/v1/billing/usage`, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  cancelSubscription(): Observable<unknown> {
+    return this._http.post(
+      `${this._baseUrl}/api/v1/billing/cancel`,
+      {},
+      { headers: this.authHeaders() },
+    );
+  }
+
+  resumeSubscription(): Observable<unknown> {
+    return this._http.post(
+      `${this._baseUrl}/api/v1/billing/resume`,
+      {},
+      { headers: this.authHeaders() },
+    );
   }
 
   createCheckout(request: CheckoutRequest): Observable<CheckoutResponse> {

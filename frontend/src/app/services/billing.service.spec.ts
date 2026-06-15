@@ -56,7 +56,7 @@ describe('BillingService.beginCheckout', () => {
 
     expect(createCheckout).toHaveBeenCalledWith({
       plan: 'unlimited_annual',
-      returnUrl: 'https://app.test/account/billing?status=activating',
+      returnUrl: 'https://app.test/pricing?status=activating',
     });
     expect(location.href).toBe('https://pay.paddle.com/x');
   });

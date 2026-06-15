@@ -54,7 +54,7 @@ test('the pricing page presents both plans, the guarantee and a working interval
     });
   });
 
-  await page.goto('/account/billing');
+  await page.goto('/pricing');
 
   await expect(
     page.getByRole('heading', { name: 'Keep going, privately' }),
@@ -101,13 +101,13 @@ test('choosing a plan creates a checkout and redirects to the Paddle URL', async
     await route.fulfill({ contentType: 'text/html', body: '<h1>Paddle checkout</h1>' });
   });
 
-  await page.goto('/account/billing');
+  await page.goto('/pricing');
   await page.getByRole('button', { name: 'Go Unlimited' }).click();
 
   // The browser is redirected to the Paddle checkout URL the backend returned.
   await page.waitForURL('**/__paddle_stub');
   expect(checkoutBody?.plan).toBe('unlimited_monthly');
-  expect(checkoutBody?.return_url).toContain('/account/billing?status=activating');
+  expect(checkoutBody?.return_url).toContain('/pricing?status=activating');
 });
 
 test('the yearly toggle switches the Unlimited checkout to the annual plan', async ({
@@ -132,7 +132,7 @@ test('the yearly toggle switches the Unlimited checkout to the annual plan', asy
     await route.fulfill({ contentType: 'text/html', body: '<h1>stub</h1>' });
   });
 
-  await page.goto('/account/billing');
+  await page.goto('/pricing');
   await page.getByRole('button', { name: /Yearly/ }).click();
   await page.getByRole('button', { name: 'Go Unlimited' }).click();
 
@@ -164,7 +164,7 @@ test('returning from checkout shows activating, then drops back into chat once a
     await route.fulfill({ json: [] });
   });
 
-  await page.goto('/account/billing?status=activating');
+  await page.goto('/pricing?status=activating');
 
   await expect(page.getByText('Activating your plan…')).toBeVisible();
   // Once the plan flips, the user is returned to the chat.

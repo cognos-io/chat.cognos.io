@@ -215,7 +215,7 @@ test('a locked banner CTA opens the pricing page', async ({ page }) => {
   await page.goto('/c/conv_price');
 
   await page.getByRole('button', { name: 'Choose a plan' }).click();
-  await expect(page).toHaveURL(/\/account\/billing/);
+  await expect(page).toHaveURL(/\/pricing/);
   await expect(
     page.getByRole('heading', { name: 'Keep going, privately' }),
   ).toBeVisible();

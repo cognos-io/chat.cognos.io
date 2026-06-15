@@ -115,6 +115,6 @@ export class TrialCreditCardComponent {
   });
 
   protected goToBilling(): void {
-    void this._router.navigate(['/account/billing']);
+    void this._router.navigate(['/pricing']);
   }
 }

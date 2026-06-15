@@ -26,12 +26,71 @@ export const routes: Routes = [
     ],
   },
   {
-    path: 'account/billing',
+    // Standalone pricing / plan-picker ("Keep going, privately"). Reached from
+    // the locked-chat surfaces and the dashboard's switch/choose actions.
+    path: 'pricing',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./pages/account/billing/account-billing.component').then(
-        (m) => m.AccountBillingComponent,
+      import('./pages/pricing/pricing.component').then((m) => m.PricingComponent),
+  },
+  {
+    // Settings area: swaps the chat sidebar for a Settings nav.
+    path: 'account',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/account/settings-shell.component').then(
+        (m) => m.SettingsShellComponent,
       ),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'billing' },
+      {
+        path: 'billing',
+        loadComponent: () =>
+          import('./pages/account/billing/plan-billing.component').then(
+            (m) => m.PlanBillingComponent,
+          ),
+      },
+      {
+        path: 'account',
+        data: { title: 'Account' },
+        loadComponent: () =>
+          import('./pages/account/settings-placeholder.component').then(
+            (m) => m.SettingsPlaceholderComponent,
+          ),
+      },
+      {
+        path: 'usage',
+        data: { title: 'Usage' },
+        loadComponent: () =>
+          import('./pages/account/settings-placeholder.component').then(
+            (m) => m.SettingsPlaceholderComponent,
+          ),
+      },
+      {
+        path: 'security',
+        data: { title: 'Security & keys' },
+        loadComponent: () =>
+          import('./pages/account/settings-placeholder.component').then(
+            (m) => m.SettingsPlaceholderComponent,
+          ),
+      },
+      {
+        path: 'team',
+        data: { title: 'Team & sharing' },
+        loadComponent: () =>
+          import('./pages/account/settings-placeholder.component').then(
+            (m) => m.SettingsPlaceholderComponent,
+          ),
+      },
+      {
+        path: 'notifications',
+        data: { title: 'Notifications' },
+        loadComponent: () =>
+          import('./pages/account/settings-placeholder.component').then(
+            (m) => m.SettingsPlaceholderComponent,
+          ),
+      },
+    ],
   },
   {
     // Public, unauthenticated read view for a shared conversation. The token

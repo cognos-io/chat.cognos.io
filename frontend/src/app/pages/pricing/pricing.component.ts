@@ -32,7 +32,7 @@ const ACTIVATION_POLL_MAX_ATTEMPTS = 40;
 // BillingService; after the redirect back, ?status=activating drives the poll
 // that waits for the subscription webhook before returning the user to chat.
 @Component({
-  selector: 'app-account-billing',
+  selector: 'app-pricing',
   standalone: true,
   imports: [
     RouterLink,
@@ -245,9 +245,9 @@ const ACTIVATION_POLL_MAX_ATTEMPTS = 40;
       }
     </main>
   `,
-  styleUrl: './account-billing.component.scss',
+  styleUrl: './pricing.component.scss',
 })
-export class AccountBillingComponent {
+export class PricingComponent {
   private readonly _route = inject(ActivatedRoute);
   private readonly _router = inject(Router);
   private readonly _destroyRef = inject(DestroyRef);

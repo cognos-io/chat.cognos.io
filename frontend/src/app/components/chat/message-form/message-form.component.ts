@@ -462,7 +462,7 @@ export class MessageFormComponent {
   }
 
   goToBilling() {
-    void this._router.navigate(['/account/billing']);
+    void this._router.navigate(['/pricing']);
   }
 
   toggleModelSelector() {

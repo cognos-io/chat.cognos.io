@@ -1090,6 +1090,20 @@ text:
 
 ### 13.3 Billing dashboard
 
+> **Status — implemented (core).** A Settings area (`/account`, sidebar nav +
+> breadcrumbs) hosts the **Plan & billing** dashboard at `/account/billing`,
+> driven by the extended `GET /api/v1/billing`. It renders all states: active
+> (Unlimited / PAYG), cancels-soon (Resume), and inactive/read-only (Choose a
+> plan). The standalone pricing page moved to `/pricing`; locked-chat CTAs and
+> the dashboard's switch/choose buttons route there. Usage breakdown comes from
+> `GET /api/v1/billing/usage` (per-model counts/spend from ledger metadata — no
+> decryption). Cancel/Resume call `POST /api/v1/billing/{cancel,resume}`. The
+> other settings sections (Account, Usage, Security, Team, Notifications) are
+> placeholders. **Deferred (needs live Paddle):** inline invoice list + PDF
+> download, the live payment-method card (brand/last4), the Paddle
+> customer-portal session, and PAYG top-up. The payment + invoices cards
+> currently show the Paddle-as-MoR assurances only.
+
 A single page at `/account/billing` showing:
 
 - Current plan + price + next renewal date.

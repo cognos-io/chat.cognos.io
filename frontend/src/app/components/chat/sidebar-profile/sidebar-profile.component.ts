@@ -72,7 +72,6 @@ const PLAN_LABELS: Record<BillingPlanType, string> = {
       align-items: center;
       gap: var(--cog-space-100);
       width: 100%;
-      border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface);
       padding: var(--cog-space-100) var(--cog-space-150);

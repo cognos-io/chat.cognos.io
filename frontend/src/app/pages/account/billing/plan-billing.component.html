@@ -1,0 +1,166 @@
+<header class="pb__header">
+  <cog-breadcrumbs [items]="breadcrumbs" (itemSelect)="onBreadcrumb($event)" />
+  <div class="pb__titlebar">
+    <h1 class="pb__title">Plan &amp; billing</h1>
+    <span class="pb__synced">Synced with Paddle</span>
+  </div>
+</header>
+
+@if (billing(); as billing) {
+  <!-- Current plan -->
+  <section class="pb__card pb__plan">
+    <div class="pb__plan-main">
+      <div class="pb__eyebrow">
+        {{ heading() }}
+        <cog-lozenge [tone]="badge().tone">{{ badge().text }}</cog-lozenge>
+      </div>
+      <h2 class="pb__plan-name">
+        {{ planName() }}
+        @if (priceLabel()) {
+          <span class="pb__plan-price">{{ priceLabel() }}</span>
+        }
+      </h2>
+      <p class="pb__plan-blurb">{{ blurb() }}</p>
+
+      <div class="pb__actions">
+        @switch (status()) {
+          @case ('cancels_soon') {
+            <cog-button
+              appearance="primary"
+              icon="rotate-cw"
+              [disabled]="actionPending()"
+              (click)="resume()"
+            >
+              Resume plan
+            </cog-button>
+            <cog-button appearance="default" (click)="goToPlans()"
+              >Switch plan</cog-button
+            >
+          }
+          @case ('active') {
+            <cog-button appearance="primary" (click)="goToPlans()"
+              >Switch plan</cog-button
+            >
+            <cog-button
+              appearance="subtle"
+              [disabled]="actionPending()"
+              (click)="cancel()"
+            >
+              Cancel plan
+            </cog-button>
+          }
+          @default {
+            <cog-button appearance="primary" icon="chevron-right" (click)="goToPlans()">
+              Choose a plan
+            </cog-button>
+          }
+        }
+      </div>
+    </div>
+
+    <aside class="pb__aside">
+      <div class="pb__aside-heading">{{ dateHeading() }}</div>
+      @if (status() === 'trial') {
+        <div class="pb__aside-value">CHF {{ billing.balance_chf.toFixed(2) }}</div>
+        <div class="pb__aside-caption">trial credit left</div>
+      } @else if (billing.cycle_end_at) {
+        <div class="pb__aside-value">{{ billing.cycle_end_at | date: 'd MMMM y' }}</div>
+        @switch (status()) {
+          @case ('active') {
+            <div class="pb__aside-caption">{{ priceLabel() }}</div>
+            <div class="pb__guarantee">
+              <cog-icon name="shield-check" [size]="14" tone="text-subtle" />
+              60-day money-back guarantee
+            </div>
+          }
+          @case ('cancels_soon') {
+            <p class="pb__aside-note">
+              Stays fully active until then. Resume any time before to keep it going.
+            </p>
+          }
+          @case ('inactive') {
+            <div class="pb__aside-caption">Sending paused · chats readable</div>
+          }
+        }
+      }
+    </aside>
+  </section>
+
+  <div class="pb__grid">
+    <!-- Usage -->
+    <section class="pb__card pb__usage">
+      <header class="pb__card-head">
+        <span class="pb__card-title">Usage this period</span>
+        @if (!isPayg()) {
+          <cog-lozenge tone="green">No limit</cog-lozenge>
+        }
+      </header>
+
+      @if (usage(); as usage) {
+        <div class="pb__usage-total">
+          {{ usage.message_count.toLocaleString('en-CH') }}
+        </div>
+        <div class="pb__usage-caption">
+          messages since {{ usage.period_start | date: 'd MMM' }}
+        </div>
+
+        <div class="pb__bars">
+          @for (bar of usageBars(); track bar.name) {
+            <div class="pb__bar">
+              <div class="pb__bar-row">
+                <span class="pb__bar-label">
+                  {{ bar.name }}
+                  @if (bar.sublabel) {
+                    <span class="pb__bar-sub">{{ bar.sublabel }}</span>
+                  }
+                </span>
+                <span class="pb__bar-value">{{ bar.display }}</span>
+              </div>
+              <cog-progress [value]="barWidth(bar.value)" [height]="6" />
+            </div>
+          } @empty {
+            <p class="pb__usage-note">No messages sent yet this period.</p>
+          }
+        </div>
+
+        <p class="pb__usage-note">
+          <cog-icon name="info" [size]="14" tone="text-subtlest" />
+          @if (isPayg()) {
+            Spend above the CHF 10 minimum is metered per message.
+          } @else {
+            Unlimited covers normal individual use — compute is metered internally only
+            to keep the service fair.
+          }
+        </p>
+      } @else {
+        <p class="pb__usage-note">No usage recorded yet this period.</p>
+      }
+    </section>
+
+    <!-- Payment method (managed by Paddle) -->
+    <section class="pb__card pb__payment">
+      <header class="pb__card-head">
+        <span class="pb__card-title">Payment method</span>
+      </header>
+      <p class="pb__payment-note">
+        <cog-icon name="lock" [size]="14" tone="text-subtle" />
+        Billing is processed by Paddle, our payment provider. We store a token, never
+        your card number.
+      </p>
+    </section>
+  </div>
+
+  <!-- Invoices -->
+  <section class="pb__card pb__invoices">
+    <header class="pb__card-head">
+      <span class="pb__card-title">Invoices</span>
+    </header>
+    <p class="pb__invoices-note">
+      Your invoices and VAT receipts are available in your Paddle portal.
+    </p>
+    <p class="pb__invoices-foot">
+      Invoices &amp; VAT receipts are issued by Paddle.com Market Ltd, our merchant of
+      record.
+    </p>
+  </section>
+}

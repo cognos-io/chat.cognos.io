@@ -25,11 +25,19 @@ export interface CheckoutResponse {
   checkout_url: string;
 }
 
+export type BillingStatus = 'trial' | 'active' | 'cancels_soon' | 'inactive';
+
 // BillingApiResponse is the raw `GET /api/v1/billing` payload.
 export interface BillingApiResponse {
   plan_type: BillingPlanType;
+  status: BillingStatus;
+  interval?: 'monthly' | 'annual';
   balance_chf: number;
   trial_seed_chf: number;
+  cycle_end_at?: string;
+  cancel_at_period_end?: boolean;
+  refund_eligible_until_at?: string;
+  previous_plan_type?: BillingPlanType;
 }
 
 // BillingState is the normalised view the frontend holds in a signal.
@@ -37,6 +45,20 @@ export interface BillingState {
   planType: BillingPlanType;
   balanceChf: number;
   trialSeedChf: number;
+}
+
+// Per-model usage rollup from `GET /api/v1/billing/usage` (ledger metadata
+// only — never message content).
+export interface UsageModel {
+  model_id: string;
+  count: number;
+  cost_chf: number;
+}
+
+export interface UsageResponse {
+  period_start: string;
+  message_count: number;
+  by_model: UsageModel[];
 }
 
 // CompletionBillingRestriction is the structured 402 body the `/complete`

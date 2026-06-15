@@ -98,7 +98,7 @@ export class BillingService {
     this._api
       .createCheckout({
         plan,
-        returnUrl: `${origin}/account/billing?status=activating`,
+        returnUrl: `${origin}/pricing?status=activating`,
       })
       .subscribe({
         next: ({ checkout_url }) => {
