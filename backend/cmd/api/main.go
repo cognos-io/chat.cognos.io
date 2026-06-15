@@ -177,11 +177,24 @@ func bindAppHooks(
 			paddleClient = paddle.NewHTTPClient(params.Config.PaddleAPIBase, params.Config.PaddleAPIKey)
 		}
 		paddlePrices := map[string]string{}
+		paddleWebhookSecret := ""
+		paddlePriceToPlan := map[string]billing.PlanType{}
 		if params.Config != nil {
 			paddlePrices = map[string]string{
 				"payg":              params.Config.PaddlePricePAYG,
 				"unlimited_monthly": params.Config.PaddlePriceUnlimitedMonthly,
 				"unlimited_annual":  params.Config.PaddlePriceUnlimitedAnnual,
+			}
+			paddleWebhookSecret = params.Config.PaddleWebhookSecret
+			// Reverse map: which plan does each configured price activate?
+			for priceID, plan := range map[string]billing.PlanType{
+				params.Config.PaddlePricePAYG:             billing.PlanTypePayG,
+				params.Config.PaddlePriceUnlimitedMonthly: billing.PlanTypeUnlimited,
+				params.Config.PaddlePriceUnlimitedAnnual:  billing.PlanTypeUnlimited,
+			} {
+				if priceID != "" {
+					paddlePriceToPlan[priceID] = plan
+				}
 			}
 		}
 
@@ -203,6 +216,8 @@ func bindAppHooks(
 			params.CompleteBillingGate,
 			paddleClient,
 			paddlePrices,
+			paddleWebhookSecret,
+			paddlePriceToPlan,
 		)
 
 		hooks.SoftDelete(app)

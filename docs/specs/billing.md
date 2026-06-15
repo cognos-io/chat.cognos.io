@@ -722,6 +722,21 @@ side-by-side, so any drift is investigable.
 
 ## 10. Webhook Handler
 
+> **Status — implemented (lean cut).** `POST /webhooks/paddle` (`PaddleWebhook`)
+> is live: it verifies the `Paddle-Signature` HMAC over `ts:rawBody` (bad
+> signature → 401, no DB write), stores every event once in `paddle_events`
+> (idempotent on the unique `paddle_event_id`; re-delivery → 200 `duplicate`),
+> then dispatches. Domain handlers wired now: `subscription.created` /
+> `subscription.activated` flip the user onto the price's plan and snapshot the
+> subscription + cycle + `refund_eligible_until_at`; `subscription.canceled`
+> drops them to `inactive`. `subscription.past_due` and `transaction.completed`
+> are stored-only (no plan change) — PAYG cycle reconciliation, overage charges,
+> and `adjustment.created`/refund handling are the deferred fast-follow.
+> Customer↔user mapping uses `custom_data.user_id` with a `paddle_customer_id`
+> fallback; unmappable events are logged and accepted (not retried). Signature
+> verification is covered in `internal/paddle/webhook_test.go`; the end-to-end
+> activate/replay/cancel flow in `cmd/api/paddle_webhook_test.go`.
+
 ### 10.1 Endpoint
 
 `POST /webhooks/paddle` — unauthenticated route (verified by HMAC), no JSON body limit (Paddle

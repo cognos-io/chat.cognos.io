@@ -119,7 +119,20 @@ func addPocketBaseRoutes(
 	completeBillingGate handler.CompleteBillingGateFunc,
 	paddleClient paddle.Client,
 	paddlePrices map[string]string,
+	paddleWebhookSecret string,
+	paddlePriceToPlan map[string]billing.PlanType,
 ) {
+	// Paddle webhook: unauthenticated (verified by HMAC) and unthrottled so we
+	// never drop Paddle's retries. Bad signatures are rejected before any write.
+	e.Router.POST(
+		"/webhooks/paddle",
+		handler.PaddleWebhook(handler.PaddleWebhookParams{
+			Logger:        logger,
+			WebhookSecret: paddleWebhookSecret,
+			PriceToPlan:   paddlePriceToPlan,
+		}),
+	)
+
 	e.Router.GET(
 		"/api/v1/models",
 		handler.ModelsGet(catalogueService),
