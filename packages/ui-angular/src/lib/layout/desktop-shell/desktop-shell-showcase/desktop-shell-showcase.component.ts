@@ -1,25 +1,20 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import { CognosButtonComponent } from "../../../button/button.component";
-import { CognosAssistantMessageComponent } from "../../../chat/assistant-message/assistant-message.component";
-import { CognosComposerComponent } from "../../../chat/composer/composer.component";
-import { CognosRedactedTextComponent } from "../../../chat/redacted-text/redacted-text.component";
-import { CognosUserMessageComponent } from "../../../chat/user-message/user-message.component";
-import { CognosIconComponent } from "../../../icon/icon.component";
-import { CognosNavItemComponent } from "../../../navigation/nav-item/nav-item.component";
-import { CognosAvatarComponent } from "../../../primitives/avatar/avatar.component";
-import { CognosIconButtonComponent } from "../../../primitives/icon-button/icon-button.component";
-import { CognosLozengeComponent } from "../../../primitives/lozenge/lozenge.component";
-import { CognosTextFieldComponent } from "../../../primitives/text-field/text-field.component";
-import { CognosDesktopShellComponent } from "../desktop-shell.component";
+import { CognosButtonComponent } from '../../../button/button.component';
+import { CognosAssistantMessageComponent } from '../../../chat/assistant-message/assistant-message.component';
+import { CognosComposerComponent } from '../../../chat/composer/composer.component';
+import { CognosRedactedTextComponent } from '../../../chat/redacted-text/redacted-text.component';
+import { CognosUserMessageComponent } from '../../../chat/user-message/user-message.component';
+import { CognosIconComponent } from '../../../icon/icon.component';
+import { CognosNavItemComponent } from '../../../navigation/nav-item/nav-item.component';
+import { CognosAvatarComponent } from '../../../primitives/avatar/avatar.component';
+import { CognosIconButtonComponent } from '../../../primitives/icon-button/icon-button.component';
+import { CognosLozengeComponent } from '../../../primitives/lozenge/lozenge.component';
+import { CognosTextFieldComponent } from '../../../primitives/text-field/text-field.component';
+import { CognosDesktopShellComponent } from '../desktop-shell.component';
 
 @Component({
-  selector: "cog-desktop-shell-showcase",
+  selector: 'cog-desktop-shell-showcase',
   standalone: true,
   imports: [
     CognosAssistantMessageComponent,
@@ -37,7 +32,11 @@ import { CognosDesktopShellComponent } from "../desktop-shell.component";
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <cog-desktop-shell [breadcrumbs]="breadcrumbs()" [navFooter]="true" [title]="title()">
+    <cog-desktop-shell
+      [breadcrumbs]="breadcrumbs()"
+      [navFooter]="true"
+      [title]="title()"
+    >
       <div cogDesktopNav class="cog-desktop-shell-showcase__nav">
         <div class="cog-desktop-shell-showcase__brand">
           <span class="cog-desktop-shell-showcase__brand-mark">
@@ -71,7 +70,11 @@ import { CognosDesktopShellComponent } from "../desktop-shell.component";
             >
               <cog-nav-item label="Data Protection Act — impact" [indent]="1" />
               <cog-nav-item label="Consultation response draft" [indent]="1" />
-              <cog-nav-item label="Cross-border data transfer memo" [indent]="1" [pinned]="true" />
+              <cog-nav-item
+                label="Cross-border data transfer memo"
+                [indent]="1"
+                [pinned]="true"
+              />
             </cog-nav-item>
             <cog-nav-item
               icon="graduation-cap"
@@ -90,10 +93,16 @@ import { CognosDesktopShellComponent } from "../desktop-shell.component";
           </div>
         </section>
 
-        <section class="cog-desktop-shell-showcase__section cog-desktop-shell-showcase__section--grow">
+        <section
+          class="cog-desktop-shell-showcase__section cog-desktop-shell-showcase__section--grow"
+        >
           <h2 class="cog-desktop-shell-showcase__section-title">Recent</h2>
           <div class="cog-desktop-shell-showcase__list">
-            <cog-nav-item icon="message-square" label="FOI request — draft reply" [selected]="true" />
+            <cog-nav-item
+              icon="message-square"
+              label="FOI request — draft reply"
+              [selected]="true"
+            />
             <cog-nav-item icon="message-square" label="Encryption key rotation" />
             <cog-nav-item icon="message-square" label="Summarise procurement PDF" />
             <cog-nav-item icon="message-square" label="FOI request triage" />
@@ -133,7 +142,30 @@ import { CognosDesktopShellComponent } from "../desktop-shell.component";
 
       <div class="cog-desktop-shell-showcase__conversation">
         <div class="cog-desktop-shell-showcase__messages">
-          <cog-user-message meta="Encrypted · 14:32">Draft a short, friendly reply to <cog-redacted-text kind="name" value="Laurent Meyer" placeholder="REDACTED_NAME_2C31" /> (<cog-redacted-text kind="email" value="l.meyer@example.ch" placeholder="REDACTED_EMAIL_7A6F" />) about their case <cog-redacted-text kind="case-id" value="GE-2026-0417" placeholder="REDACTED_CASE_ID_17D0" /> — they also left a number, <cog-redacted-text kind="phone" value="+41 22 555 0143" placeholder="REDACTED_PHONE_510B" />.</cog-user-message>
+          <cog-user-message meta="Encrypted · 14:32"
+            >Draft a short, friendly reply to
+            <cog-redacted-text
+              kind="name"
+              value="Laurent Meyer"
+              placeholder="REDACTED_NAME_2C31"
+            />
+            (<cog-redacted-text
+              kind="email"
+              value="l.meyer@example.ch"
+              placeholder="REDACTED_EMAIL_7A6F"
+            />) about their case
+            <cog-redacted-text
+              kind="case-id"
+              value="GE-2026-0417"
+              placeholder="REDACTED_CASE_ID_17D0"
+            />
+            — they also left a number,
+            <cog-redacted-text
+              kind="phone"
+              value="+41 22 555 0143"
+              placeholder="REDACTED_PHONE_510B"
+            />.</cog-user-message
+          >
 
           <cog-assistant-message
             model="Cognos Sovereign"
@@ -142,13 +174,52 @@ import { CognosDesktopShellComponent } from "../desktop-shell.component";
             [sources]="0"
           >
             <div class="cog-desktop-shell-showcase__assistant-copy">
-              <p>Here’s a draft you can send to <cog-redacted-text kind="name" value="Laurent Meyer" placeholder="REDACTED_NAME_2C31" />:</p>
-              <p><strong>Subject — Your enquiry (case <cog-redacted-text kind="case-id" value="GE-2026-0417" placeholder="REDACTED_CASE_ID_17D0" />)</strong></p>
-              <p>Dear <cog-redacted-text kind="name" value="Laurent Meyer" placeholder="REDACTED_NAME_2C31" />,</p>
-              <p>Thank you for getting in touch. We’ve received your request and logged it under <cog-redacted-text kind="case-id" value="GE-2026-0417" placeholder="REDACTED_CASE_ID_17D0" />. I’ll follow up by email at <cog-redacted-text kind="email" value="l.meyer@example.ch" placeholder="REDACTED_EMAIL_7A6F" /> within three working days; if anything is urgent, please call our office and quote your case number.</p>
+              <p>
+                Here’s a draft you can send to
+                <cog-redacted-text
+                  kind="name"
+                  value="Laurent Meyer"
+                  placeholder="REDACTED_NAME_2C31"
+                />:
+              </p>
+              <p>
+                <strong
+                  >Subject — Your enquiry (case
+                  <cog-redacted-text
+                    kind="case-id"
+                    value="GE-2026-0417"
+                    placeholder="REDACTED_CASE_ID_17D0"
+                  />)</strong
+                >
+              </p>
+              <p>
+                Dear
+                <cog-redacted-text
+                  kind="name"
+                  value="Laurent Meyer"
+                  placeholder="REDACTED_NAME_2C31"
+                />,
+              </p>
+              <p>
+                Thank you for getting in touch. We’ve received your request and logged
+                it under
+                <cog-redacted-text
+                  kind="case-id"
+                  value="GE-2026-0417"
+                  placeholder="REDACTED_CASE_ID_17D0"
+                />. I’ll follow up by email at
+                <cog-redacted-text
+                  kind="email"
+                  value="l.meyer@example.ch"
+                  placeholder="REDACTED_EMAIL_7A6F"
+                />
+                within three working days; if anything is urgent, please call our office
+                and quote your case number.
+              </p>
               <p>Kind regards,<br />Policy Unit</p>
               <p>
-                <strong>Note</strong> — I never saw the real name, email, phone or case ID. Only the placeholders above were sent to me.
+                <strong>Note</strong> — I never saw the real name, email, phone or case
+                ID. Only the placeholders above were sent to me.
               </p>
             </div>
           </cog-assistant-message>
@@ -312,10 +383,10 @@ import { CognosDesktopShellComponent } from "../desktop-shell.component";
   ],
 })
 export class CognosDesktopShellShowcaseComponent {
-  readonly title = input("FOI request — draft reply");
+  readonly title = input('FOI request — draft reply');
 
   protected readonly breadcrumbs = computed(() => [
-    { label: "Cognos" },
+    { label: 'Cognos' },
     { label: this.title(), current: true },
   ]);
 }

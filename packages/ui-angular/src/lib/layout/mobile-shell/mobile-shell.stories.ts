@@ -1,6 +1,6 @@
-import { moduleMetadata, type Meta, type StoryObj } from "@storybook/angular";
+import { type Meta, type StoryObj, moduleMetadata } from '@storybook/angular';
 
-import { CognosMobileShellShowcaseComponent } from "./mobile-shell-showcase/mobile-shell-showcase.component";
+import { CognosMobileShellShowcaseComponent } from './mobile-shell-showcase/mobile-shell-showcase.component';
 
 type StoryArgs = {
   drawerOpen: boolean;
@@ -8,18 +8,18 @@ type StoryArgs = {
 };
 
 const meta: Meta<StoryArgs> = {
-  title: "Layout/Mobile Shell",
+  title: 'Layout/Mobile Shell',
   decorators: [
     moduleMetadata({
       imports: [CognosMobileShellShowcaseComponent],
     }),
   ],
   parameters: {
-    layout: "fullscreen",
+    layout: 'fullscreen',
   },
   args: {
     drawerOpen: false,
-    title: "FOI request — draft reply",
+    title: 'FOI request — draft reply',
   },
   render: (args) => ({
     props: args,

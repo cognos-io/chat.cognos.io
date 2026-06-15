@@ -142,6 +142,7 @@
   display: grid;
   gap: var(--cog-space-200);
   grid-template-columns: minmax(0, 1fr);
+  margin-bottom: var(--cog-space-200);
 }
 
 @media (min-width: 720px) {

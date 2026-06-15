@@ -1,23 +1,23 @@
-import { moduleMetadata, type Meta, type StoryObj } from "@storybook/angular";
+import { type Meta, type StoryObj, moduleMetadata } from '@storybook/angular';
 
-import { CognosDesktopShellShowcaseComponent } from "./desktop-shell-showcase/desktop-shell-showcase.component";
+import { CognosDesktopShellShowcaseComponent } from './desktop-shell-showcase/desktop-shell-showcase.component';
 
 type StoryArgs = {
   title: string;
 };
 
 const meta: Meta<StoryArgs> = {
-  title: "Layout/Desktop Shell",
+  title: 'Layout/Desktop Shell',
   decorators: [
     moduleMetadata({
       imports: [CognosDesktopShellShowcaseComponent],
     }),
   ],
   parameters: {
-    layout: "fullscreen",
+    layout: 'fullscreen',
   },
   args: {
-    title: "FOI request — draft reply",
+    title: 'FOI request — draft reply',
   },
   render: (args) => ({
     props: args,

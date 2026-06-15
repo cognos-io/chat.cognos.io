@@ -1,10 +1,11 @@
-import { TestBed } from "@angular/core/testing";
-import { describe, expect, it, vi } from "vitest";
+import { TestBed } from '@angular/core/testing';
 
-import { CognosMobileShellComponent } from "./mobile-shell.component";
+import { describe, expect, it, vi } from 'vitest';
 
-describe("CognosMobileShellComponent", () => {
-  it("emits menuClick when the menu button is pressed", () => {
+import { CognosMobileShellComponent } from './mobile-shell.component';
+
+describe('CognosMobileShellComponent', () => {
+  it('emits menuClick when the menu button is pressed', () => {
     const fixture = TestBed.createComponent(CognosMobileShellComponent);
     fixture.detectChanges();
 
@@ -19,9 +20,9 @@ describe("CognosMobileShellComponent", () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it("hides the menu button when showMenuButton is false", () => {
+  it('hides the menu button when showMenuButton is false', () => {
     const fixture = TestBed.createComponent(CognosMobileShellComponent);
-    fixture.componentRef.setInput("showMenuButton", false);
+    fixture.componentRef.setInput('showMenuButton', false);
     fixture.detectChanges();
 
     expect(
@@ -31,14 +32,14 @@ describe("CognosMobileShellComponent", () => {
 
   it("re-emits the drawer's close event as drawerClose", () => {
     const fixture = TestBed.createComponent(CognosMobileShellComponent);
-    fixture.componentRef.setInput("drawerOpen", true);
+    fixture.componentRef.setInput('drawerOpen', true);
     fixture.detectChanges();
 
     const listener = vi.fn();
     fixture.componentInstance.drawerClose.subscribe(listener);
 
     (
-      fixture.nativeElement.querySelector(".cog-drawer__scrim") as HTMLButtonElement
+      fixture.nativeElement.querySelector('.cog-drawer__scrim') as HTMLButtonElement
     ).click();
 
     expect(listener).toHaveBeenCalledTimes(1);

@@ -1,22 +1,20 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 import {
-  CognosBreadcrumbsComponent,
   type CognosBreadcrumbItem,
-} from "../../navigation/breadcrumbs/breadcrumbs.component";
+  CognosBreadcrumbsComponent,
+} from '../../navigation/breadcrumbs/breadcrumbs.component';
 
 @Component({
-  selector: "cog-desktop-shell",
+  selector: 'cog-desktop-shell',
   standalone: true,
   imports: [CognosBreadcrumbsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '[class.cog-desktop-shell-host--fill]': 'fillViewport()',
+  },
   template: `
-    <section class="cog-desktop-shell">
+    <section [class]="shellClass()">
       <aside [class]="navClass()">
         <div class="cog-desktop-shell__nav-body">
           <ng-content select="[cogDesktopNav]" />
@@ -30,18 +28,20 @@ import {
       </aside>
 
       <div class="cog-desktop-shell__content">
-        <header class="cog-desktop-shell__header">
-          <div class="cog-desktop-shell__heading">
-            <cog-breadcrumbs [items]="breadcrumbs()" />
-            <h1 class="cog-desktop-shell__title">{{ title() }}</h1>
-          </div>
+        @if (showHeader()) {
+          <header class="cog-desktop-shell__header">
+            <div class="cog-desktop-shell__heading">
+              <cog-breadcrumbs [items]="breadcrumbs()" />
+              <h1 class="cog-desktop-shell__title">{{ title() }}</h1>
+            </div>
 
-          <div class="cog-desktop-shell__actions">
-            <ng-content select="[cogDesktopActions]" />
-          </div>
-        </header>
+            <div class="cog-desktop-shell__actions">
+              <ng-content select="[cogDesktopActions]" />
+            </div>
+          </header>
+        }
 
-        <main class="cog-desktop-shell__main">
+        <main [class]="mainClass()">
           <ng-content />
         </main>
       </div>
@@ -54,11 +54,43 @@ import {
         min-height: 100vh;
       }
 
+      /* Fixed-viewport mode: the shell fills the screen and the content area
+         scrolls internally (for app views with their own header/composer). */
+      :host(.cog-desktop-shell-host--fill) {
+        height: 100vh;
+        height: 100svh;
+        min-height: 0;
+        overflow: hidden;
+      }
+
       .cog-desktop-shell {
         display: grid;
         min-height: 100vh;
         grid-template-columns: 290px minmax(0, 1fr);
         background: var(--cog-app-bg);
+      }
+
+      .cog-desktop-shell--fill {
+        min-height: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .cog-desktop-shell--fill .cog-desktop-shell__nav {
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .cog-desktop-shell--fill .cog-desktop-shell__content {
+        min-height: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .cog-desktop-shell--fill .cog-desktop-shell__main {
+        min-height: 0;
+        overflow: hidden;
       }
 
       .cog-desktop-shell__nav {
@@ -83,8 +115,19 @@ import {
       }
 
       .cog-desktop-shell__content {
-        display: grid;
-        grid-template-rows: auto minmax(0, 1fr);
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .cog-desktop-shell__main {
+        flex: 1;
+        min-width: 0;
+        padding: 0 var(--cog-space-300) var(--cog-space-300);
+      }
+
+      .cog-desktop-shell__main--flush {
+        padding: 0;
       }
 
       .cog-desktop-shell__header {
@@ -114,25 +157,45 @@ import {
         justify-content: flex-end;
         gap: var(--cog-space-100);
       }
-
-      .cog-desktop-shell__main {
-        padding: 0 var(--cog-space-300) var(--cog-space-300);
-      }
     `,
   ],
 })
 export class CognosDesktopShellComponent {
   readonly breadcrumbs = input<CognosBreadcrumbItem[]>([]);
-  readonly title = input("Workspace");
+  readonly title = input('Workspace');
   readonly navFooter = input(false);
+  /** Render the built-in breadcrumb + title header. Off when the view supplies
+   * its own header (e.g. a chat header) inside the content. */
+  readonly showHeader = input(true);
+  /** Fill the viewport and scroll the content internally, instead of letting
+   * the whole page scroll. */
+  readonly fillViewport = input(false);
+  /** Pad the content area. Off for full-bleed content (e.g. a chat view). */
+  readonly padded = input(true);
+
+  protected readonly shellClass = computed(() =>
+    this.fillViewport()
+      ? 'cog-desktop-shell cog-desktop-shell--fill'
+      : 'cog-desktop-shell',
+  );
 
   protected readonly navClass = computed(() => {
-    const classes = ["cog-desktop-shell__nav"];
+    const classes = ['cog-desktop-shell__nav'];
 
     if (this.navFooter()) {
-      classes.push("cog-desktop-shell__nav--footer");
+      classes.push('cog-desktop-shell__nav--footer');
     }
 
-    return classes.join(" ");
+    return classes.join(' ');
+  });
+
+  protected readonly mainClass = computed(() => {
+    const classes = ['cog-desktop-shell__main'];
+
+    if (!this.padded()) {
+      classes.push('cog-desktop-shell__main--flush');
+    }
+
+    return classes.join(' ');
   });
 }

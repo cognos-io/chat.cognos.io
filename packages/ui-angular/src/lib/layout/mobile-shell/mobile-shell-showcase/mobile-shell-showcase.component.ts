@@ -1,22 +1,18 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import { CognosButtonComponent } from "../../../button/button.component";
-import { CognosAssistantMessageComponent } from "../../../chat/assistant-message/assistant-message.component";
-import { CognosComposerComponent } from "../../../chat/composer/composer.component";
-import { CognosUserMessageComponent } from "../../../chat/user-message/user-message.component";
-import { CognosIconComponent } from "../../../icon/icon.component";
-import { CognosNavItemComponent } from "../../../navigation/nav-item/nav-item.component";
-import { CognosIconButtonComponent } from "../../../primitives/icon-button/icon-button.component";
-import { CognosLozengeComponent } from "../../../primitives/lozenge/lozenge.component";
-import { CognosTextFieldComponent } from "../../../primitives/text-field/text-field.component";
-import { CognosMobileShellComponent } from "../mobile-shell.component";
+import { CognosButtonComponent } from '../../../button/button.component';
+import { CognosAssistantMessageComponent } from '../../../chat/assistant-message/assistant-message.component';
+import { CognosComposerComponent } from '../../../chat/composer/composer.component';
+import { CognosUserMessageComponent } from '../../../chat/user-message/user-message.component';
+import { CognosIconComponent } from '../../../icon/icon.component';
+import { CognosNavItemComponent } from '../../../navigation/nav-item/nav-item.component';
+import { CognosIconButtonComponent } from '../../../primitives/icon-button/icon-button.component';
+import { CognosLozengeComponent } from '../../../primitives/lozenge/lozenge.component';
+import { CognosTextFieldComponent } from '../../../primitives/text-field/text-field.component';
+import { CognosMobileShellComponent } from '../mobile-shell.component';
 
 @Component({
-  selector: "cog-mobile-shell-showcase",
+  selector: 'cog-mobile-shell-showcase',
   standalone: true,
   imports: [
     CognosAssistantMessageComponent,
@@ -33,7 +29,12 @@ import { CognosMobileShellComponent } from "../mobile-shell.component";
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="cog-mobile-shell-showcase">
-      <cog-mobile-shell [drawerFooter]="true" [drawerOpen]="drawerOpen()" [drawerTitle]="'Cognos'" [title]="title()">
+      <cog-mobile-shell
+        [drawerFooter]="true"
+        [drawerOpen]="drawerOpen()"
+        [drawerTitle]="'Cognos'"
+        [title]="title()"
+      >
         <div cogMobileActions>
           <cog-icon-button name="more-horizontal" size="lg" title="More actions" />
         </div>
@@ -64,17 +65,32 @@ import { CognosMobileShellComponent } from "../mobile-shell.component";
               >
                 <cog-nav-item label="Data Protection Act — impact" [indent]="1" />
                 <cog-nav-item label="Consultation response draft" [indent]="1" />
-                <cog-nav-item label="Cross-border data transfer memo" [indent]="1" [pinned]="true" />
+                <cog-nav-item
+                  label="Cross-border data transfer memo"
+                  [indent]="1"
+                  [pinned]="true"
+                />
               </cog-nav-item>
-              <cog-nav-item icon="graduation-cap" label="Lycée — Year 11" meta="2" [expandable]="true" />
+              <cog-nav-item
+                icon="graduation-cap"
+                label="Lycée — Year 11"
+                meta="2"
+                [expandable]="true"
+              />
               <cog-nav-item icon="lock" label="Private" meta="1" [expandable]="true" />
             </div>
           </section>
 
-          <section class="cog-mobile-shell-showcase__section cog-mobile-shell-showcase__section--grow">
+          <section
+            class="cog-mobile-shell-showcase__section cog-mobile-shell-showcase__section--grow"
+          >
             <h2 class="cog-mobile-shell-showcase__section-title">Recent</h2>
             <div class="cog-mobile-shell-showcase__list">
-              <cog-nav-item icon="message-square" label="FOI request — draft reply" [selected]="true" />
+              <cog-nav-item
+                icon="message-square"
+                label="FOI request — draft reply"
+                [selected]="true"
+              />
               <cog-nav-item icon="message-square" label="Encryption key rotation" />
               <cog-nav-item icon="message-square" label="Summarise procurement PDF" />
               <cog-nav-item icon="message-square" label="FOI request triage" />
@@ -112,7 +128,8 @@ import { CognosMobileShellComponent } from "../mobile-shell.component";
               <p>Here’s a draft you can send:</p>
               <p><strong>Subject — Your enquiry (case GE-2026-0417)</strong></p>
               <p>
-                Thank you for getting in touch. We’ve logged your request and will follow up within three working days.
+                Thank you for getting in touch. We’ve logged your request and will
+                follow up within three working days.
               </p>
             </div>
           </cog-assistant-message>
@@ -238,5 +255,5 @@ import { CognosMobileShellComponent } from "../mobile-shell.component";
 })
 export class CognosMobileShellShowcaseComponent {
   readonly drawerOpen = input(false);
-  readonly title = input("FOI request — draft reply");
+  readonly title = input('FOI request — draft reply');
 }

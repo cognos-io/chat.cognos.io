@@ -14,9 +14,9 @@ import { filter } from 'rxjs';
 
 import {
   CognosButtonComponent,
-  CognosDrawerComponent,
-  CognosIconButtonComponent,
+  CognosDesktopShellComponent,
   CognosIconComponent,
+  CognosMobileShellComponent,
   CognosToastService,
 } from '@cognos/ui-angular';
 import type { CognosIconName } from '@cognos/ui/icons';
@@ -26,6 +26,7 @@ import { TrialCreditCardComponent } from '@app/components/chat/trial-credit-card
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/contact-help-dialog.component';
 import { BillingService } from '@app/services/billing.service';
+import { DeviceService } from '@app/services/device.service';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
@@ -35,9 +36,11 @@ interface SettingsNavItem {
   icon: CognosIconName;
 }
 
-// SettingsShellComponent is the same app shell as the chat view — same width,
-// logo, account actions, profile footer, and the mobile hamburger-drawer — with
-// the conversation list + search swapped for the Settings nav.
+// SettingsShellComponent composes the shared ui-angular app shell
+// (cog-desktop-shell / cog-mobile-shell) with the Settings nav, account
+// actions, and profile footer. The chat view uses the same shells — this is the
+// single source of truth for the frame. Each settings page renders its own
+// breadcrumb + title in the content, so the shell's built-in header is off.
 @Component({
   selector: 'app-settings-shell',
   standalone: true,
@@ -46,9 +49,9 @@ interface SettingsNavItem {
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
+    CognosDesktopShellComponent,
+    CognosMobileShellComponent,
     CognosButtonComponent,
-    CognosDrawerComponent,
-    CognosIconButtonComponent,
     CognosIconComponent,
     CognosLogoComponent,
     SidebarProfileComponent,
@@ -57,9 +60,7 @@ interface SettingsNavItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ng-template #brand>
-      <div class="settings__brand">
-        <app-cognos-logo class="settings__logo" palette="dark"></app-cognos-logo>
-      </div>
+      <app-cognos-logo class="settings__logo" palette="dark"></app-cognos-logo>
     </ng-template>
 
     <ng-template #back>
@@ -86,7 +87,7 @@ interface SettingsNavItem {
     </ng-template>
 
     <ng-template #actions>
-      <div class="settings__nav-actions">
+      <div class="settings__actions">
         <cog-button appearance="subtle" type="button" (click)="onOpenHelpDialog()">
           Help
         </cog-button>
@@ -112,95 +113,55 @@ interface SettingsNavItem {
       <app-sidebar-profile></app-sidebar-profile>
     </ng-template>
 
-    <div class="settings">
-      <aside class="settings__sidebar">
-        <div class="settings__nav">
+    @if (device.isMobile()) {
+      <cog-mobile-shell
+        [fillViewport]="true"
+        title=""
+        drawerTitle="Settings"
+        [drawerOpen]="drawerOpen()"
+        [drawerFooter]="true"
+        (menuClick)="openDrawer()"
+        (drawerClose)="closeDrawer()"
+      >
+        <app-cognos-logo cogMobileBrand class="settings__logo" palette="dark" />
+
+        <router-outlet></router-outlet>
+
+        <div cogMobileDrawer class="settings__drawer">
+          <ng-container *ngTemplateOutlet="back"></ng-container>
+          <ng-container *ngTemplateOutlet="menu"></ng-container>
+        </div>
+        <div cogMobileDrawerFooter class="settings__navfooter">
+          <ng-container *ngTemplateOutlet="actions"></ng-container>
+          <ng-container *ngTemplateOutlet="footer"></ng-container>
+        </div>
+      </cog-mobile-shell>
+    } @else {
+      <cog-desktop-shell [navFooter]="true" [showHeader]="false" [fillViewport]="true">
+        <div cogDesktopNav class="settings__nav">
           <ng-container *ngTemplateOutlet="brand"></ng-container>
           <ng-container *ngTemplateOutlet="back"></ng-container>
           <ng-container *ngTemplateOutlet="menu"></ng-container>
         </div>
-        <div class="settings__actions">
-          <ng-container *ngTemplateOutlet="actions"></ng-container>
-        </div>
-        <div class="settings__footer">
-          <ng-container *ngTemplateOutlet="footer"></ng-container>
-        </div>
-      </aside>
 
-      <div class="settings__main">
-        <header class="settings__mobile-bar">
-          <cog-icon-button
-            name="menu"
-            size="lg"
-            title="Open navigation"
-            (click)="openDrawer()"
-          />
-          <app-cognos-logo
-            class="settings__mobile-logo"
-            palette="dark"
-          ></app-cognos-logo>
-          <div class="settings__mobile-actions"></div>
-        </header>
-
-        <main class="settings__content">
-          <router-outlet></router-outlet>
-        </main>
-      </div>
-
-      <cog-drawer
-        [open]="drawerOpen()"
-        [stickyFooter]="true"
-        title="Settings"
-        [hideTitle]="true"
-        (close)="closeDrawer()"
-      >
-        <app-cognos-logo
-          cogDrawerHeader
-          class="settings__drawer-logo"
-          palette="dark"
-        ></app-cognos-logo>
-
-        <div class="settings__drawer-body">
-          <ng-container *ngTemplateOutlet="back"></ng-container>
-          <ng-container *ngTemplateOutlet="menu"></ng-container>
-        </div>
-
-        <div cogDrawerFooter>
+        <div cogDesktopNavFooter class="settings__navfooter">
           <ng-container *ngTemplateOutlet="actions"></ng-container>
           <ng-container *ngTemplateOutlet="footer"></ng-container>
         </div>
-      </cog-drawer>
-    </div>
+
+        <router-outlet></router-outlet>
+      </cog-desktop-shell>
+    }
   `,
   styles: `
-    :host {
+    .settings__logo {
       display: block;
-      background: var(--cog-app-bg);
-    }
-
-    .settings__sidebar {
-      background: var(--cog-nav-bg);
+      height: 24px;
     }
 
     .settings__nav {
       display: grid;
-      grid-template-rows: auto auto minmax(0, 1fr);
       gap: var(--cog-space-150);
-      padding: var(--cog-space-200);
-      min-height: 0;
-      overflow-y: auto;
-    }
-
-    .settings__brand {
-      display: flex;
-      align-items: center;
-    }
-
-    .settings__logo,
-    .settings__mobile-logo,
-    .settings__drawer-logo {
-      display: block;
-      height: 24px;
     }
 
     .settings__back {
@@ -220,7 +181,6 @@ interface SettingsNavItem {
       display: grid;
       gap: 2px;
       align-content: start;
-      min-height: 0;
     }
 
     .settings__menu-heading {
@@ -253,101 +213,17 @@ interface SettingsNavItem {
     }
 
     .settings__actions {
-      padding: var(--cog-space-100) var(--cog-space-200) var(--cog-space-150);
-    }
-
-    .settings__nav-actions {
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       gap: var(--cog-space-050);
-      width: 100%;
+      margin-bottom: var(--cog-space-150);
     }
 
-    .settings__footer {
+    .settings__navfooter,
+    .settings__drawer {
       display: grid;
       gap: var(--cog-space-150);
-      border-top: 1px solid var(--cog-border);
-      padding: var(--cog-space-150) var(--cog-space-200);
-    }
-
-    .settings__main {
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr);
-      height: 100%;
-      min-height: 0;
-    }
-
-    .settings__mobile-bar {
-      display: none;
-    }
-
-    .settings__mobile-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: var(--cog-space-050);
-    }
-
-    .settings__content {
-      min-height: 0;
-      overflow-y: auto;
-      padding: var(--cog-space-300);
-    }
-
-    cog-drawer [cogDrawerFooter] {
-      display: grid;
-      gap: var(--cog-space-150);
-    }
-
-    .settings__drawer-body {
-      display: grid;
-      gap: var(--cog-space-150);
-    }
-
-    @media (min-width: 768px) {
-      .settings {
-        display: grid;
-        grid-template-columns: 304px minmax(0, 1fr);
-        height: 100vh;
-        height: 100svh;
-        overflow: hidden;
-      }
-
-      .settings__sidebar {
-        display: grid;
-        grid-template-rows: minmax(0, 1fr) auto auto;
-        border-right: 1px solid var(--cog-border);
-        height: 100%;
-        min-height: 0;
-        overflow: hidden;
-      }
-    }
-
-    @media (max-width: 767px) {
-      .settings {
-        height: 100vh;
-        height: 100svh;
-        overflow: hidden;
-      }
-
-      .settings__sidebar {
-        display: none;
-      }
-
-      .settings__mobile-bar {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto;
-        align-items: center;
-        gap: var(--cog-space-100);
-        min-height: 56px;
-        border-bottom: 1px solid var(--cog-border);
-        background: var(--cog-nav-bg);
-        padding: 0 var(--cog-space-200);
-      }
-
-      .settings__content {
-        padding: var(--cog-space-200);
-      }
     }
   `,
 })
@@ -357,6 +233,7 @@ export class SettingsShellComponent {
   private readonly _toastService = inject(CognosToastService);
   private readonly _router = inject(Router);
   public readonly billing = inject(BillingService);
+  public readonly device = inject(DeviceService);
 
   readonly drawerOpen = signal(false);
 
@@ -370,7 +247,6 @@ export class SettingsShellComponent {
   ];
 
   constructor() {
-    // Close the drawer after navigating, like the chat shell.
     this._router.events
       .pipe(
         takeUntilDestroyed(),

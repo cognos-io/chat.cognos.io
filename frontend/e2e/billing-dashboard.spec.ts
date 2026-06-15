@@ -188,7 +188,7 @@ test('mobile settings opens the nav via the hamburger drawer', async ({ page }) 
   // used to break, clipping content with no scroll).
   await expect(page.getByRole('heading', { name: 'Plan & billing' })).toBeVisible();
   const scrollable = await page
-    .locator('.settings__content')
+    .locator('.cog-mobile-shell__main')
     .evaluate((el) => el.scrollHeight > el.clientHeight);
   expect(scrollable).toBe(true);
 
