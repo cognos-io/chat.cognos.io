@@ -274,6 +274,7 @@ interface SettingsNavItem {
     .settings__main {
       display: grid;
       grid-template-rows: auto minmax(0, 1fr);
+      height: 100%;
       min-height: 0;
     }
 

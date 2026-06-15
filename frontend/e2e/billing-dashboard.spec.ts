@@ -184,6 +184,14 @@ test('mobile settings opens the nav via the hamburger drawer', async ({ page }) 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/account/billing');
 
+  // The content area must scroll on mobile (regression guard: the height chain
+  // used to break, clipping content with no scroll).
+  await expect(page.getByRole('heading', { name: 'Plan & billing' })).toBeVisible();
+  const scrollable = await page
+    .locator('.settings__content')
+    .evaluate((el) => el.scrollHeight > el.clientHeight);
+  expect(scrollable).toBe(true);
+
   // The desktop sidebar is hidden; the nav lives behind the hamburger.
   const hamburger = page.getByRole('button', { name: 'Open navigation' });
   await expect(hamburger).toBeVisible();
