@@ -32,7 +32,10 @@ type checkoutRequest struct {
 }
 
 type checkoutResponse struct {
-	CheckoutURL string `json:"checkout_url"`
+	// TransactionID lets the frontend open the Paddle.js overlay for this
+	// server-created transaction. CheckoutURL is the hosted-page fallback.
+	TransactionID string `json:"transaction_id"`
+	CheckoutURL   string `json:"checkout_url"`
 }
 
 // BillingCheckoutParams wires the checkout handler. Prices maps a plan key to a
@@ -94,7 +97,10 @@ func BillingCheckout(params BillingCheckoutParams) func(e *core.RequestEvent) er
 			}
 		}
 
-		return e.JSON(http.StatusOK, checkoutResponse{CheckoutURL: result.CheckoutURL})
+		return e.JSON(http.StatusOK, checkoutResponse{
+			TransactionID: result.TransactionID,
+			CheckoutURL:   result.CheckoutURL,
+		})
 	}
 }
 

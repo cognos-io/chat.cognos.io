@@ -90,6 +90,55 @@ func TestHTTPClientCreateCheckout_MissingURL(t *testing.T) {
 	}
 }
 
+func TestHTTPClientCreatePortalSession_Success(t *testing.T) {
+	var gotPath string
+	var gotBody map[string]any
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		raw, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(raw, &gotBody)
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"urls":{"general":{"overview":"https://portal/over?token=t"},` +
+			`"subscriptions":[{"id":"sub_1","update_subscription_payment_method":"https://portal/pay?token=t"}]}}}`))
+	}))
+	defer server.Close()
+
+	client := NewHTTPClient(server.URL, "k")
+	session, err := client.CreatePortalSession(context.Background(), "ctm_9", []string{"sub_1"})
+	if err != nil {
+		t.Fatalf("CreatePortalSession: %v", err)
+	}
+
+	if gotPath != "/customers/ctm_9/portal-sessions" {
+		t.Errorf("path = %q", gotPath)
+	}
+	subs, _ := gotBody["subscription_ids"].([]any)
+	if len(subs) != 1 || subs[0] != "sub_1" {
+		t.Errorf("subscription_ids = %v", gotBody["subscription_ids"])
+	}
+	if session.OverviewURL != "https://portal/over?token=t" {
+		t.Errorf("OverviewURL = %q", session.OverviewURL)
+	}
+	if session.UpdatePaymentURL != "https://portal/pay?token=t" {
+		t.Errorf("UpdatePaymentURL = %q", session.UpdatePaymentURL)
+	}
+}
+
+func TestHTTPClientCreatePortalSession_MissingOverview(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"data":{"urls":{"general":{}}}}`))
+	}))
+	defer server.Close()
+
+	client := NewHTTPClient(server.URL, "k")
+	_, err := client.CreatePortalSession(context.Background(), "ctm_9", nil)
+	if err == nil {
+		t.Fatal("expected error when overview url is absent")
+	}
+}
+
 func TestNewHTTPClientDefaultsBaseURL(t *testing.T) {
 	if got := NewHTTPClient("", "k").BaseURL; got != "https://api.paddle.com" {
 		t.Errorf("default BaseURL = %q", got)

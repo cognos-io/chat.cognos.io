@@ -32,6 +32,7 @@ var apiV1Routes = []struct {
 	{http.MethodGet, "/api/v1/billing/transactions", false},
 	{http.MethodGet, "/api/v1/billing/usage", false},
 	{http.MethodPost, "/api/v1/billing/checkout", false},
+	{http.MethodPost, "/api/v1/billing/portal", false},
 	{http.MethodPost, "/api/v1/billing/cancel", false},
 	{http.MethodPost, "/api/v1/billing/resume", false},
 	{http.MethodGet, "/api/v1/conversations", false},

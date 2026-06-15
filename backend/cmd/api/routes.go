@@ -212,6 +212,17 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	e.Router.POST(
+		"/api/v1/billing/portal",
+		handler.BillingPortal(handler.BillingPortalParams{
+			Logger: logger,
+			Client: paddleClient,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.GET(
 		"/api/v1/conversations",
 		handler.ConversationsList(app),

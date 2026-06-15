@@ -14,13 +14,18 @@ import (
 
 // fakePaddleClient records the last checkout request and returns canned values.
 type fakePaddleClient struct {
-	result     paddle.CheckoutResult
-	err        error
-	gotReq     paddle.CheckoutRequest
-	calls      int
-	subErr     error
-	canceledID string
-	resumedID  string
+	result      paddle.CheckoutResult
+	err         error
+	gotReq      paddle.CheckoutRequest
+	calls       int
+	subErr      error
+	canceledID  string
+	resumedID   string
+	portal      paddle.PortalSession
+	portalErr   error
+	portalCust  string
+	portalSubs  []string
+	portalCalls int
 }
 
 func (f *fakePaddleClient) CreateCheckout(
@@ -40,6 +45,17 @@ func (f *fakePaddleClient) CancelSubscription(_ context.Context, id string) erro
 func (f *fakePaddleClient) ResumeSubscription(_ context.Context, id string) error {
 	f.resumedID = id
 	return f.subErr
+}
+
+func (f *fakePaddleClient) CreatePortalSession(
+	_ context.Context,
+	customerID string,
+	subscriptionIDs []string,
+) (paddle.PortalSession, error) {
+	f.portalCalls++
+	f.portalCust = customerID
+	f.portalSubs = subscriptionIDs
+	return f.portal, f.portalErr
 }
 
 func checkoutConfig() *config.APIConfig {

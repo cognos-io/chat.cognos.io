@@ -39,6 +39,13 @@ type CheckoutResult struct {
 	CustomerID    string
 }
 
+// PortalSession holds the authenticated customer-portal links Paddle mints for
+// a customer. The links carry a short-lived token and must not be cached.
+type PortalSession struct {
+	OverviewURL      string // customer portal homepage
+	UpdatePaymentURL string // deep link to the update-payment-method form (if any)
+}
+
 // Client is the Paddle surface the billing handlers depend on.
 type Client interface {
 	CreateCheckout(ctx context.Context, req CheckoutRequest) (CheckoutResult, error)
@@ -47,6 +54,10 @@ type Client interface {
 	CancelSubscription(ctx context.Context, subscriptionID string) error
 	// ResumeSubscription removes a scheduled cancellation.
 	ResumeSubscription(ctx context.Context, subscriptionID string) error
+	// CreatePortalSession mints authenticated customer-portal links. When a
+	// subscription id is supplied, the result includes its payment-method deep
+	// link so "Update card" can open straight onto the form.
+	CreatePortalSession(ctx context.Context, customerID string, subscriptionIDs []string) (PortalSession, error)
 }
 
 // HTTPClient talks to the real Paddle Billing API.
@@ -149,6 +160,76 @@ func (c *HTTPClient) CreateCheckout(
 		CheckoutURL:   parsed.Data.Checkout.URL,
 		CustomerID:    parsed.Data.CustomerID,
 	}, nil
+}
+
+// portalSessionResponse is the slice of Paddle's response we read.
+type portalSessionResponse struct {
+	Data struct {
+		URLs struct {
+			General struct {
+				Overview string `json:"overview"`
+			} `json:"general"`
+			Subscriptions []struct {
+				ID                              string `json:"id"`
+				UpdateSubscriptionPaymentMethod string `json:"update_subscription_payment_method"`
+			} `json:"subscriptions"`
+		} `json:"urls"`
+	} `json:"data"`
+}
+
+// CreatePortalSession mints authenticated customer-portal links for a customer.
+func (c *HTTPClient) CreatePortalSession(
+	ctx context.Context,
+	customerID string,
+	subscriptionIDs []string,
+) (PortalSession, error) {
+	payload := map[string]any{}
+	if len(subscriptionIDs) > 0 {
+		payload["subscription_ids"] = subscriptionIDs
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return PortalSession{}, fmt.Errorf("marshal portal payload: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(
+		ctx, http.MethodPost,
+		c.BaseURL+"/customers/"+customerID+"/portal-sessions",
+		bytes.NewReader(body),
+	)
+	if err != nil {
+		return PortalSession{}, fmt.Errorf("build portal request: %w", err)
+	}
+	httpReq.Header.Set("Authorization", "Bearer "+c.APIKey)
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.HTTP.Do(httpReq)
+	if err != nil {
+		return PortalSession{}, fmt.Errorf("call paddle: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return PortalSession{}, fmt.Errorf(
+			"paddle portal-sessions returned %d: %s", resp.StatusCode, snippet(respBody),
+		)
+	}
+
+	var parsed portalSessionResponse
+	if err := json.Unmarshal(respBody, &parsed); err != nil {
+		return PortalSession{}, fmt.Errorf("decode paddle response: %w", err)
+	}
+	if parsed.Data.URLs.General.Overview == "" {
+		return PortalSession{}, fmt.Errorf("paddle response missing portal overview url")
+	}
+
+	session := PortalSession{OverviewURL: parsed.Data.URLs.General.Overview}
+	if len(parsed.Data.URLs.Subscriptions) > 0 {
+		session.UpdatePaymentURL = parsed.Data.URLs.Subscriptions[0].UpdateSubscriptionPaymentMethod
+	}
+	return session, nil
 }
 
 // CancelSubscription schedules cancellation at the end of the current period.
