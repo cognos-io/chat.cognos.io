@@ -7,6 +7,7 @@ import { Observable, Subscriber, filter, map, take } from 'rxjs';
 
 import {
   BillingApiResponse,
+  BillingInvoicesResponse,
   CheckoutRequest,
   CheckoutResponse,
   PortalResponse,
@@ -408,6 +409,13 @@ export class CognosApiService {
     return this._http.post<PortalResponse>(
       `${this._baseUrl}/api/v1/billing/portal`,
       {},
+      { headers: this.authHeaders() },
+    );
+  }
+
+  getBillingInvoices(): Observable<BillingInvoicesResponse> {
+    return this._http.get<BillingInvoicesResponse>(
+      `${this._baseUrl}/api/v1/billing/invoices`,
       { headers: this.authHeaders() },
     );
   }

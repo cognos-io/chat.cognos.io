@@ -23,6 +23,10 @@ const seedAuth = async (page: Page, userFixture: VaultFixture): Promise<void> =>
       body: JSON.stringify({ message: 'Not found' }),
     });
   });
+  // Default: no card / no invoices. Tests that need them override this route.
+  await page.route(`${API}/api/v1/billing/invoices`, async (route) => {
+    await route.fulfill({ json: { card: null, invoices: [] } });
+  });
 };
 
 const usageJson = {
@@ -78,6 +82,57 @@ test('active unlimited dashboard shows plan, renewal, usage and the settings nav
   // Portal entry points appear once there's a Paddle customer (non-trial).
   await expect(page.getByRole('button', { name: 'Update' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Open Paddle portal' })).toBeVisible();
+});
+
+test('dashboard renders the saved card and Paddle invoices', async ({ page }) => {
+  const userFixture = buildVaultFixture('user_inv', 'inv@example.com');
+  await seedAuth(page, userFixture);
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({
+      json: {
+        plan_type: 'unlimited',
+        status: 'active',
+        interval: 'monthly',
+        balance_chf: 0,
+        trial_seed_chf: 0,
+        cycle_end_at: '2026-07-01T00:00:00Z',
+        cancel_at_period_end: false,
+      },
+    });
+  });
+  await page.route(`${API}/api/v1/billing/usage`, async (route) => {
+    await route.fulfill({ json: usageJson });
+  });
+  // Override the default empty invoices route with a real card + invoices.
+  await page.route(`${API}/api/v1/billing/invoices`, async (route) => {
+    await route.fulfill({
+      json: {
+        card: { brand: 'visa', last4: '4242', expiry_month: 9, expiry_year: 2028 },
+        invoices: [
+          {
+            id: 'txn_1',
+            invoice_number: 'CG-26-0002',
+            status: 'paid',
+            currency: 'CHF',
+            amount_minor: 10000,
+            billed_at: '2026-04-14T00:00:00Z',
+          },
+        ],
+      },
+    });
+  });
+
+  await page.goto('/account/billing');
+
+  // Saved card replaces the "No card available" placeholder.
+  await expect(page.getByText('Visa •••• 4242')).toBeVisible();
+  await expect(page.getByText('Expires 09 / 2028')).toBeVisible();
+  await expect(page.getByText('No card available')).toHaveCount(0);
+
+  // Invoice row with number, status and amount.
+  await expect(page.getByText('Invoice CG-26-0002')).toBeVisible();
+  await expect(page.getByText('Paid', { exact: true })).toBeVisible();
+  await expect(page.getByText('CHF 100.00')).toBeVisible();
 });
 
 test('cancels-soon dashboard offers resume', async ({ page }) => {

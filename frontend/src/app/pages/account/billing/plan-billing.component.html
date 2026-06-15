@@ -150,15 +150,26 @@
           </cog-button>
         }
       </header>
-      <!-- Card brand/last4 appear here once Paddle card data is wired; until
-           then "Update" opens the portal to add/manage a card. -->
       <div class="pb__payment-card">
         <span class="pb__payment-badge" aria-hidden="true">
-          <cog-icon name="credit-card" [size]="18" tone="current" />
+          @if (card(); as card) {
+            {{ cardBrandLabel(card.brand) }}
+          } @else {
+            <cog-icon name="credit-card" [size]="18" tone="current" />
+          }
         </span>
-        <span class="pb__payment-empty" i18n="@@billing.payment.noCard">
-          No card available
-        </span>
+        @if (card(); as card) {
+          <div class="pb__payment-details">
+            <div class="pb__payment-number">
+              {{ cardBrandLabel(card.brand) }} •••• {{ card.last4 }}
+            </div>
+            <div class="pb__payment-expiry">Expires {{ cardExpiry(card) }}</div>
+          </div>
+        } @else {
+          <span class="pb__payment-empty" i18n="@@billing.payment.noCard">
+            No card available
+          </span>
+        }
       </div>
       <p class="pb__payment-note">
         <cog-icon name="lock" [size]="14" tone="text-subtle" />
@@ -181,9 +192,33 @@
         </cog-button>
       }
     </header>
-    <p class="pb__invoices-note">
-      Your invoices and VAT receipts are available in your Paddle portal.
-    </p>
+    @if (invoices().length > 0) {
+      <ul class="pb__invoice-list">
+        @for (invoice of invoices(); track invoice.id) {
+          <li class="pb__invoice">
+            <cog-icon name="file-text" [size]="18" tone="text-subtle" />
+            <div class="pb__invoice-main">
+              <div class="pb__invoice-title">
+                Invoice {{ invoice.invoice_number || '—' }}
+              </div>
+              @if (invoice.billed_at) {
+                <div class="pb__invoice-sub">
+                  {{ invoice.billed_at | date: 'd MMM y' }}
+                </div>
+              }
+            </div>
+            <cog-lozenge [tone]="invoiceBadge(invoice.status).tone">
+              {{ invoiceBadge(invoice.status).text }}
+            </cog-lozenge>
+            <div class="pb__invoice-amount">{{ invoiceAmount(invoice) }}</div>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="pb__invoices-note">
+        Your invoices and VAT receipts are available in your Paddle portal.
+      </p>
+    }
     <p class="pb__invoices-foot">
       Invoices &amp; VAT receipts are issued by Paddle.com Market Ltd, our merchant of
       record.

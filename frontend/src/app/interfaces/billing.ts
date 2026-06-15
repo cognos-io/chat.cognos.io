@@ -35,6 +35,31 @@ export interface PortalResponse {
   update_payment_url?: string;
 }
 
+// PaymentCard is the saved-card summary (display fields only — never a full
+// card number). Sourced from Paddle's customer payment methods.
+export interface PaymentCard {
+  brand: string;
+  last4: string;
+  expiry_month: number;
+  expiry_year: number;
+}
+
+// Invoice is a single Paddle transaction surfaced on the dashboard.
+export interface Invoice {
+  id: string;
+  invoice_number: string;
+  status: string; // paid, completed, billed, past_due, canceled
+  currency: string;
+  amount_minor: number; // minor units (Rappen for CHF)
+  billed_at?: string;
+}
+
+// BillingInvoicesResponse is the `GET /api/v1/billing/invoices` payload.
+export interface BillingInvoicesResponse {
+  card: PaymentCard | null;
+  invoices: Invoice[];
+}
+
 export type BillingStatus = 'trial' | 'active' | 'cancels_soon' | 'inactive';
 
 // BillingApiResponse is the raw `GET /api/v1/billing` payload.

@@ -243,11 +243,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
+  min-width: 40px;
   height: 28px;
+  padding: 0 var(--cog-space-075);
   border-radius: var(--cog-radius-sm, 6px);
   background: var(--cog-text);
   color: var(--cog-surface);
+  font-size: var(--cog-fs-caption);
+  font-weight: var(--cog-fw-bold, 700);
+  font-style: italic;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .pb__payment-empty {
@@ -255,6 +261,68 @@
   color: var(--cog-text);
   font-size: var(--cog-fs-body);
   font-weight: var(--cog-fw-semibold);
+}
+
+.pb__payment-details {
+  display: grid;
+  gap: 2px;
+}
+
+.pb__payment-number {
+  color: var(--cog-text);
+  font-size: var(--cog-fs-body);
+  font-weight: var(--cog-fw-semibold);
+}
+
+.pb__payment-expiry {
+  color: var(--cog-text-subtle);
+  font-size: var(--cog-fs-body-sm);
+}
+
+/* Invoice list */
+.pb__invoice-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pb__invoice {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-150);
+  padding: var(--cog-space-150) 0;
+  border-bottom: 1px solid var(--cog-border);
+}
+
+.pb__invoice:first-child {
+  padding-top: 0;
+}
+
+.pb__invoice-main {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pb__invoice-title {
+  color: var(--cog-text);
+  font-size: var(--cog-fs-body-sm);
+  font-weight: var(--cog-fw-semibold);
+}
+
+.pb__invoice-sub {
+  color: var(--cog-text-subtle);
+  font-size: var(--cog-fs-body-sm);
+}
+
+.pb__invoice-amount {
+  color: var(--cog-text);
+  font-size: var(--cog-fs-body-sm);
+  font-weight: var(--cog-fw-semibold);
+  font-variant-numeric: tabular-nums;
 }
 
 .pb__invoices-foot {

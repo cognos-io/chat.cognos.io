@@ -18,7 +18,13 @@ import {
   CognosProgressComponent,
 } from '@cognos/ui-angular';
 
-import { BillingApiResponse, UsageResponse } from '@app/interfaces/billing';
+import {
+  BillingApiResponse,
+  BillingInvoicesResponse,
+  Invoice,
+  PaymentCard,
+  UsageResponse,
+} from '@app/interfaces/billing';
 import { BillingService } from '@app/services/billing.service';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ErrorService } from '@app/services/error.service';
@@ -56,6 +62,7 @@ export class PlanBillingComponent {
 
   protected readonly billing = signal<BillingApiResponse | null>(null);
   protected readonly usage = signal<UsageResponse | null>(null);
+  protected readonly invoiceData = signal<BillingInvoicesResponse | null>(null);
   protected readonly actionPending = signal(false);
 
   protected readonly breadcrumbs = [
@@ -83,6 +90,56 @@ export class PlanBillingComponent {
       .getBillingUsage()
       .pipe(takeUntilDestroyed(this._destroyRef))
       .subscribe({ next: (res) => this.usage.set(res), error: () => undefined });
+    this._api
+      .getBillingInvoices()
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe({ next: (res) => this.invoiceData.set(res), error: () => undefined });
+  }
+
+  // --- Card + invoices -----------------------------------------------------
+
+  protected readonly card = computed<PaymentCard | null>(
+    () => this.invoiceData()?.card ?? null,
+  );
+  protected readonly invoices = computed<Invoice[]>(
+    () => this.invoiceData()?.invoices ?? [],
+  );
+
+  protected cardBrandLabel(brand: string): string {
+    const labels: Record<string, string> = {
+      visa: 'Visa',
+      mastercard: 'Mastercard',
+      american_express: 'Amex',
+      amex: 'Amex',
+    };
+    return (
+      labels[brand] ?? (brand ? brand.charAt(0).toUpperCase() + brand.slice(1) : 'Card')
+    );
+  }
+
+  protected cardExpiry(card: PaymentCard): string {
+    return `${String(card.expiry_month).padStart(2, '0')} / ${card.expiry_year}`;
+  }
+
+  protected invoiceAmount(invoice: Invoice): string {
+    return `${invoice.currency} ${(invoice.amount_minor / 100).toFixed(2)}`;
+  }
+
+  protected invoiceBadge(status: string): {
+    text: string;
+    tone: 'green' | 'red' | 'blue' | 'neutral';
+  } {
+    switch (status) {
+      case 'paid':
+      case 'completed':
+        return { text: 'Paid', tone: 'green' };
+      case 'past_due':
+        return { text: 'Past due', tone: 'red' };
+      case 'billed':
+        return { text: 'Due', tone: 'blue' };
+      default:
+        return { text: 'Pending', tone: 'neutral' };
+    }
   }
 
   // --- Derived view state -------------------------------------------------
