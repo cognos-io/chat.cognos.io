@@ -1,7 +1,7 @@
 # Cognos Billing — Architecture Specification
 
 **Version:** 0.3 (Draft) **Status:** Ready for review **Stack:** Go (backend), Angular (frontend),
-PocketBase/SQLite (primary store), Polar.sh (metered subscriptions + tax)
+PocketBase/SQLite (primary store), Paddle (subscriptions + usage overage charges + tax)
 
 ---
 
@@ -11,13 +11,13 @@ PocketBase/SQLite (primary store), Polar.sh (metered subscriptions + tax)
 2. [Relationship to the Model-Selector Spec](#2-relationship-to-the-model-selector-spec)
 3. [Plans](#3-plans)
 4. [Pricing & Cost Calculation](#4-pricing--cost-calculation)
-5. [Polar.sh Integration](#5-polarsh-integration)
+5. [Paddle Integration](#5-paddle-integration)
 6. [Billing State Machine](#6-billing-state-machine)
 7. [Money-Back Guarantee](#7-money-back-guarantee)
 8. [Fair-Use Policy (Unlimited Plan)](#8-fair-use-policy-unlimited-plan)
 9. [Data Model](#9-data-model)
 10. [Webhook Handler](#10-webhook-handler)
-11. [PAYG Metered Usage Push & Cycle Reconciliation](#11-payg-metered-usage-push--cycle-reconciliation)
+11. [PAYG Usage Accrual & Cycle Reconciliation](#11-payg-usage-accrual--cycle-reconciliation)
 12. [APIs](#12-apis)
 13. [UI / UX Touchpoints](#13-ui--ux-touchpoints)
 14. [Failure Modes & Edge Cases](#14-failure-modes--edge-cases)
@@ -30,7 +30,7 @@ PocketBase/SQLite (primary store), Polar.sh (metered subscriptions + tax)
 ## 1. Overview & Goals
 
 Cognos charges all users for access. Two plans are offered, both billed in **CHF** (excluding
-tax — Polar.sh adds tax on top at checkout). All payments are processed through **Polar.sh**, which
+tax — Paddle adds tax on top at checkout). All payments are processed through **Paddle**, which
 acts as the Merchant of Record and handles VAT / sales-tax compliance on our behalf.
 
 The product offers a **60-day money-back guarantee** on every first purchase. Users may also be
@@ -38,26 +38,26 @@ refunded later at our discretion, with provider usage optionally deducted (see S
 
 ### Goals
 
-1. Charge users in CHF using Polar.sh as the only payment surface.
+1. Charge users in CHF using Paddle as the only payment surface.
 2. Support two plans — **Pay-As-You-Go** and **Unlimited (with fair usage)** — plus a small free
    trial on signup that converts into a read-only state after exhaustion.
 3. Apply a **20% margin** to provider COGS on PAYG, transparently to the user (they see Cognos
    prices, not provider prices).
-4. Bill PAYG via **Polar's metered (usage-based) subscription** with a CHF 5/month minimum
-   commit: every completion pushes a usage event to Polar with the user-facing cost in rappen,
-   Polar invoices `max(sum(usage), CHF 5)` at cycle end automatically. We keep a parallel copy of
-   every event in our own `balance_transactions` ledger for dashboard, audit, and reconciliation.
+4. Bill PAYG via a **Paddle subscription with a CHF 10/month minimum commit**. Paddle has no
+   usage-metering API, so usage accrues in our own `balance_transactions` ledger (the source of
+   truth) and at cycle end we post a **single one-time overage charge** to Paddle for any usage
+   above the commit. Net effect: the customer is billed `max(sum(usage), CHF 10)` per cycle.
 5. Track usage for the Unlimited plan but do not block — surface abuse to operators via a nightly
    internal report.
 6. Honour the **60-day money-back guarantee** with a documented refund process and a clear ledger.
-7. Store every Polar webhook event so we can replay, audit, and reconcile.
+7. Store every Paddle webhook event so we can replay, audit, and reconcile.
 
 ### Non-goals (this spec)
 
 - Self-serve plan migration UI in production polish (manual admin path acceptable initially).
-- Multi-currency display (CHF only; Polar may render local-currency equivalents at checkout).
-- Invoicing infrastructure — Polar produces invoices.
-- Dunning automation beyond what Polar provides natively.
+- Multi-currency display (CHF only; Paddle may render local-currency equivalents at checkout).
+- Invoicing infrastructure — Paddle produces invoices.
+- Dunning automation beyond what Paddle provides natively.
 
 ---
 
@@ -67,23 +67,23 @@ This document **supersedes** the billing portions of
 [`backend-model-selector.md`](./backend-model-selector.md) (Section 4.4 and the `user_billing` /
 `balance_transactions` schemas) with the following amendments:
 
-| Topic              | Old (`backend-model-selector.md`)  | New (this spec)                                                                                |
-| ------------------ | ---------------------------------- | ---------------------------------------------------------------------------------------------- |
-| PAYG mechanism     | CHF 5 base fee (mechanism unclear) | **Post-paid metered via Polar**: push event per completion → Polar bills `max(sum, CHF 5)`/mo  |
-| Unlimited price    | CHF 35/mo                          | **CHF 100/mo** or **CHF 1000/yr** (2 months free)                                              |
-| Plan enum value    | `flat_rate`                        | `unlimited` (rename — `flat_rate` kept as a temporary alias if needed)                         |
-| Margin             | Not defined                        | **+20%** on provider USD cost, then convert to CHF                                             |
-| Payment processor  | Not defined ("manual for now")     | **Polar.sh** (Merchant of Record, handles tax)                                                 |
-| Free state         | Not defined                        | CHF 2 signup credit (per-user override via DB) → read-only after exhaustion                    |
-| Refund policy      | Not defined                        | 60-day money-back, optional usage deduction, one refund per user lifetime                      |
-| Business invoicing | Not defined                        | Surfaced at checkout (company name + VAT ID forwarded to Polar)                                |
-| Currency           | Not defined                        | **CHF only**, end-to-end. EUR fallback only if Polar doesn't yet support CHF subscriptions     |
+| Topic              | Old (`backend-model-selector.md`)  | New (this spec)                                                                                                   |
+| ------------------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| PAYG mechanism     | CHF 5 base fee (mechanism unclear) | **CHF 10/mo min commit + cycle-end overage charge via Paddle**: accrue usage locally → bill `max(sum, CHF 10)`/mo |
+| Unlimited price    | CHF 35/mo                          | **CHF 100/mo** or **CHF 1000/yr** (2 months free)                                                                 |
+| Plan enum value    | `flat_rate`                        | `unlimited` (rename — `flat_rate` kept as a temporary alias if needed)                                            |
+| Margin             | Not defined                        | **+20%** on provider USD cost, then convert to CHF                                                                |
+| Payment processor  | Not defined ("manual for now")     | **Paddle** (Merchant of Record, handles tax)                                                                      |
+| Free state         | Not defined                        | CHF 2 signup credit (per-user override via DB) → read-only after exhaustion                                       |
+| Refund policy      | Not defined                        | 60-day money-back, optional usage deduction, one refund per user lifetime                                         |
+| Business invoicing | Not defined                        | Surfaced at checkout (company name + VAT ID forwarded to Paddle)                                                  |
+| Currency           | Not defined                        | **CHF only**, end-to-end. EUR fallback only if Paddle doesn't yet support CHF subscriptions                       |
 
 All other content in `backend-model-selector.md` (model catalogue, gateway, encryption, analytics)
 is unchanged and remains the source of truth.
 
 The existing `backend/internal/billing/service.go` (`CalculateCost`, `CanAfford`) is the
-implementation starting point. This spec extends it with margin, plan-aware behaviour, and Polar
+implementation starting point. This spec extends it with margin, plan-aware behaviour, and Paddle
 integration.
 
 ---
@@ -93,12 +93,12 @@ integration.
 There are exactly three billing states a user can be in. Every authenticated user is in **exactly
 one** at any moment.
 
-| State            | Plan enum value | Price (excl. tax)                                                 | Usage handling                                                                                |
-| ---------------- | --------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Trial            | `trial`         | Free, capped to seed credit (default CHF 2.00; per-user override) | Usage deducts from `balance_rappen` (internal credit). After exhaustion → `inactive`.         |
-| Pay-As-You-Go    | `payg`          | `max(sum(usage), CHF 5)` per cycle, billed by Polar at cycle end  | Post-paid. Each completion pushes a usage event to Polar + writes a local `usage` ledger row. |
-| Unlimited        | `unlimited`     | CHF 100/mo **or** CHF 1000/yr (≈ 2 months free)                   | Usage recorded for analytics + fair-use monitoring; no billing impact per request.            |
-| (transient) None | `inactive`      | n/a                                                               | `/complete` returns 402. Read-only access to history/settings retained.                       |
+| State            | Plan enum value | Price (excl. tax)                                                  | Usage handling                                                                                                                           |
+| ---------------- | --------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Trial            | `trial`         | Free, capped to seed credit (default CHF 2.00; per-user override)  | Usage deducts from `balance_rappen` (internal credit). After exhaustion → `inactive`.                                                    |
+| Pay-As-You-Go    | `payg`          | `max(sum(usage), CHF 10)` per cycle, billed by Paddle at cycle end | CHF 10/mo min commit billed by Paddle. Each completion writes a local `usage` ledger row; an overage charge is posted once at cycle end. |
+| Unlimited        | `unlimited`     | CHF 100/mo **or** CHF 1000/yr (≈ 2 months free)                    | Usage recorded for analytics + fair-use monitoring; no billing impact per request.                                                       |
+| (transient) None | `inactive`      | n/a                                                                | `/complete` returns 402. Read-only access to history/settings retained.                                                                  |
 
 ### 3.1 Trial
 
@@ -116,47 +116,56 @@ one** at any moment.
 - A user is granted trial credit **exactly once** in their lifetime, keyed on `users.id`. Operators
   can grant additional ad-hoc credit later via an `adjustment` transaction (Section 12.7).
 
-### 3.2 Pay-As-You-Go (post-paid, metered via Polar)
+### 3.2 Pay-As-You-Go (minimum commit + cycle-end overage)
 
-PAYG is a **post-paid metered subscription**. The user subscribes once via Polar; thereafter every
-completion is reported to Polar as a usage event and Polar invoices `max(sum(usage), CHF 5.00)` at
-cycle end. We mirror every event into our own `balance_transactions` ledger so the dashboard,
-margin reporting, and refund flow don't depend on Polar's API for read-back.
+PAYG is a **recurring Paddle subscription with a CHF 10.00/cycle minimum commit, plus a single
+overage charge posted at cycle end**. Paddle has no usage-metering / event-ingestion API (the only
+primitive for variable amounts is a one-time charge on an existing subscription), so **our
+`balance_transactions` ledger is the authoritative usage counter** and Paddle simply collects the
+resulting amount. We never push per-completion events to Paddle.
 
-- **Polar product shape**: a single recurring subscription, `cognos-payg`, configured with a
-  **CHF 5.00 minimum commit per cycle** and a **per-unit metered overage** at CHF 0.01 / unit
-  where one unit equals one rappen of `user_cost`. Net effect:
-    - Usage ≤ CHF 5 in the cycle → Polar bills CHF 5 (the commit).
-    - Usage > CHF 5 in the cycle → Polar bills `usage` exactly (commit absorbed into usage).
-  This achieves `max(usage, CHF 5)` without any cycle-end gymnastics on our side.
-- **Plan start**: Polar `subscription.created` for `cognos-payg` → `plan_type = "payg"`. No
-  balance is set; the user's PAYG state is purely "subscribed to the metered product".
-- **Per-completion event push (Section 11)**: after each successful gateway call, the backend
-  pushes an event to Polar's meter ingestion endpoint with `idempotency_key = ledger.event_id`,
-  `customer_id`, `units = user_cost_rappen`, and `timestamp`. This is done **best-effort**: the
-  HTTP response to the user is not delayed for Polar; failures are queued for asynchronous retry.
-- **Cycle end**: Polar issues an invoice (`order.created` webhook). We record the order against
-  the cycle for reconciliation but do **not** modify any balance — there is no balance.
+- **Paddle product shape**: a single recurring subscription, `cognos-payg`, whose recurring price
+  is the **CHF 10.00 minimum commit per cycle**, billed by Paddle each cycle. Overage above the
+  commit is added as a **one-time charge** at cycle end (see below). Net effect:
+    - Usage ≤ CHF 10 in the cycle → customer is billed CHF 10.00 (the commit, no overage charge).
+    - Usage > CHF 10 in the cycle → customer is billed CHF 10.00 + `(usage − CHF 10.00)` = `usage`.
+  This achieves `max(usage, CHF 10)` per cycle.
+- **Plan start**: Paddle `subscription.created` for `cognos-payg` → `plan_type = "payg"`. No
+  balance is set; the user's PAYG state is purely "subscribed to the minimum-commit product".
+- **Per-completion accrual (Section 11)**: after each successful gateway call, the backend writes a
+  local `usage` row only. There is **no** per-completion call to Paddle, so the HTTP response is
+  never delayed for a billing provider.
+- **Cycle end overage charge (Section 11)**: just before each renewal (driven by the
+  `subscription.updated` rollover), if the cycle's local usage exceeds the CHF 10.00 commit, the
+  backend posts **one** one-time charge of `(usage − CHF 10.00)` to the subscription via Paddle's
+  one-time-charge API, billed on the next transaction. A deterministic idempotency key per cycle
+  prevents double-charging on retry.
+- **Cycle invoice**: Paddle issues the cycle transaction (`transaction.completed` webhook) covering
+  the commit plus any overage charge. We record it against the cycle for reconciliation but do
+  **not** modify any balance — there is no balance.
 - **No "out of balance" state**: PAYG users are never blocked for funds. They could in principle
   accrue arbitrary usage in a cycle, hence the soft spending-alert mechanism in Section 14.11.
 - **Subscription cancellation**: at `period_end` the plan transitions to `inactive`. The final
-  cycle's accrued usage is still billed by Polar.
-- **Failed payment**: Polar's dunning runs. If Polar gives up (`subscription.revoked`) the user
-  drops to `inactive`. The unpaid invoice remains on the Polar customer record for collection.
-- **Plan switch PAYG → Unlimited**: takes effect immediately on Polar's side; final PAYG cycle is
-  billed as normal (`max(usage_so_far, CHF 5)`).
+  cycle's accrued usage is still billed by Paddle (commit + final overage charge).
+- **Failed payment**: Paddle's dunning runs. If Paddle marks the subscription `canceled` after
+  dunning gives up, the user drops to `inactive`. The unpaid transaction remains on the Paddle
+  customer record for collection.
+- **Plan switch PAYG → Unlimited**: takes effect immediately on Paddle's side; the final PAYG cycle
+  is billed as normal (`max(usage_so_far, CHF 10)`, overage charged on close).
 
-> **Why route through Polar's metered billing?** Polar already handles invoicing, tax, dunning,
-> and minimum-commit math. Pushing events lets it be the source of truth for what the customer
-> owes; our ledger is the source of truth for what the customer used (and for our margin against
-> provider cost). Two clean roles, no duplicated billing logic.
+> **Why this shape?** Paddle is Merchant of Record and handles invoicing, tax, and dunning, but it
+> does not aggregate usage. So we split the roles cleanly: our ledger is the source of truth for
+> what the customer used (and for our margin against provider cost), and Paddle is the source of
+> truth for what the customer is charged — the recurring commit plus the one overage charge we
+> compute and post per cycle.
 
 ### 3.3 Unlimited
 
-- Two Polar products: **`unlimited_monthly`** (CHF 100/mo) and **`unlimited_annual`** (CHF 1000/yr).
-- Annual is a single Polar subscription product; the CHF 200/yr discount is encoded directly in the
+- Two Paddle products: **`unlimited_monthly`** (CHF 100/mo) and **`unlimited_annual`** (CHF
+  1000/yr).
+- Annual is a single Paddle subscription product; the CHF 200/yr discount is encoded directly in the
   product price (no coupon code required).
-- Renewal is automatic via Polar. Cancellation = no auto-renew at next cycle boundary.
+- Renewal is automatic via Paddle. Cancellation = no auto-renew at next cycle boundary.
 - Every completion still writes a `usage` row to `balance_transactions` with
   `amount_rappen = 0` (i.e. no balance impact) and the real cost recorded in
   `provider_cost_rappen` / `user_cost_rappen` columns (see schema). This keeps a complete picture
@@ -164,14 +173,14 @@ margin reporting, and refund flow don't depend on Polar's API for read-back.
 
 ### 3.4 Plan switches — summary
 
-| From → To                         | When does it take effect?                            | Billing / Refund                                                                    |
-| --------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Trial → PAYG / Unlimited          | On Polar `subscription.created`                      | Trial credit is consumed/abandoned, not migrated                                    |
-| PAYG → Unlimited (monthly/annual) | Immediately                                          | Final PAYG cycle billed as `max(usage_to_now, CHF 5)`                               |
-| Unlimited (monthly) → PAYG        | At end of current paid period                        | New PAYG cycle starts at switch                                                     |
-| Unlimited (annual) → PAYG         | At end of current paid period (no pro-rata refund)   | New PAYG cycle starts at switch; refund only inside 60-day window                   |
-| Unlimited monthly ↔ annual        | At end of current paid period (no pro-rata)          | No refund unless inside 60-day window                                               |
-| Any → cancelled (`inactive`)      | At end of current paid period                        | PAYG: final cycle bill still issued; refund only inside 60-day window               |
+| From → To                         | When does it take effect?                          | Billing / Refund                                                      |
+| --------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------- |
+| Trial → PAYG / Unlimited          | On Paddle `subscription.created`                   | Trial credit is consumed/abandoned, not migrated                      |
+| PAYG → Unlimited (monthly/annual) | Immediately                                        | Final PAYG cycle billed as `max(usage_to_now, CHF 10)`                |
+| Unlimited (monthly) → PAYG        | At end of current paid period                      | New PAYG cycle starts at switch                                       |
+| Unlimited (annual) → PAYG         | At end of current paid period (no pro-rata refund) | New PAYG cycle starts at switch; refund only inside 60-day window     |
+| Unlimited monthly ↔ annual        | At end of current paid period (no pro-rata)        | No refund unless inside 60-day window                                 |
+| Any → cancelled (`inactive`)      | At end of current paid period                      | PAYG: final cycle bill still issued; refund only inside 60-day window |
 
 ---
 
@@ -196,7 +205,7 @@ flowchart LR
     I --> J
     J --> K{plan_type?}
     K -- trial --> L["UPDATE user_billing<br/>balance_rappen -= user_cost_rappen"]
-    K -- payg --> M["Enqueue Polar meter event<br/>idempotency_key = event_id<br/>units = user_cost_rappen<br/>(async, best-effort)"]
+    K -- payg --> M["Accrue locally only<br/>(no Paddle call per request);<br/>overage charged at cycle end"]
     K -- unlimited --> N["(no further action)"]
 ```
 
@@ -238,94 +247,96 @@ Why USD-first markup, then FX?
 
 ### 4.4 Configurable values
 
-| Config                                 | Default                | Notes                                                                    |
-| -------------------------------------- | ---------------------- | ------------------------------------------------------------------------ |
-| `BILLING_MARGIN_BPS`                   | `2000` (= 20.00%)      | Basis points; allows fine adjustment without code change.                |
-| `BILLING_PAYG_MIN_COMMIT_RAPPEN`       | `500` (CHF 5.00)       | Minimum commit per PAYG cycle, configured on Polar product. Shown in UI. |
-| `BILLING_PAYG_SOFT_ALERT_RAPPEN`       | `5000` (CHF 50.00)     | Per-user in-cycle alert threshold (Section 14.11).                       |
-| `BILLING_UNLIMITED_MONTHLY_RAPPEN`     | `10000` (CHF 100.00)   | Polar subscription price (excl. tax).                                    |
-| `BILLING_UNLIMITED_ANNUAL_RAPPEN`      | `100000` (CHF 1000.00) | Polar subscription price (excl. tax).                                    |
-| `BILLING_TRIAL_SEED_RAPPEN`            | `200` (CHF 2.00)       | Granted once on signup, unless per-user override is staged.              |
-| `BILLING_REFUND_GUARANTEE_DAYS`        | `60`                   | Money-back window.                                                       |
-| `BILLING_UNLIMITED_FAIR_USE_ALERT_CHF` | `200.0`                | Nightly alert threshold (user-cost CHF). 2× monthly price.               |
+| Config                                 | Default                | Notes                                                                            |
+| -------------------------------------- | ---------------------- | -------------------------------------------------------------------------------- |
+| `BILLING_MARGIN_BPS`                   | `2000` (= 20.00%)      | Basis points; allows fine adjustment without code change.                        |
+| `BILLING_PAYG_MIN_COMMIT_RAPPEN`       | `1000` (CHF 10.00)     | Minimum commit per PAYG cycle = the Paddle subscription base price. Shown in UI. |
+| `BILLING_PAYG_SOFT_ALERT_RAPPEN`       | `5000` (CHF 50.00)     | Per-user in-cycle alert threshold (Section 14.11).                               |
+| `BILLING_UNLIMITED_MONTHLY_RAPPEN`     | `10000` (CHF 100.00)   | Paddle subscription price (excl. tax).                                           |
+| `BILLING_UNLIMITED_ANNUAL_RAPPEN`      | `100000` (CHF 1000.00) | Paddle subscription price (excl. tax).                                           |
+| `BILLING_TRIAL_SEED_RAPPEN`            | `200` (CHF 2.00)       | Granted once on signup, unless per-user override is staged.                      |
+| `BILLING_REFUND_GUARANTEE_DAYS`        | `60`                   | Money-back window.                                                               |
+| `BILLING_UNLIMITED_FAIR_USE_ALERT_CHF` | `200.0`                | Nightly alert threshold (user-cost CHF). 2× monthly price.                       |
 
 ---
 
-## 5. Polar.sh Integration
+## 5. Paddle Integration
 
-### 5.1 Product catalogue (Polar side)
+### 5.1 Product catalogue (Paddle side)
 
-We need three Polar products (Sandbox + Production), plus one meter:
+We need three Paddle products, each with a recurring price (Sandbox + Production), plus one
+non-recurring price used for PAYG overage charges:
 
-| Polar product slug   | Type                                                | Pricing (excl. tax)                                                                                  | Maps to            |
-| -------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------ |
-| `cognos-payg`        | Recurring (monthly) **metered with minimum commit** | CHF 5.00 minimum commit + CHF 0.01 per unit of `cognos_usage_rappen` (commit credited against usage) | PAYG subscription. |
-| `cognos-unlimited-m` | Recurring (monthly)                                 | CHF 100.00                                                                                           | Unlimited monthly. |
-| `cognos-unlimited-y` | Recurring (annual)                                  | CHF 1000.00 (≈ 2 months free vs monthly)                                                             | Unlimited annual.  |
+| Paddle entity                 | Type                             | Pricing (excl. tax)                       | Maps to                        |
+| ----------------------------- | -------------------------------- | ----------------------------------------- | ------------------------------ |
+| `cognos-payg` (price)         | Recurring (monthly)              | CHF 10.00 — the minimum commit per cycle  | PAYG subscription base.        |
+| `cognos-payg-overage` (price) | One-time (`billing_cycle: null`) | CHF — amount set per charge (the overage) | PAYG cycle-end overage charge. |
+| `cognos-unlimited-m` (price)  | Recurring (monthly)              | CHF 100.00                                | Unlimited monthly.             |
+| `cognos-unlimited-y` (price)  | Recurring (annual)               | CHF 1000.00 (≈ 2 months free vs monthly)  | Unlimited annual.              |
 
-Polar meter:
-
-| Polar meter slug       | Unit description                                                              |
-| ---------------------- | ----------------------------------------------------------------------------- |
-| `cognos_usage_rappen`  | One unit = one rappen (CHF 0.01) of user-facing cost incurred by a completion.|
-
-> **Polar product configuration note.** The exact UI / API names for "minimum commit absorbed by
-> metered overage" vary across Polar's product surface. The net behaviour we want is:
-> `cycle_invoice = max(sum(meter_units) × 0.01, CHF 5.00)`. If Polar's product builder cannot
-> express this directly, the equivalent fallback is "CHF 0.01/unit metered, no base" + a backend
-> top-off event of `max(0, 500 - sum)` rappen pushed at cycle-end. Either way, the user is
-> charged exactly `max(usage, CHF 5)`. Confirm at integration time.
+> **How `max(usage, CHF 10)` is achieved without a meter.** Paddle has no usage-metering /
+> event-ingestion API; the only primitive for a variable amount is a **one-time charge** added to
+> an existing subscription. So:
+>
+> - The `cognos-payg` recurring price (CHF 10.00) bills the minimum commit every cycle.
+> - Usage is counted **locally** in `balance_transactions` (Section 11), not by Paddle.
+> - At cycle end, if local usage exceeds CHF 10.00, the backend posts one one-time charge of
+>   `(usage − CHF 10.00)` against the subscription using the `cognos-payg-overage` price (or an
+>   inline price object), billed on the next transaction.
+>
+> Net invoice for the cycle = `max(usage, CHF 10.00)`. See Section 11 for the charge timing,
+> idempotency, and reconciliation, and Section 14.10 for the zero-base alternative shape.
 
 ### 5.2 Currency
 
 **CHF, end-to-end.** Being a Swiss company with a privacy-first brand is core to our positioning,
 so the storefront, ledger, dashboards, invoices, and refund flows all transact in CHF. The
-integration plan assumes Polar supports CHF-denominated subscriptions for our org.
+integration plan assumes Paddle supports CHF-denominated subscriptions for our org.
 
-If at integration time CHF is not yet available for the product type we need, the **single
-documented fallback** is EUR-denominated products with prices set to the day-of CHF equivalent
-(round to the nearest EUR 0.10). Internal accounting stays in CHF regardless: every Polar order
-is recorded against its CHF intent using the FX rate captured at order time. This fallback is
-explicitly a temporary measure and should be reversed once Polar adds CHF support.
+If at integration time CHF is not yet available for the product type we need, the
+**single documented fallback** is EUR-denominated products with prices set to the day-of CHF
+equivalent (round to the nearest EUR 0.10). Internal accounting stays in CHF regardless: every
+Paddle transaction is recorded against its CHF intent using the FX rate captured at transaction
+time. This fallback is explicitly a temporary measure and should be reversed once Paddle adds CHF
+support.
 
 ### 5.3 Configuration
 
 ```bash
-# ── Polar.sh ──────────────────────────────────────────────
-POLAR_API_BASE=https://api.polar.sh                 # or sandbox host
-POLAR_ORG_ID=org_xxx
-POLAR_ACCESS_TOKEN=polar_xxx                        # server-side; never client
-POLAR_WEBHOOK_SECRET=whsec_xxx                      # for HMAC verification
-POLAR_PRODUCT_PAYG=prod_xxx
-POLAR_PRODUCT_UNLIMITED_MONTHLY=prod_xxx
-POLAR_PRODUCT_UNLIMITED_ANNUAL=prod_xxx
-POLAR_METER_PAYG_USAGE=meter_xxx                    # cognos_usage_rappen
-POLAR_INGEST_ENDPOINT=/v1/events/ingest             # confirm at integration time
-POLAR_USAGE_PUSH_QUEUE_MAX=10000                    # in-process queue size before backpressure
+# ── Paddle ──────────────────────────────────────────────
+PADDLE_API_BASE=https://api.paddle.com               # https://sandbox-api.paddle.com for sandbox
+PADDLE_API_KEY=pdl_live_apikey_xxx                   # server-side bearer token; never client
+PADDLE_WEBHOOK_SECRET=pdl_ntfset_xxx_secret          # notification-destination secret for signature verification
+PADDLE_PRICE_PAYG=pri_xxx                            # cognos-payg recurring (CHF 10.00 min commit)
+PADDLE_PRICE_PAYG_OVERAGE=pri_xxx                    # cognos-payg-overage one-time (amount set per charge)
+PADDLE_PRICE_UNLIMITED_MONTHLY=pri_xxx
+PADDLE_PRICE_UNLIMITED_ANNUAL=pri_xxx
 ```
 
 ### 5.4 Webhook events we listen for
 
-| Polar event             | What we do                                                                                                                |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `subscription.created`  | Transition user `trial`/`inactive` → `payg`/`unlimited`. Snapshot `polar_subscription_id`, cycle bounds.                  |
-| `subscription.updated`  | Cycle rollover: record a new `payg_cycle_summaries` row for the closing cycle and reset our cycle bookkeeping.            |
-| `subscription.canceled` | Mark plan ending at `current_period_end`. After that timestamp passes, transition to `inactive`.                          |
-| `subscription.active`   | Defensive re-sync to `payg`/`unlimited` (e.g. after dunning recovery).                                                    |
-| `subscription.revoked`  | Hard cancel — set plan to `inactive` immediately (used in chargebacks).                                                   |
-| `order.created`         | Cycle invoice from Polar — record `polar_order_id` against the cycle summary for audit. No balance action.                |
-| `order.refunded`        | Insert a `refund` row recording the refunded amount and metadata. No balance reversal (Polar already adjusted the order). |
-| `customer.updated`      | Sync email / customer metadata if changed externally.                                                                     |
+| Paddle event             | What we do                                                                                                                                   |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `subscription.created`   | Transition user `trial`/`inactive` → `payg`/`unlimited`. Snapshot `paddle_subscription_id`, cycle bounds.                                    |
+| `subscription.activated` | Defensive re-sync to `payg`/`unlimited` (e.g. after dunning recovery or trial end).                                                          |
+| `subscription.updated`   | Cycle rollover: post the closing cycle's PAYG overage charge (Section 11), record a new `payg_cycle_summaries` row, reset cycle bookkeeping. |
+| `subscription.canceled`  | Mark plan ending at `current_billing_period.ends_at` (or immediately if effective now). After it passes, transition to `inactive`.           |
+| `subscription.past_due`  | Subscription in dunning. No plan change yet; surfaced for monitoring. `subscription.canceled` follows if Paddle gives up.                    |
+| `transaction.completed`  | Cycle transaction paid — record `paddle_transaction_id` + billed amount against the cycle summary for audit. No balance action.              |
+| `adjustment.created`     | A refund/credit adjustment. Insert a `refund` row recording the amount and metadata. No balance reversal (Paddle already adjusted it).       |
+| `customer.updated`       | Sync email / customer metadata if changed externally.                                                                                        |
 
-All other Polar event types are logged to `polar_events` for replay but otherwise ignored.
+All other Paddle event types are logged to `paddle_events` for replay but otherwise ignored.
+Chargebacks surface as an `adjustment.created` of type `chargeback`; treat them like a refund and
+move the plan to `inactive` (Section 7.5).
 
 ### 5.5 Idempotency & verification
 
-- Every webhook hit verifies the HMAC signature using `POLAR_WEBHOOK_SECRET`. Bad signature → 401
-  and no DB write.
-- Polar's event ID (e.g. `evt_xyz`) is the primary key on `polar_events`. Re-delivery is a no-op.
+- Every webhook hit verifies the `Paddle-Signature` header (HMAC-SHA256 over `ts:rawBody` using the
+  notification-destination secret in `PADDLE_WEBHOOK_SECRET`). Bad signature → 401 and no DB write.
+- Paddle's event ID (e.g. `evt_xyz`) is the primary key on `paddle_events`. Re-delivery is a no-op.
 - Webhook handler is `O(1)` work: write the raw event, enqueue domain side-effects on a separate
-  internal queue. Re-deliveries from Polar don't compound side effects.
+  internal queue. Re-deliveries from Paddle don't compound side effects.
 
 ### 5.6 Checkout sequence
 
@@ -335,22 +346,22 @@ sequenceDiagram
     actor U as User (browser)
     participant FE as Angular frontend
     participant BE as Cognos backend
-    participant P as Polar.sh
+    participant P as Paddle
     participant DB as PocketBase
 
     U->>FE: Click "Pay-As-You-Go" / "Unlimited"
     Note over U,FE: Optional toggle:<br/>"Buying for a business?"<br/>→ company name, VAT ID
     FE->>BE: POST /api/v1/billing/checkout<br/>{ plan, business?: {name, vat_id, country} }
-    BE->>P: POST /v1/checkouts<br/>customer_external_id = users.id<br/>product = POLAR_PRODUCT_*<br/>customer_billing_address, tax_id (if business)
-    P-->>BE: { checkout_url, session_id }
-    BE-->>FE: { checkout_url }
-    FE->>U: redirect → checkout_url
+    BE->>P: POST /transactions<br/>items = [{ price_id = PADDLE_PRICE_*, quantity 1 }]<br/>customer_id (created/looked up)<br/>custom_data.user_id = users.id<br/>address + business + tax_id (if business)
+    P-->>BE: { id: txn_xxx, checkout: { url } }
+    BE-->>FE: { checkout_url = checkout.url }
+    FE->>U: open Paddle.js checkout / redirect → checkout_url
     U->>P: Confirm details, enter card / pay
     P-->>U: 3DS / success
-    P->>BE: POST /webhooks/polar<br/>type=subscription.created
+    P->>BE: POST /webhooks/paddle<br/>type=subscription.created
     BE->>BE: verify HMAC
-    BE->>DB: INSERT polar_events (id PK)
-    BE->>DB: UPSERT user_billing<br/>plan_type, polar_subscription_id,<br/>cycle bounds, refund_eligible_until_at
+    BE->>DB: INSERT paddle_events (id PK)
+    BE->>DB: UPSERT user_billing<br/>plan_type, paddle_subscription_id,<br/>cycle bounds, refund_eligible_until_at
     BE-->>P: 200 OK
     P-->>U: redirect → app success page
     U->>FE: lands on /account/billing
@@ -358,15 +369,18 @@ sequenceDiagram
     BE-->>FE: { plan_type, in_cycle_usage_chf, predicted_bill_chf, ... }
 ```
 
-### 5.7 Server-to-Polar calls
+### 5.7 Server-to-Paddle calls
 
-The backend calls Polar to:
+The backend calls Paddle to:
 
-- Create a **checkout session** when a logged-in user chooses a plan or a top-up pack
-  (`POST /v1/checkouts`), forwarding business invoicing details when supplied.
-- Cancel / reactivate a user's subscription if they hit "cancel" in our UI (or we proxy to Polar's
+- Create a **checkout** when a logged-in user chooses a plan (`POST /transactions`, returning a
+  `checkout.url`), forwarding business invoicing details when supplied.
+- Post the **PAYG cycle-end overage charge** as a one-time charge on the subscription
+  (`POST /subscriptions/{id}/charge` with the overage price/amount — Section 11).
+- Cancel / reactivate a user's subscription if they hit "cancel" in our UI (or we proxy to Paddle's
   hosted customer portal — see 13.4).
-- Issue **refunds** via the Polar API as part of the money-back flow (Section 7).
+- Issue **refunds** via the Paddle adjustments API (`POST /adjustments`, `action: refund`) as part
+  of the money-back flow (Section 7).
 
 Each call is retried with exponential backoff up to 5 minutes; persistent failure raises an alert.
 
@@ -378,16 +392,16 @@ Each call is retried with exponential backoff up to 5 minutes; persistent failur
 stateDiagram-v2
     [*] --> trial: signup hook<br/>balance = 200 rappen<br/>(per-user override possible)
     trial --> inactive: balance exhausted
-    trial --> payg: pick PAYG +<br/>Polar subscription.created
-    trial --> unlimited: pick Unlimited +<br/>Polar subscription.created
-    inactive --> payg: pick PAYG +<br/>Polar subscription.created
-    inactive --> unlimited: pick Unlimited +<br/>Polar subscription.created
-    payg --> unlimited: switch +<br/>Polar subscription.created
-    unlimited --> payg: switch +<br/>Polar subscription.created
+    trial --> payg: pick PAYG +<br/>Paddle subscription.created
+    trial --> unlimited: pick Unlimited +<br/>Paddle subscription.created
+    inactive --> payg: pick PAYG +<br/>Paddle subscription.created
+    inactive --> unlimited: pick Unlimited +<br/>Paddle subscription.created
+    payg --> unlimited: switch +<br/>Paddle subscription.created
+    unlimited --> payg: switch +<br/>Paddle subscription.created
     payg --> inactive: subscription.canceled +<br/>period_end passed
     unlimited --> inactive: subscription.canceled +<br/>period_end passed
-    payg --> inactive: subscription.revoked<br/>(chargeback)
-    unlimited --> inactive: subscription.revoked<br/>(chargeback)
+    payg --> inactive: adjustment.created<br/>(chargeback)
+    unlimited --> inactive: adjustment.created<br/>(chargeback)
     payg --> inactive: refund within 60 days
     unlimited --> inactive: refund within 60 days
 
@@ -397,9 +411,10 @@ stateDiagram-v2
         consumed once per user
     end note
     note right of payg
-        post-paid metered
-        push event per request
-        Polar bills max(sum, 5)
+        CHF 10/mo min commit
+        accrue locally per request
+        overage charged at cycle end
+        Paddle bills max(sum, 10)
         never blocks /complete
     end note
     note right of unlimited
@@ -422,16 +437,16 @@ Edges:
 - **trial → inactive**: triggered inside the completion handler when `CanAfford` returns false.
   Sets `plan_type='inactive'`, `balance_rappen=0`. Trial credit is forfeited on transition; it
   does not migrate to a subsequent paid plan.
-- **inactive → payg|unlimited**: triggered by Polar `subscription.created` webhook. Sets
-  `plan_type`, `polar_subscription_id`, `polar_cycle_*` bounds, `refund_eligible_until_at`.
-- **PAYG usage push**: each completion writes a `usage` row to `balance_transactions` and
-  enqueues a Polar meter event with the same `event_id` for idempotency. Polar accrues the units
-  against the cycle invoice. See Section 11.
+- **inactive → payg|unlimited**: triggered by Paddle `subscription.created` webhook. Sets
+  `plan_type`, `paddle_subscription_id`, `paddle_cycle_*` bounds, `refund_eligible_until_at`.
+- **PAYG usage accrual**: each completion writes a `usage` row to `balance_transactions` only — no
+  per-request Paddle call. At cycle rollover the backend posts a single overage charge for usage
+  above the commit. See Section 11.
 - **payg|unlimited → inactive**: scheduled by `subscription.canceled` + `period_end` cron, or
-  immediate via `subscription.revoked`. For PAYG, Polar still issues the final cycle invoice
-  after the transition.
+  immediate via a chargeback `adjustment.created`. For PAYG, Paddle still issues the final cycle
+  invoice after the transition.
 
-A user's state and Polar state must reconcile every cycle (Section 14.2).
+A user's state and Paddle state must reconcile every cycle (Section 14.2).
 
 ---
 
@@ -439,7 +454,7 @@ A user's state and Polar state must reconcile every cycle (Section 14.2).
 
 ### 7.1 Policy
 
-- **Window**: 60 calendar days from the **first successful Polar payment of the active
+- **Window**: 60 calendar days from the **first successful Paddle payment of the active
   subscription** (`refund_eligible_until_at` is snapshotted at subscription creation).
 - **Trigger**: user emails support / clicks a "request refund" button. Initial implementation is
   email-driven; an in-app self-serve refund flow can come later.
@@ -472,21 +487,21 @@ sequenceDiagram
     actor Op as Operator
     participant CLI as Refund CLI / admin endpoint
     participant DB as PocketBase
-    participant P as Polar.sh
+    participant P as Paddle
 
     U->>Op: "I want a refund" (email or in-app request)
     Op->>CLI: cognos refund --user=<id><br/>--deduct-usage=<bool><br/>--reason="..."
-    CLI->>DB: SELECT polar orders in window<br/>SELECT usage rows in window
+    CLI->>DB: SELECT Paddle transactions in window<br/>SELECT usage rows in window
     DB-->>CLI: { gross_refund, usage_total }
     Note over CLI: net = gross - (deduct ? usage : 0)<br/>clamp net ≥ 0
-    loop for each Polar order in window
-        CLI->>P: POST /v1/refunds<br/>order_id, amount (apportioned)
-        P-->>CLI: { refund_id }
+    loop for each Paddle transaction in window
+        CLI->>P: POST /adjustments<br/>action=refund, transaction_id,<br/>items/amount (apportioned)
+        P-->>CLI: { id: adj_xxx }
     end
-    CLI->>DB: INSERT refunds row<br/>gross, usage_deduction,<br/>net, polar_refund_ids,<br/>operator_id, inside_window
+    CLI->>DB: INSERT refunds row<br/>gross, usage_deduction,<br/>net, paddle_adjustment_ids,<br/>operator_id, inside_window
     CLI->>DB: UPDATE users SET refund_used = true
-    CLI->>DB: UPDATE user_billing<br/>SET plan_type = 'inactive',<br/>polar_subscription_id = NULL
-    CLI->>P: cancel active subscription (revoke)
+    CLI->>DB: UPDATE user_billing<br/>SET plan_type = 'inactive',<br/>paddle_subscription_id = NULL
+    CLI->>P: cancel active subscription (effective immediately)
     CLI-->>Op: summary (gross, deduction, net)
     Op-->>U: confirmation
 ```
@@ -494,11 +509,12 @@ sequenceDiagram
 1. Support agent loads the user's `/admin/billing/{user_id}` page (or runs a CLI command):
    `cognos refund --user=<id> --reason="..." --deduct-usage=<true|false>`
 2. The tool computes:
-   - `gross_refund_rappen` = sum of Polar orders/subscription charges in the refund window
+   - `gross_refund_rappen` = sum of Paddle transactions/subscription charges in the refund window
    - `usage_deduction_rappen` = (optional) sum of `user_cost_rappen` for usage rows in that window
    - `net_refund_rappen` = `gross_refund_rappen - usage_deduction_rappen` (clamped ≥ 0)
-3. The tool calls Polar's refund API for each underlying Polar order with the apportioned amount.
-4. A `refund` row is written with `polar_refund_ids`, the breakdown, and the operator who
+3. The tool creates a Paddle refund adjustment against each underlying transaction with the
+   apportioned amount.
+4. A `refund` row is written with `paddle_adjustment_ids`, the breakdown, and the operator who
    authorised it.
 5. The user's plan is moved to `inactive` (refund implies they didn't want it).
 6. `users.refund_used = true` is set to enforce one-per-lifetime.
@@ -510,9 +526,9 @@ reason. There is no automatic limit.
 
 ### 7.5 Chargebacks
 
-When Polar fires `subscription.revoked` / equivalent for a chargeback, we treat it the same as a
-refund (set plan to `inactive`, log the event, no auto-reversal of usage data). Operators are
-notified for fraud review.
+When Paddle fires an `adjustment.created` of type `chargeback` (and cancels the subscription), we
+treat it the same as a refund (set plan to `inactive`, log the event, no auto-reversal of usage
+data). Operators are notified for fraud review.
 
 ---
 
@@ -562,83 +578,81 @@ threshold is published — it stays internal.
 
 #### `users` (additions)
 
-| Field                  | Type     | Notes                                                                  |
-| ---------------------- | -------- | ---------------------------------------------------------------------- |
-| `refund_used`          | Bool     | Default false. Set true when a refund has been issued (lifetime flag). |
-| `polar_customer_id`    | Text     | Polar's customer ID, set on first Polar interaction. Nullable.         |
-| `business_name`        | Text     | Company name for invoicing if the user buys for a business. Nullable.  |
-| `business_vat_id`      | Text     | VAT/UID registration. Forwarded to Polar at checkout. Nullable.        |
-| `business_country`     | Text     | ISO 3166-1 alpha-2 country code for the business address. Nullable.    |
+| Field                | Type | Notes                                                                  |
+| -------------------- | ---- | ---------------------------------------------------------------------- |
+| `refund_used`        | Bool | Default false. Set true when a refund has been issued (lifetime flag). |
+| `paddle_customer_id` | Text | Paddle's customer ID, set on first Paddle interaction. Nullable.       |
+| `business_name`      | Text | Company name for invoicing if the user buys for a business. Nullable.  |
+| `business_vat_id`    | Text | VAT/UID registration. Forwarded to Paddle at checkout. Nullable.       |
+| `business_country`   | Text | ISO 3166-1 alpha-2 country code for the business address. Nullable.    |
 
 #### `user_billing` (rename / extend)
 
-| Field                          | Type     | Notes                                                                                                |
-| ------------------------------ | -------- | ---------------------------------------------------------------------------------------------------- |
-| `id`                           | Text PK  | Existing. This remains the opaque `billing_user_id` used in analytics.                               |
-| `user_id`                      | FK users | Existing.                                                                                            |
-| `plan_type`                    | Text     | Now one of: `trial`, `payg`, `unlimited`, `inactive`. (Old `flat_rate` migrated to `unlimited`.)     |
-| `plan_started_at`              | DateTime | Existing.                                                                                            |
-| `plan_ends_at`                 | DateTime | Existing. Set when scheduled to cancel.                                                              |
-| `balance_rappen`               | Integer  | Existing. Always ≥ 0. Spendable credit for `trial` only. Zero for `payg` / `unlimited` / `inactive`. |
-| `polar_subscription_id`        | Text     | NEW. Active Polar subscription ID. Null for `trial`/`inactive`.                                      |
-| `polar_product_id`             | Text     | NEW. Polar product the subscription points at.                                                       |
-| `polar_cycle_start_at`         | DateTime | NEW. Current Polar billing cycle start.                                                              |
-| `polar_cycle_end_at`           | DateTime | NEW. Current Polar billing cycle end (= renewal/cancel boundary).                                    |
-| `refund_eligible_until_at`     | DateTime | NEW. Snapshot of `first_payment_at + 60 days`. Null for `trial`.                                     |
-| `trial_seed_granted_rappen`    | Integer  | NEW. What was actually granted on signup (default vs override). Audit field.                         |
+| Field                       | Type     | Notes                                                                                                |
+| --------------------------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| `id`                        | Text PK  | Existing. This remains the opaque `billing_user_id` used in analytics.                               |
+| `user_id`                   | FK users | Existing.                                                                                            |
+| `plan_type`                 | Text     | Now one of: `trial`, `payg`, `unlimited`, `inactive`. (Old `flat_rate` migrated to `unlimited`.)     |
+| `plan_started_at`           | DateTime | Existing.                                                                                            |
+| `plan_ends_at`              | DateTime | Existing. Set when scheduled to cancel.                                                              |
+| `balance_rappen`            | Integer  | Existing. Always ≥ 0. Spendable credit for `trial` only. Zero for `payg` / `unlimited` / `inactive`. |
+| `paddle_subscription_id`    | Text     | NEW. Active Paddle subscription ID. Null for `trial`/`inactive`.                                     |
+| `paddle_price_id`           | Text     | NEW. Paddle price ID the subscription's item points at.                                              |
+| `paddle_cycle_start_at`     | DateTime | NEW. Current Paddle billing cycle start.                                                             |
+| `paddle_cycle_end_at`       | DateTime | NEW. Current Paddle billing cycle end (= renewal/cancel boundary).                                   |
+| `refund_eligible_until_at`  | DateTime | NEW. Snapshot of `first_payment_at + 60 days`. Null for `trial`.                                     |
+| `trial_seed_granted_rappen` | Integer  | NEW. What was actually granted on signup (default vs override). Audit field.                         |
 
 #### `balance_transactions` (extend)
 
-| Field                  | Type     | Notes                                                                                                     |
-| ---------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
-| `id`                   | Text PK  | Existing.                                                                                                 |
-| `user_id`              | FK users | Existing.                                                                                                 |
-| `occurred_at`          | DateTime | Existing.                                                                                                 |
-| `type`                 | Text     | One of: `usage`, `refund`, `trial_seed`, `adjustment`. (Plan-credit types no longer needed.)              |
-| `amount_rappen`        | Integer  | Signed: negative for `usage`/`refund`; positive for `trial_seed`/`adjustment`.                            |
-| `balance_after_rappen` | Integer  | Trial: balance after this row. PAYG/Unlimited: not meaningful (set to 0).                                 |
-| `event_id`             | Text     | Existing — links to analytics `event_id` for `usage`. Null otherwise.                                     |
-| `polar_order_id`       | Text     | Null for most rows; populated for `refund` rows linking to the refunded Polar order.                      |
-| `polar_meter_event_id` | Text     | NEW. For PAYG `usage` rows: ID returned by Polar's meter ingest API. Null if push pending/failed.         |
-| `polar_pushed_at`      | DateTime | NEW. Timestamp of successful push. Null while queued.                                                     |
-| `provider_cost_rappen` | Integer  | NEW. For `usage` rows only. The raw provider cost in CHF (no margin). Allows margin recomputation.        |
-| `user_cost_rappen`     | Integer  | NEW. For `usage` rows only. The marked-up user-facing cost in CHF. = `-amount_rappen` for PAYG.           |
-| `fx_rate_usd_chf`      | Double   | NEW. For `usage` rows only. The FX rate snapshot at request time.                                         |
-| `description`          | Text     | Existing.                                                                                                 |
+| Field                   | Type     | Notes                                                                                                      |
+| ----------------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
+| `id`                    | Text PK  | Existing.                                                                                                  |
+| `user_id`               | FK users | Existing.                                                                                                  |
+| `occurred_at`           | DateTime | Existing.                                                                                                  |
+| `type`                  | Text     | One of: `usage`, `refund`, `trial_seed`, `adjustment`. (Plan-credit types no longer needed.)               |
+| `amount_rappen`         | Integer  | Signed: negative for `usage`/`refund`; positive for `trial_seed`/`adjustment`.                             |
+| `balance_after_rappen`  | Integer  | Trial: balance after this row. PAYG/Unlimited: not meaningful (set to 0).                                  |
+| `event_id`              | Text     | Existing — links to analytics `event_id` for `usage`. Null otherwise.                                      |
+| `paddle_transaction_id` | Text     | Null for most rows; populated for `refund` rows linking to the Paddle transaction the adjustment refunded. |
+| `provider_cost_rappen`  | Integer  | NEW. For `usage` rows only. The raw provider cost in CHF (no margin). Allows margin recomputation.         |
+| `user_cost_rappen`      | Integer  | NEW. For `usage` rows only. The marked-up user-facing cost in CHF. = `-amount_rappen` for PAYG.            |
+| `fx_rate_usd_chf`       | Double   | NEW. For `usage` rows only. The FX rate snapshot at request time.                                          |
+| `description`           | Text     | Existing.                                                                                                  |
 
 ### 9.2 New tables
 
-#### `polar_events`
+#### `paddle_events`
 
-Raw, deduplicated webhook log. Source of truth for everything Polar tells us.
+Raw, deduplicated webhook log. Source of truth for everything Paddle tells us.
 
-| Field                   | Type     | Notes                                                                  |
-| ----------------------- | -------- | ---------------------------------------------------------------------- |
-| `id`                    | Text PK  | Polar event ID (e.g. `evt_xxx`). Primary key — natural idempotency.    |
-| `received_at`           | DateTime | When we received it.                                                   |
-| `type`                  | Text     | Polar event type (e.g. `subscription.created`).                        |
-| `polar_customer_id`     | Text     | Indexed for join.                                                      |
-| `polar_subscription_id` | Text     | Indexed.                                                               |
-| `polar_order_id`        | Text     | Indexed.                                                               |
-| `payload_json`          | Text     | Full webhook body as received.                                         |
-| `processed_at`          | DateTime | Null until our domain handler completes. Allows replay of unprocessed. |
-| `processing_error`      | Text     | Null on success. Last error if any.                                    |
+| Field                    | Type     | Notes                                                                  |
+| ------------------------ | -------- | ---------------------------------------------------------------------- |
+| `id`                     | Text PK  | Paddle event ID (e.g. `evt_xxx`). Primary key — natural idempotency.   |
+| `received_at`            | DateTime | When we received it.                                                   |
+| `type`                   | Text     | Paddle event type (e.g. `subscription.created`).                       |
+| `paddle_customer_id`     | Text     | Indexed for join.                                                      |
+| `paddle_subscription_id` | Text     | Indexed.                                                               |
+| `paddle_transaction_id`  | Text     | Indexed.                                                               |
+| `payload_json`           | Text     | Full webhook body as received.                                         |
+| `processed_at`           | DateTime | Null until our domain handler completes. Allows replay of unprocessed. |
+| `processing_error`       | Text     | Null on success. Last error if any.                                    |
 
 #### `refunds`
 
-| Field                     | Type     | Notes                                                                            |
-| ------------------------- | -------- | -------------------------------------------------------------------------------- |
-| `id`                      | Text PK  | UUID.                                                                            |
-| `user_id`                 | FK users |                                                                                  |
-| `requested_at`            | DateTime |                                                                                  |
-| `processed_at`            | DateTime | Null until completed.                                                            |
-| `gross_refund_rappen`     | Integer  | Pre-deduction.                                                                   |
-| `usage_deduction_rappen`  | Integer  | 0 if no deduction applied.                                                       |
-| `net_refund_rappen`       | Integer  | What we actually refunded via Polar.                                             |
-| `reason_text`             | Text     | Operator-recorded reason.                                                        |
-| `operator_id`             | Text     | The admin user who authorised it.                                                |
-| `polar_refund_ids_json`   | Text     | JSON array of Polar refund IDs created (may be multiple if window spans orders). |
-| `inside_guarantee_window` | Bool     | True if requested within 60-day window.                                          |
+| Field                        | Type     | Notes                                                                                       |
+| ---------------------------- | -------- | ------------------------------------------------------------------------------------------- |
+| `id`                         | Text PK  | UUID.                                                                                       |
+| `user_id`                    | FK users |                                                                                             |
+| `requested_at`               | DateTime |                                                                                             |
+| `processed_at`               | DateTime | Null until completed.                                                                       |
+| `gross_refund_rappen`        | Integer  | Pre-deduction.                                                                              |
+| `usage_deduction_rappen`     | Integer  | 0 if no deduction applied.                                                                  |
+| `net_refund_rappen`          | Integer  | What we actually refunded via Paddle.                                                       |
+| `reason_text`                | Text     | Operator-recorded reason.                                                                   |
+| `operator_id`                | Text     | The admin user who authorised it.                                                           |
+| `paddle_adjustment_ids_json` | Text     | JSON array of Paddle adjustment IDs created (may be multiple if window spans transactions). |
+| `inside_guarantee_window`    | Bool     | True if requested within 60-day window.                                                     |
 
 #### `trial_seed_overrides`
 
@@ -657,24 +671,24 @@ seed to specific invitees without changing the global default.
 
 #### `payg_cycle_summaries`
 
-One row per closed PAYG cycle. Records what we observed locally and what Polar billed,
+One row per closed PAYG cycle. Records what we observed locally and what Paddle billed,
 side-by-side, so any drift is investigable.
 
-| Field                       | Type     | Notes                                                                       |
-| --------------------------- | -------- | --------------------------------------------------------------------------- |
-| `id`                        | Text PK  |                                                                             |
-| `user_id`                   | FK users |                                                                             |
-| `cycle_start_at`            | DateTime |                                                                             |
-| `cycle_end_at`              | DateTime |                                                                             |
-| `polar_subscription_id`     | Text     |                                                                             |
-| `polar_order_id`            | Text     | The cycle invoice from Polar (set when `order.created` arrives).            |
-| `local_usage_rappen`        | Integer  | `-SUM(usage amount_rappen)` in `[cycle_start, cycle_end)`.                  |
-| `local_expected_bill_rappen`| Integer  | `max(local_usage_rappen, BILLING_PAYG_MIN_COMMIT_RAPPEN)` — what we expect. |
-| `polar_billed_rappen`       | Integer  | Net amount Polar invoiced. Set from `order.created`.                        |
-| `events_pushed_count`       | Integer  | Number of usage events we successfully pushed during the cycle.             |
-| `events_failed_count`       | Integer  | Number still un-pushed at cycle close — should be 0 in steady state.        |
-| `reconciled`                | Bool     | True iff `polar_billed_rappen == local_expected_bill_rappen` (±1 rappen).   |
-| `closed_at`                 | DateTime | When this summary was finalised.                                            |
+| Field                        | Type     | Notes                                                                                            |
+| ---------------------------- | -------- | ------------------------------------------------------------------------------------------------ |
+| `id`                         | Text PK  |                                                                                                  |
+| `user_id`                    | FK users |                                                                                                  |
+| `cycle_start_at`             | DateTime |                                                                                                  |
+| `cycle_end_at`               | DateTime |                                                                                                  |
+| `paddle_subscription_id`     | Text     |                                                                                                  |
+| `paddle_transaction_id`      | Text     | The cycle transaction from Paddle (set when `transaction.completed` arrives).                    |
+| `local_usage_rappen`         | Integer  | `-SUM(usage amount_rappen)` in `[cycle_start, cycle_end)`.                                       |
+| `local_expected_bill_rappen` | Integer  | `max(local_usage_rappen, BILLING_PAYG_MIN_COMMIT_RAPPEN)` — what we expect.                      |
+| `overage_charge_rappen`      | Integer  | The one-time overage charge we posted for this cycle. `max(0, local_usage − commit)`; 0 if none. |
+| `paddle_overage_txn_id`      | Text     | Paddle ID of the one-time overage charge (the resulting transaction/charge). Null if no overage. |
+| `paddle_billed_rappen`       | Integer  | Net amount Paddle invoiced (commit + overage). Set from `transaction.completed`.                 |
+| `reconciled`                 | Bool     | True iff `paddle_billed_rappen == local_expected_bill_rappen` (±1 rappen).                       |
+| `closed_at`                  | DateTime | When this summary was finalised.                                                                 |
 
 ---
 
@@ -682,40 +696,40 @@ side-by-side, so any drift is investigable.
 
 ### 10.1 Endpoint
 
-`POST /webhooks/polar` — unauthenticated route (verified by HMAC), no JSON body limit (Polar
-payloads are small but include nested customer/order objects).
+`POST /webhooks/paddle` — unauthenticated route (verified by HMAC), no JSON body limit (Paddle
+payloads are small but include nested customer/transaction objects).
 
 ### 10.2 Flow
 
 ```mermaid
 flowchart TD
-    A[POST /webhooks/polar] --> B[Read raw body bytes]
-    B --> C{HMAC matches<br/>Polar-Webhook-Signature?}
+    A[POST /webhooks/paddle] --> B[Read raw body bytes]
+    B --> C{HMAC matches<br/>Paddle-Signature?}
     C -- no --> C1[Return 401<br/>No DB write]
     C -- yes --> D[Parse envelope:<br/>event_id, type]
-    D --> E["INSERT INTO polar_events<br/>ON CONFLICT(id) DO NOTHING"]
+    D --> E["INSERT INTO paddle_events<br/>ON CONFLICT(id) DO NOTHING"]
     E --> F{Conflict?<br/>(duplicate delivery)}
     F -- yes --> F1[Return 200<br/>log 'duplicate']
     F -- no --> G[Dispatch by type to<br/>domain handler]
     G --> H{Handler success?}
-    H -- yes --> I["UPDATE polar_events<br/>SET processed_at = now()"]
+    H -- yes --> I["UPDATE paddle_events<br/>SET processed_at = now()"]
     I --> J[Return 200]
-    H -- no --> K["UPDATE polar_events<br/>SET processing_error = ?"]
-    K --> L[Return 500<br/>Polar retries → re-dispatch<br/>handlers MUST be idempotent]
+    H -- no --> K["UPDATE paddle_events<br/>SET processing_error = ?"]
+    K --> L[Return 500<br/>Paddle retries → re-dispatch<br/>handlers MUST be idempotent]
 ```
 
 ```text
 1. Read raw body (DO NOT json.Decode yet — signature is over raw bytes).
-2. Verify HMAC: compare-constant-time(HMAC_SHA256(body, POLAR_WEBHOOK_SECRET),
-                                      header "Polar-Webhook-Signature").
+2. Verify HMAC: parse the `Paddle-Signature` header (`ts=...;h1=...`), then
+   compare-constant-time(HMAC_SHA256("<ts>:<rawBody>", PADDLE_WEBHOOK_SECRET), h1).
    - Mismatch -> 401, no DB write.
 3. Parse the JSON envelope, extract event_id and type.
-4. INSERT INTO polar_events ON CONFLICT(id) DO NOTHING.
+4. INSERT INTO paddle_events ON CONFLICT(id) DO NOTHING.
    - If conflict: 200 OK, log "duplicate", return.
 5. Dispatch by type to a domain handler (small per-event Go func).
-6. On success: UPDATE polar_events SET processed_at = now() WHERE id = ?.
-7. On error: log, UPDATE polar_events SET processing_error = ?.
-   - Return 500 so Polar retries. The next attempt re-enters step 4, conflicts, but step 6 has not
+6. On success: UPDATE paddle_events SET processed_at = now() WHERE id = ?.
+7. On error: log, UPDATE paddle_events SET processing_error = ?.
+   - Return 500 so Paddle retries. The next attempt re-enters step 4, conflicts, but step 6 has not
      run -> we re-dispatch. Domain handlers must be idempotent.
 ```
 
@@ -723,54 +737,54 @@ flowchart TD
 
 Each handler must be safe to run multiple times. Specifically:
 
-- `subscription.created`: `UPSERT user_billing SET plan_type, polar_subscription_id, cycle bounds
-  WHERE user_id = ?` — keyed on `polar_subscription_id` uniqueness.
+- `subscription.created`: `UPSERT user_billing SET plan_type, paddle_subscription_id, cycle bounds
+  WHERE user_id = ?` — keyed on `paddle_subscription_id` uniqueness.
 - `subscription.updated`: detect cycle rollover by comparing the event's `current_period_start`
-  to the stored `polar_cycle_start_at`. On rollover, close the prior cycle (write
+  to the stored `paddle_cycle_start_at`. On rollover, close the prior cycle (write
   `payg_cycle_summaries` row) and update cycle bounds. Both writes are keyed so re-delivery is a
   no-op.
-- `subscription.canceled` / `subscription.revoked`: setting `plan_ends_at` and `plan_type` are
-  idempotent assignments.
-- `order.created`: keyed on `polar_order_id` — `UPDATE payg_cycle_summaries SET polar_order_id,
-  polar_billed_rappen WHERE cycle_end_at = ?` for the matching cycle. No ledger row written.
-- `order.refunded`: keyed on `polar_refund_id` — refuse to double-insert a `refund` row.
+- `subscription.canceled`: setting `plan_ends_at` and `plan_type` are idempotent assignments.
+- `subscription.updated` (overage charge): the cycle's overage charge is posted with a
+  deterministic idempotency key (`overage_<payg_cycle_summaries.id>`), so a re-delivered rollover
+  never double-charges. Record the resulting `paddle_overage_txn_id` on the cycle summary.
+- `transaction.completed`: keyed on `paddle_transaction_id` — `UPDATE payg_cycle_summaries SET
+  paddle_transaction_id, paddle_billed_rappen WHERE cycle_end_at = ?` for the matching cycle. No
+  ledger row written.
+- `adjustment.created` (refund): keyed on `paddle_adjustment_id` — refuse to double-insert a
+  `refund` row.
 
-### 10.4 Mapping Polar customer ↔ Cognos user
+### 10.4 Mapping Paddle customer ↔ Cognos user
 
-- When a Cognos user starts the checkout flow, we call Polar's `POST /v1/checkouts` with
-  `customer_external_id = users.id`. Polar stores it and includes it in every subsequent webhook
-  for that customer.
-- The webhook handler resolves the Cognos user via `customer_external_id`. If the field is missing
-  (e.g. a customer was created in the Polar dashboard manually), we fall back to
-  `polar_customer_id` lookup on `users` — and if that fails too, log a `policy_error` event for
+- When a Cognos user starts the checkout flow, we create the Paddle transaction/customer with
+  `custom_data.user_id = users.id` (and persist the returned `paddle_customer_id` on `users`).
+  Paddle includes the customer on every subsequent webhook for that customer.
+- The webhook handler resolves the Cognos user via `custom_data.user_id`. If it is missing
+  (e.g. a customer was created in the Paddle dashboard manually), we fall back to
+  `paddle_customer_id` lookup on `users` — and if that fails too, log a `policy_error` event for
   manual triage.
 
 ---
 
-## 11. PAYG Metered Usage Push & Cycle Reconciliation
+## 11. PAYG Usage Accrual & Cycle Reconciliation
 
-PAYG billing is post-paid metered via Polar. The backend's job is to (a) push one usage event to
-Polar per completion, durably, and (b) reconcile what we observed locally against Polar's cycle
-invoice when it arrives.
+PAYG billing is a **CHF 10/cycle minimum commit + a single cycle-end overage charge**, both
+collected by Paddle. Paddle has **no usage-metering API**, so the backend's job is to (a) accrue
+usage locally per completion, (b) post one overage charge per cycle for usage above the commit, and
+(c) reconcile what we observed locally against Paddle's cycle transaction when it arrives.
 
-### 11.1 Per-completion event push
+### 11.1 Per-completion accrual
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant H as /complete handler
     participant DB as PocketBase
-    participant Q as Push queue (in-process)
-    participant P as Polar.sh
 
     Note over H: After successful gateway response,<br/>cost pipeline computes user_cost_rappen.
-    H->>DB: INSERT balance_transactions<br/>type='usage', amount=-user_cost_rappen,<br/>event_id, polar_meter_event_id=NULL
+    H->>DB: INSERT balance_transactions<br/>type='usage', amount=-user_cost_rappen,<br/>event_id, provider/user cost, fx_rate
     alt plan_type = payg
-        H->>Q: enqueue(event_id, customer, units, ts)
-        H-->>H: respond 200 to client (no Polar wait)
-        Q->>P: POST /v1/events/ingest<br/>meter=cognos_usage_rappen<br/>idempotency_key=event_id<br/>customer_id, units=user_cost_rappen, timestamp
-        P-->>Q: { id }
-        Q->>DB: UPDATE balance_transactions<br/>SET polar_meter_event_id=id,<br/>polar_pushed_at=now()<br/>WHERE event_id=?
+        Note over H,DB: No Paddle call per request —<br/>usage is counted locally only.
+        H-->>H: respond 200 to client immediately
     else plan_type = trial
         H->>DB: UPDATE user_billing<br/>SET balance_rappen = balance_rappen - user_cost_rappen
     else plan_type = unlimited
@@ -780,31 +794,13 @@ sequenceDiagram
 
 ```text
 1. After gateway responds, compute user_cost_rappen (Section 4.1).
-2. INSERT balance_transactions row with type='usage'. The /complete response can return now —
-   subsequent steps are async with respect to the HTTP response.
-3. IF plan_type == 'payg':
-      enqueue(event_id, polar_customer_id, units=user_cost_rappen, ts=occurred_at)
-      A background worker drains the queue, posts to Polar's meter ingest endpoint with
-      idempotency_key=event_id, and writes back polar_meter_event_id + polar_pushed_at.
+2. INSERT balance_transactions row with type='usage'. The /complete response returns now.
+3. IF plan_type == 'payg': nothing else — usage accrues in the ledger; Paddle is not called.
 4. IF plan_type == 'trial': UPDATE user_billing.balance_rappen -= user_cost_rappen.
 5. IF plan_type == 'unlimited': no further action.
 ```
 
-### 11.2 Push reliability
-
-- The push queue lives in-process. On crash, on startup a sweep query re-enqueues every PAYG
-  `usage` row with `polar_meter_event_id IS NULL` from the last 30 days.
-- A periodic job (every 5 minutes) does the same sweep as a backstop, in case a queue worker
-  silently stalled.
-- `idempotency_key = balance_transactions.event_id` means re-pushes are safe: Polar deduplicates
-  on its side and returns the same `id`.
-- If Polar returns a permanent error (4xx other than 409 conflict), the row is flagged with
-  `processing_error` and an operator alert fires. The local ledger is still authoritative for
-  margin reporting; only Polar's bill is affected.
-- We never block the user-facing `/complete` response on the push. The user receives their
-  completion immediately; the push happens in the background.
-
-### 11.3 Cycle rollover & reconciliation
+### 11.2 Cycle-end overage charge
 
 ```mermaid
 sequenceDiagram
@@ -812,44 +808,67 @@ sequenceDiagram
     participant W as Webhook handler<br/>(subscription.updated)
     participant R as Reconcile job
     participant DB as PocketBase
-    participant P as Polar.sh
+    participant P as Paddle
 
-    W->>R: cycle rollover detected<br/>(current_period_start changed)
+    W->>R: cycle rollover detected<br/>(current_billing_period changed)
     R->>DB: BEGIN
     R->>DB: usage = -SUM(amount_rappen)<br/>FROM balance_transactions<br/>WHERE type='usage'<br/>AND occurred_at ∈ closed_cycle
-    R->>DB: pushed   = COUNT(polar_meter_event_id IS NOT NULL)
-    R->>DB: failed   = COUNT(polar_meter_event_id IS NULL)
-    R->>DB: INSERT payg_cycle_summaries<br/>local_usage_rappen=usage,<br/>local_expected_bill_rappen=max(usage,500),<br/>events_pushed_count=pushed,<br/>events_failed_count=failed,<br/>polar_billed_rappen=NULL,<br/>reconciled=false
-    R->>DB: UPDATE user_billing<br/>SET polar_cycle_start_at=new_start,<br/>polar_cycle_end_at=new_end
+    R->>DB: INSERT payg_cycle_summaries<br/>local_usage_rappen=usage,<br/>local_expected_bill_rappen=max(usage,1000),<br/>overage_charge_rappen=max(0,usage-1000),<br/>paddle_billed_rappen=NULL, reconciled=false
+    R->>DB: UPDATE user_billing<br/>SET paddle_cycle_start_at=new_start,<br/>paddle_cycle_end_at=new_end
     R->>DB: COMMIT
+    alt overage_charge_rappen > 0
+        R->>P: POST /subscriptions/{id}/charge<br/>price=cognos-payg-overage (amount=overage),<br/>idempotency_key=overage_<cycle_id>,<br/>effective_from=next_billing_period
+        P-->>R: { transaction_id }
+        R->>DB: UPDATE payg_cycle_summaries<br/>SET paddle_overage_txn_id=transaction_id
+    end
 
-    Note over W,R: Later, Polar issues the cycle invoice:
-    W->>R: order.created (cycle invoice)
-    R->>DB: UPDATE payg_cycle_summaries<br/>SET polar_order_id, polar_billed_rappen,<br/>reconciled=(polar_billed ≈ local_expected)
+    Note over W,R: Later, Paddle bills the cycle transaction:
+    W->>R: transaction.completed (commit + overage)
+    R->>DB: UPDATE payg_cycle_summaries<br/>SET paddle_transaction_id, paddle_billed_rappen,<br/>reconciled=(paddle_billed ≈ local_expected)
     alt drift detected
-        R->>P: GET /v1/orders/{id} for detail
+        R->>P: GET /transactions/{id} for detail
         R-->>R: alert operator with diff
     end
 ```
 
 ```text
-1. subscription.updated → detect cycle rollover.
-2. INSERT payg_cycle_summaries(cycle_start, cycle_end, local_usage, local_expected_bill,
-                               events_pushed, events_failed)
-3. Update user_billing cycle bounds.
-4. When order.created arrives for that cycle:
-      UPDATE payg_cycle_summaries SET polar_order_id, polar_billed_rappen,
-             reconciled = abs(polar_billed - local_expected) <= 1
-5. If !reconciled: alert. Common causes: events failed to push, FX drift on a re-push, manual
-   Polar credit memo.
+1. subscription.updated → detect cycle rollover (current_billing_period changed).
+2. usage = -SUM(usage amount_rappen) over the closing cycle.
+3. INSERT payg_cycle_summaries(cycle_start, cycle_end, local_usage, local_expected_bill=max(usage,1000),
+                               overage_charge=max(0, usage-1000)).
+4. Update user_billing cycle bounds.
+5. IF overage_charge > 0: POST one one-time charge to the subscription with
+      idempotency_key=overage_<cycle_id>; store paddle_overage_txn_id.
+6. When transaction.completed arrives for that cycle:
+      UPDATE payg_cycle_summaries SET paddle_transaction_id, paddle_billed_rappen,
+             reconciled = abs(paddle_billed - local_expected) <= 1
+7. If !reconciled: alert. Common causes: overage charge failed to post, FX drift, manual Paddle
+   credit/adjustment.
 ```
 
-### 11.4 Why this is post-paid (vs the earlier pre-paid sketch)
+### 11.3 Overage-charge reliability
 
-- Polar's metered + minimum-commit feature handles the `max(usage, CHF 5)` math natively.
-- One Polar product, no top-up packs, no balance ledger arithmetic.
-- Per-completion latency is unaffected: pushes are background; the user-facing 200 returns
-  immediately after the local ledger row is written.
+- The overage charge is the **only** PAYG call to Paddle, made once per cycle at rollover, so there
+  is no per-completion push queue to drain.
+- It is posted with a deterministic `idempotency_key = overage_<cycle_id>`, so a re-delivered
+  `subscription.updated` (or a retried job) never double-charges — Paddle returns the same charge.
+- If the charge fails transiently (5xx, timeout), the reconcile job retries with exponential
+  backoff; `paddle_overage_txn_id` stays null until it succeeds. A periodic backstop (every
+  5 minutes) re-attempts any cycle summary with `overage_charge_rappen > 0` and
+  `paddle_overage_txn_id IS NULL`.
+- If the charge fails permanently (4xx), the cycle summary is flagged with a `processing_error` and
+  an operator alert fires. The local ledger is still authoritative for margin reporting; only that
+  cycle's overage collection is affected, and an operator can backfill via a manual charge.
+- The user-facing `/complete` response is never blocked by anything in this section.
+
+### 11.4 Why minimum-commit-plus-overage (vs a meter or the earlier pre-paid sketch)
+
+- Paddle has no usage meter, so `max(usage, CHF 10)` can't be expressed by a metered price. The
+  recurring commit + one cycle-end one-time charge reproduces it exactly with primitives Paddle
+  does support.
+- No top-up packs, no balance ledger arithmetic, no per-request provider call.
+- Per-completion latency is unaffected: the user-facing 200 returns immediately after the local
+  ledger row is written; Paddle is touched only once per cycle.
 - The trade-off is that users can in theory accrue arbitrary in-cycle usage. The soft alert and
   fair-use monitoring in Section 14.11 handle this.
 
@@ -864,15 +883,15 @@ All endpoints prefixed `/api/v1/`. Authenticated via the existing session.
 ```json
 {
   "plan_type": "payg",
-  "polar_subscription_id": "sub_xxx",
+  "paddle_subscription_id": "sub_xxx",
   "cycle_start_at": "2026-06-01T00:00:00Z",
   "cycle_end_at":   "2026-07-01T00:00:00Z",
   "in_cycle_usage_chf": 3.42,
-  "min_commit_chf": 5.00,
-  "predicted_bill_chf": 5.00,
-  "predicted_bill_explanation": "Below the CHF 5.00 minimum — you'll be billed CHF 5.00 at cycle end.",
+  "min_commit_chf": 10.00,
+  "predicted_bill_chf": 10.00,
+  "predicted_bill_explanation": "Below the CHF 10.00 minimum — you'll be billed CHF 10.00 at cycle end.",
   "refund_eligible_until_at": "2026-08-01T00:00:00Z",
-  "manage_url": "https://polar.sh/customer-portal/...?token=..."
+  "manage_url": "https://paddle.com/customer-portal/...?token=..."
 }
 ```
 
@@ -918,24 +937,24 @@ Body:
 ```
 
 `business` is optional and only set when the user has ticked "Buying for a business" on the
-pricing page. When present, it is forwarded to Polar's checkout via `customer_billing_address` +
-`tax_id` so the resulting invoice carries the company details. We also mirror the fields onto the
-local `users` record for display in our dashboard.
+pricing page. When present, it is forwarded to Paddle as the customer's `business` (name + tax
+identifier) and `address` so the resulting invoice carries the company details. We also mirror the
+fields onto the local `users` record for display in our dashboard.
 
 Response:
 
 ```json
-{ "checkout_url": "https://polar.sh/...?session=..." }
+{ "checkout_url": "https://paddle.com/...?session=..." }
 ```
 
-The frontend redirects the user to `checkout_url`. After payment, Polar redirects the user back
+The frontend redirects the user to `checkout_url`. After payment, Paddle redirects the user back
 to our app and fires `subscription.created` to the webhook.
 
 ### 12.3 `POST /api/v1/billing/cancel`
 
-Body: empty. Cancels the active Polar subscription at period end. Response 204.
+Body: empty. Cancels the active Paddle subscription at period end. Response 204.
 
-(Alternative: skip this endpoint and link directly to Polar's hosted customer portal — see 13.4.)
+(Alternative: skip this endpoint and link directly to Paddle's hosted customer portal — see 13.4.)
 
 ### 12.4 `GET /api/v1/billing/transactions` (extend)
 
@@ -970,7 +989,7 @@ Authenticated via admin session. Drives Section 7.3.
 | `402 Payment Required` | `TRIAL_EXHAUSTED`  | `plan_type = 'trial'` and `balance < estimated_cost`.                  |
 | `403 Forbidden`        | `MODEL_INELIGIBLE` | Selected model not allowed for user's privacy tier.                    |
 
-PAYG users are **never** blocked for funds — usage accrues to the cycle invoice. Failed Polar
+PAYG users are **never** blocked for funds — usage accrues to the cycle invoice. Failed Paddle
 payment on a renewal causes a transition to `inactive`, which then 402s as `INACTIVE`.
 
 The 402 response includes a structured body so the client can show the right CTA without parsing
@@ -1002,9 +1021,9 @@ text:
 - On the next `/complete` that would deduct below 0, server returns 402 with
   `code = "TRIAL_EXHAUSTED"`.
 - The chat UI shows a modal: "Your free trial is used up. Pick a plan to keep chatting."
-    - Two buttons: **Pay-As-You-Go (CHF 5/mo + usage)** and **Unlimited (CHF 100/mo)**.
+    - Two buttons: **Pay-As-You-Go (CHF 10/mo + usage)** and **Unlimited (CHF 100/mo)**.
     - Annual offer surfaced beneath: **"Save CHF 200 with Unlimited Annual (CHF 1000/yr)"**.
-- Choosing a plan hits `/api/v1/billing/checkout` and redirects to Polar.
+- Choosing a plan hits `/api/v1/billing/checkout` and redirects to Paddle.
 
 ### 13.3 Billing dashboard
 
@@ -1012,29 +1031,29 @@ A single page at `/account/billing` showing:
 
 - Current plan + price + next renewal date.
 - **PAYG:** in-cycle usage prominently with a running total
-  ("CHF 3.42 used this cycle — billed CHF 5.00 on {cycle_end} as you're below the minimum"
+  ("CHF 3.42 used this cycle — billed CHF 10.00 on {cycle_end} as you're below the minimum"
   or "CHF 12.18 used this cycle — billed CHF 12.18 on {cycle_end}"). A progress bar against the
-  CHF 5.00 minimum is helpful for users who want to "get their money's worth" of the floor.
+  CHF 10.00 minimum is helpful for users who want to "get their money's worth" of the floor.
 - Current cycle usage breakdown (model × cost) with a per-row drill-down.
-- Recent transactions (latest 50). PAYG rows show `usage` only; Unlimited the same. Polar invoice
-  amounts surfaced from the matching `payg_cycle_summaries.polar_billed_rappen`.
+- Recent transactions (latest 50). PAYG rows show `usage` only; Unlimited the same. Paddle invoice
+  amounts surfaced from the matching `payg_cycle_summaries.paddle_billed_rappen`.
 - "Buying for a business?" toggle — collects company name + VAT ID, persisted on `users` and
-  forwarded to Polar on the next checkout/subscription update.
-- "Manage subscription / payment method" → link to Polar's customer portal (for card updates,
+  forwarded to Paddle on the next checkout/subscription update.
+- "Manage subscription / payment method" → link to Paddle's customer portal (for card updates,
   invoice downloads, etc.).
 - "Switch plan" CTA → opens checkout for the other plan.
 - "Request refund" link (visible only inside the 60-day window).
 
-### 13.4 Polar customer portal
+### 13.4 Paddle customer portal
 
-We rely on Polar's hosted customer portal for:
+We rely on Paddle's hosted customer portal for:
 
 - Updating payment method.
 - Downloading invoices.
 - Self-serve cancellation.
 
-The portal URL is generated server-side on each `GET /api/v1/billing` call (Polar issues short-
-lived tokens). We do not embed it; we link out.
+The portal URL is generated server-side on each `GET /api/v1/billing` call via Paddle's
+customer-portal-sessions API (`POST /customer-portal-sessions`). We do not embed it; we link out.
 
 ### 13.5 Marketing wording
 
@@ -1052,32 +1071,32 @@ lived tokens). We do not embed it; we link out.
 
 ## 14. Failure Modes & Edge Cases
 
-### 14.1 Polar webhook is delayed / never arrives
+### 14.1 Paddle webhook is delayed / never arrives
 
-- Nightly job re-checks: for every user with `polar_cycle_end_at < now() - 1h`, attempt to fetch
-  the latest subscription state from Polar's API and reconcile.
-- If Polar reports the subscription canceled but we still think it's active for > 24h, alert.
+- Nightly job re-checks: for every user with `paddle_cycle_end_at < now() - 1h`, attempt to fetch
+  the latest subscription state from Paddle's API and reconcile.
+- If Paddle reports the subscription canceled but we still think it's active for > 24h, alert.
 
 ### 14.2 Reconciliation
 
 A weekly job:
 
 ```sql
--- All Polar subscriptions Polar thinks are active
--- vs. all user_billing rows we think have an active polar_subscription_id
+-- All Paddle subscriptions Paddle thinks are active
+-- vs. all user_billing rows we think have an active paddle_subscription_id
 -- Symmetric diff -> alert.
 ```
 
-This catches: orphaned Polar subscriptions (Polar active, we don't know about it), and
-optimistic-locked rows (we think active, Polar canceled).
+This catches: orphaned Paddle subscriptions (Paddle active, we don't know about it), and
+optimistic-locked rows (we think active, Paddle canceled).
 
 ### 14.3 User deletes their account
 
-- Drain any pending PAYG meter-event pushes before issuing the cancellation, so Polar's final
-  invoice reflects everything the user actually used.
-- Cancel the active Polar subscription immediately (revoke), null out `polar_subscription_id`.
-  Polar still issues the final invoice for in-cycle usage.
-- Keep `balance_transactions`, `payg_cycle_summaries`, `refunds`, `polar_events` for audit.
+- Post the final PAYG overage charge for usage accrued in the open cycle before issuing the
+  cancellation, so Paddle's final invoice reflects everything the user actually used.
+- Cancel the active Paddle subscription immediately, null out `paddle_subscription_id`.
+  Paddle still issues the final transaction for the commit + overage.
+- Keep `balance_transactions`, `payg_cycle_summaries`, `refunds`, `paddle_events` for audit.
   `users` row may be soft-deleted depending on existing auth design.
 
 ### 14.4 FX rate fetch fails on a critical day
@@ -1101,40 +1120,40 @@ optimistic-locked rows (we think active, Polar canceled).
 - For **PAYG**, the `usage` insert is independent per request; concurrency only matters for the
   cycle-summary read-modify-write at rollover, which happens once per cycle per user.
 
-### 14.7 Polar meter event push failures
+### 14.7 PAYG overage charge failures
 
-- Transient failure (5xx, timeout): the queue worker retries with exponential backoff. The local
-  `usage` row is the source of truth; nothing user-visible is affected.
-- Permanent failure (4xx other than 409 conflict): row flagged with `processing_error`, an alert
-  fires. The cycle summary's `events_failed_count` increments at rollover; operator decides
-  whether to backfill via Polar's bulk-import API or absorb the loss for that cycle.
-- Polar deduplicates on `idempotency_key = event_id`, so re-pushes never double-count.
-- A startup sweep re-enqueues every PAYG `usage` row with `polar_meter_event_id IS NULL` for the
-  last 30 days, plus a periodic backstop every 5 minutes.
+- Transient failure (5xx, timeout): the reconcile job retries the one-time charge with exponential
+  backoff. The local `usage` row and cycle summary are the source of truth; nothing user-visible is
+  affected, and `paddle_overage_txn_id` stays null until the charge succeeds.
+- Permanent failure (4xx): the cycle summary is flagged with `processing_error` and an alert fires.
+  An operator decides whether to post the charge manually or absorb the loss for that cycle.
+- The charge uses `idempotency_key = overage_<cycle_id>`, so retries never double-charge.
+- A periodic backstop (every 5 minutes) re-attempts any cycle summary with
+  `overage_charge_rappen > 0` and `paddle_overage_txn_id IS NULL`.
 
 ### 14.8 User signs up, never uses, never pays
 
 - They stay on `trial` until they exhaust seed credit (which they may never do). No webhook fires.
   This is fine. No data scrubbing required by this spec.
 
-### 14.9 What if Polar tax rate retroactively changes for a region?
+### 14.9 What if Paddle tax rate retroactively changes for a region?
 
-- Polar handles this on their invoice. Our internal accounting is net-of-tax. No action required.
+- Paddle handles this on their invoice. Our internal accounting is net-of-tax. No action required.
 
-### 14.10 Fallback if Polar can't express minimum-commit-against-metered natively
+### 14.10 Alternative PAYG charge shape (zero base)
 
-If at integration time Polar's product builder cannot directly express
-"CHF 5/cycle minimum commit + CHF 0.01/unit metered with commit absorbed into usage", the
-fallback is:
+The primary shape (Section 3.2 / 11) is a **CHF 10.00 recurring commit + a cycle-end one-time
+overage charge** for usage above the commit. An equivalent alternative, if it fits Paddle's
+catalogue or subscription-lifecycle billing better:
 
-- Configure the product as **pure metered, CHF 0.01/unit, no base**.
-- At cycle close (driven by `subscription.updated` rollover), if `local_usage_rappen < 500`,
-  push one final synthetic event of `(500 - local_usage_rappen)` rappen to top the user up to the
-  minimum. Use a distinguished `idempotency_key` like `min_commit_<cycle_id>` so the top-off
-  cannot be replayed.
+- Configure the recurring price at **CHF 0.00** (or omit a recurring base), and at cycle close
+  post a **single one-time charge for the full cycle amount** = `max(local_usage_rappen, 1000)`
+  rappen, using `idempotency_key = cycle_<cycle_id>` so it cannot be double-billed.
 
-End result for the customer is identical: invoice = `max(usage, CHF 5)`. The reconciliation step
-in Section 11.3 handles either configuration unchanged.
+End result for the customer is identical: invoice = `max(usage, CHF 10)`. The reconciliation step in
+Section 11.2 handles either shape unchanged — only `overage_charge_rappen` / `paddle_billed_rappen`
+bookkeeping differs. Decide which shape at integration time based on how Paddle bills one-time
+charges relative to the renewal transaction.
 
 ### 14.11 Soft in-cycle spending alert
 
@@ -1155,13 +1174,13 @@ A lightweight protection without a hard block:
 
 ## 15. Tax & Compliance Notes
 
-- **Polar.sh is Merchant of Record.** They collect VAT / sales tax in jurisdictions where required
+- **Paddle is Merchant of Record.** They collect VAT / sales tax in jurisdictions where required
   and remit to authorities. We do not handle tax registration, returns, or invoicing ourselves.
 - All prices in our UI, our database, and this spec are **net of tax**. The customer's actual
-  payment includes Polar's tax surcharge at checkout — we do not see or record it.
-- Polar invoices are the legal record. Our `polar_events` table stores enough metadata
-  (order IDs, amounts net of tax) to reconcile against Polar's reports.
-- Switzerland VAT (8.1% standard) applies to CH customers; Polar handles this automatically. Our
+  payment includes Paddle's tax surcharge at checkout — we do not see or record it.
+- Paddle invoices are the legal record. Our `paddle_events` table stores enough metadata
+  (order IDs, amounts net of tax) to reconcile against Paddle's reports.
+- Switzerland VAT (8.1% standard) applies to CH customers; Paddle handles this automatically. Our
   internal cost analysis ignores VAT.
 
 ---
@@ -1191,31 +1210,31 @@ existing test deployment isn't broken mid-rollout.
 | B2.4 | Trial-exhaustion modal in frontend                                               | frontend           |
 | B2.5 | Integration tests for trial → inactive transition                                | backend tests      |
 
-### Phase B3 — Polar integration & subscriptions
+### Phase B3 — Paddle integration & subscriptions
 
-| #    | Task                                                                                 | Area                |
-| ---- | ------------------------------------------------------------------------------------ | ------------------- |
-| B3.1 | Create Polar products (PAYG metered, unlimited M/Y) and `cognos_usage_rappen` meter  | ops                 |
-| B3.2 | `internal/polar/` client: checkout, meter ingest, order lookup, refund, portal       | `polar`             |
-| B3.3 | `trial_seed_overrides` table + admin CLI to stage overrides                          | `store`, `cmd`      |
-| B3.4 | `business_*` fields on `users`; checkout endpoint forwards them to Polar             | `handler`, frontend |
-| B3.5 | `POST /api/v1/billing/checkout` + frontend redirect                                  | `handler`, frontend |
-| B3.6 | `POST /webhooks/polar`: HMAC verify + raw write to `polar_events`                    | `handler`           |
-| B3.7 | Domain handlers for `subscription.{created,updated,canceled,revoked,active}`         | `billing`           |
-| B3.8 | Reconciliation job (Section 14.2)                                                    | `jobs`              |
+| #    | Task                                                                                         | Area                |
+| ---- | -------------------------------------------------------------------------------------------- | ------------------- |
+| B3.1 | Create Paddle prices (PAYG commit + overage, unlimited M/Y)                                  | ops                 |
+| B3.2 | `internal/paddle/` client: checkout, subscription charge, transaction lookup, refund, portal | `paddle`            |
+| B3.3 | `trial_seed_overrides` table + admin CLI to stage overrides                                  | `store`, `cmd`      |
+| B3.4 | `business_*` fields on `users`; checkout endpoint forwards them to Paddle                    | `handler`, frontend |
+| B3.5 | `POST /api/v1/billing/checkout` + frontend redirect                                          | `handler`, frontend |
+| B3.6 | `POST /webhooks/paddle`: `Paddle-Signature` verify + raw write to `paddle_events`            | `handler`           |
+| B3.7 | Domain handlers for `subscription.{created,activated,updated,canceled,past_due}`             | `billing`           |
+| B3.8 | Reconciliation job (Section 14.2)                                                            | `jobs`              |
 
-### Phase B4 — PAYG metered usage & cycle reconciliation
+### Phase B4 — PAYG usage accrual & cycle reconciliation
 
-| #    | Task                                                                                  | Area             |
-| ---- | ------------------------------------------------------------------------------------- | ---------------- |
-| B4.1 | Add `polar_meter_event_id`, `polar_pushed_at` to `balance_transactions`               | `store`          |
-| B4.2 | `internal/billing/meter_push.go` — async queue + worker + backoff                     | `billing`        |
-| B4.3 | Startup + 5-minute sweep for un-pushed PAYG usage rows                                | `jobs`           |
-| B4.4 | `payg_cycle_summaries` table + write on `subscription.updated` rollover               | `store`          |
-| B4.5 | `order.created` handler → fill `polar_billed_rappen`, set `reconciled`                | `billing`        |
-| B4.6 | Soft-alert email/notice at `BILLING_PAYG_SOFT_ALERT_RAPPEN`                           | `billing`        |
-| B4.7 | `order.refunded` handler writing `refund` row                                         | `billing`        |
-| B4.8 | Integration tests: zero usage cycle, sub-min, over-min, push retry, drift alert       | backend tests    |
+| #    | Task                                                                                     | Area          |
+| ---- | ---------------------------------------------------------------------------------------- | ------------- |
+| B4.1 | Local `usage`-row accrual for PAYG in `/complete` (no per-request Paddle call)           | `handler`     |
+| B4.2 | `internal/billing/overage_charge.go` — cycle-end one-time charge + idempotency + backoff | `billing`     |
+| B4.3 | 5-minute backstop for cycle summaries with un-posted overage charges                     | `jobs`        |
+| B4.4 | `payg_cycle_summaries` table + write + overage charge on `subscription.updated` rollover | `store`       |
+| B4.5 | `transaction.completed` handler → fill `paddle_billed_rappen`, set `reconciled`          | `billing`     |
+| B4.6 | Soft-alert email/notice at `BILLING_PAYG_SOFT_ALERT_RAPPEN`                              | `billing`     |
+| B4.7 | `adjustment.created` handler writing `refund` row                                        | `billing`     |
+| B4.8 | Integration tests: zero usage cycle, sub-min, over-min, overage retry, drift alert       | backend tests |
 
 ### Phase B5 — Refunds & admin
 
@@ -1249,23 +1268,23 @@ existing test deployment isn't broken mid-rollout.
 All major decisions have been confirmed. The list below records them for the record so future
 contributors don't have to ask again.
 
-| #   | Decision                                        | Resolution                                                                                                                                       |
-| --- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | Currency                                        | **CHF, end-to-end.** Being Swiss is part of the brand. EUR fallback only if Polar doesn't yet support CHF subscriptions for our org.             |
-| 2   | Trial seed amount                               | **CHF 2.00** default (`BILLING_TRIAL_SEED_RAPPEN=200`), with **per-user override** via the `trial_seed_overrides` table for marketing campaigns. |
-| 3   | One refund per user lifetime                    | **Yes.** Enforced via `users.refund_used`.                                                                                                       |
-| 4   | Refunds outside the 60-day window               | **None**, except manual goodwill exceptions via `cognos refund --force`.                                                                         |
-| 5   | PAYG mechanism                                  | **Post-paid metered via Polar**: push one usage event per completion; Polar bills `max(sum, CHF 5)` at cycle end. Local ledger kept in parallel. |
-| 6   | Fair-use threshold (Unlimited)                  | CHF 200/mo rolling 30-day user-cost. Internal alert only — not published.                                                                        |
-| 7   | Unlimited monthly → annual switch               | End-of-cycle, no pro-rata, no discount carried over.                                                                                             |
-| 8   | 60-day window after plan switch                 | Carries forward against the **original** subscription start, not the new one.                                                                    |
-| 9   | VAT display                                     | All UI shows excl. tax with "Tax added at checkout" note.                                                                                        |
-| 10  | Polar product shape for PAYG                    | Single recurring subscription with CHF 5/mo minimum commit + CHF 0.01/unit metered (commit absorbed into usage). Fallback shape in §14.10.       |
-| 11  | Discount on monthly-to-annual mid-cycle upgrade | **No.** End-of-cycle switch, no pro-rata, no carry-over credit.                                                                                  |
-| 12  | 60-day guarantee on Unlimited annual _renewals_ | **No.** Initial purchase only.                                                                                                                   |
-| 13  | Business invoicing (company name + VAT ID)      | **Yes.** Surfaced at checkout via a "Buying for a business?" toggle; forwarded to Polar's `customer_billing_address` + `tax_id`.                 |
-| 14  | Marketing currency consistency                  | CHF everywhere — pricing page, dashboard, invoices. No auto-localised pricing.                                                                   |
-| 15  | Admin tooling depth                             | CLI + minimal admin endpoint for now. Richer admin UI is its own follow-up spec when usage demands it.                                           |
+| #   | Decision                                        | Resolution                                                                                                                                                                                      |
+| --- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Currency                                        | **CHF, end-to-end.** Being Swiss is part of the brand. EUR fallback only if Paddle doesn't yet support CHF subscriptions for our account.                                                       |
+| 2   | Trial seed amount                               | **CHF 2.00** default (`BILLING_TRIAL_SEED_RAPPEN=200`), with **per-user override** via the `trial_seed_overrides` table for marketing campaigns.                                                |
+| 3   | One refund per user lifetime                    | **Yes.** Enforced via `users.refund_used`.                                                                                                                                                      |
+| 4   | Refunds outside the 60-day window               | **None**, except manual goodwill exceptions via `cognos refund --force`.                                                                                                                        |
+| 5   | PAYG mechanism                                  | **CHF 10/mo min commit + cycle-end overage charge.** Usage accrues locally (Paddle has no meter); one one-time charge per cycle for usage above the commit, so Paddle bills `max(sum, CHF 10)`. |
+| 6   | Fair-use threshold (Unlimited)                  | CHF 200/mo rolling 30-day user-cost. Internal alert only — not published.                                                                                                                       |
+| 7   | Unlimited monthly → annual switch               | End-of-cycle, no pro-rata, no discount carried over.                                                                                                                                            |
+| 8   | 60-day window after plan switch                 | Carries forward against the **original** subscription start, not the new one.                                                                                                                   |
+| 9   | VAT display                                     | All UI shows excl. tax with "Tax added at checkout" note.                                                                                                                                       |
+| 10  | Paddle product shape for PAYG                   | Recurring CHF 10/mo commit price + a one-time overage price charged at cycle end (Paddle has no usage meter). Zero-base alternative in §14.10.                                                  |
+| 11  | Discount on monthly-to-annual mid-cycle upgrade | **No.** End-of-cycle switch, no pro-rata, no carry-over credit.                                                                                                                                 |
+| 12  | 60-day guarantee on Unlimited annual _renewals_ | **No.** Initial purchase only.                                                                                                                                                                  |
+| 13  | Business invoicing (company name + VAT ID)      | **Yes.** Surfaced at checkout via a "Buying for a business?" toggle; forwarded to Paddle as the customer `business` + `address` + `tax_id`.                                                     |
+| 14  | Marketing currency consistency                  | CHF everywhere — pricing page, dashboard, invoices. No auto-localised pricing.                                                                                                                  |
+| 15  | Admin tooling depth                             | CLI + minimal admin endpoint for now. Richer admin UI is its own follow-up spec when usage demands it.                                                                                          |
 
 ### Items deferred to future specs
 
