@@ -1,3 +1,4 @@
+import { DialogRef } from '@angular/cdk/dialog';
 import { Component, computed, inject } from '@angular/core';
 import {
   AbstractControl,
@@ -6,6 +7,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import {
   CognosButtonComponent,
@@ -163,13 +165,22 @@ const validateUnlockForm = (
             }}</span>
           }
 
-          <cog-button appearance="primary" type="submit" [disabled]="vaultForm.invalid">
-            @if (vaultService.isNewKeyPair()) {
-              Create encrypted backup
-            } @else {
-              Unlock encrypted backup
-            }
-          </cog-button>
+          <div class="vault-password-dialog__actions">
+            <cog-button appearance="subtle" type="button" (click)="logOut()">
+              Log out
+            </cog-button>
+            <cog-button
+              appearance="primary"
+              type="submit"
+              [disabled]="vaultForm.invalid"
+            >
+              @if (vaultService.isNewKeyPair()) {
+                Create encrypted backup
+              } @else {
+                Unlock encrypted backup
+              }
+            </cog-button>
+          </div>
         </form>
       </div>
     </cog-dialog-surface>
@@ -320,12 +331,21 @@ const validateUnlockForm = (
       line-height: var(--cog-lh-caption);
       text-wrap: pretty;
     }
+
+    .vault-password-dialog__actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: var(--cog-space-100);
+    }
   `,
 })
 export class VaultPasswordDialogComponent {
   readonly vaultService = inject(VaultService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(CognosToastService);
+  private readonly router = inject(Router);
+  private readonly dialogRef = inject(DialogRef, { optional: true });
 
   readonly title = computed(() => {
     if (this.vaultService.isNewKeyPair()) {
@@ -411,6 +431,14 @@ export class VaultPasswordDialogComponent {
     } finally {
       document.body.removeChild(textarea);
     }
+  }
+
+  // Escape hatch when the device can't be unlocked (e.g. the encrypted backup
+  // no longer exists). Closes the dialog and routes to the logout flow, which
+  // clears the session and local vault state.
+  logOut() {
+    this.dialogRef?.close();
+    void this.router.navigate(['', 'auth', 'logout']);
   }
 
   submit() {

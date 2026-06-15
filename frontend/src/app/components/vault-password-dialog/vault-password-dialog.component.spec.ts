@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
 
 import { CognosToastService } from '@cognos/ui-angular';
 
@@ -37,6 +38,7 @@ describe('VaultPasswordDialogComponent', () => {
     await TestBed.configureTestingModule({
       imports: [VaultPasswordDialogComponent],
       providers: [
+        provideRouter([]),
         {
           provide: VaultService,
           useValue: {
@@ -67,6 +69,23 @@ describe('VaultPasswordDialogComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Incorrect backup password');
+  });
+
+  it('offers a log out action that routes to the logout flow', async () => {
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const logoutButton = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    ).find((el) => (el as HTMLElement).textContent?.trim() === 'Log out') as
+      | HTMLButtonElement
+      | undefined;
+
+    expect(logoutButton).toBeTruthy();
+
+    component.logOut();
+
+    expect(navigate).toHaveBeenCalledWith(['', 'auth', 'logout']);
   });
 
   it('shows a locked title when the account was explicitly locked', () => {
