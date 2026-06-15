@@ -1,7 +1,8 @@
-import { Injectable, signal } from "@angular/core";
-import type { CognosIconName } from "@cognos/ui/icons";
+import { Injectable, signal } from '@angular/core';
 
-export type CognosToastTone = "success" | "info" | "danger";
+import type { CognosIconName } from '@cognos/ui/icons';
+
+export type CognosToastTone = 'success' | 'info' | 'danger';
 
 export type CognosToastAction = {
   label: string;
@@ -18,24 +19,24 @@ export type CognosToastInput = {
 };
 
 export type CognosToast = Required<
-  Pick<CognosToastInput, "title" | "tone" | "icon" | "duration">
+  Pick<CognosToastInput, 'title' | 'tone' | 'icon' | 'duration'>
 > &
-  Pick<CognosToastInput, "msg" | "action"> & {
+  Pick<CognosToastInput, 'msg' | 'action'> & {
     id: string;
   };
 
-@Injectable({ providedIn: "root" })
+@Injectable({ providedIn: 'root' })
 export class CognosToastService {
   private readonly itemsState = signal<CognosToast[]>([]);
   readonly items = this.itemsState.asReadonly();
 
   notify(input: CognosToastInput): string {
     const toast: CognosToast = {
-      id: crypto.randomUUID(),
+      id: createToastId(),
       title: input.title,
       msg: input.msg,
-      tone: input.tone ?? "success",
-      icon: input.icon ?? defaultIconForTone(input.tone ?? "success"),
+      tone: input.tone ?? 'success',
+      icon: input.icon ?? defaultIconForTone(input.tone ?? 'success'),
       action: input.action,
       duration: input.duration ?? 3400,
     };
@@ -56,13 +57,24 @@ export class CognosToastService {
   }
 }
 
+// A toast id only needs to be unique within the page, so fall back to a random
+// string when crypto.randomUUID is unavailable — it is a secure-context-only API
+// and a toast must never throw (e.g. on a plain-http dev origin).
+function createToastId(): string {
+  const cryptoRef = globalThis.crypto;
+  if (typeof cryptoRef?.randomUUID === 'function') {
+    return cryptoRef.randomUUID();
+  }
+  return `toast-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 function defaultIconForTone(tone: CognosToastTone): CognosIconName {
   switch (tone) {
-    case "danger":
-      return "shield-x";
-    case "info":
-      return "info";
+    case 'danger':
+      return 'shield-x';
+    case 'info':
+      return 'info';
     default:
-      return "shield-check";
+      return 'shield-check';
   }
 }
