@@ -88,6 +88,10 @@ export class PlanBillingComponent {
   // --- Derived view state -------------------------------------------------
 
   protected readonly status = computed(() => this.billing()?.status ?? 'inactive');
+
+  // A Paddle customer only exists once the user has checked out, so the portal
+  // (manage card / invoices) is only reachable off the trial.
+  protected readonly hasBillingAccount = computed(() => this.status() !== 'trial');
   protected readonly isPayg = computed(
     () =>
       this.billing()?.plan_type === 'payg' ||
@@ -213,6 +217,12 @@ export class PlanBillingComponent {
 
   protected goToPlans(): void {
     void this._router.navigate(['/pricing']);
+  }
+
+  // Open the Paddle customer portal in a new tab — 'payment' deep-links to the
+  // card form, 'overview' lands on invoices + receipts.
+  protected openPortal(target: 'overview' | 'payment'): void {
+    this._billing.openPortal(target);
   }
 
   protected cancel(): void {

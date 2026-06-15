@@ -1,15 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   computed,
   inject,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-
-import { switchMap, take, timer } from 'rxjs';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import {
   CognosButtonComponent,
@@ -22,15 +18,11 @@ import { BillingService } from '@app/services/billing.service';
 
 type BillingInterval = 'monthly' | 'yearly';
 
-// How long to wait for the subscription.created webhook before telling the user
-// it's taking longer than usual. ~100s at a cache-warm 2.5s cadence.
-const ACTIVATION_POLL_INTERVAL_MS = 2500;
-const ACTIVATION_POLL_MAX_ATTEMPTS = 40;
-
 // AccountBillingComponent is the pricing / "keep going" page. It is where every
 // locked-chat surface points. Plan CTAs start a Paddle checkout via
-// BillingService; after the redirect back, ?status=activating drives the poll
-// that waits for the subscription webhook before returning the user to chat.
+// BillingService (Paddle.js overlay, or a hosted-checkout redirect fallback).
+// The activation poll — shared with overlay completion — lives in the service;
+// ?status=activating (set on the redirect return) kicks it off here.
 @Component({
   selector: 'app-pricing',
   standalone: true,
@@ -48,11 +40,11 @@ const ACTIVATION_POLL_MAX_ATTEMPTS = 40;
         Back to your chats
       </a>
 
-      @if (activating()) {
+      @if (billing.activating()) {
         <section class="pricing__activating" role="status">
           <cog-icon name="loader" [size]="28" tone="brand" />
           <h1 class="pricing__title">Activating your plan…</h1>
-          @if (activationSlow()) {
+          @if (billing.activationSlow()) {
             <p class="pricing__subtitle">
               This is taking longer than usual. Your plan will appear here as soon as
               the payment is confirmed — no need to pay again.
@@ -249,47 +241,15 @@ const ACTIVATION_POLL_MAX_ATTEMPTS = 40;
 })
 export class PricingComponent {
   private readonly _route = inject(ActivatedRoute);
-  private readonly _router = inject(Router);
-  private readonly _destroyRef = inject(DestroyRef);
   public readonly billing = inject(BillingService);
 
   readonly interval = signal<BillingInterval>('monthly');
-  // True while we wait (post-Paddle redirect) for the plan to go live.
-  readonly activating = signal(false);
-  // True once the poll gives up — the plan may still be settling server-side.
-  readonly activationSlow = signal(false);
 
   constructor() {
+    // On the redirect return from a hosted checkout, kick off the shared poll.
     if (this._route.snapshot.queryParamMap.get('status') === 'activating') {
-      this.startActivationPoll();
+      this.billing.pollActivation();
     }
-  }
-
-  // After checkout Paddle returns the user here; the subscription.created
-  // webhook lands asynchronously, so poll the plan state until it flips to a
-  // paid plan, then drop the user back into the chat.
-  private startActivationPoll(): void {
-    this.activating.set(true);
-    timer(0, ACTIVATION_POLL_INTERVAL_MS)
-      .pipe(
-        take(ACTIVATION_POLL_MAX_ATTEMPTS),
-        switchMap(() => this.billing.fetchState()),
-        takeUntilDestroyed(this._destroyRef),
-      )
-      .subscribe({
-        next: (state) => {
-          if (state.plan_type === 'payg' || state.plan_type === 'unlimited') {
-            this.activating.set(false);
-            void this._router.navigate(['/']);
-          }
-        },
-        complete: () => {
-          // Ran out of attempts without a paid plan landing.
-          if (this.activating()) {
-            this.activationSlow.set(true);
-          }
-        },
-      });
   }
 
   protected readonly paygFeatures = [

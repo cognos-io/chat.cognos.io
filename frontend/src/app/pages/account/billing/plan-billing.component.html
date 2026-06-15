@@ -144,8 +144,14 @@
           <cog-icon name="credit-card" [size]="18" tone="text-subtle" />
           Payment method
         </span>
+        @if (hasBillingAccount()) {
+          <cog-button appearance="default" (click)="openPortal('payment')">
+            Update
+          </cog-button>
+        }
       </header>
-      <!-- Card brand/last4 + Update appear here once Paddle card data is wired. -->
+      <!-- Card brand/last4 appear here once Paddle card data is wired; until
+           then "Update" opens the portal to add/manage a card. -->
       <div class="pb__payment-card">
         <span class="pb__payment-badge" aria-hidden="true">
           <cog-icon name="credit-card" [size]="18" tone="current" />
@@ -165,7 +171,15 @@
   <!-- Invoices -->
   <section class="pb__card pb__invoices">
     <header class="pb__card-head">
-      <span class="pb__card-title">Invoices</span>
+      <span class="pb__card-title">
+        <cog-icon name="file-text" [size]="18" tone="text-subtle" />
+        Invoices
+      </span>
+      @if (hasBillingAccount()) {
+        <cog-button appearance="default" icon="link" (click)="openPortal('overview')">
+          Open Paddle portal
+        </cog-button>
+      }
     </header>
     <p class="pb__invoices-note">
       Your invoices and VAT receipts are available in your Paddle portal.

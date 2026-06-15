@@ -9,6 +9,7 @@ import {
   BillingApiResponse,
   CheckoutRequest,
   CheckoutResponse,
+  PortalResponse,
   UsageResponse,
 } from '@app/interfaces/billing';
 import { ConversationRecord } from '@app/interfaces/conversation';
@@ -399,6 +400,14 @@ export class CognosApiService {
         business: request.business,
         return_url: request.returnUrl,
       },
+      { headers: this.authHeaders() },
+    );
+  }
+
+  createPortalSession(): Observable<PortalResponse> {
+    return this._http.post<PortalResponse>(
+      `${this._baseUrl}/api/v1/billing/portal`,
+      {},
       { headers: this.authHeaders() },
     );
   }

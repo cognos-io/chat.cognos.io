@@ -22,7 +22,17 @@ export interface CheckoutRequest {
 }
 
 export interface CheckoutResponse {
+  // Paddle transaction id for the Paddle.js overlay; checkout_url is the
+  // hosted-page fallback when the overlay can't be used.
+  transaction_id?: string;
   checkout_url: string;
+}
+
+// PortalResponse is the `POST /api/v1/billing/portal` payload: authenticated
+// Paddle customer-portal links to open in a new tab (never stored).
+export interface PortalResponse {
+  overview_url: string;
+  update_payment_url?: string;
 }
 
 export type BillingStatus = 'trial' | 'active' | 'cancels_soon' | 'inactive';

@@ -1,16 +1,25 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 
-import { Observable, tap } from 'rxjs';
+import { Observable, switchMap, take, tap, timer } from 'rxjs';
 
 import {
   BillingApiResponse,
   BillingState,
   CheckoutPlan,
+  CheckoutResponse,
   CompletionBillingRestriction,
 } from '@app/interfaces/billing';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ErrorService } from '@app/services/error.service';
+import { PaddleService } from '@app/services/paddle.service';
+
+// How long to wait for the subscription.created webhook before telling the user
+// it's taking longer than usual. ~100s at a cache-warm 2.5s cadence.
+const ACTIVATION_POLL_INTERVAL_MS = 2500;
+const ACTIVATION_POLL_MAX_ATTEMPTS = 40;
 
 // BillingService is the frontend's single source of truth for the user's plan
 // state. It backs the trial pill/credit card, the locked-chat surfaces, and the
@@ -24,9 +33,13 @@ export class BillingService {
   private readonly _api = inject(CognosApiService);
   private readonly _document = inject(DOCUMENT);
   private readonly _errors = inject(ErrorService);
+  private readonly _paddle = inject(PaddleService);
+  private readonly _router = inject(Router);
 
   private readonly _state = signal<BillingState | null>(null);
   private readonly _checkoutPending = signal(false);
+  private readonly _activating = signal(false);
+  private readonly _activationSlow = signal(false);
 
   // Set when a /complete call is rejected for billing reasons this session.
   // A used-up trial keeps plan_type='trial' with a near-zero (but not always
@@ -57,9 +70,19 @@ export class BillingService {
 
   constructor() {
     this.refresh();
+
+    // The Paddle.js overlay completes in-page (no redirect back), so reuse the
+    // activation poll the moment checkout completes.
+    this._paddle.checkoutCompleted$
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.pollActivation());
   }
 
   readonly checkoutPending = this._checkoutPending.asReadonly();
+  // True while we wait for the subscription webhook to flip us to a paid plan.
+  readonly activating = this._activating.asReadonly();
+  // True once the poll gives up — the plan may still be settling server-side.
+  readonly activationSlow = this._activationSlow.asReadonly();
 
   // fetchState fetches the authoritative plan state and syncs the signal. The
   // activation poll subscribes to this; `refresh` is the fire-and-forget form.
@@ -85,9 +108,10 @@ export class BillingService {
     });
   }
 
-  // beginCheckout creates a Paddle checkout for the plan and redirects the
-  // browser to it. Paddle returns the user to the pricing page with
-  // ?status=activating so the activation poll can take over.
+  // beginCheckout creates a Paddle transaction for the plan, then opens the
+  // Paddle.js overlay for it. When the overlay isn't configured we fall back to
+  // a full redirect to the hosted checkout; Paddle returns the user to the
+  // pricing page with ?status=activating so the poll can take over.
   beginCheckout(plan: CheckoutPlan): void {
     if (this._checkoutPending()) {
       return;
@@ -101,12 +125,87 @@ export class BillingService {
         returnUrl: `${origin}/pricing?status=activating`,
       })
       .subscribe({
-        next: ({ checkout_url }) => {
-          this._document.location.href = checkout_url;
+        next: (res) => {
+          void this._launchCheckout(res);
         },
         error: () => {
           this._checkoutPending.set(false);
           this._errors.alert('Could not start checkout. Please try again.');
+        },
+      });
+  }
+
+  // _launchCheckout prefers the in-page Paddle overlay (no navigation); on
+  // completion the constructor's subscription starts the activation poll. If the
+  // overlay can't open it falls back to the hosted checkout page.
+  private async _launchCheckout(res: CheckoutResponse): Promise<void> {
+    if (res.transaction_id && this._paddle.enabled) {
+      const opened = await this._paddle.openCheckout(res.transaction_id);
+      if (opened) {
+        this._checkoutPending.set(false);
+        return;
+      }
+    }
+    this._document.location.href = res.checkout_url;
+  }
+
+  // openPortal opens an authenticated Paddle customer-portal link in a new tab.
+  // The tab is opened synchronously (within the click) to dodge pop-up blockers,
+  // then pointed at the link once the backend mints it. 'payment' deep-links to
+  // the card form when available.
+  openPortal(target: 'overview' | 'payment' = 'overview'): void {
+    const view = this._document.defaultView;
+    const tab = view?.open('about:blank', '_blank') ?? null;
+    if (tab) {
+      tab.opener = null;
+    }
+
+    this._api.createPortalSession().subscribe({
+      next: (res) => {
+        const url =
+          target === 'payment' && res.update_payment_url
+            ? res.update_payment_url
+            : res.overview_url;
+        if (tab) {
+          tab.location.href = url;
+        } else {
+          view?.open(url, '_blank');
+        }
+      },
+      error: () => {
+        tab?.close();
+        this._errors.alert('Could not open the billing portal. Please try again.');
+      },
+    });
+  }
+
+  // pollActivation waits for the subscription webhook to flip the plan to a paid
+  // tier, then drops the user back into chat. Reused by the pricing page (after
+  // a hosted-checkout redirect) and by overlay completion. Concurrent calls are
+  // ignored so the two paths never double-poll.
+  pollActivation(): void {
+    if (this._activating()) {
+      return;
+    }
+    this._activating.set(true);
+    this._activationSlow.set(false);
+
+    timer(0, ACTIVATION_POLL_INTERVAL_MS)
+      .pipe(
+        take(ACTIVATION_POLL_MAX_ATTEMPTS),
+        switchMap(() => this.fetchState()),
+      )
+      .subscribe({
+        next: (state) => {
+          if (state.plan_type === 'payg' || state.plan_type === 'unlimited') {
+            this._activating.set(false);
+            void this._router.navigate(['/']);
+          }
+        },
+        complete: () => {
+          if (this._activating()) {
+            this._activationSlow.set(true);
+          }
         },
       });
   }
