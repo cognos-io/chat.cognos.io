@@ -69,13 +69,6 @@
   gap: var(--cog-space-050);
 }
 
-.chat-shell__nav-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--cog-space-050);
-}
-
 // Sidebar/drawer footer: account actions + (trial card) + profile, stacked.
 .chat-shell__footer-host,
 .chat-shell__drawer-footer {

@@ -74,23 +74,7 @@
 </ng-template>
 
 <ng-template #navActions>
-  <div class="chat-shell__nav-actions">
-    <cog-button appearance="subtle" type="button" (click)="onOpenHelpDialog()">
-      Help
-    </cog-button>
-    <cog-button
-      appearance="subtle"
-      icon="lock"
-      title="Locks your account and does not log you out."
-      type="button"
-      (click)="onLock()"
-    >
-      Lock
-    </cog-button>
-    <cog-button appearance="subtle" type="button" (click)="onLogout()">
-      Log out
-    </cog-button>
-  </div>
+  <app-sidebar-account-actions (actioned)="closeDrawer()" />
 </ng-template>
 
 <ng-template #chatNav>

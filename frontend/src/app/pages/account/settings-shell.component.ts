@@ -1,4 +1,3 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -13,22 +12,18 @@ import {
 import { filter } from 'rxjs';
 
 import {
-  CognosButtonComponent,
   CognosDesktopShellComponent,
   CognosIconComponent,
   CognosMobileShellComponent,
-  CognosToastService,
 } from '@cognos/ui-angular';
 import type { CognosIconName } from '@cognos/ui/icons';
 
 import { SidebarProfileComponent } from '@app/components/chat/sidebar-profile/sidebar-profile.component';
 import { TrialCreditCardComponent } from '@app/components/chat/trial-credit-card/trial-credit-card.component';
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
-import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/contact-help-dialog.component';
+import { SidebarAccountActionsComponent } from '@app/components/sidebar-account-actions/sidebar-account-actions.component';
 import { BillingService } from '@app/services/billing.service';
 import { DeviceService } from '@app/services/device.service';
-import { VaultService } from '@app/services/vault.service';
-import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 interface SettingsNavItem {
   label: string;
@@ -51,11 +46,11 @@ interface SettingsNavItem {
     RouterOutlet,
     CognosDesktopShellComponent,
     CognosMobileShellComponent,
-    CognosButtonComponent,
     CognosIconComponent,
     CognosLogoComponent,
     SidebarProfileComponent,
     TrialCreditCardComponent,
+    SidebarAccountActionsComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -87,23 +82,7 @@ interface SettingsNavItem {
     </ng-template>
 
     <ng-template #actions>
-      <div class="settings__actions">
-        <cog-button appearance="subtle" type="button" (click)="onOpenHelpDialog()">
-          Help
-        </cog-button>
-        <cog-button
-          appearance="subtle"
-          icon="lock"
-          title="Locks your account and does not log you out."
-          type="button"
-          (click)="onLock()"
-        >
-          Lock
-        </cog-button>
-        <cog-button appearance="subtle" type="button" (click)="onLogout()">
-          Log out
-        </cog-button>
-      </div>
+      <app-sidebar-account-actions (actioned)="closeDrawer()" />
     </ng-template>
 
     <ng-template #footer>
@@ -212,14 +191,6 @@ interface SettingsNavItem {
       color: var(--cog-selected-text, var(--cog-text));
     }
 
-    .settings__actions {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: var(--cog-space-050);
-      margin-bottom: var(--cog-space-150);
-    }
-
     .settings__navfooter,
     .settings__drawer {
       display: grid;
@@ -228,9 +199,6 @@ interface SettingsNavItem {
   `,
 })
 export class SettingsShellComponent {
-  private readonly _dialog = inject(Dialog);
-  private readonly _vaultService = inject(VaultService);
-  private readonly _toastService = inject(CognosToastService);
   private readonly _router = inject(Router);
   public readonly billing = inject(BillingService);
   public readonly device = inject(DeviceService);
@@ -261,26 +229,5 @@ export class SettingsShellComponent {
 
   closeDrawer(): void {
     this.drawerOpen.set(false);
-  }
-
-  protected onOpenHelpDialog(): void {
-    this._dialog.open(ContactHelpDialogComponent, cognosDialogOptions);
-  }
-
-  protected onLock(): void {
-    this.drawerOpen.set(false);
-    this._vaultService.lock();
-    this._toastService.notify({
-      title: 'Account locked',
-      msg: 'This device now needs your password and Account Key to unlock again.',
-      tone: 'info',
-      icon: 'lock',
-      duration: 4200,
-    });
-  }
-
-  protected onLogout(): void {
-    this.drawerOpen.set(false);
-    void this._router.navigate(['', 'auth', 'logout']);
   }
 }

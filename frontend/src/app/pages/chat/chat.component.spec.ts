@@ -146,21 +146,12 @@ describe('ChatComponent', () => {
     expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 
-  it('locks the local account state without logging out', () => {
+  it('closes the drawer when an account action fires', () => {
     component.drawerOpen.set(true);
 
-    component.onLock();
+    component.closeDrawer();
 
-    expect(vaultService.lock).toHaveBeenCalledTimes(1);
-    expect(toastService.notify).toHaveBeenCalledWith({
-      title: 'Account locked',
-      msg: 'This device now needs your password and Account Key to unlock again.',
-      tone: 'info',
-      icon: 'lock',
-      duration: 4200,
-    });
     expect(component.drawerOpen()).toBe(false);
-    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('forwards search changes to the conversation filter', () => {

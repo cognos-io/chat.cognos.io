@@ -13,7 +13,6 @@ import {
   CognosLozengeComponent,
   CognosMobileShellComponent,
   CognosTextFieldComponent,
-  CognosToastService,
 } from '@cognos/ui-angular';
 
 import { BillingLockBannerComponent } from '@app/components/billing/billing-lock-banner/billing-lock-banner.component';
@@ -22,8 +21,8 @@ import { ConversationListItemComponent } from '@app/components/chat/conversation
 import { SidebarProfileComponent } from '@app/components/chat/sidebar-profile/sidebar-profile.component';
 import { TrialCreditCardComponent } from '@app/components/chat/trial-credit-card/trial-credit-card.component';
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
-import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/contact-help-dialog.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
+import { SidebarAccountActionsComponent } from '@app/components/sidebar-account-actions/sidebar-account-actions.component';
 import { VaultPasswordDialogComponent } from '@app/components/vault-password-dialog/vault-password-dialog.component';
 import { BillingService } from '@app/services/billing.service';
 import { DeviceService } from '@app/services/device.service';
@@ -52,6 +51,7 @@ import { ConversationService } from '../../services/conversation.service';
     SidebarProfileComponent,
     TrialCreditCardComponent,
     BillingLockBannerComponent,
+    SidebarAccountActionsComponent,
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
@@ -59,7 +59,6 @@ import { ConversationService } from '../../services/conversation.service';
 export class ChatComponent {
   private readonly _dialog = inject(Dialog);
   private readonly _messageService = inject(MessageService);
-  private readonly _toastService = inject(CognosToastService);
   private readonly _vaultService = inject(VaultService);
 
   readonly router = inject(Router);
@@ -116,10 +115,6 @@ export class ChatComponent {
     });
   }
 
-  onOpenHelpDialog() {
-    this._dialog.open(ContactHelpDialogComponent, cognosDialogOptions);
-  }
-
   onNewConversation() {
     if (this.billing.isSendingLocked()) {
       return;
@@ -134,23 +129,6 @@ export class ChatComponent {
     if (this.router.url !== '/') {
       this.router.navigateByUrl('/');
     }
-  }
-
-  onLock() {
-    this.drawerOpen.set(false);
-    this._vaultService.lock();
-    this._toastService.notify({
-      title: 'Account locked',
-      msg: 'This device now needs your password and Account Key to unlock again.',
-      tone: 'info',
-      icon: 'lock',
-      duration: 4200,
-    });
-  }
-
-  onLogout() {
-    this.drawerOpen.set(false);
-    this.router.navigate(['', 'auth', 'logout']);
   }
 
   onSearchChange(value: string) {
