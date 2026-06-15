@@ -198,6 +198,11 @@ export class VaultService {
         switchMap(() =>
           from(this._trustedUnlockService.clearAllUnlockKeys()).pipe(
             map(() => {
+              // Logout must leave no vault state behind: the unlock keys + server
+              // session are gone above; also drop the trusted-user-key context
+              // (salt / fingerprint / scheme) so nothing ties this browser to the
+              // account.
+              this.clearAllTrustedUserKeyContexts();
               this.generatedAccountKey.set(null);
               this.wasLocked.set(false);
               this.clearUnlockError();
@@ -540,6 +545,21 @@ export class VaultService {
 
   private computePublicKeyFingerprint(publicKey: Uint8Array): string {
     return Base64.fromUint8Array(this._cryptoService.hash(publicKey));
+  }
+
+  // Sweep every persisted trusted-user-key context (all accounts on this
+  // browser). Mirrors TrustedUnlockService.clearAllUnlockKeys so a logout wipes
+  // the full set of vault-related localStorage entries, not just one user's.
+  private clearAllTrustedUserKeyContexts(): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(trustedUserKeyContextPrefix)) {
+        localStorage.removeItem(key);
+      }
+    }
   }
 
   private persistTrustedUserKeyContext(keyPairRecord: UserKeyPairsResponse): void {

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { NEVER } from 'rxjs';
+import { NEVER, Subject } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 
@@ -99,5 +99,65 @@ describe('VaultService', () => {
       service.unpackKeyPairRecord(keyPairRecord as never, new Uint8Array([9, 9, 9])),
     ).toThrowError('User key pair integrity check failed');
     expect(cryptoService.openSecretBox).not.toHaveBeenCalled();
+  });
+});
+
+describe('VaultService logout hygiene', () => {
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+  });
+
+  // Security: logout must leave no vault state behind — the unlock keys/server
+  // session go via TrustedUnlockService, and the trusted-user-key context
+  // (salt / fingerprint / scheme) must be swept from localStorage too.
+  it('clears unlock keys and every trusted-user-key context on logout', async () => {
+    const logout$ = new Subject<boolean>();
+    const clearAllUnlockKeys = vi.fn().mockResolvedValue(undefined);
+
+    localStorage.setItem(
+      'cognos:trusted-user-key:user-1',
+      JSON.stringify({ passwordSalt: 'salt' }),
+    );
+    localStorage.setItem('cognos:trusted-user-key:user-2', '{}');
+    localStorage.setItem('unrelated-key', 'keep-me');
+
+    TestBed.configureTestingModule({
+      providers: [
+        VaultService,
+        { provide: CognosApiService, useValue: { getUserKeyPair: () => NEVER } },
+        {
+          provide: CryptoService,
+          useValue: { equalBytes: vi.fn(), mac: vi.fn(), openSecretBox: vi.fn() },
+        },
+        {
+          provide: AuthService,
+          useValue: { logout$, user: () => ({ id: 'user-1' }) },
+        },
+        {
+          provide: TrustedUnlockService,
+          useValue: {
+            clearAllUnlockKeys,
+            clearUnlockKey: async () => {},
+            getUnlockKey: async () => undefined,
+            setUnlockKey: async () => {},
+          },
+        },
+      ],
+    });
+
+    const service = TestBed.inject(VaultService);
+    const sub = service.keyPair$.subscribe(); // activate the merged state stream
+
+    logout$.next(true);
+    await new Promise((resolve) => setTimeout(resolve, 0)); // flush clearAllUnlockKeys
+
+    expect(clearAllUnlockKeys).toHaveBeenCalledOnce();
+    expect(localStorage.getItem('cognos:trusted-user-key:user-1')).toBeNull();
+    expect(localStorage.getItem('cognos:trusted-user-key:user-2')).toBeNull();
+    // Non-vault keys are untouched.
+    expect(localStorage.getItem('unrelated-key')).toBe('keep-me');
+
+    sub.unsubscribe();
   });
 });
