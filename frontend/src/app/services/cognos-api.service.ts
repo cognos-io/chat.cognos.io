@@ -5,6 +5,7 @@ import PocketBase from 'pocketbase';
 
 import { Observable, Subscriber, filter, map, take } from 'rxjs';
 
+import { BillingApiResponse } from '@app/interfaces/billing';
 import { ConversationRecord } from '@app/interfaces/conversation';
 import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/model';
 import {
@@ -356,6 +357,12 @@ export class CognosApiService {
   private readonly _http = inject(HttpClient);
   private readonly _pb = inject(PocketBase);
   private readonly _baseUrl = environment.pocketbaseBaseUrl;
+
+  getBilling(): Observable<BillingApiResponse> {
+    return this._http.get<BillingApiResponse>(`${this._baseUrl}/api/v1/billing`, {
+      headers: this.authHeaders(),
+    });
+  }
 
   getModels(): Observable<ModelsCatalogueResponse> {
     return this._http

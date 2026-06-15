@@ -26,6 +26,14 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'account/billing',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/account/billing/account-billing.component').then(
+        (m) => m.AccountBillingComponent,
+      ),
+  },
+  {
     // Public, unauthenticated read view for a shared conversation. The token
     // is in the path; the decryption key rides in the URL fragment (#...),
     // which the browser never sends to the server.

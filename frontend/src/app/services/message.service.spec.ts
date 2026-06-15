@@ -14,6 +14,7 @@ import {
   buildCompletionMessages,
   buildDeletedMessageData,
   isCompletionAbortError,
+  parseCompletionBillingRestriction,
   regenerateContextPath,
   removeStreamingCompletionMessages,
   resolveCompletionErrorMessage,
@@ -43,6 +44,62 @@ const makeResponse = (overrides: Partial<CompleteResponse> = {}): CompleteRespon
     usedProviderCost: false,
   },
   ...overrides,
+});
+
+describe('parseCompletionBillingRestriction', () => {
+  const billing402 = (body: unknown): HttpErrorResponse =>
+    new HttpErrorResponse({ status: 402, error: body });
+
+  it('parses a trial-exhausted 402 into a structured restriction', () => {
+    const restriction = parseCompletionBillingRestriction(
+      billing402({
+        error: 'TRIAL_EXHAUSTED',
+        message: 'Your free trial has been used up.',
+        balance_chf: 0.02,
+        estimated_cost_chf: 0.32,
+        next_step: 'subscribe',
+      }),
+    );
+
+    expect(restriction).toEqual({
+      code: 'TRIAL_EXHAUSTED',
+      message: 'Your free trial has been used up.',
+      balanceChf: 0.02,
+      estimatedCostChf: 0.32,
+      nextStep: 'subscribe',
+    });
+  });
+
+  it('parses an inactive 402 and falls back to a default message', () => {
+    const restriction = parseCompletionBillingRestriction(
+      billing402({ error: 'INACTIVE', message: '   ' }),
+    );
+
+    expect(restriction?.code).toBe('INACTIVE');
+    expect(restriction?.message).toBe(
+      'Your account needs an active plan before you can keep chatting.',
+    );
+  });
+
+  it('ignores non-402 errors', () => {
+    expect(
+      parseCompletionBillingRestriction(
+        new HttpErrorResponse({ status: 500, error: { error: 'INACTIVE' } }),
+      ),
+    ).toBeNull();
+  });
+
+  it('ignores 402s without a recognised billing code', () => {
+    expect(
+      parseCompletionBillingRestriction(billing402({ error: 'SOMETHING_ELSE' })),
+    ).toBeNull();
+    expect(parseCompletionBillingRestriction(billing402(null))).toBeNull();
+  });
+
+  it('ignores errors that are not HTTP responses', () => {
+    expect(parseCompletionBillingRestriction(new Error('boom'))).toBeNull();
+    expect(parseCompletionBillingRestriction(undefined)).toBeNull();
+  });
 });
 
 describe('isCompletionAbortError', () => {

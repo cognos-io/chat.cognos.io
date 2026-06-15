@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
 
 import { Message } from '@app/interfaces/message';
 import { AgentService } from '@app/services/agent.service';
+import { BillingService } from '@app/services/billing.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService, MessageStatus } from '@app/services/message.service';
@@ -62,6 +63,16 @@ describe('MessageFormComponent', () => {
           useValue: { selectedModel },
         },
         { provide: VaultService, useValue: { keyPair$: new Subject() } },
+        {
+          provide: BillingService,
+          useValue: {
+            isReadOnly: signal(false),
+            isTrial: signal(false),
+            balanceChf: signal(0),
+            refresh: vi.fn(),
+            openPlanGate: vi.fn(),
+          },
+        },
       ],
     }).compileComponents();
 

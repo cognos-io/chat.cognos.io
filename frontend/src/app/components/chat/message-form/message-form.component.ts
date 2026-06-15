@@ -21,9 +21,11 @@ import {
   CognosButtonComponent,
   CognosIconButtonComponent,
   CognosIconComponent,
+  CognosLozengeComponent,
 } from '@cognos/ui-angular';
 
 import { AgentService } from '@app/services/agent.service';
+import { BillingService } from '@app/services/billing.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import {
@@ -47,10 +49,22 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     CognosButtonComponent,
     CognosIconButtonComponent,
     CognosIconComponent,
+    CognosLozengeComponent,
     ModelSelectorComponent,
   ],
   template: `
     <form class="message-form" [formGroup]="messageForm" (submit)="sendMessage()">
+      @if (billing.isReadOnly()) {
+        <div class="message-form__locked" role="status">
+          <span class="message-form__locked-text">
+            Choose a plan to keep chatting. You can still read your chats.
+          </span>
+          <cog-button appearance="primary" type="button" (click)="openPlanGate()">
+            View plans
+          </cog-button>
+        </div>
+      }
+
       <div class="message-form__panel">
         <label class="message-form__label" for="message-form">
           Message Cognos — encrypted on this device
@@ -70,6 +84,12 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
         ></textarea>
 
         <div class="message-form__controls">
+          @if (billing.isTrial()) {
+            <cog-lozenge tone="blue" class="message-form__trial">
+              Trial · CHF {{ billing.balanceChf().toFixed(2) }} left
+            </cog-lozenge>
+          }
+
           <cog-button
             #modelTrigger="cdkOverlayOrigin"
             cdkOverlayOrigin
@@ -205,6 +225,28 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
       margin-left: auto;
     }
 
+    .message-form__trial {
+      margin-right: var(--cog-space-050);
+    }
+
+    .message-form__locked {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--cog-space-150);
+      flex-wrap: wrap;
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface-sunken, var(--cog-surface));
+      padding: var(--cog-space-150);
+    }
+
+    .message-form__locked-text {
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm);
+      line-height: var(--cog-lh-body-sm);
+    }
+
     .message-form__meta,
     .message-form__security {
       display: flex;
@@ -253,9 +295,10 @@ export class MessageFormComponent {
   public readonly messageService = inject(MessageService);
   public readonly agentService = inject(AgentService);
   public readonly modelService = inject(ModelService);
+  public readonly billing = inject(BillingService);
 
   readonly canSendMessage = computed(
-    () => this.modelService.selectedModel().isEligible,
+    () => this.modelService.selectedModel().isEligible && !this.billing.isReadOnly(),
   );
 
   messageForm = this._fb.group({
@@ -271,6 +314,13 @@ export class MessageFormComponent {
     }
 
     effect(() => {
+      // An inactive plan is read-only: keep the composer locked regardless of
+      // send status so the user can read history but not send.
+      if (this.billing.isReadOnly()) {
+        this.disableForm();
+        return;
+      }
+
       switch (this.messageService.status()) {
         case MessageStatus.Sending:
           this.disableForm();
@@ -278,6 +328,8 @@ export class MessageFormComponent {
         case MessageStatus.Success:
           this._previousMessage = '';
           this.enableForm();
+          // Reconcile the trial pill with the balance the completion just spent.
+          this.billing.refresh();
           break;
         case MessageStatus.None:
         case MessageStatus.ErrorSending:
@@ -309,6 +361,10 @@ export class MessageFormComponent {
 
   openAgentSelector() {
     this._dialog.open(AgentSelectorComponent, cognosDialogOptions);
+  }
+
+  openPlanGate() {
+    this.billing.openPlanGate('inactive');
   }
 
   toggleModelSelector() {

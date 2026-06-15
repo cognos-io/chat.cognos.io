@@ -33,11 +33,13 @@ import {
 } from '@cognos/ui-angular';
 
 import { generateConversationAgentId } from '@app/interfaces/agent';
+import { CompletionBillingRestriction } from '@app/interfaces/billing';
 import { Message, MessageData, parseMessageData } from '@app/interfaces/message';
 import { parseBackendDate } from '@app/utils/timestamp';
 
 import { AgentService } from './agent.service';
 import { AuthService } from './auth.service';
+import { BillingService } from './billing.service';
 import {
   CognosApiService,
   CompleteResponse,
@@ -332,6 +334,38 @@ export const resolveCompletionErrorMessage = (error: HttpErrorResponse): string 
   }
 };
 
+// parseCompletionBillingRestriction recognises the structured 402 the
+// /complete endpoint returns when billing blocks a send (spec §12.7). It
+// returns null for any other error so the caller falls back to a toast.
+export const parseCompletionBillingRestriction = (
+  error: unknown,
+): CompletionBillingRestriction | null => {
+  if (!(error instanceof HttpErrorResponse) || error.status !== 402) {
+    return null;
+  }
+  const body = error.error as {
+    error?: string;
+    message?: string;
+    balance_chf?: number;
+    estimated_cost_chf?: number;
+    next_step?: string;
+  } | null;
+  const code = body?.error;
+  if (code !== 'TRIAL_EXHAUSTED' && code !== 'INACTIVE') {
+    return null;
+  }
+  return {
+    code,
+    message:
+      typeof body?.message === 'string' && body.message.trim() !== ''
+        ? body.message
+        : 'Your account needs an active plan before you can keep chatting.',
+    balanceChf: body?.balance_chf,
+    estimatedCostChf: body?.estimated_cost_chf,
+    nextStep: body?.next_step,
+  };
+};
+
 export const resolveCompletionFailureMessage = (error: unknown): string => {
   if (error instanceof HttpErrorResponse) {
     return resolveCompletionErrorMessage(error);
@@ -369,6 +403,7 @@ export class MessageService {
   private readonly _softDeleteMessage$ = new Subject<Message>();
   private readonly _agentService = inject(AgentService);
   private readonly _authService = inject(AuthService);
+  private readonly _billingService = inject(BillingService);
   private readonly _conversationService = inject(ConversationService);
   private readonly _cryptoService = inject(CryptoService);
   private readonly _errorService = inject(ErrorService);
@@ -897,7 +932,7 @@ export class MessageService {
         }
 
         console.error('Error sending message');
-        this._errorService.alert(resolveCompletionFailureMessage(err));
+        this.reportCompletionError(err);
 
         if (!shouldApplyCompletionUpdate()) {
           return EMPTY;
@@ -1042,7 +1077,7 @@ export class MessageService {
         }
 
         console.error('Error regenerating message');
-        this._errorService.alert(resolveCompletionFailureMessage(err));
+        this.reportCompletionError(err);
 
         if (!shouldApplyCompletionUpdate()) {
           return EMPTY;
@@ -1068,6 +1103,18 @@ export class MessageService {
         this.consumeIntentionalCompletionAbort();
       }),
     );
+  }
+
+  // reportCompletionError routes a failed completion to the right surface: a
+  // billing 402 opens the plan-selection gate (and syncs plan state); anything
+  // else falls back to a danger toast.
+  private reportCompletionError(err: unknown): void {
+    const restriction = parseCompletionBillingRestriction(err);
+    if (restriction) {
+      this._billingService.presentPlanGate(restriction);
+      return;
+    }
+    this._errorService.alert(resolveCompletionFailureMessage(err));
   }
 
   private abortActiveCompletion(): void {
