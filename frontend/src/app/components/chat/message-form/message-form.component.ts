@@ -339,6 +339,20 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
       .message-form__meta {
         display: none;
       }
+
+      /* Give the locked notice's copy the full width and drop the actions onto
+         their own row so the text isn't squeezed into a narrow column. */
+      .message-form__locked {
+        flex-wrap: wrap;
+      }
+
+      .message-form__locked-actions {
+        flex-basis: 100%;
+      }
+
+      .message-form__locked-actions cog-button {
+        flex: 1;
+      }
     }
   `,
 })

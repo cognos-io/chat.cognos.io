@@ -177,6 +177,10 @@
       <ng-container *ngTemplateOutlet="navActions"></ng-container>
       <ng-container *ngTemplateOutlet="navSearch"></ng-container>
       <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
+      @if (billing.isTrial()) {
+        <app-trial-credit-card></app-trial-credit-card>
+      }
+      <ng-container *ngTemplateOutlet="profileFooter"></ng-container>
     </div>
   </cog-drawer>
 </div>
