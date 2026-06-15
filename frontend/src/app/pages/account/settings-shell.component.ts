@@ -27,8 +27,11 @@ import { DeviceService } from '@app/services/device.service';
 
 interface SettingsNavItem {
   label: string;
-  path: string;
+  link: string;
   icon: CognosIconName;
+  // Match the link exactly (used for the /account home so it isn't active on
+  // every child route).
+  exact?: boolean;
 }
 
 // SettingsShellComponent composes the shared ui-angular app shell
@@ -68,11 +71,12 @@ interface SettingsNavItem {
     <ng-template #menu>
       <nav class="settings__menu" aria-label="Settings">
         <div class="settings__menu-heading">Settings</div>
-        @for (item of navItems; track item.path) {
+        @for (item of navItems; track item.link) {
           <a
             class="settings__menu-item"
-            [routerLink]="item.path"
+            [routerLink]="item.link"
             routerLinkActive="settings__menu-item--active"
+            [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
           >
             <cog-icon [name]="item.icon" [size]="18" tone="current" />
             {{ item.label }}
@@ -206,12 +210,12 @@ export class SettingsShellComponent {
   readonly drawerOpen = signal(false);
 
   protected readonly navItems: SettingsNavItem[] = [
-    { label: 'Account', path: 'account', icon: 'user-plus' },
-    { label: 'Plan & billing', path: 'billing', icon: 'landmark' },
-    { label: 'Usage', path: 'usage', icon: 'file-text' },
-    { label: 'Security & keys', path: 'security', icon: 'shield' },
-    { label: 'Team & sharing', path: 'team', icon: 'users' },
-    { label: 'Notifications', path: 'notifications', icon: 'mail' },
+    { label: 'Account', link: '/account', icon: 'user-plus', exact: true },
+    { label: 'Plan & billing', link: '/account/billing', icon: 'landmark' },
+    { label: 'Usage', link: '/account/usage', icon: 'file-text' },
+    { label: 'Security & keys', link: '/account/security', icon: 'shield' },
+    { label: 'Team & sharing', link: '/account/team', icon: 'users' },
+    { label: 'Notifications', link: '/account/notifications', icon: 'mail' },
   ];
 
   constructor() {

@@ -35,11 +35,7 @@ const PLAN_LABELS: Record<BillingPlanType, string> = {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <a
-      class="sidebar-profile"
-      routerLink="/account/billing"
-      aria-label="Account & billing"
-    >
+    <a class="sidebar-profile" routerLink="/account" aria-label="Account & billing">
       <cog-avatar class="sidebar-profile__avatar" [name]="avatarName()" [size]="36" />
 
       <span class="sidebar-profile__body">

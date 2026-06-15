@@ -42,20 +42,20 @@ export const routes: Routes = [
         (m) => m.SettingsShellComponent,
       ),
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'billing' },
+      {
+        // /account is the Account home (placeholder for now).
+        path: '',
+        data: { title: 'Account' },
+        loadComponent: () =>
+          import('./pages/account/settings-placeholder.component').then(
+            (m) => m.SettingsPlaceholderComponent,
+          ),
+      },
       {
         path: 'billing',
         loadComponent: () =>
           import('./pages/account/billing/plan-billing.component').then(
             (m) => m.PlanBillingComponent,
-          ),
-      },
-      {
-        path: 'account',
-        data: { title: 'Account' },
-        loadComponent: () =>
-          import('./pages/account/settings-placeholder.component').then(
-            (m) => m.SettingsPlaceholderComponent,
           ),
       },
       {
