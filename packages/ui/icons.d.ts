@@ -38,6 +38,8 @@ export type CognosIconName =
   | 'copy'
   | 'copy-plus'
   | 'credit-card'
+  | 'calendar'
+  | 'gauge'
   | 'refresh-cw'
   | 'thumbs-up'
   | 'quote'

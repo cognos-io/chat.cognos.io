@@ -35,8 +35,8 @@ import { CognosBreadcrumbsComponent } from '@cognos/ui-angular';
 
     .placeholder__header {
       display: grid;
-      gap: var(--cog-space-100);
-      margin-bottom: var(--cog-space-250, 20px);
+      gap: var(--cog-space-050);
+      margin: var(--cog-space-150) 0 var(--cog-space-250, 20px);
     }
 
     .placeholder__title {

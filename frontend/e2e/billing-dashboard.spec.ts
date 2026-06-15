@@ -133,6 +133,9 @@ test('dashboard renders the saved card and Paddle invoices', async ({ page }) =>
   await expect(page.getByText('Invoice CG-26-0002')).toBeVisible();
   await expect(page.getByText('Paid', { exact: true })).toBeVisible();
   await expect(page.getByText('CHF 100.00')).toBeVisible();
+
+  // The Paddle brand mark renders (Synced with Paddle + invoices footer).
+  await expect(page.getByRole('img', { name: 'Paddle' }).first()).toBeVisible();
 });
 
 test('cancels-soon dashboard offers resume', async ({ page }) => {

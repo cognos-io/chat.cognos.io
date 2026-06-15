@@ -5,8 +5,9 @@
 
 .pb__header {
   display: grid;
-  gap: var(--cog-space-100);
-  margin-bottom: var(--cog-space-200);
+  /* Breathing room above the breadcrumb, tighter to the title below it. */
+  gap: var(--cog-space-050);
+  margin: var(--cog-space-150) 0 var(--cog-space-200);
 }
 
 .pb__titlebar {
@@ -24,8 +25,17 @@
 }
 
 .pb__synced {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cog-space-050);
   color: var(--cog-text-subtle);
   font-size: var(--cog-fs-body-sm);
+  white-space: nowrap;
+}
+
+.pb__synced-name {
+  color: var(--cog-text);
+  font-weight: var(--cog-fw-semibold);
 }
 
 .pb__card {
@@ -103,6 +113,9 @@
 }
 
 .pb__aside-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cog-space-050);
   color: var(--cog-text-subtlest);
   font-size: var(--cog-fs-caption);
   font-weight: var(--cog-fw-semibold);
@@ -326,9 +339,18 @@
 }
 
 .pb__invoices-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--cog-space-050);
   margin: var(--cog-space-150) 0 0;
   padding-top: var(--cog-space-150);
   border-top: 1px solid var(--cog-border);
   color: var(--cog-text-subtlest);
   font-size: var(--cog-fs-caption);
+}
+
+.pb__invoices-foot-name {
+  color: var(--cog-text-subtle);
+  font-weight: var(--cog-fw-semibold);
 }

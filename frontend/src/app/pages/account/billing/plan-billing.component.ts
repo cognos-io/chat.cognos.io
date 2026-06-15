@@ -18,6 +18,7 @@ import {
   CognosProgressComponent,
 } from '@cognos/ui-angular';
 
+import { PaddleLogoComponent } from '@app/components/paddle-logo/paddle-logo.component';
 import {
   BillingApiResponse,
   BillingInvoicesResponse,
@@ -47,6 +48,7 @@ interface UsageBar {
     CognosIconComponent,
     CognosLozengeComponent,
     CognosProgressComponent,
+    PaddleLogoComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './plan-billing.component.html',

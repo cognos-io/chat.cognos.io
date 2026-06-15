@@ -2,7 +2,10 @@
   <cog-breadcrumbs [items]="breadcrumbs" (itemSelect)="onBreadcrumb($event)" />
   <div class="pb__titlebar">
     <h1 class="pb__title">Plan &amp; billing</h1>
-    <span class="pb__synced">Synced with Paddle</span>
+    <span class="pb__synced">
+      Synced with <app-paddle-logo />
+      <span class="pb__synced-name">Paddle</span>
+    </span>
   </div>
 </header>
 
@@ -59,7 +62,10 @@
     </div>
 
     <aside class="pb__aside">
-      <div class="pb__aside-heading">{{ dateHeading() }}</div>
+      <div class="pb__aside-heading">
+        <cog-icon name="calendar" [size]="14" tone="text-subtlest" />
+        {{ dateHeading() }}
+      </div>
       @if (status() === 'trial') {
         <div class="pb__aside-value">CHF {{ billing.balance_chf.toFixed(2) }}</div>
         <div class="pb__aside-caption">trial credit left</div>
@@ -90,7 +96,10 @@
     <!-- Usage -->
     <section class="pb__card pb__usage">
       <header class="pb__card-head">
-        <span class="pb__card-title">Usage this period</span>
+        <span class="pb__card-title">
+          <cog-icon name="gauge" [size]="18" tone="text-subtle" />
+          Usage this period
+        </span>
         @if (!isPayg()) {
           <cog-lozenge tone="green">No limit</cog-lozenge>
         }
@@ -220,6 +229,8 @@
       </p>
     }
     <p class="pb__invoices-foot">
+      <app-paddle-logo />
+      <span class="pb__invoices-foot-name">Paddle</span>
       Invoices &amp; VAT receipts are issued by Paddle.com Market Ltd, our merchant of
       record.
     </p>
