@@ -92,8 +92,10 @@ describe('VaultPasswordDialogComponent', () => {
     const keyInput = () =>
       fixture.nativeElement.querySelector('#account-key') as HTMLInputElement;
 
-    // Sensitive by default — not left on screen for shoulder-surfers.
-    expect(keyInput().type).toBe('password');
+    // Stays type=text (so password managers keep autofilling the login) and is
+    // masked visually instead — not left readable for shoulder-surfers.
+    expect(keyInput().type).toBe('text');
+    expect(keyInput().classList).toContain('vault-password-dialog__input--masked');
 
     const revealButton = Array.from(
       fixture.nativeElement.querySelectorAll('button'),
@@ -105,7 +107,7 @@ describe('VaultPasswordDialogComponent', () => {
     revealButton!.click();
     fixture.detectChanges();
 
-    expect(keyInput().type).toBe('text');
+    expect(keyInput().classList).not.toContain('vault-password-dialog__input--masked');
     expect(component.showAccountKey()).toBe(true);
   });
 
