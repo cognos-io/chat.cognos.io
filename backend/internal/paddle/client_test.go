@@ -139,6 +139,85 @@ func TestHTTPClientCreatePortalSession_MissingOverview(t *testing.T) {
 	}
 }
 
+func TestHTTPClientGetCard_Success(t *testing.T) {
+	var gotPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		_, _ = w.Write([]byte(`{"data":[{"type":"card","card":{"type":"visa","last4":"4242","expiry_month":9,"expiry_year":2028}}]}`))
+	}))
+	defer server.Close()
+
+	card, err := NewHTTPClient(server.URL, "k").GetCard(context.Background(), "ctm_9")
+	if err != nil {
+		t.Fatalf("GetCard: %v", err)
+	}
+	if gotPath != "/customers/ctm_9/payment-methods" {
+		t.Errorf("path = %q", gotPath)
+	}
+	if card == nil || card.Brand != "visa" || card.Last4 != "4242" ||
+		card.ExpiryMonth != 9 || card.ExpiryYear != 2028 {
+		t.Errorf("unexpected card: %+v", card)
+	}
+}
+
+func TestHTTPClientGetCard_None(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"data":[]}`))
+	}))
+	defer server.Close()
+
+	card, err := NewHTTPClient(server.URL, "k").GetCard(context.Background(), "ctm_9")
+	if err != nil {
+		t.Fatalf("GetCard: %v", err)
+	}
+	if card != nil {
+		t.Errorf("expected no card, got %+v", card)
+	}
+}
+
+func TestHTTPClientListInvoices_Success(t *testing.T) {
+	var gotQuery string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotQuery = r.URL.RawQuery
+		_, _ = w.Write([]byte(`{"data":[{"id":"txn_1","invoice_number":"CG-26-0002","status":"paid",` +
+			`"currency_code":"CHF","billed_at":"2026-04-14T00:00:00Z",` +
+			`"details":{"totals":{"grand_total":"10000"}}}]}`))
+	}))
+	defer server.Close()
+
+	invoices, err := NewHTTPClient(server.URL, "k").ListInvoices(context.Background(), "ctm_9")
+	if err != nil {
+		t.Fatalf("ListInvoices: %v", err)
+	}
+	if !strings.Contains(gotQuery, "customer_id=ctm_9") {
+		t.Errorf("query = %q", gotQuery)
+	}
+	if len(invoices) != 1 {
+		t.Fatalf("got %d invoices", len(invoices))
+	}
+	inv := invoices[0]
+	if inv.ID != "txn_1" || inv.InvoiceNumber != "CG-26-0002" || inv.Status != "paid" ||
+		inv.CurrencyCode != "CHF" || inv.GrandTotalMinor != 10000 {
+		t.Errorf("unexpected invoice: %+v", inv)
+	}
+	if inv.BilledAt.IsZero() {
+		t.Error("billed_at should be parsed")
+	}
+}
+
+func TestHTTPClientListInvoices_PaddleError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(`{"error":{"code":"forbidden"}}`))
+	}))
+	defer server.Close()
+
+	_, err := NewHTTPClient(server.URL, "k").ListInvoices(context.Background(), "ctm_9")
+	if err == nil {
+		t.Fatal("expected error on non-2xx")
+	}
+}
+
 func TestNewHTTPClientDefaultsBaseURL(t *testing.T) {
 	if got := NewHTTPClient("", "k").BaseURL; got != "https://api.paddle.com" {
 		t.Errorf("default BaseURL = %q", got)

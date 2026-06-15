@@ -224,6 +224,17 @@ func addPocketBaseRoutes(
 	)
 
 	e.Router.GET(
+		"/api/v1/billing/invoices",
+		handler.BillingInvoices(handler.BillingInvoicesParams{
+			Logger: logger,
+			Client: paddleClient,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
 		"/api/v1/conversations",
 		handler.ConversationsList(app),
 	).Bind(

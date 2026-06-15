@@ -26,6 +26,10 @@ type fakePaddleClient struct {
 	portalCust  string
 	portalSubs  []string
 	portalCalls int
+	card        *paddle.Card
+	cardErr     error
+	invoices    []paddle.Invoice
+	invoicesErr error
 }
 
 func (f *fakePaddleClient) CreateCheckout(
@@ -56,6 +60,14 @@ func (f *fakePaddleClient) CreatePortalSession(
 	f.portalCust = customerID
 	f.portalSubs = subscriptionIDs
 	return f.portal, f.portalErr
+}
+
+func (f *fakePaddleClient) GetCard(_ context.Context, _ string) (*paddle.Card, error) {
+	return f.card, f.cardErr
+}
+
+func (f *fakePaddleClient) ListInvoices(_ context.Context, _ string) ([]paddle.Invoice, error) {
+	return f.invoices, f.invoicesErr
 }
 
 func checkoutConfig() *config.APIConfig {

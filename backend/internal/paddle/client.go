@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -46,6 +47,25 @@ type PortalSession struct {
 	UpdatePaymentURL string // deep link to the update-payment-method form (if any)
 }
 
+// Card is the saved payment-method summary shown on the dashboard. Only
+// non-sensitive display fields — never a full card number (Paddle holds that).
+type Card struct {
+	Brand       string // "visa", "mastercard", …
+	Last4       string
+	ExpiryMonth int
+	ExpiryYear  int
+}
+
+// Invoice is the slice of a Paddle transaction we surface as an invoice row.
+type Invoice struct {
+	ID              string
+	InvoiceNumber   string
+	Status          string // paid, completed, billed, past_due, canceled
+	CurrencyCode    string
+	BilledAt        time.Time
+	GrandTotalMinor int64 // total in the currency's minor unit (Rappen for CHF)
+}
+
 // Client is the Paddle surface the billing handlers depend on.
 type Client interface {
 	CreateCheckout(ctx context.Context, req CheckoutRequest) (CheckoutResult, error)
@@ -58,6 +78,10 @@ type Client interface {
 	// subscription id is supplied, the result includes its payment-method deep
 	// link so "Update card" can open straight onto the form.
 	CreatePortalSession(ctx context.Context, customerID string, subscriptionIDs []string) (PortalSession, error)
+	// GetCard returns the customer's default saved card, or nil if none.
+	GetCard(ctx context.Context, customerID string) (*Card, error)
+	// ListInvoices returns the customer's billed/paid transactions, newest-first.
+	ListInvoices(ctx context.Context, customerID string) ([]Invoice, error)
 }
 
 // HTTPClient talks to the real Paddle Billing API.
@@ -230,6 +254,120 @@ func (c *HTTPClient) CreatePortalSession(
 		session.UpdatePaymentURL = parsed.Data.URLs.Subscriptions[0].UpdateSubscriptionPaymentMethod
 	}
 	return session, nil
+}
+
+type paymentMethodsResponse struct {
+	Data []struct {
+		Type string `json:"type"`
+		Card struct {
+			Type        string `json:"type"`
+			Last4       string `json:"last4"`
+			ExpiryMonth int    `json:"expiry_month"`
+			ExpiryYear  int    `json:"expiry_year"`
+		} `json:"card"`
+	} `json:"data"`
+}
+
+// GetCard returns the customer's first saved card (display fields only).
+func (c *HTTPClient) GetCard(ctx context.Context, customerID string) (*Card, error) {
+	body, err := c.getJSON(ctx, c.BaseURL+"/customers/"+customerID+"/payment-methods")
+	if err != nil {
+		return nil, err
+	}
+	var parsed paymentMethodsResponse
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return nil, fmt.Errorf("decode payment methods: %w", err)
+	}
+	for _, method := range parsed.Data {
+		if method.Type == "card" && method.Card.Last4 != "" {
+			return &Card{
+				Brand:       method.Card.Type,
+				Last4:       method.Card.Last4,
+				ExpiryMonth: method.Card.ExpiryMonth,
+				ExpiryYear:  method.Card.ExpiryYear,
+			}, nil
+		}
+	}
+	return nil, nil
+}
+
+type transactionsListResponse struct {
+	Data []struct {
+		ID            string `json:"id"`
+		InvoiceNumber string `json:"invoice_number"`
+		Status        string `json:"status"`
+		CurrencyCode  string `json:"currency_code"`
+		BilledAt      string `json:"billed_at"`
+		Details       struct {
+			Totals struct {
+				GrandTotal string `json:"grand_total"`
+			} `json:"totals"`
+		} `json:"details"`
+	} `json:"data"`
+}
+
+// ListInvoices returns the customer's billed/paid transactions, newest-first.
+func (c *HTTPClient) ListInvoices(ctx context.Context, customerID string) ([]Invoice, error) {
+	url := c.BaseURL + "/transactions?customer_id=" + customerID +
+		"&status=billed,paid,completed,past_due&order_by=billed_at[DESC]&per_page=50"
+	body, err := c.getJSON(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+	var parsed transactionsListResponse
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return nil, fmt.Errorf("decode transactions: %w", err)
+	}
+
+	invoices := make([]Invoice, 0, len(parsed.Data))
+	for _, txn := range parsed.Data {
+		invoice := Invoice{
+			ID:              txn.ID,
+			InvoiceNumber:   txn.InvoiceNumber,
+			Status:          txn.Status,
+			CurrencyCode:    txn.CurrencyCode,
+			GrandTotalMinor: parseMinorAmount(txn.Details.Totals.GrandTotal),
+		}
+		if txn.BilledAt != "" {
+			if t, err := time.Parse(time.RFC3339, txn.BilledAt); err == nil {
+				invoice.BilledAt = t.UTC()
+			}
+		}
+		invoices = append(invoices, invoice)
+	}
+	return invoices, nil
+}
+
+// getJSON performs an authenticated GET and returns the response body, or an
+// error for non-2xx responses (with a bounded snippet, no secrets).
+func (c *HTTPClient) getJSON(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("build request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("call paddle: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("paddle GET %s returned %d: %s", url, resp.StatusCode, snippet(body))
+	}
+	return body, nil
+}
+
+// parseMinorAmount parses Paddle's string minor-unit totals (e.g. "1000") into
+// an int64, returning 0 for anything unparseable.
+func parseMinorAmount(value string) int64 {
+	n, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64)
+	if err != nil {
+		return 0
+	}
+	return n
 }
 
 // CancelSubscription schedules cancellation at the end of the current period.
