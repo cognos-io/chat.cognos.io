@@ -35,7 +35,9 @@ test('authenticated user sees trial exhaustion feedback when billing blocks send
   });
 
   await page.route('http://localhost:8090/api/v1/billing', async (route) => {
-    await route.fulfill({ json: { plan_type: 'trial', balance_chf: 0.02 } });
+    await route.fulfill({
+      json: { plan_type: 'trial', balance_chf: 0.02, trial_seed_chf: 2.0 },
+    });
   });
 
   await page.route('http://localhost:8090/api/v1/models', async (route) => {
@@ -134,10 +136,9 @@ test('authenticated user sees trial exhaustion feedback when billing blocks send
   await composer.fill('This should be blocked by billing');
   await page.getByRole('button', { name: 'Send' }).click();
 
-  // A trial-exhausted 402 opens the plan-selection dialog (not a generic toast)
-  // and rolls back the optimistic message.
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByText(/free trial/i).first()).toBeVisible();
+  // A trial-exhausted 402 locks the composer in place (no modal) and rolls back
+  // the optimistic message.
+  await expect(page.getByText('Sending is paused')).toBeVisible();
+  await expect(page.getByText('Your trial credits are used up')).toBeVisible();
   await expect(page.getByText('This should be blocked by billing')).toHaveCount(0);
 });

@@ -1,6 +1,7 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { Subject } from 'rxjs';
 
@@ -47,6 +48,7 @@ describe('MessageFormComponent', () => {
     await TestBed.configureTestingModule({
       imports: [MessageFormComponent],
       providers: [
+        provideRouter([]),
         { provide: Dialog, useValue: { open: vi.fn() } },
         {
           provide: AgentService,
@@ -66,11 +68,8 @@ describe('MessageFormComponent', () => {
         {
           provide: BillingService,
           useValue: {
-            isReadOnly: signal(false),
-            isTrial: signal(false),
-            balanceChf: signal(0),
+            isSendingLocked: signal(false),
             refresh: vi.fn(),
-            openPlanGate: vi.fn(),
           },
         },
       ],

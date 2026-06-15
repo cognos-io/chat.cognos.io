@@ -21,9 +21,10 @@ const (
 var ErrStateNotFound = errors.New("billing state not found")
 
 type State struct {
-	PlanType      PlanType
-	BalanceRappen int64
-	BillingUserID string
+	PlanType        PlanType
+	BalanceRappen   int64
+	TrialSeedRappen int64
+	BillingUserID   string
 }
 
 type StateRepo interface {

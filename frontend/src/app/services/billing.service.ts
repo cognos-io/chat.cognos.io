@@ -1,41 +1,47 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
 
-import {
-  PlanGateDialogComponent,
-  PlanGateDialogData,
-} from '@app/components/billing/plan-gate-dialog/plan-gate-dialog.component';
-import {
-  BillingPlanType,
-  BillingState,
-  CompletionBillingRestriction,
-  PlanGateReason,
-} from '@app/interfaces/billing';
+import { BillingState, CompletionBillingRestriction } from '@app/interfaces/billing';
 import { CognosApiService } from '@app/services/cognos-api.service';
-import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 // BillingService is the frontend's single source of truth for the user's plan
-// state. It backs the trial pill, the read-only composer lock, and the
-// plan-gate dialog. The balance is shown to the user but is never authoritative
-// — the backend ledger is. We optimistically decrement it as completions land
-// so the pill feels live, then reconcile on the next refresh.
+// state. It backs the trial pill/credit card, the locked-chat surfaces, and the
+// pricing page. The balance is shown to the user but is never authoritative —
+// the backend ledger is. We optimistically decrement it as completions land so
+// the pill feels live, then reconcile on the next refresh.
 @Injectable({
   providedIn: 'root',
 })
 export class BillingService {
   private readonly _api = inject(CognosApiService);
-  private readonly _dialog = inject(Dialog);
-  private readonly _router = inject(Router);
 
   private readonly _state = signal<BillingState | null>(null);
-  private _gateOpen = false;
+
+  // Set when a /complete call is rejected for billing reasons this session.
+  // A used-up trial keeps plan_type='trial' with a near-zero (but not always
+  // exactly zero) balance, so the server 402 is the most reliable "you can no
+  // longer send" signal mid-session.
+  private readonly _sendBlocked = signal(false);
 
   readonly state = this._state.asReadonly();
   readonly planType = computed(() => this._state()?.planType ?? null);
   readonly balanceChf = computed(() => this._state()?.balanceChf ?? 0);
+  readonly trialSeedChf = computed(() => this._state()?.trialSeedChf ?? 0);
   readonly isTrial = computed(() => this.planType() === 'trial');
-  readonly isReadOnly = computed(() => this.planType() === 'inactive');
+
+  // Sending is locked when there's no active plan, or a trial whose credit is
+  // spent (server said so this session, or the balance has reached zero).
+  readonly isSendingLocked = computed(() => {
+    if (this.planType() === 'inactive') {
+      return true;
+    }
+    if (this.isTrial()) {
+      return this._sendBlocked() || this.balanceChf() <= 0;
+    }
+    return false;
+  });
+
+  // A trial that can no longer send — drives the "used up" badge/messaging.
+  readonly isTrialUsedUp = computed(() => this.isTrial() && this.isSendingLocked());
 
   constructor() {
     this.refresh();
@@ -49,6 +55,7 @@ export class BillingService {
         this._state.set({
           planType: res.plan_type,
           balanceChf: res.balance_chf ?? 0,
+          trialSeedChf: res.trial_seed_chf ?? 0,
         }),
       error: () => {
         /* leave state as-is; the gate still relies on the 402 from /complete */
@@ -69,38 +76,17 @@ export class BillingService {
     });
   }
 
-  // presentPlanGate is called when /complete returns a billing 402. It syncs
-  // the local state to the server's verdict (so the composer locks for
-  // inactive) and opens the plan-selection dialog.
-  presentPlanGate(restriction: CompletionBillingRestriction): void {
+  // markSendingBlocked records a billing 402 from /complete so the locked-chat
+  // surfaces appear immediately, and reflects an inactive plan locally.
+  markSendingBlocked(restriction: CompletionBillingRestriction): void {
+    this._sendBlocked.set(true);
     if (restriction.code === 'INACTIVE') {
-      this._state.set({ planType: 'inactive', balanceChf: 0 });
-      this.openPlanGate('inactive');
-      return;
+      const current = this._state();
+      this._state.set({
+        planType: 'inactive',
+        balanceChf: 0,
+        trialSeedChf: current?.trialSeedChf ?? 0,
+      });
     }
-    this.refresh();
-    this.openPlanGate('trial_exhausted');
-  }
-
-  // openPlanGate shows the dialog (at most one at a time). Choosing a plan
-  // routes to the billing page with the chosen plan pre-selected.
-  openPlanGate(reason: PlanGateReason): void {
-    if (this._gateOpen) {
-      return;
-    }
-    this._gateOpen = true;
-    const ref = this._dialog.open<BillingPlanType | undefined>(
-      PlanGateDialogComponent,
-      {
-        ...cognosDialogOptions,
-        data: { reason } satisfies PlanGateDialogData,
-      },
-    );
-    ref.closed.subscribe((plan) => {
-      this._gateOpen = false;
-      if (plan) {
-        void this._router.navigate(['/account/billing'], { queryParams: { plan } });
-      }
-    });
   }
 }

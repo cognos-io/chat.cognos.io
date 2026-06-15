@@ -40,6 +40,10 @@
       padding: var(--cog-space-200) var(--cog-space-300);
     }
 
+    &__lock-banner {
+      padding: 0 var(--cog-space-300) var(--cog-space-150);
+    }
+
     &__page-content {
       padding: 0 var(--cog-space-300) var(--cog-space-300);
     }
@@ -60,6 +64,8 @@
   &__brand {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: var(--cog-space-100);
   }
 
   &__logo,
@@ -116,16 +122,18 @@
     gap: var(--cog-space-050);
   }
 
-  &__main,
-  &__page {
+  &__main {
     display: grid;
     min-height: 0;
-  }
-
-  &__main {
     grid-template-rows: auto minmax(0, 1fr);
     height: 100%;
     overflow: hidden;
+  }
+
+  &__page {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
   &__mobile-bar {
@@ -138,16 +146,18 @@
     gap: var(--cog-space-050);
   }
 
-  &__page {
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-
   &__page-header {
     padding: var(--cog-space-200);
   }
 
+  &__lock-banner {
+    display: block;
+    padding: 0 var(--cog-space-200) var(--cog-space-150);
+  }
+
   &__page-content {
     display: grid;
+    flex: 1;
     min-height: 0;
     padding: 0 var(--cog-space-200) var(--cog-space-200);
   }

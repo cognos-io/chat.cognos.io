@@ -9,16 +9,15 @@ export type BillingPlanType = 'trial' | 'payg' | 'unlimited' | 'inactive';
 export interface BillingApiResponse {
   plan_type: BillingPlanType;
   balance_chf: number;
+  trial_seed_chf: number;
 }
 
 // BillingState is the normalised view the frontend holds in a signal.
 export interface BillingState {
   planType: BillingPlanType;
   balanceChf: number;
+  trialSeedChf: number;
 }
-
-// Why the user hit the plan gate — drives the dialog's copy.
-export type PlanGateReason = 'trial_exhausted' | 'inactive';
 
 // CompletionBillingRestriction is the structured 402 body the `/complete`
 // endpoint returns when billing blocks a send (spec §12.7).

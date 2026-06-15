@@ -1111,7 +1111,9 @@ export class MessageService {
   private reportCompletionError(err: unknown): void {
     const restriction = parseCompletionBillingRestriction(err);
     if (restriction) {
-      this._billingService.presentPlanGate(restriction);
+      // Lock the composer + surface the in-chat billing banners. No toast — the
+      // locked-chat UI and the pricing page carry the recovery path.
+      this._billingService.markSendingBlocked(restriction);
       return;
     }
     this._errorService.alert(resolveCompletionFailureMessage(err));

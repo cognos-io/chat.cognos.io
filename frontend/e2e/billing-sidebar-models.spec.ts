@@ -107,22 +107,26 @@ test('the sidebar profile button shows the plan and routes to billing', async ({
   ]);
 
   await page.route(`${API}/api/v1/billing`, async (route) => {
-    await route.fulfill({ json: { plan_type: 'trial', balance_chf: 0.32 } });
+    await route.fulfill({
+      json: { plan_type: 'trial', balance_chf: 0.32, trial_seed_chf: 2.0 },
+    });
   });
 
   await page.goto('/c/conv_profile');
 
   const profile = page.getByRole('link', { name: /account & billing/i });
   await expect(profile).toBeVisible();
-  // Plan label + trial credit are both surfaced up front.
-  await expect(profile.getByText(/trial/i).first()).toBeVisible();
-  await expect(profile.getByText(/CHF\s*0\.32/).first()).toBeVisible();
-  // Privacy-preserving avatar initials derived from the email local-part.
+  // Plan label + privacy-preserving avatar initials (from the email local-part).
+  await expect(profile.getByText('Trial', { exact: true })).toBeVisible();
   await expect(profile.getByText('EJ')).toBeVisible();
+  // Trial credit is surfaced in the dedicated card above the profile.
+  await expect(page.getByText('CHF 0.32 left of your CHF 2.00 trial')).toBeVisible();
 
   await profile.click();
   await expect(page).toHaveURL(/\/account\/billing/);
-  await expect(page.getByRole('heading', { name: 'Billing' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Keep going, privately' }),
+  ).toBeVisible();
 });
 
 test('the model selector tags models with low/medium/high cost tiers', async ({
@@ -141,7 +145,9 @@ test('the model selector tags models with low/medium/high cost tiers', async ({
   ]);
 
   await page.route(`${API}/api/v1/billing`, async (route) => {
-    await route.fulfill({ json: { plan_type: 'trial', balance_chf: 2.0 } });
+    await route.fulfill({
+      json: { plan_type: 'trial', balance_chf: 2.0, trial_seed_chf: 2.0 },
+    });
   });
 
   // The composer (and its model trigger) is rebuilt while fetching — wait for

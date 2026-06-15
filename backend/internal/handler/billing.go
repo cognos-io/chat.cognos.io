@@ -16,8 +16,9 @@ import (
 const defaultBillingTransactionLimit = 50
 
 type billingResponse struct {
-	PlanType   billing.PlanType `json:"plan_type"`
-	BalanceCHF float64          `json:"balance_chf"`
+	PlanType     billing.PlanType `json:"plan_type"`
+	BalanceCHF   float64          `json:"balance_chf"`
+	TrialSeedCHF float64          `json:"trial_seed_chf"`
 }
 
 type billingTransaction struct {
@@ -79,8 +80,9 @@ func BillingGet(params BillingGetParams) func(e *core.RequestEvent) error {
 		}
 
 		return e.JSON(http.StatusOK, billingResponse{
-			PlanType:   state.PlanType,
-			BalanceCHF: float64(state.BalanceRappen) / 100,
+			PlanType:     state.PlanType,
+			BalanceCHF:   float64(state.BalanceRappen) / 100,
+			TrialSeedCHF: float64(state.TrialSeedRappen) / 100,
 		})
 	}
 }

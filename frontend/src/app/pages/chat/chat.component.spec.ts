@@ -93,8 +93,10 @@ describe('ChatComponent', () => {
           useValue: {
             planType: signal('trial'),
             balanceChf: signal(2),
+            trialSeedChf: signal(2),
             isTrial: signal(true),
-            isReadOnly: signal(false),
+            isSendingLocked: signal(false),
+            isTrialUsedUp: signal(false),
           },
         },
         { provide: ConversationService, useValue: conversationService },

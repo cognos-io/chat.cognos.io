@@ -50,20 +50,36 @@
 </ng-template>
 
 <ng-template #navNewChat>
-  <cog-button
-    appearance="primary"
-    [fullWidth]="true"
-    icon="plus"
-    (click)="onNewConversation()"
-  >
-    New chat
-  </cog-button>
+  @if (billing.isSendingLocked()) {
+    <cog-button
+      appearance="default"
+      [fullWidth]="true"
+      icon="plus"
+      iconAfter="lock"
+      title="Choose a plan to start a new chat"
+      [disabled]="true"
+    >
+      New chat
+    </cog-button>
+  } @else {
+    <cog-button
+      appearance="primary"
+      [fullWidth]="true"
+      icon="plus"
+      (click)="onNewConversation()"
+    >
+      New chat
+    </cog-button>
+  }
 </ng-template>
 
 <ng-template #navigationContent>
   <div class="chat-shell__nav">
     <div class="chat-shell__brand">
       <app-cognos-logo class="chat-shell__logo" palette="dark"></app-cognos-logo>
+      @if (billing.isTrial()) {
+        <cog-lozenge tone="neutral">Trial</cog-lozenge>
+      }
     </div>
 
     <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
@@ -106,6 +122,9 @@
       <ng-container *ngTemplateOutlet="navActions"></ng-container>
     </div>
     <div class="chat-shell__sidebar-footer">
+      @if (billing.isTrial()) {
+        <app-trial-credit-card></app-trial-credit-card>
+      }
       <ng-container *ngTemplateOutlet="profileFooter"></ng-container>
     </div>
   </aside>
@@ -126,6 +145,10 @@
       <header class="chat-shell__page-header">
         <app-chat-header />
       </header>
+
+      @if (billing.isSendingLocked()) {
+        <app-billing-lock-banner class="chat-shell__lock-banner" />
+      }
 
       <main class="chat-shell__page-content" role="main">
         <router-outlet></router-outlet>

@@ -11,17 +11,21 @@ import {
   CognosDrawerComponent,
   CognosIconButtonComponent,
   CognosIconComponent,
+  CognosLozengeComponent,
   CognosTextFieldComponent,
   CognosToastService,
 } from '@cognos/ui-angular';
 
+import { BillingLockBannerComponent } from '@app/components/billing/billing-lock-banner/billing-lock-banner.component';
 import { ChatHeaderComponent } from '@app/components/chat/chat-header/chat-header.component';
 import { ConversationListItemComponent } from '@app/components/chat/conversation-list/conversation-list-item/conversation-list-item.component';
 import { SidebarProfileComponent } from '@app/components/chat/sidebar-profile/sidebar-profile.component';
+import { TrialCreditCardComponent } from '@app/components/chat/trial-credit-card/trial-credit-card.component';
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/contact-help-dialog.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { VaultPasswordDialogComponent } from '@app/components/vault-password-dialog/vault-password-dialog.component';
+import { BillingService } from '@app/services/billing.service';
 import { MessageService } from '@app/services/message.service';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
@@ -38,12 +42,15 @@ import { ConversationService } from '../../services/conversation.service';
     CognosDrawerComponent,
     CognosIconButtonComponent,
     CognosIconComponent,
+    CognosLozengeComponent,
     CognosLogoComponent,
     CognosTextFieldComponent,
     ChatHeaderComponent,
     ConversationListItemComponent,
     LoadingIndicatorComponent,
     SidebarProfileComponent,
+    TrialCreditCardComponent,
+    BillingLockBannerComponent,
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
@@ -56,6 +63,7 @@ export class ChatComponent {
 
   readonly router = inject(Router);
   readonly conversationService = inject(ConversationService);
+  readonly billing = inject(BillingService);
   readonly drawerOpen = signal(false);
 
   private _vaultDialogRef: DialogRef<unknown, VaultPasswordDialogComponent> | null =
@@ -111,6 +119,10 @@ export class ChatComponent {
   }
 
   onNewConversation() {
+    if (this.billing.isSendingLocked()) {
+      return;
+    }
+
     if (this.canClearTemporaryMessages()) {
       this._messageService.resetState();
     }

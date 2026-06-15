@@ -39,9 +39,10 @@ func (r *PocketBaseRepo) StateForUser(userID string) (State, error) {
 	}
 
 	return State{
-		PlanType:      planType,
-		BalanceRappen: int64(records[0].GetInt("balance_rappen")),
-		BillingUserID: records[0].Id,
+		PlanType:        planType,
+		BalanceRappen:   int64(records[0].GetInt("balance_rappen")),
+		TrialSeedRappen: int64(records[0].GetInt("trial_seed_granted_rappen")),
+		BillingUserID:   records[0].Id,
 	}, nil
 }
 

@@ -17,12 +17,12 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import {
   CognosButtonComponent,
   CognosIconButtonComponent,
   CognosIconComponent,
-  CognosLozengeComponent,
 } from '@cognos/ui-angular';
 
 import { AgentService } from '@app/services/agent.service';
@@ -50,118 +50,135 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
     CognosButtonComponent,
     CognosIconButtonComponent,
     CognosIconComponent,
-    CognosLozengeComponent,
     ModelSelectorComponent,
   ],
   template: `
     <form class="message-form" [formGroup]="messageForm" (submit)="sendMessage()">
-      @if (billing.isReadOnly()) {
-        <div class="message-form__locked" role="status">
-          <span class="message-form__locked-text">
-            Choose a plan to keep chatting. You can still read your chats.
+      @if (billing.isSendingLocked()) {
+        <div class="message-form__locked-wrap">
+          <div class="message-form__locked" role="status">
+            <span class="message-form__locked-icon">
+              <cog-icon name="lock" [size]="18" tone="text-subtle" />
+            </span>
+            <span class="message-form__locked-copy">
+              <span class="message-form__locked-title">Sending is paused</span>
+              <span class="message-form__locked-body">
+                You can read everything here. Pick a plan to send new messages.
+              </span>
+            </span>
+            <span class="message-form__locked-actions">
+              <cog-button appearance="default" type="button" (click)="goToBilling()">
+                Compare plans
+              </cog-button>
+              <cog-button
+                appearance="primary"
+                icon="chevron-right"
+                type="button"
+                (click)="goToBilling()"
+              >
+                Upgrade
+              </cog-button>
+            </span>
+          </div>
+          <p class="message-form__locked-note">
+            <cog-icon name="shield-check" [size]="14" tone="text-subtle" />
+            60-day money-back guarantee · cancel anytime
+          </p>
+        </div>
+      } @else {
+        <div class="message-form__panel">
+          <label class="message-form__label" for="message-form">
+            Message Cognos — encrypted on this device
+          </label>
+
+          <textarea
+            cdkTextareaAutosize
+            cdkAutosizeMaxRows="8"
+            cdkAutosizeMinRows="2"
+            class="message-form__textarea"
+            formControlName="content"
+            id="message-form"
+            name="message-form"
+            placeholder="Message with Cognos"
+            (keydown.control.enter)="isMac ? undefined : sendMessage()"
+            (keydown.meta.enter)="isMac ? sendMessage() : undefined"
+          ></textarea>
+
+          <div class="message-form__controls">
+            <cog-button
+              #modelTrigger="cdkOverlayOrigin"
+              cdkOverlayOrigin
+              appearance="default"
+              iconAfter="chevron-down"
+              type="button"
+              (click)="toggleModelSelector()"
+            >
+              {{ modelService.selectedModel().name }}
+            </cog-button>
+
+            <ng-template
+              cdkConnectedOverlay
+              [cdkConnectedOverlayOrigin]="modelTrigger"
+              [cdkConnectedOverlayOpen]="modelSelectorOpen()"
+              [cdkConnectedOverlayHasBackdrop]="true"
+              cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+              [cdkConnectedOverlayPositions]="modelSelectorPositions"
+              (backdropClick)="closeModelSelector()"
+              (detach)="closeModelSelector()"
+              (overlayKeydown)="onOverlayKeydown($event)"
+            >
+              <app-model-selector
+                (modelSelected)="closeModelSelector()"
+              ></app-model-selector>
+            </ng-template>
+
+            <cog-icon-button
+              name="sparkles"
+              title="Choose assistant — {{ agentService.selectedAgent().name }}"
+              type="button"
+              (click)="openAgentSelector()"
+            />
+
+            @if (canClearTemporaryMessages() && !isMobile()) {
+              <cog-icon-button
+                name="eraser"
+                title="Clear all messages"
+                type="button"
+                (click)="onClearMessages()"
+              />
+            }
+
+            <cog-button
+              class="message-form__send"
+              appearance="primary"
+              icon="send"
+              title="Send"
+              type="submit"
+              [disabled]="
+                messageForm.disabled || !messageForm.valid || !canSendMessage()
+              "
+            >
+              <span class="message-form__send-label">Send</span>
+            </cog-button>
+          </div>
+        </div>
+
+        <div class="message-form__meta">
+          <span class="message-form__security">
+            <cog-icon name="lock" [size]="12" tone="text-subtlest" />
+            <span>End-to-end encrypted · keys are encrypted before backup</span>
           </span>
-          <cog-button appearance="primary" type="button" (click)="openPlanGate()">
-            View plans
-          </cog-button>
+
+          <span class="message-form__shortcut">
+            @if (isMac) {
+              Cmd
+            } @else {
+              Ctrl
+            }
+            + Enter to send
+          </span>
         </div>
       }
-
-      <div class="message-form__panel">
-        <label class="message-form__label" for="message-form">
-          Message Cognos — encrypted on this device
-        </label>
-
-        <textarea
-          cdkTextareaAutosize
-          cdkAutosizeMaxRows="8"
-          cdkAutosizeMinRows="2"
-          class="message-form__textarea"
-          formControlName="content"
-          id="message-form"
-          name="message-form"
-          placeholder="Message with Cognos"
-          (keydown.control.enter)="isMac ? undefined : sendMessage()"
-          (keydown.meta.enter)="isMac ? sendMessage() : undefined"
-        ></textarea>
-
-        <div class="message-form__controls">
-          @if (billing.isTrial()) {
-            <cog-lozenge tone="blue" class="message-form__trial">
-              Trial · CHF {{ billing.balanceChf().toFixed(2) }} left
-            </cog-lozenge>
-          }
-
-          <cog-button
-            #modelTrigger="cdkOverlayOrigin"
-            cdkOverlayOrigin
-            appearance="default"
-            iconAfter="chevron-down"
-            type="button"
-            (click)="toggleModelSelector()"
-          >
-            {{ modelService.selectedModel().name }}
-          </cog-button>
-
-          <ng-template
-            cdkConnectedOverlay
-            [cdkConnectedOverlayOrigin]="modelTrigger"
-            [cdkConnectedOverlayOpen]="modelSelectorOpen()"
-            [cdkConnectedOverlayHasBackdrop]="true"
-            cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
-            [cdkConnectedOverlayPositions]="modelSelectorPositions"
-            (backdropClick)="closeModelSelector()"
-            (detach)="closeModelSelector()"
-            (overlayKeydown)="onOverlayKeydown($event)"
-          >
-            <app-model-selector
-              (modelSelected)="closeModelSelector()"
-            ></app-model-selector>
-          </ng-template>
-
-          <cog-icon-button
-            name="sparkles"
-            title="Choose assistant — {{ agentService.selectedAgent().name }}"
-            type="button"
-            (click)="openAgentSelector()"
-          />
-
-          @if (canClearTemporaryMessages() && !isMobile()) {
-            <cog-icon-button
-              name="eraser"
-              title="Clear all messages"
-              type="button"
-              (click)="onClearMessages()"
-            />
-          }
-
-          <cog-button
-            class="message-form__send"
-            appearance="primary"
-            icon="send"
-            title="Send"
-            type="submit"
-            [disabled]="messageForm.disabled || !messageForm.valid || !canSendMessage()"
-          >
-            <span class="message-form__send-label">Send</span>
-          </cog-button>
-        </div>
-      </div>
-
-      <div class="message-form__meta">
-        <span class="message-form__security">
-          <cog-icon name="lock" [size]="12" tone="text-subtlest" />
-          <span>End-to-end encrypted · keys are encrypted before backup</span>
-        </span>
-
-        <span class="message-form__shortcut">
-          @if (isMac) {
-            Cmd
-          } @else {
-            Ctrl
-          }
-          + Enter to send
-        </span>
-      </div>
     </form>
   `,
   styles: `
@@ -226,26 +243,70 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
       margin-left: auto;
     }
 
-    .message-form__trial {
-      margin-right: var(--cog-space-050);
+    .message-form__locked-wrap {
+      display: grid;
+      gap: var(--cog-space-100);
     }
 
     .message-form__locked {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: var(--cog-space-150);
       flex-wrap: wrap;
-      border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-sm);
+      border: 1px dashed var(--cog-border);
+      border-radius: var(--cog-radius-md);
       background: var(--cog-surface-sunken, var(--cog-surface));
-      padding: var(--cog-space-150);
+      padding: var(--cog-space-150) var(--cog-space-200);
     }
 
-    .message-form__locked-text {
+    .message-form__locked-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      flex: none;
+      border-radius: var(--cog-radius-pill);
+      background: var(--cog-surface);
+      border: 1px solid var(--cog-border);
+    }
+
+    .message-form__locked-copy {
+      display: grid;
+      gap: 2px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .message-form__locked-title {
+      color: var(--cog-text);
+      font-weight: var(--cog-fw-semibold);
+      font-size: var(--cog-fs-body);
+      line-height: var(--cog-lh-body);
+    }
+
+    .message-form__locked-body {
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-body-sm);
       line-height: var(--cog-lh-body-sm);
+    }
+
+    .message-form__locked-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-100);
+      flex: none;
+    }
+
+    .message-form__locked-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--cog-space-050);
+      margin: 0;
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
     }
 
     .message-form__meta,
@@ -287,6 +348,7 @@ export class MessageFormComponent {
   private readonly _platformId = inject(PLATFORM_ID);
   private readonly _conversationService = inject(ConversationService);
   private readonly _deviceService = inject(DeviceService);
+  private readonly _router = inject(Router);
 
   private _previousMessage = '';
 
@@ -299,7 +361,8 @@ export class MessageFormComponent {
   public readonly billing = inject(BillingService);
 
   readonly canSendMessage = computed(
-    () => this.modelService.selectedModel().isEligible && !this.billing.isReadOnly(),
+    () =>
+      this.modelService.selectedModel().isEligible && !this.billing.isSendingLocked(),
   );
 
   messageForm = this._fb.group({
@@ -321,7 +384,7 @@ export class MessageFormComponent {
     effect(() => {
       const status = this.messageService.status();
 
-      if (untracked(() => this.billing.isReadOnly())) {
+      if (untracked(() => this.billing.isSendingLocked())) {
         this.disableForm();
         return;
       }
@@ -353,7 +416,7 @@ export class MessageFormComponent {
     // to inactive, and restore it (unless mid-send) if the plan becomes active
     // again. Kept separate so it never touches the composer's content.
     effect(() => {
-      if (this.billing.isReadOnly()) {
+      if (this.billing.isSendingLocked()) {
         this.disableForm();
       } else if (this.messageService.status() !== MessageStatus.Sending) {
         this.enableForm();
@@ -384,8 +447,8 @@ export class MessageFormComponent {
     this._dialog.open(AgentSelectorComponent, cognosDialogOptions);
   }
 
-  openPlanGate() {
-    this.billing.openPlanGate('inactive');
+  goToBilling() {
+    void this._router.navigate(['/account/billing']);
   }
 
   toggleModelSelector() {
