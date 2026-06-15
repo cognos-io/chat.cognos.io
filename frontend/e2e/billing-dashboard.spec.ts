@@ -71,6 +71,9 @@ test('active unlimited dashboard shows plan, renewal, usage and the settings nav
   // Usage breakdown (count, from ledger metadata).
   await expect(page.getByText('42').first()).toBeVisible();
   await expect(page.getByText('No limit')).toBeVisible();
+
+  // Payment method placeholder (card brand/last4 wired with live Paddle data).
+  await expect(page.getByText('No card available')).toBeVisible();
 });
 
 test('cancels-soon dashboard offers resume', async ({ page }) => {

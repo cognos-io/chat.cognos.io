@@ -140,8 +140,20 @@
     <!-- Payment method (managed by Paddle) -->
     <section class="pb__card pb__payment">
       <header class="pb__card-head">
-        <span class="pb__card-title">Payment method</span>
+        <span class="pb__card-title">
+          <cog-icon name="credit-card" [size]="18" tone="text-subtle" />
+          Payment method
+        </span>
       </header>
+      <!-- Card brand/last4 + Update appear here once Paddle card data is wired. -->
+      <div class="pb__payment-card">
+        <span class="pb__payment-badge" aria-hidden="true">
+          <cog-icon name="credit-card" [size]="18" tone="current" />
+        </span>
+        <span class="pb__payment-empty" i18n="@@billing.payment.noCard">
+          No card available
+        </span>
+      </div>
       <p class="pb__payment-note">
         <cog-icon name="lock" [size]="14" tone="text-subtle" />
         Billing is processed by Paddle, our payment provider. We store a token, never

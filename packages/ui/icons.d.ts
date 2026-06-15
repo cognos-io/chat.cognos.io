@@ -37,6 +37,7 @@ export type CognosIconName =
   | 'rotate-cw'
   | 'copy'
   | 'copy-plus'
+  | 'credit-card'
   | 'refresh-cw'
   | 'thumbs-up'
   | 'quote'

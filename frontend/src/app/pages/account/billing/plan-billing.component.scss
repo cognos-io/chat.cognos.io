@@ -164,6 +164,9 @@
 }
 
 .pb__card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cog-space-075);
   color: var(--cog-text);
   font-weight: var(--cog-fw-semibold);
 }
@@ -226,6 +229,32 @@
   color: var(--cog-text-subtle);
   font-size: var(--cog-fs-body-sm);
   line-height: var(--cog-lh-body-sm);
+}
+
+/* Placeholder card row — mirrors the brand badge + label layout used once a
+   real Paddle card (e.g. Visa •••• 4242) is wired in. */
+.pb__payment-card {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-100);
+}
+
+.pb__payment-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 28px;
+  border-radius: var(--cog-radius-sm, 6px);
+  background: var(--cog-text);
+  color: var(--cog-surface);
+}
+
+.pb__payment-empty {
+  margin: 0;
+  color: var(--cog-text);
+  font-size: var(--cog-fs-body);
+  font-weight: var(--cog-fw-semibold);
 }
 
 .pb__invoices-foot {
