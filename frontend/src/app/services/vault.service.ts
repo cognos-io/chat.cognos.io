@@ -6,6 +6,7 @@ import {
   Observable,
   Subject,
   catchError,
+  distinctUntilChanged,
   from,
   map,
   of,
@@ -160,26 +161,55 @@ export class VaultService {
             );
           }),
         ),
-      this.fetchUserKeyPairRecord().pipe(
-        catchError((error) => {
-          if (error.status === 404) {
-            this.ensureGeneratedAccountKey();
-            return of(null);
+      // Re-fetch the key-pair whenever the authenticated identity changes. The
+      // VaultService is an app-lifetime singleton and the SPA never reloads on
+      // logout → register/login, so a one-shot fetch would leave the previous
+      // user's keyPairRecord/isNewKeyPair in memory — and a brand-new account
+      // would be shown the "unlock someone else's backup" flow. Keying off the
+      // user id (nulls included, so a same-user re-login still refires) keeps the
+      // vault state bound to whoever is signed in. Token refreshes re-emit the
+      // same id and are ignored, so an unlocked session is never disrupted.
+      this._authService.user$.pipe(
+        distinctUntilChanged(
+          (previous, next) => (previous?.['id'] ?? null) === (next?.['id'] ?? null),
+        ),
+        switchMap((user) => {
+          if (!user) {
+            // Signed out: drop the previous user's in-memory vault state.
+            this.generatedAccountKey.set(null);
+            return of({
+              keyPair: undefined,
+              keyPairRecord: undefined,
+              isNewKeyPair: false,
+              isRestoring: false,
+            });
           }
 
-          return throwError(() => error);
+          // A (different) user signed in — clear any leftover generated key
+          // before the fetch decides new (404) vs existing.
+          this.generatedAccountKey.set(null);
+          return this.fetchUserKeyPairRecord().pipe(
+            catchError((error) => {
+              if (error.status === 404) {
+                this.ensureGeneratedAccountKey();
+                return of(null);
+              }
+
+              return throwError(() => error);
+            }),
+            switchMap((keyPairRecord) =>
+              from(this.buildFetchedVaultState(keyPairRecord)).pipe(
+                map((nextState) => ({
+                  keyPair: nextState.keyPair,
+                  keyPairRecord,
+                  isNewKeyPair: !keyPairRecord,
+                  isRestoring: false,
+                })),
+              ),
+            ),
+            catchError(() => of({ isRestoring: false })),
+          );
         }),
-        switchMap((keyPairRecord) =>
-          from(this.buildFetchedVaultState(keyPairRecord)).pipe(
-            map((nextState) => ({
-              keyPair: nextState.keyPair,
-              keyPairRecord,
-              isNewKeyPair: !keyPairRecord,
-              isRestoring: false,
-            })),
-          ),
-        ),
-        catchError(() => of({ isRestoring: false })),
       ),
       this.lock$.pipe(
         switchMap(() =>
