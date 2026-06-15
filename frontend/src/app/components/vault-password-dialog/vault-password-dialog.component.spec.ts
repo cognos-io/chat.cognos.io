@@ -88,14 +88,13 @@ describe('VaultPasswordDialogComponent', () => {
     expect(navigate).toHaveBeenCalledWith(['', 'auth', 'logout']);
   });
 
-  it('masks the Account Key by default and reveals it on toggle', () => {
+  it('hides the Account Key in a password field by default and reveals it on toggle', () => {
     const keyInput = () =>
       fixture.nativeElement.querySelector('#account-key') as HTMLInputElement;
 
-    // Stays type=text (so password managers keep autofilling the login) and is
-    // masked visually instead — not left readable for shoulder-surfers.
-    expect(keyInput().type).toBe('text');
-    expect(keyInput().classList).toContain('vault-password-dialog__input--masked');
+    // A real password input: recovery-grade secret material must not be saved to
+    // the browser's plaintext autofill history or offered in a suggestion drop-down.
+    expect(keyInput().type).toBe('password');
 
     const revealButton = Array.from(
       fixture.nativeElement.querySelectorAll('button'),
@@ -107,7 +106,8 @@ describe('VaultPasswordDialogComponent', () => {
     revealButton!.click();
     fixture.detectChanges();
 
-    expect(keyInput().classList).not.toContain('vault-password-dialog__input--masked');
+    // Show flips it to a plain text field so the user can verify a paste.
+    expect(keyInput().type).toBe('text');
     expect(component.showAccountKey()).toBe(true);
   });
 
@@ -176,7 +176,7 @@ describe('VaultPasswordDialogComponent', () => {
       '#account-key',
     ) as HTMLInputElement;
 
-    expect(accountKeyInput.autocomplete).toBe('new-password');
+    expect(accountKeyInput.autocomplete).toBe('off');
     expect(accountKeyInput.readOnly).toBe(true);
 
     accountKeyInput.dispatchEvent(new FocusEvent('focus'));

@@ -133,18 +133,19 @@ const validateUnlockForm = (
                   {{ showAccountKey() ? 'Hide' : 'Show' }}
                 </button>
               </div>
-              <!-- Kept as type=text so password managers treat the form as a
-                   normal login (one password field) and keep autofilling. The
-                   Account Key is masked visually via CSS and toggled by the
-                   Show/Hide control. -->
+              <!-- A real password field: the Account Key is recovery-grade
+                   secret material, so it must never land in the browser's
+                   plaintext form-autofill history or be offered in a suggestion
+                   dropdown. The Show/Hide control flips it to type=text on
+                   demand; autocomplete is off so password managers don't
+                   capture it. -->
               <input
                 #accountKeyInput
                 id="account-key"
                 class="vault-password-dialog__input vault-password-dialog__input--code"
-                [class.vault-password-dialog__input--masked]="!showAccountKey()"
                 formControlName="accountKey"
-                type="text"
-                autocomplete="new-password"
+                [type]="showAccountKey() ? 'text' : 'password'"
+                autocomplete="off"
                 readonly
                 spellcheck="false"
                 (focus)="accountKeyInput.readOnly = false"
@@ -334,13 +335,6 @@ const validateUnlockForm = (
     .vault-password-dialog__input--code {
       font-family: var(--cog-font-mono, monospace);
       text-transform: uppercase;
-    }
-
-    /* Visual masking that keeps the field type=text (password-manager
-       friendly). Supported in Chromium, Safari and modern Firefox. */
-    .vault-password-dialog__input--masked {
-      -webkit-text-security: disc;
-      text-security: disc;
     }
 
     .vault-password-dialog__input:focus {
