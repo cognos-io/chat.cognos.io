@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
-import { Observable, switchMap, take, tap, timer } from 'rxjs';
+import { Observable, switchMap, take, takeWhile, tap, timer } from 'rxjs';
 
 import {
   BillingApiResponse,
@@ -199,10 +199,14 @@ export class BillingService {
       .pipe(
         take(ACTIVATION_POLL_MAX_ATTEMPTS),
         switchMap(() => this.fetchState()),
+        // Stop the moment a paid plan lands (inclusive: still emit that state so
+        // `next` can route once). Without this the timer kept firing and
+        // re-navigated to '/' every interval, yanking the user off any page.
+        takeWhile((state) => !this._isPaidPlan(state), true),
       )
       .subscribe({
         next: (state) => {
-          if (state.plan_type === 'payg' || state.plan_type === 'unlimited') {
+          if (this._isPaidPlan(state)) {
             this._activating.set(false);
             void this._router.navigate(['/']);
           }
@@ -213,6 +217,10 @@ export class BillingService {
           }
         },
       });
+  }
+
+  private _isPaidPlan(state: BillingApiResponse): boolean {
+    return state.plan_type === 'payg' || state.plan_type === 'unlimited';
   }
 
   // applyTrialUsage optimistically reduces the displayed trial credit so the

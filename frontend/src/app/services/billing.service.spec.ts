@@ -233,3 +233,78 @@ describe('BillingService.openPortal', () => {
     expect(alert).toHaveBeenCalledOnce();
   });
 });
+
+describe('BillingService.pollActivation', () => {
+  let getBilling: ReturnType<typeof vi.fn>;
+  let navigate: ReturnType<typeof vi.fn>;
+
+  const build = (planType: string): BillingService => {
+    getBilling = vi
+      .fn()
+      .mockReturnValue(
+        of({
+          plan_type: planType,
+          status: 'active',
+          balance_chf: 0,
+          trial_seed_chf: 0,
+        }),
+      );
+    navigate = vi.fn();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        BillingService,
+        { provide: CognosApiService, useValue: { getBilling } },
+        { provide: ErrorService, useValue: { alert: vi.fn() } },
+        {
+          provide: PaddleService,
+          useValue: { enabled: false, checkoutCompleted$: new Subject() },
+        },
+        { provide: Router, useValue: { navigate } },
+        { provide: AuthService, useValue: { email: () => '' } },
+        {
+          provide: DOCUMENT,
+          useValue: { location: { href: '' }, defaultView: { open: vi.fn() } },
+        },
+      ],
+    });
+    return TestBed.inject(BillingService);
+  };
+
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    TestBed.resetTestingModule();
+  });
+
+  // Regression: once the plan goes live the poll must STOP. Previously the timer
+  // kept firing every interval, re-navigating to '/' and yanking the user out of
+  // any screen (e.g. their profile) they opened.
+  it('navigates once and stops polling after the plan activates', () => {
+    const service = build('unlimited');
+    getBilling.mockClear(); // ignore the constructor's refresh()
+    navigate.mockClear();
+
+    service.pollActivation();
+    vi.advanceTimersByTime(10000); // several poll intervals
+
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith(['/']);
+    expect(getBilling).toHaveBeenCalledTimes(1);
+    expect(service.activating()).toBe(false);
+  });
+
+  // While still on the trial it keeps polling and never navigates.
+  it('keeps polling without navigating while the plan is not yet active', () => {
+    const service = build('trial');
+    getBilling.mockClear();
+    navigate.mockClear();
+
+    service.pollActivation();
+    vi.advanceTimersByTime(6000); // ~3 intervals
+
+    expect(navigate).not.toHaveBeenCalled();
+    expect(getBilling.mock.calls.length).toBeGreaterThan(1);
+    expect(service.activating()).toBe(true);
+  });
+});
