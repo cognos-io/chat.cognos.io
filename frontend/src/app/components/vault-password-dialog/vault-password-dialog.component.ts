@@ -1,5 +1,5 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -82,8 +82,10 @@ const validateUnlockForm = (
               </cog-button>
             </div>
             <p>
-              Cognos never stores the plaintext Account Key. If you lose it,
-              fresh-device unlock may be impossible.
+              Keep this Account Key private — anyone who has it together with your
+              account password can unlock your account. Cognos never stores the
+              plaintext Account Key, so if you lose it fresh-device unlock may be
+              impossible.
             </p>
           } @else {
             <p>Enter your account password and Account Key to unlock this device.</p>
@@ -117,14 +119,26 @@ const validateUnlockForm = (
           </label>
 
           @if (!vaultService.isNewKeyPair()) {
-            <label class="vault-password-dialog__field" for="account-key">
-              <span class="vault-password-dialog__label">Account Key</span>
+            <div class="vault-password-dialog__field">
+              <div class="vault-password-dialog__field-head">
+                <label class="vault-password-dialog__label" for="account-key">
+                  Account Key
+                </label>
+                <button
+                  class="vault-password-dialog__reveal"
+                  type="button"
+                  [attr.aria-pressed]="showAccountKey()"
+                  (click)="toggleAccountKey()"
+                >
+                  {{ showAccountKey() ? 'Hide' : 'Show' }}
+                </button>
+              </div>
               <input
                 #accountKeyInput
                 id="account-key"
                 class="vault-password-dialog__input vault-password-dialog__input--code"
                 formControlName="accountKey"
-                type="text"
+                [type]="showAccountKey() ? 'text' : 'password'"
                 autocomplete="new-password"
                 readonly
                 spellcheck="false"
@@ -138,7 +152,7 @@ const validateUnlockForm = (
                   >Account Key is required</span
                 >
               }
-            </label>
+            </div>
           }
 
           @if (vaultService.isNewKeyPair()) {
@@ -279,6 +293,28 @@ const validateUnlockForm = (
       line-height: var(--cog-lh-body-sm);
     }
 
+    .vault-password-dialog__field-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--cog-space-100);
+    }
+
+    .vault-password-dialog__reveal {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      color: var(--cog-link, var(--cog-brand));
+      font: inherit;
+      font-size: var(--cog-fs-body-sm);
+      font-weight: var(--cog-fw-semibold);
+      cursor: pointer;
+    }
+
+    .vault-password-dialog__reveal:hover {
+      text-decoration: underline;
+    }
+
     .vault-password-dialog__input {
       min-height: 40px;
       border: 2px solid var(--cog-border);
@@ -358,6 +394,12 @@ export class VaultPasswordDialogComponent {
     () => this.vaultService.generatedAccountKey() ?? '',
   );
 
+  // The Account Key is a recovery credential as sensitive as the password, so
+  // the unlock field is masked by default. A show/hide toggle lets the user
+  // verify a paste without leaving it on screen (shoulder-surfing / screen
+  // share / screenshots).
+  readonly showAccountKey = signal(false);
+
   readonly vaultForm = this.fb.group(
     {
       accountKey: [''],
@@ -431,6 +473,10 @@ export class VaultPasswordDialogComponent {
     } finally {
       document.body.removeChild(textarea);
     }
+  }
+
+  toggleAccountKey() {
+    this.showAccountKey.update((shown) => !shown);
   }
 
   // Escape hatch when the device can't be unlocked (e.g. the encrypted backup

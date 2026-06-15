@@ -88,6 +88,27 @@ describe('VaultPasswordDialogComponent', () => {
     expect(navigate).toHaveBeenCalledWith(['', 'auth', 'logout']);
   });
 
+  it('masks the Account Key by default and reveals it on toggle', () => {
+    const keyInput = () =>
+      fixture.nativeElement.querySelector('#account-key') as HTMLInputElement;
+
+    // Sensitive by default — not left on screen for shoulder-surfers.
+    expect(keyInput().type).toBe('password');
+
+    const revealButton = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    ).find((el) => (el as HTMLElement).textContent?.trim() === 'Show') as
+      | HTMLButtonElement
+      | undefined;
+    expect(revealButton).toBeTruthy();
+
+    revealButton!.click();
+    fixture.detectChanges();
+
+    expect(keyInput().type).toBe('text');
+    expect(component.showAccountKey()).toBe(true);
+  });
+
   it('shows a locked title when the account was explicitly locked', () => {
     wasLocked.set(true);
 
