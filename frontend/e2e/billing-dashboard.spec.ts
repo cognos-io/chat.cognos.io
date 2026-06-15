@@ -74,6 +74,10 @@ test('active unlimited dashboard shows plan, renewal, usage and the settings nav
 
   // Payment method placeholder (card brand/last4 wired with live Paddle data).
   await expect(page.getByText('No card available')).toBeVisible();
+
+  // Portal entry points appear once there's a Paddle customer (non-trial).
+  await expect(page.getByRole('button', { name: 'Update' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Open Paddle portal' })).toBeVisible();
 });
 
 test('cancels-soon dashboard offers resume', async ({ page }) => {
