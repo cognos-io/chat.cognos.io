@@ -41,7 +41,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
         </div>
       </header>
 
-      <main class="cog-mobile-shell__main">
+      <main [class]="mainClass()">
         <ng-content />
       </main>
 
@@ -131,6 +131,10 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
         padding: var(--cog-space-200);
       }
 
+      .cog-mobile-shell__main--flush {
+        padding: 0;
+      }
+
       .cog-mobile-shell__composer {
         position: sticky;
         bottom: 0;
@@ -154,6 +158,8 @@ export class CognosMobileShellComponent {
   readonly showMenuButton = input(true);
   /** Fill the viewport and scroll the main area internally. */
   readonly fillViewport = input(false);
+  /** Pad the main area. Off for full-bleed content (e.g. a chat view). */
+  readonly padded = input(true);
   readonly menuClick = output<void>();
   readonly drawerClose = output<void>();
 
@@ -161,6 +167,12 @@ export class CognosMobileShellComponent {
     this.fillViewport()
       ? 'cog-mobile-shell cog-mobile-shell--fill'
       : 'cog-mobile-shell',
+  );
+
+  protected readonly mainClass = computed(() =>
+    this.padded()
+      ? 'cog-mobile-shell__main'
+      : 'cog-mobile-shell__main cog-mobile-shell__main--flush',
   );
 
   protected onMenuClick(): void {

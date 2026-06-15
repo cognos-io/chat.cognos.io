@@ -73,21 +73,6 @@
   }
 </ng-template>
 
-<ng-template #navigationContent>
-  <div class="chat-shell__nav">
-    <div class="chat-shell__brand">
-      <app-cognos-logo class="chat-shell__logo" palette="dark"></app-cognos-logo>
-      @if (billing.isTrial()) {
-        <cog-lozenge tone="neutral">Trial</cog-lozenge>
-      }
-    </div>
-
-    <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
-    <ng-container *ngTemplateOutlet="navSearch"></ng-container>
-    <ng-container *ngTemplateOutlet="navConversations"></ng-container>
-  </div>
-</ng-template>
-
 <ng-template #navActions>
   <div class="chat-shell__nav-actions">
     <cog-button appearance="subtle" type="button" (click)="onOpenHelpDialog()">
@@ -108,82 +93,95 @@
   </div>
 </ng-template>
 
-<ng-template #profileFooter>
+<ng-template #chatNav>
+  <div class="chat-shell__nav">
+    <div class="chat-shell__brand">
+      <app-cognos-logo class="chat-shell__logo" palette="dark"></app-cognos-logo>
+      @if (billing.isTrial()) {
+        <cog-lozenge tone="neutral">Trial</cog-lozenge>
+      }
+    </div>
+
+    <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
+    <ng-container *ngTemplateOutlet="navSearch"></ng-container>
+    <ng-container *ngTemplateOutlet="navConversations"></ng-container>
+  </div>
+</ng-template>
+
+<ng-template #chatFooter>
+  <ng-container *ngTemplateOutlet="navActions"></ng-container>
+  @if (billing.isTrial()) {
+    <app-trial-credit-card></app-trial-credit-card>
+  }
   <app-sidebar-profile></app-sidebar-profile>
 </ng-template>
 
-<div
-  class="chat-shell"
-  [class.chat-shell--temporary]="conversationService.isTemporaryConversation()"
->
-  <aside class="chat-shell__sidebar">
-    <ng-container *ngTemplateOutlet="navigationContent"></ng-container>
-    <div class="chat-shell__sidebar-actions">
-      <ng-container *ngTemplateOutlet="navActions"></ng-container>
-    </div>
-    <div class="chat-shell__sidebar-footer">
-      @if (billing.isTrial()) {
-        <app-trial-credit-card></app-trial-credit-card>
-      }
-      <ng-container *ngTemplateOutlet="profileFooter"></ng-container>
-    </div>
-  </aside>
-
-  <div class="chat-shell__main">
-    <header class="chat-shell__mobile-bar">
-      <cog-icon-button
-        name="menu"
-        size="lg"
-        title="Open navigation"
-        (click)="openDrawer()"
-      />
-      <app-cognos-logo class="chat-shell__mobile-logo" palette="dark"></app-cognos-logo>
-      <div class="chat-shell__mobile-actions"></div>
+<ng-template #chatPage>
+  <div
+    class="chat-page"
+    [class.chat-page--temporary]="conversationService.isTemporaryConversation()"
+  >
+    <header class="chat-page__header">
+      <app-chat-header />
     </header>
 
-    <div class="chat-shell__page">
-      <header class="chat-shell__page-header">
-        <app-chat-header />
-      </header>
+    @if (billing.isSendingLocked()) {
+      <app-billing-lock-banner class="chat-page__lock-banner" />
+    }
 
-      @if (billing.isSendingLocked()) {
-        <app-billing-lock-banner class="chat-shell__lock-banner" />
-      }
-
-      <main class="chat-shell__page-content" role="main">
-        <router-outlet></router-outlet>
-      </main>
-    </div>
+    <main class="chat-page__content" role="main">
+      <router-outlet></router-outlet>
+    </main>
   </div>
+</ng-template>
 
-  <cog-drawer
-    [open]="drawerOpen()"
-    [stickyFooter]="true"
-    [title]="'Navigation'"
-    [hideTitle]="true"
-    (close)="closeDrawer()"
+@if (device.isMobile()) {
+  <cog-mobile-shell
+    [fillViewport]="true"
+    [padded]="false"
+    title=""
+    drawerTitle="Navigation"
+    [drawerOpen]="drawerOpen()"
+    [drawerFooter]="true"
+    (menuClick)="openDrawer()"
+    (drawerClose)="closeDrawer()"
   >
-    <app-cognos-logo
-      cogDrawerHeader
-      class="chat-shell__drawer-logo"
-      palette="dark"
-    ></app-cognos-logo>
+    <app-cognos-logo cogMobileBrand class="chat-shell__logo" palette="dark" />
 
-    <div class="chat-shell__drawer-body">
+    <div class="chat-shell__content-host">
+      <ng-container *ngTemplateOutlet="chatPage"></ng-container>
+    </div>
+
+    <div cogMobileDrawer class="chat-shell__drawer-body">
       <ng-container *ngTemplateOutlet="navConversations"></ng-container>
     </div>
 
-    <div cogDrawerFooter>
-      <ng-container *ngTemplateOutlet="navActions"></ng-container>
+    <div cogMobileDrawerFooter class="chat-shell__drawer-footer">
       <ng-container *ngTemplateOutlet="navSearch"></ng-container>
       <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
-      @if (billing.isTrial()) {
-        <app-trial-credit-card></app-trial-credit-card>
-      }
-      <ng-container *ngTemplateOutlet="profileFooter"></ng-container>
+      <ng-container *ngTemplateOutlet="chatFooter"></ng-container>
     </div>
-  </cog-drawer>
-</div>
+  </cog-mobile-shell>
+} @else {
+  <cog-desktop-shell
+    [navFooter]="true"
+    [showHeader]="false"
+    [fillViewport]="true"
+    [padded]="false"
+  >
+    <div cogDesktopNav class="chat-shell__nav-host">
+      <ng-container *ngTemplateOutlet="chatNav"></ng-container>
+    </div>
+
+    <div cogDesktopNavFooter class="chat-shell__footer-host">
+      <ng-container *ngTemplateOutlet="chatFooter"></ng-container>
+    </div>
+
+    <div class="chat-shell__content-host">
+      <ng-container *ngTemplateOutlet="chatPage"></ng-container>
+    </div>
+  </cog-desktop-shell>
+}
 
 @if (isRestoringVault()) {
   <div

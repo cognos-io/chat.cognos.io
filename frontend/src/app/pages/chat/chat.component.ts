@@ -8,10 +8,10 @@ import { filter } from 'rxjs';
 
 import {
   CognosButtonComponent,
-  CognosDrawerComponent,
-  CognosIconButtonComponent,
+  CognosDesktopShellComponent,
   CognosIconComponent,
   CognosLozengeComponent,
+  CognosMobileShellComponent,
   CognosTextFieldComponent,
   CognosToastService,
 } from '@cognos/ui-angular';
@@ -26,6 +26,7 @@ import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { VaultPasswordDialogComponent } from '@app/components/vault-password-dialog/vault-password-dialog.component';
 import { BillingService } from '@app/services/billing.service';
+import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
@@ -39,8 +40,8 @@ import { ConversationService } from '../../services/conversation.service';
     CommonModule,
     RouterModule,
     CognosButtonComponent,
-    CognosDrawerComponent,
-    CognosIconButtonComponent,
+    CognosDesktopShellComponent,
+    CognosMobileShellComponent,
     CognosIconComponent,
     CognosLozengeComponent,
     CognosLogoComponent,
@@ -64,6 +65,7 @@ export class ChatComponent {
   readonly router = inject(Router);
   readonly conversationService = inject(ConversationService);
   readonly billing = inject(BillingService);
+  readonly device = inject(DeviceService);
   readonly drawerOpen = signal(false);
 
   private _vaultDialogRef: DialogRef<unknown, VaultPasswordDialogComponent> | null =

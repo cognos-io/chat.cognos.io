@@ -93,7 +93,7 @@ test('desktop sidebar exposes the account actions', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('/');
 
-  const sidebar = page.locator('.chat-shell__sidebar');
+  const sidebar = page.locator('.cog-desktop-shell__nav');
   await expect(sidebar.getByRole('button', { name: 'Help' })).toBeVisible();
   await expect(sidebar.getByRole('button', { name: 'Lock' })).toBeVisible();
   await expect(sidebar.getByRole('button', { name: 'Log out' })).toBeVisible();

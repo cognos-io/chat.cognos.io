@@ -1,215 +1,145 @@
-@media (min-width: 768px) {
-  .chat-shell {
-    display: grid;
-    height: 100vh;
-    height: 100svh;
-    overflow: hidden;
-    grid-template-columns: 304px minmax(0, 1fr);
+// The shell frame (sidebar, footer, mobile bar + drawer) comes from
+// cog-desktop-shell / cog-mobile-shell. These styles are just the chat-specific
+// content projected into the shell slots.
 
-    &--temporary {
-      .chat-shell__page {
-        background: color-mix(in srgb, var(--cog-success-bg) 32%, var(--cog-app-bg));
-      }
-    }
-
-    &__sidebar {
-      display: grid;
-      grid-template-rows: minmax(0, 1fr) auto auto;
-      border-right: 1px solid var(--cog-border);
-      background: var(--cog-nav-bg);
-      height: 100%;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    &__sidebar-actions {
-      padding: var(--cog-space-100) var(--cog-space-200) var(--cog-space-150);
-
-      .chat-shell__nav-actions {
-        justify-content: space-between;
-        width: 100%;
-      }
-    }
-
-    &__sidebar-footer {
-      border-top: 1px solid var(--cog-border);
-      padding: var(--cog-space-150) var(--cog-space-200);
-    }
-
-    &__page-header {
-      padding: var(--cog-space-200) var(--cog-space-300);
-    }
-
-    &__lock-banner {
-      padding: 0 var(--cog-space-300) var(--cog-space-150);
-    }
-
-    &__page-content {
-      padding: 0 var(--cog-space-300) var(--cog-space-300);
-    }
-  }
+.chat-shell__nav-host,
+.chat-shell__content-host {
+  height: 100%;
+  min-height: 0;
 }
 
-.chat-shell {
-  background: var(--cog-app-bg);
-
-  &__nav {
-    display: grid;
-    grid-template-rows: auto auto auto minmax(0, 1fr);
-    gap: var(--cog-space-200);
-    height: 100%;
-    padding: var(--cog-space-200);
-  }
-
-  &__brand {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--cog-space-100);
-  }
-
-  &__logo,
-  &__mobile-logo,
-  &__drawer-logo {
-    display: block;
-    height: 24px;
-  }
-
-  &__drawer-body {
-    display: grid;
-    min-height: 100%;
-    padding-top: var(--cog-space-150);
-  }
-
-  &__search {
-    display: grid;
-    gap: var(--cog-space-100);
-  }
-
-  &__search-hint {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--cog-space-075);
-    color: var(--cog-text-subtlest);
-    font-size: var(--cog-fs-caption);
-    line-height: var(--cog-lh-caption);
-  }
-
-  &__conversation-sections {
-    display: grid;
-    gap: var(--cog-space-300);
-    min-height: 0;
-    align-content: start;
-    overflow: auto;
-  }
-
-  &__section {
-    display: grid;
-    gap: var(--cog-space-100);
-  }
-
-  &__section-heading {
-    color: var(--cog-text-subtlest);
-    font-size: var(--cog-fs-overline);
-    font-weight: var(--cog-fw-overline);
-    letter-spacing: var(--cog-ls-overline);
-    line-height: var(--cog-lh-overline);
-    text-transform: var(--cog-tt-overline);
-  }
-
-  &__conversation-list {
-    display: grid;
-    gap: var(--cog-space-050);
-  }
-
-  &__main {
-    display: grid;
-    min-height: 0;
-    grid-template-rows: auto minmax(0, 1fr);
-    height: 100%;
-    overflow: hidden;
-  }
-
-  &__page {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-
-  &__mobile-bar {
-    display: none;
-  }
-
-  &__mobile-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--cog-space-050);
-  }
-
-  &__page-header {
-    padding: var(--cog-space-200);
-  }
-
-  &__lock-banner {
-    display: block;
-    padding: 0 var(--cog-space-200) var(--cog-space-150);
-  }
-
-  &__page-content {
-    display: grid;
-    flex: 1;
-    min-height: 0;
-    padding: 0 var(--cog-space-200) var(--cog-space-200);
-  }
-
-  &__nav-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: var(--cog-space-050);
-  }
+.chat-shell__nav {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap: var(--cog-space-200);
+  height: 100%;
+  min-height: 0;
 }
 
-cog-drawer [cogDrawerFooter] {
+.chat-shell__brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cog-space-100);
+}
+
+.chat-shell__logo {
+  display: block;
+  height: 24px;
+}
+
+.chat-shell__search {
+  display: grid;
+  gap: var(--cog-space-100);
+}
+
+.chat-shell__search-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cog-space-075);
+  color: var(--cog-text-subtlest);
+  font-size: var(--cog-fs-caption);
+  line-height: var(--cog-lh-caption);
+}
+
+.chat-shell__conversation-sections {
+  display: grid;
+  gap: var(--cog-space-300);
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+}
+
+.chat-shell__section {
+  display: grid;
+  gap: var(--cog-space-100);
+}
+
+.chat-shell__section-heading {
+  color: var(--cog-text-subtlest);
+  font-size: var(--cog-fs-overline);
+  font-weight: var(--cog-fw-overline);
+  letter-spacing: var(--cog-ls-overline);
+  line-height: var(--cog-lh-overline);
+  text-transform: var(--cog-tt-overline);
+}
+
+.chat-shell__conversation-list {
+  display: grid;
+  gap: var(--cog-space-050);
+}
+
+.chat-shell__nav-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--cog-space-050);
+}
+
+// Sidebar/drawer footer: account actions + (trial card) + profile, stacked.
+.chat-shell__footer-host,
+.chat-shell__drawer-footer {
   display: grid;
   gap: var(--cog-space-150);
 }
 
-cog-drawer .chat-shell__search-hint {
+.chat-shell__drawer-body {
+  display: grid;
+  min-height: 100%;
+  padding-top: var(--cog-space-150);
+}
+
+// The search hint is redundant inside the mobile drawer.
+cog-mobile-shell .chat-shell__search-hint {
   display: none;
 }
 
-@media (max-width: 767px) {
-  .chat-shell {
-    height: 100vh;
-    height: 100svh;
-    overflow: hidden;
-
-    &__sidebar {
-      display: none;
-    }
-
-    &__mobile-bar {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto;
-      align-items: center;
-      gap: var(--cog-space-100);
-      min-height: 56px;
-      border-bottom: 1px solid var(--cog-border);
-      background: var(--cog-nav-bg);
-      padding: 0 var(--cog-space-200);
-    }
-
-    &__page-header {
-      padding-top: var(--cog-space-150);
-    }
-  }
+// Content: chat header + (lock banner) + the scrollable conversation area.
+.chat-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
-.chat-shell__page-content > * {
+.chat-page--temporary {
+  background: color-mix(in srgb, var(--cog-success-bg) 32%, var(--cog-app-bg));
+}
+
+.chat-page__header {
+  padding: var(--cog-space-200) var(--cog-space-300);
+}
+
+.chat-page__lock-banner {
+  display: block;
+  padding: 0 var(--cog-space-300) var(--cog-space-150);
+}
+
+.chat-page__content {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  padding: 0 var(--cog-space-300) var(--cog-space-300);
+}
+
+.chat-page__content > * {
   grid-area: 1 / 1;
   min-width: 0;
   min-height: 0;
+}
+
+@media (max-width: 767px) {
+  .chat-page__header {
+    padding: var(--cog-space-150) var(--cog-space-200);
+  }
+
+  .chat-page__lock-banner {
+    padding: 0 var(--cog-space-200) var(--cog-space-150);
+  }
+
+  .chat-page__content {
+    padding: 0 var(--cog-space-200) var(--cog-space-200);
+  }
 }
 
 .chat-shell__vault-restore {
