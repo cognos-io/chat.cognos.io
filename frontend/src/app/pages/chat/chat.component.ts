@@ -11,13 +11,13 @@ import {
   CognosDrawerComponent,
   CognosIconButtonComponent,
   CognosIconComponent,
-  CognosLozengeComponent,
   CognosTextFieldComponent,
   CognosToastService,
 } from '@cognos/ui-angular';
 
 import { ChatHeaderComponent } from '@app/components/chat/chat-header/chat-header.component';
 import { ConversationListItemComponent } from '@app/components/chat/conversation-list/conversation-list-item/conversation-list-item.component';
+import { SidebarProfileComponent } from '@app/components/chat/sidebar-profile/sidebar-profile.component';
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/contact-help-dialog.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
@@ -38,12 +38,12 @@ import { ConversationService } from '../../services/conversation.service';
     CognosDrawerComponent,
     CognosIconButtonComponent,
     CognosIconComponent,
-    CognosLozengeComponent,
     CognosLogoComponent,
     CognosTextFieldComponent,
     ChatHeaderComponent,
     ConversationListItemComponent,
     LoadingIndicatorComponent,
+    SidebarProfileComponent,
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',

@@ -145,7 +145,17 @@ test('exhausting the trial opens a plan-selection dialog instead of a generic er
     },
   );
 
+  // The composer is torn down and rebuilt while the message list is fetching,
+  // which would discard text typed too early. Wait for the messages fetch to
+  // settle (and the loaded empty state) before typing.
+  const messagesLoaded = page.waitForResponse((res) =>
+    res.url().includes('/conversations/conv_trial_exhaust/messages'),
+  );
   await page.goto('/c/conv_trial_exhaust');
+  await messagesLoaded;
+  await expect(
+    page.getByText('Get started by sending a message using the composer below.'),
+  ).toBeVisible();
 
   const composer = page.getByLabel('Message Cognos — encrypted on this device');
   await composer.fill('This should trip the plan gate');

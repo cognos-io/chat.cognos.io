@@ -92,21 +92,8 @@
   </div>
 </ng-template>
 
-<ng-template #securityFooter>
-  <div class="chat-shell__security-card">
-    <div class="chat-shell__security-header">
-      <span class="chat-shell__security-badge">
-        <cog-icon name="shield-check" [size]="14" tone="success" />
-      </span>
-      <div>
-        <div class="chat-shell__security-title">
-          <cog-lozenge tone="green">Encrypted</cog-lozenge>
-          <cog-lozenge tone="green">Verified</cog-lozenge>
-        </div>
-        <p class="chat-shell__security-copy">Keys are encrypted before backup.</p>
-      </div>
-    </div>
-  </div>
+<ng-template #profileFooter>
+  <app-sidebar-profile></app-sidebar-profile>
 </ng-template>
 
 <div
@@ -119,7 +106,7 @@
       <ng-container *ngTemplateOutlet="navActions"></ng-container>
     </div>
     <div class="chat-shell__sidebar-footer">
-      <ng-container *ngTemplateOutlet="securityFooter"></ng-container>
+      <ng-container *ngTemplateOutlet="profileFooter"></ng-container>
     </div>
   </aside>
 

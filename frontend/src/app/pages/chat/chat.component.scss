@@ -152,46 +152,6 @@
     padding: 0 var(--cog-space-200) var(--cog-space-200);
   }
 
-  &__security-card {
-    display: grid;
-    gap: var(--cog-space-100);
-    border: 1px solid var(--cog-border);
-    border-radius: var(--cog-radius-sm);
-    background: color-mix(in srgb, var(--cog-surface) 92%, transparent);
-    padding: var(--cog-space-150);
-  }
-
-  &__security-header {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--cog-space-100);
-  }
-
-  &__security-badge {
-    display: inline-flex;
-    width: 28px;
-    height: 28px;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--cog-radius-pill);
-    background: var(--cog-success-bg);
-    flex: none;
-  }
-
-  &__security-title {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--cog-space-050);
-    margin-bottom: var(--cog-space-050);
-  }
-
-  &__security-copy {
-    margin: 0;
-    color: var(--cog-text-subtle);
-    font-size: var(--cog-fs-caption);
-    line-height: var(--cog-lh-caption);
-  }
-
   &__nav-actions {
     display: flex;
     flex-wrap: wrap;

@@ -8,19 +8,29 @@ import {
   inject,
 } from '@angular/core';
 
-import { CognosIconComponent } from '@cognos/ui-angular';
+import { CognosIconComponent, CognosLozengeComponent } from '@cognos/ui-angular';
 
 import { TagComponent } from '@app/components/tag/tag.component';
 import { Model } from '@app/interfaces/model';
 import { ModelService } from '@app/services/model.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
+import {
+  MODEL_COST_TIER_LABEL,
+  ModelCostTier,
+  deriveModelCostTier,
+} from '@app/utils/model-cost-tier';
 
 @Component({
   selector: 'app-model-selector',
   standalone: true,
-  imports: [CommonModule, CognosIconComponent, TagComponent],
+  imports: [CommonModule, CognosIconComponent, CognosLozengeComponent, TagComponent],
   template: `
     <div class="model-selector" role="listbox" aria-label="Pick your AI model">
+      <p class="model-selector__explainer">
+        Cost shows roughly how much each model spends per message. Higher-cost models
+        cost more than lower-cost ones.
+      </p>
+
       <ul class="model-selector__list">
         @for (model of orderedModels(); track model.id) {
           <li>
@@ -52,6 +62,13 @@ import { UserPreferencesService } from '@app/services/user-preferences.service';
               <span class="model-selector__body">
                 <span class="model-selector__heading">
                   <span class="model-selector__name">{{ model.name }}</span>
+                  <cog-lozenge
+                    class="model-selector__cost"
+                    [tone]="costTierTone(model)"
+                    [attr.title]="'Estimated model cost: ' + costTierLabel(model)"
+                  >
+                    {{ costTierLabel(model) }}
+                  </cog-lozenge>
                   @if (model.tags && model.tags.length > 0) {
                     <span class="model-selector__tags">
                       @for (tag of model.tags; track tag.title) {
@@ -98,6 +115,14 @@ import { UserPreferencesService } from '@app/services/user-preferences.service';
       background: var(--cog-surface-raised);
       box-shadow: var(--cog-shadow-overlay, 0 10px 30px rgba(0, 0, 0, 0.12));
       padding: var(--cog-space-075);
+    }
+
+    .model-selector__explainer {
+      margin: 0;
+      padding: var(--cog-space-075) var(--cog-space-100) var(--cog-space-100);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
     }
 
     .model-selector__list {
@@ -271,6 +296,19 @@ export class ModelSelectorComponent {
 
   isPinned(modelId: string): boolean {
     return this._preferencesService.isModelPinned(modelId);
+  }
+
+  costTierLabel(model: Model): string {
+    return MODEL_COST_TIER_LABEL[deriveModelCostTier(model.pricing)];
+  }
+
+  costTierTone(model: Model): 'green' | 'blue' | 'red' {
+    const tones: Record<ModelCostTier, 'green' | 'blue' | 'red'> = {
+      low: 'green',
+      medium: 'blue',
+      high: 'red',
+    };
+    return tones[deriveModelCostTier(model.pricing)];
   }
 
   onSelectModel(model: Model) {

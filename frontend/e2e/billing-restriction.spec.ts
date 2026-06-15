@@ -117,9 +117,18 @@ test('authenticated user sees trial exhaustion feedback when billing blocks send
     },
   );
 
+  // Composer is rebuilt while the conversation is fetching — wait for the
+  // messages fetch to settle before typing so the text isn't discarded.
+  const messagesLoaded = page.waitForResponse((res) =>
+    res.url().includes('/conversations/conv_e2e_trial_blocked/messages'),
+  );
   await page.goto('/c/conv_e2e_trial_blocked');
+  await messagesLoaded;
 
   await expect(page.getByRole('heading', { name: 'Trial exhausted' })).toBeVisible();
+  await expect(
+    page.getByText('Get started by sending a message using the composer below.'),
+  ).toBeVisible();
 
   const composer = page.getByLabel('Message Cognos — encrypted on this device');
   await composer.fill('This should be blocked by billing');

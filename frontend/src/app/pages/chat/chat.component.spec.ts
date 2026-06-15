@@ -10,6 +10,7 @@ import { KeyPair } from '@app/interfaces/key-pair';
 import { Message } from '@app/interfaces/message';
 
 import { AuthService } from '../../services/auth.service';
+import { BillingService } from '../../services/billing.service';
 import { ConversationService } from '../../services/conversation.service';
 import { DeviceService } from '../../services/device.service';
 import { MessageService } from '../../services/message.service';
@@ -86,7 +87,16 @@ describe('ChatComponent', () => {
       imports: [ChatComponent],
       providers: [
         provideRouter([]),
-        { provide: AuthService, useValue: { email: signal('') } },
+        { provide: AuthService, useValue: { email: signal(''), user: signal(null) } },
+        {
+          provide: BillingService,
+          useValue: {
+            planType: signal('trial'),
+            balanceChf: signal(2),
+            isTrial: signal(true),
+            isReadOnly: signal(false),
+          },
+        },
         { provide: ConversationService, useValue: conversationService },
         { provide: DeviceService, useValue: { isMobile: signal(false) } },
         { provide: MessageService, useValue: messageService },

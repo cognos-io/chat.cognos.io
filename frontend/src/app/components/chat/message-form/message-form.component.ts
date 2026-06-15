@@ -9,6 +9,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import {
   FormBuilder,
@@ -313,15 +314,19 @@ export class MessageFormComponent {
       this.isMac = window.navigator.userAgent.includes('Mac');
     }
 
+    // Status-driven enable/disable + content restore. This must react only to
+    // send status — the read-only check is read untracked so a billing refresh
+    // can't re-fire this effect and clobber the composer's in-progress text via
+    // the None branch.
     effect(() => {
-      // An inactive plan is read-only: keep the composer locked regardless of
-      // send status so the user can read history but not send.
-      if (this.billing.isReadOnly()) {
+      const status = this.messageService.status();
+
+      if (untracked(() => this.billing.isReadOnly())) {
         this.disableForm();
         return;
       }
 
-      switch (this.messageService.status()) {
+      switch (status) {
         case MessageStatus.Sending:
           this.disableForm();
           break;
@@ -333,9 +338,25 @@ export class MessageFormComponent {
           break;
         case MessageStatus.None:
         case MessageStatus.ErrorSending:
-          this.messageForm.patchValue({ content: this._previousMessage });
+          // Only restore a prior draft (e.g. after a failed send). Never patch
+          // an empty string over the composer — status settles to None during
+          // conversation load and that would wipe text the user is typing.
+          if (this._previousMessage) {
+            this.messageForm.patchValue({ content: this._previousMessage });
+          }
           this.enableForm();
           break;
+      }
+    });
+
+    // An inactive plan is read-only: lock the composer whenever the plan flips
+    // to inactive, and restore it (unless mid-send) if the plan becomes active
+    // again. Kept separate so it never touches the composer's content.
+    effect(() => {
+      if (this.billing.isReadOnly()) {
+        this.disableForm();
+      } else if (this.messageService.status() !== MessageStatus.Sending) {
+        this.enableForm();
       }
     });
   }
