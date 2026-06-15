@@ -66,8 +66,8 @@ func init() {
 						"options": {"min": "", "max": ""}
 					},
 					{
-						"id": "txtpolsub001",
-						"name": "polar_subscription_id",
+						"id": "txtpdlsub001",
+						"name": "paddle_subscription_id",
 						"type": "text",
 						"required": false,
 						"presentable": false,
@@ -75,8 +75,8 @@ func init() {
 						"options": {"min": null, "max": null, "pattern": ""}
 					},
 					{
-						"id": "txtpolprod01",
-						"name": "polar_product_id",
+						"id": "txtpdlprice1",
+						"name": "paddle_price_id",
 						"type": "text",
 						"required": false,
 						"presentable": false,
@@ -85,7 +85,7 @@ func init() {
 					},
 					{
 						"id": "dtcyclefrom1",
-						"name": "polar_cycle_start_at",
+						"name": "paddle_cycle_start_at",
 						"type": "date",
 						"required": false,
 						"presentable": false,
@@ -94,7 +94,7 @@ func init() {
 					},
 					{
 						"id": "dtcycleto001",
-						"name": "polar_cycle_end_at",
+						"name": "paddle_cycle_end_at",
 						"type": "date",
 						"required": false,
 						"presentable": false,
@@ -197,31 +197,13 @@ func init() {
 						"options": {"min": null, "max": null, "pattern": ""}
 					},
 					{
-						"id": "txtpolarord1",
-						"name": "polar_order_id",
+						"id": "txtpdltxn001",
+						"name": "paddle_transaction_id",
 						"type": "text",
 						"required": false,
 						"presentable": false,
 						"unique": false,
 						"options": {"min": null, "max": null, "pattern": ""}
-					},
-					{
-						"id": "txtpolmeter1",
-						"name": "polar_meter_event_id",
-						"type": "text",
-						"required": false,
-						"presentable": false,
-						"unique": false,
-						"options": {"min": null, "max": null, "pattern": ""}
-					},
-					{
-						"id": "dtpolpush001",
-						"name": "polar_pushed_at",
-						"type": "date",
-						"required": false,
-						"presentable": false,
-						"unique": false,
-						"options": {"min": "", "max": ""}
 					},
 					{
 						"id": "numprovcost1",

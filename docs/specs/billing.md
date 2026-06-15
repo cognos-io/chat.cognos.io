@@ -581,6 +581,27 @@ threshold is published — it stays internal.
 
 ## 9. Data Model
 
+> **Status — schema implemented.** PocketBase migrations now realise this data
+> model:
+>
+> - `1760000014_created_billing_collections.go` — `user_billing` +
+>   `balance_transactions`, using Paddle field names
+>   (`paddle_subscription_id`, `paddle_price_id`, `paddle_cycle_start_at`,
+>   `paddle_cycle_end_at`, `paddle_transaction_id`). The earlier Polar field
+>   names were rewritten in place (billing was never deployed).
+> - `1760000025_users_paddle_fields.go` — adds `display_name`, `refund_used`,
+>   `paddle_customer_id`, `business_name`, `business_vat_id`, `business_country`
+>   to `users`.
+> - `1760000026_created_paddle_billing_collections.go` — `paddle_events`
+>   (idempotency on a unique `paddle_event_id`), `refunds`,
+>   `trial_seed_overrides` (unique `email`), `payg_cycle_summaries`.
+>
+> All four billing collections keep every API rule `nil` (superuser / server-only;
+> never the public auto API). Schema coverage lives in
+> `backend/db/migrations/paddle_schema_test.go`. Note: `paddle_events`'s natural
+> key is the unique `paddle_event_id` field rather than the record id, to avoid
+> PocketBase's record-id length constraints while preserving webhook idempotency.
+
 ### 9.1 Changes to existing tables
 
 #### `users` (additions)
