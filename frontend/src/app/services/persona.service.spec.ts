@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { of } from 'rxjs';
@@ -12,6 +13,7 @@ import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
 import { PersonaService } from './persona.service';
+import { UserPreferencesService } from './user-preferences.service';
 import { VaultService } from './vault.service';
 
 describe('PersonaService', () => {
@@ -82,6 +84,19 @@ describe('PersonaService', () => {
             keyPair$: keyPair$.asObservable(),
           },
         },
+        {
+          provide: UserPreferencesService,
+          useValue: {
+            pinnedPersonas: signal<string[]>([]),
+            recentPersonas: signal<string[]>([]),
+            defaultPersonaId: signal(''),
+            isPersonaPinned: vi.fn().mockReturnValue(false),
+            pinPersona: vi.fn(),
+            unpinPersona: vi.fn(),
+            setDefaultPersona: vi.fn(),
+            markRecentPersona: vi.fn(),
+          },
+        },
       ],
     });
     service = TestBed.inject(PersonaService);
@@ -121,6 +136,8 @@ describe('PersonaService', () => {
         name: 'Custom persona',
         description: 'Private description',
         systemPrompt: 'Private prompt',
+        icon: 'pencil',
+        color: 'teal',
       })
       .subscribe();
 
@@ -130,6 +147,30 @@ describe('PersonaService', () => {
     const plaintext = new TextDecoder().decode(cryptoService.box.mock.calls[0][0]);
     expect(plaintext).toContain('Private prompt');
     expect(api.createPersona.mock.calls[0][0].data).not.toContain('Private prompt');
+  });
+
+  it('groups official personas for the personas page', () => {
+    const official = service.personaGroups().find((group) => group.id === 'official');
+    expect(official?.personas.map((persona) => persona.id)).toContain(defaultPersonaId);
+  });
+
+  it('filters personas by name, description, or prompt', () => {
+    const results = service.search(service.personaList(), 'socratic');
+    expect(results.map((persona) => persona.id)).toEqual(['cognos:socratic']);
+  });
+
+  it('pins an unpinned persona through the preferences service', () => {
+    const prefs = TestBed.inject(UserPreferencesService);
+    service.togglePin('cognos:direct');
+    expect(prefs.pinPersona).toHaveBeenCalledWith('cognos:direct');
+  });
+
+  it('marks a persona recently used when it is selected', () => {
+    const prefs = TestBed.inject(UserPreferencesService);
+    service.selectPersona('cognos:editor');
+
+    expect(prefs.markRecentPersona).toHaveBeenCalledWith('cognos:editor');
+    expect(service.selectedPersona().id).toBe('cognos:editor');
   });
 
   it('loads and decrypts custom personas when the vault unlocks', () => {

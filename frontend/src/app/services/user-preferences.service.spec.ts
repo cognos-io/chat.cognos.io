@@ -169,4 +169,51 @@ describe('UserPreferencesService', () => {
       decodePreferences(api.updateUserPreferences.mock.calls[0][1]).pinnedConversations,
     ).toEqual(['conv-2']);
   });
+
+  it('persists a pinned persona without duplicating it', async () => {
+    api.getUserPreferences.mockReturnValue(throwError(() => ({ status: 404 })));
+    api.createUserPreferences.mockImplementation((payload: { data: string }) =>
+      of({ id: 'prefs-1', data: payload.data }),
+    );
+    api.updateUserPreferences.mockImplementation(
+      (_recordId: string, payload: { data: string }) =>
+        of({ id: 'prefs-1', data: payload.data }),
+    );
+
+    emitKeyPair(currentKeyPair);
+    await flushPromises();
+    service.pinPersona('cognos:direct');
+    await flushPromises();
+    service.pinPersona('cognos:direct');
+    await flushPromises();
+
+    expect(service.isPersonaPinned('cognos:direct')).toBe(true);
+    expect(
+      decodePreferences(api.updateUserPreferences.mock.calls.at(-1)![1]).pinnedPersonas,
+    ).toEqual(['cognos:direct']);
+  });
+
+  it('keeps recently used personas most-recent-first, de-duplicated and capped', async () => {
+    api.getUserPreferences.mockReturnValue(throwError(() => ({ status: 404 })));
+    api.createUserPreferences.mockImplementation((payload: { data: string }) =>
+      of({ id: 'prefs-1', data: payload.data }),
+    );
+    api.updateUserPreferences.mockImplementation(
+      (_recordId: string, payload: { data: string }) =>
+        of({ id: 'prefs-1', data: payload.data }),
+    );
+
+    emitKeyPair(currentKeyPair);
+    await flushPromises();
+
+    for (const id of ['a', 'b', 'a', 'c', 'd', 'e', 'f', 'g', 'h', 'i']) {
+      service.markRecentPersona(id);
+      await flushPromises();
+    }
+
+    const recent = service.recentPersonas();
+    expect(recent[0]).toBe('i');
+    expect(recent.length).toBe(8);
+    expect(new Set(recent).size).toBe(recent.length);
+  });
 });

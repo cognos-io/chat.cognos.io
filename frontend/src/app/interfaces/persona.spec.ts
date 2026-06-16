@@ -50,9 +50,45 @@ describe('persona encrypted payload', () => {
       name: 'Private coach',
       description: 'Hidden metadata',
       system_prompt: 'Private prompt',
+      icon: 'pencil',
+      color: 'teal',
     };
 
     expect(parsePersonaData(serializePersonaData(data))).toEqual(data);
+  });
+
+  it('defaults icon and colour when the payload omits them', () => {
+    const encoded = new TextEncoder().encode(
+      JSON.stringify({
+        version: '1',
+        name: 'Legacy',
+        description: 'Saved before icons existed',
+        system_prompt: 'Hello',
+      }),
+    );
+
+    expect(parsePersonaData(encoded)).toMatchObject({
+      icon: 'sparkles',
+      color: 'slate',
+    });
+  });
+
+  it('coerces unknown icon and colour values to defaults', () => {
+    const encoded = new TextEncoder().encode(
+      JSON.stringify({
+        version: '1',
+        name: 'Odd',
+        description: 'Has nonsense icon',
+        system_prompt: 'Hello',
+        icon: 'not-a-real-icon',
+        color: 'chartreuse',
+      }),
+    );
+
+    expect(parsePersonaData(encoded)).toMatchObject({
+      icon: 'sparkles',
+      color: 'slate',
+    });
   });
 
   it('rejects unsupported encrypted persona data versions', () => {

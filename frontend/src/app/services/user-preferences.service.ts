@@ -51,6 +51,14 @@ export class UserPreferencesService {
   private readonly _unpinConversation = new Subject<string>();
   private readonly _pinModel = new Subject<string>();
   private readonly _unpinModel = new Subject<string>();
+  private readonly _pinPersona = new Subject<string>();
+  private readonly _unpinPersona = new Subject<string>();
+  private readonly _setDefaultPersona = new Subject<string>();
+  private readonly _markRecentPersona = new Subject<string>();
+
+  // Most-recently-used personas are capped so the "recently used" group and the
+  // in-chat switcher stay short.
+  private static readonly recentPersonaLimit = 8;
 
   // TODO(ewan): We need a better way to trigger the remote updating of preferences
   // e.g. a global state state trigger that reacts to state changes, sends the newly updated state to the backend and replaces the local state with the response
@@ -152,12 +160,84 @@ export class UserPreferencesService {
             });
           }),
         ),
+      // Pin persona, local then remote
+      (state) =>
+        this._pinPersona.pipe(
+          map((personaId) => ({
+            pinnedPersonas: this.addIdToList(personaId, state().pinnedPersonas),
+          })),
+        ),
+      (state) =>
+        this._pinPersona.pipe(
+          concatMap((personaId) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              pinnedPersonas: this.addIdToList(personaId, state().pinnedPersonas),
+            }),
+          ),
+        ),
+      // Unpin persona, local then remote
+      (state) =>
+        this._unpinPersona.pipe(
+          map((personaId) => ({
+            pinnedPersonas: state().pinnedPersonas.filter((id) => id !== personaId),
+          })),
+        ),
+      (state) =>
+        this._unpinPersona.pipe(
+          concatMap((personaId) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              pinnedPersonas: state().pinnedPersonas.filter((id) => id !== personaId),
+            }),
+          ),
+        ),
+      // Set default persona, local then remote
+      () =>
+        this._setDefaultPersona.pipe(
+          map((personaId) => ({ defaultPersonaId: personaId })),
+        ),
+      (state) =>
+        this._setDefaultPersona.pipe(
+          concatMap((personaId) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              defaultPersonaId: personaId,
+            }),
+          ),
+        ),
+      // Mark persona recently used, local then remote
+      (state) =>
+        this._markRecentPersona.pipe(
+          map((personaId) => ({
+            recentPersonas: this.prependRecentPersona(
+              personaId,
+              state().recentPersonas,
+            ),
+          })),
+        ),
+      (state) =>
+        this._markRecentPersona.pipe(
+          concatMap((personaId) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              recentPersonas: this.prependRecentPersona(
+                personaId,
+                state().recentPersonas,
+              ),
+            }),
+          ),
+        ),
     ],
     actionSources: {
       pinConversation: this._pinConversation,
       unpinConversation: this._unpinConversation,
       pinModel: this._pinModel,
       unpinModel: this._unpinModel,
+      pinPersona: this._pinPersona,
+      unpinPersona: this._unpinPersona,
+      setDefaultPersona: this._setDefaultPersona,
+      markRecentPersona: this._markRecentPersona,
     },
   });
 
@@ -174,10 +254,25 @@ export class UserPreferencesService {
   public unpinModel = (modelId: string) => {
     this.state.unpinModel(modelId);
   };
+  public pinPersona = (personaId: string) => {
+    this.state.pinPersona(personaId);
+  };
+  public unpinPersona = (personaId: string) => {
+    this.state.unpinPersona(personaId);
+  };
+  public setDefaultPersona = (personaId: string) => {
+    this.state.setDefaultPersona(personaId);
+  };
+  public markRecentPersona = (personaId: string) => {
+    this.state.markRecentPersona(personaId);
+  };
 
   // selectors
   public pinnedConversationIds = this.state.pinnedConversations;
   public pinnedModels = this.state.pinnedModels;
+  public pinnedPersonas = this.state.pinnedPersonas;
+  public recentPersonas = this.state.recentPersonas;
+  public defaultPersonaId = this.state.defaultPersonaId;
 
   // private methods
   private addConversationIdToPinnedConversations(
@@ -192,6 +287,14 @@ export class UserPreferencesService {
       return [...list];
     }
     return [...list, id];
+  }
+
+  // Most-recent-first, de-duplicated, capped.
+  private prependRecentPersona(id: string, list: Array<string>): Array<string> {
+    return [id, ...list.filter((existing) => existing !== id)].slice(
+      0,
+      UserPreferencesService.recentPersonaLimit,
+    );
   }
 
   private encryptUserPreferencesData(data: UserPreferencesData): Uint8Array {
@@ -305,5 +408,9 @@ export class UserPreferencesService {
 
   public isModelPinned(modelId: string): boolean {
     return this.state().pinnedModels.includes(modelId);
+  }
+
+  public isPersonaPinned(personaId: string): boolean {
+    return this.state().pinnedPersonas.includes(personaId);
   }
 }

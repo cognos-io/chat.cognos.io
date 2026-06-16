@@ -7,6 +7,10 @@ import { Base64 } from 'js-base64';
 import {
   EncryptedPersonaData,
   Persona,
+  PersonaColor,
+  PersonaIcon,
+  coercePersonaColor,
+  coercePersonaIcon,
   defaultPersonaId,
   parsePersonaData,
   serializePersonaData,
@@ -17,11 +21,26 @@ import { PersonasResponse } from '@app/types/pocketbase-types';
 import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
+import { UserPreferencesService } from './user-preferences.service';
 import { VaultService } from './vault.service';
 
-const defaultPersona =
+const fallbackPersona =
   providedPersonas.find((persona) => persona.id === defaultPersonaId) ??
   providedPersonas[0];
+
+export interface PersonaInput {
+  name: string;
+  description: string;
+  systemPrompt: string;
+  icon: PersonaIcon;
+  color: PersonaColor;
+}
+
+export interface PersonaGroup {
+  id: 'pinned' | 'recent' | 'official' | 'mine';
+  label: string;
+  personas: Persona[];
+}
 
 @Injectable({
   providedIn: 'root',
@@ -31,19 +50,80 @@ export class PersonaService {
   private readonly _cryptoService = inject(CryptoService);
   private readonly _vaultService = inject(VaultService);
   private readonly _errorService = inject(ErrorService);
+  private readonly _preferences = inject(UserPreferencesService);
 
   private readonly _customPersonas = signal<Persona[]>([]);
-  private readonly _selectedPersonaId = signal(defaultPersona.id);
+  private readonly _selectedPersonaId = signal<string | undefined>(undefined);
 
   readonly personaList = computed(() => [
     ...providedPersonas,
     ...this._customPersonas(),
   ]);
-  readonly selectedPersona = computed(() => {
+
+  // The active persona falls back to the user's saved default, then the Cognos
+  // default, so a freshly loaded session always has a valid persona.
+  readonly defaultPersona = computed(() => {
+    const saved = this._preferences.defaultPersonaId();
     return (
-      this.personaList().find((persona) => persona.id === this._selectedPersonaId()) ??
-      defaultPersona
+      this.personaList().find((persona) => persona.id === saved) ?? fallbackPersona
     );
+  });
+
+  readonly selectedPersona = computed(() => {
+    const selectedId = this._selectedPersonaId();
+    return (
+      this.personaList().find((persona) => persona.id === selectedId) ??
+      this.defaultPersona()
+    );
+  });
+
+  readonly customPersonas = this._customPersonas.asReadonly();
+  readonly officialPersonas = computed(() =>
+    this.personaList().filter((persona) => persona.source === 'cognos'),
+  );
+
+  readonly pinnedPersonas = computed(() => {
+    const pinned = this._preferences.pinnedPersonas();
+    return pinned
+      .map((id) => this.personaList().find((persona) => persona.id === id))
+      .filter((persona): persona is Persona => persona !== undefined);
+  });
+
+  readonly recentPersonas = computed(() => {
+    const recent = this._preferences.recentPersonas();
+    const pinned = new Set(this._preferences.pinnedPersonas());
+    return recent
+      .filter((id) => !pinned.has(id))
+      .map((id) => this.personaList().find((persona) => persona.id === id))
+      .filter((persona): persona is Persona => persona !== undefined);
+  });
+
+  // The grouped view that backs the personas page. Sections are omitted when
+  // empty so the page never renders a heading with nothing under it.
+  readonly personaGroups = computed<PersonaGroup[]>(() => {
+    const pinnedIds = new Set(this._preferences.pinnedPersonas());
+    const recentIds = new Set(this.recentPersonas().map((persona) => persona.id));
+
+    const groups: PersonaGroup[] = [
+      { id: 'pinned', label: 'Pinned', personas: this.pinnedPersonas() },
+      { id: 'recent', label: 'Recently used', personas: this.recentPersonas() },
+      {
+        id: 'official',
+        label: 'Official',
+        personas: this.officialPersonas().filter(
+          (persona) => !pinnedIds.has(persona.id) && !recentIds.has(persona.id),
+        ),
+      },
+      {
+        id: 'mine',
+        label: 'My personas',
+        personas: this._customPersonas().filter(
+          (persona) => !pinnedIds.has(persona.id) && !recentIds.has(persona.id),
+        ),
+      },
+    ];
+
+    return groups.filter((group) => group.personas.length > 0);
   });
 
   constructor() {
@@ -64,6 +144,7 @@ export class PersonaService {
     const persona = this.personaList().find((candidate) => candidate.id === id);
     if (persona) {
       this._selectedPersonaId.set(id);
+      this._preferences.markRecentPersona(id);
     }
   }
 
@@ -74,11 +155,39 @@ export class PersonaService {
     return computed(() => this.personaList().find((persona) => persona.id === id));
   }
 
-  createPersona(input: {
-    name: string;
-    description: string;
-    systemPrompt: string;
-  }): Observable<Persona> {
+  isPinned(id: string): boolean {
+    return this._preferences.isPersonaPinned(id);
+  }
+
+  togglePin(id: string): void {
+    if (this._preferences.isPersonaPinned(id)) {
+      this._preferences.unpinPersona(id);
+    } else {
+      this._preferences.pinPersona(id);
+    }
+  }
+
+  isDefault(id: string): boolean {
+    return this.defaultPersona().id === id;
+  }
+
+  setDefault(id: string): void {
+    this._preferences.setDefaultPersona(id);
+  }
+
+  // Returns the input populated from an existing persona, ready for the editor
+  // when a user duplicates a (possibly official, read-only) persona.
+  duplicateInput(persona: Persona): PersonaInput {
+    return {
+      name: `${persona.name} copy`,
+      description: persona.description,
+      systemPrompt: persona.systemPrompt,
+      icon: persona.icon,
+      color: persona.color,
+    };
+  }
+
+  createPersona(input: PersonaInput): Observable<Persona> {
     const data = this.normalizedPersonaData(input);
     const encryptedData = this.encryptPersonaData(data);
 
@@ -135,8 +244,11 @@ export class PersonaService {
         this._customPersonas.update((personas) =>
           personas.filter((candidate) => candidate.recordId !== persona.recordId),
         );
+        if (this._preferences.isPersonaPinned(persona.id)) {
+          this._preferences.unpinPersona(persona.id);
+        }
         if (this.selectedPersona().id === persona.id) {
-          this.selectPersona(defaultPersona.id);
+          this.selectPersona(this.defaultPersona().id);
         }
       }),
       catchError((error) => {
@@ -144,6 +256,21 @@ export class PersonaService {
         this._errorService.alert('Failed to delete persona');
         throw error;
       }),
+    );
+  }
+
+  // Client-side search across name, description, and prompt. Cognos never sees
+  // custom persona plaintext, so filtering has to happen here.
+  search(personas: Persona[], query: string): Persona[] {
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed) {
+      return personas;
+    }
+    return personas.filter((persona) =>
+      [persona.name, persona.description, persona.systemPrompt]
+        .join('\n')
+        .toLowerCase()
+        .includes(trimmed),
     );
   }
 
@@ -158,16 +285,14 @@ export class PersonaService {
     );
   }
 
-  private normalizedPersonaData(input: {
-    name: string;
-    description: string;
-    systemPrompt: string;
-  }): EncryptedPersonaData {
+  private normalizedPersonaData(input: PersonaInput): EncryptedPersonaData {
     return {
       version: '1',
       name: input.name.trim(),
       description: input.description.trim(),
       system_prompt: input.systemPrompt.trim(),
+      icon: coercePersonaIcon(input.icon),
+      color: coercePersonaColor(input.color),
     };
   }
 
@@ -205,6 +330,8 @@ export class PersonaService {
       name: data.name,
       description: data.description,
       systemPrompt: data.system_prompt,
+      icon: data.icon,
+      color: data.color,
       authorId: record.user,
       source: 'user',
     });

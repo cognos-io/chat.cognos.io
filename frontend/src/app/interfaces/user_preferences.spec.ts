@@ -77,6 +77,9 @@ describe('serializeUserPreferencesData', () => {
     const original: UserPreferencesData = {
       pinnedConversations: ['c-1', 'c-2'],
       pinnedModels: ['m-1'],
+      pinnedPersonas: ['cognos:direct'],
+      recentPersonas: ['cognos:editor'],
+      defaultPersonaId: 'cognos:simple-assistant',
     };
 
     const serialized = serializeUserPreferencesData(original);

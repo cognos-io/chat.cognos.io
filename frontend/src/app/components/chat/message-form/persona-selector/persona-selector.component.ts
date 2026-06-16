@@ -8,7 +8,11 @@ import {
 } from '@cognos/ui-angular';
 
 import { TagComponent } from '@app/components/tag/tag.component';
-import { Persona } from '@app/interfaces/persona';
+import {
+  Persona,
+  defaultPersonaColor,
+  defaultPersonaIcon,
+} from '@app/interfaces/persona';
 import { PersonaService } from '@app/services/persona.service';
 
 @Component({
@@ -235,6 +239,8 @@ export class PersonaSelectorComponent {
         name: this.customName,
         description: this.customDescription,
         systemPrompt: this.customSystemPrompt,
+        icon: defaultPersonaIcon,
+        color: defaultPersonaColor,
       })
       .subscribe({
         next: (persona) => {

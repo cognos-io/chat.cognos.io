@@ -3,12 +3,21 @@ import { z } from 'zod';
 export const UserPreferencesData = z.object({
   pinnedConversations: z.array(z.string()),
   pinnedModels: z.array(z.string()).default([]),
+  // Persona state is kept here rather than on the personas collection so it
+  // also covers Cognos-provided personas (which have no per-user record) and
+  // never leaks which personas a user pins or favours.
+  pinnedPersonas: z.array(z.string()).default([]),
+  recentPersonas: z.array(z.string()).default([]),
+  defaultPersonaId: z.string().default(''),
 });
 export type UserPreferencesData = z.infer<typeof UserPreferencesData>;
 
 export const emptyPreferences: UserPreferencesData = {
   pinnedConversations: [],
   pinnedModels: [],
+  pinnedPersonas: [],
+  recentPersonas: [],
+  defaultPersonaId: '',
 };
 
 /**
@@ -32,7 +41,9 @@ export const parseUserPreferencesData = (
  * @param data (UserPreferencesData) object to serialize
  * @returns (Uint8Array) encoded JSON representation
  */
-export const serializeUserPreferencesData = (data: UserPreferencesData): Uint8Array => {
+export const serializeUserPreferencesData = (
+  data: z.input<typeof UserPreferencesData>,
+): Uint8Array => {
   const serialized = JSON.stringify(UserPreferencesData.parse(data));
   return new TextEncoder().encode(serialized);
 };
