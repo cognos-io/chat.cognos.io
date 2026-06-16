@@ -186,6 +186,14 @@ describe('ChatHeaderComponent', () => {
     expect(component.fingerprint()).toBe('');
   });
 
+  it('hides the user avatar when there are no other people in the chat', () => {
+    selectedConversation.set(makeConversation('c-1', 'Saved chat'));
+    fixture.detectChanges();
+
+    expect(component.hasOtherPeople()).toBe(false);
+    expect(fixture.nativeElement.querySelector('.chat-header__avatar')).toBeNull();
+  });
+
   it('derives avatar initials from the user email', () => {
     email.set('ewan.jones@livemap.ch');
     fixture.detectChanges();

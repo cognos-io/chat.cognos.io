@@ -91,6 +91,12 @@ export class ChatHeaderComponent {
   // have nothing the server can hand to a public reader.
   readonly canShare = computed(() => this._conversationId() !== null);
 
+  // The current user's avatar only earns its place once a chat actually has
+  // other people in it. Invites and projects don't exist yet, so there are
+  // never other participants today — wire this to the participant list when
+  // that lands.
+  readonly hasOtherPeople = computed(() => false);
+
   readonly title = computed(() => {
     const title = this.conversationService.conversation()?.decryptedData.title;
 

@@ -7,7 +7,13 @@
     <h1 class="chat-header__title" [attr.title]="title()">{{ title() }}</h1>
 
     <div class="chat-header__actions">
-      <cog-avatar class="chat-header__avatar" [name]="currentUserName()" [size]="28" />
+      @if (hasOtherPeople()) {
+        <cog-avatar
+          class="chat-header__avatar"
+          [name]="currentUserName()"
+          [size]="28"
+        />
+      }
 
       @if (canShare()) {
         @if (isShared()) {
