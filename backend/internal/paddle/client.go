@@ -268,8 +268,18 @@ type paymentMethodsResponse struct {
 	} `json:"data"`
 }
 
-// GetCard returns the customer's first saved card (display fields only).
+// GetCard returns the customer's saved card (display fields only). It prefers
+// the saved payment-methods endpoint, falling back to the card on the most
+// recent transaction — that's more widely available (e.g. in sandbox, or when
+// the API key isn't granted payment-method read).
 func (c *HTTPClient) GetCard(ctx context.Context, customerID string) (*Card, error) {
+	if card, err := c.cardFromPaymentMethods(ctx, customerID); err == nil && card != nil {
+		return card, nil
+	}
+	return c.cardFromTransactions(ctx, customerID)
+}
+
+func (c *HTTPClient) cardFromPaymentMethods(ctx context.Context, customerID string) (*Card, error) {
 	body, err := c.getJSON(ctx, c.BaseURL+"/customers/"+customerID+"/payment-methods")
 	if err != nil {
 		return nil, err
@@ -291,6 +301,33 @@ func (c *HTTPClient) GetCard(ctx context.Context, customerID string) (*Card, err
 	return nil, nil
 }
 
+func (c *HTTPClient) cardFromTransactions(ctx context.Context, customerID string) (*Card, error) {
+	url := c.BaseURL + "/transactions?customer_id=" + customerID +
+		"&status=completed,billed,paid&order_by=billed_at[DESC]&per_page=20"
+	body, err := c.getJSON(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+	var parsed transactionsListResponse
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return nil, fmt.Errorf("decode transactions: %w", err)
+	}
+	for _, txn := range parsed.Data {
+		for _, payment := range txn.Payments {
+			card := payment.MethodDetails.Card
+			if payment.MethodDetails.Type == "card" && card.Last4 != "" {
+				return &Card{
+					Brand:       card.Type,
+					Last4:       card.Last4,
+					ExpiryMonth: card.ExpiryMonth,
+					ExpiryYear:  card.ExpiryYear,
+				}, nil
+			}
+		}
+	}
+	return nil, nil
+}
+
 type transactionsListResponse struct {
 	Data []struct {
 		ID            string `json:"id"`
@@ -303,6 +340,17 @@ type transactionsListResponse struct {
 				GrandTotal string `json:"grand_total"`
 			} `json:"totals"`
 		} `json:"details"`
+		Payments []struct {
+			MethodDetails struct {
+				Type string `json:"type"`
+				Card struct {
+					Type        string `json:"type"`
+					Last4       string `json:"last4"`
+					ExpiryMonth int    `json:"expiry_month"`
+					ExpiryYear  int    `json:"expiry_year"`
+				} `json:"card"`
+			} `json:"method_details"`
+		} `json:"payments"`
 	} `json:"data"`
 }
 

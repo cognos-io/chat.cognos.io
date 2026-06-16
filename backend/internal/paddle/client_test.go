@@ -175,6 +175,30 @@ func TestHTTPClientGetCard_None(t *testing.T) {
 	}
 }
 
+func TestHTTPClientGetCard_FallsBackToTransactions(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Payment-methods returns nothing; the card is recovered from the
+		// transaction's payment details.
+		if strings.Contains(r.URL.Path, "payment-methods") {
+			_, _ = w.Write([]byte(`{"data":[]}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"data":[{"id":"txn_1","status":"completed",` +
+			`"payments":[{"method_details":{"type":"card","card":{"type":"mastercard",` +
+			`"last4":"5556","expiry_month":3,"expiry_year":2030}}}]}]}`))
+	}))
+	defer server.Close()
+
+	card, err := NewHTTPClient(server.URL, "k").GetCard(context.Background(), "ctm_9")
+	if err != nil {
+		t.Fatalf("GetCard: %v", err)
+	}
+	if card == nil || card.Brand != "mastercard" || card.Last4 != "5556" ||
+		card.ExpiryMonth != 3 || card.ExpiryYear != 2030 {
+		t.Errorf("unexpected card from transactions: %+v", card)
+	}
+}
+
 func TestHTTPClientListInvoices_Success(t *testing.T) {
 	var gotQuery string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
