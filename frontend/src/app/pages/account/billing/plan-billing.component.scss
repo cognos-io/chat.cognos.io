@@ -341,6 +341,10 @@
 }
 
 .pb__invoice-amount {
+  /* Fixed, right-aligned so the amounts (and the badges before them) line up
+     across rows regardless of value width. */
+  min-width: 6rem;
+  text-align: right;
   color: var(--cog-text);
   font-size: var(--cog-fs-body-sm);
   font-weight: var(--cog-fw-semibold);
