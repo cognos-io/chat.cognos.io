@@ -24,6 +24,7 @@ import {
   coerceAvatarIcon,
 } from '@app/interfaces/avatar';
 import { AuthService } from '@app/services/auth.service';
+import { ConversationService } from '@app/services/conversation.service';
 import { deriveProfileName } from '@app/utils/profile-identity';
 
 // AccountComponent is the Account home (/account). It owns the user-facing
@@ -141,6 +142,46 @@ import { deriveProfileName } from '@app/utils/profile-identity';
         >
           {{ saving() ? 'Saving…' : 'Save profile' }}
         </cog-button>
+      </div>
+    </section>
+
+    <section
+      class="account__card account__danger"
+      aria-labelledby="account-danger-heading"
+    >
+      <h2 id="account-danger-heading" class="account__card-title">Danger zone</h2>
+
+      <div class="account__danger-row">
+        <div class="account__danger-copy">
+          <p class="account__danger-title">Delete all chats</p>
+          <p class="account__card-subtitle">
+            Permanently delete every conversation and its messages. This can’t be
+            undone.
+          </p>
+        </div>
+
+        @if (confirmingDeleteChats()) {
+          <div class="account__danger-confirm">
+            <cog-button
+              appearance="danger"
+              [disabled]="deletingChats()"
+              (click)="deleteAllChats()"
+            >
+              {{ deletingChats() ? 'Deleting…' : 'Yes, delete everything' }}
+            </cog-button>
+            <cog-button
+              appearance="subtle"
+              [disabled]="deletingChats()"
+              (click)="confirmingDeleteChats.set(false)"
+            >
+              Cancel
+            </cog-button>
+          </div>
+        } @else {
+          <cog-button appearance="danger" (click)="confirmingDeleteChats.set(true)">
+            Delete all chats
+          </cog-button>
+        }
       </div>
     </section>
   `,
@@ -306,10 +347,47 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       justify-content: flex-end;
       margin-top: var(--cog-space-100);
     }
+
+    .account__danger {
+      margin-top: var(--cog-space-200, 16px);
+      border-color: var(--cog-danger-border, #f1c0c0);
+      background: var(--cog-danger-surface, #fef2f2);
+    }
+
+    .account__danger .account__card-title {
+      color: var(--cog-danger-text, #b91c1c);
+    }
+
+    .account__danger-row {
+      display: flex;
+      gap: var(--cog-space-150);
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-top: var(--cog-space-100);
+    }
+
+    .account__danger-copy {
+      min-width: 0;
+    }
+
+    .account__danger-title {
+      margin: 0;
+      color: var(--cog-text);
+      font-size: var(--cog-fs-body-sm);
+      font-weight: var(--cog-fw-semibold);
+    }
+
+    .account__danger-confirm {
+      display: flex;
+      gap: var(--cog-space-100);
+      align-items: center;
+    }
   `,
 })
 export class AccountComponent {
   private readonly _auth = inject(AuthService);
+  private readonly _conversations = inject(ConversationService);
   private readonly _toast = inject(CognosToastService);
 
   protected readonly email = this._auth.email;
@@ -333,6 +411,8 @@ export class AccountComponent {
   protected readonly avatarColor = signal<AvatarColor>(this._persistedColor());
 
   protected readonly saving = signal(false);
+  protected readonly confirmingDeleteChats = signal(false);
+  protected readonly deletingChats = signal(false);
 
   protected readonly dirty = computed(
     () =>
@@ -373,5 +453,26 @@ export class AccountComponent {
         },
         error: () => this.saving.set(false),
       });
+  }
+
+  deleteAllChats(): void {
+    if (this.deletingChats()) {
+      return;
+    }
+
+    this.deletingChats.set(true);
+    this._conversations.deleteAllConversations().subscribe({
+      next: ({ deleted }) => {
+        this.deletingChats.set(false);
+        this.confirmingDeleteChats.set(false);
+        this._toast.notify({
+          title: deleted === 1 ? 'Deleted 1 chat' : `Deleted ${deleted} chats`,
+        });
+      },
+      error: () => {
+        this.deletingChats.set(false);
+        this._toast.notify({ title: 'Could not delete chats', tone: 'danger' });
+      },
+    });
   }
 }

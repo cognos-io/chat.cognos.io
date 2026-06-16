@@ -530,6 +530,18 @@ export class CognosApiService {
     );
   }
 
+  // Bulk-deletes every conversation the user can access (the "delete all chats"
+  // danger action). The server clears them in one transaction and returns the
+  // number removed.
+  deleteAllConversations(): Observable<{ deleted: number }> {
+    return this._http.delete<{ deleted: number }>(
+      `${this._baseUrl}/api/v1/conversations`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
   listConversationMessages(
     conversationId: string,
     page: number,

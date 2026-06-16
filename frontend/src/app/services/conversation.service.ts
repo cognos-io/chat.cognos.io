@@ -287,6 +287,10 @@ export class ConversationService {
             };
           }),
         ),
+      // Empties the in-memory list after the server-side bulk delete so the
+      // sidebar reflects the wipe without a refetch.
+      clearConversations: (_state, $: Observable<void>) =>
+        $.pipe(map(() => ({ conversations: [], selectedConversationId: '' }))),
     },
   });
 
@@ -610,6 +614,15 @@ export class ConversationService {
 
   private deleteConversation(conversationId: string): Observable<void> {
     return this._api.deleteConversation(conversationId);
+  }
+
+  // Deletes every conversation the user has (the account "delete all chats"
+  // danger action), then clears the in-memory list. The caller subscribes for
+  // the completion / error so it can confirm to the user.
+  deleteAllConversations(): Observable<{ deleted: number }> {
+    return this._api
+      .deleteAllConversations()
+      .pipe(tap(() => this.state.clearConversations()));
   }
 
   editConversation(

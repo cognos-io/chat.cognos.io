@@ -205,6 +205,52 @@ func ConversationsDelete(app core.App) func(e *core.RequestEvent) error {
 	}
 }
 
+type deleteAllConversationsResponse struct {
+	Deleted int `json:"deleted"`
+}
+
+// ConversationsDeleteAll wipes every conversation the caller can currently
+// access — the same active-participant set ConversationsList returns. It backs
+// the account "delete all chats" danger action. Deletes run inside a single
+// transaction so the user's chat list is cleared atomically; the messages,
+// secret keys, participants, and public shares cascade off each conversation.
+// This matches the single-delete semantics (any active participant may delete a
+// conversation), just applied to the whole list at once.
+func ConversationsDeleteAll(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		user := auth.ExtractUser(e)
+		if user == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		conversationIDs, err := activeParticipantConversationIDs(app, user.ID)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to list conversations", err)
+		}
+		if len(conversationIDs) == 0 {
+			return e.JSON(http.StatusOK, deleteAllConversationsResponse{Deleted: 0})
+		}
+
+		records, err := app.FindRecordsByIds("conversations", conversationIDs)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load conversations", err)
+		}
+
+		if err := app.RunInTransaction(func(txApp core.App) error {
+			for _, record := range records {
+				if err := txApp.Delete(record); err != nil {
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to delete conversations", err)
+		}
+
+		return e.JSON(http.StatusOK, deleteAllConversationsResponse{Deleted: len(records)})
+	}
+}
+
 func ConversationMessagesList(app core.App) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		conversationID := e.Request.PathValue("conversationID")
