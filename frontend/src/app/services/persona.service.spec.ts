@@ -154,6 +154,20 @@ describe('PersonaService', () => {
     expect(official?.personas.map((persona) => persona.id)).toContain(defaultPersonaId);
   });
 
+  it('keeps a recently-used persona in both Recently used and its home group', () => {
+    const prefs = TestBed.inject(UserPreferencesService) as unknown as {
+      recentPersonas: ReturnType<typeof signal<string[]>>;
+    };
+    prefs.recentPersonas.set(['cognos:direct']);
+
+    const groups = service.personaGroups();
+    const recent = groups.find((group) => group.id === 'recent');
+    const official = groups.find((group) => group.id === 'official');
+
+    expect(recent?.personas.map((persona) => persona.id)).toContain('cognos:direct');
+    expect(official?.personas.map((persona) => persona.id)).toContain('cognos:direct');
+  });
+
   it('filters personas by name, description, or prompt', () => {
     const results = service.search(service.personaList(), 'socratic');
     expect(results.map((persona) => persona.id)).toEqual(['cognos:socratic']);

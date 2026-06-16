@@ -53,8 +53,10 @@ test('browses, searches, activates and pins personas on the personas page', asyn
   ).toBeVisible();
 
   // The seven bundled official personas appear under the Official section.
-  const officialSection = page.locator('.personas-page__section', {
-    hasText: 'Official',
+  // Scope by the section heading so the "Official" badge text on cards in other
+  // sections (e.g. Recently used) doesn't also match.
+  const officialSection = page.locator('.personas-page__section').filter({
+    has: page.locator('.personas-page__section-heading', { hasText: 'Official' }),
   });
   await expect(officialSection.getByText('Simple Assistant')).toBeVisible();
   await expect(officialSection.getByText('Socratic Tutor')).toBeVisible();
@@ -69,8 +71,11 @@ test('browses, searches, activates and pins personas on the personas page', asyn
 
   await page.getByLabel('Search personas').fill('');
 
-  // Activating a persona gives it the active treatment.
-  const researcher = page.locator('.persona-card', { hasText: 'Researcher' });
+  // Activating a persona gives it the active treatment. (It stays in Official
+  // and also shows under Recently used, so scope to the Official card.)
+  const researcher = officialSection.locator('.persona-card', {
+    hasText: 'Researcher',
+  });
   await researcher.click();
   await expect(researcher).toHaveAttribute('aria-pressed', 'true');
   await expect(researcher.getByText('Active')).toBeVisible();

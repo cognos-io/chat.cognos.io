@@ -56,19 +56,15 @@ export class PersonasPageComponent {
 
   protected readonly selectedId = computed(() => this._personas.selectedPersona().id);
 
-  private readonly _usedIds = computed(() => {
-    const ids = new Set<string>();
-    for (const persona of this._personas.pinnedPersonas()) {
-      ids.add(persona.id);
-    }
-    for (const persona of this._personas.recentPersonas()) {
-      ids.add(persona.id);
-    }
-    return ids;
-  });
+  // Pinning moves a persona into its own section; recency does not. A
+  // recently-used persona still belongs to Official or My personas, so only
+  // pinned ids are removed from the home sections.
+  private readonly _pinnedIds = computed(
+    () => new Set(this._personas.pinnedPersonas().map((persona) => persona.id)),
+  );
 
   protected readonly sections = computed<PersonaSection[]>(() => {
-    const used = this._usedIds();
+    const pinned = this._pinnedIds();
     const sections: PersonaSection[] = [
       { id: 'pinned', label: 'Pinned', personas: this._personas.pinnedPersonas() },
       {
@@ -81,7 +77,7 @@ export class PersonasPageComponent {
         label: 'Official',
         personas: this._personas
           .officialPersonas()
-          .filter((persona) => !used.has(persona.id)),
+          .filter((persona) => !pinned.has(persona.id)),
       },
     ];
 
@@ -94,9 +90,9 @@ export class PersonasPageComponent {
   });
 
   protected readonly myPersonas = computed(() => {
-    const used = this._usedIds();
+    const pinned = this._pinnedIds();
     return this.filter(
-      this._personas.customPersonas().filter((persona) => !used.has(persona.id)),
+      this._personas.customPersonas().filter((persona) => !pinned.has(persona.id)),
     );
   });
 

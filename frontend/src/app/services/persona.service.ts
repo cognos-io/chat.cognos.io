@@ -101,8 +101,9 @@ export class PersonaService {
   // The grouped view that backs the personas page. Sections are omitted when
   // empty so the page never renders a heading with nothing under it.
   readonly personaGroups = computed<PersonaGroup[]>(() => {
+    // Pinning moves a persona into the Pinned section; recency is additive, so
+    // a recently-used persona still appears under Official or My personas.
     const pinnedIds = new Set(this._preferences.pinnedPersonas());
-    const recentIds = new Set(this.recentPersonas().map((persona) => persona.id));
 
     const groups: PersonaGroup[] = [
       { id: 'pinned', label: 'Pinned', personas: this.pinnedPersonas() },
@@ -111,14 +112,14 @@ export class PersonaService {
         id: 'official',
         label: 'Official',
         personas: this.officialPersonas().filter(
-          (persona) => !pinnedIds.has(persona.id) && !recentIds.has(persona.id),
+          (persona) => !pinnedIds.has(persona.id),
         ),
       },
       {
         id: 'mine',
         label: 'My personas',
         personas: this._customPersonas().filter(
-          (persona) => !pinnedIds.has(persona.id) && !recentIds.has(persona.id),
+          (persona) => !pinnedIds.has(persona.id),
         ),
       },
     ];

@@ -64,8 +64,9 @@ test('creates an encrypted custom persona through the editor', async ({ page }) 
   await page.getByLabel('Instructions').fill('Sensitive private prompt');
   await page.getByRole('button', { name: 'Save encrypted persona' }).click();
 
-  // The new persona is created, shown on the page, and becomes active.
-  const newCard = page.locator('.persona-card', { hasText: 'Private coach' });
+  // The new persona is created, shown on the page (in My personas and, as it
+  // was just used, Recently used), and becomes active.
+  const newCard = page.locator('.persona-card', { hasText: 'Private coach' }).first();
   await expect(newCard).toBeVisible();
   await expect(newCard).toHaveAttribute('aria-pressed', 'true');
 
