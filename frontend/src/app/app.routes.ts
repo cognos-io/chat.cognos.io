@@ -26,6 +26,16 @@ export const routes: Routes = [
     ],
   },
   {
+    // Dedicated persona management page. Reached from the in-chat switcher's
+    // "Manage personas" action.
+    path: 'personas',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/personas/personas-page.component').then(
+        (m) => m.PersonasPageComponent,
+      ),
+  },
+  {
     // Standalone pricing / plan-picker ("Keep going, privately"). Reached from
     // the locked-chat surfaces and the dashboard's switch/choose actions.
     path: 'pricing',

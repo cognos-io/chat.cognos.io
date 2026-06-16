@@ -1,0 +1,142 @@
+<div class="personas-page">
+  <header class="personas-page__header">
+    <nav class="personas-page__breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/">Cognos</a>
+      <cog-icon name="chevron-right" [size]="14" />
+      <span aria-current="page">Personas</span>
+    </nav>
+
+    <div class="personas-page__title-row">
+      <app-persona-avatar icon="sparkles" color="green" [size]="44" />
+      <div class="personas-page__title-text">
+        <h1 class="personas-page__title">Personas</h1>
+        <p class="personas-page__subtitle">
+          How Cognos responds — switch any time
+          <span class="personas-page__badge">Encrypted</span>
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <div class="personas-page__toolbar">
+    <label class="personas-page__search">
+      <cog-icon name="search" [size]="16" />
+      <input
+        type="search"
+        placeholder="Search personas"
+        aria-label="Search personas"
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)"
+      />
+    </label>
+
+    <div class="personas-page__view-toggle" role="group" aria-label="View mode">
+      <button
+        type="button"
+        class="personas-page__view-button"
+        [class.is-active]="viewMode() === 'grid'"
+        [attr.aria-pressed]="viewMode() === 'grid'"
+        title="Grid view"
+        (click)="setViewMode('grid')"
+      >
+        <cog-icon name="layout-grid" [size]="16" />
+      </button>
+      <button
+        type="button"
+        class="personas-page__view-button"
+        [class.is-active]="viewMode() === 'list'"
+        [attr.aria-pressed]="viewMode() === 'list'"
+        title="List view"
+        (click)="setViewMode('list')"
+      >
+        <cog-icon name="list" [size]="16" />
+      </button>
+    </div>
+  </div>
+
+  @for (section of sections(); track section.id) {
+    <section class="personas-page__section">
+      <h2 class="personas-page__section-heading">
+        {{ section.label }} <span>· {{ section.personas.length }}</span>
+      </h2>
+      <div class="personas-page__grid" [class.is-list]="viewMode() === 'list'">
+        @for (persona of section.personas; track persona.id) {
+          <ng-container
+            [ngTemplateOutlet]="card"
+            [ngTemplateOutletContext]="{ $implicit: persona }"
+          />
+        }
+      </div>
+    </section>
+  }
+
+  @if (myPersonas().length > 0) {
+    <section class="personas-page__section">
+      <h2 class="personas-page__section-heading">
+        My personas <span>· {{ myPersonas().length }}</span>
+      </h2>
+      <div class="personas-page__grid" [class.is-list]="viewMode() === 'list'">
+        @for (persona of myPersonas(); track persona.id) {
+          <ng-container
+            [ngTemplateOutlet]="card"
+            [ngTemplateOutletContext]="{ $implicit: persona }"
+          />
+        }
+      </div>
+    </section>
+  }
+
+  @if (sections().length === 0 && myPersonas().length === 0) {
+    <p class="personas-page__empty">No personas match “{{ query() }}”.</p>
+  }
+</div>
+
+<ng-template #card let-persona>
+  <button
+    type="button"
+    class="persona-card"
+    [class.is-active]="isActive(persona)"
+    [attr.data-persona-id]="persona.id"
+    [attr.aria-pressed]="isActive(persona)"
+    (click)="select(persona)"
+  >
+    <span class="persona-card__top">
+      <app-persona-avatar [icon]="persona.icon" [color]="persona.color" [size]="40" />
+      <span class="persona-card__heading">
+        <span class="persona-card__name">{{ persona.name }}</span>
+        <span class="persona-card__badges">
+          @if (isActive(persona)) {
+            <span class="persona-card__badge persona-card__badge--active">Active</span>
+          }
+          @if (isDefault(persona)) {
+            <span class="persona-card__badge persona-card__badge--default"
+              >Default</span
+            >
+          }
+          @if (persona.source === 'cognos') {
+            <span class="persona-card__badge persona-card__badge--official"
+              >Official</span
+            >
+          }
+        </span>
+      </span>
+
+      <span
+        class="persona-card__pin"
+        [class.is-pinned]="isPinned(persona)"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="isPinned(persona) ? 'Unpin persona' : 'Pin persona'"
+        [attr.aria-pressed]="isPinned(persona)"
+        [title]="isPinned(persona) ? 'Unpin' : 'Pin'"
+        (click)="togglePin(persona, $event)"
+        (keydown.enter)="togglePin(persona, $event)"
+        (keydown.space)="togglePin(persona, $event)"
+      >
+        <cog-icon name="pin" [size]="16" />
+      </span>
+    </span>
+
+    <span class="persona-card__description">{{ persona.description }}</span>
+  </button>
+</ng-template>

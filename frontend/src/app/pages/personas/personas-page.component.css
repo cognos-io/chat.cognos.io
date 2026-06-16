@@ -1,0 +1,272 @@
+:host {
+  display: block;
+  min-block-size: 100dvh;
+  background: var(--cog-surface-sunken, #f6f7f9);
+}
+
+.personas-page {
+  inline-size: min(100%, 1040px);
+  margin-inline: auto;
+  padding: var(--cog-space-300, 24px) var(--cog-space-250, 20px)
+    var(--cog-space-600, 48px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--cog-space-250, 20px);
+}
+
+.personas-page__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-75, 6px);
+  color: var(--cog-text-subtle, #64748b);
+  font-size: var(--cog-fs-caption, 13px);
+}
+
+.personas-page__breadcrumb a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.personas-page__breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.personas-page__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-150, 12px);
+  margin-block-start: var(--cog-space-100, 8px);
+}
+
+.personas-page__title {
+  margin: 0;
+  font-size: var(--cog-fs-h-lg, 26px);
+  font-weight: var(--cog-fw-h-lg, 700);
+  color: var(--cog-text, #0f172a);
+}
+
+.personas-page__subtitle {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-100, 8px);
+  color: var(--cog-text-subtle, #64748b);
+  font-size: var(--cog-fs-body, 14px);
+}
+
+.personas-page__badge {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cog-success-text, #15803d);
+  background: var(--cog-success-surface, #dcfce7);
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.personas-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cog-space-150, 12px);
+}
+
+.personas-page__search {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-100, 8px);
+  flex: 1;
+  max-inline-size: 340px;
+  padding: var(--cog-space-100, 8px) var(--cog-space-150, 12px);
+  border: 1px solid var(--cog-border, #e2e8f0);
+  border-radius: var(--cog-radius-sm, 8px);
+  background: var(--cog-surface, #ffffff);
+  color: var(--cog-text-subtle, #64748b);
+}
+
+.personas-page__search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--cog-text, #0f172a);
+  font: inherit;
+}
+
+.personas-page__view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--cog-border, #e2e8f0);
+  border-radius: var(--cog-radius-sm, 8px);
+  overflow: hidden;
+  background: var(--cog-surface, #ffffff);
+}
+
+.personas-page__view-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--cog-space-75, 6px) var(--cog-space-100, 8px);
+  border: none;
+  background: transparent;
+  color: var(--cog-text-subtle, #64748b);
+  cursor: pointer;
+}
+
+.personas-page__view-button.is-active {
+  background: var(--cog-surface-sunken, #eef2f6);
+  color: var(--cog-brand, #15803d);
+}
+
+.personas-page__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cog-space-125, 10px);
+}
+
+.personas-page__section-heading {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: var(--cog-fs-caption, 12px);
+  font-weight: 700;
+  color: var(--cog-text-subtle, #64748b);
+}
+
+.personas-page__section-heading span {
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.personas-page__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--cog-space-150, 12px);
+}
+
+.personas-page__grid.is-list {
+  grid-template-columns: 1fr;
+}
+
+.personas-page__empty {
+  color: var(--cog-text-subtle, #64748b);
+  font-size: var(--cog-fs-body, 14px);
+}
+
+.persona-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cog-space-150, 12px);
+  text-align: start;
+  padding: var(--cog-space-150, 14px);
+  border: 1px solid var(--cog-border, #e2e8f0);
+  border-radius: var(--cog-radius-md, 12px);
+  background: var(--cog-surface, #ffffff);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.persona-card:hover {
+  border-color: var(--cog-border-strong, #cbd5e1);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.08);
+}
+
+.persona-card.is-active {
+  border-color: var(--cog-brand, #16a34a);
+  background: var(--cog-success-surface, #f0fdf4);
+  box-shadow: 0 0 0 1px var(--cog-brand, #16a34a);
+}
+
+.persona-card__top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--cog-space-125, 10px);
+}
+
+.persona-card__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-inline-size: 0;
+}
+
+.persona-card__name {
+  font-weight: 600;
+  color: var(--cog-text, #0f172a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.persona-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.persona-card__badge {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.persona-card__badge--active {
+  color: var(--cog-success-text, #15803d);
+}
+
+.persona-card__badge--default {
+  color: var(--cog-brand, #1d4ed8);
+}
+
+.persona-card__badge--official {
+  color: var(--cog-text-subtle, #64748b);
+  background: var(--cog-surface-sunken, #eef2f6);
+}
+
+.persona-card__pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 26px;
+  block-size: 26px;
+  border-radius: var(--cog-radius-sm, 6px);
+  color: var(--cog-text-subtlest, #94a3b8);
+  opacity: 0;
+  cursor: pointer;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease;
+}
+
+.persona-card:hover .persona-card__pin,
+.persona-card__pin:focus-visible,
+.persona-card__pin.is-pinned {
+  opacity: 1;
+}
+
+.persona-card__pin.is-pinned {
+  color: var(--cog-brand, #15803d);
+}
+
+.persona-card__description {
+  color: var(--cog-text-subtle, #64748b);
+  font-size: var(--cog-fs-body, 13px);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .personas-page__grid {
+    grid-template-columns: 1fr;
+  }
+}
