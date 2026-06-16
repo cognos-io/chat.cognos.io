@@ -38,6 +38,11 @@
   margin-block-start: var(--cog-space-100, 8px);
 }
 
+.personas-page__title-text {
+  flex: 1;
+  min-inline-size: 0;
+}
+
 .personas-page__title {
   margin: 0;
   font-size: var(--cog-fs-h-lg, 26px);
@@ -317,10 +322,21 @@
     flex-direction: column;
   }
 
+  /* On narrow screens the docked editor becomes a bottom sheet over the page. */
   .personas-page__editor {
-    position: static;
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
     inline-size: 100%;
-    max-block-size: none;
+    max-block-size: 88dvh;
+    overflow-y: auto;
+    z-index: 50;
+    box-shadow: 0 -8px 30px rgb(15 23 42 / 0.18);
+  }
+
+  .personas-page.is-editing .personas-page__main {
+    /* Leave room so the last cards aren't hidden behind the sheet. */
+    padding-block-end: 40dvh;
   }
 }
 
