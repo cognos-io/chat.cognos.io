@@ -15,6 +15,15 @@ import { PersonaService } from '@app/services/persona.service';
   imports: [CognosIconComponent, PersonaAvatarComponent],
   template: `
     <div class="persona-chips" role="group" aria-label="Quick persona switch">
+      <button
+        type="button"
+        class="persona-chips__chip persona-chips__chip--all"
+        (click)="openAll()"
+      >
+        <cog-icon name="layout-grid" [size]="14" />
+        <span class="persona-chips__name">All</span>
+      </button>
+
       @for (persona of chips(); track persona.id) {
         <button
           type="button"
@@ -35,15 +44,6 @@ import { PersonaService } from '@app/services/persona.service';
           <span class="persona-chips__name">{{ persona.name }}</span>
         </button>
       }
-
-      <button
-        type="button"
-        class="persona-chips__chip persona-chips__chip--all"
-        (click)="openAll()"
-      >
-        <cog-icon name="layout-grid" [size]="14" />
-        <span class="persona-chips__name">All</span>
-      </button>
     </div>
   `,
   styles: `
@@ -105,12 +105,13 @@ export class PersonaChipsComponent {
 
   readonly selectedId = computed(() => this._personas.selectedPersona().id);
 
-  // Active persona first, then pinned, de-duplicated and capped so the row
-  // stays on one or two lines.
+  // Active persona first, then pinned and recently-used, de-duplicated and
+  // capped so the row stays on one or two lines.
   readonly chips = computed<Persona[]>(() => {
     const ordered = [
       this._personas.selectedPersona(),
       ...this._personas.pinnedPersonas(),
+      ...this._personas.recentPersonas(),
     ];
     const seen = new Set<string>();
     const list: Persona[] = [];
@@ -120,7 +121,7 @@ export class PersonaChipsComponent {
         list.push(persona);
       }
     }
-    return list.slice(0, 4);
+    return list.slice(0, 6);
   });
 
   select(persona: Persona): void {
