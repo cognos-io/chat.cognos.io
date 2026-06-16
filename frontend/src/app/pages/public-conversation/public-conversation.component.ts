@@ -145,6 +145,22 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
       }
     </main>
 
+    <footer class="public-conversation__promo">
+      <div class="public-conversation__promo-inner">
+        <app-cognos-logo class="public-conversation__promo-logo" palette="dark" />
+        <p class="public-conversation__promo-text">
+          Cognos encrypts your AI chats. This is a public conversation, but only people
+          with the link can decrypt and read it. If you care about keeping your AI chats
+          private and secure, prefer a European service, and want both proprietary and
+          open-source models, go to
+          <a href="https://cognos.io/" target="_blank" rel="noopener noreferrer"
+            >cognos.io</a
+          >
+          and sign up today.
+        </p>
+      </div>
+    </footer>
+
     <ng-template #body let-message>
       @if (message.decryptedData.deleted) {
         <p class="public-conversation__muted">Deleted message</p>
@@ -158,12 +174,68 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
     </ng-template>
   `,
   styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      min-block-size: 100dvh;
+    }
+
     .public-conversation {
+      flex: 1;
+      width: 100%;
       max-width: 760px;
       margin: 0 auto;
       padding: var(--cog-space-300, 24px) var(--cog-space-200, 16px);
       display: grid;
       gap: var(--cog-space-300, 24px);
+      align-content: start;
+    }
+
+    /* Subtle full-width promo band pinned beneath the conversation. */
+    .public-conversation__promo {
+      border-top: 1px solid var(--cog-border, #e2e2e2);
+      background: var(--cog-surface-sunken, #f6f7f9);
+    }
+
+    .public-conversation__promo-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: var(--cog-space-250, 20px) var(--cog-space-200, 16px);
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-200, 16px);
+    }
+
+    .public-conversation__promo-logo {
+      display: block;
+      height: 22px;
+      flex: none;
+      opacity: 0.85;
+    }
+
+    .public-conversation__promo-text {
+      margin: 0;
+      color: var(--cog-text-subtle, #6b6b6b);
+      font-size: var(--cog-fs-caption, 13px);
+      line-height: var(--cog-lh-body, 1.5);
+    }
+
+    .public-conversation__promo-text a {
+      color: var(--cog-brand, #15803d);
+      font-weight: var(--cog-fw-semibold, 600);
+      text-decoration: none;
+    }
+
+    .public-conversation__promo-text a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .public-conversation__promo-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--cog-space-125, 10px);
+      }
     }
 
     .public-conversation__bar {
