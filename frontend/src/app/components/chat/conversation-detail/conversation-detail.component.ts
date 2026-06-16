@@ -91,9 +91,10 @@ import { MessageListComponent } from '../message-list/message-list.component';
 
     .conversation-detail__composer {
       width: 100%;
-      max-width: 80ch;
+      max-width: var(--chat-container-width);
       margin: 0 auto;
       padding-top: var(--cog-space-150);
+      padding-inline: var(--cog-space-200);
     }
   `,
 })

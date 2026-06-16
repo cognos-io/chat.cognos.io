@@ -197,6 +197,10 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
   styles: `
     :host {
       display: block;
+      width: 100%;
+      max-width: var(--chat-container-width);
+      margin-inline: auto;
+      padding-inline: var(--cog-space-200);
     }
 
     .message-list-item {

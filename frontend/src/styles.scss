@@ -5,7 +5,10 @@
 @tailwind utilities;
 
 :root {
-  --chat-container-width: 80ch;
+  /* Fixed readable width for the conversation thread and composer, matching the
+     public conversation view (.public-conversation) for a consistent reading
+     measure on desktop. */
+  --chat-container-width: 760px;
 }
 
 html,
