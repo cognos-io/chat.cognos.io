@@ -271,6 +271,19 @@ func bindAppHooks(
 			if err != nil {
 				return err
 			}
+
+			if paddleClient != nil && paddleOveragePriceID != "" {
+				_, err = retryPaygOverageJob(
+					params.CronScheduler,
+					app.Logger(),
+					billingRepo,
+					paddleClient,
+					paddleOveragePriceID,
+				)
+				if err != nil {
+					return err
+				}
+			}
 		}
 
 		return e.Next()

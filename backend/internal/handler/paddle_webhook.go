@@ -27,10 +27,21 @@ const (
 	webhookPBDateLayout     = "2006-01-02 15:04:05.000Z"
 )
 
+// CycleReconciler records a paid Paddle cycle transaction against its PAYG cycle
+// summary. billing.PocketBaseRepo satisfies it.
+type CycleReconciler interface {
+	RecordCycleTransaction(
+		subscriptionID, transactionID string,
+		billedRappen int64,
+		closedAt string,
+	) (bool, error)
+}
+
 // PaddleWebhookParams wires the webhook handler. PriceToPlan maps a Paddle
 // price id to the plan it activates. MinCommitRappen is the PAYG cycle floor
 // (CHF 10.00) used when closing a cycle to compute the overage above it.
 // Client + OveragePriceID let a cycle close post the overage charge to Paddle.
+// Reconciler records cycle transactions for audit (transaction.completed).
 type PaddleWebhookParams struct {
 	Logger          *slog.Logger
 	WebhookSecret   string
@@ -38,6 +49,7 @@ type PaddleWebhookParams struct {
 	MinCommitRappen int64
 	Client          paddle.Client
 	OveragePriceID  string
+	Reconciler      CycleReconciler
 }
 
 // PaddleWebhook ingests Paddle notifications. It verifies the HMAC signature,
@@ -164,9 +176,11 @@ func dispatchPaddleEvent(
 		}
 		return markSubscriptionPastDue(app, params, sub)
 	case "transaction.completed":
-		// No plan change in the lean cut; the raw event is stored for audit and
-		// (later) PAYG cycle reconciliation.
-		return nil
+		txn, err := event.Transaction()
+		if err != nil {
+			return err
+		}
+		return recordCycleTransaction(params, txn)
 	default:
 		return nil
 	}
@@ -263,6 +277,19 @@ func cancelSubscription(
 	record.Set("paddle_subscription_id", "")
 	record.Set("past_due", false)
 	return app.Save(record)
+}
+
+// recordCycleTransaction links a paid Paddle cycle transaction to its PAYG
+// cycle summary for audit/reconciliation. Non-PAYG transactions (no matching
+// open summary) are a no-op; the raw event is still stored.
+func recordCycleTransaction(params PaddleWebhookParams, txn paddle.TransactionData) error {
+	if params.Reconciler == nil || txn.SubscriptionID == "" {
+		return nil
+	}
+	_, err := params.Reconciler.RecordCycleTransaction(
+		txn.SubscriptionID, txn.ID, txn.GrandTotalMinor(), nowRFC3339(),
+	)
+	return err
 }
 
 // markSubscriptionPastDue flags the user's billing row when Paddle reports a

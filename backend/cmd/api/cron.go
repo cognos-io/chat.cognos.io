@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log/slog"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
+
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 )
 
 type ExpiredMessagesRepo interface {
@@ -43,6 +47,41 @@ func cleanUpExpiredMessageJob(
 				return
 			}
 		}, logger, expiredMessagesRepo),
+	)
+}
+
+// retryPaygOverageJob is the spec §11.3 / §14.7 backstop: every ~5 minutes it
+// re-posts any PAYG overage charge that never landed (the webhook's synchronous
+// post failed and isn't re-dispatched on retry). The deterministic idempotency
+// key makes a re-post safe, so this self-heals dropped charges + missed
+// rollover webhooks without ever double-billing.
+func retryPaygOverageJob(
+	scheduler gocron.Scheduler,
+	logger *slog.Logger,
+	repo *billing.PocketBaseRepo,
+	client paddle.Client,
+	overagePriceID string,
+) (gocron.Job, error) {
+	return scheduler.NewJob(
+		gocron.DurationRandomJob(
+			4*time.Minute,
+			6*time.Minute,
+		),
+		gocron.NewTask(func() {
+			if client == nil || overagePriceID == "" {
+				return
+			}
+			posted, err := repo.RetryUnpostedOverages(
+				context.Background(), client, overagePriceID, logger,
+			)
+			if err != nil {
+				logger.Error("payg overage backstop failed", "err", err)
+				return
+			}
+			if posted > 0 {
+				logger.Info("payg overage backstop posted charges", "count", posted)
+			}
+		}),
 	)
 }
 

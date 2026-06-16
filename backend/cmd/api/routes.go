@@ -137,6 +137,7 @@ func addPocketBaseRoutes(
 			MinCommitRappen: paddleMinCommitRappen,
 			Client:          paddleClient,
 			OveragePriceID:  paddleOveragePriceID,
+			Reconciler:      billing.NewPocketBaseRepo(app),
 		}),
 	)
 

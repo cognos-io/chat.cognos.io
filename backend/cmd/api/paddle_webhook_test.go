@@ -470,6 +470,38 @@ func TestPaddleWebhookUpdatedSurfacesScheduledCancel(t *testing.T) {
 	}
 }
 
+func TestPaddleWebhookTransactionCompletedRecordsCycle(t *testing.T) {
+	app, mux := activatePAYG(t)
+	// Roll over so a closed cycle summary exists for sub_payg (June cycle).
+	seedUsage(t, app, time.Date(2026, 6, 10, 0, 0, 0, 0, time.UTC), 1500)
+	postWebhook(mux, paygRolloverBody, signPaddle(t, webhookSecret, paygRolloverBody))
+
+	summary := cycleSummaryFor(t, app, "sub_payg")
+	if summary == nil {
+		t.Fatal("setup: expected a cycle summary after rollover")
+	}
+
+	// Paddle bills the cycle (commit + overage). grand_total is minor units.
+	txnBody := `{"event_id":"evt_txn_done","event_type":"transaction.completed",` +
+		`"data":{"id":"txn_cycle_1","subscription_id":"sub_payg","status":"completed",` +
+		`"details":{"totals":{"grand_total":"1500"}}}}`
+	if rec := postWebhook(mux, txnBody, signPaddle(t, webhookSecret, txnBody)); rec.Code != http.StatusOK {
+		t.Fatalf("transaction.completed status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+
+	summary = cycleSummaryFor(t, app, "sub_payg")
+	if got := summary.GetString("paddle_transaction_id"); got != "txn_cycle_1" {
+		t.Errorf("paddle_transaction_id = %q, want txn_cycle_1", got)
+	}
+	if got := summary.GetInt("paddle_billed_rappen"); got != 1500 {
+		t.Errorf("paddle_billed_rappen = %d, want 1500", got)
+	}
+	// Billed (1500) >= local expected (max(1500,1000)=1500) → reconciled.
+	if !summary.GetBool("reconciled") {
+		t.Error("reconciled should be true when Paddle billed at least the expected amount")
+	}
+}
+
 func TestPaddleWebhookMarksAndClearsPastDue(t *testing.T) {
 	app, mux := bootWebhookMux(t)
 

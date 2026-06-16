@@ -138,21 +138,32 @@ Without this, PAYG only ever bills the CHF 10 floor and never charges usage abov
 
 ---
 
-### Phase 4 — 🟠 Transaction recording + periodic reconciliation
+### Phase 4 — ✅ Transaction recording + overage-retry backstop
 
-1. **Webhook `transaction.completed`** → record the cycle invoice against the matching
-   `payg_cycle_summaries` row (`paddle_billed_rappen`, `paddle_transaction_id`, `closed_at`), set
-   `reconciled=true` when local-expected ≈ paddle-billed.
-2. **Reconciliation pass** (cron or PocketBase scheduled job): find `payg_cycle_summaries` with
+1. ✅ **Webhook `transaction.completed`** → `RecordCycleTransaction` links the Paddle transaction to
+   the matching open `payg_cycle_summaries` row (`paddle_billed_rappen`, `paddle_transaction_id`,
+   `closed_at`), marking `reconciled` when Paddle billed at least the locally-expected amount (a
+   safe lower bound). Idempotent on `paddle_transaction_id`.
+2. ✅ **Overage-retry backstop** (gocron job, every ~5 min): `RetryUnpostedOverages` re-posts any
+   closed cycle with `overage_charge_rappen > 0` and an empty `paddle_overage_txn_id` — the only
+   PAYG self-healing path, since a failed charge in the webhook isn't re-dispatched. The
+   deterministic idempotency key makes a re-post safe, so it also recovers dropped charges + missed
+   rollover webhooks without double-billing.
 
-   `reconciled=false` or open cycles past their end; retry a missed overage charge; flag drift
-   (local-expected vs paddle-billed) for triage. Also self-heals missed webhooks.
+> **Open item for live verification (Phase 8):** the exact per-cycle amount reconciliation depends
+> on Paddle's overage charge **timing** (`effective_from: next_billing_period` → which renewal the
+> overage rides) and the transaction line-item structure. With "commit in advance + overage in
+> arrears" a single transaction spans two cycles' charges, so we currently record for audit and
+> assert only the safe lower bound (`billed ≥ expected`) rather than exact equality. Confirm against
+> sandbox data and tighten the `reconciled` check + drift alert then.
 
-- **Files:** webhook, a new `cmd/` cron entry or PocketBase `Cron` hook, `internal/billing/payg.go`.
-- **Tests:** unit — reconcile marks matching rows reconciled, flags mismatches, retries unposted
-  overage; integration — `transaction.completed` closes the summary.
-- **Acceptance:** every closed PAYG cycle ends `reconciled=true`; a deliberately-dropped webhook is
-  recovered by the next pass.
+- **Files:** `internal/billing/reconcile.go`, `internal/paddle/webhook.go` (transaction totals +
+  billing period), `internal/handler/paddle_webhook.go`, `cmd/api/{cron,main,routes}.go`.
+- **Tests:** ✅ `cmd/api/billing_reconcile_test.go` — backstop re-posts only unposted overages,
+  skips posted/zero, idempotent across passes; ✅ `transaction.completed` records the cycle +
+  reconciled.
+- **Acceptance:** ✅ a deliberately-dropped/failed overage charge is recovered by the next backstop
+  pass; ⏳ exact `reconciled=true` equality pending live Paddle verification (see open item).
 
 ---
 

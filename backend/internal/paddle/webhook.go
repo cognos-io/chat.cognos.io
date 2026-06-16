@@ -102,9 +102,25 @@ type TransactionData struct {
 	ID             string `json:"id"`
 	CustomerID     string `json:"customer_id"`
 	SubscriptionID string `json:"subscription_id"`
+	Status         string `json:"status"`
 	CustomData     struct {
 		UserID string `json:"user_id"`
 	} `json:"custom_data"`
+	Details struct {
+		Totals struct {
+			GrandTotal string `json:"grand_total"`
+		} `json:"totals"`
+	} `json:"details"`
+	BillingPeriod struct {
+		StartsAt string `json:"starts_at"`
+		EndsAt   string `json:"ends_at"`
+	} `json:"billing_period"`
+}
+
+// GrandTotalMinor parses the transaction's grand total (Paddle sends minor units
+// as a decimal string, e.g. "1340") into an int64 Rappen value.
+func (t TransactionData) GrandTotalMinor() int64 {
+	return parseMinorAmount(t.Details.Totals.GrandTotal)
 }
 
 // ParseWebhook decodes the envelope.

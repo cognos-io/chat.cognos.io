@@ -737,10 +737,12 @@ side-by-side, so any drift is investigable.
 > flags `user_billing.past_due` (access continues through dunning; dashboard +
 > chat shell show a "payment failed — update your card" banner) and
 > `subscription.activated` clears it on recovery; `subscription.canceled` drops
-> them to `inactive`. `transaction.completed` is stored-only (no plan change) —
-> the 5-minute overage-retry backstop, the `transaction.completed`
-> reconciliation, and `adjustment.created`/refund handling are the deferred
-> fast-follow.
+> them to `inactive`. `transaction.completed` records the Paddle transaction +
+> billed amount against the matching `payg_cycle_summaries` row for audit, and a
+> ~5-minute gocron backstop re-posts any overage charge that never landed
+> (idempotency-key-safe). `adjustment.created`/refund handling and the exact
+> per-cycle `reconciled` equality (pending live Paddle timing verification) are
+> the remaining fast-follow.
 > Customer↔user mapping uses `custom_data.user_id` with a `paddle_customer_id`
 > fallback; unmappable events are logged and accepted (not retried). Signature
 > verification is covered in `internal/paddle/webhook_test.go`; the end-to-end
