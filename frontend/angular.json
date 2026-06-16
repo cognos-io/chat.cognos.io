@@ -113,6 +113,11 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "prebundle": {
+              "exclude": ["@cognos/ui"]
+            }
+          },
           "configurations": {
             "production": {
               "buildTarget": "frontend:build:production"
