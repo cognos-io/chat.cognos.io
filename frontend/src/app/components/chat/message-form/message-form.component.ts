@@ -115,6 +115,7 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
             <cog-button
               #modelTrigger="cdkOverlayOrigin"
               cdkOverlayOrigin
+              class="message-form__model"
               appearance="default"
               iconAfter="chevron-down"
               type="button"
@@ -307,8 +308,20 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
     }
 
     @media (max-width: 767px) {
-      .message-form__persona-name {
-        display: none;
+      /* The persona switcher spans the full width above the model/send row. */
+      .message-form__persona {
+        order: -1;
+        flex-basis: 100%;
+        inline-size: 100%;
+        max-width: none;
+        justify-content: space-between;
+      }
+
+      /* Model selector and send share the line below; the model takes the
+         remaining space and the send button stays pinned to the right. */
+      .message-form__model {
+        flex: 1;
+        min-width: 0;
       }
     }
 
