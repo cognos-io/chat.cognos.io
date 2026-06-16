@@ -12,6 +12,7 @@ import { KeyPair } from '@app/interfaces/key-pair';
 import { Message } from '@app/interfaces/message';
 import { AuthService } from '@app/services/auth.service';
 import { ConversationService } from '@app/services/conversation.service';
+import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
 import { VaultService } from '@app/services/vault.service';
 
@@ -29,6 +30,7 @@ describe('ChatHeaderComponent', () => {
   const keyPair = signal<KeyPair | undefined>(undefined);
   const publicKeyFingerprint = signal('');
   const email = signal('');
+  const isMobile = signal(false);
 
   const deleteConversation$ = { next: vi.fn() };
 
@@ -59,6 +61,7 @@ describe('ChatHeaderComponent', () => {
     keyPair.set(undefined);
     publicKeyFingerprint.set('');
     email.set('');
+    isMobile.set(false);
     vi.clearAllMocks();
 
     dialogOpen = vi.fn().mockReturnValue({ closed: of(true) });
@@ -71,6 +74,7 @@ describe('ChatHeaderComponent', () => {
         { provide: MessageService, useValue: messageService },
         { provide: VaultService, useValue: vaultService },
         { provide: AuthService, useValue: authService },
+        { provide: DeviceService, useValue: { isMobile } },
         { provide: Dialog, useValue: { open: dialogOpen } },
       ],
     }).compileComponents();
@@ -117,6 +121,22 @@ describe('ChatHeaderComponent', () => {
     expect(
       component.menuItems().find((item) => item.title === 'Export')?.disabled,
     ).toBe(true);
+  });
+
+  it('adds Share to the overflow menu on mobile, where the Share button is hidden', () => {
+    selectedConversation.set(makeConversation('c-1', 'Saved chat'));
+    isMobile.set(true);
+    fixture.detectChanges();
+
+    expect(component.menuItems().map((item) => item.title)).toEqual([
+      'Share',
+      'Rename',
+      'Export',
+      'Delete',
+    ]);
+
+    component.onMenuSelect(0);
+    expect(dialogOpen).toHaveBeenCalled();
   });
 
   it('offers clear messages only for a temporary conversation with messages', () => {

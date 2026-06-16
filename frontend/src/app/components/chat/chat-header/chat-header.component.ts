@@ -28,11 +28,12 @@ import { EditConversationDialogComponent } from '@app/components/edit-conversati
 import { ShareConversationDialogComponent } from '@app/components/share-conversation-dialog/share-conversation-dialog.component';
 import { AuthService } from '@app/services/auth.service';
 import { ConversationService } from '@app/services/conversation.service';
+import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
-type HeaderMenuAction = 'rename' | 'export' | 'clear' | 'delete';
+type HeaderMenuAction = 'share' | 'rename' | 'export' | 'clear' | 'delete';
 
 type HeaderMenuEntry = CognosMenuItem & { action: HeaderMenuAction };
 
@@ -58,6 +59,7 @@ export class ChatHeaderComponent {
   private readonly _messageService = inject(MessageService);
   private readonly _router = inject(Router);
   private readonly _vaultService = inject(VaultService);
+  private readonly _device = inject(DeviceService);
 
   readonly conversationService = inject(ConversationService);
 
@@ -111,6 +113,11 @@ export class ChatHeaderComponent {
     const hasConversation = this._conversationId() !== null;
 
     if (hasConversation) {
+      // The dedicated Share button is hidden on mobile, so surface sharing in
+      // the overflow menu there instead.
+      if (this._device.isMobile()) {
+        entries.push({ action: 'share', title: 'Share', icon: 'user-plus' });
+      }
       entries.push({ action: 'rename', title: 'Rename', icon: 'pencil' });
       entries.push({
         action: 'export',
@@ -169,6 +176,9 @@ export class ChatHeaderComponent {
     }
 
     switch (entry.action) {
+      case 'share':
+        this.onShare();
+        break;
       case 'rename':
         this.onRename();
         break;
