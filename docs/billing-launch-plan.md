@@ -95,10 +95,15 @@ Without this, PAYG only ever bills the CHF 10 floor and never charges usage abov
    `PATCH /subscriptions/{id}` with the new item + `proration_billing_mode`.
 2. ✅ **Backend:** `POST /api/v1/billing/change-plan {plan}` → with an active
    `paddle_subscription_id`, changes its price; else falls back to checkout. **Proration policy
-   (decided):** upgrades (PAYG→Unlimited) `prorated_immediately`; downgrades + monthly↔annual
-   `full_next_billing_period` (no mid-cycle money). Paddle applies the swap immediately either way
-   (it can't defer the price swap, only the billing). Switching away from PAYG closes the open
-   cycle and posts the final overage via the deterministic-id close (no double-charge).
+   (decided + live-verified):** upgrades (PAYG→Unlimited) `prorated_immediately`; downgrades +
+   monthly↔annual `do_not_bill` (no charge today, no pro-rata credit). **Live Paddle caught that
+   `full_next_billing_period` is rejected for billing-cycle changes (monthly↔annual) with
+   `subscription_new_items_not_valid` — only `prorated_immediately`/`full_immediately`/`do_not_bill`
+   are allowed there**, so the downgrade/lateral mode is `do_not_bill`. Paddle applies the swap
+   immediately either way (it can't defer the price swap, only the billing). Switching away from
+   PAYG closes the open cycle and posts the final overage via the deterministic-id close (no
+   double-charge). Verified live: switching the test sub monthly↔annual modifies the one
+   subscription (customer count stayed 4 — no duplicate).
 3. ✅ **Frontend:** "Switch plan" opens an inline picker (no native dialog — e2e-friendly) listing
    the other plans with timing wording, calling change-plan; `checkout` outcomes fall back to the
    overlay. "Choose a plan" (inactive/trial) still routes to `/pricing`.

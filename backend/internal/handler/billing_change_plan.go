@@ -12,12 +12,15 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 )
 
-// Proration modes for a plan switch. Upgrades bill the prorated difference now;
-// downgrades and lateral switches don't move money mid-cycle — the new price is
-// billed in full at the next renewal (spec §3.4, decisions #7/#11).
+// Proration modes for a plan switch. Upgrades bill the prorated difference now
+// (prorated_immediately is valid even across a billing-cycle change). Downgrades
+// and lateral (monthly↔annual) switches use do_not_bill: no charge today and no
+// pro-rata credit (spec §3.4, decisions #7/#11) — and, unlike
+// full_next_billing_period, Paddle accepts it when the billing cycle changes
+// (monthly↔annual), where the *_next_billing_period modes are rejected.
 const (
 	prorationUpgrade   = "prorated_immediately"
-	prorationDowngrade = "full_next_billing_period"
+	prorationDowngrade = "do_not_bill"
 )
 
 // BillingChangePlanParams wires the change-plan handler. OveragePriceID +

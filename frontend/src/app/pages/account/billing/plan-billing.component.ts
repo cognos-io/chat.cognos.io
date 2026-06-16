@@ -327,7 +327,7 @@ export class PlanBillingComponent {
       label: 'Pay as you go — CHF 10 / month min.',
     };
     const now = 'Takes effect now — prorated to this cycle.';
-    const next = 'Starts at your next renewal — no charge today.';
+    const next = 'No charge today — billed at the new rate from your next renewal.';
 
     switch (billing.plan_type) {
       case 'payg':

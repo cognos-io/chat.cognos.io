@@ -109,14 +109,49 @@ func TestBillingChangePlanDowngradeUnlimitedToPayg(t *testing.T) {
 		},
 		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
 		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
-			if fake.changeProration != "full_next_billing_period" {
-				t.Errorf("proration = %q, want full_next_billing_period (downgrade)", fake.changeProration)
+			if fake.changeProration != "do_not_bill" {
+				t.Errorf("proration = %q, want do_not_bill (downgrade, no pro-rata)", fake.changeProration)
 			}
 			if fake.changePriceID != "pri_payg" {
 				t.Errorf("change price = %q, want pri_payg", fake.changePriceID)
 			}
 			if fake.chargeCalls != 0 {
 				t.Errorf("overage charge calls = %d, want 0 (not switching from PAYG)", fake.chargeCalls)
+			}
+		},
+	}
+	scenario.Test(t)
+}
+
+// Lateral monthly→annual changes the billing cycle, where Paddle rejects the
+// *_next_billing_period modes — it must use do_not_bill (regression: live Paddle
+// returned subscription_new_items_not_valid for full_next_billing_period).
+func TestBillingChangePlanMonthlyToAnnualUsesDoNotBill(t *testing.T) {
+	t.Parallel()
+	fake := &fakePaddleClient{}
+	scenario := tests.ApiScenario{
+		Name:            "unlimited monthly → annual uses do_not_bill",
+		Method:          http.MethodPost,
+		URL:             "/api/v1/billing/change-plan",
+		Body:            strings.NewReader(`{"plan":"unlimited_annual"}`),
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"status":"changed"`},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			app := setupChangePlanApp(t, fake)
+			updateUserBilling(t, app, testUserID, map[string]any{
+				"plan_type":              "unlimited",
+				"paddle_subscription_id": "sub_1",
+				"paddle_price_id":        "pri_unl_monthly",
+			})
+			return app
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			if fake.changeProration != "do_not_bill" {
+				t.Errorf("proration = %q, want do_not_bill (cycle change)", fake.changeProration)
+			}
+			if fake.changePriceID != "pri_unl_annual" {
+				t.Errorf("change price = %q, want pri_unl_annual", fake.changePriceID)
 			}
 		},
 	}
