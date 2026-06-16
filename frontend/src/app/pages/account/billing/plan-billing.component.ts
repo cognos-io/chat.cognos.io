@@ -275,6 +275,12 @@ export class PlanBillingComponent {
     Math.max(1, ...this.usageBars().map((bar) => bar.value)),
   );
 
+  // Total spend this period (PAYG headline) — billing is token-cost based, so we
+  // show francs rather than a message count.
+  protected readonly usageTotalCostChf = computed(() =>
+    (this.usage()?.by_model ?? []).reduce((sum, row) => sum + row.cost_chf, 0),
+  );
+
   protected barWidth(value: number): number {
     return Math.round((value / this.usageMax()) * 100);
   }

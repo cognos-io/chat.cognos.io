@@ -84,6 +84,37 @@ test('active unlimited dashboard shows plan, renewal, usage and the settings nav
   await expect(page.getByRole('button', { name: 'Open Paddle portal' })).toBeVisible();
 });
 
+test('PAYG usage headline shows spend in CHF, not a message count', async ({
+  page,
+}) => {
+  const userFixture = buildVaultFixture('user_payg', 'payg@example.com');
+  await seedAuth(page, userFixture);
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({
+      json: {
+        plan_type: 'payg',
+        status: 'active',
+        interval: 'monthly',
+        balance_chf: 0,
+        trial_seed_chf: 0,
+        cycle_end_at: '2026-07-01T00:00:00Z',
+        cancel_at_period_end: false,
+      },
+    });
+  });
+  await page.route(`${API}/api/v1/billing/usage`, async (route) => {
+    await route.fulfill({ json: usageJson });
+  });
+
+  await page.goto('/account/billing');
+
+  // Billing is token-cost based, so PAYG leads with francs (sum of by_model
+  // cost_chf = 6.80), not the message count.
+  await expect(page.locator('.pb__usage-total')).toHaveText('CHF 6.80');
+  await expect(page.getByText(/spent since/)).toBeVisible();
+  await expect(page.getByText(/messages since/)).toHaveCount(0);
+});
+
 test('dashboard renders the saved card and Paddle invoices', async ({ page }) => {
   const userFixture = buildVaultFixture('user_inv', 'inv@example.com');
   await seedAuth(page, userFixture);

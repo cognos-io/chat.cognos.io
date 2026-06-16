@@ -108,12 +108,19 @@
       </header>
 
       @if (usage(); as usage) {
-        <div class="pb__usage-total">
-          {{ usage.message_count.toLocaleString('en-CH') }}
-        </div>
-        <div class="pb__usage-caption">
-          messages since {{ usage.period_start | date: 'd MMM' }}
-        </div>
+        @if (isPayg()) {
+          <div class="pb__usage-total">CHF {{ usageTotalCostChf().toFixed(2) }}</div>
+          <div class="pb__usage-caption">
+            spent since {{ usage.period_start | date: 'd MMM' }} · CHF 10 minimum
+          </div>
+        } @else {
+          <div class="pb__usage-total">
+            {{ usage.message_count.toLocaleString('en-CH') }}
+          </div>
+          <div class="pb__usage-caption">
+            messages since {{ usage.period_start | date: 'd MMM' }}
+          </div>
+        }
 
         <div class="pb__bars">
           @for (bar of usageBars(); track bar.name) {
@@ -137,7 +144,8 @@
         <p class="pb__usage-note">
           <cog-icon name="info" [size]="14" tone="text-subtlest" />
           @if (isPayg()) {
-            Spend above the CHF 10 minimum is metered per message.
+            Spend above the CHF 10 minimum is metered by token usage and added to your
+            next invoice.
           } @else {
             Unlimited covers normal individual use — compute is metered internally only
             to keep the service fair.
