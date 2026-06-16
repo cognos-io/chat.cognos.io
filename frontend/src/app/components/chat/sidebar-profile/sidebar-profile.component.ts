@@ -7,6 +7,7 @@ import {
   CognosLozengeComponent,
 } from '@cognos/ui-angular';
 
+import { coerceAvatarColor, coerceAvatarIcon } from '@app/interfaces/avatar';
 import { BillingPlanType } from '@app/interfaces/billing';
 import { AuthService } from '@app/services/auth.service';
 import { BillingService } from '@app/services/billing.service';
@@ -36,7 +37,13 @@ const PLAN_LABELS: Record<BillingPlanType, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a class="sidebar-profile" routerLink="/account" aria-label="Account & billing">
-      <cog-avatar class="sidebar-profile__avatar" [name]="avatarName()" [size]="36" />
+      <cog-avatar
+        class="sidebar-profile__avatar"
+        [name]="avatarName()"
+        [icon]="avatarIcon() ?? null"
+        [color]="avatarIcon() ? avatarColor() : ''"
+        [size]="36"
+      />
 
       <span class="sidebar-profile__body">
         @if (displayName()) {
@@ -132,6 +139,14 @@ export class SidebarProfileComponent {
   // Feeds the avatar's initials/aria — derived, never rendered as raw email.
   readonly avatarName = computed(() =>
     deriveProfileName(this._displayName(), this._auth.email()),
+  );
+
+  // The chosen icon avatar (icon + colour); undefined icon falls back to initials.
+  readonly avatarIcon = computed(() =>
+    coerceAvatarIcon(this._auth.user()?.['avatar_icon']),
+  );
+  readonly avatarColor = computed(() =>
+    coerceAvatarColor(this._auth.user()?.['avatar_color']),
   );
 
   planLabel(): string {

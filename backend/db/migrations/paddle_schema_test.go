@@ -85,6 +85,11 @@ func TestPaddleBillingSchema(t *testing.T) {
 		)
 	})
 
+	t.Run("users carries avatar icon + colour fields", func(t *testing.T) {
+		c := mustCollection(t, app, "users")
+		assertHasFields(t, c, "avatar_icon", "avatar_color")
+	})
+
 	t.Run("paddle_events exists", func(t *testing.T) {
 		c := mustCollection(t, app, "paddle_events")
 		assertHasFields(t, c,
