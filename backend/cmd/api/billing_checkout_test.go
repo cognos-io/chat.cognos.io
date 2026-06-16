@@ -38,6 +38,12 @@ type fakePaddleClient struct {
 	chargeIdemKey  string
 	chargeTxnID    string
 	chargeErr      error
+
+	changeCalls     int
+	changeSubID     string
+	changePriceID   string
+	changeProration string
+	changeErr       error
 }
 
 func (f *fakePaddleClient) CreateCheckout(
@@ -76,6 +82,17 @@ func (f *fakePaddleClient) GetCard(_ context.Context, _ string) (*paddle.Card, e
 
 func (f *fakePaddleClient) ListInvoices(_ context.Context, _ string) ([]paddle.Invoice, error) {
 	return f.invoices, f.invoicesErr
+}
+
+func (f *fakePaddleClient) ChangeSubscriptionPrice(
+	_ context.Context,
+	subscriptionID, newPriceID, prorationBillingMode string,
+) error {
+	f.changeCalls++
+	f.changeSubID = subscriptionID
+	f.changePriceID = newPriceID
+	f.changeProration = prorationBillingMode
+	return f.changeErr
 }
 
 func (f *fakePaddleClient) CreateOneTimeCharge(

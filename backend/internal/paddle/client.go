@@ -82,6 +82,11 @@ type Client interface {
 	GetCard(ctx context.Context, customerID string) (*Card, error)
 	// ListInvoices returns the customer's billed/paid transactions, newest-first.
 	ListInvoices(ctx context.Context, customerID string) ([]Invoice, error)
+	// ChangeSubscriptionPrice switches the subscription's single item to
+	// newPriceID. prorationBillingMode controls how/when Paddle bills the change
+	// (e.g. "prorated_immediately" for an upgrade, "full_next_billing_period" for
+	// a downgrade/lateral switch so no money moves mid-cycle).
+	ChangeSubscriptionPrice(ctx context.Context, subscriptionID, newPriceID, prorationBillingMode string) error
 	// CreateOneTimeCharge posts a one-time charge on a subscription for the PAYG
 	// cycle-end overage: `quantity` units of the 1-Rappen overage price, billed on
 	// the next renewal transaction. idempotencyKey makes a re-post a no-op at
@@ -504,6 +509,22 @@ func (c *HTTPClient) ResumeSubscription(ctx context.Context, subscriptionID stri
 	return c.patchJSON(ctx,
 		c.BaseURL+"/subscriptions/"+subscriptionID,
 		map[string]any{"scheduled_change": nil},
+	)
+}
+
+// ChangeSubscriptionPrice switches the subscription onto a new single-item price.
+// Paddle applies the item change immediately; prorationBillingMode decides
+// whether/when it's billed.
+func (c *HTTPClient) ChangeSubscriptionPrice(
+	ctx context.Context,
+	subscriptionID, newPriceID, prorationBillingMode string,
+) error {
+	return c.patchJSON(ctx,
+		c.BaseURL+"/subscriptions/"+subscriptionID,
+		map[string]any{
+			"items":                  []map[string]any{{"price_id": newPriceID, "quantity": 1}},
+			"proration_billing_mode": prorationBillingMode,
+		},
 	)
 }
 

@@ -218,6 +218,20 @@ func addPocketBaseRoutes(
 	)
 
 	e.Router.POST(
+		"/api/v1/billing/change-plan",
+		handler.BillingChangePlan(handler.BillingChangePlanParams{
+			Logger:          logger,
+			Client:          paddleClient,
+			Prices:          paddlePrices,
+			OveragePriceID:  paddleOveragePriceID,
+			MinCommitRappen: paddleMinCommitRappen,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
 		"/api/v1/billing/portal",
 		handler.BillingPortal(handler.BillingPortalParams{
 			Logger: logger,
