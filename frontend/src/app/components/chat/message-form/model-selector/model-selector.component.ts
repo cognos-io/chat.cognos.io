@@ -12,6 +12,7 @@ import { CognosIconComponent, CognosLozengeComponent } from '@cognos/ui-angular'
 
 import { TagComponent } from '@app/components/tag/tag.component';
 import { Model } from '@app/interfaces/model';
+import { BillingService } from '@app/services/billing.service';
 import { ModelService } from '@app/services/model.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
 import {
@@ -26,10 +27,12 @@ import {
   imports: [CommonModule, CognosIconComponent, CognosLozengeComponent, TagComponent],
   template: `
     <div class="model-selector" role="listbox" aria-label="Pick your AI model">
-      <p class="model-selector__explainer">
-        Cost shows roughly how much each model spends per message. Higher-cost models
-        cost more than lower-cost ones.
-      </p>
+      @if (!hideCost()) {
+        <p class="model-selector__explainer">
+          Cost shows roughly how much each model spends per message. Higher-cost models
+          cost more than lower-cost ones.
+        </p>
+      }
 
       <ul class="model-selector__list">
         @for (model of orderedModels(); track model.id) {
@@ -62,13 +65,15 @@ import {
               <span class="model-selector__body">
                 <span class="model-selector__heading">
                   <span class="model-selector__name">{{ model.name }}</span>
-                  <cog-lozenge
-                    class="model-selector__cost"
-                    [tone]="costTierTone(model)"
-                    [attr.title]="'Estimated model cost: ' + costTierLabel(model)"
-                  >
-                    {{ costTierLabel(model) }}
-                  </cog-lozenge>
+                  @if (!hideCost()) {
+                    <cog-lozenge
+                      class="model-selector__cost"
+                      [tone]="costTierTone(model)"
+                      [attr.title]="'Estimated model cost: ' + costTierLabel(model)"
+                    >
+                      {{ costTierLabel(model) }}
+                    </cog-lozenge>
+                  }
                   @if (model.tags && model.tags.length > 0) {
                     <span class="model-selector__tags">
                       @for (tag of model.tags; track tag.title) {
@@ -268,6 +273,11 @@ import {
 export class ModelSelectorComponent {
   private readonly _modelService = inject(ModelService);
   private readonly _preferencesService = inject(UserPreferencesService);
+  private readonly _billingService = inject(BillingService);
+
+  // Unlimited plans aren't billed per message, so the cost lozenges and the
+  // cost explainer are hidden for them.
+  readonly hideCost = computed(() => this._billingService.isUnlimited());
 
   @Output() readonly modelSelected = new EventEmitter<Model>();
 

@@ -55,6 +55,9 @@ export class BillingService {
   readonly balanceChf = computed(() => this._state()?.balanceChf ?? 0);
   readonly trialSeedChf = computed(() => this._state()?.trialSeedChf ?? 0);
   readonly isTrial = computed(() => this.planType() === 'trial');
+  // Unlimited plans aren't billed per message, so per-model cost framing is
+  // irrelevant and hidden for them.
+  readonly isUnlimited = computed(() => this.planType() === 'unlimited');
 
   // Sending is locked when there's no active plan, or a trial whose credit is
   // spent (server said so this session, or the balance has reached zero).
