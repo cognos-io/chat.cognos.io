@@ -13,6 +13,7 @@ approach to ProtonMail which encrypts user emails.
 
 ## Guidelines
 
+- Write e2e tests first. Red/green development. More info below.
 - Security is a top priority. We must make sure that we never log user data including chat contents.
   Chats must be encrypted as soon as possible.
 - Simple is secure. Keep things idomatic. Prefer declarative over imperative.
