@@ -740,9 +740,11 @@ side-by-side, so any drift is investigable.
 > them to `inactive`. `transaction.completed` records the Paddle transaction +
 > billed amount against the matching `payg_cycle_summaries` row for audit, and a
 > ~5-minute gocron backstop re-posts any overage charge that never landed
-> (idempotency-key-safe). `adjustment.created`/refund handling and the exact
-> per-cycle `reconciled` equality (pending live Paddle timing verification) are
-> the remaining fast-follow.
+> (idempotency-key-safe). `adjustment.created` writes a `refunds` row (sets
+> `users.refund_used`; a `chargeback` action also drops the user to `inactive`,
+> §7.5), and the invoices endpoint surfaces a REFUNDED badge by cross-referencing
+> that ledger. The exact per-cycle `reconciled` equality (pending live Paddle
+> timing verification) is the remaining fast-follow.
 > Customer↔user mapping uses `custom_data.user_id` with a `paddle_customer_id`
 > fallback; unmappable events are logged and accepted (not retried). Signature
 > verification is covered in `internal/paddle/webhook_test.go`; the end-to-end

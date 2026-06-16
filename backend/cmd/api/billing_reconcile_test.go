@@ -28,6 +28,23 @@ func seedCycleSummary(t testing.TB, app *tests.TestApp, id string, fields map[st
 	}
 }
 
+// seedRefund inserts a refunds row for the test user with the given
+// paddle_adjustment_ids_json payload.
+func seedRefund(t testing.TB, app *tests.TestApp, id, adjustmentJSON string) {
+	t.Helper()
+	collection, err := app.FindCollectionByNameOrId("refunds")
+	if err != nil {
+		t.Fatalf("find refunds: %v", err)
+	}
+	record := core.NewRecord(collection)
+	record.Id = id
+	record.Set("user_id", testUserID)
+	record.Set("paddle_adjustment_ids_json", adjustmentJSON)
+	if err := app.Save(record); err != nil {
+		t.Fatalf("seed refund %q: %v", id, err)
+	}
+}
+
 func TestRetryUnpostedOveragesReposts(t *testing.T) {
 	app := setupBillingApp(t, nil)
 	repo := billing.NewPocketBaseRepo(app)

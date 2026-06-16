@@ -418,6 +418,14 @@ export class CognosApiService {
     );
   }
 
+  requestRefund(reasonText: string): Observable<unknown> {
+    return this._http.post(
+      `${this._baseUrl}/api/v1/billing/refund-request`,
+      { reason_text: reasonText },
+      { headers: this.authHeaders() },
+    );
+  }
+
   createPortalSession(): Observable<PortalResponse> {
     return this._http.post<PortalResponse>(
       `${this._baseUrl}/api/v1/billing/portal`,

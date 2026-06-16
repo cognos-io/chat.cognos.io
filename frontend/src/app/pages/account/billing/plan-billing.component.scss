@@ -201,6 +201,26 @@
   font-size: var(--cog-fs-caption);
 }
 
+.pb__refund-link {
+  margin-top: var(--cog-space-050);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cog-text-subtle);
+  font-size: var(--cog-fs-caption);
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: var(--cog-text);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
 /* Usage + payment grid */
 .pb__grid {
   display: grid;

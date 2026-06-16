@@ -4,9 +4,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pocketbase/dbx"
@@ -22,6 +24,7 @@ const (
 	webhookUserBillingColl  = "user_billing"
 	paygCycleSummariesColl  = "payg_cycle_summaries"
 	balanceTransactionsColl = "balance_transactions"
+	refundsColl             = "refunds"
 	refundGuaranteeDays     = 60
 	cycleSummaryIDLen       = 15
 	webhookPBDateLayout     = "2006-01-02 15:04:05.000Z"
@@ -181,6 +184,12 @@ func dispatchPaddleEvent(
 			return err
 		}
 		return recordCycleTransaction(params, txn)
+	case "adjustment.created":
+		adj, err := event.Adjustment()
+		if err != nil {
+			return err
+		}
+		return recordAdjustment(app, params, adj)
 	default:
 		return nil
 	}
@@ -290,6 +299,104 @@ func recordCycleTransaction(params PaddleWebhookParams, txn paddle.TransactionDa
 		txn.SubscriptionID, txn.ID, txn.GrandTotalMinor(), nowRFC3339(),
 	)
 	return err
+}
+
+// recordAdjustment records a Paddle refund/credit/chargeback as a `refunds`
+// ledger row (spec §5.4, §7). It sets the one-refund-per-lifetime flag and, for
+// a chargeback, drops the user to inactive (§7.5). Idempotent on the adjustment
+// id; reversals are ignored (Paddle already netted them). No balance is touched
+// — Paddle has already moved the money.
+func recordAdjustment(app core.App, params PaddleWebhookParams, adj paddle.AdjustmentData) error {
+	if adj.ID == "" || strings.HasSuffix(adj.Action, "_reverse") {
+		return nil
+	}
+
+	// Idempotent: this adjustment already has a refunds row.
+	if existing, _ := app.FindRecordsByFilter(
+		refundsColl, "paddle_adjustment_ids_json ~ {:adj}", "", 1, 0,
+		dbx.Params{"adj": adj.ID},
+	); len(existing) > 0 {
+		return nil
+	}
+
+	userID := resolveAdjustmentUserID(app, adj)
+	if userID == "" {
+		if params.Logger != nil {
+			params.Logger.Warn("paddle adjustment could not be mapped to a user",
+				"adjustment_id", adj.ID, "subscription_id", adj.SubscriptionID)
+		}
+		return nil
+	}
+
+	billingRecord, _ := app.FindFirstRecordByData(webhookUserBillingColl, "user_id", userID)
+	insideWindow := false
+	if billingRecord != nil {
+		eligible := billingRecord.GetDateTime("refund_eligible_until_at").Time()
+		insideWindow = !eligible.IsZero() && time.Now().UTC().Before(eligible)
+	}
+
+	collection, err := app.FindCollectionByNameOrId(refundsColl)
+	if err != nil {
+		return err
+	}
+	payload, _ := json.Marshal(map[string]any{
+		"adjustment_ids": []string{adj.ID},
+		"transaction_id": adj.TransactionID,
+		"action":         adj.Action,
+	})
+	record := core.NewRecord(collection)
+	record.Set("user_id", userID)
+	record.Set("requested_at", nowRFC3339())
+	record.Set("processed_at", nowRFC3339())
+	record.Set("gross_refund_rappen", adj.TotalMinor())
+	record.Set("usage_deduction_rappen", 0)
+	record.Set("net_refund_rappen", adj.TotalMinor())
+	record.Set("reason_text", adj.Reason)
+	record.Set("operator_id", "paddle_webhook")
+	record.Set("inside_guarantee_window", insideWindow)
+	record.Set("paddle_adjustment_ids_json", string(payload))
+	if err := app.Save(record); err != nil {
+		return err
+	}
+
+	// One refund per lifetime (spec §7, decision #3).
+	if user, err := app.FindRecordById("users", userID); err == nil && user != nil &&
+		!user.GetBool("refund_used") {
+		user.Set("refund_used", true)
+		if err := app.Save(user); err != nil && params.Logger != nil {
+			params.Logger.Error("failed to set refund_used", "err", err)
+		}
+	}
+
+	// Chargeback drops the user to inactive (spec §7.5).
+	if adj.IsChargeback() && billingRecord != nil {
+		billingRecord.Set("plan_type", string(billing.PlanTypeInactive))
+		billingRecord.Set("paddle_subscription_id", "")
+		billingRecord.Set("plan_ends_at", nowRFC3339())
+		if err := app.Save(billingRecord); err != nil && params.Logger != nil {
+			params.Logger.Error("failed to deactivate after chargeback", "err", err)
+		}
+	}
+
+	return nil
+}
+
+// resolveAdjustmentUserID maps a Paddle adjustment to a Cognos user via the
+// subscription it adjusts, falling back to the customer id.
+func resolveAdjustmentUserID(app core.App, adj paddle.AdjustmentData) string {
+	if adj.SubscriptionID != "" {
+		if record, _ := app.FindFirstRecordByData(
+			webhookUserBillingColl, "paddle_subscription_id", adj.SubscriptionID,
+		); record != nil {
+			return record.GetString("user_id")
+		}
+	}
+	if adj.CustomerID != "" {
+		if user, _ := app.FindFirstRecordByData("users", "paddle_customer_id", adj.CustomerID); user != nil {
+			return user.Id
+		}
+	}
+	return ""
 }
 
 // markSubscriptionPastDue flags the user's billing row when Paddle reports a

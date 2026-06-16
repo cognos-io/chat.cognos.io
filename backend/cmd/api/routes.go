@@ -233,6 +233,16 @@ func addPocketBaseRoutes(
 	)
 
 	e.Router.POST(
+		"/api/v1/billing/refund-request",
+		handler.BillingRefundRequest(handler.BillingRefundRequestParams{
+			Logger: logger,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
 		"/api/v1/billing/portal",
 		handler.BillingPortal(handler.BillingPortalParams{
 			Logger: logger,

@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 
@@ -71,16 +73,25 @@ func BillingInvoices(params BillingInvoicesParams) func(e *core.RequestEvent) er
 			}
 		}
 
+		// Paddle transactions never report a "refunded" status; we derive it by
+		// cross-referencing the local refunds ledger (written from
+		// adjustment.created) for the transaction id.
+		refunded := refundedTransactionIDs(e.App, user.Id)
+
 		if invoices, err := params.Client.ListInvoices(ctx, customerID); err != nil {
 			if params.Logger != nil {
 				params.Logger.Error("paddle list invoices failed", "err", err)
 			}
 		} else {
 			for _, invoice := range invoices {
+				status := invoice.Status
+				if refunded[invoice.ID] {
+					status = "refunded"
+				}
 				row := invoiceResponse{
 					ID:            invoice.ID,
 					InvoiceNumber: invoice.InvoiceNumber,
-					Status:        invoice.Status,
+					Status:        status,
 					Currency:      invoice.CurrencyCode,
 					AmountMinor:   invoice.GrandTotalMinor,
 				}
@@ -93,4 +104,27 @@ func BillingInvoices(params BillingInvoicesParams) func(e *core.RequestEvent) er
 
 		return e.JSON(http.StatusOK, resp)
 	}
+}
+
+// refundedTransactionIDs returns the set of Paddle transaction ids the user has
+// a refund recorded against, read from the local `refunds` ledger. Used to
+// surface a REFUNDED badge on the matching invoice (Paddle has no such status).
+func refundedTransactionIDs(app core.App, userID string) map[string]bool {
+	out := map[string]bool{}
+	records, err := app.FindRecordsByFilter(
+		refundsColl, "user_id = {:u}", "", 200, 0, dbx.Params{"u": userID},
+	)
+	if err != nil {
+		return out
+	}
+	for _, record := range records {
+		var meta struct {
+			TransactionID string `json:"transaction_id"`
+		}
+		if err := json.Unmarshal([]byte(record.GetString("paddle_adjustment_ids_json")), &meta); err == nil &&
+			meta.TransactionID != "" {
+			out[meta.TransactionID] = true
+		}
+	}
+	return out
 }

@@ -123,6 +123,43 @@ func (t TransactionData) GrandTotalMinor() int64 {
 	return parseMinorAmount(t.Details.Totals.GrandTotal)
 }
 
+// AdjustmentData is the subset of a Paddle adjustment (refund / credit /
+// chargeback) we act on.
+type AdjustmentData struct {
+	ID             string `json:"id"`
+	Action         string `json:"action"` // refund | credit | chargeback | chargeback_reverse | ...
+	TransactionID  string `json:"transaction_id"`
+	SubscriptionID string `json:"subscription_id"`
+	CustomerID     string `json:"customer_id"`
+	Status         string `json:"status"`
+	Reason         string `json:"reason"`
+	Totals         struct {
+		Total    string `json:"total"`
+		Currency string `json:"currency_code"`
+	} `json:"totals"`
+}
+
+// TotalMinor parses the adjustment's total (Paddle minor-unit decimal string)
+// into an int64 Rappen value.
+func (a AdjustmentData) TotalMinor() int64 {
+	return parseMinorAmount(a.Totals.Total)
+}
+
+// IsChargeback reports whether this adjustment is a chargeback (treated like a
+// refund but also moves the plan to inactive — spec §7.5).
+func (a AdjustmentData) IsChargeback() bool {
+	return a.Action == "chargeback"
+}
+
+// Adjustment decodes the event data as an adjustment.
+func (e WebhookEvent) Adjustment() (AdjustmentData, error) {
+	var data AdjustmentData
+	if err := json.Unmarshal(e.Data, &data); err != nil {
+		return AdjustmentData{}, fmt.Errorf("paddle: decode adjustment data: %w", err)
+	}
+	return data, nil
+}
+
 // ParseWebhook decodes the envelope.
 func ParseWebhook(rawBody []byte) (WebhookEvent, error) {
 	var event WebhookEvent

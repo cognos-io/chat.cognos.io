@@ -140,6 +140,8 @@ export class PlanBillingComponent {
       case 'paid':
       case 'completed':
         return { text: 'Paid', tone: 'green' };
+      case 'refunded':
+        return { text: 'Refunded', tone: 'red' };
       case 'past_due':
         return { text: 'Past due', tone: 'red' };
       case 'billed':
@@ -193,6 +195,31 @@ export class PlanBillingComponent {
 
   // A failed renewal payment — drives the dashboard banner + "Update card" CTA.
   protected readonly isPastDue = computed(() => this.status() === 'past_due');
+
+  // Set once the user has sent a refund request this session (stub flow).
+  protected readonly refundRequested = signal(false);
+
+  // requestRefund sends the v0 refund request (operator-driven; spec §12.5). It
+  // does not issue a refund — it flags the request for follow-up.
+  protected requestRefund(): void {
+    if (this.actionPending()) {
+      return;
+    }
+    this.actionPending.set(true);
+    this._api
+      .requestRefund('')
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe({
+        next: () => {
+          this.actionPending.set(false);
+          this.refundRequested.set(true);
+        },
+        error: () => {
+          this.actionPending.set(false);
+          this._errors.alert('Could not send your refund request. Please try again.');
+        },
+      });
+  }
 
   protected readonly planName = computed(() => {
     const billing = this.billing();

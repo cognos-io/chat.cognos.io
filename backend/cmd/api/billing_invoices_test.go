@@ -50,6 +50,36 @@ func TestBillingInvoicesReturnsCardAndInvoices(t *testing.T) {
 	scenario.Test(t)
 }
 
+// A transaction with a recorded refund surfaces as REFUNDED (Paddle has no such
+// status — we derive it from the local refunds ledger).
+func TestBillingInvoicesDerivesRefundedStatus(t *testing.T) {
+	t.Parallel()
+	fake := &fakePaddleClient{
+		invoices: []paddle.Invoice{
+			{ID: "txn_refunded", InvoiceNumber: "CG-26-0009", Status: "completed", CurrencyCode: "CHF", GrandTotalMinor: 10000},
+			{ID: "txn_paid", InvoiceNumber: "CG-26-0010", Status: "completed", CurrencyCode: "CHF", GrandTotalMinor: 10000},
+		},
+	}
+	scenario := tests.ApiScenario{
+		Name:           "refunded transaction shows refunded status",
+		Method:         http.MethodGet,
+		URL:            "/api/v1/billing/invoices",
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"id":"txn_refunded","invoice_number":"CG-26-0009","status":"refunded"`,
+			`"id":"txn_paid","invoice_number":"CG-26-0010","status":"completed"`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			app := setupBillingApp(t, fake)
+			setUserField(t, app, "test1@example.com", "paddle_customer_id", "ctm_1")
+			seedRefund(t, app, "refund000000001", `{"adjustment_ids":["adj_1"],"transaction_id":"txn_refunded"}`)
+			return app
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+	}
+	scenario.Test(t)
+}
+
 // Rainy/edge: no Paddle customer (e.g. trial) → empty payload, never an error.
 func TestBillingInvoicesEmptyWithoutCustomer(t *testing.T) {
 	t.Parallel()

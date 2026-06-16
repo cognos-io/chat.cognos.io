@@ -172,22 +172,27 @@ Without this, PAYG only ever bills the CHF 10 floor and never charges usage abov
 
 ---
 
-### Phase 5 — 🟠 Refunds (adjustment.created) + REFUNDED invoice status
+### Phase 5 — ✅ Refunds (adjustment.created) + REFUNDED invoice status
 
-1. **Webhook `adjustment.created`** → write a `refunds` row (`gross_refund_rappen`,
-   `net_refund_rappen`, `paddle_adjustment_ids_json`, `inside_guarantee_window` from
-   `refund_eligible_until_at`); set `users.refund_used` where relevant (spec §7).
-2. **Invoices:** the dashboard "REFUNDED" badge — Paddle transaction status has no `refunded`;
-   derive it from a linked adjustment (the invoices endpoint cross-references `refunds`/adjustments
-   for the transaction). Map → red/neutral lozenge.
-3. **Refund request endpoint** `POST /api/v1/billing/refund-request` (spec §12.5) — initially
+1. ✅ **Webhook `adjustment.created`** → `recordAdjustment` writes a `refunds` row
+   (`gross_refund_rappen`, `net_refund_rappen`, `inside_guarantee_window` from
+   `refund_eligible_until_at`, `paddle_adjustment_ids_json` embedding the adjustment id +
+   transaction id + action) and sets `users.refund_used` (one-per-lifetime, §7). A `chargeback`
+   action also drops the user to `inactive` (§7.5). Idempotent on the adjustment id; `*_reverse`
+   actions are ignored. No balance is touched (Paddle already moved the money).
+2. ✅ **Invoices REFUNDED badge** — `billing_invoices.go` cross-references the local `refunds`
+   ledger (`refundedTransactionIDs`) and maps a refunded transaction's status to `refunded`; the
+   dashboard renders a red "Refunded" lozenge.
+3. ✅ **Refund request endpoint** `POST /api/v1/billing/refund-request` (spec §12.5) — stubbed:
+   logs the request for operator follow-up (email wiring post-MVP) and returns `received`. A
+   "Request a refund" link shows on the dashboard inside the 60-day window.
 
-   stubbed/operator-driven; full self-serve later.
-
-- **Files:** webhook, `internal/handler/billing_invoices.go` (+ adjustment lookup),
-  `internal/paddle/webhook.go` (parse adjustment), frontend badge mapping.
-- **Tests:** integration — adjustment event writes a refund row; invoices endpoint returns
-  `status: refunded` for the affected transaction; e2e — REFUNDED badge renders.
+- **Files:** `internal/paddle/webhook.go` (adjustment parser), `internal/handler/paddle_webhook.go`,
+  `internal/handler/billing_invoices.go`, new `internal/handler/billing_refund_request.go`,
+  `cmd/api/routes.go`, `cognos-api.service.ts`, `plan-billing.component.*`.
+- **Tests:** ✅ integration — adjustment writes a refund row + sets refund_used + idempotent;
+  chargeback → inactive; invoices endpoint returns `status: refunded` for the affected transaction;
+  refund-request 401/accepted.
 
 ---
 

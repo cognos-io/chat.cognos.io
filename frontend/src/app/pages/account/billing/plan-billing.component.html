@@ -122,6 +122,18 @@
                 <cog-icon name="shield-check" [size]="14" tone="text-subtle" />
                 60-day money-back guarantee
               </div>
+              @if (refundRequested()) {
+                <p class="pb__aside-note">Refund request sent — we’ll be in touch.</p>
+              } @else {
+                <button
+                  type="button"
+                  class="pb__refund-link"
+                  [disabled]="actionPending()"
+                  (click)="requestRefund()"
+                >
+                  Request a refund
+                </button>
+              }
             }
           }
           @case ('cancels_soon') {

@@ -546,6 +546,71 @@ func TestPaddleWebhookMarksAndClearsPastDue(t *testing.T) {
 	}
 }
 
+func TestPaddleWebhookAdjustmentRecordsRefund(t *testing.T) {
+	app, mux := bootWebhookMux(t)
+	// Activate (unlimited, sub_1) so the adjustment maps to a user via the sub.
+	postWebhook(mux, subscriptionCreatedBody, signPaddle(t, webhookSecret, subscriptionCreatedBody))
+
+	body := `{"event_id":"evt_adj_refund","event_type":"adjustment.created",` +
+		`"data":{"id":"adj_1","action":"refund","transaction_id":"txn_inv_1",` +
+		`"subscription_id":"sub_1","customer_id":"ctm_1","reason":"changed mind",` +
+		`"totals":{"total":"10000","currency_code":"CHF"}}}`
+	if rec := postWebhook(mux, body, signPaddle(t, webhookSecret, body)); rec.Code != http.StatusOK {
+		t.Fatalf("adjustment status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+
+	refunds, err := app.FindRecordsByFilter("refunds", "user_id = {:u}", "", 10, 0, map[string]any{"u": testUserID})
+	if err != nil {
+		t.Fatalf("find refunds: %v", err)
+	}
+	if len(refunds) != 1 {
+		t.Fatalf("refunds count = %d, want 1", len(refunds))
+	}
+	r := refunds[0]
+	if got := r.GetInt("gross_refund_rappen"); got != 10000 {
+		t.Errorf("gross_refund_rappen = %d, want 10000", got)
+	}
+	if !r.GetBool("inside_guarantee_window") {
+		t.Error("inside_guarantee_window should be true (activation set a 60-day window)")
+	}
+	if got := r.GetString("paddle_adjustment_ids_json"); !strings.Contains(got, "adj_1") || !strings.Contains(got, "txn_inv_1") {
+		t.Errorf("paddle_adjustment_ids_json = %q, want adj_1 + txn_inv_1", got)
+	}
+
+	// One-refund-per-lifetime flag set.
+	user, _ := app.FindRecordById("users", testUserID)
+	if !user.GetBool("refund_used") {
+		t.Error("users.refund_used should be true after a refund")
+	}
+
+	// Re-delivery is a no-op (idempotent on the adjustment id).
+	postWebhook(mux, body, signPaddle(t, webhookSecret, body))
+	n, _ := app.CountRecords("refunds")
+	if n != 1 {
+		t.Errorf("refunds count after replay = %d, want 1", n)
+	}
+}
+
+func TestPaddleWebhookChargebackDeactivates(t *testing.T) {
+	app, mux := bootWebhookMux(t)
+	postWebhook(mux, subscriptionCreatedBody, signPaddle(t, webhookSecret, subscriptionCreatedBody))
+	if plan := planFor(t, app, testUserID); plan != "unlimited" {
+		t.Fatalf("setup: plan = %q, want unlimited", plan)
+	}
+
+	body := `{"event_id":"evt_adj_cb","event_type":"adjustment.created",` +
+		`"data":{"id":"adj_cb","action":"chargeback","transaction_id":"txn_inv_2",` +
+		`"subscription_id":"sub_1","customer_id":"ctm_1",` +
+		`"totals":{"total":"10000","currency_code":"CHF"}}}`
+	if rec := postWebhook(mux, body, signPaddle(t, webhookSecret, body)); rec.Code != http.StatusOK {
+		t.Fatalf("chargeback status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+
+	if plan := planFor(t, app, testUserID); plan != "inactive" {
+		t.Errorf("plan = %q, want inactive after chargeback", plan)
+	}
+}
+
 func TestPaddleWebhookIgnoresUnmappableUser(t *testing.T) {
 	app, mux := bootWebhookMux(t)
 
