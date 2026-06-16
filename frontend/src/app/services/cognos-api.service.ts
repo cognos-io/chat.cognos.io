@@ -277,6 +277,15 @@ export interface ApiPublicConversationResponse {
   key_version: number;
 }
 
+export interface ApiPublicModelName {
+  id: string;
+  name: string;
+}
+
+interface ApiPublicModelsResponse {
+  models: ApiPublicModelName[];
+}
+
 interface ApiVaultSessionResponse {
   wrap_key: string;
 }
@@ -795,6 +804,14 @@ export class CognosApiService {
     return this._http.get<MessageListResponse>(
       `${this._baseUrl}/api/v1/public/conversations/${token}/messages`,
     );
+  }
+
+  // Unauthenticated id→name catalogue used by the public shared-conversation
+  // page to label assistant messages with the model name.
+  getPublicModelNames(): Observable<ApiPublicModelName[]> {
+    return this._http
+      .get<ApiPublicModelsResponse>(`${this._baseUrl}/api/v1/public/models`)
+      .pipe(map((response) => response.models));
   }
 
   getUserPreferences(): Observable<UserPreferencesResponse> {

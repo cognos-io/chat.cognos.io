@@ -28,6 +28,30 @@ func TestModelsGetRequiresAuth(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestPublicModelsGetReturnsNamesWithoutAuth(t *testing.T) {
+	t.Parallel()
+
+	scenario := tests.ApiScenario{
+		Name:           "public models route returns id and name without auth",
+		Method:         http.MethodGet,
+		URL:            "/api/v1/public/models",
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"id":"llama-3-3-infomaniak"`,
+			`"name":"Llama 3.3"`,
+		},
+		NotExpectedContent: []string{
+			// Never leak user-specific or pricing data on the public route.
+			`"pricing"`,
+			`"privacy_tier"`,
+			`"is_eligible"`,
+		},
+		TestAppFactory: setupTestApp,
+	}
+
+	scenario.Test(t)
+}
+
 func TestModelsGetReturnsActiveModels(t *testing.T) {
 	t.Parallel()
 

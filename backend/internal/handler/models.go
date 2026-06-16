@@ -22,6 +22,37 @@ type modelsResponse struct {
 	Models           []modelResponse       `json:"models"`
 }
 
+// publicModelName is the minimal, non-sensitive catalogue projection exposed to
+// unauthenticated readers (e.g. the public shared-conversation page) so they
+// can show a model's display name instead of its raw id.
+type publicModelName struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type publicModelsResponse struct {
+	Models []publicModelName `json:"models"`
+}
+
+// PublicModelsGet returns id→name for active models with no authentication.
+// Only the id and display name are exposed — never pricing, tiers, or
+// eligibility, which are user-specific.
+func PublicModelsGet(catalogueService catalogue.Service) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		models, err := catalogueService.ActiveModels(context.Background())
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load models", err)
+		}
+
+		names := make([]publicModelName, 0, len(models))
+		for _, model := range models {
+			names = append(names, publicModelName{ID: model.ID, Name: model.Name})
+		}
+
+		return e.JSON(http.StatusOK, publicModelsResponse{Models: names})
+	}
+}
+
 func ModelsGet(catalogueService catalogue.Service) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		if !auth.IsAuthenticated(e) {

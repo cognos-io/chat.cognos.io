@@ -60,6 +60,8 @@ with other development ports.
 
 - Unit tests for hot and critical code paths
 - Red/green tests wherever possible
+- Write browser e2e tests with playwright, API e2e tests with playwright, Go test tables, Typescript
+  vitest test tables for frontend
 
 ### Data access
 

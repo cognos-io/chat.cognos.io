@@ -59,6 +59,9 @@ const routePublicEndpoints = async (
       });
     },
   );
+  await page.route(`${PB}/api/v1/public/models`, async (route) => {
+    await route.fulfill({ json: { models: [{ id: 'eu-model', name: 'EU Model' }] } });
+  });
 };
 
 // Minimal authenticated chat routing so a conversation page loads and the Share
@@ -184,6 +187,12 @@ test('renders the branching message tree with the active path and lets readers s
   await expect(page.getByText('What is the capital?')).toBeVisible();
   await expect(page.getByText('Second answer')).toBeVisible();
   await expect(page.getByText('First answer')).toBeHidden();
+
+  // Assistant messages are labelled with the model name, not the raw id.
+  await expect(page.getByText('EU Model')).toBeVisible();
+  await expect(page.locator('.public-conversation').getByText('eu-model')).toHaveCount(
+    0,
+  );
 
   // Ordering: the user question precedes the assistant reply in the DOM.
   const messageText = await page.locator('.public-conversation__messages').innerText();

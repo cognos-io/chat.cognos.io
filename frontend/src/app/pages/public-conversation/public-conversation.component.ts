@@ -320,6 +320,10 @@ export class PublicConversationComponent implements OnInit {
   private readonly _messages = signal<Message[]>([]);
   private readonly _branchSelections = signal<Record<string, string>>({});
 
+  // Public id→name catalogue so assistant messages show the model name rather
+  // than its raw id. Falls back to the id if the lookup is unavailable.
+  private readonly _modelNames = signal<Record<string, string>>({});
+
   private readonly _activeBranch = computed(() =>
     selectActiveBranch(this._messages(), publicTreeAccessors, {
       selections: this._branchSelections(),
@@ -329,6 +333,18 @@ export class PublicConversationComponent implements OnInit {
   readonly path = computed(() => this._activeBranch().path);
 
   ngOnInit(): void {
+    // Load the public model-name catalogue independently; assistant labels fall
+    // back to the raw model id if it never arrives.
+    this._api.getPublicModelNames().subscribe({
+      next: (names) =>
+        this._modelNames.set(
+          Object.fromEntries(names.map((model) => [model.id, model.name])),
+        ),
+      error: () => {
+        /* keep falling back to the model id */
+      },
+    });
+
     const token = this._route.snapshot.paramMap.get('token');
     const fragment = this._route.snapshot.fragment;
 
@@ -414,9 +430,13 @@ export class PublicConversationComponent implements OnInit {
   }
 
   assistantLabel(message: Message): string {
-    // No model catalogue on the public route — surface the stored model id, or
-    // fall back to the product name.
-    return message.decryptedData.model_id || 'Cognos';
+    // Map the stored model id to its display name via the public catalogue;
+    // fall back to the raw id, then the product name.
+    const modelId = message.decryptedData.model_id;
+    if (!modelId) {
+      return 'Cognos';
+    }
+    return this._modelNames()[modelId] ?? modelId;
   }
 
   userMeta(message: Message): string {

@@ -379,6 +379,15 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	// Public, unauthenticated id→name catalogue so the shared-conversation page
+	// can label assistant messages with the model name instead of its raw id.
+	e.Router.GET(
+		"/api/v1/public/models",
+		handler.PublicModelsGet(catalogueService),
+	).Bind(
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.PATCH(
 		"/api/v1/messages/{messageID}",
 		handler.MessagesUpdate(app),
