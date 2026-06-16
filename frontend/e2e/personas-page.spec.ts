@@ -84,3 +84,76 @@ test('browses, searches, activates and pins personas on the personas page', asyn
 
   expect(pageErrors).toEqual([]);
 });
+
+test('keeps the chat sidebar and closes on Escape', async ({ page }) => {
+  const userFixture = buildVaultFixture('user_e2e_shell', 'shell@example.com');
+  await seedAuthenticatedUnlockState(page, userFixture);
+
+  await page.route(`${API}/api/v1/user-key-pair`, async (route) => {
+    await route.fulfill({ json: userFixture.userKeyPairRecord });
+  });
+  await page.route(`${API}/api/v1/vault-session`, async (route) => {
+    await route.fulfill({ json: userFixture.vaultSession });
+  });
+  await page.route(`${API}/api/v1/user-preferences`, async (route) => {
+    await route.fulfill({
+      status: 404,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'Not found' }),
+    });
+  });
+  await page.route(`${API}/api/v1/conversations`, async (route) => {
+    await route.fulfill({ json: [] });
+  });
+  await page.route(`${API}/api/v1/personas`, async (route) => {
+    await route.fulfill({ json: { items: [] } });
+  });
+  await page.route(`${API}/api/v1/models`, async (route) => {
+    await route.fulfill({
+      json: {
+        privacy_tier: 'eu',
+        preferred_model_id: 'eu-model',
+        models: [
+          {
+            id: 'eu-model',
+            name: 'EU Model',
+            slug: 'eu-model',
+            provider_id: 'infomaniak',
+            provider_model_id: 'eu-model',
+            description: 'Eligible model',
+            privacy_tier: 'eu',
+            tags: [{ title: 'switzerland' }],
+            content_types: ['text'],
+            input_context_tokens: 64000,
+            max_output_tokens: 8192,
+            pricing: {
+              input_usd_per_million_tokens: 1,
+              output_usd_per_million_tokens: 2,
+            },
+            is_eligible: true,
+          },
+        ],
+      },
+    });
+  });
+
+  // Start on the chat home and open personas via the "All" chip.
+  await page.goto('/');
+  const composer = page.getByLabel('Message Cognos — encrypted on this device');
+  await expect(composer).toBeVisible();
+
+  await page.locator('.persona-chips').getByText('All').click();
+
+  // Personas page is shown, and the chat sidebar is still present.
+  await expect(
+    page.getByRole('heading', { name: 'Personas', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByLabel('Search conversations')).toBeVisible();
+
+  // Escape returns to the conversation view.
+  await page.keyboard.press('Escape');
+  await expect(composer).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Personas', exact: true }),
+  ).toHaveCount(0);
+});

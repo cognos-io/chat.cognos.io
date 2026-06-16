@@ -1,6 +1,7 @@
 :host {
   display: block;
-  min-block-size: 100dvh;
+  block-size: 100%;
+  overflow-y: auto;
   background: var(--cog-surface-sunken, #f6f7f9);
 }
 

@@ -23,17 +23,16 @@ export const routes: Routes = [
             (m) => m.ConversationDetailComponent,
           ),
       },
+      {
+        // Persona management replaces the conversation view but keeps the chat
+        // sidebar. Reached from the in-chat switcher's "Manage personas" action.
+        path: 'personas',
+        loadComponent: () =>
+          import('./pages/personas/personas-page.component').then(
+            (m) => m.PersonasPageComponent,
+          ),
+      },
     ],
-  },
-  {
-    // Dedicated persona management page. Reached from the in-chat switcher's
-    // "Manage personas" action.
-    path: 'personas',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/personas/personas-page.component').then(
-        (m) => m.PersonasPageComponent,
-      ),
   },
   {
     // Standalone pricing / plan-picker ("Keep going, privately"). Reached from

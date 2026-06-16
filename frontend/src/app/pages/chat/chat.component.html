@@ -100,14 +100,16 @@
     class="chat-page"
     [class.chat-page--temporary]="conversationService.isTemporaryConversation()"
   >
-    <header class="chat-page__header">
-      <app-chat-header />
-    </header>
+    @if (!isPersonasRoute()) {
+      <header class="chat-page__header">
+        <app-chat-header />
+      </header>
 
-    @if (billing.isSendingLocked()) {
-      <app-billing-lock-banner class="chat-page__lock-banner" />
-    } @else if (billing.isPastDue()) {
-      <app-billing-past-due-banner class="chat-page__lock-banner" />
+      @if (billing.isSendingLocked()) {
+        <app-billing-lock-banner class="chat-page__lock-banner" />
+      } @else if (billing.isPastDue()) {
+        <app-billing-past-due-banner class="chat-page__lock-banner" />
+      }
     }
 
     <main class="chat-page__content" role="main">

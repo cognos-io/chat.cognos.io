@@ -1,7 +1,8 @@
-import { NgTemplateOutlet } from '@angular/common';
+import { Location, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   computed,
   inject,
   signal,
@@ -47,6 +48,7 @@ type ViewMode = 'grid' | 'list';
 })
 export class PersonasPageComponent {
   private readonly _personas = inject(PersonaService);
+  private readonly _location = inject(Location);
 
   protected readonly query = signal('');
   protected readonly viewMode = signal<ViewMode>('grid');
@@ -142,6 +144,17 @@ export class PersonasPageComponent {
 
   protected closeEditor(): void {
     this.editing.set(null);
+  }
+
+  // Escape closes the editor sheet if it is open, otherwise it leaves the
+  // personas page and returns to the conversation the user came from.
+  @HostListener('document:keydown.escape')
+  protected onEscape(): void {
+    if (this.editing() !== null) {
+      this.closeEditor();
+      return;
+    }
+    this._location.back();
   }
 
   private filter(personas: Persona[]): Persona[] {

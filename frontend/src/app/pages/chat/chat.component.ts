@@ -69,6 +69,11 @@ export class ChatComponent {
   readonly device = inject(DeviceService);
   readonly drawerOpen = signal(false);
 
+  // The persona management page renders in the conversation outlet but brings
+  // its own header, so the chat header is hidden while it is active.
+  readonly currentUrl = signal(this.router.url);
+  readonly isPersonasRoute = computed(() => this.currentUrl().startsWith('/personas'));
+
   private _vaultDialogRef: DialogRef<unknown, VaultPasswordDialogComponent> | null =
     null;
 
@@ -91,6 +96,7 @@ export class ChatComponent {
       )
       .subscribe(() => {
         this.drawerOpen.set(false);
+        this.currentUrl.set(this.router.url);
       });
 
     // Hold the unlock dialog until the persistent-session restore settles, so
