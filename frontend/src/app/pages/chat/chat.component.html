@@ -111,6 +111,8 @@
 
     @if (billing.isSendingLocked()) {
       <app-billing-lock-banner class="chat-page__lock-banner" />
+    } @else if (billing.isPastDue()) {
+      <app-billing-past-due-banner class="chat-page__lock-banner" />
     }
 
     <main class="chat-page__content" role="main">

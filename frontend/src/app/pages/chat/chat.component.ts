@@ -16,6 +16,7 @@ import {
 } from '@cognos/ui-angular';
 
 import { BillingLockBannerComponent } from '@app/components/billing/billing-lock-banner/billing-lock-banner.component';
+import { BillingPastDueBannerComponent } from '@app/components/billing/billing-past-due-banner/billing-past-due-banner.component';
 import { ChatHeaderComponent } from '@app/components/chat/chat-header/chat-header.component';
 import { ConversationListItemComponent } from '@app/components/chat/conversation-list/conversation-list-item/conversation-list-item.component';
 import { SidebarProfileComponent } from '@app/components/chat/sidebar-profile/sidebar-profile.component';
@@ -51,6 +52,7 @@ import { ConversationService } from '../../services/conversation.service';
     SidebarProfileComponent,
     TrialCreditCardComponent,
     BillingLockBannerComponent,
+    BillingPastDueBannerComponent,
     SidebarAccountActionsComponent,
   ],
   templateUrl: './chat.component.html',

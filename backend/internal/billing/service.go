@@ -34,6 +34,7 @@ type State struct {
 	CycleStartAt          time.Time // current Paddle billing cycle start
 	CycleEndAt            time.Time // renewal / next-charge boundary
 	RefundEligibleUntilAt time.Time
+	PastDue               bool // a renewal payment failed; Paddle is dunning
 }
 
 type StateRepo interface {

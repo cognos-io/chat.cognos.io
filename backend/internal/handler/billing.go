@@ -117,11 +117,17 @@ func buildBillingResponse(state billing.State, planByPrice map[string]PlanMeta) 
 	case billing.PlanTypeTrial:
 		resp.Status = "trial"
 	case billing.PlanTypePayG, billing.PlanTypeUnlimited:
-		if !state.PlanEndsAt.IsZero() {
+		switch {
+		case state.PastDue:
+			// A failed renewal is the most actionable state — surface it over a
+			// pending cancellation so the user fixes their card.
+			resp.Status = "past_due"
+			resp.CycleEndAt = formatBillingTime(state.CycleEndAt)
+		case !state.PlanEndsAt.IsZero():
 			resp.Status = "cancels_soon"
 			resp.CancelAtPeriodEnd = true
 			resp.CycleEndAt = formatBillingTime(state.PlanEndsAt)
-		} else {
+		default:
 			resp.Status = "active"
 			resp.CycleEndAt = formatBillingTime(state.CycleEndAt)
 		}

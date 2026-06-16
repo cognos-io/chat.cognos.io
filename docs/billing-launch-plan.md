@@ -115,23 +115,25 @@ Without this, PAYG only ever bills the CHF 10 floor and never charges usage abov
 
 ---
 
-### Phase 3 — 🟠 Failed payment / dunning → past_due surface
+### Phase 3 — ✅ Failed payment / dunning → past_due surface
 
-`subscription.past_due` is ignored, so we show "active" while Paddle has suspended.
+`subscription.past_due` was ignored, so we showed "active" while Paddle had suspended.
 
-1. **Webhook:** `subscription.past_due` → mark a grace state on `user_billing` (reuse `plan_type` +
-   a `past_due` flag, or a status field); `subscription.canceled` after dunning already → inactive.
-2. **API:** surface the past_due state in `GET /api/v1/billing` (`status: 'past_due'`).
-3. **Frontend:** a "Payment failed — update your card to keep your plan" banner on the dashboard +
+1. ✅ **Webhook:** `subscription.past_due` → sets a `past_due` bool on `user_billing` (new migration
+   `1760000027`); `subscription.activated` clears it on dunning recovery; `subscription.canceled`
+   already → inactive (and clears the flag).
+2. ✅ **API:** `GET /api/v1/billing` returns `status: 'past_due'` for a paid plan with the flag
+   (takes precedence over `cancels_soon`).
+3. ✅ **Frontend:** a shared `app-billing-past-due-banner` ("payment failed — update your card",
+   linking to the portal payment deep-link) on the dashboard + chat shell. **Sending is NOT blocked
+   during grace** (recommended) — the user keeps working until the `canceled` event locks it.
 
-   the chat shell, linking to the portal payment deep-link. Decide whether sending is blocked during
-   grace (recommend: keep working through the grace window, then the canceled event locks it).
-
-- **Files:** webhook, `internal/handler/billing.go` (status), `billing.service.ts` + a banner
-  component, `plan-billing.component`.
-- **Tests:** integration — past_due event flips status; e2e — banner shows for past_due and links to
-  the portal.
-- **Acceptance:** a failed renewal shows the dunning banner; recovery (next
+- **Files:** `1760000027_user_billing_past_due.go`, webhook, `internal/billing/{service,repo}.go`,
+  `internal/handler/billing.go`, `interfaces/billing.ts`, `billing.service.ts`, new
+  `billing-past-due-banner.component.ts`, `chat.component.*`, `plan-billing.component.*`.
+- **Tests:** ✅ integration — past_due event flips the flag + status; recovery clears it; GET
+  reports `status:"past_due"`. (Banner render is covered by the existing component specs + manual.)
+- **Acceptance:** ✅ a failed renewal shows the dunning banner; recovery (next
   `subscription.activated`) clears it.
 
 ---

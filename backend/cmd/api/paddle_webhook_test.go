@@ -470,6 +470,50 @@ func TestPaddleWebhookUpdatedSurfacesScheduledCancel(t *testing.T) {
 	}
 }
 
+func TestPaddleWebhookMarksAndClearsPastDue(t *testing.T) {
+	app, mux := bootWebhookMux(t)
+
+	// Activate (unlimited, sub_1) so there's a subscription to dun.
+	postWebhook(mux, subscriptionCreatedBody, signPaddle(t, webhookSecret, subscriptionCreatedBody))
+
+	pastDueBody := `{"event_id":"evt_past_due_1","event_type":"subscription.past_due",` +
+		`"data":{"id":"sub_1","customer_id":"ctm_1","status":"past_due",` +
+		`"custom_data":{"user_id":"uvi8zmr78j9y5hz"}}}`
+	if rec := postWebhook(mux, pastDueBody, signPaddle(t, webhookSecret, pastDueBody)); rec.Code != http.StatusOK {
+		t.Fatalf("past_due status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+
+	record, err := app.FindFirstRecordByData("user_billing", "user_id", testUserID)
+	if err != nil {
+		t.Fatalf("find user_billing: %v", err)
+	}
+	if !record.GetBool("past_due") {
+		t.Error("past_due should be true after a failed renewal")
+	}
+	// The plan keeps working through the grace window.
+	if got := record.GetString("plan_type"); got != "unlimited" {
+		t.Errorf("plan_type = %q, want unlimited (access continues during dunning)", got)
+	}
+
+	// Dunning recovery: subscription.activated clears the flag.
+	recoverBody := `{"event_id":"evt_recover_1","event_type":"subscription.activated",` +
+		`"data":{"id":"sub_1","customer_id":"ctm_1","status":"active",` +
+		`"custom_data":{"user_id":"uvi8zmr78j9y5hz"},` +
+		`"items":[{"price":{"id":"pri_unl_monthly"}}],` +
+		`"current_billing_period":{"starts_at":"2026-07-01T00:00:00Z","ends_at":"2026-08-01T00:00:00Z"}}}`
+	if rec := postWebhook(mux, recoverBody, signPaddle(t, webhookSecret, recoverBody)); rec.Code != http.StatusOK {
+		t.Fatalf("recover status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+
+	record, err = app.FindFirstRecordByData("user_billing", "user_id", testUserID)
+	if err != nil {
+		t.Fatalf("find user_billing: %v", err)
+	}
+	if record.GetBool("past_due") {
+		t.Error("past_due should be cleared after dunning recovery")
+	}
+}
+
 func TestPaddleWebhookIgnoresUnmappableUser(t *testing.T) {
 	app, mux := bootWebhookMux(t)
 

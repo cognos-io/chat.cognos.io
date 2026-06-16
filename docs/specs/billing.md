@@ -733,11 +733,14 @@ side-by-side, so any drift is investigable.
 > on a PAYG cycle rollover closes the prior cycle by writing an idempotent
 > `payg_cycle_summaries` row (local usage, expected bill, overage) and posting
 > the overage as a one-time charge to Paddle (`Paddle-Idempotency-Key` per cycle;
-> a failure leaves `reconciled=false` for the backstop); `subscription.canceled`
-> drops them to `inactive`. `subscription.past_due` and `transaction.completed`
-> are stored-only (no plan change) — the 5-minute overage-retry backstop, the
-> `transaction.completed` reconciliation, and `adjustment.created`/refund
-> handling are the deferred fast-follow.
+> a failure leaves `reconciled=false` for the backstop); `subscription.past_due`
+> flags `user_billing.past_due` (access continues through dunning; dashboard +
+> chat shell show a "payment failed — update your card" banner) and
+> `subscription.activated` clears it on recovery; `subscription.canceled` drops
+> them to `inactive`. `transaction.completed` is stored-only (no plan change) —
+> the 5-minute overage-retry backstop, the `transaction.completed`
+> reconciliation, and `adjustment.created`/refund handling are the deferred
+> fast-follow.
 > Customer↔user mapping uses `custom_data.user_id` with a `paddle_customer_id`
 > fallback; unmappable events are logged and accepted (not retried). Signature
 > verification is covered in `internal/paddle/webhook_test.go`; the end-to-end

@@ -82,6 +82,32 @@ func TestBillingGetReportsActiveUnlimited(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestBillingGetReportsPastDue(t *testing.T) {
+	t.Parallel()
+	scenario := tests.ApiScenario{
+		Name:           "unlimited with a failed renewal reads past_due",
+		Method:         http.MethodGet,
+		URL:            "/api/v1/billing",
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"plan_type":"unlimited"`,
+			`"status":"past_due"`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			app := setupBillingApp(t, nil)
+			updateUserBilling(t, app, testUserID, map[string]any{
+				"plan_type":           "unlimited",
+				"paddle_price_id":     "pri_unl_monthly",
+				"paddle_cycle_end_at": "2026-07-01 00:00:00.000Z",
+				"past_due":            true,
+			})
+			return app
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+	}
+	scenario.Test(t)
+}
+
 func TestBillingGetReportsCancelsSoon(t *testing.T) {
 	t.Parallel()
 	scenario := tests.ApiScenario{

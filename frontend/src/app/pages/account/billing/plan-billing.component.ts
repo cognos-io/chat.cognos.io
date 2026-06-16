@@ -18,6 +18,7 @@ import {
   CognosProgressComponent,
 } from '@cognos/ui-angular';
 
+import { BillingPastDueBannerComponent } from '@app/components/billing/billing-past-due-banner/billing-past-due-banner.component';
 import { PaddleLogoComponent } from '@app/components/paddle-logo/paddle-logo.component';
 import {
   BillingApiResponse,
@@ -50,6 +51,7 @@ interface UsageBar {
     CognosLozengeComponent,
     CognosProgressComponent,
     PaddleLogoComponent,
+    BillingPastDueBannerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './plan-billing.component.html',
@@ -173,11 +175,13 @@ export class PlanBillingComponent {
 
   protected readonly badge = computed<{
     text: string;
-    tone: 'green' | 'blue' | 'neutral';
+    tone: 'green' | 'blue' | 'neutral' | 'red';
   }>(() => {
     switch (this.status()) {
       case 'active':
         return { text: 'Active', tone: 'green' };
+      case 'past_due':
+        return { text: 'Payment failed', tone: 'red' };
       case 'cancels_soon':
         return { text: 'Cancels soon', tone: 'neutral' };
       case 'trial':
@@ -186,6 +190,9 @@ export class PlanBillingComponent {
         return { text: 'Read-only', tone: 'neutral' };
     }
   });
+
+  // A failed renewal payment — drives the dashboard banner + "Update card" CTA.
+  protected readonly isPastDue = computed(() => this.status() === 'past_due');
 
   protected readonly planName = computed(() => {
     const billing = this.billing();
@@ -244,6 +251,8 @@ export class PlanBillingComponent {
         return 'Access until';
       case 'inactive':
         return 'Ended';
+      case 'past_due':
+        return 'Retrying payment';
       case 'active':
         return this.isPayg() ? 'Next minimum charge' : 'Renews';
       default:

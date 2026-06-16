@@ -50,6 +50,7 @@ func (r *PocketBaseRepo) StateForUser(userID string) (State, error) {
 		CycleStartAt:          record.GetDateTime("paddle_cycle_start_at").Time().UTC(),
 		CycleEndAt:            record.GetDateTime("paddle_cycle_end_at").Time().UTC(),
 		RefundEligibleUntilAt: record.GetDateTime("refund_eligible_until_at").Time().UTC(),
+		PastDue:               record.GetBool("past_due"),
 	}, nil
 }
 

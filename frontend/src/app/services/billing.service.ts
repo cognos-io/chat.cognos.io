@@ -71,6 +71,10 @@ export class BillingService {
   // A trial that can no longer send — drives the "used up" badge/messaging.
   readonly isTrialUsedUp = computed(() => this.isTrial() && this.isSendingLocked());
 
+  // A paid plan whose last renewal payment failed — Paddle is dunning. Access
+  // continues through the grace window; we surface a banner to fix the card.
+  readonly isPastDue = computed(() => this._state()?.status === 'past_due');
+
   constructor() {
     this.refresh();
 
@@ -94,6 +98,7 @@ export class BillingService {
       tap((res) =>
         this._state.set({
           planType: res.plan_type,
+          status: res.status,
           balanceChf: res.balance_chf ?? 0,
           trialSeedChf: res.trial_seed_chf ?? 0,
         }),

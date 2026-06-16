@@ -25,8 +25,27 @@
       </h2>
       <p class="pb__plan-blurb">{{ blurb() }}</p>
 
+      @if (isPastDue()) {
+        <app-billing-past-due-banner />
+      }
+
       <div class="pb__actions">
         @switch (status()) {
+          @case ('past_due') {
+            <cog-button appearance="primary" (click)="openPortal('payment')">
+              Update card
+            </cog-button>
+            <cog-button appearance="default" (click)="openSwitch()"
+              >Switch plan</cog-button
+            >
+            <cog-button
+              appearance="subtle"
+              [disabled]="actionPending()"
+              (click)="cancel()"
+            >
+              Cancel plan
+            </cog-button>
+          }
           @case ('cancels_soon') {
             <cog-button
               appearance="primary"

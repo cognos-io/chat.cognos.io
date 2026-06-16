@@ -157,7 +157,13 @@ func dispatchPaddleEvent(
 			return err
 		}
 		return cancelSubscription(app, params, sub)
-	case "subscription.past_due", "transaction.completed":
+	case "subscription.past_due":
+		sub, err := event.Subscription()
+		if err != nil {
+			return err
+		}
+		return markSubscriptionPastDue(app, params, sub)
+	case "transaction.completed":
 		// No plan change in the lean cut; the raw event is stored for audit and
 		// (later) PAYG cycle reconciliation.
 		return nil
@@ -212,8 +218,10 @@ func activateSubscription(
 		record.Set("paddle_price_id", sub.PriceID())
 		// Paid plans don't draw on the trial balance; trial credit is abandoned.
 		record.Set("balance_rappen", 0)
-		// A (re)activation clears any pending cancellation.
+		// A (re)activation clears any pending cancellation and any dunning state
+		// (Paddle fires subscription.activated on a successful dunning recovery).
 		record.Set("plan_ends_at", "")
+		record.Set("past_due", false)
 
 		if sub.CurrentBillingPeriod.StartsAt != "" {
 			record.Set("paddle_cycle_start_at", sub.CurrentBillingPeriod.StartsAt)
@@ -253,6 +261,32 @@ func cancelSubscription(
 	record.Set("plan_type", string(billing.PlanTypeInactive))
 	record.Set("plan_ends_at", nowRFC3339())
 	record.Set("paddle_subscription_id", "")
+	record.Set("past_due", false)
+	return app.Save(record)
+}
+
+// markSubscriptionPastDue flags the user's billing row when Paddle reports a
+// failed renewal and starts dunning. The plan keeps working through the grace
+// window so the user can fix their card; subscription.activated clears the flag
+// on recovery, subscription.canceled drops them to inactive if dunning fails.
+// Idempotent: a re-delivered past_due re-sets the same flag.
+func markSubscriptionPastDue(
+	app core.App,
+	params PaddleWebhookParams,
+	sub paddle.SubscriptionData,
+) error {
+	record, err := app.FindFirstRecordByData(
+		webhookUserBillingColl, "paddle_subscription_id", sub.ID,
+	)
+	if err != nil || record == nil {
+		if params.Logger != nil {
+			params.Logger.Warn("paddle past_due for unknown subscription",
+				"subscription_id", sub.ID)
+		}
+		return nil
+	}
+
+	record.Set("past_due", true)
 	return app.Save(record)
 }
 

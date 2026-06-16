@@ -97,6 +97,7 @@ describe('ChatComponent', () => {
             isTrial: signal(true),
             isSendingLocked: signal(false),
             isTrialUsedUp: signal(false),
+            isPastDue: signal(false),
           },
         },
         { provide: ConversationService, useValue: conversationService },

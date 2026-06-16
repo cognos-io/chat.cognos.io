@@ -78,7 +78,12 @@ export interface BillingInvoicesResponse {
   invoices: Invoice[];
 }
 
-export type BillingStatus = 'trial' | 'active' | 'cancels_soon' | 'inactive';
+export type BillingStatus =
+  | 'trial'
+  | 'active'
+  | 'cancels_soon'
+  | 'past_due'
+  | 'inactive';
 
 // BillingApiResponse is the raw `GET /api/v1/billing` payload.
 export interface BillingApiResponse {
@@ -96,6 +101,7 @@ export interface BillingApiResponse {
 // BillingState is the normalised view the frontend holds in a signal.
 export interface BillingState {
   planType: BillingPlanType;
+  status?: BillingStatus;
   balanceChf: number;
   trialSeedChf: number;
 }
