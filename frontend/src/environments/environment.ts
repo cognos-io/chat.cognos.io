@@ -6,4 +6,13 @@ export const environment = {
   // disables the overlay and falls back to the hosted checkout URL.
   paddleClientToken: '',
   paddleEnvironment: 'production' as 'sandbox' | 'production',
+  // Build-time feature flags. One per not-yet-shipped settings section; the
+  // settings nav hides flagged-off sections and their routes redirect to
+  // /account. Flip to true to ship a section (can graduate to per-user later).
+  featureFlags: {
+    usage: false,
+    security: false,
+    team: false,
+    notifications: false,
+  },
 };

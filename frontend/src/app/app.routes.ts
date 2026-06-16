@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './guards/auth.guard';
+import { featureFlagGuard } from './guards/feature-flag.guard';
 
 export const routes: Routes = [
   {
@@ -69,7 +70,8 @@ export const routes: Routes = [
       },
       {
         path: 'usage',
-        data: { title: 'Usage' },
+        canActivate: [featureFlagGuard],
+        data: { title: 'Usage', featureFlag: 'usage' },
         loadComponent: () =>
           import('./pages/account/settings-placeholder.component').then(
             (m) => m.SettingsPlaceholderComponent,
@@ -77,7 +79,8 @@ export const routes: Routes = [
       },
       {
         path: 'security',
-        data: { title: 'Security & keys' },
+        canActivate: [featureFlagGuard],
+        data: { title: 'Security & keys', featureFlag: 'security' },
         loadComponent: () =>
           import('./pages/account/settings-placeholder.component').then(
             (m) => m.SettingsPlaceholderComponent,
@@ -85,7 +88,8 @@ export const routes: Routes = [
       },
       {
         path: 'team',
-        data: { title: 'Team & sharing' },
+        canActivate: [featureFlagGuard],
+        data: { title: 'Team & sharing', featureFlag: 'team' },
         loadComponent: () =>
           import('./pages/account/settings-placeholder.component').then(
             (m) => m.SettingsPlaceholderComponent,
@@ -93,7 +97,8 @@ export const routes: Routes = [
       },
       {
         path: 'notifications',
-        data: { title: 'Notifications' },
+        canActivate: [featureFlagGuard],
+        data: { title: 'Notifications', featureFlag: 'notifications' },
         loadComponent: () =>
           import('./pages/account/settings-placeholder.component').then(
             (m) => m.SettingsPlaceholderComponent,

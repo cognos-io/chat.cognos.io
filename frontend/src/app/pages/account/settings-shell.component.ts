@@ -23,8 +23,11 @@ import { TrialCreditCardComponent } from '@app/components/chat/trial-credit-card
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { SidebarAccountActionsComponent } from '@app/components/sidebar-account-actions/sidebar-account-actions.component';
 import { SidebarBrandComponent } from '@app/components/sidebar-brand/sidebar-brand.component';
+import { FeatureFlag } from '@app/guards/feature-flag.guard';
 import { BillingService } from '@app/services/billing.service';
 import { DeviceService } from '@app/services/device.service';
+
+import { environment } from '@environments/environment';
 
 interface SettingsNavItem {
   label: string;
@@ -33,6 +36,9 @@ interface SettingsNavItem {
   // Match the link exactly (used for the /account home so it isn't active on
   // every child route).
   exact?: boolean;
+  // When set, the item only appears if the matching build-time feature flag is
+  // on. Unflagged items (Account, Plan & billing) always show.
+  flag?: FeatureFlag;
 }
 
 // SettingsShellComponent composes the shared ui-angular app shell
@@ -211,14 +217,30 @@ export class SettingsShellComponent {
 
   readonly drawerOpen = signal(false);
 
-  protected readonly navItems: SettingsNavItem[] = [
+  // The full set of settings sections. Flagged-off sections are filtered out of
+  // `navItems` so they never render in the nav (their routes also redirect).
+  private readonly _allNavItems: SettingsNavItem[] = [
     { label: 'Account', link: '/account', icon: 'user-plus', exact: true },
     { label: 'Plan & billing', link: '/account/billing', icon: 'landmark' },
-    { label: 'Usage', link: '/account/usage', icon: 'file-text' },
-    { label: 'Security & keys', link: '/account/security', icon: 'shield' },
-    { label: 'Team & sharing', link: '/account/team', icon: 'users' },
-    { label: 'Notifications', link: '/account/notifications', icon: 'mail' },
+    { label: 'Usage', link: '/account/usage', icon: 'file-text', flag: 'usage' },
+    {
+      label: 'Security & keys',
+      link: '/account/security',
+      icon: 'shield',
+      flag: 'security',
+    },
+    { label: 'Team & sharing', link: '/account/team', icon: 'users', flag: 'team' },
+    {
+      label: 'Notifications',
+      link: '/account/notifications',
+      icon: 'mail',
+      flag: 'notifications',
+    },
   ];
+
+  protected readonly navItems: SettingsNavItem[] = this._allNavItems.filter(
+    (item) => !item.flag || environment.featureFlags[item.flag],
+  );
 
   constructor() {
     this._router.events
