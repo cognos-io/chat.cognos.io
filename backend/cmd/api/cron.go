@@ -85,6 +85,42 @@ func retryPaygOverageJob(
 	)
 }
 
+// fairUseReportJob is the nightly fair-use monitor (spec §8): it flags Unlimited
+// accounts whose rolling 30-day user-cost exceeds the threshold and logs them
+// for operator review. Read-only — it never throttles or blocks anyone.
+func fairUseReportJob(
+	scheduler gocron.Scheduler,
+	logger *slog.Logger,
+	repo *billing.PocketBaseRepo,
+	thresholdRappen int64,
+) (gocron.Job, error) {
+	return scheduler.NewJob(
+		gocron.DurationRandomJob(
+			23*time.Hour,
+			25*time.Hour,
+		),
+		gocron.NewTask(func() {
+			since := time.Now().UTC().Add(-billing.DefaultFairUseWindow)
+			flags, err := repo.FlagFairUseOutliers(since, thresholdRappen)
+			if err != nil {
+				logger.Error("fair-use report failed", "err", err)
+				return
+			}
+			if len(flags) == 0 {
+				return
+			}
+			logger.Warn("fair-use: Unlimited accounts over threshold",
+				"count", len(flags), "threshold_rappen", thresholdRappen)
+			for _, flag := range flags {
+				logger.Warn("fair-use outlier",
+					"user_id", flag.UserID,
+					"rolling_cost_rappen", flag.RollingCostRappen,
+					"request_count", flag.RequestCount)
+			}
+		}),
+	)
+}
+
 func cleanUpDeletedRecordJob(
 	scheduler gocron.Scheduler,
 	logger *slog.Logger,

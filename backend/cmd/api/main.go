@@ -284,6 +284,16 @@ func bindAppHooks(
 					return err
 				}
 			}
+
+			fairUseThreshold := int64(billing.DefaultFairUseAlertRappen)
+			if params.Config != nil && params.Config.BillingUnlimitedFairUseAlertRappen > 0 {
+				fairUseThreshold = params.Config.BillingUnlimitedFairUseAlertRappen
+			}
+			if _, err = fairUseReportJob(
+				params.CronScheduler, app.Logger(), billingRepo, fairUseThreshold,
+			); err != nil {
+				return err
+			}
 		}
 
 		return e.Next()

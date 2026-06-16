@@ -216,19 +216,29 @@ Without this, PAYG only ever bills the CHF 10 floor and never charges usage abov
 
 ---
 
-### Phase 7 — ⚪ Fair-use / abuse monitoring (Unlimited) — spec §8, §14.11
+### Phase 7 — ✅ Fair-use / abuse monitoring (Unlimited) — spec §8, §14.11
 
-1. **Usage aggregation:** a DuckDB (per CLAUDE.md tooling) rollup over `balance_transactions`
-   computing per-user token/cost totals per window; flag users exceeding fair-use thresholds (e.g. >
-   Nx the median, or an absolute token ceiling).
-2. **Soft action:** spending-alert / soft-limit mechanism (spec §14.11) — notify + optionally
-   throttle flagged accounts; operator review before any hard action.
-3. **Surface:** an internal report / dashboard for review (not customer-facing initially).
+1. ✅ **Usage aggregation:** `FlagFairUseOutliers` rolls up `balance_transactions` (read-only)
+   summing `user_cost_rappen` per Unlimited user over the rolling 30-day window, flagging those over
+   `BILLING_UNLIMITED_FAIR_USE_ALERT_RAPPEN` (default CHF 200 = 2× monthly). **Sums the
+   authoritative ledger directly** rather than a DuckDB/parquet rollup — that's the analytics-scale
+   alternative for later (noted in code).
+2. ✅ **Soft action:** the `fairUseReportJob` gocron job (nightly) logs flagged accounts at WARN for
+   operator review. **Read-only — never throttles or blocks** (spec §8.1 monitor-only).
+3. ✅ **Surface:** structured WARN logs (per-account + a summary count) — the internal report;
+   Slack/email routing is a later hook.
 
-- **Files:** a new `cmd/fairuse/` (or `internal/billing/fairuse`) job + DuckDB query; alerting hook.
-- **Tests:** unit — threshold/flagging logic over seeded usage (normal vs outlier); the job is
-  read-only (never hard-limits without a flag).
-- **Acceptance:** a synthetic heavy Unlimited account is flagged; normal accounts aren't.
+> **Also fixed here (migration `1760000028`):** `balance_transactions.amount_rappen` was `required`,
+> and PocketBase rejects a required number's `0` as blank — so every Unlimited usage row
+> (`amount_rappen=0` by design) and any zero-cost row was being silently dropped in `RecordUsage`,
+> starving this monitor + the Unlimited usage dashboard of data. Made it non-required.
+
+- **Files:** `internal/billing/fairuse.go`, `cmd/api/{cron,main}.go`, `internal/config/api.go`,
+  migration `1760000028_balance_transactions_amount_optional.go`.
+- **Tests:** ✅ integration — heavy Unlimited account flagged, a normal one isn't, PAYG +
+  out-of-window rows excluded, none-under-threshold returns empty; ✅ regression — a zero-amount
+  Unlimited usage row now persists.
+- **Acceptance:** ✅ a synthetic heavy Unlimited account is flagged; normal accounts aren't.
 
 ---
 

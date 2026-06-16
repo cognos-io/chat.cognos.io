@@ -41,6 +41,41 @@ func TestPocketBaseBillingRepoStateForUserMapsLegacyFlatRateAlias(t *testing.T) 
 	}
 }
 
+// Regression: an Unlimited usage row has amount_rappen = 0 by design (cost
+// lives in user_cost_rappen). It must persist — a required amount_rappen field
+// rejected 0 as "blank", silently dropping every Unlimited usage row.
+func TestPocketBaseBillingRepoRecordsZeroAmountUnlimitedUsage(t *testing.T) {
+	t.Parallel()
+
+	app := setupTestApp(t)
+	defer app.Cleanup()
+
+	repo := billing.NewPocketBaseRepo(app)
+	err := repo.RecordUsage(billing.UsageRecord{
+		UserID:         "uvi8zmr78j9y5hz",
+		EventID:        "evt_unlimited_zero",
+		ModelID:        "test-model",
+		PlanType:       billing.PlanTypeUnlimited,
+		Type:           billing.UsageTransactionType,
+		AmountRappen:   0,
+		UserCostRappen: 1234,
+	})
+	if err != nil {
+		t.Fatalf("RecordUsage(unlimited, amount=0) error = %v", err)
+	}
+
+	records, err := app.FindRecordsByFilter(
+		"balance_transactions", "event_id = {:e}", "", 1, 0,
+		map[string]any{"e": "evt_unlimited_zero"},
+	)
+	if err != nil || len(records) != 1 {
+		t.Fatalf("expected the zero-amount usage row to persist (err=%v, n=%d)", err, len(records))
+	}
+	if got := records[0].GetInt("user_cost_rappen"); got != 1234 {
+		t.Errorf("user_cost_rappen = %d, want 1234", got)
+	}
+}
+
 func TestPocketBaseBillingRepoStateForUserReturnsErrStateNotFound(t *testing.T) {
 	t.Parallel()
 
