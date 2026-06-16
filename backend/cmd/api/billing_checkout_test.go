@@ -44,6 +44,13 @@ type fakePaddleClient struct {
 	changePriceID   string
 	changeProration string
 	changeErr       error
+
+	txnLookupID    string
+	txnCustomerID  string
+	txnCustomerErr error
+	pdfLookupID    string
+	invoicePDFURL  string
+	invoicePDFErr  error
 }
 
 func (f *fakePaddleClient) CreateCheckout(
@@ -82,6 +89,16 @@ func (f *fakePaddleClient) GetCard(_ context.Context, _ string) (*paddle.Card, e
 
 func (f *fakePaddleClient) ListInvoices(_ context.Context, _ string) ([]paddle.Invoice, error) {
 	return f.invoices, f.invoicesErr
+}
+
+func (f *fakePaddleClient) GetTransactionCustomerID(_ context.Context, txnID string) (string, error) {
+	f.txnLookupID = txnID
+	return f.txnCustomerID, f.txnCustomerErr
+}
+
+func (f *fakePaddleClient) GetInvoicePDFURL(_ context.Context, txnID string) (string, error) {
+	f.pdfLookupID = txnID
+	return f.invoicePDFURL, f.invoicePDFErr
 }
 
 func (f *fakePaddleClient) ChangeSubscriptionPrice(

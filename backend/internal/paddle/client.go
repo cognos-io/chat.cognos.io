@@ -63,7 +63,8 @@ type Invoice struct {
 	Status          string // paid, completed, billed, past_due, canceled
 	CurrencyCode    string
 	BilledAt        time.Time
-	GrandTotalMinor int64 // total in the currency's minor unit (Rappen for CHF)
+	GrandTotalMinor int64  // total in the currency's minor unit (Rappen for CHF)
+	Description     string // e.g. "Unlimited · monthly"; falls back to the number
 }
 
 // Client is the Paddle surface the billing handlers depend on.
@@ -82,6 +83,11 @@ type Client interface {
 	GetCard(ctx context.Context, customerID string) (*Card, error)
 	// ListInvoices returns the customer's billed/paid transactions, newest-first.
 	ListInvoices(ctx context.Context, customerID string) ([]Invoice, error)
+	// GetTransactionCustomerID returns the customer a transaction belongs to, so
+	// a handler can verify ownership before exposing its invoice.
+	GetTransactionCustomerID(ctx context.Context, transactionID string) (string, error)
+	// GetInvoicePDFURL returns a short-lived URL to a transaction's PDF invoice.
+	GetInvoicePDFURL(ctx context.Context, transactionID string) (string, error)
 	// ChangeSubscriptionPrice switches the subscription's single item to
 	// newPriceID. prorationBillingMode controls how/when Paddle bills the change
 	// (e.g. "prorated_immediately" for an upgrade, "full_next_billing_period" for
@@ -346,7 +352,15 @@ type transactionsListResponse struct {
 		Status        string `json:"status"`
 		CurrencyCode  string `json:"currency_code"`
 		BilledAt      string `json:"billed_at"`
-		Details       struct {
+		Items         []struct {
+			Price struct {
+				Name         string `json:"name"`
+				BillingCycle *struct {
+					Interval string `json:"interval"`
+				} `json:"billing_cycle"`
+			} `json:"price"`
+		} `json:"items"`
+		Details struct {
 			Totals struct {
 				GrandTotal string `json:"grand_total"`
 			} `json:"totals"`
@@ -387,6 +401,15 @@ func (c *HTTPClient) ListInvoices(ctx context.Context, customerID string) ([]Inv
 			CurrencyCode:    txn.CurrencyCode,
 			GrandTotalMinor: parseMinorAmount(txn.Details.Totals.GrandTotal),
 		}
+		if len(txn.Items) > 0 {
+			name := strings.TrimSpace(txn.Items[0].Price.Name)
+			if name != "" {
+				invoice.Description = name
+				if cycle := txn.Items[0].Price.BillingCycle; cycle != nil && cycle.Interval != "" {
+					invoice.Description = name + " · " + intervalLabel(cycle.Interval)
+				}
+			}
+		}
 		if txn.BilledAt != "" {
 			if t, err := time.Parse(time.RFC3339, txn.BilledAt); err == nil {
 				invoice.BilledAt = t.UTC()
@@ -395,6 +418,64 @@ func (c *HTTPClient) ListInvoices(ctx context.Context, customerID string) ([]Inv
 		invoices = append(invoices, invoice)
 	}
 	return invoices, nil
+}
+
+// intervalLabel maps Paddle's billing interval ("month"/"year") to the
+// customer-facing label we use everywhere else ("monthly"/"annual").
+func intervalLabel(interval string) string {
+	switch interval {
+	case "month":
+		return "monthly"
+	case "year":
+		return "annual"
+	case "week":
+		return "weekly"
+	case "day":
+		return "daily"
+	default:
+		return interval
+	}
+}
+
+type transactionDetailResponse struct {
+	Data struct {
+		CustomerID string `json:"customer_id"`
+	} `json:"data"`
+}
+
+// GetTransactionCustomerID returns the customer a transaction belongs to.
+func (c *HTTPClient) GetTransactionCustomerID(ctx context.Context, transactionID string) (string, error) {
+	body, err := c.getJSON(ctx, c.BaseURL+"/transactions/"+transactionID)
+	if err != nil {
+		return "", err
+	}
+	var parsed transactionDetailResponse
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return "", fmt.Errorf("decode transaction: %w", err)
+	}
+	return parsed.Data.CustomerID, nil
+}
+
+type invoicePDFResponse struct {
+	Data struct {
+		URL string `json:"url"`
+	} `json:"data"`
+}
+
+// GetInvoicePDFURL returns a short-lived URL to a transaction's PDF invoice.
+func (c *HTTPClient) GetInvoicePDFURL(ctx context.Context, transactionID string) (string, error) {
+	body, err := c.getJSON(ctx, c.BaseURL+"/transactions/"+transactionID+"/invoice")
+	if err != nil {
+		return "", err
+	}
+	var parsed invoicePDFResponse
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return "", fmt.Errorf("decode invoice: %w", err)
+	}
+	if parsed.Data.URL == "" {
+		return "", fmt.Errorf("paddle response missing invoice url")
+	}
+	return parsed.Data.URL, nil
 }
 
 // getJSON performs an authenticated GET and returns the response body, or an

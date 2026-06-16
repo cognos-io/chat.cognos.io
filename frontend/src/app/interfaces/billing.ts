@@ -66,10 +66,17 @@ export interface PaymentCard {
 export interface Invoice {
   id: string;
   invoice_number: string;
-  status: string; // paid, completed, billed, past_due, canceled
+  description?: string; // e.g. "Unlimited · monthly"
+  status: string; // paid, completed, billed, past_due, canceled, refunded
   currency: string;
   amount_minor: number; // minor units (Rappen for CHF)
   billed_at?: string;
+}
+
+// InvoicePdfResponse is the `GET /api/v1/billing/invoices/{id}/pdf` payload — a
+// short-lived URL to the PDF (never cached).
+export interface InvoicePdfResponse {
+  url: string;
 }
 
 // BillingInvoicesResponse is the `GET /api/v1/billing/invoices` payload.

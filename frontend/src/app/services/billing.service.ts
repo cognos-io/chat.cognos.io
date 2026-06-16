@@ -213,6 +213,31 @@ export class BillingService {
     });
   }
 
+  // openInvoicePdf opens a Paddle PDF invoice in a new tab. Like openPortal, the
+  // tab is opened synchronously (within the click) to dodge pop-up blockers, then
+  // pointed at the short-lived URL the backend mints (ownership-checked server-side).
+  openInvoicePdf(transactionId: string): void {
+    const view = this._document.defaultView;
+    const tab = view?.open('about:blank', '_blank') ?? null;
+    if (tab) {
+      tab.opener = null;
+    }
+
+    this._api.getInvoicePdf(transactionId).subscribe({
+      next: (res) => {
+        if (tab) {
+          tab.location.href = res.url;
+        } else {
+          view?.open(res.url, '_blank');
+        }
+      },
+      error: () => {
+        tab?.close();
+        this._errors.alert('Could not open the invoice. Please try again.');
+      },
+    });
+  }
+
   // pollActivation waits for the subscription webhook to flip the plan to a paid
   // tier, then drops the user back into chat. Reused by the pricing page (after
   // a hosted-checkout redirect) and by overlay completion. Concurrent calls are

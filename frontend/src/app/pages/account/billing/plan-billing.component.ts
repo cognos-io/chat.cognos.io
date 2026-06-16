@@ -417,6 +417,11 @@ export class PlanBillingComponent {
     this._billing.openPortal(target);
   }
 
+  // Open a single invoice's PDF (ownership-checked server-side) in a new tab.
+  protected downloadInvoice(transactionId: string): void {
+    this._billing.openInvoicePdf(transactionId);
+  }
+
   protected cancel(): void {
     this.runAction(this._api.cancelSubscription());
   }

@@ -196,20 +196,23 @@ Without this, PAYG only ever bills the CHF 10 floor and never charges usage abov
 
 ---
 
-### Phase 6 — 🟡 Invoice polish
+### Phase 6 — ✅ Invoice polish
 
-1. **Per-invoice PDF download:** `GET /api/v1/billing/invoices/{id}/pdf` → verify the transaction's
-   `customer_id` matches the caller's customer **before** calling Paddle
-   `GET /transactions/{id}/invoice`; return the URL; frontend opens it in a new tab (download icon
-   per row).
-2. **Line descriptions:** parse `items[].price.name` (+ `billing_cycle.interval`) in `ListInvoices`
+1. ✅ **Per-invoice PDF download:** `GET /api/v1/billing/invoices/{id}/pdf` (`BillingInvoicePDF`) →
+   verifies the transaction's `customer_id` matches the caller's customer
+   (`GetTransactionCustomerID`) **before** fetching the invoice (`GET /transactions/{id}/invoice`);
+   returns a short-lived URL. The dashboard renders a download icon per row that opens it in a new
+   tab (pop-up-safe, via `BillingService.openInvoicePdf`).
+2. ✅ **Line descriptions:** `ListInvoices` parses `items[].price.name` + `billing_cycle.interval`
+   → e.g. "Unlimited · annual" (`month`→`monthly`, `year`→`annual`); the row falls back to
+   "Invoice {number}" when no name is present.
 
-   → e.g. "Unlimited · monthly"; fall back to "Invoice {number}".
-
-- **Files:** `internal/paddle/client.go`, `billing_invoices.go`, new PDF handler + route +
-  auth-surface test, `plan-billing.component.*`.
-- **Tests:** integration — PDF endpoint 200 for own invoice, 403/404 for another customer's id; e2e
-  — invoice rows show the plan description + a working download icon.
+- **Files:** `internal/paddle/client.go`, `internal/handler/billing_invoices.go`, new
+  `internal/handler/billing_invoice_pdf.go` + route, `cognos-api.service.ts`, `billing.service.ts`,
+  `plan-billing.component.*`, `interfaces/billing.ts`.
+- **Tests:** ✅ integration — PDF endpoint 200 for own invoice, **404 for another customer's id**
+  (invoice never fetched), 401 unauth; ✅ client httptests — description build (`year`→`annual`),
+  PDF URL; ✅ invoices endpoint returns the description.
 
 ---
 

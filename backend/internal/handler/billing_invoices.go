@@ -28,6 +28,7 @@ type cardResponse struct {
 type invoiceResponse struct {
 	ID            string `json:"id"`
 	InvoiceNumber string `json:"invoice_number"`
+	Description   string `json:"description,omitempty"`
 	Status        string `json:"status"`
 	Currency      string `json:"currency"`
 	AmountMinor   int64  `json:"amount_minor"`
@@ -91,6 +92,7 @@ func BillingInvoices(params BillingInvoicesParams) func(e *core.RequestEvent) er
 				row := invoiceResponse{
 					ID:            invoice.ID,
 					InvoiceNumber: invoice.InvoiceNumber,
+					Description:   invoice.Description,
 					Status:        status,
 					Currency:      invoice.CurrencyCode,
 					AmountMinor:   invoice.GrandTotalMinor,

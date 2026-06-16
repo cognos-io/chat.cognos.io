@@ -60,6 +60,46 @@ func TestHTTPClientCreateCheckout_Success(t *testing.T) {
 	}
 }
 
+func TestHTTPClientListInvoices_BuildsDescription(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":[{"id":"txn_1","invoice_number":"CG-1","status":"completed",` +
+			`"currency_code":"CHF","details":{"totals":{"grand_total":"10000"}},` +
+			`"items":[{"price":{"name":"Unlimited","billing_cycle":{"interval":"year"}}}]}]}`))
+	}))
+	defer server.Close()
+
+	invoices, err := NewHTTPClient(server.URL, "k").ListInvoices(context.Background(), "ctm_1")
+	if err != nil {
+		t.Fatalf("ListInvoices: %v", err)
+	}
+	if len(invoices) != 1 {
+		t.Fatalf("invoices = %d, want 1", len(invoices))
+	}
+	if invoices[0].Description != "Unlimited · annual" {
+		t.Errorf("description = %q, want \"Unlimited · annual\"", invoices[0].Description)
+	}
+}
+
+func TestHTTPClientGetInvoicePDFURL(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/transactions/txn_1/invoice" {
+			t.Errorf("path = %q, want /transactions/txn_1/invoice", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"url":"https://paddle.com/inv.pdf"}}`))
+	}))
+	defer server.Close()
+
+	url, err := NewHTTPClient(server.URL, "k").GetInvoicePDFURL(context.Background(), "txn_1")
+	if err != nil {
+		t.Fatalf("GetInvoicePDFURL: %v", err)
+	}
+	if url != "https://paddle.com/inv.pdf" {
+		t.Errorf("url = %q", url)
+	}
+}
+
 func TestHTTPClientChangeSubscriptionPrice(t *testing.T) {
 	var gotMethod, gotPath string
 	var gotBody map[string]any

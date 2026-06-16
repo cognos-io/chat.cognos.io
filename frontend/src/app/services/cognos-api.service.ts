@@ -12,6 +12,7 @@ import {
   ChangePlanResponse,
   CheckoutRequest,
   CheckoutResponse,
+  InvoicePdfResponse,
   PortalResponse,
   UsageResponse,
 } from '@app/interfaces/billing';
@@ -437,6 +438,13 @@ export class CognosApiService {
   getBillingInvoices(): Observable<BillingInvoicesResponse> {
     return this._http.get<BillingInvoicesResponse>(
       `${this._baseUrl}/api/v1/billing/invoices`,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  getInvoicePdf(transactionId: string): Observable<InvoicePdfResponse> {
+    return this._http.get<InvoicePdfResponse>(
+      `${this._baseUrl}/api/v1/billing/invoices/${transactionId}/pdf`,
       { headers: this.authHeaders() },
     );
   }

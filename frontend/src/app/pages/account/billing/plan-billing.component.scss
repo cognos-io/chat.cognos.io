@@ -420,6 +420,21 @@
   font-variant-numeric: tabular-nums;
 }
 
+.pb__invoice-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--cog-space-050);
+  border: 0;
+  border-radius: var(--cog-radius-sm, 8px);
+  background: none;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--cog-surface-sunken, var(--cog-border));
+  }
+}
+
 /* Full-bleed grey footer band pinned to the card's bottom edge. */
 .pb__invoices-foot {
   display: flex;
