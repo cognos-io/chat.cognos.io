@@ -55,36 +55,35 @@ handled at all. Everything below hangs off these.
 
 ---
 
-### Phase 1 — 🔴 PAYG cycle-end overage charge + reconciliation (spec §11) — LAUNCH-BLOCKING
+### Phase 1 — ✅ PAYG cycle-end overage charge (spec §11) — LAUNCH-BLOCKING
 
 Without this, PAYG only ever bills the CHF 10 floor and never charges usage above it.
 
-1. **Paddle client:**
-   `CreateOneTimeCharge(ctx, subscriptionID, priceID, quantityRappen, idempotencyKey)` →
-   `POST /subscriptions/{id}/charge` with `items:[{price_id, quantity}]` (overage price is the
-   1-Rappen unit; quantity = overage Rappen). Confirm exact request/`effective_from` shape against
-   Paddle docs. Pass a deterministic `Paddle-Idempotency-Key`.
-2. **Cycle close** (triggered by Phase 0 rollover, or a small reconcile pass):
-   - Sum `user_cost_rappen` from `balance_transactions` for the closing cycle window
-     (`paddle_cycle_start_at`..`paddle_cycle_end_at`, `type='usage'`).
-   - `overage = max(0, usage − 1000)` Rappen.
-   - Write a `payg_cycle_summaries` row (`local_usage_rappen`, `overage_charge_rappen`,
-     `local_expected_bill_rappen = max(usage,1000)`, cycle window). The row's deterministic id / a
-     unique key per `(subscription_id, cycle_end_at)` IS the idempotency guard.
-   - If `overage > 0`, post the one-time charge; store `paddle_overage_txn_id`.
-3. **Reliability (spec §11.3):** idempotency key per cycle so retries/re-delivery never
+1. ✅ **Paddle client:**
+   `CreateOneTimeCharge(ctx, subscriptionID, priceID, quantity, idempotencyKey)` →
+   `POST /subscriptions/{id}/charge?include=next_transaction` with
+   `{effective_from:"next_billing_period", items:[{price_id, quantity}]}` (overage price is the
+   1-Rappen unit; quantity = overage Rappen). Sends `Paddle-Idempotency-Key`. Confirmed against
+   Paddle docs: the endpoint returns the **subscription** entity (201), not a transaction, so the
+   overage rides the next renewal — no transaction id is available at post time.
+2. ✅ **Cycle close** (triggered by the Phase 0 rollover in `closePAYGCycle`):
+   - Sums `user_cost_rappen` over the closing cycle window (`type='usage'`).
+   - Computes `overage = max(0, usage − commit)` via `billing.ComputeCycleSummary`.
+   - Writes the `payg_cycle_summaries` row (deterministic id per `(subscription_id, cycle_end)` =
+     idempotency guard).
+   - If `overage > 0`, posts the one-time charge and stores `paddle_overage_txn_id` — or a
+     `posted:<idempotency_key>` marker when Paddle returns no id yet, so the backstop won't re-post.
+3. ✅ **Reliability (spec §11.3):** idempotency key `overage_<cycle_id>` per cycle. A Paddle failure
+   is logged and leaves the summary `reconciled=false` + empty txn id (webhook still 200, cycle
+   still advances) for the Phase 4 sweep to retry. **The 5-minute backstop itself is Phase 4.**
 
-   double-charge; on Paddle failure, leave the summary `reconciled=false` for the Phase 4 sweep to
-   retry.
-
-- **Files:** `internal/paddle/client.go` (+ fake), `internal/billing/` (cycle usage sum + close
-  logic — likely a new `payg.go`), `internal/handler/paddle_webhook.go`, route wiring if a
-  manual/cron trigger is added.
-- **Tests:** unit — overage math (usage<10, =10, >10, no usage); idempotency (second close is a
-  no-op); client httptest for the charge call. Integration — rollover event closes the cycle and
-  posts the right amount.
-- **Acceptance:** a PAYG cycle with CHF 23.40 usage posts a CHF 13.40 overage charge exactly once; a
-  cycle ≤ CHF 10 posts nothing; re-delivered rollover doesn't double-charge.
+- **Files:** `internal/paddle/client.go` (+ fake), `internal/billing/payg.go`,
+  `internal/handler/paddle_webhook.go`, `internal/config/api.go` + `cmd/api/{routes,main}.go`.
+- **Tests:** unit — overage math (Phase 0); client httptest for the charge call (success, bad
+  quantity, Paddle error). Integration — rollover with overage posts the right amount once; within
+  the commit posts nothing; a charge failure still advances the cycle.
+- **Acceptance:** ✅ a PAYG cycle with CHF 23.40 usage posts a CHF 13.40 overage charge exactly
+  once; ✅ a cycle ≤ CHF 10 posts nothing; ✅ re-delivered rollover doesn't double-charge.
 
 ---
 

@@ -82,6 +82,12 @@ type Client interface {
 	GetCard(ctx context.Context, customerID string) (*Card, error)
 	// ListInvoices returns the customer's billed/paid transactions, newest-first.
 	ListInvoices(ctx context.Context, customerID string) ([]Invoice, error)
+	// CreateOneTimeCharge posts a one-time charge on a subscription for the PAYG
+	// cycle-end overage: `quantity` units of the 1-Rappen overage price, billed on
+	// the next renewal transaction. idempotencyKey makes a re-post a no-op at
+	// Paddle. Returns the resulting transaction id if Paddle exposes one (it often
+	// doesn't until the renewal is billed), else empty.
+	CreateOneTimeCharge(ctx context.Context, subscriptionID, priceID string, quantity int64, idempotencyKey string) (string, error)
 }
 
 // HTTPClient talks to the real Paddle Billing API.
@@ -416,6 +422,73 @@ func parseMinorAmount(value string) int64 {
 		return 0
 	}
 	return n
+}
+
+// chargeResponse is the slice of the subscription entity Paddle returns from a
+// one-time charge. The charge itself rides the next renewal transaction, so the
+// only id we may see now is the previewed next_transaction's (often absent).
+type chargeResponse struct {
+	Data struct {
+		NextTransaction struct {
+			ID string `json:"id"`
+		} `json:"next_transaction"`
+	} `json:"data"`
+}
+
+// CreateOneTimeCharge posts the PAYG overage as a one-time charge billed on the
+// next renewal (`effective_from: next_billing_period`). The overage price is a
+// CHF 0.01 (1-Rappen) unit, so quantity == overage in Rappen. The
+// Paddle-Idempotency-Key makes a retried post return the same charge rather than
+// double-billing.
+func (c *HTTPClient) CreateOneTimeCharge(
+	ctx context.Context,
+	subscriptionID, priceID string,
+	quantity int64,
+	idempotencyKey string,
+) (string, error) {
+	if quantity < 1 {
+		return "", fmt.Errorf("paddle: one-time charge quantity must be >= 1, got %d", quantity)
+	}
+
+	payload := map[string]any{
+		"effective_from": "next_billing_period",
+		"items":          []map[string]any{{"price_id": priceID, "quantity": quantity}},
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("marshal charge payload: %w", err)
+	}
+
+	url := c.BaseURL + "/subscriptions/" + subscriptionID + "/charge?include=next_transaction"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		return "", fmt.Errorf("build charge request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+	if idempotencyKey != "" {
+		req.Header.Set("Paddle-Idempotency-Key", idempotencyKey)
+	}
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("call paddle: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf(
+			"paddle subscriptions charge returned %d: %s", resp.StatusCode, snippet(respBody),
+		)
+	}
+
+	var parsed chargeResponse
+	if err := json.Unmarshal(respBody, &parsed); err != nil {
+		// The charge succeeded (2xx); we just couldn't read an id. Not fatal.
+		return "", nil
+	}
+	return parsed.Data.NextTransaction.ID, nil
 }
 
 // CancelSubscription schedules cancellation at the end of the current period.

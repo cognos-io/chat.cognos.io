@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
@@ -29,11 +30,14 @@ const (
 // PaddleWebhookParams wires the webhook handler. PriceToPlan maps a Paddle
 // price id to the plan it activates. MinCommitRappen is the PAYG cycle floor
 // (CHF 10.00) used when closing a cycle to compute the overage above it.
+// Client + OveragePriceID let a cycle close post the overage charge to Paddle.
 type PaddleWebhookParams struct {
 	Logger          *slog.Logger
 	WebhookSecret   string
 	PriceToPlan     map[string]billing.PlanType
 	MinCommitRappen int64
+	Client          paddle.Client
+	OveragePriceID  string
 }
 
 // PaddleWebhook ingests Paddle notifications. It verifies the HMAC signature,
@@ -77,7 +81,7 @@ func PaddleWebhook(params PaddleWebhookParams) func(e *core.RequestEvent) error 
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to record event", err)
 		}
 
-		if dispatchErr := dispatchPaddleEvent(e.App, params, event); dispatchErr != nil {
+		if dispatchErr := dispatchPaddleEvent(e.Request.Context(), e.App, params, event); dispatchErr != nil {
 			record.Set("processing_error", dispatchErr.Error())
 			_ = e.App.Save(record)
 			if params.Logger != nil {
@@ -129,6 +133,7 @@ func recordPaddleEvent(
 // intentionally ignored (already stored raw). A returned error triggers a 500
 // + Paddle retry, so only genuinely retryable failures should bubble up.
 func dispatchPaddleEvent(
+	ctx context.Context,
 	app core.App,
 	params PaddleWebhookParams,
 	event paddle.WebhookEvent,
@@ -145,7 +150,7 @@ func dispatchPaddleEvent(
 		if err != nil {
 			return err
 		}
-		return updateSubscription(app, params, sub)
+		return updateSubscription(ctx, app, params, sub)
 	case "subscription.canceled":
 		sub, err := event.Subscription()
 		if err != nil {
@@ -258,6 +263,7 @@ func cancelSubscription(
 // the snapshot writes are plain assignments and the cycle close is keyed on a
 // deterministic id, so a re-delivered event changes nothing.
 func updateSubscription(
+	ctx context.Context,
 	app core.App,
 	params PaddleWebhookParams,
 	sub paddle.SubscriptionData,
@@ -292,7 +298,7 @@ func updateSubscription(
 	newStart, _ := time.Parse(time.RFC3339, sub.CurrentBillingPeriod.StartsAt)
 	rolledOver := !oldStart.IsZero() && !newStart.IsZero() && newStart.After(oldStart)
 	if rolledOver && oldPlan == string(billing.PlanTypePayG) && !oldEnd.IsZero() {
-		if err := closePAYGCycle(app, params, userID, sub.ID, oldStart, oldEnd); err != nil {
+		if err := closePAYGCycle(ctx, app, params, userID, sub.ID, oldStart, oldEnd); err != nil {
 			return err
 		}
 	}
@@ -322,10 +328,17 @@ func updateSubscription(
 
 // closePAYGCycle writes a payg_cycle_summaries row for the PAYG cycle that just
 // ended: the local usage total, the expected bill (max(usage, commit)), and the
-// overage above the commit. Idempotent — keyed on a deterministic id derived
-// from the subscription id + cycle end, so a re-delivered rollover never writes
-// a second summary. Phase 1 extends this to post the overage charge to Paddle.
+// overage above the commit. When the overage is positive it posts a one-time
+// charge to Paddle billed on the next renewal. Idempotent — keyed on a
+// deterministic id derived from the subscription id + cycle end, so a
+// re-delivered rollover never writes a second summary or posts twice.
+//
+// The summary is persisted before the charge is attempted: a charge failure is
+// logged and leaves paddle_overage_txn_id empty + reconciled=false for the
+// Phase 4 backstop to retry, but it must NOT fail the webhook — that would block
+// the cycle-bound advance below and the event is never re-dispatched.
 func closePAYGCycle(
+	ctx context.Context,
 	app core.App,
 	params PaddleWebhookParams,
 	userID, subscriptionID string,
@@ -362,7 +375,60 @@ func closePAYGCycle(
 	record.Set("overage_charge_rappen", summary.OverageChargeRappen)
 	record.Set("reconciled", false)
 	record.Set("closed_at", nowRFC3339())
-	return app.Save(record)
+	if err := app.Save(record); err != nil {
+		return err
+	}
+
+	postOverageCharge(ctx, app, params, record, subscriptionID, id, summary.OverageChargeRappen)
+	return nil
+}
+
+// postOverageCharge posts the cycle's overage to Paddle and records the result
+// on the summary. Best-effort: any failure is logged and left for the Phase 4
+// backstop (paddle_overage_txn_id stays empty). A deterministic idempotency key
+// per cycle guarantees a retry never double-charges.
+func postOverageCharge(
+	ctx context.Context,
+	app core.App,
+	params PaddleWebhookParams,
+	summary *core.Record,
+	subscriptionID, cycleID string,
+	overageRappen int64,
+) {
+	if overageRappen <= 0 {
+		return // usage within the commit; nothing to charge
+	}
+	if params.Client == nil || params.OveragePriceID == "" {
+		if params.Logger != nil {
+			params.Logger.Warn("PAYG overage not posted: Paddle charge not configured",
+				"subscription_id", subscriptionID, "overage_rappen", overageRappen)
+		}
+		return
+	}
+
+	idempotencyKey := "overage_" + cycleID
+	txnID, err := params.Client.CreateOneTimeCharge(
+		ctx, subscriptionID, params.OveragePriceID, overageRappen, idempotencyKey,
+	)
+	if err != nil {
+		if params.Logger != nil {
+			params.Logger.Error("PAYG overage charge failed; backstop will retry",
+				"subscription_id", subscriptionID, "overage_rappen", overageRappen, "err", err)
+		}
+		return
+	}
+
+	// Paddle bills next-billing-period charges on the upcoming renewal, so a real
+	// transaction id often isn't available yet. Persist it when present, otherwise
+	// a deterministic posted-marker so the backstop knows the charge is placed and
+	// won't re-post; transaction.completed (Phase 4) overwrites it with the real id.
+	if txnID == "" {
+		txnID = "posted:" + idempotencyKey
+	}
+	summary.Set("paddle_overage_txn_id", txnID)
+	if err := app.Save(summary); err != nil && params.Logger != nil {
+		params.Logger.Error("failed to record paddle_overage_txn_id", "err", err)
+	}
 }
 
 // sumPAYGUsageRappen totals the user-facing cost of `usage` ledger rows in the

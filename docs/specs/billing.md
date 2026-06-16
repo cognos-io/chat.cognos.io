@@ -731,9 +731,11 @@ side-by-side, so any drift is investigable.
 > subscription + cycle + `refund_eligible_until_at`; `subscription.updated`
 > refreshes the snapshot (plan/price, cycle window, scheduled cancellation) and
 > on a PAYG cycle rollover closes the prior cycle by writing an idempotent
-> `payg_cycle_summaries` row (local usage, expected bill, overage); `subscription.canceled`
+> `payg_cycle_summaries` row (local usage, expected bill, overage) and posting
+> the overage as a one-time charge to Paddle (`Paddle-Idempotency-Key` per cycle;
+> a failure leaves `reconciled=false` for the backstop); `subscription.canceled`
 > drops them to `inactive`. `subscription.past_due` and `transaction.completed`
-> are stored-only (no plan change) — posting the overage charge to Paddle, the
+> are stored-only (no plan change) — the 5-minute overage-retry backstop, the
 > `transaction.completed` reconciliation, and `adjustment.created`/refund
 > handling are the deferred fast-follow.
 > Customer↔user mapping uses `custom_data.user_id` with a `paddle_customer_id`

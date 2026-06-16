@@ -124,6 +124,7 @@ func addPocketBaseRoutes(
 	billingUsageRepo billing.UsageRepo,
 	paddlePlanByPrice map[string]handler.PlanMeta,
 	paddleMinCommitRappen int64,
+	paddleOveragePriceID string,
 ) {
 	// Paddle webhook: unauthenticated (verified by HMAC) and unthrottled so we
 	// never drop Paddle's retries. Bad signatures are rejected before any write.
@@ -134,6 +135,8 @@ func addPocketBaseRoutes(
 			WebhookSecret:   paddleWebhookSecret,
 			PriceToPlan:     paddlePriceToPlan,
 			MinCommitRappen: paddleMinCommitRappen,
+			Client:          paddleClient,
+			OveragePriceID:  paddleOveragePriceID,
 		}),
 	)
 

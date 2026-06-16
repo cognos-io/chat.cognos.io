@@ -30,6 +30,14 @@ type fakePaddleClient struct {
 	cardErr     error
 	invoices    []paddle.Invoice
 	invoicesErr error
+
+	chargeCalls    int
+	chargeSubID    string
+	chargePriceID  string
+	chargeQuantity int64
+	chargeIdemKey  string
+	chargeTxnID    string
+	chargeErr      error
 }
 
 func (f *fakePaddleClient) CreateCheckout(
@@ -68,6 +76,20 @@ func (f *fakePaddleClient) GetCard(_ context.Context, _ string) (*paddle.Card, e
 
 func (f *fakePaddleClient) ListInvoices(_ context.Context, _ string) ([]paddle.Invoice, error) {
 	return f.invoices, f.invoicesErr
+}
+
+func (f *fakePaddleClient) CreateOneTimeCharge(
+	_ context.Context,
+	subscriptionID, priceID string,
+	quantity int64,
+	idempotencyKey string,
+) (string, error) {
+	f.chargeCalls++
+	f.chargeSubID = subscriptionID
+	f.chargePriceID = priceID
+	f.chargeQuantity = quantity
+	f.chargeIdemKey = idempotencyKey
+	return f.chargeTxnID, f.chargeErr
 }
 
 func checkoutConfig() *config.APIConfig {

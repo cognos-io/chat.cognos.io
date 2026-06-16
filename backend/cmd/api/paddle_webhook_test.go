@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -16,6 +17,7 @@ import (
 	"github.com/pocketbase/pocketbase/tests"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 )
 
 const (
@@ -37,6 +39,7 @@ const subscriptionCanceledBody = `{"event_id":"evt_canceled_1","event_type":"sub
 func paddleWebhookConfig() *config.APIConfig {
 	c := checkoutConfig()
 	c.PaddleWebhookSecret = webhookSecret
+	c.PaddlePricePAYGOverage = "pri_payg_overage"
 	return c
 }
 
@@ -53,8 +56,17 @@ func signPaddle(t testing.TB, secret, body string) string {
 // bootWebhookMux boots a test app with Paddle configured and returns its HTTP
 // mux so a test can drive several requests against one app.
 func bootWebhookMux(t *testing.T) (*tests.TestApp, http.Handler) {
+	return bootWebhookMuxWithClient(t, nil)
+}
+
+// bootWebhookMuxWithClient boots a webhook test app wired to a fake Paddle
+// client so a test can assert outbound calls (e.g. the overage charge).
+func bootWebhookMuxWithClient(t *testing.T, client paddle.Client) (*tests.TestApp, http.Handler) {
 	t.Helper()
-	app := setupTestAppWithHookParams(t, appHookParams{Config: paddleWebhookConfig()})
+	app := setupTestAppWithHookParams(t, appHookParams{
+		Config:       paddleWebhookConfig(),
+		PaddleClient: client,
+	})
 
 	baseRouter, err := apis.NewRouter(app)
 	if err != nil {
@@ -210,8 +222,14 @@ func TestPaddleWebhookCancelsSubscription(t *testing.T) {
 // activatePAYG subscribes the test user to the PAYG price (pri_payg) for the
 // June 2026 cycle, returning the booted app + mux.
 func activatePAYG(t *testing.T) (*tests.TestApp, http.Handler) {
+	return activatePAYGWithClient(t, nil)
+}
+
+// activatePAYGWithClient is activatePAYG wired to a fake Paddle client so cycle
+// rollover can exercise the overage charge.
+func activatePAYGWithClient(t *testing.T, client paddle.Client) (*tests.TestApp, http.Handler) {
 	t.Helper()
-	app, mux := bootWebhookMux(t)
+	app, mux := bootWebhookMuxWithClient(t, client)
 	body := `{"event_id":"evt_payg_create","event_type":"subscription.created",` +
 		`"data":{"id":"sub_payg","customer_id":"ctm_payg","status":"active",` +
 		`"custom_data":{"user_id":"uvi8zmr78j9y5hz"},` +
@@ -330,6 +348,98 @@ func TestPaddleWebhookRolloverIsIdempotent(t *testing.T) {
 	}
 	if n != 1 {
 		t.Errorf("payg_cycle_summaries count = %d, want exactly 1", n)
+	}
+}
+
+func TestPaddleWebhookRolloverPostsOverageCharge(t *testing.T) {
+	fake := &fakePaddleClient{chargeTxnID: "txn_overage_1"}
+	app, mux := activatePAYGWithClient(t, fake)
+
+	// CHF 23.40 usage in the June cycle → CHF 13.40 overage (1340 rappen).
+	seedUsage(t, app, time.Date(2026, 6, 5, 12, 0, 0, 0, time.UTC), 2340)
+
+	if rec := postWebhook(mux, paygRolloverBody, signPaddle(t, webhookSecret, paygRolloverBody)); rec.Code != http.StatusOK {
+		t.Fatalf("rollover status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+
+	if fake.chargeCalls != 1 {
+		t.Fatalf("CreateOneTimeCharge calls = %d, want 1", fake.chargeCalls)
+	}
+	if fake.chargeSubID != "sub_payg" {
+		t.Errorf("charge subscription = %q, want sub_payg", fake.chargeSubID)
+	}
+	if fake.chargePriceID != "pri_payg_overage" {
+		t.Errorf("charge price = %q, want pri_payg_overage", fake.chargePriceID)
+	}
+	if fake.chargeQuantity != 1340 {
+		t.Errorf("charge quantity = %d, want 1340", fake.chargeQuantity)
+	}
+
+	summary := cycleSummaryFor(t, app, "sub_payg")
+	if summary == nil {
+		t.Fatal("expected a cycle summary")
+	}
+	if want := "overage_" + summary.Id; fake.chargeIdemKey != want {
+		t.Errorf("idempotency key = %q, want %q", fake.chargeIdemKey, want)
+	}
+	if got := summary.GetString("paddle_overage_txn_id"); got != "txn_overage_1" {
+		t.Errorf("paddle_overage_txn_id = %q, want txn_overage_1", got)
+	}
+}
+
+func TestPaddleWebhookRolloverWithinCommitPostsNothing(t *testing.T) {
+	fake := &fakePaddleClient{}
+	app, mux := activatePAYGWithClient(t, fake)
+
+	// CHF 3.42 usage — under the CHF 10 commit, so no overage charge.
+	seedUsage(t, app, time.Date(2026, 6, 5, 12, 0, 0, 0, time.UTC), 342)
+
+	if rec := postWebhook(mux, paygRolloverBody, signPaddle(t, webhookSecret, paygRolloverBody)); rec.Code != http.StatusOK {
+		t.Fatalf("rollover status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+
+	if fake.chargeCalls != 0 {
+		t.Errorf("CreateOneTimeCharge calls = %d, want 0 (within commit)", fake.chargeCalls)
+	}
+	summary := cycleSummaryFor(t, app, "sub_payg")
+	if summary == nil {
+		t.Fatal("expected a cycle summary")
+	}
+	if got := summary.GetInt("overage_charge_rappen"); got != 0 {
+		t.Errorf("overage_charge_rappen = %d, want 0", got)
+	}
+	if got := summary.GetString("paddle_overage_txn_id"); got != "" {
+		t.Errorf("paddle_overage_txn_id = %q, want empty (no charge)", got)
+	}
+}
+
+func TestPaddleWebhookRolloverChargeFailureStillAdvancesCycle(t *testing.T) {
+	fake := &fakePaddleClient{chargeErr: context.DeadlineExceeded}
+	app, mux := activatePAYGWithClient(t, fake)
+	seedUsage(t, app, time.Date(2026, 6, 5, 12, 0, 0, 0, time.UTC), 2340)
+
+	// A Paddle charge failure must not fail the webhook — the summary persists
+	// (reconciled=false, no txn id) for the backstop, and the cycle still advances.
+	if rec := postWebhook(mux, paygRolloverBody, signPaddle(t, webhookSecret, paygRolloverBody)); rec.Code != http.StatusOK {
+		t.Fatalf("rollover status = %d, want 200 despite charge failure — body: %s", rec.Code, rec.Body.String())
+	}
+
+	summary := cycleSummaryFor(t, app, "sub_payg")
+	if summary == nil {
+		t.Fatal("expected a cycle summary even when the charge failed")
+	}
+	if got := summary.GetString("paddle_overage_txn_id"); got != "" {
+		t.Errorf("paddle_overage_txn_id = %q, want empty after a failed charge", got)
+	}
+	if summary.GetBool("reconciled") {
+		t.Error("reconciled should be false after a failed charge")
+	}
+	billingRec, err := app.FindFirstRecordByData("user_billing", "user_id", testUserID)
+	if err != nil {
+		t.Fatalf("find user_billing: %v", err)
+	}
+	if got := billingRec.GetDateTime("paddle_cycle_start_at").Time().UTC(); !got.Equal(time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC)) {
+		t.Errorf("cycle did not advance: paddle_cycle_start_at = %s, want 2026-07-01", got)
 	}
 }
 

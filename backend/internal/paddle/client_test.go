@@ -60,6 +60,89 @@ func TestHTTPClientCreateCheckout_Success(t *testing.T) {
 	}
 }
 
+func TestHTTPClientCreateOneTimeCharge_Success(t *testing.T) {
+	var gotPath, gotIdem, gotMethod string
+	var gotBody map[string]any
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotMethod = r.Method
+		gotPath = r.URL.Path
+		gotIdem = r.Header.Get("Paddle-Idempotency-Key")
+		raw, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(raw, &gotBody)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write([]byte(`{"data":{"id":"sub_1","next_transaction":{"id":"txn_next_9"}}}`))
+	}))
+	defer server.Close()
+
+	client := NewHTTPClient(server.URL, "pdl_test_key")
+	txnID, err := client.CreateOneTimeCharge(
+		context.Background(), "sub_1", "pri_overage", 1340, "overage_cycleabc",
+	)
+	if err != nil {
+		t.Fatalf("CreateOneTimeCharge: %v", err)
+	}
+	if txnID != "txn_next_9" {
+		t.Errorf("txnID = %q, want txn_next_9", txnID)
+	}
+	if gotMethod != http.MethodPost {
+		t.Errorf("method = %q, want POST", gotMethod)
+	}
+	if gotPath != "/subscriptions/sub_1/charge" {
+		t.Errorf("path = %q, want /subscriptions/sub_1/charge", gotPath)
+	}
+	if gotIdem != "overage_cycleabc" {
+		t.Errorf("Paddle-Idempotency-Key = %q", gotIdem)
+	}
+	if gotBody["effective_from"] != "next_billing_period" {
+		t.Errorf("effective_from = %v, want next_billing_period", gotBody["effective_from"])
+	}
+	items, _ := gotBody["items"].([]any)
+	if len(items) != 1 {
+		t.Fatalf("items len = %d, want 1", len(items))
+	}
+	item, _ := items[0].(map[string]any)
+	if item["price_id"] != "pri_overage" {
+		t.Errorf("item price_id = %v, want pri_overage", item["price_id"])
+	}
+	// JSON numbers decode to float64.
+	if qty, _ := item["quantity"].(float64); qty != 1340 {
+		t.Errorf("item quantity = %v, want 1340", item["quantity"])
+	}
+}
+
+func TestHTTPClientCreateOneTimeCharge_RejectsZeroQuantity(t *testing.T) {
+	called := false
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusCreated)
+	}))
+	defer server.Close()
+
+	client := NewHTTPClient(server.URL, "k")
+	if _, err := client.CreateOneTimeCharge(context.Background(), "sub_1", "pri_overage", 0, "k1"); err == nil {
+		t.Error("expected an error for quantity < 1")
+	}
+	if called {
+		t.Error("must not call Paddle with an invalid quantity")
+	}
+}
+
+func TestHTTPClientCreateOneTimeCharge_PaddleError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":{"code":"subscription_not_active"}}`))
+	}))
+	defer server.Close()
+
+	client := NewHTTPClient(server.URL, "k")
+	if _, err := client.CreateOneTimeCharge(context.Background(), "sub_1", "pri_overage", 100, "k1"); err == nil {
+		t.Error("expected an error on a non-2xx Paddle response")
+	}
+}
+
 func TestHTTPClientCreateCheckout_PaddleError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
