@@ -1,0 +1,133 @@
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { Router } from '@angular/router';
+
+import { CognosIconComponent } from '@cognos/ui-angular';
+
+import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
+import { Persona } from '@app/interfaces/persona';
+import { PersonaService } from '@app/services/persona.service';
+
+// Quick persona chips shown above the composer on a fresh chat: the active
+// persona plus pinned ones, and an "All" chip that opens the personas page.
+@Component({
+  selector: 'app-persona-chips',
+  standalone: true,
+  imports: [CognosIconComponent, PersonaAvatarComponent],
+  template: `
+    <div class="persona-chips" role="group" aria-label="Quick persona switch">
+      @for (persona of chips(); track persona.id) {
+        <button
+          type="button"
+          class="persona-chips__chip"
+          [class.is-active]="persona.id === selectedId()"
+          [attr.aria-pressed]="persona.id === selectedId()"
+          (click)="select(persona)"
+        >
+          @if (persona.id === selectedId()) {
+            <cog-icon name="check" [size]="14" tone="success" />
+          } @else {
+            <app-persona-avatar
+              [icon]="persona.icon"
+              [color]="persona.color"
+              [size]="18"
+            />
+          }
+          <span class="persona-chips__name">{{ persona.name }}</span>
+        </button>
+      }
+
+      <button
+        type="button"
+        class="persona-chips__chip persona-chips__chip--all"
+        (click)="openAll()"
+      >
+        <cog-icon name="layout-grid" [size]="14" />
+        <span class="persona-chips__name">All</span>
+      </button>
+    </div>
+  `,
+  styles: `
+    :host {
+      display: block;
+    }
+
+    .persona-chips {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--cog-space-075, 6px);
+    }
+
+    .persona-chips__chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-050, 6px);
+      padding: 4px 10px 4px 6px;
+      border: 1px solid var(--cog-border, #e2e8f0);
+      border-radius: var(--cog-radius-pill, 999px);
+      background: var(--cog-surface, #ffffff);
+      color: var(--cog-text, #0f172a);
+      font: inherit;
+      font-size: var(--cog-fs-caption, 13px);
+      cursor: pointer;
+      transition:
+        border-color var(--cog-dur-fast) var(--cog-ease-standard),
+        background var(--cog-dur-fast) var(--cog-ease-standard);
+    }
+
+    .persona-chips__chip:hover {
+      border-color: var(--cog-border-strong, #cbd5e1);
+    }
+
+    .persona-chips__chip.is-active {
+      border-color: var(--cog-brand, #16a34a);
+      background: var(--cog-success-surface, #f0fdf4);
+      color: var(--cog-success-text, #15803d);
+      font-weight: var(--cog-fw-semibold, 600);
+      padding-left: 10px;
+    }
+
+    .persona-chips__chip--all {
+      border-style: dashed;
+      color: var(--cog-text-subtle, #64748b);
+      padding-left: 10px;
+    }
+
+    .persona-chips__name {
+      white-space: nowrap;
+    }
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class PersonaChipsComponent {
+  private readonly _personas = inject(PersonaService);
+  private readonly _router = inject(Router);
+
+  readonly selectedId = computed(() => this._personas.selectedPersona().id);
+
+  // Active persona first, then pinned, de-duplicated and capped so the row
+  // stays on one or two lines.
+  readonly chips = computed<Persona[]>(() => {
+    const ordered = [
+      this._personas.selectedPersona(),
+      ...this._personas.pinnedPersonas(),
+    ];
+    const seen = new Set<string>();
+    const list: Persona[] = [];
+    for (const persona of ordered) {
+      if (!seen.has(persona.id)) {
+        seen.add(persona.id);
+        list.push(persona);
+      }
+    }
+    return list.slice(0, 4);
+  });
+
+  select(persona: Persona): void {
+    this._personas.selectPersona(persona.id);
+  }
+
+  openAll(): void {
+    void this._router.navigate(['/personas']);
+  }
+}

@@ -42,6 +42,28 @@ test('switches persona multiple times within one conversation', async ({ page })
     await route.fulfill({ status: 201, json: { items: [] } });
   });
 
+  // Switching marks personas recently-used, which writes preferences; accept
+  // the writes and echo them so the client can decrypt its own payload.
+  await page.route(`${API}/api/v1/user-preferences`, async (route) => {
+    if (route.request().method() === 'POST') {
+      const body = route.request().postDataJSON() as { data: string };
+      await route.fulfill({
+        status: 201,
+        json: { id: 'prefs_switch', data: body.data },
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 404,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'Not found' }),
+    });
+  });
+  await page.route(`${API}/api/v1/user-preferences/prefs_switch`, async (route) => {
+    const body = route.request().postDataJSON() as { data: string };
+    await route.fulfill({ json: { id: 'prefs_switch', data: body.data } });
+  });
+
   await page.route(`${API}/api/v1/models`, async (route) => {
     await route.fulfill({
       json: {
@@ -145,25 +167,31 @@ test('switches persona multiple times within one conversation', async ({ page })
 
   const composer = page.getByLabel('Message Cognos — encrypted on this device');
 
+  // On a fresh chat the persona chips are shown above the composer.
+  const chips = page.locator('.persona-chips');
+  await expect(chips).toBeVisible();
+  await expect(chips.getByText('Simple Assistant')).toBeVisible();
+  await expect(chips.getByText('All')).toBeVisible();
+
   // Turn 1 — default persona (Simple Assistant)
   await composer.fill('First message');
   await page.getByRole('button', { name: 'Send' }).click();
   await expect(page.getByText('Reply 1')).toBeVisible();
 
-  // Switch to Direct
-  await page.getByTitle(/Choose persona/).click();
-  await page.getByText('Direct', { exact: true }).click();
-  await page.getByRole('button', { name: 'Select' }).click();
+  // Switch to Direct via the in-chat dropdown
+  await page.getByTitle(/Switch persona/).click();
+  await page.locator('.persona-switcher__row', { hasText: 'Direct' }).click();
 
   // Turn 2 — Direct persona
   await composer.fill('Second message');
   await page.getByRole('button', { name: 'Send' }).click();
   await expect(page.getByText('Reply 2')).toBeVisible();
 
-  // Switch to Technical Partner
-  await page.getByTitle(/Choose persona/).click();
-  await page.getByText('Technical Partner', { exact: true }).click();
-  await page.getByRole('button', { name: 'Select' }).click();
+  // Switch to Technical Partner via the in-chat dropdown
+  await page.getByTitle(/Switch persona/).click();
+  await page
+    .locator('.persona-switcher__row', { hasText: 'Technical Partner' })
+    .click();
 
   // Turn 3 — Technical Partner persona
   await composer.fill('Third message');

@@ -1,4 +1,3 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { isPlatformBrowser } from '@angular/common';
@@ -25,6 +24,7 @@ import {
   CognosIconComponent,
 } from '@cognos/ui-angular';
 
+import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import { BillingService } from '@app/services/billing.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
@@ -35,10 +35,10 @@ import {
 } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
-import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 import { ModelSelectorComponent } from './model-selector/model-selector.component';
-import { PersonaSelectorComponent } from './persona-selector/persona-selector.component';
+import { PersonaChipsComponent } from './persona-chips/persona-chips.component';
+import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.component';
 
 @Component({
   selector: 'app-message-form',
@@ -51,6 +51,9 @@ import { PersonaSelectorComponent } from './persona-selector/persona-selector.co
     CognosIconButtonComponent,
     CognosIconComponent,
     ModelSelectorComponent,
+    PersonaSwitcherComponent,
+    PersonaChipsComponent,
+    PersonaAvatarComponent,
   ],
   template: `
     <form class="message-form" [formGroup]="messageForm" (submit)="sendMessage()">
@@ -86,6 +89,10 @@ import { PersonaSelectorComponent } from './persona-selector/persona-selector.co
           </p>
         </div>
       } @else {
+        @if (showPersonaChips()) {
+          <app-persona-chips />
+        }
+
         <div class="message-form__panel">
           <label class="message-form__label" for="message-form">
             Message Cognos — encrypted on this device
@@ -132,12 +139,41 @@ import { PersonaSelectorComponent } from './persona-selector/persona-selector.co
               ></app-model-selector>
             </ng-template>
 
-            <cog-icon-button
-              name="sparkles"
-              title="Choose persona — {{ personaService.selectedPersona().name }}"
+            <button
+              #personaTrigger="cdkOverlayOrigin"
+              cdkOverlayOrigin
               type="button"
-              (click)="openPersonaSelector()"
-            />
+              class="message-form__persona"
+              title="Switch persona — {{ personaService.selectedPersona().name }}"
+              (click)="togglePersonaSwitcher()"
+            >
+              <app-persona-avatar
+                [icon]="personaService.selectedPersona().icon"
+                [color]="personaService.selectedPersona().color"
+                [size]="22"
+              />
+              <span class="message-form__persona-name">
+                {{ personaService.selectedPersona().name }}
+              </span>
+              <cog-icon name="chevron-down" [size]="14" tone="text-subtle" />
+            </button>
+
+            <ng-template
+              cdkConnectedOverlay
+              [cdkConnectedOverlayOrigin]="personaTrigger"
+              [cdkConnectedOverlayOpen]="personaSwitcherOpen()"
+              [cdkConnectedOverlayHasBackdrop]="true"
+              cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+              [cdkConnectedOverlayPositions]="modelSelectorPositions"
+              (backdropClick)="closePersonaSwitcher()"
+              (detach)="closePersonaSwitcher()"
+              (overlayKeydown)="onPersonaOverlayKeydown($event)"
+            >
+              <app-persona-switcher
+                (personaSelected)="closePersonaSwitcher()"
+                (managed)="closePersonaSwitcher()"
+              ></app-persona-switcher>
+            </ng-template>
 
             @if (canClearTemporaryMessages() && !isMobile()) {
               <cog-icon-button
@@ -241,6 +277,39 @@ import { PersonaSelectorComponent } from './persona-selector/persona-selector.co
 
     .message-form__send {
       margin-left: auto;
+    }
+
+    .message-form__persona {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-075, 6px);
+      padding: 4px 8px 4px 4px;
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-pill, 999px);
+      background: var(--cog-surface);
+      color: var(--cog-text);
+      font: inherit;
+      font-size: var(--cog-fs-caption, 13px);
+      cursor: pointer;
+      max-width: 200px;
+      transition: border-color var(--cog-dur-fast) var(--cog-ease-standard);
+    }
+
+    .message-form__persona:hover {
+      border-color: var(--cog-border-strong, var(--cog-brand));
+    }
+
+    .message-form__persona-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: var(--cog-fw-semibold, 600);
+    }
+
+    @media (max-width: 767px) {
+      .message-form__persona-name {
+        display: none;
+      }
     }
 
     .message-form__locked-wrap {
@@ -357,7 +426,6 @@ import { PersonaSelectorComponent } from './persona-selector/persona-selector.co
   `,
 })
 export class MessageFormComponent {
-  private readonly _dialog = inject(Dialog);
   private readonly _fb = inject(FormBuilder);
   private readonly _platformId = inject(PLATFORM_ID);
   private readonly _conversationService = inject(ConversationService);
@@ -457,8 +525,26 @@ export class MessageFormComponent {
     },
   ];
 
-  openPersonaSelector() {
-    this._dialog.open(PersonaSelectorComponent, cognosDialogOptions);
+  readonly personaSwitcherOpen = signal(false);
+
+  // The pinned-persona chips are a fresh-chat affordance: only shown before the
+  // first message so they don't clutter an ongoing conversation.
+  readonly showPersonaChips = computed(
+    () => this.messageService.messages().length === 0,
+  );
+
+  togglePersonaSwitcher() {
+    this.personaSwitcherOpen.update((open) => !open);
+  }
+
+  closePersonaSwitcher() {
+    this.personaSwitcherOpen.set(false);
+  }
+
+  onPersonaOverlayKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      this.closePersonaSwitcher();
+    }
   }
 
   goToBilling() {

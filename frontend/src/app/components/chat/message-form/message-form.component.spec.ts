@@ -1,4 +1,3 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -49,7 +48,6 @@ describe('MessageFormComponent', () => {
       imports: [MessageFormComponent],
       providers: [
         provideRouter([]),
-        { provide: Dialog, useValue: { open: vi.fn() } },
         {
           provide: PersonaService,
           useValue: {
@@ -57,7 +55,13 @@ describe('MessageFormComponent', () => {
               id: 'persona-1',
               name: 'Cognos Persona',
               systemPrompt: 'Be helpful.',
+              icon: 'sparkles',
+              color: 'green',
             }),
+            pinnedPersonas: signal([]),
+            recentPersonas: signal([]),
+            officialPersonas: signal([]),
+            selectPersona: vi.fn(),
           },
         },
         {
