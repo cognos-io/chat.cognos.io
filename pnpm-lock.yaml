@@ -71,6 +71,9 @@ importers:
       '@cognos/ui-angular':
         specifier: workspace:*
         version: link:../packages/ui-angular
+      '@paddle/paddle-js':
+        specifier: ^1.6.4
+        version: 1.6.4
       argon2id:
         specifier: ^1.0.1
         version: 1.0.1
@@ -2734,6 +2737,9 @@ packages:
     resolution: {integrity: sha512-Wb14jWEW8huH6It9F6sXd9vrYmIS7pMrgkU6sxpLxkP+9z+wRgs71hUEhRpcn8FOXAFa27FVWfY2tRpbfTzfLw==}
     cpu: [x64]
     os: [win32]
+
+  '@paddle/paddle-js@1.6.4':
+    resolution: {integrity: sha512-ncfnS6I8mCX6krZ3Sgz2iAYivGmhdI81yt9mT6prtPj4Ipd9J3M12LCJRUFL4FB7BYeeuV04c33RSEnbZUBCaA==}
 
   '@parcel/watcher-android-arm64@2.5.6':
     resolution: {integrity: sha512-YQxSS34tPF/6ZG7r/Ih9xy+kP/WwediEUsqmtf0cuCV5TPPKw/PQHRhueUo6JdeFJaqV3pyjm0GdYjZotbRt/A==}
@@ -11326,6 +11332,8 @@ snapshots:
   '@oxc-resolver/binding-win32-x64-msvc@11.20.0':
     optional: true
 
+  '@paddle/paddle-js@1.6.4': {}
+
   '@parcel/watcher-android-arm64@2.5.6':
     optional: true
 
@@ -17246,7 +17254,7 @@ snapshots:
 
   telejson@8.0.0: {}
 
-  terser-webpack-plugin@5.6.1(esbuild@0.27.3)(postcss@8.5.12)(webpack@5.105.2(esbuild@0.27.3)(postcss@8.5.12)):
+  terser-webpack-plugin@5.6.1(esbuild@0.27.3)(postcss@8.5.15)(webpack@5.105.2(esbuild@0.27.3)(postcss@8.5.12)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
@@ -17255,7 +17263,7 @@ snapshots:
       webpack: 5.105.2(esbuild@0.27.3)(postcss@8.5.15)
     optionalDependencies:
       esbuild: 0.27.3
-      postcss: 8.5.12
+      postcss: 8.5.15
 
   terser-webpack-plugin@5.6.1(esbuild@0.27.3)(postcss@8.5.15)(webpack@5.94.0(esbuild@0.27.3)(postcss@8.5.15)):
     dependencies:
@@ -17813,7 +17821,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3
-      terser-webpack-plugin: 5.6.1(esbuild@0.27.3)(postcss@8.5.12)(webpack@5.105.2(esbuild@0.27.3)(postcss@8.5.12))
+      terser-webpack-plugin: 5.6.1(esbuild@0.27.3)(postcss@8.5.15)(webpack@5.105.2(esbuild@0.27.3)(postcss@8.5.12))
       watchpack: 2.5.1
       webpack-sources: 3.5.0
     transitivePeerDependencies:

@@ -4,6 +4,6 @@ export const environment = {
   localVaultPassword: '',
   // Paddle.js: client-side token (publishable) + environment. Empty token
   // disables the overlay and falls back to the hosted checkout URL.
-  paddleClientToken: '',
+  paddleClientToken: 'test_c1107d12db43b5817816135fccf',
   paddleEnvironment: 'sandbox' as 'sandbox' | 'production',
 };

@@ -10,6 +10,12 @@ install-dev: install-mise
     @pnpm install
     @lefthook install
 
+# Generates a self-signed certificate for the development server
+mkcert:
+    @if [ ! -f /tmp/cognos.crt ]; then \
+        mkcert -cert-file=/tmp/cognos.crt -key-file=/tmp/cognos.key localhost 127.0.0.1 cognos.local; \
+    fi
+
 # Run the Go tests
 [working-directory("backend")]
 go-test:
@@ -32,12 +38,12 @@ storybook:
 
 # Run the frontend dev server
 [working-directory("frontend")]
-frontend:
-    @pnpm start
+frontend: mkcert
+    @pnpm start --host cognos.local --port 4200 --ssl --ssl-cert /tmp/cognos.crt --ssl-key /tmp/cognos.key
 
 # Run the backend API with live reload
 [working-directory("backend")]
-backend:
+backend: mkcert
     @go run github.com/cosmtrek/air@v1.50.0 \
         --build.cmd "go build -o=/tmp/bin/api ./cmd/api" \
         --build.bin "/tmp/bin/api" \
