@@ -49,6 +49,36 @@ func TestSelectReplySwitchesOnTokenCap(t *testing.T) {
 			req:  chatCompletionRequest{},
 			want: "Mocked assistant reply",
 		},
+		{
+			name: "echo sentinel replies with the user content verbatim, stripped",
+			req: chatCompletionRequest{
+				Messages: []chatCompletionMsg{
+					{Role: "user", Content: echoPrefix + "hello world"},
+				},
+			},
+			want: "hello world",
+		},
+		{
+			name: "echo uses the latest user turn, ignoring earlier ones",
+			req: chatCompletionRequest{
+				Messages: []chatCompletionMsg{
+					{Role: "user", Content: "first"},
+					{Role: "assistant", Content: "reply"},
+					{Role: "user", Content: echoPrefix + "second"},
+				},
+			},
+			want: "second",
+		},
+		{
+			name: "echo sentinel is ignored under the title token cap",
+			req: chatCompletionRequest{
+				MaxTokens: 10,
+				Messages: []chatCompletionMsg{
+					{Role: "user", Content: echoPrefix + "ignored"},
+				},
+			},
+			want: "Mocked conversation title",
+		},
 	}
 
 	for _, tc := range cases {

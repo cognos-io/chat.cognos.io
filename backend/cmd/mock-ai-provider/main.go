@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -84,9 +85,10 @@ func routes(logger *slog.Logger) http.Handler {
 }
 
 type chatCompletionRequest struct {
-	Model               string `json:"model"`
-	MaxTokens           int    `json:"max_tokens"`
-	MaxCompletionTokens int    `json:"max_completion_tokens"`
+	Model               string              `json:"model"`
+	MaxTokens           int                 `json:"max_tokens"`
+	MaxCompletionTokens int                 `json:"max_completion_tokens"`
+	Messages            []chatCompletionMsg `json:"messages"`
 }
 
 type chatCompletionResponse struct {
@@ -148,6 +150,12 @@ func chatCompletionsHandler(logger *slog.Logger) http.HandlerFunc {
 	}
 }
 
+// echoPrefix opts a request into echo mode: the latest user turn is replied to
+// verbatim with the sentinel stripped. Tests use it to drive an arbitrarily
+// large assistant reply (to exercise message-persistence limits) without baking
+// sizes into the mock.
+const echoPrefix = "[echo]"
+
 // selectReply mirrors the .mjs heuristic: the backend issues a tiny
 // (max_tokens ≤ 20) call when it wants the model to invent a conversation
 // title; everything else is treated as a real assistant turn. Keeping it
@@ -160,7 +168,21 @@ func selectReply(req chatCompletionRequest) string {
 	if tokenCap > 0 && tokenCap <= 20 {
 		return "Mocked conversation title"
 	}
+	if last := lastUserContent(req); strings.HasPrefix(last, echoPrefix) {
+		return strings.TrimPrefix(last, echoPrefix)
+	}
 	return "Mocked assistant reply"
+}
+
+// lastUserContent returns the content of the final user message, or "" when
+// there isn't one.
+func lastUserContent(req chatCompletionRequest) string {
+	for i := len(req.Messages) - 1; i >= 0; i-- {
+		if req.Messages[i].Role == "user" {
+			return req.Messages[i].Content
+		}
+	}
+	return ""
 }
 
 func writeJSON(w http.ResponseWriter, status int, body any) {

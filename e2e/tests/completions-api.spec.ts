@@ -35,6 +35,11 @@ interface CompleteResponse {
   usage: CompleteResponseUsage;
 }
 
+interface MessageListResponse {
+  totalItems: number;
+  items: { id: string; data: string }[];
+}
+
 const APPROVED_MODEL_ID = 'llama-3-3-infomaniak';
 const DEFAULT_AGENT_ID = 'cognos:simple-assistant';
 
@@ -271,6 +276,55 @@ test.describe('persisted /conversations/{id}/complete API', () => {
       expect(listRes.ok()).toBe(true);
       const list = (await listRes.json()) as { totalItems: number };
       expect(list.totalItems).toBeGreaterThanOrEqual(2);
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
+  test('persists an assistant reply longer than the 5000-char text default', async () => {
+    // Regression for "Must be no more than 5000 character(s)." on
+    // /complete. messages.data holds base64(ciphertext); a long assistant
+    // reply pushes it past PocketBase's implicit 5000-char default for a text
+    // field with no explicit max. Migration 1760000029 raised the cap to 1MB.
+    // The mock provider's [echo] sentinel returns the user turn verbatim, so we
+    // drive the reply size from here and exercise both the user-message and
+    // assistant-message save paths in one request.
+    const user = await provisionApiUser();
+    try {
+      const conversationID = await createConversationWithKey(user);
+
+      // ~8k chars of plaintext: comfortably past 5000 once JSON-wrapped,
+      // encrypted and base64-encoded, for both the prompt and the echoed reply.
+      const largeBody = 'x'.repeat(8000);
+      const prompt = `[echo]${largeBody}`;
+
+      const res = await user.api.post(
+        `/api/v1/conversations/${conversationID}/complete`,
+        {
+          data: {
+            model_id: APPROVED_MODEL_ID,
+            agent_id: DEFAULT_AGENT_ID,
+            request_id: 'e2e-large-1',
+            messages: [{ role: 'user', content: prompt }],
+          },
+        },
+      );
+      expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
+
+      const body = (await res.json()) as CompleteResponse;
+      // The reply echoed the prompt verbatim (sentinel stripped).
+      expect(body.assistant_message.content).toBe(largeBody);
+
+      // Both turns persisted, and at least one stored ciphertext exceeds the
+      // old 5000-char cap — proving the field now accepts large messages.
+      const listRes = await user.api.get(
+        `/api/v1/conversations/${conversationID}/messages?page=1&page_size=50`,
+      );
+      expect(listRes.ok()).toBe(true);
+      const list = (await listRes.json()) as MessageListResponse;
+      expect(list.totalItems).toBeGreaterThanOrEqual(2);
+      const longestCiphertext = Math.max(...list.items.map((m) => m.data.length));
+      expect(longestCiphertext).toBeGreaterThan(5000);
     } finally {
       await user.api.dispose();
     }
