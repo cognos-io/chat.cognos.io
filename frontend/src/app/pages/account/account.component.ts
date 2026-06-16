@@ -5,6 +5,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { Router } from '@angular/router';
 
 import {
   CognosAvatarComponent,
@@ -24,6 +25,7 @@ import {
   coerceAvatarIcon,
 } from '@app/interfaces/avatar';
 import { AuthService } from '@app/services/auth.service';
+import { CognosApiService } from '@app/services/cognos-api.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { deriveProfileName } from '@app/utils/profile-identity';
 
@@ -180,6 +182,55 @@ import { deriveProfileName } from '@app/utils/profile-identity';
         } @else {
           <cog-button appearance="danger" (click)="confirmingDeleteChats.set(true)">
             Delete all chats
+          </cog-button>
+        }
+      </div>
+
+      <hr class="account__danger-divider" />
+
+      <div class="account__danger-row">
+        <div class="account__danger-copy">
+          <p class="account__danger-title">Delete account</p>
+          <p class="account__card-subtitle">
+            Permanently delete your account, chats, keys and personas. Billing records
+            are retained for accounting. This can’t be undone.
+          </p>
+
+          @if (confirmingDeleteAccount()) {
+            <div class="account__field account__danger-confirm-field">
+              <span class="account__hint">
+                Type <strong>DELETE</strong> to confirm.
+              </span>
+              <cog-text-field
+                ariaLabel="Type DELETE to confirm"
+                placeholder="DELETE"
+                [value]="deleteAccountConfirmText()"
+                (valueChange)="deleteAccountConfirmText.set($event)"
+              />
+            </div>
+          }
+        </div>
+
+        @if (confirmingDeleteAccount()) {
+          <div class="account__danger-confirm">
+            <cog-button
+              appearance="danger"
+              [disabled]="deletingAccount() || !canDeleteAccount()"
+              (click)="deleteAccount()"
+            >
+              {{ deletingAccount() ? 'Deleting…' : 'Delete my account' }}
+            </cog-button>
+            <cog-button
+              appearance="subtle"
+              [disabled]="deletingAccount()"
+              (click)="cancelDeleteAccount()"
+            >
+              Cancel
+            </cog-button>
+          </div>
+        } @else {
+          <cog-button appearance="danger" (click)="confirmingDeleteAccount.set(true)">
+            Delete account
           </cog-button>
         }
       </div>
@@ -383,11 +434,26 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       gap: var(--cog-space-100);
       align-items: center;
     }
+
+    .account__danger-confirm-field {
+      margin-top: var(--cog-space-100);
+      max-width: 280px;
+    }
+
+    .account__danger-divider {
+      width: 100%;
+      height: 1px;
+      border: 0;
+      margin: var(--cog-space-150) 0 0;
+      background: var(--cog-danger-border, #f1c0c0);
+    }
   `,
 })
 export class AccountComponent {
   private readonly _auth = inject(AuthService);
+  private readonly _api = inject(CognosApiService);
   private readonly _conversations = inject(ConversationService);
+  private readonly _router = inject(Router);
   private readonly _toast = inject(CognosToastService);
 
   protected readonly email = this._auth.email;
@@ -413,6 +479,13 @@ export class AccountComponent {
   protected readonly saving = signal(false);
   protected readonly confirmingDeleteChats = signal(false);
   protected readonly deletingChats = signal(false);
+
+  protected readonly confirmingDeleteAccount = signal(false);
+  protected readonly deletingAccount = signal(false);
+  protected readonly deleteAccountConfirmText = signal('');
+  protected readonly canDeleteAccount = computed(
+    () => this.deleteAccountConfirmText().trim().toUpperCase() === 'DELETE',
+  );
 
   protected readonly dirty = computed(
     () =>
@@ -472,6 +545,37 @@ export class AccountComponent {
       error: () => {
         this.deletingChats.set(false);
         this._toast.notify({ title: 'Could not delete chats', tone: 'danger' });
+      },
+    });
+  }
+
+  cancelDeleteAccount(): void {
+    this.confirmingDeleteAccount.set(false);
+    this.deleteAccountConfirmText.set('');
+  }
+
+  deleteAccount(): void {
+    if (this.deletingAccount() || !this.canDeleteAccount()) {
+      return;
+    }
+
+    this.deletingAccount.set(true);
+    this._api.deleteAccount().subscribe({
+      next: async () => {
+        // The account is gone — clear the session and send them to login.
+        await this._auth.logout();
+        this._toast.notify({ title: 'Your account has been deleted' });
+        await this._router.navigate(['/', 'auth', 'login']);
+      },
+      error: (error: unknown) => {
+        this.deletingAccount.set(false);
+        const conflict = (error as { status?: number })?.status === 409;
+        this._toast.notify({
+          title: conflict
+            ? 'Cancel your plan before deleting your account'
+            : 'Could not delete your account',
+          tone: 'danger',
+        });
       },
     });
   }

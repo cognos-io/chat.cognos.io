@@ -306,6 +306,14 @@ func addPocketBaseRoutes(
 	)
 
 	e.Router.DELETE(
+		"/api/v1/account",
+		handler.AccountDelete(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.DELETE(
 		"/api/v1/conversations/{conversationID}",
 		handler.ConversationsDelete(app),
 	).Bind(
