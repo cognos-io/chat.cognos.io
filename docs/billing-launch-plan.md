@@ -28,27 +28,30 @@ currently-unused `payg_cycle_summaries` and `refunds`.
 
 ---
 
-### Phase 0 — Webhook event coverage (foundation for 1, 3, 4, 5)
+### Phase 0 — Webhook event coverage (foundation for 1, 3, 4, 5) — ✅ `subscription.updated` done
 
 Today only `subscription.created/activated/canceled` do anything; `subscription.past_due` and
 `transaction.completed` are no-ops, and `subscription.updated` / `adjustment.created` aren't
 handled at all. Everything below hangs off these.
 
-1. Add a `subscription.updated` case → handler `updateSubscription`:
-   - Refresh `user_billing` snapshot (price, cycle window, `plan_ends_at`/scheduled change).
-   - Detect **cycle rollover** (new `current_billing_period` vs stored `paddle_cycle_end_at`) → emit
-     the trigger Phase 1 consumes (close the previous PAYG cycle).
-   - Detect **price/plan change** → update `paddle_price_id` + `plan_type`.
-2. Add a `transaction.completed` case → handler `recordTransaction` (Phase 4 detail).
-3. Add an `adjustment.created` case → handler `recordAdjustment` (Phase 5 detail).
-4. Keep every branch idempotent (re-delivery safe) — events are already de-duped on
+1. ✅ Add a `subscription.updated` case → handler `updateSubscription`:
+   - ✅ Refresh `user_billing` snapshot (price, cycle window, `plan_ends_at`/scheduled change).
+   - ✅ Detect **cycle rollover** (new `current_billing_period.starts_at` vs stored
+     `paddle_cycle_start_at`) → for PAYG, close the previous cycle via an idempotent
+     `closePAYGCycle` (writes a `payg_cycle_summaries` row with local usage + expected bill +
+     overage). Posting the overage **charge** to Paddle is Phase 1.
+   - ✅ Detect **price/plan change** → update `paddle_price_id` + `plan_type`.
+2. `transaction.completed` case → handler `recordTransaction` — deferred to **Phase 4** (event is
+   already stored raw; the meaningful body is reconciliation).
+3. `adjustment.created` case → handler `recordAdjustment` — deferred to **Phase 5** (event is
+   already stored raw; the body is refund recording).
+4. ✅ Keep every branch idempotent (re-delivery safe) — events are de-duped on `paddle_event_id`;
+   the cycle close is additionally keyed on a deterministic id per `(subscription_id, cycle_end)`.
 
-   `paddle_event_id`; handlers must also be safe to re-run.
-
-- **Files:** `backend/internal/handler/paddle_webhook.go`, `internal/paddle/webhook.go` (parse
-  `adjustment`/`transaction` payloads).
-- **Tests:** extend `cmd/api/paddle_webhook_test.go` — each new event type updates the expected
-  record; re-delivery is a no-op.
+- **Files:** `backend/internal/handler/paddle_webhook.go`, `internal/billing/payg.go` (cycle math),
+  `internal/config/api.go` + `cmd/api/{routes,main}.go` (`BILLING_PAYG_MIN_COMMIT_RAPPEN` wiring).
+- **Tests:** `internal/billing/payg_test.go` (overage math); `cmd/api/paddle_webhook_test.go`
+  (rollover writes a summary, idempotent re-delivery, scheduled-cancel surfaces `plan_ends_at`).
 
 ---
 

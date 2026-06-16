@@ -10,6 +10,8 @@ import (
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
+
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 )
 
 func pathExists(path string) bool {
@@ -86,7 +88,8 @@ type APIConfig struct {
 	DeepInfraAPIURL string `koanf:"deepinfra.url"`
 	DeepInfraAPIKey string `koanf:"deepinfra.api_key"`
 	// Billing
-	BillingTrialSeedRappen int64 `koanf:"billing.trial_seed_rappen"`
+	BillingTrialSeedRappen     int64 `koanf:"billing.trial_seed_rappen"`
+	BillingPaygMinCommitRappen int64 `koanf:"billing.payg_min_commit_rappen"`
 	// Paddle (payments). Prices are Paddle price IDs (pri_...).
 	PaddleAPIBase               string `koanf:"paddle.api_base"`
 	PaddleAPIKey                string `koanf:"paddle.api_key"`
@@ -145,6 +148,10 @@ func MustLoadAPIConfig(logger *slog.Logger) *APIConfig {
 
 	if c.BillingTrialSeedRappen <= 0 {
 		c.BillingTrialSeedRappen = 200
+	}
+
+	if c.BillingPaygMinCommitRappen <= 0 {
+		c.BillingPaygMinCommitRappen = billing.DefaultPAYGMinCommitRappen
 	}
 
 	if strings.TrimSpace(c.PaddleAPIBase) == "" {

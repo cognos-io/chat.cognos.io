@@ -728,10 +728,14 @@ side-by-side, so any drift is investigable.
 > (idempotent on the unique `paddle_event_id`; re-delivery → 200 `duplicate`),
 > then dispatches. Domain handlers wired now: `subscription.created` /
 > `subscription.activated` flip the user onto the price's plan and snapshot the
-> subscription + cycle + `refund_eligible_until_at`; `subscription.canceled`
+> subscription + cycle + `refund_eligible_until_at`; `subscription.updated`
+> refreshes the snapshot (plan/price, cycle window, scheduled cancellation) and
+> on a PAYG cycle rollover closes the prior cycle by writing an idempotent
+> `payg_cycle_summaries` row (local usage, expected bill, overage); `subscription.canceled`
 > drops them to `inactive`. `subscription.past_due` and `transaction.completed`
-> are stored-only (no plan change) — PAYG cycle reconciliation, overage charges,
-> and `adjustment.created`/refund handling are the deferred fast-follow.
+> are stored-only (no plan change) — posting the overage charge to Paddle, the
+> `transaction.completed` reconciliation, and `adjustment.created`/refund
+> handling are the deferred fast-follow.
 > Customer↔user mapping uses `custom_data.user_id` with a `paddle_customer_id`
 > fallback; unmappable events are logged and accepted (not retried). Signature
 > verification is covered in `internal/paddle/webhook_test.go`; the end-to-end

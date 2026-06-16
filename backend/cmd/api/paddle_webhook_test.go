@@ -4,10 +4,12 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -200,6 +202,161 @@ func TestPaddleWebhookCancelsSubscription(t *testing.T) {
 
 	if plan := planFor(t, app, testUserID); plan != "inactive" {
 		t.Errorf("plan = %q, want inactive after cancellation", plan)
+	}
+}
+
+// --- Phase 0: subscription.updated (snapshot refresh + PAYG cycle rollover) ---
+
+// activatePAYG subscribes the test user to the PAYG price (pri_payg) for the
+// June 2026 cycle, returning the booted app + mux.
+func activatePAYG(t *testing.T) (*tests.TestApp, http.Handler) {
+	t.Helper()
+	app, mux := bootWebhookMux(t)
+	body := `{"event_id":"evt_payg_create","event_type":"subscription.created",` +
+		`"data":{"id":"sub_payg","customer_id":"ctm_payg","status":"active",` +
+		`"custom_data":{"user_id":"uvi8zmr78j9y5hz"},` +
+		`"items":[{"price":{"id":"pri_payg"}}],` +
+		`"current_billing_period":{"starts_at":"2026-06-01T00:00:00Z","ends_at":"2026-07-01T00:00:00Z"}}}`
+	rec := postWebhook(mux, body, signPaddle(t, webhookSecret, body))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("activate PAYG status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+	if plan := planFor(t, app, testUserID); plan != "payg" {
+		t.Fatalf("setup: plan = %q, want payg", plan)
+	}
+	return app, mux
+}
+
+// seedUsage inserts a `usage` ledger row for the test user at occurredAt with
+// the given user-facing cost, so a cycle close can total it.
+func seedUsage(t *testing.T, app *tests.TestApp, occurredAt time.Time, userCostRappen int64) {
+	t.Helper()
+	collection, err := app.FindCollectionByNameOrId("balance_transactions")
+	if err != nil {
+		t.Fatalf("find balance_transactions: %v", err)
+	}
+	record := core.NewRecord(collection)
+	record.Set("user_id", testUserID)
+	record.Set("type", "usage")
+	record.Set("occurred_at", occurredAt.UTC())
+	record.Set("event_id", fmt.Sprintf("evt_seed_%d_%d", occurredAt.UnixNano(), userCostRappen))
+	record.Set("amount_rappen", -userCostRappen)
+	record.Set("user_cost_rappen", userCostRappen)
+	record.Set("model_id", "test-model")
+	if err := app.Save(record); err != nil {
+		t.Fatalf("seed usage row: %v", err)
+	}
+}
+
+// rolloverBody advances the PAYG subscription to the July cycle.
+const paygRolloverBody = `{"event_id":"evt_payg_rollover","event_type":"subscription.updated",` +
+	`"data":{"id":"sub_payg","customer_id":"ctm_payg","status":"active",` +
+	`"custom_data":{"user_id":"uvi8zmr78j9y5hz"},` +
+	`"items":[{"price":{"id":"pri_payg"}}],` +
+	`"current_billing_period":{"starts_at":"2026-07-01T00:00:00Z","ends_at":"2026-08-01T00:00:00Z"}}}`
+
+func cycleSummaryFor(t *testing.T, app *tests.TestApp, subID string) *core.Record {
+	t.Helper()
+	records, err := app.FindRecordsByFilter(
+		"payg_cycle_summaries", "paddle_subscription_id = {:s}", "", 10, 0,
+		map[string]any{"s": subID},
+	)
+	if err != nil {
+		t.Fatalf("find payg_cycle_summaries: %v", err)
+	}
+	if len(records) == 0 {
+		return nil
+	}
+	if len(records) > 1 {
+		t.Fatalf("expected at most one cycle summary, got %d", len(records))
+	}
+	return records[0]
+}
+
+func TestPaddleWebhookUpdatedRollsOverPaygCycle(t *testing.T) {
+	app, mux := activatePAYG(t)
+
+	// CHF 23.40 of usage in the closing (June) cycle → expect a CHF 13.40 overage.
+	seedUsage(t, app, time.Date(2026, 6, 5, 12, 0, 0, 0, time.UTC), 2000)
+	seedUsage(t, app, time.Date(2026, 6, 20, 12, 0, 0, 0, time.UTC), 340)
+	// A row outside the cycle must not be counted.
+	seedUsage(t, app, time.Date(2026, 7, 2, 12, 0, 0, 0, time.UTC), 9999)
+
+	rec := postWebhook(mux, paygRolloverBody, signPaddle(t, webhookSecret, paygRolloverBody))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("rollover status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+
+	summary := cycleSummaryFor(t, app, "sub_payg")
+	if summary == nil {
+		t.Fatal("expected a payg_cycle_summaries row after rollover")
+	}
+	if got := summary.GetInt("local_usage_rappen"); got != 2340 {
+		t.Errorf("local_usage_rappen = %d, want 2340", got)
+	}
+	if got := summary.GetInt("local_expected_bill_rappen"); got != 2340 {
+		t.Errorf("local_expected_bill_rappen = %d, want 2340", got)
+	}
+	if got := summary.GetInt("overage_charge_rappen"); got != 1340 {
+		t.Errorf("overage_charge_rappen = %d, want 1340", got)
+	}
+
+	// The user_billing snapshot advanced to the new cycle.
+	billingRec, err := app.FindFirstRecordByData("user_billing", "user_id", testUserID)
+	if err != nil {
+		t.Fatalf("find user_billing: %v", err)
+	}
+	if got := billingRec.GetDateTime("paddle_cycle_start_at").Time().UTC(); !got.Equal(time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC)) {
+		t.Errorf("paddle_cycle_start_at = %s, want 2026-07-01", got)
+	}
+}
+
+func TestPaddleWebhookRolloverIsIdempotent(t *testing.T) {
+	app, mux := activatePAYG(t)
+	seedUsage(t, app, time.Date(2026, 6, 10, 0, 0, 0, 0, time.UTC), 500)
+
+	sig := signPaddle(t, webhookSecret, paygRolloverBody)
+	if rec := postWebhook(mux, paygRolloverBody, sig); rec.Code != http.StatusOK {
+		t.Fatalf("first rollover status = %d, want 200", rec.Code)
+	}
+	// A re-delivered rollover (same event id) is a webhook-level duplicate.
+	if rec := postWebhook(mux, paygRolloverBody, sig); rec.Code != http.StatusOK {
+		t.Fatalf("replay status = %d, want 200", rec.Code)
+	}
+
+	n, err := app.CountRecords("payg_cycle_summaries")
+	if err != nil {
+		t.Fatalf("count payg_cycle_summaries: %v", err)
+	}
+	if n != 1 {
+		t.Errorf("payg_cycle_summaries count = %d, want exactly 1", n)
+	}
+}
+
+func TestPaddleWebhookUpdatedSurfacesScheduledCancel(t *testing.T) {
+	app, mux := activatePAYG(t)
+
+	body := `{"event_id":"evt_sched_cancel","event_type":"subscription.updated",` +
+		`"data":{"id":"sub_payg","customer_id":"ctm_payg","status":"active",` +
+		`"custom_data":{"user_id":"uvi8zmr78j9y5hz"},` +
+		`"items":[{"price":{"id":"pri_payg"}}],` +
+		`"current_billing_period":{"starts_at":"2026-06-01T00:00:00Z","ends_at":"2026-07-01T00:00:00Z"},` +
+		`"scheduled_change":{"action":"cancel","effective_at":"2026-07-01T00:00:00Z"}}}`
+
+	if rec := postWebhook(mux, body, signPaddle(t, webhookSecret, body)); rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 — body: %s", rec.Code, rec.Body.String())
+	}
+
+	billingRec, err := app.FindFirstRecordByData("user_billing", "user_id", testUserID)
+	if err != nil {
+		t.Fatalf("find user_billing: %v", err)
+	}
+	if billingRec.GetString("plan_ends_at") == "" {
+		t.Error("plan_ends_at should be set from a scheduled cancellation")
+	}
+	// Same period (no rollover) → no cycle summary written.
+	if summary := cycleSummaryFor(t, app, "sub_payg"); summary != nil {
+		t.Error("no cycle summary expected without a rollover")
 	}
 }
 

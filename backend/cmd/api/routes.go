@@ -123,15 +123,17 @@ func addPocketBaseRoutes(
 	paddlePriceToPlan map[string]billing.PlanType,
 	billingUsageRepo billing.UsageRepo,
 	paddlePlanByPrice map[string]handler.PlanMeta,
+	paddleMinCommitRappen int64,
 ) {
 	// Paddle webhook: unauthenticated (verified by HMAC) and unthrottled so we
 	// never drop Paddle's retries. Bad signatures are rejected before any write.
 	e.Router.POST(
 		"/webhooks/paddle",
 		handler.PaddleWebhook(handler.PaddleWebhookParams{
-			Logger:        logger,
-			WebhookSecret: paddleWebhookSecret,
-			PriceToPlan:   paddlePriceToPlan,
+			Logger:          logger,
+			WebhookSecret:   paddleWebhookSecret,
+			PriceToPlan:     paddlePriceToPlan,
+			MinCommitRappen: paddleMinCommitRappen,
 		}),
 	)
 

@@ -1,11 +1,14 @@
 package handler
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"io"
 	"log/slog"
 	"net/http"
 	"time"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 
@@ -14,17 +17,23 @@ import (
 )
 
 const (
-	paddleEventsCollection = "paddle_events"
-	webhookUserBillingColl = "user_billing"
-	refundGuaranteeDays    = 60
+	paddleEventsCollection  = "paddle_events"
+	webhookUserBillingColl  = "user_billing"
+	paygCycleSummariesColl  = "payg_cycle_summaries"
+	balanceTransactionsColl = "balance_transactions"
+	refundGuaranteeDays     = 60
+	cycleSummaryIDLen       = 15
+	webhookPBDateLayout     = "2006-01-02 15:04:05.000Z"
 )
 
 // PaddleWebhookParams wires the webhook handler. PriceToPlan maps a Paddle
-// price id to the plan it activates.
+// price id to the plan it activates. MinCommitRappen is the PAYG cycle floor
+// (CHF 10.00) used when closing a cycle to compute the overage above it.
 type PaddleWebhookParams struct {
-	Logger        *slog.Logger
-	WebhookSecret string
-	PriceToPlan   map[string]billing.PlanType
+	Logger          *slog.Logger
+	WebhookSecret   string
+	PriceToPlan     map[string]billing.PlanType
+	MinCommitRappen int64
 }
 
 // PaddleWebhook ingests Paddle notifications. It verifies the HMAC signature,
@@ -131,6 +140,12 @@ func dispatchPaddleEvent(
 			return err
 		}
 		return activateSubscription(app, params, sub)
+	case "subscription.updated":
+		sub, err := event.Subscription()
+		if err != nil {
+			return err
+		}
+		return updateSubscription(app, params, sub)
 	case "subscription.canceled":
 		sub, err := event.Subscription()
 		if err != nil {
@@ -234,6 +249,154 @@ func cancelSubscription(
 	record.Set("plan_ends_at", nowRFC3339())
 	record.Set("paddle_subscription_id", "")
 	return app.Save(record)
+}
+
+// updateSubscription handles `subscription.updated`. It (1) refreshes the
+// user_billing snapshot (plan/price, cycle window, scheduled cancellation) and
+// (2) detects a cycle rollover — the billing period advancing — and, for PAYG,
+// closes the cycle that just ended so its overage can be billed. Idempotent:
+// the snapshot writes are plain assignments and the cycle close is keyed on a
+// deterministic id, so a re-delivered event changes nothing.
+func updateSubscription(
+	app core.App,
+	params PaddleWebhookParams,
+	sub paddle.SubscriptionData,
+) error {
+	userID := resolveWebhookUserID(app, sub.CustomData.UserID, sub.CustomerID)
+	if userID == "" {
+		// Fall back to the subscription we already track.
+		if rec, _ := app.FindFirstRecordByData(
+			webhookUserBillingColl, "paddle_subscription_id", sub.ID,
+		); rec != nil {
+			userID = rec.GetString("user_id")
+		}
+	}
+	if userID == "" {
+		if params.Logger != nil {
+			params.Logger.Warn("paddle subscription.updated could not be mapped to a user",
+				"subscription_id", sub.ID, "customer_id", sub.CustomerID)
+		}
+		return nil
+	}
+
+	// Capture the stored cycle window + plan before we overwrite them so we can
+	// detect a rollover against the new billing period.
+	var oldStart, oldEnd time.Time
+	var oldPlan string
+	if rec, _ := app.FindFirstRecordByData(webhookUserBillingColl, "user_id", userID); rec != nil {
+		oldStart = rec.GetDateTime("paddle_cycle_start_at").Time().UTC()
+		oldEnd = rec.GetDateTime("paddle_cycle_end_at").Time().UTC()
+		oldPlan = rec.GetString("plan_type")
+	}
+
+	newStart, _ := time.Parse(time.RFC3339, sub.CurrentBillingPeriod.StartsAt)
+	rolledOver := !oldStart.IsZero() && !newStart.IsZero() && newStart.After(oldStart)
+	if rolledOver && oldPlan == string(billing.PlanTypePayG) && !oldEnd.IsZero() {
+		if err := closePAYGCycle(app, params, userID, sub.ID, oldStart, oldEnd); err != nil {
+			return err
+		}
+	}
+
+	plan := params.PriceToPlan[sub.PriceID()]
+	return upsertUserBilling(app, userID, func(record *core.Record) {
+		if plan != "" {
+			record.Set("plan_type", string(plan))
+			record.Set("paddle_price_id", sub.PriceID())
+		}
+		record.Set("paddle_subscription_id", sub.ID)
+		if sub.CurrentBillingPeriod.StartsAt != "" {
+			record.Set("paddle_cycle_start_at", sub.CurrentBillingPeriod.StartsAt)
+		}
+		if sub.CurrentBillingPeriod.EndsAt != "" {
+			record.Set("paddle_cycle_end_at", sub.CurrentBillingPeriod.EndsAt)
+		}
+		// A scheduled cancellation surfaces here as a pending change; its
+		// absence means any prior schedule was cleared (resume).
+		if sub.ScheduledChange != nil && sub.ScheduledChange.Action == "cancel" {
+			record.Set("plan_ends_at", sub.ScheduledChange.EffectiveAt)
+		} else {
+			record.Set("plan_ends_at", "")
+		}
+	})
+}
+
+// closePAYGCycle writes a payg_cycle_summaries row for the PAYG cycle that just
+// ended: the local usage total, the expected bill (max(usage, commit)), and the
+// overage above the commit. Idempotent — keyed on a deterministic id derived
+// from the subscription id + cycle end, so a re-delivered rollover never writes
+// a second summary. Phase 1 extends this to post the overage charge to Paddle.
+func closePAYGCycle(
+	app core.App,
+	params PaddleWebhookParams,
+	userID, subscriptionID string,
+	cycleStart, cycleEnd time.Time,
+) error {
+	id := cycleSummaryID(subscriptionID, cycleEnd)
+	if existing, _ := app.FindRecordById(paygCycleSummariesColl, id); existing != nil {
+		return nil // cycle already closed
+	}
+
+	usage, err := sumPAYGUsageRappen(app, userID, cycleStart, cycleEnd)
+	if err != nil {
+		return err
+	}
+
+	commit := params.MinCommitRappen
+	if commit <= 0 {
+		commit = billing.DefaultPAYGMinCommitRappen
+	}
+	summary := billing.ComputeCycleSummary(usage, commit)
+
+	collection, err := app.FindCollectionByNameOrId(paygCycleSummariesColl)
+	if err != nil {
+		return err
+	}
+	record := core.NewRecord(collection)
+	record.Id = id
+	record.Set("user_id", userID)
+	record.Set("paddle_subscription_id", subscriptionID)
+	record.Set("cycle_start_at", cycleStart.UTC().Format(time.RFC3339))
+	record.Set("cycle_end_at", cycleEnd.UTC().Format(time.RFC3339))
+	record.Set("local_usage_rappen", summary.LocalUsageRappen)
+	record.Set("local_expected_bill_rappen", summary.LocalExpectedBillRappen)
+	record.Set("overage_charge_rappen", summary.OverageChargeRappen)
+	record.Set("reconciled", false)
+	record.Set("closed_at", nowRFC3339())
+	return app.Save(record)
+}
+
+// sumPAYGUsageRappen totals the user-facing cost of `usage` ledger rows in the
+// half-open cycle window [start, end). It reads only ledger metadata, never
+// message content.
+func sumPAYGUsageRappen(app core.App, userID string, start, end time.Time) (int64, error) {
+	var result struct {
+		Total int64 `db:"total"`
+	}
+	err := app.DB().NewQuery(`
+		SELECT COALESCE(SUM(user_cost_rappen), 0) AS total
+		FROM ` + balanceTransactionsColl + `
+		WHERE user_id = {:user_id}
+		  AND type = {:type}
+		  AND occurred_at >= {:start}
+		  AND occurred_at < {:end}
+	`).Bind(dbx.Params{
+		"user_id": userID,
+		"type":    billing.UsageTransactionType,
+		"start":   start.UTC().Format(webhookPBDateLayout),
+		"end":     end.UTC().Format(webhookPBDateLayout),
+	}).One(&result)
+	if err != nil {
+		return 0, err
+	}
+	return result.Total, nil
+}
+
+// cycleSummaryID derives a stable PocketBase record id for a PAYG cycle so the
+// close is idempotent. Hex of a SHA-256 over (subscription id | cycle end)
+// satisfies PocketBase's lowercase-alphanumeric id constraint.
+func cycleSummaryID(subscriptionID string, cycleEnd time.Time) string {
+	sum := sha256.Sum256([]byte(subscriptionID + "|" + cycleEnd.UTC().Format(time.RFC3339)))
+	return hex.EncodeToString(sum[:])[:cycleSummaryIDLen]
 }
 
 // resolveWebhookUserID maps a Paddle event to a Cognos user: prefer the

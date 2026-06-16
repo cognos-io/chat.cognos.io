@@ -178,8 +178,12 @@ func bindAppHooks(
 		}
 		paddlePrices := map[string]string{}
 		paddleWebhookSecret := ""
+		paddleMinCommitRappen := int64(billing.DefaultPAYGMinCommitRappen)
 		paddlePriceToPlan := map[string]billing.PlanType{}
 		if params.Config != nil {
+			if params.Config.BillingPaygMinCommitRappen > 0 {
+				paddleMinCommitRappen = params.Config.BillingPaygMinCommitRappen
+			}
 			paddlePrices = map[string]string{
 				"payg":              params.Config.PaddlePricePAYG,
 				"unlimited_monthly": params.Config.PaddlePriceUnlimitedMonthly,
@@ -234,6 +238,7 @@ func bindAppHooks(
 			paddlePriceToPlan,
 			billingRepo,
 			paddlePlanByPrice,
+			paddleMinCommitRappen,
 		)
 
 		hooks.SoftDelete(app)
