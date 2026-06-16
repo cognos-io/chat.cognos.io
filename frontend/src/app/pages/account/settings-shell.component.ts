@@ -22,6 +22,7 @@ import { SidebarProfileComponent } from '@app/components/chat/sidebar-profile/si
 import { TrialCreditCardComponent } from '@app/components/chat/trial-credit-card/trial-credit-card.component';
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { SidebarAccountActionsComponent } from '@app/components/sidebar-account-actions/sidebar-account-actions.component';
+import { SidebarBrandComponent } from '@app/components/sidebar-brand/sidebar-brand.component';
 import { BillingService } from '@app/services/billing.service';
 import { DeviceService } from '@app/services/device.service';
 
@@ -54,11 +55,12 @@ interface SettingsNavItem {
     SidebarProfileComponent,
     TrialCreditCardComponent,
     SidebarAccountActionsComponent,
+    SidebarBrandComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ng-template #brand>
-      <app-cognos-logo class="settings__logo" palette="dark"></app-cognos-logo>
+      <app-sidebar-brand />
     </ng-template>
 
     <ng-template #back>

@@ -16,13 +16,8 @@
   min-height: 0;
 }
 
-.chat-shell__brand {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--cog-space-100);
-}
-
+/* .chat-shell__logo is the mobile brand-bar logo; the desktop sidebar header
+   lives in the shared app-sidebar-brand component. */
 .chat-shell__logo {
   display: block;
   height: 24px;

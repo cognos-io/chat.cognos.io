@@ -10,7 +10,6 @@ import {
   CognosButtonComponent,
   CognosDesktopShellComponent,
   CognosIconComponent,
-  CognosLozengeComponent,
   CognosMobileShellComponent,
   CognosTextFieldComponent,
 } from '@cognos/ui-angular';
@@ -24,6 +23,7 @@ import { TrialCreditCardComponent } from '@app/components/chat/trial-credit-card
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { SidebarAccountActionsComponent } from '@app/components/sidebar-account-actions/sidebar-account-actions.component';
+import { SidebarBrandComponent } from '@app/components/sidebar-brand/sidebar-brand.component';
 import { VaultPasswordDialogComponent } from '@app/components/vault-password-dialog/vault-password-dialog.component';
 import { BillingService } from '@app/services/billing.service';
 import { DeviceService } from '@app/services/device.service';
@@ -43,7 +43,6 @@ import { ConversationService } from '../../services/conversation.service';
     CognosDesktopShellComponent,
     CognosMobileShellComponent,
     CognosIconComponent,
-    CognosLozengeComponent,
     CognosLogoComponent,
     CognosTextFieldComponent,
     ChatHeaderComponent,
@@ -54,6 +53,7 @@ import { ConversationService } from '../../services/conversation.service';
     BillingLockBannerComponent,
     BillingPastDueBannerComponent,
     SidebarAccountActionsComponent,
+    SidebarBrandComponent,
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',

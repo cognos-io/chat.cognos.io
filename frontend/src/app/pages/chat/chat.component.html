@@ -79,12 +79,7 @@
 
 <ng-template #chatNav>
   <div class="chat-shell__nav">
-    <div class="chat-shell__brand">
-      <app-cognos-logo class="chat-shell__logo" palette="dark"></app-cognos-logo>
-      @if (billing.isTrial()) {
-        <cog-lozenge tone="neutral">Trial</cog-lozenge>
-      }
-    </div>
+    <app-sidebar-brand />
 
     <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
     <ng-container *ngTemplateOutlet="navSearch"></ng-container>
