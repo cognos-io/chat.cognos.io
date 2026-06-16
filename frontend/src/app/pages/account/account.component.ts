@@ -27,6 +27,7 @@ import {
 import { AuthService } from '@app/services/auth.service';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ConversationService } from '@app/services/conversation.service';
+import { ExportService } from '@app/services/export.service';
 import { deriveProfileName } from '@app/utils/profile-identity';
 
 // AccountComponent is the Account home (/account). It owns the user-facing
@@ -143,6 +144,24 @@ import { deriveProfileName } from '@app/utils/profile-identity';
           (click)="save()"
         >
           {{ saving() ? 'Saving…' : 'Save profile' }}
+        </cog-button>
+      </div>
+    </section>
+
+    <section class="account__card" aria-labelledby="account-data-heading">
+      <h2 id="account-data-heading" class="account__card-title">Your data</h2>
+      <p class="account__card-subtitle">
+        Download all your conversations and messages — decrypted in your browser — as a
+        JSON file.
+      </p>
+      <div class="account__actions">
+        <cog-button
+          appearance="default"
+          icon="download"
+          [disabled]="exporting()"
+          (click)="exportData()"
+        >
+          {{ exporting() ? 'Preparing…' : 'Download my data' }}
         </cog-button>
       </div>
     </section>
@@ -453,6 +472,7 @@ export class AccountComponent {
   private readonly _auth = inject(AuthService);
   private readonly _api = inject(CognosApiService);
   private readonly _conversations = inject(ConversationService);
+  private readonly _export = inject(ExportService);
   private readonly _router = inject(Router);
   private readonly _toast = inject(CognosToastService);
 
@@ -479,6 +499,8 @@ export class AccountComponent {
   protected readonly saving = signal(false);
   protected readonly confirmingDeleteChats = signal(false);
   protected readonly deletingChats = signal(false);
+
+  protected readonly exporting = signal(false);
 
   protected readonly confirmingDeleteAccount = signal(false);
   protected readonly deletingAccount = signal(false);
@@ -547,6 +569,28 @@ export class AccountComponent {
         this._toast.notify({ title: 'Could not delete chats', tone: 'danger' });
       },
     });
+  }
+
+  exportData(): void {
+    if (this.exporting()) {
+      return;
+    }
+
+    this.exporting.set(true);
+    this._export
+      .downloadExport(new Date())
+      .then(({ conversation_count }) => {
+        this._toast.notify({
+          title:
+            conversation_count === 1
+              ? 'Exported 1 chat'
+              : `Exported ${conversation_count} chats`,
+        });
+      })
+      .catch(() => {
+        this._toast.notify({ title: 'Could not export your data', tone: 'danger' });
+      })
+      .finally(() => this.exporting.set(false));
   }
 
   cancelDeleteAccount(): void {
