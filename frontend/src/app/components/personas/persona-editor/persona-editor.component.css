@@ -1,0 +1,260 @@
+:host {
+  display: block;
+}
+
+.persona-editor {
+  display: flex;
+  flex-direction: column;
+  background: var(--cog-surface, #ffffff);
+  border: 1px solid var(--cog-border, #e2e8f0);
+  border-radius: var(--cog-radius-md, 12px);
+  overflow: hidden;
+}
+
+.persona-editor__header {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-125, 10px);
+  padding: var(--cog-space-150, 14px);
+  border-block-end: 1px solid var(--cog-border, #e2e8f0);
+}
+
+.persona-editor__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 36px;
+  block-size: 36px;
+  border-radius: var(--cog-radius-sm, 8px);
+  background: var(--swatch-bg, #eef0f3);
+  color: var(--swatch-fg, #475569);
+}
+
+.persona-editor__heading {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.persona-editor__title {
+  margin: 0;
+  font-size: var(--cog-fs-h-sm, 16px);
+  font-weight: 700;
+  color: var(--cog-text, #0f172a);
+}
+
+.persona-editor__subtitle {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--cog-text-subtle, #64748b);
+  font-size: var(--cog-fs-caption, 12px);
+}
+
+.persona-editor__close {
+  border: none;
+  background: transparent;
+  color: var(--cog-text-subtle, #64748b);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--cog-radius-sm, 6px);
+}
+
+.persona-editor__close:hover {
+  background: var(--cog-surface-sunken, #eef2f6);
+}
+
+.persona-editor__body {
+  padding: var(--cog-space-150, 14px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--cog-space-150, 14px);
+}
+
+.persona-editor__notice {
+  display: flex;
+  gap: var(--cog-space-100, 8px);
+  padding: var(--cog-space-125, 10px);
+  border-radius: var(--cog-radius-sm, 8px);
+  background: var(--cog-info-surface, #eff6ff);
+  color: var(--cog-info-text, #1e40af);
+  font-size: var(--cog-fs-caption, 13px);
+  line-height: 1.4;
+}
+
+.persona-editor__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cog-space-75, 6px);
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.persona-editor__field legend,
+.persona-editor__label {
+  padding: 0;
+  font-size: var(--cog-fs-caption, 12px);
+  font-weight: 600;
+  color: var(--cog-text-subtle, #64748b);
+}
+
+.persona-editor__field input,
+.persona-editor__field textarea {
+  border: 1px solid var(--cog-border, #e2e8f0);
+  border-radius: var(--cog-radius-sm, 8px);
+  background: var(--cog-surface, #ffffff);
+  color: var(--cog-text, #0f172a);
+  padding: var(--cog-space-100, 8px) var(--cog-space-125, 10px);
+  font: inherit;
+}
+
+.persona-editor__field textarea {
+  resize: vertical;
+  min-block-size: 96px;
+}
+
+.persona-editor__field input:read-only,
+.persona-editor__field textarea:read-only {
+  background: var(--cog-surface-sunken, #f6f7f9);
+  color: var(--cog-text-subtle, #64748b);
+}
+
+.persona-editor__icon-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--cog-space-75, 6px);
+}
+
+.persona-editor__icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: 1px solid var(--cog-border, #e2e8f0);
+  border-radius: var(--cog-radius-sm, 8px);
+  background: var(--cog-surface, #ffffff);
+  color: var(--cog-text-subtle, #64748b);
+  cursor: pointer;
+}
+
+.persona-editor__icon-button.is-selected {
+  border-color: var(--cog-brand, #2563eb);
+  color: var(--cog-brand, #2563eb);
+  box-shadow: 0 0 0 1px var(--cog-brand, #2563eb);
+}
+
+.persona-editor__field:disabled .persona-editor__icon-button,
+.persona-editor__field:disabled .persona-editor__color-swatch {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.persona-editor__color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cog-space-100, 8px);
+}
+
+.persona-editor__color-swatch {
+  inline-size: 26px;
+  block-size: 26px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background: var(--swatch-bg, #eef0f3);
+  cursor: pointer;
+}
+
+.persona-editor__color-swatch.is-selected {
+  border-color: var(--cog-brand, #2563eb);
+  box-shadow: 0 0 0 2px var(--cog-surface, #fff);
+  outline: 2px solid var(--cog-brand, #2563eb);
+}
+
+.persona-editor__default {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-100, 8px);
+  font-size: var(--cog-fs-body, 14px);
+  color: var(--cog-text, #0f172a);
+}
+
+.persona-editor__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-100, 8px);
+  padding: var(--cog-space-150, 14px);
+  border-block-start: 1px solid var(--cog-border, #e2e8f0);
+}
+
+.persona-editor__footer-spacer {
+  flex: 1;
+}
+
+.persona-editor__delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: var(--cog-danger-text, #dc2626);
+  cursor: pointer;
+  font: inherit;
+}
+
+.persona-editor__delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Palette — shared by the preview avatar and the colour swatches. */
+.persona-editor__avatar--green,
+.persona-editor__color-swatch--green {
+  --swatch-bg: #dcfce7;
+  --swatch-fg: #15803d;
+}
+.persona-editor__avatar--blue,
+.persona-editor__color-swatch--blue {
+  --swatch-bg: #dbeafe;
+  --swatch-fg: #1d4ed8;
+}
+.persona-editor__avatar--indigo,
+.persona-editor__color-swatch--indigo {
+  --swatch-bg: #e0e7ff;
+  --swatch-fg: #4338ca;
+}
+.persona-editor__avatar--violet,
+.persona-editor__color-swatch--violet {
+  --swatch-bg: #ede9fe;
+  --swatch-fg: #6d28d9;
+}
+.persona-editor__avatar--teal,
+.persona-editor__color-swatch--teal {
+  --swatch-bg: #ccfbf1;
+  --swatch-fg: #0f766e;
+}
+.persona-editor__avatar--sky,
+.persona-editor__color-swatch--sky {
+  --swatch-bg: #e0f2fe;
+  --swatch-fg: #0369a1;
+}
+.persona-editor__avatar--amber,
+.persona-editor__color-swatch--amber {
+  --swatch-bg: #fef3c7;
+  --swatch-fg: #b45309;
+}
+.persona-editor__avatar--orange,
+.persona-editor__color-swatch--orange {
+  --swatch-bg: #ffedd5;
+  --swatch-fg: #c2410c;
+}
+.persona-editor__avatar--pink,
+.persona-editor__color-swatch--pink {
+  --swatch-bg: #fce7f3;
+  --swatch-fg: #be185d;
+}
+.persona-editor__avatar--slate,
+.persona-editor__color-swatch--slate {
+  --swatch-bg: #eef0f3;
+  --swatch-fg: #475569;
+}

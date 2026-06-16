@@ -118,6 +118,27 @@
   color: var(--cog-brand, #15803d);
 }
 
+.personas-page__layout {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cog-space-250, 20px);
+}
+
+.personas-page__main {
+  flex: 1;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cog-space-250, 20px);
+}
+
+.personas-page__editor {
+  position: sticky;
+  inset-block-start: var(--cog-space-200, 16px);
+  inline-size: 360px;
+  flex-shrink: 0;
+}
+
 .personas-page__section {
   display: flex;
   flex-direction: column;
@@ -230,7 +251,13 @@
   background: var(--cog-surface-sunken, #eef2f6);
 }
 
-.persona-card__pin {
+.persona-card__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.persona-card__action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -242,17 +269,59 @@
   cursor: pointer;
   transition:
     opacity 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    background 0.15s ease;
 }
 
-.persona-card:hover .persona-card__pin,
-.persona-card__pin:focus-visible,
+.persona-card__action:hover {
+  background: var(--cog-surface-sunken, #eef2f6);
+  color: var(--cog-text-subtle, #64748b);
+}
+
+.persona-card:hover .persona-card__action,
+.persona-card__action:focus-visible,
 .persona-card__pin.is-pinned {
   opacity: 1;
 }
 
 .persona-card__pin.is-pinned {
   color: var(--cog-brand, #15803d);
+}
+
+.persona-card--new {
+  align-items: center;
+  justify-content: center;
+  gap: var(--cog-space-75, 6px);
+  text-align: center;
+  border-style: dashed;
+  color: var(--cog-text-subtle, #64748b);
+  min-block-size: 132px;
+}
+
+.persona-card--new__label {
+  font-weight: 600;
+  color: var(--cog-text, #0f172a);
+}
+
+.persona-card--new__hint {
+  font-size: var(--cog-fs-caption, 12px);
+  max-inline-size: 22ch;
+}
+
+.personas-page.is-editing .personas-page__grid {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 880px) {
+  .personas-page__layout {
+    flex-direction: column;
+  }
+
+  .personas-page__editor {
+    position: static;
+    inline-size: 100%;
+    max-block-size: none;
+  }
 }
 
 .persona-card__description {

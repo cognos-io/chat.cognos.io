@@ -1,4 +1,4 @@
-<div class="personas-page">
+<div class="personas-page" [class.is-editing]="editing() !== null">
   <header class="personas-page__header">
     <nav class="personas-page__breadcrumb" aria-label="Breadcrumb">
       <a routerLink="/">Cognos</a>
@@ -15,6 +15,9 @@
           <span class="personas-page__badge">Encrypted</span>
         </p>
       </div>
+      <cog-button appearance="primary" icon="plus" (click)="openNew()">
+        New persona
+      </cog-button>
     </div>
   </header>
 
@@ -54,41 +57,71 @@
     </div>
   </div>
 
-  @for (section of sections(); track section.id) {
-    <section class="personas-page__section">
-      <h2 class="personas-page__section-heading">
-        {{ section.label }} <span>· {{ section.personas.length }}</span>
-      </h2>
-      <div class="personas-page__grid" [class.is-list]="viewMode() === 'list'">
-        @for (persona of section.personas; track persona.id) {
-          <ng-container
-            [ngTemplateOutlet]="card"
-            [ngTemplateOutletContext]="{ $implicit: persona }"
-          />
-        }
-      </div>
-    </section>
-  }
+  <div class="personas-page__layout">
+    <div class="personas-page__main">
+      @for (section of sections(); track section.id) {
+        <section class="personas-page__section">
+          <h2 class="personas-page__section-heading">
+            {{ section.label }} <span>· {{ section.personas.length }}</span>
+          </h2>
+          <div class="personas-page__grid" [class.is-list]="viewMode() === 'list'">
+            @for (persona of section.personas; track persona.id) {
+              <ng-container
+                [ngTemplateOutlet]="card"
+                [ngTemplateOutletContext]="{ $implicit: persona }"
+              />
+            }
+          </div>
+        </section>
+      }
 
-  @if (myPersonas().length > 0) {
-    <section class="personas-page__section">
-      <h2 class="personas-page__section-heading">
-        My personas <span>· {{ myPersonas().length }}</span>
-      </h2>
-      <div class="personas-page__grid" [class.is-list]="viewMode() === 'list'">
-        @for (persona of myPersonas(); track persona.id) {
-          <ng-container
-            [ngTemplateOutlet]="card"
-            [ngTemplateOutletContext]="{ $implicit: persona }"
-          />
-        }
-      </div>
-    </section>
-  }
+      @if (myPersonas().length > 0 || showNewPersonaCard()) {
+        <section class="personas-page__section">
+          <h2 class="personas-page__section-heading">
+            My personas <span>· {{ myPersonas().length }}</span>
+          </h2>
+          <div class="personas-page__grid" [class.is-list]="viewMode() === 'list'">
+            @for (persona of myPersonas(); track persona.id) {
+              <ng-container
+                [ngTemplateOutlet]="card"
+                [ngTemplateOutletContext]="{ $implicit: persona }"
+              />
+            }
+            @if (showNewPersonaCard()) {
+              <button
+                type="button"
+                class="persona-card persona-card--new"
+                (click)="openNew()"
+              >
+                <cog-icon name="plus" [size]="22" />
+                <span class="persona-card--new__label">New persona</span>
+                <span class="persona-card--new__hint">
+                  Write your own instructions — encrypted in your browser.
+                </span>
+              </button>
+            }
+          </div>
+        </section>
+      }
 
-  @if (sections().length === 0 && myPersonas().length === 0) {
-    <p class="personas-page__empty">No personas match “{{ query() }}”.</p>
-  }
+      @if (
+        sections().length === 0 && myPersonas().length === 0 && !showNewPersonaCard()
+      ) {
+        <p class="personas-page__empty">No personas match “{{ query() }}”.</p>
+      }
+    </div>
+
+    @if (editing(); as target) {
+      <aside class="personas-page__editor">
+        <app-persona-editor
+          [persona]="target.persona"
+          [seed]="target.seed"
+          (closed)="closeEditor()"
+          (duplicated)="onDuplicate($event)"
+        />
+      </aside>
+    }
+  </div>
 </div>
 
 <ng-template #card let-persona>
@@ -121,19 +154,33 @@
         </span>
       </span>
 
-      <span
-        class="persona-card__pin"
-        [class.is-pinned]="isPinned(persona)"
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="isPinned(persona) ? 'Unpin persona' : 'Pin persona'"
-        [attr.aria-pressed]="isPinned(persona)"
-        [title]="isPinned(persona) ? 'Unpin' : 'Pin'"
-        (click)="togglePin(persona, $event)"
-        (keydown.enter)="togglePin(persona, $event)"
-        (keydown.space)="togglePin(persona, $event)"
-      >
-        <cog-icon name="pin" [size]="16" />
+      <span class="persona-card__actions">
+        <span
+          class="persona-card__action"
+          role="button"
+          tabindex="0"
+          [attr.aria-label]="
+            persona.source === 'cognos' ? 'View persona' : 'Edit persona'
+          "
+          [title]="persona.source === 'cognos' ? 'View' : 'Edit'"
+          (click)="openEditor(persona, $event)"
+          (keydown.enter)="openEditor(persona, $event)"
+        >
+          <cog-icon name="pencil" [size]="15" />
+        </span>
+        <span
+          class="persona-card__action persona-card__pin"
+          [class.is-pinned]="isPinned(persona)"
+          role="button"
+          tabindex="0"
+          [attr.aria-label]="isPinned(persona) ? 'Unpin persona' : 'Pin persona'"
+          [attr.aria-pressed]="isPinned(persona)"
+          [title]="isPinned(persona) ? 'Unpin' : 'Pin'"
+          (click)="togglePin(persona, $event)"
+          (keydown.enter)="togglePin(persona, $event)"
+        >
+          <cog-icon name="pin" [size]="16" />
+        </span>
       </span>
     </span>
 

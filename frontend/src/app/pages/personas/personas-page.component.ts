@@ -9,16 +9,22 @@ import {
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import { CognosIconComponent } from '@cognos/ui-angular';
+import { CognosButtonComponent, CognosIconComponent } from '@cognos/ui-angular';
 
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
+import { PersonaEditorComponent } from '@app/components/personas/persona-editor/persona-editor.component';
 import { Persona } from '@app/interfaces/persona';
-import { PersonaService } from '@app/services/persona.service';
+import { PersonaInput, PersonaService } from '@app/services/persona.service';
 
 interface PersonaSection {
   id: 'pinned' | 'recent' | 'official';
   label: string;
   personas: Persona[];
+}
+
+interface EditorTarget {
+  persona: Persona | null;
+  seed: PersonaInput | null;
 }
 
 type ViewMode = 'grid' | 'list';
@@ -30,8 +36,10 @@ type ViewMode = 'grid' | 'list';
     NgTemplateOutlet,
     FormsModule,
     RouterLink,
+    CognosButtonComponent,
     CognosIconComponent,
     PersonaAvatarComponent,
+    PersonaEditorComponent,
   ],
   templateUrl: './personas-page.component.html',
   styleUrl: './personas-page.component.css',
@@ -42,6 +50,7 @@ export class PersonasPageComponent {
 
   protected readonly query = signal('');
   protected readonly viewMode = signal<ViewMode>('grid');
+  protected readonly editing = signal<EditorTarget | null>(null);
 
   protected readonly selectedId = computed(() => this._personas.selectedPersona().id);
 
@@ -116,6 +125,23 @@ export class PersonasPageComponent {
 
   protected setViewMode(mode: ViewMode): void {
     this.viewMode.set(mode);
+  }
+
+  protected openNew(): void {
+    this.editing.set({ persona: null, seed: null });
+  }
+
+  protected openEditor(persona: Persona, event: Event): void {
+    event.stopPropagation();
+    this.editing.set({ persona, seed: null });
+  }
+
+  protected onDuplicate(seed: PersonaInput): void {
+    this.editing.set({ persona: null, seed });
+  }
+
+  protected closeEditor(): void {
+    this.editing.set(null);
   }
 
   private filter(personas: Persona[]): Persona[] {
