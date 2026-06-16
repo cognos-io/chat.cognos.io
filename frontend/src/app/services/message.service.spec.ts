@@ -2,6 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { describe, expect, it } from 'vitest';
 
+import { ROOT_PARENT_KEY, selectActiveBranch } from '@cognos/ui-angular';
+
 import { Message } from '@app/interfaces/message';
 
 import { CompleteResponse } from './cognos-api.service';
@@ -14,6 +16,7 @@ import {
   buildCompletionMessages,
   buildDeletedMessageData,
   isCompletionAbortError,
+  messageTreeAccessors,
   parseCompletionBillingRestriction,
   regenerateContextPath,
   removeStreamingCompletionMessages,
@@ -344,6 +347,64 @@ describe('regenerateContextPath', () => {
   it('returns empty for a missing parent or no parent id', () => {
     expect(regenerateContextPath(path, 'unknown')).toEqual([]);
     expect(regenerateContextPath(path, undefined)).toEqual([]);
+  });
+});
+
+// Editing a user message forks the conversation: the amended turn is added as a
+// new sibling (same parent) and selected. These tests pin the branch-resolution
+// behaviour MessageService.editAndForkMessage relies on — including the root
+// case, where the edited turn's siblings live under ROOT_PARENT_KEY.
+describe('edit fork branch resolution', () => {
+  let clock = 0;
+  const node = (id: string, parentMessageId?: string): Message => ({
+    record_id: id,
+    parentMessageId,
+    // Monotonic timestamps so the edited sibling is unambiguously the newest.
+    createdAt: new Date(2026, 0, 1, 0, 0, clock++),
+    decryptedData: { content: id, owner_id: parentMessageId ? undefined : 'u' },
+  });
+
+  it('follows the edited sibling and drops the original turn and its replies', () => {
+    // u1 -> a1 -> u2 -> a2, then u2 is edited into sibling u2b (parent a1).
+    const messages = [
+      node('u1'),
+      node('a1', 'u1'),
+      node('u2', 'a1'),
+      node('a2', 'u2'),
+      node('u2b', 'a1'),
+    ];
+
+    const { path, branchPoints } = selectActiveBranch(messages, messageTreeAccessors, {
+      selections: { a1: 'u2b' },
+    });
+
+    expect(path.map((m) => m.record_id)).toEqual(['u1', 'a1', 'u2b']);
+    // a1 is now a fork point with two children (u2 and the edited u2b).
+    expect(branchPoints.get('a1')).toBe(2);
+  });
+
+  it('defaults to the edited sibling as the newest even without a selection', () => {
+    const messages = [
+      node('u1'),
+      node('a1', 'u1'),
+      node('u2', 'a1'),
+      node('u2b', 'a1'),
+    ];
+
+    const { path } = selectActiveBranch(messages, messageTreeAccessors, {});
+
+    expect(path.map((m) => m.record_id)).toEqual(['u1', 'a1', 'u2b']);
+  });
+
+  it('forks a root user message under the root key', () => {
+    // Editing the very first message: u1b is a root sibling of u1.
+    const messages = [node('u1'), node('a1', 'u1'), node('u1b')];
+
+    const { path } = selectActiveBranch(messages, messageTreeAccessors, {
+      selections: { [ROOT_PARENT_KEY]: 'u1b' },
+    });
+
+    expect(path.map((m) => m.record_id)).toEqual(['u1b']);
   });
 });
 

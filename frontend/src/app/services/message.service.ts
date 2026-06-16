@@ -29,12 +29,18 @@ import { signalSlice } from 'ngxtension/signal-slice';
 import {
   MessageBranchInfo,
   MessageTreeAccessors,
+  ROOT_PARENT_KEY,
   selectActiveBranch,
 } from '@cognos/ui-angular';
 
 import { generateConversationAgentId } from '@app/interfaces/agent';
 import { CompletionBillingRestriction } from '@app/interfaces/billing';
-import { Message, MessageData, parseMessageData } from '@app/interfaces/message';
+import {
+  Message,
+  MessageData,
+  isMessageFromUser,
+  parseMessageData,
+} from '@app/interfaces/message';
 import { parseBackendDate } from '@app/utils/timestamp';
 
 import { AgentService } from './agent.service';
@@ -419,6 +425,7 @@ export class MessageService {
   // sources
   public readonly sendMessage$ = new Subject<MessageRequest>();
   public readonly regenerateMessage$ = new Subject<Message>();
+  public readonly editMessage$ = new Subject<{ message: Message; content: string }>();
   private readonly _cleanedMessage$ = this.sendMessage$.pipe(
     map((raw) => ({ ...raw, content: raw.content?.trim() })),
     filter(({ content }) => content !== undefined && content !== ''),
@@ -569,6 +576,11 @@ export class MessageService {
       // regenerate a fresh assistant response as a sibling branch
       this.regenerateMessage$.pipe(
         exhaustMap((message) => this.regenerateResponse(message)),
+      ),
+
+      // edit a user message into a new sibling branch and answer it afresh
+      this.editMessage$.pipe(
+        exhaustMap(({ message, content }) => this.editAndForkMessage(message, content)),
       ),
     ],
     selectors: (state) => ({
@@ -763,6 +775,13 @@ export class MessageService {
 
   public regenerate(message: Message): void {
     this.regenerateMessage$.next(message);
+  }
+
+  // editMessage forks the conversation at a user message: the edited text is
+  // sent as a new sibling of the original (same parent) and answered afresh,
+  // leaving the original turn and its replies reachable via the branch switcher.
+  public editMessage(message: Message, content: string): void {
+    this.editMessage$.next({ message, content });
   }
 
   public readonly keepExpiringMessage = this.state.keepExpiringMessage;
@@ -1103,6 +1122,60 @@ export class MessageService {
         this.consumeIntentionalCompletionAbort();
       }),
     );
+  }
+
+  // editAndForkMessage forks the conversation at a user message. Unlike
+  // regenerate (which reuses an existing user turn and only adds a new
+  // assistant reply), editing creates a NEW user turn as a sibling of the
+  // original — same parent — then streams a fresh reply threaded under it. The
+  // edited turn is added as the newest sibling and explicitly selected so the
+  // active path — and therefore the completion context sendMessage builds — is
+  // the edited branch rather than the original. The original turn and its
+  // replies stay reachable through the branch switcher.
+  private editAndForkMessage(
+    original: Message,
+    rawContent: string,
+  ): Observable<Partial<MessageState>> {
+    const content = rawContent.trim();
+    if (
+      !content ||
+      original.decryptedData.deleted ||
+      !isMessageFromUser(original.decryptedData)
+    ) {
+      return EMPTY;
+    }
+
+    const conversation = this._conversationService.conversation();
+    const isTemporaryConversation = this._conversationService.isTemporaryConversation();
+    if (!conversation && !isTemporaryConversation) {
+      return EMPTY;
+    }
+
+    if (conversation) {
+      this._conversationService.updateConversationUpdatedTimeNow({
+        id: conversation.record.id,
+      });
+    }
+
+    // A root user message has no parent; its siblings live under the root key.
+    const parentMessageId = original.parentMessageId;
+    const forkKey = parentMessageId ?? ROOT_PARENT_KEY;
+    const requestId = self.crypto.randomUUID();
+
+    const editedMessage: Message = {
+      record_id: requestId,
+      parentMessageId,
+      createdAt: new Date(),
+      decryptedData: {
+        content,
+        owner_id: this._authService.user()?.['id'],
+      },
+    };
+
+    this.state.addMessage(editedMessage);
+    this.state.selectBranch({ parentKey: forkKey, childId: requestId });
+
+    return this.sendMessage({ requestId, content, parentMessageId });
   }
 
   // reportCompletionError routes a failed completion to the right surface: a

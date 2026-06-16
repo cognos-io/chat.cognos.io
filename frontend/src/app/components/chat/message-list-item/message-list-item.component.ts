@@ -1,13 +1,20 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { Dialog } from '@angular/cdk/dialog';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  inject,
+  signal,
+} from '@angular/core';
 
 import { MarkdownComponent } from 'ngx-markdown';
 
 import {
   CognosAssistantMessageComponent,
   CognosBranchSwitcherComponent,
+  CognosButtonComponent,
   CognosIconButtonComponent,
   CognosUserMessageComponent,
   MessageBranchInfo,
@@ -33,6 +40,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     CognosUserMessageComponent,
     CognosIconButtonComponent,
     CognosBranchSwitcherComponent,
+    CognosButtonComponent,
   ],
   template: `
     @if (message) {
@@ -60,6 +68,10 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
               title="Copy to clipboard"
               [cdkCopyToClipboard]="message.decryptedData.content"
             />
+          }
+
+          @if (canEdit()) {
+            <cog-icon-button name="pencil" title="Edit message" (click)="startEdit()" />
           }
 
           @if (canRegenerate()) {
@@ -90,7 +102,31 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
         @if (isMessageFromUser(message.decryptedData)) {
           <div class="message-list-item__user">
             <cog-user-message [meta]="userMeta()" [branchCount]="branchPointCount()">
-              @if (message.decryptedData.deleted) {
+              @if (isEditing()) {
+                <div class="message-list-item__edit">
+                  <textarea
+                    class="message-list-item__edit-input"
+                    [value]="editDraft()"
+                    (input)="editDraft.set($any($event.target).value)"
+                    (keydown.escape)="cancelEdit()"
+                    rows="3"
+                    aria-label="Edit message"
+                    i18n-aria-label="@@message.edit.input"
+                  ></textarea>
+                  <div class="message-list-item__edit-actions">
+                    <cog-button appearance="subtle" (click)="cancelEdit()">
+                      <ng-container i18n="@@message.edit.cancel">Cancel</ng-container>
+                    </cog-button>
+                    <cog-button
+                      appearance="primary"
+                      [disabled]="!editDraft().trim()"
+                      (click)="saveEdit()"
+                    >
+                      <ng-container i18n="@@message.edit.save">Save</ng-container>
+                    </cog-button>
+                  </div>
+                </div>
+              } @else if (message.decryptedData.deleted) {
                 <p class="message-list-item__deleted" i18n="@@message.deleted">
                   Deleted message
                 </p>
@@ -102,7 +138,16 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                 <p class="message-list-item__empty">This message is empty.</p>
               }
 
-              @if (message.decryptedData.content || message.record_id) {
+              <!--
+                The actions div must stay a near-top-level child of
+                cog-user-message so it projects into the hover-only actions slot
+                outside the bubble. Nesting it deeper (e.g. inside the edit
+                @else above) breaks [cogMessageActions] projection and the
+                buttons fall back into the bubble body, always visible.
+              -->
+              @if (
+                !isEditing() && (message.decryptedData.content || message.record_id)
+              ) {
                 <div cogMessageActions class="message-list-item__actions">
                   <ng-container *ngTemplateOutlet="messageActions"></ng-container>
                 </div>
@@ -181,6 +226,40 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       margin: 0;
       white-space: pre-wrap;
     }
+
+    .message-list-item__edit {
+      display: grid;
+      gap: var(--cog-space-100);
+      min-width: min(70vw, 480px);
+    }
+
+    .message-list-item__edit-input {
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 64px;
+      resize: vertical;
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-xs);
+      background: var(--cog-input-bg);
+      padding: var(--cog-space-100);
+      color: var(--cog-text);
+      font: inherit;
+      font-size: var(--cog-fs-body-lg);
+      line-height: var(--cog-lh-body-lg);
+    }
+
+    .message-list-item__edit-input:focus-visible {
+      border-color: var(--cog-brand);
+      background: var(--cog-input-bg-focus);
+      outline: 2px solid var(--cog-brand);
+      outline-offset: 1px;
+    }
+
+    .message-list-item__edit-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--cog-space-075);
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -223,6 +302,49 @@ export class MessageListItemComponent {
     if (this.message) {
       this._messageService.regenerate(this.message);
     }
+  }
+
+  // Inline-edit state for a user message. Editing forks the conversation: the
+  // amended text is sent as a new sibling branch (see MessageService.editMessage).
+  protected readonly isEditing = signal(false);
+  protected readonly editDraft = signal('');
+
+  // A persisted, non-streaming user message with content can be edited into a
+  // new branch. Assistant messages use regenerate instead.
+  canEdit(): boolean {
+    const message = this.message;
+    return (
+      !!message &&
+      !!message.record_id &&
+      !message.isStreaming &&
+      !message.decryptedData.deleted &&
+      isMessageFromUser(message.decryptedData) &&
+      !!message.decryptedData.content
+    );
+  }
+
+  startEdit(): void {
+    if (!this.message) {
+      return;
+    }
+    this.editDraft.set(this.message.decryptedData.content ?? '');
+    this.isEditing.set(true);
+  }
+
+  cancelEdit(): void {
+    this.isEditing.set(false);
+    this.editDraft.set('');
+  }
+
+  saveEdit(): void {
+    const message = this.message;
+    const content = this.editDraft().trim();
+    if (!message || !content) {
+      return;
+    }
+    this._messageService.editMessage(message, content);
+    this.isEditing.set(false);
+    this.editDraft.set('');
   }
 
   onPreviousBranch(): void {
