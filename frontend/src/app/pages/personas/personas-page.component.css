@@ -124,6 +124,20 @@
   color: var(--cog-brand, #15803d);
 }
 
+/* Mobile: the New persona button drops full-width under the description, and
+   the grid/list toggle is hidden because the grid is always single-column. */
+.personas-page.is-mobile .personas-page__title-row {
+  flex-wrap: wrap;
+}
+
+.personas-page.is-mobile .personas-page__view-toggle {
+  display: none;
+}
+
+.personas-page.is-mobile .personas-page__search {
+  max-inline-size: none;
+}
+
 .personas-page__layout {
   display: flex;
   align-items: flex-start;

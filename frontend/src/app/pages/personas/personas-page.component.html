@@ -1,4 +1,8 @@
-<div class="personas-page" [class.is-editing]="editing() !== null">
+<div
+  class="personas-page"
+  [class.is-editing]="editing() !== null"
+  [class.is-mobile]="isMobile()"
+>
   <header class="personas-page__header">
     <nav class="personas-page__breadcrumb" aria-label="Breadcrumb">
       <a routerLink="/">Cognos</a>
@@ -15,7 +19,12 @@
           <span class="personas-page__badge">Encrypted</span>
         </p>
       </div>
-      <cog-button appearance="primary" icon="plus" (click)="openNew()">
+      <cog-button
+        appearance="primary"
+        icon="plus"
+        [fullWidth]="isMobile()"
+        (click)="openNew()"
+      >
         New persona
       </cog-button>
     </div>

@@ -39,6 +39,14 @@ test('personas page is usable on a narrow mobile viewport', async ({ page }) => 
   const grid = page.locator('.personas-page__grid').first();
   await expect(grid).toHaveCSS('grid-template-columns', /^\d+(\.\d+)?px$/);
 
+  // The grid/list toggle is hidden on mobile (it has no effect there).
+  await expect(page.locator('.personas-page__view-toggle')).toBeHidden();
+
+  // The New persona button is full width under the description.
+  await expect(page.getByRole('button', { name: 'New persona' }).first()).toHaveClass(
+    /cog-button--full-width/,
+  );
+
   // The editor opens as a bottom sheet pinned to the viewport bottom.
   await page.getByRole('button', { name: 'New persona' }).first().click();
   const editor = page.locator('.personas-page__editor');

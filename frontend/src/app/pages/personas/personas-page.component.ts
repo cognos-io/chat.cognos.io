@@ -15,6 +15,7 @@ import { CognosButtonComponent, CognosIconComponent } from '@cognos/ui-angular';
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import { PersonaEditorComponent } from '@app/components/personas/persona-editor/persona-editor.component';
 import { Persona } from '@app/interfaces/persona';
+import { DeviceService } from '@app/services/device.service';
 import { PersonaInput, PersonaService } from '@app/services/persona.service';
 
 interface PersonaSection {
@@ -49,6 +50,9 @@ type ViewMode = 'grid' | 'list';
 export class PersonasPageComponent {
   private readonly _personas = inject(PersonaService);
   private readonly _location = inject(Location);
+  private readonly _device = inject(DeviceService);
+
+  protected readonly isMobile = computed(() => this._device.isMobile());
 
   protected readonly query = signal('');
   protected readonly viewMode = signal<ViewMode>('grid');
