@@ -46,16 +46,20 @@ type ShareState = 'checking' | 'idle' | 'shared';
             <div class="share-dialog__copy">
               <h3>Create a public link</h3>
               <p>
-                Anyone with the link can read this conversation. The decryption key
-                lives in the link itself and never reaches our servers — so keep the
-                link private to the people you choose.
+                Only people with the link can see this conversation — but they’ll see
+                every message, past and future, until you stop sharing. The decryption
+                key lives in the link itself and never reaches our servers, so keep it
+                to the people you choose.
               </p>
             </div>
           }
           @case ('shared') {
             <div class="share-dialog__copy">
               <h3>Public link</h3>
-              <p>Anyone with this link can read the conversation.</p>
+              <p>
+                Only people with this link can see this conversation. They’ll see every
+                message — past and future — until you stop sharing.
+              </p>
             </div>
             <div class="share-dialog__link">
               <input
@@ -124,6 +128,13 @@ type ShareState = 'checking' | 'idle' | 'shared';
       display: flex;
       gap: var(--cog-space-100);
       align-items: stretch;
+    }
+
+    /* Let the Copy button fill the row height so it matches the input field.
+       The button host stretches via align-items: stretch above; making it a
+       flex container lets its inner <button> grow to that full height. */
+    .share-dialog__link cog-button {
+      display: flex;
     }
 
     .share-dialog__url {
