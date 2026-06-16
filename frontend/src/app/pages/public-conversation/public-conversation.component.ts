@@ -23,6 +23,7 @@ import {
   selectActiveBranch,
 } from '@cognos/ui-angular';
 
+import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { parseConversationData } from '@app/interfaces/conversation';
 import { KeyPair } from '@app/interfaces/key-pair';
 import { Message, isMessageFromUser, parseMessageData } from '@app/interfaces/message';
@@ -62,12 +63,13 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
     CognosUserMessageComponent,
     CognosAssistantMessageComponent,
     CognosBranchSwitcherComponent,
+    CognosLogoComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <main class="public-conversation">
       <header class="public-conversation__bar">
-        <span class="public-conversation__brand">Cognos</span>
+        <app-cognos-logo class="public-conversation__logo" palette="dark" />
         <span class="public-conversation__lock" title="End-to-end encrypted">
           Shared securely · decrypted in your browser
         </span>
@@ -173,10 +175,9 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
       border-bottom: 1px solid var(--cog-border, #e2e2e2);
     }
 
-    .public-conversation__brand {
-      font-weight: var(--cog-fw-semibold, 600);
-      font-size: var(--cog-fs-h-sm, 18px);
-      color: var(--cog-text, #1a1a1a);
+    .public-conversation__logo {
+      display: block;
+      height: 24px;
     }
 
     .public-conversation__lock {
