@@ -246,6 +246,30 @@ export class AuthService implements OnDestroy {
     );
   }
 
+  // Patch the current user's own record (display name, avatar icon/colour).
+  // PocketBase's SDK saves the updated auth record back into the authStore,
+  // which fires onChange and refreshes the `user` signal — so the sidebar and
+  // anywhere else reading the profile update without a manual refetch.
+  updateProfile(patch: {
+    display_name?: string;
+    avatar_icon?: string;
+    avatar_color?: string;
+  }): Observable<AuthUser> {
+    const userId = this.user()?.['id'] as string | undefined;
+    if (!userId) {
+      return throwError(() => new Error('Not authenticated'));
+    }
+
+    return from(this._pb.collection(this._authCollection).update(userId, patch)).pipe(
+      map((record) => record as AuthUser),
+      catchError((error) => {
+        this._errorService.alert('Unable to update your profile');
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
   async logout(): Promise<void> {
     await this._trustedUnlockService.clearAllUnlockKeys();
 

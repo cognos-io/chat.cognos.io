@@ -53,13 +53,11 @@ export const routes: Routes = [
       ),
     children: [
       {
-        // /account is the Account home (placeholder for now).
+        // /account is the Account home: profile, avatar, and the danger zone.
         path: '',
         data: { title: 'Account' },
         loadComponent: () =>
-          import('./pages/account/settings-placeholder.component').then(
-            (m) => m.SettingsPlaceholderComponent,
-          ),
+          import('./pages/account/account.component').then((m) => m.AccountComponent),
       },
       {
         path: 'billing',
