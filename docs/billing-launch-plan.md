@@ -242,18 +242,20 @@ Without this, PAYG only ever bills the CHF 10 floor and never charges usage abov
 
 ---
 
-### Phase 8 — ⚪ Production webhook wiring + ops
+### Phase 8 — Production webhook wiring + ops — 📋 runbook written; prod wiring is operator-side
 
-1. Production Paddle **notification destination** → `https://<prod-host>/webhooks/paddle`, with the
-   signing secret in `COGNOS_PADDLE_WEBHOOK_SECRET` (file/secret, not committed). Subscribe:
+1. ⏳ Production Paddle **notification destination** → `https://<prod-host>/webhooks/paddle`, with
+   the signing secret in `COGNOS_PADDLE_WEBHOOK_SECRET` (file/secret, not committed). Subscribe:
    `subscription.created/activated/updated/canceled/past_due`, `transaction.completed`,
-   `adjustment.created`.
-2. Production Paddle **client token** + price IDs + `paddle.api_base` (live host) in prod config.
-3. A short **runbook**: how overage/reconciliation/dunning behave, what to check when a webhook
+   `adjustment.created`. **← operator does this in the live Paddle account.**
+2. ⏳ Production Paddle **client token** + price IDs + `paddle.api_base` (live host) in prod config.
+   **← operator config/secrets.**
+3. ✅ A short **runbook** → `docs/billing-ops-runbook.md`: the full go-live checklist (prices,
+   destination, events, every `COGNOS_*` config var), how overage/dunning/refunds/fair-use behave,
+   triage (failed webhook, unposted overage, plan↔Paddle drift), and how to issue a goodwill refund.
 
-   fails, how to issue a goodwill refund.
-
-- **Acceptance:** a sandbox→prod checklist is green; a test event reaches prod and is processed.
+- **Acceptance:** a sandbox→prod checklist is green (see the runbook §1.4 smoke test); a test event
+  reaches prod and is processed (`paddle_events.processed_at` set).
 
 ---
 
