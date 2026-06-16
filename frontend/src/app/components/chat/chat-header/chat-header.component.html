@@ -10,15 +10,27 @@
       <cog-avatar class="chat-header__avatar" [name]="currentUserName()" [size]="28" />
 
       @if (canShare()) {
-        <cog-button
-          class="chat-header__share"
-          appearance="default"
-          icon="user-plus"
-          title="Share this conversation"
-          (click)="onShare()"
-        >
-          Share
-        </cog-button>
+        @if (isShared()) {
+          <button
+            type="button"
+            class="chat-header__shared"
+            title="This conversation is shared with a public link — manage sharing"
+            (click)="onShare()"
+          >
+            <cog-icon name="link" [size]="16" tone="current" />
+            Shared
+          </button>
+        } @else {
+          <cog-button
+            class="chat-header__share"
+            appearance="default"
+            icon="user-plus"
+            title="Share this conversation"
+            (click)="onShare()"
+          >
+            Share
+          </cog-button>
+        }
       }
 
       <cog-icon-button

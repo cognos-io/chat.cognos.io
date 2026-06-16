@@ -14,6 +14,7 @@ import { AuthService } from '@app/services/auth.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
+import { PublicShareService } from '@app/services/public-share.service';
 import { VaultService } from '@app/services/vault.service';
 
 import { ChatHeaderComponent } from './chat-header.component';
@@ -54,6 +55,10 @@ describe('ChatHeaderComponent', () => {
     email,
   };
 
+  const publicShareService = {
+    existingShareUrl: vi.fn().mockReturnValue(of(null)),
+  };
+
   beforeEach(async () => {
     selectedConversation.set(undefined);
     temporaryConversation.set(false);
@@ -63,6 +68,7 @@ describe('ChatHeaderComponent', () => {
     email.set('');
     isMobile.set(false);
     vi.clearAllMocks();
+    publicShareService.existingShareUrl.mockReturnValue(of(null));
 
     dialogOpen = vi.fn().mockReturnValue({ closed: of(true) });
 
@@ -75,6 +81,7 @@ describe('ChatHeaderComponent', () => {
         { provide: VaultService, useValue: vaultService },
         { provide: AuthService, useValue: authService },
         { provide: DeviceService, useValue: { isMobile } },
+        { provide: PublicShareService, useValue: publicShareService },
         { provide: Dialog, useValue: { open: dialogOpen } },
       ],
     }).compileComponents();
@@ -137,6 +144,18 @@ describe('ChatHeaderComponent', () => {
 
     component.onMenuSelect(0);
     expect(dialogOpen).toHaveBeenCalled();
+  });
+
+  it('warns with a Shared control when the conversation has a public link', () => {
+    publicShareService.existingShareUrl.mockReturnValue(
+      of('https://cognos.local/p/abc#k'),
+    );
+    selectedConversation.set(makeConversation('c-1', 'Saved chat'));
+    fixture.detectChanges();
+
+    expect(component.isShared()).toBe(true);
+    expect(fixture.nativeElement.querySelector('.chat-header__shared')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.chat-header__share')).toBeNull();
   });
 
   it('offers clear messages only for a temporary conversation with messages', () => {

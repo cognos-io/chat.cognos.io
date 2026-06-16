@@ -33,6 +33,28 @@
   gap: var(--cog-space-100);
 }
 
+// Warning treatment for a conversation that currently has a public share link,
+// so the owner is always aware the chat is publicly readable.
+.chat-header__shared {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cog-space-075);
+  flex: none;
+  padding: var(--cog-space-075) var(--cog-space-150);
+  border: 1px solid #f59e0b;
+  border-radius: var(--cog-radius-sm);
+  background: #fffbeb;
+  color: #b45309;
+  font: inherit;
+  font-weight: var(--cog-fw-semibold);
+  cursor: pointer;
+  transition: background var(--cog-dur-fast) var(--cog-ease-standard);
+}
+
+.chat-header__shared:hover {
+  background: #fef3c7;
+}
+
 .chat-header__menu-wrap {
   position: relative;
 }
@@ -48,7 +70,8 @@
 // first things to drop on narrow screens. Security and the overflow menu stay.
 @media (max-width: 600px) {
   .chat-header__avatar,
-  .chat-header__share {
+  .chat-header__share,
+  .chat-header__shared {
     display: none;
   }
 }

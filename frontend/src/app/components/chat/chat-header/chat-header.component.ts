@@ -5,6 +5,7 @@ import {
   ElementRef,
   HostListener,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -18,6 +19,7 @@ import {
   CognosBreadcrumbsComponent,
   CognosButtonComponent,
   CognosIconButtonComponent,
+  CognosIconComponent,
   CognosMenuComponent,
   type CognosMenuItem,
   CognosSecurityModalComponent,
@@ -26,10 +28,12 @@ import {
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 import { ShareConversationDialogComponent } from '@app/components/share-conversation-dialog/share-conversation-dialog.component';
+import { Conversation } from '@app/interfaces/conversation';
 import { AuthService } from '@app/services/auth.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
+import { PublicShareService } from '@app/services/public-share.service';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
@@ -45,6 +49,7 @@ type HeaderMenuEntry = CognosMenuItem & { action: HeaderMenuAction };
     CognosBreadcrumbsComponent,
     CognosButtonComponent,
     CognosIconButtonComponent,
+    CognosIconComponent,
     CognosMenuComponent,
     CognosSecurityModalComponent,
   ],
@@ -60,11 +65,27 @@ export class ChatHeaderComponent {
   private readonly _router = inject(Router);
   private readonly _vaultService = inject(VaultService);
   private readonly _device = inject(DeviceService);
+  private readonly _publicShare = inject(PublicShareService);
 
   readonly conversationService = inject(ConversationService);
 
   readonly menuOpen = signal(false);
   readonly securityOpen = signal(false);
+  // True when the current conversation has a live public share link, so the
+  // Share control can warn the user that this chat is publicly readable.
+  readonly isShared = signal(false);
+
+  constructor() {
+    // Re-check the public-share state whenever the active conversation changes.
+    effect(() => {
+      const conversation = this.conversationService.conversation();
+      if (!conversation) {
+        this.isShared.set(false);
+        return;
+      }
+      this._refreshShareState(conversation);
+    });
+  }
 
   // Sharing is only meaningful for a persisted conversation; temporary chats
   // have nothing the server can hand to a public reader.
@@ -116,7 +137,11 @@ export class ChatHeaderComponent {
       // The dedicated Share button is hidden on mobile, so surface sharing in
       // the overflow menu there instead.
       if (this._device.isMobile()) {
-        entries.push({ action: 'share', title: 'Share', icon: 'user-plus' });
+        entries.push({
+          action: 'share',
+          title: this.isShared() ? 'Shared' : 'Share',
+          icon: this.isShared() ? 'link' : 'user-plus',
+        });
       }
       entries.push({ action: 'rename', title: 'Rename', icon: 'pencil' });
       entries.push({
@@ -209,9 +234,34 @@ export class ChatHeaderComponent {
       return;
     }
 
-    this._dialog.open(ShareConversationDialogComponent, {
-      ...cognosDialogOptions,
-      data: { conversationId },
+    this._dialog
+      .open(ShareConversationDialogComponent, {
+        ...cognosDialogOptions,
+        data: { conversationId },
+      })
+      .closed.subscribe(() => {
+        // The dialog may have created or revoked the share; resync the badge.
+        const conversation = this.conversationService.conversation();
+        if (conversation) {
+          this._refreshShareState(conversation);
+        }
+      });
+  }
+
+  private _refreshShareState(conversation: Conversation) {
+    const id = conversation.record.id;
+    this._publicShare.existingShareUrl(conversation).subscribe({
+      next: (url) => {
+        // Ignore a late response for a conversation the user already left.
+        if (this._conversationId() === id) {
+          this.isShared.set(url !== null);
+        }
+      },
+      error: () => {
+        if (this._conversationId() === id) {
+          this.isShared.set(false);
+        }
+      },
     });
   }
 
