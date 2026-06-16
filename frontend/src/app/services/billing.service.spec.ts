@@ -155,6 +155,71 @@ describe('BillingService.beginCheckout', () => {
   });
 });
 
+describe('BillingService.changePlan', () => {
+  let changePlan: ReturnType<typeof vi.fn>;
+  let getBilling: ReturnType<typeof vi.fn>;
+  let location: { origin: string; href: string };
+
+  const build = (): BillingService => {
+    changePlan = vi.fn();
+    getBilling = vi
+      .fn()
+      .mockReturnValue(
+        of({ plan_type: 'unlimited', balance_chf: 0, trial_seed_chf: 0 }),
+      );
+    location = { origin: 'https://app.test', href: '' };
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        BillingService,
+        { provide: CognosApiService, useValue: { getBilling, changePlan } },
+        { provide: ErrorService, useValue: { alert: vi.fn() } },
+        {
+          provide: PaddleService,
+          useValue: { enabled: false, checkoutCompleted$: new Subject() },
+        },
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: AuthService, useValue: { email: () => 'user@example.com' } },
+        {
+          provide: DOCUMENT,
+          useValue: { location, defaultView: { open: vi.fn() } },
+        },
+      ],
+    });
+    return TestBed.inject(BillingService);
+  };
+
+  // Sunny: a 'changed' outcome re-fetches the authoritative plan state and never
+  // redirects the browser.
+  it('refreshes state and does not redirect when the plan changed in place', () => {
+    const service = build();
+    changePlan.mockReturnValue(of({ status: 'changed' }));
+    getBilling.mockClear(); // ignore the constructor refresh
+
+    service.changePlan('unlimited_annual').subscribe();
+
+    expect(changePlan).toHaveBeenCalledWith({
+      plan: 'unlimited_annual',
+      returnUrl: 'https://app.test/account/billing?status=activating',
+    });
+    expect(getBilling).toHaveBeenCalledTimes(1); // the refresh()
+    expect(location.href).toBe('');
+  });
+
+  // A 'checkout' outcome (no live subscription) falls back to the hosted checkout.
+  it('redirects to checkout when the backend has no subscription to change', () => {
+    const service = build();
+    changePlan.mockReturnValue(
+      of({ status: 'checkout', checkout_url: 'https://pay.paddle.com/new' }),
+    );
+
+    service.changePlan('unlimited_monthly').subscribe();
+
+    expect(location.href).toBe('https://pay.paddle.com/new');
+  });
+});
+
 describe('BillingService.openPortal', () => {
   let createPortalSession: ReturnType<typeof vi.fn>;
   let alert: ReturnType<typeof vi.fn>;
@@ -239,16 +304,14 @@ describe('BillingService.pollActivation', () => {
   let navigate: ReturnType<typeof vi.fn>;
 
   const build = (planType: string): BillingService => {
-    getBilling = vi
-      .fn()
-      .mockReturnValue(
-        of({
-          plan_type: planType,
-          status: 'active',
-          balance_chf: 0,
-          trial_seed_chf: 0,
-        }),
-      );
+    getBilling = vi.fn().mockReturnValue(
+      of({
+        plan_type: planType,
+        status: 'active',
+        balance_chf: 0,
+        trial_seed_chf: 0,
+      }),
+    );
     navigate = vi.fn();
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({

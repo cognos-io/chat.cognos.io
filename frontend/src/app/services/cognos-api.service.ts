@@ -8,6 +8,8 @@ import { Observable, Subscriber, filter, map, take } from 'rxjs';
 import {
   BillingApiResponse,
   BillingInvoicesResponse,
+  ChangePlanRequest,
+  ChangePlanResponse,
   CheckoutRequest,
   CheckoutResponse,
   PortalResponse,
@@ -399,6 +401,17 @@ export class CognosApiService {
       {
         plan: request.plan,
         business: request.business,
+        return_url: request.returnUrl,
+      },
+      { headers: this.authHeaders() },
+    );
+  }
+
+  changePlan(request: ChangePlanRequest): Observable<ChangePlanResponse> {
+    return this._http.post<ChangePlanResponse>(
+      `${this._baseUrl}/api/v1/billing/change-plan`,
+      {
+        plan: request.plan,
         return_url: request.returnUrl,
       },
       { headers: this.authHeaders() },

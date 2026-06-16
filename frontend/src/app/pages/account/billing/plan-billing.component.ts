@@ -22,6 +22,7 @@ import { PaddleLogoComponent } from '@app/components/paddle-logo/paddle-logo.com
 import {
   BillingApiResponse,
   BillingInvoicesResponse,
+  CheckoutPlan,
   Invoice,
   PaymentCard,
   UsageResponse,
@@ -66,6 +67,8 @@ export class PlanBillingComponent {
   protected readonly usage = signal<UsageResponse | null>(null);
   protected readonly invoiceData = signal<BillingInvoicesResponse | null>(null);
   protected readonly actionPending = signal(false);
+  // Whether the "Switch plan" picker is open (active/cancels-soon subscribers).
+  protected readonly switchOpen = signal(false);
 
   protected readonly breadcrumbs = [
     { label: 'Cognos' },
@@ -289,6 +292,87 @@ export class PlanBillingComponent {
 
   protected goToPlans(): void {
     void this._router.navigate(['/pricing']);
+  }
+
+  // The plans an active subscriber can switch to, with timing wording. Upgrades
+  // to Unlimited take effect immediately (prorated); downgrades and
+  // monthly↔annual switches start at the next renewal (no pro-rata) — matching
+  // the change-plan backend (spec §3.4).
+  protected readonly switchTargets = computed<
+    { key: CheckoutPlan; label: string; note: string }[]
+  >(() => {
+    const billing = this.billing();
+    if (!billing) {
+      return [];
+    }
+    const toUnlimitedMonthly = {
+      key: 'unlimited_monthly' as CheckoutPlan,
+      label: 'Unlimited · monthly — CHF 100 / month',
+    };
+    const toUnlimitedAnnual = {
+      key: 'unlimited_annual' as CheckoutPlan,
+      label: "Unlimited · annual — CHF 1'000 / year",
+    };
+    const toPayg = {
+      key: 'payg' as CheckoutPlan,
+      label: 'Pay as you go — CHF 10 / month min.',
+    };
+    const now = 'Takes effect now — prorated to this cycle.';
+    const next = 'Starts at your next renewal — no charge today.';
+
+    switch (billing.plan_type) {
+      case 'payg':
+        return [
+          { ...toUnlimitedMonthly, note: now },
+          { ...toUnlimitedAnnual, note: now },
+        ];
+      case 'unlimited':
+        return billing.interval === 'annual'
+          ? [
+              { ...toUnlimitedMonthly, note: next },
+              { ...toPayg, note: next },
+            ]
+          : [
+              { ...toUnlimitedAnnual, note: next },
+              { ...toPayg, note: next },
+            ];
+      default:
+        return [];
+    }
+  });
+
+  protected openSwitch(): void {
+    this.switchOpen.set(true);
+  }
+
+  protected closeSwitch(): void {
+    this.switchOpen.set(false);
+  }
+
+  // changeTo switches the existing subscription to the chosen plan. A `checkout`
+  // outcome (no live subscription) is handled inside BillingService (overlay);
+  // otherwise we reload the dashboard to reflect the new plan.
+  protected changeTo(plan: CheckoutPlan): void {
+    if (this.actionPending()) {
+      return;
+    }
+    this.actionPending.set(true);
+    this._billing
+      .changePlan(plan)
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.actionPending.set(false);
+          this.switchOpen.set(false);
+          if (res.status !== 'checkout') {
+            this.load();
+          }
+        },
+        error: () => {
+          this.actionPending.set(false);
+          this._errors.alert('Could not switch your plan. Please try again.');
+        },
+      });
   }
 
   // Open the Paddle customer portal in a new tab — 'payment' deep-links to the

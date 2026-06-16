@@ -28,6 +28,24 @@ export interface CheckoutResponse {
   checkout_url: string;
 }
 
+// ChangePlanRequest switches an existing subscription to a different plan
+// (`POST /api/v1/billing/change-plan`). Distinct from checkout: it modifies the
+// one subscription rather than creating a new one.
+export interface ChangePlanRequest {
+  plan: CheckoutPlan;
+  returnUrl?: string;
+}
+
+// ChangePlanResponse reports the outcome. `changed`/`unchanged` mean the
+// subscription was modified in place; `checkout` means the user had no live
+// subscription and must complete a hosted/overlay checkout (`checkout_url` /
+// `transaction_id` populated, as for CheckoutResponse).
+export interface ChangePlanResponse {
+  status: 'changed' | 'unchanged' | 'checkout';
+  checkout_url?: string;
+  transaction_id?: string;
+}
+
 // PortalResponse is the `POST /api/v1/billing/portal` payload: authenticated
 // Paddle customer-portal links to open in a new tab (never stored).
 export interface PortalResponse {

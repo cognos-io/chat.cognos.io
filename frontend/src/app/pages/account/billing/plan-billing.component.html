@@ -36,12 +36,12 @@
             >
               Resume plan
             </cog-button>
-            <cog-button appearance="default" (click)="goToPlans()"
+            <cog-button appearance="default" (click)="openSwitch()"
               >Switch plan</cog-button
             >
           }
           @case ('active') {
-            <cog-button appearance="primary" (click)="goToPlans()"
+            <cog-button appearance="primary" (click)="openSwitch()"
               >Switch plan</cog-button
             >
             <cog-button
@@ -59,6 +59,30 @@
           }
         }
       </div>
+
+      @if (switchOpen()) {
+        <div class="pb__switch" role="group" aria-label="Switch plan">
+          <p class="pb__switch-title">Switch to another plan</p>
+          @for (target of switchTargets(); track target.key) {
+            <button
+              type="button"
+              class="pb__switch-option"
+              [disabled]="actionPending()"
+              (click)="changeTo(target.key)"
+            >
+              <span class="pb__switch-label">{{ target.label }}</span>
+              <span class="pb__switch-note">{{ target.note }}</span>
+            </button>
+          }
+          <cog-button
+            appearance="subtle"
+            [disabled]="actionPending()"
+            (click)="closeSwitch()"
+          >
+            Cancel
+          </cog-button>
+        </div>
+      }
     </div>
 
     <aside class="pb__aside">

@@ -8,6 +8,7 @@ import { Observable, switchMap, take, takeWhile, tap, timer } from 'rxjs';
 import {
   BillingApiResponse,
   BillingState,
+  ChangePlanResponse,
   CheckoutPlan,
   CheckoutResponse,
   CompletionBillingRestriction,
@@ -152,6 +153,29 @@ export class BillingService {
       }
     }
     this._document.location.href = res.checkout_url;
+  }
+
+  // changePlan switches the user's existing subscription to another plan. When
+  // the backend reports `checkout` (no live subscription — first purchase or
+  // resubscribe) it falls back to the Paddle overlay/hosted checkout, mirroring
+  // beginCheckout. Otherwise it refreshes the authoritative state. The Observable
+  // lets the dashboard react (close the picker, reload) once the call resolves.
+  changePlan(plan: CheckoutPlan): Observable<ChangePlanResponse> {
+    const origin = this._document.location.origin;
+    return this._api
+      .changePlan({ plan, returnUrl: `${origin}/account/billing?status=activating` })
+      .pipe(
+        tap((res) => {
+          if (res.status === 'checkout' && res.checkout_url) {
+            void this._launchCheckout({
+              transaction_id: res.transaction_id,
+              checkout_url: res.checkout_url,
+            });
+          } else {
+            this.refresh();
+          }
+        }),
+      );
   }
 
   // openPortal opens an authenticated Paddle customer-portal link in a new tab.

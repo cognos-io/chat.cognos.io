@@ -33,6 +33,20 @@ test.describe('billing status API', () => {
     }
   });
 
+  test('unauthenticated callers cannot change plan', async () => {
+    // change-plan modifies a paid subscription — it must reject anonymous
+    // callers before any Paddle interaction (the 401 is unconditional).
+    const api = await newAnonymousApi();
+    try {
+      const res = await api.post('/api/v1/billing/change-plan', {
+        data: { plan: 'payg' },
+      });
+      expect(res.status()).toBe(401);
+    } finally {
+      await api.dispose();
+    }
+  });
+
   test('newly registered user lands on a recognised plan with a CHF balance', async () => {
     // PocketBase user-create hook auto-provisions a billing row for every
     // new user. The exact plan and balance are operator-configurable, but

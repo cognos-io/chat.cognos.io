@@ -87,28 +87,31 @@ Without this, PAYG only ever bills the CHF 10 floor and never charges usage abov
 
 ---
 
-### Phase 2 — 🔴 Plan switching updates the existing subscription (no duplicates)
+### Phase 2 — ✅ Plan switching updates the existing subscription (no duplicates)
 
-"Switch plan" currently routes to `/pricing` → a fresh checkout → a **second** subscription.
+"Switch plan" previously routed to `/pricing` → a fresh checkout → a **second** subscription.
 
-1. **Paddle client:** `ChangeSubscriptionPrice(ctx, subscriptionID, newPriceID, prorationMode)` →
+1. ✅ **Paddle client:** `ChangeSubscriptionPrice(ctx, subscriptionID, newPriceID, prorationMode)` →
    `PATCH /subscriptions/{id}` with the new item + `proration_billing_mode`.
-2. **Backend:** `POST /api/v1/billing/change-plan {plan}` → if the user has an active
-   `paddle_subscription_id`, change its price; else fall back to checkout (new customer). Map
-   plan→price as today.
-3. **Frontend:** "Switch plan" calls change-plan when a subscription exists (not a new overlay).
+2. ✅ **Backend:** `POST /api/v1/billing/change-plan {plan}` → with an active
+   `paddle_subscription_id`, changes its price; else falls back to checkout. **Proration policy
+   (decided):** upgrades (PAYG→Unlimited) `prorated_immediately`; downgrades + monthly↔annual
+   `full_next_billing_period` (no mid-cycle money). Paddle applies the swap immediately either way
+   (it can't defer the price swap, only the billing). Switching away from PAYG closes the open
+   cycle and posts the final overage via the deterministic-id close (no double-charge).
+3. ✅ **Frontend:** "Switch plan" opens an inline picker (no native dialog — e2e-friendly) listing
+   the other plans with timing wording, calling change-plan; `checkout` outcomes fall back to the
+   overlay. "Choose a plan" (inactive/trial) still routes to `/pricing`.
 
-   Show a confirm with proration wording; refresh on success. Keep the overlay only for first
-   purchase / resubscribe-after-inactive.
-
-- **Files:** `internal/paddle/client.go` (+fake), new `internal/handler/billing_change_plan.go`,
+- **Files:** `internal/paddle/client.go` (+fake), `internal/handler/billing_change_plan.go`,
   `cmd/api/routes.go`, `frontend/.../billing.service.ts`, `plan-billing.component.*`,
-  `cognos-api.service.ts`.
-- **Tests:** e2e — active user "Switch plan" hits change-plan, not checkout; a brand-new user still
-  gets the overlay. Integration — change-plan with an existing sub calls Paddle update; without one
-  returns checkout. Unit — the routing decision.
-- **Acceptance:** switching PAYG↔Unlimited (and monthly↔annual) modifies the one subscription; the
-  user is never left with two.
+  `cognos-api.service.ts`, `interfaces/billing.ts`.
+- **Tests:** ✅ integration — change-plan with an existing sub calls Paddle update (correct
+  proration per direction); without one returns checkout; final PAYG overage posts on switch. ✅
+  client httptest for the PATCH. ✅ frontend unit — changePlan routing (changed→refresh,
+  checkout→overlay). ✅ e2e — unauthenticated change-plan → 401.
+- **Acceptance:** ✅ switching PAYG↔Unlimited (and monthly↔annual) modifies the one subscription;
+  the user is never left with two.
 
 ---
 
