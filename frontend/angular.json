@@ -115,7 +115,7 @@
           "builder": "@angular/build:dev-server",
           "options": {
             "prebundle": {
-              "exclude": ["@cognos/ui"]
+              "exclude": ["@cognos/ui", "lucide"]
             }
           },
           "configurations": {
