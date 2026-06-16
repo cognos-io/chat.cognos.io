@@ -19,6 +19,7 @@ import {
 } from '@cognos/ui-angular';
 
 import { BillingPastDueBannerComponent } from '@app/components/billing/billing-past-due-banner/billing-past-due-banner.component';
+import { SwitchPlanModalComponent } from '@app/components/billing/switch-plan-modal/switch-plan-modal.component';
 import { PaddleLogoComponent } from '@app/components/paddle-logo/paddle-logo.component';
 import {
   BillingApiResponse,
@@ -52,6 +53,7 @@ interface UsageBar {
     CognosProgressComponent,
     PaddleLogoComponent,
     BillingPastDueBannerComponent,
+    SwitchPlanModalComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './plan-billing.component.html',
@@ -329,53 +331,6 @@ export class PlanBillingComponent {
   protected goToPlans(): void {
     void this._router.navigate(['/pricing']);
   }
-
-  // The plans an active subscriber can switch to, with timing wording. Upgrades
-  // to Unlimited take effect immediately (prorated); downgrades and
-  // monthly↔annual switches start at the next renewal (no pro-rata) — matching
-  // the change-plan backend (spec §3.4).
-  protected readonly switchTargets = computed<
-    { key: CheckoutPlan; label: string; note: string }[]
-  >(() => {
-    const billing = this.billing();
-    if (!billing) {
-      return [];
-    }
-    const toUnlimitedMonthly = {
-      key: 'unlimited_monthly' as CheckoutPlan,
-      label: 'Unlimited · monthly — CHF 100 / month',
-    };
-    const toUnlimitedAnnual = {
-      key: 'unlimited_annual' as CheckoutPlan,
-      label: "Unlimited · annual — CHF 1'000 / year",
-    };
-    const toPayg = {
-      key: 'payg' as CheckoutPlan,
-      label: 'Pay as you go — CHF 10 / month min.',
-    };
-    const now = 'Takes effect now — prorated to this cycle.';
-    const next = 'No charge today — billed at the new rate from your next renewal.';
-
-    switch (billing.plan_type) {
-      case 'payg':
-        return [
-          { ...toUnlimitedMonthly, note: now },
-          { ...toUnlimitedAnnual, note: now },
-        ];
-      case 'unlimited':
-        return billing.interval === 'annual'
-          ? [
-              { ...toUnlimitedMonthly, note: next },
-              { ...toPayg, note: next },
-            ]
-          : [
-              { ...toUnlimitedAnnual, note: next },
-              { ...toPayg, note: next },
-            ];
-      default:
-        return [];
-    }
-  });
 
   protected openSwitch(): void {
     this.switchOpen.set(true);

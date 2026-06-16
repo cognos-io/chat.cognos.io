@@ -350,3 +350,98 @@ test('the settings nav opens placeholder sections', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Account' })).toBeVisible();
   await expect(page.getByText('coming soon')).toBeVisible();
 });
+
+test('switch-plan modal marks the current plan and switches to PAYG', async ({
+  page,
+}) => {
+  const userFixture = buildVaultFixture('user_switch', 'switch@example.com');
+  await seedAuth(page, userFixture);
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({
+      json: {
+        plan_type: 'unlimited',
+        status: 'active',
+        interval: 'monthly',
+        balance_chf: 0,
+        trial_seed_chf: 0,
+        cycle_end_at: '2026-07-01T00:00:00Z',
+        cancel_at_period_end: false,
+      },
+    });
+  });
+  await page.route(`${API}/api/v1/billing/usage`, async (route) => {
+    await route.fulfill({ json: usageJson });
+  });
+  let changeBody: { plan?: string } | null = null;
+  await page.route(`${API}/api/v1/billing/change-plan`, async (route) => {
+    changeBody = route.request().postDataJSON();
+    await route.fulfill({ json: { status: 'changed' } });
+  });
+
+  await page.goto('/account/billing');
+  await page.getByRole('button', { name: 'Switch plan' }).click();
+
+  // Modal opens with both plans + the billing-period toggle.
+  await expect(page.getByRole('heading', { name: 'Switch plan' })).toBeVisible();
+  await expect(page.getByText('Billing period')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Monthly' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Yearly/ })).toBeVisible();
+
+  // The current plan (Unlimited monthly) is marked and not switchable.
+  const unlimitedCard = page.locator('.spm__plan').filter({ hasText: 'Unlimited' });
+  await expect(unlimitedCard.locator('.spm__current')).toBeVisible();
+  await expect(
+    unlimitedCard.getByRole('button', { name: 'Current plan' }),
+  ).toBeDisabled();
+
+  // Switch to Pay as you go.
+  const paygCard = page.locator('.spm__plan').filter({ hasText: 'Pay as you go' });
+  await paygCard.getByRole('button', { name: 'Switch' }).click();
+
+  await expect.poll(() => changeBody?.plan).toBe('payg');
+  // Modal closes once the switch succeeds.
+  await expect(page.getByRole('heading', { name: 'Switch plan' })).toBeHidden();
+});
+
+test('switch-plan modal yearly toggle switches Unlimited to annual', async ({
+  page,
+}) => {
+  const userFixture = buildVaultFixture('user_switch_y', 'switchy@example.com');
+  await seedAuth(page, userFixture);
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({
+      json: {
+        plan_type: 'payg',
+        status: 'active',
+        interval: 'monthly',
+        balance_chf: 0,
+        trial_seed_chf: 0,
+        cycle_end_at: '2026-07-01T00:00:00Z',
+        cancel_at_period_end: false,
+      },
+    });
+  });
+  await page.route(`${API}/api/v1/billing/usage`, async (route) => {
+    await route.fulfill({ json: usageJson });
+  });
+  let changeBody: { plan?: string } | null = null;
+  await page.route(`${API}/api/v1/billing/change-plan`, async (route) => {
+    changeBody = route.request().postDataJSON();
+    await route.fulfill({ json: { status: 'changed' } });
+  });
+
+  await page.goto('/account/billing');
+  await page.getByRole('button', { name: 'Switch plan' }).click();
+
+  // PAYG is current here.
+  const paygCard = page.locator('.spm__plan').filter({ hasText: 'Pay as you go' });
+  await expect(paygCard.getByRole('button', { name: 'Current plan' })).toBeDisabled();
+
+  // Toggle to yearly, then switch to Unlimited → annual price id.
+  await page.getByRole('button', { name: /Yearly/ }).click();
+  const unlimitedCard = page.locator('.spm__plan').filter({ hasText: 'Unlimited' });
+  await expect(unlimitedCard.getByText('/ year')).toBeVisible();
+  await unlimitedCard.getByRole('button', { name: 'Switch' }).click();
+
+  await expect.poll(() => changeBody?.plan).toBe('unlimited_annual');
+});

@@ -104,9 +104,10 @@ Without this, PAYG only ever bills the CHF 10 floor and never charges usage abov
    PAYG closes the open cycle and posts the final overage via the deterministic-id close (no
    double-charge). Verified live: switching the test sub monthly↔annual modifies the one
    subscription (customer count stayed 4 — no duplicate).
-3. ✅ **Frontend:** "Switch plan" opens an inline picker (no native dialog — e2e-friendly) listing
-   the other plans with timing wording, calling change-plan; `checkout` outcomes fall back to the
-   overlay. "Choose a plan" (inactive/trial) still routes to `/pricing`.
+3. ✅ **Frontend:** "Switch plan" opens a `cog-modal` (`SwitchPlanModalComponent`) with a
+   monthly/yearly billing-period toggle that re-prices Unlimited, marks the plan the user is on
+   ("Current"), and switches via change-plan; `checkout` outcomes fall back to the overlay. "Choose
+   a plan" (inactive/trial) still routes to `/pricing`. (Replaced the earlier inline dropdown.)
 
 - **Files:** `internal/paddle/client.go` (+fake), `internal/handler/billing_change_plan.go`,
   `cmd/api/routes.go`, `frontend/.../billing.service.ts`, `plan-billing.component.*`,
