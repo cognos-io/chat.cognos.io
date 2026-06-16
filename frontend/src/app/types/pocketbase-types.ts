@@ -5,7 +5,7 @@ import type PocketBase from 'pocketbase';
 import type { RecordService } from 'pocketbase';
 
 export enum Collections {
-  Agents = 'agents',
+  Personas = 'personas',
   ConversationPublicKeys = 'conversation_public_keys',
   ConversationSecretKeys = 'conversation_secret_keys',
   Conversations = 'conversations',
@@ -42,10 +42,9 @@ export type AuthSystemFields<T = never> = {
 
 // Record types for each collection
 
-export type AgentsRecord = {
-  description: string;
-  name: string;
-  slug: string;
+export type PersonasRecord = {
+  data: string;
+  user: RecordIdString;
 };
 
 export type ConversationPublicKeysRecord = {
@@ -125,7 +124,7 @@ export type UsersRecord = {
 };
 
 // Response types include system fields and match responses from the PocketBase API
-export type AgentsResponse<Texpand = unknown> = Required<AgentsRecord> &
+export type PersonasResponse<Texpand = unknown> = Required<PersonasRecord> &
   BaseSystemFields<Texpand>;
 export type ConversationPublicKeysResponse<Texpand = unknown> =
   Required<ConversationPublicKeysRecord> & BaseSystemFields<Texpand>;
@@ -155,7 +154,7 @@ export type UsersResponse<Texpand = unknown> = Required<UsersRecord> &
 // Types containing all Records and Responses, useful for creating typing helper functions
 
 export type CollectionRecords = {
-  agents: AgentsRecord;
+  personas: PersonasRecord;
   conversation_public_keys: ConversationPublicKeysRecord;
   conversation_secret_keys: ConversationSecretKeysRecord;
   conversations: ConversationsRecord;
@@ -169,7 +168,7 @@ export type CollectionRecords = {
 };
 
 export type CollectionResponses = {
-  agents: AgentsResponse;
+  personas: PersonasResponse;
   conversation_public_keys: ConversationPublicKeysResponse;
   conversation_secret_keys: ConversationSecretKeysResponse;
   conversations: ConversationsResponse;
@@ -186,7 +185,7 @@ export type CollectionResponses = {
 // https://github.com/pocketbase/js-sdk#specify-typescript-definitions
 
 export type TypedPocketBase = PocketBase & {
-  collection(idOrName: 'agents'): RecordService<AgentsResponse>;
+  collection(idOrName: 'personas'): RecordService<PersonasResponse>;
   collection(
     idOrName: 'conversation_public_keys',
   ): RecordService<ConversationPublicKeysResponse>;

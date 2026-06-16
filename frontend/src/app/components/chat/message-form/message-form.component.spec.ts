@@ -6,12 +6,12 @@ import { provideRouter } from '@angular/router';
 import { Subject } from 'rxjs';
 
 import { Message } from '@app/interfaces/message';
-import { AgentService } from '@app/services/agent.service';
 import { BillingService } from '@app/services/billing.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService, MessageStatus } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
+import { PersonaService } from '@app/services/persona.service';
 import { VaultService } from '@app/services/vault.service';
 
 import { MessageFormComponent } from './message-form.component';
@@ -51,8 +51,14 @@ describe('MessageFormComponent', () => {
         provideRouter([]),
         { provide: Dialog, useValue: { open: vi.fn() } },
         {
-          provide: AgentService,
-          useValue: { selectedAgent: signal({ id: 'agent-1', name: 'Cognos Agent' }) },
+          provide: PersonaService,
+          useValue: {
+            selectedPersona: signal({
+              id: 'persona-1',
+              name: 'Cognos Persona',
+              systemPrompt: 'Be helpful.',
+            }),
+          },
         },
         {
           provide: ConversationService,

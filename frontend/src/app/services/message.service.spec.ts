@@ -31,7 +31,7 @@ const makeResponse = (overrides: Partial<CompleteResponse> = {}): CompleteRespon
     id: 'asst-1',
     parentMessageId: 'user-1',
     content: 'hello back',
-    agentId: 'cognos:simple-assistant',
+    personaId: 'cognos:simple-assistant',
     modelId: 'infomaniak:llama-3',
     createdAt: '2026-01-02T03:04:05.000Z',
   },
@@ -210,7 +210,7 @@ describe('buildCompletionMessages', () => {
     expect(assistant.parentMessageId).toBe('user-1');
     expect(assistant.decryptedData).toEqual({
       content: 'hello back',
-      agent_id: 'cognos:simple-assistant',
+      persona_id: 'cognos:simple-assistant',
       model_id: 'infomaniak:llama-3',
     });
     expect(assistant.createdAt).toEqual(new Date('2026-01-02T03:04:05.000Z'));
@@ -228,7 +228,7 @@ describe('buildCompletionMessages', () => {
         id: 'asst-1',
         parentMessageId: 'user-1',
         content: 'hello back',
-        agentId: 'cognos:simple-assistant',
+        personaId: 'cognos:simple-assistant',
         modelId: 'infomaniak:llama-3',
         createdAt: '2026-01-02 03:04:05.000Z',
       },
@@ -299,7 +299,7 @@ describe('buildDeletedMessageData', () => {
       conversation_id: 'conv-1',
       parent_message_id: 'user-1',
       created_at: '2026-01-02T03:04:05.000Z',
-      agent_id: 'cognos:simple-assistant',
+      persona_id: 'cognos:simple-assistant',
       model_id: 'infomaniak:llama-3',
       owner_id: undefined,
     });
@@ -310,7 +310,7 @@ describe('buildDeletedMessageData', () => {
       conversation_id: 'conv-1',
       parent_message_id: 'user-1',
       created_at: '2026-01-02T03:04:05.000Z',
-      agent_id: 'cognos:simple-assistant',
+      persona_id: 'cognos:simple-assistant',
       model_id: 'infomaniak:llama-3',
       owner_id: undefined,
       deleted: true,
@@ -430,14 +430,14 @@ describe('stream completion helpers', () => {
       [userMessage()],
       { requestId: 'req-1', content: 'hello' },
       'hel',
-      'agent-1',
+      'persona-1',
       'model-1',
     );
     const second = applyCompletionStreamDelta(
       first,
       { requestId: 'req-1', content: 'hello' },
       'lo',
-      'agent-1',
+      'persona-1',
       'model-1',
     );
 
@@ -452,7 +452,7 @@ describe('stream completion helpers', () => {
       [userMessage()],
       { requestId: 'req-1', content: 'hello' },
       'hello back',
-      'agent-1',
+      'persona-1',
       'model-1',
     );
 
@@ -478,7 +478,7 @@ describe('stream completion helpers', () => {
       [userMessage()],
       { requestId: 'req-1', content: 'hello' },
       'partial',
-      'agent-1',
+      'persona-1',
       'model-1',
     );
 
@@ -487,7 +487,7 @@ describe('stream completion helpers', () => {
 });
 
 describe('buildCompletionMessageContext', () => {
-  const noopAgent = () => undefined;
+  const noopPersona = () => undefined;
   const noopModel = () => undefined;
 
   const makeMessage = (overrides: Partial<Message> = {}): Message => ({
@@ -499,7 +499,7 @@ describe('buildCompletionMessageContext', () => {
   });
 
   it('returns an empty context when there are no messages', () => {
-    expect(buildCompletionMessageContext([], 100, noopAgent, noopModel)).toEqual([]);
+    expect(buildCompletionMessageContext([], 100, noopPersona, noopModel)).toEqual([]);
   });
 
   it('skips messages with empty or missing content', () => {
@@ -509,7 +509,12 @@ describe('buildCompletionMessageContext', () => {
       makeMessage({ decryptedData: { content: 'real', owner_id: 'u-1' } }),
     ];
 
-    const context = buildCompletionMessageContext(messages, 100, noopAgent, noopModel);
+    const context = buildCompletionMessageContext(
+      messages,
+      100,
+      noopPersona,
+      noopModel,
+    );
     expect(context).toHaveLength(1);
     expect(context[0]).toMatchObject({ role: 'user', content: 'real', name: 'u-1' });
   });
@@ -521,7 +526,12 @@ describe('buildCompletionMessageContext', () => {
       }),
     ];
 
-    const context = buildCompletionMessageContext(messages, 100, noopAgent, noopModel);
+    const context = buildCompletionMessageContext(
+      messages,
+      100,
+      noopPersona,
+      noopModel,
+    );
     expect(context).toEqual([
       { role: 'user', content: DELETED_MESSAGE_MARKER, name: 'u-1' },
     ]);
@@ -538,7 +548,7 @@ describe('buildCompletionMessageContext', () => {
     const context = buildCompletionMessageContext(
       [newest, oldest],
       100,
-      noopAgent,
+      noopPersona,
       noopModel,
     );
 
@@ -554,7 +564,7 @@ describe('buildCompletionMessageContext', () => {
     const context = buildCompletionMessageContext(
       [asstMsg, userMsg],
       100,
-      noopAgent,
+      noopPersona,
       noopModel,
     );
 
@@ -564,37 +574,37 @@ describe('buildCompletionMessageContext', () => {
 
   it('prefers owner_id for the participant name', () => {
     const msg = makeMessage({
-      decryptedData: { content: 'hi', owner_id: 'u-1', agent_id: 'a', model_id: 'm' },
+      decryptedData: { content: 'hi', owner_id: 'u-1', persona_id: 'a', model_id: 'm' },
     });
 
     const context = buildCompletionMessageContext(
       [msg],
       100,
-      () => 'agent-name',
+      () => 'persona-name',
       () => 'model-name',
     );
 
     expect(context[0].name).toBe('u-1');
   });
 
-  it('falls back to the agent name when owner_id is absent', () => {
+  it('falls back to the persona name when owner_id is absent', () => {
     const msg = makeMessage({
-      decryptedData: { content: 'hi', agent_id: 'a', model_id: 'm' },
+      decryptedData: { content: 'hi', persona_id: 'a', model_id: 'm' },
     });
 
     const context = buildCompletionMessageContext(
       [msg],
       100,
-      () => 'agent-name',
+      () => 'persona-name',
       () => 'model-name',
     );
 
-    expect(context[0].name).toBe('agent-name');
+    expect(context[0].name).toBe('persona-name');
   });
 
-  it('falls back to the model name when neither owner_id nor agent name resolves', () => {
+  it('falls back to the model name when neither owner_id nor persona name resolves', () => {
     const msg = makeMessage({
-      decryptedData: { content: 'hi', agent_id: 'a', model_id: 'm' },
+      decryptedData: { content: 'hi', persona_id: 'a', model_id: 'm' },
     });
 
     const context = buildCompletionMessageContext(
@@ -609,7 +619,7 @@ describe('buildCompletionMessageContext', () => {
 
   it('leaves name undefined when no resolver returns a value', () => {
     const msg = makeMessage({ decryptedData: { content: 'hi' } });
-    const context = buildCompletionMessageContext([msg], 100, noopAgent, noopModel);
+    const context = buildCompletionMessageContext([msg], 100, noopPersona, noopModel);
     expect(context[0].name).toBeUndefined();
   });
 
@@ -623,7 +633,7 @@ describe('buildCompletionMessageContext', () => {
       makeMessage({ decryptedData: { content: 'ccccc' } }), // 5
       makeMessage({ decryptedData: { content: 'ddddd' } }), // 5 — would tip
     ];
-    const context = buildCompletionMessageContext(msgs, 10, noopAgent, noopModel);
+    const context = buildCompletionMessageContext(msgs, 10, noopPersona, noopModel);
     // We took msgs[0..2] (8+5+5=18 < 20). msgs[3] would make it 23 >= 20.
     expect(context.map((c) => c.content)).toEqual(['ccccc', 'bbbbb', 'aaaaaaaa']);
   });
@@ -633,7 +643,7 @@ describe('buildCompletionMessageContext', () => {
     // everything bigger than that — we should send nothing rather than half a
     // message, and the caller can decide what to do.
     const msgs = [makeMessage({ decryptedData: { content: 'too long' } })];
-    expect(buildCompletionMessageContext(msgs, 1, noopAgent, noopModel)).toEqual([]);
+    expect(buildCompletionMessageContext(msgs, 1, noopPersona, noopModel)).toEqual([]);
   });
 });
 

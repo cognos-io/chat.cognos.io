@@ -296,7 +296,7 @@ export const buildMessageRecordFixture = (
     created: string;
     content: string;
     ownerId?: string;
-    agentId?: string;
+    personaId?: string;
     modelId?: string;
     parentMessageId?: string;
     expires?: string;
@@ -306,7 +306,7 @@ export const buildMessageRecordFixture = (
     content: record.content,
     conversation_id: conversationFixture.conversationRecord.id,
     ...(record.ownerId ? { owner_id: record.ownerId } : {}),
-    ...(record.agentId ? { agent_id: record.agentId } : {}),
+    ...(record.personaId ? { persona_id: record.personaId } : {}),
     ...(record.modelId ? { model_id: record.modelId } : {}),
     ...(record.parentMessageId ? { parent_message_id: record.parentMessageId } : {}),
   };

@@ -137,7 +137,7 @@ test('sending a message bumps its conversation to the top of recent', async ({
             id: 'msg_bump_assistant',
             parent_message_id: 'msg_bump_user',
             content: 'Got it.',
-            agent_id: 'cognos:simple-assistant',
+            persona_id: 'cognos:simple-assistant',
             model_id: 'eu-model',
             created_at: '2026-06-12 12:00:00.000Z',
           },

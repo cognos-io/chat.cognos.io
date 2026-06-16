@@ -100,12 +100,12 @@ test('authenticated user sends a message and receives a response', async ({ page
       const request = route.request();
       const body = request.postDataJSON() as {
         model_id: string;
-        agent_id: string;
+        persona_id: string;
         messages: Array<{ role: string; content: string }>;
       };
 
       expect(body.model_id).toBe('eu-model');
-      expect(body.agent_id).toBe('cognos:simple-assistant');
+      expect(body.persona_id).toBe('cognos:simple-assistant');
       expect(body.messages.at(-1)).toMatchObject({
         role: 'user',
         content: 'Hello from e2e',
@@ -124,7 +124,7 @@ test('authenticated user sends a message and receives a response', async ({ page
                 id: 'msg_assistant_1',
                 parent_message_id: 'msg_user_1',
                 content: 'Hi from the mocked backend',
-                agent_id: 'cognos:simple-assistant',
+                persona_id: 'cognos:simple-assistant',
                 model_id: 'eu-model',
                 created_at: '2026-06-07T00:00:00Z',
               },

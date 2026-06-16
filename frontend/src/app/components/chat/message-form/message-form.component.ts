@@ -25,7 +25,6 @@ import {
   CognosIconComponent,
 } from '@cognos/ui-angular';
 
-import { AgentService } from '@app/services/agent.service';
 import { BillingService } from '@app/services/billing.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
@@ -35,10 +34,11 @@ import {
   MessageStatus,
 } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
+import { PersonaService } from '@app/services/persona.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
-import { AgentSelectorComponent } from './agent-selector/agent-selector.component';
 import { ModelSelectorComponent } from './model-selector/model-selector.component';
+import { PersonaSelectorComponent } from './persona-selector/persona-selector.component';
 
 @Component({
   selector: 'app-message-form',
@@ -134,9 +134,9 @@ import { ModelSelectorComponent } from './model-selector/model-selector.componen
 
             <cog-icon-button
               name="sparkles"
-              title="Choose assistant — {{ agentService.selectedAgent().name }}"
+              title="Choose persona — {{ personaService.selectedPersona().name }}"
               type="button"
-              (click)="openAgentSelector()"
+              (click)="openPersonaSelector()"
             />
 
             @if (canClearTemporaryMessages() && !isMobile()) {
@@ -370,7 +370,7 @@ export class MessageFormComponent {
   isMobile = computed(() => this._deviceService.isMobile());
 
   public readonly messageService = inject(MessageService);
-  public readonly agentService = inject(AgentService);
+  public readonly personaService = inject(PersonaService);
   public readonly modelService = inject(ModelService);
   public readonly billing = inject(BillingService);
 
@@ -457,8 +457,8 @@ export class MessageFormComponent {
     },
   ];
 
-  openAgentSelector() {
-    this._dialog.open(AgentSelectorComponent, cognosDialogOptions);
+  openPersonaSelector() {
+    this._dialog.open(PersonaSelectorComponent, cognosDialogOptions);
   }
 
   goToBilling() {

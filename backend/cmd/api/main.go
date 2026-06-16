@@ -19,7 +19,6 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
-	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/go-co-op/gocron/v2"
 	bifrostschemas "github.com/maximhq/bifrost/core/schemas"
 	"github.com/pocketbase/pocketbase"
@@ -36,7 +35,6 @@ type appHookParams struct {
 	GatewayClient           gateway.Client
 	MessageRepo             chat.MessageRepo
 	KeyPairRepo             auth.KeyPairRepo
-	AIAgentRepo             aiagent.AIAgentRepo
 	ConversationRepo        chat.ConversationRepo
 	BillingService          *billing.Service
 	BillingStateRepo        billing.StateRepo
@@ -106,11 +104,6 @@ func bindAppHooks(
 		messageRepo := params.MessageRepo
 		if messageRepo == nil {
 			messageRepo = chat.NewPocketBaseMessageRepo(app)
-		}
-
-		aiAgentRepo := params.AIAgentRepo
-		if aiAgentRepo == nil {
-			aiAgentRepo = aiagent.NewInMemoryAIAgentRepo(app.Logger())
 		}
 
 		conversationRepo := params.ConversationRepo
@@ -225,7 +218,6 @@ func bindAppHooks(
 			catalogueService,
 			gatewayClient,
 			messageRepo,
-			aiAgentRepo,
 			conversationRepo,
 			billingService,
 			billingStateRepo,

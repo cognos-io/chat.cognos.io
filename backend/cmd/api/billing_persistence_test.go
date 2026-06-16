@@ -8,7 +8,6 @@ import (
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
-	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 )
@@ -236,7 +235,8 @@ func TestCompletionsUsePocketBaseBillingReposByDefault(t *testing.T) {
 		URL:    "/api/v1/completions",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"messages":[{"role":"user","content":"hello there"}]
 		}`),
 		ExpectedStatus: http.StatusOK,
@@ -247,7 +247,6 @@ func TestCompletionsUsePocketBaseBillingReposByDefault(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:  gatewayClient,
-				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 			})
 		},

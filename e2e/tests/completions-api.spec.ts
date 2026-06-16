@@ -27,7 +27,7 @@ interface CompleteResponse {
     id?: string;
     parent_message_id?: string;
     content: string;
-    agent_id?: string;
+    persona_id?: string;
     model_id?: string;
     created_at: string;
   };
@@ -41,7 +41,8 @@ interface MessageListResponse {
 }
 
 const APPROVED_MODEL_ID = 'llama-3-3-infomaniak';
-const DEFAULT_AGENT_ID = 'cognos:simple-assistant';
+const DEFAULT_PERSONA_ID = 'cognos:simple-assistant';
+const DEFAULT_SYSTEM_PROMPT = 'You are a helpful test persona.';
 
 const CONVERSATION_DATA = Buffer.from(
   JSON.stringify({ title: 'completion contract' }),
@@ -93,7 +94,8 @@ test.describe('non-persisted /completions API', () => {
       const res = await api.post('/api/v1/completions', {
         data: {
           model_id: APPROVED_MODEL_ID,
-          agent_id: DEFAULT_AGENT_ID,
+          persona_id: DEFAULT_PERSONA_ID,
+          system_prompt: DEFAULT_SYSTEM_PROMPT,
           messages: [{ role: 'user', content: 'hello' }],
         },
       });
@@ -113,7 +115,8 @@ test.describe('non-persisted /completions API', () => {
       const res = await user.api.post('/api/v1/completions', {
         data: {
           model_id: APPROVED_MODEL_ID,
-          agent_id: DEFAULT_AGENT_ID,
+          persona_id: DEFAULT_PERSONA_ID,
+          system_prompt: DEFAULT_SYSTEM_PROMPT,
           messages: [{ role: 'user', content: 'hello there' }],
         },
       });
@@ -121,6 +124,7 @@ test.describe('non-persisted /completions API', () => {
       const body = (await res.json()) as CompleteResponse;
 
       expect(body.assistant_message.content).toBeTruthy();
+      expect(body.assistant_message.persona_id).toBe(DEFAULT_PERSONA_ID);
       // created_at must be RFC 3339 (ISO-8601 with a "T") so the frontend can
       // parse it in any browser. The persisted copy is encrypted inside the
       // message blob; this is the value the UI renders optimistically.
@@ -141,7 +145,8 @@ test.describe('non-persisted /completions API', () => {
     try {
       const res = await user.api.post('/api/v1/completions', {
         data: {
-          agent_id: DEFAULT_AGENT_ID,
+          persona_id: DEFAULT_PERSONA_ID,
+          system_prompt: DEFAULT_SYSTEM_PROMPT,
           messages: [{ role: 'user', content: 'hi' }],
         },
       });
@@ -159,7 +164,8 @@ test.describe('non-persisted /completions API', () => {
       const res = await user.api.post('/api/v1/completions', {
         data: {
           model_id: APPROVED_MODEL_ID,
-          agent_id: DEFAULT_AGENT_ID,
+          persona_id: DEFAULT_PERSONA_ID,
+          system_prompt: DEFAULT_SYSTEM_PROMPT,
           messages: [],
         },
       });
@@ -178,7 +184,8 @@ test.describe('non-persisted /completions API', () => {
       const res = await user.api.post('/api/v1/completions', {
         data: {
           model_id: APPROVED_MODEL_ID,
-          agent_id: DEFAULT_AGENT_ID,
+          persona_id: DEFAULT_PERSONA_ID,
+          system_prompt: DEFAULT_SYSTEM_PROMPT,
           messages: [
             { role: 'user', content: 'hi' },
             { role: 'assistant', content: 'hello' },
@@ -197,7 +204,8 @@ test.describe('non-persisted /completions API', () => {
       const res = await user.api.post('/api/v1/completions', {
         data: {
           model_id: 'definitely-not-a-real-model',
-          agent_id: DEFAULT_AGENT_ID,
+          persona_id: DEFAULT_PERSONA_ID,
+          system_prompt: DEFAULT_SYSTEM_PROMPT,
           messages: [{ role: 'user', content: 'hi' }],
         },
       });
@@ -209,17 +217,19 @@ test.describe('non-persisted /completions API', () => {
     }
   });
 
-  test('rejects unknown agent_id', async () => {
+  test('rejects missing system_prompt', async () => {
     const user = await provisionApiUser();
     try {
       const res = await user.api.post('/api/v1/completions', {
         data: {
           model_id: APPROVED_MODEL_ID,
-          agent_id: 'cognos:definitely-not-an-agent',
+          persona_id: DEFAULT_PERSONA_ID,
           messages: [{ role: 'user', content: 'hi' }],
         },
       });
       expect(res.status()).toBe(400);
+      const body = (await res.json()) as { message?: string };
+      expect(body.message ?? '').toMatch(/system prompt/i);
     } finally {
       await user.api.dispose();
     }
@@ -233,7 +243,8 @@ test.describe('persisted /conversations/{id}/complete API', () => {
       const res = await api.post('/api/v1/conversations/anyconv00000001/complete', {
         data: {
           model_id: APPROVED_MODEL_ID,
-          agent_id: DEFAULT_AGENT_ID,
+          persona_id: DEFAULT_PERSONA_ID,
+          system_prompt: DEFAULT_SYSTEM_PROMPT,
           messages: [{ role: 'user', content: 'hi' }],
         },
       });
@@ -253,7 +264,8 @@ test.describe('persisted /conversations/{id}/complete API', () => {
         {
           data: {
             model_id: APPROVED_MODEL_ID,
-            agent_id: DEFAULT_AGENT_ID,
+            persona_id: DEFAULT_PERSONA_ID,
+            system_prompt: DEFAULT_SYSTEM_PROMPT,
             request_id: 'e2e-req-1',
             messages: [{ role: 'user', content: 'hello from the e2e suite' }],
           },
@@ -303,7 +315,8 @@ test.describe('persisted /conversations/{id}/complete API', () => {
         {
           data: {
             model_id: APPROVED_MODEL_ID,
-            agent_id: DEFAULT_AGENT_ID,
+            persona_id: DEFAULT_PERSONA_ID,
+            system_prompt: DEFAULT_SYSTEM_PROMPT,
             request_id: 'e2e-large-1',
             messages: [{ role: 'user', content: prompt }],
           },
@@ -344,7 +357,8 @@ test.describe('persisted /conversations/{id}/complete API', () => {
         {
           data: {
             model_id: APPROVED_MODEL_ID,
-            agent_id: DEFAULT_AGENT_ID,
+            persona_id: DEFAULT_PERSONA_ID,
+            system_prompt: DEFAULT_SYSTEM_PROMPT,
             messages: [{ role: 'user', content: 'sneaky message' }],
           },
         },

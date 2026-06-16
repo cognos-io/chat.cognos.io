@@ -92,6 +92,28 @@ type userPreferencesRecordResponse struct {
 	User           string `json:"user"`
 }
 
+type personaRecordResponse struct {
+	ID             string `json:"id"`
+	Created        string `json:"created"`
+	Updated        string `json:"updated"`
+	CollectionID   string `json:"collectionId"`
+	CollectionName string `json:"collectionName"`
+	Data           string `json:"data"`
+	User           string `json:"user"`
+}
+
+type listPersonasResponse struct {
+	Items []personaRecordResponse `json:"items"`
+}
+
+type createPersonaRequest struct {
+	Data string `json:"data"`
+}
+
+type updatePersonaRequest struct {
+	Data string `json:"data"`
+}
+
 type createUserPreferencesRequest struct {
 	Data string `json:"data"`
 }
@@ -401,6 +423,108 @@ func UserPreferencesUpdate(app core.App) func(e *core.RequestEvent) error {
 	}
 }
 
+func PersonasList(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		user := auth.ExtractUser(e)
+		if user == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		records, err := app.FindRecordsByFilter(
+			"personas",
+			"user={:user_id}",
+			"-updated",
+			100,
+			0,
+			dbx.Params{"user_id": user.ID},
+		)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load personas", err)
+		}
+
+		items := make([]personaRecordResponse, 0, len(records))
+		for _, record := range records {
+			items = append(items, personaRecordToResponse(record))
+		}
+
+		return e.JSON(http.StatusOK, listPersonasResponse{Items: items})
+	}
+}
+
+func PersonasCreate(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		user := auth.ExtractUser(e)
+		if user == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		var req createPersonaRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Failed to read request data", err)
+		}
+		if strings.TrimSpace(req.Data) == "" {
+			return apis.NewBadRequestError("data is required", nil)
+		}
+
+		collection, err := app.FindCollectionByNameOrId("personas")
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load personas collection", err)
+		}
+
+		record := core.NewRecord(collection)
+		form := forms.NewRecordUpsert(app, record)
+		form.Load(map[string]any{
+			"data": req.Data,
+			"user": user.ID,
+		})
+		if err := form.Submit(); err != nil {
+			return apis.NewBadRequestError("Failed to create persona", err)
+		}
+
+		return e.JSON(http.StatusCreated, personaRecordToResponse(record))
+	}
+}
+
+func PersonasUpdate(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		record, err := ownedPersonaRecord(app, e, e.Request.PathValue("personaID"))
+		if err != nil {
+			return err
+		}
+
+		var req updatePersonaRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Failed to read request data", err)
+		}
+		if strings.TrimSpace(req.Data) == "" {
+			return apis.NewBadRequestError("data is required", nil)
+		}
+
+		form := forms.NewRecordUpsert(app, record)
+		form.Load(map[string]any{"data": req.Data})
+		if err := form.Submit(); err != nil {
+			return apis.NewBadRequestError("Failed to update persona", err)
+		}
+
+		return e.JSON(http.StatusOK, personaRecordToResponse(record))
+	}
+}
+
+func PersonasDelete(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		record, err := ownedPersonaRecord(app, e, e.Request.PathValue("personaID"))
+		if err != nil {
+			return err
+		}
+
+		if err := app.Delete(record); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to delete persona", err)
+		}
+
+		return e.NoContent(http.StatusNoContent)
+	}
+}
+
 // wrapKeyPattern bounds the wrap key to a 32-byte (256-bit) AES key encoded as
 // base64. Tightening past the generic base64 column regex keeps junk payloads
 // out without leaning on a runtime length check.
@@ -613,6 +737,35 @@ func ownedUserPreferencesRecord(app core.App, e *core.RequestEvent, preferencesI
 	}
 
 	return record, nil
+}
+
+func ownedPersonaRecord(app core.App, e *core.RequestEvent, personaID string) (*core.Record, error) {
+	user := auth.ExtractUser(e)
+	if user == nil {
+		return nil, apis.NewUnauthorizedError("User not authenticated", nil)
+	}
+
+	record, err := app.FindRecordById("personas", personaID)
+	if err != nil {
+		return nil, apis.NewNotFoundError("Persona not found", err)
+	}
+	if record.GetString("user") != user.ID {
+		return nil, apis.NewNotFoundError("Persona not found", nil)
+	}
+
+	return record, nil
+}
+
+func personaRecordToResponse(record *core.Record) personaRecordResponse {
+	return personaRecordResponse{
+		ID:             record.Id,
+		Created:        record.GetString("created"),
+		Updated:        record.GetString("updated"),
+		CollectionID:   record.Collection().Id,
+		CollectionName: record.Collection().Name,
+		Data:           record.GetString("data"),
+		User:           record.GetString("user"),
+	}
 }
 
 func userKeyPairRecordToResponse(record *core.Record) userKeyPairRecordResponse {

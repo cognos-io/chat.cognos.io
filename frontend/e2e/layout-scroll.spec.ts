@@ -31,7 +31,7 @@ const seedLongConversation = async (page: import('@playwright/test').Page) => {
     id: 'msg_assistant_scroll',
     created: '2026-06-13T22:25:05Z',
     content: longParagraph('The stock market is a network of exchanges'),
-    agentId: 'cognos:simple-assistant',
+    personaId: 'cognos:simple-assistant',
     modelId: 'eu-model',
     parentMessageId: userMessage.id,
   });

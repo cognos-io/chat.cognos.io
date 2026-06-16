@@ -15,7 +15,6 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/participants"
-	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/hook"
@@ -108,7 +107,6 @@ func addPocketBaseRoutes(
 	catalogueService catalogue.Service,
 	gatewayClient gateway.Client,
 	messageRepo chat.MessageRepo,
-	aiAgentRepo aiagent.AIAgentRepo,
 	conversationRepo chat.ConversationRepo,
 	billingService *billing.Service,
 	billingStateRepo billing.StateRepo,
@@ -403,7 +401,6 @@ func addPocketBaseRoutes(
 		GatewayClient:       gatewayClient,
 		MessageRepo:         messageRepo,
 		ConversationRepo:    conversationRepo,
-		AgentRepo:           aiAgentRepo,
 		BillingService:      billingService,
 		BillingStateRepo:    billingStateRepo,
 		BillingLedgerRepo:   billingLedgerRepo,
@@ -496,6 +493,38 @@ func addPocketBaseRoutes(
 	e.Router.PATCH(
 		"/api/v1/user-preferences/{preferencesID}",
 		handler.UserPreferencesUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/personas",
+		handler.PersonasList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/personas",
+		handler.PersonasCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/personas/{personaID}",
+		handler.PersonasUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.DELETE(
+		"/api/v1/personas/{personaID}",
+		handler.PersonasDelete(app),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),
@@ -611,8 +640,8 @@ func addPocketBaseRoutes(
 		registry,
 		app,
 		logger,
-		"agents",
-		"Number of agents in the system",
+		"personas",
+		"Number of personas in the system",
 	)
 
 	e.Router.GET(

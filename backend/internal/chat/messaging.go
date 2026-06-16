@@ -13,7 +13,7 @@ type MessageRecordData struct {
 	CreatedAt string `json:"created_at,omitempty"`
 	// Identifier fields for who has written the message
 	// At least one of these fields should be set
-	OwnerID string `json:"owner_id,omitempty"`
-	AgentID string `json:"agent_id,omitempty"`
-	ModelID string `json:"model_id,omitempty"`
+	OwnerID   string `json:"owner_id,omitempty"`
+	PersonaID string `json:"persona_id,omitempty"`
+	ModelID   string `json:"model_id,omitempty"`
 }

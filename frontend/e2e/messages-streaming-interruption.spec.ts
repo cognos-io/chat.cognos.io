@@ -110,7 +110,7 @@ const createCompletionMock = (options: CompletionMockOptions): CompletionMock =>
       id: `msg_assistant_${conversationFixture.conversationRecord.id}`,
       created: '2026-06-07T00:00:05Z',
       content: assistantContent,
-      agentId: 'cognos:simple-assistant',
+      personaId: 'cognos:simple-assistant',
       modelId: 'eu-model',
       parentMessageId: userMessage.id,
     });
@@ -169,7 +169,7 @@ const createCompletionMock = (options: CompletionMockOptions): CompletionMock =>
                 id: `msg_assistant_${conversationFixture.conversationRecord.id}`,
                 parent_message_id: `msg_user_${conversationFixture.conversationRecord.id}`,
                 content: assistantContent,
-                agent_id: 'cognos:simple-assistant',
+                persona_id: 'cognos:simple-assistant',
                 model_id: 'eu-model',
                 created_at: '2026-06-07T00:00:00Z',
               },

@@ -27,7 +27,7 @@ test('authenticated user reloads and still sees decrypted history', async ({
     id: 'msg_assistant_history',
     created: '2026-06-07T00:00:05Z',
     content: 'We shipped the gateway seam and the new browser tests.',
-    agentId: 'cognos:simple-assistant',
+    personaId: 'cognos:simple-assistant',
     modelId: 'eu-model',
     parentMessageId: userMessage.id,
   });

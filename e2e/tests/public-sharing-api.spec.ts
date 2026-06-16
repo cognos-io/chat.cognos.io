@@ -37,7 +37,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────
 
 const APPROVED_MODEL_ID = 'llama-3-3-infomaniak';
-const DEFAULT_AGENT_ID = 'cognos:simple-assistant';
+const DEFAULT_PERSONA_ID = 'cognos:simple-assistant';
 
 interface ConversationResponse {
   id: string;
@@ -150,7 +150,8 @@ async function seedCompletion(
     {
       data: {
         model_id: APPROVED_MODEL_ID,
-        agent_id: DEFAULT_AGENT_ID,
+        persona_id: DEFAULT_PERSONA_ID,
+        system_prompt: 'You are a helpful test persona.',
         request_id: 'e2e-public-share-1',
         messages: [{ role: 'user', content: userMessage }],
       },

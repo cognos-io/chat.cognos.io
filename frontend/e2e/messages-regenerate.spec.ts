@@ -34,7 +34,7 @@ test('regenerating an answer creates a sibling branch the user can switch betwee
     id: 'msg_assistant_regen',
     created: '2026-06-13T22:25:05Z',
     content: 'The original answer.',
-    agentId: 'cognos:simple-assistant',
+    personaId: 'cognos:simple-assistant',
     modelId: 'eu-model',
     parentMessageId: userMessage.id,
   });
@@ -74,7 +74,7 @@ test('regenerating an answer creates a sibling branch the user can switch betwee
               id: 'msg_assistant_regen_2',
               parent_message_id: 'msg_user_regen',
               content: 'A regenerated answer.',
-              agent_id: 'cognos:simple-assistant',
+              persona_id: 'cognos:simple-assistant',
               model_id: 'eu-model',
               created_at: '2026-06-13T22:26:00Z',
             },

@@ -26,7 +26,8 @@ test('assistant responses stream progressively on the existing completion endpoi
   let completionRequestBody:
     | {
         model_id: string;
-        agent_id: string;
+        persona_id: string;
+        system_prompt: string;
         messages: Array<{ role: string; content: string }>;
       }
     | undefined;
@@ -73,7 +74,7 @@ test('assistant responses stream progressively on the existing completion endpoi
                 id: 'msg_assistant_stream_1',
                 parent_message_id: 'msg_user_stream_1',
                 content: 'Hi from the streamed backend',
-                agent_id: 'cognos:simple-assistant',
+                persona_id: 'cognos:simple-assistant',
                 model_id: 'eu-model',
                 created_at: '2026-06-07T00:00:00Z',
               },
@@ -192,7 +193,8 @@ test('assistant responses stream progressively on the existing completion endpoi
         if (route.request().method() === 'POST') {
           completionRequestBody = route.request().postDataJSON() as {
             model_id: string;
-            agent_id: string;
+            persona_id: string;
+            system_prompt: string;
             messages: Array<{ role: string; content: string }>;
           };
         }
@@ -228,7 +230,8 @@ test('assistant responses stream progressively on the existing completion endpoi
     await expect(finalAssistantMessage).toHaveText('Hi from the streamed backend');
 
     expect(completionRequestBody?.model_id).toBe('eu-model');
-    expect(completionRequestBody?.agent_id).toBe('cognos:simple-assistant');
+    expect(completionRequestBody?.persona_id).toBe('cognos:simple-assistant');
+    expect(completionRequestBody?.system_prompt).toContain('accurate, factual');
     expect(completionRequestBody?.messages.at(-1)).toMatchObject({
       role: 'user',
       content: 'Hello from streaming e2e',

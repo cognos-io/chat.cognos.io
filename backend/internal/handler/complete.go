@@ -18,7 +18,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/participants"
-	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
+	"github.com/cognos-io/chat.cognos.io/backend/pkg/persona"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
@@ -32,7 +32,8 @@ type completionMessage struct {
 type completeRequest struct {
 	Messages        []completionMessage `json:"messages"`
 	ModelID         string              `json:"model_id"`
-	AgentID         string              `json:"agent_id"`
+	PersonaID       string              `json:"persona_id"`
+	SystemPrompt    string              `json:"system_prompt"`
 	ParentMessageID string              `json:"parent_message_id,omitempty"`
 	RequestID       string              `json:"request_id,omitempty"`
 	MaxOutputTokens int                 `json:"max_output_tokens,omitempty"`
@@ -40,6 +41,8 @@ type completeRequest struct {
 }
 
 type CompleteRequest = completeRequest
+
+const maxSystemPromptChars = 20000
 
 type CompleteBillingRestriction struct {
 	Error            string   `json:"error"`
@@ -71,7 +74,7 @@ type assistantMessageResponse struct {
 	ID              string `json:"id,omitempty"`
 	ParentMessageID string `json:"parent_message_id,omitempty"`
 	Content         string `json:"content"`
-	AgentID         string `json:"agent_id"`
+	PersonaID       string `json:"persona_id"`
 	ModelID         string `json:"model_id"`
 	CreatedAt       string `json:"created_at"`
 }
@@ -97,7 +100,6 @@ type CompleteHandlerParams struct {
 	GatewayClient       gateway.Client
 	MessageRepo         chat.MessageRepo
 	ConversationRepo    chat.ConversationRepo
-	AgentRepo           aiagent.AIAgentRepo
 	BillingService      *billing.Service
 	BillingStateRepo    billing.StateRepo
 	BillingLedgerRepo   billing.LedgerRepo
@@ -141,15 +143,22 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		}
 
 		req.ModelID = strings.TrimSpace(req.ModelID)
-		req.AgentID = strings.TrimSpace(req.AgentID)
+		req.PersonaID = strings.TrimSpace(req.PersonaID)
+		req.SystemPrompt = strings.TrimSpace(req.SystemPrompt)
 		req.ParentMessageID = strings.TrimSpace(req.ParentMessageID)
 		req.RequestID = strings.TrimSpace(req.RequestID)
 
 		if req.ModelID == "" {
 			return apis.NewBadRequestError("Model ID is required", nil)
 		}
-		if req.AgentID == "" {
-			return apis.NewBadRequestError("Agent ID is required", nil)
+		if req.PersonaID == "" {
+			return apis.NewBadRequestError("Persona ID is required", nil)
+		}
+		if req.SystemPrompt == "" {
+			return apis.NewBadRequestError("System prompt is required", nil)
+		}
+		if len(req.SystemPrompt) > maxSystemPromptChars {
+			return apis.NewBadRequestError("System prompt is too long", nil)
 		}
 		if len(req.Messages) == 0 {
 			return apis.NewBadRequestError("At least one message is required", nil)
@@ -180,13 +189,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			return apis.NewForbiddenError("Model is not available for the user's privacy tier", nil)
 		}
 
-		agent, err := params.AgentRepo.LookupPrompt(req.AgentID)
-		if err != nil {
-			if errors.Is(err, aiagent.ErrAgentNotFound) {
-				return apis.NewBadRequestError("Invalid agent ID", err)
-			}
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to load agent", err)
-		}
+		prompt := persona.Prompt{SystemMessage: req.SystemPrompt}
 
 		conversationID := ""
 		if useConversationPath {
@@ -257,18 +260,18 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			return apis.NewApiError(http.StatusServiceUnavailable, "Provider is unavailable", nil)
 		}
 
-		agentMessages := make([]aiagent.Message, 0, len(req.Messages))
+		personaMessages := make([]persona.Message, 0, len(req.Messages))
 		for _, message := range req.Messages {
-			agentMessages = append(agentMessages, aiagent.Message{
+			personaMessages = append(personaMessages, persona.Message{
 				Role:    message.Role,
 				Content: message.Content,
 				Name:    message.Name,
 			})
 		}
-		agentMessages = aiagent.BuildMessages(agent, agentMessages)
+		personaMessages = persona.BuildMessages(prompt, personaMessages)
 
-		messages := make([]gateway.Message, 0, len(agentMessages))
-		for _, message := range agentMessages {
+		messages := make([]gateway.Message, 0, len(personaMessages))
+		for _, message := range personaMessages {
 			messages = append(messages, gateway.Message{
 				Role:    message.Role,
 				Content: message.Content,
@@ -352,7 +355,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 				assistantParentID,
 				chat.MessageRecordData{
 					Content:   gatewayResp.Message.Content,
-					AgentID:   req.AgentID,
+					PersonaID: req.PersonaID,
 					ModelID:   model.ID,
 					CreatedAt: assistantCreatedAt,
 				},
@@ -416,7 +419,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			RequestID: req.RequestID,
 			AssistantMessage: assistantMessageResponse{
 				Content:   gatewayResp.Message.Content,
-				AgentID:   req.AgentID,
+				PersonaID: req.PersonaID,
 				ModelID:   model.ID,
 				CreatedAt: assistantCreatedAt,
 			},

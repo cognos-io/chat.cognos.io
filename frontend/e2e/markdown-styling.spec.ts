@@ -50,7 +50,7 @@ const seedMarkdownConversation = async (page: import('@playwright/test').Page) =
     id: 'msg_assistant_md',
     created: '2026-06-13T22:25:05Z',
     content: markdownContent,
-    agentId: 'cognos:simple-assistant',
+    personaId: 'cognos:simple-assistant',
     modelId: 'eu-model',
     parentMessageId: userMessage.id,
   });

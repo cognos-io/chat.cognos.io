@@ -33,7 +33,6 @@ import {
   selectActiveBranch,
 } from '@cognos/ui-angular';
 
-import { generateConversationAgentId } from '@app/interfaces/agent';
 import { CompletionBillingRestriction } from '@app/interfaces/billing';
 import {
   Message,
@@ -41,9 +40,12 @@ import {
   isMessageFromUser,
   parseMessageData,
 } from '@app/interfaces/message';
+import {
+  generateConversationPersonaId,
+  generateConversationSystemPrompt,
+} from '@app/interfaces/persona';
 import { parseBackendDate } from '@app/utils/timestamp';
 
-import { AgentService } from './agent.service';
 import { AuthService } from './auth.service';
 import { BillingService } from './billing.service';
 import {
@@ -58,6 +60,7 @@ import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
 import { ModelService } from './model.service';
+import { PersonaService } from './persona.service';
 import { VaultService } from './vault.service';
 
 export enum MessageStatus {
@@ -115,7 +118,7 @@ export const buildDeletedMessageData = (existing: MessageData): MessageData => (
   conversation_id: existing.conversation_id,
   parent_message_id: existing.parent_message_id,
   created_at: existing.created_at,
-  agent_id: existing.agent_id,
+  persona_id: existing.persona_id,
   model_id: existing.model_id,
   owner_id: existing.owner_id,
   deleted: true,
@@ -176,13 +179,13 @@ export const assertMessageBindings = (
 // buildCompletionMessageContext walks the conversation newest-first and
 // produces the chronological prompt context. It enforces the per-message
 // "would push us over the input budget" stop without ever sending plaintext
-// fields we did not intend to (e.g. owner_id, agent_id, model_id are only
+// fields we did not intend to (e.g. owner_id, persona_id, model_id are only
 // consulted to pick the role + display name and never round-trip into the
 // outgoing payload).
 export const buildCompletionMessageContext = (
   messagesNewestFirst: ReadonlyArray<Message>,
   inputContextTokens: number,
-  resolveAgentName: (id: string | undefined) => string | undefined,
+  resolvePersonaName: (id: string | undefined) => string | undefined,
   resolveModelName: (id: string | undefined) => string | undefined,
 ): CompletionMessageRequest[] => {
   const context: CompletionMessageRequest[] = [];
@@ -209,7 +212,7 @@ export const buildCompletionMessageContext = (
       content,
       name:
         ownerId ??
-        resolveAgentName(message.decryptedData.agent_id) ??
+        resolvePersonaName(message.decryptedData.persona_id) ??
         resolveModelName(message.decryptedData.model_id),
     });
     usedContextLength += content.length;
@@ -236,7 +239,7 @@ export const buildCompletionMessages = (
     expires,
     decryptedData: {
       content: resp.assistantMessage.content,
-      agent_id: resp.assistantMessage.agentId,
+      persona_id: resp.assistantMessage.personaId,
       model_id: resp.assistantMessage.modelId,
     },
   };
@@ -259,7 +262,7 @@ export const applyCompletionStreamDelta = (
   existing: ReadonlyArray<Message>,
   request: MessageRequest,
   delta: string,
-  agentId: string,
+  personaId: string,
   modelId: string,
 ): Message[] => {
   const assistantId = streamingAssistantMessageId(request.requestId);
@@ -291,7 +294,7 @@ export const applyCompletionStreamDelta = (
       isStreaming: true,
       decryptedData: {
         content: delta,
-        agent_id: agentId,
+        persona_id: personaId,
         model_id: modelId,
       },
     },
@@ -407,7 +410,7 @@ export const splitStreamDeltaForDisplay = (delta: string, chunkSize = 3): string
 })
 export class MessageService {
   private readonly _softDeleteMessage$ = new Subject<Message>();
-  private readonly _agentService = inject(AgentService);
+  private readonly _personaService = inject(PersonaService);
   private readonly _authService = inject(AuthService);
   private readonly _billingService = inject(BillingService);
   private readonly _conversationService = inject(ConversationService);
@@ -878,10 +881,12 @@ export class MessageService {
 
     this.state.setStatus(MessageStatus.Sending);
 
+    const selectedPersona = this._personaService.selectedPersona();
     const request = {
       messages: this.createMessageContext(),
       modelId: this._modelService.selectedModel().id,
-      agentId: this._agentService.selectedAgent().id,
+      personaId: selectedPersona.id,
+      systemPrompt: selectedPersona.systemPrompt,
       parentMessageId: messageRequest.parentMessageId,
       requestId: messageRequest.requestId,
     };
@@ -927,7 +932,7 @@ export class MessageService {
                 this.state().messages,
                 streamingRequest,
                 event.delta,
-                request.agentId,
+                request.personaId,
                 request.modelId,
               ),
             };
@@ -1010,10 +1015,12 @@ export class MessageService {
     this.state.setStatus(MessageStatus.Sending);
 
     const requestId = self.crypto.randomUUID();
+    const selectedPersona = this._personaService.selectedPersona();
     const request = {
       messages: this.buildContextFromPath([...contextPath].reverse()),
       modelId: this._modelService.selectedModel().id,
-      agentId: this._agentService.selectedAgent().id,
+      personaId: selectedPersona.id,
+      systemPrompt: selectedPersona.systemPrompt,
       parentMessageId: parentId,
       requestId,
     };
@@ -1058,7 +1065,7 @@ export class MessageService {
                 this.state().messages,
                 streamingRequest,
                 event.delta,
-                request.agentId,
+                request.personaId,
                 request.modelId,
               ),
               // Surface the in-progress response as the active branch.
@@ -1244,7 +1251,7 @@ export class MessageService {
     return buildCompletionMessageContext(
       messagesNewestFirst,
       model.inputContextLength,
-      (id) => this._agentService.getAgent(id)()?.name,
+      (id) => this._personaService.getPersona(id)()?.name,
       (id) => this._modelService.getModel(id)?.name,
     );
   }
@@ -1258,7 +1265,8 @@ export class MessageService {
         persist: false,
         messages: [{ role: 'user', content: startingMessage }],
         modelId: this._modelService.selectedModel().id,
-        agentId: generateConversationAgentId,
+        personaId: generateConversationPersonaId,
+        systemPrompt: generateConversationSystemPrompt,
       })
       .pipe(
         catchError((err) => {

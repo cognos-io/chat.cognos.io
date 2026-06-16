@@ -27,7 +27,7 @@ test('deleting a message replaces it with a tombstone and keeps the thread', asy
     id: 'msg_assistant_del',
     created: '2026-06-13T22:25:05Z',
     content: 'The secret answer.',
-    agentId: 'cognos:simple-assistant',
+    personaId: 'cognos:simple-assistant',
     modelId: 'eu-model',
     parentMessageId: userMessage.id,
   });

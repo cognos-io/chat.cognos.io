@@ -21,12 +21,12 @@ import {
 } from '@cognos/ui-angular';
 
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
-import { Agent } from '@app/interfaces/agent';
 import { Message, isMessageFromUser } from '@app/interfaces/message';
 import { Model } from '@app/interfaces/model';
-import { AgentService } from '@app/services/agent.service';
+import { Persona } from '@app/interfaces/persona';
 import { MessageService } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
+import { PersonaService } from '@app/services/persona.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 @Component({
@@ -47,7 +47,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       <li
         class="message-list-item"
         [id]="message.record_id"
-        [attr.data-agent-id]="message.decryptedData.agent_id"
+        [attr.data-persona-id]="message.decryptedData.persona_id"
         [attr.data-model-id]="message.decryptedData.model_id"
         [attr.data-owner-id]="message.decryptedData.owner_id"
         [attr.data-parent-id]="message.parentMessageId"
@@ -269,7 +269,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
 })
 export class MessageListItemComponent {
   private readonly _modelService = inject(ModelService);
-  private readonly _agentService = inject(AgentService);
+  private readonly _personaService = inject(PersonaService);
   private readonly _messageService = inject(MessageService);
   private readonly _dialog = inject(Dialog);
 
@@ -363,13 +363,13 @@ export class MessageListItemComponent {
     }
   }
 
-  get agent(): Agent | undefined {
-    const agentId = this.message?.decryptedData.agent_id;
-    if (!this.message || !agentId) {
+  get persona(): Persona | undefined {
+    const personaId = this.message?.decryptedData.persona_id;
+    if (!this.message || !personaId) {
       return undefined;
     }
 
-    return this._agentService.getAgent(agentId)();
+    return this._personaService.getPersona(personaId)();
   }
 
   get model(): Model | undefined {
@@ -382,11 +382,11 @@ export class MessageListItemComponent {
   }
 
   assistantLabel() {
-    if (this.agent && this.model) {
-      return `${this.agent.name} · ${this.model.name}`;
+    if (this.persona && this.model) {
+      return `${this.persona.name} · ${this.model.name}`;
     }
 
-    return this.agent?.name ?? this.model?.name ?? 'Cognos';
+    return this.persona?.name ?? this.model?.name ?? 'Cognos';
   }
 
   userMeta() {

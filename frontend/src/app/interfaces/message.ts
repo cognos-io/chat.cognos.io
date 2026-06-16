@@ -19,7 +19,7 @@ export const MessageData = z.object({
   // message-timing metadata is stored in a plaintext column. Optional because
   // messages created before this field existed won't carry it.
   created_at: z.string().optional(),
-  agent_id: z.string().optional(), // the agent used when generating the message
+  persona_id: z.string().optional(), // the persona used when generating the message
   model_id: z.string().optional(), // the model used when generating the message
   owner_id: z.string().optional(), // the user who sent the message
   // Tombstone flag set when the message is soft-deleted. The content is cleared

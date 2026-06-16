@@ -21,6 +21,7 @@ import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/mod
 import {
   ConversationPublicKeysResponse,
   ConversationSecretKeysResponse,
+  PersonasResponse,
   UserKeyPairsResponse,
   UserPreferencesResponse,
 } from '@app/types/pocketbase-types';
@@ -36,7 +37,8 @@ export interface CompletionMessageRequest {
 export interface CompleteRequest {
   messages: CompletionMessageRequest[];
   modelId: string;
-  agentId: string;
+  personaId: string;
+  systemPrompt: string;
   parentMessageId?: string;
   requestId?: string;
   maxOutputTokens?: number;
@@ -51,7 +53,7 @@ export interface CompleteResponse {
     id?: string;
     parentMessageId?: string;
     content: string;
-    agentId: string;
+    personaId: string;
     modelId: string;
     createdAt: string;
   };
@@ -139,7 +141,8 @@ interface ApiModelsCatalogueResponse {
 interface ApiCompleteRequest {
   messages: CompletionMessageRequest[];
   model_id: string;
-  agent_id: string;
+  persona_id: string;
+  system_prompt: string;
   parent_message_id?: string;
   request_id?: string;
   max_output_tokens?: number;
@@ -154,7 +157,7 @@ interface ApiCompleteResponse {
     id?: string;
     parent_message_id?: string;
     content: string;
-    agent_id: string;
+    persona_id: string;
     model_id: string;
     created_at: string;
   };
@@ -294,6 +297,18 @@ interface ApiUserPreferencesUpdateRequest {
   data: string;
 }
 
+interface ApiPersonaCreateRequest {
+  data: string;
+}
+
+interface ApiPersonaUpdateRequest {
+  data: string;
+}
+
+interface ApiPersonasListResponse {
+  items: PersonasResponse[];
+}
+
 // mapCompleteRequest and mapCompleteResponse are exported as pure helpers so
 // the snake_case ↔ camelCase contract with the backend can be unit-tested
 // directly. Without these as pinned helpers, a backend field rename would
@@ -302,7 +317,8 @@ interface ApiUserPreferencesUpdateRequest {
 export const mapCompleteRequest = (request: CompleteRequest): ApiCompleteRequest => ({
   messages: request.messages,
   model_id: request.modelId,
-  agent_id: request.agentId,
+  persona_id: request.personaId,
+  system_prompt: request.systemPrompt,
   parent_message_id: request.parentMessageId,
   request_id: request.requestId,
   max_output_tokens: request.maxOutputTokens,
@@ -319,7 +335,7 @@ export const mapCompleteResponse = (
     id: response.assistant_message.id,
     parentMessageId: response.assistant_message.parent_message_id,
     content: response.assistant_message.content,
-    agentId: response.assistant_message.agent_id,
+    personaId: response.assistant_message.persona_id,
     modelId: response.assistant_message.model_id,
     createdAt: response.assistant_message.created_at,
   },
@@ -800,6 +816,43 @@ export class CognosApiService {
         headers: this.authHeaders(),
       },
     );
+  }
+
+  listPersonas(): Observable<PersonasResponse[]> {
+    return this._http
+      .get<ApiPersonasListResponse>(`${this._baseUrl}/api/v1/personas`, {
+        headers: this.authHeaders(),
+      })
+      .pipe(map((response) => response.items));
+  }
+
+  createPersona(request: ApiPersonaCreateRequest): Observable<PersonasResponse> {
+    return this._http.post<PersonasResponse>(
+      `${this._baseUrl}/api/v1/personas`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  updatePersona(
+    personaId: string,
+    request: ApiPersonaUpdateRequest,
+  ): Observable<PersonasResponse> {
+    return this._http.patch<PersonasResponse>(
+      `${this._baseUrl}/api/v1/personas/${personaId}`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  deletePersona(personaId: string): Observable<void> {
+    return this._http.delete<void>(`${this._baseUrl}/api/v1/personas/${personaId}`, {
+      headers: this.authHeaders(),
+    });
   }
 
   getVaultSession(): Observable<VaultSession> {

@@ -11,7 +11,8 @@ describe('mapCompleteRequest', () => {
     const wire = mapCompleteRequest({
       messages: [{ role: 'user', content: 'hi' }],
       modelId: 'infomaniak:llama-3',
-      agentId: 'cognos:simple-assistant',
+      personaId: 'cognos:simple-assistant',
+      systemPrompt: 'Be helpful.',
       parentMessageId: 'msg-1',
       requestId: 'req-1',
       maxOutputTokens: 256,
@@ -21,7 +22,8 @@ describe('mapCompleteRequest', () => {
     expect(wire).toEqual({
       messages: [{ role: 'user', content: 'hi' }],
       model_id: 'infomaniak:llama-3',
-      agent_id: 'cognos:simple-assistant',
+      persona_id: 'cognos:simple-assistant',
+      system_prompt: 'Be helpful.',
       parent_message_id: 'msg-1',
       request_id: 'req-1',
       max_output_tokens: 256,
@@ -33,7 +35,8 @@ describe('mapCompleteRequest', () => {
     const wire = mapCompleteRequest({
       messages: [],
       modelId: 'm',
-      agentId: 'a',
+      personaId: 'a',
+      systemPrompt: 'prompt',
     });
 
     // We deliberately do NOT default these to null or omit them — sending
@@ -63,7 +66,7 @@ describe('parseCompleteStreamData', () => {
         id: 'asst-1',
         parent_message_id: 'user-1',
         content: 'hello back',
-        agent_id: 'cognos:simple-assistant',
+        persona_id: 'cognos:simple-assistant',
         model_id: 'infomaniak:llama-3',
         created_at: '2026-01-02T03:04:05.000Z',
       },
@@ -113,7 +116,7 @@ describe('mapCompleteResponse', () => {
       id: 'asst-1',
       parent_message_id: 'user-1',
       content: 'hello back',
-      agent_id: 'cognos:simple-assistant',
+      persona_id: 'cognos:simple-assistant',
       model_id: 'infomaniak:llama-3',
       created_at: '2026-01-02T03:04:05.000Z',
     },
@@ -139,7 +142,7 @@ describe('mapCompleteResponse', () => {
         id: 'asst-1',
         parentMessageId: 'user-1',
         content: 'hello back',
-        agentId: 'cognos:simple-assistant',
+        personaId: 'cognos:simple-assistant',
         modelId: 'infomaniak:llama-3',
         createdAt: '2026-01-02T03:04:05.000Z',
       },

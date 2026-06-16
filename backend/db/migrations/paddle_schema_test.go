@@ -132,6 +132,24 @@ func TestPaddleBillingSchema(t *testing.T) {
 	})
 }
 
+func TestPersonasSchemaStoresEncryptedUserOwnedData(t *testing.T) {
+	app := bootMigratedApp(t)
+	c := mustCollection(t, app, "personas")
+
+	// `created`/`updated` are required: PersonasList sorts by `-updated` and the
+	// API serialises both, so a collection without them returns 500 on every
+	// authenticated list.
+	assertHasFields(t, c, "user", "data", "created", "updated")
+	for _, field := range []string{"name", "description", "system_prompt"} {
+		if c.Fields.GetByName(field) != nil {
+			t.Errorf("personas collection must not store plaintext field %q", field)
+		}
+	}
+	if c.ListRule == nil || c.ViewRule == nil || c.CreateRule == nil || c.UpdateRule == nil || c.DeleteRule == nil {
+		t.Fatal("personas collection must have owner-scoped API rules")
+	}
+}
+
 // Edge: the Paddle event id is the natural idempotency key — re-inserting the
 // same event id must be rejected so webhook re-delivery is a no-op.
 func TestPaddleEventsRejectDuplicateID(t *testing.T) {

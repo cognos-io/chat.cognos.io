@@ -14,7 +14,6 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
-	"github.com/cognos-io/chat.cognos.io/backend/pkg/aiagent"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
@@ -40,7 +39,7 @@ func TestCompletionsRequireAuth(t *testing.T) {
 		Name:            "first-party completions require record auth",
 		Method:          http.MethodPost,
 		URL:             "/api/v1/completions",
-		Body:            strings.NewReader(`{"model_id":"llama-3-3-infomaniak","agent_id":"cognos:simple-assistant","messages":[{"role":"user","content":"hello"}]}`),
+		Body:            strings.NewReader(`{"model_id":"llama-3-3-infomaniak","persona_id":"cognos:simple-assistant","system_prompt":"test persona prompt","messages":[{"role":"user","content":"hello"}]}`),
 		ExpectedStatus:  http.StatusUnauthorized,
 		ExpectedContent: []string{`"message":"The request requires valid record authorization token."`},
 		TestAppFactory:  setupTestApp,
@@ -65,7 +64,8 @@ func TestCompletionsRejectNonWhitelistedModelBeforeGatewayCall(t *testing.T) {
 		URL:    "/api/v1/completions",
 		Body: strings.NewReader(`{
 			"model_id":"non-whitelisted-model",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"messages":[{"role":"user","content":"hello"}]
 		}`),
 		ExpectedStatus: http.StatusBadRequest,
@@ -75,7 +75,6 @@ func TestCompletionsRejectNonWhitelistedModelBeforeGatewayCall(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:  gatewayClient,
-				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 			})
 		},
@@ -124,6 +123,9 @@ func TestConversationCompletePersistsEncryptedMessages(t *testing.T) {
 			if req.Messages[0].Role != "system" {
 				t.Fatalf("Complete() Messages[0].Role = %q, want %q", req.Messages[0].Role, "system")
 			}
+			if req.Messages[0].Content != "test persona prompt" {
+				t.Fatalf("Complete() Messages[0].Content = %q, want %q", req.Messages[0].Content, "test persona prompt")
+			}
 			if req.Messages[1].Content != "hello there" {
 				t.Fatalf("Complete() Messages[1].Content = %q, want %q", req.Messages[1].Content, "hello there")
 			}
@@ -144,7 +146,8 @@ func TestConversationCompletePersistsEncryptedMessages(t *testing.T) {
 		URL:    "/api/v1/conversations/" + conversationID + "/complete",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"request_id":"req-1",
 			"messages":[{"role":"user","content":"hello there"}]
 		}`),
@@ -158,7 +161,6 @@ func TestConversationCompletePersistsEncryptedMessages(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:  gatewayClient,
-				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 				ConversationRepo: stubConversationRepo{
 					byID: func(id string) (chat.Conversation, error) {
@@ -225,7 +227,7 @@ func TestConversationCompleteStreamPersistsEncryptedMessages(t *testing.T) {
 		Name:           "conversation complete stream persists encrypted messages",
 		Method:         http.MethodPost,
 		URL:            "/api/v1/conversations/" + conversationID + "/complete",
-		Body:           strings.NewReader(`{"model_id":"llama-3-3-infomaniak","agent_id":"cognos:simple-assistant","request_id":"req-stream-1","messages":[{"role":"user","content":"hello there"}]}`),
+		Body:           strings.NewReader(`{"model_id":"llama-3-3-infomaniak","persona_id":"cognos:simple-assistant","system_prompt":"test persona prompt","request_id":"req-stream-1","messages":[{"role":"user","content":"hello there"}]}`),
 		ExpectedStatus: http.StatusOK,
 		ExpectedContent: []string{
 			`"type":"delta","delta":"hello "`,
@@ -234,7 +236,6 @@ func TestConversationCompleteStreamPersistsEncryptedMessages(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:  gatewayClient,
-				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 				ConversationRepo: stubConversationRepo{
 					byID: func(id string) (chat.Conversation, error) {
@@ -352,7 +353,7 @@ func TestConversationCompleteStreamPersistsAndBillsAfterClientDisconnect(t *test
 		Name:           "conversation complete stream persists and bills after client disconnect",
 		Method:         http.MethodPost,
 		URL:            "/api/v1/conversations/" + conversationID + "/complete",
-		Body:           strings.NewReader(`{"model_id":"llama-3-3-infomaniak","agent_id":"cognos:simple-assistant","request_id":"req-disc-1","messages":[{"role":"user","content":"hello there"}]}`),
+		Body:           strings.NewReader(`{"model_id":"llama-3-3-infomaniak","persona_id":"cognos:simple-assistant","system_prompt":"test persona prompt","request_id":"req-disc-1","messages":[{"role":"user","content":"hello there"}]}`),
 		ExpectedStatus: http.StatusOK,
 		ExpectedContent: []string{
 			`"type":"delta","delta":"hello "`,
@@ -360,7 +361,6 @@ func TestConversationCompleteStreamPersistsAndBillsAfterClientDisconnect(t *test
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:     gatewayClient,
-				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService:    billing.NewService(),
 				BillingLedgerRepo: ledgerRepo,
 				BillingStateRepo: stubBillingStateRepo{
@@ -459,7 +459,8 @@ func TestCompletionsTemporaryDoesNotPersistMessages(t *testing.T) {
 		URL:    "/api/v1/completions",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"request_id":"req-temp",
 			"messages":[{"role":"user","content":"temporary chat"}]
 		}`),
@@ -477,7 +478,6 @@ func TestCompletionsTemporaryDoesNotPersistMessages(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:  gatewayClient,
-				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 			})
 		},
@@ -545,7 +545,8 @@ func TestCompletionsReturnStructuredBillingRestrictionBeforeGatewayCall(t *testi
 		URL:    "/api/v1/completions",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"messages":[{"role":"user","content":"hello there"}]
 		}`),
 		ExpectedStatus: http.StatusPaymentRequired,
@@ -557,7 +558,6 @@ func TestCompletionsReturnStructuredBillingRestrictionBeforeGatewayCall(t *testi
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:  gatewayClient,
-				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 				BillingStateRepo: stubBillingStateRepo{
 					stateForUser: func(userID string) (billing.State, error) {
@@ -596,7 +596,8 @@ func TestCompletionsAllowPayGUsersWhenBillingStateIsPresent(t *testing.T) {
 		URL:    "/api/v1/completions",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"request_id":"req-payg",
 			"messages":[{"role":"user","content":"hello there"}]
 		}`),
@@ -610,7 +611,6 @@ func TestCompletionsAllowPayGUsersWhenBillingStateIsPresent(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:  gatewayClient,
-				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 				BillingStateRepo: stubBillingStateRepo{
 					stateForUser: func(userID string) (billing.State, error) {
@@ -653,7 +653,8 @@ func TestCompletionsRecordPayGUsageAfterGatewayCall(t *testing.T) {
 		URL:    "/api/v1/completions",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"messages":[{"role":"user","content":"hello there"}]
 		}`),
 		ExpectedStatus: http.StatusOK,
@@ -664,7 +665,6 @@ func TestCompletionsRecordPayGUsageAfterGatewayCall(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:     gatewayClient,
-				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService:    billing.NewService(),
 				BillingLedgerRepo: ledgerRepo,
 				BillingStateRepo: stubBillingStateRepo{
@@ -729,7 +729,8 @@ func TestCompletionsRecordUnlimitedUsageWithoutDeduction(t *testing.T) {
 		URL:    "/api/v1/completions",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"messages":[{"role":"user","content":"hello there"}]
 		}`),
 		ExpectedStatus: http.StatusOK,
@@ -740,7 +741,6 @@ func TestCompletionsRecordUnlimitedUsageWithoutDeduction(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:     gatewayClient,
-				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService:    billing.NewService(),
 				BillingLedgerRepo: ledgerRepo,
 				BillingStateRepo: stubBillingStateRepo{
@@ -799,7 +799,8 @@ func TestCompletionsRecordTrialUsageAndBalanceAfter(t *testing.T) {
 		URL:    "/api/v1/completions",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"messages":[{"role":"user","content":"hello there"}]
 		}`),
 		ExpectedStatus: http.StatusOK,
@@ -810,7 +811,6 @@ func TestCompletionsRecordTrialUsageAndBalanceAfter(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:     gatewayClient,
-				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService:    billing.NewService(),
 				BillingLedgerRepo: ledgerRepo,
 				BillingStateRepo: stubBillingStateRepo{
@@ -864,7 +864,8 @@ func TestCompletionsDoNotRecordUsageWhenBillingBlocksRequest(t *testing.T) {
 		URL:    "/api/v1/completions",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"messages":[{"role":"user","content":"hello there"}]
 		}`),
 		ExpectedStatus: http.StatusPaymentRequired,
@@ -874,7 +875,6 @@ func TestCompletionsDoNotRecordUsageWhenBillingBlocksRequest(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:     gatewayClient,
-				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService:    billing.NewService(),
 				BillingLedgerRepo: ledgerRepo,
 				BillingStateRepo: stubBillingStateRepo{
@@ -923,7 +923,8 @@ func TestCompletionsUseFXRateProviderForResponseAndLedger(t *testing.T) {
 		URL:    "/api/v1/completions",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"messages":[{"role":"user","content":"hello there"}]
 		}`),
 		ExpectedStatus: http.StatusOK,
@@ -935,7 +936,6 @@ func TestCompletionsUseFXRateProviderForResponseAndLedger(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:     gatewayClient,
-				AIAgentRepo:       aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService:    billing.NewService(),
 				BillingLedgerRepo: ledgerRepo,
 				FXRateProvider:    billing.StaticFXRateProvider{Rate: 0.9},
@@ -997,7 +997,8 @@ func TestCompletionsEmitUsageEventAfterGatewayCall(t *testing.T) {
 		URL:    "/api/v1/completions",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"messages":[{"role":"user","content":"hello there"}]
 		}`),
 		ExpectedStatus: http.StatusOK,
@@ -1007,7 +1008,6 @@ func TestCompletionsEmitUsageEventAfterGatewayCall(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:  gatewayClient,
-				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 				UsageEmitter:   emitter,
 				BillingStateRepo: stubBillingStateRepo{
@@ -1078,7 +1078,8 @@ func TestCompletionsReturnTrialExhaustedBeforeGatewayCall(t *testing.T) {
 		URL:    "/api/v1/completions",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"messages":[{"role":"user","content":"hello there"}]
 		}`),
 		ExpectedStatus: http.StatusPaymentRequired,
@@ -1092,7 +1093,6 @@ func TestCompletionsReturnTrialExhaustedBeforeGatewayCall(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:  gatewayClient,
-				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 				BillingStateRepo: stubBillingStateRepo{
 					stateForUser: func(userID string) (billing.State, error) {
@@ -1127,7 +1127,8 @@ func TestConversationCompleteCleansUpRequestMessageOnProviderError(t *testing.T)
 		URL:    "/api/v1/conversations/" + conversationID + "/complete",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"messages":[{"role":"user","content":"hello there"}]
 		}`),
 		ExpectedStatus: http.StatusServiceUnavailable,
@@ -1137,7 +1138,6 @@ func TestConversationCompleteCleansUpRequestMessageOnProviderError(t *testing.T)
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:  gatewayClient,
-				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 				ConversationRepo: stubConversationRepo{
 					byID: func(id string) (chat.Conversation, error) {
@@ -1194,7 +1194,8 @@ func TestConversationRegeneratePersistsAssistantSibling(t *testing.T) {
 		URL:    "/api/v1/conversations/" + conversationID + "/regenerate",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"request_id":"req-regen-1",
 			"parent_message_id":"msgregenparent1",
 			"messages":[{"role":"user","content":"hello there"}]
@@ -1207,7 +1208,6 @@ func TestConversationRegeneratePersistsAssistantSibling(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:  gatewayClient,
-				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 				ConversationRepo: stubConversationRepo{
 					byID: func(id string) (chat.Conversation, error) {
@@ -1277,7 +1277,8 @@ func TestConversationRegenerateRejectsForeignParentMessage(t *testing.T) {
 		URL:    "/api/v1/conversations/" + conversationID + "/regenerate",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"request_id":"req-regen-2",
 			"parent_message_id":"msgforeignparen",
 			"messages":[{"role":"user","content":"hello there"}]
@@ -1287,7 +1288,6 @@ func TestConversationRegenerateRejectsForeignParentMessage(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:  gatewayClient,
-				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 				ConversationRepo: stubConversationRepo{
 					byID: func(id string) (chat.Conversation, error) {
@@ -1365,7 +1365,8 @@ func TestConversationCompleteRejectsNonParticipant(t *testing.T) {
 		URL:    "/api/v1/conversations/" + conversationID + "/complete",
 		Body: strings.NewReader(`{
 			"model_id":"llama-3-3-infomaniak",
-			"agent_id":"cognos:simple-assistant",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
 			"messages":[{"role":"user","content":"snoop"}]
 		}`),
 		ExpectedStatus: http.StatusNotFound,
@@ -1375,7 +1376,6 @@ func TestConversationCompleteRejectsNonParticipant(t *testing.T) {
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
 				GatewayClient:  gatewayClient,
-				AIAgentRepo:    aiagent.NewInMemoryAIAgentRepo(nil),
 				BillingService: billing.NewService(),
 				ConversationRepo: stubConversationRepo{
 					byID: func(id string) (chat.Conversation, error) {

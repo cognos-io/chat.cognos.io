@@ -11,59 +11,47 @@ func init() {
 			"id": "l9i0pyg6kx2m0t5",
 			"created": "2024-03-21 07:55:09.084Z",
 			"updated": "2024-03-21 07:55:09.084Z",
-			"name": "agents",
+			"name": "personas",
 			"type": "base",
 			"system": false,
 			"fields": [
 				{
 					"system": false,
-					"id": "izdzf11m",
-					"name": "name",
-					"type": "text",
+					"id": "persuser001",
+					"name": "user",
+					"type": "relation",
 					"required": true,
 					"presentable": false,
 					"unique": false,
 					"options": {
-						"min": null,
-						"max": null,
-						"pattern": ""
+						"collectionId": "_pb_users_auth_",
+						"cascadeDelete": true,
+						"minSelect": null,
+						"maxSelect": 1,
+						"displayFields": null
 					}
 				},
 				{
 					"system": false,
-					"id": "zy00qn7p",
-					"name": "slug",
+					"id": "persdata001",
+					"name": "data",
 					"type": "text",
 					"required": true,
 					"presentable": false,
 					"unique": false,
 					"options": {
 						"min": null,
-						"max": null,
-						"pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-					}
-				},
-				{
-					"system": false,
-					"id": "rj2zqvz5",
-					"name": "description",
-					"type": "text",
-					"required": true,
-					"presentable": false,
-					"unique": false,
-					"options": {
-						"min": null,
-						"max": null,
-						"pattern": ""
+						"max": 1048576,
+						"pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
 					}
 				}
 			],
 			"indexes": [],
-			"listRule": null,
-			"viewRule": null,
-			"createRule": null,
-			"updateRule": null,
-			"deleteRule": null,
+			"listRule": "@request.auth.id != \"\" && @request.auth.id = user",
+			"viewRule": "@request.auth.id != \"\" && @request.auth.id = user",
+			"createRule": "@request.auth.id != \"\" && @request.auth.id = @request.body.user && @request.body.id:isset = false && @request.body.created:isset = false && @request.body.updated:isset = false && @request.body.data:isset = true",
+			"updateRule": "@request.auth.id != \"\" && @request.auth.id = user",
+			"deleteRule": "@request.auth.id != \"\" && @request.auth.id = user",
 			"options": {}
 		}`
 

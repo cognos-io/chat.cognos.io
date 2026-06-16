@@ -25,7 +25,7 @@ const seedConversation = async (page: import('@playwright/test').Page) => {
     id: 'msg_assistant_actions',
     created: '2026-06-13T22:25:05Z',
     content: 'A short assistant reply.',
-    agentId: 'cognos:simple-assistant',
+    personaId: 'cognos:simple-assistant',
     modelId: 'eu-model',
     parentMessageId: userMessage.id,
   });

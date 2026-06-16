@@ -113,7 +113,8 @@ http GET :8090/api/v1/models \
 http POST :8090/api/v1/completions \
     Authorization:"Bearer $AUTH_TOKEN" \
     model_id="llama-3-3-infomaniak" \
-    agent_id="cognos:simple-assistant" \
+    persona_id="cognos:simple-assistant" \
+    system_prompt="You are a helpful assistant." \
     request_id="req-local-1" \
     messages:='[{"role": "user", "content": "Say this is a test!"}]'
 ```
@@ -124,7 +125,8 @@ http POST :8090/api/v1/completions \
 http POST :8090/api/v1/conversations/{{CONVERSATION_ID}}/complete \
     Authorization:"Bearer $AUTH_TOKEN" \
     model_id="llama-3-3-infomaniak" \
-    agent_id="cognos:simple-assistant" \
+    persona_id="cognos:simple-assistant" \
+    system_prompt="You are a helpful assistant." \
     request_id="req-local-2" \
     messages:='[{"role": "user", "content": "Say this is a test!"}]'
 ```

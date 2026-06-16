@@ -30,18 +30,18 @@ describe('parseMessageData', () => {
     expect(parsed.owner_id).toBe('user-1');
   });
 
-  it('parses an assistant message with model + agent metadata', () => {
+  it('parses an assistant message with model + persona metadata', () => {
     const payload = encode(
       JSON.stringify({
         content: 'reply',
-        agent_id: 'agent-1',
+        persona_id: 'persona-1',
         model_id: 'model-1',
       }),
     );
     const parsed = parseMessageData(payload);
 
     expect(parsed.content).toBe('reply');
-    expect(parsed.agent_id).toBe('agent-1');
+    expect(parsed.persona_id).toBe('persona-1');
     expect(parsed.model_id).toBe('model-1');
     expect(parsed.owner_id).toBeUndefined();
   });
