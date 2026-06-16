@@ -74,10 +74,12 @@
         @switch (status()) {
           @case ('active') {
             <div class="pb__aside-caption">{{ priceLabel() }}</div>
-            <div class="pb__guarantee">
-              <cog-icon name="shield-check" [size]="14" tone="text-subtle" />
-              60-day money-back guarantee
-            </div>
+            @if (refundEligible()) {
+              <div class="pb__guarantee">
+                <cog-icon name="shield-check" [size]="14" tone="text-subtle" />
+                60-day money-back guarantee
+              </div>
+            }
           }
           @case ('cancels_soon') {
             <p class="pb__aside-note">

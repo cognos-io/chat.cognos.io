@@ -157,6 +157,13 @@ export class PlanBillingComponent {
       this.billing()?.previous_plan_type === 'payg',
   );
 
+  // The money-back guarantee only applies within the refund window, so hide it
+  // once it has lapsed (or when the backend set no eligibility date).
+  protected readonly refundEligible = computed(() => {
+    const until = this.billing()?.refund_eligible_until_at;
+    return until ? new Date(until).getTime() > Date.now() : false;
+  });
+
   protected readonly heading = computed(() =>
     this.status() === 'inactive' ? 'Previous plan' : 'Current plan',
   );

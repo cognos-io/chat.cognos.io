@@ -104,7 +104,9 @@
 
 .pb__aside {
   display: grid;
-  gap: var(--cog-space-050);
+  gap: var(--cog-space-025, 2px);
+  /* Hug the content rather than stretching to the plan column's height. */
+  align-self: start;
   align-content: start;
   border: 1px solid var(--cog-border);
   border-radius: var(--cog-radius-md);
@@ -145,7 +147,7 @@
   display: flex;
   align-items: center;
   gap: var(--cog-space-050);
-  margin-top: var(--cog-space-050);
+  margin-top: var(--cog-space-100);
   color: var(--cog-text-subtle);
   font-size: var(--cog-fs-caption);
 }

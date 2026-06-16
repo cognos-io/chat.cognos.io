@@ -97,6 +97,7 @@ test('dashboard renders the saved card and Paddle invoices', async ({ page }) =>
         trial_seed_chf: 0,
         cycle_end_at: '2026-07-01T00:00:00Z',
         cancel_at_period_end: false,
+        refund_eligible_until_at: '2099-01-01T00:00:00Z',
       },
     });
   });
@@ -136,6 +137,38 @@ test('dashboard renders the saved card and Paddle invoices', async ({ page }) =>
 
   // The Paddle brand mark renders (Synced with Paddle + invoices footer).
   await expect(page.getByRole('img', { name: 'Paddle' }).first()).toBeVisible();
+
+  // Within the refund window, the money-back guarantee shows.
+  await expect(page.getByText('60-day money-back guarantee')).toBeVisible();
+});
+
+test('the money-back guarantee hides once the refund window has lapsed', async ({
+  page,
+}) => {
+  const userFixture = buildVaultFixture('user_norefund', 'norefund@example.com');
+  await seedAuth(page, userFixture);
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({
+      json: {
+        plan_type: 'unlimited',
+        status: 'active',
+        interval: 'monthly',
+        balance_chf: 0,
+        trial_seed_chf: 0,
+        cycle_end_at: '2026-07-01T00:00:00Z',
+        cancel_at_period_end: false,
+        refund_eligible_until_at: '2020-01-01T00:00:00Z', // lapsed
+      },
+    });
+  });
+  await page.route(`${API}/api/v1/billing/usage`, async (route) => {
+    await route.fulfill({ json: usageJson });
+  });
+
+  await page.goto('/account/billing');
+
+  await expect(page.getByRole('heading', { name: /Unlimited/ })).toBeVisible();
+  await expect(page.getByText('60-day money-back guarantee')).toHaveCount(0);
 });
 
 test('cancels-soon dashboard offers resume', async ({ page }) => {
