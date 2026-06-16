@@ -244,6 +244,13 @@
   line-height: var(--cog-lh-body-sm);
 }
 
+/* The Paddle note is separated from the card row by a divider. */
+.pb__payment-note {
+  margin-top: var(--cog-space-200);
+  padding-top: var(--cog-space-200);
+  border-top: 1px solid var(--cog-border);
+}
+
 /* Placeholder card row — mirrors the brand badge + label layout used once a
    real Paddle card (e.g. Visa •••• 4242) is wired in. */
 .pb__payment-card {
@@ -338,16 +345,25 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Full-bleed grey footer band pinned to the card's bottom edge. */
 .pb__invoices-foot {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--cog-space-050);
-  margin: var(--cog-space-150) 0 0;
-  padding-top: var(--cog-space-150);
+  margin: var(--cog-space-200) calc(-1 * var(--cog-space-250, 20px))
+    calc(-1 * var(--cog-space-250, 20px));
+  padding: var(--cog-space-150) var(--cog-space-250, 20px);
   border-top: 1px solid var(--cog-border);
+  border-radius: 0 0 var(--cog-radius-lg, 16px) var(--cog-radius-lg, 16px);
+  background: var(--cog-surface-sunken, var(--cog-app-bg));
   color: var(--cog-text-subtlest);
   font-size: var(--cog-fs-caption);
+}
+
+/* The last invoice's divider would clash with the footer band's top border. */
+.pb__invoice:last-child {
+  border-bottom: none;
 }
 
 .pb__invoices-foot-name {

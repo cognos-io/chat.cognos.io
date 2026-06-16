@@ -51,7 +51,7 @@ func BillingInvoices(params BillingInvoicesParams) func(e *core.RequestEvent) er
 
 		resp := invoicesResponse{Invoices: []invoiceResponse{}}
 
-		customerID := user.GetString("paddle_customer_id")
+		customerID := customerIDForUser(e.App, user)
 		if params.Client == nil || customerID == "" {
 			return e.JSON(http.StatusOK, resp)
 		}

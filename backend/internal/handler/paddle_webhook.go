@@ -173,6 +173,19 @@ func activateSubscription(
 		return nil
 	}
 
+	// Persist the Paddle customer id on the user so the portal, invoices and
+	// checkout handlers can resolve it (the transaction created at checkout has
+	// no customer for a brand-new customer — Paddle mints it during payment).
+	if sub.CustomerID != "" {
+		if user, err := app.FindRecordById("users", userID); err == nil && user != nil &&
+			user.GetString("paddle_customer_id") != sub.CustomerID {
+			user.Set("paddle_customer_id", sub.CustomerID)
+			if err := app.Save(user); err != nil && params.Logger != nil {
+				params.Logger.Error("failed to persist paddle_customer_id on user", "err", err)
+			}
+		}
+	}
+
 	return upsertUserBilling(app, userID, func(record *core.Record) {
 		record.Set("plan_type", string(plan))
 		record.Set("paddle_subscription_id", sub.ID)

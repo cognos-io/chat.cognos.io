@@ -143,6 +143,16 @@ func TestPaddleWebhookActivatesSubscription(t *testing.T) {
 		t.Error("refund_eligible_until_at should be set on activation")
 	}
 
+	// The Paddle customer id is persisted on the user so the portal + invoices
+	// handlers can resolve it (a new customer has none at checkout time).
+	user, err := app.FindRecordById("users", testUserID)
+	if err != nil {
+		t.Fatalf("find user: %v", err)
+	}
+	if got := user.GetString("paddle_customer_id"); got != "ctm_1" {
+		t.Errorf("user paddle_customer_id = %q, want ctm_1", got)
+	}
+
 	// The event is recorded once and marked processed.
 	event, err := app.FindFirstRecordByData("paddle_events", "paddle_event_id", "evt_created_1")
 	if err != nil {

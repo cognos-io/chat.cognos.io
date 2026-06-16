@@ -36,7 +36,7 @@ func BillingPortal(params BillingPortalParams) func(e *core.RequestEvent) error 
 			return apis.NewApiError(http.StatusServiceUnavailable, "Billing is not configured", nil)
 		}
 
-		customerID := user.GetString("paddle_customer_id")
+		customerID := customerIDForUser(e.App, user)
 		if customerID == "" {
 			// No Paddle customer yet (never checked out) — nothing to manage.
 			return apis.NewApiError(http.StatusConflict, "No billing account yet", nil)
