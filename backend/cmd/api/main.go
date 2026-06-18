@@ -239,7 +239,9 @@ func bindAppHooks(
 		hooks.SoftDelete(app)
 		hooks.EnforceSingleUserKeyPair(app)
 		hooks.EnforceSingleConversationPublicKey(app)
-		hooks.ForbidPasswordReset(app)
+		// Password reset is allowed: under the account_key_v2 scheme the password
+		// is authentication-only and is not an input to the data key, so resetting
+		// it never affects encrypted data (see docs/security-model.md §9/§10).
 		hooks.ForbidUserEmailChangeFlow(app)
 		hooks.ForbidUserEmailChanges(app)
 
