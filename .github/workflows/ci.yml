@@ -70,6 +70,50 @@ jobs:
       - name: build ui-angular
         run: pnpm --dir packages/ui-angular exec ng build ui-angular
 
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Warm the Go build cache so the Playwright-managed `go run` servers
+      # (mock AI provider + API) start within their webServer timeouts.
+      - name: warm go build cache
+        working-directory: backend
+        run: go build ./cmd/mock-ai-provider ./cmd/api
+
+      - name: install playwright browsers
+        run: pnpm --filter @cognos/e2e exec playwright install --with-deps chromium
+
+      - name: run e2e tests
+        run: pnpm --filter @cognos/e2e test
+
+      - name: upload playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+          retention-days: 7
+
   containers:
     runs-on: ubuntu-latest
     steps:
