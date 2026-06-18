@@ -45,17 +45,20 @@ describe('RegisterComponent', () => {
     vi.restoreAllMocks();
   });
 
-  it('shows a mismatch error when the passwords differ', () => {
+  it('has no password-confirmation field (single password entry)', () => {
+    expect(component.registerForm.contains('passwordConfirm')).toBe(false);
+    expect(fixture.nativeElement.querySelector('#passwordConfirm')).toBeNull();
+  });
+
+  it('requires a password of at least 8 characters', () => {
     component.registerForm.setValue({
       email: 'person@example.com',
-      password: 'password-one',
-      passwordConfirm: 'password-two',
+      password: 'short',
     });
-    component.registerForm.controls.passwordConfirm.markAsTouched();
-    fixture.detectChanges();
+    expect(component.registerForm.invalid).toBe(true);
 
-    expect(component.registerForm.errors).toEqual({ passwordMismatch: true });
-    expect(fixture.nativeElement.textContent).toContain("Passwords don't match.");
+    component.registerForm.controls.password.setValue('long-enough-password');
+    expect(component.registerForm.valid).toBe(true);
   });
 
   it('submits registration when the form is valid', () => {
@@ -63,7 +66,6 @@ describe('RegisterComponent', () => {
     component.registerForm.setValue({
       email: 'person@example.com',
       password: 'correct horse battery staple',
-      passwordConfirm: 'correct horse battery staple',
     });
 
     component.onSubmit();
@@ -80,7 +82,6 @@ describe('RegisterComponent', () => {
     component.registerForm.setValue({
       email: 'person@example.com',
       password: 'correct horse battery staple',
-      passwordConfirm: 'correct horse battery staple',
     });
 
     component.onSubmit();

@@ -1,12 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
@@ -19,14 +13,6 @@ import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.com
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 
 import { AuthService } from '@services/auth.service';
-
-const matchPassword = (control: AbstractControl): ValidationErrors | null => {
-  const password = control.get('password')?.value;
-  const confirm = control.get('passwordConfirm')?.value;
-  return password && confirm && password !== confirm
-    ? { passwordMismatch: true }
-    : null;
-};
 
 @Component({
   selector: 'app-register',
@@ -81,25 +67,6 @@ const matchPassword = (control: AbstractControl): ValidationErrors | null => {
               placeholder="At least 8 characters"
             />
           </label>
-
-          <label class="auth-page__field" for="passwordConfirm">
-            <span class="auth-page__label">Confirm password</span>
-            <input
-              id="passwordConfirm"
-              class="auth-page__input"
-              formControlName="passwordConfirm"
-              type="password"
-              autocomplete="new-password"
-              placeholder="Repeat your password"
-            />
-          </label>
-
-          @if (
-            registerForm.errors?.['passwordMismatch'] &&
-            registerForm.get('passwordConfirm')?.touched
-          ) {
-            <p class="auth-page__hint">Passwords don't match.</p>
-          }
 
           <cog-button
             appearance="primary"
@@ -266,14 +233,10 @@ export class RegisterComponent {
 
   readonly loading = signal(false);
 
-  readonly registerForm = this._fb.nonNullable.group(
-    {
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
-      passwordConfirm: ['', [Validators.required]],
-    },
-    { validators: matchPassword },
-  );
+  readonly registerForm = this._fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
+  });
 
   constructor() {
     this.authService.user$.pipe(takeUntilDestroyed(), filterNil()).subscribe((user) => {

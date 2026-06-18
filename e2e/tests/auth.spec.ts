@@ -38,16 +38,17 @@ test.describe('auth + account key flow', () => {
     ).toBeVisible();
   });
 
-  test('register form rejects mismatched passwords', async ({ page }) => {
+  test('register form needs only a single password (no confirmation field)', async ({
+    page,
+  }) => {
     await gotoRegister(page);
 
-    await page.getByLabel('Email').fill('mismatch@cognos-e2e.test');
-    await page.getByLabel('Password', { exact: true }).fill('password-one');
-    await page.getByLabel('Confirm password').fill('password-two');
-    await page.getByLabel('Confirm password').blur();
+    await expect(page.getByLabel('Confirm password')).toHaveCount(0);
 
-    await expect(page.getByText(/passwords don't match/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /create account/i })).toBeDisabled();
+    await page.getByLabel('Email').fill('single-pw@cognos-e2e.test');
+    await page.getByLabel('Password', { exact: true }).fill('a-strong-password');
+
+    await expect(page.getByRole('button', { name: /create account/i })).toBeEnabled();
   });
 
   test('register → copy Account Key → acknowledge → logout → login → unlock', async ({

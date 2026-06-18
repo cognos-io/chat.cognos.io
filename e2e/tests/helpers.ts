@@ -19,8 +19,9 @@ export async function fillRegisterForm(
   account: TestAccount,
 ): Promise<void> {
   await page.getByLabel('Email').fill(account.email);
+  // Single password entry — there is no confirmation field (a typo is
+  // recoverable via password reset, which no longer affects encrypted data).
   await page.getByLabel('Password', { exact: true }).fill(account.password);
-  await page.getByLabel('Confirm password').fill(account.password);
 }
 
 export async function submitRegister(page: Page): Promise<void> {
