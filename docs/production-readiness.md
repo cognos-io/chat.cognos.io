@@ -34,12 +34,27 @@ recovery secret, and password-change is a pure auth op.
 | C.1 | Wrap secret key under `Argon2id(Account Key)` (`v2`)      | ✅     | v2-only (greenfield, no migration); helpers unit-tested           |
 | C.2 | Unlock UX: decrypt step asks for Account Key only         | ✅     | No password field at all; always asks for the Account Key         |
 | C.3 | Re-enable password reset                                  | ✅     | Hook removed; tests assert request 204 + confirm changes password |
-| C.4 | Password-change UI                                        | ⬜     | Pure auth op (PocketBase); no key re-wrap                         |
-| C.5 | MFA (TOTP, then WebAuthn)                                 | ⬜     | Login protection                                                  |
-| C.6 | Emergency Kit onboarding (download/print the Account Key) | ⬜     | Make safeguarding the Account Key unmistakable                    |
+| C.4 | Password-change UI                                        | ✅     | Account "Password" card; re-auths after change; unit + e2e tested |
+| C.5 | MFA                                                       | 🔎     | Needs a decision — see below                                      |
+| C.6 | Emergency Kit onboarding (download/print the Account Key) | ✅     | Downloadable plain-text kit on the new-account dialog             |
+
+Also done: single-password signup (confirm field removed — a typo is now
+recoverable via reset).
 
 No v1→v2 migration: launch is greenfield, so the legacy password+Account-Key
 scheme was removed outright rather than carried for backward compatibility.
+
+**C.5 MFA — decision needed.** PocketBase's built-in MFA combines password /
+OAuth2 / **OTP (email one-time code)** — there is **no native TOTP
+(authenticator app) or passkeys/WebAuthn**. So the options are:
+
+- **Email-OTP MFA (native, ~modest):** enable MFA + OTP on the users collection;
+  login becomes password → emailed code. Built-in, low risk. Weaker factor
+  (email-account compromise defeats it).
+- **Authenticator-app TOTP (custom, large):** store a per-user TOTP secret, QR
+  enrolment, verify, recovery codes, wire into login. The factor the persona
+  expects, but a net-new subsystem PocketBase doesn't provide.
+- **Passkeys/WebAuthn (custom, large):** strongest UX, also not native.
 
 ## Track D — Production hardening (infra)
 
