@@ -19,14 +19,16 @@ A user has a `privacy_tier` field on their `users` record. The rule:
 allowed iff rank(modelTier) <= rank(userTier)
 ```
 
-A `ch_only` user only sees `ch_only` models. An `eu` user sees `ch_only`
-and `eu` models. A `global` user sees everything active. Unknown / missing
-user tier values normalise to `eu`.
+For a `ch_only` user only `ch_only` models are eligible. For an `eu` user
+`ch_only` and `eu` models are eligible. For a `global` user everything active
+is eligible. Unknown / missing user tier values normalise to `eu`.
 
 The check is enforced in **two places**:
 
-1. **`GET /api/v1/models`** filters the catalogue down to what the user is
-   eligible for — they never see ineligible models in the picker.
+1. **`GET /api/v1/models`** returns every active model annotated with an
+   `is_eligible` flag (plus an `ineligibility_reason` when false). Ineligible
+   models are still listed but shown disabled in the picker, so users can see
+   what a higher tier would unlock rather than wondering why a model is missing.
 2. **`POST /…/complete`** re-checks the chosen model against the user's tier
    and returns `403 Model is not available for the user's privacy tier`
    if they smuggled in an ineligible model ID.
@@ -38,8 +40,8 @@ flowchart LR
   R1 --> C{R1 ≤ R2?}
   R2 --> C
   C -- yes --> A[allow]
-  C -- no --> D[hidden in /models<br/>403 from /complete]
+  C -- no --> D[disabled in /models<br/>403 from /complete]
 ```
 
-Why two places: the catalogue filter is UX, the handler check is the
-authoritative gate. Both must agree.
+Why two places: the `is_eligible` flag drives UX (disabled in the picker),
+the handler check is the authoritative gate. Both must agree.

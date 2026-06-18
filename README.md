@@ -7,8 +7,9 @@ Target security model for this rework:
 - chat content is stored server-side as ciphertext only
 - private keys are encrypted client-side before backup
 - new devices require the user's password and **Account Key** to unlock encrypted key material
-- trusted-device unlock is temporarily disabled on the web until a stronger local hardware-backed
-  protection model is in place
+- persistent unlock across refreshes and tabs uses a server-revocable split-key session: half the
+  wrap key lives in local storage and half is held server-side, so neither half alone recovers the
+  unlock key (see `docs/security-model.md`)
 
 See:
 

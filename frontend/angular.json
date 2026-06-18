@@ -41,6 +41,11 @@
               "src/site.webmanifest",
               "src/robots.txt",
               "src/security.txt",
+              {
+                "glob": "security.txt",
+                "input": "src",
+                "output": ".well-known"
+              },
               "src/_headers"
             ],
             "styles": [

@@ -68,17 +68,17 @@ failures.
 
 ### H-8 — Trusted-device record co-locates wrapped blob and wrapping CryptoKey
 
-Status: ❌ Not fixed.
+Status: ✅ Fixed (split-key session).
 
-`trusted-unlock.service.ts` still writes
-`{iv, userId, wrappedUnlockKey, wrappingKey}` to a single IndexedDB
-record. CSP + Trusted Types raise the bar for the same-origin
-prerequisite, but the row itself is still "read-one → plaintext
-key" for any XSS or content-script that lands.
-
-Fix: split wrapped blob and wrapping key across separate stores, or
-derive the wrapping key on demand from a device secret that never
-persists alongside the blob.
+The earlier design wrote `{iv, userId, wrappedUnlockKey, wrappingKey}`
+to a single IndexedDB record, so a single "read-one" yielded a plaintext
+key. `trusted-unlock.service.ts` no longer co-locates the two halves: the
+unlock key is wrapped client-side and only the ciphertext is kept in
+`localStorage`, while the wrapping ("wrap") key half is held server-side
+and fetched per session via `/api/v1/vault-session`, where it is
+revocable. Neither half alone recovers the unlock key, so a single read
+no longer leaks it. See the split-key persistent session in
+`security-model.md`.
 
 ### H-10 — PocketBase auth-store in localStorage
 

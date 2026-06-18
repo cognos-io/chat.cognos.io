@@ -8,8 +8,8 @@ Target direction:
 
 - first-party Cognos API endpoints instead of long-term OpenAI compatibility
 - backend-driven model catalogue
-- encrypted private-key backup with a user **Account Key** for new-device unlock; persistent
-  trusted-device unlock is temporarily disabled on the web until stronger local protection exists
+- encrypted private-key backup with a user **Account Key** for new-device unlock; persistent unlock
+  uses a server-revocable split-key session (see `../docs/security-model.md`)
 - ciphertext-only message storage at rest
 
 See:
