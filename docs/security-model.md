@@ -175,9 +175,10 @@ Cognos should use well-tested primitives.
 
 ### Additional rules
 
-- use a **random per-user salt** for password-based derivation
-- email changes must not break cryptographic access
-- password changes should re-wrap key material rather than re-encrypt all user data
+- use a **random per-user salt** for Account-Key-based derivation
+- email changes must not break cryptographic access (email is not an input to any key)
+- changing the password must not touch key material (it is authentication-only); only an Account Key
+  change re-wraps the secret key, and even then never re-encrypts historical messages
 
 ## 8. Trusted-device behavior
 
