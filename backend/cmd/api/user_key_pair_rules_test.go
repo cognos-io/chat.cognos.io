@@ -54,7 +54,7 @@ func TestUserKeyPairRulesRequireIntegrityMetadata(t *testing.T) {
 				"user": %q,
 				"public_key": %q,
 				"secret_key": %q,
-				"unlock_scheme": "password_account_key_v1",
+				"unlock_scheme": "account_key_v2",
 				"record_mac": %q
 			}`, userID, publicKey, secretKey, recordMAC)),
 			ExpectedStatus: http.StatusBadRequest,
@@ -73,7 +73,7 @@ func TestUserKeyPairRulesRequireIntegrityMetadata(t *testing.T) {
 				"public_key": %q,
 				"secret_key": %q,
 				"password_salt": %q,
-				"unlock_scheme": "password_account_key_v1"
+				"unlock_scheme": "account_key_v2"
 			}`, userID, publicKey, secretKey, passwordSalt)),
 			ExpectedStatus: http.StatusBadRequest,
 			ExpectedContent: []string{
@@ -110,7 +110,7 @@ func TestUserKeyPairRulesRequireIntegrityMetadata(t *testing.T) {
 				"public_key": "im-not-a-valid-key",
 				"secret_key": %q,
 				"password_salt": %q,
-				"unlock_scheme": "password_account_key_v1",
+				"unlock_scheme": "account_key_v2",
 				"record_mac": %q
 			}`, userID, secretKey, passwordSalt, recordMAC)),
 			ExpectedStatus: http.StatusBadRequest,

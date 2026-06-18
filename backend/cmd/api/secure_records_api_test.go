@@ -90,12 +90,12 @@ func TestUserKeyPairCreateCreatesOwnedRecord(t *testing.T) {
 			"public_key": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 			"record_mac": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 			"secret_key": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-			"unlock_scheme": "password_account_key_v1"
+			"unlock_scheme": "account_key_v2"
 		}`),
 		ExpectedStatus: http.StatusCreated,
 		ExpectedContent: []string{
 			`"user":"` + userID + `"`,
-			`"unlock_scheme":"password_account_key_v1"`,
+			`"unlock_scheme":"account_key_v2"`,
 		},
 		TestAppFactory: setupTestApp,
 		BeforeTestFunc: withUserToken,

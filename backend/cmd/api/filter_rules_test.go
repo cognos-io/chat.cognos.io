@@ -93,7 +93,7 @@ var testUserKeyPairs = []struct {
 			"SZaJGqFNjtjTt89x",
 		}, ""),
 		PasswordSalt: "AAAAAAAAAAAAAAAAAAAAAA==",
-		UnlockScheme: "password_account_key_v1",
+		UnlockScheme: "account_key_v2",
 		RecordMAC:    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 	},
 	{
@@ -109,7 +109,7 @@ var testUserKeyPairs = []struct {
 			"cqBWHCSpO4/UNT6Z",
 		}, ""),
 		PasswordSalt: "AAAAAAAAAAAAAAAAAAAAAA==",
-		UnlockScheme: "password_account_key_v1",
+		UnlockScheme: "account_key_v2",
 		RecordMAC:    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 	},
 	{
@@ -125,7 +125,7 @@ var testUserKeyPairs = []struct {
 			"eLgnpDUIYL2l38oW",
 		}, ""),
 		PasswordSalt: "AAAAAAAAAAAAAAAAAAAAAA==",
-		UnlockScheme: "password_account_key_v1",
+		UnlockScheme: "account_key_v2",
 		RecordMAC:    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 	},
 }
@@ -344,7 +344,7 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 				"public_key": "%s",
 				"secret_key": "%s",
 				"password_salt": "AAAAAAAAAAAAAAAAAAAAAA==",
-				"unlock_scheme": "password_account_key_v1",
+				"unlock_scheme": "account_key_v2",
 				"record_mac": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 			}`, userId, userPublicKey, userEncryptedSecretKey)),
 			ExpectedStatus:  http.StatusBadRequest,
@@ -376,7 +376,7 @@ func TestUserKeyPairFilterRules(t *testing.T) {
 				"public_key": "im-not-a-valid-key",
 				"secret_key": "%s",
 				"password_salt": "AAAAAAAAAAAAAAAAAAAAAA==",
-				"unlock_scheme": "password_account_key_v1",
+				"unlock_scheme": "account_key_v2",
 				"record_mac": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 			}`, userId, userEncryptedSecretKey)),
 			ExpectedStatus: http.StatusBadRequest,

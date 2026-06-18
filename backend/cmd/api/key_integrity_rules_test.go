@@ -20,7 +20,7 @@ func TestKeyIntegrityFieldsExist(t *testing.T) {
 	if userKeyPairs.CreateRule == nil {
 		t.Fatal("user_key_pairs create rule is nil")
 	}
-	for _, want := range []string{"password_salt:isset = true", "unlock_scheme = \"password_account_key_v1\"", "record_mac:isset = true"} {
+	for _, want := range []string{"password_salt:isset = true", "unlock_scheme = \"account_key_v2\"", "record_mac:isset = true"} {
 		if !strings.Contains(*userKeyPairs.CreateRule, want) {
 			t.Fatalf("user_key_pairs create rule = %q, want substring %q", *userKeyPairs.CreateRule, want)
 		}

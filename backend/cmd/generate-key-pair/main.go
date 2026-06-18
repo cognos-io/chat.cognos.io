@@ -7,13 +7,11 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 	"strings"
 
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/nacl/secretbox"
-	"golang.org/x/term"
 )
 
 const accountKeyBytes = 16
@@ -25,18 +23,6 @@ func main() {
 		"Account Key. If omitted, a new one is generated and printed",
 	)
 	flag.Parse()
-
-	fmt.Fprint(os.Stderr, "Account password: ")
-	passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
-	fmt.Fprintln(os.Stderr)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	accountPassword := strings.TrimSpace(string(passwordBytes))
-	if accountPassword == "" {
-		log.Fatal("Account password is required")
-	}
 
 	resolvedAccountKey := normalizeAccountKey(*accountKey)
 	if resolvedAccountKey == "" {
@@ -55,7 +41,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	secretMaterial := []byte(accountPassword + "\x00" + resolvedAccountKey)
+	// account_key_v2: the unlock key derives from the Account Key alone.
+	secretMaterial := []byte(resolvedAccountKey)
 	hashedPassword := argon2.IDKey(
 		secretMaterial,
 		passwordSalt,
@@ -88,7 +75,7 @@ func main() {
 	encryptedSecKeyString := base64.StdEncoding.EncodeToString(encryptedSecKeyBytes)
 	passwordSaltString := base64.StdEncoding.EncodeToString(passwordSalt)
 
-	log.Printf("Unlock Scheme: password_account_key_v1\n")
+	log.Printf("Unlock Scheme: account_key_v2\n")
 	log.Printf("Password Salt: %s\n", passwordSaltString)
 	log.Printf("Public Key: %s\n", pubKeyString)
 	log.Printf("Encrypted Secret Key: %s\n", encryptedSecKeyString)
