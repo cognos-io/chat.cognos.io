@@ -10,7 +10,6 @@ import { CryptoService } from './crypto.service';
 import { TrustedUnlockService } from './trusted-unlock.service';
 import {
   UNLOCK_SCHEME_ACCOUNT_KEY,
-  UNLOCK_SCHEME_PASSWORD_ACCOUNT_KEY,
   VaultService,
   buildUnlockSecretMaterial,
   normaliseAccountKey,
@@ -27,44 +26,19 @@ describe('normaliseAccountKey', () => {
 describe('buildUnlockSecretMaterial', () => {
   const decode = (bytes: Uint8Array) => new TextDecoder().decode(bytes);
 
-  it('v2 derives from the Account Key alone and ignores the password', () => {
-    const withPassword = buildUnlockSecretMaterial(
-      UNLOCK_SCHEME_ACCOUNT_KEY,
-      'ab-cd-ef',
-      'hunter2',
-    );
-    const withoutPassword = buildUnlockSecretMaterial(
-      UNLOCK_SCHEME_ACCOUNT_KEY,
-      'ab-cd-ef',
-      '',
-    );
-    const differentPassword = buildUnlockSecretMaterial(
-      UNLOCK_SCHEME_ACCOUNT_KEY,
-      'ab-cd-ef',
-      'a-totally-different-password',
-    );
+  it('derives from the normalised Account Key alone', () => {
+    const material = buildUnlockSecretMaterial(UNLOCK_SCHEME_ACCOUNT_KEY, 'ab-cd-ef');
 
-    // The whole point of v2: the password is not part of the data key, so
-    // changing or forgetting it never changes what the Account Key unlocks.
-    expect(decode(withPassword)).toBe('ABCDEF');
-    expect(withoutPassword).toEqual(withPassword);
-    expect(differentPassword).toEqual(withPassword);
-  });
-
-  it('v1 (legacy) keeps the exact password + NUL + key format', () => {
-    const material = buildUnlockSecretMaterial(
-      UNLOCK_SCHEME_PASSWORD_ACCOUNT_KEY,
-      'ab-cd-ef',
-      'hunter2',
-    );
-
-    expect(decode(material)).toBe(`hunter2${String.fromCharCode(0)}ABCDEF`);
+    expect(decode(material)).toBe('ABCDEF');
   });
 
   it('throws on an unknown scheme rather than deriving a wrong key', () => {
-    expect(() => buildUnlockSecretMaterial('made_up_v9', 'ab-cd', 'pw')).toThrowError(
-      /unsupported unlock scheme/,
-    );
+    // Includes the retired v1 scheme string — those records are not supported.
+    for (const scheme of ['password_account_key_v1', 'made_up_v9']) {
+      expect(() => buildUnlockSecretMaterial(scheme, 'ab-cd')).toThrowError(
+        /unsupported unlock scheme/,
+      );
+    }
   });
 });
 
@@ -130,7 +104,7 @@ describe('VaultService', () => {
       public_key: Base64.fromUint8Array(new Uint8Array([1, 2, 3])),
       secret_key: Base64.fromUint8Array(new Uint8Array([4, 5, 6])),
       password_salt: Base64.fromUint8Array(new Uint8Array([7, 8, 9])),
-      unlock_scheme: 'password_account_key_v1',
+      unlock_scheme: 'account_key_v2',
       record_mac: '',
     };
 
@@ -150,7 +124,7 @@ describe('VaultService', () => {
       public_key: Base64.fromUint8Array(new Uint8Array([1, 2, 3])),
       secret_key: Base64.fromUint8Array(new Uint8Array([4, 5, 6])),
       password_salt: Base64.fromUint8Array(new Uint8Array([7, 8, 9])),
-      unlock_scheme: 'password_account_key_v1',
+      unlock_scheme: 'account_key_v2',
       record_mac: Base64.fromUint8Array(new Uint8Array([1, 2, 3])),
     };
 
@@ -219,7 +193,7 @@ describe('VaultService rebinds to the authenticated user', () => {
       public_key: Base64.fromUint8Array(new Uint8Array([1, 2, 3])),
       secret_key: Base64.fromUint8Array(new Uint8Array([4, 5, 6])),
       password_salt: Base64.fromUint8Array(new Uint8Array([7, 8, 9])),
-      unlock_scheme: 'password_account_key_v1',
+      unlock_scheme: 'account_key_v2',
       record_mac: Base64.fromUint8Array(new Uint8Array([1, 2, 3])),
     };
     let call = 0;

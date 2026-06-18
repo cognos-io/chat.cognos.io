@@ -38,7 +38,6 @@ interface VaultState {
 
 interface UnlockRequest {
   accountKey: string;
-  accountPassword: string;
   trustDevice: boolean;
 }
 
@@ -49,12 +48,10 @@ const initialState: VaultState = {
   isRestoring: true,
 };
 
-// Legacy scheme: the unlock key was derived from password + Account Key. Kept so
-// any records created before the v2 switch still unlock.
-export const UNLOCK_SCHEME_PASSWORD_ACCOUNT_KEY = 'password_account_key_v1';
-// Current scheme: the unlock key is derived from the Account Key alone. The
-// password is authentication-only and is not an input to the data key, so a
-// forgotten password is a recoverable event (see docs/security-model.md §5).
+// The unlock key is derived from the Account Key alone. The password is
+// authentication-only and is not an input to the data key, so a forgotten
+// password is a recoverable event (see docs/security-model.md §5). The scheme
+// is recorded on each key-pair record so future scheme changes stay explicit.
 export const UNLOCK_SCHEME_ACCOUNT_KEY = 'account_key_v2';
 
 // Strip human-friendly separators (dashes, spaces) and normalise case so the
@@ -63,28 +60,17 @@ export function normaliseAccountKey(accountKey: string): string {
   return accountKey.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 }
 
-// Build the Argon2id input for a given unlock scheme. v2 excludes the password
-// entirely; v1 mixes it in for backward compatibility. Throwing on an unknown
-// scheme keeps an unexpected record from silently deriving a wrong-but-valid key.
+// Build the Argon2id input for an unlock scheme. Throwing on an unknown scheme
+// keeps an unexpected record from silently deriving a wrong-but-valid key.
 export function buildUnlockSecretMaterial(
   scheme: string,
   accountKey: string,
-  accountPassword: string,
 ): Uint8Array {
-  const normalisedAccountKey = normaliseAccountKey(accountKey);
-
-  switch (scheme) {
-    case UNLOCK_SCHEME_ACCOUNT_KEY:
-      return new TextEncoder().encode(normalisedAccountKey);
-    case UNLOCK_SCHEME_PASSWORD_ACCOUNT_KEY:
-      // Exact legacy format: password and key joined by a NUL separator. Built
-      // via fromCharCode to keep a raw NUL byte out of the source file.
-      return new TextEncoder().encode(
-        accountPassword + String.fromCharCode(0) + normalisedAccountKey,
-      );
-    default:
-      throw new Error(`unsupported unlock scheme: ${scheme}`);
+  if (scheme !== UNLOCK_SCHEME_ACCOUNT_KEY) {
+    throw new Error(`unsupported unlock scheme: ${scheme}`);
   }
+
+  return new TextEncoder().encode(normaliseAccountKey(accountKey));
 }
 
 const argon2idMemory = 65536; // 64MiB
@@ -287,14 +273,6 @@ export class VaultService {
   isRestoring = this.state.isRestoring;
   keyPair$ = toObservable(this.keyPair);
 
-  // Legacy v1 records mix the password into the unlock key, so they still need
-  // it at the unlock step. v2 records (and all new accounts) derive from the
-  // Account Key alone, so the unlock dialog asks only for the Account Key.
-  readonly requiresLegacyPassword = computed(
-    () =>
-      this.state.keyPairRecord()?.unlock_scheme === UNLOCK_SCHEME_PASSWORD_ACCOUNT_KEY,
-  );
-
   /**
    * Canonical fingerprint of the unlocked public key — base64(blake2b(publicKey)).
    * This is the exact value persisted in the trusted-device context, so anything
@@ -380,13 +358,12 @@ export class VaultService {
       return throwError(() => new Error('missing generated account key'));
     }
 
-    // New accounts use the Account-Key-only scheme: the password is not mixed
-    // into the data key, so it can be reset later without losing data.
+    // The unlock key derives from the Account Key alone, so the password can be
+    // reset later without losing data.
     const passwordSalt = this.generatePasswordSalt();
     const secretMaterial = buildUnlockSecretMaterial(
       UNLOCK_SCHEME_ACCOUNT_KEY,
       accountKey,
-      request.accountPassword,
     );
 
     return this.hashSecretMaterial(secretMaterial, passwordSalt).pipe(
@@ -451,23 +428,13 @@ export class VaultService {
     keyPairRecord: UserKeyPairsResponse,
   ): Observable<KeyPair> {
     const scheme = keyPairRecord.unlock_scheme;
-    if (
-      (scheme !== UNLOCK_SCHEME_ACCOUNT_KEY &&
-        scheme !== UNLOCK_SCHEME_PASSWORD_ACCOUNT_KEY) ||
-      !keyPairRecord.password_salt
-    ) {
+    if (scheme !== UNLOCK_SCHEME_ACCOUNT_KEY || !keyPairRecord.password_salt) {
       return throwError(() => new Error('invalid encrypted backup metadata'));
     }
 
     this.assertTrustedUserKeyContext(keyPairRecord);
 
-    // v2 derives from the Account Key alone; v1 (legacy) still mixes in the
-    // password. The scheme is recorded on the key-pair record.
-    const secretMaterial = buildUnlockSecretMaterial(
-      scheme,
-      request.accountKey,
-      request.accountPassword,
-    );
+    const secretMaterial = buildUnlockSecretMaterial(scheme, request.accountKey);
     return this.hashSecretMaterial(secretMaterial, keyPairRecord.password_salt).pipe(
       map((unlockKey) => ({
         keyPair: this.unpackKeyPairRecord(keyPairRecord, unlockKey),

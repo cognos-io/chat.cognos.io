@@ -16,14 +16,11 @@ import {
   CognosToastService,
 } from '@cognos/ui-angular';
 
-import { environment } from '@environments/environment';
-
 import { VaultService } from '../../services/vault.service';
 
 const validateUnlockForm = (
   control: AbstractControl,
   isNewKeyPair: boolean,
-  requiresPassword: boolean,
 ): ValidationErrors | null => {
   if (isNewKeyPair) {
     return control.get('accountKeySaved')?.value
@@ -31,17 +28,8 @@ const validateUnlockForm = (
       : { accountKeySavedRequired: true };
   }
 
-  const errors: ValidationErrors = {};
-  if (!control.get('accountKey')?.value?.trim()) {
-    errors['accountKeyRequired'] = true;
-  }
-  // The password is only part of the key for legacy v1 records; v2 unlock needs
-  // the Account Key alone.
-  if (requiresPassword && (control.get('accountPassword')?.value?.length ?? 0) < 8) {
-    errors['accountPasswordRequired'] = true;
-  }
-
-  return Object.keys(errors).length > 0 ? errors : null;
+  // Unlock derives from the Account Key alone, so it is the only required input.
+  return control.get('accountKey')?.value?.trim() ? null : { accountKeyRequired: true };
 };
 
 @Component({
@@ -97,11 +85,7 @@ const validateUnlockForm = (
               cannot be recovered.
             </p>
           } @else {
-            @if (vaultService.requiresLegacyPassword()) {
-              <p>Enter your account password and Account Key to unlock this device.</p>
-            } @else {
-              <p>Enter your Account Key to unlock this device.</p>
-            }
+            <p>Enter your Account Key to unlock this device.</p>
             <p>
               After you unlock, this browser stays unlocked across refreshes and new
               tabs. You will need your Account Key again after locking the account,
@@ -115,24 +99,6 @@ const validateUnlockForm = (
           [formGroup]="vaultForm"
           (ngSubmit)="submit()"
         >
-          @if (vaultService.requiresLegacyPassword()) {
-            <label class="vault-password-dialog__field" for="account-password">
-              <span class="vault-password-dialog__label">Account password</span>
-              <input
-                id="account-password"
-                class="vault-password-dialog__input"
-                formControlName="accountPassword"
-                type="password"
-                autocomplete="current-password"
-              />
-              @if (vaultForm.hasError('accountPasswordRequired')) {
-                <span class="vault-password-dialog__error"
-                  >Account password is required</span
-                >
-              }
-            </label>
-          }
-
           @if (!vaultService.isNewKeyPair()) {
             <div class="vault-password-dialog__field">
               <div class="vault-password-dialog__field-head">
@@ -425,17 +391,10 @@ export class VaultPasswordDialogComponent {
     {
       accountKey: [''],
       accountKeySaved: [false],
-      accountPassword: [
-        environment.isDevelopment ? environment.localVaultPassword : '',
-      ],
     },
     {
       validators: (control) =>
-        validateUnlockForm(
-          control,
-          this.vaultService.isNewKeyPair(),
-          this.vaultService.requiresLegacyPassword(),
-        ),
+        validateUnlockForm(control, this.vaultService.isNewKeyPair()),
     },
   );
 
@@ -517,12 +476,11 @@ export class VaultPasswordDialogComponent {
       return;
     }
 
-    const { accountKey, accountPassword } = this.vaultForm.getRawValue();
+    const { accountKey } = this.vaultForm.getRawValue();
 
     this.vaultService.clearUnlockError();
     this.vaultService.unlockRequest$.next({
       accountKey: accountKey ?? '',
-      accountPassword: accountPassword ?? '',
       trustDevice: true,
     });
   }
