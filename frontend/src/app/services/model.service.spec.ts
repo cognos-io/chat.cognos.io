@@ -7,7 +7,7 @@ import { TestBed } from '@angular/core/testing';
 
 import PocketBase from 'pocketbase';
 
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 
 import { loadingModel } from '@app/interfaces/model';
 
@@ -18,9 +18,11 @@ describe('ModelService', () => {
   let service: ModelService;
   let httpController: HttpTestingController;
   let authUser$: BehaviorSubject<unknown>;
+  let updatePreferredModel: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     authUser$ = new BehaviorSubject<unknown>(null);
+    updatePreferredModel = vi.fn().mockReturnValue(of({}));
 
     TestBed.configureTestingModule({
       providers: [
@@ -31,6 +33,7 @@ describe('ModelService', () => {
           provide: AuthService,
           useValue: {
             user$: authUser$,
+            updatePreferredModel,
           },
         },
         {
@@ -145,11 +148,15 @@ describe('ModelService', () => {
 
     expect(service.selectedModel().id).toBe('eu-model');
 
+    // An ineligible model must neither change the selection nor be persisted.
     service.selectModel('global-model');
     expect(service.selectedModel().id).toBe('eu-model');
+    expect(updatePreferredModel).not.toHaveBeenCalled();
 
+    // An eligible explicit selection is persisted to the user record.
     service.selectModel('eu-model');
     expect(service.selectedModel().id).toBe('eu-model');
+    expect(updatePreferredModel).toHaveBeenCalledExactlyOnceWith('eu-model');
   });
 
   it('falls back to the first returned model when none are eligible', () => {
@@ -299,6 +306,7 @@ describe('ModelService', () => {
     // reducer returns {} for unknown candidates so selectedModelId stays put.
     service.selectModel('does-not-exist');
     expect(service.selectedModel().id).toBe('llama-3-3-infomaniak');
+    expect(updatePreferredModel).not.toHaveBeenCalled();
   });
 
   it('resets to the initial state after logout', () => {

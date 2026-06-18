@@ -270,6 +270,28 @@ export class AuthService implements OnDestroy {
     );
   }
 
+  // Persist the user's preferred model on their own record so the choice is
+  // restored on the next sign-in or a new device. Best-effort: a failure here
+  // must not block the in-session selection, so callers ignore the error.
+  updatePreferredModel(modelId: string): Observable<AuthUser> {
+    const userId = this.user()?.['id'] as string | undefined;
+    if (!userId) {
+      return throwError(() => new Error('Not authenticated'));
+    }
+
+    return from(
+      this._pb.collection(this._authCollection).update(userId, {
+        preferred_model_id: modelId,
+      }),
+    ).pipe(
+      map((record) => record as AuthUser),
+      catchError((error) => {
+        console.error('Unable to persist preferred model', error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
   async logout(): Promise<void> {
     await this._trustedUnlockService.clearAllUnlockKeys();
 

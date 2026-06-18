@@ -78,6 +78,12 @@ export class ModelService {
             if (!model || !model.isEligible) {
               return {};
             }
+            // Persist the choice to the user's record (best-effort) so it is
+            // restored next session. Local selection updates regardless of the
+            // network result.
+            this._authService
+              .updatePreferredModel(id)
+              .subscribe({ error: () => undefined });
             return {
               selectedModelId: id,
             };
