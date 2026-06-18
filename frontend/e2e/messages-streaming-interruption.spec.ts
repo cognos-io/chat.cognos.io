@@ -336,7 +336,9 @@ test('switching conversations during streaming does not leak content or errors',
     ).toBeVisible();
     await expect(page.getByRole('button', { name: 'EU Model' })).toBeVisible();
 
-    const composer = page.getByLabel('Message Cognos — encrypted on this device');
+    const composer = page.getByLabel(
+      'Message Cognos — stored encrypted; sent to your provider to reply',
+    );
     await composer.fill('Hello from switch e2e');
     await page.getByRole('button', { name: 'Send' }).click();
 
@@ -412,7 +414,9 @@ test('reload shows completed messages after the stream connection drops', async 
     ).toBeVisible();
     await expect(page.getByRole('button', { name: 'EU Model' })).toBeVisible();
 
-    const composer = page.getByLabel('Message Cognos — encrypted on this device');
+    const composer = page.getByLabel(
+      'Message Cognos — stored encrypted; sent to your provider to reply',
+    );
     await composer.fill('Hello after disconnect');
     await page.getByRole('button', { name: 'Send' }).click();
 

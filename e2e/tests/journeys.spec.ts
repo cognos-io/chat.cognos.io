@@ -76,7 +76,7 @@ test.describe('high-level user journeys', () => {
     await unlockAccount(page, account.password, accountKey);
 
     await page
-      .getByLabel('Message Cognos — encrypted on this device')
+      .getByLabel('Message Cognos — stored encrypted; sent to your provider to reply')
       .fill('Hello from the e2e user journey');
     await page.getByRole('button', { name: /^send$/i }).click();
 
@@ -128,7 +128,7 @@ test.describe('high-level user journeys', () => {
     await provisionUnlockedAccount(page);
 
     await page
-      .getByLabel('Message Cognos — encrypted on this device')
+      .getByLabel('Message Cognos — stored encrypted; sent to your provider to reply')
       .fill('Pin this conversation and model');
     await page.getByRole('button', { name: /^send$/i }).click();
     await expect
@@ -162,7 +162,7 @@ test.describe('high-level user journeys', () => {
     const { account, accountKey } = await provisionUnlockedAccount(page);
 
     await page
-      .getByLabel('Message Cognos — encrypted on this device')
+      .getByLabel('Message Cognos — stored encrypted; sent to your provider to reply')
       .fill('Message that should survive lock and unlock');
     await page.getByRole('button', { name: /^send$/i }).click();
 

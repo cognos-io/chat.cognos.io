@@ -144,7 +144,9 @@ test('keeps the chat sidebar and closes on Escape', async ({ page }) => {
 
   // Start on the chat home and open personas via the "All" chip.
   await page.goto('/');
-  const composer = page.getByLabel('Message Cognos — encrypted on this device');
+  const composer = page.getByLabel(
+    'Message Cognos — stored encrypted; sent to your provider to reply',
+  );
   await expect(composer).toBeVisible();
 
   await page.locator('.persona-chips').getByText('All').click();

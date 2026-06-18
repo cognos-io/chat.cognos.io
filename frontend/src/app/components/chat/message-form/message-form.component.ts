@@ -95,7 +95,7 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
 
         <div class="message-form__panel">
           <label class="message-form__label" for="message-form">
-            Message Cognos — encrypted on this device
+            Message Cognos — stored encrypted; sent to your provider to reply
           </label>
 
           <textarea

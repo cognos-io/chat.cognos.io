@@ -115,7 +115,9 @@ test('authenticated user cannot send with an unavailable model', async ({ page }
     page.getByText('model privacy tier exceeds user privacy tier'),
   ).toBeVisible();
 
-  const composer = page.getByLabel('Message Cognos — encrypted on this device');
+  const composer = page.getByLabel(
+    'Message Cognos — stored encrypted; sent to your provider to reply',
+  );
   await composer.fill('This should never send');
 
   const sendButton = page.getByRole('button', { name: 'Send' });

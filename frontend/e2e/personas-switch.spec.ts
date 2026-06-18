@@ -165,7 +165,9 @@ test('switches persona multiple times within one conversation', async ({ page })
   await page.goto('/c/conv_e2e_switch');
   await expect(page.getByRole('heading', { name: 'Switch test' })).toBeVisible();
 
-  const composer = page.getByLabel('Message Cognos — encrypted on this device');
+  const composer = page.getByLabel(
+    'Message Cognos — stored encrypted; sent to your provider to reply',
+  );
 
   // On a fresh chat the persona chips are shown above the composer.
   const chips = page.locator('.persona-chips');

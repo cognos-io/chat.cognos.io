@@ -115,7 +115,9 @@ test.describe('auth + account key flow', () => {
     await createEncryptedBackup(page, account.password);
 
     await expect(
-      page.getByLabel('Message Cognos — encrypted on this device'),
+      page.getByLabel(
+        'Message Cognos — stored encrypted; sent to your provider to reply',
+      ),
     ).toBeVisible();
 
     await page.reload();
@@ -127,7 +129,9 @@ test.describe('auth + account key flow', () => {
       page.getByRole('heading', { name: /secure your encrypted backup/i }),
     ).toBeHidden();
     await expect(
-      page.getByLabel('Message Cognos — encrypted on this device'),
+      page.getByLabel(
+        'Message Cognos — stored encrypted; sent to your provider to reply',
+      ),
     ).toBeVisible();
 
     // Also covers reopening the app in a new tab from the same origin.
@@ -136,7 +140,9 @@ test.describe('auth + account key flow', () => {
     await expect(newPage).toHaveURL(/\/$/);
     await expect(newPage.getByRole('heading', { name: /unlock backup/i })).toBeHidden();
     await expect(
-      newPage.getByLabel('Message Cognos — encrypted on this device'),
+      newPage.getByLabel(
+        'Message Cognos — stored encrypted; sent to your provider to reply',
+      ),
     ).toBeVisible();
     await newPage.close();
   });
@@ -157,7 +163,9 @@ test.describe('auth + account key flow', () => {
     await acknowledgeAccountKey(page);
     await createEncryptedBackup(page, account.password);
     await expect(
-      page.getByLabel('Message Cognos — encrypted on this device'),
+      page.getByLabel(
+        'Message Cognos — stored encrypted; sent to your provider to reply',
+      ),
     ).toBeVisible();
 
     // Install a MutationObserver that runs from the very first script execution
@@ -221,7 +229,9 @@ test.describe('auth + account key flow', () => {
     await page.reload();
 
     await expect(
-      page.getByLabel('Message Cognos — encrypted on this device'),
+      page.getByLabel(
+        'Message Cognos — stored encrypted; sent to your provider to reply',
+      ),
     ).toBeVisible();
 
     const { appearances, overlaySeen } = await page.evaluate(() => {

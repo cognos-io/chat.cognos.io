@@ -132,7 +132,9 @@ test('authenticated user sees trial exhaustion feedback when billing blocks send
     page.getByText('Get started by sending a message using the composer below.'),
   ).toBeVisible();
 
-  const composer = page.getByLabel('Message Cognos — encrypted on this device');
+  const composer = page.getByLabel(
+    'Message Cognos — stored encrypted; sent to your provider to reply',
+  );
   await composer.fill('This should be blocked by billing');
   await page.getByRole('button', { name: 'Send' }).click();
 

@@ -154,7 +154,9 @@ test('exhausting the trial locks the composer and shows the in-chat banners', as
     page.getByText('Get started by sending a message using the composer below.'),
   ).toBeVisible();
 
-  const composer = page.getByLabel('Message Cognos — encrypted on this device');
+  const composer = page.getByLabel(
+    'Message Cognos — stored encrypted; sent to your provider to reply',
+  );
   await composer.fill('This should trip the plan gate');
   await page.getByRole('button', { name: 'Send' }).click();
 
@@ -192,7 +194,9 @@ test('inactive users keep read access but cannot send', async ({ page }) => {
   // Composer is replaced by the locked state; no text input is offered.
   await expect(page.getByText('Sending is paused')).toBeVisible();
   await expect(
-    page.getByLabel('Message Cognos — encrypted on this device'),
+    page.getByLabel(
+      'Message Cognos — stored encrypted; sent to your provider to reply',
+    ),
   ).toHaveCount(0);
   // No trial card for a non-trial plan.
   await expect(page.getByText('Trial credit')).toHaveCount(0);

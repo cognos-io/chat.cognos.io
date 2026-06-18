@@ -152,7 +152,9 @@ test('authenticated user sends a message and receives a response', async ({ page
   await expect(page.getByRole('heading', { name: 'Quarterly planning' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'EU Model' })).toBeVisible();
 
-  const composer = page.getByLabel('Message Cognos — encrypted on this device');
+  const composer = page.getByLabel(
+    'Message Cognos — stored encrypted; sent to your provider to reply',
+  );
   await composer.fill('Hello from e2e');
   await page.getByRole('button', { name: 'Send' }).click();
 

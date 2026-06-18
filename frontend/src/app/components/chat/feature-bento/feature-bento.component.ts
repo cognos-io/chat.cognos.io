@@ -36,10 +36,11 @@ const featureBentoItems: FeatureBentoItem[] = [
     icon: 'rotate-cw',
   },
   {
-    title: 'No training on your data',
+    title: 'No-retention providers',
     description: {
-      small: 'Keep your data private',
-      medium: 'Your data can never be used to train future AI models',
+      small: 'Approved providers only',
+      medium:
+        'We only route to approved providers with no-retention, no-training terms',
     },
     tone: 'teal',
     icon: 'shield-x',
@@ -54,11 +55,11 @@ const featureBentoItems: FeatureBentoItem[] = [
     icon: 'shield-check',
   },
   {
-    title: 'No risk of leaks',
+    title: 'Only you can decrypt',
     description: {
-      small: 'Only you can see your data',
+      small: 'You hold the keys',
       medium:
-        'Only you can access your data. Without your permission, no one can access it',
+        'Your chat history is stored encrypted — only you hold the keys to decrypt it',
     },
     tone: 'blue',
     icon: 'eye-off',

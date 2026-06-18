@@ -212,7 +212,9 @@ test('assistant responses stream progressively on the existing completion endpoi
     ).toBeVisible();
     await expect(page.getByRole('button', { name: 'EU Model' })).toBeVisible();
 
-    const composer = page.getByLabel('Message Cognos — encrypted on this device');
+    const composer = page.getByLabel(
+      'Message Cognos — stored encrypted; sent to your provider to reply',
+    );
     await composer.fill('Hello from streaming e2e');
     await page.getByRole('button', { name: 'Send' }).click();
 
