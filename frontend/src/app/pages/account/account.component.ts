@@ -261,14 +261,16 @@ import { deriveProfileName } from '@app/utils/profile-identity';
   `,
   styles: `
     :host {
-      display: block;
+      display: flex;
+      flex-direction: column;
+      gap: var(--cog-space-200, 16px);
       max-width: 920px;
     }
 
     .account__header {
       display: grid;
       gap: var(--cog-space-050);
-      margin: var(--cog-space-150) 0 var(--cog-space-250, 20px);
+      margin: var(--cog-space-150) 0 0;
     }
 
     .account__title {
@@ -435,7 +437,6 @@ import { deriveProfileName } from '@app/utils/profile-identity';
     }
 
     .account__danger {
-      margin-top: var(--cog-space-200, 16px);
       border-color: var(--cog-danger-border, #f1c0c0);
       background: var(--cog-danger-surface, #fef2f2);
     }
@@ -454,6 +455,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
     }
 
     .account__danger-copy {
+      flex: 1;
       min-width: 0;
     }
 
