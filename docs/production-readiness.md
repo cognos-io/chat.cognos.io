@@ -20,16 +20,23 @@ for ~200–500 privacy-conscious users. Status legend: ✅ done · 🚧 in progr
 | #   | Item                                                             | Status | Notes                                                                                 |
 | --- | ---------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
 | B.1 | "Where your data goes" facts panel in model selector             | ⬜     | Data already on `Model` (provider, hosting country/region, no-retention, open-source) |
-| B.2 | Persist `preferred_model_id` back to the user record             | ⬜     | Backend field exists; frontend only reads it today                                    |
-| B.3 | Privacy-tier setting (Only CH / EU / Global) gating the selector | ⬜     | Backend tier-gating exists; needs a user-editable preference                          |
+| B.2 | Persist `preferred_model_id` back to the user record             | ✅     | Persisted best-effort on explicit eligible selection                                  |
+| B.3 | Privacy-tier setting (Only CH / EU / Global) gating the selector | ⬜     | `privacy_tier` is a free user data-residency preference (no plan entitlement)         |
 
-## Track C — Paid-GA auth blockers (design-first)
+## Track C — Paid-GA auth blockers
 
-| #   | Item                                   | Status | Notes                                                              |
-| --- | -------------------------------------- | ------ | ------------------------------------------------------------------ |
-| C.1 | MFA (TOTP, then WebAuthn)              | ⬜ 🔎  | Protects login; separable from vault unlock                        |
-| C.2 | Password-change UI                     | ⬜     | Currently no change flow; reset is disabled                        |
-| C.3 | Account-key recovery ("Emergency Kit") | ⬜ 🔎  | Irreversible-by-design today; needs an ADR + sign-off on tradeoffs |
+Model decided: **Account Key = sole data/recovery key; password = auth-only and
+resettable** (see `security-model.md` §5/§9). This shrinks the work — no third
+recovery secret, and password-change is a pure auth op.
+
+| #   | Item                                                       | Status | Notes                                                            |
+| --- | ---------------------------------------------------------- | ------ | ---------------------------------------------------------------- |
+| C.1 | Wrap secret key under `Argon2id(Account Key)` (`v2`)       | ⬜     | Drop password from KDF; unlock reads `unlock_scheme` per record  |
+| C.2 | Unlock UX: decrypt step asks for Account Key only          | ⬜     | Login already authenticates; no password at the decrypt step     |
+| C.3 | Re-enable password reset                                   | ⬜     | Remove `ForbidPasswordReset` hook; data now survives a reset     |
+| C.4 | Password-change UI                                         | ⬜     | Pure auth op (PocketBase); no key re-wrap                        |
+| C.5 | MFA (TOTP, then WebAuthn)                                  | ⬜     | Login protection                                                 |
+| C.6 | Emergency Kit onboarding (download/print the Account Key)  | ⬜     | Make safeguarding the Account Key unmistakable                   |
 
 ## Track D — Production hardening (infra)
 

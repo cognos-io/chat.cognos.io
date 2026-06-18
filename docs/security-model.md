@@ -15,7 +15,9 @@ Core properties:
   plaintext chat content
 - users can access their encrypted data on multiple devices via an **encrypted private-key backup**
   model
-- unlocking a new device requires **account password + Account Key**
+- the **account password** is for authentication only (sign-in) and is resettable by email
+- decrypting data requires the **Account Key**, a high-entropy secret the server never sees; it is
+  both the day-to-day unlock secret and the recovery key
 
 This document describes the intended security model and trust boundaries.
 
@@ -102,24 +104,38 @@ request processing.
 
 ## 5. Key management model
 
-Cognos uses a **1Password-style Account Key model**.
+Cognos uses a **1Password-inspired Account Key model**, with one deliberate
+divergence: the Account Key **alone** decrypts data, so a forgotten password is a
+normal recoverable event rather than a lock-out. (1Password proper requires both
+the master password _and_ the Secret Key and has no individual recovery; we trade
+that marginal second factor for working password reset and a single secret to
+safeguard.)
 
-Users have two secrets:
+Users have two secrets, each with **one job**:
 
 1. **Account password**
    - user-chosen
-   - used for authentication
+   - **authentication only** — it is not an input to any data-encryption key
+   - resettable by email; resetting it never affects encrypted data
 2. **Account Key**
-   - high-entropy generated secret
-   - required to unlock a new device
-   - intended to materially improve security against server-side compromise and database theft
+   - high-entropy generated secret (128-bit), shown once at onboarding
+   - the **sole** secret that decrypts the private-key backup, and therefore the
+     recovery key / Emergency Kit
+   - never sent to or stored by the server, so a stolen database cannot be
+     brute-forced regardless of password strength
+
+The user's secret key is wrapped under `Argon2id(Account Key, salt)` —
+**not** `Argon2id(password + Account Key, salt)`. The wrap scheme is recorded on
+the key-pair record (`unlock_scheme`) so the client derives the key the right way.
 
 ### Design goals
 
 - support cross-device access
 - avoid storing plaintext private keys on the server
-- avoid relying on the login password alone to unlock encrypted private-key backups
+- make the data's confidentiality independent of password strength
 - make compromise of the auth database insufficient to decrypt user private keys
+- keep authentication (password, resettable) cleanly separate from data
+  decryption (Account Key), so password loss is recoverable
 
 ## 6. Private-key backup model
 
@@ -177,7 +193,7 @@ treating the browser-origin as a strong trust anchor.
 
 **Construction (on successful unlock):**
 
-1. The client derives the unlock key from password + Account Key + salt via Argon2id, as elsewhere.
+1. The client derives the unlock key from the Account Key + salt via Argon2id, as elsewhere.
 2. The client generates a fresh random 32-byte AES-GCM-class symmetric key — the **wrap key**.
 3. The client encrypts the unlock key with the wrap key using NaCl `secretbox` and a fresh random
    nonce. The resulting ciphertext + nonce is stored in `localStorage` under a per-user key
@@ -258,21 +274,27 @@ On first setup, the client should:
 
 If a user loses:
 
-- **password only**: auth recovery may be possible depending on auth design, but encrypted data must
-  remain protected
-- **Account Key only**: cross-device unlock may be impossible
-- **password and Account Key**: encrypted data recovery may be impossible
+- **password only**: fully recoverable. They reset the password by email, sign back in, and decrypt
+  with their Account Key. Encrypted data is unaffected because the password is not part of any
+  data-encryption key.
+- **Account Key only**: encrypted data is unrecoverable. The Account Key is the sole decryption
+  secret; this is the irreducible cost of genuine zero-knowledge encryption.
+- **password and Account Key**: encrypted data is unrecoverable.
 
-This is an intentional tradeoff in favor of privacy.
+Losing the Account Key is the one unrecoverable case. Onboarding must therefore make safeguarding
+the Account Key (the Emergency Kit) unmistakable. This is an intentional tradeoff in favor of
+privacy.
 
 ## 10. Password change, email change, logout, lost device
 
 ### Password change
 
-Changing the account password must:
+Because the password is authentication-only and not an input to any
+data-encryption key, changing it is a **pure auth operation**:
 
-- re-wrap encrypted unlock material client-side or through a safe authenticated flow
-- avoid re-encrypting all historical messages
+- it updates the authentication credential only
+- it does **not** re-wrap key material or re-encrypt any messages
+- the Account Key continues to decrypt data unchanged
 
 ### Email change
 
