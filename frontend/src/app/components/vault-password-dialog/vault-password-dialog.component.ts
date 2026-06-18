@@ -18,6 +18,36 @@ import {
 
 import { VaultService } from '../../services/vault.service';
 
+// Plain-text "Emergency Kit" the user can download at onboarding. It is the
+// 1Password-style printable record of the one secret they must never lose.
+export function buildEmergencyKitText(accountKey: string, email?: string): string {
+  const lines = [
+    'COGNOS EMERGENCY KIT',
+    '',
+    'Your Account Key is the ONLY thing that can decrypt your data.',
+    'Store it somewhere safe and private — a password manager, or printed and',
+    'locked away. Anyone who has it can read your chats.',
+    '',
+  ];
+  if (email) {
+    lines.push(`Account: ${email}`);
+  }
+  lines.push(
+    'Account Key:',
+    accountKey,
+    '',
+    'What it does:',
+    '- Unlocks your encrypted chats on a new device.',
+    '- Your password only signs you in; this key decrypts your data.',
+    '',
+    'If you lose it:',
+    '- Cognos never stores your Account Key, so your data cannot be recovered.',
+    '',
+    'Cognos · https://cognos.io',
+  );
+  return lines.join('\n');
+}
+
 const validateUnlockForm = (
   control: AbstractControl,
   isNewKeyPair: boolean,
@@ -75,9 +105,22 @@ const validateUnlockForm = (
               <code class="vault-password-dialog__account-key-value">{{
                 generatedAccountKey()
               }}</code>
-              <cog-button appearance="default" type="button" (click)="copyAccountKey()">
-                Copy Account Key
-              </cog-button>
+              <div class="vault-password-dialog__account-key-actions">
+                <cog-button
+                  appearance="default"
+                  type="button"
+                  (click)="copyAccountKey()"
+                >
+                  Copy Account Key
+                </cog-button>
+                <cog-button
+                  appearance="default"
+                  type="button"
+                  (click)="downloadEmergencyKit()"
+                >
+                  Download Emergency Kit
+                </cog-button>
+              </div>
             </div>
             <p>
               Keep this Account Key private — anyone who has it can decrypt your data.
@@ -257,6 +300,12 @@ const validateUnlockForm = (
       padding: var(--cog-space-150);
     }
 
+    .vault-password-dialog__account-key-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--cog-space-100);
+    }
+
     .vault-password-dialog__account-key-label {
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-caption);
@@ -397,6 +446,35 @@ export class VaultPasswordDialogComponent {
         validateUnlockForm(control, this.vaultService.isNewKeyPair()),
     },
   );
+
+  // Download the Account Key as a plain-text Emergency Kit the user can store
+  // in a password manager or print. Generated entirely client-side.
+  downloadEmergencyKit(): void {
+    const accountKey = this.generatedAccountKey();
+    if (!accountKey || typeof document === 'undefined') {
+      return;
+    }
+
+    const blob = new Blob([buildEmergencyKitText(accountKey)], {
+      type: 'text/plain;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'cognos-emergency-kit.txt';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+
+    this.toastService.notify({
+      title: 'Emergency Kit downloaded',
+      msg: 'Store the file somewhere safe before you continue.',
+      tone: 'success',
+      icon: 'download',
+      duration: 3200,
+    });
+  }
 
   async copyAccountKey(): Promise<void> {
     const accountKey = this.generatedAccountKey();

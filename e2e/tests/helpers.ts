@@ -44,6 +44,9 @@ export async function expectAccountKeyDialogForNewUser(page: Page): Promise<void
   await expect(page.getByText(/generated a one-time account key/i)).toBeVisible();
   await expect(page.getByRole('button', { name: /copy account key/i })).toBeVisible();
   await expect(
+    page.getByRole('button', { name: /download emergency kit/i }),
+  ).toBeVisible();
+  await expect(
     page.getByRole('button', { name: /create encrypted backup/i }),
   ).toBeDisabled();
 }

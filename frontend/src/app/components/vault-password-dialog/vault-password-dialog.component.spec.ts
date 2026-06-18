@@ -5,7 +5,33 @@ import { Router, provideRouter } from '@angular/router';
 import { CognosToastService } from '@cognos/ui-angular';
 
 import { VaultService } from '../../services/vault.service';
-import { VaultPasswordDialogComponent } from './vault-password-dialog.component';
+import {
+  VaultPasswordDialogComponent,
+  buildEmergencyKitText,
+} from './vault-password-dialog.component';
+
+describe('buildEmergencyKitText', () => {
+  const key = 'ABCD-EF12-3456-7890'; // gitleaks:allow — fake test value
+
+  it('includes the Account Key verbatim', () => {
+    expect(buildEmergencyKitText(key)).toContain(key);
+  });
+
+  it('explains it is the sole decryption/recovery key and is unrecoverable', () => {
+    const text = buildEmergencyKitText(key).toLowerCase();
+    expect(text).toContain('account key');
+    expect(text).toContain('decrypt');
+    // The whole point of the kit: losing it means the data is gone.
+    expect(text).toContain('cannot be recovered');
+  });
+
+  it('includes the email when provided and omits the label when not', () => {
+    expect(buildEmergencyKitText(key, 'person@example.com')).toContain(
+      'person@example.com',
+    );
+    expect(buildEmergencyKitText(key)).not.toContain('Account:');
+  });
+});
 
 describe('VaultPasswordDialogComponent', () => {
   let fixture: ComponentFixture<VaultPasswordDialogComponent>;
