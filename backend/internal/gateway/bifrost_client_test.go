@@ -153,14 +153,30 @@ func TestBifrostClientCompleteFlattensTextBlocks(t *testing.T) {
 func TestBifrostClientCompletePropagatesBifrostError(t *testing.T) {
 	t.Parallel()
 
+	// The provider's free-text message can echo request snippets (plaintext
+	// user content), so it must never appear in the error we propagate.
+	statusCode := 400
+	errorType := "invalid_request_error"
 	requester := &stubBifrostRequester{
-		err: &schemas.BifrostError{Error: &schemas.ErrorField{Message: "provider unavailable"}},
+		err: &schemas.BifrostError{
+			StatusCode: &statusCode,
+			Error: &schemas.ErrorField{
+				Type:    &errorType,
+				Message: "invalid token in messages[0]: 'my secret prompt'",
+			},
+		},
 	}
 	client := NewBifrostClient(requester, nil, nil, nil)
 
 	_, err := client.Complete(context.Background(), CompleteRequest{ProviderID: "infomaniak", ProviderModelID: "model"})
-	if err == nil || err.Error() != "bifrost request failed: provider unavailable" {
-		t.Fatalf("Complete() error = %v, want provider unavailable", err)
+	if err == nil {
+		t.Fatal("Complete() error = nil, want non-nil")
+	}
+	if strings.Contains(err.Error(), "my secret prompt") {
+		t.Fatalf("Complete() error leaks the provider message: %v", err)
+	}
+	if want := "bifrost request failed: status=400 type=invalid_request_error"; err.Error() != want {
+		t.Fatalf("Complete() error = %q, want %q", err.Error(), want)
 	}
 }
 
@@ -204,6 +220,14 @@ func TestBifrostClientCompleteLogsStructuredErrorFields(t *testing.T) {
 	} {
 		if !strings.Contains(logBuf.String(), want) {
 			t.Fatalf("log output = %s, want substring %s", logBuf.String(), want)
+		}
+	}
+
+	// The provider's free-text message (which can contain plaintext user
+	// content) must never be logged.
+	for _, notWant := range []string{"error_message", "provider API error", "not found"} {
+		if strings.Contains(logBuf.String(), notWant) {
+			t.Fatalf("log output = %s, must not contain %q", logBuf.String(), notWant)
 		}
 	}
 }

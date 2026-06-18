@@ -85,7 +85,7 @@ func (c *BifrostClient) Complete(ctx context.Context, req CompleteRequest) (Comp
 	resp, bifrostErr := c.requester.ChatCompletionRequest(bifrostCtx, chatReq)
 	if bifrostErr != nil {
 		c.logBifrostError(req, bifrostErr)
-		return CompleteResponse{}, fmt.Errorf("bifrost request failed: %s", bifrostErr.GetErrorString())
+		return CompleteResponse{}, fmt.Errorf("bifrost request failed: %s", safeErrorSummary(bifrostErr))
 	}
 	if resp == nil {
 		return CompleteResponse{}, fmt.Errorf("bifrost returned nil response")
@@ -141,7 +141,7 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 	stream, bifrostErr := c.requester.ChatCompletionStreamRequest(bifrostCtx, chatReq)
 	if bifrostErr != nil {
 		c.logBifrostError(req, bifrostErr)
-		return nil, fmt.Errorf("bifrost request failed: %s", bifrostErr.GetErrorString())
+		return nil, fmt.Errorf("bifrost request failed: %s", safeErrorSummary(bifrostErr))
 	}
 	if stream == nil {
 		return nil, fmt.Errorf("bifrost returned nil stream")
@@ -157,7 +157,7 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 			}
 			if chunk.BifrostError != nil {
 				c.logBifrostError(req, chunk.BifrostError)
-				out <- CompleteStreamEvent{Err: fmt.Errorf("bifrost request failed: %s", chunk.BifrostError.GetErrorString())}
+				out <- CompleteStreamEvent{Err: fmt.Errorf("bifrost request failed: %s", safeErrorSummary(chunk.BifrostError))}
 				return
 			}
 			if chunk.BifrostChatResponse == nil {
@@ -276,7 +276,6 @@ func (c *BifrostClient) logBifrostError(req CompleteRequest, bifrostErr *schemas
 		"provider", strings.TrimSpace(req.ProviderID),
 		"model", strings.TrimSpace(req.ProviderModelID),
 		"status_code", derefInt(bifrostErr.StatusCode),
-		"error_message", errorMessage(bifrostErr),
 		"error_type", derefString(bifrostErrorType(bifrostErr)),
 		"error_code", derefString(bifrostErrorCode(bifrostErr)),
 		"original_model_requested", bifrostErr.ExtraFields.OriginalModelRequested,
@@ -312,14 +311,30 @@ func bifrostErrorCode(bifrostErr *schemas.BifrostError) *string {
 	return bifrostErr.Error.Code
 }
 
-func errorMessage(bifrostErr *schemas.BifrostError) string {
+// safeErrorSummary describes a provider failure using only structured,
+// provider-defined fields (status, type, code). It deliberately omits the
+// free-text Error.Message: some providers echo parts of the request — and
+// therefore plaintext user content — back in that field. Cognos never logs or
+// propagates user data, so the message must not reach logs or wrapped errors.
+func safeErrorSummary(bifrostErr *schemas.BifrostError) string {
 	if bifrostErr == nil {
-		return ""
+		return "unknown error"
 	}
-	if bifrostErr.Error != nil && bifrostErr.Error.Message != "" {
-		return bifrostErr.Error.Message
+
+	parts := make([]string, 0, 3)
+	if bifrostErr.StatusCode != nil {
+		parts = append(parts, fmt.Sprintf("status=%d", *bifrostErr.StatusCode))
 	}
-	return bifrostErr.GetErrorString()
+	if errorType := derefString(bifrostErrorType(bifrostErr)); errorType != "" {
+		parts = append(parts, "type="+errorType)
+	}
+	if errorCode := derefString(bifrostErrorCode(bifrostErr)); errorCode != "" {
+		parts = append(parts, "code="+errorCode)
+	}
+	if len(parts) == 0 {
+		return "unspecified provider error"
+	}
+	return strings.Join(parts, " ")
 }
 
 func derefString(value *string) string {
