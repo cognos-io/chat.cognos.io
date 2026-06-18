@@ -34,6 +34,7 @@ approach to ProtonMail which encrypts user emails.
   larger tasks as code will be reviewed commit-by-commit
 - ask clarifying questions. minimise assumptions. use the decision maker skill for fast decisions
   but ask if that also is unsure.
+- Write and maintain documentation for humans with poor attention spans.
 
 ## Tools
 
