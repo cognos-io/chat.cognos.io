@@ -63,78 +63,82 @@ import { deriveProfileName } from '@app/utils/profile-identity';
         Your display name appears on your messages and in shared chats.
       </p>
 
-      <div class="account__profile">
-        <cog-avatar
-          [name]="avatarName()"
-          [icon]="avatarIcon() ?? null"
-          [color]="avatarIcon() ? avatarColor() : ''"
-          [size]="40"
-        />
-
-        <div class="account__fields">
-          <div class="account__field">
-            <span class="account__label">Display name</span>
-            <cog-text-field
-              ariaLabel="Display name"
-              placeholder="Add a display name"
-              [value]="displayName()"
-              (valueChange)="displayName.set($event)"
-            />
-          </div>
-
-          <div class="account__field">
-            <span class="account__label">Email</span>
-            <cog-text-field
-              ariaLabel="Email"
-              [value]="email()"
-              [readonly]="true"
-              [disabled]="true"
-            />
-            <span class="account__hint">
-              Email changes aren’t available yet. Contact support if you need to change
-              it.
-            </span>
-          </div>
-
-          <fieldset class="account__field account__fieldset">
-            <legend class="account__label">Avatar icon</legend>
-            <div class="account__icon-grid" role="radiogroup" aria-label="Avatar icon">
-              @for (option of icons; track option) {
-                <button
-                  type="button"
-                  class="account__icon-button"
-                  [class.is-selected]="avatarIcon() === option"
-                  [attr.aria-label]="'Icon ' + option"
-                  [attr.aria-pressed]="avatarIcon() === option"
-                  (click)="selectIcon(option)"
-                >
-                  <cog-icon [name]="option" [size]="18" tone="current" />
-                </button>
-              }
-            </div>
-          </fieldset>
-
-          <fieldset class="account__field account__fieldset">
-            <legend class="account__label">Avatar colour</legend>
-            <div
-              class="account__color-row"
-              role="radiogroup"
-              aria-label="Avatar colour"
-            >
-              @for (option of colors; track option) {
-                <button
-                  type="button"
-                  class="account__color-swatch"
-                  [class]="'account__color-swatch--' + option"
-                  [class.is-selected]="avatarColor() === option"
-                  [attr.aria-label]="'Colour ' + option"
-                  [attr.aria-pressed]="avatarColor() === option"
-                  (click)="selectColor(option)"
-                ></button>
-              }
-            </div>
-          </fieldset>
+      <div class="account__fields">
+        <div class="account__field">
+          <span class="account__label">Display name</span>
+          <cog-text-field
+            ariaLabel="Display name"
+            placeholder="Add a display name"
+            [value]="displayName()"
+            (valueChange)="displayName.set($event)"
+          />
         </div>
+
+        <div class="account__field">
+          <span class="account__label">Email</span>
+          <cog-text-field
+            ariaLabel="Email"
+            [value]="email()"
+            [readonly]="true"
+            [disabled]="true"
+          />
+          <span class="account__hint">
+            Email changes aren’t available yet. Contact support if you need to change
+            it.
+          </span>
+        </div>
+
+        <fieldset class="account__field account__fieldset">
+          <legend class="account__label">Avatar</legend>
+          <div class="account__avatar">
+            <cog-avatar
+              class="account__avatar-preview"
+              [name]="avatarName()"
+              [icon]="avatarIcon() ?? null"
+              [color]="avatarIcon() ? avatarColor() : ''"
+              [size]="40"
+            />
+
+            <div class="account__avatar-pickers">
+              <div
+                class="account__icon-grid"
+                role="radiogroup"
+                aria-label="Avatar icon"
+              >
+                @for (option of icons; track option) {
+                  <button
+                    type="button"
+                    class="account__icon-button"
+                    [class.is-selected]="avatarIcon() === option"
+                    [attr.aria-label]="'Icon ' + option"
+                    [attr.aria-pressed]="avatarIcon() === option"
+                    (click)="selectIcon(option)"
+                  >
+                    <cog-icon [name]="option" [size]="18" tone="current" />
+                  </button>
+                }
+              </div>
+
+              <div
+                class="account__color-row"
+                role="radiogroup"
+                aria-label="Avatar colour"
+              >
+                @for (option of colors; track option) {
+                  <button
+                    type="button"
+                    class="account__color-swatch"
+                    [class]="'account__color-swatch--' + option"
+                    [class.is-selected]="avatarColor() === option"
+                    [attr.aria-label]="'Colour ' + option"
+                    [attr.aria-pressed]="avatarColor() === option"
+                    (click)="selectColor(option)"
+                  ></button>
+                }
+              </div>
+            </div>
+          </div>
+        </fieldset>
       </div>
 
       <div class="account__actions">
@@ -296,18 +300,30 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       font-size: var(--cog-fs-body-sm);
     }
 
-    .account__profile {
-      display: flex;
-      gap: var(--cog-space-200, 16px);
-      align-items: flex-start;
-      margin-top: var(--cog-space-100);
-    }
-
     .account__fields {
       display: grid;
+      gap: var(--cog-space-200, 16px);
+      margin-top: var(--cog-space-100);
+      min-width: 0;
+    }
+
+    .account__avatar {
+      display: flex;
       gap: var(--cog-space-150);
+      align-items: center;
+      margin-top: var(--cog-space-050);
+    }
+
+    .account__avatar-preview {
+      flex: none;
+    }
+
+    .account__avatar-pickers {
+      display: grid;
+      gap: var(--cog-space-100);
       flex: 1;
       min-width: 0;
+      max-width: 460px;
     }
 
     .account__field {
@@ -334,7 +350,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
 
     .account__icon-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+      grid-template-columns: repeat(10, 1fr);
       gap: var(--cog-space-075);
     }
 
