@@ -31,15 +31,15 @@ recovery secret, and password-change is a pure auth op.
 
 | #   | Item                                                      | Status | Notes                                                             |
 | --- | --------------------------------------------------------- | ------ | ----------------------------------------------------------------- |
-| C.1 | Wrap secret key under `Argon2id(Account Key)` (`v2`)      | ✅     | Dual-scheme; pure helpers unit-test that v2 ignores the password  |
-| C.2 | Unlock UX: decrypt step asks for Account Key only         | ✅     | Password field shows only for legacy v1 records                   |
+| C.1 | Wrap secret key under `Argon2id(Account Key)` (`v2`)      | ✅     | v2-only (greenfield, no migration); helpers unit-tested           |
+| C.2 | Unlock UX: decrypt step asks for Account Key only         | ✅     | No password field at all; always asks for the Account Key         |
 | C.3 | Re-enable password reset                                  | ✅     | Hook removed; tests assert request 204 + confirm changes password |
 | C.4 | Password-change UI                                        | ⬜     | Pure auth op (PocketBase); no key re-wrap                         |
 | C.5 | MFA (TOTP, then WebAuthn)                                 | ⬜     | Login protection                                                  |
 | C.6 | Emergency Kit onboarding (download/print the Account Key) | ⬜     | Make safeguarding the Account Key unmistakable                    |
 
-Follow-up: a v1→v2 re-key on successful unlock would auto-migrate any legacy
-records and make password reset safe for them too. No v1 users exist pre-launch.
+No v1→v2 migration: launch is greenfield, so the legacy password+Account-Key
+scheme was removed outright rather than carried for backward compatibility.
 
 ## Track D — Production hardening (infra)
 
