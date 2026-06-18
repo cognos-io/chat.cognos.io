@@ -15,6 +15,7 @@ describe('VaultPasswordDialogComponent', () => {
   const generatedAccountKey = signal<string | null>(null);
   const isNewKeyPair = signal(false);
   const wasLocked = signal(false);
+  const requiresLegacyPassword = signal(false);
   const unlockRequest$ = { next: vi.fn() };
   const clearUnlockError = vi.fn();
   const toastService = { notify: vi.fn() };
@@ -24,6 +25,7 @@ describe('VaultPasswordDialogComponent', () => {
     generatedAccountKey.set(null);
     isNewKeyPair.set(false);
     wasLocked.set(false);
+    requiresLegacyPassword.set(false);
     unlockRequest$.next.mockReset();
     clearUnlockError.mockReset();
     toastService.notify.mockReset();
@@ -45,6 +47,7 @@ describe('VaultPasswordDialogComponent', () => {
             generatedAccountKey,
             isNewKeyPair,
             wasLocked,
+            requiresLegacyPassword,
             unlockError,
             unlockRequest$,
             clearUnlockError,
@@ -183,6 +186,34 @@ describe('VaultPasswordDialogComponent', () => {
     fixture.detectChanges();
 
     expect(accountKeyInput.readOnly).toBe(false);
+  });
+
+  it('asks for the Account Key only on v2 unlock and adds the password for legacy v1', () => {
+    // Default (v2): the Account Key alone unlocks, so no password field.
+    expect(fixture.nativeElement.querySelector('#account-password')).toBeNull();
+    expect(fixture.nativeElement.querySelector('#account-key')).not.toBeNull();
+
+    // Legacy v1 records mix the password into the key, so it is requested.
+    requiresLegacyPassword.set(true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#account-password')).not.toBeNull();
+  });
+
+  it('unlocks a v2 backup with the Account Key alone (no password needed)', () => {
+    component.vaultForm.controls.accountPassword.setValue('');
+    component.vaultForm.controls.accountKey.setValue('test-account-key');
+
+    // The form is valid with no password because v2 derives from the key alone.
+    expect(component.vaultForm.valid).toBe(true);
+
+    component.submit();
+
+    expect(unlockRequest$.next).toHaveBeenCalledWith({
+      accountKey: 'test-account-key',
+      accountPassword: '',
+      trustDevice: true,
+    });
   });
 
   it('clears the unlock error before submitting unlock details', () => {

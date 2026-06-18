@@ -287,6 +287,14 @@ export class VaultService {
   isRestoring = this.state.isRestoring;
   keyPair$ = toObservable(this.keyPair);
 
+  // Legacy v1 records mix the password into the unlock key, so they still need
+  // it at the unlock step. v2 records (and all new accounts) derive from the
+  // Account Key alone, so the unlock dialog asks only for the Account Key.
+  readonly requiresLegacyPassword = computed(
+    () =>
+      this.state.keyPairRecord()?.unlock_scheme === UNLOCK_SCHEME_PASSWORD_ACCOUNT_KEY,
+  );
+
   /**
    * Canonical fingerprint of the unlocked public key — base64(blake2b(publicKey)).
    * This is the exact value persisted in the trusted-device context, so anything
