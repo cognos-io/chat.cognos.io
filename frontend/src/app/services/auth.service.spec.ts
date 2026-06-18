@@ -19,6 +19,7 @@ describe('AuthService', () => {
   const authWithPassword = vi.fn();
   const authRefresh = vi.fn();
   const create = vi.fn();
+  const update = vi.fn();
   const send = vi.fn();
   const clear = vi.fn();
   const onChange = vi.fn(
@@ -48,6 +49,7 @@ describe('AuthService', () => {
       authRefresh,
       authWithPassword,
       create,
+      update,
     })),
     send,
   };
@@ -63,6 +65,7 @@ describe('AuthService', () => {
     authWithPassword.mockReset();
     authRefresh.mockReset();
     create.mockReset();
+    update.mockReset();
     send.mockReset();
     clear.mockReset();
     onChange.mockClear();
@@ -128,6 +131,52 @@ describe('AuthService', () => {
       id: 'user-1',
       email: 'person@example.com',
     });
+  });
+
+  it('changes the password and re-authenticates to keep the session alive', async () => {
+    authStore.isValid = true;
+    authRefresh.mockResolvedValue({});
+    update.mockResolvedValue({ id: 'user-1', email: 'person@example.com' });
+    authWithPassword.mockResolvedValue({
+      record: { id: 'user-1', email: 'person@example.com' },
+    });
+
+    authChangeHandler?.('token-123', { id: 'user-1', email: 'person@example.com' });
+
+    await lastValueFrom(service.changePassword('old-pw', 'a-new-strong-pw'));
+
+    // PocketBase verifies oldPassword and rotates the token; passwordConfirm
+    // mirrors the new password since we already validated it client-side.
+    expect(update).toHaveBeenCalledWith('user-1', {
+      oldPassword: 'old-pw',
+      password: 'a-new-strong-pw',
+      passwordConfirm: 'a-new-strong-pw',
+    });
+    // Re-auth with the new password refreshes the now-rotated token.
+    expect(authWithPassword).toHaveBeenCalledWith(
+      'person@example.com',
+      'a-new-strong-pw',
+    );
+  });
+
+  it('propagates the error and does not re-auth when the current password is wrong', async () => {
+    authStore.isValid = true;
+    authRefresh.mockResolvedValue({});
+    update.mockRejectedValue(new Error('Failed to authenticate.'));
+
+    authChangeHandler?.('token-123', { id: 'user-1', email: 'person@example.com' });
+
+    await expect(
+      lastValueFrom(service.changePassword('wrong-pw', 'a-new-strong-pw')),
+    ).rejects.toThrow();
+    expect(authWithPassword).not.toHaveBeenCalled();
+  });
+
+  it('rejects a password change when no one is authenticated', async () => {
+    await expect(
+      lastValueFrom(service.changePassword('old-pw', 'a-new-strong-pw')),
+    ).rejects.toThrow(/not authenticated/i);
+    expect(update).not.toHaveBeenCalled();
   });
 
   it('redirects to logout when a stale session refresh returns 401', async () => {

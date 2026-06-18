@@ -77,6 +77,40 @@ test.describe('auth + account key flow', () => {
     await unlockAccount(page, accountKey);
   });
 
+  test('change the password in account settings, then sign in with the new one', async ({
+    page,
+  }) => {
+    const account = makeTestAccount();
+    const newPassword = `${account.password}-rotated`;
+
+    await gotoRegister(page);
+    await fillRegisterForm(page, account);
+    await submitRegister(page);
+
+    await expectAccountKeyDialogForNewUser(page);
+    const accountKey = await captureGeneratedAccountKey(page);
+    await acknowledgeAccountKey(page);
+    await createEncryptedBackup(page);
+
+    // Change the password from account settings.
+    await page.goto('/account');
+    await page.getByLabel('Current password').fill(account.password);
+    await page.getByLabel('New password').fill(newPassword);
+    await page.getByRole('button', { name: /change password/i }).click();
+    await expect(page.getByText(/password changed/i)).toBeVisible();
+
+    // The new password works on a fresh sign-in (if the change had silently
+    // no-op'd, logging in with the new password would fail and never reach the
+    // unlock dialog). Data is untouched, so the same Account Key unlocks.
+    await logout(page);
+    await gotoLogin(page);
+    await fillLoginForm(page, { ...account, password: newPassword });
+    await submitLogin(page);
+
+    await expectUnlockDialog(page);
+    await unlockAccount(page, accountKey);
+  });
+
   test('lock shows a toast and requires unlock again without logging out', async ({
     page,
   }) => {

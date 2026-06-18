@@ -170,6 +170,50 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       </div>
     </section>
 
+    <section class="account__card" aria-labelledby="account-password-heading">
+      <h2 id="account-password-heading" class="account__card-title">Password</h2>
+      <p class="account__card-subtitle">
+        Your password only signs you in — it does not unlock your data (that's your
+        Account Key). Changing it is safe and never affects your encrypted chats.
+      </p>
+
+      <div class="account__fields">
+        <div class="account__field">
+          <span class="account__label">Current password</span>
+          <cog-text-field
+            ariaLabel="Current password"
+            type="password"
+            [value]="currentPassword()"
+            (valueChange)="currentPassword.set($event)"
+          />
+        </div>
+        <div class="account__field">
+          <span class="account__label">New password</span>
+          <cog-text-field
+            ariaLabel="New password"
+            type="password"
+            placeholder="At least 8 characters"
+            [value]="newPassword()"
+            (valueChange)="newPassword.set($event)"
+          />
+        </div>
+      </div>
+
+      @if (passwordError()) {
+        <p class="account__error">{{ passwordError() }}</p>
+      }
+
+      <div class="account__actions">
+        <cog-button
+          appearance="primary"
+          [disabled]="!canChangePassword()"
+          (click)="changePassword()"
+        >
+          {{ changingPassword() ? 'Changing…' : 'Change password' }}
+        </cog-button>
+      </div>
+    </section>
+
     <section
       class="account__card account__danger"
       aria-labelledby="account-danger-heading"
@@ -344,6 +388,13 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       font-size: var(--cog-fs-caption);
     }
 
+    .account__error {
+      margin: 0;
+      color: var(--cog-danger-text, #b91c1c);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+    }
+
     .account__fieldset {
       margin: 0;
       padding: 0;
@@ -515,6 +566,18 @@ export class AccountComponent {
   protected readonly avatarColor = signal<AvatarColor>(this._persistedColor());
 
   protected readonly saving = signal(false);
+
+  protected readonly currentPassword = signal('');
+  protected readonly newPassword = signal('');
+  protected readonly changingPassword = signal(false);
+  protected readonly passwordError = signal<string | null>(null);
+  protected readonly canChangePassword = computed(
+    () =>
+      !this.changingPassword() &&
+      this.currentPassword().length > 0 &&
+      this.newPassword().length >= 8,
+  );
+
   protected readonly confirmingDeleteChats = signal(false);
   protected readonly deletingChats = signal(false);
 
@@ -566,6 +629,29 @@ export class AccountComponent {
         },
         error: () => this.saving.set(false),
       });
+  }
+
+  changePassword(): void {
+    if (!this.canChangePassword()) {
+      return;
+    }
+
+    this.changingPassword.set(true);
+    this.passwordError.set(null);
+    this._auth.changePassword(this.currentPassword(), this.newPassword()).subscribe({
+      next: () => {
+        this.changingPassword.set(false);
+        this.currentPassword.set('');
+        this.newPassword.set('');
+        this._toast.notify({ title: 'Password changed' });
+      },
+      error: () => {
+        this.changingPassword.set(false);
+        this.passwordError.set(
+          'Could not change your password. Check your current password and try again.',
+        );
+      },
+    });
   }
 
   deleteAllChats(): void {

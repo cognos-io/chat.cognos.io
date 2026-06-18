@@ -292,6 +292,41 @@ export class AuthService implements OnDestroy {
     );
   }
 
+  // Change the account password. Under account_key_v2 the password is
+  // authentication-only (not part of the data key), so this is a pure auth
+  // operation — no key material is re-wrapped. PocketBase verifies oldPassword
+  // and rotates the auth token, so we re-authenticate with the new password to
+  // keep the current session valid instead of bouncing the user to the login.
+  changePassword(currentPassword: string, newPassword: string): Observable<AuthUser> {
+    const user = this.user();
+    const userId = user?.['id'] as string | undefined;
+    const email = user?.['email'] as string | undefined;
+    if (!userId || !email) {
+      return throwError(() => new Error('Not authenticated'));
+    }
+
+    return from(
+      this._pb.collection(this._authCollection).update(userId, {
+        oldPassword: currentPassword,
+        password: newPassword,
+        passwordConfirm: newPassword,
+      }),
+    ).pipe(
+      switchMap(() =>
+        from(
+          this._pb
+            .collection(this._authCollection)
+            .authWithPassword(email, newPassword),
+        ),
+      ),
+      map((authData) => authData.record as AuthUser),
+      catchError((error) => {
+        console.error('Unable to change password', error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
   async logout(): Promise<void> {
     await this._trustedUnlockService.clearAllUnlockKeys();
 
