@@ -8,7 +8,65 @@ import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
 import { TrustedUnlockService } from './trusted-unlock.service';
-import { VaultService } from './vault.service';
+import {
+  UNLOCK_SCHEME_ACCOUNT_KEY,
+  UNLOCK_SCHEME_PASSWORD_ACCOUNT_KEY,
+  VaultService,
+  buildUnlockSecretMaterial,
+  normaliseAccountKey,
+} from './vault.service';
+
+describe('normaliseAccountKey', () => {
+  it('strips separators and upper-cases so formatting never changes the key', () => {
+    expect(normaliseAccountKey('abcd-ef12-3456')).toBe('ABCDEF123456');
+    expect(normaliseAccountKey('ABCD EF12 3456')).toBe('ABCDEF123456');
+    expect(normaliseAccountKey('abcdef123456')).toBe('ABCDEF123456');
+  });
+});
+
+describe('buildUnlockSecretMaterial', () => {
+  const decode = (bytes: Uint8Array) => new TextDecoder().decode(bytes);
+
+  it('v2 derives from the Account Key alone and ignores the password', () => {
+    const withPassword = buildUnlockSecretMaterial(
+      UNLOCK_SCHEME_ACCOUNT_KEY,
+      'ab-cd-ef',
+      'hunter2',
+    );
+    const withoutPassword = buildUnlockSecretMaterial(
+      UNLOCK_SCHEME_ACCOUNT_KEY,
+      'ab-cd-ef',
+      '',
+    );
+    const differentPassword = buildUnlockSecretMaterial(
+      UNLOCK_SCHEME_ACCOUNT_KEY,
+      'ab-cd-ef',
+      'a-totally-different-password',
+    );
+
+    // The whole point of v2: the password is not part of the data key, so
+    // changing or forgetting it never changes what the Account Key unlocks.
+    expect(decode(withPassword)).toBe('ABCDEF');
+    expect(withoutPassword).toEqual(withPassword);
+    expect(differentPassword).toEqual(withPassword);
+  });
+
+  it('v1 (legacy) keeps the exact password + NUL + key format', () => {
+    const material = buildUnlockSecretMaterial(
+      UNLOCK_SCHEME_PASSWORD_ACCOUNT_KEY,
+      'ab-cd-ef',
+      'hunter2',
+    );
+
+    expect(decode(material)).toBe(`hunter2${String.fromCharCode(0)}ABCDEF`);
+  });
+
+  it('throws on an unknown scheme rather than deriving a wrong key', () => {
+    expect(() => buildUnlockSecretMaterial('made_up_v9', 'ab-cd', 'pw')).toThrowError(
+      /unsupported unlock scheme/,
+    );
+  });
+});
 
 describe('VaultService', () => {
   let service: VaultService;

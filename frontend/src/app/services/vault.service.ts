@@ -49,7 +49,43 @@ const initialState: VaultState = {
   isRestoring: true,
 };
 
-const unlockSchemePasswordAccountKey = 'password_account_key_v1';
+// Legacy scheme: the unlock key was derived from password + Account Key. Kept so
+// any records created before the v2 switch still unlock.
+export const UNLOCK_SCHEME_PASSWORD_ACCOUNT_KEY = 'password_account_key_v1';
+// Current scheme: the unlock key is derived from the Account Key alone. The
+// password is authentication-only and is not an input to the data key, so a
+// forgotten password is a recoverable event (see docs/security-model.md §5).
+export const UNLOCK_SCHEME_ACCOUNT_KEY = 'account_key_v2';
+
+// Strip human-friendly separators (dashes, spaces) and normalise case so the
+// Account Key derives the same material however the user typed it.
+export function normaliseAccountKey(accountKey: string): string {
+  return accountKey.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+}
+
+// Build the Argon2id input for a given unlock scheme. v2 excludes the password
+// entirely; v1 mixes it in for backward compatibility. Throwing on an unknown
+// scheme keeps an unexpected record from silently deriving a wrong-but-valid key.
+export function buildUnlockSecretMaterial(
+  scheme: string,
+  accountKey: string,
+  accountPassword: string,
+): Uint8Array {
+  const normalisedAccountKey = normaliseAccountKey(accountKey);
+
+  switch (scheme) {
+    case UNLOCK_SCHEME_ACCOUNT_KEY:
+      return new TextEncoder().encode(normalisedAccountKey);
+    case UNLOCK_SCHEME_PASSWORD_ACCOUNT_KEY:
+      // Exact legacy format: password and key joined by a NUL separator. Built
+      // via fromCharCode to keep a raw NUL byte out of the source file.
+      return new TextEncoder().encode(
+        accountPassword + String.fromCharCode(0) + normalisedAccountKey,
+      );
+    default:
+      throw new Error(`unsupported unlock scheme: ${scheme}`);
+  }
+}
 
 const argon2idMemory = 65536; // 64MiB
 const argon2idIterationCount = 3;
@@ -327,15 +363,6 @@ export class VaultService {
     this.lock$.next();
   }
 
-  private buildPasswordAccountKeySecretMaterial(
-    rawPassword: string,
-    accountKey: string,
-  ): Uint8Array {
-    return new TextEncoder().encode(
-      `${rawPassword}\u0000${this.normaliseAccountKey(accountKey)}`,
-    );
-  }
-
   private createInitialUserKeyPair(request: UnlockRequest): Observable<{
     keyPair: KeyPair;
     keyPairRecord: UserKeyPairsResponse;
@@ -345,15 +372,23 @@ export class VaultService {
       return throwError(() => new Error('missing generated account key'));
     }
 
+    // New accounts use the Account-Key-only scheme: the password is not mixed
+    // into the data key, so it can be reset later without losing data.
     const passwordSalt = this.generatePasswordSalt();
-    const secretMaterial = this.buildPasswordAccountKeySecretMaterial(
-      request.accountPassword,
+    const secretMaterial = buildUnlockSecretMaterial(
+      UNLOCK_SCHEME_ACCOUNT_KEY,
       accountKey,
+      request.accountPassword,
     );
 
     return this.hashSecretMaterial(secretMaterial, passwordSalt).pipe(
       switchMap((unlockKey) =>
-        this.createNewUserKeyPair(unlockKey, passwordSalt, request.trustDevice),
+        this.createNewUserKeyPair(
+          unlockKey,
+          passwordSalt,
+          UNLOCK_SCHEME_ACCOUNT_KEY,
+          request.trustDevice,
+        ),
       ),
       tap(() => this.generatedAccountKey.set(null)),
     );
@@ -362,6 +397,7 @@ export class VaultService {
   private createNewUserKeyPair(
     unlockKey: Uint8Array,
     passwordSalt: string,
+    unlockScheme: string,
     trustDevice: boolean,
   ): Observable<{
     keyPair: KeyPair;
@@ -382,14 +418,14 @@ export class VaultService {
             password_salt: passwordSalt,
             public_key: publicKeyBase64,
             secret_key: encryptedSecretKeyBase64,
-            unlock_scheme: unlockSchemePasswordAccountKey,
+            unlock_scheme: unlockScheme,
             user: userID ?? '',
           },
           unlockKey,
         ),
       ),
       secret_key: encryptedSecretKeyBase64,
-      unlock_scheme: unlockSchemePasswordAccountKey,
+      unlock_scheme: unlockScheme,
     };
 
     return this._api.createUserKeyPair(keyPairRecordData).pipe(
@@ -406,8 +442,10 @@ export class VaultService {
     request: UnlockRequest,
     keyPairRecord: UserKeyPairsResponse,
   ): Observable<KeyPair> {
+    const scheme = keyPairRecord.unlock_scheme;
     if (
-      keyPairRecord.unlock_scheme !== unlockSchemePasswordAccountKey ||
+      (scheme !== UNLOCK_SCHEME_ACCOUNT_KEY &&
+        scheme !== UNLOCK_SCHEME_PASSWORD_ACCOUNT_KEY) ||
       !keyPairRecord.password_salt
     ) {
       return throwError(() => new Error('invalid encrypted backup metadata'));
@@ -415,9 +453,12 @@ export class VaultService {
 
     this.assertTrustedUserKeyContext(keyPairRecord);
 
-    const secretMaterial = this.buildPasswordAccountKeySecretMaterial(
-      request.accountPassword,
+    // v2 derives from the Account Key alone; v1 (legacy) still mixes in the
+    // password. The scheme is recorded on the key-pair record.
+    const secretMaterial = buildUnlockSecretMaterial(
+      scheme,
       request.accountKey,
+      request.accountPassword,
     );
     return this.hashSecretMaterial(secretMaterial, keyPairRecord.password_salt).pipe(
       map((unlockKey) => ({
@@ -498,10 +539,6 @@ export class VaultService {
     ).join('');
 
     return accountKey.match(/.{1,4}/g)?.join('-') ?? accountKey;
-  }
-
-  private normaliseAccountKey(accountKey: string): string {
-    return accountKey.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   }
 
   private computeUserKeyPairRecordMAC(
