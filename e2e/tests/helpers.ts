@@ -49,7 +49,8 @@ export async function expectAccountKeyDialogForNewUser(page: Page): Promise<void
 
 export async function expectUnlockDialog(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: /unlock backup/i })).toBeVisible();
-  await expect(page.getByLabel('Account password')).toBeVisible();
+  // v2 unlock asks for the Account Key alone — there is no password field.
+  await expect(page.getByLabel('Account password')).toHaveCount(0);
   await expect(page.getByLabel('Account Key')).toBeVisible();
   await expect(
     page.getByRole('button', { name: /unlock encrypted backup/i }),
@@ -85,11 +86,10 @@ export async function acknowledgeAccountKey(page: Page): Promise<void> {
     .check();
 }
 
-export async function createEncryptedBackup(
-  page: Page,
-  accountPassword: string,
-): Promise<void> {
-  await page.getByLabel('Account password').fill(accountPassword);
+// Creating the v2 backup needs no password (the acknowledgement enables the
+// button). This also exercises POST /api/v1/user-key-pair end to end, so a
+// backend rejection of the unlock scheme fails the test here.
+export async function createEncryptedBackup(page: Page): Promise<void> {
   await expect(
     page.getByRole('button', { name: /create encrypted backup/i }),
   ).toBeEnabled();
@@ -100,12 +100,7 @@ export async function createEncryptedBackup(
   await expect(page).toHaveURL(/\/$/);
 }
 
-export async function unlockAccount(
-  page: Page,
-  accountPassword: string,
-  accountKey: string,
-): Promise<void> {
-  await page.getByLabel('Account password').fill(accountPassword);
+export async function unlockAccount(page: Page, accountKey: string): Promise<void> {
   const accountKeyField = page.getByLabel('Account Key');
   await accountKeyField.click();
   await accountKeyField.fill(accountKey);
@@ -127,9 +122,7 @@ export async function lockFromDrawer(page: Page): Promise<void> {
     page.locator('cog-toast-host').getByText(/^account locked$/i),
   ).toBeVisible();
   await expect(
-    page.getByText(
-      /this device now needs your password and account key to unlock again/i,
-    ),
+    page.getByText(/this device now needs your account key to unlock again/i),
   ).toBeVisible();
 }
 

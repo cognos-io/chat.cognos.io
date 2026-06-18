@@ -64,7 +64,7 @@ test.describe('auth + account key flow', () => {
     const accountKey = await captureGeneratedAccountKey(page);
     await copyAccountKey(page);
     await acknowledgeAccountKey(page);
-    await createEncryptedBackup(page, account.password);
+    await createEncryptedBackup(page);
 
     await logout(page);
 
@@ -73,7 +73,7 @@ test.describe('auth + account key flow', () => {
     await submitLogin(page);
 
     await expectUnlockDialog(page);
-    await unlockAccount(page, account.password, accountKey);
+    await unlockAccount(page, accountKey);
   });
 
   test('lock shows a toast and requires unlock again without logging out', async ({
@@ -90,14 +90,44 @@ test.describe('auth + account key flow', () => {
     const accountKey = await captureGeneratedAccountKey(page);
     await copyAccountKey(page);
     await acknowledgeAccountKey(page);
-    await createEncryptedBackup(page, account.password);
+    await createEncryptedBackup(page);
 
     await openMobileDrawer(page);
     await lockFromDrawer(page);
     await expectLockedDialog(page);
     await expect(page).toHaveURL(/\/$/);
 
-    await unlockAccount(page, account.password, accountKey);
+    await unlockAccount(page, accountKey);
+  });
+
+  test('registration creates the encrypted backup and lands in the chat', async ({
+    page,
+  }) => {
+    // Regression: this drives POST /api/v1/user-key-pair through the browser, so
+    // a backend that rejects the unlock scheme (or any create failure) surfaces
+    // here as a failure to leave the dialog and reach the composer.
+    const account = makeTestAccount();
+
+    await gotoRegister(page);
+    await fillRegisterForm(page, account);
+    await submitRegister(page);
+
+    await expectAccountKeyDialogForNewUser(page);
+
+    await captureGeneratedAccountKey(page);
+    await acknowledgeAccountKey(page);
+    await createEncryptedBackup(page);
+
+    // Reaching the composer proves the backup POST succeeded and the vault
+    // unlocked — no error toast, no stuck dialog.
+    await expect(
+      page.getByLabel(
+        'Message Cognos — stored encrypted; sent to your provider to reply',
+      ),
+    ).toBeVisible();
+    await expect(page.getByText(/error creating your encrypted backup/i)).toHaveCount(
+      0,
+    );
   });
 
   test('reloading the page after unlock keeps the vault unlocked', async ({ page }) => {
@@ -112,7 +142,7 @@ test.describe('auth + account key flow', () => {
     const accountKey = await captureGeneratedAccountKey(page);
     await copyAccountKey(page);
     await acknowledgeAccountKey(page);
-    await createEncryptedBackup(page, account.password);
+    await createEncryptedBackup(page);
 
     await expect(
       page.getByLabel(
@@ -161,7 +191,7 @@ test.describe('auth + account key flow', () => {
     const accountKey = await captureGeneratedAccountKey(page);
     await copyAccountKey(page);
     await acknowledgeAccountKey(page);
-    await createEncryptedBackup(page, account.password);
+    await createEncryptedBackup(page);
     await expect(
       page.getByLabel(
         'Message Cognos — stored encrypted; sent to your provider to reply',

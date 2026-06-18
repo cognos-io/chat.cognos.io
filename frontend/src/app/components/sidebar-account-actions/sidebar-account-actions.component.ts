@@ -63,7 +63,7 @@ export class SidebarAccountActionsComponent {
     this._vaultService.lock();
     this._toastService.notify({
       title: 'Account locked',
-      msg: 'This device now needs your password and Account Key to unlock again.',
+      msg: 'This device now needs your Account Key to unlock again.',
       tone: 'info',
       icon: 'lock',
       duration: 4200,

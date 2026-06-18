@@ -43,7 +43,7 @@ async function provisionUnlockedAccount(page: Page) {
   const accountKey = await captureGeneratedAccountKey(page);
   await copyAccountKey(page);
   await acknowledgeAccountKey(page);
-  await createEncryptedBackup(page, account.password);
+  await createEncryptedBackup(page);
 
   return { account, accountKey };
 }
@@ -73,7 +73,7 @@ test.describe('high-level user journeys', () => {
     await fillLoginForm(page, account);
     await submitLogin(page);
     await expectUnlockDialog(page);
-    await unlockAccount(page, account.password, accountKey);
+    await unlockAccount(page, accountKey);
 
     await page
       .getByLabel('Message Cognos — stored encrypted; sent to your provider to reply')
