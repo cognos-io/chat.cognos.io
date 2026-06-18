@@ -3,6 +3,8 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
+import { of } from 'rxjs';
+
 import { CognosToastService } from '@cognos/ui-angular';
 
 import { Conversation } from '@app/interfaces/conversation';
@@ -14,6 +16,7 @@ import { BillingService } from '../../services/billing.service';
 import { ConversationService } from '../../services/conversation.service';
 import { DeviceService } from '../../services/device.service';
 import { MessageService } from '../../services/message.service';
+import { PublicShareService } from '../../services/public-share.service';
 import { UserPreferencesService } from '../../services/user-preferences.service';
 import { VaultService } from '../../services/vault.service';
 import { ChatComponent } from './chat.component';
@@ -56,6 +59,14 @@ describe('ChatComponent', () => {
     isConversationPinned: () => false,
     pinConversation: vi.fn(),
     unpinConversation: vi.fn(),
+  };
+
+  // The chat header injects PublicShareService -> CognosApiService -> PocketBase
+  // Client. Stub it so the component test does not construct that chain.
+  const publicShareService = {
+    existingShareUrl: vi.fn().mockReturnValue(of(null)),
+    share: vi.fn().mockReturnValue(of('')),
+    revoke: vi.fn().mockReturnValue(of(undefined)),
   };
 
   const keyPair = signal<KeyPair | undefined>({
@@ -104,6 +115,7 @@ describe('ChatComponent', () => {
         { provide: DeviceService, useValue: { isMobile: signal(false) } },
         { provide: MessageService, useValue: messageService },
         { provide: UserPreferencesService, useValue: userPreferencesService },
+        { provide: PublicShareService, useValue: publicShareService },
         { provide: Dialog, useValue: { open: dialogOpen } },
         { provide: CognosToastService, useValue: toastService },
         { provide: VaultService, useValue: vaultService },
