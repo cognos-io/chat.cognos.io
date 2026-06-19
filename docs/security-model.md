@@ -211,17 +211,6 @@ treating the browser-origin as a strong trust anchor.
 3. The client decrypts the blob with the returned wrap key. On MAC failure, both halves are
    discarded and the user is prompted.
 
-**Session longevity (avoiding constant Account Key re-entry):**
-
-The auth token lasts **30 days** (`users` collection `authToken.duration`; raised from
-PocketBase's 5-day default) and is silently refreshed while the app is open. Because the
-split-key session rides on a valid auth session, the unlock persists across refreshes, new
-tabs, and app restarts for up to 30 days of inactivity — the user is **not** asked for the
-Account Key again during that window. Re-entry is only required after an explicit lock or
-logout, after clearing browser storage, or once the token finally expires (which forces
-re-authentication and, via the logout path, clears the session). The Account Key itself is
-**never stored** anywhere — only the server-side, revocable wrap-key half persists.
-
 **Invalidation:**
 
 - Explicit lock and logout both clear the local blob and DELETE the server-side wrap key. After
@@ -249,9 +238,8 @@ re-authentication and, via the logout path, clears the session). The Account Key
 
 **Explicitly out of scope for this iteration:**
 
-- Idle-TTL on the wrap key (server-side auto-expiry after N days of inactivity). The 30-day auth
-  token now bounds how long an abandoned session survives; a tighter, independent idle window on the
-  wrap key itself is a future hardening (tracked under production hardening).
+- Idle-TTL on the wrap key (server-side auto-expiry after N minutes of inactivity). Token expiry on
+  the auth session handles bounded revocation; a tighter idle window is a future tightening.
 - Per-fetch wrap-key rotation (single-use wrap keys). Rotation would harden against an XSS that
   briefly reads a snapshot of `localStorage` + one network call, but introduces multi-tab races and
   is deferred.
