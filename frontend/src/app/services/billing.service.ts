@@ -5,6 +5,8 @@ import { Router } from '@angular/router';
 
 import { Observable, switchMap, take, takeWhile, tap, timer } from 'rxjs';
 
+import { TranslocoService } from '@jsverse/transloco';
+
 import { paddleLocaleFor } from '@app/i18n/languages';
 import {
   BillingApiResponse,
@@ -41,6 +43,7 @@ export class BillingService {
   private readonly _router = inject(Router);
   private readonly _auth = inject(AuthService);
   private readonly _language = inject(LanguageService);
+  private readonly _transloco = inject(TranslocoService);
 
   private readonly _state = signal<BillingState | null>(null);
   private readonly _checkoutPending = signal(false);
@@ -144,7 +147,7 @@ export class BillingService {
         },
         error: () => {
           this._checkoutPending.set(false);
-          this._errors.alert('Could not start checkout. Please try again.');
+          this._errors.alert(this._transloco.translate('errors.startCheckout'));
         },
       });
   }
@@ -215,7 +218,7 @@ export class BillingService {
       },
       error: () => {
         tab?.close();
-        this._errors.alert('Could not open the billing portal. Please try again.');
+        this._errors.alert(this._transloco.translate('errors.openPortal'));
       },
     });
   }
@@ -240,7 +243,7 @@ export class BillingService {
       },
       error: () => {
         tab?.close();
-        this._errors.alert('Could not open the invoice. Please try again.');
+        this._errors.alert(this._transloco.translate('errors.openInvoice'));
       },
     });
   }

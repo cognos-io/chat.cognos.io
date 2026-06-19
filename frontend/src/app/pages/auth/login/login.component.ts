@@ -5,7 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
 
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { filterNil } from 'ngxtension/filter-nil';
 
 import { CognosButtonComponent } from '@cognos/ui-angular';
@@ -229,6 +229,7 @@ export class LoginComponent {
   private readonly _errorService: ErrorService = inject(ErrorService);
   private readonly _fb = inject(FormBuilder);
   private readonly _router: Router = inject(Router);
+  private readonly _transloco = inject(TranslocoService);
 
   readonly loginForm = this._fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -241,9 +242,7 @@ export class LoginComponent {
     this.authService.user$
       .pipe(
         catchError(() => {
-          this._errorService.alert(
-            'Failed to fetch user, please refresh and try again.',
-          );
+          this._errorService.alert(this._transloco.translate('errors.fetchUser'));
           return EMPTY;
         }),
         takeUntilDestroyed(),

@@ -19,6 +19,7 @@ import {
   timer,
 } from 'rxjs';
 
+import { TranslocoService } from '@jsverse/transloco';
 import { signalSlice } from 'ngxtension/signal-slice';
 
 import { TypedPocketBase } from '../types/pocketbase-types';
@@ -56,6 +57,7 @@ export class AuthService implements OnDestroy {
   private readonly _storeUnsubscribe: () => void;
   private readonly _router = inject(Router);
   private readonly _trustedUnlockService = inject(TrustedUnlockService);
+  private readonly _transloco = inject(TranslocoService);
 
   readonly login$ = new Subject<LoginRequest>();
   readonly logout$ = new Subject<boolean>();
@@ -135,7 +137,7 @@ export class AuthService implements OnDestroy {
           .authRefresh()
           .catch((error) => {
             console.error('Error refreshing auth token', error);
-            this._errorService.alert('Error refreshing auth token');
+            this._errorService.alert(this._transloco.translate('errors.refreshToken'));
             if (error?.status === 401) {
               this._router.navigate(['', 'auth', 'logout']);
             }
@@ -147,7 +149,7 @@ export class AuthService implements OnDestroy {
   listAuthMethods(): Observable<AuthMethodsList> {
     return from(this._pb.collection(this._authCollection).listAuthMethods()).pipe(
       catchError((error) => {
-        this._errorService.alert('Unable to list auth methods');
+        this._errorService.alert(this._transloco.translate('errors.listAuthMethods'));
         console.error('Error listing auth methods', error);
         return EMPTY;
       }),
@@ -159,7 +161,9 @@ export class AuthService implements OnDestroy {
       this._pb.collection(this._authCollection).authWithPassword(email, password),
     ).pipe(
       catchError((error) => {
-        this._errorService.alert('Invalid email or password');
+        this._errorService.alert(
+          this._transloco.translate('errors.invalidCredentials'),
+        );
         console.error(error);
         return throwError(() => error);
       }),
@@ -178,7 +182,7 @@ export class AuthService implements OnDestroy {
       catchError((error) => {
         const message =
           (error as { response?: { message?: string } })?.response?.message ??
-          'Unable to create your account';
+          this._transloco.translate<string>('errors.createAccount');
         this._errorService.alert(message);
         console.error(error);
         return throwError(() => error);
@@ -193,7 +197,7 @@ export class AuthService implements OnDestroy {
       catchError((error) => {
         const message =
           (error as { response?: { message?: string } })?.response?.message ??
-          'Unable to send password reset email';
+          this._transloco.translate<string>('errors.sendPasswordReset');
         this._errorService.alert(message);
         console.error(error);
         return throwError(() => error);
@@ -214,7 +218,7 @@ export class AuthService implements OnDestroy {
       catchError((error) => {
         const message =
           (error as { response?: { message?: string } })?.response?.message ??
-          'Unable to reset password. The link may have expired.';
+          this._transloco.translate<string>('errors.resetPassword');
         this._errorService.alert(message);
         console.error(error);
         return throwError(() => error);
@@ -227,7 +231,7 @@ export class AuthService implements OnDestroy {
       this._pb.collection(this._authCollection).requestVerification(email),
     ).pipe(
       catchError((error) => {
-        this._errorService.alert('Unable to send verification email');
+        this._errorService.alert(this._transloco.translate('errors.sendVerification'));
         console.error(error);
         return throwError(() => error);
       }),
@@ -239,7 +243,7 @@ export class AuthService implements OnDestroy {
       this._pb.collection(this._authCollection).confirmVerification(token),
     ).pipe(
       catchError((error) => {
-        this._errorService.alert('Unable to verify email. The link may have expired.');
+        this._errorService.alert(this._transloco.translate('errors.verifyEmail'));
         console.error(error);
         return throwError(() => error);
       }),
@@ -263,7 +267,7 @@ export class AuthService implements OnDestroy {
     return from(this._pb.collection(this._authCollection).update(userId, patch)).pipe(
       map((record) => record as AuthUser),
       catchError((error) => {
-        this._errorService.alert('Unable to update your profile');
+        this._errorService.alert(this._transloco.translate('errors.updateProfile'));
         console.error(error);
         return throwError(() => error);
       }),
@@ -285,7 +289,7 @@ export class AuthService implements OnDestroy {
     ).pipe(
       map((record) => record as AuthUser),
       catchError((error) => {
-        this._errorService.alert('Unable to update data processing region');
+        this._errorService.alert(this._transloco.translate('errors.updateRegion'));
         console.error(error);
         return throwError(() => error);
       }),
@@ -364,7 +368,7 @@ export class AuthService implements OnDestroy {
       catchError((error) => {
         const message =
           (error as { response?: { message?: string } })?.response?.message ??
-          'Unable to start the email change';
+          this._transloco.translate<string>('errors.startEmailChange');
         this._errorService.alert(message);
         console.error(error);
         return throwError(() => error);
@@ -379,7 +383,7 @@ export class AuthService implements OnDestroy {
       catchError((error) => {
         const message =
           (error as { response?: { message?: string } })?.response?.message ??
-          'Unable to confirm the email change. The link may have expired.';
+          this._transloco.translate<string>('errors.confirmEmailChange');
         this._errorService.alert(message);
         console.error(error);
         return throwError(() => error);

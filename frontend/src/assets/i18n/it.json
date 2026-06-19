@@ -724,6 +724,32 @@
       "unlockIntro": "Inserisci la tua Chiave dell'account per sbloccare questo dispositivo."
     }
   },
+  "errors": {
+    "confirmEmailChange": "Impossibile confermare la modifica dell'e-mail. Il link potrebbe essere scaduto.",
+    "createAccount": "Impossibile creare il tuo account",
+    "deletePersona": "Impossibile eliminare la persona",
+    "fetchPreferences": "Impossibile caricare le preferenze utente",
+    "fetchUser": "Impossibile caricare l'utente, aggiorna la pagina e riprova.",
+    "invalidCredentials": "E-mail o password non validi",
+    "listAuthMethods": "Impossibile caricare i metodi di accesso",
+    "loadPersonas": "Impossibile caricare le persona",
+    "openInvoice": "Impossibile aprire la fattura. Riprova.",
+    "openPortal": "Impossibile aprire il portale di fatturazione. Riprova.",
+    "refreshToken": "Errore durante l'aggiornamento del token di autenticazione",
+    "resetPassword": "Impossibile reimpostare la password. Il link potrebbe essere scaduto.",
+    "savePersona": "Impossibile salvare la persona",
+    "savePreferences": "Impossibile salvare le preferenze utente",
+    "sendPasswordReset": "Impossibile inviare l'e-mail per reimpostare la password",
+    "sendVerification": "Impossibile inviare l'e-mail di verifica",
+    "somethingWentWrong": "Qualcosa è andato storto",
+    "startCheckout": "Impossibile avviare il pagamento. Riprova.",
+    "startEmailChange": "Impossibile avviare la modifica dell'e-mail",
+    "updatePersona": "Impossibile aggiornare la persona",
+    "updatePreferences": "Impossibile aggiornare le preferenze utente",
+    "updateProfile": "Impossibile aggiornare il tuo profilo",
+    "updateRegion": "Impossibile aggiornare la regione di elaborazione dei dati",
+    "verifyEmail": "Impossibile verificare l'e-mail. Il link potrebbe essere scaduto."
+  },
   "language": {
     "label": "Lingua"
   },

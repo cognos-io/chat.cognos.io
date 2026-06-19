@@ -724,6 +724,32 @@
       "unlockIntro": "Saisissez votre clé de compte pour déverrouiller cet appareil."
     }
   },
+  "errors": {
+    "confirmEmailChange": "Impossible de confirmer le changement d'e-mail. Le lien a peut-être expiré.",
+    "createAccount": "Impossible de créer votre compte",
+    "deletePersona": "Échec de la suppression de la persona",
+    "fetchPreferences": "Échec du chargement des préférences utilisateur",
+    "fetchUser": "Échec du chargement de l'utilisateur, veuillez actualiser et réessayer.",
+    "invalidCredentials": "E-mail ou mot de passe invalide",
+    "listAuthMethods": "Impossible de charger les méthodes de connexion",
+    "loadPersonas": "Échec du chargement des personas",
+    "openInvoice": "Impossible d'ouvrir la facture. Veuillez réessayer.",
+    "openPortal": "Impossible d'ouvrir le portail de facturation. Veuillez réessayer.",
+    "refreshToken": "Erreur lors de l'actualisation du jeton d'authentification",
+    "resetPassword": "Impossible de réinitialiser le mot de passe. Le lien a peut-être expiré.",
+    "savePersona": "Échec de l'enregistrement de la persona",
+    "savePreferences": "Échec de l'enregistrement des préférences utilisateur",
+    "sendPasswordReset": "Impossible d'envoyer l'e-mail de réinitialisation du mot de passe",
+    "sendVerification": "Impossible d'envoyer l'e-mail de vérification",
+    "somethingWentWrong": "Une erreur s'est produite",
+    "startCheckout": "Impossible de démarrer le paiement. Veuillez réessayer.",
+    "startEmailChange": "Impossible de démarrer le changement d'e-mail",
+    "updatePersona": "Échec de la mise à jour de la persona",
+    "updatePreferences": "Échec de la mise à jour des préférences utilisateur",
+    "updateProfile": "Impossible de mettre à jour votre profil",
+    "updateRegion": "Impossible de mettre à jour la région de traitement des données",
+    "verifyEmail": "Impossible de vérifier l'e-mail. Le lien a peut-être expiré."
+  },
   "language": {
     "label": "Langue"
   },

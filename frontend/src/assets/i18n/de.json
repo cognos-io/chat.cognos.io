@@ -724,6 +724,32 @@
       "unlockIntro": "Geben Sie Ihren Account-Schlüssel ein, um dieses Gerät zu entsperren."
     }
   },
+  "errors": {
+    "confirmEmailChange": "Die E-Mail-Änderung konnte nicht bestätigt werden. Der Link ist möglicherweise abgelaufen.",
+    "createAccount": "Ihr Konto konnte nicht erstellt werden",
+    "deletePersona": "Persona konnte nicht gelöscht werden",
+    "fetchPreferences": "Benutzereinstellungen konnten nicht geladen werden",
+    "fetchUser": "Benutzer konnte nicht geladen werden. Bitte aktualisieren Sie die Seite und versuchen Sie es erneut.",
+    "invalidCredentials": "Ungültige E-Mail-Adresse oder ungültiges Passwort",
+    "listAuthMethods": "Anmeldemethoden konnten nicht geladen werden",
+    "loadPersonas": "Personas konnten nicht geladen werden",
+    "openInvoice": "Die Rechnung konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.",
+    "openPortal": "Das Abrechnungsportal konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.",
+    "refreshToken": "Fehler beim Aktualisieren des Anmelde-Tokens",
+    "resetPassword": "Passwort konnte nicht zurückgesetzt werden. Der Link ist möglicherweise abgelaufen.",
+    "savePersona": "Persona konnte nicht gespeichert werden",
+    "savePreferences": "Benutzereinstellungen konnten nicht gespeichert werden",
+    "sendPasswordReset": "E-Mail zum Zurücksetzen des Passworts konnte nicht gesendet werden",
+    "sendVerification": "Bestätigungs-E-Mail konnte nicht gesendet werden",
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "startCheckout": "Der Bezahlvorgang konnte nicht gestartet werden. Bitte versuchen Sie es erneut.",
+    "startEmailChange": "Die E-Mail-Änderung konnte nicht gestartet werden",
+    "updatePersona": "Persona konnte nicht aktualisiert werden",
+    "updatePreferences": "Benutzereinstellungen konnten nicht aktualisiert werden",
+    "updateProfile": "Ihr Profil konnte nicht aktualisiert werden",
+    "updateRegion": "Die Region für die Datenverarbeitung konnte nicht aktualisiert werden",
+    "verifyEmail": "E-Mail-Adresse konnte nicht bestätigt werden. Der Link ist möglicherweise abgelaufen."
+  },
   "language": {
     "label": "Sprache"
   },

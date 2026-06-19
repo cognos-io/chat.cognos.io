@@ -724,6 +724,32 @@
       "unlockIntro": "Introduce tu Clave de cuenta para desbloquear este dispositivo."
     }
   },
+  "errors": {
+    "confirmEmailChange": "No se pudo confirmar el cambio de correo. Es posible que el enlace haya caducado.",
+    "createAccount": "No se pudo crear tu cuenta",
+    "deletePersona": "No se pudo eliminar la persona",
+    "fetchPreferences": "No se pudieron cargar las preferencias del usuario",
+    "fetchUser": "No se pudo cargar el usuario, actualiza la página e inténtalo de nuevo.",
+    "invalidCredentials": "Correo electrónico o contraseña no válidos",
+    "listAuthMethods": "No se pudieron cargar los métodos de inicio de sesión",
+    "loadPersonas": "No se pudieron cargar las personas",
+    "openInvoice": "No se pudo abrir la factura. Inténtalo de nuevo.",
+    "openPortal": "No se pudo abrir el portal de facturación. Inténtalo de nuevo.",
+    "refreshToken": "Error al actualizar el token de autenticación",
+    "resetPassword": "No se pudo restablecer la contraseña. Es posible que el enlace haya caducado.",
+    "savePersona": "No se pudo guardar la persona",
+    "savePreferences": "No se pudieron guardar las preferencias del usuario",
+    "sendPasswordReset": "No se pudo enviar el correo para restablecer la contraseña",
+    "sendVerification": "No se pudo enviar el correo de verificación",
+    "somethingWentWrong": "Algo salió mal",
+    "startCheckout": "No se pudo iniciar el pago. Inténtalo de nuevo.",
+    "startEmailChange": "No se pudo iniciar el cambio de correo",
+    "updatePersona": "No se pudo actualizar la persona",
+    "updatePreferences": "No se pudieron actualizar las preferencias del usuario",
+    "updateProfile": "No se pudo actualizar tu perfil",
+    "updateRegion": "No se pudo actualizar la región de procesamiento de datos",
+    "verifyEmail": "No se pudo verificar el correo. Es posible que el enlace haya caducado."
+  },
   "language": {
     "label": "Idioma"
   },

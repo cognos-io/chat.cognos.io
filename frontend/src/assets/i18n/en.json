@@ -724,6 +724,32 @@
       "unlockIntro": "Enter your Account Key to unlock this device."
     }
   },
+  "errors": {
+    "confirmEmailChange": "Unable to confirm the email change. The link may have expired.",
+    "createAccount": "Unable to create your account",
+    "deletePersona": "Failed to delete persona",
+    "fetchPreferences": "Failed to fetch user preferences",
+    "fetchUser": "Failed to fetch user, please refresh and try again.",
+    "invalidCredentials": "Invalid email or password",
+    "listAuthMethods": "Unable to list auth methods",
+    "loadPersonas": "Failed to load personas",
+    "openInvoice": "Could not open the invoice. Please try again.",
+    "openPortal": "Could not open the billing portal. Please try again.",
+    "refreshToken": "Error refreshing auth token",
+    "resetPassword": "Unable to reset password. The link may have expired.",
+    "savePersona": "Failed to save persona",
+    "savePreferences": "Failed to save user preferences",
+    "sendPasswordReset": "Unable to send password reset email",
+    "sendVerification": "Unable to send verification email",
+    "somethingWentWrong": "Something went wrong",
+    "startCheckout": "Could not start checkout. Please try again.",
+    "startEmailChange": "Unable to start the email change",
+    "updatePersona": "Failed to update persona",
+    "updatePreferences": "Failed to update user preferences",
+    "updateProfile": "Unable to update your profile",
+    "updateRegion": "Unable to update data processing region",
+    "verifyEmail": "Unable to verify email. The link may have expired."
+  },
   "language": {
     "label": "Language"
   },

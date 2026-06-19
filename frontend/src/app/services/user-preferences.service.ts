@@ -11,6 +11,7 @@ import {
   switchMap,
 } from 'rxjs';
 
+import { TranslocoService } from '@jsverse/transloco';
 import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
 
@@ -46,6 +47,7 @@ export class UserPreferencesService {
   private readonly _cryptoService = inject(CryptoService);
   private readonly _vaultService = inject(VaultService);
   private readonly _errorService = inject(ErrorService);
+  private readonly _transloco = inject(TranslocoService);
 
   private readonly _pinConversation = new Subject<string>();
   private readonly _unpinConversation = new Subject<string>();
@@ -349,7 +351,7 @@ export class UserPreferencesService {
       ignorePocketbase404(),
       catchError((error) => {
         console.error('Failed to fetch user preferences', error);
-        this._errorService.alert('Failed to fetch user preferences');
+        this._errorService.alert(this._transloco.translate('errors.fetchPreferences'));
         return EMPTY;
       }),
       map((record) => {
@@ -394,7 +396,7 @@ export class UserPreferencesService {
       .pipe(
         catchError((error) => {
           console.error('Failed to save user preferences', error);
-          this._errorService.alert('Failed to save user preferences');
+          this._errorService.alert(this._transloco.translate('errors.savePreferences'));
           return EMPTY;
         }),
       );
@@ -413,7 +415,9 @@ export class UserPreferencesService {
       .pipe(
         catchError((error) => {
           console.error('Failed to update user preferences', error);
-          this._errorService.alert('Failed to update user preferences');
+          this._errorService.alert(
+            this._transloco.translate('errors.updatePreferences'),
+          );
           return EMPTY;
         }),
       );

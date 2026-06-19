@@ -724,6 +724,32 @@
       "unlockIntro": "Introduza a sua Chave de Conta para desbloquear este dispositivo."
     }
   },
+  "errors": {
+    "confirmEmailChange": "Não foi possível confirmar a alteração do e-mail. O link pode ter expirado.",
+    "createAccount": "Não foi possível criar a sua conta",
+    "deletePersona": "Falha ao eliminar a persona",
+    "fetchPreferences": "Falha ao carregar as preferências do utilizador",
+    "fetchUser": "Falha ao carregar o utilizador, atualize a página e tente novamente.",
+    "invalidCredentials": "E-mail ou palavra-passe inválidos",
+    "listAuthMethods": "Não foi possível carregar os métodos de login",
+    "loadPersonas": "Falha ao carregar as personas",
+    "openInvoice": "Não foi possível abrir a fatura. Tente novamente.",
+    "openPortal": "Não foi possível abrir o portal de faturação. Tente novamente.",
+    "refreshToken": "Erro ao atualizar o token de autenticação",
+    "resetPassword": "Não foi possível redefinir a palavra-passe. O link pode ter expirado.",
+    "savePersona": "Falha ao guardar a persona",
+    "savePreferences": "Falha ao guardar as preferências do utilizador",
+    "sendPasswordReset": "Não foi possível enviar o e-mail de redefinição da palavra-passe",
+    "sendVerification": "Não foi possível enviar o e-mail de verificação",
+    "somethingWentWrong": "Algo deu errado",
+    "startCheckout": "Não foi possível iniciar o pagamento. Tente novamente.",
+    "startEmailChange": "Não foi possível iniciar a alteração do e-mail",
+    "updatePersona": "Falha ao atualizar a persona",
+    "updatePreferences": "Falha ao atualizar as preferências do utilizador",
+    "updateProfile": "Não foi possível atualizar o seu perfil",
+    "updateRegion": "Não foi possível atualizar a região de processamento de dados",
+    "verifyEmail": "Não foi possível verificar o e-mail. O link pode ter expirado."
+  },
   "language": {
     "label": "Idioma"
   },

@@ -2,6 +2,7 @@ import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 
 import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 
+import { TranslocoService } from '@jsverse/transloco';
 import { Base64 } from 'js-base64';
 
 import {
@@ -51,6 +52,7 @@ export class PersonaService {
   private readonly _vaultService = inject(VaultService);
   private readonly _errorService = inject(ErrorService);
   private readonly _preferences = inject(UserPreferencesService);
+  private readonly _transloco = inject(TranslocoService);
 
   private readonly _customPersonas = signal<Persona[]>([]);
   private readonly _selectedPersonaId = signal<string | undefined>(undefined);
@@ -200,7 +202,7 @@ export class PersonaService {
       }),
       catchError((error) => {
         console.error('Failed to create persona');
-        this._errorService.alert('Failed to save persona');
+        this._errorService.alert(this._transloco.translate('errors.savePersona'));
         throw error;
       }),
     );
@@ -229,7 +231,7 @@ export class PersonaService {
         }),
         catchError((error) => {
           console.error('Failed to update persona');
-          this._errorService.alert('Failed to update persona');
+          this._errorService.alert(this._transloco.translate('errors.updatePersona'));
           throw error;
         }),
       );
@@ -254,7 +256,7 @@ export class PersonaService {
       }),
       catchError((error) => {
         console.error('Failed to delete persona');
-        this._errorService.alert('Failed to delete persona');
+        this._errorService.alert(this._transloco.translate('errors.deletePersona'));
         throw error;
       }),
     );
@@ -280,7 +282,7 @@ export class PersonaService {
       map((records) => records.map((record) => this.decryptPersonaRecord(record))),
       catchError(() => {
         console.error('Failed to load personas');
-        this._errorService.alert('Failed to load personas');
+        this._errorService.alert(this._transloco.translate('errors.loadPersonas'));
         return of([]);
       }),
     );
