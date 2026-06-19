@@ -9,6 +9,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 
@@ -19,40 +21,43 @@ type VerificationState = 'verifying' | 'success' | 'error' | 'missing-token';
 @Component({
   selector: 'app-verify-email',
   standalone: true,
-  imports: [RouterLink, CognosLogoComponent, LoadingIndicatorComponent],
+  imports: [
+    RouterLink,
+    TranslocoModule,
+    CognosLogoComponent,
+    LoadingIndicatorComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="auth-page">
-      <section class="auth-page__card">
+      <section class="auth-page__card" *transloco="let t">
         <app-cognos-logo class="auth-page__logo" palette="dark"></app-cognos-logo>
-        <h1 class="auth-page__title">Verify your email</h1>
+        <h1 class="auth-page__title">{{ t('auth.verify.title') }}</h1>
 
         @switch (state()) {
           @case ('verifying') {
             <p class="auth-page__lead">
               <app-loading-indicator></app-loading-indicator>
-              Verifying your email…
+              {{ t('auth.verify.verifying') }}
             </p>
           }
           @case ('success') {
-            <p class="auth-page__success">
-              Your email is verified. Thanks for confirming.
-            </p>
-            <a routerLink="/auth/login" class="auth-page__switch">Continue to log in</a>
+            <p class="auth-page__success">{{ t('auth.verify.success') }}</p>
+            <a routerLink="/auth/login" class="auth-page__switch">{{
+              t('auth.verify.continueToLogin')
+            }}</a>
           }
           @case ('error') {
-            <p class="auth-page__hint">
-              That verification link didn't work — it may have expired or already been
-              used.
-            </p>
-            <a routerLink="/auth/login" class="auth-page__switch">Go to log in</a>
+            <p class="auth-page__hint">{{ t('auth.verify.error') }}</p>
+            <a routerLink="/auth/login" class="auth-page__switch">{{
+              t('auth.verify.goToLogin')
+            }}</a>
           }
           @case ('missing-token') {
-            <p class="auth-page__hint">
-              This verification link is missing its token. Try clicking the link from
-              your email again.
-            </p>
-            <a routerLink="/auth/login" class="auth-page__switch">Go to log in</a>
+            <p class="auth-page__hint">{{ t('auth.verify.missingToken') }}</p>
+            <a routerLink="/auth/login" class="auth-page__switch">{{
+              t('auth.verify.goToLogin')
+            }}</a>
           }
         }
       </section>

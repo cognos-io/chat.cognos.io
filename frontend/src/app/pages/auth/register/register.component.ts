@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
 
+import { TranslocoModule } from '@jsverse/transloco';
 import { filterNil } from 'ngxtension/filter-nil';
 
 import { CognosButtonComponent, CognosLozengeComponent } from '@cognos/ui-angular';
@@ -20,6 +21,7 @@ import { AuthService } from '@services/auth.service';
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    TranslocoModule,
     CognosButtonComponent,
     CognosLozengeComponent,
     CognosLogoComponent,
@@ -28,16 +30,13 @@ import { AuthService } from '@services/auth.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="auth-page">
-      <section class="auth-page__card">
+      <section class="auth-page__card" *transloco="let t">
         <app-cognos-logo class="auth-page__logo" palette="dark"></app-cognos-logo>
         <div class="auth-page__eyebrow">
-          <cog-lozenge tone="green">Private beta</cog-lozenge>
+          <cog-lozenge tone="green">{{ t('auth.register.beta') }}</cog-lozenge>
         </div>
-        <h1 class="auth-page__title">Create your Cognos account</h1>
-        <p class="auth-page__lead">
-          Start with your email and password. Right after signup, Cognos will generate
-          an Account Key for encrypted backup unlock on new devices.
-        </p>
+        <h1 class="auth-page__title">{{ t('auth.register.title') }}</h1>
+        <p class="auth-page__lead">{{ t('auth.register.lead') }}</p>
 
         <form
           class="auth-page__form"
@@ -45,26 +44,26 @@ import { AuthService } from '@services/auth.service';
           (ngSubmit)="onSubmit()"
         >
           <label class="auth-page__field" for="email">
-            <span class="auth-page__label">Email</span>
+            <span class="auth-page__label">{{ t('common.email') }}</span>
             <input
               id="email"
               class="auth-page__input"
               formControlName="email"
               type="email"
               autocomplete="email"
-              placeholder="you@example.com"
+              [placeholder]="t('common.emailPlaceholder')"
             />
           </label>
 
           <label class="auth-page__field" for="password">
-            <span class="auth-page__label">Password</span>
+            <span class="auth-page__label">{{ t('common.password') }}</span>
             <input
               id="password"
               class="auth-page__input"
               formControlName="password"
               type="password"
               autocomplete="new-password"
-              placeholder="At least 12 characters"
+              [placeholder]="t('auth.register.passwordPlaceholder')"
             />
           </label>
 
@@ -78,27 +77,27 @@ import { AuthService } from '@services/auth.service';
             @if (loading()) {
               <span class="auth-page__loading-copy">
                 <app-loading-indicator></app-loading-indicator>
-                Creating account…
+                {{ t('auth.register.creating') }}
               </span>
             } @else {
-              Create account
+              {{ t('auth.register.submit') }}
             }
           </cog-button>
         </form>
 
         <p class="auth-page__legal">
-          By creating an account you agree to our
+          {{ t('auth.register.legalPrefix') }}
           <a
             href="https://cognos.io/privacy-policy-and-terms/"
             rel="noopener noreferrer"
             target="_blank"
-            >Privacy Policy and Terms</a
+            >{{ t('common.privacyTerms') }}</a
           >.
         </p>
 
         <p class="auth-page__switch">
-          Already have an account?
-          <a routerLink="/auth/login">Log in</a>
+          {{ t('auth.register.haveAccount') }}
+          <a routerLink="/auth/login">{{ t('auth.register.login') }}</a>
         </p>
       </section>
     </div>

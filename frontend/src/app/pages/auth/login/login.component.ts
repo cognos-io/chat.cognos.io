@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
 
+import { TranslocoModule } from '@jsverse/transloco';
 import { filterNil } from 'ngxtension/filter-nil';
 
 import { CognosButtonComponent } from '@cognos/ui-angular';
@@ -21,42 +22,40 @@ import { AuthService } from '@services/auth.service';
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    TranslocoModule,
     CognosButtonComponent,
     CognosLogoComponent,
     LoadingIndicatorComponent,
   ],
   template: `
     <div class="login-page">
-      <section class="login-page__card">
+      <section class="login-page__card" *transloco="let t">
         <app-cognos-logo class="login-page__logo" palette="dark"></app-cognos-logo>
-        <h1 class="login-page__title">Get started with privacy-first AI</h1>
-        <p class="login-page__lead">
-          Chat with the latest models without giving up control of your data. New
-          devices may also ask for your Account Key.
-        </p>
+        <h1 class="login-page__title">{{ t('auth.login.title') }}</h1>
+        <p class="login-page__lead">{{ t('auth.login.lead') }}</p>
 
         <form class="login-page__form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
           <label class="login-page__field" for="email">
-            <span class="login-page__label">Email</span>
+            <span class="login-page__label">{{ t('common.email') }}</span>
             <input
               id="email"
               class="login-page__input"
               formControlName="email"
               type="email"
               autocomplete="email"
-              placeholder="you@example.com"
+              [placeholder]="t('common.emailPlaceholder')"
             />
           </label>
 
           <label class="login-page__field" for="password">
-            <span class="login-page__label">Password</span>
+            <span class="login-page__label">{{ t('common.password') }}</span>
             <input
               id="password"
               class="login-page__input"
               formControlName="password"
               type="password"
               autocomplete="current-password"
-              placeholder="••••••••"
+              [placeholder]="t('common.passwordPlaceholder')"
             />
           </label>
 
@@ -70,35 +69,33 @@ import { AuthService } from '@services/auth.service';
             @if (loading()) {
               <span class="login-page__loading-copy">
                 <app-loading-indicator></app-loading-indicator>
-                Signing in…
+                {{ t('auth.login.signingIn') }}
               </span>
             } @else {
-              Log in
+              {{ t('auth.login.submit') }}
             }
           </cog-button>
         </form>
 
         @if (authService.status() === 'error') {
-          <p class="login-page__hint">
-            We couldn't sign you in. Check your email and password and try again.
-          </p>
+          <p class="login-page__hint">{{ t('auth.login.error') }}</p>
         }
 
         <p class="login-page__switch">
-          <a routerLink="/auth/forgot-password">Forgot your password?</a>
+          <a routerLink="/auth/forgot-password">{{ t('auth.login.forgot') }}</a>
         </p>
         <p class="login-page__switch">
-          Need an account?
-          <a routerLink="/auth/register">Register</a>
+          {{ t('auth.login.needAccount') }}
+          <a routerLink="/auth/register">{{ t('auth.login.register') }}</a>
         </p>
 
         <p class="login-page__legal">
-          By signing up you agree to our
+          {{ t('auth.login.legalPrefix') }}
           <a
             href="https://cognos.io/privacy-policy-and-terms/"
             rel="noopener noreferrer"
             target="_blank"
-            >Privacy Policy and Terms</a
+            >{{ t('common.privacyTerms') }}</a
           >.
         </p>
       </section>

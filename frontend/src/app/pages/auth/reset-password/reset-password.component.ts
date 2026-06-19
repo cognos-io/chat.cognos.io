@@ -16,6 +16,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import { CognosButtonComponent } from '@cognos/ui-angular';
 
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
@@ -37,6 +39,7 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null => {
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    TranslocoModule,
     CognosButtonComponent,
     CognosLogoComponent,
     LoadingIndicatorComponent,
@@ -44,39 +47,31 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null => {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="auth-page">
-      <section class="auth-page__card">
+      <section class="auth-page__card" *transloco="let t">
         <app-cognos-logo class="auth-page__logo" palette="dark"></app-cognos-logo>
-        <h1 class="auth-page__title">Choose a new password</h1>
+        <h1 class="auth-page__title">{{ t('auth.reset.title') }}</h1>
 
         @switch (state()) {
           @case ('missing-token') {
-            <p class="auth-page__hint">
-              This reset link is missing its token. Request a new link and try again.
-            </p>
+            <p class="auth-page__hint">{{ t('auth.reset.missingToken') }}</p>
             <a routerLink="/auth/forgot-password" class="auth-page__switch">
-              Request a new link
+              {{ t('auth.reset.requestNewLink') }}
             </a>
           }
           @case ('success') {
-            <p class="auth-page__success">
-              Your password has been reset. Your encrypted chats are untouched — your
-              password only signs you in.
-            </p>
-            <a routerLink="/auth/login" class="auth-page__switch">Continue to log in</a>
+            <p class="auth-page__success">{{ t('auth.reset.success') }}</p>
+            <a routerLink="/auth/login" class="auth-page__switch">{{
+              t('auth.reset.continueToLogin')
+            }}</a>
           }
           @case ('error') {
-            <p class="auth-page__hint">
-              That reset link didn't work — it may have expired or already been used.
-            </p>
+            <p class="auth-page__hint">{{ t('auth.reset.error') }}</p>
             <a routerLink="/auth/forgot-password" class="auth-page__switch">
-              Request a new link
+              {{ t('auth.reset.requestNewLink') }}
             </a>
           }
           @default {
-            <p class="auth-page__lead">
-              Pick a new password of at least 12 characters. Your password is only used
-              to sign in, so this won't affect your encrypted chats.
-            </p>
+            <p class="auth-page__lead">{{ t('auth.reset.lead') }}</p>
 
             <form
               class="auth-page__form"
@@ -84,26 +79,28 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null => {
               (ngSubmit)="onSubmit()"
             >
               <label class="auth-page__field" for="password">
-                <span class="auth-page__label">New password</span>
+                <span class="auth-page__label">{{ t('auth.reset.newPassword') }}</span>
                 <input
                   id="password"
                   class="auth-page__input"
                   formControlName="password"
                   type="password"
                   autocomplete="new-password"
-                  placeholder="At least 12 characters"
+                  [placeholder]="t('auth.register.passwordPlaceholder')"
                 />
               </label>
 
               <label class="auth-page__field" for="passwordConfirm">
-                <span class="auth-page__label">Confirm new password</span>
+                <span class="auth-page__label">{{
+                  t('auth.reset.confirmNewPassword')
+                }}</span>
                 <input
                   id="passwordConfirm"
                   class="auth-page__input"
                   formControlName="passwordConfirm"
                   type="password"
                   autocomplete="new-password"
-                  placeholder="Re-enter your password"
+                  [placeholder]="t('auth.reset.confirmPlaceholder')"
                 />
               </label>
 
@@ -111,7 +108,7 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null => {
                 resetForm.hasError('mismatch') &&
                 resetForm.get('passwordConfirm')?.dirty
               ) {
-                <p class="auth-page__hint">Passwords don't match.</p>
+                <p class="auth-page__hint">{{ t('auth.reset.mismatch') }}</p>
               }
 
               <cog-button
@@ -124,16 +121,16 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null => {
                 @if (state() === 'submitting') {
                   <span class="auth-page__loading-copy">
                     <app-loading-indicator></app-loading-indicator>
-                    Resetting…
+                    {{ t('auth.reset.resetting') }}
                   </span>
                 } @else {
-                  Reset password
+                  {{ t('auth.reset.submit') }}
                 }
               </cog-button>
             </form>
 
             <p class="auth-page__switch">
-              <a routerLink="/auth/login">Back to log in</a>
+              <a routerLink="/auth/login">{{ t('auth.reset.backToLogin') }}</a>
             </p>
           }
         }

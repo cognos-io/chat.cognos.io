@@ -7,6 +7,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import { CognosButtonComponent, CognosTextFieldComponent } from '@cognos/ui-angular';
 
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
@@ -20,6 +22,7 @@ type ConfirmState = 'form' | 'submitting' | 'success' | 'error' | 'missing-token
   standalone: true,
   imports: [
     RouterLink,
+    TranslocoModule,
     CognosLogoComponent,
     CognosTextFieldComponent,
     CognosButtonComponent,
@@ -27,20 +30,17 @@ type ConfirmState = 'form' | 'submitting' | 'success' | 'error' | 'missing-token
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="auth-page">
-      <section class="auth-page__card">
+      <section class="auth-page__card" *transloco="let t">
         <app-cognos-logo class="auth-page__logo" palette="dark"></app-cognos-logo>
-        <h1 class="auth-page__title">Confirm your new email</h1>
+        <h1 class="auth-page__title">{{ t('auth.confirmEmail.title') }}</h1>
 
         @switch (state()) {
           @case ('form') {
-            <p class="auth-page__lead">
-              Enter your password to finish changing your email. Your password only
-              signs you in — this never affects your encrypted chats.
-            </p>
+            <p class="auth-page__lead">{{ t('auth.confirmEmail.lead') }}</p>
             <div class="auth-page__field">
-              <span class="auth-page__label">Password</span>
+              <span class="auth-page__label">{{ t('common.password') }}</span>
               <cog-text-field
-                ariaLabel="Password"
+                [ariaLabel]="t('common.password')"
                 type="password"
                 [value]="password()"
                 (valueChange)="password.set($event)"
@@ -51,31 +51,29 @@ type ConfirmState = 'form' | 'submitting' | 'success' | 'error' | 'missing-token
               [disabled]="password().length === 0"
               (click)="confirm()"
             >
-              Confirm email change
+              {{ t('auth.confirmEmail.submit') }}
             </cog-button>
           }
           @case ('submitting') {
-            <p class="auth-page__lead">Confirming your new email…</p>
+            <p class="auth-page__lead">{{ t('auth.confirmEmail.submitting') }}</p>
           }
           @case ('success') {
-            <p class="auth-page__success">
-              Your email has been changed. Please sign in again with your new email.
-            </p>
-            <a routerLink="/auth/login" class="auth-page__switch">Continue to log in</a>
+            <p class="auth-page__success">{{ t('auth.confirmEmail.success') }}</p>
+            <a routerLink="/auth/login" class="auth-page__switch">{{
+              t('auth.confirmEmail.continueToLogin')
+            }}</a>
           }
           @case ('error') {
-            <p class="auth-page__hint">
-              That link didn't work — it may have expired or already been used, or the
-              password was incorrect.
-            </p>
-            <a routerLink="/auth/login" class="auth-page__switch">Go to log in</a>
+            <p class="auth-page__hint">{{ t('auth.confirmEmail.error') }}</p>
+            <a routerLink="/auth/login" class="auth-page__switch">{{
+              t('auth.confirmEmail.goToLogin')
+            }}</a>
           }
           @case ('missing-token') {
-            <p class="auth-page__hint">
-              This confirmation link is missing its token. Try clicking the link from
-              your email again.
-            </p>
-            <a routerLink="/auth/login" class="auth-page__switch">Go to log in</a>
+            <p class="auth-page__hint">{{ t('auth.confirmEmail.missingToken') }}</p>
+            <a routerLink="/auth/login" class="auth-page__switch">{{
+              t('auth.confirmEmail.goToLogin')
+            }}</a>
           }
         }
       </section>

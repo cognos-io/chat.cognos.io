@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import { CognosButtonComponent } from '@cognos/ui-angular';
 
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
@@ -17,6 +19,7 @@ import { AuthService } from '@services/auth.service';
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    TranslocoModule,
     CognosButtonComponent,
     CognosLogoComponent,
     LoadingIndicatorComponent,
@@ -24,28 +27,20 @@ import { AuthService } from '@services/auth.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="auth-page">
-      <section class="auth-page__card">
+      <section class="auth-page__card" *transloco="let t">
         <app-cognos-logo class="auth-page__logo" palette="dark"></app-cognos-logo>
-        <h1 class="auth-page__title">Reset your password</h1>
+        <h1 class="auth-page__title">{{ t('auth.forgot.title') }}</h1>
 
         @if (sent()) {
           <p class="auth-page__success">
-            If an account exists for {{ submittedEmail() }}, we've sent a password reset
-            link. Check your inbox and follow the link to choose a new password.
+            {{ t('auth.forgot.sent', { email: submittedEmail() }) }}
           </p>
-          <p class="auth-page__lead">
-            Your password only signs you in — it never unlocks your encrypted chats, so
-            resetting it is safe and leaves your history untouched.
-          </p>
+          <p class="auth-page__lead">{{ t('auth.forgot.sentNote') }}</p>
           <p class="auth-page__switch">
-            <a routerLink="/auth/login">Back to log in</a>
+            <a routerLink="/auth/login">{{ t('auth.forgot.backToLogin') }}</a>
           </p>
         } @else {
-          <p class="auth-page__lead">
-            Enter your email and we'll send you a link to set a new password. Your
-            password is only used to sign in, so resetting it never affects your
-            encrypted chats.
-          </p>
+          <p class="auth-page__lead">{{ t('auth.forgot.lead') }}</p>
 
           <form
             class="auth-page__form"
@@ -53,14 +48,14 @@ import { AuthService } from '@services/auth.service';
             (ngSubmit)="onSubmit()"
           >
             <label class="auth-page__field" for="email">
-              <span class="auth-page__label">Email</span>
+              <span class="auth-page__label">{{ t('common.email') }}</span>
               <input
                 id="email"
                 class="auth-page__input"
                 formControlName="email"
                 type="email"
                 autocomplete="email"
-                placeholder="you@example.com"
+                [placeholder]="t('common.emailPlaceholder')"
               />
             </label>
 
@@ -74,16 +69,16 @@ import { AuthService } from '@services/auth.service';
               @if (sending()) {
                 <span class="auth-page__loading-copy">
                   <app-loading-indicator></app-loading-indicator>
-                  Sending…
+                  {{ t('auth.forgot.sending') }}
                 </span>
               } @else {
-                Send reset link
+                {{ t('auth.forgot.submit') }}
               }
             </cog-button>
           </form>
 
           <p class="auth-page__switch">
-            <a routerLink="/auth/login">Back to log in</a>
+            <a routerLink="/auth/login">{{ t('auth.forgot.backToLogin') }}</a>
           </p>
         }
       </section>
