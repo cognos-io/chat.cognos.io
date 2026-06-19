@@ -63,9 +63,15 @@ export class PaddleService {
 
   // openCheckout opens the Paddle overlay for a server-created transaction.
   // When the signed-in user's email is known it prefills the checkout (Paddle
-  // skips re-asking for it). Returns false when Paddle is unavailable so the
-  // caller can fall back.
-  async openCheckout(transactionId: string, email?: string): Promise<boolean> {
+  // skips re-asking for it). `locale` localises the overlay UI to the user's
+  // chosen language; the currency stays CHF (set server-side on the
+  // transaction) — the buyer can still switch it within the overlay. Returns
+  // false when Paddle is unavailable so the caller can fall back.
+  async openCheckout(
+    transactionId: string,
+    email?: string,
+    locale?: string,
+  ): Promise<boolean> {
     const paddle = await this._init();
     if (!paddle) {
       return false;
@@ -74,6 +80,7 @@ export class PaddleService {
     paddle.Checkout.open({
       transactionId,
       ...(trimmedEmail ? { customer: { email: trimmedEmail } } : {}),
+      ...(locale ? { settings: { locale } } : {}),
     });
     return true;
   }

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 
 import { Observable, switchMap, take, takeWhile, tap, timer } from 'rxjs';
 
+import { paddleLocaleFor } from '@app/i18n/languages';
 import {
   BillingApiResponse,
   BillingState,
@@ -16,6 +17,7 @@ import {
 import { AuthService } from '@app/services/auth.service';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ErrorService } from '@app/services/error.service';
+import { LanguageService } from '@app/services/language.service';
 import { PaddleService } from '@app/services/paddle.service';
 
 // How long to wait for the subscription.created webhook before telling the user
@@ -38,6 +40,7 @@ export class BillingService {
   private readonly _paddle = inject(PaddleService);
   private readonly _router = inject(Router);
   private readonly _auth = inject(AuthService);
+  private readonly _language = inject(LanguageService);
 
   private readonly _state = signal<BillingState | null>(null);
   private readonly _checkoutPending = signal(false);
@@ -154,6 +157,7 @@ export class BillingService {
       const opened = await this._paddle.openCheckout(
         res.transaction_id,
         this._auth.email(),
+        paddleLocaleFor(this._language.current()),
       );
       if (opened) {
         this._checkoutPending.set(false);
