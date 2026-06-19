@@ -62,13 +62,13 @@ OAuth2 / **OTP (email one-time code)** — there is **no native TOTP
 
 ## Track D — Production hardening (infra)
 
-| #   | Item                                                                                  | Status | Notes                                                                        |
-| --- | ------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------- |
-| D.1 | Build images off-host; digest-pin + sign                                              | ⬜     | Needs your prod/deploy context                                               |
-| D.2 | Pin Caddy Cloudflare DNS plugin version                                               | ⬜     | Needs your prod/deploy context                                               |
-| D.3 | Confirm/fix Caddy `trusted_proxies` / Cloudflare origin lock                          | ⬜     | Needs your prod Caddy config                                                 |
-| D.4 | Compose hardening: `read_only`, `cap_drop`, `no-new-privileges`, healthchecks, limits | 🚧     | Prepared in `docker-compose.yaml`; **staging smoke-test before prod deploy** |
-| D.5 | Raise `minPasswordLength` to ≥12; sign-in rate limit                                  | ✅     | Min=12 + authWithPassword 100→10/5min; per-account lockout is a follow-up    |
+| #   | Item                                                                                  | Status | Notes                                                                          |
+| --- | ------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------ |
+| D.1 | Build images off-host; digest-pin + sign                                              | ⬜     | Needs your prod/deploy context                                                 |
+| D.2 | Pin Caddy Cloudflare DNS plugin version                                               | ⬜     | Needs your prod/deploy context                                                 |
+| D.3 | Confirm/fix Caddy `trusted_proxies` / Cloudflare origin lock                          | ⬜     | Needs your prod Caddy config                                                   |
+| D.4 | Compose hardening: `read_only`, `cap_drop`, `no-new-privileges`, healthchecks, limits | 🚧     | Prepared in `docker-compose.yaml`; **staging smoke-test before prod deploy**   |
+| D.5 | Raise `minPasswordLength` to ≥12; sign-in rate limit                                  | ✅     | Min=12 + authWithPassword 100→10/5min; **per-account lockout now implemented** |
 
 Fixed (Account Key re-entry): the cause was the **30-minute inactivity
 auto-logout** (`app.component.ts`), which fully logged out and wiped the
@@ -77,6 +77,27 @@ attempt was reverted): the session now stays unlocked until explicit lock/logout
 (or the 5-day token lapsing after disuse). A short idle-lock can return once a
 quick-unlock factor (passkey/PIN) exists, since the Account Key is the only
 unlock factor today.
+
+## Post-review hardening (2026-06-19)
+
+- **Email change re-enabled** — verified request → confirm flow (email is not a
+  key input under v2); account page has an Email card + a confirm page; only
+  unverified direct PATCHes stay blocked. Backend + browser e2e cover it.
+- **Password-reset UI rebuilt** — `forgot-password`/`reset-password` were stale
+  "unavailable" placeholders despite reset being enabled server-side (C.3); now
+  functional request + confirm pages.
+- **Per-account login lockout** — 5 consecutive failures lock an account for
+  15 min, defeating IP-rotating credential guessing the per-IP limit can't.
+- **Idle-TTL on vault wrap keys** — `last_used_at` touched on use + a 30-day
+  idle sweep, bounding abandoned-but-open devices now that idle auto-logout is
+  gone (TTL > token TTL, so returning users don't re-enter the Account Key).
+- **Browser e2e coverage** — added gated root-suite specs for the email-change,
+  password-reset, and confirm-email-change surfaces. Made the `frontend/e2e`
+  suite (35 app-level specs: account, billing, messages, personas, models,
+  vault) **self-contained** so it can run standalone/CI. Not yet gated in CI:
+  against a contaminated dev DB it runs 62/67, with 5 state-heavy billing/vault
+  specs failing; these need triage on a fresh stack before adding the CI job
+  (they mock their own API but read live user/conversation state). **Open item.**
 
 ## Notes for reviewers
 
