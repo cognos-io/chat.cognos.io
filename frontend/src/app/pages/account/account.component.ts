@@ -295,8 +295,9 @@ import { deriveProfileName } from '@app/utils/profile-identity';
         <div class="account__danger-copy">
           <p class="account__danger-title">Delete account</p>
           <p class="account__card-subtitle">
-            Permanently delete your account, chats, keys and personas. Billing records
-            are retained for accounting. This can’t be undone.
+            We permanently delete your account and encrypted chat data, keys and
+            personas. Records required for billing, tax, fraud prevention, or legal
+            compliance may be retained. This can’t be undone.
           </p>
 
           @if (confirmingDeleteAccount()) {

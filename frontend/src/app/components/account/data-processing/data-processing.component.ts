@@ -83,8 +83,8 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
           </h2>
           <p class="data-processing__subtitle">
             Choose where your messages may be processed. This is the only thing that
-            changes which models you can use — it has no effect on what we keep, because
-            we keep nothing.
+            changes which models you can use — it has no effect on how your chats are
+            stored: your history is always saved encrypted, never as plaintext.
           </p>
         </div>
         <cog-lozenge tone="green">{{ currentBadge() }}</cog-lozenge>
@@ -135,11 +135,15 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
       <div class="data-processing__retention">
         <cog-icon name="shield-check" [size]="18" tone="success" />
         <div>
-          <p class="data-processing__retention-title">Zero retention — every region</p>
+          <p class="data-processing__retention-title">
+            No plaintext retention — every region
+          </p>
           <p class="data-processing__retention-body">
-            Cognos never stores your prompts or responses anywhere. This setting only
-            controls the jurisdiction your messages pass through while a model answers,
-            and which models that makes available.
+            Approved providers process your messages under no-retention, no-training
+            terms, and Cognos never stores plaintext prompts or responses — your chat
+            history is saved encrypted. This setting only controls the jurisdiction your
+            messages pass through while a model answers, and which models that makes
+            available.
           </p>
         </div>
       </div>
@@ -198,7 +202,7 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
             <cog-icon name="lock" [size]="14" tone="current" />
             {{ lockedCount() }} more
             {{ lockedCount() === 1 ? 'model unlocks' : 'models unlock' }} if you widen
-            your processing region — still with zero retention.
+            your processing region — still no-retention providers, still encrypted.
           </p>
         }
       </section>
