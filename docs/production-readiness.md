@@ -70,12 +70,13 @@ OAuth2 / **OTP (email one-time code)** — there is **no native TOTP
 | D.4 | Compose hardening: `read_only`, `cap_drop`, `no-new-privileges`, healthchecks, limits | 🚧     | Prepared in `docker-compose.yaml`; **staging smoke-test before prod deploy** |
 | D.5 | Raise `minPasswordLength` to ≥12; sign-in rate limit                                  | ✅     | Min=12 + authWithPassword 100→10/5min; per-account lockout is a follow-up    |
 
-Open (Account Key re-entry): the real cause of frequent re-entry is the
-**30-minute inactivity auto-logout** (`app.component.ts`), which fully logs out
-and wipes the split-key vault session — not the auth-token TTL (a 5-day token
-auto-refreshes every 5 min while open). Decision needed on the idle/auto-lock
-behaviour; the high-entropy Account Key being the only re-unlock factor is what
-makes any aggressive lock painful.
+Fixed (Account Key re-entry): the cause was the **30-minute inactivity
+auto-logout** (`app.component.ts`), which fully logged out and wiped the
+split-key vault session — not the auth-token TTL. Removed it (the 30-day-token
+attempt was reverted): the session now stays unlocked until explicit lock/logout
+(or the 5-day token lapsing after disuse). A short idle-lock can return once a
+quick-unlock factor (passkey/PIN) exists, since the Account Key is the only
+unlock factor today.
 
 ## Notes for reviewers
 

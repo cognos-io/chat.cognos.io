@@ -306,7 +306,14 @@ Changing email must:
 
 ### Logout / lock
 
-Current implementation guarantees that logging out or explicitly locking the account:
+The session stays unlocked on a trusted device until the user **explicitly locks
+or logs out** (or the auth token finally lapses after days of disuse). There is
+**no idle auto-lock**: because the Account Key is the only unlock factor,
+auto-locking on inactivity would force re-entry of a high-entropy key many times
+a day for no real gain on the user's own device. A quick-unlock factor
+(passkey/PIN) is the prerequisite for reintroducing a short idle lock.
+
+Logging out or explicitly locking the account:
 
 - removes trusted-device unlock state from the current device
 - requires unlock again before local decryption resumes

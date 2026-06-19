@@ -74,10 +74,11 @@ const featureBentoItems: FeatureBentoItem[] = [
     icon: 'lock',
   },
   {
-    title: 'Auto account lock',
+    title: 'Lock anytime',
     description: {
-      small: 'Log out after inactivity',
-      medium: 'Protect your data by automatically logging out after inactivity',
+      small: 'Lock with one tap',
+      medium:
+        'Lock your account the moment you step away; it stays unlocked on this device until you lock or sign out',
     },
     tone: 'violet',
     icon: 'key-round',

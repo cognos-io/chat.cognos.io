@@ -1,9 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router, RouterOutlet } from '@angular/router';
-
-import { Observable, fromEvent, interval, merge, repeat, takeUntil } from 'rxjs';
+import { RouterOutlet } from '@angular/router';
 
 import { CognosToastHostComponent } from '@cognos/ui-angular';
 
@@ -20,32 +17,4 @@ export class AppComponent {
   title = 'frontend';
 
   public auth = inject(AuthService);
-
-  private readonly _router = inject(Router);
-
-  constructor() {
-    const browserInactive$ = (graceTimeMs: number): Observable<number> => {
-      const activityIndicatorEvents$ = merge(
-        ...[
-          'click',
-          'mousemove',
-          'mousedown',
-          'scroll',
-          'keydown',
-          'touchstart',
-          'visibilitychange',
-        ].map((eventName) => fromEvent(document, eventName)),
-      );
-
-      return interval(graceTimeMs).pipe(takeUntil(activityIndicatorEvents$), repeat());
-    };
-
-    browserInactive$(30 * 60 * 1000)
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => {
-        if (this.auth.user()) {
-          this._router.navigate(['', 'auth', 'logout']);
-        }
-      });
-  }
 }
