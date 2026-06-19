@@ -1,109 +1,51 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import { CognosIconComponent } from '@cognos/ui-angular';
 import type { CognosIconName } from '@cognos/ui/icons';
 
 import { DeviceService, Height } from '@app/services/device.service';
 
 interface FeatureBentoItem {
-  title: string;
-  description: {
-    small: string;
-    medium: string;
-  };
+  // i18n key under `chat.bento.items.*`; the template resolves `.title`,
+  // `.small` and `.medium` for the localised copy.
+  key: string;
   tone: 'blue' | 'violet' | 'teal';
   icon: CognosIconName;
 }
 
 const featureBentoItems: FeatureBentoItem[] = [
-  {
-    title: 'Multi-model support',
-    description: {
-      small: 'Pick from a variety of AI models',
-      medium: 'Use both proprietary and open-source AI models to get the best results',
-    },
-    tone: 'blue',
-    icon: 'server',
-  },
-  {
-    title: 'Disappearing messages',
-    description: {
-      small: 'Set a timer for your messages',
-      medium:
-        'Set a timer for your messages to be permanently deleted after a certain time',
-    },
-    tone: 'violet',
-    icon: 'rotate-cw',
-  },
-  {
-    title: 'No-retention providers',
-    description: {
-      small: 'Approved providers only',
-      medium:
-        'We only route to approved providers with no-retention, no-training terms',
-    },
-    tone: 'teal',
-    icon: 'shield-x',
-  },
-  {
-    title: 'Messages encrypted',
-    description: {
-      small: 'Secure & private',
-      medium: 'Using strong encryption to keep your data secure and private',
-    },
-    tone: 'violet',
-    icon: 'shield-check',
-  },
-  {
-    title: 'Only you can decrypt',
-    description: {
-      small: 'You hold the keys',
-      medium:
-        'Your chat history is stored encrypted — only you hold the keys to decrypt it',
-    },
-    tone: 'blue',
-    icon: 'eye-off',
-  },
-  {
-    title: 'Incognito conversations',
-    description: {
-      small: 'Chats never saved',
-      medium: 'Option to enter incognito mode where your chats are never saved',
-    },
-    tone: 'teal',
-    icon: 'lock',
-  },
-  {
-    title: 'Lock anytime',
-    description: {
-      small: 'Lock with one tap',
-      medium:
-        'Lock your account the moment you step away; it stays unlocked on this device until you lock or sign out',
-    },
-    tone: 'violet',
-    icon: 'key-round',
-  },
+  { key: 'multiModel', tone: 'blue', icon: 'server' },
+  { key: 'disappearing', tone: 'violet', icon: 'rotate-cw' },
+  { key: 'noRetention', tone: 'teal', icon: 'shield-x' },
+  { key: 'encrypted', tone: 'violet', icon: 'shield-check' },
+  { key: 'onlyYou', tone: 'blue', icon: 'eye-off' },
+  { key: 'incognito', tone: 'teal', icon: 'lock' },
+  { key: 'lockAnytime', tone: 'violet', icon: 'key-round' },
 ];
 
 @Component({
   selector: 'app-feature-bento',
   standalone: true,
-  imports: [CognosIconComponent],
+  imports: [CognosIconComponent, TranslocoModule],
   template: `
-    <div class="feature-bento">
-      @for (bentoItem of bentoItems(); track bentoItem.title; let index = $index) {
+    <div class="feature-bento" *transloco="let t">
+      @for (bentoItem of bentoItems(); track bentoItem.key; let index = $index) {
         <article [class]="cardClass(index, bentoItem.tone)">
           <span [class]="iconClass(bentoItem.tone)">
             <cog-icon [name]="bentoItem.icon" [size]="18" tone="current" />
           </span>
 
           <div class="feature-bento__content">
-            <h3 class="feature-bento__title">{{ bentoItem.title }}</h3>
+            <h3 class="feature-bento__title">
+              {{ t('chat.bento.items.' + bentoItem.key + '.title') }}
+            </h3>
             <p class="feature-bento__description">
               @if (isMediumBento(index)) {
-                {{ bentoItem.description.medium }}
+                {{ t('chat.bento.items.' + bentoItem.key + '.medium') }}
               } @else {
-                {{ bentoItem.description.small }}
+                {{ t('chat.bento.items.' + bentoItem.key + '.small') }}
               }
             </p>
           </div>

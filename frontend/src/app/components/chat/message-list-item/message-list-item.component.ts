@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { MarkdownComponent } from 'ngx-markdown';
 
 import {
@@ -41,10 +42,12 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     CognosIconButtonComponent,
     CognosBranchSwitcherComponent,
     CognosButtonComponent,
+    TranslocoModule,
   ],
   template: `
     @if (message) {
       <li
+        *transloco="let t"
         class="message-list-item"
         [id]="message.record_id"
         [attr.data-persona-id]="message.decryptedData.persona_id"
@@ -65,19 +68,23 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
           @if (message.decryptedData.content) {
             <cog-icon-button
               name="copy"
-              title="Copy to clipboard"
+              [title]="t('chat.message.copy')"
               [cdkCopyToClipboard]="message.decryptedData.content"
             />
           }
 
           @if (canEdit()) {
-            <cog-icon-button name="pencil" title="Edit message" (click)="startEdit()" />
+            <cog-icon-button
+              name="pencil"
+              [title]="t('chat.message.edit')"
+              (click)="startEdit()"
+            />
           }
 
           @if (canRegenerate()) {
             <cog-icon-button
               name="rotate-cw"
-              title="Regenerate response"
+              [title]="t('chat.message.regenerate')"
               (click)="onRegenerate()"
             />
           }
@@ -85,7 +92,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
           @if (message.expires) {
             <cog-icon-button
               name="pin"
-              title="Keep this temporary message"
+              [title]="t('chat.message.keep')"
               (click)="onKeepMessage(message)"
             />
           }
@@ -93,7 +100,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
           @if (message.record_id && !message.decryptedData.deleted) {
             <cog-icon-button
               name="x"
-              title="Delete message"
+              [title]="t('chat.message.delete')"
               (click)="onDeleteMessage(message)"
             />
           }
@@ -110,32 +117,33 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                     (input)="editDraft.set($any($event.target).value)"
                     (keydown.escape)="cancelEdit()"
                     rows="3"
-                    aria-label="Edit message"
-                    i18n-aria-label="@@message.edit.input"
+                    [attr.aria-label]="t('chat.message.editInputAria')"
                   ></textarea>
                   <div class="message-list-item__edit-actions">
                     <cog-button appearance="subtle" (click)="cancelEdit()">
-                      <ng-container i18n="@@message.edit.cancel">Cancel</ng-container>
+                      {{ t('chat.message.editCancel') }}
                     </cog-button>
                     <cog-button
                       appearance="primary"
                       [disabled]="!editDraft().trim()"
                       (click)="saveEdit()"
                     >
-                      <ng-container i18n="@@message.edit.save">Save</ng-container>
+                      {{ t('chat.message.editSave') }}
                     </cog-button>
                   </div>
                 </div>
               } @else if (message.decryptedData.deleted) {
-                <p class="message-list-item__deleted" i18n="@@message.deleted">
-                  Deleted message
+                <p class="message-list-item__deleted">
+                  {{ t('chat.message.deleted') }}
                 </p>
               } @else if (message.decryptedData.content) {
                 <markdown emoji katex>
                   {{ message.decryptedData.content }}
                 </markdown>
               } @else {
-                <p class="message-list-item__empty">This message is empty.</p>
+                <p class="message-list-item__empty">
+                  {{ t('chat.message.empty') }}
+                </p>
               }
 
               <!--
@@ -163,8 +171,8 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
               [branchCount]="branchPointCount()"
             >
               @if (message.decryptedData.deleted) {
-                <p class="message-list-item__deleted" i18n="@@message.deleted">
-                  Deleted message
+                <p class="message-list-item__deleted">
+                  {{ t('chat.message.deleted') }}
                 </p>
               } @else if (message.decryptedData.content) {
                 @if (message.isStreaming) {
@@ -178,8 +186,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                 }
               } @else {
                 <p class="message-list-item__empty">
-                  This message is empty or the AI did not generate a response, please
-                  try again.
+                  {{ t('chat.message.emptyAssistant') }}
                 </p>
               }
 
@@ -272,6 +279,7 @@ export class MessageListItemComponent {
   private readonly _personaService = inject(PersonaService);
   private readonly _messageService = inject(MessageService);
   private readonly _dialog = inject(Dialog);
+  private readonly _transloco = inject(TranslocoService);
 
   @Input() message?: Message;
 
@@ -392,7 +400,9 @@ export class MessageListItemComponent {
   userMeta() {
     const time = this.formatTimestamp(this.message?.createdAt);
 
-    return time ? `Encrypted · ${time}` : 'Encrypted';
+    return time
+      ? this._transloco.translate('chat.message.encryptedWithTime', { time })
+      : this._transloco.translate('chat.message.encrypted');
   }
 
   messageTime() {
@@ -415,7 +425,7 @@ export class MessageListItemComponent {
       .open(ConfirmationDialogComponent, {
         ...cognosDialogOptions,
         data: {
-          message: 'Are you sure you want to delete this message?',
+          message: this._transloco.translate('chat.message.deleteConfirm'),
         },
       })
       .closed.subscribe((confirmed) => {

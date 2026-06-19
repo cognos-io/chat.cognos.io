@@ -2,10 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   linkedSignal,
   output,
 } from '@angular/core';
+
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
   CognosButtonComponent,
@@ -30,12 +33,15 @@ type BillingPeriod = 'monthly' | 'yearly';
     CognosButtonComponent,
     CognosLozengeComponent,
     CognosIconComponent,
+    TranslocoModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './switch-plan-modal.component.html',
   styleUrl: './switch-plan-modal.component.scss',
 })
 export class SwitchPlanModalComponent {
+  private readonly _transloco = inject(TranslocoService);
+
   readonly open = input(false);
   readonly currentPlan = input<BillingPlanType | null>(null);
   readonly currentInterval = input<'monthly' | 'annual' | undefined>(undefined);
@@ -74,13 +80,18 @@ export class SwitchPlanModalComponent {
   );
 
   protected readonly unlimitedPer = computed(() =>
-    this.billingPeriod() === 'yearly' ? '/ year' : '/ month',
+    this.billingPeriod() === 'yearly'
+      ? this._transloco.translate('billing.switch.perYear')
+      : this._transloco.translate('billing.switch.perMonth'),
   );
 
   protected readonly unlimitedSub = computed(() =>
     this.billingPeriod() === 'yearly'
-      ? 'Two months free vs paying monthly'
-      : "CHF 1'000 / yr saves you CHF 200",
+      ? this._transloco.translate('billing.switch.unlimitedSubYearly')
+      : this._transloco.translate('billing.switch.unlimitedSubMonthly', {
+          yearly: "CHF 1'000",
+          saving: 'CHF 200',
+        }),
   );
 
   protected onClose(): void {

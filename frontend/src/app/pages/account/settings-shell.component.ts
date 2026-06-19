@@ -11,6 +11,8 @@ import {
 
 import { filter } from 'rxjs';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import {
   CognosDesktopShellComponent,
   CognosIconComponent,
@@ -30,7 +32,8 @@ import { DeviceService } from '@app/services/device.service';
 import { environment } from '@environments/environment';
 
 interface SettingsNavItem {
-  label: string;
+  // i18n key under `settings.nav.*` for the menu label.
+  labelKey: string;
   link: string;
   icon: CognosIconName;
   // Match the link exactly (used for the /account home so it isn't active on
@@ -62,96 +65,99 @@ interface SettingsNavItem {
     TrialCreditCardComponent,
     SidebarAccountActionsComponent,
     SidebarBrandComponent,
+    TranslocoModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <ng-template #brand>
-      <app-sidebar-brand />
-    </ng-template>
+    <ng-container *transloco="let t">
+      <ng-template #brand>
+        <app-sidebar-brand />
+      </ng-template>
 
-    <ng-template #back>
-      <a class="settings__back" routerLink="/">
-        <cog-icon name="chevron-left" [size]="16" tone="current" />
-        Back to chats
-      </a>
-    </ng-template>
+      <ng-template #back>
+        <a class="settings__back" routerLink="/">
+          <cog-icon name="chevron-left" [size]="16" tone="current" />
+          {{ t('settings.backToChats') }}
+        </a>
+      </ng-template>
 
-    <ng-template #menu>
-      <nav class="settings__menu" aria-label="Settings">
-        <div class="settings__menu-heading">Settings</div>
-        @for (item of navItems; track item.link) {
-          <a
-            class="settings__menu-item"
-            [routerLink]="item.link"
-            routerLinkActive="settings__menu-item--active"
-            [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-          >
-            <cog-icon [name]="item.icon" [size]="18" tone="current" />
-            {{ item.label }}
-          </a>
+      <ng-template #menu>
+        <nav class="settings__menu" [attr.aria-label]="t('settings.title')">
+          <div class="settings__menu-heading">{{ t('settings.title') }}</div>
+          @for (item of navItems; track item.link) {
+            <a
+              class="settings__menu-item"
+              [routerLink]="item.link"
+              routerLinkActive="settings__menu-item--active"
+              [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+            >
+              <cog-icon [name]="item.icon" [size]="18" tone="current" />
+              {{ t(item.labelKey) }}
+            </a>
+          }
+        </nav>
+      </ng-template>
+
+      <ng-template #actions>
+        <app-sidebar-account-actions (actioned)="closeDrawer()" />
+      </ng-template>
+
+      <ng-template #footer>
+        @if (billing.isTrial()) {
+          <app-trial-credit-card></app-trial-credit-card>
         }
-      </nav>
-    </ng-template>
+        <app-sidebar-profile></app-sidebar-profile>
+      </ng-template>
 
-    <ng-template #actions>
-      <app-sidebar-account-actions (actioned)="closeDrawer()" />
-    </ng-template>
+      @if (device.isMobile()) {
+        <cog-mobile-shell
+          [fillViewport]="true"
+          title=""
+          [drawerTitle]="t('settings.title')"
+          [drawerOpen]="drawerOpen()"
+          [drawerFooter]="true"
+          (menuClick)="openDrawer()"
+          (drawerClose)="closeDrawer()"
+        >
+          <app-cognos-logo cogMobileBrand class="settings__logo" palette="dark" />
 
-    <ng-template #footer>
-      @if (billing.isTrial()) {
-        <app-trial-credit-card></app-trial-credit-card>
-      }
-      <app-sidebar-profile></app-sidebar-profile>
-    </ng-template>
-
-    @if (device.isMobile()) {
-      <cog-mobile-shell
-        [fillViewport]="true"
-        title=""
-        drawerTitle="Settings"
-        [drawerOpen]="drawerOpen()"
-        [drawerFooter]="true"
-        (menuClick)="openDrawer()"
-        (drawerClose)="closeDrawer()"
-      >
-        <app-cognos-logo cogMobileBrand class="settings__logo" palette="dark" />
-
-        <router-outlet></router-outlet>
-
-        <div cogMobileDrawer class="settings__drawer">
-          <ng-container *ngTemplateOutlet="back"></ng-container>
-          <ng-container *ngTemplateOutlet="menu"></ng-container>
-        </div>
-        <div cogMobileDrawerFooter class="settings__navfooter">
-          <ng-container *ngTemplateOutlet="actions"></ng-container>
-          <ng-container *ngTemplateOutlet="footer"></ng-container>
-        </div>
-      </cog-mobile-shell>
-    } @else {
-      <cog-desktop-shell
-        [navFooter]="true"
-        [showHeader]="false"
-        [fillViewport]="true"
-        [padded]="false"
-      >
-        <div cogDesktopNav class="settings__nav">
-          <ng-container *ngTemplateOutlet="brand"></ng-container>
-          <ng-container *ngTemplateOutlet="back"></ng-container>
-          <ng-container *ngTemplateOutlet="menu"></ng-container>
-        </div>
-
-        <div cogDesktopNavFooter class="settings__navfooter">
-          <ng-container *ngTemplateOutlet="actions"></ng-container>
-          <ng-container *ngTemplateOutlet="footer"></ng-container>
-        </div>
-
-        <!-- The shell's main area is overflow:hidden under fillViewport, so the
-             settings content needs its own scroll container or long pages clip. -->
-        <div class="settings__content">
           <router-outlet></router-outlet>
-        </div>
-      </cog-desktop-shell>
-    }
+
+          <div cogMobileDrawer class="settings__drawer">
+            <ng-container *ngTemplateOutlet="back"></ng-container>
+            <ng-container *ngTemplateOutlet="menu"></ng-container>
+          </div>
+          <div cogMobileDrawerFooter class="settings__navfooter">
+            <ng-container *ngTemplateOutlet="actions"></ng-container>
+            <ng-container *ngTemplateOutlet="footer"></ng-container>
+          </div>
+        </cog-mobile-shell>
+      } @else {
+        <cog-desktop-shell
+          [navFooter]="true"
+          [showHeader]="false"
+          [fillViewport]="true"
+          [padded]="false"
+        >
+          <div cogDesktopNav class="settings__nav">
+            <ng-container *ngTemplateOutlet="brand"></ng-container>
+            <ng-container *ngTemplateOutlet="back"></ng-container>
+            <ng-container *ngTemplateOutlet="menu"></ng-container>
+          </div>
+
+          <div cogDesktopNavFooter class="settings__navfooter">
+            <ng-container *ngTemplateOutlet="actions"></ng-container>
+            <ng-container *ngTemplateOutlet="footer"></ng-container>
+          </div>
+
+          <!-- The shell's main area is overflow:hidden under fillViewport, so the
+             settings content needs its own scroll container or long pages clip. -->
+          <div class="settings__content">
+            <router-outlet></router-outlet>
+          </div>
+        </cog-desktop-shell>
+      }
+    </ng-container>
   `,
   styles: `
     .settings__content {
@@ -235,18 +241,33 @@ export class SettingsShellComponent {
   // The full set of settings sections. Flagged-off sections are filtered out of
   // `navItems` so they never render in the nav (their routes also redirect).
   private readonly _allNavItems: SettingsNavItem[] = [
-    { label: 'Account', link: '/account', icon: 'user-plus', exact: true },
-    { label: 'Plan & billing', link: '/account/billing', icon: 'landmark' },
-    { label: 'Usage', link: '/account/usage', icon: 'file-text', flag: 'usage' },
     {
-      label: 'Security & keys',
+      labelKey: 'settings.nav.account',
+      link: '/account',
+      icon: 'user-plus',
+      exact: true,
+    },
+    { labelKey: 'settings.nav.billing', link: '/account/billing', icon: 'landmark' },
+    {
+      labelKey: 'settings.nav.usage',
+      link: '/account/usage',
+      icon: 'file-text',
+      flag: 'usage',
+    },
+    {
+      labelKey: 'settings.nav.security',
       link: '/account/security',
       icon: 'shield',
       flag: 'security',
     },
-    { label: 'Team & sharing', link: '/account/team', icon: 'users', flag: 'team' },
     {
-      label: 'Notifications',
+      labelKey: 'settings.nav.team',
+      link: '/account/team',
+      icon: 'users',
+      flag: 'team',
+    },
+    {
+      labelKey: 'settings.nav.notifications',
       link: '/account/notifications',
       icon: 'mail',
       flag: 'notifications',

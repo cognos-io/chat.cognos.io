@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import { CognosLozengeComponent } from '@cognos/ui-angular';
 
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
@@ -13,13 +15,13 @@ import { BillingService } from '@app/services/billing.service';
 @Component({
   selector: 'app-sidebar-brand',
   standalone: true,
-  imports: [CognosLogoComponent, CognosLozengeComponent],
+  imports: [CognosLogoComponent, CognosLozengeComponent, TranslocoModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="sidebar-brand">
+    <div class="sidebar-brand" *transloco="let t">
       <app-cognos-logo class="sidebar-brand__logo" palette="dark" />
       @if (billing.isTrial()) {
-        <cog-lozenge tone="neutral">Trial</cog-lozenge>
+        <cog-lozenge tone="neutral">{{ t('chat.sidebar.plan.trial') }}</cog-lozenge>
       }
     </div>
   `,

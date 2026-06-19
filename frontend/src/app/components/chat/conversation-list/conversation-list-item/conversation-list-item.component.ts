@@ -11,6 +11,8 @@ import {
 } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+
 import {
   CognosIconButtonComponent,
   CognosIconComponent,
@@ -33,9 +35,10 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     CognosIconButtonComponent,
     CognosIconComponent,
     CognosMenuComponent,
+    TranslocoModule,
   ],
   template: `
-    <div class="conversation-list-item">
+    <div class="conversation-list-item" *transloco="let t">
       <a
         class="conversation-list-item__link"
         routerLinkActive="conversation-list-item__link--active"
@@ -57,7 +60,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
         <div class="conversation-list-item__menu-wrap">
           <cog-icon-button
             name="more-horizontal"
-            title="Open conversation menu"
+            [title]="t('chat.list.openMenu')"
             [selected]="menuOpen()"
             (click)="toggleMenu($event)"
           />
@@ -166,6 +169,7 @@ export class ConversationListItemComponent {
   private readonly _elementRef = inject(ElementRef<HTMLElement>);
   private readonly _preferencesService = inject(UserPreferencesService);
   private readonly _conversationService = inject(ConversationService);
+  private readonly _transloco = inject(TranslocoService);
 
   readonly menuOpen = signal(false);
   readonly router = inject(Router);
@@ -176,15 +180,17 @@ export class ConversationListItemComponent {
 
     return [
       {
-        title: isPinned ? 'Unpin' : 'Pin',
+        title: isPinned
+          ? this._transloco.translate('chat.list.unpin')
+          : this._transloco.translate('chat.list.pin'),
         icon: 'pin',
       },
       {
-        title: 'Edit',
+        title: this._transloco.translate('chat.list.edit'),
         icon: 'pencil',
       },
       {
-        title: 'Delete',
+        title: this._transloco.translate('chat.list.delete'),
         icon: 'x',
       },
     ];
@@ -237,7 +243,7 @@ export class ConversationListItemComponent {
       .open(ConfirmationDialogComponent, {
         ...cognosDialogOptions,
         data: {
-          message: 'Are you sure you want to delete this conversation?',
+          message: this._transloco.translate('chat.list.deleteConfirm'),
         },
       })
       .closed.subscribe((result) => {

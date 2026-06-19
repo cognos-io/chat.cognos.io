@@ -1,4 +1,4 @@
-<section class="persona-editor" [class.is-readonly]="readOnly()">
+<section *transloco="let t" class="persona-editor" [class.is-readonly]="readOnly()">
   <header class="persona-editor__header">
     <span class="persona-editor__avatar" [class]="'persona-editor__avatar--' + color()">
       <cog-icon [name]="icon()" [size]="20" />
@@ -8,23 +8,25 @@
         @if (readOnly()) {
           {{ persona()?.name }}
         } @else if (isEditing()) {
-          Edit persona
+          {{ t('personas.editor.titleEdit') }}
         } @else {
-          Create your own
+          {{ t('personas.editor.titleCreate') }}
         }
       </h2>
       <p class="persona-editor__subtitle">
         @if (readOnly()) {
-          <cog-icon name="lock" [size]="12" /> Read-only · shipped by Cognos
+          <cog-icon name="lock" [size]="12" />
+          {{ t('personas.editor.readOnlySubtitle') }}
         } @else {
-          <cog-icon name="lock" [size]="12" /> Encrypted in your browser
+          <cog-icon name="lock" [size]="12" />
+          {{ t('personas.editor.encryptedSubtitle') }}
         }
       </p>
     </div>
     <button
       type="button"
       class="persona-editor__close"
-      aria-label="Close editor"
+      [attr.aria-label]="t('personas.editor.close')"
       (click)="close()"
     >
       <cog-icon name="x" [size]="18" />
@@ -36,21 +38,25 @@
       <div class="persona-editor__notice" role="note">
         <cog-icon name="info" [size]="16" />
         <span>
-          <strong>Official persona</strong> — official personas can’t be edited.
-          Duplicate it to make your own version you can tune.
+          <strong>{{ t('personas.editor.notice.lead') }}</strong>
+          {{ t('personas.editor.notice.body') }}
         </span>
       </div>
     }
 
     <fieldset class="persona-editor__field" [disabled]="readOnly()">
-      <legend>Icon</legend>
-      <div class="persona-editor__icon-grid" role="radiogroup" aria-label="Icon">
+      <legend>{{ t('personas.editor.iconLegend') }}</legend>
+      <div
+        class="persona-editor__icon-grid"
+        role="radiogroup"
+        [attr.aria-label]="t('personas.editor.iconLegend')"
+      >
         @for (option of icons; track option) {
           <button
             type="button"
             class="persona-editor__icon-button"
             [class.is-selected]="icon() === option"
-            [attr.aria-label]="'Icon ' + option"
+            [attr.aria-label]="t('personas.editor.iconOption', { icon: option })"
             [attr.aria-pressed]="icon() === option"
             (click)="selectIcon(option)"
           >
@@ -61,15 +67,19 @@
     </fieldset>
 
     <fieldset class="persona-editor__field" [disabled]="readOnly()">
-      <legend>Colour</legend>
-      <div class="persona-editor__color-row" role="radiogroup" aria-label="Colour">
+      <legend>{{ t('personas.editor.colourLegend') }}</legend>
+      <div
+        class="persona-editor__color-row"
+        role="radiogroup"
+        [attr.aria-label]="t('personas.editor.colourLegend')"
+      >
         @for (option of colors; track option) {
           <button
             type="button"
             class="persona-editor__color-swatch"
             [class]="'persona-editor__color-swatch--' + option"
             [class.is-selected]="color() === option"
-            [attr.aria-label]="'Colour ' + option"
+            [attr.aria-label]="t('personas.editor.colourOption', { colour: option })"
             [attr.aria-pressed]="color() === option"
             (click)="selectColor(option)"
           ></button>
@@ -78,7 +88,7 @@
     </fieldset>
 
     <label class="persona-editor__field">
-      <span class="persona-editor__label">Name</span>
+      <span class="persona-editor__label">{{ t('personas.editor.nameLabel') }}</span>
       <input
         type="text"
         [ngModel]="name()"
@@ -89,7 +99,9 @@
     </label>
 
     <label class="persona-editor__field">
-      <span class="persona-editor__label">Description</span>
+      <span class="persona-editor__label">{{
+        t('personas.editor.descriptionLabel')
+      }}</span>
       <input
         type="text"
         [ngModel]="description()"
@@ -100,7 +112,9 @@
     </label>
 
     <label class="persona-editor__field">
-      <span class="persona-editor__label">Instructions</span>
+      <span class="persona-editor__label">{{
+        t('personas.editor.instructionsLabel')
+      }}</span>
       <textarea
         rows="6"
         [ngModel]="systemPrompt()"
@@ -116,16 +130,18 @@
           [ngModel]="makeDefault()"
           (ngModelChange)="makeDefault.set($event)"
         />
-        <span>Use as my default persona</span>
+        <span>{{ t('personas.editor.useAsDefault') }}</span>
       </label>
     }
   </div>
 
   <footer class="persona-editor__footer">
     @if (readOnly()) {
-      <cog-button appearance="subtle" (click)="close()">Close</cog-button>
+      <cog-button appearance="subtle" (click)="close()">{{
+        t('personas.editor.closeButton')
+      }}</cog-button>
       <cog-button appearance="primary" icon="copy-plus" (click)="duplicate()">
-        Duplicate to edit
+        {{ t('personas.editor.duplicateToEdit') }}
       </cog-button>
     } @else {
       @if (isEditing()) {
@@ -135,18 +151,20 @@
           [disabled]="saving()"
           (click)="remove()"
         >
-          <cog-icon name="eraser" [size]="16" /> Delete
+          <cog-icon name="eraser" [size]="16" /> {{ t('personas.editor.delete') }}
         </button>
       }
       <span class="persona-editor__footer-spacer"></span>
-      <cog-button appearance="subtle" (click)="close()">Cancel</cog-button>
+      <cog-button appearance="subtle" (click)="close()">{{
+        t('common.cancel')
+      }}</cog-button>
       <cog-button
         appearance="primary"
         icon="check"
         [disabled]="!canSave() || saving()"
         (click)="save()"
       >
-        Save encrypted persona
+        {{ t('personas.editor.save') }}
       </cog-button>
     }
   </footer>

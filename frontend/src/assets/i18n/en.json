@@ -1,157 +1,821 @@
 {
-  "language": {
-    "label": "Language"
-  },
   "account": {
-    "title": "Account",
-    "breadcrumbs": { "settings": "Settings", "account": "Account" },
-    "language": {
-      "title": "Language",
-      "subtitle": "Choose the language for the Cognos interface. Your choice is saved to your account and applies on all your devices."
+    "breadcrumbs": {
+      "account": "Account",
+      "settings": "Settings"
     },
-    "profile": {
-      "title": "Profile",
-      "subtitle": "Your display name appears on your messages and in shared chats.",
-      "displayName": "Display name",
-      "displayNamePlaceholder": "Add a display name",
-      "avatar": "Avatar",
-      "iconAria": "Avatar icon",
-      "colorAria": "Avatar colour",
-      "iconOptionAria": "Icon {{ name }}",
-      "colorOptionAria": "Colour {{ name }}",
-      "save": "Save profile",
-      "saving": "Saving…"
+    "danger": {
+      "confirmFieldAria": "Type DELETE to confirm",
+      "deleteAccountConfirm": "Delete my account",
+      "deleteAccountSubtitle": "We permanently delete your account and encrypted chat data, keys and personas. Records required for billing, tax, fraud prevention, or legal compliance may be retained. This can’t be undone.",
+      "deleteAccountTitle": "Delete account",
+      "deleteChatsConfirm": "Yes, delete everything",
+      "deleteChatsSubtitle": "Permanently delete every conversation and its messages. This can’t be undone.",
+      "deleteChatsTitle": "Delete all chats",
+      "deleting": "Deleting…",
+      "title": "Danger zone",
+      "typeToConfirm": "Type {{ word }} to confirm."
     },
     "data": {
-      "title": "Your data",
-      "subtitle": "Download all your conversations and messages — decrypted in your browser — as a JSON file.",
       "download": "Download my data",
-      "preparing": "Preparing…"
+      "preparing": "Preparing…",
+      "subtitle": "Download all your conversations and messages — decrypted in your browser — as a JSON file.",
+      "title": "Your data"
+    },
+    "dataProcessing": {
+      "badge": {
+        "ch_only": "Switzerland only",
+        "eu": "Europe + UK",
+        "global": "Global"
+      },
+      "context": "{{ size }} context",
+      "footnoteMany": "{{ count }} more models unlock if you widen your processing region — still no-retention providers, still encrypted.",
+      "footnoteOne": "{{ count }} more model unlocks if you widen your processing region — still no-retention providers, still encrypted.",
+      "modelCount": "{{ count }} models",
+      "modelsAvailable": "Models available",
+      "modelsOf": "{{ eligible }} of {{ total }}",
+      "needsBroaderRegion": "Needs broader region",
+      "regionAria": "Data processing region",
+      "regionBadge": {
+        "ch_only": "Swiss",
+        "eu": "EU",
+        "global": "Global"
+      },
+      "retentionBody": "Approved providers process your messages under no-retention, no-training terms, and Cognos never stores plaintext prompts or responses — your chat history is saved encrypted. This setting only controls the jurisdiction your messages pass through while a model answers, and which models that makes available.",
+      "retentionTitle": "No plaintext retention — every region",
+      "subtitle": "Choose where your messages may be processed. This is the only thing that changes which models you can use — it has no effect on how your chats are stored: your history is always saved encrypted, never as plaintext.",
+      "tiers": {
+        "ch_only": {
+          "blurb": "Processed only on Swiss soil — on-prem and Swiss cloud.",
+          "name": "Switzerland only",
+          "note": "Strictest residency"
+        },
+        "eu": {
+          "blurb": "Processed within the EU/EEA, the United Kingdom and Switzerland.",
+          "name": "Europe + Switzerland + UK",
+          "note": "Adequacy-aligned"
+        },
+        "global": {
+          "blurb": "Processed in vetted data centres worldwide, routed to the nearest region.",
+          "name": "Global",
+          "note": "Every model"
+        }
+      },
+      "title": "Data processing"
     },
     "email": {
-      "title": "Email",
-      "subtitle": "Your email only signs you in and receives account notices — it never unlocks your data. Changing it is safe and never affects your encrypted chats.",
       "current": "Current email",
       "new": "New email",
       "send": "Send confirmation link",
-      "sending": "Sending…"
+      "sending": "Sending…",
+      "subtitle": "Your email only signs you in and receives account notices — it never unlocks your data. Changing it is safe and never affects your encrypted chats.",
+      "title": "Email"
+    },
+    "errors": {
+      "emailChange": "Could not start the email change. Check the address and try again.",
+      "passwordChange": "Could not change your password. Check your current password and try again."
+    },
+    "language": {
+      "subtitle": "Choose the language for the Cognos interface. Your choice is saved to your account and applies on all your devices.",
+      "title": "Language"
     },
     "password": {
-      "title": "Password",
-      "subtitle": "Your password only signs you in — it does not unlock your data (that's your Account Key). Changing it is safe and never affects your encrypted chats.",
+      "change": "Change password",
+      "changing": "Changing…",
       "current": "Current password",
       "new": "New password",
       "newPlaceholder": "At least 12 characters",
-      "change": "Change password",
-      "changing": "Changing…"
+      "subtitle": "Your password only signs you in — it does not unlock your data (that's your Account Key). Changing it is safe and never affects your encrypted chats.",
+      "title": "Password"
     },
-    "danger": {
-      "title": "Danger zone",
-      "deleteChatsTitle": "Delete all chats",
-      "deleteChatsSubtitle": "Permanently delete every conversation and its messages. This can’t be undone.",
-      "deleteChatsConfirm": "Yes, delete everything",
-      "deleting": "Deleting…",
-      "deleteAccountTitle": "Delete account",
-      "deleteAccountSubtitle": "We permanently delete your account and encrypted chat data, keys and personas. Records required for billing, tax, fraud prevention, or legal compliance may be retained. This can’t be undone.",
-      "typeToConfirm": "Type {{ word }} to confirm.",
-      "confirmFieldAria": "Type DELETE to confirm",
-      "deleteAccountConfirm": "Delete my account"
+    "profile": {
+      "avatar": "Avatar",
+      "colorAria": "Avatar colour",
+      "colorOptionAria": "Colour {{ name }}",
+      "displayName": "Display name",
+      "displayNamePlaceholder": "Add a display name",
+      "iconAria": "Avatar icon",
+      "iconOptionAria": "Icon {{ name }}",
+      "save": "Save profile",
+      "saving": "Saving…",
+      "subtitle": "Your display name appears on your messages and in shared chats.",
+      "title": "Profile"
     },
+    "title": "Account",
     "toasts": {
-      "profileUpdated": "Profile updated",
-      "passwordChanged": "Password changed",
-      "emailLinkSentTitle": "Confirmation link sent",
-      "emailLinkSentMsg": "Open the link we emailed to {{ email }} to finish changing your email.",
-      "deletedOneChat": "Deleted 1 chat",
-      "deletedManyChats": "Deleted {{ count }} chats",
-      "deleteChatsError": "Could not delete chats",
-      "exportedOne": "Exported 1 chat",
-      "exportedMany": "Exported {{ count }} chats",
-      "exportError": "Could not export your data",
       "accountDeleted": "Your account has been deleted",
       "deleteAccountConflict": "Cancel your plan before deleting your account",
-      "deleteAccountError": "Could not delete your account"
-    },
-    "errors": {
-      "passwordChange": "Could not change your password. Check your current password and try again.",
-      "emailChange": "Could not start the email change. Check the address and try again."
+      "deleteAccountError": "Could not delete your account",
+      "deleteChatsError": "Could not delete chats",
+      "deletedManyChats": "Deleted {{ count }} chats",
+      "deletedOneChat": "Deleted 1 chat",
+      "emailLinkSentMsg": "Open the link we emailed to {{ email }} to finish changing your email.",
+      "emailLinkSentTitle": "Confirmation link sent",
+      "exportError": "Could not export your data",
+      "exportedMany": "Exported {{ count }} chats",
+      "exportedOne": "Exported 1 chat",
+      "passwordChanged": "Password changed",
+      "profileUpdated": "Profile updated"
     }
   },
-  "common": {
-    "email": "Email",
-    "password": "Password",
-    "emailPlaceholder": "you@example.com",
-    "passwordPlaceholder": "••••••••",
-    "privacyTerms": "Privacy Policy and Terms",
-    "cancel": "Cancel"
-  },
   "auth": {
-    "login": {
-      "title": "Get started with privacy-first AI",
-      "lead": "Chat with the latest models without giving up control of your data. New devices may also ask for your Account Key.",
-      "signingIn": "Signing in…",
-      "submit": "Log in",
-      "error": "We couldn't sign you in. Check your email and password and try again.",
-      "forgot": "Forgot your password?",
-      "needAccount": "Need an account?",
-      "register": "Register",
-      "legalPrefix": "By signing up you agree to our"
-    },
-    "register": {
-      "beta": "Private beta",
-      "title": "Create your Cognos account",
-      "lead": "Start with your email and password. Right after signup, Cognos will generate an Account Key for encrypted backup unlock on new devices.",
-      "passwordPlaceholder": "At least 12 characters",
-      "creating": "Creating account…",
-      "submit": "Create account",
-      "legalPrefix": "By creating an account you agree to our",
-      "haveAccount": "Already have an account?",
-      "login": "Log in"
-    },
-    "forgot": {
-      "title": "Reset your password",
-      "sent": "If an account exists for {{ email }}, we've sent a password reset link. Check your inbox and follow the link to choose a new password.",
-      "sentNote": "Your password only signs you in — it never unlocks your encrypted chats, so resetting it is safe and leaves your history untouched.",
-      "lead": "Enter your email and we'll send you a link to set a new password. Your password is only used to sign in, so resetting it never affects your encrypted chats.",
-      "sending": "Sending…",
-      "submit": "Send reset link",
-      "backToLogin": "Back to log in"
-    },
-    "reset": {
-      "title": "Choose a new password",
-      "missingToken": "This reset link is missing its token. Request a new link and try again.",
-      "requestNewLink": "Request a new link",
-      "success": "Your password has been reset. Your encrypted chats are untouched — your password only signs you in.",
-      "continueToLogin": "Continue to log in",
-      "error": "That reset link didn't work — it may have expired or already been used.",
-      "lead": "Pick a new password of at least 12 characters. Your password is only used to sign in, so this won't affect your encrypted chats.",
-      "newPassword": "New password",
-      "confirmNewPassword": "Confirm new password",
-      "confirmPlaceholder": "Re-enter your password",
-      "mismatch": "Passwords don't match.",
-      "resetting": "Resetting…",
-      "submit": "Reset password",
-      "backToLogin": "Back to log in"
-    },
-    "verify": {
-      "title": "Verify your email",
-      "verifying": "Verifying your email…",
-      "success": "Your email is verified. Thanks for confirming.",
-      "continueToLogin": "Continue to log in",
-      "error": "That verification link didn't work — it may have expired or already been used.",
-      "missingToken": "This verification link is missing its token. Try clicking the link from your email again.",
-      "goToLogin": "Go to log in"
-    },
     "confirmEmail": {
-      "title": "Confirm your new email",
+      "continueToLogin": "Continue to log in",
+      "error": "That link didn't work — it may have expired or already been used, or the password was incorrect.",
+      "goToLogin": "Go to log in",
       "lead": "Enter your password to finish changing your email. Your password only signs you in — this never affects your encrypted chats.",
+      "missingToken": "This confirmation link is missing its token. Try clicking the link from your email again.",
       "submit": "Confirm email change",
       "submitting": "Confirming your new email…",
       "success": "Your email has been changed. Please sign in again with your new email.",
+      "title": "Confirm your new email"
+    },
+    "forgot": {
+      "backToLogin": "Back to log in",
+      "lead": "Enter your email and we'll send you a link to set a new password. Your password is only used to sign in, so resetting it never affects your encrypted chats.",
+      "sending": "Sending…",
+      "sent": "If an account exists for {{ email }}, we've sent a password reset link. Check your inbox and follow the link to choose a new password.",
+      "sentNote": "Your password only signs you in — it never unlocks your encrypted chats, so resetting it is safe and leaves your history untouched.",
+      "submit": "Send reset link",
+      "title": "Reset your password"
+    },
+    "login": {
+      "error": "We couldn't sign you in. Check your email and password and try again.",
+      "forgot": "Forgot your password?",
+      "lead": "Chat with the latest models without giving up control of your data. New devices may also ask for your Account Key.",
+      "legalPrefix": "By signing up you agree to our",
+      "needAccount": "Need an account?",
+      "register": "Register",
+      "signingIn": "Signing in…",
+      "submit": "Log in",
+      "title": "Get started with privacy-first AI"
+    },
+    "register": {
+      "beta": "Private beta",
+      "creating": "Creating account…",
+      "haveAccount": "Already have an account?",
+      "lead": "Start with your email and password. Right after signup, Cognos will generate an Account Key for encrypted backup unlock on new devices.",
+      "legalPrefix": "By creating an account you agree to our",
+      "login": "Log in",
+      "passwordPlaceholder": "At least 12 characters",
+      "submit": "Create account",
+      "title": "Create your Cognos account"
+    },
+    "reset": {
+      "backToLogin": "Back to log in",
+      "confirmNewPassword": "Confirm new password",
+      "confirmPlaceholder": "Re-enter your password",
       "continueToLogin": "Continue to log in",
-      "error": "That link didn't work — it may have expired or already been used, or the password was incorrect.",
-      "missingToken": "This confirmation link is missing its token. Try clicking the link from your email again.",
-      "goToLogin": "Go to log in"
+      "error": "That reset link didn't work — it may have expired or already been used.",
+      "lead": "Pick a new password of at least 12 characters. Your password is only used to sign in, so this won't affect your encrypted chats.",
+      "mismatch": "Passwords don't match.",
+      "missingToken": "This reset link is missing its token. Request a new link and try again.",
+      "newPassword": "New password",
+      "requestNewLink": "Request a new link",
+      "resetting": "Resetting…",
+      "submit": "Reset password",
+      "success": "Your password has been reset. Your encrypted chats are untouched — your password only signs you in.",
+      "title": "Choose a new password"
+    },
+    "verify": {
+      "continueToLogin": "Continue to log in",
+      "error": "That verification link didn't work — it may have expired or already been used.",
+      "goToLogin": "Go to log in",
+      "missingToken": "This verification link is missing its token. Try clicking the link from your email again.",
+      "success": "Your email is verified. Thanks for confirming.",
+      "title": "Verify your email",
+      "verifying": "Verifying your email…"
     }
+  },
+  "billing": {
+    "lock": {
+      "body": "Your chats stay encrypted and readable. Choose a plan to start sending again.",
+      "choosePlan": "Choose a plan",
+      "titleInactive": "Your plan is inactive",
+      "titleTrialUsedUp": "Your trial credits are used up"
+    },
+    "pastDue": {
+      "body": "Update your card to keep your plan — your access continues for now.",
+      "title": "We couldn't take your last payment",
+      "updateCard": "Update card"
+    },
+    "plan": {
+      "actions": {
+        "cancelPlan": "Cancel plan",
+        "choosePlan": "Choose a plan",
+        "resumePlan": "Resume plan",
+        "switchPlan": "Switch plan",
+        "updateCard": "Update card"
+      },
+      "aside": {
+        "cancelsSoonNote": "Stays fully active until then. Resume any time before to keep it going.",
+        "inactiveCaption": "Sending paused · chats readable",
+        "trialCredit": "trial credit left"
+      },
+      "blurb": {
+        "cancelsSoon": "Your plan is set to cancel. It keeps working until the end of the period.",
+        "inactive": "Your chats stay encrypted and readable. Choose a plan to start sending again.",
+        "payg": "Buy credits and spend them on any model. A CHF 10 minimum keeps your account active each month.",
+        "trial": "You're on the free trial. Choose a plan to keep sending once it runs out.",
+        "unlimited": "Unlimited messages across every Cognos model, with priority Swiss-cloud compute."
+      },
+      "breadcrumbs": {
+        "planBilling": "Plan & billing",
+        "settings": "Settings"
+      },
+      "dateHeading": {
+        "accessUntil": "Access until",
+        "ended": "Ended",
+        "nextMinCharge": "Next minimum charge",
+        "renews": "Renews",
+        "retrying": "Retrying payment",
+        "trial": "Trial"
+      },
+      "guarantee": "60-day money-back guarantee",
+      "heading": {
+        "current": "Current plan",
+        "previous": "Previous plan"
+      },
+      "invoiceStatus": {
+        "due": "Due",
+        "paid": "Paid",
+        "pastDue": "Past due",
+        "pending": "Pending",
+        "refunded": "Refunded"
+      },
+      "invoices": {
+        "downloadPdf": "Download invoice PDF",
+        "foot": "Invoices & VAT receipts are issued by Paddle.com Market Ltd, our merchant of record.",
+        "invoiceLabel": "Invoice {{ number }}",
+        "note": "Your invoices and VAT receipts are available in your Paddle portal.",
+        "openPortal": "Open Paddle portal",
+        "title": "Invoices"
+      },
+      "names": {
+        "none": "No plan",
+        "payg": "Pay as you go",
+        "trial": "Trial",
+        "unlimited": "Unlimited"
+      },
+      "payment": {
+        "card": "Card",
+        "expires": "Expires {{ expiry }}",
+        "noCard": "No card available",
+        "note": "Billing is processed by Paddle, our payment provider. We store a token, never your card number.",
+        "title": "Payment method",
+        "update": "Update"
+      },
+      "price": {
+        "perMonth": "{{ price }} / month",
+        "perMonthMin": "{{ price }} / month min.",
+        "perYear": "{{ price }} / year"
+      },
+      "refundSent": "Refund request sent — we'll be in touch.",
+      "requestRefund": "Request a refund",
+      "statusBadge": {
+        "active": "Active",
+        "cancelsSoon": "Cancels soon",
+        "paymentFailed": "Payment failed",
+        "readOnly": "Read-only",
+        "trial": "Trial"
+      },
+      "syncedWith": "Synced with",
+      "title": "Plan & billing",
+      "usage": {
+        "emptyPeriod": "No messages sent yet this period.",
+        "messagesSince": "messages since {{ date }}",
+        "noLimit": "No limit",
+        "noneRecorded": "No usage recorded yet this period.",
+        "notePayg": "Spend above the CHF 10 minimum is metered by token usage and added to your next invoice.",
+        "noteUnlimited": "Unlimited covers normal individual use — compute is metered internally only to keep the service fair.",
+        "spentSince": "spent since {{ date }} · CHF 10 minimum",
+        "title": "Usage this period"
+      }
+    },
+    "pricing": {
+      "activating": {
+        "normal": "Hang tight — we're confirming your payment. This usually takes a few seconds.",
+        "slow": "This is taking longer than usual. Your plan will appear here as soon as the payment is confirmed — no need to pay again.",
+        "title": "Activating your plan…"
+      },
+      "assurances": {
+        "encrypted": {
+          "body": "We store payment tokens, never card numbers.",
+          "title": "Encrypted billing"
+        },
+        "noLockIn": {
+          "body": "Switch plans or cancel from settings anytime.",
+          "title": "No lock-in"
+        },
+        "readable": {
+          "body": "Nothing is deleted when the trial ends.",
+          "title": "Trial chats stay readable"
+        }
+      },
+      "back": "Back to your chats",
+      "footer": {
+        "link": "Talk to us",
+        "text": "Prices in CHF, incl. VAT. Questions about a plan?"
+      },
+      "guarantee": {
+        "body": "Not the right fit? Cancel within 60 days of your first payment for a full refund — on either plan, no questions asked.",
+        "title": "60-day money-back guarantee"
+      },
+      "intervalAria": "Billing interval",
+      "monthly": "Monthly",
+      "monthsFree": "2 months free",
+      "payg": {
+        "blurb": "Buy credits and spend them on any model. A CHF 10 minimum keeps your account active each month.",
+        "cta": "Start with credits",
+        "features": {
+          "credits": "Credits work on every model and skill",
+          "noCommitment": "No annual commitment",
+          "payForUse": "Pay only for what you actually run",
+          "rollover": "Unused credits roll over while active"
+        },
+        "fine": "Spend above the CHF 10 minimum is metered per message.",
+        "name": "Pay as you go",
+        "priceNote": "Billed monthly · top up anytime",
+        "tag": "Flexible",
+        "unit": "/ month min."
+      },
+      "status": {
+        "sendingPaused": "Sending paused",
+        "trialUsedUp": "Trial credits used up"
+      },
+      "subtitle": "Your trial chats are still here and fully readable. Pick a plan to send new messages — same encryption, same Swiss compute.",
+      "title": "Keep going, privately",
+      "unlimited": {
+        "blurb": "Unlimited messages across every Cognos model, with priority Swiss-cloud compute.",
+        "cta": "Go Unlimited",
+        "features": {
+          "cancel": "Cancel anytime — keeps working to period end",
+          "priority": "Priority Swiss-cloud & on-prem compute",
+          "skills": "All skills, prompt library and sharing",
+          "unlimited": "Unlimited messages on every model"
+        },
+        "fine": "Fair use applies",
+        "name": "Unlimited",
+        "perMonth": "/ month",
+        "perYear": "/ year",
+        "savesMonthly": "{{ yearly }}/yr saves you {{ saving }}",
+        "savesYearly": "Two months free vs monthly",
+        "tag": "Recommended"
+      },
+      "yearly": "Yearly"
+    },
+    "switch": {
+      "billingPeriod": "Billing period",
+      "current": "● Current",
+      "currentPlan": "Current plan",
+      "monthly": "Monthly",
+      "monthsFree": "2 months free",
+      "note": "Changes take effect immediately. 60-day money-back guarantee on either plan.",
+      "payg": {
+        "desc": "Buy credits and spend them on any model. A CHF 10 monthly minimum keeps your account active.",
+        "name": "Pay as you go",
+        "per": "/ mo min.",
+        "sub": "Credits on every model · billed monthly",
+        "tag": "Flexible"
+      },
+      "perMonth": "/ month",
+      "perYear": "/ year",
+      "switch": "Switch",
+      "title": "Switch plan",
+      "unlimited": {
+        "desc": "Unlimited messages across every Cognos model, with priority Swiss-cloud compute.",
+        "name": "Unlimited",
+        "tag": "Recommended"
+      },
+      "unlimitedSubMonthly": "{{ yearly }} / yr saves you {{ saving }}",
+      "unlimitedSubYearly": "Two months free vs paying monthly",
+      "yearly": "Yearly"
+    },
+    "toasts": {
+      "genericError": "Something went wrong. Please try again.",
+      "refundError": "Could not send your refund request. Please try again.",
+      "switchError": "Could not switch your plan. Please try again."
+    }
+  },
+  "chat": {
+    "bento": {
+      "items": {
+        "disappearing": {
+          "medium": "Set a timer for your messages to be permanently deleted after a certain time",
+          "small": "Set a timer for your messages",
+          "title": "Disappearing messages"
+        },
+        "encrypted": {
+          "medium": "Using strong encryption to keep your data secure and private",
+          "small": "Secure & private",
+          "title": "Messages encrypted"
+        },
+        "incognito": {
+          "medium": "Option to enter incognito mode where your chats are never saved",
+          "small": "Chats never saved",
+          "title": "Incognito conversations"
+        },
+        "lockAnytime": {
+          "medium": "Lock your account the moment you step away; it stays unlocked on this device until you lock or sign out",
+          "small": "Lock with one tap",
+          "title": "Lock anytime"
+        },
+        "multiModel": {
+          "medium": "Use both proprietary and open-source AI models to get the best results",
+          "small": "Pick from a variety of AI models",
+          "title": "Multi-model support"
+        },
+        "noRetention": {
+          "medium": "We only route to approved providers with no-retention, no-training terms",
+          "small": "Approved providers only",
+          "title": "No-retention providers"
+        },
+        "onlyYou": {
+          "medium": "Your chat history is stored encrypted — only you hold the keys to decrypt it",
+          "small": "You hold the keys",
+          "title": "Only you can decrypt"
+        }
+      }
+    },
+    "composer": {
+      "clearMessages": "Clear all messages",
+      "encrypted": "End-to-end encrypted · keys are encrypted before backup",
+      "label": "Message Cognos — stored encrypted; sent to your provider to reply",
+      "locked": {
+        "body": "You can read everything here. Pick a plan to send new messages.",
+        "comparePlans": "Compare plans",
+        "guarantee": "60-day money-back guarantee · cancel anytime",
+        "title": "Sending is paused",
+        "upgrade": "Upgrade"
+      },
+      "placeholder": "Message with Cognos",
+      "send": "Send",
+      "shortcutMac": "Cmd + Enter to send",
+      "shortcutOther": "Ctrl + Enter to send",
+      "switchPersona": "Switch persona — {{ name }}"
+    },
+    "conversation": {
+      "drawerTitle": "Navigation",
+      "restoringSession": "Restoring encrypted session",
+      "scrollToBottom": "Scroll to bottom of conversation"
+    },
+    "empty": {
+      "disappearingMessages": "Disappearing messages:",
+      "disappearingOff": "Off",
+      "incognitoBody": "Your messages will not be saved. If you leave this conversation or clear it, you will not be able to recover them.",
+      "incognitoTitle": "Incognito mode enabled",
+      "secureBody": "Get started by sending a message using the composer below.",
+      "secureTitle": "Secure AI messaging",
+      "temporaryChat": "Temporary chat"
+    },
+    "header": {
+      "clearMessages": "Clear messages",
+      "delete": "Delete",
+      "deleteConfirm": "Are you sure you want to delete this conversation?",
+      "export": "Export",
+      "menu": "Conversation menu",
+      "newChat": "New chat",
+      "rename": "Rename",
+      "security": "Security & keys",
+      "share": "Share",
+      "shareTitle": "Share this conversation",
+      "shared": "Shared",
+      "sharedTitle": "This conversation is shared with a public link — manage sharing",
+      "soon": "Soon",
+      "temporaryChat": "Temporary chat"
+    },
+    "icebreakers": {
+      "items": {
+        "dinnerParty": {
+          "description": "dinner party guest list",
+          "title": "Write the ultimate"
+        },
+        "dreamHouse": {
+          "description": "for my pet",
+          "title": "Describe a dream house"
+        },
+        "environmental": {
+          "description": "designing a sustainable future for our planet",
+          "title": "Environmental champion"
+        },
+        "ethereumDeveloper": {
+          "description": "optimized for smart contract development",
+          "title": "Be an Ethereum developer"
+        },
+        "futureTech": {
+          "description": "envisioning the next big technology innovation",
+          "title": "Future Tech Innovator"
+        },
+        "helpRecruit": {
+          "description": "a new member for my team",
+          "title": "Help me recruit"
+        },
+        "intergalacticAmbassador": {
+          "description": "negotiating between alien civilizations",
+          "title": "Intergalactic ambassador"
+        },
+        "masterChef": {
+          "description": "with limited ingredients",
+          "title": "Master chef challenge"
+        },
+        "planHoliday": {
+          "description": "that I will never forget",
+          "title": "Plan a holiday"
+        },
+        "predictFuture": {
+          "description": "of technical innovation",
+          "title": "Predict the future"
+        },
+        "rewriteHistory": {
+          "description": "to change the course of events",
+          "title": "Rewrite history"
+        },
+        "spaceExplorer": {
+          "description": "detail the chronicles of a space explorer in a distant galaxy",
+          "title": "Space explorer's journal"
+        },
+        "superheroOrigin": {
+          "description": "for a new hero",
+          "title": "Superhero origin story"
+        },
+        "timeCapsule": {
+          "description": "for future generations",
+          "title": "Create a time capsule"
+        },
+        "ultimatePlaylist": {
+          "description": "Creating the perfect music playlist",
+          "title": "The Ultimate Playlist"
+        },
+        "wouldYouRather": {
+          "description": "AI Edition",
+          "title": "Would You Rather"
+        }
+      }
+    },
+    "list": {
+      "delete": "Delete",
+      "deleteConfirm": "Are you sure you want to delete this conversation?",
+      "edit": "Edit",
+      "newChat": "New chat",
+      "newChatLockedTitle": "Choose a plan to start a new chat",
+      "openMenu": "Open conversation menu",
+      "pin": "Pin",
+      "pinned": "Pinned",
+      "recent": "Recent",
+      "searchAria": "Search conversations",
+      "searchPlaceholder": "Search",
+      "searchedOnDevice": "Searched on this device",
+      "unpin": "Unpin"
+    },
+    "message": {
+      "copy": "Copy to clipboard",
+      "delete": "Delete message",
+      "deleteConfirm": "Are you sure you want to delete this message?",
+      "deleted": "Deleted message",
+      "disappearAfter": "New messages in this conversation will disappear after {{ duration }}",
+      "edit": "Edit message",
+      "editCancel": "Cancel",
+      "editInputAria": "Edit message",
+      "editSave": "Save",
+      "empty": "This message is empty.",
+      "emptyAssistant": "This message is empty or the AI did not generate a response, please try again.",
+      "encrypted": "Encrypted",
+      "encryptedWithTime": "Encrypted · {{ time }}",
+      "keep": "Keep this temporary message",
+      "regenerate": "Regenerate response"
+    },
+    "models": {
+      "costTier": {
+        "high": "High cost",
+        "low": "Low cost",
+        "medium": "Medium cost"
+      },
+      "estimatedCost": "Estimated model cost: {{ cost }}",
+      "explainer": "Cost shows roughly how much each model spends per message. Higher-cost models cost more than lower-cost ones.",
+      "pickAria": "Pick your AI model",
+      "pin": "Pin model",
+      "unpin": "Unpin model"
+    },
+    "personas": {
+      "all": "All",
+      "manage": "Manage personas…",
+      "quickSwitchAria": "Quick persona switch",
+      "switchAria": "Switch persona"
+    },
+    "sidebar": {
+      "accountBilling": "Account & billing",
+      "creditLeft": "CHF {{ amount }} left",
+      "help": "Help",
+      "lock": "Lock",
+      "lockTitle": "Locks your account and does not log you out.",
+      "lockedToastMsg": "This device now needs your Account Key to unlock again.",
+      "lockedToastTitle": "Account locked",
+      "logout": "Log out",
+      "plan": {
+        "inactive": "No active plan",
+        "loading": "Loading…",
+        "payg": "Pay-As-You-Go",
+        "trial": "Trial",
+        "unlimited": "Unlimited"
+      },
+      "viewPlans": "View plans"
+    },
+    "temporary": {
+      "body": "For more privacy all new messages will disappear from this chat after the selected duration below. You can also manually keep a message before it expires.",
+      "durations": {
+        "days180": "180 days",
+        "days7": "7 days",
+        "days90": "90 days",
+        "hours24": "24 hours",
+        "off": "Off"
+      },
+      "lead": "Make your messages disappear.",
+      "note": "This will not affect existing messages and can be disabled at any time.",
+      "save": "Save",
+      "title": "Disappearing messages"
+    },
+    "trial": {
+      "choosePlan": "Choose a plan",
+      "creditLabel": "Trial credit",
+      "detail": "{{ amount }} left of your {{ total }} trial",
+      "usedUp": "Used up"
+    }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "••••••••",
+    "privacyTerms": "Privacy Policy and Terms"
+  },
+  "dialogs": {
+    "confirm": {
+      "no": "No",
+      "title": "Just checking",
+      "yes": "Yes"
+    },
+    "contactHelp": {
+      "done": "Done",
+      "emailLabel": "Email:",
+      "introAfter": "— the founder, for direct support.",
+      "introBefore": "If you are having problems, you can contact me —",
+      "outro": "Let me know what you're having trouble with and I will be happy to help make it better with you.",
+      "thanks": "Thank you for using Cognos.",
+      "threemaLabel": "Threema:",
+      "title": "Need help? Want to contact me?"
+    },
+    "editConversation": {
+      "disappearingBody": "For more privacy all new messages will disappear from this chat after the selected duration below. You can also choose to manually keep a message before it expires.",
+      "disappearingHeading": "Enable disappearing messages",
+      "disappearingNote": "This will not affect existing messages and can be disabled at any time.",
+      "error": "Unable to edit conversation, please try again later.",
+      "nameLabel": "Change the name",
+      "save": "Save",
+      "title": "Edit conversation"
+    },
+    "profilePicture": {
+      "alt": "Profile picture of {{name}}"
+    },
+    "share": {
+      "checking": "Checking sharing status…",
+      "close": "Close",
+      "copied": "Copied",
+      "copy": "Copy",
+      "copyError": "Unable to copy the link.",
+      "createBody": "Only people with the link can see this conversation — but they’ll see every message, past and future, until you stop sharing. The decryption key lives in the link itself and never reaches our servers, so keep it to the people you choose.",
+      "createError": "Unable to create a public link, please try again.",
+      "createHeading": "Create a public link",
+      "createLink": "Create public link",
+      "linkAriaLabel": "Public share link",
+      "revokeError": "Unable to stop sharing, please try again.",
+      "sharedBody": "Only people with this link can see this conversation. They’ll see every message — past and future — until you stop sharing.",
+      "sharedHeading": "Public link",
+      "stopSharing": "Stop sharing",
+      "title": "Share conversation"
+    },
+    "vaultPassword": {
+      "accountKey": "Account Key",
+      "accountKeyRequired": "Account Key is required",
+      "acknowledge": "I have copied my Account Key to a safe place and acknowledge that if I lose it I will also not be able to access my account.",
+      "acknowledgeRequired": "Please confirm that you copied your Account Key and accept the recovery risk.",
+      "copiedMsg": "Store it somewhere safe before you continue.",
+      "copiedTitle": "Account Key copied",
+      "copyAccountKey": "Copy Account Key",
+      "copyFailedMsg": "Select and store the Account Key manually before you continue.",
+      "copyFailedTitle": "Could not copy Account Key",
+      "createBackup": "Create encrypted backup",
+      "downloadKit": "Download Emergency Kit",
+      "hide": "Hide",
+      "kitDownloadedMsg": "Store the file somewhere safe before you continue.",
+      "kitDownloadedTitle": "Emergency Kit downloaded",
+      "lockedBadge": "Locked",
+      "lockedBody": "Unlock to continue. This lock only clears local trusted access and does not sign you out.",
+      "lockedOnDevice": "Account locked on this device",
+      "logOut": "Log out",
+      "newIntro": "Cognos generated a one-time Account Key for this encrypted backup. Save it now. It is the only thing that can decrypt your data — your password just signs you in, and a new device only needs this Account Key.",
+      "newWarning": "Keep this Account Key private — anyone who has it can decrypt your data. Cognos never stores the plaintext Account Key, so if you lose it your data cannot be recovered.",
+      "show": "Show",
+      "titleLocked": "Account locked",
+      "titleNew": "Secure your encrypted backup",
+      "titleUnlock": "Unlock backup",
+      "unlockBackup": "Unlock encrypted backup",
+      "unlockBody": "After you unlock, this browser stays unlocked across refreshes and new tabs. You will need your Account Key again after locking the account, logging out, or clearing browser storage.",
+      "unlockIntro": "Enter your Account Key to unlock this device."
+    }
+  },
+  "language": {
+    "label": "Language"
+  },
+  "personas": {
+    "editor": {
+      "close": "Close editor",
+      "closeButton": "Close",
+      "colourLegend": "Colour",
+      "colourOption": "Colour {{colour}}",
+      "delete": "Delete",
+      "descriptionLabel": "Description",
+      "duplicateToEdit": "Duplicate to edit",
+      "encryptedSubtitle": "Encrypted in your browser",
+      "iconLegend": "Icon",
+      "iconOption": "Icon {{icon}}",
+      "instructionsLabel": "Instructions",
+      "nameLabel": "Name",
+      "notice": {
+        "body": "— official personas can’t be edited. Duplicate it to make your own version you can tune.",
+        "lead": "Official persona"
+      },
+      "readOnlySubtitle": "Read-only · shipped by Cognos",
+      "save": "Save encrypted persona",
+      "titleCreate": "Create your own",
+      "titleEdit": "Edit persona",
+      "useAsDefault": "Use as my default persona"
+    },
+    "page": {
+      "actions": {
+        "defaultForNewChats": "Default for new chats",
+        "defaultPersona": "Default persona",
+        "edit": "Edit",
+        "editPersona": "Edit persona",
+        "pin": "Pin",
+        "pinPersona": "Pin persona",
+        "setDefault": "Set as default",
+        "setDefaultPersona": "Set as default persona",
+        "unpin": "Unpin",
+        "unpinPersona": "Unpin persona",
+        "view": "View",
+        "viewPersona": "View persona"
+      },
+      "badges": {
+        "active": "Active",
+        "default": "Default",
+        "official": "Official"
+      },
+      "breadcrumb": "Breadcrumb",
+      "empty": "No personas match “{{query}}”.",
+      "encryptedBadge": "Encrypted",
+      "gridView": "Grid view",
+      "listView": "List view",
+      "myPersonas": "My personas",
+      "newPersona": "New persona",
+      "newPersonaHint": "Write your own instructions — encrypted in your browser.",
+      "searchPlaceholder": "Search personas",
+      "sections": {
+        "official": "Official",
+        "pinned": "Pinned",
+        "recent": "Recently used"
+      },
+      "subtitle": "How Cognos responds — switch any time",
+      "title": "Personas",
+      "viewMode": "View mode"
+    }
+  },
+  "public": {
+    "decrypting": "Decrypting shared conversation…",
+    "deletedMessage": "Deleted message",
+    "emptyMessage": "This message is empty.",
+    "encrypted": "Encrypted",
+    "encryptedAt": "Encrypted · {{time}}",
+    "encryptedTitle": "End-to-end encrypted",
+    "promoAfter": "and sign up today.",
+    "promoBefore": "Cognos encrypts your AI chats. This is a public conversation, but only people with the link can decrypt and read it. If you care about keeping your AI chats private and secure, prefer a European service, and want both proprietary and open-source models, go to",
+    "sharedSecurely": "Shared securely · decrypted in your browser",
+    "unavailableBody": "The shared conversation may have been unshared, or the link is incomplete. Ask the person who shared it for a fresh link.",
+    "unavailableTitle": "This link isn’t available"
+  },
+  "settings": {
+    "backToChats": "Back to chats",
+    "nav": {
+      "account": "Account",
+      "billing": "Plan & billing",
+      "notifications": "Notifications",
+      "security": "Security & keys",
+      "team": "Team & sharing",
+      "usage": "Usage"
+    },
+    "placeholder": {
+      "comingSoon": "This section is coming soon."
+    },
+    "title": "Settings"
   }
 }

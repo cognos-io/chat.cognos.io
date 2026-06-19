@@ -9,6 +9,8 @@ import {
 
 import { EMPTY, catchError, finalize } from 'rxjs';
 
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+
 import {
   CognosButtonComponent,
   CognosDialogSurfaceComponent,
@@ -28,11 +30,12 @@ type ShareState = 'checking' | 'idle' | 'shared';
 @Component({
   selector: 'app-share-conversation-dialog',
   standalone: true,
-  imports: [CognosDialogSurfaceComponent, CognosButtonComponent],
+  imports: [CognosDialogSurfaceComponent, CognosButtonComponent, TranslocoModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <cog-dialog-surface
-      title="Share conversation"
+      *transloco="let t"
+      [title]="t('dialogs.share.title')"
       [footer]="true"
       [width]="560"
       (close)="close()"
@@ -40,26 +43,18 @@ type ShareState = 'checking' | 'idle' | 'shared';
       <div class="share-dialog">
         @switch (state()) {
           @case ('checking') {
-            <p class="share-dialog__status">Checking sharing status…</p>
+            <p class="share-dialog__status">{{ t('dialogs.share.checking') }}</p>
           }
           @case ('idle') {
             <div class="share-dialog__copy">
-              <h3>Create a public link</h3>
-              <p>
-                Only people with the link can see this conversation — but they’ll see
-                every message, past and future, until you stop sharing. The decryption
-                key lives in the link itself and never reaches our servers, so keep it
-                to the people you choose.
-              </p>
+              <h3>{{ t('dialogs.share.createHeading') }}</h3>
+              <p>{{ t('dialogs.share.createBody') }}</p>
             </div>
           }
           @case ('shared') {
             <div class="share-dialog__copy">
-              <h3>Public link</h3>
-              <p>
-                Only people with this link can see this conversation. They’ll see every
-                message — past and future — until you stop sharing.
-              </p>
+              <h3>{{ t('dialogs.share.sharedHeading') }}</h3>
+              <p>{{ t('dialogs.share.sharedBody') }}</p>
             </div>
             <div class="share-dialog__link">
               <input
@@ -68,10 +63,10 @@ type ShareState = 'checking' | 'idle' | 'shared';
                 readonly
                 [value]="shareUrl()"
                 (focus)="selectAll($event)"
-                aria-label="Public share link"
+                [attr.aria-label]="t('dialogs.share.linkAriaLabel')"
               />
               <cog-button appearance="default" (click)="copy()">
-                {{ copied() ? 'Copied' : 'Copy' }}
+                {{ copied() ? t('dialogs.share.copied') : t('dialogs.share.copy') }}
               </cog-button>
             </div>
           }
@@ -79,19 +74,21 @@ type ShareState = 'checking' | 'idle' | 'shared';
       </div>
 
       <div cogDialogFooter>
-        <cog-button appearance="subtle" (click)="close()">Close</cog-button>
+        <cog-button appearance="subtle" (click)="close()">{{
+          t('dialogs.share.close')
+        }}</cog-button>
         @if (state() === 'idle') {
           <cog-button
             appearance="primary"
             [disabled]="working()"
             (click)="createLink()"
           >
-            Create public link
+            {{ t('dialogs.share.createLink') }}
           </cog-button>
         }
         @if (state() === 'shared') {
           <cog-button appearance="danger" [disabled]="working()" (click)="revoke()">
-            Stop sharing
+            {{ t('dialogs.share.stopSharing') }}
           </cog-button>
         }
       </div>
@@ -155,6 +152,7 @@ export class ShareConversationDialogComponent implements OnInit {
   private readonly _conversationService = inject(ConversationService);
   private readonly _publicShareService = inject(PublicShareService);
   private readonly _errorService = inject(ErrorService);
+  private readonly _transloco = inject(TranslocoService);
 
   readonly data: { conversationId: string } = inject(DIALOG_DATA);
 
@@ -207,7 +205,9 @@ export class ShareConversationDialogComponent implements OnInit {
       .pipe(
         finalize(() => this.working.set(false)),
         catchError(() => {
-          this._errorService.alert('Unable to create a public link, please try again.');
+          this._errorService.alert(
+            this._transloco.translate('dialogs.share.createError'),
+          );
           return EMPTY;
         }),
       )
@@ -231,7 +231,9 @@ export class ShareConversationDialogComponent implements OnInit {
       .pipe(
         finalize(() => this.working.set(false)),
         catchError(() => {
-          this._errorService.alert('Unable to stop sharing, please try again.');
+          this._errorService.alert(
+            this._transloco.translate('dialogs.share.revokeError'),
+          );
           return EMPTY;
         }),
       )
@@ -251,7 +253,9 @@ export class ShareConversationDialogComponent implements OnInit {
     navigator.clipboard
       .writeText(url)
       .then(() => this.copied.set(true))
-      .catch(() => this._errorService.alert('Unable to copy the link.'));
+      .catch(() =>
+        this._errorService.alert(this._transloco.translate('dialogs.share.copyError')),
+      );
   }
 
   selectAll(event: FocusEvent): void {

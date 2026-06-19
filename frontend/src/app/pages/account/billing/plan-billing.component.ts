@@ -10,6 +10,8 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+
 import {
   CognosBreadcrumbsComponent,
   CognosButtonComponent,
@@ -54,6 +56,7 @@ interface UsageBar {
     PaddleLogoComponent,
     BillingPastDueBannerComponent,
     SwitchPlanModalComponent,
+    TranslocoModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './plan-billing.component.html',
@@ -66,6 +69,7 @@ export class PlanBillingComponent {
   private readonly _billing = inject(BillingService);
   private readonly _errors = inject(ErrorService);
   private readonly _destroyRef = inject(DestroyRef);
+  private readonly _transloco = inject(TranslocoService);
 
   protected readonly billing = signal<BillingApiResponse | null>(null);
   protected readonly usage = signal<UsageResponse | null>(null);
@@ -74,11 +78,14 @@ export class PlanBillingComponent {
   // Whether the "Switch plan" picker is open (active/cancels-soon subscribers).
   protected readonly switchOpen = signal(false);
 
-  protected readonly breadcrumbs = [
+  protected readonly breadcrumbs = computed(() => [
     { label: 'Cognos' },
-    { label: 'Settings' },
-    { label: 'Plan & billing', current: true },
-  ];
+    { label: this._transloco.translate('billing.plan.breadcrumbs.settings') },
+    {
+      label: this._transloco.translate('billing.plan.breadcrumbs.planBilling'),
+      current: true,
+    },
+  ]);
 
   protected onBreadcrumb(index: number): void {
     if (index === 0) {
@@ -122,7 +129,10 @@ export class PlanBillingComponent {
       amex: 'Amex',
     };
     return (
-      labels[brand] ?? (brand ? brand.charAt(0).toUpperCase() + brand.slice(1) : 'Card')
+      labels[brand] ??
+      (brand
+        ? brand.charAt(0).toUpperCase() + brand.slice(1)
+        : this._transloco.translate('billing.plan.payment.card'))
     );
   }
 
@@ -141,15 +151,30 @@ export class PlanBillingComponent {
     switch (status) {
       case 'paid':
       case 'completed':
-        return { text: 'Paid', tone: 'green' };
+        return {
+          text: this._transloco.translate('billing.plan.invoiceStatus.paid'),
+          tone: 'green',
+        };
       case 'refunded':
-        return { text: 'Refunded', tone: 'red' };
+        return {
+          text: this._transloco.translate('billing.plan.invoiceStatus.refunded'),
+          tone: 'red',
+        };
       case 'past_due':
-        return { text: 'Past due', tone: 'red' };
+        return {
+          text: this._transloco.translate('billing.plan.invoiceStatus.pastDue'),
+          tone: 'red',
+        };
       case 'billed':
-        return { text: 'Due', tone: 'blue' };
+        return {
+          text: this._transloco.translate('billing.plan.invoiceStatus.due'),
+          tone: 'blue',
+        };
       default:
-        return { text: 'Pending', tone: 'neutral' };
+        return {
+          text: this._transloco.translate('billing.plan.invoiceStatus.pending'),
+          tone: 'neutral',
+        };
     }
   }
 
@@ -174,7 +199,9 @@ export class PlanBillingComponent {
   });
 
   protected readonly heading = computed(() =>
-    this.status() === 'inactive' ? 'Previous plan' : 'Current plan',
+    this.status() === 'inactive'
+      ? this._transloco.translate('billing.plan.heading.previous')
+      : this._transloco.translate('billing.plan.heading.current'),
   );
 
   protected readonly badge = computed<{
@@ -183,15 +210,30 @@ export class PlanBillingComponent {
   }>(() => {
     switch (this.status()) {
       case 'active':
-        return { text: 'Active', tone: 'green' };
+        return {
+          text: this._transloco.translate('billing.plan.statusBadge.active'),
+          tone: 'green',
+        };
       case 'past_due':
-        return { text: 'Payment failed', tone: 'red' };
+        return {
+          text: this._transloco.translate('billing.plan.statusBadge.paymentFailed'),
+          tone: 'red',
+        };
       case 'cancels_soon':
-        return { text: 'Cancels soon', tone: 'neutral' };
+        return {
+          text: this._transloco.translate('billing.plan.statusBadge.cancelsSoon'),
+          tone: 'neutral',
+        };
       case 'trial':
-        return { text: 'Trial', tone: 'blue' };
+        return {
+          text: this._transloco.translate('billing.plan.statusBadge.trial'),
+          tone: 'blue',
+        };
       default:
-        return { text: 'Read-only', tone: 'neutral' };
+        return {
+          text: this._transloco.translate('billing.plan.statusBadge.readOnly'),
+          tone: 'neutral',
+        };
     }
   });
 
@@ -218,7 +260,7 @@ export class PlanBillingComponent {
         },
         error: () => {
           this.actionPending.set(false);
-          this._errors.alert('Could not send your refund request. Please try again.');
+          this._errors.alert(this._transloco.translate('billing.toasts.refundError'));
         },
       });
   }
@@ -232,13 +274,13 @@ export class PlanBillingComponent {
       billing.status === 'inactive' ? billing.previous_plan_type : billing.plan_type;
     switch (plan) {
       case 'unlimited':
-        return 'Unlimited';
+        return this._transloco.translate('billing.plan.names.unlimited');
       case 'payg':
-        return 'Pay as you go';
+        return this._transloco.translate('billing.plan.names.payg');
       case 'trial':
-        return 'Trial';
+        return this._transloco.translate('billing.plan.names.trial');
       default:
-        return 'No plan';
+        return this._transloco.translate('billing.plan.names.none');
     }
   });
 
@@ -251,10 +293,18 @@ export class PlanBillingComponent {
       billing.plan_type === 'unlimited' ||
       billing.previous_plan_type === 'unlimited'
     ) {
-      return billing.interval === 'annual' ? "CHF 1'000 / year" : 'CHF 100 / month';
+      return billing.interval === 'annual'
+        ? this._transloco.translate('billing.plan.price.perYear', {
+            price: "CHF 1'000",
+          })
+        : this._transloco.translate('billing.plan.price.perMonth', {
+            price: 'CHF 100',
+          });
     }
     if (billing.plan_type === 'payg' || billing.previous_plan_type === 'payg') {
-      return 'CHF 10 / month min.';
+      return this._transloco.translate('billing.plan.price.perMonthMin', {
+        price: 'CHF 10',
+      });
     }
     return '';
   });
@@ -262,30 +312,32 @@ export class PlanBillingComponent {
   protected readonly blurb = computed(() => {
     switch (this.status()) {
       case 'cancels_soon':
-        return 'Your plan is set to cancel. It keeps working until the end of the period.';
+        return this._transloco.translate('billing.plan.blurb.cancelsSoon');
       case 'inactive':
-        return 'Your chats stay encrypted and readable. Choose a plan to start sending again.';
+        return this._transloco.translate('billing.plan.blurb.inactive');
       case 'trial':
-        return 'You’re on the free trial. Choose a plan to keep sending once it runs out.';
+        return this._transloco.translate('billing.plan.blurb.trial');
       default:
         return this.isPayg()
-          ? 'Buy credits and spend them on any model. A CHF 10 minimum keeps your account active each month.'
-          : 'Unlimited messages across every Cognos model, with priority Swiss-cloud compute.';
+          ? this._transloco.translate('billing.plan.blurb.payg')
+          : this._transloco.translate('billing.plan.blurb.unlimited');
     }
   });
 
   protected readonly dateHeading = computed(() => {
     switch (this.status()) {
       case 'cancels_soon':
-        return 'Access until';
+        return this._transloco.translate('billing.plan.dateHeading.accessUntil');
       case 'inactive':
-        return 'Ended';
+        return this._transloco.translate('billing.plan.dateHeading.ended');
       case 'past_due':
-        return 'Retrying payment';
+        return this._transloco.translate('billing.plan.dateHeading.retrying');
       case 'active':
-        return this.isPayg() ? 'Next minimum charge' : 'Renews';
+        return this.isPayg()
+          ? this._transloco.translate('billing.plan.dateHeading.nextMinCharge')
+          : this._transloco.translate('billing.plan.dateHeading.renews');
       default:
-        return 'Trial';
+        return this._transloco.translate('billing.plan.dateHeading.trial');
     }
   });
 
@@ -361,7 +413,7 @@ export class PlanBillingComponent {
         },
         error: () => {
           this.actionPending.set(false);
-          this._errors.alert('Could not switch your plan. Please try again.');
+          this._errors.alert(this._transloco.translate('billing.toasts.switchError'));
         },
       });
   }
@@ -398,7 +450,7 @@ export class PlanBillingComponent {
       },
       error: () => {
         this.actionPending.set(false);
-        this._errors.alert('Something went wrong. Please try again.');
+        this._errors.alert(this._transloco.translate('billing.toasts.genericError'));
       },
     });
   }

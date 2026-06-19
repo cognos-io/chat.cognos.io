@@ -8,6 +8,8 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import { CognosIconComponent } from '@cognos/ui-angular';
 
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
@@ -20,9 +22,14 @@ import { PersonaService } from '@app/services/persona.service';
 @Component({
   selector: 'app-persona-switcher',
   standalone: true,
-  imports: [CognosIconComponent, PersonaAvatarComponent],
+  imports: [CognosIconComponent, PersonaAvatarComponent, TranslocoModule],
   template: `
-    <div class="persona-switcher" role="listbox" aria-label="Switch persona">
+    <div
+      class="persona-switcher"
+      role="listbox"
+      [attr.aria-label]="t('chat.personas.switchAria')"
+      *transloco="let t"
+    >
       <ul class="persona-switcher__list">
         @for (persona of quickList(); track persona.id) {
           <li>
@@ -55,7 +62,7 @@ import { PersonaService } from '@app/services/persona.service';
 
       <button type="button" class="persona-switcher__manage" (click)="manage()">
         <cog-icon name="settings" [size]="16" />
-        Manage personas…
+        {{ t('chat.personas.manage') }}
       </button>
     </div>
   `,

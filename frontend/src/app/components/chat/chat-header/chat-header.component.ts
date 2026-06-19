@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { Base64 } from 'js-base64';
 
 import {
@@ -52,6 +53,7 @@ type HeaderMenuEntry = CognosMenuItem & { action: HeaderMenuAction };
     CognosIconComponent,
     CognosMenuComponent,
     CognosSecurityModalComponent,
+    TranslocoModule,
   ],
   templateUrl: './chat-header.component.html',
   styleUrl: './chat-header.component.scss',
@@ -66,6 +68,7 @@ export class ChatHeaderComponent {
   private readonly _vaultService = inject(VaultService);
   private readonly _device = inject(DeviceService);
   private readonly _publicShare = inject(PublicShareService);
+  private readonly _transloco = inject(TranslocoService);
 
   readonly conversationService = inject(ConversationService);
 
@@ -105,8 +108,8 @@ export class ChatHeaderComponent {
     }
 
     return this.conversationService.isTemporaryConversation()
-      ? 'Temporary chat'
-      : 'New chat';
+      ? this._transloco.translate('chat.header.temporaryChat')
+      : this._transloco.translate('chat.header.newChat');
   });
 
   // Breadcrumbs only render when a conversation lives inside a project. Projects
@@ -145,26 +148,40 @@ export class ChatHeaderComponent {
       if (this._device.isMobile()) {
         entries.push({
           action: 'share',
-          title: this.isShared() ? 'Shared' : 'Share',
+          title: this.isShared()
+            ? this._transloco.translate('chat.header.shared')
+            : this._transloco.translate('chat.header.share'),
           icon: this.isShared() ? 'link' : 'user-plus',
         });
       }
-      entries.push({ action: 'rename', title: 'Rename', icon: 'pencil' });
+      entries.push({
+        action: 'rename',
+        title: this._transloco.translate('chat.header.rename'),
+        icon: 'pencil',
+      });
       entries.push({
         action: 'export',
-        title: 'Export',
+        title: this._transloco.translate('chat.header.export'),
         icon: 'download',
         disabled: true,
-        trailing: 'Soon',
+        trailing: this._transloco.translate('chat.header.soon'),
       });
     }
 
     if (this._canClearMessages()) {
-      entries.push({ action: 'clear', title: 'Clear messages', icon: 'eraser' });
+      entries.push({
+        action: 'clear',
+        title: this._transloco.translate('chat.header.clearMessages'),
+        icon: 'eraser',
+      });
     }
 
     if (hasConversation) {
-      entries.push({ action: 'delete', title: 'Delete', icon: 'x' });
+      entries.push({
+        action: 'delete',
+        title: this._transloco.translate('chat.header.delete'),
+        icon: 'x',
+      });
     }
 
     return entries;
@@ -295,7 +312,7 @@ export class ChatHeaderComponent {
       .open(ConfirmationDialogComponent, {
         ...cognosDialogOptions,
         data: {
-          message: 'Are you sure you want to delete this conversation?',
+          message: this._transloco.translate('chat.header.deleteConfirm'),
         },
       })
       .closed.subscribe((result) => {

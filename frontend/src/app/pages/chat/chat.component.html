@@ -1,177 +1,183 @@
-<ng-template #navConversations>
-  <div class="chat-shell__conversation-sections">
-    @if (conversationService.hasPinnedConversations()) {
-      <section class="chat-shell__section">
-        <header class="chat-shell__section-heading">Pinned</header>
-        <div class="chat-shell__conversation-list">
-          @for (
-            conversation of conversationService.pinnedConversations();
-            track conversation.record.id
-          ) {
-            <app-conversation-list-item
-              [conversation]="conversation"
-            ></app-conversation-list-item>
-          }
-        </div>
-      </section>
-    }
-
-    @if (conversationService.hasNonPinnedConversations()) {
-      <section class="chat-shell__section">
-        <header class="chat-shell__section-heading">Recent</header>
-        <div class="chat-shell__conversation-list">
-          @for (
-            conversation of conversationService.nonPinnedConversations();
-            track conversation.record.id
-          ) {
-            <app-conversation-list-item
-              [conversation]="conversation"
-            ></app-conversation-list-item>
-          }
-        </div>
-      </section>
-    }
-  </div>
-</ng-template>
-
-<ng-template #navSearch>
-  <div class="chat-shell__search">
-    <cog-text-field
-      ariaLabel="Search conversations"
-      icon="search"
-      placeholder="Search"
-      (valueChange)="onSearchChange($event)"
-    ></cog-text-field>
-    <div class="chat-shell__search-hint">
-      <cog-icon name="laptop" [size]="14" tone="text-subtlest" />
-      <span>Searched on this device</span>
-    </div>
-  </div>
-</ng-template>
-
-<ng-template #navNewChat>
-  @if (billing.isSendingLocked()) {
-    <cog-button
-      appearance="default"
-      [fullWidth]="true"
-      icon="plus"
-      iconAfter="lock"
-      title="Choose a plan to start a new chat"
-      [disabled]="true"
-    >
-      New chat
-    </cog-button>
-  } @else {
-    <cog-button
-      appearance="primary"
-      [fullWidth]="true"
-      icon="plus"
-      (click)="onNewConversation()"
-    >
-      New chat
-    </cog-button>
-  }
-</ng-template>
-
-<ng-template #navActions>
-  <app-sidebar-account-actions (actioned)="closeDrawer()" />
-</ng-template>
-
-<ng-template #chatNav>
-  <div class="chat-shell__nav">
-    <app-sidebar-brand />
-
-    <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
-    <ng-container *ngTemplateOutlet="navSearch"></ng-container>
-    <ng-container *ngTemplateOutlet="navConversations"></ng-container>
-  </div>
-</ng-template>
-
-<ng-template #chatFooter>
-  <ng-container *ngTemplateOutlet="navActions"></ng-container>
-  @if (billing.isTrial()) {
-    <app-trial-credit-card></app-trial-credit-card>
-  }
-  <app-sidebar-profile></app-sidebar-profile>
-</ng-template>
-
-<ng-template #chatPage>
-  <div
-    class="chat-page"
-    [class.chat-page--temporary]="conversationService.isTemporaryConversation()"
-  >
-    @if (!isPersonasRoute()) {
-      <header class="chat-page__header">
-        <app-chat-header />
-      </header>
-
-      @if (billing.isSendingLocked()) {
-        <app-billing-lock-banner class="chat-page__lock-banner" />
-      } @else if (billing.isPastDue()) {
-        <app-billing-past-due-banner class="chat-page__lock-banner" />
+<ng-container *transloco="let t">
+  <ng-template #navConversations>
+    <div class="chat-shell__conversation-sections">
+      @if (conversationService.hasPinnedConversations()) {
+        <section class="chat-shell__section">
+          <header class="chat-shell__section-heading">
+            {{ t('chat.list.pinned') }}
+          </header>
+          <div class="chat-shell__conversation-list">
+            @for (
+              conversation of conversationService.pinnedConversations();
+              track conversation.record.id
+            ) {
+              <app-conversation-list-item
+                [conversation]="conversation"
+              ></app-conversation-list-item>
+            }
+          </div>
+        </section>
       }
-    }
 
-    <main class="chat-page__content" role="main">
-      <router-outlet></router-outlet>
-    </main>
-  </div>
-</ng-template>
-
-@if (device.isMobile()) {
-  <cog-mobile-shell
-    [fillViewport]="true"
-    [padded]="false"
-    title=""
-    drawerTitle="Navigation"
-    [drawerOpen]="drawerOpen()"
-    [drawerFooter]="true"
-    (menuClick)="openDrawer()"
-    (drawerClose)="closeDrawer()"
-  >
-    <app-cognos-logo cogMobileBrand class="chat-shell__logo" palette="dark" />
-
-    <div class="chat-shell__content-host">
-      <ng-container *ngTemplateOutlet="chatPage"></ng-container>
+      @if (conversationService.hasNonPinnedConversations()) {
+        <section class="chat-shell__section">
+          <header class="chat-shell__section-heading">
+            {{ t('chat.list.recent') }}
+          </header>
+          <div class="chat-shell__conversation-list">
+            @for (
+              conversation of conversationService.nonPinnedConversations();
+              track conversation.record.id
+            ) {
+              <app-conversation-list-item
+                [conversation]="conversation"
+              ></app-conversation-list-item>
+            }
+          </div>
+        </section>
+      }
     </div>
+  </ng-template>
 
-    <div cogMobileDrawer class="chat-shell__drawer-body">
+  <ng-template #navSearch>
+    <div class="chat-shell__search">
+      <cog-text-field
+        [ariaLabel]="t('chat.list.searchAria')"
+        icon="search"
+        [placeholder]="t('chat.list.searchPlaceholder')"
+        (valueChange)="onSearchChange($event)"
+      ></cog-text-field>
+      <div class="chat-shell__search-hint">
+        <cog-icon name="laptop" [size]="14" tone="text-subtlest" />
+        <span>{{ t('chat.list.searchedOnDevice') }}</span>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #navNewChat>
+    @if (billing.isSendingLocked()) {
+      <cog-button
+        appearance="default"
+        [fullWidth]="true"
+        icon="plus"
+        iconAfter="lock"
+        [title]="t('chat.list.newChatLockedTitle')"
+        [disabled]="true"
+      >
+        {{ t('chat.list.newChat') }}
+      </cog-button>
+    } @else {
+      <cog-button
+        appearance="primary"
+        [fullWidth]="true"
+        icon="plus"
+        (click)="onNewConversation()"
+      >
+        {{ t('chat.list.newChat') }}
+      </cog-button>
+    }
+  </ng-template>
+
+  <ng-template #navActions>
+    <app-sidebar-account-actions (actioned)="closeDrawer()" />
+  </ng-template>
+
+  <ng-template #chatNav>
+    <div class="chat-shell__nav">
+      <app-sidebar-brand />
+
+      <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
+      <ng-container *ngTemplateOutlet="navSearch"></ng-container>
       <ng-container *ngTemplateOutlet="navConversations"></ng-container>
     </div>
+  </ng-template>
 
-    <div cogMobileDrawerFooter class="chat-shell__drawer-footer">
-      <ng-container *ngTemplateOutlet="navSearch"></ng-container>
-      <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
-      <ng-container *ngTemplateOutlet="chatFooter"></ng-container>
-    </div>
-  </cog-mobile-shell>
-} @else {
-  <cog-desktop-shell
-    [navFooter]="true"
-    [showHeader]="false"
-    [fillViewport]="true"
-    [padded]="false"
-  >
-    <div cogDesktopNav class="chat-shell__nav-host">
-      <ng-container *ngTemplateOutlet="chatNav"></ng-container>
-    </div>
+  <ng-template #chatFooter>
+    <ng-container *ngTemplateOutlet="navActions"></ng-container>
+    @if (billing.isTrial()) {
+      <app-trial-credit-card></app-trial-credit-card>
+    }
+    <app-sidebar-profile></app-sidebar-profile>
+  </ng-template>
 
-    <div cogDesktopNavFooter class="chat-shell__footer-host">
-      <ng-container *ngTemplateOutlet="chatFooter"></ng-container>
-    </div>
+  <ng-template #chatPage>
+    <div
+      class="chat-page"
+      [class.chat-page--temporary]="conversationService.isTemporaryConversation()"
+    >
+      @if (!isPersonasRoute()) {
+        <header class="chat-page__header">
+          <app-chat-header />
+        </header>
 
-    <div class="chat-shell__content-host">
-      <ng-container *ngTemplateOutlet="chatPage"></ng-container>
-    </div>
-  </cog-desktop-shell>
-}
+        @if (billing.isSendingLocked()) {
+          <app-billing-lock-banner class="chat-page__lock-banner" />
+        } @else if (billing.isPastDue()) {
+          <app-billing-past-due-banner class="chat-page__lock-banner" />
+        }
+      }
 
-@if (isRestoringVault()) {
-  <div
-    class="chat-shell__vault-restore"
-    role="status"
-    aria-label="Restoring encrypted session"
-  >
-    <app-loading-indicator></app-loading-indicator>
-  </div>
-}
+      <main class="chat-page__content" role="main">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  </ng-template>
+
+  @if (device.isMobile()) {
+    <cog-mobile-shell
+      [fillViewport]="true"
+      [padded]="false"
+      title=""
+      [drawerTitle]="t('chat.conversation.drawerTitle')"
+      [drawerOpen]="drawerOpen()"
+      [drawerFooter]="true"
+      (menuClick)="openDrawer()"
+      (drawerClose)="closeDrawer()"
+    >
+      <app-cognos-logo cogMobileBrand class="chat-shell__logo" palette="dark" />
+
+      <div class="chat-shell__content-host">
+        <ng-container *ngTemplateOutlet="chatPage"></ng-container>
+      </div>
+
+      <div cogMobileDrawer class="chat-shell__drawer-body">
+        <ng-container *ngTemplateOutlet="navConversations"></ng-container>
+      </div>
+
+      <div cogMobileDrawerFooter class="chat-shell__drawer-footer">
+        <ng-container *ngTemplateOutlet="navSearch"></ng-container>
+        <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
+        <ng-container *ngTemplateOutlet="chatFooter"></ng-container>
+      </div>
+    </cog-mobile-shell>
+  } @else {
+    <cog-desktop-shell
+      [navFooter]="true"
+      [showHeader]="false"
+      [fillViewport]="true"
+      [padded]="false"
+    >
+      <div cogDesktopNav class="chat-shell__nav-host">
+        <ng-container *ngTemplateOutlet="chatNav"></ng-container>
+      </div>
+
+      <div cogDesktopNavFooter class="chat-shell__footer-host">
+        <ng-container *ngTemplateOutlet="chatFooter"></ng-container>
+      </div>
+
+      <div class="chat-shell__content-host">
+        <ng-container *ngTemplateOutlet="chatPage"></ng-container>
+      </div>
+    </cog-desktop-shell>
+  }
+
+  @if (isRestoringVault()) {
+    <div
+      class="chat-shell__vault-restore"
+      role="status"
+      [attr.aria-label]="t('chat.conversation.restoringSession')"
+    >
+      <app-loading-indicator></app-loading-indicator>
+    </div>
+  }
+</ng-container>

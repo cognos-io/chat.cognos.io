@@ -6,6 +6,8 @@ import {
   signal,
 } from '@angular/core';
 
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+
 import { CognosIconComponent, CognosLozengeComponent } from '@cognos/ui-angular';
 import type { CognosIconName } from '@cognos/ui/icons';
 
@@ -15,51 +17,32 @@ import { ModelService } from '@app/services/model.service';
 
 interface TierOption {
   id: PrivacyTier;
-  name: string;
   icon: CognosIconName;
-  blurb: string;
-  note: string;
 }
 
 // Ordered most-restrictive first, matching how residency is presented to the
-// user (Switzerland → Europe → Global).
+// user (Switzerland → Europe → Global). The localised name/blurb/note live in
+// the catalog under `account.dataProcessing.tiers.<id>.*`.
 const TIER_OPTIONS: TierOption[] = [
-  {
-    id: 'ch_only',
-    name: 'Switzerland only',
-    icon: 'shield-check',
-    blurb: 'Processed only on Swiss soil — on-prem and Swiss cloud.',
-    note: 'Strictest residency',
-  },
-  {
-    id: 'eu',
-    name: 'Europe + Switzerland + UK',
-    icon: 'landmark',
-    blurb: 'Processed within the EU/EEA, the United Kingdom and Switzerland.',
-    note: 'Adequacy-aligned',
-  },
-  {
-    id: 'global',
-    name: 'Global',
-    icon: 'cloud',
-    blurb: 'Processed in vetted data centres worldwide, routed to the nearest region.',
-    note: 'Every model',
-  },
+  { id: 'ch_only', icon: 'shield-check' },
+  { id: 'eu', icon: 'landmark' },
+  { id: 'global', icon: 'cloud' },
 ];
 
 const TIER_RANK: Record<PrivacyTier, number> = { ch_only: 0, eu: 1, global: 2 };
 
-const TIER_BADGE: Record<PrivacyTier, string> = {
-  ch_only: 'Switzerland only',
-  eu: 'Europe + UK',
-  global: 'Global',
+// i18n key suffixes for the tier residency badge.
+const TIER_BADGE_KEY: Record<PrivacyTier, string> = {
+  ch_only: 'ch_only',
+  eu: 'eu',
+  global: 'global',
 };
 
-// Short residency label shown on each model row.
-const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
-  ch_only: 'Swiss',
-  eu: 'EU',
-  global: 'Global',
+// i18n key suffixes for the short residency label on each model row.
+const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
+  ch_only: 'ch_only',
+  eu: 'eu',
+  global: 'global',
 };
 
 // DataProcessingComponent lets the user choose where their messages may be
@@ -69,22 +52,24 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
 @Component({
   selector: 'app-data-processing',
   standalone: true,
-  imports: [CognosIconComponent, CognosLozengeComponent],
+  imports: [CognosIconComponent, CognosLozengeComponent, TranslocoModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="data-processing" aria-labelledby="data-processing-heading">
+    <section
+      *transloco="let t"
+      class="data-processing"
+      aria-labelledby="data-processing-heading"
+    >
       <header class="data-processing__head">
         <span class="data-processing__head-icon">
           <cog-icon name="server" [size]="18" tone="current" />
         </span>
         <div class="data-processing__head-text">
           <h2 id="data-processing-heading" class="data-processing__title">
-            Data processing
+            {{ t('account.dataProcessing.title') }}
           </h2>
           <p class="data-processing__subtitle">
-            Choose where your messages may be processed. This is the only thing that
-            changes which models you can use — it has no effect on how your chats are
-            stored: your history is always saved encrypted, never as plaintext.
+            {{ t('account.dataProcessing.subtitle') }}
           </p>
         </div>
         <cog-lozenge tone="green">{{ currentBadge() }}</cog-lozenge>
@@ -93,7 +78,7 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
       <div
         class="data-processing__tiers"
         role="radiogroup"
-        aria-label="Data processing region"
+        [attr.aria-label]="t('account.dataProcessing.regionAria')"
       >
         @for (tier of tiers; track tier.id) {
           <button
@@ -120,13 +105,21 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
                 <span class="data-processing__tier-radio" aria-hidden="true"></span>
               }
             </span>
-            <span class="data-processing__tier-name">{{ tier.name }}</span>
-            <span class="data-processing__tier-blurb">{{ tier.blurb }}</span>
+            <span class="data-processing__tier-name">{{
+              t('account.dataProcessing.tiers.' + tier.id + '.name')
+            }}</span>
+            <span class="data-processing__tier-blurb">{{
+              t('account.dataProcessing.tiers.' + tier.id + '.blurb')
+            }}</span>
             <span class="data-processing__tier-foot">
-              <cog-lozenge tone="neutral"
-                >{{ modelCountForTier(tier.id) }} models</cog-lozenge
-              >
-              <span class="data-processing__tier-note">{{ tier.note }}</span>
+              <cog-lozenge tone="neutral">{{
+                t('account.dataProcessing.modelCount', {
+                  count: modelCountForTier(tier.id),
+                })
+              }}</cog-lozenge>
+              <span class="data-processing__tier-note">{{
+                t('account.dataProcessing.tiers.' + tier.id + '.note')
+              }}</span>
             </span>
           </button>
         }
@@ -136,14 +129,10 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
         <cog-icon name="shield-check" [size]="18" tone="success" />
         <div>
           <p class="data-processing__retention-title">
-            No plaintext retention — every region
+            {{ t('account.dataProcessing.retentionTitle') }}
           </p>
           <p class="data-processing__retention-body">
-            Approved providers process your messages under no-retention, no-training
-            terms, and Cognos never stores plaintext prompts or responses — your chat
-            history is saved encrypted. This setting only controls the jurisdiction your
-            messages pass through while a model answers, and which models that makes
-            available.
+            {{ t('account.dataProcessing.retentionBody') }}
           </p>
         </div>
       </div>
@@ -151,10 +140,13 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
       <section class="models" aria-labelledby="models-heading">
         <header class="models__head">
           <h3 id="models-heading" class="models__title">
-            Models available
-            <cog-lozenge tone="neutral"
-              >{{ eligibleCount() }} of {{ totalCount() }}</cog-lozenge
-            >
+            {{ t('account.dataProcessing.modelsAvailable') }}
+            <cog-lozenge tone="neutral">{{
+              t('account.dataProcessing.modelsOf', {
+                eligible: eligibleCount(),
+                total: totalCount(),
+              })
+            }}</cog-lozenge>
           </h3>
           <span class="models__region">{{ currentBadge() }}</span>
         </header>
@@ -183,13 +175,18 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
                   @if (hostingLabel(model)) {
                     <span class="models__location">{{ hostingLabel(model) }}</span>
                   }
-                  <span class="models__context"
-                    >{{ formatContext(model.inputContextLength) }} context</span
-                  >
+                  <span class="models__context">{{
+                    t('account.dataProcessing.context', {
+                      size: formatContext(model.inputContextLength),
+                    })
+                  }}</span>
                 } @else {
                   <span class="models__locked">
                     <cog-icon name="lock" [size]="12" tone="current" />
-                    {{ model.ineligibilityReason || 'Needs broader region' }}
+                    {{
+                      model.ineligibilityReason ||
+                        t('account.dataProcessing.needsBroaderRegion')
+                    }}
                   </span>
                 }
               </span>
@@ -200,9 +197,11 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
         @if (lockedCount() > 0) {
           <p class="models__footnote">
             <cog-icon name="lock" [size]="14" tone="current" />
-            {{ lockedCount() }} more
-            {{ lockedCount() === 1 ? 'model unlocks' : 'models unlock' }} if you widen
-            your processing region — still no-retention providers, still encrypted.
+            {{
+              lockedCount() === 1
+                ? t('account.dataProcessing.footnoteOne', { count: lockedCount() })
+                : t('account.dataProcessing.footnoteMany', { count: lockedCount() })
+            }}
           </p>
         }
       </section>
@@ -517,12 +516,17 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
 export class DataProcessingComponent {
   private readonly _models = inject(ModelService);
   private readonly _auth = inject(AuthService);
+  private readonly _transloco = inject(TranslocoService);
 
   protected readonly tiers = TIER_OPTIONS;
   protected readonly saving = signal(false);
 
   protected readonly currentTier = this._models.privacyTier;
-  protected readonly currentBadge = computed(() => TIER_BADGE[this.currentTier()]);
+  protected readonly currentBadge = computed(() =>
+    this._transloco.translate(
+      'account.dataProcessing.badge.' + TIER_BADGE_KEY[this.currentTier()],
+    ),
+  );
 
   private readonly _modelList = this._models.modelList;
   protected readonly totalCount = computed(() => this._modelList().length);
@@ -539,7 +543,10 @@ export class DataProcessingComponent {
   );
 
   protected regionBadge(model: Model): string {
-    return MODEL_REGION_BADGE[model.privacyTier] ?? model.privacyTier;
+    const key = MODEL_REGION_BADGE_KEY[model.privacyTier];
+    return key
+      ? this._transloco.translate('account.dataProcessing.regionBadge.' + key)
+      : model.privacyTier;
   }
 
   protected hostingLabel(model: Model): string {

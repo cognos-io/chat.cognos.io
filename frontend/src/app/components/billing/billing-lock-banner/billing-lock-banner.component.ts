@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+
 import {
   CognosButtonComponent,
   CognosSectionMessageComponent,
@@ -14,15 +16,21 @@ import { BillingService } from '@app/services/billing.service';
 @Component({
   selector: 'app-billing-lock-banner',
   standalone: true,
-  imports: [CognosSectionMessageComponent, CognosButtonComponent],
+  imports: [CognosSectionMessageComponent, CognosButtonComponent, TranslocoModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <cog-section-message tone="info" icon="lock" [title]="title()">
-      {{ body() }}
-      <cog-button cogSectionMessageAction appearance="primary" (click)="goToBilling()">
-        Choose a plan
-      </cog-button>
-    </cog-section-message>
+    <ng-container *transloco="let t">
+      <cog-section-message tone="info" icon="lock" [title]="title()">
+        {{ body() }}
+        <cog-button
+          cogSectionMessageAction
+          appearance="primary"
+          (click)="goToBilling()"
+        >
+          {{ t('billing.lock.choosePlan') }}
+        </cog-button>
+      </cog-section-message>
+    </ng-container>
   `,
   styles: `
     :host {
@@ -32,17 +40,17 @@ import { BillingService } from '@app/services/billing.service';
 })
 export class BillingLockBannerComponent {
   private readonly _router = inject(Router);
+  private readonly _transloco = inject(TranslocoService);
   public readonly billing = inject(BillingService);
 
   protected readonly title = computed(() =>
     this.billing.isTrialUsedUp()
-      ? 'Your trial credits are used up'
-      : 'Your plan is inactive',
+      ? this._transloco.translate('billing.lock.titleTrialUsedUp')
+      : this._transloco.translate('billing.lock.titleInactive'),
   );
 
-  protected readonly body = computed(
-    () =>
-      'Your chats stay encrypted and readable. Choose a plan to start sending again.',
+  protected readonly body = computed(() =>
+    this._transloco.translate('billing.lock.body'),
   );
 
   protected goToBilling(): void {

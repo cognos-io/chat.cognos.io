@@ -1,22 +1,28 @@
 <div
+  *transloco="let t"
   class="personas-page"
   [class.is-editing]="editing() !== null"
   [class.is-mobile]="isMobile()"
 >
   <header class="personas-page__header">
-    <nav class="personas-page__breadcrumb" aria-label="Breadcrumb">
+    <nav
+      class="personas-page__breadcrumb"
+      [attr.aria-label]="t('personas.page.breadcrumb')"
+    >
       <a routerLink="/">Cognos</a>
       <cog-icon name="chevron-right" [size]="14" />
-      <span aria-current="page">Personas</span>
+      <span aria-current="page">{{ t('personas.page.title') }}</span>
     </nav>
 
     <div class="personas-page__title-row">
       <app-persona-avatar icon="sparkles" color="green" [size]="44" />
       <div class="personas-page__title-text">
-        <h1 class="personas-page__title">Personas</h1>
+        <h1 class="personas-page__title">{{ t('personas.page.title') }}</h1>
         <p class="personas-page__subtitle">
-          How Cognos responds — switch any time
-          <span class="personas-page__badge">Encrypted</span>
+          {{ t('personas.page.subtitle') }}
+          <span class="personas-page__badge">{{
+            t('personas.page.encryptedBadge')
+          }}</span>
         </p>
       </div>
       <cog-button
@@ -25,7 +31,7 @@
         [fullWidth]="isMobile()"
         (click)="openNew()"
       >
-        New persona
+        {{ t('personas.page.newPersona') }}
       </cog-button>
     </div>
   </header>
@@ -35,20 +41,24 @@
       <cog-icon name="search" [size]="16" />
       <input
         type="search"
-        placeholder="Search personas"
-        aria-label="Search personas"
+        [placeholder]="t('personas.page.searchPlaceholder')"
+        [attr.aria-label]="t('personas.page.searchPlaceholder')"
         [ngModel]="query()"
         (ngModelChange)="query.set($event)"
       />
     </label>
 
-    <div class="personas-page__view-toggle" role="group" aria-label="View mode">
+    <div
+      class="personas-page__view-toggle"
+      role="group"
+      [attr.aria-label]="t('personas.page.viewMode')"
+    >
       <button
         type="button"
         class="personas-page__view-button"
         [class.is-active]="viewMode() === 'grid'"
         [attr.aria-pressed]="viewMode() === 'grid'"
-        title="Grid view"
+        [title]="t('personas.page.gridView')"
         (click)="setViewMode('grid')"
       >
         <cog-icon name="layout-grid" [size]="16" />
@@ -58,7 +68,7 @@
         class="personas-page__view-button"
         [class.is-active]="viewMode() === 'list'"
         [attr.aria-pressed]="viewMode() === 'list'"
-        title="List view"
+        [title]="t('personas.page.listView')"
         (click)="setViewMode('list')"
       >
         <cog-icon name="list" [size]="16" />
@@ -87,7 +97,7 @@
       @if (myPersonas().length > 0 || showNewPersonaCard()) {
         <section class="personas-page__section">
           <h2 class="personas-page__section-heading">
-            My personas <span>· {{ myPersonas().length }}</span>
+            {{ t('personas.page.myPersonas') }} <span>· {{ myPersonas().length }}</span>
           </h2>
           <div class="personas-page__grid" [class.is-list]="viewMode() === 'list'">
             @for (persona of myPersonas(); track persona.id) {
@@ -103,9 +113,11 @@
                 (click)="openNew()"
               >
                 <cog-icon name="plus" [size]="22" />
-                <span class="persona-card--new__label">New persona</span>
+                <span class="persona-card--new__label">{{
+                  t('personas.page.newPersona')
+                }}</span>
                 <span class="persona-card--new__hint">
-                  Write your own instructions — encrypted in your browser.
+                  {{ t('personas.page.newPersonaHint') }}
                 </span>
               </button>
             }
@@ -116,7 +128,9 @@
       @if (
         sections().length === 0 && myPersonas().length === 0 && !showNewPersonaCard()
       ) {
-        <p class="personas-page__empty">No personas match “{{ query() }}”.</p>
+        <p class="personas-page__empty">
+          {{ t('personas.page.empty', { query: query() }) }}
+        </p>
       }
     </div>
 
@@ -135,6 +149,7 @@
 
 <ng-template #card let-persona>
   <button
+    *transloco="let t"
     type="button"
     class="persona-card"
     [class.is-active]="isActive(persona)"
@@ -148,17 +163,19 @@
         <span class="persona-card__name">{{ persona.name }}</span>
         <span class="persona-card__badges">
           @if (isActive(persona)) {
-            <span class="persona-card__badge persona-card__badge--active">Active</span>
+            <span class="persona-card__badge persona-card__badge--active">{{
+              t('personas.page.badges.active')
+            }}</span>
           }
           @if (isDefault(persona)) {
-            <span class="persona-card__badge persona-card__badge--default"
-              >Default</span
-            >
+            <span class="persona-card__badge persona-card__badge--default">{{
+              t('personas.page.badges.default')
+            }}</span>
           }
           @if (persona.source === 'cognos') {
-            <span class="persona-card__badge persona-card__badge--official"
-              >Official</span
-            >
+            <span class="persona-card__badge persona-card__badge--official">{{
+              t('personas.page.badges.official')
+            }}</span>
           }
         </span>
       </span>
@@ -169,9 +186,15 @@
           role="button"
           tabindex="0"
           [attr.aria-label]="
-            persona.source === 'cognos' ? 'View persona' : 'Edit persona'
+            persona.source === 'cognos'
+              ? t('personas.page.actions.viewPersona')
+              : t('personas.page.actions.editPersona')
           "
-          [title]="persona.source === 'cognos' ? 'View' : 'Edit'"
+          [title]="
+            persona.source === 'cognos'
+              ? t('personas.page.actions.view')
+              : t('personas.page.actions.edit')
+          "
           (click)="openEditor(persona, $event)"
           (keydown.enter)="openEditor(persona, $event)"
         >
@@ -183,10 +206,16 @@
           role="button"
           tabindex="0"
           [attr.aria-label]="
-            isDefault(persona) ? 'Default persona' : 'Set as default persona'
+            isDefault(persona)
+              ? t('personas.page.actions.defaultPersona')
+              : t('personas.page.actions.setDefaultPersona')
           "
           [attr.aria-pressed]="isDefault(persona)"
-          [title]="isDefault(persona) ? 'Default for new chats' : 'Set as default'"
+          [title]="
+            isDefault(persona)
+              ? t('personas.page.actions.defaultForNewChats')
+              : t('personas.page.actions.setDefault')
+          "
           (click)="setDefault(persona, $event)"
           (keydown.enter)="setDefault(persona, $event)"
         >
@@ -197,9 +226,17 @@
           [class.is-pinned]="isPinned(persona)"
           role="button"
           tabindex="0"
-          [attr.aria-label]="isPinned(persona) ? 'Unpin persona' : 'Pin persona'"
+          [attr.aria-label]="
+            isPinned(persona)
+              ? t('personas.page.actions.unpinPersona')
+              : t('personas.page.actions.pinPersona')
+          "
           [attr.aria-pressed]="isPinned(persona)"
-          [title]="isPinned(persona) ? 'Unpin' : 'Pin'"
+          [title]="
+            isPinned(persona)
+              ? t('personas.page.actions.unpin')
+              : t('personas.page.actions.pin')
+          "
           (click)="togglePin(persona, $event)"
           (keydown.enter)="togglePin(persona, $event)"
         >

@@ -2,6 +2,8 @@ import { DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import {
   CognosButtonComponent,
   CognosDialogSurfaceComponent,
@@ -12,53 +14,60 @@ import { ConversationService } from '@app/services/conversation.service';
 import { ConversationsExpiryDurationOptions } from '@app/types/pocketbase-types';
 
 export const expiringDurations = [
-  { value: '', label: 'Off' },
-  { value: '24h', label: '24 hours' },
-  { value: '168h', label: '7 days' },
-  { value: '2160h', label: '90 days' },
-  { value: '4320h', label: '180 days' },
+  { value: '', key: 'off', label: 'Off' },
+  { value: '24h', key: 'hours24', label: '24 hours' },
+  { value: '168h', key: 'days7', label: '7 days' },
+  { value: '2160h', key: 'days90', label: '90 days' },
+  { value: '4320h', key: 'days180', label: '180 days' },
 ];
 
 @Component({
   selector: 'app-temporary-message-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule, CognosDialogSurfaceComponent, CognosButtonComponent],
+  imports: [
+    ReactiveFormsModule,
+    CognosDialogSurfaceComponent,
+    CognosButtonComponent,
+    TranslocoModule,
+  ],
   template: `
-    <cog-dialog-surface
-      title="Disappearing messages"
-      [footer]="true"
-      [width]="560"
-      (close)="close()"
-    >
-      <div class="temporary-message-dialog">
-        <div class="temporary-message-dialog__copy">
-          <p>Make your messages disappear.</p>
-          <p>
-            For more privacy all new messages will disappear from this chat after the
-            selected duration below. You can also manually keep a message before it
-            expires.
-          </p>
-          <p>This will not affect existing messages and can be disabled at any time.</p>
+    <ng-container *transloco="let t">
+      <cog-dialog-surface
+        [title]="t('chat.temporary.title')"
+        [footer]="true"
+        [width]="560"
+        (close)="close()"
+      >
+        <div class="temporary-message-dialog">
+          <div class="temporary-message-dialog__copy">
+            <p>{{ t('chat.temporary.lead') }}</p>
+            <p>{{ t('chat.temporary.body') }}</p>
+            <p>{{ t('chat.temporary.note') }}</p>
+          </div>
+
+          <div class="temporary-message-dialog__options" role="radiogroup">
+            @for (option of expiringDurations; track option.label) {
+              <button
+                [class]="optionClass(option.value)"
+                type="button"
+                (click)="expirationDuration.setValue(option.value)"
+              >
+                {{ t('chat.temporary.durations.' + option.key) }}
+              </button>
+            }
+          </div>
         </div>
 
-        <div class="temporary-message-dialog__options" role="radiogroup">
-          @for (option of expiringDurations; track option.label) {
-            <button
-              [class]="optionClass(option.value)"
-              type="button"
-              (click)="expirationDuration.setValue(option.value)"
-            >
-              {{ option.label }}
-            </button>
-          }
+        <div cogDialogFooter>
+          <cog-button appearance="subtle" (click)="close()">{{
+            t('common.cancel')
+          }}</cog-button>
+          <cog-button appearance="primary" (click)="onSave()">{{
+            t('chat.temporary.save')
+          }}</cog-button>
         </div>
-      </div>
-
-      <div cogDialogFooter>
-        <cog-button appearance="subtle" (click)="close()">Cancel</cog-button>
-        <cog-button appearance="primary" (click)="onSave()">Save</cog-button>
-      </div>
-    </cog-dialog-surface>
+      </cog-dialog-surface>
+    </ng-container>
   `,
   styles: `
     .temporary-message-dialog {

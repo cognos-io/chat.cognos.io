@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import { CognosIconComponent } from '@cognos/ui-angular';
 
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
@@ -12,16 +14,21 @@ import { PersonaService } from '@app/services/persona.service';
 @Component({
   selector: 'app-persona-chips',
   standalone: true,
-  imports: [CognosIconComponent, PersonaAvatarComponent],
+  imports: [CognosIconComponent, PersonaAvatarComponent, TranslocoModule],
   template: `
-    <div class="persona-chips" role="group" aria-label="Quick persona switch">
+    <div
+      class="persona-chips"
+      role="group"
+      [attr.aria-label]="t('chat.personas.quickSwitchAria')"
+      *transloco="let t"
+    >
       <button
         type="button"
         class="persona-chips__chip persona-chips__chip--all"
         (click)="openAll()"
       >
         <cog-icon name="layout-grid" [size]="14" />
-        <span class="persona-chips__name">All</span>
+        <span class="persona-chips__name">{{ t('chat.personas.all') }}</span>
       </button>
 
       @for (persona of chips(); track persona.id) {

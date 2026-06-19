@@ -16,6 +16,7 @@ import {
 
 import { ReplaySubject, debounceTime, fromEvent, takeUntil } from 'rxjs';
 
+import { TranslocoModule } from '@jsverse/transloco';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 import {
@@ -46,11 +47,13 @@ import {
     CognosToggleComponent,
     CognosButtonComponent,
     CognosSectionMessageComponent,
+    TranslocoModule,
   ],
   template: `
     <div
       #wrapper
       class="message-list"
+      *transloco="let t"
       infiniteScroll
       (scrolledUp)="onScrollUp()"
       [scrollWindow]="false"
@@ -69,13 +72,15 @@ import {
 
           <div class="message-list__empty">
             @if (conversationService.isTemporaryConversation()) {
-              <cog-section-message title="Incognito mode enabled" tone="success">
-                Your messages will not be saved. If you leave this conversation or clear
-                it, you will not be able to recover them.
+              <cog-section-message
+                [title]="t('chat.empty.incognitoTitle')"
+                tone="success"
+              >
+                {{ t('chat.empty.incognitoBody') }}
               </cog-section-message>
             } @else {
-              <cog-section-message title="Secure AI messaging" tone="info">
-                Get started by sending a message using the composer below.
+              <cog-section-message [title]="t('chat.empty.secureTitle')" tone="info">
+                {{ t('chat.empty.secureBody') }}
               </cog-section-message>
             }
           </div>
@@ -88,11 +93,11 @@ import {
                 type="button"
                 (click)="onDisappearingMessages()"
               >
-                Disappearing messages:
+                {{ t('chat.empty.disappearingMessages') }}
                 @if (expirationDelayValue()) {
                   {{ expirationDelayValue() }}
                 } @else {
-                  Off
+                  {{ t('chat.empty.disappearingOff') }}
                 }
               </cog-button>
             }
@@ -100,10 +105,10 @@ import {
             <span class="message-list__toggle">
               <cog-toggle
                 [checked]="conversationService.isTemporaryConversation()"
-                label="Temporary chat"
+                [label]="t('chat.empty.temporaryChat')"
                 (checkedChange)="onToggleTemporaryChat($event)"
               ></cog-toggle>
-              <span>Temporary chat</span>
+              <span>{{ t('chat.empty.temporaryChat') }}</span>
             </span>
           </div>
         </div>
@@ -125,8 +130,7 @@ import {
             icon="rotate-cw"
             (click)="onEditConversation()"
           >
-            New messages in this conversation will disappear after
-            {{ expirationDelayValue() }}
+            {{ t('chat.message.disappearAfter', { duration: expirationDelayValue() }) }}
           </cog-button>
         </div>
       }

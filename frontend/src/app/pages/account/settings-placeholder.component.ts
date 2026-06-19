@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import { CognosBreadcrumbsComponent } from '@cognos/ui-angular';
 
 // SettingsPlaceholderComponent renders a "coming soon" settings page. The page
@@ -9,23 +11,25 @@ import { CognosBreadcrumbsComponent } from '@cognos/ui-angular';
 @Component({
   selector: 'app-settings-placeholder',
   standalone: true,
-  imports: [CognosBreadcrumbsComponent],
+  imports: [CognosBreadcrumbsComponent, TranslocoModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="placeholder__header">
-      <cog-breadcrumbs
-        [items]="[
-          { label: 'Cognos' },
-          { label: 'Settings' },
-          { label: title, current: true },
-        ]"
-      />
-      <h1 class="placeholder__title">{{ title }}</h1>
-    </header>
+    <ng-container *transloco="let t">
+      <header class="placeholder__header">
+        <cog-breadcrumbs
+          [items]="[
+            { label: 'Cognos' },
+            { label: t('settings.title') },
+            { label: title, current: true },
+          ]"
+        />
+        <h1 class="placeholder__title">{{ title }}</h1>
+      </header>
 
-    <section class="placeholder__card">
-      <p>This section is coming soon.</p>
-    </section>
+      <section class="placeholder__card">
+        <p>{{ t('settings.placeholder.comingSoon') }}</p>
+      </section>
+    </ng-container>
   `,
   styles: `
     :host {

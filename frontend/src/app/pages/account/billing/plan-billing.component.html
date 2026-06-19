@@ -1,304 +1,325 @@
-<header class="pb__header">
-  <cog-breadcrumbs [items]="breadcrumbs" (itemSelect)="onBreadcrumb($event)" />
-  <div class="pb__titlebar">
-    <h1 class="pb__title">Plan &amp; billing</h1>
-    <span class="pb__synced">
-      Synced with <app-paddle-logo />
-      <span class="pb__synced-name">Paddle</span>
-    </span>
-  </div>
-</header>
-
-@if (billing(); as billing) {
-  <!-- Current plan -->
-  <section class="pb__card pb__plan">
-    <div class="pb__plan-main">
-      <div class="pb__eyebrow">
-        {{ heading() }}
-        <cog-lozenge [tone]="badge().tone">{{ badge().text }}</cog-lozenge>
-      </div>
-      <h2 class="pb__plan-name">
-        {{ planName() }}
-        @if (priceLabel()) {
-          <span class="pb__plan-price">{{ priceLabel() }}</span>
-        }
-      </h2>
-      <p class="pb__plan-blurb">{{ blurb() }}</p>
-
-      @if (isPastDue()) {
-        <app-billing-past-due-banner />
-      }
-
-      <div class="pb__actions">
-        @switch (status()) {
-          @case ('past_due') {
-            <cog-button appearance="primary" (click)="openPortal('payment')">
-              Update card
-            </cog-button>
-            <cog-button appearance="default" (click)="openSwitch()"
-              >Switch plan</cog-button
-            >
-            <cog-button
-              appearance="subtle"
-              [disabled]="actionPending()"
-              (click)="cancel()"
-            >
-              Cancel plan
-            </cog-button>
-          }
-          @case ('cancels_soon') {
-            <cog-button
-              appearance="primary"
-              icon="rotate-cw"
-              [disabled]="actionPending()"
-              (click)="resume()"
-            >
-              Resume plan
-            </cog-button>
-            <cog-button appearance="default" (click)="openSwitch()"
-              >Switch plan</cog-button
-            >
-          }
-          @case ('active') {
-            <cog-button appearance="primary" (click)="openSwitch()"
-              >Switch plan</cog-button
-            >
-            <cog-button
-              appearance="subtle"
-              [disabled]="actionPending()"
-              (click)="cancel()"
-            >
-              Cancel plan
-            </cog-button>
-          }
-          @default {
-            <cog-button appearance="primary" icon="chevron-right" (click)="goToPlans()">
-              Choose a plan
-            </cog-button>
-          }
-        }
-      </div>
-
-      <app-switch-plan-modal
-        [open]="switchOpen()"
-        [currentPlan]="billing.plan_type"
-        [currentInterval]="billing.interval"
-        [pending]="actionPending()"
-        (closed)="closeSwitch()"
-        (switchPlan)="changeTo($event)"
-      />
+<ng-container *transloco="let t">
+  <header class="pb__header">
+    <cog-breadcrumbs [items]="breadcrumbs()" (itemSelect)="onBreadcrumb($event)" />
+    <div class="pb__titlebar">
+      <h1 class="pb__title">{{ t('billing.plan.title') }}</h1>
+      <span class="pb__synced">
+        {{ t('billing.plan.syncedWith') }} <app-paddle-logo />
+        <span class="pb__synced-name">Paddle</span>
+      </span>
     </div>
+  </header>
 
-    <aside class="pb__aside">
-      <div class="pb__aside-heading">
-        <cog-icon name="calendar" [size]="14" tone="text-subtlest" />
-        {{ dateHeading() }}
-      </div>
-      @if (status() === 'trial') {
-        <div class="pb__aside-value">CHF {{ billing.balance_chf.toFixed(2) }}</div>
-        <div class="pb__aside-caption">trial credit left</div>
-      } @else if (billing.cycle_end_at) {
-        <div class="pb__aside-value">{{ billing.cycle_end_at | date: 'd MMMM y' }}</div>
-        @switch (status()) {
-          @case ('active') {
-            <div class="pb__aside-caption">{{ priceLabel() }}</div>
-            @if (refundEligible()) {
-              <div class="pb__guarantee">
-                <cog-icon name="shield-check" [size]="14" tone="text-subtle" />
-                60-day money-back guarantee
-              </div>
-              @if (refundRequested()) {
-                <p class="pb__aside-note">Refund request sent — we’ll be in touch.</p>
-              } @else {
-                <button
-                  type="button"
-                  class="pb__refund-link"
-                  [disabled]="actionPending()"
-                  (click)="requestRefund()"
-                >
-                  Request a refund
-                </button>
-              }
+  @if (billing(); as billing) {
+    <!-- Current plan -->
+    <section class="pb__card pb__plan">
+      <div class="pb__plan-main">
+        <div class="pb__eyebrow">
+          {{ heading() }}
+          <cog-lozenge [tone]="badge().tone">{{ badge().text }}</cog-lozenge>
+        </div>
+        <h2 class="pb__plan-name">
+          {{ planName() }}
+          @if (priceLabel()) {
+            <span class="pb__plan-price">{{ priceLabel() }}</span>
+          }
+        </h2>
+        <p class="pb__plan-blurb">{{ blurb() }}</p>
+
+        @if (isPastDue()) {
+          <app-billing-past-due-banner />
+        }
+
+        <div class="pb__actions">
+          @switch (status()) {
+            @case ('past_due') {
+              <cog-button appearance="primary" (click)="openPortal('payment')">
+                {{ t('billing.plan.actions.updateCard') }}
+              </cog-button>
+              <cog-button appearance="default" (click)="openSwitch()">{{
+                t('billing.plan.actions.switchPlan')
+              }}</cog-button>
+              <cog-button
+                appearance="subtle"
+                [disabled]="actionPending()"
+                (click)="cancel()"
+              >
+                {{ t('billing.plan.actions.cancelPlan') }}
+              </cog-button>
             }
-          }
-          @case ('cancels_soon') {
-            <p class="pb__aside-note">
-              Stays fully active until then. Resume any time before to keep it going.
-            </p>
-          }
-          @case ('inactive') {
-            <div class="pb__aside-caption">Sending paused · chats readable</div>
-          }
-        }
-      }
-    </aside>
-  </section>
-
-  <div class="pb__grid">
-    <!-- Usage -->
-    <section class="pb__card pb__usage">
-      <header class="pb__card-head">
-        <span class="pb__card-title">
-          <cog-icon name="gauge" [size]="18" tone="text-subtle" />
-          Usage this period
-        </span>
-        @if (!isPayg()) {
-          <cog-lozenge tone="green">No limit</cog-lozenge>
-        }
-      </header>
-
-      @if (usage(); as usage) {
-        @if (isPayg()) {
-          <div class="pb__usage-total">CHF {{ usageTotalCostChf().toFixed(2) }}</div>
-          <div class="pb__usage-caption">
-            spent since {{ usage.period_start | date: 'd MMM' }} · CHF 10 minimum
-          </div>
-        } @else {
-          <div class="pb__usage-total">
-            {{ usage.message_count.toLocaleString('en-CH') }}
-          </div>
-          <div class="pb__usage-caption">
-            messages since {{ usage.period_start | date: 'd MMM' }}
-          </div>
-        }
-
-        <div class="pb__bars">
-          @for (bar of usageBars(); track bar.name) {
-            <div class="pb__bar">
-              <div class="pb__bar-row">
-                <span class="pb__bar-label">
-                  {{ bar.name }}
-                  @if (bar.sublabel) {
-                    <span class="pb__bar-sub">{{ bar.sublabel }}</span>
-                  }
-                </span>
-                <span class="pb__bar-value">{{ bar.display }}</span>
-              </div>
-              <cog-progress [value]="barWidth(bar.value)" [height]="6" />
-            </div>
-          } @empty {
-            <p class="pb__usage-note">No messages sent yet this period.</p>
+            @case ('cancels_soon') {
+              <cog-button
+                appearance="primary"
+                icon="rotate-cw"
+                [disabled]="actionPending()"
+                (click)="resume()"
+              >
+                {{ t('billing.plan.actions.resumePlan') }}
+              </cog-button>
+              <cog-button appearance="default" (click)="openSwitch()">{{
+                t('billing.plan.actions.switchPlan')
+              }}</cog-button>
+            }
+            @case ('active') {
+              <cog-button appearance="primary" (click)="openSwitch()">{{
+                t('billing.plan.actions.switchPlan')
+              }}</cog-button>
+              <cog-button
+                appearance="subtle"
+                [disabled]="actionPending()"
+                (click)="cancel()"
+              >
+                {{ t('billing.plan.actions.cancelPlan') }}
+              </cog-button>
+            }
+            @default {
+              <cog-button
+                appearance="primary"
+                icon="chevron-right"
+                (click)="goToPlans()"
+              >
+                {{ t('billing.plan.actions.choosePlan') }}
+              </cog-button>
+            }
           }
         </div>
 
-        <p class="pb__usage-note">
-          <cog-icon name="info" [size]="14" tone="text-subtlest" />
-          @if (isPayg()) {
-            Spend above the CHF 10 minimum is metered by token usage and added to your
-            next invoice.
-          } @else {
-            Unlimited covers normal individual use — compute is metered internally only
-            to keep the service fair.
+        <app-switch-plan-modal
+          [open]="switchOpen()"
+          [currentPlan]="billing.plan_type"
+          [currentInterval]="billing.interval"
+          [pending]="actionPending()"
+          (closed)="closeSwitch()"
+          (switchPlan)="changeTo($event)"
+        />
+      </div>
+
+      <aside class="pb__aside">
+        <div class="pb__aside-heading">
+          <cog-icon name="calendar" [size]="14" tone="text-subtlest" />
+          {{ dateHeading() }}
+        </div>
+        @if (status() === 'trial') {
+          <div class="pb__aside-value">CHF {{ billing.balance_chf.toFixed(2) }}</div>
+          <div class="pb__aside-caption">{{ t('billing.plan.aside.trialCredit') }}</div>
+        } @else if (billing.cycle_end_at) {
+          <div class="pb__aside-value">
+            {{ billing.cycle_end_at | date: 'd MMMM y' }}
+          </div>
+          @switch (status()) {
+            @case ('active') {
+              <div class="pb__aside-caption">{{ priceLabel() }}</div>
+              @if (refundEligible()) {
+                <div class="pb__guarantee">
+                  <cog-icon name="shield-check" [size]="14" tone="text-subtle" />
+                  {{ t('billing.plan.guarantee') }}
+                </div>
+                @if (refundRequested()) {
+                  <p class="pb__aside-note">{{ t('billing.plan.refundSent') }}</p>
+                } @else {
+                  <button
+                    type="button"
+                    class="pb__refund-link"
+                    [disabled]="actionPending()"
+                    (click)="requestRefund()"
+                  >
+                    {{ t('billing.plan.requestRefund') }}
+                  </button>
+                }
+              }
+            }
+            @case ('cancels_soon') {
+              <p class="pb__aside-note">
+                {{ t('billing.plan.aside.cancelsSoonNote') }}
+              </p>
+            }
+            @case ('inactive') {
+              <div class="pb__aside-caption">
+                {{ t('billing.plan.aside.inactiveCaption') }}
+              </div>
+            }
           }
-        </p>
-      } @else {
-        <p class="pb__usage-note">No usage recorded yet this period.</p>
-      }
+        }
+      </aside>
     </section>
 
-    <!-- Payment method (managed by Paddle) -->
-    <section class="pb__card pb__payment">
+    <div class="pb__grid">
+      <!-- Usage -->
+      <section class="pb__card pb__usage">
+        <header class="pb__card-head">
+          <span class="pb__card-title">
+            <cog-icon name="gauge" [size]="18" tone="text-subtle" />
+            {{ t('billing.plan.usage.title') }}
+          </span>
+          @if (!isPayg()) {
+            <cog-lozenge tone="green">{{
+              t('billing.plan.usage.noLimit')
+            }}</cog-lozenge>
+          }
+        </header>
+
+        @if (usage(); as usage) {
+          @if (isPayg()) {
+            <div class="pb__usage-total">CHF {{ usageTotalCostChf().toFixed(2) }}</div>
+            <div class="pb__usage-caption">
+              {{
+                t('billing.plan.usage.spentSince', {
+                  date: usage.period_start | date: 'd MMM',
+                })
+              }}
+            </div>
+          } @else {
+            <div class="pb__usage-total">
+              {{ usage.message_count.toLocaleString('en-CH') }}
+            </div>
+            <div class="pb__usage-caption">
+              {{
+                t('billing.plan.usage.messagesSince', {
+                  date: usage.period_start | date: 'd MMM',
+                })
+              }}
+            </div>
+          }
+
+          <div class="pb__bars">
+            @for (bar of usageBars(); track bar.name) {
+              <div class="pb__bar">
+                <div class="pb__bar-row">
+                  <span class="pb__bar-label">
+                    {{ bar.name }}
+                    @if (bar.sublabel) {
+                      <span class="pb__bar-sub">{{ bar.sublabel }}</span>
+                    }
+                  </span>
+                  <span class="pb__bar-value">{{ bar.display }}</span>
+                </div>
+                <cog-progress [value]="barWidth(bar.value)" [height]="6" />
+              </div>
+            } @empty {
+              <p class="pb__usage-note">{{ t('billing.plan.usage.emptyPeriod') }}</p>
+            }
+          </div>
+
+          <p class="pb__usage-note">
+            <cog-icon name="info" [size]="14" tone="text-subtlest" />
+            @if (isPayg()) {
+              {{ t('billing.plan.usage.notePayg') }}
+            } @else {
+              {{ t('billing.plan.usage.noteUnlimited') }}
+            }
+          </p>
+        } @else {
+          <p class="pb__usage-note">{{ t('billing.plan.usage.noneRecorded') }}</p>
+        }
+      </section>
+
+      <!-- Payment method (managed by Paddle) -->
+      <section class="pb__card pb__payment">
+        <header class="pb__card-head">
+          <span class="pb__card-title">
+            <cog-icon name="credit-card" [size]="18" tone="text-subtle" />
+            {{ t('billing.plan.payment.title') }}
+          </span>
+          @if (hasBillingAccount()) {
+            <cog-button appearance="default" (click)="openPortal('payment')">
+              {{ t('billing.plan.payment.update') }}
+            </cog-button>
+          }
+        </header>
+        <div class="pb__payment-card">
+          <span class="pb__payment-badge" aria-hidden="true">
+            @if (card(); as card) {
+              {{ cardBrandLabel(card.brand) }}
+            } @else {
+              <cog-icon name="credit-card" [size]="18" tone="current" />
+            }
+          </span>
+          @if (card(); as card) {
+            <div class="pb__payment-details">
+              <div class="pb__payment-number">
+                {{ cardBrandLabel(card.brand) }} •••• {{ card.last4 }}
+              </div>
+              <div class="pb__payment-expiry">
+                {{ t('billing.plan.payment.expires', { expiry: cardExpiry(card) }) }}
+              </div>
+            </div>
+          } @else {
+            <span class="pb__payment-empty">
+              {{ t('billing.plan.payment.noCard') }}
+            </span>
+          }
+        </div>
+        <p class="pb__payment-note">
+          <cog-icon name="lock" [size]="14" tone="text-subtle" />
+          {{ t('billing.plan.payment.note') }}
+        </p>
+      </section>
+    </div>
+
+    <!-- Invoices -->
+    <section class="pb__card pb__invoices">
       <header class="pb__card-head">
         <span class="pb__card-title">
-          <cog-icon name="credit-card" [size]="18" tone="text-subtle" />
-          Payment method
+          <cog-icon name="file-text" [size]="18" tone="text-subtle" />
+          {{ t('billing.plan.invoices.title') }}
         </span>
         @if (hasBillingAccount()) {
-          <cog-button appearance="default" (click)="openPortal('payment')">
-            Update
+          <cog-button appearance="default" icon="link" (click)="openPortal('overview')">
+            {{ t('billing.plan.invoices.openPortal') }}
           </cog-button>
         }
       </header>
-      <div class="pb__payment-card">
-        <span class="pb__payment-badge" aria-hidden="true">
-          @if (card(); as card) {
-            {{ cardBrandLabel(card.brand) }}
-          } @else {
-            <cog-icon name="credit-card" [size]="18" tone="current" />
+      @if (invoices().length > 0) {
+        <ul class="pb__invoice-list">
+          @for (invoice of invoices(); track invoice.id) {
+            <li class="pb__invoice">
+              <cog-icon name="file-text" [size]="18" tone="text-subtle" />
+              <div class="pb__invoice-main">
+                <div class="pb__invoice-title">
+                  {{
+                    invoice.description ||
+                      t('billing.plan.invoices.invoiceLabel', {
+                        number: invoice.invoice_number || '—',
+                      })
+                  }}
+                </div>
+                <div class="pb__invoice-sub">
+                  @if (invoice.description && invoice.invoice_number) {
+                    {{ invoice.invoice_number }}
+                    @if (invoice.billed_at) {
+                      · {{ invoice.billed_at | date: 'd MMM y' }}
+                    }
+                  } @else if (invoice.billed_at) {
+                    {{ invoice.billed_at | date: 'd MMM y' }}
+                  }
+                </div>
+              </div>
+              <cog-lozenge [tone]="invoiceBadge(invoice.status).tone">
+                {{ invoiceBadge(invoice.status).text }}
+              </cog-lozenge>
+              <div class="pb__invoice-amount">{{ invoiceAmount(invoice) }}</div>
+              <button
+                type="button"
+                class="pb__invoice-download"
+                [title]="t('billing.plan.invoices.downloadPdf')"
+                [attr.aria-label]="t('billing.plan.invoices.downloadPdf')"
+                (click)="downloadInvoice(invoice.id)"
+              >
+                <cog-icon name="download" [size]="16" tone="text-subtle" />
+              </button>
+            </li>
           }
-        </span>
-        @if (card(); as card) {
-          <div class="pb__payment-details">
-            <div class="pb__payment-number">
-              {{ cardBrandLabel(card.brand) }} •••• {{ card.last4 }}
-            </div>
-            <div class="pb__payment-expiry">Expires {{ cardExpiry(card) }}</div>
-          </div>
-        } @else {
-          <span class="pb__payment-empty" i18n="@@billing.payment.noCard">
-            No card available
-          </span>
-        }
-      </div>
-      <p class="pb__payment-note">
-        <cog-icon name="lock" [size]="14" tone="text-subtle" />
-        Billing is processed by Paddle, our payment provider. We store a token, never
-        your card number.
+        </ul>
+      } @else {
+        <p class="pb__invoices-note">
+          {{ t('billing.plan.invoices.note') }}
+        </p>
+      }
+      <p class="pb__invoices-foot">
+        <app-paddle-logo />
+        <span class="pb__invoices-foot-name">Paddle</span>
+        {{ t('billing.plan.invoices.foot') }}
       </p>
     </section>
-  </div>
-
-  <!-- Invoices -->
-  <section class="pb__card pb__invoices">
-    <header class="pb__card-head">
-      <span class="pb__card-title">
-        <cog-icon name="file-text" [size]="18" tone="text-subtle" />
-        Invoices
-      </span>
-      @if (hasBillingAccount()) {
-        <cog-button appearance="default" icon="link" (click)="openPortal('overview')">
-          Open Paddle portal
-        </cog-button>
-      }
-    </header>
-    @if (invoices().length > 0) {
-      <ul class="pb__invoice-list">
-        @for (invoice of invoices(); track invoice.id) {
-          <li class="pb__invoice">
-            <cog-icon name="file-text" [size]="18" tone="text-subtle" />
-            <div class="pb__invoice-main">
-              <div class="pb__invoice-title">
-                {{
-                  invoice.description || 'Invoice ' + (invoice.invoice_number || '—')
-                }}
-              </div>
-              <div class="pb__invoice-sub">
-                @if (invoice.description && invoice.invoice_number) {
-                  {{ invoice.invoice_number }}
-                  @if (invoice.billed_at) {
-                    · {{ invoice.billed_at | date: 'd MMM y' }}
-                  }
-                } @else if (invoice.billed_at) {
-                  {{ invoice.billed_at | date: 'd MMM y' }}
-                }
-              </div>
-            </div>
-            <cog-lozenge [tone]="invoiceBadge(invoice.status).tone">
-              {{ invoiceBadge(invoice.status).text }}
-            </cog-lozenge>
-            <div class="pb__invoice-amount">{{ invoiceAmount(invoice) }}</div>
-            <button
-              type="button"
-              class="pb__invoice-download"
-              title="Download invoice PDF"
-              aria-label="Download invoice PDF"
-              (click)="downloadInvoice(invoice.id)"
-            >
-              <cog-icon name="download" [size]="16" tone="text-subtle" />
-            </button>
-          </li>
-        }
-      </ul>
-    } @else {
-      <p class="pb__invoices-note">
-        Your invoices and VAT receipts are available in your Paddle portal.
-      </p>
-    }
-    <p class="pb__invoices-foot">
-      <app-paddle-logo />
-      <span class="pb__invoices-foot-name">Paddle</span>
-      Invoices &amp; VAT receipts are issued by Paddle.com Market Ltd, our merchant of
-      record.
-    </p>
-  </section>
-}
+  }
+</ng-container>

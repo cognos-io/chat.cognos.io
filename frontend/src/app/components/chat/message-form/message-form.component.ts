@@ -18,6 +18,8 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import {
   CognosButtonComponent,
   CognosIconButtonComponent,
@@ -54,9 +56,15 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
     PersonaSwitcherComponent,
     PersonaChipsComponent,
     PersonaAvatarComponent,
+    TranslocoModule,
   ],
   template: `
-    <form class="message-form" [formGroup]="messageForm" (submit)="sendMessage()">
+    <form
+      class="message-form"
+      [formGroup]="messageForm"
+      (submit)="sendMessage()"
+      *transloco="let t"
+    >
       @if (billing.isSendingLocked()) {
         <div class="message-form__locked-wrap">
           <div class="message-form__locked" role="status">
@@ -64,14 +72,16 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
               <cog-icon name="lock" [size]="18" tone="text-subtle" />
             </span>
             <span class="message-form__locked-copy">
-              <span class="message-form__locked-title">Sending is paused</span>
+              <span class="message-form__locked-title">{{
+                t('chat.composer.locked.title')
+              }}</span>
               <span class="message-form__locked-body">
-                You can read everything here. Pick a plan to send new messages.
+                {{ t('chat.composer.locked.body') }}
               </span>
             </span>
             <span class="message-form__locked-actions">
               <cog-button appearance="default" type="button" (click)="goToBilling()">
-                Compare plans
+                {{ t('chat.composer.locked.comparePlans') }}
               </cog-button>
               <cog-button
                 appearance="primary"
@@ -79,13 +89,13 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
                 type="button"
                 (click)="goToBilling()"
               >
-                Upgrade
+                {{ t('chat.composer.locked.upgrade') }}
               </cog-button>
             </span>
           </div>
           <p class="message-form__locked-note">
             <cog-icon name="shield-check" [size]="14" tone="text-subtle" />
-            60-day money-back guarantee · cancel anytime
+            {{ t('chat.composer.locked.guarantee') }}
           </p>
         </div>
       } @else {
@@ -95,7 +105,7 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
 
         <div class="message-form__panel">
           <label class="message-form__label" for="message-form">
-            Message Cognos — stored encrypted; sent to your provider to reply
+            {{ t('chat.composer.label') }}
           </label>
 
           <textarea
@@ -106,7 +116,7 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
             formControlName="content"
             id="message-form"
             name="message-form"
-            placeholder="Message with Cognos"
+            [placeholder]="t('chat.composer.placeholder')"
             (keydown.control.enter)="isMac ? undefined : sendMessage()"
             (keydown.meta.enter)="isMac ? sendMessage() : undefined"
           ></textarea>
@@ -145,7 +155,11 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
               cdkOverlayOrigin
               type="button"
               class="message-form__persona"
-              title="Switch persona — {{ personaService.selectedPersona().name }}"
+              [title]="
+                t('chat.composer.switchPersona', {
+                  name: personaService.selectedPersona().name,
+                })
+              "
               (click)="togglePersonaSwitcher()"
             >
               <app-persona-avatar
@@ -179,7 +193,7 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
             @if (canClearTemporaryMessages() && !isMobile()) {
               <cog-icon-button
                 name="eraser"
-                title="Clear all messages"
+                [title]="t('chat.composer.clearMessages')"
                 type="button"
                 (click)="onClearMessages()"
               />
@@ -189,13 +203,15 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
               class="message-form__send"
               appearance="primary"
               icon="send"
-              title="Send"
+              [title]="t('chat.composer.send')"
               type="submit"
               [disabled]="
                 messageForm.disabled || !messageForm.valid || !canSendMessage()
               "
             >
-              <span class="message-form__send-label">Send</span>
+              <span class="message-form__send-label">{{
+                t('chat.composer.send')
+              }}</span>
             </cog-button>
           </div>
         </div>
@@ -203,16 +219,15 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
         <div class="message-form__meta">
           <span class="message-form__security">
             <cog-icon name="lock" [size]="12" tone="text-subtlest" />
-            <span>End-to-end encrypted · keys are encrypted before backup</span>
+            <span>{{ t('chat.composer.encrypted') }}</span>
           </span>
 
           <span class="message-form__shortcut">
             @if (isMac) {
-              Cmd
+              {{ t('chat.composer.shortcutMac') }}
             } @else {
-              Ctrl
+              {{ t('chat.composer.shortcutOther') }}
             }
-            + Enter to send
           </span>
         </div>
       }

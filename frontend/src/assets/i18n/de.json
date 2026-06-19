@@ -1,157 +1,821 @@
 {
-  "language": {
-    "label": "Sprache"
-  },
   "account": {
-    "title": "Konto",
-    "breadcrumbs": { "settings": "Einstellungen", "account": "Konto" },
-    "language": {
-      "title": "Sprache",
-      "subtitle": "Wählen Sie die Sprache für die Cognos-Oberfläche. Ihre Auswahl wird in Ihrem Konto gespeichert und gilt auf allen Ihren Geräten."
+    "breadcrumbs": {
+      "account": "Konto",
+      "settings": "Einstellungen"
     },
-    "profile": {
-      "title": "Profil",
-      "subtitle": "Ihr Anzeigename erscheint bei Ihren Nachrichten und in geteilten Chats.",
-      "displayName": "Anzeigename",
-      "displayNamePlaceholder": "Anzeigename hinzufügen",
-      "avatar": "Avatar",
-      "iconAria": "Avatar-Symbol",
-      "colorAria": "Avatar-Farbe",
-      "iconOptionAria": "Symbol {{ name }}",
-      "colorOptionAria": "Farbe {{ name }}",
-      "save": "Profil speichern",
-      "saving": "Wird gespeichert…"
+    "danger": {
+      "confirmFieldAria": "Geben Sie zur Bestätigung DELETE ein",
+      "deleteAccountConfirm": "Mein Konto löschen",
+      "deleteAccountSubtitle": "Wir löschen Ihr Konto sowie Ihre verschlüsselten Chat-Daten, Schlüssel und Personas dauerhaft. Aufzeichnungen, die für Abrechnung, Steuern, Betrugsprävention oder gesetzliche Vorgaben erforderlich sind, können aufbewahrt werden. Dies kann nicht rückgängig gemacht werden.",
+      "deleteAccountTitle": "Konto löschen",
+      "deleteChatsConfirm": "Ja, alles löschen",
+      "deleteChatsSubtitle": "Löschen Sie dauerhaft jede Konversation und ihre Nachrichten. Dies kann nicht rückgängig gemacht werden.",
+      "deleteChatsTitle": "Alle Chats löschen",
+      "deleting": "Wird gelöscht…",
+      "title": "Gefahrenzone",
+      "typeToConfirm": "Geben Sie zur Bestätigung {{ word }} ein."
     },
     "data": {
-      "title": "Ihre Daten",
-      "subtitle": "Laden Sie alle Ihre Konversationen und Nachrichten — in Ihrem Browser entschlüsselt — als JSON-Datei herunter.",
       "download": "Meine Daten herunterladen",
-      "preparing": "Wird vorbereitet…"
+      "preparing": "Wird vorbereitet…",
+      "subtitle": "Laden Sie alle Ihre Konversationen und Nachrichten — in Ihrem Browser entschlüsselt — als JSON-Datei herunter.",
+      "title": "Ihre Daten"
+    },
+    "dataProcessing": {
+      "badge": {
+        "ch_only": "Nur Schweiz",
+        "eu": "Europa + UK",
+        "global": "Global"
+      },
+      "context": "{{ size }} Kontext",
+      "footnoteMany": "{{ count }} weitere Modelle werden freigeschaltet, wenn Sie Ihre Verarbeitungsregion erweitern — weiterhin Anbieter ohne Datenspeicherung, weiterhin verschlüsselt.",
+      "footnoteOne": "{{ count }} weiteres Modell wird freigeschaltet, wenn Sie Ihre Verarbeitungsregion erweitern — weiterhin Anbieter ohne Datenspeicherung, weiterhin verschlüsselt.",
+      "modelCount": "{{ count }} Modelle",
+      "modelsAvailable": "Verfügbare Modelle",
+      "modelsOf": "{{ eligible }} von {{ total }}",
+      "needsBroaderRegion": "Erfordert eine breitere Region",
+      "regionAria": "Region der Datenverarbeitung",
+      "regionBadge": {
+        "ch_only": "Schweiz",
+        "eu": "EU",
+        "global": "Global"
+      },
+      "retentionBody": "Geprüfte Anbieter verarbeiten Ihre Nachrichten unter Bedingungen ohne Datenspeicherung und ohne Training, und Cognos speichert niemals Klartext-Eingaben oder -Antworten — Ihr Chatverlauf wird verschlüsselt gespeichert. Diese Einstellung steuert nur, durch welche Rechtsordnung Ihre Nachrichten gelangen, während ein Modell antwortet, und welche Modelle dadurch verfügbar werden.",
+      "retentionTitle": "Keine Klartextspeicherung — in jeder Region",
+      "subtitle": "Wählen Sie, wo Ihre Nachrichten verarbeitet werden dürfen. Dies ist das Einzige, was beeinflusst, welche Modelle Sie nutzen können — es hat keine Auswirkung darauf, wie Ihre Chats gespeichert werden: Ihr Verlauf wird immer verschlüsselt gespeichert, nie als Klartext.",
+      "tiers": {
+        "ch_only": {
+          "blurb": "Wird ausschließlich auf Schweizer Boden verarbeitet — On-Premise und Schweizer Cloud.",
+          "name": "Nur Schweiz",
+          "note": "Strengste Datenresidenz"
+        },
+        "eu": {
+          "blurb": "Wird innerhalb der EU/des EWR, des Vereinigten Königreichs und der Schweiz verarbeitet.",
+          "name": "Europa + Schweiz + UK",
+          "note": "Angemessenheitskonform"
+        },
+        "global": {
+          "blurb": "Wird in geprüften Rechenzentren weltweit verarbeitet, weitergeleitet an die nächstgelegene Region.",
+          "name": "Global",
+          "note": "Jedes Modell"
+        }
+      },
+      "title": "Datenverarbeitung"
     },
     "email": {
-      "title": "E-Mail",
-      "subtitle": "Ihre E-Mail dient nur zur Anmeldung und zum Empfang von Kontobenachrichtigungen — sie entsperrt niemals Ihre Daten. Das Ändern ist sicher und betrifft Ihre verschlüsselten Chats nie.",
       "current": "Aktuelle E-Mail",
       "new": "Neue E-Mail",
       "send": "Bestätigungslink senden",
-      "sending": "Wird gesendet…"
+      "sending": "Wird gesendet…",
+      "subtitle": "Ihre E-Mail dient nur zur Anmeldung und zum Empfang von Kontobenachrichtigungen — sie entsperrt niemals Ihre Daten. Das Ändern ist sicher und betrifft Ihre verschlüsselten Chats nie.",
+      "title": "E-Mail"
+    },
+    "errors": {
+      "emailChange": "Die E-Mail-Änderung konnte nicht gestartet werden. Prüfen Sie die Adresse und versuchen Sie es erneut.",
+      "passwordChange": "Ihr Passwort konnte nicht geändert werden. Prüfen Sie Ihr aktuelles Passwort und versuchen Sie es erneut."
+    },
+    "language": {
+      "subtitle": "Wählen Sie die Sprache für die Cognos-Oberfläche. Ihre Auswahl wird in Ihrem Konto gespeichert und gilt auf allen Ihren Geräten.",
+      "title": "Sprache"
     },
     "password": {
-      "title": "Passwort",
-      "subtitle": "Ihr Passwort dient nur zur Anmeldung — es entsperrt nicht Ihre Daten (das ist Ihr Account-Schlüssel). Das Ändern ist sicher und betrifft Ihre verschlüsselten Chats nie.",
+      "change": "Passwort ändern",
+      "changing": "Wird geändert…",
       "current": "Aktuelles Passwort",
       "new": "Neues Passwort",
       "newPlaceholder": "Mindestens 12 Zeichen",
-      "change": "Passwort ändern",
-      "changing": "Wird geändert…"
+      "subtitle": "Ihr Passwort dient nur zur Anmeldung — es entsperrt nicht Ihre Daten (das ist Ihr Account-Schlüssel). Das Ändern ist sicher und betrifft Ihre verschlüsselten Chats nie.",
+      "title": "Passwort"
     },
-    "danger": {
-      "title": "Gefahrenzone",
-      "deleteChatsTitle": "Alle Chats löschen",
-      "deleteChatsSubtitle": "Löschen Sie dauerhaft jede Konversation und ihre Nachrichten. Dies kann nicht rückgängig gemacht werden.",
-      "deleteChatsConfirm": "Ja, alles löschen",
-      "deleting": "Wird gelöscht…",
-      "deleteAccountTitle": "Konto löschen",
-      "deleteAccountSubtitle": "Wir löschen Ihr Konto sowie Ihre verschlüsselten Chat-Daten, Schlüssel und Personas dauerhaft. Aufzeichnungen, die für Abrechnung, Steuern, Betrugsprävention oder gesetzliche Vorgaben erforderlich sind, können aufbewahrt werden. Dies kann nicht rückgängig gemacht werden.",
-      "typeToConfirm": "Geben Sie zur Bestätigung {{ word }} ein.",
-      "confirmFieldAria": "Geben Sie zur Bestätigung DELETE ein",
-      "deleteAccountConfirm": "Mein Konto löschen"
+    "profile": {
+      "avatar": "Avatar",
+      "colorAria": "Avatar-Farbe",
+      "colorOptionAria": "Farbe {{ name }}",
+      "displayName": "Anzeigename",
+      "displayNamePlaceholder": "Anzeigename hinzufügen",
+      "iconAria": "Avatar-Symbol",
+      "iconOptionAria": "Symbol {{ name }}",
+      "save": "Profil speichern",
+      "saving": "Wird gespeichert…",
+      "subtitle": "Ihr Anzeigename erscheint bei Ihren Nachrichten und in geteilten Chats.",
+      "title": "Profil"
     },
+    "title": "Konto",
     "toasts": {
-      "profileUpdated": "Profil aktualisiert",
-      "passwordChanged": "Passwort geändert",
-      "emailLinkSentTitle": "Bestätigungslink gesendet",
-      "emailLinkSentMsg": "Öffnen Sie den Link, den wir an {{ email }} gesendet haben, um die Änderung Ihrer E-Mail abzuschließen.",
-      "deletedOneChat": "1 Chat gelöscht",
-      "deletedManyChats": "{{ count }} Chats gelöscht",
-      "deleteChatsError": "Chats konnten nicht gelöscht werden",
-      "exportedOne": "1 Chat exportiert",
-      "exportedMany": "{{ count }} Chats exportiert",
-      "exportError": "Ihre Daten konnten nicht exportiert werden",
       "accountDeleted": "Ihr Konto wurde gelöscht",
       "deleteAccountConflict": "Kündigen Sie Ihren Tarif, bevor Sie Ihr Konto löschen",
-      "deleteAccountError": "Ihr Konto konnte nicht gelöscht werden"
-    },
-    "errors": {
-      "passwordChange": "Ihr Passwort konnte nicht geändert werden. Prüfen Sie Ihr aktuelles Passwort und versuchen Sie es erneut.",
-      "emailChange": "Die E-Mail-Änderung konnte nicht gestartet werden. Prüfen Sie die Adresse und versuchen Sie es erneut."
+      "deleteAccountError": "Ihr Konto konnte nicht gelöscht werden",
+      "deleteChatsError": "Chats konnten nicht gelöscht werden",
+      "deletedManyChats": "{{ count }} Chats gelöscht",
+      "deletedOneChat": "1 Chat gelöscht",
+      "emailLinkSentMsg": "Öffnen Sie den Link, den wir an {{ email }} gesendet haben, um die Änderung Ihrer E-Mail abzuschließen.",
+      "emailLinkSentTitle": "Bestätigungslink gesendet",
+      "exportError": "Ihre Daten konnten nicht exportiert werden",
+      "exportedMany": "{{ count }} Chats exportiert",
+      "exportedOne": "1 Chat exportiert",
+      "passwordChanged": "Passwort geändert",
+      "profileUpdated": "Profil aktualisiert"
     }
   },
-  "common": {
-    "email": "E-Mail",
-    "password": "Passwort",
-    "emailPlaceholder": "du@beispiel.com",
-    "passwordPlaceholder": "••••••••",
-    "privacyTerms": "Datenschutz und AGB",
-    "cancel": "Abbrechen"
-  },
   "auth": {
-    "login": {
-      "title": "Starten Sie mit datenschutzfreundlicher KI",
-      "lead": "Chatten Sie mit den neuesten Modellen, ohne die Kontrolle über Ihre Daten aufzugeben. Auf neuen Geräten kann zusätzlich Ihr Account-Schlüssel abgefragt werden.",
-      "signingIn": "Anmeldung läuft…",
-      "submit": "Anmelden",
-      "error": "Anmeldung fehlgeschlagen. Bitte prüfen Sie E-Mail und Passwort und versuchen Sie es erneut.",
-      "forgot": "Passwort vergessen?",
-      "needAccount": "Noch kein Konto?",
-      "register": "Registrieren",
-      "legalPrefix": "Mit der Registrierung akzeptieren Sie unsere"
-    },
-    "register": {
-      "beta": "Private Beta",
-      "title": "Erstellen Sie Ihr Cognos-Konto",
-      "lead": "Beginnen Sie mit E-Mail und Passwort. Direkt nach der Registrierung erstellt Cognos einen Account-Schlüssel für die verschlüsselte Entsperrung auf neuen Geräten.",
-      "passwordPlaceholder": "Mindestens 12 Zeichen",
-      "creating": "Konto wird erstellt…",
-      "submit": "Konto erstellen",
-      "legalPrefix": "Mit der Erstellung eines Kontos akzeptieren Sie unsere",
-      "haveAccount": "Sie haben bereits ein Konto?",
-      "login": "Anmelden"
-    },
-    "forgot": {
-      "title": "Passwort zurücksetzen",
-      "sent": "Falls ein Konto für {{ email }} existiert, haben wir einen Link zum Zurücksetzen des Passworts gesendet. Prüfen Sie Ihren Posteingang und folgen Sie dem Link, um ein neues Passwort zu wählen.",
-      "sentNote": "Ihr Passwort dient nur zur Anmeldung — es entschlüsselt niemals Ihre verschlüsselten Chats. Das Zurücksetzen ist daher sicher und lässt Ihren Verlauf unberührt.",
-      "lead": "Geben Sie Ihre E-Mail ein, und wir senden Ihnen einen Link, um ein neues Passwort festzulegen. Ihr Passwort dient nur zur Anmeldung, das Zurücksetzen betrifft Ihre verschlüsselten Chats also nie.",
-      "sending": "Wird gesendet…",
-      "submit": "Link zum Zurücksetzen senden",
-      "backToLogin": "Zurück zur Anmeldung"
-    },
-    "reset": {
-      "title": "Neues Passwort wählen",
-      "missingToken": "Diesem Link fehlt das Token. Fordern Sie einen neuen Link an und versuchen Sie es erneut.",
-      "requestNewLink": "Neuen Link anfordern",
-      "success": "Ihr Passwort wurde zurückgesetzt. Ihre verschlüsselten Chats bleiben unberührt — Ihr Passwort dient nur zur Anmeldung.",
-      "continueToLogin": "Weiter zur Anmeldung",
-      "error": "Dieser Link funktioniert nicht — er ist möglicherweise abgelaufen oder wurde bereits verwendet.",
-      "lead": "Wählen Sie ein neues Passwort mit mindestens 12 Zeichen. Ihr Passwort dient nur zur Anmeldung, dies betrifft Ihre verschlüsselten Chats also nicht.",
-      "newPassword": "Neues Passwort",
-      "confirmNewPassword": "Neues Passwort bestätigen",
-      "confirmPlaceholder": "Passwort erneut eingeben",
-      "mismatch": "Die Passwörter stimmen nicht überein.",
-      "resetting": "Wird zurückgesetzt…",
-      "submit": "Passwort zurücksetzen",
-      "backToLogin": "Zurück zur Anmeldung"
-    },
-    "verify": {
-      "title": "E-Mail bestätigen",
-      "verifying": "Ihre E-Mail wird bestätigt…",
-      "success": "Ihre E-Mail ist bestätigt. Danke für die Bestätigung.",
-      "continueToLogin": "Weiter zur Anmeldung",
-      "error": "Dieser Bestätigungslink funktioniert nicht — er ist möglicherweise abgelaufen oder wurde bereits verwendet.",
-      "missingToken": "Diesem Bestätigungslink fehlt das Token. Klicken Sie den Link in Ihrer E-Mail erneut an.",
-      "goToLogin": "Zur Anmeldung"
-    },
     "confirmEmail": {
-      "title": "Neue E-Mail bestätigen",
+      "continueToLogin": "Weiter zur Anmeldung",
+      "error": "Dieser Link funktioniert nicht — er ist möglicherweise abgelaufen, wurde bereits verwendet oder das Passwort war falsch.",
+      "goToLogin": "Zur Anmeldung",
       "lead": "Geben Sie Ihr Passwort ein, um die Änderung Ihrer E-Mail abzuschließen. Ihr Passwort dient nur zur Anmeldung — dies betrifft Ihre verschlüsselten Chats nie.",
+      "missingToken": "Diesem Bestätigungslink fehlt das Token. Klicken Sie den Link in Ihrer E-Mail erneut an.",
       "submit": "E-Mail-Änderung bestätigen",
       "submitting": "Ihre neue E-Mail wird bestätigt…",
       "success": "Ihre E-Mail wurde geändert. Bitte melden Sie sich erneut mit Ihrer neuen E-Mail an.",
+      "title": "Neue E-Mail bestätigen"
+    },
+    "forgot": {
+      "backToLogin": "Zurück zur Anmeldung",
+      "lead": "Geben Sie Ihre E-Mail ein, und wir senden Ihnen einen Link, um ein neues Passwort festzulegen. Ihr Passwort dient nur zur Anmeldung, das Zurücksetzen betrifft Ihre verschlüsselten Chats also nie.",
+      "sending": "Wird gesendet…",
+      "sent": "Falls ein Konto für {{ email }} existiert, haben wir einen Link zum Zurücksetzen des Passworts gesendet. Prüfen Sie Ihren Posteingang und folgen Sie dem Link, um ein neues Passwort zu wählen.",
+      "sentNote": "Ihr Passwort dient nur zur Anmeldung — es entschlüsselt niemals Ihre verschlüsselten Chats. Das Zurücksetzen ist daher sicher und lässt Ihren Verlauf unberührt.",
+      "submit": "Link zum Zurücksetzen senden",
+      "title": "Passwort zurücksetzen"
+    },
+    "login": {
+      "error": "Anmeldung fehlgeschlagen. Bitte prüfen Sie E-Mail und Passwort und versuchen Sie es erneut.",
+      "forgot": "Passwort vergessen?",
+      "lead": "Chatten Sie mit den neuesten Modellen, ohne die Kontrolle über Ihre Daten aufzugeben. Auf neuen Geräten kann zusätzlich Ihr Account-Schlüssel abgefragt werden.",
+      "legalPrefix": "Mit der Registrierung akzeptieren Sie unsere",
+      "needAccount": "Noch kein Konto?",
+      "register": "Registrieren",
+      "signingIn": "Anmeldung läuft…",
+      "submit": "Anmelden",
+      "title": "Starten Sie mit datenschutzfreundlicher KI"
+    },
+    "register": {
+      "beta": "Private Beta",
+      "creating": "Konto wird erstellt…",
+      "haveAccount": "Sie haben bereits ein Konto?",
+      "lead": "Beginnen Sie mit E-Mail und Passwort. Direkt nach der Registrierung erstellt Cognos einen Account-Schlüssel für die verschlüsselte Entsperrung auf neuen Geräten.",
+      "legalPrefix": "Mit der Erstellung eines Kontos akzeptieren Sie unsere",
+      "login": "Anmelden",
+      "passwordPlaceholder": "Mindestens 12 Zeichen",
+      "submit": "Konto erstellen",
+      "title": "Erstellen Sie Ihr Cognos-Konto"
+    },
+    "reset": {
+      "backToLogin": "Zurück zur Anmeldung",
+      "confirmNewPassword": "Neues Passwort bestätigen",
+      "confirmPlaceholder": "Passwort erneut eingeben",
       "continueToLogin": "Weiter zur Anmeldung",
-      "error": "Dieser Link funktioniert nicht — er ist möglicherweise abgelaufen, wurde bereits verwendet oder das Passwort war falsch.",
+      "error": "Dieser Link funktioniert nicht — er ist möglicherweise abgelaufen oder wurde bereits verwendet.",
+      "lead": "Wählen Sie ein neues Passwort mit mindestens 12 Zeichen. Ihr Passwort dient nur zur Anmeldung, dies betrifft Ihre verschlüsselten Chats also nicht.",
+      "mismatch": "Die Passwörter stimmen nicht überein.",
+      "missingToken": "Diesem Link fehlt das Token. Fordern Sie einen neuen Link an und versuchen Sie es erneut.",
+      "newPassword": "Neues Passwort",
+      "requestNewLink": "Neuen Link anfordern",
+      "resetting": "Wird zurückgesetzt…",
+      "submit": "Passwort zurücksetzen",
+      "success": "Ihr Passwort wurde zurückgesetzt. Ihre verschlüsselten Chats bleiben unberührt — Ihr Passwort dient nur zur Anmeldung.",
+      "title": "Neues Passwort wählen"
+    },
+    "verify": {
+      "continueToLogin": "Weiter zur Anmeldung",
+      "error": "Dieser Bestätigungslink funktioniert nicht — er ist möglicherweise abgelaufen oder wurde bereits verwendet.",
+      "goToLogin": "Zur Anmeldung",
       "missingToken": "Diesem Bestätigungslink fehlt das Token. Klicken Sie den Link in Ihrer E-Mail erneut an.",
-      "goToLogin": "Zur Anmeldung"
+      "success": "Ihre E-Mail ist bestätigt. Danke für die Bestätigung.",
+      "title": "E-Mail bestätigen",
+      "verifying": "Ihre E-Mail wird bestätigt…"
     }
+  },
+  "billing": {
+    "lock": {
+      "body": "Ihre Chats bleiben verschlüsselt und lesbar. Wählen Sie einen Tarif, um wieder Nachrichten zu senden.",
+      "choosePlan": "Tarif wählen",
+      "titleInactive": "Ihr Tarif ist inaktiv",
+      "titleTrialUsedUp": "Ihr Testguthaben ist aufgebraucht"
+    },
+    "pastDue": {
+      "body": "Aktualisieren Sie Ihre Karte, um Ihren Tarif zu behalten — Ihr Zugang bleibt vorerst bestehen.",
+      "title": "Wir konnten Ihre letzte Zahlung nicht einziehen",
+      "updateCard": "Karte aktualisieren"
+    },
+    "plan": {
+      "actions": {
+        "cancelPlan": "Tarif kündigen",
+        "choosePlan": "Tarif wählen",
+        "resumePlan": "Tarif fortsetzen",
+        "switchPlan": "Tarif wechseln",
+        "updateCard": "Karte aktualisieren"
+      },
+      "aside": {
+        "cancelsSoonNote": "Bleibt bis dahin voll aktiv. Setzen Sie ihn jederzeit vorher fort, um ihn weiterlaufen zu lassen.",
+        "inactiveCaption": "Senden pausiert · Chats lesbar",
+        "trialCredit": "Testguthaben übrig"
+      },
+      "blurb": {
+        "cancelsSoon": "Ihr Tarif wird gekündigt. Er funktioniert bis zum Ende der Periode weiter.",
+        "inactive": "Ihre Chats bleiben verschlüsselt und lesbar. Wählen Sie einen Tarif, um wieder Nachrichten zu senden.",
+        "payg": "Kaufen Sie Guthaben und nutzen Sie es für jedes Modell. Ein Minimum von CHF 10 hält Ihr Konto jeden Monat aktiv.",
+        "trial": "Sie nutzen die kostenlose Testphase. Wählen Sie einen Tarif, um weiterhin Nachrichten zu senden, sobald sie endet.",
+        "unlimited": "Unbegrenzt Nachrichten über alle Cognos-Modelle, mit priorisierter Swiss-Cloud-Rechenleistung."
+      },
+      "breadcrumbs": {
+        "planBilling": "Tarif & Abrechnung",
+        "settings": "Einstellungen"
+      },
+      "dateHeading": {
+        "accessUntil": "Zugang bis",
+        "ended": "Beendet",
+        "nextMinCharge": "Nächste Mindestbelastung",
+        "renews": "Verlängert sich",
+        "retrying": "Zahlung wird erneut versucht",
+        "trial": "Testphase"
+      },
+      "guarantee": "60 Tage Geld-zurück-Garantie",
+      "heading": {
+        "current": "Aktueller Tarif",
+        "previous": "Vorheriger Tarif"
+      },
+      "invoiceStatus": {
+        "due": "Fällig",
+        "paid": "Bezahlt",
+        "pastDue": "Überfällig",
+        "pending": "Ausstehend",
+        "refunded": "Erstattet"
+      },
+      "invoices": {
+        "downloadPdf": "Rechnungs-PDF herunterladen",
+        "foot": "Rechnungen & MwSt-Belege werden von Paddle.com Market Ltd, unserem Merchant of Record, ausgestellt.",
+        "invoiceLabel": "Rechnung {{ number }}",
+        "note": "Ihre Rechnungen und MwSt-Belege sind in Ihrem Paddle-Portal verfügbar.",
+        "openPortal": "Paddle-Portal öffnen",
+        "title": "Rechnungen"
+      },
+      "names": {
+        "none": "Kein Tarif",
+        "payg": "Pay as you go",
+        "trial": "Testphase",
+        "unlimited": "Unlimited"
+      },
+      "payment": {
+        "card": "Karte",
+        "expires": "Läuft ab {{ expiry }}",
+        "noCard": "Keine Karte verfügbar",
+        "note": "Die Abrechnung erfolgt über Paddle, unseren Zahlungsanbieter. Wir speichern ein Token, niemals Ihre Kartennummer.",
+        "title": "Zahlungsmethode",
+        "update": "Aktualisieren"
+      },
+      "price": {
+        "perMonth": "{{ price }} / Monat",
+        "perMonthMin": "{{ price }} / Monat min.",
+        "perYear": "{{ price }} / Jahr"
+      },
+      "refundSent": "Rückerstattungsanfrage gesendet — wir melden uns.",
+      "requestRefund": "Rückerstattung anfragen",
+      "statusBadge": {
+        "active": "Aktiv",
+        "cancelsSoon": "Wird bald gekündigt",
+        "paymentFailed": "Zahlung fehlgeschlagen",
+        "readOnly": "Nur Lesen",
+        "trial": "Testphase"
+      },
+      "syncedWith": "Synchronisiert mit",
+      "title": "Tarif & Abrechnung",
+      "usage": {
+        "emptyPeriod": "In dieser Periode noch keine Nachrichten gesendet.",
+        "messagesSince": "Nachrichten seit {{ date }}",
+        "noLimit": "Kein Limit",
+        "noneRecorded": "In dieser Periode noch keine Nutzung erfasst.",
+        "notePayg": "Verbrauch über dem Minimum von CHF 10 wird nach Token-Nutzung berechnet und Ihrer nächsten Rechnung hinzugefügt.",
+        "noteUnlimited": "Unlimited deckt die normale individuelle Nutzung ab — die Rechenleistung wird nur intern gemessen, um den Dienst fair zu halten.",
+        "spentSince": "ausgegeben seit {{ date }} · CHF 10 Minimum",
+        "title": "Nutzung in dieser Periode"
+      }
+    },
+    "pricing": {
+      "activating": {
+        "normal": "Einen Moment — wir bestätigen Ihre Zahlung. Das dauert üblicherweise nur ein paar Sekunden.",
+        "slow": "Das dauert länger als üblich. Ihr Tarif erscheint hier, sobald die Zahlung bestätigt ist — Sie müssen nicht erneut bezahlen.",
+        "title": "Ihr Tarif wird aktiviert…"
+      },
+      "assurances": {
+        "encrypted": {
+          "body": "Wir speichern Zahlungs-Token, niemals Kartennummern.",
+          "title": "Verschlüsselte Abrechnung"
+        },
+        "noLockIn": {
+          "body": "Wechseln oder kündigen Sie jederzeit in den Einstellungen.",
+          "title": "Keine Bindung"
+        },
+        "readable": {
+          "body": "Beim Ende des Tests wird nichts gelöscht.",
+          "title": "Test-Chats bleiben lesbar"
+        }
+      },
+      "back": "Zurück zu Ihren Chats",
+      "footer": {
+        "link": "Sprechen Sie mit uns",
+        "text": "Preise in CHF, inkl. MwSt. Fragen zu einem Tarif?"
+      },
+      "guarantee": {
+        "body": "Nicht das Richtige? Kündigen Sie innerhalb von 60 Tagen nach Ihrer ersten Zahlung für eine volle Rückerstattung — bei beiden Tarifen, ohne Wenn und Aber.",
+        "title": "60 Tage Geld-zurück-Garantie"
+      },
+      "intervalAria": "Abrechnungsintervall",
+      "monthly": "Monatlich",
+      "monthsFree": "2 Monate gratis",
+      "payg": {
+        "blurb": "Kaufen Sie Guthaben und nutzen Sie es für jedes Modell. Ein Minimum von CHF 10 hält Ihr Konto jeden Monat aktiv.",
+        "cta": "Mit Guthaben starten",
+        "features": {
+          "credits": "Guthaben funktioniert für jedes Modell und jeden Skill",
+          "noCommitment": "Keine jährliche Bindung",
+          "payForUse": "Zahlen Sie nur für das, was Sie tatsächlich nutzen",
+          "rollover": "Ungenutztes Guthaben wird übertragen, solange aktiv"
+        },
+        "fine": "Verbrauch über dem Minimum von CHF 10 wird pro Nachricht abgerechnet.",
+        "name": "Pay as you go",
+        "priceNote": "Monatlich abgerechnet · jederzeit aufladen",
+        "tag": "Flexibel",
+        "unit": "/ Monat min."
+      },
+      "status": {
+        "sendingPaused": "Senden pausiert",
+        "trialUsedUp": "Testguthaben aufgebraucht"
+      },
+      "subtitle": "Ihre Test-Chats sind weiterhin hier und vollständig lesbar. Wählen Sie einen Tarif, um neue Nachrichten zu senden — gleiche Verschlüsselung, gleiche Swiss-Rechenleistung.",
+      "title": "Privat weitermachen",
+      "unlimited": {
+        "blurb": "Unbegrenzt Nachrichten über alle Cognos-Modelle, mit priorisierter Swiss-Cloud-Rechenleistung.",
+        "cta": "Unlimited wählen",
+        "features": {
+          "cancel": "Jederzeit kündbar — läuft bis zum Periodenende weiter",
+          "priority": "Priorisierte Swiss-Cloud- & On-Prem-Rechenleistung",
+          "skills": "Alle Skills, Prompt-Bibliothek und Teilen",
+          "unlimited": "Unbegrenzt Nachrichten auf jedem Modell"
+        },
+        "fine": "Faire Nutzung gilt",
+        "name": "Unlimited",
+        "perMonth": "/ Monat",
+        "perYear": "/ Jahr",
+        "savesMonthly": "{{ yearly }}/Jahr spart Ihnen {{ saving }}",
+        "savesYearly": "Zwei Monate gratis gegenüber monatlich",
+        "tag": "Empfohlen"
+      },
+      "yearly": "Jährlich"
+    },
+    "switch": {
+      "billingPeriod": "Abrechnungszeitraum",
+      "current": "● Aktuell",
+      "currentPlan": "Aktueller Tarif",
+      "monthly": "Monatlich",
+      "monthsFree": "2 Monate gratis",
+      "note": "Änderungen werden sofort wirksam. 60 Tage Geld-zurück-Garantie für beide Tarife.",
+      "payg": {
+        "desc": "Kaufen Sie Guthaben und nutzen Sie es für jedes Modell. Ein monatliches Minimum von CHF 10 hält Ihr Konto aktiv.",
+        "name": "Pay as you go",
+        "per": "/ Mt. min.",
+        "sub": "Guthaben für jedes Modell · monatlich abgerechnet",
+        "tag": "Flexibel"
+      },
+      "perMonth": "/ Monat",
+      "perYear": "/ Jahr",
+      "switch": "Wechseln",
+      "title": "Tarif wechseln",
+      "unlimited": {
+        "desc": "Unbegrenzt Nachrichten über alle Cognos-Modelle, mit priorisierter Swiss-Cloud-Rechenleistung.",
+        "name": "Unlimited",
+        "tag": "Empfohlen"
+      },
+      "unlimitedSubMonthly": "{{ yearly }} / Jahr spart Ihnen {{ saving }}",
+      "unlimitedSubYearly": "Zwei Monate gratis gegenüber monatlicher Zahlung",
+      "yearly": "Jährlich"
+    },
+    "toasts": {
+      "genericError": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+      "refundError": "Ihre Rückerstattungsanfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+      "switchError": "Ihr Tarif konnte nicht gewechselt werden. Bitte versuchen Sie es erneut."
+    }
+  },
+  "chat": {
+    "bento": {
+      "items": {
+        "disappearing": {
+          "medium": "Legen Sie einen Timer fest, damit Ihre Nachrichten nach einer bestimmten Zeit dauerhaft gelöscht werden",
+          "small": "Legen Sie einen Timer für Ihre Nachrichten fest",
+          "title": "Verschwindende Nachrichten"
+        },
+        "encrypted": {
+          "medium": "Starke Verschlüsselung hält Ihre Daten sicher und privat",
+          "small": "Sicher & privat",
+          "title": "Nachrichten verschlüsselt"
+        },
+        "incognito": {
+          "medium": "Möglichkeit, in den Inkognito-Modus zu wechseln, in dem Ihre Chats nie gespeichert werden",
+          "small": "Chats werden nie gespeichert",
+          "title": "Inkognito-Konversationen"
+        },
+        "lockAnytime": {
+          "medium": "Sperren Sie Ihr Konto, sobald Sie sich entfernen; es bleibt auf diesem Gerät entsperrt, bis Sie sperren oder sich abmelden",
+          "small": "Mit einem Tippen sperren",
+          "title": "Jederzeit sperren"
+        },
+        "multiModel": {
+          "medium": "Nutzen Sie sowohl proprietäre als auch quelloffene KI-Modelle für die besten Ergebnisse",
+          "small": "Wählen Sie aus verschiedenen KI-Modellen",
+          "title": "Unterstützung mehrerer Modelle"
+        },
+        "noRetention": {
+          "medium": "Wir leiten nur an geprüfte Anbieter weiter, die keine Daten speichern und nicht damit trainieren",
+          "small": "Nur geprüfte Anbieter",
+          "title": "Anbieter ohne Datenspeicherung"
+        },
+        "onlyYou": {
+          "medium": "Ihr Chatverlauf wird verschlüsselt gespeichert — nur Sie halten die Schlüssel, um ihn zu entschlüsseln",
+          "small": "Sie halten die Schlüssel",
+          "title": "Nur Sie können entschlüsseln"
+        }
+      }
+    },
+    "composer": {
+      "clearMessages": "Alle Nachrichten löschen",
+      "encrypted": "Ende-zu-Ende-verschlüsselt · Schlüssel werden vor der Sicherung verschlüsselt",
+      "label": "Cognos schreiben — verschlüsselt gespeichert; zum Antworten an Ihren Anbieter gesendet",
+      "locked": {
+        "body": "Sie können hier alles lesen. Wählen Sie einen Tarif, um neue Nachrichten zu senden.",
+        "comparePlans": "Tarife vergleichen",
+        "guarantee": "60 Tage Geld-zurück-Garantie · jederzeit kündbar",
+        "title": "Senden ist pausiert",
+        "upgrade": "Upgrade"
+      },
+      "placeholder": "Mit Cognos schreiben",
+      "send": "Senden",
+      "shortcutMac": "Cmd + Enter zum Senden",
+      "shortcutOther": "Strg + Enter zum Senden",
+      "switchPersona": "Persona wechseln — {{ name }}"
+    },
+    "conversation": {
+      "drawerTitle": "Navigation",
+      "restoringSession": "Verschlüsselte Sitzung wird wiederhergestellt",
+      "scrollToBottom": "Zum Ende der Konversation scrollen"
+    },
+    "empty": {
+      "disappearingMessages": "Verschwindende Nachrichten:",
+      "disappearingOff": "Aus",
+      "incognitoBody": "Ihre Nachrichten werden nicht gespeichert. Wenn Sie diese Konversation verlassen oder leeren, können Sie sie nicht wiederherstellen.",
+      "incognitoTitle": "Inkognito-Modus aktiviert",
+      "secureBody": "Beginnen Sie, indem Sie unten im Eingabefeld eine Nachricht senden.",
+      "secureTitle": "Sichere KI-Nachrichten",
+      "temporaryChat": "Temporärer Chat"
+    },
+    "header": {
+      "clearMessages": "Nachrichten löschen",
+      "delete": "Löschen",
+      "deleteConfirm": "Möchten Sie diese Konversation wirklich löschen?",
+      "export": "Exportieren",
+      "menu": "Konversationsmenü",
+      "newChat": "Neuer Chat",
+      "rename": "Umbenennen",
+      "security": "Sicherheit & Schlüssel",
+      "share": "Teilen",
+      "shareTitle": "Diese Konversation teilen",
+      "shared": "Geteilt",
+      "sharedTitle": "Diese Konversation ist über einen öffentlichen Link geteilt — Freigabe verwalten",
+      "soon": "Bald",
+      "temporaryChat": "Temporärer Chat"
+    },
+    "icebreakers": {
+      "items": {
+        "dinnerParty": {
+          "description": "Gästeliste für eine Dinnerparty",
+          "title": "Erstelle die ultimative"
+        },
+        "dreamHouse": {
+          "description": "für mein Haustier",
+          "title": "Beschreibe ein Traumhaus"
+        },
+        "environmental": {
+          "description": "eine nachhaltige Zukunft für unseren Planeten gestalten",
+          "title": "Umweltchampion"
+        },
+        "ethereumDeveloper": {
+          "description": "optimiert für die Entwicklung von Smart Contracts",
+          "title": "Sei ein Ethereum-Entwickler"
+        },
+        "futureTech": {
+          "description": "die nächste große technologische Innovation vorstellen",
+          "title": "Zukunfts-Technikpionier"
+        },
+        "helpRecruit": {
+          "description": "eines neuen Mitglieds für mein Team",
+          "title": "Hilf mir beim Rekrutieren"
+        },
+        "intergalacticAmbassador": {
+          "description": "vermittelt zwischen außerirdischen Zivilisationen",
+          "title": "Intergalaktischer Botschafter"
+        },
+        "masterChef": {
+          "description": "mit begrenzten Zutaten",
+          "title": "Sterneküchen-Challenge"
+        },
+        "planHoliday": {
+          "description": "den ich nie vergessen werde",
+          "title": "Plane einen Urlaub"
+        },
+        "predictFuture": {
+          "description": "der technischen Innovation",
+          "title": "Sage die Zukunft voraus"
+        },
+        "rewriteHistory": {
+          "description": "um den Lauf der Ereignisse zu ändern",
+          "title": "Schreibe die Geschichte um"
+        },
+        "spaceExplorer": {
+          "description": "die Chroniken eines Weltraumforschers in einer fernen Galaxie schildern",
+          "title": "Tagebuch eines Weltraumforschers"
+        },
+        "superheroOrigin": {
+          "description": "für einen neuen Helden",
+          "title": "Superhelden-Entstehungsgeschichte"
+        },
+        "timeCapsule": {
+          "description": "für künftige Generationen",
+          "title": "Erstelle eine Zeitkapsel"
+        },
+        "ultimatePlaylist": {
+          "description": "die perfekte Musik-Playlist erstellen",
+          "title": "Die ultimative Playlist"
+        },
+        "wouldYouRather": {
+          "description": "KI-Edition",
+          "title": "Würdest du eher"
+        }
+      }
+    },
+    "list": {
+      "delete": "Löschen",
+      "deleteConfirm": "Möchten Sie diese Konversation wirklich löschen?",
+      "edit": "Bearbeiten",
+      "newChat": "Neuer Chat",
+      "newChatLockedTitle": "Wählen Sie einen Tarif, um einen neuen Chat zu starten",
+      "openMenu": "Konversationsmenü öffnen",
+      "pin": "Anheften",
+      "pinned": "Angeheftet",
+      "recent": "Zuletzt",
+      "searchAria": "Konversationen durchsuchen",
+      "searchPlaceholder": "Suchen",
+      "searchedOnDevice": "Auf diesem Gerät durchsucht",
+      "unpin": "Lösen"
+    },
+    "message": {
+      "copy": "In die Zwischenablage kopieren",
+      "delete": "Nachricht löschen",
+      "deleteConfirm": "Möchten Sie diese Nachricht wirklich löschen?",
+      "deleted": "Gelöschte Nachricht",
+      "disappearAfter": "Neue Nachrichten in dieser Konversation verschwinden nach {{ duration }}",
+      "edit": "Nachricht bearbeiten",
+      "editCancel": "Abbrechen",
+      "editInputAria": "Nachricht bearbeiten",
+      "editSave": "Speichern",
+      "empty": "Diese Nachricht ist leer.",
+      "emptyAssistant": "Diese Nachricht ist leer oder die KI hat keine Antwort generiert, bitte versuchen Sie es erneut.",
+      "encrypted": "Verschlüsselt",
+      "encryptedWithTime": "Verschlüsselt · {{ time }}",
+      "keep": "Diese temporäre Nachricht behalten",
+      "regenerate": "Antwort neu generieren"
+    },
+    "models": {
+      "costTier": {
+        "high": "Hohe Kosten",
+        "low": "Niedrige Kosten",
+        "medium": "Mittlere Kosten"
+      },
+      "estimatedCost": "Geschätzte Modellkosten: {{ cost }}",
+      "explainer": "Die Kosten zeigen ungefähr, wie viel jedes Modell pro Nachricht ausgibt. Teurere Modelle kosten mehr als günstigere.",
+      "pickAria": "Wählen Sie Ihr KI-Modell",
+      "pin": "Modell anheften",
+      "unpin": "Modell lösen"
+    },
+    "personas": {
+      "all": "Alle",
+      "manage": "Personas verwalten…",
+      "quickSwitchAria": "Schneller Persona-Wechsel",
+      "switchAria": "Persona wechseln"
+    },
+    "sidebar": {
+      "accountBilling": "Konto & Abrechnung",
+      "creditLeft": "CHF {{ amount }} übrig",
+      "help": "Hilfe",
+      "lock": "Sperren",
+      "lockTitle": "Sperrt Ihr Konto und meldet Sie nicht ab.",
+      "lockedToastMsg": "Dieses Gerät benötigt nun Ihren Account-Schlüssel, um wieder zu entsperren.",
+      "lockedToastTitle": "Konto gesperrt",
+      "logout": "Abmelden",
+      "plan": {
+        "inactive": "Kein aktiver Tarif",
+        "loading": "Wird geladen…",
+        "payg": "Nutzungsbasiert",
+        "trial": "Testphase",
+        "unlimited": "Unbegrenzt"
+      },
+      "viewPlans": "Tarife ansehen"
+    },
+    "temporary": {
+      "body": "Für mehr Privatsphäre verschwinden alle neuen Nachrichten aus diesem Chat nach der unten gewählten Dauer. Sie können eine Nachricht auch manuell behalten, bevor sie abläuft.",
+      "durations": {
+        "days180": "180 Tage",
+        "days7": "7 Tage",
+        "days90": "90 Tage",
+        "hours24": "24 Stunden",
+        "off": "Aus"
+      },
+      "lead": "Lassen Sie Ihre Nachrichten verschwinden.",
+      "note": "Dies wirkt sich nicht auf bestehende Nachrichten aus und kann jederzeit deaktiviert werden.",
+      "save": "Speichern",
+      "title": "Verschwindende Nachrichten"
+    },
+    "trial": {
+      "choosePlan": "Tarif wählen",
+      "creditLabel": "Testguthaben",
+      "detail": "{{ amount }} übrig von Ihrer Testphase über {{ total }}",
+      "usedUp": "Aufgebraucht"
+    }
+  },
+  "common": {
+    "cancel": "Abbrechen",
+    "email": "E-Mail",
+    "emailPlaceholder": "du@beispiel.com",
+    "password": "Passwort",
+    "passwordPlaceholder": "••••••••",
+    "privacyTerms": "Datenschutz und AGB"
+  },
+  "dialogs": {
+    "confirm": {
+      "no": "Nein",
+      "title": "Kurze Rückfrage",
+      "yes": "Ja"
+    },
+    "contactHelp": {
+      "done": "Fertig",
+      "emailLabel": "E-Mail:",
+      "introAfter": "— den Gründer, für direkten Support.",
+      "introBefore": "Wenn Sie Probleme haben, können Sie mich kontaktieren —",
+      "outro": "Sagen Sie mir, womit Sie Schwierigkeiten haben, und ich helfe Ihnen gerne, es gemeinsam mit Ihnen zu verbessern.",
+      "thanks": "Danke, dass Sie Cognos nutzen.",
+      "threemaLabel": "Threema:",
+      "title": "Brauchen Sie Hilfe? Möchten Sie mich kontaktieren?"
+    },
+    "editConversation": {
+      "disappearingBody": "Für mehr Privatsphäre verschwinden alle neuen Nachrichten in diesem Chat nach der unten gewählten Dauer. Sie können eine Nachricht auch manuell behalten, bevor sie abläuft.",
+      "disappearingHeading": "Verschwindende Nachrichten aktivieren",
+      "disappearingNote": "Dies betrifft keine bestehenden Nachrichten und kann jederzeit deaktiviert werden.",
+      "error": "Konversation konnte nicht bearbeitet werden, bitte versuchen Sie es später erneut.",
+      "nameLabel": "Namen ändern",
+      "save": "Speichern",
+      "title": "Konversation bearbeiten"
+    },
+    "profilePicture": {
+      "alt": "Profilbild von {{name}}"
+    },
+    "share": {
+      "checking": "Freigabestatus wird geprüft…",
+      "close": "Schließen",
+      "copied": "Kopiert",
+      "copy": "Kopieren",
+      "copyError": "Der Link konnte nicht kopiert werden.",
+      "createBody": "Nur Personen mit dem Link können diese Konversation sehen — aber sie sehen jede Nachricht, vergangene und zukünftige, bis Sie die Freigabe beenden. Der Entschlüsselungsschlüssel steckt im Link selbst und erreicht niemals unsere Server, geben Sie ihn also nur an die Personen weiter, die Sie auswählen.",
+      "createError": "Öffentlicher Link konnte nicht erstellt werden, bitte versuchen Sie es erneut.",
+      "createHeading": "Öffentlichen Link erstellen",
+      "createLink": "Öffentlichen Link erstellen",
+      "linkAriaLabel": "Öffentlicher Freigabelink",
+      "revokeError": "Freigabe konnte nicht beendet werden, bitte versuchen Sie es erneut.",
+      "sharedBody": "Nur Personen mit diesem Link können diese Konversation sehen. Sie sehen jede Nachricht — vergangene und zukünftige — bis Sie die Freigabe beenden.",
+      "sharedHeading": "Öffentlicher Link",
+      "stopSharing": "Freigabe beenden",
+      "title": "Konversation teilen"
+    },
+    "vaultPassword": {
+      "accountKey": "Account-Schlüssel",
+      "accountKeyRequired": "Account-Schlüssel ist erforderlich",
+      "acknowledge": "Ich habe meinen Account-Schlüssel an einem sicheren Ort gespeichert und bestätige, dass ich bei Verlust auch keinen Zugriff mehr auf mein Konto habe.",
+      "acknowledgeRequired": "Bitte bestätigen Sie, dass Sie Ihren Account-Schlüssel kopiert haben und das Wiederherstellungsrisiko akzeptieren.",
+      "copiedMsg": "Speichern Sie ihn an einem sicheren Ort, bevor Sie fortfahren.",
+      "copiedTitle": "Account-Schlüssel kopiert",
+      "copyAccountKey": "Account-Schlüssel kopieren",
+      "copyFailedMsg": "Wählen Sie den Account-Schlüssel aus und speichern Sie ihn manuell, bevor Sie fortfahren.",
+      "copyFailedTitle": "Account-Schlüssel konnte nicht kopiert werden",
+      "createBackup": "Verschlüsseltes Backup erstellen",
+      "downloadKit": "Notfall-Kit herunterladen",
+      "hide": "Verbergen",
+      "kitDownloadedMsg": "Speichern Sie die Datei an einem sicheren Ort, bevor Sie fortfahren.",
+      "kitDownloadedTitle": "Notfall-Kit heruntergeladen",
+      "lockedBadge": "Gesperrt",
+      "lockedBody": "Entsperren Sie, um fortzufahren. Diese Sperre löscht nur den lokalen vertrauenswürdigen Zugriff und meldet Sie nicht ab.",
+      "lockedOnDevice": "Konto auf diesem Gerät gesperrt",
+      "logOut": "Abmelden",
+      "newIntro": "Cognos hat einen einmaligen Account-Schlüssel für dieses verschlüsselte Backup generiert. Speichern Sie ihn jetzt. Er ist das Einzige, was Ihre Daten entschlüsseln kann — Ihr Passwort meldet Sie nur an, und ein neues Gerät benötigt nur diesen Account-Schlüssel.",
+      "newWarning": "Halten Sie diesen Account-Schlüssel geheim — jeder, der ihn hat, kann Ihre Daten entschlüsseln. Cognos speichert den Account-Schlüssel niemals im Klartext, wenn Sie ihn also verlieren, können Ihre Daten nicht wiederhergestellt werden.",
+      "show": "Anzeigen",
+      "titleLocked": "Konto gesperrt",
+      "titleNew": "Sichern Sie Ihr verschlüsseltes Backup",
+      "titleUnlock": "Backup entsperren",
+      "unlockBackup": "Verschlüsseltes Backup entsperren",
+      "unlockBody": "Nach dem Entsperren bleibt dieser Browser über Aktualisierungen und neue Tabs hinweg entsperrt. Sie benötigen Ihren Account-Schlüssel erneut, nachdem Sie das Konto gesperrt, sich abgemeldet oder den Browserspeicher gelöscht haben.",
+      "unlockIntro": "Geben Sie Ihren Account-Schlüssel ein, um dieses Gerät zu entsperren."
+    }
+  },
+  "language": {
+    "label": "Sprache"
+  },
+  "personas": {
+    "editor": {
+      "close": "Editor schließen",
+      "closeButton": "Schließen",
+      "colourLegend": "Farbe",
+      "colourOption": "Farbe {{colour}}",
+      "delete": "Löschen",
+      "descriptionLabel": "Beschreibung",
+      "duplicateToEdit": "Zum Bearbeiten duplizieren",
+      "encryptedSubtitle": "In Ihrem Browser verschlüsselt",
+      "iconLegend": "Symbol",
+      "iconOption": "Symbol {{icon}}",
+      "instructionsLabel": "Anweisungen",
+      "nameLabel": "Name",
+      "notice": {
+        "body": "— offizielle Personas können nicht bearbeitet werden. Duplizieren Sie sie, um eine eigene Version zu erstellen, die Sie anpassen können.",
+        "lead": "Offizielle Persona"
+      },
+      "readOnlySubtitle": "Schreibgeschützt · von Cognos bereitgestellt",
+      "save": "Verschlüsselte Persona speichern",
+      "titleCreate": "Eigene erstellen",
+      "titleEdit": "Persona bearbeiten",
+      "useAsDefault": "Als meine Standard-Persona verwenden"
+    },
+    "page": {
+      "actions": {
+        "defaultForNewChats": "Standard für neue Chats",
+        "defaultPersona": "Standard-Persona",
+        "edit": "Bearbeiten",
+        "editPersona": "Persona bearbeiten",
+        "pin": "Anheften",
+        "pinPersona": "Persona anheften",
+        "setDefault": "Als Standard festlegen",
+        "setDefaultPersona": "Als Standard-Persona festlegen",
+        "unpin": "Lösen",
+        "unpinPersona": "Persona lösen",
+        "view": "Ansehen",
+        "viewPersona": "Persona ansehen"
+      },
+      "badges": {
+        "active": "Aktiv",
+        "default": "Standard",
+        "official": "Offiziell"
+      },
+      "breadcrumb": "Navigationspfad",
+      "empty": "Keine Personas passen zu „{{query}}“.",
+      "encryptedBadge": "Verschlüsselt",
+      "gridView": "Rasteransicht",
+      "listView": "Listenansicht",
+      "myPersonas": "Meine Personas",
+      "newPersona": "Neue Persona",
+      "newPersonaHint": "Schreiben Sie eigene Anweisungen — in Ihrem Browser verschlüsselt.",
+      "searchPlaceholder": "Personas durchsuchen",
+      "sections": {
+        "official": "Offiziell",
+        "pinned": "Angeheftet",
+        "recent": "Zuletzt verwendet"
+      },
+      "subtitle": "Wie Cognos antwortet — jederzeit wechselbar",
+      "title": "Personas",
+      "viewMode": "Ansichtsmodus"
+    }
+  },
+  "public": {
+    "decrypting": "Geteilte Konversation wird entschlüsselt…",
+    "deletedMessage": "Gelöschte Nachricht",
+    "emptyMessage": "Diese Nachricht ist leer.",
+    "encrypted": "Verschlüsselt",
+    "encryptedAt": "Verschlüsselt · {{time}}",
+    "encryptedTitle": "Ende-zu-Ende-verschlüsselt",
+    "promoAfter": "und registrieren Sie sich noch heute.",
+    "promoBefore": "Cognos verschlüsselt Ihre KI-Chats. Dies ist eine öffentliche Konversation, aber nur Personen mit dem Link können sie entschlüsseln und lesen. Wenn Ihnen wichtig ist, dass Ihre KI-Chats privat und sicher bleiben, Sie einen europäischen Dienst bevorzugen und sowohl proprietäre als auch Open-Source-Modelle möchten, gehen Sie zu",
+    "sharedSecurely": "Sicher geteilt · in Ihrem Browser entschlüsselt",
+    "unavailableBody": "Die geteilte Konversation wurde möglicherweise nicht mehr freigegeben, oder der Link ist unvollständig. Bitten Sie die Person, die ihn geteilt hat, um einen neuen Link.",
+    "unavailableTitle": "Dieser Link ist nicht verfügbar"
+  },
+  "settings": {
+    "backToChats": "Zurück zu den Chats",
+    "nav": {
+      "account": "Konto",
+      "billing": "Tarif & Abrechnung",
+      "notifications": "Benachrichtigungen",
+      "security": "Sicherheit & Schlüssel",
+      "team": "Team & Freigabe",
+      "usage": "Nutzung"
+    },
+    "placeholder": {
+      "comingSoon": "Dieser Bereich ist bald verfügbar."
+    },
+    "title": "Einstellungen"
   }
 }

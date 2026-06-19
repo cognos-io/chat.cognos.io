@@ -12,6 +12,8 @@ import {
 
 import { EMPTY, catchError, finalize } from 'rxjs';
 
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+
 import {
   CognosButtonComponent,
   CognosDialogSurfaceComponent,
@@ -33,10 +35,16 @@ const notBlankValidator = (): ValidatorFn => {
 @Component({
   selector: 'app-edit-conversation-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule, CognosDialogSurfaceComponent, CognosButtonComponent],
+  imports: [
+    ReactiveFormsModule,
+    CognosDialogSurfaceComponent,
+    CognosButtonComponent,
+    TranslocoModule,
+  ],
   template: `
     <cog-dialog-surface
-      title="Edit conversation"
+      *transloco="let t"
+      [title]="t('dialogs.editConversation.title')"
       [footer]="true"
       [width]="560"
       (close)="close()"
@@ -44,7 +52,7 @@ const notBlankValidator = (): ValidatorFn => {
       <form [formGroup]="editForm" [id]="formId" class="edit-conversation-dialog">
         <div class="edit-conversation-dialog__field">
           <label class="edit-conversation-dialog__label" for="conversation-title">
-            Change the name
+            {{ t('dialogs.editConversation.nameLabel') }}
           </label>
           <input
             id="conversation-title"
@@ -55,13 +63,9 @@ const notBlankValidator = (): ValidatorFn => {
         </div>
 
         <div class="edit-conversation-dialog__copy">
-          <h3>Enable disappearing messages</h3>
-          <p>
-            For more privacy all new messages will disappear from this chat after the
-            selected duration below. You can also choose to manually keep a message
-            before it expires.
-          </p>
-          <p>This will not affect existing messages and can be disabled at any time.</p>
+          <h3>{{ t('dialogs.editConversation.disappearingHeading') }}</h3>
+          <p>{{ t('dialogs.editConversation.disappearingBody') }}</p>
+          <p>{{ t('dialogs.editConversation.disappearingNote') }}</p>
         </div>
 
         <div class="edit-conversation-dialog__options" role="radiogroup">
@@ -78,7 +82,9 @@ const notBlankValidator = (): ValidatorFn => {
       </form>
 
       <div cogDialogFooter>
-        <cog-button appearance="subtle" (click)="close()">Cancel</cog-button>
+        <cog-button appearance="subtle" (click)="close()">{{
+          t('common.cancel')
+        }}</cog-button>
         <cog-button
           appearance="primary"
           type="submit"
@@ -86,7 +92,7 @@ const notBlankValidator = (): ValidatorFn => {
           [attr.form]="formId"
           (click)="onEditConversation()"
         >
-          Save
+          {{ t('dialogs.editConversation.save') }}
         </cog-button>
       </div>
     </cog-dialog-surface>
@@ -174,6 +180,7 @@ const notBlankValidator = (): ValidatorFn => {
 export class EditConversationDialogComponent implements OnInit {
   private readonly _dialogRef = inject(DialogRef<void>);
   private readonly _errorService = inject(ErrorService);
+  private readonly _transloco = inject(TranslocoService);
 
   readonly conversationService = inject(ConversationService);
   readonly expiringDurations = expiringDurations;
@@ -210,7 +217,7 @@ export class EditConversationDialogComponent implements OnInit {
         finalize(() => this.editForm.enable()),
         catchError(() => {
           this._errorService.alert(
-            'Unable to edit conversation, please try again later.',
+            this._transloco.translate('dialogs.editConversation.error'),
           );
           return EMPTY;
         }),

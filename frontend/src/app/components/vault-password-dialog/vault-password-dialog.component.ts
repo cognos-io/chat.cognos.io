@@ -8,6 +8,8 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+
 import {
   CognosButtonComponent,
   CognosDialogSurfaceComponent,
@@ -71,9 +73,15 @@ const validateUnlockForm = (
     CognosButtonComponent,
     CognosIconComponent,
     CognosLozengeComponent,
+    TranslocoModule,
   ],
   template: `
-    <cog-dialog-surface [title]="title()" [footer]="false" [dismissible]="false">
+    <cog-dialog-surface
+      *transloco="let t"
+      [title]="title()"
+      [footer]="false"
+      [dismissible]="false"
+    >
       <div class="vault-password-dialog">
         <div class="vault-password-dialog__copy">
           @if (!vaultService.isNewKeyPair() && vaultService.wasLocked()) {
@@ -83,25 +91,22 @@ const validateUnlockForm = (
               </span>
               <div class="vault-password-dialog__status-copy">
                 <div class="vault-password-dialog__status-title">
-                  <cog-lozenge tone="blue">Locked</cog-lozenge>
-                  <span>Account locked on this device</span>
+                  <cog-lozenge tone="blue">{{
+                    t('dialogs.vaultPassword.lockedBadge')
+                  }}</cog-lozenge>
+                  <span>{{ t('dialogs.vaultPassword.lockedOnDevice') }}</span>
                 </div>
-                <p>
-                  Unlock to continue. This lock only clears local trusted access and
-                  does not sign you out.
-                </p>
+                <p>{{ t('dialogs.vaultPassword.lockedBody') }}</p>
               </div>
             </div>
           }
 
           @if (vaultService.isNewKeyPair()) {
-            <p>
-              Cognos generated a one-time Account Key for this encrypted backup. Save it
-              now. It is the only thing that can decrypt your data — your password just
-              signs you in, and a new device only needs this Account Key.
-            </p>
+            <p>{{ t('dialogs.vaultPassword.newIntro') }}</p>
             <div class="vault-password-dialog__account-key-card">
-              <span class="vault-password-dialog__account-key-label">Account Key</span>
+              <span class="vault-password-dialog__account-key-label">{{
+                t('dialogs.vaultPassword.accountKey')
+              }}</span>
               <code class="vault-password-dialog__account-key-value">{{
                 generatedAccountKey()
               }}</code>
@@ -111,29 +116,21 @@ const validateUnlockForm = (
                   type="button"
                   (click)="copyAccountKey()"
                 >
-                  Copy Account Key
+                  {{ t('dialogs.vaultPassword.copyAccountKey') }}
                 </cog-button>
                 <cog-button
                   appearance="default"
                   type="button"
                   (click)="downloadEmergencyKit()"
                 >
-                  Download Emergency Kit
+                  {{ t('dialogs.vaultPassword.downloadKit') }}
                 </cog-button>
               </div>
             </div>
-            <p>
-              Keep this Account Key private — anyone who has it can decrypt your data.
-              Cognos never stores the plaintext Account Key, so if you lose it your data
-              cannot be recovered.
-            </p>
+            <p>{{ t('dialogs.vaultPassword.newWarning') }}</p>
           } @else {
-            <p>Enter your Account Key to unlock this device.</p>
-            <p>
-              After you unlock, this browser stays unlocked across refreshes and new
-              tabs. You will need your Account Key again after locking the account,
-              logging out, or clearing browser storage.
-            </p>
+            <p>{{ t('dialogs.vaultPassword.unlockIntro') }}</p>
+            <p>{{ t('dialogs.vaultPassword.unlockBody') }}</p>
           }
         </div>
 
@@ -146,7 +143,7 @@ const validateUnlockForm = (
             <div class="vault-password-dialog__field">
               <div class="vault-password-dialog__field-head">
                 <label class="vault-password-dialog__label" for="account-key">
-                  Account Key
+                  {{ t('dialogs.vaultPassword.accountKey') }}
                 </label>
                 <button
                   class="vault-password-dialog__reveal"
@@ -154,7 +151,11 @@ const validateUnlockForm = (
                   [attr.aria-pressed]="showAccountKey()"
                   (click)="toggleAccountKey()"
                 >
-                  {{ showAccountKey() ? 'Hide' : 'Show' }}
+                  {{
+                    showAccountKey()
+                      ? t('dialogs.vaultPassword.hide')
+                      : t('dialogs.vaultPassword.show')
+                  }}
                 </button>
               </div>
               <!-- A real password field: the Account Key is recovery-grade
@@ -178,9 +179,9 @@ const validateUnlockForm = (
                 vaultForm.hasError('accountKeyRequired') &&
                 vaultForm.get('accountKey')?.touched
               ) {
-                <span class="vault-password-dialog__error"
-                  >Account Key is required</span
-                >
+                <span class="vault-password-dialog__error">{{
+                  t('dialogs.vaultPassword.accountKeyRequired')
+                }}</span>
               }
             </div>
           }
@@ -190,16 +191,12 @@ const validateUnlockForm = (
               class="vault-password-dialog__checkbox-row vault-password-dialog__checkbox-row--acknowledge"
             >
               <input formControlName="accountKeySaved" type="checkbox" />
-              <span>
-                I have copied my Account Key to a safe place and acknowledge that if I
-                lose it I will also not be able to access my account.
-              </span>
+              <span>{{ t('dialogs.vaultPassword.acknowledge') }}</span>
             </label>
             @if (vaultForm.hasError('accountKeySavedRequired')) {
-              <span class="vault-password-dialog__error"
-                >Please confirm that you copied your Account Key and accept the recovery
-                risk.</span
-              >
+              <span class="vault-password-dialog__error">{{
+                t('dialogs.vaultPassword.acknowledgeRequired')
+              }}</span>
             }
           }
 
@@ -211,7 +208,7 @@ const validateUnlockForm = (
 
           <div class="vault-password-dialog__actions">
             <cog-button appearance="subtle" type="button" (click)="logOut()">
-              Log out
+              {{ t('dialogs.vaultPassword.logOut') }}
             </cog-button>
             <cog-button
               appearance="primary"
@@ -219,9 +216,9 @@ const validateUnlockForm = (
               [disabled]="vaultForm.invalid"
             >
               @if (vaultService.isNewKeyPair()) {
-                Create encrypted backup
+                {{ t('dialogs.vaultPassword.createBackup') }}
               } @else {
-                Unlock encrypted backup
+                {{ t('dialogs.vaultPassword.unlockBackup') }}
               }
             </cog-button>
           </div>
@@ -418,13 +415,16 @@ export class VaultPasswordDialogComponent {
   private readonly toastService = inject(CognosToastService);
   private readonly router = inject(Router);
   private readonly dialogRef = inject(DialogRef, { optional: true });
+  private readonly _transloco = inject(TranslocoService);
 
   readonly title = computed(() => {
     if (this.vaultService.isNewKeyPair()) {
-      return 'Secure your encrypted backup';
+      return this._transloco.translate('dialogs.vaultPassword.titleNew');
     }
 
-    return this.vaultService.wasLocked() ? 'Account locked' : 'Unlock backup';
+    return this.vaultService.wasLocked()
+      ? this._transloco.translate('dialogs.vaultPassword.titleLocked')
+      : this._transloco.translate('dialogs.vaultPassword.titleUnlock');
   });
   readonly generatedAccountKey = computed(
     () => this.vaultService.generatedAccountKey() ?? '',
@@ -468,8 +468,8 @@ export class VaultPasswordDialogComponent {
     URL.revokeObjectURL(url);
 
     this.toastService.notify({
-      title: 'Emergency Kit downloaded',
-      msg: 'Store the file somewhere safe before you continue.',
+      title: this._transloco.translate('dialogs.vaultPassword.kitDownloadedTitle'),
+      msg: this._transloco.translate('dialogs.vaultPassword.kitDownloadedMsg'),
       tone: 'success',
       icon: 'download',
       duration: 3200,
@@ -485,8 +485,8 @@ export class VaultPasswordDialogComponent {
     const copied = await this.copyText(accountKey);
     if (!copied) {
       this.toastService.notify({
-        title: 'Could not copy Account Key',
-        msg: 'Select and store the Account Key manually before you continue.',
+        title: this._transloco.translate('dialogs.vaultPassword.copyFailedTitle'),
+        msg: this._transloco.translate('dialogs.vaultPassword.copyFailedMsg'),
         tone: 'danger',
         icon: 'shield-x',
         duration: 4200,
@@ -495,8 +495,8 @@ export class VaultPasswordDialogComponent {
     }
 
     this.toastService.notify({
-      title: 'Account Key copied',
-      msg: 'Store it somewhere safe before you continue.',
+      title: this._transloco.translate('dialogs.vaultPassword.copiedTitle'),
+      msg: this._transloco.translate('dialogs.vaultPassword.copiedMsg'),
       tone: 'success',
       icon: 'copy',
       duration: 3200,

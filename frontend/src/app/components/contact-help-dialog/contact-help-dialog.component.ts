@@ -1,6 +1,8 @@
 import { DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import {
   CognosButtonComponent,
   CognosDialogSurfaceComponent,
@@ -15,33 +17,35 @@ import { ProfilePictureComponent } from '../team/profile-picture/profile-picture
     CognosDialogSurfaceComponent,
     CognosButtonComponent,
     ProfilePictureComponent,
+    TranslocoModule,
   ],
   template: `
     <cog-dialog-surface
-      title="Need help? Want to contact me?"
+      *transloco="let t"
+      [title]="t('dialogs.contactHelp.title')"
       [footer]="true"
       (close)="close()"
     >
       <div class="contact-help-dialog">
         <div class="contact-help-dialog__copy">
           <p>
-            If you are having problems, you can contact me —
+            {{ t('dialogs.contactHelp.introBefore') }}
             <a
               href="https://www.linkedin.com/in/egjones/"
               rel="noopener noreferrer"
               target="_blank"
               >Ewan</a
             >
-            — the founder, for direct support.
+            {{ t('dialogs.contactHelp.introAfter') }}
           </p>
 
           <ul>
             <li>
-              Email:
+              {{ t('dialogs.contactHelp.emailLabel') }}
               <a href="mailto:ewan@cognos.io">ewan&#64;cognos.io</a>
             </li>
             <li>
-              Threema:
+              {{ t('dialogs.contactHelp.threemaLabel') }}
               <a
                 href="https://threema.id/NM4AVD9N"
                 rel="noopener noreferrer"
@@ -51,11 +55,8 @@ import { ProfilePictureComponent } from '../team/profile-picture/profile-picture
             </li>
           </ul>
 
-          <p>
-            Let me know what you're having trouble with and I will be happy to help make
-            it better with you.
-          </p>
-          <p>Thank you for using Cognos.</p>
+          <p>{{ t('dialogs.contactHelp.outro') }}</p>
+          <p>{{ t('dialogs.contactHelp.thanks') }}</p>
         </div>
 
         <div class="contact-help-dialog__image">
@@ -67,7 +68,9 @@ import { ProfilePictureComponent } from '../team/profile-picture/profile-picture
       </div>
 
       <div cogDialogFooter>
-        <cog-button appearance="primary" (click)="close()">Done</cog-button>
+        <cog-button appearance="primary" (click)="close()">{{
+          t('dialogs.contactHelp.done')
+        }}</cog-button>
       </div>
     </cog-dialog-surface>
   `,

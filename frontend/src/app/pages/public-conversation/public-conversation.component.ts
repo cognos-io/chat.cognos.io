@@ -11,6 +11,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { EMPTY, catchError, switchMap } from 'rxjs';
 
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { Base64 } from 'js-base64';
 import { MarkdownComponent } from 'ngx-markdown';
 
@@ -64,28 +65,26 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
     CognosAssistantMessageComponent,
     CognosBranchSwitcherComponent,
     CognosLogoComponent,
+    TranslocoModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="public-conversation">
+    <main class="public-conversation" *transloco="let t">
       <header class="public-conversation__bar">
         <app-cognos-logo class="public-conversation__logo" palette="dark" />
-        <span class="public-conversation__lock" title="End-to-end encrypted">
-          Shared securely · decrypted in your browser
+        <span class="public-conversation__lock" [title]="t('public.encryptedTitle')">
+          {{ t('public.sharedSecurely') }}
         </span>
       </header>
 
       @switch (state()) {
         @case ('loading') {
-          <p class="public-conversation__status">Decrypting shared conversation…</p>
+          <p class="public-conversation__status">{{ t('public.decrypting') }}</p>
         }
         @case ('unavailable') {
           <section class="public-conversation__empty">
-            <h1>This link isn’t available</h1>
-            <p>
-              The shared conversation may have been unshared, or the link is incomplete.
-              Ask the person who shared it for a fresh link.
-            </p>
+            <h1>{{ t('public.unavailableTitle') }}</h1>
+            <p>{{ t('public.unavailableBody') }}</p>
           </section>
         }
         @case ('ready') {
@@ -145,32 +144,31 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
       }
     </main>
 
-    <footer class="public-conversation__promo">
+    <footer class="public-conversation__promo" *transloco="let t">
       <div class="public-conversation__promo-inner">
         <app-cognos-logo class="public-conversation__promo-logo" palette="dark" />
         <p class="public-conversation__promo-text">
-          Cognos encrypts your AI chats. This is a public conversation, but only people
-          with the link can decrypt and read it. If you care about keeping your AI chats
-          private and secure, prefer a European service, and want both proprietary and
-          open-source models, go to
+          {{ t('public.promoBefore') }}
           <a href="https://cognos.io/" target="_blank" rel="noopener noreferrer"
             >cognos.io</a
           >
-          and sign up today.
+          {{ t('public.promoAfter') }}
         </p>
       </div>
     </footer>
 
     <ng-template #body let-message>
-      @if (message.decryptedData.deleted) {
-        <p class="public-conversation__muted">Deleted message</p>
-      } @else if (message.decryptedData.content) {
-        <markdown class="public-conversation__text" emoji katex>{{
-          message.decryptedData.content
-        }}</markdown>
-      } @else {
-        <p class="public-conversation__muted">This message is empty.</p>
-      }
+      <ng-container *transloco="let t">
+        @if (message.decryptedData.deleted) {
+          <p class="public-conversation__muted">{{ t('public.deletedMessage') }}</p>
+        } @else if (message.decryptedData.content) {
+          <markdown class="public-conversation__text" emoji katex>{{
+            message.decryptedData.content
+          }}</markdown>
+        } @else {
+          <p class="public-conversation__muted">{{ t('public.emptyMessage') }}</p>
+        }
+      </ng-container>
     </ng-template>
   `,
   styles: `
@@ -308,6 +306,7 @@ export class PublicConversationComponent implements OnInit {
   private readonly _route = inject(ActivatedRoute);
   private readonly _api = inject(CognosApiService);
   private readonly _crypto = inject(CryptoService);
+  private readonly _transloco = inject(TranslocoService);
 
   readonly state = signal<ViewState>('loading');
   readonly title = signal('');
@@ -441,7 +440,9 @@ export class PublicConversationComponent implements OnInit {
 
   userMeta(message: Message): string {
     const time = this.formatTimestamp(message.createdAt);
-    return time ? `Encrypted · ${time}` : 'Encrypted';
+    return time
+      ? this._transloco.translate('public.encryptedAt', { time })
+      : this._transloco.translate('public.encrypted');
   }
 
   messageTime(message: Message): string {

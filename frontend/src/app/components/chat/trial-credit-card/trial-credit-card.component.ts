@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import {
   CognosButtonComponent,
   CognosIconComponent,
@@ -22,17 +24,18 @@ import { BillingService } from '@app/services/billing.service';
     CognosIconComponent,
     CognosLozengeComponent,
     CognosProgressComponent,
+    TranslocoModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="trial-credit">
+    <section class="trial-credit" *transloco="let t">
       <header class="trial-credit__head">
         <span class="trial-credit__label">
           <cog-icon name="sparkles" [size]="16" tone="brand" />
-          Trial credit
+          {{ t('chat.trial.creditLabel') }}
         </span>
         @if (usedUp()) {
-          <cog-lozenge tone="red">Used up</cog-lozenge>
+          <cog-lozenge tone="red">{{ t('chat.trial.usedUp') }}</cog-lozenge>
         }
       </header>
 
@@ -44,7 +47,12 @@ import { BillingService } from '@app/services/billing.service';
       />
 
       <p class="trial-credit__detail">
-        CHF {{ balance().toFixed(2) }} left of your CHF {{ seed().toFixed(2) }} trial
+        {{
+          t('chat.trial.detail', {
+            amount: 'CHF ' + balance().toFixed(2),
+            total: 'CHF ' + seed().toFixed(2),
+          })
+        }}
       </p>
 
       <cog-button
@@ -53,7 +61,7 @@ import { BillingService } from '@app/services/billing.service';
         [fullWidth]="true"
         (click)="goToBilling()"
       >
-        Choose a plan
+        {{ t('chat.trial.choosePlan') }}
       </cog-button>
     </section>
   `,

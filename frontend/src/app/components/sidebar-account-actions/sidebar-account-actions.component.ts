@@ -2,6 +2,8 @@ import { Dialog } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+
 import { CognosButtonComponent, CognosToastService } from '@cognos/ui-angular';
 
 import { ContactHelpDialogComponent } from '@app/components/contact-help-dialog/contact-help-dialog.component';
@@ -14,24 +16,24 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
 @Component({
   selector: 'app-sidebar-account-actions',
   standalone: true,
-  imports: [CognosButtonComponent],
+  imports: [CognosButtonComponent, TranslocoModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="account-actions">
+    <div class="account-actions" *transloco="let t">
       <cog-button appearance="subtle" type="button" (click)="onOpenHelpDialog()">
-        Help
+        {{ t('chat.sidebar.help') }}
       </cog-button>
       <cog-button
         appearance="subtle"
         icon="lock"
-        title="Locks your account and does not log you out."
+        [title]="t('chat.sidebar.lockTitle')"
         type="button"
         (click)="onLock()"
       >
-        Lock
+        {{ t('chat.sidebar.lock') }}
       </cog-button>
       <cog-button appearance="subtle" type="button" (click)="onLogout()">
-        Log out
+        {{ t('chat.sidebar.logout') }}
       </cog-button>
     </div>
   `,
@@ -50,6 +52,7 @@ export class SidebarAccountActionsComponent {
   private readonly _vaultService = inject(VaultService);
   private readonly _toastService = inject(CognosToastService);
   private readonly _router = inject(Router);
+  private readonly _transloco = inject(TranslocoService);
 
   /** Emitted after an action runs, so a host can close its mobile drawer. */
   readonly actioned = output<void>();
@@ -62,8 +65,8 @@ export class SidebarAccountActionsComponent {
   protected onLock(): void {
     this._vaultService.lock();
     this._toastService.notify({
-      title: 'Account locked',
-      msg: 'This device now needs your Account Key to unlock again.',
+      title: this._transloco.translate('chat.sidebar.lockedToastTitle'),
+      msg: this._transloco.translate('chat.sidebar.lockedToastMsg'),
       tone: 'info',
       icon: 'lock',
       duration: 4200,

@@ -6,6 +6,8 @@ import { NavigationEnd, Router, RouterModule } from '@angular/router';
 
 import { filter } from 'rxjs';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import {
   CognosButtonComponent,
   CognosDesktopShellComponent,
@@ -54,6 +56,7 @@ import { ConversationService } from '../../services/conversation.service';
     BillingPastDueBannerComponent,
     SidebarAccountActionsComponent,
     SidebarBrandComponent,
+    TranslocoModule,
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',

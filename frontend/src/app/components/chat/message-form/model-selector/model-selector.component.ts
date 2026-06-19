@@ -8,6 +8,8 @@ import {
   inject,
 } from '@angular/core';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import { CognosIconComponent, CognosLozengeComponent } from '@cognos/ui-angular';
 
 import { TagComponent } from '@app/components/tag/tag.component';
@@ -15,22 +17,28 @@ import { Model } from '@app/interfaces/model';
 import { BillingService } from '@app/services/billing.service';
 import { ModelService } from '@app/services/model.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
-import {
-  MODEL_COST_TIER_LABEL,
-  ModelCostTier,
-  deriveModelCostTier,
-} from '@app/utils/model-cost-tier';
+import { ModelCostTier, deriveModelCostTier } from '@app/utils/model-cost-tier';
 
 @Component({
   selector: 'app-model-selector',
   standalone: true,
-  imports: [CommonModule, CognosIconComponent, CognosLozengeComponent, TagComponent],
+  imports: [
+    CommonModule,
+    CognosIconComponent,
+    CognosLozengeComponent,
+    TagComponent,
+    TranslocoModule,
+  ],
   template: `
-    <div class="model-selector" role="listbox" aria-label="Pick your AI model">
+    <div
+      class="model-selector"
+      role="listbox"
+      [attr.aria-label]="t('chat.models.pickAria')"
+      *transloco="let t"
+    >
       @if (!hideCost()) {
         <p class="model-selector__explainer">
-          Cost shows roughly how much each model spends per message. Higher-cost models
-          cost more than lower-cost ones.
+          {{ t('chat.models.explainer') }}
         </p>
       }
 
@@ -54,7 +62,9 @@ import {
                 <button
                   type="button"
                   class="model-selector__pin-button"
-                  [attr.title]="isPinned(model.id) ? 'Unpin model' : 'Pin model'"
+                  [attr.title]="
+                    isPinned(model.id) ? t('chat.models.unpin') : t('chat.models.pin')
+                  "
                   [attr.aria-pressed]="isPinned(model.id)"
                   (click)="onTogglePin($event, model)"
                 >
@@ -69,9 +79,13 @@ import {
                     <cog-lozenge
                       class="model-selector__cost"
                       [tone]="costTierTone(model)"
-                      [attr.title]="'Estimated model cost: ' + costTierLabel(model)"
+                      [attr.title]="
+                        t('chat.models.estimatedCost', {
+                          cost: t('chat.models.costTier.' + costTier(model)),
+                        })
+                      "
                     >
-                      {{ costTierLabel(model) }}
+                      {{ t('chat.models.costTier.' + costTier(model)) }}
                     </cog-lozenge>
                   }
                   @if (model.tags && model.tags.length > 0) {
@@ -308,8 +322,8 @@ export class ModelSelectorComponent {
     return this._preferencesService.isModelPinned(modelId);
   }
 
-  costTierLabel(model: Model): string {
-    return MODEL_COST_TIER_LABEL[deriveModelCostTier(model.pricing)];
+  costTier(model: Model): ModelCostTier {
+    return deriveModelCostTier(model.pricing);
   }
 
   costTierTone(model: Model): 'green' | 'blue' | 'red' {

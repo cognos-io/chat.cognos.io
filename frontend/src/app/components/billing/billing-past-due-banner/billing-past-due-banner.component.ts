@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import {
   CognosButtonComponent,
   CognosSectionMessageComponent,
@@ -13,19 +15,21 @@ import { BillingService } from '@app/services/billing.service';
 @Component({
   selector: 'app-billing-past-due-banner',
   standalone: true,
-  imports: [CognosSectionMessageComponent, CognosButtonComponent],
+  imports: [CognosSectionMessageComponent, CognosButtonComponent, TranslocoModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <cog-section-message
-      tone="info"
-      icon="triangle-alert"
-      title="We couldn't take your last payment"
-    >
-      Update your card to keep your plan — your access continues for now.
-      <cog-button cogSectionMessageAction appearance="primary" (click)="updateCard()">
-        Update card
-      </cog-button>
-    </cog-section-message>
+    <ng-container *transloco="let t">
+      <cog-section-message
+        tone="info"
+        icon="triangle-alert"
+        [title]="t('billing.pastDue.title')"
+      >
+        {{ t('billing.pastDue.body') }}
+        <cog-button cogSectionMessageAction appearance="primary" (click)="updateCard()">
+          {{ t('billing.pastDue.updateCard') }}
+        </cog-button>
+      </cog-section-message>
+    </ng-container>
   `,
   styles: `
     :host {

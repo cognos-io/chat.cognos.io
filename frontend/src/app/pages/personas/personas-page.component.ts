@@ -10,6 +10,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+
 import { CognosButtonComponent, CognosIconComponent } from '@cognos/ui-angular';
 
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
@@ -42,6 +44,7 @@ type ViewMode = 'grid' | 'list';
     CognosIconComponent,
     PersonaAvatarComponent,
     PersonaEditorComponent,
+    TranslocoModule,
   ],
   templateUrl: './personas-page.component.html',
   styleUrl: './personas-page.component.css',
@@ -51,6 +54,7 @@ export class PersonasPageComponent {
   private readonly _personas = inject(PersonaService);
   private readonly _location = inject(Location);
   private readonly _device = inject(DeviceService);
+  private readonly _transloco = inject(TranslocoService);
 
   protected readonly isMobile = computed(() => this._device.isMobile());
 
@@ -70,15 +74,19 @@ export class PersonasPageComponent {
   protected readonly sections = computed<PersonaSection[]>(() => {
     const pinned = this._pinnedIds();
     const sections: PersonaSection[] = [
-      { id: 'pinned', label: 'Pinned', personas: this._personas.pinnedPersonas() },
+      {
+        id: 'pinned',
+        label: this._transloco.translate('personas.page.sections.pinned'),
+        personas: this._personas.pinnedPersonas(),
+      },
       {
         id: 'recent',
-        label: 'Recently used',
+        label: this._transloco.translate('personas.page.sections.recent'),
         personas: this._personas.recentPersonas(),
       },
       {
         id: 'official',
-        label: 'Official',
+        label: this._transloco.translate('personas.page.sections.official'),
         personas: this._personas
           .officialPersonas()
           .filter((persona) => !pinned.has(persona.id)),

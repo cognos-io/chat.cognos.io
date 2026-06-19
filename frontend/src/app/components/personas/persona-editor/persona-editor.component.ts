@@ -10,6 +10,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import { CognosButtonComponent, CognosIconComponent } from '@cognos/ui-angular';
 
 import {
@@ -29,7 +31,7 @@ import { PersonaInput, PersonaService } from '@app/services/persona.service';
 @Component({
   selector: 'app-persona-editor',
   standalone: true,
-  imports: [FormsModule, CognosButtonComponent, CognosIconComponent],
+  imports: [FormsModule, CognosButtonComponent, CognosIconComponent, TranslocoModule],
   templateUrl: './persona-editor.component.html',
   styleUrl: './persona-editor.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

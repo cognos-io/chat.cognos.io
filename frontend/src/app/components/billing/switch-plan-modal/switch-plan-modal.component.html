@@ -1,96 +1,112 @@
-<cog-modal [open]="open()" title="Switch plan" [width]="600" (close)="onClose()">
-  <div class="spm">
-    <div class="spm__period">
-      <span class="spm__period-label">Billing period</span>
-      <div class="spm__segmented" role="group" aria-label="Billing period">
-        <button
-          type="button"
-          class="spm__seg"
-          [class.spm__seg--active]="billingPeriod() === 'monthly'"
-          (click)="setPeriod('monthly')"
+<ng-container *transloco="let t">
+  <cog-modal
+    [open]="open()"
+    [title]="t('billing.switch.title')"
+    [width]="600"
+    (close)="onClose()"
+  >
+    <div class="spm">
+      <div class="spm__period">
+        <span class="spm__period-label">{{ t('billing.switch.billingPeriod') }}</span>
+        <div
+          class="spm__segmented"
+          role="group"
+          [attr.aria-label]="t('billing.switch.billingPeriod')"
         >
-          Monthly
-        </button>
-        <button
-          type="button"
-          class="spm__seg"
-          [class.spm__seg--active]="billingPeriod() === 'yearly'"
-          (click)="setPeriod('yearly')"
-        >
-          Yearly
-          <span class="spm__seg-badge">2 months free</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Pay as you go -->
-    <div class="spm__plan" [class.spm__plan--current]="paygIsCurrent()">
-      <div class="spm__plan-head">
-        <span class="spm__plan-name">Pay as you go</span>
-        <cog-lozenge tone="blue">Flexible</cog-lozenge>
-        @if (paygIsCurrent()) {
-          <span class="spm__current">● Current</span>
-        }
-      </div>
-      <p class="spm__plan-desc">
-        Buy credits and spend them on any model. A CHF 10 monthly minimum keeps your
-        account active.
-      </p>
-      <div class="spm__plan-foot">
-        <div class="spm__price">
-          <span class="spm__price-amount">CHF 10</span>
-          <span class="spm__price-per">/ mo min.</span>
-          <div class="spm__price-sub">Credits on every model · billed monthly</div>
-        </div>
-        @if (paygIsCurrent()) {
-          <cog-button appearance="subtle" [disabled]="true">Current plan</cog-button>
-        } @else {
-          <cog-button
-            appearance="primary"
-            [disabled]="pending()"
-            (click)="choosePayg()"
+          <button
+            type="button"
+            class="spm__seg"
+            [class.spm__seg--active]="billingPeriod() === 'monthly'"
+            (click)="setPeriod('monthly')"
           >
-            Switch
-          </cog-button>
-        }
-      </div>
-    </div>
-
-    <!-- Unlimited -->
-    <div class="spm__plan" [class.spm__plan--current]="unlimitedIsCurrent()">
-      <div class="spm__plan-head">
-        <span class="spm__plan-name">Unlimited</span>
-        <cog-lozenge tone="green">Recommended</cog-lozenge>
-        @if (unlimitedIsCurrent()) {
-          <span class="spm__current">● Current</span>
-        }
-      </div>
-      <p class="spm__plan-desc">
-        Unlimited messages across every Cognos model, with priority Swiss-cloud compute.
-      </p>
-      <div class="spm__plan-foot">
-        <div class="spm__price">
-          <span class="spm__price-amount">{{ unlimitedPrice() }}</span>
-          <span class="spm__price-per">{{ unlimitedPer() }}</span>
-          <div class="spm__price-sub">{{ unlimitedSub() }}</div>
-        </div>
-        @if (unlimitedIsCurrent()) {
-          <cog-button appearance="subtle" [disabled]="true">Current plan</cog-button>
-        } @else {
-          <cog-button
-            appearance="primary"
-            [disabled]="pending()"
-            (click)="chooseUnlimited()"
+            {{ t('billing.switch.monthly') }}
+          </button>
+          <button
+            type="button"
+            class="spm__seg"
+            [class.spm__seg--active]="billingPeriod() === 'yearly'"
+            (click)="setPeriod('yearly')"
           >
-            Switch
-          </cog-button>
-        }
+            {{ t('billing.switch.yearly') }}
+            <span class="spm__seg-badge">{{ t('billing.switch.monthsFree') }}</span>
+          </button>
+        </div>
       </div>
-    </div>
 
-    <p class="spm__note">
-      <cog-icon name="shield-check" [size]="14" tone="text-subtle" />
-      Changes take effect immediately. 60-day money-back guarantee on either plan.
-    </p>
-  </div>
-</cog-modal>
+      <!-- Pay as you go -->
+      <div class="spm__plan" [class.spm__plan--current]="paygIsCurrent()">
+        <div class="spm__plan-head">
+          <span class="spm__plan-name">{{ t('billing.switch.payg.name') }}</span>
+          <cog-lozenge tone="blue">{{ t('billing.switch.payg.tag') }}</cog-lozenge>
+          @if (paygIsCurrent()) {
+            <span class="spm__current">{{ t('billing.switch.current') }}</span>
+          }
+        </div>
+        <p class="spm__plan-desc">
+          {{ t('billing.switch.payg.desc') }}
+        </p>
+        <div class="spm__plan-foot">
+          <div class="spm__price">
+            <span class="spm__price-amount">CHF 10</span>
+            <span class="spm__price-per">{{ t('billing.switch.payg.per') }}</span>
+            <div class="spm__price-sub">{{ t('billing.switch.payg.sub') }}</div>
+          </div>
+          @if (paygIsCurrent()) {
+            <cog-button appearance="subtle" [disabled]="true">{{
+              t('billing.switch.currentPlan')
+            }}</cog-button>
+          } @else {
+            <cog-button
+              appearance="primary"
+              [disabled]="pending()"
+              (click)="choosePayg()"
+            >
+              {{ t('billing.switch.switch') }}
+            </cog-button>
+          }
+        </div>
+      </div>
+
+      <!-- Unlimited -->
+      <div class="spm__plan" [class.spm__plan--current]="unlimitedIsCurrent()">
+        <div class="spm__plan-head">
+          <span class="spm__plan-name">{{ t('billing.switch.unlimited.name') }}</span>
+          <cog-lozenge tone="green">{{
+            t('billing.switch.unlimited.tag')
+          }}</cog-lozenge>
+          @if (unlimitedIsCurrent()) {
+            <span class="spm__current">{{ t('billing.switch.current') }}</span>
+          }
+        </div>
+        <p class="spm__plan-desc">
+          {{ t('billing.switch.unlimited.desc') }}
+        </p>
+        <div class="spm__plan-foot">
+          <div class="spm__price">
+            <span class="spm__price-amount">{{ unlimitedPrice() }}</span>
+            <span class="spm__price-per">{{ unlimitedPer() }}</span>
+            <div class="spm__price-sub">{{ unlimitedSub() }}</div>
+          </div>
+          @if (unlimitedIsCurrent()) {
+            <cog-button appearance="subtle" [disabled]="true">{{
+              t('billing.switch.currentPlan')
+            }}</cog-button>
+          } @else {
+            <cog-button
+              appearance="primary"
+              [disabled]="pending()"
+              (click)="chooseUnlimited()"
+            >
+              {{ t('billing.switch.switch') }}
+            </cog-button>
+          }
+        </div>
+      </div>
+
+      <p class="spm__note">
+        <cog-icon name="shield-check" [size]="14" tone="text-subtle" />
+        {{ t('billing.switch.note') }}
+      </p>
+    </div>
+  </cog-modal>
+</ng-container>

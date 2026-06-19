@@ -7,6 +7,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import {
   CognosButtonComponent,
   CognosIconComponent,
@@ -31,28 +33,27 @@ type BillingInterval = 'monthly' | 'yearly';
     CognosButtonComponent,
     CognosIconComponent,
     CognosLozengeComponent,
+    TranslocoModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="pricing">
+    <main class="pricing" *transloco="let t">
       <a class="pricing__back" routerLink="/">
         <cog-icon name="chevron-left" [size]="16" tone="current" />
-        Back to your chats
+        {{ t('billing.pricing.back') }}
       </a>
 
       @if (billing.activating()) {
         <section class="pricing__activating" role="status">
           <cog-icon name="loader" [size]="28" tone="brand" />
-          <h1 class="pricing__title">Activating your plan…</h1>
+          <h1 class="pricing__title">{{ t('billing.pricing.activating.title') }}</h1>
           @if (billing.activationSlow()) {
             <p class="pricing__subtitle">
-              This is taking longer than usual. Your plan will appear here as soon as
-              the payment is confirmed — no need to pay again.
+              {{ t('billing.pricing.activating.slow') }}
             </p>
           } @else {
             <p class="pricing__subtitle">
-              Hang tight — we're confirming your payment. This usually takes a few
-              seconds.
+              {{ t('billing.pricing.activating.normal') }}
             </p>
           }
         </section>
@@ -61,17 +62,24 @@ type BillingInterval = 'monthly' | 'yearly';
           @if (billing.isSendingLocked()) {
             <span class="pricing__status">
               <cog-icon name="lock" [size]="14" tone="text-subtle" />
-              {{ billing.isTrialUsedUp() ? 'Trial credits used up' : 'Sending paused' }}
+              {{
+                billing.isTrialUsedUp()
+                  ? t('billing.pricing.status.trialUsedUp')
+                  : t('billing.pricing.status.sendingPaused')
+              }}
             </span>
           }
 
-          <h1 class="pricing__title">Keep going, privately</h1>
+          <h1 class="pricing__title">{{ t('billing.pricing.title') }}</h1>
           <p class="pricing__subtitle">
-            Your trial chats are still here and fully readable. Pick a plan to send new
-            messages — same encryption, same Swiss compute.
+            {{ t('billing.pricing.subtitle') }}
           </p>
 
-          <div class="pricing__interval" role="group" aria-label="Billing interval">
+          <div
+            class="pricing__interval"
+            role="group"
+            [attr.aria-label]="t('billing.pricing.intervalAria')"
+          >
             <button
               type="button"
               class="pricing__interval-option"
@@ -79,7 +87,7 @@ type BillingInterval = 'monthly' | 'yearly';
               [attr.aria-pressed]="interval() === 'monthly'"
               (click)="interval.set('monthly')"
             >
-              Monthly
+              {{ t('billing.pricing.monthly') }}
             </button>
             <button
               type="button"
@@ -88,8 +96,10 @@ type BillingInterval = 'monthly' | 'yearly';
               [attr.aria-pressed]="interval() === 'yearly'"
               (click)="interval.set('yearly')"
             >
-              Yearly
-              <cog-lozenge tone="green">2 months free</cog-lozenge>
+              {{ t('billing.pricing.yearly') }}
+              <cog-lozenge tone="green">{{
+                t('billing.pricing.monthsFree')
+              }}</cog-lozenge>
             </button>
           </div>
         </header>
@@ -98,19 +108,20 @@ type BillingInterval = 'monthly' | 'yearly';
           <!-- Pay as you go -->
           <section class="pricing__card">
             <div class="pricing__card-head">
-              <h2 class="pricing__plan-name">Pay as you go</h2>
-              <cog-lozenge tone="blue">Flexible</cog-lozenge>
+              <h2 class="pricing__plan-name">{{ t('billing.pricing.payg.name') }}</h2>
+              <cog-lozenge tone="blue">{{ t('billing.pricing.payg.tag') }}</cog-lozenge>
             </div>
             <p class="pricing__plan-blurb">
-              Buy credits and spend them on any model. A CHF 10 minimum keeps your
-              account active each month.
+              {{ t('billing.pricing.payg.blurb') }}
             </p>
 
             <p class="pricing__price">
               <span class="pricing__price-amount">CHF 10</span>
-              <span class="pricing__price-unit">/ month min.</span>
+              <span class="pricing__price-unit">{{
+                t('billing.pricing.payg.unit')
+              }}</span>
             </p>
-            <p class="pricing__price-note">Billed monthly · top up anytime</p>
+            <p class="pricing__price-note">{{ t('billing.pricing.payg.priceNote') }}</p>
 
             <cog-button
               appearance="default"
@@ -118,53 +129,65 @@ type BillingInterval = 'monthly' | 'yearly';
               [disabled]="checkoutPending()"
               (click)="selectPlan('payg')"
             >
-              Start with credits
+              {{ t('billing.pricing.payg.cta') }}
             </cog-button>
 
             <ul class="pricing__features">
-              @for (feature of paygFeatures; track feature.label) {
+              @for (feature of paygFeatures; track feature.key) {
                 <li [class.pricing__feature--muted]="feature.muted">
                   <cog-icon
                     name="check"
                     [size]="16"
                     [tone]="feature.muted ? 'text-subtlest' : 'success'"
                   />
-                  {{ feature.label }}
+                  {{ t(feature.key) }}
                 </li>
               }
             </ul>
 
             <p class="pricing__fine">
-              Spend above the CHF 10 minimum is metered per message.
+              {{ t('billing.pricing.payg.fine') }}
             </p>
           </section>
 
           <!-- Unlimited -->
           <section class="pricing__card pricing__card--featured">
             <div class="pricing__card-head">
-              <h2 class="pricing__plan-name">Unlimited</h2>
-              <cog-lozenge tone="green">Recommended</cog-lozenge>
+              <h2 class="pricing__plan-name">
+                {{ t('billing.pricing.unlimited.name') }}
+              </h2>
+              <cog-lozenge tone="green">{{
+                t('billing.pricing.unlimited.tag')
+              }}</cog-lozenge>
             </div>
             <p class="pricing__plan-blurb">
-              Unlimited messages across every Cognos model, with priority Swiss-cloud
-              compute.
+              {{ t('billing.pricing.unlimited.blurb') }}
             </p>
 
             @if (interval() === 'monthly') {
               <p class="pricing__price">
                 <span class="pricing__price-amount">CHF 100</span>
-                <span class="pricing__price-unit">/ month</span>
+                <span class="pricing__price-unit">{{
+                  t('billing.pricing.unlimited.perMonth')
+                }}</span>
               </p>
               <p class="pricing__price-note pricing__price-note--accent">
-                CHF 1'000/yr saves you CHF 200
+                {{
+                  t('billing.pricing.unlimited.savesMonthly', {
+                    yearly: "CHF 1'000",
+                    saving: 'CHF 200',
+                  })
+                }}
               </p>
             } @else {
               <p class="pricing__price">
                 <span class="pricing__price-amount">CHF 1'000</span>
-                <span class="pricing__price-unit">/ year</span>
+                <span class="pricing__price-unit">{{
+                  t('billing.pricing.unlimited.perYear')
+                }}</span>
               </p>
               <p class="pricing__price-note pricing__price-note--accent">
-                Two months free vs monthly
+                {{ t('billing.pricing.unlimited.savesYearly') }}
               </p>
             }
 
@@ -174,21 +197,21 @@ type BillingInterval = 'monthly' | 'yearly';
               [disabled]="checkoutPending()"
               (click)="selectPlan('unlimited')"
             >
-              Go Unlimited
+              {{ t('billing.pricing.unlimited.cta') }}
             </cog-button>
 
             <ul class="pricing__features">
               @for (feature of unlimitedFeatures; track feature) {
                 <li>
                   <cog-icon name="check" [size]="16" tone="success" />
-                  {{ feature }}
+                  {{ t(feature) }}
                 </li>
               }
             </ul>
 
             <p class="pricing__fine">
               <cog-icon name="info" [size]="14" tone="text-subtlest" />
-              Fair use applies
+              {{ t('billing.pricing.unlimited.fine') }}
             </p>
           </section>
         </div>
@@ -198,10 +221,11 @@ type BillingInterval = 'monthly' | 'yearly';
             <cog-icon name="shield-check" [size]="20" tone="success" />
           </span>
           <div>
-            <div class="pricing__guarantee-title">60-day money-back guarantee</div>
+            <div class="pricing__guarantee-title">
+              {{ t('billing.pricing.guarantee.title') }}
+            </div>
             <p class="pricing__guarantee-body">
-              Not the right fit? Cancel within 60 days of your first payment for a full
-              refund — on either plan, no questions asked.
+              {{ t('billing.pricing.guarantee.body') }}
             </p>
           </div>
         </section>
@@ -210,29 +234,38 @@ type BillingInterval = 'monthly' | 'yearly';
           <div class="pricing__assurance">
             <cog-icon name="file-text" [size]="18" tone="text-subtle" />
             <div>
-              <div class="pricing__assurance-title">Trial chats stay readable</div>
-              <p>Nothing is deleted when the trial ends.</p>
+              <div class="pricing__assurance-title">
+                {{ t('billing.pricing.assurances.readable.title') }}
+              </div>
+              <p>{{ t('billing.pricing.assurances.readable.body') }}</p>
             </div>
           </div>
           <div class="pricing__assurance">
             <cog-icon name="key-round" [size]="18" tone="text-subtle" />
             <div>
-              <div class="pricing__assurance-title">Encrypted billing</div>
-              <p>We store payment tokens, never card numbers.</p>
+              <div class="pricing__assurance-title">
+                {{ t('billing.pricing.assurances.encrypted.title') }}
+              </div>
+              <p>{{ t('billing.pricing.assurances.encrypted.body') }}</p>
             </div>
           </div>
           <div class="pricing__assurance">
             <cog-icon name="x" [size]="18" tone="text-subtle" />
             <div>
-              <div class="pricing__assurance-title">No lock-in</div>
-              <p>Switch plans or cancel from settings anytime.</p>
+              <div class="pricing__assurance-title">
+                {{ t('billing.pricing.assurances.noLockIn.title') }}
+              </div>
+              <p>{{ t('billing.pricing.assurances.noLockIn.body') }}</p>
             </div>
           </div>
         </div>
 
         <p class="pricing__footer">
-          Prices in CHF, incl. VAT. Questions about a plan?
-          <a href="mailto:support@cognos.io" class="pricing__link">Talk to us</a>.
+          {{ t('billing.pricing.footer.text') }}
+          <a href="mailto:support@cognos.io" class="pricing__link">{{
+            t('billing.pricing.footer.link')
+          }}</a
+          >.
         </p>
       }
     </main>
@@ -253,17 +286,17 @@ export class PricingComponent {
   }
 
   protected readonly paygFeatures = [
-    { label: 'Credits work on every model and skill', muted: false },
-    { label: 'Pay only for what you actually run', muted: false },
-    { label: 'Unused credits roll over while active', muted: false },
-    { label: 'No annual commitment', muted: true },
+    { key: 'billing.pricing.payg.features.credits', muted: false },
+    { key: 'billing.pricing.payg.features.payForUse', muted: false },
+    { key: 'billing.pricing.payg.features.rollover', muted: false },
+    { key: 'billing.pricing.payg.features.noCommitment', muted: true },
   ];
 
   protected readonly unlimitedFeatures = [
-    'Unlimited messages on every model',
-    'Priority Swiss-cloud & on-prem compute',
-    'All skills, prompt library and sharing',
-    'Cancel anytime — keeps working to period end',
+    'billing.pricing.unlimited.features.unlimited',
+    'billing.pricing.unlimited.features.priority',
+    'billing.pricing.unlimited.features.skills',
+    'billing.pricing.unlimited.features.cancel',
   ];
 
   // Whether the user is currently locked (used by the locked-state pill).

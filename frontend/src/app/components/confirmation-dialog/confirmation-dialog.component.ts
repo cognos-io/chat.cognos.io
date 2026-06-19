@@ -1,6 +1,8 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import {
   CognosButtonComponent,
   CognosDialogSurfaceComponent,
@@ -9,14 +11,23 @@ import {
 @Component({
   selector: 'app-confirmation-dialog',
   standalone: true,
-  imports: [CognosDialogSurfaceComponent, CognosButtonComponent],
+  imports: [CognosDialogSurfaceComponent, CognosButtonComponent, TranslocoModule],
   template: `
-    <cog-dialog-surface title="Just checking" [footer]="true" (close)="close()">
+    <cog-dialog-surface
+      *transloco="let t"
+      [title]="t('dialogs.confirm.title')"
+      [footer]="true"
+      (close)="close()"
+    >
       <p class="confirmation-dialog__message">{{ data.message }}</p>
 
       <div cogDialogFooter>
-        <cog-button appearance="subtle" (click)="close()">No</cog-button>
-        <cog-button appearance="danger" (click)="confirm()">Yes</cog-button>
+        <cog-button appearance="subtle" (click)="close()">{{
+          t('dialogs.confirm.no')
+        }}</cog-button>
+        <cog-button appearance="danger" (click)="confirm()">{{
+          t('dialogs.confirm.yes')
+        }}</cog-button>
       </div>
     </cog-dialog-surface>
   `,

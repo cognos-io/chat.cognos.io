@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, Input, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import { CognosIconButtonComponent } from '@cognos/ui-angular';
 
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
@@ -20,9 +22,10 @@ import { MessageListComponent } from '../message-list/message-list.component';
     MessageListComponent,
     LoadingIndicatorComponent,
     CognosIconButtonComponent,
+    TranslocoModule,
   ],
   template: `
-    <div class="conversation-detail">
+    <div class="conversation-detail" *transloco="let t">
       @if (isFetching()) {
         <app-loading-indicator></app-loading-indicator>
       } @else {
@@ -41,7 +44,7 @@ import { MessageListComponent } from '../message-list/message-list.component';
               <cog-icon-button
                 name="chevron-down"
                 size="lg"
-                title="Scroll to bottom of conversation"
+                [title]="t('chat.conversation.scrollToBottom')"
                 (click)="messageListEl()?.scrollToBottom()"
               />
             </div>

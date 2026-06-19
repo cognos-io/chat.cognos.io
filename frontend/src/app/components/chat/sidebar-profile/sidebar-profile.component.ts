@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+
 import {
   CognosAvatarComponent,
   CognosIconComponent,
@@ -13,11 +15,11 @@ import { AuthService } from '@app/services/auth.service';
 import { BillingService } from '@app/services/billing.service';
 import { deriveProfileName } from '@app/utils/profile-identity';
 
-const PLAN_LABELS: Record<BillingPlanType, string> = {
-  trial: 'Trial',
-  payg: 'Pay-As-You-Go',
-  unlimited: 'Unlimited',
-  inactive: 'No active plan',
+const PLAN_LABEL_KEYS: Record<BillingPlanType, string> = {
+  trial: 'chat.sidebar.plan.trial',
+  payg: 'chat.sidebar.plan.payg',
+  unlimited: 'chat.sidebar.plan.unlimited',
+  inactive: 'chat.sidebar.plan.inactive',
 };
 
 // SidebarProfileComponent replaces the old security footer with a profile +
@@ -33,10 +35,16 @@ const PLAN_LABELS: Record<BillingPlanType, string> = {
     CognosAvatarComponent,
     CognosIconComponent,
     CognosLozengeComponent,
+    TranslocoModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <a class="sidebar-profile" routerLink="/account" aria-label="Account & billing">
+    <a
+      *transloco="let t"
+      class="sidebar-profile"
+      routerLink="/account"
+      [attr.aria-label]="t('chat.sidebar.accountBilling')"
+    >
       <cog-avatar
         class="sidebar-profile__avatar"
         [name]="avatarName()"
@@ -54,7 +62,11 @@ const PLAN_LABELS: Record<BillingPlanType, string> = {
           <cog-lozenge [tone]="planTone()">{{ planLabel() }}</cog-lozenge>
           @if (billing.isTrial()) {
             <span class="sidebar-profile__credit">
-              CHF {{ billing.balanceChf().toFixed(2) }} left
+              {{
+                t('chat.sidebar.creditLeft', {
+                  amount: billing.balanceChf().toFixed(2),
+                })
+              }}
             </span>
           }
         </span>
@@ -65,7 +77,7 @@ const PLAN_LABELS: Record<BillingPlanType, string> = {
         name="landmark"
         [size]="18"
         tone="text-subtle"
-        title="View plans"
+        [title]="t('chat.sidebar.viewPlans')"
       />
     </a>
   `,
@@ -126,6 +138,7 @@ const PLAN_LABELS: Record<BillingPlanType, string> = {
 })
 export class SidebarProfileComponent {
   private readonly _auth = inject(AuthService);
+  private readonly _transloco = inject(TranslocoService);
   public readonly billing = inject(BillingService);
 
   // The persisted display name (arrives with the Paddle schema migration);
@@ -151,7 +164,9 @@ export class SidebarProfileComponent {
 
   planLabel(): string {
     const plan = this.billing.planType();
-    return plan ? PLAN_LABELS[plan] : 'Loading…';
+    return plan
+      ? this._transloco.translate(PLAN_LABEL_KEYS[plan])
+      : this._transloco.translate('chat.sidebar.plan.loading');
   }
 
   planTone(): 'blue' | 'green' | 'neutral' {
