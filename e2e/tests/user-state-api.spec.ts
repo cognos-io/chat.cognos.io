@@ -35,7 +35,7 @@ const VALID_USER_KEY_PAIR_BODY = () => ({
   public_key: randomBase64(32),
   secret_key: randomBase64(64),
   password_salt: randomBase64(16),
-  unlock_scheme: 'password_account_key_v1',
+  unlock_scheme: 'account_key_v2',
   record_mac: randomBase64(32),
 });
 
