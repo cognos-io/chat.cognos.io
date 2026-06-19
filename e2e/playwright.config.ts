@@ -21,6 +21,9 @@ export default defineConfig({
   reporter: process.env.CI ? [['github'], ['html']] : 'html',
   use: {
     baseURL: BASE_URL,
+    // The local dev stack serves the frontend over HTTPS with a self-signed
+    // cert (cognos.local). Harmless against plain-http (CI) targets.
+    ignoreHTTPSErrors: true,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
