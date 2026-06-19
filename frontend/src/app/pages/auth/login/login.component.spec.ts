@@ -64,7 +64,9 @@ describe('LoginComponent', () => {
 
     expect(links).toContain('Forgot your password?');
     expect(links).toContain('Register');
-    expect(fixture.nativeElement.textContent).toContain(
+    // Password reset is enabled now (the password is auth-only), so the old
+    // "temporarily unavailable" notice must be gone.
+    expect(fixture.nativeElement.textContent).not.toContain(
       'Password reset is temporarily unavailable',
     );
   });

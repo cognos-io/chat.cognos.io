@@ -88,10 +88,6 @@ import { AuthService } from '@services/auth.service';
           <a routerLink="/auth/forgot-password">Forgot your password?</a>
         </p>
         <p class="login-page__switch">
-          Password reset is temporarily unavailable while encrypted vault recovery is
-          being implemented.
-        </p>
-        <p class="login-page__switch">
           Need an account?
           <a routerLink="/auth/register">Register</a>
         </p>
