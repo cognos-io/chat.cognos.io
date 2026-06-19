@@ -128,7 +128,12 @@ interface SettingsNavItem {
         </div>
       </cog-mobile-shell>
     } @else {
-      <cog-desktop-shell [navFooter]="true" [showHeader]="false" [fillViewport]="true">
+      <cog-desktop-shell
+        [navFooter]="true"
+        [showHeader]="false"
+        [fillViewport]="true"
+        [padded]="false"
+      >
         <div cogDesktopNav class="settings__nav">
           <ng-container *ngTemplateOutlet="brand"></ng-container>
           <ng-container *ngTemplateOutlet="back"></ng-container>
@@ -140,11 +145,21 @@ interface SettingsNavItem {
           <ng-container *ngTemplateOutlet="footer"></ng-container>
         </div>
 
-        <router-outlet></router-outlet>
+        <!-- The shell's main area is overflow:hidden under fillViewport, so the
+             settings content needs its own scroll container or long pages clip. -->
+        <div class="settings__content">
+          <router-outlet></router-outlet>
+        </div>
       </cog-desktop-shell>
     }
   `,
   styles: `
+    .settings__content {
+      height: 100%;
+      overflow-y: auto;
+      padding: 0 var(--cog-space-300) var(--cog-space-300);
+    }
+
     .settings__logo {
       display: block;
       height: 24px;
