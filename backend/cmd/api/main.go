@@ -270,6 +270,16 @@ func bindAppHooks(
 				return err
 			}
 
+			vaultSessionRepo := hooks.NewPocketBaseVaultSessionWrapKeyRepo(app)
+			_, err = cleanUpIdleVaultSessionsJob(
+				params.CronScheduler,
+				app.Logger(),
+				vaultSessionRepo,
+			)
+			if err != nil {
+				return err
+			}
+
 			if paddleClient != nil && paddleOveragePriceID != "" {
 				_, err = retryPaygOverageJob(
 					params.CronScheduler,

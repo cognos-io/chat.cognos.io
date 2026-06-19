@@ -9,6 +9,7 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/forms"
+	"github.com/pocketbase/pocketbase/tools/types"
 )
 
 type userKeyPairRecordResponse struct {
@@ -542,6 +543,13 @@ func VaultSessionGet(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewNotFoundError("Vault session not found", err)
 		}
 
+		// Touch last_used_at so the idle-TTL sweep treats an actively-used
+		// session as fresh. Best-effort: never fail the unlock on a touch error.
+		record.Set("last_used_at", types.NowDateTime())
+		if err := app.Save(record); err != nil {
+			app.Logger().Error("vault session: failed to touch last_used_at", "error", err)
+		}
+
 		return e.JSON(http.StatusOK, vaultSessionRecordResponse{
 			WrapKey: record.GetString("wrap_key"),
 		})
@@ -575,8 +583,9 @@ func VaultSessionUpsert(app core.App) func(e *core.RequestEvent) error {
 
 		form := forms.NewRecordUpsert(app, record)
 		form.Load(map[string]any{
-			"user":     user.ID,
-			"wrap_key": wrapKey,
+			"user":         user.ID,
+			"wrap_key":     wrapKey,
+			"last_used_at": types.NowDateTime(),
 		})
 		if err := form.Submit(); err != nil {
 			return apis.NewBadRequestError("Failed to save vault session", err)

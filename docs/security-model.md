@@ -236,10 +236,17 @@ treating the browser-origin as a strong trust anchor.
 - **Stolen device with browser open**: a powered-on, unlocked browser session can already decrypt
   locally. The persistent session does not make this worse.
 
+**Idle-TTL on the wrap key (implemented):** the wrap key carries a `last_used_at`
+timestamp, touched on every read/write through `/api/v1/vault-session`. A cron
+sweep deletes wrap keys idle beyond the TTL (currently **30 days**), so an
+abandoned-but-open device loses its server-side unlock half and must re-enter the
+Account Key. The TTL is deliberately **longer than the auth-token TTL** (5 days):
+a returning user re-authenticates with their password without _also_ re-entering
+the Account Key — only genuinely abandoned sessions are revoked. This is the
+server-side bound that replaces the removed idle auto-logout (see §10).
+
 **Explicitly out of scope for this iteration:**
 
-- Idle-TTL on the wrap key (server-side auto-expiry after N minutes of inactivity). Token expiry on
-  the auth session handles bounded revocation; a tighter idle window is a future tightening.
 - Per-fetch wrap-key rotation (single-use wrap keys). Rotation would harden against an XSS that
   briefly reads a snapshot of `localStorage` + one network call, but introduces multi-tab races and
   is deferred.

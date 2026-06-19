@@ -21,6 +21,10 @@ type DeletedRecordRepo interface {
 	DeleteCreatedBefore(cutoff time.Time) error
 }
 
+type VaultSessionWrapKeyRepo interface {
+	DeleteIdleBefore(cutoff time.Time) error
+}
+
 func cleanUpExpiredMessageJob(
 	scheduler gocron.Scheduler,
 	logger *slog.Logger,
@@ -118,6 +122,33 @@ func fairUseReportJob(
 					"request_count", flag.RequestCount)
 			}
 		}),
+	)
+}
+
+// cleanUpIdleVaultSessionsJob sweeps persistent-session wrap keys that have not
+// been used within the idle TTL. Now that there is no idle auto-logout, this
+// bounds how long an abandoned-but-open device stays unlockable without a fresh
+// Account Key entry. The TTL is deliberately longer than the auth-token TTL so
+// a returning user re-authenticates (password) without also re-entering their
+// Account Key — only genuinely abandoned sessions are revoked.
+func cleanUpIdleVaultSessionsJob(
+	scheduler gocron.Scheduler,
+	logger *slog.Logger,
+	vaultSessionRepo VaultSessionWrapKeyRepo,
+) (gocron.Job, error) {
+	const idleTTL = 30 * 24 * time.Hour
+
+	return scheduler.NewJob(
+		gocron.DurationRandomJob(
+			1*time.Hour,
+			2*time.Hour,
+		),
+		gocron.NewTask(func(logger *slog.Logger, repo VaultSessionWrapKeyRepo) {
+			cutoff := time.Now().UTC().Add(-idleTTL)
+			if err := repo.DeleteIdleBefore(cutoff); err != nil {
+				logger.Error("failed to sweep idle vault sessions", "err", err)
+			}
+		}, logger, vaultSessionRepo),
 	)
 }
 
