@@ -123,8 +123,8 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
             <span class="data-processing__tier-name">{{ tier.name }}</span>
             <span class="data-processing__tier-blurb">{{ tier.blurb }}</span>
             <span class="data-processing__tier-foot">
-              <span class="data-processing__tier-count"
-                >{{ modelCountForTier(tier.id) }} models</span
+              <cog-lozenge tone="neutral"
+                >{{ modelCountForTier(tier.id) }} models</cog-lozenge
               >
               <span class="data-processing__tier-note">{{ tier.note }}</span>
             </span>
@@ -143,74 +143,75 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
           </p>
         </div>
       </div>
-    </section>
 
-    <section class="models" aria-labelledby="models-heading">
-      <header class="models__head">
-        <h3 id="models-heading" class="models__title">
-          Models available
-          <span class="models__count">{{ eligibleCount() }} of {{ totalCount() }}</span>
-        </h3>
-        <span class="models__region">{{ currentBadge() }}</span>
-      </header>
+      <section class="models" aria-labelledby="models-heading">
+        <header class="models__head">
+          <h3 id="models-heading" class="models__title">
+            Models available
+            <cog-lozenge tone="neutral"
+              >{{ eligibleCount() }} of {{ totalCount() }}</cog-lozenge
+            >
+          </h3>
+          <span class="models__region">{{ currentBadge() }}</span>
+        </header>
 
-      <ul class="models__list">
-        @for (model of orderedModels(); track model.id) {
-          <li class="models__row" [class.models__row--locked]="!model.isEligible">
-            <span class="models__icon">
-              <cog-icon
-                [name]="model.isEligible ? 'server' : 'lock'"
-                [size]="16"
-                tone="current"
-              />
-            </span>
-            <span class="models__body">
-              <span class="models__name-row">
-                <span class="models__name">{{ model.name }}</span>
-                <cog-lozenge [tone]="model.isEligible ? 'green' : 'neutral'">
-                  {{ regionBadge(model) }}
-                </cog-lozenge>
+        <ul class="models__list">
+          @for (model of orderedModels(); track model.id) {
+            <li class="models__row" [class.models__row--locked]="!model.isEligible">
+              <span class="models__icon">
+                <cog-icon
+                  [name]="model.isEligible ? 'server' : 'lock'"
+                  [size]="16"
+                  tone="current"
+                />
               </span>
-              <span class="models__desc">{{ model.description }}</span>
-            </span>
-            <span class="models__meta">
-              @if (model.isEligible) {
-                @if (hostingLabel(model)) {
-                  <span class="models__location">{{ hostingLabel(model) }}</span>
-                }
-                <span class="models__context"
-                  >{{ formatContext(model.inputContextLength) }} context</span
-                >
-              } @else {
-                <span class="models__locked">
-                  <cog-icon name="lock" [size]="12" tone="current" />
-                  {{ model.ineligibilityReason || 'Needs broader region' }}
+              <span class="models__body">
+                <span class="models__name-row">
+                  <span class="models__name">{{ model.name }}</span>
+                  <cog-lozenge [tone]="model.isEligible ? 'green' : 'neutral'">
+                    {{ regionBadge(model) }}
+                  </cog-lozenge>
                 </span>
-              }
-            </span>
-          </li>
-        }
-      </ul>
+                <span class="models__desc">{{ model.description }}</span>
+              </span>
+              <span class="models__meta">
+                @if (model.isEligible) {
+                  @if (hostingLabel(model)) {
+                    <span class="models__location">{{ hostingLabel(model) }}</span>
+                  }
+                  <span class="models__context"
+                    >{{ formatContext(model.inputContextLength) }} context</span
+                  >
+                } @else {
+                  <span class="models__locked">
+                    <cog-icon name="lock" [size]="12" tone="current" />
+                    {{ model.ineligibilityReason || 'Needs broader region' }}
+                  </span>
+                }
+              </span>
+            </li>
+          }
+        </ul>
 
-      @if (lockedCount() > 0) {
-        <p class="models__footnote">
-          <cog-icon name="lock" [size]="14" tone="current" />
-          {{ lockedCount() }} more
-          {{ lockedCount() === 1 ? 'model unlocks' : 'models unlock' }} if you widen
-          your processing region — still with zero retention.
-        </p>
-      }
+        @if (lockedCount() > 0) {
+          <p class="models__footnote">
+            <cog-icon name="lock" [size]="14" tone="current" />
+            {{ lockedCount() }} more
+            {{ lockedCount() === 1 ? 'model unlocks' : 'models unlock' }} if you widen
+            your processing region — still with zero retention.
+          </p>
+        }
+      </section>
     </section>
   `,
   styles: `
     :host {
-      display: grid;
-      gap: var(--cog-space-200);
+      display: block;
     }
 
     .data-processing {
       display: grid;
-      gap: var(--cog-space-200);
+      gap: var(--cog-space-250);
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
@@ -259,17 +260,17 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
     .data-processing__tiers {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: var(--cog-space-125);
+      gap: var(--cog-space-150);
     }
 
     .data-processing__tier {
       display: grid;
-      gap: var(--cog-space-100);
+      gap: var(--cog-space-125);
       align-content: start;
       border: 2px solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
-      padding: var(--cog-space-150);
+      padding: var(--cog-space-175, 16px);
       text-align: left;
       cursor: pointer;
       font: inherit;
@@ -336,7 +337,7 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
 
     .data-processing__tier-foot {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: var(--cog-space-100);
       margin-top: var(--cog-space-050);
     }
@@ -412,8 +413,6 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
       list-style: none;
       margin: 0;
       padding: 0;
-      display: grid;
-      gap: var(--cog-space-025, 2px);
     }
 
     .models__row {
@@ -421,16 +420,16 @@ const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
       grid-template-columns: 32px minmax(0, 1fr) auto;
       align-items: center;
       gap: var(--cog-space-125);
-      border-radius: var(--cog-radius-sm);
-      padding: var(--cog-space-125) var(--cog-space-100);
+      padding: var(--cog-space-150) var(--cog-space-050);
+      border-bottom: 1px solid var(--cog-border-subtle, var(--cog-border));
     }
 
-    .models__row:hover {
-      background: var(--cog-surface-hover, rgba(0, 0, 0, 0.03));
+    .models__row:last-child {
+      border-bottom: 0;
     }
 
     .models__row--locked {
-      opacity: 0.6;
+      opacity: 0.55;
     }
 
     .models__icon {
