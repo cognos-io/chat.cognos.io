@@ -246,6 +246,8 @@ func bindAppHooks(
 		// changes still go through PocketBase's verified request → confirm flow;
 		// this guard only blocks an unverified email swap via a direct PATCH.
 		hooks.ForbidUserEmailChanges(app)
+		// Per-account brute-force lockout, on top of the per-IP rate limit.
+		hooks.EnforceLoginLockout(app)
 
 		if params.CronScheduler != nil {
 			expiredMessagesRepo := chat.NewPocketBaseMessageRepo(app)
