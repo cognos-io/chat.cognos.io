@@ -3,9 +3,78 @@
     "label": "Idioma"
   },
   "account": {
+    "title": "Conta",
+    "breadcrumbs": { "settings": "Definições", "account": "Conta" },
     "language": {
       "title": "Idioma",
       "subtitle": "Escolha o idioma da interface da Cognos. A sua escolha é guardada na sua conta e aplica-se em todos os seus dispositivos."
+    },
+    "profile": {
+      "title": "Perfil",
+      "subtitle": "O seu nome de exibição aparece nas suas mensagens e nas conversas partilhadas.",
+      "displayName": "Nome de exibição",
+      "displayNamePlaceholder": "Adicione um nome de exibição",
+      "avatar": "Avatar",
+      "iconAria": "Ícone de avatar",
+      "colorAria": "Cor do avatar",
+      "iconOptionAria": "Ícone {{ name }}",
+      "colorOptionAria": "Cor {{ name }}",
+      "save": "Guardar perfil",
+      "saving": "A guardar…"
+    },
+    "data": {
+      "title": "Os seus dados",
+      "subtitle": "Transfira todas as suas conversas e mensagens — descriptografadas no seu navegador — como um ficheiro JSON.",
+      "download": "Transferir os meus dados",
+      "preparing": "A preparar…"
+    },
+    "email": {
+      "title": "E-mail",
+      "subtitle": "O seu e-mail serve apenas para iniciar sessão e receber avisos da conta — nunca desbloqueia os seus dados. Alterá-lo é seguro e nunca afeta as suas conversas encriptadas.",
+      "current": "E-mail atual",
+      "new": "Novo e-mail",
+      "send": "Enviar link de confirmação",
+      "sending": "A enviar…"
+    },
+    "password": {
+      "title": "Palavra-passe",
+      "subtitle": "A sua palavra-passe serve apenas para iniciar sessão — não desbloqueia os seus dados (isso é a sua Chave de Conta). Alterá-la é seguro e nunca afeta as suas conversas encriptadas.",
+      "current": "Palavra-passe atual",
+      "new": "Nova palavra-passe",
+      "newPlaceholder": "Pelo menos 12 caracteres",
+      "change": "Alterar palavra-passe",
+      "changing": "A alterar…"
+    },
+    "danger": {
+      "title": "Zona de perigo",
+      "deleteChatsTitle": "Eliminar todas as conversas",
+      "deleteChatsSubtitle": "Elimine permanentemente cada conversa e as suas mensagens. Isto não pode ser anulado.",
+      "deleteChatsConfirm": "Sim, eliminar tudo",
+      "deleting": "A eliminar…",
+      "deleteAccountTitle": "Eliminar conta",
+      "deleteAccountSubtitle": "Eliminamos permanentemente a sua conta e os seus dados de conversa encriptados, chaves e personas. Os registos necessários para faturação, impostos, prevenção de fraude ou conformidade legal podem ser mantidos. Isto não pode ser anulado.",
+      "typeToConfirm": "Escreva {{ word }} para confirmar.",
+      "confirmFieldAria": "Escreva DELETE para confirmar",
+      "deleteAccountConfirm": "Eliminar a minha conta"
+    },
+    "toasts": {
+      "profileUpdated": "Perfil atualizado",
+      "passwordChanged": "Palavra-passe alterada",
+      "emailLinkSentTitle": "Link de confirmação enviado",
+      "emailLinkSentMsg": "Abra o link que enviámos para {{ email }} para concluir a alteração do seu e-mail.",
+      "deletedOneChat": "1 conversa eliminada",
+      "deletedManyChats": "{{ count }} conversas eliminadas",
+      "deleteChatsError": "Não foi possível eliminar as conversas",
+      "exportedOne": "1 conversa exportada",
+      "exportedMany": "{{ count }} conversas exportadas",
+      "exportError": "Não foi possível exportar os seus dados",
+      "accountDeleted": "A sua conta foi eliminada",
+      "deleteAccountConflict": "Cancele o seu plano antes de eliminar a sua conta",
+      "deleteAccountError": "Não foi possível eliminar a sua conta"
+    },
+    "errors": {
+      "passwordChange": "Não foi possível alterar a sua palavra-passe. Verifique a sua palavra-passe atual e tente novamente.",
+      "emailChange": "Não foi possível iniciar a alteração de e-mail. Verifique o endereço e tente novamente."
     }
   },
   "common": {
@@ -13,7 +82,8 @@
     "password": "Palavra-passe",
     "emailPlaceholder": "voce@exemplo.com",
     "passwordPlaceholder": "••••••••",
-    "privacyTerms": "Política de Privacidade e Termos"
+    "privacyTerms": "Política de Privacidade e Termos",
+    "cancel": "Cancelar"
   },
   "auth": {
     "login": {

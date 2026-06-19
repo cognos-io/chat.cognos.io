@@ -3,9 +3,78 @@
     "label": "Sprache"
   },
   "account": {
+    "title": "Konto",
+    "breadcrumbs": { "settings": "Einstellungen", "account": "Konto" },
     "language": {
       "title": "Sprache",
       "subtitle": "Wählen Sie die Sprache für die Cognos-Oberfläche. Ihre Auswahl wird in Ihrem Konto gespeichert und gilt auf allen Ihren Geräten."
+    },
+    "profile": {
+      "title": "Profil",
+      "subtitle": "Ihr Anzeigename erscheint bei Ihren Nachrichten und in geteilten Chats.",
+      "displayName": "Anzeigename",
+      "displayNamePlaceholder": "Anzeigename hinzufügen",
+      "avatar": "Avatar",
+      "iconAria": "Avatar-Symbol",
+      "colorAria": "Avatar-Farbe",
+      "iconOptionAria": "Symbol {{ name }}",
+      "colorOptionAria": "Farbe {{ name }}",
+      "save": "Profil speichern",
+      "saving": "Wird gespeichert…"
+    },
+    "data": {
+      "title": "Ihre Daten",
+      "subtitle": "Laden Sie alle Ihre Konversationen und Nachrichten — in Ihrem Browser entschlüsselt — als JSON-Datei herunter.",
+      "download": "Meine Daten herunterladen",
+      "preparing": "Wird vorbereitet…"
+    },
+    "email": {
+      "title": "E-Mail",
+      "subtitle": "Ihre E-Mail dient nur zur Anmeldung und zum Empfang von Kontobenachrichtigungen — sie entsperrt niemals Ihre Daten. Das Ändern ist sicher und betrifft Ihre verschlüsselten Chats nie.",
+      "current": "Aktuelle E-Mail",
+      "new": "Neue E-Mail",
+      "send": "Bestätigungslink senden",
+      "sending": "Wird gesendet…"
+    },
+    "password": {
+      "title": "Passwort",
+      "subtitle": "Ihr Passwort dient nur zur Anmeldung — es entsperrt nicht Ihre Daten (das ist Ihr Account-Schlüssel). Das Ändern ist sicher und betrifft Ihre verschlüsselten Chats nie.",
+      "current": "Aktuelles Passwort",
+      "new": "Neues Passwort",
+      "newPlaceholder": "Mindestens 12 Zeichen",
+      "change": "Passwort ändern",
+      "changing": "Wird geändert…"
+    },
+    "danger": {
+      "title": "Gefahrenzone",
+      "deleteChatsTitle": "Alle Chats löschen",
+      "deleteChatsSubtitle": "Löschen Sie dauerhaft jede Konversation und ihre Nachrichten. Dies kann nicht rückgängig gemacht werden.",
+      "deleteChatsConfirm": "Ja, alles löschen",
+      "deleting": "Wird gelöscht…",
+      "deleteAccountTitle": "Konto löschen",
+      "deleteAccountSubtitle": "Wir löschen Ihr Konto sowie Ihre verschlüsselten Chat-Daten, Schlüssel und Personas dauerhaft. Aufzeichnungen, die für Abrechnung, Steuern, Betrugsprävention oder gesetzliche Vorgaben erforderlich sind, können aufbewahrt werden. Dies kann nicht rückgängig gemacht werden.",
+      "typeToConfirm": "Geben Sie zur Bestätigung {{ word }} ein.",
+      "confirmFieldAria": "Geben Sie zur Bestätigung DELETE ein",
+      "deleteAccountConfirm": "Mein Konto löschen"
+    },
+    "toasts": {
+      "profileUpdated": "Profil aktualisiert",
+      "passwordChanged": "Passwort geändert",
+      "emailLinkSentTitle": "Bestätigungslink gesendet",
+      "emailLinkSentMsg": "Öffnen Sie den Link, den wir an {{ email }} gesendet haben, um die Änderung Ihrer E-Mail abzuschließen.",
+      "deletedOneChat": "1 Chat gelöscht",
+      "deletedManyChats": "{{ count }} Chats gelöscht",
+      "deleteChatsError": "Chats konnten nicht gelöscht werden",
+      "exportedOne": "1 Chat exportiert",
+      "exportedMany": "{{ count }} Chats exportiert",
+      "exportError": "Ihre Daten konnten nicht exportiert werden",
+      "accountDeleted": "Ihr Konto wurde gelöscht",
+      "deleteAccountConflict": "Kündigen Sie Ihren Tarif, bevor Sie Ihr Konto löschen",
+      "deleteAccountError": "Ihr Konto konnte nicht gelöscht werden"
+    },
+    "errors": {
+      "passwordChange": "Ihr Passwort konnte nicht geändert werden. Prüfen Sie Ihr aktuelles Passwort und versuchen Sie es erneut.",
+      "emailChange": "Die E-Mail-Änderung konnte nicht gestartet werden. Prüfen Sie die Adresse und versuchen Sie es erneut."
     }
   },
   "common": {
@@ -13,7 +82,8 @@
     "password": "Passwort",
     "emailPlaceholder": "du@beispiel.com",
     "passwordPlaceholder": "••••••••",
-    "privacyTerms": "Datenschutz und AGB"
+    "privacyTerms": "Datenschutz und AGB",
+    "cancel": "Abbrechen"
   },
   "auth": {
     "login": {

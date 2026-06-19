@@ -3,9 +3,78 @@
     "label": "Lingua"
   },
   "account": {
+    "title": "Account",
+    "breadcrumbs": { "settings": "Impostazioni", "account": "Account" },
     "language": {
       "title": "Lingua",
       "subtitle": "Scegli la lingua dell'interfaccia di Cognos. La tua scelta viene salvata sul tuo account e si applica su tutti i tuoi dispositivi."
+    },
+    "profile": {
+      "title": "Profilo",
+      "subtitle": "Il tuo nome visualizzato appare nei tuoi messaggi e nelle chat condivise.",
+      "displayName": "Nome visualizzato",
+      "displayNamePlaceholder": "Aggiungi un nome visualizzato",
+      "avatar": "Avatar",
+      "iconAria": "Icona avatar",
+      "colorAria": "Colore avatar",
+      "iconOptionAria": "Icona {{ name }}",
+      "colorOptionAria": "Colore {{ name }}",
+      "save": "Salva profilo",
+      "saving": "Salvataggio…"
+    },
+    "data": {
+      "title": "I tuoi dati",
+      "subtitle": "Scarica tutte le tue conversazioni e i tuoi messaggi — decifrati nel tuo browser — come file JSON.",
+      "download": "Scarica i miei dati",
+      "preparing": "Preparazione…"
+    },
+    "email": {
+      "title": "E-mail",
+      "subtitle": "La tua e-mail serve solo per accedere e ricevere avvisi sull'account — non sblocca mai i tuoi dati. Cambiarla è sicuro e non influisce mai sulle tue chat crittografate.",
+      "current": "E-mail attuale",
+      "new": "Nuova e-mail",
+      "send": "Invia link di conferma",
+      "sending": "Invio…"
+    },
+    "password": {
+      "title": "Password",
+      "subtitle": "La tua password serve solo per accedere — non sblocca i tuoi dati (quella è la tua Chiave dell'account). Cambiarla è sicuro e non influisce mai sulle tue chat crittografate.",
+      "current": "Password attuale",
+      "new": "Nuova password",
+      "newPlaceholder": "Almeno 12 caratteri",
+      "change": "Cambia password",
+      "changing": "Modifica…"
+    },
+    "danger": {
+      "title": "Zona pericolosa",
+      "deleteChatsTitle": "Elimina tutte le chat",
+      "deleteChatsSubtitle": "Elimina definitivamente ogni conversazione e i suoi messaggi. Questa azione non può essere annullata.",
+      "deleteChatsConfirm": "Sì, elimina tutto",
+      "deleting": "Eliminazione…",
+      "deleteAccountTitle": "Elimina account",
+      "deleteAccountSubtitle": "Eliminiamo definitivamente il tuo account e i tuoi dati di chat crittografati, le chiavi e le persona. I record richiesti per fatturazione, fisco, prevenzione delle frodi o conformità legale possono essere conservati. Questa azione non può essere annullata.",
+      "typeToConfirm": "Digita {{ word }} per confermare.",
+      "confirmFieldAria": "Digita DELETE per confermare",
+      "deleteAccountConfirm": "Elimina il mio account"
+    },
+    "toasts": {
+      "profileUpdated": "Profilo aggiornato",
+      "passwordChanged": "Password modificata",
+      "emailLinkSentTitle": "Link di conferma inviato",
+      "emailLinkSentMsg": "Apri il link che abbiamo inviato a {{ email }} per completare la modifica della tua e-mail.",
+      "deletedOneChat": "1 chat eliminata",
+      "deletedManyChats": "{{ count }} chat eliminate",
+      "deleteChatsError": "Impossibile eliminare le chat",
+      "exportedOne": "1 chat esportata",
+      "exportedMany": "{{ count }} chat esportate",
+      "exportError": "Impossibile esportare i tuoi dati",
+      "accountDeleted": "Il tuo account è stato eliminato",
+      "deleteAccountConflict": "Annulla il tuo piano prima di eliminare il tuo account",
+      "deleteAccountError": "Impossibile eliminare il tuo account"
+    },
+    "errors": {
+      "passwordChange": "Impossibile cambiare la tua password. Controlla la tua password attuale e riprova.",
+      "emailChange": "Impossibile avviare la modifica dell'e-mail. Controlla l'indirizzo e riprova."
     }
   },
   "common": {
@@ -13,7 +82,8 @@
     "password": "Password",
     "emailPlaceholder": "tu@esempio.com",
     "passwordPlaceholder": "••••••••",
-    "privacyTerms": "Informativa sulla privacy e termini"
+    "privacyTerms": "Informativa sulla privacy e termini",
+    "cancel": "Annulla"
   },
   "auth": {
     "login": {

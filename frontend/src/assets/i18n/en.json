@@ -3,9 +3,78 @@
     "label": "Language"
   },
   "account": {
+    "title": "Account",
+    "breadcrumbs": { "settings": "Settings", "account": "Account" },
     "language": {
       "title": "Language",
       "subtitle": "Choose the language for the Cognos interface. Your choice is saved to your account and applies on all your devices."
+    },
+    "profile": {
+      "title": "Profile",
+      "subtitle": "Your display name appears on your messages and in shared chats.",
+      "displayName": "Display name",
+      "displayNamePlaceholder": "Add a display name",
+      "avatar": "Avatar",
+      "iconAria": "Avatar icon",
+      "colorAria": "Avatar colour",
+      "iconOptionAria": "Icon {{ name }}",
+      "colorOptionAria": "Colour {{ name }}",
+      "save": "Save profile",
+      "saving": "Saving…"
+    },
+    "data": {
+      "title": "Your data",
+      "subtitle": "Download all your conversations and messages — decrypted in your browser — as a JSON file.",
+      "download": "Download my data",
+      "preparing": "Preparing…"
+    },
+    "email": {
+      "title": "Email",
+      "subtitle": "Your email only signs you in and receives account notices — it never unlocks your data. Changing it is safe and never affects your encrypted chats.",
+      "current": "Current email",
+      "new": "New email",
+      "send": "Send confirmation link",
+      "sending": "Sending…"
+    },
+    "password": {
+      "title": "Password",
+      "subtitle": "Your password only signs you in — it does not unlock your data (that's your Account Key). Changing it is safe and never affects your encrypted chats.",
+      "current": "Current password",
+      "new": "New password",
+      "newPlaceholder": "At least 12 characters",
+      "change": "Change password",
+      "changing": "Changing…"
+    },
+    "danger": {
+      "title": "Danger zone",
+      "deleteChatsTitle": "Delete all chats",
+      "deleteChatsSubtitle": "Permanently delete every conversation and its messages. This can’t be undone.",
+      "deleteChatsConfirm": "Yes, delete everything",
+      "deleting": "Deleting…",
+      "deleteAccountTitle": "Delete account",
+      "deleteAccountSubtitle": "We permanently delete your account and encrypted chat data, keys and personas. Records required for billing, tax, fraud prevention, or legal compliance may be retained. This can’t be undone.",
+      "typeToConfirm": "Type {{ word }} to confirm.",
+      "confirmFieldAria": "Type DELETE to confirm",
+      "deleteAccountConfirm": "Delete my account"
+    },
+    "toasts": {
+      "profileUpdated": "Profile updated",
+      "passwordChanged": "Password changed",
+      "emailLinkSentTitle": "Confirmation link sent",
+      "emailLinkSentMsg": "Open the link we emailed to {{ email }} to finish changing your email.",
+      "deletedOneChat": "Deleted 1 chat",
+      "deletedManyChats": "Deleted {{ count }} chats",
+      "deleteChatsError": "Could not delete chats",
+      "exportedOne": "Exported 1 chat",
+      "exportedMany": "Exported {{ count }} chats",
+      "exportError": "Could not export your data",
+      "accountDeleted": "Your account has been deleted",
+      "deleteAccountConflict": "Cancel your plan before deleting your account",
+      "deleteAccountError": "Could not delete your account"
+    },
+    "errors": {
+      "passwordChange": "Could not change your password. Check your current password and try again.",
+      "emailChange": "Could not start the email change. Check the address and try again."
     }
   },
   "common": {
@@ -13,7 +82,8 @@
     "password": "Password",
     "emailPlaceholder": "you@example.com",
     "passwordPlaceholder": "••••••••",
-    "privacyTerms": "Privacy Policy and Terms"
+    "privacyTerms": "Privacy Policy and Terms",
+    "cancel": "Cancel"
   },
   "auth": {
     "login": {

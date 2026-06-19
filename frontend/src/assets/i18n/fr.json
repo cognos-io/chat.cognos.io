@@ -3,9 +3,78 @@
     "label": "Langue"
   },
   "account": {
+    "title": "Compte",
+    "breadcrumbs": { "settings": "Paramètres", "account": "Compte" },
     "language": {
       "title": "Langue",
       "subtitle": "Choisissez la langue de l'interface Cognos. Votre choix est enregistré sur votre compte et s'applique sur tous vos appareils."
+    },
+    "profile": {
+      "title": "Profil",
+      "subtitle": "Votre nom affiché apparaît sur vos messages et dans les conversations partagées.",
+      "displayName": "Nom affiché",
+      "displayNamePlaceholder": "Ajouter un nom affiché",
+      "avatar": "Avatar",
+      "iconAria": "Icône d'avatar",
+      "colorAria": "Couleur d'avatar",
+      "iconOptionAria": "Icône {{ name }}",
+      "colorOptionAria": "Couleur {{ name }}",
+      "save": "Enregistrer le profil",
+      "saving": "Enregistrement…"
+    },
+    "data": {
+      "title": "Vos données",
+      "subtitle": "Téléchargez toutes vos conversations et messages — déchiffrés dans votre navigateur — au format JSON.",
+      "download": "Télécharger mes données",
+      "preparing": "Préparation…"
+    },
+    "email": {
+      "title": "E-mail",
+      "subtitle": "Votre e-mail sert uniquement à vous connecter et à recevoir les avis liés au compte — il ne déverrouille jamais vos données. Le modifier est sans risque et n'affecte jamais vos conversations chiffrées.",
+      "current": "E-mail actuel",
+      "new": "Nouvel e-mail",
+      "send": "Envoyer le lien de confirmation",
+      "sending": "Envoi…"
+    },
+    "password": {
+      "title": "Mot de passe",
+      "subtitle": "Votre mot de passe sert uniquement à vous connecter — il ne déverrouille pas vos données (c'est le rôle de votre clé de compte). Le modifier est sans risque et n'affecte jamais vos conversations chiffrées.",
+      "current": "Mot de passe actuel",
+      "new": "Nouveau mot de passe",
+      "newPlaceholder": "Au moins 12 caractères",
+      "change": "Changer le mot de passe",
+      "changing": "Modification…"
+    },
+    "danger": {
+      "title": "Zone de danger",
+      "deleteChatsTitle": "Supprimer toutes les conversations",
+      "deleteChatsSubtitle": "Supprimez définitivement chaque conversation et ses messages. Cette action est irréversible.",
+      "deleteChatsConfirm": "Oui, tout supprimer",
+      "deleting": "Suppression…",
+      "deleteAccountTitle": "Supprimer le compte",
+      "deleteAccountSubtitle": "Nous supprimons définitivement votre compte ainsi que vos données de conversation chiffrées, vos clés et vos personas. Les enregistrements requis pour la facturation, la fiscalité, la prévention de la fraude ou la conformité légale peuvent être conservés. Cette action est irréversible.",
+      "typeToConfirm": "Saisissez {{ word }} pour confirmer.",
+      "confirmFieldAria": "Saisissez DELETE pour confirmer",
+      "deleteAccountConfirm": "Supprimer mon compte"
+    },
+    "toasts": {
+      "profileUpdated": "Profil mis à jour",
+      "passwordChanged": "Mot de passe modifié",
+      "emailLinkSentTitle": "Lien de confirmation envoyé",
+      "emailLinkSentMsg": "Ouvrez le lien que nous avons envoyé à {{ email }} pour terminer le changement d'e-mail.",
+      "deletedOneChat": "1 conversation supprimée",
+      "deletedManyChats": "{{ count }} conversations supprimées",
+      "deleteChatsError": "Impossible de supprimer les conversations",
+      "exportedOne": "1 conversation exportée",
+      "exportedMany": "{{ count }} conversations exportées",
+      "exportError": "Impossible d'exporter vos données",
+      "accountDeleted": "Votre compte a été supprimé",
+      "deleteAccountConflict": "Résiliez votre abonnement avant de supprimer votre compte",
+      "deleteAccountError": "Impossible de supprimer votre compte"
+    },
+    "errors": {
+      "passwordChange": "Impossible de changer votre mot de passe. Vérifiez votre mot de passe actuel et réessayez.",
+      "emailChange": "Impossible de démarrer le changement d'e-mail. Vérifiez l'adresse et réessayez."
     }
   },
   "common": {
@@ -13,7 +82,8 @@
     "password": "Mot de passe",
     "emailPlaceholder": "vous@exemple.com",
     "passwordPlaceholder": "••••••••",
-    "privacyTerms": "Politique de confidentialité et conditions"
+    "privacyTerms": "Politique de confidentialité et conditions",
+    "cancel": "Annuler"
   },
   "auth": {
     "login": {

@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
   CognosAvatarComponent,
@@ -55,309 +55,332 @@ import { deriveProfileName } from '@app/utils/profile-identity';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="account__header">
-      <cog-breadcrumbs
-        [items]="[
-          { label: 'Cognos' },
-          { label: 'Settings' },
-          { label: 'Account', current: true },
-        ]"
-      />
-      <h1 class="account__title">Account</h1>
-    </header>
+    <ng-container *transloco="let t">
+      <header class="account__header">
+        <cog-breadcrumbs
+          [items]="[
+            { label: 'Cognos' },
+            { label: t('account.breadcrumbs.settings') },
+            { label: t('account.breadcrumbs.account'), current: true },
+          ]"
+        />
+        <h1 class="account__title">{{ t('account.title') }}</h1>
+      </header>
 
-    <section
-      class="account__card"
-      aria-labelledby="account-language-heading"
-      *transloco="let t"
-    >
-      <h2 id="account-language-heading" class="account__card-title">
-        {{ t('account.language.title') }}
-      </h2>
-      <p class="account__card-subtitle">{{ t('account.language.subtitle') }}</p>
-      <div class="account__actions">
-        <app-language-switcher></app-language-switcher>
-      </div>
-    </section>
-
-    <section class="account__card" aria-labelledby="account-profile-heading">
-      <h2 id="account-profile-heading" class="account__card-title">Profile</h2>
-      <p class="account__card-subtitle">
-        Your display name appears on your messages and in shared chats.
-      </p>
-
-      <div class="account__fields">
-        <div class="account__field">
-          <span class="account__label">Display name</span>
-          <cog-text-field
-            ariaLabel="Display name"
-            placeholder="Add a display name"
-            [value]="displayName()"
-            (valueChange)="displayName.set($event)"
-          />
+      <section class="account__card" aria-labelledby="account-language-heading">
+        <h2 id="account-language-heading" class="account__card-title">
+          {{ t('account.language.title') }}
+        </h2>
+        <p class="account__card-subtitle">{{ t('account.language.subtitle') }}</p>
+        <div class="account__actions">
+          <app-language-switcher></app-language-switcher>
         </div>
+      </section>
 
-        <fieldset class="account__field account__fieldset">
-          <legend class="account__label">Avatar</legend>
-          <div class="account__avatar">
-            <cog-avatar
-              class="account__avatar-preview"
-              [name]="avatarName()"
-              [icon]="avatarIcon() ?? null"
-              [color]="avatarIcon() ? avatarColor() : ''"
-              [size]="40"
+      <section class="account__card" aria-labelledby="account-profile-heading">
+        <h2 id="account-profile-heading" class="account__card-title">
+          {{ t('account.profile.title') }}
+        </h2>
+        <p class="account__card-subtitle">{{ t('account.profile.subtitle') }}</p>
+
+        <div class="account__fields">
+          <div class="account__field">
+            <span class="account__label">{{ t('account.profile.displayName') }}</span>
+            <cog-text-field
+              [ariaLabel]="t('account.profile.displayName')"
+              [placeholder]="t('account.profile.displayNamePlaceholder')"
+              [value]="displayName()"
+              (valueChange)="displayName.set($event)"
             />
-
-            <div class="account__avatar-pickers">
-              <div
-                class="account__icon-grid"
-                role="radiogroup"
-                aria-label="Avatar icon"
-              >
-                @for (option of icons; track option) {
-                  <button
-                    type="button"
-                    class="account__icon-button"
-                    [class.is-selected]="avatarIcon() === option"
-                    [attr.aria-label]="'Icon ' + option"
-                    [attr.aria-pressed]="avatarIcon() === option"
-                    (click)="selectIcon(option)"
-                  >
-                    <cog-icon [name]="option" [size]="18" tone="current" />
-                  </button>
-                }
-              </div>
-
-              <div
-                class="account__color-row"
-                role="radiogroup"
-                aria-label="Avatar colour"
-              >
-                @for (option of colors; track option) {
-                  <button
-                    type="button"
-                    class="account__color-swatch"
-                    [class]="'account__color-swatch--' + option"
-                    [class.is-selected]="avatarColor() === option"
-                    [attr.aria-label]="'Colour ' + option"
-                    [attr.aria-pressed]="avatarColor() === option"
-                    (click)="selectColor(option)"
-                  ></button>
-                }
-              </div>
-            </div>
           </div>
-        </fieldset>
-      </div>
 
-      <div class="account__actions">
-        <cog-button
-          appearance="primary"
-          [disabled]="saving() || !dirty()"
-          (click)="save()"
-        >
-          {{ saving() ? 'Saving…' : 'Save profile' }}
-        </cog-button>
-      </div>
-    </section>
-
-    <app-data-processing />
-
-    <section class="account__card" aria-labelledby="account-data-heading">
-      <h2 id="account-data-heading" class="account__card-title">Your data</h2>
-      <p class="account__card-subtitle">
-        Download all your conversations and messages — decrypted in your browser — as a
-        JSON file.
-      </p>
-      <div class="account__actions">
-        <cog-button
-          appearance="default"
-          icon="download"
-          [disabled]="exporting()"
-          (click)="exportData()"
-        >
-          {{ exporting() ? 'Preparing…' : 'Download my data' }}
-        </cog-button>
-      </div>
-    </section>
-
-    <section class="account__card" aria-labelledby="account-email-heading">
-      <h2 id="account-email-heading" class="account__card-title">Email</h2>
-      <p class="account__card-subtitle">
-        Your email only signs you in and receives account notices — it never unlocks
-        your data. Changing it is safe and never affects your encrypted chats.
-      </p>
-
-      <div class="account__fields">
-        <div class="account__field">
-          <span class="account__label">Current email</span>
-          <cog-text-field
-            ariaLabel="Current email"
-            [value]="email()"
-            [readonly]="true"
-            [disabled]="true"
-          />
-        </div>
-        <div class="account__field">
-          <span class="account__label">New email</span>
-          <cog-text-field
-            ariaLabel="New email"
-            type="email"
-            placeholder="you@example.com"
-            [value]="newEmail()"
-            (valueChange)="newEmail.set($event)"
-          />
-        </div>
-      </div>
-
-      @if (emailChangeError()) {
-        <p class="account__error">{{ emailChangeError() }}</p>
-      }
-
-      <div class="account__actions">
-        <cog-button
-          appearance="primary"
-          [disabled]="!canRequestEmailChange()"
-          (click)="requestEmailChange()"
-        >
-          {{ requestingEmailChange() ? 'Sending…' : 'Send confirmation link' }}
-        </cog-button>
-      </div>
-    </section>
-
-    <section class="account__card" aria-labelledby="account-password-heading">
-      <h2 id="account-password-heading" class="account__card-title">Password</h2>
-      <p class="account__card-subtitle">
-        Your password only signs you in — it does not unlock your data (that's your
-        Account Key). Changing it is safe and never affects your encrypted chats.
-      </p>
-
-      <div class="account__fields">
-        <div class="account__field">
-          <span class="account__label">Current password</span>
-          <cog-text-field
-            ariaLabel="Current password"
-            type="password"
-            [value]="currentPassword()"
-            (valueChange)="currentPassword.set($event)"
-          />
-        </div>
-        <div class="account__field">
-          <span class="account__label">New password</span>
-          <cog-text-field
-            ariaLabel="New password"
-            type="password"
-            placeholder="At least 12 characters"
-            [value]="newPassword()"
-            (valueChange)="newPassword.set($event)"
-          />
-        </div>
-      </div>
-
-      @if (passwordError()) {
-        <p class="account__error">{{ passwordError() }}</p>
-      }
-
-      <div class="account__actions">
-        <cog-button
-          appearance="primary"
-          [disabled]="!canChangePassword()"
-          (click)="changePassword()"
-        >
-          {{ changingPassword() ? 'Changing…' : 'Change password' }}
-        </cog-button>
-      </div>
-    </section>
-
-    <section
-      class="account__card account__danger"
-      aria-labelledby="account-danger-heading"
-    >
-      <h2 id="account-danger-heading" class="account__card-title">Danger zone</h2>
-
-      <div class="account__danger-row">
-        <div class="account__danger-copy">
-          <p class="account__danger-title">Delete all chats</p>
-          <p class="account__card-subtitle">
-            Permanently delete every conversation and its messages. This can’t be
-            undone.
-          </p>
-        </div>
-
-        @if (confirmingDeleteChats()) {
-          <div class="account__danger-confirm">
-            <cog-button
-              appearance="danger"
-              [disabled]="deletingChats()"
-              (click)="deleteAllChats()"
-            >
-              {{ deletingChats() ? 'Deleting…' : 'Yes, delete everything' }}
-            </cog-button>
-            <cog-button
-              appearance="subtle"
-              [disabled]="deletingChats()"
-              (click)="confirmingDeleteChats.set(false)"
-            >
-              Cancel
-            </cog-button>
-          </div>
-        } @else {
-          <cog-button appearance="danger" (click)="confirmingDeleteChats.set(true)">
-            Delete all chats
-          </cog-button>
-        }
-      </div>
-
-      <hr class="account__danger-divider" />
-
-      <div class="account__danger-row">
-        <div class="account__danger-copy">
-          <p class="account__danger-title">Delete account</p>
-          <p class="account__card-subtitle">
-            We permanently delete your account and encrypted chat data, keys and
-            personas. Records required for billing, tax, fraud prevention, or legal
-            compliance may be retained. This can’t be undone.
-          </p>
-
-          @if (confirmingDeleteAccount()) {
-            <div class="account__field account__danger-confirm-field">
-              <span class="account__hint">
-                Type <strong>DELETE</strong> to confirm.
-              </span>
-              <cog-text-field
-                ariaLabel="Type DELETE to confirm"
-                placeholder="DELETE"
-                [value]="deleteAccountConfirmText()"
-                (valueChange)="deleteAccountConfirmText.set($event)"
+          <fieldset class="account__field account__fieldset">
+            <legend class="account__label">{{ t('account.profile.avatar') }}</legend>
+            <div class="account__avatar">
+              <cog-avatar
+                class="account__avatar-preview"
+                [name]="avatarName()"
+                [icon]="avatarIcon() ?? null"
+                [color]="avatarIcon() ? avatarColor() : ''"
+                [size]="40"
               />
+
+              <div class="account__avatar-pickers">
+                <div
+                  class="account__icon-grid"
+                  role="radiogroup"
+                  [attr.aria-label]="t('account.profile.iconAria')"
+                >
+                  @for (option of icons; track option) {
+                    <button
+                      type="button"
+                      class="account__icon-button"
+                      [class.is-selected]="avatarIcon() === option"
+                      [attr.aria-label]="
+                        t('account.profile.iconOptionAria', { name: option })
+                      "
+                      [attr.aria-pressed]="avatarIcon() === option"
+                      (click)="selectIcon(option)"
+                    >
+                      <cog-icon [name]="option" [size]="18" tone="current" />
+                    </button>
+                  }
+                </div>
+
+                <div
+                  class="account__color-row"
+                  role="radiogroup"
+                  [attr.aria-label]="t('account.profile.colorAria')"
+                >
+                  @for (option of colors; track option) {
+                    <button
+                      type="button"
+                      class="account__color-swatch"
+                      [class]="'account__color-swatch--' + option"
+                      [class.is-selected]="avatarColor() === option"
+                      [attr.aria-label]="
+                        t('account.profile.colorOptionAria', { name: option })
+                      "
+                      [attr.aria-pressed]="avatarColor() === option"
+                      (click)="selectColor(option)"
+                    ></button>
+                  }
+                </div>
+              </div>
             </div>
+          </fieldset>
+        </div>
+
+        <div class="account__actions">
+          <cog-button
+            appearance="primary"
+            [disabled]="saving() || !dirty()"
+            (click)="save()"
+          >
+            {{ saving() ? t('account.profile.saving') : t('account.profile.save') }}
+          </cog-button>
+        </div>
+      </section>
+
+      <app-data-processing />
+
+      <section class="account__card" aria-labelledby="account-data-heading">
+        <h2 id="account-data-heading" class="account__card-title">
+          {{ t('account.data.title') }}
+        </h2>
+        <p class="account__card-subtitle">{{ t('account.data.subtitle') }}</p>
+        <div class="account__actions">
+          <cog-button
+            appearance="default"
+            icon="download"
+            [disabled]="exporting()"
+            (click)="exportData()"
+          >
+            {{ exporting() ? t('account.data.preparing') : t('account.data.download') }}
+          </cog-button>
+        </div>
+      </section>
+
+      <section class="account__card" aria-labelledby="account-email-heading">
+        <h2 id="account-email-heading" class="account__card-title">
+          {{ t('account.email.title') }}
+        </h2>
+        <p class="account__card-subtitle">{{ t('account.email.subtitle') }}</p>
+
+        <div class="account__fields">
+          <div class="account__field">
+            <span class="account__label">{{ t('account.email.current') }}</span>
+            <cog-text-field
+              [ariaLabel]="t('account.email.current')"
+              [value]="email()"
+              [readonly]="true"
+              [disabled]="true"
+            />
+          </div>
+          <div class="account__field">
+            <span class="account__label">{{ t('account.email.new') }}</span>
+            <cog-text-field
+              [ariaLabel]="t('account.email.new')"
+              type="email"
+              [placeholder]="t('common.emailPlaceholder')"
+              [value]="newEmail()"
+              (valueChange)="newEmail.set($event)"
+            />
+          </div>
+        </div>
+
+        @if (emailChangeError()) {
+          <p class="account__error">{{ emailChangeError() }}</p>
+        }
+
+        <div class="account__actions">
+          <cog-button
+            appearance="primary"
+            [disabled]="!canRequestEmailChange()"
+            (click)="requestEmailChange()"
+          >
+            {{
+              requestingEmailChange()
+                ? t('account.email.sending')
+                : t('account.email.send')
+            }}
+          </cog-button>
+        </div>
+      </section>
+
+      <section class="account__card" aria-labelledby="account-password-heading">
+        <h2 id="account-password-heading" class="account__card-title">
+          {{ t('account.password.title') }}
+        </h2>
+        <p class="account__card-subtitle">{{ t('account.password.subtitle') }}</p>
+
+        <div class="account__fields">
+          <div class="account__field">
+            <span class="account__label">{{ t('account.password.current') }}</span>
+            <cog-text-field
+              [ariaLabel]="t('account.password.current')"
+              type="password"
+              [value]="currentPassword()"
+              (valueChange)="currentPassword.set($event)"
+            />
+          </div>
+          <div class="account__field">
+            <span class="account__label">{{ t('account.password.new') }}</span>
+            <cog-text-field
+              [ariaLabel]="t('account.password.new')"
+              type="password"
+              [placeholder]="t('account.password.newPlaceholder')"
+              [value]="newPassword()"
+              (valueChange)="newPassword.set($event)"
+            />
+          </div>
+        </div>
+
+        @if (passwordError()) {
+          <p class="account__error">{{ passwordError() }}</p>
+        }
+
+        <div class="account__actions">
+          <cog-button
+            appearance="primary"
+            [disabled]="!canChangePassword()"
+            (click)="changePassword()"
+          >
+            {{
+              changingPassword()
+                ? t('account.password.changing')
+                : t('account.password.change')
+            }}
+          </cog-button>
+        </div>
+      </section>
+
+      <section
+        class="account__card account__danger"
+        aria-labelledby="account-danger-heading"
+      >
+        <h2 id="account-danger-heading" class="account__card-title">
+          {{ t('account.danger.title') }}
+        </h2>
+
+        <div class="account__danger-row">
+          <div class="account__danger-copy">
+            <p class="account__danger-title">
+              {{ t('account.danger.deleteChatsTitle') }}
+            </p>
+            <p class="account__card-subtitle">
+              {{ t('account.danger.deleteChatsSubtitle') }}
+            </p>
+          </div>
+
+          @if (confirmingDeleteChats()) {
+            <div class="account__danger-confirm">
+              <cog-button
+                appearance="danger"
+                [disabled]="deletingChats()"
+                (click)="deleteAllChats()"
+              >
+                {{
+                  deletingChats()
+                    ? t('account.danger.deleting')
+                    : t('account.danger.deleteChatsConfirm')
+                }}
+              </cog-button>
+              <cog-button
+                appearance="subtle"
+                [disabled]="deletingChats()"
+                (click)="confirmingDeleteChats.set(false)"
+              >
+                {{ t('common.cancel') }}
+              </cog-button>
+            </div>
+          } @else {
+            <cog-button appearance="danger" (click)="confirmingDeleteChats.set(true)">
+              {{ t('account.danger.deleteChatsTitle') }}
+            </cog-button>
           }
         </div>
 
-        @if (confirmingDeleteAccount()) {
-          <div class="account__danger-confirm">
-            <cog-button
-              appearance="danger"
-              [disabled]="deletingAccount() || !canDeleteAccount()"
-              (click)="deleteAccount()"
-            >
-              {{ deletingAccount() ? 'Deleting…' : 'Delete my account' }}
-            </cog-button>
-            <cog-button
-              appearance="subtle"
-              [disabled]="deletingAccount()"
-              (click)="cancelDeleteAccount()"
-            >
-              Cancel
-            </cog-button>
+        <hr class="account__danger-divider" />
+
+        <div class="account__danger-row">
+          <div class="account__danger-copy">
+            <p class="account__danger-title">
+              {{ t('account.danger.deleteAccountTitle') }}
+            </p>
+            <p class="account__card-subtitle">
+              {{ t('account.danger.deleteAccountSubtitle') }}
+            </p>
+
+            @if (confirmingDeleteAccount()) {
+              <div class="account__field account__danger-confirm-field">
+                <span
+                  class="account__hint"
+                  [innerHTML]="
+                    t('account.danger.typeToConfirm', {
+                      word: '<strong>DELETE</strong>',
+                    })
+                  "
+                ></span>
+                <cog-text-field
+                  [ariaLabel]="t('account.danger.confirmFieldAria')"
+                  placeholder="DELETE"
+                  [value]="deleteAccountConfirmText()"
+                  (valueChange)="deleteAccountConfirmText.set($event)"
+                />
+              </div>
+            }
           </div>
-        } @else {
-          <cog-button appearance="danger" (click)="confirmingDeleteAccount.set(true)">
-            Delete account
-          </cog-button>
-        }
-      </div>
-    </section>
+
+          @if (confirmingDeleteAccount()) {
+            <div class="account__danger-confirm">
+              <cog-button
+                appearance="danger"
+                [disabled]="deletingAccount() || !canDeleteAccount()"
+                (click)="deleteAccount()"
+              >
+                {{
+                  deletingAccount()
+                    ? t('account.danger.deleting')
+                    : t('account.danger.deleteAccountConfirm')
+                }}
+              </cog-button>
+              <cog-button
+                appearance="subtle"
+                [disabled]="deletingAccount()"
+                (click)="cancelDeleteAccount()"
+              >
+                {{ t('common.cancel') }}
+              </cog-button>
+            </div>
+          } @else {
+            <cog-button appearance="danger" (click)="confirmingDeleteAccount.set(true)">
+              {{ t('account.danger.deleteAccountTitle') }}
+            </cog-button>
+          }
+        </div>
+      </section>
+    </ng-container>
   `,
   styles: `
     :host {
@@ -600,6 +623,7 @@ export class AccountComponent {
   private readonly _export = inject(ExportService);
   private readonly _router = inject(Router);
   private readonly _toast = inject(CognosToastService);
+  private readonly _transloco = inject(TranslocoService);
 
   protected readonly email = this._auth.email;
   protected readonly icons = avatarIcons;
@@ -693,7 +717,9 @@ export class AccountComponent {
       .subscribe({
         next: () => {
           this.saving.set(false);
-          this._toast.notify({ title: 'Profile updated' });
+          this._toast.notify({
+            title: this._transloco.translate('account.toasts.profileUpdated'),
+          });
         },
         error: () => this.saving.set(false),
       });
@@ -711,12 +737,14 @@ export class AccountComponent {
         this.changingPassword.set(false);
         this.currentPassword.set('');
         this.newPassword.set('');
-        this._toast.notify({ title: 'Password changed' });
+        this._toast.notify({
+          title: this._transloco.translate('account.toasts.passwordChanged'),
+        });
       },
       error: () => {
         this.changingPassword.set(false);
         this.passwordError.set(
-          'Could not change your password. Check your current password and try again.',
+          this._transloco.translate('account.errors.passwordChange'),
         );
       },
     });
@@ -735,14 +763,16 @@ export class AccountComponent {
         this.requestingEmailChange.set(false);
         this.newEmail.set('');
         this._toast.notify({
-          title: 'Confirmation link sent',
-          msg: `Open the link we emailed to ${target} to finish changing your email.`,
+          title: this._transloco.translate('account.toasts.emailLinkSentTitle'),
+          msg: this._transloco.translate('account.toasts.emailLinkSentMsg', {
+            email: target,
+          }),
         });
       },
       error: () => {
         this.requestingEmailChange.set(false);
         this.emailChangeError.set(
-          'Could not start the email change. Check the address and try again.',
+          this._transloco.translate('account.errors.emailChange'),
         );
       },
     });
@@ -759,12 +789,20 @@ export class AccountComponent {
         this.deletingChats.set(false);
         this.confirmingDeleteChats.set(false);
         this._toast.notify({
-          title: deleted === 1 ? 'Deleted 1 chat' : `Deleted ${deleted} chats`,
+          title:
+            deleted === 1
+              ? this._transloco.translate('account.toasts.deletedOneChat')
+              : this._transloco.translate('account.toasts.deletedManyChats', {
+                  count: deleted,
+                }),
         });
       },
       error: () => {
         this.deletingChats.set(false);
-        this._toast.notify({ title: 'Could not delete chats', tone: 'danger' });
+        this._toast.notify({
+          title: this._transloco.translate('account.toasts.deleteChatsError'),
+          tone: 'danger',
+        });
       },
     });
   }
@@ -781,12 +819,17 @@ export class AccountComponent {
         this._toast.notify({
           title:
             conversation_count === 1
-              ? 'Exported 1 chat'
-              : `Exported ${conversation_count} chats`,
+              ? this._transloco.translate('account.toasts.exportedOne')
+              : this._transloco.translate('account.toasts.exportedMany', {
+                  count: conversation_count,
+                }),
         });
       })
       .catch(() => {
-        this._toast.notify({ title: 'Could not export your data', tone: 'danger' });
+        this._toast.notify({
+          title: this._transloco.translate('account.toasts.exportError'),
+          tone: 'danger',
+        });
       })
       .finally(() => this.exporting.set(false));
   }
@@ -806,7 +849,9 @@ export class AccountComponent {
       next: async () => {
         // The account is gone — clear the session and send them to login.
         await this._auth.logout();
-        this._toast.notify({ title: 'Your account has been deleted' });
+        this._toast.notify({
+          title: this._transloco.translate('account.toasts.accountDeleted'),
+        });
         await this._router.navigate(['/', 'auth', 'login']);
       },
       error: (error: unknown) => {
@@ -814,8 +859,8 @@ export class AccountComponent {
         const conflict = (error as { status?: number })?.status === 409;
         this._toast.notify({
           title: conflict
-            ? 'Cancel your plan before deleting your account'
-            : 'Could not delete your account',
+            ? this._transloco.translate('account.toasts.deleteAccountConflict')
+            : this._transloco.translate('account.toasts.deleteAccountError'),
           tone: 'danger',
         });
       },

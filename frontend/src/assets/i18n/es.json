@@ -3,9 +3,78 @@
     "label": "Idioma"
   },
   "account": {
+    "title": "Cuenta",
+    "breadcrumbs": { "settings": "Ajustes", "account": "Cuenta" },
     "language": {
       "title": "Idioma",
       "subtitle": "Elige el idioma de la interfaz de Cognos. Tu elección se guarda en tu cuenta y se aplica en todos tus dispositivos."
+    },
+    "profile": {
+      "title": "Perfil",
+      "subtitle": "Tu nombre visible aparece en tus mensajes y en los chats compartidos.",
+      "displayName": "Nombre visible",
+      "displayNamePlaceholder": "Añade un nombre visible",
+      "avatar": "Avatar",
+      "iconAria": "Icono de avatar",
+      "colorAria": "Color de avatar",
+      "iconOptionAria": "Icono {{ name }}",
+      "colorOptionAria": "Color {{ name }}",
+      "save": "Guardar perfil",
+      "saving": "Guardando…"
+    },
+    "data": {
+      "title": "Tus datos",
+      "subtitle": "Descarga todas tus conversaciones y mensajes — descifrados en tu navegador — como un archivo JSON.",
+      "download": "Descargar mis datos",
+      "preparing": "Preparando…"
+    },
+    "email": {
+      "title": "Correo electrónico",
+      "subtitle": "Tu correo solo sirve para iniciar sesión y recibir avisos de la cuenta — nunca desbloquea tus datos. Cambiarlo es seguro y nunca afecta a tus chats cifrados.",
+      "current": "Correo actual",
+      "new": "Nuevo correo",
+      "send": "Enviar enlace de confirmación",
+      "sending": "Enviando…"
+    },
+    "password": {
+      "title": "Contraseña",
+      "subtitle": "Tu contraseña solo sirve para iniciar sesión — no desbloquea tus datos (eso es tu Clave de cuenta). Cambiarla es seguro y nunca afecta a tus chats cifrados.",
+      "current": "Contraseña actual",
+      "new": "Nueva contraseña",
+      "newPlaceholder": "Al menos 12 caracteres",
+      "change": "Cambiar contraseña",
+      "changing": "Cambiando…"
+    },
+    "danger": {
+      "title": "Zona de peligro",
+      "deleteChatsTitle": "Eliminar todos los chats",
+      "deleteChatsSubtitle": "Elimina permanentemente cada conversación y sus mensajes. Esto no se puede deshacer.",
+      "deleteChatsConfirm": "Sí, eliminar todo",
+      "deleting": "Eliminando…",
+      "deleteAccountTitle": "Eliminar cuenta",
+      "deleteAccountSubtitle": "Eliminamos permanentemente tu cuenta y tus datos de chat cifrados, claves y personas. Los registros necesarios para facturación, impuestos, prevención del fraude o cumplimiento legal pueden conservarse. Esto no se puede deshacer.",
+      "typeToConfirm": "Escribe {{ word }} para confirmar.",
+      "confirmFieldAria": "Escribe DELETE para confirmar",
+      "deleteAccountConfirm": "Eliminar mi cuenta"
+    },
+    "toasts": {
+      "profileUpdated": "Perfil actualizado",
+      "passwordChanged": "Contraseña cambiada",
+      "emailLinkSentTitle": "Enlace de confirmación enviado",
+      "emailLinkSentMsg": "Abre el enlace que enviamos a {{ email }} para terminar de cambiar tu correo.",
+      "deletedOneChat": "1 chat eliminado",
+      "deletedManyChats": "{{ count }} chats eliminados",
+      "deleteChatsError": "No se pudieron eliminar los chats",
+      "exportedOne": "1 chat exportado",
+      "exportedMany": "{{ count }} chats exportados",
+      "exportError": "No se pudieron exportar tus datos",
+      "accountDeleted": "Tu cuenta ha sido eliminada",
+      "deleteAccountConflict": "Cancela tu plan antes de eliminar tu cuenta",
+      "deleteAccountError": "No se pudo eliminar tu cuenta"
+    },
+    "errors": {
+      "passwordChange": "No se pudo cambiar tu contraseña. Comprueba tu contraseña actual e inténtalo de nuevo.",
+      "emailChange": "No se pudo iniciar el cambio de correo. Comprueba la dirección e inténtalo de nuevo."
     }
   },
   "common": {
@@ -13,7 +82,8 @@
     "password": "Contraseña",
     "emailPlaceholder": "tu@ejemplo.com",
     "passwordPlaceholder": "••••••••",
-    "privacyTerms": "Política de privacidad y términos"
+    "privacyTerms": "Política de privacidad y términos",
+    "cancel": "Cancelar"
   },
   "auth": {
     "login": {
