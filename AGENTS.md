@@ -13,7 +13,7 @@ approach to ProtonMail which encrypts user emails.
 
 ## Guidelines
 
-- Write e2e tests first. Red/green development. More info below.
+- Write browser and api e2e tests first. Red/green development. More info below.
 - Security is a top priority. We must make sure that we never log user data including chat contents.
   Chats must be encrypted as soon as possible.
 - Simple is secure. Keep things idomatic. Prefer declarative over imperative.
@@ -53,7 +53,7 @@ approach to ProtonMail which encrypts user emails.
 
 ## Testing
 
-Tests should cover both sunny, rainy and edge cases including invalid data gets handled correctly
+Tests should cover sunny, rainy and edge cases including invalid data gets handled correctly
 and behaviour is expected.
 
 When testing locally, run the backend, frontend and web on non-standard ports so as not to conflict
