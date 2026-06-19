@@ -60,6 +60,18 @@ OAuth2 / **OTP (email one-time code)** — there is **no native TOTP
   expects, but a net-new subsystem PocketBase doesn't provide.
 - **Passkeys/WebAuthn (custom, large):** strongest UX, also not native.
 
+**Recommendation:** ship GA with **optional native email-OTP MFA + clear
+disclosure of its limit**, and put **passkeys/WebAuthn** on the near-term
+roadmap (skip standalone TOTP). Rationale: the **Account Key already protects the
+actual sensitive data** — it never reaches the server, so even a full
+password+email compromise cannot decrypt chat history. MFA here protects
+_account access_ (sending new messages, billing, metadata), not the encrypted
+corpus, so the gap is narrower than for a typical app. Email-OTP is a low-risk
+native win for that access layer; passkeys are the better long-term second
+factor **and** double as the quick-unlock factor that would let us reintroduce a
+short idle-lock (see §10 / the removed idle auto-logout). Owner: deferred to a
+separate MFA branch.
+
 ## Track D — Production hardening (infra)
 
 | #   | Item                                                                                  | Status | Notes                                                                          |
@@ -105,6 +117,28 @@ unlock factor today.
     (no `#confirmPassword` / `#account-password`), profile → `/account`,
     always-on nav links, real Account page; de-flaked the export test. **Now
     gated** via a `frontend-e2e` CI job.
+
+## Second review round (2026-06-19) — trust copy + docs
+
+- **Storage-claim overclaim fixed** — `DataProcessingComponent` no longer says
+  "we keep nothing" / "never stores your prompts or responses anywhere". New
+  wording: no-retention providers + Cognos never stores **plaintext** prompts or
+  responses; chat history is saved **encrypted**.
+- **Docs aligned to `account_key_v2`** — removed disabled-password-reset and
+  "password + Account Key" unlock wording and the `password_account_key_v1`
+  reference from README, backend/README, the model-selector spec/checklist, and
+  `security_findings` (N-4 marked fixed). Obsolete `*-blocked` process docs
+  replaced with `password-reset` / `email-change` (both enabled). Canonical line:
+  *password authenticates; the Account Key unlocks encrypted data; losing the
+  Account Key means encrypted data is unrecoverable.*
+- **Deletion/retention copy** — the Delete account card now states that records
+  required for billing, tax, fraud prevention, or legal compliance may be
+  retained while account + encrypted chat data are deleted.
+- **MFA** — recommendation recorded under C.5 (ship optional email-OTP + disclose;
+  passkeys near-term). Deferred to a separate branch.
+- **Deploy hardening (Track D.1–D.4)** — still open; needs your prod/deploy
+  context (off-host builds, digest-pin/sign, Caddy plugin pin, Cloudflare origin
+  lock, staging smoke-test). Owner: you, separately.
 
 ## Notes for reviewers
 
