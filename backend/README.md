@@ -35,10 +35,12 @@ instead of mounting a plaintext config file into the container.
 
 We use PocketBase's built-in `users` auth collection for authentication.
 
-The intended cross-device security model is documented in `../docs/security-model.md`.
+The cross-device security model is documented in `../docs/security-model.md`.
 
-Password reset is intentionally disabled until the app has a vault-recovery flow that can re-wrap
-user key material safely.
+Password reset is enabled. Under the `account_key_v2` scheme the password only
+authenticates sign-in — it is **not** an input to any data-encryption key — so a
+reset never re-wraps key material or affects encrypted chats. The Account Key
+(never seen by the server) is what unlocks data and is the sole recovery secret.
 
 ### Setup
 

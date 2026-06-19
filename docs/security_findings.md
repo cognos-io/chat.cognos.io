@@ -150,11 +150,13 @@ BorgBase account if the prod host was ever shared.
 
 ### N-4 — Argon2id parameter change without `unlock_scheme` bump
 
-Status: ❌ Not fixed.
-Params raised (m=65536/3/1) but `unlock_scheme` still
-`password_account_key_v1`. Acceptable pre-launch; the version
-mechanism exists exactly for this and should be exercised next
-time params move (`_v2`) even if it's a one-way cutover.
+Status: ✅ Fixed.
+The scheme was cut over to **`account_key_v2`** (the secret key is now
+wrapped under `Argon2id(Account Key)` alone — the password is
+authentication-only). The legacy `password_account_key_v1` value is no
+longer accepted: the `user_key_pairs` create rule pins
+`unlock_scheme = "account_key_v2"`. Launch is greenfield, so v1 was
+dropped outright rather than migrated.
 
 ### N-5 — No signed key-rotation envelope
 

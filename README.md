@@ -82,7 +82,8 @@ steps to going live for posterity.
 - PocketBase authentication:
     - Create or migrate users in the `users` auth collection
     - Use built-in PocketBase email/password auth for app login
-    - Password reset is intentionally disabled until vault recovery is implemented
+    - Password reset is enabled: the password only authenticates sign-in (the
+      Account Key unlocks encrypted data), so resetting it never touches chats
 - Backend:
     - Arm VPS on Hetzner:
         - Falkenstein region ([fastest ping](https://cloudpingtest.com/hetzner))

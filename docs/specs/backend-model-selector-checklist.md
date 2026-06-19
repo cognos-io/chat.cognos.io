@@ -33,7 +33,7 @@ This checklist is the living execution tracker for the rework.
 - conversation encryption is participant-based and sharing-ready
 - threading and expiry still work after the rewrite
 - billing records token usage and cost metadata without storing plaintext content
-- new-device unlock requires password + Account Key
+- new-device unlock requires the Account Key (after password sign-in)
 - trusted devices can stay unlocked locally
 - README/docs match the implemented security model
 

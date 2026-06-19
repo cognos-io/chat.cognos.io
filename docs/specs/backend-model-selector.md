@@ -3,6 +3,14 @@
 **Version:** 1.2 **Status:** In progress **Stack:** Go (backend), Angular (frontend),
 PocketBase/SQLite (primary store), DuckDB + Parquet/S3 (analytics)
 
+> **Authoritative auth/unlock model → `docs/security-model.md`.** This spec
+> predates the `account_key_v2` cutover. In the implemented model the
+> **password authenticates sign-in**, the **Account Key alone unlocks encrypted
+> data**, and **losing the Account Key means encrypted data is unrecoverable**
+> (the password is resettable and never derives a data key). Where this document
+> says "password + Account Key" for unlock, read it as: sign in with the
+> password, then unlock with the Account Key.
+
 ---
 
 ## Table of Contents
@@ -43,9 +51,10 @@ Cognos is an encrypted AI chat application. It works on the same privacy princip
 - The **public key** is stored on the server.
 - The **private key is encrypted client-side** and may be backed up to the server to support
   cross-device access.
-- Unlocking a new device requires the user's **account password + Account Key**. Trusted devices
-  may cache a **locally wrapped unlock blob** until the user locks the account, logs out, or clears
-  browser storage.
+- Unlocking a new device requires the user's **Account Key** (after signing in with the account
+  password): the password authenticates, while the Account Key alone unlocks the encrypted key
+  material. Trusted devices may cache a **locally wrapped unlock blob** until the user locks the
+  account, logs out, or clears browser storage.
 - Each conversation has its own **conversation-scoped key material** so the product is built for
   future sharing from the start.
 - The backend encrypts persisted chat content with the **conversation's public encryption
@@ -1490,7 +1499,7 @@ Success criteria for the overall rework:
 3. Message content is stored as ciphertext only while preserving threading and expiry.
 4. Conversation encryption is participant based and ready for future sharing.
 5. Billing and analytics record token/cache/provider-cost metadata without plaintext content.
-6. Cross-device unlock requires account password + Account Key.
+6. Cross-device unlock requires the Account Key (after password sign-in).
 7. Product copy accurately describes the security model.
 
 ---
@@ -1857,7 +1866,8 @@ Cognos will use a **1Password-style Account Key model**.
 - The server must never store or receive the **plaintext private key**.
 - A **trusted device** may cache locally wrapped unlock material so the user does not need to
   repeatedly enter the Account Key.
-- A **new device** must require both the account password and Account Key.
+- A **new device** signs in with the account password, then requires the **Account Key** to unlock
+  the encrypted key material. The password authenticates; the Account Key alone unlocks.
 - The Account Key is the deliberate security/usability tradeoff chosen for Cognos.
 - We are explicitly **not** using the old wording “private key never leaves your device”.
 
@@ -1867,9 +1877,10 @@ Cognos will use a **1Password-style Account Key model**.
 - Use **Argon2id** with a random per-user salt for password-based derivation.
 - The user's **email must not be part of cryptographic identity** in a way that makes email
   changes destructive.
-- **Password changes** should re-wrap unlock material, not force message re-encryption.
-- If the user loses both the password and Account Key, encrypted data recovery may be impossible.
-  This is an accepted consequence of the chosen privacy posture.
+- **Password changes** are a pure auth operation — under `account_key_v2` the password is not a
+  key input, so a change re-wraps nothing and never re-encrypts messages.
+- If the user loses the **Account Key**, encrypted data recovery is impossible (the password is
+  resettable and only authenticates). This is an accepted consequence of the chosen privacy posture.
 
 ### 13.4 Current-state findings that affect implementation
 
@@ -1941,7 +1952,8 @@ Remove or rewrite claims that imply the strict old model:
 - Replace with wording closer to:
     - **“Your private key is encrypted client-side before backup. Cognos never stores the plaintext
       private key.”**
-    - **“New devices require your password and Account Key to unlock your encrypted key material.”**
+    - **“Sign in with your password, then enter your Account Key to unlock your encrypted key
+      material on a new device.”**
     - **“Trusted devices can stay unlocked locally on this browser until you log out or clear
       browser storage.”**
 
