@@ -2,7 +2,10 @@ import { defineConfig } from '@playwright/test';
 
 const BASE_URL = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:4201';
 const POCKETBASE_URL = process.env.E2E_POCKETBASE_URL ?? 'http://127.0.0.1:8090';
-const AI_MOCK_URL = process.env.E2E_AI_MOCK_URL ?? 'http://127.0.0.1:18080/v1';
+// Base URL only — the bifrost OpenAI-compatible client appends its own
+// `/v1/chat/completions`, so a trailing `/v1` here would double it to
+// `/v1/v1/chat/completions` and 404 against the mock.
+const AI_MOCK_URL = process.env.E2E_AI_MOCK_URL ?? 'http://127.0.0.1:18080';
 const AI_MOCK_HEALTH_URL =
   process.env.E2E_AI_MOCK_HEALTH_URL ?? 'http://127.0.0.1:18080/health';
 
