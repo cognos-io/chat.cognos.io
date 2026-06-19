@@ -93,7 +93,7 @@ const wireChatShell = async (
   );
 };
 
-test('the sidebar profile button shows the plan and routes to billing', async ({
+test('the sidebar profile button shows the plan and routes to the account page', async ({
   page,
 }) => {
   const userFixture = buildVaultFixture('user_profile', 'ewan.jones@example.com');
@@ -133,9 +133,9 @@ test('the sidebar profile button shows the plan and routes to billing', async ({
   await expect(page.getByText('CHF 0.32 left of your CHF 2.00 trial')).toBeVisible();
 
   await profile.click();
-  await expect(page).toHaveURL(/\/account\/billing/);
-  // Profile opens the billing dashboard (not the pricing page).
-  await expect(page.getByRole('heading', { name: 'Plan & billing' })).toBeVisible();
+  await expect(page).toHaveURL(/\/account$/);
+  // Profile opens the Account home (not the pricing page).
+  await expect(page.getByRole('heading', { name: 'Account' })).toBeVisible();
 });
 
 test('the model selector tags models with low/medium/high cost tiers', async ({

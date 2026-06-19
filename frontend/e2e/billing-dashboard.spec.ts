@@ -59,9 +59,10 @@ test('active unlimited dashboard shows plan, renewal, usage and the settings nav
 
   await page.goto('/account/billing');
 
-  // Settings nav present.
+  // Settings nav present (the always-on sections; unbuilt ones are behind
+  // feature flags and hidden by default).
   await expect(page.getByRole('link', { name: 'Plan & billing' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Security & keys' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Account', exact: true })).toBeVisible();
 
   // Plan card.
   await expect(page.getByRole('heading', { name: 'Plan & billing' })).toBeVisible();
@@ -327,11 +328,11 @@ test('mobile settings opens the nav via the hamburger drawer', async ({ page }) 
   await hamburger.click();
 
   // The Settings nav is now reachable in the drawer.
-  await page.getByRole('link', { name: 'Security & keys' }).click();
-  await expect(page).toHaveURL(/\/account\/security/);
+  await page.getByRole('link', { name: 'Account', exact: true }).click();
+  await expect(page).toHaveURL(/\/account$/);
 });
 
-test('the settings nav opens placeholder sections', async ({ page }) => {
+test('the settings nav navigates to the Account section', async ({ page }) => {
   const userFixture = buildVaultFixture('user_nav', 'nav@example.com');
   await seedAuth(page, userFixture);
   await page.route(`${API}/api/v1/billing`, async (route) => {
@@ -348,7 +349,6 @@ test('the settings nav opens placeholder sections', async ({ page }) => {
 
   await expect(page).toHaveURL(/\/account$/);
   await expect(page.getByRole('heading', { name: 'Account' })).toBeVisible();
-  await expect(page.getByText('coming soon')).toBeVisible();
 });
 
 test('switch-plan modal marks the current plan and switches to PAYG', async ({

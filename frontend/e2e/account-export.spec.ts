@@ -78,7 +78,15 @@ test('the account page exports decrypted chats as a JSON download', async ({
   );
 
   await page.setViewportSize({ width: 1280, height: 800 });
+
+  // The export reads the in-memory (decrypted) conversation list, which the app
+  // populates from this GET on load. Wait for it before exporting, otherwise the
+  // click can race an empty list and export zero conversations.
+  const conversationsLoaded = page.waitForResponse((r) =>
+    /\/api\/v1\/conversations(\?.*)?$/.test(r.url()),
+  );
   await page.goto('/account');
+  await conversationsLoaded;
 
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download my data' }).click();

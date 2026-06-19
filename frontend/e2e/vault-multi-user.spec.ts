@@ -160,7 +160,7 @@ const registerAndCaptureKey = async (
   await page.goto('/auth/register');
   await page.locator('#email').fill(email);
   await page.locator('#password').fill(password);
-  await page.locator('#confirmPassword, #passwordConfirm').first().fill(password);
+  // Single-password signup — no confirmation field.
   await page.getByRole('button', { name: 'Create account' }).click();
 
   // The new-key dialog shows the generated Account Key.
@@ -169,8 +169,8 @@ const registerAndCaptureKey = async (
   const accountKey = ((await keyEl.textContent()) ?? '').trim();
   expect(accountKey.replace(/[^A-Za-z0-9]/g, '').length).toBe(32);
 
-  // Confirm + create the encrypted backup (browser runs argon2).
-  await page.locator('#account-password').fill(password);
+  // v2 backup creation: acknowledge the Account Key (no password), then create
+  // the encrypted backup (browser runs argon2).
   await page
     .locator('.vault-password-dialog__checkbox-row input[type="checkbox"]')
     .check();
@@ -207,7 +207,7 @@ const loginAndUnlock = async (
   await expect(
     page.getByRole('button', { name: 'Unlock encrypted backup' }),
   ).toBeVisible();
-  await page.locator('#account-password').fill(password);
+  // v2 unlock asks for the Account Key alone — no password field.
   // The Account Key input is readonly until focused (anti-autofill), so click to
   // make it editable before filling.
   await page.locator('#account-key').click();
