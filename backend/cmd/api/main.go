@@ -239,10 +239,12 @@ func bindAppHooks(
 		hooks.SoftDelete(app)
 		hooks.EnforceSingleUserKeyPair(app)
 		hooks.EnforceSingleConversationPublicKey(app)
-		// Password reset is allowed: under the account_key_v2 scheme the password
-		// is authentication-only and is not an input to the data key, so resetting
-		// it never affects encrypted data (see docs/security-model.md §9/§10).
-		hooks.ForbidUserEmailChangeFlow(app)
+		// Password reset and email change are both allowed: under the
+		// account_key_v2 scheme the email and password are authentication-only
+		// metadata, never inputs to the data key, so changing either never
+		// affects encrypted data (see docs/security-model.md §9/§10). Email
+		// changes still go through PocketBase's verified request → confirm flow;
+		// this guard only blocks an unverified email swap via a direct PATCH.
 		hooks.ForbidUserEmailChanges(app)
 
 		if params.CronScheduler != nil {

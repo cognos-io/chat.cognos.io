@@ -299,10 +299,17 @@ data-encryption key, changing it is a **pure auth operation**:
 
 ### Email change
 
-Changing email must:
+The email is authentication-only metadata — it is **not an input to any key
+derivation** — so changing it never affects encrypted-data access. Email change
+is enabled through PocketBase's **verified request → confirm flow**: a
+confirmation link is sent to the _new_ address and the change only takes effect
+once the user confirms it with that token plus their current password.
 
-- not affect encrypted data access
-- not be part of vault-key derivation in any destructive way
+- a direct PATCH of the `email` field (which would skip verification) stays
+  blocked server-side (`ForbidUserEmailChanges`); changes must go through the
+  verified flow
+- no key material is re-wrapped and no messages are re-encrypted
+- the Account Key continues to decrypt data unchanged
 
 ### Logout / lock
 
