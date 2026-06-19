@@ -9,7 +9,7 @@ import {
 import { CognosIconComponent, CognosLozengeComponent } from '@cognos/ui-angular';
 import type { CognosIconName } from '@cognos/ui/icons';
 
-import { PrivacyTier } from '@app/interfaces/model';
+import { Model, PrivacyTier } from '@app/interfaces/model';
 import { AuthService } from '@app/services/auth.service';
 import { ModelService } from '@app/services/model.service';
 
@@ -52,6 +52,13 @@ const TIER_RANK: Record<PrivacyTier, number> = { ch_only: 0, eu: 1, global: 2 };
 const TIER_BADGE: Record<PrivacyTier, string> = {
   ch_only: 'Switzerland only',
   eu: 'Europe + UK',
+  global: 'Global',
+};
+
+// Short residency label shown on each model row.
+const MODEL_REGION_BADGE: Record<PrivacyTier, string> = {
+  ch_only: 'Swiss',
+  eu: 'EU',
   global: 'Global',
 };
 
@@ -137,10 +144,68 @@ const TIER_BADGE: Record<PrivacyTier, string> = {
         </div>
       </div>
     </section>
+
+    <section class="models" aria-labelledby="models-heading">
+      <header class="models__head">
+        <h3 id="models-heading" class="models__title">
+          Models available
+          <span class="models__count">{{ eligibleCount() }} of {{ totalCount() }}</span>
+        </h3>
+        <span class="models__region">{{ currentBadge() }}</span>
+      </header>
+
+      <ul class="models__list">
+        @for (model of orderedModels(); track model.id) {
+          <li class="models__row" [class.models__row--locked]="!model.isEligible">
+            <span class="models__icon">
+              <cog-icon
+                [name]="model.isEligible ? 'server' : 'lock'"
+                [size]="16"
+                tone="current"
+              />
+            </span>
+            <span class="models__body">
+              <span class="models__name-row">
+                <span class="models__name">{{ model.name }}</span>
+                <cog-lozenge [tone]="model.isEligible ? 'green' : 'neutral'">
+                  {{ regionBadge(model) }}
+                </cog-lozenge>
+              </span>
+              <span class="models__desc">{{ model.description }}</span>
+            </span>
+            <span class="models__meta">
+              @if (model.isEligible) {
+                @if (hostingLabel(model)) {
+                  <span class="models__location">{{ hostingLabel(model) }}</span>
+                }
+                <span class="models__context"
+                  >{{ formatContext(model.inputContextLength) }} context</span
+                >
+              } @else {
+                <span class="models__locked">
+                  <cog-icon name="lock" [size]="12" tone="current" />
+                  {{ model.ineligibilityReason || 'Needs broader region' }}
+                </span>
+              }
+            </span>
+          </li>
+        }
+      </ul>
+
+      @if (lockedCount() > 0) {
+        <p class="models__footnote">
+          <cog-icon name="lock" [size]="14" tone="current" />
+          {{ lockedCount() }} more
+          {{ lockedCount() === 1 ? 'model unlocks' : 'models unlock' }} if you widen
+          your processing region — still with zero retention.
+        </p>
+      }
+    </section>
   `,
   styles: `
     :host {
-      display: block;
+      display: grid;
+      gap: var(--cog-space-200);
     }
 
     .data-processing {
@@ -313,6 +378,137 @@ const TIER_BADGE: Record<PrivacyTier, string> = {
       line-height: var(--cog-lh-caption);
       text-wrap: pretty;
     }
+
+    .models__head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--cog-space-100);
+      padding: 0 var(--cog-space-050) var(--cog-space-100);
+    }
+
+    .models__title {
+      margin: 0;
+      display: inline-flex;
+      align-items: baseline;
+      gap: var(--cog-space-100);
+      color: var(--cog-text-subtlest);
+      font-size: var(--cog-fs-caption);
+      font-weight: var(--cog-fw-semibold);
+      letter-spacing: var(--cog-ls-overline);
+      text-transform: uppercase;
+    }
+
+    .models__count {
+      color: var(--cog-text-subtle);
+    }
+
+    .models__region {
+      color: var(--cog-text-subtlest);
+      font-size: var(--cog-fs-caption);
+    }
+
+    .models__list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: var(--cog-space-025, 2px);
+    }
+
+    .models__row {
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--cog-space-125);
+      border-radius: var(--cog-radius-sm);
+      padding: var(--cog-space-125) var(--cog-space-100);
+    }
+
+    .models__row:hover {
+      background: var(--cog-surface-hover, rgba(0, 0, 0, 0.03));
+    }
+
+    .models__row--locked {
+      opacity: 0.6;
+    }
+
+    .models__icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface-raised, rgba(0, 0, 0, 0.04));
+      color: var(--cog-text-subtle);
+    }
+
+    .models__body {
+      display: grid;
+      gap: var(--cog-space-025, 2px);
+      min-width: 0;
+    }
+
+    .models__name-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--cog-space-075);
+    }
+
+    .models__name {
+      color: var(--cog-text);
+      font-size: var(--cog-fs-body-sm);
+      font-weight: var(--cog-fw-semibold);
+      line-height: var(--cog-lh-body-sm);
+    }
+
+    .models__desc {
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+    }
+
+    .models__meta {
+      display: grid;
+      justify-items: end;
+      gap: var(--cog-space-025, 2px);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .models__location {
+      color: var(--cog-text);
+      font-size: var(--cog-fs-caption);
+      font-weight: var(--cog-fw-semibold);
+    }
+
+    .models__context {
+      color: var(--cog-text-subtlest);
+      font-size: var(--cog-fs-caption);
+    }
+
+    .models__locked {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-050);
+      color: var(--cog-text-subtlest);
+      font-size: var(--cog-fs-caption);
+    }
+
+    .models__footnote {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-075);
+      margin: var(--cog-space-050) 0 0;
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface-raised, rgba(0, 0, 0, 0.03));
+      padding: var(--cog-space-100) var(--cog-space-125);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+    }
   `,
 })
 export class DataProcessingComponent {
@@ -324,6 +520,44 @@ export class DataProcessingComponent {
 
   protected readonly currentTier = this._models.privacyTier;
   protected readonly currentBadge = computed(() => TIER_BADGE[this.currentTier()]);
+
+  private readonly _modelList = this._models.modelList;
+  protected readonly totalCount = computed(() => this._modelList().length);
+  protected readonly eligibleCount = computed(
+    () => this._modelList().filter((model) => model.isEligible).length,
+  );
+  protected readonly lockedCount = computed(
+    () => this.totalCount() - this.eligibleCount(),
+  );
+
+  // Eligible models first, then locked ones (shown greyed), matching the mock.
+  protected readonly orderedModels = computed(() =>
+    [...this._modelList()].sort((a, b) => Number(b.isEligible) - Number(a.isEligible)),
+  );
+
+  protected regionBadge(model: Model): string {
+    return MODEL_REGION_BADGE[model.privacyTier] ?? model.privacyTier;
+  }
+
+  protected hostingLabel(model: Model): string {
+    const region = model.hostingRegion?.trim();
+    if (region) {
+      return region.charAt(0).toUpperCase() + region.slice(1);
+    }
+    return model.hostingCountry?.trim() ?? '';
+  }
+
+  // Human-friendly context window, e.g. 128000 → "128K", 1000000 → "1M".
+  protected formatContext(tokens: number): string {
+    if (tokens >= 1_000_000) {
+      const millions = tokens / 1_000_000;
+      return `${Number.isInteger(millions) ? millions : millions.toFixed(1)}M`;
+    }
+    if (tokens >= 1000) {
+      return `${Math.round(tokens / 1000)}K`;
+    }
+    return `${tokens}`;
+  }
 
   // Models eligible at a candidate tier = those whose own tier is at or below it
   // (ch_only ⊆ eu ⊆ global). Computed from the catalogue we already hold.
