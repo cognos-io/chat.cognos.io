@@ -94,8 +94,8 @@ import {
                 (click)="onDisappearingMessages()"
               >
                 {{ t('chat.empty.disappearingMessages') }}
-                @if (expirationDelayValue()) {
-                  {{ expirationDelayValue() }}
+                @if (expirationDurationKey() && expirationDurationKey() !== 'off') {
+                  {{ t('chat.temporary.durations.' + expirationDurationKey()) }}
                 } @else {
                   {{ t('chat.empty.disappearingOff') }}
                 }
@@ -120,9 +120,9 @@ import {
 
       @if (
         conversationService.conversation() &&
-        expirationDelayValue() !== 'Off' &&
-        !conversationService.isTemporaryConversation() &&
-        expirationDelayValue() !== ''
+        expirationDurationKey() &&
+        expirationDurationKey() !== 'off' &&
+        !conversationService.isTemporaryConversation()
       ) {
         <div class="message-list__banner">
           <cog-button
@@ -130,7 +130,11 @@ import {
             icon="rotate-cw"
             (click)="onEditConversation()"
           >
-            {{ t('chat.message.disappearAfter', { duration: expirationDelayValue() }) }}
+            {{
+              t('chat.message.disappearAfter', {
+                duration: t('chat.temporary.durations.' + expirationDurationKey()),
+              })
+            }}
           </cog-button>
         </div>
       }
@@ -260,14 +264,16 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
 
   readonly conversationService = inject(ConversationService);
 
-  public readonly expirationDelayValue = computed(() => {
+  // The translation key for the active disappearing-message duration
+  // ('off' | 'hours24' | …), resolved against chat.temporary.durations.*.
+  public readonly expirationDurationKey = computed(() => {
     let duration = this.conversationService.conversation()?.record
       .expiry_duration as string;
 
     if (!duration) {
       duration = this.conversationService.expirationDuration();
     }
-    return expiringDurations.find((x) => x.value === duration)?.label;
+    return expiringDurations.find((x) => x.value === duration)?.key;
   });
 
   constructor() {

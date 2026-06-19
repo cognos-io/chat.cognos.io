@@ -69,13 +69,13 @@ const notBlankValidator = (): ValidatorFn => {
         </div>
 
         <div class="edit-conversation-dialog__options" role="radiogroup">
-          @for (option of expiringDurations; track option.label) {
+          @for (option of expiringDurations; track option.key) {
             <button
               [class]="optionClass(option.value)"
               type="button"
               (click)="editForm.controls.expirationDuration.setValue(option.value)"
             >
-              {{ option.label }}
+              {{ t('chat.temporary.durations.' + option.key) }}
             </button>
           }
         </div>
