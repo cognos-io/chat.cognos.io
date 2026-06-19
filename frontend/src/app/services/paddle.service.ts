@@ -22,6 +22,21 @@ export const PADDLE_CONFIG = new InjectionToken<PaddleConfig>('PADDLE_CONFIG', {
   }),
 });
 
+// The Paddle.js loader behind an injection token. Importing + calling the real
+// `initializePaddle` injects a <script> tag and hits the network, so tests
+// inject a stub here instead of mocking the node_modules ESM package (which
+// hoists unreliably and otherwise leaves the real loader hanging on a 5s
+// timeout).
+export type PaddleInitialize = typeof initializePaddle;
+
+export const PADDLE_INITIALIZE = new InjectionToken<PaddleInitialize>(
+  'PADDLE_INITIALIZE',
+  {
+    providedIn: 'root',
+    factory: () => initializePaddle,
+  },
+);
+
 // PaddleService owns the Paddle.js lifecycle: it lazily loads and initialises
 // the SDK on first use, opens the hosted checkout *overlay* for a server-created
 // transaction, and surfaces checkout completion so the billing flow can refresh.
@@ -30,6 +45,7 @@ export const PADDLE_CONFIG = new InjectionToken<PaddleConfig>('PADDLE_CONFIG', {
 @Injectable({ providedIn: 'root' })
 export class PaddleService {
   private readonly _config = inject(PADDLE_CONFIG);
+  private readonly _initializePaddle = inject(PADDLE_INITIALIZE);
   private readonly _token = this._config.token;
   private readonly _environment = this._config.environment;
 
@@ -68,7 +84,7 @@ export class PaddleService {
     if (!this.enabled) {
       return Promise.resolve(undefined);
     }
-    this._paddlePromise ??= initializePaddle({
+    this._paddlePromise ??= this._initializePaddle({
       environment: this._environment,
       token: this._token,
       eventCallback: (event) => {

@@ -1,29 +1,26 @@
 import { TestBed } from '@angular/core/testing';
 
-import { initializePaddle } from '@paddle/paddle-js';
+import { CheckoutEventNames } from '@paddle/paddle-js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PADDLE_CONFIG, PaddleService } from './paddle.service';
+import { PADDLE_CONFIG, PADDLE_INITIALIZE, PaddleService } from './paddle.service';
 
-// The SDK (a node_modules package) is mocked so no script loads; the
-// eventCallback is captured so we can simulate completion. The client token is
-// supplied via PADDLE_CONFIG, which the harness lets us override.
-vi.mock('@paddle/paddle-js', () => ({
-  initializePaddle: vi.fn(),
-  CheckoutEventNames: { CHECKOUT_COMPLETED: 'checkout.completed' },
-}));
-
+// The Paddle loader is injected (PADDLE_INITIALIZE) and stubbed here, so no
+// script ever loads and there is no node_modules ESM mock to hoist. The
+// eventCallback is captured to simulate completion; the client token comes from
+// PADDLE_CONFIG, which the harness lets us override.
 describe('PaddleService', () => {
   const open = vi.fn();
   let capturedEventCallback: ((event: { name: string }) => void) | undefined;
+  const initializePaddle = vi.fn();
 
   beforeEach(() => {
     open.mockReset();
     capturedEventCallback = undefined;
-    vi.mocked(initializePaddle).mockReset();
-    vi.mocked(initializePaddle).mockImplementation((options) => {
+    initializePaddle.mockReset();
+    initializePaddle.mockImplementation((options) => {
       capturedEventCallback = options?.eventCallback as typeof capturedEventCallback;
-      return Promise.resolve({ Checkout: { open } } as never);
+      return Promise.resolve({ Checkout: { open } });
     });
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
@@ -33,6 +30,7 @@ describe('PaddleService', () => {
           provide: PADDLE_CONFIG,
           useValue: { token: 'test_token', environment: 'sandbox' },
         },
+        { provide: PADDLE_INITIALIZE, useValue: initializePaddle },
       ],
     });
   });
@@ -71,7 +69,7 @@ describe('PaddleService', () => {
     service.checkoutCompleted$.subscribe(seen);
 
     await service.openCheckout('txn_1');
-    capturedEventCallback?.({ name: 'checkout.completed' });
+    capturedEventCallback?.({ name: CheckoutEventNames.CHECKOUT_COMPLETED });
 
     expect(seen).toHaveBeenCalledOnce();
   });
