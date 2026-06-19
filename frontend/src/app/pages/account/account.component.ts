@@ -32,9 +32,11 @@ import { ExportService } from '@app/services/export.service';
 import { deriveProfileName } from '@app/utils/profile-identity';
 
 // AccountComponent is the Account home (/account). It owns the user-facing
-// profile (display name, and — added separately — avatar) plus a danger zone.
-// Identity stays privacy-preserving: the email is shown read-only and never
-// edited here (email changes are blocked server-side until account-key re-auth).
+// profile (display name + avatar), the email- and password-change cards, and a
+// danger zone. Under account_key_v2 the email and password are
+// authentication-only metadata (never inputs to the data key), so changing
+// either is crypto-safe; email changes go through PocketBase's verified
+// request → confirm flow.
 @Component({
   selector: 'app-account',
   standalone: true,
@@ -74,20 +76,6 @@ import { deriveProfileName } from '@app/utils/profile-identity';
             [value]="displayName()"
             (valueChange)="displayName.set($event)"
           />
-        </div>
-
-        <div class="account__field">
-          <span class="account__label">Email</span>
-          <cog-text-field
-            ariaLabel="Email"
-            [value]="email()"
-            [readonly]="true"
-            [disabled]="true"
-          />
-          <span class="account__hint">
-            Email changes aren’t available yet. Contact support if you need to change
-            it.
-          </span>
         </div>
 
         <fieldset class="account__field account__fieldset">
@@ -170,6 +158,50 @@ import { deriveProfileName } from '@app/utils/profile-identity';
           (click)="exportData()"
         >
           {{ exporting() ? 'Preparing…' : 'Download my data' }}
+        </cog-button>
+      </div>
+    </section>
+
+    <section class="account__card" aria-labelledby="account-email-heading">
+      <h2 id="account-email-heading" class="account__card-title">Email</h2>
+      <p class="account__card-subtitle">
+        Your email only signs you in and receives account notices — it never unlocks
+        your data. Changing it is safe and never affects your encrypted chats.
+      </p>
+
+      <div class="account__fields">
+        <div class="account__field">
+          <span class="account__label">Current email</span>
+          <cog-text-field
+            ariaLabel="Current email"
+            [value]="email()"
+            [readonly]="true"
+            [disabled]="true"
+          />
+        </div>
+        <div class="account__field">
+          <span class="account__label">New email</span>
+          <cog-text-field
+            ariaLabel="New email"
+            type="email"
+            placeholder="you@example.com"
+            [value]="newEmail()"
+            (valueChange)="newEmail.set($event)"
+          />
+        </div>
+      </div>
+
+      @if (emailChangeError()) {
+        <p class="account__error">{{ emailChangeError() }}</p>
+      }
+
+      <div class="account__actions">
+        <cog-button
+          appearance="primary"
+          [disabled]="!canRequestEmailChange()"
+          (click)="requestEmailChange()"
+        >
+          {{ requestingEmailChange() ? 'Sending…' : 'Send confirmation link' }}
         </cog-button>
       </div>
     </section>
@@ -582,6 +614,18 @@ export class AccountComponent {
       this.newPassword().length >= 12,
   );
 
+  protected readonly newEmail = signal('');
+  protected readonly requestingEmailChange = signal(false);
+  protected readonly emailChangeError = signal<string | null>(null);
+  protected readonly canRequestEmailChange = computed(() => {
+    const next = this.newEmail().trim();
+    return (
+      !this.requestingEmailChange() &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(next) &&
+      next.toLowerCase() !== this.email().trim().toLowerCase()
+    );
+  });
+
   protected readonly confirmingDeleteChats = signal(false);
   protected readonly deletingChats = signal(false);
 
@@ -653,6 +697,32 @@ export class AccountComponent {
         this.changingPassword.set(false);
         this.passwordError.set(
           'Could not change your password. Check your current password and try again.',
+        );
+      },
+    });
+  }
+
+  requestEmailChange(): void {
+    if (!this.canRequestEmailChange()) {
+      return;
+    }
+
+    const target = this.newEmail().trim();
+    this.requestingEmailChange.set(true);
+    this.emailChangeError.set(null);
+    this._auth.requestEmailChange(target).subscribe({
+      next: () => {
+        this.requestingEmailChange.set(false);
+        this.newEmail.set('');
+        this._toast.notify({
+          title: 'Confirmation link sent',
+          msg: `Open the link we emailed to ${target} to finish changing your email.`,
+        });
+      },
+      error: () => {
+        this.requestingEmailChange.set(false);
+        this.emailChangeError.set(
+          'Could not start the email change. Check the address and try again.',
         );
       },
     });

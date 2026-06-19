@@ -327,6 +327,41 @@ export class AuthService implements OnDestroy {
     );
   }
 
+  // Request an email change. Under account_key_v2 the email is
+  // authentication-only metadata (never an input to the data key), so changing
+  // it is crypto-safe and never touches encrypted data. PocketBase sends a
+  // confirmation link to the NEW address; the change only takes effect once
+  // confirmEmailChange is called with that token + the current password.
+  requestEmailChange(newEmail: string): Observable<boolean> {
+    return from(
+      this._pb.collection(this._authCollection).requestEmailChange(newEmail),
+    ).pipe(
+      catchError((error) => {
+        const message =
+          (error as { response?: { message?: string } })?.response?.message ??
+          'Unable to start the email change';
+        this._errorService.alert(message);
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  confirmEmailChange(token: string, password: string): Observable<boolean> {
+    return from(
+      this._pb.collection(this._authCollection).confirmEmailChange(token, password),
+    ).pipe(
+      catchError((error) => {
+        const message =
+          (error as { response?: { message?: string } })?.response?.message ??
+          'Unable to confirm the email change. The link may have expired.';
+        this._errorService.alert(message);
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
   async logout(): Promise<void> {
     await this._trustedUnlockService.clearAllUnlockKeys();
 

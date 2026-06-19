@@ -146,6 +146,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'confirm-email-change',
+        loadComponent: () =>
+          import('./pages/auth/confirm-email-change/confirm-email-change.component').then(
+            (m) => m.ConfirmEmailChangeComponent,
+          ),
+      },
+      {
         path: 'verify-email',
         loadComponent: () =>
           import('./pages/auth/verify-email/verify-email.component').then(
