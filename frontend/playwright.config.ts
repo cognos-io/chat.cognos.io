@@ -17,7 +17,7 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
   retries: process.env.CI ? 2 : 0,
-  reporter: 'line',
+  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'line',
   timeout: 30_000,
   use: {
     baseURL: BASE_URL,

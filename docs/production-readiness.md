@@ -94,19 +94,17 @@ unlock factor today.
 - **Browser e2e coverage** — added gated root-suite specs for the email-change,
   password-reset, and confirm-email-change surfaces. Made the `frontend/e2e`
   suite (35 app-level specs) **self-contained** so it can run standalone/CI.
-  Triaged a fresh-stack run of both suites:
-    - Root `e2e/`: fixed the stale `user-key-pair` fixture (v1 → `account_key_v2`)
-    and the mock AI base URL (bifrost double-`/v1`). Remaining root failures are
-    the completion-executing specs — **bifrost now requests an SSE stream but the
-    mock AI provider only returns plain JSON**, so bifrost rejects it
-    (`status_code: 0`). This likely also reds the e2e CI job today. **Open item:
-    add SSE streaming to `cmd/mock-ai-provider`.**
-    - `frontend/e2e/`: 5 stale specs from intended product changes that this
-    ungated suite drifted past — vault specs use removed `#confirmPassword` /
-    `#account-password` fields (single-password signup + v2 unlock), billing
-    specs expect profile → `/account/billing` (now `/account`) and the
-    feature-flagged-off "Security & keys" section / old "coming soon" copy. Needs
-    a helper-rewrite pass to v2 before gating. **Open item.**
+  Both suites now run fully green on a fresh stack and gate in CI:
+    - Root `e2e/` (**101/101**): fixed the stale `user-key-pair` fixture
+    (v1 → `account_key_v2`), the mock AI base URL (bifrost double-`/v1`), and —
+    the real blocker — **taught `cmd/mock-ai-provider` to stream SSE** (bifrost
+    routes completions as a stream; the mock only returned plain JSON). Updated
+    the completion specs to parse the backend's own SSE response and refreshed
+    the lock/unlock journey for v2.
+    - `frontend/e2e/` (**67/67**): rewrote the drifted specs — v2 vault helpers
+    (no `#confirmPassword` / `#account-password`), profile → `/account`,
+    always-on nav links, real Account page; de-flaked the export test. **Now
+    gated** via a `frontend-e2e` CI job.
 
 ## Notes for reviewers
 
