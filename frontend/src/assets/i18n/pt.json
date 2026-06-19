@@ -1,0 +1,81 @@
+{
+  "language": {
+    "label": "Idioma"
+  },
+  "common": {
+    "email": "E-mail",
+    "password": "Palavra-passe",
+    "emailPlaceholder": "voce@exemplo.com",
+    "passwordPlaceholder": "••••••••",
+    "privacyTerms": "Política de Privacidade e Termos"
+  },
+  "auth": {
+    "login": {
+      "title": "Comece com uma IA que prioriza a privacidade",
+      "lead": "Converse com os modelos mais recentes sem abrir mão do controlo dos seus dados. Novos dispositivos também podem pedir a sua Chave de Conta.",
+      "signingIn": "A iniciar sessão…",
+      "submit": "Iniciar sessão",
+      "error": "Não foi possível iniciar a sua sessão. Verifique o seu e-mail e palavra-passe e tente novamente.",
+      "forgot": "Esqueceu-se da palavra-passe?",
+      "needAccount": "Precisa de uma conta?",
+      "register": "Registar",
+      "legalPrefix": "Ao registar-se, aceita a nossa"
+    },
+    "register": {
+      "beta": "Beta privada",
+      "title": "Crie a sua conta Cognos",
+      "lead": "Comece com o seu e-mail e palavra-passe. Logo após o registo, a Cognos irá gerar uma Chave de Conta para o desbloqueio encriptado em novos dispositivos.",
+      "passwordPlaceholder": "Pelo menos 12 caracteres",
+      "creating": "A criar conta…",
+      "submit": "Criar conta",
+      "legalPrefix": "Ao criar uma conta, aceita a nossa",
+      "haveAccount": "Já tem uma conta?",
+      "login": "Iniciar sessão"
+    },
+    "forgot": {
+      "title": "Repor a sua palavra-passe",
+      "sent": "Se existir uma conta para {{ email }}, enviámos um link para repor a palavra-passe. Verifique a sua caixa de entrada e siga o link para escolher uma nova palavra-passe.",
+      "sentNote": "A sua palavra-passe serve apenas para iniciar sessão — nunca desbloqueia as suas conversas encriptadas, por isso repô-la é seguro e mantém o seu histórico intacto.",
+      "lead": "Introduza o seu e-mail e enviar-lhe-emos um link para definir uma nova palavra-passe. A sua palavra-passe é usada apenas para iniciar sessão, por isso repô-la nunca afeta as suas conversas encriptadas.",
+      "sending": "A enviar…",
+      "submit": "Enviar link de reposição",
+      "backToLogin": "Voltar ao início de sessão"
+    },
+    "reset": {
+      "title": "Escolha uma nova palavra-passe",
+      "missingToken": "Falta o token a este link. Solicite um novo link e tente novamente.",
+      "requestNewLink": "Solicitar um novo link",
+      "success": "A sua palavra-passe foi reposta. As suas conversas encriptadas permanecem intactas — a sua palavra-passe serve apenas para iniciar sessão.",
+      "continueToLogin": "Continuar para o início de sessão",
+      "error": "Esse link de reposição não funcionou — pode ter expirado ou já ter sido utilizado.",
+      "lead": "Escolha uma nova palavra-passe com pelo menos 12 caracteres. A sua palavra-passe é usada apenas para iniciar sessão, por isso isto não afetará as suas conversas encriptadas.",
+      "newPassword": "Nova palavra-passe",
+      "confirmNewPassword": "Confirmar nova palavra-passe",
+      "confirmPlaceholder": "Volte a introduzir a sua palavra-passe",
+      "mismatch": "As palavras-passe não coincidem.",
+      "resetting": "A repor…",
+      "submit": "Repor palavra-passe",
+      "backToLogin": "Voltar ao início de sessão"
+    },
+    "verify": {
+      "title": "Verifique o seu e-mail",
+      "verifying": "A verificar o seu e-mail…",
+      "success": "O seu e-mail está verificado. Obrigado por confirmar.",
+      "continueToLogin": "Continuar para o início de sessão",
+      "error": "Esse link de verificação não funcionou — pode ter expirado ou já ter sido utilizado.",
+      "missingToken": "Falta o token a este link de verificação. Volte a clicar no link do seu e-mail.",
+      "goToLogin": "Ir para o início de sessão"
+    },
+    "confirmEmail": {
+      "title": "Confirme o seu novo e-mail",
+      "lead": "Introduza a sua palavra-passe para concluir a alteração do e-mail. A sua palavra-passe serve apenas para iniciar sessão — isto nunca afeta as suas conversas encriptadas.",
+      "submit": "Confirmar alteração de e-mail",
+      "submitting": "A confirmar o seu novo e-mail…",
+      "success": "O seu e-mail foi alterado. Inicie sessão novamente com o seu novo e-mail.",
+      "continueToLogin": "Continuar para o início de sessão",
+      "error": "Esse link não funcionou — pode ter expirado, já ter sido utilizado, ou a palavra-passe estava incorreta.",
+      "missingToken": "Falta o token a este link de confirmação. Volte a clicar no link do seu e-mail.",
+      "goToLogin": "Ir para o início de sessão"
+    }
+  }
+}

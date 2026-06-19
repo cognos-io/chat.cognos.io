@@ -1,0 +1,81 @@
+{
+  "language": {
+    "label": "Language"
+  },
+  "common": {
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "you@example.com",
+    "passwordPlaceholder": "••••••••",
+    "privacyTerms": "Privacy Policy and Terms"
+  },
+  "auth": {
+    "login": {
+      "title": "Get started with privacy-first AI",
+      "lead": "Chat with the latest models without giving up control of your data. New devices may also ask for your Account Key.",
+      "signingIn": "Signing in…",
+      "submit": "Log in",
+      "error": "We couldn't sign you in. Check your email and password and try again.",
+      "forgot": "Forgot your password?",
+      "needAccount": "Need an account?",
+      "register": "Register",
+      "legalPrefix": "By signing up you agree to our"
+    },
+    "register": {
+      "beta": "Private beta",
+      "title": "Create your Cognos account",
+      "lead": "Start with your email and password. Right after signup, Cognos will generate an Account Key for encrypted backup unlock on new devices.",
+      "passwordPlaceholder": "At least 12 characters",
+      "creating": "Creating account…",
+      "submit": "Create account",
+      "legalPrefix": "By creating an account you agree to our",
+      "haveAccount": "Already have an account?",
+      "login": "Log in"
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "sent": "If an account exists for {{ email }}, we've sent a password reset link. Check your inbox and follow the link to choose a new password.",
+      "sentNote": "Your password only signs you in — it never unlocks your encrypted chats, so resetting it is safe and leaves your history untouched.",
+      "lead": "Enter your email and we'll send you a link to set a new password. Your password is only used to sign in, so resetting it never affects your encrypted chats.",
+      "sending": "Sending…",
+      "submit": "Send reset link",
+      "backToLogin": "Back to log in"
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "missingToken": "This reset link is missing its token. Request a new link and try again.",
+      "requestNewLink": "Request a new link",
+      "success": "Your password has been reset. Your encrypted chats are untouched — your password only signs you in.",
+      "continueToLogin": "Continue to log in",
+      "error": "That reset link didn't work — it may have expired or already been used.",
+      "lead": "Pick a new password of at least 12 characters. Your password is only used to sign in, so this won't affect your encrypted chats.",
+      "newPassword": "New password",
+      "confirmNewPassword": "Confirm new password",
+      "confirmPlaceholder": "Re-enter your password",
+      "mismatch": "Passwords don't match.",
+      "resetting": "Resetting…",
+      "submit": "Reset password",
+      "backToLogin": "Back to log in"
+    },
+    "verify": {
+      "title": "Verify your email",
+      "verifying": "Verifying your email…",
+      "success": "Your email is verified. Thanks for confirming.",
+      "continueToLogin": "Continue to log in",
+      "error": "That verification link didn't work — it may have expired or already been used.",
+      "missingToken": "This verification link is missing its token. Try clicking the link from your email again.",
+      "goToLogin": "Go to log in"
+    },
+    "confirmEmail": {
+      "title": "Confirm your new email",
+      "lead": "Enter your password to finish changing your email. Your password only signs you in — this never affects your encrypted chats.",
+      "submit": "Confirm email change",
+      "submitting": "Confirming your new email…",
+      "success": "Your email has been changed. Please sign in again with your new email.",
+      "continueToLogin": "Continue to log in",
+      "error": "That link didn't work — it may have expired or already been used, or the password was incorrect.",
+      "missingToken": "This confirmation link is missing its token. Try clicking the link from your email again.",
+      "goToLogin": "Go to log in"
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "language": {
+    "label": "Langue"
+  },
+  "common": {
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "emailPlaceholder": "vous@exemple.com",
+    "passwordPlaceholder": "••••••••",
+    "privacyTerms": "Politique de confidentialité et conditions"
+  },
+  "auth": {
+    "login": {
+      "title": "Commencez avec une IA respectueuse de la vie privée",
+      "lead": "Discutez avec les derniers modèles sans renoncer au contrôle de vos données. Les nouveaux appareils peuvent également demander votre clé de compte.",
+      "signingIn": "Connexion…",
+      "submit": "Se connecter",
+      "error": "Connexion impossible. Vérifiez votre e-mail et votre mot de passe, puis réessayez.",
+      "forgot": "Mot de passe oublié ?",
+      "needAccount": "Besoin d'un compte ?",
+      "register": "S'inscrire",
+      "legalPrefix": "En vous inscrivant, vous acceptez notre"
+    },
+    "register": {
+      "beta": "Bêta privée",
+      "title": "Créez votre compte Cognos",
+      "lead": "Commencez avec votre e-mail et votre mot de passe. Juste après l'inscription, Cognos génère une clé de compte pour le déverrouillage chiffré sur les nouveaux appareils.",
+      "passwordPlaceholder": "Au moins 12 caractères",
+      "creating": "Création du compte…",
+      "submit": "Créer un compte",
+      "legalPrefix": "En créant un compte, vous acceptez notre",
+      "haveAccount": "Vous avez déjà un compte ?",
+      "login": "Se connecter"
+    },
+    "forgot": {
+      "title": "Réinitialiser votre mot de passe",
+      "sent": "Si un compte existe pour {{ email }}, nous avons envoyé un lien de réinitialisation. Consultez votre boîte de réception et suivez le lien pour choisir un nouveau mot de passe.",
+      "sentNote": "Votre mot de passe sert uniquement à vous connecter — il ne déverrouille jamais vos conversations chiffrées. Le réinitialiser est donc sans risque et laisse votre historique intact.",
+      "lead": "Saisissez votre e-mail et nous vous enverrons un lien pour définir un nouveau mot de passe. Votre mot de passe sert uniquement à la connexion ; le réinitialiser n'affecte jamais vos conversations chiffrées.",
+      "sending": "Envoi…",
+      "submit": "Envoyer le lien",
+      "backToLogin": "Retour à la connexion"
+    },
+    "reset": {
+      "title": "Choisir un nouveau mot de passe",
+      "missingToken": "Le jeton est absent de ce lien. Demandez un nouveau lien et réessayez.",
+      "requestNewLink": "Demander un nouveau lien",
+      "success": "Votre mot de passe a été réinitialisé. Vos conversations chiffrées sont intactes — votre mot de passe sert uniquement à vous connecter.",
+      "continueToLogin": "Continuer vers la connexion",
+      "error": "Ce lien de réinitialisation n'a pas fonctionné — il a peut-être expiré ou déjà été utilisé.",
+      "lead": "Choisissez un nouveau mot de passe d'au moins 12 caractères. Votre mot de passe sert uniquement à la connexion, cela n'affectera donc pas vos conversations chiffrées.",
+      "newPassword": "Nouveau mot de passe",
+      "confirmNewPassword": "Confirmer le nouveau mot de passe",
+      "confirmPlaceholder": "Saisissez à nouveau votre mot de passe",
+      "mismatch": "Les mots de passe ne correspondent pas.",
+      "resetting": "Réinitialisation…",
+      "submit": "Réinitialiser le mot de passe",
+      "backToLogin": "Retour à la connexion"
+    },
+    "verify": {
+      "title": "Vérifier votre e-mail",
+      "verifying": "Vérification de votre e-mail…",
+      "success": "Votre e-mail est vérifié. Merci de votre confirmation.",
+      "continueToLogin": "Continuer vers la connexion",
+      "error": "Ce lien de vérification n'a pas fonctionné — il a peut-être expiré ou déjà été utilisé.",
+      "missingToken": "Le jeton est absent de ce lien de vérification. Cliquez à nouveau sur le lien dans votre e-mail.",
+      "goToLogin": "Aller à la connexion"
+    },
+    "confirmEmail": {
+      "title": "Confirmer votre nouvel e-mail",
+      "lead": "Saisissez votre mot de passe pour terminer le changement d'e-mail. Votre mot de passe sert uniquement à vous connecter — cela n'affecte jamais vos conversations chiffrées.",
+      "submit": "Confirmer le changement d'e-mail",
+      "submitting": "Confirmation de votre nouvel e-mail…",
+      "success": "Votre e-mail a été modifié. Veuillez vous reconnecter avec votre nouvel e-mail.",
+      "continueToLogin": "Continuer vers la connexion",
+      "error": "Ce lien n'a pas fonctionné — il a peut-être expiré, déjà été utilisé, ou le mot de passe était incorrect.",
+      "missingToken": "Le jeton est absent de ce lien de confirmation. Cliquez à nouveau sur le lien dans votre e-mail.",
+      "goToLogin": "Aller à la connexion"
+    }
+  }
+}

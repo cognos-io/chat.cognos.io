@@ -1,0 +1,81 @@
+{
+  "language": {
+    "label": "Sprache"
+  },
+  "common": {
+    "email": "E-Mail",
+    "password": "Passwort",
+    "emailPlaceholder": "du@beispiel.com",
+    "passwordPlaceholder": "••••••••",
+    "privacyTerms": "Datenschutz und AGB"
+  },
+  "auth": {
+    "login": {
+      "title": "Starten Sie mit datenschutzfreundlicher KI",
+      "lead": "Chatten Sie mit den neuesten Modellen, ohne die Kontrolle über Ihre Daten aufzugeben. Auf neuen Geräten kann zusätzlich Ihr Account-Schlüssel abgefragt werden.",
+      "signingIn": "Anmeldung läuft…",
+      "submit": "Anmelden",
+      "error": "Anmeldung fehlgeschlagen. Bitte prüfen Sie E-Mail und Passwort und versuchen Sie es erneut.",
+      "forgot": "Passwort vergessen?",
+      "needAccount": "Noch kein Konto?",
+      "register": "Registrieren",
+      "legalPrefix": "Mit der Registrierung akzeptieren Sie unsere"
+    },
+    "register": {
+      "beta": "Private Beta",
+      "title": "Erstellen Sie Ihr Cognos-Konto",
+      "lead": "Beginnen Sie mit E-Mail und Passwort. Direkt nach der Registrierung erstellt Cognos einen Account-Schlüssel für die verschlüsselte Entsperrung auf neuen Geräten.",
+      "passwordPlaceholder": "Mindestens 12 Zeichen",
+      "creating": "Konto wird erstellt…",
+      "submit": "Konto erstellen",
+      "legalPrefix": "Mit der Erstellung eines Kontos akzeptieren Sie unsere",
+      "haveAccount": "Sie haben bereits ein Konto?",
+      "login": "Anmelden"
+    },
+    "forgot": {
+      "title": "Passwort zurücksetzen",
+      "sent": "Falls ein Konto für {{ email }} existiert, haben wir einen Link zum Zurücksetzen des Passworts gesendet. Prüfen Sie Ihren Posteingang und folgen Sie dem Link, um ein neues Passwort zu wählen.",
+      "sentNote": "Ihr Passwort dient nur zur Anmeldung — es entschlüsselt niemals Ihre verschlüsselten Chats. Das Zurücksetzen ist daher sicher und lässt Ihren Verlauf unberührt.",
+      "lead": "Geben Sie Ihre E-Mail ein, und wir senden Ihnen einen Link, um ein neues Passwort festzulegen. Ihr Passwort dient nur zur Anmeldung, das Zurücksetzen betrifft Ihre verschlüsselten Chats also nie.",
+      "sending": "Wird gesendet…",
+      "submit": "Link zum Zurücksetzen senden",
+      "backToLogin": "Zurück zur Anmeldung"
+    },
+    "reset": {
+      "title": "Neues Passwort wählen",
+      "missingToken": "Diesem Link fehlt das Token. Fordern Sie einen neuen Link an und versuchen Sie es erneut.",
+      "requestNewLink": "Neuen Link anfordern",
+      "success": "Ihr Passwort wurde zurückgesetzt. Ihre verschlüsselten Chats bleiben unberührt — Ihr Passwort dient nur zur Anmeldung.",
+      "continueToLogin": "Weiter zur Anmeldung",
+      "error": "Dieser Link funktioniert nicht — er ist möglicherweise abgelaufen oder wurde bereits verwendet.",
+      "lead": "Wählen Sie ein neues Passwort mit mindestens 12 Zeichen. Ihr Passwort dient nur zur Anmeldung, dies betrifft Ihre verschlüsselten Chats also nicht.",
+      "newPassword": "Neues Passwort",
+      "confirmNewPassword": "Neues Passwort bestätigen",
+      "confirmPlaceholder": "Passwort erneut eingeben",
+      "mismatch": "Die Passwörter stimmen nicht überein.",
+      "resetting": "Wird zurückgesetzt…",
+      "submit": "Passwort zurücksetzen",
+      "backToLogin": "Zurück zur Anmeldung"
+    },
+    "verify": {
+      "title": "E-Mail bestätigen",
+      "verifying": "Ihre E-Mail wird bestätigt…",
+      "success": "Ihre E-Mail ist bestätigt. Danke für die Bestätigung.",
+      "continueToLogin": "Weiter zur Anmeldung",
+      "error": "Dieser Bestätigungslink funktioniert nicht — er ist möglicherweise abgelaufen oder wurde bereits verwendet.",
+      "missingToken": "Diesem Bestätigungslink fehlt das Token. Klicken Sie den Link in Ihrer E-Mail erneut an.",
+      "goToLogin": "Zur Anmeldung"
+    },
+    "confirmEmail": {
+      "title": "Neue E-Mail bestätigen",
+      "lead": "Geben Sie Ihr Passwort ein, um die Änderung Ihrer E-Mail abzuschließen. Ihr Passwort dient nur zur Anmeldung — dies betrifft Ihre verschlüsselten Chats nie.",
+      "submit": "E-Mail-Änderung bestätigen",
+      "submitting": "Ihre neue E-Mail wird bestätigt…",
+      "success": "Ihre E-Mail wurde geändert. Bitte melden Sie sich erneut mit Ihrer neuen E-Mail an.",
+      "continueToLogin": "Weiter zur Anmeldung",
+      "error": "Dieser Link funktioniert nicht — er ist möglicherweise abgelaufen, wurde bereits verwendet oder das Passwort war falsch.",
+      "missingToken": "Diesem Bestätigungslink fehlt das Token. Klicken Sie den Link in Ihrer E-Mail erneut an.",
+      "goToLogin": "Zur Anmeldung"
+    }
+  }
+}

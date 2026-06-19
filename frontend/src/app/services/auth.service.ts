@@ -292,6 +292,31 @@ export class AuthService implements OnDestroy {
     );
   }
 
+  // Persist the user's UI language onto their own record. The language is not
+  // sensitive (unlike chat content) so it's stored in plaintext: it must apply
+  // before the vault is unlocked, follow the user across devices, and be
+  // available server-side (localised emails, Paddle checkout locale). The SDK
+  // saves the updated record into the authStore, which re-emits `user`.
+  setPreferredLanguage(language: string): Observable<AuthUser> {
+    const userId = this.user()?.['id'] as string | undefined;
+    if (!userId) {
+      return throwError(() => new Error('Not authenticated'));
+    }
+
+    return from(
+      this._pb
+        .collection(this._authCollection)
+        .update(userId, { preferred_language: language }),
+    ).pipe(
+      map((record) => record as AuthUser),
+      catchError((error) => {
+        // Non-fatal: the language still applies locally this session.
+        console.error('Unable to save language preference', error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
   // Change the account password. Under account_key_v2 the password is
   // authentication-only (not part of the data key), so this is a pure auth
   // operation — no key material is re-wrapped. PocketBase verifies oldPassword

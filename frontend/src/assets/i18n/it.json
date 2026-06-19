@@ -1,0 +1,81 @@
+{
+  "language": {
+    "label": "Lingua"
+  },
+  "common": {
+    "email": "E-mail",
+    "password": "Password",
+    "emailPlaceholder": "tu@esempio.com",
+    "passwordPlaceholder": "••••••••",
+    "privacyTerms": "Informativa sulla privacy e termini"
+  },
+  "auth": {
+    "login": {
+      "title": "Inizia con un'IA che mette la privacy al primo posto",
+      "lead": "Chatta con i modelli più recenti senza rinunciare al controllo dei tuoi dati. I nuovi dispositivi potrebbero anche richiedere la tua Chiave dell'account.",
+      "signingIn": "Accesso in corso…",
+      "submit": "Accedi",
+      "error": "Impossibile accedere. Controlla la tua e-mail e la password e riprova.",
+      "forgot": "Hai dimenticato la password?",
+      "needAccount": "Ti serve un account?",
+      "register": "Registrati",
+      "legalPrefix": "Registrandoti accetti la nostra"
+    },
+    "register": {
+      "beta": "Beta privata",
+      "title": "Crea il tuo account Cognos",
+      "lead": "Inizia con la tua e-mail e password. Subito dopo la registrazione, Cognos genererà una Chiave dell'account per lo sblocco crittografato sui nuovi dispositivi.",
+      "passwordPlaceholder": "Almeno 12 caratteri",
+      "creating": "Creazione dell'account…",
+      "submit": "Crea account",
+      "legalPrefix": "Creando un account accetti la nostra",
+      "haveAccount": "Hai già un account?",
+      "login": "Accedi"
+    },
+    "forgot": {
+      "title": "Reimposta la password",
+      "sent": "Se esiste un account per {{ email }}, abbiamo inviato un link per reimpostare la password. Controlla la tua casella di posta e segui il link per scegliere una nuova password.",
+      "sentNote": "La tua password serve solo per accedere — non sblocca mai le tue chat crittografate, quindi reimpostarla è sicuro e lascia intatta la tua cronologia.",
+      "lead": "Inserisci la tua e-mail e ti invieremo un link per impostare una nuova password. La tua password è usata solo per accedere, quindi reimpostarla non influisce mai sulle tue chat crittografate.",
+      "sending": "Invio in corso…",
+      "submit": "Invia link di reimpostazione",
+      "backToLogin": "Torna all'accesso"
+    },
+    "reset": {
+      "title": "Scegli una nuova password",
+      "missingToken": "A questo link manca il token. Richiedi un nuovo link e riprova.",
+      "requestNewLink": "Richiedi un nuovo link",
+      "success": "La tua password è stata reimpostata. Le tue chat crittografate sono intatte — la tua password serve solo per accedere.",
+      "continueToLogin": "Continua all'accesso",
+      "error": "Questo link di reimpostazione non ha funzionato — potrebbe essere scaduto o già stato usato.",
+      "lead": "Scegli una nuova password di almeno 12 caratteri. La tua password è usata solo per accedere, quindi questo non influirà sulle tue chat crittografate.",
+      "newPassword": "Nuova password",
+      "confirmNewPassword": "Conferma nuova password",
+      "confirmPlaceholder": "Reinserisci la tua password",
+      "mismatch": "Le password non corrispondono.",
+      "resetting": "Reimpostazione…",
+      "submit": "Reimposta password",
+      "backToLogin": "Torna all'accesso"
+    },
+    "verify": {
+      "title": "Verifica la tua e-mail",
+      "verifying": "Verifica della tua e-mail…",
+      "success": "La tua e-mail è verificata. Grazie per la conferma.",
+      "continueToLogin": "Continua all'accesso",
+      "error": "Questo link di verifica non ha funzionato — potrebbe essere scaduto o già stato usato.",
+      "missingToken": "A questo link di verifica manca il token. Fai di nuovo clic sul link nella tua e-mail.",
+      "goToLogin": "Vai all'accesso"
+    },
+    "confirmEmail": {
+      "title": "Conferma la tua nuova e-mail",
+      "lead": "Inserisci la tua password per completare il cambio di e-mail. La tua password serve solo per accedere — questo non influisce mai sulle tue chat crittografate.",
+      "submit": "Conferma cambio e-mail",
+      "submitting": "Conferma della tua nuova e-mail…",
+      "success": "La tua e-mail è stata modificata. Accedi di nuovo con la tua nuova e-mail.",
+      "continueToLogin": "Continua all'accesso",
+      "error": "Questo link non ha funzionato — potrebbe essere scaduto, già stato usato, o la password era errata.",
+      "missingToken": "A questo link di conferma manca il token. Fai di nuovo clic sul link nella tua e-mail.",
+      "goToLogin": "Vai all'accesso"
+    }
+  }
+}

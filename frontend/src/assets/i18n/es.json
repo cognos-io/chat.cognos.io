@@ -1,0 +1,81 @@
+{
+  "language": {
+    "label": "Idioma"
+  },
+  "common": {
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "emailPlaceholder": "tu@ejemplo.com",
+    "passwordPlaceholder": "••••••••",
+    "privacyTerms": "Política de privacidad y términos"
+  },
+  "auth": {
+    "login": {
+      "title": "Empieza con una IA que prioriza la privacidad",
+      "lead": "Chatea con los modelos más recientes sin renunciar al control de tus datos. Los dispositivos nuevos también pueden pedir tu Clave de cuenta.",
+      "signingIn": "Iniciando sesión…",
+      "submit": "Iniciar sesión",
+      "error": "No pudimos iniciar tu sesión. Comprueba tu correo y contraseña e inténtalo de nuevo.",
+      "forgot": "¿Olvidaste tu contraseña?",
+      "needAccount": "¿Necesitas una cuenta?",
+      "register": "Registrarse",
+      "legalPrefix": "Al registrarte aceptas nuestra"
+    },
+    "register": {
+      "beta": "Beta privada",
+      "title": "Crea tu cuenta de Cognos",
+      "lead": "Empieza con tu correo y contraseña. Justo después del registro, Cognos generará una Clave de cuenta para el desbloqueo cifrado en dispositivos nuevos.",
+      "passwordPlaceholder": "Al menos 12 caracteres",
+      "creating": "Creando cuenta…",
+      "submit": "Crear cuenta",
+      "legalPrefix": "Al crear una cuenta aceptas nuestra",
+      "haveAccount": "¿Ya tienes una cuenta?",
+      "login": "Iniciar sesión"
+    },
+    "forgot": {
+      "title": "Restablecer tu contraseña",
+      "sent": "Si existe una cuenta para {{ email }}, hemos enviado un enlace para restablecer la contraseña. Revisa tu bandeja de entrada y sigue el enlace para elegir una nueva contraseña.",
+      "sentNote": "Tu contraseña solo sirve para iniciar sesión — nunca desbloquea tus chats cifrados, así que restablecerla es seguro y deja tu historial intacto.",
+      "lead": "Introduce tu correo y te enviaremos un enlace para establecer una nueva contraseña. Tu contraseña solo se usa para iniciar sesión, así que restablecerla nunca afecta a tus chats cifrados.",
+      "sending": "Enviando…",
+      "submit": "Enviar enlace de restablecimiento",
+      "backToLogin": "Volver a iniciar sesión"
+    },
+    "reset": {
+      "title": "Elige una nueva contraseña",
+      "missingToken": "A este enlace le falta el token. Solicita un nuevo enlace e inténtalo de nuevo.",
+      "requestNewLink": "Solicitar un nuevo enlace",
+      "success": "Tu contraseña se ha restablecido. Tus chats cifrados permanecen intactos — tu contraseña solo sirve para iniciar sesión.",
+      "continueToLogin": "Continuar al inicio de sesión",
+      "error": "Ese enlace de restablecimiento no funcionó — puede haber caducado o ya haberse usado.",
+      "lead": "Elige una nueva contraseña de al menos 12 caracteres. Tu contraseña solo se usa para iniciar sesión, así que esto no afectará a tus chats cifrados.",
+      "newPassword": "Nueva contraseña",
+      "confirmNewPassword": "Confirmar nueva contraseña",
+      "confirmPlaceholder": "Vuelve a introducir tu contraseña",
+      "mismatch": "Las contraseñas no coinciden.",
+      "resetting": "Restableciendo…",
+      "submit": "Restablecer contraseña",
+      "backToLogin": "Volver a iniciar sesión"
+    },
+    "verify": {
+      "title": "Verifica tu correo",
+      "verifying": "Verificando tu correo…",
+      "success": "Tu correo está verificado. Gracias por confirmarlo.",
+      "continueToLogin": "Continuar al inicio de sesión",
+      "error": "Ese enlace de verificación no funcionó — puede haber caducado o ya haberse usado.",
+      "missingToken": "A este enlace de verificación le falta el token. Vuelve a hacer clic en el enlace de tu correo.",
+      "goToLogin": "Ir a iniciar sesión"
+    },
+    "confirmEmail": {
+      "title": "Confirma tu nuevo correo",
+      "lead": "Introduce tu contraseña para completar el cambio de correo. Tu contraseña solo sirve para iniciar sesión — esto nunca afecta a tus chats cifrados.",
+      "submit": "Confirmar cambio de correo",
+      "submitting": "Confirmando tu nuevo correo…",
+      "success": "Tu correo se ha cambiado. Inicia sesión de nuevo con tu nuevo correo.",
+      "continueToLogin": "Continuar al inicio de sesión",
+      "error": "Ese enlace no funcionó — puede haber caducado, ya haberse usado, o la contraseña era incorrecta.",
+      "missingToken": "A este enlace de confirmación le falta el token. Vuelve a hacer clic en el enlace de tu correo.",
+      "goToLogin": "Ir a iniciar sesión"
+    }
+  }
+}

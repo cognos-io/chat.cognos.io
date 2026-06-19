@@ -11,6 +11,7 @@
     "@angular/router": "^21.2.16",
     "@cognos/ui": "workspace:*",
     "@cognos/ui-angular": "workspace:*",
+    "@jsverse/transloco": "^8.4.0",
     "@paddle/paddle-js": "^1.6.4",
     "argon2id": "^1.0.1",
     "blakejs": "^1.2.1",
