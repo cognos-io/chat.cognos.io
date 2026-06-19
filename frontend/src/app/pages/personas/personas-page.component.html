@@ -178,6 +178,21 @@
           <cog-icon name="pencil" [size]="15" />
         </span>
         <span
+          class="persona-card__action persona-card__default"
+          [class.is-default]="isDefault(persona)"
+          role="button"
+          tabindex="0"
+          [attr.aria-label]="
+            isDefault(persona) ? 'Default persona' : 'Set as default persona'
+          "
+          [attr.aria-pressed]="isDefault(persona)"
+          [title]="isDefault(persona) ? 'Default for new chats' : 'Set as default'"
+          (click)="setDefault(persona, $event)"
+          (keydown.enter)="setDefault(persona, $event)"
+        >
+          <cog-icon name="sparkles" [size]="15" />
+        </span>
+        <span
           class="persona-card__action persona-card__pin"
           [class.is-pinned]="isPinned(persona)"
           role="button"

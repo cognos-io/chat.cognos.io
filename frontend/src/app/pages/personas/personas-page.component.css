@@ -300,11 +300,13 @@
 
 .persona-card:hover .persona-card__action,
 .persona-card__action:focus-visible,
-.persona-card__pin.is-pinned {
+.persona-card__pin.is-pinned,
+.persona-card__default.is-default {
   opacity: 1;
 }
 
-.persona-card__pin.is-pinned {
+.persona-card__pin.is-pinned,
+.persona-card__default.is-default {
   color: var(--cog-brand, #15803d);
 }
 

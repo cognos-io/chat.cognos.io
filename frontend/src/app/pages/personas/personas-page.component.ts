@@ -125,6 +125,15 @@ export class PersonasPageComponent {
     this._personas.togglePin(persona.id);
   }
 
+  // Make this persona the default for new chats (persisted to the single user
+  // preferences object). Already-default is a no-op.
+  protected setDefault(persona: Persona, event: Event): void {
+    event.stopPropagation();
+    if (!this.isDefault(persona)) {
+      this._personas.setDefault(persona.id);
+    }
+  }
+
   protected setViewMode(mode: ViewMode): void {
     this.viewMode.set(mode);
   }
