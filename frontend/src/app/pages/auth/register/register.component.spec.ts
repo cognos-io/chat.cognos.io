@@ -50,14 +50,14 @@ describe('RegisterComponent', () => {
     expect(fixture.nativeElement.querySelector('#passwordConfirm')).toBeNull();
   });
 
-  it('requires a password of at least 8 characters', () => {
+  it('requires a password of at least 12 characters', () => {
     component.registerForm.setValue({
       email: 'person@example.com',
-      password: 'short',
+      password: 'eleven-char', // 11 chars
     });
     expect(component.registerForm.invalid).toBe(true);
 
-    component.registerForm.controls.password.setValue('long-enough-password');
+    component.registerForm.controls.password.setValue('twelve-chars'); // 12 chars
     expect(component.registerForm.valid).toBe(true);
   });
 

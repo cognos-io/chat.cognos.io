@@ -196,7 +196,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
           <cog-text-field
             ariaLabel="New password"
             type="password"
-            placeholder="At least 8 characters"
+            placeholder="At least 12 characters"
             [value]="newPassword()"
             (valueChange)="newPassword.set($event)"
           />
@@ -579,7 +579,7 @@ export class AccountComponent {
     () =>
       !this.changingPassword() &&
       this.currentPassword().length > 0 &&
-      this.newPassword().length >= 8,
+      this.newPassword().length >= 12,
   );
 
   protected readonly confirmingDeleteChats = signal(false);

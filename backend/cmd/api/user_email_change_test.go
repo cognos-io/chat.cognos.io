@@ -52,7 +52,7 @@ func TestUserEmailChangeConfirmIsRejected(t *testing.T) {
 		URL:    "/api/collections/users/confirm-email-change",
 		Body: strings.NewReader(fmt.Sprintf(`{
 			"token": %q,
-			"password": "password"
+			"password": "password-1234"
 		}`, token)),
 		ExpectedStatus: http.StatusBadRequest,
 		ExpectedContent: []string{

@@ -80,7 +80,7 @@ func TestNewUsersReceiveTrialBillingStateOnCreate(t *testing.T) {
 	record.Set("username", "newtrial")
 	record.Set("verified", true)
 	record.Set("privacy_tier", "eu")
-	record.SetPassword("password")
+	record.SetPassword("password-1234")
 	if err := app.Save(record); err != nil {
 		t.Fatalf("Save(users) error = %v", err)
 	}
@@ -120,7 +120,7 @@ func TestNewUsersReceiveConfiguredTrialBillingStateOnCreate(t *testing.T) {
 	record.Set("username", "newtrial-config")
 	record.Set("verified", true)
 	record.Set("privacy_tier", "eu")
-	record.SetPassword("password")
+	record.SetPassword("password-1234")
 	if err := app.Save(record); err != nil {
 		t.Fatalf("Save(users) error = %v", err)
 	}

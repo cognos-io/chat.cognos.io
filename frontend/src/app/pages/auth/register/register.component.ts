@@ -64,7 +64,7 @@ import { AuthService } from '@services/auth.service';
               formControlName="password"
               type="password"
               autocomplete="new-password"
-              placeholder="At least 8 characters"
+              placeholder="At least 12 characters"
             />
           </label>
 
@@ -235,7 +235,7 @@ export class RegisterComponent {
 
   readonly registerForm = this._fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(8)]],
+    password: ['', [Validators.required, Validators.minLength(12)]],
   });
 
   constructor() {

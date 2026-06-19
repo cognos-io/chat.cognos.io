@@ -35,4 +35,11 @@ func TestPocketBaseAuthRateLimitsAreConfigured(t *testing.T) {
 			t.Fatalf("RateLimits.Rules missing %q, got %v", want, labels)
 		}
 	}
+
+	// Password sign-in must stay tightly capped to slow brute-force guessing.
+	for _, rule := range app.Settings().RateLimits.Rules {
+		if rule.Label == "*:authWithPassword" && rule.MaxRequests > 10 {
+			t.Fatalf("authWithPassword MaxRequests = %d, want <= 10", rule.MaxRequests)
+		}
+	}
 }

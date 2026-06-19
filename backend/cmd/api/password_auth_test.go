@@ -17,7 +17,7 @@ func TestPasswordAuthWorks(t *testing.T) {
 		URL:    "/api/collections/users/auth-with-password",
 		Body: strings.NewReader(`{
 			"identity": "test1@example.com",
-			"password": "password"
+			"password": "password-1234"
 		}`),
 		ExpectedStatus: http.StatusOK,
 		ExpectedContent: []string{
