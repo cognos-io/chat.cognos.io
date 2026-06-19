@@ -63,13 +63,17 @@ OAuth2 / **OTP (email one-time code)** — there is **no native TOTP
 
 ## Track D — Production hardening (infra)
 
-| #   | Item                                                                                  | Status | Notes                                     |
-| --- | ------------------------------------------------------------------------------------- | ------ | ----------------------------------------- |
-| D.1 | Build images off-host; digest-pin + sign                                              | ⬜     | Prod currently builds on host via compose |
-| D.2 | Pin Caddy Cloudflare DNS plugin version                                               | ⬜     |                                           |
-| D.3 | Confirm/fix Caddy `trusted_proxies` / Cloudflare origin lock                          | ⬜     |                                           |
-| D.4 | Compose hardening: `read_only`, `cap_drop`, `no-new-privileges`, healthchecks, limits | ⬜     |                                           |
-| D.5 | Raise `minPasswordLength` to ≥12; per-account lockout                                 | ⬜     | From H-? findings                         |
+| #   | Item                                                                                  | Status | Notes                                                                        |
+| --- | ------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------- |
+| D.1 | Build images off-host; digest-pin + sign                                              | ⬜     | Needs your prod/deploy context                                               |
+| D.2 | Pin Caddy Cloudflare DNS plugin version                                               | ⬜     | Needs your prod/deploy context                                               |
+| D.3 | Confirm/fix Caddy `trusted_proxies` / Cloudflare origin lock                          | ⬜     | Needs your prod Caddy config                                                 |
+| D.4 | Compose hardening: `read_only`, `cap_drop`, `no-new-privileges`, healthchecks, limits | 🚧     | Prepared in `docker-compose.yaml`; **staging smoke-test before prod deploy** |
+| D.5 | Raise `minPasswordLength` to ≥12; sign-in rate limit                                  | ✅     | Min=12 + authWithPassword 100→10/5min; per-account lockout is a follow-up    |
+
+Also done (session hardening): auth-token duration raised to **30 days** so a
+signed-in session and the split-key unlock persist without frequent Account Key
+re-entry (see `security-model.md §8`).
 
 ## Notes for reviewers
 
