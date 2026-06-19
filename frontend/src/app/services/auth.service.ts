@@ -270,6 +270,28 @@ export class AuthService implements OnDestroy {
     );
   }
 
+  // Set the data-processing (privacy) tier on the user's own record. The
+  // PocketBase SDK saves the updated record into the authStore, which fires
+  // onChange and re-emits `user` — so the model catalogue re-fetches and model
+  // eligibility updates without a manual refresh.
+  setPrivacyTier(tier: 'ch_only' | 'eu' | 'global'): Observable<AuthUser> {
+    const userId = this.user()?.['id'] as string | undefined;
+    if (!userId) {
+      return throwError(() => new Error('Not authenticated'));
+    }
+
+    return from(
+      this._pb.collection(this._authCollection).update(userId, { privacy_tier: tier }),
+    ).pipe(
+      map((record) => record as AuthUser),
+      catchError((error) => {
+        this._errorService.alert('Unable to update data processing region');
+        console.error(error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
   // Change the account password. Under account_key_v2 the password is
   // authentication-only (not part of the data key), so this is a pure auth
   // operation — no key material is re-wrapped. PocketBase verifies oldPassword

@@ -16,6 +16,7 @@ import {
   CognosToastService,
 } from '@cognos/ui-angular';
 
+import { DataProcessingComponent } from '@app/components/account/data-processing/data-processing.component';
 import {
   AvatarColor,
   AvatarIcon,
@@ -43,6 +44,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
     CognosIconComponent,
     CognosTextFieldComponent,
     CognosButtonComponent,
+    DataProcessingComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -151,6 +153,8 @@ import { deriveProfileName } from '@app/utils/profile-identity';
         </cog-button>
       </div>
     </section>
+
+    <app-data-processing />
 
     <section class="account__card" aria-labelledby="account-data-heading">
       <h2 id="account-data-heading" class="account__card-title">Your data</h2>

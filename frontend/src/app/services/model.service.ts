@@ -4,7 +4,7 @@ import { Observable, catchError, map, of, switchMap } from 'rxjs';
 
 import { signalSlice } from 'ngxtension/signal-slice';
 
-import { Model, loadingModel } from '@app/interfaces/model';
+import { Model, PrivacyTier, loadingModel } from '@app/interfaces/model';
 
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
@@ -13,11 +13,15 @@ import { UserPreferencesService } from './user-preferences.service';
 interface ModelState {
   modelList: Model[];
   selectedModelId: string;
+  // The user's current data-processing tier, echoed by /api/v1/models. Drives
+  // which models are eligible.
+  privacyTier: PrivacyTier;
 }
 
 const initialState: ModelState = {
   modelList: [],
   selectedModelId: '',
+  privacyTier: 'eu',
 };
 
 @Injectable({
@@ -42,7 +46,10 @@ export class ModelService {
             // (selectedModel selector) from the manual pick, then the user's
             // persisted default, then the first eligible model. That avoids a
             // race with the encrypted preferences, which decrypt after unlock.
-            map((response) => ({ modelList: response.models })),
+            map((response) => ({
+              modelList: response.models,
+              privacyTier: response.privacyTier,
+            })),
             catchError((error) => {
               console.error('Failed to load models', error);
               return of(initialState);
@@ -103,6 +110,7 @@ export class ModelService {
   readonly modelList = this.state.modelList;
   readonly selectModel = this.state.selectModel;
   readonly groupedModels = this.state.groupedModels;
+  readonly privacyTier = this.state.privacyTier;
 
   getModel(id?: string): Model | undefined {
     if (!id) {
