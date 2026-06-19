@@ -4,6 +4,22 @@ services:
   web:
     build: ./web
     restart: unless-stopped
+    # Hardening: drop all Linux capabilities except the one Caddy needs to bind
+    # the privileged TLS/HTTP ports, forbid privilege escalation, and run the
+    # root filesystem read-only (Caddy still writes certs to the /data volume
+    # and its admin socket to the /run/caddy tmpfs).
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    mem_limit: 256m
+    cpus: 1.0
+    tmpfs:
+      - /run/caddy
+      - /tmp
     environment:
       CADDY_ADMIN: "unix//run/caddy/admin.sock"
     env_file:
@@ -23,6 +39,24 @@ services:
     build: ./backend
     restart: unless-stopped
     user: "1001:0"
+    # Hardening: read-only root (PocketBase only writes the pb_data volume),
+    # no capabilities, no privilege escalation, bounded resources, and a
+    # health check on the app's /health route.
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    cpus: 2.0
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     env_file:
       - ./backend/.env
     environment:
@@ -38,6 +72,14 @@ services:
   backup:
     image: ghcr.io/borgmatic-collective/borgmatic
     restart: unless-stopped
+    # Hardening: no capabilities + no privilege escalation + bounded resources.
+    # Not read_only — borg needs to write its cache/locks; tighten separately.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    cpus: 1.0
     env_file:
       - ./backup/.env
     environment:
