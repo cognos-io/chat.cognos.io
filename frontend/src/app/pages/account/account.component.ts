@@ -7,6 +7,8 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { TranslocoModule } from '@jsverse/transloco';
+
 import {
   CognosAvatarComponent,
   CognosBreadcrumbsComponent,
@@ -17,6 +19,7 @@ import {
 } from '@cognos/ui-angular';
 
 import { DataProcessingComponent } from '@app/components/account/data-processing/data-processing.component';
+import { LanguageSwitcherComponent } from '@app/components/language-switcher/language-switcher.component';
 import {
   AvatarColor,
   AvatarIcon,
@@ -47,6 +50,8 @@ import { deriveProfileName } from '@app/utils/profile-identity';
     CognosTextFieldComponent,
     CognosButtonComponent,
     DataProcessingComponent,
+    LanguageSwitcherComponent,
+    TranslocoModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -60,6 +65,20 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       />
       <h1 class="account__title">Account</h1>
     </header>
+
+    <section
+      class="account__card"
+      aria-labelledby="account-language-heading"
+      *transloco="let t"
+    >
+      <h2 id="account-language-heading" class="account__card-title">
+        {{ t('account.language.title') }}
+      </h2>
+      <p class="account__card-subtitle">{{ t('account.language.subtitle') }}</p>
+      <div class="account__actions">
+        <app-language-switcher></app-language-switcher>
+      </div>
+    </section>
 
     <section class="account__card" aria-labelledby="account-profile-heading">
       <h2 id="account-profile-heading" class="account__card-title">Profile</h2>

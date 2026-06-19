@@ -2,6 +2,12 @@
   "language": {
     "label": "Idioma"
   },
+  "account": {
+    "language": {
+      "title": "Idioma",
+      "subtitle": "Elige el idioma de la interfaz de Cognos. Tu elección se guarda en tu cuenta y se aplica en todos tus dispositivos."
+    }
+  },
   "common": {
     "email": "Correo electrónico",
     "password": "Contraseña",
