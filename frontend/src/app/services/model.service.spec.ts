@@ -3,26 +3,30 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
+import { WritableSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import PocketBase from 'pocketbase';
 
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 import { loadingModel } from '@app/interfaces/model';
 
 import { AuthService } from './auth.service';
 import { ModelService } from './model.service';
+import { UserPreferencesService } from './user-preferences.service';
 
 describe('ModelService', () => {
   let service: ModelService;
   let httpController: HttpTestingController;
   let authUser$: BehaviorSubject<unknown>;
-  let updatePreferredModel: ReturnType<typeof vi.fn>;
+  let setDefaultModel: ReturnType<typeof vi.fn>;
+  let defaultModelId: WritableSignal<string>;
 
   beforeEach(() => {
     authUser$ = new BehaviorSubject<unknown>(null);
-    updatePreferredModel = vi.fn().mockReturnValue(of({}));
+    setDefaultModel = vi.fn();
+    defaultModelId = signal('');
 
     TestBed.configureTestingModule({
       providers: [
@@ -33,7 +37,14 @@ describe('ModelService', () => {
           provide: AuthService,
           useValue: {
             user$: authUser$,
-            updatePreferredModel,
+          },
+        },
+        {
+          // The default model is the single preferences source of truth now.
+          provide: UserPreferencesService,
+          useValue: {
+            defaultModelId,
+            setDefaultModel,
           },
         },
         {
@@ -151,12 +162,46 @@ describe('ModelService', () => {
     // An ineligible model must neither change the selection nor be persisted.
     service.selectModel('global-model');
     expect(service.selectedModel().id).toBe('eu-model');
-    expect(updatePreferredModel).not.toHaveBeenCalled();
+    expect(setDefaultModel).not.toHaveBeenCalled();
 
-    // An eligible explicit selection is persisted to the user record.
+    // An eligible explicit selection is persisted as the default preference.
     service.selectModel('eu-model');
     expect(service.selectedModel().id).toBe('eu-model');
-    expect(updatePreferredModel).toHaveBeenCalledExactlyOnceWith('eu-model');
+    expect(setDefaultModel).toHaveBeenCalledExactlyOnceWith('eu-model');
+  });
+
+  it('uses the persisted default model once preferences provide it', () => {
+    authUser$.next({ id: 'user-1' });
+    const request = httpController.expectOne('http://localhost:8090/api/v1/models');
+    request.flush({
+      privacy_tier: 'global',
+      models: [makeModel('model-a'), makeModel('model-b')],
+    });
+
+    // Before preferences decrypt, the first eligible model is active.
+    expect(service.selectedModel().id).toBe('model-a');
+
+    // When the decrypted default arrives it wins reactively (no race).
+    defaultModelId.set('model-b');
+    expect(service.selectedModel().id).toBe('model-b');
+  });
+
+  it('ignores a persisted default that is ineligible or unknown', () => {
+    authUser$.next({ id: 'user-1' });
+    const request = httpController.expectOne('http://localhost:8090/api/v1/models');
+    request.flush({
+      privacy_tier: 'eu',
+      models: [
+        makeModel('eu-model', { privacy_tier: 'eu', is_eligible: true }),
+        makeModel('global-model', { privacy_tier: 'global', is_eligible: false }),
+      ],
+    });
+
+    defaultModelId.set('global-model'); // ineligible
+    expect(service.selectedModel().id).toBe('eu-model');
+
+    defaultModelId.set('does-not-exist'); // unknown
+    expect(service.selectedModel().id).toBe('eu-model');
   });
 
   it('falls back to the first returned model when none are eligible', () => {
@@ -306,7 +351,7 @@ describe('ModelService', () => {
     // reducer returns {} for unknown candidates so selectedModelId stays put.
     service.selectModel('does-not-exist');
     expect(service.selectedModel().id).toBe('llama-3-3-infomaniak');
-    expect(updatePreferredModel).not.toHaveBeenCalled();
+    expect(setDefaultModel).not.toHaveBeenCalled();
   });
 
   it('resets to the initial state after logout', () => {
@@ -345,3 +390,20 @@ describe('ModelService', () => {
     expect(service.selectedModel()).toEqual(loadingModel);
   });
 });
+
+function makeModel(id: string, overrides: Record<string, unknown> = {}) {
+  return {
+    id,
+    name: id,
+    slug: id,
+    provider_id: 'infomaniak',
+    description: '',
+    privacy_tier: 'global',
+    tags: [],
+    content_types: ['text'],
+    input_context_tokens: 32000,
+    pricing: { input_usd_per_million_tokens: 0, output_usd_per_million_tokens: 0 },
+    is_eligible: true,
+    ...overrides,
+  };
+}

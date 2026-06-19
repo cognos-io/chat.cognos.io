@@ -54,6 +54,7 @@ export class UserPreferencesService {
   private readonly _pinPersona = new Subject<string>();
   private readonly _unpinPersona = new Subject<string>();
   private readonly _setDefaultPersona = new Subject<string>();
+  private readonly _setDefaultModel = new Subject<string>();
   private readonly _markRecentPersona = new Subject<string>();
 
   // Most-recently-used personas are capped so the "recently used" group and the
@@ -206,6 +207,17 @@ export class UserPreferencesService {
             }),
           ),
         ),
+      // Set default model, local then remote
+      () => this._setDefaultModel.pipe(map((modelId) => ({ defaultModelId: modelId }))),
+      (state) =>
+        this._setDefaultModel.pipe(
+          concatMap((modelId) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              defaultModelId: modelId,
+            }),
+          ),
+        ),
       // Mark persona recently used, local then remote
       (state) =>
         this._markRecentPersona.pipe(
@@ -237,6 +249,7 @@ export class UserPreferencesService {
       pinPersona: this._pinPersona,
       unpinPersona: this._unpinPersona,
       setDefaultPersona: this._setDefaultPersona,
+      setDefaultModel: this._setDefaultModel,
       markRecentPersona: this._markRecentPersona,
     },
   });
@@ -263,6 +276,9 @@ export class UserPreferencesService {
   public setDefaultPersona = (personaId: string) => {
     this.state.setDefaultPersona(personaId);
   };
+  public setDefaultModel = (modelId: string) => {
+    this.state.setDefaultModel(modelId);
+  };
   public markRecentPersona = (personaId: string) => {
     this.state.markRecentPersona(personaId);
   };
@@ -273,6 +289,7 @@ export class UserPreferencesService {
   public pinnedPersonas = this.state.pinnedPersonas;
   public recentPersonas = this.state.recentPersonas;
   public defaultPersonaId = this.state.defaultPersonaId;
+  public defaultModelId = this.state.defaultModelId;
 
   // private methods
   private addConversationIdToPinnedConversations(

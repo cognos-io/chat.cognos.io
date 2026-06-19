@@ -8,6 +8,7 @@ import { Model, loadingModel } from '@app/interfaces/model';
 
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
+import { UserPreferencesService } from './user-preferences.service';
 
 interface ModelState {
   modelList: Model[];
@@ -25,6 +26,7 @@ const initialState: ModelState = {
 export class ModelService {
   private readonly _authService = inject(AuthService);
   private readonly _api = inject(CognosApiService);
+  private readonly _preferences = inject(UserPreferencesService);
 
   private readonly state = signalSlice({
     initialState,
@@ -36,13 +38,11 @@ export class ModelService {
           }
 
           return this._api.getModels().pipe(
-            map((response) => ({
-              modelList: response.models,
-              selectedModelId: this.selectInitialModelID(
-                response.models,
-                response.preferredModelId,
-              ),
-            })),
+            // selectedModelId stays empty here; the active model is derived
+            // (selectedModel selector) from the manual pick, then the user's
+            // persisted default, then the first eligible model. That avoids a
+            // race with the encrypted preferences, which decrypt after unlock.
+            map((response) => ({ modelList: response.models })),
             catchError((error) => {
               console.error('Failed to load models', error);
               return of(initialState);
@@ -54,11 +54,20 @@ export class ModelService {
     selectors: (state) => ({
       selectedModel: () => {
         const modelList = state.modelList();
-        const selectedModel = modelList.find(
-          (model) => model.id === state.selectedModelId(),
-        );
+        const eligibleById = (id: string) =>
+          id
+            ? modelList.find((model) => model.id === id && model.isEligible)
+            : undefined;
 
-        return selectedModel ?? modelList[0] ?? loadingModel;
+        return (
+          // 1. an explicit pick this session, 2. the persisted default from the
+          // single preferences object, 3. the first eligible model.
+          eligibleById(state.selectedModelId()) ??
+          eligibleById(this._preferences.defaultModelId()) ??
+          modelList.find((model) => model.isEligible) ??
+          modelList[0] ??
+          loadingModel
+        );
       },
       groupedModels: () => {
         return state.modelList().reduce<Record<string, Array<Model>>>((acc, model) => {
@@ -78,12 +87,9 @@ export class ModelService {
             if (!model || !model.isEligible) {
               return {};
             }
-            // Persist the choice to the user's record (best-effort) so it is
-            // restored next session. Local selection updates regardless of the
-            // network result.
-            this._authService
-              .updatePreferredModel(id)
-              .subscribe({ error: () => undefined });
+            // Picking a model also makes it the default, persisted to the single
+            // preferences object so it is restored next session / on new devices.
+            this._preferences.setDefaultModel(id);
             return {
               selectedModelId: id,
             };
@@ -104,23 +110,5 @@ export class ModelService {
     }
 
     return this.state().modelList.find((model) => model.id === id);
-  }
-
-  private selectInitialModelID(models: Model[], preferredModelId?: string): string {
-    if (preferredModelId) {
-      const preferredModel = models.find(
-        (model) => model.id === preferredModelId && model.isEligible,
-      );
-      if (preferredModel) {
-        return preferredModel.id;
-      }
-    }
-
-    const firstEligibleModel = models.find((model) => model.isEligible);
-    if (firstEligibleModel) {
-      return firstEligibleModel.id;
-    }
-
-    return models[0]?.id ?? '';
   }
 }

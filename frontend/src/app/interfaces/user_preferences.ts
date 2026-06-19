@@ -9,6 +9,9 @@ export const UserPreferencesData = z.object({
   pinnedPersonas: z.array(z.string()).default([]),
   recentPersonas: z.array(z.string()).default([]),
   defaultPersonaId: z.string().default(''),
+  // The user's default model and persona live here (encrypted), so this object
+  // is the single source of truth wherever a default is set (chat or settings).
+  defaultModelId: z.string().default(''),
 });
 export type UserPreferencesData = z.infer<typeof UserPreferencesData>;
 
@@ -18,6 +21,7 @@ export const emptyPreferences: UserPreferencesData = {
   pinnedPersonas: [],
   recentPersonas: [],
   defaultPersonaId: '',
+  defaultModelId: '',
 };
 
 /**

@@ -270,28 +270,6 @@ export class AuthService implements OnDestroy {
     );
   }
 
-  // Persist the user's preferred model on their own record so the choice is
-  // restored on the next sign-in or a new device. Best-effort: a failure here
-  // must not block the in-session selection, so callers ignore the error.
-  updatePreferredModel(modelId: string): Observable<AuthUser> {
-    const userId = this.user()?.['id'] as string | undefined;
-    if (!userId) {
-      return throwError(() => new Error('Not authenticated'));
-    }
-
-    return from(
-      this._pb.collection(this._authCollection).update(userId, {
-        preferred_model_id: modelId,
-      }),
-    ).pipe(
-      map((record) => record as AuthUser),
-      catchError((error) => {
-        console.error('Unable to persist preferred model', error);
-        return throwError(() => error);
-      }),
-    );
-  }
-
   // Change the account password. Under account_key_v2 the password is
   // authentication-only (not part of the data key), so this is a pure auth
   // operation — no key material is re-wrapped. PocketBase verifies oldPassword

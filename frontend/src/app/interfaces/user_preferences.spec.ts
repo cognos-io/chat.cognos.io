@@ -80,6 +80,7 @@ describe('serializeUserPreferencesData', () => {
       pinnedPersonas: ['cognos:direct'],
       recentPersonas: ['cognos:editor'],
       defaultPersonaId: 'cognos:simple-assistant',
+      defaultModelId: 'm-1',
     };
 
     const serialized = serializeUserPreferencesData(original);
