@@ -159,7 +159,7 @@ test.describe('high-level user journeys', () => {
   test('lock then unlock fetches and decrypts persisted messages', async ({ page }) => {
     const apiPaths = recordApiPaths(page);
 
-    const { account, accountKey } = await provisionUnlockedAccount(page);
+    const { accountKey } = await provisionUnlockedAccount(page);
 
     await page
       .getByLabel('Message Cognos — stored encrypted; sent to your provider to reply')
@@ -173,31 +173,19 @@ test.describe('high-level user journeys', () => {
         ),
       )
       .toBe(true);
-    await expect
-      .poll(() =>
-        apiPaths.some((path) =>
-          /\/api\/v1\/conversations\/[^/]+\/messages$/.test(path),
-        ),
-      )
-      .toBe(true);
+    // Under SSE streaming the assistant reply arrives over the /complete stream
+    // and renders directly — there is no separate /messages fetch on send. Wait
+    // for the rendered reply to confirm the turn completed and persisted.
+    await expect(page.getByText('Mocked assistant reply')).toBeVisible();
 
     const conversationUrl = page.url();
 
     await page.locator('app-chat').waitFor();
-    await page.evaluate(() => {
-      const chatRoot = document.querySelector('app-chat');
-      if (!(chatRoot instanceof Element)) {
-        throw new Error('app-chat root not found');
-      }
-
-      const chatComponent = (
-        globalThis as { ng?: { getComponent(node: Element): { onLock(): void } } }
-      ).ng?.getComponent(chatRoot);
-      chatComponent?.onLock();
-    });
+    // Lock via the sidebar account actions (the "Lock" button → VaultService.lock()).
+    await page.getByRole('button', { name: /^lock$/i }).click();
     await expectLockedDialog(page);
 
-    await page.getByLabel('Account password').fill(account.password);
+    // v2 unlock asks for the Account Key alone — there is no password field.
     const accountKeyField = page.getByLabel('Account Key');
     await accountKeyField.click();
     await accountKeyField.fill(accountKey);

@@ -89,6 +89,7 @@ type chatCompletionRequest struct {
 	MaxTokens           int                 `json:"max_tokens"`
 	MaxCompletionTokens int                 `json:"max_completion_tokens"`
 	Messages            []chatCompletionMsg `json:"messages"`
+	Stream              bool                `json:"stream"`
 }
 
 type chatCompletionResponse struct {
@@ -117,6 +118,29 @@ type chatCompletionUsage struct {
 	TotalTokens      int `json:"total_tokens"`
 }
 
+// Streaming (SSE) response shapes — OpenAI `chat.completion.chunk` objects.
+// The backend gateway (bifrost) requests a stream and reconstructs the reply
+// from the delta chunks plus a trailing usage chunk.
+type chatCompletionChunk struct {
+	ID      string                      `json:"id"`
+	Object  string                      `json:"object"`
+	Created int64                       `json:"created"`
+	Model   string                      `json:"model"`
+	Choices []chatCompletionChunkChoice `json:"choices"`
+	Usage   *chatCompletionUsage        `json:"usage,omitempty"`
+}
+
+type chatCompletionChunkChoice struct {
+	Index        int                    `json:"index"`
+	Delta        chatCompletionChunkMsg `json:"delta"`
+	FinishReason *string                `json:"finish_reason"`
+}
+
+type chatCompletionChunkMsg struct {
+	Role    string `json:"role,omitempty"`
+	Content string `json:"content,omitempty"`
+}
+
 func chatCompletionsHandler(logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req chatCompletionRequest
@@ -134,7 +158,13 @@ func chatCompletionsHandler(logger *slog.Logger) http.HandlerFunc {
 			model = "mock-model"
 		}
 
-		logger.Info("chat completion", "model", model, "reply", reply)
+		logger.Info("chat completion", "model", model, "reply", reply, "stream", req.Stream)
+
+		if req.Stream {
+			writeChatCompletionStream(w, logger, model, reply)
+			return
+		}
+
 		writeJSON(w, http.StatusOK, chatCompletionResponse{
 			ID:      "chatcmpl-mock",
 			Object:  "chat.completion",
@@ -148,6 +178,62 @@ func chatCompletionsHandler(logger *slog.Logger) http.HandlerFunc {
 			Usage: chatCompletionUsage{PromptTokens: 1, CompletionTokens: 1, TotalTokens: 2},
 		})
 	}
+}
+
+// writeChatCompletionStream emits an OpenAI-style SSE stream: a content delta
+// chunk, a final chunk with finish_reason, a usage chunk, then `[DONE]`. The
+// whole reply goes in a single delta — bifrost accumulates deltas, so chunking
+// finer buys nothing for the mock.
+func writeChatCompletionStream(w http.ResponseWriter, logger *slog.Logger, model, reply string) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		logger.Error("streaming unsupported: ResponseWriter is not a Flusher")
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "streaming unsupported"})
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.WriteHeader(http.StatusOK)
+
+	created := time.Now().Unix()
+	stop := "stop"
+
+	send := func(chunk chatCompletionChunk) {
+		payload, _ := json.Marshal(chunk)
+		_, _ = fmt.Fprintf(w, "data: %s\n\n", payload)
+		flusher.Flush()
+	}
+
+	// Content delta.
+	send(chatCompletionChunk{
+		ID:      "chatcmpl-mock",
+		Object:  "chat.completion.chunk",
+		Created: created,
+		Model:   model,
+		Choices: []chatCompletionChunkChoice{{
+			Index: 0,
+			Delta: chatCompletionChunkMsg{Role: "assistant", Content: reply},
+		}},
+	})
+
+	// Final chunk: finish_reason + usage (OpenAI sends usage in a trailing chunk).
+	send(chatCompletionChunk{
+		ID:      "chatcmpl-mock",
+		Object:  "chat.completion.chunk",
+		Created: created,
+		Model:   model,
+		Choices: []chatCompletionChunkChoice{{
+			Index:        0,
+			Delta:        chatCompletionChunkMsg{},
+			FinishReason: &stop,
+		}},
+		Usage: &chatCompletionUsage{PromptTokens: 1, CompletionTokens: 1, TotalTokens: 2},
+	})
+
+	_, _ = fmt.Fprint(w, "data: [DONE]\n\n")
+	flusher.Flush()
 }
 
 // echoPrefix opts a request into echo mode: the latest user turn is replied to

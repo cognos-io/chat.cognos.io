@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import type { APIResponse } from '@playwright/test';
 import { randomBytes } from 'node:crypto';
 
 import { newAnonymousApi, provisionApiUser } from './api-helpers';
@@ -43,6 +44,39 @@ interface MessageListResponse {
 const APPROVED_MODEL_ID = 'llama-3-3-infomaniak';
 const DEFAULT_PERSONA_ID = 'cognos:simple-assistant';
 const DEFAULT_SYSTEM_PROMPT = 'You are a helpful test persona.';
+
+// The completion endpoints stream Server-Sent Events: `data: {json}\n\n` per
+// event, with `type: 'delta'` carrying incremental text and a terminal
+// `type: 'complete'` carrying the full response. Parse the stream and return
+// that final response (the contract the frontend MessageService consumes).
+async function readCompleteStream(res: APIResponse): Promise<CompleteResponse> {
+  const text = await res.text();
+  let final: CompleteResponse | undefined;
+  let deltaText = '';
+  for (const block of text.split('\n\n')) {
+    const line = block.split('\n').find((l) => l.startsWith('data:'));
+    if (!line) continue;
+    const payload = line.slice('data:'.length).trim();
+    if (!payload || payload === '[DONE]') continue;
+    const event = JSON.parse(payload) as {
+      type: string;
+      delta?: string;
+      message?: string;
+      response?: CompleteResponse;
+    };
+    if (event.type === 'error') {
+      throw new Error(`completion stream error: ${event.message ?? 'unknown'}`);
+    }
+    if (event.type === 'delta') deltaText += event.delta ?? '';
+    if (event.type === 'complete' && event.response) final = event.response;
+  }
+  if (!final) {
+    throw new Error(`no 'complete' event in stream: ${text.slice(0, 200)}`);
+  }
+  // The streamed deltas must reconstruct the assistant content.
+  if (deltaText) expect(final.assistant_message.content).toBe(deltaText);
+  return final;
+}
 
 const CONVERSATION_DATA = Buffer.from(
   JSON.stringify({ title: 'completion contract' }),
@@ -121,7 +155,7 @@ test.describe('non-persisted /completions API', () => {
         },
       });
       expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
-      const body = (await res.json()) as CompleteResponse;
+      const body = await readCompleteStream(res);
 
       expect(body.assistant_message.content).toBeTruthy();
       expect(body.assistant_message.persona_id).toBe(DEFAULT_PERSONA_ID);
@@ -273,7 +307,7 @@ test.describe('persisted /conversations/{id}/complete API', () => {
       );
       expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
 
-      const body = (await res.json()) as CompleteResponse;
+      const body = await readCompleteStream(res);
       expect(body.request_id).toBe('e2e-req-1');
       expect(body.user_message_id).toBeTruthy();
       expect(body.assistant_message.id).toBeTruthy();
@@ -324,7 +358,7 @@ test.describe('persisted /conversations/{id}/complete API', () => {
       );
       expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
 
-      const body = (await res.json()) as CompleteResponse;
+      const body = await readCompleteStream(res);
       // The reply echoed the prompt verbatim (sentinel stripped).
       expect(body.assistant_message.content).toBe(largeBody);
 
