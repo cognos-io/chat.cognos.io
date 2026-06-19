@@ -17,11 +17,16 @@ for ~200–500 privacy-conscious users. Status legend: ✅ done · 🚧 in progr
 
 ## Track B — Privacy control surface
 
-| #   | Item                                                             | Status | Notes                                                                                 |
-| --- | ---------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
-| B.1 | "Where your data goes" facts panel in model selector             | ⬜     | Data already on `Model` (provider, hosting country/region, no-retention, open-source) |
-| B.2 | Persist `preferred_model_id` back to the user record             | ✅     | Persisted best-effort on explicit eligible selection                                  |
-| B.3 | Privacy-tier setting (Only CH / EU / Global) gating the selector | ⬜     | `privacy_tier` is a free user data-residency preference (no plan entitlement)         |
+| #   | Item                                                           | Status | Notes                                                                               |
+| --- | -------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------- |
+| B.1 | "Where your data goes" facts list (Account → Models available) | ✅     | Per-model residency badge, hosting, context, locked states; matches design mock     |
+| B.2 | Default model + persona in one preferences object              | ✅     | Both in encrypted `user_preferences`; model selection derives reactively            |
+| B.3 | Data-processing residency selector (Switzerland / EU / Global) | ✅     | Patches `privacy_tier`, re-gates the catalogue; tier cards + zero-retention callout |
+
+Also done: settings page now scrolls (shell overflow fix); stale login reset
+copy removed. Pending B polish: a UI to set the **default persona** (model
+default is set by picking it in chat; persona default plumbing exists), and a
+browser e2e for pick-default → reload → restored.
 
 ## Track C — Paid-GA auth blockers
 
