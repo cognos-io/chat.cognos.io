@@ -93,11 +93,20 @@ unlock factor today.
   gone (TTL > token TTL, so returning users don't re-enter the Account Key).
 - **Browser e2e coverage** — added gated root-suite specs for the email-change,
   password-reset, and confirm-email-change surfaces. Made the `frontend/e2e`
-  suite (35 app-level specs: account, billing, messages, personas, models,
-  vault) **self-contained** so it can run standalone/CI. Not yet gated in CI:
-  against a contaminated dev DB it runs 62/67, with 5 state-heavy billing/vault
-  specs failing; these need triage on a fresh stack before adding the CI job
-  (they mock their own API but read live user/conversation state). **Open item.**
+  suite (35 app-level specs) **self-contained** so it can run standalone/CI.
+  Triaged a fresh-stack run of both suites:
+    - Root `e2e/`: fixed the stale `user-key-pair` fixture (v1 → `account_key_v2`)
+    and the mock AI base URL (bifrost double-`/v1`). Remaining root failures are
+    the completion-executing specs — **bifrost now requests an SSE stream but the
+    mock AI provider only returns plain JSON**, so bifrost rejects it
+    (`status_code: 0`). This likely also reds the e2e CI job today. **Open item:
+    add SSE streaming to `cmd/mock-ai-provider`.**
+    - `frontend/e2e/`: 5 stale specs from intended product changes that this
+    ungated suite drifted past — vault specs use removed `#confirmPassword` /
+    `#account-password` fields (single-password signup + v2 unlock), billing
+    specs expect profile → `/account/billing` (now `/account`) and the
+    feature-flagged-off "Security & keys" section / old "coming soon" copy. Needs
+    a helper-rewrite pass to v2 before gating. **Open item.**
 
 ## Notes for reviewers
 
