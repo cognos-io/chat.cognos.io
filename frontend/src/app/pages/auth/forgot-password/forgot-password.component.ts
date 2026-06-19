@@ -1,30 +1,91 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
+import { EMPTY, catchError } from 'rxjs';
+
+import { CognosButtonComponent } from '@cognos/ui-angular';
+
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
+import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
+
+import { AuthService } from '@services/auth.service';
 
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [RouterLink, CognosLogoComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    CognosButtonComponent,
+    CognosLogoComponent,
+    LoadingIndicatorComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="auth-page">
       <section class="auth-page__card">
         <app-cognos-logo class="auth-page__logo" palette="dark"></app-cognos-logo>
-        <h1 class="auth-page__title">Password reset is unavailable</h1>
-        <p class="auth-page__lead">
-          Cognos currently blocks password reset because there is not yet a safe vault
-          recovery flow for encrypted backups.
-        </p>
-        <p class="auth-page__lead">
-          We do not want to offer a reset path that could leave your encrypted history
-          inaccessible or weaken the current security model.
-        </p>
+        <h1 class="auth-page__title">Reset your password</h1>
 
-        <p class="auth-page__switch">
-          <a routerLink="/auth/login">Return to login</a>
-        </p>
+        @if (sent()) {
+          <p class="auth-page__success">
+            If an account exists for {{ submittedEmail() }}, we've sent a password reset
+            link. Check your inbox and follow the link to choose a new password.
+          </p>
+          <p class="auth-page__lead">
+            Your password only signs you in — it never unlocks your encrypted chats, so
+            resetting it is safe and leaves your history untouched.
+          </p>
+          <p class="auth-page__switch">
+            <a routerLink="/auth/login">Back to log in</a>
+          </p>
+        } @else {
+          <p class="auth-page__lead">
+            Enter your email and we'll send you a link to set a new password. Your
+            password is only used to sign in, so resetting it never affects your
+            encrypted chats.
+          </p>
+
+          <form
+            class="auth-page__form"
+            [formGroup]="forgotForm"
+            (ngSubmit)="onSubmit()"
+          >
+            <label class="auth-page__field" for="email">
+              <span class="auth-page__label">Email</span>
+              <input
+                id="email"
+                class="auth-page__input"
+                formControlName="email"
+                type="email"
+                autocomplete="email"
+                placeholder="you@example.com"
+              />
+            </label>
+
+            <cog-button
+              appearance="primary"
+              [fullWidth]="true"
+              size="lg"
+              type="submit"
+              [disabled]="sending() || forgotForm.invalid"
+            >
+              @if (sending()) {
+                <span class="auth-page__loading-copy">
+                  <app-loading-indicator></app-loading-indicator>
+                  Sending…
+                </span>
+              } @else {
+                Send reset link
+              }
+            </cog-button>
+          </form>
+
+          <p class="auth-page__switch">
+            <a routerLink="/auth/login">Back to log in</a>
+          </p>
+        }
       </section>
     </div>
   `,
@@ -55,13 +116,20 @@ import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.com
       padding: var(--cog-space-400);
     }
 
+    .auth-page__form,
+    .auth-page__field {
+      display: grid;
+      gap: var(--cog-space-150);
+    }
+
     .auth-page__logo {
       height: 28px;
     }
 
     .auth-page__title,
     .auth-page__lead,
-    .auth-page__switch {
+    .auth-page__switch,
+    .auth-page__success {
       margin: 0;
     }
 
@@ -82,8 +150,49 @@ import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.com
       text-wrap: pretty;
     }
 
+    .auth-page__label {
+      color: var(--cog-text);
+      font-size: var(--cog-fs-body-sm);
+      font-weight: var(--cog-fw-semibold);
+      line-height: var(--cog-lh-body-sm);
+    }
+
+    .auth-page__input {
+      min-height: 44px;
+      border: 2px solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-input-bg);
+      color: var(--cog-text);
+      padding: 0 var(--cog-space-150);
+      font: inherit;
+      outline: 0;
+    }
+
+    .auth-page__input:focus {
+      border-color: var(--cog-brand);
+      background: var(--cog-input-bg-focus);
+    }
+
+    .auth-page__success {
+      color: var(--cog-text);
+      border: 1px solid var(--cog-success-border, var(--cog-border));
+      background: var(--cog-success-bg);
+      padding: var(--cog-space-200);
+      border-radius: var(--cog-radius-sm);
+    }
+
     .auth-page__switch a {
       color: var(--cog-link);
+    }
+
+    .auth-page__loading-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-100);
+    }
+
+    .auth-page__loading-copy app-loading-indicator {
+      padding: 0;
     }
 
     @media (max-width: 640px) {
@@ -107,4 +216,38 @@ import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.com
     }
   `,
 })
-export class ForgotPasswordComponent {}
+export class ForgotPasswordComponent {
+  private readonly _authService = inject(AuthService);
+  private readonly _fb = inject(FormBuilder);
+
+  readonly sending = signal(false);
+  readonly sent = signal(false);
+  readonly submittedEmail = signal('');
+
+  readonly forgotForm = this._fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+  });
+
+  onSubmit(): void {
+    if (this.forgotForm.invalid || this.sending()) {
+      return;
+    }
+
+    const { email } = this.forgotForm.getRawValue();
+    this.sending.set(true);
+
+    this._authService
+      .requestPasswordReset(email)
+      .pipe(
+        catchError(() => {
+          this.sending.set(false);
+          return EMPTY;
+        }),
+      )
+      .subscribe(() => {
+        this.submittedEmail.set(email);
+        this.sending.set(false);
+        this.sent.set(true);
+      });
+  }
+}
