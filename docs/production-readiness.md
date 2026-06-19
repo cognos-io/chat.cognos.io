@@ -24,9 +24,8 @@ for ~200–500 privacy-conscious users. Status legend: ✅ done · 🚧 in progr
 | B.3 | Data-processing residency selector (Switzerland / EU / Global) | ✅     | Patches `privacy_tier`, re-gates the catalogue; tier cards + zero-retention callout |
 
 Also done: settings page now scrolls (shell overflow fix); stale login reset
-copy removed. Pending B polish: a UI to set the **default persona** (model
-default is set by picking it in chat; persona default plumbing exists), and a
-browser e2e for pick-default → reload → restored.
+copy removed; a "set as default" control on the personas page; and a browser
+e2e proving the default model round-trips through preferences across a reload.
 
 ## Track C — Paid-GA auth blockers
 
