@@ -556,15 +556,64 @@ The server must not persist:
 - Upload logs do not include filenames or file contents.
 - Project APIs never return plaintext `data` fields.
 
+## Decisions (2026-06-20)
+
+- **Scope:** Build the architecture through Phase 3 (encrypted projects → sharing → project
+  conversations). Files (Phase 4) and shared memory (Phase 5) are deferred. **Ship Phase 1 first.**
+- **Rotation is forward-only**, matching the existing conversation `/rotate`: rotation re-keys and
+  re-wraps the project key for remaining members but does **not** re-encrypt existing project
+  `data`, file keys, conversation keys, or memory. A revoked member who retained their old wrapped
+  key can still decrypt pre-rotation content. This is an accepted limit and must be stated in
+  product copy (see "Revoke user"), not just "content they already decrypted".
+- **User discovery and billing attribution are deferred** and are explicit gates that must be
+  decided _before_ Phase 2 sharing ships (see "Pre-Phase-2 gates" below).
+
+## Gaps found during codebase review (must be built; not in original plan)
+
+- **No user public-key lookup exists.** There is no API or UI to fetch another user's public key by
+  email or ID (`backend/cmd/api/routes.go` has only conversation-scoped public-key routes). Every
+  sharing flow depends on the admin's browser obtaining the invitee's public key to wrap the project
+  key. This primitive — and its enumeration/privacy tradeoff — must be designed before Phase 2.
+- **Multi-participant sharing is greenfield on the frontend.** The backend `participants` collection
+  and conversation `/rotate` handler exist, but the client only has _public-link_ sharing
+  (ephemeral-key sealed box, secret in URL fragment). There is no authenticated multi-participant
+  decrypt, invite UI, or role management to reuse. Phase 2 builds this from scratch.
+- **File storage backend is undecided.** No upload infrastructure exists; `storage_ref` implies a
+  PocketBase-file-field vs S3-compatible decision. Phase 4 is larger than the roadmap implies.
+- **Standalone-conversation → project migration flow is unspecified.** Moving an existing
+  conversation into a project requires re-wrapping `conversation_secret_key` under the project key
+  and reconciling the two participant systems (open decision below).
+
+### Pre-Phase-2 gates (decide before sharing ships)
+
+- **User discovery:** exact-email public-key lookup API (with rate-limiting against enumeration) vs
+  invite-by-token (wrap-on-accept). Affects privacy budget.
+- **Billing attribution:** acting-user-pays vs project-owner-pays for completions in a shared
+  project. No pooled-quota plumbing exists today.
+
+## Validated against the codebase (reusable as-is)
+
+- `participants` collection: `conversation`, `user`, `role` ∈ {Viewer, Editor, Admin}, `added_at`,
+  `removed_at` (soft-revoke). `project_participants` mirrors this.
+- `conversation_public_keys` / `conversation_secret_keys` with `key_version`; per-participant
+  wrapped secret keys; atomic rotation in `backend/internal/handler/conversations.go`.
+- 404-not-403 via locked PocketBase collection rules + Go-handler authz (`participants.IsActive`).
+- Completion-time response encryption: `sealed_box(data, conversation_public_key)`.
+- Conversation `data`/titles are encrypted with `box.before(conv_pk, conv_sk)` (keypair with
+  itself), so any member holding `conv_sk` can decrypt the title — the nested-conversation model
+  holds.
+- All needed primitives (`sealed_box`, `secretbox`, `box`) exist in
+  `frontend/.../crypto.service.ts`.
+
 ## Open decisions
 
 - Whether project conversations should keep old direct conversation participants for migration, or
   require project membership only once `project` is set.
 - Whether project key rotation should be synchronous-only for MVP or support resumable interrupted
-  rotations immediately.
+  rotations immediately. (Recommend synchronous-only for v1.)
 - Whether file MIME type should always be encrypted, or whether a small allowlisted plaintext media
-  class is acceptable for UI optimisation.
+  class is acceptable for UI optimisation. (Recommend always-encrypted for v1.)
 - Whether shared memory is user-confirmed only in v1, or whether assistant-suggested memory can be
-  added behind an explicit review step.
+  added behind an explicit review step. (Recommend user-confirmed only for v1.)
 - Whether project deletion should hard-delete child resources immediately or use a soft-delete
-  recovery window.
+  recovery window. (Recommend soft-delete recovery window.)
