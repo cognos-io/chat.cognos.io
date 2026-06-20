@@ -85,12 +85,17 @@
 
 .project-detail__new-chat {
   display: flex;
+  align-items: stretch;
   gap: var(--cog-space-100, 8px);
 }
 
 .project-detail__new-chat input {
   flex: 1;
-  padding: var(--cog-space-100, 8px) var(--cog-space-150, 12px);
+  box-sizing: border-box;
+  /* Match the cog-button height (md = 32px min) so the field and the New chat
+     button line up; vertical centering comes from the flex row stretching. */
+  min-height: 32px;
+  padding: 0 var(--cog-space-150, 12px);
   border: 1px solid var(--cog-border, #e2e8f0);
   border-radius: var(--cog-radius-150, 8px);
   font: inherit;
