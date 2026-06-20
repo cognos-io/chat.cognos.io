@@ -22,15 +22,37 @@ const publicShareCollectionName = "conversation_public_shares"
 // gating the (still-encrypted) public payload, so it must be unguessable.
 const publicShareTokenLength = 32
 
+// Public-share modes (spec §6.6). Redacted-only is the safe default and never
+// exposes redaction key material; include-sensitive additionally carries the
+// sealed redaction key so readers can hydrate placeholders.
+const (
+	shareModeRedactedOnly     = "redacted_only"
+	shareModeIncludeSensitive = "include_sensitive"
+)
+
 type createPublicShareRequest struct {
 	PublicKey                    string `json:"public_key"`
 	WrappedConversationSecretKey string `json:"wrapped_conversation_secret_key"`
 	ShareSecret                  string `json:"share_secret"`
+	// Optional redaction fields. Required when Mode is include_sensitive.
+	Mode                      string `json:"mode"`
+	WrappedRedactionSecretKey string `json:"wrapped_redaction_secret_key"`
+	RedactionPublicKey        string `json:"redaction_public_key"`
 }
 
 type createPublicShareResponse struct {
 	Token      string `json:"token"`
 	KeyVersion int    `json:"key_version"`
+	Mode       string `json:"mode"`
+}
+
+// shareMode returns the share's mode, defaulting legacy/empty rows to
+// redacted-only — the safe interpretation.
+func shareMode(record *core.Record) string {
+	if record.GetString("mode") == shareModeIncludeSensitive {
+		return shareModeIncludeSensitive
+	}
+	return shareModeRedactedOnly
 }
 
 // participantPublicShareResponse is what an authenticated participant sees: the
@@ -43,6 +65,7 @@ type participantPublicShareResponse struct {
 	PublicKey   string `json:"public_key"`
 	ShareSecret string `json:"share_secret"`
 	KeyVersion  int    `json:"key_version"`
+	Mode        string `json:"mode"`
 }
 
 // publicConversationResponse is the unauthenticated payload. Everything here is
@@ -54,6 +77,10 @@ type publicConversationResponse struct {
 	ConversationPublicKey        string `json:"conversation_public_key"`
 	WrappedConversationSecretKey string `json:"wrapped_conversation_secret_key"`
 	KeyVersion                   int    `json:"key_version"`
+	Mode                         string `json:"mode"`
+	// Populated only for include-sensitive shares; empty for redacted-only.
+	WrappedRedactionSecretKey string `json:"wrapped_redaction_secret_key,omitempty"`
+	RedactionPublicKey        string `json:"redaction_public_key,omitempty"`
 }
 
 // ConversationPublicShareCreate publishes a public link for the conversation.
@@ -103,6 +130,23 @@ func ConversationPublicShareCreate(app core.App) func(e *core.RequestEvent) erro
 			)
 		}
 
+		// Default to the safe mode. Include-sensitive must carry the redaction
+		// key material the anonymous reader needs to hydrate placeholders.
+		mode := shareModeRedactedOnly
+		req.WrappedRedactionSecretKey = strings.TrimSpace(req.WrappedRedactionSecretKey)
+		req.RedactionPublicKey = strings.TrimSpace(req.RedactionPublicKey)
+		if req.Mode == shareModeIncludeSensitive {
+			mode = shareModeIncludeSensitive
+			if req.WrappedRedactionSecretKey == "" || req.RedactionPublicKey == "" {
+				return apis.NewBadRequestError(
+					"include_sensitive shares require wrapped_redaction_secret_key and redaction_public_key",
+					nil,
+				)
+			}
+		} else if req.Mode != "" && req.Mode != shareModeRedactedOnly {
+			return apis.NewBadRequestError("invalid mode", nil)
+		}
+
 		collection, err := app.FindCollectionByNameOrId(publicShareCollectionName)
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to load public shares collection", err)
@@ -128,6 +172,17 @@ func ConversationPublicShareCreate(app core.App) func(e *core.RequestEvent) erro
 		record.Set("wrapped_conversation_secret_key", req.WrappedConversationSecretKey)
 		record.Set("share_secret", req.ShareSecret)
 		record.Set("key_version", keyVersion)
+		record.Set("mode", mode)
+		// Redaction material only ever lives on include-sensitive shares; clear
+		// it when (re)creating a redacted-only share so a downgrade can't leave
+		// stale key material behind.
+		if mode == shareModeIncludeSensitive {
+			record.Set("wrapped_redaction_secret_key", req.WrappedRedactionSecretKey)
+			record.Set("redaction_public_key", req.RedactionPublicKey)
+		} else {
+			record.Set("wrapped_redaction_secret_key", "")
+			record.Set("redaction_public_key", "")
+		}
 
 		if err := app.Save(record); err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to create public share", err)
@@ -136,6 +191,7 @@ func ConversationPublicShareCreate(app core.App) func(e *core.RequestEvent) erro
 		return e.JSON(http.StatusCreated, createPublicShareResponse{
 			Token:      token,
 			KeyVersion: keyVersion,
+			Mode:       mode,
 		})
 	}
 }
@@ -165,6 +221,7 @@ func ConversationPublicShareGet(app core.App) func(e *core.RequestEvent) error {
 			PublicKey:   record.GetString("public_key"),
 			ShareSecret: record.GetString("share_secret"),
 			KeyVersion:  publicShareKeyVersion(record),
+			Mode:        shareMode(record),
 		})
 	}
 }
@@ -221,13 +278,54 @@ func PublicConversationGet(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewNotFoundError("Conversation is not publicly shared", err)
 		}
 
-		return e.JSON(http.StatusOK, publicConversationResponse{
+		resp := publicConversationResponse{
 			ConversationID:               conversation.Id,
 			Data:                         conversation.GetString("data"),
 			ConversationPublicKey:        publicKey,
 			WrappedConversationSecretKey: share.GetString("wrapped_conversation_secret_key"),
 			KeyVersion:                   keyVersion,
-		})
+			Mode:                         shareMode(share),
+		}
+		// Only an include-sensitive share carries the redaction key material; a
+		// redacted-only share never exposes it, so its readers can only see
+		// placeholders.
+		if resp.Mode == shareModeIncludeSensitive {
+			resp.WrappedRedactionSecretKey = share.GetString("wrapped_redaction_secret_key")
+			resp.RedactionPublicKey = share.GetString("redaction_public_key")
+		}
+
+		return e.JSON(http.StatusOK, resp)
+	}
+}
+
+// PublicConversationRedactionEntriesList returns the sealed token→original
+// mappings for an include-sensitive public share. Redacted-only shares (and any
+// unknown token) get a uniform 404 — they must never be able to reach the
+// mappings, which is the whole point of the two-mode design (spec §6.6, §12).
+func PublicConversationRedactionEntriesList(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		share, conversation, err := publicShareByToken(app, e.Request.PathValue("token"))
+		if err != nil {
+			return err
+		}
+		if shareMode(share) != shareModeIncludeSensitive {
+			return apis.NewNotFoundError("Public conversation not found", nil)
+		}
+
+		records, err := app.FindAllRecords(
+			redactionEntriesCollectionName,
+			dbx.HashExp{"conversation": conversation.Id},
+		)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to list redaction entries", err)
+		}
+
+		items := make([]redactionEntryResponse, 0, len(records))
+		for _, record := range records {
+			items = append(items, redactionEntryToResponse(record))
+		}
+
+		return e.JSON(http.StatusOK, listRedactionEntriesResponse{Items: items})
 	}
 }
 

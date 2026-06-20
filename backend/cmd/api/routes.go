@@ -486,6 +486,15 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	// Redaction mappings for a public share — only resolves for
+	// include-sensitive shares; redacted-only shares 404 here.
+	e.Router.GET(
+		"/api/v1/public/conversations/{token}/redaction-entries",
+		handler.PublicConversationRedactionEntriesList(app),
+	).Bind(
+		rateLimiterMiddleware(app),
+	)
+
 	// Public, unauthenticated id→name catalogue so the shared-conversation page
 	// can label assistant messages with the model name instead of its raw id.
 	e.Router.GET(
