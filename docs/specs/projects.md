@@ -485,25 +485,38 @@ The server must not persist:
 
 ## Implementation roadmap
 
-### Phase 1 — encrypted projects
+> **Build order note:** Phase 2 (sharing) is blocked on the deferred
+> user-discovery + billing gates, and ChatGPT-style projects are single-user
+> anyway. So the build order is **1 → 3 → (gates) → 2**. Phase 3 only ever
+> deals with single-owner projects until sharing ships, which keeps it
+> independent of Phase 2.
 
-- Add project collection and participant collection.
-- Add encrypted project metadata.
-- Add project list/create/update/delete APIs.
-- Add frontend project list/detail shell.
+### Phase 1 — encrypted projects ✅ DONE
 
-### Phase 2 — project sharing
+- ✅ `projects`, `project_participants`, `project_key_wrappings` collections
+  (migration `1760000040`), all rules locked.
+- ✅ Encrypted project metadata (`data` = secretbox under a per-project content
+  key; content key sealed to each participant's public key).
+- ✅ `GET/POST/GET{id}/PATCH/DELETE /api/v1/projects`; create writes project +
+  Admin participant + creator key wrapping transactionally; list/get embed the
+  caller's wrapper. Account deletion removes the user's projects.
+- ✅ Frontend `ProjectService` + `/projects` list/detail shell behind the
+  `projects` feature flag (on in dev).
+- ✅ Tests: API e2e (authz/404/locked-rules), crypto round-trip unit tests,
+  browser e2e (create + decrypt-on-load).
 
-- Add project key wrappers.
-- Add invite flow.
+### Phase 2 — project sharing (BLOCKED on pre-Phase-2 gates)
+
+- Add invite flow (needs the **user public-key lookup** primitive — see gaps).
 - Add participant list and role management.
-- Add revoke + project key rotation.
+- Add revoke + project key rotation (forward-only, per decision).
+- Decide billing attribution for shared-project completions.
 
-### Phase 3 — project conversations
+### Phase 3 — project conversations (NEXT)
 
 - Add optional `project` relation to conversations.
 - Add project conversation create/list APIs.
-- Add project-wrapped conversation secret keys.
+- Add project-wrapped conversation secret keys (`project_conversation_keys`).
 - Ensure project membership gates project conversation access.
 
 ### Phase 4 — encrypted files
