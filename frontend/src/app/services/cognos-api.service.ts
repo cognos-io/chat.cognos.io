@@ -287,6 +287,53 @@ export interface ApiParticipantPublicShareResponse {
   key_version: number;
 }
 
+export interface ApiRedactionKeyEntry {
+  user_id: string;
+  wrapped_secret_key: string;
+}
+
+interface ApiCreateRedactionKeyRequest {
+  public_key: string;
+  keys: ApiRedactionKeyEntry[];
+}
+
+export interface ApiCreateRedactionKeyResponse {
+  key_version: number;
+}
+
+export interface ApiRedactionKeyResponse {
+  public_key: string;
+  wrapped_secret_key: string;
+  key_version: number;
+}
+
+export interface ApiRedactionEntry {
+  token: string;
+  data: string;
+  source_kind: string;
+  source_id?: string;
+}
+
+interface ApiCreateRedactionEntriesRequest {
+  entries: ApiRedactionEntry[];
+}
+
+export interface ApiCreateRedactionEntriesResponse {
+  created: string[];
+}
+
+export interface ApiRedactionEntryResponse {
+  token: string;
+  data: string;
+  key_version: number;
+  source_kind: string;
+  source_id: string;
+}
+
+export interface ApiListRedactionEntriesResponse {
+  items: ApiRedactionEntryResponse[];
+}
+
 export interface ApiPublicConversationResponse {
   conversation_id: string;
   data: string;
@@ -897,6 +944,52 @@ export class CognosApiService {
   deletePublicShare(conversationId: string): Observable<void> {
     return this._http.delete<void>(
       `${this._baseUrl}/api/v1/conversations/${conversationId}/public-share`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  getRedactionKey(conversationId: string): Observable<ApiRedactionKeyResponse> {
+    return this._http.get<ApiRedactionKeyResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/redaction-key`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  createRedactionKey(
+    conversationId: string,
+    request: ApiCreateRedactionKeyRequest,
+  ): Observable<ApiCreateRedactionKeyResponse> {
+    return this._http.post<ApiCreateRedactionKeyResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/redaction-key`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  listRedactionEntries(
+    conversationId: string,
+  ): Observable<ApiListRedactionEntriesResponse> {
+    return this._http.get<ApiListRedactionEntriesResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/redaction-entries`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  createRedactionEntries(
+    conversationId: string,
+    request: ApiCreateRedactionEntriesRequest,
+  ): Observable<ApiCreateRedactionEntriesResponse> {
+    return this._http.post<ApiCreateRedactionEntriesResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/redaction-entries`,
+      request,
       {
         headers: this.authHeaders(),
       },
