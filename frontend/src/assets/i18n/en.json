@@ -438,6 +438,23 @@
       }
     },
     "composer": {
+      "redaction": {
+        "summary": "Redacting {{ count }} sensitive value(s) before sending",
+        "none": "Sending without redaction",
+        "redact": "Redact",
+        "types": {
+          "iban": "IBAN",
+          "email": "Email address",
+          "credit_card": "Card number",
+          "secret": "Secret / API key",
+          "ch_ahv": "AHV number",
+          "uk_nino": "NI number",
+          "phone": "Phone number",
+          "person": "Name",
+          "org": "Organisation",
+          "place": "Place"
+        }
+      },
       "clearMessages": "Clear all messages",
       "encrypted": "End-to-end encrypted · keys are encrypted before backup",
       "label": "Message Cognos — stored encrypted; sent to your provider to reply",

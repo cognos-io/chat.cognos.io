@@ -44,11 +44,7 @@ import {
   generateConversationPersonaId,
   generateConversationSystemPrompt,
 } from '@app/interfaces/persona';
-import {
-  RedactionCandidate,
-  RedactionEntry,
-  containsRedactionToken,
-} from '@app/redaction';
+import { RedactionEntry, candidateKey, containsRedactionToken } from '@app/redaction';
 import { parseBackendDate } from '@app/utils/timestamp';
 
 import { AuthService } from './auth.service';
@@ -153,12 +149,14 @@ export type MessageRequest = {
   requestId: string;
   content: string;
   parentMessageId?: string;
-  // PII redaction (spec docs/specs/pii-redaction.md). `redactionSelection` is
-  // the set of candidates the composer chose to redact; when omitted, all Tier 1
-  // detections are redacted by default. `redactionEntries` carries the mappings
-  // minted while redacting `content`, to be persisted once the conversation is
-  // known — it is internal and never sent to the completion endpoint.
-  redactionSelection?: RedactionCandidate[];
+  // PII redaction (spec docs/specs/pii-redaction.md). `redactionDeselected`
+  // holds the offset-independent keys (see `candidateKey`) of detections the
+  // user opted OUT of redacting; everything else detected is redacted by
+  // default. Keys (not offsets) cross this boundary so trimming/timing can't
+  // misalign them. `redactionEntries` carries the mappings minted while
+  // redacting `content`, persisted once the conversation is known — it is
+  // internal and never sent to the completion endpoint.
+  redactionDeselected?: string[];
   redactionEntries?: RedactionEntry[];
 };
 
@@ -896,10 +894,16 @@ export class MessageService {
   // message and completion context are redacted from the very first frame.
   private redactRequest(req: MessageRequest): MessageRequest {
     const conversationId = this._conversationService.conversation()?.record.id ?? null;
+    // Re-detect on the final (already-trimmed) content and drop only what the
+    // user explicitly deselected, so offsets always match the text being sent.
+    const deselected = new Set(req.redactionDeselected ?? []);
+    const candidates = this._redactionService
+      .detect(req.content)
+      .filter((candidate) => !deselected.has(candidateKey(candidate)));
     const { redactedText, newEntries } = this._redactionService.prepareRedaction(
       conversationId,
       req.content,
-      req.redactionSelection,
+      candidates,
       { kind: 'message', id: req.requestId },
     );
     return { ...req, content: redactedText, redactionEntries: newEntries };

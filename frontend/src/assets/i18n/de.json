@@ -438,6 +438,23 @@
       }
     },
     "composer": {
+      "redaction": {
+        "summary": "{{ count }} sensible(r) Wert(e) werden vor dem Senden geschwärzt",
+        "none": "Senden ohne Schwärzung",
+        "redact": "Schwärzen",
+        "types": {
+          "iban": "IBAN",
+          "email": "E-Mail-Adresse",
+          "credit_card": "Kartennummer",
+          "secret": "Geheimnis / API-Schlüssel",
+          "ch_ahv": "AHV-Nummer",
+          "uk_nino": "NI-Nummer",
+          "phone": "Telefonnummer",
+          "person": "Name",
+          "org": "Organisation",
+          "place": "Ort"
+        }
+      },
       "clearMessages": "Alle Nachrichten löschen",
       "encrypted": "Ende-zu-Ende-verschlüsselt · Schlüssel werden vor der Sicherung verschlüsselt",
       "label": "Cognos schreiben — verschlüsselt gespeichert; zum Antworten an Ihren Anbieter gesendet",

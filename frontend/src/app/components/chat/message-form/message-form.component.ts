@@ -10,6 +10,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormControl,
@@ -18,15 +19,20 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { debounceTime } from 'rxjs';
+
 import { TranslocoModule } from '@jsverse/transloco';
 
 import {
   CognosButtonComponent,
   CognosIconButtonComponent,
   CognosIconComponent,
+  CognosRedactedTextComponent,
+  CognosRedactedTextKind,
 } from '@cognos/ui-angular';
 
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
+import { RedactionCandidate, RedactionType, candidateKey } from '@app/redaction';
 import { BillingService } from '@app/services/billing.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
@@ -37,6 +43,7 @@ import {
 } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
+import { RedactionService } from '@app/services/redaction.service';
 
 import { ModelSelectorComponent } from './model-selector/model-selector.component';
 import { PersonaChipsComponent } from './persona-chips/persona-chips.component';
@@ -52,6 +59,7 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
     CognosButtonComponent,
     CognosIconButtonComponent,
     CognosIconComponent,
+    CognosRedactedTextComponent,
     ModelSelectorComponent,
     PersonaSwitcherComponent,
     PersonaChipsComponent,
@@ -122,6 +130,62 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
             (keydown.control.enter)="isMac ? undefined : sendMessage()"
             (keydown.meta.enter)="isMac ? sendMessage() : undefined"
           ></textarea>
+
+          @if (redactionCandidates().length) {
+            <div class="message-form__redaction">
+              <button
+                type="button"
+                class="message-form__redaction-summary"
+                [attr.aria-expanded]="redactionPreviewOpen()"
+                (click)="toggleRedactionPreview()"
+              >
+                <cog-icon name="shield-check" [size]="14" tone="text-subtle" />
+                <span>
+                  @if (redactionActiveCount() > 0) {
+                    {{
+                      t('chat.composer.redaction.summary', {
+                        count: redactionActiveCount(),
+                      })
+                    }}
+                  } @else {
+                    {{ t('chat.composer.redaction.none') }}
+                  }
+                </span>
+                <cog-icon
+                  [name]="redactionPreviewOpen() ? 'chevron-down' : 'chevron-right'"
+                  [size]="14"
+                  tone="text-subtle"
+                />
+              </button>
+
+              @if (redactionPreviewOpen()) {
+                <ul class="message-form__redaction-list">
+                  @for (item of redactionCandidates(); track redactionKeyOf(item)) {
+                    <li
+                      class="message-form__redaction-item"
+                      [class.message-form__redaction-item--off]="!isRedacted(item)"
+                    >
+                      <cog-redacted-text
+                        [value]="item.value"
+                        [placeholder]="redactionPlaceholder(item)"
+                        [kind]="redactionKind(item)"
+                        [label]="t('chat.composer.redaction.types.' + item.type)"
+                        [showSettings]="false"
+                      />
+                      <label class="message-form__redaction-toggle">
+                        <input
+                          type="checkbox"
+                          [checked]="isRedacted(item)"
+                          (change)="toggleRedaction(item)"
+                        />
+                        {{ t('chat.composer.redaction.redact') }}
+                      </label>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
 
           <div class="message-form__controls">
             <cog-button
@@ -306,6 +370,59 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
       align-items: center;
       gap: var(--cog-space-100);
       flex-wrap: wrap;
+    }
+
+    .message-form__redaction {
+      display: grid;
+      gap: var(--cog-space-100);
+    }
+
+    .message-form__redaction-summary {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-075);
+      align-self: start;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      color: var(--cog-text-subtle);
+      font: inherit;
+      font-size: var(--cog-fs-caption);
+      cursor: pointer;
+    }
+
+    .message-form__redaction-summary:hover {
+      color: var(--cog-text);
+    }
+
+    .message-form__redaction-list {
+      display: grid;
+      gap: var(--cog-space-075);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .message-form__redaction-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--cog-space-100);
+      flex-wrap: wrap;
+    }
+
+    .message-form__redaction-item--off {
+      opacity: 0.55;
+    }
+
+    .message-form__redaction-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-050);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      cursor: pointer;
+      white-space: nowrap;
     }
 
     .message-form__send {
@@ -503,6 +620,32 @@ export class MessageFormComponent {
     }),
   });
 
+  private readonly _redactionService = inject(RedactionService);
+
+  // Debounced draft drives the preview so detection never blocks typing
+  // (spec §17). The textarea itself is never mutated.
+  private readonly _redactionDraft = toSignal(
+    this.messageForm.controls.content.valueChanges.pipe(debounceTime(150)),
+    { initialValue: '' },
+  );
+
+  // Detected Tier 1 candidates for the current draft.
+  readonly redactionCandidates = computed(() =>
+    this._redactionService.detect(this._redactionDraft() ?? ''),
+  );
+
+  // Value-keys (offset-independent) the user opted OUT of redacting.
+  private readonly _redactionDeselected = signal<Set<string>>(new Set());
+  readonly redactionPreviewOpen = signal(false);
+
+  // How many detections are still selected for redaction.
+  readonly redactionActiveCount = computed(
+    () =>
+      this.redactionCandidates().filter(
+        (candidate) => !this._redactionDeselected().has(candidateKey(candidate)),
+      ).length,
+  );
+
   constructor() {
     if (isPlatformBrowser(this._platformId)) {
       this.isMac = window.navigator.userAgent.includes('Mac');
@@ -635,9 +778,66 @@ export class MessageFormComponent {
     const messageRequest: MessageRequest = {
       content: contentValue,
       requestId: self.crypto.randomUUID(),
+      redactionDeselected: Array.from(this._redactionDeselected()),
     };
     this.messageService.sendMessage$.next(messageRequest);
     this.messageForm.reset();
+    this._redactionDeselected.set(new Set());
+    this.redactionPreviewOpen.set(false);
+  }
+
+  toggleRedactionPreview(): void {
+    this.redactionPreviewOpen.update((open) => !open);
+  }
+
+  redactionKeyOf(candidate: RedactionCandidate): string {
+    return candidateKey(candidate);
+  }
+
+  isRedacted(candidate: RedactionCandidate): boolean {
+    return !this._redactionDeselected().has(candidateKey(candidate));
+  }
+
+  toggleRedaction(candidate: RedactionCandidate): void {
+    const key = candidateKey(candidate);
+    this._redactionDeselected.update((set) => {
+      const next = new Set(set);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }
+
+  // Map a detector type to the redacted-text pill's visual kind; everything
+  // without a dedicated icon falls back to a labelled "custom" pill.
+  redactionKind(candidate: RedactionCandidate): CognosRedactedTextKind {
+    const map: Partial<Record<RedactionType, CognosRedactedTextKind>> = {
+      email: 'email',
+      phone: 'phone',
+      person: 'name',
+    };
+    return map[candidate.type] ?? 'custom';
+  }
+
+  // Illustrative placeholder shown in the preview (the real random token is
+  // minted at send time).
+  redactionPlaceholder(candidate: RedactionCandidate): string {
+    const code: Record<RedactionType, string> = {
+      iban: 'IBAN',
+      email: 'EMAIL',
+      credit_card: 'CC',
+      secret: 'SECRET',
+      ch_ahv: 'AHV',
+      uk_nino: 'NINO',
+      phone: 'PHONE',
+      person: 'PERSON',
+      org: 'ORG',
+      place: 'PLACE',
+    };
+    return `[[PII_${code[candidate.type]}]]`;
   }
 
   stopStreaming() {

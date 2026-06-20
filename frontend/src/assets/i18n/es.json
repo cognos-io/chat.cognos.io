@@ -438,6 +438,23 @@
       }
     },
     "composer": {
+      "redaction": {
+        "summary": "Se redactarán {{ count }} valor(es) sensible(s) antes de enviar",
+        "none": "Enviar sin redacción",
+        "redact": "Redactar",
+        "types": {
+          "iban": "IBAN",
+          "email": "Correo electrónico",
+          "credit_card": "Número de tarjeta",
+          "secret": "Secreto / clave API",
+          "ch_ahv": "Número AHV",
+          "uk_nino": "Número NI",
+          "phone": "Número de teléfono",
+          "person": "Nombre",
+          "org": "Organización",
+          "place": "Lugar"
+        }
+      },
       "clearMessages": "Borrar todos los mensajes",
       "encrypted": "Cifrado de extremo a extremo · las claves se cifran antes de la copia de seguridad",
       "label": "Escribe a Cognos — se guarda cifrado; se envía a tu proveedor para responder",

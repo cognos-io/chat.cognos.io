@@ -438,6 +438,23 @@
       }
     },
     "composer": {
+      "redaction": {
+        "summary": "{{ count }} valore/i sensibile/i verrà oscurato prima dell’invio",
+        "none": "Invio senza oscuramento",
+        "redact": "Oscura",
+        "types": {
+          "iban": "IBAN",
+          "email": "Indirizzo email",
+          "credit_card": "Numero di carta",
+          "secret": "Segreto / chiave API",
+          "ch_ahv": "Numero AHV",
+          "uk_nino": "Numero NI",
+          "phone": "Numero di telefono",
+          "person": "Nome",
+          "org": "Organizzazione",
+          "place": "Luogo"
+        }
+      },
       "clearMessages": "Cancella tutti i messaggi",
       "encrypted": "Crittografato end-to-end · le chiavi vengono cifrate prima del backup",
       "label": "Scrivi a Cognos — archiviato cifrato; inviato al tuo provider per rispondere",
