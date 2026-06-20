@@ -83,7 +83,7 @@ export class ProjectService {
                 return EMPTY;
               }),
               tap((project) => {
-                this._router.navigate(['/', 'projects', project.record.id]);
+                this._router.navigate(['/account/projects', project.record.id]);
               }),
               map((project) => ({
                 selectedProjectId: project.record.id,

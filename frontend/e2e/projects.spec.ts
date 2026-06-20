@@ -34,6 +34,12 @@ test('creates a project and sees its decrypted name', async ({ page }) => {
   await page.route(`${API}/api/v1/personas`, async (route) => {
     await route.fulfill({ json: { items: [] } });
   });
+  // The settings shell (which now hosts the projects pages) loads billing.
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({
+      json: { plan_type: 'trial', status: 'trial', balance_chf: 2, trial_seed_chf: 2 },
+    });
+  });
 
   // GET starts empty; POST echoes the encrypted blob + wrapped key back so the
   // client can build the new project from its in-memory content key.
@@ -64,21 +70,20 @@ test('creates a project and sees its decrypted name', async ({ page }) => {
     await route.fulfill({ json: [] });
   });
 
-  await page.goto('/projects');
+  await page.goto('/account/projects');
 
   await expect(
     page.getByRole('heading', { name: 'Projects', exact: true }),
   ).toBeVisible();
   await expect(page.getByTestId('projects-empty')).toBeVisible();
 
-  await page.getByRole('button', { name: 'New project' }).click();
   await page.getByLabel('Project name').fill('Acme launch');
   await page.getByLabel('Description').fill('Private project notes');
   await page.getByRole('button', { name: 'Create project' }).click();
 
   // The service navigates to the detail page; the decrypted name is rendered
   // from the in-memory content key.
-  await expect(page).toHaveURL(/\/projects\/proj_created_e2e$/);
+  await expect(page).toHaveURL(/\/account\/projects\/proj_created_e2e$/);
   await expect(page.getByTestId('project-name')).toHaveText('Acme launch');
   await expect(page.getByTestId('project-description')).toHaveText(
     'Private project notes',
@@ -120,6 +125,12 @@ test('decrypts an existing project on load', async ({ page }) => {
   await page.route(`${API}/api/v1/personas`, async (route) => {
     await route.fulfill({ json: { items: [] } });
   });
+  // The settings shell (which now hosts the projects pages) loads billing.
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({
+      json: { plan_type: 'trial', status: 'trial', balance_chf: 2, trial_seed_chf: 2 },
+    });
+  });
   await page.route(`${API}/api/v1/projects`, async (route) => {
     await route.fulfill({ json: [projectFixture.projectRecord] });
   });
@@ -127,7 +138,7 @@ test('decrypts an existing project on load', async ({ page }) => {
     await route.fulfill({ json: [] });
   });
 
-  await page.goto('/projects');
+  await page.goto('/account/projects');
 
   // The encrypted name is decrypted client-side from the wrapped content key.
   await expect(page.getByTestId('projects-list')).toBeVisible();

@@ -12,7 +12,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { TranslocoModule } from '@jsverse/transloco';
 
-import { CognosButtonComponent, CognosIconComponent } from '@cognos/ui-angular';
+import { CognosBreadcrumbsComponent, CognosButtonComponent } from '@cognos/ui-angular';
 
 import { ProjectConversationService } from '@app/services/project-conversation.service';
 import { ProjectService } from '@app/services/project.service';
@@ -24,8 +24,8 @@ import { ProjectService } from '@app/services/project.service';
     FormsModule,
     RouterLink,
     TranslocoModule,
+    CognosBreadcrumbsComponent,
     CognosButtonComponent,
-    CognosIconComponent,
   ],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.css',
@@ -111,7 +111,7 @@ export class ProjectDetailComponent {
 
   protected confirmDelete(): void {
     this._projects.deleteProject$.next(this.projectId());
-    this._router.navigate(['/', 'projects']);
+    this._router.navigate(['/account/projects']);
   }
 
   protected openConversation(conversationId: string): void {

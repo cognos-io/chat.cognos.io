@@ -249,6 +249,12 @@ export class SettingsShellComponent {
     },
     { labelKey: 'settings.nav.billing', link: '/account/billing', icon: 'landmark' },
     {
+      labelKey: 'settings.nav.projects',
+      link: '/account/projects',
+      icon: 'folder',
+      flag: 'projects',
+    },
+    {
       labelKey: 'settings.nav.usage',
       link: '/account/usage',
       icon: 'file-text',

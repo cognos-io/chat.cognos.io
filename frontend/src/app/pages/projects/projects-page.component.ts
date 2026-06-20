@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 
 import { TranslocoModule } from '@jsverse/transloco';
 
-import { CognosButtonComponent, CognosIconComponent } from '@cognos/ui-angular';
+import { CognosBreadcrumbsComponent, CognosButtonComponent } from '@cognos/ui-angular';
 
 import { ProjectService } from '@app/services/project.service';
 
@@ -15,8 +15,8 @@ import { ProjectService } from '@app/services/project.service';
     FormsModule,
     RouterLink,
     TranslocoModule,
+    CognosBreadcrumbsComponent,
     CognosButtonComponent,
-    CognosIconComponent,
   ],
   templateUrl: './projects-page.component.html',
   styleUrl: './projects-page.component.css',
@@ -27,21 +27,11 @@ export class ProjectsPageComponent {
 
   protected readonly projects = this._projects.orderedProjects;
 
-  // Local form state for the inline "new project" panel.
-  protected readonly showForm = signal(false);
+  // Inline create form, always visible in its own card (matching the
+  // account settings layout).
   protected readonly name = signal('');
   protected readonly description = signal('');
   protected readonly creating = signal(false);
-
-  protected openForm(): void {
-    this.name.set('');
-    this.description.set('');
-    this.showForm.set(true);
-  }
-
-  protected cancelForm(): void {
-    this.showForm.set(false);
-  }
 
   protected create(): void {
     const name = this.name().trim();
@@ -50,7 +40,7 @@ export class ProjectsPageComponent {
     }
     this.creating.set(true);
     // The service handles encryption + persistence and navigates to the new
-    // project's detail page on success, which tears down this component.
+    // project's detail page on success.
     this._projects.newProject$.next({
       version: '1',
       name,

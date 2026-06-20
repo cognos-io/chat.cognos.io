@@ -1,25 +1,20 @@
-<div *transloco="let t" class="projects-page">
+<ng-container *transloco="let t">
   <header class="projects-page__header">
-    <nav class="projects-page__breadcrumb" [attr.aria-label]="t('projects.title')">
-      <a routerLink="/">Cognos</a>
-      <cog-icon name="chevron-right" [size]="14" />
-      <span aria-current="page">{{ t('projects.title') }}</span>
-    </nav>
-
-    <div class="projects-page__title-row">
-      <div class="projects-page__title-text">
-        <h1 class="projects-page__title">{{ t('projects.title') }}</h1>
-        <p class="projects-page__subtitle">{{ t('projects.subtitle') }}</p>
-      </div>
-      @if (!showForm()) {
-        <cog-button appearance="primary" icon="plus" (click)="openForm()">
-          {{ t('projects.new') }}
-        </cog-button>
-      }
-    </div>
+    <cog-breadcrumbs
+      [items]="[
+        { label: 'Cognos' },
+        { label: t('settings.title') },
+        { label: t('projects.title'), current: true },
+      ]"
+    />
+    <h1 class="projects-page__title">{{ t('projects.title') }}</h1>
+    <p class="projects-page__subtitle">{{ t('projects.subtitle') }}</p>
   </header>
 
-  @if (showForm()) {
+  <section class="projects-page__card" aria-labelledby="projects-create-heading">
+    <h2 id="projects-create-heading" class="projects-page__card-title">
+      {{ t('projects.new') }}
+    </h2>
     <form class="projects-page__form" (submit)="$event.preventDefault(); create()">
       <label class="projects-page__field">
         <span class="projects-page__label">{{ t('projects.nameLabel') }}</span>
@@ -37,19 +32,17 @@
         <span class="projects-page__label">{{ t('projects.descriptionLabel') }}</span>
         <textarea
           name="project-description"
-          rows="3"
+          rows="2"
           [placeholder]="t('projects.descriptionPlaceholder')"
           [ngModel]="description()"
           (ngModelChange)="description.set($event)"
         ></textarea>
       </label>
 
-      <div class="projects-page__form-actions">
-        <cog-button appearance="subtle" type="button" (click)="cancelForm()">
-          {{ t('projects.cancel') }}
-        </cog-button>
+      <div class="projects-page__actions">
         <cog-button
           appearance="primary"
+          icon="plus"
           type="submit"
           [disabled]="name().trim() === '' || creating()"
         >
@@ -57,33 +50,38 @@
         </cog-button>
       </div>
     </form>
-  }
+  </section>
 
-  @if (projects().length === 0 && !showForm()) {
-    <div class="projects-page__empty" data-testid="projects-empty">
-      <p class="projects-page__empty-title">{{ t('projects.empty') }}</p>
-      <p class="projects-page__empty-hint">{{ t('projects.emptyHint') }}</p>
-    </div>
-  } @else {
-    <ul class="projects-page__list" data-testid="projects-list">
-      @for (project of projects(); track project.record.id) {
-        <li class="projects-page__item">
-          <a
-            class="projects-page__item-link"
-            [routerLink]="['/', 'projects', project.record.id]"
-            data-testid="project-card"
-          >
-            <span class="projects-page__item-name">{{
-              project.decryptedData.name
-            }}</span>
-            @if (project.decryptedData.description) {
-              <span class="projects-page__item-description">{{
-                project.decryptedData.description
+  <section class="projects-page__card" aria-labelledby="projects-list-heading">
+    <h2 id="projects-list-heading" class="projects-page__card-title">
+      {{ t('projects.yourProjects') }}
+    </h2>
+
+    @if (projects().length === 0) {
+      <p class="projects-page__empty" data-testid="projects-empty">
+        {{ t('projects.emptyHint') }}
+      </p>
+    } @else {
+      <ul class="projects-page__list" data-testid="projects-list">
+        @for (project of projects(); track project.record.id) {
+          <li>
+            <a
+              class="projects-page__item"
+              [routerLink]="['/account/projects', project.record.id]"
+              data-testid="project-card"
+            >
+              <span class="projects-page__item-name">{{
+                project.decryptedData.name
               }}</span>
-            }
-          </a>
-        </li>
-      }
-    </ul>
-  }
-</div>
+              @if (project.decryptedData.description) {
+                <span class="projects-page__item-description">{{
+                  project.decryptedData.description
+                }}</span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</ng-container>

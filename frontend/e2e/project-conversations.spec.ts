@@ -34,6 +34,12 @@ const seedBaseRoutes = async (
   await page.route(`${API}/api/v1/personas`, async (route) => {
     await route.fulfill({ json: { items: [] } });
   });
+  // The settings shell that hosts the projects pages loads billing.
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({
+      json: { plan_type: 'trial', status: 'trial', balance_chf: 2, trial_seed_chf: 2 },
+    });
+  });
 };
 
 test('decrypts a project conversation and shows it under the project', async ({
@@ -63,7 +69,7 @@ test('decrypts a project conversation and shows it under the project', async ({
     },
   );
 
-  await page.goto(`/projects/${projectFixture.projectRecord.id}`);
+  await page.goto(`/account/projects/${projectFixture.projectRecord.id}`);
 
   // Project name decrypts, and the project conversation title decrypts via the
   // project content key → wrapped conversation secret key.
@@ -136,7 +142,7 @@ test('creates a chat inside a project and opens it', async ({ page }) => {
     },
   );
 
-  await page.goto(`/projects/${projectFixture.projectRecord.id}`);
+  await page.goto(`/account/projects/${projectFixture.projectRecord.id}`);
   await expect(page.getByTestId('project-no-conversations')).toBeVisible();
 
   await page.getByPlaceholder('Name this chat (optional)').fill('Kickoff');

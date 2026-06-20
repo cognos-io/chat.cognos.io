@@ -841,7 +841,8 @@
     "save": "Save changes",
     "saving": "Saving…",
     "subtitle": "Group related chats into an encrypted workspace.",
-    "title": "Projects"
+    "title": "Projects",
+    "yourProjects": "Your projects"
   },
   "public": {
     "decrypting": "Decrypting shared conversation…",
@@ -862,6 +863,7 @@
       "account": "Account",
       "billing": "Plan & billing",
       "notifications": "Notifications",
+      "projects": "Projects",
       "security": "Security & keys",
       "team": "Team & sharing",
       "usage": "Usage"

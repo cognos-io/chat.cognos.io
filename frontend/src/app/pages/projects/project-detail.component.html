@@ -1,9 +1,12 @@
 <div *transloco="let t" class="project-detail">
-  <nav class="project-detail__breadcrumb">
-    <a routerLink="/">Cognos</a>
-    <cog-icon name="chevron-right" [size]="14" />
-    <a routerLink="/projects">{{ t('projects.title') }}</a>
-  </nav>
+  <cog-breadcrumbs
+    [items]="[
+      { label: 'Cognos' },
+      { label: t('settings.title') },
+      { label: t('projects.title') },
+      { label: project()?.decryptedData?.name ?? t('projects.title'), current: true },
+    ]"
+  />
 
   @if (project(); as project) {
     @if (editing()) {
@@ -139,6 +142,8 @@
     }
   } @else {
     <p class="project-detail__missing">{{ t('projects.notFound') }}</p>
-    <a class="project-detail__back" routerLink="/projects">{{ t('projects.back') }}</a>
+    <a class="project-detail__back" routerLink="/account/projects">{{
+      t('projects.back')
+    }}</a>
   }
 </div>
