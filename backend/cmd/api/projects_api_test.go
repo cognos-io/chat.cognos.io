@@ -169,6 +169,31 @@ func TestProjectListOnlyReturnsOwnProjects(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestProjectGetEmbedsCallerKeyWrapping(t *testing.T) {
+	t.Parallel()
+
+	projectID := "ownedproj000010"
+
+	scenario := tests.ApiScenario{
+		Name:           "get project embeds the caller's wrapped project key",
+		Method:         http.MethodGet,
+		URL:            "/api/v1/projects/" + projectID,
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"id":"` + projectID + `"`,
+			// seedOwnedProject stores base64("wrapped") as the wrapping.
+			`"wrapped_project_key":"` + base64.StdEncoding.EncodeToString([]byte("wrapped")) + `"`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedProject(t, app, projectID, "test1@example.com")
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func TestProjectGetOtherUserReturnsNotFound(t *testing.T) {
 	t.Parallel()
 

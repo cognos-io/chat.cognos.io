@@ -19,13 +19,19 @@ import (
 const projectKeyWrappingsCollection = "project_key_wrappings"
 
 type projectRecordResponse struct {
-	ID         string `json:"id"`
-	Created    string `json:"created"`
-	Updated    string `json:"updated"`
-	Data       string `json:"data"`
-	Creator    string `json:"creator,omitempty"`
-	KeyVersion int    `json:"key_version"`
-	ArchivedAt string `json:"archived_at,omitempty"`
+	ID      string `json:"id"`
+	Created string `json:"created"`
+	Updated string `json:"updated"`
+	Data    string `json:"data"`
+	Creator string `json:"creator,omitempty"`
+	// WrappedProjectKey is the symmetric project content key sealed to the
+	// requesting caller's public key, at the project's current key_version.
+	// It is embedded in the response so the client can decrypt `data` in a
+	// single round-trip; only the caller's own secret key can open it, so
+	// returning it to that same authenticated caller leaks nothing.
+	WrappedProjectKey string `json:"wrapped_project_key,omitempty"`
+	KeyVersion        int    `json:"key_version"`
+	ArchivedAt        string `json:"archived_at,omitempty"`
 }
 
 type createProjectRequest struct {
@@ -73,7 +79,13 @@ func ProjectsList(app core.App) func(e *core.RequestEvent) error {
 
 		response := make([]projectRecordResponse, 0, len(records))
 		for _, record := range records {
-			response = append(response, projectRecordToResponse(record))
+			item := projectRecordToResponse(record)
+			wrapped, err := callerWrappedProjectKey(app, record.Id, user.ID, item.KeyVersion)
+			if err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to load project key", err)
+			}
+			item.WrappedProjectKey = wrapped
+			response = append(response, item)
 		}
 
 		return e.JSON(http.StatusOK, response)
@@ -147,17 +159,26 @@ func ProjectsCreate(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to create project", err)
 		}
 
-		return e.JSON(http.StatusCreated, projectRecordToResponse(record))
+		response := projectRecordToResponse(record)
+		response.WrappedProjectKey = req.WrappedProjectKey
+		return e.JSON(http.StatusCreated, response)
 	}
 }
 
 func ProjectsGet(app core.App) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
+		user := auth.ExtractUser(e)
 		record, err := accessibleProjectRecord(app, e, e.Request.PathValue("projectID"))
 		if err != nil {
 			return err
 		}
-		return e.JSON(http.StatusOK, projectRecordToResponse(record))
+		response := projectRecordToResponse(record)
+		wrapped, err := callerWrappedProjectKey(app, record.Id, user.ID, response.KeyVersion)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load project key", err)
+		}
+		response.WrappedProjectKey = wrapped
+		return e.JSON(http.StatusOK, response)
 	}
 }
 
@@ -254,6 +275,23 @@ func activeParticipantProjectIDs(app core.App, userID string) ([]string, error) 
 		ids = append(ids, row.ProjectID)
 	}
 	return ids, nil
+}
+
+// callerWrappedProjectKey returns the project content key sealed to the given
+// user at the given key_version, or an empty string when no wrapper exists
+// (e.g. a participant added before a rotation they haven't been re-wrapped
+// for). A missing wrapper is not an error here — the client treats an empty
+// wrapper as "cannot decrypt yet".
+func callerWrappedProjectKey(app core.App, projectID, userID string, keyVersion int) (string, error) {
+	record, err := app.FindFirstRecordByFilter(
+		projectKeyWrappingsCollection,
+		"project = {:p} && user = {:u} && key_version = {:v}",
+		dbx.Params{"p": projectID, "u": userID, "v": keyVersion},
+	)
+	if err != nil || record == nil {
+		return "", nil
+	}
+	return record.GetString("wrapped_project_key"), nil
 }
 
 func projectRecordToResponse(record *core.Record) projectRecordResponse {
