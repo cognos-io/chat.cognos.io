@@ -356,6 +356,51 @@ export const buildPublicShareFixture = (
   };
 };
 
+export type ProjectFixture = {
+  projectRecord: {
+    id: string;
+    created: string;
+    updated: string;
+    data: string;
+    creator: string;
+    wrapped_project_key: string;
+    key_version: number;
+  };
+  contentKey: Uint8Array;
+};
+
+// buildProjectFixture mirrors what ProjectService writes on create: the
+// metadata encrypted under a random symmetric content key (secretbox), and
+// that content key sealed to the user's public key so the client can recover
+// it on load. Used to assert decrypt-on-load renders the project name.
+export const buildProjectFixture = (
+  userFixture: VaultFixture,
+  projectId: string,
+  name: string,
+  description = '',
+): ProjectFixture => {
+  const contentKey = nacl.randomBytes(nacl.secretbox.keyLength);
+  const encryptedData = secretBox(
+    textEncoder.encode(JSON.stringify({ version: '1', name, description })),
+    contentKey,
+  );
+  const wrappedProjectKey = sealedBox(contentKey, userFixture.userKeyPair.publicKey);
+  const now = new Date().toISOString();
+
+  return {
+    projectRecord: {
+      id: projectId,
+      created: now,
+      updated: now,
+      data: base64(encryptedData),
+      creator: userFixture.authState.model.id,
+      wrapped_project_key: base64(wrappedProjectKey),
+      key_version: 1,
+    },
+    contentKey,
+  };
+};
+
 export const seedAuthenticatedUnlockState = async (
   page: { addInitScript: (...args: unknown[]) => Promise<void> },
   fixture: VaultFixture,
