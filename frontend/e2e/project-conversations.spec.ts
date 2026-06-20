@@ -80,6 +80,52 @@ test('decrypts a project conversation and shows it under the project', async ({
   expect(pageErrors).toEqual([]);
 });
 
+test('shows a Projects group and project chats in the chat sidebar', async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  const userFixture = buildVaultFixture('user_e2e_pc3', 'pc3@example.com');
+  const projectFixture = buildProjectFixture(userFixture, 'proj_pc_3', 'Acme launch');
+  const conversationFixture = buildProjectConversationFixture(
+    projectFixture,
+    'pconv_e2e_side1',
+    'Design notes',
+  );
+
+  await seedAuthenticatedUnlockState(page, userFixture);
+  await seedBaseRoutes(page, userFixture);
+
+  await page.route(`${API}/api/v1/models`, async (route) => {
+    await route.fulfill({
+      json: { privacy_tier: 'eu', preferred_model_id: '', models: [] },
+    });
+  });
+  await page.route(`${API}/api/v1/projects`, async (route) => {
+    await route.fulfill({ json: [projectFixture.projectRecord] });
+  });
+  await page.route(
+    `${API}/api/v1/projects/${projectFixture.projectRecord.id}/conversations`,
+    async (route) => {
+      await route.fulfill({ json: [conversationFixture.record] });
+    },
+  );
+
+  await page.goto('/');
+
+  // The project appears in a "Projects" group, linking to the project page.
+  await expect(page.getByRole('link', { name: 'Acme launch' })).toHaveAttribute(
+    'href',
+    /\/account\/projects\/proj_pc_3$/,
+  );
+
+  // The project chat appears in the recent list (all chats, project or not).
+  await expect(page.getByText('Design notes')).toBeVisible();
+
+  expect(pageErrors).toEqual([]);
+});
+
 test('creates a chat inside a project and opens it', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));

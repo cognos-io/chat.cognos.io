@@ -30,8 +30,12 @@ import { VaultPasswordDialogComponent } from '@app/components/vault-password-dia
 import { BillingService } from '@app/services/billing.service';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
+import { ProjectConversationService } from '@app/services/project-conversation.service';
+import { ProjectService } from '@app/services/project.service';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
+
+import { environment } from '@environments/environment';
 
 import { ConversationService } from '../../services/conversation.service';
 
@@ -71,6 +75,14 @@ export class ChatComponent {
   readonly billing = inject(BillingService);
   readonly device = inject(DeviceService);
   readonly drawerOpen = signal(false);
+
+  // Projects group at the top of the sidebar (flagged while sharing is built).
+  private readonly _projectService = inject(ProjectService);
+  // Injected so its eager-load runs while the chat shell is alive, merging the
+  // user's project conversations into the sidebar list (all chats, recent-first).
+  private readonly _projectConversationService = inject(ProjectConversationService);
+  readonly projectsEnabled = environment.featureFlags.projects;
+  readonly projects = this._projectService.orderedProjects;
 
   // The persona management page renders in the conversation outlet but brings
   // its own header, so the chat header is hidden while it is active.

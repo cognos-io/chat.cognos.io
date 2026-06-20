@@ -64,6 +64,28 @@
   gap: var(--cog-space-050);
 }
 
+// Project rows in the sidebar's "Projects" group — link to the project page.
+.chat-shell__project-item {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-100);
+  padding: var(--cog-space-075) var(--cog-space-100);
+  border-radius: var(--cog-radius-sm);
+  color: var(--cog-text);
+  text-decoration: none;
+  font-size: var(--cog-fs-body-sm);
+}
+
+.chat-shell__project-item:hover {
+  background: var(--cog-surface-hover, rgba(0, 0, 0, 0.04));
+}
+
+.chat-shell__project-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 // Sidebar/drawer footer: account actions + (trial card) + profile, stacked.
 .chat-shell__footer-host,
 .chat-shell__drawer-footer {

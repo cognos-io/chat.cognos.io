@@ -39,6 +39,29 @@
     </div>
   </ng-template>
 
+  <ng-template #navProjects>
+    @if (projectsEnabled && projects().length > 0) {
+      <section class="chat-shell__section">
+        <header class="chat-shell__section-heading">
+          {{ t('chat.list.projects') }}
+        </header>
+        <div class="chat-shell__conversation-list">
+          @for (project of projects(); track project.record.id) {
+            <a
+              class="chat-shell__project-item"
+              [routerLink]="['/account/projects', project.record.id]"
+            >
+              <cog-icon name="folder" [size]="16" tone="current" />
+              <span class="chat-shell__project-name">{{
+                project.decryptedData.name
+              }}</span>
+            </a>
+          }
+        </div>
+      </section>
+    }
+  </ng-template>
+
   <ng-template #navSearch>
     <div class="chat-shell__search">
       <cog-text-field
@@ -88,6 +111,7 @@
 
       <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
       <ng-container *ngTemplateOutlet="navSearch"></ng-container>
+      <ng-container *ngTemplateOutlet="navProjects"></ng-container>
       <ng-container *ngTemplateOutlet="navConversations"></ng-container>
     </div>
   </ng-template>
@@ -141,6 +165,7 @@
       </div>
 
       <div cogMobileDrawer class="chat-shell__drawer-body">
+        <ng-container *ngTemplateOutlet="navProjects"></ng-container>
         <ng-container *ngTemplateOutlet="navConversations"></ng-container>
       </div>
 

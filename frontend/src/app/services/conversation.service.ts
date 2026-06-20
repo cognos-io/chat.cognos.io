@@ -169,17 +169,15 @@ export class ConversationService {
     ],
     selectors: (state) => {
       const filteredConversations = computed(() => {
-        // Project conversations live in the same store so /c/:id selection and
-        // the message flow resolve them, but they are surfaced under their
-        // project — never in the main sidebar list/search.
-        const standalone = state
-          .conversations()
-          .filter((conversation) => !conversation.record.project);
+        // All conversations — project and standalone alike — appear in the
+        // sidebar list, sorted most-recent-first by orderedConversations.
+        // Projects also get their own group at the top of the sidebar.
+        const all = state.conversations();
 
         const filter = state.filter().trim().toLowerCase();
-        if (filter === '') return standalone;
+        if (filter === '') return all;
 
-        return standalone.filter((conversation) =>
+        return all.filter((conversation) =>
           conversation.decryptedData.title.toLowerCase().includes(filter),
         );
       });

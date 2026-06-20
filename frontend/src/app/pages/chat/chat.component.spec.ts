@@ -16,6 +16,8 @@ import { BillingService } from '../../services/billing.service';
 import { ConversationService } from '../../services/conversation.service';
 import { DeviceService } from '../../services/device.service';
 import { MessageService } from '../../services/message.service';
+import { ProjectConversationService } from '../../services/project-conversation.service';
+import { ProjectService } from '../../services/project.service';
 import { PublicShareService } from '../../services/public-share.service';
 import { UserPreferencesService } from '../../services/user-preferences.service';
 import { VaultService } from '../../services/vault.service';
@@ -112,6 +114,8 @@ describe('ChatComponent', () => {
           },
         },
         { provide: ConversationService, useValue: conversationService },
+        { provide: ProjectService, useValue: { orderedProjects: signal([]) } },
+        { provide: ProjectConversationService, useValue: {} },
         { provide: DeviceService, useValue: { isMobile: signal(false) } },
         { provide: MessageService, useValue: messageService },
         { provide: UserPreferencesService, useValue: userPreferencesService },
