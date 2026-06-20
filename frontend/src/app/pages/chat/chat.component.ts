@@ -1,6 +1,5 @@
-import { Dialog, DialogRef } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 
@@ -26,14 +25,13 @@ import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.com
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { SidebarAccountActionsComponent } from '@app/components/sidebar-account-actions/sidebar-account-actions.component';
 import { SidebarBrandComponent } from '@app/components/sidebar-brand/sidebar-brand.component';
-import { VaultPasswordDialogComponent } from '@app/components/vault-password-dialog/vault-password-dialog.component';
+import { VaultUnlockGateDirective } from '@app/directives/vault-unlock-gate.directive';
 import { BillingService } from '@app/services/billing.service';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
 import { ProjectConversationService } from '@app/services/project-conversation.service';
 import { ProjectService } from '@app/services/project.service';
 import { VaultService } from '@app/services/vault.service';
-import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 import { environment } from '@environments/environment';
 
@@ -64,9 +62,9 @@ import { ConversationService } from '../../services/conversation.service';
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
+  hostDirectives: [VaultUnlockGateDirective],
 })
 export class ChatComponent {
-  private readonly _dialog = inject(Dialog);
   private readonly _messageService = inject(MessageService);
   private readonly _vaultService = inject(VaultService);
 
@@ -89,9 +87,6 @@ export class ChatComponent {
   readonly currentUrl = signal(this.router.url);
   readonly isPersonasRoute = computed(() => this.currentUrl().startsWith('/personas'));
 
-  private _vaultDialogRef: DialogRef<unknown, VaultPasswordDialogComponent> | null =
-    null;
-
   readonly isRestoringVault = computed(
     () => this._vaultService.isRestoring() && !this._vaultService.keyPair(),
   );
@@ -113,29 +108,6 @@ export class ChatComponent {
         this.drawerOpen.set(false);
         this.currentUrl.set(this.router.url);
       });
-
-    // Hold the unlock dialog until the persistent-session restore settles, so
-    // returning users with a valid trusted-device session never see a flash of
-    // the unlock form between page load and keyPair becoming available.
-    effect(() => {
-      const keyPair = this._vaultService.keyPair();
-      const restoring = this._vaultService.isRestoring();
-
-      if (keyPair) {
-        this._vaultDialogRef?.close();
-        this._vaultDialogRef = null;
-        return;
-      }
-
-      if (restoring) {
-        return;
-      }
-
-      this._vaultDialogRef ??= this._dialog.open(VaultPasswordDialogComponent, {
-        ...cognosDialogOptions,
-        disableClose: true,
-      });
-    });
   }
 
   onNewConversation() {

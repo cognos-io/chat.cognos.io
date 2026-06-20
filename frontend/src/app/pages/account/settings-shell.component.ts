@@ -25,6 +25,7 @@ import { TrialCreditCardComponent } from '@app/components/chat/trial-credit-card
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { SidebarAccountActionsComponent } from '@app/components/sidebar-account-actions/sidebar-account-actions.component';
 import { SidebarBrandComponent } from '@app/components/sidebar-brand/sidebar-brand.component';
+import { VaultUnlockGateDirective } from '@app/directives/vault-unlock-gate.directive';
 import { FeatureFlag } from '@app/guards/feature-flag.guard';
 import { BillingService } from '@app/services/billing.service';
 import { DeviceService } from '@app/services/device.service';
@@ -67,6 +68,9 @@ interface SettingsNavItem {
     SidebarBrandComponent,
     TranslocoModule,
   ],
+  // Prompt for the Account Key when the vault is locked on any settings route
+  // (e.g. Projects needs it to decrypt) — the chat shell carries the same gate.
+  hostDirectives: [VaultUnlockGateDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ng-container *transloco="let t">
