@@ -1,7 +1,11 @@
 <ng-container *transloco="let t">
   <header class="chat-header">
     @if (breadcrumbs().length) {
-      <cog-breadcrumbs class="chat-header__breadcrumbs" [items]="breadcrumbs()" />
+      <cog-breadcrumbs
+        class="chat-header__breadcrumbs"
+        [items]="breadcrumbs()"
+        (itemSelect)="onBreadcrumb($event)"
+      />
     }
 
     <div class="chat-header__row">

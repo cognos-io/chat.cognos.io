@@ -10,10 +10,12 @@ import { Base64 } from 'js-base64';
 import { Conversation } from '@app/interfaces/conversation';
 import { KeyPair } from '@app/interfaces/key-pair';
 import { Message } from '@app/interfaces/message';
+import { Project } from '@app/interfaces/project';
 import { AuthService } from '@app/services/auth.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
+import { ProjectService } from '@app/services/project.service';
 import { PublicShareService } from '@app/services/public-share.service';
 import { VaultService } from '@app/services/vault.service';
 
@@ -28,6 +30,7 @@ describe('ChatHeaderComponent', () => {
   const selectedConversation = signal<Conversation | undefined>(undefined);
   const temporaryConversation = signal(false);
   const messages = signal<Message[]>([]);
+  const projects = signal<Project[]>([]);
   const keyPair = signal<KeyPair | undefined>(undefined);
   const publicKeyFingerprint = signal('');
   const email = signal('');
@@ -63,6 +66,7 @@ describe('ChatHeaderComponent', () => {
     selectedConversation.set(undefined);
     temporaryConversation.set(false);
     messages.set([]);
+    projects.set([]);
     keyPair.set(undefined);
     publicKeyFingerprint.set('');
     email.set('');
@@ -77,6 +81,7 @@ describe('ChatHeaderComponent', () => {
       providers: [
         provideRouter([]),
         { provide: ConversationService, useValue: conversationService },
+        { provide: ProjectService, useValue: { projects } },
         { provide: MessageService, useValue: messageService },
         { provide: VaultService, useValue: vaultService },
         { provide: AuthService, useValue: authService },
@@ -90,6 +95,7 @@ describe('ChatHeaderComponent', () => {
     component = fixture.componentInstance;
     router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
     fixture.detectChanges();
   });
 
@@ -156,6 +162,39 @@ describe('ChatHeaderComponent', () => {
     expect(component.isShared()).toBe(true);
     expect(fixture.nativeElement.querySelector('.chat-header__shared')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.chat-header__share')).toBeNull();
+  });
+
+  it('renders no breadcrumb for a fresh new chat', () => {
+    expect(component.breadcrumbs()).toEqual([]);
+  });
+
+  it('shows a Cognos / title breadcrumb for a standalone chat', () => {
+    selectedConversation.set(makeConversation('c-1', 'Saved chat'));
+    fixture.detectChanges();
+
+    expect(component.breadcrumbs().map((b) => b.label)).toEqual([
+      'Cognos',
+      'Saved chat',
+    ]);
+    expect(component.breadcrumbs().at(-1)?.current).toBe(true);
+
+    component.onBreadcrumb(0);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/');
+  });
+
+  it('includes the project in the breadcrumb for a project chat and links to it', () => {
+    projects.set([makeProject('proj-1', 'Acme launch')]);
+    selectedConversation.set(makeConversation('c-1', 'Design notes', 'proj-1'));
+    fixture.detectChanges();
+
+    expect(component.breadcrumbs().map((b) => b.label)).toEqual([
+      'Cognos',
+      'Acme launch',
+      'Design notes',
+    ]);
+
+    component.onBreadcrumb(1);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/account/projects/proj-1');
   });
 
   it('disables sharing for a project conversation', () => {
@@ -273,6 +312,20 @@ function makeConversation(id: string, title: string, project?: string): Conversa
       publicKey: new Uint8Array(),
       secretKey: new Uint8Array(),
     },
+  };
+}
+
+function makeProject(id: string, name: string): Project {
+  return {
+    record: {
+      id,
+      created: '2026-01-01T00:00:00.000Z',
+      updated: '2026-01-02T00:00:00.000Z',
+      data: '',
+      key_version: 1,
+    },
+    decryptedData: { version: '1', name, description: '' },
+    contentKey: new Uint8Array(),
   };
 }
 

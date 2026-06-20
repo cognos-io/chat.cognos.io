@@ -34,6 +34,7 @@ import { AuthService } from '@app/services/auth.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
+import { ProjectService } from '@app/services/project.service';
 import { PublicShareService } from '@app/services/public-share.service';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
@@ -69,6 +70,7 @@ export class ChatHeaderComponent {
   private readonly _device = inject(DeviceService);
   private readonly _publicShare = inject(PublicShareService);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _projectService = inject(ProjectService);
 
   readonly conversationService = inject(ConversationService);
 
@@ -119,9 +121,52 @@ export class ChatHeaderComponent {
       : this._transloco.translate('chat.header.newChat');
   });
 
-  // Breadcrumbs only render when a conversation lives inside a project. Projects
-  // do not exist yet, so this stays empty until that feature lands.
-  readonly breadcrumbs = computed<CognosBreadcrumbItem[]>(() => []);
+  // The breadcrumb trail above the title: Cognos → (project, if any) → chat.
+  // Empty until a conversation is loaded (a fresh/temporary chat shows none).
+  // `route` drives navigation via the breadcrumbs' itemSelect output, since the
+  // breadcrumb items themselves only carry a label.
+  private readonly _breadcrumbTrail = computed<{ label: string; route?: string }[]>(
+    () => {
+      const conversation = this.conversationService.conversation();
+      if (!conversation) {
+        return [];
+      }
+
+      const trail: { label: string; route?: string }[] = [
+        { label: 'Cognos', route: '/' },
+      ];
+
+      const projectId = conversation.record.project;
+      if (projectId) {
+        const project = this._projectService
+          .projects()
+          .find((candidate) => candidate.record.id === projectId);
+        trail.push({
+          label:
+            project?.decryptedData.name ?? this._transloco.translate('projects.title'),
+          route: `/account/projects/${projectId}`,
+        });
+      }
+
+      trail.push({ label: this.title() });
+      return trail;
+    },
+  );
+
+  readonly breadcrumbs = computed<CognosBreadcrumbItem[]>(() => {
+    const trail = this._breadcrumbTrail();
+    return trail.map((crumb, index) => ({
+      label: crumb.label,
+      current: index === trail.length - 1,
+    }));
+  });
+
+  onBreadcrumb(index: number): void {
+    const route = this._breadcrumbTrail()[index]?.route;
+    if (route) {
+      this._router.navigateByUrl(route);
+    }
+  }
 
   readonly currentUserName = computed(() =>
     displayNameFromEmail(this._authService.email()),
