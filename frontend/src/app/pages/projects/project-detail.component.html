@@ -131,13 +131,15 @@
             </cog-button>
           </div>
         } @else {
-          <cog-button
-            appearance="subtle"
-            (click)="requestDelete()"
-            data-testid="project-delete"
-          >
-            {{ t('projects.delete') }}
-          </cog-button>
+          <div class="project-detail__actions">
+            <cog-button
+              appearance="danger"
+              (click)="requestDelete()"
+              data-testid="project-delete"
+            >
+              {{ t('projects.delete') }}
+            </cog-button>
+          </div>
         }
       </section>
     }
