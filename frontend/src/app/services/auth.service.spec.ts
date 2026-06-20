@@ -60,6 +60,7 @@ describe('AuthService', () => {
   };
 
   beforeEach(() => {
+    vi.useFakeTimers();
     authChangeHandler = undefined;
     authStore.isValid = false;
     authWithPassword.mockReset();
@@ -92,6 +93,7 @@ describe('AuthService', () => {
 
   afterEach(() => {
     TestBed.resetTestingModule();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -177,6 +179,21 @@ describe('AuthService', () => {
       lastValueFrom(service.changePassword('old-pw', 'a-new-strong-pw')),
     ).rejects.toThrow(/not authenticated/i);
     expect(update).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the auth token after auth state loads post-startup', async () => {
+    const refreshIntervalMs = 1000 * 60 * 5;
+    authRefresh.mockResolvedValue({});
+
+    authStore.isValid = true;
+    authChangeHandler?.('token-123', {
+      id: 'user-1',
+      email: 'person@example.com',
+    });
+
+    await vi.advanceTimersByTimeAsync(refreshIntervalMs);
+
+    expect(authRefresh).toHaveBeenCalledTimes(1);
   });
 
   it('redirects to logout when a stale session refresh returns 401', async () => {

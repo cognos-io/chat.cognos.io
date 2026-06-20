@@ -9,6 +9,7 @@ import {
   Observable,
   Subject,
   catchError,
+  defer,
   from,
   map,
   of,
@@ -113,7 +114,7 @@ export class AuthService implements OnDestroy {
   email = this.state.email;
 
   constructor() {
-    this.checkAndRefreshToken()
+    defer(() => this.checkAndRefreshToken())
       .pipe(
         takeUntilDestroyed(),
         repeat({ delay: 1000 * 60 * 5 }),
