@@ -169,14 +169,19 @@ export class ConversationService {
     ],
     selectors: (state) => {
       const filteredConversations = computed(() => {
-        const filter = state.filter().trim().toLowerCase();
-        if (filter === '') return state.conversations();
-
-        return state
+        // Project conversations live in the same store so /c/:id selection and
+        // the message flow resolve them, but they are surfaced under their
+        // project — never in the main sidebar list/search.
+        const standalone = state
           .conversations()
-          .filter((conversation) =>
-            conversation.decryptedData.title.toLowerCase().includes(filter),
-          );
+          .filter((conversation) => !conversation.record.project);
+
+        const filter = state.filter().trim().toLowerCase();
+        if (filter === '') return standalone;
+
+        return standalone.filter((conversation) =>
+          conversation.decryptedData.title.toLowerCase().includes(filter),
+        );
       });
 
       const orderedConversations = computed(() => {
@@ -291,6 +296,24 @@ export class ConversationService {
       // sidebar reflects the wipe without a refetch.
       clearConversations: (_state, $: Observable<void>) =>
         $.pipe(map(() => ({ conversations: [], selectedConversationId: '' }))),
+      // Merges externally-loaded conversations (notably project conversations,
+      // which the main list endpoint excludes) into the store by id, so the
+      // chat view can select and message them like any other conversation.
+      upsertConversations: (state, $: Observable<Conversation[]>) =>
+        $.pipe(
+          map((incoming) => {
+            const byId = new Map(
+              state().conversations.map((conversation) => [
+                conversation.record.id,
+                conversation,
+              ]),
+            );
+            for (const conversation of incoming) {
+              byId.set(conversation.record.id, conversation);
+            }
+            return { conversations: [...byId.values()] };
+          }),
+        ),
     },
   });
 
@@ -323,6 +346,9 @@ export class ConversationService {
   readonly setConversationTitle = this.state.setConversationTitle;
   readonly isTemporaryConversation = this.state.isTemporaryConversation;
   readonly setIsTemporaryConversation = this.state.setIsTemporaryConversation;
+  // Merge project conversations (loaded by ProjectConversationService) into the
+  // store so the chat view can select and message them.
+  readonly upsertConversations = this.state.upsertConversations;
 
   readonly updateConversationUpdatedTimeNow =
     this.state.updateConversationUpdatedTimeNow;

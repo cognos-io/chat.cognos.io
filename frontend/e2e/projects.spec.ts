@@ -59,6 +59,10 @@ test('creates a project and sees its decrypted name', async ({ page }) => {
     }
     await route.fulfill({ json: [] });
   });
+  // The project detail page eagerly loads each project's conversations.
+  await page.route(`${API}/api/v1/projects/*/conversations`, async (route) => {
+    await route.fulfill({ json: [] });
+  });
 
   await page.goto('/projects');
 
@@ -118,6 +122,9 @@ test('decrypts an existing project on load', async ({ page }) => {
   });
   await page.route(`${API}/api/v1/projects`, async (route) => {
     await route.fulfill({ json: [projectFixture.projectRecord] });
+  });
+  await page.route(`${API}/api/v1/projects/*/conversations`, async (route) => {
+    await route.fulfill({ json: [] });
   });
 
   await page.goto('/projects');

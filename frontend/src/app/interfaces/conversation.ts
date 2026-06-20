@@ -19,6 +19,11 @@ export interface ConversationRecord {
   data: string;
   creator?: string;
   expiry_duration?: string;
+  // When set, the conversation belongs to a project: it is gated by project
+  // membership and kept out of the main sidebar list (it shows under the
+  // project instead). Its key is wrapped by the project content key rather
+  // than per-participant.
+  project?: string;
 }
 
 /**

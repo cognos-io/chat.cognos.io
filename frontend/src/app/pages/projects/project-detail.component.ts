@@ -14,6 +14,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 
 import { CognosButtonComponent, CognosIconComponent } from '@cognos/ui-angular';
 
+import { ProjectConversationService } from '@app/services/project-conversation.service';
 import { ProjectService } from '@app/services/project.service';
 
 @Component({
@@ -32,6 +33,7 @@ import { ProjectService } from '@app/services/project.service';
 })
 export class ProjectDetailComponent {
   private readonly _projects = inject(ProjectService);
+  private readonly _projectConversations = inject(ProjectConversationService);
   private readonly _router = inject(Router);
 
   // Bound from the `:projectId` route param via withComponentInputBinding().
@@ -41,11 +43,18 @@ export class ProjectDetailComponent {
     this._projects.projects().find((project) => project.record.id === this.projectId()),
   );
 
+  protected readonly conversations = computed(() =>
+    this._projectConversations.conversationsFor(this.projectId())(),
+  );
+
   protected readonly editing = signal(false);
   protected readonly confirmingDelete = signal(false);
   protected readonly saving = signal(false);
   protected readonly name = signal('');
   protected readonly description = signal('');
+
+  protected readonly chatName = signal('');
+  protected readonly creatingChat = signal(false);
 
   constructor() {
     // Keep the service's "selected project" in sync with the routed id so
@@ -103,5 +112,28 @@ export class ProjectDetailComponent {
   protected confirmDelete(): void {
     this._projects.deleteProject$.next(this.projectId());
     this._router.navigate(['/', 'projects']);
+  }
+
+  protected openConversation(conversationId: string): void {
+    this._router.navigate(['/', 'c', conversationId]);
+  }
+
+  protected startChat(): void {
+    const project = this.project();
+    if (!project || this.creatingChat()) {
+      return;
+    }
+    const title = this.chatName().trim() || 'New chat';
+    this.creatingChat.set(true);
+    this._projectConversations.create(project, { title }).subscribe({
+      next: (conversation) => {
+        this.creatingChat.set(false);
+        this.chatName.set('');
+        this._router.navigate(['/', 'c', conversation.record.id]);
+      },
+      error: () => {
+        this.creatingChat.set(false);
+      },
+    });
   }
 }

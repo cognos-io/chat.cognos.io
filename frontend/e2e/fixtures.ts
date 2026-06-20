@@ -401,6 +401,55 @@ export const buildProjectFixture = (
   };
 };
 
+export type ProjectConversationFixture = {
+  record: {
+    id: string;
+    created: string;
+    updated: string;
+    data: string;
+    project: string;
+    key_version: number;
+    project_key_version: number;
+    wrapped_conversation_secret_key: string;
+  };
+  conversationKeyPair: nacl.BoxKeyPair;
+};
+
+// buildProjectConversationFixture mirrors what ProjectConversationService
+// writes: the title encrypted with the conversation keypair, and the
+// conversation secret key wrapped (secretbox) by the project content key.
+export const buildProjectConversationFixture = (
+  projectFixture: ProjectFixture,
+  conversationId: string,
+  title: string,
+): ProjectConversationFixture => {
+  const conversationKeyPair = nacl.box.keyPair();
+  const sharedKey = nacl.box.before(
+    conversationKeyPair.publicKey,
+    conversationKeyPair.secretKey,
+  );
+  const encryptedData = box(textEncoder.encode(JSON.stringify({ title })), sharedKey);
+  const wrappedSecretKey = secretBox(
+    conversationKeyPair.secretKey,
+    projectFixture.contentKey,
+  );
+  const now = new Date().toISOString();
+
+  return {
+    record: {
+      id: conversationId,
+      created: now,
+      updated: now,
+      data: base64(encryptedData),
+      project: projectFixture.projectRecord.id,
+      key_version: 1,
+      project_key_version: 1,
+      wrapped_conversation_secret_key: base64(wrappedSecretKey),
+    },
+    conversationKeyPair,
+  };
+};
+
 export const seedAuthenticatedUnlockState = async (
   page: { addInitScript: (...args: unknown[]) => Promise<void> },
   fixture: VaultFixture,

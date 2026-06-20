@@ -53,6 +53,21 @@ export interface Project {
   contentKey: Uint8Array;
 }
 
+// ProjectConversationRecord is the API shape for a conversation inside a
+// project. The conversation secret key is wrapped by the project content key
+// (not per-participant); the client unwraps it to reconstruct the conversation
+// keypair.
+export interface ProjectConversationRecord {
+  id: string;
+  created: string;
+  updated: string;
+  data: string;
+  project: string;
+  key_version: number;
+  project_key_version: number;
+  wrapped_conversation_secret_key: string;
+}
+
 const updatedAtMs = (project: Project): number => {
   const time = parseBackendDate(project.record.updated).getTime();
   return Number.isNaN(time) ? 0 : time;

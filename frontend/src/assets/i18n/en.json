@@ -819,6 +819,8 @@
   "projects": {
     "back": "Back to projects",
     "cancel": "Cancel",
+    "chatNamePlaceholder": "Name this chat (optional)",
+    "conversations": "Chats",
     "create": "Create project",
     "creating": "Creating…",
     "createdLabel": "Created",
@@ -833,6 +835,8 @@
     "nameLabel": "Project name",
     "namePlaceholder": "e.g. Acme launch",
     "new": "New project",
+    "newChat": "New chat",
+    "noConversations": "No chats in this project yet.",
     "notFound": "Project not found.",
     "save": "Save changes",
     "saving": "Saving…",
