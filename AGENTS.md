@@ -35,6 +35,8 @@ approach to ProtonMail which encrypts user emails.
 - ask clarifying questions. minimise assumptions. use the decision maker skill for fast decisions
   but ask if that also is unsure.
 - Write and maintain documentation for humans with poor attention spans.
+- Use i18n and make sure all translations are provided in all supported languages and not just
+  English.
 
 ## Tools
 
