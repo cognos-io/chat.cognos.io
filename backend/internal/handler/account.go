@@ -64,6 +64,24 @@ func AccountDelete(app core.App) func(e *core.RequestEvent) error {
 				}
 			}
 
+			// Projects the user created are removed too — their
+			// participants and key wrappings cascade off each project. (A
+			// later sharing phase will need to reassign ownership instead of
+			// hard-deleting shared projects; today every project is
+			// single-owner.)
+			projects, err := txApp.FindAllRecords(
+				"projects",
+				dbx.HashExp{"creator": user.ID},
+			)
+			if err != nil {
+				return err
+			}
+			for _, record := range projects {
+				if err := txApp.Delete(record); err != nil {
+					return err
+				}
+			}
+
 			return txApp.Delete(userRecord)
 		}); err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to delete account", err)

@@ -330,6 +330,46 @@ func addPocketBaseRoutes(
 	)
 
 	e.Router.GET(
+		"/api/v1/projects",
+		handler.ProjectsList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/projects",
+		handler.ProjectsCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/projects/{projectID}",
+		handler.ProjectsGet(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/projects/{projectID}",
+		handler.ProjectsUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.DELETE(
+		"/api/v1/projects/{projectID}",
+		handler.ProjectsDelete(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
 		"/api/v1/conversations/{conversationID}/participants",
 		handler.ConversationParticipantsList(app),
 	).Bind(

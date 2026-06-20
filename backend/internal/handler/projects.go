@@ -1,0 +1,273 @@
+package handler
+
+import (
+	"net/http"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/projectparticipants"
+	"github.com/pocketbase/dbx"
+	"github.com/pocketbase/pocketbase/apis"
+	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/forms"
+)
+
+// projectKeyWrappingsCollection is the collection holding the symmetric
+// project content key sealed to each participant's public key.
+const projectKeyWrappingsCollection = "project_key_wrappings"
+
+type projectRecordResponse struct {
+	ID         string `json:"id"`
+	Created    string `json:"created"`
+	Updated    string `json:"updated"`
+	Data       string `json:"data"`
+	Creator    string `json:"creator,omitempty"`
+	KeyVersion int    `json:"key_version"`
+	ArchivedAt string `json:"archived_at,omitempty"`
+}
+
+type createProjectRequest struct {
+	// Data is the encrypted project metadata blob (base64). The plaintext
+	// (name/description/settings) is encrypted client-side under the project
+	// content key and never reaches the server.
+	Data string `json:"data"`
+	// WrappedProjectKey is the symmetric project content key sealed to the
+	// creator's own public key (base64). Without it the creator could not
+	// decrypt their own project on a fresh session, so it is mandatory and
+	// written transactionally alongside the project.
+	WrappedProjectKey string `json:"wrapped_project_key"`
+}
+
+type updateProjectRequest struct {
+	Data string `json:"data"`
+	// ArchivedAt, when set to an RFC3339 timestamp, archives the project; an
+	// empty string clears it (unarchive). Operational metadata only — it is
+	// not part of the encrypted blob.
+	ArchivedAt string `json:"archived_at"`
+}
+
+func ProjectsList(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		user := auth.ExtractUser(e)
+		if user == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		projectIDs, err := activeParticipantProjectIDs(app, user.ID)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to list projects", err)
+		}
+		if len(projectIDs) == 0 {
+			return e.JSON(http.StatusOK, []projectRecordResponse{})
+		}
+
+		records, err := app.FindRecordsByIds("projects", projectIDs)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to list projects", err)
+		}
+		sort.Slice(records, func(i, j int) bool {
+			return records[i].GetString("updated") > records[j].GetString("updated")
+		})
+
+		response := make([]projectRecordResponse, 0, len(records))
+		for _, record := range records {
+			response = append(response, projectRecordToResponse(record))
+		}
+
+		return e.JSON(http.StatusOK, response)
+	}
+}
+
+func ProjectsCreate(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		user := auth.ExtractUser(e)
+		if user == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		var req createProjectRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Failed to read request data", err)
+		}
+		req.Data = strings.TrimSpace(req.Data)
+		req.WrappedProjectKey = strings.TrimSpace(req.WrappedProjectKey)
+
+		if req.Data == "" {
+			return apis.NewBadRequestError("Project data is required", nil)
+		}
+		if req.WrappedProjectKey == "" {
+			return apis.NewBadRequestError("wrapped_project_key is required", nil)
+		}
+
+		projectsCollection, err := app.FindCollectionByNameOrId("projects")
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load projects collection", err)
+		}
+		participantsCollection, err := app.FindCollectionByNameOrId(projectparticipants.CollectionName)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load project participants collection", err)
+		}
+		wrappingsCollection, err := app.FindCollectionByNameOrId(projectKeyWrappingsCollection)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load project key wrappings collection", err)
+		}
+
+		record := core.NewRecord(projectsCollection)
+		record.Set("creator", user.ID)
+		record.Set("data", req.Data)
+		record.Set("key_version", 1)
+
+		// All three rows land together or none do: a stranded project with no
+		// creator participant would be invisible (the access check would 404
+		// its own creator), and a project with no key wrapping would be
+		// undecryptable. The transaction makes both impossible.
+		if err := app.RunInTransaction(func(txApp core.App) error {
+			if err := txApp.Save(record); err != nil {
+				return err
+			}
+
+			participantRecord := core.NewRecord(participantsCollection)
+			participantRecord.Set("project", record.Id)
+			participantRecord.Set("user", user.ID)
+			participantRecord.Set("role", string(projectparticipants.RoleAdmin))
+			participantRecord.Set("added_at", time.Now().UTC())
+			if err := txApp.Save(participantRecord); err != nil {
+				return err
+			}
+
+			wrappingRecord := core.NewRecord(wrappingsCollection)
+			wrappingRecord.Set("project", record.Id)
+			wrappingRecord.Set("user", user.ID)
+			wrappingRecord.Set("key_version", 1)
+			wrappingRecord.Set("wrapped_project_key", req.WrappedProjectKey)
+			return txApp.Save(wrappingRecord)
+		}); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to create project", err)
+		}
+
+		return e.JSON(http.StatusCreated, projectRecordToResponse(record))
+	}
+}
+
+func ProjectsGet(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		record, err := accessibleProjectRecord(app, e, e.Request.PathValue("projectID"))
+		if err != nil {
+			return err
+		}
+		return e.JSON(http.StatusOK, projectRecordToResponse(record))
+	}
+}
+
+func ProjectsUpdate(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		record, err := accessibleProjectRecord(app, e, e.Request.PathValue("projectID"))
+		if err != nil {
+			return err
+		}
+
+		var req updateProjectRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Failed to read request data", err)
+		}
+		req.Data = strings.TrimSpace(req.Data)
+		if req.Data == "" {
+			return apis.NewBadRequestError("Project data is required", nil)
+		}
+
+		form := forms.NewRecordUpsert(app, record)
+		form.Load(map[string]any{
+			"data":        req.Data,
+			"archived_at": strings.TrimSpace(req.ArchivedAt),
+		})
+		if err := form.Submit(); err != nil {
+			return apis.NewBadRequestError("Failed to update project", err)
+		}
+
+		return e.JSON(http.StatusOK, projectRecordToResponse(record))
+	}
+}
+
+func ProjectsDelete(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		record, err := accessibleProjectRecord(app, e, e.Request.PathValue("projectID"))
+		if err != nil {
+			return err
+		}
+
+		if err := app.Delete(record); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to delete project", err)
+		}
+
+		return e.NoContent(http.StatusNoContent)
+	}
+}
+
+// accessibleProjectRecord loads a project only when the caller is an active
+// participant. Non-participants get 404 — the same shape a missing project
+// returns — so the response can't be used to probe for project ids.
+func accessibleProjectRecord(app core.App, e *core.RequestEvent, projectID string) (*core.Record, error) {
+	user := auth.ExtractUser(e)
+	if user == nil {
+		return nil, apis.NewUnauthorizedError("User not authenticated", nil)
+	}
+	record, err := app.FindRecordById("projects", projectID)
+	if err != nil {
+		return nil, apis.NewNotFoundError("Project not found", err)
+	}
+	repo := projectparticipants.NewPocketBaseRepo(app)
+	active, err := repo.IsActive(projectID, user.ID)
+	if err != nil {
+		return nil, apis.NewApiError(http.StatusInternalServerError, "Failed to verify project access", err)
+	}
+	if !active {
+		return nil, apis.NewNotFoundError("Project not found", nil)
+	}
+	return record, nil
+}
+
+// activeParticipantProjectIDs returns the project IDs the user can currently
+// access (active participant rows only). Read-side counterpart to
+// projectparticipants.Repo.IsActive.
+func activeParticipantProjectIDs(app core.App, userID string) ([]string, error) {
+	if userID == "" {
+		return nil, nil
+	}
+
+	rows := []struct {
+		ProjectID string `db:"project"`
+	}{}
+
+	if err := app.DB().
+		Select("project").
+		From(projectparticipants.CollectionName).
+		Where(dbx.HashExp{"user": userID}).
+		AndWhere(dbx.NewExp("removed_at = ''")).
+		All(&rows); err != nil {
+		return nil, err
+	}
+
+	ids := make([]string, 0, len(rows))
+	for _, row := range rows {
+		ids = append(ids, row.ProjectID)
+	}
+	return ids, nil
+}
+
+func projectRecordToResponse(record *core.Record) projectRecordResponse {
+	version := record.GetInt("key_version")
+	if version < 1 {
+		version = 1
+	}
+	return projectRecordResponse{
+		ID:         record.Id,
+		Created:    record.GetString("created"),
+		Updated:    record.GetString("updated"),
+		Data:       record.GetString("data"),
+		Creator:    record.GetString("creator"),
+		KeyVersion: version,
+		ArchivedAt: record.GetString("archived_at"),
+	}
+}
