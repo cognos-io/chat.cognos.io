@@ -433,6 +433,41 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	// PII redaction: per-conversation redaction key (independent of the
+	// conversation key) and the sealed token→original mappings. All gated by
+	// active conversation participation in the handlers.
+	e.Router.GET(
+		"/api/v1/conversations/{conversationID}/redaction-key",
+		handler.ConversationRedactionKeyGet(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/conversations/{conversationID}/redaction-key",
+		handler.ConversationRedactionKeyCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/conversations/{conversationID}/redaction-entries",
+		handler.ConversationRedactionEntriesList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/conversations/{conversationID}/redaction-entries",
+		handler.ConversationRedactionEntriesCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	// Public, unauthenticated read surface for shared conversations. Gated by
 	// the existence of a share row for the token, NOT by auth — the URL
 	// fragment (held only by the client) is what decrypts the payload. Rate

@@ -29,6 +29,8 @@ func TestChatCollectionRulesAreLocked(t *testing.T) {
 		{collection: "conversation_secret_keys", ops: []string{"list", "view", "create", "update", "delete"}},
 		{collection: "messages", ops: []string{"list", "view", "create", "update", "delete"}},
 		{collection: "participants", ops: []string{"list", "view", "create", "update", "delete"}},
+		{collection: "conversation_redaction_keys", ops: []string{"list", "view", "create", "update", "delete"}},
+		{collection: "redaction_entries", ops: []string{"list", "view", "create", "update", "delete"}},
 	}
 
 	for _, tc := range cases {
