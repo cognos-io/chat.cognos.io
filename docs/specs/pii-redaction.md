@@ -181,8 +181,13 @@ Cost of not solving it:
     - The textarea content is not live-mutated during typing or paste.
     - The composer shows a count of detected sensitive values before send.
     - A preview of the redacted text is available without revealing values to the backend.
-    - Sending applies the redacted text, creates required mappings, and clears draft-only preview
-    state.
+    - High-confidence (Tier 1) detections are selected for redaction by default; the user can
+    deselect any individual detection to send it raw.
+    - Tier 2 (NLP) detections are shown unselected and require explicit opt-in per item.
+    - Deselecting a detection sends that value in plaintext to the provider; the preview makes this
+    consequence clear.
+    - Sending applies the redacted text for the selected detections only, creates required mappings,
+    and clears draft-only preview state.
 
 ### 6.6 Public sharing modes
 
@@ -286,31 +291,50 @@ stored message data.
 
 ## 8. Detector scope
 
-MVP detectors must prefer high precision over high recall.
+Detectors run in two tiers (see §8.3):
 
-P0 detectors:
+- **Tier 1 (fast, always-on)**: high-precision regex + checksum detectors for structured values.
+  These prefer precision over recall and must not corrupt normal prose. They are `high` confidence.
+- **Tier 2 (slow, opt-in)**: lightweight pure-JS NLP entity hints (`compromise`) for names,
+  organisations, and places. These are `low`/`medium` confidence, advisory, and off by default.
 
-| Type             | Detector notes                                                                  | Normalization                                    |
-| ---------------- | ------------------------------------------------------------------------------- | ------------------------------------------------ |
-| IBAN             | Validate country/check digits where practical; ignore invalid checksum matches. | Uppercase, remove spaces.                        |
-| Email            | Conservative RFC-like practical email pattern.                                  | Lowercase domain; preserve original for display. |
-| Credit card      | Require Luhn check; avoid replacing short number groups.                        | Remove spaces and separators.                    |
-| API/private keys | Detect obvious key prefixes and PEM private-key blocks.                         | Preserve exact original.                         |
+### 8.1 Tier 1 — structured detectors (always-on)
 
-P1 detectors:
+P0 detectors (first slice):
 
-| Type                         | Detector notes                                                                  | Normalization                          |
-| ---------------------------- | ------------------------------------------------------------------------------- | -------------------------------------- |
-| Phone number                 | Conservative international and national patterns; avoid matching arbitrary IDs. | Remove punctuation except leading `+`. |
-| UK National Insurance number | Format validation.                                                              | Uppercase, remove spaces.              |
-| Swiss AHV number             | Format/checksum validation where possible.                                      | Remove separators.                     |
+| Type                         | Detector id  | Detector notes                                                                         | Normalization                                    |
+| ---------------------------- | ------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| IBAN                         | `iban:v1`    | mod-97 checksum via `ibantools`; ignore invalid-checksum matches. Covers Swiss IBAN.   | Uppercase, remove spaces.                        |
+| Email                        | `email:v1`   | Conservative RFC-like pattern; validate via `isEmail`.                                 | Lowercase domain; preserve original for display. |
+| Credit card                  | `cc:v1`      | Require Luhn (`card-validator`); avoid replacing short number groups.                  | Remove spaces and separators.                    |
+| API/private keys             | `secret:v1`  | Obvious key prefixes + PEM private-key blocks (gitleaks-derived rules) + entropy gate. | Preserve exact original.                         |
+| Swiss AHV number             | `ch-ahv:v1`  | `756.XXXX.XXXX.XX` shape + EAN-13 check digit.                                         | Remove separators.                               |
+| UK National Insurance number | `uk-nino:v1` | Format validation; exclude invalid prefixes/suffixes (DWP rules).                      | Uppercase, remove spaces.                        |
 
-Detector rules:
+P1 detectors (later iteration):
+
+| Type         | Detector id | Detector notes                                                                  | Normalization                          |
+| ------------ | ----------- | ------------------------------------------------------------------------------- | -------------------------------------- |
+| Phone number | `phone:v1`  | `libphonenumber-js` `findPhoneNumbersInText`; conservative; avoid arbitrary IDs.| Remove punctuation except leading `+`. |
+
+### 8.2 Tier 2 — NLP entity hints (opt-in)
+
+- Backed by `compromise` (MIT, ~250KB, no model download, returns character offsets).
+- Detects `PERSON`, `ORG`, `PLACE` as advisory candidates with `low`/`medium` confidence.
+- Off by default; the user opts in. Lazy-loaded so the bundle cost is only paid when enabled.
+- Tier 2 candidates are always surfaced in the preview as deselectable, never silently redacted,
+  because of their higher false-positive rate.
+- The detector interface is pluggable so a higher-accuracy ML backend (e.g. GLiNER via WebGPU) can
+  be added later without reworking the engine.
+
+### 8.3 Detector rules
 
 - Detectors must return ranges in the original text.
-- Overlapping detections resolve by highest confidence and longest range.
-- Detectors must include a stable detector id such as `iban:v1`.
-- Low-confidence NLP-style entity recognition is out of scope for the MVP.
+- Each candidate carries a `confidence` (`low` | `medium` | `high`) and a stable `detector` id.
+- Overlapping detections resolve by highest confidence, then longest range.
+- Tier 1 high-confidence candidates are selected for redaction by default; Tier 2 candidates are
+  surfaced but require explicit user selection.
+- All detectors share one `Detector` interface; tiers differ only in cost and confidence.
 
 ## 9. Architecture
 
@@ -389,7 +413,8 @@ id
 conversation
 user
 key_version
-wrapped_key
+public_key
+wrapped_secret_key
 created
 updated
 ```
@@ -399,7 +424,9 @@ Field meanings:
 - `conversation`: relation to `conversations`, cascade delete enabled;
 - `user`: relation to `users`, cascade delete enabled;
 - `key_version`: redaction-key generation;
-- `wrapped_key`: redaction key encrypted/wrapped for the user.
+- `public_key`: the redaction keypair's public key for this generation (base64, denormalized per
+  row; identical across a generation, safe to expose so clients can seal new entries);
+- `wrapped_secret_key`: the redaction secret key wrapped (DH `box`) for this user.
 
 Rules:
 
@@ -456,10 +483,12 @@ Rules:
 
 ### 11.1 Key separation
 
-The redaction key must be separate from the conversation key.
+The redaction key must be **independent random key material**, separate from the conversation key.
 
 Reason: sharing the conversation key for redacted-only public views must not automatically grant the
-ability to decrypt token mappings.
+ability to decrypt token mappings. The redaction key therefore must **not** be derived from the
+conversation key (e.g. `blake2b(conversation_secret || "pii")` is forbidden — a redacted-only public
+reader holds the conversation key and could recompute it).
 
 ```txt
 conversation key → decrypts redacted title/messages
@@ -468,14 +497,21 @@ redaction key    → decrypts placeholder-to-original mappings
 
 ### 11.2 Creation
 
+The redaction key mirrors the existing conversation key model (`crypto.service.ts` +
+`conversation_secret_keys`): a fresh Curve25519 keypair per conversation. Redaction entries are
+sealed to the redaction **public** key (`createSealedBox`), and the redaction **secret** key is
+wrapped per participant via DH `box`, exactly like `conversation_secret_keys`.
+
 When a conversation first needs redaction:
 
-1. Browser generates a random 32-byte redaction key.
-2. Browser wraps the redaction key for each participant receiving mapping access.
-3. Browser stores wrapped keys through the backend.
-4. Browser encrypts redaction entries with the redaction key.
+1. Browser generates a fresh redaction keypair (`cryptoService.newKeyPair()`).
+2. Browser wraps the redaction secret key for each participant receiving mapping access (DH `box`).
+3. Browser stores the redaction public key and per-participant wrapped secret keys through the
+   backend (`conversation_redaction_keys`).
+4. Browser seals redaction-entry payloads to the redaction public key.
 
-If a conversation never uses redaction, no redaction key is required.
+If a conversation never uses redaction, no redaction key is required (lazy creation on first
+detected value).
 
 ### 11.3 Participant add
 
@@ -763,19 +799,29 @@ Hydration:
 | Large pasted text blocks freeze composer                        | Medium | Medium     | Debounce detection and process future document text in chunks.                                              |
 | Raw PII appears in frontend console during debugging            | High   | Medium     | Ban logging of candidates/mappings; test review and lint/code-review checklist for redaction paths.         |
 
-## 22. Open decisions before implementation
+## 22. Decisions (resolved 2026-06-20)
 
-1. **Always-on or user-toggleable**: default recommendation is always-on for high-confidence
-   detectors, with a per-send preview.
-2. **Participant-level mapping permissions**: default recommendation is active participants can
-   decrypt mappings; add separate PII permissions only if product requirements demand it.
-3. **MVP detector list**: default recommendation is IBAN, email, credit-card with Luhn, and obvious
-   API/private keys.
-4. **Historical conversations**: default recommendation is no automatic backfill in the first
-   release.
-5. **Streaming hydration**: decide whether to hydrate streaming assistant deltas live or wait until
-   each message completes. Safer default is hydrate on render with the same display pipeline, not a
-   special streaming mutation path.
+1. **Always-on or user-toggleable** → **Auto-redact with preview + per-item deselect.** Tier 1
+   high-confidence detections are selected by default; the user can deselect any item to send it
+   raw. Tier 2 NLP detections are opt-in per item. The textarea is never live-mutated.
+2. **Phase 2 NLP ambition** → **Lightweight pure-JS (`compromise`), opt-in, lazy-loaded.** Detector
+   interface stays pluggable so a heavier ML backend (GLiNER/WebGPU) can be added later. Piiranha is
+   excluded (non-commercial licence); Presidio is Python-only and not viable in-browser.
+3. **MVP detector list** → IBAN, email, credit-card (Luhn), API/private keys, **Swiss AHV, UK NINo**
+   in P0. Phone number is P1.
+4. **Participant-level mapping permissions**: active participants can decrypt mappings; no separate
+   PII permission tier in this release.
+5. **Historical conversations**: no automatic backfill in the first release.
+6. **Streaming hydration**: hydrate on render with the same display pipeline, not a special
+   streaming mutation path.
+7. **First slice scope** → Phases 1–4 (engine, key/mapping storage, chat integration, public sharing
+   modes). See §11.4 caveat on rotation.
+
+> ⚠️ **Rotation dependency**: conversation key rotation currently does not re-encrypt historical
+> data (`/rotate` is effectively test-only). Coupling redaction-key rotation to it (§11.4) inherits
+> that limitation: rotation rewraps keys for the active set going forward but does not re-seal
+> historical redaction entries. Full rotation hardening is tracked separately and is out of scope
+> for this slice.
 
 ## 23. Implementation checklist
 
