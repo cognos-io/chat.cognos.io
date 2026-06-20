@@ -4,6 +4,38 @@ import { buildVaultFixture, seedAuthenticatedUnlockState } from './fixtures';
 
 const API = 'http://localhost:8090';
 
+const billingResponse = {
+  plan_type: 'trial',
+  status: 'active',
+  balance_chf: 5,
+  trial_seed_chf: 5,
+};
+
+const modelsResponse = {
+  privacy_tier: 'eu',
+  preferred_model_id: 'eu-model',
+  models: [
+    {
+      id: 'eu-model',
+      name: 'EU Model',
+      slug: 'eu-model',
+      provider_id: 'infomaniak',
+      provider_model_id: 'eu-model',
+      description: 'Eligible model',
+      privacy_tier: 'eu',
+      tags: [{ title: 'switzerland' }],
+      content_types: ['text'],
+      input_context_tokens: 64000,
+      max_output_tokens: 8192,
+      pricing: {
+        input_usd_per_million_tokens: 1,
+        output_usd_per_million_tokens: 2,
+      },
+      is_eligible: true,
+    },
+  ],
+};
+
 test('creates an encrypted custom persona through the editor', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -19,12 +51,33 @@ test('creates an encrypted custom persona through the editor', async ({ page }) 
   await page.route(`${API}/api/v1/vault-session`, async (route) => {
     await route.fulfill({ json: userFixture.vaultSession });
   });
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({ json: billingResponse });
+  });
+  await page.route(`${API}/api/v1/models`, async (route) => {
+    await route.fulfill({ json: modelsResponse });
+  });
   await page.route(`${API}/api/v1/user-preferences`, async (route) => {
+    if (route.request().method() === 'POST') {
+      const body = route.request().postDataJSON() as { data: string };
+      await route.fulfill({
+        status: 201,
+        json: { id: 'prefs_editor', data: body.data },
+      });
+      return;
+    }
     await route.fulfill({
       status: 404,
       contentType: 'application/json',
       body: JSON.stringify({ message: 'Not found' }),
     });
+  });
+  await page.route(`${API}/api/v1/user-preferences/prefs_editor`, async (route) => {
+    const body = route.request().postDataJSON() as { data: string };
+    await route.fulfill({ json: { id: 'prefs_editor', data: body.data } });
+  });
+  await page.route(`${API}/api/v1/projects`, async (route) => {
+    await route.fulfill({ json: [] });
   });
   await page.route(`${API}/api/v1/conversations`, async (route) => {
     await route.fulfill({ json: [] });
@@ -92,12 +145,21 @@ test('official personas open read-only and can be duplicated to edit', async ({
   await page.route(`${API}/api/v1/vault-session`, async (route) => {
     await route.fulfill({ json: userFixture.vaultSession });
   });
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({ json: billingResponse });
+  });
+  await page.route(`${API}/api/v1/models`, async (route) => {
+    await route.fulfill({ json: modelsResponse });
+  });
   await page.route(`${API}/api/v1/user-preferences`, async (route) => {
     await route.fulfill({
       status: 404,
       contentType: 'application/json',
       body: JSON.stringify({ message: 'Not found' }),
     });
+  });
+  await page.route(`${API}/api/v1/projects`, async (route) => {
+    await route.fulfill({ json: [] });
   });
   await page.route(`${API}/api/v1/conversations`, async (route) => {
     await route.fulfill({ json: [] });

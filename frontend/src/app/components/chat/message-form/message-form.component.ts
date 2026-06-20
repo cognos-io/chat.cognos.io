@@ -62,7 +62,8 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
     <form
       class="message-form"
       [formGroup]="messageForm"
-      (submit)="sendMessage()"
+      (submit)="onSubmit()"
+      (keydown.escape)="onComposerEscape($event)"
       *transloco="let t"
     >
       @if (billing.isSendingLocked()) {
@@ -117,6 +118,7 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
             id="message-form"
             name="message-form"
             [placeholder]="t('chat.composer.placeholder')"
+            [readOnly]="isStreaming()"
             (keydown.control.enter)="isMac ? undefined : sendMessage()"
             (keydown.meta.enter)="isMac ? sendMessage() : undefined"
           ></textarea>
@@ -199,20 +201,35 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
               />
             }
 
-            <cog-button
-              class="message-form__send"
-              appearance="primary"
-              icon="send"
-              [title]="t('chat.composer.send')"
-              type="submit"
-              [disabled]="
-                messageForm.disabled || !messageForm.valid || !canSendMessage()
-              "
-            >
-              <span class="message-form__send-label">{{
-                t('chat.composer.send')
-              }}</span>
-            </cog-button>
+            @if (isStreaming()) {
+              <cog-button
+                class="message-form__send"
+                appearance="primary"
+                icon="x"
+                [title]="t('chat.composer.stop')"
+                type="button"
+                (click)="stopStreaming()"
+              >
+                <span class="message-form__send-label">{{
+                  t('chat.composer.stop')
+                }}</span>
+              </cog-button>
+            } @else {
+              <cog-button
+                class="message-form__send"
+                appearance="primary"
+                icon="send"
+                [title]="t('chat.composer.send')"
+                type="submit"
+                [disabled]="
+                  messageForm.disabled || !messageForm.valid || !canSendMessage()
+                "
+              >
+                <span class="message-form__send-label">{{
+                  t('chat.composer.send')
+                }}</span>
+              </cog-button>
+            }
           </div>
         </div>
 
@@ -475,6 +492,10 @@ export class MessageFormComponent {
       this.modelService.selectedModel().isEligible && !this.billing.isSendingLocked(),
   );
 
+  readonly isStreaming = computed(
+    () => this.messageService.status() === MessageStatus.Sending,
+  );
+
   messageForm = this._fb.group({
     content: new FormControl('', {
       nonNullable: true,
@@ -501,7 +522,7 @@ export class MessageFormComponent {
 
       switch (status) {
         case MessageStatus.Sending:
-          this.disableForm();
+          this.enableForm();
           break;
         case MessageStatus.Success:
           this._previousMessage = '';
@@ -593,6 +614,15 @@ export class MessageFormComponent {
     }
   }
 
+  onSubmit() {
+    if (this.isStreaming()) {
+      this.stopStreaming();
+      return;
+    }
+
+    this.sendMessage();
+  }
+
   sendMessage() {
     const content = this.messageForm.controls.content;
     const contentValue = content.value ?? '';
@@ -608,6 +638,20 @@ export class MessageFormComponent {
     };
     this.messageService.sendMessage$.next(messageRequest);
     this.messageForm.reset();
+  }
+
+  stopStreaming() {
+    this.messageService.stopActiveCompletion();
+  }
+
+  onComposerEscape(event: Event) {
+    if (!this.isStreaming()) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    this.stopStreaming();
   }
 
   disableForm() {

@@ -714,6 +714,14 @@ export class CognosApiService {
     );
   }
 
+  stopCompletion(requestId: string): Observable<void> {
+    return this._http.post<void>(
+      `${this._baseUrl}/api/v1/completions/${encodeURIComponent(requestId)}/stop`,
+      null,
+      { headers: this.authHeaders() },
+    );
+  }
+
   completeConversationStream(
     conversationId: string,
     request: CompleteRequest,

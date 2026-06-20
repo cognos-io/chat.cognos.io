@@ -450,6 +450,7 @@
       },
       "placeholder": "Mit Cognos schreiben",
       "send": "Senden",
+      "stop": "Stopp",
       "shortcutMac": "Cmd + Enter zum Senden",
       "shortcutOther": "Strg + Enter zum Senden",
       "switchPersona": "Persona wechseln — {{ name }}"

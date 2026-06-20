@@ -43,6 +43,7 @@ type appHookParams struct {
 	FXRateProvider          billing.FXRateProvider
 	UsageEmitter            analytics.Emitter
 	CompleteBillingGate     handler.CompleteBillingGateFunc
+	CompletionStopper       *handler.CompletionStopper
 	CatalogueService        catalogue.Service
 	PaddleClient            paddle.Client
 }
@@ -211,6 +212,11 @@ func bindAppHooks(
 			}
 		}
 
+		completionStopper := params.CompletionStopper
+		if completionStopper == nil {
+			completionStopper = handler.NewCompletionStopper()
+		}
+
 		addPocketBaseRoutes(
 			e,
 			app,
@@ -226,6 +232,7 @@ func bindAppHooks(
 			fxRateProvider,
 			usageEmitter,
 			params.CompleteBillingGate,
+			completionStopper,
 			paddleClient,
 			paddlePrices,
 			paddleWebhookSecret,

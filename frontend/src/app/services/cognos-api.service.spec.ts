@@ -1,10 +1,55 @@
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
+import PocketBase from 'pocketbase';
+
 import { describe, expect, it } from 'vitest';
 
 import {
+  CognosApiService,
   mapCompleteRequest,
   mapCompleteResponse,
   parseCompleteStreamData,
 } from './cognos-api.service';
+
+describe('CognosApiService', () => {
+  it('posts explicit completion stops with auth', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        CognosApiService,
+        {
+          provide: PocketBase,
+          useValue: {
+            authStore: {
+              token: 'test-token',
+            },
+          },
+        },
+      ],
+    });
+
+    const service = TestBed.inject(CognosApiService);
+    const httpController = TestBed.inject(HttpTestingController);
+
+    service.stopCompletion('req/with spaces').subscribe();
+
+    const request = httpController.expectOne(
+      'http://localhost:8090/api/v1/completions/req%2Fwith%20spaces/stop',
+    );
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toBeNull();
+    expect(request.request.headers.get('Authorization')).toBe('Bearer test-token');
+    request.flush(null);
+    httpController.verify();
+    TestBed.resetTestingModule();
+  });
+});
 
 describe('mapCompleteRequest', () => {
   it('maps camelCase request fields onto the wire snake_case shape', () => {

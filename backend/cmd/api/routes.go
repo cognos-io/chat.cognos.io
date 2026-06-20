@@ -114,6 +114,7 @@ func addPocketBaseRoutes(
 	fxRateProvider billing.FXRateProvider,
 	usageEmitter analytics.Emitter,
 	completeBillingGate handler.CompleteBillingGateFunc,
+	completionStopper *handler.CompletionStopper,
 	paddleClient paddle.Client,
 	paddlePrices map[string]string,
 	paddleWebhookSecret string,
@@ -487,6 +488,7 @@ func addPocketBaseRoutes(
 		FXRateProvider:      fxRateProvider,
 		UsageEmitter:        usageEmitter,
 		CompleteBillingGate: completeBillingGate,
+		CompletionStopper:   completionStopper,
 		App:                 app,
 	}
 
@@ -637,6 +639,14 @@ func addPocketBaseRoutes(
 	e.Router.POST(
 		"/api/v1/completions",
 		handler.Complete(completeParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/completions/{requestID}/stop",
+		handler.StopCompletion(completionStopper),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),

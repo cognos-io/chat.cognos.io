@@ -48,11 +48,13 @@ type CompletionMockOptions = {
   userPrompt: string;
   assistantContent: string;
   disconnectAfterFirstDelta?: boolean;
+  stopAfterFirstDelta?: boolean;
 };
 
 type CompletionMock = {
   server: Server;
   port: number;
+  requestStop: () => void;
   waitForPersisted: () => Promise<void>;
   getPersistedMessages: () => MessageRecordFixture[];
 };
@@ -90,8 +92,10 @@ const createCompletionMock = (options: CompletionMockOptions): CompletionMock =>
     userPrompt,
     assistantContent,
     disconnectAfterFirstDelta = false,
+    stopAfterFirstDelta = false,
   } = options;
 
+  let stopRequested = false;
   let persistedMessages: MessageRecordFixture[] = [];
   let resolvePersisted: (() => void) | undefined;
   const persistedPromise = new Promise<void>((resolve) => {
@@ -155,6 +159,44 @@ const createCompletionMock = (options: CompletionMockOptions): CompletionMock =>
         return;
       }
 
+      if (stopAfterFirstDelta) {
+        const interval = setInterval(() => {
+          if (!stopRequested) {
+            return;
+          }
+          clearInterval(interval);
+          response.end(
+            `data: ${JSON.stringify({
+              type: 'complete',
+              response: {
+                user_message_id: `msg_user_${conversationFixture.conversationRecord.id}`,
+                assistant_message: {
+                  id: `msg_assistant_${conversationFixture.conversationRecord.id}`,
+                  parent_message_id: `msg_user_${conversationFixture.conversationRecord.id}`,
+                  content: assistantContent,
+                  persona_id: 'cognos:simple-assistant',
+                  model_id: 'eu-model',
+                  created_at: '2026-06-07T00:00:00Z',
+                },
+                usage: {
+                  input_tokens: 12,
+                  output_tokens: 2,
+                  total_tokens: 14,
+                  cache_creation_input_tokens: 0,
+                  cache_read_input_tokens: 0,
+                  cost_usd: 0.01,
+                  cost_chf: 0.01,
+                  cost_rappen: 1,
+                  used_provider_cost: true,
+                },
+              },
+            })}\n\n`,
+          );
+          persistCompletedExchange();
+        }, 25);
+        return;
+      }
+
       response.write(
         `data: ${JSON.stringify({ type: 'delta', delta: 'the streamed backend' })}\n\n`,
       );
@@ -195,6 +237,9 @@ const createCompletionMock = (options: CompletionMockOptions): CompletionMock =>
   return {
     server,
     port: 0,
+    requestStop: () => {
+      stopRequested = true;
+    },
     waitForPersisted: async () => {
       await persistedPromise;
     },
@@ -367,6 +412,156 @@ test('switching conversations during streaming does not leak content or errors',
     await expect(page.getByText('Hello from switch e2e')).toBeVisible();
     await expect(page.getByText('Hi from the streamed backend')).toBeVisible();
     await expect(page.locator('.message-list-item__streaming')).toHaveCount(0);
+  } finally {
+    await closeServer(completionMock.server);
+  }
+});
+
+test('stop button cancels streaming and keeps the partial response', async ({
+  page,
+}) => {
+  const userFixture = buildVaultFixture('user_e2e_stop', 'stop@example.com');
+  const conversationFixture = buildConversationFixture(
+    userFixture,
+    'conv_e2e_stop',
+    'Stop conversation',
+  );
+
+  const messageLists: Record<string, MessageRecordFixture[]> = {
+    [conversationFixture.conversationRecord.id]: [],
+  };
+
+  const completionMock = createCompletionMock({
+    conversationFixture,
+    userFixture,
+    userPrompt: 'Hello then stop',
+    assistantContent: 'Hi from ',
+    stopAfterFirstDelta: true,
+  });
+
+  try {
+    completionMock.port = await listen(completionMock.server);
+    await seedCommonRoutes(page, userFixture, [conversationFixture], messageLists);
+
+    await page.route(
+      `http://localhost:8090/api/v1/conversations/${conversationFixture.conversationRecord.id}/complete`,
+      async (route) => {
+        await route.continue({
+          url: `http://127.0.0.1:${completionMock.port}/stream`,
+        });
+      },
+    );
+
+    let stopRequests = 0;
+    await page.route(
+      'http://localhost:8090/api/v1/completions/*/stop',
+      async (route) => {
+        stopRequests++;
+        completionMock.requestStop();
+        await route.fulfill({ status: 204, body: '' });
+      },
+    );
+
+    await page.goto(`/c/${conversationFixture.conversationRecord.id}`);
+
+    await expect(
+      page.getByRole('heading', { name: 'Stop conversation' }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'EU Model' })).toBeVisible();
+
+    const composer = page.getByLabel(
+      'Message Cognos — stored encrypted; sent to your provider to reply',
+    );
+    await composer.fill('Hello then stop');
+    await page.getByRole('button', { name: 'Send' }).click();
+
+    await expect(page.getByText('Hello then stop')).toBeVisible();
+    await expect(page.locator('.message-list-item__streaming').last()).toContainText(
+      'Hi from',
+    );
+
+    await page.getByRole('button', { name: 'Stop' }).click();
+
+    await completionMock.waitForPersisted();
+    messageLists[conversationFixture.conversationRecord.id] =
+      completionMock.getPersistedMessages();
+
+    await expect(page.getByText('Hi from')).toBeVisible();
+    await expect(page.locator('.message-list-item__streaming')).toHaveCount(0);
+    await expect(page.getByText('Something went wrong')).toHaveCount(0);
+    expect(stopRequests).toBe(1);
+  } finally {
+    await closeServer(completionMock.server);
+  }
+});
+
+test('Escape in the composer stops an active stream', async ({ page }) => {
+  const userFixture = buildVaultFixture(
+    'user_e2e_escape_stop',
+    'escape-stop@example.com',
+  );
+  const conversationFixture = buildConversationFixture(
+    userFixture,
+    'conv_e2e_escape_stop',
+    'Escape stop conversation',
+  );
+
+  const messageLists: Record<string, MessageRecordFixture[]> = {
+    [conversationFixture.conversationRecord.id]: [],
+  };
+
+  const completionMock = createCompletionMock({
+    conversationFixture,
+    userFixture,
+    userPrompt: 'Hello then escape',
+    assistantContent: 'Hi from ',
+    stopAfterFirstDelta: true,
+  });
+
+  try {
+    completionMock.port = await listen(completionMock.server);
+    await seedCommonRoutes(page, userFixture, [conversationFixture], messageLists);
+
+    await page.route(
+      `http://localhost:8090/api/v1/conversations/${conversationFixture.conversationRecord.id}/complete`,
+      async (route) => {
+        await route.continue({
+          url: `http://127.0.0.1:${completionMock.port}/stream`,
+        });
+      },
+    );
+
+    let stopRequests = 0;
+    await page.route(
+      'http://localhost:8090/api/v1/completions/*/stop',
+      async (route) => {
+        stopRequests++;
+        completionMock.requestStop();
+        await route.fulfill({ status: 204, body: '' });
+      },
+    );
+
+    await page.goto(`/c/${conversationFixture.conversationRecord.id}`);
+
+    const composer = page.getByLabel(
+      'Message Cognos — stored encrypted; sent to your provider to reply',
+    );
+    await composer.fill('Hello then escape');
+    await page.getByRole('button', { name: 'Send' }).click();
+
+    await expect(page.locator('.message-list-item__streaming').last()).toContainText(
+      'Hi from',
+    );
+
+    await composer.press('Escape');
+
+    await completionMock.waitForPersisted();
+    messageLists[conversationFixture.conversationRecord.id] =
+      completionMock.getPersistedMessages();
+
+    await expect(page.getByText('Hi from')).toBeVisible();
+    await expect(page.locator('.message-list-item__streaming')).toHaveCount(0);
+    expect(stopRequests).toBe(1);
   } finally {
     await closeServer(completionMock.server);
   }

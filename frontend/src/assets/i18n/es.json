@@ -450,6 +450,7 @@
       },
       "placeholder": "Escribe con Cognos",
       "send": "Enviar",
+      "stop": "Detener",
       "shortcutMac": "Cmd + Intro para enviar",
       "shortcutOther": "Ctrl + Intro para enviar",
       "switchPersona": "Cambiar de persona — {{ name }}"

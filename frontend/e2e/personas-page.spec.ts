@@ -4,6 +4,38 @@ import { buildVaultFixture, seedAuthenticatedUnlockState } from './fixtures';
 
 const API = 'http://localhost:8090';
 
+const billingResponse = {
+  plan_type: 'trial',
+  status: 'active',
+  balance_chf: 5,
+  trial_seed_chf: 5,
+};
+
+const modelsResponse = {
+  privacy_tier: 'eu',
+  preferred_model_id: 'eu-model',
+  models: [
+    {
+      id: 'eu-model',
+      name: 'EU Model',
+      slug: 'eu-model',
+      provider_id: 'infomaniak',
+      provider_model_id: 'eu-model',
+      description: 'Eligible model',
+      privacy_tier: 'eu',
+      tags: [{ title: 'switzerland' }],
+      content_types: ['text'],
+      input_context_tokens: 64000,
+      max_output_tokens: 8192,
+      pricing: {
+        input_usd_per_million_tokens: 1,
+        output_usd_per_million_tokens: 2,
+      },
+      is_eligible: true,
+    },
+  ],
+};
+
 test('browses, searches, activates and pins personas on the personas page', async ({
   page,
 }) => {
@@ -19,6 +51,15 @@ test('browses, searches, activates and pins personas on the personas page', asyn
   });
   await page.route(`${API}/api/v1/vault-session`, async (route) => {
     await route.fulfill({ json: userFixture.vaultSession });
+  });
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({ json: billingResponse });
+  });
+  await page.route(`${API}/api/v1/models`, async (route) => {
+    await route.fulfill({ json: modelsResponse });
+  });
+  await page.route(`${API}/api/v1/projects`, async (route) => {
+    await route.fulfill({ json: [] });
   });
   await page.route(`${API}/api/v1/personas`, async (route) => {
     await route.fulfill({ json: { items: [] } });
@@ -100,12 +141,18 @@ test('keeps the chat sidebar and closes on Escape', async ({ page }) => {
   await page.route(`${API}/api/v1/vault-session`, async (route) => {
     await route.fulfill({ json: userFixture.vaultSession });
   });
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({ json: billingResponse });
+  });
   await page.route(`${API}/api/v1/user-preferences`, async (route) => {
     await route.fulfill({
       status: 404,
       contentType: 'application/json',
       body: JSON.stringify({ message: 'Not found' }),
     });
+  });
+  await page.route(`${API}/api/v1/projects`, async (route) => {
+    await route.fulfill({ json: [] });
   });
   await page.route(`${API}/api/v1/conversations`, async (route) => {
     await route.fulfill({ json: [] });
@@ -114,32 +161,7 @@ test('keeps the chat sidebar and closes on Escape', async ({ page }) => {
     await route.fulfill({ json: { items: [] } });
   });
   await page.route(`${API}/api/v1/models`, async (route) => {
-    await route.fulfill({
-      json: {
-        privacy_tier: 'eu',
-        preferred_model_id: 'eu-model',
-        models: [
-          {
-            id: 'eu-model',
-            name: 'EU Model',
-            slug: 'eu-model',
-            provider_id: 'infomaniak',
-            provider_model_id: 'eu-model',
-            description: 'Eligible model',
-            privacy_tier: 'eu',
-            tags: [{ title: 'switzerland' }],
-            content_types: ['text'],
-            input_context_tokens: 64000,
-            max_output_tokens: 8192,
-            pricing: {
-              input_usd_per_million_tokens: 1,
-              output_usd_per_million_tokens: 2,
-            },
-            is_eligible: true,
-          },
-        ],
-      },
-    });
+    await route.fulfill({ json: modelsResponse });
   });
 
   // Start on the chat home and open personas via the "All" chip.

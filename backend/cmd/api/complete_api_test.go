@@ -7,14 +7,17 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/analytics"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/pocketbase/dbx"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 	"golang.org/x/crypto/nacl/box"
@@ -427,6 +430,140 @@ func TestConversationCompleteStreamPersistsAndBillsAfterClientDisconnect(t *test
 	}
 
 	scenario.Test(t)
+}
+
+func TestConversationCompleteStopCancelsUpstreamAndPersistsPartial(t *testing.T) {
+	conversationID := "convstop0000001"
+	requestID := "req-stop-1"
+	var conversationPublicKey [32]byte
+
+	started := make(chan struct{})
+	ctxCancelled := make(chan struct{})
+	gatewayClient := &gateway.MockClient{
+		CompleteStreamFunc: func(ctx context.Context, req gateway.CompleteRequest) (<-chan gateway.CompleteStreamEvent, error) {
+			if req.ProviderID != "infomaniak" {
+				t.Fatalf("CompleteStream() ProviderID = %q, want %q", req.ProviderID, "infomaniak")
+			}
+			out := make(chan gateway.CompleteStreamEvent)
+			go func() {
+				defer close(out)
+				close(started)
+				out <- gateway.CompleteStreamEvent{Delta: "partial answer"}
+				<-ctx.Done()
+				close(ctxCancelled)
+			}()
+			return out, nil
+		},
+	}
+
+	app := setupTestAppWithHookParams(t, appHookParams{
+		GatewayClient:  gatewayClient,
+		BillingService: billing.NewService(),
+		ConversationRepo: stubConversationRepo{
+			byID: func(id string) (chat.Conversation, error) {
+				return chat.Conversation{ID: id, PublicKey: conversationPublicKey}, nil
+			},
+		},
+	})
+	defer app.Cleanup()
+	conversationPublicKey = seedConversationRecord(t, app, conversationID)
+
+	baseRouter, err := apis.NewRouter(app)
+	if err != nil {
+		t.Fatalf("apis.NewRouter: %v", err)
+	}
+
+	var mux http.Handler
+	serveEvent := &core.ServeEvent{App: app, Router: baseRouter}
+	if err := app.OnServe().Trigger(serveEvent, func(e *core.ServeEvent) error {
+		withRecordAuth("users", "test1@example.com")(t, app, e)
+		built, err := e.Router.BuildMux()
+		mux = built
+		return err
+	}); err != nil {
+		t.Fatalf("OnServe trigger: %v", err)
+	}
+
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	type completionResult struct {
+		status int
+		body   string
+		err    error
+	}
+	completionDone := make(chan completionResult, 1)
+	go func() {
+		resp, err := http.Post(
+			server.URL+"/api/v1/conversations/"+conversationID+"/complete",
+			"application/json",
+			strings.NewReader(`{"model_id":"llama-3-3-infomaniak","persona_id":"cognos:simple-assistant","system_prompt":"test persona prompt","request_id":"`+requestID+`","messages":[{"role":"user","content":"hello there"}]}`),
+		)
+		if err != nil {
+			completionDone <- completionResult{err: err}
+			return
+		}
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		completionDone <- completionResult{status: resp.StatusCode, body: string(body), err: err}
+	}()
+
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("CompleteStream() did not start")
+	}
+
+	stopResp, err := http.Post(
+		server.URL+"/api/v1/completions/"+requestID+"/stop",
+		"application/json",
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("POST stop error = %v", err)
+	}
+	defer stopResp.Body.Close()
+	if stopResp.StatusCode != http.StatusNoContent {
+		body, _ := io.ReadAll(stopResp.Body)
+		t.Fatalf("POST stop status = %d, want %d — body: %s", stopResp.StatusCode, http.StatusNoContent, body)
+	}
+
+	select {
+	case <-ctxCancelled:
+	case <-time.After(time.Second):
+		t.Fatal("upstream context was not cancelled")
+	}
+
+	var result completionResult
+	select {
+	case result = <-completionDone:
+	case <-time.After(time.Second):
+		t.Fatal("completion stream did not finish after stop")
+	}
+	if result.err != nil {
+		t.Fatalf("completion request error = %v", result.err)
+	}
+	if result.status != http.StatusOK {
+		t.Fatalf("completion status = %d, want %d — body: %s", result.status, http.StatusOK, result.body)
+	}
+	if !strings.Contains(result.body, `"type":"complete"`) || !strings.Contains(result.body, `"content":"partial answer"`) {
+		t.Fatalf("completion body missing partial complete response, got %q", result.body)
+	}
+
+	records, err := app.FindRecordsByFilter(
+		"messages",
+		"conversation={:conversation}",
+		"",
+		10,
+		0,
+		dbx.Params{"conversation": conversationID},
+	)
+	if err != nil {
+		t.Fatalf("FindRecordsByFilter(messages) error = %v", err)
+	}
+	if len(records) != 2 {
+		t.Fatalf("FindRecordsByFilter(messages) len = %d, want %d", len(records), 2)
+	}
 }
 
 func TestCompletionsTemporaryDoesNotPersistMessages(t *testing.T) {

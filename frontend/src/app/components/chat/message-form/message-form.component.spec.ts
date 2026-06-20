@@ -32,6 +32,7 @@ describe('MessageFormComponent', () => {
     status,
     messages,
     sendMessage$: { next: vi.fn() },
+    stopActiveCompletion: vi.fn(),
     resetState: vi.fn(),
   };
 
@@ -112,13 +113,52 @@ describe('MessageFormComponent', () => {
 
     status.set(MessageStatus.Sending);
     fixture.detectChanges();
-    expect(component.messageForm.disabled).toBe(true);
+    expect(component.messageForm.disabled).toBe(false);
+    expect(
+      (fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement).readOnly,
+    ).toBe(true);
 
     status.set(MessageStatus.ErrorSending);
     fixture.detectChanges();
 
     expect(component.messageForm.disabled).toBe(false);
     expect(component.messageForm.controls.content.value).toBe('Retry me');
+  });
+
+  it('shows a stop action while a completion is streaming', () => {
+    status.set(MessageStatus.Sending);
+    fixture.detectChanges();
+
+    const stopButton = Array.from(
+      fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
+    ).find((button) => button.textContent?.includes('Stop')) as HTMLButtonElement;
+
+    expect(stopButton).toBeTruthy();
+
+    stopButton.click();
+
+    expect(messageService.stopActiveCompletion).toHaveBeenCalledTimes(1);
+    expect(messageService.sendMessage$.next).not.toHaveBeenCalled();
+  });
+
+  it('stops streaming on Escape from inside the composer only while streaming', () => {
+    const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+
+    form.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(messageService.stopActiveCompletion).not.toHaveBeenCalled();
+
+    status.set(MessageStatus.Sending);
+    fixture.detectChanges();
+
+    const event = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    form.dispatchEvent(event);
+
+    expect(messageService.stopActiveCompletion).toHaveBeenCalledTimes(1);
+    expect(event.defaultPrevented).toBe(true);
   });
 
   it('does not send when the selected model is unavailable', () => {

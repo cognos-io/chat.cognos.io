@@ -421,6 +421,7 @@ export class MessageService {
   private readonly _vaultService = inject(VaultService);
 
   private _activeCompletionAbort: AbortController | null = null;
+  private _activeCompletionRequestId = '';
   private _intentionalCompletionAbort = false;
 
   private readonly pageSize = 100;
@@ -878,6 +879,7 @@ export class MessageService {
     this.abortActiveCompletion();
     const abortController = new AbortController();
     this._activeCompletionAbort = abortController;
+    this._activeCompletionRequestId = messageRequest.requestId;
 
     this.state.setStatus(MessageStatus.Sending);
 
@@ -973,6 +975,7 @@ export class MessageService {
       finalize(() => {
         if (this._activeCompletionAbort === abortController) {
           this._activeCompletionAbort = null;
+          this._activeCompletionRequestId = '';
         }
         if (
           !completed &&
@@ -1015,6 +1018,7 @@ export class MessageService {
     this.state.setStatus(MessageStatus.Sending);
 
     const requestId = self.crypto.randomUUID();
+    this._activeCompletionRequestId = requestId;
     const selectedPersona = this._personaService.selectedPersona();
     const request = {
       messages: this.buildContextFromPath([...contextPath].reverse()),
@@ -1117,6 +1121,7 @@ export class MessageService {
       finalize(() => {
         if (this._activeCompletionAbort === abortController) {
           this._activeCompletionAbort = null;
+          this._activeCompletionRequestId = '';
         }
         if (
           !completed &&
@@ -1199,6 +1204,18 @@ export class MessageService {
     this._errorService.alert(resolveCompletionFailureMessage(err));
   }
 
+  stopActiveCompletion(): void {
+    const requestId = this._activeCompletionRequestId;
+    if (!requestId || this.status() !== MessageStatus.Sending) {
+      return;
+    }
+
+    this._api
+      .stopCompletion(requestId)
+      .pipe(catchError(() => EMPTY))
+      .subscribe();
+  }
+
   private abortActiveCompletion(): void {
     if (!this._activeCompletionAbort) {
       return;
@@ -1207,6 +1224,7 @@ export class MessageService {
     this._intentionalCompletionAbort = true;
     this._activeCompletionAbort.abort();
     this._activeCompletionAbort = null;
+    this._activeCompletionRequestId = '';
   }
 
   private consumeIntentionalCompletionAbort(): boolean {

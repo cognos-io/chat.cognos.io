@@ -450,6 +450,7 @@
       },
       "placeholder": "Message with Cognos",
       "send": "Send",
+      "stop": "Stop",
       "shortcutMac": "Cmd + Enter to send",
       "shortcutOther": "Ctrl + Enter to send",
       "switchPersona": "Switch persona — {{ name }}"

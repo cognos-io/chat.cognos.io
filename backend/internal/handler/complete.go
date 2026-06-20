@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -88,6 +89,53 @@ type completeResponse struct {
 
 const completeStreamHeartbeatInterval = 15 * time.Second
 
+type CompletionStopper struct {
+	mu      sync.Mutex
+	cancels map[string]context.CancelFunc
+}
+
+func NewCompletionStopper() *CompletionStopper {
+	return &CompletionStopper{cancels: map[string]context.CancelFunc{}}
+}
+
+func (s *CompletionStopper) Register(ownerID string, requestID string, cancel context.CancelFunc) func() {
+	if s == nil || ownerID == "" || requestID == "" || cancel == nil {
+		return func() {}
+	}
+
+	key := completionStopKey(ownerID, requestID)
+	s.mu.Lock()
+	s.cancels[key] = cancel
+	s.mu.Unlock()
+
+	return func() {
+		s.mu.Lock()
+		delete(s.cancels, key)
+		s.mu.Unlock()
+	}
+}
+
+func (s *CompletionStopper) Stop(ownerID string, requestID string) bool {
+	if s == nil || ownerID == "" || requestID == "" {
+		return false
+	}
+
+	key := completionStopKey(ownerID, requestID)
+	s.mu.Lock()
+	cancel := s.cancels[key]
+	s.mu.Unlock()
+
+	if cancel == nil {
+		return false
+	}
+	cancel()
+	return true
+}
+
+func completionStopKey(ownerID string, requestID string) string {
+	return ownerID + ":" + requestID
+}
+
 type completeStreamResponse struct {
 	Type     string            `json:"type"`
 	Delta    string            `json:"delta,omitempty"`
@@ -107,6 +155,7 @@ type CompleteHandlerParams struct {
 	FXRateProvider      billing.FXRateProvider
 	UsageEmitter        analytics.Emitter
 	CompleteBillingGate CompleteBillingGateFunc
+	CompletionStopper   *CompletionStopper
 	// App backs conversation-scoped access checks. When set,
 	// /api/v1/conversations/{id}/complete returns 404 to callers who cannot
 	// access the target conversation — gated by project membership for project
@@ -130,6 +179,26 @@ func CompleteConversation(params CompleteHandlerParams) func(e *core.RequestEven
 // previous response to the same message.
 func RegenerateConversation(params CompleteHandlerParams) func(e *core.RequestEvent) error {
 	return complete(params, true, true)
+}
+
+func StopCompletion(stopper *CompletionStopper) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		owner := auth.ExtractUser(e)
+		if owner == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		requestID := strings.TrimSpace(e.Request.PathValue("requestID"))
+		if requestID == "" {
+			return apis.NewBadRequestError("Request ID is required", nil)
+		}
+
+		if stopper != nil {
+			stopper.Stop(owner.ID, requestID)
+		}
+
+		return e.NoContent(http.StatusNoContent)
+	}
 }
 
 func complete(params CompleteHandlerParams, useConversationPath bool, regenerate bool) func(e *core.RequestEvent) error {
@@ -324,7 +393,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			MaxOutputTokens: req.MaxOutputTokens,
 		}
 
-		gatewayResp, clientDisconnected, err := streamGatewayCompletion(e, params, gatewayReq)
+		gatewayResp, clientDisconnected, _, err := streamGatewayCompletion(e, params, gatewayReq, owner.ID, req.RequestID)
 		if err != nil {
 			if userMessageRecord != nil {
 				if deleteErr := params.MessageRepo.DeleteMessage(userMessageRecord.Id); deleteErr != nil {
@@ -468,11 +537,20 @@ func streamGatewayCompletion(
 	e *core.RequestEvent,
 	params CompleteHandlerParams,
 	req gateway.CompleteRequest,
-) (gateway.CompleteResponse, bool, error) {
+	ownerID string,
+	requestID string,
+) (gateway.CompleteResponse, bool, bool, error) {
 	// Detach from the client request context so a tab close or network drop
 	// does not cancel the upstream LLM call. We still finish the completion,
-	// persist the full assistant message, and record billing.
+	// persist the full assistant message, and record billing. Explicit user stop
+	// requests get their own cancellable child context.
 	streamCtx := context.WithoutCancel(e.Request.Context())
+	if params.CompletionStopper != nil && requestID != "" {
+		var cancel context.CancelFunc
+		streamCtx, cancel = context.WithCancel(streamCtx)
+		unregister := params.CompletionStopper.Register(ownerID, requestID, cancel)
+		defer unregister()
+	}
 
 	return collectGatewayStream(streamCtx, params.GatewayClient, req, func(delta string) error {
 		return writeCompleteStreamEvent(e, completeStreamResponse{
@@ -493,7 +571,7 @@ func collectGatewayStream(
 	onDelta func(string) error,
 	onHeartbeat func() error,
 	onClientDisconnect func(error),
-) (gateway.CompleteResponse, bool, error) {
+) (gateway.CompleteResponse, bool, bool, error) {
 	return collectGatewayStreamWithHeartbeat(
 		ctx,
 		client,
@@ -513,10 +591,10 @@ func collectGatewayStreamWithHeartbeat(
 	onHeartbeat func() error,
 	onClientDisconnect func(error),
 	heartbeatInterval time.Duration,
-) (gateway.CompleteResponse, bool, error) {
+) (gateway.CompleteResponse, bool, bool, error) {
 	stream, err := client.CompleteStream(ctx, req)
 	if err != nil {
-		return gateway.CompleteResponse{}, false, err
+		return gateway.CompleteResponse{}, false, false, err
 	}
 
 	var heartbeatC <-chan time.Time
@@ -534,7 +612,13 @@ func collectGatewayStreamWithHeartbeat(
 	for {
 		select {
 		case <-ctx.Done():
-			return gateway.CompleteResponse{}, clientDisconnected, ctx.Err()
+			return gateway.CompleteResponse{
+				Message: gateway.Message{
+					Role:    "assistant",
+					Content: builder.String(),
+				},
+				Usage: usage,
+			}, clientDisconnected, true, nil
 		case <-heartbeatC:
 			if !clientDisconnected {
 				if err := onHeartbeat(); err != nil {
@@ -550,10 +634,10 @@ func collectGatewayStreamWithHeartbeat(
 						Content: builder.String(),
 					},
 					Usage: usage,
-				}, clientDisconnected, nil
+				}, clientDisconnected, false, nil
 			}
 			if event.Err != nil {
-				return gateway.CompleteResponse{}, clientDisconnected, event.Err
+				return gateway.CompleteResponse{}, clientDisconnected, false, event.Err
 			}
 			if event.Delta != "" {
 				builder.WriteString(event.Delta)

@@ -64,6 +64,7 @@ var apiV1Routes = []struct {
 	{http.MethodPut, "/api/v1/vault-session", false},
 	{http.MethodDelete, "/api/v1/vault-session", false},
 	{http.MethodPost, "/api/v1/completions", false},
+	{http.MethodPost, "/api/v1/completions/{requestID}/stop", false},
 	{http.MethodPost, "/api/v1/conversations/{conversationID}/complete", false},
 	{http.MethodPost, "/api/v1/conversations/{conversationID}/regenerate", false},
 

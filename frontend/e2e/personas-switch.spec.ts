@@ -27,6 +27,16 @@ test('switches persona multiple times within one conversation', async ({ page })
   await page.route(`${API}/api/v1/vault-session`, async (route) => {
     await route.fulfill({ json: userFixture.vaultSession });
   });
+  await page.route(`${API}/api/v1/billing`, async (route) => {
+    await route.fulfill({
+      json: {
+        plan_type: 'trial',
+        status: 'active',
+        balance_chf: 5,
+        trial_seed_chf: 5,
+      },
+    });
+  });
   await page.route(`${API}/api/v1/user-preferences`, async (route) => {
     await route.fulfill({
       status: 404,
@@ -93,6 +103,10 @@ test('switches persona multiple times within one conversation', async ({ page })
     });
   });
 
+  await page.route(`${API}/api/v1/projects`, async (route) => {
+    await route.fulfill({ json: [] });
+  });
+
   await page.route(`${API}/api/v1/conversations`, async (route) => {
     await route.fulfill({ json: [conversationFixture.conversationRecord] });
   });
@@ -106,6 +120,12 @@ test('switches persona multiple times within one conversation', async ({ page })
     `${API}/api/v1/conversations/conv_e2e_switch/secret-key`,
     async (route) => {
       await route.fulfill({ json: conversationFixture.conversationSecretKeyRecord });
+    },
+  );
+  await page.route(
+    `${API}/api/v1/conversations/conv_e2e_switch/public-share`,
+    async (route) => {
+      await route.fulfill({ status: 404, json: { message: 'Not found' } });
     },
   );
   await page.route(
