@@ -127,20 +127,38 @@ export class ConversationService {
           return { filter };
         }),
       ),
-      // When the user's key pair changes, reload or clear the conversations
-      this._vaultService.keyPair$.pipe(
-        switchMap((keyPair) => {
-          if (!keyPair) {
-            return of(initialState);
-          }
+      // When the user's key pair changes, reload or clear the conversations.
+      // `fetchConversations` only returns standalone conversations (the list
+      // endpoint excludes project ones), so we MERGE rather than replace:
+      // project conversations are loaded separately by
+      // ProjectConversationService and upserted into this same store. Replacing
+      // would drop them whenever this reload lands after that upsert (a load
+      // race), leaving project chats missing from the sidebar and unopenable.
+      (state) =>
+        this._vaultService.keyPair$.pipe(
+          switchMap((keyPair) => {
+            if (!keyPair) {
+              return of(initialState);
+            }
 
-          return this.fetchConversations().pipe(
-            map((conversations) => {
-              return { conversations };
-            }),
-          );
-        }),
-      ),
+            return this.fetchConversations().pipe(
+              map((fetched) => {
+                const byId = new Map<string, Conversation>();
+                // Retain already-loaded project conversations…
+                for (const conversation of state().conversations) {
+                  if (conversation.record.project) {
+                    byId.set(conversation.record.id, conversation);
+                  }
+                }
+                // …then overlay the freshly-fetched standalone conversations.
+                for (const conversation of fetched) {
+                  byId.set(conversation.record.id, conversation);
+                }
+                return { conversations: [...byId.values()] };
+              }),
+            );
+          }),
+        ),
       // When deleteConversation emits, delete the conversation
       (state) =>
         this.deleteConversation$.pipe(

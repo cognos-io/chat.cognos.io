@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  buildConversationFixture,
   buildProjectConversationFixture,
   buildProjectFixture,
   buildVaultFixture,
@@ -121,6 +122,75 @@ test('shows a Projects group and project chats in the chat sidebar', async ({
   );
 
   // The project chat appears in the recent list (all chats, project or not).
+  await expect(page.getByText('Design notes')).toBeVisible();
+
+  expect(pageErrors).toEqual([]);
+});
+
+test('project chats survive a late standalone-conversation reload', async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  const userFixture = buildVaultFixture('user_e2e_pc4', 'pc4@example.com');
+  const projectFixture = buildProjectFixture(userFixture, 'proj_pc_4', 'Acme launch');
+  const conversationFixture = buildProjectConversationFixture(
+    projectFixture,
+    'pconv_e2e_race',
+    'Design notes',
+  );
+
+  // A standalone conversation returned by the (late) main list endpoint.
+  const standaloneFixture = buildConversationFixture(
+    userFixture,
+    'conv_e2e_standalone',
+    'Standalone chat',
+  );
+
+  await seedAuthenticatedUnlockState(page, userFixture);
+  await seedBaseRoutes(page, userFixture);
+
+  await page.route(`${API}/api/v1/models`, async (route) => {
+    await route.fulfill({
+      json: { privacy_tier: 'eu', preferred_model_id: '', models: [] },
+    });
+  });
+  await page.route(`${API}/api/v1/projects`, async (route) => {
+    await route.fulfill({ json: [projectFixture.projectRecord] });
+  });
+  await page.route(
+    `${API}/api/v1/projects/${projectFixture.projectRecord.id}/conversations`,
+    async (route) => {
+      await route.fulfill({ json: [conversationFixture.record] });
+    },
+  );
+
+  // The standalone conversation list resolves LATE — after the project chat has
+  // already been merged into the store. A non-merging reload would replace the
+  // store with this standalone list, wiping the project chat.
+  await page.route(`${API}/api/v1/conversations`, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    await route.fulfill({ json: [standaloneFixture.conversationRecord] });
+  });
+  await page.route(
+    `${API}/api/v1/conversations/conv_e2e_standalone/public-key`,
+    async (route) => {
+      await route.fulfill({ json: standaloneFixture.conversationPublicKeyRecord });
+    },
+  );
+  await page.route(
+    `${API}/api/v1/conversations/conv_e2e_standalone/secret-key`,
+    async (route) => {
+      await route.fulfill({ json: standaloneFixture.conversationSecretKeyRecord });
+    },
+  );
+
+  await page.goto('/');
+
+  // The standalone chat appearing proves the late list reload has been applied
+  // to the store; the project chat must have survived that reload.
+  await expect(page.getByText('Standalone chat')).toBeVisible();
   await expect(page.getByText('Design notes')).toBeVisible();
 
   expect(pageErrors).toEqual([]);
