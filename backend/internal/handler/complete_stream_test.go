@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 )
@@ -34,6 +35,7 @@ func TestCollectGatewayStreamContinuesAfterClientDisconnect(t *testing.T) {
 			}
 			return nil
 		},
+		func() error { return nil },
 		func(error) {},
 	)
 	if err != nil {
@@ -50,6 +52,48 @@ func TestCollectGatewayStreamContinuesAfterClientDisconnect(t *testing.T) {
 	}
 	if resp.Usage.InputTokens != 12 || resp.Usage.OutputTokens != 8 {
 		t.Fatalf("usage = %+v, want input=12 output=8", resp.Usage)
+	}
+}
+
+func TestCollectGatewayStreamSendsHeartbeatWhileWaitingForDeltas(t *testing.T) {
+	ch := make(chan gateway.CompleteStreamEvent, 1)
+	gatewayClient := &gateway.MockClient{
+		CompleteStreamFunc: func(_ context.Context, _ gateway.CompleteRequest) (<-chan gateway.CompleteStreamEvent, error) {
+			return ch, nil
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	heartbeatWrites := 0
+	resp, clientDisconnected, err := collectGatewayStreamWithHeartbeat(
+		ctx,
+		gatewayClient,
+		gateway.CompleteRequest{ProviderID: "infomaniak", ProviderModelID: "model"},
+		func(string) error { return nil },
+		func() error {
+			if heartbeatWrites == 0 {
+				ch <- gateway.CompleteStreamEvent{Delta: "done"}
+				close(ch)
+			}
+			heartbeatWrites++
+			return nil
+		},
+		func(error) {},
+		time.Millisecond,
+	)
+	if err != nil {
+		t.Fatalf("collectGatewayStreamWithHeartbeat() error = %v", err)
+	}
+	if clientDisconnected {
+		t.Fatal("clientDisconnected = true, want false")
+	}
+	if heartbeatWrites == 0 {
+		t.Fatalf("heartbeat writes = %d, want at least 1", heartbeatWrites)
+	}
+	if resp.Message.Content != "done" {
+		t.Fatalf("assistant content = %q, want %q", resp.Message.Content, "done")
 	}
 }
 
@@ -72,6 +116,7 @@ func TestCollectGatewayStreamReturnsGatewayError(t *testing.T) {
 		gatewayClient,
 		gateway.CompleteRequest{ProviderID: "infomaniak", ProviderModelID: "model"},
 		func(string) error { return nil },
+		func() error { return nil },
 		func(error) {},
 	)
 	if !errors.Is(err, gatewayErr) {

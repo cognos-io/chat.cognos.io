@@ -86,6 +86,8 @@ type completeResponse struct {
 	Usage            usageResponse            `json:"usage"`
 }
 
+const completeStreamHeartbeatInterval = 15 * time.Second
+
 type completeStreamResponse struct {
 	Type     string            `json:"type"`
 	Delta    string            `json:"delta,omitempty"`
@@ -477,6 +479,8 @@ func streamGatewayCompletion(
 			Type:  "delta",
 			Delta: delta,
 		})
+	}, func() error {
+		return writeCompleteStreamHeartbeat(e)
 	}, func(err error) {
 		params.Logger.Info("client disconnected during completion stream", "err", err)
 	})
@@ -487,49 +491,88 @@ func collectGatewayStream(
 	client gateway.Client,
 	req gateway.CompleteRequest,
 	onDelta func(string) error,
+	onHeartbeat func() error,
 	onClientDisconnect func(error),
+) (gateway.CompleteResponse, bool, error) {
+	return collectGatewayStreamWithHeartbeat(
+		ctx,
+		client,
+		req,
+		onDelta,
+		onHeartbeat,
+		onClientDisconnect,
+		completeStreamHeartbeatInterval,
+	)
+}
+
+func collectGatewayStreamWithHeartbeat(
+	ctx context.Context,
+	client gateway.Client,
+	req gateway.CompleteRequest,
+	onDelta func(string) error,
+	onHeartbeat func() error,
+	onClientDisconnect func(error),
+	heartbeatInterval time.Duration,
 ) (gateway.CompleteResponse, bool, error) {
 	stream, err := client.CompleteStream(ctx, req)
 	if err != nil {
 		return gateway.CompleteResponse{}, false, err
 	}
 
+	var heartbeatC <-chan time.Time
+	var heartbeat *time.Ticker
+	if heartbeatInterval > 0 && onHeartbeat != nil {
+		heartbeat = time.NewTicker(heartbeatInterval)
+		heartbeatC = heartbeat.C
+		defer heartbeat.Stop()
+	}
+
 	var builder strings.Builder
 	usage := gateway.Usage{}
 	clientDisconnected := false
 
-	for event := range stream {
-		if event.Err != nil {
-			return gateway.CompleteResponse{}, clientDisconnected, event.Err
-		}
-		if event.Delta != "" {
-			builder.WriteString(event.Delta)
+	for {
+		select {
+		case <-ctx.Done():
+			return gateway.CompleteResponse{}, clientDisconnected, ctx.Err()
+		case <-heartbeatC:
 			if !clientDisconnected {
-				if err := onDelta(event.Delta); err != nil {
+				if err := onHeartbeat(); err != nil {
 					clientDisconnected = true
 					onClientDisconnect(err)
 				}
 			}
-		}
-		if event.Usage != nil {
-			usage = *event.Usage
+		case event, ok := <-stream:
+			if !ok {
+				return gateway.CompleteResponse{
+					Message: gateway.Message{
+						Role:    "assistant",
+						Content: builder.String(),
+					},
+					Usage: usage,
+				}, clientDisconnected, nil
+			}
+			if event.Err != nil {
+				return gateway.CompleteResponse{}, clientDisconnected, event.Err
+			}
+			if event.Delta != "" {
+				builder.WriteString(event.Delta)
+				if !clientDisconnected {
+					if err := onDelta(event.Delta); err != nil {
+						clientDisconnected = true
+						onClientDisconnect(err)
+					}
+				}
+			}
+			if event.Usage != nil {
+				usage = *event.Usage
+			}
 		}
 	}
-
-	return gateway.CompleteResponse{
-		Message: gateway.Message{
-			Role:    "assistant",
-			Content: builder.String(),
-		},
-		Usage: usage,
-	}, clientDisconnected, nil
 }
 
 func writeCompleteStreamEvent(e *core.RequestEvent, response completeStreamResponse) error {
-	e.Response.Header().Set("Content-Type", "text/event-stream")
-	e.Response.Header().Set("Cache-Control", "no-cache, no-transform")
-	e.Response.Header().Set("Connection", "keep-alive")
-	e.Response.Header().Set("X-Accel-Buffering", "no")
+	setCompleteStreamHeaders(e)
 
 	payload, err := json.Marshal(response)
 	if err != nil {
@@ -546,6 +589,21 @@ func writeCompleteStreamEvent(e *core.RequestEvent, response completeStreamRespo
 	}
 
 	return e.Flush()
+}
+
+func writeCompleteStreamHeartbeat(e *core.RequestEvent) error {
+	setCompleteStreamHeaders(e)
+	if _, err := e.Response.Write([]byte(": keep-alive\n\n")); err != nil {
+		return err
+	}
+	return e.Flush()
+}
+
+func setCompleteStreamHeaders(e *core.RequestEvent) {
+	e.Response.Header().Set("Content-Type", "text/event-stream")
+	e.Response.Header().Set("Cache-Control", "no-cache, no-transform")
+	e.Response.Header().Set("Connection", "keep-alive")
+	e.Response.Header().Set("X-Accel-Buffering", "no")
 }
 
 func completionUSDToCHFRate(params CompleteHandlerParams) float64 {
