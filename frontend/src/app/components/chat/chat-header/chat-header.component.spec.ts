@@ -158,6 +158,30 @@ describe('ChatHeaderComponent', () => {
     expect(fixture.nativeElement.querySelector('.chat-header__share')).toBeNull();
   });
 
+  it('disables sharing for a project conversation', () => {
+    selectedConversation.set(makeConversation('c-1', 'Project chat', 'proj-1'));
+    fixture.detectChanges();
+
+    expect(component.isProjectConversation()).toBe(true);
+    // The disabled, tooltip-wrapped Share control renders instead of the
+    // clickable one, and invoking share is a no-op.
+    expect(
+      fixture.nativeElement.querySelector('.chat-header__share-wrap'),
+    ).not.toBeNull();
+
+    component.onShare();
+    expect(dialogOpen).not.toHaveBeenCalled();
+  });
+
+  it('disables the Share entry in the mobile overflow menu for a project conversation', () => {
+    selectedConversation.set(makeConversation('c-1', 'Project chat', 'proj-1'));
+    isMobile.set(true);
+    fixture.detectChanges();
+
+    const shareItem = component.menuItems().find((item) => item.title === 'Share');
+    expect(shareItem?.disabled).toBe(true);
+  });
+
   it('offers clear messages only for a temporary conversation with messages', () => {
     temporaryConversation.set(true);
     messages.set([makeMessage('hello')]);
@@ -235,13 +259,14 @@ describe('ChatHeaderComponent', () => {
   });
 });
 
-function makeConversation(id: string, title: string): Conversation {
+function makeConversation(id: string, title: string, project?: string): Conversation {
   return {
     record: {
       id,
       created: '2026-01-01T00:00:00.000Z',
       updated: '2026-01-02T00:00:00.000Z',
       data: '',
+      ...(project ? { project } : {}),
     },
     decryptedData: { title },
     keyPair: {

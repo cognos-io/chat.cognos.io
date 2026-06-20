@@ -55,6 +55,13 @@
   background: #fef3c7;
 }
 
+// Hoverable wrapper around the disabled Share button (the button itself has
+// pointer-events: none) so its tooltip still appears on project conversations.
+.chat-header__share-wrap {
+  display: inline-flex;
+  flex: none;
+}
+
 .chat-header__menu-wrap {
   position: relative;
 }
@@ -71,6 +78,7 @@
 @media (max-width: 600px) {
   .chat-header__avatar,
   .chat-header__share,
+  .chat-header__share-wrap,
   .chat-header__shared {
     display: none;
   }

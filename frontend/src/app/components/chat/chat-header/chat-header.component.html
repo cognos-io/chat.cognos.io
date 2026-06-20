@@ -17,7 +17,23 @@
         }
 
         @if (canShare()) {
-          @if (isShared()) {
+          @if (isProjectConversation()) {
+            <!-- Disabled buttons swallow pointer events, so the tooltip lives on
+                 the wrapping span to stay hoverable. -->
+            <span
+              class="chat-header__share-wrap"
+              [title]="t('chat.header.shareProjectDisabled')"
+            >
+              <cog-button
+                class="chat-header__share"
+                appearance="default"
+                icon="user-plus"
+                [disabled]="true"
+              >
+                {{ t('chat.header.share') }}
+              </cog-button>
+            </span>
+          } @else if (isShared()) {
             <button
               type="button"
               class="chat-header__shared"

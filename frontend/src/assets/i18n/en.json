@@ -478,6 +478,7 @@
       "rename": "Rename",
       "security": "Security & keys",
       "share": "Share",
+      "shareProjectDisabled": "Chats in a project can't be shared with a public link.",
       "shareTitle": "Share this conversation",
       "shared": "Shared",
       "sharedTitle": "This conversation is shared with a public link — manage sharing",

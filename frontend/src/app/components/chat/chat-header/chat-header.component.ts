@@ -94,6 +94,13 @@ export class ChatHeaderComponent {
   // have nothing the server can hand to a public reader.
   readonly canShare = computed(() => this._conversationId() !== null);
 
+  // Project conversations can't be publicly shared (public project sharing is a
+  // non-goal, and a link would bypass project membership). The Share control
+  // stays visible but disabled, with a tooltip explaining why.
+  readonly isProjectConversation = computed(
+    () => !!this.conversationService.conversation()?.record.project,
+  );
+
   // The current user's avatar only earns its place once a chat actually has
   // other people in it. Invites and projects don't exist yet, so there are
   // never other participants today — wire this to the participant list when
@@ -152,6 +159,7 @@ export class ChatHeaderComponent {
             ? this._transloco.translate('chat.header.shared')
             : this._transloco.translate('chat.header.share'),
           icon: this.isShared() ? 'link' : 'user-plus',
+          disabled: this.isProjectConversation(),
         });
       }
       entries.push({
@@ -253,7 +261,7 @@ export class ChatHeaderComponent {
   onShare() {
     const conversationId = this._conversationId();
 
-    if (!conversationId) {
+    if (!conversationId || this.isProjectConversation()) {
       return;
     }
 
