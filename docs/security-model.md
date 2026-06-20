@@ -390,10 +390,40 @@ Prefer wording like:
 - **"Trusted devices can stay unlocked locally on this browser until you lock the account, log
   out, or clear browser storage."**
 
-## 14. Open limitations
+## 14. Browser PII redaction (optional layer)
+
+Cognos detects common high-confidence sensitive values (IBAN, email, credit card, API/private keys,
+Swiss AHV, UK NINo) in the browser and replaces them with stable placeholder tokens
+(`[[PII_<TYPE>_<RANDOM>]]`) **before** any completion request leaves the device. See
+`docs/specs/pii-redaction.md`.
+
+What this changes about the trust model:
+
+- For redacted values, neither the backend nor the model provider ever sees the plaintext — they see
+  only placeholders, and the backend persists redacted message content.
+- Token → original mappings are stored encrypted under a **separate per-conversation redaction
+  keypair**, independent of the conversation key. The redaction secret is sealed to each
+  participant's **personal** key, so holding the conversation key alone (e.g. a redacted-only public
+  share reader) can never recover it.
+- Random token suffixes use Web Crypto and are never derived from the original value; raw values and
+  decrypted mappings are never logged.
+
+Public sharing has two modes: **redacted-only** (default) exposes no redaction key material or
+entries; **include-sensitive** seals the redaction secret to the share key so an explicitly-chosen
+reader can hydrate originals. The server gates the public redaction-entries endpoint to
+include-sensitive shares.
+
+Limitations: detection is best-effort and high-precision (it favours avoiding false positives), so
+it is not a guarantee that every sensitive value is caught. Redaction is a data-minimisation layer,
+not a replacement for the encryption model above. Redaction-key rotation inherits the current
+conversation-key rotation limitation (it does not re-seal historical entries).
+
+## 15. Open limitations
 
 This model does **not** attempt to protect against a malicious server during live completion
-requests, because the backend must see plaintext to call AI providers.
+requests, because the backend must see plaintext to call AI providers. Browser PII redaction
+(§14) narrows this exposure for detected high-confidence values, which are replaced with
+placeholders before the request leaves the device.
 
 This model is designed to protect against:
 
@@ -402,7 +432,7 @@ This model is designed to protect against:
 - accidental internal access to stored chat history
 - server-side compromise that does not also obtain the user's Account Key
 
-## 15. Related implementation areas
+## 16. Related implementation areas
 
 Primary implementation areas:
 

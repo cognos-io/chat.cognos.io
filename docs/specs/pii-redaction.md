@@ -825,19 +825,32 @@ Hydration:
 
 ## 23. Implementation checklist
 
-- [ ] Add pure redaction types, detectors, engine, and hydration helpers.
-- [ ] Add frontend unit tests for positive and negative detector fixtures.
-- [ ] Add redaction-key and redaction-entry backend migrations with locked collection rules.
-- [ ] Add authenticated redaction-key and redaction-entry endpoints.
-- [ ] Add frontend redaction services.
-- [ ] Integrate redaction before message send.
-- [ ] Integrate redaction before title generation.
-- [ ] Integrate redaction with edited-message forks.
-- [ ] Integrate redaction with regeneration context.
-- [ ] Render hydrated content for authorised viewers.
-- [ ] Add composer count and preview UX.
-- [ ] Add public sharing mode selection.
-- [ ] Ensure redacted-only public shares cannot access mappings.
-- [ ] Ensure include-sensitive-values public shares can hydrate mappings.
-- [ ] Update `docs/security-model.md` after implementation details are finalised.
-- [ ] Add document-upload source metadata notes before file upload implementation begins.
+- [x] Add pure redaction types, detectors, engine, and hydration helpers.
+- [x] Add frontend unit tests for positive and negative detector fixtures.
+- [x] Add redaction-key and redaction-entry backend migrations with locked collection rules.
+- [x] Add authenticated redaction-key and redaction-entry endpoints.
+- [x] Add frontend redaction services.
+- [x] Integrate redaction before message send.
+- [x] Integrate redaction before title generation. (Inherited: title generation uses the
+  already-redacted draft.)
+- [x] Integrate redaction with edited-message forks.
+- [x] Integrate redaction with regeneration context. (Inherited: regeneration builds context from
+  stored, already-redacted content.)
+- [x] Render hydrated content for authorised viewers.
+- [x] Add composer count and preview UX.
+- [x] Add public sharing mode selection.
+- [x] Ensure redacted-only public shares cannot access mappings.
+- [x] Ensure include-sensitive-values public shares can hydrate mappings.
+- [x] Update `docs/security-model.md` after implementation details are finalised.
+- [x] Add document-upload source metadata notes before file upload implementation begins.
+  (`source_kind` supports `message`/`document`/`document_chunk`; the engine is source-agnostic.)
+
+### Deferred to follow-up (out of scope for this slice)
+
+- Tier 2 NLP detection (`compromise`) — the engine's pluggable `Detector` interface is ready for it.
+- Participant-add redaction-key wrapping and redaction-key rotation (the key is currently wrapped
+  for the creating user only; other participants see placeholders until this lands).
+- Temporary-chat in-memory hydration (temp chats redact before send but do not yet hydrate locally).
+- Block-send-on-mapping-failure: mappings persist best-effort after send (no PII is ever sent, but a
+  persistence failure currently costs only the owner's own hydration).
+- Browser e2e (Playwright) coverage for the redaction flows and network no-leak assertions.
