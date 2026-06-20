@@ -44,6 +44,11 @@ import {
   generateConversationPersonaId,
   generateConversationSystemPrompt,
 } from '@app/interfaces/persona';
+import {
+  RedactionCandidate,
+  RedactionEntry,
+  containsRedactionToken,
+} from '@app/redaction';
 import { parseBackendDate } from '@app/utils/timestamp';
 
 import { AuthService } from './auth.service';
@@ -61,6 +66,7 @@ import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
 import { ModelService } from './model.service';
 import { PersonaService } from './persona.service';
+import { RedactionService } from './redaction.service';
 import { VaultService } from './vault.service';
 
 export enum MessageStatus {
@@ -147,7 +153,22 @@ export type MessageRequest = {
   requestId: string;
   content: string;
   parentMessageId?: string;
+  // PII redaction (spec docs/specs/pii-redaction.md). `redactionSelection` is
+  // the set of candidates the composer chose to redact; when omitted, all Tier 1
+  // detections are redacted by default. `redactionEntries` carries the mappings
+  // minted while redacting `content`, to be persisted once the conversation is
+  // known — it is internal and never sent to the completion endpoint.
+  redactionSelection?: RedactionCandidate[];
+  redactionEntries?: RedactionEntry[];
 };
+
+// REDACTION_INSTRUCTION tells the model to preserve placeholder tokens verbatim
+// so they survive the round-trip and can be hydrated on display. It contains no
+// sensitive values (spec §13).
+const REDACTION_INSTRUCTION =
+  'Some sensitive values in this conversation have been replaced with ' +
+  'placeholders like [[PII_EMAIL_A8F2KD]]. Preserve these placeholders exactly ' +
+  'in your response; do not invent, alter, or remove them.';
 
 type CompleteErrorBody = {
   error?: string;
@@ -419,6 +440,7 @@ export class MessageService {
   private readonly _modelService = inject(ModelService);
   private readonly _api = inject(CognosApiService);
   private readonly _vaultService = inject(VaultService);
+  private readonly _redactionService = inject(RedactionService);
 
   private _activeCompletionAbort: AbortController | null = null;
   private _activeCompletionRequestId = '';
@@ -433,6 +455,10 @@ export class MessageService {
   private readonly _cleanedMessage$ = this.sendMessage$.pipe(
     map((raw) => ({ ...raw, content: raw.content?.trim() })),
     filter(({ content }) => content !== undefined && content !== ''),
+    // Redact BEFORE the optimistic message is added and the context is built,
+    // so neither the displayed turn nor the completion request ever holds the
+    // raw value. Hydration restores it on render for the owner.
+    map((req) => this.redactRequest(req as MessageRequest)),
   );
   private readonly _isNewConversation$ = new Subject<boolean>();
 
@@ -864,6 +890,43 @@ export class MessageService {
     );
   }
 
+  // redactRequest swaps detected sensitive values in the draft for stable
+  // placeholder tokens, carrying the new mappings on the request so they can be
+  // persisted once the conversation exists. Pure + synchronous so the optimistic
+  // message and completion context are redacted from the very first frame.
+  private redactRequest(req: MessageRequest): MessageRequest {
+    const conversationId = this._conversationService.conversation()?.record.id ?? null;
+    const { redactedText, newEntries } = this._redactionService.prepareRedaction(
+      conversationId,
+      req.content,
+      req.redactionSelection,
+      { kind: 'message', id: req.requestId },
+    );
+    return { ...req, content: redactedText, redactionEntries: newEntries };
+  }
+
+  // persistRedaction seals and stores the mappings minted for a request. The
+  // content is already redacted by the time we get here, so a failure here
+  // costs the owner their own hydration — not a leak — hence it is best-effort
+  // and never blocks the send. Temporary conversations have no row to attach to.
+  private persistRedaction(messageRequest: MessageRequest): void {
+    const conversation = this._conversationService.conversation();
+    if (!conversation || !messageRequest.redactionEntries?.length) {
+      return;
+    }
+    this._redactionService
+      .persist(conversation, messageRequest.redactionEntries, {
+        kind: 'message',
+        id: messageRequest.requestId,
+      })
+      .subscribe({
+        error: () => {
+          // Swallow: no sensitive value was sent upstream. A retry/repair path
+          // is tracked as a follow-up.
+        },
+      });
+  }
+
   private sendMessage(
     messageRequest: MessageRequest,
   ): Observable<Partial<MessageState>> {
@@ -873,6 +936,8 @@ export class MessageService {
     if (!conversation && !isTemporaryConversation) {
       throw new Error('No conversation selected');
     }
+
+    this.persistRedaction(messageRequest);
 
     const originConversationId = conversation?.record.id ?? null;
 
@@ -884,11 +949,18 @@ export class MessageService {
     this.state.setStatus(MessageStatus.Sending);
 
     const selectedPersona = this._personaService.selectedPersona();
+    const messages = this.createMessageContext();
+    // When placeholders are present, instruct the model to preserve them so they
+    // survive the round-trip and hydrate cleanly on display.
+    const hasRedactions = messages.some((m) => containsRedactionToken(m.content));
+    const systemPrompt = hasRedactions
+      ? `${selectedPersona.systemPrompt}\n\n${REDACTION_INSTRUCTION}`
+      : selectedPersona.systemPrompt;
     const request = {
-      messages: this.createMessageContext(),
+      messages,
       modelId: this._modelService.selectedModel().id,
       personaId: selectedPersona.id,
-      systemPrompt: selectedPersona.systemPrompt,
+      systemPrompt,
       parentMessageId: messageRequest.parentMessageId,
       requestId: messageRequest.requestId,
     };
@@ -1174,12 +1246,21 @@ export class MessageService {
     const forkKey = parentMessageId ?? ROOT_PARENT_KEY;
     const requestId = self.crypto.randomUUID();
 
+    // Edit-fork bypasses _cleanedMessage$, so redact here too: the edited turn
+    // must be stored and sent redacted just like a normal send.
+    const { redactedText, newEntries } = this._redactionService.prepareRedaction(
+      conversation?.record.id ?? null,
+      content,
+      undefined,
+      { kind: 'message', id: requestId },
+    );
+
     const editedMessage: Message = {
       record_id: requestId,
       parentMessageId,
       createdAt: new Date(),
       decryptedData: {
-        content,
+        content: redactedText,
         owner_id: this._authService.user()?.['id'],
       },
     };
@@ -1187,7 +1268,12 @@ export class MessageService {
     this.state.addMessage(editedMessage);
     this.state.selectBranch({ parentKey: forkKey, childId: requestId });
 
-    return this.sendMessage({ requestId, content, parentMessageId });
+    return this.sendMessage({
+      requestId,
+      content: redactedText,
+      parentMessageId,
+      redactionEntries: newEntries,
+    });
   }
 
   // reportCompletionError routes a failed completion to the right surface: a

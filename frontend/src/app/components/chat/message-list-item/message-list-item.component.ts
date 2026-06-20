@@ -3,8 +3,10 @@ import { Dialog } from '@angular/cdk/dialog';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   Input,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -25,9 +27,11 @@ import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog
 import { Message, isMessageFromUser } from '@app/interfaces/message';
 import { Model } from '@app/interfaces/model';
 import { Persona } from '@app/interfaces/persona';
+import { ConversationService } from '@app/services/conversation.service';
 import { MessageService } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
+import { RedactionService } from '@app/services/redaction.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 @Component({
@@ -69,7 +73,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
             <cog-icon-button
               name="copy"
               [title]="t('chat.message.copy')"
-              [cdkCopyToClipboard]="message.decryptedData.content"
+              [cdkCopyToClipboard]="hydrated(message.decryptedData.content)"
             />
           }
 
@@ -138,7 +142,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                 </p>
               } @else if (message.decryptedData.content) {
                 <markdown emoji katex>
-                  {{ message.decryptedData.content }}
+                  {{ hydrated(message.decryptedData.content) }}
                 </markdown>
               } @else {
                 <p class="message-list-item__empty">
@@ -177,11 +181,11 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
               } @else if (message.decryptedData.content) {
                 @if (message.isStreaming) {
                   <p class="message-list-item__streaming">
-                    {{ message.decryptedData.content }}
+                    {{ hydrated(message.decryptedData.content) }}
                   </p>
                 } @else {
                   <markdown emoji katex>
-                    {{ message.decryptedData.content }}
+                    {{ hydrated(message.decryptedData.content) }}
                   </markdown>
                 }
               } @else {
@@ -278,12 +282,34 @@ export class MessageListItemComponent {
   private readonly _modelService = inject(ModelService);
   private readonly _personaService = inject(PersonaService);
   private readonly _messageService = inject(MessageService);
+  private readonly _conversationService = inject(ConversationService);
+  private readonly _redactionService = inject(RedactionService);
+  private readonly _cdr = inject(ChangeDetectorRef);
   private readonly _dialog = inject(Dialog);
   private readonly _transloco = inject(TranslocoService);
+
+  // Redaction mappings load asynchronously after the view renders; when they
+  // arrive (revision bumps), re-run change detection so placeholders hydrate.
+  private readonly _hydrationEffect = effect(() => {
+    this._redactionService.revision();
+    this._cdr.markForCheck();
+  });
 
   @Input() message?: Message;
 
   isMessageFromUser = isMessageFromUser;
+
+  // hydrated swaps placeholder tokens back to their originals for display only.
+  // Stored content stays redacted; unknown tokens render as-is.
+  hydrated(content?: string | null): string {
+    if (!content) {
+      return '';
+    }
+    return this._redactionService.hydrate(
+      this._conversationService.conversation()?.record.id,
+      content,
+    );
+  }
 
   // Navigation metadata when this message is one of several sibling branches.
   branchInfo(): MessageBranchInfo | undefined {
@@ -339,7 +365,8 @@ export class MessageListItemComponent {
     if (!this.message) {
       return;
     }
-    this.editDraft.set(this.message.decryptedData.content ?? '');
+    // Edit the original value, not the placeholder; re-redaction happens on save.
+    this.editDraft.set(this.hydrated(this.message.decryptedData.content));
     this.isEditing.set(true);
   }
 

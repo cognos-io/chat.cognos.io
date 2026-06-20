@@ -15,6 +15,7 @@ import {
   ApiRedactionKeyResponse,
   CognosApiService,
 } from './cognos-api.service';
+import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 import { RedactionService } from './redaction.service';
 import { VaultService } from './vault.service';
@@ -80,6 +81,9 @@ describe('RedactionService', () => {
         { provide: CognosApiService, useValue: api },
         { provide: VaultService, useValue: { keyPair: () => userKeyPair } },
         { provide: AuthService, useValue: { user: () => ({ id: 'user1' }) } },
+        // The auto-load effect reads the active conversation; keep it null so
+        // each test drives loading explicitly.
+        { provide: ConversationService, useValue: { conversation: () => null } },
       ],
     });
     service = TestBed.inject(RedactionService);

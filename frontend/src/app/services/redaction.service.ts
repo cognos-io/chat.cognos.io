@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, effect, inject, signal } from '@angular/core';
 
 import { Observable, catchError, defer, map, of, switchMap, throwError } from 'rxjs';
 
@@ -18,6 +18,7 @@ import {
 
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
+import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 import { VaultService } from './vault.service';
 
@@ -62,12 +63,31 @@ export class RedactionService {
   private readonly _crypto = inject(CryptoService);
   private readonly _vault = inject(VaultService);
   private readonly _auth = inject(AuthService);
+  private readonly _conversationService = inject(ConversationService);
 
   private readonly _state = new Map<string, ConversationRedaction>();
+  private _loadedConversationId: string | null = null;
 
   // Bumped whenever decrypted entries change, so templates can recompute
   // hydrated content reactively without threading the Map through signals.
   readonly revision = signal(0);
+
+  // Load and decrypt a conversation's mappings as soon as it becomes active, so
+  // hydration is ready by the time messages render.
+  private readonly _autoLoad = effect(() => {
+    const conversation = this._conversationService.conversation();
+    const id = conversation?.record.id ?? null;
+    if (!conversation || id === this._loadedConversationId) {
+      return;
+    }
+    this._loadedConversationId = id;
+    this.loadConversation(conversation).subscribe({
+      error: () => {
+        // A failed load leaves placeholders visible rather than breaking the
+        // conversation view (spec §17 reliability).
+      },
+    });
+  });
 
   /** Tier 1 high-confidence detection for composer preview. Pure, no I/O. */
   detect(text: string): RedactionCandidate[] {
