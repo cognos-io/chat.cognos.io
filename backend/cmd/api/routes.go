@@ -14,7 +14,6 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
-	"github.com/cognos-io/chat.cognos.io/backend/internal/participants"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/hook"
@@ -370,6 +369,22 @@ func addPocketBaseRoutes(
 	)
 
 	e.Router.GET(
+		"/api/v1/projects/{projectID}/conversations",
+		handler.ProjectConversationsList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/projects/{projectID}/conversations",
+		handler.ProjectConversationsCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
 		"/api/v1/conversations/{conversationID}/participants",
 		handler.ConversationParticipantsList(app),
 	).Bind(
@@ -472,7 +487,7 @@ func addPocketBaseRoutes(
 		FXRateProvider:      fxRateProvider,
 		UsageEmitter:        usageEmitter,
 		CompleteBillingGate: completeBillingGate,
-		ParticipantsRepo:    participants.NewPocketBaseRepo(app),
+		App:                 app,
 	}
 
 	e.Router.GET(

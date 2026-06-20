@@ -17,7 +17,6 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
-	"github.com/cognos-io/chat.cognos.io/backend/internal/participants"
 	"github.com/cognos-io/chat.cognos.io/backend/pkg/persona"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -106,12 +105,13 @@ type CompleteHandlerParams struct {
 	FXRateProvider      billing.FXRateProvider
 	UsageEmitter        analytics.Emitter
 	CompleteBillingGate CompleteBillingGateFunc
-	// ParticipantsRepo authorises conversation-scoped completion requests.
-	// When set, /api/v1/conversations/{id}/complete returns 404 to callers
-	// who are not active participants of the target conversation. Left nil
-	// only in unit tests that have already pre-validated access by other
-	// means (the production wiring always sets it).
-	ParticipantsRepo participants.Repo
+	// App backs conversation-scoped access checks. When set,
+	// /api/v1/conversations/{id}/complete returns 404 to callers who cannot
+	// access the target conversation — gated by project membership for project
+	// conversations, or conversation participants otherwise. Left nil only in
+	// unit tests that have already pre-validated access (production always
+	// sets it).
+	App core.App
 }
 
 func Complete(params CompleteHandlerParams) func(e *core.RequestEvent) error {
@@ -203,14 +203,16 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 
 		var conversation chat.Conversation
 		if shouldPersist {
-			if params.ParticipantsRepo != nil {
+			if params.App != nil {
 				// Authorise the caller against the conversation BEFORE we
 				// reveal whether the conversation exists. A non-participant
 				// must get the same 404 a non-existent conversation would,
 				// otherwise the response shape leaks "this ID is real."
-				active, err := params.ParticipantsRepo.IsActive(conversationID, owner.ID)
+				// Project conversations gate on project membership; standalone
+				// conversations on their participants.
+				active, err := conversationAccessibleByID(params.App, conversationID, owner.ID)
 				if err != nil {
-					params.Logger.Error("participants lookup failed", "err", err)
+					params.Logger.Error("conversation access lookup failed", "err", err)
 					return apis.NewApiError(http.StatusInternalServerError, "Failed to verify conversation access", err)
 				}
 				if !active {

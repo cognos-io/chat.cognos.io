@@ -10,6 +10,7 @@ import (
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/participants"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/projectparticipants"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -397,6 +398,9 @@ func ConversationParticipantsAdd(app core.App) func(e *core.RequestEvent) error 
 		if err != nil {
 			return err
 		}
+		if conversation.GetString("project") != "" {
+			return apis.NewBadRequestError("Project conversations are shared via their project", nil)
+		}
 
 		repo := participants.NewPocketBaseRepo(app)
 		callerRole, _, err := repo.ActiveRole(conversationID, caller.ID)
@@ -527,6 +531,9 @@ func ConversationKeyRotate(app core.App) func(e *core.RequestEvent) error {
 		conversationRecord, err := ownedConversationRecord(app, e, conversationID)
 		if err != nil {
 			return err
+		}
+		if conversationRecord.GetString("project") != "" {
+			return apis.NewBadRequestError("Project conversation keys rotate with the project", nil)
 		}
 
 		repo := participants.NewPocketBaseRepo(app)
@@ -743,6 +750,29 @@ func MessagesUpdate(app core.App) func(e *core.RequestEvent) error {
 	}
 }
 
+// conversationAccessible reports whether the user may access the conversation.
+// A conversation that belongs to a project (project != "") is gated by project
+// membership; a standalone conversation is gated by its participants. This is
+// the spec's access rule and keeps the two participant systems from
+// overlapping — project conversations carry no conversation-participant rows.
+func conversationAccessible(app core.App, conversation *core.Record, userID string) (bool, error) {
+	if projectID := conversation.GetString("project"); projectID != "" {
+		return projectparticipants.NewPocketBaseRepo(app).IsActive(projectID, userID)
+	}
+	return participants.NewPocketBaseRepo(app).IsActive(conversation.Id, userID)
+}
+
+// conversationAccessibleByID loads the conversation and applies
+// conversationAccessible. A missing conversation reads as "no access" so the
+// caller surfaces an indistinguishable 404.
+func conversationAccessibleByID(app core.App, conversationID, userID string) (bool, error) {
+	record, err := app.FindRecordById("conversations", conversationID)
+	if err != nil {
+		return false, nil
+	}
+	return conversationAccessible(app, record, userID)
+}
+
 func ownedConversationRecord(app core.App, e *core.RequestEvent, conversationID string) (*core.Record, error) {
 	user := auth.ExtractUser(e)
 	if user == nil {
@@ -752,8 +782,7 @@ func ownedConversationRecord(app core.App, e *core.RequestEvent, conversationID 
 	if err != nil {
 		return nil, apis.NewNotFoundError("Conversation not found", err)
 	}
-	repo := participants.NewPocketBaseRepo(app)
-	active, err := repo.IsActive(conversationID, user.ID)
+	active, err := conversationAccessible(app, record, user.ID)
 	if err != nil {
 		return nil, apis.NewApiError(http.StatusInternalServerError, "Failed to verify conversation access", err)
 	}
@@ -773,11 +802,11 @@ func ownedMessageRecord(app core.App, e *core.RequestEvent, messageID string) (*
 		return nil, apis.NewNotFoundError("Message not found", err)
 	}
 	conversationID := record.GetString("conversation")
-	if _, err := app.FindRecordById("conversations", conversationID); err != nil {
+	conversation, err := app.FindRecordById("conversations", conversationID)
+	if err != nil {
 		return nil, apis.NewNotFoundError("Message not found", err)
 	}
-	repo := participants.NewPocketBaseRepo(app)
-	active, err := repo.IsActive(conversationID, user.ID)
+	active, err := conversationAccessible(app, conversation, user.ID)
 	if err != nil {
 		return nil, apis.NewApiError(http.StatusInternalServerError, "Failed to verify message access", err)
 	}

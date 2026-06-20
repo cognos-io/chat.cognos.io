@@ -73,6 +73,12 @@ func ConversationPublicShareCreate(app core.App) func(e *core.RequestEvent) erro
 		if err != nil {
 			return err
 		}
+		if conversationRecord.GetString("project") != "" {
+			// Public links for project conversations aren't supported (the spec
+			// lists public project sharing as a non-goal); they'd also bypass
+			// project membership. Reject cleanly.
+			return apis.NewBadRequestError("Project conversations cannot be publicly shared", nil)
+		}
 
 		repo := participants.NewPocketBaseRepo(app)
 		callerRole, _, err := repo.ActiveRole(conversationID, caller.ID)
