@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { TranslocoModule } from '@jsverse/transloco';
 
@@ -24,8 +24,20 @@ import { ProjectService } from '@app/services/project.service';
 })
 export class ProjectsPageComponent {
   private readonly _projects = inject(ProjectService);
+  private readonly _router = inject(Router);
 
   protected readonly projects = this._projects.orderedProjects;
+
+  // Routes for the breadcrumb crumbs, in order. The last crumb (Projects) is
+  // the current page and has no route.
+  private readonly breadcrumbRoutes = ['/', '/account'];
+
+  protected onBreadcrumb(index: number): void {
+    const route = this.breadcrumbRoutes[index];
+    if (route) {
+      this._router.navigateByUrl(route);
+    }
+  }
 
   // Inline create form, always visible in its own card (matching the
   // account settings layout).

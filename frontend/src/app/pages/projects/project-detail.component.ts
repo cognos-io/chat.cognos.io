@@ -114,6 +114,17 @@ export class ProjectDetailComponent {
     this._router.navigate(['/account/projects']);
   }
 
+  // Routes for the breadcrumb crumbs, in order: Cognos, Settings, Projects.
+  // The final crumb (the project name) is the current page and has no route.
+  private readonly breadcrumbRoutes = ['/', '/account', '/account/projects'];
+
+  protected onBreadcrumb(index: number): void {
+    const route = this.breadcrumbRoutes[index];
+    if (route) {
+      this._router.navigateByUrl(route);
+    }
+  }
+
   protected openConversation(conversationId: string): void {
     this._router.navigate(['/', 'c', conversationId]);
   }

@@ -89,6 +89,11 @@ test('creates a project and sees its decrypted name', async ({ page }) => {
     'Private project notes',
   );
 
+  // The breadcrumb crumbs navigate: clicking "Projects" returns to the list.
+  await page.getByRole('button', { name: 'Projects', exact: true }).click();
+  await expect(page).toHaveURL(/\/account\/projects$/);
+  await expect(page.getByTestId('projects-list')).toBeVisible();
+
   expect(pageErrors).toEqual([]);
 });
 

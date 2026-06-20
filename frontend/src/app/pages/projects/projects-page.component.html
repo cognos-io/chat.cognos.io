@@ -1,6 +1,7 @@
 <ng-container *transloco="let t">
   <header class="projects-page__header">
     <cog-breadcrumbs
+      (itemSelect)="onBreadcrumb($event)"
       [items]="[
         { label: 'Cognos' },
         { label: t('settings.title') },

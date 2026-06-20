@@ -1,5 +1,6 @@
 <div *transloco="let t" class="project-detail">
   <cog-breadcrumbs
+    (itemSelect)="onBreadcrumb($event)"
     [items]="[
       { label: 'Cognos' },
       { label: t('settings.title') },
