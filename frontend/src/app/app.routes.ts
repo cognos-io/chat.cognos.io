@@ -68,7 +68,7 @@ export const routes: Routes = [
       },
       {
         // Encrypted projects. Gated behind the `projects` feature flag while
-        // sharing (phase 2) and the i18n pass are pending.
+        // sharing (phase 2) is pending.
         path: 'projects',
         canActivate: [featureFlagGuard],
         data: { featureFlag: 'projects' },

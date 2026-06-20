@@ -14,8 +14,8 @@ export const environment = {
     security: false,
     team: false,
     notifications: false,
-    // Encrypted projects (shared workspaces). Off until sharing (phase 2) and
-    // the i18n pass for the projects.* namespace are complete.
+    // Encrypted projects (shared workspaces). Off until sharing (phase 2) is
+    // complete.
     projects: false,
   },
 };
