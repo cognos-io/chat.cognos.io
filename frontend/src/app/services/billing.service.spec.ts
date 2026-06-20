@@ -137,7 +137,9 @@ describe('BillingService.beginCheckout', () => {
     service.beginCheckout('payg');
     await Promise.resolve();
 
-    expect(openCheckout).toHaveBeenCalledWith('txn_1', 'user@example.com');
+    // openCheckout receives the transaction id, the user's email, and the
+    // Paddle locale derived from the active language (English → 'en').
+    expect(openCheckout).toHaveBeenCalledWith('txn_1', 'user@example.com', 'en');
     expect(location.href).toBe('');
     expect(service.checkoutPending()).toBe(false);
   });

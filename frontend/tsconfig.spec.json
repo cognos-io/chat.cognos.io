@@ -6,5 +6,10 @@
   },
   "extends": "./tsconfig.json",
   "files": ["../packages/ui-angular/src/public-api.ts"],
-  "include": ["src/**/*.spec.ts", "src/**/*.d.ts", "../packages/ui-angular/src/**/*.ts"]
+  "include": [
+    "src/**/*.spec.ts",
+    "src/**/*.d.ts",
+    "src/test-providers.ts",
+    "../packages/ui-angular/src/**/*.ts"
+  ]
 }

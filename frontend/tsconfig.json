@@ -21,6 +21,7 @@
     "noImplicitReturns": true,
     "noPropertyAccessFromIndexSignature": true,
     "outDir": "./dist/out-tsc",
+    "resolveJsonModule": true,
     "paths": {
       "@app/*": ["app/*"],
       "@components/*": ["app/components/*"],
