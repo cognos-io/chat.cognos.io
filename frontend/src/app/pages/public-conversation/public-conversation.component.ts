@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { EMPTY, catchError, switchMap } from 'rxjs';
+import { EMPTY, Observable, catchError, map, of, switchMap } from 'rxjs';
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { Base64 } from 'js-base64';
@@ -28,7 +28,11 @@ import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.com
 import { parseConversationData } from '@app/interfaces/conversation';
 import { KeyPair } from '@app/interfaces/key-pair';
 import { Message, isMessageFromUser, parseMessageData } from '@app/interfaces/message';
-import { CognosApiService } from '@app/services/cognos-api.service';
+import { RedactionEntry, hydrateRedactedText } from '@app/redaction';
+import {
+  ApiPublicConversationResponse,
+  CognosApiService,
+} from '@app/services/cognos-api.service';
 import { CryptoService } from '@app/services/crypto.service';
 import { parseBackendDate } from '@app/utils/timestamp';
 
@@ -383,13 +387,28 @@ export class PublicConversationComponent implements OnInit {
           const conversationData = parseConversationData(
             this._crypto.openBox(Base64.toUint8Array(conv.data), sharedKey),
           );
-          this.title.set(conversationData.title);
 
-          return this._api.listPublicConversationMessages(token).pipe(
-            switchMap((list) => {
-              this._messages.set(this.decryptMessages(list.items, conversationKeyPair));
-              this.state.set('ready');
-              return EMPTY;
+          // For an include-sensitive share, recover the redaction mappings and
+          // hydrate placeholders; redacted-only shares carry no key material and
+          // resolve to an empty mapping (placeholders stay visible).
+          return this.resolveRedactionEntries(token, conv, publicShareKeyPair).pipe(
+            switchMap((entries) => {
+              this.title.set(hydrateRedactedText(conversationData.title, entries));
+              return this._api.listPublicConversationMessages(token).pipe(
+                switchMap((list) => {
+                  const messages = this.decryptMessages(
+                    list.items,
+                    conversationKeyPair,
+                  );
+                  this._messages.set(
+                    entries.length
+                      ? messages.map((message) => this.hydrateMessage(message, entries))
+                      : messages,
+                  );
+                  this.state.set('ready');
+                  return EMPTY;
+                }),
+              );
             }),
           );
         }),
@@ -461,6 +480,70 @@ export class PublicConversationComponent implements OnInit {
       return '';
     }
     return new DatePipe('en-GB').transform(date, 'short') ?? '';
+  }
+
+  // resolveRedactionEntries recovers the decrypted token→original mappings for
+  // an include-sensitive share. Redacted-only shares (no key material, or a 404
+  // from the gated endpoint) resolve to an empty list, so placeholders stay.
+  private resolveRedactionEntries(
+    token: string,
+    conv: ApiPublicConversationResponse,
+    publicShareKeyPair: KeyPair,
+  ): Observable<RedactionEntry[]> {
+    if (
+      conv.mode !== 'include_sensitive' ||
+      !conv.wrapped_redaction_secret_key ||
+      !conv.redaction_public_key
+    ) {
+      return of([]);
+    }
+
+    let redactionKeyPair: KeyPair;
+    try {
+      redactionKeyPair = {
+        publicKey: Base64.toUint8Array(conv.redaction_public_key),
+        secretKey: this._crypto.openSealedBox(
+          Base64.toUint8Array(conv.wrapped_redaction_secret_key),
+          publicShareKeyPair,
+        ),
+      };
+    } catch {
+      return of([]);
+    }
+
+    return this._api.listPublicConversationRedactionEntries(token).pipe(
+      map((res) =>
+        res.items
+          .map((item) => this.tryDecryptEntry(item.data, redactionKeyPair))
+          .filter((entry): entry is RedactionEntry => entry !== null),
+      ),
+      catchError(() => of([])),
+    );
+  }
+
+  private tryDecryptEntry(dataB64: string, keyPair: KeyPair): RedactionEntry | null {
+    try {
+      const plaintext = this._crypto.openSealedBox(
+        Base64.toUint8Array(dataB64),
+        keyPair,
+      );
+      return JSON.parse(new TextDecoder().decode(plaintext)) as RedactionEntry;
+    } catch {
+      return null;
+    }
+  }
+
+  private hydrateMessage(message: Message, entries: RedactionEntry[]): Message {
+    if (!message.decryptedData.content) {
+      return message;
+    }
+    return {
+      ...message,
+      decryptedData: {
+        ...message.decryptedData,
+        content: hydrateRedactedText(message.decryptedData.content, entries),
+      },
+    };
   }
 
   private decryptMessages(

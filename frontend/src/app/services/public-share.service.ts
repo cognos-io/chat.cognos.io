@@ -1,15 +1,20 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, inject } from '@angular/core';
 
-import { Observable, catchError, map, of, throwError } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 
 import { Conversation } from '@app/interfaces/conversation';
 import { KeyPair } from '@app/interfaces/key-pair';
 
-import { CognosApiService } from './cognos-api.service';
+import {
+  type ApiCreatePublicShareResponse,
+  CognosApiService,
+  type PublicShareMode,
+} from './cognos-api.service';
 import { CryptoService } from './crypto.service';
+import { RedactionService } from './redaction.service';
 
 // PublicShareService owns the client-side crypto for public links. The server
 // only ever sees ciphertext + a throwaway public key; the secret half of the
@@ -28,9 +33,17 @@ import { CryptoService } from './crypto.service';
 export class PublicShareService {
   private readonly _api = inject(CognosApiService);
   private readonly _crypto = inject(CryptoService);
+  private readonly _redaction = inject(RedactionService);
   private readonly _document = inject(DOCUMENT);
 
-  share(conversation: Conversation): Observable<string> {
+  // share mints a public link. Redacted-only (default) hands the reader only the
+  // conversation key, so PII placeholders stay placeholders. Include-sensitive
+  // additionally seals the conversation's redaction secret to the share key, so
+  // an anonymous reader holding the fragment can hydrate the originals.
+  share(
+    conversation: Conversation,
+    mode: PublicShareMode = 'redacted_only',
+  ): Observable<string> {
     const publicShareKeyPair = this._crypto.newKeyPair();
 
     const wrappedConversationSecretKey = this._crypto.createSealedBox(
@@ -42,15 +55,48 @@ export class PublicShareService {
       conversation.keyPair.publicKey,
     );
 
-    return this._api
-      .createPublicShare(conversation.record.id, {
-        public_key: Base64.fromUint8Array(publicShareKeyPair.publicKey),
-        wrapped_conversation_secret_key: Base64.fromUint8Array(
-          wrappedConversationSecretKey,
-        ),
-        share_secret: Base64.fromUint8Array(shareSecret),
-      })
-      .pipe(map((res) => this.buildShareUrl(res.token, publicShareKeyPair.secretKey)));
+    const base = {
+      public_key: Base64.fromUint8Array(publicShareKeyPair.publicKey),
+      wrapped_conversation_secret_key: Base64.fromUint8Array(
+        wrappedConversationSecretKey,
+      ),
+      share_secret: Base64.fromUint8Array(shareSecret),
+    };
+
+    const create$: Observable<ApiCreatePublicShareResponse> =
+      mode === 'include_sensitive'
+        ? this._redaction.keyPairFor(conversation).pipe(
+            switchMap((redactionKeyPair) => {
+              if (!redactionKeyPair) {
+                // Nothing redacted in this conversation — fall back to the safe
+                // mode rather than minting an empty include-sensitive share.
+                return this._api.createPublicShare(conversation.record.id, {
+                  ...base,
+                  mode: 'redacted_only',
+                });
+              }
+              const wrappedRedactionSecretKey = this._crypto.createSealedBox(
+                redactionKeyPair.secretKey,
+                publicShareKeyPair.publicKey,
+              );
+              return this._api.createPublicShare(conversation.record.id, {
+                ...base,
+                mode: 'include_sensitive',
+                wrapped_redaction_secret_key: Base64.fromUint8Array(
+                  wrappedRedactionSecretKey,
+                ),
+                redaction_public_key: Base64.fromUint8Array(redactionKeyPair.publicKey),
+              });
+            }),
+          )
+        : this._api.createPublicShare(conversation.record.id, {
+            ...base,
+            mode: 'redacted_only',
+          });
+
+    return create$.pipe(
+      map((res) => this.buildShareUrl(res.token, publicShareKeyPair.secretKey)),
+    );
   }
 
   existingShareUrl(conversation: Conversation): Observable<string | null> {

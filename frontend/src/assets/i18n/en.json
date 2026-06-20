@@ -698,6 +698,13 @@
       "alt": "Profile picture of {{name}}"
     },
     "share": {
+      "redaction": {
+        "heading": "Sensitive values",
+        "redactedLabel": "Share redacted conversation only — recommended",
+        "redactedHint": "Readers can decrypt the conversation, but sensitive values stay as placeholders.",
+        "sensitiveLabel": "Include sensitive values",
+        "sensitiveHint": "Anyone with this link can see restored sensitive values. Only use this with people allowed to see the originals."
+      },
       "checking": "Checking sharing status…",
       "close": "Close",
       "copied": "Copied",

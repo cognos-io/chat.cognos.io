@@ -14,6 +14,7 @@ import {
 } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
 import { PublicShareService } from './public-share.service';
+import { RedactionService } from './redaction.service';
 
 // A minimal stand-in for the parts of CognosApiService the share service uses.
 // createPublicShare records the request so the crypto can be inspected.
@@ -24,7 +25,11 @@ class ApiStub {
     wrapped_conversation_secret_key: string;
     share_secret: string;
   } | null = null;
-  createResponse: ApiCreatePublicShareResponse = { token: 'tok123', key_version: 1 };
+  createResponse: ApiCreatePublicShareResponse = {
+    token: 'tok123',
+    key_version: 1,
+    mode: 'redacted_only',
+  };
   getResponse: ApiParticipantPublicShareResponse | { status: number } = { status: 404 };
 
   createPublicShare(
@@ -83,7 +88,12 @@ describe('PublicShareService', () => {
   beforeEach(() => {
     api = new ApiStub();
     TestBed.configureTestingModule({
-      providers: [{ provide: CognosApiService, useValue: api }],
+      providers: [
+        { provide: CognosApiService, useValue: api },
+        // Default (redacted-only) shares never touch redaction; stub it so the
+        // real service (and its conversation dependency) isn't constructed.
+        { provide: RedactionService, useValue: { keyPairFor: () => of(null) } },
+      ],
     });
     service = TestBed.inject(PublicShareService);
     crypto = TestBed.inject(CryptoService);
@@ -131,6 +141,7 @@ describe('PublicShareService', () => {
       public_key: Base64.fromUint8Array(publicShareKeyPair.publicKey),
       share_secret: Base64.fromUint8Array(shareSecret),
       key_version: 1,
+      mode: 'redacted_only',
     };
 
     const url = await firstValueFrom(service.existingShareUrl(conversation));

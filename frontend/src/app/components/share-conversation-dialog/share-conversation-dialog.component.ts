@@ -16,6 +16,7 @@ import {
   CognosDialogSurfaceComponent,
 } from '@cognos/ui-angular';
 
+import { type PublicShareMode } from '@app/services/cognos-api.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { ErrorService } from '@app/services/error.service';
 import { PublicShareService } from '@app/services/public-share.service';
@@ -50,6 +51,43 @@ type ShareState = 'checking' | 'idle' | 'shared';
               <h3>{{ t('dialogs.share.createHeading') }}</h3>
               <p>{{ t('dialogs.share.createBody') }}</p>
             </div>
+            <fieldset class="share-dialog__modes">
+              <legend>{{ t('dialogs.share.redaction.heading') }}</legend>
+              <label class="share-dialog__mode">
+                <input
+                  type="radio"
+                  name="share-mode"
+                  value="redacted_only"
+                  [checked]="mode() === 'redacted_only'"
+                  (change)="mode.set('redacted_only')"
+                />
+                <span class="share-dialog__mode-text">
+                  <span class="share-dialog__mode-label">
+                    {{ t('dialogs.share.redaction.redactedLabel') }}
+                  </span>
+                  <span class="share-dialog__mode-hint">
+                    {{ t('dialogs.share.redaction.redactedHint') }}
+                  </span>
+                </span>
+              </label>
+              <label class="share-dialog__mode">
+                <input
+                  type="radio"
+                  name="share-mode"
+                  value="include_sensitive"
+                  [checked]="mode() === 'include_sensitive'"
+                  (change)="mode.set('include_sensitive')"
+                />
+                <span class="share-dialog__mode-text">
+                  <span class="share-dialog__mode-label">
+                    {{ t('dialogs.share.redaction.sensitiveLabel') }}
+                  </span>
+                  <span class="share-dialog__mode-hint share-dialog__mode-hint--warn">
+                    {{ t('dialogs.share.redaction.sensitiveHint') }}
+                  </span>
+                </span>
+              </label>
+            </fieldset>
           }
           @case ('shared') {
             <div class="share-dialog__copy">
@@ -145,6 +183,48 @@ type ShareState = 'checking' | 'idle' | 'shared';
       font: inherit;
       outline: 0;
     }
+
+    .share-dialog__modes {
+      display: grid;
+      gap: var(--cog-space-150);
+      margin: 0;
+      padding: var(--cog-space-150);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
+    }
+
+    .share-dialog__modes legend {
+      padding: 0 var(--cog-space-075);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+    }
+
+    .share-dialog__mode {
+      display: flex;
+      gap: var(--cog-space-100);
+      align-items: start;
+      cursor: pointer;
+    }
+
+    .share-dialog__mode-text {
+      display: grid;
+      gap: 2px;
+    }
+
+    .share-dialog__mode-label {
+      color: var(--cog-text);
+      font-weight: var(--cog-fw-semibold);
+    }
+
+    .share-dialog__mode-hint {
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm);
+      line-height: var(--cog-lh-body-sm);
+    }
+
+    .share-dialog__mode-hint--warn {
+      color: var(--cog-text-danger, var(--cog-danger, #b42318));
+    }
   `,
 })
 export class ShareConversationDialogComponent implements OnInit {
@@ -160,6 +240,8 @@ export class ShareConversationDialogComponent implements OnInit {
   readonly shareUrl = signal('');
   readonly copied = signal(false);
   readonly working = signal(false);
+  // Defaults to the safe mode; the user opts into including sensitive values.
+  readonly mode = signal<PublicShareMode>('redacted_only');
 
   ngOnInit(): void {
     const conversation = this._conversationService.getConversation(
@@ -201,7 +283,7 @@ export class ShareConversationDialogComponent implements OnInit {
 
     this.working.set(true);
     this._publicShareService
-      .share(conversation)
+      .share(conversation, this.mode())
       .pipe(
         finalize(() => this.working.set(false)),
         catchError(() => {

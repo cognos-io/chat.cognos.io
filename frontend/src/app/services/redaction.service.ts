@@ -217,6 +217,26 @@ export class RedactionService {
     return hydrateRedactedText(text, Array.from(state.entries.values()));
   }
 
+  /**
+   * The conversation's redaction keypair, loading it if needed. Resolves to
+   * null when the conversation has no redaction key (never used redaction) —
+   * the caller (e.g. public sharing) then has nothing sensitive to include.
+   */
+  keyPairFor(conversation: Conversation): Observable<KeyPair | null> {
+    const conversationId = conversation.record.id;
+    const cached = this._state.get(conversationId)?.keyPair;
+    if (cached) {
+      return of(cached);
+    }
+    return this.fetchKeyPair(conversationId).pipe(
+      map((keyPair) => {
+        this.cacheKeyPair(conversationId, keyPair);
+        return keyPair;
+      }),
+      catchError((err) => (isNotFound(err) ? of(null) : throwError(() => err))),
+    );
+  }
+
   // --- key management ------------------------------------------------------
 
   // ensureKeyPair returns the conversation's redaction keypair, creating and

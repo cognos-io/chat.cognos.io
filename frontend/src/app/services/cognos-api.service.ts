@@ -269,15 +269,22 @@ export interface ApiRotateConversationKeyResponse {
   revoked_user_ids: string[];
 }
 
+export type PublicShareMode = 'redacted_only' | 'include_sensitive';
+
 interface ApiCreatePublicShareRequest {
   public_key: string;
   wrapped_conversation_secret_key: string;
   share_secret: string;
+  mode?: PublicShareMode;
+  // Required when mode is include_sensitive.
+  wrapped_redaction_secret_key?: string;
+  redaction_public_key?: string;
 }
 
 export interface ApiCreatePublicShareResponse {
   token: string;
   key_version: number;
+  mode: PublicShareMode;
 }
 
 export interface ApiParticipantPublicShareResponse {
@@ -285,6 +292,7 @@ export interface ApiParticipantPublicShareResponse {
   public_key: string;
   share_secret: string;
   key_version: number;
+  mode: PublicShareMode;
 }
 
 export interface ApiRedactionKeyEntry {
@@ -340,6 +348,10 @@ export interface ApiPublicConversationResponse {
   conversation_public_key: string;
   wrapped_conversation_secret_key: string;
   key_version: number;
+  mode: PublicShareMode;
+  // Present only for include_sensitive shares.
+  wrapped_redaction_secret_key?: string;
+  redaction_public_key?: string;
 }
 
 export interface ApiPublicModelName {
@@ -1005,6 +1017,16 @@ export class CognosApiService {
   listPublicConversationMessages(token: string): Observable<MessageListResponse> {
     return this._http.get<MessageListResponse>(
       `${this._baseUrl}/api/v1/public/conversations/${token}/messages`,
+    );
+  }
+
+  // Redaction mappings for an include-sensitive public share. 404s for
+  // redacted-only shares — the server gates this, not the client.
+  listPublicConversationRedactionEntries(
+    token: string,
+  ): Observable<ApiListRedactionEntriesResponse> {
+    return this._http.get<ApiListRedactionEntriesResponse>(
+      `${this._baseUrl}/api/v1/public/conversations/${token}/redaction-entries`,
     );
   }
 

@@ -698,6 +698,13 @@
       "alt": "Profilbild von {{name}}"
     },
     "share": {
+      "redaction": {
+        "heading": "Sensible Werte",
+        "redactedLabel": "Nur geschwärzte Unterhaltung teilen — empfohlen",
+        "redactedHint": "Leser können die Unterhaltung entschlüsseln, sensible Werte bleiben jedoch Platzhalter.",
+        "sensitiveLabel": "Sensible Werte einschließen",
+        "sensitiveHint": "Jede Person mit diesem Link kann die wiederhergestellten sensiblen Werte sehen. Nur mit dazu berechtigten Personen verwenden."
+      },
       "checking": "Freigabestatus wird geprüft…",
       "close": "Schließen",
       "copied": "Kopiert",

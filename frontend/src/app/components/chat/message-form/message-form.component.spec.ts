@@ -11,6 +11,7 @@ import { DeviceService } from '@app/services/device.service';
 import { MessageService, MessageStatus } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
+import { RedactionService } from '@app/services/redaction.service';
 import { VaultService } from '@app/services/vault.service';
 
 import { MessageFormComponent } from './message-form.component';
@@ -70,6 +71,9 @@ describe('MessageFormComponent', () => {
           useValue: { isTemporaryConversation: signal(false) },
         },
         { provide: DeviceService, useValue: { isMobile: signal(false) } },
+        // The composer's redaction preview only calls detect(); stub it so the
+        // real RedactionService (and its API/conversation deps) isn't built.
+        { provide: RedactionService, useValue: { detect: () => [] } },
         { provide: MessageService, useValue: messageService },
         {
           provide: ModelService,
@@ -103,6 +107,8 @@ describe('MessageFormComponent', () => {
     expect(messageService.sendMessage$.next).toHaveBeenCalledWith({
       content: 'Hello world',
       requestId: '00000000-0000-4000-8000-000000000000',
+      // No detections deselected (the stub detects nothing), so an empty list.
+      redactionDeselected: [],
     });
     expect(component.messageForm.controls.content.value).toBe('');
   });

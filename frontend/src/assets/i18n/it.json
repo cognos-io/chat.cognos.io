@@ -698,6 +698,13 @@
       "alt": "Immagine del profilo di {{name}}"
     },
     "share": {
+      "redaction": {
+        "heading": "Valori sensibili",
+        "redactedLabel": "Condividi solo la conversazione oscurata — consigliato",
+        "redactedHint": "I lettori possono decifrare la conversazione, ma i valori sensibili restano segnaposto.",
+        "sensitiveLabel": "Includi valori sensibili",
+        "sensitiveHint": "Chiunque abbia questo link può vedere i valori sensibili ripristinati. Usalo solo con persone autorizzate a vedere gli originali."
+      },
       "checking": "Verifica dello stato di condivisione in corso…",
       "close": "Chiudi",
       "copied": "Copiato",
