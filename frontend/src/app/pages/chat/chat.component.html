@@ -111,8 +111,10 @@
 
       <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
       <ng-container *ngTemplateOutlet="navSearch"></ng-container>
-      <ng-container *ngTemplateOutlet="navProjects"></ng-container>
-      <ng-container *ngTemplateOutlet="navConversations"></ng-container>
+      <div class="chat-shell__scroll">
+        <ng-container *ngTemplateOutlet="navProjects"></ng-container>
+        <ng-container *ngTemplateOutlet="navConversations"></ng-container>
+      </div>
     </div>
   </ng-template>
 
@@ -165,8 +167,10 @@
       </div>
 
       <div cogMobileDrawer class="chat-shell__drawer-body">
-        <ng-container *ngTemplateOutlet="navProjects"></ng-container>
-        <ng-container *ngTemplateOutlet="navConversations"></ng-container>
+        <div class="chat-shell__scroll">
+          <ng-container *ngTemplateOutlet="navProjects"></ng-container>
+          <ng-container *ngTemplateOutlet="navConversations"></ng-container>
+        </div>
       </div>
 
       <div cogMobileDrawerFooter class="chat-shell__drawer-footer">

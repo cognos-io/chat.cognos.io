@@ -37,12 +37,21 @@
   line-height: var(--cog-lh-caption);
 }
 
-.chat-shell__conversation-sections {
+// The single scroll region holding the Projects group + the conversation
+// sections. It occupies the nav's flexible row so the groups stack from the
+// top (align-content: start) and scroll together rather than stretching.
+.chat-shell__scroll {
   display: grid;
   gap: var(--cog-space-300);
   min-height: 0;
   align-content: start;
   overflow: auto;
+}
+
+.chat-shell__conversation-sections {
+  display: grid;
+  gap: var(--cog-space-300);
+  align-content: start;
 }
 
 .chat-shell__section {
