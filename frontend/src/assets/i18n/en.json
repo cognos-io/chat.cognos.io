@@ -816,6 +816,29 @@
       "viewMode": "View mode"
     }
   },
+  "projects": {
+    "back": "Back to projects",
+    "cancel": "Cancel",
+    "create": "Create project",
+    "creating": "Creating…",
+    "createdLabel": "Created",
+    "delete": "Delete project",
+    "deleteConfirm": "Delete this project? This can’t be undone.",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "What is this project about?",
+    "edit": "Edit",
+    "empty": "No projects yet.",
+    "emptyHint": "Create your first project to group related chats into an encrypted workspace.",
+    "loading": "Loading…",
+    "nameLabel": "Project name",
+    "namePlaceholder": "e.g. Acme launch",
+    "new": "New project",
+    "notFound": "Project not found.",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "subtitle": "Group related chats into an encrypted workspace.",
+    "title": "Projects"
+  },
   "public": {
     "decrypting": "Decrypting shared conversation…",
     "deletedMessage": "Deleted message",

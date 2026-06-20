@@ -18,6 +18,7 @@ import {
 } from '@app/interfaces/billing';
 import { ConversationRecord } from '@app/interfaces/conversation';
 import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/model';
+import { ProjectRecord } from '@app/interfaces/project';
 import {
   ConversationPublicKeysResponse,
   ConversationSecretKeysResponse,
@@ -197,6 +198,16 @@ export type ApiCompleteStreamEvent =
 interface ApiConversationRequest {
   data: string;
   expiry_duration?: string;
+}
+
+interface ApiProjectCreateRequest {
+  data: string;
+  wrapped_project_key: string;
+}
+
+interface ApiProjectUpdateRequest {
+  data: string;
+  archived_at?: string;
 }
 
 interface ApiMessageUpdateRequest {
@@ -528,6 +539,46 @@ export class CognosApiService {
         headers: this.authHeaders(),
       },
     );
+  }
+
+  listProjects(): Observable<ProjectRecord[]> {
+    return this._http.get<ProjectRecord[]>(`${this._baseUrl}/api/v1/projects`, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  createProject(request: ApiProjectCreateRequest): Observable<ProjectRecord> {
+    return this._http.post<ProjectRecord>(`${this._baseUrl}/api/v1/projects`, request, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  getProject(projectId: string): Observable<ProjectRecord> {
+    return this._http.get<ProjectRecord>(
+      `${this._baseUrl}/api/v1/projects/${projectId}`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  updateProject(
+    projectId: string,
+    request: ApiProjectUpdateRequest,
+  ): Observable<ProjectRecord> {
+    return this._http.patch<ProjectRecord>(
+      `${this._baseUrl}/api/v1/projects/${projectId}`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  deleteProject(projectId: string): Observable<void> {
+    return this._http.delete<void>(`${this._baseUrl}/api/v1/projects/${projectId}`, {
+      headers: this.authHeaders(),
+    });
   }
 
   // Bulk-deletes every conversation the user can access (the "delete all chats"

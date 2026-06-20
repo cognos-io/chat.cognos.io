@@ -1,0 +1,95 @@
+<div *transloco="let t" class="project-detail">
+  <nav class="project-detail__breadcrumb">
+    <a routerLink="/">Cognos</a>
+    <cog-icon name="chevron-right" [size]="14" />
+    <a routerLink="/projects">{{ t('projects.title') }}</a>
+  </nav>
+
+  @if (project(); as project) {
+    @if (editing()) {
+      <form class="project-detail__form" (submit)="$event.preventDefault(); save()">
+        <label class="project-detail__field">
+          <span class="project-detail__label">{{ t('projects.nameLabel') }}</span>
+          <input
+            type="text"
+            name="project-name"
+            [ngModel]="name()"
+            (ngModelChange)="name.set($event)"
+            autocomplete="off"
+          />
+        </label>
+        <label class="project-detail__field">
+          <span class="project-detail__label">{{
+            t('projects.descriptionLabel')
+          }}</span>
+          <textarea
+            name="project-description"
+            rows="3"
+            [ngModel]="description()"
+            (ngModelChange)="description.set($event)"
+          ></textarea>
+        </label>
+        <div class="project-detail__actions">
+          <cog-button appearance="subtle" type="button" (click)="cancelEdit()">
+            {{ t('projects.cancel') }}
+          </cog-button>
+          <cog-button
+            appearance="primary"
+            type="submit"
+            [disabled]="name().trim() === '' || saving()"
+          >
+            {{ saving() ? t('projects.saving') : t('projects.save') }}
+          </cog-button>
+        </div>
+      </form>
+    } @else {
+      <header class="project-detail__header">
+        <h1 class="project-detail__title" data-testid="project-name">
+          {{ project.decryptedData.name }}
+        </h1>
+        <div class="project-detail__header-actions">
+          <cog-button appearance="subtle" icon="pencil" (click)="startEdit()">
+            {{ t('projects.edit') }}
+          </cog-button>
+        </div>
+      </header>
+
+      @if (project.decryptedData.description) {
+        <p class="project-detail__description" data-testid="project-description">
+          {{ project.decryptedData.description }}
+        </p>
+      }
+
+      <section class="project-detail__danger">
+        @if (confirmingDelete()) {
+          <p class="project-detail__danger-prompt">
+            {{ t('projects.deleteConfirm') }}
+          </p>
+          <div class="project-detail__actions">
+            <cog-button appearance="subtle" (click)="cancelDelete()">
+              {{ t('projects.cancel') }}
+            </cog-button>
+            <cog-button
+              appearance="danger"
+              (click)="confirmDelete()"
+              data-testid="project-delete-confirm"
+            >
+              {{ t('projects.delete') }}
+            </cog-button>
+          </div>
+        } @else {
+          <cog-button
+            appearance="subtle"
+            (click)="requestDelete()"
+            data-testid="project-delete"
+          >
+            {{ t('projects.delete') }}
+          </cog-button>
+        }
+      </section>
+    }
+  } @else {
+    <p class="project-detail__missing">{{ t('projects.notFound') }}</p>
+    <a class="project-detail__back" routerLink="/projects">{{ t('projects.back') }}</a>
+  }
+</div>

@@ -35,6 +35,14 @@ export class CryptoService {
   }
 
   /**
+   * randomKey - generates a fresh random symmetric key suitable for secretBox
+   * (e.g. a project content key). 32 bytes of CSPRNG output.
+   */
+  randomKey(): Uint8Array {
+    return nacl.randomBytes(nacl.secretbox.keyLength);
+  }
+
+  /**
    * keyPairFromSecretKey - rebuilds the full key pair from a secret key alone.
    * Used by the public-sharing reader, which only receives the secret half in
    * the URL fragment and must recover the matching public key to open sealed

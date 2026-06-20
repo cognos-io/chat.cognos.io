@@ -36,6 +36,29 @@ export const routes: Routes = [
     ],
   },
   {
+    // Encrypted projects (shared workspaces). Gated behind the `projects`
+    // feature flag while phases 2–3 are built.
+    path: 'projects',
+    canActivate: [authGuard, featureFlagGuard],
+    data: { featureFlag: 'projects' },
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./pages/projects/projects-page.component').then(
+            (m) => m.ProjectsPageComponent,
+          ),
+      },
+      {
+        path: ':projectId',
+        loadComponent: () =>
+          import('./pages/projects/project-detail.component').then(
+            (m) => m.ProjectDetailComponent,
+          ),
+      },
+    ],
+  },
+  {
     // Standalone pricing / plan-picker ("Keep going, privately"). Reached from
     // the locked-chat surfaces and the dashboard's switch/choose actions.
     path: 'pricing',

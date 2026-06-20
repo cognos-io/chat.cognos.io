@@ -14,5 +14,8 @@ export const environment = {
     security: false,
     team: false,
     notifications: false,
+    // Encrypted projects — on in development so the shell and e2e can exercise
+    // it while phases 2–3 are built.
+    projects: true,
   },
 };
