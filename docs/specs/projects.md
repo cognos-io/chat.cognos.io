@@ -512,12 +512,29 @@ The server must not persist:
 - Add revoke + project key rotation (forward-only, per decision).
 - Decide billing attribution for shared-project completions.
 
-### Phase 3 — project conversations (NEXT)
+### Phase 3 — project conversations ✅ DONE
 
-- Add optional `project` relation to conversations.
-- Add project conversation create/list APIs.
-- Add project-wrapped conversation secret keys (`project_conversation_keys`).
-- Ensure project membership gates project conversation access.
+- ✅ Optional `project` relation on conversations + `project_conversation_keys`
+  (migration `1760000041`); the conversation secret key is wrapped by the
+  project content key.
+- ✅ `GET/POST /api/v1/projects/{id}/conversations` (create writes conversation
+    - public key + wrapped key transactionally, no participant rows; list embeds
+  the wrapped key). Viewers can't create.
+- ✅ Access for project conversations gated by project membership via a single
+  `conversationAccessible` helper shared by message access and the completion
+  path; project conversations are excluded from the main conversation list, and
+  the conversation-level sharing endpoints (participants/rotate/public-share)
+  reject them.
+- ✅ Frontend `ProjectConversationService` derives the conversation keypair from
+  the project content key and merges project conversations into
+  `ConversationService` so the existing chat view opens and messages them; the
+  sidebar excludes them. Project detail page lists/creates project chats.
+- ✅ Tests: backend API e2e (create/list/access/exclusion/completion gating),
+  browser e2e (decrypt-on-load + create→open).
+
+**Known refinements (not blockers):** new project chats default to the title
+"New chat" (no auto-title from first message yet); project chats are eagerly
+loaded for all projects on unlock so direct chat URLs resolve.
 
 ### Phase 4 — encrypted files
 
