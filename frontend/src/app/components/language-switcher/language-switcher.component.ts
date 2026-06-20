@@ -68,9 +68,10 @@ import { LanguageService } from '@services/language.service';
     .lang-switcher__trigger {
       display: inline-flex;
       align-items: center;
-      gap: var(--cog-space-075);
+      gap: var(--cog-space-100);
       min-height: 36px;
-      padding: 0 var(--cog-space-125);
+      min-width: 84px;
+      padding: 0 var(--cog-space-200);
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface);
