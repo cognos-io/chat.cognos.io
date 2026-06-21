@@ -954,9 +954,39 @@
   },
   "models": {
     "description": {
-      "default": "Verfügbar über Cognos.",
-      "infomaniak": "Gehostet in der Schweiz von Infomaniak.",
-      "requesty": "Bereitgestellt über das EU-Gateway von Requesty in Frankfurt."
+      "claude-haiku-4-5": "Anthropics schnelles, leichtgewichtiges Modell für alltägliche Aufgaben.",
+      "claude-opus-4-8": "Anthropics leistungsstärkstes Modell für komplexes Schlussfolgern und Programmieren.",
+      "claude-sonnet-4-6": "Anthropics ausgewogenes Modell — starkes Schlussfolgern bei praktischer Geschwindigkeit.",
+      "gemini-2-5-pro": "Googles leistungsstarkes Modell für Schlussfolgern über lange Kontexte.",
+      "gemini-3-1-flash-lite": "Googles schnellstes, sparsamstes Gemini für Aufgaben mit hohem Volumen.",
+      "gemini-3-5-flash": "Googles schnelles multimodales Modell, das Geschwindigkeit und Qualität ausbalanciert.",
+      "gemma-3-27b-it": "Googles offenes Instruktionsmodell für allgemeinen Chat.",
+      "glm-5-2": "Zhipus offenes Modell, stark bei Schlussfolgern, Programmieren und Werkzeugnutzung.",
+      "google-gemma-4-31b-it-infomaniak": "Googles offenes Instruktionsmodell für allgemeinen Chat.",
+      "gpt-4o-mini": "OpenAIs kleines multimodales Modell für schnelle, kostengünstige Aufgaben.",
+      "gpt-5-5": "OpenAIs Spitzenmodell für fortgeschrittenes Schlussfolgern und multimodale Arbeit.",
+      "gpt-5-mini": "Ein kleineres, schnelleres GPT-5 für kostenbewusstes Schlussfolgern.",
+      "gpt-5-nano": "OpenAIs kleinstes, günstigstes GPT-5 für Aufgaben mit hohem Volumen.",
+      "gpt-oss-120b": "OpenAIs Open-Weight-Modell für Schlussfolgern und Werkzeugnutzung.",
+      "hermes-4-405b": "Nous Researchs großes, steuerbares offenes Modell für Schlussfolgern.",
+      "hermes-4-70b": "Nous Researchs offenes Modell — fähiges Schlussfolgern in kleinerer Größe.",
+      "kimi-k2-6": "Moonshots offenes, agentenfähiges Modell mit starker Werkzeugnutzung bei langem Kontext.",
+      "llama-3-3-70b-instruct": "Metas offenes Instruktionsmodell für mehrsprachigen Chat.",
+      "llama-3-3-infomaniak": "Metas offenes Instruktionsmodell für mehrsprachigen Chat.",
+      "minimax-m2-5": "MiniMax' offenes Modell für agentenbasierte Workflows und Programmieren.",
+      "mistralai-ministral-3-14b-instruct-2512-infomaniak": "Mistrals kompaktes, effizientes offenes Modell für schnelle Aufgaben.",
+      "mistralai-mistral-small-4-119b-2603-infomaniak": "Mistrals leistungsfähiges offenes Modell, das Qualität und Effizienz ausbalanciert.",
+      "moonshotai-kimi-k2-6-infomaniak": "Moonshots offenes, agentenfähiges Modell mit starker Werkzeugnutzung bei langem Kontext.",
+      "nemotron-3-nano-omni": "NVIDIAs kompaktes offenes Modell für effizientes multimodales Schlussfolgern.",
+      "nvidia-nemotron-3-nano-30b-a3b-fp8-infomaniak": "NVIDIAs effizientes offenes MoE-Modell für Reasoning-Aufgaben.",
+      "o4-mini": "OpenAIs kompaktes Reasoning-Modell, effizient bei Mathematik und Code.",
+      "qwen-qwen3-5-122b-a10b-fp8-infomaniak": "Alibabas offenes MoE-Modell für starkes Schlussfolgern im großen Maßstab.",
+      "qwen-qwen3-5-397b-a17b-fp8-infomaniak": "Alibabas offenes MoE-Spitzenmodell für anspruchsvolle Aufgaben.",
+      "qwen3-235b-a22b-instruct-2507": "Alibabas großes offenes MoE-Modell für fortgeschrittenes Schlussfolgern.",
+      "qwen3-30b-a3b-instruct-2507": "Alibabas effizientes offenes MoE-Modell für alltägliches Schlussfolgern.",
+      "qwen3-32b": "Alibabas offenes Modell, stark bei mehrsprachigem Chat und Werkzeugen.",
+      "qwen3-next-80b-a3b-thinking": "Alibabas offenes Reasoning-Modell mit erweitertem Nachdenken.",
+      "swiss-ai-apertus-70b-instruct-2509-infomaniak": "Das vollständig offene, transparente Schweizer Modell für mehrsprachige Aufgaben."
     }
   }
 }

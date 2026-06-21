@@ -11,7 +11,7 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { CognosIconComponent, CognosLozengeComponent } from '@cognos/ui-angular';
 import type { CognosIconName } from '@cognos/ui/icons';
 
-import { modelDescriptionKey } from '@app/i18n/model-copy';
+import { localizedModelDescription } from '@app/i18n/model-copy';
 import { Model, PrivacyTier } from '@app/interfaces/model';
 import { AuthService } from '@app/services/auth.service';
 import { ModelService } from '@app/services/model.service';
@@ -164,9 +164,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
               </span>
               <span class="models__body">
                 <span class="models__name">{{ model.name }}</span>
-                <span class="models__desc">{{
-                  t('models.description.' + descKey(model))
-                }}</span>
+                <span class="models__desc">{{ describe(model, t) }}</span>
               </span>
               <span class="models__meta">
                 <cog-lozenge [tone]="model.isEligible ? 'green' : 'neutral'">
@@ -590,8 +588,8 @@ export class DataProcessingComponent {
     this.expanded.update((open) => !open);
   }
 
-  // Translation-key suffix for the model's residency tagline (by provider).
-  protected readonly descKey = modelDescriptionKey;
+  // Localised per-model description (falls back to the catalogue description).
+  protected readonly describe = localizedModelDescription;
 
   protected regionBadge(model: Model): string {
     const key = MODEL_REGION_BADGE_KEY[model.privacyTier];

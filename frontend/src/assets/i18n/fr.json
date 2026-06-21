@@ -954,9 +954,39 @@
   },
   "models": {
     "description": {
-      "default": "Disponible via Cognos.",
-      "infomaniak": "Hébergé en Suisse par Infomaniak.",
-      "requesty": "Fourni via la passerelle européenne de Requesty à Francfort."
+      "claude-haiku-4-5": "Modèle rapide et léger d'Anthropic pour les tâches quotidiennes.",
+      "claude-opus-4-8": "Modèle le plus performant d'Anthropic pour le raisonnement complexe et la programmation.",
+      "claude-sonnet-4-6": "Modèle équilibré d'Anthropic — raisonnement solide à une vitesse pratique.",
+      "gemini-2-5-pro": "Modèle haute performance de Google pour le raisonnement sur de longs contextes.",
+      "gemini-3-1-flash-lite": "Le Gemini le plus rapide et le plus économique de Google pour les tâches en grand volume.",
+      "gemini-3-5-flash": "Modèle multimodal rapide de Google, équilibrant vitesse et qualité.",
+      "gemma-3-27b-it": "Modèle d'instruction ouvert de Google pour la conversation polyvalente.",
+      "glm-5-2": "Modèle ouvert de Zhipu, performant en raisonnement, programmation et utilisation d'outils.",
+      "google-gemma-4-31b-it-infomaniak": "Modèle d'instruction ouvert de Google pour la conversation polyvalente.",
+      "gpt-4o-mini": "Petit modèle multimodal d'OpenAI pour des tâches rapides et économiques.",
+      "gpt-5-5": "Modèle phare d'OpenAI pour le raisonnement avancé et le travail multimodal.",
+      "gpt-5-mini": "Un GPT-5 plus petit et plus rapide pour le raisonnement à coût maîtrisé.",
+      "gpt-5-nano": "Le GPT-5 le plus petit et le moins cher d'OpenAI pour les tâches en grand volume.",
+      "gpt-oss-120b": "Modèle à poids ouverts d'OpenAI pour le raisonnement et l'utilisation d'outils.",
+      "hermes-4-405b": "Grand modèle ouvert et pilotable de Nous Research pour le raisonnement.",
+      "hermes-4-70b": "Modèle ouvert de Nous Research — raisonnement performant dans une taille réduite.",
+      "kimi-k2-6": "Modèle agentique ouvert de Moonshot, performant pour l'utilisation d'outils sur de longs contextes.",
+      "llama-3-3-70b-instruct": "Modèle d'instruction ouvert de Meta pour les conversations multilingues.",
+      "llama-3-3-infomaniak": "Modèle d'instruction ouvert de Meta pour les conversations multilingues.",
+      "minimax-m2-5": "Modèle ouvert de MiniMax conçu pour les workflows agentiques et la programmation.",
+      "mistralai-ministral-3-14b-instruct-2512-infomaniak": "Modèle ouvert compact et efficace de Mistral pour les tâches rapides.",
+      "mistralai-mistral-small-4-119b-2603-infomaniak": "Modèle ouvert performant de Mistral, équilibrant qualité et efficacité.",
+      "moonshotai-kimi-k2-6-infomaniak": "Modèle agentique ouvert de Moonshot, performant pour l'utilisation d'outils sur de longs contextes.",
+      "nemotron-3-nano-omni": "Modèle ouvert compact de NVIDIA pour un raisonnement multimodal efficace.",
+      "nvidia-nemotron-3-nano-30b-a3b-fp8-infomaniak": "Modèle MoE ouvert et efficace de NVIDIA pour les tâches de raisonnement.",
+      "o4-mini": "Modèle de raisonnement compact d'OpenAI, efficace en maths et en code.",
+      "qwen-qwen3-5-122b-a10b-fp8-infomaniak": "Modèle MoE ouvert d'Alibaba pour un raisonnement solide à grande échelle.",
+      "qwen-qwen3-5-397b-a17b-fp8-infomaniak": "Modèle MoE ouvert phare d'Alibaba pour les tâches exigeantes.",
+      "qwen3-235b-a22b-instruct-2507": "Grand modèle MoE ouvert d'Alibaba pour le raisonnement avancé.",
+      "qwen3-30b-a3b-instruct-2507": "Modèle MoE ouvert et efficace d'Alibaba pour le raisonnement quotidien.",
+      "qwen3-32b": "Modèle ouvert d'Alibaba, performant en conversation multilingue et outils.",
+      "qwen3-next-80b-a3b-thinking": "Modèle de raisonnement ouvert d'Alibaba avec réflexion approfondie.",
+      "swiss-ai-apertus-70b-instruct-2509-infomaniak": "Le modèle suisse entièrement ouvert et transparent pour les tâches multilingues."
     }
   }
 }

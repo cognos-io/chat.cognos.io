@@ -954,9 +954,39 @@
   },
   "models": {
     "description": {
-      "default": "Available through Cognos.",
-      "infomaniak": "Hosted in Switzerland by Infomaniak.",
-      "requesty": "Served through Requesty's EU gateway in Frankfurt."
+      "claude-haiku-4-5": "Anthropic's fast, lightweight model for everyday tasks.",
+      "claude-opus-4-8": "Anthropic's most capable model for complex reasoning and coding.",
+      "claude-sonnet-4-6": "Anthropic's balanced model — strong reasoning at practical speed.",
+      "gemini-2-5-pro": "Google's high-capability model for reasoning over long contexts.",
+      "gemini-3-1-flash-lite": "Google's fastest, most economical Gemini for high-volume tasks.",
+      "gemini-3-5-flash": "Google's fast multimodal model balancing speed and quality.",
+      "gemma-3-27b-it": "Google's open instruction model for general-purpose chat.",
+      "glm-5-2": "Zhipu's open model, strong at reasoning, coding and tool use.",
+      "google-gemma-4-31b-it-infomaniak": "Google's open instruction model for general-purpose chat.",
+      "gpt-4o-mini": "OpenAI's small multimodal model for fast, low-cost tasks.",
+      "gpt-5-5": "OpenAI's flagship model for advanced reasoning and multimodal work.",
+      "gpt-5-mini": "A smaller, faster GPT-5 for cost-sensitive reasoning.",
+      "gpt-5-nano": "OpenAI's smallest, cheapest GPT-5 for high-volume tasks.",
+      "gpt-oss-120b": "OpenAI's open-weight model for reasoning and tool use.",
+      "hermes-4-405b": "Nous Research's large, steerable open model for reasoning.",
+      "hermes-4-70b": "Nous Research's open model — capable reasoning at a smaller size.",
+      "kimi-k2-6": "Moonshot's open agentic model with strong long-context tool use.",
+      "llama-3-3-70b-instruct": "Meta's open instruction model for multilingual chat.",
+      "llama-3-3-infomaniak": "Meta's open instruction model for multilingual chat.",
+      "minimax-m2-5": "MiniMax's open model built for agentic workflows and coding.",
+      "mistralai-ministral-3-14b-instruct-2512-infomaniak": "Mistral's compact, efficient open model for fast tasks.",
+      "mistralai-mistral-small-4-119b-2603-infomaniak": "Mistral's capable open model balancing quality and efficiency.",
+      "moonshotai-kimi-k2-6-infomaniak": "Moonshot's open agentic model with strong long-context tool use.",
+      "nemotron-3-nano-omni": "NVIDIA's compact open model for efficient multimodal reasoning.",
+      "nvidia-nemotron-3-nano-30b-a3b-fp8-infomaniak": "NVIDIA's efficient open MoE model for reasoning tasks.",
+      "o4-mini": "OpenAI's compact reasoning model, efficient at maths and code.",
+      "qwen-qwen3-5-122b-a10b-fp8-infomaniak": "Alibaba's open MoE model for strong reasoning at scale.",
+      "qwen-qwen3-5-397b-a17b-fp8-infomaniak": "Alibaba's flagship open MoE model for demanding tasks.",
+      "qwen3-235b-a22b-instruct-2507": "Alibaba's large open MoE model for advanced reasoning.",
+      "qwen3-30b-a3b-instruct-2507": "Alibaba's efficient open MoE model for everyday reasoning.",
+      "qwen3-32b": "Alibaba's open model, strong at multilingual chat and tools.",
+      "qwen3-next-80b-a3b-thinking": "Alibaba's open reasoning model with extended thinking.",
+      "swiss-ai-apertus-70b-instruct-2509-infomaniak": "Switzerland's fully open, transparent model for multilingual tasks."
     }
   }
 }

@@ -954,9 +954,39 @@
   },
   "models": {
     "description": {
-      "default": "Disponible a través de Cognos.",
-      "infomaniak": "Alojado en Suiza por Infomaniak.",
-      "requesty": "Servido a través de la pasarela europea de Requesty en Fráncfort."
+      "claude-haiku-4-5": "Modelo rápido y ligero de Anthropic para tareas cotidianas.",
+      "claude-opus-4-8": "El modelo más capaz de Anthropic para razonamiento complejo y programación.",
+      "claude-sonnet-4-6": "Modelo equilibrado de Anthropic: razonamiento sólido a una velocidad práctica.",
+      "gemini-2-5-pro": "Modelo de alta capacidad de Google para razonar sobre contextos largos.",
+      "gemini-3-1-flash-lite": "El Gemini más rápido y económico de Google para tareas de gran volumen.",
+      "gemini-3-5-flash": "Modelo multimodal rápido de Google que equilibra velocidad y calidad.",
+      "gemma-3-27b-it": "Modelo de instrucción abierto de Google para chat de uso general.",
+      "glm-5-2": "Modelo abierto de Zhipu, sólido en razonamiento, programación y uso de herramientas.",
+      "google-gemma-4-31b-it-infomaniak": "Modelo de instrucción abierto de Google para chat de uso general.",
+      "gpt-4o-mini": "Modelo multimodal pequeño de OpenAI para tareas rápidas y económicas.",
+      "gpt-5-5": "Modelo insignia de OpenAI para razonamiento avanzado y trabajo multimodal.",
+      "gpt-5-mini": "Un GPT-5 más pequeño y rápido para razonamiento con costes ajustados.",
+      "gpt-5-nano": "El GPT-5 más pequeño y económico de OpenAI para tareas de gran volumen.",
+      "gpt-oss-120b": "Modelo de pesos abiertos de OpenAI para razonamiento y uso de herramientas.",
+      "hermes-4-405b": "Gran modelo abierto y orientable de Nous Research para razonamiento.",
+      "hermes-4-70b": "Modelo abierto de Nous Research: razonamiento capaz en un tamaño menor.",
+      "kimi-k2-6": "Modelo agéntico abierto de Moonshot, sólido en el uso de herramientas con contextos largos.",
+      "llama-3-3-70b-instruct": "Modelo de instrucción abierto de Meta para chat multilingüe.",
+      "llama-3-3-infomaniak": "Modelo de instrucción abierto de Meta para chat multilingüe.",
+      "minimax-m2-5": "Modelo abierto de MiniMax diseñado para flujos agénticos y programación.",
+      "mistralai-ministral-3-14b-instruct-2512-infomaniak": "Modelo abierto compacto y eficiente de Mistral para tareas rápidas.",
+      "mistralai-mistral-small-4-119b-2603-infomaniak": "Modelo abierto capaz de Mistral que equilibra calidad y eficiencia.",
+      "moonshotai-kimi-k2-6-infomaniak": "Modelo agéntico abierto de Moonshot, sólido en el uso de herramientas con contextos largos.",
+      "nemotron-3-nano-omni": "Modelo abierto compacto de NVIDIA para razonamiento multimodal eficiente.",
+      "nvidia-nemotron-3-nano-30b-a3b-fp8-infomaniak": "Modelo MoE abierto y eficiente de NVIDIA para tareas de razonamiento.",
+      "o4-mini": "Modelo de razonamiento compacto de OpenAI, eficiente en matemáticas y código.",
+      "qwen-qwen3-5-122b-a10b-fp8-infomaniak": "Modelo MoE abierto de Alibaba para un razonamiento sólido a gran escala.",
+      "qwen-qwen3-5-397b-a17b-fp8-infomaniak": "Modelo MoE abierto insignia de Alibaba para tareas exigentes.",
+      "qwen3-235b-a22b-instruct-2507": "Gran modelo MoE abierto de Alibaba para razonamiento avanzado.",
+      "qwen3-30b-a3b-instruct-2507": "Modelo MoE abierto y eficiente de Alibaba para razonamiento cotidiano.",
+      "qwen3-32b": "Modelo abierto de Alibaba, sólido en chat multilingüe y herramientas.",
+      "qwen3-next-80b-a3b-thinking": "Modelo de razonamiento abierto de Alibaba con pensamiento ampliado.",
+      "swiss-ai-apertus-70b-instruct-2509-infomaniak": "El modelo suizo totalmente abierto y transparente para tareas multilingües."
     }
   }
 }
