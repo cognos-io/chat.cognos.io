@@ -8,6 +8,7 @@ export type CognosIconName =
   | 'shield-check'
   | 'shield'
   | 'key-round'
+  | 'eye'
   | 'eye-off'
   | 'search'
   | 'laptop'

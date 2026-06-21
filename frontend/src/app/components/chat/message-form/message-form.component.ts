@@ -3,6 +3,7 @@ import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { isPlatformBrowser } from '@angular/common';
 import {
   Component,
+  ElementRef,
   HostListener,
   PLATFORM_ID,
   computed,
@@ -10,6 +11,7 @@ import {
   inject,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
@@ -34,7 +36,13 @@ import {
 } from '@cognos/ui-angular';
 
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
-import { RedactionCandidate, candidateKey, tokenTypeCode } from '@app/redaction';
+import {
+  RedactionCandidate,
+  buildCustomCandidates,
+  candidateKey,
+  resolveOverlaps,
+  tokenTypeCode,
+} from '@app/redaction';
 import { BillingService } from '@app/services/billing.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
@@ -51,6 +59,12 @@ import { redactionKindFor, redactionModalLabels } from '../redaction-ui';
 import { ModelSelectorComponent } from './model-selector/model-selector.component';
 import { PersonaChipsComponent } from './persona-chips/persona-chips.component';
 import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.component';
+
+// Escape text before placing it in the highlight overlay's innerHTML; only the
+// <mark> tags we add are meant to be markup.
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 @Component({
   selector: 'app-message-form',
@@ -120,22 +134,37 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
             {{ t('chat.composer.label') }}
           </label>
 
-          <textarea
-            cdkTextareaAutosize
-            cdkAutosizeMaxRows="8"
-            cdkAutosizeMinRows="2"
-            class="message-form__textarea"
-            formControlName="content"
-            id="message-form"
-            name="message-form"
-            [placeholder]="t('chat.composer.placeholder')"
-            [readOnly]="isStreaming()"
-            (keydown.control.enter)="isMac ? undefined : sendMessage()"
-            (keydown.meta.enter)="isMac ? sendMessage() : undefined"
-            (mouseup)="onComposerMouseUp($event)"
-            (contextmenu)="onComposerContextMenu($event)"
-            (input)="redactPopover.set(null)"
-          ></textarea>
+          <div
+            class="message-form__editor"
+            [class.message-form__editor--highlight]="highlightRedactions()"
+          >
+            @if (highlightRedactions()) {
+              <div
+                #redactionHighlights
+                class="message-form__highlights"
+                aria-hidden="true"
+                [innerHTML]="redactionHighlightHtml()"
+              ></div>
+            }
+
+            <textarea
+              cdkTextareaAutosize
+              cdkAutosizeMaxRows="8"
+              cdkAutosizeMinRows="2"
+              class="message-form__textarea"
+              formControlName="content"
+              id="message-form"
+              name="message-form"
+              [placeholder]="t('chat.composer.placeholder')"
+              [readOnly]="isStreaming()"
+              (keydown.control.enter)="isMac ? undefined : sendMessage()"
+              (keydown.meta.enter)="isMac ? sendMessage() : undefined"
+              (mouseup)="onComposerMouseUp($event)"
+              (contextmenu)="onComposerContextMenu($event)"
+              (input)="redactPopover.set(null)"
+              (scroll)="onComposerScroll($event)"
+            ></textarea>
+          </div>
 
           <!-- Selection action: redact the highlighted text manually. Anchored
                to the pointer; clears when the selection or draft changes. -->
@@ -154,30 +183,43 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
 
           @if (hasRedactionPreview()) {
             <div class="message-form__redaction">
-              <button
-                type="button"
-                class="message-form__redaction-summary"
-                [attr.aria-expanded]="redactionPreviewOpen()"
-                (click)="toggleRedactionPreview()"
-              >
-                <cog-icon name="shield-check" [size]="14" tone="text-subtle" />
-                <span>
-                  @if (redactionActiveCount() > 0) {
-                    {{
-                      t('chat.composer.redaction.summary', {
-                        count: redactionActiveCount(),
-                      })
-                    }}
-                  } @else {
-                    {{ t('chat.composer.redaction.none') }}
-                  }
-                </span>
-                <cog-icon
-                  [name]="redactionPreviewOpen() ? 'chevron-down' : 'chevron-right'"
-                  [size]="14"
-                  tone="text-subtle"
+              <div class="message-form__redaction-head">
+                <button
+                  type="button"
+                  class="message-form__redaction-summary"
+                  [attr.aria-expanded]="redactionPreviewOpen()"
+                  (click)="toggleRedactionPreview()"
+                >
+                  <cog-icon name="shield-check" [size]="14" tone="text-subtle" />
+                  <span>
+                    @if (redactionActiveCount() > 0) {
+                      {{
+                        t('chat.composer.redaction.summary', {
+                          count: redactionActiveCount(),
+                        })
+                      }}
+                    } @else {
+                      {{ t('chat.composer.redaction.none') }}
+                    }
+                  </span>
+                  <cog-icon
+                    [name]="redactionPreviewOpen() ? 'chevron-down' : 'chevron-right'"
+                    [size]="14"
+                    tone="text-subtle"
+                  />
+                </button>
+
+                <cog-icon-button
+                  [name]="highlightRedactions() ? 'eye' : 'eye-off'"
+                  [title]="
+                    highlightRedactions()
+                      ? t('chat.composer.redaction.hideHighlight')
+                      : t('chat.composer.redaction.showHighlight')
+                  "
+                  [selected]="highlightRedactions()"
+                  (click)="highlightRedactions.set(!highlightRedactions())"
                 />
-              </button>
+              </div>
 
               @if (redactionPreviewOpen()) {
                 <ul class="message-form__redaction-list">
@@ -407,6 +449,40 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
       color: var(--cog-text-subtlest);
     }
 
+    /* Highlight overlay: a backdrop mirroring the textarea exactly, with marks
+       behind the (transparent-background) textarea text. Typography + box must
+       match .message-form__textarea char-for-char so marks line up. */
+    .message-form__editor {
+      position: relative;
+    }
+
+    .message-form__highlights {
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      pointer-events: none;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      font: inherit;
+      font-size: 16px;
+      line-height: var(--cog-lh-body-lg);
+      color: transparent;
+    }
+
+    .message-form__highlights ::ng-deep mark {
+      background-color: var(--cog-loz-purple-bg);
+      color: transparent;
+      border-radius: var(--cog-radius-xs);
+    }
+
+    .message-form__editor--highlight .message-form__textarea {
+      position: relative;
+      z-index: 1;
+      background: transparent;
+    }
+
     .message-form__controls {
       display: flex;
       align-items: center;
@@ -416,6 +492,13 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
 
     .message-form__redaction {
       display: grid;
+      gap: var(--cog-space-100);
+    }
+
+    .message-form__redaction-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       gap: var(--cog-space-100);
     }
 
@@ -716,6 +799,46 @@ export class MessageFormComponent {
     this._redactionService.detect(this._redactionDraft() ?? ''),
   );
 
+  // Live (non-debounced) draft drives the highlight overlay so the marks stay
+  // aligned with the textarea char-for-char while typing.
+  private readonly _liveDraft = toSignal(
+    this.messageForm.controls.content.valueChanges,
+    { initialValue: '' },
+  );
+
+  // Eye toggle: paint the values that will be redacted directly in the composer.
+  readonly highlightRedactions = signal(false);
+  private readonly _highlights =
+    viewChild<ElementRef<HTMLElement>>('redactionHighlights');
+
+  // Escaped HTML with <mark> around each to-be-redacted range, rendered into an
+  // overlay behind the (transparent-background) textarea. The textarea value is
+  // never mutated — this is a display layer.
+  readonly redactionHighlightHtml = computed(() => {
+    if (!this.highlightRedactions()) {
+      return '';
+    }
+    const text = this._liveDraft() ?? '';
+    const deselected = this._redactionDeselected();
+    const auto = this._redactionService
+      .detect(text)
+      .filter((candidate) => !deselected.has(candidateKey(candidate)));
+    const custom = buildCustomCandidates(text, this._customRedactions());
+    const ranges = resolveOverlaps([...auto, ...custom]);
+
+    let html = '';
+    let cursor = 0;
+    for (const range of ranges) {
+      html +=
+        escapeHtml(text.slice(cursor, range.start)) +
+        '<mark>' +
+        escapeHtml(text.slice(range.start, range.end)) +
+        '</mark>';
+      cursor = range.end;
+    }
+    return html + escapeHtml(text.slice(cursor));
+  });
+
   // Value-keys (offset-independent) the user opted OUT of redacting.
   private readonly _redactionDeselected = signal<Set<string>>(new Set());
   readonly redactionPreviewOpen = signal(false);
@@ -888,6 +1011,15 @@ export class MessageFormComponent {
   }
 
   // --- manual (selection) redaction ----------------------------------------
+
+  // Keep the highlight overlay scrolled in lockstep with the textarea.
+  onComposerScroll(event: Event): void {
+    const highlights = this._highlights()?.nativeElement;
+    if (highlights) {
+      highlights.scrollTop = (event.target as HTMLElement).scrollTop;
+      highlights.scrollLeft = (event.target as HTMLElement).scrollLeft;
+    }
+  }
 
   onComposerMouseUp(event: MouseEvent): void {
     const text = this.selectedText(event.target);

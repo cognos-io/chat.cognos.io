@@ -455,6 +455,8 @@
         "summary": "{{ count }} sensible(r) Wert(e) werden vor dem Senden geschwärzt",
         "none": "Senden ohne Schwärzung",
         "redact": "Schwärzen",
+        "showHighlight": "Anzeigen, was geschwärzt wird",
+        "hideHighlight": "Schwärzungs-Hervorhebung ausblenden",
         "redactAction": "Schwärzen",
         "remove": "Entfernen",
         "types": {

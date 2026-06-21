@@ -455,6 +455,8 @@
         "summary": "{{ count }} valore/i sensibile/i verrà oscurato prima dell’invio",
         "none": "Invio senza oscuramento",
         "redact": "Oscura",
+        "showHighlight": "Mostra cosa verrà oscurato",
+        "hideHighlight": "Nascondi evidenziazione",
         "redactAction": "Oscura",
         "remove": "Rimuovi",
         "types": {

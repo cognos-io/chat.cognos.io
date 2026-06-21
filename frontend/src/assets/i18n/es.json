@@ -455,6 +455,8 @@
         "summary": "Se redactarán {{ count }} valor(es) sensible(s) antes de enviar",
         "none": "Enviar sin redacción",
         "redact": "Redactar",
+        "showHighlight": "Mostrar lo que se redactará",
+        "hideHighlight": "Ocultar el resaltado",
         "redactAction": "Redactar",
         "remove": "Quitar",
         "types": {

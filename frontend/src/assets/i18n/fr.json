@@ -455,6 +455,8 @@
         "summary": "{{ count }} valeur(s) sensible(s) seront masquée(s) avant l’envoi",
         "none": "Envoi sans masquage",
         "redact": "Masquer",
+        "showHighlight": "Afficher ce qui sera masqué",
+        "hideHighlight": "Masquer la surbrillance",
         "redactAction": "Masquer",
         "remove": "Retirer",
         "types": {

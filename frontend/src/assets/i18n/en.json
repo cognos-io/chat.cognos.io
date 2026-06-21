@@ -455,6 +455,8 @@
         "summary": "Redacting {{ count }} sensitive value(s) before sending",
         "none": "Sending without redaction",
         "redact": "Redact",
+        "showHighlight": "Show what will be redacted",
+        "hideHighlight": "Hide redaction highlight",
         "redactAction": "Redact",
         "remove": "Remove",
         "types": {

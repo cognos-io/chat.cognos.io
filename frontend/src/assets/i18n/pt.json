@@ -455,6 +455,8 @@
         "summary": "A ocultar {{ count }} valor(es) sensível(eis) antes de enviar",
         "none": "Enviar sem ocultação",
         "redact": "Ocultar",
+        "showHighlight": "Mostrar o que será ocultado",
+        "hideHighlight": "Ocultar o destaque",
         "redactAction": "Ocultar",
         "remove": "Remover",
         "types": {
