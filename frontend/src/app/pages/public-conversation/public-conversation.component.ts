@@ -35,6 +35,11 @@ import { parseBackendDate } from '@app/utils/timestamp';
 
 type ViewState = 'loading' | 'ready' | 'unavailable';
 
+// A neutral censorship bar shown in place of a hidden sensitive value: a run of
+// full-block glyphs the length of the words "redacted text". Plain text (no
+// markup) so it renders identically in the markdown body and the escaped title.
+const REDACTED_BAR = '█'.repeat('redacted text'.length);
+
 // Same structural accessors the chat uses (message.service.ts) so the public
 // view resolves the active branch identically. Kept local to avoid pulling the
 // whole MessageService into this unauthenticated route's bundle.
@@ -560,7 +565,7 @@ export class PublicConversationComponent implements OnInit {
           return entry.original;
         }
       }
-      return this._transloco.translate('public.redactedValue');
+      return REDACTED_BAR;
     });
   }
 

@@ -887,7 +887,6 @@
   "public": {
     "includeSensitive": "Incluir valores potencialmente sensibles",
     "hideSensitive": "Ocultar valores sensibles",
-    "redactedValue": "🛡 redactado",
     "decrypting": "Descifrando la conversación compartida…",
     "deletedMessage": "Mensaje eliminado",
     "emptyMessage": "Este mensaje está vacío.",

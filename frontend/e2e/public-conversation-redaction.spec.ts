@@ -89,9 +89,9 @@ test('include-sensitive share: reader sees placeholders, then reveals on opt-in'
   await expect(page.getByRole('heading', { name: 'Payment' })).toBeVisible();
 
   const messages = page.locator('.public-conversation__messages');
-  // Default: the sensitive value is NOT shown; a neutral marker stands in.
+  // Default: the sensitive value is NOT shown; a censorship bar stands in.
   await expect(messages).not.toContainText('GB82');
-  await expect(messages).toContainText('redacted');
+  await expect(messages).toContainText('█');
   // The raw token is never shown either.
   await expect(messages).not.toContainText('[[PII_');
 
@@ -105,7 +105,7 @@ test('include-sensitive share: reader sees placeholders, then reveals on opt-in'
 
   // Now the original is visible.
   await expect(messages).toContainText(IBAN);
-  await expect(messages).not.toContainText('redacted');
+  await expect(messages).not.toContainText('█');
 
   // And it can be hidden again.
   await page.getByRole('button', { name: 'Hide sensitive values' }).click();
@@ -141,7 +141,7 @@ test('redacted-only share: reader can never reveal sensitive values', async ({
   await expect(page.getByRole('heading', { name: 'Payment' })).toBeVisible();
 
   const messages = page.locator('.public-conversation__messages');
-  await expect(messages).toContainText('redacted');
+  await expect(messages).toContainText('█');
   await expect(messages).not.toContainText('GB82');
   await expect(messages).not.toContainText('[[PII_');
 
