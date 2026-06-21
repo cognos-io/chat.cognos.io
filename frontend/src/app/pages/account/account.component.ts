@@ -199,23 +199,6 @@ import { deriveProfileName } from '@app/utils/profile-identity';
         }
       </section>
 
-      <section class="account__card" aria-labelledby="account-data-heading">
-        <h2 id="account-data-heading" class="account__card-title">
-          {{ t('account.data.title') }}
-        </h2>
-        <p class="account__card-subtitle">{{ t('account.data.subtitle') }}</p>
-        <div class="account__actions">
-          <cog-button
-            appearance="default"
-            icon="download"
-            [disabled]="exporting()"
-            (click)="exportData()"
-          >
-            {{ exporting() ? t('account.data.preparing') : t('account.data.download') }}
-          </cog-button>
-        </div>
-      </section>
-
       <section class="account__card" aria-labelledby="account-email-heading">
         <h2 id="account-email-heading" class="account__card-title">
           {{ t('account.email.title') }}
@@ -306,6 +289,23 @@ import { deriveProfileName } from '@app/utils/profile-identity';
                 ? t('account.password.changing')
                 : t('account.password.change')
             }}
+          </cog-button>
+        </div>
+      </section>
+
+      <section class="account__card" aria-labelledby="account-data-heading">
+        <h2 id="account-data-heading" class="account__card-title">
+          {{ t('account.data.title') }}
+        </h2>
+        <p class="account__card-subtitle">{{ t('account.data.subtitle') }}</p>
+        <div class="account__actions">
+          <cog-button
+            appearance="default"
+            icon="download"
+            [disabled]="exporting()"
+            (click)="exportData()"
+          >
+            {{ exporting() ? t('account.data.preparing') : t('account.data.download') }}
           </cog-button>
         </div>
       </section>
