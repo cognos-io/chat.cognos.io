@@ -21,14 +21,15 @@ import { Router } from '@angular/router';
 
 import { debounceTime } from 'rxjs';
 
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
   CognosButtonComponent,
   CognosIconButtonComponent,
   CognosIconComponent,
   CognosRedactedTextComponent,
-  CognosRedactedTextKind,
+  type CognosRedactedTextKind,
+  type CognosRedactedTextLabels,
 } from '@cognos/ui-angular';
 
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
@@ -45,6 +46,7 @@ import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
 import { RedactionService } from '@app/services/redaction.service';
 
+import { redactionKindFor, redactionModalLabels } from '../redaction-ui';
 import { ModelSelectorComponent } from './model-selector/model-selector.component';
 import { PersonaChipsComponent } from './persona-chips/persona-chips.component';
 import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.component';
@@ -170,6 +172,7 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
                         [placeholder]="redactionPlaceholder(item)"
                         [kind]="redactionKind(item)"
                         [label]="t('chat.composer.redaction.types.' + item.type)"
+                        [labels]="modalLabels()"
                         [showSettings]="false"
                       />
                       <label class="message-form__redaction-toggle">
@@ -593,6 +596,7 @@ export class MessageFormComponent {
   private readonly _conversationService = inject(ConversationService);
   private readonly _deviceService = inject(DeviceService);
   private readonly _router = inject(Router);
+  private readonly _transloco = inject(TranslocoService);
 
   private _previousMessage = '';
 
@@ -814,12 +818,13 @@ export class MessageFormComponent {
   // Map a detector type to the redacted-text pill's visual kind; everything
   // without a dedicated icon falls back to a labelled "custom" pill.
   redactionKind(candidate: RedactionCandidate): CognosRedactedTextKind {
-    const map: Partial<Record<RedactionType, CognosRedactedTextKind>> = {
-      email: 'email',
-      phone: 'phone',
-      person: 'name',
-    };
-    return map[candidate.type] ?? 'custom';
+    return redactionKindFor(candidate.type);
+  }
+
+  // Localised explainer-modal copy for the preview pills, so the public/library
+  // component shows the same translated strings as the rest of the app.
+  modalLabels(): CognosRedactedTextLabels {
+    return redactionModalLabels(this._transloco);
   }
 
   // Illustrative placeholder shown in the preview (the real random token is

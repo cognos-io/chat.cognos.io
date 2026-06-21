@@ -398,6 +398,19 @@
     }
   },
   "chat": {
+    "redaction": {
+      "modal": {
+        "title": "Informazioni personali oscurate",
+        "detected": "rilevato e protetto su questo dispositivo",
+        "explainer": "Cognos ha trovato un valore sensibile in questo messaggio e lo ha sostituito con un segnaposto prima che qualcosa lasciasse il tuo dispositivo. Il modello di IA vede sempre e solo il segnaposto, mai il valore reale.",
+        "youSee": "Tu vedi",
+        "modelSees": "Il modello vede",
+        "notice": "Il valore reale non lascia mai questo dispositivo. Cognos invia al modello solo il segnaposto e poi lo ripristina nel tuo browser quando arriva la risposta.",
+        "copy": "Copia",
+        "settings": "Impostazioni di oscuramento",
+        "done": "Fatto"
+      }
+    },
     "bento": {
       "items": {
         "disappearing": {

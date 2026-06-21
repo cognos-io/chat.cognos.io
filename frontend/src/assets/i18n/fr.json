@@ -398,6 +398,19 @@
     }
   },
   "chat": {
+    "redaction": {
+      "modal": {
+        "title": "Informations personnelles masquées",
+        "detected": "détecté et protégé sur cet appareil",
+        "explainer": "Cognos a trouvé une valeur sensible dans ce message et l’a remplacée par un espace réservé avant que quoi que ce soit ne quitte votre appareil. Le modèle d’IA ne voit jamais que l’espace réservé, jamais la valeur réelle.",
+        "youSee": "Vous voyez",
+        "modelSees": "Le modèle voit",
+        "notice": "La valeur réelle ne quitte jamais cet appareil. Cognos n’envoie que l’espace réservé au modèle, puis la restaure dans votre navigateur à réception de la réponse.",
+        "copy": "Copier",
+        "settings": "Paramètres de masquage",
+        "done": "Terminé"
+      }
+    },
     "bento": {
       "items": {
         "disappearing": {

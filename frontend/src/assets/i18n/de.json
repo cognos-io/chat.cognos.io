@@ -398,6 +398,19 @@
     }
   },
   "chat": {
+    "redaction": {
+      "modal": {
+        "title": "Persönliche Daten geschwärzt",
+        "detected": "auf diesem Gerät erkannt & geschützt",
+        "explainer": "Cognos hat einen sensiblen Wert in dieser Nachricht gefunden und durch einen Platzhalter ersetzt, bevor etwas Ihr Gerät verlassen hat. Das KI-Modell sieht immer nur den Platzhalter – niemals den echten Wert.",
+        "youSee": "Sie sehen",
+        "modelSees": "Das Modell sieht",
+        "notice": "Der echte Wert verlässt dieses Gerät nie. Cognos sendet nur den Platzhalter an das Modell und stellt ihn in Ihrem Browser wieder her, wenn die Antwort zurückkommt.",
+        "copy": "Kopieren",
+        "settings": "Schwärzungseinstellungen",
+        "done": "Fertig"
+      }
+    },
     "bento": {
       "items": {
         "disappearing": {

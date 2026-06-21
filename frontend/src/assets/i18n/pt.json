@@ -398,6 +398,19 @@
     }
   },
   "chat": {
+    "redaction": {
+      "modal": {
+        "title": "Informações pessoais ocultadas",
+        "detected": "detetado e protegido neste dispositivo",
+        "explainer": "O Cognos encontrou um valor sensível nesta mensagem e substituiu-o por um marcador de posição antes de algo sair do seu dispositivo. O modelo de IA só vê o marcador, nunca o valor real.",
+        "youSee": "Você vê",
+        "modelSees": "O modelo vê",
+        "notice": "O valor real nunca sai deste dispositivo. O Cognos envia apenas o marcador ao modelo e depois restaura-o no seu navegador quando a resposta chega.",
+        "copy": "Copiar",
+        "settings": "Definições de ocultação",
+        "done": "Concluído"
+      }
+    },
     "bento": {
       "items": {
         "disappearing": {

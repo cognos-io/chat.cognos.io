@@ -15,24 +15,18 @@ import {
 import { TranslocoService } from '@jsverse/transloco';
 import { MarkdownComponent } from 'ngx-markdown';
 
-import {
-  CognosRedactedTextComponent,
-  type CognosRedactedTextKind,
-} from '@cognos/ui-angular';
+import { CognosRedactedTextComponent } from '@cognos/ui-angular';
 
-import { RedactionEntry, RedactionType } from '@app/redaction';
+import { RedactionEntry } from '@app/redaction';
 import { ConversationService } from '@app/services/conversation.service';
 import { RedactionService } from '@app/services/redaction.service';
 
+import {
+  redactionKindFor,
+  redactionModalLabels,
+  redactionTypeLabel,
+} from '../redaction-ui';
 import { injectRedactionPills } from './redaction-pills';
-
-// Detector type → the pill's visual kind. Anything without a dedicated icon
-// renders as a labelled "custom" pill.
-const TYPE_KIND: Partial<Record<RedactionType, CognosRedactedTextKind>> = {
-  email: 'email',
-  phone: 'phone',
-  person: 'name',
-};
 
 /**
  * Renders redacted message content with full markdown, then replaces each
@@ -118,11 +112,9 @@ export class RedactedMarkdownComponent {
     });
     ref.setInput('value', entry.original);
     ref.setInput('placeholder', entry.token);
-    ref.setInput('kind', TYPE_KIND[entry.type] ?? 'custom');
-    ref.setInput(
-      'label',
-      this._transloco.translate(`chat.composer.redaction.types.${entry.type}`),
-    );
+    ref.setInput('kind', redactionKindFor(entry.type));
+    ref.setInput('label', redactionTypeLabel(this._transloco, entry.type));
+    ref.setInput('labels', redactionModalLabels(this._transloco));
     ref.setInput('showSettings', false);
     this._appRef.attachView(ref.hostView);
     const host = ref.location.nativeElement as HTMLElement;

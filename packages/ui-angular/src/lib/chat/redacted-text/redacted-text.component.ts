@@ -5,23 +5,48 @@ import {
   input,
   output,
   signal,
-} from "@angular/core";
-import type { CognosIconName } from "@cognos/ui/icons";
+} from '@angular/core';
 
-import { CognosButtonComponent } from "../../button/button.component";
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosModalComponent } from "../../overlays/modal/modal.component";
-import { CognosLozengeComponent } from "../../primitives/lozenge/lozenge.component";
+import type { CognosIconName } from '@cognos/ui/icons';
 
-export type CognosRedactedTextKind =
-  | "name"
-  | "email"
-  | "phone"
-  | "case-id"
-  | "custom";
+import { CognosButtonComponent } from '../../button/button.component';
+import { CognosIconComponent } from '../../icon/icon.component';
+import { CognosModalComponent } from '../../overlays/modal/modal.component';
+import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.component';
+
+export type CognosRedactedTextKind = 'name' | 'email' | 'phone' | 'case-id' | 'custom';
+
+// All user-visible copy in the explainer modal. Exposed as a single input so the
+// host app can supply localised strings (the library stays translation-free);
+// English defaults keep standalone/storybook usage working.
+export interface CognosRedactedTextLabels {
+  title: string;
+  detected: string;
+  explainer: string;
+  youSee: string;
+  modelSees: string;
+  notice: string;
+  copy: string;
+  settings: string;
+  done: string;
+}
+
+export const COGNOS_REDACTED_TEXT_DEFAULT_LABELS: CognosRedactedTextLabels = {
+  title: 'Personal information redacted',
+  detected: 'detected & protected on this device',
+  explainer:
+    'Cognos found a sensitive value in this message and replaced it with a placeholder before anything left your device. The AI model only ever sees the placeholder — never the real value.',
+  youSee: 'You see',
+  modelSees: 'The model sees',
+  notice:
+    'The real value never leaves this device. Cognos sends only the placeholder to the model, then restores it in your browser when the reply comes back.',
+  copy: 'Copy',
+  settings: 'Redaction settings',
+  done: 'Done',
+};
 
 @Component({
-  selector: "cog-redacted-text",
+  selector: 'cog-redacted-text',
   standalone: true,
   imports: [
     CognosButtonComponent,
@@ -37,7 +62,7 @@ export type CognosRedactedTextKind =
       tabindex="0"
       [attr.aria-label]="ariaLabel()"
       [attr.aria-haspopup]="'dialog'"
-      [attr.title]="title()"
+      [attr.title]="text().title"
       (click)="openDetails()"
       (keydown)="onTriggerKeydown($event)"
     >
@@ -48,7 +73,7 @@ export type CognosRedactedTextKind =
     <cog-modal
       [open]="detailsOpen()"
       [stickyFooter]="true"
-      [title]="title()"
+      [title]="text().title"
       [width]="560"
       (close)="closeDetails()"
     >
@@ -58,32 +83,42 @@ export type CognosRedactedTextKind =
             <cog-icon [name]="badgeIcon()" [size]="12" tone="current" />
             {{ badgeLabel() }}
           </cog-lozenge>
-          <span>detected &amp; protected on this device</span>
+          <span>{{ text().detected }}</span>
         </div>
 
-        <p class="cog-redacted-text__copy">
-          Cognos found {{ detectedNoun() }} in this message and replaced it with a
-          placeholder before anything left your device. The AI model only ever sees the
-          placeholder — never the real value.
-        </p>
+        <p class="cog-redacted-text__copy">{{ text().explainer }}</p>
 
-        <section class="cog-redacted-text__comparison" aria-label="Redaction comparison">
+        <section
+          class="cog-redacted-text__comparison"
+          aria-label="Redaction comparison"
+        >
           <div class="cog-redacted-text__comparison-row">
             <div class="cog-redacted-text__comparison-content">
-              <div class="cog-redacted-text__comparison-label">You see</div>
+              <div class="cog-redacted-text__comparison-label">{{ text().youSee }}</div>
               <div class="cog-redacted-text__comparison-value">
                 <strong>{{ value() }}</strong>
               </div>
             </div>
-            <cog-button appearance="subtle" icon="copy" type="button" (click)="copyValue()">
-              Copy
+            <cog-button
+              appearance="subtle"
+              icon="copy"
+              type="button"
+              (click)="copyValue()"
+            >
+              {{ text().copy }}
             </cog-button>
           </div>
 
-          <div class="cog-redacted-text__comparison-row cog-redacted-text__comparison-row--muted">
+          <div
+            class="cog-redacted-text__comparison-row cog-redacted-text__comparison-row--muted"
+          >
             <div class="cog-redacted-text__comparison-content">
-              <div class="cog-redacted-text__comparison-label">The model sees</div>
-              <div class="cog-redacted-text__comparison-placeholder">{{ placeholder() }}</div>
+              <div class="cog-redacted-text__comparison-label">
+                {{ text().modelSees }}
+              </div>
+              <div class="cog-redacted-text__comparison-placeholder">
+                {{ placeholder() }}
+              </div>
             </div>
           </div>
         </section>
@@ -92,24 +127,26 @@ export type CognosRedactedTextKind =
           <span class="cog-redacted-text__notice-icon">
             <cog-icon name="shield-check" [size]="16" tone="current" />
           </span>
-          <p>
-            The real value never leaves this device. Cognos sends only the placeholder to
-            the model, then restores it in your browser when the reply comes back.
-          </p>
+          <p>{{ text().notice }}</p>
         </section>
       </div>
 
       <div cogModalFooter class="cog-redacted-text__footer">
         @if (showSettings()) {
-          <cog-button appearance="link" icon="settings" type="button" (click)="onOpenSettings()">
-            {{ settingsLabel() }}
+          <cog-button
+            appearance="link"
+            icon="settings"
+            type="button"
+            (click)="onOpenSettings()"
+          >
+            {{ text().settings }}
           </cog-button>
         } @else {
           <span></span>
         }
 
         <cog-button appearance="primary" type="button" (click)="closeDetails()">
-          {{ doneLabel() }}
+          {{ text().done }}
         </cog-button>
       </div>
     </cog-modal>
@@ -167,14 +204,14 @@ export type CognosRedactedTextKind =
         align-items: center;
         gap: var(--cog-space-150);
         color: var(--cog-text-subtle);
-        font-size: var(--cog-fs-body-lg);
-        line-height: var(--cog-lh-body-lg);
+        font-size: var(--cog-fs-body-sm);
+        line-height: var(--cog-lh-body-sm);
       }
 
       .cog-redacted-text__copy {
         margin: 0;
-        font-size: var(--cog-fs-h-sm);
-        line-height: var(--cog-lh-h-sm);
+        font-size: var(--cog-fs-body);
+        line-height: var(--cog-lh-body);
         text-wrap: pretty;
       }
 
@@ -215,15 +252,15 @@ export type CognosRedactedTextKind =
 
       .cog-redacted-text__comparison-value {
         color: var(--cog-text);
-        font-size: var(--cog-fs-h-sm);
-        line-height: var(--cog-lh-h-sm);
+        font-size: var(--cog-fs-body);
+        line-height: var(--cog-lh-body);
       }
 
       .cog-redacted-text__comparison-placeholder {
         color: var(--cog-text-subtle);
         font-family: var(--cog-font-mono);
-        font-size: var(--cog-fs-h-sm);
-        line-height: var(--cog-lh-h-sm);
+        font-size: var(--cog-fs-body);
+        line-height: var(--cog-lh-body);
       }
 
       .cog-redacted-text__notice {
@@ -239,8 +276,8 @@ export type CognosRedactedTextKind =
 
       .cog-redacted-text__notice p {
         margin: 0;
-        font-size: var(--cog-fs-h-sm);
-        line-height: var(--cog-lh-h-sm);
+        font-size: var(--cog-fs-body);
+        line-height: var(--cog-lh-body);
         text-wrap: pretty;
       }
 
@@ -279,24 +316,31 @@ export type CognosRedactedTextKind =
 export class CognosRedactedTextComponent {
   readonly value = input.required<string>();
   readonly placeholder = input.required<string>();
-  readonly kind = input<CognosRedactedTextKind>("custom");
-  readonly label = input("");
-  readonly title = input("Personal information redacted");
-  readonly settingsLabel = input("Redaction settings");
-  readonly doneLabel = input("Done");
+  readonly kind = input<CognosRedactedTextKind>('custom');
+  readonly label = input('');
   readonly showSettings = input(true);
+  // Localised modal copy; merged over English defaults so partial overrides work.
+  readonly labels = input<Partial<CognosRedactedTextLabels>>({});
   readonly openSettings = output<void>();
 
   protected readonly detailsOpen = signal(false);
 
-  protected readonly badgeLabel = computed(() => this.kindConfig().label);
+  protected readonly text = computed<CognosRedactedTextLabels>(() => ({
+    ...COGNOS_REDACTED_TEXT_DEFAULT_LABELS,
+    ...this.labels(),
+  }));
+
+  // The badge prefers an explicit label (the host's localised type name) and
+  // falls back to the built-in label for the known kinds.
+  protected readonly badgeLabel = computed(
+    () => this.label() || this.kindConfig().label,
+  );
   protected readonly badgeIcon = computed<CognosIconName>(() => this.kindConfig().icon);
-  protected readonly detectedNoun = computed(() => this.kindConfig().noun);
   protected readonly inlineIcon = computed<CognosIconName>(() =>
-    this.kind() === "email" ? "mail" : "eye-off",
+    this.kind() === 'email' ? 'mail' : 'eye-off',
   );
   protected readonly ariaLabel = computed(
-    () => `Show redaction details for ${this.badgeLabel().toLowerCase()}`,
+    () => `${this.text().title}: ${this.badgeLabel()}`,
   );
 
   protected openDetails(): void {
@@ -308,7 +352,7 @@ export class CognosRedactedTextComponent {
   }
 
   protected onTriggerKeydown(event: KeyboardEvent): void {
-    if (event.key !== "Enter" && event.key !== " ") {
+    if (event.key !== 'Enter' && event.key !== ' ') {
       return;
     }
 
@@ -324,42 +368,18 @@ export class CognosRedactedTextComponent {
     this.openSettings.emit();
   }
 
-  private kindConfig(): {
-    icon: CognosIconName;
-    label: string;
-    noun: string;
-  } {
+  private kindConfig(): { icon: CognosIconName; label: string } {
     switch (this.kind()) {
-      case "name":
-        return {
-          icon: "eye-off",
-          label: "Name",
-          noun: "a name",
-        };
-      case "email":
-        return {
-          icon: "mail",
-          label: "Email address",
-          noun: "an email address",
-        };
-      case "phone":
-        return {
-          icon: "eye-off",
-          label: "Phone number",
-          noun: "a phone number",
-        };
-      case "case-id":
-        return {
-          icon: "eye-off",
-          label: "Case ID",
-          noun: "a case ID",
-        };
+      case 'name':
+        return { icon: 'eye-off', label: 'Name' };
+      case 'email':
+        return { icon: 'mail', label: 'Email address' };
+      case 'phone':
+        return { icon: 'eye-off', label: 'Phone number' };
+      case 'case-id':
+        return { icon: 'eye-off', label: 'Case ID' };
       default:
-        return {
-          icon: "eye-off",
-          label: this.label() || "Redacted value",
-          noun: this.label() ? this.label().toLowerCase() : "a redacted value",
-        };
+        return { icon: 'eye-off', label: this.label() || 'Redacted value' };
     }
   }
 }

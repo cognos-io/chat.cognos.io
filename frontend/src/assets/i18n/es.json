@@ -398,6 +398,19 @@
     }
   },
   "chat": {
+    "redaction": {
+      "modal": {
+        "title": "Información personal redactada",
+        "detected": "detectado y protegido en este dispositivo",
+        "explainer": "Cognos encontró un valor sensible en este mensaje y lo reemplazó por un marcador de posición antes de que algo saliera de tu dispositivo. El modelo de IA solo ve el marcador, nunca el valor real.",
+        "youSee": "Tú ves",
+        "modelSees": "El modelo ve",
+        "notice": "El valor real nunca sale de este dispositivo. Cognos solo envía el marcador al modelo y luego lo restaura en tu navegador cuando llega la respuesta.",
+        "copy": "Copiar",
+        "settings": "Ajustes de redacción",
+        "done": "Hecho"
+      }
+    },
     "bento": {
       "items": {
         "disappearing": {

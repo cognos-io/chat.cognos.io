@@ -398,6 +398,19 @@
     }
   },
   "chat": {
+    "redaction": {
+      "modal": {
+        "title": "Personal information redacted",
+        "detected": "detected & protected on this device",
+        "explainer": "Cognos found a sensitive value in this message and replaced it with a placeholder before anything left your device. The AI model only ever sees the placeholder — never the real value.",
+        "youSee": "You see",
+        "modelSees": "The model sees",
+        "notice": "The real value never leaves this device. Cognos sends only the placeholder to the model, then restores it in your browser when the reply comes back.",
+        "copy": "Copy",
+        "settings": "Redaction settings",
+        "done": "Done"
+      }
+    },
     "bento": {
       "items": {
         "disappearing": {
