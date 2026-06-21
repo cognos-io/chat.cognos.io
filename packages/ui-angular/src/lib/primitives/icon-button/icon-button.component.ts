@@ -1,18 +1,14 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-} from "@angular/core";
-import type { CognosIconName } from "@cognos/ui/icons";
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
+import type { CognosIconName } from '@cognos/ui/icons';
 
-export type CognosIconButtonSize = "md" | "lg";
-export type CognosIconButtonType = "button" | "submit" | "reset";
+import { CognosIconComponent, type CognosIconTone } from '../../icon/icon.component';
+
+export type CognosIconButtonSize = 'md' | 'lg';
+export type CognosIconButtonType = 'button' | 'submit' | 'reset';
 
 @Component({
-  selector: "cog-icon-button",
+  selector: 'cog-icon-button',
   standalone: true,
   imports: [CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,12 +20,7 @@ export type CognosIconButtonType = "button" | "submit" | "reset";
       [attr.title]="title() || null"
       [attr.type]="type()"
     >
-      <cog-icon
-        [name]="name()"
-        [size]="16"
-        [title]="title()"
-        [tone]="selected() ? 'selected' : 'text-subtle'"
-      />
+      <cog-icon [name]="name()" [size]="16" [title]="title()" [tone]="iconTone()" />
     </button>
   `,
   styles: [
@@ -92,20 +83,27 @@ export type CognosIconButtonType = "button" | "submit" | "reset";
   ],
 })
 export class CognosIconButtonComponent {
-  readonly name = input<CognosIconName>("plus");
-  readonly title = input("");
+  readonly name = input<CognosIconName>('plus');
+  readonly title = input('');
   readonly selected = input(false);
-  readonly size = input<CognosIconButtonSize>("md");
+  readonly size = input<CognosIconButtonSize>('md');
   readonly disabled = input(false);
-  readonly type = input<CognosIconButtonType>("button");
+  readonly type = input<CognosIconButtonType>('button');
+  // Optional explicit icon tone (e.g. 'success' for a transient confirmation).
+  // When unset the tone follows the selected state, preserving existing usage.
+  readonly tone = input<CognosIconTone | undefined>(undefined);
+
+  protected readonly iconTone = computed<CognosIconTone>(
+    () => this.tone() ?? (this.selected() ? 'selected' : 'text-subtle'),
+  );
 
   protected readonly buttonClass = computed(() => {
-    const classes = ["cog-icon-button", `cog-icon-button--${this.size()}`];
+    const classes = ['cog-icon-button', `cog-icon-button--${this.size()}`];
 
     if (this.selected()) {
-      classes.push("cog-icon-button--selected");
+      classes.push('cog-icon-button--selected');
     }
 
-    return classes.join(" ");
+    return classes.join(' ');
   });
 }

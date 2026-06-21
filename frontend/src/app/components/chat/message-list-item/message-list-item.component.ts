@@ -5,6 +5,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   HostListener,
   Input,
@@ -81,8 +82,9 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                    clipboard — the real values or the placeholder version. -->
               <span class="message-list-item__copy-wrap">
                 <cog-icon-button
-                  name="copy"
-                  [title]="t('chat.message.copy')"
+                  [name]="copied() ? 'check' : 'copy'"
+                  [tone]="copied() ? 'success' : undefined"
+                  [title]="copied() ? t('chat.message.copied') : t('chat.message.copy')"
                   [selected]="copyMenuOpen()"
                   (click)="toggleCopyMenu($event)"
                 />
@@ -97,9 +99,11 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
               </span>
             } @else {
               <cog-icon-button
-                name="copy"
-                [title]="t('chat.message.copy')"
+                [name]="copied() ? 'check' : 'copy'"
+                [tone]="copied() ? 'success' : undefined"
+                [title]="copied() ? t('chat.message.copied') : t('chat.message.copy')"
                 [cdkCopyToClipboard]="hydrated(message.decryptedData.content)"
+                (cdkCopyToClipboardCopied)="onCopied()"
               />
             }
           }
@@ -327,6 +331,24 @@ export class MessageListItemComponent {
   // Copy-options menu (only offered for messages containing redactions).
   readonly copyMenuOpen = signal(false);
 
+  // Transient "copied" state: the copy icon becomes a green tick for a moment
+  // after a successful copy, then reverts.
+  readonly copied = signal(false);
+  private _copiedTimer?: ReturnType<typeof setTimeout>;
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => clearTimeout(this._copiedTimer));
+  }
+
+  onCopied(): void {
+    this.copied.set(true);
+    clearTimeout(this._copiedTimer);
+    this._copiedTimer = setTimeout(() => {
+      this.copied.set(false);
+      this._cdr.markForCheck();
+    }, 2000);
+  }
+
   // Redaction mappings load asynchronously after the view renders; when they
   // arrive (revision bumps), re-run change detection so placeholders hydrate.
   private readonly _hydrationEffect = effect(() => {
@@ -376,6 +398,7 @@ export class MessageListItemComponent {
     const content = this.message?.decryptedData.content ?? '';
     const text = index === 0 ? this.hydrated(content) : this.redactedCopy(content);
     void globalThis.navigator?.clipboard?.writeText(text);
+    this.onCopied();
     this.copyMenuOpen.set(false);
   }
 

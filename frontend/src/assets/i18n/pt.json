@@ -644,7 +644,8 @@
       "encrypted": "Encriptado",
       "encryptedWithTime": "Encriptado · {{ time }}",
       "keep": "Manter esta mensagem temporária",
-      "regenerate": "Gerar resposta novamente"
+      "regenerate": "Gerar resposta novamente",
+      "copied": "Copiado"
     },
     "models": {
       "costTier": {
