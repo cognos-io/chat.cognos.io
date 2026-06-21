@@ -63,7 +63,7 @@ func TestNewStaticAccountFromAPIConfigBuildsRequestyEUGatewayByDefault(t *testin
 	if cfg.CustomProviderConfig == nil || cfg.CustomProviderConfig.BaseProviderType != schemas.OpenAI {
 		t.Fatalf("requesty BaseProviderType = %#v, want openai", cfg.CustomProviderConfig)
 	}
-	if cfg.NetworkConfig.BaseURL != "https://router.eu.requesty.ai/v1" {
+	if cfg.NetworkConfig.BaseURL != "https://router.eu.requesty.ai" {
 		t.Fatalf("BaseURL = %q, want EU gateway default", cfg.NetworkConfig.BaseURL)
 	}
 	if cfg.OpenAIConfig == nil || !cfg.OpenAIConfig.DisableStore {
@@ -76,7 +76,7 @@ func TestNewStaticAccountFromAPIConfigHonoursRequestyURLOverride(t *testing.T) {
 
 	account, err := NewStaticAccountFromAPIConfig(&config.APIConfig{
 		RequestyAPIKey: "requesty-key",
-		RequestyAPIURL: "https://router.requesty.ai/v1",
+		RequestyAPIURL: "https://router.requesty.ai",
 	})
 	if err != nil {
 		t.Fatalf("NewStaticAccountFromAPIConfig() error = %v, want nil", err)
@@ -86,7 +86,7 @@ func TestNewStaticAccountFromAPIConfigHonoursRequestyURLOverride(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetConfigForProvider(requesty) error = %v, want nil", err)
 	}
-	if cfg.NetworkConfig.BaseURL != "https://router.requesty.ai/v1" {
+	if cfg.NetworkConfig.BaseURL != "https://router.requesty.ai" {
 		t.Fatalf("BaseURL = %q, want override", cfg.NetworkConfig.BaseURL)
 	}
 }

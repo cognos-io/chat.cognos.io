@@ -42,8 +42,9 @@ infomaniak:
 # Env overrides: COGNOS_REQUESTY_API_KEY, COGNOS_REQUESTY_URL
 # Secret file override: COGNOS_REQUESTY_API_KEY_FILE
 #
-# url is optional; defaults to https://router.eu.requesty.ai/v1 (the EU gateway)
-# when empty. Full EU residency also requires EU-region model ids in the catalogue.
+# url is optional; defaults to https://router.eu.requesty.ai (the EU gateway)
+# when empty. Do NOT append "/v1" — the gateway adds the OpenAI path itself.
+# Full EU residency also requires EU-region model ids in the catalogue.
 requesty:
   url: ""
   api_key: ""

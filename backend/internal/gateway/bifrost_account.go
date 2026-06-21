@@ -15,7 +15,11 @@ const (
 	// requestyDefaultURL is Requesty's EU gateway. Pointing at this host keeps
 	// Requesty's request processing zero-retention and in-region (Frankfurt);
 	// full EU residency additionally requires EU-region model ids.
-	requestyDefaultURL = "https://router.eu.requesty.ai/v1"
+	//
+	// NB: no "/v1" suffix — Bifrost's OpenAI provider appends "/v1/chat/completions"
+	// to the base URL itself, so including it here would produce a doubled
+	// "/v1/v1/..." path and a 404 from Requesty.
+	requestyDefaultURL = "https://router.eu.requesty.ai"
 )
 
 type StaticAccount struct {
