@@ -49,6 +49,8 @@ func TestMustLoadAPIConfig_ReadsAllProviderEnvVars(t *testing.T) {
 		"COGNOS_ANTHROPIC_URL":             "https://anthropic.test/",
 		"COGNOS_DEEPINFRA_URL":             "https://deepinfra.test/",
 		"COGNOS_DEEPINFRA_API_KEY":         "deepinfra-key",
+		"COGNOS_REQUESTY_URL":              "https://requesty.test/",
+		"COGNOS_REQUESTY_API_KEY":          "requesty-key",
 		"COGNOS_BILLING_TRIAL_SEED_RAPPEN": "500",
 	}
 	for k, v := range envVars {
@@ -74,6 +76,8 @@ func TestMustLoadAPIConfig_ReadsAllProviderEnvVars(t *testing.T) {
 		{"AnthropicAPIURL", cfg.AnthropicAPIURL, "https://anthropic.test/"},
 		{"DeepInfraAPIURL", cfg.DeepInfraAPIURL, "https://deepinfra.test/"},
 		{"DeepInfraAPIKey", cfg.DeepInfraAPIKey, "deepinfra-key"},
+		{"RequestyAPIURL", cfg.RequestyAPIURL, "https://requesty.test/"},
+		{"RequestyAPIKey", cfg.RequestyAPIKey, "requesty-key"},
 	}
 	for _, tc := range cases {
 		if tc.got != tc.want {

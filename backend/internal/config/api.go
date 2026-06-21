@@ -87,6 +87,9 @@ type APIConfig struct {
 	// DeepInfra
 	DeepInfraAPIURL string `koanf:"deepinfra.url"`
 	DeepInfraAPIKey string `koanf:"deepinfra.api_key"`
+	// Requesty (OpenAI-compatible EU gateway)
+	RequestyAPIKey string `koanf:"requesty.api_key"`
+	RequestyAPIURL string `koanf:"requesty.url"`
 	// Billing
 	BillingTrialSeedRappen             int64 `koanf:"billing.trial_seed_rappen"`
 	BillingPaygMinCommitRappen         int64 `koanf:"billing.payg_min_commit_rappen"`
@@ -173,6 +176,7 @@ func MustLoadAPIConfig(logger *slog.Logger) *APIConfig {
 		{envVar: "COGNOS_GOOGLE_API_KEY_FILE", apply: func(value string) { c.GoogleGeminiAPIKey = value }},
 		{envVar: "COGNOS_ANTHROPIC_API_KEY_FILE", apply: func(value string) { c.AnthropicAPIKey = value }},
 		{envVar: "COGNOS_DEEPINFRA_API_KEY_FILE", apply: func(value string) { c.DeepInfraAPIKey = value }},
+		{envVar: "COGNOS_REQUESTY_API_KEY_FILE", apply: func(value string) { c.RequestyAPIKey = value }},
 		{envVar: "COGNOS_PADDLE_API_KEY_FILE", apply: func(value string) { c.PaddleAPIKey = value }},
 		{envVar: "COGNOS_PADDLE_WEBHOOK_SECRET_FILE", apply: func(value string) { c.PaddleWebhookSecret = value }},
 	} {

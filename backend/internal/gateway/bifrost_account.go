@@ -13,6 +13,10 @@ import (
 const (
 	defaultProviderWeight = 100
 	deepInfraDefaultURL   = "https://api.deepinfra.com/v1/openai"
+	// requestyDefaultURL is Requesty's EU gateway. Pointing at this host keeps
+	// Requesty's request processing zero-retention and in-region (Frankfurt);
+	// full EU residency additionally requires EU-region model ids.
+	requestyDefaultURL = "https://router.eu.requesty.ai/v1"
 )
 
 type StaticAccount struct {
@@ -89,6 +93,18 @@ func NewStaticAccountFromAPIConfig(cfg *config.APIConfig) (*StaticAccount, error
 			schemas.ModelProvider("deepinfra"),
 			openAIProviderConfig(baseURL, &schemas.CustomProviderConfig{BaseProviderType: schemas.OpenAI}),
 			providerKey("deepinfra", cfg.DeepInfraAPIKey),
+		)
+	}
+
+	if strings.TrimSpace(cfg.RequestyAPIKey) != "" {
+		baseURL := strings.TrimSpace(cfg.RequestyAPIURL)
+		if baseURL == "" {
+			baseURL = requestyDefaultURL
+		}
+		account.addProvider(
+			schemas.ModelProvider("requesty"),
+			openAIProviderConfig(baseURL, &schemas.CustomProviderConfig{BaseProviderType: schemas.OpenAI}),
+			providerKey("requesty", cfg.RequestyAPIKey),
 		)
 	}
 

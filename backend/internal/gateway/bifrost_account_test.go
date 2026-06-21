@@ -73,3 +73,46 @@ func TestNewStaticAccountFromAPIConfigRejectsIncompleteCloudflareConfig(t *testi
 		t.Fatal("NewStaticAccountFromAPIConfig() error = nil, want non-nil")
 	}
 }
+
+func TestNewStaticAccountFromAPIConfigBuildsRequestyEUGatewayByDefault(t *testing.T) {
+	t.Parallel()
+
+	account, err := NewStaticAccountFromAPIConfig(&config.APIConfig{RequestyAPIKey: "requesty-key"})
+	if err != nil {
+		t.Fatalf("NewStaticAccountFromAPIConfig() error = %v, want nil", err)
+	}
+
+	cfg, err := account.GetConfigForProvider(schemas.ModelProvider("requesty"))
+	if err != nil {
+		t.Fatalf("GetConfigForProvider(requesty) error = %v, want nil", err)
+	}
+	if cfg.CustomProviderConfig == nil || cfg.CustomProviderConfig.BaseProviderType != schemas.OpenAI {
+		t.Fatalf("requesty BaseProviderType = %#v, want openai", cfg.CustomProviderConfig)
+	}
+	if cfg.NetworkConfig.BaseURL != "https://router.eu.requesty.ai/v1" {
+		t.Fatalf("BaseURL = %q, want EU gateway default", cfg.NetworkConfig.BaseURL)
+	}
+	if cfg.OpenAIConfig == nil || !cfg.OpenAIConfig.DisableStore {
+		t.Fatal("OpenAIConfig.DisableStore = false, want true")
+	}
+}
+
+func TestNewStaticAccountFromAPIConfigHonoursRequestyURLOverride(t *testing.T) {
+	t.Parallel()
+
+	account, err := NewStaticAccountFromAPIConfig(&config.APIConfig{
+		RequestyAPIKey: "requesty-key",
+		RequestyAPIURL: "https://router.requesty.ai/v1",
+	})
+	if err != nil {
+		t.Fatalf("NewStaticAccountFromAPIConfig() error = %v, want nil", err)
+	}
+
+	cfg, err := account.GetConfigForProvider(schemas.ModelProvider("requesty"))
+	if err != nil {
+		t.Fatalf("GetConfigForProvider(requesty) error = %v, want nil", err)
+	}
+	if cfg.NetworkConfig.BaseURL != "https://router.requesty.ai/v1" {
+		t.Fatalf("BaseURL = %q, want override", cfg.NetworkConfig.BaseURL)
+	}
+}
