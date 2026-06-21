@@ -168,23 +168,29 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       <app-data-processing />
 
       <section class="account__card" aria-labelledby="account-redaction-heading">
-        <h2 id="account-redaction-heading" class="account__card-title">
-          {{ t('account.redaction.title') }}
-        </h2>
-        <p class="account__card-subtitle">{{ t('account.redaction.subtitle') }}</p>
-        <div class="account__redaction-row">
-          <cog-toggle
-            [checked]="redactionEnabled()"
-            [label]="t('account.redaction.toggleLabel')"
-            (checkedChange)="setRedactionEnabled($event)"
-          />
-          <span class="account__redaction-state">
-            {{
-              redactionEnabled()
-                ? t('account.redaction.on')
-                : t('account.redaction.off')
-            }}
-          </span>
+        <div class="account__redaction-header">
+          <div class="account__redaction-text">
+            <h2 id="account-redaction-heading" class="account__card-title">
+              {{ t('account.redaction.title') }}
+            </h2>
+            <p class="account__card-subtitle">
+              {{ t('account.redaction.subtitle') }}
+            </p>
+          </div>
+          <div class="account__redaction-control">
+            <span class="account__redaction-state">
+              {{
+                redactionEnabled()
+                  ? t('account.redaction.on')
+                  : t('account.redaction.off')
+              }}
+            </span>
+            <cog-toggle
+              [checked]="redactionEnabled()"
+              [label]="t('account.redaction.toggleLabel')"
+              (checkedChange)="setRedactionEnabled($event)"
+            />
+          </div>
         </div>
         @if (!redactionEnabled()) {
           <p class="account__redaction-warning" role="status">
@@ -454,11 +460,23 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       font-size: var(--cog-fs-body-sm);
     }
 
-    .account__redaction-row {
+    .account__redaction-header {
       display: flex;
       align-items: center;
+      justify-content: space-between;
+      gap: var(--cog-space-200);
+    }
+
+    .account__redaction-text {
+      display: grid;
+      gap: var(--cog-space-100);
+    }
+
+    .account__redaction-control {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
       gap: var(--cog-space-150);
-      margin-top: var(--cog-space-150);
     }
 
     .account__redaction-state {
