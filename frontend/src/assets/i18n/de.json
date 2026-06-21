@@ -69,7 +69,9 @@
           "note": "Jedes Modell"
         }
       },
-      "title": "Datenverarbeitung"
+      "title": "Datenverarbeitung",
+      "showLess": "Weniger anzeigen",
+      "showMore": "{{ count }} weitere anzeigen"
     },
     "email": {
       "current": "Aktuelle E-Mail",
@@ -949,5 +951,12 @@
       "comingSoon": "Dieser Bereich ist bald verfügbar."
     },
     "title": "Einstellungen"
+  },
+  "models": {
+    "description": {
+      "default": "Verfügbar über Cognos.",
+      "infomaniak": "Gehostet in der Schweiz von Infomaniak.",
+      "requesty": "Bereitgestellt über das EU-Gateway von Requesty in Frankfurt."
+    }
   }
 }

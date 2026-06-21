@@ -13,6 +13,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { CognosIconComponent, CognosLozengeComponent } from '@cognos/ui-angular';
 
 import { TagComponent } from '@app/components/tag/tag.component';
+import { modelDescriptionKey } from '@app/i18n/model-copy';
 import { Model } from '@app/interfaces/model';
 import { BillingService } from '@app/services/billing.service';
 import { ModelService } from '@app/services/model.service';
@@ -97,7 +98,7 @@ import { ModelCostTier, deriveModelCostTier } from '@app/utils/model-cost-tier';
                   }
                 </span>
                 <span class="model-selector__description">
-                  {{ model.description }}
+                  {{ t('models.description.' + descKey(model)) }}
                 </span>
                 @if (!model.isEligible && model.ineligibilityReason) {
                   <span class="model-selector__availability-reason">
@@ -292,6 +293,9 @@ export class ModelSelectorComponent {
   // Unlimited plans aren't billed per message, so the cost lozenges and the
   // cost explainer are hidden for them.
   readonly hideCost = computed(() => this._billingService.isUnlimited());
+
+  // Translation-key suffix for the model's residency tagline (by provider).
+  protected readonly descKey = modelDescriptionKey;
 
   @Output() readonly modelSelected = new EventEmitter<Model>();
 

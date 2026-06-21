@@ -11,6 +11,7 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { CognosIconComponent, CognosLozengeComponent } from '@cognos/ui-angular';
 import type { CognosIconName } from '@cognos/ui/icons';
 
+import { modelDescriptionKey } from '@app/i18n/model-copy';
 import { Model, PrivacyTier } from '@app/interfaces/model';
 import { AuthService } from '@app/services/auth.service';
 import { ModelService } from '@app/services/model.service';
@@ -152,7 +153,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
         </header>
 
         <ul class="models__list">
-          @for (model of orderedModels(); track model.id) {
+          @for (model of visibleModels(); track model.id) {
             <li class="models__row" [class.models__row--locked]="!model.isEligible">
               <span class="models__icon">
                 <cog-icon
@@ -162,19 +163,16 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
                 />
               </span>
               <span class="models__body">
-                <span class="models__name-row">
-                  <span class="models__name">{{ model.name }}</span>
-                  <cog-lozenge [tone]="model.isEligible ? 'green' : 'neutral'">
-                    {{ regionBadge(model) }}
-                  </cog-lozenge>
-                </span>
-                <span class="models__desc">{{ model.description }}</span>
+                <span class="models__name">{{ model.name }}</span>
+                <span class="models__desc">{{
+                  t('models.description.' + descKey(model))
+                }}</span>
               </span>
               <span class="models__meta">
+                <cog-lozenge [tone]="model.isEligible ? 'green' : 'neutral'">
+                  {{ regionBadge(model) }}
+                </cog-lozenge>
                 @if (model.isEligible) {
-                  @if (hostingLabel(model)) {
-                    <span class="models__location">{{ hostingLabel(model) }}</span>
-                  }
                   <span class="models__context">{{
                     t('account.dataProcessing.context', {
                       size: formatContext(model.inputContextLength),
@@ -193,6 +191,23 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
             </li>
           }
         </ul>
+
+        @if (totalCount() > collapsedLimit) {
+          <button
+            type="button"
+            class="models__show-more"
+            [class.models__show-more--open]="expanded()"
+            (click)="toggleExpanded()"
+            [attr.aria-expanded]="expanded()"
+          >
+            <cog-icon name="chevron-down" [size]="14" tone="current" />
+            {{
+              expanded()
+                ? t('account.dataProcessing.showLess')
+                : t('account.dataProcessing.showMore', { count: hiddenCount() })
+            }}
+          </button>
+        }
 
         @if (lockedCount() > 0) {
           <p class="models__footnote">
@@ -452,13 +467,6 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       min-width: 0;
     }
 
-    .models__name-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: var(--cog-space-075);
-    }
-
     .models__name {
       color: var(--cog-text);
       font-size: var(--cog-fs-body-sm);
@@ -480,10 +488,34 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       white-space: nowrap;
     }
 
-    .models__location {
-      color: var(--cog-text);
+    .models__show-more {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-050);
+      margin: var(--cog-space-100) auto 0;
+      border: 0;
+      background: transparent;
+      padding: var(--cog-space-075) var(--cog-space-100);
+      color: var(--cog-text-subtle);
+      font: inherit;
       font-size: var(--cog-fs-caption);
       font-weight: var(--cog-fw-semibold);
+      cursor: pointer;
+      border-radius: var(--cog-radius-sm);
+    }
+
+    .models__show-more:hover {
+      color: var(--cog-text);
+      background: var(--cog-surface-raised, rgba(0, 0, 0, 0.04));
+    }
+
+    .models__show-more cog-icon {
+      display: inline-flex;
+      transition: transform var(--cog-dur-fast) var(--cog-ease-standard);
+    }
+
+    .models__show-more--open cog-icon {
+      transform: rotate(180deg);
     }
 
     .models__context {
@@ -542,19 +574,30 @@ export class DataProcessingComponent {
     [...this._modelList()].sort((a, b) => Number(b.isEligible) - Number(a.isEligible)),
   );
 
+  // Collapse the (long) catalogue to the first few rows, expandable on demand.
+  protected readonly collapsedLimit = 5;
+  protected readonly expanded = signal(false);
+  protected readonly visibleModels = computed(() =>
+    this.expanded()
+      ? this.orderedModels()
+      : this.orderedModels().slice(0, this.collapsedLimit),
+  );
+  protected readonly hiddenCount = computed(() =>
+    Math.max(0, this.totalCount() - this.collapsedLimit),
+  );
+
+  protected toggleExpanded(): void {
+    this.expanded.update((open) => !open);
+  }
+
+  // Translation-key suffix for the model's residency tagline (by provider).
+  protected readonly descKey = modelDescriptionKey;
+
   protected regionBadge(model: Model): string {
     const key = MODEL_REGION_BADGE_KEY[model.privacyTier];
     return key
       ? this._transloco.translate('account.dataProcessing.regionBadge.' + key)
       : model.privacyTier;
-  }
-
-  protected hostingLabel(model: Model): string {
-    const region = model.hostingRegion?.trim();
-    if (region) {
-      return region.charAt(0).toUpperCase() + region.slice(1);
-    }
-    return model.hostingCountry?.trim() ?? '';
   }
 
   // Human-friendly context window, e.g. 128000 → "128K", 1000000 → "1M".

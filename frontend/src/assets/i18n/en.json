@@ -69,7 +69,9 @@
           "note": "Every model"
         }
       },
-      "title": "Data processing"
+      "title": "Data processing",
+      "showLess": "Show less",
+      "showMore": "Show {{ count }} more"
     },
     "email": {
       "current": "Current email",
@@ -949,5 +951,12 @@
       "comingSoon": "This section is coming soon."
     },
     "title": "Settings"
+  },
+  "models": {
+    "description": {
+      "default": "Available through Cognos.",
+      "infomaniak": "Hosted in Switzerland by Infomaniak.",
+      "requesty": "Served through Requesty's EU gateway in Frankfurt."
+    }
   }
 }

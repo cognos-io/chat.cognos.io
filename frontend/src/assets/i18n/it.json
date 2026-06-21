@@ -69,7 +69,9 @@
           "note": "Ogni modello"
         }
       },
-      "title": "Trattamento dei dati"
+      "title": "Trattamento dei dati",
+      "showLess": "Mostra meno",
+      "showMore": "Mostra altri {{ count }}"
     },
     "email": {
       "current": "E-mail attuale",
@@ -949,5 +951,12 @@
       "comingSoon": "Questa sezione sarà presto disponibile."
     },
     "title": "Impostazioni"
+  },
+  "models": {
+    "description": {
+      "default": "Disponibile tramite Cognos.",
+      "infomaniak": "Ospitato in Svizzera da Infomaniak.",
+      "requesty": "Erogato tramite il gateway UE di Requesty a Francoforte."
+    }
   }
 }

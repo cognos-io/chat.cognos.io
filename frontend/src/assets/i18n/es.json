@@ -69,7 +69,9 @@
           "note": "Todos los modelos"
         }
       },
-      "title": "Procesamiento de datos"
+      "title": "Procesamiento de datos",
+      "showLess": "Mostrar menos",
+      "showMore": "Mostrar {{ count }} más"
     },
     "email": {
       "current": "Correo actual",
@@ -949,5 +951,12 @@
       "comingSoon": "Esta sección estará disponible pronto."
     },
     "title": "Ajustes"
+  },
+  "models": {
+    "description": {
+      "default": "Disponible a través de Cognos.",
+      "infomaniak": "Alojado en Suiza por Infomaniak.",
+      "requesty": "Servido a través de la pasarela europea de Requesty en Fráncfort."
+    }
   }
 }

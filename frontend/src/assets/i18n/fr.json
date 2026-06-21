@@ -69,7 +69,9 @@
           "note": "Tous les modèles"
         }
       },
-      "title": "Traitement des données"
+      "title": "Traitement des données",
+      "showLess": "Afficher moins",
+      "showMore": "Afficher {{ count }} de plus"
     },
     "email": {
       "current": "E-mail actuel",
@@ -949,5 +951,12 @@
       "comingSoon": "Cette section arrive bientôt."
     },
     "title": "Paramètres"
+  },
+  "models": {
+    "description": {
+      "default": "Disponible via Cognos.",
+      "infomaniak": "Hébergé en Suisse par Infomaniak.",
+      "requesty": "Fourni via la passerelle européenne de Requesty à Francfort."
+    }
   }
 }

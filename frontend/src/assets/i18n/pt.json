@@ -69,7 +69,9 @@
           "note": "Todos os modelos"
         }
       },
-      "title": "Processamento de dados"
+      "title": "Processamento de dados",
+      "showLess": "Mostrar menos",
+      "showMore": "Mostrar mais {{ count }}"
     },
     "email": {
       "current": "E-mail atual",
@@ -949,5 +951,12 @@
       "comingSoon": "Esta secção estará disponível em breve."
     },
     "title": "Definições"
+  },
+  "models": {
+    "description": {
+      "default": "Disponível através da Cognos.",
+      "infomaniak": "Hospedado na Suíça pela Infomaniak.",
+      "requesty": "Fornecido através do gateway da UE da Requesty em Frankfurt."
+    }
   }
 }
