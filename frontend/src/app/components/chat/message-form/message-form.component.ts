@@ -450,6 +450,7 @@ function escapeHtml(value: string): string {
 
     .message-form__textarea {
       width: 100%;
+      box-sizing: border-box;
       resize: none;
       border: 0;
       background: transparent;
@@ -459,6 +460,12 @@ function escapeHtml(value: string): string {
       line-height: var(--cog-lh-body-lg);
       outline: 0;
       padding: 0;
+      /* Wrapping + scrollbar gutter must match .message-form__highlights
+         exactly, or the overlay marks drift once the textarea scrolls. */
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      word-break: normal;
+      scrollbar-gutter: stable;
     }
 
     .message-form__textarea::placeholder {
@@ -475,12 +482,17 @@ function escapeHtml(value: string): string {
     .message-form__highlights {
       position: absolute;
       inset: 0;
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
       overflow: hidden;
       pointer-events: none;
       white-space: pre-wrap;
       overflow-wrap: break-word;
+      word-break: normal;
+      /* Reserve the same gutter the textarea's scrollbar occupies so both
+         layers wrap at the identical column. */
+      scrollbar-gutter: stable;
       font: inherit;
       font-size: 16px;
       line-height: var(--cog-lh-body-lg);
