@@ -901,6 +901,10 @@ export class MessageService {
   // persisted once the conversation exists. Pure + synchronous so the optimistic
   // message and completion context are redacted from the very first frame.
   private redactRequest(req: MessageRequest): MessageRequest {
+    // Redaction is opt-out: when the user has disabled it, send as typed.
+    if (!this._redactionService.enabled()) {
+      return { ...req, redactionEntries: [] };
+    }
     const conversationId = this._conversationService.conversation()?.record.id ?? null;
     // Re-detect on the final (already-trimmed) content and drop only what the
     // user explicitly deselected, so offsets always match the text being sent.
@@ -908,9 +912,15 @@ export class MessageService {
     const auto = this._redactionService
       .detect(req.content)
       .filter((candidate) => !deselected.has(candidateKey(candidate)));
-    // Plus any manual selections the user marked to redact; resolve overlaps so
-    // a manual selection touching a detected value doesn't double-splice.
-    const custom = buildCustomCandidates(req.content, req.redactionCustom ?? []);
+    // Manual selections for this message, plus values manually redacted earlier
+    // in this conversation (so they keep getting redacted automatically).
+    const customValues = [
+      ...(req.redactionCustom ?? []),
+      ...this._redactionService.customRedactionValues(conversationId),
+    ];
+    // Resolve overlaps so a manual selection touching a detected value doesn't
+    // double-splice.
+    const custom = buildCustomCandidates(req.content, customValues);
     const candidates = resolveOverlaps([...auto, ...custom]);
     const { redactedText, newEntries } = this._redactionService.prepareRedaction(
       conversationId,

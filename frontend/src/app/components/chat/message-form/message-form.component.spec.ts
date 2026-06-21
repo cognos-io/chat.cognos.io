@@ -68,12 +68,23 @@ describe('MessageFormComponent', () => {
         },
         {
           provide: ConversationService,
-          useValue: { isTemporaryConversation: signal(false) },
+          useValue: {
+            isTemporaryConversation: signal(false),
+            conversation: () => null,
+          },
         },
         { provide: DeviceService, useValue: { isMobile: signal(false) } },
-        // The composer's redaction preview only calls detect(); stub it so the
-        // real RedactionService (and its API/conversation deps) isn't built.
-        { provide: RedactionService, useValue: { detect: () => [] } },
+        // The composer's redaction preview reads these; stub them so the real
+        // RedactionService (and its API/conversation deps) isn't built.
+        {
+          provide: RedactionService,
+          useValue: {
+            detect: () => [],
+            enabled: () => true,
+            revision: () => 0,
+            customRedactionValues: () => [],
+          },
+        },
         { provide: MessageService, useValue: messageService },
         {
           provide: ModelService,

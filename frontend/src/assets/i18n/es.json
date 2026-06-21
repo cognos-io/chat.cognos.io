@@ -1,5 +1,13 @@
 {
   "account": {
+    "redaction": {
+      "title": "Redacción de datos personales",
+      "subtitle": "Detecta valores sensibles (correos, IBAN, números de identidad, etc.) y los reemplaza por marcadores antes de enviar tus mensajes a los proveedores de IA. Activado por defecto.",
+      "toggleLabel": "Redactar valores sensibles",
+      "on": "Activado",
+      "off": "Desactivado",
+      "disabledNote": "La redacción está desactivada. Los nuevos mensajes incluirán los valores sensibles completos. Las conversaciones que ya redactaste siguen protegidas."
+    },
     "breadcrumbs": {
       "account": "Cuenta",
       "settings": "Ajustes"
@@ -458,6 +466,7 @@
         "showHighlight": "Mostrar lo que se redactará",
         "hideHighlight": "Ocultar el resaltado",
         "redactAction": "Redactar",
+        "remembered": "Recordado",
         "remove": "Quitar",
         "types": {
           "iban": "IBAN",

@@ -12,6 +12,9 @@ export const UserPreferencesData = z.object({
   // The user's default model and persona live here (encrypted), so this object
   // is the single source of truth wherever a default is set (chat or settings).
   defaultModelId: z.string().default(''),
+  // Browser PII redaction is on by default (secure by default). When the user
+  // turns it off it stays off for future messages until re-enabled.
+  redactionEnabled: z.boolean().default(true),
 });
 export type UserPreferencesData = z.infer<typeof UserPreferencesData>;
 
@@ -22,6 +25,7 @@ export const emptyPreferences: UserPreferencesData = {
   recentPersonas: [],
   defaultPersonaId: '',
   defaultModelId: '',
+  redactionEnabled: true,
 };
 
 /**

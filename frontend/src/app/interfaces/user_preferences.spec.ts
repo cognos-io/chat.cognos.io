@@ -81,6 +81,7 @@ describe('serializeUserPreferencesData', () => {
       recentPersonas: ['cognos:editor'],
       defaultPersonaId: 'cognos:simple-assistant',
       defaultModelId: 'm-1',
+      redactionEnabled: false,
     };
 
     const serialized = serializeUserPreferencesData(original);

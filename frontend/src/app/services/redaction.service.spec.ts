@@ -18,6 +18,7 @@ import {
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 import { RedactionService } from './redaction.service';
+import { UserPreferencesService } from './user-preferences.service';
 import { VaultService } from './vault.service';
 
 // A fake backend that stores what the service seals, so the decrypt path can be
@@ -84,6 +85,7 @@ describe('RedactionService', () => {
         // The auto-load effect reads the active conversation; keep it null so
         // each test drives loading explicitly.
         { provide: ConversationService, useValue: { conversation: () => null } },
+        { provide: UserPreferencesService, useValue: { redactionEnabled: () => true } },
       ],
     });
     service = TestBed.inject(RedactionService);

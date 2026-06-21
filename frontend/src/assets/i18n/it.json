@@ -1,5 +1,13 @@
 {
   "account": {
+    "redaction": {
+      "title": "Oscuramento dei dati personali",
+      "subtitle": "Rileva valori sensibili (email, IBAN, numeri identificativi, ecc.) e li sostituisce con segnaposto prima che i messaggi vengano inviati ai fornitori di IA. Attivo per impostazione predefinita.",
+      "toggleLabel": "Oscura valori sensibili",
+      "on": "Attivo",
+      "off": "Disattivato",
+      "disabledNote": "L'oscuramento è disattivato. I nuovi messaggi includeranno i valori sensibili per intero. Le conversazioni già oscurate restano protette."
+    },
     "breadcrumbs": {
       "account": "Account",
       "settings": "Impostazioni"
@@ -458,6 +466,7 @@
         "showHighlight": "Mostra cosa verrà oscurato",
         "hideHighlight": "Nascondi evidenziazione",
         "redactAction": "Oscura",
+        "remembered": "Memorizzato",
         "remove": "Rimuovi",
         "types": {
           "iban": "IBAN",

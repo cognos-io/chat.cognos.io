@@ -20,6 +20,7 @@ import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
+import { UserPreferencesService } from './user-preferences.service';
 import { VaultService } from './vault.service';
 
 const NoUserKeyPairError = new Error('User key pair not available');
@@ -64,9 +65,14 @@ export class RedactionService {
   private readonly _vault = inject(VaultService);
   private readonly _auth = inject(AuthService);
   private readonly _conversationService = inject(ConversationService);
+  private readonly _userPreferences = inject(UserPreferencesService);
 
   private readonly _state = new Map<string, ConversationRedaction>();
   private _loadedConversationId: string | null = null;
+
+  // Whether redaction is active for new messages. On by default (secure by
+  // default); the user can turn it off in settings for all future messages.
+  readonly enabled = this._userPreferences.redactionEnabled;
 
   // Bumped whenever decrypted entries change, so templates can recompute
   // hydrated content reactively without threading the Map through signals.
@@ -217,6 +223,22 @@ export class RedactionService {
       return new Map();
     }
     return this._state.get(conversationId)?.entries ?? new Map();
+  }
+
+  /**
+   * Original values the user manually redacted earlier in this conversation, so
+   * the same value is auto-redacted in future messages without re-selecting it.
+   * Read `revision()` first in any reactive consumer (the map loads async).
+   */
+  customRedactionValues(conversationId: string | null | undefined): string[] {
+    const entries = this.entriesFor(conversationId);
+    const values = new Set<string>();
+    for (const entry of entries.values()) {
+      if (entry.type === 'custom') {
+        values.add(entry.original);
+      }
+    }
+    return [...values];
   }
 
   /** Restore originals for known tokens. Display-only; never mutates stored data. */

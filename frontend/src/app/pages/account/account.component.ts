@@ -16,6 +16,7 @@ import {
   CognosIconComponent,
   CognosTextFieldComponent,
   CognosToastService,
+  CognosToggleComponent,
 } from '@cognos/ui-angular';
 
 import { DataProcessingComponent } from '@app/components/account/data-processing/data-processing.component';
@@ -32,6 +33,7 @@ import { AuthService } from '@app/services/auth.service';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { ExportService } from '@app/services/export.service';
+import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { deriveProfileName } from '@app/utils/profile-identity';
 
 // AccountComponent is the Account home (/account). It owns the user-facing
@@ -49,6 +51,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
     CognosIconComponent,
     CognosTextFieldComponent,
     CognosButtonComponent,
+    CognosToggleComponent,
     DataProcessingComponent,
     LanguageSwitcherComponent,
     TranslocoModule,
@@ -163,6 +166,32 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       </section>
 
       <app-data-processing />
+
+      <section class="account__card" aria-labelledby="account-redaction-heading">
+        <h2 id="account-redaction-heading" class="account__card-title">
+          {{ t('account.redaction.title') }}
+        </h2>
+        <p class="account__card-subtitle">{{ t('account.redaction.subtitle') }}</p>
+        <div class="account__redaction-row">
+          <cog-toggle
+            [checked]="redactionEnabled()"
+            [label]="t('account.redaction.toggleLabel')"
+            (checkedChange)="setRedactionEnabled($event)"
+          />
+          <span class="account__redaction-state">
+            {{
+              redactionEnabled()
+                ? t('account.redaction.on')
+                : t('account.redaction.off')
+            }}
+          </span>
+        </div>
+        @if (!redactionEnabled()) {
+          <p class="account__redaction-warning" role="status">
+            {{ t('account.redaction.disabledNote') }}
+          </p>
+        }
+      </section>
 
       <section class="account__card" aria-labelledby="account-data-heading">
         <h2 id="account-data-heading" class="account__card-title">
@@ -425,6 +454,25 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       font-size: var(--cog-fs-body-sm);
     }
 
+    .account__redaction-row {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-150);
+      margin-top: var(--cog-space-150);
+    }
+
+    .account__redaction-state {
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm);
+    }
+
+    .account__redaction-warning {
+      margin: var(--cog-space-150) 0 0;
+      color: var(--cog-text-danger, var(--cog-danger, #b42318));
+      font-size: var(--cog-fs-body-sm);
+      line-height: var(--cog-lh-body-sm);
+    }
+
     .account__fields {
       display: grid;
       gap: var(--cog-space-200, 16px);
@@ -624,6 +672,13 @@ export class AccountComponent {
   private readonly _router = inject(Router);
   private readonly _toast = inject(CognosToastService);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _userPreferences = inject(UserPreferencesService);
+
+  protected readonly redactionEnabled = this._userPreferences.redactionEnabled;
+
+  protected setRedactionEnabled(enabled: boolean): void {
+    this._userPreferences.setRedactionEnabled(enabled);
+  }
 
   protected readonly email = this._auth.email;
   protected readonly icons = avatarIcons;

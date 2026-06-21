@@ -1,5 +1,13 @@
 {
   "account": {
+    "redaction": {
+      "title": "PII redaction",
+      "subtitle": "Detect sensitive values (emails, IBANs, ID numbers and more) and replace them with placeholders before your messages are sent to AI providers. On by default.",
+      "toggleLabel": "Redact sensitive values",
+      "on": "On",
+      "off": "Off",
+      "disabledNote": "Redaction is off. New messages you send will include sensitive values in full. Conversations you already redacted stay protected."
+    },
     "breadcrumbs": {
       "account": "Account",
       "settings": "Settings"
@@ -458,6 +466,7 @@
         "showHighlight": "Show what will be redacted",
         "hideHighlight": "Hide redaction highlight",
         "redactAction": "Redact",
+        "remembered": "Remembered",
         "remove": "Remove",
         "types": {
           "iban": "IBAN",

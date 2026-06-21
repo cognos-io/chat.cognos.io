@@ -1,5 +1,13 @@
 {
   "account": {
+    "redaction": {
+      "title": "Masquage des données personnelles",
+      "subtitle": "Détecte les valeurs sensibles (e-mails, IBAN, numéros d'identité, etc.) et les remplace par des espaces réservés avant l'envoi de vos messages aux fournisseurs d'IA. Activé par défaut.",
+      "toggleLabel": "Masquer les valeurs sensibles",
+      "on": "Activé",
+      "off": "Désactivé",
+      "disabledNote": "Le masquage est désactivé. Les nouveaux messages incluront les valeurs sensibles en entier. Les conversations déjà masquées restent protégées."
+    },
     "breadcrumbs": {
       "account": "Compte",
       "settings": "Paramètres"
@@ -458,6 +466,7 @@
         "showHighlight": "Afficher ce qui sera masqué",
         "hideHighlight": "Masquer la surbrillance",
         "redactAction": "Masquer",
+        "remembered": "Mémorisé",
         "remove": "Retirer",
         "types": {
           "iban": "IBAN",

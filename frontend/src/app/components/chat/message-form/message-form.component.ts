@@ -266,6 +266,22 @@ function escapeHtml(value: string): string {
                       </button>
                     </li>
                   }
+
+                  @for (remembered of rememberedCustomRedactions(); track remembered) {
+                    <li class="message-form__redaction-item">
+                      <cog-redacted-text
+                        [value]="remembered"
+                        placeholder="[[PII_CUSTOM]]"
+                        kind="custom"
+                        [label]="t('chat.composer.redaction.types.custom')"
+                        [labels]="modalLabels()"
+                        [showSettings]="false"
+                      />
+                      <span class="message-form__redaction-remembered">
+                        {{ t('chat.composer.redaction.remembered') }}
+                      </span>
+                    </li>
+                  }
                 </ul>
               }
             </div>
@@ -566,6 +582,12 @@ function escapeHtml(value: string): string {
       color: var(--cog-text);
     }
 
+    .message-form__redaction-remembered {
+      color: var(--cog-text-subtlest);
+      font-size: var(--cog-fs-caption);
+      white-space: nowrap;
+    }
+
     .message-form__redact-pop {
       position: fixed;
       z-index: 60;
@@ -794,10 +816,27 @@ export class MessageFormComponent {
     { initialValue: '' },
   );
 
-  // Detected Tier 1 candidates for the current draft.
+  // Detected Tier 1 candidates for the current draft (empty when the user has
+  // turned redaction off in settings).
   readonly redactionCandidates = computed(() =>
-    this._redactionService.detect(this._redactionDraft() ?? ''),
+    this._redactionService.enabled()
+      ? this._redactionService.detect(this._redactionDraft() ?? '')
+      : [],
   );
+
+  // Values manually redacted earlier in this conversation, so they're shown as
+  // (auto-applied) redactions here too. Reactive to mappings loading via
+  // revision(); the message service applies them on send.
+  private readonly _rememberedCustomValues = computed(() => {
+    if (!this._redactionService.enabled()) {
+      return [];
+    }
+    this._redactionService.revision();
+    const conversation = this._conversationService.conversation();
+    return this._redactionService.customRedactionValues(
+      conversation?.record.id ?? null,
+    );
+  });
 
   // Live (non-debounced) draft drives the highlight overlay so the marks stay
   // aligned with the textarea char-for-char while typing.
@@ -815,7 +854,7 @@ export class MessageFormComponent {
   // overlay behind the (transparent-background) textarea. The textarea value is
   // never mutated — this is a display layer.
   readonly redactionHighlightHtml = computed(() => {
-    if (!this.highlightRedactions()) {
+    if (!this.highlightRedactions() || !this._redactionService.enabled()) {
       return '';
     }
     const text = this._liveDraft() ?? '';
@@ -823,7 +862,10 @@ export class MessageFormComponent {
     const auto = this._redactionService
       .detect(text)
       .filter((candidate) => !deselected.has(candidateKey(candidate)));
-    const custom = buildCustomCandidates(text, this._customRedactions());
+    const custom = buildCustomCandidates(text, [
+      ...this._customRedactions(),
+      ...this._rememberedCustomValues(),
+    ]);
     const ranges = resolveOverlaps([...auto, ...custom]);
 
     let html = '';
@@ -848,23 +890,40 @@ export class MessageFormComponent {
   private readonly _customRedactions = signal<string[]>([]);
   readonly redactPopover = signal<{ x: number; y: number; text: string } | null>(null);
 
-  // Only show manual redactions that are still present in the current draft.
+  // Manual redactions for this message that are still present in the draft.
   readonly activeCustomRedactions = computed(() => {
+    if (!this._redactionService.enabled()) {
+      return [];
+    }
     const draft = this._redactionDraft() ?? '';
     return this._customRedactions().filter((text) => draft.includes(text));
   });
 
+  // Remembered (earlier-redacted) values present in the draft, minus any the
+  // user is also selecting again right now.
+  readonly rememberedCustomRedactions = computed(() => {
+    const draft = this._redactionDraft() ?? '';
+    const session = new Set(this._customRedactions());
+    return this._rememberedCustomValues().filter(
+      (value) => draft.includes(value) && !session.has(value),
+    );
+  });
+
   readonly hasRedactionPreview = computed(
     () =>
-      this.redactionCandidates().length > 0 || this.activeCustomRedactions().length > 0,
+      this.redactionCandidates().length > 0 ||
+      this.activeCustomRedactions().length > 0 ||
+      this.rememberedCustomRedactions().length > 0,
   );
 
-  // How many values (detected-and-selected + manual) will be redacted.
+  // How many values (detected-and-selected + manual + remembered) get redacted.
   readonly redactionActiveCount = computed(
     () =>
       this.redactionCandidates().filter(
         (candidate) => !this._redactionDeselected().has(candidateKey(candidate)),
-      ).length + this.activeCustomRedactions().length,
+      ).length +
+      this.activeCustomRedactions().length +
+      this.rememberedCustomRedactions().length,
   );
 
   constructor() {
@@ -1022,11 +1081,17 @@ export class MessageFormComponent {
   }
 
   onComposerMouseUp(event: MouseEvent): void {
+    if (!this._redactionService.enabled()) {
+      return;
+    }
     const text = this.selectedText(event.target);
     this.redactPopover.set(text ? { x: event.clientX, y: event.clientY, text } : null);
   }
 
   onComposerContextMenu(event: MouseEvent): void {
+    if (!this._redactionService.enabled()) {
+      return;
+    }
     const text = this.selectedText(event.target);
     if (!text) {
       return;

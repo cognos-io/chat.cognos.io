@@ -1,5 +1,13 @@
 {
   "account": {
+    "redaction": {
+      "title": "Ocultação de dados pessoais",
+      "subtitle": "Deteta valores sensíveis (e-mails, IBANs, números de identificação, etc.) e substitui-os por marcadores antes de enviar as suas mensagens aos fornecedores de IA. Ativado por predefinição.",
+      "toggleLabel": "Ocultar valores sensíveis",
+      "on": "Ativado",
+      "off": "Desativado",
+      "disabledNote": "A ocultação está desativada. As novas mensagens incluirão os valores sensíveis na íntegra. As conversas que já ocultou permanecem protegidas."
+    },
     "breadcrumbs": {
       "account": "Conta",
       "settings": "Definições"
@@ -458,6 +466,7 @@
         "showHighlight": "Mostrar o que será ocultado",
         "hideHighlight": "Ocultar o destaque",
         "redactAction": "Ocultar",
+        "remembered": "Memorizado",
         "remove": "Remover",
         "types": {
           "iban": "IBAN",

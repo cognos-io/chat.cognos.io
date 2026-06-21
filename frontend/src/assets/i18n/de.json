@@ -1,5 +1,13 @@
 {
   "account": {
+    "redaction": {
+      "title": "PII-Schwärzung",
+      "subtitle": "Erkennt sensible Werte (E-Mails, IBANs, Ausweisnummern usw.) und ersetzt sie durch Platzhalter, bevor Ihre Nachrichten an KI-Anbieter gesendet werden. Standardmäßig aktiviert.",
+      "toggleLabel": "Sensible Werte schwärzen",
+      "on": "Ein",
+      "off": "Aus",
+      "disabledNote": "Schwärzung ist aus. Neue Nachrichten enthalten sensible Werte vollständig. Bereits geschwärzte Unterhaltungen bleiben geschützt."
+    },
     "breadcrumbs": {
       "account": "Konto",
       "settings": "Einstellungen"
@@ -458,6 +466,7 @@
         "showHighlight": "Anzeigen, was geschwärzt wird",
         "hideHighlight": "Schwärzungs-Hervorhebung ausblenden",
         "redactAction": "Schwärzen",
+        "remembered": "Gemerkt",
         "remove": "Entfernen",
         "types": {
           "iban": "IBAN",

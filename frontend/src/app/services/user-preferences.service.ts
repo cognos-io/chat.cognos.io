@@ -58,6 +58,7 @@ export class UserPreferencesService {
   private readonly _setDefaultPersona = new Subject<string>();
   private readonly _setDefaultModel = new Subject<string>();
   private readonly _markRecentPersona = new Subject<string>();
+  private readonly _setRedactionEnabled = new Subject<boolean>();
 
   // Most-recently-used personas are capped so the "recently used" group and the
   // in-chat switcher stay short.
@@ -220,6 +221,20 @@ export class UserPreferencesService {
             }),
           ),
         ),
+      // Toggle PII redaction, local then remote
+      () =>
+        this._setRedactionEnabled.pipe(
+          map((enabled) => ({ redactionEnabled: enabled })),
+        ),
+      (state) =>
+        this._setRedactionEnabled.pipe(
+          concatMap((enabled) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              redactionEnabled: enabled,
+            }),
+          ),
+        ),
       // Mark persona recently used, local then remote
       (state) =>
         this._markRecentPersona.pipe(
@@ -253,6 +268,7 @@ export class UserPreferencesService {
       setDefaultPersona: this._setDefaultPersona,
       setDefaultModel: this._setDefaultModel,
       markRecentPersona: this._markRecentPersona,
+      setRedactionEnabled: this._setRedactionEnabled,
     },
   });
 
@@ -284,6 +300,9 @@ export class UserPreferencesService {
   public markRecentPersona = (personaId: string) => {
     this.state.markRecentPersona(personaId);
   };
+  public setRedactionEnabled = (enabled: boolean) => {
+    this.state.setRedactionEnabled(enabled);
+  };
 
   // selectors
   public pinnedConversationIds = this.state.pinnedConversations;
@@ -292,6 +311,7 @@ export class UserPreferencesService {
   public recentPersonas = this.state.recentPersonas;
   public defaultPersonaId = this.state.defaultPersonaId;
   public defaultModelId = this.state.defaultModelId;
+  public redactionEnabled = this.state.redactionEnabled;
 
   // private methods
   private addConversationIdToPinnedConversations(
