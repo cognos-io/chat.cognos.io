@@ -212,6 +212,47 @@ export const secretDetector: Detector = {
   },
 };
 
+// --- IP addresses ----------------------------------------------------------
+
+// Per-octet 0–255. Surrounded by a negated [\w.] boundary so a longer dotted
+// run (software versions like 1.2.3.4.5) doesn't yield a sub-range match.
+const IPV4_OCTET = '(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)';
+const IPV4_RE = new RegExp(
+  `(?<![\\w.])(?:${IPV4_OCTET}\\.){3}${IPV4_OCTET}(?![\\w.])`,
+  'g',
+);
+
+// Comprehensive IPv6: full, compressed (`::`), and IPv4-mapped forms. The
+// negated [\w:.] boundaries stop it matching inside scope-resolution (`std::`)
+// or longer colon/word runs.
+const IPV6_RE =
+  /(?<![\w:.])(?:(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){1,7}:|(?:[0-9A-Fa-f]{1,4}:){1,6}:[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){1,5}(?::[0-9A-Fa-f]{1,4}){1,2}|(?:[0-9A-Fa-f]{1,4}:){1,4}(?::[0-9A-Fa-f]{1,4}){1,3}|(?:[0-9A-Fa-f]{1,4}:){1,3}(?::[0-9A-Fa-f]{1,4}){1,4}|(?:[0-9A-Fa-f]{1,4}:){1,2}(?::[0-9A-Fa-f]{1,4}){1,5}|[0-9A-Fa-f]{1,4}:(?::[0-9A-Fa-f]{1,4}){1,6}|::(?:ffff(?::0{1,4})?:)?(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)|(?:[0-9A-Fa-f]{1,4}:){1,4}:(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)|:(?:(?::[0-9A-Fa-f]{1,4}){1,7}|:))(?![\w:.])/g;
+
+export const ipAddressDetector: Detector = {
+  id: 'ip:v1',
+  type: 'ip_address',
+  detect(text) {
+    const out: RedactionCandidate[] = [];
+    // IPv6 first: it can embed an IPv4 tail, and overlap resolution keeps the
+    // longer range.
+    for (const m of matchAll(text, IPV6_RE)) {
+      const value = m[0];
+      // The bare unspecified address is noise, not PII.
+      if (value === '::') continue;
+      // Require at least two hextet groups so a lone `1::` style fragment with
+      // a single group on each side still reads as an address, but plain words
+      // never do.
+      if ((value.match(/:/g)?.length ?? 0) < 2) continue;
+      out.push(candidate('ip_address', 'ip:v1', m, value, value.toLowerCase()));
+    }
+    for (const m of matchAll(text, IPV4_RE)) {
+      const value = m[0];
+      out.push(candidate('ip_address', 'ip:v1', m, value, value));
+    }
+    return out;
+  },
+};
+
 /** Tier 1 detectors that run on every detection pass. */
 export const TIER1_DETECTORS: readonly Detector[] = [
   emailDetector,
@@ -220,5 +261,6 @@ export const TIER1_DETECTORS: readonly Detector[] = [
   swissAhvDetector,
   ukNinoDetector,
   secretDetector,
+  ipAddressDetector,
   ...NATIONAL_DETECTORS,
 ];

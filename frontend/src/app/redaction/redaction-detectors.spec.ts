@@ -4,6 +4,7 @@ import {
   creditCardDetector,
   emailDetector,
   ibanDetector,
+  ipAddressDetector,
   isValidEan13,
   isValidIbanChecksum,
   isValidLuhn,
@@ -135,5 +136,50 @@ describe('secretDetector', () => {
 
   it('ignores ordinary words', () => {
     expect(secretDetector.detect('please ask the desk for the key')).toEqual([]);
+  });
+});
+
+describe('ipAddressDetector', () => {
+  it('detects an IPv4 address', () => {
+    const [c] = ipAddressDetector.detect('server at 192.168.1.45 responded');
+    expect(c.value).toBe('192.168.1.45');
+    expect(c.type).toBe('ip_address');
+  });
+
+  it('detects edge IPv4 values (0.0.0.0 and 255.255.255.255)', () => {
+    expect(ipAddressDetector.detect('bind 0.0.0.0 here')[0].value).toBe('0.0.0.0');
+    expect(ipAddressDetector.detect('mask 255.255.255.255 ok')[0].value).toBe(
+      '255.255.255.255',
+    );
+  });
+
+  it('rejects octets above 255', () => {
+    expect(ipAddressDetector.detect('not 256.1.1.1 valid')).toEqual([]);
+    expect(ipAddressDetector.detect('not 999.999.999.999 valid')).toEqual([]);
+  });
+
+  it('does not match a sub-range inside a longer dotted version', () => {
+    expect(ipAddressDetector.detect('release 1.2.3.4.5 shipped')).toEqual([]);
+  });
+
+  it('detects a full IPv6 address and lowercases it', () => {
+    const [c] = ipAddressDetector.detect(
+      'host 2001:0DB8:85A3:0000:0000:8A2E:0370:7334 up',
+    );
+    expect(c.value).toBe('2001:0DB8:85A3:0000:0000:8A2E:0370:7334');
+    expect(c.normalized).toBe('2001:0db8:85a3:0000:0000:8a2e:0370:7334');
+    expect(c.type).toBe('ip_address');
+  });
+
+  it('detects compressed and IPv4-mapped IPv6', () => {
+    expect(ipAddressDetector.detect('gw 2001:db8::1 ok')[0].value).toBe('2001:db8::1');
+    expect(ipAddressDetector.detect('map ::ffff:192.168.1.1 here')[0].value).toBe(
+      '::ffff:192.168.1.1',
+    );
+  });
+
+  it('ignores C++ scope resolution and ordinary prose', () => {
+    expect(ipAddressDetector.detect('call std::vector::size now')).toEqual([]);
+    expect(ipAddressDetector.detect('the meeting is at noon')).toEqual([]);
   });
 });

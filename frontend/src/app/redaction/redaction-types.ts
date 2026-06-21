@@ -33,6 +33,8 @@ export type RedactionType =
   | 'pt_nif'
   | 'es_dni'
   | 'es_nie'
+  // Network identifiers.
+  | 'ip_address'
   // Tier 2 NLP entity hints.
   | 'person'
   | 'org'
