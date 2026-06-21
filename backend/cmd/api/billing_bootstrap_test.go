@@ -104,6 +104,7 @@ func TestNewUsersReceiveConfiguredTrialBillingStateOnCreate(t *testing.T) {
 		Config: &config.APIConfig{
 			InfomaniakAPIKey:       "test-infomaniak-key",
 			InfomaniakProductID:    "test-product-id",
+			RequestyAPIKey:         "test-requesty-key",
 			BillingTrialSeedRappen: 321,
 		},
 	})

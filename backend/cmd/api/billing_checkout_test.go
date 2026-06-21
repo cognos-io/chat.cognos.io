@@ -130,6 +130,7 @@ func checkoutConfig() *config.APIConfig {
 	return &config.APIConfig{
 		InfomaniakAPIKey:            "test-infomaniak-key",
 		InfomaniakProductID:         "test-product-id",
+		RequestyAPIKey:              "test-requesty-key",
 		PaddleAPIBase:               "https://api.paddle.com",
 		PaddlePricePAYG:             "pri_payg",
 		PaddlePriceUnlimitedMonthly: "pri_unl_monthly",
