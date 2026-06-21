@@ -615,6 +615,9 @@
     },
     "message": {
       "copy": "Copiar al portapapeles",
+      "copyWithValues": "Copiar con valores sensibles",
+      "copyRedacted": "Copiar redactado",
+      "redactedMarker": "[redactado]",
       "delete": "Eliminar mensaje",
       "deleteConfirm": "¿Seguro que quieres eliminar este mensaje?",
       "deleted": "Mensaje eliminado",

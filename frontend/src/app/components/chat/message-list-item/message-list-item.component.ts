@@ -5,6 +5,8 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  ElementRef,
+  HostListener,
   Input,
   effect,
   inject,
@@ -18,6 +20,8 @@ import {
   CognosBranchSwitcherComponent,
   CognosButtonComponent,
   CognosIconButtonComponent,
+  CognosMenuComponent,
+  type CognosMenuItem,
   CognosUserMessageComponent,
   MessageBranchInfo,
 } from '@cognos/ui-angular';
@@ -27,6 +31,7 @@ import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog
 import { Message, isMessageFromUser } from '@app/interfaces/message';
 import { Model } from '@app/interfaces/model';
 import { Persona } from '@app/interfaces/persona';
+import { containsRedactionToken } from '@app/redaction';
 import { ConversationService } from '@app/services/conversation.service';
 import { MessageService } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
@@ -46,6 +51,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     CognosIconButtonComponent,
     CognosBranchSwitcherComponent,
     CognosButtonComponent,
+    CognosMenuComponent,
     TranslocoModule,
   ],
   template: `
@@ -70,11 +76,32 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
           }
 
           @if (message.decryptedData.content) {
-            <cog-icon-button
-              name="copy"
-              [title]="t('chat.message.copy')"
-              [cdkCopyToClipboard]="hydrated(message.decryptedData.content)"
-            />
+            @if (containsRedaction(message.decryptedData.content)) {
+              <!-- Redacted content: let the reader choose what lands on the
+                   clipboard — the real values or the placeholder version. -->
+              <span class="message-list-item__copy-wrap">
+                <cog-icon-button
+                  name="copy"
+                  [title]="t('chat.message.copy')"
+                  [selected]="copyMenuOpen()"
+                  (click)="toggleCopyMenu($event)"
+                />
+                @if (copyMenuOpen()) {
+                  <div class="message-list-item__copy-menu">
+                    <cog-menu
+                      [items]="copyMenuItems()"
+                      (itemSelect)="onCopySelect($event)"
+                    />
+                  </div>
+                }
+              </span>
+            } @else {
+              <cog-icon-button
+                name="copy"
+                [title]="t('chat.message.copy')"
+                [cdkCopyToClipboard]="hydrated(message.decryptedData.content)"
+              />
+            }
           }
 
           @if (canEdit()) {
@@ -226,6 +253,18 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       gap: var(--cog-space-050);
     }
 
+    .message-list-item__copy-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .message-list-item__copy-menu {
+      position: absolute;
+      top: calc(100% + var(--cog-space-050));
+      left: 0;
+      z-index: 10;
+    }
+
     .message-list-item__empty,
     .message-list-item__deleted {
       margin: 0;
@@ -283,6 +322,10 @@ export class MessageListItemComponent {
   private readonly _cdr = inject(ChangeDetectorRef);
   private readonly _dialog = inject(Dialog);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  // Copy-options menu (only offered for messages containing redactions).
+  readonly copyMenuOpen = signal(false);
 
   // Redaction mappings load asynchronously after the view renders; when they
   // arrive (revision bumps), re-run change detection so placeholders hydrate.
@@ -305,6 +348,54 @@ export class MessageListItemComponent {
       this._conversationService.conversation()?.record.id,
       content,
     );
+  }
+
+  // True when the stored content carries redaction placeholders, so copying
+  // offers a choice between the real values and the placeholder version.
+  containsRedaction(content?: string | null): boolean {
+    return !!content && containsRedactionToken(content);
+  }
+
+  copyMenuItems(): CognosMenuItem[] {
+    return [
+      { title: this._transloco.translate('chat.message.copyWithValues'), icon: 'copy' },
+      {
+        title: this._transloco.translate('chat.message.copyRedacted'),
+        icon: 'shield-check',
+      },
+    ];
+  }
+
+  toggleCopyMenu(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.copyMenuOpen.update((open) => !open);
+  }
+
+  onCopySelect(index: number): void {
+    const content = this.message?.decryptedData.content ?? '';
+    const text = index === 0 ? this.hydrated(content) : this.redactedCopy(content);
+    void globalThis.navigator?.clipboard?.writeText(text);
+    this.copyMenuOpen.set(false);
+  }
+
+  // Close the copy menu when clicking anywhere outside this message item.
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.copyMenuOpen()) {
+      return;
+    }
+    const target = event.target;
+    if (target instanceof Node && !this._elementRef.nativeElement.contains(target)) {
+      this.copyMenuOpen.set(false);
+    }
+  }
+
+  // The placeholder version of the content: each token becomes a neutral
+  // "[redacted]" marker, safe to paste/share without exposing originals.
+  private redactedCopy(content: string): string {
+    const marker = this._transloco.translate('chat.message.redactedMarker');
+    return content.replace(/\[\[PII_[A-Z]+_[A-Z0-9]+\]\]/g, marker);
   }
 
   // Navigation metadata when this message is one of several sibling branches.

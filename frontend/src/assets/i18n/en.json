@@ -615,6 +615,9 @@
     },
     "message": {
       "copy": "Copy to clipboard",
+      "copyWithValues": "Copy with sensitive values",
+      "copyRedacted": "Copy redacted",
+      "redactedMarker": "[redacted]",
       "delete": "Delete message",
       "deleteConfirm": "Are you sure you want to delete this message?",
       "deleted": "Deleted message",

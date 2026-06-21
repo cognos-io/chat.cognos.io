@@ -615,6 +615,9 @@
     },
     "message": {
       "copy": "In die Zwischenablage kopieren",
+      "copyWithValues": "Mit sensiblen Werten kopieren",
+      "copyRedacted": "Geschwärzt kopieren",
+      "redactedMarker": "[geschwärzt]",
       "delete": "Nachricht löschen",
       "deleteConfirm": "Möchten Sie diese Nachricht wirklich löschen?",
       "deleted": "Gelöschte Nachricht",
