@@ -38,17 +38,9 @@ func TestMustLoadAPIConfig_ReadsAllProviderEnvVars(t *testing.T) {
 
 	envVars := map[string]string{
 		"COGNOS_BIFROST_LOG_LEVEL":         "debug",
-		"COGNOS_OPENAI_API_KEY":            "openai-key",
 		"COGNOS_INFOMANIAK_API_KEY":        "infomaniak-key",
 		"COGNOS_INFOMANIAK_URL":            "https://infomaniak.test/",
 		"COGNOS_INFOMANIAK_PRODUCT_ID":     "product-id",
-		"COGNOS_CLOUDFLARE_ACCOUNT_ID":     "cf-account",
-		"COGNOS_CLOUDFLARE_API_KEY":        "cf-key",
-		"COGNOS_GOOGLE_API_KEY":            "google-key",
-		"COGNOS_ANTHROPIC_API_KEY":         "anthropic-key",
-		"COGNOS_ANTHROPIC_URL":             "https://anthropic.test/",
-		"COGNOS_DEEPINFRA_URL":             "https://deepinfra.test/",
-		"COGNOS_DEEPINFRA_API_KEY":         "deepinfra-key",
 		"COGNOS_REQUESTY_URL":              "https://requesty.test/",
 		"COGNOS_REQUESTY_API_KEY":          "requesty-key",
 		"COGNOS_BILLING_TRIAL_SEED_RAPPEN": "500",
@@ -65,17 +57,9 @@ func TestMustLoadAPIConfig_ReadsAllProviderEnvVars(t *testing.T) {
 		want  string
 	}{
 		{"BifrostLogLevel", cfg.BifrostLogLevel, "debug"},
-		{"OpenAIAPIKey", cfg.OpenAIAPIKey, "openai-key"},
 		{"InfomaniakAPIKey", cfg.InfomaniakAPIKey, "infomaniak-key"},
 		{"InfomaniakAPIURL", cfg.InfomaniakAPIURL, "https://infomaniak.test/"},
 		{"InfomaniakProductID", cfg.InfomaniakProductID, "product-id"},
-		{"CloudflareAccountID", cfg.CloudflareAccountID, "cf-account"},
-		{"CloudflareAPIKey", cfg.CloudflareAPIKey, "cf-key"},
-		{"GoogleGeminiAPIKey", cfg.GoogleGeminiAPIKey, "google-key"},
-		{"AnthropicAPIKey", cfg.AnthropicAPIKey, "anthropic-key"},
-		{"AnthropicAPIURL", cfg.AnthropicAPIURL, "https://anthropic.test/"},
-		{"DeepInfraAPIURL", cfg.DeepInfraAPIURL, "https://deepinfra.test/"},
-		{"DeepInfraAPIKey", cfg.DeepInfraAPIKey, "deepinfra-key"},
 		{"RequestyAPIURL", cfg.RequestyAPIURL, "https://requesty.test/"},
 		{"RequestyAPIKey", cfg.RequestyAPIKey, "requesty-key"},
 	}

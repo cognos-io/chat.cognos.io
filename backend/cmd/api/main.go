@@ -87,6 +87,7 @@ func bindAppHooks(
 				return err
 			}
 			logBifrostProviderConfig(app.Logger(), account, bifrostschemas.ModelProvider("infomaniak"))
+			logBifrostProviderConfig(app.Logger(), account, bifrostschemas.ModelProvider("requesty"))
 			if err := ensureActiveProvidersConfigured(context.Background(), catalogueService, account); err != nil {
 				return err
 			}

@@ -12,7 +12,6 @@ import (
 
 const (
 	defaultProviderWeight = 100
-	deepInfraDefaultURL   = "https://api.deepinfra.com/v1/openai"
 	// requestyDefaultURL is Requesty's EU gateway. Pointing at this host keeps
 	// Requesty's request processing zero-retention and in-region (Frankfurt);
 	// full EU residency additionally requires EU-region model ids.
@@ -38,26 +37,6 @@ func NewStaticAccountFromAPIConfig(cfg *config.APIConfig) (*StaticAccount, error
 
 	account := NewStaticAccount()
 
-	if strings.TrimSpace(cfg.OpenAIAPIKey) != "" {
-		account.addProvider(schemas.OpenAI, openAIProviderConfig("", nil), providerKey("openai", cfg.OpenAIAPIKey))
-	}
-
-	if strings.TrimSpace(cfg.AnthropicAPIKey) != "" {
-		account.addProvider(
-			schemas.Anthropic,
-			providerConfig(strings.TrimSpace(cfg.AnthropicAPIURL), nil, false),
-			providerKey("anthropic", cfg.AnthropicAPIKey),
-		)
-	}
-
-	if strings.TrimSpace(cfg.GoogleGeminiAPIKey) != "" {
-		account.addProvider(
-			schemas.ModelProvider("google"),
-			providerConfig("", &schemas.CustomProviderConfig{BaseProviderType: schemas.Gemini}, false),
-			providerKey("google", cfg.GoogleGeminiAPIKey),
-		)
-	}
-
 	if strings.TrimSpace(cfg.InfomaniakAPIKey) != "" {
 		baseURL, err := infomaniakBaseURL(cfg)
 		if err != nil {
@@ -67,32 +46,6 @@ func NewStaticAccountFromAPIConfig(cfg *config.APIConfig) (*StaticAccount, error
 			schemas.ModelProvider("infomaniak"),
 			openAIProviderConfig(baseURL, &schemas.CustomProviderConfig{BaseProviderType: schemas.OpenAI}),
 			providerKey("infomaniak", cfg.InfomaniakAPIKey),
-		)
-	}
-
-	if strings.TrimSpace(cfg.CloudflareAPIKey) != "" {
-		if strings.TrimSpace(cfg.CloudflareAccountID) == "" {
-			return nil, fmt.Errorf("cloudflare.account_id is required when cloudflare.api_key is set")
-		}
-		account.addProvider(
-			schemas.ModelProvider("cloudflare"),
-			openAIProviderConfig(
-				fmt.Sprintf("https://api.cloudflare.com/client/v4/accounts/%s/ai/v1", strings.TrimSpace(cfg.CloudflareAccountID)),
-				&schemas.CustomProviderConfig{BaseProviderType: schemas.OpenAI},
-			),
-			providerKey("cloudflare", cfg.CloudflareAPIKey),
-		)
-	}
-
-	if strings.TrimSpace(cfg.DeepInfraAPIKey) != "" {
-		baseURL := strings.TrimSpace(cfg.DeepInfraAPIURL)
-		if baseURL == "" {
-			baseURL = deepInfraDefaultURL
-		}
-		account.addProvider(
-			schemas.ModelProvider("deepinfra"),
-			openAIProviderConfig(baseURL, &schemas.CustomProviderConfig{BaseProviderType: schemas.OpenAI}),
-			providerKey("deepinfra", cfg.DeepInfraAPIKey),
 		)
 	}
 
@@ -142,14 +95,10 @@ func (a *StaticAccount) addProvider(provider schemas.ModelProvider, cfg *schemas
 	a.keys[provider] = []schemas.Key{key}
 }
 
+// openAIProviderConfig builds the Bifrost config for an OpenAI-compatible
+// provider. DisableStore is always set so upstreams never persist our prompts.
 func openAIProviderConfig(baseURL string, custom *schemas.CustomProviderConfig) *schemas.ProviderConfig {
-	cfg := providerConfig(baseURL, custom, true)
-	cfg.OpenAIConfig = &schemas.OpenAIConfig{DisableStore: true}
-	return cfg
-}
-
-func providerConfig(baseURL string, custom *schemas.CustomProviderConfig, openAICompatible bool) *schemas.ProviderConfig {
-	cfg := &schemas.ProviderConfig{
+	return &schemas.ProviderConfig{
 		NetworkConfig: schemas.NetworkConfig{
 			BaseURL:                        strings.TrimSpace(baseURL),
 			DefaultRequestTimeoutInSeconds: schemas.DefaultRequestTimeoutInSeconds,
@@ -164,11 +113,8 @@ func providerConfig(baseURL string, custom *schemas.CustomProviderConfig, openAI
 			BufferSize:  32,
 		},
 		CustomProviderConfig: custom,
+		OpenAIConfig:         &schemas.OpenAIConfig{DisableStore: true},
 	}
-	if openAICompatible {
-		cfg.OpenAIConfig = &schemas.OpenAIConfig{DisableStore: true}
-	}
-	return cfg
 }
 
 func providerKey(id string, value string) schemas.Key {

@@ -48,32 +48,6 @@ func TestNewStaticAccountFromAPIConfigBuildsInfomaniakCustomProvider(t *testing.
 	}
 }
 
-func TestNewStaticAccountFromAPIConfigBuildsGoogleAsGeminiCustomProvider(t *testing.T) {
-	t.Parallel()
-
-	account, err := NewStaticAccountFromAPIConfig(&config.APIConfig{GoogleGeminiAPIKey: "google-key"})
-	if err != nil {
-		t.Fatalf("NewStaticAccountFromAPIConfig() error = %v, want nil", err)
-	}
-
-	cfg, err := account.GetConfigForProvider(schemas.ModelProvider("google"))
-	if err != nil {
-		t.Fatalf("GetConfigForProvider(google) error = %v, want nil", err)
-	}
-	if cfg.CustomProviderConfig == nil || cfg.CustomProviderConfig.BaseProviderType != schemas.Gemini {
-		t.Fatalf("google BaseProviderType = %#v, want gemini", cfg.CustomProviderConfig)
-	}
-}
-
-func TestNewStaticAccountFromAPIConfigRejectsIncompleteCloudflareConfig(t *testing.T) {
-	t.Parallel()
-
-	_, err := NewStaticAccountFromAPIConfig(&config.APIConfig{CloudflareAPIKey: "cf-key"})
-	if err == nil {
-		t.Fatal("NewStaticAccountFromAPIConfig() error = nil, want non-nil")
-	}
-}
-
 func TestNewStaticAccountFromAPIConfigBuildsRequestyEUGatewayByDefault(t *testing.T) {
 	t.Parallel()
 

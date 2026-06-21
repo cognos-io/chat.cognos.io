@@ -24,13 +24,6 @@
 bifrost:
   log_level: error
 
-# --- OpenAI -------------------------------------------------------------------
-# API key for OpenAI (or an OpenAI-compatible endpoint).
-# Env override: COGNOS_OPENAI_API_KEY
-# Secret file override: COGNOS_OPENAI_API_KEY_FILE
-openai:
-  api_key: ""
-
 # --- Infomaniak (OpenAI-compatible AI proxy) ----------------------------------
 # Env overrides: COGNOS_INFOMANIAK_API_KEY, COGNOS_INFOMANIAK_URL,
 #                COGNOS_INFOMANIAK_PRODUCT_ID
@@ -43,40 +36,6 @@ infomaniak:
   api_key: ""
   url: ""
   product_id: ""
-
-# --- Cloudflare (Workers AI) --------------------------------------------------
-# Both account_id and api_key are required when enabling this provider.
-# Env overrides: COGNOS_CLOUDFLARE_ACCOUNT_ID, COGNOS_CLOUDFLARE_API_KEY
-# Secret file override: COGNOS_CLOUDFLARE_API_KEY_FILE
-cloudflare:
-  account_id: ""
-  api_key: ""
-
-# --- Google Gemini ------------------------------------------------------------
-# Env override: COGNOS_GOOGLE_API_KEY
-# Secret file override: COGNOS_GOOGLE_API_KEY_FILE
-google:
-  api_key: ""
-
-# --- Anthropic (Claude) -------------------------------------------------------
-# Env overrides: COGNOS_ANTHROPIC_API_KEY, COGNOS_ANTHROPIC_URL
-# Secret file override: COGNOS_ANTHROPIC_API_KEY_FILE
-#
-# url is optional; defaults to the Anthropic API when empty.
-# Example override (proxy/gateway):
-#   url: https://api.anthropic.com
-anthropic:
-  url: ""
-  api_key: ""
-
-# --- DeepInfra ----------------------------------------------------------------
-# Env overrides: COGNOS_DEEPINFRA_API_KEY, COGNOS_DEEPINFRA_URL
-# Secret file override: COGNOS_DEEPINFRA_API_KEY_FILE
-#
-# url is optional; defaults to https://api.deepinfra.com/v1/openai when empty.
-deepinfra:
-  url: ""
-  api_key: ""
 
 # --- Requesty (OpenAI-compatible EU gateway) ----------------------------------
 # Zero-data-retention LLM router hosted in Frankfurt (AWS eu-central-1).

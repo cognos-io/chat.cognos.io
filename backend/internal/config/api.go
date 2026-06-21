@@ -70,23 +70,10 @@ func fileEnvValue(envVar string) (string, error) {
 type APIConfig struct {
 	// Bifrost
 	BifrostLogLevel string `koanf:"bifrost.log_level"`
-	// OpenAI
-	OpenAIAPIKey string `koanf:"openai.api_key"`
-	// Infomaniak
+	// Infomaniak (Swiss, OpenAI-compatible AI proxy)
 	InfomaniakAPIKey    string `koanf:"infomaniak.api_key"`
 	InfomaniakAPIURL    string `koanf:"infomaniak.url"`
 	InfomaniakProductID string `koanf:"infomaniak.product_id"`
-	// Cloudflare
-	CloudflareAccountID string `koanf:"cloudflare.account_id"`
-	CloudflareAPIKey    string `koanf:"cloudflare.api_key"`
-	// Google Gemini
-	GoogleGeminiAPIKey string `koanf:"google.api_key"`
-	// Anthropic
-	AnthropicAPIKey string `koanf:"anthropic.api_key"`
-	AnthropicAPIURL string `koanf:"anthropic.url"`
-	// DeepInfra
-	DeepInfraAPIURL string `koanf:"deepinfra.url"`
-	DeepInfraAPIKey string `koanf:"deepinfra.api_key"`
 	// Requesty (OpenAI-compatible EU gateway)
 	RequestyAPIKey string `koanf:"requesty.api_key"`
 	RequestyAPIURL string `koanf:"requesty.url"`
@@ -170,12 +157,7 @@ func MustLoadAPIConfig(logger *slog.Logger) *APIConfig {
 		envVar string
 		apply  func(string)
 	}{
-		{envVar: "COGNOS_OPENAI_API_KEY_FILE", apply: func(value string) { c.OpenAIAPIKey = value }},
 		{envVar: "COGNOS_INFOMANIAK_API_KEY_FILE", apply: func(value string) { c.InfomaniakAPIKey = value }},
-		{envVar: "COGNOS_CLOUDFLARE_API_KEY_FILE", apply: func(value string) { c.CloudflareAPIKey = value }},
-		{envVar: "COGNOS_GOOGLE_API_KEY_FILE", apply: func(value string) { c.GoogleGeminiAPIKey = value }},
-		{envVar: "COGNOS_ANTHROPIC_API_KEY_FILE", apply: func(value string) { c.AnthropicAPIKey = value }},
-		{envVar: "COGNOS_DEEPINFRA_API_KEY_FILE", apply: func(value string) { c.DeepInfraAPIKey = value }},
 		{envVar: "COGNOS_REQUESTY_API_KEY_FILE", apply: func(value string) { c.RequestyAPIKey = value }},
 		{envVar: "COGNOS_PADDLE_API_KEY_FILE", apply: func(value string) { c.PaddleAPIKey = value }},
 		{envVar: "COGNOS_PADDLE_WEBHOOK_SECRET_FILE", apply: func(value string) { c.PaddleWebhookSecret = value }},
