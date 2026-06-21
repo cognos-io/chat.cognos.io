@@ -395,28 +395,69 @@ Prefer wording like:
 Cognos detects common high-confidence sensitive values (IBAN, email, credit card, API/private keys,
 Swiss AHV, UK NINo) in the browser and replaces them with stable placeholder tokens
 (`[[PII_<TYPE>_<RANDOM>]]`) **before** any completion request leaves the device. See
-`docs/specs/pii-redaction.md`.
+`docs/specs/pii-redaction.md` for the full design.
 
-What this changes about the trust model:
+### 14.1 What this changes about the trust model
 
-- For redacted values, neither the backend nor the model provider ever sees the plaintext — they see
-  only placeholders, and the backend persists redacted message content.
-- Token → original mappings are stored encrypted under a **separate per-conversation redaction
-  keypair**, independent of the conversation key. The redaction secret is sealed to each
-  participant's **personal** key, so holding the conversation key alone (e.g. a redacted-only public
-  share reader) can never recover it.
-- Random token suffixes use Web Crypto and are never derived from the original value; raw values and
-  decrypted mappings are never logged.
+- For redacted values, neither the backend nor the model provider ever sees the plaintext — they
+  receive only placeholders, and the backend persists the redacted message content.
+- Random token suffixes use Web Crypto and are never derived from the original value (no reversible
+  encoding, no deterministic hash). Raw detected values and decrypted mappings are never logged,
+  sent to analytics, or attached to billing events.
+- Detection is best-effort and tuned for high precision (it favours avoiding false positives), so it
+  is **not** a guarantee that every sensitive value is caught. Redaction is a data-minimisation
+  layer on top of — not a replacement for — the encryption model above.
 
-Public sharing has two modes: **redacted-only** (default) exposes no redaction key material or
-entries; **include-sensitive** seals the redaction secret to the share key so an explicitly-chosen
-reader can hydrate originals. The server gates the public redaction-entries endpoint to
-include-sensitive shares.
+### 14.2 The redaction key (separate from the conversation key)
 
-Limitations: detection is best-effort and high-precision (it favours avoiding false positives), so
-it is not a guarantee that every sensitive value is caught. Redaction is a data-minimisation layer,
-not a replacement for the encryption model above. Redaction-key rotation inherits the current
-conversation-key rotation limitation (it does not re-seal historical entries).
+Token → original mappings are encrypted under a **per-conversation redaction keypair**
+(Curve25519), generated lazily on first use and kept **independent of the conversation key**:
+
+- the **redaction public key** seals each mapping entry (anonymous sealed box), so any holder of the
+  public key can add entries but only the secret-key holder can read them;
+- the **redaction secret key** is wrapped (sealed) to each participant's **personal** key, so it can
+  be recovered only by that user — **not** by someone who merely holds the conversation key.
+
+This separation is the load-bearing property for sharing: handing out the conversation key (which is
+how a normal share lets a reader decrypt titles and messages) must **not** also hand out the ability
+to un-redact. Deriving the redaction key from the conversation key (e.g. `KDF(conversation_secret)`)
+is explicitly forbidden for the same reason.
+
+Server-side storage (`conversation_redaction_keys`, `redaction_entries`) holds only ciphertext,
+wrapped keys, and the plaintext token string (so clients can look up a mapping by token). The server
+can associate a token with a conversation but cannot read the original value. Both collections have
+`null` PocketBase API rules; all access flows through `/api/v1` handlers that authorise by active
+conversation participation, and the collection lock-down is pinned by a test.
+
+### 14.3 Securely sharing without leaking values
+
+Public sharing reuses the existing fragment-gated link model (§4): the share link is
+`/p/<token>#<fragment>`, where the URL **fragment** carries the only secret that unlocks the payload
+and is never transmitted to the server (browsers strip fragments from requests). Two modes:
+
+| Mode                                           | What the link carries                                                                                                                                               | What a reader can do                                                                                                          |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **Redacted-only** (default)                    | Conversation key only (fragment-gated, as today). No redaction key material is stored on the share, and the public redaction-entries endpoint returns `404` for it. | Read the conversation; sensitive values stay as censorship bars. Un-redaction is impossible — the key simply isn't reachable. |
+| **Include sensitive values** (explicit opt-in) | Additionally, the redaction **secret** sealed to the share keypair, whose secret half lives only in the URL fragment.                                               | Recover the redaction key from the fragment and reveal originals.                                                             |
+
+So an include-sensitive link gates the redaction key through the URL fragment in exactly the same
+way the conversation key is already gated — the server never holds anything that can un-redact on
+its own. Switching a share's mode mints a **new token and URL** (the old link stops resolving), and
+revoking a share deletes the row so both URLs `404` immediately.
+
+**Two-stage reveal.** Even on an include-sensitive link, the public reader page starts with every
+sensitive value hidden behind a censorship bar. The reader must explicitly choose *Include
+potentially sensitive values* before the client fetches and decrypts the mappings — viewing
+originals is always a deliberate act, never the default. A redacted-only link never offers the
+control, because the key material does not exist in the link.
+
+### 14.4 Limitations
+
+- Detection is best-effort (see §14.1); unrecognised values are not protected.
+- Redaction-key rotation is coupled to conversation-key rotation and inherits its current limitation
+  — it rewraps keys for the active set going forward but does not re-seal historical entries.
+- The redaction secret is currently wrapped for the creating user only; other participants gain
+  mapping access when participant-add wrapping lands (until then they see placeholders).
 
 ## 15. Open limitations
 
