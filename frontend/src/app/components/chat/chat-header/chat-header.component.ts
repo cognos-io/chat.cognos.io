@@ -24,6 +24,7 @@ import {
   CognosMenuComponent,
   type CognosMenuItem,
   CognosSecurityModalComponent,
+  CognosToastService,
 } from '@cognos/ui-angular';
 
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
@@ -33,6 +34,7 @@ import { Conversation } from '@app/interfaces/conversation';
 import { AuthService } from '@app/services/auth.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
+import { ExportService } from '@app/services/export.service';
 import { MessageService } from '@app/services/message.service';
 import { ProjectService } from '@app/services/project.service';
 import { PublicShareService } from '@app/services/public-share.service';
@@ -79,11 +81,14 @@ export class ChatHeaderComponent {
   private readonly _transloco = inject(TranslocoService);
   private readonly _projectService = inject(ProjectService);
   private readonly _redaction = inject(RedactionService);
+  private readonly _export = inject(ExportService);
+  private readonly _toast = inject(CognosToastService);
 
   readonly conversationService = inject(ConversationService);
 
   readonly menuOpen = signal(false);
   readonly securityOpen = signal(false);
+  readonly exporting = signal(false);
   // True when the current conversation has a live public share link, so the
   // Share control can warn the user that this chat is publicly readable.
   readonly isShared = signal(false);
@@ -231,8 +236,7 @@ export class ChatHeaderComponent {
         action: 'export',
         title: this._transloco.translate('chat.header.export'),
         icon: 'download',
-        disabled: true,
-        trailing: this._transloco.translate('chat.header.soon'),
+        disabled: this.exporting(),
       });
 
       // Mask/reveal redacted values in the rendered chat — only worth offering
@@ -321,7 +325,7 @@ export class ChatHeaderComponent {
         this.onDelete();
         break;
       case 'export':
-        // Export is not implemented yet; the menu item is disabled.
+        this.onExport();
         break;
     }
   }
@@ -370,6 +374,31 @@ export class ChatHeaderComponent {
         }
       },
     });
+  }
+
+  // Export the active conversation: decrypt its messages in the browser and
+  // download them as JSON (same format as the full data export).
+  private onExport() {
+    const conversation = this.conversationService.conversation();
+    if (!conversation || this.exporting()) {
+      return;
+    }
+
+    this.exporting.set(true);
+    this._export
+      .downloadConversationExport(conversation, new Date())
+      .then(() => {
+        this._toast.notify({
+          title: this._transloco.translate('chat.toasts.exported'),
+        });
+      })
+      .catch(() => {
+        this._toast.notify({
+          title: this._transloco.translate('chat.toasts.exportError'),
+          tone: 'danger',
+        });
+      })
+      .finally(() => this.exporting.set(false));
   }
 
   private onRename() {

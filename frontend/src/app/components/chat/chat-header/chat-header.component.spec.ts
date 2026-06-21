@@ -7,6 +7,8 @@ import { of } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 
+import { CognosToastService } from '@cognos/ui-angular';
+
 import { Conversation } from '@app/interfaces/conversation';
 import { KeyPair } from '@app/interfaces/key-pair';
 import { Message } from '@app/interfaces/message';
@@ -14,6 +16,7 @@ import { Project } from '@app/interfaces/project';
 import { AuthService } from '@app/services/auth.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
+import { ExportService } from '@app/services/export.service';
 import { MessageService } from '@app/services/message.service';
 import { ProjectService } from '@app/services/project.service';
 import { PublicShareService } from '@app/services/public-share.service';
@@ -73,6 +76,11 @@ describe('ChatHeaderComponent', () => {
     toggleValuesHidden: vi.fn(() => valuesHidden.update((h) => !h)),
   };
 
+  const exportService = {
+    downloadConversationExport: vi.fn().mockResolvedValue({ conversation_count: 1 }),
+  };
+  const toastService = { notify: vi.fn() };
+
   beforeEach(async () => {
     selectedConversation.set(undefined);
     temporaryConversation.set(false);
@@ -102,6 +110,8 @@ describe('ChatHeaderComponent', () => {
         { provide: DeviceService, useValue: { isMobile } },
         { provide: PublicShareService, useValue: publicShareService },
         { provide: RedactionService, useValue: redactionService },
+        { provide: ExportService, useValue: exportService },
+        { provide: CognosToastService, useValue: toastService },
         { provide: Dialog, useValue: { open: dialogOpen } },
       ],
     }).compileComponents();
@@ -148,7 +158,21 @@ describe('ChatHeaderComponent', () => {
     expect(titles).toEqual(['Rename', 'Export', 'Delete']);
     expect(
       component.menuItems().find((item) => item.title === 'Export')?.disabled,
-    ).toBe(true);
+    ).toBeFalsy();
+  });
+
+  it('exports the conversation when the export action is selected', async () => {
+    selectedConversation.set(makeConversation('c-1', 'Saved chat'));
+    fixture.detectChanges();
+
+    const titles = component.menuItems().map((item) => item.title);
+    component.onMenuSelect(titles.indexOf('Export'));
+    await Promise.resolve();
+
+    expect(exportService.downloadConversationExport).toHaveBeenCalledTimes(1);
+    expect(exportService.downloadConversationExport.mock.calls[0][0]).toBe(
+      selectedConversation(),
+    );
   });
 
   it('offers a hide/show values toggle only when the conversation has redactions', () => {

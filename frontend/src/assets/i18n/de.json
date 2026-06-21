@@ -538,7 +538,6 @@
       "shareTitle": "Diese Konversation teilen",
       "shared": "Geteilt",
       "sharedTitle": "Diese Konversation ist über einen öffentlichen Link geteilt — Freigabe verwalten",
-      "soon": "Bald",
       "temporaryChat": "Temporärer Chat",
       "hideValues": "Sensible Werte ausblenden",
       "showValues": "Sensible Werte anzeigen"
@@ -702,6 +701,10 @@
       "creditLabel": "Testguthaben",
       "detail": "{{ amount }} übrig von Ihrer Testphase über {{ total }}",
       "usedUp": "Aufgebraucht"
+    },
+    "toasts": {
+      "exported": "Unterhaltung exportiert",
+      "exportError": "Unterhaltung konnte nicht exportiert werden"
     }
   },
   "common": {

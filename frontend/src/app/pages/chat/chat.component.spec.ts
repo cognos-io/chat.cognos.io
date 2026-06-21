@@ -15,6 +15,7 @@ import { AuthService } from '../../services/auth.service';
 import { BillingService } from '../../services/billing.service';
 import { ConversationService } from '../../services/conversation.service';
 import { DeviceService } from '../../services/device.service';
+import { ExportService } from '../../services/export.service';
 import { MessageService } from '../../services/message.service';
 import { ProjectConversationService } from '../../services/project-conversation.service';
 import { ProjectService } from '../../services/project.service';
@@ -135,6 +136,10 @@ describe('ChatComponent', () => {
         },
         { provide: Dialog, useValue: { open: dialogOpen } },
         { provide: CognosToastService, useValue: toastService },
+        {
+          provide: ExportService,
+          useValue: { downloadConversationExport: vi.fn() },
+        },
         { provide: VaultService, useValue: vaultService },
       ],
     }).compileComponents();

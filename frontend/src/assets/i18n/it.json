@@ -538,7 +538,6 @@
       "shareTitle": "Condividi questa conversazione",
       "shared": "Condivisa",
       "sharedTitle": "Questa conversazione è condivisa tramite un link pubblico — gestisci la condivisione",
-      "soon": "Presto",
       "temporaryChat": "Chat temporanea",
       "hideValues": "Nascondi valori sensibili",
       "showValues": "Mostra valori sensibili"
@@ -702,6 +701,10 @@
       "creditLabel": "Credito di prova",
       "detail": "{{ amount }} rimanenti della tua prova da {{ total }}",
       "usedUp": "Esaurito"
+    },
+    "toasts": {
+      "exported": "Conversazione esportata",
+      "exportError": "Impossibile esportare questa conversazione"
     }
   },
   "common": {

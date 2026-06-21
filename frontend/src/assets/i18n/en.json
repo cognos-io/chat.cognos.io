@@ -538,7 +538,6 @@
       "shareTitle": "Share this conversation",
       "shared": "Shared",
       "sharedTitle": "This conversation is shared with a public link — manage sharing",
-      "soon": "Soon",
       "temporaryChat": "Temporary chat",
       "hideValues": "Hide sensitive values",
       "showValues": "Show sensitive values"
@@ -702,6 +701,10 @@
       "creditLabel": "Trial credit",
       "detail": "{{ amount }} left of your {{ total }} trial",
       "usedUp": "Used up"
+    },
+    "toasts": {
+      "exported": "Conversation exported",
+      "exportError": "Could not export this conversation"
     }
   },
   "common": {
