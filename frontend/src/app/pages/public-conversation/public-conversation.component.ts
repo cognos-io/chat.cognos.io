@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { EMPTY, Observable, catchError, map, of, switchMap } from 'rxjs';
+import { EMPTY, catchError, of, switchMap } from 'rxjs';
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { Base64 } from 'js-base64';
@@ -28,11 +28,8 @@ import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.com
 import { parseConversationData } from '@app/interfaces/conversation';
 import { KeyPair } from '@app/interfaces/key-pair';
 import { Message, isMessageFromUser, parseMessageData } from '@app/interfaces/message';
-import { RedactionEntry, hydrateRedactedText } from '@app/redaction';
-import {
-  ApiPublicConversationResponse,
-  CognosApiService,
-} from '@app/services/cognos-api.service';
+import { RedactionEntry } from '@app/redaction';
+import { CognosApiService } from '@app/services/cognos-api.service';
 import { CryptoService } from '@app/services/crypto.service';
 import { parseBackendDate } from '@app/utils/timestamp';
 
@@ -76,9 +73,26 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
     <main class="public-conversation" *transloco="let t">
       <header class="public-conversation__bar">
         <app-cognos-logo class="public-conversation__logo" palette="dark" />
-        <span class="public-conversation__lock" [title]="t('public.encryptedTitle')">
-          {{ t('public.sharedSecurely') }}
-        </span>
+        <div class="public-conversation__bar-actions">
+          @if (canRevealSensitive()) {
+            <button
+              type="button"
+              class="public-conversation__reveal"
+              (click)="
+                revealSensitive() ? hideSensitiveValues() : revealSensitiveValues()
+              "
+            >
+              {{
+                revealSensitive()
+                  ? t('public.hideSensitive')
+                  : t('public.includeSensitive')
+              }}
+            </button>
+          }
+          <span class="public-conversation__lock" [title]="t('public.encryptedTitle')">
+            {{ t('public.sharedSecurely') }}
+          </span>
+        </div>
       </header>
 
       @switch (state()) {
@@ -166,9 +180,12 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
         @if (message.decryptedData.deleted) {
           <p class="public-conversation__muted">{{ t('public.deletedMessage') }}</p>
         } @else if (message.decryptedData.content) {
-          <markdown class="public-conversation__text" emoji katex>{{
-            message.decryptedData.content
-          }}</markdown>
+          <markdown
+            class="public-conversation__text"
+            emoji
+            katex
+            [data]="renderText(message.decryptedData.content)"
+          ></markdown>
         } @else {
           <p class="public-conversation__muted">{{ t('public.emptyMessage') }}</p>
         }
@@ -254,9 +271,30 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
       height: 24px;
     }
 
+    .public-conversation__bar-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-150, 12px);
+    }
+
     .public-conversation__lock {
       color: var(--cog-text-subtle, #6b6b6b);
       font-size: var(--cog-fs-body-sm, 13px);
+    }
+
+    .public-conversation__reveal {
+      border: 1px solid var(--cog-border, #e2e2e2);
+      border-radius: var(--cog-radius-pill, 999px);
+      background: var(--cog-surface, #fff);
+      color: var(--cog-text, #1a1a1a);
+      padding: 6px 12px;
+      font: inherit;
+      font-size: var(--cog-fs-body-sm, 13px);
+      cursor: pointer;
+    }
+
+    .public-conversation__reveal:hover {
+      border-color: var(--cog-brand, #15803d);
     }
 
     .public-conversation__status,
@@ -313,9 +351,23 @@ export class PublicConversationComponent implements OnInit {
   private readonly _transloco = inject(TranslocoService);
 
   readonly state = signal<ViewState>('loading');
-  readonly title = signal('');
+  // Raw decrypted title — may contain placeholder tokens, rendered via title().
+  private readonly _rawTitle = signal('');
+  readonly title = computed(() => this.renderText(this._rawTitle()));
 
   readonly isMessageFromUser = isMessageFromUser;
+
+  // Two-stage sensitive-value reveal. A reader always starts with sensitive
+  // values hidden (placeholders); they can only be revealed if the sharer chose
+  // an include-sensitive link (which carries the redaction key, gated by the URL
+  // fragment exactly like the conversation key). Redacted-only links never make
+  // the values available, so the reveal control is not even offered.
+  readonly canRevealSensitive = signal(false);
+  readonly revealSensitive = signal(false);
+  private readonly _revealLoading = signal(false);
+  private readonly _redactionEntries = signal<Map<string, RedactionEntry>>(new Map());
+  private _redactionKeyPair: KeyPair | null = null;
+  private _token = '';
 
   // The full decrypted message set, plus the per-fork branch selection (parent
   // id -> chosen child id). The active path + branch metadata are derived from
@@ -355,6 +407,7 @@ export class PublicConversationComponent implements OnInit {
       this.state.set('unavailable');
       return;
     }
+    this._token = token;
 
     let publicShareKeyPair: KeyPair;
     try {
@@ -387,28 +440,36 @@ export class PublicConversationComponent implements OnInit {
           const conversationData = parseConversationData(
             this._crypto.openBox(Base64.toUint8Array(conv.data), sharedKey),
           );
+          this._rawTitle.set(conversationData.title);
 
-          // For an include-sensitive share, recover the redaction mappings and
-          // hydrate placeholders; redacted-only shares carry no key material and
-          // resolve to an empty mapping (placeholders stay visible).
-          return this.resolveRedactionEntries(token, conv, publicShareKeyPair).pipe(
-            switchMap((entries) => {
-              this.title.set(hydrateRedactedText(conversationData.title, entries));
-              return this._api.listPublicConversationMessages(token).pipe(
-                switchMap((list) => {
-                  const messages = this.decryptMessages(
-                    list.items,
-                    conversationKeyPair,
-                  );
-                  this._messages.set(
-                    entries.length
-                      ? messages.map((message) => this.hydrateMessage(message, entries))
-                      : messages,
-                  );
-                  this.state.set('ready');
-                  return EMPTY;
-                }),
-              );
+          // An include-sensitive share carries the redaction key (sealed to the
+          // share key, so only the URL-fragment holder can open it). We recover
+          // it now but do NOT decrypt or reveal anything yet — the reader must
+          // explicitly opt in. Redacted-only shares offer no reveal at all.
+          if (
+            conv.mode === 'include_sensitive' &&
+            conv.wrapped_redaction_secret_key &&
+            conv.redaction_public_key
+          ) {
+            try {
+              this._redactionKeyPair = {
+                publicKey: Base64.toUint8Array(conv.redaction_public_key),
+                secretKey: this._crypto.openSealedBox(
+                  Base64.toUint8Array(conv.wrapped_redaction_secret_key),
+                  publicShareKeyPair,
+                ),
+              };
+              this.canRevealSensitive.set(true);
+            } catch {
+              // Bad key material → no reveal offered; placeholders stay.
+            }
+          }
+
+          return this._api.listPublicConversationMessages(token).pipe(
+            switchMap((list) => {
+              this._messages.set(this.decryptMessages(list.items, conversationKeyPair));
+              this.state.set('ready');
+              return EMPTY;
             }),
           );
         }),
@@ -482,43 +543,59 @@ export class PublicConversationComponent implements OnInit {
     return new DatePipe('en-GB').transform(date, 'short') ?? '';
   }
 
-  // resolveRedactionEntries recovers the decrypted token→original mappings for
-  // an include-sensitive share. Redacted-only shares (no key material, or a 404
-  // from the gated endpoint) resolve to an empty list, so placeholders stay.
-  private resolveRedactionEntries(
-    token: string,
-    conv: ApiPublicConversationResponse,
-    publicShareKeyPair: KeyPair,
-  ): Observable<RedactionEntry[]> {
-    if (
-      conv.mode !== 'include_sensitive' ||
-      !conv.wrapped_redaction_secret_key ||
-      !conv.redaction_public_key
-    ) {
-      return of([]);
+  // renderText turns stored (redacted) text into what the reader should see:
+  // when sensitive values are revealed, known tokens become their originals;
+  // otherwise every token becomes a neutral "redacted" marker. Used for both
+  // the title and message bodies, so placeholders never leak as raw tokens.
+  renderText(text: string): string {
+    if (!text) {
+      return '';
+    }
+    const revealed = this.revealSensitive();
+    const entries = this._redactionEntries();
+    return text.replace(/\[\[PII_[A-Z]+_[A-Z0-9]+\]\]/g, (token) => {
+      if (revealed) {
+        const entry = entries.get(token);
+        if (entry) {
+          return entry.original;
+        }
+      }
+      return this._transloco.translate('public.redactedValue');
+    });
+  }
+
+  // revealSensitiveValues is the explicit opt-in. The first time, it fetches and
+  // decrypts the mappings (lazily — they never load unless the reader asks);
+  // afterwards it just toggles the display.
+  revealSensitiveValues(): void {
+    if (!this.canRevealSensitive() || this._revealLoading()) {
+      return;
+    }
+    if (this._redactionEntries().size > 0 || !this._redactionKeyPair) {
+      this.revealSensitive.set(true);
+      return;
     }
 
-    let redactionKeyPair: KeyPair;
-    try {
-      redactionKeyPair = {
-        publicKey: Base64.toUint8Array(conv.redaction_public_key),
-        secretKey: this._crypto.openSealedBox(
-          Base64.toUint8Array(conv.wrapped_redaction_secret_key),
-          publicShareKeyPair,
-        ),
-      };
-    } catch {
-      return of([]);
-    }
+    this._revealLoading.set(true);
+    this._api
+      .listPublicConversationRedactionEntries(this._token)
+      .pipe(catchError(() => of({ items: [] })))
+      .subscribe((res) => {
+        const map = new Map<string, RedactionEntry>();
+        for (const item of res.items) {
+          const entry = this.tryDecryptEntry(item.data, this._redactionKeyPair!);
+          if (entry) {
+            map.set(entry.token, entry);
+          }
+        }
+        this._redactionEntries.set(map);
+        this.revealSensitive.set(true);
+        this._revealLoading.set(false);
+      });
+  }
 
-    return this._api.listPublicConversationRedactionEntries(token).pipe(
-      map((res) =>
-        res.items
-          .map((item) => this.tryDecryptEntry(item.data, redactionKeyPair))
-          .filter((entry): entry is RedactionEntry => entry !== null),
-      ),
-      catchError(() => of([])),
-    );
+  hideSensitiveValues(): void {
+    this.revealSensitive.set(false);
   }
 
   private tryDecryptEntry(dataB64: string, keyPair: KeyPair): RedactionEntry | null {
@@ -531,19 +608,6 @@ export class PublicConversationComponent implements OnInit {
     } catch {
       return null;
     }
-  }
-
-  private hydrateMessage(message: Message, entries: RedactionEntry[]): Message {
-    if (!message.decryptedData.content) {
-      return message;
-    }
-    return {
-      ...message,
-      decryptedData: {
-        ...message.decryptedData,
-        content: hydrateRedactedText(message.decryptedData.content, entries),
-      },
-    };
   }
 
   private decryptMessages(

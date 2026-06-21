@@ -335,6 +335,11 @@ export const buildMessageRecordFixture = (
 export const buildPublicShareFixture = (
   conversationFixture: ConversationFixture,
   token: string,
+  // When redactionEntries are supplied the share is "include_sensitive": the
+  // redaction secret is sealed to the public-share key (so the URL fragment
+  // gates it, exactly like the conversation key) and the public redaction
+  // entries are sealed to the redaction public key.
+  options?: { redactionEntries?: RedactionEntrySeed[] },
 ) => {
   const publicShareKeyPair = nacl.box.keyPair();
   const wrappedConversationSecretKey = sealedBox(
@@ -342,17 +347,64 @@ export const buildPublicShareFixture = (
     publicShareKeyPair.publicKey,
   );
 
+  const publicConversationResponse: Record<string, unknown> = {
+    conversation_id: conversationFixture.conversationRecord.id,
+    data: conversationFixture.conversationRecord.data,
+    conversation_public_key: conversationFixture.conversationPublicKeyRecord.public_key,
+    wrapped_conversation_secret_key: base64(wrappedConversationSecretKey),
+    key_version: 1,
+    mode: 'redacted_only',
+  };
+
+  let redactionEntriesResponse: {
+    items: Array<{
+      token: string;
+      data: string;
+      key_version: number;
+      source_kind: string;
+      source_id: string;
+    }>;
+  } = { items: [] };
+
+  if (options?.redactionEntries?.length) {
+    const redactionKeyPair = nacl.box.keyPair();
+    publicConversationResponse['mode'] = 'include_sensitive';
+    publicConversationResponse['wrapped_redaction_secret_key'] = base64(
+      sealedBox(redactionKeyPair.secretKey, publicShareKeyPair.publicKey),
+    );
+    publicConversationResponse['redaction_public_key'] = base64(
+      redactionKeyPair.publicKey,
+    );
+    redactionEntriesResponse = {
+      items: options.redactionEntries.map((entry) => ({
+        token: entry.token,
+        data: base64(
+          sealedBox(
+            textEncoder.encode(
+              JSON.stringify({
+                version: '1',
+                token: entry.token,
+                type: entry.type,
+                original: entry.original,
+                normalized: entry.normalized,
+                detector: entry.detector,
+              }),
+            ),
+            redactionKeyPair.publicKey,
+          ),
+        ),
+        key_version: 1,
+        source_kind: 'message',
+        source_id: '',
+      })),
+    };
+  }
+
   return {
     token,
     fragment: Buffer.from(publicShareKeyPair.secretKey).toString('base64url'),
-    publicConversationResponse: {
-      conversation_id: conversationFixture.conversationRecord.id,
-      data: conversationFixture.conversationRecord.data,
-      conversation_public_key:
-        conversationFixture.conversationPublicKeyRecord.public_key,
-      wrapped_conversation_secret_key: base64(wrappedConversationSecretKey),
-      key_version: 1,
-    },
+    publicConversationResponse,
+    redactionEntriesResponse,
   };
 };
 

@@ -872,6 +872,9 @@
     "yourProjects": "Ihre Projekte"
   },
   "public": {
+    "includeSensitive": "Möglicherweise sensible Werte einbeziehen",
+    "hideSensitive": "Sensible Werte ausblenden",
+    "redactedValue": "🛡 geschwärzt",
     "decrypting": "Geteilte Konversation wird entschlüsselt…",
     "deletedMessage": "Gelöschte Nachricht",
     "emptyMessage": "Diese Nachricht ist leer.",

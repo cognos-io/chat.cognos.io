@@ -872,6 +872,9 @@
     "yourProjects": "Your projects"
   },
   "public": {
+    "includeSensitive": "Include potentially sensitive values",
+    "hideSensitive": "Hide sensitive values",
+    "redactedValue": "🛡 redacted",
     "decrypting": "Decrypting shared conversation…",
     "deletedMessage": "Deleted message",
     "emptyMessage": "This message is empty.",
