@@ -356,6 +356,82 @@ export const buildPublicShareFixture = (
   };
 };
 
+export type RedactionEntrySeed = {
+  token: string;
+  type: string;
+  original: string;
+  normalized: string;
+  detector: string;
+};
+
+export type RedactionFixture = {
+  redactionKeyPair: nacl.BoxKeyPair;
+  // Shape of GET /conversations/{id}/redaction-key.
+  redactionKeyResponse: {
+    public_key: string;
+    wrapped_secret_key: string;
+    key_version: number;
+  };
+  // Shape of GET /conversations/{id}/redaction-entries.
+  entriesResponse: {
+    items: Array<{
+      token: string;
+      data: string;
+      key_version: number;
+      source_kind: string;
+      source_id: string;
+    }>;
+  };
+};
+
+// buildRedactionFixture mirrors what RedactionService writes: a fresh redaction
+// keypair whose secret is sealed to the user's personal key (so only the user
+// can open it), and one sealed entry per mapping (sealed to the redaction public
+// key). The decrypted payload matches the RedactionEntry shape the client
+// parses.
+export const buildRedactionFixture = (
+  userFixture: VaultFixture,
+  entries: RedactionEntrySeed[],
+): RedactionFixture => {
+  const redactionKeyPair = nacl.box.keyPair();
+  const wrappedSecret = sealedBox(
+    redactionKeyPair.secretKey,
+    userFixture.userKeyPair.publicKey,
+  );
+
+  return {
+    redactionKeyPair,
+    redactionKeyResponse: {
+      public_key: base64(redactionKeyPair.publicKey),
+      wrapped_secret_key: base64(wrappedSecret),
+      key_version: 1,
+    },
+    entriesResponse: {
+      items: entries.map((entry) => ({
+        token: entry.token,
+        data: base64(
+          sealedBox(
+            textEncoder.encode(
+              JSON.stringify({
+                version: '1',
+                token: entry.token,
+                type: entry.type,
+                original: entry.original,
+                normalized: entry.normalized,
+                detector: entry.detector,
+              }),
+            ),
+            redactionKeyPair.publicKey,
+          ),
+        ),
+        key_version: 1,
+        source_kind: 'message',
+        source_id: '',
+      })),
+    },
+  };
+};
+
 export type ProjectFixture = {
   projectRecord: {
     id: string;

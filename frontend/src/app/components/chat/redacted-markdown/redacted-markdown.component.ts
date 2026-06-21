@@ -69,7 +69,14 @@ export class RedactedMarkdownComponent {
   /** The stored, redacted content (tokens intact — NOT hydrated). */
   readonly content = input.required<string>();
 
-  private _pillRefs: ComponentRef<CognosRedactedTextComponent>[] = [];
+  // Each injected pill, with the host element it replaced the token text with
+  // and the token it stands for — so clearPills can restore the DOM to its
+  // raw-token state, keeping hydratePills idempotent across repeat calls.
+  private _pills: {
+    ref: ComponentRef<CognosRedactedTextComponent>;
+    host: HTMLElement;
+    token: string;
+  }[] = [];
 
   constructor() {
     // Mappings load asynchronously; when they arrive (revision bumps), re-run
@@ -101,11 +108,11 @@ export class RedactedMarkdownComponent {
     injectRedactionPills(
       markdownEl,
       (token) => entries.has(token),
-      (token) => this.createPill(entries.get(token) as RedactionEntry),
+      (token) => this.createPill(token, entries.get(token) as RedactionEntry),
     );
   }
 
-  private createPill(entry: RedactionEntry): HTMLElement {
+  private createPill(token: string, entry: RedactionEntry): HTMLElement {
     const ref = createComponent(CognosRedactedTextComponent, {
       environmentInjector: this._envInjector,
     });
@@ -118,15 +125,22 @@ export class RedactedMarkdownComponent {
     );
     ref.setInput('showSettings', false);
     this._appRef.attachView(ref.hostView);
-    this._pillRefs.push(ref);
-    return ref.location.nativeElement as HTMLElement;
+    const host = ref.location.nativeElement as HTMLElement;
+    this._pills.push({ ref, host, token });
+    return host;
   }
 
+  // clearPills restores each pill's host back to the raw token text before
+  // destroying the component, so a subsequent hydratePills() pass sees the
+  // tokens again and can re-inject. Without this, a second pass would destroy
+  // the pills and leave empty host shells (the token already gone), blanking
+  // the redacted value — notably after switching conversations and back.
   private clearPills(): void {
-    for (const ref of this._pillRefs) {
+    for (const { ref, host, token } of this._pills) {
+      host.parentNode?.replaceChild(document.createTextNode(token), host);
       this._appRef.detachView(ref.hostView);
       ref.destroy();
     }
-    this._pillRefs = [];
+    this._pills = [];
   }
 }
