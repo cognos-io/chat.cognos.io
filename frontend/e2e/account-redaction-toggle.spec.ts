@@ -116,6 +116,7 @@ test('disabling redaction in settings turns it off for future messages', async (
 
   // Default ON: detection flags the email.
   await page.goto('/c/conv_set');
+  await expect(page.getByRole('heading', { name: 'Tickets' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'EU Model' })).toBeVisible();
   await composer.fill('Email jane@example.com please');
   await expect(page.getByText('Redacting 1 sensitive value')).toBeVisible();
@@ -128,6 +129,7 @@ test('disabling redaction in settings turns it off for future messages', async (
 
   // Future messages: detection no longer runs.
   await page.goto('/c/conv_set');
+  await expect(page.getByRole('heading', { name: 'Tickets' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'EU Model' })).toBeVisible();
   await composer.fill('Email jane@example.com please');
   // Give detection its debounce window, then assert nothing is flagged.

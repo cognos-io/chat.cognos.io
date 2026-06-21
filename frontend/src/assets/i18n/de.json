@@ -489,7 +489,8 @@
           "phone": "Telefonnummer",
           "person": "Name",
           "org": "Organisation",
-          "place": "Ort"
+          "place": "Ort",
+          "ip_address": "IP-Adresse"
         }
       },
       "clearMessages": "Alle Nachrichten löschen",
@@ -538,7 +539,9 @@
       "shared": "Geteilt",
       "sharedTitle": "Diese Konversation ist über einen öffentlichen Link geteilt — Freigabe verwalten",
       "soon": "Bald",
-      "temporaryChat": "Temporärer Chat"
+      "temporaryChat": "Temporärer Chat",
+      "hideValues": "Sensible Werte ausblenden",
+      "showValues": "Sensible Werte anzeigen"
     },
     "icebreakers": {
       "items": {

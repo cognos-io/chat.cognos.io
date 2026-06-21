@@ -19,6 +19,7 @@ import { MessageService } from '../../services/message.service';
 import { ProjectConversationService } from '../../services/project-conversation.service';
 import { ProjectService } from '../../services/project.service';
 import { PublicShareService } from '../../services/public-share.service';
+import { RedactionService } from '../../services/redaction.service';
 import { UserPreferencesService } from '../../services/user-preferences.service';
 import { VaultService } from '../../services/vault.service';
 import { ChatComponent } from './chat.component';
@@ -120,6 +121,18 @@ describe('ChatComponent', () => {
         { provide: MessageService, useValue: messageService },
         { provide: UserPreferencesService, useValue: userPreferencesService },
         { provide: PublicShareService, useValue: publicShareService },
+        {
+          provide: RedactionService,
+          useValue: {
+            revision: signal(0),
+            valuesHidden: signal(false),
+            enabled: signal(true),
+            entriesFor: () => new Map(),
+            detect: () => [],
+            customRedactionValues: () => [],
+            toggleValuesHidden: vi.fn(),
+          },
+        },
         { provide: Dialog, useValue: { open: dialogOpen } },
         { provide: CognosToastService, useValue: toastService },
         { provide: VaultService, useValue: vaultService },

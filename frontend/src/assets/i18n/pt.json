@@ -489,7 +489,8 @@
           "phone": "Número de telefone",
           "person": "Nome",
           "org": "Organização",
-          "place": "Local"
+          "place": "Local",
+          "ip_address": "Endereço IP"
         }
       },
       "clearMessages": "Limpar todas as mensagens",
@@ -538,7 +539,9 @@
       "shared": "Partilhada",
       "sharedTitle": "Esta conversa está partilhada através de um link público — gerir a partilha",
       "soon": "Em breve",
-      "temporaryChat": "Conversa temporária"
+      "temporaryChat": "Conversa temporária",
+      "hideValues": "Ocultar valores sensíveis",
+      "showValues": "Mostrar valores sensíveis"
     },
     "icebreakers": {
       "items": {

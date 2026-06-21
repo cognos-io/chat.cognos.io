@@ -77,6 +77,7 @@ export class RedactedMarkdownComponent {
     // the swap so tokens that were raw become pills.
     effect(() => {
       this._redaction.revision();
+      this._redaction.valuesHidden();
       this.content();
       queueMicrotask(() => this.hydratePills());
     });
@@ -116,6 +117,7 @@ export class RedactedMarkdownComponent {
     ref.setInput('label', redactionTypeLabel(this._transloco, entry.type));
     ref.setInput('labels', redactionModalLabels(this._transloco));
     ref.setInput('showSettings', false);
+    ref.setInput('masked', this._redaction.valuesHidden());
     this._appRef.attachView(ref.hostView);
     const host = ref.location.nativeElement as HTMLElement;
     this._pills.push({ ref, host, token });

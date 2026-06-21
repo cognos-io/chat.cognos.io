@@ -17,6 +17,7 @@ import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
 import { ProjectService } from '@app/services/project.service';
 import { PublicShareService } from '@app/services/public-share.service';
+import { RedactionService } from '@app/services/redaction.service';
 import { VaultService } from '@app/services/vault.service';
 
 import { ChatHeaderComponent } from './chat-header.component';
@@ -62,6 +63,16 @@ describe('ChatHeaderComponent', () => {
     existingShareUrl: vi.fn().mockReturnValue(of(null)),
   };
 
+  const redactionRevision = signal(0);
+  const valuesHidden = signal(false);
+  const redactionEntries = signal<Map<string, unknown>>(new Map());
+  const redactionService = {
+    revision: redactionRevision,
+    valuesHidden,
+    entriesFor: () => redactionEntries(),
+    toggleValuesHidden: vi.fn(() => valuesHidden.update((h) => !h)),
+  };
+
   beforeEach(async () => {
     selectedConversation.set(undefined);
     temporaryConversation.set(false);
@@ -71,6 +82,9 @@ describe('ChatHeaderComponent', () => {
     publicKeyFingerprint.set('');
     email.set('');
     isMobile.set(false);
+    redactionRevision.set(0);
+    valuesHidden.set(false);
+    redactionEntries.set(new Map());
     vi.clearAllMocks();
     publicShareService.existingShareUrl.mockReturnValue(of(null));
 
@@ -87,6 +101,7 @@ describe('ChatHeaderComponent', () => {
         { provide: AuthService, useValue: authService },
         { provide: DeviceService, useValue: { isMobile } },
         { provide: PublicShareService, useValue: publicShareService },
+        { provide: RedactionService, useValue: redactionService },
         { provide: Dialog, useValue: { open: dialogOpen } },
       ],
     }).compileComponents();
@@ -134,6 +149,31 @@ describe('ChatHeaderComponent', () => {
     expect(
       component.menuItems().find((item) => item.title === 'Export')?.disabled,
     ).toBe(true);
+  });
+
+  it('offers a hide/show values toggle only when the conversation has redactions', () => {
+    selectedConversation.set(makeConversation('c-1', 'Saved chat'));
+    fixture.detectChanges();
+
+    // No redactions yet → no toggle.
+    expect(component.menuItems().map((item) => item.title)).not.toContain(
+      'Hide sensitive values',
+    );
+
+    redactionEntries.set(new Map([['[[PII_EMAIL_X]]', {}]]));
+    redactionRevision.update((v) => v + 1);
+    fixture.detectChanges();
+
+    // The toggle appears, and selecting it masks the values; the label flips.
+    const titles = component.menuItems().map((item) => item.title);
+    expect(titles).toContain('Hide sensitive values');
+    component.onMenuSelect(titles.indexOf('Hide sensitive values'));
+    expect(redactionService.toggleValuesHidden).toHaveBeenCalledTimes(1);
+
+    fixture.detectChanges();
+    expect(component.menuItems().map((item) => item.title)).toContain(
+      'Show sensitive values',
+    );
   });
 
   it('adds Share to the overflow menu on mobile, where the Share button is hidden', () => {

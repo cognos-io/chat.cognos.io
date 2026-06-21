@@ -78,6 +78,16 @@ export class RedactionService {
   // hydrated content reactively without threading the Map through signals.
   readonly revision = signal(0);
 
+  // When true, rendered messages mask their redacted values instead of showing
+  // the decrypted originals — for screen sharing or showing the chat to someone
+  // else without leaking sensitive data. Transient (never persisted): the owner
+  // always sees their own values again on reload.
+  readonly valuesHidden = signal(false);
+
+  toggleValuesHidden(): void {
+    this.valuesHidden.update((hidden) => !hidden);
+  }
+
   // Load and decrypt a conversation's mappings as soon as it becomes active, so
   // hydration is ready by the time messages render.
   private readonly _autoLoad = effect(() => {

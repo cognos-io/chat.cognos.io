@@ -67,7 +67,7 @@ export const COGNOS_REDACTED_TEXT_DEFAULT_LABELS: CognosRedactedTextLabels = {
       (keydown)="onTriggerKeydown($event)"
     >
       <cog-icon [name]="inlineIcon()" [size]="14" tone="current" />
-      <span>{{ value() }}</span>
+      <span>{{ displayValue() }}</span>
     </span>
 
     <cog-modal
@@ -319,11 +319,21 @@ export class CognosRedactedTextComponent {
   readonly kind = input<CognosRedactedTextKind>('custom');
   readonly label = input('');
   readonly showSettings = input(true);
+  // When true the inline pill shows a mask instead of the real value, so the
+  // chat can be screen-shared without leaking it. The explainer modal still
+  // reveals the value on an explicit click.
+  readonly masked = input(false);
   // Localised modal copy; merged over English defaults so partial overrides work.
   readonly labels = input<Partial<CognosRedactedTextLabels>>({});
   readonly openSettings = output<void>();
 
   protected readonly detailsOpen = signal(false);
+
+  // The masked inline form: a fixed bullet run, so its width never hints at the
+  // length of the hidden value.
+  protected readonly displayValue = computed(() =>
+    this.masked() ? '••••••' : this.value(),
+  );
 
   protected readonly text = computed<CognosRedactedTextLabels>(() => ({
     ...COGNOS_REDACTED_TEXT_DEFAULT_LABELS,

@@ -36,10 +36,17 @@ import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
 import { ProjectService } from '@app/services/project.service';
 import { PublicShareService } from '@app/services/public-share.service';
+import { RedactionService } from '@app/services/redaction.service';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
-type HeaderMenuAction = 'share' | 'rename' | 'export' | 'clear' | 'delete';
+type HeaderMenuAction =
+  | 'share'
+  | 'rename'
+  | 'export'
+  | 'toggle-redaction-visibility'
+  | 'clear'
+  | 'delete';
 
 type HeaderMenuEntry = CognosMenuItem & { action: HeaderMenuAction };
 
@@ -71,6 +78,7 @@ export class ChatHeaderComponent {
   private readonly _publicShare = inject(PublicShareService);
   private readonly _transloco = inject(TranslocoService);
   private readonly _projectService = inject(ProjectService);
+  private readonly _redaction = inject(RedactionService);
 
   readonly conversationService = inject(ConversationService);
 
@@ -184,6 +192,13 @@ export class ChatHeaderComponent {
     () => this.conversationService.conversation()?.record.id ?? null,
   );
 
+  // Whether the active conversation has any decrypted redaction mappings. Reads
+  // revision() so it recomputes when mappings finish loading.
+  private readonly _hasRedactions = computed(() => {
+    this._redaction.revision();
+    return this._redaction.entriesFor(this._conversationId() ?? undefined).size > 0;
+  });
+
   private readonly _canClearMessages = computed(
     () =>
       this.conversationService.isTemporaryConversation() &&
@@ -219,6 +234,19 @@ export class ChatHeaderComponent {
         disabled: true,
         trailing: this._transloco.translate('chat.header.soon'),
       });
+
+      // Mask/reveal redacted values in the rendered chat — only worth offering
+      // once this conversation actually has something redacted.
+      if (this._hasRedactions()) {
+        const hidden = this._redaction.valuesHidden();
+        entries.push({
+          action: 'toggle-redaction-visibility',
+          title: hidden
+            ? this._transloco.translate('chat.header.showValues')
+            : this._transloco.translate('chat.header.hideValues'),
+          icon: hidden ? 'eye' : 'eye-off',
+        });
+      }
     }
 
     if (this._canClearMessages()) {
@@ -282,6 +310,9 @@ export class ChatHeaderComponent {
         break;
       case 'rename':
         this.onRename();
+        break;
+      case 'toggle-redaction-visibility':
+        this._redaction.toggleValuesHidden();
         break;
       case 'clear':
         this.onClearMessages();
