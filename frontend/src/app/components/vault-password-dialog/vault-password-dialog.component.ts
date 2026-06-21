@@ -18,6 +18,8 @@ import {
   CognosToastService,
 } from '@cognos/ui-angular';
 
+import { LanguageSwitcherComponent } from '@app/components/language-switcher/language-switcher.component';
+
 import { VaultService } from '../../services/vault.service';
 
 // Plain-text "Emergency Kit" the user can download at onboarding. It is the
@@ -73,6 +75,7 @@ const validateUnlockForm = (
     CognosButtonComponent,
     CognosIconComponent,
     CognosLozengeComponent,
+    LanguageSwitcherComponent,
     TranslocoModule,
   ],
   template: `
@@ -83,6 +86,12 @@ const validateUnlockForm = (
       [dismissible]="false"
     >
       <div class="vault-password-dialog">
+        <!-- The user can't decrypt their saved preference yet, so the picker
+             persists the choice locally (LanguageService → localStorage). -->
+        <div class="vault-password-dialog__lang">
+          <app-language-switcher />
+        </div>
+
         <div class="vault-password-dialog__copy">
           @if (!vaultService.isNewKeyPair() && vaultService.wasLocked()) {
             <div class="vault-password-dialog__status-card">
@@ -238,6 +247,11 @@ const validateUnlockForm = (
     .vault-password-dialog__field {
       display: grid;
       gap: var(--cog-space-150);
+    }
+
+    .vault-password-dialog__lang {
+      justify-self: end;
+      margin-top: calc(-1 * var(--cog-space-050));
     }
 
     .vault-password-dialog__copy p {

@@ -4,6 +4,7 @@ import { Router, provideRouter } from '@angular/router';
 
 import { CognosToastService } from '@cognos/ui-angular';
 
+import { LanguageService } from '../../services/language.service';
 import { VaultService } from '../../services/vault.service';
 import {
   VaultPasswordDialogComponent,
@@ -79,6 +80,20 @@ describe('VaultPasswordDialogComponent', () => {
         {
           provide: CognosToastService,
           useValue: toastService,
+        },
+        {
+          // The embedded language switcher only needs these; stubbing avoids
+          // constructing the real LanguageService → AuthService chain.
+          provide: LanguageService,
+          useValue: {
+            currentLanguage: signal({
+              code: 'en',
+              nativeName: 'English',
+              englishName: 'English',
+            }),
+            languages: [{ code: 'en', nativeName: 'English', englishName: 'English' }],
+            use: vi.fn(),
+          },
         },
       ],
     }).compileComponents();
