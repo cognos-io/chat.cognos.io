@@ -455,8 +455,11 @@
         "summary": "{{ count }} valore/i sensibile/i verrà oscurato prima dell’invio",
         "none": "Invio senza oscuramento",
         "redact": "Oscura",
+        "redactAction": "Oscura",
+        "remove": "Rimuovi",
         "types": {
           "iban": "IBAN",
+          "custom": "Personalizzato",
           "us_ssn": "SSN (US)",
           "uk_nhs": "NHS (UK)",
           "fr_nir": "NIR (FR)",

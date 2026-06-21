@@ -455,8 +455,11 @@
         "summary": "{{ count }} valeur(s) sensible(s) seront masquée(s) avant l’envoi",
         "none": "Envoi sans masquage",
         "redact": "Masquer",
+        "redactAction": "Masquer",
+        "remove": "Retirer",
         "types": {
           "iban": "IBAN",
+          "custom": "Personnalisé",
           "us_ssn": "SSN (US)",
           "uk_nhs": "NHS (UK)",
           "fr_nir": "NIR (FR)",

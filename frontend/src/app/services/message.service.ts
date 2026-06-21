@@ -44,7 +44,13 @@ import {
   generateConversationPersonaId,
   generateConversationSystemPrompt,
 } from '@app/interfaces/persona';
-import { RedactionEntry, candidateKey, containsRedactionToken } from '@app/redaction';
+import {
+  RedactionEntry,
+  buildCustomCandidates,
+  candidateKey,
+  containsRedactionToken,
+  resolveOverlaps,
+} from '@app/redaction';
 import { parseBackendDate } from '@app/utils/timestamp';
 
 import { AuthService } from './auth.service';
@@ -157,6 +163,8 @@ export type MessageRequest = {
   // redacting `content`, persisted once the conversation is known — it is
   // internal and never sent to the completion endpoint.
   redactionDeselected?: string[];
+  // Exact substrings the user manually selected to redact in the composer.
+  redactionCustom?: string[];
   redactionEntries?: RedactionEntry[];
 };
 
@@ -897,9 +905,13 @@ export class MessageService {
     // Re-detect on the final (already-trimmed) content and drop only what the
     // user explicitly deselected, so offsets always match the text being sent.
     const deselected = new Set(req.redactionDeselected ?? []);
-    const candidates = this._redactionService
+    const auto = this._redactionService
       .detect(req.content)
       .filter((candidate) => !deselected.has(candidateKey(candidate)));
+    // Plus any manual selections the user marked to redact; resolve overlaps so
+    // a manual selection touching a detected value doesn't double-splice.
+    const custom = buildCustomCandidates(req.content, req.redactionCustom ?? []);
+    const candidates = resolveOverlaps([...auto, ...custom]);
     const { redactedText, newEntries } = this._redactionService.prepareRedaction(
       conversationId,
       req.content,

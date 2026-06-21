@@ -455,8 +455,11 @@
         "summary": "A ocultar {{ count }} valor(es) sensível(eis) antes de enviar",
         "none": "Enviar sem ocultação",
         "redact": "Ocultar",
+        "redactAction": "Ocultar",
+        "remove": "Remover",
         "types": {
           "iban": "IBAN",
+          "custom": "Personalizado",
           "us_ssn": "SSN (US)",
           "uk_nhs": "NHS (UK)",
           "fr_nir": "NIR (FR)",

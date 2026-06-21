@@ -3,6 +3,7 @@ import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { isPlatformBrowser } from '@angular/common';
 import {
   Component,
+  HostListener,
   PLATFORM_ID,
   computed,
   effect,
@@ -131,9 +132,27 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
             [readOnly]="isStreaming()"
             (keydown.control.enter)="isMac ? undefined : sendMessage()"
             (keydown.meta.enter)="isMac ? sendMessage() : undefined"
+            (mouseup)="onComposerMouseUp($event)"
+            (contextmenu)="onComposerContextMenu($event)"
+            (input)="redactPopover.set(null)"
           ></textarea>
 
-          @if (redactionCandidates().length) {
+          <!-- Selection action: redact the highlighted text manually. Anchored
+               to the pointer; clears when the selection or draft changes. -->
+          @if (redactPopover(); as pop) {
+            <button
+              type="button"
+              class="message-form__redact-pop"
+              [style.left.px]="pop.x"
+              [style.top.px]="pop.y"
+              (click)="addCustomRedaction(pop.text)"
+            >
+              <cog-icon name="shield-check" [size]="14" tone="current" />
+              {{ t('chat.composer.redaction.redactAction') }}
+            </button>
+          }
+
+          @if (hasRedactionPreview()) {
             <div class="message-form__redaction">
               <button
                 type="button"
@@ -183,6 +202,26 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
                         />
                         {{ t('chat.composer.redaction.redact') }}
                       </label>
+                    </li>
+                  }
+
+                  @for (custom of activeCustomRedactions(); track custom) {
+                    <li class="message-form__redaction-item">
+                      <cog-redacted-text
+                        [value]="custom"
+                        placeholder="[[PII_CUSTOM]]"
+                        kind="custom"
+                        [label]="t('chat.composer.redaction.types.custom')"
+                        [labels]="modalLabels()"
+                        [showSettings]="false"
+                      />
+                      <button
+                        type="button"
+                        class="message-form__redaction-remove"
+                        (click)="removeCustomRedaction(custom)"
+                      >
+                        {{ t('chat.composer.redaction.remove') }}
+                      </button>
                     </li>
                   }
                 </ul>
@@ -428,6 +467,45 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
       white-space: nowrap;
     }
 
+    .message-form__redaction-remove {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      color: var(--cog-text-subtle);
+      font: inherit;
+      font-size: var(--cog-fs-caption);
+      text-decoration: underline;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .message-form__redaction-remove:hover {
+      color: var(--cog-text);
+    }
+
+    .message-form__redact-pop {
+      position: fixed;
+      z-index: 60;
+      transform: translate(-50%, calc(-100% - 8px));
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-050);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-pill);
+      background: var(--cog-surface);
+      box-shadow: var(--cog-shadow-overlay);
+      padding: 4px 10px;
+      color: var(--cog-text);
+      font: inherit;
+      font-size: var(--cog-fs-caption);
+      font-weight: var(--cog-fw-semibold);
+      cursor: pointer;
+    }
+
+    .message-form__redact-pop:hover {
+      border-color: var(--cog-brand);
+    }
+
     .message-form__send {
       margin-left: auto;
     }
@@ -642,12 +720,28 @@ export class MessageFormComponent {
   private readonly _redactionDeselected = signal<Set<string>>(new Set());
   readonly redactionPreviewOpen = signal(false);
 
-  // How many detections are still selected for redaction.
+  // Substrings the user manually selected to redact, and the floating "Redact"
+  // action anchored to the pointer when there's a selection.
+  private readonly _customRedactions = signal<string[]>([]);
+  readonly redactPopover = signal<{ x: number; y: number; text: string } | null>(null);
+
+  // Only show manual redactions that are still present in the current draft.
+  readonly activeCustomRedactions = computed(() => {
+    const draft = this._redactionDraft() ?? '';
+    return this._customRedactions().filter((text) => draft.includes(text));
+  });
+
+  readonly hasRedactionPreview = computed(
+    () =>
+      this.redactionCandidates().length > 0 || this.activeCustomRedactions().length > 0,
+  );
+
+  // How many values (detected-and-selected + manual) will be redacted.
   readonly redactionActiveCount = computed(
     () =>
       this.redactionCandidates().filter(
         (candidate) => !this._redactionDeselected().has(candidateKey(candidate)),
-      ).length,
+      ).length + this.activeCustomRedactions().length,
   );
 
   constructor() {
@@ -783,11 +877,63 @@ export class MessageFormComponent {
       content: contentValue,
       requestId: self.crypto.randomUUID(),
       redactionDeselected: Array.from(this._redactionDeselected()),
+      redactionCustom: this._customRedactions(),
     };
     this.messageService.sendMessage$.next(messageRequest);
     this.messageForm.reset();
     this._redactionDeselected.set(new Set());
+    this._customRedactions.set([]);
+    this.redactPopover.set(null);
     this.redactionPreviewOpen.set(false);
+  }
+
+  // --- manual (selection) redaction ----------------------------------------
+
+  onComposerMouseUp(event: MouseEvent): void {
+    const text = this.selectedText(event.target);
+    this.redactPopover.set(text ? { x: event.clientX, y: event.clientY, text } : null);
+  }
+
+  onComposerContextMenu(event: MouseEvent): void {
+    const text = this.selectedText(event.target);
+    if (!text) {
+      return;
+    }
+    // Replace the native menu with our inline redact action.
+    event.preventDefault();
+    this.redactPopover.set({ x: event.clientX, y: event.clientY, text });
+  }
+
+  addCustomRedaction(text: string): void {
+    this._customRedactions.update((list) =>
+      list.includes(text) ? list : [...list, text],
+    );
+    this.redactPopover.set(null);
+  }
+
+  removeCustomRedaction(text: string): void {
+    this._customRedactions.update((list) => list.filter((t) => t !== text));
+  }
+
+  // Dismiss the floating action when the pointer goes down anywhere that isn't
+  // the action itself or the textarea (a fresh selection re-opens it).
+  @HostListener('document:mousedown', ['$event'])
+  onDocumentMouseDown(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.message-form__redact-pop, .message-form__textarea')) {
+      return;
+    }
+    this.redactPopover.set(null);
+  }
+
+  private selectedText(target: EventTarget | null): string {
+    const textarea = target as HTMLTextAreaElement | null;
+    if (!textarea || textarea.selectionStart == null) {
+      return '';
+    }
+    return (textarea.value ?? '')
+      .slice(textarea.selectionStart, textarea.selectionEnd)
+      .trim();
   }
 
   toggleRedactionPreview(): void {

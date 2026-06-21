@@ -3,10 +3,12 @@ import { describe, expect, it } from 'vitest';
 import {
   TOKEN_RE,
   applyRedactions,
+  buildCustomCandidates,
   buildToken,
   defaultTokenGenerator,
   detectSensitiveText,
   randomTokenSuffix,
+  resolveOverlaps,
 } from './redaction-engine';
 import {
   Detector,
@@ -173,5 +175,48 @@ describe('applyRedactions', () => {
       },
     );
     expect(result.newEntries[0].source).toEqual({ kind: 'message', id: 'msg_1' });
+  });
+});
+
+describe('buildCustomCandidates', () => {
+  it('finds every occurrence of each selected substring', () => {
+    const candidates = buildCustomCandidates('pay Acme Ltd and Acme Ltd again', [
+      'Acme Ltd',
+    ]);
+    expect(candidates).toHaveLength(2);
+    expect(candidates.every((c) => c.type === 'custom')).toBe(true);
+    expect(candidates[0]).toMatchObject({ start: 4, end: 12, value: 'Acme Ltd' });
+    expect(candidates[1].start).toBe(17);
+  });
+
+  it('ignores blank and duplicate selections', () => {
+    expect(buildCustomCandidates('hello', ['  '])).toEqual([]);
+    expect(buildCustomCandidates('a a a', ['a', 'a'])).toHaveLength(3); // deduped input, 3 hits
+  });
+});
+
+describe('resolveOverlaps', () => {
+  it('keeps the higher-confidence candidate when ranges overlap', () => {
+    const low = {
+      type: 'org' as const,
+      detector: 'x',
+      start: 0,
+      end: 8,
+      value: 'ABCDEFGH',
+      normalized: 'abcdefgh',
+      confidence: 'low' as const,
+    };
+    const high = {
+      type: 'custom' as const,
+      detector: 'custom:v1',
+      start: 2,
+      end: 6,
+      value: 'CDEF',
+      normalized: 'CDEF',
+      confidence: 'high' as const,
+    };
+    const resolved = resolveOverlaps([low, high]);
+    expect(resolved).toHaveLength(1);
+    expect(resolved[0].confidence).toBe('high');
   });
 });

@@ -36,7 +36,9 @@ export type RedactionType =
   // Tier 2 NLP entity hints.
   | 'person'
   | 'org'
-  | 'place';
+  | 'place'
+  // User-selected manual redaction (no detector).
+  | 'custom';
 
 /** Where a redacted source originated. Modelled now so documents reuse it. */
 export type RedactionSourceKind = 'message' | 'document' | 'document_chunk';

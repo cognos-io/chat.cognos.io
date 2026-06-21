@@ -455,8 +455,11 @@
         "summary": "Redacting {{ count }} sensitive value(s) before sending",
         "none": "Sending without redaction",
         "redact": "Redact",
+        "redactAction": "Redact",
+        "remove": "Remove",
         "types": {
           "iban": "IBAN",
+          "custom": "Custom",
           "us_ssn": "SSN (US)",
           "uk_nhs": "NHS (UK)",
           "fr_nir": "NIR (FR)",

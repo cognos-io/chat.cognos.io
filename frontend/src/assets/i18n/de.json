@@ -455,8 +455,11 @@
         "summary": "{{ count }} sensible(r) Wert(e) werden vor dem Senden geschwärzt",
         "none": "Senden ohne Schwärzung",
         "redact": "Schwärzen",
+        "redactAction": "Schwärzen",
+        "remove": "Entfernen",
         "types": {
           "iban": "IBAN",
+          "custom": "Benutzerdefiniert",
           "us_ssn": "SSN (US)",
           "uk_nhs": "NHS (UK)",
           "fr_nir": "NIR (FR)",

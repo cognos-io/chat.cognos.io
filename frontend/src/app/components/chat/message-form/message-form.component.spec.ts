@@ -107,8 +107,10 @@ describe('MessageFormComponent', () => {
     expect(messageService.sendMessage$.next).toHaveBeenCalledWith({
       content: 'Hello world',
       requestId: '00000000-0000-4000-8000-000000000000',
-      // No detections deselected (the stub detects nothing), so an empty list.
+      // No detections deselected and no manual selections (the stub detects
+      // nothing), so both lists are empty.
       redactionDeselected: [],
+      redactionCustom: [],
     });
     expect(component.messageForm.controls.content.value).toBe('');
   });
