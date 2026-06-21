@@ -4,16 +4,17 @@ import {
   computed,
   input,
   output,
-} from "@angular/core";
-import type { CognosIconName } from "@cognos/ui/icons";
+} from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-button.component";
+import type { CognosIconName } from '@cognos/ui/icons';
 
-export type CognosModalTitleTone = "default" | "info" | "success" | "danger";
+import { CognosIconComponent } from '../../icon/icon.component';
+import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-button.component';
+
+export type CognosModalTitleTone = 'default' | 'info' | 'success' | 'danger';
 
 @Component({
-  selector: "cog-modal",
+  selector: 'cog-modal',
   standalone: true,
   imports: [CognosIconButtonComponent, CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -152,6 +153,12 @@ export type CognosModalTitleTone = "default" | "info" | "success" | "danger";
 
       .cog-modal__title {
         margin: 0;
+        /* Defend against prose/markdown heading styles when the modal is
+           rendered inside a .cog-prose container (e.g. a redaction pill injected
+           into a rendered message): those add an h2 border + padding that would
+           otherwise draw a stray rule under the title. */
+        padding-bottom: 0;
+        border-bottom: 0;
         color: var(--cog-text);
         font-size: var(--cog-fs-h-md);
         font-weight: var(--cog-fw-h-md);
@@ -190,21 +197,21 @@ export type CognosModalTitleTone = "default" | "info" | "success" | "danger";
 })
 export class CognosModalComponent {
   readonly open = input(false);
-  readonly title = input("");
+  readonly title = input('');
   readonly titleIcon = input<CognosIconName | null>(null);
-  readonly titleTone = input<CognosModalTitleTone>("default");
+  readonly titleTone = input<CognosModalTitleTone>('default');
   readonly width = input(540);
   readonly stickyFooter = input(false);
   readonly close = output<void>();
 
   protected readonly modalClass = computed(() => {
-    const classes = ["cog-modal__panel"];
+    const classes = ['cog-modal__panel'];
 
     if (this.stickyFooter()) {
-      classes.push("cog-modal__panel--footer");
+      classes.push('cog-modal__panel--footer');
     }
 
-    return classes.join(" ");
+    return classes.join(' ');
   });
 
   protected readonly titleIconClass = computed(
@@ -213,14 +220,14 @@ export class CognosModalComponent {
 
   protected readonly titleIconTone = computed(() => {
     switch (this.titleTone()) {
-      case "danger":
-        return "danger" as const;
-      case "info":
-        return "brand" as const;
-      case "success":
-        return "success" as const;
+      case 'danger':
+        return 'danger' as const;
+      case 'info':
+        return 'brand' as const;
+      case 'success':
+        return 'success' as const;
       default:
-        return "selected" as const;
+        return 'selected' as const;
     }
   });
 

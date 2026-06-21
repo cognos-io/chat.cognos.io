@@ -189,7 +189,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
             class="public-conversation__text"
             emoji
             katex
-            [data]="renderText(message.decryptedData.content)"
+            [data]="renderBody(message.decryptedData.content)"
           ></markdown>
         } @else {
           <p class="public-conversation__muted">{{ t('public.emptyMessage') }}</p>
@@ -548,11 +548,30 @@ export class PublicConversationComponent implements OnInit {
     return new DatePipe('en-GB').transform(date, 'short') ?? '';
   }
 
-  // renderText turns stored (redacted) text into what the reader should see:
-  // when sensitive values are revealed, known tokens become their originals;
-  // otherwise every token becomes a neutral "redacted" marker. Used for both
-  // the title and message bodies, so placeholders never leak as raw tokens.
+  // renderText turns stored (redacted) text into a plain string: revealed tokens
+  // become their originals, hidden ones become the censorship bar. Used for the
+  // title, which is interpolated (HTML-escaped) so markup can't be used there.
   renderText(text: string): string {
+    return this.replaceTokens(text, () => REDACTED_BAR);
+  }
+
+  // renderBody is the markdown-bound variant: hidden tokens become an
+  // accessible censorship bar — role="img" + aria-label so screen readers
+  // announce "redacted value" instead of a run of block glyphs. The markup is
+  // safe (DOMPurify keeps span/role/aria-label) because the body is rendered as
+  // markdown, unlike the escaped title.
+  renderBody(text: string): string {
+    const aria = this._transloco
+      .translate('public.redactedAria')
+      .replace(/"/g, '&quot;');
+    return this.replaceTokens(
+      text,
+      () =>
+        `<span role="img" class="cog-pii-redacted" aria-label="${aria}">${REDACTED_BAR}</span>`,
+    );
+  }
+
+  private replaceTokens(text: string, hidden: () => string): string {
     if (!text) {
       return '';
     }
@@ -565,7 +584,7 @@ export class PublicConversationComponent implements OnInit {
           return entry.original;
         }
       }
-      return REDACTED_BAR;
+      return hidden();
     });
   }
 

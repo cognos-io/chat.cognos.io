@@ -114,4 +114,11 @@ test('redacted pill opens the shared explainer modal with localised copy', async
   await expect(modal).toContainText(original);
   await expect(modal).toContainText('The model sees');
   await expect(modal).toContainText(token);
+
+  // The title must not inherit the prose/markdown h2 underline — the pill (and
+  // its modal) lives inside a .cog-prose message body.
+  const borderWidth = await page
+    .locator('.cog-modal__title')
+    .evaluate((el) => getComputedStyle(el).borderBottomWidth);
+  expect(borderWidth).toBe('0px');
 });

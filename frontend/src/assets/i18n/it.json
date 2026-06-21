@@ -885,6 +885,7 @@
     "yourProjects": "I tuoi progetti"
   },
   "public": {
+    "redactedAria": "Valore oscurato",
     "includeSensitive": "Includi valori potenzialmente sensibili",
     "hideSensitive": "Nascondi valori sensibili",
     "decrypting": "Decrittazione della conversazione condivisa in corso…",
