@@ -205,6 +205,20 @@ export class RedactionService {
     );
   }
 
+  /**
+   * The decrypted token→entry map for a conversation, for renderers that show
+   * each redacted span as a pill rather than flattening to plain text. Empty
+   * when nothing is loaded.
+   */
+  entriesFor(
+    conversationId: string | null | undefined,
+  ): ReadonlyMap<string, RedactionEntry> {
+    if (!conversationId) {
+      return new Map();
+    }
+    return this._state.get(conversationId)?.entries ?? new Map();
+  }
+
   /** Restore originals for known tokens. Display-only; never mutates stored data. */
   hydrate(conversationId: string | null | undefined, text: string): string {
     if (!conversationId) {

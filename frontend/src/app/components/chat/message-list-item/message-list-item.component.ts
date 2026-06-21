@@ -12,7 +12,6 @@ import {
 } from '@angular/core';
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
-import { MarkdownComponent } from 'ngx-markdown';
 
 import {
   CognosAssistantMessageComponent,
@@ -23,6 +22,7 @@ import {
   MessageBranchInfo,
 } from '@cognos/ui-angular';
 
+import { RedactedMarkdownComponent } from '@app/components/chat/redacted-markdown/redacted-markdown.component';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { Message, isMessageFromUser } from '@app/interfaces/message';
 import { Model } from '@app/interfaces/model';
@@ -38,7 +38,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
   selector: 'app-message-list-item',
   standalone: true,
   imports: [
-    MarkdownComponent,
+    RedactedMarkdownComponent,
     ClipboardModule,
     NgTemplateOutlet,
     CognosAssistantMessageComponent,
@@ -141,9 +141,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                   {{ t('chat.message.deleted') }}
                 </p>
               } @else if (message.decryptedData.content) {
-                <markdown emoji katex>
-                  {{ hydrated(message.decryptedData.content) }}
-                </markdown>
+                <app-redacted-markdown [content]="message.decryptedData.content" />
               } @else {
                 <p class="message-list-item__empty">
                   {{ t('chat.message.empty') }}
@@ -184,9 +182,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                     {{ hydrated(message.decryptedData.content) }}
                   </p>
                 } @else {
-                  <markdown emoji katex>
-                    {{ hydrated(message.decryptedData.content) }}
-                  </markdown>
+                  <app-redacted-markdown [content]="message.decryptedData.content" />
                 }
               } @else {
                 <p class="message-list-item__empty">
