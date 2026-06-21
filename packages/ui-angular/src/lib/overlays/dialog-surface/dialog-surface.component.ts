@@ -23,6 +23,10 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
           }
         </div>
 
+        <!-- Optional controls aligned with the title (e.g. a language picker).
+             Projects nothing when unused, so other dialogs are unaffected. -->
+        <ng-content select="[cogDialogHeaderActions]" />
+
         @if (dismissible()) {
           <cog-icon-button name="x" title="Close" size="lg" (click)="onClose()" />
         }

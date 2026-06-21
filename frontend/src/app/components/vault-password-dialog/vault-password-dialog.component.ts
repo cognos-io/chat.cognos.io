@@ -81,17 +81,16 @@ const validateUnlockForm = (
   template: `
     <cog-dialog-surface
       *transloco="let t"
-      [title]="title()"
+      [title]="t(titleKey())"
       [footer]="false"
       [dismissible]="false"
     >
-      <div class="vault-password-dialog">
-        <!-- The user can't decrypt their saved preference yet, so the picker
-             persists the choice locally (LanguageService → localStorage). -->
-        <div class="vault-password-dialog__lang">
-          <app-language-switcher />
-        </div>
+      <!-- In the title row: the user can't decrypt their saved preference yet,
+           so the picker persists the choice locally (LanguageService →
+           localStorage). -->
+      <app-language-switcher cogDialogHeaderActions />
 
+      <div class="vault-password-dialog">
         <div class="vault-password-dialog__copy">
           @if (!vaultService.isNewKeyPair() && vaultService.wasLocked()) {
             <div class="vault-password-dialog__status-card">
@@ -247,11 +246,6 @@ const validateUnlockForm = (
     .vault-password-dialog__field {
       display: grid;
       gap: var(--cog-space-150);
-    }
-
-    .vault-password-dialog__lang {
-      justify-self: end;
-      margin-top: calc(-1 * var(--cog-space-050));
     }
 
     .vault-password-dialog__copy p {
@@ -431,14 +425,17 @@ export class VaultPasswordDialogComponent {
   private readonly dialogRef = inject(DialogRef, { optional: true });
   private readonly _transloco = inject(TranslocoService);
 
-  readonly title = computed(() => {
+  // Resolve only the i18n *key* here; the template translates it with the
+  // `*transloco` `t` function so the title re-localises live alongside the body
+  // when the language changes in the dialog.
+  readonly titleKey = computed(() => {
     if (this.vaultService.isNewKeyPair()) {
-      return this._transloco.translate('dialogs.vaultPassword.titleNew');
+      return 'dialogs.vaultPassword.titleNew';
     }
 
     return this.vaultService.wasLocked()
-      ? this._transloco.translate('dialogs.vaultPassword.titleLocked')
-      : this._transloco.translate('dialogs.vaultPassword.titleUnlock');
+      ? 'dialogs.vaultPassword.titleLocked'
+      : 'dialogs.vaultPassword.titleUnlock';
   });
   readonly generatedAccountKey = computed(
     () => this.vaultService.generatedAccountKey() ?? '',
