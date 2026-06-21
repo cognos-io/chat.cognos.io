@@ -306,16 +306,31 @@ P0 detectors (first slice):
 | ---------------------------- | ------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | IBAN                         | `iban:v1`    | mod-97 checksum via `ibantools`; ignore invalid-checksum matches. Covers Swiss IBAN.   | Uppercase, remove spaces.                        |
 | Email                        | `email:v1`   | Conservative RFC-like pattern; validate via `isEmail`.                                 | Lowercase domain; preserve original for display. |
-| Credit card                  | `cc:v1`      | Require Luhn (`card-validator`); avoid replacing short number groups.                  | Remove spaces and separators.                    |
+| Credit/debit card            | `cc:v1`      | Require a known IIN prefix (Visa/MC/Amex/Discover/Maestro) + Luhn + length 13–19.      | Remove spaces and separators.                    |
 | API/private keys             | `secret:v1`  | Obvious key prefixes + PEM private-key blocks (gitleaks-derived rules) + entropy gate. | Preserve exact original.                         |
-| Swiss AHV number             | `ch-ahv:v1`  | `756.XXXX.XXXX.XX` shape + EAN-13 check digit.                                         | Remove separators.                               |
-| UK National Insurance number | `uk-nino:v1` | Format validation; exclude invalid prefixes/suffixes (DWP rules).                      | Uppercase, remove spaces.                        |
 
-P1 detectors (later iteration):
+National identifier / tax / health detectors (all checksum- or format-validated; see
+`redaction-detectors-national.ts`). Validation algorithms and the canonical valid/invalid test
+vectors live in `redaction-detectors-national.spec.ts`.
 
-| Type         | Detector id | Detector notes                                                                  | Normalization                          |
-| ------------ | ----------- | ------------------------------------------------------------------------------- | -------------------------------------- |
-| Phone number | `phone:v1`  | `libphonenumber-js` `findPhoneNumbersInText`; conservative; avoid arbitrary IDs.| Remove punctuation except leading `+`. |
+| Type                 | Detector id               | Validation                                                                     |
+| -------------------- | ------------------------- | ------------------------------------------------------------------------------ |
+| USA SSN              | `us-ssn:v1`               | Dashed `XXX-XX-XXXX` + area/group/serial rules (no checksum exists).           |
+| UK NINo              | `uk-nino:v1`              | Format + DWP prefix/suffix rules.                                              |
+| UK NHS number        | `uk-nhs:v1`               | `3 3 4` grouping + mod-11 (11→0, 10→invalid).                                  |
+| France NIR           | `fr-nir:v1`               | 15 chars; key = 97 − (first 13 mod 97); Corsica `2A/2B` → 19/18.               |
+| Italy Codice Fiscale | `it-cf:v1`                | 16 chars; odd/even tables + check character.                                   |
+| Italy Partita IVA    | `it-piva:v1`              | 11 digits; Luhn-style check digit.                                             |
+| Germany Steuer-IdNr  | `de-steuerid:v1`          | 11 digits; ISO 7064 MOD 11,10 + first≠0 + repeated-digit structural rule.      |
+| Switzerland AHV      | `ch-ahv:v1`               | `756.XXXX.XXXX.XX` + EAN-13 check digit.                                       |
+| Austria SVNR         | `at-svnr:v1`              | 10 digits; check digit at position 4 (mod 11) + trailing `DDMMYY`.             |
+| Portugal NIF         | `pt-nif:v1`               | 9 digits; mod-11 (≥10→0) + valid leading type digit.                           |
+| Spain DNI / NIE      | `es-dni:v1` / `es-nie:v1` | Control letter `TRWAGMYFPDXBNJZSQVHLCKE[n mod 23]` (NIE prefix X/Y/Z → 0/1/2). |
+
+Phone numbers (`phone:v1`): E.164 `+CC` form for all in-scope countries (USA, UK, FR, IT, DE, CH,
+AT, PT, ES), validated by national-significant-digit length per calling code. Bare national-format
+numbers are intentionally not auto-detected by regex (too false-positive-prone); richer national
+parsing via `libphonenumber-js` remains a later iteration.
 
 ### 8.2 Tier 2 — NLP entity hints (opt-in)
 

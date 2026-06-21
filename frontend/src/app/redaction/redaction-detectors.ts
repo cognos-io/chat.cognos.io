@@ -8,7 +8,9 @@
  * Tier 2 NLP hints (`compromise`) live behind a lazy-loaded detector and are
  * registered separately so the bundle cost is only paid when enabled.
  */
-import { Detector, RedactionCandidate, RedactionType } from './redaction-types';
+import { candidate, matchAll } from './redaction-detector-utils';
+import { NATIONAL_DETECTORS } from './redaction-detectors-national';
+import { Detector, RedactionCandidate } from './redaction-types';
 
 // --- Checksums -------------------------------------------------------------
 
@@ -58,42 +60,6 @@ export function isValidEan13(digits: string): boolean {
   return check === digits.charCodeAt(12) - 48;
 }
 
-// --- Helpers ---------------------------------------------------------------
-
-function* matchAll(
-  text: string,
-  pattern: RegExp,
-): Generator<RegExpExecArray, void, unknown> {
-  const re = new RegExp(
-    pattern.source,
-    pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`,
-  );
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(text)) !== null) {
-    if (m.index === re.lastIndex) re.lastIndex += 1; // guard against zero-width
-    yield m;
-  }
-}
-
-function candidate(
-  type: RedactionType,
-  detector: string,
-  match: RegExpExecArray,
-  matched: string,
-  normalized: string,
-): RedactionCandidate {
-  const start = match.index + match[0].indexOf(matched);
-  return {
-    type,
-    detector,
-    start,
-    end: start + matched.length,
-    value: matched,
-    normalized,
-    confidence: 'high',
-  };
-}
-
 // --- Email -----------------------------------------------------------------
 
 const EMAIL_RE = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
@@ -140,6 +106,18 @@ export const ibanDetector: Detector = {
 
 const CARD_RE = /\b\d(?:[ -]?\d){12,18}\b/g;
 
+// Require a known Issuer Identification Number prefix so a Luhn-passing but
+// non-card number (order ids, etc.) isn't flagged. Visa, Mastercard
+// (51–55, 2221–2720), Amex, Discover and Maestro cover the cards in scope.
+function hasKnownCardPrefix(d: string): boolean {
+  if (/^4/.test(d)) return true; // Visa
+  if (/^3[47]/.test(d)) return true; // Amex
+  if (/^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/.test(d)) return true; // Mastercard
+  if (/^(6011|65|64[4-9]|622)/.test(d)) return true; // Discover
+  if (/^(50|5[6-9]|6[0-9])/.test(d)) return true; // Maestro
+  return false;
+}
+
 export const creditCardDetector: Detector = {
   id: 'cc:v1',
   type: 'credit_card',
@@ -149,6 +127,7 @@ export const creditCardDetector: Detector = {
       const value = m[0];
       const digits = value.replace(/[ -]/g, '');
       if (digits.length < 13 || digits.length > 19) continue;
+      if (!hasKnownCardPrefix(digits)) continue;
       if (!isValidLuhn(digits)) continue;
       out.push(candidate('credit_card', 'cc:v1', m, value, digits));
     }
@@ -241,4 +220,5 @@ export const TIER1_DETECTORS: readonly Detector[] = [
   swissAhvDetector,
   ukNinoDetector,
   secretDetector,
+  ...NATIONAL_DETECTORS,
 ];

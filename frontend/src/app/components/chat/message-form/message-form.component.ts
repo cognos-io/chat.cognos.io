@@ -33,7 +33,7 @@ import {
 } from '@cognos/ui-angular';
 
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
-import { RedactionCandidate, RedactionType, candidateKey } from '@app/redaction';
+import { RedactionCandidate, candidateKey, tokenTypeCode } from '@app/redaction';
 import { BillingService } from '@app/services/billing.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
@@ -830,19 +830,7 @@ export class MessageFormComponent {
   // Illustrative placeholder shown in the preview (the real random token is
   // minted at send time).
   redactionPlaceholder(candidate: RedactionCandidate): string {
-    const code: Record<RedactionType, string> = {
-      iban: 'IBAN',
-      email: 'EMAIL',
-      credit_card: 'CC',
-      secret: 'SECRET',
-      ch_ahv: 'AHV',
-      uk_nino: 'NINO',
-      phone: 'PHONE',
-      person: 'PERSON',
-      org: 'ORG',
-      place: 'PLACE',
-    };
-    return `[[PII_${code[candidate.type]}]]`;
+    return `[[PII_${tokenTypeCode(candidate.type)}]]`;
   }
 
   stopStreaming() {

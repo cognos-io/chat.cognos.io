@@ -74,8 +74,18 @@ describe('creditCardDetector', () => {
     expect(creditCardDetector.detect('ref 4111 1111 1111 1112')).toEqual([]);
   });
 
+  it('detects an Amex card by its IIN prefix', () => {
+    const [c] = creditCardDetector.detect('amex 3782 822463 10005 ok');
+    expect(c.normalized).toBe('378282246310005');
+  });
+
   it('ignores short numbers', () => {
     expect(creditCardDetector.detect('extension 4521 today')).toEqual([]);
+  });
+
+  it('ignores a Luhn-valid number with no known card prefix', () => {
+    // Passes Luhn but starts with 1 — not a real IIN, so not a card.
+    expect(creditCardDetector.detect('id 1000000000000008 done')).toEqual([]);
   });
 });
 

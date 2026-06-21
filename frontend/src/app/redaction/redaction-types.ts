@@ -19,9 +19,21 @@ export type RedactionType =
   | 'email'
   | 'credit_card'
   | 'secret'
-  | 'ch_ahv'
-  | 'uk_nino'
   | 'phone'
+  // National identifiers / tax / health numbers (checksum-validated).
+  | 'us_ssn'
+  | 'uk_nino'
+  | 'uk_nhs'
+  | 'fr_nir'
+  | 'it_codice_fiscale'
+  | 'it_partita_iva'
+  | 'de_steuer_id'
+  | 'ch_ahv'
+  | 'at_svnr'
+  | 'pt_nif'
+  | 'es_dni'
+  | 'es_nie'
+  // Tier 2 NLP entity hints.
   | 'person'
   | 'org'
   | 'place';
