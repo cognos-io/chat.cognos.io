@@ -101,7 +101,7 @@ import { ModelService } from '@app/services/model.service';
     .composer-tools {
       display: grid;
       gap: var(--cog-space-050);
-      width: min(360px, 90vw);
+      width: min(360px, calc(100vw - var(--cog-space-200)));
       padding: var(--cog-space-100);
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-md, var(--cog-radius-sm));

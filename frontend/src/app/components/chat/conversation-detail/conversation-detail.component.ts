@@ -99,6 +99,15 @@ import { MessageListComponent } from '../message-list/message-list.component';
       padding-top: var(--cog-space-150);
       padding-inline: var(--cog-space-200);
     }
+
+    /* On mobile the composer fills the width edge-to-edge — the outer padding
+       wastes scarce horizontal space. */
+    @media (max-width: 640px) {
+      .conversation-detail__composer {
+        padding-top: var(--cog-space-100);
+        padding-inline: 0;
+      }
+    }
   `,
 })
 export class ConversationDetailComponent {
