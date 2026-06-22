@@ -157,10 +157,14 @@ func (c *BifrostClient) generateImageViaChat(ctx context.Context, req ImageReque
 		return ImageResponse{}, err
 	}
 
-	bifrostCtx := schemas.NewBifrostContextWithValue(
-		ctx, schemas.NoDeadline,
-		schemas.BifrostContextKeySendBackRawResponse, true,
-	)
+	// Capture the raw provider response so we can read the image out of
+	// choices[].message.images[] (Bifrost's typed chat response drops it). The
+	// per-request SendBackRawResponse override is only honoured when the
+	// AllowPerRequestRawOverride flag is also set, so set both. Scoped to this
+	// request only — raw provider plaintext is never captured for text chat.
+	bifrostCtx := schemas.NewBifrostContext(ctx, schemas.NoDeadline)
+	bifrostCtx.SetValue(schemas.BifrostContextKeyAllowPerRequestRawOverride, true)
+	bifrostCtx.SetValue(schemas.BifrostContextKeySendBackRawResponse, true)
 
 	resp, bifrostErr := c.requester.ChatCompletionRequest(bifrostCtx, chatReq)
 	if bifrostErr != nil {
