@@ -46,7 +46,14 @@ type Model struct {
 	HostingCountry      string        `json:"hosting_country,omitempty"`
 	HostingRegion       string        `json:"hosting_region,omitempty"`
 	ProviderDescription string        `json:"provider_description,omitempty"`
-	IsActive            bool          `json:"-"`
+	// SupportsImageGeneration marks a model that can generate images. Distinct
+	// from image input/vision support.
+	SupportsImageGeneration bool `json:"supports_image_generation"`
+	// ImageGenerationTransport is the provider API to use for image generation
+	// ("images_api" or "chat_completions"). Backend routing only — not exposed to
+	// the frontend. Only meaningful when SupportsImageGeneration is true.
+	ImageGenerationTransport string `json:"-"`
+	IsActive                 bool   `json:"-"`
 }
 
 func CloneModels(models []Model) []Model {

@@ -155,6 +155,7 @@ func TestModelsGetHidesProviderRoutingFields(t *testing.T) {
 				`"base_url"`,
 				`"baseURL"`,
 				`"api_key"`,
+				`"image_generation_transport"`,
 			} {
 				if strings.Contains(body, field) {
 					t.Fatalf("models response leaked %s: %s", field, body)
@@ -171,11 +172,60 @@ func TestModelsGetHidesProviderRoutingFields(t *testing.T) {
 				t.Fatal("expected at least one model in response")
 			}
 			for _, model := range payload.Models {
-				for _, banned := range []string{"provider_model_id", "base_url", "api_key"} {
+				for _, banned := range []string{"provider_model_id", "base_url", "api_key", "image_generation_transport"} {
 					if _, ok := model[banned]; ok {
 						t.Errorf("model %v exposed %q field", model["id"], banned)
 					}
 				}
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+// TestModelsGetExposesImageGenerationCapability verifies the catalogue migration
+// applied: the Gemini image model is whitelisted and carries
+// supports_image_generation, while text models report it false.
+func TestModelsGetExposesImageGenerationCapability(t *testing.T) {
+	t.Parallel()
+
+	scenario := tests.ApiScenario{
+		Name:            "models route exposes image generation capability",
+		Method:          http.MethodGet,
+		URL:             "/api/v1/models",
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"supports_image_generation":true`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc:  withRecordAuth("users", "test1@example.com"),
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, res *http.Response) {
+			bodyBytes, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatalf("read response: %v", err)
+			}
+			defer res.Body.Close()
+
+			var payload struct {
+				Models []struct {
+					ID                      string `json:"id"`
+					SupportsImageGeneration bool   `json:"supports_image_generation"`
+				} `json:"models"`
+			}
+			if err := json.Unmarshal(bodyBytes, &payload); err != nil {
+				t.Fatalf("unmarshal models response: %v", err)
+			}
+
+			var foundImageModel bool
+			for _, model := range payload.Models {
+				if model.ID == "gemini-2-5-flash-image" {
+					foundImageModel = true
+					if !model.SupportsImageGeneration {
+						t.Error("gemini-2-5-flash-image should report supports_image_generation=true")
+					}
+				}
+			}
+			if !foundImageModel {
+				t.Fatal("expected the whitelisted gemini-2-5-flash-image model in the catalogue")
 			}
 		},
 	}

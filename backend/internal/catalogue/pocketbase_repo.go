@@ -98,7 +98,10 @@ func (r *PocketBaseRepo) ActiveModels(_ context.Context) ([]Model, error) {
 			HostingCountry:      strings.TrimSpace(record.GetString("hosting_country")),
 			HostingRegion:       strings.TrimSpace(record.GetString("hosting_region")),
 			ProviderDescription: provider.Description,
-			IsActive:            true,
+
+			SupportsImageGeneration:  record.GetBool("supports_image_generation"),
+			ImageGenerationTransport: strings.TrimSpace(record.GetString("image_generation_transport")),
+			IsActive:                 true,
 		}
 
 		if model.Name == "" {
