@@ -18,6 +18,7 @@
     "clipboard": "^2.0.11",
     "dompurify": "^3.4.10",
     "emoji-toolkit": "^8.0.0",
+    "fflate": "^0.8.3",
     "js-base64": "^3.7.7",
     "katex": "^0.16.10",
     "marked": "^18.0.5",

@@ -17,7 +17,9 @@ function encode(data: Record<string, unknown>): Uint8Array {
 
 describe('ExportService', () => {
   const listConversationMessages = vi.fn();
+  const fetchAttachmentBytes = vi.fn();
   const openSealedBox = vi.fn();
+  const openSecretBox = vi.fn();
   let service: ExportService;
 
   const conversation = {
@@ -35,12 +37,15 @@ describe('ExportService', () => {
     TestBed.configureTestingModule({
       providers: [
         ExportService,
-        { provide: CognosApiService, useValue: { listConversationMessages } },
+        {
+          provide: CognosApiService,
+          useValue: { listConversationMessages, fetchAttachmentBytes },
+        },
         {
           provide: ConversationService,
           useValue: { conversationList: () => [conversation] },
         },
-        { provide: CryptoService, useValue: { openSealedBox } },
+        { provide: CryptoService, useValue: { openSealedBox, openSecretBox } },
       ],
     });
     service = TestBed.inject(ExportService);
@@ -105,5 +110,55 @@ describe('ExportService', () => {
 
     expect(payload.conversation_count).toBe(1);
     expect(payload.conversations[0].messages[1].parent_message_id).toBe('m1');
+  });
+
+  it('references decrypted image attachments by archive path', async () => {
+    // One assistant image message: data decrypts to an attachment, then the
+    // attachment file is fetched and decrypted to bytes.
+    listConversationMessages.mockReturnValue(
+      of({
+        page: 1,
+        perPage: 100,
+        totalItems: 1,
+        totalPages: 1,
+        items: [{ id: 'img1', data: 'AQ==' }],
+      }),
+    );
+    openSealedBox.mockReset();
+    openSealedBox
+      // First call: decrypt the message data (carrying the attachment metadata).
+      .mockReturnValueOnce(
+        encode({
+          content: '',
+          created_at: '2026-01-01T00:00:03Z',
+          model_id: 'gemini-2-5-flash-image',
+          attachments: [
+            { kind: 'generated_image', mime_type: 'image/png', sealed_key: 'c2s=' },
+          ],
+        }),
+      )
+      // Second call: unseal the per-attachment symmetric key.
+      .mockReturnValueOnce(new Uint8Array(32));
+    fetchAttachmentBytes.mockReturnValue(of(new Uint8Array([1, 2, 3])));
+    openSecretBox.mockReturnValue(new Uint8Array([0x89, 0x50, 0x4e, 0x47]));
+
+    const payload = await service.buildConversationExport(
+      conversation,
+      new Date('2026-06-21T00:00:00Z'),
+    );
+
+    const message = payload.conversations[0].messages[0];
+    expect(message.attachments).toEqual([
+      {
+        kind: 'generated_image',
+        mime_type: 'image/png',
+        file: 'images/img1-0.png',
+        width: undefined,
+        height: undefined,
+      },
+    ]);
+    // The attachment was fetched via the conversation-scoped route and decrypted.
+    expect(fetchAttachmentBytes).toHaveBeenCalledWith('conv-1', 'img1');
+    expect(openSecretBox).toHaveBeenCalledTimes(1);
   });
 });

@@ -2,10 +2,12 @@ import { Injectable, inject } from '@angular/core';
 
 import { firstValueFrom } from 'rxjs';
 
+import { zipSync } from 'fflate';
 import { Base64 } from 'js-base64';
 
 import { Conversation } from '@app/interfaces/conversation';
 import {
+  MessageAttachment,
   MessageData,
   isMessageFromUser,
   parseMessageData,
@@ -17,6 +19,16 @@ import { CryptoService } from './crypto.service';
 
 const MESSAGE_PAGE_SIZE = 100;
 
+// ExportedAttachment references a decrypted image bundled alongside the JSON in
+// the export archive. `file` is the archive-relative path to the image bytes.
+export interface ExportedAttachment {
+  kind: string;
+  mime_type: string;
+  file: string;
+  width?: number;
+  height?: number;
+}
+
 export interface ExportedMessage {
   record_id?: string;
   // The record id of the message this one replies to, preserving the thread
@@ -27,7 +39,15 @@ export interface ExportedMessage {
   content: string | null;
   model_id?: string;
   persona_id?: string;
+  // Decrypted image attachments, each pointing at a file in the archive.
+  attachments?: ExportedAttachment[];
 }
+
+// The decrypted image files gathered during an export, keyed by their
+// archive-relative path (matching ExportedAttachment.file).
+type ExportImages = Map<string, Uint8Array>;
+
+const EXPORT_JSON_NAME = 'conversation.json';
 
 export interface ExportedConversation {
   id: string;
@@ -56,21 +76,19 @@ export class ExportService {
   private readonly _crypto = inject(CryptoService);
 
   async buildExport(now: Date): Promise<ExportPayload> {
-    const conversations = this._conversations.conversationList();
-
-    const exported: ExportedConversation[] = [];
-    for (const conversation of conversations) {
-      exported.push(await this.exportConversation(conversation));
-    }
-
-    return this.wrap(exported, now);
+    const { payload } = await this.gather(this._conversations.conversationList(), now);
+    return payload;
   }
 
-  // downloadExport builds the payload and triggers a browser download of the
-  // JSON file. Returns the payload so callers can report a summary.
+  // downloadExport builds the payload and triggers a browser download. When any
+  // conversation has generated images, the download is a .zip bundling the JSON
+  // with the decrypted images; otherwise it stays a plain .json.
   async downloadExport(now: Date): Promise<ExportPayload> {
-    const payload = await this.buildExport(now);
-    this.triggerDownload(payload, `cognos-export-${now.toISOString().slice(0, 10)}`);
+    const { payload, images } = await this.gather(
+      this._conversations.conversationList(),
+      now,
+    );
+    this.deliver(payload, images, `cognos-export-${now.toISOString().slice(0, 10)}`);
     return payload;
   }
 
@@ -80,16 +98,32 @@ export class ExportService {
     conversation: Conversation,
     now: Date,
   ): Promise<ExportPayload> {
-    return this.wrap([await this.exportConversation(conversation)], now);
+    const { payload } = await this.gather([conversation], now);
+    return payload;
   }
 
   async downloadConversationExport(
     conversation: Conversation,
     now: Date,
   ): Promise<ExportPayload> {
-    const payload = await this.buildConversationExport(conversation, now);
-    this.triggerDownload(payload, this.conversationFilename(conversation, now));
+    const { payload, images } = await this.gather([conversation], now);
+    this.deliver(payload, images, this.conversationFilename(conversation, now));
     return payload;
+  }
+
+  // gather decrypts every conversation's messages and their image attachments,
+  // accumulating the decrypted image bytes into a single archive map shared
+  // across conversations (record ids are globally unique, so paths don't clash).
+  private async gather(
+    conversations: Conversation[],
+    now: Date,
+  ): Promise<{ payload: ExportPayload; images: ExportImages }> {
+    const images: ExportImages = new Map();
+    const exported: ExportedConversation[] = [];
+    for (const conversation of conversations) {
+      exported.push(await this.exportConversation(conversation, images));
+    }
+    return { payload: this.wrap(exported, now), images };
   }
 
   private wrap(conversations: ExportedConversation[], now: Date): ExportPayload {
@@ -103,17 +137,21 @@ export class ExportService {
 
   private async exportConversation(
     conversation: Conversation,
+    images: ExportImages,
   ): Promise<ExportedConversation> {
     return {
       id: conversation.record.id,
       title: conversation.decryptedData.title,
       created: conversation.record.created,
       updated: conversation.record.updated,
-      messages: await this.exportMessages(conversation),
+      messages: await this.exportMessages(conversation, images),
     };
   }
 
-  private async exportMessages(conversation: Conversation): Promise<ExportedMessage[]> {
+  private async exportMessages(
+    conversation: Conversation,
+    images: ExportImages,
+  ): Promise<ExportedMessage[]> {
     const messages: ExportedMessage[] = [];
 
     let page = 1;
@@ -138,6 +176,12 @@ export class ExportService {
           content: data.content,
           model_id: data.model_id,
           persona_id: data.persona_id,
+          attachments: await this.exportAttachments(
+            conversation,
+            record.id,
+            data.attachments,
+            images,
+          ),
         });
       }
 
@@ -149,6 +193,60 @@ export class ExportService {
     return messages.sort((a, b) =>
       (a.created_at ?? '').localeCompare(b.created_at ?? ''),
     );
+  }
+
+  // exportAttachments fetches and decrypts each image attachment, adds the bytes
+  // to the archive map, and returns the JSON references. Returns undefined when
+  // the message has no attachments (so the field stays absent for text turns).
+  // A failed fetch/decrypt skips that image rather than failing the whole export.
+  private async exportAttachments(
+    conversation: Conversation,
+    messageId: string,
+    attachments: MessageAttachment[] | undefined,
+    images: ExportImages,
+  ): Promise<ExportedAttachment[] | undefined> {
+    if (!attachments?.length) {
+      return undefined;
+    }
+
+    const exported: ExportedAttachment[] = [];
+    for (let index = 0; index < attachments.length; index += 1) {
+      const attachment = attachments[index];
+      const bytes = await this.decryptAttachment(conversation, messageId, attachment);
+      if (!bytes) {
+        continue;
+      }
+      const file = `images/${messageId}-${index}.${extForMime(attachment.mime_type)}`;
+      images.set(file, bytes);
+      exported.push({
+        kind: attachment.kind,
+        mime_type: attachment.mime_type,
+        file,
+        width: attachment.width,
+        height: attachment.height,
+      });
+    }
+
+    return exported.length ? exported : undefined;
+  }
+
+  private async decryptAttachment(
+    conversation: Conversation,
+    messageId: string,
+    attachment: MessageAttachment,
+  ): Promise<Uint8Array | null> {
+    try {
+      const ciphertext = await firstValueFrom(
+        this._api.fetchAttachmentBytes(conversation.record.id, messageId),
+      );
+      const symmetricKey = this._crypto.openSealedBox(
+        Base64.toUint8Array(attachment.sealed_key),
+        conversation.keyPair,
+      );
+      return this._crypto.openSecretBox(ciphertext, symmetricKey);
+    } catch {
+      return null;
+    }
   }
 
   private decrypt(base64Data: string, conversation: Conversation): MessageData {
@@ -176,17 +274,54 @@ export class ExportService {
     return `cognos-${base}-${now.toISOString().slice(0, 10)}`;
   }
 
-  private triggerDownload(payload: ExportPayload, filename: string): void {
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: 'application/json',
-    });
+  // deliver downloads the export: a plain .json when there are no images, or a
+  // .zip bundling conversation.json with the decrypted images/ folder otherwise.
+  private deliver(
+    payload: ExportPayload,
+    images: ExportImages,
+    filename: string,
+  ): void {
+    const json = JSON.stringify(payload, null, 2);
+
+    if (images.size === 0) {
+      this.download(new Blob([json], { type: 'application/json' }), `${filename}.json`);
+      return;
+    }
+
+    const files: Record<string, Uint8Array> = {
+      [EXPORT_JSON_NAME]: new TextEncoder().encode(json),
+    };
+    for (const [path, bytes] of images) {
+      files[path] = bytes;
+    }
+    const zipped = zipSync(files);
+    this.download(
+      new Blob([zipped as BlobPart], { type: 'application/zip' }),
+      `${filename}.zip`,
+    );
+  }
+
+  private download(blob: Blob, filename: string): void {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `${filename}.json`;
+    anchor.download = filename;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
     URL.revokeObjectURL(url);
+  }
+}
+
+function extForMime(mimeType: string): string {
+  switch (mimeType) {
+    case 'image/jpeg':
+      return 'jpg';
+    case 'image/webp':
+      return 'webp';
+    case 'image/gif':
+      return 'gif';
+    default:
+      return 'png';
   }
 }
