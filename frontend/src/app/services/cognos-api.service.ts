@@ -815,22 +815,27 @@ export class CognosApiService {
     );
   }
 
-  // fetchAttachmentBytes downloads the encrypted bytes of a protected message
-  // attachment. Protected files require a short-lived file token; the bytes are
-  // ciphertext and are decrypted client-side.
-  fetchAttachmentBytes(recordId: string, fileName: string): Observable<Uint8Array> {
-    return from(this.downloadAttachment(recordId, fileName));
+  // fetchAttachmentBytes downloads the encrypted bytes of a message attachment
+  // through the conversation-scoped route (the messages collection is locked to
+  // custom routes, so the built-in protected-file endpoint is unavailable). The
+  // bytes are ciphertext and are decrypted client-side.
+  fetchAttachmentBytes(
+    conversationId: string,
+    messageId: string,
+  ): Observable<Uint8Array> {
+    return from(this.downloadAttachment(conversationId, messageId));
   }
 
   private async downloadAttachment(
-    recordId: string,
-    fileName: string,
+    conversationId: string,
+    messageId: string,
   ): Promise<Uint8Array> {
-    const token = await this._pb.files.getToken();
-    const url = `${this._baseUrl}/api/files/messages/${encodeURIComponent(
-      recordId,
-    )}/${encodeURIComponent(fileName)}?token=${encodeURIComponent(token)}`;
-    const response = await fetch(url);
+    const url = `${this._baseUrl}/api/v1/conversations/${encodeURIComponent(
+      conversationId,
+    )}/messages/${encodeURIComponent(messageId)}/attachment`;
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${this._pb.authStore.token}` },
+    });
     if (!response.ok) {
       throw new Error(`failed to fetch attachment (${response.status})`);
     }

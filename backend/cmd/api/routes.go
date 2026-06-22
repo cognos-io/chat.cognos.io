@@ -720,6 +720,14 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	e.Router.GET(
+		"/api/v1/conversations/{conversationID}/messages/{messageID}/attachment",
+		handler.ConversationMessageAttachment(completeParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.POST("/v1/auth/logout", func(re *core.RequestEvent) error {
 		re.Auth.RefreshTokenKey()
 		if err := app.Save(re.Auth); err != nil {

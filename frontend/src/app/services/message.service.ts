@@ -1229,10 +1229,7 @@ export class MessageService {
     attachment: MessageAttachment,
     conversation: Conversation,
   ): Observable<string> {
-    if (!attachment.file_name) {
-      throw new Error('attachment is missing a file name');
-    }
-    return this._api.fetchAttachmentBytes(recordId, attachment.file_name).pipe(
+    return this._api.fetchAttachmentBytes(conversation.record.id, recordId).pipe(
       map((ciphertext) => {
         const symmetricKey = this._cryptoService.openSealedBox(
           Base64.toUint8Array(attachment.sealed_key),

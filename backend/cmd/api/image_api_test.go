@@ -35,6 +35,44 @@ func TestConversationImageRequiresAuth(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestConversationMessageAttachmentRequiresAuth(t *testing.T) {
+	t.Parallel()
+
+	scenario := tests.ApiScenario{
+		Name:            "attachment download requires record auth",
+		Method:          http.MethodGet,
+		URL:             "/api/v1/conversations/conv1/messages/msg1/attachment",
+		ExpectedStatus:  http.StatusUnauthorized,
+		ExpectedContent: []string{`"message":"The request requires valid record authorization token."`},
+		TestAppFactory:  setupTestApp,
+	}
+
+	scenario.Test(t)
+}
+
+func TestConversationMessageAttachmentMissingReturnsNotFound(t *testing.T) {
+	t.Parallel()
+
+	conversationID := "convimgmiss0001"
+	var conversationPublicKey [32]byte
+
+	scenario := tests.ApiScenario{
+		Name:            "attachment download 404s for a non-existent message",
+		Method:          http.MethodGet,
+		URL:             "/api/v1/conversations/" + conversationID + "/messages/nope/attachment",
+		ExpectedStatus:  http.StatusNotFound,
+		ExpectedContent: []string{"Attachment not found"},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			conversationPublicKey = seedConversationRecord(t, app, conversationID)
+			_ = conversationPublicKey
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func TestConversationImageRejectsNonImageModelBeforeGateway(t *testing.T) {
 	t.Parallel()
 

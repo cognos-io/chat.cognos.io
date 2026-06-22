@@ -19,6 +19,54 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
+// ConversationMessageAttachment serves the encrypted bytes of a message's
+// attachment (e.g. a generated image). The messages collection is locked to
+// custom routes, so the built-in protected-file endpoint denies regular users;
+// this route applies the same conversation-participant access check as the rest
+// of the conversation API. The bytes are ciphertext — decryption is client-side.
+func ConversationMessageAttachment(params CompleteHandlerParams) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		owner := auth.ExtractUser(e)
+		if owner == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		conversationID := e.Request.PathValue("conversationID")
+		messageID := e.Request.PathValue("messageID")
+		if conversationID == "" || messageID == "" {
+			return apis.NewBadRequestError("Conversation and message IDs are required", nil)
+		}
+
+		// Authorise against the conversation before revealing the message exists.
+		active, err := conversationAccessibleByID(e.App, conversationID, owner.ID)
+		if err != nil {
+			params.Logger.Error("attachment access lookup failed", "err", err)
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify access", err)
+		}
+		if !active {
+			return apis.NewNotFoundError("Attachment not found", nil)
+		}
+
+		record, err := e.App.FindRecordById("messages", messageID)
+		if err != nil || record.GetString("conversation") != conversationID {
+			return apis.NewNotFoundError("Attachment not found", nil)
+		}
+
+		filename := record.GetString("attachment")
+		if filename == "" {
+			return apis.NewNotFoundError("Attachment not found", nil)
+		}
+
+		fsys, err := e.App.NewFilesystem()
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to open file storage", err)
+		}
+		defer fsys.Close()
+
+		return fsys.Serve(e.Response, e.Request, record.BaseFilesPath()+"/"+filename, filename)
+	}
+}
+
 type generateImageRequest struct {
 	Prompt    string `json:"prompt"`
 	ModelID   string `json:"model_id"`
