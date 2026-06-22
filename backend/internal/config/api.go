@@ -81,6 +81,9 @@ type APIConfig struct {
 	BillingTrialSeedRappen             int64 `koanf:"billing.trial_seed_rappen"`
 	BillingPaygMinCommitRappen         int64 `koanf:"billing.payg_min_commit_rappen"`
 	BillingUnlimitedFairUseAlertRappen int64 `koanf:"billing.unlimited_fair_use_alert_rappen"`
+	// BillingMarginBPS is the markup over provider cost in basis points
+	// (2200 = 22%). Defaults to billing.DefaultMarginBPS.
+	BillingMarginBPS int64 `koanf:"billing.margin_bps"`
 	// Paddle (payments). Prices are Paddle price IDs (pri_...).
 	PaddleAPIBase               string `koanf:"paddle.api_base"`
 	PaddleAPIKey                string `koanf:"paddle.api_key"`
@@ -147,6 +150,10 @@ func MustLoadAPIConfig(logger *slog.Logger) *APIConfig {
 
 	if c.BillingUnlimitedFairUseAlertRappen <= 0 {
 		c.BillingUnlimitedFairUseAlertRappen = billing.DefaultFairUseAlertRappen
+	}
+
+	if c.BillingMarginBPS <= 0 {
+		c.BillingMarginBPS = billing.DefaultMarginBPS
 	}
 
 	if strings.TrimSpace(c.PaddleAPIBase) == "" {

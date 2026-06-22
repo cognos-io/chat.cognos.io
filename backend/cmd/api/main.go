@@ -115,7 +115,11 @@ func bindAppHooks(
 
 		billingService := params.BillingService
 		if billingService == nil {
-			billingService = billing.NewService()
+			marginBPS := int64(billing.DefaultMarginBPS)
+			if params.Config != nil && params.Config.BillingMarginBPS > 0 {
+				marginBPS = params.Config.BillingMarginBPS
+			}
+			billingService = billing.NewServiceWithMargin(marginBPS)
 		}
 
 		billingRepo := billing.NewPocketBaseRepo(app)
