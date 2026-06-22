@@ -202,7 +202,7 @@ type ShareState = 'checking' | 'idle' | 'shared';
     .share-dialog__mode {
       display: flex;
       gap: var(--cog-space-100);
-      align-items: start;
+      align-items: center;
       cursor: pointer;
     }
 

@@ -64,7 +64,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
 
       .cog-dialog-surface__header {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
         gap: var(--cog-space-150);
         padding: var(--cog-space-200) var(--cog-space-200) var(--cog-space-150);
