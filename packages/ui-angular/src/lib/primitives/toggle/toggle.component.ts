@@ -4,18 +4,19 @@ import {
   computed,
   input,
   output,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
+import { CognosIconComponent } from '../../icon/icon.component';
 
 @Component({
-  selector: "cog-toggle",
+  selector: 'cog-toggle',
   standalone: true,
   imports: [CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <button
       [class]="toggleClass()"
+      [attr.id]="inputId() || null"
       [disabled]="disabled()"
       [attr.aria-checked]="checked()"
       [attr.aria-label]="label() || null"
@@ -105,17 +106,20 @@ import { CognosIconComponent } from "../../icon/icon.component";
 export class CognosToggleComponent {
   readonly checked = input(false);
   readonly disabled = input(false);
-  readonly label = input("");
+  readonly label = input('');
+  // Optional id placed on the switch button so a native <label for> can target
+  // it (a <button> is a labelable element), making adjacent label text toggle it.
+  readonly inputId = input('');
   readonly checkedChange = output<boolean>();
 
   protected readonly toggleClass = computed(() => {
-    const classes = ["cog-toggle"];
+    const classes = ['cog-toggle'];
 
     if (this.checked()) {
-      classes.push("cog-toggle--checked");
+      classes.push('cog-toggle--checked');
     }
 
-    return classes.join(" ");
+    return classes.join(' ');
   });
 
   protected onToggle(): void {

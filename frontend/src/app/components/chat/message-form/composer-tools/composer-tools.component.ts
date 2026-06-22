@@ -44,17 +44,25 @@ import { ModelService } from '@app/services/model.service';
         />
       </div>
 
+      <!-- The copy is a native <label> targeting the switch's id, so clicking
+           the title or description toggles it (a <button> is labelable) — no
+           extra JS or tab stop, and the cog-toggle stays the keyboard-operable
+           role="switch" control. -->
       <div class="composer-tools__row">
         <cog-icon name="image" [size]="18" tone="text-subtle" />
-        <div class="composer-tools__copy">
+        <label
+          class="composer-tools__copy composer-tools__copy--clickable"
+          [attr.for]="imageToggleId"
+        >
           <span class="composer-tools__title">{{
             t('chat.composer.tools.generateImage.title')
           }}</span>
           <span class="composer-tools__desc">{{
             t('chat.composer.tools.generateImage.description')
           }}</span>
-        </div>
+        </label>
         <cog-toggle
+          [inputId]="imageToggleId"
           [checked]="tools.imageGenerationEnabled()"
           [label]="t('chat.composer.tools.generateImage.title')"
           (checkedChange)="tools.setImageGeneration($event)"
@@ -104,7 +112,7 @@ import { ModelService } from '@app/services/model.service';
     .composer-tools__row {
       display: grid;
       grid-template-columns: auto 1fr auto;
-      align-items: start;
+      align-items: center;
       gap: var(--cog-space-100);
       padding: var(--cog-space-100);
       border-radius: var(--cog-radius-sm);
@@ -114,9 +122,18 @@ import { ModelService } from '@app/services/model.service';
       opacity: 0.55;
     }
 
+    .composer-tools__row:has(.composer-tools__copy--clickable:hover) {
+      background: var(--cog-surface-hover);
+    }
+
     .composer-tools__copy {
       display: grid;
       gap: 2px;
+    }
+
+    .composer-tools__copy--clickable {
+      cursor: pointer;
+      user-select: none;
     }
 
     .composer-tools__title {
@@ -149,7 +166,6 @@ import { ModelService } from '@app/services/model.service';
       margin: 0;
       font-size: var(--cog-fs-body);
       line-height: var(--cog-lh-body, 1.4);
-      font-weight: 600;
       color: var(--cog-warning-text, #8a5a00);
     }
 
@@ -170,4 +186,7 @@ import { ModelService } from '@app/services/model.service';
 export class ComposerToolsComponent {
   readonly tools = inject(ComposerToolsService);
   readonly modelService = inject(ModelService);
+
+  // Ties the Generate image label to its switch so clicking the text toggles it.
+  readonly imageToggleId = 'composer-tool-image';
 }
