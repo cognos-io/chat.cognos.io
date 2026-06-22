@@ -23,12 +23,29 @@ Resolved after reviewing the live backend and frontend code:
   conversation **public** key and encrypts with an anonymous sealed box (`box.SealAnonymous`); it
   cannot decrypt. Clients decrypt with the conversation secret key. There is no new
   `conversation-attachment-v1` scheme and no server-side decryption (see §7.4).
-- **Provider return shape**: For Requesty/Gemini image models the image arrives **inline as a
-  content block on the same chat-completion call**, not via a separate images endpoint or a
-  temporary URL. The current gateway client discards non-text content blocks and must be extended
-  (see §7.7). A provider spike confirms the exact shape before the persistence MVP.
+- **Two transports, selected per model**: The provider spike (against live Requesty) established
+  that image generation is **not one path**. Requesty exposes two, chosen by model:
+    - **Images API** (`POST /v1/images/generations`) for OpenAI `gpt-image-*`. Returns
+      `data[].b64_json`. Proven end-to-end.
+    - **Chat Completions** (`POST /v1/chat/completions`) for Google Gemini `*-flash-image-*` (the
+      ZDR/EU-eligible models). The image returns inline at
+      `choices[].message.images[].image_url.url` as a `data:` URI.
+
+This is the single biggest correction to the original draft, which assumed one chat-completion
+content block. See §7.7 for the gateway design and §7.1/§6.2 for the catalogue field this requires.
+
+- **Bifrost does not model chat image output**: Bifrost (through v1.5.22) has no typed field for
+  `message.images[]` on chat responses, so the Gemini image would be dropped. The gateway enables
+  Bifrost's per-request `SendBackRawResponse` flag **only** for image-via-chat requests and parses
+  the data URI out of the raw provider JSON. The flag is never set for text completions, so raw
+  provider plaintext is not captured on the common path. Upgrading Bifrost does not remove this
+  need.
+- **ZDR drove Route B**: the EU-resident, zero-retention image model is Gemini-class, which only
+  generates via chat completions — so the chat transport is required, not optional, for ZDR users.
 - **Build sequence**: Update this spec first, then ship the model-capability slice (UI/API, no
-  crypto) alongside the provider spike, then the encrypted-persistence MVP.
+  crypto) alongside the provider spike, then the encrypted-persistence MVP. (Spike: done — gateway
+  image generation, image-flagged billing, and attachment encryption are implemented and tested;
+  the gpt-image path is proven against live Requesty, the Gemini chat path is pending a live run.)
 
 ## 1. Overview
 
@@ -131,6 +148,9 @@ Cost of not solving it:
     `supports_image_generation` when available.
     - `supports_image_generation` is distinct from image input support and does not imply vision.
     - Text-only models continue to appear in the catalogue with `supports_image_generation: false`.
+    - For models where `supports_image_generation` is true, the catalogue also records the
+      **transport** the backend must use (`images_api` or `chat_completions`, see §7.1). This is a
+      backend routing concern; the frontend does not need it.
 
 ### 6.3 Unsupported-model alerting
 
@@ -221,13 +241,17 @@ Cost of not solving it:
 
 ### 7.1 Model catalogue
 
-Add a backend model field:
+Add two backend model fields — the capability flag (user-facing) and the transport (backend
+routing, since the spike proved image generation uses two different provider APIs):
 
 ```go
-SupportsImageGeneration bool `json:"supports_image_generation"`
+SupportsImageGeneration bool   `json:"supports_image_generation"`
+// ImageGenerationTransport is "images_api" or "chat_completions". Only meaningful
+// when SupportsImageGeneration is true. Backend-only; never sent to the frontend.
+ImageGenerationTransport string `json:"-"`
 ```
 
-Frontend mapping:
+Frontend mapping (capability only — the transport is not exposed):
 
 ```ts
 supportsImageGeneration: boolean
@@ -236,14 +260,16 @@ supportsImageGeneration: boolean
 Do not overload `content_types` for this. `content_types` is currently tied to message/input media
 shape and future image input support. Image generation is an output/tool capability.
 
-Recommended PocketBase field on `ai_models`:
+Recommended PocketBase fields on `ai_models`:
 
 ```txt
-supports_image_generation bool default false
+supports_image_generation  bool   default false
+image_generation_transport select images_api | chat_completions   (only set when the above is true)
 ```
 
-Requesty import/seed data must map the upstream `supports_image_generation` value into this field.
-Manual operator changes remain possible through the catalogue collection.
+The transport maps to `gateway.ImageTransport`: OpenAI `gpt-image-*` models use `images_api`;
+Google Gemini `*-flash-image-*` models use `chat_completions`. Requesty import/seed data must set
+both fields. Manual operator changes remain possible through the catalogue collection.
 
 ### 7.2 Request shape
 
@@ -262,6 +288,10 @@ The request must include an explicit image generation flag/mode, for example:
 
 The exact field name can be chosen during implementation, but it must be explicit and testable. The
 backend must not infer image generation from prompt text alone.
+
+The client sends only the boolean flag and the `model_id`; the backend resolves which transport to
+use (§7.1, §7.7) from the catalogue. The transport is never client-supplied — a client cannot ask
+to route a model differently.
 
 ### 7.3 Response and message payload shape
 
@@ -309,10 +339,12 @@ key and never decrypts; only clients holding the conversation secret key decrypt
 
 Required flow:
 
-1. Backend sends the prompt to the selected image-capable provider.
-2. Provider returns image bytes — for the Requesty/Gemini path, inline as a content block on the
-   chat-completion response (see §7.7). If any provider returns a temporary URL instead, the
-   backend downloads the bytes immediately and never persists the URL.
+1. Backend sends the prompt to the selected image-capable provider over the model's transport
+   (§7.7).
+2. The gateway returns decoded image bytes regardless of transport: the Images API yields
+   `data[].b64_json` and the chat path yields a `data:` URI from `message.images[]` (both decoded to
+   bytes inside the gateway, see §7.7). If any provider returns a temporary URL instead, the backend
+   downloads the bytes immediately and never persists the URL.
 3. Backend generates a random per-file symmetric key and encrypts the image bytes in memory with
    NaCl `secretbox` (`secretBox` on the client side).
 4. Backend seals that symmetric key to the conversation public key with `box.SealAnonymous`, and
@@ -359,37 +391,59 @@ Usage/analytics records must capture only operational billing fields such as:
 - final billed cost in USD/CHF/rappen;
 - latency and success/failure class.
 
-Bifrost responses already carry `Cost.TotalCost`, so **prefer provider-reported cost** and apply
-the existing margin, exactly as the text pipeline can. Fall back to an operator-managed per-image
-price on `ai_models` only when the provider reports no cost; such a model must not be enabled for
-paid users until that price is set.
+**Cost source differs by transport** (a spike finding):
+
+- **Images API** (`gpt-image-*`): the response carries **no cost** — only token counts
+  (`ImageUsage` has no `Cost` field). So provider-reported cost is unavailable on this path and the
+  model **must** have an operator-managed price (per image, or via image token rates) before it can
+  be enabled for paid users.
+- **Chat Completions** (Gemini): the response **may** carry `usage.Cost.TotalCost`. When present,
+  prefer it and apply the existing margin, exactly as the text pipeline does; otherwise fall back to
+  the operator-managed price. (Whether Gemini-via-Requesty actually reports cost is confirmed by the
+  live integration run.)
+
+The gateway already maps these: the Images API path leaves `ProviderCostUSD` nil; the chat path
+sets it from `usage.Cost.TotalCost` when available. `BillingService.CalculateCost` already prefers
+`ProviderCostUSD` when non-nil and falls back to token pricing.
 
 The current `billing_ledger` meters purely on input/output tokens and has no operation-type or
-image-count column. This slice must add `operation_type` (`image_generation`) and
-`generated_image_count` to the ledger, and branch `BillingService.CalculateCost` to price by image
-when token-based pricing does not apply.
+image-count column. This slice already adds `operation_type` (`image_generation`) and
+`generated_image_count` to the in-memory usage record (`billing.UsageRecord`); the remaining work is
+the matching ledger columns/migration and a per-image pricing branch in `CalculateCost` for models
+without a provider-reported cost.
 
-### 7.7 Gateway/provider path (current gap)
+### 7.7 Gateway/provider path (implemented in the spike)
 
-The gateway client (`internal/gateway/bifrost_client.go`) is text-only today:
+The gateway exposes one method, `Client.GenerateImage(ctx, ImageRequest) (ImageResponse, error)`,
+which dispatches on `ImageRequest.Transport`. Both transports return decoded image **bytes** plus a
+`Usage`, so the caller (and §7.4 persistence) is transport-agnostic.
 
-- it sends only `Content.ContentStr` (plain text) on requests;
-- `extractMessageContent()` walks `Content.ContentBlocks` but keeps only `block.Text`, silently
-  discarding any image content block;
-- the streaming path assembles `Delta.Content` text deltas.
+**Images API transport** (`images_api`, default — OpenAI `gpt-image-*`):
 
-For an inline-image model such as `gemini-2-5-flash-image`, the generated image returns as a
-non-text content block on the **same** chat-completion response. To support image generation the
-gateway layer must:
+- Calls Bifrost's dedicated `ImageGenerationRequest` (`POST /v1/images/generations`).
+- Requests `response_format=b64_json` so the bytes return **inline** — we never receive or persist a
+  temporary provider URL.
+- Reads `data[].b64_json`; usage carries token counts only (no provider cost — see §7.6).
 
-- carry image content blocks through `gateway.Message`/response types instead of discarding them;
-- expose a non-streaming completion path (or a single terminal result event) for image responses,
-  since they do not token-stream like text;
-- surface provider-reported usage/cost (`Cost.TotalCost`) for the billing branch in §7.6.
+**Chat Completions transport** (`chat_completions` — Google Gemini `*-flash-image-*`, the ZDR path):
 
-A short provider spike (one image request through Requesty) confirms the exact block shape, MIME
-type, and whether bytes are inline base64 or a URL, before the persistence MVP is designed in
-detail.
+- Calls Bifrost's `ChatCompletionRequest` (`POST /v1/chat/completions`) with the prompt as a single
+  user message.
+- Bifrost's typed chat response has **no field** for generated images (true through v1.5.22), so the
+  gateway sets Bifrost's `SendBackRawResponse` flag **per request** (via the
+  `BifrostContextKeySendBackRawResponse` context key — never globally, so raw provider plaintext is
+  not captured on the text-completion path) and parses the image out of the raw provider JSON at
+  `choices[].message.images[].image_url.url` (a `data:image/...;base64,...` URI, decoded to bytes).
+- Usage is read from the typed response and includes `ProviderCostUSD` when Bifrost reports
+  `usage.Cost.TotalCost`.
+
+Both paths log only structured, non-sensitive error fields (status/type/code) — never the prompt,
+the free-text provider message (which can echo the prompt), or any image bytes.
+
+Verification status: the Images API path is proven against live Requesty
+(`azure/openai/gpt-image-1`, returns a ~2.2 MB PNG). The chat path has unit coverage against a
+stubbed raw response and a gated integration test (`REQUESTY_IMAGE_TRANSPORT=chat_completions`)
+pending a live run for final confirmation of the response shape and whether cost is reported.
 
 ## 8. Non-Functional Requirements
 
@@ -454,10 +508,12 @@ detail.
 - Image generation request with unsupported model returns an error before gateway invocation.
 - Image generation request with privacy-tier-ineligible model returns the existing eligibility error
   before gateway invocation.
-- Successful image generation persists encrypted assistant message data and encrypted object
-  content.
+- Successful image generation persists encrypted assistant message data and an encrypted protected
+  file.
 - Provider failure after user message persistence deletes the user message.
-- Object storage or message persistence failure leaves no plaintext image artefacts.
+- Protected file write or message persistence failure leaves no plaintext image artefacts.
+- A chat-transport (Gemini) image is parsed from the raw provider response and persisted encrypted,
+  with no raw provider JSON or `data:` URI written to logs or the database.
 
 ### Frontend unit tests
 
@@ -482,8 +538,10 @@ detail.
 ## 13. Open Decisions Before Implementation
 
 Resolved (see §0 Decision Log): storage backend (PocketBase protected file field), encryption
-model (sealed box to conversation public key, no new scheme), provider return shape (inline content
-block, pending spike confirmation), build sequence (spec → capability slice + spike → MVP).
+model (sealed box to conversation public key, no new scheme), build sequence (spec → capability
+slice + spike → MVP). The provider path is now resolved and implemented — **two transports
+(`images_api` / `chat_completions`) selected per model** (§7.7), with the Images API proven against
+live Requesty and the Gemini chat path pending a live run.
 
 Still open:
 
@@ -495,6 +553,9 @@ Still open:
 - Whether generated images must support expiry deletion exactly tied to message expiry in the first
   slice.
 - How provider-specific image options such as aspect ratio or size are exposed, if at all, in the
-  MVP.
+  MVP. (The chat transport supports an optional `image_config` with `aspect_ratio`/`image_size`;
+  the Images API supports `size`/`quality`/`output_format`. Neither is wired in the spike.)
 - Whether image generation uses the existing `/complete` endpoint with a flag (MVP per §7.2) or a
   dedicated route, given it does not token-stream.
+- Confirm whether the Gemini chat transport reports `usage.Cost.TotalCost`; if not, an
+  operator-managed per-image price is required for those models too (§7.6).
