@@ -115,6 +115,92 @@ func TestConversationImageRejectsNonImageModelBeforeGateway(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestConversationImageRegenerateParentsToExistingMessage(t *testing.T) {
+	t.Parallel()
+
+	gatewayClient := &gateway.MockClient{
+		GenerateImageFunc: func(_ context.Context, _ gateway.ImageRequest) (gateway.ImageResponse, error) {
+			return gateway.ImageResponse{
+				Images: []gateway.GeneratedImage{{Bytes: fakeImageBytes, MimeType: "image/png"}},
+				Usage:  gateway.Usage{InputTokens: 7, OutputTokens: 1303, TotalTokens: 1310},
+			}, nil
+		},
+	}
+
+	conversationID := "convimgregen001"
+	parentID := "parentmsgimg001"
+	var conversationPublicKey [32]byte
+
+	scenario := tests.ApiScenario{
+		Name:   "image regenerate parents to an existing message without a new user turn",
+		Method: http.MethodPost,
+		URL:    "/api/v1/conversations/" + conversationID + "/image",
+		Body: strings.NewReader(`{
+			"model_id":"gemini-2-5-flash-image",
+			"prompt":"a watercolour fox",
+			"parent_message_id":"` + parentID + `"
+		}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"parent_message_id":"` + parentID + `"`,
+		},
+		// user_message_id is omitempty — absent when regenerating (no new user turn).
+		NotExpectedContent: []string{`"user_message_id"`},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				BillingService: billing.NewService(),
+				ConversationRepo: stubConversationRepo{
+					byID: func(id string) (chat.Conversation, error) {
+						return chat.Conversation{ID: id, PublicKey: conversationPublicKey}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			conversationPublicKey = seedConversationRecord(t, app, conversationID)
+
+			// Seed the existing prompt message the regenerate parents to.
+			coll, err := app.FindCollectionByNameOrId("messages")
+			if err != nil {
+				t.Fatalf("find messages collection: %v", err)
+			}
+			parent := core.NewRecord(coll)
+			parent.Id = parentID
+			parent.Set("conversation", conversationID)
+			parent.Set("data", "ZHVtbXk=")
+			if err := app.Save(parent); err != nil {
+				t.Fatalf("seed parent message: %v", err)
+			}
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			records, err := app.FindRecordsByFilter(
+				"messages",
+				"conversation={:conversation}",
+				"",
+				10,
+				0,
+				dbx.Params{"conversation": conversationID},
+			)
+			if err != nil {
+				t.Fatalf("FindRecordsByFilter(messages) error = %v", err)
+			}
+			// Only the seeded parent + the new assistant image — no new user turn.
+			if len(records) != 2 {
+				t.Fatalf("persisted %d messages, want 2 (parent + assistant)", len(records))
+			}
+			for _, record := range records {
+				if record.Id != parentID && record.GetString("parent_message") != parentID {
+					t.Fatalf("assistant message parent = %q, want %q", record.GetString("parent_message"), parentID)
+				}
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func TestConversationImageGenerationPersistsEncryptedAttachment(t *testing.T) {
 	t.Parallel()
 

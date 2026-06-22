@@ -88,6 +88,9 @@ export type CompleteStreamEvent =
 export interface GenerateImageRequest {
   prompt: string;
   modelId: string;
+  // When set, regenerates: the new image is parented to this existing message
+  // instead of creating a fresh user prompt message.
+  parentMessageId?: string;
   requestId?: string;
 }
 
@@ -809,6 +812,7 @@ export class CognosApiService {
       {
         prompt: request.prompt,
         model_id: request.modelId,
+        parent_message_id: request.parentMessageId,
         request_id: request.requestId,
       },
       { headers: this.authHeaders() },

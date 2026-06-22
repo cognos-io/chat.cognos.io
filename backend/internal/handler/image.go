@@ -68,9 +68,12 @@ func ConversationMessageAttachment(params CompleteHandlerParams) func(e *core.Re
 }
 
 type generateImageRequest struct {
-	Prompt    string `json:"prompt"`
-	ModelID   string `json:"model_id"`
-	RequestID string `json:"request_id,omitempty"`
+	Prompt  string `json:"prompt"`
+	ModelID string `json:"model_id"`
+	// ParentMessageID, when set, regenerates: the new image is parented to this
+	// existing message instead of creating a fresh user prompt message.
+	ParentMessageID string `json:"parent_message_id,omitempty"`
+	RequestID       string `json:"request_id,omitempty"`
 }
 
 const maxImagePromptChars = 4000
@@ -123,6 +126,7 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 		req.Prompt = strings.TrimSpace(req.Prompt)
 		req.ModelID = strings.TrimSpace(req.ModelID)
 		req.RequestID = strings.TrimSpace(req.RequestID)
+		req.ParentMessageID = strings.TrimSpace(req.ParentMessageID)
 
 		if req.ModelID == "" {
 			return apis.NewBadRequestError("Model ID is required", nil)
@@ -196,20 +200,45 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 			}
 		}
 
-		// Persist the user's prompt as a user message first, so the prompt and
-		// its generated image stay together in the conversation thread.
-		err, userMessageRecord := params.MessageRepo.EncryptAndPersistMessage(
-			conversation,
-			"",
-			chat.MessageRecordData{
-				OwnerID:   owner.ID,
-				Content:   req.Prompt,
-				CreatedAt: time.Now().UTC().Format(time.RFC3339),
-			},
-		)
-		if err != nil {
-			params.Logger.Error("failed to save image prompt message", "err", err)
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to save request message", err)
+		// Regenerate mode: parent the new image to an existing prompt message
+		// instead of creating a fresh one (mirrors the text regenerate path).
+		regenerate := req.ParentMessageID != ""
+		var userMessageRecord *core.Record
+		assistantParentID := req.ParentMessageID
+
+		if regenerate {
+			parentRecord, err := e.App.FindRecordById("messages", req.ParentMessageID)
+			if err != nil || parentRecord.GetString("conversation") != conversationID {
+				return apis.NewNotFoundError("Parent message not found or unable to load", nil)
+			}
+		} else {
+			// Persist the user's prompt as a user message first, so the prompt and
+			// its generated image stay together in the conversation thread.
+			persistErr, record := params.MessageRepo.EncryptAndPersistMessage(
+				conversation,
+				"",
+				chat.MessageRecordData{
+					OwnerID:   owner.ID,
+					Content:   req.Prompt,
+					CreatedAt: time.Now().UTC().Format(time.RFC3339),
+				},
+			)
+			if persistErr != nil {
+				params.Logger.Error("failed to save image prompt message", "err", persistErr)
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to save request message", persistErr)
+			}
+			userMessageRecord = record
+			assistantParentID = record.Id
+		}
+
+		// cleanupPromptMessage rolls back the freshly-persisted prompt on a later
+		// failure. No-op when regenerating (we created no prompt message).
+		cleanupPromptMessage := func() {
+			if userMessageRecord != nil {
+				if deleteErr := params.MessageRepo.DeleteMessage(userMessageRecord.Id); deleteErr != nil {
+					params.Logger.Error("failed to clean up image prompt message", "err", deleteErr)
+				}
+			}
 		}
 
 		gatewayStartedAt := time.Now()
@@ -221,10 +250,7 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 			OutputFormat:    "png",
 		})
 		if err != nil || len(imageResp.Images) == 0 || len(imageResp.Images[0].Bytes) == 0 {
-			// Roll back the orphaned prompt message, mirroring the completion path.
-			if deleteErr := params.MessageRepo.DeleteMessage(userMessageRecord.Id); deleteErr != nil {
-				params.Logger.Error("failed to clean up image prompt message", "err", deleteErr)
-			}
+			cleanupPromptMessage()
 			params.Logger.Error("image generation upstream request failed", "provider", model.ProviderID, "err", err)
 			return apis.NewApiError(http.StatusServiceUnavailable, "Failed to generate image", nil)
 		}
@@ -234,9 +260,7 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 		// Encrypt the image bytes for the conversation before any durable write.
 		attachment, err := chat.EncryptAttachment(image.Bytes, conversation.PublicKey)
 		if err != nil {
-			if deleteErr := params.MessageRepo.DeleteMessage(userMessageRecord.Id); deleteErr != nil {
-				params.Logger.Error("failed to clean up image prompt message", "err", deleteErr)
-			}
+			cleanupPromptMessage()
 			params.Logger.Error("failed to encrypt generated image", "err", err)
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to store generated image", nil)
 		}
@@ -244,7 +268,7 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 		assistantCreatedAt := time.Now().UTC().Format(time.RFC3339)
 		err, assistantMessageRecord := params.MessageRepo.EncryptAndPersistImageMessage(
 			conversation,
-			userMessageRecord.Id,
+			assistantParentID,
 			chat.MessageRecordData{
 				ModelID:   model.ID,
 				CreatedAt: assistantCreatedAt,
@@ -257,9 +281,7 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 			attachment.Ciphertext,
 		)
 		if err != nil {
-			if deleteErr := params.MessageRepo.DeleteMessage(userMessageRecord.Id); deleteErr != nil {
-				params.Logger.Error("failed to clean up image prompt message", "err", deleteErr)
-			}
+			cleanupPromptMessage()
 			params.Logger.Error("failed to save generated image message", "err", err)
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to store generated image", nil)
 		}
@@ -317,12 +339,17 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 			}
 		}
 
+		userMessageID := ""
+		if userMessageRecord != nil {
+			userMessageID = userMessageRecord.Id
+		}
+
 		return e.JSON(http.StatusOK, generateImageResponse{
 			RequestID:     req.RequestID,
-			UserMessageID: userMessageRecord.Id,
+			UserMessageID: userMessageID,
 			AssistantMessage: assistantImageMessageResponse{
 				ID:              assistantMessageRecord.Id,
-				ParentMessageID: userMessageRecord.Id,
+				ParentMessageID: assistantParentID,
 				ModelID:         model.ID,
 				CreatedAt:       assistantCreatedAt,
 				Attachment: imageAttachmentResponse{

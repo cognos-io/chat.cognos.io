@@ -362,17 +362,21 @@ export const applyImageGenerationResponse = (
   attachment: MessageAttachment,
   imageUrl: string,
 ): Message[] => {
-  const userMessageId = resp.user_message_id ?? requestId;
-
-  const messages = existing.map((message) =>
-    message.record_id === requestId
-      ? { ...message, record_id: userMessageId }
-      : message,
-  );
+  // Swap the optimistic user message's temporary id for the persisted one (only
+  // present on first generation; regenerate creates no user message).
+  const messages = resp.user_message_id
+    ? existing.map((message) =>
+        message.record_id === requestId
+          ? { ...message, record_id: resp.user_message_id }
+          : message,
+      )
+    : [...existing];
 
   const assistant: Message = {
     record_id: resp.assistant_message.id,
-    parentMessageId: userMessageId,
+    // Backend-authoritative parent: the new user message (generate) or the
+    // existing prompt (regenerate).
+    parentMessageId: resp.assistant_message.parent_message_id,
     createdAt: parseBackendDate(resp.assistant_message.created_at),
     decryptedData: {
       content: '',
@@ -1174,51 +1178,93 @@ export class MessageService {
     conversation: Conversation,
   ): Observable<Partial<MessageState>> {
     this.state.setStatus(MessageStatus.Sending);
-    const originConversationId = conversation.record.id;
 
     return this._api
-      .generateConversationImage(originConversationId, {
+      .generateConversationImage(conversation.record.id, {
         prompt: messageRequest.content,
         modelId: this._modelService.selectedModel().id,
         requestId: messageRequest.requestId,
       })
       .pipe(
-        switchMap((response) => {
-          const attachment: MessageAttachment = {
-            kind: response.assistant_message.attachment.kind,
-            mime_type: response.assistant_message.attachment.mime_type,
-            sealed_key: response.assistant_message.attachment.sealed_key,
-            file_name: response.assistant_message.attachment.file_name,
-          };
-          return this.decryptAttachmentToUrl(
-            response.assistant_message.id,
-            attachment,
-            conversation,
-          ).pipe(
-            map((imageUrl) => ({
-              status: MessageStatus.Success,
-              messages: applyImageGenerationResponse(
-                this.state().messages,
-                messageRequest.requestId,
-                response,
-                attachment,
-                imageUrl,
-              ),
-            })),
-          );
-        }),
-        catchError((err: unknown) => {
-          console.error('Error generating image');
-          this.reportCompletionError(err);
-          return of({
-            status: MessageStatus.ErrorSending,
-            messages: removeStreamingCompletionMessages(
-              this.state().messages,
-              messageRequest.requestId,
-            ),
-          });
-        }),
+        switchMap((response) =>
+          this.renderImageResponse(response, conversation, messageRequest.requestId),
+        ),
+        catchError((err: unknown) =>
+          this.handleImageError(err, messageRequest.requestId),
+        ),
       );
+  }
+
+  // regenerateImage produces a fresh image as a sibling of an existing image
+  // message, reusing the original prompt and parenting to the same user message
+  // (no new user turn) — the image counterpart of regenerateResponse.
+  private regenerateImage(
+    message: Message,
+    parentId: string,
+    conversation: Conversation,
+  ): Observable<Partial<MessageState>> {
+    const prompt =
+      this.state().messages.find((candidate) => candidate.record_id === parentId)
+        ?.decryptedData.content ?? '';
+    const modelId =
+      message.decryptedData.model_id ?? this._modelService.selectedModel().id;
+
+    this.state.setStatus(MessageStatus.Sending);
+
+    return this._api
+      .generateConversationImage(conversation.record.id, {
+        prompt,
+        modelId,
+        parentMessageId: parentId,
+        requestId: self.crypto.randomUUID(),
+      })
+      .pipe(
+        switchMap((response) => this.renderImageResponse(response, conversation, '')),
+        catchError((err: unknown) => this.handleImageError(err, '')),
+      );
+  }
+
+  // renderImageResponse decrypts the generated attachment and folds the new image
+  // message into state. Shared by generation and regeneration.
+  private renderImageResponse(
+    response: GenerateImageResponse,
+    conversation: Conversation,
+    requestId: string,
+  ): Observable<Partial<MessageState>> {
+    const attachment: MessageAttachment = {
+      kind: response.assistant_message.attachment.kind,
+      mime_type: response.assistant_message.attachment.mime_type,
+      sealed_key: response.assistant_message.attachment.sealed_key,
+      file_name: response.assistant_message.attachment.file_name,
+    };
+    return this.decryptAttachmentToUrl(
+      response.assistant_message.id,
+      attachment,
+      conversation,
+    ).pipe(
+      map((imageUrl) => ({
+        status: MessageStatus.Success,
+        messages: applyImageGenerationResponse(
+          this.state().messages,
+          requestId,
+          response,
+          attachment,
+          imageUrl,
+        ),
+      })),
+    );
+  }
+
+  private handleImageError(
+    err: unknown,
+    requestId: string,
+  ): Observable<Partial<MessageState>> {
+    console.error('Error generating image');
+    this.reportCompletionError(err);
+    return of({
+      status: MessageStatus.ErrorSending,
+      messages: removeStreamingCompletionMessages(this.state().messages, requestId),
+    });
   }
 
   // decryptAttachmentToUrl fetches the encrypted attachment file, unseals its
@@ -1264,6 +1310,16 @@ export class MessageService {
     if (!conversation && !isTemporaryConversation) {
       return EMPTY;
     }
+
+    // Regenerating an image message re-runs image generation (the text
+    // completion path would drop the image), parented to the same prompt.
+    if ((message.decryptedData.attachments?.length ?? 0) > 0) {
+      if (!conversation || isTemporaryConversation) {
+        return EMPTY;
+      }
+      return this.regenerateImage(message, parentId, conversation);
+    }
+
     const originConversationId = conversation?.record.id ?? null;
 
     this.abortActiveCompletion();
