@@ -147,6 +147,8 @@ import { ModelService } from '@app/services/model.service';
       align-items: center;
       gap: var(--cog-space-075);
       margin: 0;
+      font-size: var(--cog-fs-body);
+      line-height: var(--cog-lh-body, 1.4);
       font-weight: 600;
       color: var(--cog-warning-text, #8a5a00);
     }

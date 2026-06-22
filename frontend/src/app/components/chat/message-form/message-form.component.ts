@@ -364,10 +364,11 @@ function escapeHtml(value: string): string {
               #toolsTrigger="cdkOverlayOrigin"
               cdkOverlayOrigin
               class="message-form__tools"
-              [class.message-form__tools--active]="anyToolActive()"
+              [class.message-form__tools--open]="toolsMenuOpen()"
               appearance="subtle"
               icon="plus"
               type="button"
+              [attr.aria-expanded]="toolsMenuOpen()"
               [attr.aria-pressed]="anyToolActive()"
               (click)="toggleToolsMenu()"
             >
@@ -550,20 +551,17 @@ function escapeHtml(value: string): string {
       flex-wrap: wrap;
     }
 
-    /* The Tools button is a slightly-transparent green affordance, deepening
-       when a tool (e.g. image generation) is active. */
+    /* The Tools button turns a slightly-transparent green while its dropdown is
+       open, matching the model/persona triggers' open affordance. */
     .message-form__tools {
-      background: color-mix(in srgb, var(--cog-brand) 10%, transparent);
+      transition:
+        background var(--cog-dur-fast) var(--cog-ease-standard),
+        color var(--cog-dur-fast) var(--cog-ease-standard);
+    }
+
+    .message-form__tools--open {
+      background: color-mix(in srgb, var(--cog-brand) 14%, transparent);
       color: var(--cog-brand);
-      transition: background var(--cog-dur-fast) var(--cog-ease-standard);
-    }
-
-    .message-form__tools:hover {
-      background: color-mix(in srgb, var(--cog-brand) 16%, transparent);
-    }
-
-    .message-form__tools--active {
-      background: color-mix(in srgb, var(--cog-brand) 18%, transparent);
     }
 
     .message-form__redaction {
