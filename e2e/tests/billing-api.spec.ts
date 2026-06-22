@@ -69,6 +69,58 @@ test.describe('billing status API', () => {
     }
   });
 
+  test('a completion uses trial credit and records it to the ledger', async () => {
+    // The core money-correctness contract, end to end: sending one chat
+    // completion must (a) record a `usage` row in the balance ledger and
+    // (b) for a trial user, actually reduce the CHF balance. This is the
+    // regression guard for the bug where a sub-rappen per-turn cost rounded
+    // to 0 and the trial credit never depleted (and PayG never billed).
+    const user = await provisionApiUser();
+    try {
+      const before = (await (
+        await user.api.get('/api/v1/billing')
+      ).json()) as BillingResponse;
+      const txBefore = (await (
+        await user.api.get('/api/v1/billing/transactions')
+      ).json()) as BillingTransactionsResponse;
+
+      // Drive the mock AI provider Playwright starts. Reading the full body
+      // guarantees the server-side usage recording has run before we re-read.
+      const completion = await user.api.post('/api/v1/completions', {
+        data: {
+          model_id: 'llama-3-3-infomaniak',
+          persona_id: 'cognos:simple-assistant',
+          system_prompt: 'You are a helpful test persona.',
+          messages: [{ role: 'user', content: 'hello there' }],
+        },
+      });
+      expect(completion.ok(), `complete: ${completion.status()}`).toBe(true);
+      const stream = await completion.text();
+      expect(stream).not.toContain('"type":"error"');
+
+      const txAfter = (await (
+        await user.api.get('/api/v1/billing/transactions')
+      ).json()) as BillingTransactionsResponse;
+      // The turn was recorded to the ledger regardless of plan type.
+      expect(txAfter.transactions.length).toBeGreaterThan(txBefore.transactions.length);
+      const newest = txAfter.transactions[0];
+      expect(newest.type).toBe('usage');
+      expect(newest.model_id).toBe('llama-3-3-infomaniak');
+
+      // For a trial user the precise (sub-rappen) cost must reduce the
+      // balance — the exact behaviour that was silently broken.
+      if (before.plan_type === 'trial') {
+        const after = (await (
+          await user.api.get('/api/v1/billing')
+        ).json()) as BillingResponse;
+        expect(after.balance_chf).toBeLessThan(before.balance_chf);
+        expect(after.balance_chf).toBeGreaterThan(0);
+      }
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
   test('balance is reported in CHF, not Rappen', async () => {
     // The billing handler converts the integer Rappen ledger value into a
     // float CHF amount for the public contract. A regression that

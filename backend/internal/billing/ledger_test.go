@@ -31,6 +31,16 @@ func TestBuildUsageRecordPayGWritesNegativeUsageAmount(t *testing.T) {
 	if got.UserCostRappen != cost.CostRappen {
 		t.Errorf("BuildUsageRecord(...).UserCostRappen = %d, want %d", got.UserCostRappen, cost.CostRappen)
 	}
+	// The precise sub-rappen cost is what actually accrues toward PayG overage.
+	if got.AmountMicroRappen != -cost.CostMicroRappen {
+		t.Errorf("BuildUsageRecord(...).AmountMicroRappen = %d, want %d", got.AmountMicroRappen, -cost.CostMicroRappen)
+	}
+	if got.UserCostMicroRappen != cost.CostMicroRappen {
+		t.Errorf("BuildUsageRecord(...).UserCostMicroRappen = %d, want %d", got.UserCostMicroRappen, cost.CostMicroRappen)
+	}
+	if cost.CostMicroRappen <= 0 {
+		t.Errorf("CalculateCost(...).CostMicroRappen = %d, want > 0", cost.CostMicroRappen)
+	}
 	if got.BalanceAfterRappen != nil {
 		t.Errorf("BuildUsageRecord(...).BalanceAfterRappen = %v, want nil", got.BalanceAfterRappen)
 	}
@@ -79,28 +89,34 @@ func TestBuildUsageRecordTrialDeductsBalance(t *testing.T) {
 		ProviderCostUSD: &providerCostUSD,
 	}, 1)
 
-	got := service.BuildUsageRecord(State{PlanType: PlanTypeTrial, BalanceRappen: 200}, BuildUsageRecordInput{
-		UserID:       "user-1",
-		EventID:      "evt-3",
-		ModelID:      "llama-3-3-infomaniak",
-		Cost:         cost,
-		FXRateUSDCHF: 1,
-		InputTokens:  8,
-		OutputTokens: 4,
-	})
+	// Seed a full CHF 2.00 trial (200 rappen = 200_000_000 micro-rappen).
+	got := service.BuildUsageRecord(
+		State{PlanType: PlanTypeTrial, BalanceRappen: 200, BalanceMicroRappen: 200_000_000},
+		BuildUsageRecordInput{
+			UserID:       "user-1",
+			EventID:      "evt-3",
+			ModelID:      "llama-3-3-infomaniak",
+			Cost:         cost,
+			FXRateUSDCHF: 1,
+			InputTokens:  8,
+			OutputTokens: 4,
+		})
 
-	if got.AmountRappen != -cost.CostRappen {
-		t.Errorf("BuildUsageRecord(...).AmountRappen = %d, want %d", got.AmountRappen, -cost.CostRappen)
+	// cost = 0.10 USD * 1.22 margin * 1 fx = 0.122 CHF = 12_200_000 micro-rappen.
+	if got.AmountMicroRappen != -cost.CostMicroRappen {
+		t.Errorf("BuildUsageRecord(...).AmountMicroRappen = %d, want %d", got.AmountMicroRappen, -cost.CostMicroRappen)
 	}
-	if got.BalanceAfterRappen == nil {
-		t.Fatal("BuildUsageRecord(...).BalanceAfterRappen = nil, want non-nil")
+	if got.BalanceAfterMicroRappen == nil {
+		t.Fatal("BuildUsageRecord(...).BalanceAfterMicroRappen = nil, want non-nil")
 	}
-	if *got.BalanceAfterRappen != 200-cost.CostRappen {
-		t.Errorf(
-			"BuildUsageRecord(...).BalanceAfterRappen = %d, want %d",
-			*got.BalanceAfterRappen,
-			200-cost.CostRappen,
-		)
+	wantMicro := int64(200_000_000) - cost.CostMicroRappen
+	if *got.BalanceAfterMicroRappen != wantMicro {
+		t.Errorf("BuildUsageRecord(...).BalanceAfterMicroRappen = %d, want %d", *got.BalanceAfterMicroRappen, wantMicro)
+	}
+	// Displayed remaining balance floors down so we never overstate credit:
+	// 187_800_000 micro-rappen -> 187 rappen.
+	if got.BalanceAfterRappen == nil || *got.BalanceAfterRappen != 187 {
+		t.Errorf("BuildUsageRecord(...).BalanceAfterRappen = %v, want 187", got.BalanceAfterRappen)
 	}
 }
 

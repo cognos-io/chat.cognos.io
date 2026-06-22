@@ -604,12 +604,12 @@ func TestCompletionsTemporaryDoesNotPersistMessages(t *testing.T) {
 		ExpectedStatus: http.StatusOK,
 		ExpectedContent: []string{
 			`"request_id":"req-temp"`,
-			`"content":"temporary reply"`,
+			`"content":"temporary reply"`, // 0.42 USD * 1.22 margin = 0.5124 CHF
 			`"cache_creation_input_tokens":7`,
 			`"cache_read_input_tokens":11`,
-			`"cost_usd":0.504`,
-			`"cost_chf":0.504`,
-			`"cost_rappen":50`,
+			`"cost_usd":0.5124`,
+			`"cost_chf":0.5124`,
+			`"cost_rappen":51`,
 			`"used_provider_cost":true`,
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
@@ -797,7 +797,7 @@ func TestCompletionsRecordPayGUsageAfterGatewayCall(t *testing.T) {
 		ExpectedStatus: http.StatusOK,
 		ExpectedContent: []string{
 			`"content":"payg reply"`,
-			`"cost_rappen":50`,
+			`"cost_rappen":51`,
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
@@ -823,11 +823,18 @@ func TestCompletionsRecordPayGUsageAfterGatewayCall(t *testing.T) {
 			if record.PlanType != billing.PlanTypePayG {
 				t.Errorf("RecordUsage().PlanType = %q, want %q", record.PlanType, billing.PlanTypePayG)
 			}
-			if record.AmountRappen != -50 {
-				t.Errorf("RecordUsage().AmountRappen = %d, want %d", record.AmountRappen, -50)
+			if record.AmountRappen != -51 {
+				t.Errorf("RecordUsage().AmountRappen = %d, want %d", record.AmountRappen, -51)
 			}
-			if record.UserCostRappen != 50 {
-				t.Errorf("RecordUsage().UserCostRappen = %d, want %d", record.UserCostRappen, 50)
+			if record.UserCostRappen != 51 {
+				t.Errorf("RecordUsage().UserCostRappen = %d, want %d", record.UserCostRappen, 51)
+			}
+			// Precise sub-rappen cost: 0.42 USD * 1.22 margin = 0.5124 CHF = 51_240_000 µR.
+			if record.UserCostMicroRappen != 51_240_000 {
+				t.Errorf("RecordUsage().UserCostMicroRappen = %d, want %d", record.UserCostMicroRappen, 51_240_000)
+			}
+			if record.AmountMicroRappen != -51_240_000 {
+				t.Errorf("RecordUsage().AmountMicroRappen = %d, want %d", record.AmountMicroRappen, -51_240_000)
 			}
 			if record.ProviderCostRappen != 42 {
 				t.Errorf("RecordUsage().ProviderCostRappen = %d, want %d", record.ProviderCostRappen, 42)
@@ -873,7 +880,7 @@ func TestCompletionsRecordUnlimitedUsageWithoutDeduction(t *testing.T) {
 		ExpectedStatus: http.StatusOK,
 		ExpectedContent: []string{
 			`"content":"unlimited reply"`,
-			`"cost_rappen":50`,
+			`"cost_rappen":51`,
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
@@ -902,8 +909,16 @@ func TestCompletionsRecordUnlimitedUsageWithoutDeduction(t *testing.T) {
 			if record.AmountRappen != 0 {
 				t.Errorf("RecordUsage().AmountRappen = %d, want 0", record.AmountRappen)
 			}
-			if record.UserCostRappen != 50 {
-				t.Errorf("RecordUsage().UserCostRappen = %d, want %d", record.UserCostRappen, 50)
+			if record.UserCostRappen != 51 {
+				t.Errorf("RecordUsage().UserCostRappen = %d, want %d", record.UserCostRappen, 51)
+			}
+			// Unlimited records the precise cost (for fair-use monitoring) but
+			// never debits it.
+			if record.UserCostMicroRappen != 51_240_000 {
+				t.Errorf("RecordUsage().UserCostMicroRappen = %d, want %d", record.UserCostMicroRappen, 51_240_000)
+			}
+			if record.AmountMicroRappen != 0 {
+				t.Errorf("RecordUsage().AmountMicroRappen = %d, want 0", record.AmountMicroRappen)
 			}
 		},
 	}
@@ -955,7 +970,7 @@ func TestCompletionsRecordTrialUsageAndBalanceAfter(t *testing.T) {
 						if userID != "uvi8zmr78j9y5hz" {
 							t.Fatalf("StateForUser(%q) unexpected user id", userID)
 						}
-						return billing.State{PlanType: billing.PlanTypeTrial, BalanceRappen: 200}, nil
+						return billing.State{PlanType: billing.PlanTypeTrial, BalanceRappen: 200, BalanceMicroRappen: 200_000_000}, nil
 					},
 				},
 			})
@@ -972,11 +987,23 @@ func TestCompletionsRecordTrialUsageAndBalanceAfter(t *testing.T) {
 			if record.AmountRappen != -12 {
 				t.Errorf("RecordUsage().AmountRappen = %d, want %d", record.AmountRappen, -12)
 			}
+			// 0.10 USD * 1.22 margin = 0.122 CHF = 12_200_000 µR debited exactly.
+			if record.AmountMicroRappen != -12_200_000 {
+				t.Errorf("RecordUsage().AmountMicroRappen = %d, want %d", record.AmountMicroRappen, -12_200_000)
+			}
+			if record.BalanceAfterMicroRappen == nil {
+				t.Fatal("RecordUsage().BalanceAfterMicroRappen = nil, want non-nil")
+			}
+			if *record.BalanceAfterMicroRappen != 187_800_000 {
+				t.Errorf("RecordUsage().BalanceAfterMicroRappen = %d, want %d", *record.BalanceAfterMicroRappen, 187_800_000)
+			}
 			if record.BalanceAfterRappen == nil {
 				t.Fatal("RecordUsage().BalanceAfterRappen = nil, want non-nil")
 			}
-			if *record.BalanceAfterRappen != 188 {
-				t.Errorf("RecordUsage().BalanceAfterRappen = %d, want %d", *record.BalanceAfterRappen, 188)
+			// Displayed remaining balance floors down (187.8 -> 187) so we never
+			// overstate the credit left.
+			if *record.BalanceAfterRappen != 187 {
+				t.Errorf("RecordUsage().BalanceAfterRappen = %d, want %d", *record.BalanceAfterRappen, 187)
 			}
 		},
 	}
@@ -1067,8 +1094,8 @@ func TestCompletionsUseFXRateProviderForResponseAndLedger(t *testing.T) {
 		ExpectedStatus: http.StatusOK,
 		ExpectedContent: []string{
 			`"content":"fx reply"`,
-			`"cost_chf":0.4536`,
-			`"cost_rappen":45`,
+			`"cost_chf":0.46115999999999996`,
+			`"cost_rappen":46`,
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
 			return setupTestAppWithHookParams(t, appHookParams{
@@ -1098,8 +1125,12 @@ func TestCompletionsUseFXRateProviderForResponseAndLedger(t *testing.T) {
 			if record.ProviderCostRappen != 38 {
 				t.Errorf("RecordUsage().ProviderCostRappen = %d, want %d", record.ProviderCostRappen, 38)
 			}
-			if record.UserCostRappen != 45 {
-				t.Errorf("RecordUsage().UserCostRappen = %d, want %d", record.UserCostRappen, 45)
+			if record.UserCostRappen != 46 {
+				t.Errorf("RecordUsage().UserCostRappen = %d, want %d", record.UserCostRappen, 46)
+			}
+			// 0.42 USD * 1.22 margin * 0.9 fx = 0.46116 CHF = 46_116_000 µR.
+			if record.UserCostMicroRappen != 46_116_000 {
+				t.Errorf("RecordUsage().UserCostMicroRappen = %d, want %d", record.UserCostMicroRappen, 46_116_000)
 			}
 		},
 	}
@@ -1184,11 +1215,11 @@ func TestCompletionsEmitUsageEventAfterGatewayCall(t *testing.T) {
 			if event.ProviderCostUSD != 0.42 {
 				t.Errorf("Emit().ProviderCostUSD = %f, want %f", event.ProviderCostUSD, 0.42)
 			}
-			if event.CostUSD != 0.504 {
-				t.Errorf("Emit().CostUSD = %f, want %f", event.CostUSD, 0.504)
+			if event.CostUSD != 0.5124 {
+				t.Errorf("Emit().CostUSD = %f, want %f", event.CostUSD, 0.5124)
 			}
-			if event.CostCHF != 0.504 {
-				t.Errorf("Emit().CostCHF = %f, want %f", event.CostCHF, 0.504)
+			if event.CostCHF != 0.5124 {
+				t.Errorf("Emit().CostCHF = %f, want %f", event.CostCHF, 0.5124)
 			}
 			if event.EventID == "" {
 				t.Error("Emit().EventID = empty, want non-empty")
@@ -1224,7 +1255,7 @@ func TestCompletionsReturnTrialExhaustedBeforeGatewayCall(t *testing.T) {
 			`"error":"TRIAL_EXHAUSTED"`,
 			`"message":"Your free trial has been used up."`,
 			`"balance_chf":0.02`,
-			`"estimated_cost_chf":0.17`,
+			`"estimated_cost_chf":0.18`,
 			`"next_step":"subscribe"`,
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
@@ -1236,7 +1267,7 @@ func TestCompletionsReturnTrialExhaustedBeforeGatewayCall(t *testing.T) {
 						if userID != "uvi8zmr78j9y5hz" {
 							t.Fatalf("StateForUser(%q) unexpected user id", userID)
 						}
-						return billing.State{PlanType: billing.PlanTypeTrial, BalanceRappen: 2}, nil
+						return billing.State{PlanType: billing.PlanTypeTrial, BalanceRappen: 2, BalanceMicroRappen: 2_000_000}, nil
 					},
 				},
 			})

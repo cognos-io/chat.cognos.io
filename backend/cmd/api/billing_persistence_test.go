@@ -105,19 +105,24 @@ func TestPocketBaseBillingRepoRecordUsageUpdatesTrialBalanceAndWritesTransaction
 
 	repo := billing.NewPocketBaseRepo(app)
 	balanceAfter := int64(188)
+	balanceAfterMicro := int64(188_000_000)
 	if err := repo.RecordUsage(billing.UsageRecord{
-		UserID:             "uvi8zmr78j9y5hz",
-		EventID:            "evt-trial-1",
-		ModelID:            "llama-3-3-infomaniak",
-		PlanType:           billing.PlanTypeTrial,
-		Type:               billing.UsageTransactionType,
-		AmountRappen:       -12,
-		ProviderCostRappen: 10,
-		UserCostRappen:     12,
-		FXRateUSDCHF:       1,
-		InputTokens:        8,
-		OutputTokens:       4,
-		BalanceAfterRappen: &balanceAfter,
+		UserID:                  "uvi8zmr78j9y5hz",
+		EventID:                 "evt-trial-1",
+		ModelID:                 "llama-3-3-infomaniak",
+		PlanType:                billing.PlanTypeTrial,
+		Type:                    billing.UsageTransactionType,
+		AmountRappen:            -12,
+		ProviderCostRappen:      10,
+		UserCostRappen:          12,
+		AmountMicroRappen:       -12_000_000,
+		ProviderCostMicroRappen: 10_000_000,
+		UserCostMicroRappen:     12_000_000,
+		FXRateUSDCHF:            1,
+		InputTokens:             8,
+		OutputTokens:            4,
+		BalanceAfterRappen:      &balanceAfter,
+		BalanceAfterMicroRappen: &balanceAfterMicro,
 	}); err != nil {
 		t.Fatalf("RecordUsage() error = %v", err)
 	}
@@ -128,6 +133,9 @@ func TestPocketBaseBillingRepoRecordUsageUpdatesTrialBalanceAndWritesTransaction
 	}
 	if got := billingRecord.GetInt("balance_rappen"); got != 188 {
 		t.Fatalf("user_billing.balance_rappen = %d, want %d", got, 188)
+	}
+	if got := billingRecord.GetInt("balance_microrappen"); got != 188_000_000 {
+		t.Fatalf("user_billing.balance_microrappen = %d, want %d", got, 188_000_000)
 	}
 
 	transactionRecord, err := app.FindFirstRecordByData("balance_transactions", "event_id", "evt-trial-1")
@@ -151,6 +159,12 @@ func TestPocketBaseBillingRepoRecordUsageUpdatesTrialBalanceAndWritesTransaction
 	}
 	if got := transactionRecord.GetInt("user_cost_rappen"); got != 12 {
 		t.Errorf("balance_transactions.user_cost_rappen = %d, want %d", got, 12)
+	}
+	if got := transactionRecord.GetInt("user_cost_microrappen"); got != 12_000_000 {
+		t.Errorf("balance_transactions.user_cost_microrappen = %d, want %d", got, 12_000_000)
+	}
+	if got := transactionRecord.GetInt("balance_after_microrappen"); got != 188_000_000 {
+		t.Errorf("balance_transactions.balance_after_microrappen = %d, want %d", got, 188_000_000)
 	}
 	if got := transactionRecord.GetInt("input_tokens"); got != 8 {
 		t.Errorf("balance_transactions.input_tokens = %d, want %d", got, 8)
@@ -184,19 +198,24 @@ func TestPocketBaseBillingRepoRecordUsageRollsBackTrialBalanceOnDuplicateEventID
 
 	repo := billing.NewPocketBaseRepo(app)
 	balanceAfter := int64(188)
+	balanceAfterMicro := int64(188_000_000)
 	err := repo.RecordUsage(billing.UsageRecord{
-		UserID:             "uvi8zmr78j9y5hz",
-		EventID:            "evt-duplicate-1",
-		ModelID:            "llama-3-3-infomaniak",
-		PlanType:           billing.PlanTypeTrial,
-		Type:               billing.UsageTransactionType,
-		AmountRappen:       -12,
-		ProviderCostRappen: 10,
-		UserCostRappen:     12,
-		FXRateUSDCHF:       1,
-		InputTokens:        8,
-		OutputTokens:       4,
-		BalanceAfterRappen: &balanceAfter,
+		UserID:                  "uvi8zmr78j9y5hz",
+		EventID:                 "evt-duplicate-1",
+		ModelID:                 "llama-3-3-infomaniak",
+		PlanType:                billing.PlanTypeTrial,
+		Type:                    billing.UsageTransactionType,
+		AmountRappen:            -12,
+		ProviderCostRappen:      10,
+		UserCostRappen:          12,
+		AmountMicroRappen:       -12_000_000,
+		ProviderCostMicroRappen: 10_000_000,
+		UserCostMicroRappen:     12_000_000,
+		FXRateUSDCHF:            1,
+		InputTokens:             8,
+		OutputTokens:            4,
+		BalanceAfterRappen:      &balanceAfter,
+		BalanceAfterMicroRappen: &balanceAfterMicro,
 	})
 	if err == nil {
 		t.Fatal("RecordUsage() error = nil, want duplicate event_id failure")
@@ -208,6 +227,9 @@ func TestPocketBaseBillingRepoRecordUsageRollsBackTrialBalanceOnDuplicateEventID
 	}
 	if got := billingRecord.GetInt("balance_rappen"); got != 200 {
 		t.Fatalf("user_billing.balance_rappen = %d, want %d after rollback", got, 200)
+	}
+	if got := billingRecord.GetInt("balance_microrappen"); got != 200_000_000 {
+		t.Fatalf("user_billing.balance_microrappen = %d, want %d after rollback", got, 200_000_000)
 	}
 }
 
@@ -258,8 +280,14 @@ func TestCompletionsUsePocketBaseBillingReposByDefault(t *testing.T) {
 			if err != nil {
 				t.Fatalf("FindFirstRecordByData(user_billing) error = %v", err)
 			}
-			if got := billingRecord.GetInt("balance_rappen"); got != 188 {
-				t.Fatalf("user_billing.balance_rappen = %d, want %d", got, 188)
+			// 200 rappen seed - 12.2 rappen (0.10 USD * 1.22 margin) = 187.8,
+			// floored to 187 so we never overstate remaining credit. The precise
+			// balance lives in balance_microrappen.
+			if got := billingRecord.GetInt("balance_rappen"); got != 187 {
+				t.Fatalf("user_billing.balance_rappen = %d, want %d", got, 187)
+			}
+			if got := billingRecord.GetInt("balance_microrappen"); got != 187_800_000 {
+				t.Fatalf("user_billing.balance_microrappen = %d, want %d", got, 187_800_000)
 			}
 			count, err := app.CountRecords("balance_transactions")
 			if err != nil {
@@ -267,6 +295,78 @@ func TestCompletionsUsePocketBaseBillingReposByDefault(t *testing.T) {
 			}
 			if count != 1 {
 				t.Fatalf("CountRecords(balance_transactions) = %d, want %d", count, 1)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+// Regression for the production "trial credit never depletes" bug: a realistic
+// turn costs a fraction of one rappen, so the old whole-rappen rounding debited
+// 0 and the balance never moved. Here the cost is DERIVED from catalogue pricing
+// (no provider cost override) and the token counts are small — exactly the case
+// that silently metered to zero. After one turn the precise micro-rappen balance
+// must drop and the ledger row must record a non-zero sub-rappen cost.
+func TestCompletionsDebitRealisticSubRappenTurnFromTrialBalance(t *testing.T) {
+	t.Parallel()
+
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(_ context.Context, _ gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			return gateway.CompleteResponse{
+				Message: gateway.Message{Role: "assistant", Content: "realistic reply"},
+				// Small token counts, NO ProviderCostUSD — cost is derived from
+				// catalogue pricing and lands well below one rappen.
+				Usage: gateway.Usage{InputTokens: 500, OutputTokens: 335, TotalTokens: 835},
+			}, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "a realistic sub-rappen turn still depletes the trial and is recorded",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
+			"messages":[{"role":"user","content":"hello there"}]
+		}`),
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"content":"realistic reply"`},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				BillingService: billing.NewService(),
+			})
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			billingRecord, err := app.FindFirstRecordByData("user_billing", "user_id", "uvi8zmr78j9y5hz")
+			if err != nil {
+				t.Fatalf("FindFirstRecordByData(user_billing) error = %v", err)
+			}
+			// The precise balance MUST have moved — this is what was broken.
+			balanceMicro := billingRecord.GetInt("balance_microrappen")
+			if balanceMicro >= 200_000_000 {
+				t.Fatalf("balance_microrappen = %d, want < 200_000_000 (sub-rappen turn must debit)", balanceMicro)
+			}
+			if balanceMicro <= 0 {
+				t.Fatalf("balance_microrappen = %d, want > 0 (one cheap turn should not exhaust the trial)", balanceMicro)
+			}
+
+			rows, err := app.FindRecordsByFilter("balance_transactions", "user_id = {:u}", "", 10, 0,
+				map[string]any{"u": "uvi8zmr78j9y5hz"})
+			if err != nil || len(rows) != 1 {
+				t.Fatalf("expected exactly one ledger row (err=%v, n=%d)", err, len(rows))
+			}
+			if got := rows[0].GetInt("user_cost_microrappen"); got <= 0 {
+				t.Fatalf("balance_transactions.user_cost_microrappen = %d, want > 0 (cost must be recorded)", got)
+			}
+			// The cost is sub-rappen, so the whole-rappen projection is still 0 —
+			// proving the micro column is what makes the credit deplete.
+			if got := rows[0].GetInt("user_cost_rappen"); got != 0 {
+				t.Logf("note: user_cost_rappen rounded to %d for a sub-rappen turn (micro column is authoritative)", got)
 			}
 		},
 	}
@@ -299,6 +399,7 @@ func setUserBillingRecord(t testing.TB, app *tests.TestApp, input seedUserBillin
 		record.Set("plan_type", input.PlanType)
 	}
 	record.Set("balance_rappen", input.BalanceRappen)
+	record.Set("balance_microrappen", int64(input.BalanceRappen)*billing.MicroRappenPerRappen)
 	if err := app.Save(record); err != nil {
 		t.Fatalf("Save(user_billing update %q) error = %v", input.UserID, err)
 	}

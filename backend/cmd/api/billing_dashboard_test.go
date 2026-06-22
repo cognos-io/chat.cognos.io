@@ -10,6 +10,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 )
 
@@ -48,6 +49,8 @@ func seedUsageRow(t testing.TB, app *tests.TestApp, id, userID, modelID string, 
 	record.Set("model_id", modelID)
 	record.Set("amount_rappen", -costRappen)
 	record.Set("user_cost_rappen", costRappen)
+	record.Set("amount_microrappen", int64(-costRappen)*billing.MicroRappenPerRappen)
+	record.Set("user_cost_microrappen", int64(costRappen)*billing.MicroRappenPerRappen)
 	record.Set("occurred_at", occurredAt)
 	if err := app.Save(record); err != nil {
 		t.Fatalf("save usage row %q: %v", id, err)

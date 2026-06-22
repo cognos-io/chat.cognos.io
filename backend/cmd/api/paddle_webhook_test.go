@@ -16,6 +16,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 )
@@ -260,6 +261,8 @@ func seedUsage(t *testing.T, app *tests.TestApp, occurredAt time.Time, userCostR
 	record.Set("event_id", fmt.Sprintf("evt_seed_%d_%d", occurredAt.UnixNano(), userCostRappen))
 	record.Set("amount_rappen", -userCostRappen)
 	record.Set("user_cost_rappen", userCostRappen)
+	record.Set("amount_microrappen", -userCostRappen*billing.MicroRappenPerRappen)
+	record.Set("user_cost_microrappen", userCostRappen*billing.MicroRappenPerRappen)
 	record.Set("model_id", "test-model")
 	if err := app.Save(record); err != nil {
 		t.Fatalf("seed usage row: %v", err)

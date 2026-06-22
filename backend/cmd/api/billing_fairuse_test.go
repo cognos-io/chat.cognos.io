@@ -30,6 +30,7 @@ func seedPlanUsage(
 	record.Set("model_id", "m")
 	record.Set("amount_rappen", 0)
 	record.Set("user_cost_rappen", costRappen)
+	record.Set("user_cost_microrappen", costRappen*billing.MicroRappenPerRappen)
 	record.Set("occurred_at", occurredAt.UTC())
 	if err := app.Save(record); err != nil {
 		t.Fatalf("seed usage %q: %v", id, err)
