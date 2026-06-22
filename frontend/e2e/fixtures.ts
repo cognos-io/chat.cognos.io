@@ -322,6 +322,13 @@ export const buildMessageRecordFixture = (
     modelId?: string;
     parentMessageId?: string;
     expires?: string;
+    attachments?: {
+      kind: string;
+      mime_type: string;
+      sealed_key: string;
+      width?: number;
+      height?: number;
+    }[];
   },
 ): MessageRecordFixture => {
   const payload = {
@@ -331,6 +338,7 @@ export const buildMessageRecordFixture = (
     ...(record.personaId ? { persona_id: record.personaId } : {}),
     ...(record.modelId ? { model_id: record.modelId } : {}),
     ...(record.parentMessageId ? { parent_message_id: record.parentMessageId } : {}),
+    ...(record.attachments ? { attachments: record.attachments } : {}),
   };
 
   return {
