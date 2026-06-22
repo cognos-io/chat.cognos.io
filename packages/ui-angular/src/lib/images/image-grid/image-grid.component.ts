@@ -4,13 +4,13 @@ import {
   computed,
   input,
   output,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosImageThumbComponent } from "../image-thumb/image-thumb.component";
+import { CognosIconComponent } from '../../icon/icon.component';
+import { CognosImageThumbComponent } from '../image-thumb/image-thumb.component';
 
 @Component({
-  selector: "cog-image-grid",
+  selector: 'cog-image-grid',
   standalone: true,
   imports: [CognosIconComponent, CognosImageThumbComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,13 +20,16 @@ import { CognosImageThumbComponent } from "../image-thumb/image-thumb.component"
         <img class="cog-image-grid__single-image" [src]="visibleImages()[0]" alt="" />
         <span class="cog-image-grid__single-lock">
           <cog-icon name="lock" [size]="11" tone="current" />
-          <span>Encrypted</span>
+          <span>{{ encryptedLabel() }}</span>
         </span>
       </button>
     } @else {
       <div class="cog-image-grid" [style.width.px]="width()">
         @for (image of visibleImages(); track image; let index = $index) {
-          <div class="cog-image-grid__cell" [class.cog-image-grid__cell--span]="showWideFirstCell() && index === 0">
+          <div
+            class="cog-image-grid__cell"
+            [class.cog-image-grid__cell--span]="showWideFirstCell() && index === 0"
+          >
             <cog-image-thumb
               [src]="image"
               [height]="showWideFirstCell() && index === 0 ? 150 : 116"
@@ -105,13 +108,13 @@ export class CognosImageGridComponent {
   readonly images = input<string[]>([]);
   readonly max = input(4);
   readonly width = input(320);
+  // English default; consumers pass a localised "Encrypted" label.
+  readonly encryptedLabel = input('Encrypted');
   readonly open = output<number>();
 
-  protected readonly visibleImages = computed(() =>
-    this.images().slice(0, this.max()),
-  );
-  protected readonly hiddenCount = computed(
-    () => Math.max(0, this.images().length - this.visibleImages().length),
+  protected readonly visibleImages = computed(() => this.images().slice(0, this.max()));
+  protected readonly hiddenCount = computed(() =>
+    Math.max(0, this.images().length - this.visibleImages().length),
   );
   protected readonly showWideFirstCell = computed(
     () => this.visibleImages().length === 3,

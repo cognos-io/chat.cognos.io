@@ -219,6 +219,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                 }
                 <cog-image-grid
                   [images]="displayImageUrls()"
+                  [encryptedLabel]="t('chat.message.imageEncrypted')"
                   (open)="openLightbox($event)"
                 />
               } @else if (imagesLoading()) {
@@ -255,11 +256,16 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     }
 
     @if (lightboxUrl(); as src) {
-      <cog-lightbox
-        [src]="src"
-        (close)="closeLightbox()"
-        (download)="downloadImage(src)"
-      />
+      <ng-container *transloco="let t">
+        <cog-lightbox
+          [src]="src"
+          [encryptedLabel]="t('chat.message.imageEncrypted')"
+          [downloadLabel]="t('chat.message.imageDownload')"
+          [closeLabel]="t('chat.message.imageClose')"
+          (close)="closeLightbox()"
+          (download)="downloadImage(src)"
+        />
+      </ng-container>
     }
   `,
   styles: `

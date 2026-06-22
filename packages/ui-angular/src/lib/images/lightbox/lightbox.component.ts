@@ -26,34 +26,25 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
         <div class="cog-lightbox__title-wrap">
           <cog-icon name="image" [size]="16" tone="current" />
           <span class="cog-lightbox__title">{{ name() }}</span>
-          <cog-lozenge tone="green">Encrypted</cog-lozenge>
+          <cog-lozenge tone="green">{{ encryptedLabel() }}</cog-lozenge>
         </div>
 
         <div class="cog-lightbox__actions">
           <button
             class="cog-lightbox__action"
             type="button"
-            title="Download"
-            aria-label="Download"
+            [title]="downloadLabel()"
+            [attr.aria-label]="downloadLabel()"
             (click)="download.emit()"
           >
             <cog-icon name="download" [size]="17" tone="current" />
           </button>
           <button
-            class="cog-lightbox__action"
-            type="button"
-            title="Save to Vault"
-            aria-label="Save to Vault"
-            (click)="saveToVault.emit()"
-          >
-            <cog-icon name="folder-plus" [size]="17" tone="current" />
-          </button>
-          <button
             #closeButton
             class="cog-lightbox__action"
             type="button"
-            title="Close"
-            aria-label="Close"
+            [title]="closeLabel()"
+            [attr.aria-label]="closeLabel()"
             (click)="close.emit()"
           >
             <cog-icon name="x" [size]="17" tone="current" />
@@ -166,9 +157,12 @@ export class CognosLightboxComponent implements OnDestroy {
 
   readonly src = input('');
   readonly name = input('image.png');
+  // Visible labels default to English; consumers pass localised strings.
+  readonly encryptedLabel = input('Encrypted');
+  readonly downloadLabel = input('Download');
+  readonly closeLabel = input('Close');
   readonly close = output<void>();
   readonly download = output<void>();
-  readonly saveToVault = output<void>();
 
   constructor() {
     afterNextRender(() => this.closeButton()?.nativeElement.focus());
