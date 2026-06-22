@@ -4,12 +4,27 @@ import "math"
 
 const UsageTransactionType = "usage"
 
+// OperationType records which kind of paid operation produced a usage record so
+// billing and analytics can distinguish image generation from text completion
+// without ever inspecting the (encrypted) content.
+type OperationType string
+
+const (
+	OperationTypeText            OperationType = "text"
+	OperationTypeImageGeneration OperationType = "image_generation"
+)
+
 type UsageRecord struct {
 	UserID   string
 	EventID  string
 	ModelID  string
 	PlanType PlanType
 	Type     string
+	// OperationType flags whether this usage came from a text completion or an
+	// image generation. Defaults to OperationTypeText.
+	OperationType OperationType
+	// GeneratedImageCount is the number of images produced (0 for text).
+	GeneratedImageCount int64
 	// *Rappen fields are the rounded projection persisted for readability.
 	AmountRappen       int64
 	ProviderCostRappen int64
@@ -33,6 +48,10 @@ type BuildUsageRecordInput struct {
 	FXRateUSDCHF float64
 	InputTokens  int64
 	OutputTokens int64
+	// OperationType defaults to OperationTypeText when empty.
+	OperationType OperationType
+	// GeneratedImageCount is the number of images produced (0 for text).
+	GeneratedImageCount int64
 }
 
 type LedgerRepo interface {
@@ -45,12 +64,19 @@ func (s *Service) BuildUsageRecord(state State, input BuildUsageRecordInput) Usa
 	userCostMicroRappen := input.Cost.CostMicroRappen
 	providerCostMicroRappen := input.Cost.ProviderCostMicroRappen
 
+	operationType := input.OperationType
+	if operationType == "" {
+		operationType = OperationTypeText
+	}
+
 	record := UsageRecord{
 		UserID:                  input.UserID,
 		EventID:                 input.EventID,
 		ModelID:                 input.ModelID,
 		PlanType:                state.PlanType,
 		Type:                    UsageTransactionType,
+		OperationType:           operationType,
+		GeneratedImageCount:     input.GeneratedImageCount,
 		ProviderCostRappen:      providerCostRappen,
 		UserCostRappen:          userCostRappen,
 		ProviderCostMicroRappen: providerCostMicroRappen,

@@ -46,6 +46,56 @@ func TestBuildUsageRecordPayGWritesNegativeUsageAmount(t *testing.T) {
 	}
 }
 
+func TestBuildUsageRecordDefaultsOperationTypeToText(t *testing.T) {
+	t.Parallel()
+
+	service := NewService()
+	cost := service.CalculateCost(catalogueModelForLedgerTest(), Usage{InputTokens: 10, OutputTokens: 5}, 1)
+
+	got := service.BuildUsageRecord(State{PlanType: PlanTypePayG}, BuildUsageRecordInput{
+		UserID:       "user-1",
+		EventID:      "evt-1",
+		ModelID:      "llama-3-3-infomaniak",
+		Cost:         cost,
+		FXRateUSDCHF: 1,
+	})
+
+	if got.OperationType != OperationTypeText {
+		t.Errorf("OperationType = %q, want %q", got.OperationType, OperationTypeText)
+	}
+	if got.GeneratedImageCount != 0 {
+		t.Errorf("GeneratedImageCount = %d, want 0 for text", got.GeneratedImageCount)
+	}
+}
+
+func TestBuildUsageRecordFlagsImageGeneration(t *testing.T) {
+	t.Parallel()
+
+	service := NewService()
+	cost := service.CalculateCost(catalogueModelForLedgerTest(), Usage{InputTokens: 12, OutputTokens: 1290}, 1)
+
+	got := service.BuildUsageRecord(State{PlanType: PlanTypePayG}, BuildUsageRecordInput{
+		UserID:              "user-1",
+		EventID:             "evt-img",
+		ModelID:             "gemini-2-5-flash-image",
+		Cost:                cost,
+		FXRateUSDCHF:        1,
+		OperationType:       OperationTypeImageGeneration,
+		GeneratedImageCount: 2,
+	})
+
+	if got.OperationType != OperationTypeImageGeneration {
+		t.Errorf("OperationType = %q, want %q", got.OperationType, OperationTypeImageGeneration)
+	}
+	if got.GeneratedImageCount != 2 {
+		t.Errorf("GeneratedImageCount = %d, want 2", got.GeneratedImageCount)
+	}
+	// Image usage is still metered like any other paid operation.
+	if got.AmountMicroRappen != -cost.CostMicroRappen {
+		t.Errorf("AmountMicroRappen = %d, want %d", got.AmountMicroRappen, -cost.CostMicroRappen)
+	}
+}
+
 func TestBuildUsageRecordUnlimitedRecordsMetadataWithoutDeduction(t *testing.T) {
 	t.Parallel()
 
