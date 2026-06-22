@@ -295,7 +295,7 @@ function escapeHtml(value: string): string {
               #modelTrigger="cdkOverlayOrigin"
               cdkOverlayOrigin
               class="message-form__model"
-              appearance="default"
+              appearance="subtle"
               iconAfter="chevron-down"
               type="button"
               (click)="toggleModelSelector()"
@@ -365,7 +365,7 @@ function escapeHtml(value: string): string {
               cdkOverlayOrigin
               class="message-form__tools"
               [class.message-form__tools--active]="anyToolActive()"
-              appearance="default"
+              appearance="subtle"
               icon="plus"
               type="button"
               [attr.aria-pressed]="anyToolActive()"
@@ -550,18 +550,20 @@ function escapeHtml(value: string): string {
       flex-wrap: wrap;
     }
 
-    /* The Tools button highlights with the brand colour when any tool (e.g.
-       image generation) is active, so it's obvious the next send is affected. */
+    /* The Tools button is a slightly-transparent green affordance, deepening
+       when a tool (e.g. image generation) is active. */
     .message-form__tools {
-      transition:
-        background var(--cog-dur-fast) var(--cog-ease-standard),
-        color var(--cog-dur-fast) var(--cog-ease-standard);
+      background: color-mix(in srgb, var(--cog-brand) 10%, transparent);
+      color: var(--cog-brand);
+      transition: background var(--cog-dur-fast) var(--cog-ease-standard);
+    }
+
+    .message-form__tools:hover {
+      background: color-mix(in srgb, var(--cog-brand) 16%, transparent);
     }
 
     .message-form__tools--active {
-      background: color-mix(in srgb, var(--cog-brand) 16%, transparent);
-      color: var(--cog-brand);
-      box-shadow: inset 0 0 0 1px var(--cog-brand);
+      background: color-mix(in srgb, var(--cog-brand) 18%, transparent);
     }
 
     .message-form__redaction {

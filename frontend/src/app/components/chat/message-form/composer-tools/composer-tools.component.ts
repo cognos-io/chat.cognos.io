@@ -76,7 +76,8 @@ import { ModelService } from '@app/services/model.service';
               {{ t('chat.composer.tools.switchHint') }}
             </p>
             <cog-button
-              appearance="default"
+              class="composer-tools__use"
+              appearance="subtle"
               icon="cloud"
               type="button"
               (click)="tools.useSuggestedImageModel()"
@@ -120,6 +121,8 @@ import { ModelService } from '@app/services/model.service';
 
     .composer-tools__title {
       font-weight: 600;
+      font-size: var(--cog-fs-body);
+      line-height: var(--cog-lh-body, 1.4);
       color: var(--cog-text);
     }
 
@@ -152,6 +155,12 @@ import { ModelService } from '@app/services/model.service';
       margin: 0;
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-caption);
+    }
+
+    .composer-tools__use {
+      align-self: start;
+      box-shadow: inset 0 0 0 1px var(--cog-warning, #c2870b);
+      color: var(--cog-warning-text, #8a5a00);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
