@@ -287,6 +287,13 @@ function escapeHtml(value: string): string {
             </div>
           }
 
+          @if (imageGenerationUnsupported()) {
+            <div class="message-form__alert" role="alert">
+              <cog-icon name="image" [size]="14" tone="text-subtle" />
+              <span>{{ t('chat.composer.imageGenerationUnsupported') }}</span>
+            </div>
+          }
+
           <div class="message-form__controls">
             <cog-button
               #modelTrigger="cdkOverlayOrigin"
@@ -355,6 +362,16 @@ function escapeHtml(value: string): string {
                 (managed)="closePersonaSwitcher()"
               ></app-persona-switcher>
             </ng-template>
+
+            <cog-icon-button
+              name="image"
+              class="message-form__tool"
+              [class.message-form__tool--active]="imageGenerationEnabled()"
+              [attr.aria-pressed]="imageGenerationEnabled()"
+              [title]="t('chat.composer.generateImage')"
+              type="button"
+              (click)="toggleImageGeneration()"
+            />
 
             @if (canClearTemporaryMessages() && !isMobile()) {
               <cog-icon-button
@@ -803,10 +820,28 @@ export class MessageFormComponent {
   public readonly modelService = inject(ModelService);
   public readonly billing = inject(BillingService);
 
+  // Image generation is an opt-in composer tool, off by default for a new
+  // session. When on, the next send is an image request instead of text.
+  readonly imageGenerationEnabled = signal(false);
+
+  // True when the tool is on but the selected model cannot generate images.
+  // Send is blocked and an alert points the user to switch models.
+  readonly imageGenerationUnsupported = computed(
+    () =>
+      this.imageGenerationEnabled() &&
+      !this.modelService.selectedModel().supportsImageGeneration,
+  );
+
   readonly canSendMessage = computed(
     () =>
-      this.modelService.selectedModel().isEligible && !this.billing.isSendingLocked(),
+      this.modelService.selectedModel().isEligible &&
+      !this.billing.isSendingLocked() &&
+      !this.imageGenerationUnsupported(),
   );
+
+  toggleImageGeneration(): void {
+    this.imageGenerationEnabled.update((enabled) => !enabled);
+  }
 
   readonly isStreaming = computed(
     () => this.messageService.status() === MessageStatus.Sending,
@@ -1072,6 +1107,7 @@ export class MessageFormComponent {
       requestId: self.crypto.randomUUID(),
       redactionDeselected: Array.from(this._redactionDeselected()),
       redactionCustom: this._customRedactions(),
+      imageGeneration: this.imageGenerationEnabled(),
     };
     this.messageService.sendMessage$.next(messageRequest);
     this.messageForm.reset();

@@ -21,6 +21,7 @@ function model(id: string, privacyTier: PrivacyTier): Model {
     contentTypes: ['text'],
     inputContextLength: 1000,
     pricing: { inputUsdPerMillionTokens: 0, outputUsdPerMillionTokens: 0 },
+    supportsImageGeneration: false,
     isEligible: true,
   };
 }

@@ -129,6 +129,7 @@ interface ApiModel {
   is_open_source?: boolean;
   hosting_country?: string;
   hosting_region?: string;
+  supports_image_generation?: boolean;
   is_eligible: boolean;
   ineligibility_reason?: string;
 }
@@ -1331,6 +1332,7 @@ export class CognosApiService {
       isOpenSource: model.is_open_source,
       hostingCountry: model.hosting_country,
       hostingRegion: model.hosting_region,
+      supportsImageGeneration: model.supports_image_generation ?? false,
       isEligible: model.is_eligible,
       ineligibilityReason: model.ineligibility_reason,
     });

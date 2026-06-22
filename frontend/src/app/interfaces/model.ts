@@ -31,6 +31,7 @@ export const Model = z.object({
   isOpenSource: z.boolean().optional(),
   hostingCountry: z.string().optional(),
   hostingRegion: z.string().optional(),
+  supportsImageGeneration: z.boolean().default(false),
   isEligible: z.boolean(),
   ineligibilityReason: z.string().optional(),
 });
@@ -60,5 +61,6 @@ export const loadingModel: Model = {
   },
   noRetention: false,
   isOpenSource: false,
+  supportsImageGeneration: false,
   isEligible: false,
 };

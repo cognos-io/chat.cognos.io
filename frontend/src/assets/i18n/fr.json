@@ -510,6 +510,8 @@
       "stop": "Arrêter",
       "shortcutMac": "Cmd + Entrée pour envoyer",
       "shortcutOther": "Ctrl + Entrée pour envoyer",
+      "generateImage": "Générer une image",
+      "imageGenerationUnsupported": "Ce modèle ne peut pas générer d'images. Choisissez un modèle compatible.",
       "switchPersona": "Changer de persona — {{ name }}"
     },
     "conversation": {

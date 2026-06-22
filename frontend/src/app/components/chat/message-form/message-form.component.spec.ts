@@ -23,7 +23,12 @@ describe('MessageFormComponent', () => {
   const status = signal(MessageStatus.None);
   const messages = signal<Message[]>([]);
 
-  const selectedModel = signal({
+  const selectedModel = signal<{
+    id: string;
+    name: string;
+    isEligible: boolean;
+    supportsImageGeneration?: boolean;
+  }>({
     id: 'model-1',
     name: 'Claude Sonnet',
     isEligible: true,
@@ -122,6 +127,8 @@ describe('MessageFormComponent', () => {
       // nothing), so both lists are empty.
       redactionDeselected: [],
       redactionCustom: [],
+      // Image generation is off by default.
+      imageGeneration: false,
     });
     expect(component.messageForm.controls.content.value).toBe('');
   });
@@ -190,5 +197,53 @@ describe('MessageFormComponent', () => {
     expect(component.canSendMessage()).toBe(false);
     expect(messageService.sendMessage$.next).not.toHaveBeenCalled();
     expect(component.messageForm.controls.content.value).toBe('Blocked message');
+  });
+
+  it('defaults the image generation tool to off', () => {
+    expect(component.imageGenerationEnabled()).toBe(false);
+    expect(component.imageGenerationUnsupported()).toBe(false);
+  });
+
+  it('blocks send and alerts when the tool is on for an image-incapable model', () => {
+    selectedModel.set({
+      id: 'model-1',
+      name: 'Claude Sonnet',
+      isEligible: true,
+      supportsImageGeneration: false,
+    });
+    component.toggleImageGeneration();
+    component.messageForm.controls.content.setValue('a fox');
+    fixture.detectChanges();
+
+    expect(component.imageGenerationUnsupported()).toBe(true);
+    expect(component.canSendMessage()).toBe(false);
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeTruthy();
+
+    component.sendMessage();
+    expect(messageService.sendMessage$.next).not.toHaveBeenCalled();
+  });
+
+  it('sends an image request when the tool is on for a capable model', () => {
+    selectedModel.set({
+      id: 'gemini-image',
+      name: 'Gemini Image',
+      isEligible: true,
+      supportsImageGeneration: true,
+    });
+    component.toggleImageGeneration();
+    component.messageForm.controls.content.setValue('a watercolour fox');
+    fixture.detectChanges();
+
+    expect(component.imageGenerationUnsupported()).toBe(false);
+    expect(component.canSendMessage()).toBe(true);
+
+    component.sendMessage();
+
+    expect(messageService.sendMessage$.next).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: 'a watercolour fox',
+        imageGeneration: true,
+      }),
+    );
   });
 });

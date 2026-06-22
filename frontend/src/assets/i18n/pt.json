@@ -510,6 +510,8 @@
       "stop": "Parar",
       "shortcutMac": "Cmd + Enter para enviar",
       "shortcutOther": "Ctrl + Enter para enviar",
+      "generateImage": "Gerar imagem",
+      "imageGenerationUnsupported": "Este modelo não gera imagens. Mude para um modelo compatível.",
       "switchPersona": "Mudar de persona — {{ name }}"
     },
     "conversation": {

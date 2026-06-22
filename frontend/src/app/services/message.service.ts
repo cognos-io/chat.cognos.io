@@ -166,6 +166,9 @@ export type MessageRequest = {
   // Exact substrings the user manually selected to redact in the composer.
   redactionCustom?: string[];
   redactionEntries?: RedactionEntry[];
+  // When true, the request generates an image instead of a text completion.
+  // Routed to the conversation image endpoint rather than /complete.
+  imageGeneration?: boolean;
 };
 
 // REDACTION_INSTRUCTION tells the model to preserve placeholder tokens verbatim
