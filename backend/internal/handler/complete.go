@@ -321,7 +321,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 					req.MaxOutputTokens,
 					completionUSDToCHFRate(params),
 				)
-				if restriction := params.BillingService.EvaluateAccess(state, estimatedCost.CostRappen); restriction != nil {
+				if restriction := params.BillingService.EvaluateAccess(state, estimatedCost.CostMicroRappen); restriction != nil {
 					return e.JSON(http.StatusPaymentRequired, completeBillingRestrictionResponse(*restriction, estimatedCost.CostCHF))
 				}
 				billingState = &state

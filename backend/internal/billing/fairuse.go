@@ -40,20 +40,20 @@ func (r *PocketBaseRepo) FlagFairUseOutliers(since time.Time, thresholdRappen in
 		NewQuery(`
 			SELECT user_id,
 			       COUNT(*) AS cnt,
-			       COALESCE(SUM(user_cost_rappen), 0) AS cost
+			       COALESCE(SUM(user_cost_microrappen), 0) AS cost
 			FROM ` + balanceTransactionsCollectionName + `
 			WHERE type = {:type}
 			  AND plan_type = {:plan}
 			  AND occurred_at >= {:since}
 			GROUP BY user_id
-			HAVING SUM(user_cost_rappen) > {:threshold}
+			HAVING SUM(user_cost_microrappen) > {:threshold}
 			ORDER BY cost DESC
 		`).
 		Bind(dbx.Params{
 			"type":      UsageTransactionType,
 			"plan":      string(PlanTypeUnlimited),
 			"since":     since.UTC().Format(pbDateLayout),
-			"threshold": thresholdRappen,
+			"threshold": thresholdRappen * MicroRappenPerRappen,
 		}).
 		All(&rows)
 	if err != nil {
@@ -64,7 +64,7 @@ func (r *PocketBaseRepo) FlagFairUseOutliers(since time.Time, thresholdRappen in
 	for _, row := range rows {
 		flags = append(flags, FairUseFlag{
 			UserID:            row.UserID,
-			RollingCostRappen: row.Cost,
+			RollingCostRappen: CeilRappenFromMicro(row.Cost),
 			RequestCount:      row.Count,
 		})
 	}

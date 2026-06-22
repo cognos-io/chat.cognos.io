@@ -16,16 +16,45 @@ const (
 	PlanTypeUnlimited PlanType = "unlimited"
 	PlanTypeInactive  PlanType = "inactive"
 
-	DefaultMarginBPS = 2000
+	// DefaultMarginBPS is the markup applied to the provider's cost, in basis
+	// points (2200 = 22%). Configurable via billing.margin_bps.
+	DefaultMarginBPS = 2200
+
+	// MicroRappenPerRappen is the precision we meter usage at internally. A
+	// single chat turn costs a fraction of one rappen, so we accumulate the
+	// exact cost in micro-rappen and only round to whole rappen when money
+	// actually leaves the system (balance display, Paddle charge).
+	MicroRappenPerRappen = 1_000_000
 )
+
+// CeilRappenFromMicro converts a non-negative micro-rappen amount to whole
+// rappen, always rounding up so we never undercharge.
+func CeilRappenFromMicro(microRappen int64) int64 {
+	if microRappen <= 0 {
+		return 0
+	}
+	return (microRappen + MicroRappenPerRappen - 1) / MicroRappenPerRappen
+}
+
+// FloorRappenFromMicro converts a micro-rappen balance to whole rappen, rounding
+// down so we never overstate remaining credit (the mirror of charging up).
+func FloorRappenFromMicro(microRappen int64) int64 {
+	if microRappen <= 0 {
+		return 0
+	}
+	return microRappen / MicroRappenPerRappen
+}
 
 var ErrStateNotFound = errors.New("billing state not found")
 
 type State struct {
-	PlanType        PlanType
-	BalanceRappen   int64
-	TrialSeedRappen int64
-	BillingUserID   string
+	PlanType PlanType
+	// BalanceRappen is the whole-rappen projection of the balance for display.
+	BalanceRappen int64
+	// BalanceMicroRappen is the precise balance used for all accounting.
+	BalanceMicroRappen int64
+	TrialSeedRappen    int64
+	BillingUserID      string
 
 	// Dashboard fields (zero/empty when not applicable).
 	PaddlePriceID         string
@@ -66,7 +95,11 @@ type CostBreakdown struct {
 	CostUSD                  float64
 	CostCHF                  float64
 	CostRappen               int64
-	UsedProviderCost         bool
+	// CostMicroRappen is the exact user cost in micro-rappen — the value used
+	// for accounting. CostRappen is the rounded projection for display only.
+	CostMicroRappen         int64
+	ProviderCostMicroRappen int64
+	UsedProviderCost        bool
 }
 
 type Service struct {
@@ -74,7 +107,16 @@ type Service struct {
 }
 
 func NewService() *Service {
-	return &Service{MarginBPS: DefaultMarginBPS}
+	return NewServiceWithMargin(DefaultMarginBPS)
+}
+
+// NewServiceWithMargin builds a Service with a configurable markup in basis
+// points. Non-positive values fall back to DefaultMarginBPS.
+func NewServiceWithMargin(marginBPS int64) *Service {
+	if marginBPS <= 0 {
+		marginBPS = DefaultMarginBPS
+	}
+	return &Service{MarginBPS: marginBPS}
 }
 
 func (s *Service) CalculateCost(
@@ -85,6 +127,7 @@ func (s *Service) CalculateCost(
 	providerCostUSD := s.providerCostUSD(model, usage)
 	userCostUSD := s.applyMargin(providerCostUSD)
 	costCHF := userCostUSD * usdToCHFRate
+	providerCostCHF := providerCostUSD * usdToCHFRate
 
 	return CostBreakdown{
 		InputTokens:              usage.InputTokens,
@@ -95,7 +138,11 @@ func (s *Service) CalculateCost(
 		CostUSD:                  userCostUSD,
 		CostCHF:                  costCHF,
 		CostRappen:               int64(math.Round(costCHF * 100)),
-		UsedProviderCost:         usage.ProviderCostUSD != nil,
+		// 1 CHF = 100 rappen = 100 * MicroRappenPerRappen micro-rappen, so
+		// CHF * 1e8 yields micro-rappen.
+		CostMicroRappen:         int64(math.Round(costCHF * 100 * MicroRappenPerRappen)),
+		ProviderCostMicroRappen: int64(math.Round(providerCostCHF * 100 * MicroRappenPerRappen)),
+		UsedProviderCost:        usage.ProviderCostUSD != nil,
 	}
 }
 
@@ -114,11 +161,11 @@ func (s *Service) EstimateUpperBoundCost(
 	}, usdToCHFRate)
 }
 
-func (s *Service) CanAfford(balanceRappen, estimatedCostRappen int64) bool {
-	return balanceRappen >= estimatedCostRappen
+func (s *Service) CanAfford(balanceMicroRappen, estimatedCostMicroRappen int64) bool {
+	return balanceMicroRappen >= estimatedCostMicroRappen
 }
 
-func (s *Service) EvaluateAccess(state State, estimatedCostRappen int64) *AccessRestriction {
+func (s *Service) EvaluateAccess(state State, estimatedCostMicroRappen int64) *AccessRestriction {
 	switch state.PlanType {
 	case PlanTypeInactive:
 		return &AccessRestriction{
@@ -127,12 +174,12 @@ func (s *Service) EvaluateAccess(state State, estimatedCostRappen int64) *Access
 			NextStep: "subscribe",
 		}
 	case PlanTypeTrial:
-		if estimatedCostRappen > 0 && !s.CanAfford(state.BalanceRappen, estimatedCostRappen) {
+		if estimatedCostMicroRappen > 0 && !s.CanAfford(state.BalanceMicroRappen, estimatedCostMicroRappen) {
 			return &AccessRestriction{
 				Error:               "TRIAL_EXHAUSTED",
 				Message:             "Your free trial has been used up.",
 				BalanceRappen:       int64Ptr(state.BalanceRappen),
-				EstimatedCostRappen: int64Ptr(estimatedCostRappen),
+				EstimatedCostRappen: int64Ptr(CeilRappenFromMicro(estimatedCostMicroRappen)),
 				NextStep:            "subscribe",
 			}
 		}

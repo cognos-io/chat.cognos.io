@@ -108,7 +108,7 @@ func buildBillingResponse(state billing.State, planByPrice map[string]PlanMeta) 
 	resp := billingResponse{
 		PlanType:              state.PlanType,
 		Interval:              meta.Interval,
-		BalanceCHF:            float64(state.BalanceRappen) / 100,
+		BalanceCHF:            float64(state.BalanceMicroRappen) / (100 * billing.MicroRappenPerRappen),
 		TrialSeedCHF:          float64(state.TrialSeedRappen) / 100,
 		RefundEligibleUntilAt: formatBillingTime(state.RefundEligibleUntilAt),
 	}
@@ -249,7 +249,7 @@ func BillingUsage(params BillingUsageParams) func(e *core.RequestEvent) error {
 			response.ByModel = append(response.ByModel, billingUsageModel{
 				ModelID: model.ModelID,
 				Count:   model.Count,
-				CostCHF: float64(model.CostRappen) / 100,
+				CostCHF: float64(model.CostMicroRappen) / (100 * billing.MicroRappenPerRappen),
 			})
 		}
 

@@ -39,9 +39,17 @@ func (r *PocketBaseRepo) StateForUser(userID string) (State, error) {
 	}
 
 	record := records[0]
+	balanceRappen := int64(record.GetInt("balance_rappen"))
+	balanceMicroRappen := int64(record.GetInt("balance_microrappen"))
+	// Legacy rows predate the micro-rappen column; derive it from the rappen
+	// balance so accounting still works before a balance has moved.
+	if balanceMicroRappen == 0 && balanceRappen > 0 {
+		balanceMicroRappen = balanceRappen * MicroRappenPerRappen
+	}
 	return State{
 		PlanType:              planType,
-		BalanceRappen:         int64(record.GetInt("balance_rappen")),
+		BalanceRappen:         balanceRappen,
+		BalanceMicroRappen:    balanceMicroRappen,
 		TrialSeedRappen:       int64(record.GetInt("trial_seed_granted_rappen")),
 		BillingUserID:         record.Id,
 		PaddlePriceID:         record.GetString("paddle_price_id"),
@@ -74,6 +82,7 @@ func (r *PocketBaseRepo) EnsureTrialState(userID string, seedRappen int64) error
 		record.Set("user_id", userID)
 		record.Set("plan_type", string(seed.PlanType))
 		record.Set("balance_rappen", seed.BalanceRappen)
+		record.Set("balance_microrappen", seed.BalanceRappen*MicroRappenPerRappen)
 		record.Set("trial_seed_granted_rappen", seed.TrialSeedGrantedRappen)
 		record.Set("plan_started_at", seed.PlanStartedAt)
 		return txApp.Save(record)
@@ -82,12 +91,15 @@ func (r *PocketBaseRepo) EnsureTrialState(userID string, seedRappen int64) error
 
 func (r *PocketBaseRepo) RecordUsage(record UsageRecord) error {
 	return r.app.RunInTransaction(func(txApp core.App) error {
-		if record.PlanType == PlanTypeTrial && record.BalanceAfterRappen != nil {
+		if record.PlanType == PlanTypeTrial && record.BalanceAfterMicroRappen != nil {
 			billingRecord, err := txApp.FindFirstRecordByData(userBillingCollectionName, "user_id", record.UserID)
 			if err != nil {
 				return err
 			}
-			billingRecord.Set("balance_rappen", *record.BalanceAfterRappen)
+			// balance_microrappen is the precise source of truth; balance_rappen
+			// is the floored display projection (never overstates remaining).
+			billingRecord.Set("balance_microrappen", *record.BalanceAfterMicroRappen)
+			billingRecord.Set("balance_rappen", FloorRappenFromMicro(*record.BalanceAfterMicroRappen))
 			if err := txApp.Save(billingRecord); err != nil {
 				return err
 			}
@@ -108,12 +120,18 @@ func (r *PocketBaseRepo) RecordUsage(record UsageRecord) error {
 		transactionRecord.Set("model_id", record.ModelID)
 		transactionRecord.Set("provider_cost_rappen", record.ProviderCostRappen)
 		transactionRecord.Set("user_cost_rappen", record.UserCostRappen)
+		transactionRecord.Set("amount_microrappen", record.AmountMicroRappen)
+		transactionRecord.Set("provider_cost_microrappen", record.ProviderCostMicroRappen)
+		transactionRecord.Set("user_cost_microrappen", record.UserCostMicroRappen)
 		transactionRecord.Set("fx_rate_usd_chf", record.FXRateUSDCHF)
 		transactionRecord.Set("input_tokens", record.InputTokens)
 		transactionRecord.Set("output_tokens", record.OutputTokens)
 		transactionRecord.Set("description", record.ModelID)
 		if record.BalanceAfterRappen != nil {
 			transactionRecord.Set("balance_after_rappen", *record.BalanceAfterRappen)
+		}
+		if record.BalanceAfterMicroRappen != nil {
+			transactionRecord.Set("balance_after_microrappen", *record.BalanceAfterMicroRappen)
 		}
 
 		return txApp.Save(transactionRecord)

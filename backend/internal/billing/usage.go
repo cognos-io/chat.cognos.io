@@ -14,9 +14,10 @@ const pbDateLayout = "2006-01-02 15:04:05.000Z"
 // straight from the ledger — message *content* is never read, so this exposes
 // nothing the encryption protects.
 type ModelUsage struct {
-	ModelID    string
-	Count      int64
-	CostRappen int64
+	ModelID         string
+	Count           int64
+	CostRappen      int64
+	CostMicroRappen int64
 }
 
 // UsageSummary is the usage breakdown for a period.
@@ -36,9 +37,9 @@ type UsageRepo interface {
 // loading every row, so a heavy month stays cheap.
 func (r *PocketBaseRepo) UsageSince(userID string, since time.Time) (UsageSummary, error) {
 	type row struct {
-		ModelID    string `db:"model_id"`
-		Count      int64  `db:"cnt"`
-		CostRappen int64  `db:"cost"`
+		ModelID string `db:"model_id"`
+		Count   int64  `db:"cnt"`
+		Cost    int64  `db:"cost"`
 	}
 
 	var rows []row
@@ -46,7 +47,7 @@ func (r *PocketBaseRepo) UsageSince(userID string, since time.Time) (UsageSummar
 		NewQuery(`
 			SELECT model_id,
 			       COUNT(*) AS cnt,
-			       COALESCE(SUM(user_cost_rappen), 0) AS cost
+			       COALESCE(SUM(user_cost_microrappen), 0) AS cost
 			FROM ` + balanceTransactionsCollectionName + `
 			WHERE user_id = {:user_id}
 			  AND type = {:type}
@@ -68,9 +69,10 @@ func (r *PocketBaseRepo) UsageSince(userID string, since time.Time) (UsageSummar
 	for _, r := range rows {
 		summary.MessageCount += r.Count
 		summary.ByModel = append(summary.ByModel, ModelUsage{
-			ModelID:    r.ModelID,
-			Count:      r.Count,
-			CostRappen: r.CostRappen,
+			ModelID:         r.ModelID,
+			Count:           r.Count,
+			CostRappen:      CeilRappenFromMicro(r.Cost),
+			CostMicroRappen: r.Cost,
 		})
 	}
 	return summary, nil

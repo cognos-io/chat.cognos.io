@@ -607,7 +607,7 @@ func sumPAYGUsageRappen(app core.App, userID string, start, end time.Time) (int6
 		Total int64 `db:"total"`
 	}
 	err := app.DB().NewQuery(`
-		SELECT COALESCE(SUM(user_cost_rappen), 0) AS total
+		SELECT COALESCE(SUM(user_cost_microrappen), 0) AS total
 		FROM ` + balanceTransactionsColl + `
 		WHERE user_id = {:user_id}
 		  AND type = {:type}
@@ -622,7 +622,9 @@ func sumPAYGUsageRappen(app core.App, userID string, start, end time.Time) (int6
 	if err != nil {
 		return 0, err
 	}
-	return result.Total, nil
+	// Round the cycle's exact sub-rappen usage up to whole rappen — the unit
+	// Paddle bills overage in — only once, here at the charge boundary.
+	return billing.CeilRappenFromMicro(result.Total), nil
 }
 
 // cycleSummaryID derives a stable PocketBase record id for a PAYG cycle so the
