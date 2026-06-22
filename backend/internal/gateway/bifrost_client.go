@@ -13,6 +13,7 @@ import (
 type bifrostRequester interface {
 	ChatCompletionRequest(ctx *schemas.BifrostContext, req *schemas.BifrostChatRequest) (*schemas.BifrostChatResponse, *schemas.BifrostError)
 	ChatCompletionStreamRequest(ctx *schemas.BifrostContext, req *schemas.BifrostChatRequest) (chan *schemas.BifrostStreamChunk, *schemas.BifrostError)
+	ImageGenerationRequest(ctx *schemas.BifrostContext, req *schemas.BifrostImageGenerationRequest) (*schemas.BifrostImageGenerationResponse, *schemas.BifrostError)
 }
 
 type bifrostShutdowner interface {
@@ -268,13 +269,20 @@ func cachedWriteTokens(usage *schemas.BifrostLLMUsage) int {
 }
 
 func (c *BifrostClient) logBifrostError(req CompleteRequest, bifrostErr *schemas.BifrostError) {
+	c.logProviderError(req.ProviderID, req.ProviderModelID, bifrostErr)
+}
+
+// logProviderError logs a provider failure using only structured, non-sensitive
+// fields (provider, model, status/type/code). It deliberately never logs the
+// prompt, the free-text error message, or any generated content.
+func (c *BifrostClient) logProviderError(providerID, modelID string, bifrostErr *schemas.BifrostError) {
 	if c == nil || c.logger == nil || bifrostErr == nil {
 		return
 	}
 
 	attrs := []any{
-		"provider", strings.TrimSpace(req.ProviderID),
-		"model", strings.TrimSpace(req.ProviderModelID),
+		"provider", strings.TrimSpace(providerID),
+		"model", strings.TrimSpace(modelID),
 		"status_code", derefInt(bifrostErr.StatusCode),
 		"error_type", derefString(bifrostErrorType(bifrostErr)),
 		"error_code", derefString(bifrostErrorCode(bifrostErr)),

@@ -17,6 +17,10 @@ type stubBifrostRequester struct {
 	streamErr *schemas.BifrostError
 	req       *schemas.BifrostChatRequest
 	streamReq *schemas.BifrostChatRequest
+
+	imageResp *schemas.BifrostImageGenerationResponse
+	imageErr  *schemas.BifrostError
+	imageReq  *schemas.BifrostImageGenerationRequest
 }
 
 func (s *stubBifrostRequester) ChatCompletionRequest(
@@ -33,6 +37,14 @@ func (s *stubBifrostRequester) ChatCompletionStreamRequest(
 ) (chan *schemas.BifrostStreamChunk, *schemas.BifrostError) {
 	s.streamReq = req
 	return s.stream, s.streamErr
+}
+
+func (s *stubBifrostRequester) ImageGenerationRequest(
+	_ *schemas.BifrostContext,
+	req *schemas.BifrostImageGenerationRequest,
+) (*schemas.BifrostImageGenerationResponse, *schemas.BifrostError) {
+	s.imageReq = req
+	return s.imageResp, s.imageErr
 }
 
 type stubBifrostShutdowner struct{ called bool }

@@ -5,7 +5,9 @@ import "context"
 type MockClient struct {
 	CompleteFunc       func(context.Context, CompleteRequest) (CompleteResponse, error)
 	CompleteStreamFunc func(context.Context, CompleteRequest) (<-chan CompleteStreamEvent, error)
+	GenerateImageFunc  func(context.Context, ImageRequest) (ImageResponse, error)
 	Requests           []CompleteRequest
+	ImageRequests      []ImageRequest
 }
 
 func (m *MockClient) Complete(ctx context.Context, req CompleteRequest) (CompleteResponse, error) {
@@ -43,6 +45,16 @@ func (m *MockClient) CompleteStream(ctx context.Context, req CompleteRequest) (<
 	ch := make(chan CompleteStreamEvent)
 	close(ch)
 	return ch, nil
+}
+
+func (m *MockClient) GenerateImage(ctx context.Context, req ImageRequest) (ImageResponse, error) {
+	m.ImageRequests = append(m.ImageRequests, req)
+
+	if m.GenerateImageFunc != nil {
+		return m.GenerateImageFunc(ctx, req)
+	}
+
+	return ImageResponse{}, nil
 }
 
 func cloneRequest(req CompleteRequest) CompleteRequest {
