@@ -77,6 +77,7 @@ func routes(logger *slog.Logger) http.Handler {
 		writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 	})
 	mux.HandleFunc("POST /v1/chat/completions", chatCompletionsHandler(logger))
+	mux.HandleFunc("POST /v1/images/generations", imagesGenerationHandler(logger))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("not found", "method", r.Method, "path", r.URL.Path)
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
@@ -152,11 +153,21 @@ func chatCompletionsHandler(logger *slog.Logger) http.HandlerFunc {
 			}
 		}
 
-		reply := selectReply(req)
 		model := req.Model
 		if model == "" {
 			model = "mock-model"
 		}
+
+		// Image models (Gemini-style) return the generated image inline on the
+		// chat completion. Our gateway calls this path non-streaming with the raw
+		// response enabled, then reads choices[].message.images[].
+		if isImageModel(model) {
+			logger.Info("chat image completion", "model", model)
+			writeChatImageResponse(w, model)
+			return
+		}
+
+		reply := selectReply(req)
 
 		logger.Info("chat completion", "model", model, "reply", reply, "stream", req.Stream)
 
@@ -269,6 +280,147 @@ func lastUserContent(req chatCompletionRequest) string {
 		}
 	}
 	return ""
+}
+
+// mockPNGBase64 is a valid 1x1 PNG, base64-encoded. Small enough to keep tests
+// fast, real enough to round-trip through base64/data-URI decoding.
+const mockPNGBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+
+// isImageModel mirrors how the real catalogue routes Gemini image models to the
+// chat-completions transport: any model whose id mentions "image".
+func isImageModel(model string) bool {
+	return strings.Contains(strings.ToLower(model), "image")
+}
+
+// --- Dedicated Images API (OpenAI gpt-image style) ---
+
+type imageGenerationRequest struct {
+	Model          string `json:"model"`
+	Prompt         string `json:"prompt"`
+	N              int    `json:"n"`
+	ResponseFormat string `json:"response_format"`
+}
+
+type imageData struct {
+	B64JSON string `json:"b64_json,omitempty"`
+	URL     string `json:"url,omitempty"`
+}
+
+type imageGenerationResponse struct {
+	Created int64                 `json:"created"`
+	Model   string                `json:"model"`
+	Data    []imageData           `json:"data"`
+	Usage   *imageGenerationUsage `json:"usage,omitempty"`
+}
+
+type imageGenerationUsage struct {
+	InputTokens  int `json:"input_tokens"`
+	OutputTokens int `json:"output_tokens"`
+	TotalTokens  int `json:"total_tokens"`
+}
+
+func imagesGenerationHandler(logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req imageGenerationRequest
+		if r.ContentLength != 0 {
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				logger.Warn("decode failed", "err", err)
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
+				return
+			}
+		}
+
+		count := req.N
+		if count <= 0 {
+			count = 1
+		}
+		model := req.Model
+		if model == "" {
+			model = "mock-image-model"
+		}
+
+		logger.Info("image generation", "model", model, "n", count, "response_format", req.ResponseFormat)
+
+		data := make([]imageData, 0, count)
+		for range count {
+			// Always inline bytes; the gateway requests b64_json so it never
+			// receives a temporary URL.
+			data = append(data, imageData{B64JSON: mockPNGBase64})
+		}
+
+		writeJSON(w, http.StatusOK, imageGenerationResponse{
+			Created: time.Now().Unix(),
+			Model:   model,
+			Data:    data,
+			// The Images API reports tokens only — no cost (mirrors real Requesty).
+			Usage: &imageGenerationUsage{InputTokens: 11, OutputTokens: 4160, TotalTokens: 4171},
+		})
+	}
+}
+
+// --- Chat-completions image output (Gemini style) ---
+
+// chatImageMessage mirrors choices[].message with the non-standard images[]
+// array Requesty returns for Gemini image models.
+type chatImageMessage struct {
+	Role    string           `json:"role"`
+	Content string           `json:"content"`
+	Images  []chatImageBlock `json:"images"`
+}
+
+type chatImageBlock struct {
+	Type     string            `json:"type"`
+	ImageURL chatImageBlockURL `json:"image_url"`
+}
+
+type chatImageBlockURL struct {
+	URL string `json:"url"`
+}
+
+type chatImageChoice struct {
+	Index        int              `json:"index"`
+	Message      chatImageMessage `json:"message"`
+	FinishReason string           `json:"finish_reason"`
+}
+
+// chatImageUsage carries the provider cost at usage.cost, exactly as Requesty
+// returns it (and where Bifrost's typed usage does not surface it).
+type chatImageUsage struct {
+	PromptTokens     int     `json:"prompt_tokens"`
+	CompletionTokens int     `json:"completion_tokens"`
+	TotalTokens      int     `json:"total_tokens"`
+	Cost             float64 `json:"cost"`
+}
+
+type chatImageResponse struct {
+	ID      string            `json:"id"`
+	Object  string            `json:"object"`
+	Created int64             `json:"created"`
+	Model   string            `json:"model"`
+	Choices []chatImageChoice `json:"choices"`
+	Usage   chatImageUsage    `json:"usage"`
+}
+
+func writeChatImageResponse(w http.ResponseWriter, model string) {
+	writeJSON(w, http.StatusOK, chatImageResponse{
+		ID:      "chatcmpl-mock-image",
+		Object:  "chat.completion",
+		Created: time.Now().Unix(),
+		Model:   model,
+		Choices: []chatImageChoice{{
+			Index:        0,
+			FinishReason: "stop",
+			Message: chatImageMessage{
+				Role:    "assistant",
+				Content: "Here is your image.",
+				Images: []chatImageBlock{{
+					Type:     "image_url",
+					ImageURL: chatImageBlockURL{URL: "data:image/png;base64," + mockPNGBase64},
+				}},
+			},
+		}},
+		Usage: chatImageUsage{PromptTokens: 7, CompletionTokens: 1303, TotalTokens: 1310, Cost: 0.0387346},
+	})
 }
 
 func writeJSON(w http.ResponseWriter, status int, body any) {

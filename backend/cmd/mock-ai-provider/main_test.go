@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -176,6 +177,77 @@ func TestRoutesHealthAndCompletionsContract(t *testing.T) {
 		handler.ServeHTTP(rec, req)
 		if rec.Code != http.StatusBadRequest {
 			t.Fatalf("status = %d, want 400", rec.Code)
+		}
+	})
+}
+
+func TestRoutesImageGenerationContract(t *testing.T) {
+	t.Parallel()
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := routes(logger)
+
+	t.Run("POST /v1/images/generations returns decodable b64_json", func(t *testing.T) {
+		t.Parallel()
+		req := httptest.NewRequest(
+			http.MethodPost,
+			"/v1/images/generations",
+			strings.NewReader(`{"model":"azure/openai/gpt-image-1","prompt":"a fox","response_format":"b64_json","n":1}`),
+		)
+		req.Header.Set("content-type", "application/json")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d body=%s", rec.Code, rec.Body.String())
+		}
+
+		var body imageGenerationResponse
+		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		if len(body.Data) != 1 || body.Data[0].B64JSON == "" {
+			t.Fatalf("expected one inline image, got %+v", body.Data)
+		}
+		if _, err := base64.StdEncoding.DecodeString(body.Data[0].B64JSON); err != nil {
+			t.Fatalf("b64_json is not valid base64: %v", err)
+		}
+		// Images API reports tokens, never cost (mirrors real Requesty).
+		if body.Usage == nil || body.Usage.OutputTokens == 0 {
+			t.Fatalf("expected token usage, got %+v", body.Usage)
+		}
+	})
+
+	t.Run("POST /v1/chat/completions for an image model returns message.images data URI", func(t *testing.T) {
+		t.Parallel()
+		req := httptest.NewRequest(
+			http.MethodPost,
+			"/v1/chat/completions",
+			strings.NewReader(`{"model":"vertex/gemini-2.5-flash-image","messages":[{"role":"user","content":"a fox"}]}`),
+		)
+		req.Header.Set("content-type", "application/json")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d body=%s", rec.Code, rec.Body.String())
+		}
+
+		var body chatImageResponse
+		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		if len(body.Choices) != 1 || len(body.Choices[0].Message.Images) != 1 {
+			t.Fatalf("expected one inline image, got %+v", body.Choices)
+		}
+		url := body.Choices[0].Message.Images[0].ImageURL.URL
+		if !strings.HasPrefix(url, "data:image/png;base64,") {
+			t.Fatalf("expected a png data URI, got %q", url[:min(40, len(url))])
+		}
+		if _, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(url, "data:image/png;base64,")); err != nil {
+			t.Fatalf("data URI payload is not valid base64: %v", err)
+		}
+		// The chat transport reports cost at usage.cost.
+		if body.Usage.Cost == 0 {
+			t.Fatalf("expected a non-zero usage.cost, got %+v", body.Usage)
 		}
 	})
 }
