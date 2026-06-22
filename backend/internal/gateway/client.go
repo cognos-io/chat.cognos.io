@@ -35,6 +35,19 @@ type CompleteStreamEvent struct {
 	Err   error
 }
 
+// ImageTransport selects how an image is generated. Requesty exposes two,
+// chosen per model: OpenAI gpt-image models use the dedicated Images API, while
+// Google Gemini models return the image inline on a chat completion.
+type ImageTransport string
+
+const (
+	// ImageTransportImagesAPI uses POST /v1/images/generations. Default.
+	ImageTransportImagesAPI ImageTransport = "images_api"
+	// ImageTransportChatCompletions uses POST /v1/chat/completions and reads the
+	// image out of choices[].message.images[].
+	ImageTransportChatCompletions ImageTransport = "chat_completions"
+)
+
 // ImageRequest is an explicit image-generation request. Image generation is a
 // distinct operation from text completion — it is never inferred from prompt
 // text — so it has its own request type and gateway method.
@@ -42,6 +55,8 @@ type ImageRequest struct {
 	ProviderID      string
 	ProviderModelID string
 	Prompt          string
+	// Transport selects the provider API. Empty defaults to the Images API.
+	Transport ImageTransport
 	// N is the number of images to generate (defaults to 1 when <= 0).
 	N int
 	// Size is an optional provider size hint such as "1024x1024".

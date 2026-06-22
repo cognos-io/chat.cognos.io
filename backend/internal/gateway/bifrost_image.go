@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -10,14 +11,24 @@ import (
 )
 
 // GenerateImage performs an explicit image-generation request against the
-// configured provider via Bifrost's dedicated image API. We always request
-// inline bytes (b64_json) so the provider returns the image directly and Cognos
-// never has to persist a temporary plaintext provider URL.
+// configured provider, dispatching to the transport the model uses.
 func (c *BifrostClient) GenerateImage(ctx context.Context, req ImageRequest) (ImageResponse, error) {
 	if c == nil || c.requester == nil {
 		return ImageResponse{}, fmt.Errorf("bifrost client is not configured")
 	}
 
+	switch req.Transport {
+	case ImageTransportChatCompletions:
+		return c.generateImageViaChat(ctx, req)
+	default:
+		return c.generateImageViaImagesAPI(ctx, req)
+	}
+}
+
+// generateImageViaImagesAPI uses Bifrost's dedicated image API. We always
+// request inline bytes (b64_json) so the provider returns the image directly and
+// Cognos never has to persist a temporary plaintext provider URL.
+func (c *BifrostClient) generateImageViaImagesAPI(ctx context.Context, req ImageRequest) (ImageResponse, error) {
 	imageReq, err := buildImageRequest(req)
 	if err != nil {
 		return ImageResponse{}, err
@@ -51,15 +62,22 @@ func (c *BifrostClient) GenerateImage(ctx context.Context, req ImageRequest) (Im
 	}, nil
 }
 
-func buildImageRequest(req ImageRequest) (*schemas.BifrostImageGenerationRequest, error) {
+func validateImageRequest(req ImageRequest) error {
 	if strings.TrimSpace(req.ProviderID) == "" {
-		return nil, fmt.Errorf("bifrost provider id is required")
+		return fmt.Errorf("bifrost provider id is required")
 	}
 	if strings.TrimSpace(req.ProviderModelID) == "" {
-		return nil, fmt.Errorf("bifrost model id is required")
+		return fmt.Errorf("bifrost model id is required")
 	}
 	if strings.TrimSpace(req.Prompt) == "" {
-		return nil, fmt.Errorf("image prompt is required")
+		return fmt.Errorf("image prompt is required")
+	}
+	return nil
+}
+
+func buildImageRequest(req ImageRequest) (*schemas.BifrostImageGenerationRequest, error) {
+	if err := validateImageRequest(req); err != nil {
+		return nil, err
 	}
 
 	// b64_json keeps the bytes inline so we never receive (or persist) a
@@ -124,5 +142,172 @@ func mimeForImageFormat(format string) string {
 		return "image/webp"
 	default:
 		return "image/png"
+	}
+}
+
+// generateImageViaChat generates an image through the chat-completions API, used
+// by models (e.g. Google Gemini) that return images inline at
+// choices[].message.images[]. Bifrost's typed chat response does not model that
+// array, so we enable raw-response capture for this single request and parse the
+// image out of the raw provider JSON. The flag is set per request, never
+// globally, so raw provider plaintext is not captured on the text-completion path.
+func (c *BifrostClient) generateImageViaChat(ctx context.Context, req ImageRequest) (ImageResponse, error) {
+	chatReq, err := buildImageChatRequest(req)
+	if err != nil {
+		return ImageResponse{}, err
+	}
+
+	bifrostCtx := schemas.NewBifrostContextWithValue(
+		ctx, schemas.NoDeadline,
+		schemas.BifrostContextKeySendBackRawResponse, true,
+	)
+
+	resp, bifrostErr := c.requester.ChatCompletionRequest(bifrostCtx, chatReq)
+	if bifrostErr != nil {
+		c.logProviderError(req.ProviderID, req.ProviderModelID, bifrostErr)
+		return ImageResponse{}, fmt.Errorf("bifrost image chat request failed: %s", safeErrorSummary(bifrostErr))
+	}
+	if resp == nil {
+		return ImageResponse{}, fmt.Errorf("bifrost returned nil image chat response")
+	}
+
+	images, err := extractChatImages(resp.ExtraFields.RawResponse, req.OutputFormat)
+	if err != nil {
+		return ImageResponse{}, err
+	}
+	if len(images) == 0 {
+		return ImageResponse{}, fmt.Errorf("chat completion returned no generated images")
+	}
+
+	return ImageResponse{Images: images, Usage: chatImageUsage(resp.Usage)}, nil
+}
+
+func buildImageChatRequest(req ImageRequest) (*schemas.BifrostChatRequest, error) {
+	if err := validateImageRequest(req); err != nil {
+		return nil, err
+	}
+
+	prompt := req.Prompt
+	messages := []schemas.ChatMessage{{
+		Role:    schemas.ChatMessageRoleUser,
+		Content: &schemas.ChatMessageContent{ContentStr: &prompt},
+	}}
+
+	return &schemas.BifrostChatRequest{
+		Provider: schemas.ModelProvider(strings.TrimSpace(req.ProviderID)),
+		Model:    strings.TrimSpace(req.ProviderModelID),
+		Input:    messages,
+	}, nil
+}
+
+// extractChatImages parses generated images out of the raw chat-completion JSON.
+// Requesty returns them at choices[].message.images[].image_url.url as data URIs.
+func extractChatImages(rawResponse interface{}, outputFormat string) ([]GeneratedImage, error) {
+	rawBytes, err := rawJSONBytes(rawResponse)
+	if err != nil {
+		return nil, err
+	}
+	if len(rawBytes) == 0 {
+		return nil, nil
+	}
+
+	var parsed struct {
+		Choices []struct {
+			Message struct {
+				Images []struct {
+					ImageURL struct {
+						URL string `json:"url"`
+					} `json:"image_url"`
+				} `json:"images"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+	if err := json.Unmarshal(rawBytes, &parsed); err != nil {
+		return nil, fmt.Errorf("parse chat image response: %w", err)
+	}
+
+	var images []GeneratedImage
+	for _, choice := range parsed.Choices {
+		for _, img := range choice.Message.Images {
+			bytes, mime, err := decodeImageDataURI(img.ImageURL.URL, outputFormat)
+			if err != nil {
+				return nil, err
+			}
+			images = append(images, GeneratedImage{Bytes: bytes, MimeType: mime})
+		}
+	}
+	return images, nil
+}
+
+// decodeImageDataURI decodes a base64 data URI ("data:image/png;base64,...").
+func decodeImageDataURI(uri, fallbackFormat string) (bytes []byte, mimeType string, err error) {
+	if !strings.HasPrefix(uri, "data:") {
+		// We never log the URI itself in case a provider returns a remote link
+		// that could carry identifying query params.
+		return nil, "", fmt.Errorf("expected an inline image data uri")
+	}
+
+	comma := strings.IndexByte(uri, ',')
+	if comma < 0 {
+		return nil, "", fmt.Errorf("malformed image data uri")
+	}
+
+	meta := uri[len("data:"):comma]
+	mimeType = mimeForImageFormat(fallbackFormat)
+	isBase64 := false
+	for _, part := range strings.Split(meta, ";") {
+		switch {
+		case part == "base64":
+			isBase64 = true
+		case strings.HasPrefix(part, "image/"):
+			mimeType = part
+		}
+	}
+	if !isBase64 {
+		return nil, "", fmt.Errorf("image data uri is not base64-encoded")
+	}
+
+	decoded, decodeErr := base64.StdEncoding.DecodeString(uri[comma+1:])
+	if decodeErr != nil {
+		return nil, "", fmt.Errorf("decode image data uri: %w", decodeErr)
+	}
+	return decoded, mimeType, nil
+}
+
+func rawJSONBytes(raw interface{}) ([]byte, error) {
+	switch v := raw.(type) {
+	case nil:
+		return nil, nil
+	case json.RawMessage:
+		return v, nil
+	case []byte:
+		return v, nil
+	case string:
+		return []byte(v), nil
+	default:
+		marshalled, err := json.Marshal(v)
+		if err != nil {
+			return nil, fmt.Errorf("marshal raw response: %w", err)
+		}
+		return marshalled, nil
+	}
+}
+
+// chatImageUsage maps chat usage for image generation. Unlike the Images API,
+// the chat path may report a provider cost (usage.Cost), which billing prefers.
+func chatImageUsage(usage *schemas.BifrostLLMUsage) Usage {
+	if usage == nil {
+		return Usage{}
+	}
+	var providerCostUSD *float64
+	if usage.Cost != nil {
+		totalCost := usage.Cost.TotalCost
+		providerCostUSD = &totalCost
+	}
+	return Usage{
+		InputTokens:     int64(usage.PromptTokens),
+		OutputTokens:    int64(usage.CompletionTokens),
+		TotalTokens:     int64(usage.TotalTokens),
+		ProviderCostUSD: providerCostUSD,
 	}
 }

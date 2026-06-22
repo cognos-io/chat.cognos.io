@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/maximhq/bifrost/core/schemas"
@@ -71,6 +73,97 @@ func TestBifrostClientGenerateImageMapsRequestAndDecodesBytes(t *testing.T) {
 	}
 	if resp.Usage.ProviderCostUSD != nil {
 		t.Errorf("expected nil provider cost for image usage, got %v", *resp.Usage.ProviderCostUSD)
+	}
+}
+
+func TestBifrostClientGenerateImageViaChatParsesRawResponse(t *testing.T) {
+	t.Parallel()
+
+	want := []byte("\x89PNG\r\n\x1a\n fake gemini image bytes")
+	dataURI := "data:image/png;base64," + base64.StdEncoding.EncodeToString(want)
+	rawResponse := json.RawMessage(fmt.Sprintf(`{
+		"choices": [{
+			"index": 0,
+			"message": {
+				"role": "assistant",
+				"content": "Here is your image.",
+				"images": [{"type": "image_url", "image_url": {"url": %q}}]
+			}
+		}]
+	}`, dataURI))
+
+	cost := 0.039
+	requester := &stubBifrostRequester{
+		resp: &schemas.BifrostChatResponse{
+			ExtraFields: schemas.BifrostResponseExtraFields{RawResponse: rawResponse},
+			Usage: &schemas.BifrostLLMUsage{
+				PromptTokens:     9,
+				CompletionTokens: 1290,
+				TotalTokens:      1299,
+				Cost:             &schemas.BifrostCost{TotalCost: cost},
+			},
+		},
+	}
+	client := NewBifrostClient(requester, nil, nil, nil)
+
+	resp, err := client.GenerateImage(context.Background(), ImageRequest{
+		ProviderID:      "requesty",
+		ProviderModelID: "vertex/google/gemini-2.5-flash-image-preview",
+		Prompt:          "a watercolour fox in a library",
+		Transport:       ImageTransportChatCompletions,
+		OutputFormat:    "png",
+	})
+	if err != nil {
+		t.Fatalf("GenerateImage (chat) returned error: %v", err)
+	}
+
+	// It must route to the chat endpoint, with raw-response capture enabled.
+	if requester.req == nil {
+		t.Fatal("expected a chat completion request to be sent")
+	}
+	if requester.imageReq != nil {
+		t.Error("chat transport must not call the images endpoint")
+	}
+
+	if len(resp.Images) != 1 {
+		t.Fatalf("expected 1 image, got %d", len(resp.Images))
+	}
+	if !bytes.Equal(resp.Images[0].Bytes, want) {
+		t.Error("decoded image bytes mismatch")
+	}
+	if resp.Images[0].MimeType != "image/png" {
+		t.Errorf("mime = %q, want image/png", resp.Images[0].MimeType)
+	}
+	// The chat path can report provider cost; billing prefers it.
+	if resp.Usage.ProviderCostUSD == nil || *resp.Usage.ProviderCostUSD != cost {
+		t.Errorf("provider cost = %v, want %v", resp.Usage.ProviderCostUSD, cost)
+	}
+	if resp.Usage.OutputTokens != 1290 {
+		t.Errorf("output tokens = %d, want 1290", resp.Usage.OutputTokens)
+	}
+}
+
+func TestBifrostClientGenerateImageViaChatErrorsWhenNoImage(t *testing.T) {
+	t.Parallel()
+
+	// A text-only chat response (no images array) must be a clear error, not a
+	// silent empty success.
+	rawResponse := json.RawMessage(`{"choices":[{"message":{"role":"assistant","content":"I cannot do that."}}]}`)
+	requester := &stubBifrostRequester{
+		resp: &schemas.BifrostChatResponse{
+			ExtraFields: schemas.BifrostResponseExtraFields{RawResponse: rawResponse},
+		},
+	}
+	client := NewBifrostClient(requester, nil, nil, nil)
+
+	_, err := client.GenerateImage(context.Background(), ImageRequest{
+		ProviderID:      "requesty",
+		ProviderModelID: "vertex/google/gemini-2.5-flash-image-preview",
+		Prompt:          "a watercolour fox",
+		Transport:       ImageTransportChatCompletions,
+	})
+	if err == nil {
+		t.Fatal("expected an error when the chat response carries no image")
 	}
 }
 
