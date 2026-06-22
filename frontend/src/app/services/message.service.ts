@@ -13,6 +13,7 @@ import {
   exhaustMap,
   filter,
   finalize,
+  forkJoin,
   from,
   map,
   of,
@@ -34,8 +35,10 @@ import {
 } from '@cognos/ui-angular';
 
 import { CompletionBillingRestriction } from '@app/interfaces/billing';
+import { Conversation } from '@app/interfaces/conversation';
 import {
   Message,
+  MessageAttachment,
   MessageData,
   isMessageFromUser,
   parseMessageData,
@@ -60,6 +63,7 @@ import {
   CompleteResponse,
   CompleteStreamEvent,
   CompletionMessageRequest,
+  GenerateImageResponse,
   MessageListResponse,
   MessageRecord,
 } from './cognos-api.service';
@@ -345,6 +349,40 @@ export const applyCompletionStreamResponse = (
     );
 
   return buildCompletionMessages(messages, resp);
+};
+
+// applyImageGenerationResponse swaps the optimistic user message's temporary id
+// for the persisted one and appends the generated-image assistant message,
+// carrying the decrypted image object URL for display. Pure — returns a new
+// array without mutating existing entries.
+export const applyImageGenerationResponse = (
+  existing: ReadonlyArray<Message>,
+  requestId: string,
+  resp: GenerateImageResponse,
+  attachment: MessageAttachment,
+  imageUrl: string,
+): Message[] => {
+  const userMessageId = resp.user_message_id ?? requestId;
+
+  const messages = existing.map((message) =>
+    message.record_id === requestId
+      ? { ...message, record_id: userMessageId }
+      : message,
+  );
+
+  const assistant: Message = {
+    record_id: resp.assistant_message.id,
+    parentMessageId: userMessageId,
+    createdAt: parseBackendDate(resp.assistant_message.created_at),
+    decryptedData: {
+      content: '',
+      model_id: resp.assistant_message.model_id,
+      attachments: [attachment],
+    },
+    imageUrls: [imageUrl],
+  };
+
+  return [...messages, assistant];
 };
 
 export const removeStreamingCompletionMessages = (
@@ -966,6 +1004,24 @@ export class MessageService {
       throw new Error('No conversation selected');
     }
 
+    // Image generation goes to a dedicated endpoint and persists an encrypted
+    // attachment, so it needs a real (non-temporary) conversation.
+    if (messageRequest.imageGeneration) {
+      if (!conversation || isTemporaryConversation) {
+        this.reportCompletionError(
+          new Error('Image generation requires a saved conversation'),
+        );
+        return of({
+          status: MessageStatus.ErrorSending,
+          messages: removeStreamingCompletionMessages(
+            this.state().messages,
+            messageRequest.requestId,
+          ),
+        });
+      }
+      return this.sendImageGeneration(messageRequest, conversation);
+    }
+
     this.persistRedaction(messageRequest);
 
     const originConversationId = conversation?.record.id ?? null;
@@ -1087,6 +1143,106 @@ export class MessageService {
           this.state.setStatus(MessageStatus.ErrorSending);
         }
         this.consumeIntentionalCompletionAbort();
+      }),
+    );
+  }
+
+  // decryptMessageImages fetches and decrypts a persisted message's image
+  // attachments into blob object URLs. Used to hydrate images on conversation
+  // load (the live generation path sets them directly). Returns [] when there's
+  // nothing to decrypt.
+  decryptMessageImages(message: Message): Observable<string[]> {
+    const conversation = this._conversationService.conversation();
+    const attachments = message.decryptedData.attachments ?? [];
+    if (!conversation || !message.record_id || attachments.length === 0) {
+      return of([]);
+    }
+    const recordId = message.record_id;
+    return forkJoin(
+      attachments.map((attachment) =>
+        this.decryptAttachmentToUrl(recordId, attachment, conversation),
+      ),
+    );
+  }
+
+  // sendImageGeneration runs an image request against the conversation image
+  // endpoint, then decrypts the returned attachment for immediate display. It is
+  // single-response (no token streaming): the optimistic user message is already
+  // in state, so on success we swap its id and append the image message.
+  private sendImageGeneration(
+    messageRequest: MessageRequest,
+    conversation: Conversation,
+  ): Observable<Partial<MessageState>> {
+    this.state.setStatus(MessageStatus.Sending);
+    const originConversationId = conversation.record.id;
+
+    return this._api
+      .generateConversationImage(originConversationId, {
+        prompt: messageRequest.content,
+        modelId: this._modelService.selectedModel().id,
+        requestId: messageRequest.requestId,
+      })
+      .pipe(
+        switchMap((response) => {
+          const attachment: MessageAttachment = {
+            kind: response.assistant_message.attachment.kind,
+            mime_type: response.assistant_message.attachment.mime_type,
+            sealed_key: response.assistant_message.attachment.sealed_key,
+            file_name: response.assistant_message.attachment.file_name,
+          };
+          return this.decryptAttachmentToUrl(
+            response.assistant_message.id,
+            attachment,
+            conversation,
+          ).pipe(
+            map((imageUrl) => ({
+              status: MessageStatus.Success,
+              messages: applyImageGenerationResponse(
+                this.state().messages,
+                messageRequest.requestId,
+                response,
+                attachment,
+                imageUrl,
+              ),
+            })),
+          );
+        }),
+        catchError((err: unknown) => {
+          console.error('Error generating image');
+          this.reportCompletionError(err);
+          return of({
+            status: MessageStatus.ErrorSending,
+            messages: removeStreamingCompletionMessages(
+              this.state().messages,
+              messageRequest.requestId,
+            ),
+          });
+        }),
+      );
+  }
+
+  // decryptAttachmentToUrl fetches the encrypted attachment file, unseals its
+  // per-attachment key with the conversation key, decrypts the bytes, and
+  // returns a blob object URL for display. All decryption is client-side.
+  private decryptAttachmentToUrl(
+    recordId: string,
+    attachment: MessageAttachment,
+    conversation: Conversation,
+  ): Observable<string> {
+    if (!attachment.file_name) {
+      throw new Error('attachment is missing a file name');
+    }
+    return this._api.fetchAttachmentBytes(recordId, attachment.file_name).pipe(
+      map((ciphertext) => {
+        const symmetricKey = this._cryptoService.openSealedBox(
+          Base64.toUint8Array(attachment.sealed_key),
+          conversation.keyPair,
+        );
+        const imageBytes = this._cryptoService.openSecretBox(ciphertext, symmetricKey);
+        const blob = new Blob([imageBytes as BlobPart], {
+          type: attachment.mime_type,
+        });
+        return URL.createObjectURL(blob);
       }),
     );
   }

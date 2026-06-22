@@ -657,6 +657,8 @@
       "editSave": "Salva",
       "empty": "Questo messaggio è vuoto.",
       "emptyAssistant": "Questo messaggio è vuoto o l'IA non ha generato una risposta, riprova.",
+      "imageUnavailable": "Impossibile caricare o decifrare questa immagine.",
+      "imageLoading": "Caricamento immagine…",
       "encrypted": "Crittografato",
       "encryptedWithTime": "Crittografato · {{ time }}",
       "keep": "Conserva questo messaggio temporaneo",

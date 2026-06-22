@@ -9,10 +9,12 @@ import {
   ElementRef,
   HostListener,
   Input,
+  type OnChanges,
   effect,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
@@ -21,6 +23,8 @@ import {
   CognosBranchSwitcherComponent,
   CognosButtonComponent,
   CognosIconButtonComponent,
+  CognosImageGridComponent,
+  CognosLightboxComponent,
   CognosMenuComponent,
   type CognosMenuItem,
   CognosUserMessageComponent,
@@ -52,6 +56,8 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     CognosIconButtonComponent,
     CognosBranchSwitcherComponent,
     CognosButtonComponent,
+    CognosImageGridComponent,
+    CognosLightboxComponent,
     CognosMenuComponent,
     TranslocoModule,
   ],
@@ -207,6 +213,22 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                 <p class="message-list-item__deleted">
                   {{ t('chat.message.deleted') }}
                 </p>
+              } @else if (displayImageUrls().length) {
+                @if (message.decryptedData.content) {
+                  <app-redacted-markdown [content]="message.decryptedData.content" />
+                }
+                <cog-image-grid
+                  [images]="displayImageUrls()"
+                  (open)="openLightbox($event)"
+                />
+              } @else if (imagesLoading()) {
+                <p class="message-list-item__streaming">
+                  {{ t('chat.message.imageLoading') }}
+                </p>
+              } @else if (hasUndecryptedImage()) {
+                <p class="message-list-item__empty">
+                  {{ t('chat.message.imageUnavailable') }}
+                </p>
               } @else if (message.decryptedData.content) {
                 @if (message.isStreaming) {
                   <p class="message-list-item__streaming">
@@ -230,6 +252,14 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
           </div>
         }
       </li>
+    }
+
+    @if (lightboxUrl(); as src) {
+      <cog-lightbox
+        [src]="src"
+        (close)="closeLightbox()"
+        (download)="downloadImage(src)"
+      />
     }
   `,
   styles: `
@@ -317,7 +347,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MessageListItemComponent {
+export class MessageListItemComponent implements OnChanges {
   private readonly _modelService = inject(ModelService);
   private readonly _personaService = inject(PersonaService);
   private readonly _messageService = inject(MessageService);
@@ -327,6 +357,7 @@ export class MessageListItemComponent {
   private readonly _dialog = inject(Dialog);
   private readonly _transloco = inject(TranslocoService);
   private readonly _elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly _destroyRef = inject(DestroyRef);
 
   // Copy-options menu (only offered for messages containing redactions).
   readonly copyMenuOpen = signal(false);
@@ -359,6 +390,87 @@ export class MessageListItemComponent {
   @Input() message?: Message;
 
   isMessageFromUser = isMessageFromUser;
+
+  // Full-resolution viewer state for generated images.
+  readonly lightboxUrl = signal<string | null>(null);
+
+  // Object URLs for the message's images. The live generation path sets
+  // message.imageUrls directly; on conversation reload we decrypt lazily into
+  // these signals.
+  private readonly _lazyImageUrls = signal<string[]>([]);
+  private readonly _imagesLoading = signal(false);
+  // record_id we've already hydrated, so re-renders don't refetch.
+  private _hydratedRecordId?: string;
+
+  displayImageUrls(): string[] {
+    const own = this.message?.imageUrls ?? [];
+    return own.length ? own : this._lazyImageUrls();
+  }
+
+  imagesLoading(): boolean {
+    return this._imagesLoading();
+  }
+
+  ngOnChanges(): void {
+    const message = this.message;
+    const attachments = message?.decryptedData.attachments ?? [];
+    if (
+      !message?.record_id ||
+      attachments.length === 0 ||
+      message.imageUrls?.length ||
+      this._hydratedRecordId === message.record_id
+    ) {
+      return;
+    }
+
+    this._hydratedRecordId = message.record_id;
+    this._imagesLoading.set(true);
+    this._messageService
+      .decryptMessageImages(message)
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe({
+        next: (urls) => {
+          this._lazyImageUrls.set(urls);
+          this._imagesLoading.set(false);
+          this._cdr.markForCheck();
+        },
+        error: () => {
+          this._imagesLoading.set(false);
+          this._cdr.markForCheck();
+        },
+      });
+  }
+
+  openLightbox(index: number): void {
+    const url = this.displayImageUrls()[index];
+    if (url) {
+      this.lightboxUrl.set(url);
+    }
+  }
+
+  closeLightbox(): void {
+    this.lightboxUrl.set(null);
+  }
+
+  // Save the decrypted image (a blob: URL) to disk at full resolution.
+  downloadImage(url: string): void {
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'cognos-image.png';
+    anchor.click();
+  }
+
+  // True when an assistant message references a generated image but no decrypted
+  // bytes are available and we're not still loading — a non-sensitive error
+  // state instead of an empty bubble.
+  hasUndecryptedImage(): boolean {
+    const attachments = this.message?.decryptedData.attachments ?? [];
+    return (
+      attachments.length > 0 &&
+      !this.displayImageUrls().length &&
+      !this._imagesLoading()
+    );
+  }
 
   // hydrated swaps placeholder tokens back to their originals for display only.
   // Stored content stays redacted; unknown tokens render as-is.

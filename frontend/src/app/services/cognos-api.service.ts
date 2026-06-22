@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 
 import PocketBase from 'pocketbase';
 
-import { Observable, Subscriber, filter, map, take } from 'rxjs';
+import { Observable, Subscriber, filter, from, map, take } from 'rxjs';
 
 import {
   BillingApiResponse,
@@ -84,6 +84,40 @@ export type CompleteStreamEvent =
       type: 'error';
       message: string;
     };
+
+export interface GenerateImageRequest {
+  prompt: string;
+  modelId: string;
+  requestId?: string;
+}
+
+// Raw JSON shape returned by POST /api/v1/conversations/{id}/image. snake_case
+// because HttpClient returns the backend payload untransformed.
+export interface GenerateImageResponse {
+  request_id?: string;
+  user_message_id?: string;
+  assistant_message: {
+    id: string;
+    parent_message_id?: string;
+    model_id: string;
+    created_at: string;
+    attachment: {
+      kind: string;
+      mime_type: string;
+      file_name: string;
+      sealed_key: string;
+    };
+  };
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+    cost_usd: number;
+    cost_chf: number;
+    cost_rappen: number;
+    used_provider_cost: boolean;
+  };
+}
 
 export interface MessageRecord {
   id: string;
@@ -761,6 +795,46 @@ export class CognosApiService {
       map((event) => event.response),
       take(1),
     );
+  }
+
+  // generateConversationImage runs an image-generation request against the
+  // conversation image endpoint. Unlike completion it is a single JSON response
+  // (image generation does not token-stream).
+  generateConversationImage(
+    conversationId: string,
+    request: GenerateImageRequest,
+  ): Observable<GenerateImageResponse> {
+    return this._http.post<GenerateImageResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/image`,
+      {
+        prompt: request.prompt,
+        model_id: request.modelId,
+        request_id: request.requestId,
+      },
+      { headers: this.authHeaders() },
+    );
+  }
+
+  // fetchAttachmentBytes downloads the encrypted bytes of a protected message
+  // attachment. Protected files require a short-lived file token; the bytes are
+  // ciphertext and are decrypted client-side.
+  fetchAttachmentBytes(recordId: string, fileName: string): Observable<Uint8Array> {
+    return from(this.downloadAttachment(recordId, fileName));
+  }
+
+  private async downloadAttachment(
+    recordId: string,
+    fileName: string,
+  ): Promise<Uint8Array> {
+    const token = await this._pb.files.getToken();
+    const url = `${this._baseUrl}/api/files/messages/${encodeURIComponent(
+      recordId,
+    )}/${encodeURIComponent(fileName)}?token=${encodeURIComponent(token)}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`failed to fetch attachment (${response.status})`);
+    }
+    return new Uint8Array(await response.arrayBuffer());
   }
 
   completeStream(

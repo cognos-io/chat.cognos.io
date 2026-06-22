@@ -6,11 +6,12 @@ import { ROOT_PARENT_KEY, selectActiveBranch } from '@cognos/ui-angular';
 
 import { Message } from '@app/interfaces/message';
 
-import { CompleteResponse } from './cognos-api.service';
+import { CompleteResponse, GenerateImageResponse } from './cognos-api.service';
 import {
   DELETED_MESSAGE_MARKER,
   applyCompletionStreamDelta,
   applyCompletionStreamResponse,
+  applyImageGenerationResponse,
   assertMessageBindings,
   buildCompletionMessageContext,
   buildCompletionMessages,
@@ -709,5 +710,84 @@ describe('assertMessageBindings', () => {
     expect(() =>
       assertMessageBindings({ conversation_id: '' }, { conversation: 'real-conv' }),
     ).not.toThrow();
+  });
+});
+
+describe('applyImageGenerationResponse', () => {
+  const response: GenerateImageResponse = {
+    request_id: 'req-1',
+    user_message_id: 'user-real-1',
+    assistant_message: {
+      id: 'assistant-1',
+      parent_message_id: 'user-real-1',
+      model_id: 'gemini-2-5-flash-image',
+      created_at: '2026-06-22T12:00:00Z',
+      attachment: {
+        kind: 'generated_image',
+        mime_type: 'image/png',
+        file_name: 'image.enc',
+        sealed_key: 'c2VhbGVk',
+      },
+    },
+    usage: {
+      input_tokens: 7,
+      output_tokens: 1303,
+      total_tokens: 1310,
+      cost_usd: 0.04,
+      cost_chf: 0.04,
+      cost_rappen: 4,
+      used_provider_cost: true,
+    },
+  };
+
+  const attachment = {
+    kind: 'generated_image',
+    mime_type: 'image/png',
+    sealed_key: 'c2VhbGVk',
+    file_name: 'image.enc',
+  };
+
+  it('swaps the optimistic user id and appends the image message', () => {
+    const existing: Message[] = [
+      {
+        record_id: 'req-1', // optimistic temp id
+        createdAt: new Date('2026-06-22T11:59:59Z'),
+        decryptedData: { content: 'a watercolour fox', owner_id: 'u1' },
+      },
+    ];
+
+    const result = applyImageGenerationResponse(
+      existing,
+      'req-1',
+      response,
+      attachment,
+      'blob:fake-url',
+    );
+
+    expect(result).toHaveLength(2);
+    // Optimistic user message gets the persisted id.
+    expect(result[0].record_id).toBe('user-real-1');
+    expect(result[0].decryptedData.content).toBe('a watercolour fox');
+
+    // Assistant image message is appended, parented to the user message.
+    const assistant = result[1];
+    expect(assistant.record_id).toBe('assistant-1');
+    expect(assistant.parentMessageId).toBe('user-real-1');
+    expect(assistant.imageUrls).toEqual(['blob:fake-url']);
+    expect(assistant.decryptedData.attachments?.[0].kind).toBe('generated_image');
+    expect(assistant.decryptedData.content).toBe('');
+  });
+
+  it('does not mutate the existing messages array', () => {
+    const existing: Message[] = [
+      {
+        record_id: 'req-1',
+        createdAt: new Date(),
+        decryptedData: { content: 'prompt' },
+      },
+    ];
+    const snapshot = existing[0].record_id;
+    applyImageGenerationResponse(existing, 'req-1', response, attachment, 'blob:x');
+    expect(existing[0].record_id).toBe(snapshot);
   });
 });

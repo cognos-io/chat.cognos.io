@@ -657,6 +657,8 @@
       "editSave": "Save",
       "empty": "This message is empty.",
       "emptyAssistant": "This message is empty or the AI did not generate a response, please try again.",
+      "imageUnavailable": "This image couldn't be loaded or decrypted.",
+      "imageLoading": "Loading image…",
       "encrypted": "Encrypted",
       "encryptedWithTime": "Encrypted · {{ time }}",
       "keep": "Keep this temporary message",

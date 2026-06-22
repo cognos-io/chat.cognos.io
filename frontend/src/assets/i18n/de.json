@@ -657,6 +657,8 @@
       "editSave": "Speichern",
       "empty": "Diese Nachricht ist leer.",
       "emptyAssistant": "Diese Nachricht ist leer oder die KI hat keine Antwort generiert, bitte versuchen Sie es erneut.",
+      "imageUnavailable": "Dieses Bild konnte nicht geladen oder entschlüsselt werden.",
+      "imageLoading": "Bild wird geladen…",
       "encrypted": "Verschlüsselt",
       "encryptedWithTime": "Verschlüsselt · {{ time }}",
       "keep": "Diese temporäre Nachricht behalten",

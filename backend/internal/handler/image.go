@@ -33,6 +33,11 @@ type imageAttachmentResponse struct {
 	// FileName is the stored protected-file name on the assistant message record.
 	// The client requests a file token and fetches it, then decrypts client-side.
 	FileName string `json:"file_name"`
+	// SealedKey is the per-attachment symmetric key sealed to the conversation
+	// public key (base64). It is useless without the conversation secret key, so
+	// returning it lets the client decrypt the just-generated image immediately
+	// without re-fetching the encrypted message.
+	SealedKey string `json:"sealed_key"`
 }
 
 type assistantImageMessageResponse struct {
@@ -273,9 +278,10 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 				ModelID:         model.ID,
 				CreatedAt:       assistantCreatedAt,
 				Attachment: imageAttachmentResponse{
-					Kind:     "generated_image",
-					MimeType: image.MimeType,
-					FileName: assistantMessageRecord.GetString("attachment"),
+					Kind:      "generated_image",
+					MimeType:  image.MimeType,
+					FileName:  assistantMessageRecord.GetString("attachment"),
+					SealedKey: attachment.SealedKeyB64,
 				},
 			},
 			Usage: usageResponse{

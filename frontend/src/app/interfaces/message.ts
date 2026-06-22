@@ -4,6 +4,25 @@ export const MessageDataVersion = z.enum(['1']);
 export type MessageDataVersion = z.infer<typeof MessageDataVersion>;
 
 /**
+ * MessageAttachment is the decrypted metadata for an encrypted attachment (e.g.
+ * a generated image). The ciphertext lives in the message record's protected
+ * `attachment` file; this carries only what the client needs to fetch and
+ * decrypt it. Mirrors MessageAttachment in the backend.
+ */
+export const MessageAttachment = z.object({
+  kind: z.string(), // e.g. "generated_image"
+  mime_type: z.string(),
+  // base64(SealAnonymous(conversationPublicKey, fileSymKey)) — unsealed with the
+  // conversation secret key to recover the symmetric key that decrypts the file.
+  sealed_key: z.string(),
+  // The protected file's name on the message record (used to fetch the bytes).
+  file_name: z.string().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+});
+export type MessageAttachment = z.infer<typeof MessageAttachment>;
+
+/**
  * MessageData is the decrypted data object of a message.
  *
  * As the message is encrypted and written in the backend, this
@@ -22,6 +41,8 @@ export const MessageData = z.object({
   persona_id: z.string().optional(), // the persona used when generating the message
   model_id: z.string().optional(), // the model used when generating the message
   owner_id: z.string().optional(), // the user who sent the message
+  // Encrypted attachments (e.g. generated images) referenced by this message.
+  attachments: z.array(MessageAttachment).optional(),
   // Tombstone flag set when the message is soft-deleted. The content is cleared
   // but the role/parent/timestamp are preserved so the thread structure and the
   // LLM context marker stay correct.
@@ -50,6 +71,9 @@ export interface Message {
   expires?: Date;
   parentMessageId?: string;
   isStreaming?: boolean;
+  // Client-only object URLs for decrypted attachments (e.g. generated images),
+  // populated after the encrypted file is fetched and decrypted. Never persisted.
+  imageUrls?: string[];
 }
 
 export const isMessageFromUser = (messageData: MessageData): boolean => {
