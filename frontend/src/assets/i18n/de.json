@@ -659,6 +659,8 @@
       },
       "estimatedCost": "Geschätzte Modellkosten: {{ cost }}",
       "explainer": "Die Kosten zeigen ungefähr, wie viel jedes Modell pro Nachricht ausgibt. Teurere Modelle kosten mehr als günstigere.",
+      "imageFilter": "Es werden Modelle angezeigt, die Bilder erzeugen können.",
+      "noImageModels": "Kein verfügbares Modell kann Bilder erzeugen.",
       "pickAria": "Wählen Sie Ihr KI-Modell",
       "pin": "Modell anheften",
       "unpin": "Modell lösen"

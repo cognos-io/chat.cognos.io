@@ -6,6 +6,7 @@ import {
   Output,
   computed,
   inject,
+  input,
 } from '@angular/core';
 
 import { TranslocoModule } from '@jsverse/transloco';
@@ -19,6 +20,20 @@ import { BillingService } from '@app/services/billing.service';
 import { ModelService } from '@app/services/model.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { ModelCostTier, deriveModelCostTier } from '@app/utils/model-cost-tier';
+
+// modelSupportsCapability gates a model against an active composer tool. A null
+// capability means "no tool active" — every model passes.
+export function modelSupportsCapability(
+  model: Model,
+  capability: 'image_generation' | null,
+): boolean {
+  switch (capability) {
+    case 'image_generation':
+      return model.supportsImageGeneration;
+    case null:
+      return true;
+  }
+}
 
 @Component({
   selector: 'app-model-selector',
@@ -37,7 +52,12 @@ import { ModelCostTier, deriveModelCostTier } from '@app/utils/model-cost-tier';
       [attr.aria-label]="t('chat.models.pickAria')"
       *transloco="let t"
     >
-      @if (!hideCost()) {
+      @if (isFiltered()) {
+        <p class="model-selector__filter-note">
+          <cog-icon name="image" [size]="14" tone="text-subtle" />
+          {{ t('chat.models.imageFilter') }}
+        </p>
+      } @else if (!hideCost()) {
         <p class="model-selector__explainer">
           {{ t('chat.models.explainer') }}
         </p>
@@ -117,6 +137,10 @@ import { ModelCostTier, deriveModelCostTier } from '@app/utils/model-cost-tier';
               }
             </button>
           </li>
+        } @empty {
+          <li class="model-selector__empty">
+            {{ t('chat.models.noImageModels') }}
+          </li>
         }
       </ul>
     </div>
@@ -143,6 +167,24 @@ import { ModelCostTier, deriveModelCostTier } from '@app/utils/model-cost-tier';
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-caption);
       line-height: var(--cog-lh-caption);
+    }
+
+    .model-selector__filter-note {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-075);
+      margin: 0;
+      padding: var(--cog-space-075) var(--cog-space-100) var(--cog-space-100);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+    }
+
+    .model-selector__empty {
+      padding: var(--cog-space-150) var(--cog-space-100);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      text-align: center;
     }
 
     .model-selector__list {
@@ -299,6 +341,13 @@ export class ModelSelectorComponent {
 
   @Output() readonly modelSelected = new EventEmitter<Model>();
 
+  // When a composer tool is active, restrict the list to models that support
+  // it. Currently only image generation; widen the union as tools are added.
+  readonly requiredCapability = input<'image_generation' | null>(null);
+
+  // Does the active capability filter hide any models? Drives the header note.
+  readonly isFiltered = computed(() => this.requiredCapability() !== null);
+
   // Snapshot of pinned model IDs captured when the dropdown opens.
   // Why: keeps row order stable while the dropdown is visible — newly
   // pinned models stay in place and only float to the top on next open.
@@ -309,7 +358,10 @@ export class ModelSelectorComponent {
   readonly selectedModelId = computed(() => this._modelService.selectedModel().id);
 
   readonly orderedModels = computed<Model[]>(() => {
-    const all = this._modelService.modelList();
+    const capability = this.requiredCapability();
+    const all = this._modelService
+      .modelList()
+      .filter((model) => modelSupportsCapability(model, capability));
     const frozen = this._frozenPinnedIds;
     if (frozen.size === 0) {
       return all;

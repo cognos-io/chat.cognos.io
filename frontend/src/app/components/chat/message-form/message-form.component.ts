@@ -319,6 +319,9 @@ function escapeHtml(value: string): string {
               (overlayKeydown)="onOverlayKeydown($event)"
             >
               <app-model-selector
+                [requiredCapability]="
+                  imageGenerationEnabled() ? 'image_generation' : null
+                "
                 (modelSelected)="closeModelSelector()"
               ></app-model-selector>
             </ng-template>
@@ -533,6 +536,35 @@ function escapeHtml(value: string): string {
       align-items: center;
       gap: var(--cog-space-100);
       flex-wrap: wrap;
+    }
+
+    /* Tool toggles (e.g. image generation). The active state is clearly
+       highlighted with the brand colour so it's obvious the next send is an
+       image request. */
+    .message-form__tool {
+      border-radius: var(--cog-radius-sm);
+      transition:
+        background var(--cog-dur-fast) var(--cog-ease-standard),
+        color var(--cog-dur-fast) var(--cog-ease-standard);
+    }
+
+    .message-form__tool--active {
+      background: color-mix(in srgb, var(--cog-brand) 16%, transparent);
+      color: var(--cog-brand);
+      box-shadow: inset 0 0 0 1px var(--cog-brand);
+    }
+
+    .message-form__alert {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-075);
+      align-self: start;
+      padding: var(--cog-space-075) var(--cog-space-100);
+      border: 1px solid var(--cog-brand);
+      border-radius: var(--cog-radius-sm);
+      background: color-mix(in srgb, var(--cog-brand) 8%, transparent);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-font-size-sm, 0.8125rem);
     }
 
     .message-form__redaction {

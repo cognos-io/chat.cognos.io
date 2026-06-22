@@ -659,6 +659,8 @@
       },
       "estimatedCost": "Coste estimado del modelo: {{ cost }}",
       "explainer": "El coste muestra aproximadamente cuánto gasta cada modelo por mensaje. Los modelos de mayor coste cuestan más que los de menor coste.",
+      "imageFilter": "Mostrando modelos que pueden generar imágenes.",
+      "noImageModels": "Ningún modelo disponible puede generar imágenes.",
       "pickAria": "Elige tu modelo de IA",
       "pin": "Fijar modelo",
       "unpin": "Dejar de fijar el modelo"
