@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -52,7 +53,7 @@ func TestEncryptMessageDataRoundTrip(t *testing.T) {
 		t.Fatalf("json.Unmarshal(plaintext) err = %v, want nil", err)
 	}
 
-	if got != message {
+	if !reflect.DeepEqual(got, message) {
 		t.Errorf("decrypted MessageRecordData = %+v, want %+v", got, message)
 	}
 }

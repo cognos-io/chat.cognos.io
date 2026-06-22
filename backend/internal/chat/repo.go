@@ -10,6 +10,7 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/forms"
+	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"github.com/pocketbase/pocketbase/tools/list"
 )
 
@@ -46,6 +47,12 @@ type MessageRepo interface {
 		conversation Conversation,
 		parentMessageID string,
 		message MessageRecordData,
+	) (error, *core.Record)
+	EncryptAndPersistImageMessage(
+		conversation Conversation,
+		parentMessageID string,
+		message MessageRecordData,
+		attachmentCiphertext []byte,
 	) (error, *core.Record)
 	DeleteMessage(messageID string) error
 }
@@ -90,6 +97,43 @@ func (r *PocketBaseMessageRepo) EncryptAndPersistMessage(
 	form.Load(formData)
 
 	return form.Submit(), record
+}
+
+// EncryptAndPersistImageMessage persists an assistant message that carries an
+// encrypted image attachment. The message data (with the sealed per-attachment
+// key) is encrypted to the conversation public key exactly like any message,
+// and the already-encrypted image ciphertext is stored in the record's
+// protected `attachment` file field. The server never holds the attachment
+// plaintext or the conversation secret key.
+func (r *PocketBaseMessageRepo) EncryptAndPersistImageMessage(
+	conversation Conversation,
+	parentMessageID string,
+	message MessageRecordData,
+	attachmentCiphertext []byte,
+) (error, *core.Record) {
+	message.ConversationID = conversation.ID
+	message.ParentMessageID = parentMessageID
+
+	base64EncryptedMessage, err := EncryptMessageData(message, conversation.PublicKey)
+	if err != nil {
+		return err, nil
+	}
+
+	attachmentFile, err := filesystem.NewFileFromBytes(attachmentCiphertext, "image.enc")
+	if err != nil {
+		return err, nil
+	}
+
+	record := core.NewRecord(r.collection)
+	record.Set("data", base64EncryptedMessage)
+	record.Set("conversation", conversation.ID)
+	record.Set("parent_message", parentMessageID)
+	if conversation.ExpiryDuration != 0 {
+		record.Set("expires", time.Now().UTC().Add(conversation.ExpiryDuration))
+	}
+	record.Set("attachment", attachmentFile)
+
+	return r.app.Save(record), record
 }
 
 // DeleteMessage deletes a message from the repository.
