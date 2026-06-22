@@ -1,7 +1,9 @@
 # Image Generation — Product & Architecture Spec
 
-**Status:** Draft (revised after codebase review — see Decision Log)  
-**Scope:** Product and technical specification, not implementation  
+**Status:** Implemented — see
+[`business_processes/image-generation.md`](../business_processes/image-generation.md) for how the
+shipped flow works. This spec is kept as the design record (rationale + decision log).  
+**Scope:** Product and technical specification  
 **Related docs:**
 
 - `docs/security-model.md`
