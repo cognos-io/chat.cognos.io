@@ -1,6 +1,6 @@
 # Image Generation — Product & Architecture Spec
 
-**Status:** Draft  
+**Status:** Draft (revised after codebase review — see Decision Log)  
 **Scope:** Product and technical specification, not implementation  
 **Related docs:**
 
@@ -8,6 +8,27 @@
 - `docs/business_processes/message-encryption.md`
 - `docs/business_processes/completion-pipeline.md`
 - `docs/specs/backend-model-selector.md`
+
+## 0. Decision Log
+
+Resolved after reviewing the live backend and frontend code:
+
+- **Storage backend**: Encrypted image bytes are stored in a **PocketBase protected file
+  field**, not external object storage (no object store exists today). Protected files are not
+  publicly addressable; access is enforced through PocketBase access rules tied to conversation
+  participation, plus short-lived file tokens. Even though the bytes are already ciphertext, the
+  user stays in complete control of who can fetch their files. S3 can back PocketBase storage
+  later via configuration without code changes.
+- **Encryption model**: Reuse the existing message scheme exactly. The server holds only a
+  conversation **public** key and encrypts with an anonymous sealed box (`box.SealAnonymous`); it
+  cannot decrypt. Clients decrypt with the conversation secret key. There is no new
+  `conversation-attachment-v1` scheme and no server-side decryption (see §7.4).
+- **Provider return shape**: For Requesty/Gemini image models the image arrives **inline as a
+  content block on the same chat-completion call**, not via a separate images endpoint or a
+  temporary URL. The current gateway client discards non-text content blocks and must be extended
+  (see §7.7). A provider spike confirms the exact shape before the persistence MVP.
+- **Build sequence**: Update this spec first, then ship the model-capability slice (UI/API, no
+  crypto) alongside the provider spike, then the encrypted-persistence MVP.
 
 ## 1. Overview
 
@@ -164,12 +185,14 @@ Cost of not solving it:
   persistence so that images receive the same privacy treatment as messages.
 - **Priority**: P0
 - **Acceptance Criteria**:
-    - Provider image bytes are encrypted before writing to object storage or any other durable
-      store.
+    - Provider image bytes are encrypted before writing to the PocketBase protected file field or
+      any other durable store.
     - PocketBase message data stores only encrypted assistant message payloads.
     - The assistant message payload can reference encrypted image attachment objects.
+    - Attachment files are **protected**: not publicly addressable, and readable only by
+      conversation participants through PocketBase access rules and short-lived file tokens.
     - Plain provider image URLs, base64 image payloads, and prompts are not logged.
-    - If object storage write or message persistence fails, no plaintext image artefact remains.
+    - If the attachment write or message persistence fails, no plaintext image artefact remains.
 
 ### 6.7 Conversation rendering
 
@@ -179,8 +202,16 @@ Cost of not solving it:
   and result stay together.
 - **Priority**: P0
 - **Acceptance Criteria**:
-    - Assistant image messages render through the existing image conversation component.
-    - The client fetches encrypted image content and decrypts it client-side before display.
+    - Assistant image messages render through the existing image conversation component
+      (`CognosImageGridComponent` / `CognosImageThumbComponent`), which already accept plain
+      string URLs.
+    - The client requests a short-lived file token, fetches the protected encrypted file, decrypts
+      it client-side, and renders it as a `blob:` URL (revoking the URL when no longer displayed).
+    - A single image is stored once: the in-conversation "thumbnail" is that same image rendered
+      small, and "download full resolution" saves the same decrypted blob. There is no separately
+      stored thumbnail artefact.
+    - While generation is in flight the composer/message shows an explicit "generating image"
+      loading state (image generation does not token-stream like text).
     - Normal text messages continue to render unchanged.
     - A failed image fetch/decrypt shows a non-sensitive error state.
     - Deleted or expired image messages no longer expose their image attachment through first-party
@@ -248,44 +279,57 @@ A decrypted assistant message payload can have a shape similar to:
       "id": "att_...",
       "kind": "generated_image",
       "mime_type": "image/png",
-      "storage_key": "attachments/<opaque-billing-prefix>/<attachment-id>.enc",
+      "attachment_record_id": "<pocketbase-record-id>",
+      "file_name": "<attachment-id>.enc",
       "width": 1024,
       "height": 1024,
-      "encryption": {
-        "scheme": "conversation-attachment-v1"
-      }
+      "sealed_key": "<base64 SealAnonymous(conversationPublicKey, fileSymKey)>"
     }
   ]
 }
 ```
 
+`attachment_record_id` / `file_name` point at the protected PocketBase file; `sealed_key` carries
+the per-file symmetric key sealed to the conversation public key (see §7.4). Both live only inside
+the encrypted message payload.
+
 The plaintext database row still contains only operational fields already required for messages,
 such as conversation, parent message, and expiry. Attachment display metadata belongs inside the
-encrypted message payload unless the server must query it.
+encrypted message payload unless the server must query it. The protected file itself is held on a
+PocketBase file field (on the message record or a dedicated `message_attachments` collection),
+whose access rules mirror the existing message participant rules so deletion cascades and access
+control come for free.
 
 ### 7.4 Attachment encryption
 
-Generated images are larger than normal message JSON, so store them outside PocketBase as encrypted
-objects.
+Generated images are far larger than message JSON (the `messages.data` column is capped at 1 MB),
+so the ciphertext lives in a PocketBase **protected file field** rather than inline in `data`. The
+encryption reuses the existing message scheme — the server encrypts to the conversation **public**
+key and never decrypts; only clients holding the conversation secret key decrypt.
 
 Required flow:
 
 1. Backend sends the prompt to the selected image-capable provider.
-2. Provider returns image bytes or a temporary provider URL.
-3. If a temporary URL is returned, backend downloads the bytes immediately and does not persist the
-   URL.
-4. Backend encrypts the image bytes in memory before durable write.
-5. Backend writes only ciphertext to object storage.
-6. Backend encrypts and persists the assistant message data with the attachment reference.
+2. Provider returns image bytes — for the Requesty/Gemini path, inline as a content block on the
+   chat-completion response (see §7.7). If any provider returns a temporary URL instead, the
+   backend downloads the bytes immediately and never persists the URL.
+3. Backend generates a random per-file symmetric key and encrypts the image bytes in memory with
+   NaCl `secretbox` (`secretBox` on the client side).
+4. Backend seals that symmetric key to the conversation public key with `box.SealAnonymous`, and
+   places the sealed key inside the assistant `MessageRecordData` payload (`sealed_key` in §7.3).
+5. Backend writes only the `secretbox` ciphertext to the protected file field.
+6. Backend encrypts and persists the assistant message data (which now references the attachment
+   and carries the sealed key).
 7. Backend returns a response containing message/attachment references, not plaintext image bytes.
 
-Recommended encryption pattern:
+Why this shape:
 
-- generate a random per-attachment symmetric key;
-- encrypt image bytes with an authenticated symmetric cipher;
-- include the per-attachment decrypt material only inside the encrypted assistant message payload,
-  or wrap it with conversation key material using the same conversation access model;
-- never store the decrypt material in plaintext columns or object metadata.
+- It matches `chat.EncryptMessageData` / `box.SealAnonymous` exactly — no new scheme, no new key
+  custody, and the client already has `openSecretBox` plus sealed-box open.
+- The symmetric key is needed because sealed boxes carry per-message overhead and the image is
+  large; sealing only the small key keeps the heavy ciphertext as one `secretbox` blob.
+- Neither the symmetric key nor the plaintext is ever stored in a plaintext column, file metadata,
+  or logs. The server can encrypt but, lacking the conversation secret key, cannot decrypt.
 
 ### 7.5 Failure handling
 
@@ -293,10 +337,11 @@ Recommended encryption pattern:
   nothing.
 - If the user message has already been persisted and provider generation fails, delete the user
   message as the text completion pipeline does.
-- If encryption or object storage fails after provider success, return an internal error and ensure
-  no plaintext image remains. Encrypted orphan objects may be cleaned up asynchronously.
-- If assistant message persistence fails after encrypted object storage succeeds, delete the user
-  message and schedule encrypted object cleanup.
+- If encryption or the protected file write fails after provider success, return an internal error
+  and ensure no plaintext image remains. Encrypted orphan files may be cleaned up asynchronously.
+- If assistant message persistence fails after the encrypted file write succeeds, delete the user
+  message and schedule encrypted file cleanup. (If the file is a field on the message record, this
+  cascades automatically.)
 
 ### 7.6 Billing and analytics
 
@@ -314,18 +359,49 @@ Usage/analytics records must capture only operational billing fields such as:
 - final billed cost in USD/CHF/rappen;
 - latency and success/failure class.
 
-If a provider does not report image generation cost, the model catalogue needs an operator-managed
-image generation price before the model can be enabled for paid users.
+Bifrost responses already carry `Cost.TotalCost`, so **prefer provider-reported cost** and apply
+the existing margin, exactly as the text pipeline can. Fall back to an operator-managed per-image
+price on `ai_models` only when the provider reports no cost; such a model must not be enabled for
+paid users until that price is set.
+
+The current `billing_ledger` meters purely on input/output tokens and has no operation-type or
+image-count column. This slice must add `operation_type` (`image_generation`) and
+`generated_image_count` to the ledger, and branch `BillingService.CalculateCost` to price by image
+when token-based pricing does not apply.
+
+### 7.7 Gateway/provider path (current gap)
+
+The gateway client (`internal/gateway/bifrost_client.go`) is text-only today:
+
+- it sends only `Content.ContentStr` (plain text) on requests;
+- `extractMessageContent()` walks `Content.ContentBlocks` but keeps only `block.Text`, silently
+  discarding any image content block;
+- the streaming path assembles `Delta.Content` text deltas.
+
+For an inline-image model such as `gemini-2-5-flash-image`, the generated image returns as a
+non-text content block on the **same** chat-completion response. To support image generation the
+gateway layer must:
+
+- carry image content blocks through `gateway.Message`/response types instead of discarding them;
+- expose a non-streaming completion path (or a single terminal result event) for image responses,
+  since they do not token-stream like text;
+- surface provider-reported usage/cost (`Cost.TotalCost`) for the billing branch in §7.6.
+
+A short provider spike (one image request through Requesty) confirms the exact block shape, MIME
+type, and whether bytes are inline base64 or a URL, before the persistence MVP is designed in
+detail.
 
 ## 8. Non-Functional Requirements
 
 - **Performance**: A successful image generation request must add no more than 2 seconds of Cognos
-  overhead after the provider returns the image bytes for encryption, object upload, and message
-  persistence for one generated image up to the MVP size limit.
+  overhead after the provider returns the image bytes for encryption, protected-file write, and
+  message persistence for one generated image up to the MVP size limit.
 - **Security**: Generated image bytes, provider URLs, prompts, and decrypted attachment metadata
   must not be logged. Durable storage may contain only ciphertext and minimal operational metadata.
-- **Scalability**: Image files must be stored in object storage, not PocketBase/SQLite. The database
-  stores encrypted message payloads and opaque object references only.
+- **Scalability**: Image bytes must be stored in a PocketBase protected file field (filesystem
+  now, S3-backed via configuration later), never inline in the `messages.data` column or any other
+  SQLite text column. The database stores encrypted message payloads and opaque file references
+  only.
 - **Reliability**: Failed image generation requests must not leave plaintext artefacts or unanswered
   user messages in the conversation. Encrypted orphan cleanup is acceptable as a background task.
 - **Accessibility**: The image generation control, unsupported-model alert, model badges, image
@@ -353,13 +429,13 @@ image generation price before the model can be enabled for paid users.
 
 ## 11. Risks & Mitigations
 
-| Risk                                                                | Impact | Likelihood | Mitigation                                                                                                          |
-| ------------------------------------------------------------------- | ------ | ---------- | ------------------------------------------------------------------------------------------------------------------- |
-| Provider returns temporary plaintext image URLs instead of bytes    | High   | Medium     | Download immediately, never persist URL, encrypt bytes before storage, add log tests for URL leakage                |
-| Image input and image generation capabilities get conflated         | Medium | Medium     | Use `supports_image_generation` as a separate field; reserve image input/vision capability for a later spec         |
-| Large image bytes are accidentally stored in PocketBase             | High   | Low        | Store only encrypted object references in message payloads; add tests that message data never contains image base64 |
-| Billing undercharges image generation when provider cost is missing | Medium | Medium     | Require configured image generation pricing before enabling a model without provider-reported costs                 |
-| UI auto-switches models and surprises users                         | Medium | Low        | Make “do not auto-switch” an acceptance criterion and cover it in E2E                                               |
+| Risk                                                                                     | Impact | Likelihood | Mitigation                                                                                                                                      |
+| ---------------------------------------------------------------------------------------- | ------ | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Provider returns temporary plaintext image URLs instead of bytes                         | High   | Medium     | Download immediately, never persist URL, encrypt bytes before storage, add log tests for URL leakage                                            |
+| Image input and image generation capabilities get conflated                              | Medium | Medium     | Use `supports_image_generation` as a separate field; reserve image input/vision capability for a later spec                                     |
+| Large image bytes land in the `messages.data` column instead of the protected file field | High   | Low        | Store bytes only in the protected file field; keep payloads to references + sealed key; add tests that message data never contains image base64 |
+| Billing undercharges image generation when provider cost is missing                      | Medium | Medium     | Require configured image generation pricing before enabling a model without provider-reported costs                                             |
+| UI auto-switches models and surprises users                                              | Medium | Low        | Make “do not auto-switch” an acceptance criterion and cover it in E2E                                                                           |
 
 ## 12. Test Plan
 
@@ -398,17 +474,27 @@ image generation price before the model can be enabled for paid users.
 - Logs do not include prompt text, provider image URLs, base64 image content, or decrypted image
   metadata.
 - PocketBase message rows do not contain plaintext image bytes or provider URLs.
-- Object storage receives encrypted bytes only.
+- The protected file field receives encrypted bytes only.
+- A non-participant cannot fetch another user's attachment file even with a guessed record ID/file
+  name (protected-file access rules enforced).
 - Analytics and billing events contain model/cost/count metadata only, never content.
 
 ## 13. Open Decisions Before Implementation
 
+Resolved (see §0 Decision Log): storage backend (PocketBase protected file field), encryption
+model (sealed box to conversation public key, no new scheme), provider return shape (inline content
+block, pending spike confirmation), build sequence (spec → capability slice + spike → MVP).
+
+Still open:
+
 - Final request field name: `image_generation`, `tool_mode`, or a more general future-proof tool
   shape.
-- Exact attachment encryption primitive and metadata format, aligned with existing frontend crypto
-  utilities.
+- Attachment file location: a file field on the `messages` record vs a dedicated
+  `message_attachments` collection (affects cascade-delete and access-rule wiring).
 - MVP image size/count limits per request.
 - Whether generated images must support expiry deletion exactly tied to message expiry in the first
   slice.
 - How provider-specific image options such as aspect ratio or size are exposed, if at all, in the
   MVP.
+- Whether image generation uses the existing `/complete` endpoint with a flag (MVP per §7.2) or a
+  dedicated route, given it does not token-stream.
