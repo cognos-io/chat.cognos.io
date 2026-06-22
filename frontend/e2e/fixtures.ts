@@ -289,6 +289,28 @@ const sealedBox = (message: Uint8Array, recipientPublicKey: Uint8Array): Uint8Ar
   return fullMessage;
 };
 
+export type ImageAttachmentFixture = {
+  sealedKeyBase64: string;
+  ciphertext: Uint8Array;
+};
+
+// buildImageAttachmentFixture encrypts raw image bytes the same way the backend
+// does — a random symmetric key (secretbox), sealed to the conversation public
+// key — so the app's openSealedBox + openSecretBox decrypt it on render. Used to
+// drive the image-generation display path in browser e2e.
+export const buildImageAttachmentFixture = (
+  conversationFixture: ConversationFixture,
+  imageBytes: Uint8Array,
+): ImageAttachmentFixture => {
+  const symmetricKey = nacl.randomBytes(nacl.secretbox.keyLength);
+  const ciphertext = secretBox(imageBytes, symmetricKey);
+  const sealedKey = sealedBox(
+    symmetricKey,
+    conversationFixture.conversationKeyPair.publicKey,
+  );
+  return { sealedKeyBase64: base64(sealedKey), ciphertext };
+};
+
 export const buildMessageRecordFixture = (
   conversationFixture: ConversationFixture,
   record: {

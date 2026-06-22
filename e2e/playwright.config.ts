@@ -57,6 +57,10 @@ export default defineConfig({
                 'COGNOS_INFOMANIAK_API_KEY=e2e-dummy-key',
                 `COGNOS_INFOMANIAK_URL=${AI_MOCK_URL}`,
                 'COGNOS_INFOMANIAK_PRODUCT_ID=e2e-dummy-product',
+                // Requesty hosts the image models; point it at the mock so image
+                // generation works offline (the mock serves both transports).
+                'COGNOS_REQUESTY_API_KEY=e2e-dummy-key',
+                `COGNOS_REQUESTY_URL=${AI_MOCK_URL}`,
                 'go run ./cmd/api serve --dev --dir ./pb_data',
               ].join(' '),
             ),
