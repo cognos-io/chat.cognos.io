@@ -81,6 +81,9 @@ func TestBifrostClientGenerateImageViaChatParsesRawResponse(t *testing.T) {
 
 	want := []byte("\x89PNG\r\n\x1a\n fake gemini image bytes")
 	dataURI := "data:image/png;base64," + base64.StdEncoding.EncodeToString(want)
+	// Mirrors the real Requesty shape: cost lives at usage.cost in the raw JSON,
+	// NOT in Bifrost's typed usage.Cost.
+	cost := 0.0387346
 	rawResponse := json.RawMessage(fmt.Sprintf(`{
 		"choices": [{
 			"index": 0,
@@ -89,18 +92,18 @@ func TestBifrostClientGenerateImageViaChatParsesRawResponse(t *testing.T) {
 				"content": "Here is your image.",
 				"images": [{"type": "image_url", "image_url": {"url": %q}}]
 			}
-		}]
-	}`, dataURI))
+		}],
+		"usage": {"prompt_tokens": 7, "completion_tokens": 1303, "total_tokens": 1310, "cost": %v}
+	}`, dataURI, cost))
 
-	cost := 0.039
 	requester := &stubBifrostRequester{
 		resp: &schemas.BifrostChatResponse{
 			ExtraFields: schemas.BifrostResponseExtraFields{RawResponse: rawResponse},
+			// Typed usage carries tokens but no cost, exactly as Bifrost returns it.
 			Usage: &schemas.BifrostLLMUsage{
-				PromptTokens:     9,
-				CompletionTokens: 1290,
-				TotalTokens:      1299,
-				Cost:             &schemas.BifrostCost{TotalCost: cost},
+				PromptTokens:     7,
+				CompletionTokens: 1303,
+				TotalTokens:      1310,
 			},
 		},
 	}
@@ -134,12 +137,13 @@ func TestBifrostClientGenerateImageViaChatParsesRawResponse(t *testing.T) {
 	if resp.Images[0].MimeType != "image/png" {
 		t.Errorf("mime = %q, want image/png", resp.Images[0].MimeType)
 	}
-	// The chat path can report provider cost; billing prefers it.
+	// Cost is read from the raw usage.cost field; billing prefers it.
 	if resp.Usage.ProviderCostUSD == nil || *resp.Usage.ProviderCostUSD != cost {
 		t.Errorf("provider cost = %v, want %v", resp.Usage.ProviderCostUSD, cost)
 	}
-	if resp.Usage.OutputTokens != 1290 {
-		t.Errorf("output tokens = %d, want 1290", resp.Usage.OutputTokens)
+	// Tokens come from Bifrost's typed usage.
+	if resp.Usage.OutputTokens != 1303 {
+		t.Errorf("output tokens = %d, want 1303", resp.Usage.OutputTokens)
 	}
 }
 

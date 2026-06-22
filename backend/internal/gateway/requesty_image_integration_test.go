@@ -25,7 +25,7 @@ import (
 // Chat-completions transport (Google Gemini, ZDR/EU):
 //
 //	REQUESTY_API_KEY=... REQUESTY_IMAGE_TRANSPORT=chat_completions \
-//	  REQUESTY_IMAGE_MODEL=vertex/google/gemini-2.5-flash-image-preview \
+//	  REQUESTY_IMAGE_MODEL=vertex/gemini-2.5-flash-image@europe-central2 \
 //	  go test ./internal/gateway -run TestRequestyImageGenerationIntegration -v
 func TestRequestyImageGenerationIntegration(t *testing.T) {
 	apiKey := os.Getenv("REQUESTY_API_KEY")
@@ -38,7 +38,7 @@ func TestRequestyImageGenerationIntegration(t *testing.T) {
 	if os.Getenv("REQUESTY_IMAGE_TRANSPORT") == string(ImageTransportChatCompletions) {
 		transport = ImageTransportChatCompletions
 		if model == "" {
-			model = "vertex/google/gemini-2.5-flash-image-preview"
+			model = "vertex/gemini-2.5-flash-image@europe-central2"
 		}
 	}
 	if model == "" {

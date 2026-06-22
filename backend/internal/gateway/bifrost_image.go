@@ -171,7 +171,7 @@ func (c *BifrostClient) generateImageViaChat(ctx context.Context, req ImageReque
 		return ImageResponse{}, fmt.Errorf("bifrost returned nil image chat response")
 	}
 
-	images, err := extractChatImages(resp.ExtraFields.RawResponse, req.OutputFormat)
+	images, providerCostUSD, err := extractChatImages(resp.ExtraFields.RawResponse, req.OutputFormat)
 	if err != nil {
 		return ImageResponse{}, err
 	}
@@ -179,7 +179,14 @@ func (c *BifrostClient) generateImageViaChat(ctx context.Context, req ImageReque
 		return ImageResponse{}, fmt.Errorf("chat completion returned no generated images")
 	}
 
-	return ImageResponse{Images: images, Usage: chatImageUsage(resp.Usage)}, nil
+	usage := chatImageUsage(resp.Usage)
+	// Requesty reports cost on the raw usage object (`usage.cost`), which Bifrost's
+	// typed usage does not carry. Prefer the raw value when present.
+	if providerCostUSD != nil {
+		usage.ProviderCostUSD = providerCostUSD
+	}
+
+	return ImageResponse{Images: images, Usage: usage}, nil
 }
 
 func buildImageChatRequest(req ImageRequest) (*schemas.BifrostChatRequest, error) {
@@ -200,15 +207,17 @@ func buildImageChatRequest(req ImageRequest) (*schemas.BifrostChatRequest, error
 	}, nil
 }
 
-// extractChatImages parses generated images out of the raw chat-completion JSON.
-// Requesty returns them at choices[].message.images[].image_url.url as data URIs.
-func extractChatImages(rawResponse interface{}, outputFormat string) ([]GeneratedImage, error) {
+// extractChatImages parses generated images and the provider-reported cost out
+// of the raw chat-completion JSON. Requesty returns images at
+// choices[].message.images[].image_url.url as data URIs, and the cost at
+// usage.cost (a field Bifrost's typed usage does not carry).
+func extractChatImages(rawResponse interface{}, outputFormat string) (images []GeneratedImage, providerCostUSD *float64, err error) {
 	rawBytes, err := rawJSONBytes(rawResponse)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if len(rawBytes) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	var parsed struct {
@@ -221,22 +230,24 @@ func extractChatImages(rawResponse interface{}, outputFormat string) ([]Generate
 				} `json:"images"`
 			} `json:"message"`
 		} `json:"choices"`
+		Usage struct {
+			Cost *float64 `json:"cost"`
+		} `json:"usage"`
 	}
 	if err := json.Unmarshal(rawBytes, &parsed); err != nil {
-		return nil, fmt.Errorf("parse chat image response: %w", err)
+		return nil, nil, fmt.Errorf("parse chat image response: %w", err)
 	}
 
-	var images []GeneratedImage
 	for _, choice := range parsed.Choices {
 		for _, img := range choice.Message.Images {
-			bytes, mime, err := decodeImageDataURI(img.ImageURL.URL, outputFormat)
-			if err != nil {
-				return nil, err
+			bytes, mime, decErr := decodeImageDataURI(img.ImageURL.URL, outputFormat)
+			if decErr != nil {
+				return nil, nil, decErr
 			}
 			images = append(images, GeneratedImage{Bytes: bytes, MimeType: mime})
 		}
 	}
-	return images, nil
+	return images, parsed.Usage.Cost, nil
 }
 
 // decodeImageDataURI decodes a base64 data URI ("data:image/png;base64,...").
