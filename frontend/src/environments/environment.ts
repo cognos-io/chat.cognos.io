@@ -2,6 +2,10 @@ export const environment = {
   isDevelopment: false, // Has to be explicitly enabled
   pocketbaseBaseUrl: 'https://api.cognos.io',
   localVaultPassword: '',
+  // Preferred model suggested when a user enables image generation on a model
+  // that can't do it. Falls back to the first image-capable eligible model when
+  // this id isn't in the catalogue.
+  suggestedImageModelId: 'gemini-2-5-flash-image',
   // Paddle.js: client-side token (publishable) + environment. Empty token
   // disables the overlay and falls back to the hosted checkout URL.
   paddleClientToken: '',

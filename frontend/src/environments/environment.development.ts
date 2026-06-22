@@ -2,6 +2,10 @@ export const environment = {
   isDevelopment: true, // Has to be explicitly enabled
   pocketbaseBaseUrl: 'http://localhost:8090',
   localVaultPassword: '',
+  // Preferred model suggested when a user enables image generation on a model
+  // that can't do it. Falls back to the first image-capable eligible model when
+  // this id isn't in the catalogue.
+  suggestedImageModelId: 'gemini-2-5-flash-image',
   // Paddle.js: client-side token (publishable) + environment. Empty token
   // disables the overlay and falls back to the hosted checkout URL.
   paddleClientToken: 'test_c1107d12db43b5817816135fccf',

@@ -510,8 +510,20 @@
       "stop": "Stop",
       "shortcutMac": "Cmd + Enter to send",
       "shortcutOther": "Ctrl + Enter to send",
-      "generateImage": "Generate image",
-      "imageGenerationUnsupported": "This model can't generate images. Switch to an image-capable model.",
+      "tools": {
+        "label": "Tools",
+        "webSearch": {
+          "title": "Web search",
+          "description": "Search the public web and cite live sources in the answer."
+        },
+        "generateImage": {
+          "title": "Generate image",
+          "description": "Create images from a text description."
+        },
+        "unsupported": "{{ model }} can't generate images",
+        "switchHint": "Switch to a model that supports it:",
+        "useModel": "Use {{ model }}"
+      },
       "switchPersona": "Switch persona — {{ name }}"
     },
     "conversation": {

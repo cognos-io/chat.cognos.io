@@ -510,8 +510,20 @@
       "stop": "Stopp",
       "shortcutMac": "Cmd + Enter zum Senden",
       "shortcutOther": "Strg + Enter zum Senden",
-      "generateImage": "Bild erzeugen",
-      "imageGenerationUnsupported": "Dieses Modell kann keine Bilder erzeugen. Wechseln Sie zu einem bildfähigen Modell.",
+      "tools": {
+        "label": "Werkzeuge",
+        "webSearch": {
+          "title": "Websuche",
+          "description": "Durchsucht das öffentliche Web und zitiert aktuelle Quellen in der Antwort."
+        },
+        "generateImage": {
+          "title": "Bild erzeugen",
+          "description": "Erstellt Bilder aus einer Textbeschreibung."
+        },
+        "unsupported": "{{ model }} kann keine Bilder erzeugen",
+        "switchHint": "Wechseln Sie zu einem Modell, das dies unterstützt:",
+        "useModel": "{{ model }} verwenden"
+      },
       "switchPersona": "Persona wechseln — {{ name }}"
     },
     "conversation": {

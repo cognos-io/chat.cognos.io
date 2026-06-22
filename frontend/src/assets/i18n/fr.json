@@ -510,8 +510,20 @@
       "stop": "Arrêter",
       "shortcutMac": "Cmd + Entrée pour envoyer",
       "shortcutOther": "Ctrl + Entrée pour envoyer",
-      "generateImage": "Générer une image",
-      "imageGenerationUnsupported": "Ce modèle ne peut pas générer d'images. Choisissez un modèle compatible.",
+      "tools": {
+        "label": "Outils",
+        "webSearch": {
+          "title": "Recherche web",
+          "description": "Recherche sur le web public et cite des sources en direct dans la réponse."
+        },
+        "generateImage": {
+          "title": "Générer une image",
+          "description": "Crée des images à partir d'une description textuelle."
+        },
+        "unsupported": "{{ model }} ne peut pas générer d'images",
+        "switchHint": "Choisissez un modèle compatible :",
+        "useModel": "Utiliser {{ model }}"
+      },
       "switchPersona": "Changer de persona — {{ name }}"
     },
     "conversation": {

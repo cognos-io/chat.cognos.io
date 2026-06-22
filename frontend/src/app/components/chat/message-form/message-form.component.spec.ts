@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
 
 import { Message } from '@app/interfaces/message';
 import { BillingService } from '@app/services/billing.service';
+import { ComposerToolsService } from '@app/services/composer-tools.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService, MessageStatus } from '@app/services/message.service';
@@ -42,9 +43,28 @@ describe('MessageFormComponent', () => {
     resetState: vi.fn(),
   };
 
+  // Mirror ComposerToolsService's surface so the composer can read tool state
+  // without pulling in the real service (and its ModelService dependency).
+  const imageGenerationEnabled = signal(false);
+  const selectedModelUnsupported = signal(false);
+  const composerTools = {
+    imageGenerationEnabled,
+    selectedModelUnsupported,
+    requiredCapability: computed(() =>
+      imageGenerationEnabled() ? 'image_generation' : null,
+    ),
+    suggestedImageModel: signal(null),
+    toggleImageGeneration: () => imageGenerationEnabled.update((v) => !v),
+    setImageGeneration: (value: boolean) => imageGenerationEnabled.set(value),
+    useSuggestedImageModel: vi.fn(),
+    reset: vi.fn(),
+  };
+
   beforeEach(async () => {
     status.set(MessageStatus.None);
     messages.set([]);
+    imageGenerationEnabled.set(false);
+    selectedModelUnsupported.set(false);
     selectedModel.set({ id: 'model-1', name: 'Claude Sonnet', isEligible: true });
     vi.clearAllMocks();
     vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
@@ -95,6 +115,7 @@ describe('MessageFormComponent', () => {
           provide: ModelService,
           useValue: { selectedModel },
         },
+        { provide: ComposerToolsService, useValue: composerTools },
         { provide: VaultService, useValue: { keyPair$: new Subject() } },
         {
           provide: BillingService,
@@ -200,41 +221,29 @@ describe('MessageFormComponent', () => {
   });
 
   it('defaults the image generation tool to off', () => {
-    expect(component.imageGenerationEnabled()).toBe(false);
-    expect(component.imageGenerationUnsupported()).toBe(false);
+    expect(component.composerTools.imageGenerationEnabled()).toBe(false);
+    expect(component.anyToolActive()).toBe(false);
   });
 
-  it('blocks send and alerts when the tool is on for an image-incapable model', () => {
-    selectedModel.set({
-      id: 'model-1',
-      name: 'Claude Sonnet',
-      isEligible: true,
-      supportsImageGeneration: false,
-    });
-    component.toggleImageGeneration();
+  it('blocks send when a tool is on for an unsupported model', () => {
+    composerTools.setImageGeneration(true);
+    selectedModelUnsupported.set(true);
     component.messageForm.controls.content.setValue('a fox');
     fixture.detectChanges();
 
-    expect(component.imageGenerationUnsupported()).toBe(true);
+    expect(component.anyToolActive()).toBe(true);
     expect(component.canSendMessage()).toBe(false);
-    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeTruthy();
 
     component.sendMessage();
     expect(messageService.sendMessage$.next).not.toHaveBeenCalled();
   });
 
   it('sends an image request when the tool is on for a capable model', () => {
-    selectedModel.set({
-      id: 'gemini-image',
-      name: 'Gemini Image',
-      isEligible: true,
-      supportsImageGeneration: true,
-    });
-    component.toggleImageGeneration();
+    composerTools.setImageGeneration(true);
+    selectedModelUnsupported.set(false);
     component.messageForm.controls.content.setValue('a watercolour fox');
     fixture.detectChanges();
 
-    expect(component.imageGenerationUnsupported()).toBe(false);
     expect(component.canSendMessage()).toBe(true);
 
     component.sendMessage();

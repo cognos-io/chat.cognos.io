@@ -44,6 +44,7 @@ import {
   tokenTypeCode,
 } from '@app/redaction';
 import { BillingService } from '@app/services/billing.service';
+import { ComposerToolsService } from '@app/services/composer-tools.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import {
@@ -56,6 +57,7 @@ import { PersonaService } from '@app/services/persona.service';
 import { RedactionService } from '@app/services/redaction.service';
 
 import { redactionKindFor, redactionModalLabels } from '../redaction-ui';
+import { ComposerToolsComponent } from './composer-tools/composer-tools.component';
 import { ModelSelectorComponent } from './model-selector/model-selector.component';
 import { PersonaChipsComponent } from './persona-chips/persona-chips.component';
 import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.component';
@@ -77,6 +79,7 @@ function escapeHtml(value: string): string {
     CognosIconButtonComponent,
     CognosIconComponent,
     CognosRedactedTextComponent,
+    ComposerToolsComponent,
     ModelSelectorComponent,
     PersonaSwitcherComponent,
     PersonaChipsComponent,
@@ -287,13 +290,6 @@ function escapeHtml(value: string): string {
             </div>
           }
 
-          @if (imageGenerationUnsupported()) {
-            <div class="message-form__alert" role="alert">
-              <cog-icon name="image" [size]="14" tone="text-subtle" />
-              <span>{{ t('chat.composer.imageGenerationUnsupported') }}</span>
-            </div>
-          }
-
           <div class="message-form__controls">
             <cog-button
               #modelTrigger="cdkOverlayOrigin"
@@ -319,9 +315,7 @@ function escapeHtml(value: string): string {
               (overlayKeydown)="onOverlayKeydown($event)"
             >
               <app-model-selector
-                [requiredCapability]="
-                  imageGenerationEnabled() ? 'image_generation' : null
-                "
+                [requiredCapability]="composerTools.requiredCapability()"
                 (modelSelected)="closeModelSelector()"
               ></app-model-selector>
             </ng-template>
@@ -366,15 +360,33 @@ function escapeHtml(value: string): string {
               ></app-persona-switcher>
             </ng-template>
 
-            <cog-icon-button
-              name="image"
-              class="message-form__tool"
-              [class.message-form__tool--active]="imageGenerationEnabled()"
-              [attr.aria-pressed]="imageGenerationEnabled()"
-              [title]="t('chat.composer.generateImage')"
+            <cog-button
+              #toolsTrigger="cdkOverlayOrigin"
+              cdkOverlayOrigin
+              class="message-form__tools"
+              [class.message-form__tools--active]="anyToolActive()"
+              appearance="default"
+              icon="plus"
               type="button"
-              (click)="toggleImageGeneration()"
-            />
+              [attr.aria-pressed]="anyToolActive()"
+              (click)="toggleToolsMenu()"
+            >
+              {{ t('chat.composer.tools.label') }}
+            </cog-button>
+
+            <ng-template
+              cdkConnectedOverlay
+              [cdkConnectedOverlayOrigin]="toolsTrigger"
+              [cdkConnectedOverlayOpen]="toolsMenuOpen()"
+              [cdkConnectedOverlayHasBackdrop]="true"
+              cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+              [cdkConnectedOverlayPositions]="modelSelectorPositions"
+              (backdropClick)="closeToolsMenu()"
+              (detach)="closeToolsMenu()"
+              (overlayKeydown)="onOverlayKeydown($event)"
+            >
+              <app-composer-tools></app-composer-tools>
+            </ng-template>
 
             @if (canClearTemporaryMessages() && !isMobile()) {
               <cog-icon-button
@@ -538,33 +550,18 @@ function escapeHtml(value: string): string {
       flex-wrap: wrap;
     }
 
-    /* Tool toggles (e.g. image generation). The active state is clearly
-       highlighted with the brand colour so it's obvious the next send is an
-       image request. */
-    .message-form__tool {
-      border-radius: var(--cog-radius-sm);
+    /* The Tools button highlights with the brand colour when any tool (e.g.
+       image generation) is active, so it's obvious the next send is affected. */
+    .message-form__tools {
       transition:
         background var(--cog-dur-fast) var(--cog-ease-standard),
         color var(--cog-dur-fast) var(--cog-ease-standard);
     }
 
-    .message-form__tool--active {
+    .message-form__tools--active {
       background: color-mix(in srgb, var(--cog-brand) 16%, transparent);
       color: var(--cog-brand);
       box-shadow: inset 0 0 0 1px var(--cog-brand);
-    }
-
-    .message-form__alert {
-      display: flex;
-      align-items: center;
-      gap: var(--cog-space-075);
-      align-self: start;
-      padding: var(--cog-space-075) var(--cog-space-100);
-      border: 1px solid var(--cog-brand);
-      border-radius: var(--cog-radius-sm);
-      background: color-mix(in srgb, var(--cog-brand) 8%, transparent);
-      color: var(--cog-text-subtle);
-      font-size: var(--cog-font-size-sm, 0.8125rem);
     }
 
     .message-form__redaction {
@@ -851,28 +848,29 @@ export class MessageFormComponent {
   public readonly personaService = inject(PersonaService);
   public readonly modelService = inject(ModelService);
   public readonly billing = inject(BillingService);
-
-  // Image generation is an opt-in composer tool, off by default for a new
-  // session. When on, the next send is an image request instead of text.
-  readonly imageGenerationEnabled = signal(false);
-
-  // True when the tool is on but the selected model cannot generate images.
-  // Send is blocked and an alert points the user to switch models.
-  readonly imageGenerationUnsupported = computed(
-    () =>
-      this.imageGenerationEnabled() &&
-      !this.modelService.selectedModel().supportsImageGeneration,
-  );
+  // Composer tool state (image generation, …) — shared with the tools menu and
+  // the model selector so toggling a tool drives send routing, model filtering
+  // and the unsupported-model warning consistently.
+  public readonly composerTools = inject(ComposerToolsService);
 
   readonly canSendMessage = computed(
     () =>
       this.modelService.selectedModel().isEligible &&
       !this.billing.isSendingLocked() &&
-      !this.imageGenerationUnsupported(),
+      !this.composerTools.selectedModelUnsupported(),
   );
 
-  toggleImageGeneration(): void {
-    this.imageGenerationEnabled.update((enabled) => !enabled);
+  readonly toolsMenuOpen = signal(false);
+
+  // Any tool active — used to highlight the "Tools" button.
+  readonly anyToolActive = computed(() => this.composerTools.imageGenerationEnabled());
+
+  toggleToolsMenu(): void {
+    this.toolsMenuOpen.update((open) => !open);
+  }
+
+  closeToolsMenu(): void {
+    this.toolsMenuOpen.set(false);
   }
 
   readonly isStreaming = computed(
@@ -1139,7 +1137,7 @@ export class MessageFormComponent {
       requestId: self.crypto.randomUUID(),
       redactionDeselected: Array.from(this._redactionDeselected()),
       redactionCustom: this._customRedactions(),
-      imageGeneration: this.imageGenerationEnabled(),
+      imageGeneration: this.composerTools.imageGenerationEnabled(),
     };
     this.messageService.sendMessage$.next(messageRequest);
     this.messageForm.reset();

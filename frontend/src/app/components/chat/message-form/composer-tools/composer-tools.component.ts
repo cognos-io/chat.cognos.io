@@ -1,0 +1,162 @@
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+
+import { TranslocoModule } from '@jsverse/transloco';
+
+import {
+  CognosButtonComponent,
+  CognosIconComponent,
+  CognosToggleComponent,
+} from '@cognos/ui-angular';
+
+import { ComposerToolsService } from '@app/services/composer-tools.service';
+import { ModelService } from '@app/services/model.service';
+
+// ComposerToolsComponent is the "+ Tools" dropdown panel. It lists the optional
+// composer tools as rows with a toggle, and — when an enabled tool can't run on
+// the selected model — shows an inline warning with a one-tap switch to a
+// suggested compatible model.
+@Component({
+  selector: 'app-composer-tools',
+  standalone: true,
+  imports: [
+    CognosButtonComponent,
+    CognosIconComponent,
+    CognosToggleComponent,
+    TranslocoModule,
+  ],
+  template: `
+    <div class="composer-tools" *transloco="let t">
+      <!-- Web search ships later; shown disabled so the menu reads complete. -->
+      <div class="composer-tools__row composer-tools__row--disabled">
+        <cog-icon name="search" [size]="18" tone="text-subtle" />
+        <div class="composer-tools__copy">
+          <span class="composer-tools__title">{{
+            t('chat.composer.tools.webSearch.title')
+          }}</span>
+          <span class="composer-tools__desc">{{
+            t('chat.composer.tools.webSearch.description')
+          }}</span>
+        </div>
+        <cog-toggle
+          [checked]="false"
+          [disabled]="true"
+          [label]="t('chat.composer.tools.webSearch.title')"
+        />
+      </div>
+
+      <div class="composer-tools__row">
+        <cog-icon name="image" [size]="18" tone="text-subtle" />
+        <div class="composer-tools__copy">
+          <span class="composer-tools__title">{{
+            t('chat.composer.tools.generateImage.title')
+          }}</span>
+          <span class="composer-tools__desc">{{
+            t('chat.composer.tools.generateImage.description')
+          }}</span>
+        </div>
+        <cog-toggle
+          [checked]="tools.imageGenerationEnabled()"
+          [label]="t('chat.composer.tools.generateImage.title')"
+          (checkedChange)="tools.setImageGeneration($event)"
+        />
+      </div>
+
+      @if (tools.selectedModelUnsupported()) {
+        <div class="composer-tools__warning" role="alert">
+          <p class="composer-tools__warning-text">
+            <cog-icon name="triangle-alert" [size]="14" />
+            {{
+              t('chat.composer.tools.unsupported', {
+                model: modelService.selectedModel().name,
+              })
+            }}
+          </p>
+          @if (tools.suggestedImageModel(); as suggested) {
+            <p class="composer-tools__warning-hint">
+              {{ t('chat.composer.tools.switchHint') }}
+            </p>
+            <cog-button
+              appearance="default"
+              icon="cloud"
+              type="button"
+              (click)="tools.useSuggestedImageModel()"
+            >
+              {{ t('chat.composer.tools.useModel', { model: suggested.name }) }}
+            </cog-button>
+          }
+        </div>
+      }
+    </div>
+  `,
+  styles: `
+    .composer-tools {
+      display: grid;
+      gap: var(--cog-space-050);
+      width: min(360px, 90vw);
+      padding: var(--cog-space-100);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-md, var(--cog-radius-sm));
+      background: var(--cog-surface);
+      box-shadow: var(--cog-shadow-200, 0 8px 24px rgba(0, 0, 0, 0.12));
+    }
+
+    .composer-tools__row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: start;
+      gap: var(--cog-space-100);
+      padding: var(--cog-space-100);
+      border-radius: var(--cog-radius-sm);
+    }
+
+    .composer-tools__row--disabled {
+      opacity: 0.55;
+    }
+
+    .composer-tools__copy {
+      display: grid;
+      gap: 2px;
+    }
+
+    .composer-tools__title {
+      font-weight: 600;
+      color: var(--cog-text);
+    }
+
+    .composer-tools__desc {
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+    }
+
+    .composer-tools__warning {
+      display: grid;
+      gap: var(--cog-space-075);
+      margin-top: var(--cog-space-050);
+      padding: var(--cog-space-100);
+      border: 1px solid var(--cog-warning, #c2870b);
+      border-radius: var(--cog-radius-sm);
+      background: color-mix(in srgb, var(--cog-warning, #c2870b) 12%, transparent);
+    }
+
+    .composer-tools__warning-text {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-075);
+      margin: 0;
+      font-weight: 600;
+      color: var(--cog-warning-text, #8a5a00);
+    }
+
+    .composer-tools__warning-hint {
+      margin: 0;
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+    }
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ComposerToolsComponent {
+  readonly tools = inject(ComposerToolsService);
+  readonly modelService = inject(ModelService);
+}
