@@ -32,6 +32,10 @@ export type MessageAttachment = z.infer<typeof MessageAttachment>;
 export const MessageData = z.object({
   version: MessageDataVersion.optional(),
   content: z.string().nullable(), // the message content
+  // Provider-returned reasoning text for assistant messages, when the model
+  // exposes it. Encrypted at rest alongside content; mirrors the backend's
+  // MessageRecordData.Reasoning. Optional and absent for most messages.
+  reasoning: z.string().optional(),
   conversation_id: z.string().optional(),
   parent_message_id: z.string().optional(),
   // RFC 3339 timestamp set by the backend inside the encrypted blob, so no

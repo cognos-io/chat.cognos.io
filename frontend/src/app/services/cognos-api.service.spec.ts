@@ -121,6 +121,7 @@ describe('parseCompleteStreamData', () => {
         total_tokens: 46,
         cache_creation_input_tokens: 5,
         cache_read_input_tokens: 7,
+        reasoning_tokens: 8,
         cost_usd: 0.0001,
         cost_chf: 0.00009,
         cost_rappen: 1,
@@ -133,6 +134,15 @@ describe('parseCompleteStreamData', () => {
     ).toEqual({
       type: 'complete',
       response: mapCompleteResponse(response),
+    });
+  });
+
+  it('maps reasoning_delta events onto their own event type', () => {
+    expect(
+      parseCompleteStreamData('{"type":"reasoning_delta","delta":"thinking"}'),
+    ).toEqual({
+      type: 'reasoning_delta',
+      delta: 'thinking',
     });
   });
 
@@ -161,6 +171,7 @@ describe('mapCompleteResponse', () => {
       id: 'asst-1',
       parent_message_id: 'user-1',
       content: 'hello back',
+      reasoning: 'because the inputs imply it',
       persona_id: 'cognos:simple-assistant',
       model_id: 'infomaniak:llama-3',
       created_at: '2026-01-02T03:04:05.000Z',
@@ -171,6 +182,7 @@ describe('mapCompleteResponse', () => {
       total_tokens: 46,
       cache_creation_input_tokens: 5,
       cache_read_input_tokens: 7,
+      reasoning_tokens: 8,
       cost_usd: 0.0001,
       cost_chf: 0.00009,
       cost_rappen: 1,
@@ -187,6 +199,7 @@ describe('mapCompleteResponse', () => {
         id: 'asst-1',
         parentMessageId: 'user-1',
         content: 'hello back',
+        reasoning: 'because the inputs imply it',
         personaId: 'cognos:simple-assistant',
         modelId: 'infomaniak:llama-3',
         createdAt: '2026-01-02T03:04:05.000Z',
@@ -197,6 +210,7 @@ describe('mapCompleteResponse', () => {
         totalTokens: 46,
         cacheCreationInputTokens: 5,
         cacheReadInputTokens: 7,
+        reasoningTokens: 8,
         costUSD: 0.0001,
         costCHF: 0.00009,
         costRappen: 1,

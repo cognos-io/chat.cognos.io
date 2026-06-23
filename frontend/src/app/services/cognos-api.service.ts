@@ -54,6 +54,8 @@ export interface CompleteResponse {
     id?: string;
     parentMessageId?: string;
     content: string;
+    // Provider-returned reasoning text, absent when the model returns none.
+    reasoning?: string;
     personaId: string;
     modelId: string;
     createdAt: string;
@@ -64,6 +66,7 @@ export interface CompleteResponse {
     totalTokens: number;
     cacheCreationInputTokens: number;
     cacheReadInputTokens: number;
+    reasoningTokens: number;
     costUSD: number;
     costCHF: number;
     costRappen: number;
@@ -74,6 +77,12 @@ export interface CompleteResponse {
 export type CompleteStreamEvent =
   | {
       type: 'delta';
+      delta: string;
+    }
+  | {
+      // Reasoning text delta, streamed on its own channel so it never mixes
+      // into the final answer content.
+      type: 'reasoning_delta';
       delta: string;
     }
   | {
@@ -196,6 +205,7 @@ interface ApiCompleteResponse {
     id?: string;
     parent_message_id?: string;
     content: string;
+    reasoning?: string;
     persona_id: string;
     model_id: string;
     created_at: string;
@@ -206,6 +216,7 @@ interface ApiCompleteResponse {
     total_tokens: number;
     cache_creation_input_tokens: number;
     cache_read_input_tokens: number;
+    reasoning_tokens: number;
     cost_usd: number;
     cost_chf: number;
     cost_rappen: number;
@@ -215,6 +226,11 @@ interface ApiCompleteResponse {
 
 interface ApiCompleteStreamDeltaEvent {
   type: 'delta';
+  delta: string;
+}
+
+interface ApiCompleteStreamReasoningDeltaEvent {
+  type: 'reasoning_delta';
   delta: string;
 }
 
@@ -230,6 +246,7 @@ interface ApiCompleteStreamErrorEvent {
 
 export type ApiCompleteStreamEvent =
   | ApiCompleteStreamDeltaEvent
+  | ApiCompleteStreamReasoningDeltaEvent
   | ApiCompleteStreamCompleteEvent
   | ApiCompleteStreamErrorEvent;
 
@@ -459,6 +476,7 @@ export const mapCompleteResponse = (
     id: response.assistant_message.id,
     parentMessageId: response.assistant_message.parent_message_id,
     content: response.assistant_message.content,
+    reasoning: response.assistant_message.reasoning,
     personaId: response.assistant_message.persona_id,
     modelId: response.assistant_message.model_id,
     createdAt: response.assistant_message.created_at,
@@ -469,6 +487,7 @@ export const mapCompleteResponse = (
     totalTokens: response.usage.total_tokens,
     cacheCreationInputTokens: response.usage.cache_creation_input_tokens,
     cacheReadInputTokens: response.usage.cache_read_input_tokens,
+    reasoningTokens: response.usage.reasoning_tokens,
     costUSD: response.usage.cost_usd,
     costCHF: response.usage.cost_chf,
     costRappen: response.usage.cost_rappen,
@@ -483,6 +502,11 @@ export const parseCompleteStreamData = (data: string): CompleteStreamEvent => {
     case 'delta':
       return {
         type: 'delta',
+        delta: event.delta,
+      };
+    case 'reasoning_delta':
+      return {
+        type: 'reasoning_delta',
         delta: event.delta,
       };
     case 'complete':

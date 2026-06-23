@@ -9,6 +9,7 @@ import { Message } from '@app/interfaces/message';
 import { CompleteResponse, GenerateImageResponse } from './cognos-api.service';
 import {
   DELETED_MESSAGE_MARKER,
+  applyCompletionReasoningStreamDelta,
   applyCompletionStreamDelta,
   applyCompletionStreamResponse,
   applyImageGenerationResponse,
@@ -42,6 +43,7 @@ const makeResponse = (overrides: Partial<CompleteResponse> = {}): CompleteRespon
     totalTokens: 0,
     cacheCreationInputTokens: 0,
     cacheReadInputTokens: 0,
+    reasoningTokens: 0,
     costUSD: 0,
     costCHF: 0,
     costRappen: 0,
@@ -484,6 +486,62 @@ describe('stream completion helpers', () => {
     );
 
     expect(removeStreamingCompletionMessages(streaming, 'req-1')).toEqual([]);
+  });
+
+  it('accumulates reasoning deltas separately from answer content', () => {
+    const request = { requestId: 'req-1', content: 'hello' };
+    const afterReasoning = applyCompletionReasoningStreamDelta(
+      [userMessage()],
+      request,
+      'I weigh ',
+      'persona-1',
+      'model-1',
+    );
+    const afterMoreReasoning = applyCompletionReasoningStreamDelta(
+      afterReasoning,
+      request,
+      'the constraints.',
+      'persona-1',
+      'model-1',
+    );
+    const afterAnswer = applyCompletionStreamDelta(
+      afterMoreReasoning,
+      request,
+      'The answer.',
+      'persona-1',
+      'model-1',
+    );
+
+    expect(afterAnswer).toHaveLength(2);
+    const assistant = afterAnswer[1];
+    expect(assistant.record_id).toBe(streamingAssistantMessageId('req-1'));
+    expect(assistant.decryptedData.reasoning).toBe('I weigh the constraints.');
+    expect(assistant.decryptedData.content).toBe('The answer.');
+    expect(assistant.isStreaming).toBe(true);
+  });
+
+  it('carries reasoning through to the finalized assistant message', () => {
+    const streaming = applyCompletionReasoningStreamDelta(
+      [userMessage()],
+      { requestId: 'req-1', content: 'hello' },
+      'because…',
+      'persona-1',
+      'model-1',
+    );
+
+    const result = applyCompletionStreamResponse(
+      streaming,
+      'req-1',
+      makeResponse({
+        assistantMessage: {
+          ...makeResponse().assistantMessage,
+          reasoning: 'because the inputs imply it',
+        },
+      }),
+    );
+
+    expect(result[1].decryptedData.reasoning).toBe('because the inputs imply it');
+    expect(result[1].decryptedData.content).toBe('hello back');
   });
 });
 

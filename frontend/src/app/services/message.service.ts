@@ -273,6 +273,7 @@ export const buildCompletionMessages = (
     expires,
     decryptedData: {
       content: resp.assistantMessage.content,
+      reasoning: resp.assistantMessage.reasoning,
       persona_id: resp.assistantMessage.personaId,
       model_id: resp.assistantMessage.modelId,
     },
@@ -328,6 +329,55 @@ export const applyCompletionStreamDelta = (
       isStreaming: true,
       decryptedData: {
         content: delta,
+        persona_id: personaId,
+        model_id: modelId,
+      },
+    },
+  ];
+};
+
+// applyCompletionReasoningStreamDelta appends a reasoning delta to the
+// streaming assistant message's `reasoning` field, kept separate from `content`
+// so reasoning never leaks into the final answer. Mirrors
+// applyCompletionStreamDelta, creating the placeholder message if the reasoning
+// stream arrives before the first answer delta.
+export const applyCompletionReasoningStreamDelta = (
+  existing: ReadonlyArray<Message>,
+  request: MessageRequest,
+  delta: string,
+  personaId: string,
+  modelId: string,
+): Message[] => {
+  const assistantId = streamingAssistantMessageId(request.requestId);
+  const assistantIndex = existing.findIndex(
+    (message) => message.record_id === assistantId,
+  );
+
+  if (assistantIndex >= 0) {
+    return existing.map((message, index) =>
+      index === assistantIndex
+        ? {
+            ...message,
+            isStreaming: true,
+            decryptedData: {
+              ...message.decryptedData,
+              reasoning: `${message.decryptedData.reasoning ?? ''}${delta}`,
+            },
+          }
+        : message,
+    );
+  }
+
+  return [
+    ...existing,
+    {
+      record_id: assistantId,
+      parentMessageId: request.parentMessageId,
+      createdAt: new Date(),
+      isStreaming: true,
+      decryptedData: {
+        content: '',
+        reasoning: delta,
         persona_id: personaId,
         model_id: modelId,
       },
@@ -1099,6 +1149,16 @@ export class MessageService {
                 request.modelId,
               ),
             };
+          case 'reasoning_delta':
+            return {
+              messages: applyCompletionReasoningStreamDelta(
+                this.state().messages,
+                streamingRequest,
+                event.delta,
+                request.personaId,
+                request.modelId,
+              ),
+            };
           case 'complete':
             completed = true;
             return {
@@ -1383,6 +1443,20 @@ export class MessageService {
                 request.modelId,
               ),
               // Surface the in-progress response as the active branch.
+              branchSelections: {
+                ...this.state().branchSelections,
+                [parentId]: streamingAssistantMessageId(requestId),
+              },
+            };
+          case 'reasoning_delta':
+            return {
+              messages: applyCompletionReasoningStreamDelta(
+                this.state().messages,
+                streamingRequest,
+                event.delta,
+                request.personaId,
+                request.modelId,
+              ),
               branchSelections: {
                 ...this.state().branchSelections,
                 [parentId]: streamingAssistantMessageId(requestId),
