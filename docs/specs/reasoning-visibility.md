@@ -1,6 +1,6 @@
 # Reasoning Visibility — Product & Architecture Spec
 
-**Status:** Draft  
+**Status:** MVP implemented (streaming disclosure shipped on `feat/reasoning-tokens`)  
 **Scope:** Show provider-returned reasoning artefacts in chat responses without weakening Cognos'
 privacy model.  
 **Related docs:**
@@ -27,6 +27,37 @@ For the MVP, the feature is a transparency panel attached to assistant messages:
 
 The product language must say **“Reasoning supplied by the model”**, not “proof”, “truth”, or
 “exact thought process”.
+
+## 0.1 Implementation status (MVP)
+
+The streaming reasoning disclosure is implemented end-to-end:
+
+- **Gateway** (`internal/gateway`): `CompleteResponse.Reasoning`,
+  `CompleteStreamEvent.ReasoningDelta`, and `Usage.ReasoningTokens` carry reasoning. The Bifrost
+  adapter maps the provider-normalised `reasoning` field (it already folds OpenAI/xAI/DeepSeek
+  shapes into one) and `completion_tokens_details.reasoning_tokens`.
+- **API** (`internal/handler/complete.go`): a `reasoning_delta` SSE event streams reasoning
+  separately from `delta`; reasoning is persisted inside the encrypted `MessageRecordData` and
+  surfaced on the terminal `complete` response plus `usage.reasoning_tokens`. Reasoning text reaches
+  no log, billing ledger, or analytics record — only the numeric token count is plumbed.
+- **Frontend**: `MessageData.reasoning` (zod), a `reasoning_delta` stream event, an accumulator that
+  keeps reasoning out of `content`, and a subtle inline "Show reasoning" disclosure that streams
+  live while the response generates and collapses once complete. Strings are translated in all six
+  locales.
+
+Decisions taken for the MVP that refine this spec:
+
+- Reasoning is stored as a **plain string**, not the nested `{format, text, blocks}` object in
+  §6.3/§7. Bifrost gives a single normalised reasoning string, so the simpler shape matches the real
+  data source. The `version` field on the payload allows promoting to a structured form later.
+- **Token-count UI (§6.6)** is deferred: `reasoning_tokens` flows through the API and is available
+  on the frontend `CompleteResponse`, but no usage label renders it yet.
+- **Model catalogue capability (§6.5)** uses the existing `reasoning` capability **tag** (already
+  mapped to the frontend model selector as a badge) rather than a new capability enum.
+- The `[reason]` sentinel in the mock AI provider drives the e2e reasoning path offline.
+
+Still open (tracked in §11–§12): the capability enum with `raw_provider_trace`, fallback reasoning
+pricing, and the public-share / export review.
 
 ## 1. Problem Statement
 
