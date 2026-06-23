@@ -163,6 +163,7 @@ function projectConversationRecord(record: ProjectConversationRecord) {
     id: record.id,
     created: record.created,
     updated: record.updated,
+    last_activity_at: record.last_activity_at,
     data: record.data,
     project: record.project,
   };

@@ -31,7 +31,7 @@ func (r stubConversationRepo) ByID(id string) (chat.Conversation, error) {
 	return r.byID(id)
 }
 
-func (r stubConversationRepo) SetConversationUpdated(conversationID string) error {
+func (r stubConversationRepo) BumpActivity(conversationID string, reason chat.ActivityReason) error {
 	return nil
 }
 

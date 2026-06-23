@@ -334,8 +334,8 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 		}
 
 		if params.ConversationRepo != nil {
-			if err := params.ConversationRepo.SetConversationUpdated(conversationID); err != nil {
-				params.Logger.Error("failed to bump conversation updated time", "err", err)
+			if err := params.ConversationRepo.BumpActivity(conversationID, chat.ActivityMessageCreated); err != nil {
+				params.Logger.Error("failed to bump conversation activity time", "err", err)
 			}
 		}
 

@@ -302,7 +302,9 @@ export class ConversationService {
             const conversations = state().conversations;
             const index = conversations.findIndex((c) => c.record.id === id);
             if (index === -1) return state();
-            conversations[index].record.updated = new Date().toISOString();
+            const now = new Date().toISOString();
+            conversations[index].record.updated = now;
+            conversations[index].record.last_activity_at = now;
             return {
               conversations: [...conversations],
             };

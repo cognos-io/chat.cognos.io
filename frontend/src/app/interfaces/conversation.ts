@@ -16,6 +16,7 @@ export interface ConversationRecord {
   id: string;
   created: string;
   updated: string;
+  last_activity_at?: string;
   data: string;
   creator?: string;
   expiry_duration?: string;
@@ -56,21 +57,26 @@ export interface Conversation {
   keyPair: KeyPair;
 }
 
-// updatedAtMs parses a conversation's updated timestamp into milliseconds.
+// activityAtMs parses the timestamp used for sidebar ordering. Prefer the
+// explicit activity timestamp; fall back to PocketBase's generic row timestamp
+// for older records/API responses.
+//
 // Conversations carry mixed timestamp formats — the backend serialises
 // "2006-01-02 15:04:05.000Z" (space) while an optimistic client bump writes
 // ISO-8601 "…T…". Comparing the raw strings would order by the character at
 // the date/time boundary ('T' vs ' ') before the actual time, so we compare
 // parsed instants instead.
-const updatedAtMs = (conversation: Conversation): number => {
-  const time = parseBackendDate(conversation.record.updated).getTime();
+const activityAtMs = (conversation: Conversation): number => {
+  const time = parseBackendDate(
+    conversation.record.last_activity_at || conversation.record.updated,
+  ).getTime();
   return Number.isNaN(time) ? 0 : time;
 };
 
 export const sortConversationsByUpdated = (
   conversations: Conversation[],
 ): Conversation[] => {
-  return [...conversations].sort((a, b) => updatedAtMs(b) - updatedAtMs(a));
+  return [...conversations].sort((a, b) => activityAtMs(b) - activityAtMs(a));
 };
 
 export const partitionConversationsByPinned = (

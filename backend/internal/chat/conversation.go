@@ -16,9 +16,18 @@ type Conversation struct {
 	ExpiryDuration time.Duration `json:"expiry_duration"`
 }
 
+type ActivityReason string
+
+const (
+	ActivityMessageCreated      ActivityReason = "message_created"
+	ActivityMessageUpdated      ActivityReason = "message_updated"
+	ActivityMessageDeleted      ActivityReason = "message_deleted"
+	ActivityConversationUpdated ActivityReason = "conversation_updated"
+)
+
 type ConversationRepo interface {
 	ByID(id string) (Conversation, error)
-	SetConversationUpdated(conversationID string) error
+	BumpActivity(conversationID string, reason ActivityReason) error
 }
 
 type PocketBaseConversationRepo struct {
@@ -27,15 +36,21 @@ type PocketBaseConversationRepo struct {
 	keyPairRepo auth.KeyPairRepo
 }
 
-// SetConversationUpdated updates the conversation's updated time.
-func (r *PocketBaseConversationRepo) SetConversationUpdated(
+// BumpActivity stamps the last user-visible conversation activity. The reason
+// is intentionally metadata-only; never pass message content here.
+func (r *PocketBaseConversationRepo) BumpActivity(
 	conversationID string,
+	reason ActivityReason,
 ) error {
+	if conversationID == "" {
+		return nil
+	}
+
 	record, err := r.app.FindRecordById(r.collection.Name, conversationID)
 	if err != nil {
 		return err
 	}
-	record.Set("updated", time.Now().UTC())
+	record.Set("last_activity_at", time.Now().UTC())
 
 	return r.app.Save(record)
 }

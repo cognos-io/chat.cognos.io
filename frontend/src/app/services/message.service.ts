@@ -1372,6 +1372,12 @@ export class MessageService {
       return EMPTY;
     }
 
+    if (conversation) {
+      this._conversationService.updateConversationUpdatedTimeNow({
+        id: conversation.record.id,
+      });
+    }
+
     // Regenerating an image message re-runs image generation (the text
     // completion path would drop the image), parented to the same prompt.
     if ((message.decryptedData.attachments?.length ?? 0) > 0) {
@@ -1748,7 +1754,12 @@ export class MessageService {
     );
 
     return this._api.softDeleteMessage(recordId, Base64.fromUint8Array(sealed)).pipe(
-      map(() => applyLocal()),
+      map(() => {
+        this._conversationService.updateConversationUpdatedTimeNow({
+          id: conversation.record.id,
+        });
+        return applyLocal();
+      }),
       catchError((err) => {
         console.error('Error deleting message');
         this._errorService.alert(resolveCompletionFailureMessage(err));

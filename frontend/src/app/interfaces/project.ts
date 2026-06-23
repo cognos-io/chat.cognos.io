@@ -61,6 +61,7 @@ export interface ProjectConversationRecord {
   id: string;
   created: string;
   updated: string;
+  last_activity_at?: string;
   data: string;
   project: string;
   key_version: number;

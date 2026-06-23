@@ -93,11 +93,16 @@ describe('conversation data parse and serialize', () => {
 });
 
 describe('conversation sidebar ordering', () => {
-  const makeConversation = (id: string, updated: string): Conversation => ({
+  const makeConversation = (
+    id: string,
+    updated: string,
+    lastActivityAt?: string,
+  ): Conversation => ({
     record: {
       id,
       created: '2026-01-01T00:00:00.000Z',
       updated,
+      last_activity_at: lastActivityAt,
       data: '',
     },
     decryptedData: { title: id },
@@ -118,6 +123,26 @@ describe('conversation sidebar ordering', () => {
       'newest',
       'middle',
       'old',
+    ]);
+  });
+
+  it('uses last activity time ahead of the generic updated timestamp', () => {
+    const conversations = [
+      makeConversation(
+        'row-updated-later',
+        '2026-01-05T00:00:00.000Z',
+        '2026-01-01 00:00:00.000Z',
+      ),
+      makeConversation(
+        'activity-later',
+        '2026-01-02T00:00:00.000Z',
+        '2026-01-04 00:00:00.000Z',
+      ),
+    ];
+
+    expect(sortConversationsByUpdated(conversations).map((c) => c.record.id)).toEqual([
+      'activity-later',
+      'row-updated-later',
     ]);
   });
 

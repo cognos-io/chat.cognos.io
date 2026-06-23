@@ -368,8 +368,9 @@ func bindAppHooks(
 		keyPairRepo := auth.NewPocketBaseKeyPairRepo(e.App)
 		conversationRepo := chat.NewPocketBaseConversationRepo(e.App, keyPairRepo)
 
-		if err := conversationRepo.SetConversationUpdated(
+		if err := conversationRepo.BumpActivity(
 			e.Record.GetString("conversation"),
+			chat.ActivityMessageCreated,
 		); err != nil {
 			return err
 		}

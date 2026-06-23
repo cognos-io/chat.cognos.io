@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/participants"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/projectparticipants"
 	"github.com/pocketbase/dbx"
@@ -28,7 +29,8 @@ type conversationRecordResponse struct {
 	// Clients persist the version alongside any wrapped conversation
 	// secret-key cache so a rotation invalidates stale wrappers on the
 	// next refresh without breaking offline copies.
-	KeyVersion int `json:"key_version"`
+	KeyVersion     int    `json:"key_version"`
+	LastActivityAt string `json:"last_activity_at,omitempty"`
 }
 
 type createConversationRequest struct {
@@ -87,7 +89,7 @@ func ConversationsList(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to list conversations", err)
 		}
 		sort.Slice(records, func(i, j int) bool {
-			return records[i].GetString("updated") > records[j].GetString("updated")
+			return conversationActivityTimestamp(records[i]) > conversationActivityTimestamp(records[j])
 		})
 
 		response := make([]conversationRecordResponse, 0, len(records))
@@ -128,6 +130,7 @@ func ConversationsCreate(app core.App) func(e *core.RequestEvent) error {
 		record.Set("data", req.Data)
 		record.Set("expiry_duration", req.ExpiryDuration)
 		record.Set("key_version", 1)
+		record.Set("last_activity_at", time.Now().UTC())
 
 		participantsCollection, err := app.FindCollectionByNameOrId(participants.CollectionName)
 		if err != nil {
@@ -185,6 +188,13 @@ func ConversationsUpdate(app core.App) func(e *core.RequestEvent) error {
 		})
 		if err := form.Submit(); err != nil {
 			return apis.NewBadRequestError("Failed to update conversation", err)
+		}
+		if err := bumpConversationActivity(app, record.Id, chat.ActivityConversationUpdated); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to update conversation activity", err)
+		}
+		record, err = app.FindRecordById("conversations", record.Id)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to reload conversation", err)
 		}
 
 		return e.JSON(http.StatusOK, conversationRecordToResponse(record))
@@ -707,9 +717,13 @@ func MessagesDelete(app core.App) func(e *core.RequestEvent) error {
 		if err != nil {
 			return err
 		}
+		conversationID := record.GetString("conversation")
 
 		if err := app.Delete(record); err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to delete message", err)
+		}
+		if err := bumpConversationActivity(app, conversationID, chat.ActivityMessageDeleted); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to update conversation activity", err)
 		}
 
 		return e.NoContent(http.StatusNoContent)
@@ -744,6 +758,11 @@ func MessagesUpdate(app core.App) func(e *core.RequestEvent) error {
 		form.Load(update)
 		if err := form.Submit(); err != nil {
 			return apis.NewBadRequestError("Failed to update message", err)
+		}
+		if req.Data != "" {
+			if err := bumpConversationActivity(app, record.GetString("conversation"), chat.ActivityMessageUpdated); err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to update conversation activity", err)
+			}
 		}
 
 		return e.JSON(http.StatusOK, messageRecordToResponse(record))
@@ -862,7 +881,22 @@ func conversationRecordToResponse(record *core.Record) conversationRecordRespons
 		Creator:        record.GetString("creator"),
 		ExpiryDuration: record.GetString("expiry_duration"),
 		KeyVersion:     version,
+		LastActivityAt: record.GetString("last_activity_at"),
 	}
+}
+
+func conversationActivityTimestamp(record *core.Record) string {
+	if value := record.GetString("last_activity_at"); value != "" {
+		return value
+	}
+	return record.GetString("updated")
+}
+
+func bumpConversationActivity(app core.App, conversationID string, reason chat.ActivityReason) error {
+	return chat.NewPocketBaseConversationRepo(
+		app,
+		auth.NewPocketBaseKeyPairRepo(app),
+	).BumpActivity(conversationID, reason)
 }
 
 func messageRecordToResponse(record *core.Record) messageRecordResponse {

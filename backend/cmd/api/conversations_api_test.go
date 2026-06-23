@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
@@ -93,6 +94,141 @@ func TestConversationListOnlyReturnsOwnedConversations(t *testing.T) {
 			body := string(bodyBytes)
 			if strings.Contains(body, `"id":"ownedconv000002"`) {
 				t.Fatalf("response body contains other user's conversation: %s", body)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestConversationListOrdersByLastActivity(t *testing.T) {
+	t.Parallel()
+
+	scenario := tests.ApiScenario{
+		Name:            "list conversations orders by last activity",
+		Method:          http.MethodGet,
+		URL:             "/api/v1/conversations",
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"id":"activefirst0001"`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, "activefirst0001", "test1@example.com")
+			setConversationLastActivityAt(t, app, "activefirst0001", "2026-06-10 12:00:00.000Z")
+
+			seedOwnedConversation(t, app, "savedlater00001", "test1@example.com")
+			setConversationLastActivityAt(t, app, "savedlater00001", "2026-06-01 12:00:00.000Z")
+
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, res *http.Response) {
+			bodyBytes, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatalf("ReadAll(response.Body) error = %v", err)
+			}
+			var payload []struct {
+				ID             string `json:"id"`
+				LastActivityAt string `json:"last_activity_at"`
+			}
+			if err := json.Unmarshal(bodyBytes, &payload); err != nil {
+				t.Fatalf("json.Unmarshal(ConversationsList response) error = %v; body = %s", err, string(bodyBytes))
+			}
+			if len(payload) < 2 {
+				t.Fatalf("ConversationsList() len = %d, want at least 2; body = %s", len(payload), string(bodyBytes))
+			}
+			if got, want := payload[0].ID, "activefirst0001"; got != want {
+				t.Fatalf("ConversationsList()[0].id = %q, want %q; body = %s", got, want, string(bodyBytes))
+			}
+			if got := payload[0].LastActivityAt; got == "" {
+				t.Fatalf("ConversationsList()[0].last_activity_at = %q, want non-empty", got)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestMessageCreateBumpsConversationLastActivity(t *testing.T) {
+	t.Parallel()
+
+	app := setupTestApp(t)
+	conversationID := "convmsgcreate01"
+	lastActivity := "2026-06-01 12:00:00.000Z"
+
+	seedOwnedConversation(t, app, conversationID, "test1@example.com")
+	setConversationLastActivityAt(t, app, conversationID, lastActivity)
+	seedMessage(t, app, "msgcreate000001", conversationID, false)
+
+	record, err := app.FindRecordById("conversations", conversationID)
+	if err != nil {
+		t.Fatalf("FindRecordById(conversations, %q) error = %v", conversationID, err)
+	}
+	if got := record.GetString("last_activity_at"); got == lastActivity || got == "" {
+		t.Fatalf("conversations[%q].last_activity_at = %q, want changed from %q", conversationID, got, lastActivity)
+	}
+}
+
+func TestMessageContentMutationBumpsConversationLastActivity(t *testing.T) {
+	t.Parallel()
+
+	conversationID := "convactivity001"
+	messageID := "msgactivity0001"
+
+	scenario := tests.ApiScenario{
+		Name:            "soft delete message bumps conversation last activity",
+		Method:          http.MethodPatch,
+		URL:             "/api/v1/messages/" + messageID,
+		Body:            strings.NewReader(`{"data":"` + base64.StdEncoding.EncodeToString([]byte(`deleted-ciphertext`)) + `"}`),
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"id":"` + messageID + `"`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			seedMessage(t, app, messageID, conversationID, false)
+			setConversationLastActivityAt(t, app, conversationID, "2026-06-01 12:00:00.000Z")
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			record, err := app.FindRecordById("conversations", conversationID)
+			if err != nil {
+				t.Fatalf("FindRecordById(conversations, %q) error = %v", conversationID, err)
+			}
+			if got, wantNot := record.GetString("last_activity_at"), "2026-06-01 12:00:00.000Z"; got == wantNot || got == "" {
+				t.Fatalf("conversations[%q].last_activity_at = %q, want changed from %q", conversationID, got, wantNot)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestMessageRetentionUpdateDoesNotBumpConversationLastActivity(t *testing.T) {
+	t.Parallel()
+
+	conversationID := "convretain00001"
+	messageID := "msgretain000001"
+	lastActivity := "2026-06-01 12:00:00.000Z"
+
+	scenario := tests.ApiScenario{
+		Name:            "clearing message expiry does not bump conversation last activity",
+		Method:          http.MethodPatch,
+		URL:             "/api/v1/messages/" + messageID,
+		Body:            strings.NewReader(`{"clear_expires":true}`),
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"id":"` + messageID + `"`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			seedMessage(t, app, messageID, conversationID, true)
+			setConversationLastActivityAt(t, app, conversationID, lastActivity)
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			record, err := app.FindRecordById("conversations", conversationID)
+			if err != nil {
+				t.Fatalf("FindRecordById(conversations, %q) error = %v", conversationID, err)
+			}
+			if got := record.GetString("last_activity_at"); got != lastActivity {
+				t.Fatalf("conversations[%q].last_activity_at = %q, want %q", conversationID, got, lastActivity)
 			}
 		},
 	}
@@ -472,6 +608,19 @@ func seedOwnedConversation(t testing.TB, app *tests.TestApp, conversationID stri
 	// participant-based access check in ownedConversationRecord will treat
 	// the creator as a non-participant and return 404.
 	seedParticipant(t, app, conversationID, userRecord.Id, "Admin")
+}
+
+func setConversationLastActivityAt(t testing.TB, app *tests.TestApp, conversationID, lastActivityAt string) {
+	t.Helper()
+
+	record, err := app.FindRecordById("conversations", conversationID)
+	if err != nil {
+		t.Fatalf("FindRecordById(conversations, %q) error = %v", conversationID, err)
+	}
+	record.Set("last_activity_at", lastActivityAt)
+	if err := app.Save(record); err != nil {
+		t.Fatalf("Save(conversationRecord %q last_activity_at) error = %v", conversationID, err)
+	}
 }
 
 func seedParticipant(t testing.TB, app *tests.TestApp, conversationID, userID, role string) {

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/projectparticipants"
@@ -15,11 +16,12 @@ import (
 const projectConversationKeysCollection = "project_conversation_keys"
 
 type projectConversationResponse struct {
-	ID      string `json:"id"`
-	Created string `json:"created"`
-	Updated string `json:"updated"`
-	Data    string `json:"data"`
-	Project string `json:"project"`
+	ID             string `json:"id"`
+	Created        string `json:"created"`
+	Updated        string `json:"updated"`
+	LastActivityAt string `json:"last_activity_at,omitempty"`
+	Data           string `json:"data"`
+	Project        string `json:"project"`
 	// KeyVersion is the conversation's own key generation; ProjectKeyVersion is
 	// the project content-key generation that wrapped the secret key below.
 	KeyVersion        int `json:"key_version"`
@@ -65,7 +67,7 @@ func ProjectConversationsList(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to list project conversations", err)
 		}
 		sort.Slice(records, func(i, j int) bool {
-			return records[i].GetString("updated") > records[j].GetString("updated")
+			return conversationActivityTimestamp(records[i]) > conversationActivityTimestamp(records[j])
 		})
 
 		response := make([]projectConversationResponse, 0, len(records))
@@ -145,6 +147,7 @@ func ProjectConversationsCreate(app core.App) func(e *core.RequestEvent) error {
 		conversation.Set("project", projectID)
 		conversation.Set("data", req.Data)
 		conversation.Set("key_version", 1)
+		conversation.Set("last_activity_at", time.Now().UTC())
 
 		if err := app.RunInTransaction(func(txApp core.App) error {
 			if err := txApp.Save(conversation); err != nil {
@@ -211,6 +214,7 @@ func projectConversationToResponse(
 		ID:                           record.Id,
 		Created:                      record.GetString("created"),
 		Updated:                      record.GetString("updated"),
+		LastActivityAt:               record.GetString("last_activity_at"),
 		Data:                         record.GetString("data"),
 		Project:                      record.GetString("project"),
 		KeyVersion:                   keyVersion,
