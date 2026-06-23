@@ -340,7 +340,9 @@ function escapeHtml(value: string): string {
                     [size]="16"
                     aria-hidden="true"
                   />
-                  {{ reasoningEffortLabel(modelService.selectedReasoningEffort()) }}
+                  @if (!isMobile()) {
+                    {{ reasoningEffortLabel(modelService.selectedReasoningEffort()) }}
+                  }
                 </span>
               </cog-button>
 
@@ -456,11 +458,14 @@ function escapeHtml(value: string): string {
               appearance="subtle"
               icon="plus"
               type="button"
+              [title]="t('chat.composer.tools.label')"
               [attr.aria-expanded]="toolsMenuOpen()"
               [attr.aria-pressed]="anyToolActive()"
               (click)="toggleToolsMenu()"
             >
-              {{ t('chat.composer.tools.label') }}
+              @if (!isMobile()) {
+                {{ t('chat.composer.tools.label') }}
+              }
             </cog-button>
 
             <ng-template

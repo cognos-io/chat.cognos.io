@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { type Page, expect, test } from '@playwright/test';
 
 import {
   buildConversationFixture,
@@ -6,20 +6,22 @@ import {
   seedAuthenticatedUnlockState,
 } from './fixtures';
 
-// The composer surfaces a reasoning-effort selector only for models that
-// declare effort tiers, defaults to the model's default, lets the user pick a
-// tier, and sends that tier with the completion.
-test('composer reasoning-effort selector defaults, switches, and is sent with the completion', async ({
-  page,
-}) => {
+// Stands up an unlocked conversation whose model declares reasoning-effort
+// tiers, so the composer renders the effort selector. Returns a ref to the last
+// completion request body so tests can assert what was sent.
+async function setupEffortConversation(
+  page: Page,
+): Promise<{ readonly body: { reasoning_effort?: string } | undefined }> {
+  const ref: { body: { reasoning_effort?: string } | undefined } = {
+    body: undefined,
+  };
+
   const userFixture = buildVaultFixture('user_e2e_effort', 'effort@example.com');
   const conversationFixture = buildConversationFixture(
     userFixture,
     'conv_e2e_effort',
     'Effort conversation',
   );
-
-  let completionRequestBody: { reasoning_effort?: string } | undefined;
 
   await seedAuthenticatedUnlockState(page, userFixture);
 
@@ -30,7 +32,6 @@ test('composer reasoning-effort selector defaults, switches, and is sent with th
     await route.fulfill({ json: userFixture.vaultSession });
   });
   await page.route('http://localhost:8090/api/v1/user-preferences', async (route) => {
-    // No stored preferences, and accept any persistence write the selector makes.
     if (route.request().method() === 'GET') {
       await route.fulfill({
         status: 404,
@@ -96,13 +97,10 @@ test('composer reasoning-effort selector defaults, switches, and is sent with th
       });
     },
   );
-
   await page.route(
     'http://localhost:8090/api/v1/conversations/conv_e2e_effort/complete',
     async (route) => {
-      completionRequestBody = route.request().postDataJSON() as {
-        reasoning_effort?: string;
-      };
+      ref.body = route.request().postDataJSON() as { reasoning_effort?: string };
       await route.fulfill({
         status: 200,
         headers: { 'content-type': 'text/event-stream' },
@@ -136,6 +134,17 @@ test('composer reasoning-effort selector defaults, switches, and is sent with th
     },
   );
 
+  return ref;
+}
+
+// The composer surfaces a reasoning-effort selector only for models that
+// declare effort tiers, defaults to the model's default, lets the user pick a
+// tier, and sends that tier with the completion.
+test('composer reasoning-effort selector defaults, switches, and is sent with the completion', async ({
+  page,
+}) => {
+  const request = await setupEffortConversation(page);
+
   await page.goto('/c/conv_e2e_effort');
 
   await expect(
@@ -160,5 +169,29 @@ test('composer reasoning-effort selector defaults, switches, and is sent with th
   await page.getByRole('button', { name: 'Send' }).click();
 
   await expect(page.getByText('Think hard about this')).toBeVisible();
-  await expect.poll(() => completionRequestBody?.reasoning_effort).toBe('high');
+  await expect.poll(() => request.body?.reasoning_effort).toBe('high');
+});
+
+// On a narrow (mobile) viewport the effort and tools buttons collapse to
+// icon-only — their text labels are dropped to save horizontal space.
+test('effort and tools buttons are icon-only on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await setupEffortConversation(page);
+
+  await page.goto('/c/conv_e2e_effort');
+
+  await expect(
+    page.getByRole('heading', { name: 'Effort conversation' }),
+  ).toBeVisible();
+
+  // Icons remain (so the buttons stay usable) but the text labels are gone.
+  const effortButton = page.locator('.message-form__reasoning');
+  await expect(effortButton).toBeVisible();
+  await expect(effortButton).not.toContainText('Medium');
+
+  const toolsButton = page.locator('.message-form__tools');
+  await expect(toolsButton).toBeVisible();
+  await expect(toolsButton).not.toContainText('Tools');
+  // The control is still reachable by its accessible label.
+  await expect(page.getByRole('button', { name: 'Tools' })).toBeVisible();
 });
