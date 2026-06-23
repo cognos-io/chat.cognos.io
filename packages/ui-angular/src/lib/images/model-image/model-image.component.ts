@@ -1,61 +1,71 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   output,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosButtonComponent } from "../../button/button.component";
-import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-button.component";
-import { CognosLozengeComponent, type CognosLozengeTone } from "../../primitives/lozenge/lozenge.component";
+import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-button.component';
+import {
+  CognosLozengeComponent,
+  type CognosLozengeTone,
+} from '../../primitives/lozenge/lozenge.component';
 
-export type CognosModelImageState = "done" | "generating";
+export type CognosModelImageState = 'done' | 'generating';
 
 @Component({
-  selector: "cog-model-image",
+  selector: 'cog-model-image',
   standalone: true,
-  imports: [
-    CognosButtonComponent,
-    CognosIconButtonComponent,
-    CognosLozengeComponent,
-  ],
+  imports: [CognosIconButtonComponent, CognosLozengeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="cog-model-image" [style.width.px]="width()">
-      @if (state() === "generating") {
+      @if (state() === 'generating') {
         <div class="cog-model-image__placeholder">
           <span class="cog-model-image__shimmer"></span>
           <div class="cog-model-image__placeholder-copy">
             <span class="cog-model-image__sparkles">✦</span>
-            <div>Generating on {{ host() }}…</div>
+            <div>{{ generatingText() }}</div>
           </div>
         </div>
       } @else {
         <button class="cog-model-image__preview" type="button" (click)="open.emit()">
-          <img class="cog-model-image__img" [src]="src()!" alt="Generated model image" />
+          <img class="cog-model-image__img" [src]="src()!" [alt]="altLabel()" />
         </button>
       }
 
       <div class="cog-model-image__meta">
         <cog-lozenge [tone]="tone()">{{ tag() }}</cog-lozenge>
-        <span class="cog-model-image__caption">Generated · re-encrypted on return</span>
+        <span class="cog-model-image__caption">{{ captionLabel() }}</span>
       </div>
 
       @if (prompt()) {
-        <div class="cog-model-image__prompt"><span class="cog-model-image__prompt-label">Prompt · </span>{{ prompt() }}</div>
+        <div class="cog-model-image__prompt">
+          <span class="cog-model-image__prompt-label">{{ promptLabel() }} · </span
+          >{{ prompt() }}
+        </div>
       }
 
-      @if (state() !== "generating") {
+      @if (state() !== 'generating') {
         <div class="cog-model-image__actions">
           <div class="cog-model-image__tools">
-            <cog-icon-button name="download" title="Download" (click)="download.emit()" />
-            <cog-icon-button name="refresh-cw" title="Regenerate" (click)="regenerate.emit()" />
-            <cog-icon-button name="copy-plus" title="Variations" (click)="variations.emit()" />
+            <cog-icon-button
+              name="download"
+              [title]="downloadLabel()"
+              (click)="download.emit()"
+            />
+            <cog-icon-button
+              name="refresh-cw"
+              [title]="regenerateLabel()"
+              (click)="regenerate.emit()"
+            />
+            <cog-icon-button
+              name="copy-plus"
+              [title]="variationsLabel()"
+              (click)="variations.emit()"
+            />
           </div>
-
-          <cog-button appearance="subtle" icon="folder-plus" type="button" (click)="saveToVault.emit()">
-            Save to Vault
-          </cog-button>
         </div>
       }
     </div>
@@ -109,7 +119,12 @@ export type CognosModelImageState = "done" | "generating";
       .cog-model-image__shimmer {
         position: absolute;
         inset: 0;
-        background: linear-gradient(105deg, transparent 35%, var(--cog-surface) 50%, transparent 65%);
+        background: linear-gradient(
+          105deg,
+          transparent 35%,
+          var(--cog-surface) 50%,
+          transparent 65%
+        );
         animation: cog-model-image-shimmer 1.3s ease-in-out infinite;
       }
 
@@ -189,15 +204,27 @@ export type CognosModelImageState = "done" | "generating";
 })
 export class CognosModelImageComponent {
   readonly src = input<string | null>(null);
-  readonly prompt = input("");
-  readonly state = input<CognosModelImageState>("done");
-  readonly tag = input("SWISS CLOUD");
-  readonly tone = input<CognosLozengeTone>("blue");
-  readonly host = input("Swiss cloud");
+  readonly prompt = input('');
+  readonly state = input<CognosModelImageState>('done');
+  readonly tag = input('SWISS CLOUD');
+  readonly tone = input<CognosLozengeTone>('blue');
+  readonly host = input('Swiss cloud');
   readonly width = input(380);
+  // Visible labels default to English; consumers pass localised strings.
+  readonly altLabel = input('Generated model image');
+  readonly captionLabel = input('Generated · re-encrypted on return');
+  readonly promptLabel = input('Prompt');
+  readonly downloadLabel = input('Download');
+  readonly regenerateLabel = input('Regenerate');
+  readonly variationsLabel = input('Variations');
+  // Empty default keeps the "Generating on {host}…" copy; an override replaces it.
+  readonly generatingLabel = input('');
   readonly open = output<void>();
   readonly download = output<void>();
   readonly regenerate = output<void>();
   readonly variations = output<void>();
-  readonly saveToVault = output<void>();
+
+  protected readonly generatingText = computed(
+    () => this.generatingLabel() || `Generating on ${this.host()}…`,
+  );
 }
