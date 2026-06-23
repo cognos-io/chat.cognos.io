@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
+	"github.com/pocketbase/pocketbase/core"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue/requestysync"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 )
 
@@ -149,6 +151,36 @@ func cleanUpIdleVaultSessionsJob(
 				logger.Error("failed to sweep idle vault sessions", "err", err)
 			}
 		}, logger, vaultSessionRepo),
+	)
+}
+
+// syncRequestyModelsJob keeps the curated Requesty models current: it runs once
+// shortly after boot and every ~6h thereafter, enriching matched models with
+// fresh reasoning/pricing/context metadata from Requesty's API. It runs in the
+// background, so a slow or unavailable Requesty never blocks startup or
+// requests, and it only writes derived fields (never curation/compliance).
+func syncRequestyModelsJob(
+	scheduler gocron.Scheduler,
+	app core.App,
+	logger *slog.Logger,
+	baseURL string,
+	apiKey string,
+) (gocron.Job, error) {
+	service := requestysync.NewService(app, requestysync.NewClient(baseURL, apiKey), logger)
+
+	return scheduler.NewJob(
+		gocron.DurationRandomJob(
+			6*time.Hour,
+			7*time.Hour,
+		),
+		gocron.NewTask(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			if _, err := service.Run(ctx); err != nil {
+				logger.Error("requesty model sync failed", "err", err)
+			}
+		}),
+		gocron.WithStartAt(gocron.WithStartImmediately()),
 	)
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue/requestysync"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/config"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
@@ -24,6 +25,7 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+	"github.com/spf13/cobra"
 
 	_ "github.com/cognos-io/chat.cognos.io/backend/db/migrations" // import migration files
 )
@@ -54,6 +56,24 @@ func NewServer() *pocketbase.PocketBase {
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		Dir:         "./db/migrations",
 		Automigrate: true,
+	})
+
+	// Manual entrypoint for the Requesty model enrichment that the background
+	// job also runs — handy for CI/ops and the scripts/ wrapper.
+	app.RootCmd.AddCommand(&cobra.Command{
+		Use:   "sync-requesty-models",
+		Short: "Enrich curated Requesty models with fresh metadata from Requesty",
+		Run: func(cmd *cobra.Command, _ []string) {
+			cfg := config.MustLoadAPIConfig(app.Logger())
+			service := requestysync.NewService(
+				app,
+				requestysync.NewClient(cfg.RequestyAPIURL, cfg.RequestyAPIKey),
+				app.Logger(),
+			)
+			if _, err := service.Run(cmd.Context()); err != nil {
+				app.Logger().Error("requesty model sync failed", "err", err)
+			}
+		},
 	})
 
 	return app
@@ -290,6 +310,19 @@ func bindAppHooks(
 			)
 			if err != nil {
 				return err
+			}
+
+			// Keep curated Requesty models current (reasoning/pricing/context).
+			if params.Config != nil && params.Config.RequestyAPIKey != "" {
+				if _, err = syncRequestyModelsJob(
+					params.CronScheduler,
+					app,
+					app.Logger(),
+					params.Config.RequestyAPIURL,
+					params.Config.RequestyAPIKey,
+				); err != nil {
+					return err
+				}
 			}
 
 			if paddleClient != nil && paddleOveragePriceID != "" {
