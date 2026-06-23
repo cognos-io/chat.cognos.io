@@ -131,6 +131,115 @@ func TestBifrostClientCompleteMapsRequestAndResponse(t *testing.T) {
 	}
 }
 
+func TestBifrostClientCompleteMapsReasoning(t *testing.T) {
+	t.Parallel()
+
+	reasoning := "First I weigh the constraints, then I answer."
+	requester := &stubBifrostRequester{
+		resp: &schemas.BifrostChatResponse{
+			Choices: []schemas.BifrostResponseChoice{{
+				ChatNonStreamResponseChoice: &schemas.ChatNonStreamResponseChoice{
+					Message: &schemas.ChatMessage{
+						Role: schemas.ChatMessageRoleAssistant,
+						Content: &schemas.ChatMessageContent{
+							ContentStr: stringPtr("The answer is 42."),
+						},
+						ChatAssistantMessage: &schemas.ChatAssistantMessage{
+							Reasoning: stringPtr(reasoning),
+						},
+					},
+				},
+			}},
+			Usage: &schemas.BifrostLLMUsage{
+				PromptTokens:     10,
+				CompletionTokens: 20,
+				TotalTokens:      30,
+				CompletionTokensDetails: &schemas.ChatCompletionTokensDetails{
+					ReasoningTokens: 8,
+				},
+			},
+		},
+	}
+	client := NewBifrostClient(requester, nil, nil, nil)
+
+	got, err := client.Complete(context.Background(), CompleteRequest{ProviderID: "requesty", ProviderModelID: "model"})
+	if err != nil {
+		t.Fatalf("Complete() error = %v, want nil", err)
+	}
+	if got.Message.Content != "The answer is 42." {
+		t.Fatalf("Complete() content = %q, want %q", got.Message.Content, "The answer is 42.")
+	}
+	if got.Reasoning != reasoning {
+		t.Fatalf("Complete() reasoning = %q, want %q", got.Reasoning, reasoning)
+	}
+	if got.Usage.ReasoningTokens != 8 {
+		t.Fatalf("Complete() reasoning tokens = %d, want 8", got.Usage.ReasoningTokens)
+	}
+}
+
+func TestBifrostClientCompleteOmitsReasoningWhenAbsent(t *testing.T) {
+	t.Parallel()
+
+	requester := &stubBifrostRequester{
+		resp: &schemas.BifrostChatResponse{
+			Choices: []schemas.BifrostResponseChoice{{
+				ChatNonStreamResponseChoice: &schemas.ChatNonStreamResponseChoice{
+					Message: &schemas.ChatMessage{
+						Role:    schemas.ChatMessageRoleAssistant,
+						Content: &schemas.ChatMessageContent{ContentStr: stringPtr("Hi")},
+					},
+				},
+			}},
+		},
+	}
+	client := NewBifrostClient(requester, nil, nil, nil)
+
+	got, err := client.Complete(context.Background(), CompleteRequest{ProviderID: "requesty", ProviderModelID: "model"})
+	if err != nil {
+		t.Fatalf("Complete() error = %v, want nil", err)
+	}
+	if got.Reasoning != "" {
+		t.Fatalf("Complete() reasoning = %q, want empty", got.Reasoning)
+	}
+	if got.Usage.ReasoningTokens != 0 {
+		t.Fatalf("Complete() reasoning tokens = %d, want 0", got.Usage.ReasoningTokens)
+	}
+}
+
+func TestBifrostClientCompleteStreamSeparatesReasoningDeltas(t *testing.T) {
+	t.Parallel()
+
+	stream := make(chan *schemas.BifrostStreamChunk, 3)
+	stream <- streamChunk(stringPtr("Let me "), nil)
+	stream <- streamChunk(nil, stringPtr("think about this"))
+	stream <- streamChunk(stringPtr("Answer"), nil)
+	close(stream)
+
+	requester := &stubBifrostRequester{stream: stream}
+	client := NewBifrostClient(requester, nil, nil, nil)
+
+	out, err := client.CompleteStream(context.Background(), CompleteRequest{ProviderID: "requesty", ProviderModelID: "model"})
+	if err != nil {
+		t.Fatalf("CompleteStream() error = %v, want nil", err)
+	}
+
+	var answer, reasoning strings.Builder
+	for event := range out {
+		if event.Err != nil {
+			t.Fatalf("stream event error = %v", event.Err)
+		}
+		answer.WriteString(event.Delta)
+		reasoning.WriteString(event.ReasoningDelta)
+	}
+
+	if answer.String() != "Let me Answer" {
+		t.Fatalf("answer = %q, want %q", answer.String(), "Let me Answer")
+	}
+	if reasoning.String() != "think about this" {
+		t.Fatalf("reasoning = %q, want %q", reasoning.String(), "think about this")
+	}
+}
+
 func TestBifrostClientCompleteFlattensTextBlocks(t *testing.T) {
 	t.Parallel()
 
@@ -289,3 +398,20 @@ func TestParseBifrostLogLevelDefaultsToError(t *testing.T) {
 }
 
 func stringPtr(v string) *string { return &v }
+
+// streamChunk builds a single streaming chunk carrying an optional answer delta
+// and/or reasoning delta, mirroring how providers interleave the two.
+func streamChunk(content, reasoning *string) *schemas.BifrostStreamChunk {
+	return &schemas.BifrostStreamChunk{
+		BifrostChatResponse: &schemas.BifrostChatResponse{
+			Choices: []schemas.BifrostResponseChoice{{
+				ChatStreamResponseChoice: &schemas.ChatStreamResponseChoice{
+					Delta: &schemas.ChatStreamResponseChoiceDelta{
+						Content:   content,
+						Reasoning: reasoning,
+					},
+				},
+			}},
+		},
+	}
+}

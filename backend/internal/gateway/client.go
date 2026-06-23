@@ -21,18 +21,28 @@ type Usage struct {
 	TotalTokens              int64
 	CacheCreationInputTokens int64
 	CacheReadInputTokens     int64
-	ProviderCostUSD          *float64
+	// ReasoningTokens is the number of tokens the provider reports spending on
+	// internal reasoning/thinking. It is a count only — never the reasoning
+	// text — and defaults to 0 for models that do not report it.
+	ReasoningTokens int64
+	ProviderCostUSD *float64
 }
 
 type CompleteResponse struct {
 	Message Message
-	Usage   Usage
+	// Reasoning is provider-returned reasoning text, when the model exposes it.
+	// It is treated as assistant content: encrypted at rest, never logged.
+	Reasoning string
+	Usage     Usage
 }
 
 type CompleteStreamEvent struct {
 	Delta string
-	Usage *Usage
-	Err   error
+	// ReasoningDelta is a chunk of provider reasoning text, kept separate from
+	// Delta so it never mixes into the final answer.
+	ReasoningDelta string
+	Usage          *Usage
+	Err            error
 }
 
 // ImageTransport selects how an image is generated. Requesty exposes two,

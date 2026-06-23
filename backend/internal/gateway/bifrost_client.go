@@ -117,12 +117,14 @@ func (c *BifrostClient) Complete(ctx context.Context, req CompleteRequest) (Comp
 			Role:    string(message.Role),
 			Content: content,
 		},
+		Reasoning: extractReasoning(message),
 		Usage: Usage{
 			InputTokens:              int64(usage.PromptTokens),
 			OutputTokens:             int64(usage.CompletionTokens),
 			TotalTokens:              int64(usage.TotalTokens),
 			CacheCreationInputTokens: int64(cachedWriteTokens(usage)),
 			CacheReadInputTokens:     int64(cachedReadTokens(usage)),
+			ReasoningTokens:          int64(reasoningTokens(usage)),
 			ProviderCostUSD:          providerCostUSD,
 		},
 	}, nil
@@ -178,18 +180,25 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 					TotalTokens:              int64(usage.TotalTokens),
 					CacheCreationInputTokens: int64(cachedWriteTokens(usage)),
 					CacheReadInputTokens:     int64(cachedReadTokens(usage)),
+					ReasoningTokens:          int64(reasoningTokens(usage)),
 					ProviderCostUSD:          providerCostUSD,
 				}
 			}
 
 			for _, choice := range chunk.BifrostChatResponse.Choices {
-				if choice.ChatStreamResponseChoice == nil || choice.ChatStreamResponseChoice.Delta == nil || choice.ChatStreamResponseChoice.Delta.Content == nil {
+				delta := choice.ChatStreamResponseChoice
+				if delta == nil || delta.Delta == nil {
 					continue
 				}
-				event.Delta += *choice.ChatStreamResponseChoice.Delta.Content
+				if delta.Delta.Content != nil {
+					event.Delta += *delta.Delta.Content
+				}
+				if delta.Delta.Reasoning != nil {
+					event.ReasoningDelta += *delta.Delta.Reasoning
+				}
 			}
 
-			if event.Delta == "" && event.Usage == nil {
+			if event.Delta == "" && event.ReasoningDelta == "" && event.Usage == nil {
 				continue
 			}
 
@@ -248,6 +257,24 @@ func extractMessageContent(message *schemas.ChatMessage) string {
 		}
 	}
 	return builder.String()
+}
+
+// extractReasoning returns the provider-normalised reasoning text for an
+// assistant message, or "" when the model exposes none. Bifrost folds the
+// provider-specific shapes (OpenAI "reasoning", xAI "reasoning_content",
+// DeepSeek thinking) into the single ChatAssistantMessage.Reasoning field.
+func extractReasoning(message *schemas.ChatMessage) string {
+	if message == nil || message.ChatAssistantMessage == nil || message.Reasoning == nil {
+		return ""
+	}
+	return *message.Reasoning
+}
+
+func reasoningTokens(usage *schemas.BifrostLLMUsage) int {
+	if usage == nil || usage.CompletionTokensDetails == nil {
+		return 0
+	}
+	return usage.CompletionTokensDetails.ReasoningTokens
 }
 
 func cachedReadTokens(usage *schemas.BifrostLLMUsage) int {
