@@ -111,12 +111,20 @@ type chatCompletionChoice struct {
 type chatCompletionMsg struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
+	// Reasoning carries provider reasoning text (OpenAI/OpenRouter "reasoning"
+	// field). Emitted only for [reason]-sentinel requests; omitted otherwise.
+	Reasoning string `json:"reasoning,omitempty"`
 }
 
 type chatCompletionUsage struct {
-	PromptTokens     int `json:"prompt_tokens"`
-	CompletionTokens int `json:"completion_tokens"`
-	TotalTokens      int `json:"total_tokens"`
+	PromptTokens            int                      `json:"prompt_tokens"`
+	CompletionTokens        int                      `json:"completion_tokens"`
+	TotalTokens             int                      `json:"total_tokens"`
+	CompletionTokensDetails *completionTokensDetails `json:"completion_tokens_details,omitempty"`
+}
+
+type completionTokensDetails struct {
+	ReasoningTokens int `json:"reasoning_tokens,omitempty"`
 }
 
 // Streaming (SSE) response shapes — OpenAI `chat.completion.chunk` objects.
@@ -138,8 +146,9 @@ type chatCompletionChunkChoice struct {
 }
 
 type chatCompletionChunkMsg struct {
-	Role    string `json:"role,omitempty"`
-	Content string `json:"content,omitempty"`
+	Role      string `json:"role,omitempty"`
+	Content   string `json:"content,omitempty"`
+	Reasoning string `json:"reasoning,omitempty"`
 }
 
 func chatCompletionsHandler(logger *slog.Logger) http.HandlerFunc {
@@ -168,12 +177,18 @@ func chatCompletionsHandler(logger *slog.Logger) http.HandlerFunc {
 		}
 
 		reply := selectReply(req)
+		reasoning := mockReasoning(req)
 
 		logger.Info("chat completion", "model", model, "reply", reply, "stream", req.Stream)
 
 		if req.Stream {
-			writeChatCompletionStream(w, logger, model, reply)
+			writeChatCompletionStream(w, logger, model, reply, reasoning)
 			return
+		}
+
+		usage := chatCompletionUsage{PromptTokens: 1, CompletionTokens: 1, TotalTokens: 2}
+		if reasoning != "" {
+			usage.CompletionTokensDetails = &completionTokensDetails{ReasoningTokens: reasoningTokenCount}
 		}
 
 		writeJSON(w, http.StatusOK, chatCompletionResponse{
@@ -183,10 +198,10 @@ func chatCompletionsHandler(logger *slog.Logger) http.HandlerFunc {
 			Model:   model,
 			Choices: []chatCompletionChoice{{
 				Index:        0,
-				Message:      chatCompletionMsg{Role: "assistant", Content: reply},
+				Message:      chatCompletionMsg{Role: "assistant", Content: reply, Reasoning: reasoning},
 				FinishReason: "stop",
 			}},
-			Usage: chatCompletionUsage{PromptTokens: 1, CompletionTokens: 1, TotalTokens: 2},
+			Usage: usage,
 		})
 	}
 }
@@ -195,7 +210,7 @@ func chatCompletionsHandler(logger *slog.Logger) http.HandlerFunc {
 // chunk, a final chunk with finish_reason, a usage chunk, then `[DONE]`. The
 // whole reply goes in a single delta — bifrost accumulates deltas, so chunking
 // finer buys nothing for the mock.
-func writeChatCompletionStream(w http.ResponseWriter, logger *slog.Logger, model, reply string) {
+func writeChatCompletionStream(w http.ResponseWriter, logger *slog.Logger, model, reply, reasoning string) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		logger.Error("streaming unsupported: ResponseWriter is not a Flusher")
@@ -217,6 +232,20 @@ func writeChatCompletionStream(w http.ResponseWriter, logger *slog.Logger, model
 		flusher.Flush()
 	}
 
+	// Reasoning delta first (on its own field), when this request opted in.
+	if reasoning != "" {
+		send(chatCompletionChunk{
+			ID:      "chatcmpl-mock",
+			Object:  "chat.completion.chunk",
+			Created: created,
+			Model:   model,
+			Choices: []chatCompletionChunkChoice{{
+				Index: 0,
+				Delta: chatCompletionChunkMsg{Role: "assistant", Reasoning: reasoning},
+			}},
+		})
+	}
+
 	// Content delta.
 	send(chatCompletionChunk{
 		ID:      "chatcmpl-mock",
@@ -230,6 +259,10 @@ func writeChatCompletionStream(w http.ResponseWriter, logger *slog.Logger, model
 	})
 
 	// Final chunk: finish_reason + usage (OpenAI sends usage in a trailing chunk).
+	usage := &chatCompletionUsage{PromptTokens: 1, CompletionTokens: 1, TotalTokens: 2}
+	if reasoning != "" {
+		usage.CompletionTokensDetails = &completionTokensDetails{ReasoningTokens: reasoningTokenCount}
+	}
 	send(chatCompletionChunk{
 		ID:      "chatcmpl-mock",
 		Object:  "chat.completion.chunk",
@@ -240,7 +273,7 @@ func writeChatCompletionStream(w http.ResponseWriter, logger *slog.Logger, model
 			Delta:        chatCompletionChunkMsg{},
 			FinishReason: &stop,
 		}},
-		Usage: &chatCompletionUsage{PromptTokens: 1, CompletionTokens: 1, TotalTokens: 2},
+		Usage: usage,
 	})
 
 	_, _ = fmt.Fprint(w, "data: [DONE]\n\n")
@@ -252,6 +285,26 @@ func writeChatCompletionStream(w http.ResponseWriter, logger *slog.Logger, model
 // large assistant reply (to exercise message-persistence limits) without baking
 // sizes into the mock.
 const echoPrefix = "[echo]"
+
+// reasonPrefix opts a request into reasoning mode: the mock returns a fixed
+// reasoning trace (text + reasoning_tokens) alongside the normal reply, so the
+// gateway → handler reasoning path can be exercised end-to-end. The sentinel is
+// not stripped from the reply — it only toggles reasoning emission.
+const reasonPrefix = "[reason]"
+
+// reasoningTrace and reasoningTokenCount are the canned reasoning artefacts the
+// mock emits for [reason] requests; tests assert on these exact values.
+const reasoningTrace = "Mock reasoning trace"
+const reasoningTokenCount = 7
+
+// mockReasoning returns the canned reasoning trace when the latest user turn
+// opts in via the [reason] sentinel, or "" otherwise.
+func mockReasoning(req chatCompletionRequest) string {
+	if strings.HasPrefix(lastUserContent(req), reasonPrefix) {
+		return reasoningTrace
+	}
+	return ""
+}
 
 // selectReply mirrors the .mjs heuristic: the backend issues a tiny
 // (max_tokens ≤ 20) call when it wants the model to invent a conversation

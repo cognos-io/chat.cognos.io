@@ -143,6 +143,54 @@ func TestRoutesHealthAndCompletionsContract(t *testing.T) {
 		}
 	})
 
+	t.Run("[reason] sentinel adds reasoning + reasoning_tokens, plain requests omit them", func(t *testing.T) {
+		t.Parallel()
+
+		// A [reason] request opts into reasoning emission.
+		req := httptest.NewRequest(
+			http.MethodPost,
+			"/v1/chat/completions",
+			strings.NewReader(`{"model":"m","max_tokens":256,"messages":[{"role":"user","content":"[reason]why?"}]}`),
+		)
+		req.Header.Set("content-type", "application/json")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d body=%s", rec.Code, rec.Body.String())
+		}
+		var body chatCompletionResponse
+		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		if body.Choices[0].Message.Reasoning != reasoningTrace {
+			t.Fatalf("reasoning = %q, want %q", body.Choices[0].Message.Reasoning, reasoningTrace)
+		}
+		if body.Usage.CompletionTokensDetails == nil ||
+			body.Usage.CompletionTokensDetails.ReasoningTokens != reasoningTokenCount {
+			t.Fatalf("reasoning tokens = %+v, want %d", body.Usage.CompletionTokensDetails, reasoningTokenCount)
+		}
+
+		// A plain request emits no reasoning at all.
+		plain := httptest.NewRequest(
+			http.MethodPost,
+			"/v1/chat/completions",
+			strings.NewReader(`{"model":"m","max_tokens":256,"messages":[{"role":"user","content":"why?"}]}`),
+		)
+		plain.Header.Set("content-type", "application/json")
+		plainRec := httptest.NewRecorder()
+		handler.ServeHTTP(plainRec, plain)
+		var plainBody chatCompletionResponse
+		if err := json.Unmarshal(plainRec.Body.Bytes(), &plainBody); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		if plainBody.Choices[0].Message.Reasoning != "" {
+			t.Fatalf("plain reasoning = %q, want empty", plainBody.Choices[0].Message.Reasoning)
+		}
+		if plainBody.Usage.CompletionTokensDetails != nil {
+			t.Fatalf("plain reasoning tokens = %+v, want nil", plainBody.Usage.CompletionTokensDetails)
+		}
+	})
+
 	t.Run("POST /v1/chat/completions with no body still answers 200", func(t *testing.T) {
 		// The .mjs path is forgiving — accept an empty body, default the
 		// model, default the reply. Useful for ad-hoc curl smoke tests.
