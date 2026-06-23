@@ -64,6 +64,7 @@ type usageResponse struct {
 	TotalTokens              int64   `json:"total_tokens"`
 	CacheCreationInputTokens int64   `json:"cache_creation_input_tokens"`
 	CacheReadInputTokens     int64   `json:"cache_read_input_tokens"`
+	ReasoningTokens          int64   `json:"reasoning_tokens"`
 	CostUSD                  float64 `json:"cost_usd"`
 	CostCHF                  float64 `json:"cost_chf"`
 	CostRappen               int64   `json:"cost_rappen"`
@@ -74,9 +75,12 @@ type assistantMessageResponse struct {
 	ID              string `json:"id,omitempty"`
 	ParentMessageID string `json:"parent_message_id,omitempty"`
 	Content         string `json:"content"`
-	PersonaID       string `json:"persona_id"`
-	ModelID         string `json:"model_id"`
-	CreatedAt       string `json:"created_at"`
+	// Reasoning is provider-returned reasoning text, omitted when the model
+	// returns none. It is encrypted into the persisted message like Content.
+	Reasoning string `json:"reasoning,omitempty"`
+	PersonaID string `json:"persona_id"`
+	ModelID   string `json:"model_id"`
+	CreatedAt string `json:"created_at"`
 }
 
 type completeResponse struct {
@@ -428,6 +432,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 				assistantParentID,
 				chat.MessageRecordData{
 					Content:   gatewayResp.Message.Content,
+					Reasoning: gatewayResp.Reasoning,
 					PersonaID: req.PersonaID,
 					ModelID:   model.ID,
 					CreatedAt: assistantCreatedAt,
@@ -492,6 +497,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			RequestID: req.RequestID,
 			AssistantMessage: assistantMessageResponse{
 				Content:   gatewayResp.Message.Content,
+				Reasoning: gatewayResp.Reasoning,
 				PersonaID: req.PersonaID,
 				ModelID:   model.ID,
 				CreatedAt: assistantCreatedAt,
@@ -502,6 +508,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 				TotalTokens:              gatewayResp.Usage.TotalTokens,
 				CacheCreationInputTokens: costBreakdown.CacheCreationInputTokens,
 				CacheReadInputTokens:     costBreakdown.CacheReadInputTokens,
+				ReasoningTokens:          gatewayResp.Usage.ReasoningTokens,
 				CostUSD:                  costBreakdown.CostUSD,
 				CostCHF:                  costBreakdown.CostCHF,
 				CostRappen:               costBreakdown.CostRappen,
@@ -557,6 +564,11 @@ func streamGatewayCompletion(
 			Type:  "delta",
 			Delta: delta,
 		})
+	}, func(reasoning string) error {
+		return writeCompleteStreamEvent(e, completeStreamResponse{
+			Type:  "reasoning_delta",
+			Delta: reasoning,
+		})
 	}, func() error {
 		return writeCompleteStreamHeartbeat(e)
 	}, func(err error) {
@@ -569,6 +581,7 @@ func collectGatewayStream(
 	client gateway.Client,
 	req gateway.CompleteRequest,
 	onDelta func(string) error,
+	onReasoning func(string) error,
 	onHeartbeat func() error,
 	onClientDisconnect func(error),
 ) (gateway.CompleteResponse, bool, bool, error) {
@@ -577,6 +590,7 @@ func collectGatewayStream(
 		client,
 		req,
 		onDelta,
+		onReasoning,
 		onHeartbeat,
 		onClientDisconnect,
 		completeStreamHeartbeatInterval,
@@ -588,6 +602,7 @@ func collectGatewayStreamWithHeartbeat(
 	client gateway.Client,
 	req gateway.CompleteRequest,
 	onDelta func(string) error,
+	onReasoning func(string) error,
 	onHeartbeat func() error,
 	onClientDisconnect func(error),
 	heartbeatInterval time.Duration,
@@ -606,19 +621,25 @@ func collectGatewayStreamWithHeartbeat(
 	}
 
 	var builder strings.Builder
+	var reasoningBuilder strings.Builder
 	usage := gateway.Usage{}
 	clientDisconnected := false
+
+	finalResponse := func() gateway.CompleteResponse {
+		return gateway.CompleteResponse{
+			Message: gateway.Message{
+				Role:    "assistant",
+				Content: builder.String(),
+			},
+			Reasoning: reasoningBuilder.String(),
+			Usage:     usage,
+		}
+	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			return gateway.CompleteResponse{
-				Message: gateway.Message{
-					Role:    "assistant",
-					Content: builder.String(),
-				},
-				Usage: usage,
-			}, clientDisconnected, true, nil
+			return finalResponse(), clientDisconnected, true, nil
 		case <-heartbeatC:
 			if !clientDisconnected {
 				if err := onHeartbeat(); err != nil {
@@ -628,16 +649,19 @@ func collectGatewayStreamWithHeartbeat(
 			}
 		case event, ok := <-stream:
 			if !ok {
-				return gateway.CompleteResponse{
-					Message: gateway.Message{
-						Role:    "assistant",
-						Content: builder.String(),
-					},
-					Usage: usage,
-				}, clientDisconnected, false, nil
+				return finalResponse(), clientDisconnected, false, nil
 			}
 			if event.Err != nil {
 				return gateway.CompleteResponse{}, clientDisconnected, false, event.Err
+			}
+			if event.ReasoningDelta != "" {
+				reasoningBuilder.WriteString(event.ReasoningDelta)
+				if !clientDisconnected && onReasoning != nil {
+					if err := onReasoning(event.ReasoningDelta); err != nil {
+						clientDisconnected = true
+						onClientDisconnect(err)
+					}
+				}
 			}
 			if event.Delta != "" {
 				builder.WriteString(event.Delta)

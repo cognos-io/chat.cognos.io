@@ -3,8 +3,12 @@ package chat
 // MessageRecordData represents the data of a message record.
 // Ensure this matches the interface in the frontend.
 type MessageRecordData struct {
-	Version         string `json:"version,omitempty"`
-	Content         string `json:"content"`
+	Version string `json:"version,omitempty"`
+	Content string `json:"content"`
+	// Reasoning is provider-returned reasoning text for assistant messages, when
+	// the model exposes it. It is encrypted at rest alongside Content and is
+	// never written to plaintext columns, logs, analytics, or billing records.
+	Reasoning       string `json:"reasoning,omitempty"`
 	ConversationID  string `json:"conversation_id,omitempty"`
 	ParentMessageID string `json:"parent_message_id,omitempty"`
 	// CreatedAt is an RFC 3339 timestamp of when the message was created.

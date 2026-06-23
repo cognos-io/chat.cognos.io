@@ -62,6 +62,7 @@ func TestCollectGatewayStreamContinuesAfterClientDisconnect(t *testing.T) {
 			}
 			return nil
 		},
+		func(string) error { return nil },
 		func() error { return nil },
 		func(error) {},
 	)
@@ -82,6 +83,52 @@ func TestCollectGatewayStreamContinuesAfterClientDisconnect(t *testing.T) {
 	}
 	if resp.Usage.InputTokens != 12 || resp.Usage.OutputTokens != 8 {
 		t.Fatalf("usage = %+v, want input=12 output=8", resp.Usage)
+	}
+}
+
+func TestCollectGatewayStreamSeparatesReasoningFromAnswer(t *testing.T) {
+	t.Parallel()
+
+	gatewayClient := &gateway.MockClient{
+		CompleteStreamFunc: func(_ context.Context, _ gateway.CompleteRequest) (<-chan gateway.CompleteStreamEvent, error) {
+			ch := make(chan gateway.CompleteStreamEvent, 4)
+			ch <- gateway.CompleteStreamEvent{ReasoningDelta: "I weigh "}
+			ch <- gateway.CompleteStreamEvent{ReasoningDelta: "the options."}
+			ch <- gateway.CompleteStreamEvent{Delta: "The answer."}
+			ch <- gateway.CompleteStreamEvent{Usage: &gateway.Usage{OutputTokens: 5, ReasoningTokens: 9}}
+			close(ch)
+			return ch, nil
+		},
+	}
+
+	var answerWrites, reasoningWrites []string
+	resp, clientDisconnected, stopped, err := collectGatewayStream(
+		context.Background(),
+		gatewayClient,
+		gateway.CompleteRequest{ProviderID: "requesty", ProviderModelID: "model"},
+		func(delta string) error { answerWrites = append(answerWrites, delta); return nil },
+		func(reasoning string) error { reasoningWrites = append(reasoningWrites, reasoning); return nil },
+		func() error { return nil },
+		func(error) {},
+	)
+	if err != nil {
+		t.Fatalf("collectGatewayStream() error = %v", err)
+	}
+	if clientDisconnected || stopped {
+		t.Fatalf("clientDisconnected=%v stopped=%v, want both false", clientDisconnected, stopped)
+	}
+	if resp.Message.Content != "The answer." {
+		t.Fatalf("answer = %q, want %q", resp.Message.Content, "The answer.")
+	}
+	if resp.Reasoning != "I weigh the options." {
+		t.Fatalf("reasoning = %q, want %q", resp.Reasoning, "I weigh the options.")
+	}
+	if resp.Usage.ReasoningTokens != 9 {
+		t.Fatalf("reasoning tokens = %d, want 9", resp.Usage.ReasoningTokens)
+	}
+	// Reasoning deltas stream on their own channel and never mix into the answer.
+	if len(reasoningWrites) != 2 || len(answerWrites) != 1 {
+		t.Fatalf("writes: reasoning=%v answer=%v", reasoningWrites, answerWrites)
 	}
 }
 
@@ -111,6 +158,7 @@ func TestCollectGatewayStreamPersistsPartialWhenStopped(t *testing.T) {
 			cancel()
 			return nil
 		},
+		func(string) error { return nil },
 		func() error { return nil },
 		func(error) {},
 		time.Hour,
@@ -148,6 +196,7 @@ func TestCollectGatewayStreamSendsHeartbeatWhileWaitingForDeltas(t *testing.T) {
 		ctx,
 		gatewayClient,
 		gateway.CompleteRequest{ProviderID: "infomaniak", ProviderModelID: "model"},
+		func(string) error { return nil },
 		func(string) error { return nil },
 		func() error {
 			if heartbeatWrites == 0 {
@@ -195,6 +244,7 @@ func TestCollectGatewayStreamReturnsGatewayError(t *testing.T) {
 		context.Background(),
 		gatewayClient,
 		gateway.CompleteRequest{ProviderID: "infomaniak", ProviderModelID: "model"},
+		func(string) error { return nil },
 		func(string) error { return nil },
 		func() error { return nil },
 		func(error) {},
