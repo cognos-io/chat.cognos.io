@@ -50,6 +50,9 @@ type ShareState = 'checking' | 'idle' | 'shared';
             <div class="share-dialog__copy">
               <h3>{{ t('dialogs.share.createHeading') }}</h3>
               <p>{{ t('dialogs.share.createBody') }}</p>
+              <p class="share-dialog__reasoning-note">
+                {{ t('dialogs.share.reasoningWarning') }}
+              </p>
             </div>
             <fieldset class="share-dialog__modes">
               <legend>{{ t('dialogs.share.redaction.heading') }}</legend>
@@ -224,6 +227,11 @@ type ShareState = 'checking' | 'idle' | 'shared';
 
     .share-dialog__mode-hint--warn {
       color: var(--cog-text-danger, var(--cog-danger, #b42318));
+    }
+
+    .share-dialog__copy p.share-dialog__reasoning-note {
+      color: var(--cog-text-danger, var(--cog-danger, #b42318));
+      font-size: var(--cog-fs-body-sm);
     }
   `,
 })

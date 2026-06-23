@@ -795,6 +795,7 @@
       "copy": "Copiar",
       "copyError": "No se pudo copiar el enlace.",
       "createBody": "Solo las personas con el enlace pueden ver esta conversación, pero verán todos los mensajes, pasados y futuros, hasta que dejes de compartir. La clave de descifrado está en el propio enlace y nunca llega a nuestros servidores, así que compártelo solo con las personas que elijas.",
+      "reasoningWarning": "Los mensajes compartidos también incluyen el razonamiento del modelo (su «pensamiento»), que puede repetir la consulta y revelar detalles sensibles que la respuesta final omite.",
       "createError": "No se pudo crear un enlace público, inténtalo de nuevo.",
       "createHeading": "Crear un enlace público",
       "createLink": "Crear enlace público",

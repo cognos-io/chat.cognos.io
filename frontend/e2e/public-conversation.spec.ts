@@ -143,6 +143,53 @@ test('renders shared message content as markdown, not raw text', async ({ page }
   await expect(messages).not.toContainText('**bold**');
 });
 
+test('shows shared assistant reasoning in a collapsed disclosure, separate from the answer', async ({
+  page,
+}) => {
+  const userFixture = buildVaultFixture('user_reason', 'reason@example.com');
+  const conversation = buildConversationFixture(
+    userFixture,
+    'conv_reason',
+    'Reasoning share',
+  );
+  const share = buildPublicShareFixture(conversation, 'reasontoken00001');
+
+  const userMessage = buildMessageRecordFixture(conversation, {
+    id: 'm_user_r',
+    created: '2026-06-14T10:00:00Z',
+    content: 'Why is the sky blue?',
+    ownerId: userFixture.authState.model.id,
+  });
+  const answer = buildMessageRecordFixture(conversation, {
+    id: 'm_answer_r',
+    created: '2026-06-14T10:00:01Z',
+    content: 'Rayleigh scattering.',
+    reasoning: 'Weighing scattering versus absorption before answering.',
+    parentMessageId: 'm_user_r',
+    modelId: 'eu-model',
+  });
+
+  await routePublicEndpoints(page, share.token, share.publicConversationResponse, [
+    userMessage,
+    answer,
+  ]);
+
+  await page.goto(`/p/${share.token}#${share.fragment}`);
+
+  await expect(page.getByRole('heading', { name: 'Reasoning share' })).toBeVisible();
+
+  // The reasoning rides in a disclosure that starts collapsed: the final answer
+  // is visible, the reasoning text is not until opened.
+  const messages = page.locator('.public-conversation__messages');
+  await expect(messages).toContainText('Rayleigh scattering.');
+  const reasoning = page.locator('.public-conversation__reasoning');
+  await expect(reasoning).toBeVisible();
+  await expect(reasoning.locator('markdown')).not.toBeVisible();
+
+  await reasoning.locator('summary').click();
+  await expect(reasoning).toContainText('Weighing scattering versus absorption');
+});
+
 test('renders the branching message tree with the active path and lets readers switch branches', async ({
   page,
 }) => {

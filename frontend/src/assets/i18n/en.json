@@ -795,6 +795,7 @@
       "copy": "Copy",
       "copyError": "Unable to copy the link.",
       "createBody": "Only people with the link can see this conversation — but they’ll see every message, past and future, until you stop sharing. The decryption key lives in the link itself and never reaches our servers, so keep it to the people you choose.",
+      "reasoningWarning": "Shared messages also include any model reasoning (its “thinking”), which can restate the prompt and reveal sensitive details the final answer leaves out.",
       "createError": "Unable to create a public link, please try again.",
       "createHeading": "Create a public link",
       "createLink": "Create public link",

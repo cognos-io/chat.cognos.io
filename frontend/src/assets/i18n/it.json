@@ -795,6 +795,7 @@
       "copy": "Copia",
       "copyError": "Impossibile copiare il link.",
       "createBody": "Solo le persone con il link possono vedere questa conversazione, ma vedranno ogni messaggio, passato e futuro, finché non interrompi la condivisione. La chiave di decrittazione si trova nel link stesso e non raggiunge mai i nostri server, quindi condividilo solo con le persone che scegli.",
+      "reasoningWarning": "I messaggi condivisi includono anche il ragionamento del modello (il suo «pensiero»), che può ripetere la richiesta e rivelare dettagli sensibili che la risposta finale omette.",
       "createError": "Impossibile creare un link pubblico, riprova.",
       "createHeading": "Crea un link pubblico",
       "createLink": "Crea link pubblico",

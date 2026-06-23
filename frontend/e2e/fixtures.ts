@@ -317,6 +317,7 @@ export const buildMessageRecordFixture = (
     id: string;
     created: string;
     content: string;
+    reasoning?: string;
     ownerId?: string;
     personaId?: string;
     modelId?: string;
@@ -334,6 +335,7 @@ export const buildMessageRecordFixture = (
   const payload = {
     content: record.content,
     conversation_id: conversationFixture.conversationRecord.id,
+    ...(record.reasoning ? { reasoning: record.reasoning } : {}),
     ...(record.ownerId ? { owner_id: record.ownerId } : {}),
     ...(record.personaId ? { persona_id: record.personaId } : {}),
     ...(record.modelId ? { model_id: record.modelId } : {}),

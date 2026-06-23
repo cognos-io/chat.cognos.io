@@ -18,6 +18,7 @@ import { MarkdownComponent } from 'ngx-markdown';
 import {
   CognosAssistantMessageComponent,
   CognosBranchSwitcherComponent,
+  CognosIconComponent,
   CognosUserMessageComponent,
   type MessageBranchInfo,
   type MessageTreeAccessors,
@@ -70,6 +71,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
     CognosUserMessageComponent,
     CognosAssistantMessageComponent,
     CognosBranchSwitcherComponent,
+    CognosIconComponent,
     CognosLogoComponent,
     TranslocoModule,
   ],
@@ -194,6 +196,24 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
         } @else {
           <p class="public-conversation__muted">{{ t('public.emptyMessage') }}</p>
         }
+
+        @if (message.decryptedData.reasoning) {
+          <details class="public-conversation__reasoning">
+            <summary class="public-conversation__reasoning-summary">
+              <cog-icon name="brain" [size]="14" aria-hidden="true" />
+              {{ t('chat.message.reasoningShow') }}
+            </summary>
+            <markdown
+              class="public-conversation__text"
+              emoji
+              katex
+              [data]="renderBody(message.decryptedData.reasoning)"
+            ></markdown>
+            <p class="public-conversation__muted">
+              {{ t('chat.message.reasoningDisclaimer') }}
+            </p>
+          </details>
+        }
       </ng-container>
     </ng-template>
   `,
@@ -300,6 +320,26 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
 
     .public-conversation__reveal:hover {
       border-color: var(--cog-brand, #15803d);
+    }
+
+    .public-conversation__reasoning {
+      margin-block-start: var(--cog-space-100, 8px);
+      border-inline-start: 2px solid var(--cog-border, #e2e2e2);
+      padding-inline-start: var(--cog-space-100, 8px);
+    }
+
+    .public-conversation__reasoning-summary {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-050, 4px);
+      color: var(--cog-text-subtle, #6b6b6b);
+      font-size: var(--cog-fs-body-sm, 13px);
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .public-conversation__reasoning-summary::-webkit-details-marker {
+      display: none;
     }
 
     .public-conversation__status,

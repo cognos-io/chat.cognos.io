@@ -795,6 +795,7 @@
       "copy": "Copiar",
       "copyError": "Não foi possível copiar a ligação.",
       "createBody": "Apenas as pessoas com a ligação podem ver esta conversa — mas verão todas as mensagens, passadas e futuras, até que deixe de partilhar. A chave de desencriptação está na própria ligação e nunca chega aos nossos servidores, por isso partilhe-a apenas com as pessoas que escolher.",
+      "reasoningWarning": "As mensagens partilhadas também incluem o raciocínio do modelo (o seu «pensamento»), que pode repetir o pedido e revelar detalhes sensíveis que a resposta final omite.",
       "createError": "Não foi possível criar uma ligação pública, tente novamente.",
       "createHeading": "Criar uma ligação pública",
       "createLink": "Criar ligação pública",

@@ -795,6 +795,7 @@
       "copy": "Kopieren",
       "copyError": "Der Link konnte nicht kopiert werden.",
       "createBody": "Nur Personen mit dem Link können diese Konversation sehen — aber sie sehen jede Nachricht, vergangene und zukünftige, bis Sie die Freigabe beenden. Der Entschlüsselungsschlüssel steckt im Link selbst und erreicht niemals unsere Server, geben Sie ihn also nur an die Personen weiter, die Sie auswählen.",
+      "reasoningWarning": "Geteilte Nachrichten enthalten auch die Begründung des Modells (sein „Nachdenken“), die die Eingabe wiedergeben und sensible Details preisgeben kann, die in der finalen Antwort fehlen.",
       "createError": "Öffentlicher Link konnte nicht erstellt werden, bitte versuchen Sie es erneut.",
       "createHeading": "Öffentlichen Link erstellen",
       "createLink": "Öffentlichen Link erstellen",

@@ -795,6 +795,7 @@
       "copy": "Copier",
       "copyError": "Impossible de copier le lien.",
       "createBody": "Seules les personnes disposant du lien peuvent voir cette conversation — mais elles verront chaque message, passé et futur, jusqu'à ce que vous arrêtiez le partage. La clé de déchiffrement se trouve dans le lien lui-même et n'atteint jamais nos serveurs, alors ne le communiquez qu'aux personnes de votre choix.",
+      "reasoningWarning": "Les messages partagés incluent aussi le raisonnement du modèle (sa « réflexion »), qui peut reprendre la requête et révéler des détails sensibles que la réponse finale omet.",
       "createError": "Impossible de créer un lien public, veuillez réessayer.",
       "createHeading": "Créer un lien public",
       "createLink": "Créer un lien public",
