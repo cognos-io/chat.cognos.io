@@ -50,6 +50,12 @@ Decisions taken for the MVP that refine this spec:
 - Reasoning is stored as a **plain string**, not the nested `{format, text, blocks}` object in
   §6.3/§7. Bifrost gives a single normalised reasoning string, so the simpler shape matches the real
   data source. The `version` field on the payload allows promoting to a structured form later.
+- **Requesting reasoning effort is implemented** (refining §12's open question): models declare
+  their accepted effort tiers in the catalogue (`reasoning_efforts` + `default_reasoning_effort`),
+  the composer shows a per-model effort selector (default medium, remembered per model), and the
+  chosen tier is validated and forwarded to the provider. Capability ships **dormant** — a model
+  shows no selector until it declares tiers, so no real model is enabled until its provider's tiers
+  are confirmed (a data change, no code).
 - **Token-count UI (§6.6)** is deferred: `reasoning_tokens` flows through the API and is available
   on the frontend `CompleteResponse`, but no usage label renders it yet.
 - **Model catalogue capability (§6.5)** uses the existing `reasoning` capability **tag** (already
