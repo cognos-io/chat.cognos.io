@@ -665,6 +665,10 @@
       "encrypted": "Verschlüsselt",
       "encryptedWithTime": "Verschlüsselt · {{ time }}",
       "keep": "Diese temporäre Nachricht behalten",
+      "reasoningShow": "Begründung anzeigen",
+      "reasoningHide": "Begründung ausblenden",
+      "reasoningThinking": "Denkt nach…",
+      "reasoningDisclaimer": "Begründung vom Modell bereitgestellt. Sie kann unvollständig oder falsch sein.",
       "regenerate": "Antwort neu generieren",
       "copied": "Kopiert"
     },

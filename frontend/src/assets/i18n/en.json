@@ -665,6 +665,10 @@
       "encrypted": "Encrypted",
       "encryptedWithTime": "Encrypted · {{ time }}",
       "keep": "Keep this temporary message",
+      "reasoningShow": "Show reasoning",
+      "reasoningHide": "Hide reasoning",
+      "reasoningThinking": "Thinking…",
+      "reasoningDisclaimer": "Reasoning supplied by the model. It may be incomplete or incorrect.",
       "regenerate": "Regenerate response",
       "copied": "Copied"
     },

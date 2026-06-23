@@ -209,6 +209,40 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
               [time]="messageTime()"
               [branchCount]="branchPointCount()"
             >
+              @if (hasReasoning()) {
+                <div class="message-list-item__reasoning">
+                  <button
+                    type="button"
+                    class="message-list-item__reasoning-toggle"
+                    [attr.aria-expanded]="reasoningExpanded()"
+                    (click)="toggleReasoning()"
+                  >
+                    <span
+                      class="message-list-item__reasoning-caret"
+                      [class.is-open]="reasoningExpanded()"
+                      aria-hidden="true"
+                    ></span>
+                    {{ reasoningToggleLabel() }}
+                  </button>
+                  @if (reasoningExpanded()) {
+                    <div class="message-list-item__reasoning-body" role="region">
+                      @if (message.isStreaming) {
+                        <p class="message-list-item__streaming">
+                          {{ message.decryptedData.reasoning }}
+                        </p>
+                      } @else {
+                        <app-redacted-markdown
+                          [content]="message.decryptedData.reasoning ?? ''"
+                        />
+                      }
+                      <p class="message-list-item__reasoning-note">
+                        {{ t('chat.message.reasoningDisclaimer') }}
+                      </p>
+                    </div>
+                  }
+                </div>
+              }
+
               @if (message.decryptedData.deleted) {
                 <p class="message-list-item__deleted">
                   {{ t('chat.message.deleted') }}
@@ -317,6 +351,59 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       white-space: pre-wrap;
     }
 
+    .message-list-item__reasoning {
+      margin-block-end: var(--cog-space-100);
+    }
+
+    .message-list-item__reasoning-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-050);
+      border: 0;
+      background: none;
+      padding: var(--cog-space-025) 0;
+      color: var(--cog-text-subtlest);
+      font: inherit;
+      font-size: var(--cog-fs-body-sm);
+      cursor: pointer;
+    }
+
+    .message-list-item__reasoning-toggle:hover {
+      color: var(--cog-text-subtle);
+    }
+
+    .message-list-item__reasoning-toggle:focus-visible {
+      outline: 2px solid var(--cog-brand);
+      outline-offset: 2px;
+      border-radius: var(--cog-radius-xs);
+    }
+
+    .message-list-item__reasoning-caret {
+      width: 0;
+      height: 0;
+      border-block: 4px solid transparent;
+      border-inline-start: 5px solid currentColor;
+      transition: transform 120ms ease;
+    }
+
+    .message-list-item__reasoning-caret.is-open {
+      transform: rotate(90deg);
+    }
+
+    .message-list-item__reasoning-body {
+      margin-block-start: var(--cog-space-050);
+      padding-inline-start: var(--cog-space-100);
+      border-inline-start: 2px solid var(--cog-border);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm);
+    }
+
+    .message-list-item__reasoning-note {
+      margin-block: var(--cog-space-100) 0;
+      color: var(--cog-text-subtlest);
+      font-style: italic;
+    }
+
     .message-list-item__edit {
       display: grid;
       gap: var(--cog-space-100);
@@ -367,6 +454,11 @@ export class MessageListItemComponent implements OnChanges {
 
   // Copy-options menu (only offered for messages containing redactions).
   readonly copyMenuOpen = signal(false);
+
+  // Reasoning disclosure: null means "follow the default" (open while the
+  // response streams so the user sees thinking live, collapsed once complete);
+  // an explicit boolean records the user's manual toggle and overrides that.
+  private readonly _reasoningOverride = signal<boolean | null>(null);
 
   // Transient "copied" state: the copy icon becomes a green tick for a moment
   // after a successful copy, then reverts.
@@ -475,6 +567,33 @@ export class MessageListItemComponent implements OnChanges {
       attachments.length > 0 &&
       !this.displayImageUrls().length &&
       !this._imagesLoading()
+    );
+  }
+
+  // True when this assistant message carries provider reasoning text to surface.
+  hasReasoning(): boolean {
+    const reasoning = this.message?.decryptedData.reasoning;
+    return !!reasoning && reasoning.trim() !== '';
+  }
+
+  // Open while streaming (live thinking), collapsed once complete, unless the
+  // user has manually toggled the disclosure.
+  reasoningExpanded(): boolean {
+    return this._reasoningOverride() ?? !!this.message?.isStreaming;
+  }
+
+  toggleReasoning(): void {
+    this._reasoningOverride.set(!this.reasoningExpanded());
+  }
+
+  reasoningToggleLabel(): string {
+    if (this.message?.isStreaming) {
+      return this._transloco.translate('chat.message.reasoningThinking');
+    }
+    return this._transloco.translate(
+      this.reasoningExpanded()
+        ? 'chat.message.reasoningHide'
+        : 'chat.message.reasoningShow',
     );
   }
 

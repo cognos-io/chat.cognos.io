@@ -665,6 +665,10 @@
       "encrypted": "Cifrado",
       "encryptedWithTime": "Cifrado · {{ time }}",
       "keep": "Conservar este mensaje temporal",
+      "reasoningShow": "Mostrar razonamiento",
+      "reasoningHide": "Ocultar razonamiento",
+      "reasoningThinking": "Pensando…",
+      "reasoningDisclaimer": "Razonamiento proporcionado por el modelo. Puede ser incompleto o incorrecto.",
       "regenerate": "Regenerar respuesta",
       "copied": "Copiado"
     },
