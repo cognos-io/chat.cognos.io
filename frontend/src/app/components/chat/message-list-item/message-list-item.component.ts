@@ -403,7 +403,8 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
 
     .message-list-item__reasoning-note {
       margin-block: var(--cog-space-100) 0;
-      color: var(--cog-text-subtlest);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm);
       font-style: italic;
     }
 

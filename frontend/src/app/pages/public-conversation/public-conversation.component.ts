@@ -197,7 +197,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
               katex
               [data]="renderBody(message.decryptedData.reasoning)"
             ></markdown>
-            <p class="public-conversation__muted">
+            <p class="public-conversation__reasoning-note">
               {{ t('chat.message.reasoningDisclaimer') }}
             </p>
           </details>
@@ -347,6 +347,14 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
     .public-conversation__reasoning-text {
       color: var(--cog-text-subtle, #6b6b6b);
       font-size: var(--cog-fs-body-sm, 13px);
+    }
+
+    /* The honesty caption matches the reasoning text exactly, but italic. */
+    .public-conversation__reasoning-note {
+      margin: var(--cog-space-100, 8px) 0 0;
+      color: var(--cog-text-subtle, #6b6b6b);
+      font-size: var(--cog-fs-body-sm, 13px);
+      font-style: italic;
     }
 
     .public-conversation__status,
