@@ -15,6 +15,10 @@ export const UserPreferencesData = z.object({
   // Browser PII redaction is on by default (secure by default). When the user
   // turns it off it stays off for future messages until re-enabled.
   redactionEnabled: z.boolean().default(true),
+  // Per-model reasoning-effort the user last chose, keyed by model id. Remembered
+  // so reselecting a model restores the chosen intensity. Values are validated
+  // against the model's declared options at use time, so stale entries are safe.
+  modelReasoningEfforts: z.record(z.string(), z.string()).default({}),
 });
 export type UserPreferencesData = z.infer<typeof UserPreferencesData>;
 
@@ -26,6 +30,7 @@ export const emptyPreferences: UserPreferencesData = {
   defaultPersonaId: '',
   defaultModelId: '',
   redactionEnabled: true,
+  modelReasoningEfforts: {},
 };
 
 /**

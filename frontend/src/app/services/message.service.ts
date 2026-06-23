@@ -1102,6 +1102,7 @@ export class MessageService {
       systemPrompt,
       parentMessageId: messageRequest.parentMessageId,
       requestId: messageRequest.requestId,
+      reasoningEffort: this._modelService.selectedReasoningEffort() || undefined,
     };
 
     let completed = false;
@@ -1397,6 +1398,7 @@ export class MessageService {
       systemPrompt: selectedPersona.systemPrompt,
       parentMessageId: parentId,
       requestId,
+      reasoningEffort: this._modelService.selectedReasoningEffort() || undefined,
     };
 
     // Only requestId + parentMessageId are read by the streaming helpers.
@@ -1637,10 +1639,13 @@ export class MessageService {
   private expandStreamEventForDisplay(
     event: CompleteStreamEvent,
   ): Observable<CompleteStreamEvent> {
-    if (event.type !== 'delta') {
+    // Reasoning is surfaced live in the disclosure while it streams, so it gets
+    // the same smooth, word-by-word typing as the answer.
+    if (event.type !== 'delta' && event.type !== 'reasoning_delta') {
       return of(event);
     }
 
+    const type = event.type;
     const chunks = splitStreamDeltaForDisplay(event.delta);
     if (chunks.length <= 1) {
       return of(event);
@@ -1648,8 +1653,8 @@ export class MessageService {
 
     return from(chunks).pipe(
       concatMap((chunk, index) => {
-        const deltaEvent = { type: 'delta', delta: chunk } as CompleteStreamEvent;
-        return index === 0 ? of(deltaEvent) : of(deltaEvent).pipe(delay(0));
+        const chunkEvent = { type, delta: chunk } as CompleteStreamEvent;
+        return index === 0 ? of(chunkEvent) : of(chunkEvent).pipe(delay(0));
       }),
     );
   }

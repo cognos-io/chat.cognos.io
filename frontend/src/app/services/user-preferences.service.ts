@@ -59,6 +59,10 @@ export class UserPreferencesService {
   private readonly _setDefaultModel = new Subject<string>();
   private readonly _markRecentPersona = new Subject<string>();
   private readonly _setRedactionEnabled = new Subject<boolean>();
+  private readonly _setModelReasoningEffort = new Subject<{
+    modelId: string;
+    effort: string;
+  }>();
 
   // Most-recently-used personas are capped so the "recently used" group and the
   // in-chat switcher stay short.
@@ -235,6 +239,28 @@ export class UserPreferencesService {
             }),
           ),
         ),
+      // Remember a per-model reasoning effort, local then remote
+      (state) =>
+        this._setModelReasoningEffort.pipe(
+          map(({ modelId, effort }) => ({
+            modelReasoningEfforts: {
+              ...state().modelReasoningEfforts,
+              [modelId]: effort,
+            },
+          })),
+        ),
+      (state) =>
+        this._setModelReasoningEffort.pipe(
+          concatMap(({ modelId, effort }) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              modelReasoningEfforts: {
+                ...state().modelReasoningEfforts,
+                [modelId]: effort,
+              },
+            }),
+          ),
+        ),
       // Mark persona recently used, local then remote
       (state) =>
         this._markRecentPersona.pipe(
@@ -269,6 +295,7 @@ export class UserPreferencesService {
       setDefaultModel: this._setDefaultModel,
       markRecentPersona: this._markRecentPersona,
       setRedactionEnabled: this._setRedactionEnabled,
+      setModelReasoningEffort: this._setModelReasoningEffort,
     },
   });
 
@@ -303,6 +330,9 @@ export class UserPreferencesService {
   public setRedactionEnabled = (enabled: boolean) => {
     this.state.setRedactionEnabled(enabled);
   };
+  public setModelReasoningEffort = (modelId: string, effort: string) => {
+    this.state.setModelReasoningEffort({ modelId, effort });
+  };
 
   // selectors
   public pinnedConversationIds = this.state.pinnedConversations;
@@ -312,6 +342,7 @@ export class UserPreferencesService {
   public defaultPersonaId = this.state.defaultPersonaId;
   public defaultModelId = this.state.defaultModelId;
   public redactionEnabled = this.state.redactionEnabled;
+  public modelReasoningEfforts = this.state.modelReasoningEfforts;
 
   // private methods
   private addConversationIdToPinnedConversations(

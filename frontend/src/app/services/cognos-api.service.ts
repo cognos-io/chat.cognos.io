@@ -43,6 +43,7 @@ export interface CompleteRequest {
   parentMessageId?: string;
   requestId?: string;
   maxOutputTokens?: number;
+  reasoningEffort?: string;
   persist?: boolean;
 }
 
@@ -176,6 +177,8 @@ interface ApiModel {
   hosting_country?: string;
   hosting_region?: string;
   supports_image_generation?: boolean;
+  reasoning_efforts?: string[];
+  default_reasoning_effort?: string;
   is_eligible: boolean;
   ineligibility_reason?: string;
 }
@@ -194,6 +197,7 @@ interface ApiCompleteRequest {
   parent_message_id?: string;
   request_id?: string;
   max_output_tokens?: number;
+  reasoning_effort?: string;
   persist?: boolean;
 }
 
@@ -463,6 +467,7 @@ export const mapCompleteRequest = (request: CompleteRequest): ApiCompleteRequest
   parent_message_id: request.parentMessageId,
   request_id: request.requestId,
   max_output_tokens: request.maxOutputTokens,
+  reasoning_effort: request.reasoningEffort,
   persist: request.persist,
 });
 
@@ -1440,6 +1445,8 @@ export class CognosApiService {
       hostingCountry: model.hosting_country,
       hostingRegion: model.hosting_region,
       supportsImageGeneration: model.supports_image_generation ?? false,
+      reasoningEfforts: model.reasoning_efforts ?? [],
+      defaultReasoningEffort: model.default_reasoning_effort,
       isEligible: model.is_eligible,
       ineligibilityReason: model.ineligibility_reason,
     });

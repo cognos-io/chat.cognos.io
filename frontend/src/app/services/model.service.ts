@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 
 import { Observable, catchError, map, of, switchMap } from 'rxjs';
 
@@ -9,6 +9,28 @@ import { Model, PrivacyTier, loadingModel } from '@app/interfaces/model';
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
 import { UserPreferencesService } from './user-preferences.service';
+
+// resolveReasoningEffort picks the effort tier to use for a model: the user's
+// remembered choice when it's still one the model offers, else the model's
+// declared default, else its first option. Returns '' when the model takes no
+// reasoning effort, meaning "send no reasoning parameter". Pure for testing.
+export const resolveReasoningEffort = (
+  model: Model,
+  remembered: Record<string, string>,
+): string => {
+  const efforts = model.reasoningEfforts ?? [];
+  if (efforts.length === 0) {
+    return '';
+  }
+  const choice = remembered[model.id];
+  if (choice && efforts.includes(choice)) {
+    return choice;
+  }
+  if (model.defaultReasoningEffort && efforts.includes(model.defaultReasoningEffort)) {
+    return model.defaultReasoningEffort;
+  }
+  return efforts[0];
+};
 
 interface ModelState {
   modelList: Model[];
@@ -111,6 +133,24 @@ export class ModelService {
   readonly selectModel = this.state.selectModel;
   readonly groupedModels = this.state.groupedModels;
   readonly privacyTier = this.state.privacyTier;
+
+  // The reasoning-effort tier in force for the selected model — the value shown
+  // in the composer and sent with completions. '' means the model takes none.
+  readonly selectedReasoningEffort = computed(() =>
+    resolveReasoningEffort(
+      this.selectedModel(),
+      this._preferences.modelReasoningEfforts(),
+    ),
+  );
+
+  // Remember the user's reasoning-effort choice for the selected model, but only
+  // when it's a tier that model actually offers.
+  setReasoningEffort(effort: string): void {
+    const model = this.selectedModel();
+    if ((model.reasoningEfforts ?? []).includes(effort)) {
+      this._preferences.setModelReasoningEffort(model.id, effort);
+    }
+  }
 
   getModel(id?: string): Model | undefined {
     if (!id) {

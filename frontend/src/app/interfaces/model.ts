@@ -32,6 +32,13 @@ export const Model = z.object({
   hostingCountry: z.string().optional(),
   hostingRegion: z.string().optional(),
   supportsImageGeneration: z.boolean().default(false),
+  // Ordered reasoning-effort tiers this model accepts (e.g. ['off','low',
+  // 'medium','high']). Empty means the model takes no effort parameter, so the
+  // composer shows no effort selector for it.
+  reasoningEfforts: z.array(z.string()).default([]),
+  // The effort tier preselected when the user hasn't chosen one. Only
+  // meaningful when reasoningEfforts is non-empty.
+  defaultReasoningEffort: z.string().optional(),
   isEligible: z.boolean(),
   ineligibilityReason: z.string().optional(),
 });
@@ -62,5 +69,6 @@ export const loadingModel: Model = {
   noRetention: false,
   isOpenSource: false,
   supportsImageGeneration: false,
+  reasoningEfforts: [],
   isEligible: false,
 };

@@ -13,8 +13,43 @@ import { BehaviorSubject } from 'rxjs';
 import { loadingModel } from '@app/interfaces/model';
 
 import { AuthService } from './auth.service';
-import { ModelService } from './model.service';
+import { ModelService, resolveReasoningEffort } from './model.service';
 import { UserPreferencesService } from './user-preferences.service';
+
+describe('resolveReasoningEffort', () => {
+  const model = (overrides: Partial<typeof loadingModel>) => ({
+    ...loadingModel,
+    ...overrides,
+  });
+
+  it('returns empty when the model declares no efforts', () => {
+    expect(resolveReasoningEffort(model({ reasoningEfforts: [] }), {})).toBe('');
+  });
+
+  it('prefers a remembered choice that the model still offers', () => {
+    const m = model({
+      id: 'm1',
+      reasoningEfforts: ['low', 'medium', 'high'],
+      defaultReasoningEffort: 'medium',
+    });
+    expect(resolveReasoningEffort(m, { m1: 'high' })).toBe('high');
+  });
+
+  it('falls back to the declared default when the remembered choice is stale', () => {
+    const m = model({
+      id: 'm1',
+      reasoningEfforts: ['low', 'medium', 'high'],
+      defaultReasoningEffort: 'medium',
+    });
+    // "ultra" is no longer offered by this model — ignore it.
+    expect(resolveReasoningEffort(m, { m1: 'ultra' })).toBe('medium');
+  });
+
+  it('falls back to the first option when there is no valid default', () => {
+    const m = model({ id: 'm1', reasoningEfforts: ['low', 'high'] });
+    expect(resolveReasoningEffort(m, {})).toBe('low');
+  });
+});
 
 describe('ModelService', () => {
   let service: ModelService;

@@ -82,6 +82,7 @@ describe('serializeUserPreferencesData', () => {
       defaultPersonaId: 'cognos:simple-assistant',
       defaultModelId: 'm-1',
       redactionEnabled: false,
+      modelReasoningEfforts: { 'm-1': 'high' },
     };
 
     const serialized = serializeUserPreferencesData(original);
