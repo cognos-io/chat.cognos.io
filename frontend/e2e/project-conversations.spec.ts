@@ -121,7 +121,10 @@ test('shows a Projects group and project chats in the chat sidebar', async ({
     /\/account\/projects\/proj_pc_3$/,
   );
 
-  // The project chat appears in the recent list (all chats, project or not).
+  // Project chats are nested under the project, not in the recent list: hidden
+  // until the project is expanded via its chevron.
+  await expect(page.getByText('Design notes')).toBeHidden();
+  await page.getByRole('button', { name: /Show chats in Acme launch/ }).click();
   await expect(page.getByText('Design notes')).toBeVisible();
 
   expect(pageErrors).toEqual([]);
@@ -189,8 +192,10 @@ test('project chats survive a late standalone-conversation reload', async ({
   await page.goto('/');
 
   // The standalone chat appearing proves the late list reload has been applied
-  // to the store; the project chat must have survived that reload.
+  // to the store; the project chat must have survived that reload (revealed by
+  // expanding the project, since project chats are nested, not in recent).
   await expect(page.getByText('Standalone chat')).toBeVisible();
+  await page.getByRole('button', { name: /Show chats in Acme launch/ }).click();
   await expect(page.getByText('Design notes')).toBeVisible();
 
   expect(pageErrors).toEqual([]);

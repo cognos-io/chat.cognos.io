@@ -187,10 +187,13 @@ export class ConversationService {
     ],
     selectors: (state) => {
       const filteredConversations = computed(() => {
-        // All conversations — project and standalone alike — appear in the
-        // sidebar list, sorted most-recent-first by orderedConversations.
-        // Projects also get their own group at the top of the sidebar.
-        const all = state.conversations();
+        // Standalone conversations make up the Pinned/Recent lists. Project
+        // conversations are surfaced under their project's collapsible group in
+        // the sidebar instead, so they're excluded here to avoid showing twice.
+        // (They remain in state.conversations() so opening one still resolves.)
+        const all = state
+          .conversations()
+          .filter((conversation) => !conversation.record.project);
 
         const filter = state.filter().trim().toLowerCase();
         if (filter === '') return all;
