@@ -72,6 +72,7 @@ import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
 import { ModelService } from './model.service';
 import { PersonaService } from './persona.service';
+import { ProjectService } from './project.service';
 import { RedactionService } from './redaction.service';
 import { VaultService } from './vault.service';
 
@@ -542,6 +543,7 @@ export class MessageService {
   private readonly _api = inject(CognosApiService);
   private readonly _vaultService = inject(VaultService);
   private readonly _redactionService = inject(RedactionService);
+  private readonly _projectService = inject(ProjectService);
 
   private _activeCompletionAbort: AbortController | null = null;
   private _activeCompletionRequestId = '';
@@ -1092,9 +1094,11 @@ export class MessageService {
     // When placeholders are present, instruct the model to preserve them so they
     // survive the round-trip and hydrate cleanly on display.
     const hasRedactions = messages.some((m) => containsRedactionToken(m.content));
-    const systemPrompt = hasRedactions
-      ? `${selectedPersona.systemPrompt}\n\n${REDACTION_INSTRUCTION}`
-      : selectedPersona.systemPrompt;
+    const systemPrompt = this.composeSystemPrompt(
+      selectedPersona.systemPrompt,
+      conversation,
+      hasRedactions ? REDACTION_INSTRUCTION : '',
+    );
     const request = {
       messages,
       modelId: this._modelService.selectedModel().id,
@@ -1401,7 +1405,10 @@ export class MessageService {
       messages: this.buildContextFromPath([...contextPath].reverse()),
       modelId: this._modelService.selectedModel().id,
       personaId: selectedPersona.id,
-      systemPrompt: selectedPersona.systemPrompt,
+      systemPrompt: this.composeSystemPrompt(
+        selectedPersona.systemPrompt,
+        conversation,
+      ),
       parentMessageId: parentId,
       requestId,
       reasoningEffort: this._modelService.selectedReasoningEffort() || undefined,
@@ -1669,6 +1676,25 @@ export class MessageService {
     // Context follows the active branch (newest-first), so the model only sees
     // the conversation the user is actually viewing.
     return this.buildContextFromPath([...this.state.activeBranch().path].reverse());
+  }
+
+  // Builds the system prompt sent with a completion. When the conversation
+  // belongs to a project, the project's decrypted instructions are prepended to
+  // the persona prompt so every chat in the project inherits that guidance; an
+  // optional suffix (e.g. the redaction instruction) is appended last.
+  private composeSystemPrompt(
+    personaPrompt: string,
+    conversation: Conversation | null | undefined,
+    suffix = '',
+  ): string {
+    const projectId = conversation?.record.project;
+    const project = projectId
+      ? this._projectService.projects().find((p) => p.record.id === projectId)
+      : undefined;
+    const instructions = project?.decryptedData.instructions?.trim() ?? '';
+    return [instructions, personaPrompt.trim(), suffix.trim()]
+      .filter((part) => part.length > 0)
+      .join('\n\n');
   }
 
   private buildContextFromPath(
