@@ -56,8 +56,15 @@ Decisions taken for the MVP that refine this spec:
   chosen tier is validated and forwarded to the provider. Capability ships **dormant** — a model
   shows no selector until it declares tiers, so no real model is enabled until its provider's tiers
   are confirmed (a data change, no code).
-- **Token-count UI (§6.6)** is deferred: `reasoning_tokens` flows through the API and is available
-  on the frontend `CompleteResponse`, but no usage label renders it yet.
+- **Token-count UI (§6.6)** is deferred to a future opt-in "debug mode" (YouTube "stats for nerds"
+  style): `reasoning_tokens` already flows through the API and is on the frontend
+  `CompleteResponse`, but no usage label renders it yet.
+- **Reasoning in shared chats** is implemented: the public conversation view renders reasoning in a
+  collapsed, redaction-aware disclosure, and the share dialog explicitly warns that shared messages
+  include the model's reasoning (which may contain sensitive detail).
+- **Reasoning-effort options are populated automatically** from Requesty's `supports_reasoning` flag
+  via the model sync ([requesty-model-sync](../business_processes/requesty-model-sync.md)); the
+  composer's effort dropdown shows per-tier icons + descriptions.
 - **Model catalogue capability (§6.5)** uses the existing `reasoning` capability **tag** (already
   mapped to the frontend model selector as a badge) rather than a new capability enum.
 - The `[reason]` sentinel in the mock AI provider drives the e2e reasoning path offline.
