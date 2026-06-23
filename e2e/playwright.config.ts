@@ -13,6 +13,17 @@ const AI_MOCK_HEALTH_URL =
 // a deployed environment via E2E_BASE_URL).
 const SKIP_WEB_SERVER = process.env.E2E_SKIP_WEB_SERVER === '1';
 
+// Set to `1` to skip the frontend dev server — the API specs only need the
+// backend + mock, so the API-only target runs without it (and on its own
+// ports) to avoid clashing with a running `just dev` stack.
+const SKIP_FRONTEND = process.env.E2E_SKIP_FRONTEND === '1';
+
+// The backend binds and stores data wherever these point. Defaults match the
+// dev stack so CI and the full suite are unchanged; the API-only target
+// overrides them to a separate port + data dir so it can run alongside `just dev`.
+const POCKETBASE_HOST = new URL(POCKETBASE_URL).host;
+const POCKETBASE_DIR = process.env.E2E_POCKETBASE_DIR ?? './pb_data';
+
 export default defineConfig({
   testDir: './tests',
   timeout: 60_000,
@@ -61,7 +72,7 @@ export default defineConfig({
                 // generation works offline (the mock serves both transports).
                 'COGNOS_REQUESTY_API_KEY=e2e-dummy-key',
                 `COGNOS_REQUESTY_URL=${AI_MOCK_URL}`,
-                'go run ./cmd/api serve --dev --dir ./pb_data',
+                `go run ./cmd/api serve --dev --dir ${POCKETBASE_DIR} --http=${POCKETBASE_HOST}`,
               ].join(' '),
             ),
           cwd: '../backend',
@@ -71,15 +82,22 @@ export default defineConfig({
           stderr: 'pipe',
           timeout: 120_000,
         },
-        {
-          command: 'pnpm --filter @cognos/chat start --host 127.0.0.1 --port 4200',
-          cwd: '..',
-          url: BASE_URL,
-          reuseExistingServer: !process.env.CI,
-          stdout: 'pipe',
-          stderr: 'pipe',
-          timeout: 120_000,
-        },
+        // The frontend dev server is only needed for browser specs; the API
+        // specs skip it (E2E_SKIP_FRONTEND=1) so they can run on isolated ports.
+        ...(SKIP_FRONTEND
+          ? []
+          : [
+              {
+                command:
+                  'pnpm --filter @cognos/chat start --host 127.0.0.1 --port 4200',
+                cwd: '..',
+                url: BASE_URL,
+                reuseExistingServer: !process.env.CI,
+                stdout: 'pipe' as const,
+                stderr: 'pipe' as const,
+                timeout: 120_000,
+              },
+            ]),
       ],
   metadata: {
     pocketbaseUrl: POCKETBASE_URL,

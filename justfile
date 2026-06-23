@@ -82,6 +82,19 @@ dev-test:
 e2e:
     @pnpm exec playwright test
 
+# Run only the API e2e specs on isolated ports + data dir, so they run cleanly
+# alongside a live `just dev` stack (no 4200/8090 conflicts). Skips the frontend
+# dev server (API specs don't need it) and uses backend/testdata/pb_data.
+[working-directory("e2e")]
+e2e-api:
+    @E2E_SKIP_FRONTEND=1 \
+        E2E_POCKETBASE_URL=http://127.0.0.1:8095 \
+        E2E_POCKETBASE_DIR=./testdata/pb_data \
+        E2E_AI_MOCK_URL=http://127.0.0.1:18085 \
+        E2E_AI_MOCK_HEALTH_URL=http://127.0.0.1:18085/health \
+        E2E_AI_MOCK_PORT=18085 \
+        pnpm exec playwright test api.spec
+
 # Open the Playwright UI runner
 [working-directory("e2e")]
 e2e-ui:
