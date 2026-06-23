@@ -3,146 +3,197 @@
     (itemSelect)="onBreadcrumb($event)"
     [items]="[
       { label: 'Cognos' },
-      { label: t('settings.title') },
       { label: t('projects.title') },
       { label: project()?.decryptedData?.name ?? t('projects.title'), current: true },
     ]"
   />
 
   @if (project(); as project) {
-    @if (editing()) {
-      <form class="project-detail__form" (submit)="$event.preventDefault(); save()">
-        <label class="project-detail__field">
-          <span class="project-detail__label">{{ t('projects.nameLabel') }}</span>
-          <input
-            type="text"
-            name="project-name"
-            [ngModel]="name()"
-            (ngModelChange)="name.set($event)"
-            autocomplete="off"
-          />
-        </label>
-        <label class="project-detail__field">
-          <span class="project-detail__label">{{
-            t('projects.descriptionLabel')
-          }}</span>
-          <textarea
-            name="project-description"
-            rows="3"
-            [ngModel]="description()"
-            (ngModelChange)="description.set($event)"
-          ></textarea>
-        </label>
-        <div class="project-detail__actions">
-          <cog-button appearance="subtle" type="button" (click)="cancelEdit()">
-            {{ t('projects.cancel') }}
-          </cog-button>
-          <cog-button
-            appearance="primary"
-            type="submit"
-            [disabled]="name().trim() === '' || saving()"
-          >
-            {{ saving() ? t('projects.saving') : t('projects.save') }}
-          </cog-button>
-        </div>
-      </form>
-    } @else {
-      <header class="project-detail__header">
+    <header class="project-detail__header">
+      <app-persona-avatar
+        [icon]="project.decryptedData.icon"
+        [color]="project.decryptedData.color"
+        [size]="52"
+      />
+      <div class="project-detail__heading">
         <h1 class="project-detail__title" data-testid="project-name">
           {{ project.decryptedData.name }}
         </h1>
-        <div class="project-detail__header-actions">
-          <cog-button appearance="subtle" icon="pencil" (click)="startEdit()">
-            {{ t('projects.edit') }}
-          </cog-button>
-        </div>
-      </header>
-
-      @if (project.decryptedData.description) {
-        <p class="project-detail__description" data-testid="project-description">
-          {{ project.decryptedData.description }}
+        <p class="project-detail__subtitle">
+          <cog-icon name="lock" [size]="13" tone="text-subtle" />
+          {{ t('projects.encrypted') }}
         </p>
-      }
+      </div>
+      <div class="project-detail__header-actions">
+        <cog-button appearance="default" icon="settings" (click)="openSettings()">
+          {{ t('projects.settings.open') }}
+        </cog-button>
+      </div>
+    </header>
 
-      <section class="project-detail__chats">
-        <div class="project-detail__chats-header">
-          <h2 class="project-detail__chats-title">{{ t('projects.conversations') }}</h2>
-        </div>
+    @if (project.decryptedData.description) {
+      <p class="project-detail__description" data-testid="project-description">
+        {{ project.decryptedData.description }}
+      </p>
+    }
 
-        <form
-          class="project-detail__new-chat"
-          (submit)="$event.preventDefault(); startChat()"
-        >
-          <input
-            type="text"
-            name="chat-name"
-            [placeholder]="t('projects.chatNamePlaceholder')"
-            [ngModel]="chatName()"
-            (ngModelChange)="chatName.set($event)"
-            autocomplete="off"
-          />
-          <cog-button
-            appearance="primary"
-            icon="plus"
-            type="submit"
-            [disabled]="creatingChat()"
+    <!-- Project-level instructions: prepended to the system prompt of chats
+         created in this project. Edited inline. -->
+    <section class="project-detail__card project-detail__instructions">
+      <div class="project-detail__card-head">
+        <span class="project-detail__card-title">
+          <cog-icon name="settings" [size]="15" tone="text-subtle" />
+          {{ t('projects.instructions.heading') }}
+        </span>
+        @if (!editingInstructions()) {
+          <button
+            type="button"
+            class="project-detail__icon-action"
+            [attr.aria-label]="t('projects.instructions.edit')"
+            (click)="startEditInstructions()"
+            data-testid="project-instructions-edit"
           >
-            {{ creatingChat() ? t('projects.creating') : t('projects.newChat') }}
-          </cog-button>
-        </form>
-
-        @if (conversations().length === 0) {
-          <p class="project-detail__no-chats" data-testid="project-no-conversations">
-            {{ t('projects.noConversations') }}
-          </p>
-        } @else {
-          <ul class="project-detail__chat-list" data-testid="project-conversations">
-            @for (conversation of conversations(); track conversation.record.id) {
-              <li>
-                <button
-                  type="button"
-                  class="project-detail__chat"
-                  (click)="openConversation(conversation.record.id)"
-                  data-testid="project-conversation"
-                >
-                  {{ conversation.decryptedData.title }}
-                </button>
-              </li>
-            }
-          </ul>
+            <cog-icon name="pencil" [size]="16" tone="current" />
+          </button>
         }
-      </section>
+      </div>
 
-      <section class="project-detail__danger">
-        @if (confirmingDelete()) {
-          <p class="project-detail__danger-prompt">
-            {{ t('projects.deleteConfirm') }}
-          </p>
+      @if (editingInstructions()) {
+        <form
+          class="project-detail__instructions-form"
+          (submit)="$event.preventDefault(); saveInstructions()"
+        >
+          <textarea
+            class="project-detail__textarea"
+            rows="4"
+            [ngModel]="instructionsDraft()"
+            (ngModelChange)="instructionsDraft.set($event)"
+            name="project-instructions"
+            [placeholder]="t('projects.instructions.placeholder')"
+            data-testid="project-instructions-input"
+          ></textarea>
           <div class="project-detail__actions">
-            <cog-button appearance="subtle" (click)="cancelDelete()">
+            <cog-button
+              appearance="subtle"
+              type="button"
+              (click)="cancelEditInstructions()"
+            >
               {{ t('projects.cancel') }}
             </cog-button>
             <cog-button
-              appearance="danger"
-              (click)="confirmDelete()"
-              data-testid="project-delete-confirm"
+              appearance="primary"
+              type="submit"
+              [disabled]="savingInstructions()"
+              data-testid="project-instructions-save"
             >
-              {{ t('projects.delete') }}
+              {{ savingInstructions() ? t('projects.saving') : t('projects.save') }}
             </cog-button>
           </div>
-        } @else {
-          <div class="project-detail__actions">
-            <cog-button
-              appearance="danger"
-              (click)="requestDelete()"
-              data-testid="project-delete"
-            >
-              {{ t('projects.delete') }}
-            </cog-button>
-          </div>
-        }
-      </section>
-    }
+        </form>
+      } @else if (project.decryptedData.instructions) {
+        <p class="project-detail__instructions-text" data-testid="project-instructions">
+          {{ project.decryptedData.instructions }}
+        </p>
+      } @else {
+        <button
+          type="button"
+          class="project-detail__instructions-empty"
+          (click)="startEditInstructions()"
+        >
+          {{ t('projects.instructions.empty') }}
+        </button>
+      }
+    </section>
+
+    <section class="project-detail__chats">
+      <div class="project-detail__chats-header">
+        <h2 class="project-detail__chats-title">
+          {{ t('projects.conversations') }}
+          <span class="project-detail__chats-count">{{ conversations().length }}</span>
+        </h2>
+      </div>
+
+      <form
+        class="project-detail__new-chat"
+        (submit)="$event.preventDefault(); startChat()"
+      >
+        <input
+          type="text"
+          name="chat-name"
+          [placeholder]="t('projects.chatNamePlaceholder')"
+          [ngModel]="chatName()"
+          (ngModelChange)="chatName.set($event)"
+          autocomplete="off"
+        />
+        <cog-button
+          appearance="primary"
+          icon="plus"
+          type="submit"
+          [disabled]="creatingChat()"
+        >
+          {{ creatingChat() ? t('projects.creating') : t('projects.newChat') }}
+        </cog-button>
+      </form>
+
+      @if (conversations().length === 0) {
+        <p class="project-detail__no-chats" data-testid="project-no-conversations">
+          {{ t('projects.noConversations') }}
+        </p>
+      } @else {
+        <ul class="project-detail__chat-list" data-testid="project-conversations">
+          @for (conversation of conversations(); track conversation.record.id) {
+            <li>
+              <button
+                type="button"
+                class="project-detail__chat"
+                (click)="openConversation(conversation.record.id)"
+                data-testid="project-conversation"
+              >
+                <span class="project-detail__chat-icon">
+                  <cog-icon name="message-square" [size]="18" tone="text-subtle" />
+                </span>
+                <span class="project-detail__chat-title">{{
+                  conversation.decryptedData.title
+                }}</span>
+                <cog-icon name="lock" [size]="14" tone="text-subtlest" />
+                <cog-icon name="chevron-right" [size]="16" tone="text-subtlest" />
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="project-detail__danger">
+      @if (confirmingDelete()) {
+        <p class="project-detail__danger-prompt">
+          {{ t('projects.deleteConfirm') }}
+        </p>
+        <div class="project-detail__actions">
+          <cog-button appearance="subtle" (click)="cancelDelete()">
+            {{ t('projects.cancel') }}
+          </cog-button>
+          <cog-button
+            appearance="danger"
+            (click)="confirmDelete()"
+            data-testid="project-delete-confirm"
+          >
+            {{ t('projects.delete') }}
+          </cog-button>
+        </div>
+      } @else {
+        <div class="project-detail__actions">
+          <cog-button
+            appearance="subtle"
+            icon="eraser"
+            (click)="requestDelete()"
+            data-testid="project-delete"
+          >
+            {{ t('projects.delete') }}
+          </cog-button>
+        </div>
+      }
+    </section>
   } @else {
     <p class="project-detail__missing">{{ t('projects.notFound') }}</p>
     <a class="project-detail__back" routerLink="/account/projects">{{

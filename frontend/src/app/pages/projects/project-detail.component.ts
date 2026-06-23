@@ -1,3 +1,4 @@
+import { Dialog } from '@angular/cdk/dialog';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,10 +13,17 @@ import { Router, RouterLink } from '@angular/router';
 
 import { TranslocoModule } from '@jsverse/transloco';
 
-import { CognosBreadcrumbsComponent, CognosButtonComponent } from '@cognos/ui-angular';
+import {
+  CognosBreadcrumbsComponent,
+  CognosButtonComponent,
+  CognosIconComponent,
+} from '@cognos/ui-angular';
 
+import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
+import { ProjectSettingsDialogComponent } from '@app/components/projects/project-settings-dialog/project-settings-dialog.component';
 import { ProjectConversationService } from '@app/services/project-conversation.service';
 import { ProjectService } from '@app/services/project.service';
+import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 @Component({
   selector: 'app-project-detail',
@@ -26,6 +34,8 @@ import { ProjectService } from '@app/services/project.service';
     TranslocoModule,
     CognosBreadcrumbsComponent,
     CognosButtonComponent,
+    CognosIconComponent,
+    PersonaAvatarComponent,
   ],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.css',
@@ -35,6 +45,7 @@ export class ProjectDetailComponent {
   private readonly _projects = inject(ProjectService);
   private readonly _projectConversations = inject(ProjectConversationService);
   private readonly _router = inject(Router);
+  private readonly _dialog = inject(Dialog);
 
   // Bound from the `:projectId` route param via withComponentInputBinding().
   readonly projectId = input.required<string>();
@@ -47,57 +58,61 @@ export class ProjectDetailComponent {
     this._projectConversations.conversationsFor(this.projectId())(),
   );
 
-  protected readonly editing = signal(false);
   protected readonly confirmingDelete = signal(false);
-  protected readonly saving = signal(false);
-  protected readonly name = signal('');
-  protected readonly description = signal('');
+
+  // Inline project-instructions editor state.
+  protected readonly editingInstructions = signal(false);
+  protected readonly instructionsDraft = signal('');
+  protected readonly savingInstructions = signal(false);
 
   protected readonly chatName = signal('');
   protected readonly creatingChat = signal(false);
 
   constructor() {
     // Keep the service's "selected project" in sync with the routed id so
-    // other surfaces (e.g. a future sidebar highlight) can react to it.
+    // other surfaces (e.g. a sidebar highlight) can react to it.
     effect(() => {
       this._projects.select(this.projectId());
     });
   }
 
-  protected startEdit(): void {
+  protected openSettings(): void {
+    this._dialog.open(ProjectSettingsDialogComponent, {
+      ...cognosDialogOptions,
+      data: { projectId: this.projectId() },
+    });
+  }
+
+  protected startEditInstructions(): void {
     const project = this.project();
     if (!project) {
       return;
     }
-    this.name.set(project.decryptedData.name);
-    this.description.set(project.decryptedData.description);
-    this.editing.set(true);
+    this.instructionsDraft.set(project.decryptedData.instructions);
+    this.editingInstructions.set(true);
   }
 
-  protected cancelEdit(): void {
-    this.editing.set(false);
+  protected cancelEditInstructions(): void {
+    this.editingInstructions.set(false);
   }
 
-  protected save(): void {
-    const name = this.name().trim();
-    if (name === '' || this.saving()) {
+  protected saveInstructions(): void {
+    const project = this.project();
+    if (!project || this.savingInstructions()) {
       return;
     }
-    this.saving.set(true);
+    this.savingInstructions.set(true);
     this._projects
       .updateProject(this.projectId(), {
-        version: '1',
-        name,
-        description: this.description().trim(),
+        ...project.decryptedData,
+        instructions: this.instructionsDraft().trim(),
       })
       .subscribe({
         next: () => {
-          this.saving.set(false);
-          this.editing.set(false);
+          this.savingInstructions.set(false);
+          this.editingInstructions.set(false);
         },
-        error: () => {
-          this.saving.set(false);
-        },
+        error: () => this.savingInstructions.set(false),
       });
   }
 
@@ -114,9 +129,9 @@ export class ProjectDetailComponent {
     this._router.navigate(['/account/projects']);
   }
 
-  // Routes for the breadcrumb crumbs, in order: Cognos, Settings, Projects.
-  // The final crumb (the project name) is the current page and has no route.
-  private readonly breadcrumbRoutes = ['/', '/account', '/account/projects'];
+  // Breadcrumb crumbs, in order: Cognos, Projects. The final crumb (the project
+  // name) is the current page and has no route.
+  private readonly breadcrumbRoutes = ['/', '/account/projects'];
 
   protected onBreadcrumb(index: number): void {
     const route = this.breadcrumbRoutes[index];
