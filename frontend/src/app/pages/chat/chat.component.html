@@ -47,15 +47,62 @@
         </header>
         <div class="chat-shell__conversation-list">
           @for (project of projects(); track project.record.id) {
-            <a
-              class="chat-shell__project-item"
-              [routerLink]="['/account/projects', project.record.id]"
-            >
-              <cog-icon name="folder" [size]="16" tone="current" />
-              <span class="chat-shell__project-name">{{
-                project.decryptedData.name
-              }}</span>
-            </a>
+            @let expanded = isProjectExpanded(project.record.id);
+            @let chats = projectChats(project.record.id);
+            <div class="chat-shell__project">
+              <button
+                type="button"
+                class="chat-shell__project-toggle"
+                [attr.aria-expanded]="expanded"
+                [attr.aria-label]="
+                  t(
+                    expanded ? 'chat.list.collapseProject' : 'chat.list.expandProject',
+                    {
+                      name: project.decryptedData.name,
+                    }
+                  )
+                "
+                (click)="toggleProject(project.record.id, $event)"
+              >
+                <cog-icon
+                  [name]="expanded ? 'chevron-down' : 'chevron-right'"
+                  [size]="16"
+                  tone="current"
+                />
+              </button>
+              <a
+                class="chat-shell__project-item"
+                [routerLink]="['/account/projects', project.record.id]"
+              >
+                <app-persona-avatar
+                  [icon]="project.decryptedData.icon"
+                  [color]="project.decryptedData.color"
+                  [size]="22"
+                />
+                <span class="chat-shell__project-name">{{
+                  project.decryptedData.name
+                }}</span>
+                @if (chats.length > 0) {
+                  <span class="chat-shell__project-count">{{ chats.length }}</span>
+                }
+              </a>
+            </div>
+
+            @if (expanded) {
+              <div class="chat-shell__project-chats">
+                @if (chats.length === 0) {
+                  <p class="chat-shell__project-empty">
+                    {{ t('projects.noConversations') }}
+                  </p>
+                } @else {
+                  @for (conversation of chats; track conversation.record.id) {
+                    <app-conversation-list-item
+                      [conversation]="conversation"
+                    ></app-conversation-list-item>
+                  }
+                }
+              </div>
+            }
           }
         </div>
       </section>

@@ -657,7 +657,9 @@
       "searchAria": "Rechercher des conversations",
       "searchPlaceholder": "Rechercher",
       "searchedOnDevice": "Recherche sur cet appareil",
-      "unpin": "Désépingler"
+      "unpin": "Désépingler",
+      "expandProject": "Afficher les discussions de {{name}}",
+      "collapseProject": "Masquer les discussions de {{name}}"
     },
     "message": {
       "copy": "Copier dans le presse-papiers",
@@ -961,7 +963,22 @@
     "saving": "Enregistrement…",
     "subtitle": "Regroupez des conversations liées dans un espace de travail chiffré.",
     "title": "Projets",
-    "yourProjects": "Vos projets"
+    "yourProjects": "Vos projets",
+    "encrypted": "Chiffré",
+    "instructions": {
+      "heading": "Instructions du projet",
+      "edit": "Modifier les instructions",
+      "placeholder": "Ajoutez des instructions qui s’appliquent à toutes les discussions de ce projet…",
+      "empty": "Ajouter des instructions de projet"
+    },
+    "settings": {
+      "title": "Paramètres du projet",
+      "open": "Paramètres",
+      "iconLegend": "Icône",
+      "colourLegend": "Couleur",
+      "untitled": "Projet sans titre",
+      "previewHint": "Apparence de ce projet dans votre barre latérale"
+    }
   },
   "public": {
     "redactedAria": "Valeur masquée",

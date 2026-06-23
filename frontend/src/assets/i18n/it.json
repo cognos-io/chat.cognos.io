@@ -657,7 +657,9 @@
       "searchAria": "Cerca tra le chat",
       "searchPlaceholder": "Cerca",
       "searchedOnDevice": "Ricerca su questo dispositivo",
-      "unpin": "Rimuovi dai fissati"
+      "unpin": "Rimuovi dai fissati",
+      "expandProject": "Mostra le chat di {{name}}",
+      "collapseProject": "Nascondi le chat di {{name}}"
     },
     "message": {
       "copy": "Copia negli appunti",
@@ -961,7 +963,22 @@
     "saving": "Salvataggio…",
     "subtitle": "Raggruppa le chat correlate in uno spazio di lavoro crittografato.",
     "title": "Progetti",
-    "yourProjects": "I tuoi progetti"
+    "yourProjects": "I tuoi progetti",
+    "encrypted": "Crittografato",
+    "instructions": {
+      "heading": "Istruzioni del progetto",
+      "edit": "Modifica istruzioni",
+      "placeholder": "Aggiungi istruzioni valide per tutte le chat di questo progetto…",
+      "empty": "Aggiungi istruzioni del progetto"
+    },
+    "settings": {
+      "title": "Impostazioni del progetto",
+      "open": "Impostazioni",
+      "iconLegend": "Icona",
+      "colourLegend": "Colore",
+      "untitled": "Progetto senza titolo",
+      "previewHint": "Come appare questo progetto nella barra laterale"
+    }
   },
   "public": {
     "redactedAria": "Valore oscurato",

@@ -657,7 +657,9 @@
       "searchAria": "Konversationen durchsuchen",
       "searchPlaceholder": "Suchen",
       "searchedOnDevice": "Auf diesem Gerät durchsucht",
-      "unpin": "Lösen"
+      "unpin": "Lösen",
+      "expandProject": "Chats in {{name}} anzeigen",
+      "collapseProject": "Chats in {{name}} ausblenden"
     },
     "message": {
       "copy": "In die Zwischenablage kopieren",
@@ -961,7 +963,22 @@
     "saving": "Wird gespeichert…",
     "subtitle": "Gruppieren Sie zusammengehörige Chats in einem verschlüsselten Arbeitsbereich.",
     "title": "Projekte",
-    "yourProjects": "Ihre Projekte"
+    "yourProjects": "Ihre Projekte",
+    "encrypted": "Verschlüsselt",
+    "instructions": {
+      "heading": "Projektanweisungen",
+      "edit": "Anweisungen bearbeiten",
+      "placeholder": "Anweisungen hinzufügen, die für jeden Chat in diesem Projekt gelten …",
+      "empty": "Projektanweisungen hinzufügen"
+    },
+    "settings": {
+      "title": "Projekteinstellungen",
+      "open": "Einstellungen",
+      "iconLegend": "Symbol",
+      "colourLegend": "Farbe",
+      "untitled": "Unbenanntes Projekt",
+      "previewHint": "So erscheint dieses Projekt in deiner Seitenleiste"
+    }
   },
   "public": {
     "redactedAria": "Geschwärzter Wert",

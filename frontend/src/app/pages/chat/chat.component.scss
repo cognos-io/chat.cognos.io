@@ -2,6 +2,12 @@
 // cog-desktop-shell / cog-mobile-shell. These styles are just the chat-specific
 // content projected into the shell slots.
 
+// Give the chat sidebar a roomier column than the default shell nav so longer
+// conversation titles stay readable (~25% wider than the 290px default).
+:host {
+  --cog-desktop-shell-nav-width: 360px;
+}
+
 .chat-shell__nav-host,
 .chat-shell__content-host {
   height: 100%;
@@ -73,12 +79,47 @@
   gap: var(--cog-space-050);
 }
 
-// Project rows in the sidebar's "Projects" group — link to the project page.
+// Project rows in the sidebar's "Projects" group. A leading chevron toggles the
+// inline chat list; the rest of the row links to the project page.
+.chat-shell__project {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--cog-space-025);
+}
+
+.chat-shell__project-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 24px;
+  block-size: 24px;
+  border: 0;
+  border-radius: var(--cog-radius-sm);
+  background: transparent;
+  color: var(--cog-text-subtlest);
+  cursor: pointer;
+  transition:
+    background-color var(--cog-dur-fast) var(--cog-ease-standard),
+    color var(--cog-dur-fast) var(--cog-ease-standard);
+}
+
+.chat-shell__project-toggle:hover {
+  background: var(--cog-surface-hover, rgba(0, 0, 0, 0.04));
+  color: var(--cog-text);
+}
+
+.chat-shell__project-toggle:focus-visible {
+  outline: 2px solid var(--cog-brand);
+  outline-offset: 2px;
+}
+
 .chat-shell__project-item {
   display: flex;
   align-items: center;
   gap: var(--cog-space-100);
-  padding: var(--cog-space-075) var(--cog-space-100);
+  min-width: 0;
+  padding: var(--cog-space-050) var(--cog-space-075);
   border-radius: var(--cog-radius-sm);
   color: var(--cog-text);
   text-decoration: none;
@@ -90,9 +131,35 @@
 }
 
 .chat-shell__project-name {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: var(--cog-fw-semibold);
+}
+
+.chat-shell__project-count {
+  flex: none;
+  color: var(--cog-text-subtlest);
+  font-size: var(--cog-fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+// Inline chat list shown when a project is expanded — indented under the row.
+.chat-shell__project-chats {
+  display: grid;
+  gap: var(--cog-space-050);
+  margin-block-start: var(--cog-space-050);
+  margin-inline-start: var(--cog-space-200);
+  padding-inline-start: var(--cog-space-100);
+  border-inline-start: 1px solid var(--cog-border);
+}
+
+.chat-shell__project-empty {
+  margin: 0;
+  padding: var(--cog-space-050) var(--cog-space-075);
+  color: var(--cog-text-subtlest);
+  font-size: var(--cog-fs-caption);
 }
 
 // Sidebar/drawer footer: account actions + (trial card) + profile, stacked.

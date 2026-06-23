@@ -657,7 +657,9 @@
       "searchAria": "Search conversations",
       "searchPlaceholder": "Search",
       "searchedOnDevice": "Searched on this device",
-      "unpin": "Unpin"
+      "unpin": "Unpin",
+      "expandProject": "Show chats in {{name}}",
+      "collapseProject": "Hide chats in {{name}}"
     },
     "message": {
       "copy": "Copy to clipboard",
@@ -961,7 +963,22 @@
     "saving": "Saving…",
     "subtitle": "Group related chats into an encrypted workspace.",
     "title": "Projects",
-    "yourProjects": "Your projects"
+    "yourProjects": "Your projects",
+    "encrypted": "Encrypted",
+    "instructions": {
+      "heading": "Project instructions",
+      "edit": "Edit instructions",
+      "placeholder": "Add instructions that apply to every chat in this project…",
+      "empty": "Add project instructions"
+    },
+    "settings": {
+      "title": "Project settings",
+      "open": "Settings",
+      "iconLegend": "Icon",
+      "colourLegend": "Colour",
+      "untitled": "Untitled project",
+      "previewHint": "How this project appears in your sidebar"
+    }
   },
   "public": {
     "redactedAria": "Redacted value",

@@ -23,9 +23,11 @@ import { SidebarProfileComponent } from '@app/components/chat/sidebar-profile/si
 import { TrialCreditCardComponent } from '@app/components/chat/trial-credit-card/trial-credit-card.component';
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
+import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import { SidebarAccountActionsComponent } from '@app/components/sidebar-account-actions/sidebar-account-actions.component';
 import { SidebarBrandComponent } from '@app/components/sidebar-brand/sidebar-brand.component';
 import { VaultUnlockGateDirective } from '@app/directives/vault-unlock-gate.directive';
+import { Conversation } from '@app/interfaces/conversation';
 import { BillingService } from '@app/services/billing.service';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
@@ -52,6 +54,7 @@ import { ConversationService } from '../../services/conversation.service';
     ChatHeaderComponent,
     ConversationListItemComponent,
     LoadingIndicatorComponent,
+    PersonaAvatarComponent,
     SidebarProfileComponent,
     TrialCreditCardComponent,
     BillingLockBannerComponent,
@@ -81,6 +84,34 @@ export class ChatComponent {
   private readonly _projectConversationService = inject(ProjectConversationService);
   readonly projectsEnabled = environment.featureFlags.projects;
   readonly projects = this._projectService.orderedProjects;
+
+  // Projects whose chats are expanded inline in the sidebar. Clicking a
+  // project's name still opens its detail page; the chevron toggles this set.
+  private readonly _expandedProjects = signal<ReadonlySet<string>>(new Set());
+
+  isProjectExpanded(projectId: string): boolean {
+    return this._expandedProjects().has(projectId);
+  }
+
+  toggleProject(projectId: string, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this._expandedProjects.update((current) => {
+      const next = new Set(current);
+      if (next.has(projectId)) {
+        next.delete(projectId);
+      } else {
+        next.add(projectId);
+      }
+      return next;
+    });
+  }
+
+  // The project's chats (newest first) for the inline expanded list; its length
+  // is shown as a count next to the project name.
+  projectChats(projectId: string): Conversation[] {
+    return this._projectConversationService.byProject().get(projectId) ?? [];
+  }
 
   // The persona management page renders in the conversation outlet but brings
   // its own header, so the chat header is hidden while it is active.

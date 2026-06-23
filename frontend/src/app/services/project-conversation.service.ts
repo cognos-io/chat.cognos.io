@@ -64,7 +64,10 @@ export class ProjectConversationService {
     { initialValue: [] },
   );
 
-  private readonly _byProject = computed(() => {
+  // Conversations grouped by project id, newest first within each project.
+  // Exposed read-only so the sidebar can render per-project chat lists and
+  // counts without each consumer rebuilding the grouping.
+  readonly byProject = computed(() => {
     const grouped = new Map<string, Conversation[]>();
     for (const conversation of this._loaded()) {
       const projectId = conversation.record.project;
@@ -73,15 +76,16 @@ export class ProjectConversationService {
       list.push(conversation);
       grouped.set(projectId, list);
     }
+    for (const [projectId, list] of grouped) {
+      grouped.set(projectId, sortConversationsByUpdated(list));
+    }
     return grouped;
   });
 
   /** conversationsFor returns a signal of the project's conversations,
    *  newest first. */
   conversationsFor(projectId: string): Signal<Conversation[]> {
-    return computed(() =>
-      sortConversationsByUpdated(this._byProject().get(projectId) ?? []),
-    );
+    return computed(() => this.byProject().get(projectId) ?? []);
   }
 
   /**

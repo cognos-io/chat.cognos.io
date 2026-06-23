@@ -66,7 +66,10 @@ import {
       .cog-desktop-shell {
         display: grid;
         min-height: 100vh;
-        grid-template-columns: 290px minmax(0, 1fr);
+        /* Consumers can widen the nav by setting --cog-desktop-shell-nav-width
+           on an ancestor (e.g. the chat shell uses a roomier column so longer
+           conversation titles stay readable). */
+        grid-template-columns: var(--cog-desktop-shell-nav-width, 290px) minmax(0, 1fr);
         background: var(--cog-app-bg);
       }
 

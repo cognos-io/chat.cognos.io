@@ -657,7 +657,9 @@
       "searchAria": "Pesquisar conversas",
       "searchPlaceholder": "Pesquisar",
       "searchedOnDevice": "Pesquisado neste dispositivo",
-      "unpin": "Desafixar"
+      "unpin": "Desafixar",
+      "expandProject": "Mostrar conversas de {{name}}",
+      "collapseProject": "Ocultar conversas de {{name}}"
     },
     "message": {
       "copy": "Copiar para a área de transferência",
@@ -961,7 +963,22 @@
     "saving": "A guardar…",
     "subtitle": "Agrupe conversas relacionadas num espaço de trabalho encriptado.",
     "title": "Projetos",
-    "yourProjects": "Os seus projetos"
+    "yourProjects": "Os seus projetos",
+    "encrypted": "Encriptado",
+    "instructions": {
+      "heading": "Instruções do projeto",
+      "edit": "Editar instruções",
+      "placeholder": "Adicione instruções que se apliquem a todas as conversas deste projeto…",
+      "empty": "Adicionar instruções do projeto"
+    },
+    "settings": {
+      "title": "Definições do projeto",
+      "open": "Definições",
+      "iconLegend": "Ícone",
+      "colourLegend": "Cor",
+      "untitled": "Projeto sem título",
+      "previewHint": "Como este projeto aparece na barra lateral"
+    }
   },
   "public": {
     "redactedAria": "Valor ocultado",
