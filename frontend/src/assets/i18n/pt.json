@@ -524,6 +524,16 @@
         "switchHint": "Mude para um modelo compatível:",
         "useModel": "Usar {{ model }}"
       },
+      "reasoning": {
+        "title": "Esforço de raciocínio",
+        "efforts": {
+          "off": "Desativado",
+          "minimal": "Mínimo",
+          "low": "Baixo",
+          "medium": "Médio",
+          "high": "Alto"
+        }
+      },
       "switchPersona": "Mudar de persona — {{ name }}"
     },
     "conversation": {

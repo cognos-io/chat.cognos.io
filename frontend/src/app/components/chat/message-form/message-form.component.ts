@@ -30,6 +30,8 @@ import {
   CognosButtonComponent,
   CognosIconButtonComponent,
   CognosIconComponent,
+  CognosMenuComponent,
+  type CognosMenuItem,
   CognosRedactedTextComponent,
   type CognosRedactedTextKind,
   type CognosRedactedTextLabels,
@@ -78,6 +80,7 @@ function escapeHtml(value: string): string {
     CognosButtonComponent,
     CognosIconButtonComponent,
     CognosIconComponent,
+    CognosMenuComponent,
     CognosRedactedTextComponent,
     ComposerToolsComponent,
     ModelSelectorComponent,
@@ -320,6 +323,41 @@ function escapeHtml(value: string): string {
                 (modelSelected)="closeModelSelector()"
               ></app-model-selector>
             </ng-template>
+
+            @if (modelService.selectedModel().reasoningEfforts.length) {
+              <cog-button
+                #reasoningTrigger="cdkOverlayOrigin"
+                cdkOverlayOrigin
+                class="message-form__reasoning"
+                appearance="subtle"
+                icon="gauge"
+                iconAfter="chevron-down"
+                type="button"
+                [title]="t('chat.composer.reasoning.title')"
+                [attr.aria-expanded]="reasoningMenuOpen()"
+                (click)="toggleReasoningMenu()"
+              >
+                {{ reasoningEffortLabel(modelService.selectedReasoningEffort()) }}
+              </cog-button>
+
+              <ng-template
+                cdkConnectedOverlay
+                [cdkConnectedOverlayOrigin]="reasoningTrigger"
+                [cdkConnectedOverlayOpen]="reasoningMenuOpen()"
+                [cdkConnectedOverlayHasBackdrop]="true"
+                cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+                [cdkConnectedOverlayPositions]="modelSelectorPositions"
+                [cdkConnectedOverlayPush]="true"
+                (backdropClick)="closeReasoningMenu()"
+                (detach)="closeReasoningMenu()"
+                (overlayKeydown)="onOverlayKeydown($event)"
+              >
+                <cog-menu
+                  [items]="reasoningMenuItems()"
+                  (itemSelect)="onReasoningEffortSelect($event)"
+                />
+              </ng-template>
+            }
 
             <button
               #personaTrigger="cdkOverlayOrigin"
@@ -1059,6 +1097,7 @@ export class MessageFormComponent {
   }
 
   readonly modelSelectorOpen = signal(false);
+  readonly reasoningMenuOpen = signal(false);
 
   readonly modelSelectorPositions = [
     {
@@ -1111,9 +1150,45 @@ export class MessageFormComponent {
     this.modelSelectorOpen.set(false);
   }
 
+  toggleReasoningMenu() {
+    this.reasoningMenuOpen.update((open) => !open);
+  }
+
+  closeReasoningMenu() {
+    this.reasoningMenuOpen.set(false);
+  }
+
+  // Human label for an effort tier. Falls back to a title-cased raw value so
+  // model-specific tiers (e.g. "ultra") render sensibly without a translation.
+  reasoningEffortLabel(effort: string): string {
+    if (!effort) {
+      return '';
+    }
+    const key = `chat.composer.reasoning.efforts.${effort}`;
+    const label = this._transloco.translate(key);
+    return label === key ? effort.charAt(0).toUpperCase() + effort.slice(1) : label;
+  }
+
+  reasoningMenuItems(): CognosMenuItem[] {
+    const selected = this.modelService.selectedReasoningEffort();
+    return this.modelService.selectedModel().reasoningEfforts.map((effort) => ({
+      title: this.reasoningEffortLabel(effort),
+      icon: effort === selected ? 'check' : undefined,
+    }));
+  }
+
+  onReasoningEffortSelect(index: number) {
+    const effort = this.modelService.selectedModel().reasoningEfforts[index];
+    if (effort) {
+      this.modelService.setReasoningEffort(effort);
+    }
+    this.closeReasoningMenu();
+  }
+
   onOverlayKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       this.closeModelSelector();
+      this.closeReasoningMenu();
     }
   }
 

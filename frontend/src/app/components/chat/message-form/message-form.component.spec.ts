@@ -29,11 +29,14 @@ describe('MessageFormComponent', () => {
     name: string;
     isEligible: boolean;
     supportsImageGeneration?: boolean;
+    reasoningEfforts: string[];
   }>({
     id: 'model-1',
     name: 'Claude Sonnet',
     isEligible: true,
+    reasoningEfforts: [],
   });
+  const selectedReasoningEffort = signal('');
 
   const messageService = {
     status,
@@ -65,7 +68,12 @@ describe('MessageFormComponent', () => {
     messages.set([]);
     imageGenerationEnabled.set(false);
     selectedModelUnsupported.set(false);
-    selectedModel.set({ id: 'model-1', name: 'Claude Sonnet', isEligible: true });
+    selectedModel.set({
+      id: 'model-1',
+      name: 'Claude Sonnet',
+      isEligible: true,
+      reasoningEfforts: [],
+    });
     vi.clearAllMocks();
     vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
       '00000000-0000-4000-8000-000000000000',
@@ -113,7 +121,7 @@ describe('MessageFormComponent', () => {
         { provide: MessageService, useValue: messageService },
         {
           provide: ModelService,
-          useValue: { selectedModel },
+          useValue: { selectedModel, selectedReasoningEffort },
         },
         { provide: ComposerToolsService, useValue: composerTools },
         { provide: VaultService, useValue: { keyPair$: new Subject() } },
@@ -209,7 +217,12 @@ describe('MessageFormComponent', () => {
   });
 
   it('does not send when the selected model is unavailable', () => {
-    selectedModel.set({ id: 'model-2', name: 'Global Model', isEligible: false });
+    selectedModel.set({
+      id: 'model-2',
+      name: 'Global Model',
+      isEligible: false,
+      reasoningEfforts: [],
+    });
     component.messageForm.controls.content.setValue('Blocked message');
     fixture.detectChanges();
 

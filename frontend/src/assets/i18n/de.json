@@ -524,6 +524,16 @@
         "switchHint": "Wechseln Sie zu einem Modell, das dies unterstützt:",
         "useModel": "{{ model }} verwenden"
       },
+      "reasoning": {
+        "title": "Denkaufwand",
+        "efforts": {
+          "off": "Aus",
+          "minimal": "Minimal",
+          "low": "Niedrig",
+          "medium": "Mittel",
+          "high": "Hoch"
+        }
+      },
       "switchPersona": "Persona wechseln — {{ name }}"
     },
     "conversation": {

@@ -21,6 +21,7 @@ function makeModel(overrides: Partial<Model>): Model {
     inputContextLength: 1000,
     pricing: { inputUsdPerMillionTokens: 0, outputUsdPerMillionTokens: 0 },
     supportsImageGeneration: false,
+    reasoningEfforts: [],
     isEligible: true,
     ...overrides,
   };

@@ -524,6 +524,16 @@
         "switchHint": "Switch to a model that supports it:",
         "useModel": "Use {{ model }}"
       },
+      "reasoning": {
+        "title": "Reasoning effort",
+        "efforts": {
+          "off": "Off",
+          "minimal": "Minimal",
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High"
+        }
+      },
       "switchPersona": "Switch persona — {{ name }}"
     },
     "conversation": {
