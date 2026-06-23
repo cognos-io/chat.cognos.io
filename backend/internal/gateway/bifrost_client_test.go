@@ -181,15 +181,14 @@ func TestBifrostClientBuildsReasoningEffortParam(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		name        string
-		effort      string
-		wantNil     bool
-		wantEnabled *bool
-		wantEffort  *string
+		name       string
+		effort     string
+		wantNil    bool
+		wantEffort *string
 	}{
 		{name: "empty sends no reasoning param", effort: "", wantNil: true},
-		{name: "off disables reasoning", effort: "off", wantEnabled: boolPtr(false)},
-		{name: "none disables reasoning", effort: "none", wantEnabled: boolPtr(false)},
+		{name: "off disables via none", effort: "off", wantEffort: stringPtr("none")},
+		{name: "none disables reasoning", effort: "none", wantEffort: stringPtr("none")},
 		{name: "medium passes through as effort", effort: "medium", wantEffort: stringPtr("medium")},
 		{name: "model-specific tier passes through", effort: "ultra", wantEffort: stringPtr("ultra")},
 	}
@@ -230,11 +229,6 @@ func TestBifrostClientBuildsReasoningEffortParam(t *testing.T) {
 			}
 			if reasoning == nil {
 				t.Fatalf("reasoning param = nil, want set")
-			}
-			if tc.wantEnabled != nil {
-				if reasoning.Enabled == nil || *reasoning.Enabled != *tc.wantEnabled {
-					t.Fatalf("reasoning.Enabled = %#v, want %v", reasoning.Enabled, *tc.wantEnabled)
-				}
 			}
 			if tc.wantEffort != nil {
 				if reasoning.Effort == nil || *reasoning.Effort != *tc.wantEffort {
@@ -466,8 +460,6 @@ func TestParseBifrostLogLevelDefaultsToError(t *testing.T) {
 }
 
 func stringPtr(v string) *string { return &v }
-
-func boolPtr(v bool) *bool { return &v }
 
 // streamChunk builds a single streaming chunk carrying an optional answer delta
 // and/or reasoning delta, mirroring how providers interleave the two.

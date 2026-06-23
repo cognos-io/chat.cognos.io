@@ -249,16 +249,18 @@ func (c *BifrostClient) buildChatRequest(req CompleteRequest) (*schemas.BifrostC
 }
 
 // reasoningParam translates a user-selected effort into Bifrost's reasoning
-// parameter. "off" (or "none") explicitly disables reasoning; any other
-// non-empty value is passed through as the effort tier; empty returns nil so no
-// reasoning parameter is sent at all.
+// parameter. Empty returns nil so no reasoning parameter is sent. "off" is
+// normalised to "none" — Requesty's vocabulary for disabling reasoning, which
+// Bifrost also treats as off ("any value other than none enables reasoning").
+// Every other tier is passed through verbatim.
 func reasoningParam(effort string) *schemas.ChatReasoning {
-	switch strings.ToLower(strings.TrimSpace(effort)) {
+	normalised := strings.ToLower(strings.TrimSpace(effort))
+	switch normalised {
 	case "":
 		return nil
 	case "off", "none":
-		disabled := false
-		return &schemas.ChatReasoning{Enabled: &disabled}
+		none := "none"
+		return &schemas.ChatReasoning{Effort: &none}
 	default:
 		return &schemas.ChatReasoning{Effort: &effort}
 	}
