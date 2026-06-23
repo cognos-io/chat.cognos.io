@@ -144,4 +144,4 @@ export function parsePersonaMarkdown(markdown: string): Persona {
 export const defaultPersonaId = 'cognos:simple-assistant';
 export const generateConversationPersonaId = 'cognos:generate-conversation-persona';
 export const generateConversationSystemPrompt =
-  'Generate a 3 to 5 word title for the conversation from the user message. Return only the title.';
+  'Generate a concise 3 to 5 word title for this conversation from the user message. Return only the title, with no quotes or explanation. Do not return generic titles like New Conversation or Untitled Chat.';
