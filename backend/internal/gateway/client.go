@@ -13,6 +13,11 @@ type CompleteRequest struct {
 	ProviderModelID string
 	Messages        []Message
 	MaxOutputTokens int
+	// ReasoningEffort, when set, asks the provider for that reasoning intensity
+	// (e.g. "low", "medium", "high", or model-specific tiers like "ultra"). The
+	// sentinel "off" disables reasoning. Empty means "don't send a reasoning
+	// parameter" — the provider uses its own default.
+	ReasoningEffort string
 }
 
 type Usage struct {

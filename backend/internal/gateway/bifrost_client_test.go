@@ -177,6 +177,74 @@ func TestBifrostClientCompleteMapsReasoning(t *testing.T) {
 	}
 }
 
+func TestBifrostClientBuildsReasoningEffortParam(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name        string
+		effort      string
+		wantNil     bool
+		wantEnabled *bool
+		wantEffort  *string
+	}{
+		{name: "empty sends no reasoning param", effort: "", wantNil: true},
+		{name: "off disables reasoning", effort: "off", wantEnabled: boolPtr(false)},
+		{name: "none disables reasoning", effort: "none", wantEnabled: boolPtr(false)},
+		{name: "medium passes through as effort", effort: "medium", wantEffort: stringPtr("medium")},
+		{name: "model-specific tier passes through", effort: "ultra", wantEffort: stringPtr("ultra")},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			requester := &stubBifrostRequester{
+				resp: &schemas.BifrostChatResponse{
+					Choices: []schemas.BifrostResponseChoice{{
+						ChatNonStreamResponseChoice: &schemas.ChatNonStreamResponseChoice{
+							Message: &schemas.ChatMessage{
+								Role:    schemas.ChatMessageRoleAssistant,
+								Content: &schemas.ChatMessageContent{ContentStr: stringPtr("hi")},
+							},
+						},
+					}},
+				},
+			}
+			client := NewBifrostClient(requester, nil, nil, nil)
+			if _, err := client.Complete(context.Background(), CompleteRequest{
+				ProviderID:      "requesty",
+				ProviderModelID: "model",
+				ReasoningEffort: tc.effort,
+			}); err != nil {
+				t.Fatalf("Complete() error = %v", err)
+			}
+
+			reasoning := (*schemas.ChatReasoning)(nil)
+			if requester.req.Params != nil {
+				reasoning = requester.req.Params.Reasoning
+			}
+			if tc.wantNil {
+				if reasoning != nil {
+					t.Fatalf("reasoning param = %#v, want nil", reasoning)
+				}
+				return
+			}
+			if reasoning == nil {
+				t.Fatalf("reasoning param = nil, want set")
+			}
+			if tc.wantEnabled != nil {
+				if reasoning.Enabled == nil || *reasoning.Enabled != *tc.wantEnabled {
+					t.Fatalf("reasoning.Enabled = %#v, want %v", reasoning.Enabled, *tc.wantEnabled)
+				}
+			}
+			if tc.wantEffort != nil {
+				if reasoning.Effort == nil || *reasoning.Effort != *tc.wantEffort {
+					t.Fatalf("reasoning.Effort = %#v, want %q", reasoning.Effort, *tc.wantEffort)
+				}
+			}
+		})
+	}
+}
+
 func TestBifrostClientCompleteOmitsReasoningWhenAbsent(t *testing.T) {
 	t.Parallel()
 
@@ -398,6 +466,8 @@ func TestParseBifrostLogLevelDefaultsToError(t *testing.T) {
 }
 
 func stringPtr(v string) *string { return &v }
+
+func boolPtr(v bool) *bool { return &v }
 
 // streamChunk builds a single streaming chunk carrying an optional answer delta
 // and/or reasoning delta, mirroring how providers interleave the two.

@@ -235,11 +235,33 @@ func (c *BifrostClient) buildChatRequest(req CompleteRequest) (*schemas.BifrostC
 		Model:    req.ProviderModelID,
 		Input:    messages,
 	}
+	if req.MaxOutputTokens > 0 || req.ReasoningEffort != "" {
+		chatReq.Params = &schemas.ChatParameters{}
+	}
 	if req.MaxOutputTokens > 0 {
-		chatReq.Params = &schemas.ChatParameters{MaxCompletionTokens: &req.MaxOutputTokens}
+		chatReq.Params.MaxCompletionTokens = &req.MaxOutputTokens
+	}
+	if reasoning := reasoningParam(req.ReasoningEffort); reasoning != nil {
+		chatReq.Params.Reasoning = reasoning
 	}
 
 	return chatReq, nil
+}
+
+// reasoningParam translates a user-selected effort into Bifrost's reasoning
+// parameter. "off" (or "none") explicitly disables reasoning; any other
+// non-empty value is passed through as the effort tier; empty returns nil so no
+// reasoning parameter is sent at all.
+func reasoningParam(effort string) *schemas.ChatReasoning {
+	switch strings.ToLower(strings.TrimSpace(effort)) {
+	case "":
+		return nil
+	case "off", "none":
+		disabled := false
+		return &schemas.ChatReasoning{Enabled: &disabled}
+	default:
+		return &schemas.ChatReasoning{Effort: &effort}
+	}
 }
 
 func extractMessageContent(message *schemas.ChatMessage) string {
