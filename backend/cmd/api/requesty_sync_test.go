@@ -56,12 +56,14 @@ func TestRequestySyncEnrichesMatchedModelsAndPreservesCuration(t *testing.T) {
 	fetcher := stubFetcher{models: []requestysync.RequestyModel{
 		{
 			// Same base id, different region — must still match.
-			ID:                requestysync.NormalizeID(enrichTarget.GetString("provider_model_id")) + "@eastus2",
-			SupportsReasoning: true,
-			InputPrice:        0.0000011, // -> 1.1 / M
-			OutputPrice:       0.0000044, // -> 4.4 / M
-			ContextWindow:     200000,
-			MaxOutputTokens:   100000,
+			ID:                  requestysync.NormalizeID(enrichTarget.GetString("provider_model_id")) + "@eastus2",
+			SupportsReasoning:   true,
+			SupportsVision:      true,
+			SupportsToolCalling: true,
+			InputPrice:          0.0000011, // -> 1.1 / M
+			OutputPrice:         0.0000044, // -> 4.4 / M
+			ContextWindow:       200000,
+			MaxOutputTokens:     100000,
 		},
 		{
 			ID:                curated.GetString("provider_model_id"),
@@ -94,6 +96,10 @@ func TestRequestySyncEnrichesMatchedModelsAndPreservesCuration(t *testing.T) {
 	}
 	if got.GetInt("input_context_tokens") != 200000 {
 		t.Fatalf("context = %d, want 200000", got.GetInt("input_context_tokens"))
+	}
+	if !got.GetBool("supports_vision") || !got.GetBool("supports_tool_calling") {
+		t.Fatalf("capability flags not synced: vision=%v tool_calling=%v",
+			got.GetBool("supports_vision"), got.GetBool("supports_tool_calling"))
 	}
 	if got.GetBool("whitelisted") != wantWhitelisted ||
 		got.GetString("privacy_tier") != wantTier ||

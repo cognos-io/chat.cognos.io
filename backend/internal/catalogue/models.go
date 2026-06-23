@@ -60,7 +60,13 @@ type Model struct {
 	// DefaultReasoningEffort is the tier preselected in the composer. Only
 	// meaningful when ReasoningEfforts is non-empty.
 	DefaultReasoningEffort string `json:"default_reasoning_effort,omitempty"`
-	IsActive               bool   `json:"-"`
+	// Capability flags kept fresh by the Requesty sync. Distinct from
+	// SupportsImageGeneration, which stays curated (it drives image routing).
+	SupportsVision      bool `json:"supports_vision"`
+	SupportsToolCalling bool `json:"supports_tool_calling"`
+	SupportsWebSearch   bool `json:"supports_web_search"`
+	SupportsComputerUse bool `json:"supports_computer_use"`
+	IsActive            bool `json:"-"`
 }
 
 // AcceptsReasoningEffort reports whether the given effort tier is one this model

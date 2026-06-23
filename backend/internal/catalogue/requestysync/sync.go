@@ -92,6 +92,21 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 			changed = true
 		}
 
+		// Capability flags are authoritative facts from Requesty, refreshed on
+		// every run. (supports_image_generation is deliberately excluded — it
+		// stays curated because it also drives image-transport routing.)
+		for field, want := range map[string]bool{
+			"supports_vision":       model.SupportsVision,
+			"supports_tool_calling": model.SupportsToolCalling,
+			"supports_web_search":   model.SupportsWebSearch,
+			"supports_computer_use": model.SupportsComputerUse,
+		} {
+			if record.GetBool(field) != want {
+				record.Set(field, want)
+				changed = true
+			}
+		}
+
 		// Reasoning efforts: set only when the model reasons and none are set,
 		// so a curated/manual override is never clobbered.
 		if efforts, def := reasoningEffortsFor(model); efforts != nil &&

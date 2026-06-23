@@ -103,6 +103,10 @@ func (r *PocketBaseRepo) ActiveModels(_ context.Context) ([]Model, error) {
 			ImageGenerationTransport: strings.TrimSpace(record.GetString("image_generation_transport")),
 			ReasoningEfforts:         normaliseEfforts(record.GetStringSlice("reasoning_efforts")),
 			DefaultReasoningEffort:   strings.TrimSpace(record.GetString("default_reasoning_effort")),
+			SupportsVision:           record.GetBool("supports_vision"),
+			SupportsToolCalling:      record.GetBool("supports_tool_calling"),
+			SupportsWebSearch:        record.GetBool("supports_web_search"),
+			SupportsComputerUse:      record.GetBool("supports_computer_use"),
 			IsActive:                 true,
 		}
 
