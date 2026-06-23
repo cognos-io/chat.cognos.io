@@ -184,6 +184,25 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
 
     <ng-template #body let-message>
       <ng-container *transloco="let t">
+        <!-- Reasoning sits above the answer it explains, matching the chat view. -->
+        @if (message.decryptedData.reasoning) {
+          <details class="public-conversation__reasoning">
+            <summary class="public-conversation__reasoning-summary">
+              <cog-icon name="brain" [size]="14" aria-hidden="true" />
+              {{ t('chat.message.reasoningShow') }}
+            </summary>
+            <markdown
+              class="public-conversation__text public-conversation__reasoning-text"
+              emoji
+              katex
+              [data]="renderBody(message.decryptedData.reasoning)"
+            ></markdown>
+            <p class="public-conversation__muted">
+              {{ t('chat.message.reasoningDisclaimer') }}
+            </p>
+          </details>
+        }
+
         @if (message.decryptedData.deleted) {
           <p class="public-conversation__muted">{{ t('public.deletedMessage') }}</p>
         } @else if (message.decryptedData.content) {
@@ -195,24 +214,6 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
           ></markdown>
         } @else {
           <p class="public-conversation__muted">{{ t('public.emptyMessage') }}</p>
-        }
-
-        @if (message.decryptedData.reasoning) {
-          <details class="public-conversation__reasoning">
-            <summary class="public-conversation__reasoning-summary">
-              <cog-icon name="brain" [size]="14" aria-hidden="true" />
-              {{ t('chat.message.reasoningShow') }}
-            </summary>
-            <markdown
-              class="public-conversation__text"
-              emoji
-              katex
-              [data]="renderBody(message.decryptedData.reasoning)"
-            ></markdown>
-            <p class="public-conversation__muted">
-              {{ t('chat.message.reasoningDisclaimer') }}
-            </p>
-          </details>
         }
       </ng-container>
     </ng-template>
@@ -340,6 +341,12 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
 
     .public-conversation__reasoning-summary::-webkit-details-marker {
       display: none;
+    }
+
+    /* Fainter than the answer so the reasoning reads as secondary context. */
+    .public-conversation__reasoning-text {
+      color: var(--cog-text-subtle, #6b6b6b);
+      font-size: var(--cog-fs-body-sm, 13px);
     }
 
     .public-conversation__status,
