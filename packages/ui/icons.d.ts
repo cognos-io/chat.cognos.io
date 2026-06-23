@@ -17,6 +17,7 @@ export type CognosIconName =
   | 'send'
   | 'paperclip'
   | 'book-text'
+  | 'brain'
   | 'sparkles'
   | 'server'
   | 'cloud'

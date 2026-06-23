@@ -1,6 +1,7 @@
 import {
   BatteryMedium,
   BookText,
+  Brain,
   Calendar,
   Check,
   ChevronDown,
@@ -87,6 +88,7 @@ export const cognosIconNames = Object.freeze([
   'send',
   'paperclip',
   'book-text',
+  'brain',
   'sparkles',
   'server',
   'cloud',
@@ -162,6 +164,7 @@ export const cognosIcons = Object.freeze({
   send: Send,
   paperclip: Paperclip,
   'book-text': BookText,
+  brain: Brain,
   sparkles: Sparkles,
   server: Server,
   cloud: Cloud,

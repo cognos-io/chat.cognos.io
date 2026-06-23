@@ -23,6 +23,7 @@ import {
   CognosBranchSwitcherComponent,
   CognosButtonComponent,
   CognosIconButtonComponent,
+  CognosIconComponent,
   CognosImageGridComponent,
   CognosLightboxComponent,
   CognosMenuComponent,
@@ -54,6 +55,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     CognosAssistantMessageComponent,
     CognosUserMessageComponent,
     CognosIconButtonComponent,
+    CognosIconComponent,
     CognosBranchSwitcherComponent,
     CognosButtonComponent,
     CognosImageGridComponent,
@@ -217,12 +219,13 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                     [attr.aria-expanded]="reasoningExpanded()"
                     (click)="toggleReasoning()"
                   >
+                    <cog-icon name="brain" [size]="14" aria-hidden="true" />
+                    {{ reasoningToggleLabel() }}
                     <span
                       class="message-list-item__reasoning-caret"
                       [class.is-open]="reasoningExpanded()"
                       aria-hidden="true"
                     ></span>
-                    {{ reasoningToggleLabel() }}
                   </button>
                   @if (reasoningExpanded()) {
                     <div class="message-list-item__reasoning-body" role="region">
