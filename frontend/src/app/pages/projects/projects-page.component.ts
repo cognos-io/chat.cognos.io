@@ -6,6 +6,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 
 import { CognosBreadcrumbsComponent, CognosButtonComponent } from '@cognos/ui-angular';
 
+import { defaultProjectColor, defaultProjectIcon } from '@app/interfaces/project';
 import { ProjectService } from '@app/services/project.service';
 
 @Component({
@@ -57,6 +58,9 @@ export class ProjectsPageComponent {
       version: '1',
       name,
       description: this.description().trim(),
+      icon: defaultProjectIcon,
+      color: defaultProjectColor,
+      instructions: '',
     });
   }
 }

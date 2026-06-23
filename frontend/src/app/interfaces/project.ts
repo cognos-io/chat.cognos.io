@@ -1,6 +1,67 @@
 import { z } from 'zod';
 
+import type { CognosIconName } from '@cognos/ui/icons';
+
+import { PersonaColor, personaColors } from '@app/interfaces/persona';
 import { parseBackendDate } from '@app/utils/timestamp';
+
+// Curated subset of the icon set that reads well as a project avatar. The
+// settings dialog renders these as the icon picker grid, so the order here is
+// the order shown to the user.
+export const projectIcons = [
+  'folder',
+  'folder-lock',
+  'landmark',
+  'layout-grid',
+  'book-text',
+  'graduation-cap',
+  'scale',
+  'file-text',
+  'table',
+  'git-branch',
+  'server',
+  'cloud',
+  'shield',
+  'key-round',
+  'calendar',
+  'credit-card',
+  'users',
+  'message-square',
+  'gauge',
+  'sparkles',
+  'languages',
+  'quote',
+  'search',
+  'laptop',
+] as const satisfies readonly CognosIconName[];
+
+export type ProjectIcon = (typeof projectIcons)[number];
+export const defaultProjectIcon: ProjectIcon = 'folder';
+
+// Projects reuse the persona avatar palette so a single set of swatch styles
+// covers both surfaces.
+export const projectColors = personaColors;
+export type ProjectColor = PersonaColor;
+export const defaultProjectColor: ProjectColor = 'slate';
+
+export function coerceProjectIcon(value: unknown): ProjectIcon {
+  return typeof value === 'string' &&
+    (projectIcons as readonly string[]).includes(value)
+    ? (value as ProjectIcon)
+    : defaultProjectIcon;
+}
+
+export function coerceProjectColor(value: unknown): ProjectColor {
+  return typeof value === 'string' &&
+    (projectColors as readonly string[]).includes(value)
+    ? (value as ProjectColor)
+    : defaultProjectColor;
+}
+
+// Unknown/missing/legacy icon and colour values coerce to a safe default so
+// projects created before these fields existed still parse.
+const ProjectIconValue = z.unknown().transform(coerceProjectIcon);
+const ProjectColorValue = z.unknown().transform(coerceProjectColor);
 
 /**
  * ProjectData is the decrypted metadata of a project. It is encrypted
@@ -11,6 +72,11 @@ export const ProjectData = z.object({
   version: z.literal('1').default('1'),
   name: z.string().trim(),
   description: z.string().trim().default(''),
+  icon: ProjectIconValue,
+  color: ProjectColorValue,
+  // Optional project-level instructions, prepended to the system prompt of
+  // chats created inside the project.
+  instructions: z.string().trim().default(''),
 });
 export type ProjectData = z.infer<typeof ProjectData>;
 

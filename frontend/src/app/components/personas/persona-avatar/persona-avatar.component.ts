@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 import { CognosIconComponent } from '@cognos/ui-angular';
+import type { CognosIconName } from '@cognos/ui/icons';
 
-import { PersonaColor, PersonaIcon } from '@app/interfaces/persona';
+import { PersonaColor } from '@app/interfaces/persona';
 
 // The persona "identity chip": a rounded square with the persona's icon on a
 // pastel background. Reused by the personas page, the editor, the in-chat
-// switcher, and the pinned chips so the look stays consistent everywhere.
+// switcher, the pinned chips, and projects so the look stays consistent
+// everywhere.
 @Component({
   selector: 'app-persona-avatar',
   standalone: true,
@@ -77,7 +79,7 @@ import { PersonaColor, PersonaIcon } from '@app/interfaces/persona';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PersonaAvatarComponent {
-  readonly icon = input.required<PersonaIcon>();
+  readonly icon = input.required<CognosIconName>();
   readonly color = input.required<PersonaColor>();
   readonly size = input(40);
 
