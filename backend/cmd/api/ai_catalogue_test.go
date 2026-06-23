@@ -40,6 +40,8 @@ type modelSeed struct {
 	InputUSDPerMillionTokens  float64
 	OutputUSDPerMillionTokens float64
 	TagRecordIDs              []string
+	ReasoningEfforts          []string
+	DefaultReasoningEffort    string
 }
 
 func seedAIProvider(t testing.TB, app *tests.TestApp, seed providerSeed) string {
@@ -109,6 +111,10 @@ func seedAIModel(t testing.TB, app *tests.TestApp, seed modelSeed) string {
 	record.Set("input_usd_per_million_tokens", seed.InputUSDPerMillionTokens)
 	record.Set("output_usd_per_million_tokens", seed.OutputUSDPerMillionTokens)
 	record.Set("tags", seed.TagRecordIDs)
+	if seed.ReasoningEfforts != nil {
+		record.Set("reasoning_efforts", seed.ReasoningEfforts)
+	}
+	record.Set("default_reasoning_effort", seed.DefaultReasoningEffort)
 	if err := app.Save(record); err != nil {
 		t.Fatalf("Save(ai_models %q) error = %v", seed.ModelID, err)
 	}

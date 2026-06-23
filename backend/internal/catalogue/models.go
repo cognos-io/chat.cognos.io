@@ -53,7 +53,24 @@ type Model struct {
 	// ("images_api" or "chat_completions"). Backend routing only — not exposed to
 	// the frontend. Only meaningful when SupportsImageGeneration is true.
 	ImageGenerationTransport string `json:"-"`
-	IsActive                 bool   `json:"-"`
+	// ReasoningEfforts is the ordered list of reasoning-effort tiers this model
+	// accepts (e.g. ["off","low","medium","high"]). Empty means the model takes
+	// no effort parameter, so the composer shows no effort selector for it.
+	ReasoningEfforts []string `json:"reasoning_efforts,omitempty"`
+	// DefaultReasoningEffort is the tier preselected in the composer. Only
+	// meaningful when ReasoningEfforts is non-empty.
+	DefaultReasoningEffort string `json:"default_reasoning_effort,omitempty"`
+	IsActive               bool   `json:"-"`
+}
+
+// AcceptsReasoningEffort reports whether the given effort tier is one this model
+// declares. Empty effort (no selection) is always accepted — it means "send no
+// reasoning parameter".
+func (m Model) AcceptsReasoningEffort(effort string) bool {
+	if effort == "" {
+		return true
+	}
+	return slices.Contains(m.ReasoningEfforts, effort)
 }
 
 func CloneModels(models []Model) []Model {

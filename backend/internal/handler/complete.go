@@ -37,6 +37,7 @@ type completeRequest struct {
 	ParentMessageID string              `json:"parent_message_id,omitempty"`
 	RequestID       string              `json:"request_id,omitempty"`
 	MaxOutputTokens int                 `json:"max_output_tokens,omitempty"`
+	ReasoningEffort string              `json:"reasoning_effort,omitempty"`
 	Persist         *bool               `json:"persist,omitempty"`
 }
 
@@ -222,6 +223,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		req.SystemPrompt = strings.TrimSpace(req.SystemPrompt)
 		req.ParentMessageID = strings.TrimSpace(req.ParentMessageID)
 		req.RequestID = strings.TrimSpace(req.RequestID)
+		req.ReasoningEffort = strings.TrimSpace(req.ReasoningEffort)
 
 		if req.ModelID == "" {
 			return apis.NewBadRequestError("Model ID is required", nil)
@@ -262,6 +264,12 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		userTier := catalogue.NormalizePrivacyTier(e.Auth.GetString("privacy_tier"))
 		if !catalogue.IsEligibleForTier(userTier, model.PrivacyTier) {
 			return apis.NewForbiddenError("Model is not available for the user's privacy tier", nil)
+		}
+
+		// Only forward a reasoning effort the model actually declares — guards
+		// against sending an unsupported parameter that a provider might reject.
+		if !model.AcceptsReasoningEffort(req.ReasoningEffort) {
+			return apis.NewBadRequestError("Reasoning effort is not supported for this model", nil)
 		}
 
 		prompt := persona.Prompt{SystemMessage: req.SystemPrompt}
@@ -395,6 +403,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			ProviderModelID: model.ProviderModelID,
 			Messages:        messages,
 			MaxOutputTokens: req.MaxOutputTokens,
+			ReasoningEffort: req.ReasoningEffort,
 		}
 
 		gatewayResp, clientDisconnected, _, err := streamGatewayCompletion(e, params, gatewayReq, owner.ID, req.RequestID)

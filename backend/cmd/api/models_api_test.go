@@ -233,6 +233,92 @@ func TestModelsGetExposesImageGenerationCapability(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestModelsGetExposesReasoningEffortOptions(t *testing.T) {
+	t.Parallel()
+
+	scenario := tests.ApiScenario{
+		Name:           "models route exposes per-model reasoning effort options",
+		Method:         http.MethodGet,
+		URL:            "/api/v1/models",
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"reasoning_efforts":["off","low","medium","high"]`,
+			`"default_reasoning_effort":"medium"`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+
+			providerID := seedAIProvider(t, app, providerSeed{
+				ProviderID:        "openai",
+				Name:              "OpenAI",
+				Enabled:           true,
+				RoutingProviderID: "openai",
+			})
+
+			seedAIModel(t, app, modelSeed{
+				ModelID:                   "reasoning-model",
+				ProviderRecordID:          providerID,
+				ProviderModelID:           "openai/o-mini",
+				Name:                      "Reasoning Model",
+				Slug:                      "reasoning-model",
+				Description:               "A model that accepts a reasoning effort",
+				Enabled:                   true,
+				Whitelisted:               true,
+				PrivacyTier:               "eu",
+				InputContextTokens:        64000,
+				InputUSDPerMillionTokens:  1,
+				OutputUSDPerMillionTokens: 2,
+				ReasoningEfforts:          []string{"off", "low", "medium", "high"},
+				DefaultReasoningEffort:    "medium",
+			})
+
+			// A model without effort metadata must expose neither field, so the
+			// composer shows no selector for it.
+			seedAIModel(t, app, modelSeed{
+				ModelID:                   "plain-model",
+				ProviderRecordID:          providerID,
+				ProviderModelID:           "openai/plain",
+				Name:                      "Plain Model",
+				Slug:                      "plain-model",
+				Description:               "No reasoning effort",
+				Enabled:                   true,
+				Whitelisted:               true,
+				PrivacyTier:               "eu",
+				InputContextTokens:        32000,
+				InputUSDPerMillionTokens:  1,
+				OutputUSDPerMillionTokens: 2,
+			})
+		},
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, res *http.Response) {
+			bodyBytes, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatalf("read response: %v", err)
+			}
+			defer res.Body.Close()
+
+			var payload struct {
+				Models []struct {
+					ID                     string   `json:"id"`
+					ReasoningEfforts       []string `json:"reasoning_efforts"`
+					DefaultReasoningEffort string   `json:"default_reasoning_effort"`
+				} `json:"models"`
+			}
+			if err := json.Unmarshal(bodyBytes, &payload); err != nil {
+				t.Fatalf("unmarshal models response: %v", err)
+			}
+
+			for _, model := range payload.Models {
+				if model.ID == "plain-model" && len(model.ReasoningEfforts) != 0 {
+					t.Errorf("plain-model should expose no reasoning efforts, got %v", model.ReasoningEfforts)
+				}
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func TestModelsGetReturnsCuratedMetadataAndSkipsDisabledOrUnwhitelistedModels(t *testing.T) {
 	t.Parallel()
 

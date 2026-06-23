@@ -101,6 +101,8 @@ func (r *PocketBaseRepo) ActiveModels(_ context.Context) ([]Model, error) {
 
 			SupportsImageGeneration:  record.GetBool("supports_image_generation"),
 			ImageGenerationTransport: strings.TrimSpace(record.GetString("image_generation_transport")),
+			ReasoningEfforts:         normaliseEfforts(record.GetStringSlice("reasoning_efforts")),
+			DefaultReasoningEffort:   strings.TrimSpace(record.GetString("default_reasoning_effort")),
 			IsActive:                 true,
 		}
 
@@ -192,4 +194,20 @@ func mapTags(ids []string, tagsByID map[string]tagRecord) []Tag {
 	}
 
 	return tags
+}
+
+// normaliseEfforts trims and drops blank entries from the stored reasoning
+// effort list, preserving order. Returns nil for an empty list so the JSON
+// field is omitted and no selector is shown.
+func normaliseEfforts(raw []string) []string {
+	efforts := make([]string, 0, len(raw))
+	for _, effort := range raw {
+		if trimmed := strings.TrimSpace(effort); trimmed != "" {
+			efforts = append(efforts, trimmed)
+		}
+	}
+	if len(efforts) == 0 {
+		return nil
+	}
+	return efforts
 }

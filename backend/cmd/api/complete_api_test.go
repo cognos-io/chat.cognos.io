@@ -109,6 +109,122 @@ func TestCompletionsRejectNonWhitelistedModelBeforeGatewayCall(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestCompletionForwardsValidReasoningEffortToGateway(t *testing.T) {
+	t.Parallel()
+
+	var gotEffort string
+	gatewayClient := &gateway.MockClient{
+		CompleteStreamFunc: func(_ context.Context, req gateway.CompleteRequest) (<-chan gateway.CompleteStreamEvent, error) {
+			gotEffort = req.ReasoningEffort
+			ch := make(chan gateway.CompleteStreamEvent, 2)
+			ch <- gateway.CompleteStreamEvent{Delta: "answer"}
+			ch <- gateway.CompleteStreamEvent{Usage: &gateway.Usage{OutputTokens: 1}}
+			close(ch)
+			return ch, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "completions forward a declared reasoning effort to the gateway",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"reasoning-model",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
+			"reasoning_effort":"high",
+			"messages":[{"role":"user","content":"hello"}]
+		}`),
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"type":"complete"`},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				BillingService: billing.NewService(),
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			seedReasoningModel(t, app)
+		},
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			if gotEffort != "high" {
+				t.Fatalf("gateway received reasoning effort %q, want %q", gotEffort, "high")
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestCompletionRejectsUnsupportedReasoningEffortBeforeGatewayCall(t *testing.T) {
+	t.Parallel()
+
+	gatewayClient := &gateway.MockClient{
+		CompleteStreamFunc: func(context.Context, gateway.CompleteRequest) (<-chan gateway.CompleteStreamEvent, error) {
+			t.Fatal("gateway must not be called for an unsupported reasoning effort")
+			return nil, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "completions reject an effort the model does not declare",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"reasoning-model",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
+			"reasoning_effort":"ultra",
+			"messages":[{"role":"user","content":"hello"}]
+		}`),
+		ExpectedStatus: http.StatusBadRequest,
+		ExpectedContent: []string{
+			`"message":"Reasoning effort is not supported for this model."`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				BillingService: billing.NewService(),
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			seedReasoningModel(t, app)
+		},
+	}
+
+	scenario.Test(t)
+}
+
+// seedReasoningModel seeds a whitelisted model that accepts off/low/medium/high
+// reasoning efforts, used by the reasoning-effort completion tests.
+func seedReasoningModel(t testing.TB, app *tests.TestApp) {
+	t.Helper()
+	providerID := seedAIProvider(t, app, providerSeed{
+		ProviderID:        "openai",
+		Name:              "OpenAI",
+		Enabled:           true,
+		RoutingProviderID: "openai",
+	})
+	seedAIModel(t, app, modelSeed{
+		ModelID:                   "reasoning-model",
+		ProviderRecordID:          providerID,
+		ProviderModelID:           "openai/o-mini",
+		Name:                      "Reasoning Model",
+		Slug:                      "reasoning-model",
+		Description:               "Accepts a reasoning effort",
+		Enabled:                   true,
+		Whitelisted:               true,
+		PrivacyTier:               "eu",
+		InputContextTokens:        64000,
+		InputUSDPerMillionTokens:  1,
+		OutputUSDPerMillionTokens: 2,
+		ReasoningEfforts:          []string{"off", "low", "medium", "high"},
+		DefaultReasoningEffort:    "medium",
+	})
+}
+
 func TestConversationCompletePersistsEncryptedMessages(t *testing.T) {
 	t.Parallel()
 
