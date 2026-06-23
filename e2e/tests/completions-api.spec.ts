@@ -19,6 +19,7 @@ interface CompleteResponseUsage {
   cost_chf?: number;
   cost_rappen?: number;
   used_provider_cost?: boolean;
+  reasoning_tokens?: number;
 }
 
 interface CompleteResponse {
@@ -28,6 +29,7 @@ interface CompleteResponse {
     id?: string;
     parent_message_id?: string;
     content: string;
+    reasoning?: string;
     persona_id?: string;
     model_id?: string;
     created_at: string;
@@ -53,6 +55,7 @@ async function readCompleteStream(res: APIResponse): Promise<CompleteResponse> {
   const text = await res.text();
   let final: CompleteResponse | undefined;
   let deltaText = '';
+  let reasoningText = '';
   for (const block of text.split('\n\n')) {
     const line = block.split('\n').find((l) => l.startsWith('data:'));
     if (!line) continue;
@@ -68,6 +71,7 @@ async function readCompleteStream(res: APIResponse): Promise<CompleteResponse> {
       throw new Error(`completion stream error: ${event.message ?? 'unknown'}`);
     }
     if (event.type === 'delta') deltaText += event.delta ?? '';
+    if (event.type === 'reasoning_delta') reasoningText += event.delta ?? '';
     if (event.type === 'complete' && event.response) final = event.response;
   }
   if (!final) {
@@ -75,6 +79,12 @@ async function readCompleteStream(res: APIResponse): Promise<CompleteResponse> {
   }
   // The streamed deltas must reconstruct the assistant content.
   if (deltaText) expect(final.assistant_message.content).toBe(deltaText);
+  // Reasoning deltas stream on their own channel and reconstruct the final
+  // reasoning — never mixing into the answer content.
+  if (reasoningText) {
+    expect(final.assistant_message.reasoning).toBe(reasoningText);
+    expect(deltaText).not.toContain(reasoningText);
+  }
   return final;
 }
 
@@ -169,6 +179,55 @@ test.describe('non-persisted /completions API', () => {
       expect(body.usage).toBeTruthy();
       expect(typeof body.usage.input_tokens).toBe('number');
       expect(typeof body.usage.output_tokens).toBe('number');
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
+  test('streams reasoning separately and reports reasoning_tokens for a reasoning model', async () => {
+    // The mock provider's [reason] sentinel makes it return a reasoning trace
+    // plus reasoning_tokens, exercising the full gateway → handler reasoning
+    // path. readCompleteStream asserts the reasoning_delta events reconstruct
+    // the final reasoning and never bleed into the answer content.
+    const user = await provisionApiUser();
+    try {
+      const res = await user.api.post('/api/v1/completions', {
+        data: {
+          model_id: APPROVED_MODEL_ID,
+          persona_id: DEFAULT_PERSONA_ID,
+          system_prompt: DEFAULT_SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: '[reason]why is the sky blue?' }],
+        },
+      });
+      expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
+      const body = await readCompleteStream(res);
+
+      expect(body.assistant_message.reasoning).toBe('Mock reasoning trace');
+      expect(body.assistant_message.content).toBeTruthy();
+      expect(body.assistant_message.content).not.toContain('Mock reasoning trace');
+      expect(body.usage.reasoning_tokens).toBe(7);
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
+  test('a model without reasoning returns reasoning_tokens: 0 and no reasoning text', async () => {
+    const user = await provisionApiUser();
+    try {
+      const res = await user.api.post('/api/v1/completions', {
+        data: {
+          model_id: APPROVED_MODEL_ID,
+          persona_id: DEFAULT_PERSONA_ID,
+          system_prompt: DEFAULT_SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: 'plain question' }],
+        },
+      });
+      expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
+      const body = await readCompleteStream(res);
+
+      // omitempty drops the field entirely when there's no reasoning.
+      expect(body.assistant_message.reasoning ?? '').toBe('');
+      expect(body.usage.reasoning_tokens ?? 0).toBe(0);
     } finally {
       await user.api.dispose();
     }
@@ -322,6 +381,50 @@ test.describe('persisted /conversations/{id}/complete API', () => {
       expect(listRes.ok()).toBe(true);
       const list = (await listRes.json()) as { totalItems: number };
       expect(list.totalItems).toBeGreaterThanOrEqual(2);
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
+  test('persisted reasoning is encrypted at rest — never stored as plaintext', async () => {
+    // The headline privacy guarantee: even though reasoning is returned to the
+    // client, it must only live inside the encrypted message blob. Drive a
+    // [reason] completion, then read the raw stored ciphertext back and assert
+    // the known reasoning plaintext appears nowhere in it.
+    const user = await provisionApiUser();
+    try {
+      const conversationID = await createConversationWithKey(user);
+
+      const res = await user.api.post(
+        `/api/v1/conversations/${conversationID}/complete`,
+        {
+          data: {
+            model_id: APPROVED_MODEL_ID,
+            persona_id: DEFAULT_PERSONA_ID,
+            system_prompt: DEFAULT_SYSTEM_PROMPT,
+            request_id: 'e2e-reason-1',
+            messages: [{ role: 'user', content: '[reason]explain yourself' }],
+          },
+        },
+      );
+      expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
+
+      const body = await readCompleteStream(res);
+      expect(body.assistant_message.reasoning).toBe('Mock reasoning trace');
+
+      const listRes = await user.api.get(
+        `/api/v1/conversations/${conversationID}/messages?page=1&page_size=50`,
+      );
+      expect(listRes.ok()).toBe(true);
+      const list = (await listRes.json()) as MessageListResponse;
+
+      // No stored ciphertext may contain the reasoning plaintext, whether read
+      // as the raw base64 column or decoded to bytes.
+      for (const item of list.items) {
+        expect(item.data).not.toContain('Mock reasoning trace');
+        const decoded = Buffer.from(item.data, 'base64').toString('utf8');
+        expect(decoded).not.toContain('Mock reasoning trace');
+      }
     } finally {
       await user.api.dispose();
     }
