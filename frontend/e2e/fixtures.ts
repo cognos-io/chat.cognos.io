@@ -538,10 +538,13 @@ export const buildProjectFixture = (
   projectId: string,
   name: string,
   description = '',
+  instructions = '',
 ): ProjectFixture => {
   const contentKey = nacl.randomBytes(nacl.secretbox.keyLength);
   const encryptedData = secretBox(
-    textEncoder.encode(JSON.stringify({ version: '1', name, description })),
+    textEncoder.encode(
+      JSON.stringify({ version: '1', name, description, instructions }),
+    ),
     contentKey,
   );
   const wrappedProjectKey = sealedBox(contentKey, userFixture.userKeyPair.publicKey);
