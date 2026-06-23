@@ -424,7 +424,7 @@ function escapeHtml(value: string): string {
               <app-persona-avatar
                 [icon]="personaService.selectedPersona().icon"
                 [color]="personaService.selectedPersona().color"
-                [size]="22"
+                [size]="20"
               />
               <span class="message-form__persona-name">
                 {{ personaService.selectedPersona().name }}
@@ -857,24 +857,33 @@ function escapeHtml(value: string): string {
       margin-left: auto;
     }
 
+    /* Mirrors the subtle model/tools buttons; native button to host the avatar. */
     .message-form__persona {
       display: inline-flex;
+      box-sizing: border-box;
       align-items: center;
-      gap: var(--cog-space-075, 6px);
-      padding: 4px 8px 4px 4px;
-      border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-pill, 999px);
-      background: var(--cog-surface);
-      color: var(--cog-text);
+      gap: var(--cog-space-075);
+      min-height: 32px;
+      padding: 0 var(--cog-space-150);
+      border: 0;
+      border-radius: var(--cog-radius-xs);
+      background: transparent;
+      color: var(--cog-text-subtle);
       font: inherit;
-      font-size: var(--cog-fs-caption, 13px);
+      font-size: var(--cog-fs-label);
+      font-weight: var(--cog-fw-label);
+      line-height: var(--cog-lh-label);
       cursor: pointer;
-      max-width: 200px;
-      transition: border-color var(--cog-dur-fast) var(--cog-ease-standard);
+      max-width: 220px;
     }
 
     .message-form__persona:hover {
-      border-color: var(--cog-border-strong, var(--cog-brand));
+      background: var(--cog-surface-hover);
+    }
+
+    .message-form__persona:focus-visible {
+      outline: 2px solid var(--cog-brand);
+      outline-offset: 2px;
     }
 
     .message-form__persona-name {
@@ -885,7 +894,6 @@ function escapeHtml(value: string): string {
     }
 
     @media (max-width: 767px) {
-      /* The persona switcher spans the full width above the model/send row. */
       .message-form__persona {
         order: -1;
         flex-basis: 100%;
@@ -894,8 +902,6 @@ function escapeHtml(value: string): string {
         justify-content: space-between;
       }
 
-      /* Model selector and send share the line below; the model takes the
-         remaining space and the send button stays pinned to the right. */
       .message-form__model {
         flex: 1;
         min-width: 0;
