@@ -532,6 +532,13 @@
           "low": "Low",
           "medium": "Medium",
           "high": "High"
+        },
+        "descriptions": {
+          "off": "Answer directly, no deliberation.",
+          "minimal": "A brief pass before replying.",
+          "low": "A quick pass before replying.",
+          "medium": "Balanced reasoning for most tasks.",
+          "high": "Deep, multi-step deliberation. Slower."
         }
       },
       "switchPersona": "Switch persona — {{ name }}"

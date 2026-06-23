@@ -532,6 +532,13 @@
           "low": "Baixo",
           "medium": "Médio",
           "high": "Alto"
+        },
+        "descriptions": {
+          "off": "Responder diretamente, sem deliberação.",
+          "minimal": "Uma breve passagem antes de responder.",
+          "low": "Uma passagem rápida antes de responder.",
+          "medium": "Raciocínio equilibrado para a maioria das tarefas.",
+          "high": "Deliberação profunda em vários passos. Mais lento."
         }
       },
       "switchPersona": "Mudar de persona — {{ name }}"

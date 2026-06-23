@@ -532,6 +532,13 @@
           "low": "Basso",
           "medium": "Medio",
           "high": "Alto"
+        },
+        "descriptions": {
+          "off": "Rispondi direttamente, senza deliberazione.",
+          "minimal": "Una breve riflessione prima di rispondere.",
+          "low": "Una rapida riflessione prima di rispondere.",
+          "medium": "Ragionamento equilibrato per la maggior parte delle attività.",
+          "high": "Deliberazione profonda in più passaggi. Più lento."
         }
       },
       "switchPersona": "Cambia persona — {{ name }}"

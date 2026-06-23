@@ -532,6 +532,13 @@
           "low": "Faible",
           "medium": "Moyen",
           "high": "Élevé"
+        },
+        "descriptions": {
+          "off": "Répondre directement, sans délibération.",
+          "minimal": "Une brève réflexion avant de répondre.",
+          "low": "Une réflexion rapide avant de répondre.",
+          "medium": "Raisonnement équilibré pour la plupart des tâches.",
+          "high": "Délibération approfondie en plusieurs étapes. Plus lent."
         }
       },
       "switchPersona": "Changer de persona — {{ name }}"

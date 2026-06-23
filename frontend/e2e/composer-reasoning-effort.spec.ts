@@ -149,7 +149,7 @@ test('composer reasoning-effort selector defaults, switches, and is sent with th
 
   // Switch to High.
   await effortButton.click();
-  await page.getByRole('menuitem', { name: 'High' }).click();
+  await page.getByRole('menuitemradio', { name: 'High' }).click();
   await expect(effortButton).toContainText('High');
 
   // Send and confirm the chosen effort travelled with the completion request.

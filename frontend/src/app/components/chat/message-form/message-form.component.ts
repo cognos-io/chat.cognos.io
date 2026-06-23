@@ -30,8 +30,6 @@ import {
   CognosButtonComponent,
   CognosIconButtonComponent,
   CognosIconComponent,
-  CognosMenuComponent,
-  type CognosMenuItem,
   CognosRedactedTextComponent,
   type CognosRedactedTextKind,
   type CognosRedactedTextLabels,
@@ -80,7 +78,6 @@ function escapeHtml(value: string): string {
     CognosButtonComponent,
     CognosIconButtonComponent,
     CognosIconComponent,
-    CognosMenuComponent,
     CognosRedactedTextComponent,
     ComposerToolsComponent,
     ModelSelectorComponent,
@@ -330,14 +327,21 @@ function escapeHtml(value: string): string {
                 cdkOverlayOrigin
                 class="message-form__reasoning"
                 appearance="subtle"
-                icon="gauge"
+                icon="brain"
                 iconAfter="chevron-down"
                 type="button"
                 [title]="t('chat.composer.reasoning.title')"
                 [attr.aria-expanded]="reasoningMenuOpen()"
                 (click)="toggleReasoningMenu()"
               >
-                {{ reasoningEffortLabel(modelService.selectedReasoningEffort()) }}
+                <span class="message-form__reasoning-trigger">
+                  <cog-icon
+                    [name]="reasoningEffortIcon(modelService.selectedReasoningEffort())"
+                    [size]="16"
+                    aria-hidden="true"
+                  />
+                  {{ reasoningEffortLabel(modelService.selectedReasoningEffort()) }}
+                </span>
               </cog-button>
 
               <ng-template
@@ -352,10 +356,54 @@ function escapeHtml(value: string): string {
                 (detach)="closeReasoningMenu()"
                 (overlayKeydown)="onOverlayKeydown($event)"
               >
-                <cog-menu
-                  [items]="reasoningMenuItems()"
-                  (itemSelect)="onReasoningEffortSelect($event)"
-                />
+                <div class="message-form__reasoning-menu" role="menu">
+                  <p class="message-form__reasoning-menu-heading">
+                    {{ t('chat.composer.reasoning.title') }}
+                  </p>
+                  @for (
+                    effort of modelService.selectedModel().reasoningEfforts;
+                    track effort;
+                    let i = $index
+                  ) {
+                    <button
+                      type="button"
+                      role="menuitemradio"
+                      class="message-form__reasoning-option"
+                      [class.is-selected]="
+                        effort === modelService.selectedReasoningEffort()
+                      "
+                      [attr.aria-checked]="
+                        effort === modelService.selectedReasoningEffort()
+                      "
+                      (click)="onReasoningEffortSelect(i)"
+                    >
+                      <cog-icon
+                        class="message-form__reasoning-option-icon"
+                        [name]="reasoningEffortIcon(effort)"
+                        [size]="18"
+                        aria-hidden="true"
+                      />
+                      <span class="message-form__reasoning-option-text">
+                        <span class="message-form__reasoning-option-label">
+                          {{ reasoningEffortLabel(effort) }}
+                        </span>
+                        @if (reasoningEffortDescription(effort); as desc) {
+                          <span class="message-form__reasoning-option-desc">{{
+                            desc
+                          }}</span>
+                        }
+                      </span>
+                      @if (effort === modelService.selectedReasoningEffort()) {
+                        <cog-icon
+                          class="message-form__reasoning-option-check"
+                          name="check"
+                          [size]="16"
+                          aria-hidden="true"
+                        />
+                      }
+                    </button>
+                  }
+                </div>
               </ng-template>
             }
 
@@ -603,6 +651,96 @@ function escapeHtml(value: string): string {
     .message-form__tools--open {
       background: color-mix(in srgb, var(--cog-brand) 14%, transparent);
       color: var(--cog-brand);
+    }
+
+    .message-form__reasoning-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-050);
+    }
+
+    .message-form__reasoning-menu {
+      min-width: 17rem;
+      max-width: 22rem;
+      padding: var(--cog-space-075);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-md, 12px);
+      background: var(--cog-surface, #fff);
+      box-shadow: var(--cog-shadow-lg, 0 12px 32px rgb(0 0 0 / 14%));
+    }
+
+    .message-form__reasoning-menu-heading {
+      margin: 0;
+      padding: var(--cog-space-050) var(--cog-space-075) var(--cog-space-075);
+      color: var(--cog-text-subtlest);
+      font-size: var(--cog-fs-body-xs, 11px);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .message-form__reasoning-option {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--cog-space-100);
+      width: 100%;
+      border: 0;
+      border-radius: var(--cog-radius-sm, 8px);
+      background: none;
+      padding: var(--cog-space-075);
+      text-align: start;
+      cursor: pointer;
+      color: var(--cog-text);
+    }
+
+    .message-form__reasoning-option:hover {
+      background: var(
+        --cog-surface-hover,
+        color-mix(in srgb, var(--cog-text) 5%, transparent)
+      );
+    }
+
+    .message-form__reasoning-option:focus-visible {
+      outline: 2px solid var(--cog-brand);
+      outline-offset: -2px;
+    }
+
+    .message-form__reasoning-option.is-selected {
+      background: color-mix(in srgb, var(--cog-brand) 12%, transparent);
+    }
+
+    .message-form__reasoning-option-icon {
+      margin-block-start: 2px;
+      color: var(--cog-text-subtle);
+      flex: none;
+    }
+
+    .message-form__reasoning-option.is-selected .message-form__reasoning-option-icon,
+    .message-form__reasoning-option.is-selected .message-form__reasoning-option-label {
+      color: var(--cog-brand);
+    }
+
+    .message-form__reasoning-option-text {
+      display: grid;
+      gap: 2px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .message-form__reasoning-option-label {
+      font-size: var(--cog-fs-body-lg, 16px);
+      line-height: 1.2;
+    }
+
+    .message-form__reasoning-option-desc {
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm, 13px);
+    }
+
+    .message-form__reasoning-option-check {
+      margin-block-start: 4px;
+      color: var(--cog-brand);
+      flex: none;
     }
 
     .message-form__redaction {
@@ -1169,12 +1307,38 @@ export class MessageFormComponent {
     return label === key ? effort.charAt(0).toUpperCase() + effort.slice(1) : label;
   }
 
-  reasoningMenuItems(): CognosMenuItem[] {
-    const selected = this.modelService.selectedReasoningEffort();
-    return this.modelService.selectedModel().reasoningEfforts.map((effort) => ({
-      title: this.reasoningEffortLabel(effort),
-      icon: effort === selected ? 'check' : undefined,
-    }));
+  // A signal-bars icon that fills more for higher effort. Model-specific tiers
+  // we don't have a dedicated icon for fall back to the full bars. The literal
+  // return type keeps it assignable to cog-icon's name input.
+  reasoningEffortIcon(
+    effort: string,
+  ): 'signal-zero' | 'signal-low' | 'signal-medium' | 'signal-high' | 'signal' {
+    switch (effort) {
+      case 'off':
+      case 'none':
+        return 'signal-zero';
+      case 'min':
+      case 'minimal':
+      case 'low':
+        return 'signal-low';
+      case 'medium':
+        return 'signal-medium';
+      case 'high':
+        return 'signal-high';
+      default:
+        return 'signal';
+    }
+  }
+
+  // One-line explanation of a tier, shown in the dropdown. Returns '' when the
+  // tier has no translated description (e.g. model-specific tiers).
+  reasoningEffortDescription(effort: string): string {
+    if (!effort) {
+      return '';
+    }
+    const key = `chat.composer.reasoning.descriptions.${effort}`;
+    const description = this._transloco.translate(key);
+    return description === key ? '' : description;
   }
 
   onReasoningEffortSelect(index: number) {

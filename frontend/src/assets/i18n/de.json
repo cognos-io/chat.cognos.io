@@ -532,6 +532,13 @@
           "low": "Niedrig",
           "medium": "Mittel",
           "high": "Hoch"
+        },
+        "descriptions": {
+          "off": "Direkt antworten, ohne Nachdenken.",
+          "minimal": "Ein kurzer Durchgang vor der Antwort.",
+          "low": "Ein schneller Durchgang vor der Antwort.",
+          "medium": "Ausgewogenes Nachdenken für die meisten Aufgaben.",
+          "high": "Tiefes, mehrstufiges Nachdenken. Langsamer."
         }
       },
       "switchPersona": "Persona wechseln — {{ name }}"
