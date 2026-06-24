@@ -176,11 +176,10 @@ test('the model selector tags models with low/medium/high cost tiers', async ({
   const selector = page.getByRole('listbox', { name: /pick your ai model/i });
   await expect(selector).toBeVisible();
 
-  // The explainer spells out that higher-cost models cost more.
-  await expect(selector.getByText(/higher-cost models cost more/i)).toBeVisible();
-
-  // Each model carries its derived tier chip.
-  await expect(selector.getByText('Low cost')).toBeVisible();
-  await expect(selector.getByText('Medium cost')).toBeVisible();
-  await expect(selector.getByText('High cost')).toBeVisible();
+  // Each model carries its derived cost-tier lozenge. Scope to the lozenge
+  // class so the "Low cost" text doesn't collide with the filter chip.
+  const costLozenges = page.locator('.model-selector__cost');
+  await expect(costLozenges.filter({ hasText: 'Low cost' }).first()).toBeVisible();
+  await expect(costLozenges.filter({ hasText: 'Medium cost' }).first()).toBeVisible();
+  await expect(costLozenges.filter({ hasText: 'High cost' }).first()).toBeVisible();
 });

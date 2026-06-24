@@ -74,16 +74,16 @@ async function setupModelSelector(page: Page, planType: string) {
   await expect(page.getByRole('listbox', { name: 'Pick your AI model' })).toBeVisible();
 }
 
-test('hides per-model cost framing on the unlimited plan', async ({ page }) => {
+test('hides the per-model cost lozenge on the unlimited plan', async ({ page }) => {
   await setupModelSelector(page, 'unlimited');
 
-  await expect(page.locator('.model-selector__explainer')).toHaveCount(0);
+  // Cost is conveyed only by the lozenge; unlimited plans aren't billed per
+  // message, so it is hidden entirely.
   await expect(page.locator('.model-selector__cost')).toHaveCount(0);
 });
 
-test('shows per-model cost framing on a metered plan', async ({ page }) => {
+test('shows the per-model cost lozenge on a metered plan', async ({ page }) => {
   await setupModelSelector(page, 'payg');
 
-  await expect(page.locator('.model-selector__explainer')).toBeVisible();
   await expect(page.locator('.model-selector__cost').first()).toBeVisible();
 });
