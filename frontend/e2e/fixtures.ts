@@ -569,6 +569,7 @@ export type ProjectConversationFixture = {
     id: string;
     created: string;
     updated: string;
+    last_activity_at?: string;
     data: string;
     project: string;
     key_version: number;
@@ -585,6 +586,7 @@ export const buildProjectConversationFixture = (
   projectFixture: ProjectFixture,
   conversationId: string,
   title: string,
+  lastActivityAt?: string,
 ): ProjectConversationFixture => {
   const conversationKeyPair = nacl.box.keyPair();
   const sharedKey = nacl.box.before(
@@ -602,7 +604,8 @@ export const buildProjectConversationFixture = (
     record: {
       id: conversationId,
       created: now,
-      updated: now,
+      updated: lastActivityAt ?? now,
+      last_activity_at: lastActivityAt,
       data: base64(encryptedData),
       project: projectFixture.projectRecord.id,
       key_version: 1,

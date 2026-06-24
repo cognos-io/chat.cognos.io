@@ -210,6 +210,56 @@ test('project instructions can be added inline and persist on the page', async (
   expect(pageErrors).toEqual([]);
 });
 
+test('project page orders chats by last activity, most recent first', async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  const userFixture = buildVaultFixture('user_e2e_pd5', 'pd5@example.com');
+  const projectFixture = buildProjectFixture(
+    userFixture,
+    'proj_pd_5',
+    'Cantonal Policy',
+  );
+  // Older activity than the second chat, but returned first by the backend.
+  const older = buildProjectConversationFixture(
+    projectFixture,
+    'pconv_pd_old',
+    'Older chat',
+    '2026-01-01T00:00:00.000Z',
+  );
+  const newer = buildProjectConversationFixture(
+    projectFixture,
+    'pconv_pd_new',
+    'Newer chat',
+    '2026-06-01T00:00:00.000Z',
+  );
+
+  await seedAuthenticatedUnlockState(page, userFixture);
+  await seedBaseRoutes(page, userFixture);
+  await page.route(`${API}/api/v1/projects`, async (route) => {
+    await route.fulfill({ json: [projectFixture.projectRecord] });
+  });
+  await page.route(
+    `${API}/api/v1/projects/${projectFixture.projectRecord.id}/conversations`,
+    async (route) => {
+      await route.fulfill({ json: [older.record, newer.record] });
+    },
+  );
+
+  await page.goto(`/account/projects/${projectFixture.projectRecord.id}`);
+  await expect(page.getByTestId('project-name')).toHaveText('Cantonal Policy');
+
+  // The most-recently-active chat is listed first regardless of backend order.
+  const titles = page.locator(
+    '[data-testid="project-conversations"] .project-detail__chat-title',
+  );
+  await expect(titles).toHaveText(['Newer chat', 'Older chat']);
+
+  expect(pageErrors).toEqual([]);
+});
+
 test('project instructions are prepended to the chat system prompt', async ({
   page,
 }) => {

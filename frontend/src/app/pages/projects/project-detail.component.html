@@ -108,32 +108,21 @@
     <section class="project-detail__chats">
       <div class="project-detail__chats-header">
         <h2 class="project-detail__chats-title">
-          {{ t('projects.conversations') }}
+          <span class="project-detail__chats-label">{{
+            t('projects.conversations')
+          }}</span>
+          <span class="project-detail__chats-dot" aria-hidden="true">·</span>
           <span class="project-detail__chats-count">{{ conversations().length }}</span>
         </h2>
-      </div>
-
-      <form
-        class="project-detail__new-chat"
-        (submit)="$event.preventDefault(); startChat()"
-      >
-        <input
-          type="text"
-          name="chat-name"
-          [placeholder]="t('projects.chatNamePlaceholder')"
-          [ngModel]="chatName()"
-          (ngModelChange)="chatName.set($event)"
-          autocomplete="off"
-        />
         <cog-button
           appearance="primary"
           icon="plus"
-          type="submit"
           [disabled]="creatingChat()"
+          (click)="startChat()"
         >
           {{ creatingChat() ? t('projects.creating') : t('projects.newChat') }}
         </cog-button>
-      </form>
+      </div>
 
       @if (conversations().length === 0) {
         <p class="project-detail__no-chats" data-testid="project-no-conversations">
@@ -149,12 +138,18 @@
                 (click)="openConversation(conversation.record.id)"
                 data-testid="project-conversation"
               >
-                <span class="project-detail__chat-icon">
-                  <cog-icon name="message-square" [size]="18" tone="text-subtle" />
-                </span>
+                <cog-icon
+                  class="project-detail__chat-icon"
+                  name="message-square"
+                  [size]="20"
+                  tone="text-subtle"
+                />
                 <span class="project-detail__chat-title">{{
                   conversation.decryptedData.title
                 }}</span>
+                @if (isPinned(conversation.record.id)) {
+                  <cog-icon name="pin" [size]="14" tone="text-subtlest" />
+                }
                 <cog-icon name="lock" [size]="14" tone="text-subtlest" />
                 <cog-icon name="chevron-right" [size]="16" tone="text-subtlest" />
               </button>
@@ -164,35 +159,45 @@
       }
     </section>
 
-    <section class="project-detail__danger">
-      @if (confirmingDelete()) {
-        <p class="project-detail__danger-prompt">
-          {{ t('projects.deleteConfirm') }}
-        </p>
-        <div class="project-detail__actions">
-          <cog-button appearance="subtle" (click)="cancelDelete()">
-            {{ t('projects.cancel') }}
-          </cog-button>
+    <section
+      class="project-detail__card project-detail__danger"
+      aria-labelledby="project-danger-heading"
+    >
+      <h2 id="project-danger-heading" class="project-detail__danger-heading">
+        {{ t('projects.danger.title') }}
+      </h2>
+      <div class="project-detail__danger-row">
+        <div class="project-detail__danger-copy">
+          <p class="project-detail__danger-name">
+            {{ t('projects.danger.deleteTitle') }}
+          </p>
+          <p class="project-detail__danger-desc">
+            {{ t('projects.danger.deleteSubtitle') }}
+          </p>
+        </div>
+        @if (confirmingDelete()) {
+          <div class="project-detail__danger-confirm">
+            <cog-button appearance="subtle" (click)="cancelDelete()">
+              {{ t('projects.cancel') }}
+            </cog-button>
+            <cog-button
+              appearance="danger"
+              (click)="confirmDelete()"
+              data-testid="project-delete-confirm"
+            >
+              {{ t('projects.delete') }}
+            </cog-button>
+          </div>
+        } @else {
           <cog-button
             appearance="danger"
-            (click)="confirmDelete()"
-            data-testid="project-delete-confirm"
-          >
-            {{ t('projects.delete') }}
-          </cog-button>
-        </div>
-      } @else {
-        <div class="project-detail__actions">
-          <cog-button
-            appearance="subtle"
-            icon="eraser"
             (click)="requestDelete()"
             data-testid="project-delete"
           >
             {{ t('projects.delete') }}
           </cog-button>
-        </div>
-      }
+        }
+      </div>
     </section>
   } @else {
     <p class="project-detail__missing">{{ t('projects.notFound') }}</p>

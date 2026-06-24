@@ -978,6 +978,11 @@
       "colourLegend": "Colour",
       "untitled": "Untitled project",
       "previewHint": "How this project appears in your sidebar"
+    },
+    "danger": {
+      "title": "Danger zone",
+      "deleteTitle": "Delete this project",
+      "deleteSubtitle": "Deleting a project can’t be undone."
     }
   },
   "public": {

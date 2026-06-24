@@ -978,6 +978,11 @@
       "colourLegend": "Farbe",
       "untitled": "Unbenanntes Projekt",
       "previewHint": "So erscheint dieses Projekt in deiner Seitenleiste"
+    },
+    "danger": {
+      "title": "Gefahrenzone",
+      "deleteTitle": "Dieses Projekt löschen",
+      "deleteSubtitle": "Das Löschen eines Projekts kann nicht rückgängig gemacht werden."
     }
   },
   "public": {

@@ -168,46 +168,27 @@
   gap: var(--cog-space-150, 12px);
 }
 
+/* Faded, uppercase section label with a middot before the count, matching the
+   "PROJECT INSTRUCTIONS" overline. */
 .project-detail__chats-title {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--cog-space-075, 6px);
   margin: 0;
-  font-size: var(--cog-fs-subtitle, 18px);
-  font-weight: 600;
-  color: var(--cog-text, #0f172a);
+  color: var(--cog-text-subtle, #64748b);
+  font-size: var(--cog-fs-overline, 11px);
+  font-weight: var(--cog-fw-overline, 600);
+  letter-spacing: var(--cog-ls-overline, 0.06em);
+  text-transform: var(--cog-tt-overline, uppercase);
+}
+
+.project-detail__chats-dot {
+  color: var(--cog-text-subtlest, #94a3b8);
 }
 
 .project-detail__chats-count {
   color: var(--cog-text-subtlest, #94a3b8);
-  font-size: var(--cog-fs-body, 15px);
-  font-weight: 500;
   font-variant-numeric: tabular-nums;
-}
-
-.project-detail__new-chat {
-  display: flex;
-  align-items: stretch;
-  gap: var(--cog-space-100, 8px);
-}
-
-.project-detail__new-chat input {
-  flex: 1;
-  box-sizing: border-box;
-  /* Match the cog-button height (md = 32px min) so the field and the New chat
-     button line up; vertical centering comes from the flex row stretching. */
-  min-height: 32px;
-  padding: 0 var(--cog-space-150, 12px);
-  border: 1px solid var(--cog-border, #e2e8f0);
-  border-radius: var(--cog-radius-sm, 8px);
-  font: inherit;
-  color: var(--cog-text, #0f172a);
-  background: var(--cog-surface, #fff);
-}
-
-.project-detail__new-chat input:focus {
-  outline: 2px solid var(--cog-brand, #2563eb);
-  outline-offset: 1px;
 }
 
 .project-detail__no-chats {
@@ -248,14 +229,7 @@
 }
 
 .project-detail__chat-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex: none;
-  inline-size: 32px;
-  block-size: 32px;
-  border-radius: var(--cog-radius-sm, 8px);
-  background: var(--cog-surface-sunken, #f1f5f9);
 }
 
 .project-detail__chat-title {
@@ -267,19 +241,52 @@
   font-weight: var(--cog-fw-semibold, 600);
 }
 
+/* Danger zone — mirrors the account-settings delete card (red surface, red
+   border, red heading) so destructive actions read the same everywhere. */
 .project-detail__danger {
   margin-block-start: var(--cog-space-200, 16px);
-  padding-block-start: var(--cog-space-200, 16px);
-  border-block-start: 1px solid var(--cog-border, #e2e8f0);
-  display: flex;
-  flex-direction: column;
-  gap: var(--cog-space-100, 8px);
+  border-color: var(--cog-danger-border, #f1c0c0);
+  background: var(--cog-danger-surface, #fef2f2);
 }
 
-.project-detail__danger-prompt {
+.project-detail__danger-heading {
+  margin: 0;
+  color: var(--cog-danger-text, #b91c1c);
+  font-size: var(--cog-fs-h-sm, 16px);
+  font-weight: var(--cog-fw-semibold, 600);
+}
+
+.project-detail__danger-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cog-space-150, 12px);
+  flex-wrap: wrap;
+  margin-top: var(--cog-space-100, 8px);
+}
+
+.project-detail__danger-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-detail__danger-name {
   margin: 0;
   color: var(--cog-text, #0f172a);
-  font-size: var(--cog-fs-body, 15px);
+  font-size: var(--cog-fs-body-sm, 14px);
+  font-weight: var(--cog-fw-semibold, 600);
+}
+
+.project-detail__danger-desc {
+  margin: 2px 0 0;
+  color: var(--cog-text-subtle, #64748b);
+  font-size: var(--cog-fs-body-sm, 14px);
+}
+
+.project-detail__danger-confirm {
+  display: flex;
+  gap: var(--cog-space-100, 8px);
+  flex: none;
 }
 
 .project-detail__missing {

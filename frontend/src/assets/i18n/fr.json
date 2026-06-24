@@ -978,6 +978,11 @@
       "colourLegend": "Couleur",
       "untitled": "Projet sans titre",
       "previewHint": "Apparence de ce projet dans votre barre latérale"
+    },
+    "danger": {
+      "title": "Zone de danger",
+      "deleteTitle": "Supprimer ce projet",
+      "deleteSubtitle": "La suppression d’un projet est irréversible."
     }
   },
   "public": {

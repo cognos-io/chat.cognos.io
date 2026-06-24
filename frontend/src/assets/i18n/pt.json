@@ -978,6 +978,11 @@
       "colourLegend": "Cor",
       "untitled": "Projeto sem título",
       "previewHint": "Como este projeto aparece na barra lateral"
+    },
+    "danger": {
+      "title": "Zona de perigo",
+      "deleteTitle": "Eliminar este projeto",
+      "deleteSubtitle": "A eliminação de um projeto não pode ser anulada."
     }
   },
   "public": {

@@ -21,8 +21,10 @@ import {
 
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import { ProjectSettingsDialogComponent } from '@app/components/projects/project-settings-dialog/project-settings-dialog.component';
+import { partitionConversationsByPinned } from '@app/interfaces/conversation';
 import { ProjectConversationService } from '@app/services/project-conversation.service';
 import { ProjectService } from '@app/services/project.service';
+import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 @Component({
@@ -44,6 +46,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
 export class ProjectDetailComponent {
   private readonly _projects = inject(ProjectService);
   private readonly _projectConversations = inject(ProjectConversationService);
+  private readonly _preferences = inject(UserPreferencesService);
   private readonly _router = inject(Router);
   private readonly _dialog = inject(Dialog);
 
@@ -54,9 +57,20 @@ export class ProjectDetailComponent {
     this._projects.projects().find((project) => project.record.id === this.projectId()),
   );
 
-  protected readonly conversations = computed(() =>
-    this._projectConversations.conversationsFor(this.projectId())(),
-  );
+  // Pinned chats first (in pin order), then the rest by last activity — the
+  // same ordering as the sidebar, scoped to this project's chats.
+  protected readonly conversations = computed(() => {
+    const all = this._projectConversations.conversationsFor(this.projectId())();
+    const { pinned, recent } = partitionConversationsByPinned(
+      all,
+      this._preferences.pinnedConversationIds(),
+    );
+    return [...pinned, ...recent];
+  });
+
+  protected isPinned(conversationId: string): boolean {
+    return this._preferences.isConversationPinned(conversationId);
+  }
 
   protected readonly confirmingDelete = signal(false);
 
@@ -65,7 +79,6 @@ export class ProjectDetailComponent {
   protected readonly instructionsDraft = signal('');
   protected readonly savingInstructions = signal(false);
 
-  protected readonly chatName = signal('');
   protected readonly creatingChat = signal(false);
 
   constructor() {
@@ -149,12 +162,10 @@ export class ProjectDetailComponent {
     if (!project || this.creatingChat()) {
       return;
     }
-    const title = this.chatName().trim() || 'New chat';
     this.creatingChat.set(true);
-    this._projectConversations.create(project, { title }).subscribe({
+    this._projectConversations.create(project, { title: 'New chat' }).subscribe({
       next: (conversation) => {
         this.creatingChat.set(false);
-        this.chatName.set('');
         this._router.navigate(['/', 'c', conversation.record.id]);
       },
       error: () => {

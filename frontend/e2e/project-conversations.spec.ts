@@ -266,7 +266,6 @@ test('creates a chat inside a project and opens it', async ({ page }) => {
   await page.goto(`/account/projects/${projectFixture.projectRecord.id}`);
   await expect(page.getByTestId('project-no-conversations')).toBeVisible();
 
-  await page.getByPlaceholder('Name this chat (optional)').fill('Kickoff');
   await page.getByRole('button', { name: 'New chat' }).click();
 
   // The service creates the conversation and navigates to the chat view.
