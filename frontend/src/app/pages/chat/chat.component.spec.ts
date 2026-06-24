@@ -13,6 +13,7 @@ import { Message } from '@app/interfaces/message';
 
 import { AuthService } from '../../services/auth.service';
 import { BillingService } from '../../services/billing.service';
+import { ConversationDuplicateService } from '../../services/conversation-duplicate.service';
 import { ConversationService } from '../../services/conversation.service';
 import { DeviceService } from '../../services/device.service';
 import { ExportService } from '../../services/export.service';
@@ -116,6 +117,10 @@ describe('ChatComponent', () => {
           },
         },
         { provide: ConversationService, useValue: conversationService },
+        {
+          provide: ConversationDuplicateService,
+          useValue: { isDuplicatingSource: () => false, duplicate: vi.fn() },
+        },
         { provide: ProjectService, useValue: { orderedProjects: signal([]) } },
         { provide: ProjectConversationService, useValue: {} },
         { provide: DeviceService, useValue: { isMobile: signal(false) } },
