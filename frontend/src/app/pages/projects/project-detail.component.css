@@ -29,15 +29,6 @@
   overflow-wrap: anywhere;
 }
 
-.project-detail__subtitle {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin: 2px 0 0;
-  color: var(--cog-text-subtle, #64748b);
-  font-size: var(--cog-fs-caption, 13px);
-}
-
 .project-detail__header-actions {
   display: flex;
   gap: var(--cog-space-100, 8px);

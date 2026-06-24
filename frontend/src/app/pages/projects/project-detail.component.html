@@ -19,10 +19,6 @@
         <h1 class="project-detail__title" data-testid="project-name">
           {{ project.decryptedData.name }}
         </h1>
-        <p class="project-detail__subtitle">
-          <cog-icon name="lock" [size]="13" tone="text-subtle" />
-          {{ t('projects.encrypted') }}
-        </p>
       </div>
       <div class="project-detail__header-actions">
         <cog-button appearance="default" icon="settings" (click)="openSettings()">
