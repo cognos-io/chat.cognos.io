@@ -401,6 +401,44 @@ export interface ApiListRedactionEntriesResponse {
   items: ApiRedactionEntryResponse[];
 }
 
+// Conversation copy ("Duplicate chat"). The browser prepares the entire
+// re-encrypted bundle and the backend writes it atomically. See
+// docs/specs/conversation-copy.md and conversation-copy.service.ts.
+export interface ApiCopyConversationInput {
+  id: string;
+  data: string;
+  public_key: string;
+  public_key_signature: string;
+  wrapped_secret_key: string;
+  expiry_duration?: string;
+}
+
+export interface ApiCopyMessageInput {
+  id: string;
+  source_id: string;
+  data: string;
+}
+
+export interface ApiCopyRedactionInput {
+  public_key: string;
+  wrapped_secret_key: string;
+  entries: ApiRedactionEntry[];
+}
+
+export interface ApiCopyConversationRequest {
+  conversation: ApiCopyConversationInput;
+  messages: ApiCopyMessageInput[];
+  redaction?: ApiCopyRedactionInput;
+}
+
+export interface ApiCopyConversationResponse {
+  conversation: ConversationRecord & {
+    key_version: number;
+    last_activity_at: string;
+  };
+  message_count: number;
+}
+
 export interface ApiPublicConversationResponse {
   conversation_id: string;
   data: string;
@@ -645,6 +683,21 @@ export class CognosApiService {
   createConversation(request: ApiConversationRequest): Observable<ConversationRecord> {
     return this._http.post<ConversationRecord>(
       `${this._baseUrl}/api/v1/conversations`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // copyConversation duplicates a source conversation from a client-prepared
+  // ciphertext bundle. POST /api/v1/conversations/{sourceId}/copies.
+  copyConversation(
+    sourceConversationId: string,
+    request: ApiCopyConversationRequest,
+  ): Observable<ApiCopyConversationResponse> {
+    return this._http.post<ApiCopyConversationResponse>(
+      `${this._baseUrl}/api/v1/conversations/${sourceConversationId}/copies`,
       request,
       {
         headers: this.authHeaders(),

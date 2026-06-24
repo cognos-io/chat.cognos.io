@@ -651,6 +651,66 @@ export class ConversationService {
   }
 
   /**
+   * loadConversationKeyPair - public access to a conversation's decrypted key
+   * pair (verifying the stored public-key signature). The duplicate flow uses
+   * it to decrypt a source conversation that may not be the active one.
+   *
+   * @param conversationId (string)
+   * @returns (Observable<KeyPair>)
+   */
+  loadConversationKeyPair(conversationId: string): Observable<KeyPair> {
+    return this.fetchConversationKeyPair(conversationId);
+  }
+
+  /**
+   * buildNewConversationKeyMaterial - produces the conversation-level key
+   * material for a brand-new conversation whose id the caller has generated,
+   * reusing the exact wire format the loader later verifies. The duplicate
+   * flow uses this to bundle everything into a single /copies request instead
+   * of the usual separate public-key/secret-key POSTs. The conversation data
+   * is encrypted to the supplied keypair; the secret key is wrapped for the
+   * current user. Owning the format here keeps it from drifting out of step
+   * with fetchConversationKeyPair.
+   */
+  buildNewConversationKeyMaterial(
+    conversationId: string,
+    data: ConversationData,
+    conversationKeyPair: KeyPair,
+  ): {
+    data: string;
+    public_key: string;
+    public_key_signature: string;
+    wrapped_secret_key: string;
+  } {
+    const userSecretKey = this._vaultService.keyPair()?.secretKey;
+    if (!userSecretKey) {
+      throw UserSecretKeyNotFoundError;
+    }
+
+    const sharedKey = this._cryptoService.sharedKey(
+      conversationKeyPair.publicKey,
+      userSecretKey,
+    );
+
+    return {
+      data: Base64.fromUint8Array(
+        this.encryptConversationData(data, conversationKeyPair),
+      ),
+      public_key: Base64.fromUint8Array(conversationKeyPair.publicKey),
+      public_key_signature: Base64.fromUint8Array(
+        this.computeConversationPublicKeySignature(
+          conversationId,
+          conversationKeyPair.publicKey,
+          userSecretKey,
+        ),
+      ),
+      wrapped_secret_key: Base64.fromUint8Array(
+        this._cryptoService.box(conversationKeyPair.secretKey, sharedKey),
+      ),
+    };
+  }
+
+  /**
    * fetchConversationRecords - fetches all conversation records from the backend.
    *
    * @returns (Observable<Array<ConversationRecord>>)
