@@ -134,7 +134,9 @@ test('persisted conversation header exposes the title, menu, share and security'
   // The overflow menu offers rename, a disabled export and delete.
   await page.getByRole('button', { name: 'Conversation menu', exact: true }).click();
   await expect(page.getByRole('menuitem', { name: 'Rename' })).toBeVisible();
-  await expect(page.getByRole('menuitem', { name: /Export/ })).toBeDisabled();
+  // Export is enabled at rest (it only disables mid-export).
+  await expect(page.getByRole('menuitem', { name: /Export/ })).toBeEnabled();
+  await expect(page.getByRole('menuitem', { name: 'Duplicate chat' })).toBeVisible();
   await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
 
   // Dismiss the menu before opening the modal.
@@ -166,6 +168,37 @@ test('security modal shows the real device key fingerprint', async ({ page }) =>
 
   await dialog.getByRole('button', { name: 'Got it' }).click();
   await expect(page.getByRole('heading', { name: 'Security & keys' })).toBeHidden();
+});
+
+test('the security modal body scrolls when its content is taller than the viewport', async ({
+  page,
+}) => {
+  const userFixture = buildVaultFixture('user_e2e', 'e2e@example.com');
+  const conversationFixture = buildConversationFixture(
+    userFixture,
+    'conv_e2e_header',
+    'Scroll check',
+  );
+
+  await seedChatRoutes(page, userFixture, [conversationFixture]);
+  // A short viewport forces the modal content past the panel height.
+  await page.setViewportSize({ width: 460, height: 640 });
+  await page.goto('/c/conv_e2e_header');
+
+  await page.getByRole('button', { name: 'Security & keys' }).click();
+
+  const body = page.locator('.cog-modal__body');
+  await expect(body).toBeVisible();
+
+  // The body is the scroll container — content overflows it rather than the
+  // panel clipping silently (the bug this guards against).
+  const overflow = await body.evaluate((el) => el.scrollHeight - el.clientHeight);
+  expect(overflow).toBeGreaterThan(0);
+
+  // And it genuinely scrolls: starts at the top, reaches the bottom content.
+  expect(await body.evaluate((el) => el.scrollTop)).toBe(0);
+  await body.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+  expect(await body.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
 });
 
 test('new chat header has no overflow menu', async ({ page }) => {

@@ -94,6 +94,10 @@ export type CognosModalTitleTone = 'default' | 'info' | 'success' | 'danger';
         z-index: 1;
         display: grid;
         width: min(100%, var(--cog-modal-width));
+        /* Cap the panel to the centred area (viewport minus .cog-modal's
+           padding) so a tall modal never overflows the screen. The body row is
+           minmax(0, 1fr) and scrolls; the header/footer stay pinned. */
+        max-height: 100%;
         grid-template-rows: auto minmax(0, 1fr);
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-md);
@@ -166,6 +170,11 @@ export type CognosModalTitleTone = 'default' | 'info' | 'success' | 'danger';
       }
 
       .cog-modal__body {
+        /* The body is the grid's flexible row (minmax(0, 1fr)); let it scroll
+           when the content is taller than the panel instead of clipping. */
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
         padding: 0 var(--cog-space-200) var(--cog-space-200);
       }
 
