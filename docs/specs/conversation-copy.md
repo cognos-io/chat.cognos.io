@@ -4,6 +4,35 @@
 **Scope:** Copy an existing conversation into a new conversation from chat-level menus. This is not
 in-message branching/regeneration.
 
+## 0.0 v1 Scope (decided 2026-06-24)
+
+Read this first. The rest of the spec describes the full design; v1 deliberately ships a subset.
+
+**In v1:**
+
+- Standalone conversations only.
+- PII redaction copy (standalone): fresh duplicate redaction keypair, secret wrapped for the
+  copying user only.
+- Client signs the duplicate `id + public_key` (reuses the existing creation signing path).
+- One synchronous request, one backend transaction, all-or-nothing. A message-count cap bounds the
+  request (see §13).
+
+**Fail closed in v1** (Duplicate action is disabled/blocked, with translated copy — never a silent
+partial copy):
+
+- Source has **attachments**.
+- Source is a **project conversation**.
+
+**Deferred** (tracked, not lost):
+
+- Project conversation duplicate (§7.2) — also blocked by the missing project-content-key wrapping
+  for redaction secrets; needs separate research.
+- Attachment byte-copy + re-seal (§6.4) and multiple attachments per message.
+- Server-side **enforcement** of `public_key_signature`. Today no key-creation endpoint verifies it;
+  enforcement must be a cross-cutting change across all of them, not just this endpoint. v1 signs
+  but does not enforce.
+- Batched/replayed or background-job copy for very large conversations — see §13 escalation path.
+
 ## 0. Decision Summary
 
 Use the user-facing label **“Duplicate chat”**.
@@ -177,6 +206,10 @@ This preserves the existing client-side binding check in `assertMessageBindings`
 
 ### 6.4 Attachments
 
+> **v1: deferred / fail closed.** v1 blocks duplication of any conversation containing attachments.
+> The re-seal design below is the target for the follow-up that also adds multiple attachments per
+> message. See §0.0.
+
 Generated image attachments have two layers:
 
 - encrypted file bytes stored on the message record;
@@ -248,6 +281,11 @@ The duplicate is standalone and private:
 
 ### 7.2 Project source conversation
 
+> **v1: deferred / fail closed.** v1 blocks duplication of project conversations. This is partly
+> blocked by the missing project-content-key wrapping for redaction secrets (a project member other
+> than the copier would have no way to read the duplicate's PII map). The design below is the target
+> for the follow-up. See §0.0.
+
 If the source conversation has `project` set, the duplicate must be created in the same project.
 
 Required permission:
@@ -279,9 +317,18 @@ This treats copies as a sub-resource of the source conversation and avoids a ver
 
 ### 8.1 Request shape
 
-The browser should generate a new PocketBase-safe conversation ID and one new PocketBase-safe ID per
-copied message before the request. That lets it sign the duplicate public key against the final
-conversation ID and encrypt message payloads with final copied parent IDs.
+The browser generates a new conversation ID and one new ID per copied message before the request.
+That lets it sign the duplicate public key against the final conversation ID and encrypt message
+payloads with final copied parent IDs.
+
+The `id` columns are plain text fields, so IDs do not have to follow PocketBase's default ID format.
+v1 uses 15-character lowercase nanoid values. The client must deduplicate within a bundle (a `Set`)
+so it never self-collides; cross-record collisions with existing rows remain handled by the `409`
+path below.
+
+The duplicate `public_key_signature` is generated (signing `id + public_key`) in v1, but the backend
+does **not** yet verify it — signature enforcement is a deferred cross-cutting change (see §0.0). Do
+not write client or server code that assumes the signature is currently enforced.
 
 ```json
 {
@@ -428,7 +475,8 @@ The backend must reject requests where:
 - a submitted parent points outside the submitted source message set;
 - the same `source_id` or duplicate `id` appears twice;
 - encrypted payload count does not match the source message count, unless a future explicit
-  partial-copy mode exists.
+  partial-copy mode exists;
+- the source message count exceeds the v1 cap (500); the request is rejected with `400` (see §13).
 
 ## 11. Data That Is Copied
 
@@ -547,13 +595,28 @@ Backend validation:
   attachment plaintext.
 - Analytics, if emitted, include only IDs/counts/timing and no content.
 
-## 13. Open Decisions
+## 13. Decisions & Escalation
 
-- **Expiry semantics:** should copied historical messages keep their original `expires` timestamps,
-  clear them, or receive new expiry timestamps based on the duplicate creation time? Recommended v1:
-  inherit the conversation expiry setting but do not copy already-expiring message timestamps unless
-  the user is explicitly duplicating an expiring chat as an expiring snapshot.
-- **Large conversations:** decide whether v1 has a maximum message count for synchronous copy or
-  needs a background job with progress.
-- **Partial failures for attachments/redaction:** recommended v1 is fail-closed, not partial copy.
-- **Copy title suffix translations:** decide the exact per-locale string for “(copy)”.
+Resolved for v1:
+
+- **Expiry semantics:** inherit the source conversation's `expiry_duration` setting. Do not copy
+  per-message `expires` timestamps from the source; the duplicate's messages get expiry derived from
+  the duplicate conversation's expiry setting, exactly as a fresh conversation would.
+- **Large conversations — message-count cap:** v1 copy is synchronous, single-request,
+  single-transaction. A hard cap of **500 messages** bounds the request. Sources above the cap fail
+  closed with a translated "conversation too large to duplicate" message. The cap is enforced both
+  client-side (before doing the work) and server-side (request rejected with `400`).
+- **Why not batches/replay:** conflicts are not the scaling concern — with random IDs a `409` is
+  astronomically unlikely, so whole-bundle regenerate-on-conflict is effectively dead code and fine.
+  The real pressure is payload/transaction size, which the cap handles. Batching across multiple
+  transactions would reintroduce the half-state §9 exists to prevent: a partial tree has dangling
+  parents (fails `assertMessageBindings`) and redaction entries pointing at messages that never
+  landed, and the user cannot tell a truncated duplicate from a complete one. So v1 stays atomic.
+- **Partial failures for attachments/redaction:** fail closed, never partial.
+- **Copy title suffix:** per-locale translated string (see §5.4); not the literal English
+  "(copy)" in non-English locales.
+
+Escalation path (deferred): if conversations routinely exceed the cap, do **not** move to
+client-driven batches. Move to a **server-side async job**: the client uploads the full ciphertext
+bundle once, the server processes it and reports progress, preserving server-side atomicity. This is
+out of scope for v1.

@@ -11,6 +11,12 @@ This is a chat-level action from the sidebar menu or conversation detail menu.
 It is **not** the same as editing/regenerating a message, which creates a
 branch inside the same conversation.
 
+**v1 scope (2026-06-24):** standalone conversations only, PII redaction copied.
+The action is **disabled/blocked** when the source has attachments or belongs
+to a project (both deferred — never copied partially). Copy is one synchronous,
+all-or-nothing request capped at 500 messages. Full detail and the deferred-work
+list live in the [spec §0.0](../specs/conversation-copy.md).
+
 A duplicate is a new conversation with a new keypair. Because message rows are
 sealed to the source conversation public key, the browser must decrypt and
 re-encrypt every copied payload before the backend stores it. If the source has
