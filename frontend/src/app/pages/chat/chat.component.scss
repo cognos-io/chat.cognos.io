@@ -93,20 +93,14 @@
   align-items: center;
   justify-content: center;
   inline-size: 24px;
-  block-size: 24px;
+  // Match the project row height so the chevron aligns with the entry; it stays
+  // background-free on hover (only the project entry highlights).
+  block-size: 40px;
   border: 0;
   border-radius: var(--cog-radius-sm);
   background: transparent;
   color: var(--cog-text-subtlest);
   cursor: pointer;
-  transition:
-    background-color var(--cog-dur-fast) var(--cog-ease-standard),
-    color var(--cog-dur-fast) var(--cog-ease-standard);
-}
-
-.chat-shell__project-toggle:hover {
-  background: var(--cog-surface-hover, rgba(0, 0, 0, 0.04));
-  color: var(--cog-text);
 }
 
 .chat-shell__project-toggle:focus-visible {
