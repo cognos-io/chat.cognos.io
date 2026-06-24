@@ -231,6 +231,49 @@ export function modelMatchesSearch(
   });
 }
 
+// formatContextWindow renders a token count as a short human label
+// (128000 -> "128K", 1_000_000 -> "1M"). Pure, shared by the composer selector
+// and account settings so both stay consistent.
+export function formatContextWindow(tokens: number): string {
+  if (tokens >= 1_000_000) {
+    const millions = tokens / 1_000_000;
+    return `${Number.isInteger(millions) ? millions : millions.toFixed(1)}M`;
+  }
+  if (tokens >= 1000) {
+    return `${Math.round(tokens / 1000)}K`;
+  }
+  return `${tokens}`;
+}
+
+// ---- strength pills --------------------------------------------------------
+
+// isPrivateModel marks models that process privately: Swiss-only tier or a
+// declared no-retention policy. Drives the "Private" strength pill / search.
+export function isPrivateModel(model: Model): boolean {
+  return model.privacyTier === 'ch_only' || model.noRetention === true;
+}
+
+// modelStrengthPills returns the ordered i18n strength keys for a row, combining
+// curated flags (everyday/fast/powerful) with predicates derived from public
+// metadata (reasoning/image/long context/low cost/private). Keys map to
+// chat.models.strengths.*; the caller localises and may cap the count.
+export function modelStrengthPills(
+  model: Model,
+  meta: MetadataLookup = defaultMetadata,
+): string[] {
+  const m = meta(model.id);
+  const keys: string[] = [];
+  if (m.recommendedDefaultFor.includes('chat')) keys.push('everyday');
+  if (m.fast) keys.push('fast');
+  if (m.powerful) keys.push('powerful');
+  if (isReasoningModel(model)) keys.push('reasoning');
+  if (isImageModel(model)) keys.push('image');
+  if (isLongContextModel(model)) keys.push('longContext');
+  if (isLowCostModel(model)) keys.push('lowCost');
+  if (isPrivateModel(model)) keys.push('private');
+  return keys;
+}
+
 // ---- ordering pipeline -----------------------------------------------------
 
 export type ModelGroupKey = 'pinned' | 'recent' | 'recommended' | 'other';

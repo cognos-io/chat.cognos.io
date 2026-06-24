@@ -35,12 +35,48 @@ export const EMPTY_MODEL_CAPABILITY_METADATA: ModelCapabilityMetadata = {
   aliases: [],
 };
 
-// Curated metadata keyed by model id. Entries are partial; missing fields fall
-// back to EMPTY_MODEL_CAPABILITY_METADATA. Seeded conservatively and intended to
-// be tuned by product — keep it reviewed whenever the catalogue changes.
+// Curated metadata keyed by model id (the slug from /api/v1/models). Entries are
+// partial; missing fields fall back to EMPTY_MODEL_CAPABILITY_METADATA. This is
+// PRODUCT-OWNED — review it whenever the catalogue changes. fast/powerful are
+// curated judgements, never inferred from name or price.
+//
+// Seed decisions (2026-06): recommended default for EU/global users is
+// gemini-3-5-flash; the Swiss (ch_only) recommended default is the largest
+// Infomaniak Qwen; the image default is gemini-2-5-flash-image.
 export const MODEL_CAPABILITY_METADATA: Readonly<
   Record<string, Partial<ModelCapabilityMetadata>>
-> = {};
+> = {
+  // --- recommended defaults -------------------------------------------------
+  'gemini-3-5-flash': {
+    recommended: true,
+    recommendedDefaultFor: ['chat'],
+    fast: true,
+  },
+  'qwen-qwen3-5-122b-a10b-fp8-infomaniak': {
+    recommended: true,
+    recommendedDefaultFor: ['chat'],
+  },
+  'gemini-2-5-flash-image': {
+    recommended: true,
+    recommendedDefaultFor: ['image'],
+    fast: true,
+  },
+  // --- other recommended all-rounders --------------------------------------
+  'claude-sonnet-4-6': { recommended: true, powerful: true },
+  'gpt-5-mini': { recommended: true, fast: true },
+  // --- fast tier ------------------------------------------------------------
+  'gpt-5-nano': { fast: true },
+  'gpt-4o-mini': { fast: true },
+  'responses-gpt-4-1-nano': { fast: true },
+  'gemini-3-1-flash-lite': { fast: true },
+  'claude-haiku-4-5': { fast: true },
+  // --- powerful tier --------------------------------------------------------
+  'claude-opus-4-8': { powerful: true },
+  'gpt-5-5': { powerful: true },
+  'responses-gpt-5-5': { powerful: true },
+  'gemini-2-5-pro': { powerful: true },
+  'qwen-qwen3-5-397b-a17b-fp8-infomaniak': { powerful: true },
+};
 
 // modelCapabilityMetadata resolves the full metadata for a model id, merging any
 // curated entry over the empty defaults. Pure and total: an unknown id returns

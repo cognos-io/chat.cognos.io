@@ -818,7 +818,8 @@
       "yesterday": "Hier",
       "daysAgo": "il y a {{count}} jours",
       "lastWeek": "La semaine dernière"
-    }
+    },
+    "close": "Fermer"
   },
   "dialogs": {
     "confirm": {

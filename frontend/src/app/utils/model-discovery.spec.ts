@@ -12,11 +12,13 @@ import {
   addRecentModel,
   buildSearchSynonyms,
   flattenGroups,
+  formatContextWindow,
   isLongContextModel,
   isLowCostModel,
   isReasoningModel,
   matchesQuickFilter,
   modelMatchesSearch,
+  modelStrengthPills,
   normalizeSearchText,
   orderModels,
   resolveDefaultModel,
@@ -380,6 +382,45 @@ describe('resolveDefaultModel', () => {
   it('returns undefined when no eligible model exists', () => {
     const none = [makeModel({ id: 'x', isEligible: false })];
     expect(resolveDefaultModel({ models: none })).toBeUndefined();
+  });
+});
+
+describe('formatContextWindow', () => {
+  it('formats thousands and millions', () => {
+    expect(formatContextWindow(128_000)).toBe('128K');
+    expect(formatContextWindow(1_000_000)).toBe('1M');
+    // Non-integer millions keep one decimal (matches the settings formatter).
+    expect(formatContextWindow(1_048_576)).toBe('1.0M');
+    expect(formatContextWindow(1_500_000)).toBe('1.5M');
+    expect(formatContextWindow(512)).toBe('512');
+  });
+});
+
+describe('modelStrengthPills', () => {
+  it('combines curated flags with derived capability pills in order', () => {
+    const meta = metaFor({
+      m: { recommendedDefaultFor: ['chat'], fast: true },
+    });
+    const model = makeModel({
+      id: 'm',
+      reasoningEfforts: ['high'],
+      inputContextLength: 200_000,
+      pricing: { inputUsdPerMillionTokens: 0.1, outputUsdPerMillionTokens: 0.1 },
+    });
+    expect(modelStrengthPills(model, meta)).toEqual([
+      'everyday',
+      'fast',
+      'reasoning',
+      'longContext',
+      'lowCost',
+    ]);
+  });
+
+  it('marks Swiss-only and no-retention models as private', () => {
+    expect(modelStrengthPills(makeModel({ privacyTier: 'ch_only' }))).toContain(
+      'private',
+    );
+    expect(modelStrengthPills(makeModel({ noRetention: true }))).toContain('private');
   });
 });
 

@@ -303,23 +303,43 @@ function escapeHtml(value: string): string {
               {{ modelService.selectedModel().name }}
             </cog-button>
 
-            <ng-template
-              cdkConnectedOverlay
-              [cdkConnectedOverlayOrigin]="modelTrigger"
-              [cdkConnectedOverlayOpen]="modelSelectorOpen()"
-              [cdkConnectedOverlayHasBackdrop]="true"
-              cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
-              [cdkConnectedOverlayPositions]="modelSelectorPositions"
-              [cdkConnectedOverlayPush]="true"
-              (backdropClick)="closeModelSelector()"
-              (detach)="closeModelSelector()"
-              (overlayKeydown)="onOverlayKeydown($event)"
-            >
-              <app-model-selector
-                [requiredCapability]="composerTools.requiredCapability()"
-                (modelSelected)="closeModelSelector()"
-              ></app-model-selector>
-            </ng-template>
+            @if (!isMobile()) {
+              <!-- Desktop: dropdown anchored to the trigger. -->
+              <ng-template
+                cdkConnectedOverlay
+                [cdkConnectedOverlayOrigin]="modelTrigger"
+                [cdkConnectedOverlayOpen]="modelSelectorOpen()"
+                [cdkConnectedOverlayHasBackdrop]="true"
+                cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+                [cdkConnectedOverlayPositions]="modelSelectorPositions"
+                [cdkConnectedOverlayPush]="true"
+                (backdropClick)="closeModelSelector()"
+                (detach)="closeModelSelector()"
+                (overlayKeydown)="onOverlayKeydown($event)"
+              >
+                <app-model-selector
+                  layout="dropdown"
+                  [requiredCapability]="composerTools.requiredCapability()"
+                  (modelSelected)="closeModelSelector()"
+                  (closed)="closeModelSelector()"
+                ></app-model-selector>
+              </ng-template>
+            } @else if (modelSelectorOpen()) {
+              <!-- Mobile: full-width bottom sheet (spec §4.5). -->
+              <div
+                class="model-sheet-backdrop"
+                (click)="closeModelSelector()"
+                aria-hidden="true"
+              ></div>
+              <div class="model-sheet" role="dialog" aria-modal="true">
+                <app-model-selector
+                  layout="sheet"
+                  [requiredCapability]="composerTools.requiredCapability()"
+                  (modelSelected)="closeModelSelector()"
+                  (closed)="closeModelSelector()"
+                ></app-model-selector>
+              </div>
+            }
 
             @if (modelService.selectedModel().reasoningEfforts.length) {
               <cog-button
@@ -546,6 +566,22 @@ function escapeHtml(value: string): string {
       display: grid;
       gap: var(--cog-space-100);
       width: 100%;
+    }
+
+    /* Mobile model selector presented as a bottom sheet (spec §4.5). */
+    .model-sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+    }
+
+    .model-sheet {
+      position: fixed;
+      inset: auto 0 0 0;
+      z-index: 1001;
+      display: flex;
+      justify-content: center;
     }
 
     .message-form__panel {

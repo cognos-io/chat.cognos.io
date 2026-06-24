@@ -818,7 +818,8 @@
       "yesterday": "Yesterday",
       "daysAgo": "{{count}} days ago",
       "lastWeek": "Last week"
-    }
+    },
+    "close": "Close"
   },
   "dialogs": {
     "confirm": {
