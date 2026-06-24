@@ -109,7 +109,8 @@
   min-width: 0;
   // Match the conversation list item height so project and chat rows align.
   min-height: 40px;
-  padding: var(--cog-space-050) var(--cog-space-150);
+  // No left padding — the avatar chip's own padding gives enough inset.
+  padding: var(--cog-space-050) var(--cog-space-150) var(--cog-space-050) 0;
   border-radius: var(--cog-radius-sm);
   color: var(--cog-text);
   text-decoration: none;
