@@ -388,7 +388,14 @@ function makeProject(id: string, name: string): Project {
       data: '',
       key_version: 1,
     },
-    decryptedData: { version: '1', name, description: '' },
+    decryptedData: {
+      version: '1',
+      name,
+      description: '',
+      icon: 'users',
+      color: 'blue',
+      instructions: '',
+    },
     contentKey: new Uint8Array(),
   };
 }

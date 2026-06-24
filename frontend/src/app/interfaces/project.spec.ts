@@ -20,6 +20,9 @@ describe('project crypto round-trip', () => {
     version: '1',
     name: 'Acme launch',
     description: 'Private project notes',
+    icon: 'users',
+    color: 'blue',
+    instructions: '',
   };
 
   // tweetnacl rejects byte arrays from another realm (vitest/jsdom gives
