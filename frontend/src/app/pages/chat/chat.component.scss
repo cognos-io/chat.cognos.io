@@ -2,12 +2,6 @@
 // cog-desktop-shell / cog-mobile-shell. These styles are just the chat-specific
 // content projected into the shell slots.
 
-// Give the chat sidebar a roomier column than the default shell nav so longer
-// conversation titles stay readable (~25% wider than the 290px default).
-:host {
-  --cog-desktop-shell-nav-width: 360px;
-}
-
 .chat-shell__nav-host,
 .chat-shell__content-host {
   height: 100%;
@@ -131,7 +125,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: var(--cog-fw-semibold);
 }
 
 .chat-shell__project-count {
