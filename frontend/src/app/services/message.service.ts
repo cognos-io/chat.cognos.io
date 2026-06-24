@@ -1091,13 +1091,10 @@ export class MessageService {
 
     const selectedPersona = this._personaService.selectedPersona();
     const messages = this.createMessageContext();
-    // When placeholders are present, instruct the model to preserve them so they
-    // survive the round-trip and hydrate cleanly on display.
-    const hasRedactions = messages.some((m) => containsRedactionToken(m.content));
     const systemPrompt = this.composeSystemPrompt(
       selectedPersona.systemPrompt,
       conversation,
-      hasRedactions ? REDACTION_INSTRUCTION : '',
+      messages,
     );
     const request = {
       messages,
@@ -1401,13 +1398,15 @@ export class MessageService {
     const requestId = self.crypto.randomUUID();
     this._activeCompletionRequestId = requestId;
     const selectedPersona = this._personaService.selectedPersona();
+    const regenerationMessages = this.buildContextFromPath([...contextPath].reverse());
     const request = {
-      messages: this.buildContextFromPath([...contextPath].reverse()),
+      messages: regenerationMessages,
       modelId: this._modelService.selectedModel().id,
       personaId: selectedPersona.id,
       systemPrompt: this.composeSystemPrompt(
         selectedPersona.systemPrompt,
         conversation,
+        regenerationMessages,
       ),
       parentMessageId: parentId,
       requestId,
@@ -1679,22 +1678,77 @@ export class MessageService {
   }
 
   // Builds the system prompt sent with a completion. When the conversation
-  // belongs to a project, the project's decrypted instructions are prepended to
-  // the persona prompt so every chat in the project inherits that guidance; an
-  // optional suffix (e.g. the redaction instruction) is appended last.
+  // belongs to a project, the project's instructions are prepended to the
+  // persona prompt so every chat in the project inherits that guidance — with
+  // any PII in them redacted (see redactProjectInstructions). The redaction
+  // instruction is appended whenever the prompt or context carries placeholders,
+  // so the model preserves them across the round-trip.
   private composeSystemPrompt(
     personaPrompt: string,
     conversation: Conversation | null | undefined,
-    suffix = '',
+    messages: ReadonlyArray<CompletionMessageRequest>,
+  ): string {
+    const instructions = this.redactProjectInstructions(conversation);
+    const hasRedactions =
+      containsRedactionToken(instructions) ||
+      messages.some((message) => containsRedactionToken(message.content));
+    return [
+      instructions,
+      personaPrompt.trim(),
+      hasRedactions ? REDACTION_INSTRUCTION : '',
+    ]
+      .filter((part) => part.length > 0)
+      .join('\n\n');
+  }
+
+  // Returns a project's instructions with PII replaced by placeholder tokens,
+  // mirroring message redaction: detection runs client-side, the raw values are
+  // swapped for stable tokens before the prompt is sent, and the new mappings
+  // are persisted to THIS conversation (best-effort) so a token the model echoes
+  // hydrates back to the original on display. Tokens are reused across messages
+  // and instructions within a conversation. Returns the raw instructions (or '')
+  // when there is no project, no instructions, redaction is off, or the
+  // conversation is temporary (no row to attach mappings to).
+  private redactProjectInstructions(
+    conversation: Conversation | null | undefined,
   ): string {
     const projectId = conversation?.record.project;
     const project = projectId
       ? this._projectService.projects().find((p) => p.record.id === projectId)
       : undefined;
     const instructions = project?.decryptedData.instructions?.trim() ?? '';
-    return [instructions, personaPrompt.trim(), suffix.trim()]
-      .filter((part) => part.length > 0)
-      .join('\n\n');
+
+    if (
+      !instructions ||
+      !projectId ||
+      !conversation ||
+      !this._redactionService.enabled() ||
+      this._conversationService.isTemporaryConversation()
+    ) {
+      return instructions;
+    }
+
+    const candidates = this._redactionService.detect(instructions);
+    if (candidates.length === 0) {
+      return instructions;
+    }
+
+    const source = { kind: 'document' as const, id: projectId };
+    const { redactedText, newEntries } = this._redactionService.prepareRedaction(
+      conversation.record.id,
+      instructions,
+      candidates,
+      source,
+    );
+    if (newEntries.length > 0) {
+      this._redactionService.persist(conversation, newEntries, source).subscribe({
+        error: () => {
+          // Best-effort: the instructions were already redacted before sending,
+          // so a persistence failure costs the owner hydration, not a leak.
+        },
+      });
+    }
+    return redactedText;
   }
 
   private buildContextFromPath(
