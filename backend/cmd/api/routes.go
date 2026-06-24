@@ -297,6 +297,14 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	e.Router.POST(
+		"/api/v1/conversations/{conversationID}/copies",
+		handler.ConversationCopy(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.DELETE(
 		"/api/v1/conversations",
 		handler.ConversationsDeleteAll(app),
