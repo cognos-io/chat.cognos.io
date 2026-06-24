@@ -45,6 +45,32 @@ func TestReasoningEffortsForOnlyWhenSupported(t *testing.T) {
 	}
 }
 
+func TestImageGenerationEnabledRequiresFlagAndTransport(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name      string
+		supports  bool
+		transport string
+		want      bool
+	}{
+		{"flag and transport", true, "chat_completions", true},
+		{"flag but no transport stays off", true, "  ", false},
+		{"transport but Requesty says no", false, "images_api", false},
+		{"neither", false, "", false},
+	}
+	for _, tc := range cases {
+		got := imageGenerationEnabled(
+			RequestyModel{SupportsImageGeneration: tc.supports},
+			tc.transport,
+		)
+		if got != tc.want {
+			t.Errorf("%s: imageGenerationEnabled(%v, %q) = %v, want %v",
+				tc.name, tc.supports, tc.transport, got, tc.want)
+		}
+	}
+}
+
 func TestPerMillionConvertsPerTokenPrice(t *testing.T) {
 	t.Parallel()
 	if got := perMillion(0.0000011); got != 1.1 {

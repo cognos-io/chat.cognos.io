@@ -50,3 +50,12 @@ func reasoningEffortsFor(model RequestyModel) ([]string, string) {
 func perMillion(perToken float64) float64 {
 	return perToken * 1_000_000
 }
+
+// imageGenerationEnabled decides whether a model is advertised as image-capable.
+// Requesty is the source of truth for the capability, but we only enable it when
+// a curated image_generation_transport is set — otherwise we'd advertise a model
+// we don't yet know how to route. So a new image-capable model stays off until an
+// operator sets the transport, then flips on automatically on the next sync.
+func imageGenerationEnabled(model RequestyModel, transport string) bool {
+	return model.SupportsImageGeneration && strings.TrimSpace(transport) != ""
+}

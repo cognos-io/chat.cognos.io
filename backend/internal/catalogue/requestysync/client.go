@@ -22,16 +22,17 @@ const DefaultBaseURL = "https://router.eu.requesty.ai"
 // RequestyModel is the subset of Requesty's /v1/models entry we consume. Prices
 // are per-token USD (e.g. 0.0000011 == $1.10 / 1M tokens).
 type RequestyModel struct {
-	ID                  string  `json:"id"`
-	SupportsReasoning   bool    `json:"supports_reasoning"`
-	SupportsVision      bool    `json:"supports_vision"`
-	SupportsToolCalling bool    `json:"supports_tool_calling"`
-	SupportsWebSearch   bool    `json:"supports_web_search"`
-	SupportsComputerUse bool    `json:"supports_computer_use"`
-	InputPrice          float64 `json:"input_price"`
-	OutputPrice         float64 `json:"output_price"`
-	ContextWindow       int     `json:"context_window"`
-	MaxOutputTokens     int     `json:"max_output_tokens"`
+	ID                      string  `json:"id"`
+	SupportsReasoning       bool    `json:"supports_reasoning"`
+	SupportsVision          bool    `json:"supports_vision"`
+	SupportsToolCalling     bool    `json:"supports_tool_calling"`
+	SupportsWebSearch       bool    `json:"supports_web_search"`
+	SupportsComputerUse     bool    `json:"supports_computer_use"`
+	SupportsImageGeneration bool    `json:"supports_image_generation"`
+	InputPrice              float64 `json:"input_price"`
+	OutputPrice             float64 `json:"output_price"`
+	ContextWindow           int     `json:"context_window"`
+	MaxOutputTokens         int     `json:"max_output_tokens"`
 }
 
 // Client fetches the Requesty model catalogue. It carries no secrets beyond the

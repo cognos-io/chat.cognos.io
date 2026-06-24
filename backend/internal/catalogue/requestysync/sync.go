@@ -93,8 +93,7 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 		}
 
 		// Capability flags are authoritative facts from Requesty, refreshed on
-		// every run. (supports_image_generation is deliberately excluded — it
-		// stays curated because it also drives image-transport routing.)
+		// every run.
 		for field, want := range map[string]bool{
 			"supports_vision":       model.SupportsVision,
 			"supports_tool_calling": model.SupportsToolCalling,
@@ -105,6 +104,17 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 				record.Set(field, want)
 				changed = true
 			}
+		}
+
+		// Image generation is gated on a curated transport: we only advertise a
+		// model as image-capable when Requesty reports it AND we know how to
+		// route its image requests (images_api vs chat_completions). A newly
+		// image-capable model stays off until an operator sets the transport,
+		// then flips on automatically here — no broken routing in between.
+		wantImage := imageGenerationEnabled(model, record.GetString("image_generation_transport"))
+		if record.GetBool("supports_image_generation") != wantImage {
+			record.Set("supports_image_generation", wantImage)
+			changed = true
 		}
 
 		// Reasoning efforts: set only when the model reasons and none are set,
