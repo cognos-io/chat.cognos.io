@@ -42,8 +42,16 @@
   <ng-template #navProjects>
     @if (projectsEnabled && projects().length > 0) {
       <section class="chat-shell__section">
-        <header class="chat-shell__section-heading">
-          {{ t('chat.list.projects') }}
+        <header class="chat-shell__section-heading chat-shell__section-heading--action">
+          <span>{{ t('chat.list.projects') }}</span>
+          <a
+            class="chat-shell__section-action"
+            [routerLink]="['/account/projects']"
+            [title]="t('projects.new')"
+            [attr.aria-label]="t('projects.new')"
+          >
+            <cog-icon name="plus" [size]="16" tone="current" />
+          </a>
         </header>
         <div class="chat-shell__conversation-list">
           @for (project of projects(); track project.record.id) {

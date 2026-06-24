@@ -68,6 +68,38 @@
   text-transform: var(--cog-tt-overline);
 }
 
+// Heading with a trailing action (e.g. the Projects "+" new-project shortcut).
+.chat-shell__section-heading--action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cog-space-100);
+}
+
+.chat-shell__section-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 22px;
+  block-size: 22px;
+  border-radius: var(--cog-radius-sm);
+  color: var(--cog-text-subtlest);
+  text-decoration: none;
+  transition:
+    background-color var(--cog-dur-fast) var(--cog-ease-standard),
+    color var(--cog-dur-fast) var(--cog-ease-standard);
+}
+
+.chat-shell__section-action:hover {
+  background: var(--cog-surface-hover, rgba(0, 0, 0, 0.04));
+  color: var(--cog-text);
+}
+
+.chat-shell__section-action:focus-visible {
+  outline: 2px solid var(--cog-brand);
+  outline-offset: 2px;
+}
+
 .chat-shell__conversation-list {
   display: grid;
   gap: var(--cog-space-050);

@@ -96,6 +96,12 @@ test('sidebar collapses and expands a project to reveal its chats and count', as
   await expect(page.locator('.chat-shell__project-count')).toHaveText('2');
   await expect(page.getByText('Data Protection Act')).toBeHidden();
 
+  // The Projects heading has a "+" shortcut to the new-project page.
+  await expect(page.getByRole('link', { name: 'New project' })).toHaveAttribute(
+    'href',
+    /\/account\/projects$/,
+  );
+
   const toggle = page.getByRole('button', { name: /Show chats in Cantonal Policy/ });
   await toggle.click();
 
