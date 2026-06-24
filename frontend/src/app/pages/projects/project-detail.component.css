@@ -256,18 +256,21 @@
   font-weight: var(--cog-fw-semibold, 600);
 }
 
+/* Copy stacked on top; the delete action sits on its own row, bottom-right. */
 .project-detail__danger-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: var(--cog-space-150, 12px);
-  flex-wrap: wrap;
   margin-top: var(--cog-space-100, 8px);
 }
 
 .project-detail__danger-copy {
-  flex: 1;
   min-width: 0;
+}
+
+.project-detail__danger-row > cog-button,
+.project-detail__danger-confirm {
+  align-self: flex-end;
 }
 
 .project-detail__danger-name {
