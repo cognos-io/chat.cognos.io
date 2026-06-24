@@ -130,7 +130,7 @@ describe('matchesQuickFilter', () => {
     ).toBe(true);
     expect(
       matchesQuickFilter(
-        makeModel({ inputContextLength: 200_000 }),
+        makeModel({ inputContextLength: 300_000 }),
         'long_context',
         meta,
       ),
@@ -404,7 +404,7 @@ describe('modelStrengthPills', () => {
     const model = makeModel({
       id: 'm',
       reasoningEfforts: ['high'],
-      inputContextLength: 200_000,
+      inputContextLength: 300_000,
       pricing: { inputUsdPerMillionTokens: 0.1, outputUsdPerMillionTokens: 0.1 },
     });
     expect(modelStrengthPills(model, meta)).toEqual([

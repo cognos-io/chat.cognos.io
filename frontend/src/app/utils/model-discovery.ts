@@ -27,8 +27,10 @@ export type QuickFilter =
   | 'image'
   | 'long_context';
 
-// Documented "long context" threshold for the first release (§5.3 / §13).
-export const LONG_CONTEXT_THRESHOLD = 128_000;
+// Documented "long context" threshold (§5.3). Set at 300k so the label marks
+// genuinely large windows (the 1M-token frontier models and 300k+ models),
+// not the now-common 128k baseline. Change here to retune it everywhere.
+export const LONG_CONTEXT_THRESHOLD = 300_000;
 
 // Most-recent-first recent-model list cap (§5.4).
 export const RECENT_MODELS_LIMIT = 8;

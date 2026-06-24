@@ -301,7 +301,8 @@ search at the bottom keeps it directly above the on-screen keyboard on mobile.
     - The Reasoning filter uses `reasoningEfforts.length > 0` unless a more explicit backend flag is
     added.
     - Low cost uses `deriveModelCostTier(model.pricing) === 'low'`.
-    - Long context uses a documented threshold, initially `inputContextLength >= 128000`.
+    - Long context uses a documented threshold, `inputContextLength >= 300000`, so the label marks
+    genuinely large windows rather than the now-common 128k baseline.
     - Fast, Powerful, and Recommended require explicit local metadata rather than guessing from
       name.
     - Filter labels use plain-language outcomes, not provider jargon.
