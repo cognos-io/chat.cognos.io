@@ -19,7 +19,7 @@ import { PersonaColor } from '@app/interfaces/persona';
       [class]="'persona-avatar--' + color()"
       [style.--persona-avatar-size.px]="size()"
     >
-      <cog-icon [name]="icon()" [size]="iconSize()" />
+      <cog-icon [name]="icon()" [size]="resolvedIconSize()" />
     </span>
   `,
   styles: `
@@ -82,6 +82,11 @@ export class PersonaAvatarComponent {
   readonly icon = input.required<CognosIconName>();
   readonly color = input.required<PersonaColor>();
   readonly size = input(40);
+  // Optional explicit icon size; defaults to half the box (so the glyph sits
+  // inside the chip with even padding). Pass a smaller value for more padding.
+  readonly iconSize = input<number>();
 
-  protected readonly iconSize = computed(() => Math.round(this.size() * 0.5));
+  protected readonly resolvedIconSize = computed(
+    () => this.iconSize() ?? Math.round(this.size() * 0.5),
+  );
 }
