@@ -1044,7 +1044,10 @@
       "iconLegend": "Ícone",
       "colourLegend": "Cor",
       "untitled": "Projeto sem título",
-      "previewHint": "Como este projeto aparece na barra lateral"
+      "previewHint": "Como este projeto aparece na barra lateral",
+      "defaultModelLabel": "Modelo predefinido",
+      "defaultModelAuto": "Usar a minha predefinição pessoal",
+      "defaultModelHint": "As conversas deste projeto começam com este modelo. Os membros sem acesso usam a sua própria predefinição."
     },
     "danger": {
       "title": "Zona de perigo",

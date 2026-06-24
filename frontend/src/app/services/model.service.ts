@@ -5,9 +5,11 @@ import { Observable, catchError, map, of, switchMap } from 'rxjs';
 import { signalSlice } from 'ngxtension/signal-slice';
 
 import { Model, PrivacyTier, loadingModel } from '@app/interfaces/model';
+import { resolveDefaultModel } from '@app/utils/model-discovery';
 
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
+import { ProjectService } from './project.service';
 import { UserPreferencesService } from './user-preferences.service';
 
 // resolveReasoningEffort picks the effort tier to use for a model: the user's
@@ -53,6 +55,7 @@ export class ModelService {
   private readonly _authService = inject(AuthService);
   private readonly _api = inject(CognosApiService);
   private readonly _preferences = inject(UserPreferencesService);
+  private readonly _projects = inject(ProjectService);
 
   private readonly state = signalSlice({
     initialState,
@@ -83,17 +86,19 @@ export class ModelService {
     selectors: (state) => ({
       selectedModel: () => {
         const modelList = state.modelList();
-        const eligibleById = (id: string) =>
-          id
-            ? modelList.find((model) => model.id === id && model.isEligible)
-            : undefined;
-
+        // Resolution order (spec §5.6/§5.7): explicit session pick → encrypted
+        // project default → encrypted user default → recommended eligible →
+        // first eligible visible. Hidden/ineligible/stale ids fall through. The
+        // final fallbacks keep a model selected even when none are eligible.
         return (
-          // 1. an explicit pick this session, 2. the persisted default from the
-          // single preferences object, 3. the first eligible model.
-          eligibleById(state.selectedModelId()) ??
-          eligibleById(this._preferences.defaultModelId()) ??
-          modelList.find((model) => model.isEligible) ??
+          resolveDefaultModel({
+            models: modelList,
+            sessionSelectedId: state.selectedModelId(),
+            projectDefaultId:
+              this._projects.selectedProject()?.decryptedData.defaultModelId,
+            userDefaultId: this._preferences.defaultModelId(),
+            hiddenIds: this._preferences.hiddenModels(),
+          }) ??
           modelList[0] ??
           loadingModel
         );

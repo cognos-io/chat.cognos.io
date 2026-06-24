@@ -14,6 +14,7 @@ import { loadingModel } from '@app/interfaces/model';
 
 import { AuthService } from './auth.service';
 import { ModelService, resolveReasoningEffort } from './model.service';
+import { ProjectService } from './project.service';
 import { UserPreferencesService } from './user-preferences.service';
 
 describe('resolveReasoningEffort', () => {
@@ -58,12 +59,20 @@ describe('ModelService', () => {
   let setDefaultModel: ReturnType<typeof vi.fn>;
   let markRecentModel: ReturnType<typeof vi.fn>;
   let defaultModelId: WritableSignal<string>;
+  let hiddenModels: WritableSignal<string[]>;
+  let selectedProject: WritableSignal<{
+    decryptedData: { defaultModelId: string };
+  } | null>;
 
   beforeEach(() => {
     authUser$ = new BehaviorSubject<unknown>(null);
     setDefaultModel = vi.fn();
     markRecentModel = vi.fn();
     defaultModelId = signal('');
+    hiddenModels = signal<string[]>([]);
+    selectedProject = signal<{
+      decryptedData: { defaultModelId: string };
+    } | null>(null);
 
     TestBed.configureTestingModule({
       providers: [
@@ -83,7 +92,12 @@ describe('ModelService', () => {
             defaultModelId,
             setDefaultModel,
             markRecentModel,
+            hiddenModels,
           },
+        },
+        {
+          provide: ProjectService,
+          useValue: { selectedProject },
         },
         {
           provide: PocketBase,
@@ -225,6 +239,26 @@ describe('ModelService', () => {
     // When the decrypted default arrives it wins reactively (no race).
     defaultModelId.set('model-b');
     expect(service.selectedModel().id).toBe('model-b');
+  });
+
+  it('prefers an eligible project default over the user default', () => {
+    authUser$.next({ id: 'user-1' });
+    const request = httpController.expectOne('http://localhost:8090/api/v1/models');
+    request.flush({
+      privacy_tier: 'global',
+      models: [makeModel('model-a'), makeModel('model-b')],
+    });
+
+    defaultModelId.set('model-a'); // user default
+    expect(service.selectedModel().id).toBe('model-a');
+
+    // A project default outranks the user default for project chats.
+    selectedProject.set({ decryptedData: { defaultModelId: 'model-b' } });
+    expect(service.selectedModel().id).toBe('model-b');
+
+    // A stale/ineligible project default is ignored, falling back to the user.
+    selectedProject.set({ decryptedData: { defaultModelId: 'does-not-exist' } });
+    expect(service.selectedModel().id).toBe('model-a');
   });
 
   it('ignores a persisted default that is ineligible or unknown', () => {

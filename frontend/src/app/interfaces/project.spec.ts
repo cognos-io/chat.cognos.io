@@ -23,7 +23,17 @@ describe('project crypto round-trip', () => {
     icon: 'users',
     color: 'blue',
     instructions: '',
+    defaultModelId: 'claude-sonnet-4-6',
   };
+
+  it('defaults defaultModelId to empty for older project blobs', () => {
+    // Projects created before the field existed must still parse (encrypted
+    // under the project content key, the value never appears in plaintext).
+    const legacy = new TextEncoder().encode(
+      JSON.stringify({ version: '1', name: 'Old', icon: 'users', color: 'blue' }),
+    );
+    expect(parseProjectData(legacy).defaultModelId).toBe('');
+  });
 
   // tweetnacl rejects byte arrays from another realm (vitest/jsdom gives
   // TextEncoder its own Uint8Array constructor), so normalise serialized

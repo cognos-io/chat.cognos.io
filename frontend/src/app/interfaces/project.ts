@@ -77,6 +77,11 @@ export const ProjectData = z.object({
   // Optional project-level instructions, prepended to the system prompt of
   // chats created inside the project.
   instructions: z.string().trim().default(''),
+  // Optional project default model id. Encrypted under the project content key
+  // like the rest of this blob — never a plaintext project field. Shared by all
+  // members; resolution prefers it over the personal default for project chats.
+  // Stale/ineligible ids are ignored at read time (see resolveDefaultModel).
+  defaultModelId: z.string().trim().default(''),
 });
 export type ProjectData = z.infer<typeof ProjectData>;
 

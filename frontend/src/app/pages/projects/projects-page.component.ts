@@ -63,6 +63,7 @@ export class ProjectsPageComponent {
       icon: defaultProjectIcon,
       color: defaultProjectColor,
       instructions: '',
+      defaultModelId: '',
     });
   }
 }

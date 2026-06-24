@@ -24,6 +24,7 @@ import {
   projectColors,
   projectIcons,
 } from '@app/interfaces/project';
+import { ModelService } from '@app/services/model.service';
 import { ProjectService } from '@app/services/project.service';
 
 // Edits a project's display identity (name, icon, colour) and description. The
@@ -87,6 +88,26 @@ import { ProjectService } from '@app/services/project.service';
             maxlength="160"
             autocomplete="off"
           />
+        </label>
+
+        <label class="project-settings__field">
+          <span class="project-settings__label">{{
+            t('projects.settings.defaultModelLabel')
+          }}</span>
+          <select
+            class="project-settings__input"
+            [ngModel]="defaultModelId()"
+            (ngModelChange)="defaultModelId.set($event)"
+            data-testid="project-settings-default-model"
+          >
+            <option value="">{{ t('projects.settings.defaultModelAuto') }}</option>
+            @for (model of eligibleModels(); track model.id) {
+              <option [value]="model.id">{{ model.name }}</option>
+            }
+          </select>
+          <span class="project-settings__hint">{{
+            t('projects.settings.defaultModelHint')
+          }}</span>
         </label>
 
         <fieldset class="project-settings__field">
@@ -204,6 +225,11 @@ import { ProjectService } from '@app/services/project.service';
       font-weight: var(--cog-fw-semibold);
     }
 
+    .project-settings__hint {
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+    }
+
     .project-settings__input {
       min-height: 40px;
       border: 2px solid var(--cog-border);
@@ -317,10 +343,17 @@ import { ProjectService } from '@app/services/project.service';
 export class ProjectSettingsDialogComponent {
   private readonly _dialogRef = inject(DialogRef<void>);
   private readonly _projects = inject(ProjectService);
+  private readonly _models = inject(ModelService);
   private readonly _data: { projectId: string } = inject(DIALOG_DATA);
 
   protected readonly icons = projectIcons;
   protected readonly colors = projectColors;
+
+  // Eligible models for the project-default picker. Ineligible (tier-locked)
+  // models are excluded so a member can't pin a default they can't use.
+  protected readonly eligibleModels = computed(() =>
+    this._models.modelList().filter((model) => model.isEligible),
+  );
 
   private readonly _project = computed(() =>
     this._projects.projects().find((p) => p.record.id === this._data.projectId),
@@ -330,6 +363,8 @@ export class ProjectSettingsDialogComponent {
   protected readonly description = signal('');
   protected readonly icon = signal<ProjectIcon>(defaultProjectIcon);
   protected readonly color = signal<ProjectColor>(defaultProjectColor);
+  // '' means "no project default" — fall back to the member's personal default.
+  protected readonly defaultModelId = signal('');
   protected readonly saving = signal(false);
 
   protected readonly canSave = computed(() => this.name().trim() !== '');
@@ -341,6 +376,7 @@ export class ProjectSettingsDialogComponent {
       this.description.set(project.decryptedData.description);
       this.icon.set(project.decryptedData.icon);
       this.color.set(project.decryptedData.color);
+      this.defaultModelId.set(project.decryptedData.defaultModelId);
     }
   }
 
@@ -363,6 +399,7 @@ export class ProjectSettingsDialogComponent {
         color: this.color(),
         // Preserve instructions, which are edited on the project page.
         instructions: project.decryptedData.instructions,
+        defaultModelId: this.defaultModelId(),
       })
       .subscribe({
         next: () => {

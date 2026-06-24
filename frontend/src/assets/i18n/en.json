@@ -1044,7 +1044,10 @@
       "iconLegend": "Icon",
       "colourLegend": "Colour",
       "untitled": "Untitled project",
-      "previewHint": "How this project appears in your sidebar"
+      "previewHint": "How this project appears in your sidebar",
+      "defaultModelLabel": "Default model",
+      "defaultModelAuto": "Use my personal default",
+      "defaultModelHint": "Chats in this project start with this model. Members without access fall back to their own default."
     },
     "danger": {
       "title": "Danger zone",

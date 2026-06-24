@@ -1044,7 +1044,10 @@
       "iconLegend": "Symbol",
       "colourLegend": "Farbe",
       "untitled": "Unbenanntes Projekt",
-      "previewHint": "So erscheint dieses Projekt in deiner Seitenleiste"
+      "previewHint": "So erscheint dieses Projekt in deiner Seitenleiste",
+      "defaultModelLabel": "Standardmodell",
+      "defaultModelAuto": "Meinen persönlichen Standard verwenden",
+      "defaultModelHint": "Chats in diesem Projekt starten mit diesem Modell. Mitglieder ohne Zugriff nutzen ihren eigenen Standard."
     },
     "danger": {
       "title": "Gefahrenzone",

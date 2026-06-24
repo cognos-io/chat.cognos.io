@@ -405,6 +405,7 @@ function makeProject(id: string, name: string): Project {
       icon: 'users',
       color: 'blue',
       instructions: '',
+      defaultModelId: '',
     },
     contentKey: new Uint8Array(),
   };

@@ -1044,7 +1044,10 @@
       "iconLegend": "Icône",
       "colourLegend": "Couleur",
       "untitled": "Projet sans titre",
-      "previewHint": "Apparence de ce projet dans votre barre latérale"
+      "previewHint": "Apparence de ce projet dans votre barre latérale",
+      "defaultModelLabel": "Modèle par défaut",
+      "defaultModelAuto": "Utiliser mon modèle par défaut",
+      "defaultModelHint": "Les conversations de ce projet démarrent avec ce modèle. Les membres sans accès utilisent leur propre modèle par défaut."
     },
     "danger": {
       "title": "Zone de danger",

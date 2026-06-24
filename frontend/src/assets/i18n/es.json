@@ -1044,7 +1044,10 @@
       "iconLegend": "Icono",
       "colourLegend": "Color",
       "untitled": "Proyecto sin título",
-      "previewHint": "Cómo aparece este proyecto en tu barra lateral"
+      "previewHint": "Cómo aparece este proyecto en tu barra lateral",
+      "defaultModelLabel": "Modelo predeterminado",
+      "defaultModelAuto": "Usar mi predeterminado personal",
+      "defaultModelHint": "Los chats de este proyecto empiezan con este modelo. Los miembros sin acceso usan su propio predeterminado."
     },
     "danger": {
       "title": "Zona de peligro",
