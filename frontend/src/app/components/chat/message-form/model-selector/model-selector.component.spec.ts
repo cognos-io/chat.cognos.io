@@ -7,12 +7,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Model } from '@app/interfaces/model';
 import { BillingService } from '@app/services/billing.service';
 import { ModelService } from '@app/services/model.service';
+import { ProjectService } from '@app/services/project.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
+import { modelSupportsCapability } from '@app/utils/model-discovery';
 
-import {
-  ModelSelectorComponent,
-  modelSupportsCapability,
-} from './model-selector.component';
+import { ModelSelectorComponent } from './model-selector.component';
 
 function makeModel(overrides: Partial<Model>): Model {
   return {
@@ -56,6 +55,9 @@ describe('ModelSelectorComponent', () => {
   let fixture: ComponentFixture<ModelSelectorComponent>;
   let selectModel: ReturnType<typeof vi.fn>;
   let hiddenModels: ReturnType<typeof signal<string[]>>;
+  let selectedProject: ReturnType<
+    typeof signal<{ decryptedData: { defaultModelId: string } } | null>
+  >;
 
   // 'gemini-3-5-flash' is a curated recommended id; the others are plain.
   const recommended = makeModel({ id: 'gemini-3-5-flash', name: 'Gemini Flash' });
@@ -71,6 +73,9 @@ describe('ModelSelectorComponent', () => {
   beforeEach(async () => {
     selectModel = vi.fn();
     hiddenModels = signal<string[]>(['hidden-model']);
+    selectedProject = signal<{ decryptedData: { defaultModelId: string } } | null>(
+      null,
+    );
 
     await TestBed.configureTestingModule({
       imports: [ModelSelectorComponent],
@@ -98,6 +103,10 @@ describe('ModelSelectorComponent', () => {
         {
           provide: BillingService,
           useValue: { isUnlimited: signal(false) },
+        },
+        {
+          provide: ProjectService,
+          useValue: { selectedProject },
         },
       ],
     }).compileComponents();
@@ -169,5 +178,22 @@ describe('ModelSelectorComponent', () => {
     root.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
 
     expect(closed).toHaveBeenCalled();
+  });
+
+  it('shows a notice when the active project default is unavailable', () => {
+    // No notice when there is no project / no project default.
+    expect(fixture.nativeElement.querySelector('.model-selector__notice')).toBeNull();
+
+    // A project default that isn't in the eligible catalogue surfaces the note.
+    selectedProject.set({ decryptedData: { defaultModelId: 'gone-from-catalogue' } });
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('.model-selector__notice'),
+    ).not.toBeNull();
+
+    // An available project default shows no notice.
+    selectedProject.set({ decryptedData: { defaultModelId: 'plain-model' } });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.model-selector__notice')).toBeNull();
   });
 });

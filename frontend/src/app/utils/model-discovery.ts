@@ -28,6 +28,24 @@ export type QuickFilter =
   | 'vision'
   | 'long_context';
 
+// A quick-filter chip: a filter key and its i18n label key. Shared by the
+// composer selector and account settings so the two surfaces never drift.
+export interface ModelFilterChip {
+  key: QuickFilter;
+  labelKey: string;
+}
+
+export const MODEL_FILTER_CHIPS: readonly ModelFilterChip[] = [
+  { key: 'recommended', labelKey: 'chat.models.filters.recommended' },
+  { key: 'fast', labelKey: 'chat.models.filters.fast' },
+  { key: 'powerful', labelKey: 'chat.models.filters.powerful' },
+  { key: 'low_cost', labelKey: 'chat.models.filters.lowCost' },
+  { key: 'reasoning', labelKey: 'chat.models.filters.reasoning' },
+  { key: 'image', labelKey: 'chat.models.filters.image' },
+  { key: 'vision', labelKey: 'chat.models.filters.vision' },
+  { key: 'long_context', labelKey: 'chat.models.filters.longContext' },
+];
+
 // Documented "long context" threshold (§5.3). Set at 300k so the label marks
 // genuinely large windows (the 1M-token frontier models and 300k+ models),
 // not the now-common 128k baseline. Change here to retune it everywhere.
@@ -257,12 +275,6 @@ export function formatContextWindow(tokens: number): string {
 }
 
 // ---- strength pills --------------------------------------------------------
-
-// isPrivateModel marks models that process privately: Swiss-only tier or a
-// declared no-retention policy. Drives the "Private" strength pill / search.
-export function isPrivateModel(model: Model): boolean {
-  return model.privacyTier === 'ch_only' || model.noRetention === true;
-}
 
 // modelStrengthPills returns the ordered i18n strength keys for a row, combining
 // curated flags (everyday/fast/powerful) with predicates derived from public

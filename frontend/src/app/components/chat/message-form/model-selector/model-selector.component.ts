@@ -21,10 +21,12 @@ import { CognosIconComponent, CognosLozengeComponent } from '@cognos/ui-angular'
 import { Model } from '@app/interfaces/model';
 import { BillingService } from '@app/services/billing.service';
 import { ModelService } from '@app/services/model.service';
+import { ProjectService } from '@app/services/project.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { modelCapabilityMetadata } from '@app/utils/model-capability-metadata';
 import { ModelCostTier, deriveModelCostTier } from '@app/utils/model-cost-tier';
 import {
+  MODEL_FILTER_CHIPS,
   QuickFilter,
   buildSearchSynonyms,
   flattenGroups,
@@ -34,18 +36,9 @@ import {
   orderModels,
 } from '@app/utils/model-discovery';
 
-// Re-exported so existing imports keep working; the implementation now lives in
-// the shared discovery util used by both the composer and account settings.
-export { modelSupportsCapability } from '@app/utils/model-discovery';
-
 // How the selector is presented. The same content renders as a compact dropdown
 // on desktop and a bottom-sheet on mobile (spec §4.5); only the chrome differs.
 export type ModelSelectorLayout = 'dropdown' | 'sheet';
-
-interface FilterChip {
-  key: QuickFilter;
-  labelKey: string;
-}
 
 @Component({
   selector: 'app-model-selector',
@@ -76,6 +69,13 @@ interface FilterChip {
             <cog-icon name="x" [size]="18" tone="current" />
           </button>
         </header>
+      }
+
+      @if (projectDefaultUnavailable()) {
+        <p class="model-selector__notice" role="status">
+          <cog-icon name="info" [size]="14" tone="text-subtle" />
+          {{ t('chat.models.projectDefaultUnavailable') }}
+        </p>
       }
 
       <!-- Scrollable, grouped model list (top). -->
@@ -293,6 +293,18 @@ interface FilterChip {
       background: transparent;
       color: var(--cog-text-subtle);
       cursor: pointer;
+    }
+
+    .model-selector__notice {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-075);
+      margin: 0;
+      padding: var(--cog-space-100);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+      border-bottom: 1px solid var(--cog-border);
     }
 
     .model-selector__list {
@@ -548,6 +560,7 @@ export class ModelSelectorComponent {
   private readonly _modelService = inject(ModelService);
   private readonly _preferences = inject(UserPreferencesService);
   private readonly _billing = inject(BillingService);
+  private readonly _projects = inject(ProjectService);
   private readonly _transloco = inject(TranslocoService);
   private readonly _host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -561,16 +574,7 @@ export class ModelSelectorComponent {
   // Asked to close (sheet X / Escape / settings link). The host owns open state.
   @Output() readonly closed = new EventEmitter<void>();
 
-  protected readonly filterChips: FilterChip[] = [
-    { key: 'recommended', labelKey: 'chat.models.filters.recommended' },
-    { key: 'fast', labelKey: 'chat.models.filters.fast' },
-    { key: 'powerful', labelKey: 'chat.models.filters.powerful' },
-    { key: 'low_cost', labelKey: 'chat.models.filters.lowCost' },
-    { key: 'reasoning', labelKey: 'chat.models.filters.reasoning' },
-    { key: 'image', labelKey: 'chat.models.filters.image' },
-    { key: 'vision', labelKey: 'chat.models.filters.vision' },
-    { key: 'long_context', labelKey: 'chat.models.filters.longContext' },
-  ];
+  protected readonly filterChips = MODEL_FILTER_CHIPS;
 
   // Frozen on open so rows don't jump while interacting (spec §7). The selector
   // is created fresh each time it opens, so these snapshots are per-open.
@@ -590,6 +594,18 @@ export class ModelSelectorComponent {
   readonly selectedModelId = computed(() => this._modelService.selectedModel().id);
 
   protected readonly hideCost = computed(() => this._billing.isUnlimited());
+
+  // True when the active project sets a default model that isn't usable for this
+  // user (ineligible for their tier, or no longer in the catalogue). Resolution
+  // silently falls through; this surfaces a localised explanation (spec §5.7).
+  protected readonly projectDefaultUnavailable = computed(() => {
+    const id = this._projects.selectedProject()?.decryptedData.defaultModelId;
+    if (!id) {
+      return false;
+    }
+    const model = this._modelService.modelList().find((m) => m.id === id);
+    return !model || !model.isEligible;
+  });
 
   // Whether any eligible, non-hidden model is recommended under the current
   // capability. If none, we drop the default Recommended chip so the list isn't
@@ -761,6 +777,17 @@ export class ModelSelectorComponent {
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
       return;
     }
+
+    // When focus is in the search box, leave text editing (cursor/Home/End)
+    // alone — except ArrowDown, which steps into the list so a user can type
+    // then arrow into the results.
+    const inSearch =
+      event.target instanceof HTMLElement &&
+      event.target.classList.contains('model-selector__search-input');
+    if (inSearch && event.key !== 'ArrowDown') {
+      return;
+    }
+
     const rows = Array.from(
       this._host.nativeElement.querySelectorAll<HTMLButtonElement>(
         '.model-selector__row:not([disabled])',
@@ -770,6 +797,10 @@ export class ModelSelectorComponent {
       return;
     }
     event.preventDefault();
+    if (inSearch) {
+      rows[0].focus();
+      return;
+    }
     const current = rows.indexOf(document.activeElement as HTMLButtonElement);
     let next: number;
     switch (event.key) {

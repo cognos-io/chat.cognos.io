@@ -18,6 +18,7 @@ import { ModelService } from '@app/services/model.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { deriveModelCostTier } from '@app/utils/model-cost-tier';
 import {
+  MODEL_FILTER_CHIPS,
   QuickFilter,
   buildSearchSynonyms,
   matchesQuickFilter,
@@ -799,16 +800,7 @@ export class DataProcessingComponent {
   // discovery logic (model-discovery), but presents a fuller management view.
   protected readonly searchQuery = signal('');
   protected readonly activeFilter = signal<QuickFilter | null>(null);
-  protected readonly filterChips: { key: QuickFilter; labelKey: string }[] = [
-    { key: 'recommended', labelKey: 'chat.models.filters.recommended' },
-    { key: 'fast', labelKey: 'chat.models.filters.fast' },
-    { key: 'powerful', labelKey: 'chat.models.filters.powerful' },
-    { key: 'low_cost', labelKey: 'chat.models.filters.lowCost' },
-    { key: 'reasoning', labelKey: 'chat.models.filters.reasoning' },
-    { key: 'image', labelKey: 'chat.models.filters.image' },
-    { key: 'vision', labelKey: 'chat.models.filters.vision' },
-    { key: 'long_context', labelKey: 'chat.models.filters.longContext' },
-  ];
+  protected readonly filterChips = MODEL_FILTER_CHIPS;
 
   private readonly _synonyms = buildSearchSynonyms(
     this._transloco.translateObject('chat.models.synonyms') ?? {},

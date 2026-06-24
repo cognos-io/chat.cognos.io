@@ -754,7 +754,8 @@
         "private": "privat schweiz eu souverän"
       },
       "manageInSettings": "Modelle, Standards & Ausgeblendete in den Einstellungen verwalten",
-      "privacyFooter": "Ende-zu-Ende-verschlüsselt · Schlüssel verlassen dieses Gerät nie"
+      "privacyFooter": "Ende-zu-Ende-verschlüsselt · Schlüssel verlassen dieses Gerät nie",
+      "projectDefaultUnavailable": "Das Standardmodell dieses Projekts ist in deinem Tarif nicht verfügbar – stattdessen wird dein eigener Standard verwendet."
     },
     "personas": {
       "all": "Alle",

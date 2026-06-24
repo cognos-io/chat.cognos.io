@@ -1,3 +1,4 @@
+import { A11yModule } from '@angular/cdk/a11y';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { isPlatformBrowser } from '@angular/common';
@@ -74,6 +75,7 @@ function escapeHtml(value: string): string {
   imports: [
     ReactiveFormsModule,
     CdkTextareaAutosize,
+    A11yModule,
     OverlayModule,
     CognosButtonComponent,
     CognosIconButtonComponent,
@@ -331,7 +333,13 @@ function escapeHtml(value: string): string {
                 (click)="closeModelSelector()"
                 aria-hidden="true"
               ></div>
-              <div class="model-sheet" role="dialog" aria-modal="true">
+              <div
+                class="model-sheet"
+                role="dialog"
+                aria-modal="true"
+                cdkTrapFocus
+                [cdkTrapFocusAutoCapture]="true"
+              >
                 <app-model-selector
                   layout="sheet"
                   [requiredCapability]="composerTools.requiredCapability()"
@@ -1278,6 +1286,18 @@ export class MessageFormComponent {
       } else if (this.messageService.status() !== MessageStatus.Sending) {
         this.enableForm();
       }
+    });
+
+    // Lock background scroll while the mobile model sheet is open, so the page
+    // behind it doesn't scroll under the user's thumb (spec §4.5). The sheet
+    // itself traps focus via cdkTrapFocus and restores it to the trigger on
+    // close. Desktop uses the CDK overlay, which manages this itself.
+    effect(() => {
+      if (!isPlatformBrowser(this._platformId)) {
+        return;
+      }
+      const locked = this.isMobile() && this.modelSelectorOpen();
+      document.body.style.overflow = locked ? 'hidden' : '';
     });
   }
 

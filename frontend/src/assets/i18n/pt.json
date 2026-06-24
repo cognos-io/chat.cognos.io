@@ -754,7 +754,8 @@
         "private": "privado suíço eu soberano"
       },
       "manageInSettings": "Gerir modelos, predefinições e ocultos nas Definições",
-      "privacyFooter": "Encriptado ponta a ponta · as chaves nunca saem deste dispositivo"
+      "privacyFooter": "Encriptado ponta a ponta · as chaves nunca saem deste dispositivo",
+      "projectDefaultUnavailable": "O modelo predefinido deste projeto não está disponível no seu plano — é usado o seu próprio predefinido."
     },
     "personas": {
       "all": "Todas",

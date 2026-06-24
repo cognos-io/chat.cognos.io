@@ -754,7 +754,8 @@
         "private": "privato svizzero eu sovrano"
       },
       "manageInSettings": "Gestisci modelli, predefiniti e nascosti nelle Impostazioni",
-      "privacyFooter": "Crittografia end-to-end · le chiavi non lasciano mai questo dispositivo"
+      "privacyFooter": "Crittografia end-to-end · le chiavi non lasciano mai questo dispositivo",
+      "projectDefaultUnavailable": "Il modello predefinito di questo progetto non è disponibile nel tuo piano: viene usato il tuo predefinito."
     },
     "personas": {
       "all": "Tutte",

@@ -754,7 +754,8 @@
         "private": "private swiss switzerland eu sovereign"
       },
       "manageInSettings": "Manage models, defaults & hidden in Settings",
-      "privacyFooter": "End-to-end encrypted · keys never leave this device"
+      "privacyFooter": "End-to-end encrypted · keys never leave this device",
+      "projectDefaultUnavailable": "Your project's default model isn't available on your plan — using your own default instead."
     },
     "personas": {
       "all": "All",

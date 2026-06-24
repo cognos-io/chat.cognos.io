@@ -754,7 +754,8 @@
         "private": "privé suisse eu souverain"
       },
       "manageInSettings": "Gérer les modèles, valeurs par défaut et masqués dans les Réglages",
-      "privacyFooter": "Chiffré de bout en bout · les clés ne quittent jamais cet appareil"
+      "privacyFooter": "Chiffré de bout en bout · les clés ne quittent jamais cet appareil",
+      "projectDefaultUnavailable": "Le modèle par défaut de ce projet n'est pas disponible avec votre offre — votre modèle par défaut est utilisé à la place."
     },
     "personas": {
       "all": "Tous",

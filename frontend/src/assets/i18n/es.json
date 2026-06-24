@@ -754,7 +754,8 @@
         "private": "privado suizo eu soberano"
       },
       "manageInSettings": "Gestiona modelos, predeterminados y ocultos en Ajustes",
-      "privacyFooter": "Cifrado de extremo a extremo · las claves nunca salen de este dispositivo"
+      "privacyFooter": "Cifrado de extremo a extremo · las claves nunca salen de este dispositivo",
+      "projectDefaultUnavailable": "El modelo predeterminado de este proyecto no está disponible en tu plan; se usa tu propio modelo predeterminado."
     },
     "personas": {
       "all": "Todas",
