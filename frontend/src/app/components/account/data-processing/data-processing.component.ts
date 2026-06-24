@@ -15,6 +15,14 @@ import { localizedModelDescription } from '@app/i18n/model-copy';
 import { Model, PrivacyTier } from '@app/interfaces/model';
 import { AuthService } from '@app/services/auth.service';
 import { ModelService } from '@app/services/model.service';
+import { UserPreferencesService } from '@app/services/user-preferences.service';
+import { deriveModelCostTier } from '@app/utils/model-cost-tier';
+import {
+  QuickFilter,
+  buildSearchSynonyms,
+  matchesQuickFilter,
+  modelMatchesSearch,
+} from '@app/utils/model-discovery';
 
 interface TierOption {
   id: PrivacyTier;
@@ -152,9 +160,52 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
           <span class="models__region">{{ currentBadge() }}</span>
         </header>
 
+        <p class="models__hint">{{ t('account.dataProcessing.manageHint') }}</p>
+
+        <label class="models__search">
+          <cog-icon name="search" [size]="16" tone="text-subtle" />
+          <input
+            type="text"
+            class="models__search-input"
+            autocomplete="off"
+            [attr.aria-label]="t('account.dataProcessing.modelsAvailable')"
+            [placeholder]="t('chat.models.search.placeholder')"
+            [value]="searchQuery()"
+            (input)="onSearch($event)"
+          />
+        </label>
+
+        <div
+          class="models__chips"
+          role="group"
+          [attr.aria-label]="t('account.dataProcessing.modelsAvailable')"
+        >
+          @for (chip of filterChips; track chip.key) {
+            <button
+              type="button"
+              class="models__chip"
+              [class.models__chip--active]="activeFilter() === chip.key"
+              [attr.aria-pressed]="activeFilter() === chip.key"
+              (click)="toggleFilter(chip.key)"
+            >
+              {{ t(chip.labelKey) }}
+            </button>
+          }
+          @if (hiddenModelsCount() > 0) {
+            <button type="button" class="models__reset" (click)="resetHidden()">
+              <cog-icon name="rotate-cw" [size]="14" tone="current" />
+              {{ t('account.dataProcessing.resetHidden') }}
+            </button>
+          }
+        </div>
+
         <ul class="models__list">
           @for (model of visibleModels(); track model.id) {
-            <li class="models__row" [class.models__row--locked]="!model.isEligible">
+            <li
+              class="models__row"
+              [class.models__row--locked]="!model.isEligible"
+              [class.models__row--hidden]="isHidden(model.id)"
+            >
               <span class="models__icon">
                 <cog-icon
                   [name]="model.isEligible ? 'server' : 'lock'"
@@ -163,7 +214,19 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
                 />
               </span>
               <span class="models__body">
-                <span class="models__name">{{ model.name }}</span>
+                <span class="models__name">
+                  {{ model.name }}
+                  @if (isDefault(model)) {
+                    <cog-lozenge tone="green">{{
+                      t('account.dataProcessing.defaultBadge')
+                    }}</cog-lozenge>
+                  }
+                  @if (isHidden(model.id)) {
+                    <cog-lozenge tone="neutral">{{
+                      t('account.dataProcessing.hiddenBadge')
+                    }}</cog-lozenge>
+                  }
+                </span>
                 <span class="models__desc">{{ describe(model, t) }}</span>
               </span>
               <span class="models__meta">
@@ -186,11 +249,38 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
                   </span>
                 }
               </span>
+              <span class="models__actions">
+                <button
+                  type="button"
+                  class="models__action models__action--pin"
+                  [class.models__action--on]="isPinned(model.id)"
+                  [attr.aria-pressed]="isPinned(model.id)"
+                  [attr.title]="
+                    isPinned(model.id) ? t('chat.models.unpin') : t('chat.models.pin')
+                  "
+                  (click)="togglePin(model.id)"
+                >
+                  <cog-icon name="pin" [size]="14" tone="current" />
+                </button>
+                <button
+                  type="button"
+                  class="models__action models__action--text"
+                  (click)="toggleHidden(model.id)"
+                >
+                  {{
+                    isHidden(model.id)
+                      ? t('account.dataProcessing.unhideModel')
+                      : t('account.dataProcessing.hideModel')
+                  }}
+                </button>
+              </span>
             </li>
+          } @empty {
+            <li class="models__empty">{{ t('chat.models.search.noResults') }}</li>
           }
         </ul>
 
-        @if (totalCount() > collapsedLimit) {
+        @if (!isFiltering() && orderedModels().length > collapsedLimit) {
           <button
             type="button"
             class="models__show-more"
@@ -433,7 +523,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
 
     .models__row {
       display: grid;
-      grid-template-columns: 32px minmax(0, 1fr) auto;
+      grid-template-columns: 32px minmax(0, 1fr) auto auto;
       align-items: center;
       gap: var(--cog-space-125);
       padding: var(--cog-space-150) var(--cog-space-050);
@@ -446,6 +536,143 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
 
     .models__row--locked {
       opacity: 0.55;
+    }
+
+    .models__row--hidden {
+      opacity: 0.6;
+    }
+
+    .models__name {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-075);
+      flex-wrap: wrap;
+    }
+
+    .models__hint {
+      margin: 0;
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+    }
+
+    .models__search {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-075);
+      padding: 0 var(--cog-space-100);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface-raised, var(--cog-surface));
+    }
+
+    .models__search:focus-within {
+      border-color: var(--cog-brand);
+    }
+
+    .models__search-input {
+      flex: 1 1 auto;
+      border: 0;
+      background: transparent;
+      padding: var(--cog-space-100) 0;
+      color: var(--cog-text);
+      font: inherit;
+    }
+
+    .models__search-input:focus {
+      outline: 0;
+    }
+
+    .models__chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--cog-space-075);
+    }
+
+    .models__chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 0 var(--cog-space-100);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-pill, 999px);
+      background: var(--cog-surface);
+      color: var(--cog-text-subtle);
+      font: inherit;
+      font-size: var(--cog-fs-caption);
+      cursor: pointer;
+    }
+
+    .models__chip--active {
+      border-color: var(--cog-brand);
+      background: var(--cog-selected-bg, rgba(46, 160, 67, 0.12));
+      color: var(--cog-brand);
+      font-weight: var(--cog-fw-semibold);
+    }
+
+    .models__reset {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-050, 4px);
+      margin-left: auto;
+      border: 0;
+      background: transparent;
+      color: var(--cog-text-subtle);
+      font: inherit;
+      font-size: var(--cog-fs-caption);
+      cursor: pointer;
+    }
+
+    .models__reset:hover {
+      color: var(--cog-text);
+    }
+
+    .models__actions {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-075);
+    }
+
+    .models__action {
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .models__action--pin {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: var(--cog-radius-xs);
+      color: var(--cog-text-subtlest);
+    }
+
+    .models__action--pin:hover {
+      color: var(--cog-text);
+    }
+
+    .models__action--on {
+      color: var(--cog-brand);
+    }
+
+    .models__action--text {
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .models__action--text:hover {
+      color: var(--cog-text);
+    }
+
+    .models__empty {
+      padding: var(--cog-space-200) var(--cog-space-050);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      text-align: center;
     }
 
     .models__icon {
@@ -547,6 +774,7 @@ export class DataProcessingComponent {
   private readonly _models = inject(ModelService);
   private readonly _auth = inject(AuthService);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _preferences = inject(UserPreferencesService);
 
   protected readonly tiers = TIER_OPTIONS;
   protected readonly saving = signal(false);
@@ -567,22 +795,109 @@ export class DataProcessingComponent {
     () => this.totalCount() - this.eligibleCount(),
   );
 
-  // Eligible models first, then locked ones (shown greyed), matching the mock.
-  protected readonly orderedModels = computed(() =>
-    [...this._modelList()].sort((a, b) => Number(b.isEligible) - Number(a.isEligible)),
+  // Search + quick-filter state. The settings list shares the composer's pure
+  // discovery logic (model-discovery), but presents a fuller management view.
+  protected readonly searchQuery = signal('');
+  protected readonly activeFilter = signal<QuickFilter | null>(null);
+  protected readonly filterChips: { key: QuickFilter; labelKey: string }[] = [
+    { key: 'recommended', labelKey: 'chat.models.filters.recommended' },
+    { key: 'fast', labelKey: 'chat.models.filters.fast' },
+    { key: 'powerful', labelKey: 'chat.models.filters.powerful' },
+    { key: 'low_cost', labelKey: 'chat.models.filters.lowCost' },
+    { key: 'reasoning', labelKey: 'chat.models.filters.reasoning' },
+    { key: 'image', labelKey: 'chat.models.filters.image' },
+    { key: 'vision', labelKey: 'chat.models.filters.vision' },
+    { key: 'long_context', labelKey: 'chat.models.filters.longContext' },
+  ];
+
+  private readonly _synonyms = buildSearchSynonyms(
+    this._transloco.translateObject('chat.models.synonyms') ?? {},
   );
 
-  // Collapse the (long) catalogue to the first few rows, expandable on demand.
+  protected readonly isFiltering = computed(
+    () => !!this.searchQuery().trim() || this.activeFilter() !== null,
+  );
+
+  // The catalogue filtered by search + quick filter, eligible-first then locked
+  // (matching the existing mock). Hidden models stay in the list — settings is
+  // where the user manages them — but are tagged and offer an Unhide action.
+  protected readonly orderedModels = computed(() => {
+    const filter = this.activeFilter();
+    const query = this.searchQuery();
+    return [...this._modelList()]
+      .filter(
+        (model) =>
+          matchesQuickFilter(model, filter) &&
+          modelMatchesSearch(model, query, {
+            costTierLabel: (m) =>
+              this._transloco.translate(
+                'chat.models.costTier.' + deriveModelCostTier(m.pricing),
+              ),
+            synonyms: this._synonyms,
+          }),
+      )
+      .sort((a, b) => Number(b.isEligible) - Number(a.isEligible));
+  });
+
+  // Collapse the (long) catalogue to the first few rows when not filtering;
+  // a search/filter shows every match so nothing hides behind "show more".
   protected readonly collapsedLimit = 5;
   protected readonly expanded = signal(false);
   protected readonly visibleModels = computed(() =>
-    this.expanded()
+    this.expanded() || this.isFiltering()
       ? this.orderedModels()
       : this.orderedModels().slice(0, this.collapsedLimit),
   );
   protected readonly hiddenCount = computed(() =>
-    Math.max(0, this.totalCount() - this.collapsedLimit),
+    Math.max(0, this.orderedModels().length - this.collapsedLimit),
   );
+
+  // Count of models the user has actively hidden (drives the reset control).
+  protected readonly hiddenModelsCount = computed(
+    () => this._preferences.hiddenModels().length,
+  );
+
+  protected readonly selectedModelId = computed(() => this._models.selectedModel().id);
+
+  protected onSearch(event: Event): void {
+    this.searchQuery.set((event.target as HTMLInputElement).value);
+  }
+
+  protected toggleFilter(filter: QuickFilter): void {
+    this.activeFilter.update((current) => (current === filter ? null : filter));
+  }
+
+  protected isPinned(modelId: string): boolean {
+    return this._preferences.isModelPinned(modelId);
+  }
+
+  protected isHidden(modelId: string): boolean {
+    return this._preferences.isModelHidden(modelId);
+  }
+
+  protected isDefault(model: Model): boolean {
+    return model.isEligible && model.id === this.selectedModelId();
+  }
+
+  protected togglePin(modelId: string): void {
+    if (this.isPinned(modelId)) {
+      this._preferences.unpinModel(modelId);
+    } else {
+      this._preferences.pinModel(modelId);
+    }
+  }
+
+  protected toggleHidden(modelId: string): void {
+    if (this.isHidden(modelId)) {
+      this._preferences.unhideModel(modelId);
+    } else {
+      this._preferences.hideModel(modelId);
+    }
+  }
+
+  protected resetHidden(): void {
+    this._preferences.resetHiddenModels();
+  }
 
   protected toggleExpanded(): void {
     this.expanded.update((open) => !open);

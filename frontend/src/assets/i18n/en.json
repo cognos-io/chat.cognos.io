@@ -71,7 +71,13 @@
       },
       "title": "Data processing",
       "showLess": "Show less",
-      "showMore": "Show {{ count }} more"
+      "showMore": "Show {{ count }} more",
+      "hideModel": "Hide",
+      "unhideModel": "Unhide",
+      "resetHidden": "Reset hidden models",
+      "hiddenBadge": "Hidden",
+      "defaultBadge": "Default",
+      "manageHint": "Search, pin, hide or set your default model."
     },
     "email": {
       "current": "Current email",

@@ -71,7 +71,13 @@
       },
       "title": "Traitement des données",
       "showLess": "Afficher moins",
-      "showMore": "Afficher {{ count }} de plus"
+      "showMore": "Afficher {{ count }} de plus",
+      "hideModel": "Masquer",
+      "unhideModel": "Afficher",
+      "resetHidden": "Réinitialiser les modèles masqués",
+      "hiddenBadge": "Masqué",
+      "defaultBadge": "Par défaut",
+      "manageHint": "Rechercher, épingler, masquer ou définir votre modèle par défaut."
     },
     "email": {
       "current": "E-mail actuel",

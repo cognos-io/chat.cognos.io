@@ -71,7 +71,13 @@
       },
       "title": "Procesamiento de datos",
       "showLess": "Mostrar menos",
-      "showMore": "Mostrar {{ count }} más"
+      "showMore": "Mostrar {{ count }} más",
+      "hideModel": "Ocultar",
+      "unhideModel": "Mostrar",
+      "resetHidden": "Restablecer modelos ocultos",
+      "hiddenBadge": "Oculto",
+      "defaultBadge": "Predeterminado",
+      "manageHint": "Busca, fija, oculta o define tu modelo predeterminado."
     },
     "email": {
       "current": "Correo actual",

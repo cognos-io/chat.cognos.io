@@ -3,9 +3,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { NEVER, of } from 'rxjs';
 
-import { Model, PrivacyTier } from '@app/interfaces/model';
+import { Model, PrivacyTier, loadingModel } from '@app/interfaces/model';
 import { AuthService } from '@app/services/auth.service';
 import { ModelService } from '@app/services/model.service';
+import { UserPreferencesService } from '@app/services/user-preferences.service';
 
 import { DataProcessingComponent } from './data-processing.component';
 
@@ -37,17 +38,41 @@ describe('DataProcessingComponent', () => {
   let modelList: WritableSignal<Model[]>;
   let privacyTier: WritableSignal<PrivacyTier>;
   let setPrivacyTier: ReturnType<typeof vi.fn>;
+  let hiddenModels: WritableSignal<string[]>;
+  let hideModel: ReturnType<typeof vi.fn>;
+  let unhideModel: ReturnType<typeof vi.fn>;
+  let resetHiddenModels: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     modelList = signal<Model[]>([]);
     privacyTier = signal<PrivacyTier>('eu');
     setPrivacyTier = vi.fn().mockReturnValue(of({}));
+    hiddenModels = signal<string[]>([]);
+    hideModel = vi.fn();
+    unhideModel = vi.fn();
+    resetHiddenModels = vi.fn();
 
     await TestBed.configureTestingModule({
       imports: [DataProcessingComponent],
       providers: [
-        { provide: ModelService, useValue: { modelList, privacyTier } },
+        {
+          provide: ModelService,
+          useValue: { modelList, privacyTier, selectedModel: signal(loadingModel) },
+        },
         { provide: AuthService, useValue: { setPrivacyTier } },
+        {
+          provide: UserPreferencesService,
+          useValue: {
+            hiddenModels,
+            isModelPinned: () => false,
+            isModelHidden: (id: string) => hiddenModels().includes(id),
+            pinModel: vi.fn(),
+            unpinModel: vi.fn(),
+            hideModel,
+            unhideModel,
+            resetHiddenModels,
+          },
+        },
       ],
     }).compileComponents();
 
@@ -93,5 +118,37 @@ describe('DataProcessingComponent', () => {
 
     component['selectTier']('ch_only');
     expect(setPrivacyTier).toHaveBeenCalledTimes(1); // blocked while saving
+  });
+
+  it('narrows the managed list by search', () => {
+    modelList.set([
+      model('claude-opus', 'eu'),
+      model('gemini-flash', 'eu'),
+      model('llama', 'eu'),
+    ]);
+
+    component['searchQuery'].set('gemini');
+    expect(component['orderedModels']().map((m) => m.id)).toEqual(['gemini-flash']);
+  });
+
+  it('shows every match when searching, bypassing the collapse limit', () => {
+    modelList.set(Array.from({ length: 8 }, (_, i) => model(`model-${i}`, 'eu')));
+    // Collapsed by default to the first few rows.
+    expect(component['visibleModels']().length).toBe(component['collapsedLimit']);
+    // A search shows all matches.
+    component['searchQuery'].set('model-');
+    expect(component['visibleModels']().length).toBe(8);
+  });
+
+  it('hides, unhides and resets hidden models via preferences', () => {
+    component['toggleHidden']('m-1');
+    expect(hideModel).toHaveBeenCalledExactlyOnceWith('m-1');
+
+    hiddenModels.set(['m-1']);
+    component['toggleHidden']('m-1');
+    expect(unhideModel).toHaveBeenCalledExactlyOnceWith('m-1');
+
+    component['resetHidden']();
+    expect(resetHiddenModels).toHaveBeenCalledOnce();
   });
 });
