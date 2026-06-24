@@ -65,16 +65,20 @@ class FakeApi {
 
   listConversationMessages(
     _id: string,
-    _page: number,
-    _size: number,
+    page: number,
+    size: number,
   ): Observable<MessageListResponse> {
+    // Paginate like the real endpoint (which caps page_size at 100) so the
+    // copy service's multi-page fetch is genuinely exercised.
     const totalItems = this.totalItemsOverride ?? this.messages.length;
+    const start = (page - 1) * size;
+    const items = this.messages.slice(start, start + size);
     return of({
-      page: 1,
-      perPage: _size,
+      page,
+      perPage: size,
       totalItems,
-      totalPages: 1,
-      items: this.messages,
+      totalPages: size > 0 ? Math.ceil(totalItems / size) : 0,
+      items,
     });
   }
 
@@ -265,6 +269,28 @@ describe('ConversationCopyService — standalone happy path', () => {
     expect(() =>
       crypto.openSealedBox(Base64.toUint8Array(data), sourceKeyPair),
     ).toThrow();
+  });
+
+  it('walks every page so conversations larger than one page (100) copy fully', async () => {
+    // 150 messages spans two pages at the endpoint's 100 cap. A single-page
+    // fetch would silently truncate to 100 and the backend would reject the
+    // count mismatch — so the service must paginate.
+    const seeded: SeededMessage[] = Array.from({ length: 150 }, (_, i) => ({
+      id: `srcmsg${String(i).padStart(9, '0')}`,
+      content: `message ${i}`,
+    }));
+    seedMessages(seeded);
+
+    await service.duplicate(makeSource());
+    const request = api.copyRequests[0];
+
+    expect(request.messages).toHaveLength(150);
+    const copiedSources = new Set(request.messages.map((m) => m.source_id));
+    for (const m of seeded) {
+      expect(copiedSources.has(m.id)).toBe(true);
+    }
+    // All duplicate ids are still distinct across the whole (multi-page) set.
+    expect(new Set(request.messages.map((m) => m.id)).size).toBe(150);
   });
 
   it('never puts plaintext message content in the request', async () => {

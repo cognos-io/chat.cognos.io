@@ -154,16 +154,9 @@ export class ConversationCopyService {
   private async loadAndDecryptMessages(
     source: Conversation,
   ): Promise<DecryptedSourceMessage[]> {
-    // One page covers the whole conversation: anything above the cap fails
-    // closed, so there is never a second page to fetch.
-    const response = await firstValueFrom(
-      this._api.listConversationMessages(source.record.id, 1, MAX_COPY_MESSAGES),
-    );
-    if (response.totalItems > MAX_COPY_MESSAGES) {
-      throw ConversationTooLargeError;
-    }
+    const records = await this.loadAllSourceMessageRecords(source.record.id);
 
-    return response.items.map((record) => {
+    return records.map((record) => {
       const plaintext = this._crypto.openSealedBox(
         Base64.toUint8Array(record.data),
         source.keyPair,
@@ -181,6 +174,32 @@ export class ConversationCopyService {
 
       return { record, payload };
     });
+  }
+
+  // loadAllSourceMessageRecords fetches the FULL message set across pages. The
+  // list endpoint caps page_size at 100, so a single request would silently
+  // truncate any conversation over 100 messages — we must walk every page. The
+  // cap is enforced up front against the unclamped totalItems so an oversized
+  // source fails closed before we fetch (or decrypt) anything more.
+  private async loadAllSourceMessageRecords(
+    conversationId: string,
+  ): Promise<MessageRecord[]> {
+    const pageSize = 100;
+    const first = await firstValueFrom(
+      this._api.listConversationMessages(conversationId, 1, pageSize),
+    );
+    if (first.totalItems > MAX_COPY_MESSAGES) {
+      throw ConversationTooLargeError;
+    }
+
+    const records = [...first.items];
+    for (let page = 2; page <= first.totalPages; page++) {
+      const next = await firstValueFrom(
+        this._api.listConversationMessages(conversationId, page, pageSize),
+      );
+      records.push(...next.items);
+    }
+    return records;
   }
 
   private async loadAndDecryptRedaction(
