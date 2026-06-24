@@ -150,8 +150,10 @@ Additional requirements for this feature:
 - **Curated capability metadata is i18n keys, not literals.** The `strengths` and expectation copy
   in §6.2 must resolve through Transloco keys, never ship as English strings in a TS map. Aliases
   used only for matching may stay as per-language data but must be parity-protected as above.
-- Filter labels, the no-result copy, "show hidden matches", the current-default label, and every
-  ineligibility/fallback explanation need enumerated keys present in all six locales.
+- Filter labels, the search placeholder, the no-result copy, "show hidden matches", the
+  "Manage models, defaults & hidden in Settings" footer link, the privacy microcopy ("Searched on
+  this device — never sent to a server" and "End-to-end encrypted · keys never leave this device"),
+  and every ineligibility/fallback explanation need enumerated keys present in all six locales.
 - All six supported languages are LTR; no RTL work is required.
 
 ### 4.3 Default-first UX requirements
@@ -213,14 +215,29 @@ Requirements:
 
 - A single breakpoint decision drives dropdown-vs-sheet; reuse the existing `DeviceService.isMobile`
   signal rather than introducing a new mechanism.
-- The sheet locks background scroll, traps focus, and offers an explicit close affordance (and
-  drag-to-dismiss where practical).
-- Filter chips live in a horizontally scrollable rail; they must not wrap into a tall block that
-  pushes the list off-screen.
-- Touch targets (rows, chips, overflow actions) are at least 44×44 px.
+- The mobile sheet is a partial-height bottom sheet with a drag handle: it locks background scroll,
+  traps focus, offers an explicit close (X) affordance and drag-to-dismiss.
+- The desktop presentation is a popover anchored to the model button, opening upward into available
+  space (existing primary CDK position).
+- Touch targets (rows, chips, close) are at least 44×44 px.
 - Search is not auto-focused on mobile; the list is visible first and the user taps to search.
-- No model action is hover-only on any breakpoint; the overflow menu must be tap-reachable.
 - The same pure filtering/ordering logic feeds both presentations; only the container differs.
+
+**Layout (shared by both presentations).** The scrollable model list is at the **top**; the controls
+sit at the **bottom**, in this order: search input → privacy microcopy → filter-chip rail. Putting
+search at the bottom keeps it directly above the on-screen keyboard on mobile.
+
+- The list is grouped, in order: **Pinned → Recent → Recommended → remaining** (see §7).
+- Each row shows: an icon, the model name with a region badge beside it (e.g. `ON-PREM`,
+  `SWISS CLOUD`, `UK CLOUD`), capability pills below the name, and a meta line (see §5.8).
+- Filter chips are a horizontally scrollable rail on mobile; on desktop they may wrap to two rows.
+  They must never wrap into a tall block that pushes the list off-screen on mobile.
+- Privacy microcopy under the search input reassures that search is local — for example
+  "Searched on this device — never sent to a server". A composer-footer line such as
+  "End-to-end encrypted · keys never leave this device" reinforces the posture. Both are localised.
+- A footer link routes to the fuller management surface: "Manage models, defaults & hidden in
+  Settings".
+- There is no per-row overflow/hide control in the composer; hiding is managed in settings (§5.5).
 
 ## 5. Core features
 
@@ -316,15 +333,15 @@ Requirements:
   choices.
 - **Priority:** P1
 - **Acceptance criteria:**
-    - Each model exposes a Hide action from an accessible overflow/menu action.
-    - Hidden models are removed from the normal list, filters, and default ordering.
+    - Hiding is managed **only in account settings**; the composer has no per-row hide/overflow
+    control. The composer footer links to the settings management surface.
+    - Account settings exposes Hide and Unhide per model and a "reset all hidden models" action.
+    - Hidden models are removed from the composer's normal list, filters, and default ordering.
     - If the selected/default model becomes hidden, selection falls back to the next eligible
       visible
     model.
-    - Search no-result state can offer "show hidden matches" when hidden models match the query.
-    - The composer exposes Hide as a secondary action, not as a primary row affordance.
-    - The account settings model list is the primary management surface for hidden models, including
-    unhide individual models and reset all hidden models.
+    - Composer search no-result state can offer "show hidden matches" when hidden models match the
+    query, so a hidden model is still reachable without leaving the composer.
     - Hidden IDs are not stored in plaintext on the server.
 
 ### 5.6 User default model
@@ -339,8 +356,9 @@ Requirements:
     - Selecting a model persists it as the user default. This preserves current behaviour:
     `selectModel()` writes `defaultModelId`. No explicit "Set as my default" control is added in the
     composer or settings.
-    - The current default is clearly labelled in both the composer selector and the account settings
-    model list so the implicit behaviour is visible.
+    - Because the default is implicit, it _is_ the currently selected model. It needs no separate
+    "DEFAULT" chip or extra highlight; the existing selected state (check icon / active row) conveys
+    it in both the composer selector and the account settings model list.
     - `ModelService.selectedModel` fallback order becomes:
     encrypted project default (in a project and eligible) → encrypted user default → recommended
     eligible model → first eligible visible model.
@@ -401,15 +419,19 @@ Requirements:
   for and what trade-offs to expect so that I can choose confidently.
 - **Priority:** P1
 - **Acceptance criteria:**
-    - Existing cost lozenges remain hidden for unlimited plans.
-    - Capability labels use localised copy and existing `TagComponent`/`CognosLozengeComponent`
-    patterns where appropriate.
-    - Rows make model strengths clear with concise labels such as Everyday, Fast, Reasoning, Image,
-    Long context, Low cost, or Private/Swiss/EU where supported.
-    - Rows communicate rough expectations without precise benchmarking claims, for example cost
-      tier,
-    context size, privacy region, and whether the model is better suited to simple or demanding
-    tasks.
+    - **Cost is shown via the existing cost lozenge only; there is no plain-language cost tier word
+    in the meta line.** The lozenge keeps its current behaviour: shown for metered plans, hidden for
+    unlimited plans. (Unlimited-plan users therefore see no cost signal, which is acceptable.)
+    - Row anatomy: icon, model name with a region badge beside it
+      (`ON-PREM`/`SWISS CLOUD`/`UK CLOUD`
+    etc.), capability pills below the name, and a meta line of `context size · city · region-type`
+    (no cost word).
+    - Capability pills use localised copy and existing `TagComponent`/`CognosLozengeComponent`
+    patterns; concise labels such as Everyday, Fast, Reasoning, Image, Long context, Low cost, or
+    Private/Swiss/EU where supported.
+    - Rows communicate rough expectations without precise benchmarking claims — context size,
+      privacy
+    region, and whether the model suits simple or demanding tasks — via pills and the meta line.
     - Descriptions remain available but do not dominate the row.
     - Ineligible models keep showing their localised ineligibility reason when available.
 
@@ -597,14 +619,18 @@ The visible rows should be built with this pipeline:
 5. Apply active quick filter
 6. Apply fuzzy search query
 7. Partition/order:
-   a. selected model, if visible and not already pinned
-   b. pinned models, in user pin order
-   c. recent models, most-recent first
-   d. recommended models
-   e. remaining models in catalogue order
+   a. pinned models, in user pin order
+   b. recent models, most-recent first
+   c. recommended models
+   d. remaining models in catalogue order
 8. If no explicit/default model is available, preselect the first recommended eligible model before
    falling back to the first eligible visible model
 ```
+
+The currently selected model is **not** hoisted to the top. It stays in its natural group (pinned,
+recent, recommended, or remaining) and is marked with the existing selected state (check icon /
+active row). Since the default is implicit, the selected model _is_ the default — no separate
+position or label is needed.
 
 Pinned order should continue to be frozen when the dropdown opens to avoid row jumps.
 
@@ -702,7 +728,7 @@ Add pure tests for:
 
 | Risk                                                                                                  | Impact | Likelihood | Mitigation                                                                                                                                                                    |
 | ----------------------------------------------------------------------------------------------------- | ------ | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The selector becomes visually overloaded with search, chips, pins, defaults, hide actions, and badges | High   | Medium     | Keep default view compact; move hide actions into an accessible overflow menu; use the responsive bottom-sheet on mobile (§4.5); test on mobile widths                        |
+| The selector becomes visually overloaded with search, chips, pins, and badges                         | High   | Medium     | Keep the composer compact; move hide management entirely to settings (§5.5); no per-row overflow; use the responsive bottom-sheet on mobile (§4.5); test on mobile widths     |
 | Capability labels are misleading because `fast` and `powerful` are subjective                         | Medium | High       | Use explicit curated metadata; do not infer from names or cost; review labels when catalogue changes                                                                          |
 | Sane defaults are wrong for some users                                                                | Medium | Medium     | Make defaults easy to override, keep recommendations explainable, and prefer privacy/billing eligibility constraints before capability ranking                                |
 | Preference changes accidentally add plaintext server fields                                           | High   | Low        | Store synced preferences only in encrypted `user_preferences.data`; add API/code-review checks                                                                                |
