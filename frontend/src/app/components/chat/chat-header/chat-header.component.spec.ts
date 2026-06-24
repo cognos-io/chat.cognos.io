@@ -14,6 +14,7 @@ import { KeyPair } from '@app/interfaces/key-pair';
 import { Message } from '@app/interfaces/message';
 import { Project } from '@app/interfaces/project';
 import { AuthService } from '@app/services/auth.service';
+import { ConversationDuplicateService } from '@app/services/conversation-duplicate.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { ExportService } from '@app/services/export.service';
@@ -80,6 +81,10 @@ describe('ChatHeaderComponent', () => {
     downloadConversationExport: vi.fn().mockResolvedValue({ conversation_count: 1 }),
   };
   const toastService = { notify: vi.fn() };
+  const duplicateService = {
+    isDuplicatingSource: () => false,
+    duplicate: vi.fn().mockResolvedValue(undefined),
+  };
 
   beforeEach(async () => {
     selectedConversation.set(undefined);
@@ -113,6 +118,10 @@ describe('ChatHeaderComponent', () => {
         { provide: ExportService, useValue: exportService },
         { provide: CognosToastService, useValue: toastService },
         { provide: Dialog, useValue: { open: dialogOpen } },
+        {
+          provide: ConversationDuplicateService,
+          useValue: duplicateService,
+        },
       ],
     }).compileComponents();
 
@@ -155,7 +164,7 @@ describe('ChatHeaderComponent', () => {
 
     const titles = component.menuItems().map((item) => item.title);
 
-    expect(titles).toEqual(['Rename', 'Export', 'Delete']);
+    expect(titles).toEqual(['Rename', 'Export', 'Duplicate chat', 'Delete']);
     expect(
       component.menuItems().find((item) => item.title === 'Export')?.disabled,
     ).toBeFalsy();
@@ -209,6 +218,7 @@ describe('ChatHeaderComponent', () => {
       'Share',
       'Rename',
       'Export',
+      'Duplicate chat',
       'Delete',
     ]);
 

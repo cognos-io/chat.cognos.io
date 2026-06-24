@@ -573,7 +573,8 @@
       "sharedTitle": "Esta conversa está partilhada através de um link público — gerir a partilha",
       "temporaryChat": "Conversa temporária",
       "hideValues": "Ocultar valores sensíveis",
-      "showValues": "Mostrar valores sensíveis"
+      "showValues": "Mostrar valores sensíveis",
+      "duplicate": "Duplicar conversa"
     },
     "icebreakers": {
       "items": {
@@ -659,7 +660,8 @@
       "searchedOnDevice": "Pesquisado neste dispositivo",
       "unpin": "Desafixar",
       "expandProject": "Mostrar conversas de {{name}}",
-      "collapseProject": "Ocultar conversas de {{name}}"
+      "collapseProject": "Ocultar conversas de {{name}}",
+      "duplicate": "Duplicar conversa"
     },
     "message": {
       "copy": "Copiar para a área de transferência",
@@ -751,7 +753,17 @@
     },
     "toasts": {
       "exported": "Conversa exportada",
-      "exportError": "Não foi possível exportar esta conversa"
+      "exportError": "Não foi possível exportar esta conversa",
+      "duplicated": "Conversa duplicada",
+      "duplicateError": "Não foi possível duplicar esta conversa. Tente novamente.",
+      "duplicateAttachments": "As conversas com anexos ainda não podem ser duplicadas.",
+      "duplicateTooLarge": "Esta conversa é demasiado grande para ser duplicada.",
+      "duplicateProject": "As conversas de projeto ainda não podem ser duplicadas."
+    },
+    "copy": {
+      "titleSuffix": "(cópia)",
+      "loadingTitle": "A duplicar conversa…",
+      "loadingWarning": "Mantenha este separador aberto. Fechar ou recarregar pode cancelar a duplicação."
     }
   },
   "common": {

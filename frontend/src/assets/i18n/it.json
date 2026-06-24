@@ -573,7 +573,8 @@
       "sharedTitle": "Questa conversazione è condivisa tramite un link pubblico — gestisci la condivisione",
       "temporaryChat": "Chat temporanea",
       "hideValues": "Nascondi valori sensibili",
-      "showValues": "Mostra valori sensibili"
+      "showValues": "Mostra valori sensibili",
+      "duplicate": "Duplica chat"
     },
     "icebreakers": {
       "items": {
@@ -659,7 +660,8 @@
       "searchedOnDevice": "Ricerca su questo dispositivo",
       "unpin": "Rimuovi dai fissati",
       "expandProject": "Mostra le chat di {{name}}",
-      "collapseProject": "Nascondi le chat di {{name}}"
+      "collapseProject": "Nascondi le chat di {{name}}",
+      "duplicate": "Duplica chat"
     },
     "message": {
       "copy": "Copia negli appunti",
@@ -751,7 +753,17 @@
     },
     "toasts": {
       "exported": "Conversazione esportata",
-      "exportError": "Impossibile esportare questa conversazione"
+      "exportError": "Impossibile esportare questa conversazione",
+      "duplicated": "Chat duplicata",
+      "duplicateError": "Impossibile duplicare questa chat. Riprova.",
+      "duplicateAttachments": "Le chat con allegati non possono ancora essere duplicate.",
+      "duplicateTooLarge": "Questa chat è troppo grande per essere duplicata.",
+      "duplicateProject": "Le chat di progetto non possono ancora essere duplicate."
+    },
+    "copy": {
+      "titleSuffix": "(copia)",
+      "loadingTitle": "Duplicazione della chat…",
+      "loadingWarning": "Tieni questa scheda aperta. Chiuderla o ricaricarla può annullare la duplicazione."
     }
   },
   "common": {

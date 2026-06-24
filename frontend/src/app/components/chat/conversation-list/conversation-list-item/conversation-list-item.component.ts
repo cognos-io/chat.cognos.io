@@ -23,6 +23,7 @@ import {
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 import { Conversation } from '@app/interfaces/conversation';
+import { ConversationDuplicateService } from '@app/services/conversation-duplicate.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
@@ -169,6 +170,7 @@ export class ConversationListItemComponent {
   private readonly _elementRef = inject(ElementRef<HTMLElement>);
   private readonly _preferencesService = inject(UserPreferencesService);
   private readonly _conversationService = inject(ConversationService);
+  private readonly _duplicateService = inject(ConversationDuplicateService);
   private readonly _transloco = inject(TranslocoService);
 
   readonly menuOpen = signal(false);
@@ -188,6 +190,11 @@ export class ConversationListItemComponent {
       {
         title: this._transloco.translate('chat.list.edit'),
         icon: 'pencil',
+      },
+      {
+        title: this._transloco.translate('chat.list.duplicate'),
+        icon: 'copy',
+        disabled: this._duplicateService.isDuplicatingSource(conversationId),
       },
       {
         title: this._transloco.translate('chat.list.delete'),
@@ -226,9 +233,18 @@ export class ConversationListItemComponent {
         this.onEditConversation(this.conversation.record.id);
         break;
       case 2:
+        this.onDuplicateConversation();
+        break;
+      case 3:
         this.onDeleteConversation(this.conversation.record.id);
         break;
     }
+  }
+
+  onDuplicateConversation() {
+    // Fire-and-forget: the service owns the loading dialog, toasts, and
+    // navigation. It guards against concurrent duplicates of the same source.
+    void this._duplicateService.duplicate(this.conversation);
   }
 
   onEditConversation(conversationId: string) {

@@ -32,6 +32,7 @@ import { EditConversationDialogComponent } from '@app/components/edit-conversati
 import { ShareConversationDialogComponent } from '@app/components/share-conversation-dialog/share-conversation-dialog.component';
 import { Conversation } from '@app/interfaces/conversation';
 import { AuthService } from '@app/services/auth.service';
+import { ConversationDuplicateService } from '@app/services/conversation-duplicate.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { ExportService } from '@app/services/export.service';
@@ -46,6 +47,7 @@ type HeaderMenuAction =
   | 'share'
   | 'rename'
   | 'export'
+  | 'duplicate'
   | 'toggle-redaction-visibility'
   | 'clear'
   | 'delete';
@@ -83,6 +85,7 @@ export class ChatHeaderComponent {
   private readonly _redaction = inject(RedactionService);
   private readonly _export = inject(ExportService);
   private readonly _toast = inject(CognosToastService);
+  private readonly _duplicate = inject(ConversationDuplicateService);
 
   readonly conversationService = inject(ConversationService);
 
@@ -239,6 +242,21 @@ export class ChatHeaderComponent {
         disabled: this.exporting(),
       });
 
+      // v1: standalone conversations only. Project chats are excluded (their
+      // duplicate would need project-content-key wrapping that doesn't exist
+      // yet); the action is hidden rather than shown-and-failing.
+      if (!this.isProjectConversation()) {
+        const conversationId = this._conversationId();
+        entries.push({
+          action: 'duplicate',
+          title: this._transloco.translate('chat.header.duplicate'),
+          icon: 'copy',
+          disabled: conversationId
+            ? this._duplicate.isDuplicatingSource(conversationId)
+            : false,
+        });
+      }
+
       // Mask/reveal redacted values in the rendered chat — only worth offering
       // once this conversation actually has something redacted.
       if (this._hasRedactions()) {
@@ -327,7 +345,19 @@ export class ChatHeaderComponent {
       case 'export':
         this.onExport();
         break;
+      case 'duplicate':
+        this.onDuplicate();
+        break;
     }
+  }
+
+  private onDuplicate() {
+    const conversation = this.conversationService.conversation();
+    if (!conversation) {
+      return;
+    }
+    // The service owns the blocking dialog, toasts, and navigation to the copy.
+    void this._duplicate.duplicate(conversation);
   }
 
   openSecurity() {

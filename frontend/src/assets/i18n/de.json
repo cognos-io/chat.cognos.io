@@ -573,7 +573,8 @@
       "sharedTitle": "Diese Konversation ist über einen öffentlichen Link geteilt — Freigabe verwalten",
       "temporaryChat": "Temporärer Chat",
       "hideValues": "Sensible Werte ausblenden",
-      "showValues": "Sensible Werte anzeigen"
+      "showValues": "Sensible Werte anzeigen",
+      "duplicate": "Chat duplizieren"
     },
     "icebreakers": {
       "items": {
@@ -659,7 +660,8 @@
       "searchedOnDevice": "Auf diesem Gerät durchsucht",
       "unpin": "Lösen",
       "expandProject": "Chats in {{name}} anzeigen",
-      "collapseProject": "Chats in {{name}} ausblenden"
+      "collapseProject": "Chats in {{name}} ausblenden",
+      "duplicate": "Chat duplizieren"
     },
     "message": {
       "copy": "In die Zwischenablage kopieren",
@@ -751,7 +753,17 @@
     },
     "toasts": {
       "exported": "Unterhaltung exportiert",
-      "exportError": "Unterhaltung konnte nicht exportiert werden"
+      "exportError": "Unterhaltung konnte nicht exportiert werden",
+      "duplicated": "Chat dupliziert",
+      "duplicateError": "Dieser Chat konnte nicht dupliziert werden. Bitte versuchen Sie es erneut.",
+      "duplicateAttachments": "Chats mit Anhängen können noch nicht dupliziert werden.",
+      "duplicateTooLarge": "Dieser Chat ist zu groß zum Duplizieren.",
+      "duplicateProject": "Projekt-Chats können noch nicht dupliziert werden."
+    },
+    "copy": {
+      "titleSuffix": "(Kopie)",
+      "loadingTitle": "Chat wird dupliziert…",
+      "loadingWarning": "Lassen Sie diesen Tab geöffnet. Schließen oder Neuladen kann das Duplizieren abbrechen."
     }
   },
   "common": {
