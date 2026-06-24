@@ -80,6 +80,35 @@
   justify-content: flex-end;
 }
 
+/* "Your projects" list: an out-of-card overline heading with a count, then a
+   single bordered container with hairline dividers — matching the project
+   detail "Chats" section. */
+.projects-page__list-section {
+  display: grid;
+  gap: var(--cog-space-100);
+}
+
+.projects-page__list-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cog-space-075);
+  margin: 0;
+  color: var(--cog-text-subtle);
+  font-size: var(--cog-fs-overline);
+  font-weight: var(--cog-fw-overline);
+  letter-spacing: var(--cog-ls-overline);
+  text-transform: var(--cog-tt-overline);
+}
+
+.projects-page__list-dot,
+.projects-page__list-count {
+  color: var(--cog-text-subtlest);
+}
+
+.projects-page__list-count {
+  font-variant-numeric: tabular-nums;
+}
+
 .projects-page__empty {
   margin: 0;
   color: var(--cog-text-subtle);
@@ -88,29 +117,35 @@
 
 .projects-page__list {
   list-style: none;
-  margin: var(--cog-space-050) 0 0;
+  margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--cog-space-050);
+  border: 1px solid var(--cog-border);
+  border-radius: var(--cog-radius-md);
+  background: var(--cog-surface);
+  overflow: hidden;
+}
+
+.projects-page__list li + li .projects-page__item {
+  border-top: 1px solid var(--cog-border);
 }
 
 .projects-page__item {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: var(--cog-space-150, 12px);
-  border: 1px solid var(--cog-border);
-  border-radius: var(--cog-radius-sm);
+  padding: var(--cog-space-125, 10px) var(--cog-space-150, 12px);
   text-decoration: none;
   color: inherit;
-  transition: border-color 120ms ease;
+  transition: background-color var(--cog-dur-fast) var(--cog-ease-standard);
 }
 
 .projects-page__item:hover {
-  border-color: var(--cog-brand);
+  background: var(--cog-surface-hover, rgba(0, 0, 0, 0.02));
 }
 
 .projects-page__item-name {
+  font-size: var(--cog-fs-body);
   font-weight: var(--cog-fw-semibold);
   color: var(--cog-text);
 }

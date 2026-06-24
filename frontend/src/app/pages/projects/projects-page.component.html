@@ -53,9 +53,11 @@
     </form>
   </section>
 
-  <section class="projects-page__card" aria-labelledby="projects-list-heading">
-    <h2 id="projects-list-heading" class="projects-page__card-title">
-      {{ t('projects.yourProjects') }}
+  <section class="projects-page__list-section" aria-labelledby="projects-list-heading">
+    <h2 id="projects-list-heading" class="projects-page__list-title">
+      <span class="projects-page__list-label">{{ t('projects.yourProjects') }}</span>
+      <span class="projects-page__list-dot" aria-hidden="true">·</span>
+      <span class="projects-page__list-count">{{ projects().length }}</span>
     </h2>
 
     @if (projects().length === 0) {
