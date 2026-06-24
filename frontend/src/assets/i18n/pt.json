@@ -705,7 +705,47 @@
       "noImageModels": "Nenhum modelo disponível consegue gerar imagens.",
       "pickAria": "Escolha o seu modelo de IA",
       "pin": "Fixar modelo",
-      "unpin": "Desafixar modelo"
+      "unpin": "Desafixar modelo",
+      "filters": {
+        "recommended": "Recomendado",
+        "fast": "Rápido",
+        "powerful": "Potente",
+        "lowCost": "Económico",
+        "reasoning": "Raciocínio",
+        "image": "Imagem",
+        "longContext": "Contexto longo"
+      },
+      "sections": {
+        "pinned": "Fixados",
+        "recent": "Recentes",
+        "recommended": "Recomendados"
+      },
+      "strengths": {
+        "everyday": "Diário",
+        "fast": "Rápido",
+        "reasoning": "Raciocínio",
+        "image": "Imagem",
+        "longContext": "Contexto longo",
+        "lowCost": "Económico",
+        "private": "Privado"
+      },
+      "search": {
+        "placeholder": "Pesquisar modelos, p. ex. «barato», «visão», «privado»…",
+        "noResults": "Nenhum modelo corresponde. Limpe a pesquisa ou os filtros.",
+        "showHidden": "Mostrar correspondências ocultas",
+        "privacyNote": "Pesquisado neste dispositivo — nunca enviado a um servidor"
+      },
+      "synonyms": {
+        "lowCost": "barato económico acessível",
+        "fast": "rápido veloz",
+        "powerful": "potente inteligente qualidade",
+        "reasoning": "raciocínio pensar lógica",
+        "image": "imagem visão foto",
+        "longContext": "contexto longo grande",
+        "private": "privado suíço eu soberano"
+      },
+      "manageInSettings": "Gerir modelos, predefinições e ocultos nas Definições",
+      "privacyFooter": "Encriptado ponta a ponta · as chaves nunca saem deste dispositivo"
     },
     "personas": {
       "all": "Todas",

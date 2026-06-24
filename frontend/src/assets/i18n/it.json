@@ -705,7 +705,47 @@
       "noImageModels": "Nessun modello disponibile può generare immagini.",
       "pickAria": "Scegli il tuo modello di IA",
       "pin": "Fissa il modello",
-      "unpin": "Rimuovi il modello fissato"
+      "unpin": "Rimuovi il modello fissato",
+      "filters": {
+        "recommended": "Consigliato",
+        "fast": "Veloce",
+        "powerful": "Potente",
+        "lowCost": "Economico",
+        "reasoning": "Ragionamento",
+        "image": "Immagine",
+        "longContext": "Contesto ampio"
+      },
+      "sections": {
+        "pinned": "Fissati",
+        "recent": "Recenti",
+        "recommended": "Consigliati"
+      },
+      "strengths": {
+        "everyday": "Quotidiano",
+        "fast": "Veloce",
+        "reasoning": "Ragionamento",
+        "image": "Immagine",
+        "longContext": "Contesto ampio",
+        "lowCost": "Economico",
+        "private": "Privato"
+      },
+      "search": {
+        "placeholder": "Cerca modelli, es. «economico», «visione», «privato»…",
+        "noResults": "Nessun modello corrisponde. Cancella ricerca o filtri.",
+        "showHidden": "Mostra risultati nascosti",
+        "privacyNote": "Ricerca su questo dispositivo, mai inviata a un server"
+      },
+      "synonyms": {
+        "lowCost": "economico conveniente accessibile",
+        "fast": "veloce rapido",
+        "powerful": "potente intelligente qualità",
+        "reasoning": "ragionamento pensare logica",
+        "image": "immagine visione foto",
+        "longContext": "contesto ampio lungo",
+        "private": "privato svizzero eu sovrano"
+      },
+      "manageInSettings": "Gestisci modelli, predefiniti e nascosti nelle Impostazioni",
+      "privacyFooter": "Crittografia end-to-end · le chiavi non lasciano mai questo dispositivo"
     },
     "personas": {
       "all": "Tutte",

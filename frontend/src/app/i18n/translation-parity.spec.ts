@@ -42,6 +42,31 @@ describe('i18n translation parity', () => {
     });
   }
 
+  it('includes the model-discovery keys in English', () => {
+    // Canary so a refactor that drops the discovery strings is caught directly.
+    // Parity across locales is enforced by the structural test above; this
+    // guards the specific keys the composer/settings selector depends on.
+    for (const key of [
+      'chat.models.filters.recommended',
+      'chat.models.filters.image',
+      'chat.models.filters.longContext',
+      'chat.models.sections.pinned',
+      'chat.models.sections.recent',
+      'chat.models.sections.recommended',
+      'chat.models.strengths.everyday',
+      'chat.models.search.placeholder',
+      'chat.models.search.noResults',
+      'chat.models.search.showHidden',
+      'chat.models.search.privacyNote',
+      'chat.models.synonyms.lowCost',
+      'chat.models.synonyms.private',
+      'chat.models.manageInSettings',
+      'chat.models.privacyFooter',
+    ]) {
+      expect(englishKeys.has(key), `en.json missing ${key}`).toBe(true);
+    }
+  });
+
   it('includes the conversation-copy keys in English', () => {
     // A canary so a refactor that drops these specific keys is caught directly.
     for (const key of [

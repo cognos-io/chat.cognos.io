@@ -10,6 +10,7 @@ import {
   LONG_CONTEXT_THRESHOLD,
   RECENT_MODELS_LIMIT,
   addRecentModel,
+  buildSearchSynonyms,
   flattenGroups,
   isLongContextModel,
   isLowCostModel,
@@ -183,6 +184,35 @@ describe('modelMatchesSearch', () => {
     // German "günstig" -> low cost; the query is folded before lookup.
     const synonyms = { gunstig: ['low cost'] };
     expect(modelMatchesSearch(cheap, 'günstig', { synonyms })).toBe(true);
+  });
+
+  it('matches privacy/swiss searches against Swiss-hosted models', () => {
+    const swiss = makeModel({ privacyTier: 'ch_only', hostingCountry: 'CH' });
+    expect(modelMatchesSearch(swiss, 'private')).toBe(true);
+    expect(modelMatchesSearch(swiss, 'swiss')).toBe(true);
+  });
+});
+
+describe('buildSearchSynonyms', () => {
+  it('expands localised intent terms to English anchors, NFD-folded', () => {
+    const synonyms = buildSearchSynonyms({
+      lowCost: 'günstig billig',
+      private: 'privat schweiz',
+      unknownIntent: 'ignored',
+    });
+    expect(synonyms['gunstig']).toEqual(['low cost']);
+    expect(synonyms['billig']).toEqual(['low cost']);
+    expect(synonyms['schweiz']).toEqual(['private']);
+    // Intents without a known anchor are dropped.
+    expect(synonyms['ignored']).toBeUndefined();
+  });
+
+  it('drives a localised search end-to-end', () => {
+    const cheap = makeModel({
+      pricing: { inputUsdPerMillionTokens: 0.1, outputUsdPerMillionTokens: 0.1 },
+    });
+    const synonyms = buildSearchSynonyms({ lowCost: 'günstig billig preiswert' });
+    expect(modelMatchesSearch(cheap, 'preiswert', { synonyms })).toBe(true);
   });
 });
 

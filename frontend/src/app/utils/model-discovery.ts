@@ -160,8 +160,50 @@ export function modelSearchHaystack(model: Model, ctx: SearchContext = {}): stri
   if (meta.recommended) parts.push('recommended');
   if (meta.fast) parts.push('fast');
   if (meta.powerful) parts.push('powerful');
+  // Privacy anchors so a "private"/"swiss" search reaches the right models.
+  if (model.noRetention || model.privacyTier === 'ch_only') parts.push('private');
+  if (
+    (model.hostingRegion ?? '').toLowerCase() === 'ch' ||
+    (model.hostingCountry ?? '').toLowerCase() === 'ch' ||
+    model.privacyTier === 'ch_only'
+  ) {
+    parts.push('swiss switzerland');
+  }
 
   return normalizeSearchText(parts.join(' '));
+}
+
+// Maps a search intent (quick-filter / strength) to the stable English anchor
+// word(s) indexed in the haystack. Localised trigger words resolve to these, so
+// a German "günstig" search finds the model whose haystack contains "low cost".
+export const SEARCH_INTENT_ANCHORS: Readonly<Record<string, string>> = {
+  lowCost: 'low cost',
+  fast: 'fast',
+  powerful: 'powerful',
+  reasoning: 'reasoning',
+  image: 'image',
+  longContext: 'long context',
+  private: 'private',
+};
+
+// buildSearchSynonyms turns the localised i18n synonym map ({intent: "term term"})
+// into the {token: anchors[]} form modelMatchesSearch expects. Trigger terms are
+// NFD-folded to match the folded query; unknown intents are ignored.
+export function buildSearchSynonyms(
+  localized: Record<string, string>,
+): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const [intent, terms] of Object.entries(localized)) {
+    const anchor = SEARCH_INTENT_ANCHORS[intent];
+    if (!anchor || typeof terms !== 'string') {
+      continue;
+    }
+    for (const token of normalizeSearchText(terms).split(' ')) {
+      if (!token) continue;
+      (out[token] ??= []).push(anchor);
+    }
+  }
+  return out;
 }
 
 // modelMatchesSearch returns true when every token in the query is satisfied by

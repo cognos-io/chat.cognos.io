@@ -705,7 +705,47 @@
       "noImageModels": "Aucun modèle disponible ne peut générer d'images.",
       "pickAria": "Choisissez votre modèle d'IA",
       "pin": "Épingler le modèle",
-      "unpin": "Détacher le modèle"
+      "unpin": "Détacher le modèle",
+      "filters": {
+        "recommended": "Recommandé",
+        "fast": "Rapide",
+        "powerful": "Puissant",
+        "lowCost": "Économique",
+        "reasoning": "Raisonnement",
+        "image": "Image",
+        "longContext": "Grand contexte"
+      },
+      "sections": {
+        "pinned": "Épinglés",
+        "recent": "Récents",
+        "recommended": "Recommandés"
+      },
+      "strengths": {
+        "everyday": "Quotidien",
+        "fast": "Rapide",
+        "reasoning": "Raisonnement",
+        "image": "Image",
+        "longContext": "Grand contexte",
+        "lowCost": "Économique",
+        "private": "Privé"
+      },
+      "search": {
+        "placeholder": "Rechercher des modèles, p. ex. « pas cher », « vision », « privé »…",
+        "noResults": "Aucun modèle ne correspond. Effacez la recherche ou les filtres.",
+        "showHidden": "Afficher les résultats masqués",
+        "privacyNote": "Recherche sur cet appareil — jamais envoyée à un serveur"
+      },
+      "synonyms": {
+        "lowCost": "pas cher économique abordable bon marché",
+        "fast": "rapide vite",
+        "powerful": "puissant intelligent qualité",
+        "reasoning": "raisonnement réflexion logique",
+        "image": "image vision photo",
+        "longContext": "grand contexte long",
+        "private": "privé suisse eu souverain"
+      },
+      "manageInSettings": "Gérer les modèles, valeurs par défaut et masqués dans les Réglages",
+      "privacyFooter": "Chiffré de bout en bout · les clés ne quittent jamais cet appareil"
     },
     "personas": {
       "all": "Tous",

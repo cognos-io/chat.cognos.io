@@ -705,7 +705,47 @@
       "noImageModels": "No available model can generate images.",
       "pickAria": "Pick your AI model",
       "pin": "Pin model",
-      "unpin": "Unpin model"
+      "unpin": "Unpin model",
+      "filters": {
+        "recommended": "Recommended",
+        "fast": "Fast",
+        "powerful": "Powerful",
+        "lowCost": "Low cost",
+        "reasoning": "Reasoning",
+        "image": "Image",
+        "longContext": "Long context"
+      },
+      "sections": {
+        "pinned": "Pinned",
+        "recent": "Recent",
+        "recommended": "Recommended"
+      },
+      "strengths": {
+        "everyday": "Everyday",
+        "fast": "Fast",
+        "reasoning": "Reasoning",
+        "image": "Image",
+        "longContext": "Long context",
+        "lowCost": "Low cost",
+        "private": "Private"
+      },
+      "search": {
+        "placeholder": "Search models, e.g. “cheap”, “vision”, “private”…",
+        "noResults": "No models match. Try clearing the search or filters.",
+        "showHidden": "Show hidden matches",
+        "privacyNote": "Searched on this device — never sent to a server"
+      },
+      "synonyms": {
+        "lowCost": "cheap budget affordable inexpensive low cost",
+        "fast": "fast quick speed",
+        "powerful": "powerful smart quality best",
+        "reasoning": "reasoning thinking logic",
+        "image": "image vision picture",
+        "longContext": "long context large",
+        "private": "private swiss switzerland eu sovereign"
+      },
+      "manageInSettings": "Manage models, defaults & hidden in Settings",
+      "privacyFooter": "End-to-end encrypted · keys never leave this device"
     },
     "personas": {
       "all": "All",

@@ -705,7 +705,47 @@
       "noImageModels": "Kein verfügbares Modell kann Bilder erzeugen.",
       "pickAria": "Wählen Sie Ihr KI-Modell",
       "pin": "Modell anheften",
-      "unpin": "Modell lösen"
+      "unpin": "Modell lösen",
+      "filters": {
+        "recommended": "Empfohlen",
+        "fast": "Schnell",
+        "powerful": "Leistungsstark",
+        "lowCost": "Günstig",
+        "reasoning": "Logik",
+        "image": "Bild",
+        "longContext": "Großer Kontext"
+      },
+      "sections": {
+        "pinned": "Angeheftet",
+        "recent": "Zuletzt",
+        "recommended": "Empfohlen"
+      },
+      "strengths": {
+        "everyday": "Alltag",
+        "fast": "Schnell",
+        "reasoning": "Logik",
+        "image": "Bild",
+        "longContext": "Großer Kontext",
+        "lowCost": "Günstig",
+        "private": "Privat"
+      },
+      "search": {
+        "placeholder": "Modelle suchen, z. B. „günstig“, „vision“, „privat“…",
+        "noResults": "Keine Modelle gefunden. Suche oder Filter zurücksetzen.",
+        "showHidden": "Ausgeblendete Treffer anzeigen",
+        "privacyNote": "Auf diesem Gerät gesucht – nie an einen Server gesendet"
+      },
+      "synonyms": {
+        "lowCost": "günstig billig preiswert",
+        "fast": "schnell flott",
+        "powerful": "leistungsstark intelligent qualität",
+        "reasoning": "logik denken schlussfolgern",
+        "image": "bild vision foto",
+        "longContext": "großer kontext lang",
+        "private": "privat schweiz eu souverän"
+      },
+      "manageInSettings": "Modelle, Standards & Ausgeblendete in den Einstellungen verwalten",
+      "privacyFooter": "Ende-zu-Ende-verschlüsselt · Schlüssel verlassen dieses Gerät nie"
     },
     "personas": {
       "all": "Alle",

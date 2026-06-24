@@ -705,7 +705,47 @@
       "noImageModels": "Ningún modelo disponible puede generar imágenes.",
       "pickAria": "Elige tu modelo de IA",
       "pin": "Fijar modelo",
-      "unpin": "Dejar de fijar el modelo"
+      "unpin": "Dejar de fijar el modelo",
+      "filters": {
+        "recommended": "Recomendado",
+        "fast": "Rápido",
+        "powerful": "Potente",
+        "lowCost": "Económico",
+        "reasoning": "Razonamiento",
+        "image": "Imagen",
+        "longContext": "Contexto amplio"
+      },
+      "sections": {
+        "pinned": "Fijados",
+        "recent": "Recientes",
+        "recommended": "Recomendados"
+      },
+      "strengths": {
+        "everyday": "Diario",
+        "fast": "Rápido",
+        "reasoning": "Razonamiento",
+        "image": "Imagen",
+        "longContext": "Contexto amplio",
+        "lowCost": "Económico",
+        "private": "Privado"
+      },
+      "search": {
+        "placeholder": "Buscar modelos, p. ej. «barato», «visión», «privado»…",
+        "noResults": "Ningún modelo coincide. Borra la búsqueda o los filtros.",
+        "showHidden": "Mostrar coincidencias ocultas",
+        "privacyNote": "Búsqueda en este dispositivo: nunca se envía a un servidor"
+      },
+      "synonyms": {
+        "lowCost": "barato económico asequible",
+        "fast": "rápido veloz",
+        "powerful": "potente inteligente calidad",
+        "reasoning": "razonamiento pensar lógica",
+        "image": "imagen visión foto",
+        "longContext": "contexto amplio largo",
+        "private": "privado suizo eu soberano"
+      },
+      "manageInSettings": "Gestiona modelos, predeterminados y ocultos en Ajustes",
+      "privacyFooter": "Cifrado de extremo a extremo · las claves nunca salen de este dispositivo"
     },
     "personas": {
       "all": "Todas",
