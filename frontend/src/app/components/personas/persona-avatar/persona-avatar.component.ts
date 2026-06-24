@@ -17,7 +17,7 @@ import { PersonaColor } from '@app/interfaces/persona';
     <span
       class="persona-avatar"
       [class]="'persona-avatar--' + color()"
-      [style.--persona-avatar-size.px]="size()"
+      [style.--persona-avatar-size]="size()"
     >
       <cog-icon [name]="icon()" [size]="resolvedIconSize()" />
     </span>
