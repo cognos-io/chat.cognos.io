@@ -11,9 +11,12 @@ ranking/filtering, encrypted/local preferences
 - `frontend/src/app/services/user-preferences.service.ts`
 - `frontend/src/app/interfaces/model.ts`
 - `frontend/src/app/interfaces/user_preferences.ts`
+- `frontend/src/app/interfaces/project.ts`
+- `frontend/src/app/services/project.service.ts`
 - `frontend/src/app/i18n/model-copy.ts`
 - `frontend/src/assets/i18n/{en,de,fr,es,it,pt}.json`
 - `docs/security-model.md`
+- `docs/specs/projects.md`
 - `docs/i18n.md`
 
 ## 1. Overview
@@ -133,6 +136,24 @@ string must be added to:
 Search should not depend only on translated UI strings. It should index stable model metadata and a
 small local synonym dictionary per language where needed.
 
+Additional requirements for this feature:
+
+- **Synonym dictionaries must be parity-protected.** Per-language search synonyms (§5.2) must not
+  drift between locales. Either store them in the i18n JSON so the existing
+  `translation-parity.spec.ts` covers them, or add a dedicated synonym-parity test. Add a canary
+  block to `translation-parity.spec.ts` for the new model-discovery key namespace, mirroring the
+  existing conversation-copy canary.
+- **Search must be diacritic- and case-insensitive.** Normalise both the query and indexed strings
+  with `String.normalize('NFD')` + combining-mark stripping so a French/Portuguese/German user
+  searching `günstig`, `rápido`, or `raciocínio` matches. This is the search-quality-by-language
+  risk in §12.
+- **Curated capability metadata is i18n keys, not literals.** The `strengths` and expectation copy
+  in §6.2 must resolve through Transloco keys, never ship as English strings in a TS map. Aliases
+  used only for matching may stay as per-language data but must be parity-protected as above.
+- Filter labels, the no-result copy, "show hidden matches", the current-default label, and every
+  ineligibility/fallback explanation need enumerated keys present in all six locales.
+- All six supported languages are LTR; no RTL work is required.
+
 ### 4.3 Default-first UX requirements
 
 The product must serve three modes without asking users to choose a mode explicitly:
@@ -159,14 +180,47 @@ Requirements:
 
 ### 4.4 Accessibility requirements
 
-- The selector remains keyboard usable.
-- Opening the selector focuses the search input when search is present.
-- Arrow keys move through visible model options.
+Full keyboard navigation is an **expansion**, not a preservation. The current selector exposes
+`role="listbox"`/`role="option"` semantics but has no arrow-key handling, so this is net-new work
+and should be estimated as such.
+
+- The selector must be fully keyboard usable.
+- Opening the selector focuses the search input when search is present, **on desktop only**. On
+  mobile the search input is not auto-focused (see §4.5) so the list is visible before the on-screen
+  keyboard appears.
+- Arrow keys move through visible model options; Home/End jump to first/last.
 - Enter selects the focused model.
-- Escape closes the selector.
-- Filter chips expose pressed state with `aria-pressed` or equivalent.
-- Hidden/destructive actions are not only exposed on hover.
-- The existing listbox/option semantics must not be broken by nested action buttons.
+- Escape closes the selector and dismisses the mobile sheet.
+- Filter chips expose pressed state with `aria-pressed` or equivalent and are reachable in the tab
+  order.
+- Hidden/destructive actions are not only exposed on hover and are reachable by keyboard.
+- The existing listbox/option semantics must not be broken by nested action buttons; per-row actions
+  must have valid keyboard semantics.
+- The mobile sheet traps focus while open, locks background scroll, and restores focus to the
+  trigger on close.
+
+### 4.5 Mobile presentation requirements
+
+The composer selector must use a **responsive split** that shares one inner content component:
+
+- **Desktop / pointer with space:** the existing CDK overlay dropdown anchored to the trigger.
+- **Mobile / narrow breakpoints:** a bottom-sheet (or full-height sheet) rather than a floating
+  dropdown. The current dropdown is height-capped at `calc(100vh - 160px)`; once a search input is
+  focused on mobile the on-screen keyboard consumes much of the viewport and the dropdown collapses
+  to an unusable sliver. A sheet avoids this.
+
+Requirements:
+
+- A single breakpoint decision drives dropdown-vs-sheet; reuse the existing `DeviceService.isMobile`
+  signal rather than introducing a new mechanism.
+- The sheet locks background scroll, traps focus, and offers an explicit close affordance (and
+  drag-to-dismiss where practical).
+- Filter chips live in a horizontally scrollable rail; they must not wrap into a tall block that
+  pushes the list off-screen.
+- Touch targets (rows, chips, overflow actions) are at least 44×44 px.
+- Search is not auto-focused on mobile; the list is visible first and the user taps to search.
+- No model action is hover-only on any breakpoint; the overflow menu must be tap-reachable.
+- The same pure filtering/ordering logic feeds both presentations; only the container differs.
 
 ## 5. Core features
 
@@ -205,6 +259,8 @@ Requirements:
     `Model.hostingRegion`, tags, cost tier, and derived capability labels.
     - Search handles common synonyms, for example `cheap` → low cost, `vision` → image,
     `smart`/`quality` → powerful, `private` → privacy-region tags.
+    - Search and synonyms are localised per language and matched diacritic- and case-insensitively
+    using `NFD` normalisation with combining-mark stripping.
     - Search is computed client-side and does not call an API.
     - Search terms are not persisted and not logged.
     - Empty search shows the default ordered model list.
@@ -250,9 +306,8 @@ Requirements:
     - The currently selected model is visible when it matches filters/search, with the existing
       check
     icon behaviour.
-    - Recent model IDs are stored in encrypted preferences if synced, or in local browser storage if
-      a
-    local-only MVP is chosen.
+    - Recent model IDs are stored in encrypted preferences (§6.3); local-only browser storage is
+    rejected (§6.4).
 
 ### 5.5 Hidden models
 
@@ -274,20 +329,23 @@ Requirements:
 
 ### 5.6 User default model
 
-- **Description:** Make default-model behaviour explicit in the UI rather than only implicit on
-  select, while ensuring users get a sane default even if they never configure one.
-- **User story:** As a user, I want Cognos to start with a sensible model and let me set my own
-  default when I care, so that new chats work well without setup.
+- **Description:** Keep default-model behaviour **implicit**: selecting a model is what makes it the
+  user's default. There is no separate "Set as my default" action. Users still get a sane default
+  even if they have never actively chosen one.
+- **User story:** As a user, I want the model I pick to stick as my default for new chats without
+  managing a separate default setting.
 - **Priority:** P1
 - **Acceptance criteria:**
-    - UI exposes "Set as my default" for eligible models.
-    - The composer may expose this as a compact secondary action; the account settings model list
-      must
-    expose it more explicitly.
-    - Current default is labelled in both the composer selector and the account settings model list.
+    - Selecting a model persists it as the user default. This preserves current behaviour:
+    `selectModel()` writes `defaultModelId`. No explicit "Set as my default" control is added in the
+    composer or settings.
+    - The current default is clearly labelled in both the composer selector and the account settings
+    model list so the implicit behaviour is visible.
     - `ModelService.selectedModel` fallback order becomes:
-explicit session pick → encrypted project default → encrypted user default → recommended eligible
-model → first eligible visible model.
+    encrypted project default (in a project and eligible) → encrypted user default → recommended
+    eligible model → first eligible visible model.
+    - Selecting a model also marks it recent (§5.4); recency does not change the default beyond the
+    selection itself.
     - Default model ID remains in encrypted `user_preferences.data` through `defaultModelId`.
     - No plaintext account/user field is added for model defaults.
 
@@ -298,18 +356,42 @@ model → first eligible visible model.
 - **User story:** As a project member, I want a project-specific default model so that project chats
   use the model appropriate for that workspace.
 - **Priority:** P2
+- **Encryption design (no new key to import):** Projects already have a **project content key** — a
+  32-byte symmetric key (`crypto.randomKey()`) generated at project creation, sealed to each
+  member's public key, and stored in `project_key_wrappings`
+  (`frontend/src/app/services/project.service.ts`,
+  `backend/db/migrations/1760000040_created_projects_collections.go`). The project metadata blob
+  (`projects.data`) is already `secretBox`-encrypted under that key and decryptable by every member.
+  The project default model rides that existing blob; there is no separate key to import or
+  provision and no new collection/migration.
 - **Acceptance criteria:**
-    - Project default is stored inside encrypted project metadata, not as a plaintext project field.
+    - Add `defaultModelId` (and optionally `defaultPersonaId`) to the encrypted `ProjectData` schema
+    (`frontend/src/app/interfaces/project.ts`). It is never a plaintext project field.
+    - The value is written through the existing `ProjectService.updateProject()` re-encrypt pipeline
+    and read by decrypting `projects.data`; no new collection, migration, or API surface is added.
+    - Project default is set **explicitly** in project settings — a shared workspace choice,
+      distinct
+    from the implicit personal default in §5.6. Because it lives under the shared project content
+    key, every member resolves the same project default.
     - Resolution order is documented and tested:
-    1. explicit model selected for this chat/session
+    1. model selected for this chat/session
     2. encrypted project default, when in a project and eligible
     3. encrypted user default, when eligible
     4. recommended eligible model
     5. first eligible visible model
     - If the project default is not eligible for the user's privacy tier or billing state, the UI
-      shows
-    a localised fallback explanation.
+    shows a localised fallback explanation.
+    - Stale-safe: an unknown or ineligible project `defaultModelId` is ignored and resolution falls
+    through to the next source.
     - Existing project encryption principles in `docs/specs/projects.md` are preserved.
+
+> **Redaction is a separate gap, not a blocker here.** Redaction secrets are currently wrapped
+> per-user (`conversation_redaction_keys`) with no project-content-key wrapping, which blocks
+> _redaction inside project conversations_ and project conversation copy. That does **not** affect
+> the project default model, which only stores a model ID in already-encrypted project metadata.
+> Project-scoped redaction — a `project_redaction_keys` collection wrapping the redaction secret
+> under the project content key, mirroring `project_conversation_keys` — is tracked separately and
+> out of scope for this spec.
 
 ### 5.8 Model strengths and expectations
 
@@ -342,9 +424,9 @@ model → first eligible visible model.
     - The account settings model list supports the same search and quick filters as the composer.
     - Settings shows the same pinned, hidden, recent, default, capability, cost, privacy-region, and
     eligibility state as the composer.
-    - Settings provides clearer actions for Pin/Unpin, Hide/Unhide, Set as my default, and Reset
-      hidden
-    models.
+    - Settings provides clearer actions for Pin/Unpin, Hide/Unhide, and Reset hidden models. There
+      is
+    no "Set as my default" action; the default is implicit per §5.6 and only labelled here.
     - The composer and settings list share the same pure filtering/ordering logic rather than
       drifting
     into separate behaviours.
@@ -425,7 +507,11 @@ Rules:
 - use it to support defaults, exploration, and fast retrieval of known models
 - do not infer quality from price unless explicitly product-approved
 - ensure labels are reviewed when catalogue entries change
-- all displayed labels, expectation copy, and aliases used for visible UI need i18n support
+- `strengths` and expectation copy must be Transloco **keys**, not literal strings, and resolve
+  through i18n; they are parity-protected (§4.2)
+- `aliases` are match-only per-language data, never rendered, and must also be parity-protected
+- the curated `recommended`/`fast`/`powerful` set and the first recommended default per privacy
+  tier are product-owned values maintained here and reviewed whenever the catalogue changes
 
 If this mapping grows too large or needs backend ownership, expose it as public catalogue metadata
 in `/api/v1/models`; it must remain product metadata, not user-specific data.
@@ -454,16 +540,45 @@ Rules:
 - IDs should be treated as stale-safe: unknown model IDs are ignored at read time.
 - Recent and hidden model lists should not expose model preference data in plaintext server fields.
 
-### 6.4 Local-only alternative
+### 6.4 Rejected: local-only browser storage
 
-A lower-complexity MVP may store `recentModels` and `hiddenModels` in browser storage. If used:
+A local-only `localStorage` MVP for `recentModels`/`hiddenModels` was considered and **rejected**.
+`recentModels` is behavioural metadata — which models a user actually uses — and `localStorage`
+under a key such as `cognos:model-selector:<user-id>` persists across logout and is readable by any
+script on the origin or by anyone on a shared machine. These fields must use encrypted sync via
+`UserPreferencesService` (§6.3) instead, inheriting the existing NaCl secretbox protection.
 
-- use a namespaced key such as `cognos:model-selector:<user-id>`
-- store only model IDs and UI state, never key material or message content
-- document that these preferences do not sync across devices
-- keep the shape compatible with later encrypted preference sync
+If any non-syncing, UI-only state ever needs browser storage, it must store only non-sensitive UI
+state (never model usage history, key material, or message content) and be cleared on logout.
 
-The preferred long-term implementation is encrypted sync via `UserPreferencesService`.
+### 6.5 Project default (encrypted project metadata)
+
+The project default model (§5.7) is **not** a new key or collection. It is an additional field in
+the existing encrypted project metadata blob:
+
+```txt
+ProjectData (encrypted in projects.data under the project content key)
+  version
+  name
+  description
+  icon
+  color
+  instructions
+  defaultModelId      ← new, optional
+  defaultPersonaId    ← new, optional
+```
+
+Rules:
+
+- The project content key already exists: generated at project creation (`crypto.randomKey()`),
+  sealed to each member's public key, stored in `project_key_wrappings`. No import or provisioning
+  step is introduced by this feature.
+- `defaultModelId`/`defaultPersonaId` are written via the existing `ProjectService.updateProject()`
+  re-encrypt pipeline and read by decrypting `projects.data`. No plaintext project field is added.
+- Zod defaults must be backward compatible: existing projects have no such keys and default to `''`.
+- Stale-safe: unknown/ineligible IDs are ignored at read time and resolution falls through (§5.7).
+- This is distinct from the per-user encrypted `defaultModelId` in §6.3; project defaults are shared
+  among all members under the project content key.
 
 ## 7. Ordering and filtering model
 
@@ -499,7 +614,8 @@ Pinned order should continue to be frozen when the dropdown opens to avoid row j
   a mid-range laptop. The selector should not block typing in the composer.
 - **Security:** search terms, hidden models, recent models, pinned models, defaults, and project
   defaults must not be stored in plaintext on the server. No plaintext chat content is introduced by
-  this feature.
+  this feature. Filter-chip and model-row interactions must not emit analytics/telemetry events
+  carrying model IDs alongside a user identifier.
 - **Scalability:** the client-side approach must comfortably handle a 10x catalogue increase without
   backend search infrastructure. If catalogue size exceeds 500 models, add a memoised search index
   rather than a server endpoint.
@@ -541,9 +657,11 @@ Add or extend tests under `frontend/e2e/`:
 - model rows expose strengths/expectations clearly enough to distinguish common use cases
 - hide a model and verify it disappears from the normal list
 - show/manage hidden models and unhide
-- set default model in the composer and verify it is restored after reload/unlock
-- set default model in account settings and verify the composer reflects it
+- select a model in the composer and verify it becomes the implicit default, restored after
+  reload/unlock
+- verify the current default is labelled in both the composer selector and account settings
 - hide/unhide models in account settings and verify the composer reflects it
+- verify the responsive split: bottom-sheet on mobile widths, dropdown on desktop
 - verify no network request is made while typing into the search box after initial catalogue load
 - verify keyboard-only selection path
 
@@ -572,41 +690,29 @@ Add pure tests for:
 
 ## 11. Implementation milestones
 
-| Phase                                              | Duration  | Deliverables                                                                                                                                                     |
-| -------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phase 1: Search, filters, and recommended defaults | 1 week    | Client-side search input, filter chips in composer and settings, shared pure filtering/order tests, recommended default fallback, i18n keys, Playwright coverage |
-| Phase 2: Recents and hidden models                 | 1 week    | `recentModels`, `hiddenModels`, encrypted preference schema defaults, composer hide action, settings hide/unhide management, tests                               |
-| Phase 3: Explicit defaults                         | 1 week    | "Set as my default" UI in composer/settings, default labels, fallback tests, encrypted preference assertions                                                     |
-| Phase 4: Project defaults                          | 1-2 weeks | encrypted project default metadata, resolution order, project settings UI, access/encryption tests                                                               |
-| Phase 5: Auto mode                                 | later     | local-rule Auto option with transparent explanation and privacy review                                                                                           |
+| Phase                                             | Duration  | Deliverables                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Phase 1: Search, filters, defaults, a11y & mobile | 1-2 weeks | Client-side search (diacritic/case-insensitive) + filter chips in composer and settings, shared pure filtering/order logic + tests, recommended default fallback, **full keyboard navigation (net-new)**, **responsive dropdown/bottom-sheet split (§4.5)**, i18n keys + synonym parity, Playwright coverage |
+| Phase 2: Recents and hidden models                | 1 week    | `recentModels`, `hiddenModels` in encrypted preferences (schema defaults), composer hide action via overflow, settings hide/unhide management, tests                                                                                                                                                         |
+| Phase 3: Default labelling & resolution           | 0.5 week  | Implicit-default labels in composer/settings, project-aware resolution order, fallback tests, encrypted preference assertions (no explicit "set default" UI)                                                                                                                                                 |
+| Phase 4: Project defaults                         | 1 week    | Add `defaultModelId` to the encrypted `ProjectData` blob (rides the existing project content key — no new collection/migration), project-aware resolution order, project settings UI, access/encryption tests                                                                                                |
+| Phase 5: Auto mode                                | later     | local-rule Auto option with transparent explanation and privacy review                                                                                                                                                                                                                                       |
 
 ## 12. Risks and mitigations
 
-| Risk                                                                                                  | Impact | Likelihood | Mitigation                                                                                                                                     |
-| ----------------------------------------------------------------------------------------------------- | ------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| The selector becomes visually overloaded with search, chips, pins, defaults, hide actions, and badges | High   | Medium     | Keep default view compact; move hide/default actions into an accessible overflow menu; test on mobile widths                                   |
-| Capability labels are misleading because `fast` and `powerful` are subjective                         | Medium | High       | Use explicit curated metadata; do not infer from names or cost; review labels when catalogue changes                                           |
-| Sane defaults are wrong for some users                                                                | Medium | Medium     | Make defaults easy to override, keep recommendations explainable, and prefer privacy/billing eligibility constraints before capability ranking |
-| Preference changes accidentally add plaintext server fields                                           | High   | Low        | Store synced preferences only in encrypted `user_preferences.data`; add API/code-review checks                                                 |
-| Nested row actions break listbox accessibility                                                        | Medium | Medium     | Revisit markup so row selection and per-row actions have valid keyboard semantics; cover with tests                                            |
-| Search quality varies by language                                                                     | Medium | Medium     | Start with stable metadata plus translated synonyms; use i18n parity tests; avoid relying only on English descriptions                         |
-| Hidden default model creates confusing fallback behaviour                                             | Medium | Medium     | Show localised fallback copy and provide a clear reset/unhide path                                                                             |
+| Risk                                                                                                  | Impact | Likelihood | Mitigation                                                                                                                                                                    |
+| ----------------------------------------------------------------------------------------------------- | ------ | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The selector becomes visually overloaded with search, chips, pins, defaults, hide actions, and badges | High   | Medium     | Keep default view compact; move hide actions into an accessible overflow menu; use the responsive bottom-sheet on mobile (§4.5); test on mobile widths                        |
+| Capability labels are misleading because `fast` and `powerful` are subjective                         | Medium | High       | Use explicit curated metadata; do not infer from names or cost; review labels when catalogue changes                                                                          |
+| Sane defaults are wrong for some users                                                                | Medium | Medium     | Make defaults easy to override, keep recommendations explainable, and prefer privacy/billing eligibility constraints before capability ranking                                |
+| Preference changes accidentally add plaintext server fields                                           | High   | Low        | Store synced preferences only in encrypted `user_preferences.data`; add API/code-review checks                                                                                |
+| Nested row actions break listbox accessibility                                                        | Medium | Medium     | Revisit markup so row selection and per-row actions have valid keyboard semantics; cover with tests                                                                           |
+| Search quality varies by language                                                                     | Medium | Medium     | Start with stable metadata plus translated synonyms; normalise diacritics/case (`NFD`); use i18n parity tests; avoid relying only on English descriptions                     |
+| Hidden default model creates confusing fallback behaviour                                             | Medium | Medium     | Show localised fallback copy and provide a clear reset/unhide path                                                                                                            |
+| Project default model leaks the choice in plaintext                                                   | Medium | Low        | Store it inside the already-encrypted `projects.data` blob under the existing project content key; never add a plaintext project field; assert opacity in API e2e             |
+| Redaction inside project conversations is wrongly assumed available (separate gap)                    | Medium | Medium     | Out of scope here: project default models only store a model ID in encrypted metadata; project-scoped redaction keys (`project_redaction_keys`) are tracked separately (§5.7) |
 
-## 13. Open decisions
-
-1. Should `recentModels` and `hiddenModels` ship as encrypted synced preferences immediately, or as
-   a local-only MVP with later encrypted sync?
-2. Should the composer expose Hide/Set default directly in its compact row actions, or only through
-   a secondary overflow menu while settings remains the primary management surface?
-3. What is the product-approved curated set for `recommended`, `fast`, and `powerful` labels?
-4. Should selecting a model continue to implicitly set the default, or should default-setting become
-   explicit? Current code persists selection as `defaultModelId`; changing this is a behavioural
-   change and needs product confirmation.
-5. Which model or curated set should be the first recommended default for each privacy tier/billing
-   state?
-6. What exact threshold defines "long context" for the first release?
-
-## 14. Non-goals
+## 13. Non-goals
 
 - Server-side personalised recommendations.
 - Server-side search endpoints for model picker queries.
