@@ -412,15 +412,16 @@ describe('modelStrengthPills', () => {
       'fast',
       'reasoning',
       'longContext',
-      'lowCost',
     ]);
   });
 
-  it('marks Swiss-only and no-retention models as private', () => {
-    expect(modelStrengthPills(makeModel({ privacyTier: 'ch_only' }))).toContain(
-      'private',
-    );
-    expect(modelStrengthPills(makeModel({ noRetention: true }))).toContain('private');
+  it('omits cost and privacy pills (shown by the lozenge / always private)', () => {
+    const lowCostSwiss = makeModel({
+      privacyTier: 'ch_only',
+      pricing: { inputUsdPerMillionTokens: 0.1, outputUsdPerMillionTokens: 0.1 },
+    });
+    expect(modelStrengthPills(lowCostSwiss)).not.toContain('lowCost');
+    expect(modelStrengthPills(lowCostSwiss)).not.toContain('private');
   });
 });
 

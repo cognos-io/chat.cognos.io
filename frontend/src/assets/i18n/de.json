@@ -727,7 +727,8 @@
         "image": "Bild",
         "longContext": "Großer Kontext",
         "lowCost": "Günstig",
-        "private": "Privat"
+        "private": "Privat",
+        "powerful": "Leistungsstark"
       },
       "search": {
         "placeholder": "Modelle suchen, z. B. „günstig“, „vision“, „privat“…",

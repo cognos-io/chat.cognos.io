@@ -255,8 +255,11 @@ export function isPrivateModel(model: Model): boolean {
 
 // modelStrengthPills returns the ordered i18n strength keys for a row, combining
 // curated flags (everyday/fast/powerful) with predicates derived from public
-// metadata (reasoning/image/long context/low cost/private). Keys map to
-// chat.models.strengths.*; the caller localises and may cap the count.
+// metadata (reasoning/image/long context). Keys map to chat.models.strengths.*;
+// the caller localises and may cap the count.
+//
+// Cost is intentionally NOT a pill — it is shown by the cost lozenge. Privacy is
+// not a pill either: every Cognos model is private, so the label adds no signal.
 export function modelStrengthPills(
   model: Model,
   meta: MetadataLookup = defaultMetadata,
@@ -269,8 +272,6 @@ export function modelStrengthPills(
   if (isReasoningModel(model)) keys.push('reasoning');
   if (isImageModel(model)) keys.push('image');
   if (isLongContextModel(model)) keys.push('longContext');
-  if (isLowCostModel(model)) keys.push('lowCost');
-  if (isPrivateModel(model)) keys.push('private');
   return keys;
 }
 

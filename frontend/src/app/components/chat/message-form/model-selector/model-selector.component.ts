@@ -103,24 +103,9 @@ interface FilterChip {
                   [disabled]="!model.isEligible"
                   (click)="onSelectModel(model)"
                 >
-                  <span class="model-selector__icon">
-                    <cog-icon
-                      [name]="
-                        model.privacyTier === 'ch_only' ? 'shield-check' : 'cloud'
-                      "
-                      [size]="16"
-                      tone="text-subtle"
-                    />
-                  </span>
-
                   <span class="model-selector__body">
                     <span class="model-selector__heading">
                       <span class="model-selector__name">{{ model.name }}</span>
-                      <cog-lozenge class="model-selector__region" tone="neutral">
-                        {{
-                          t('account.dataProcessing.regionBadge.' + model.privacyTier)
-                        }}
-                      </cog-lozenge>
                       @if (!hideCost()) {
                         <cog-lozenge
                           class="model-selector__cost"
@@ -335,8 +320,8 @@ interface FilterChip {
 
     .model-selector__row {
       display: grid;
-      grid-template-columns: 24px minmax(0, 1fr) auto;
-      align-items: start;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
       gap: var(--cog-space-100);
       width: 100%;
       border: 0;
@@ -365,10 +350,6 @@ interface FilterChip {
     .model-selector__row--disabled {
       cursor: not-allowed;
       opacity: 0.72;
-    }
-
-    .model-selector__icon {
-      margin-top: 2px;
     }
 
     .model-selector__body {
@@ -418,13 +399,13 @@ interface FilterChip {
     }
 
     .model-selector__check {
-      margin-top: 2px;
       align-self: center;
     }
 
     .model-selector__pin-button {
       position: absolute;
-      top: var(--cog-space-100);
+      top: 50%;
+      transform: translateY(-50%);
       right: var(--cog-space-075);
       display: inline-flex;
       align-items: center;
@@ -731,7 +712,20 @@ export class ModelSelectorComponent {
     const context = t('account.dataProcessing.context', {
       size: formatContextWindow(model.inputContextLength),
     });
-    return model.hostingCountry ? `${context} · ${model.hostingCountry}` : context;
+    return `${context} · ${this.regionFlag(model)}`;
+  }
+
+  // A compact flag for the hosting region, replacing the country code to save
+  // space. Falls back to a globe for non-CH/EU hosting.
+  protected regionFlag(model: Model): string {
+    const country = (model.hostingCountry ?? '').toUpperCase();
+    if (country === 'CH' || model.privacyTier === 'ch_only') {
+      return '🇨🇭';
+    }
+    if (country === 'EU' || model.privacyTier === 'eu') {
+      return '🇪🇺';
+    }
+    return '🌐';
   }
 
   protected isPinned(modelId: string): boolean {
