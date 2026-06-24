@@ -298,6 +298,19 @@ import { ProjectService } from '@app/services/project.service';
     .project-settings__color-swatch--slate {
       --swatch-bg: #eef0f3;
     }
+    /* "No fill": a surface circle with a hairline border and a diagonal slash. */
+    .project-settings__color-swatch--transparent {
+      background:
+        linear-gradient(
+          to top right,
+          transparent calc(50% - 1px),
+          var(--cog-text-subtlest, #94a3b8) calc(50% - 1px),
+          var(--cog-text-subtlest, #94a3b8) calc(50% + 1px),
+          transparent calc(50% + 1px)
+        ),
+        var(--cog-surface, #fff);
+      box-shadow: inset 0 0 0 1px var(--cog-border, #e2e8f0);
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

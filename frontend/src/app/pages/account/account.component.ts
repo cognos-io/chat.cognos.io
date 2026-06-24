@@ -625,6 +625,19 @@ import { deriveProfileName } from '@app/utils/profile-identity';
     .account__color-swatch--slate {
       background: #eef0f3;
     }
+    /* "No fill": a surface circle with a diagonal slash (border comes from the
+       swatch's inset shadow). */
+    .account__color-swatch--transparent {
+      background:
+        linear-gradient(
+          to top right,
+          transparent calc(50% - 1px),
+          var(--cog-text-subtlest, #94a3b8) calc(50% - 1px),
+          var(--cog-text-subtlest, #94a3b8) calc(50% + 1px),
+          transparent calc(50% + 1px)
+        ),
+        var(--cog-surface, #fff);
+    }
 
     .account__actions {
       display: flex;

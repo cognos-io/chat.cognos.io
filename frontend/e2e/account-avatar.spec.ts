@@ -68,3 +68,29 @@ test('the Account page lets a user pick an avatar icon and colour', async ({
   await expect.poll(() => patched?.['avatar_icon']).toBe('message-square');
   expect(patched?.['avatar_color']).toBe('blue');
 });
+
+test('the Account page offers a transparent avatar colour', async ({ page }) => {
+  const fixture = buildVaultFixture('user_e2e_av02', 'avatar2@example.com');
+  await seed(page, fixture);
+
+  let patched: Record<string, unknown> | undefined;
+  await page.route(
+    `${API}/api/collections/users/records/${fixture.authState.model.id}`,
+    async (route) => {
+      if (route.request().method() !== 'PATCH') {
+        return route.fallback();
+      }
+      patched = JSON.parse(route.request().postData() ?? '{}');
+      await route.fulfill({ json: { ...fixture.authState.model, ...patched } });
+    },
+  );
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/account');
+
+  await page.getByRole('button', { name: 'Icon shield' }).click();
+  await page.getByRole('button', { name: 'Colour transparent' }).click();
+  await page.getByRole('button', { name: 'Save profile' }).click();
+
+  await expect.poll(() => patched?.['avatar_color']).toBe('transparent');
+});

@@ -75,12 +75,18 @@ import { PersonaColor } from '@app/interfaces/persona';
       --persona-avatar-bg: #eef0f3;
       --persona-avatar-fg: #475569;
     }
+    .persona-avatar--transparent {
+      --persona-avatar-bg: transparent;
+      --persona-avatar-fg: var(--cog-text-subtle, #475569);
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PersonaAvatarComponent {
   readonly icon = input.required<CognosIconName>();
-  readonly color = input.required<PersonaColor>();
+  // Accepts the persona palette plus 'transparent' (used by projects) for a
+  // fill-free chip.
+  readonly color = input.required<PersonaColor | 'transparent'>();
   readonly size = input(40);
   // Optional explicit icon size; defaults to half the box (so the glyph sits
   // inside the chip with even padding). Pass a smaller value for more padding.

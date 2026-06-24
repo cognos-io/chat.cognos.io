@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import type { CognosIconName } from '@cognos/ui/icons';
 
-import { PersonaColor, personaColors } from '@app/interfaces/persona';
+import { personaColors } from '@app/interfaces/persona';
 import { parseBackendDate } from '@app/utils/timestamp';
 
 // Curated subset of the icon set that reads well as a project avatar. The
@@ -38,10 +38,10 @@ export const projectIcons = [
 export type ProjectIcon = (typeof projectIcons)[number];
 export const defaultProjectIcon: ProjectIcon = 'folder';
 
-// Projects reuse the persona avatar palette so a single set of swatch styles
-// covers both surfaces.
-export const projectColors = personaColors;
-export type ProjectColor = PersonaColor;
+// Projects reuse the persona avatar palette, plus a 'transparent' option for a
+// fill-free icon.
+export const projectColors = [...personaColors, 'transparent'] as const;
+export type ProjectColor = (typeof projectColors)[number];
 export const defaultProjectColor: ProjectColor = 'slate';
 
 export function coerceProjectIcon(value: unknown): ProjectIcon {

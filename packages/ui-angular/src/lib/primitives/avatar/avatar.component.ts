@@ -22,6 +22,8 @@ export const COGNOS_AVATAR_COLORS = [
   'orange',
   'pink',
   'slate',
+  // No pastel fill — the icon sits on a transparent background.
+  'transparent',
 ] as const;
 
 export type CognosAvatarColor = (typeof COGNOS_AVATAR_COLORS)[number];
@@ -117,6 +119,11 @@ export type CognosAvatarColor = (typeof COGNOS_AVATAR_COLORS)[number];
       .cog-avatar--slate {
         --cog-avatar-bg: #eef0f3;
         --cog-avatar-fg: #475569;
+      }
+      .cog-avatar--transparent {
+        --cog-avatar-bg: transparent;
+        --cog-avatar-fg: var(--cog-text-subtle, #475569);
+        box-shadow: none;
       }
     `,
   ],

@@ -158,6 +158,57 @@ test('project settings dialog renames the project', async ({ page }) => {
   expect(pageErrors).toEqual([]);
 });
 
+test('project settings dialog offers a transparent icon colour', async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  const userFixture = buildVaultFixture('user_e2e_pd6', 'pd6@example.com');
+  const projectFixture = buildProjectFixture(
+    userFixture,
+    'proj_pd_6',
+    'Cantonal Policy',
+  );
+
+  await seedAuthenticatedUnlockState(page, userFixture);
+  await seedBaseRoutes(page, userFixture);
+  await page.route(`${API}/api/v1/projects`, async (route) => {
+    await route.fulfill({ json: [projectFixture.projectRecord] });
+  });
+  await page.route(
+    `${API}/api/v1/projects/${projectFixture.projectRecord.id}`,
+    async (route) => {
+      if (route.request().method() === 'PATCH') {
+        const body = route.request().postDataJSON() as { data: string };
+        await route.fulfill({
+          json: { ...projectFixture.projectRecord, data: body.data },
+        });
+        return;
+      }
+      await route.fallback();
+    },
+  );
+  await page.route(`${API}/api/v1/projects/*/conversations`, async (route) => {
+    await route.fulfill({ json: [] });
+  });
+
+  await page.goto(`/account/projects/${projectFixture.projectRecord.id}`);
+  // Default colour is the slate chip.
+  await expect(
+    page.locator('.project-detail__header .persona-avatar--slate'),
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Colour transparent' }).click();
+  await page.getByTestId('project-settings-save').click();
+
+  // The saved transparent colour is reflected on the header avatar chip.
+  await expect(
+    page.locator('.project-detail__header .persona-avatar--transparent'),
+  ).toBeVisible();
+
+  expect(pageErrors).toEqual([]);
+});
+
 test('project instructions can be added inline and persist on the page', async ({
   page,
 }) => {
