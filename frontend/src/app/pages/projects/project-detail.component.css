@@ -197,12 +197,20 @@
   font-size: var(--cog-fs-body, 15px);
 }
 
+/* One bordered container; items are split by hairline dividers, no gaps. */
 .project-detail__chat-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--cog-space-075, 6px);
+  border: 1px solid var(--cog-border, #e2e8f0);
+  border-radius: var(--cog-radius-md, 12px);
+  background: var(--cog-surface, #fff);
+  overflow: hidden;
+}
+
+.project-detail__chat-list li + li .project-detail__chat {
+  border-top: 1px solid var(--cog-border, #e2e8f0);
 }
 
 .project-detail__chat {
@@ -212,19 +220,15 @@
   inline-size: 100%;
   text-align: start;
   padding: var(--cog-space-125, 10px) var(--cog-space-150, 12px);
-  border: 1px solid var(--cog-border, #e2e8f0);
-  border-radius: var(--cog-radius-md, 12px);
-  background: var(--cog-surface, #fff);
+  border: 0;
+  background: transparent;
   font: inherit;
   color: var(--cog-text, #0f172a);
   cursor: pointer;
-  transition:
-    border-color var(--cog-dur-fast) var(--cog-ease-standard),
-    background-color var(--cog-dur-fast) var(--cog-ease-standard);
+  transition: background-color var(--cog-dur-fast) var(--cog-ease-standard);
 }
 
 .project-detail__chat:hover {
-  border-color: var(--cog-border-strong, #cbd5e1);
   background: var(--cog-surface-hover, rgba(0, 0, 0, 0.02));
 }
 
