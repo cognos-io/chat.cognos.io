@@ -242,6 +242,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: var(--cog-fs-body, 15px);
   font-weight: var(--cog-fw-semibold, 600);
 }
 
