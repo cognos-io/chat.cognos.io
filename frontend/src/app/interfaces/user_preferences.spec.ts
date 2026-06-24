@@ -46,6 +46,16 @@ describe('parseUserPreferencesData', () => {
     expect(parseUserPreferencesData(payload).pinnedModels).toEqual([]);
   });
 
+  it('defaults recentModels and hiddenModels for older payloads', () => {
+    // Existing users' encrypted payloads predate these keys; they must decrypt
+    // to empty arrays rather than throwing (spec §6.3 backward compatibility).
+    const payload = encode(JSON.stringify({ pinnedConversations: ['c-1'] }));
+    const parsed = parseUserPreferencesData(payload);
+
+    expect(parsed.recentModels).toEqual([]);
+    expect(parsed.hiddenModels).toEqual([]);
+  });
+
   it('rejects payloads missing pinnedConversations', () => {
     const payload = encode(JSON.stringify({ pinnedModels: [] }));
     expect(() => parseUserPreferencesData(payload)).toThrow();
@@ -83,6 +93,8 @@ describe('serializeUserPreferencesData', () => {
       defaultModelId: 'm-1',
       redactionEnabled: false,
       modelReasoningEfforts: { 'm-1': 'high' },
+      recentModels: ['m-1', 'm-2'],
+      hiddenModels: ['m-3'],
     };
 
     const serialized = serializeUserPreferencesData(original);

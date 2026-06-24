@@ -56,11 +56,13 @@ describe('ModelService', () => {
   let httpController: HttpTestingController;
   let authUser$: BehaviorSubject<unknown>;
   let setDefaultModel: ReturnType<typeof vi.fn>;
+  let markRecentModel: ReturnType<typeof vi.fn>;
   let defaultModelId: WritableSignal<string>;
 
   beforeEach(() => {
     authUser$ = new BehaviorSubject<unknown>(null);
     setDefaultModel = vi.fn();
+    markRecentModel = vi.fn();
     defaultModelId = signal('');
 
     TestBed.configureTestingModule({
@@ -80,6 +82,7 @@ describe('ModelService', () => {
           useValue: {
             defaultModelId,
             setDefaultModel,
+            markRecentModel,
           },
         },
         {
@@ -198,11 +201,14 @@ describe('ModelService', () => {
     service.selectModel('global-model');
     expect(service.selectedModel().id).toBe('eu-model');
     expect(setDefaultModel).not.toHaveBeenCalled();
+    expect(markRecentModel).not.toHaveBeenCalled();
 
-    // An eligible explicit selection is persisted as the default preference.
+    // An eligible explicit selection is persisted as the default preference and
+    // recorded as recently used (the default stays implicit, spec §5.6).
     service.selectModel('eu-model');
     expect(service.selectedModel().id).toBe('eu-model');
     expect(setDefaultModel).toHaveBeenCalledExactlyOnceWith('eu-model');
+    expect(markRecentModel).toHaveBeenCalledExactlyOnceWith('eu-model');
   });
 
   it('uses the persisted default model once preferences provide it', () => {

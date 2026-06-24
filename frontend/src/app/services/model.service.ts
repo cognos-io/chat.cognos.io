@@ -118,7 +118,10 @@ export class ModelService {
             }
             // Picking a model also makes it the default, persisted to the single
             // preferences object so it is restored next session / on new devices.
+            // The default stays implicit (spec §5.6): selecting is the only way
+            // to set it. Selecting also records the model as recently used.
             this._preferences.setDefaultModel(id);
+            this._preferences.markRecentModel(id);
             return {
               selectedModelId: id,
             };

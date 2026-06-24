@@ -22,6 +22,7 @@ import {
   serializeUserPreferencesData,
 } from '@app/interfaces/user_preferences';
 import { ignorePocketbase404 } from '@app/operators/ignore-404';
+import { addRecentModel } from '@app/utils/model-discovery';
 
 import { UserPreferencesResponse } from '../types/pocketbase-types';
 import { CognosApiService } from './cognos-api.service';
@@ -58,6 +59,10 @@ export class UserPreferencesService {
   private readonly _setDefaultPersona = new Subject<string>();
   private readonly _setDefaultModel = new Subject<string>();
   private readonly _markRecentPersona = new Subject<string>();
+  private readonly _markRecentModel = new Subject<string>();
+  private readonly _hideModel = new Subject<string>();
+  private readonly _unhideModel = new Subject<string>();
+  private readonly _resetHiddenModels = new Subject<void>();
   private readonly _setRedactionEnabled = new Subject<boolean>();
   private readonly _setModelReasoningEffort = new Subject<{
     modelId: string;
@@ -283,6 +288,65 @@ export class UserPreferencesService {
             }),
           ),
         ),
+      // Mark model recently used, local then remote
+      (state) =>
+        this._markRecentModel.pipe(
+          map((modelId) => ({
+            recentModels: addRecentModel(modelId, state().recentModels),
+          })),
+        ),
+      (state) =>
+        this._markRecentModel.pipe(
+          concatMap((modelId) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              recentModels: addRecentModel(modelId, state().recentModels),
+            }),
+          ),
+        ),
+      // Hide model, local then remote
+      (state) =>
+        this._hideModel.pipe(
+          map((modelId) => ({
+            hiddenModels: this.addIdToList(modelId, state().hiddenModels),
+          })),
+        ),
+      (state) =>
+        this._hideModel.pipe(
+          concatMap((modelId) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              hiddenModels: this.addIdToList(modelId, state().hiddenModels),
+            }),
+          ),
+        ),
+      // Unhide model, local then remote
+      (state) =>
+        this._unhideModel.pipe(
+          map((modelId) => ({
+            hiddenModels: state().hiddenModels.filter((id) => id !== modelId),
+          })),
+        ),
+      (state) =>
+        this._unhideModel.pipe(
+          concatMap((modelId) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              hiddenModels: state().hiddenModels.filter((id) => id !== modelId),
+            }),
+          ),
+        ),
+      // Reset all hidden models, local then remote
+      () => this._resetHiddenModels.pipe(map(() => ({ hiddenModels: [] }))),
+      (state) =>
+        this._resetHiddenModels.pipe(
+          concatMap(() =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              hiddenModels: [],
+            }),
+          ),
+        ),
     ],
     actionSources: {
       pinConversation: this._pinConversation,
@@ -294,6 +358,10 @@ export class UserPreferencesService {
       setDefaultPersona: this._setDefaultPersona,
       setDefaultModel: this._setDefaultModel,
       markRecentPersona: this._markRecentPersona,
+      markRecentModel: this._markRecentModel,
+      hideModel: this._hideModel,
+      unhideModel: this._unhideModel,
+      resetHiddenModels: this._resetHiddenModels,
       setRedactionEnabled: this._setRedactionEnabled,
       setModelReasoningEffort: this._setModelReasoningEffort,
     },
@@ -327,6 +395,18 @@ export class UserPreferencesService {
   public markRecentPersona = (personaId: string) => {
     this.state.markRecentPersona(personaId);
   };
+  public markRecentModel = (modelId: string) => {
+    this.state.markRecentModel(modelId);
+  };
+  public hideModel = (modelId: string) => {
+    this.state.hideModel(modelId);
+  };
+  public unhideModel = (modelId: string) => {
+    this.state.unhideModel(modelId);
+  };
+  public resetHiddenModels = () => {
+    this.state.resetHiddenModels();
+  };
   public setRedactionEnabled = (enabled: boolean) => {
     this.state.setRedactionEnabled(enabled);
   };
@@ -343,6 +423,8 @@ export class UserPreferencesService {
   public defaultModelId = this.state.defaultModelId;
   public redactionEnabled = this.state.redactionEnabled;
   public modelReasoningEfforts = this.state.modelReasoningEfforts;
+  public recentModels = this.state.recentModels;
+  public hiddenModels = this.state.hiddenModels;
 
   // private methods
   private addConversationIdToPinnedConversations(
@@ -480,6 +562,10 @@ export class UserPreferencesService {
 
   public isModelPinned(modelId: string): boolean {
     return this.state().pinnedModels.includes(modelId);
+  }
+
+  public isModelHidden(modelId: string): boolean {
+    return this.state().hiddenModels.includes(modelId);
   }
 
   public isPersonaPinned(personaId: string): boolean {

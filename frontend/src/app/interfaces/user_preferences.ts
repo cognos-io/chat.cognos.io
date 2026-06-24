@@ -19,6 +19,13 @@ export const UserPreferencesData = z.object({
   // so reselecting a model restores the chosen intensity. Values are validated
   // against the model's declared options at use time, so stale entries are safe.
   modelReasoningEfforts: z.record(z.string(), z.string()).default({}),
+  // Most-recently-used model ids, most-recent-first, de-duplicated and capped.
+  // Surfaces a "Recent" group in the selector. Encrypted like the rest of this
+  // payload — model usage history never lives in plaintext (spec §6.3/§6.4).
+  recentModels: z.array(z.string()).default([]),
+  // Model ids the user has hidden from the normal selector. Managed in account
+  // settings. Unknown ids are ignored at read time, so stale entries are safe.
+  hiddenModels: z.array(z.string()).default([]),
 });
 export type UserPreferencesData = z.infer<typeof UserPreferencesData>;
 
@@ -31,6 +38,8 @@ export const emptyPreferences: UserPreferencesData = {
   defaultModelId: '',
   redactionEnabled: true,
   modelReasoningEfforts: {},
+  recentModels: [],
+  hiddenModels: [],
 };
 
 /**
