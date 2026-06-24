@@ -311,6 +311,45 @@ test('project page orders chats by last activity, most recent first', async ({
   expect(pageErrors).toEqual([]);
 });
 
+test('project chats show a last-activity label', async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  const userFixture = buildVaultFixture('user_e2e_pd7', 'pd7@example.com');
+  const projectFixture = buildProjectFixture(
+    userFixture,
+    'proj_pd_7',
+    'Cantonal Policy',
+  );
+  // Far in the past (midday UTC so the calendar date is timezone-stable) → the
+  // label falls back to the absolute YYYY/MM/DD form.
+  const chat = buildProjectConversationFixture(
+    projectFixture,
+    'pconv_pd_dated',
+    'Archived chat',
+    '2020-01-02T12:00:00.000Z',
+  );
+
+  await seedAuthenticatedUnlockState(page, userFixture);
+  await seedBaseRoutes(page, userFixture);
+  await page.route(`${API}/api/v1/projects`, async (route) => {
+    await route.fulfill({ json: [projectFixture.projectRecord] });
+  });
+  await page.route(
+    `${API}/api/v1/projects/${projectFixture.projectRecord.id}/conversations`,
+    async (route) => {
+      await route.fulfill({ json: [chat.record] });
+    },
+  );
+
+  await page.goto(`/account/projects/${projectFixture.projectRecord.id}`);
+  await expect(page.getByTestId('project-name')).toHaveText('Cantonal Policy');
+
+  await expect(page.locator('.project-detail__chat-meta')).toHaveText('2020/01/02');
+
+  expect(pageErrors).toEqual([]);
+});
+
 test('project instructions are prepended to the chat system prompt', async ({
   page,
 }) => {

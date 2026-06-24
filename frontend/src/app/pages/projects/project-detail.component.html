@@ -141,9 +141,14 @@
                   [size]="20"
                   tone="text-subtle"
                 />
-                <span class="project-detail__chat-title">{{
-                  conversation.decryptedData.title
-                }}</span>
+                <span class="project-detail__chat-main">
+                  <span class="project-detail__chat-title">{{
+                    conversation.decryptedData.title
+                  }}</span>
+                  <span class="project-detail__chat-meta">{{
+                    lastActivityLabel(conversation)
+                  }}</span>
+                </span>
                 @if (isPinned(conversation.record.id)) {
                   <cog-icon name="pin" [size]="14" tone="text-subtlest" />
                 }

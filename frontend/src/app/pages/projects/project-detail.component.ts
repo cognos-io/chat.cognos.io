@@ -11,7 +11,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
   CognosBreadcrumbsComponent,
@@ -21,11 +21,15 @@ import {
 
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import { ProjectSettingsDialogComponent } from '@app/components/projects/project-settings-dialog/project-settings-dialog.component';
-import { partitionConversationsByPinned } from '@app/interfaces/conversation';
+import {
+  Conversation,
+  partitionConversationsByPinned,
+} from '@app/interfaces/conversation';
 import { ProjectConversationService } from '@app/services/project-conversation.service';
 import { ProjectService } from '@app/services/project.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
+import { relativeDate } from '@app/utils/relative-date';
 
 @Component({
   selector: 'app-project-detail',
@@ -47,6 +51,7 @@ export class ProjectDetailComponent {
   private readonly _projects = inject(ProjectService);
   private readonly _projectConversations = inject(ProjectConversationService);
   private readonly _preferences = inject(UserPreferencesService);
+  private readonly _transloco = inject(TranslocoService);
   private readonly _router = inject(Router);
   private readonly _dialog = inject(Dialog);
 
@@ -70,6 +75,24 @@ export class ProjectDetailComponent {
 
   protected isPinned(conversationId: string): boolean {
     return this._preferences.isConversationPinned(conversationId);
+  }
+
+  // Human-friendly last-activity label (today / yesterday / N days ago / last
+  // week / YYYY-MM-DD) for a project chat.
+  protected lastActivityLabel(conversation: Conversation): string {
+    const result = relativeDate(
+      conversation.record.last_activity_at ?? conversation.record.updated,
+    );
+    if (!result) {
+      return '';
+    }
+    if ('absolute' in result) {
+      return result.absolute;
+    }
+    return this._transloco.translate(
+      result.key,
+      'params' in result ? result.params : undefined,
+    );
   }
 
   protected readonly confirmingDelete = signal(false);

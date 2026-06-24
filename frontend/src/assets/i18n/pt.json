@@ -760,7 +760,13 @@
     "emailPlaceholder": "voce@exemplo.com",
     "password": "Palavra-passe",
     "passwordPlaceholder": "••••••••",
-    "privacyTerms": "Política de Privacidade e Termos"
+    "privacyTerms": "Política de Privacidade e Termos",
+    "relativeDate": {
+      "today": "Hoje",
+      "yesterday": "Ontem",
+      "daysAgo": "há {{count}} dias",
+      "lastWeek": "Na semana passada"
+    }
   },
   "dialogs": {
     "confirm": {

@@ -227,14 +227,25 @@
   flex: none;
 }
 
-.project-detail__chat-title {
+.project-detail__chat-main {
   flex: 1;
   min-inline-size: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.project-detail__chat-title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: var(--cog-fs-body, 15px);
   font-weight: var(--cog-fw-semibold, 600);
+}
+
+.project-detail__chat-meta {
+  color: var(--cog-text-subtlest, #94a3b8);
+  font-size: var(--cog-fs-caption, 13px);
+  line-height: var(--cog-lh-caption, 1.3);
 }
 
 /* Danger zone — mirrors the account-settings delete card (red surface, red

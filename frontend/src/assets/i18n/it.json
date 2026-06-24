@@ -760,7 +760,13 @@
     "emailPlaceholder": "tu@esempio.com",
     "password": "Password",
     "passwordPlaceholder": "••••••••",
-    "privacyTerms": "Informativa sulla privacy e termini"
+    "privacyTerms": "Informativa sulla privacy e termini",
+    "relativeDate": {
+      "today": "Oggi",
+      "yesterday": "Ieri",
+      "daysAgo": "{{count}} giorni fa",
+      "lastWeek": "La settimana scorsa"
+    }
   },
   "dialogs": {
     "confirm": {
