@@ -25,6 +25,7 @@ export type QuickFilter =
   | 'low_cost'
   | 'reasoning'
   | 'image'
+  | 'vision'
   | 'long_context';
 
 // Documented "long context" threshold (§5.3). Set at 300k so the label marks
@@ -55,6 +56,11 @@ export function normalizeSearchText(input: string): string {
 
 export function isImageModel(model: Model): boolean {
   return model.supportsImageGeneration;
+}
+
+// Vision = the model can read images as input. Distinct from image generation.
+export function isVisionModel(model: Model): boolean {
+  return model.supportsVision;
 }
 
 // Reasoning is declared by the model offering reasoning-effort tiers (§5.3).
@@ -104,6 +110,8 @@ export function matchesQuickFilter(
       return isReasoningModel(model);
     case 'image':
       return isImageModel(model);
+    case 'vision':
+      return isVisionModel(model);
     case 'long_context':
       return isLongContextModel(model);
   }
@@ -155,7 +163,8 @@ export function modelSearchHaystack(model: Model, ctx: SearchContext = {}): stri
     ...meta.aliases,
   ];
 
-  if (isImageModel(model)) parts.push('image vision');
+  if (isImageModel(model)) parts.push('image generation');
+  if (isVisionModel(model)) parts.push('vision');
   if (isReasoningModel(model)) parts.push('reasoning');
   if (isLowCostModel(model)) parts.push('low cost cheap');
   if (isLongContextModel(model)) parts.push('long context');
@@ -273,6 +282,7 @@ export function modelStrengthPills(
   if (m.powerful) keys.push('powerful');
   if (isReasoningModel(model)) keys.push('reasoning');
   if (isImageModel(model)) keys.push('image');
+  if (isVisionModel(model)) keys.push('vision');
   if (isLongContextModel(model)) keys.push('longContext');
   return keys;
 }

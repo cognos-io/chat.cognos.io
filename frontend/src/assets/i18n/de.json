@@ -713,7 +713,8 @@
         "lowCost": "Günstig",
         "reasoning": "Logik",
         "image": "Bild",
-        "longContext": "Großer Kontext"
+        "longContext": "Großer Kontext",
+        "vision": "Bildverständnis"
       },
       "sections": {
         "pinned": "Angeheftet",
@@ -728,7 +729,8 @@
         "longContext": "Großer Kontext",
         "lowCost": "Günstig",
         "private": "Privat",
-        "powerful": "Leistungsstark"
+        "powerful": "Leistungsstark",
+        "vision": "Bildverständnis"
       },
       "search": {
         "placeholder": "Modelle suchen, z. B. „günstig“, „vision“, „privat“…",

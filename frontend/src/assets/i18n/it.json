@@ -713,7 +713,8 @@
         "lowCost": "Economico",
         "reasoning": "Ragionamento",
         "image": "Immagine",
-        "longContext": "Contesto ampio"
+        "longContext": "Contesto ampio",
+        "vision": "Visione"
       },
       "sections": {
         "pinned": "Fissati",
@@ -728,7 +729,8 @@
         "longContext": "Contesto ampio",
         "lowCost": "Economico",
         "private": "Privato",
-        "powerful": "Potente"
+        "powerful": "Potente",
+        "vision": "Visione"
       },
       "search": {
         "placeholder": "Cerca modelli, es. «economico», «visione», «privato»…",

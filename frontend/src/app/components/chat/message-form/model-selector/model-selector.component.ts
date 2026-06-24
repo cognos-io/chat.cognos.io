@@ -568,6 +568,7 @@ export class ModelSelectorComponent {
     { key: 'low_cost', labelKey: 'chat.models.filters.lowCost' },
     { key: 'reasoning', labelKey: 'chat.models.filters.reasoning' },
     { key: 'image', labelKey: 'chat.models.filters.image' },
+    { key: 'vision', labelKey: 'chat.models.filters.vision' },
     { key: 'long_context', labelKey: 'chat.models.filters.longContext' },
   ];
 

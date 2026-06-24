@@ -32,6 +32,12 @@ export const Model = z.object({
   hostingCountry: z.string().optional(),
   hostingRegion: z.string().optional(),
   supportsImageGeneration: z.boolean().default(false),
+  // Objective capability flags synced from the provider catalogue (Requesty).
+  // Vision = can read images as input (distinct from image generation).
+  supportsVision: z.boolean().default(false),
+  supportsToolCalling: z.boolean().default(false),
+  supportsWebSearch: z.boolean().default(false),
+  supportsComputerUse: z.boolean().default(false),
   // Ordered reasoning-effort tiers this model accepts (e.g. ['off','low',
   // 'medium','high']). Empty means the model takes no effort parameter, so the
   // composer shows no effort selector for it.
@@ -69,6 +75,10 @@ export const loadingModel: Model = {
   noRetention: false,
   isOpenSource: false,
   supportsImageGeneration: false,
+  supportsVision: false,
+  supportsToolCalling: false,
+  supportsWebSearch: false,
+  supportsComputerUse: false,
   reasoningEfforts: [],
   isEligible: false,
 };

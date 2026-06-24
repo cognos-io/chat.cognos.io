@@ -40,6 +40,10 @@ function makeModel(overrides: Partial<Model> = {}): Model {
     inputContextLength: 8_192,
     pricing: { inputUsdPerMillionTokens: 1, outputUsdPerMillionTokens: 1 },
     supportsImageGeneration: false,
+    supportsVision: false,
+    supportsToolCalling: false,
+    supportsWebSearch: false,
+    supportsComputerUse: false,
     reasoningEfforts: [],
     isEligible: true,
     ...overrides,
@@ -129,6 +133,9 @@ describe('matchesQuickFilter', () => {
       matchesQuickFilter(makeModel({ reasoningEfforts: ['low'] }), 'reasoning', meta),
     ).toBe(true);
     expect(
+      matchesQuickFilter(makeModel({ supportsVision: true }), 'vision', meta),
+    ).toBe(true);
+    expect(
       matchesQuickFilter(
         makeModel({ inputContextLength: 300_000 }),
         'long_context',
@@ -157,7 +164,9 @@ describe('modelMatchesSearch', () => {
 
   it('matches derived capability words', () => {
     const image = makeModel({ supportsImageGeneration: true });
-    expect(modelMatchesSearch(image, 'vision')).toBe(true);
+    expect(modelMatchesSearch(image, 'image')).toBe(true);
+    const vision = makeModel({ supportsVision: true });
+    expect(modelMatchesSearch(vision, 'vision')).toBe(true);
     const reasoning = makeModel({ reasoningEfforts: ['high'] });
     expect(modelMatchesSearch(reasoning, 'reasoning')).toBe(true);
   });

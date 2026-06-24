@@ -713,7 +713,8 @@
         "lowCost": "Économique",
         "reasoning": "Raisonnement",
         "image": "Image",
-        "longContext": "Grand contexte"
+        "longContext": "Grand contexte",
+        "vision": "Vision"
       },
       "sections": {
         "pinned": "Épinglés",
@@ -728,7 +729,8 @@
         "longContext": "Grand contexte",
         "lowCost": "Économique",
         "private": "Privé",
-        "powerful": "Puissant"
+        "powerful": "Puissant",
+        "vision": "Vision"
       },
       "search": {
         "placeholder": "Rechercher des modèles, p. ex. « pas cher », « vision », « privé »…",

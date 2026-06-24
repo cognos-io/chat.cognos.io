@@ -177,6 +177,10 @@ interface ApiModel {
   hosting_country?: string;
   hosting_region?: string;
   supports_image_generation?: boolean;
+  supports_vision?: boolean;
+  supports_tool_calling?: boolean;
+  supports_web_search?: boolean;
+  supports_computer_use?: boolean;
   reasoning_efforts?: string[];
   default_reasoning_effort?: string;
   is_eligible: boolean;
@@ -1498,6 +1502,10 @@ export class CognosApiService {
       hostingCountry: model.hosting_country,
       hostingRegion: model.hosting_region,
       supportsImageGeneration: model.supports_image_generation ?? false,
+      supportsVision: model.supports_vision ?? false,
+      supportsToolCalling: model.supports_tool_calling ?? false,
+      supportsWebSearch: model.supports_web_search ?? false,
+      supportsComputerUse: model.supports_computer_use ?? false,
       reasoningEfforts: model.reasoning_efforts ?? [],
       defaultReasoningEffort: model.default_reasoning_effort,
       isEligible: model.is_eligible,

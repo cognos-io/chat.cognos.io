@@ -713,7 +713,8 @@
         "lowCost": "Low cost",
         "reasoning": "Reasoning",
         "image": "Image",
-        "longContext": "Long context"
+        "longContext": "Long context",
+        "vision": "Vision"
       },
       "sections": {
         "pinned": "Pinned",
@@ -728,7 +729,8 @@
         "longContext": "Long context",
         "lowCost": "Low cost",
         "private": "Private",
-        "powerful": "Powerful"
+        "powerful": "Powerful",
+        "vision": "Vision"
       },
       "search": {
         "placeholder": "Search models, e.g. “cheap”, “vision”, “private”…",
