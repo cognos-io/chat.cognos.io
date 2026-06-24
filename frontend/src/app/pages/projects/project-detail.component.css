@@ -112,7 +112,7 @@
 }
 
 .project-detail__instructions-empty:hover {
-  color: var(--cog-brand, #2563eb);
+  color: var(--cog-brand);
   text-decoration: underline;
 }
 
@@ -136,7 +136,7 @@
 
 .project-detail__textarea:focus {
   outline: 0;
-  border-color: var(--cog-brand, #2563eb);
+  border-color: var(--cog-brand);
 }
 
 .project-detail__actions {
@@ -305,5 +305,5 @@
 }
 
 .project-detail__back {
-  color: var(--cog-accent, #2563eb);
+  color: var(--cog-link, var(--cog-brand));
 }

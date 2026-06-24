@@ -71,8 +71,8 @@
 
 .projects-page__field input:focus,
 .projects-page__field textarea:focus {
-  outline: 2px solid var(--cog-accent, #2563eb);
-  outline-offset: 1px;
+  outline: 0;
+  border-color: var(--cog-brand);
 }
 
 .projects-page__actions {
@@ -107,7 +107,7 @@
 }
 
 .projects-page__item:hover {
-  border-color: var(--cog-accent, #2563eb);
+  border-color: var(--cog-brand);
 }
 
 .projects-page__item-name {
