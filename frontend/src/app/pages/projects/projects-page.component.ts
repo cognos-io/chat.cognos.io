@@ -6,6 +6,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 
 import { CognosBreadcrumbsComponent, CognosButtonComponent } from '@cognos/ui-angular';
 
+import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import { defaultProjectColor, defaultProjectIcon } from '@app/interfaces/project';
 import { ProjectService } from '@app/services/project.service';
 
@@ -18,6 +19,7 @@ import { ProjectService } from '@app/services/project.service';
     TranslocoModule,
     CognosBreadcrumbsComponent,
     CognosButtonComponent,
+    PersonaAvatarComponent,
   ],
   templateUrl: './projects-page.component.html',
   styleUrl: './projects-page.component.css',

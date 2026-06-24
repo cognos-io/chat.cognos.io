@@ -73,14 +73,21 @@
               [routerLink]="['/account/projects', project.record.id]"
               data-testid="project-card"
             >
-              <span class="projects-page__item-name">{{
-                project.decryptedData.name
-              }}</span>
-              @if (project.decryptedData.description) {
-                <span class="projects-page__item-description">{{
-                  project.decryptedData.description
+              <app-persona-avatar
+                [icon]="project.decryptedData.icon"
+                [color]="project.decryptedData.color"
+                [size]="36"
+              />
+              <span class="projects-page__item-text">
+                <span class="projects-page__item-name">{{
+                  project.decryptedData.name
                 }}</span>
-              }
+                @if (project.decryptedData.description) {
+                  <span class="projects-page__item-description">{{
+                    project.decryptedData.description
+                  }}</span>
+                }
+              </span>
             </a>
           </li>
         }

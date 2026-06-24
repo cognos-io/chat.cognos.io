@@ -132,8 +132,8 @@
 
 .projects-page__item {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: var(--cog-space-125, 10px);
   padding: var(--cog-space-125, 10px) var(--cog-space-150, 12px);
   text-decoration: none;
   color: inherit;
@@ -142,6 +142,13 @@
 
 .projects-page__item:hover {
   background: var(--cog-surface-hover, rgba(0, 0, 0, 0.02));
+}
+
+.projects-page__item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .projects-page__item-name {
