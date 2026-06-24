@@ -63,7 +63,7 @@ interface MessageListResponse {
 }
 
 interface ParticipantListResponse {
-  items: { user: string; role: string; removed_at?: string }[];
+  participants: { user_id: string; role: string }[];
 }
 
 interface RedactionKeyResponse {
@@ -380,10 +380,10 @@ test.describe('conversation copy API — standalone happy path', () => {
       );
       expect(partRes.ok()).toBe(true);
       const participants = (await partRes.json()) as ParticipantListResponse;
-      const active = participants.items.filter((p) => !p.removed_at);
-      expect(active.length).toBe(1);
-      expect(active[0].user).toBe(owner.userId);
-      expect(active[0].role).toBe('Admin');
+      // ListActive already filters to current members.
+      expect(participants.participants.length).toBe(1);
+      expect(participants.participants[0].user_id).toBe(owner.userId);
+      expect(participants.participants[0].role).toBe('Admin');
 
       // The full tree copied, with parents remapped to duplicate ids.
       const dupMessages = (await listMessages(owner, prepared.duplicateConversationId))
