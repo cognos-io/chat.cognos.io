@@ -117,13 +117,15 @@
 .chat-shell__project-item {
   display: flex;
   align-items: center;
-  gap: var(--cog-space-100);
+  gap: var(--cog-space-075);
   min-width: 0;
-  padding: var(--cog-space-050) var(--cog-space-075);
+  // Match the conversation list item height so project and chat rows align.
+  min-height: 40px;
+  padding: var(--cog-space-050) var(--cog-space-150);
   border-radius: var(--cog-radius-sm);
   color: var(--cog-text);
   text-decoration: none;
-  font-size: var(--cog-fs-body-sm);
+  font-size: var(--cog-fs-body);
 }
 
 .chat-shell__project-item:hover {
