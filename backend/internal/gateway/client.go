@@ -18,6 +18,11 @@ type CompleteRequest struct {
 	// sentinel "off" disables reasoning. Empty means "don't send a reasoning
 	// parameter" — the provider uses its own default.
 	ReasoningEffort string
+	// JSONResponseFormat asks the provider to return a valid JSON object
+	// (OpenAI-compatible response_format: {"type":"json_object"}). Only set it for
+	// models that advertise structured-output support; callers must still tolerate
+	// non-JSON output, as not every provider honours the hint.
+	JSONResponseFormat bool
 }
 
 type Usage struct {

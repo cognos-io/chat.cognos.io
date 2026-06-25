@@ -235,7 +235,7 @@ func (c *BifrostClient) buildChatRequest(req CompleteRequest) (*schemas.BifrostC
 		Model:    req.ProviderModelID,
 		Input:    messages,
 	}
-	if req.MaxOutputTokens > 0 || req.ReasoningEffort != "" {
+	if req.MaxOutputTokens > 0 || req.ReasoningEffort != "" || req.JSONResponseFormat {
 		chatReq.Params = &schemas.ChatParameters{}
 	}
 	if req.MaxOutputTokens > 0 {
@@ -243,6 +243,13 @@ func (c *BifrostClient) buildChatRequest(req CompleteRequest) (*schemas.BifrostC
 	}
 	if reasoning := reasoningParam(req.ReasoningEffort); reasoning != nil {
 		chatReq.Params.Reasoning = reasoning
+	}
+	if req.JSONResponseFormat {
+		// OpenAI-compatible JSON mode. Bifrost passes this through to the
+		// provider; providers that don't support it ignore it, so the caller must
+		// still tolerate non-JSON output.
+		var responseFormat interface{} = map[string]string{"type": "json_object"}
+		chatReq.Params.ResponseFormat = &responseFormat
 	}
 
 	return chatReq, nil

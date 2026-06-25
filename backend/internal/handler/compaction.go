@@ -207,7 +207,7 @@ func CompactionCreate(params CompactionHandlerParams) func(e *core.RequestEvent)
 			return apis.NewApiError(http.StatusServiceUnavailable, "Provider is unavailable", nil)
 		}
 
-		parsed, usage, err := runCompaction(params, model, prior, inputMessages)
+		parsed, outputMode, usage, err := runCompaction(params, model, prior, inputMessages)
 		if err != nil {
 			params.Logger.Error("compaction generation failed", "provider", model.ProviderID, "err", err)
 			return apis.NewApiError(http.StatusBadGateway, "Failed to generate compaction", err)
@@ -221,7 +221,7 @@ func CompactionCreate(params CompactionHandlerParams) func(e *core.RequestEvent)
 			Messages:            inputMessages,
 			SourceTokenEstimate: req.SourceTokenEstimate,
 			ModelID:             model.ID,
-			OutputMode:          compaction.OutputModeDelimitedText,
+			OutputMode:          outputMode,
 			CreatedAt:           time.Now().UTC().Format(time.RFC3339),
 		}, parsed, compactionLevel)
 
@@ -240,18 +240,18 @@ func CompactionCreate(params CompactionHandlerParams) func(e *core.RequestEvent)
 	}
 }
 
-// runCompaction calls the provider with the backend-owned prompt and parses the
-// result, retrying parsing once if the first output is not recoverable JSON.
+// runCompaction calls the provider and parses the result. When the model
+// advertises structured-output support it first asks for a native JSON object;
+// if that output is not recoverable it automatically falls back to the
+// universal delimited-text path (spec §8.3). A model without the capability uses
+// delimited text with a single retry. Returns the output mode that succeeded.
 func runCompaction(
 	params CompactionHandlerParams,
 	model catalogue.Model,
 	prior *compaction.PriorSummary,
 	messages []compaction.InputMessage,
-) (compaction.ParseResult, gateway.Usage, error) {
-	gatewayMessages := []gateway.Message{
-		{Role: "system", Content: compaction.SystemPrompt()},
-		{Role: "user", Content: compaction.BuildUserContent(prior, messages)},
-	}
+) (compaction.ParseResult, compaction.OutputMode, gateway.Usage, error) {
+	userContent := compaction.BuildUserContent(prior, messages)
 
 	maxOutput := compactionMaxOutputTokens
 	if model.MaxOutputTokens > 0 && model.MaxOutputTokens < maxOutput {
@@ -260,27 +260,42 @@ func runCompaction(
 
 	aliasMap := compaction.AliasMap(messages)
 
+	// Attempt order: structured-then-delimited for capable models (the second
+	// attempt is the safety net for a model that ignores response_format);
+	// delimited-twice otherwise.
+	var structuredAttempts []bool
+	if model.SupportsStructuredOutput {
+		structuredAttempts = []bool{true, false}
+	} else {
+		structuredAttempts = []bool{false, false}
+	}
+
 	var lastErr error
 	var totalUsage gateway.Usage
-	for attempt := 0; attempt < 2; attempt++ {
+	for _, structured := range structuredAttempts {
 		resp, err := params.GatewayClient.Complete(context.Background(), gateway.CompleteRequest{
-			ProviderID:      model.ProviderID,
-			ProviderModelID: model.ProviderModelID,
-			Messages:        gatewayMessages,
-			MaxOutputTokens: maxOutput,
+			ProviderID:         model.ProviderID,
+			ProviderModelID:    model.ProviderModelID,
+			Messages:           []gateway.Message{{Role: "system", Content: compaction.SystemPrompt(structured)}, {Role: "user", Content: userContent}},
+			MaxOutputTokens:    maxOutput,
+			JSONResponseFormat: structured,
 		})
 		if err != nil {
-			return compaction.ParseResult{}, totalUsage, err
+			return compaction.ParseResult{}, "", totalUsage, err
 		}
 		totalUsage = addUsage(totalUsage, resp.Usage)
 
 		parsed, parseErr := compaction.Parse(resp.Message.Content, aliasMap)
 		if parseErr == nil {
-			return parsed, totalUsage, nil
+			mode := compaction.OutputModeDelimitedText
+			if structured {
+				mode = compaction.OutputModeStructured
+			}
+			return parsed, mode, totalUsage, nil
 		}
 		lastErr = parseErr
 	}
-	return compaction.ParseResult{}, totalUsage, lastErr
+	return compaction.ParseResult{}, "", totalUsage, lastErr
 }
 
 func addUsage(a, b gateway.Usage) gateway.Usage {
