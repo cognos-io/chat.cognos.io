@@ -811,6 +811,21 @@ func addPocketBaseRoutes(
 	e.Router.DELETE("/api/v1/project-memory/{id}", handler.ProjectMemoryDelete(app)).
 		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
 
+	// Scoped redaction (so user/project memory placeholders hydrate everywhere).
+	e.Router.GET("/api/v1/user-redaction-entries", handler.UserRedactionEntriesList(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.POST("/api/v1/user-redaction-entries", handler.UserRedactionEntriesCreate(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+
+	e.Router.GET("/api/v1/projects/{projectID}/redaction-key", handler.ProjectRedactionKeyGet(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.POST("/api/v1/projects/{projectID}/redaction-key", handler.ProjectRedactionKeyCreate(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.GET("/api/v1/projects/{projectID}/redaction-entries", handler.ProjectRedactionEntriesList(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.POST("/api/v1/projects/{projectID}/redaction-entries", handler.ProjectRedactionEntriesCreate(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+
 	e.Router.POST("/v1/auth/logout", func(re *core.RequestEvent) error {
 		re.Auth.RefreshTokenKey()
 		if err := app.Save(re.Auth); err != nil {
