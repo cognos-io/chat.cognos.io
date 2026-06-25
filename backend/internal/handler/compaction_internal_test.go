@@ -46,6 +46,49 @@ func runFixture(t *testing.T, model catalogue.Model, replies []string) (compacti
 	return parsed, mode, gw, err
 }
 
+func TestEffectiveMaxOutputTokens(t *testing.T) {
+	t.Parallel()
+
+	model := catalogue.Model{MaxOutputTokens: 128000}
+	cases := []struct {
+		name      string
+		requested int
+		model     catalogue.Model
+		want      int
+	}{
+		{"unset uses default", 0, model, defaultMaxOutputTokens},
+		{"caller request honoured", 2000, model, 2000},
+		{"request clamped to model max", 200000, model, 128000},
+		{"default clamped to small model max", 0, catalogue.Model{MaxOutputTokens: 4000}, 4000},
+		{"no model max keeps value", 0, catalogue.Model{}, defaultMaxOutputTokens},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := effectiveMaxOutputTokens(tc.requested, tc.model); got != tc.want {
+				t.Errorf("effectiveMaxOutputTokens(%d) = %d, want %d", tc.requested, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestEstimatePromptInputTokensUsesActualPrompt(t *testing.T) {
+	t.Parallel()
+
+	// 1M-context model: the estimate must reflect the short prompt, not the
+	// context window.
+	model := catalogue.Model{InputContextTokens: 1_000_000, ApproxCharsPerToken: 4}
+	got := estimatePromptInputTokens("system", []completionMessage{
+		{Role: "user", Content: "hello there friend"},
+	}, model)
+	// (6 + 18) / 4 + 1 = 7
+	if got != 7 {
+		t.Errorf("estimatePromptInputTokens = %d, want 7", got)
+	}
+	if got >= int64(model.InputContextTokens) {
+		t.Errorf("estimate %d should be far below the context window", got)
+	}
+}
+
 func TestRunCompactionUsesStructuredWhenSupported(t *testing.T) {
 	t.Parallel()
 

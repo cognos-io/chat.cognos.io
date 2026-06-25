@@ -184,6 +184,30 @@ test.describe('non-persisted /completions API', () => {
     }
   });
 
+  test('a short prompt to an expensive large-context model is not blocked on a trial balance', async () => {
+    // Regression: the pre-flight gate used to price the model's whole context
+    // window + max output (~CHF 9 for Opus), wrongly blocking a CHF 2 trial. It
+    // now estimates from the actual prompt and a capped output, so a short turn
+    // is affordable.
+    const user = await provisionApiUser();
+    try {
+      const res = await user.api.post('/api/v1/completions', {
+        data: {
+          model_id: 'claude-opus-4-8',
+          persona_id: DEFAULT_PERSONA_ID,
+          system_prompt: DEFAULT_SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: 'hi' }],
+        },
+      });
+      expect(res.status(), `expected success, got ${res.status()}`).not.toBe(402);
+      expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
+      const body = await readCompleteStream(res);
+      expect(body.assistant_message.content).toBeTruthy();
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
   test('streams reasoning separately and reports reasoning_tokens for a reasoning model', async () => {
     // The mock provider's [reason] sentinel makes it return a reasoning trace
     // plus reasoning_tokens, exercising the full gateway → handler reasoning

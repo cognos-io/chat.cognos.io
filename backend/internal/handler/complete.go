@@ -295,6 +295,16 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		}
 		prompt := persona.Prompt{SystemMessage: systemMessage}
 
+		// The output we will actually allow the provider to generate. The billing
+		// gate prices this exact ceiling (not the model's absolute max), and we
+		// pass the same value to the provider so the response can never exceed
+		// what we estimated — making the gate honest with no overspend risk.
+		effectiveMaxOutput := effectiveMaxOutputTokens(req.MaxOutputTokens, model)
+		// A realistic input estimate from the actual prompt, rather than assuming
+		// the whole context window — so a short prompt to a large-context model is
+		// not priced as if it filled a million tokens.
+		estimatedInputTokens := estimatePromptInputTokens(systemMessage, req.Messages, model)
+
 		conversationID := ""
 		if useConversationPath {
 			conversationID = e.Request.PathValue("conversationID")
@@ -349,11 +359,10 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 					return apis.NewApiError(http.StatusInternalServerError, "Failed to evaluate billing access", err)
 				}
 			} else {
-				estimatedCost := params.BillingService.EstimateUpperBoundCost(
-					model,
-					req.MaxOutputTokens,
-					completionUSDToCHFRate(params),
-				)
+				estimatedCost := params.BillingService.CalculateCost(model, billing.Usage{
+					InputTokens:  estimatedInputTokens,
+					OutputTokens: int64(effectiveMaxOutput),
+				}, completionUSDToCHFRate(params))
 				if restriction := params.BillingService.EvaluateAccess(state, estimatedCost.CostMicroRappen); restriction != nil {
 					return e.JSON(http.StatusPaymentRequired, completeBillingRestrictionResponse(*restriction, estimatedCost.CostCHF))
 				}
@@ -423,7 +432,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			ProviderID:      model.ProviderID,
 			ProviderModelID: model.ProviderModelID,
 			Messages:        messages,
-			MaxOutputTokens: req.MaxOutputTokens,
+			MaxOutputTokens: effectiveMaxOutput,
 			ReasoningEffort: req.ReasoningEffort,
 		}
 
@@ -751,6 +760,46 @@ func completionUSDToCHFRate(params CompleteHandlerParams) float64 {
 		return params.FXRateProvider.USDToCHF()
 	}
 	return 1
+}
+
+// defaultMaxOutputTokens caps a single completion's output when the caller does
+// not request a specific limit. It bounds the per-call cost (so the billing gate
+// stays affordable for expensive/large-context models) and is generous for a
+// chat turn. Tune here if longer single responses are needed.
+const defaultMaxOutputTokens = 8192
+
+// effectiveMaxOutputTokens is the output ceiling we both gate on and enforce at
+// the provider: the caller's request when given, otherwise the default, always
+// clamped to the model's own maximum.
+func effectiveMaxOutputTokens(requested int, model catalogue.Model) int {
+	out := requested
+	if out <= 0 {
+		out = defaultMaxOutputTokens
+	}
+	if model.MaxOutputTokens > 0 && out > model.MaxOutputTokens {
+		out = model.MaxOutputTokens
+	}
+	return out
+}
+
+// estimatePromptInputTokens approximates the prompt's input tokens from the
+// actual system prompt + messages, using the model's chars-per-token heuristic.
+// Used by the billing gate so a short prompt is not priced as the full context
+// window.
+func estimatePromptInputTokens(
+	systemMessage string,
+	messages []completionMessage,
+	model catalogue.Model,
+) int64 {
+	chars := len(systemMessage)
+	for _, message := range messages {
+		chars += len(message.Content)
+	}
+	charsPerToken := model.CharsPerToken()
+	if charsPerToken <= 0 {
+		charsPerToken = catalogue.DefaultApproxCharsPerToken
+	}
+	return int64(chars/charsPerToken) + 1
 }
 
 func completeBillingRestrictionResponse(
