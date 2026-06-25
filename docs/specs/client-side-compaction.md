@@ -259,12 +259,23 @@ Request:
 
   // Only the messages added since the parent's anchor (or all messages for level 0).
   messages: Array<{
-    alias: string; // "M1", "M2", ...
+    alias: string;      // "M1", "M2", ...
+    message_id: string; // real message id — used server-side to build
+                        // covered_message_ids and resolve citation aliases.
+                        // NEVER forwarded to the provider (which sees alias +
+                        // role + content only).
     role: 'user' | 'assistant';
     content: string;
   }>;
+
+  // The parent's compaction_level (the client knows it from the decrypted
+  // parent). New level = parent_compaction_level + 1; omit/0 for a leaf.
+  parent_compaction_level?: number;
 }
 ```
+
+> **Implementation note (V1):** `message_id` is included per message so the
+> server can map citation aliases without ever exposing IDs to the provider.
 
 The client decrypts the parent compaction locally and passes its plaintext `prior_summary` back up;
 the server never stores or reads a plaintext summary at rest.
@@ -348,6 +359,13 @@ so it is gated on `supportsStructuredOutput` (§6.4):
   `output_mode: 'delimited_text'`.
 
 Either way the contract is the same payload schema, so downstream code does not branch on provider.
+
+> **Implementation note (V1):** the gateway does not yet plumb a `response_format`
+> through to providers, so V1 uses the **delimited-text path for every model**
+> regardless of `supports_structured_output`. The capability flag is persisted
+> and read so that enabling the native structured path later is a localised
+> gateway change, not a schema change. `output_mode` is therefore
+> `delimited_text` for all V1 compactions.
 
 ### 8.4 Prompt intent
 
