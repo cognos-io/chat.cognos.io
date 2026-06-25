@@ -411,6 +411,54 @@ func CompactionList(params CompactionHandlerParams) func(e *core.RequestEvent) e
 	}
 }
 
+type updateCompactionRequest struct {
+	Data string `json:"data"`
+}
+
+// CompactionUpdate replaces a compaction's ciphertext, used when the user edits
+// the durable memory client-side (spec §8.2). The client decrypts, edits,
+// re-redacts and re-encrypts the payload; the server only ever stores the new
+// ciphertext and never sees plaintext.
+func CompactionUpdate(params CompactionHandlerParams) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		owner := auth.ExtractUser(e)
+		if owner == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		compactionID := strings.TrimSpace(e.Request.PathValue("id"))
+		record, err := params.CompactionRepo.ByID(compactionID)
+		if err != nil {
+			return apis.NewNotFoundError("Compaction not found", nil)
+		}
+
+		active, err := conversationAccessibleByID(params.App, record.GetString("conversation"), owner.ID)
+		if err != nil {
+			params.Logger.Error("conversation access lookup failed", "err", err)
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify conversation access", err)
+		}
+		if !active {
+			return apis.NewNotFoundError("Compaction not found", nil)
+		}
+
+		var req updateCompactionRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Invalid request body", err)
+		}
+		req.Data = strings.TrimSpace(req.Data)
+		if req.Data == "" {
+			return apis.NewBadRequestError("Data is required", nil)
+		}
+
+		record.Set("data", req.Data)
+		if err := params.App.Save(record); err != nil {
+			// A malformed (non-base64 / oversized) blob fails the field validation.
+			return apis.NewBadRequestError("Failed to update compaction", err)
+		}
+		return e.JSON(http.StatusOK, toRecordResponse(record))
+	}
+}
+
 // CompactionDelete removes a compaction, used when a covered message is deleted
 // or re-redacted and the summary is no longer valid (spec §12).
 func CompactionDelete(params CompactionHandlerParams) func(e *core.RequestEvent) error {

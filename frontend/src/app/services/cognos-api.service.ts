@@ -937,6 +937,20 @@ export class CognosApiService {
       .pipe(map((response) => response.items ?? []));
   }
 
+  // updateCompaction replaces a compaction's ciphertext after the user edits its
+  // durable memory. The client re-encrypts the payload; the server stores opaque
+  // bytes only.
+  updateCompaction(
+    compactionId: string,
+    data: string,
+  ): Observable<ApiCompactionRecord> {
+    return this._http.patch<ApiCompactionRecord>(
+      `${this._baseUrl}/api/v1/conversation-compactions/${compactionId}`,
+      { data },
+      { headers: this.authHeaders() },
+    );
+  }
+
   deleteCompaction(compactionId: string): Observable<void> {
     return this._http.delete<void>(
       `${this._baseUrl}/api/v1/conversation-compactions/${compactionId}`,

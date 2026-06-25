@@ -321,6 +321,36 @@ export class CompactionService {
   }
 
   /**
+   * updateDurableMemory re-encrypts a compaction with edited durable memory and
+   * persists the new ciphertext. The narrative and all other payload fields are
+   * preserved; only durable_memory changes. The caller is responsible for having
+   * re-redacted any edited text before passing it in (spec §8.2, §12.2).
+   */
+  updateDurableMemory(
+    compaction: Compaction,
+    durableMemory: CompactionPayload['durable_memory'],
+    keyPair: KeyPair,
+  ): Observable<Compaction> {
+    const payload: CompactionPayload = {
+      ...compaction.payload,
+      durable_memory: durableMemory,
+    };
+    const sealed = this._cryptoService.createSealedBox(
+      new TextEncoder().encode(JSON.stringify(payload)),
+      keyPair.publicKey,
+    );
+    return this._api
+      .updateCompaction(compaction.recordId, Base64.fromUint8Array(sealed))
+      .pipe(
+        map(() => {
+          const updated: Compaction = { ...compaction, payload };
+          this.upsert(compaction.conversationId, updated);
+          return updated;
+        }),
+      );
+  }
+
+  /**
    * invalidateForDeletedMessage deletes every compaction (and fold-chain
    * descendant) that represents the deleted message, so its content cannot
    * survive in any persisted summary (spec §12).

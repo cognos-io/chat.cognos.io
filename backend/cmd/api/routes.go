@@ -767,6 +767,14 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	e.Router.PATCH(
+		"/api/v1/conversation-compactions/{id}",
+		handler.CompactionUpdate(compactionParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.DELETE(
 		"/api/v1/conversation-compactions/{id}",
 		handler.CompactionDelete(compactionParams),

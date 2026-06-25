@@ -187,6 +187,51 @@ test.describe('conversation compaction API', () => {
     }
   });
 
+  test('participant can update a compaction ciphertext; non-participant cannot', async () => {
+    const owner = await provisionApiUser();
+    const outsider = await provisionApiUser();
+    try {
+      const conversationID = await createConversationWithKey(owner);
+      const [anchorID] = await seedMessages(owner, conversationID);
+
+      const createRes = await owner.api.post(
+        `/api/v1/conversations/${conversationID}/compactions`,
+        { data: compactionBody(anchorID, anchorID) },
+      );
+      expect(createRes.ok()).toBe(true);
+      const created = (await createRes.json()) as CreateCompactionResponse;
+
+      const newData = Buffer.from('re-encrypted-edited-memory').toString('base64');
+
+      // Outsider cannot update.
+      const outsiderPatch = await outsider.api.patch(
+        `/api/v1/conversation-compactions/${created.id}`,
+        { data: { data: newData } },
+      );
+      expect(outsiderPatch.status()).toBe(404);
+
+      // Owner updates the ciphertext.
+      const patchRes = await owner.api.patch(
+        `/api/v1/conversation-compactions/${created.id}`,
+        { data: { data: newData } },
+      );
+      expect(
+        patchRes.ok(),
+        `patch: ${patchRes.status()} ${await patchRes.text()}`,
+      ).toBe(true);
+
+      const listRes = await owner.api.get(
+        `/api/v1/conversations/${conversationID}/compactions`,
+      );
+      const list = (await listRes.json()) as { items: CompactionRecord[] };
+      const updated = list.items.find((i) => i.id === created.id);
+      expect(updated?.data).toBe(newData);
+    } finally {
+      await owner.api.dispose();
+      await outsider.api.dispose();
+    }
+  });
+
   test('create rejects an anchor that is not in the conversation', async () => {
     const user = await provisionApiUser();
     try {
