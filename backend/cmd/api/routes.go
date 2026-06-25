@@ -791,6 +791,26 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	// User-scoped memory (owned by the authenticated user).
+	e.Router.POST("/api/v1/user-memory", handler.UserMemoryCreate(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.GET("/api/v1/user-memory", handler.UserMemoryList(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.PATCH("/api/v1/user-memory/{id}", handler.UserMemoryUpdate(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.DELETE("/api/v1/user-memory/{id}", handler.UserMemoryDelete(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+
+	// Project-scoped memory (gated by active project membership).
+	e.Router.POST("/api/v1/projects/{projectID}/memory", handler.ProjectMemoryCreate(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.GET("/api/v1/projects/{projectID}/memory", handler.ProjectMemoryList(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.PATCH("/api/v1/project-memory/{id}", handler.ProjectMemoryUpdate(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.DELETE("/api/v1/project-memory/{id}", handler.ProjectMemoryDelete(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+
 	e.Router.POST("/v1/auth/logout", func(re *core.RequestEvent) error {
 		re.Auth.RefreshTokenKey()
 		if err := app.Save(re.Auth); err != nil {
