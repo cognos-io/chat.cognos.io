@@ -45,6 +45,12 @@ export const MessageData = z.object({
   persona_id: z.string().optional(), // the persona used when generating the message
   model_id: z.string().optional(), // the model used when generating the message
   owner_id: z.string().optional(), // the user who sent the message
+  // Provider usage counts for the turn that produced this assistant message:
+  // input_tokens is the real prompt size that was sent, output_tokens the reply
+  // size. Used for accurate context planning (spec §10.1). Absent on user
+  // messages and on messages created before this field existed.
+  input_tokens: z.number().optional(),
+  output_tokens: z.number().optional(),
   // Encrypted attachments (e.g. generated images) referenced by this message.
   attachments: z.array(MessageAttachment).optional(),
   // Tombstone flag set when the message is soft-deleted. The content is cleared

@@ -20,6 +20,14 @@ type MessageRecordData struct {
 	OwnerID   string `json:"owner_id,omitempty"`
 	PersonaID string `json:"persona_id,omitempty"`
 	ModelID   string `json:"model_id,omitempty"`
+	// InputTokens/OutputTokens are the provider's real usage counts for the turn
+	// that produced this (assistant) message: InputTokens is the prompt size that
+	// was actually sent (system + context + user), OutputTokens the reply size.
+	// Stored inside the encrypted blob so context planning uses real numbers
+	// rather than a character heuristic (spec §10.1); never logged or billed from
+	// here. Zero/absent for messages created before this field existed.
+	InputTokens  int64 `json:"input_tokens,omitempty"`
+	OutputTokens int64 `json:"output_tokens,omitempty"`
 	// Attachments describe encrypted binary attachments (e.g. generated images)
 	// stored as protected files on the message record. The bytes never live in
 	// this payload — only the metadata needed to fetch and decrypt them.

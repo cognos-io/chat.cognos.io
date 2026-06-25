@@ -215,6 +215,8 @@ describe('buildCompletionMessages', () => {
       content: 'hello back',
       persona_id: 'cognos:simple-assistant',
       model_id: 'infomaniak:llama-3',
+      input_tokens: 0,
+      output_tokens: 0,
     });
     expect(assistant.createdAt).toEqual(new Date('2026-01-02T03:04:05.000Z'));
     expect(assistant.expires).toBeUndefined();

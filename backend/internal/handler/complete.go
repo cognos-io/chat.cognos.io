@@ -461,11 +461,13 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 				conversation,
 				assistantParentID,
 				chat.MessageRecordData{
-					Content:   gatewayResp.Message.Content,
-					Reasoning: gatewayResp.Reasoning,
-					PersonaID: req.PersonaID,
-					ModelID:   model.ID,
-					CreatedAt: assistantCreatedAt,
+					Content:      gatewayResp.Message.Content,
+					Reasoning:    gatewayResp.Reasoning,
+					PersonaID:    req.PersonaID,
+					ModelID:      model.ID,
+					CreatedAt:    assistantCreatedAt,
+					InputTokens:  gatewayResp.Usage.InputTokens,
+					OutputTokens: gatewayResp.Usage.OutputTokens,
 				},
 			)
 			if err != nil {

@@ -25,9 +25,12 @@ const COMPLETE_STREAM = (assistantId: string, userId: string) =>
           created_at: '2026-06-07T00:00:00Z',
         },
         usage: {
-          input_tokens: 12,
+          // Real prompt-token count the planner now reads. 45 is below the
+          // read-path model's threshold (0.7×64000) but above the trigger
+          // model's tiny one (0.7×50 = 35), so only the trigger test fires.
+          input_tokens: 45,
           output_tokens: 8,
-          total_tokens: 20,
+          total_tokens: 53,
           cache_creation_input_tokens: 0,
           cache_read_input_tokens: 0,
           cost_usd: 0.02,

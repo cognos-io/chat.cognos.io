@@ -302,6 +302,11 @@ export const buildCompletionMessages = (
       reasoning: resp.assistantMessage.reasoning,
       persona_id: resp.assistantMessage.personaId,
       model_id: resp.assistantMessage.modelId,
+      // Carry the provider's real usage so context planning uses true token
+      // counts immediately, not just after a reload (spec §10.1). Mirrors what
+      // the backend persists inside the encrypted blob.
+      input_tokens: resp.usage.inputTokens,
+      output_tokens: resp.usage.outputTokens,
     },
   };
 
@@ -1862,6 +1867,21 @@ export class MessageService {
     );
   }
 
+  // newestRecordedContextTokens returns the real prompt-token count from the most
+  // recent assistant turn that recorded one. That input_tokens value is the
+  // provider's exact measurement of everything we last sent (system + context +
+  // user), so it is the most accurate available estimate of current context size
+  // — already accounting for any compaction summary that was in play (spec §10.1).
+  private newestRecordedContextTokens(path: ReadonlyArray<Message>): number | null {
+    for (let i = path.length - 1; i >= 0; i--) {
+      const tokens = path[i].decryptedData.input_tokens;
+      if (tokens && tokens > 0) {
+        return tokens;
+      }
+    }
+    return null;
+  }
+
   // maybeTriggerCompaction opportunistically compacts the older prefix of the
   // active branch in the background once raw context passes the trigger
   // threshold. Non-blocking, at most one in flight per conversation, and never
@@ -1909,8 +1929,20 @@ export class MessageService {
 
     const charsPerToken = model.approxCharsPerToken > 0 ? model.approxCharsPerToken : 2;
     const usableContextChars = model.inputContextLength * charsPerToken;
-    const estimatedRawChars = estimateRawContextChars(branch, existingValid);
-    if (!shouldTriggerCompaction(estimatedRawChars, usableContextChars)) {
+
+    // Prefer the provider's real prompt-token count from the latest turn; fall
+    // back to the character heuristic only when no turn has recorded one yet.
+    const realContextTokens = this.newestRecordedContextTokens(
+      this.state.activeBranch().path,
+    );
+    const triggered =
+      realContextTokens !== null
+        ? shouldTriggerCompaction(realContextTokens, model.inputContextLength)
+        : shouldTriggerCompaction(
+            estimateRawContextChars(branch, existingValid),
+            usableContextChars,
+          );
+    if (!triggered) {
       return;
     }
 
