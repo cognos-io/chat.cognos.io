@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/compaction"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
@@ -54,18 +55,22 @@ func TestEffectiveMaxOutputTokens(t *testing.T) {
 		name      string
 		requested int
 		model     catalogue.Model
+		plan      billing.PlanType
 		want      int
 	}{
-		{"unset uses default", 0, model, defaultMaxOutputTokens},
-		{"caller request honoured", 2000, model, 2000},
-		{"request clamped to model max", 200000, model, 128000},
-		{"default clamped to small model max", 0, catalogue.Model{MaxOutputTokens: 4000}, 4000},
-		{"no model max keeps value", 0, catalogue.Model{}, defaultMaxOutputTokens},
+		{"trial uses default cap", 0, model, billing.PlanTypeTrial, defaultMaxOutputTokens},
+		{"inactive uses default cap", 0, model, billing.PlanTypeInactive, defaultMaxOutputTokens},
+		{"payg uses paid cap", 0, model, billing.PlanTypePayG, paidMaxOutputTokens},
+		{"unlimited uses paid cap", 0, model, billing.PlanTypeUnlimited, paidMaxOutputTokens},
+		{"caller request honoured", 2000, model, billing.PlanTypeTrial, 2000},
+		{"paid cap clamped to model max", 0, catalogue.Model{MaxOutputTokens: 16000}, billing.PlanTypeUnlimited, 16000},
+		{"request clamped to model max", 200000, model, billing.PlanTypeUnlimited, 128000},
+		{"no model max keeps paid cap", 0, catalogue.Model{}, billing.PlanTypeUnlimited, paidMaxOutputTokens},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := effectiveMaxOutputTokens(tc.requested, tc.model); got != tc.want {
-				t.Errorf("effectiveMaxOutputTokens(%d) = %d, want %d", tc.requested, got, tc.want)
+			if got := effectiveMaxOutputTokens(tc.requested, tc.model, tc.plan); got != tc.want {
+				t.Errorf("effectiveMaxOutputTokens(%d, %s) = %d, want %d", tc.requested, tc.plan, got, tc.want)
 			}
 		})
 	}

@@ -295,15 +295,21 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		}
 		prompt := persona.Prompt{SystemMessage: systemMessage}
 
-		// The output we will actually allow the provider to generate. The billing
-		// gate prices this exact ceiling (not the model's absolute max), and we
-		// pass the same value to the provider so the response can never exceed
-		// what we estimated — making the gate honest with no overspend risk.
-		effectiveMaxOutput := effectiveMaxOutputTokens(req.MaxOutputTokens, model)
 		// A realistic input estimate from the actual prompt, rather than assuming
 		// the whole context window — so a short prompt to a large-context model is
 		// not priced as if it filled a million tokens.
 		estimatedInputTokens := estimatePromptInputTokens(systemMessage, req.Messages, model)
+		// The output we will actually allow the provider to generate. The billing
+		// gate prices this exact ceiling (not the model's absolute max), and we
+		// pass the same value to the provider so the response can never exceed
+		// what we estimated — making the gate honest with no overspend risk. The
+		// ceiling is plan-aware (refined once billing state is known below); the
+		// baseline is conservative when billing is metered, generous otherwise.
+		basePlan := billing.PlanTypeUnlimited
+		if params.BillingStateRepo != nil && params.BillingService != nil {
+			basePlan = billing.PlanTypeTrial
+		}
+		effectiveMaxOutput := effectiveMaxOutputTokens(req.MaxOutputTokens, model, basePlan)
 
 		conversationID := ""
 		if useConversationPath {
@@ -359,6 +365,9 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 					return apis.NewApiError(http.StatusInternalServerError, "Failed to evaluate billing access", err)
 				}
 			} else {
+				// Refine the output ceiling to the user's actual plan before gating
+				// and before it is enforced on the provider request below.
+				effectiveMaxOutput = effectiveMaxOutputTokens(req.MaxOutputTokens, model, state.PlanType)
 				estimatedCost := params.BillingService.CalculateCost(model, billing.Usage{
 					InputTokens:  estimatedInputTokens,
 					OutputTokens: int64(effectiveMaxOutput),
@@ -762,19 +771,33 @@ func completionUSDToCHFRate(params CompleteHandlerParams) float64 {
 	return 1
 }
 
-// defaultMaxOutputTokens caps a single completion's output when the caller does
-// not request a specific limit. It bounds the per-call cost (so the billing gate
-// stays affordable for expensive/large-context models) and is generous for a
-// chat turn. Tune here if longer single responses are needed.
-const defaultMaxOutputTokens = 8192
+// Per-plan default output ceilings, applied when the caller does not request a
+// specific limit. They bound per-call cost (keeping the billing gate affordable
+// for expensive/large-context models); paid plans get a higher ceiling for
+// longer single responses. Always clamped to the model's own maximum.
+const (
+	defaultMaxOutputTokens = 8192  // trial / inactive / unknown
+	paidMaxOutputTokens    = 32768 // payg / unlimited
+)
+
+// outputCapForPlan returns the default output ceiling for a plan. Paid plans
+// (pay-as-you-go and unlimited) get the higher cap.
+func outputCapForPlan(plan billing.PlanType) int {
+	switch plan {
+	case billing.PlanTypePayG, billing.PlanTypeUnlimited:
+		return paidMaxOutputTokens
+	default:
+		return defaultMaxOutputTokens
+	}
+}
 
 // effectiveMaxOutputTokens is the output ceiling we both gate on and enforce at
-// the provider: the caller's request when given, otherwise the default, always
-// clamped to the model's own maximum.
-func effectiveMaxOutputTokens(requested int, model catalogue.Model) int {
+// the provider: the caller's request when given, otherwise the plan default,
+// always clamped to the model's own maximum.
+func effectiveMaxOutputTokens(requested int, model catalogue.Model, plan billing.PlanType) int {
 	out := requested
 	if out <= 0 {
-		out = defaultMaxOutputTokens
+		out = outputCapForPlan(plan)
 	}
 	if model.MaxOutputTokens > 0 && out > model.MaxOutputTokens {
 		out = model.MaxOutputTokens
