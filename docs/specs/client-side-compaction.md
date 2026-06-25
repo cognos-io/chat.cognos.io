@@ -712,9 +712,24 @@ never raw PII — consistent with messages and auto-compactions.
 `"Add to memory"` is offered only on **persisted, non-project** conversations. The memory drawer
 (header → Memory) shows the user-curated manual memory in preference to the auto-compaction summary.
 
-### 16.4 Future scopes
+### 16.4 User and project scopes (implemented)
 
-The same manual-memory mechanism will extend to **"Add to user memory"** and **"Add to project
-memory"** by writing to user- and project-scoped records. Those require user/project content-key
-wrapping (see the project-redaction-keys gap) and are out of scope here; V1 is conversation-scoped
-only.
+The selection action is a **scope menu**: a pinned snippet can be added to **conversation**,
+**user**, or **project** memory (the project option appears only when the conversation belongs to a
+project).
+
+- **User memory** (`user_memory` collection): sealed to the user's vault public key, owned by the
+  user, injected into every conversation they have.
+- **Project memory** (`project_memory` collection): encrypted with the project content key, gated by
+  active project membership, injected into every conversation in that project.
+- Both are **client-encrypted, ciphertext-only** stores with the same CRUD shape as manual
+  conversation memory; the server never sees plaintext.
+
+When sending a message, **all scopes are combined** into `context_summary` (conversation + project +
+user) via `renderCombinedMemory`.
+
+**Redaction caveat:** redaction tokens are conversation-scoped, so a snippet added to user/project
+memory is re-redacted in the _current_ conversation's context. The placeholder is safe in any
+conversation (the provider never sees the PII), but display hydration only resolves in the
+conversation it was created in until user/project-scoped redaction keys exist (the
+project-redaction-keys gap).
