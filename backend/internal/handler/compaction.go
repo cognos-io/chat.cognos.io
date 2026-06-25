@@ -415,6 +415,45 @@ type updateCompactionRequest struct {
 	Data string `json:"data"`
 }
 
+// CompactionCreateManual stores a client-encrypted "manual memory" compaction
+// (user-curated facts pinned via the UI) without running a model. Like the PATCH
+// path, the server only ever stores ciphertext. The payload's covered_message_ids
+// are empty, so the client treats it as branch-independent, always-injected
+// memory (spec §8.2).
+func CompactionCreateManual(params CompactionHandlerParams) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		owner := auth.ExtractUser(e)
+		if owner == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		conversationID := strings.TrimSpace(e.Request.PathValue("conversationID"))
+		active, err := conversationAccessibleByID(params.App, conversationID, owner.ID)
+		if err != nil {
+			params.Logger.Error("conversation access lookup failed", "err", err)
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify conversation access", err)
+		}
+		if !active {
+			return apis.NewNotFoundError("Conversation not found", nil)
+		}
+
+		var req updateCompactionRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Invalid request body", err)
+		}
+		req.Data = strings.TrimSpace(req.Data)
+		if req.Data == "" {
+			return apis.NewBadRequestError("Data is required", nil)
+		}
+
+		record, err := params.CompactionRepo.CreateCiphertext(conversationID, req.Data)
+		if err != nil {
+			return apis.NewBadRequestError("Failed to save memory", err)
+		}
+		return e.JSON(http.StatusOK, toRecordResponse(record))
+	}
+}
+
 // CompactionUpdate replaces a compaction's ciphertext, used when the user edits
 // the durable memory client-side (spec §8.2). The client decrypts, edits,
 // re-redacts and re-encrypts the payload; the server only ever stores the new

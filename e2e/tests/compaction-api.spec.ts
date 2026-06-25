@@ -232,6 +232,40 @@ test.describe('conversation compaction API', () => {
     }
   });
 
+  test('participant can create a manual memory; non-participant cannot', async () => {
+    const owner = await provisionApiUser();
+    const outsider = await provisionApiUser();
+    try {
+      const conversationID = await createConversationWithKey(owner);
+      const data = Buffer.from('client-encrypted-manual-memory').toString('base64');
+
+      const outsiderRes = await outsider.api.post(
+        `/api/v1/conversations/${conversationID}/compactions/manual`,
+        { data: { data } },
+      );
+      expect(outsiderRes.status()).toBe(404);
+
+      const res = await owner.api.post(
+        `/api/v1/conversations/${conversationID}/compactions/manual`,
+        { data: { data } },
+      );
+      expect(res.ok(), `manual: ${res.status()} ${await res.text()}`).toBe(true);
+      const created = (await res.json()) as CompactionRecord;
+      expect(created.id).toBeTruthy();
+      expect(created.data).toBe(data);
+
+      // It shows up in the conversation's compaction list, ciphertext only.
+      const listRes = await owner.api.get(
+        `/api/v1/conversations/${conversationID}/compactions`,
+      );
+      const list = (await listRes.json()) as { items: CompactionRecord[] };
+      expect(list.items.map((i) => i.id)).toContain(created.id);
+    } finally {
+      await owner.api.dispose();
+      await outsider.api.dispose();
+    }
+  });
+
   test('create rejects an anchor that is not in the conversation', async () => {
     const user = await provisionApiUser();
     try {

@@ -30,6 +30,7 @@ func EncryptPayload(payload Payload, conversationPublicKey [32]byte) (string, er
 // touches the database.
 type Repo interface {
 	Create(conversationID string, conversationPublicKey [32]byte, payload Payload) (*core.Record, error)
+	CreateCiphertext(conversationID string, data string) (*core.Record, error)
 	ListByConversation(conversationID string) ([]*core.Record, error)
 	ByID(id string) (*core.Record, error)
 	Delete(id string) error
@@ -61,6 +62,20 @@ func (r *PocketBaseRepo) Create(
 		return nil, err
 	}
 
+	record := core.NewRecord(r.collection)
+	record.Set("conversation", conversationID)
+	record.Set("data", data)
+	if err := r.app.Save(record); err != nil {
+		return nil, err
+	}
+	return record, nil
+}
+
+// CreateCiphertext persists an already-encrypted compaction blob produced by the
+// client (e.g. user-curated "manual memory"), without running a model. The
+// server never sees plaintext — it only stores the ciphertext, exactly as the
+// PATCH update path does.
+func (r *PocketBaseRepo) CreateCiphertext(conversationID string, data string) (*core.Record, error) {
 	record := core.NewRecord(r.collection)
 	record.Set("conversation", conversationID)
 	record.Set("data", data)
