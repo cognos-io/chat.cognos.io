@@ -93,8 +93,10 @@ export class RedactedMarkdownComponent {
     if (!markdownEl) {
       return;
     }
-    const entries = this._redaction.entriesFor(
-      this._conversation.conversation()?.record.id,
+    const conversation = this._conversation.conversation();
+    const entries = this._redaction.combinedEntriesFor(
+      conversation?.record.id,
+      conversation?.record.project,
     );
     if (entries.size === 0) {
       return;

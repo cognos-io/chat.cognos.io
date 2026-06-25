@@ -687,9 +687,11 @@ export class MessageListItemComponent implements OnChanges {
     if (!content) {
       return '';
     }
+    const conversation = this._conversationService.conversation();
     return this._redactionService.hydrate(
-      this._conversationService.conversation()?.record.id,
+      conversation?.record.id,
       content,
+      conversation?.record.project,
     );
   }
 
@@ -812,31 +814,15 @@ export class MessageListItemComponent implements OnChanges {
       return;
     }
     const conversationId = conversation.record.id;
+    const projectId = conversation.record.project;
 
-    // Re-redact in the conversation's context so no plaintext PII is stored. The
-    // placeholder is safe everywhere; cross-conversation display hydration is
-    // best-effort until user/project redaction keys exist.
+    // Re-redact in the TARGET scope so no plaintext PII is stored and the
+    // placeholder hydrates wherever that scope is shown (spec §16).
     let snippet = text;
     if (this._redactionService.enabled()) {
-      const source = {
-        kind: 'message' as const,
-        id: this.message?.record_id ?? conversationId,
-      };
-      const { redactedText, newEntries } = this._redactionService.prepareRedaction(
-        conversationId,
-        text,
-        undefined,
-        source,
-      );
-      snippet = redactedText;
-      if (newEntries.length > 0) {
-        this._redactionService.persist(conversation, newEntries, source).subscribe({
-          error: () => undefined,
-        });
-      }
+      snippet = this.redactForScope(scope, text, conversation, projectId);
     }
 
-    const projectId = conversation.record.project;
     let write$: Observable<unknown>;
     if (scope === 'user') {
       write$ = this._scopedMemory.addUserFact(snippet);
@@ -859,6 +845,52 @@ export class MessageListItemComponent implements OnChanges {
           tone: 'danger',
         }),
     });
+  }
+
+  // redactForScope re-redacts the snippet against the chosen scope's token map
+  // and persists any new mappings there (best-effort), returning the placeholder
+  // text to store in that scope's memory.
+  private redactForScope(
+    scope: MemoryScope,
+    text: string,
+    conversation: NonNullable<ReturnType<ConversationService['conversation']>>,
+    projectId: string | undefined,
+  ): string {
+    const swallow = { error: () => undefined };
+    if (scope === 'user') {
+      const { redactedText, newEntries } =
+        this._redactionService.prepareUserRedaction(text);
+      if (newEntries.length > 0) {
+        this._redactionService.persistUserRedaction(newEntries).subscribe(swallow);
+      }
+      return redactedText;
+    }
+    if (scope === 'project' && projectId) {
+      const { redactedText, newEntries } =
+        this._redactionService.prepareProjectRedaction(projectId, text);
+      if (newEntries.length > 0) {
+        this._redactionService
+          .persistProjectRedaction(projectId, newEntries)
+          .subscribe(swallow);
+      }
+      return redactedText;
+    }
+    const source = {
+      kind: 'message' as const,
+      id: this.message?.record_id ?? conversation.record.id,
+    };
+    const { redactedText, newEntries } = this._redactionService.prepareRedaction(
+      conversation.record.id,
+      text,
+      undefined,
+      source,
+    );
+    if (newEntries.length > 0) {
+      this._redactionService
+        .persist(conversation, newEntries, source)
+        .subscribe(swallow);
+    }
+    return redactedText;
   }
 
   // The placeholder version of the content: each token becomes a neutral

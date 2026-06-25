@@ -70,6 +70,20 @@ export class RedactionService {
   private readonly _state = new Map<string, ConversationRedaction>();
   private _loadedConversationId: string | null = null;
 
+  // User-scoped redaction: token→original sealed to the user's own key (no
+  // separate keypair). Loaded once; merged into hydration everywhere (spec §16).
+  private readonly _userEntries = new Map<string, RedactionEntry>();
+  private _userLoaded = false;
+
+  // Project-scoped redaction: a per-project redaction keypair (independent of the
+  // content key) + decrypted entries, merged into hydration for the project's
+  // conversations.
+  private readonly _projectState = new Map<
+    string,
+    { keyPair: KeyPair | null; entries: Map<string, RedactionEntry> }
+  >();
+  private _loadedProjectId: string | null = null;
+
   // Whether redaction is active for new messages. On by default (secure by
   // default); the user can turn it off in settings for all future messages.
   readonly enabled = this._userPreferences.redactionEnabled;
@@ -97,12 +111,25 @@ export class RedactionService {
       return;
     }
     this._loadedConversationId = id;
-    this.loadConversation(conversation).subscribe({
+    const swallow = {
       error: () => {
         // A failed load leaves placeholders visible rather than breaking the
         // conversation view (spec §17 reliability).
       },
-    });
+    };
+    this.loadConversation(conversation).subscribe(swallow);
+
+    // User redaction follows the user everywhere; load it once. Project
+    // redaction loads when a project conversation becomes active.
+    if (!this._userLoaded) {
+      this._userLoaded = true;
+      this.loadUserRedaction().subscribe(swallow);
+    }
+    const projectId = conversation.record.project ?? null;
+    if (projectId && projectId !== this._loadedProjectId) {
+      this._loadedProjectId = projectId;
+      this.loadProjectRedaction(projectId).subscribe(swallow);
+    }
   });
 
   /** Tier 1 high-confidence detection for composer preview. Pure, no I/O. */
@@ -251,16 +278,55 @@ export class RedactionService {
     return [...values];
   }
 
-  /** Restore originals for known tokens. Display-only; never mutates stored data. */
-  hydrate(conversationId: string | null | undefined, text: string): string {
-    if (!conversationId) {
+  /**
+   * Restore originals for known tokens. Display-only; never mutates stored data.
+   * Resolves a token against the union of the conversation, its project (when
+   * given), and the user — so placeholders pinned to any scope hydrate (spec §16).
+   */
+  hydrate(
+    conversationId: string | null | undefined,
+    text: string,
+    projectId?: string | null,
+  ): string {
+    const entries = this.combinedEntries(conversationId, projectId);
+    if (entries.length === 0) {
       return text;
     }
-    const state = this._state.get(conversationId);
-    if (!state || state.entries.size === 0) {
-      return text;
+    return hydrateRedactedText(text, entries);
+  }
+
+  /**
+   * The merged token→entry map across the conversation, its project, and the
+   * user, for renderers that show each redacted span as a pill (spec §16).
+   */
+  combinedEntriesFor(
+    conversationId: string | null | undefined,
+    projectId?: string | null,
+  ): ReadonlyMap<string, RedactionEntry> {
+    const merged = new Map<string, RedactionEntry>();
+    // User + project first; the conversation's own entries win on the (negligible)
+    // chance of a token collision.
+    for (const entry of this._userEntries.values()) {
+      merged.set(entry.token, entry);
     }
-    return hydrateRedactedText(text, Array.from(state.entries.values()));
+    if (projectId) {
+      for (const entry of this._projectState.get(projectId)?.entries.values() ?? []) {
+        merged.set(entry.token, entry);
+      }
+    }
+    if (conversationId) {
+      for (const entry of this._state.get(conversationId)?.entries.values() ?? []) {
+        merged.set(entry.token, entry);
+      }
+    }
+    return merged;
+  }
+
+  private combinedEntries(
+    conversationId: string | null | undefined,
+    projectId?: string | null,
+  ): RedactionEntry[] {
+    return Array.from(this.combinedEntriesFor(conversationId, projectId).values());
   }
 
   /**
@@ -281,6 +347,209 @@ export class RedactionService {
       }),
       catchError((err) => (isNotFound(err) ? of(null) : throwError(() => err))),
     );
+  }
+
+  // --- scoped (user/project) redaction -------------------------------------
+
+  /** Load + decrypt the user's redaction entries (sealed to the user's key). */
+  loadUserRedaction(): Observable<void> {
+    const userKeyPair = this._vault.keyPair();
+    if (!userKeyPair) {
+      return of(undefined);
+    }
+    return this._api.listUserRedactionEntries().pipe(
+      map((res) => {
+        this._userEntries.clear();
+        for (const item of res.items) {
+          const entry = this.tryDecryptEntry(item.data, userKeyPair);
+          if (entry) {
+            this._userEntries.set(entry.token, entry);
+          }
+        }
+        this.revision.update((v) => v + 1);
+      }),
+      catchError((err) => (isNotFound(err) ? of(undefined) : throwError(() => err))),
+    );
+  }
+
+  /** Redact a snippet against the user scope (reusing the user's tokens). */
+  prepareUserRedaction(text: string): {
+    redactedText: string;
+    newEntries: RedactionEntry[];
+  } {
+    return this.prepareAgainst(text, Array.from(this._userEntries.values()));
+  }
+
+  /** Seal + persist new user-scoped mappings (sealed to the user's own key). */
+  persistUserRedaction(newEntries: RedactionEntry[]): Observable<void> {
+    if (newEntries.length === 0) {
+      return of(undefined);
+    }
+    const userKeyPair = this._vault.keyPair();
+    if (!userKeyPair) {
+      return throwError(() => NoUserKeyPairError);
+    }
+    const apiEntries = newEntries.map((entry) => ({
+      token: entry.token,
+      data: this.sealEntry(entry, userKeyPair),
+      source_kind: 'message' as const,
+    }));
+    return this._api.createUserRedactionEntries({ entries: apiEntries }).pipe(
+      map(() => {
+        for (const entry of newEntries) {
+          this._userEntries.set(entry.token, entry);
+        }
+        this.revision.update((v) => v + 1);
+      }),
+    );
+  }
+
+  /** Load + decrypt a project's redaction key + entries. */
+  loadProjectRedaction(projectId: string): Observable<void> {
+    return this._api.getProjectRedactionKey(projectId).pipe(
+      switchMap((res) => {
+        const keyPair = this.unwrapKeyPair(res.public_key, res.wrapped_secret_key);
+        return this._api.listProjectRedactionEntries(projectId).pipe(
+          map((entriesRes) => {
+            const entries = new Map<string, RedactionEntry>();
+            for (const item of entriesRes.items) {
+              const entry = this.tryDecryptEntry(item.data, keyPair);
+              if (entry) {
+                entries.set(entry.token, entry);
+              }
+            }
+            this._projectState.set(projectId, { keyPair, entries });
+            this.revision.update((v) => v + 1);
+          }),
+        );
+      }),
+      catchError((err) => {
+        if (isNotFound(err)) {
+          this._projectState.set(projectId, { keyPair: null, entries: new Map() });
+          this.revision.update((v) => v + 1);
+          return of(undefined);
+        }
+        return throwError(() => err);
+      }),
+    );
+  }
+
+  /** Redact a snippet against a project scope (reusing the project's tokens). */
+  prepareProjectRedaction(
+    projectId: string,
+    text: string,
+  ): { redactedText: string; newEntries: RedactionEntry[] } {
+    return this.prepareAgainst(
+      text,
+      Array.from(this._projectState.get(projectId)?.entries.values() ?? []),
+    );
+  }
+
+  /** Seal + persist new project-scoped mappings under the project redaction key. */
+  persistProjectRedaction(
+    projectId: string,
+    newEntries: RedactionEntry[],
+  ): Observable<void> {
+    if (newEntries.length === 0) {
+      return of(undefined);
+    }
+    return this.ensureProjectKeyPair(projectId).pipe(
+      switchMap((keyPair) => {
+        const apiEntries = newEntries.map((entry) => ({
+          token: entry.token,
+          data: this.sealEntry(entry, keyPair),
+          source_kind: 'message' as const,
+        }));
+        return this._api
+          .createProjectRedactionEntries(projectId, { entries: apiEntries })
+          .pipe(
+            map(() => {
+              const state = this._projectState.get(projectId) ?? {
+                keyPair,
+                entries: new Map<string, RedactionEntry>(),
+              };
+              for (const entry of newEntries) {
+                state.entries.set(entry.token, entry);
+              }
+              state.keyPair = keyPair;
+              this._projectState.set(projectId, state);
+              this.revision.update((v) => v + 1);
+            }),
+          );
+      }),
+    );
+  }
+
+  private prepareAgainst(
+    text: string,
+    existing: RedactionEntry[],
+  ): { redactedText: string; newEntries: RedactionEntry[] } {
+    const candidates = detectSensitiveText(text);
+    if (candidates.length === 0) {
+      return { redactedText: text, newEntries: [] };
+    }
+    const result = applyRedactions(text, candidates, existing, defaultTokenGenerator);
+    return { redactedText: result.redactedText, newEntries: result.newEntries };
+  }
+
+  // ensureProjectKeyPair returns a project's redaction keypair, creating it on
+  // first use (wrapped to the caller; other members gain access when participant
+  // re-wrapping lands — the same MVP limitation conversations have).
+  private ensureProjectKeyPair(projectId: string): Observable<KeyPair> {
+    const cached = this._projectState.get(projectId)?.keyPair;
+    if (cached) {
+      return of(cached);
+    }
+    return this.fetchProjectKeyPair(projectId).pipe(
+      catchError((err) =>
+        isNotFound(err) ? this.createProjectKeyPair(projectId) : throwError(() => err),
+      ),
+      map((keyPair) => {
+        const state = this._projectState.get(projectId) ?? {
+          keyPair: null,
+          entries: new Map<string, RedactionEntry>(),
+        };
+        state.keyPair = keyPair;
+        this._projectState.set(projectId, state);
+        return keyPair;
+      }),
+    );
+  }
+
+  private fetchProjectKeyPair(projectId: string): Observable<KeyPair> {
+    return this._api
+      .getProjectRedactionKey(projectId)
+      .pipe(map((res) => this.unwrapKeyPair(res.public_key, res.wrapped_secret_key)));
+  }
+
+  private createProjectKeyPair(projectId: string): Observable<KeyPair> {
+    return defer(() => {
+      const userKeyPair = this._vault.keyPair();
+      const userId = this._auth.user()?.['id'] as string | undefined;
+      if (!userKeyPair || !userId) {
+        return throwError(() => NoUserKeyPairError);
+      }
+      const redactionKeyPair = this._crypto.newKeyPair();
+      const wrapped = this._crypto.createSealedBox(
+        redactionKeyPair.secretKey,
+        userKeyPair.publicKey,
+      );
+      return this._api
+        .createProjectRedactionKey(projectId, {
+          public_key: Base64.fromUint8Array(redactionKeyPair.publicKey),
+          keys: [
+            { user_id: userId, wrapped_secret_key: Base64.fromUint8Array(wrapped) },
+          ],
+        })
+        .pipe(
+          map(() => redactionKeyPair),
+          catchError((err) =>
+            (err as { status?: number })?.status === 409
+              ? this.fetchProjectKeyPair(projectId)
+              : throwError(() => err),
+          ),
+        );
+    });
   }
 
   // --- key management ------------------------------------------------------

@@ -1354,6 +1354,63 @@ export class CognosApiService {
     );
   }
 
+  // --- Scoped (user/project) redaction entries + project keypair ---
+
+  listUserRedactionEntries(): Observable<ApiListRedactionEntriesResponse> {
+    return this._http.get<ApiListRedactionEntriesResponse>(
+      `${this._baseUrl}/api/v1/user-redaction-entries`,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  createUserRedactionEntries(
+    request: ApiCreateRedactionEntriesRequest,
+  ): Observable<ApiCreateRedactionEntriesResponse> {
+    return this._http.post<ApiCreateRedactionEntriesResponse>(
+      `${this._baseUrl}/api/v1/user-redaction-entries`,
+      request,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  getProjectRedactionKey(projectId: string): Observable<ApiRedactionKeyResponse> {
+    return this._http.get<ApiRedactionKeyResponse>(
+      `${this._baseUrl}/api/v1/projects/${projectId}/redaction-key`,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  createProjectRedactionKey(
+    projectId: string,
+    request: ApiCreateRedactionKeyRequest,
+  ): Observable<ApiCreateRedactionKeyResponse> {
+    return this._http.post<ApiCreateRedactionKeyResponse>(
+      `${this._baseUrl}/api/v1/projects/${projectId}/redaction-key`,
+      request,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  listProjectRedactionEntries(
+    projectId: string,
+  ): Observable<ApiListRedactionEntriesResponse> {
+    return this._http.get<ApiListRedactionEntriesResponse>(
+      `${this._baseUrl}/api/v1/projects/${projectId}/redaction-entries`,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  createProjectRedactionEntries(
+    projectId: string,
+    request: ApiCreateRedactionEntriesRequest,
+  ): Observable<ApiCreateRedactionEntriesResponse> {
+    return this._http.post<ApiCreateRedactionEntriesResponse>(
+      `${this._baseUrl}/api/v1/projects/${projectId}/redaction-entries`,
+      request,
+      { headers: this.authHeaders() },
+    );
+  }
+
   getPublicConversation(token: string): Observable<ApiPublicConversationResponse> {
     return this._http.get<ApiPublicConversationResponse>(
       `${this._baseUrl}/api/v1/public/conversations/${token}`,
