@@ -11,6 +11,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/compaction"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
@@ -544,6 +545,20 @@ func addPocketBaseRoutes(
 		App:                 app,
 	}
 
+	compactionParams := handler.CompactionHandlerParams{
+		App:               app,
+		Logger:            logger,
+		CatalogueService:  catalogueService,
+		GatewayClient:     gatewayClient,
+		ConversationRepo:  conversationRepo,
+		CompactionRepo:    compaction.NewPocketBaseRepo(app),
+		BillingService:    billingService,
+		BillingStateRepo:  billingStateRepo,
+		BillingLedgerRepo: billingLedgerRepo,
+		FXRateProvider:    fxRateProvider,
+		UsageEmitter:      usageEmitter,
+	}
+
 	e.Router.GET(
 		"/api/v1/user-key-pair",
 		handler.UserKeyPairGet(app),
@@ -731,6 +746,30 @@ func addPocketBaseRoutes(
 	e.Router.GET(
 		"/api/v1/conversations/{conversationID}/messages/{messageID}/attachment",
 		handler.ConversationMessageAttachment(completeParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/conversations/{conversationID}/compactions",
+		handler.CompactionCreate(compactionParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/conversations/{conversationID}/compactions",
+		handler.CompactionList(compactionParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.DELETE(
+		"/api/v1/conversation-compactions/{id}",
+		handler.CompactionDelete(compactionParams),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),

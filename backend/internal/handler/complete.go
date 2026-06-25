@@ -39,11 +39,20 @@ type completeRequest struct {
 	MaxOutputTokens int                 `json:"max_output_tokens,omitempty"`
 	ReasoningEffort string              `json:"reasoning_effort,omitempty"`
 	Persist         *bool               `json:"persist,omitempty"`
+	// ContextSummary is a client-rendered compaction summary of older messages
+	// (spec §9.2). It is folded into the canonical system prompt inside explicit
+	// delimiters so summarised content is framed as reference material — never
+	// injected as a synthetic assistant turn or a caller system message.
+	ContextSummary string `json:"context_summary,omitempty"`
 }
 
 type CompleteRequest = completeRequest
 
 const maxSystemPromptChars = 20000
+
+// maxContextSummaryChars bounds the injected compaction summary independently of
+// the system prompt so a long summary cannot be used to blow the prompt budget.
+const maxContextSummaryChars = 12000
 
 type CompleteBillingRestriction struct {
 	Error            string   `json:"error"`
@@ -224,6 +233,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		req.ParentMessageID = strings.TrimSpace(req.ParentMessageID)
 		req.RequestID = strings.TrimSpace(req.RequestID)
 		req.ReasoningEffort = strings.TrimSpace(req.ReasoningEffort)
+		req.ContextSummary = strings.TrimSpace(req.ContextSummary)
 
 		if req.ModelID == "" {
 			return apis.NewBadRequestError("Model ID is required", nil)
@@ -236,6 +246,9 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		}
 		if len(req.SystemPrompt) > maxSystemPromptChars {
 			return apis.NewBadRequestError("System prompt is too long", nil)
+		}
+		if len(req.ContextSummary) > maxContextSummaryChars {
+			return apis.NewBadRequestError("Context summary is too long", nil)
 		}
 		if len(req.Messages) == 0 {
 			return apis.NewBadRequestError("At least one message is required", nil)
@@ -272,7 +285,15 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			return apis.NewBadRequestError("Reasoning effort is not supported for this model", nil)
 		}
 
-		prompt := persona.Prompt{SystemMessage: req.SystemPrompt}
+		systemMessage := req.SystemPrompt
+		if req.ContextSummary != "" {
+			// Fold the compaction summary in after the canonical system prompt,
+			// clearly delimited so a summarised "ignore previous instructions"
+			// reads as quoted reference content, not a live directive (spec §11.1).
+			systemMessage = req.SystemPrompt +
+				"\n\n<conversation_summary>\n" + req.ContextSummary + "\n</conversation_summary>"
+		}
+		prompt := persona.Prompt{SystemMessage: systemMessage}
 
 		conversationID := ""
 		if useConversationPath {
