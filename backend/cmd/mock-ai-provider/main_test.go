@@ -36,6 +36,17 @@ func TestSelectReplySwitchesOnTokenCap(t *testing.T) {
 			want: "Mocked assistant reply",
 		},
 		{
+			name: "a compaction system prompt returns a parseable compaction block",
+			req: chatCompletionRequest{
+				MaxTokens: 2000,
+				Messages: []chatCompletionMsg{
+					{Role: "system", Content: "You compact a conversation so it can continue."},
+					{Role: "user", Content: "[M1] user: hi"},
+				},
+			},
+			want: mockCompactionReply,
+		},
+		{
 			name: "max_completion_tokens is honoured when max_tokens is unset",
 			req:  chatCompletionRequest{MaxCompletionTokens: 15},
 			want: "Mocked conversation title",

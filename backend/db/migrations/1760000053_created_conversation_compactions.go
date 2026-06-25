@@ -56,6 +56,26 @@ func init() {
 							"max": 131072,
 							"pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
 						}
+					},
+					{
+						"system": false,
+						"id": "cmpctcreated01",
+						"name": "created",
+						"type": "autodate",
+						"presentable": false,
+						"hidden": false,
+						"onCreate": true,
+						"onUpdate": false
+					},
+					{
+						"system": false,
+						"id": "cmpctupdated01",
+						"name": "updated",
+						"type": "autodate",
+						"presentable": false,
+						"hidden": false,
+						"onCreate": true,
+						"onUpdate": true
 					}
 				],
 				"indexes": [

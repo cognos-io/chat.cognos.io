@@ -306,11 +306,39 @@ func mockReasoning(req chatCompletionRequest) string {
 	return ""
 }
 
+// compactionSystemMarker is a stable phrase from the backend-owned compaction
+// system prompt. The mock keys off it to return a parseable <compaction> block
+// instead of a normal assistant turn, so the compaction endpoint can be driven
+// end-to-end without a real model.
+const compactionSystemMarker = "You compact a conversation"
+
+// mockCompactionReply is a deterministic, parseable compaction payload. It cites
+// alias M1 (always present in the e2e input) so citation resolution is
+// exercised, and embeds a recognisable plaintext the suite asserts never leaks
+// into the stored ciphertext.
+const mockCompactionReply = "<compaction>\n" +
+	`{"durable_memory":{"facts":["MOCK_COMPACTION_FACT about the user [M1]"],"decisions":[],"open_threads":[],"glossary":[]},"rolling_narrative":"MOCK_COMPACTION_NARRATIVE","citations":["M1"]}` +
+	"\n</compaction>"
+
+// isCompactionRequest reports whether the request carries the compaction system
+// prompt.
+func isCompactionRequest(req chatCompletionRequest) bool {
+	for _, m := range req.Messages {
+		if m.Role == "system" && strings.Contains(m.Content, compactionSystemMarker) {
+			return true
+		}
+	}
+	return false
+}
+
 // selectReply mirrors the .mjs heuristic: the backend issues a tiny
 // (max_tokens ≤ 20) call when it wants the model to invent a conversation
 // title; everything else is treated as a real assistant turn. Keeping it
 // pure makes the conditional unit-testable without spinning up the server.
 func selectReply(req chatCompletionRequest) string {
+	if isCompactionRequest(req) {
+		return mockCompactionReply
+	}
 	tokenCap := req.MaxTokens
 	if tokenCap == 0 {
 		tokenCap = req.MaxCompletionTokens
