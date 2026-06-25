@@ -728,8 +728,14 @@ project).
 When sending a message, **all scopes are combined** into `context_summary` (conversation + project +
 user) via `renderCombinedMemory`.
 
-**Redaction caveat:** redaction tokens are conversation-scoped, so a snippet added to user/project
-memory is re-redacted in the _current_ conversation's context. The placeholder is safe in any
-conversation (the provider never sees the PII), but display hydration only resolves in the
-conversation it was created in until user/project-scoped redaction keys exist (the
-project-redaction-keys gap).
+**Scoped redaction (implemented).** Redaction is now scope-aware: a snippet pinned to user/project
+memory is re-redacted in **that scope**, with the mapping stored in scope-specific redaction stores
+— `user_redaction_entries` (sealed to the user's own key) and `project_redaction_entries` (sealed to
+a per-project redaction keypair, independent of the project content key, wrapped per active member,
+like the conversation model). `hydrate()` resolves a token against the **union** of conversation +
+project
+
+- user entries, so a placeholder hydrates wherever its scope is shown — closing the
+project-redaction-keys gap. (Multi-member project redaction currently wraps the key for the creating
+member; granting it to other members follows the same participant re-wrapping path conversations
+use.)
