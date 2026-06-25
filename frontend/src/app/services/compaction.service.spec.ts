@@ -8,6 +8,7 @@ import {
   estimateRawContextChars,
   isCompactionValidForBranch,
   planCompaction,
+  renderCombinedMemory,
   renderCompactionSummary,
   renderConversationMemory,
   selectManualMemory,
@@ -305,6 +306,69 @@ describe('renderConversationMemory', () => {
 
   it('returns undefined when neither has content', () => {
     expect(renderConversationMemory(null, null)).toBeUndefined();
+  });
+});
+
+describe('renderCombinedMemory', () => {
+  const scoped = (scope: 'user' | 'project', fact: string) => ({
+    recordId: scope,
+    payload: {
+      version: '1',
+      kind: 'scoped_memory' as const,
+      scope,
+      durable_memory: { facts: [fact], decisions: [], open_threads: [], glossary: [] },
+      created_at: '',
+    },
+  });
+
+  it('merges all scopes with clear labels', () => {
+    const text = renderCombinedMemory({
+      conversationManual: compaction('cm', {
+        covered_message_ids: [],
+        anchor_message_id: '',
+        durable_memory: {
+          facts: ['conv fact'],
+          decisions: [],
+          open_threads: [],
+          glossary: [],
+        },
+      }),
+      conversationAuto: compaction('auto', {
+        covered_message_ids: ['m1'],
+        anchor_message_id: 'm1',
+        rolling_narrative: 'AUTO_SUMMARY',
+      }),
+      projectMemory: scoped('project', 'proj fact'),
+      userMemory: scoped('user', 'user fact'),
+    });
+    expect(text).toContain('Conversation memory:');
+    expect(text).toContain('conv fact');
+    expect(text).toContain('AUTO_SUMMARY');
+    expect(text).toContain('Project memory:');
+    expect(text).toContain('proj fact');
+    expect(text).toContain('User memory:');
+    expect(text).toContain('user fact');
+  });
+
+  it('renders only the scopes that have content', () => {
+    const text = renderCombinedMemory({
+      conversationManual: null,
+      conversationAuto: null,
+      projectMemory: null,
+      userMemory: scoped('user', 'just a user fact'),
+    });
+    expect(text).toBe('User memory:\n- Facts:\n  - just a user fact');
+  });
+
+  it('returns undefined when every scope is empty', () => {
+    expect(
+      renderCombinedMemory({
+        conversationManual: null,
+        conversationAuto: null,
+        projectMemory: null,
+        userMemory: null,
+      }),
+    ).toBeUndefined();
   });
 });
 

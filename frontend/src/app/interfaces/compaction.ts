@@ -52,3 +52,25 @@ export interface Compaction {
   createdAt: Date;
   payload: CompactionPayload;
 }
+
+// MemoryScope identifies which store a pinned snippet belongs to.
+export type MemoryScope = 'conversation' | 'user' | 'project';
+
+// ScopedMemoryPayload is the decrypted shape of a user- or project-scoped memory
+// record. It reuses the durable-memory structure but is not tied to any
+// conversation/message prefix (spec §16). Sealed to the user's public key (user
+// scope) or the project content key (project scope).
+export const ScopedMemoryPayload = z.object({
+  version: z.string().default('1'),
+  kind: z.literal('scoped_memory'),
+  scope: z.enum(['user', 'project']),
+  durable_memory: CompactionDurableMemory,
+  created_at: z.string().default(''),
+});
+export type ScopedMemoryPayload = z.infer<typeof ScopedMemoryPayload>;
+
+// ScopedMemory is the decrypted, cached view of a user/project memory record.
+export interface ScopedMemory {
+  recordId: string;
+  payload: ScopedMemoryPayload;
+}

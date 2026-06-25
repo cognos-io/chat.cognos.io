@@ -16,6 +16,8 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+import { Observable } from 'rxjs';
+
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
@@ -35,6 +37,7 @@ import {
 
 import { RedactedMarkdownComponent } from '@app/components/chat/redacted-markdown/redacted-markdown.component';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
+import { MemoryScope } from '@app/interfaces/compaction';
 import { Message, isMessageFromUser } from '@app/interfaces/message';
 import { Model } from '@app/interfaces/model';
 import { Persona } from '@app/interfaces/persona';
@@ -45,6 +48,7 @@ import { MessageService } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
 import { RedactionService } from '@app/services/redaction.service';
+import { ScopedMemoryService } from '@app/services/scoped-memory.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 @Component({
@@ -308,17 +312,30 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     }
 
     @if (addToMemoryPopover(); as pop) {
-      <button
+      <div
         *transloco="let t"
-        type="button"
         class="message-list-item__memory-pop"
         [style.left.px]="pop.x"
         [style.top.px]="pop.y"
-        (click)="addSelectionToMemory(pop.text)"
       >
-        <cog-icon name="brain" [size]="14" tone="current" />
-        {{ t('chat.memory.addAction') }}
-      </button>
+        <span class="message-list-item__memory-pop-label">
+          {{ t('chat.memory.addAction') }}
+        </span>
+        <button type="button" (click)="addSelectionToMemory('conversation', pop.text)">
+          <cog-icon name="message-square" [size]="14" tone="current" />
+          {{ t('chat.memory.addToConversation') }}
+        </button>
+        @if (canAddToProject()) {
+          <button type="button" (click)="addSelectionToMemory('project', pop.text)">
+            <cog-icon name="folder" [size]="14" tone="current" />
+            {{ t('chat.memory.addToProject') }}
+          </button>
+        }
+        <button type="button" (click)="addSelectionToMemory('user', pop.text)">
+          <cog-icon name="users" [size]="14" tone="current" />
+          {{ t('chat.memory.addToUser') }}
+        </button>
+      </div>
     }
   `,
   styles: `
@@ -330,25 +347,48 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       padding-inline: var(--cog-space-200);
     }
 
-    /* Floating "Add to memory" action shown over a text selection — mirrors the
-       composer's redact popover. */
+    /* Floating "Add to memory" menu shown over a text selection — mirrors the
+       composer's redact popover, with one entry per memory scope. */
     .message-list-item__memory-pop {
       position: fixed;
       z-index: 60;
       transform: translate(-50%, calc(-100% - 8px));
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-md);
+      background: var(--cog-surface);
+      box-shadow: var(--cog-shadow-overlay);
+      padding: var(--cog-space-050);
+      color: var(--cog-text);
+      font-size: var(--cog-fs-caption);
+    }
+
+    .message-list-item__memory-pop-label {
+      padding: 2px var(--cog-space-100);
+      color: var(--cog-text-subtle);
+      font-weight: var(--cog-fw-semibold);
+    }
+
+    .message-list-item__memory-pop button {
       display: inline-flex;
       align-items: center;
       gap: var(--cog-space-050);
-      border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-pill);
-      background: var(--cog-surface);
-      box-shadow: var(--cog-shadow-overlay);
-      padding: 4px 10px;
+      border: 0;
+      border-radius: var(--cog-radius-sm);
+      background: transparent;
+      padding: var(--cog-space-050) var(--cog-space-100);
       color: var(--cog-text);
       font: inherit;
-      font-size: var(--cog-fs-caption);
       font-weight: var(--cog-fw-semibold);
+      text-align: left;
+      white-space: nowrap;
       cursor: pointer;
+    }
+
+    .message-list-item__memory-pop button:hover {
+      background: var(--cog-surface-hover);
     }
 
     .message-list-item {
@@ -488,6 +528,7 @@ export class MessageListItemComponent implements OnChanges {
   private readonly _conversationService = inject(ConversationService);
   private readonly _redactionService = inject(RedactionService);
   private readonly _compactionService = inject(CompactionService);
+  private readonly _scopedMemory = inject(ScopedMemoryService);
   private readonly _toast = inject(CognosToastService);
   private readonly _cdr = inject(ChangeDetectorRef);
   private readonly _dialog = inject(Dialog);
@@ -739,21 +780,31 @@ export class MessageListItemComponent implements OnChanges {
     this.addToMemoryPopover.set(null);
   }
 
-  // canAddToMemory gates the popover: persisted, non-project conversations the
-  // user can encrypt to. Project/user-scoped memory is a future addition.
+  // canAddToMemory gates the popover: a persisted conversation the user can
+  // encrypt to. Project conversations are allowed (they additionally offer the
+  // project scope).
   private canAddToMemory(): boolean {
     const conversation = this._conversationService.conversation();
     return (
       !!conversation &&
       !this._conversationService.isTemporaryConversation() &&
-      !conversation.record.project &&
       !!conversation.keyPair
     );
   }
 
+  // canAddToProject reports whether the project-memory option should appear —
+  // only when the conversation belongs to a project.
+  canAddToProject(): boolean {
+    return (
+      this.canAddToMemory() &&
+      !!this._conversationService.conversation()?.record.project
+    );
+  }
+
   // addSelectionToMemory re-redacts the selected snippet (so no plaintext PII is
-  // stored) and pins it to the conversation's manual memory.
-  addSelectionToMemory(text: string): void {
+  // stored) and pins it to the chosen memory scope: conversation, project, or
+  // user (spec §16).
+  addSelectionToMemory(scope: MemoryScope, text: string): void {
     const conversation = this._conversationService.conversation();
     this.addToMemoryPopover.set(null);
     window.getSelection()?.removeAllRanges();
@@ -762,6 +813,9 @@ export class MessageListItemComponent implements OnChanges {
     }
     const conversationId = conversation.record.id;
 
+    // Re-redact in the conversation's context so no plaintext PII is stored. The
+    // placeholder is safe everywhere; cross-conversation display hydration is
+    // best-effort until user/project redaction keys exist.
     let snippet = text;
     if (this._redactionService.enabled()) {
       const source = {
@@ -782,19 +836,29 @@ export class MessageListItemComponent implements OnChanges {
       }
     }
 
-    this._compactionService
-      .addManualFact(conversationId, snippet, conversation.keyPair)
-      .subscribe({
-        next: () =>
-          this._toast.notify({
-            title: this._transloco.translate('chat.memory.added'),
-          }),
-        error: () =>
-          this._toast.notify({
-            title: this._transloco.translate('chat.memory.addError'),
-            tone: 'danger',
-          }),
-      });
+    const projectId = conversation.record.project;
+    let write$: Observable<unknown>;
+    if (scope === 'user') {
+      write$ = this._scopedMemory.addUserFact(snippet);
+    } else if (scope === 'project' && projectId) {
+      write$ = this._scopedMemory.addProjectFact(projectId, snippet);
+    } else {
+      write$ = this._compactionService.addManualFact(
+        conversationId,
+        snippet,
+        conversation.keyPair,
+      );
+    }
+
+    write$.subscribe({
+      next: () =>
+        this._toast.notify({ title: this._transloco.translate('chat.memory.added') }),
+      error: () =>
+        this._toast.notify({
+          title: this._transloco.translate('chat.memory.addError'),
+          tone: 'danger',
+        }),
+    });
   }
 
   // The placeholder version of the content: each token becomes a neutral

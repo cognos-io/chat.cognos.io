@@ -832,7 +832,10 @@
       "added": "Added to memory",
       "addError": "Couldn't add to memory. Please try again.",
       "redactionInfo": "Sensitive values are stored redacted — the model only ever sees placeholders.",
-      "redactedNote": "Stored redacted:"
+      "redactedNote": "Stored redacted:",
+      "addToConversation": "Conversation",
+      "addToUser": "User",
+      "addToProject": "Project"
     }
   },
   "common": {

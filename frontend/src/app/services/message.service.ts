@@ -73,7 +73,7 @@ import {
   CompactionService,
   estimateRawContextChars,
   planCompaction,
-  renderConversationMemory,
+  renderCombinedMemory,
   shouldTriggerCompaction,
 } from './compaction.service';
 import { ConversationService } from './conversation.service';
@@ -83,6 +83,7 @@ import { ModelService } from './model.service';
 import { PersonaService } from './persona.service';
 import { ProjectService } from './project.service';
 import { RedactionService } from './redaction.service';
+import { ScopedMemoryService } from './scoped-memory.service';
 import { VaultService } from './vault.service';
 
 export enum MessageStatus {
@@ -575,6 +576,7 @@ export class MessageService {
   private readonly _redactionService = inject(RedactionService);
   private readonly _projectService = inject(ProjectService);
   private readonly _compactionService = inject(CompactionService);
+  private readonly _scopedMemory = inject(ScopedMemoryService);
 
   private _activeCompletionAbort: AbortController | null = null;
   private _activeCompletionRequestId = '';
@@ -1036,15 +1038,20 @@ export class MessageService {
   // background. Best-effort: a failure just means the planner falls back to
   // raw-tail truncation.
   private loadCompactions(conversationId: string): void {
-    const keyPair = this._conversationService.conversation()?.keyPair;
+    const conversation = this._conversationService.conversation();
+    const keyPair = conversation?.keyPair;
     if (!keyPair) {
       return;
     }
-    this._compactionService.load(conversationId, keyPair).subscribe({
-      error: () => {
-        // Non-fatal: compaction is an optimisation, not required for chat.
-      },
-    });
+    const swallow = { error: () => undefined };
+    this._compactionService.load(conversationId, keyPair).subscribe(swallow);
+    // User memory follows the user everywhere; project memory only when the
+    // conversation belongs to a project. Both best-effort.
+    this._scopedMemory.loadUserMemory().subscribe(swallow);
+    const projectId = conversation?.record.project;
+    if (projectId) {
+      this._scopedMemory.loadProjectMemory(projectId).subscribe(swallow);
+    }
   }
 
   // redactRequest swaps detected sensitive values in the draft for stable
@@ -1835,13 +1842,20 @@ export class MessageService {
     contextSummary?: string;
   } {
     const model = this._modelService.selectedModel();
-    const conversationId = this._conversationService.conversation()?.record.id ?? null;
+    const conversation = this._conversationService.conversation();
+    const conversationId = conversation?.record.id ?? null;
+    const projectId = conversation?.record.project ?? null;
     const compaction = this.selectCompactionForContext(messagesNewestFirst);
-    // User-curated memory is branch-independent and always injected alongside the
-    // active-branch auto-compaction (spec §8.2).
+    // Memory from every scope is combined into the injected context: the
+    // user-curated conversation memory, the active-branch auto-compaction, and
+    // the branch-independent project + user memory (spec §16).
     const manual = conversationId
       ? this._compactionService.manualMemoryFor(conversationId)
       : null;
+    const projectMemory = projectId
+      ? this._scopedMemory.projectMemoryFor(projectId)
+      : null;
+    const userMemory = this._scopedMemory.userMemory();
     const excludeMessageIds = compaction
       ? new Set(compaction.payload.covered_message_ids)
       : undefined;
@@ -1854,7 +1868,12 @@ export class MessageService {
     );
     return {
       messages,
-      contextSummary: renderConversationMemory(manual, compaction),
+      contextSummary: renderCombinedMemory({
+        conversationManual: manual,
+        conversationAuto: compaction,
+        projectMemory,
+        userMemory,
+      }),
     };
   }
 

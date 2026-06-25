@@ -832,7 +832,10 @@
       "added": "Zum Gedächtnis hinzugefügt",
       "addError": "Konnte nicht zum Gedächtnis hinzugefügt werden. Bitte erneut versuchen.",
       "redactionInfo": "Sensible Werte werden redigiert gespeichert — das Modell sieht nur Platzhalter.",
-      "redactedNote": "Redigiert gespeichert:"
+      "redactedNote": "Redigiert gespeichert:",
+      "addToConversation": "Unterhaltung",
+      "addToUser": "Benutzer",
+      "addToProject": "Projekt"
     }
   },
   "common": {

@@ -111,6 +111,23 @@ test('selecting message text adds it to memory and injects it on the next send',
       await route.fulfill({ json: { items: [] } });
     },
   );
+  // User memory is loaded on open and written when the User scope is chosen.
+  let userData: string | undefined;
+  await page.route('http://localhost:8090/api/v1/user-memory', async (route) => {
+    if (route.request().method() === 'POST') {
+      userData = (route.request().postDataJSON() as { data?: string }).data;
+      await route.fulfill({
+        json: {
+          id: 'usrmem_1',
+          data: userData,
+          created: '2026-06-13T22:30:00Z',
+          updated: '2026-06-13T22:30:00Z',
+        },
+      });
+      return;
+    }
+    await route.fulfill({ json: { items: [] } });
+  });
   await page.route(
     'http://localhost:8090/api/v1/conversations/conv_e2e_add/compactions/manual',
     async (route) => {
@@ -169,14 +186,24 @@ test('selecting message text adds it to memory and injects it on the next send',
   await page.goto('/c/conv_e2e_add');
   await expect(page.getByRole('heading', { name: 'Pin chat' })).toBeVisible();
 
-  // Select the snippet text in the rendered message and raise the popover.
+  // Select the snippet text in the rendered message and raise the scope menu.
   const snippet = page.getByText(SNIPPET);
   await expect(snippet).toBeVisible();
   await snippet.selectText();
   await snippet.dispatchEvent('mouseup');
 
-  // Choose "Add to memory" and confirm a ciphertext-only manual POST fired.
-  await page.getByRole('button', { name: 'Add to memory' }).click();
+  // A non-project conversation offers Conversation + User, but not Project.
+  const menu = page.locator('.message-list-item__memory-pop');
+  await expect(
+    menu.getByRole('button', { name: 'Conversation', exact: true }),
+  ).toBeVisible();
+  await expect(menu.getByRole('button', { name: 'User', exact: true })).toBeVisible();
+  await expect(menu.getByRole('button', { name: 'Project', exact: true })).toHaveCount(
+    0,
+  );
+
+  // Pin to conversation memory — confirm a ciphertext-only manual POST fired.
+  await menu.getByRole('button', { name: 'Conversation', exact: true }).click();
   await expect.poll(() => manualData).toBeTruthy();
   expect(manualData).not.toContain('dark theme');
   await expect(page.getByText('Added to memory')).toBeVisible();
@@ -188,4 +215,11 @@ test('selecting message text adds it to memory and injects it on the next send',
   await composer.fill('Remind me what I like');
   await page.getByRole('button', { name: 'Send' }).click();
   await expect.poll(() => completeBody?.context_summary ?? '').toContain(SNIPPET);
+
+  // Pinning the same selection to User memory writes a ciphertext-only POST.
+  await snippet.selectText();
+  await snippet.dispatchEvent('mouseup');
+  await menu.getByRole('button', { name: 'User', exact: true }).click();
+  await expect.poll(() => userData).toBeTruthy();
+  expect(userData).not.toContain('dark theme');
 });

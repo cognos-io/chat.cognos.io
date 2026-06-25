@@ -832,7 +832,10 @@
       "added": "Aggiunto alla memoria",
       "addError": "Impossibile aggiungere alla memoria. Riprova.",
       "redactionInfo": "I valori sensibili sono memorizzati oscurati — il modello vede solo segnaposto.",
-      "redactedNote": "Memorizzato oscurato:"
+      "redactedNote": "Memorizzato oscurato:",
+      "addToConversation": "Conversazione",
+      "addToUser": "Utente",
+      "addToProject": "Progetto"
     }
   },
   "common": {

@@ -4,7 +4,11 @@ import { Observable, forkJoin, map, of } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 
-import { Compaction, CompactionPayload } from '@app/interfaces/compaction';
+import {
+  Compaction,
+  CompactionPayload,
+  ScopedMemory,
+} from '@app/interfaces/compaction';
 import { KeyPair } from '@app/interfaces/key-pair';
 
 import {
@@ -162,6 +166,42 @@ export const renderConversationMemory = (
   }
   if (prefix) {
     sections.push(renderCompactionSummary(prefix.payload));
+  }
+  return sections.length > 0 ? sections.join('\n\n') : undefined;
+};
+
+// renderCombinedMemory merges every memory scope into the single block injected
+// as context_summary (spec §16): the user-curated conversation memory, the
+// active-branch auto-compaction, plus project- and user-scoped memory. Each is
+// optional; returns undefined when nothing has content. Ordered conversation →
+// project → user (specific to general).
+export const renderCombinedMemory = (input: {
+  conversationManual: Compaction | null;
+  conversationAuto: Compaction | null;
+  projectMemory: ScopedMemory | null;
+  userMemory: ScopedMemory | null;
+}): string | undefined => {
+  const sections: string[] = [];
+  if (input.conversationManual) {
+    const memory = renderDurableMemory(input.conversationManual.payload.durable_memory);
+    if (memory) {
+      sections.push('Conversation memory:\n' + memory);
+    }
+  }
+  if (input.conversationAuto) {
+    sections.push(renderCompactionSummary(input.conversationAuto.payload));
+  }
+  if (input.projectMemory) {
+    const memory = renderDurableMemory(input.projectMemory.payload.durable_memory);
+    if (memory) {
+      sections.push('Project memory:\n' + memory);
+    }
+  }
+  if (input.userMemory) {
+    const memory = renderDurableMemory(input.userMemory.payload.durable_memory);
+    if (memory) {
+      sections.push('User memory:\n' + memory);
+    }
   }
   return sections.length > 0 ? sections.join('\n\n') : undefined;
 };

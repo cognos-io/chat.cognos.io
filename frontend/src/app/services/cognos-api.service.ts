@@ -251,6 +251,18 @@ interface ApiListCompactionsResponse {
   items: ApiCompactionRecord[];
 }
 
+// Scoped (user/project) memory records — ciphertext-only, like compactions.
+export interface ApiMemoryRecord {
+  id: string;
+  data: string;
+  created: string;
+  updated: string;
+}
+
+interface ApiMemoryListResponse {
+  items: ApiMemoryRecord[];
+}
+
 // payload is the plaintext compaction the backend returns for immediate use. It
 // is validated through the CompactionPayload schema by the service, so it is
 // typed loosely here at the transport boundary.
@@ -967,6 +979,57 @@ export class CognosApiService {
   deleteCompaction(compactionId: string): Observable<void> {
     return this._http.delete<void>(
       `${this._baseUrl}/api/v1/conversation-compactions/${compactionId}`,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  // --- User- and project-scoped memory (client-encrypted ciphertext) ---
+
+  listUserMemory(): Observable<ApiMemoryRecord[]> {
+    return this._http
+      .get<ApiMemoryListResponse>(`${this._baseUrl}/api/v1/user-memory`, {
+        headers: this.authHeaders(),
+      })
+      .pipe(map((response) => response.items ?? []));
+  }
+
+  createUserMemory(data: string): Observable<ApiMemoryRecord> {
+    return this._http.post<ApiMemoryRecord>(
+      `${this._baseUrl}/api/v1/user-memory`,
+      { data },
+      { headers: this.authHeaders() },
+    );
+  }
+
+  updateUserMemory(id: string, data: string): Observable<ApiMemoryRecord> {
+    return this._http.patch<ApiMemoryRecord>(
+      `${this._baseUrl}/api/v1/user-memory/${id}`,
+      { data },
+      { headers: this.authHeaders() },
+    );
+  }
+
+  listProjectMemory(projectId: string): Observable<ApiMemoryRecord[]> {
+    return this._http
+      .get<ApiMemoryListResponse>(
+        `${this._baseUrl}/api/v1/projects/${projectId}/memory`,
+        { headers: this.authHeaders() },
+      )
+      .pipe(map((response) => response.items ?? []));
+  }
+
+  createProjectMemory(projectId: string, data: string): Observable<ApiMemoryRecord> {
+    return this._http.post<ApiMemoryRecord>(
+      `${this._baseUrl}/api/v1/projects/${projectId}/memory`,
+      { data },
+      { headers: this.authHeaders() },
+    );
+  }
+
+  updateProjectMemory(id: string, data: string): Observable<ApiMemoryRecord> {
+    return this._http.patch<ApiMemoryRecord>(
+      `${this._baseUrl}/api/v1/project-memory/${id}`,
+      { data },
       { headers: this.authHeaders() },
     );
   }

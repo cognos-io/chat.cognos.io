@@ -832,7 +832,10 @@
       "added": "Añadido a la memoria",
       "addError": "No se pudo añadir a la memoria. Inténtalo de nuevo.",
       "redactionInfo": "Los valores sensibles se almacenan censurados: el modelo solo ve marcadores de posición.",
-      "redactedNote": "Almacenado censurado:"
+      "redactedNote": "Almacenado censurado:",
+      "addToConversation": "Conversación",
+      "addToUser": "Usuario",
+      "addToProject": "Proyecto"
     }
   },
   "common": {

@@ -832,7 +832,10 @@
       "added": "Ajouté à la mémoire",
       "addError": "Impossible d'ajouter à la mémoire. Veuillez réessayer.",
       "redactionInfo": "Les valeurs sensibles sont stockées expurgées — le modèle ne voit que des espaces réservés.",
-      "redactedNote": "Stocké expurgé :"
+      "redactedNote": "Stocké expurgé :",
+      "addToConversation": "Conversation",
+      "addToUser": "Utilisateur",
+      "addToProject": "Projet"
     }
   },
   "common": {
