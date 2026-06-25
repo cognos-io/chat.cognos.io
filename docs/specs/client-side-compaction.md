@@ -680,3 +680,41 @@ text or summary text.
 - **Future (privacy-max tier):** in-browser summarisation via WebGPU small models (Gemma/Qwen-class)
   is now viable and would let compaction run **without sending any plaintext to the server** — the
   long-term privacy ceiling for this feature. Out of scope for V1 (see §3) but worth tracking.
+
+## 16. Manual (user-curated) memory
+
+Beyond automatic compaction, the user can **explicitly pin** snippets to a conversation's memory.
+Selecting text in any user/assistant message raises a floating **"Add to memory"** action (mirroring
+the composer's redact popover); choosing it persists the snippet to the conversation's manual
+memory.
+
+### 16.1 Manual memory record
+
+Manual memory is stored as a **compaction record with an empty `covered_message_ids` and empty
+`anchor_message_id`** — i.e. it is not tied to any message prefix. Consequences:
+
+- It is **branch-independent and always injected** (it is never selected as the active-branch prefix
+  compaction, and the planner injects it alongside whichever prefix compaction is valid).
+- It is **never folded** by recursive compaction and **never invalidated** by message deletion (a
+  pinned snippet is an explicit user copy that should outlive its source message).
+- It is created **without a model call** via `POST /conversations/{id}/compactions/manual`, which
+  stores client-encrypted ciphertext exactly like the PATCH update path. Subsequent edits reuse
+  PATCH.
+
+### 16.2 Redaction
+
+The selected text is the hydrated (owner-visible) message text. Before storage it is **re-redacted**
+(reusing existing token mappings, persisting any new ones), so the manual memory holds placeholders,
+never raw PII — consistent with messages and auto-compactions.
+
+### 16.3 Scope and the drawer
+
+`"Add to memory"` is offered only on **persisted, non-project** conversations. The memory drawer
+(header → Memory) shows the user-curated manual memory in preference to the auto-compaction summary.
+
+### 16.4 Future scopes
+
+The same manual-memory mechanism will extend to **"Add to user memory"** and **"Add to project
+memory"** by writing to user- and project-scoped records. Those require user/project content-key
+wrapping (see the project-redaction-keys gap) and are out of scope here; V1 is conversation-scoped
+only.
