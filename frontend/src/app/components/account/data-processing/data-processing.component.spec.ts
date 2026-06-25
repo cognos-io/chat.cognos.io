@@ -27,6 +27,10 @@ function model(id: string, privacyTier: PrivacyTier): Model {
     supportsToolCalling: false,
     supportsWebSearch: false,
     supportsComputerUse: false,
+    eligibleForCompaction: false,
+    supportsStructuredOutput: false,
+    supportsCacheHints: false,
+    approxCharsPerToken: 0,
     reasoningEfforts: [],
     isEligible: true,
   };

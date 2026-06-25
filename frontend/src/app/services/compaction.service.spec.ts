@@ -1,0 +1,178 @@
+import { describe, expect, it } from 'vitest';
+
+import { Compaction, CompactionPayload } from '@app/interfaces/compaction';
+
+import {
+  compactionsInvalidatedByMessage,
+  isCompactionValidForBranch,
+  renderCompactionSummary,
+  selectNewestValidCompaction,
+} from './compaction.service';
+
+const payload = (overrides: Partial<CompactionPayload> = {}): CompactionPayload => ({
+  version: '1',
+  kind: 'conversation_compaction',
+  conversation_id: 'conv1',
+  anchor_message_id: 'm3',
+  covered_message_ids: ['m1', 'm2', 'm3'],
+  parent_compaction_id: '',
+  compaction_level: 0,
+  durable_memory: { facts: [], decisions: [], open_threads: [], glossary: [] },
+  rolling_narrative: '',
+  citations: [],
+  source_token_estimate: 0,
+  summary_token_estimate: 0,
+  model_id: 'model-x',
+  prompt_version: 'compaction_v1',
+  output_mode: 'delimited_text',
+  created_at: '2026-06-25T00:00:00Z',
+  ...overrides,
+});
+
+const compaction = (
+  recordId: string,
+  overrides: Partial<CompactionPayload> = {},
+  createdAt = '2026-06-25T00:00:00Z',
+): Compaction => ({
+  recordId,
+  conversationId: 'conv1',
+  createdAt: new Date(createdAt),
+  payload: payload(overrides),
+});
+
+describe('isCompactionValidForBranch', () => {
+  it('accepts a compaction whose covered set is a contiguous prefix ending at the anchor', () => {
+    expect(isCompactionValidForBranch(payload(), ['m1', 'm2', 'm3', 'm4', 'm5'])).toBe(
+      true,
+    );
+  });
+
+  it('reuses a prefix compaction across a sibling branch sharing that history', () => {
+    // Different tail (m4b instead of m4) but the same m1..m3 prefix — still valid.
+    expect(isCompactionValidForBranch(payload(), ['m1', 'm2', 'm3', 'm4b'])).toBe(true);
+  });
+
+  it('rejects when the branch diverges within the covered prefix', () => {
+    expect(isCompactionValidForBranch(payload(), ['m1', 'mX', 'm3', 'm4'])).toBe(false);
+  });
+
+  it('rejects when covered is longer than the branch', () => {
+    expect(isCompactionValidForBranch(payload(), ['m1', 'm2'])).toBe(false);
+  });
+
+  it('rejects an empty covered set', () => {
+    expect(
+      isCompactionValidForBranch(payload({ covered_message_ids: [] }), ['m1']),
+    ).toBe(false);
+  });
+
+  it('rejects when the anchor is not the last covered message', () => {
+    expect(
+      isCompactionValidForBranch(payload({ anchor_message_id: 'm2' }), [
+        'm1',
+        'm2',
+        'm3',
+      ]),
+    ).toBe(false);
+  });
+});
+
+describe('selectNewestValidCompaction', () => {
+  const branch = ['m1', 'm2', 'm3', 'm4', 'm5'];
+
+  it('returns null when nothing is valid', () => {
+    const sibling = compaction('c1', {
+      covered_message_ids: ['mX'],
+      anchor_message_id: 'mX',
+    });
+    expect(selectNewestValidCompaction([sibling], branch)).toBeNull();
+  });
+
+  it('prefers the compaction covering the longest prefix', () => {
+    const small = compaction('small', {
+      covered_message_ids: ['m1', 'm2'],
+      anchor_message_id: 'm2',
+    });
+    const big = compaction('big', {
+      covered_message_ids: ['m1', 'm2', 'm3', 'm4'],
+      anchor_message_id: 'm4',
+    });
+    expect(selectNewestValidCompaction([small, big], branch)?.recordId).toBe('big');
+  });
+
+  it('breaks coverage ties by newest creation time', () => {
+    const older = compaction(
+      'older',
+      { covered_message_ids: ['m1', 'm2', 'm3'], anchor_message_id: 'm3' },
+      '2026-06-25T00:00:00Z',
+    );
+    const newer = compaction(
+      'newer',
+      { covered_message_ids: ['m1', 'm2', 'm3'], anchor_message_id: 'm3' },
+      '2026-06-26T00:00:00Z',
+    );
+    expect(selectNewestValidCompaction([older, newer], branch)?.recordId).toBe('newer');
+  });
+});
+
+describe('compactionsInvalidatedByMessage', () => {
+  it('returns compactions directly covering the deleted message', () => {
+    const c = compaction('c1', {
+      covered_message_ids: ['m1', 'm2'],
+      anchor_message_id: 'm2',
+    });
+    expect(compactionsInvalidatedByMessage([c], 'm2')).toEqual(['c1']);
+  });
+
+  it('includes fold-chain descendants of a covering compaction', () => {
+    // c1 covers m1..m2; c2 folded c1 (parent = c1) covering m1..m4; c3 folded c2.
+    const c1 = compaction('c1', {
+      covered_message_ids: ['m1', 'm2'],
+      anchor_message_id: 'm2',
+    });
+    const c2 = compaction('c2', {
+      covered_message_ids: ['m1', 'm2', 'm3', 'm4'],
+      anchor_message_id: 'm4',
+      parent_compaction_id: 'c1',
+    });
+    const c3 = compaction('c3', {
+      covered_message_ids: ['m1', 'm2', 'm3', 'm4', 'm5', 'm6'],
+      anchor_message_id: 'm6',
+      parent_compaction_id: 'c2',
+    });
+    const got = compactionsInvalidatedByMessage([c1, c2, c3], 'm1').sort();
+    expect(got).toEqual(['c1', 'c2', 'c3']);
+  });
+
+  it('returns nothing when no compaction covers the message', () => {
+    const c = compaction('c1', {
+      covered_message_ids: ['m1'],
+      anchor_message_id: 'm1',
+    });
+    expect(compactionsInvalidatedByMessage([c], 'm9')).toEqual([]);
+  });
+});
+
+describe('renderCompactionSummary', () => {
+  it('renders durable memory sections and the narrative, skipping empty parts', () => {
+    const text = renderCompactionSummary(
+      payload({
+        durable_memory: {
+          facts: ['Prefers Postgres'],
+          decisions: ['Use pgx'],
+          open_threads: [],
+          glossary: [{ term: '[[PII_EMAIL_A8F2KD]]', note: 'work email' }],
+        },
+        rolling_narrative: 'Discussed the driver choice.',
+      }),
+    );
+    expect(text).toContain('Facts');
+    expect(text).toContain('Prefers Postgres');
+    expect(text).toContain('Use pgx');
+    expect(text).toContain('[[PII_EMAIL_A8F2KD]]');
+    expect(text).toContain('Recent narrative:');
+    expect(text).toContain('Discussed the driver choice.');
+    // open_threads was empty, so its heading must not appear.
+    expect(text).not.toContain('Open threads');
+  });
+});

@@ -16,6 +16,7 @@ import {
   PortalResponse,
   UsageResponse,
 } from '@app/interfaces/billing';
+import { CompactionDurableMemory } from '@app/interfaces/compaction';
 import { ConversationRecord } from '@app/interfaces/conversation';
 import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/model';
 import { ProjectConversationRecord, ProjectRecord } from '@app/interfaces/project';
@@ -45,6 +46,10 @@ export interface CompleteRequest {
   maxOutputTokens?: number;
   reasoningEffort?: string;
   persist?: boolean;
+  // Client-rendered compaction summary of older messages, folded into the
+  // canonical system prompt server-side inside <conversation_summary> delimiters
+  // (spec §9.2). Omitted when there is no valid compaction for the active branch.
+  contextSummary?: string;
 }
 
 export interface CompleteResponse {
@@ -207,6 +212,52 @@ interface ApiCompleteRequest {
   max_output_tokens?: number;
   reasoning_effort?: string;
   persist?: boolean;
+  context_summary?: string;
+}
+
+interface ApiCompactionMessageInput {
+  alias: string;
+  message_id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+interface ApiCompactionPriorSummary {
+  durable_memory: CompactionDurableMemory;
+  rolling_narrative: string;
+  covered_message_ids: string[];
+}
+
+export interface ApiCreateCompactionRequest {
+  request_id?: string;
+  model_id: string;
+  anchor_message_id: string;
+  source_token_estimate?: number;
+  parent_compaction_id?: string;
+  parent_compaction_level?: number;
+  prior_summary?: ApiCompactionPriorSummary;
+  messages: ApiCompactionMessageInput[];
+}
+
+export interface ApiCompactionRecord {
+  id: string;
+  conversation: string;
+  data: string;
+  created: string;
+  updated: string;
+}
+
+interface ApiListCompactionsResponse {
+  items: ApiCompactionRecord[];
+}
+
+// payload is the plaintext compaction the backend returns for immediate use. It
+// is validated through the CompactionPayload schema by the service, so it is
+// typed loosely here at the transport boundary.
+export interface ApiCreateCompactionResponse extends ApiCompactionRecord {
+  skipped?: boolean;
+  reason?: string;
+  payload?: unknown;
 }
 
 interface ApiCompleteResponse {
@@ -515,6 +566,7 @@ export const mapCompleteRequest = (request: CompleteRequest): ApiCompleteRequest
   max_output_tokens: request.maxOutputTokens,
   reasoning_effort: request.reasoningEffort,
   persist: request.persist,
+  context_summary: request.contextSummary,
 });
 
 export const mapCompleteResponse = (
@@ -860,6 +912,36 @@ export class CognosApiService {
     return this._http.delete<void>(`${this._baseUrl}/api/v1/messages/${messageId}`, {
       headers: this.authHeaders(),
     });
+  }
+
+  // createCompaction asks the backend to summarise an active-branch prefix and
+  // persist the encrypted result. The transport stays in snake_case; decryption
+  // of the returned `data`/`payload` is the caller's concern (CompactionService).
+  createCompaction(
+    conversationId: string,
+    request: ApiCreateCompactionRequest,
+  ): Observable<ApiCreateCompactionResponse> {
+    return this._http.post<ApiCreateCompactionResponse>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/compactions`,
+      request,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  listCompactions(conversationId: string): Observable<ApiCompactionRecord[]> {
+    return this._http
+      .get<ApiListCompactionsResponse>(
+        `${this._baseUrl}/api/v1/conversations/${conversationId}/compactions`,
+        { headers: this.authHeaders() },
+      )
+      .pipe(map((response) => response.items ?? []));
+  }
+
+  deleteCompaction(compactionId: string): Observable<void> {
+    return this._http.delete<void>(
+      `${this._baseUrl}/api/v1/conversation-compactions/${compactionId}`,
+      { headers: this.authHeaders() },
+    );
   }
 
   complete(request: CompleteRequest): Observable<CompleteResponse> {
