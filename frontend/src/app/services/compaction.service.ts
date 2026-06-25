@@ -105,12 +105,10 @@ export const compactionsInvalidatedByMessage = (
   return [...invalidated];
 };
 
-// renderCompactionSummary renders a decrypted payload into the plain text the
-// backend wraps in <conversation_summary> delimiters (spec §9.2). It mirrors the
-// durable-memory + rolling-narrative structure.
-export const renderCompactionSummary = (payload: CompactionPayload): string => {
-  const { durable_memory: memory, rolling_narrative: narrative } = payload;
-  const lines: string[] = ['Durable memory:'];
+// renderDurableMemory renders the durable-memory lists into plain text. Returns
+// '' when every list is empty.
+const renderDurableMemory = (memory: CompactionPayload['durable_memory']): string => {
+  const lines: string[] = [];
   const appendList = (label: string, items: string[]): void => {
     if (items.length === 0) {
       return;
@@ -129,11 +127,69 @@ export const renderCompactionSummary = (payload: CompactionPayload): string => {
       lines.push(`  - ${entry.term}: ${entry.note}`);
     }
   }
-  if (narrative.trim() !== '') {
-    lines.push('Recent narrative:', narrative.trim());
+  return lines.join('\n');
+};
+
+// renderCompactionSummary renders a decrypted payload into the plain text the
+// backend wraps in <conversation_summary> delimiters (spec §9.2). It mirrors the
+// durable-memory + rolling-narrative structure.
+export const renderCompactionSummary = (payload: CompactionPayload): string => {
+  const lines: string[] = ['Durable memory:'];
+  const memory = renderDurableMemory(payload.durable_memory);
+  if (memory) {
+    lines.push(memory);
+  }
+  if (payload.rolling_narrative.trim() !== '') {
+    lines.push('Recent narrative:', payload.rolling_narrative.trim());
   }
   return lines.join('\n');
 };
+
+// renderConversationMemory combines the user-curated manual memory with the
+// newest auto-compaction summary into the single block injected as
+// context_summary. Either part may be absent; returns undefined when neither
+// has content so no context_summary is sent.
+export const renderConversationMemory = (
+  manual: Compaction | null,
+  prefix: Compaction | null,
+): string | undefined => {
+  const sections: string[] = [];
+  if (manual) {
+    const memory = renderDurableMemory(manual.payload.durable_memory);
+    if (memory) {
+      sections.push('User-curated memory:\n' + memory);
+    }
+  }
+  if (prefix) {
+    sections.push(renderCompactionSummary(prefix.payload));
+  }
+  return sections.length > 0 ? sections.join('\n\n') : undefined;
+};
+
+// selectManualMemory returns the conversation's manual-memory record (the
+// branch-independent one with no covered messages), newest if several exist.
+export const selectManualMemory = (
+  compactions: readonly Compaction[],
+): Compaction | null => {
+  let best: Compaction | null = null;
+  for (const candidate of compactions) {
+    if (candidate.payload.covered_message_ids.length !== 0) {
+      continue;
+    }
+    if (!best || candidate.createdAt.getTime() > best.createdAt.getTime()) {
+      best = candidate;
+    }
+  }
+  return best;
+};
+
+// emptyDurableMemory is the starting point for a fresh manual memory.
+const emptyDurableMemory = (): CompactionPayload['durable_memory'] => ({
+  facts: [],
+  decisions: [],
+  open_threads: [],
+  glossary: [],
+});
 
 // CompactionPlanMessage is the minimal view of an active-branch message the
 // planner needs.
@@ -348,6 +404,91 @@ export class CompactionService {
           return updated;
         }),
       );
+  }
+
+  /** manualMemoryFor returns the conversation's manual (user-curated) memory. */
+  manualMemoryFor(conversationId: string): Compaction | null {
+    return selectManualMemory(this.compactionsFor(conversationId));
+  }
+
+  /**
+   * addManualFact appends a single user-pinned snippet to the conversation's
+   * manual memory, creating the manual record if it does not exist yet (spec
+   * §8.2). The caller must have re-redacted the snippet first.
+   */
+  addManualFact(
+    conversationId: string,
+    fact: string,
+    keyPair: KeyPair,
+  ): Observable<Compaction> {
+    const existing = this.manualMemoryFor(conversationId);
+    const base = existing?.payload.durable_memory ?? emptyDurableMemory();
+    if (base.facts.includes(fact) && existing) {
+      return of(existing); // already pinned — no-op
+    }
+    return this.saveManualMemory(
+      conversationId,
+      { ...base, facts: [...base.facts, fact] },
+      keyPair,
+    );
+  }
+
+  /**
+   * saveManualMemory persists edited manual memory, updating the existing record
+   * or creating one (branch-independent, empty covered set) when absent.
+   */
+  saveManualMemory(
+    conversationId: string,
+    durableMemory: CompactionPayload['durable_memory'],
+    keyPair: KeyPair,
+  ): Observable<Compaction> {
+    const existing = this.manualMemoryFor(conversationId);
+    if (existing) {
+      return this.updateDurableMemory(existing, durableMemory, keyPair);
+    }
+    const payload = this.buildManualPayload(conversationId, durableMemory);
+    const sealed = this._cryptoService.createSealedBox(
+      new TextEncoder().encode(JSON.stringify(payload)),
+      keyPair.publicKey,
+    );
+    return this._api
+      .createManualCompaction(conversationId, Base64.fromUint8Array(sealed))
+      .pipe(
+        map((record) => {
+          const compaction: Compaction = {
+            recordId: record.id,
+            conversationId,
+            createdAt: new Date(record.created),
+            payload,
+          };
+          this.upsert(conversationId, compaction);
+          return compaction;
+        }),
+      );
+  }
+
+  private buildManualPayload(
+    conversationId: string,
+    durableMemory: CompactionPayload['durable_memory'],
+  ): CompactionPayload {
+    return {
+      version: '1',
+      kind: 'conversation_compaction',
+      conversation_id: conversationId,
+      anchor_message_id: '',
+      covered_message_ids: [],
+      parent_compaction_id: '',
+      compaction_level: 0,
+      durable_memory: durableMemory,
+      rolling_narrative: '',
+      citations: [],
+      source_token_estimate: 0,
+      summary_token_estimate: 0,
+      model_id: '',
+      prompt_version: 'manual_v1',
+      output_mode: 'manual',
+      created_at: '',
+    };
   }
 
   /**

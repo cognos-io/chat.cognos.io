@@ -9,6 +9,8 @@ import {
   isCompactionValidForBranch,
   planCompaction,
   renderCompactionSummary,
+  renderConversationMemory,
+  selectManualMemory,
   selectNewestValidCompaction,
   shouldTriggerCompaction,
 } from './compaction.service';
@@ -238,6 +240,71 @@ describe('planCompaction', () => {
       existingValid: null,
     });
     expect(plan).toBeNull();
+  });
+});
+
+describe('selectManualMemory', () => {
+  it('returns the newest record with no covered messages', () => {
+    const auto = compaction('auto', {
+      covered_message_ids: ['m1', 'm2'],
+      anchor_message_id: 'm2',
+    });
+    const manualOld = compaction(
+      'manual-old',
+      { covered_message_ids: [], anchor_message_id: '' },
+      '2026-06-25T00:00:00Z',
+    );
+    const manualNew = compaction(
+      'manual-new',
+      { covered_message_ids: [], anchor_message_id: '' },
+      '2026-06-26T00:00:00Z',
+    );
+    expect(selectManualMemory([auto, manualOld, manualNew])?.recordId).toBe(
+      'manual-new',
+    );
+  });
+
+  it('returns null when only covered (auto) compactions exist', () => {
+    const auto = compaction('auto', {
+      covered_message_ids: ['m1'],
+      anchor_message_id: 'm1',
+    });
+    expect(selectManualMemory([auto])).toBeNull();
+  });
+});
+
+describe('renderConversationMemory', () => {
+  const manual = compaction('manual', {
+    covered_message_ids: [],
+    anchor_message_id: '',
+    durable_memory: {
+      facts: ['Pinned: deploys on Infomaniak'],
+      decisions: [],
+      open_threads: [],
+      glossary: [],
+    },
+  });
+  const auto = compaction('auto', {
+    covered_message_ids: ['m1', 'm2'],
+    anchor_message_id: 'm2',
+    rolling_narrative: 'AUTO_NARRATIVE',
+  });
+
+  it('combines curated memory and the auto summary', () => {
+    const text = renderConversationMemory(manual, auto);
+    expect(text).toContain('User-curated memory:');
+    expect(text).toContain('Pinned: deploys on Infomaniak');
+    expect(text).toContain('AUTO_NARRATIVE');
+  });
+
+  it('renders only curated memory when there is no auto compaction', () => {
+    const text = renderConversationMemory(manual, null);
+    expect(text).toContain('Pinned: deploys on Infomaniak');
+    expect(text).not.toContain('Recent narrative');
+  });
+
+  it('returns undefined when neither has content', () => {
+    expect(renderConversationMemory(null, null)).toBeUndefined();
   });
 });
 

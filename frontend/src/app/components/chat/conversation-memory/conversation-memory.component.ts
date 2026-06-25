@@ -154,7 +154,14 @@ export class ConversationMemoryComponent implements OnInit {
       .subscribe(() => this._dialogRef.close());
   }
 
+  // Prefer the user-curated manual memory (the target of "Add to memory"); fall
+  // back to the newest auto-compaction so the drawer still works for chats that
+  // have only ever been auto-compacted.
   private newestCompaction(): Compaction | null {
+    const manual = this._compactionService.manualMemoryFor(this.data.conversationId);
+    if (manual) {
+      return manual;
+    }
     const compactions = this._compactionService.compactionsFor(
       this.data.conversationId,
     );

@@ -937,6 +937,19 @@ export class CognosApiService {
       .pipe(map((response) => response.items ?? []));
   }
 
+  // createManualCompaction stores a client-encrypted manual-memory record (user
+  // pinned snippets) without a model call. Server stores opaque ciphertext.
+  createManualCompaction(
+    conversationId: string,
+    data: string,
+  ): Observable<ApiCompactionRecord> {
+    return this._http.post<ApiCompactionRecord>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/compactions/manual`,
+      { data },
+      { headers: this.authHeaders() },
+    );
+  }
+
   // updateCompaction replaces a compaction's ciphertext after the user edits its
   // durable memory. The client re-encrypts the payload; the server stores opaque
   // bytes only.

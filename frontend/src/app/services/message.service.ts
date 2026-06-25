@@ -73,7 +73,7 @@ import {
   CompactionService,
   estimateRawContextChars,
   planCompaction,
-  renderCompactionSummary,
+  renderConversationMemory,
   shouldTriggerCompaction,
 } from './compaction.service';
 import { ConversationService } from './conversation.service';
@@ -1828,7 +1828,13 @@ export class MessageService {
     contextSummary?: string;
   } {
     const model = this._modelService.selectedModel();
+    const conversationId = this._conversationService.conversation()?.record.id ?? null;
     const compaction = this.selectCompactionForContext(messagesNewestFirst);
+    // User-curated memory is branch-independent and always injected alongside the
+    // active-branch auto-compaction (spec §8.2).
+    const manual = conversationId
+      ? this._compactionService.manualMemoryFor(conversationId)
+      : null;
     const excludeMessageIds = compaction
       ? new Set(compaction.payload.covered_message_ids)
       : undefined;
@@ -1841,9 +1847,7 @@ export class MessageService {
     );
     return {
       messages,
-      contextSummary: compaction
-        ? renderCompactionSummary(compaction.payload)
-        : undefined,
+      contextSummary: renderConversationMemory(manual, compaction),
     };
   }
 
