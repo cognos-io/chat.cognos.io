@@ -827,7 +827,10 @@
       "linePlaceholder": "Um item por linha",
       "empty": "Ainda nada foi compactado nesta conversa.",
       "save": "Guardar memória",
-      "saveError": "Não foi possível guardar a memória da conversa. Tente novamente."
+      "saveError": "Não foi possível guardar a memória da conversa. Tente novamente.",
+      "addAction": "Adicionar à memória",
+      "added": "Adicionado à memória",
+      "addError": "Não foi possível adicionar à memória. Tente novamente."
     }
   },
   "common": {

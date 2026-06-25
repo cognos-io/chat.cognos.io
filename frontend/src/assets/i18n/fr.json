@@ -827,7 +827,10 @@
       "linePlaceholder": "Un élément par ligne",
       "empty": "Rien n'a encore été compacté dans cette conversation.",
       "save": "Enregistrer la mémoire",
-      "saveError": "Impossible d'enregistrer la mémoire de la conversation. Veuillez réessayer."
+      "saveError": "Impossible d'enregistrer la mémoire de la conversation. Veuillez réessayer.",
+      "addAction": "Ajouter à la mémoire",
+      "added": "Ajouté à la mémoire",
+      "addError": "Impossible d'ajouter à la mémoire. Veuillez réessayer."
     }
   },
   "common": {

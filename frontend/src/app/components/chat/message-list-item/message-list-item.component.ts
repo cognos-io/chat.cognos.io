@@ -28,6 +28,7 @@ import {
   CognosLightboxComponent,
   CognosMenuComponent,
   type CognosMenuItem,
+  CognosToastService,
   CognosUserMessageComponent,
   MessageBranchInfo,
 } from '@cognos/ui-angular';
@@ -38,6 +39,7 @@ import { Message, isMessageFromUser } from '@app/interfaces/message';
 import { Model } from '@app/interfaces/model';
 import { Persona } from '@app/interfaces/persona';
 import { containsRedactionToken } from '@app/redaction';
+import { CompactionService } from '@app/services/compaction.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { MessageService } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
@@ -304,6 +306,20 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
         />
       </ng-container>
     }
+
+    @if (addToMemoryPopover(); as pop) {
+      <button
+        *transloco="let t"
+        type="button"
+        class="message-list-item__memory-pop"
+        [style.left.px]="pop.x"
+        [style.top.px]="pop.y"
+        (click)="addSelectionToMemory(pop.text)"
+      >
+        <cog-icon name="brain" [size]="14" tone="current" />
+        {{ t('chat.memory.addAction') }}
+      </button>
+    }
   `,
   styles: `
     :host {
@@ -312,6 +328,27 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       max-width: var(--chat-container-width);
       margin-inline: auto;
       padding-inline: var(--cog-space-200);
+    }
+
+    /* Floating "Add to memory" action shown over a text selection — mirrors the
+       composer's redact popover. */
+    .message-list-item__memory-pop {
+      position: fixed;
+      z-index: 60;
+      transform: translate(-50%, calc(-100% - 8px));
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-050);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-pill);
+      background: var(--cog-surface);
+      box-shadow: var(--cog-shadow-overlay);
+      padding: 4px 10px;
+      color: var(--cog-text);
+      font: inherit;
+      font-size: var(--cog-fs-caption);
+      font-weight: var(--cog-fw-semibold);
+      cursor: pointer;
     }
 
     .message-list-item {
@@ -450,6 +487,8 @@ export class MessageListItemComponent implements OnChanges {
   private readonly _messageService = inject(MessageService);
   private readonly _conversationService = inject(ConversationService);
   private readonly _redactionService = inject(RedactionService);
+  private readonly _compactionService = inject(CompactionService);
+  private readonly _toast = inject(CognosToastService);
   private readonly _cdr = inject(ChangeDetectorRef);
   private readonly _dialog = inject(Dialog);
   private readonly _transloco = inject(TranslocoService);
@@ -653,6 +692,109 @@ export class MessageListItemComponent implements OnChanges {
     if (target instanceof Node && !this._elementRef.nativeElement.contains(target)) {
       this.copyMenuOpen.set(false);
     }
+  }
+
+  // A floating "Add to memory" action shown over a text selection inside this
+  // message — mirrors the composer's redact popover (spec §8.2).
+  readonly addToMemoryPopover = signal<{ x: number; y: number; text: string } | null>(
+    null,
+  );
+
+  @HostListener('mouseup')
+  onMouseUp(): void {
+    if (!this.canAddToMemory()) {
+      this.addToMemoryPopover.set(null);
+      return;
+    }
+    const selection = window.getSelection();
+    const text = selection?.toString().trim() ?? '';
+    if (!text || !selection || selection.rangeCount === 0) {
+      this.addToMemoryPopover.set(null);
+      return;
+    }
+    // Only act on a selection that lives inside this message.
+    const range = selection.getRangeAt(0);
+    if (!this._elementRef.nativeElement.contains(range.commonAncestorContainer)) {
+      this.addToMemoryPopover.set(null);
+      return;
+    }
+    const rect = range.getBoundingClientRect();
+    this.addToMemoryPopover.set({
+      x: rect.left + rect.width / 2,
+      y: rect.top,
+      text,
+    });
+  }
+
+  @HostListener('document:mousedown', ['$event'])
+  onDocumentMouseDown(event: MouseEvent): void {
+    if (!this.addToMemoryPopover()) {
+      return;
+    }
+    const target = event.target as HTMLElement | null;
+    // Keep the popover open when the click is the action button itself.
+    if (target?.closest('.message-list-item__memory-pop')) {
+      return;
+    }
+    this.addToMemoryPopover.set(null);
+  }
+
+  // canAddToMemory gates the popover: persisted, non-project conversations the
+  // user can encrypt to. Project/user-scoped memory is a future addition.
+  private canAddToMemory(): boolean {
+    const conversation = this._conversationService.conversation();
+    return (
+      !!conversation &&
+      !this._conversationService.isTemporaryConversation() &&
+      !conversation.record.project &&
+      !!conversation.keyPair
+    );
+  }
+
+  // addSelectionToMemory re-redacts the selected snippet (so no plaintext PII is
+  // stored) and pins it to the conversation's manual memory.
+  addSelectionToMemory(text: string): void {
+    const conversation = this._conversationService.conversation();
+    this.addToMemoryPopover.set(null);
+    window.getSelection()?.removeAllRanges();
+    if (!conversation) {
+      return;
+    }
+    const conversationId = conversation.record.id;
+
+    let snippet = text;
+    if (this._redactionService.enabled()) {
+      const source = {
+        kind: 'message' as const,
+        id: this.message?.record_id ?? conversationId,
+      };
+      const { redactedText, newEntries } = this._redactionService.prepareRedaction(
+        conversationId,
+        text,
+        undefined,
+        source,
+      );
+      snippet = redactedText;
+      if (newEntries.length > 0) {
+        this._redactionService.persist(conversation, newEntries, source).subscribe({
+          error: () => undefined,
+        });
+      }
+    }
+
+    this._compactionService
+      .addManualFact(conversationId, snippet, conversation.keyPair)
+      .subscribe({
+        next: () =>
+          this._toast.notify({
+            title: this._transloco.translate('chat.memory.added'),
+          }),
+        error: () =>
+          this._toast.notify({
+            title: this._transloco.translate('chat.memory.addError'),
+            tone: 'danger',
+          }),
+      });
   }
 
   // The placeholder version of the content: each token becomes a neutral

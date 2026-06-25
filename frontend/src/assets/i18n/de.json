@@ -827,7 +827,10 @@
       "linePlaceholder": "Ein Eintrag pro Zeile",
       "empty": "In diesem Gespräch wurde noch nichts komprimiert.",
       "save": "Gedächtnis speichern",
-      "saveError": "Das Gesprächsgedächtnis konnte nicht gespeichert werden. Bitte erneut versuchen."
+      "saveError": "Das Gesprächsgedächtnis konnte nicht gespeichert werden. Bitte erneut versuchen.",
+      "addAction": "Zum Gedächtnis hinzufügen",
+      "added": "Zum Gedächtnis hinzugefügt",
+      "addError": "Konnte nicht zum Gedächtnis hinzugefügt werden. Bitte erneut versuchen."
     }
   },
   "common": {

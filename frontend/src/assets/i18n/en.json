@@ -827,7 +827,10 @@
       "linePlaceholder": "One item per line",
       "empty": "Nothing has been compacted in this conversation yet.",
       "save": "Save memory",
-      "saveError": "Couldn't save the conversation memory. Please try again."
+      "saveError": "Couldn't save the conversation memory. Please try again.",
+      "addAction": "Add to memory",
+      "added": "Added to memory",
+      "addError": "Couldn't add to memory. Please try again."
     }
   },
   "common": {

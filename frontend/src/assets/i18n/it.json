@@ -827,7 +827,10 @@
       "linePlaceholder": "Un elemento per riga",
       "empty": "In questa conversazione non è ancora stato compattato nulla.",
       "save": "Salva memoria",
-      "saveError": "Impossibile salvare la memoria della conversazione. Riprova."
+      "saveError": "Impossibile salvare la memoria della conversazione. Riprova.",
+      "addAction": "Aggiungi alla memoria",
+      "added": "Aggiunto alla memoria",
+      "addError": "Impossibile aggiungere alla memoria. Riprova."
     }
   },
   "common": {
