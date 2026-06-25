@@ -59,6 +59,7 @@ import { parseBackendDate } from '@app/utils/timestamp';
 import { AuthService } from './auth.service';
 import { BillingService } from './billing.service';
 import {
+  ApiCreateCompactionRequest,
   CognosApiService,
   CompleteResponse,
   CompleteStreamEvent,
@@ -67,6 +68,14 @@ import {
   MessageListResponse,
   MessageRecord,
 } from './cognos-api.service';
+import {
+  CompactionPlanMessage,
+  CompactionService,
+  estimateRawContextChars,
+  planCompaction,
+  renderCompactionSummary,
+  shouldTriggerCompaction,
+} from './compaction.service';
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
@@ -222,13 +231,29 @@ export const buildCompletionMessageContext = (
   inputContextTokens: number,
   resolvePersonaName: (id: string | undefined) => string | undefined,
   resolveModelName: (id: string | undefined) => string | undefined,
+  options?: {
+    // chars-per-token heuristic; defaults to the long-standing conservative 2.
+    charsPerToken?: number;
+    // record ids already represented by a compaction summary — skipped so they
+    // are not sent raw alongside the summary (spec §9).
+    excludeMessageIds?: ReadonlySet<string>;
+  },
 ): CompletionMessageRequest[] => {
   const context: CompletionMessageRequest[] = [];
-  // 1 token ~= 2 characters. We avoid a tokenizer dep here intentionally.
-  const targetContextChars = inputContextTokens * 2;
+  // 1 token ~= charsPerToken characters. We avoid a tokenizer dep here
+  // intentionally; the ratio is per-model (capability) with a conservative
+  // default that errs towards compacting/truncating a little early.
+  const charsPerToken =
+    options?.charsPerToken && options.charsPerToken > 0 ? options.charsPerToken : 2;
+  const excludeMessageIds = options?.excludeMessageIds;
+  const targetContextChars = inputContextTokens * charsPerToken;
   let usedContextLength = 0;
 
   for (const message of messagesNewestFirst) {
+    // Messages already folded into a compaction summary are not resent raw.
+    if (message.record_id && excludeMessageIds?.has(message.record_id)) {
+      continue;
+    }
     // A soft-deleted message keeps its place in the thread via a marker so the
     // model sees that a turn was intentionally removed.
     const content = message.decryptedData.deleted
@@ -544,10 +569,14 @@ export class MessageService {
   private readonly _vaultService = inject(VaultService);
   private readonly _redactionService = inject(RedactionService);
   private readonly _projectService = inject(ProjectService);
+  private readonly _compactionService = inject(CompactionService);
 
   private _activeCompletionAbort: AbortController | null = null;
   private _activeCompletionRequestId = '';
   private _intentionalCompletionAbort = false;
+  // Conversation ids with a compaction request currently in flight, so we keep
+  // at most one per conversation (spec §10.2).
+  private readonly _compactionInFlight = new Set<string>();
 
   private readonly pageSize = 100;
 
@@ -980,6 +1009,11 @@ export class MessageService {
     totalPages: number;
     items: Message[];
   }> {
+    if (page === 1) {
+      // Load the conversation's encrypted compactions once, on first page, so
+      // the planner can reuse them without blocking message rendering.
+      this.loadCompactions(conversationId);
+    }
     return this.fetchMessages(conversationId, page).pipe(
       tap(() => {
         this.state.setStatus(MessageStatus.Decrypting);
@@ -991,6 +1025,21 @@ export class MessageService {
         };
       }),
     );
+  }
+
+  // loadCompactions fetches and decrypts the conversation's compactions in the
+  // background. Best-effort: a failure just means the planner falls back to
+  // raw-tail truncation.
+  private loadCompactions(conversationId: string): void {
+    const keyPair = this._conversationService.conversation()?.keyPair;
+    if (!keyPair) {
+      return;
+    }
+    this._compactionService.load(conversationId, keyPair).subscribe({
+      error: () => {
+        // Non-fatal: compaction is an optimisation, not required for chat.
+      },
+    });
   }
 
   // redactRequest swaps detected sensitive values in the draft for stable
@@ -1090,7 +1139,7 @@ export class MessageService {
     this.state.setStatus(MessageStatus.Sending);
 
     const selectedPersona = this._personaService.selectedPersona();
-    const messages = this.createMessageContext();
+    const { messages, contextSummary } = this.createMessageContext();
     const systemPrompt = this.composeSystemPrompt(
       selectedPersona.systemPrompt,
       conversation,
@@ -1104,6 +1153,7 @@ export class MessageService {
       parentMessageId: messageRequest.parentMessageId,
       requestId: messageRequest.requestId,
       reasoningEffort: this._modelService.selectedReasoningEffort() || undefined,
+      contextSummary,
     };
 
     let completed = false;
@@ -1209,6 +1259,12 @@ export class MessageService {
           this.state.setStatus(MessageStatus.ErrorSending);
         }
         this.consumeIntentionalCompletionAbort();
+
+        // After a successful persisted response, opportunistically compact the
+        // older prefix in the background (spec §10). Never blocks the user.
+        if (completed && !isTemporaryConversation && originConversationId) {
+          this.maybeTriggerCompaction(originConversationId);
+        }
       }),
     );
   }
@@ -1398,7 +1454,9 @@ export class MessageService {
     const requestId = self.crypto.randomUUID();
     this._activeCompletionRequestId = requestId;
     const selectedPersona = this._personaService.selectedPersona();
-    const regenerationMessages = this.buildContextFromPath([...contextPath].reverse());
+    const { messages: regenerationMessages, contextSummary } = this.buildRequestContext(
+      [...contextPath].reverse(),
+    );
     const request = {
       messages: regenerationMessages,
       modelId: this._modelService.selectedModel().id,
@@ -1411,6 +1469,7 @@ export class MessageService {
       parentMessageId: parentId,
       requestId,
       reasoningEffort: this._modelService.selectedReasoningEffort() || undefined,
+      contextSummary,
     };
 
     // Only requestId + parentMessageId are read by the streaming helpers.
@@ -1671,10 +1730,13 @@ export class MessageService {
     );
   }
 
-  private createMessageContext(): Array<CompletionMessageRequest> {
+  private createMessageContext(): {
+    messages: Array<CompletionMessageRequest>;
+    contextSummary?: string;
+  } {
     // Context follows the active branch (newest-first), so the model only sees
     // the conversation the user is actually viewing.
-    return this.buildContextFromPath([...this.state.activeBranch().path].reverse());
+    return this.buildRequestContext([...this.state.activeBranch().path].reverse());
   }
 
   // Builds the system prompt sent with a completion. When the conversation
@@ -1751,16 +1813,146 @@ export class MessageService {
     return redactedText;
   }
 
-  private buildContextFromPath(
-    messagesNewestFirst: ReadonlyArray<Message>,
-  ): Array<CompletionMessageRequest> {
+  // buildRequestContext turns the active-branch path (newest-first) into the
+  // outgoing completion context. When a valid compaction covers an older prefix
+  // of the branch, those messages are dropped from the raw context and the
+  // summary is returned as contextSummary for the backend to fold into the
+  // system prompt (spec §9).
+  private buildRequestContext(messagesNewestFirst: ReadonlyArray<Message>): {
+    messages: Array<CompletionMessageRequest>;
+    contextSummary?: string;
+  } {
     const model = this._modelService.selectedModel();
-    return buildCompletionMessageContext(
+    const compaction = this.selectCompactionForContext(messagesNewestFirst);
+    const excludeMessageIds = compaction
+      ? new Set(compaction.payload.covered_message_ids)
+      : undefined;
+    const messages = buildCompletionMessageContext(
       messagesNewestFirst,
       model.inputContextLength,
       (id) => this._personaService.getPersona(id)()?.name,
       (id) => this._modelService.getModel(id)?.name,
+      { charsPerToken: model.approxCharsPerToken, excludeMessageIds },
     );
+    return {
+      messages,
+      contextSummary: compaction
+        ? renderCompactionSummary(compaction.payload)
+        : undefined,
+    };
+  }
+
+  // selectCompactionForContext returns the newest compaction valid for the
+  // active branch, or null when there is no persisted conversation or no valid
+  // compaction.
+  private selectCompactionForContext(
+    messagesNewestFirst: ReadonlyArray<Message>,
+  ): ReturnType<CompactionService['newestValidForBranch']> {
+    const conversation = this._conversationService.conversation();
+    if (!conversation) {
+      return null;
+    }
+    const branchMessageIds = [...messagesNewestFirst]
+      .reverse()
+      .map((message) => message.record_id)
+      .filter((id): id is string => !!id);
+    return this._compactionService.newestValidForBranch(
+      conversation.record.id,
+      branchMessageIds,
+    );
+  }
+
+  // maybeTriggerCompaction opportunistically compacts the older prefix of the
+  // active branch in the background once raw context passes the trigger
+  // threshold. Non-blocking, at most one in flight per conversation, and never
+  // for temporary, disappearing-message or project conversations (spec §10, §12).
+  private maybeTriggerCompaction(conversationId: string): void {
+    const conversation = this._conversationService.conversation();
+    if (!conversation || conversation.record.id !== conversationId) {
+      return;
+    }
+    if (this._conversationService.isTemporaryConversation()) {
+      return;
+    }
+    // Disappearing-message and project conversations are out of scope for V1.
+    if (conversation.record.expiry_duration || conversation.record.project) {
+      return;
+    }
+    if (this._compactionInFlight.has(conversationId)) {
+      return;
+    }
+
+    const model = this._modelService.selectedModel();
+    if (!model.eligibleForCompaction) {
+      return;
+    }
+
+    const branch: CompactionPlanMessage[] = this.state
+      .activeBranch()
+      .path.filter(
+        (message): message is Message & { record_id: string } =>
+          !!message.record_id &&
+          !message.decryptedData.deleted &&
+          !!message.decryptedData.content,
+      )
+      .map((message) => ({
+        recordId: message.record_id,
+        role: message.decryptedData.owner_id ? 'user' : 'assistant',
+        content: message.decryptedData.content ?? '',
+      }));
+
+    const branchIds = branch.map((message) => message.recordId);
+    const existingValid = this._compactionService.newestValidForBranch(
+      conversationId,
+      branchIds,
+    );
+
+    const charsPerToken = model.approxCharsPerToken > 0 ? model.approxCharsPerToken : 2;
+    const usableContextChars = model.inputContextLength * charsPerToken;
+    const estimatedRawChars = estimateRawContextChars(branch, existingValid);
+    if (!shouldTriggerCompaction(estimatedRawChars, usableContextChars)) {
+      return;
+    }
+
+    const plan = planCompaction(branch, { usableContextChars, existingValid });
+    if (!plan) {
+      return;
+    }
+
+    const request: ApiCreateCompactionRequest = {
+      request_id: self.crypto.randomUUID(),
+      model_id: model.id,
+      anchor_message_id: plan.anchorMessageId,
+      source_token_estimate: Math.ceil(
+        plan.messages.reduce((sum, message) => sum + message.content.length, 0) /
+          charsPerToken,
+      ),
+      messages: plan.messages.map((message) => ({
+        alias: message.alias,
+        message_id: message.messageId,
+        role: message.role,
+        content: message.content,
+      })),
+    };
+    if (plan.parent) {
+      request.parent_compaction_id = plan.parent.recordId;
+      request.parent_compaction_level = plan.parent.payload.compaction_level;
+      request.prior_summary = {
+        durable_memory: plan.parent.payload.durable_memory,
+        rolling_narrative: plan.parent.payload.rolling_narrative,
+        covered_message_ids: plan.parent.payload.covered_message_ids,
+      };
+    }
+
+    this._compactionInFlight.add(conversationId);
+    this._compactionService
+      .create(conversationId, request)
+      .pipe(finalize(() => this._compactionInFlight.delete(conversationId)))
+      .subscribe({
+        error: () => {
+          // Best-effort background work; a later response retries.
+        },
+      });
   }
 
   private generateConversationTitle(
@@ -1838,6 +2030,15 @@ export class MessageService {
         this._conversationService.updateConversationUpdatedTimeNow({
           id: conversation.record.id,
         });
+        // Remove any compaction (and fold-chain descendants) representing the
+        // deleted message so its content cannot survive in a summary (spec §12).
+        this._compactionService
+          .invalidateForDeletedMessage(conversation.record.id, recordId)
+          .subscribe({
+            error: () => {
+              // Best-effort: a failure is retried on the next deletion/reload.
+            },
+          });
         return applyLocal();
       }),
       catchError((err) => {

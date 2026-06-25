@@ -3,10 +3,14 @@ import { describe, expect, it } from 'vitest';
 import { Compaction, CompactionPayload } from '@app/interfaces/compaction';
 
 import {
+  CompactionPlanMessage,
   compactionsInvalidatedByMessage,
+  estimateRawContextChars,
   isCompactionValidForBranch,
+  planCompaction,
   renderCompactionSummary,
   selectNewestValidCompaction,
+  shouldTriggerCompaction,
 } from './compaction.service';
 
 const payload = (overrides: Partial<CompactionPayload> = {}): CompactionPayload => ({
@@ -150,6 +154,90 @@ describe('compactionsInvalidatedByMessage', () => {
       anchor_message_id: 'm1',
     });
     expect(compactionsInvalidatedByMessage([c], 'm9')).toEqual([]);
+  });
+});
+
+describe('shouldTriggerCompaction', () => {
+  it('fires at or above the trigger fraction', () => {
+    expect(shouldTriggerCompaction(70, 100, 0.7)).toBe(true);
+    expect(shouldTriggerCompaction(80, 100, 0.7)).toBe(true);
+  });
+
+  it('does not fire below the fraction', () => {
+    expect(shouldTriggerCompaction(69, 100, 0.7)).toBe(false);
+  });
+
+  it('never fires with non-positive usable context', () => {
+    expect(shouldTriggerCompaction(50, 0, 0.7)).toBe(false);
+  });
+});
+
+describe('estimateRawContextChars', () => {
+  const branch: CompactionPlanMessage[] = [
+    { recordId: 'm1', role: 'user', content: '0123456789' },
+    { recordId: 'm2', role: 'assistant', content: '0123456789' },
+    { recordId: 'm3', role: 'user', content: '0123456789' },
+  ];
+
+  it('sums all message chars when there is no compaction', () => {
+    expect(estimateRawContextChars(branch, null)).toBe(30);
+  });
+
+  it('replaces covered messages with the rendered summary length', () => {
+    const c = compaction('c1', {
+      covered_message_ids: ['m1', 'm2'],
+      anchor_message_id: 'm2',
+      durable_memory: { facts: ['x'], decisions: [], open_threads: [], glossary: [] },
+    });
+    const summaryLen = renderCompactionSummary(c.payload).length;
+    // m1+m2 covered (excluded), m3 raw (10) plus the summary text.
+    expect(estimateRawContextChars(branch, c)).toBe(summaryLen + 10);
+  });
+});
+
+describe('planCompaction', () => {
+  const branch: CompactionPlanMessage[] = Array.from({ length: 6 }, (_, i) => ({
+    recordId: `m${i + 1}`,
+    role: i % 2 === 0 ? 'user' : 'assistant',
+    content: '0123456789', // 10 chars each
+  }));
+
+  it('compacts the older prefix and keeps the recent tail (leaf)', () => {
+    // keepRecentChars = 100 * 0.25 = 25 -> keeps m5,m6 raw; prefix = m1..m4.
+    const plan = planCompaction(branch, {
+      usableContextChars: 100,
+      existingValid: null,
+    });
+    expect(plan).not.toBeNull();
+    expect(plan!.parent).toBeNull();
+    expect(plan!.anchorMessageId).toBe('m4');
+    expect(plan!.messages.map((m) => m.messageId)).toEqual(['m1', 'm2', 'm3', 'm4']);
+    expect(plan!.messages.map((m) => m.alias)).toEqual(['M1', 'M2', 'M3', 'M4']);
+  });
+
+  it('folds onto an existing compaction by compacting only messages after its anchor', () => {
+    const parent = compaction('parent', {
+      covered_message_ids: ['m1', 'm2'],
+      anchor_message_id: 'm2',
+    });
+    const plan = planCompaction(branch, {
+      usableContextChars: 100,
+      existingValid: parent,
+    });
+    expect(plan).not.toBeNull();
+    expect(plan!.parent?.recordId).toBe('parent');
+    // prefix m1..m4, minus through-parent-anchor (m2) -> m3,m4.
+    expect(plan!.messages.map((m) => m.messageId)).toEqual(['m3', 'm4']);
+    expect(plan!.anchorMessageId).toBe('m4');
+  });
+
+  it('returns null when the prefix is too small to be worth compacting', () => {
+    // Huge keep budget -> everything stays in the raw tail, nothing to compact.
+    const plan = planCompaction(branch, {
+      usableContextChars: 100000,
+      existingValid: null,
+    });
+    expect(plan).toBeNull();
   });
 });
 

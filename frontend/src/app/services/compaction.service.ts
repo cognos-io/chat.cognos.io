@@ -135,6 +135,127 @@ export const renderCompactionSummary = (payload: CompactionPayload): string => {
   return lines.join('\n');
 };
 
+// CompactionPlanMessage is the minimal view of an active-branch message the
+// planner needs.
+export interface CompactionPlanMessage {
+  recordId: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+// CompactionPlan describes the prefix to compact and (when folding) the parent
+// it builds on.
+export interface CompactionPlan {
+  anchorMessageId: string;
+  messages: {
+    alias: string;
+    messageId: string;
+    role: 'user' | 'assistant';
+    content: string;
+  }[];
+  parent: Compaction | null;
+}
+
+// COMPACTION_TRIGGER_FRACTION is the usable-context fraction at which background
+// compaction starts (spec §10.1).
+export const COMPACTION_TRIGGER_FRACTION = 0.7;
+// COMPACTION_KEEP_RECENT_FRACTION of usable context is kept as a raw tail; the
+// older prefix is what gets compacted (spec §10.3).
+export const COMPACTION_KEEP_RECENT_FRACTION = 0.25;
+// Minimum messages worth compacting — below this the savings aren't worth a
+// provider call.
+const MIN_MESSAGES_TO_COMPACT = 2;
+
+// estimateRawContextChars sums the characters that would be sent raw: every
+// branch message not already represented by the given compaction.
+export const estimateRawContextChars = (
+  branchOldestFirst: readonly CompactionPlanMessage[],
+  activeCompaction: Compaction | null,
+): number => {
+  const covered = new Set(activeCompaction?.payload.covered_message_ids ?? []);
+  let chars = activeCompaction
+    ? renderCompactionSummary(activeCompaction.payload).length
+    : 0;
+  for (const message of branchOldestFirst) {
+    if (covered.has(message.recordId)) {
+      continue;
+    }
+    chars += message.content.length;
+  }
+  return chars;
+};
+
+// shouldTriggerCompaction reports whether the raw context has grown past the
+// trigger fraction of usable context.
+export const shouldTriggerCompaction = (
+  estimatedRawChars: number,
+  usableContextChars: number,
+  fraction: number = COMPACTION_TRIGGER_FRACTION,
+): boolean => {
+  if (usableContextChars <= 0) {
+    return false;
+  }
+  return estimatedRawChars >= fraction * usableContextChars;
+};
+
+// planCompaction decides which prefix of the active branch to compact and, when
+// a valid compaction already exists, folds onto it by only compacting messages
+// added since its anchor (spec §8.1, §10.3). Returns null when there is nothing
+// worth compacting.
+export const planCompaction = (
+  branchOldestFirst: readonly CompactionPlanMessage[],
+  options: {
+    usableContextChars: number;
+    existingValid: Compaction | null;
+    keepRecentFraction?: number;
+    minMessages?: number;
+  },
+): CompactionPlan | null => {
+  const usable = branchOldestFirst.filter((m) => m.content.trim() !== '');
+  const keepFraction = options.keepRecentFraction ?? COMPACTION_KEEP_RECENT_FRACTION;
+  const keepRecentChars = options.usableContextChars * keepFraction;
+  const minMessages = options.minMessages ?? MIN_MESSAGES_TO_COMPACT;
+
+  // Walk newest-first, keeping the recent tail until it fills the keep budget.
+  // Everything older than that is the candidate prefix to compact.
+  let tailChars = 0;
+  let cut = usable.length; // index of first kept (raw-tail) message
+  for (let i = usable.length - 1; i >= 0; i--) {
+    if (tailChars + usable[i].content.length > keepRecentChars) {
+      break;
+    }
+    tailChars += usable[i].content.length;
+    cut = i;
+  }
+  let prefix = usable.slice(0, cut);
+
+  const parent = options.existingValid;
+  if (parent) {
+    // Fold: only compact messages added after the parent's anchor.
+    const anchorIndex = usable.findIndex(
+      (m) => m.recordId === parent.payload.anchor_message_id,
+    );
+    if (anchorIndex >= 0) {
+      prefix = prefix.slice(anchorIndex + 1);
+    }
+  }
+
+  if (prefix.length < minMessages) {
+    return null;
+  }
+
+  return {
+    anchorMessageId: prefix[prefix.length - 1].recordId,
+    parent,
+    messages: prefix.map((m, index) => ({
+      alias: `M${index + 1}`,
+      messageId: m.recordId,
+      role: m.role,
+      content: m.content,
+    })),
+  };
+};
+
 /**
  * CompactionService loads, decrypts, caches and mutates the encrypted
  * conversation compactions for the active conversation. Decryption happens here;
