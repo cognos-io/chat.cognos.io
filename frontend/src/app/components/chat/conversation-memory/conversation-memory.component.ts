@@ -3,9 +3,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import { EMPTY, catchError, finalize } from 'rxjs';
@@ -15,6 +17,7 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import {
   CognosButtonComponent,
   CognosDialogSurfaceComponent,
+  CognosIconComponent,
 } from '@cognos/ui-angular';
 
 import { Compaction, CompactionDurableMemory } from '@app/interfaces/compaction';
@@ -39,6 +42,7 @@ import { RedactionService } from '@app/services/redaction.service';
     ReactiveFormsModule,
     CognosDialogSurfaceComponent,
     CognosButtonComponent,
+    CognosIconComponent,
     TranslocoModule,
   ],
   templateUrl: './conversation-memory.component.html',
@@ -71,6 +75,34 @@ export class ConversationMemoryComponent implements OnInit {
     decisions: new FormControl('', { nonNullable: true }),
     openThreads: new FormControl('', { nonNullable: true }),
   });
+
+  // Whether PII redaction is on for this user — drives the "stored redacted"
+  // affordances.
+  readonly redactionEnabled = this._redaction.enabled;
+
+  // Live field values, so the detection below recomputes as the user types.
+  private readonly _factsValue = toSignal(this.form.controls.facts.valueChanges, {
+    initialValue: '',
+  });
+  private readonly _decisionsValue = toSignal(
+    this.form.controls.decisions.valueChanges,
+    {
+      initialValue: '',
+    },
+  );
+  private readonly _openThreadsValue = toSignal(
+    this.form.controls.openThreads.valueChanges,
+    { initialValue: '' },
+  );
+
+  // Sensitive values detected in each field that will be stored redacted.
+  readonly factsRedactions = computed(() => this.detectRedactions(this._factsValue()));
+  readonly decisionsRedactions = computed(() =>
+    this.detectRedactions(this._decisionsValue()),
+  );
+  readonly openThreadsRedactions = computed(() =>
+    this.detectRedactions(this._openThreadsValue()),
+  );
 
   ngOnInit(): void {
     const compaction = this.newestCompaction();
@@ -186,6 +218,25 @@ export class ConversationMemoryComponent implements OnInit {
       .split('\n')
       .map((line) => line.trim())
       .filter((line) => line.length > 0);
+  }
+
+  // detectRedactions returns the distinct sensitive values in `text` that will be
+  // stored redacted (empty when redaction is off). Values already written as
+  // placeholders are not re-flagged.
+  private detectRedactions(text: string): string[] {
+    if (!this._redaction.enabled() || !text) {
+      return [];
+    }
+    const seen = new Set<string>();
+    const values: string[] = [];
+    for (const candidate of this._redaction.detect(text)) {
+      const value = text.slice(candidate.start, candidate.end).trim();
+      if (value && !seen.has(value)) {
+        seen.add(value);
+        values.push(value);
+      }
+    }
+    return values;
   }
 
   // redactList re-redacts each item (when redaction is enabled), reusing existing

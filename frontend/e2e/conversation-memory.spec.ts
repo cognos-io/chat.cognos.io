@@ -175,6 +175,13 @@ test('edits a conversation memory and persists re-encrypted ciphertext', async (
   await expect(facts).toHaveValue('User prefers Postgres');
   await expect(page.locator('#memory-decisions')).toHaveValue('Adopt pgx');
 
+  // Typing a sensitive value surfaces a "stored redacted" affordance flagging
+  // the exact value that will be redacted.
+  await facts.fill('User prefers Postgres\nEmail ewan@climacrux.com');
+  const redactedNote = page.locator('.conversation-memory__redacted-note');
+  await expect(redactedNote).toBeVisible();
+  await expect(redactedNote.locator('mark')).toHaveText('ewan@climacrux.com');
+
   // Edit a fact and save.
   await facts.fill('User prefers Postgres\nDeploys on Infomaniak');
   await page.getByRole('button', { name: 'Save memory' }).click();

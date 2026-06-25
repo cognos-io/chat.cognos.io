@@ -1149,6 +1149,7 @@ export class MessageService {
       selectedPersona.systemPrompt,
       conversation,
       messages,
+      contextSummary,
     );
     const request = {
       messages,
@@ -1470,6 +1471,7 @@ export class MessageService {
         selectedPersona.systemPrompt,
         conversation,
         regenerationMessages,
+        contextSummary,
       ),
       parentMessageId: parentId,
       requestId,
@@ -1754,10 +1756,15 @@ export class MessageService {
     personaPrompt: string,
     conversation: Conversation | null | undefined,
     messages: ReadonlyArray<CompletionMessageRequest>,
+    contextSummary?: string,
   ): string {
     const instructions = this.redactProjectInstructions(conversation);
+    // The injected memory (contextSummary) can carry redaction placeholders even
+    // when no raw message does — so the model still needs the preserve-tokens
+    // instruction in that case.
     const hasRedactions =
       containsRedactionToken(instructions) ||
+      (!!contextSummary && containsRedactionToken(contextSummary)) ||
       messages.some((message) => containsRedactionToken(message.content));
     return [
       instructions,

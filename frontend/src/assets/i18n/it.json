@@ -830,7 +830,9 @@
       "saveError": "Impossibile salvare la memoria della conversazione. Riprova.",
       "addAction": "Aggiungi alla memoria",
       "added": "Aggiunto alla memoria",
-      "addError": "Impossibile aggiungere alla memoria. Riprova."
+      "addError": "Impossibile aggiungere alla memoria. Riprova.",
+      "redactionInfo": "I valori sensibili sono memorizzati oscurati — il modello vede solo segnaposto.",
+      "redactedNote": "Memorizzato oscurato:"
     }
   },
   "common": {

@@ -830,7 +830,9 @@
       "saveError": "Impossible d'enregistrer la mémoire de la conversation. Veuillez réessayer.",
       "addAction": "Ajouter à la mémoire",
       "added": "Ajouté à la mémoire",
-      "addError": "Impossible d'ajouter à la mémoire. Veuillez réessayer."
+      "addError": "Impossible d'ajouter à la mémoire. Veuillez réessayer.",
+      "redactionInfo": "Les valeurs sensibles sont stockées expurgées — le modèle ne voit que des espaces réservés.",
+      "redactedNote": "Stocké expurgé :"
     }
   },
   "common": {

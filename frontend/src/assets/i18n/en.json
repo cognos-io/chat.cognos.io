@@ -830,7 +830,9 @@
       "saveError": "Couldn't save the conversation memory. Please try again.",
       "addAction": "Add to memory",
       "added": "Added to memory",
-      "addError": "Couldn't add to memory. Please try again."
+      "addError": "Couldn't add to memory. Please try again.",
+      "redactionInfo": "Sensitive values are stored redacted — the model only ever sees placeholders.",
+      "redactedNote": "Stored redacted:"
     }
   },
   "common": {

@@ -830,7 +830,9 @@
       "saveError": "Não foi possível guardar a memória da conversa. Tente novamente.",
       "addAction": "Adicionar à memória",
       "added": "Adicionado à memória",
-      "addError": "Não foi possível adicionar à memória. Tente novamente."
+      "addError": "Não foi possível adicionar à memória. Tente novamente.",
+      "redactionInfo": "Os valores sensíveis são armazenados ocultados — o modelo só vê marcadores de posição.",
+      "redactedNote": "Armazenado ocultado:"
     }
   },
   "common": {

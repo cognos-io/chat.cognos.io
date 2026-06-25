@@ -9,6 +9,13 @@
     <div class="conversation-memory">
       <p class="conversation-memory__intro">{{ t('chat.memory.intro') }}</p>
 
+      @if (redactionEnabled()) {
+        <p class="conversation-memory__redaction-info">
+          <cog-icon name="shield-check" [size]="14" tone="current" />
+          {{ t('chat.memory.redactionInfo') }}
+        </p>
+      }
+
       <form [formGroup]="form" class="conversation-memory__form">
         <div class="conversation-memory__field">
           <label for="memory-facts">{{ t('chat.memory.facts') }}</label>
@@ -18,6 +25,14 @@
             formControlName="facts"
             [placeholder]="t('chat.memory.linePlaceholder')"
           ></textarea>
+          @if (factsRedactions().length > 0) {
+            <p class="conversation-memory__redacted-note">
+              <span>{{ t('chat.memory.redactedNote') }}</span>
+              @for (value of factsRedactions(); track value) {
+                <mark>{{ value }}</mark>
+              }
+            </p>
+          }
         </div>
 
         <div class="conversation-memory__field">
@@ -28,6 +43,14 @@
             formControlName="decisions"
             [placeholder]="t('chat.memory.linePlaceholder')"
           ></textarea>
+          @if (decisionsRedactions().length > 0) {
+            <p class="conversation-memory__redacted-note">
+              <span>{{ t('chat.memory.redactedNote') }}</span>
+              @for (value of decisionsRedactions(); track value) {
+                <mark>{{ value }}</mark>
+              }
+            </p>
+          }
         </div>
 
         <div class="conversation-memory__field">
@@ -38,6 +61,14 @@
             formControlName="openThreads"
             [placeholder]="t('chat.memory.linePlaceholder')"
           ></textarea>
+          @if (openThreadsRedactions().length > 0) {
+            <p class="conversation-memory__redacted-note">
+              <span>{{ t('chat.memory.redactedNote') }}</span>
+              @for (value of openThreadsRedactions(); track value) {
+                <mark>{{ value }}</mark>
+              }
+            </p>
+          }
         </div>
       </form>
 

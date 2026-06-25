@@ -830,7 +830,9 @@
       "saveError": "Das Gesprächsgedächtnis konnte nicht gespeichert werden. Bitte erneut versuchen.",
       "addAction": "Zum Gedächtnis hinzufügen",
       "added": "Zum Gedächtnis hinzugefügt",
-      "addError": "Konnte nicht zum Gedächtnis hinzugefügt werden. Bitte erneut versuchen."
+      "addError": "Konnte nicht zum Gedächtnis hinzugefügt werden. Bitte erneut versuchen.",
+      "redactionInfo": "Sensible Werte werden redigiert gespeichert — das Modell sieht nur Platzhalter.",
+      "redactedNote": "Redigiert gespeichert:"
     }
   },
   "common": {

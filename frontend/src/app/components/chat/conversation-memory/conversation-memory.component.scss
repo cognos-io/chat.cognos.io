@@ -68,3 +68,30 @@
   display: grid;
   gap: var(--cog-space-50);
 }
+
+.conversation-memory__redaction-info {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-050);
+  margin: 0;
+  color: var(--cog-text-subtle);
+  font-size: var(--cog-fs-caption);
+  line-height: var(--cog-lh-caption);
+}
+
+.conversation-memory__redacted-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cog-space-050);
+  margin: var(--cog-space-050) 0 0;
+  color: var(--cog-text-subtle);
+  font-size: var(--cog-fs-caption);
+}
+
+.conversation-memory__redacted-note mark {
+  background: var(--cog-loz-purple-bg);
+  color: var(--cog-text);
+  border-radius: var(--cog-radius-xs);
+  padding: 0 4px;
+}
