@@ -1,0 +1,78 @@
+<cog-dialog-surface
+  *transloco="let t"
+  [title]="t('chat.memory.title')"
+  [footer]="true"
+  [width]="440"
+  (close)="close()"
+>
+  @if (hasMemory()) {
+    <div class="conversation-memory">
+      <p class="conversation-memory__intro">{{ t('chat.memory.intro') }}</p>
+
+      <form [formGroup]="form" class="conversation-memory__form">
+        <div class="conversation-memory__field">
+          <label for="memory-facts">{{ t('chat.memory.facts') }}</label>
+          <textarea
+            id="memory-facts"
+            rows="4"
+            formControlName="facts"
+            [placeholder]="t('chat.memory.linePlaceholder')"
+          ></textarea>
+        </div>
+
+        <div class="conversation-memory__field">
+          <label for="memory-decisions">{{ t('chat.memory.decisions') }}</label>
+          <textarea
+            id="memory-decisions"
+            rows="4"
+            formControlName="decisions"
+            [placeholder]="t('chat.memory.linePlaceholder')"
+          ></textarea>
+        </div>
+
+        <div class="conversation-memory__field">
+          <label for="memory-open-threads">{{ t('chat.memory.openThreads') }}</label>
+          <textarea
+            id="memory-open-threads"
+            rows="4"
+            formControlName="openThreads"
+            [placeholder]="t('chat.memory.linePlaceholder')"
+          ></textarea>
+        </div>
+      </form>
+
+      @if (glossary().length > 0) {
+        <div class="conversation-memory__readonly">
+          <h3>{{ t('chat.memory.glossary') }}</h3>
+          <ul>
+            @for (entry of glossary(); track entry.term) {
+              <li>
+                <strong>{{ entry.term }}</strong> — {{ entry.note }}
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (narrative()) {
+        <div class="conversation-memory__readonly">
+          <h3>{{ t('chat.memory.narrative') }}</h3>
+          <p>{{ narrative() }}</p>
+        </div>
+      }
+    </div>
+  } @else {
+    <p class="conversation-memory__empty">{{ t('chat.memory.empty') }}</p>
+  }
+
+  <div cogDialogFooter>
+    <cog-button appearance="subtle" (click)="close()">
+      {{ t('common.cancel') }}
+    </cog-button>
+    @if (hasMemory()) {
+      <cog-button appearance="primary" [disabled]="saving()" (click)="save()">
+        {{ t('chat.memory.save') }}
+      </cog-button>
+    }
+  </div>
+</cog-dialog-surface>

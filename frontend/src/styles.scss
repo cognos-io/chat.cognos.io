@@ -52,6 +52,17 @@ a {
   outline: 0;
 }
 
+// Right-anchored full-height drawer variant (e.g. the conversation memory
+// panel). Paired with a right global position strategy when opened.
+.cog-dialog-panel--drawer {
+  max-width: min(460px, 100vw);
+  height: 100vh;
+}
+
+.cog-dialog-panel--drawer .cdk-dialog-container {
+  height: 100%;
+}
+
 .glass {
   backdrop-filter: blur(200px);
 }

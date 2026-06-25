@@ -580,7 +580,8 @@
       "temporaryChat": "Chat temporal",
       "hideValues": "Ocultar valores sensibles",
       "showValues": "Mostrar valores sensibles",
-      "duplicate": "Duplicar chat"
+      "duplicate": "Duplicar chat",
+      "memory": "Memoria"
     },
     "icebreakers": {
       "items": {
@@ -814,6 +815,19 @@
       "titleSuffix": "(copia)",
       "loadingTitle": "Duplicando chat…",
       "loadingWarning": "Mantén esta pestaña abierta. Cerrarla o recargarla puede cancelar la duplicación."
+    },
+    "memory": {
+      "title": "Memoria de la conversación",
+      "intro": "Cognos resume los mensajes antiguos para mantener este chat dentro de los límites del modelo. Revisa y edita lo que recuerda: un elemento por línea.",
+      "facts": "Hechos",
+      "decisions": "Decisiones",
+      "openThreads": "Temas pendientes",
+      "glossary": "Glosario",
+      "narrative": "Resumen reciente",
+      "linePlaceholder": "Un elemento por línea",
+      "empty": "Todavía no se ha compactado nada en esta conversación.",
+      "save": "Guardar memoria",
+      "saveError": "No se pudo guardar la memoria de la conversación. Inténtalo de nuevo."
     }
   },
   "common": {

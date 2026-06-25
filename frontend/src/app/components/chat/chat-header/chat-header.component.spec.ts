@@ -14,6 +14,7 @@ import { KeyPair } from '@app/interfaces/key-pair';
 import { Message } from '@app/interfaces/message';
 import { Project } from '@app/interfaces/project';
 import { AuthService } from '@app/services/auth.service';
+import { CompactionService } from '@app/services/compaction.service';
 import { ConversationDuplicateService } from '@app/services/conversation-duplicate.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
@@ -118,6 +119,7 @@ describe('ChatHeaderComponent', () => {
         { provide: ExportService, useValue: exportService },
         { provide: CognosToastService, useValue: toastService },
         { provide: Dialog, useValue: { open: dialogOpen } },
+        { provide: CompactionService, useValue: { compactionsFor: () => [] } },
         {
           provide: ConversationDuplicateService,
           useValue: duplicateService,

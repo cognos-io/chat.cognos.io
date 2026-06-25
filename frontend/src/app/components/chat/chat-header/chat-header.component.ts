@@ -1,4 +1,5 @@
 import { Dialog } from '@angular/cdk/dialog';
+import { Overlay } from '@angular/cdk/overlay';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -27,11 +28,13 @@ import {
   CognosToastService,
 } from '@cognos/ui-angular';
 
+import { ConversationMemoryComponent } from '@app/components/chat/conversation-memory/conversation-memory.component';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 import { ShareConversationDialogComponent } from '@app/components/share-conversation-dialog/share-conversation-dialog.component';
 import { Conversation } from '@app/interfaces/conversation';
 import { AuthService } from '@app/services/auth.service';
+import { CompactionService } from '@app/services/compaction.service';
 import { ConversationDuplicateService } from '@app/services/conversation-duplicate.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
@@ -48,6 +51,7 @@ type HeaderMenuAction =
   | 'rename'
   | 'export'
   | 'duplicate'
+  | 'memory'
   | 'toggle-redaction-visibility'
   | 'clear'
   | 'delete';
@@ -83,6 +87,8 @@ export class ChatHeaderComponent {
   private readonly _transloco = inject(TranslocoService);
   private readonly _projectService = inject(ProjectService);
   private readonly _redaction = inject(RedactionService);
+  private readonly _compaction = inject(CompactionService);
+  private readonly _overlay = inject(Overlay);
   private readonly _export = inject(ExportService);
   private readonly _toast = inject(CognosToastService);
   private readonly _duplicate = inject(ConversationDuplicateService);
@@ -213,6 +219,15 @@ export class ChatHeaderComponent {
       this._messageService.messages().length > 0,
   );
 
+  // Whether the active conversation has at least one compaction — the Memory
+  // control is offered only then, so short chats stay clean (spec §5.1).
+  private readonly _hasCompaction = computed(() => {
+    const conversationId = this._conversationId();
+    return conversationId
+      ? this._compaction.compactionsFor(conversationId).length > 0
+      : false;
+  });
+
   private readonly _menuEntries = computed<HeaderMenuEntry[]>(() => {
     const entries: HeaderMenuEntry[] = [];
     const hasConversation = this._conversationId() !== null;
@@ -254,6 +269,16 @@ export class ChatHeaderComponent {
           disabled: conversationId
             ? this._duplicate.isDuplicatingSource(conversationId)
             : false,
+        });
+      }
+
+      // Conversation memory editor — only when an encrypted compaction exists
+      // for this chat.
+      if (this._hasCompaction()) {
+        entries.push({
+          action: 'memory',
+          title: this._transloco.translate('chat.header.memory'),
+          icon: 'brain',
         });
       }
 
@@ -348,7 +373,29 @@ export class ChatHeaderComponent {
       case 'duplicate':
         this.onDuplicate();
         break;
+      case 'memory':
+        this.onMemory();
+        break;
     }
+  }
+
+  // onMemory opens the conversation-memory editor as a right-anchored drawer.
+  private onMemory() {
+    const conversationId = this._conversationId();
+    if (!conversationId) {
+      return;
+    }
+    this._dialog.open(ConversationMemoryComponent, {
+      backdropClass: cognosDialogOptions.backdropClass,
+      panelClass: ['cog-dialog-panel', 'cog-dialog-panel--drawer'],
+      positionStrategy: this._overlay
+        .position()
+        .global()
+        .right('0')
+        .top('0')
+        .bottom('0'),
+      data: { conversationId },
+    });
   }
 
   private onDuplicate() {

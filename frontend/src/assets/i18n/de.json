@@ -580,7 +580,8 @@
       "temporaryChat": "Temporärer Chat",
       "hideValues": "Sensible Werte ausblenden",
       "showValues": "Sensible Werte anzeigen",
-      "duplicate": "Chat duplizieren"
+      "duplicate": "Chat duplizieren",
+      "memory": "Gedächtnis"
     },
     "icebreakers": {
       "items": {
@@ -814,6 +815,19 @@
       "titleSuffix": "(Kopie)",
       "loadingTitle": "Chat wird dupliziert…",
       "loadingWarning": "Lassen Sie diesen Tab geöffnet. Schließen oder Neuladen kann das Duplizieren abbrechen."
+    },
+    "memory": {
+      "title": "Gesprächsgedächtnis",
+      "intro": "Cognos fasst ältere Nachrichten zusammen, damit dieser Chat im Modelllimit bleibt. Prüfen und bearbeiten Sie, was gespeichert wird – ein Eintrag pro Zeile.",
+      "facts": "Fakten",
+      "decisions": "Entscheidungen",
+      "openThreads": "Offene Punkte",
+      "glossary": "Glossar",
+      "narrative": "Aktuelle Zusammenfassung",
+      "linePlaceholder": "Ein Eintrag pro Zeile",
+      "empty": "In diesem Gespräch wurde noch nichts komprimiert.",
+      "save": "Gedächtnis speichern",
+      "saveError": "Das Gesprächsgedächtnis konnte nicht gespeichert werden. Bitte erneut versuchen."
     }
   },
   "common": {

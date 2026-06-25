@@ -13,6 +13,7 @@ import { Message } from '@app/interfaces/message';
 
 import { AuthService } from '../../services/auth.service';
 import { BillingService } from '../../services/billing.service';
+import { CompactionService } from '../../services/compaction.service';
 import { ConversationDuplicateService } from '../../services/conversation-duplicate.service';
 import { ConversationService } from '../../services/conversation.service';
 import { DeviceService } from '../../services/device.service';
@@ -117,6 +118,7 @@ describe('ChatComponent', () => {
           },
         },
         { provide: ConversationService, useValue: conversationService },
+        { provide: CompactionService, useValue: { compactionsFor: () => [] } },
         {
           provide: ConversationDuplicateService,
           useValue: { isDuplicatingSource: () => false, duplicate: vi.fn() },

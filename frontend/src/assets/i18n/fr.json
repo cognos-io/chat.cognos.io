@@ -580,7 +580,8 @@
       "temporaryChat": "Discussion temporaire",
       "hideValues": "Masquer les valeurs sensibles",
       "showValues": "Afficher les valeurs sensibles",
-      "duplicate": "Dupliquer la conversation"
+      "duplicate": "Dupliquer la conversation",
+      "memory": "Mémoire"
     },
     "icebreakers": {
       "items": {
@@ -814,6 +815,19 @@
       "titleSuffix": "(copie)",
       "loadingTitle": "Duplication de la conversation…",
       "loadingWarning": "Gardez cet onglet ouvert. Fermer ou recharger la page peut annuler la duplication."
+    },
+    "memory": {
+      "title": "Mémoire de la conversation",
+      "intro": "Cognos résume les anciens messages pour que cette conversation reste dans les limites du modèle. Vérifiez et modifiez ce dont il se souvient — un élément par ligne.",
+      "facts": "Faits",
+      "decisions": "Décisions",
+      "openThreads": "Sujets en cours",
+      "glossary": "Glossaire",
+      "narrative": "Résumé récent",
+      "linePlaceholder": "Un élément par ligne",
+      "empty": "Rien n'a encore été compacté dans cette conversation.",
+      "save": "Enregistrer la mémoire",
+      "saveError": "Impossible d'enregistrer la mémoire de la conversation. Veuillez réessayer."
     }
   },
   "common": {
