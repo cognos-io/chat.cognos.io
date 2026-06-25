@@ -21,6 +21,7 @@ import {
   MODEL_FILTER_CHIPS,
   QuickFilter,
   buildSearchSynonyms,
+  formatContextWindow,
   matchesQuickFilter,
   modelMatchesSearch,
 } from '@app/utils/model-discovery';
@@ -905,17 +906,9 @@ export class DataProcessingComponent {
       : model.privacyTier;
   }
 
-  // Human-friendly context window, e.g. 128000 → "128K", 1000000 → "1M".
-  protected formatContext(tokens: number): string {
-    if (tokens >= 1_000_000) {
-      const millions = tokens / 1_000_000;
-      return `${Number.isInteger(millions) ? millions : millions.toFixed(1)}M`;
-    }
-    if (tokens >= 1000) {
-      return `${Math.round(tokens / 1000)}K`;
-    }
-    return `${tokens}`;
-  }
+  // Human-friendly context window (e.g. 128000 → "128K"). Shared with the
+  // composer selector so the two surfaces never show the same model differently.
+  protected readonly formatContext = formatContextWindow;
 
   // Models eligible at a candidate tier = those whose own tier is at or below it
   // (ch_only ⊆ eu ⊆ global). Computed from the catalogue we already hold.

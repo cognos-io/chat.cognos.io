@@ -388,6 +388,12 @@ describe('resolveDefaultModel', () => {
     expect(resolveDefaultModel({ models: plain })?.id).toBe('y');
   });
 
+  it('falls back to an eligible model when every eligible model is hidden', () => {
+    // Hiding all usable models must not leave chat stuck on an ineligible one.
+    const all = [makeModel({ id: 'a' }), makeModel({ id: 'b' })];
+    expect(resolveDefaultModel({ models: all, hiddenIds: ['a', 'b'] })?.id).toBe('a');
+  });
+
   it('returns undefined when no eligible model exists', () => {
     const none = [makeModel({ id: 'x', isEligible: false })];
     expect(resolveDefaultModel({ models: none })).toBeUndefined();

@@ -216,4 +216,71 @@ describe('UserPreferencesService', () => {
     expect(recent.length).toBe(8);
     expect(new Set(recent).size).toBe(recent.length);
   });
+
+  it('hides, unhides and resets hidden models, persisting each change', async () => {
+    // Start from an existing record so every mutation is an update (the first
+    // mutation on a fresh user would otherwise create the record).
+    api.getUserPreferences.mockReturnValue(
+      of({
+        id: 'prefs-1',
+        data: Base64.fromUint8Array(
+          serializeUserPreferencesData({ pinnedConversations: [], hiddenModels: [] }),
+        ),
+      }),
+    );
+    api.updateUserPreferences.mockImplementation(
+      (_recordId: string, payload: { data: string }) =>
+        of({ id: 'prefs-1', data: payload.data }),
+    );
+
+    emitKeyPair(currentKeyPair);
+    await flushPromises();
+
+    service.hideModel('model-x');
+    await flushPromises();
+    expect(service.isModelHidden('model-x')).toBe(true);
+    expect(
+      decodePreferences(api.updateUserPreferences.mock.calls.at(-1)![1]).hiddenModels,
+    ).toEqual(['model-x']);
+
+    service.unhideModel('model-x');
+    await flushPromises();
+    expect(service.isModelHidden('model-x')).toBe(false);
+    expect(
+      decodePreferences(api.updateUserPreferences.mock.calls.at(-1)![1]).hiddenModels,
+    ).toEqual([]);
+
+    service.hideModel('model-y');
+    await flushPromises();
+    service.resetHiddenModels();
+    await flushPromises();
+    expect(service.hiddenModels()).toEqual([]);
+    expect(
+      decodePreferences(api.updateUserPreferences.mock.calls.at(-1)![1]).hiddenModels,
+    ).toEqual([]);
+  });
+
+  it('keeps recently used models most-recent-first, de-duplicated and capped', async () => {
+    api.getUserPreferences.mockReturnValue(throwError(() => ({ status: 404 })));
+    api.createUserPreferences.mockImplementation((payload: { data: string }) =>
+      of({ id: 'prefs-1', data: payload.data }),
+    );
+    api.updateUserPreferences.mockImplementation(
+      (_recordId: string, payload: { data: string }) =>
+        of({ id: 'prefs-1', data: payload.data }),
+    );
+
+    emitKeyPair(currentKeyPair);
+    await flushPromises();
+
+    for (const id of ['a', 'b', 'a', 'c', 'd', 'e', 'f', 'g', 'h', 'i']) {
+      service.markRecentModel(id);
+      await flushPromises();
+    }
+
+    const recent = service.recentModels();
+    expect(recent[0]).toBe('i');
+    expect(recent.length).toBe(8);
+    expect(new Set(recent).size).toBe(recent.length);
+  });
 });

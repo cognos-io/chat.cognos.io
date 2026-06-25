@@ -351,9 +351,7 @@ export class ProjectSettingsDialogComponent {
 
   // Eligible models for the project-default picker. Ineligible (tier-locked)
   // models are excluded so a member can't pin a default they can't use.
-  protected readonly eligibleModels = computed(() =>
-    this._models.modelList().filter((model) => model.isEligible),
-  );
+  protected readonly eligibleModels = this._models.eligibleModels;
 
   private readonly _project = computed(() =>
     this._projects.projects().find((p) => p.record.id === this._data.projectId),

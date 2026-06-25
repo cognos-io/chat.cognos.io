@@ -18,9 +18,6 @@ export interface ModelCapabilityMetadata {
   // are explicit here rather than guessed.
   fast: boolean;
   powerful: boolean;
-  // i18n keys (never literal copy) for the strength pills shown on the row.
-  // Resolved through Transloco at render time.
-  strengthKeys: string[];
   // Language-neutral extra search terms (e.g. a product shorthand). Per-language
   // synonyms live in the i18n synonym layer, not here.
   aliases: string[];
@@ -31,7 +28,6 @@ export const EMPTY_MODEL_CAPABILITY_METADATA: ModelCapabilityMetadata = {
   recommendedDefaultFor: [],
   fast: false,
   powerful: false,
-  strengthKeys: [],
   aliases: [],
 };
 

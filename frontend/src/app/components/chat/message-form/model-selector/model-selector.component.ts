@@ -28,6 +28,7 @@ import { ModelCostTier, deriveModelCostTier } from '@app/utils/model-cost-tier';
 import {
   MODEL_FILTER_CHIPS,
   QuickFilter,
+  SearchContext,
   buildSearchSynonyms,
   flattenGroups,
   formatContextWindow,
@@ -171,7 +172,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
 
         @if (isEmpty()) {
           <div class="model-selector__empty">
-            <p>{{ t('chat.models.search.noResults') }}</p>
+            <p>{{ t(emptyMessageKey()) }}</p>
             @if (hasHiddenMatches() && !showHidden()) {
               <button
                 type="button"
@@ -621,6 +622,22 @@ export class ModelSelectorComponent {
       ),
   );
 
+  // Search index context, shared by groups() and hasHiddenMatches() so a hidden
+  // model that matches only on its localised cost-tier/region label is found by
+  // both (otherwise "show hidden matches" wouldn't surface it).
+  private searchContext(): SearchContext {
+    return {
+      costTierLabel: (model) =>
+        this._transloco.translate('chat.models.costTier.' + this.costTier(model)),
+      synonyms: this._synonyms,
+      extraTerms: (model) => [
+        this._transloco.translate(
+          'account.dataProcessing.regionBadge.' + model.privacyTier,
+        ),
+      ],
+    };
+  }
+
   protected readonly groups = computed(() =>
     orderModels({
       models: this._modelService.modelList(),
@@ -631,16 +648,7 @@ export class ModelSelectorComponent {
       quickFilter: this.activeFilter(),
       query: this.searchQuery(),
       showHidden: this.showHidden(),
-      searchContext: {
-        costTierLabel: (model) =>
-          this._transloco.translate('chat.models.costTier.' + this.costTier(model)),
-        synonyms: this._synonyms,
-        extraTerms: (model) => [
-          this._transloco.translate(
-            'account.dataProcessing.regionBadge.' + model.privacyTier,
-          ),
-        ],
-      },
+      searchContext: this.searchContext(),
     }),
   );
 
@@ -665,7 +673,7 @@ export class ModelSelectorComponent {
           quickFilter: this.activeFilter(),
           query: this.searchQuery(),
           showHidden: true,
-          searchContext: { synonyms: this._synonyms },
+          searchContext: this.searchContext(),
         }),
       ).length > 0
     );
@@ -688,6 +696,16 @@ export class ModelSelectorComponent {
           ?.focus();
       }
     });
+  }
+
+  // When the image tool is active and nothing matches, explain that no model can
+  // generate images rather than the generic "clear your search" copy — unless
+  // the user is actually searching, where the generic message is accurate.
+  protected emptyMessageKey(): string {
+    return this.requiredCapability() === 'image_generation' &&
+      !this.searchQuery().trim()
+      ? 'chat.models.noImageModels'
+      : 'chat.models.search.noResults';
   }
 
   protected onSearch(event: Event): void {

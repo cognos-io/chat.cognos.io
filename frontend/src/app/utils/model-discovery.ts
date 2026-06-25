@@ -411,8 +411,10 @@ function isUsableDefault(
 
 // resolveDefaultModel implements the §5.6/§5.7 resolution order:
 // session pick → project default → user default → recommended eligible
-// (purpose-aware) → first eligible visible model. Returns undefined only when
-// no eligible model exists at all.
+// (purpose-aware) → first eligible visible → first eligible (even if hidden).
+// The last step keeps chat usable when the user has hidden every model they can
+// use: an eligible-but-hidden model still works, and beats an ineligible one.
+// Returns undefined only when no eligible model exists at all.
 export function resolveDefaultModel(input: ResolveDefaultInput): Model | undefined {
   const meta = input.meta ?? defaultMetadata;
   const hidden = new Set(input.hiddenIds ?? []);
@@ -448,8 +450,16 @@ export function resolveDefaultModel(input: ResolveDefaultInput): Model | undefin
   if (anyRecommended) {
     return anyRecommended;
   }
+  if (eligibleVisible[0]) {
+    return eligibleVisible[0];
+  }
 
-  return eligibleVisible[0];
+  // Everything eligible is hidden: still pick an eligible model so the composer
+  // stays usable (the user can unhide from settings) rather than falling to an
+  // ineligible catalogue entry.
+  return input.models.find(
+    (model) => model.isEligible && modelSupportsCapability(model, capability),
+  );
 }
 
 // ---- recent models ---------------------------------------------------------

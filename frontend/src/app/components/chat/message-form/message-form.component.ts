@@ -1292,12 +1292,18 @@ export class MessageFormComponent {
     // behind it doesn't scroll under the user's thumb (spec §4.5). The sheet
     // itself traps focus via cdkTrapFocus and restores it to the trigger on
     // close. Desktop uses the CDK overlay, which manages this itself.
-    effect(() => {
+    effect((onCleanup) => {
       if (!isPlatformBrowser(this._platformId)) {
         return;
       }
       const locked = this.isMobile() && this.modelSelectorOpen();
       document.body.style.overflow = locked ? 'hidden' : '';
+      // Always release the lock on teardown (component destroyed mid-open, e.g.
+      // the footer link routes to Settings while the sheet is up) so the next
+      // page isn't left unscrollable.
+      onCleanup(() => {
+        document.body.style.overflow = '';
+      });
     });
   }
 

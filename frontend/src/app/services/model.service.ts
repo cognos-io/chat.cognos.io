@@ -138,6 +138,11 @@ export class ModelService {
 
   readonly selectedModel = this.state.selectedModel;
   readonly modelList = this.state.modelList;
+  // Models the user may actually use (eligible for their privacy tier). Shared
+  // so "eligible" is defined in one place across the pickers and settings.
+  readonly eligibleModels = computed(() =>
+    this.state.modelList().filter((model) => model.isEligible),
+  );
   readonly selectModel = this.state.selectModel;
   readonly groupedModels = this.state.groupedModels;
   readonly privacyTier = this.state.privacyTier;

@@ -20,15 +20,14 @@ describe('modelCapabilityMetadata', () => {
     (MODEL_CAPABILITY_METADATA as Record<string, unknown>)[id] = {
       recommended: true,
       recommendedDefaultFor: ['chat'],
-      strengthKeys: ['chat.models.strengths.everyday'],
+      fast: true,
     };
     try {
       expect(modelCapabilityMetadata(id)).toEqual({
         recommended: true,
         recommendedDefaultFor: ['chat'],
-        fast: false,
+        fast: true,
         powerful: false,
-        strengthKeys: ['chat.models.strengths.everyday'],
         aliases: [],
       });
     } finally {

@@ -106,14 +106,15 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 			}
 		}
 
-		// Image generation is gated on a curated transport: we only advertise a
-		// model as image-capable when Requesty reports it AND we know how to
-		// route its image requests (images_api vs chat_completions). A newly
-		// image-capable model stays off until an operator sets the transport,
-		// then flips on automatically here — no broken routing in between.
-		wantImage := imageGenerationEnabled(model, record.GetString("image_generation_transport"))
-		if record.GetBool("supports_image_generation") != wantImage {
-			record.Set("supports_image_generation", wantImage)
+		// Image generation: the sync only ever turns it ON, never OFF. A model
+		// becomes image-capable when Requesty reports it AND a curated transport
+		// is set (so we know how to route images_api vs chat_completions), then
+		// flips on automatically — no broken routing in between. We never write
+		// false, so a transient omission in Requesty's data can't disable a
+		// curated image model; operators disable it manually.
+		if imageGenerationEnabled(model, record.GetString("image_generation_transport")) &&
+			!record.GetBool("supports_image_generation") {
+			record.Set("supports_image_generation", true)
 			changed = true
 		}
 
