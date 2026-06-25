@@ -63,6 +63,39 @@ a {
   height: 100%;
 }
 
+// Full-screen bottom sheet that slides up — used for the conversation memory on
+// mobile, paired with a bottom global position strategy.
+.cog-dialog-panel--sheet {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100dvh;
+  animation: cog-dialog-sheet-up var(--cog-dur-fast, 160ms)
+    var(--cog-ease-standard, ease) both;
+}
+
+.cog-dialog-panel--sheet .cdk-dialog-container,
+.cog-dialog-panel--sheet cog-dialog-surface {
+  height: 100%;
+}
+
+// Override the surface's intrinsic max width/rounded corners so it fills the
+// screen edge to edge (specificity beats the component's own scoped rule).
+.cdk-overlay-pane.cog-dialog-panel--sheet .cog-dialog-surface {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+@keyframes cog-dialog-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
 .glass {
   backdrop-filter: blur(200px);
 }

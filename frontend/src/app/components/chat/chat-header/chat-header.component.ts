@@ -379,21 +379,23 @@ export class ChatHeaderComponent {
     }
   }
 
-  // onMemory opens the conversation-memory editor as a right-anchored drawer.
+  // onMemory opens the conversation-memory editor: a right-anchored drawer on
+  // desktop, and a full-screen sheet that slides up from the bottom on mobile.
   private onMemory() {
     const conversationId = this._conversationId();
     if (!conversationId) {
       return;
     }
+    const mobile = this._device.isMobile();
+    const position = this._overlay.position().global();
     this._dialog.open(ConversationMemoryComponent, {
       backdropClass: cognosDialogOptions.backdropClass,
-      panelClass: ['cog-dialog-panel', 'cog-dialog-panel--drawer'],
-      positionStrategy: this._overlay
-        .position()
-        .global()
-        .right('0')
-        .top('0')
-        .bottom('0'),
+      panelClass: mobile
+        ? ['cog-dialog-panel', 'cog-dialog-panel--sheet']
+        : ['cog-dialog-panel', 'cog-dialog-panel--drawer'],
+      positionStrategy: mobile
+        ? position.bottom('0')
+        : position.right('0').top('0').bottom('0'),
       data: { conversationId },
     });
   }
