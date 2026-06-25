@@ -181,6 +181,10 @@ interface ApiModel {
   supports_tool_calling?: boolean;
   supports_web_search?: boolean;
   supports_computer_use?: boolean;
+  eligible_for_compaction?: boolean;
+  supports_structured_output?: boolean;
+  supports_cache_hints?: boolean;
+  approx_chars_per_token?: number;
   reasoning_efforts?: string[];
   default_reasoning_effort?: string;
   is_eligible: boolean;
@@ -1506,6 +1510,10 @@ export class CognosApiService {
       supportsToolCalling: model.supports_tool_calling ?? false,
       supportsWebSearch: model.supports_web_search ?? false,
       supportsComputerUse: model.supports_computer_use ?? false,
+      eligibleForCompaction: model.eligible_for_compaction ?? false,
+      supportsStructuredOutput: model.supports_structured_output ?? false,
+      supportsCacheHints: model.supports_cache_hints ?? false,
+      approxCharsPerToken: model.approx_chars_per_token ?? 0,
       reasoningEfforts: model.reasoning_efforts ?? [],
       defaultReasoningEffort: model.default_reasoning_effort,
       isEligible: model.is_eligible,

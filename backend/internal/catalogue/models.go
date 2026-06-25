@@ -66,7 +66,34 @@ type Model struct {
 	SupportsToolCalling bool `json:"supports_tool_calling"`
 	SupportsWebSearch   bool `json:"supports_web_search"`
 	SupportsComputerUse bool `json:"supports_computer_use"`
+	// Compaction capability metadata (spec docs/specs/client-side-compaction.md
+	// §6.4). Compaction reads these capabilities and never branches on model IDs.
+	// EligibleForCompaction gates whether the model may be used to compact at all.
+	EligibleForCompaction bool `json:"eligible_for_compaction"`
+	// SupportsStructuredOutput enables native JSON-schema / forced-tool output;
+	// when false the compaction handler falls back to delimited-text parsing.
+	SupportsStructuredOutput bool `json:"supports_structured_output"`
+	// SupportsCacheHints means the provider accepts explicit cache_control
+	// breakpoints; when false we rely on stable-prefix layout / auto-cache.
+	SupportsCacheHints bool `json:"supports_cache_hints"`
+	// ApproxCharsPerToken is a per-family heuristic for rough draft token
+	// estimates. 0 means "use DefaultApproxCharsPerToken".
+	ApproxCharsPerToken int  `json:"approx_chars_per_token"`
 	IsActive            bool `json:"-"`
+}
+
+// DefaultApproxCharsPerToken is the fallback chars-per-token ratio used when a
+// model does not declare its own. Deliberately conservative (lower ratio => more
+// estimated tokens => compact a little earlier rather than overflow context).
+const DefaultApproxCharsPerToken = 3
+
+// CharsPerToken returns the model's declared chars-per-token heuristic, falling
+// back to DefaultApproxCharsPerToken when unset.
+func (m Model) CharsPerToken() int {
+	if m.ApproxCharsPerToken > 0 {
+		return m.ApproxCharsPerToken
+	}
+	return DefaultApproxCharsPerToken
 }
 
 // AcceptsReasoningEffort reports whether the given effort tier is one this model

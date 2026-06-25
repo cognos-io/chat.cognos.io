@@ -38,6 +38,14 @@ export const Model = z.object({
   supportsToolCalling: z.boolean().default(false),
   supportsWebSearch: z.boolean().default(false),
   supportsComputerUse: z.boolean().default(false),
+  // Compaction capability metadata (spec docs/specs/client-side-compaction.md
+  // §6.4). The planner reads these capabilities and never branches on model IDs.
+  eligibleForCompaction: z.boolean().default(false),
+  supportsStructuredOutput: z.boolean().default(false),
+  supportsCacheHints: z.boolean().default(false),
+  // Per-family chars-per-token heuristic for rough draft estimates. 0 => use the
+  // global default.
+  approxCharsPerToken: z.number().default(0),
   // Ordered reasoning-effort tiers this model accepts (e.g. ['off','low',
   // 'medium','high']). Empty means the model takes no effort parameter, so the
   // composer shows no effort selector for it.
@@ -79,6 +87,10 @@ export const loadingModel: Model = {
   supportsToolCalling: false,
   supportsWebSearch: false,
   supportsComputerUse: false,
+  eligibleForCompaction: false,
+  supportsStructuredOutput: false,
+  supportsCacheHints: false,
+  approxCharsPerToken: 0,
   reasoningEfforts: [],
   isEligible: false,
 };

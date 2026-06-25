@@ -107,6 +107,10 @@ func (r *PocketBaseRepo) ActiveModels(_ context.Context) ([]Model, error) {
 			SupportsToolCalling:      record.GetBool("supports_tool_calling"),
 			SupportsWebSearch:        record.GetBool("supports_web_search"),
 			SupportsComputerUse:      record.GetBool("supports_computer_use"),
+			EligibleForCompaction:    record.GetBool("eligible_for_compaction"),
+			SupportsStructuredOutput: record.GetBool("supports_structured_output"),
+			SupportsCacheHints:       record.GetBool("supports_cache_hints"),
+			ApproxCharsPerToken:      record.GetInt("approx_chars_per_token"),
 			IsActive:                 true,
 		}
 
