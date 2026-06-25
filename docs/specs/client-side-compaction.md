@@ -360,12 +360,14 @@ so it is gated on `supportsStructuredOutput` (§6.4):
 
 Either way the contract is the same payload schema, so downstream code does not branch on provider.
 
-> **Implementation note (V1):** the gateway does not yet plumb a `response_format`
-> through to providers, so V1 uses the **delimited-text path for every model**
-> regardless of `supports_structured_output`. The capability flag is persisted
-> and read so that enabling the native structured path later is a localised
-> gateway change, not a schema change. `output_mode` is therefore
-> `delimited_text` for all V1 compactions.
+> **Implementation note:** native structured output is **implemented** and
+> capability-gated. When `supports_structured_output` is true the gateway sends
+> `response_format: {"type":"json_object"}` and the bare-JSON prompt variant; if
+> that output is not recoverable the handler **automatically falls back** to the
+> delimited-text path (and a model without the capability uses delimited text
+> directly). `output_mode` records which path actually produced the stored
+> compaction. The choice is automatic per the user's selected model — never a
+> user setting and never a model override.
 
 ### 8.4 Prompt intent
 
@@ -667,8 +669,14 @@ text or summary text.
 - Should a future setting let power users disable auto-compaction?
 - Should a future compaction model be chosen per privacy tier and cost tier?
 - What is the right full-re-summarisation cadence `N` (§8.1, §10.3) to balance drift against cost?
-- Is editing `durable_memory` in place reliable enough across weaker open models, or should the fold
-  prompt always re-derive it from `prior_summary` + new messages?
+- Editing `durable_memory` in place is **accepted for V1**: weaker open models may merge
+  imperfectly, but the user can review and correct it in the conversation-memory drawer (header →
+  Memory, shown only when a compaction exists). The drawer hydrates redaction placeholders to
+  originals for the owner and re-redacts on save, then re-encrypts via the ciphertext-only PATCH
+  endpoint.
+- **Resolved (implemented):** real provider token counts are persisted per assistant turn and drive
+  the trigger (§10.1); native structured output is capability-gated with a delimited-text fallback
+  (§8.3); the create response returns the plaintext payload for immediate local use (§7.1).
 - **Future (privacy-max tier):** in-browser summarisation via WebGPU small models (Gemma/Qwen-class)
   is now viable and would let compaction run **without sending any plaintext to the server** — the
   long-term privacy ceiling for this feature. Out of scope for V1 (see §3) but worth tracking.
