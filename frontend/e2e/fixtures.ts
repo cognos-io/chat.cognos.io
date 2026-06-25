@@ -359,6 +359,36 @@ export const buildMessageRecordFixture = (
   };
 };
 
+// buildCompactionRecordFixture seals a compaction payload to the conversation
+// key exactly as the backend would, so a GET /compactions mock can return a
+// record the CompactionService decrypts. `payload` is the snake_case decrypted
+// shape (see docs/specs/client-side-compaction.md §6.2).
+export const buildCompactionRecordFixture = (
+  conversationFixture: ConversationFixture,
+  record: {
+    id: string;
+    created: string;
+    payload: Record<string, unknown>;
+  },
+): {
+  id: string;
+  conversation: string;
+  data: string;
+  created: string;
+  updated: string;
+} => ({
+  id: record.id,
+  conversation: conversationFixture.conversationRecord.id,
+  data: base64(
+    sealedBox(
+      textEncoder.encode(JSON.stringify(record.payload)),
+      conversationFixture.conversationKeyPair.publicKey,
+    ),
+  ),
+  created: record.created,
+  updated: record.created,
+});
+
 // buildPublicShareFixture produces the server-side payload + URL fragment for a
 // publicly-shared conversation, mirroring what PublicShareService.share writes:
 // the conversation secret sealed to a throwaway public-share public key (so the
