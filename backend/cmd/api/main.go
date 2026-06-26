@@ -48,6 +48,11 @@ type appHookParams struct {
 	CompletionStopper       *handler.CompletionStopper
 	CatalogueService        catalogue.Service
 	PaddleClient            paddle.Client
+	// Attachment storage caps. Zero means "use the handler default". Exposed
+	// here primarily so tests can inject tiny caps without uploading real
+	// megabytes/gigabytes.
+	AttachmentMaxFileBytes    int64
+	AttachmentStorageCapBytes int64
 }
 
 func NewServer() *pocketbase.PocketBase {
@@ -266,6 +271,8 @@ func bindAppHooks(
 			paddlePlanByPrice,
 			paddleMinCommitRappen,
 			paddleOveragePriceID,
+			params.AttachmentMaxFileBytes,
+			params.AttachmentStorageCapBytes,
 		)
 
 		hooks.SoftDelete(app)

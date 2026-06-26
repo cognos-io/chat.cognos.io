@@ -124,6 +124,8 @@ func addPocketBaseRoutes(
 	paddlePlanByPrice map[string]handler.PlanMeta,
 	paddleMinCommitRappen int64,
 	paddleOveragePriceID string,
+	attachmentMaxFileBytes int64,
+	attachmentStorageCapBytes int64,
 ) {
 	// Paddle webhook: unauthenticated (verified by HMAC) and unthrottled so we
 	// never drop Paddle's retries. Bad signatures are rejected before any write.
@@ -545,6 +547,13 @@ func addPocketBaseRoutes(
 		App:                 app,
 	}
 
+	attachmentParams := handler.AttachmentHandlerParams{
+		App:             app,
+		Logger:          logger,
+		MaxFileBytes:    attachmentMaxFileBytes,
+		StorageCapBytes: attachmentStorageCapBytes,
+	}
+
 	compactionParams := handler.CompactionHandlerParams{
 		App:               app,
 		Logger:            logger,
@@ -746,6 +755,38 @@ func addPocketBaseRoutes(
 	e.Router.GET(
 		"/api/v1/conversations/{conversationID}/messages/{messageID}/attachment",
 		handler.ConversationMessageAttachment(completeParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/conversations/{conversationID}/attachments",
+		handler.AttachmentCreate(attachmentParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/conversations/{conversationID}/attachments",
+		handler.AttachmentList(attachmentParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/conversations/{conversationID}/attachments/{attachmentID}/files/{fileName}",
+		handler.AttachmentDownload(attachmentParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.DELETE(
+		"/api/v1/conversations/{conversationID}/attachments/{attachmentID}",
+		handler.AttachmentDelete(attachmentParams),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),
