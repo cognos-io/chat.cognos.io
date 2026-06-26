@@ -40,13 +40,20 @@ type MessageRecordData struct {
 // it. The protected file's name is read from the plaintext record field, so it
 // is intentionally not duplicated here.
 type MessageAttachment struct {
-	// Kind identifies the attachment type, e.g. "generated_image".
+	// Kind identifies the attachment type, e.g. "generated_image" or
+	// "user_upload".
 	Kind string `json:"kind"`
-	// MimeType is the decrypted image's media type, e.g. "image/png".
-	MimeType string `json:"mime_type"`
+	// MimeType is the decrypted media type, e.g. "image/png". For user uploads
+	// it is the detected type, carried as a display hint.
+	MimeType string `json:"mime_type,omitempty"`
 	// SealedKey is base64(SealAnonymous(conversationPublicKey, fileSymKey)) — the
-	// per-attachment symmetric key sealed to the conversation public key.
-	SealedKey string `json:"sealed_key"`
+	// per-attachment symmetric key sealed to the conversation public key. Used by
+	// generated images; empty for user uploads, whose keys live in the encrypted
+	// conversation_attachments manifest.
+	SealedKey string `json:"sealed_key,omitempty"`
+	// AttachmentID references a conversation_attachments record for user uploads.
+	// Empty for generated images, whose bytes live on the message record itself.
+	AttachmentID string `json:"attachment_id,omitempty"`
 	// Width and Height are optional display hints (0 when unknown).
 	Width  int `json:"width,omitempty"`
 	Height int `json:"height,omitempty"`

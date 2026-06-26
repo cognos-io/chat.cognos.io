@@ -44,6 +44,26 @@ type completeRequest struct {
 	// delimiters so summarised content is framed as reference material — never
 	// injected as a synthetic assistant turn or a caller system message.
 	ContextSummary string `json:"context_summary,omitempty"`
+	// AttachmentIDs are conversation_attachments records to link to the new user
+	// message. The client embeds nothing in the encrypted blob directly; the
+	// backend persists these as user_upload references and sets the message
+	// relation (spec §9.5).
+	AttachmentIDs []string `json:"attachment_ids,omitempty"`
+	// AttachmentContexts is the transient, plaintext attachment content for the
+	// provider. It is wrapped as untrusted material, counted by the billing gate,
+	// and never persisted or logged.
+	AttachmentContexts []completionAttachmentInput `json:"attachment_contexts,omitempty"`
+}
+
+// completionAttachmentInput is one attachment's transient provider context.
+type completionAttachmentInput struct {
+	AttachmentID     string `json:"attachment_id"`
+	MessageID        string `json:"message_id,omitempty"`
+	DisplayName      string `json:"display_name"`
+	DetectedMimeType string `json:"detected_mime_type"`
+	ProcessorID      string `json:"processor_id"`
+	TextContext      string `json:"text_context,omitempty"`
+	ContextTruncated bool   `json:"context_truncated,omitempty"`
 }
 
 type CompleteRequest = completeRequest
@@ -264,6 +284,16 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		if regenerate && req.ParentMessageID == "" {
 			return apis.NewBadRequestError("Parent message ID is required to regenerate", nil)
 		}
+		if len(req.AttachmentIDs) > MaxAttachmentsPerMessage {
+			return apis.NewBadRequestError("Too many attachments", nil)
+		}
+		attachmentContextChars := 0
+		for i := range req.AttachmentContexts {
+			attachmentContextChars += len(req.AttachmentContexts[i].TextContext)
+		}
+		if attachmentContextChars > maxAttachmentContextCharsPerMessage {
+			return apis.NewBadRequestError("Attachment context is too long", nil)
+		}
 
 		model, ok, err := params.CatalogueService.GetModelByID(context.Background(), req.ModelID)
 		if err != nil {
@@ -295,10 +325,20 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		}
 		prompt := persona.Prompt{SystemMessage: systemMessage}
 
+		// Wrap any attachment context as untrusted material and append it to the
+		// user's turn (never the system prompt). Built before the estimate so the
+		// billing gate counts attachment characters and cannot be bypassed by a
+		// large attachment (spec §10.3).
+		attachmentContextBlock := WrapAttachmentContexts(req.AttachmentContexts)
+		effectiveMessages := req.Messages
+		if attachmentContextBlock != "" {
+			effectiveMessages = appendAttachmentContext(req.Messages, attachmentContextBlock)
+		}
+
 		// A realistic input estimate from the actual prompt, rather than assuming
 		// the whole context window — so a short prompt to a large-context model is
 		// not priced as if it filled a million tokens.
-		estimatedInputTokens := estimatePromptInputTokens(systemMessage, req.Messages, model)
+		estimatedInputTokens := estimatePromptInputTokens(systemMessage, effectiveMessages, model)
 		// The output we will actually allow the provider to generate. The billing
 		// gate prices this exact ceiling (not the model's absolute max), and we
 		// pass the same value to the provider so the response can never exceed
@@ -344,6 +384,14 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			if err != nil {
 				return apis.NewNotFoundError("Conversation not found or unable to load", err)
 			}
+
+			// Reject references to attachments outside this conversation before
+			// any provider work or persistence (spec §9.5).
+			if len(req.AttachmentIDs) > 0 && params.App != nil {
+				if err := verifyAttachmentsInConversation(params.App, conversationID, req.AttachmentIDs); err != nil {
+					return apis.NewBadRequestError("Invalid attachment reference", nil)
+				}
+			}
 		}
 
 		var billingState *billing.State
@@ -384,8 +432,8 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			return apis.NewApiError(http.StatusServiceUnavailable, "Provider is unavailable", nil)
 		}
 
-		personaMessages := make([]persona.Message, 0, len(req.Messages))
-		for _, message := range req.Messages {
+		personaMessages := make([]persona.Message, 0, len(effectiveMessages))
+		for _, message := range effectiveMessages {
 			personaMessages = append(personaMessages, persona.Message{
 				Role:    message.Role,
 				Content: message.Content,
@@ -419,20 +467,35 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 					return apis.NewNotFoundError("Parent message not found or unable to load", nil)
 				}
 			} else {
+				userMessageData := chat.MessageRecordData{
+					OwnerID:   owner.ID,
+					Content:   lastMessage.Content,
+					CreatedAt: time.Now().UTC().Format(time.RFC3339),
+				}
+				if len(req.AttachmentIDs) > 0 {
+					// Embed encrypted references to the uploaded attachments. Only
+					// the kind, record id and display mime type go into the
+					// encrypted message; keys/filenames stay in the manifest.
+					userMessageData.Attachments = buildUserUploadAttachments(req.AttachmentIDs, req.AttachmentContexts)
+				}
 				err, userMessageRecord = params.MessageRepo.EncryptAndPersistMessage(
 					conversation,
 					req.ParentMessageID,
-					chat.MessageRecordData{
-						OwnerID:   owner.ID,
-						Content:   lastMessage.Content,
-						CreatedAt: time.Now().UTC().Format(time.RFC3339),
-					},
+					userMessageData,
 				)
 				if err != nil {
 					params.Logger.Error("failed to save request message", "err", err)
 					return apis.NewApiError(http.StatusInternalServerError, "Failed to save request message", err)
 				}
 				assistantParentID = userMessageRecord.Id
+
+				// Link the draft attachments to the persisted user message so they
+				// are no longer abandonable drafts. Plaintext relation only.
+				if len(req.AttachmentIDs) > 0 && params.App != nil {
+					if err := linkAttachmentsToMessage(params.App, req.AttachmentIDs, userMessageRecord.Id); err != nil {
+						params.Logger.Error("failed to link attachments to message", "err", err)
+					}
+				}
 			}
 		}
 
@@ -802,6 +865,18 @@ func effectiveMaxOutputTokens(requested int, model catalogue.Model, plan billing
 	if model.MaxOutputTokens > 0 && out > model.MaxOutputTokens {
 		out = model.MaxOutputTokens
 	}
+	return out
+}
+
+// appendAttachmentContext returns a copy of messages with the wrapped
+// attachment block appended to the final (user) turn. The original message
+// content persisted to the conversation is unchanged — the block is transient
+// provider context only.
+func appendAttachmentContext(messages []completionMessage, block string) []completionMessage {
+	out := make([]completionMessage, len(messages))
+	copy(out, messages)
+	last := len(out) - 1
+	out[last].Content = out[last].Content + "\n\n" + block
 	return out
 }
 
