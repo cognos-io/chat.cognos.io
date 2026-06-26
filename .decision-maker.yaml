@@ -1,0 +1,8 @@
+enabled: true
+process: reversibility
+bias: balanced
+model:
+  provider: session
+  model: null
+save_records: false
+records_dir: docs/decisions
