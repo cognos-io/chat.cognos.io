@@ -36,6 +36,8 @@ import {
   type CognosRedactedTextLabels,
 } from '@cognos/ui-angular';
 
+import { ACCEPTED_ATTACHMENT_ACCEPT } from '@app/attachments/attachment-accept';
+import { AttachmentProcessingService } from '@app/attachments/attachment-processing.service';
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import {
   RedactionCandidate,
@@ -91,9 +93,13 @@ function escapeHtml(value: string): string {
   template: `
     <form
       class="message-form"
+      [class.message-form--drag-over]="attachmentDragOver()"
       [formGroup]="messageForm"
       (submit)="onSubmit()"
       (keydown.escape)="onComposerEscape($event)"
+      (dragover)="onAttachmentDragOver($event)"
+      (dragleave)="onAttachmentDragLeave($event)"
+      (drop)="onAttachmentDrop($event)"
       *transloco="let t"
     >
       @if (billing.isSendingLocked()) {
@@ -138,6 +144,62 @@ function escapeHtml(value: string): string {
           <label class="message-form__label" for="message-form">
             {{ t('chat.composer.label') }}
           </label>
+
+          <input
+            #attachmentInput
+            type="file"
+            class="message-form__file-input"
+            [accept]="attachmentAccept"
+            multiple
+            hidden
+            (change)="onAttachmentInputChange($event)"
+          />
+
+          @if (attachments.attachments().length > 0) {
+            <ul class="message-form__attachments" data-testid="attachment-chips">
+              @for (att of attachments.attachments(); track att.localId) {
+                <li
+                  class="message-form__chip"
+                  [class.message-form__chip--failed]="att.state === 'failed'"
+                  data-testid="attachment-chip"
+                >
+                  <cog-icon name="file-text" [size]="14" tone="text-subtle" />
+                  <span class="message-form__chip-name" [title]="att.fileName">{{
+                    att.fileName
+                  }}</span>
+                  @if (att.state === 'ready') {
+                    <span class="message-form__chip-size">{{
+                      formatAttachmentSize(att.sizeBytes)
+                    }}</span>
+                  } @else if (att.state === 'failed') {
+                    <span class="message-form__chip-status">{{
+                      attachmentErrorLabel(att.errorCode)
+                    }}</span>
+                  } @else {
+                    <span class="message-form__chip-status">{{
+                      attachmentStateLabel(att.state)
+                    }}</span>
+                  }
+                  <button
+                    type="button"
+                    class="message-form__chip-remove"
+                    [attr.aria-label]="
+                      t('chat.composer.attachments.remove', { name: att.fileName })
+                    "
+                    (click)="removeAttachment(att.localId)"
+                  >
+                    <cog-icon name="x" [size]="14" />
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+
+          @if (attachmentNotice()) {
+            <p class="message-form__attachment-notice" role="status">
+              {{ attachmentNotice() }}
+            </p>
+          }
 
           <div
             class="message-form__editor"
@@ -511,6 +573,18 @@ function escapeHtml(value: string): string {
               <app-composer-tools></app-composer-tools>
             </ng-template>
 
+            @if (canAttach()) {
+              <cog-icon-button
+                name="paperclip"
+                class="message-form__attach"
+                [title]="t('chat.composer.attachments.add')"
+                [disabled]="!attachments.canAddMore()"
+                type="button"
+                data-testid="attach-button"
+                (click)="openAttachmentPicker()"
+              />
+            }
+
             @if (canClearTemporaryMessages() && !isMobile()) {
               <cog-icon-button
                 name="eraser"
@@ -574,6 +648,72 @@ function escapeHtml(value: string): string {
       display: grid;
       gap: var(--cog-space-100);
       width: 100%;
+    }
+
+    .message-form--drag-over .message-form__panel {
+      outline: 2px dashed var(--cog-color-border-accent, #4f8cff);
+      outline-offset: 2px;
+    }
+
+    .message-form__file-input {
+      display: none;
+    }
+
+    .message-form__attachments {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--cog-space-100, 8px);
+    }
+
+    .message-form__chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-50, 6px);
+      max-width: 16rem;
+      padding: 4px 8px;
+      border: 1px solid var(--cog-color-border-subtle, #d0d0d0);
+      border-radius: var(--cog-radius-200, 8px);
+      background: var(--cog-color-surface-subtle, #f5f5f5);
+      font-size: 0.8125rem;
+    }
+
+    .message-form__chip--failed {
+      border-color: var(--cog-color-border-danger, #e0a0a0);
+    }
+
+    .message-form__chip-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .message-form__chip-size,
+    .message-form__chip-status {
+      color: var(--cog-color-text-subtle, #777);
+      flex-shrink: 0;
+    }
+
+    .message-form__chip-remove {
+      display: inline-flex;
+      align-items: center;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+      color: var(--cog-color-text-subtle, #777);
+    }
+
+    .message-form__chip-remove:hover {
+      color: var(--cog-color-text, #111);
+    }
+
+    .message-form__attachment-notice {
+      margin: 0;
+      font-size: 0.8125rem;
+      color: var(--cog-color-text-subtle, #777);
     }
 
     /* Mobile model selector presented as a bottom sheet (spec §4.5). */
@@ -1087,12 +1227,115 @@ export class MessageFormComponent {
   // and the unsupported-model warning consistently.
   public readonly composerTools = inject(ComposerToolsService);
 
+  // Attachments (spec docs/specs/attachments.md). The service owns the worker
+  // and selection state; the composer renders chips and feeds files in.
+  public readonly attachments = inject(AttachmentProcessingService);
+  readonly attachmentAccept = ACCEPTED_ATTACHMENT_ACCEPT;
+  private readonly _attachmentInput =
+    viewChild<ElementRef<HTMLInputElement>>('attachmentInput');
+  readonly attachmentDragOver = signal(false);
+  // A transient, translated notice (e.g. the per-message cap was hit).
+  readonly attachmentNotice = signal<string | null>(null);
+
+  // Attachments need a persisted conversation (the upload endpoint is
+  // conversation-scoped and the manifest is sealed to the conversation key), so
+  // they are unavailable in a brand-new temporary chat — mirroring image
+  // generation.
+  readonly canAttach = computed(() => {
+    const conversation = this._conversationService.conversation();
+    return (
+      !!conversation &&
+      !this._conversationService.isTemporaryConversation() &&
+      !!conversation.keyPair
+    );
+  });
+
   readonly canSendMessage = computed(
     () =>
       this.modelService.selectedModel().isEligible &&
       !this.billing.isSendingLocked() &&
-      !this.composerTools.selectedModelUnsupported(),
+      !this.composerTools.selectedModelUnsupported() &&
+      !this.attachments.hasPending(),
   );
+
+  openAttachmentPicker(): void {
+    this.attachmentNotice.set(null);
+    this._attachmentInput()?.nativeElement.click();
+  }
+
+  onAttachmentInputChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.acceptFiles(Array.from(input.files ?? []));
+    input.value = ''; // allow re-selecting the same file
+  }
+
+  onAttachmentDragOver(event: DragEvent): void {
+    if (!this.canAttach()) {
+      return;
+    }
+    event.preventDefault();
+    this.attachmentDragOver.set(true);
+  }
+
+  onAttachmentDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.attachmentDragOver.set(false);
+  }
+
+  onAttachmentDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.attachmentDragOver.set(false);
+    if (!this.canAttach()) {
+      return;
+    }
+    this.acceptFiles(Array.from(event.dataTransfer?.files ?? []));
+  }
+
+  removeAttachment(localId: string): void {
+    this.attachments.remove(localId);
+  }
+
+  attachmentStateLabel(state: string): string {
+    return this._transloco.translate(`chat.composer.attachments.state.${state}`);
+  }
+
+  attachmentErrorLabel(code: string | undefined): string {
+    return this._transloco.translate(
+      `chat.composer.attachments.errors.${code ?? 'processing_failed'}`,
+    );
+  }
+
+  formatAttachmentSize(bytes: number): string {
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  private acceptFiles(files: File[]): void {
+    if (files.length === 0 || !this.canAttach()) {
+      return;
+    }
+    const conversation = this._conversationService.conversation();
+    if (!conversation?.keyPair) {
+      return;
+    }
+    const accepted = this.attachments.add(
+      files,
+      conversation.record.id,
+      conversation.keyPair.publicKey,
+    );
+    if (accepted < files.length) {
+      this.attachmentNotice.set(
+        this._transloco.translate('chat.composer.attachments.tooMany', {
+          max: this.attachments.count(),
+        }),
+      );
+    }
+  }
 
   readonly toolsMenuOpen = signal(false);
 
@@ -1447,14 +1690,23 @@ export class MessageFormComponent {
     }
 
     this._previousMessage = contentValue;
+    const attachmentInputs = this.attachments.completionInputs();
     const messageRequest: MessageRequest = {
       content: contentValue,
       requestId: self.crypto.randomUUID(),
       redactionDeselected: Array.from(this._redactionDeselected()),
       redactionCustom: this._customRedactions(),
       imageGeneration: this.composerTools.imageGenerationEnabled(),
+      attachmentIds: attachmentInputs.attachmentIds.length
+        ? attachmentInputs.attachmentIds
+        : undefined,
+      attachmentContexts: attachmentInputs.attachmentContexts.length
+        ? attachmentInputs.attachmentContexts
+        : undefined,
     };
     this.messageService.sendMessage$.next(messageRequest);
+    this.attachments.clear();
+    this.attachmentNotice.set(null);
     this.messageForm.reset();
     this._redactionDeselected.set(new Set());
     this._customRedactions.set([]);

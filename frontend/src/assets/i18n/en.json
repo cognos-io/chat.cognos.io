@@ -554,7 +554,29 @@
           "high": "Deep, multi-step deliberation. Slower."
         }
       },
-      "switchPersona": "Switch persona — {{ name }}"
+      "switchPersona": "Switch persona — {{ name }}",
+      "attachments": {
+        "add": "Attach file",
+        "remove": "Remove {{ name }}",
+        "unavailable": "Save the conversation before attaching files",
+        "tooMany": "You can attach up to {{ max }} files",
+        "providerNotice": "Attached files are sent to the AI provider when used",
+        "dropHint": "Drop files to attach",
+        "state": {
+          "queued": "Queued…",
+          "processing": "Processing…",
+          "encrypting": "Encrypting…",
+          "uploading": "Uploading…",
+          "failed": "Failed"
+        },
+        "errors": {
+          "unsupported_type": "Unsupported file type",
+          "file_too_large": "File is too large",
+          "decode_failed": "Couldn’t read this file as text",
+          "empty_file": "File is empty",
+          "processing_failed": "Couldn’t process this file"
+        }
+      }
     },
     "conversation": {
       "drawerTitle": "Navigation",

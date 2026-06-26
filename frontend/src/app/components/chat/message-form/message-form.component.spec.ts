@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 
 import { Subject } from 'rxjs';
 
+import { AttachmentProcessingService } from '@app/attachments/attachment-processing.service';
 import { Message } from '@app/interfaces/message';
 import { BillingService } from '@app/services/billing.service';
 import { ComposerToolsService } from '@app/services/composer-tools.service';
@@ -124,6 +125,19 @@ describe('MessageFormComponent', () => {
           useValue: { selectedModel, selectedReasoningEffort },
         },
         { provide: ComposerToolsService, useValue: composerTools },
+        {
+          provide: AttachmentProcessingService,
+          useValue: {
+            attachments: signal([]),
+            hasPending: signal(false),
+            count: signal(0),
+            canAddMore: signal(true),
+            add: vi.fn(),
+            remove: vi.fn(),
+            clear: vi.fn(),
+            completionInputs: () => ({ attachmentIds: [], attachmentContexts: [] }),
+          },
+        },
         { provide: VaultService, useValue: { keyPair$: new Subject() } },
         {
           provide: BillingService,

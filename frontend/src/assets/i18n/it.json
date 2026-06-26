@@ -554,7 +554,29 @@
           "high": "Deliberazione profonda in più passaggi. Più lento."
         }
       },
-      "switchPersona": "Cambia persona — {{ name }}"
+      "switchPersona": "Cambia persona — {{ name }}",
+      "attachments": {
+        "add": "Allega file",
+        "remove": "Rimuovi {{ name }}",
+        "unavailable": "Salva la conversazione prima di allegare file",
+        "tooMany": "Puoi allegare fino a {{ max }} file",
+        "providerNotice": "I file allegati vengono inviati al provider di IA quando vengono usati",
+        "dropHint": "Rilascia i file da allegare",
+        "state": {
+          "queued": "In coda…",
+          "processing": "Elaborazione…",
+          "encrypting": "Crittografia…",
+          "uploading": "Caricamento…",
+          "failed": "Non riuscito"
+        },
+        "errors": {
+          "unsupported_type": "Tipo di file non supportato",
+          "file_too_large": "File troppo grande",
+          "decode_failed": "Impossibile leggere il file come testo",
+          "empty_file": "Il file è vuoto",
+          "processing_failed": "Impossibile elaborare il file"
+        }
+      }
     },
     "conversation": {
       "drawerTitle": "Navigazione",

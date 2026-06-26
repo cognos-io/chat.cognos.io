@@ -554,7 +554,29 @@
           "high": "Délibération approfondie en plusieurs étapes. Plus lent."
         }
       },
-      "switchPersona": "Changer de persona — {{ name }}"
+      "switchPersona": "Changer de persona — {{ name }}",
+      "attachments": {
+        "add": "Joindre un fichier",
+        "remove": "Supprimer {{ name }}",
+        "unavailable": "Enregistrez la conversation avant de joindre des fichiers",
+        "tooMany": "Vous pouvez joindre jusqu’à {{ max }} fichiers",
+        "providerNotice": "Les fichiers joints sont envoyés au fournisseur d’IA lorsqu’ils sont utilisés",
+        "dropHint": "Déposez des fichiers à joindre",
+        "state": {
+          "queued": "En file d’attente…",
+          "processing": "Traitement…",
+          "encrypting": "Chiffrement…",
+          "uploading": "Téléversement…",
+          "failed": "Échec"
+        },
+        "errors": {
+          "unsupported_type": "Type de fichier non pris en charge",
+          "file_too_large": "Fichier trop volumineux",
+          "decode_failed": "Impossible de lire ce fichier comme texte",
+          "empty_file": "Le fichier est vide",
+          "processing_failed": "Impossible de traiter ce fichier"
+        }
+      }
     },
     "conversation": {
       "drawerTitle": "Navigation",

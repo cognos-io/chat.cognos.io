@@ -76,6 +76,38 @@ describe('mapCompleteRequest', () => {
     });
   });
 
+  it('maps attachment ids and contexts onto snake_case wire fields', () => {
+    const wire = mapCompleteRequest({
+      messages: [{ role: 'user', content: 'summarise' }],
+      modelId: 'm',
+      personaId: 'a',
+      systemPrompt: 'prompt',
+      attachmentIds: ['att-1', 'att-2'],
+      attachmentContexts: [
+        {
+          attachmentId: 'att-1',
+          displayName: 'notes.txt',
+          detectedMimeType: 'text/plain',
+          processorId: 'text',
+          textContext: 'body',
+          contextTruncated: false,
+        },
+      ],
+    });
+
+    expect(wire.attachment_ids).toEqual(['att-1', 'att-2']);
+    expect(wire.attachment_contexts).toEqual([
+      {
+        attachment_id: 'att-1',
+        display_name: 'notes.txt',
+        detected_mime_type: 'text/plain',
+        processor_id: 'text',
+        text_context: 'body',
+        context_truncated: false,
+      },
+    ]);
+  });
+
   it('passes optional fields through as undefined when absent', () => {
     const wire = mapCompleteRequest({
       messages: [],

@@ -554,7 +554,29 @@
           "high": "Deliberación profunda de varios pasos. Más lento."
         }
       },
-      "switchPersona": "Cambiar de persona — {{ name }}"
+      "switchPersona": "Cambiar de persona — {{ name }}",
+      "attachments": {
+        "add": "Adjuntar archivo",
+        "remove": "Quitar {{ name }}",
+        "unavailable": "Guarda la conversación antes de adjuntar archivos",
+        "tooMany": "Puedes adjuntar hasta {{ max }} archivos",
+        "providerNotice": "Los archivos adjuntos se envían al proveedor de IA cuando se usan",
+        "dropHint": "Suelta archivos para adjuntar",
+        "state": {
+          "queued": "En cola…",
+          "processing": "Procesando…",
+          "encrypting": "Cifrando…",
+          "uploading": "Subiendo…",
+          "failed": "Error"
+        },
+        "errors": {
+          "unsupported_type": "Tipo de archivo no admitido",
+          "file_too_large": "El archivo es demasiado grande",
+          "decode_failed": "No se pudo leer el archivo como texto",
+          "empty_file": "El archivo está vacío",
+          "processing_failed": "No se pudo procesar el archivo"
+        }
+      }
     },
     "conversation": {
       "drawerTitle": "Navegación",

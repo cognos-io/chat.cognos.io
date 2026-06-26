@@ -61,6 +61,7 @@ import { BillingService } from './billing.service';
 import {
   ApiCreateCompactionRequest,
   CognosApiService,
+  CompleteAttachmentContext,
   CompleteResponse,
   CompleteStreamEvent,
   CompletionMessageRequest,
@@ -184,6 +185,11 @@ export type MessageRequest = {
   // When true, the request generates an image instead of a text completion.
   // Routed to the conversation image endpoint rather than /complete.
   imageGeneration?: boolean;
+  // User-uploaded attachments (spec docs/specs/attachments.md). `attachmentIds`
+  // are the conversation_attachments records to link to the new user message;
+  // `attachmentContexts` is the transient provider context (never persisted).
+  attachmentIds?: string[];
+  attachmentContexts?: CompleteAttachmentContext[];
 };
 
 // REDACTION_INSTRUCTION tells the model to preserve placeholder tokens verbatim
@@ -1167,6 +1173,8 @@ export class MessageService {
       requestId: messageRequest.requestId,
       reasoningEffort: this._modelService.selectedReasoningEffort() || undefined,
       contextSummary,
+      attachmentIds: messageRequest.attachmentIds,
+      attachmentContexts: messageRequest.attachmentContexts,
     };
 
     let completed = false;

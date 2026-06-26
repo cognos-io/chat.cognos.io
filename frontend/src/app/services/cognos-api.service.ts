@@ -36,6 +36,16 @@ export interface CompletionMessageRequest {
   name?: string;
 }
 
+/** Transient attachment context for a completion request (spec §9.5). */
+export interface CompleteAttachmentContext {
+  attachmentId: string;
+  displayName: string;
+  detectedMimeType: string;
+  processorId: string;
+  textContext?: string;
+  contextTruncated?: boolean;
+}
+
 export interface CompleteRequest {
   messages: CompletionMessageRequest[];
   modelId: string;
@@ -50,6 +60,10 @@ export interface CompleteRequest {
   // canonical system prompt server-side inside <conversation_summary> delimiters
   // (spec §9.2). Omitted when there is no valid compaction for the active branch.
   contextSummary?: string;
+  // User-uploaded attachments to link to the new message, and their transient
+  // provider context (spec §9.5). Empty/omitted for messages without uploads.
+  attachmentIds?: string[];
+  attachmentContexts?: CompleteAttachmentContext[];
 }
 
 export interface CompleteResponse {
@@ -213,6 +227,17 @@ interface ApiCompleteRequest {
   reasoning_effort?: string;
   persist?: boolean;
   context_summary?: string;
+  attachment_ids?: string[];
+  attachment_contexts?: ApiCompletionAttachmentInput[];
+}
+
+interface ApiCompletionAttachmentInput {
+  attachment_id: string;
+  display_name: string;
+  detected_mime_type: string;
+  processor_id: string;
+  text_context?: string;
+  context_truncated?: boolean;
 }
 
 interface ApiCompactionMessageInput {
@@ -579,6 +604,15 @@ export const mapCompleteRequest = (request: CompleteRequest): ApiCompleteRequest
   reasoning_effort: request.reasoningEffort,
   persist: request.persist,
   context_summary: request.contextSummary,
+  attachment_ids: request.attachmentIds,
+  attachment_contexts: request.attachmentContexts?.map((context) => ({
+    attachment_id: context.attachmentId,
+    display_name: context.displayName,
+    detected_mime_type: context.detectedMimeType,
+    processor_id: context.processorId,
+    text_context: context.textContext,
+    context_truncated: context.contextTruncated,
+  })),
 });
 
 export const mapCompleteResponse = (

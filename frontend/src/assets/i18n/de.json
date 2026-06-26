@@ -554,7 +554,29 @@
           "high": "Tiefes, mehrstufiges Nachdenken. Langsamer."
         }
       },
-      "switchPersona": "Persona wechseln — {{ name }}"
+      "switchPersona": "Persona wechseln — {{ name }}",
+      "attachments": {
+        "add": "Datei anhängen",
+        "remove": "{{ name }} entfernen",
+        "unavailable": "Speichern Sie die Unterhaltung, bevor Sie Dateien anhängen",
+        "tooMany": "Sie können bis zu {{ max }} Dateien anhängen",
+        "providerNotice": "Angehängte Dateien werden bei Verwendung an den KI-Anbieter gesendet",
+        "dropHint": "Dateien zum Anhängen ablegen",
+        "state": {
+          "queued": "In Warteschlange…",
+          "processing": "Wird verarbeitet…",
+          "encrypting": "Wird verschlüsselt…",
+          "uploading": "Wird hochgeladen…",
+          "failed": "Fehlgeschlagen"
+        },
+        "errors": {
+          "unsupported_type": "Nicht unterstützter Dateityp",
+          "file_too_large": "Datei ist zu groß",
+          "decode_failed": "Datei konnte nicht als Text gelesen werden",
+          "empty_file": "Datei ist leer",
+          "processing_failed": "Datei konnte nicht verarbeitet werden"
+        }
+      }
     },
     "conversation": {
       "drawerTitle": "Navigation",
