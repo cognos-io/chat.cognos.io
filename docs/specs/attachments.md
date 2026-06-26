@@ -32,7 +32,9 @@ with text-like files and a worker-based processing pipeline.
 - **1 GiB per-user storage cap.** Total stored ciphertext per user in `conversation_attachments`
   (original + all derived artifacts) must not exceed 1 GiB. Enforced at the create endpoint before
   persistence. A plaintext per-record ciphertext `size_bytes` column makes the per-owner sum
-  efficient; ciphertext byte counts are already accepted operational metadata.
+  efficient; ciphertext byte counts are already accepted operational metadata. The accounting is
+  intended to expand later to total encrypted storage (including generated images in
+  `messages.attachment`), so keep it generic enough to widen without a redesign.
 - **New attachment storage, not the generated-image message field.** User uploads need originals,
   AI artifacts, manifests and pre-send upload. Use a new `conversation_attachments` collection with
   protected encrypted files rather than overloading the existing single `messages.attachment` file
@@ -833,6 +835,8 @@ Do not silently drop attachments during duplicate.
 - Drag/drop may be added, but must use the same validation path.
 - Attachment chips show decrypted display name, size and state.
 - Errors use translated generic copy and do not include extracted content.
+- When attachments are sent to the AI, surface clear copy that the AI provider sees the attachment
+  content for that request (consistent with §6.2). Do not imply otherwise.
 - User-facing text is translated for every supported locale.
 
 ### 12.3 Worker bundling
@@ -922,17 +926,18 @@ Resolved:
 - Context character caps: **100k/file, 200k/message** (accepted; tunable before launch).
 - Historical attachment context: **included in V1**; smarter selection is future work.
 - Draft cleanup window: **8 hours**.
-- Per-user storage cap: **1 GiB**, counting all stored ciphertext in `conversation_attachments`
-  (originals + derived); generated images in `messages.attachment` are out of scope for V1.
+- Per-user storage cap: **1 GiB**. Counts all stored ciphertext in `conversation_attachments`
+  (originals + derived) in V1, but the accounting is intended to **expand to total encrypted
+  storage** (including generated images in `messages.attachment`) later; keep it generic enough to
+  widen without a redesign.
 - Artifact key wrapping: **single seal** (raw key in the encrypted manifest).
 - Artifact addressing: manifest stores **no server filename**; client maps artifacts to files by
   canonical order and downloads by filename (existing serve pattern).
 - Integrity: **blake2b-256 plaintext hash** in the manifest, verified after decrypt.
+- User-facing copy **explicitly warns** that AI providers see attachment content when the user asks
+  the AI to use an attachment.
 - All user-facing copy is **i18n with translations for every supported locale**.
 
 Still open:
 
-- Whether user-facing copy should explicitly warn that AI providers see attachment content when
-  used.
-- Whether the storage cap should later include generated images / total encrypted storage rather
-  than just `conversation_attachments`.
+- None currently tracked.
