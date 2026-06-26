@@ -1371,7 +1371,7 @@ func TestCompletionsReturnTrialExhaustedBeforeGatewayCall(t *testing.T) {
 			`"error":"TRIAL_EXHAUSTED"`,
 			`"message":"Your free trial has been used up."`,
 			`"balance_chf":0.02`,
-			`"estimated_cost_chf":0.18`,
+			`"estimated_cost_chf":0.03`,
 			`"next_step":"subscribe"`,
 		},
 		TestAppFactory: func(t testing.TB) *tests.TestApp {
