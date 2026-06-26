@@ -619,3 +619,87 @@ Compaction, memory, and scoped redaction (§15–§16):
   `frontend/src/app/components/chat/message-list-item/message-list-item.component.ts`
 
 Update this document if the actual implemented trust model changes.
+
+## Appendix A — Architecture diagrams
+
+These figures summarise the trust model for the whitepaper. They are intentionally
+implementation-light: the load-bearing facts are **where the plaintext/ciphertext boundary sits**
+and **which key seals which store**.
+
+### Figure 1 — Send path: where plaintext exists
+
+Plaintext exists only in the browser and transiently in-flight (backend + provider over TLS).
+Everything persisted is ciphertext. The provider never receives a real message ID or an un-redacted
+PII value.
+
+```mermaid
+flowchart LR
+  subgraph client["Client (browser) — holds every decryption key"]
+    dec["Decrypt at rest:<br/>messages + memory<br/>(each from its scope key)"]
+    ctx["Build request:<br/>raw tail + combined memory,<br/>PII as [[PII_…]] placeholders"]
+    dec --> ctx
+  end
+
+  subgraph server["Backend — plaintext only in-flight, never persisted"]
+    fold["Fold context_summary into<br/>the canonical system prompt"]
+    enc["Encrypt reply to the<br/>conversation public key"]
+    store[("Ciphertext at rest")]
+  end
+
+  subgraph provider["AI provider — no retention"]
+    llm["Sees placeholders only:<br/>aliases [M3], never real IDs;<br/>[[PII_…]] tokens, never originals"]
+  end
+
+  ctx -->|"TLS — redacted context"| fold
+  fold -->|"TLS"| llm
+  llm -->|"reply"| enc
+  enc --> store
+
+  store -.->|"load + decrypt"| dec
+```
+
+### Figure 2 — Stores, sealing keys, and who can decrypt
+
+Each persisted store is sealed to a key the server does not hold. Redaction keys are deliberately
+**independent of the content/conversation key**, so granting read access (the conversation or
+project key) never grants un-redaction.
+
+```mermaid
+flowchart LR
+  subgraph conv["Conversation scope"]
+    cstore["messages<br/>conversation_compactions<br/>(incl. curated memory)"]
+    centries["redaction_entries"]
+    ckey(["conversation public key"])
+    crkey(["conversation redaction key<br/>— independent keypair"])
+    cstore -->|sealed to| ckey
+    centries -->|sealed to| crkey
+  end
+
+  subgraph user["User scope"]
+    ustore["user_memory<br/>user_redaction_entries"]
+    ukey(["user vault public key"])
+    ustore -->|sealed to| ukey
+  end
+
+  subgraph proj["Project scope"]
+    pstore["project_memory"]
+    pentries["project_redaction_entries"]
+    pck(["project content key"])
+    prkey(["project redaction key<br/>— independent of content key"])
+    pstore -->|encrypted with| pck
+    pentries -->|sealed to| prkey
+  end
+
+  personal(["each user's / member's<br/>personal vault key"])
+  ckey -. "secret wrapped to" .-> personal
+  crkey -. "secret wrapped to" .-> personal
+  pck -. "wrapped to" .-> personal
+  prkey -. "secret wrapped to" .-> personal
+
+  server["Server stores ciphertext + plaintext tokens + routing relations only —<br/>no sealing key, so it can never read content or un-redact"]
+```
+
+> Server view (both figures): the backend can associate a record with its conversation / user /
+> project (to authorise and list it) and can read a redaction **token** string, but holds no key
+> that opens any sealed payload. The only plaintext it ever handles is in-flight during a completion
+> or compaction call (§4, §15.2).
