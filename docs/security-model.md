@@ -68,15 +68,23 @@ Approved providers must have:
 - user account metadata needed for auth and billing
 - plaintext prompts and conversation context during active completion requests
 - plaintext model responses before they are encrypted for storage
+- plaintext messages during a **compaction** completion call (same as any completion — see §15)
 - model IDs, token counts, provider metadata, and cost metadata
 - encrypted private-key backup ciphertext
-- public keys
+- public keys (user, conversation, and the per-conversation / per-project **redaction** public keys)
+- routing relations needed to authorise access: which conversation a compaction or redaction entry
+  belongs to, which user owns a user-scoped record, which project a project-scoped record belongs to
 
 ### The server cannot see at rest
 
 - plaintext stored chat history
 - plaintext stored conversation titles
 - plaintext stored private keys
+- plaintext **conversation compaction summaries** (durable memory, rolling narrative, citations,
+  covered message IDs, token estimates) — all inside the encrypted `data` blob (§15)
+- plaintext **user-scoped and project-scoped memory** (§16)
+- plaintext **redaction mappings** at any scope (conversation, user, project) — the server holds
+  only the token string and the sealed original (§14, §16)
 
 ## 4. Message security model
 
@@ -459,12 +467,120 @@ control, because the key material does not exist in the link.
 - The redaction secret is currently wrapped for the creating user only; other participants gain
   mapping access when participant-add wrapping lands (until then they see placeholders).
 
-## 15. Open limitations
+## 15. Conversation compaction (encrypted memory)
+
+Long conversations are kept within a model's context window by **compaction**: older messages on the
+active branch are summarised and the summary is reused in place of the raw messages on later sends.
+The summary is treated as message-grade content — it is **encrypted at rest and never stored in
+plaintext**. See `docs/specs/client-side-compaction.md` for the full design.
+
+### 15.1 Storage and encryption
+
+Compactions live in a dedicated `conversation_compactions` collection. Only routing/timestamps are
+plaintext columns (`conversation`, `created`, `updated`); everything else is inside an encrypted
+`data` blob:
+
+```txt
+data = base64(SealAnonymous(conversation_public_key, json_payload))
+```
+
+The payload (sealed, so server-opaque) carries the summary's **durable memory** (facts, decisions,
+open threads, a glossary of redaction placeholders and exact names), a **rolling narrative**, the
+**citations** mapping aliases to real message IDs, the **covered message IDs**, token estimates,
+the model ID, and the prompt version. The server can associate a compaction with a conversation (to
+authorise and list it) but **cannot read any of that content**.
+
+The collection has `null` PocketBase API rules; all access flows through `/api/v1` handlers that
+authorise by active conversation participation — the same membership check that gates messages.
+
+### 15.2 Trust model during the compaction call
+
+Producing a compaction runs a provider completion over the (aliased) messages, so it has the **same
+live-request exposure as any completion (§4)**: the backend and the chosen provider see plaintext
+in flight, and the result is encrypted immediately before storage. Two redaction-preserving
+properties hold:
+
+- The provider only ever sees **citation aliases** (`[M3]`), never real message IDs; the
+  alias→message-ID map is added server-side into the encrypted payload and never sent to the
+  provider.
+- Redaction placeholders inside the messages are preserved verbatim by the compaction prompt and
+  recorded in the glossary, so a compacted summary never re-introduces a value the user redacted.
+
+The endpoint must not log request messages, prior-summary content, or provider output.
+
+### 15.3 Curated ("manual") memory
+
+A user can pin a snippet of a message to the conversation's memory ("Add to memory"). This is stored
+as a compaction record with an empty covered-message set — a **client-encrypted** payload sealed to
+the conversation public key and POSTed as ciphertext (no provider call). The server stores opaque
+bytes only, exactly like a model-generated compaction. Editing memory re-encrypts the payload
+client-side and replaces the ciphertext via a PATCH; the server never sees the edited plaintext.
+
+## 16. User- and project-scoped memory, and scoped redaction
+
+Pinned memory and its redaction can be scoped beyond a single conversation: to the **user** (follows
+them across all chats) or to a **project** (shared by the project's conversations). All scopes are
+client-encrypted and combined into the injected context when sending a message. See
+`docs/specs/client-side-compaction.md` §16.
+
+### 16.1 Scoped memory storage
+
+| Scope        | Collection                 | Encryption                                                      | Access gate                     |
+| ------------ | -------------------------- | --------------------------------------------------------------- | ------------------------------- |
+| Conversation | `conversation_compactions` | sealed to the conversation public key                           | active conversation participant |
+| User         | `user_memory`              | sealed to the **user's own vault public key** (sole party)      | the owning user                 |
+| Project      | `project_memory`           | `secretBox` under the **project content key** (held by members) | active project member           |
+
+All three store only ciphertext; the server never holds plaintext memory at any scope. Project
+public sharing is a non-goal, and project-scoped writes require active membership, so the content
+key is an appropriate sealing key for project memory.
+
+### 16.2 Scoped redaction keys and entries
+
+So a placeholder pinned to user/project memory hydrates wherever that scope is shown — not only the
+conversation it was minted in — redaction is **scope-aware**, mirroring the conversation model
+(§14.2):
+
+- **User redaction** (`user_redaction_entries`): each token→original mapping is sealed to the
+  **user's own public key**. The user is the only party, so no separate keypair is needed.
+- **Project redaction** (`project_redaction_keys` + `project_redaction_entries`): a per-project
+  redaction **keypair independent of the project content key**, with the secret wrapped (sealed) to
+  each active member's personal key — exactly the independence property of §14.2. Mappings are
+  sealed to the project redaction public key. Keeping the redaction key independent of the content
+  key preserves the option of a future "redacted-only" project reader who can see project content
+  but not PII, and means content-key access alone never unlocks un-redaction.
+
+Both new entry stores hold only the plaintext token string plus the sealed original; the server can
+associate a token with a user/project but cannot read the value. All collections have `null` API
+rules and are gated by ownership (user) or active membership (project) in `/api/v1` handlers.
+
+### 16.3 Hydration union and the no-leak guarantee
+
+When a token is encountered for display, the client resolves it against the **union** of the
+conversation's, the project's, and the user's redaction entries. This is display-only and never
+mutates stored data.
+
+The provider-exposure guarantee holds across every scope: memory is injected into a completion in
+its **redacted (placeholder) form**, so a provider never receives a user/project-pinned PII value in
+the clear. A snippet is re-redacted **in its target scope** before storage, so the original lives
+only in that scope's sealed entries. (If the model echoes a placeholder back, the client hydrates it
+from the union above.)
+
+### 16.4 Limitations
+
+- A project's redaction secret is currently wrapped for the **creating member** only; other members
+  see placeholders until participant re-wrapping lands — the same MVP limitation conversation
+  redaction has (§14.4). It is a UX/coverage limit, not a leak: no member ever receives a value they
+  shouldn't, and provider exposure is unaffected.
+- Scoped redaction inherits the best-effort detection caveat (§14.1): only recognised
+  high-confidence values are tokenised.
+
+## 17. Open limitations
 
 This model does **not** attempt to protect against a malicious server during live completion
-requests, because the backend must see plaintext to call AI providers. Browser PII redaction
-(§14) narrows this exposure for detected high-confidence values, which are replaced with
-placeholders before the request leaves the device.
+requests, because the backend must see plaintext to call AI providers (this includes the compaction
+completion call, §15.2). Browser PII redaction (§14, §16) narrows this exposure for detected
+high-confidence values, which are replaced with placeholders before the request leaves the device.
 
 This model is designed to protect against:
 
@@ -473,7 +589,7 @@ This model is designed to protect against:
 - accidental internal access to stored chat history
 - server-side compromise that does not also obtain the user's Account Key
 
-## 16. Related implementation areas
+## 18. Related implementation areas
 
 Primary implementation areas:
 
@@ -489,5 +605,17 @@ Primary implementation areas:
 - `frontend/src/app/interfaces/model.ts`
 - `backend/internal/handler/secure_records.go` (VaultSession{Get,Upsert,Delete})
 - `backend/db/migrations/*_created_vault_session_wrap_keys.go`
+
+Compaction, memory, and scoped redaction (§15–§16):
+
+- `backend/internal/compaction/` (payload, prompt, parse, repo, encryption)
+- `backend/internal/handler/compaction.go`, `scoped_memory.go`, `scoped_redaction.go`
+- `backend/internal/handler/redaction.go` (conversation redaction)
+- `backend/db/migrations/*_created_conversation_compactions.go`, `*_created_scoped_memory.go`,
+  `*_created_redaction_collections.go`, `*_created_scoped_redaction.go`
+- `frontend/src/app/services/compaction.service.ts`, `scoped-memory.service.ts`,
+  `redaction.service.ts`
+- `frontend/src/app/components/chat/conversation-memory/`,
+  `frontend/src/app/components/chat/message-list-item/message-list-item.component.ts`
 
 Update this document if the actual implemented trust model changes.
