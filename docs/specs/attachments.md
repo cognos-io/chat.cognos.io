@@ -1,6 +1,20 @@
 # Attachments — Product & Architecture Spec
 
-**Status:** Draft
+**Status:** V1 implemented — text-like files (`.txt`, `.md`, `.csv`, valid UTF-8 `.json`). Images,
+PDF and DOCX remain future phases.
+
+**Implementation notes (V1):**
+
+- The encrypted manifest is a single flat `artifacts[]` array (original at index 0, derived after).
+  Artifact keys are **single-sealed** (raw key inside the sealed manifest), per §0.
+- Artifacts are addressed on download by **server file name**, learned from the record's `files[]`
+  array (stable upload ordering), via `GET …/attachments/{id}/files/{fileName}` — the backend stays
+  a dumb participant-gated file server.
+- Attachments require a **saved conversation** (the upload endpoint is conversation-scoped and the
+  manifest is sealed to the conversation key), so the composer's paperclip is hidden in a brand-new
+  temporary chat — mirroring image generation. First message creates the conversation; attach after.
+- Per-user storage cap and per-file ciphertext cap are injectable (`appHookParams`) and default to
+  1 GiB / 11 MiB.
 
 **Scope:** Client-side encrypted user-uploaded attachments for encrypted conversations, starting
 with text-like files and a worker-based processing pipeline.
@@ -439,12 +453,14 @@ Current generated-image attachments use fields such as `kind`, `mime_type`, `sea
 }
 ```
 
-The reference is built **client-side** and embedded inside the encrypted message payload. The
-backend never edits the encrypted blob (it cannot decrypt it); it only verifies each `attachment_id`
-belongs to the conversation and is readable by the user, and sets the plaintext
-`conversation_attachments.message` relation. The encrypted message payload stores only references.
-It does not store extracted text unless a future explicit decision says transcript exports should
-include the exact prompt-time attachment context.
+In the completion flow the backend already assembles and encrypts the user message (it receives the
+plaintext turn to call the provider, and seals it to the conversation key — the existing "plaintext
+in-flight, encrypted at rest" model). So the backend embeds these `user_upload` references into
+`MessageRecordData.Attachments` server-side, exactly like the generated-image precedent, then sets
+the plaintext `conversation_attachments.message` relation. It verifies every `attachment_id` belongs
+to the conversation first. The encrypted message payload stores only references — never the
+extracted text. (The artifact bytes and the manifest remain fully zero-knowledge: they are encrypted
+client-side and the server never sees their plaintext.)
 
 ### 7.4 Export
 
@@ -692,9 +708,8 @@ attachment_contexts?: CompletionAttachmentInput[];
 Backend requirements:
 
 - verify every `attachment_id` belongs to the conversation and is readable by the user;
-- set the plaintext `conversation_attachments.message` relation for each id (the client, not the
-  backend, embeds the reference inside the encrypted message payload — the backend cannot decrypt or
-  edit that blob);
+- embed the `user_upload` references into the user message it persists (server-side encryption, like
+  generated images) and set the plaintext `conversation_attachments.message` relation for each id;
 - include `attachment_contexts` text (plus the prompt-injection wrapper boilerplate) in
   `estimatePromptInputTokens` **before** the billing gate, so attachment context is metered and the
   pre-call gate cannot be bypassed by large attachments;
@@ -714,8 +729,8 @@ plaintext prompts for completion requests.
 When the user sends a message with ready attachments:
 
 - the normal user text stays as the message content;
-- attachment ids are embedded by the client in the encrypted message data, and the backend links the
-  attachment records via the plaintext `message` relation;
+- attachment ids are embedded in the encrypted message data (server-side, during persistence) and
+  the backend links the attachment records via the plaintext `message` relation;
 - text context is added to the provider request as untrusted attachment material, counted by the
   token estimator and billing gate.
 
@@ -909,14 +924,14 @@ Browser e2e:
 
 ## 14. Rollout plan
 
-1. Documentation/spec.
-2. Backend collection + locked custom routes + API tests.
-3. Frontend worker scaffold + text processor unit tests.
-4. Client-side encryption/upload + UI chips.
-5. Completion request extension + provider mock e2e.
-6. Export support.
-7. Images processor.
-8. PDF/DOCX processors after separate library spikes.
+1. ✅ Documentation/spec.
+2. ✅ Backend collection + locked custom routes + API tests.
+3. ✅ Frontend worker scaffold + text processor unit tests.
+4. ✅ Client-side encryption/upload + UI chips (paperclip + drag/drop + remove).
+5. ✅ Completion request extension + provider mock e2e.
+6. Export support. _(deferred)_
+7. Images processor. _(deferred)_
+8. PDF/DOCX processors after separate library spikes. _(deferred)_
 
 ## 15. Decisions and open questions
 
