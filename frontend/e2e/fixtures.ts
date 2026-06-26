@@ -389,6 +389,44 @@ export const buildCompactionRecordFixture = (
   updated: record.created,
 });
 
+// buildUserMemoryRecordFixture seals a scoped-memory payload to the user's vault
+// key exactly as ScopedMemoryService would, so a GET /user-memory mock can return
+// a record the settings memory page decrypts. `durableMemory` is the decrypted
+// shape ({ items: string[] }).
+export const buildUserMemoryRecordFixture = (
+  userFixture: VaultFixture,
+  record: {
+    id: string;
+    created: string;
+    durableMemory: Record<string, unknown>;
+  },
+): {
+  id: string;
+  user: string;
+  data: string;
+  created: string;
+  updated: string;
+} => ({
+  id: record.id,
+  user: userFixture.authState.model.id,
+  data: base64(
+    sealedBox(
+      textEncoder.encode(
+        JSON.stringify({
+          version: '1',
+          kind: 'scoped_memory',
+          scope: 'user',
+          durable_memory: record.durableMemory,
+          created_at: record.created,
+        }),
+      ),
+      userFixture.userKeyPair.publicKey,
+    ),
+  ),
+  created: record.created,
+  updated: record.created,
+});
+
 // buildPublicShareFixture produces the server-side payload + URL fragment for a
 // publicly-shared conversation, mirroring what PublicShareService.share writes:
 // the conversation secret sealed to a throwaway public-share public key (so the

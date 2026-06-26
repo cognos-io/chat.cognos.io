@@ -60,6 +60,16 @@ export const routes: Routes = [
           import('./pages/account/account.component').then((m) => m.AccountComponent),
       },
       {
+        // Personal (user-scoped) memory: view and edit the facts injected into
+        // every chat.
+        path: 'memory',
+        data: { title: 'Memory' },
+        loadComponent: () =>
+          import('./pages/account/account-memory.component').then(
+            (m) => m.AccountMemoryComponent,
+          ),
+      },
+      {
         path: 'billing',
         loadComponent: () =>
           import('./pages/account/billing/plan-billing.component').then(

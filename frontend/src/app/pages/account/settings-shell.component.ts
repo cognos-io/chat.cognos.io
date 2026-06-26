@@ -251,6 +251,7 @@ export class SettingsShellComponent {
       icon: 'user-plus',
       exact: true,
     },
+    { labelKey: 'settings.nav.memory', link: '/account/memory', icon: 'brain' },
     { labelKey: 'settings.nav.billing', link: '/account/billing', icon: 'landmark' },
     {
       labelKey: 'settings.nav.projects',
