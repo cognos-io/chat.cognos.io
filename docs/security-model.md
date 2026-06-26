@@ -655,7 +655,7 @@ flowchart LR
   llm -->|"reply"| enc
   enc --> store
 
-  store -.->|"load + decrypt"| dec
+  store -. "load + decrypt" .-> dec
 ```
 
 ### Figure 2 — Stores, sealing keys, and who can decrypt
