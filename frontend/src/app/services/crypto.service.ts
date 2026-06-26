@@ -3,8 +3,24 @@ import { Injectable } from '@angular/core';
 import { blake2b } from 'blakejs';
 import nacl from 'tweetnacl';
 
+import {
+  createSealedBox as createSealedBoxHelper,
+  openSealedBox as openSealedBoxHelper,
+} from '../crypto/sealed-box';
+import {
+  openSecretBox as openSecretBoxHelper,
+  randomSecretKey,
+  secretBox as secretBoxHelper,
+} from '../crypto/secret-box';
 import { KeyPair } from '../interfaces/key-pair';
 
+/**
+ * CryptoService is the Angular-injectable surface for the app's NaCl crypto. The
+ * actual sealed-box / secretbox primitives live in framework-free helpers under
+ * `app/crypto/` so they can be reused inside the attachment Web Worker (which has
+ * no Angular DI). This service delegates to those helpers; its existing tests
+ * keep their behaviour pinned.
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -39,7 +55,7 @@ export class CryptoService {
    * (e.g. a project content key). 32 bytes of CSPRNG output.
    */
   randomKey(): Uint8Array {
-    return nacl.randomBytes(nacl.secretbox.keyLength);
+    return randomSecretKey();
   }
 
   /**
@@ -107,14 +123,7 @@ export class CryptoService {
    * @returns (Uint8Array) - The encrypted message (ciphertext) including the nonce
    */
   secretBox(message: Uint8Array, key: Uint8Array): Uint8Array {
-    const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
-    const ciphertext = nacl.secretbox(message, nonce, key);
-
-    const fullMessage = new Uint8Array(nonce.length + ciphertext.length);
-    fullMessage.set(nonce);
-    fullMessage.set(ciphertext, nonce.length);
-
-    return fullMessage;
+    return secretBoxHelper(message, key);
   }
 
   /**
@@ -126,15 +135,7 @@ export class CryptoService {
    * @returns (Uint8Array) - The decrypted message
    */
   openSecretBox(fullMessage: Uint8Array, key: Uint8Array): Uint8Array {
-    const nonce = fullMessage.slice(0, nacl.secretbox.nonceLength);
-    const ciphertext = fullMessage.slice(nacl.secretbox.nonceLength);
-    const decrypted = nacl.secretbox.open(ciphertext, nonce, key);
-
-    if (decrypted === null) {
-      throw new Error('Could not open secret box');
-    }
-
-    return decrypted;
+    return openSecretBoxHelper(fullMessage, key);
   }
 
   /**
@@ -157,53 +158,10 @@ export class CryptoService {
    * @returns (Uint8Array) - The sealed box (ephemeral public key + ciphertext)
    */
   createSealedBox(message: Uint8Array, recipientPublicKey: Uint8Array): Uint8Array {
-    const ephemeralKeyPair = nacl.box.keyPair();
-
-    const keys = new Uint8Array(
-      ephemeralKeyPair.publicKey.length + recipientPublicKey.length,
-    );
-    keys.set(ephemeralKeyPair.publicKey);
-    keys.set(recipientPublicKey, ephemeralKeyPair.publicKey.length);
-
-    const nonce = blake2b(keys, undefined, nacl.secretbox.nonceLength);
-    const ciphertext = nacl.box(
-      message,
-      nonce,
-      recipientPublicKey,
-      ephemeralKeyPair.secretKey,
-    );
-
-    const sealedBox = new Uint8Array(
-      ephemeralKeyPair.publicKey.length + ciphertext.length,
-    );
-    sealedBox.set(ephemeralKeyPair.publicKey);
-    sealedBox.set(ciphertext, ephemeralKeyPair.publicKey.length);
-
-    return sealedBox;
+    return createSealedBoxHelper(message, recipientPublicKey);
   }
 
   openSealedBox(sealedBox: Uint8Array, myKeyPair: KeyPair): Uint8Array {
-    // Sealed boxes look like this:
-    // ephemeral_pk ‖ box(m, recipient_pk, ephemeral_sk, nonce=blake2b(ephemeral_pk ‖ recipient_pk))
-    const theirPublicKey = sealedBox.slice(0, nacl.box.publicKeyLength);
-    const ciphertext = sealedBox.slice(nacl.box.publicKeyLength);
-
-    const keys = new Uint8Array(theirPublicKey.length + myKeyPair.publicKey.length);
-    keys.set(theirPublicKey);
-    keys.set(myKeyPair.publicKey, theirPublicKey.length);
-
-    const nonce = blake2b(keys, undefined, nacl.secretbox.nonceLength);
-
-    const decryptedMessage = nacl.box.open(
-      ciphertext,
-      nonce,
-      theirPublicKey,
-      myKeyPair.secretKey,
-    );
-    if (decryptedMessage === null) {
-      throw new Error('Could not open sealed box');
-    }
-
-    return decryptedMessage;
+    return openSealedBoxHelper(sealedBox, myKeyPair);
   }
 }
