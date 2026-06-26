@@ -29,13 +29,36 @@ with text-like files and a worker-based processing pipeline.
 - **10 MiB upload cap for user attachments.** The user-facing max original file size is 10 MiB.
   This is separate from the existing generated-image `messages.attachment` field, which currently
   allows larger encrypted generated images.
+- **1 GiB per-user storage cap.** Total stored ciphertext per user in `conversation_attachments`
+  (original + all derived artifacts) must not exceed 1 GiB. Enforced at the create endpoint before
+  persistence. A plaintext per-record ciphertext `size_bytes` column makes the per-owner sum
+  efficient; ciphertext byte counts are already accepted operational metadata.
 - **New attachment storage, not the generated-image message field.** User uploads need originals,
   AI artifacts, manifests and pre-send upload. Use a new `conversation_attachments` collection with
   protected encrypted files rather than overloading the existing single `messages.attachment` file
   field used by image generation.
-- **Encrypted manifest.** Original filename, MIME type, detected type, artifact metadata, sealed
+- **Encrypted manifest.** Original filename, MIME type, detected type, artifact metadata, artifact
   keys and extraction status live inside an encrypted manifest. Plaintext collection columns are
-  only for routing and access control.
+  only for routing, access control and storage accounting.
+- **Single-sealed artifact keys.** Each artifact body is encrypted with a random, conversation-
+  independent symmetric key (`secretbox`). That raw key is stored inside the manifest, and the
+  manifest as a whole is sealed to the conversation public key. The artifact key is not separately
+  sealed: anyone who can open the manifest already holds the conversation secret key, so a second
+  wrap adds size and code paths without adding privacy. (Per-artifact sealing would only pay off for
+  selective per-artifact sharing, which is a non-goal.)
+- **Manifest stores no server filename; ordering maps artifacts to files.** The browser builds the
+  manifest before upload and cannot know PocketBase's assigned filenames. The manifest references
+  artifacts by a client-generated `artifact_id` and a fixed canonical order; files are uploaded in
+  that order, so `files[i]` corresponds to the i-th artifact. At download time the client reads the
+  current `files[]` from list/get, maps the artifact to its server filename by position, and
+  downloads by filename — reusing the existing protected-file serve pattern
+  (`ConversationMessageAttachment`). The backend stays a dumb participant-gated file server and
+  never needs to read the encrypted manifest.
+- **End-to-end integrity hash.** A blake2b-256 hash of each artifact's plaintext is stored inside
+  the encrypted manifest and verified after decrypt. This catches pipeline/decode corruption and
+  enables client dedup; it is not a tamper control (`secretbox` already authenticates ciphertext).
+  The hash is never a plaintext column — a plaintext content hash would enable confirmation-of-file
+  attacks.
 - **Provider visibility is explicit.** Stored attachments remain encrypted. AI providers see
   attachment content only when the client sends extracted text or model-ready image bytes as part of
   an inference request.
@@ -182,11 +205,15 @@ The backend must never durably store plaintext:
 - manifest fields;
 - plaintext hashes of original content.
 
-Plaintext columns are allowed only when needed for backend access/routing:
+Plaintext columns are allowed only when needed for backend access/routing/accounting:
 
 ```txt
-id, conversation, owner, message?, created, updated
+id, conversation, owner, message?, size_bytes, created, updated
 ```
+
+`size_bytes` is the total ciphertext byte count for the record's files. It is operational metadata
+(PocketBase already knows ciphertext sizes) and exists so the 1 GiB per-user cap can be summed per
+owner without reading files.
 
 PocketBase will also know ciphertext file names/sizes and upload timestamps. This is accepted
 operational metadata.
@@ -207,17 +234,28 @@ approved AI provider. Product copy must not imply otherwise.
 Use the existing NaCl conventions already present in `CryptoService` and backend attachment code:
 
 - per artifact:
-  1. generate random 32-byte symmetric key;
+  1. generate random 32-byte symmetric key (conversation-independent);
   2. encrypt bytes with `secretbox`, stored as `nonce || ciphertext`;
-  3. seal the symmetric key to the conversation public key with the sealed-box layout used by
-     `CryptoService.createSealedBox`;
-  4. store the sealed key inside the encrypted manifest.
+  3. store the raw 32-byte key inside the manifest (single seal — see §0 Decision Log). The key is
+     never separately sealed; the manifest's own encryption is the only confidentiality boundary.
 - manifest:
     - JSON-encode the manifest;
-    - encrypt directly to the conversation public key with sealed box;
+    - encrypt directly to the conversation public key with sealed box
+      (`CryptoService.createSealedBox`);
     - store as base64 in the `data` field.
 
-Only participants with the conversation secret key can decrypt the manifest and artifact keys.
+Only participants with the conversation secret key can decrypt the manifest, and the manifest is the
+only thing that holds the artifact keys. Because artifact bodies use conversation-independent keys,
+a future conversation-copy re-seal is a manifest-only operation: re-seal the manifest to the new
+conversation key without re-encrypting any artifact bytes.
+
+### 6.3.1 Manifest binding verification
+
+After decrypting a manifest the client MUST verify the manifest's `conversation_id` and
+`client_attachment_id` match the record it requested, mirroring the existing
+`assertMessageBindings` check in `message.service.ts`. `secretbox`/sealed-box authentication means
+the server cannot forge or tamper with ciphertext, but it could still serve a different valid
+attachment record from the same conversation; the binding check rejects that.
 
 ### 6.4 Worker crypto implementation
 
@@ -265,6 +303,12 @@ only as reference material for the user's request.
 
 The exact wrapper should be owned by the backend so clients cannot accidentally omit it.
 
+**Placement: attachment context is never a system or developer instruction.** The wrapped, delimited
+block is injected as part of the user turn (alongside the user's text), never as a system/developer
+message and never merged into the system prompt. Treating attachment content as a system instruction
+would defeat the wrapper. The token estimator and billing gate count this injected block (see
+§10.3).
+
 ### 6.7 Logging
 
 Never log:
@@ -295,6 +339,7 @@ conversation       relation -> conversations, required
 owner              relation -> users, required
 message            relation -> messages, optional until the user sends
 files              protected file[], maxSelect small, maxSize 10 MiB per file
+size_bytes         number, required; total ciphertext bytes across files (for the per-user cap)
 data               text, required; base64 sealed manifest
 created
 updated
@@ -304,9 +349,11 @@ Notes:
 
 - `files` contains encrypted blobs only.
 - `files` should be protected.
+- `size_bytes` is set server-side from the received file parts and summed per owner to enforce the
+  1 GiB cap. Allow a little headroom over 10 MiB per file for `secretbox` overhead.
 - `message` is set once the user message is persisted; before send, attachments are conversation
   drafts and can be deleted if abandoned.
-- A cleanup job should delete unattached draft attachments older than a short window, e.g. 24 hours.
+- A cleanup job should delete unattached draft attachments older than 8 hours.
 - This collection is separate from the existing `messages.attachment` generated-image field.
 
 ### 7.2 Encrypted manifest shape
@@ -324,15 +371,14 @@ interface AttachmentManifestV1 {
   owner_id: string;
 
   original: {
-    artifact_id: string;
-    file_name: string; // protected file name containing ciphertext, not user's original filename
+    artifact_id: string; // client-generated; stable handle for this artifact (position 0)
     original_name: string;
     declared_mime_type: string;
     detected_mime_type: string;
     extension: string;
-    size_bytes: number;
-    sealed_key: string;
-    plaintext_hash: string; // inside encrypted manifest only
+    size_bytes: number; // plaintext size
+    key: string; // base64 raw 32-byte secretbox key; protected only by manifest encryption
+    plaintext_hash: string; // blake2b-256 of plaintext; integrity + dedup; manifest only
   };
 
   processor: {
@@ -342,13 +388,12 @@ interface AttachmentManifestV1 {
   };
 
   artifacts: Array<{
-    artifact_id: string;
+    artifact_id: string; // client-generated; stable handle; position in this array maps to files[]
     kind: 'original' | 'extracted_text' | 'text_chunk' | 'thumbnail' | 'model_image';
-    file_name: string;
     mime_type: string;
     size_bytes: number;
-    sealed_key: string;
-    plaintext_hash?: string; // inside encrypted manifest only
+    key: string; // base64 raw 32-byte secretbox key
+    plaintext_hash?: string; // blake2b-256; integrity + dedup; manifest only
     text_stats?: {
       char_count: number;
       line_count?: number;
@@ -371,10 +416,13 @@ interface AttachmentManifestV1 {
 }
 ```
 
-The manifest intentionally does not need the server-assigned PocketBase record id; the create
-response supplies that id, and encrypted message references use it. The manifest is richer than V1
-needs so later image/text artifacts can be added without changing the storage pattern. Do not add
-these fields as plaintext collection columns.
+The manifest intentionally does not need the server-assigned PocketBase record id or server
+filenames; the create response supplies the record id, encrypted message references use it, and
+artifacts are addressed by client-generated `artifact_id`. The client maps `artifact_id` to the
+stored file via stable `files[]` ordering returned by create/list (the n-th `artifact` corresponds
+to the n-th uploaded file). The manifest is richer than V1 needs so later image/text artifacts can
+be added without changing the storage pattern. Do not add these fields as plaintext collection
+columns.
 
 ### 7.3 Message payload references
 
@@ -385,14 +433,16 @@ Current generated-image attachments use fields such as `kind`, `mime_type`, `sea
 ```ts
 {
   kind: 'user_upload';
-  attachment_id: string;
-  manifest_sealed: true;
+  attachment_id: string; // server-assigned conversation_attachments record id
 }
 ```
 
-The encrypted message payload stores only references. It does not store extracted text unless a
-future explicit decision says transcript exports should include the exact prompt-time attachment
-context.
+The reference is built **client-side** and embedded inside the encrypted message payload. The
+backend never edits the encrypted blob (it cannot decrypt it); it only verifies each `attachment_id`
+belongs to the conversation and is readable by the user, and sets the plaintext
+`conversation_attachments.message` relation. The encrypted message payload stores only references.
+It does not store extracted text unless a future explicit decision says transcript exports should
+include the exact prompt-time attachment context.
 
 ### 7.4 Export
 
@@ -567,6 +617,9 @@ Backend requirements:
 - require authenticated user;
 - verify active participant access to the conversation;
 - enforce file count and 10 MiB per-file cap;
+- compute the received ciphertext byte total, persist it to `size_bytes`, and reject the upload
+  before persistence if it would push the owner's summed `conversation_attachments` storage over the
+  1 GiB cap (translated, user-safe error; deleting attachments frees space);
 - do not inspect ciphertext as if it were plaintext;
 - do not log filenames from multipart parts; use generated server filenames;
 - return user-safe validation/business errors.
@@ -585,7 +638,12 @@ Returns records the user can access. Used for reload/export and for resolving at
 GET /api/v1/conversations/{conversationID}/attachments/{attachmentID}/files/{fileName}
 ```
 
-Returns ciphertext bytes. The client decrypts using the sealed key from the decrypted manifest.
+Returns ciphertext bytes via the protected-file serve path, gated by the participant +
+record-ownership check (same pattern as `ConversationMessageAttachment`). The client obtains
+`fileName` from the record's `files[]` array (list/get), mapping the artifact to its file by the
+canonical upload order, then decrypts using the raw `key` for that artifact from the decrypted
+manifest. The manifest never stores a server filename — it is unknown at manifest-creation time and
+is learned here at download time.
 
 ### 9.4 Delete draft attachment
 
@@ -632,8 +690,14 @@ attachment_contexts?: CompletionAttachmentInput[];
 Backend requirements:
 
 - verify every `attachment_id` belongs to the conversation and is readable by the user;
-- attach ids to the encrypted user message payload;
-- wrap `attachment_contexts` as untrusted content before the gateway call;
+- set the plaintext `conversation_attachments.message` relation for each id (the client, not the
+  backend, embeds the reference inside the encrypted message payload — the backend cannot decrypt or
+  edit that blob);
+- include `attachment_contexts` text (plus the prompt-injection wrapper boilerplate) in
+  `estimatePromptInputTokens` **before** the billing gate, so attachment context is metered and the
+  pre-call gate cannot be bypassed by large attachments;
+- wrap `attachment_contexts` as untrusted content before the gateway call (placed in the user turn,
+  never as a system/developer instruction — see §6.6);
 - never persist `text_context` plaintext;
 - never log `attachment_contexts`.
 
@@ -648,8 +712,10 @@ plaintext prompts for completion requests.
 When the user sends a message with ready attachments:
 
 - the normal user text stays as the message content;
-- attachment ids are persisted in encrypted message data;
-- text context is added to the provider request as untrusted attachment material.
+- attachment ids are embedded by the client in the encrypted message data, and the backend links the
+  attachment records via the plaintext `message` relation;
+- text context is added to the provider request as untrusted attachment material, counted by the
+  token estimator and billing gate.
 
 ### 10.2 Historical attachment context
 
@@ -662,13 +728,16 @@ branch by:
 4. applying context caps and active-branch planning;
 5. sending `attachment_contexts` with the completion request.
 
-V1 may include only current-turn attachment context if historical replay is too large for the first
-slice, but the storage model must not prevent historical context later.
+V1 includes historical attachment context (not current-turn only). The first slice replays prior
+on-branch attachment context within the context caps; smarter selection (relevance ranking,
+per-attachment inclusion, summarisation) is future work. Historical context is metered by the same
+estimator and billing gate as current-turn context.
 
 ### 10.3 Interaction with compaction
 
 Attachment text can be large. The context planner should count attachment context against the same
-usable context budget as messages and compactions.
+usable context budget as messages and compactions, and the same total must be passed to
+`estimatePromptInputTokens` so the billing gate sees every attachment character.
 
 Initial rule:
 
@@ -710,10 +779,13 @@ fetching. Do not expose generic file URLs if they bypass conversation participan
 ### 11.3 Persistence and cleanup
 
 - Create records only after participant check passes.
+- Maintain `size_bytes` per record and reject creates that would exceed the owner's 1 GiB cap.
 - Use generated server-side filenames for encrypted file parts.
 - Attachments uploaded but never linked to a message are drafts.
-- Add cleanup for old unlinked drafts.
-- Deleting a conversation deletes attachments.
+- Add cleanup for unlinked drafts older than 8 hours. Linking a draft to a message (on send) must
+  win any race with the reaper; ephemeral completions (`persist: false`) should delete their drafts
+  client-side since they are never linked.
+- Deleting a conversation deletes attachments (and frees the owner's quota).
 - Deleting or expiring a message should delete or detach linked attachments according to retention
   rules. The simple V1 rule should be: delete linked attachment records when their owning message is
   hard-deleted/expired.
@@ -782,6 +854,11 @@ Frontend:
 - text processor rejects invalid UTF-8 and NUL bytes;
 - context caps are applied;
 - encrypted manifest does not contain plaintext filename/content;
+- decrypted-artifact `plaintext_hash` (blake2b-256) verification passes for good bytes and fails for
+  corrupted bytes;
+- manifest binding check rejects a manifest whose `conversation_id`/`client_attachment_id` do not
+  match the requested record;
+- artifact `artifact_id` maps to the correct file by stable ordering;
 - worker protocol maps progress, success and failure;
 - completion request mapper includes `attachment_ids` and `attachment_contexts` without renaming
   mistakes.
@@ -791,8 +868,15 @@ Backend:
 - participant can create/list/download/delete attachment records;
 - non-participant gets 404;
 - upload over 10 MiB is rejected before record creation;
+- upload that would exceed the 1 GiB per-user cap is rejected before record creation; deleting frees
+  space;
+- artifact download serves the correct file by name, gated by participant + record-ownership, and
+  refuses filenames from other records;
 - unsupported route/malformed multipart returns safe validation error;
 - completion rejects attachment ids outside the conversation;
+- attachment context is included in the input-token estimate so the billing gate cannot be bypassed
+  by large attachment context;
+- attachment context is placed in the user turn, never the system prompt;
 - completion never logs attachment context in error paths.
 
 ### 13.2 E2E tests
@@ -830,11 +914,25 @@ Browser e2e:
 7. Images processor.
 8. PDF/DOCX processors after separate library spikes.
 
-## 15. Open questions
+## 15. Decisions and open questions
 
-- Exact per-message attachment count: proposed `4`.
-- Exact context character caps: proposed `100k/file`, `200k/message`.
-- Whether V1 should include historical attachment context or current-turn only.
-- Whether draft attachment cleanup should be 24 hours or shorter.
+Resolved:
+
+- Per-message attachment count: **4**.
+- Context character caps: **100k/file, 200k/message** (accepted; tunable before launch).
+- Historical attachment context: **included in V1**; smarter selection is future work.
+- Draft cleanup window: **8 hours**.
+- Per-user storage cap: **1 GiB**, counting all stored ciphertext in `conversation_attachments`
+  (originals + derived); generated images in `messages.attachment` are out of scope for V1.
+- Artifact key wrapping: **single seal** (raw key in the encrypted manifest).
+- Artifact addressing: manifest stores **no server filename**; client maps artifacts to files by
+  canonical order and downloads by filename (existing serve pattern).
+- Integrity: **blake2b-256 plaintext hash** in the manifest, verified after decrypt.
+- All user-facing copy is **i18n with translations for every supported locale**.
+
+Still open:
+
 - Whether user-facing copy should explicitly warn that AI providers see attachment content when
   used.
+- Whether the storage cap should later include generated images / total encrypted storage rather
+  than just `conversation_attachments`.
