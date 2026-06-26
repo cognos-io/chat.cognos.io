@@ -154,6 +154,7 @@ export const processAttachment = async (
   return {
     clientAttachmentId,
     conversationId: input.conversationId,
+    processorId: processor.id,
     manifestB64: Base64.fromUint8Array(sealed),
     artifacts: encryptedArtifacts,
     display: {

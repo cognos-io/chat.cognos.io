@@ -124,6 +124,7 @@ export interface EncryptedArtifactDraft {
 export interface EncryptedAttachmentDraft {
   clientAttachmentId: string;
   conversationId: string;
+  processorId: string;
   /** base64 sealed manifest for the `data` field. */
   manifestB64: string;
   /** Encrypted artifacts in canonical upload order (original first). */
