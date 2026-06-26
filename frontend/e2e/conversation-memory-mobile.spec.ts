@@ -39,12 +39,7 @@ test('opens the conversation memory as a full-screen sheet on mobile', async ({
       covered_message_ids: ['msg_sheet_1'],
       parent_compaction_id: '',
       compaction_level: 0,
-      durable_memory: {
-        facts: ['Prefers mobile'],
-        decisions: [],
-        open_threads: [],
-        glossary: [],
-      },
+      durable_memory: { items: ['Prefers mobile'] },
       rolling_narrative: 'A short chat.',
       citations: [],
       source_token_estimate: 10,

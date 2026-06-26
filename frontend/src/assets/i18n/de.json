@@ -10,7 +10,8 @@
     },
     "breadcrumbs": {
       "account": "Konto",
-      "settings": "Einstellungen"
+      "settings": "Einstellungen",
+      "memory": "Gedächtnis"
     },
     "danger": {
       "confirmFieldAria": "Geben Sie zur Bestätigung DELETE ein",
@@ -132,6 +133,12 @@
       "exportedOne": "1 Chat exportiert",
       "passwordChanged": "Passwort geändert",
       "profileUpdated": "Profil aktualisiert"
+    },
+    "memory": {
+      "title": "Dein Gedächtnis",
+      "subtitle": "Fakten, die du in deinem persönlichen Gedächtnis gespeichert hast. Sie sind verschlüsselt, nur du kannst sie lesen, und sie werden dem Kontext jedes Chats hinzugefügt.",
+      "save": "Speichern",
+      "saved": "Gedächtnis gespeichert"
     }
   },
   "auth": {
@@ -819,10 +826,6 @@
     "memory": {
       "title": "Gesprächsgedächtnis",
       "intro": "Cognos fasst ältere Nachrichten zusammen, damit dieser Chat im Modelllimit bleibt. Prüfen und bearbeiten Sie, was gespeichert wird – ein Eintrag pro Zeile.",
-      "facts": "Fakten",
-      "decisions": "Entscheidungen",
-      "openThreads": "Offene Punkte",
-      "glossary": "Glossar",
       "narrative": "Aktuelle Zusammenfassung",
       "linePlaceholder": "Ein Eintrag pro Zeile",
       "empty": "In diesem Gespräch wurde noch nichts komprimiert.",
@@ -835,7 +838,8 @@
       "redactedNote": "Redigiert gespeichert:",
       "addToConversation": "Unterhaltung",
       "addToUser": "Benutzer",
-      "addToProject": "Projekt"
+      "addToProject": "Projekt",
+      "items": "Was gemerkt werden soll"
     }
   },
   "common": {
@@ -1103,7 +1107,8 @@
       "projects": "Projekte",
       "security": "Sicherheit & Schlüssel",
       "team": "Team & Freigabe",
-      "usage": "Nutzung"
+      "usage": "Nutzung",
+      "memory": "Gedächtnis"
     },
     "placeholder": {
       "comingSoon": "Dieser Bereich ist bald verfügbar."

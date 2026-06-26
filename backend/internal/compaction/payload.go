@@ -31,21 +31,15 @@ const (
 	OutputModeDelimitedText OutputMode = "delimited_text"
 )
 
-// GlossaryEntry preserves a redaction placeholder or an important exact name so
-// it survives summarisation verbatim (spec §8.2).
-type GlossaryEntry struct {
-	Term string `json:"term"`
-	Note string `json:"note"`
-}
-
-// DurableMemory is the slowly-changing part of a compaction. On a fold it is
-// merged with the prior memory rather than regenerated wholesale, which keeps it
-// stable enough to act as a cache-friendly prefix (spec §8.2, §9.3).
+// DurableMemory is the slowly-changing part of a compaction: a single flat list
+// of memory items — stable facts and preferences, decisions made, open
+// questions, and important exact names or redaction placeholders. It is one list
+// (not separate facts/decisions/threads/glossary buckets) so the user-facing
+// memory reads as a simple bullet list (spec §8.2). On a fold it is merged with
+// the prior memory rather than regenerated wholesale, which keeps it stable
+// enough to act as a cache-friendly prefix (spec §8.2, §9.3).
 type DurableMemory struct {
-	Facts       []string        `json:"facts"`
-	Decisions   []string        `json:"decisions"`
-	OpenThreads []string        `json:"open_threads"`
-	Glossary    []GlossaryEntry `json:"glossary"`
+	Items []string `json:"items"`
 }
 
 // Citation maps a provider-safe alias (e.g. "M12") to a real message ID. The

@@ -10,7 +10,8 @@
     },
     "breadcrumbs": {
       "account": "Account",
-      "settings": "Impostazioni"
+      "settings": "Impostazioni",
+      "memory": "Memoria"
     },
     "danger": {
       "confirmFieldAria": "Digita DELETE per confermare",
@@ -132,6 +133,12 @@
       "exportedOne": "1 chat esportata",
       "passwordChanged": "Password modificata",
       "profileUpdated": "Profilo aggiornato"
+    },
+    "memory": {
+      "title": "La tua memoria",
+      "subtitle": "Informazioni che hai fissato nella tua memoria personale. Sono cifrate, solo tu puoi leggerle e vengono aggiunte al contesto di ogni chat.",
+      "save": "Salva",
+      "saved": "Memoria salvata"
     }
   },
   "auth": {
@@ -819,10 +826,6 @@
     "memory": {
       "title": "Memoria della conversazione",
       "intro": "Cognos riassume i messaggi più vecchi per mantenere questa chat entro i limiti del modello. Controlla e modifica ciò che ricorda: un elemento per riga.",
-      "facts": "Fatti",
-      "decisions": "Decisioni",
-      "openThreads": "Questioni aperte",
-      "glossary": "Glossario",
       "narrative": "Riepilogo recente",
       "linePlaceholder": "Un elemento per riga",
       "empty": "In questa conversazione non è ancora stato compattato nulla.",
@@ -835,7 +838,8 @@
       "redactedNote": "Memorizzato oscurato:",
       "addToConversation": "Conversazione",
       "addToUser": "Utente",
-      "addToProject": "Progetto"
+      "addToProject": "Progetto",
+      "items": "Cosa ricordare"
     }
   },
   "common": {
@@ -1103,7 +1107,8 @@
       "projects": "Progetti",
       "security": "Sicurezza e chiavi",
       "team": "Team e condivisione",
-      "usage": "Utilizzo"
+      "usage": "Utilizzo",
+      "memory": "Memoria"
     },
     "placeholder": {
       "comingSoon": "Questa sezione sarà presto disponibile."

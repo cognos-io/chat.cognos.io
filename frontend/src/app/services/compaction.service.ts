@@ -109,30 +109,10 @@ export const compactionsInvalidatedByMessage = (
   return [...invalidated];
 };
 
-// renderDurableMemory renders the durable-memory lists into plain text. Returns
-// '' when every list is empty.
-const renderDurableMemory = (memory: CompactionPayload['durable_memory']): string => {
-  const lines: string[] = [];
-  const appendList = (label: string, items: string[]): void => {
-    if (items.length === 0) {
-      return;
-    }
-    lines.push(`- ${label}:`);
-    for (const item of items) {
-      lines.push(`  - ${item}`);
-    }
-  };
-  appendList('Facts', memory.facts);
-  appendList('Decisions', memory.decisions);
-  appendList('Open threads', memory.open_threads);
-  if (memory.glossary.length > 0) {
-    lines.push('- Glossary:');
-    for (const entry of memory.glossary) {
-      lines.push(`  - ${entry.term}: ${entry.note}`);
-    }
-  }
-  return lines.join('\n');
-};
+// renderDurableMemory renders the durable-memory items as a plain bullet list.
+// Returns '' when the list is empty.
+const renderDurableMemory = (memory: CompactionPayload['durable_memory']): string =>
+  memory.items.map((item) => `- ${item}`).join('\n');
 
 // renderCompactionSummary renders a decrypted payload into the plain text the
 // backend wraps in <conversation_summary> delimiters (spec §9.2). It mirrors the
@@ -225,10 +205,7 @@ export const selectManualMemory = (
 
 // emptyDurableMemory is the starting point for a fresh manual memory.
 const emptyDurableMemory = (): CompactionPayload['durable_memory'] => ({
-  facts: [],
-  decisions: [],
-  open_threads: [],
-  glossary: [],
+  items: [],
 });
 
 // CompactionPlanMessage is the minimal view of an active-branch message the
@@ -463,12 +440,12 @@ export class CompactionService {
   ): Observable<Compaction> {
     const existing = this.manualMemoryFor(conversationId);
     const base = existing?.payload.durable_memory ?? emptyDurableMemory();
-    if (base.facts.includes(fact) && existing) {
+    if (base.items.includes(fact) && existing) {
       return of(existing); // already pinned — no-op
     }
     return this.saveManualMemory(
       conversationId,
-      { ...base, facts: [...base.facts, fact] },
+      { ...base, items: [...base.items, fact] },
       keyPair,
     );
   }

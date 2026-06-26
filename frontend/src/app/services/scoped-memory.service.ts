@@ -16,10 +16,7 @@ import { ProjectService } from './project.service';
 import { VaultService } from './vault.service';
 
 const emptyDurableMemory = (): CompactionDurableMemory => ({
-  facts: [],
-  decisions: [],
-  open_threads: [],
-  glossary: [],
+  items: [],
 });
 
 const buildPayload = (
@@ -118,6 +115,32 @@ export class ScopedMemoryService {
     );
   }
 
+  /**
+   * saveUserMemory replaces the user's whole memory (facts/decisions/open
+   * threads/glossary), creating the record on first save. Used by the settings
+   * memory editor. The caller re-redacts any edited text first.
+   */
+  saveUserMemory(
+    durableMemory: CompactionDurableMemory,
+  ): Observable<ScopedMemory | null> {
+    const keyPair = this._vault.keyPair();
+    if (!keyPair) {
+      return of(null);
+    }
+    const existing = this._userMemory();
+    const data = this.sealUser(buildPayload('user', durableMemory), keyPair.publicKey);
+    const request = existing
+      ? this._api.updateUserMemory(existing.recordId, data)
+      : this._api.createUserMemory(data);
+    return request.pipe(
+      map((record) => {
+        const memory = this.toMemory(record, 'user', durableMemory);
+        this._userMemory.set(memory);
+        return memory;
+      }),
+    );
+  }
+
   /** addProjectFact appends a snippet to a project's memory. */
   addProjectFact(projectId: string, fact: string): Observable<ScopedMemory | null> {
     const contentKey = this.projectContentKey(projectId);
@@ -154,10 +177,10 @@ export class ScopedMemoryService {
     fact: string,
   ): CompactionDurableMemory | null {
     const base = existing?.payload.durable_memory ?? emptyDurableMemory();
-    if (base.facts.includes(fact)) {
+    if (base.items.includes(fact)) {
       return null;
     }
-    return { ...base, facts: [...base.facts, fact] };
+    return { ...base, items: [...base.items, fact] };
   }
 
   private decryptNewest(

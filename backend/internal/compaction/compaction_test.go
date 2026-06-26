@@ -14,10 +14,7 @@ func TestParseExtractsDelimitedJSONAndResolvesCitations(t *testing.T) {
 
 	raw := "Here is the summary.\n<compaction>\n" + `{
 		"durable_memory": {
-			"facts": ["User is migrating to Postgres [M1]"],
-			"decisions": ["Use pgx [M2]"],
-			"open_threads": [],
-			"glossary": [{"term": "[[PII_EMAIL_A8F2KD]]", "note": "work email"}]
+			"items": ["User is migrating to Postgres [M1]", "Use pgx [M2]"]
 		},
 		"rolling_narrative": "Discussed driver choice.",
 		"citations": ["M2"]
@@ -29,8 +26,8 @@ func TestParseExtractsDelimitedJSONAndResolvesCitations(t *testing.T) {
 		t.Fatalf("Parse returned error: %v", err)
 	}
 
-	if len(got.DurableMemory.Facts) != 1 {
-		t.Fatalf("expected 1 fact, got %v", got.DurableMemory.Facts)
+	if len(got.DurableMemory.Items) != 2 {
+		t.Fatalf("expected 2 memory items, got %v", got.DurableMemory.Items)
 	}
 	if got.RollingNarrative != "Discussed driver choice." {
 		t.Errorf("unexpected narrative %q", got.RollingNarrative)
@@ -51,7 +48,7 @@ func TestParseExtractsDelimitedJSONAndResolvesCitations(t *testing.T) {
 func TestParseDropsUnknownAliases(t *testing.T) {
 	t.Parallel()
 
-	raw := `<compaction>{"durable_memory":{"facts":[],"decisions":[],"open_threads":[],"glossary":[]},"rolling_narrative":"x","citations":["M9"]}</compaction>`
+	raw := `<compaction>{"durable_memory":{"items":[]},"rolling_narrative":"x","citations":["M9"]}</compaction>`
 	got, err := Parse(raw, map[string]string{"M1": "msg_one"})
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
@@ -64,12 +61,12 @@ func TestParseDropsUnknownAliases(t *testing.T) {
 func TestParseFallsBackToBareJSON(t *testing.T) {
 	t.Parallel()
 
-	raw := "noise {\"durable_memory\":{\"facts\":[\"a\"],\"decisions\":[],\"open_threads\":[],\"glossary\":[]},\"rolling_narrative\":\"n\",\"citations\":[]} noise"
+	raw := "noise {\"durable_memory\":{\"items\":[\"a\"]},\"rolling_narrative\":\"n\",\"citations\":[]} noise"
 	got, err := Parse(raw, nil)
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}
-	if len(got.DurableMemory.Facts) != 1 || got.RollingNarrative != "n" {
+	if len(got.DurableMemory.Items) != 1 || got.RollingNarrative != "n" {
 		t.Errorf("unexpected parse %#v", got)
 	}
 }
@@ -90,9 +87,8 @@ func TestParseNormalisesNilSlices(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}
-	if got.DurableMemory.Facts == nil || got.DurableMemory.Decisions == nil ||
-		got.DurableMemory.OpenThreads == nil || got.DurableMemory.Glossary == nil {
-		t.Errorf("expected non-nil slices, got %#v", got.DurableMemory)
+	if got.DurableMemory.Items == nil {
+		t.Errorf("expected non-nil items slice, got %#v", got.DurableMemory)
 	}
 }
 

@@ -19,9 +19,9 @@ V1 is **background, encrypted, branch-aware, recursive compaction**.
   and stores it in a dedicated `conversation_compactions` collection.
 - Compaction is **recursive**: a new compaction folds the previous summary plus the messages added
   since its anchor, so cost is bounded by new messages, not by total history.
-- A compaction has two parts: a slowly-changing **durable memory** (stable facts, decisions,
-  redaction-placeholder glossary) that is edited in place, and a **rolling narrative** of the recent
-  arc that is re-folded each time.
+- A compaction has two parts: a slowly-changing **durable memory** (a single flat list of memory
+  items — stable facts, decisions, open questions, important names/placeholders) that is edited in
+  place, and a **rolling narrative** of the recent arc that is re-folded each time.
 - The compaction table stores no plaintext summary, citations, token counts, anchor IDs, or covered
   message IDs. Those live inside the encrypted `data` blob.
 - The feature is transparent in normal mode. Future power-user mode can show what was compacted.
@@ -79,7 +79,7 @@ That is simple, but it loses useful history silently:
 | **Raw tail**          | Recent messages after the anchor that are still sent verbatim.                                          |
 | **Citation alias**    | A provider-safe label like `[M12]`, mapped client-side to a real message ID.                            |
 | **Usable context**    | Model input context minus reserves for system prompt, current draft, output, and safety margin.         |
-| **Durable memory**    | Slowly-changing structured facts/decisions/preferences + redaction glossary, edited in place.           |
+| **Durable memory**    | A slowly-changing flat list of memory items (facts, decisions, open questions, names), edited in place. |
 | **Rolling narrative** | The recent conversational arc and open threads, re-folded into each new compaction.                     |
 | **Fold**              | Producing a new compaction from `previous summary + messages since its anchor` (recursive compaction).  |
 | **Model capability**  | Registry metadata (§6.4) describing what a model supports: context window, structured output, etc.      |
@@ -164,13 +164,12 @@ Payload shape:
   // Two-part summary (§8.2). Durable memory is edited in place across folds;
   // the rolling narrative is regenerated each fold.
   durable_memory: {
-    facts: string[];        // stable facts, constraints, preferences
-    decisions: string[];    // decisions made so far
-    open_threads: string[]; // unresolved tasks/questions
-    glossary: Array<{       // redaction placeholders + important exact names
-      term: string;         // e.g. "[[PII_EMAIL_A8F2KD]]" or "Project Helios"
-      note: string;
-    }>;
+    // A single flat list of memory items — stable facts and preferences,
+    // decisions made, open questions, and important exact names or redaction
+    // placeholders (e.g. "[[PII_EMAIL_A8F2KD]] is the user's work email").
+    // Kept as one list (not separate buckets) so the user-facing memory reads
+    // as a simple bullet list users can understand and edit.
+    items: string[];
   };
   rolling_narrative: string; // concise prose of the recent arc
 
@@ -340,10 +339,11 @@ durable-memory part (§8.2) is stable by construction and resists drift between 
 
 The model produces two parts with different lifecycles:
 
-- **Durable memory** — `facts`, `decisions`, `open_threads`, and a `glossary`. On a fold, the prior
-  durable memory is **edited in place**: add new entries, update changed ones, mark resolved threads
-  — do not rewrite wholesale. This keeps it byte-stable enough to act as a cache-friendly prefix
-  (§9.3).
+- **Durable memory** — a single flat `items` list (stable facts, decisions, open questions, and
+  important names/redaction placeholders noted inline). On a fold, the prior durable memory is
+  **edited in place**: add new items, update changed ones, drop contradicted ones — do not rewrite
+  wholesale. This keeps it byte-stable enough to act as a cache-friendly prefix (§9.3). It is one
+  list (not separate buckets) so the user-facing memory reads as a simple bullet list (§16).
 - **Rolling narrative** — concise prose of the recent arc, regenerated each fold.
 
 ### 8.3 Output mode (capability-gated)
@@ -372,8 +372,10 @@ Either way the contract is the same payload schema, so downstream code does not 
 ### 8.4 Prompt intent
 
 - Summarise the supplied conversation for future continuation.
-- Preserve user goals, stable facts, constraints, decisions, open tasks, and important exact names.
-- Preserve PII redaction placeholders **exactly**, and record them in `glossary`.
+- Preserve user goals, stable facts, constraints, decisions, open tasks, and important exact names,
+  each as one short bullet in the `items` list.
+- Preserve PII redaction placeholders **exactly**, adding an `items` entry noting what each refers
+  to.
 - Use citation aliases like `[M3]` for important claims; every claim should carry an alias that
   exists in the input set.
 - Do not include unsupported facts.
@@ -445,10 +447,8 @@ the assembled prompt immediately after the canonical system prompt, wrapped in e
 ```txt
 <conversation_summary>
 Durable memory:
-- Facts: ...
-- Decisions: ...
-- Open threads: ...
-- Glossary: ...
+- ...
+- ...
 Recent narrative:
 ...
 </conversation_summary>
@@ -588,7 +588,7 @@ V1 acceptance rule:
 ### 12.2 Redaction-mapping changes
 
 Redaction is applied client-side before send, and placeholders are summarised into the compaction
-`glossary` (§8.2). If a user **later redacts more** of an already-covered message, the unredacted
+`items` list (§8.2). If a user **later redacts more** of an already-covered message, the unredacted
 text could persist inside an existing summary. Therefore a redaction-mapping change to a covered
 message must invalidate (delete) the covering compaction and its fold-chain descendants, the same
 way deletion does (§12.1).
@@ -736,6 +736,6 @@ like the conversation model). `hydrate()` resolves a token against the **union**
 project
 
 - user entries, so a placeholder hydrates wherever its scope is shown — closing the
-project-redaction-keys gap. (Multi-member project redaction currently wraps the key for the creating
-member; granting it to other members follows the same participant re-wrapping path conversations
-use.)
+  project-redaction-keys gap. (Multi-member project redaction currently wraps the key for the
+  creating member; granting it to other members follows the same participant re-wrapping path
+  conversations use.)

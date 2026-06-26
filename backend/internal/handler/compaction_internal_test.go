@@ -10,7 +10,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 )
 
-const validCompactionJSON = `{"durable_memory":{"facts":[],"decisions":[],"open_threads":[],"glossary":[]},"rolling_narrative":"n","citations":[]}`
+const validCompactionJSON = `{"durable_memory":{"items":[]},"rolling_narrative":"n","citations":[]}`
 
 // scriptedGateway returns a queued response per Complete call and records whether
 // each call asked for JSON response format.

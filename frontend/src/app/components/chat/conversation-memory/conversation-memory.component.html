@@ -18,72 +18,23 @@
 
       <form [formGroup]="form" class="conversation-memory__form">
         <div class="conversation-memory__field">
-          <label for="memory-facts">{{ t('chat.memory.facts') }}</label>
+          <label for="memory-items">{{ t('chat.memory.items') }}</label>
           <textarea
-            id="memory-facts"
-            rows="4"
-            formControlName="facts"
+            id="memory-items"
+            rows="8"
+            formControlName="items"
             [placeholder]="t('chat.memory.linePlaceholder')"
           ></textarea>
-          @if (factsRedactions().length > 0) {
+          @if (itemsRedactions().length > 0) {
             <p class="conversation-memory__redacted-note">
               <span>{{ t('chat.memory.redactedNote') }}</span>
-              @for (value of factsRedactions(); track value) {
-                <mark>{{ value }}</mark>
-              }
-            </p>
-          }
-        </div>
-
-        <div class="conversation-memory__field">
-          <label for="memory-decisions">{{ t('chat.memory.decisions') }}</label>
-          <textarea
-            id="memory-decisions"
-            rows="4"
-            formControlName="decisions"
-            [placeholder]="t('chat.memory.linePlaceholder')"
-          ></textarea>
-          @if (decisionsRedactions().length > 0) {
-            <p class="conversation-memory__redacted-note">
-              <span>{{ t('chat.memory.redactedNote') }}</span>
-              @for (value of decisionsRedactions(); track value) {
-                <mark>{{ value }}</mark>
-              }
-            </p>
-          }
-        </div>
-
-        <div class="conversation-memory__field">
-          <label for="memory-open-threads">{{ t('chat.memory.openThreads') }}</label>
-          <textarea
-            id="memory-open-threads"
-            rows="4"
-            formControlName="openThreads"
-            [placeholder]="t('chat.memory.linePlaceholder')"
-          ></textarea>
-          @if (openThreadsRedactions().length > 0) {
-            <p class="conversation-memory__redacted-note">
-              <span>{{ t('chat.memory.redactedNote') }}</span>
-              @for (value of openThreadsRedactions(); track value) {
+              @for (value of itemsRedactions(); track value) {
                 <mark>{{ value }}</mark>
               }
             </p>
           }
         </div>
       </form>
-
-      @if (glossary().length > 0) {
-        <div class="conversation-memory__readonly">
-          <h3>{{ t('chat.memory.glossary') }}</h3>
-          <ul>
-            @for (entry of glossary(); track entry.term) {
-              <li>
-                <strong>{{ entry.term }}</strong> — {{ entry.note }}
-              </li>
-            }
-          </ul>
-        </div>
-      }
 
       @if (narrative()) {
         <div class="conversation-memory__readonly">

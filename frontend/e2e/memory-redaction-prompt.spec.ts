@@ -41,12 +41,7 @@ test('memory-only redaction placeholders extend the system prompt', async ({
       covered_message_ids: [],
       parent_compaction_id: '',
       compaction_level: 0,
-      durable_memory: {
-        facts: ['Work email is [[PII_EMAIL_A8F2KD]]'],
-        decisions: [],
-        open_threads: [],
-        glossary: [],
-      },
+      durable_memory: { items: ['Work email is [[PII_EMAIL_A8F2KD]]'] },
       rolling_narrative: '',
       citations: [],
       source_token_estimate: 0,

@@ -10,7 +10,8 @@
     },
     "breadcrumbs": {
       "account": "Conta",
-      "settings": "Definições"
+      "settings": "Definições",
+      "memory": "Memória"
     },
     "danger": {
       "confirmFieldAria": "Escreva DELETE para confirmar",
@@ -132,6 +133,12 @@
       "exportedOne": "1 conversa exportada",
       "passwordChanged": "Palavra-passe alterada",
       "profileUpdated": "Perfil atualizado"
+    },
+    "memory": {
+      "title": "A sua memória",
+      "subtitle": "Factos que fixou na sua memória pessoal. Estão cifrados, só você os pode ler e são adicionados ao contexto de cada conversa.",
+      "save": "Guardar",
+      "saved": "Memória guardada"
     }
   },
   "auth": {
@@ -819,10 +826,6 @@
     "memory": {
       "title": "Memória da conversa",
       "intro": "O Cognos resume mensagens antigas para manter esta conversa dentro dos limites do modelo. Reveja e edite o que ele lembra — um item por linha.",
-      "facts": "Factos",
-      "decisions": "Decisões",
-      "openThreads": "Tópicos em aberto",
-      "glossary": "Glossário",
       "narrative": "Resumo recente",
       "linePlaceholder": "Um item por linha",
       "empty": "Ainda nada foi compactado nesta conversa.",
@@ -835,7 +838,8 @@
       "redactedNote": "Armazenado ocultado:",
       "addToConversation": "Conversa",
       "addToUser": "Utilizador",
-      "addToProject": "Projeto"
+      "addToProject": "Projeto",
+      "items": "O que recordar"
     }
   },
   "common": {
@@ -1103,7 +1107,8 @@
       "projects": "Projetos",
       "security": "Segurança e chaves",
       "team": "Equipa e partilha",
-      "usage": "Utilização"
+      "usage": "Utilização",
+      "memory": "Memória"
     },
     "placeholder": {
       "comingSoon": "Esta secção estará disponível em breve."

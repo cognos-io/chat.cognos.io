@@ -4,17 +4,11 @@ import { z } from 'zod';
 // exactly (the payload is sealed by the backend, decrypted here, and parsed
 // without a case transform). See docs/specs/client-side-compaction.md §6.2.
 
-export const CompactionGlossaryEntry = z.object({
-  term: z.string(),
-  note: z.string(),
-});
-export type CompactionGlossaryEntry = z.infer<typeof CompactionGlossaryEntry>;
-
+// Durable memory is a single flat list of memory items (stable facts,
+// decisions, open questions, important names/placeholders) rather than separate
+// buckets, so the user-facing memory reads as a simple bullet list (spec §8.2).
 export const CompactionDurableMemory = z.object({
-  facts: z.array(z.string()).default([]),
-  decisions: z.array(z.string()).default([]),
-  open_threads: z.array(z.string()).default([]),
-  glossary: z.array(CompactionGlossaryEntry).default([]),
+  items: z.array(z.string()).default([]),
 });
 export type CompactionDurableMemory = z.infer<typeof CompactionDurableMemory>;
 

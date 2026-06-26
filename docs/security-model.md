@@ -454,8 +454,8 @@ its own. Switching a share's mode mints a **new token and URL** (the old link st
 revoking a share deletes the row so both URLs `404` immediately.
 
 **Two-stage reveal.** Even on an include-sensitive link, the public reader page starts with every
-sensitive value hidden behind a censorship bar. The reader must explicitly choose *Include
-potentially sensitive values* before the client fetches and decrypts the mappings — viewing
+sensitive value hidden behind a censorship bar. The reader must explicitly choose _Include
+potentially sensitive values_ before the client fetches and decrypts the mappings — viewing
 originals is always a deliberate act, never the default. A redacted-only link never offers the
 control, because the key material does not exist in the link.
 
@@ -484,8 +484,9 @@ plaintext columns (`conversation`, `created`, `updated`); everything else is ins
 data = base64(SealAnonymous(conversation_public_key, json_payload))
 ```
 
-The payload (sealed, so server-opaque) carries the summary's **durable memory** (facts, decisions,
-open threads, a glossary of redaction placeholders and exact names), a **rolling narrative**, the
+The payload (sealed, so server-opaque) carries the summary's **durable memory** (a single flat list
+of memory items — facts, decisions, open questions, and important names/redaction placeholders), a
+**rolling narrative**, the
 **citations** mapping aliases to real message IDs, the **covered message IDs**, token estimates,
 the model ID, and the prompt version. The server can associate a compaction with a conversation (to
 authorise and list it) but **cannot read any of that content**.
@@ -504,7 +505,7 @@ properties hold:
   alias→message-ID map is added server-side into the encrypted payload and never sent to the
   provider.
 - Redaction placeholders inside the messages are preserved verbatim by the compaction prompt and
-  recorded in the glossary, so a compacted summary never re-introduces a value the user redacted.
+  kept in the memory items, so a compacted summary never re-introduces a value the user redacted.
 
 The endpoint must not log request messages, prior-summary content, or provider output.
 

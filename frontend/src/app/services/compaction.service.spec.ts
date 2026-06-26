@@ -24,7 +24,7 @@ const payload = (overrides: Partial<CompactionPayload> = {}): CompactionPayload 
   covered_message_ids: ['m1', 'm2', 'm3'],
   parent_compaction_id: '',
   compaction_level: 0,
-  durable_memory: { facts: [], decisions: [], open_threads: [], glossary: [] },
+  durable_memory: { items: [] },
   rolling_narrative: '',
   citations: [],
   source_token_estimate: 0,
@@ -190,7 +190,7 @@ describe('estimateRawContextChars', () => {
     const c = compaction('c1', {
       covered_message_ids: ['m1', 'm2'],
       anchor_message_id: 'm2',
-      durable_memory: { facts: ['x'], decisions: [], open_threads: [], glossary: [] },
+      durable_memory: { items: ['x'] },
     });
     const summaryLen = renderCompactionSummary(c.payload).length;
     // m1+m2 covered (excluded), m3 raw (10) plus the summary text.
@@ -278,12 +278,7 @@ describe('renderConversationMemory', () => {
   const manual = compaction('manual', {
     covered_message_ids: [],
     anchor_message_id: '',
-    durable_memory: {
-      facts: ['Pinned: deploys on Infomaniak'],
-      decisions: [],
-      open_threads: [],
-      glossary: [],
-    },
+    durable_memory: { items: ['Pinned: deploys on Infomaniak'] },
   });
   const auto = compaction('auto', {
     covered_message_ids: ['m1', 'm2'],
@@ -316,7 +311,7 @@ describe('renderCombinedMemory', () => {
       version: '1',
       kind: 'scoped_memory' as const,
       scope,
-      durable_memory: { facts: [fact], decisions: [], open_threads: [], glossary: [] },
+      durable_memory: { items: [fact] },
       created_at: '',
     },
   });
@@ -326,12 +321,7 @@ describe('renderCombinedMemory', () => {
       conversationManual: compaction('cm', {
         covered_message_ids: [],
         anchor_message_id: '',
-        durable_memory: {
-          facts: ['conv fact'],
-          decisions: [],
-          open_threads: [],
-          glossary: [],
-        },
+        durable_memory: { items: ['conv fact'] },
       }),
       conversationAuto: compaction('auto', {
         covered_message_ids: ['m1'],
@@ -357,7 +347,7 @@ describe('renderCombinedMemory', () => {
       projectMemory: null,
       userMemory: scoped('user', 'just a user fact'),
     });
-    expect(text).toBe('User memory:\n- Facts:\n  - just a user fact');
+    expect(text).toBe('User memory:\n- just a user fact');
   });
 
   it('returns undefined when every scope is empty', () => {
@@ -373,25 +363,32 @@ describe('renderCombinedMemory', () => {
 });
 
 describe('renderCompactionSummary', () => {
-  it('renders durable memory sections and the narrative, skipping empty parts', () => {
+  it('renders the durable memory list and the narrative, skipping empty parts', () => {
     const text = renderCompactionSummary(
       payload({
         durable_memory: {
-          facts: ['Prefers Postgres'],
-          decisions: ['Use pgx'],
-          open_threads: [],
-          glossary: [{ term: '[[PII_EMAIL_A8F2KD]]', note: 'work email' }],
+          items: [
+            'Prefers Postgres',
+            'Use pgx',
+            '[[PII_EMAIL_A8F2KD]] is the work email',
+          ],
         },
         rolling_narrative: 'Discussed the driver choice.',
       }),
     );
-    expect(text).toContain('Facts');
-    expect(text).toContain('Prefers Postgres');
-    expect(text).toContain('Use pgx');
+    expect(text).toContain('Durable memory:');
+    expect(text).toContain('- Prefers Postgres');
+    expect(text).toContain('- Use pgx');
     expect(text).toContain('[[PII_EMAIL_A8F2KD]]');
     expect(text).toContain('Recent narrative:');
     expect(text).toContain('Discussed the driver choice.');
-    // open_threads was empty, so its heading must not appear.
-    expect(text).not.toContain('Open threads');
+  });
+
+  it('omits the narrative section when the narrative is empty', () => {
+    const text = renderCompactionSummary(
+      payload({ durable_memory: { items: ['Solo fact'] }, rolling_narrative: '' }),
+    );
+    expect(text).toContain('- Solo fact');
+    expect(text).not.toContain('Recent narrative');
   });
 });

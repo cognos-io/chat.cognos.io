@@ -10,7 +10,8 @@
     },
     "breadcrumbs": {
       "account": "Account",
-      "settings": "Settings"
+      "settings": "Settings",
+      "memory": "Memory"
     },
     "danger": {
       "confirmFieldAria": "Type DELETE to confirm",
@@ -132,6 +133,12 @@
       "exportedOne": "Exported 1 chat",
       "passwordChanged": "Password changed",
       "profileUpdated": "Profile updated"
+    },
+    "memory": {
+      "title": "Your memory",
+      "subtitle": "Facts you've pinned to your personal memory. They're encrypted, only you can read them, and they're added to the context of every chat.",
+      "save": "Save",
+      "saved": "Memory saved"
     }
   },
   "auth": {
@@ -819,10 +826,6 @@
     "memory": {
       "title": "Conversation memory",
       "intro": "Cognos summarises older messages to keep this chat within the model's limits. Review and edit what it remembers — one item per line.",
-      "facts": "Facts",
-      "decisions": "Decisions",
-      "openThreads": "Open threads",
-      "glossary": "Glossary",
       "narrative": "Recent summary",
       "linePlaceholder": "One item per line",
       "empty": "Nothing has been compacted in this conversation yet.",
@@ -835,7 +838,8 @@
       "redactedNote": "Stored redacted:",
       "addToConversation": "Conversation",
       "addToUser": "User",
-      "addToProject": "Project"
+      "addToProject": "Project",
+      "items": "What to remember"
     }
   },
   "common": {
@@ -1103,7 +1107,8 @@
       "projects": "Projects",
       "security": "Security & keys",
       "team": "Team & sharing",
-      "usage": "Usage"
+      "usage": "Usage",
+      "memory": "Memory"
     },
     "placeholder": {
       "comingSoon": "This section is coming soon."

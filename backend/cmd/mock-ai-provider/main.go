@@ -317,7 +317,7 @@ const compactionSystemMarker = "You compact a conversation"
 // exercised, and embeds a recognisable plaintext the suite asserts never leaks
 // into the stored ciphertext.
 const mockCompactionReply = "<compaction>\n" +
-	`{"durable_memory":{"facts":["MOCK_COMPACTION_FACT about the user [M1]"],"decisions":[],"open_threads":[],"glossary":[]},"rolling_narrative":"MOCK_COMPACTION_NARRATIVE","citations":["M1"]}` +
+	`{"durable_memory":{"items":["MOCK_COMPACTION_FACT about the user [M1]"]},"rolling_narrative":"MOCK_COMPACTION_NARRATIVE","citations":["M1"]}` +
 	"\n</compaction>"
 
 // isCompactionRequest reports whether the request carries the compaction system

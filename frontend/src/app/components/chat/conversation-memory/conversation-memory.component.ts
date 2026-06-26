@@ -65,44 +65,25 @@ export class ConversationMemoryComponent implements OnInit {
   readonly saving = signal(false);
   // Read-only, hydrated context for the user.
   readonly narrative = signal('');
-  readonly glossary = signal<{ term: string; note: string }[]>([]);
   // Whether anything is shown at all (a compaction exists).
   readonly hasMemory = signal(false);
 
-  // Editable lists, one item per line, hydrated for display.
+  // The editable memory, one item per line, hydrated for display.
   readonly form = new FormGroup({
-    facts: new FormControl('', { nonNullable: true }),
-    decisions: new FormControl('', { nonNullable: true }),
-    openThreads: new FormControl('', { nonNullable: true }),
+    items: new FormControl('', { nonNullable: true }),
   });
 
   // Whether PII redaction is on for this user — drives the "stored redacted"
   // affordances.
   readonly redactionEnabled = this._redaction.enabled;
 
-  // Live field values, so the detection below recomputes as the user types.
-  private readonly _factsValue = toSignal(this.form.controls.facts.valueChanges, {
+  // Live field value, so the detection below recomputes as the user types.
+  private readonly _itemsValue = toSignal(this.form.controls.items.valueChanges, {
     initialValue: '',
   });
-  private readonly _decisionsValue = toSignal(
-    this.form.controls.decisions.valueChanges,
-    {
-      initialValue: '',
-    },
-  );
-  private readonly _openThreadsValue = toSignal(
-    this.form.controls.openThreads.valueChanges,
-    { initialValue: '' },
-  );
 
-  // Sensitive values detected in each field that will be stored redacted.
-  readonly factsRedactions = computed(() => this.detectRedactions(this._factsValue()));
-  readonly decisionsRedactions = computed(() =>
-    this.detectRedactions(this._decisionsValue()),
-  );
-  readonly openThreadsRedactions = computed(() =>
-    this.detectRedactions(this._openThreadsValue()),
-  );
+  // Sensitive values detected in the field that will be stored redacted.
+  readonly itemsRedactions = computed(() => this.detectRedactions(this._itemsValue()));
 
   ngOnInit(): void {
     const compaction = this.newestCompaction();
@@ -113,18 +94,8 @@ export class ConversationMemoryComponent implements OnInit {
     this.hasMemory.set(true);
 
     const memory = compaction.payload.durable_memory;
-    this.form.setValue({
-      facts: this.toTextarea(memory.facts),
-      decisions: this.toTextarea(memory.decisions),
-      openThreads: this.toTextarea(memory.open_threads),
-    });
+    this.form.setValue({ items: this.toTextarea(memory.items) });
     this.narrative.set(this.hydrate(compaction.payload.rolling_narrative));
-    this.glossary.set(
-      memory.glossary.map((entry) => ({
-        term: this.hydrate(entry.term),
-        note: this.hydrate(entry.note),
-      })),
-    );
   }
 
   close(): void {
@@ -140,27 +111,12 @@ export class ConversationMemoryComponent implements OnInit {
       return;
     }
 
-    // Re-redact every edited list back into placeholders, collecting any new
+    // Re-redact the edited list back into placeholders, collecting any new
     // token mappings to persist so they hydrate correctly next time.
     const newEntries: RedactionEntry[] = [];
-    const facts = this.redactList(this.fromTextarea(this.form.value.facts), newEntries);
-    const decisions = this.redactList(
-      this.fromTextarea(this.form.value.decisions),
-      newEntries,
-    );
-    const openThreads = this.redactList(
-      this.fromTextarea(this.form.value.openThreads),
-      newEntries,
-    );
+    const items = this.redactList(this.fromTextarea(this.form.value.items), newEntries);
 
-    const durableMemory: CompactionDurableMemory = {
-      // Glossary stays as stored (already redacted); only the editable lists
-      // change in V1.
-      ...compaction.payload.durable_memory,
-      facts,
-      decisions,
-      open_threads: openThreads,
-    };
+    const durableMemory: CompactionDurableMemory = { items };
 
     if (newEntries.length > 0) {
       // Best-effort: the memory is already re-redacted before storage, so a

@@ -47,12 +47,7 @@ test('edits a conversation memory and persists re-encrypted ciphertext', async (
       covered_message_ids: ['msg_mem_1', 'msg_mem_2'],
       parent_compaction_id: '',
       compaction_level: 0,
-      durable_memory: {
-        facts: ['User prefers Postgres'],
-        decisions: ['Adopt pgx'],
-        open_threads: [],
-        glossary: [],
-      },
+      durable_memory: { items: ['User prefers Postgres', 'Adopt pgx'] },
       rolling_narrative: 'Discussed the database stack.',
       citations: [],
       source_token_estimate: 50,
@@ -171,19 +166,18 @@ test('edits a conversation memory and persists re-encrypted ciphertext', async (
 
   // The drawer shows the stored durable memory.
   await expect(page.getByText('Conversation memory')).toBeVisible();
-  const facts = page.locator('#memory-facts');
-  await expect(facts).toHaveValue('User prefers Postgres');
-  await expect(page.locator('#memory-decisions')).toHaveValue('Adopt pgx');
+  const items = page.locator('#memory-items');
+  await expect(items).toHaveValue('User prefers Postgres\nAdopt pgx');
 
   // Typing a sensitive value surfaces a "stored redacted" affordance flagging
   // the exact value that will be redacted.
-  await facts.fill('User prefers Postgres\nEmail ewan@climacrux.com');
+  await items.fill('User prefers Postgres\nAdopt pgx\nEmail ewan@climacrux.com');
   const redactedNote = page.locator('.conversation-memory__redacted-note');
   await expect(redactedNote).toBeVisible();
   await expect(redactedNote.locator('mark')).toHaveText('ewan@climacrux.com');
 
   // Edit a fact and save.
-  await facts.fill('User prefers Postgres\nDeploys on Infomaniak');
+  await items.fill('User prefers Postgres\nAdopt pgx\nDeploys on Infomaniak');
   await page.getByRole('button', { name: 'Save memory' }).click();
 
   // A re-encrypted (ciphertext) PATCH was sent — never the edited plaintext.

@@ -99,32 +99,17 @@ func referencedAliases(r ParseResult) []string {
 		}
 	}
 	scan(r.RollingNarrative)
-	for _, f := range r.DurableMemory.Facts {
-		scan(f)
-	}
-	for _, d := range r.DurableMemory.Decisions {
-		scan(d)
-	}
-	for _, t := range r.DurableMemory.OpenThreads {
-		scan(t)
+	for _, item := range r.DurableMemory.Items {
+		scan(item)
 	}
 	return refs
 }
 
-// normaliseMemory guarantees non-nil slices so the encrypted payload always has
-// the documented shape (empty arrays rather than null).
+// normaliseMemory guarantees a non-nil slice so the encrypted payload always has
+// the documented shape (an empty array rather than null).
 func normaliseMemory(m DurableMemory) DurableMemory {
-	if m.Facts == nil {
-		m.Facts = []string{}
-	}
-	if m.Decisions == nil {
-		m.Decisions = []string{}
-	}
-	if m.OpenThreads == nil {
-		m.OpenThreads = []string{}
-	}
-	if m.Glossary == nil {
-		m.Glossary = []GlossaryEntry{}
+	if m.Items == nil {
+		m.Items = []string{}
 	}
 	return m
 }

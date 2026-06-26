@@ -41,10 +41,7 @@ interface CreateCompactionResponse extends CompactionRecord {
     covered_message_ids: string[];
     compaction_level: number;
     durable_memory: {
-      facts: string[];
-      decisions: string[];
-      open_threads: string[];
-      glossary: { term: string; note: string }[];
+      items: string[];
     };
     rolling_narrative: string;
     citations: { label: string; message_id: string }[];
@@ -144,7 +141,7 @@ test.describe('conversation compaction API', () => {
       // Plaintext returned for immediate local use carries the model's summary
       // and the resolved citation (alias M1 -> real message id).
       expect(created.payload).toBeTruthy();
-      expect(created.payload!.durable_memory.facts.join(' ')).toContain(MOCK_FACT);
+      expect(created.payload!.durable_memory.items.join(' ')).toContain(MOCK_FACT);
       expect(created.payload!.rolling_narrative).toContain(MOCK_NARRATIVE);
       expect(created.payload!.anchor_message_id).toBe(anchorID);
       expect(created.payload!.covered_message_ids).toContain(anchorID);

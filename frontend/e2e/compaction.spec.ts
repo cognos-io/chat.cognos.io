@@ -107,12 +107,7 @@ test('reuses a persisted compaction: injects its summary and drops covered messa
       covered_message_ids: ['msg_cmp_1', 'msg_cmp_2'],
       parent_compaction_id: '',
       compaction_level: 0,
-      durable_memory: {
-        facts: ['The roadmap was discussed [M1]'],
-        decisions: [],
-        open_threads: [],
-        glossary: [],
-      },
+      durable_memory: { items: ['The roadmap was discussed [M1]'] },
       rolling_narrative: 'SUMMARY_OF_ROADMAP_CHAT',
       citations: [{ label: 'M1', message_id: 'msg_cmp_1' }],
       source_token_estimate: 50,
