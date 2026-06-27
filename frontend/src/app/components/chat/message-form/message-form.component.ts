@@ -1435,23 +1435,48 @@ export class MessageFormComponent {
       return;
     }
 
-    const accepted = this.attachments.add(
-      candidates,
-      ownerPublicKey,
-      // Send PDFs raw when the model accepts native files (better quality).
-      this.modelService.selectedModel().supportsFileInput,
-      // Redact detected sensitive values in the extracted text at processing time
-      // (opt-out via the redaction toggle), so the provider never sees them.
-      this._redactionService.enabled(),
-    );
+    // Dedup: a file whose bytes are already in the library is reused (no second
+    // upload), the rest are processed + uploaded as new library files.
+    void this._library.splitNewVsExisting(candidates).then(({ toUpload, existing }) => {
+      let accepted = 0;
+      if (toUpload.length > 0) {
+        accepted += this.attachments.add(
+          toUpload,
+          ownerPublicKey,
+          // Send PDFs raw when the model accepts native files (better quality).
+          this.modelService.selectedModel().supportsFileInput,
+          // Redact detected sensitive values at processing time (opt-out via the
+          // redaction toggle), so the provider never sees them.
+          this._redactionService.enabled(),
+        );
+      }
+      if (existing.length > 0) {
+        forkJoin(existing.map((file) => this._library.materialize(file))).subscribe({
+          next: (selections) => {
+            accepted += this.attachments.addFromLibrary(selections);
+            this.surfaceAcceptNotice(rejectedImages, accepted, candidates.length);
+          },
+          error: () =>
+            this.surfaceAcceptNotice(rejectedImages, accepted, candidates.length),
+        });
+      } else {
+        this.surfaceAcceptNotice(rejectedImages, accepted, candidates.length);
+      }
+    });
+  }
 
+  private surfaceAcceptNotice(
+    rejectedImages: boolean,
+    accepted: number,
+    candidateCount: number,
+  ): void {
     if (rejectedImages) {
       this.attachmentNotice.set(
         this._transloco.translate('chat.composer.attachments.imageNeedsVision', {
           model: this.modelService.selectedModel().displayName,
         }),
       );
-    } else if (accepted < candidates.length) {
+    } else if (accepted < candidateCount) {
       this.attachmentNotice.set(
         this._transloco.translate('chat.composer.attachments.tooMany', {
           max: this.attachments.count(),

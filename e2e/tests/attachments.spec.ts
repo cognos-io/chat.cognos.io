@@ -263,6 +263,27 @@ test.describe('composer attachments', () => {
     await expect(page.getByText('Mocked assistant reply').nth(1)).toBeVisible();
   });
 
+  test('dedupes an identical re-upload to a single library entry', async ({ page }) => {
+    await provisionUnlockedAccount(page);
+    await expect(page.getByTestId('attach-button')).toBeVisible();
+
+    const content = 'identical bytes for dedup';
+    await setComposerFile(page, 'dup.txt', 'text/plain', content);
+    await expect(page.getByTestId('attachment-chip')).toContainText('dup.txt');
+    await page.getByLabel(COMPOSER_LABEL).fill('first');
+    await page.getByRole('button', { name: /^send$/i }).click();
+    await expect(page.getByText('Mocked assistant reply')).toBeVisible();
+
+    // Re-select the exact same file: it is reused from the library, not uploaded
+    // again, so the library still holds a single entry.
+    await setComposerFile(page, 'dup.txt', 'text/plain', content);
+    await expect(page.getByTestId('attachment-chip')).toContainText('dup.txt');
+
+    await page.getByTestId('attach-button').click();
+    await page.getByTestId('attach-from-library').click();
+    await expect(page.getByTestId('library-list').locator('li')).toHaveCount(1);
+  });
+
   test('removing a selected attachment clears it before send', async ({ page }) => {
     await provisionUnlockedAccount(page);
     await startConversation(page);

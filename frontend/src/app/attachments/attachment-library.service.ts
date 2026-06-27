@@ -1,9 +1,10 @@
 import { Injectable, inject, signal } from '@angular/core';
 
-import { Observable, from, map } from 'rxjs';
+import { Observable, firstValueFrom, from, map } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 
+import { hashBytes } from '@app/crypto/hash';
 import {
   applyRedactions,
   defaultTokenGenerator,
@@ -69,6 +70,41 @@ export class AttachmentLibraryService {
   /** Find a library file by its original plaintext hash (dedup lookup). */
   findByHash(plaintextHash: string): LibraryFile | undefined {
     return this.files().find((f) => f.plaintextHash === plaintextHash);
+  }
+
+  /**
+   * Split selected files into those already in the library (by content hash, to
+   * reuse) and those that are new (to upload). Ensures the library is loaded so
+   * the hash lookup is current. The blake2b hash matches the manifest's stored
+   * plaintext_hash of the original artifact.
+   */
+  async splitNewVsExisting(
+    files: readonly File[],
+  ): Promise<{ toUpload: File[]; existing: LibraryFile[] }> {
+    // Refresh (not just ensureLoaded) so a file uploaded earlier in this session
+    // is visible to the hash lookup — uploads don't flow through this cache.
+    try {
+      await firstValueFrom(this.refresh());
+    } catch {
+      /* a failed list just means dedup is skipped this time */
+    }
+    const toUpload: File[] = [];
+    const existing: LibraryFile[] = [];
+    for (const file of files) {
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const hash = Base64.fromUint8Array(hashBytes(bytes));
+        const match = this.findByHash(hash);
+        if (match) {
+          existing.push(match);
+          continue;
+        }
+      } catch {
+        /* fall through to upload on any hashing failure */
+      }
+      toUpload.push(file);
+    }
+    return { toUpload, existing };
   }
 
   /**
