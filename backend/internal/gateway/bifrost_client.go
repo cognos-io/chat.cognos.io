@@ -222,11 +222,9 @@ func (c *BifrostClient) buildChatRequest(req CompleteRequest) (*schemas.BifrostC
 		content := message.Content
 		name := strings.TrimSpace(message.Name)
 		messages = append(messages, schemas.ChatMessage{
-			Name: nullableString(name),
-			Role: schemas.ChatMessageRole(message.Role),
-			Content: &schemas.ChatMessageContent{
-				ContentStr: &content,
-			},
+			Name:    nullableString(name),
+			Role:    schemas.ChatMessageRole(message.Role),
+			Content: buildMessageContent(content, message.Images),
 		})
 	}
 
@@ -271,6 +269,33 @@ func reasoningParam(effort string) *schemas.ChatReasoning {
 	default:
 		return &schemas.ChatReasoning{Effort: &effort}
 	}
+}
+
+// buildMessageContent renders a gateway message into Bifrost content. With no
+// images it stays a plain string; with images it becomes multimodal content
+// blocks (an optional text block followed by image_url data-URL blocks).
+func buildMessageContent(content string, images []MessageImage) *schemas.ChatMessageContent {
+	if len(images) == 0 {
+		text := content
+		return &schemas.ChatMessageContent{ContentStr: &text}
+	}
+
+	blocks := make([]schemas.ChatContentBlock, 0, len(images)+1)
+	if content != "" {
+		text := content
+		blocks = append(blocks, schemas.ChatContentBlock{
+			Type: schemas.ChatContentBlockTypeText,
+			Text: &text,
+		})
+	}
+	for _, image := range images {
+		dataURL := "data:" + image.MimeType + ";base64," + image.Base64
+		blocks = append(blocks, schemas.ChatContentBlock{
+			Type:           schemas.ChatContentBlockTypeImage,
+			ImageURLStruct: &schemas.ChatInputImage{URL: dataURL},
+		})
+	}
+	return &schemas.ChatMessageContent{ContentBlocks: blocks}
 }
 
 func extractMessageContent(message *schemas.ChatMessage) string {

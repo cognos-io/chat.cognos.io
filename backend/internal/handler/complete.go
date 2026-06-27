@@ -55,7 +55,9 @@ type completeRequest struct {
 	AttachmentContexts []completionAttachmentInput `json:"attachment_contexts,omitempty"`
 }
 
-// completionAttachmentInput is one attachment's transient provider context.
+// completionAttachmentInput is one attachment's transient provider context. It
+// carries either extracted text (documents) or an inline image (vision models),
+// never persisted.
 type completionAttachmentInput struct {
 	AttachmentID     string `json:"attachment_id"`
 	MessageID        string `json:"message_id,omitempty"`
@@ -64,6 +66,10 @@ type completionAttachmentInput struct {
 	ProcessorID      string `json:"processor_id"`
 	TextContext      string `json:"text_context,omitempty"`
 	ContextTruncated bool   `json:"context_truncated,omitempty"`
+	// ImageBase64 is the model-ready image (base64, no data: prefix) for vision
+	// models; ImageMimeType is its media type.
+	ImageBase64   string `json:"image_base64,omitempty"`
+	ImageMimeType string `json:"image_mime_type,omitempty"`
 }
 
 type CompleteRequest = completeRequest
@@ -315,6 +321,18 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			return apis.NewBadRequestError("Reasoning effort is not supported for this model", nil)
 		}
 
+		// Image attachments require a vision-capable model. The UI gates this, but
+		// enforce server-side too (capability bypass + clear error).
+		attachmentImages, attachmentImageBytes := collectAttachmentImages(req.AttachmentContexts)
+		if len(attachmentImages) > 0 {
+			if !model.SupportsVision {
+				return apis.NewBadRequestError("This model can't read images", nil)
+			}
+			if attachmentImageBytes > maxAttachmentImageBase64BytesPerMessage {
+				return apis.NewBadRequestError("Attached images are too large", nil)
+			}
+		}
+
 		systemMessage := req.SystemPrompt
 		if req.ContextSummary != "" {
 			// Fold the compaction summary in after the canonical system prompt,
@@ -337,8 +355,10 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 
 		// A realistic input estimate from the actual prompt, rather than assuming
 		// the whole context window — so a short prompt to a large-context model is
-		// not priced as if it filled a million tokens.
-		estimatedInputTokens := estimatePromptInputTokens(systemMessage, effectiveMessages, model)
+		// not priced as if it filled a million tokens. Images add a flat per-image
+		// estimate the char heuristic can't see.
+		estimatedInputTokens := estimatePromptInputTokens(systemMessage, effectiveMessages, model) +
+			int64(len(attachmentImages)*VisionImageInputTokenEstimate)
 		// The output we will actually allow the provider to generate. The billing
 		// gate prices this exact ceiling (not the model's absolute max), and we
 		// pass the same value to the provider so the response can never exceed
@@ -449,6 +469,12 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 				Content: message.Content,
 				Name:    message.Name,
 			})
+		}
+
+		// Attach inline images to the latest user turn so vision models receive
+		// them alongside the prompt + any text attachment context.
+		if len(attachmentImages) > 0 && len(messages) > 0 {
+			messages[len(messages)-1].Images = attachmentImages
 		}
 
 		// The assistant response is parented to the freshly persisted user

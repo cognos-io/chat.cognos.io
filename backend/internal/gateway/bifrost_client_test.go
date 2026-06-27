@@ -51,6 +51,52 @@ type stubBifrostShutdowner struct{ called bool }
 
 func (s *stubBifrostShutdowner) Shutdown() { s.called = true }
 
+func TestBuildMessageContentTextOnly(t *testing.T) {
+	t.Parallel()
+
+	content := buildMessageContent("hello", nil)
+	if content.ContentStr == nil || *content.ContentStr != "hello" {
+		t.Fatalf("text-only content = %+v, want ContentStr=hello", content)
+	}
+	if content.ContentBlocks != nil {
+		t.Fatalf("text-only content should not use blocks")
+	}
+}
+
+func TestBuildMessageContentWithImages(t *testing.T) {
+	t.Parallel()
+
+	content := buildMessageContent("describe this", []MessageImage{
+		{Base64: "QUJD", MimeType: "image/png"},
+	})
+	if content.ContentStr != nil {
+		t.Fatalf("multimodal content should not use ContentStr")
+	}
+	if len(content.ContentBlocks) != 2 {
+		t.Fatalf("want 2 blocks (text+image), got %d", len(content.ContentBlocks))
+	}
+	if content.ContentBlocks[0].Type != schemas.ChatContentBlockTypeText ||
+		content.ContentBlocks[0].Text == nil || *content.ContentBlocks[0].Text != "describe this" {
+		t.Fatalf("first block should be the prompt text: %+v", content.ContentBlocks[0])
+	}
+	image := content.ContentBlocks[1]
+	if image.Type != schemas.ChatContentBlockTypeImage || image.ImageURLStruct == nil {
+		t.Fatalf("second block should be an image: %+v", image)
+	}
+	if image.ImageURLStruct.URL != "data:image/png;base64,QUJD" {
+		t.Fatalf("image data URL = %q", image.ImageURLStruct.URL)
+	}
+}
+
+func TestBuildMessageContentImageOnly(t *testing.T) {
+	t.Parallel()
+
+	content := buildMessageContent("", []MessageImage{{Base64: "QQ==", MimeType: "image/jpeg"}})
+	if len(content.ContentBlocks) != 1 || content.ContentBlocks[0].Type != schemas.ChatContentBlockTypeImage {
+		t.Fatalf("image-only content should be a single image block: %+v", content.ContentBlocks)
+	}
+}
+
 func TestBifrostClientCompleteMapsRequestAndResponse(t *testing.T) {
 	t.Parallel()
 

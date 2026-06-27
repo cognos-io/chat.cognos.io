@@ -6,6 +6,16 @@ type Message struct {
 	Role    string
 	Content string
 	Name    string
+	// Images attaches inline image inputs to this message for vision models.
+	// When non-empty the message is sent as multimodal content blocks (text +
+	// image_url) instead of a plain string.
+	Images []MessageImage
+}
+
+// MessageImage is an inline image input (base64, no data: prefix).
+type MessageImage struct {
+	Base64   string
+	MimeType string
 }
 
 type CompleteRequest struct {

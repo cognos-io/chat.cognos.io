@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 )
 
@@ -54,7 +55,7 @@ func TestMockClientCompleteCapturesRequestAndReturnsStubbedResponse(t *testing.T
 				t.Fatalf("Complete() len(Messages) = %d, want %d", len(gotReq.Messages), len(wantReq.Messages))
 			}
 			for i := range wantReq.Messages {
-				if gotReq.Messages[i] != wantReq.Messages[i] {
+				if !reflect.DeepEqual(gotReq.Messages[i], wantReq.Messages[i]) {
 					t.Fatalf("Complete() Messages[%d] = %#v, want %#v", i, gotReq.Messages[i], wantReq.Messages[i])
 				}
 			}
@@ -87,7 +88,7 @@ func TestMockClientCompleteCapturesRequestAndReturnsStubbedResponse(t *testing.T
 			len(wantReq.Messages),
 		)
 	}
-	if gotResp.Message != wantResp.Message {
+	if !reflect.DeepEqual(gotResp.Message, wantResp.Message) {
 		t.Fatalf("Complete() Message = %#v, want %#v", gotResp.Message, wantResp.Message)
 	}
 	if gotResp.Usage.InputTokens != wantResp.Usage.InputTokens {
