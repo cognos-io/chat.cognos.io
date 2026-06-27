@@ -88,6 +88,49 @@ describe('parseMessageData', () => {
     const payload = encode(JSON.stringify({ content: 42 }));
     expect(() => parseMessageData(payload)).toThrow();
   });
+
+  it('parses a user-upload attachment that has no sealed_key', () => {
+    // User uploads keep their key in the encrypted attachment manifest, so the
+    // backend omits sealed_key (omitempty). The message must still decrypt.
+    const payload = encode(
+      JSON.stringify({
+        content: 'see attached',
+        attachments: [
+          {
+            kind: 'user_upload',
+            mime_type: 'text/markdown',
+            attachment_id: 'att-1',
+          },
+        ],
+      }),
+    );
+    const parsed = parseMessageData(payload);
+
+    expect(parsed.attachments).toHaveLength(1);
+    expect(parsed.attachments?.[0].attachment_id).toBe('att-1');
+    expect(parsed.attachments?.[0].sealed_key).toBeUndefined();
+  });
+
+  it('parses a generated-image attachment that has a sealed_key', () => {
+    const payload = encode(
+      JSON.stringify({
+        content: null,
+        attachments: [
+          {
+            kind: 'generated_image',
+            mime_type: 'image/png',
+            sealed_key: 'c2VhbGVk',
+            width: 512,
+            height: 512,
+          },
+        ],
+      }),
+    );
+    const parsed = parseMessageData(payload);
+
+    expect(parsed.attachments?.[0].sealed_key).toBe('c2VhbGVk');
+    expect(parsed.attachments?.[0].attachment_id).toBeUndefined();
+  });
 });
 
 describe('isMessageFromUser', () => {

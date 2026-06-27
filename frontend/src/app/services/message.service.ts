@@ -1493,6 +1493,11 @@ export class MessageService {
   ): Observable<string> {
     return this._api.fetchAttachmentBytes(conversation.record.id, recordId).pipe(
       map((ciphertext) => {
+        // Only generated images embed a sealed_key + bytes on the message record;
+        // this display path is never used for user uploads, which have none.
+        if (!attachment.sealed_key) {
+          throw new Error('Attachment has no sealed key');
+        }
         const symmetricKey = this._cryptoService.openSealedBox(
           Base64.toUint8Array(attachment.sealed_key),
           conversation.keyPair,

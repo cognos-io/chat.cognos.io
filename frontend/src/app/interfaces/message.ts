@@ -10,11 +10,16 @@ export type MessageDataVersion = z.infer<typeof MessageDataVersion>;
  * decrypt it. Mirrors MessageAttachment in the backend.
  */
 export const MessageAttachment = z.object({
-  kind: z.string(), // e.g. "generated_image"
+  kind: z.string(), // e.g. "generated_image" or "user_upload"
   mime_type: z.string(),
   // base64(SealAnonymous(conversationPublicKey, fileSymKey)) — unsealed with the
   // conversation secret key to recover the symmetric key that decrypts the file.
-  sealed_key: z.string(),
+  // Present for generated images; absent for user uploads, whose keys live in the
+  // encrypted conversation_attachments manifest (backend omits it via omitempty).
+  sealed_key: z.string().optional(),
+  // References a conversation_attachments record for user uploads. Absent for
+  // generated images, whose bytes live on the message record itself.
+  attachment_id: z.string().optional(),
   // The protected file's name on the message record (used to fetch the bytes).
   file_name: z.string().optional(),
   width: z.number().optional(),

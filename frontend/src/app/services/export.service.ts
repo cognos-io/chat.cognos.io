@@ -239,6 +239,11 @@ export class ExportService {
       const ciphertext = await firstValueFrom(
         this._api.fetchAttachmentBytes(conversation.record.id, messageId),
       );
+      // Only generated images carry a sealed_key + bytes on the message record;
+      // user uploads have none here, so there is nothing to decrypt for export.
+      if (!attachment.sealed_key) {
+        return null;
+      }
       const symmetricKey = this._crypto.openSealedBox(
         Base64.toUint8Array(attachment.sealed_key),
         conversation.keyPair,
