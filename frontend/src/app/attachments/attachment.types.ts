@@ -25,7 +25,7 @@ export interface DetectedFileType {
   extension: string; // lowercased, no dot (e.g. "txt")
   declaredMimeType: string; // browser-provided File.type (may be empty)
   detectedMimeType: string; // our best guess used for the manifest
-  family: 'text' | 'unknown';
+  family: 'text' | 'document' | 'spreadsheet' | 'image' | 'unknown';
 }
 
 export interface ProcessorInput {
@@ -56,6 +56,14 @@ export interface UnencryptedArtifact {
   textStats?: ArtifactTextStats;
 }
 
+/** Model-ready image context for vision models (base64, no data: prefix). */
+export interface ImageAiContext {
+  base64: string;
+  mimeType: string;
+  width: number;
+  height: number;
+}
+
 export interface ProcessorOutput {
   normalizedType: string;
   /** Derived artifacts only — the pipeline always adds the original itself. */
@@ -67,6 +75,8 @@ export interface ProcessorOutput {
     /** Index into the final artifacts array (after the original) — resolved by
      * the pipeline to an artifact_id. */
     preferredArtifactIndex?: number;
+    /** Present for image attachments destined for vision models. */
+    imageContext?: ImageAiContext;
   };
 }
 
@@ -140,6 +150,7 @@ export interface EncryptedAttachmentDraft {
     hasTextContext: boolean;
     textContext?: string;
     contextTruncated?: boolean;
+    imageContext?: ImageAiContext;
   };
 }
 
@@ -148,6 +159,8 @@ export type AttachmentProcessingErrorCode =
   | 'file_too_large'
   | 'decode_failed'
   | 'empty_file'
+  | 'no_text_extracted'
+  | 'image_decode_failed'
   | 'processing_failed';
 
 export class AttachmentProcessingError extends Error {

@@ -14,9 +14,17 @@ const inputFor = (fileName: string, mime = ''): ProcessorInput => ({
 });
 
 describe('processor registry', () => {
-  it('selects the text processor for supported files', () => {
-    const processor = selectProcessor(defaultProcessors(), inputFor('notes.txt'));
-    expect(processor.id).toBe('text');
+  it('selects the right processor per supported type', () => {
+    const cases: [string, string, string][] = [
+      ['notes.txt', '', 'text'],
+      ['report.pdf', '', 'pdf'],
+      ['memo.docx', '', 'docx'],
+      ['data.xlsx', '', 'excel'],
+      ['data.xls', '', 'excel'],
+    ];
+    for (const [name, mime, id] of cases) {
+      expect(selectProcessor(defaultProcessors(), inputFor(name, mime)).id).toBe(id);
+    }
   });
 
   it('fails closed for unsupported files', () => {

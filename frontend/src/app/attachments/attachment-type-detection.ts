@@ -15,6 +15,23 @@ const TEXT_EXTENSIONS: Record<string, string> = {
   json: 'application/json',
 };
 
+const DOCUMENT_EXTENSIONS: Record<string, string> = {
+  pdf: 'application/pdf',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+};
+
+const SPREADSHEET_EXTENSIONS: Record<string, string> = {
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  xls: 'application/vnd.ms-excel',
+};
+
+const IMAGE_EXTENSIONS: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp',
+};
+
 export const extensionOf = (fileName: string): string => {
   const dot = fileName.lastIndexOf('.');
   if (dot < 0 || dot === fileName.length - 1) {
@@ -42,6 +59,36 @@ export const detectFileType = (
       declaredMimeType: declared,
       detectedMimeType: textMimeFromExt ?? declared ?? 'text/plain',
       family: 'text',
+    };
+  }
+
+  const documentMime = DOCUMENT_EXTENSIONS[extension];
+  if (documentMime || declared === 'application/pdf') {
+    return {
+      extension,
+      declaredMimeType: declared,
+      detectedMimeType: documentMime ?? declared,
+      family: 'document',
+    };
+  }
+
+  const spreadsheetMime = SPREADSHEET_EXTENSIONS[extension];
+  if (spreadsheetMime) {
+    return {
+      extension,
+      declaredMimeType: declared,
+      detectedMimeType: spreadsheetMime,
+      family: 'spreadsheet',
+    };
+  }
+
+  const imageMime = IMAGE_EXTENSIONS[extension];
+  if (imageMime || declared.startsWith('image/')) {
+    return {
+      extension,
+      declaredMimeType: declared,
+      detectedMimeType: imageMime ?? declared,
+      family: 'image',
     };
   }
 

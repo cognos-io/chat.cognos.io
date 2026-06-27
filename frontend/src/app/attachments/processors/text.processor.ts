@@ -4,6 +4,7 @@ import {
   ProcessorInput,
   ProcessorOutput,
 } from '../attachment.types';
+import { buildExtractedTextOutput } from './text-extraction';
 
 const SUPPORTED_EXTENSIONS = ['txt', 'text', 'md', 'markdown', 'csv', 'json'] as const;
 const SUPPORTED_MIME_TYPES = [
@@ -68,34 +69,10 @@ export class TextProcessor implements AttachmentProcessor {
       }
     }
 
-    const extractedBytes = Uint8Array.from(new TextEncoder().encode(text));
-    const charCount = text.length;
-    const lineCount = text.length === 0 ? 0 : text.split('\n').length;
-
-    const cap = input.limits.maxContextCharsPerFile;
-    const truncated = charCount > cap;
-    const textContext = truncated ? text.slice(0, cap) : text;
-
-    return {
-      normalizedType: input.detectedType.detectedMimeType || 'text/plain',
-      artifacts: [
-        {
-          kind: 'extracted_text',
-          mimeType: 'text/plain',
-          bytes: extractedBytes,
-          textStats: {
-            char_count: charCount,
-            line_count: lineCount,
-            truncated_for_context: truncated,
-          },
-        },
-      ],
-      ai: {
-        hasTextContext: textContext.trim().length > 0,
-        textContext,
-        textContextTruncated: truncated,
-        preferredArtifactIndex: 0,
-      },
-    };
+    return buildExtractedTextOutput(
+      text,
+      input.limits,
+      input.detectedType.detectedMimeType || 'text/plain',
+    );
   }
 }

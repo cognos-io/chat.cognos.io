@@ -9,6 +9,10 @@ export const ACCEPTED_ATTACHMENT_EXTENSIONS = [
   '.markdown',
   '.csv',
   '.json',
+  '.pdf',
+  '.docx',
+  '.xlsx',
+  '.xls',
 ] as const;
 
 export const ACCEPTED_ATTACHMENT_ACCEPT = ACCEPTED_ATTACHMENT_EXTENSIONS.join(',');

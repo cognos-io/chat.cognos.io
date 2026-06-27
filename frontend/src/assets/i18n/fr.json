@@ -574,7 +574,9 @@
           "file_too_large": "Fichier trop volumineux",
           "decode_failed": "Impossible de lire ce fichier comme texte",
           "empty_file": "Le fichier est vide",
-          "processing_failed": "Impossible de traiter ce fichier"
+          "processing_failed": "Impossible de traiter ce fichier",
+          "no_text_extracted": "Aucun texte n’a pu être extrait de ce fichier",
+          "image_decode_failed": "Cette image n’a pas pu être lue"
         }
       }
     },

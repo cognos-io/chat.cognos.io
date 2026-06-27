@@ -574,7 +574,9 @@
           "file_too_large": "File is too large",
           "decode_failed": "Couldn’t read this file as text",
           "empty_file": "File is empty",
-          "processing_failed": "Couldn’t process this file"
+          "processing_failed": "Couldn’t process this file",
+          "no_text_extracted": "No text could be extracted from this file",
+          "image_decode_failed": "This image couldn’t be read"
         }
       }
     },
