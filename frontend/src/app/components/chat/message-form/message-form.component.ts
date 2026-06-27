@@ -23,9 +23,10 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { debounceTime } from 'rxjs';
+import { debounceTime, take } from 'rxjs';
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { filterNil } from 'ngxtension/filter-nil';
 
 import {
   CognosButtonComponent,
@@ -42,6 +43,7 @@ import {
 } from '@app/attachments/attachment-accept';
 import { AttachmentProcessingService } from '@app/attachments/attachment-processing.service';
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
+import { Conversation } from '@app/interfaces/conversation';
 import {
   RedactionCandidate,
   buildCustomCandidates,
@@ -1241,17 +1243,14 @@ export class MessageFormComponent {
   readonly attachmentNotice = signal<string | null>(null);
 
   // Attachments need a persisted conversation (the upload endpoint is
-  // conversation-scoped and the manifest is sealed to the conversation key), so
-  // they are unavailable in a brand-new temporary chat — mirroring image
+  // conversation-scoped and the manifest is sealed to the conversation key). A
+  // brand-new chat has no conversation yet, so attaching creates one first (like
+  // sending the first message does). Only the ephemeral "temporary chat" mode —
+  // which deliberately never persists — has no paperclip, mirroring image
   // generation.
-  readonly canAttach = computed(() => {
-    const conversation = this._conversationService.conversation();
-    return (
-      !!conversation &&
-      !this._conversationService.isTemporaryConversation() &&
-      !!conversation.keyPair
-    );
-  });
+  readonly canAttach = computed(
+    () => !this._conversationService.isTemporaryConversation(),
+  );
 
   readonly canSendMessage = computed(
     () =>
@@ -1322,10 +1321,6 @@ export class MessageFormComponent {
     if (files.length === 0 || !this.canAttach()) {
       return;
     }
-    const conversation = this._conversationService.conversation();
-    if (!conversation?.keyPair) {
-      return;
-    }
 
     // Images need a vision-capable model. Reject them with a clear notice when
     // the current model can't read images, rather than failing later on send.
@@ -1337,27 +1332,61 @@ export class MessageFormComponent {
       candidates = filtered;
     }
 
-    const accepted = this.attachments.add(
-      candidates,
-      conversation.record.id,
-      conversation.keyPair.publicKey,
-      // Send PDFs raw when the model accepts native files (better quality).
-      this.modelService.selectedModel().supportsFileInput,
-    );
-
-    if (rejectedImages) {
-      this.attachmentNotice.set(
-        this._transloco.translate('chat.composer.attachments.imageNeedsVision', {
-          model: this.modelService.selectedModel().name,
-        }),
-      );
-    } else if (accepted < candidates.length) {
-      this.attachmentNotice.set(
-        this._transloco.translate('chat.composer.attachments.tooMany', {
-          max: this.attachments.count(),
-        }),
-      );
+    if (candidates.length === 0) {
+      if (rejectedImages) {
+        this.attachmentNotice.set(
+          this._transloco.translate('chat.composer.attachments.imageNeedsVision', {
+            model: this.modelService.selectedModel().name,
+          }),
+        );
+      }
+      return;
     }
+
+    // Resolve a persisted conversation (creating one for a brand-new chat),
+    // then queue the files against it.
+    this.withConversation((conversation) => {
+      const accepted = this.attachments.add(
+        candidates,
+        conversation.record.id,
+        conversation.keyPair.publicKey,
+        // Send PDFs raw when the model accepts native files (better quality).
+        this.modelService.selectedModel().supportsFileInput,
+      );
+
+      if (rejectedImages) {
+        this.attachmentNotice.set(
+          this._transloco.translate('chat.composer.attachments.imageNeedsVision', {
+            model: this.modelService.selectedModel().name,
+          }),
+        );
+      } else if (accepted < candidates.length) {
+        this.attachmentNotice.set(
+          this._transloco.translate('chat.composer.attachments.tooMany', {
+            max: this.attachments.count(),
+          }),
+        );
+      }
+    });
+  }
+
+  // withConversation runs cb against a persisted conversation that has a key
+  // pair: the current one if present, otherwise it creates a new conversation
+  // (the same flow as sending the first message) and waits for it.
+  private withConversation(cb: (conversation: Conversation) => void): void {
+    const existing = this._conversationService.conversation();
+    if (existing?.keyPair) {
+      cb(existing);
+      return;
+    }
+    this._conversationService.newConversation$.next({ title: 'New Conversation' });
+    this._conversationService.conversation$
+      .pipe(filterNil(), take(1))
+      .subscribe((created) => {
+        if (created.keyPair) {
+          cb(created);
+        }
+      });
   }
 
   readonly toolsMenuOpen = signal(false);

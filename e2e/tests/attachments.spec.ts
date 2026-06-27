@@ -44,11 +44,13 @@ function setComposerFile(page: Page, name: string, mimeType: string, body: strin
 }
 
 test.describe('composer attachments', () => {
-  test('attach a text file, send, and see the assistant reply', async ({ page }) => {
+  test('attach a text file on a fresh chat, send, and see the assistant reply', async ({
+    page,
+  }) => {
     await provisionUnlockedAccount(page);
-    await startConversation(page);
 
-    // The paperclip appears once the conversation is saved.
+    // The paperclip is available on a brand-new chat; attaching creates the
+    // conversation (no need to send a message first).
     await expect(page.getByTestId('attach-button')).toBeVisible();
 
     await setComposerFile(page, 'notes.txt', 'text/plain', 'the quick brown fox');
@@ -63,8 +65,8 @@ test.describe('composer attachments', () => {
     await expect(send).toBeEnabled();
     await send.click();
 
-    // A second assistant reply confirms the turn completed with the attachment.
-    await expect(page.getByText('Mocked assistant reply')).toHaveCount(2);
+    // The assistant reply confirms the turn completed with the attachment.
+    await expect(page.getByText('Mocked assistant reply')).toBeVisible();
     // The composer selection clears after a successful send.
     await expect(page.getByTestId('attachment-chip')).toHaveCount(0);
   });
@@ -85,6 +87,20 @@ test.describe('composer attachments', () => {
     await page.getByLabel(COMPOSER_LABEL).fill('Carry on without the file');
     await page.getByRole('button', { name: /^send$/i }).click();
     await expect(page.getByText('Mocked assistant reply')).toHaveCount(2);
+  });
+
+  test('attaching an image to a non-vision model shows a clear notice and no chip', async ({
+    page,
+  }) => {
+    await provisionUnlockedAccount(page);
+    await startConversation(page);
+
+    // The e2e catalogue has no vision-capable model, so an image is rejected at
+    // selection with the imageNeedsVision notice (no chip is created).
+    await setComposerFile(page, 'cat.png', 'image/png', '\x89PNG\r\n\x1a\n binary');
+
+    await expect(page.getByText(/read images/i)).toBeVisible();
+    await expect(page.getByTestId('attachment-chip')).toHaveCount(0);
   });
 
   test('removing a selected attachment clears it before send', async ({ page }) => {
