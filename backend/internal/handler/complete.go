@@ -44,10 +44,10 @@ type completeRequest struct {
 	// delimiters so summarised content is framed as reference material — never
 	// injected as a synthetic assistant turn or a caller system message.
 	ContextSummary string `json:"context_summary,omitempty"`
-	// AttachmentIDs are conversation_attachments records to link to the new user
-	// message. The client embeds nothing in the encrypted blob directly; the
-	// backend persists these as user_upload references and sets the message
-	// relation (spec §9.5).
+	// AttachmentIDs are user_attachments (library) records the caller owns and is
+	// referencing from this message. The client embeds nothing in the encrypted
+	// blob directly; the backend persists these as user_upload references and
+	// records an attachment_usages row per (file, message) (spec §9.5).
 	AttachmentIDs []string `json:"attachment_ids,omitempty"`
 	// AttachmentContexts is the transient, plaintext attachment content for the
 	// provider. It is wrapped as untrusted material, counted by the billing gate,
@@ -425,10 +425,11 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 				return apis.NewNotFoundError("Conversation not found or unable to load", err)
 			}
 
-			// Reject references to attachments outside this conversation before
-			// any provider work or persistence (spec §9.5).
+			// Reject references to attachments the caller does not own before any
+			// provider work or persistence. A user may attach any file from their
+			// own library to any conversation they participate in (spec §9.5).
 			if len(req.AttachmentIDs) > 0 && params.App != nil {
-				if err := verifyAttachmentsInConversation(params.App, conversationID, req.AttachmentIDs); err != nil {
+				if err := verifyAttachmentsOwnedBy(params.App, owner.ID, req.AttachmentIDs); err != nil {
 					return apis.NewBadRequestError("Invalid attachment reference", nil)
 				}
 			}
@@ -541,11 +542,18 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 				}
 				assistantParentID = userMessageRecord.Id
 
-				// Link the draft attachments to the persisted user message so they
-				// are no longer abandonable drafts. Plaintext relation only.
+				// Record that this message references each library file, so the
+				// library can show "used in chats" and a removed file leaves a
+				// tombstone. Plaintext join rows only; best-effort.
 				if len(req.AttachmentIDs) > 0 && params.App != nil {
-					if err := linkAttachmentsToMessage(params.App, req.AttachmentIDs, userMessageRecord.Id); err != nil {
-						params.Logger.Error("failed to link attachments to message", "err", err)
+					if err := recordAttachmentUsages(
+						params.App,
+						req.AttachmentIDs,
+						conversationID,
+						userMessageRecord.Id,
+						owner.ID,
+					); err != nil {
+						params.Logger.Error("failed to record attachment usages", "err", err)
 					}
 				}
 			}

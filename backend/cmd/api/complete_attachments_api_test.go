@@ -18,7 +18,7 @@ import (
 // TestConversationCompleteWithAttachment verifies the end-to-end attachment
 // completion path: the provider receives the wrapped untrusted context, the
 // user message persists only encrypted references (never the plaintext
-// context), and the draft attachment is linked to the new message.
+// context), and a usage row links the library file to the new message.
 func TestConversationCompleteWithAttachment(t *testing.T) {
 	t.Parallel()
 
@@ -75,7 +75,7 @@ func TestConversationCompleteWithAttachment(t *testing.T) {
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			withRecordAuth("users", "test1@example.com")(t, app, e)
 			conversationPublicKey = seedConversationRecord(t, app, conversationID)
-			seedAttachmentRecord(t, app, attachmentID, conversationID, "test1@example.com", manifest, [][]byte{[]byte("ciphertext")})
+			seedLibraryAttachment(t, app, attachmentID, "test1@example.com", manifest, [][]byte{[]byte("ciphertext")})
 		},
 		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
 			// The provider must have seen the untrusted wrapper + the doc body +
@@ -100,13 +100,24 @@ func TestConversationCompleteWithAttachment(t *testing.T) {
 				}
 			}
 
-			// The draft attachment is now linked to the new user message.
-			rec, err := app.FindRecordById("conversation_attachments", attachmentID)
+			// A usage row now links the library file to the new user message, and
+			// the library record's manifest is untouched by referencing it.
+			usages, err := app.FindRecordsByFilter(
+				"attachment_usages", "attachment={:a}", "", 10, 0,
+				dbx.Params{"a": attachmentID},
+			)
+			if err != nil {
+				t.Fatalf("FindRecordsByFilter(usages) error = %v", err)
+			}
+			if len(usages) != 1 {
+				t.Fatalf("recorded %d usage rows, want 1", len(usages))
+			}
+			if usages[0].GetString("conversation") != conversationID {
+				t.Fatalf("usage conversation = %q, want %q", usages[0].GetString("conversation"), conversationID)
+			}
+			rec, err := app.FindRecordById("user_attachments", attachmentID)
 			if err != nil {
 				t.Fatalf("FindRecordById(attachment) error = %v", err)
-			}
-			if rec.GetString("message") == "" {
-				t.Fatalf("attachment was not linked to a message")
 			}
 			if rec.GetString("data") != manifest {
 				t.Fatalf("attachment manifest changed: %q", rec.GetString("data"))
@@ -116,9 +127,9 @@ func TestConversationCompleteWithAttachment(t *testing.T) {
 	scenario.Test(t)
 }
 
-// TestConversationCompleteRejectsAttachmentOutsideConversation ensures a caller
-// cannot reference an attachment belonging to a different conversation.
-func TestConversationCompleteRejectsAttachmentOutsideConversation(t *testing.T) {
+// TestConversationCompleteRejectsAttachmentOfAnotherUser ensures a caller cannot
+// reference a library file owned by a different user.
+func TestConversationCompleteRejectsAttachmentOfAnotherUser(t *testing.T) {
 	t.Parallel()
 
 	gatewayCalled := false
@@ -132,13 +143,12 @@ func TestConversationCompleteRejectsAttachmentOutsideConversation(t *testing.T) 
 	}
 
 	targetConversationID := "convcompatt0002"
-	otherConversationID := "convcompatt0003"
 	foreignAttachmentID := "attforeign00001"
 	manifest := base64.StdEncoding.EncodeToString([]byte("sealed"))
 	var conversationPublicKey [32]byte
 
 	scenario := tests.ApiScenario{
-		Name:   "completion rejects an attachment id from another conversation",
+		Name:   "completion rejects an attachment id owned by another user",
 		Method: http.MethodPost,
 		URL:    "/api/v1/conversations/" + targetConversationID + "/complete",
 		Body: strings.NewReader(`{
@@ -164,8 +174,8 @@ func TestConversationCompleteRejectsAttachmentOutsideConversation(t *testing.T) 
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			withRecordAuth("users", "test1@example.com")(t, app, e)
 			conversationPublicKey = seedConversationRecord(t, app, targetConversationID)
-			seedConversationRecord(t, app, otherConversationID)
-			seedAttachmentRecord(t, app, foreignAttachmentID, otherConversationID, "test1@example.com", manifest, [][]byte{[]byte("ct")})
+			// Owned by a DIFFERENT user — test1 must not be able to reference it.
+			seedLibraryAttachment(t, app, foreignAttachmentID, "test2@example.com", manifest, [][]byte{[]byte("ct")})
 		},
 		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
 			if gatewayCalled {

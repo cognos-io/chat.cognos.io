@@ -49,9 +49,9 @@ type MessageAttachment struct {
 	// SealedKey is base64(SealAnonymous(conversationPublicKey, fileSymKey)) — the
 	// per-attachment symmetric key sealed to the conversation public key. Used by
 	// generated images; empty for user uploads, whose keys live in the encrypted
-	// conversation_attachments manifest.
+	// user_attachments (library) manifest sealed to the owner's key.
 	SealedKey string `json:"sealed_key,omitempty"`
-	// AttachmentID references a conversation_attachments record for user uploads.
+	// AttachmentID references a user_attachments (library) record for user uploads.
 	// Empty for generated images, whose bytes live on the message record itself.
 	AttachmentID string `json:"attachment_id,omitempty"`
 	// Width and Height are optional display hints (0 when unknown).
