@@ -11,6 +11,14 @@ translated message. OCR for scanned PDFs/images remains a future phase.
   text-context path — no backend change. Heavy libs are lazy-imported (kept out of the worker
   bundle); the pdfjs worker is copied to `/assets`. Scanned/text-less files fail closed with
   `no_text_extracted`.
+- **PDF native file modality.** When the selected model has native file input (a **curated**
+  `supports_file_input` capability — Requesty does not expose it), PDFs are sent **raw** to the
+  provider as a `file` content block (better quality on scanned/tabular PDFs; skips pdfjs entirely),
+  instead of client-extracted text. Other doc types (DOCX/XLSX) always extract text — providers do
+  not accept them natively. Gated to file-capable models (UI at attach + send, server 400
+  otherwise), with a per-file payload cap and a per-file billing estimate. Privacy note: the raw
+  file (including its metadata) goes to the provider and bypasses the text cap — we cannot sanitize
+  PDFs the way images are re-encoded. At rest it stays client-encrypted like any artifact.
 - The image processor re-encodes in the worker via OffscreenCanvas (strips EXIF, downscales),
   stores the encrypted re-encoded image, and sends it to **vision-capable models only** as a
   Bifrost image content block. Non-vision models reject images (UI gate + server 400). Image input
@@ -213,7 +221,7 @@ V1 rejects:
 
 | Phase | Types                 | Implementation                                                                            | Status   |
 | ----- | --------------------- | ----------------------------------------------------------------------------------------- | -------- |
-| PDF   | PDF                   | `pdfjs-dist` (lazy; worker copied to `/assets`) → text                                    | done     |
+| PDF   | PDF                   | file-capable model → raw `file` block; else `pdfjs-dist` (lazy) → text                    | done     |
 | DOCX  | DOCX                  | `mammoth.extractRawText` (lazy) → text                                                    | done     |
 | Excel | XLSX/XLS              | SheetJS `xlsx` (lazy) → per-sheet CSV text                                                | done     |
 | Image | PNG, JPEG, WebP       | `createImageBitmap` + `OffscreenCanvas` re-encode (strip EXIF, downscale) → vision blocks | done     |
