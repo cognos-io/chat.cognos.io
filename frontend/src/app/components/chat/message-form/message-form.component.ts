@@ -369,7 +369,7 @@ function escapeHtml(value: string): string {
               type="button"
               (click)="toggleModelSelector()"
             >
-              {{ modelService.selectedModel().name }}
+              {{ modelService.selectedModel().displayName }}
             </cog-button>
 
             @if (!isMobile()) {
@@ -426,6 +426,11 @@ function escapeHtml(value: string): string {
                 iconAfter="chevron-down"
                 type="button"
                 [title]="t('chat.composer.reasoning.title')"
+                [attr.aria-label]="
+                  t('chat.composer.reasoning.title') +
+                  ': ' +
+                  reasoningEffortLabel(modelService.selectedReasoningEffort())
+                "
                 [attr.aria-expanded]="reasoningMenuOpen()"
                 (click)="toggleReasoningMenu()"
               >
@@ -435,9 +440,6 @@ function escapeHtml(value: string): string {
                     [size]="16"
                     aria-hidden="true"
                   />
-                  @if (!isMobile()) {
-                    {{ reasoningEffortLabel(modelService.selectedReasoningEffort()) }}
-                  }
                 </span>
               </cog-button>
 
@@ -1336,7 +1338,7 @@ export class MessageFormComponent {
       if (rejectedImages) {
         this.attachmentNotice.set(
           this._transloco.translate('chat.composer.attachments.imageNeedsVision', {
-            model: this.modelService.selectedModel().name,
+            model: this.modelService.selectedModel().displayName,
           }),
         );
       }
@@ -1357,7 +1359,7 @@ export class MessageFormComponent {
       if (rejectedImages) {
         this.attachmentNotice.set(
           this._transloco.translate('chat.composer.attachments.imageNeedsVision', {
-            model: this.modelService.selectedModel().name,
+            model: this.modelService.selectedModel().displayName,
           }),
         );
       } else if (accepted < candidates.length) {
@@ -1749,7 +1751,7 @@ export class MessageFormComponent {
     if (selected.some((a) => a.isImage) && !model.supportsVision) {
       this.attachmentNotice.set(
         this._transloco.translate('chat.composer.attachments.imageNeedsVision', {
-          model: model.name,
+          model: model.displayName,
         }),
       );
       return;
@@ -1757,7 +1759,7 @@ export class MessageFormComponent {
     if (selected.some((a) => a.isRawFile) && !model.supportsFileInput) {
       this.attachmentNotice.set(
         this._transloco.translate('chat.composer.attachments.fileNeedsFileModel', {
-          model: model.name,
+          model: model.displayName,
         }),
       );
       return;

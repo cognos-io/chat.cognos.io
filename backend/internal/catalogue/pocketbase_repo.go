@@ -79,9 +79,15 @@ func (r *PocketBaseRepo) ActiveModels(_ context.Context) ([]Model, error) {
 			continue
 		}
 
+		name := strings.TrimSpace(record.GetString("name"))
+		displayName := strings.TrimSpace(record.GetString("display_name"))
+		if displayName == "" {
+			displayName = FriendlyModelName(name)
+		}
 		model := Model{
 			ID:                  modelID,
-			Name:                strings.TrimSpace(record.GetString("name")),
+			Name:                name,
+			DisplayName:         displayName,
 			Slug:                strings.TrimSpace(record.GetString("slug")),
 			Description:         strings.TrimSpace(record.GetString("description")),
 			ProviderID:          provider.ProviderID,

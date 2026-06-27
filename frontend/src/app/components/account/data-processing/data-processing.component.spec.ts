@@ -14,6 +14,7 @@ function model(id: string, privacyTier: PrivacyTier): Model {
   return {
     id,
     name: id,
+    displayName: id,
     slug: id,
     providerId: 'infomaniak',
     description: '',

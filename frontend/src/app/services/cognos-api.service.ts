@@ -186,6 +186,7 @@ interface ApiTag {
 interface ApiModel {
   id: string;
   name: string;
+  display_name?: string;
   slug: string;
   provider_id: string;
   provider_name?: string;
@@ -1767,6 +1768,7 @@ export class CognosApiService {
     return Model.parse({
       id: model.id,
       name: model.name,
+      displayName: model.display_name || model.name,
       slug: model.slug,
       providerId: model.provider_id,
       providerName: model.provider_name,

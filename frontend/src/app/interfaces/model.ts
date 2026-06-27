@@ -17,6 +17,9 @@ export type Pricing = z.infer<typeof Pricing>;
 export const Model = z.object({
   id: z.string(),
   name: z.string(),
+  // User-facing name (de-jargoned). Always populated by the API (falls back to
+  // `name`); `name` keeps the full technical form for any operator-facing view.
+  displayName: z.string().default(''),
   slug: z.string(),
   providerId: z.string(),
   providerName: z.string().optional(),
@@ -70,6 +73,7 @@ export type ModelsCatalogueResponse = z.infer<typeof ModelsCatalogueResponse>;
 export const loadingModel: Model = {
   id: '',
   name: 'Loading models…',
+  displayName: 'Loading models…',
   slug: 'loading-models',
   providerId: 'cognos',
   providerName: 'Cognos',

@@ -106,7 +106,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
                 >
                   <span class="model-selector__body">
                     <span class="model-selector__heading">
-                      <span class="model-selector__name">{{ model.name }}</span>
+                      <span class="model-selector__name">{{ model.displayName }}</span>
                       @if (!hideCost()) {
                         <cog-lozenge
                           class="model-selector__cost"

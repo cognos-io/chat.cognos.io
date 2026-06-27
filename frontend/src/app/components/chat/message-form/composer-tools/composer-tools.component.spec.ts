@@ -13,6 +13,7 @@ function makeModel(overrides: Partial<Model>): Model {
   return {
     id: 'm',
     name: 'M',
+    displayName: 'M',
     slug: 'm',
     providerId: 'requesty',
     description: '',

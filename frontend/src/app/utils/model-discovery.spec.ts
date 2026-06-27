@@ -30,6 +30,7 @@ function makeModel(overrides: Partial<Model> = {}): Model {
   return {
     id: 'model-a',
     name: 'Model A',
+    displayName: 'Model A',
     slug: 'model-a',
     providerId: 'requesty',
     providerName: 'Requesty',

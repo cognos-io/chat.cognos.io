@@ -28,8 +28,11 @@ type Pricing struct {
 }
 
 type Model struct {
-	ID                  string        `json:"id"`
+	ID string `json:"id"`
+	// Name is the full technical name (e.g. "Claude Sonnet 4.6 (Bedrock)") for
+	// internal/operator use. DisplayName is the user-facing, de-jargoned name.
 	Name                string        `json:"name"`
+	DisplayName         string        `json:"display_name"`
 	Slug                string        `json:"slug"`
 	Description         string        `json:"description"`
 	ProviderID          string        `json:"provider_id"`

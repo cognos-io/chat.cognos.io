@@ -14,9 +14,10 @@ import { modelSupportsCapability } from '@app/utils/model-discovery';
 import { ModelSelectorComponent } from './model-selector.component';
 
 function makeModel(overrides: Partial<Model>): Model {
-  return {
+  const base: Model = {
     id: 'm',
     name: 'M',
+    displayName: 'M',
     slug: 'm',
     providerId: 'requesty',
     description: '',
@@ -39,6 +40,12 @@ function makeModel(overrides: Partial<Model>): Model {
     isEligible: true,
     ...overrides,
   };
+  // Default displayName to name unless explicitly overridden (the UI renders
+  // displayName).
+  if (overrides.displayName === undefined && overrides.name !== undefined) {
+    base.displayName = base.name;
+  }
+  return base;
 }
 
 describe('modelSupportsCapability', () => {
