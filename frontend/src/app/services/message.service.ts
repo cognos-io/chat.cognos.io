@@ -1240,6 +1240,7 @@ export class MessageService {
       conversation,
       messages,
       contextSummary,
+      messageRequest.attachmentContexts,
     );
     const request = {
       messages,
@@ -1854,15 +1855,22 @@ export class MessageService {
     conversation: Conversation | null | undefined,
     messages: ReadonlyArray<CompletionMessageRequest>,
     contextSummary?: string,
+    attachmentContexts?: ReadonlyArray<CompleteAttachmentContext>,
   ): string {
     const instructions = this.redactProjectInstructions(conversation);
     // The injected memory (contextSummary) can carry redaction placeholders even
     // when no raw message does — so the model still needs the preserve-tokens
-    // instruction in that case.
+    // instruction in that case. Attachment text is redacted client-side too and
+    // is appended to the prompt server-side, so its tokens only live in the
+    // attachment contexts at this point — check them as well.
     const hasRedactions =
       containsRedactionToken(instructions) ||
       (!!contextSummary && containsRedactionToken(contextSummary)) ||
-      messages.some((message) => containsRedactionToken(message.content));
+      messages.some((message) => containsRedactionToken(message.content)) ||
+      (attachmentContexts?.some((context) =>
+        containsRedactionToken(context.textContext ?? ''),
+      ) ??
+        false);
     return [
       instructions,
       personaPrompt.trim(),

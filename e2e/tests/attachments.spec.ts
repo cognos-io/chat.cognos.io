@@ -112,12 +112,15 @@ test.describe('composer attachments', () => {
     // Capture what the client sends to the completion endpoint without breaking
     // the real backend flow (continue the request through).
     let sentContexts: Array<{ text_context?: string }> | undefined;
+    let sentSystemPrompt = '';
     await page.route('**/complete', async (route) => {
       if (route.request().method() === 'POST') {
         const body = route.request().postDataJSON() as {
           attachment_contexts?: Array<{ text_context?: string }>;
+          system_prompt?: string;
         };
         sentContexts = body.attachment_contexts;
+        sentSystemPrompt = body.system_prompt ?? '';
       }
       await route.continue();
     });
@@ -146,6 +149,10 @@ test.describe('composer attachments', () => {
     expect(text).not.toContain(email);
     expect(text).toMatch(/\[\[PII_IBAN_[A-Z0-9]+\]\]/);
     expect(text).toMatch(/\[\[PII_EMAIL_[A-Z0-9]+\]\]/);
+
+    // The body carried no PII, so the only redaction came from the attachment —
+    // the system prompt must still tell the model to preserve the placeholders.
+    expect(sentSystemPrompt).toContain('placeholders');
   });
 
   test('hydrates attachment redaction tokens and survives a reload', async ({
