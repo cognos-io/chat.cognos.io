@@ -31,6 +31,57 @@ In the `configs` directory copy the `api.example.yaml` to an environment specifi
 For production, prefer `COGNOS_*` environment variables and `COGNOS_*_FILE` secret-file inputs
 instead of mounting a plaintext config file into the container.
 
+## Requesty model sync
+
+The AI model catalogue (`ai_models`) is curated by us, but a sync keeps Requesty-provided models
+fresh. It runs **automatically in-app**: a background job on boot and roughly every 6 hours. You
+normally don't need to do anything.
+
+What the sync does for `provider = requesty` models (Infomaniak models are never touched):
+
+- **Refreshes** derived fields — pricing, context window, max output, capability flags
+  (`supports_vision`, `supports_tool_calling`, …) — and sets `reasoning_efforts` only when unset
+  (so manual overrides win).
+- **Disables** (never deletes) enabled models that have **vanished** from the Requesty API — a
+  removed model stops working, so it's switched off (`enabled = false`). The record and all curation
+  (`display_name`, `privacy_tier`, `hosting_*`, `whitelisted`, `supports_file_input`) are preserved.
+
+It never overwrites `enabled`, `whitelisted`, `privacy_tier`, `hosting_*` or `display_name` — those
+stay hand-curated. (Hand-editing pricing / context / the four synced capability flags will be
+overwritten on the next run.)
+
+### Run it manually
+
+Use the wrapper (reads the same `COGNOS_REQUESTY_*` config as the API):
+
+```sh
+./scripts/sync-requesty-models.sh
+```
+
+Or the raw subcommand:
+
+```sh
+cd backend && go run ./cmd/api sync-requesty-models
+```
+
+### Disabling removed models (safety guard)
+
+The disable pass is guarded so a partial or empty Requesty response can't switch off a big chunk of
+the catalogue: if **more than 25%** of enabled Requesty models are absent from the fetch, the
+disable pass is **skipped** and logged. An **empty fetch never disables anything** (even when
+forced).
+
+If you intentionally remove several models and want them disabled now — even past the 25% guard —
+force it:
+
+```sh
+# one-off manual cleanup (CLI flag)
+./scripts/sync-requesty-models.sh --force-disable-absent
+
+# standing override for the scheduled in-app job (env var)
+COGNOS_REQUESTY_FORCE_DISABLE_ABSENT=true
+```
+
 ## Authentication
 
 We use PocketBase's built-in `users` auth collection for authentication.
