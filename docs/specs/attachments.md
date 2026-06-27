@@ -102,6 +102,14 @@ with text-like files and a worker-based processing pipeline.
   an inference request.
 - **Prompt injection is in scope.** Attachment content is untrusted data. The backend wraps
   attachment context in fixed delimiters/instructions before calling the model.
+- **Extracted text is redacted before it leaves the client.** Text from an attachment is run
+  through the same PII redaction engine as the message body (`docs/specs/pii-redaction.md`),
+  so detected sensitive values (emails, IBANs, secrets, …) are swapped for placeholder tokens
+  before the `text_context` is sent to the backend/provider. Redaction is shared with the prompt: a
+  value in both the message and an attachment collapses to one token, and the mappings persist
+  under the conversation redaction key so the assistant's reply hydrates on display. Image bytes and
+  raw-file (e.g. native-PDF) passthrough are binary and cannot be text-redacted — they bypass this
+  layer, which is called out in product copy and the threat model below.
 
 ## 1. Problem
 
@@ -753,6 +761,9 @@ When the user sends a message with ready attachments:
 - the normal user text stays as the message content;
 - attachment ids are embedded in the encrypted message data (server-side, during persistence) and
   the backend links the attachment records via the plaintext `message` relation;
+- extracted `text_context` is redacted client-side (in `MessageService.redactRequest`, in lockstep
+  with the message body) before the request is built, so the provider only ever sees placeholder
+  tokens for detected sensitive values — see `docs/specs/pii-redaction.md`;
 - text context is added to the provider request as untrusted attachment material, counted by the
   token estimator and billing gate.
 

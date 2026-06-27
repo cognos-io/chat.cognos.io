@@ -223,7 +223,23 @@ Cost of not solving it:
     - Current-generation redaction-key reads return only the active generation.
     - Public shares are revoked when key rotation invalidates the share's access assumptions.
 
-### 6.8 Future document-source support
+### 6.8 Attachment-source redaction (shipped)
+
+- **Description**: Text extracted from a user-uploaded attachment is redacted with the same engine
+  as the message body before it reaches the provider.
+- **User story**: As a user attaching a file with sensitive data, I want detected values in the
+  extracted text replaced with placeholders so the file workflow is not a weaker privacy path than
+  typing.
+- **How it works**: `MessageService.redactRequest` redacts the message body, then redacts the
+  attachment's `text_context` via `RedactionService.prepareAttachmentText`, threading the body's
+  (and each earlier attachment's) freshly-minted entries forward so a shared value collapses to one
+  token.
+  New entries are persisted under the conversation redaction key alongside the message's, tagged
+  with `source_kind: 'attachment'` and the attachment id, and hydrate the assistant's reply.
+- **Limitation**: only extracted _text_ is redactable. Image bytes and raw-file (native-PDF)
+  passthrough are binary and bypass redaction; this is documented in `docs/specs/attachments.md`.
+
+### 6.9 Future document-source support
 
 - **Description**: Model redaction entries around generic text sources so documents can reuse the
   same redaction engine.
@@ -231,7 +247,8 @@ Cost of not solving it:
   protection as chat messages so that file workflows do not create a weaker privacy path.
 - **Priority**: P1
 - **Acceptance criteria**:
-    - Redaction-entry source metadata supports at least `message`, `document`, and `document_chunk`.
+    - Redaction-entry source metadata supports at least `message`, `attachment`, `document`, and
+      `document_chunk`.
     - The core redaction engine accepts plain text and does not depend on Angular components or chat
     message state.
     - File-upload implementation can call the same detection, tokenization, and mapping APIs without
@@ -474,8 +491,8 @@ Field meanings:
 - `token`: placeholder token, plaintext so clients can request/update mappings by token;
 - `key_version`: redaction-key generation used to encrypt `data`;
 - `data`: encrypted redaction-entry payload;
-- `source_kind`: one of `message`, `document`, `document_chunk`;
-- `source_id`: message id, document id, or chunk id when available.
+- `source_kind`: one of `message`, `document`, `document_chunk`, `attachment`;
+- `source_id`: message id, document id, chunk id, or attachment id when available.
 
 Sensitive values must only appear in `data` after encryption.
 
