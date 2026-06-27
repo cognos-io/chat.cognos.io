@@ -75,7 +75,7 @@ test.describe('composer attachments', () => {
     await provisionUnlockedAccount(page);
     await startConversation(page);
 
-    await setComposerFile(page, 'photo.png', 'image/png', '\x89PNG\r\n\x1a\n binary');
+    await setComposerFile(page, 'clip.mp4', 'video/mp4', 'not really a video');
 
     const chip = page.getByTestId('attachment-chip');
     await expect(chip).toBeVisible();

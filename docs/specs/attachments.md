@@ -1,7 +1,21 @@
 # Attachments — Product & Architecture Spec
 
-**Status:** V1 implemented — text-like files (`.txt`, `.md`, `.csv`, valid UTF-8 `.json`). Images,
-PDF and DOCX remain future phases.
+**Status:** Implemented. Supported types: text (`.txt`, `.md`, `.csv`, UTF-8 `.json`), **PDF**,
+**DOCX** and **Excel** (`.xlsx`/`.xls`) via client-side text extraction, and **images** (`.png`,
+`.jpg`, `.webp`) via full multimodal/vision. Unsupported files are rejected before upload with a
+translated message. OCR for scanned PDFs/images remains a future phase.
+
+**Type support & processors:**
+
+- Document processors (PDF→pdfjs, DOCX→mammoth, Excel→SheetJS) extract text and reuse the existing
+  text-context path — no backend change. Heavy libs are lazy-imported (kept out of the worker
+  bundle); the pdfjs worker is copied to `/assets`. Scanned/text-less files fail closed with
+  `no_text_extracted`.
+- The image processor re-encodes in the worker via OffscreenCanvas (strips EXIF, downscales),
+  stores the encrypted re-encoded image, and sends it to **vision-capable models only** as a
+  Bifrost image content block. Non-vision models reject images (UI gate + server 400). Image input
+  is added to the billing estimate via a flat per-image token figure; actual billing uses provider
+  usage.
 
 **Implementation notes (V1):**
 
@@ -195,15 +209,15 @@ V1 rejects:
 - binary or invalid UTF-8 files;
 - files with mismatched type signals that cannot be safely classified.
 
-### 5.4 Later processors
+### 5.4 Additional processors
 
-| Phase    | Types                 | Likely implementation                                                                            |
-| -------- | --------------------- | ------------------------------------------------------------------------------------------------ |
-| Image    | PNG, JPEG, WebP       | `createImageBitmap`, `OffscreenCanvas` where available, canvas fallback, re-encode to strip EXIF |
-| PDF      | PDF                   | `pdfjs-dist`; test worker-inside-worker constraints before committing                            |
-| DOCX     | DOCX                  | `mammoth` for text extraction                                                                    |
-| Rich CSV | CSV/TSV               | `papaparse` if native line preview is insufficient                                               |
-| OCR      | Images / scanned PDFs | likely deferred; `tesseract.js` is heavy and should be separately evaluated                      |
+| Phase | Types                 | Implementation                                                                            | Status   |
+| ----- | --------------------- | ----------------------------------------------------------------------------------------- | -------- |
+| PDF   | PDF                   | `pdfjs-dist` (lazy; worker copied to `/assets`) → text                                    | done     |
+| DOCX  | DOCX                  | `mammoth.extractRawText` (lazy) → text                                                    | done     |
+| Excel | XLSX/XLS              | SheetJS `xlsx` (lazy) → per-sheet CSV text                                                | done     |
+| Image | PNG, JPEG, WebP       | `createImageBitmap` + `OffscreenCanvas` re-encode (strip EXIF, downscale) → vision blocks | done     |
+| OCR   | Images / scanned PDFs | deferred; `tesseract.js` is heavy and should be separately evaluated                      | deferred |
 
 New processors must use the same registry contract and tests.
 
@@ -930,8 +944,8 @@ Browser e2e:
 4. ✅ Client-side encryption/upload + UI chips (paperclip + drag/drop + remove).
 5. ✅ Completion request extension + provider mock e2e.
 6. Export support. _(deferred)_
-7. Images processor. _(deferred)_
-8. PDF/DOCX processors after separate library spikes. _(deferred)_
+7. ✅ Images processor (full multimodal/vision).
+8. ✅ PDF / DOCX / Excel text-extraction processors.
 
 ## 15. Decisions and open questions
 
