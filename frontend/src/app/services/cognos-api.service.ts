@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 
 import PocketBase from 'pocketbase';
 
-import { Observable, Subscriber, filter, from, map, take } from 'rxjs';
+import { Observable, Subscriber, filter, from, last, map } from 'rxjs';
 
 import {
   BillingApiResponse,
@@ -1092,7 +1092,11 @@ export class CognosApiService {
           event.type === 'complete',
       ),
       map((event) => event.response),
-      take(1),
+      // last() (not take(1)) so we consume the stream to its natural end instead
+      // of unsubscribing the instant the complete event arrives — an early
+      // unsubscribe aborts the still-open fetch (NS_BINDING_ABORTED) before the
+      // backend closes it. There is exactly one complete event per stream.
+      last(),
     );
   }
 
@@ -1109,7 +1113,9 @@ export class CognosApiService {
           event.type === 'complete',
       ),
       map((event) => event.response),
-      take(1),
+      // last() (not take(1)) — consume to the stream's natural end so the fetch
+      // is not aborted mid-flight (NS_BINDING_ABORTED) on early unsubscribe.
+      last(),
     );
   }
 
