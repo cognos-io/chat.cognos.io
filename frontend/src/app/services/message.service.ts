@@ -344,20 +344,24 @@ export const reasoningDisablingEffort = (
 ): string | undefined =>
   ['off', 'none'].find((effort) => reasoningEfforts.includes(effort));
 
-// Output budget for title generation. Normally tiny (a title is a few words),
-// but when the model is a reasoning model we can't switch off, hidden reasoning
-// shares this budget — so give it enough headroom that the title text still
-// fits. Belt-and-braces alongside reasoningDisablingEffort.
+// Output budget for title generation. A title is a few words, so the budget is
+// tiny. When the model always reasons (no off tier), the backend raises the
+// ceiling above the thinking budget it sizes — see the reasoning-output-budget
+// business process — so this tiny value is always safe to send.
 export const TITLE_MAX_OUTPUT_TOKENS = 15;
-export const TITLE_MAX_OUTPUT_TOKENS_WITH_REASONING = 2048;
 
-export const titleMaxOutputTokens = (reasoningEfforts: readonly string[]): number => {
-  const reasonsUnconditionally =
-    reasoningEfforts.length > 0 && !reasoningDisablingEffort(reasoningEfforts);
-  return reasonsUnconditionally
-    ? TITLE_MAX_OUTPUT_TOKENS_WITH_REASONING
-    : TITLE_MAX_OUTPUT_TOKENS;
-};
+// titleReasoningEffort picks the reasoning effort for a title completion:
+//   - the off tier when the model has one (cheapest — no hidden reasoning);
+//   - otherwise the lowest declared tier, so the backend sizes an explicit
+//     thinking budget and floors max_tokens above it. A model that always
+//     reasons would otherwise 400 the tiny title request
+//     ("max_tokens must be greater than thinking.budget_tokens");
+//   - undefined for non-reasoning models, where any effort would be rejected.
+export const titleReasoningEffort = (
+  reasoningEfforts: readonly string[],
+): string | undefined =>
+  reasoningDisablingEffort(reasoningEfforts) ??
+  reasoningEfforts.find((effort) => !['off', 'none'].includes(effort));
 
 export const applyCompletionStreamDelta = (
   existing: ReadonlyArray<Message>,
@@ -2072,7 +2076,7 @@ export class MessageService {
     const model = this._modelService.selectedModel();
     return this._api
       .complete({
-        maxOutputTokens: titleMaxOutputTokens(model.reasoningEfforts),
+        maxOutputTokens: TITLE_MAX_OUTPUT_TOKENS,
         persist: false,
         messages: [{ role: 'user', content: startingMessage }],
         modelId: model.id,
@@ -2080,9 +2084,10 @@ export class MessageService {
         systemPrompt: generateConversationSystemPrompt,
         // Disable reasoning when the model supports it — otherwise a reasoning
         // model burns the small output budget on hidden reasoning and returns
-        // no title text. When it can't be disabled, titleMaxOutputTokens widens
-        // the budget so the title still fits.
-        reasoningEffort: reasoningDisablingEffort(model.reasoningEfforts),
+        // no title text. When it can't be disabled, send the lowest tier so the
+        // backend sizes an explicit thinking budget and raises max_tokens above
+        // it (see the reasoning-output-budget business process).
+        reasoningEffort: titleReasoningEffort(model.reasoningEfforts),
       })
       .pipe(
         catchError((err) => {

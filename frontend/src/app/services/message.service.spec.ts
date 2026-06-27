@@ -9,8 +9,6 @@ import { Message } from '@app/interfaces/message';
 import { CompleteResponse, GenerateImageResponse } from './cognos-api.service';
 import {
   DELETED_MESSAGE_MARKER,
-  TITLE_MAX_OUTPUT_TOKENS,
-  TITLE_MAX_OUTPUT_TOKENS_WITH_REASONING,
   applyCompletionReasoningStreamDelta,
   applyCompletionStreamDelta,
   applyCompletionStreamResponse,
@@ -29,7 +27,7 @@ import {
   resolveCompletionFailureMessage,
   splitStreamDeltaForDisplay,
   streamingAssistantMessageId,
-  titleMaxOutputTokens,
+  titleReasoningEffort,
 } from './message.service';
 
 const makeResponse = (overrides: Partial<CompleteResponse> = {}): CompleteResponse => ({
@@ -888,24 +886,34 @@ describe('reasoningDisablingEffort', () => {
   });
 });
 
-describe('titleMaxOutputTokens', () => {
+describe('titleReasoningEffort', () => {
   it.each([
     {
-      name: 'non-reasoning model keeps the tiny budget',
+      name: 'non-reasoning model sends no effort',
       efforts: [],
-      expected: TITLE_MAX_OUTPUT_TOKENS,
+      expected: undefined,
     },
     {
-      name: 'reasoning model with an off tier keeps the tiny budget',
+      name: 'reasoning model with an off tier disables reasoning',
       efforts: ['off', 'low', 'high'],
-      expected: TITLE_MAX_OUTPUT_TOKENS,
+      expected: 'off',
     },
     {
-      name: 'reasoning model that cannot disable reasoning gets headroom',
+      name: 'model using none as its off tier disables reasoning',
+      efforts: ['none', 'low', 'high'],
+      expected: 'none',
+    },
+    {
+      name: 'model that cannot disable reasoning requests its lowest tier',
       efforts: ['low', 'medium', 'high'],
-      expected: TITLE_MAX_OUTPUT_TOKENS_WITH_REASONING,
+      expected: 'low',
+    },
+    {
+      name: 'lowest tier may be the only declared tier',
+      efforts: ['high'],
+      expected: 'high',
     },
   ])('$name', ({ efforts, expected }) => {
-    expect(titleMaxOutputTokens(efforts)).toBe(expected);
+    expect(titleReasoningEffort(efforts)).toBe(expected);
   });
 });
