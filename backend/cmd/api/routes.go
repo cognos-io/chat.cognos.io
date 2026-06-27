@@ -760,33 +760,60 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	// User-scoped attachment library (spec docs/specs/attachments.md). Files belong
+	// to the user and are reusable across conversations; access is gated by file
+	// ownership inside the handlers.
 	e.Router.POST(
-		"/api/v1/conversations/{conversationID}/attachments",
-		handler.AttachmentCreate(attachmentParams),
+		"/api/v1/attachments",
+		handler.LibraryAttachmentCreate(attachmentParams),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),
 	)
 
 	e.Router.GET(
-		"/api/v1/conversations/{conversationID}/attachments",
-		handler.AttachmentList(attachmentParams),
+		"/api/v1/attachments",
+		handler.LibraryAttachmentList(attachmentParams),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),
 	)
 
 	e.Router.GET(
-		"/api/v1/conversations/{conversationID}/attachments/{attachmentID}/files/{fileName}",
-		handler.AttachmentDownload(attachmentParams),
+		"/api/v1/attachments/{attachmentID}",
+		handler.LibraryAttachmentGet(attachmentParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/attachments/{attachmentID}/files/{fileName}",
+		handler.LibraryAttachmentDownload(attachmentParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/attachments/{attachmentID}",
+		handler.LibraryAttachmentRename(attachmentParams),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),
 	)
 
 	e.Router.DELETE(
-		"/api/v1/conversations/{conversationID}/attachments/{attachmentID}",
-		handler.AttachmentDelete(attachmentParams),
+		"/api/v1/attachments/{attachmentID}",
+		handler.LibraryAttachmentDelete(attachmentParams),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/attachments/{attachmentID}/usages",
+		handler.LibraryAttachmentUsages(attachmentParams),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),

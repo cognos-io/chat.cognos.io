@@ -22,8 +22,8 @@ const (
 	// DefaultAttachmentMaxFileBytes is the per-artifact ciphertext cap. It allows
 	// a ~10 MiB original plus secretbox overhead.
 	DefaultAttachmentMaxFileBytes = int64(11 << 20)
-	// DefaultAttachmentStorageCapBytes is the per-user total ciphertext cap
-	// across conversation_attachments (spec §0). Counts originals + derived.
+	// DefaultAttachmentStorageCapBytes is the per-user total ciphertext cap across
+	// their user_attachments library (spec §0). Counts originals + derived.
 	DefaultAttachmentStorageCapBytes = int64(1 << 30)
 	// MaxAttachmentFilesPerRecord bounds the number of artifacts (original +
 	// derived) in one logical attachment.
@@ -49,11 +49,19 @@ const (
 	// FileInputTokenEstimate is a rough per-file input-token cost for the billing
 	// gate (a PDF's true cost is per-page; actual billing uses provider usage).
 	FileInputTokenEstimate = 4000
+
+	// libraryAttachmentsCollection holds the user-scoped attachment library: each
+	// file's per-artifact key + manifest are sealed to the OWNER's personal key, so
+	// it is reusable across any of their conversations.
+	libraryAttachmentsCollection = "user_attachments"
+	// attachmentUsagesCollection is the plaintext join recording which messages
+	// reference a library file (powers "used in chats" + the removed-file tombstone).
+	attachmentUsagesCollection = "attachment_usages"
 )
 
-// AttachmentHandlerParams carries the dependencies for the conversation
-// attachment routes. The collection is locked to custom routes, so all access
-// is authorised here by conversation participant membership.
+// AttachmentHandlerParams carries the dependencies for the user-scoped library
+// attachment routes. The collection is locked to custom routes, so all access is
+// authorised here by file ownership.
 type AttachmentHandlerParams struct {
 	App    core.App
 	Logger *slog.Logger
@@ -77,57 +85,48 @@ func (p AttachmentHandlerParams) storageCapBytes() int64 {
 	return DefaultAttachmentStorageCapBytes
 }
 
-// attachmentResponse is the transport DTO. Plaintext routing/accounting fields
-// only — the manifest stays opaque base64 ciphertext in `data`.
+// attachmentResponse is the transport DTO. Plaintext accounting fields only — the
+// manifest stays opaque base64 ciphertext in `data`.
 type attachmentResponse struct {
-	ID           string   `json:"id"`
-	Conversation string   `json:"conversation"`
-	Message      string   `json:"message,omitempty"`
-	SizeBytes    int64    `json:"size_bytes"`
-	Files        []string `json:"files"`
-	Data         string   `json:"data"`
-	Created      string   `json:"created"`
-	Updated      string   `json:"updated"`
+	ID        string   `json:"id"`
+	SizeBytes int64    `json:"size_bytes"`
+	Files     []string `json:"files"`
+	Data      string   `json:"data"`
+	Created   string   `json:"created"`
+	Updated   string   `json:"updated"`
 }
 
 func newAttachmentResponse(record *core.Record) attachmentResponse {
 	return attachmentResponse{
-		ID:           record.Id,
-		Conversation: record.GetString("conversation"),
-		Message:      record.GetString("message"),
-		SizeBytes:    int64(record.GetInt("size_bytes")),
-		Files:        record.GetStringSlice("files"),
-		Data:         record.GetString("data"),
-		Created:      record.GetString("created"),
-		Updated:      record.GetString("updated"),
+		ID:        record.Id,
+		SizeBytes: int64(record.GetInt("size_bytes")),
+		Files:     record.GetStringSlice("files"),
+		Data:      record.GetString("data"),
+		Created:   record.GetString("created"),
+		Updated:   record.GetString("updated"),
 	}
 }
 
-// AttachmentCreate handles POST /api/v1/conversations/{id}/attachments. It
-// accepts a multipart body of a base64 sealed manifest (`data`) plus one or more
-// encrypted artifact blobs (`files`), and stores them as a draft attachment
-// (no message link yet). All bytes are ciphertext; the server never inspects or
-// decrypts them.
-func AttachmentCreate(params AttachmentHandlerParams) func(e *core.RequestEvent) error {
+// ownedAttachment loads a library attachment and confirms the caller owns it. A
+// missing record or a different owner both return the same not-found error, so an
+// id is never confirmed to a non-owner.
+func ownedAttachment(app core.App, attachmentID, ownerID string) (*core.Record, error) {
+	record, err := app.FindRecordById(libraryAttachmentsCollection, attachmentID)
+	if err != nil || record.GetString("owner") != ownerID {
+		return nil, apis.NewNotFoundError("Attachment not found", nil)
+	}
+	return record, nil
+}
+
+// LibraryAttachmentCreate handles POST /api/v1/attachments. It accepts a multipart
+// body of a base64 sealed manifest (`data`, sealed to the owner's key) plus one or
+// more encrypted artifact blobs (`files`), and stores them in the caller's library.
+// All bytes are ciphertext; the server never inspects or decrypts them.
+func LibraryAttachmentCreate(params AttachmentHandlerParams) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		owner := auth.ExtractUser(e)
 		if owner == nil {
 			return apis.NewUnauthorizedError("User not authenticated", nil)
-		}
-
-		conversationID := e.Request.PathValue("conversationID")
-		if conversationID == "" {
-			return apis.NewBadRequestError("Conversation ID is required", nil)
-		}
-
-		active, err := conversationAccessibleByID(params.App, conversationID, owner.ID)
-		if err != nil {
-			params.Logger.Error("attachment access lookup failed", "err", err)
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify access", err)
-		}
-		if !active {
-			// Same 404 a non-existent conversation gives, so the id is not leaked.
-			return apis.NewNotFoundError("Conversation not found", nil)
 		}
 
 		files, err := e.FindUploadedFiles("files")
@@ -161,14 +160,13 @@ func AttachmentCreate(params AttachmentHandlerParams) func(e *core.RequestEvent)
 			return apis.NewForbiddenError("Storage limit reached", nil)
 		}
 
-		collection, err := params.App.FindCollectionByNameOrId("conversation_attachments")
+		collection, err := params.App.FindCollectionByNameOrId(libraryAttachmentsCollection)
 		if err != nil {
 			params.Logger.Error("attachment collection lookup failed", "err", err)
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to store attachment", err)
 		}
 
 		record := core.NewRecord(collection)
-		record.Set("conversation", conversationID)
 		record.Set("owner", owner.ID)
 		record.Set("data", data)
 		record.Set("files", files)
@@ -183,37 +181,23 @@ func AttachmentCreate(params AttachmentHandlerParams) func(e *core.RequestEvent)
 	}
 }
 
-// AttachmentList handles GET /api/v1/conversations/{id}/attachments and returns
-// every attachment record the caller can access for the conversation, so the
-// client can resolve message references and reload/export.
-func AttachmentList(params AttachmentHandlerParams) func(e *core.RequestEvent) error {
+// LibraryAttachmentList handles GET /api/v1/attachments and returns every library
+// record the caller owns, newest first. Filename search is client-side (names live
+// only in the sealed manifest), so there is no server-side query parameter.
+func LibraryAttachmentList(params AttachmentHandlerParams) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		owner := auth.ExtractUser(e)
 		if owner == nil {
 			return apis.NewUnauthorizedError("User not authenticated", nil)
 		}
 
-		conversationID := e.Request.PathValue("conversationID")
-		if conversationID == "" {
-			return apis.NewBadRequestError("Conversation ID is required", nil)
-		}
-
-		active, err := conversationAccessibleByID(params.App, conversationID, owner.ID)
-		if err != nil {
-			params.Logger.Error("attachment access lookup failed", "err", err)
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify access", err)
-		}
-		if !active {
-			return apis.NewNotFoundError("Conversation not found", nil)
-		}
-
 		records, err := params.App.FindRecordsByFilter(
-			"conversation_attachments",
-			"conversation={:conversation}",
-			"created",
+			libraryAttachmentsCollection,
+			"owner={:owner}",
+			"-created",
 			500,
 			0,
-			dbx.Params{"conversation": conversationID},
+			dbx.Params{"owner": owner.ID},
 		)
 		if err != nil {
 			params.Logger.Error("attachment list failed", "err", err)
@@ -228,37 +212,46 @@ func AttachmentList(params AttachmentHandlerParams) func(e *core.RequestEvent) e
 	}
 }
 
-// AttachmentDownload handles
-// GET /api/v1/conversations/{id}/attachments/{attachmentID}/files/{fileName}.
-// It serves the ciphertext bytes of one artifact via the protected-file path,
-// gated by the same conversation participant check as the rest of the API. The
-// client decrypts using the artifact key from the decrypted manifest.
-func AttachmentDownload(params AttachmentHandlerParams) func(e *core.RequestEvent) error {
+// LibraryAttachmentGet handles GET /api/v1/attachments/{attachmentID} and returns
+// a single owned record, so a message can resolve a file its list page missed.
+func LibraryAttachmentGet(params AttachmentHandlerParams) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		owner := auth.ExtractUser(e)
+		if owner == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+		attachmentID := e.Request.PathValue("attachmentID")
+		if attachmentID == "" {
+			return apis.NewBadRequestError("Attachment is required", nil)
+		}
+		record, err := ownedAttachment(params.App, attachmentID, owner.ID)
+		if err != nil {
+			return err
+		}
+		return e.JSON(http.StatusOK, newAttachmentResponse(record))
+	}
+}
+
+// LibraryAttachmentDownload handles
+// GET /api/v1/attachments/{attachmentID}/files/{fileName}. It serves the ciphertext
+// bytes of one artifact via the protected-file path, gated by file ownership. The
+// client decrypts using the artifact key from the (owner-sealed) manifest.
+func LibraryAttachmentDownload(params AttachmentHandlerParams) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		owner := auth.ExtractUser(e)
 		if owner == nil {
 			return apis.NewUnauthorizedError("User not authenticated", nil)
 		}
 
-		conversationID := e.Request.PathValue("conversationID")
 		attachmentID := e.Request.PathValue("attachmentID")
 		fileName := e.Request.PathValue("fileName")
-		if conversationID == "" || attachmentID == "" || fileName == "" {
-			return apis.NewBadRequestError("Conversation, attachment and file are required", nil)
+		if attachmentID == "" || fileName == "" {
+			return apis.NewBadRequestError("Attachment and file are required", nil)
 		}
 
-		active, err := conversationAccessibleByID(params.App, conversationID, owner.ID)
+		record, err := ownedAttachment(params.App, attachmentID, owner.ID)
 		if err != nil {
-			params.Logger.Error("attachment access lookup failed", "err", err)
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify access", err)
-		}
-		if !active {
-			return apis.NewNotFoundError("Attachment not found", nil)
-		}
-
-		record, err := params.App.FindRecordById("conversation_attachments", attachmentID)
-		if err != nil || record.GetString("conversation") != conversationID {
-			return apis.NewNotFoundError("Attachment not found", nil)
+			return err
 		}
 		if !slices.Contains(record.GetStringSlice("files"), fileName) {
 			return apis.NewNotFoundError("Attachment not found", nil)
@@ -274,38 +267,84 @@ func AttachmentDownload(params AttachmentHandlerParams) func(e *core.RequestEven
 	}
 }
 
-// AttachmentDelete handles
-// DELETE /api/v1/conversations/{id}/attachments/{attachmentID}. V1 allows
-// deleting only draft attachments (not yet linked to a message); linked
-// attachments are removed when their owning message is deleted/expired.
-func AttachmentDelete(params AttachmentHandlerParams) func(e *core.RequestEvent) error {
+// LibraryAttachmentRename handles PATCH /api/v1/attachments/{attachmentID}. The
+// display name lives inside the sealed manifest, so a "rename" is the client
+// replacing the sealed `data` blob. Only `data` may change — never the ciphertext
+// files or the byte accounting.
+func LibraryAttachmentRename(params AttachmentHandlerParams) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		owner := auth.ExtractUser(e)
 		if owner == nil {
 			return apis.NewUnauthorizedError("User not authenticated", nil)
 		}
-
-		conversationID := e.Request.PathValue("conversationID")
 		attachmentID := e.Request.PathValue("attachmentID")
-		if conversationID == "" || attachmentID == "" {
-			return apis.NewBadRequestError("Conversation and attachment are required", nil)
+		if attachmentID == "" {
+			return apis.NewBadRequestError("Attachment is required", nil)
 		}
 
-		active, err := conversationAccessibleByID(params.App, conversationID, owner.ID)
+		var req struct {
+			Data string `json:"data"`
+		}
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Invalid request body", err)
+		}
+		data := strings.TrimSpace(req.Data)
+		if data == "" {
+			return apis.NewBadRequestError("Manifest data is required", nil)
+		}
+
+		record, err := ownedAttachment(params.App, attachmentID, owner.ID)
 		if err != nil {
-			params.Logger.Error("attachment access lookup failed", "err", err)
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify access", err)
+			return err
 		}
-		if !active {
-			return apis.NewNotFoundError("Attachment not found", nil)
+		record.Set("data", data)
+		if err := params.App.Save(record); err != nil {
+			// A validation failure (e.g. oversized/invalid base64 caught by the
+			// field rules) is a client error, not a server fault.
+			return apis.NewBadRequestError("Failed to update attachment", err)
+		}
+		return e.JSON(http.StatusOK, newAttachmentResponse(record))
+	}
+}
+
+// LibraryAttachmentDelete handles DELETE /api/v1/attachments/{attachmentID}.
+// Removal is allowed even when the file is referenced by messages: the file row
+// and its bytes go, its usage rows are cleared, and the messages keep their
+// embedded reference so the client renders a "file removed" tombstone. Deletion
+// must never cascade into messages.
+func LibraryAttachmentDelete(params AttachmentHandlerParams) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		owner := auth.ExtractUser(e)
+		if owner == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+		attachmentID := e.Request.PathValue("attachmentID")
+		if attachmentID == "" {
+			return apis.NewBadRequestError("Attachment is required", nil)
 		}
 
-		record, err := params.App.FindRecordById("conversation_attachments", attachmentID)
-		if err != nil || record.GetString("conversation") != conversationID {
-			return apis.NewNotFoundError("Attachment not found", nil)
+		record, err := ownedAttachment(params.App, attachmentID, owner.ID)
+		if err != nil {
+			return err
 		}
-		if record.GetString("message") != "" {
-			return apis.NewBadRequestError("Attachment is linked to a message", nil)
+
+		// Clear usage rows first (the attachment relation is intentionally
+		// non-cascade so messages survive). Best-effort: a stray usage row is
+		// harmless once the file is gone.
+		usages, err := params.App.FindRecordsByFilter(
+			attachmentUsagesCollection,
+			"attachment={:attachment}",
+			"",
+			0,
+			0,
+			dbx.Params{"attachment": attachmentID},
+		)
+		if err == nil {
+			for _, usage := range usages {
+				if delErr := params.App.Delete(usage); delErr != nil {
+					params.Logger.Error("attachment usage delete failed", "err", delErr)
+				}
+			}
 		}
 
 		if err := params.App.Delete(record); err != nil {
@@ -317,31 +356,94 @@ func AttachmentDelete(params AttachmentHandlerParams) func(e *core.RequestEvent)
 	}
 }
 
-// verifyAttachmentsInConversation checks that every attachment id exists and
-// belongs to the given conversation, so a caller cannot link or reference an
-// attachment from another thread. The caller has already been authorised
-// against the conversation.
-func verifyAttachmentsInConversation(app core.App, conversationID string, attachmentIDs []string) error {
+// attachmentUsageResponse is one place a library file is referenced.
+type attachmentUsageResponse struct {
+	Conversation string `json:"conversation"`
+	Message      string `json:"message"`
+	Created      string `json:"created"`
+}
+
+// LibraryAttachmentUsages handles GET /api/v1/attachments/{attachmentID}/usages and
+// lists the (conversation, message) references for an owned file, powering the
+// "used in chats" view. Conversation ids only — the client resolves titles it can
+// already decrypt.
+func LibraryAttachmentUsages(params AttachmentHandlerParams) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		owner := auth.ExtractUser(e)
+		if owner == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+		attachmentID := e.Request.PathValue("attachmentID")
+		if attachmentID == "" {
+			return apis.NewBadRequestError("Attachment is required", nil)
+		}
+		if _, err := ownedAttachment(params.App, attachmentID, owner.ID); err != nil {
+			return err
+		}
+
+		records, err := params.App.FindRecordsByFilter(
+			attachmentUsagesCollection,
+			"attachment={:attachment}",
+			"-created",
+			500,
+			0,
+			dbx.Params{"attachment": attachmentID},
+		)
+		if err != nil {
+			params.Logger.Error("attachment usages list failed", "err", err)
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to list usages", err)
+		}
+
+		out := make([]attachmentUsageResponse, 0, len(records))
+		for _, record := range records {
+			out = append(out, attachmentUsageResponse{
+				Conversation: record.GetString("conversation"),
+				Message:      record.GetString("message"),
+				Created:      record.GetString("created"),
+			})
+		}
+		return e.JSON(http.StatusOK, out)
+	}
+}
+
+// verifyAttachmentsOwnedBy checks that every attachment id exists and belongs to
+// the caller, so a user can reference only files from their own library. The
+// caller has already been authorised against the conversation.
+func verifyAttachmentsOwnedBy(app core.App, ownerID string, attachmentIDs []string) error {
 	for _, id := range attachmentIDs {
-		record, err := app.FindRecordById("conversation_attachments", id)
-		if err != nil || record.GetString("conversation") != conversationID {
-			return fmt.Errorf("attachment %q not in conversation", id)
+		record, err := app.FindRecordById(libraryAttachmentsCollection, id)
+		if err != nil || record.GetString("owner") != ownerID {
+			return fmt.Errorf("attachment %q not owned by user", id)
 		}
 	}
 	return nil
 }
 
-// linkAttachmentsToMessage sets the message relation on each draft attachment,
-// turning it from an abandonable draft into a persisted message attachment. It
-// only touches plaintext routing columns; it never reads the encrypted manifest.
-func linkAttachmentsToMessage(app core.App, attachmentIDs []string, messageID string) error {
+// recordAttachmentUsages records that a message references each library file, so
+// the library can show "used in chats" and a removed file leaves a tombstone. The
+// unique (attachment, message) index makes this idempotent across re-sends; a
+// duplicate is ignored. Only plaintext routing columns are written.
+func recordAttachmentUsages(
+	app core.App,
+	attachmentIDs []string,
+	conversationID, messageID, userID string,
+) error {
+	collection, err := app.FindCollectionByNameOrId(attachmentUsagesCollection)
+	if err != nil {
+		return err
+	}
 	for _, id := range attachmentIDs {
-		record, err := app.FindRecordById("conversation_attachments", id)
-		if err != nil {
-			return err
-		}
+		record := core.NewRecord(collection)
+		record.Set("attachment", id)
+		record.Set("conversation", conversationID)
 		record.Set("message", messageID)
+		record.Set("user", userID)
 		if err := app.Save(record); err != nil {
+			// A unique-constraint violation means the usage already exists
+			// (re-send / regenerate) — that's fine, keep going.
+			if strings.Contains(strings.ToLower(err.Error()), "unique") {
+				continue
+			}
 			return err
 		}
 	}
@@ -349,8 +451,8 @@ func linkAttachmentsToMessage(app core.App, attachmentIDs []string, messageID st
 }
 
 // buildUserUploadAttachments builds the encrypted-message attachment references
-// for user uploads. Only the kind, the record id and a display mime type are
-// embedded; filenames, keys and hashes stay in the encrypted manifest.
+// for user uploads. Only the kind, the library record id and a display mime type
+// are embedded; filenames, keys and hashes stay in the owner-sealed manifest.
 func buildUserUploadAttachments(
 	attachmentIDs []string,
 	contexts []completionAttachmentInput,
@@ -465,14 +567,14 @@ func WrapAttachmentContexts(contexts []completionAttachmentInput) string {
 }
 
 // sumOwnerAttachmentBytes returns the total stored ciphertext bytes for a user
-// across all conversation_attachments, for the per-user storage cap.
+// across their whole attachment library, for the per-user storage cap.
 func sumOwnerAttachmentBytes(app core.App, ownerID string) (int64, error) {
 	var res struct {
 		Total int64 `db:"total"`
 	}
 	err := app.DB().
 		Select("COALESCE(SUM(size_bytes), 0) AS total").
-		From("conversation_attachments").
+		From(libraryAttachmentsCollection).
 		Where(dbx.HashExp{"owner": ownerID}).
 		One(&res)
 	if err != nil {
