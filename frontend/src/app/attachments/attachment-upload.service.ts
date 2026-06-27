@@ -9,11 +9,9 @@ import { environment } from '@environments/environment';
 
 import { EncryptedAttachmentDraft } from './attachment.types';
 
-/** Raw JSON shape returned by the attachment endpoints (snake_case). */
+/** Raw JSON shape returned by the library attachment endpoints (snake_case). */
 interface ApiAttachmentResponse {
   id: string;
-  conversation: string;
-  message?: string;
   size_bytes: number;
   files: string[];
   data: string;
@@ -21,22 +19,25 @@ interface ApiAttachmentResponse {
   updated: string;
 }
 
-/** Decrypted-side view of a conversation_attachments record. */
+/** Decrypted-side view of a user_attachments (library) record. */
 export interface AttachmentRecord {
   id: string;
-  conversation: string;
-  message: string;
   sizeBytes: number;
   files: string[];
-  data: string; // base64 sealed manifest
+  data: string; // base64 sealed manifest (sealed to the owner's key)
   created: string;
   updated: string;
 }
 
+/** One place a library file is referenced (from the usages endpoint). */
+export interface AttachmentUsage {
+  conversation: string;
+  message: string;
+  created: string;
+}
+
 const toRecord = (response: ApiAttachmentResponse): AttachmentRecord => ({
   id: response.id,
-  conversation: response.conversation,
-  message: response.message ?? '',
   sizeBytes: response.size_bytes,
   files: response.files ?? [],
   data: response.data,
@@ -45,9 +46,9 @@ const toRecord = (response: ApiAttachmentResponse): AttachmentRecord => ({
 });
 
 /**
- * AttachmentUploadService talks to the conversation attachment endpoints. It
- * only ever sends/receives ciphertext (encrypted artifact blobs + the sealed
- * manifest); decryption happens client-side from the manifest.
+ * AttachmentUploadService talks to the user-scoped library attachment endpoints.
+ * It only ever sends/receives ciphertext (encrypted artifact blobs + the manifest
+ * sealed to the owner's key); decryption happens client-side from the manifest.
  */
 @Injectable({ providedIn: 'root' })
 export class AttachmentUploadService {
@@ -55,11 +56,8 @@ export class AttachmentUploadService {
   private readonly _pb = inject(PocketBase);
   private readonly _baseUrl = environment.pocketbaseBaseUrl;
 
-  /** Upload an encrypted draft as a (message-less) draft attachment record. */
-  upload(
-    conversationId: string,
-    draft: EncryptedAttachmentDraft,
-  ): Observable<AttachmentRecord> {
+  /** Upload an encrypted draft into the user's library. */
+  upload(draft: EncryptedAttachmentDraft): Observable<AttachmentRecord> {
     const form = new FormData();
     form.append('data', draft.manifestB64);
     // Files are uploaded in canonical order so files[i] maps to artifacts[i].
@@ -75,42 +73,67 @@ export class AttachmentUploadService {
     });
 
     return this._http
-      .post<ApiAttachmentResponse>(
-        `${this._baseUrl}/api/v1/conversations/${encodeURIComponent(conversationId)}/attachments`,
-        form,
+      .post<ApiAttachmentResponse>(`${this._baseUrl}/api/v1/attachments`, form, {
+        headers: this.authHeaders(),
+      })
+      .pipe(map(toRecord));
+  }
+
+  /** List every library record the user owns (newest first). */
+  list(): Observable<AttachmentRecord[]> {
+    return this._http
+      .get<ApiAttachmentResponse[]>(`${this._baseUrl}/api/v1/attachments`, {
+        headers: this.authHeaders(),
+      })
+      .pipe(map((items) => (items ?? []).map(toRecord)));
+  }
+
+  /** Fetch a single library record by id (resolves a message's referenced file). */
+  get(attachmentId: string): Observable<AttachmentRecord> {
+    return this._http
+      .get<ApiAttachmentResponse>(
+        `${this._baseUrl}/api/v1/attachments/${encodeURIComponent(attachmentId)}`,
         { headers: this.authHeaders() },
       )
       .pipe(map(toRecord));
   }
 
-  /** List every attachment record the user can access for a conversation. */
-  list(conversationId: string): Observable<AttachmentRecord[]> {
+  /** Replace the sealed manifest (used for rename — the display name lives in it). */
+  updateManifest(
+    attachmentId: string,
+    manifestB64: string,
+  ): Observable<AttachmentRecord> {
     return this._http
-      .get<
-        ApiAttachmentResponse[]
-      >(`${this._baseUrl}/api/v1/conversations/${encodeURIComponent(conversationId)}/attachments`, { headers: this.authHeaders() })
-      .pipe(map((items) => (items ?? []).map(toRecord)));
+      .patch<ApiAttachmentResponse>(
+        `${this._baseUrl}/api/v1/attachments/${encodeURIComponent(attachmentId)}`,
+        { data: manifestB64 },
+        { headers: this.authHeaders() },
+      )
+      .pipe(map(toRecord));
   }
 
-  /** Delete an unlinked draft attachment (e.g. removed before send). */
-  deleteDraft(conversationId: string, attachmentId: string): Observable<void> {
+  /** Remove a library file (allowed even if used — referencing chats tombstone). */
+  remove(attachmentId: string): Observable<void> {
     return this._http.delete<void>(
-      `${this._baseUrl}/api/v1/conversations/${encodeURIComponent(
-        conversationId,
-      )}/attachments/${encodeURIComponent(attachmentId)}`,
+      `${this._baseUrl}/api/v1/attachments/${encodeURIComponent(attachmentId)}`,
       { headers: this.authHeaders() },
     );
   }
 
+  /** List the conversations/messages that reference a library file. */
+  usages(attachmentId: string): Observable<AttachmentUsage[]> {
+    return this._http
+      .get<
+        AttachmentUsage[]
+      >(`${this._baseUrl}/api/v1/attachments/${encodeURIComponent(attachmentId)}/usages`, { headers: this.authHeaders() })
+      .pipe(map((items) => items ?? []));
+  }
+
   /** Download one encrypted artifact's ciphertext bytes by server file name. */
-  async downloadArtifact(
-    conversationId: string,
-    attachmentId: string,
-    fileName: string,
-  ): Promise<Uint8Array> {
-    const url = `${this._baseUrl}/api/v1/conversations/${encodeURIComponent(
-      conversationId,
-    )}/attachments/${encodeURIComponent(attachmentId)}/files/${encodeURIComponent(fileName)}`;
+  async downloadArtifact(attachmentId: string, fileName: string): Promise<Uint8Array> {
+    const url = `${this._baseUrl}/api/v1/attachments/${encodeURIComponent(
+      attachmentId,
+    )}/files/${encodeURIComponent(fileName)}`;
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${this._pb.authStore.token}` },
     });

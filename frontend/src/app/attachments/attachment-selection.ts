@@ -14,7 +14,8 @@ import {
 export interface SelectedAttachment {
   localId: string;
   requestId: string;
-  conversationId: string;
+  /** Legacy/unused for library files (they are user-scoped, not conversation-scoped). */
+  conversationId?: string;
   fileName: string;
   sizeBytes: number;
   mimeType: string;
@@ -31,6 +32,24 @@ export interface SelectedAttachment {
   isImage?: boolean;
   /** True when this attachment is a raw file (gated to file-capable models). */
   isRawFile?: boolean;
+}
+
+/**
+ * A library file chosen via the picker, already uploaded, ready to attach to the
+ * current message without re-processing. The provider context (textContext /
+ * imageContext / fileContext) is materialised by decrypting the file's artifacts
+ * before it is injected, so a reused file still contributes context + redaction.
+ */
+export interface LibrarySelection {
+  record: AttachmentRecord;
+  fileName: string;
+  sizeBytes: number;
+  mimeType: string;
+  processorId?: string;
+  textContext?: string;
+  contextTruncated?: boolean;
+  imageContext?: ImageAiContext;
+  fileContext?: FileAiContext;
 }
 
 export interface CompletionAttachmentContext {

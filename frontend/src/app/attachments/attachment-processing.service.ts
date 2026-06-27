@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 
 import {
   AttachmentCompletionPayload,
+  LibrarySelection,
   SelectedAttachment,
   buildCompletionAttachmentInputs,
   hasPendingAttachments,
@@ -43,12 +44,7 @@ export class AttachmentProcessingService {
    * add queues files for processing. Returns the number actually accepted (the
    * per-message cap may reject extras). The caller surfaces the cap to the user.
    */
-  add(
-    files: File[],
-    conversationId: string,
-    conversationPublicKey: Uint8Array,
-    preferRawForPdf = false,
-  ): number {
+  add(files: File[], ownerPublicKey: Uint8Array, preferRawForPdf = false): number {
     const remaining =
       USER_ATTACHMENT_MAX_COUNT_PER_MESSAGE - this._attachments().length;
     const accepted = files.slice(0, Math.max(0, remaining));
@@ -58,7 +54,6 @@ export class AttachmentProcessingService {
       const selection: SelectedAttachment = {
         localId: requestId,
         requestId,
-        conversationId,
         fileName: file.name,
         sizeBytes: file.size,
         mimeType: file.type || 'application/octet-stream',
@@ -71,8 +66,7 @@ export class AttachmentProcessingService {
         type: 'process',
         requestId,
         file,
-        conversationId,
-        conversationPublicKey,
+        ownerPublicKey,
         limits: defaultAttachmentLimits(),
         preferRawForPdf,
       };
@@ -82,7 +76,45 @@ export class AttachmentProcessingService {
     return accepted.length;
   }
 
-  /** Remove a selected attachment, cancelling processing and deleting any draft. */
+  /**
+   * addFromLibrary injects already-uploaded library files into the composer
+   * selection as ready attachments (no re-processing or re-upload). The provider
+   * context is materialised separately by the caller (it must decrypt the file's
+   * extracted text), so these start without textContext.
+   */
+  addFromLibrary(files: readonly LibrarySelection[]): number {
+    const remaining =
+      USER_ATTACHMENT_MAX_COUNT_PER_MESSAGE - this._attachments().length;
+    const accepted = files.slice(0, Math.max(0, remaining));
+
+    for (const file of accepted) {
+      const requestId = nextLocalId();
+      const selection: SelectedAttachment = {
+        localId: requestId,
+        requestId,
+        fileName: file.fileName,
+        sizeBytes: file.sizeBytes,
+        mimeType: file.mimeType,
+        processorId: file.processorId ?? 'library',
+        state: 'ready',
+        record: file.record,
+        textContext: file.textContext,
+        contextTruncated: file.contextTruncated,
+        imageContext: file.imageContext,
+        isImage: !!file.imageContext,
+        fileContext: file.fileContext,
+        isRawFile: !!file.fileContext,
+      };
+      this._attachments.update((list) => [...list, selection]);
+    }
+    return accepted.length;
+  }
+
+  /**
+   * Remove a selected attachment from the composer. Processing (if still running)
+   * is cancelled, but an uploaded file is NOT deleted — uploading adds it to the
+   * user's library, where it persists until they delete it from the library view.
+   */
   remove(localId: string): void {
     const target = this._attachments().find((a) => a.localId === localId);
     if (!target) {
@@ -92,13 +124,6 @@ export class AttachmentProcessingService {
       type: 'cancel',
       requestId: target.requestId,
     } as AttachmentWorkerRequest);
-    if (target.record) {
-      this._upload.deleteDraft(target.conversationId, target.record.id).subscribe({
-        error: () => {
-          /* best-effort: the draft cleanup job will reap it */
-        },
-      });
-    }
     this._attachments.update((list) => list.filter((a) => a.localId !== localId));
   }
 
@@ -156,7 +181,7 @@ export class AttachmentProcessingService {
       isRawFile: !!draft.ai.fileContext,
     });
 
-    this._upload.upload(target.conversationId, draft).subscribe({
+    this._upload.upload(draft).subscribe({
       next: (record) => this.patch(requestId, { state: 'ready', record }),
       error: () =>
         this.patch(requestId, { state: 'failed', errorCode: 'processing_failed' }),

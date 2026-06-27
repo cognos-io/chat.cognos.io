@@ -46,8 +46,7 @@ const handleProcess = async (
       fileName: req.file.name,
       declaredMimeType: req.file.type,
       bytes: new Uint8Array(buffer),
-      conversationId: req.conversationId,
-      conversationPublicKey: req.conversationPublicKey,
+      ownerPublicKey: req.ownerPublicKey,
       limits: req.limits,
       preferRawForPdf: req.preferRawForPdf,
     });

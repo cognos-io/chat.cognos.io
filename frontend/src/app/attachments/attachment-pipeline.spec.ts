@@ -19,8 +19,7 @@ describe('processAttachment', () => {
       fileName,
       declaredMimeType: mime,
       bytes: bytes(content),
-      conversationId: 'conv123',
-      conversationPublicKey: keyPair.publicKey,
+      ownerPublicKey: keyPair.publicKey,
     });
 
   it('encrypts the original + extracted text and seals the manifest', async () => {
@@ -31,13 +30,15 @@ describe('processAttachment', () => {
     expect(draft.artifacts[0].kind).toBe('original');
     expect(draft.artifacts[1].kind).toBe('extracted_text');
 
-    // The manifest decrypts only with the conversation key and binds the convo.
+    // The manifest decrypts with the owner (user) key and is a library file (no
+    // conversation binding — it's reusable across chats).
     const manifestBytes = openSealedBox(
       Base64.toUint8Array(draft.manifestB64),
       keyPair,
     );
     const manifest = JSON.parse(text(manifestBytes)) as AttachmentManifestV1;
-    expect(manifest.conversation_id).toBe('conv123');
+    expect(manifest.kind).toBe('library_file');
+    expect(manifest.conversation_id).toBeUndefined();
     expect(manifest.client_attachment_id).toBe(draft.clientAttachmentId);
     expect(manifest.original_name).toBe('secret-notes.txt');
     expect(manifest.artifacts).toHaveLength(2);
@@ -83,8 +84,7 @@ describe('processAttachment', () => {
       fileName: 'report.pdf',
       declaredMimeType: 'application/pdf',
       bytes: pdfBytes,
-      conversationId: 'conv1',
-      conversationPublicKey: keyPair.publicKey,
+      ownerPublicKey: keyPair.publicKey,
       preferRawForPdf: true,
     });
 
@@ -105,8 +105,7 @@ describe('processAttachment', () => {
         fileName: 'photo.png',
         declaredMimeType: 'image/png',
         bytes: Uint8Array.from([0x89, 0x50, 0x4e, 0x47]),
-        conversationId: 'c',
-        conversationPublicKey: keyPair.publicKey,
+        ownerPublicKey: keyPair.publicKey,
       }),
     ).rejects.toBeInstanceOf(AttachmentProcessingError);
   });
@@ -117,8 +116,7 @@ describe('processAttachment', () => {
         fileName: 'empty.txt',
         declaredMimeType: 'text/plain',
         bytes: new Uint8Array(0),
-        conversationId: 'c',
-        conversationPublicKey: keyPair.publicKey,
+        ownerPublicKey: keyPair.publicKey,
       }),
     ).rejects.toThrow();
 
@@ -127,8 +125,7 @@ describe('processAttachment', () => {
         fileName: 'big.txt',
         declaredMimeType: 'text/plain',
         bytes: bytes('xxxxxxxxxx'),
-        conversationId: 'c',
-        conversationPublicKey: keyPair.publicKey,
+        ownerPublicKey: keyPair.publicKey,
         limits: { maxBytes: 4, maxContextCharsPerFile: 100 },
       }),
     ).rejects.toThrow();

@@ -99,7 +99,7 @@ export interface AttachmentProcessor {
   process(input: ProcessorInput): Promise<ProcessorOutput>;
 }
 
-/** Encrypted manifest stored (sealed) in conversation_attachments.data. */
+/** Encrypted manifest stored (sealed) in user_attachments.data. */
 export interface ManifestArtifact {
   artifact_id: string;
   kind: ArtifactKind;
@@ -112,9 +112,14 @@ export interface ManifestArtifact {
 
 export interface AttachmentManifestV1 {
   version: '1';
-  kind: 'conversation_attachment';
+  // 'library_file': user-scoped, sealed to the owner's key, reusable across chats.
+  // 'conversation_attachment' is the legacy pre-library value kept only so old
+  // manifests still type-check while decrypting.
+  kind: 'library_file' | 'conversation_attachment';
   client_attachment_id: string;
-  conversation_id: string;
+  // Optional: a library file is owned by the user, not bound to a conversation.
+  // Legacy manifests may still carry the conversation they were created in.
+  conversation_id?: string;
   original_name: string;
   declared_mime_type: string;
   detected_mime_type: string;
@@ -142,7 +147,6 @@ export interface EncryptedArtifactDraft {
 /** The full encrypted draft the worker returns for one selected file. */
 export interface EncryptedAttachmentDraft {
   clientAttachmentId: string;
-  conversationId: string;
   processorId: string;
   /** base64 sealed manifest for the `data` field. */
   manifestB64: string;
@@ -197,8 +201,9 @@ export type AttachmentWorkerRequest =
       type: 'process';
       requestId: string;
       file: File;
-      conversationId: string;
-      conversationPublicKey: Uint8Array;
+      // Public key the manifest + per-file keys are sealed to. The user's own
+      // vault key, so the file is recoverable in any of their conversations.
+      ownerPublicKey: Uint8Array;
       limits?: AttachmentProcessingLimits;
       // When true and the file is a PDF, send the raw file to the model instead
       // of extracting text (the selected model supports native file input).

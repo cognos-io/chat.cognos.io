@@ -12,7 +12,6 @@ import { EncryptedAttachmentDraft } from './attachment.types';
 
 const draft = (): EncryptedAttachmentDraft => ({
   clientAttachmentId: 'cid',
-  conversationId: 'conv1',
   processorId: 'text',
   manifestB64: 'c2VhbGVk',
   artifacts: [
@@ -57,13 +56,11 @@ describe('AttachmentUploadService', () => {
     TestBed.resetTestingModule();
   });
 
-  it('uploads a multipart draft and maps the response', () => {
+  it('uploads a multipart draft to the library and maps the response', () => {
     let result: { id: string; files: string[]; sizeBytes: number } | undefined;
-    service.upload('conv1', draft()).subscribe((r) => (result = r));
+    service.upload(draft()).subscribe((r) => (result = r));
 
-    const req = http.expectOne(
-      'http://localhost:8090/api/v1/conversations/conv1/attachments',
-    );
+    const req = http.expectOne('http://localhost:8090/api/v1/attachments');
     expect(req.request.method).toBe('POST');
     expect(req.request.headers.get('Authorization')).toBe('Bearer tok');
     const body = req.request.body as FormData;
@@ -72,7 +69,6 @@ describe('AttachmentUploadService', () => {
 
     req.flush({
       id: 'rec1',
-      conversation: 'conv1',
       size_bytes: 5,
       files: ['art-0_x.enc', 'art-1_y.enc'],
       data: 'c2VhbGVk',
@@ -85,21 +81,39 @@ describe('AttachmentUploadService', () => {
     expect(result?.sizeBytes).toBe(5);
   });
 
-  it('lists attachments for a conversation', () => {
-    service.list('conv1').subscribe();
-    const req = http.expectOne(
-      'http://localhost:8090/api/v1/conversations/conv1/attachments',
-    );
+  it('lists the library', () => {
+    service.list().subscribe();
+    const req = http.expectOne('http://localhost:8090/api/v1/attachments');
     expect(req.request.method).toBe('GET');
     req.flush([]);
   });
 
-  it('deletes a draft attachment', () => {
-    service.deleteDraft('conv1', 'rec1').subscribe();
-    const req = http.expectOne(
-      'http://localhost:8090/api/v1/conversations/conv1/attachments/rec1',
-    );
+  it('renames by replacing the sealed manifest', () => {
+    service.updateManifest('rec1', 'bmV3').subscribe();
+    const req = http.expectOne('http://localhost:8090/api/v1/attachments/rec1');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ data: 'bmV3' });
+    req.flush({
+      id: 'rec1',
+      size_bytes: 1,
+      files: [],
+      data: 'bmV3',
+      created: 'n',
+      updated: 'n',
+    });
+  });
+
+  it('removes a library file', () => {
+    service.remove('rec1').subscribe();
+    const req = http.expectOne('http://localhost:8090/api/v1/attachments/rec1');
     expect(req.request.method).toBe('DELETE');
     req.flush(null);
+  });
+
+  it('lists usages for a library file', () => {
+    service.usages('rec1').subscribe();
+    const req = http.expectOne('http://localhost:8090/api/v1/attachments/rec1/usages');
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
   });
 });

@@ -23,10 +23,9 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { debounceTime, take } from 'rxjs';
+import { debounceTime } from 'rxjs';
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
-import { filterNil } from 'ngxtension/filter-nil';
 
 import {
   CognosButtonComponent,
@@ -43,7 +42,6 @@ import {
 } from '@app/attachments/attachment-accept';
 import { AttachmentProcessingService } from '@app/attachments/attachment-processing.service';
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
-import { Conversation } from '@app/interfaces/conversation';
 import {
   RedactionCandidate,
   buildCustomCandidates,
@@ -63,6 +61,7 @@ import {
 import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
 import { RedactionService } from '@app/services/redaction.service';
+import { VaultService } from '@app/services/vault.service';
 
 import { redactionKindFor, redactionModalLabels } from '../redaction-ui';
 import { ComposerToolsComponent } from './composer-tools/composer-tools.component';
@@ -1345,50 +1344,37 @@ export class MessageFormComponent {
       return;
     }
 
-    // Resolve a persisted conversation (creating one for a brand-new chat),
-    // then queue the files against it.
-    this.withConversation((conversation) => {
-      const accepted = this.attachments.add(
-        candidates,
-        conversation.record.id,
-        conversation.keyPair.publicKey,
-        // Send PDFs raw when the model accepts native files (better quality).
-        this.modelService.selectedModel().supportsFileInput,
+    // Files go to the user's library, sealed to their own key — no conversation
+    // is needed to attach (one is created on send, as before). Guard the locked
+    // vault: without the user key we cannot seal the manifest.
+    const ownerPublicKey = this._vault.keyPair()?.publicKey;
+    if (!ownerPublicKey) {
+      this.attachmentNotice.set(
+        this._transloco.translate('chat.composer.attachments.unavailable'),
       );
-
-      if (rejectedImages) {
-        this.attachmentNotice.set(
-          this._transloco.translate('chat.composer.attachments.imageNeedsVision', {
-            model: this.modelService.selectedModel().displayName,
-          }),
-        );
-      } else if (accepted < candidates.length) {
-        this.attachmentNotice.set(
-          this._transloco.translate('chat.composer.attachments.tooMany', {
-            max: this.attachments.count(),
-          }),
-        );
-      }
-    });
-  }
-
-  // withConversation runs cb against a persisted conversation that has a key
-  // pair: the current one if present, otherwise it creates a new conversation
-  // (the same flow as sending the first message) and waits for it.
-  private withConversation(cb: (conversation: Conversation) => void): void {
-    const existing = this._conversationService.conversation();
-    if (existing?.keyPair) {
-      cb(existing);
       return;
     }
-    this._conversationService.newConversation$.next({ title: 'New Conversation' });
-    this._conversationService.conversation$
-      .pipe(filterNil(), take(1))
-      .subscribe((created) => {
-        if (created.keyPair) {
-          cb(created);
-        }
-      });
+
+    const accepted = this.attachments.add(
+      candidates,
+      ownerPublicKey,
+      // Send PDFs raw when the model accepts native files (better quality).
+      this.modelService.selectedModel().supportsFileInput,
+    );
+
+    if (rejectedImages) {
+      this.attachmentNotice.set(
+        this._transloco.translate('chat.composer.attachments.imageNeedsVision', {
+          model: this.modelService.selectedModel().displayName,
+        }),
+      );
+    } else if (accepted < candidates.length) {
+      this.attachmentNotice.set(
+        this._transloco.translate('chat.composer.attachments.tooMany', {
+          max: this.attachments.count(),
+        }),
+      );
+    }
   }
 
   readonly toolsMenuOpen = signal(false);
@@ -1416,6 +1402,7 @@ export class MessageFormComponent {
   });
 
   private readonly _redactionService = inject(RedactionService);
+  private readonly _vault = inject(VaultService);
 
   // Debounced draft drives the preview so detection never blocks typing
   // (spec §17). The textarea itself is never mutated.

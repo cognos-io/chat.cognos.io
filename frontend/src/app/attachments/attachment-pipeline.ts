@@ -22,8 +22,9 @@ export interface ProcessAttachmentInput {
   fileName: string;
   declaredMimeType: string;
   bytes: Uint8Array;
-  conversationId: string;
-  conversationPublicKey: Uint8Array;
+  // The user's vault public key. The manifest + per-file keys are sealed to it,
+  // so the library file is recoverable by the owner in any conversation.
+  ownerPublicKey: Uint8Array;
   limits?: AttachmentProcessingLimits;
   processors?: readonly AttachmentProcessor[];
   // When true and the file is a PDF, skip text extraction and send the raw file
@@ -75,7 +76,7 @@ const encryptArtifact = (
 /**
  * processAttachment runs the full client-side pipeline for one file: detect →
  * process → encrypt each artifact under a random key → seal the manifest to the
- * conversation public key. It never returns plaintext bytes for storage; only
+ * owner's (user's) public key. It never returns plaintext bytes for storage; only
  * the transient `ai.textContext` is plaintext (for the provider request).
  *
  * Pure and framework-free so it can run inside the Web Worker and be unit
@@ -156,9 +157,8 @@ export const processAttachment = async (
   const clientAttachmentId = newId();
   const manifest: AttachmentManifestV1 = {
     version: '1',
-    kind: 'conversation_attachment',
+    kind: 'library_file',
     client_attachment_id: clientAttachmentId,
-    conversation_id: input.conversationId,
     original_name: input.fileName,
     declared_mime_type: detectedType.declaredMimeType,
     detected_mime_type: detectedType.detectedMimeType,
@@ -179,11 +179,10 @@ export const processAttachment = async (
   const manifestBytes = Uint8Array.from(
     new TextEncoder().encode(JSON.stringify(manifest)),
   );
-  const sealed = createSealedBox(manifestBytes, input.conversationPublicKey);
+  const sealed = createSealedBox(manifestBytes, input.ownerPublicKey);
 
   return {
     clientAttachmentId,
-    conversationId: input.conversationId,
     processorId,
     manifestB64: Base64.fromUint8Array(sealed),
     artifacts: encryptedArtifacts,
