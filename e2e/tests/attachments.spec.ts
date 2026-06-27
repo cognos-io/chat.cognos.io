@@ -229,6 +229,40 @@ test.describe('composer attachments', () => {
     expect(download.suggestedFilename()).toBe('cognos_test.txt');
   });
 
+  test('attaches a previously uploaded file from the library', async ({ page }) => {
+    await provisionUnlockedAccount(page);
+    await expect(page.getByTestId('attach-button')).toBeVisible();
+
+    // Upload + send so the file lands in the user's library.
+    await setComposerFile(
+      page,
+      'libfile.txt',
+      'text/plain',
+      'reusable library content',
+    );
+    await expect(page.getByTestId('attachment-chip')).toContainText('libfile.txt');
+    await page.getByLabel(COMPOSER_LABEL).fill('first use of the file');
+    await page.getByRole('button', { name: /^send$/i }).click();
+    await expect(page.getByText('Mocked assistant reply')).toBeVisible();
+    await expect(page.getByTestId('attachment-chip')).toHaveCount(0);
+
+    // Re-attach the same file via the library picker (no re-upload).
+    await page.getByTestId('attach-button').click();
+    await page.getByTestId('attach-from-library').click();
+    const list = page.getByTestId('library-list');
+    await expect(list).toContainText('libfile.txt');
+    await list.getByText('libfile.txt').click();
+    await page.getByTestId('library-attach-selected').click();
+
+    // It appears as a ready composer attachment again.
+    await expect(page.getByTestId('attachment-chip')).toContainText('libfile.txt');
+    await page.getByLabel(COMPOSER_LABEL).fill('reuse the file');
+    const send = page.getByRole('button', { name: /^send$/i });
+    await expect(send).toBeEnabled();
+    await send.click();
+    await expect(page.getByText('Mocked assistant reply').nth(1)).toBeVisible();
+  });
+
   test('removing a selected attachment clears it before send', async ({ page }) => {
     await provisionUnlockedAccount(page);
     await startConversation(page);

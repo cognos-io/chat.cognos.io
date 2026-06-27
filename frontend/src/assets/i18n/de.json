@@ -557,8 +557,12 @@
       "switchPersona": "Persona wechseln — {{ name }}",
       "attachments": {
         "add": "Datei anhängen",
+        "menu": {
+          "upload": "Datei hochladen",
+          "fromLibrary": "Aus Bibliothek"
+        },
         "remove": "{{ name }} entfernen",
-        "unavailable": "Speichern Sie die Unterhaltung, bevor Sie Dateien anhängen",
+        "unavailable": "Entsperren Sie Ihren Tresor, bevor Sie Dateien anhängen",
         "tooMany": "Sie können bis zu {{ max }} Dateien anhängen",
         "providerNotice": "Angehängte Dateien werden bei Verwendung an den KI-Anbieter gesendet",
         "dropHint": "Dateien zum Anhängen ablegen",
@@ -888,6 +892,26 @@
       "lastWeek": "Letzte Woche"
     },
     "close": "Schließen"
+  },
+  "library": {
+    "title": "Dateibibliothek",
+    "searchPlaceholder": "Dateien suchen",
+    "empty": "Noch keine Dateien in Ihrer Bibliothek",
+    "rename": "Umbenennen",
+    "renameSave": "Speichern",
+    "remove": "Entfernen",
+    "removeConfirm": "Diese Datei aus Ihrer Bibliothek entfernen? Chats, die sie verwendet haben, zeigen „Datei entfernt“.",
+    "download": "Herunterladen",
+    "usedIn": "In {{ count }} Chats verwendet",
+    "usedInEmpty": "Noch in keinem Chat verwendet",
+    "addedOn": "Hinzugefügt am {{ date }}",
+    "picker": {
+      "title": "Aus Bibliothek anhängen",
+      "searchPlaceholder": "Dateien suchen",
+      "empty": "Noch keine Dateien in Ihrer Bibliothek",
+      "cancel": "Abbrechen",
+      "attachSelected": "Anhängen ({{ count }})"
+    }
   },
   "dialogs": {
     "confirm": {

@@ -557,8 +557,12 @@
       "switchPersona": "Switch persona — {{ name }}",
       "attachments": {
         "add": "Attach file",
+        "menu": {
+          "upload": "Upload file",
+          "fromLibrary": "From library"
+        },
         "remove": "Remove {{ name }}",
-        "unavailable": "Save the conversation before attaching files",
+        "unavailable": "Unlock your vault before attaching files",
         "tooMany": "You can attach up to {{ max }} files",
         "providerNotice": "Attached files are sent to the AI provider when used",
         "dropHint": "Drop files to attach",
@@ -888,6 +892,26 @@
       "lastWeek": "Last week"
     },
     "close": "Close"
+  },
+  "library": {
+    "title": "File library",
+    "searchPlaceholder": "Search files",
+    "empty": "No files in your library yet",
+    "rename": "Rename",
+    "renameSave": "Save",
+    "remove": "Remove",
+    "removeConfirm": "Remove this file from your library? Chats that used it will show \"File removed\".",
+    "download": "Download",
+    "usedIn": "Used in {{ count }} chats",
+    "usedInEmpty": "Not used in any chat yet",
+    "addedOn": "Added {{ date }}",
+    "picker": {
+      "title": "Attach from library",
+      "searchPlaceholder": "Search files",
+      "empty": "No files in your library yet",
+      "cancel": "Cancel",
+      "attachSelected": "Attach ({{ count }})"
+    }
   },
   "dialogs": {
     "confirm": {

@@ -557,8 +557,12 @@
       "switchPersona": "Mudar de persona — {{ name }}",
       "attachments": {
         "add": "Anexar arquivo",
+        "menu": {
+          "upload": "Enviar arquivo",
+          "fromLibrary": "Da biblioteca"
+        },
         "remove": "Remover {{ name }}",
-        "unavailable": "Salve a conversa antes de anexar arquivos",
+        "unavailable": "Desbloqueie seu cofre antes de anexar arquivos",
         "tooMany": "Você pode anexar até {{ max }} arquivos",
         "providerNotice": "Os arquivos anexados são enviados ao provedor de IA quando usados",
         "dropHint": "Solte arquivos para anexar",
@@ -888,6 +892,26 @@
       "lastWeek": "Na semana passada"
     },
     "close": "Fechar"
+  },
+  "library": {
+    "title": "Biblioteca de arquivos",
+    "searchPlaceholder": "Pesquisar arquivos",
+    "empty": "Ainda não há arquivos na sua biblioteca",
+    "rename": "Renomear",
+    "renameSave": "Salvar",
+    "remove": "Remover",
+    "removeConfirm": "Remover este arquivo da sua biblioteca? As conversas que o usaram mostrarão «Arquivo removido».",
+    "download": "Baixar",
+    "usedIn": "Usado em {{ count }} conversas",
+    "usedInEmpty": "Ainda não usado em nenhuma conversa",
+    "addedOn": "Adicionado em {{ date }}",
+    "picker": {
+      "title": "Anexar da biblioteca",
+      "searchPlaceholder": "Pesquisar arquivos",
+      "empty": "Ainda não há arquivos na sua biblioteca",
+      "cancel": "Cancelar",
+      "attachSelected": "Anexar ({{ count }})"
+    }
   },
   "dialogs": {
     "confirm": {

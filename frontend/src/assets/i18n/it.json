@@ -557,8 +557,12 @@
       "switchPersona": "Cambia persona — {{ name }}",
       "attachments": {
         "add": "Allega file",
+        "menu": {
+          "upload": "Carica file",
+          "fromLibrary": "Dalla libreria"
+        },
         "remove": "Rimuovi {{ name }}",
-        "unavailable": "Salva la conversazione prima di allegare file",
+        "unavailable": "Sblocca il tuo vault prima di allegare file",
         "tooMany": "Puoi allegare fino a {{ max }} file",
         "providerNotice": "I file allegati vengono inviati al provider di IA quando vengono usati",
         "dropHint": "Rilascia i file da allegare",
@@ -888,6 +892,26 @@
       "lastWeek": "La settimana scorsa"
     },
     "close": "Chiudi"
+  },
+  "library": {
+    "title": "Libreria file",
+    "searchPlaceholder": "Cerca file",
+    "empty": "Nessun file nella tua libreria",
+    "rename": "Rinomina",
+    "renameSave": "Salva",
+    "remove": "Rimuovi",
+    "removeConfirm": "Rimuovere questo file dalla libreria? Le chat che lo hanno usato mostreranno «File rimosso».",
+    "download": "Scarica",
+    "usedIn": "Usato in {{ count }} chat",
+    "usedInEmpty": "Non ancora usato in nessuna chat",
+    "addedOn": "Aggiunto il {{ date }}",
+    "picker": {
+      "title": "Allega dalla libreria",
+      "searchPlaceholder": "Cerca file",
+      "empty": "Nessun file nella tua libreria",
+      "cancel": "Annulla",
+      "attachSelected": "Allega ({{ count }})"
+    }
   },
   "dialogs": {
     "confirm": {

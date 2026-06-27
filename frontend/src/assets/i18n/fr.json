@@ -557,8 +557,12 @@
       "switchPersona": "Changer de persona — {{ name }}",
       "attachments": {
         "add": "Joindre un fichier",
+        "menu": {
+          "upload": "Téléverser un fichier",
+          "fromLibrary": "Depuis la bibliothèque"
+        },
         "remove": "Supprimer {{ name }}",
-        "unavailable": "Enregistrez la conversation avant de joindre des fichiers",
+        "unavailable": "Déverrouillez votre coffre avant de joindre des fichiers",
         "tooMany": "Vous pouvez joindre jusqu’à {{ max }} fichiers",
         "providerNotice": "Les fichiers joints sont envoyés au fournisseur d’IA lorsqu’ils sont utilisés",
         "dropHint": "Déposez des fichiers à joindre",
@@ -888,6 +892,26 @@
       "lastWeek": "La semaine dernière"
     },
     "close": "Fermer"
+  },
+  "library": {
+    "title": "Bibliothèque de fichiers",
+    "searchPlaceholder": "Rechercher des fichiers",
+    "empty": "Aucun fichier dans votre bibliothèque",
+    "rename": "Renommer",
+    "renameSave": "Enregistrer",
+    "remove": "Supprimer",
+    "removeConfirm": "Supprimer ce fichier de votre bibliothèque ? Les conversations qui l'ont utilisé afficheront « Fichier supprimé ».",
+    "download": "Télécharger",
+    "usedIn": "Utilisé dans {{ count }} conversations",
+    "usedInEmpty": "Pas encore utilisé dans une conversation",
+    "addedOn": "Ajouté le {{ date }}",
+    "picker": {
+      "title": "Joindre depuis la bibliothèque",
+      "searchPlaceholder": "Rechercher des fichiers",
+      "empty": "Aucun fichier dans votre bibliothèque",
+      "cancel": "Annuler",
+      "attachSelected": "Joindre ({{ count }})"
+    }
   },
   "dialogs": {
     "confirm": {

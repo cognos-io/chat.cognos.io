@@ -1,4 +1,5 @@
 import { A11yModule } from '@angular/cdk/a11y';
+import { Dialog } from '@angular/cdk/dialog';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { isPlatformBrowser } from '@angular/common';
@@ -23,7 +24,7 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { debounceTime } from 'rxjs';
+import { debounceTime, forkJoin } from 'rxjs';
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
@@ -40,7 +41,12 @@ import {
   ACCEPTED_ATTACHMENT_ACCEPT,
   isImageFile,
 } from '@app/attachments/attachment-accept';
+import {
+  AttachmentLibraryService,
+  LibraryFile,
+} from '@app/attachments/attachment-library.service';
 import { AttachmentProcessingService } from '@app/attachments/attachment-processing.service';
+import { LibraryPickerDialogComponent } from '@app/attachments/library-picker/library-picker-dialog.component';
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import {
   RedactionCandidate,
@@ -62,6 +68,7 @@ import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
 import { RedactionService } from '@app/services/redaction.service';
 import { VaultService } from '@app/services/vault.service';
+import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 import { redactionKindFor, redactionModalLabels } from '../redaction-ui';
 import { ComposerToolsComponent } from './composer-tools/composer-tools.component';
@@ -581,14 +588,52 @@ function escapeHtml(value: string): string {
 
             @if (canAttach()) {
               <cog-icon-button
+                #attachTrigger="cdkOverlayOrigin"
+                cdkOverlayOrigin
                 name="paperclip"
                 class="message-form__attach"
                 [title]="t('chat.composer.attachments.add')"
                 [disabled]="!attachments.canAddMore()"
                 type="button"
                 data-testid="attach-button"
-                (click)="openAttachmentPicker()"
+                [attr.aria-expanded]="attachMenuOpen()"
+                (click)="attachMenuOpen.set(!attachMenuOpen())"
               />
+
+              <ng-template
+                cdkConnectedOverlay
+                [cdkConnectedOverlayOrigin]="attachTrigger"
+                [cdkConnectedOverlayOpen]="attachMenuOpen()"
+                [cdkConnectedOverlayHasBackdrop]="true"
+                cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+                [cdkConnectedOverlayPositions]="modelSelectorPositions"
+                [cdkConnectedOverlayPush]="true"
+                (backdropClick)="attachMenuOpen.set(false)"
+                (detach)="attachMenuOpen.set(false)"
+              >
+                <div class="message-form__attach-menu" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="message-form__attach-menu-item"
+                    data-testid="attach-upload"
+                    (click)="attachMenuOpen.set(false); openAttachmentPicker()"
+                  >
+                    <cog-icon name="upload" [size]="16" tone="text-subtle" />
+                    {{ t('chat.composer.attachments.menu.upload') }}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="message-form__attach-menu-item"
+                    data-testid="attach-from-library"
+                    (click)="attachMenuOpen.set(false); openLibraryPicker()"
+                  >
+                    <cog-icon name="folder" [size]="16" tone="text-subtle" />
+                    {{ t('chat.composer.attachments.menu.fromLibrary') }}
+                  </button>
+                </div>
+              </ng-template>
             }
 
             @if (canClearTemporaryMessages() && !isMobile()) {
@@ -1261,9 +1306,44 @@ export class MessageFormComponent {
       !this.attachments.hasPending(),
   );
 
+  readonly attachMenuOpen = signal(false);
+
   openAttachmentPicker(): void {
     this.attachmentNotice.set(null);
     this._attachmentInput()?.nativeElement.click();
+  }
+
+  // Open the library picker; on confirm, materialise each chosen file (decrypt
+  // its text context + redaction mappings) and inject it as a ready selection.
+  openLibraryPicker(): void {
+    this.attachmentNotice.set(null);
+    const ref = this._dialog.open<LibraryFile[]>(LibraryPickerDialogComponent, {
+      ...cognosDialogOptions,
+    });
+    ref.closed.subscribe((chosen) => {
+      if (!chosen || chosen.length === 0) {
+        return;
+      }
+      forkJoin(chosen.map((file) => this._library.materialize(file))).subscribe({
+        next: (selections) => {
+          const accepted = this.attachments.addFromLibrary(selections);
+          if (accepted < selections.length) {
+            this.attachmentNotice.set(
+              this._transloco.translate('chat.composer.attachments.tooMany', {
+                max: this.attachments.count(),
+              }),
+            );
+          }
+        },
+        error: () => {
+          this.attachmentNotice.set(
+            this._transloco.translate(
+              'chat.composer.attachments.errors.processing_failed',
+            ),
+          );
+        },
+      });
+    });
   }
 
   onAttachmentInputChange(event: Event): void {
@@ -1406,6 +1486,8 @@ export class MessageFormComponent {
 
   private readonly _redactionService = inject(RedactionService);
   private readonly _vault = inject(VaultService);
+  private readonly _dialog = inject(Dialog);
+  private readonly _library = inject(AttachmentLibraryService);
 
   // Debounced draft drives the preview so detection never blocks typing
   // (spec §17). The textarea itself is never mutated.

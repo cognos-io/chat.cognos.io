@@ -557,8 +557,12 @@
       "switchPersona": "Cambiar de persona — {{ name }}",
       "attachments": {
         "add": "Adjuntar archivo",
+        "menu": {
+          "upload": "Subir archivo",
+          "fromLibrary": "Desde la biblioteca"
+        },
         "remove": "Quitar {{ name }}",
-        "unavailable": "Guarda la conversación antes de adjuntar archivos",
+        "unavailable": "Desbloquea tu bóveda antes de adjuntar archivos",
         "tooMany": "Puedes adjuntar hasta {{ max }} archivos",
         "providerNotice": "Los archivos adjuntos se envían al proveedor de IA cuando se usan",
         "dropHint": "Suelta archivos para adjuntar",
@@ -888,6 +892,26 @@
       "lastWeek": "La semana pasada"
     },
     "close": "Cerrar"
+  },
+  "library": {
+    "title": "Biblioteca de archivos",
+    "searchPlaceholder": "Buscar archivos",
+    "empty": "Aún no hay archivos en tu biblioteca",
+    "rename": "Renombrar",
+    "renameSave": "Guardar",
+    "remove": "Eliminar",
+    "removeConfirm": "¿Eliminar este archivo de tu biblioteca? Los chats que lo usaron mostrarán «Archivo eliminado».",
+    "download": "Descargar",
+    "usedIn": "Usado en {{ count }} chats",
+    "usedInEmpty": "Aún no se usa en ningún chat",
+    "addedOn": "Añadido el {{ date }}",
+    "picker": {
+      "title": "Adjuntar desde la biblioteca",
+      "searchPlaceholder": "Buscar archivos",
+      "empty": "Aún no hay archivos en tu biblioteca",
+      "cancel": "Cancelar",
+      "attachSelected": "Adjuntar ({{ count }})"
+    }
   },
   "dialogs": {
     "confirm": {
