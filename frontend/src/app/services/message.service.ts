@@ -35,6 +35,9 @@ import {
   selectActiveBranch,
 } from '@cognos/ui-angular';
 
+import { AttachmentUploadService } from '@app/attachments/attachment-upload.service';
+import { AttachmentManifestV1 } from '@app/attachments/attachment.types';
+import { MessageAttachmentChip } from '@app/components/chat/message-attachment-chip/message-attachment-chip.component';
 import { CompletionBillingRestriction } from '@app/interfaces/billing';
 import { Conversation } from '@app/interfaces/conversation';
 import {
@@ -615,6 +618,7 @@ export class MessageService {
   private readonly _modelService = inject(ModelService);
   private readonly _api = inject(CognosApiService);
   private readonly _vaultService = inject(VaultService);
+  private readonly _uploadService = inject(AttachmentUploadService);
   private readonly _redactionService = inject(RedactionService);
   private readonly _projectService = inject(ProjectService);
   private readonly _compactionService = inject(CompactionService);
@@ -739,6 +743,21 @@ export class MessageService {
             }
           }
 
+          // Mirror the user_upload references the backend embeds, so the file
+          // chip shows immediately on the optimistic message (not only on reload).
+          const optimisticAttachments: MessageAttachment[] = (
+            messageRequest.attachmentIds ?? []
+          ).map((id) => {
+            const ctx = messageRequest.attachmentContexts?.find(
+              (c) => c.attachmentId === id,
+            );
+            return {
+              kind: 'user_upload',
+              attachment_id: id,
+              mime_type: ctx?.detectedMimeType ?? 'application/octet-stream',
+            };
+          });
+
           const msg: Message = {
             // this ID is a temporary id and we will update it when we get the response
             record_id: messageRequest.requestId,
@@ -747,6 +766,9 @@ export class MessageService {
             decryptedData: {
               content: messageRequest.content,
               owner_id: this._authService.user()?.['id'],
+              attachments: optimisticAttachments.length
+                ? optimisticAttachments
+                : undefined,
             },
           };
 
@@ -1361,7 +1383,11 @@ export class MessageService {
   // nothing to decrypt.
   decryptMessageImages(message: Message): Observable<string[]> {
     const conversation = this._conversationService.conversation();
-    const attachments = message.decryptedData.attachments ?? [];
+    // Only generated images carry a sealed_key + bytes on the message record.
+    // User uploads live in the library (resolved via resolveAttachmentChips).
+    const attachments = (message.decryptedData.attachments ?? []).filter(
+      (a) => !!a.sealed_key,
+    );
     if (!conversation || !message.record_id || attachments.length === 0) {
       return of([]);
     }
@@ -1497,6 +1523,104 @@ export class MessageService {
         return URL.createObjectURL(blob);
       }),
     );
+  }
+
+  /**
+   * Resolve the user-upload attachments on a message into chips for the bubble.
+   * The state never leaks another user's filename: a viewer who is not the file
+   * owner (the message sender) — including public-share viewers — gets the
+   * "private" cue without any fetch. The owner resolves the library record; a
+   * missing record (deleted) becomes a "removed" tombstone.
+   */
+  resolveAttachmentChips(message: Message): Observable<MessageAttachmentChip[]> {
+    const uploads = (message.decryptedData.attachments ?? []).filter(
+      (a) => a.kind === 'user_upload' && !!a.attachment_id,
+    );
+    if (uploads.length === 0) {
+      return of([]);
+    }
+    const currentUserId = this._authService.user()?.['id'] as string | undefined;
+    const isOwner = !!currentUserId && currentUserId === message.decryptedData.owner_id;
+
+    return forkJoin(
+      uploads.map((attachment) => {
+        const attachmentId = attachment.attachment_id!;
+        // Not the owner (co-participant / public viewer) → private, no fetch.
+        if (!isOwner) {
+          return of<MessageAttachmentChip>({ attachmentId, state: 'private' });
+        }
+        return this._uploadService.get(attachmentId).pipe(
+          map((record) => this.chipFromRecord(attachmentId, record)),
+          // 404 (or any failure) means the file is gone from the library.
+          catchError(() =>
+            of<MessageAttachmentChip>({ attachmentId, state: 'removed' }),
+          ),
+        );
+      }),
+    );
+  }
+
+  // chipFromRecord decrypts the owner-sealed manifest to produce a resolved chip
+  // (display name + the original artifact's key/file name for download).
+  private chipFromRecord(
+    attachmentId: string,
+    record: { data: string; files: string[] },
+  ): MessageAttachmentChip {
+    const keyPair = this._vaultService.keyPair();
+    if (!keyPair) {
+      return { attachmentId, state: 'removed' };
+    }
+    try {
+      const manifestBytes = this._cryptoService.openSealedBox(
+        Base64.toUint8Array(record.data),
+        keyPair,
+      );
+      const manifest = JSON.parse(
+        new TextDecoder().decode(manifestBytes),
+      ) as AttachmentManifestV1;
+      const original = manifest.artifacts[0];
+      return {
+        attachmentId,
+        state: 'resolved',
+        fileName: manifest.original_name,
+        mimeType: manifest.detected_mime_type,
+        originalFileName: record.files[0],
+        originalKeyB64: original?.key,
+      };
+    } catch {
+      return { attachmentId, state: 'removed' };
+    }
+  }
+
+  /**
+   * Fetch + decrypt a resolved attachment chip's original bytes and trigger a
+   * browser download. The per-file key comes from the owner-sealed manifest, so
+   * the bytes are decrypted client-side.
+   */
+  downloadAttachmentChip(chip: MessageAttachmentChip): void {
+    if (chip.state !== 'resolved' || !chip.originalFileName || !chip.originalKeyB64) {
+      return;
+    }
+    void this._uploadService
+      .downloadArtifact(chip.attachmentId, chip.originalFileName)
+      .then((ciphertext) => {
+        const plaintext = this._cryptoService.openSecretBox(
+          ciphertext,
+          Base64.toUint8Array(chip.originalKeyB64!),
+        );
+        const blob = new Blob([plaintext as BlobPart], {
+          type: chip.mimeType || 'application/octet-stream',
+        });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = chip.fileName || 'attachment';
+        anchor.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch(() => {
+        /* best-effort download; surface nothing on failure */
+      });
   }
 
   // regenerateResponse asks the model for a fresh reply to an existing message

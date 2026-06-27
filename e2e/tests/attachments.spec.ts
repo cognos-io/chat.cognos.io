@@ -188,12 +188,45 @@ test.describe('composer attachments', () => {
     await expect(page.getByText(iban).first()).toBeVisible();
     await expect(page.locator('body')).not.toContainText('[[PII_EMAIL_');
 
+    // The owner sees the file chip on their message (resolved state).
+    await expect(page.getByTestId('message-attachment-chip')).toContainText(
+      'sensitive.md',
+    );
+
     // Bug 2: after a reload the attachment message decrypts and the tokens still
     // hydrate from the persisted, conversation-scoped mappings.
     await page.reload();
     await expect(page.locator('body')).not.toContainText('Failed to decrypt message');
     await expect(page.getByText(email).first()).toBeVisible();
     await expect(page.locator('body')).not.toContainText('[[PII_EMAIL_');
+    // The chip still resolves to the library file after reload.
+    await expect(page.getByTestId('message-attachment-chip')).toContainText(
+      'sensitive.md',
+    );
+  });
+
+  test('the message file chip downloads the decrypted file', async ({ page }) => {
+    await provisionUnlockedAccount(page);
+    await expect(page.getByTestId('attach-button')).toBeVisible();
+
+    const body = 'the quick brown fox';
+    await setComposerFile(page, 'cognos_test.txt', 'text/plain', body);
+    await expect(page.getByTestId('attachment-chip')).toContainText('cognos_test.txt');
+
+    await page.getByLabel(COMPOSER_LABEL).fill('whats in the file?');
+    const send = page.getByRole('button', { name: /^send$/i });
+    await expect(send).toBeEnabled();
+    await send.click();
+    await expect(page.getByText('Mocked assistant reply')).toBeVisible();
+
+    const chip = page.getByTestId('message-attachment-chip');
+    await expect(chip).toContainText('cognos_test.txt');
+
+    // Clicking the chip downloads the decrypted original bytes.
+    const downloadPromise = page.waitForEvent('download');
+    await chip.click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('cognos_test.txt');
   });
 
   test('removing a selected attachment clears it before send', async ({ page }) => {

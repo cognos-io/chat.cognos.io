@@ -723,6 +723,12 @@
       "imageEncrypted": "Encrypted",
       "imageDownload": "Download",
       "imageClose": "Close",
+      "attachment": {
+        "download": "Download {{ name }}",
+        "subtitleDocument": "Document",
+        "removed": "File removed",
+        "private": "Private file attached"
+      },
       "encrypted": "Encrypted",
       "encryptedWithTime": "Encrypted · {{ time }}",
       "keep": "Keep this temporary message",

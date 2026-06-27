@@ -25,6 +25,7 @@ import {
   selectActiveBranch,
 } from '@cognos/ui-angular';
 
+import { MessageAttachmentChipComponent } from '@app/components/chat/message-attachment-chip/message-attachment-chip.component';
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { parseConversationData } from '@app/interfaces/conversation';
 import { KeyPair } from '@app/interfaces/key-pair';
@@ -73,6 +74,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
     CognosBranchSwitcherComponent,
     CognosIconComponent,
     CognosLogoComponent,
+    MessageAttachmentChipComponent,
     TranslocoModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -205,15 +207,27 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
 
         @if (message.decryptedData.deleted) {
           <p class="public-conversation__muted">{{ t('public.deletedMessage') }}</p>
-        } @else if (message.decryptedData.content) {
-          <markdown
-            class="public-conversation__text"
-            emoji
-            katex
-            [data]="renderBody(message.decryptedData.content)"
-          ></markdown>
         } @else {
-          <p class="public-conversation__muted">{{ t('public.emptyMessage') }}</p>
+          <!-- Files are sealed to their owner; a public viewer can never decrypt
+               them, so only the private cue is shown (spec attachments §privacy). -->
+          @for (attachment of userUploadAttachments(message); track $index) {
+            <app-message-attachment-chip
+              [chip]="{
+                attachmentId: attachment.attachment_id || '',
+                state: 'private',
+              }"
+            />
+          }
+          @if (message.decryptedData.content) {
+            <markdown
+              class="public-conversation__text"
+              emoji
+              katex
+              [data]="renderBody(message.decryptedData.content)"
+            ></markdown>
+          } @else if (userUploadAttachments(message).length === 0) {
+            <p class="public-conversation__muted">{{ t('public.emptyMessage') }}</p>
+          }
         }
       </ng-container>
     </ng-template>
@@ -416,6 +430,14 @@ export class PublicConversationComponent implements OnInit {
   readonly title = computed(() => this.renderText(this._rawTitle()));
 
   readonly isMessageFromUser = isMessageFromUser;
+
+  // User-upload attachments on a message. In a public share the viewer can never
+  // decrypt them (sealed to the owner), so they render as the "private" cue.
+  userUploadAttachments(message: Message): { attachment_id?: string }[] {
+    return (message.decryptedData.attachments ?? []).filter(
+      (a) => a.kind === 'user_upload',
+    );
+  }
 
   // Two-stage sensitive-value reveal. A reader always starts with sensitive
   // values hidden (placeholders); they can only be revealed if the sharer chose

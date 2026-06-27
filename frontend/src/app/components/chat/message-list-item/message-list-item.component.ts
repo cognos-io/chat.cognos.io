@@ -35,6 +35,10 @@ import {
   MessageBranchInfo,
 } from '@cognos/ui-angular';
 
+import {
+  MessageAttachmentChip,
+  MessageAttachmentChipComponent,
+} from '@app/components/chat/message-attachment-chip/message-attachment-chip.component';
 import { RedactedMarkdownComponent } from '@app/components/chat/redacted-markdown/redacted-markdown.component';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { MemoryScope } from '@app/interfaces/compaction';
@@ -56,6 +60,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
   standalone: true,
   imports: [
     RedactedMarkdownComponent,
+    MessageAttachmentChipComponent,
     ClipboardModule,
     NgTemplateOutlet,
     CognosAssistantMessageComponent,
@@ -185,12 +190,24 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                 <p class="message-list-item__deleted">
                   {{ t('chat.message.deleted') }}
                 </p>
-              } @else if (message.decryptedData.content) {
-                <app-redacted-markdown [content]="message.decryptedData.content" />
               } @else {
-                <p class="message-list-item__empty">
-                  {{ t('chat.message.empty') }}
-                </p>
+                @if (fileChips().length) {
+                  <div class="message-list-item__attachments">
+                    @for (chip of fileChips(); track chip.attachmentId) {
+                      <app-message-attachment-chip
+                        [chip]="chip"
+                        (download)="downloadAttachment($event)"
+                      />
+                    }
+                  </div>
+                }
+                @if (message.decryptedData.content) {
+                  <app-redacted-markdown [content]="message.decryptedData.content" />
+                } @else if (!fileChips().length) {
+                  <p class="message-list-item__empty">
+                    {{ t('chat.message.empty') }}
+                  </p>
+                }
               }
 
               <!--
@@ -584,6 +601,15 @@ export class MessageListItemComponent implements OnChanges {
   // record_id we've already hydrated, so re-renders don't refetch.
   private _hydratedRecordId?: string;
 
+  // Resolved user-upload chips for the bubble (name + download, or a
+  // removed/private cue). Hydrated lazily, keyed by record id.
+  private readonly _fileChips = signal<MessageAttachmentChip[]>([]);
+  private _chipsRecordId?: string;
+
+  fileChips(): MessageAttachmentChip[] {
+    return this._fileChips();
+  }
+
   displayImageUrls(): string[] {
     const own = this.message?.imageUrls ?? [];
     return own.length ? own : this._lazyImageUrls();
@@ -596,12 +622,32 @@ export class MessageListItemComponent implements OnChanges {
   ngOnChanges(): void {
     const message = this.message;
     const attachments = message?.decryptedData.attachments ?? [];
+    if (!message?.record_id || attachments.length === 0) {
+      return;
+    }
+
+    // Resolve user-upload chips (name/download, or removed/private cue) once
+    // per record. Independent of the generated-image path below.
     if (
-      !message?.record_id ||
-      attachments.length === 0 ||
-      message.imageUrls?.length ||
-      this._hydratedRecordId === message.record_id
+      this._chipsRecordId !== message.record_id &&
+      attachments.some((a) => a.kind === 'user_upload')
     ) {
+      this._chipsRecordId = message.record_id;
+      this._messageService
+        .resolveAttachmentChips(message)
+        .pipe(takeUntilDestroyed(this._destroyRef))
+        .subscribe({
+          next: (chips) => {
+            this._fileChips.set(chips);
+            this._cdr.markForCheck();
+          },
+          error: () => {
+            /* leave chips empty on failure */
+          },
+        });
+    }
+
+    if (message.imageUrls?.length || this._hydratedRecordId === message.record_id) {
       return;
     }
 
@@ -621,6 +667,11 @@ export class MessageListItemComponent implements OnChanges {
           this._cdr.markForCheck();
         },
       });
+  }
+
+  // Download a resolved user-upload chip (fetch ciphertext, decrypt, save).
+  downloadAttachment(chip: MessageAttachmentChip): void {
+    this._messageService.downloadAttachmentChip(chip);
   }
 
   openLightbox(index: number): void {
@@ -646,7 +697,9 @@ export class MessageListItemComponent implements OnChanges {
   // bytes are available and we're not still loading — a non-sensitive error
   // state instead of an empty bubble.
   hasUndecryptedImage(): boolean {
-    const attachments = this.message?.decryptedData.attachments ?? [];
+    const attachments = (this.message?.decryptedData.attachments ?? []).filter(
+      (a) => !!a.sealed_key,
+    );
     return (
       attachments.length > 0 &&
       !this.displayImageUrls().length &&

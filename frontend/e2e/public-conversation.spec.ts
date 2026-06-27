@@ -143,6 +143,43 @@ test('renders shared message content as markdown, not raw text', async ({ page }
   await expect(messages).not.toContainText('**bold**');
 });
 
+test('shows a private cue for a user-upload attachment a public viewer cannot decrypt', async ({
+  page,
+}) => {
+  const userFixture = buildVaultFixture('user_priv', 'priv@example.com');
+  const conversation = buildConversationFixture(
+    userFixture,
+    'conv_priv',
+    'Private file',
+  );
+  const share = buildPublicShareFixture(conversation, 'privtoken0000001');
+
+  // A user message that referenced a library file. The file is sealed to the
+  // owner's key, so a public reader can never see it — only the cue.
+  const message = buildMessageRecordFixture(conversation, {
+    id: 'm_priv',
+    created: '2026-06-14T10:00:00Z',
+    content: "what's my name?",
+    ownerId: userFixture.authState.model.id,
+    attachments: [
+      { kind: 'user_upload', mime_type: 'text/plain', attachment_id: 'lib_file_0001' },
+    ],
+  });
+
+  await routePublicEndpoints(page, share.token, share.publicConversationResponse, [
+    message,
+  ]);
+
+  await page.goto(`/p/${share.token}#${share.fragment}`);
+
+  await expect(page.getByRole('heading', { name: 'Private file' })).toBeVisible();
+  // The message content still renders; the file shows the private cue, and the
+  // viewer is offered no way to fetch or decrypt it.
+  await expect(page.getByText("what's my name?")).toBeVisible();
+  await expect(page.getByTestId('message-attachment-private')).toBeVisible();
+  await expect(page.getByTestId('message-attachment-chip')).toHaveCount(0);
+});
+
 test('shows shared assistant reasoning in a collapsed disclosure, separate from the answer', async ({
   page,
 }) => {

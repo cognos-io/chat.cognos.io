@@ -723,6 +723,12 @@
       "imageEncrypted": "Chiffré",
       "imageDownload": "Télécharger",
       "imageClose": "Fermer",
+      "attachment": {
+        "download": "Télécharger {{ name }}",
+        "subtitleDocument": "Document",
+        "removed": "Fichier supprimé",
+        "private": "Fichier privé joint"
+      },
       "encrypted": "Chiffré",
       "encryptedWithTime": "Chiffré · {{ time }}",
       "keep": "Conserver ce message temporaire",

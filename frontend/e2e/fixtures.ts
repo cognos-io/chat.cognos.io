@@ -326,7 +326,8 @@ export const buildMessageRecordFixture = (
     attachments?: {
       kind: string;
       mime_type: string;
-      sealed_key: string;
+      sealed_key?: string;
+      attachment_id?: string;
       width?: number;
       height?: number;
     }[];
