@@ -103,6 +103,51 @@ test.describe('composer attachments', () => {
     await expect(page.getByTestId('attachment-chip')).toHaveCount(0);
   });
 
+  test('redacts sensitive values extracted from an attachment before they reach the provider', async ({
+    page,
+  }) => {
+    await provisionUnlockedAccount(page);
+    await startConversation(page);
+
+    // Capture what the client sends to the completion endpoint without breaking
+    // the real backend flow (continue the request through).
+    let sentContexts: Array<{ text_context?: string }> | undefined;
+    await page.route('**/complete', async (route) => {
+      if (route.request().method() === 'POST') {
+        const body = route.request().postDataJSON() as {
+          attachment_contexts?: Array<{ text_context?: string }>;
+        };
+        sentContexts = body.attachment_contexts;
+      }
+      await route.continue();
+    });
+
+    const iban = 'DE75512108001245126199';
+    const email = 'cognos@example.com';
+    await setComposerFile(
+      page,
+      'sensitive.md',
+      'text/markdown',
+      `# Personal Information\n\nmy name is ${email}.\n\nMy IBAN is ${iban}\n`,
+    );
+
+    await expect(page.getByTestId('attachment-chip')).toContainText('sensitive.md');
+
+    await page.getByLabel(COMPOSER_LABEL).fill('Summarise the attached file');
+    const send = page.getByRole('button', { name: /^send$/i });
+    await expect(send).toBeEnabled();
+    await send.click();
+
+    await expect(page.getByText('Mocked assistant reply')).toBeVisible();
+
+    // The extracted text reached the provider as placeholders, never raw values.
+    const text = sentContexts?.[0]?.text_context ?? '';
+    expect(text).not.toContain(iban);
+    expect(text).not.toContain(email);
+    expect(text).toMatch(/\[\[PII_IBAN_[A-Z0-9]+\]\]/);
+    expect(text).toMatch(/\[\[PII_EMAIL_[A-Z0-9]+\]\]/);
+  });
+
   test('removing a selected attachment clears it before send', async ({ page }) => {
     await provisionUnlockedAccount(page);
     await startConversation(page);

@@ -144,6 +144,56 @@ describe('RedactionService', () => {
     await firstValue(service.loadConversation(conversation));
     expect(service.hydrate('conv1', 'plain text')).toBe('plain text');
   });
+
+  it('redacts extracted attachment text and keeps originals out of it', () => {
+    const { redactedText, newEntries } = service.prepareAttachmentText(
+      'conv1',
+      'My IBAN is DE75512108001245126199 and email cognos@example.com',
+    );
+    expect(redactedText).not.toContain('DE75512108001245126199');
+    expect(redactedText).not.toContain('cognos@example.com');
+    expect(redactedText).toMatch(/\[\[PII_IBAN_[A-Z0-9]+\]\]/);
+    expect(redactedText).toMatch(/\[\[PII_EMAIL_[A-Z0-9]+\]\]/);
+    expect(newEntries).toHaveLength(2);
+  });
+
+  it('reuses a token carried from the message body so shared values collapse', () => {
+    // The body already minted a token for this email in the same send.
+    const body = service.prepareRedaction('conv1', 'email cognos@example.com');
+    expect(body.newEntries).toHaveLength(1);
+    const bodyToken = body.newEntries[0].token;
+
+    const attachment = service.prepareAttachmentText(
+      'conv1',
+      'the attached file also mentions cognos@example.com',
+      body.newEntries,
+    );
+    // Same placeholder, and nothing new to persist for the duplicate value.
+    expect(attachment.redactedText).toContain(bodyToken);
+    expect(attachment.newEntries).toHaveLength(0);
+  });
+
+  it('redacts manually-remembered custom values found in attachment text', () => {
+    const { redactedText, newEntries } = service.prepareAttachmentText(
+      'conv1',
+      'project codename Acme Corp appears in the document',
+      [],
+      ['Acme Corp'],
+    );
+    expect(redactedText).not.toContain('Acme Corp');
+    expect(redactedText).toMatch(/\[\[PII_CUSTOM_[A-Z0-9]+\]\]/);
+    expect(newEntries).toHaveLength(1);
+    expect(newEntries[0].type).toBe('custom');
+  });
+
+  it('leaves attachment text without sensitive values untouched', () => {
+    const { redactedText, newEntries } = service.prepareAttachmentText(
+      'conv1',
+      'the quick brown fox',
+    );
+    expect(redactedText).toBe('the quick brown fox');
+    expect(newEntries).toHaveLength(0);
+  });
 });
 
 function firstValue<T>(obs: Observable<T>): Promise<T> {
