@@ -21,7 +21,26 @@ type Summary struct {
 	Matched          int
 	Updated          int
 	ReasoningEnabled int
+	// Disabled counts models disabled because they vanished from Requesty.
+	Disabled int
+	// DisableSkipped is true when the disable pass was skipped because the fetch
+	// looked unhealthy (too many models absent) and force was not set.
+	DisableSkipped bool
 }
+
+// SyncOptions tunes a sync run.
+type SyncOptions struct {
+	// ForceDisableAbsent disables every enabled Requesty model missing from the
+	// fetch, bypassing the health-threshold guard. Used for a manual cleanup
+	// after intentionally removing models. An empty fetch is still never treated
+	// as a removal signal, even when forced.
+	ForceDisableAbsent bool
+}
+
+// maxDisableAbsentFraction guards against a partial Requesty response disabling
+// a large slice of the catalogue: if more than this share of enabled Requesty
+// models is absent from the fetch, the disable pass is skipped unless forced.
+const maxDisableAbsentFraction = 0.25
 
 // Service enriches curated Requesty-provider models with fresh metadata.
 type Service struct {
@@ -35,11 +54,15 @@ func NewService(app core.App, fetcher ModelsFetcher, logger *slog.Logger) *Servi
 }
 
 // Run fetches the Requesty catalogue and updates matched ai_models records.
-// It only ever writes derived fields (reasoning efforts, pricing, context) and
-// never touches curation/compliance fields (enabled, whitelisted, privacy_tier,
-// hosting_*). Reasoning efforts are set only when absent, so manual overrides
-// win. It is idempotent and safe to run repeatedly.
-func (s *Service) Run(ctx context.Context) (Summary, error) {
+// It refreshes derived fields (reasoning efforts, pricing, context, capability
+// flags) and disables models that have vanished from Requesty (they stop
+// working once removed). It never deletes records and never touches the other
+// curation/compliance fields (whitelisted, privacy_tier, hosting_*, display
+// name). Reasoning efforts are set only when absent, so manual overrides win.
+// The disable pass is guarded against a partial/empty fetch (see
+// maxDisableAbsentFraction) unless opts.ForceDisableAbsent is set. Idempotent
+// and safe to run repeatedly.
+func (s *Service) Run(ctx context.Context, opts SyncOptions) (Summary, error) {
 	var summary Summary
 	if s == nil || s.app == nil || s.fetcher == nil {
 		return summary, fmt.Errorf("requesty sync is not configured")
@@ -63,9 +86,21 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 		return summary, fmt.Errorf("load requesty models: %w", err)
 	}
 
+	var absentEnabled []*core.Record
+	enabledCount := 0
 	for _, record := range records {
+		isEnabled := record.GetBool("enabled")
+		if isEnabled {
+			enabledCount++
+		}
+
 		model, ok := byID[NormalizeID(record.GetString("provider_model_id"))]
 		if !ok {
+			// Present in our catalogue but gone from Requesty — a disable
+			// candidate (handled after the loop, behind the health guard).
+			if isEnabled {
+				absentEnabled = append(absentEnabled, record)
+			}
 			continue
 		}
 		summary.Matched++
@@ -142,10 +177,45 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 		summary.Updated++
 	}
 
+	// Disable pass: models removed from Requesty stop working, so disable (never
+	// delete) them. Guard against a partial/empty fetch wiping the catalogue —
+	// skip unless the absent share is small or the caller forces it. An empty
+	// fetch is never a valid removal signal, even when forced.
+	if len(absentEnabled) > 0 {
+		absentFraction := 1.0
+		if enabledCount > 0 {
+			absentFraction = float64(len(absentEnabled)) / float64(enabledCount)
+		}
+		healthyFetch := summary.Fetched > 0
+		if healthyFetch && (opts.ForceDisableAbsent || absentFraction <= maxDisableAbsentFraction) {
+			for _, record := range absentEnabled {
+				record.Set("enabled", false)
+				if err := s.app.Save(record); err != nil {
+					if s.logger != nil {
+						s.logger.Error("requesty sync: failed to disable absent model",
+							"model_id", record.GetString("model_id"), "err", err)
+					}
+					continue
+				}
+				summary.Disabled++
+			}
+		} else {
+			summary.DisableSkipped = true
+			if s.logger != nil {
+				s.logger.Warn("requesty sync: skipped disabling absent models",
+					"absent", len(absentEnabled), "enabled", enabledCount,
+					"absent_fraction", absentFraction, "fetched", summary.Fetched,
+					"forced", opts.ForceDisableAbsent,
+					"hint", "re-run with force to override the health guard")
+			}
+		}
+	}
+
 	if s.logger != nil {
 		s.logger.Info("requesty model sync complete",
 			"fetched", summary.Fetched, "matched", summary.Matched,
-			"updated", summary.Updated, "reasoning_enabled", summary.ReasoningEnabled)
+			"updated", summary.Updated, "reasoning_enabled", summary.ReasoningEnabled,
+			"disabled", summary.Disabled, "disable_skipped", summary.DisableSkipped)
 	}
 	return summary, nil
 }

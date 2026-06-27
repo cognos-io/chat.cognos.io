@@ -65,21 +65,30 @@ func NewServer() *pocketbase.PocketBase {
 
 	// Manual entrypoint for the Requesty model enrichment that the background
 	// job also runs — handy for CI/ops and the scripts/ wrapper.
-	app.RootCmd.AddCommand(&cobra.Command{
+	syncCmd := &cobra.Command{
 		Use:   "sync-requesty-models",
 		Short: "Enrich curated Requesty models with fresh metadata from Requesty",
 		Run: func(cmd *cobra.Command, _ []string) {
 			cfg := config.MustLoadAPIConfig(app.Logger())
+			force, _ := cmd.Flags().GetBool("force-disable-absent")
 			service := requestysync.NewService(
 				app,
 				requestysync.NewClient(cfg.RequestyAPIURL, cfg.RequestyAPIKey),
 				app.Logger(),
 			)
-			if _, err := service.Run(cmd.Context()); err != nil {
+			opts := requestysync.SyncOptions{
+				ForceDisableAbsent: force || cfg.RequestyForceDisableAbsent,
+			}
+			if _, err := service.Run(cmd.Context(), opts); err != nil {
 				app.Logger().Error("requesty model sync failed", "err", err)
 			}
 		},
-	})
+	}
+	// Bypass the health guard and disable every model absent from the fetch — for
+	// a manual cleanup after intentionally removing models from Requesty.
+	syncCmd.Flags().Bool("force-disable-absent", false,
+		"disable models missing from Requesty even if many are absent (manual cleanup)")
+	app.RootCmd.AddCommand(syncCmd)
 
 	return app
 }
@@ -327,6 +336,7 @@ func bindAppHooks(
 					app.Logger(),
 					params.Config.RequestyAPIURL,
 					params.Config.RequestyAPIKey,
+					params.Config.RequestyForceDisableAbsent,
 				); err != nil {
 					return err
 				}

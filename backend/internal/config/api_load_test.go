@@ -37,13 +37,14 @@ func TestMustLoadAPIConfig_ReadsAllProviderEnvVars(t *testing.T) {
 	}
 
 	envVars := map[string]string{
-		"COGNOS_BIFROST_LOG_LEVEL":         "debug",
-		"COGNOS_INFOMANIAK_API_KEY":        "infomaniak-key",
-		"COGNOS_INFOMANIAK_URL":            "https://infomaniak.test/",
-		"COGNOS_INFOMANIAK_PRODUCT_ID":     "product-id",
-		"COGNOS_REQUESTY_URL":              "https://requesty.test/",
-		"COGNOS_REQUESTY_API_KEY":          "requesty-key",
-		"COGNOS_BILLING_TRIAL_SEED_RAPPEN": "500",
+		"COGNOS_BIFROST_LOG_LEVEL":             "debug",
+		"COGNOS_INFOMANIAK_API_KEY":            "infomaniak-key",
+		"COGNOS_INFOMANIAK_URL":                "https://infomaniak.test/",
+		"COGNOS_INFOMANIAK_PRODUCT_ID":         "product-id",
+		"COGNOS_REQUESTY_URL":                  "https://requesty.test/",
+		"COGNOS_REQUESTY_API_KEY":              "requesty-key",
+		"COGNOS_BILLING_TRIAL_SEED_RAPPEN":     "500",
+		"COGNOS_REQUESTY_FORCE_DISABLE_ABSENT": "true",
 	}
 	for k, v := range envVars {
 		t.Setenv(k, v)
@@ -70,6 +71,9 @@ func TestMustLoadAPIConfig_ReadsAllProviderEnvVars(t *testing.T) {
 	}
 	if cfg.BillingTrialSeedRappen != 500 {
 		t.Errorf("BillingTrialSeedRappen = %d, want 500", cfg.BillingTrialSeedRappen)
+	}
+	if !cfg.RequestyForceDisableAbsent {
+		t.Errorf("RequestyForceDisableAbsent = false, want true (bool env coercion)")
 	}
 }
 

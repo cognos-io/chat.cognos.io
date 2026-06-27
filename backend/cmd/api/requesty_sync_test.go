@@ -6,7 +6,131 @@ import (
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue/requestysync"
 	"github.com/pocketbase/dbx"
+	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tests"
 )
+
+// enabledRequestyModels returns the enabled Requesty ai_models records.
+func enabledRequestyModels(t testing.TB, app *tests.TestApp) []*core.Record {
+	t.Helper()
+	provider, err := app.FindFirstRecordByData("ai_providers", "provider_id", "requesty")
+	if err != nil {
+		t.Fatalf("requesty provider not seeded: %v", err)
+	}
+	records, err := app.FindAllRecords("ai_models", dbx.HashExp{"provider": provider.Id})
+	if err != nil {
+		t.Fatalf("load requesty models: %v", err)
+	}
+	enabled := make([]*core.Record, 0, len(records))
+	for _, r := range records {
+		if r.GetBool("enabled") {
+			enabled = append(enabled, r)
+		}
+	}
+	return enabled
+}
+
+func fetcherFor(records []*core.Record) stubFetcher {
+	models := make([]requestysync.RequestyModel, 0, len(records))
+	for _, r := range records {
+		models = append(models, requestysync.RequestyModel{ID: r.GetString("provider_model_id")})
+	}
+	return stubFetcher{models: models}
+}
+
+// A model removed from Requesty is disabled (not deleted) when the fetch is
+// healthy (only a small share absent).
+func TestRequestySyncDisablesAbsentModelWhenFetchHealthy(t *testing.T) {
+	t.Parallel()
+	app := setupTestApp(t)
+
+	enabled := enabledRequestyModels(t, app)
+	if len(enabled) < 5 {
+		t.Fatalf("need >=5 enabled requesty models for a <25%% absent share, got %d", len(enabled))
+	}
+	removed := enabled[0]
+
+	// Fetch everything except the one "removed" model.
+	summary, err := requestysync.NewService(app, fetcherFor(enabled[1:]), nil).
+		Run(context.Background(), requestysync.SyncOptions{})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if summary.Disabled != 1 || summary.DisableSkipped {
+		t.Fatalf("summary = %+v, want Disabled=1 DisableSkipped=false", summary)
+	}
+
+	gotRemoved, _ := app.FindRecordById("ai_models", removed.Id)
+	if gotRemoved.GetBool("enabled") {
+		t.Fatalf("absent model should be disabled")
+	}
+	gotKept, _ := app.FindRecordById("ai_models", enabled[1].Id)
+	if !gotKept.GetBool("enabled") {
+		t.Fatalf("matched model should stay enabled")
+	}
+}
+
+// A partial fetch (most models absent) skips the disable pass unless forced.
+func TestRequestySyncSkipsDisableOnUnhealthyFetchUnlessForced(t *testing.T) {
+	t.Parallel()
+	app := setupTestApp(t)
+
+	enabled := enabledRequestyModels(t, app)
+	if len(enabled) < 5 {
+		t.Fatalf("need >=5 enabled requesty models, got %d", len(enabled))
+	}
+	// Fetch only the first model — the rest look absent (well over the threshold).
+	partial := fetcherFor(enabled[:1])
+
+	// Without force: skipped, nothing disabled.
+	summary, err := requestysync.NewService(app, partial, nil).
+		Run(context.Background(), requestysync.SyncOptions{})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if !summary.DisableSkipped || summary.Disabled != 0 {
+		t.Fatalf("summary = %+v, want DisableSkipped=true Disabled=0", summary)
+	}
+	if gotReload, _ := app.FindRecordById("ai_models", enabled[1].Id); !gotReload.GetBool("enabled") {
+		t.Fatalf("model wrongly disabled without force")
+	}
+
+	// With force: the health guard is bypassed and absent models are disabled.
+	forced, err := requestysync.NewService(app, partial, nil).
+		Run(context.Background(), requestysync.SyncOptions{ForceDisableAbsent: true})
+	if err != nil {
+		t.Fatalf("Run(force) error = %v", err)
+	}
+	if forced.Disabled == 0 || forced.DisableSkipped {
+		t.Fatalf("forced summary = %+v, want Disabled>0 DisableSkipped=false", forced)
+	}
+	if gotReload, _ := app.FindRecordById("ai_models", enabled[1].Id); gotReload.GetBool("enabled") {
+		t.Fatalf("absent model should be disabled under force")
+	}
+}
+
+// An empty fetch is never treated as a removal signal, even when forced.
+func TestRequestySyncNeverDisablesOnEmptyFetchEvenForced(t *testing.T) {
+	t.Parallel()
+	app := setupTestApp(t)
+
+	enabled := enabledRequestyModels(t, app)
+	if len(enabled) == 0 {
+		t.Fatalf("need seeded requesty models")
+	}
+
+	summary, err := requestysync.NewService(app, stubFetcher{}, nil).
+		Run(context.Background(), requestysync.SyncOptions{ForceDisableAbsent: true})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if summary.Disabled != 0 || !summary.DisableSkipped {
+		t.Fatalf("summary = %+v, want Disabled=0 DisableSkipped=true on empty fetch", summary)
+	}
+	if gotReload, _ := app.FindRecordById("ai_models", enabled[0].Id); !gotReload.GetBool("enabled") {
+		t.Fatalf("empty fetch must never disable models, even forced")
+	}
+}
 
 type stubFetcher struct {
 	models []requestysync.RequestyModel
@@ -73,7 +197,7 @@ func TestRequestySyncEnrichesMatchedModelsAndPreservesCuration(t *testing.T) {
 		},
 	}}
 
-	summary, err := requestysync.NewService(app, fetcher, nil).Run(context.Background())
+	summary, err := requestysync.NewService(app, fetcher, nil).Run(context.Background(), requestysync.SyncOptions{})
 	if err != nil {
 		t.Fatalf("Run() error = %v", err)
 	}

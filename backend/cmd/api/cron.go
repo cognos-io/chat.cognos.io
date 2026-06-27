@@ -165,8 +165,10 @@ func syncRequestyModelsJob(
 	logger *slog.Logger,
 	baseURL string,
 	apiKey string,
+	forceDisableAbsent bool,
 ) (gocron.Job, error) {
 	service := requestysync.NewService(app, requestysync.NewClient(baseURL, apiKey), logger)
+	opts := requestysync.SyncOptions{ForceDisableAbsent: forceDisableAbsent}
 
 	return scheduler.NewJob(
 		gocron.DurationRandomJob(
@@ -176,7 +178,7 @@ func syncRequestyModelsJob(
 		gocron.NewTask(func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
-			if _, err := service.Run(ctx); err != nil {
+			if _, err := service.Run(ctx, opts); err != nil {
 				logger.Error("requesty model sync failed", "err", err)
 			}
 		}),
