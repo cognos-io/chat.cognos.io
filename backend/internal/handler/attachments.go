@@ -43,6 +43,12 @@ const (
 	// the billing gate (the char heuristic can't see image bytes). Actual billing
 	// still uses the provider's reported usage.
 	VisionImageInputTokenEstimate = 1200
+	// maxAttachmentFileBase64BytesPerMessage bounds the total raw file payload
+	// (base64) sent to a file-capable model in one request.
+	maxAttachmentFileBase64BytesPerMessage = 14 << 20 // ~10 MiB original
+	// FileInputTokenEstimate is a rough per-file input-token cost for the billing
+	// gate (a PDF's true cost is per-page; actual billing uses provider usage).
+	FileInputTokenEstimate = 4000
 )
 
 // AttachmentHandlerParams carries the dependencies for the conversation
@@ -401,6 +407,30 @@ func collectAttachmentImages(contexts []completionAttachmentInput) ([]gateway.Me
 		total += len(c.ImageBase64)
 	}
 	return images, total
+}
+
+// collectAttachmentFiles pulls native file inputs (raw PDFs) out of the
+// attachment contexts for file-capable models, plus the total base64 byte count
+// for the per-message payload cap.
+func collectAttachmentFiles(contexts []completionAttachmentInput) ([]gateway.MessageFile, int) {
+	files := make([]gateway.MessageFile, 0, len(contexts))
+	total := 0
+	for _, c := range contexts {
+		if strings.TrimSpace(c.FileBase64) == "" {
+			continue
+		}
+		mimeType := c.FileMimeType
+		if mimeType == "" {
+			mimeType = c.DetectedMimeType
+		}
+		files = append(files, gateway.MessageFile{
+			Base64:   c.FileBase64,
+			MimeType: mimeType,
+			Filename: c.FileName,
+		})
+		total += len(c.FileBase64)
+	}
+	return files, total
 }
 
 // WrapAttachmentContexts renders the untrusted attachment context block that is

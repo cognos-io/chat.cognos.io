@@ -10,12 +10,22 @@ type Message struct {
 	// When non-empty the message is sent as multimodal content blocks (text +
 	// image_url) instead of a plain string.
 	Images []MessageImage
+	// Files attaches native file inputs (e.g. PDFs) for models that support
+	// document input. Sent as `file` content blocks.
+	Files []MessageFile
 }
 
 // MessageImage is an inline image input (base64, no data: prefix).
 type MessageImage struct {
 	Base64   string
 	MimeType string
+}
+
+// MessageFile is a native file input (base64, no data: prefix).
+type MessageFile struct {
+	Base64   string
+	MimeType string
+	Filename string
 }
 
 type CompleteRequest struct {

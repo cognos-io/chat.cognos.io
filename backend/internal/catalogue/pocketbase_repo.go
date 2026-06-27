@@ -104,6 +104,7 @@ func (r *PocketBaseRepo) ActiveModels(_ context.Context) ([]Model, error) {
 			ReasoningEfforts:         normaliseEfforts(record.GetStringSlice("reasoning_efforts")),
 			DefaultReasoningEffort:   strings.TrimSpace(record.GetString("default_reasoning_effort")),
 			SupportsVision:           record.GetBool("supports_vision"),
+			SupportsFileInput:        record.GetBool("supports_file_input"),
 			SupportsToolCalling:      record.GetBool("supports_tool_calling"),
 			SupportsWebSearch:        record.GetBool("supports_web_search"),
 			SupportsComputerUse:      record.GetBool("supports_computer_use"),

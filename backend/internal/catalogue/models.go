@@ -62,7 +62,11 @@ type Model struct {
 	DefaultReasoningEffort string `json:"default_reasoning_effort,omitempty"`
 	// Capability flags kept fresh by the Requesty sync. Distinct from
 	// SupportsImageGeneration, which stays curated (it drives image routing).
-	SupportsVision      bool `json:"supports_vision"`
+	SupportsVision bool `json:"supports_vision"`
+	// SupportsFileInput marks a model that accepts native file input (PDF) as a
+	// document content block. Curated by us (Requesty does not expose it): when
+	// true the client sends the raw file instead of client-extracted text.
+	SupportsFileInput   bool `json:"supports_file_input"`
 	SupportsToolCalling bool `json:"supports_tool_calling"`
 	SupportsWebSearch   bool `json:"supports_web_search"`
 	SupportsComputerUse bool `json:"supports_computer_use"`

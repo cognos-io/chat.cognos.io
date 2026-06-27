@@ -31,6 +31,150 @@ func enableModelVision(t testing.TB, app *tests.TestApp, modelID string) {
 	}
 }
 
+func enableModelFileInput(t testing.TB, app *tests.TestApp, modelID string) {
+	t.Helper()
+	rec, err := app.FindFirstRecordByFilter(
+		"ai_models", "model_id={:m}", dbx.Params{"m": modelID},
+	)
+	if err != nil {
+		t.Fatalf("find model %q: %v", modelID, err)
+	}
+	rec.Set("supports_file_input", true)
+	if err := app.Save(rec); err != nil {
+		t.Fatalf("enable file input on %q: %v", modelID, err)
+	}
+}
+
+func TestConversationCompleteSendsFileToFileCapableModel(t *testing.T) {
+	t.Parallel()
+
+	var sentFiles []gateway.MessageFile
+	gatewayClient := &gateway.MockClient{
+		CompleteStreamFunc: func(_ context.Context, req gateway.CompleteRequest) (<-chan gateway.CompleteStreamEvent, error) {
+			if len(req.Messages) > 0 {
+				sentFiles = req.Messages[len(req.Messages)-1].Files
+			}
+			ch := make(chan gateway.CompleteStreamEvent, 2)
+			ch <- gateway.CompleteStreamEvent{Delta: "ok"}
+			ch <- gateway.CompleteStreamEvent{Usage: &gateway.Usage{InputTokens: 30, OutputTokens: 3, TotalTokens: 33}}
+			close(ch)
+			return ch, nil
+		},
+	}
+
+	conversationID := "convfile0000001"
+	var conversationPublicKey [32]byte
+
+	scenario := tests.ApiScenario{
+		Name:   "raw file is sent to a file-capable model",
+		Method: http.MethodPost,
+		URL:    "/api/v1/conversations/" + conversationID + "/complete",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
+			"messages":[{"role":"user","content":"summarise this pdf"}],
+			"attachment_contexts":[{
+				"attachment_id":"",
+				"display_name":"report.pdf",
+				"detected_mime_type":"application/pdf",
+				"processor_id":"pdf-raw",
+				"file_base64":"JVBERi0xLjQK",
+				"file_mime_type":"application/pdf",
+				"file_name":"report.pdf"
+			}]
+		}`),
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"type":"complete"`},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				BillingService: billing.NewService(),
+				ConversationRepo: stubConversationRepo{
+					byID: func(id string) (chat.Conversation, error) {
+						return chat.Conversation{ID: id, PublicKey: conversationPublicKey}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			conversationPublicKey = seedConversationRecord(t, app, conversationID)
+			enableModelFileInput(t, app, "llama-3-3-infomaniak")
+		},
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			if len(sentFiles) != 1 {
+				t.Fatalf("provider received %d files, want 1", len(sentFiles))
+			}
+			if sentFiles[0].Base64 != "JVBERi0xLjQK" || sentFiles[0].Filename != "report.pdf" {
+				t.Fatalf("provider file = %+v", sentFiles[0])
+			}
+		},
+	}
+	scenario.Test(t)
+}
+
+func TestConversationCompleteRejectsFileForNonFileModel(t *testing.T) {
+	t.Parallel()
+
+	gatewayCalled := false
+	gatewayClient := &gateway.MockClient{
+		CompleteStreamFunc: func(context.Context, gateway.CompleteRequest) (<-chan gateway.CompleteStreamEvent, error) {
+			gatewayCalled = true
+			ch := make(chan gateway.CompleteStreamEvent)
+			close(ch)
+			return ch, nil
+		},
+	}
+
+	conversationID := "convfile0000002"
+	var conversationPublicKey [32]byte
+
+	scenario := tests.ApiScenario{
+		Name:   "raw file is rejected for a model without native file input",
+		Method: http.MethodPost,
+		URL:    "/api/v1/conversations/" + conversationID + "/complete",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
+			"messages":[{"role":"user","content":"summarise this pdf"}],
+			"attachment_contexts":[{
+				"attachment_id":"",
+				"display_name":"report.pdf",
+				"detected_mime_type":"application/pdf",
+				"processor_id":"pdf-raw",
+				"file_base64":"JVBERi0xLjQK",
+				"file_mime_type":"application/pdf",
+				"file_name":"report.pdf"
+			}]
+		}`),
+		ExpectedStatus:  http.StatusBadRequest,
+		ExpectedContent: []string{"can't read files"},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				BillingService: billing.NewService(),
+				ConversationRepo: stubConversationRepo{
+					byID: func(id string) (chat.Conversation, error) {
+						return chat.Conversation{ID: id, PublicKey: conversationPublicKey}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			conversationPublicKey = seedConversationRecord(t, app, conversationID)
+		},
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			if gatewayCalled {
+				t.Fatalf("gateway was called despite a non-file model")
+			}
+		},
+	}
+	scenario.Test(t)
+}
+
 func TestConversationCompleteSendsImageToVisionModel(t *testing.T) {
 	t.Parallel()
 

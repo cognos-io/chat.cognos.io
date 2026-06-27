@@ -224,7 +224,7 @@ func (c *BifrostClient) buildChatRequest(req CompleteRequest) (*schemas.BifrostC
 		messages = append(messages, schemas.ChatMessage{
 			Name:    nullableString(name),
 			Role:    schemas.ChatMessageRole(message.Role),
-			Content: buildMessageContent(content, message.Images),
+			Content: buildMessageContent(content, message.Images, message.Files),
 		})
 	}
 
@@ -272,15 +272,20 @@ func reasoningParam(effort string) *schemas.ChatReasoning {
 }
 
 // buildMessageContent renders a gateway message into Bifrost content. With no
-// images it stays a plain string; with images it becomes multimodal content
-// blocks (an optional text block followed by image_url data-URL blocks).
-func buildMessageContent(content string, images []MessageImage) *schemas.ChatMessageContent {
-	if len(images) == 0 {
+// images or files it stays a plain string; otherwise it becomes multimodal
+// content blocks (an optional text block, then image_url data-URL blocks, then
+// file data-URL blocks).
+func buildMessageContent(
+	content string,
+	images []MessageImage,
+	files []MessageFile,
+) *schemas.ChatMessageContent {
+	if len(images) == 0 && len(files) == 0 {
 		text := content
 		return &schemas.ChatMessageContent{ContentStr: &text}
 	}
 
-	blocks := make([]schemas.ChatContentBlock, 0, len(images)+1)
+	blocks := make([]schemas.ChatContentBlock, 0, len(images)+len(files)+1)
 	if content != "" {
 		text := content
 		blocks = append(blocks, schemas.ChatContentBlock{
@@ -293,6 +298,19 @@ func buildMessageContent(content string, images []MessageImage) *schemas.ChatMes
 		blocks = append(blocks, schemas.ChatContentBlock{
 			Type:           schemas.ChatContentBlockTypeImage,
 			ImageURLStruct: &schemas.ChatInputImage{URL: dataURL},
+		})
+	}
+	for _, file := range files {
+		dataURL := "data:" + file.MimeType + ";base64," + file.Base64
+		filename := file.Filename
+		fileType := file.MimeType
+		blocks = append(blocks, schemas.ChatContentBlock{
+			Type: schemas.ChatContentBlockTypeFile,
+			File: &schemas.ChatInputFile{
+				FileData: &dataURL,
+				Filename: &filename,
+				FileType: &fileType,
+			},
 		})
 	}
 	return &schemas.ChatMessageContent{ContentBlocks: blocks}

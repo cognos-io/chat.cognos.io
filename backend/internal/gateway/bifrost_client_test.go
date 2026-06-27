@@ -54,7 +54,7 @@ func (s *stubBifrostShutdowner) Shutdown() { s.called = true }
 func TestBuildMessageContentTextOnly(t *testing.T) {
 	t.Parallel()
 
-	content := buildMessageContent("hello", nil)
+	content := buildMessageContent("hello", nil, nil)
 	if content.ContentStr == nil || *content.ContentStr != "hello" {
 		t.Fatalf("text-only content = %+v, want ContentStr=hello", content)
 	}
@@ -68,7 +68,7 @@ func TestBuildMessageContentWithImages(t *testing.T) {
 
 	content := buildMessageContent("describe this", []MessageImage{
 		{Base64: "QUJD", MimeType: "image/png"},
-	})
+	}, nil)
 	if content.ContentStr != nil {
 		t.Fatalf("multimodal content should not use ContentStr")
 	}
@@ -91,9 +91,33 @@ func TestBuildMessageContentWithImages(t *testing.T) {
 func TestBuildMessageContentImageOnly(t *testing.T) {
 	t.Parallel()
 
-	content := buildMessageContent("", []MessageImage{{Base64: "QQ==", MimeType: "image/jpeg"}})
+	content := buildMessageContent("", []MessageImage{{Base64: "QQ==", MimeType: "image/jpeg"}}, nil)
 	if len(content.ContentBlocks) != 1 || content.ContentBlocks[0].Type != schemas.ChatContentBlockTypeImage {
 		t.Fatalf("image-only content should be a single image block: %+v", content.ContentBlocks)
+	}
+}
+
+func TestBuildMessageContentWithFile(t *testing.T) {
+	t.Parallel()
+
+	content := buildMessageContent("summarise", nil, []MessageFile{
+		{Base64: "JVBERi0=", MimeType: "application/pdf", Filename: "report.pdf"},
+	})
+	if content.ContentStr != nil {
+		t.Fatalf("file content should not use ContentStr")
+	}
+	if len(content.ContentBlocks) != 2 {
+		t.Fatalf("want 2 blocks (text+file), got %d", len(content.ContentBlocks))
+	}
+	file := content.ContentBlocks[1]
+	if file.Type != schemas.ChatContentBlockTypeFile || file.File == nil {
+		t.Fatalf("second block should be a file: %+v", file)
+	}
+	if file.File.FileData == nil || *file.File.FileData != "data:application/pdf;base64,JVBERi0=" {
+		t.Fatalf("file data URL = %v", file.File.FileData)
+	}
+	if file.File.Filename == nil || *file.File.Filename != "report.pdf" {
+		t.Fatalf("file name = %v", file.File.Filename)
 	}
 }
 

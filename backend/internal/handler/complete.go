@@ -70,6 +70,11 @@ type completionAttachmentInput struct {
 	// models; ImageMimeType is its media type.
 	ImageBase64   string `json:"image_base64,omitempty"`
 	ImageMimeType string `json:"image_mime_type,omitempty"`
+	// FileBase64 is a raw file (base64, no data: prefix) for models with native
+	// file input (e.g. a PDF); FileMimeType/FileName describe it.
+	FileBase64   string `json:"file_base64,omitempty"`
+	FileMimeType string `json:"file_mime_type,omitempty"`
+	FileName     string `json:"file_name,omitempty"`
 }
 
 type CompleteRequest = completeRequest
@@ -333,6 +338,17 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			}
 		}
 
+		// Raw file attachments (e.g. PDFs) require a model with native file input.
+		attachmentFiles, attachmentFileBytes := collectAttachmentFiles(req.AttachmentContexts)
+		if len(attachmentFiles) > 0 {
+			if !model.SupportsFileInput {
+				return apis.NewBadRequestError("This model can't read files", nil)
+			}
+			if attachmentFileBytes > maxAttachmentFileBase64BytesPerMessage {
+				return apis.NewBadRequestError("Attached files are too large", nil)
+			}
+		}
+
 		systemMessage := req.SystemPrompt
 		if req.ContextSummary != "" {
 			// Fold the compaction summary in after the canonical system prompt,
@@ -358,7 +374,8 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		// not priced as if it filled a million tokens. Images add a flat per-image
 		// estimate the char heuristic can't see.
 		estimatedInputTokens := estimatePromptInputTokens(systemMessage, effectiveMessages, model) +
-			int64(len(attachmentImages)*VisionImageInputTokenEstimate)
+			int64(len(attachmentImages)*VisionImageInputTokenEstimate) +
+			int64(len(attachmentFiles)*FileInputTokenEstimate)
 		// The output we will actually allow the provider to generate. The billing
 		// gate prices this exact ceiling (not the model's absolute max), and we
 		// pass the same value to the provider so the response can never exceed
@@ -471,10 +488,16 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			})
 		}
 
-		// Attach inline images to the latest user turn so vision models receive
-		// them alongside the prompt + any text attachment context.
-		if len(attachmentImages) > 0 && len(messages) > 0 {
-			messages[len(messages)-1].Images = attachmentImages
+		// Attach inline images + raw files to the latest user turn so vision /
+		// file-capable models receive them alongside the prompt and any text
+		// attachment context.
+		if len(messages) > 0 {
+			if len(attachmentImages) > 0 {
+				messages[len(messages)-1].Images = attachmentImages
+			}
+			if len(attachmentFiles) > 0 {
+				messages[len(messages)-1].Files = attachmentFiles
+			}
 		}
 
 		// The assistant response is parented to the freshly persisted user
