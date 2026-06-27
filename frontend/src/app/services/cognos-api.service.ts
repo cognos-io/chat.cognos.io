@@ -46,6 +46,9 @@ export interface CompleteAttachmentContext {
   contextTruncated?: boolean;
   imageBase64?: string;
   imageMimeType?: string;
+  fileBase64?: string;
+  fileName?: string;
+  fileMimeType?: string;
 }
 
 export interface CompleteRequest {
@@ -199,6 +202,7 @@ interface ApiModel {
   hosting_region?: string;
   supports_image_generation?: boolean;
   supports_vision?: boolean;
+  supports_file_input?: boolean;
   supports_tool_calling?: boolean;
   supports_web_search?: boolean;
   supports_computer_use?: boolean;
@@ -242,6 +246,9 @@ interface ApiCompletionAttachmentInput {
   context_truncated?: boolean;
   image_base64?: string;
   image_mime_type?: string;
+  file_base64?: string;
+  file_name?: string;
+  file_mime_type?: string;
 }
 
 interface ApiCompactionMessageInput {
@@ -618,6 +625,9 @@ export const mapCompleteRequest = (request: CompleteRequest): ApiCompleteRequest
     context_truncated: context.contextTruncated,
     image_base64: context.imageBase64,
     image_mime_type: context.imageMimeType,
+    file_base64: context.fileBase64,
+    file_name: context.fileName,
+    file_mime_type: context.fileMimeType,
   })),
 });
 
@@ -1776,6 +1786,7 @@ export class CognosApiService {
       hostingRegion: model.hosting_region,
       supportsImageGeneration: model.supports_image_generation ?? false,
       supportsVision: model.supports_vision ?? false,
+      supportsFileInput: model.supports_file_input ?? false,
       supportsToolCalling: model.supports_tool_calling ?? false,
       supportsWebSearch: model.supports_web_search ?? false,
       supportsComputerUse: model.supports_computer_use ?? false,

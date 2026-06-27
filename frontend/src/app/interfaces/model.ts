@@ -35,6 +35,8 @@ export const Model = z.object({
   // Objective capability flags synced from the provider catalogue (Requesty).
   // Vision = can read images as input (distinct from image generation).
   supportsVision: z.boolean().default(false),
+  // File input = accepts native files (PDF) as a document block. Curated.
+  supportsFileInput: z.boolean().default(false),
   supportsToolCalling: z.boolean().default(false),
   supportsWebSearch: z.boolean().default(false),
   supportsComputerUse: z.boolean().default(false),
@@ -84,6 +86,7 @@ export const loadingModel: Model = {
   isOpenSource: false,
   supportsImageGeneration: false,
   supportsVision: false,
+  supportsFileInput: false,
   supportsToolCalling: false,
   supportsWebSearch: false,
   supportsComputerUse: false,

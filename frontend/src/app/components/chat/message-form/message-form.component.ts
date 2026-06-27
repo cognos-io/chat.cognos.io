@@ -1341,6 +1341,8 @@ export class MessageFormComponent {
       candidates,
       conversation.record.id,
       conversation.keyPair.publicKey,
+      // Send PDFs raw when the model accepts native files (better quality).
+      this.modelService.selectedModel().supportsFileInput,
     );
 
     if (rejectedImages) {
@@ -1707,6 +1709,28 @@ export class MessageFormComponent {
     const contentValue = content.value ?? '';
 
     if (content.invalid || this.messageForm.disabled || !this.canSendMessage()) {
+      return;
+    }
+
+    // Guard the model-switched-after-attaching edge: image/raw-file attachments
+    // only work on capable models. Block with a clear notice rather than letting
+    // the backend reject the completion.
+    const model = this.modelService.selectedModel();
+    const selected = this.attachments.attachments();
+    if (selected.some((a) => a.isImage) && !model.supportsVision) {
+      this.attachmentNotice.set(
+        this._transloco.translate('chat.composer.attachments.imageNeedsVision', {
+          model: model.name,
+        }),
+      );
+      return;
+    }
+    if (selected.some((a) => a.isRawFile) && !model.supportsFileInput) {
+      this.attachmentNotice.set(
+        this._transloco.translate('chat.composer.attachments.fileNeedsFileModel', {
+          model: model.name,
+        }),
+      );
       return;
     }
 

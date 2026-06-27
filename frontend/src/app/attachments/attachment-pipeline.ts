@@ -12,6 +12,7 @@ import {
   EncryptedArtifactDraft,
   EncryptedAttachmentDraft,
   ManifestArtifact,
+  ProcessorOutput,
   UnencryptedArtifact,
   defaultAttachmentLimits,
 } from './attachment.types';
@@ -25,7 +26,13 @@ export interface ProcessAttachmentInput {
   conversationPublicKey: Uint8Array;
   limits?: AttachmentProcessingLimits;
   processors?: readonly AttachmentProcessor[];
+  // When true and the file is a PDF, skip text extraction and send the raw file
+  // to the model (the selected model accepts native file input).
+  preferRawForPdf?: boolean;
 }
+
+const isPdf = (detected: { extension: string; detectedMimeType: string }): boolean =>
+  detected.extension === 'pdf' || detected.detectedMimeType === 'application/pdf';
 
 const newId = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -98,8 +105,31 @@ export const processAttachment = async (
     limits,
   };
 
-  const processor = selectProcessor(processors, processorInput);
-  const output = await processor.process(processorInput);
+  // Raw PDF passthrough: when the model accepts native files, send the original
+  // PDF instead of client-extracted text (better quality, skips pdfjs).
+  let processorId: string;
+  let processorVersion = '1';
+  let output: ProcessorOutput;
+  if (input.preferRawForPdf && isPdf(detectedType)) {
+    processorId = 'pdf-raw';
+    output = {
+      normalizedType: 'application/pdf',
+      artifacts: [],
+      ai: {
+        hasTextContext: false,
+        fileContext: {
+          base64: Base64.fromUint8Array(input.bytes),
+          mimeType: 'application/pdf',
+          fileName: input.fileName,
+        },
+      },
+    };
+  } else {
+    const processor = selectProcessor(processors, processorInput);
+    processorId = processor.id;
+    processorVersion = processor.version;
+    output = await processor.process(processorInput);
+  }
 
   // The original is always artifact[0]; derived artifacts follow in order.
   const allArtifacts: UnencryptedArtifact[] = [
@@ -133,7 +163,7 @@ export const processAttachment = async (
     declared_mime_type: detectedType.declaredMimeType,
     detected_mime_type: detectedType.detectedMimeType,
     extension: detectedType.extension,
-    processor: { id: processor.id, version: processor.version, status: 'processed' },
+    processor: { id: processorId, version: processorVersion, status: 'processed' },
     artifacts: manifestArtifacts,
     ai: {
       has_text_context: output.ai.hasTextContext,
@@ -154,7 +184,7 @@ export const processAttachment = async (
   return {
     clientAttachmentId,
     conversationId: input.conversationId,
-    processorId: processor.id,
+    processorId,
     manifestB64: Base64.fromUint8Array(sealed),
     artifacts: encryptedArtifacts,
     display: {
@@ -167,6 +197,7 @@ export const processAttachment = async (
       textContext: output.ai.textContext,
       contextTruncated: output.ai.textContextTruncated,
       imageContext: output.ai.imageContext,
+      fileContext: output.ai.fileContext,
     },
   };
 };

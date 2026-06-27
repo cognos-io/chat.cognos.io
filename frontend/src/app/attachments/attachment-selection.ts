@@ -3,6 +3,7 @@ import {
   AttachmentProcessingErrorCode,
   AttachmentProcessingStage,
   EncryptedAttachmentDraft,
+  FileAiContext,
   ImageAiContext,
 } from './attachment.types';
 
@@ -25,8 +26,11 @@ export interface SelectedAttachment {
   textContext?: string;
   contextTruncated?: boolean;
   imageContext?: ImageAiContext;
+  fileContext?: FileAiContext;
   /** True when this attachment is an image (gated to vision-capable models). */
   isImage?: boolean;
+  /** True when this attachment is a raw file (gated to file-capable models). */
+  isRawFile?: boolean;
 }
 
 export interface CompletionAttachmentContext {
@@ -38,6 +42,9 @@ export interface CompletionAttachmentContext {
   contextTruncated?: boolean;
   imageBase64?: string;
   imageMimeType?: string;
+  fileBase64?: string;
+  fileName?: string;
+  fileMimeType?: string;
 }
 
 export interface AttachmentCompletionPayload {
@@ -63,7 +70,9 @@ export const buildCompletionAttachmentInputs = (
     attachmentContexts: ready
       .filter(
         (attachment) =>
-          (attachment.textContext ?? '').trim().length > 0 || !!attachment.imageContext,
+          (attachment.textContext ?? '').trim().length > 0 ||
+          !!attachment.imageContext ||
+          !!attachment.fileContext,
       )
       .map((attachment) => ({
         attachmentId: attachment.record!.id,
@@ -74,6 +83,9 @@ export const buildCompletionAttachmentInputs = (
         contextTruncated: attachment.contextTruncated,
         imageBase64: attachment.imageContext?.base64,
         imageMimeType: attachment.imageContext?.mimeType,
+        fileBase64: attachment.fileContext?.base64,
+        fileName: attachment.fileContext?.fileName,
+        fileMimeType: attachment.fileContext?.mimeType,
       })),
   };
 };

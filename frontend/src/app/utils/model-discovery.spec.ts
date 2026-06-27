@@ -41,6 +41,7 @@ function makeModel(overrides: Partial<Model> = {}): Model {
     pricing: { inputUsdPerMillionTokens: 1, outputUsdPerMillionTokens: 1 },
     supportsImageGeneration: false,
     supportsVision: false,
+    supportsFileInput: false,
     supportsToolCalling: false,
     supportsWebSearch: false,
     supportsComputerUse: false,

@@ -77,6 +77,28 @@ describe('processAttachment', () => {
     }
   });
 
+  it('sends a PDF raw (no extraction) when the model accepts native files', async () => {
+    const pdfBytes = bytes('%PDF-1.4 fake pdf body');
+    const draft = await processAttachment({
+      fileName: 'report.pdf',
+      declaredMimeType: 'application/pdf',
+      bytes: pdfBytes,
+      conversationId: 'conv1',
+      conversationPublicKey: keyPair.publicKey,
+      preferRawForPdf: true,
+    });
+
+    // Only the original artifact is stored (no extracted_text), and a raw file
+    // context is emitted for the provider.
+    expect(draft.artifacts).toHaveLength(1);
+    expect(draft.artifacts[0].kind).toBe('original');
+    expect(draft.ai.hasTextContext).toBe(false);
+    expect(draft.ai.fileContext?.mimeType).toBe('application/pdf');
+    expect(draft.ai.fileContext?.fileName).toBe('report.pdf');
+    expect(draft.ai.fileContext?.base64).toBe(Base64.fromUint8Array(pdfBytes));
+    expect(draft.processorId).toBe('pdf-raw');
+  });
+
   it('rejects unsupported binary files (fail closed)', async () => {
     await expect(
       processAttachment({

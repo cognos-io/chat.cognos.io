@@ -578,7 +578,8 @@
           "no_text_extracted": "No se pudo extraer texto de este archivo",
           "image_decode_failed": "No se pudo leer esta imagen"
         },
-        "imageNeedsVision": "{{ model }} no puede leer imágenes. Cambia a un modelo con visión para adjuntar imágenes."
+        "imageNeedsVision": "{{ model }} no puede leer imágenes. Cambia a un modelo con visión para adjuntar imágenes.",
+        "fileNeedsFileModel": "{{ model }} no puede leer archivos. Cambia a un modelo compatible con archivos o quita el archivo."
       }
     },
     "conversation": {

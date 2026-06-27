@@ -49,6 +49,7 @@ const handleProcess = async (
       conversationId: req.conversationId,
       conversationPublicKey: req.conversationPublicKey,
       limits: req.limits,
+      preferRawForPdf: req.preferRawForPdf,
     });
 
     if (cancelled.has(requestId)) {

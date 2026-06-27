@@ -578,7 +578,8 @@
           "no_text_extracted": "No text could be extracted from this file",
           "image_decode_failed": "This image couldn’t be read"
         },
-        "imageNeedsVision": "{{ model }} can’t read images. Switch to a vision-capable model to attach images."
+        "imageNeedsVision": "{{ model }} can’t read images. Switch to a vision-capable model to attach images.",
+        "fileNeedsFileModel": "{{ model }} can’t read files. Switch to a model that supports files, or remove the file."
       }
     },
     "conversation": {

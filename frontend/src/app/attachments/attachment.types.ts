@@ -64,6 +64,13 @@ export interface ImageAiContext {
   height: number;
 }
 
+/** Raw file context for models with native file input (base64, no data: prefix). */
+export interface FileAiContext {
+  base64: string;
+  mimeType: string;
+  fileName: string;
+}
+
 export interface ProcessorOutput {
   normalizedType: string;
   /** Derived artifacts only — the pipeline always adds the original itself. */
@@ -77,6 +84,8 @@ export interface ProcessorOutput {
     preferredArtifactIndex?: number;
     /** Present for image attachments destined for vision models. */
     imageContext?: ImageAiContext;
+    /** Present for raw files destined for file-capable models. */
+    fileContext?: FileAiContext;
   };
 }
 
@@ -151,6 +160,7 @@ export interface EncryptedAttachmentDraft {
     textContext?: string;
     contextTruncated?: boolean;
     imageContext?: ImageAiContext;
+    fileContext?: FileAiContext;
   };
 }
 
@@ -190,6 +200,9 @@ export type AttachmentWorkerRequest =
       conversationId: string;
       conversationPublicKey: Uint8Array;
       limits?: AttachmentProcessingLimits;
+      // When true and the file is a PDF, send the raw file to the model instead
+      // of extracting text (the selected model supports native file input).
+      preferRawForPdf?: boolean;
     }
   | {
       type: 'cancel';

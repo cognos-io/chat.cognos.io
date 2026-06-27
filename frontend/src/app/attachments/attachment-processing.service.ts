@@ -47,6 +47,7 @@ export class AttachmentProcessingService {
     files: File[],
     conversationId: string,
     conversationPublicKey: Uint8Array,
+    preferRawForPdf = false,
   ): number {
     const remaining =
       USER_ATTACHMENT_MAX_COUNT_PER_MESSAGE - this._attachments().length;
@@ -73,6 +74,7 @@ export class AttachmentProcessingService {
         conversationId,
         conversationPublicKey,
         limits: defaultAttachmentLimits(),
+        preferRawForPdf,
       };
       this.ensureWorker().postMessage(request);
     }
@@ -150,6 +152,8 @@ export class AttachmentProcessingService {
       contextTruncated: draft.ai.contextTruncated,
       imageContext: draft.ai.imageContext,
       isImage: !!draft.ai.imageContext,
+      fileContext: draft.ai.fileContext,
+      isRawFile: !!draft.ai.fileContext,
     });
 
     this._upload.upload(target.conversationId, draft).subscribe({
