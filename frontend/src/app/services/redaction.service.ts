@@ -11,9 +11,11 @@ import {
   RedactionEntry,
   RedactionSource,
   applyRedactions,
+  buildCustomCandidates,
   defaultTokenGenerator,
   detectSensitiveText,
   hydrateRedactedText,
+  resolveOverlaps,
 } from '@app/redaction';
 
 import { AuthService } from './auth.service';
@@ -157,6 +159,45 @@ export class RedactionService {
     const existing = conversationId
       ? Array.from(this._state.get(conversationId)?.entries.values() ?? [])
       : [];
+    const result = applyRedactions(
+      text,
+      candidates,
+      existing,
+      defaultTokenGenerator,
+      source,
+    );
+    return { redactedText: result.redactedText, newEntries: result.newEntries };
+  }
+
+  /**
+   * Redact text extracted from a user-uploaded attachment before it reaches the
+   * provider. Attachment text is untrusted user content just like the prompt
+   * (spec docs/specs/attachments.md §9.5), so detected sensitive values are
+   * tokenised with the same engine. Token reuse spans the conversation's stored
+   * entries, `carryEntries` (tokens just minted for the message body or earlier
+   * attachments in the same send), and the conversation's manual `customValues`
+   * — so one value collapses to one placeholder everywhere it appears. Pure and
+   * synchronous; the resulting `newEntries` are persisted by the caller.
+   */
+  prepareAttachmentText(
+    conversationId: string | null,
+    text: string,
+    carryEntries: readonly RedactionEntry[] = [],
+    customValues: readonly string[] = [],
+    source?: RedactionSource,
+  ): { redactedText: string; newEntries: RedactionEntry[] } {
+    const auto = detectSensitiveText(text);
+    const custom = buildCustomCandidates(text, customValues);
+    const candidates = resolveOverlaps([...auto, ...custom]);
+    if (candidates.length === 0) {
+      return { redactedText: text, newEntries: [] };
+    }
+    const existing = [
+      ...(conversationId
+        ? Array.from(this._state.get(conversationId)?.entries.values() ?? [])
+        : []),
+      ...carryEntries,
+    ];
     const result = applyRedactions(
       text,
       candidates,

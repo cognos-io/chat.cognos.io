@@ -1137,7 +1137,39 @@ export class MessageService {
       candidates,
       { kind: 'message', id: req.requestId },
     );
-    return { ...req, content: redactedText, redactionEntries: newEntries };
+
+    // Attachment text is untrusted user content too (spec docs/specs/attachments.md
+    // §9.5): redact each extracted text_context in lockstep with the body so a
+    // sensitive value never reaches the provider — not in the prompt and not in
+    // an attachment. Carry the body's mappings (and each prior attachment's)
+    // forward so a value shared across them collapses to one placeholder. Image
+    // and raw-file contexts are binary and pass through untouched.
+    const carried: RedactionEntry[] = [...newEntries];
+    const attachmentContexts = req.attachmentContexts?.map((context) => {
+      const text = context.textContext ?? '';
+      if (!text.trim()) {
+        return context;
+      }
+      const redacted = this._redactionService.prepareAttachmentText(
+        conversationId,
+        text,
+        carried,
+        customValues,
+        { kind: 'attachment', id: context.attachmentId },
+      );
+      if (redacted.newEntries.length === 0) {
+        return context;
+      }
+      carried.push(...redacted.newEntries);
+      return { ...context, textContext: redacted.redactedText };
+    });
+
+    return {
+      ...req,
+      content: redactedText,
+      attachmentContexts,
+      redactionEntries: carried,
+    };
   }
 
   // persistRedaction seals and stores the mappings minted for a request. The
