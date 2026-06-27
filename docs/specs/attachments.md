@@ -1,5 +1,42 @@
 # Attachments — Product & Architecture Spec
 
+> **⚠️ Current model: user-scoped library (supersedes the conversation-scoped
+> design below).** Attachments were reworked from conversation-scoped into a
+> reusable, user-owned **library**. Where this section conflicts with the older
+> prose, this section wins. The older sections are kept for processor/pipeline
+> detail, which is unchanged.
+>
+> What changed:
+>
+> - **Sealed to the user, not the conversation.** Per-artifact keys + the manifest
+>   are sealed to the user's vault key (was: conversation public key). Files are
+>   decryptable by the owner in any chat. Future project libraries seal to a
+>   project key.
+> - **Collections.** `conversation_attachments` → owner-scoped **`user_attachments`**
+>   (no `conversation`/`message` columns) + a plaintext **`attachment_usages`** join
+>   `(attachment, conversation, message, user)`. The `attachment` relation is
+>   **non-cascade** so deleting a file leaves referencing messages intact.
+> - **Endpoints** (owner-gated, all under `/api/v1/attachments`): `POST` (upload),
+>   `GET` (list), `GET /{id}` (one), `GET /{id}/files/{name}` (bytes),
+>   `PATCH /{id}` (rename = replace sealed manifest), `DELETE /{id}` (allowed even
+>   if used), `GET /{id}/usages`. A non-owner gets 404 (ids never leak).
+> - **Completion** verifies attachment **ownership** (not conversation membership)
+>   and records `attachment_usages` rows instead of setting a `message` relation.
+> - **Redaction travels with the file.** Detected values in the extracted text are
+>   redacted in the worker at processing; the mappings are stored (sealed) in the
+>   manifest and merged into a conversation's redaction scope (`source_kind:
+>   'attachment'`) when used — stable placeholders, provider never sees raw values.
+> - **Message bubble chip** with three viewer-dependent states: _resolved_ (owner →
+>   name + download), _removed_ (owner, file deleted → "File removed" tombstone),
+>   _private_ ("Private file attached" for co-participants / public-share viewers
+>   who cannot decrypt another user's file; decided from sender identity).
+> - **Library management** at `/account/library`: list, filename search, rename,
+>   download, remove, and "used in N chats". Composer attach offers **Upload** or
+>   **From library**; identical re-uploads are **deduped** by content hash.
+> - **Removal = tombstone**, never a cascade into messages.
+
+## Original conversation-scoped design (reference)
+
 **Status:** Implemented. Supported types: text (`.txt`, `.md`, `.csv`, UTF-8 `.json`), **PDF**,
 **DOCX** and **Excel** (`.xlsx`/`.xls`) via client-side text extraction, and **images** (`.png`,
 `.jpg`, `.webp`) via full multimodal/vision. Unsupported files are rejected before upload with a
