@@ -38,6 +38,12 @@ type CompleteRequest struct {
 	// sentinel "off" disables reasoning. Empty means "don't send a reasoning
 	// parameter" — the provider uses its own default.
 	ReasoningEffort string
+	// ReasoningMaxTokens, when > 0, is the explicit thinking-budget ceiling sent
+	// to the provider (Anthropic's thinking.budget_tokens). We set it ourselves
+	// rather than letting the router derive a budget from the effort, so we can
+	// guarantee Anthropic's invariant that MaxOutputTokens > ReasoningMaxTokens.
+	// Ignored when reasoning is off.
+	ReasoningMaxTokens int
 	// JSONResponseFormat asks the provider to return a valid JSON object
 	// (OpenAI-compatible response_format: {"type":"json_object"}). Only set it for
 	// models that advertise structured-output support; callers must still tolerate

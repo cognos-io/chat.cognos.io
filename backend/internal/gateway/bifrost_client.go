@@ -240,6 +240,14 @@ func (c *BifrostClient) buildChatRequest(req CompleteRequest) (*schemas.BifrostC
 		chatReq.Params.MaxCompletionTokens = &req.MaxOutputTokens
 	}
 	if reasoning := reasoningParam(req.ReasoningEffort); reasoning != nil {
+		// Send the thinking budget explicitly (Anthropic's thinking.budget_tokens)
+		// so we own the max_tokens > budget invariant rather than depending on the
+		// router's effort→budget mapping. reasoningParam only returns non-nil for
+		// an enabled tier, so a budget here is always for active reasoning.
+		if req.ReasoningMaxTokens > 0 {
+			budget := req.ReasoningMaxTokens
+			reasoning.MaxTokens = &budget
+		}
 		chatReq.Params.Reasoning = reasoning
 	}
 	if req.JSONResponseFormat {
@@ -254,18 +262,22 @@ func (c *BifrostClient) buildChatRequest(req CompleteRequest) (*schemas.BifrostC
 }
 
 // reasoningParam translates a user-selected effort into Bifrost's reasoning
-// parameter. Empty returns nil so no reasoning parameter is sent. "off" is
-// normalised to "none" — Requesty's vocabulary for disabling reasoning, which
-// Bifrost also treats as off ("any value other than none enables reasoning").
-// Every other tier is passed through verbatim.
+// parameter. Empty AND the disabling tiers ("off"/"none") return nil, so NO
+// reasoning parameter is sent — that is the portable, OpenAI-compatible way to
+// request no extended thinking.
+//
+// We must NOT send effort "none" to disable: Requesty is a Bifrost custom
+// provider, which skips reasoning normalisation and forwards the param verbatim.
+// Requesty/Bedrock then reads the mere presence of a reasoning param as
+// "thinking on" and applies a default budget — so "none" actually ENABLES
+// thinking, and a small max_tokens (e.g. title generation's ~15) trips
+// Anthropic's "max_tokens > thinking.budget_tokens" 400. Omitting the param
+// leaves Claude at its thinking-off default. Every other tier passes through
+// verbatim.
 func reasoningParam(effort string) *schemas.ChatReasoning {
-	normalised := strings.ToLower(strings.TrimSpace(effort))
-	switch normalised {
-	case "":
+	switch strings.ToLower(strings.TrimSpace(effort)) {
+	case "", "off", "none":
 		return nil
-	case "off", "none":
-		none := "none"
-		return &schemas.ChatReasoning{Effort: &none}
 	default:
 		return &schemas.ChatReasoning{Effort: &effort}
 	}
