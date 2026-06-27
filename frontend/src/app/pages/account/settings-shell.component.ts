@@ -252,6 +252,7 @@ export class SettingsShellComponent {
       exact: true,
     },
     { labelKey: 'settings.nav.memory', link: '/account/memory', icon: 'brain' },
+    { labelKey: 'settings.nav.library', link: '/account/library', icon: 'folder' },
     { labelKey: 'settings.nav.billing', link: '/account/billing', icon: 'landmark' },
     {
       labelKey: 'settings.nav.projects',

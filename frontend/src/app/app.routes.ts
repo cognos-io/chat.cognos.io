@@ -70,6 +70,16 @@ export const routes: Routes = [
           ),
       },
       {
+        // User-scoped attachment library: view, search, rename, download and
+        // remove uploaded files, and see which chats use them.
+        path: 'library',
+        data: { title: 'Library' },
+        loadComponent: () =>
+          import('./pages/account/account-library.component').then(
+            (m) => m.AccountLibraryComponent,
+          ),
+      },
+      {
         path: 'billing',
         loadComponent: () =>
           import('./pages/account/billing/plan-billing.component').then(

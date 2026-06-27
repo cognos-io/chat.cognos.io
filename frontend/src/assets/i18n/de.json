@@ -1164,7 +1164,8 @@
       "security": "Sicherheit & Schlüssel",
       "team": "Team & Freigabe",
       "usage": "Nutzung",
-      "memory": "Gedächtnis"
+      "memory": "Gedächtnis",
+      "library": "Bibliothek"
     },
     "placeholder": {
       "comingSoon": "Dieser Bereich ist bald verfügbar."

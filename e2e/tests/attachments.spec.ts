@@ -284,6 +284,41 @@ test.describe('composer attachments', () => {
     await expect(page.getByTestId('library-list').locator('li')).toHaveCount(1);
   });
 
+  test('library page renames a file and removing it tombstones it in chats', async ({
+    page,
+  }) => {
+    await provisionUnlockedAccount(page);
+    await expect(page.getByTestId('attach-button')).toBeVisible();
+
+    await setComposerFile(page, 'managed.txt', 'text/plain', 'managed library file');
+    await expect(page.getByTestId('attachment-chip')).toContainText('managed.txt');
+    await page.getByLabel(COMPOSER_LABEL).fill('use the managed file');
+    await page.getByRole('button', { name: /^send$/i }).click();
+    await expect(page.getByText('Mocked assistant reply')).toBeVisible();
+    const chatUrl = page.url();
+
+    // Open the library management page.
+    await page.goto('/account/library');
+    const list = page.getByTestId('library-page-list');
+    await expect(list).toContainText('managed.txt');
+
+    // Rename the file.
+    await page.getByRole('button', { name: 'Rename' }).first().click();
+    await page.locator('.library-page__rename').fill('renamed.txt');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(list).toContainText('renamed.txt');
+
+    // Remove it (confirm the dialog).
+    await page.getByRole('button', { name: 'Remove' }).first().click();
+    await page.getByRole('button', { name: 'Yes' }).click();
+    await expect(page.getByTestId('library-page-list')).toHaveCount(0);
+
+    // Back in the chat that used it, the message now shows a removed tombstone.
+    await page.goto(chatUrl);
+    await expect(page.getByTestId('message-attachment-tombstone')).toBeVisible();
+    await expect(page.getByTestId('message-attachment-chip')).toHaveCount(0);
+  });
+
   test('removing a selected attachment clears it before send', async ({ page }) => {
     await provisionUnlockedAccount(page);
     await startConversation(page);

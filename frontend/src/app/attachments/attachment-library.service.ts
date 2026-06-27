@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 
-import { Observable, firstValueFrom, from, map } from 'rxjs';
+import { Observable, firstValueFrom, from, map, switchMap } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 
@@ -14,7 +14,11 @@ import { CryptoService } from '@app/services/crypto.service';
 import { VaultService } from '@app/services/vault.service';
 
 import { LibrarySelection } from './attachment-selection';
-import { AttachmentRecord, AttachmentUploadService } from './attachment-upload.service';
+import {
+  AttachmentRecord,
+  AttachmentUploadService,
+  AttachmentUsage,
+} from './attachment-upload.service';
 import { AttachmentManifestV1 } from './attachment.types';
 
 /**
@@ -156,6 +160,58 @@ export class AttachmentLibraryService {
         };
       }),
     );
+  }
+
+  /**
+   * Rename a library file. The display name lives in the manifest, so we re-seal
+   * the manifest with the new name to the user's key and PATCH it. Refreshes the
+   * cache on success.
+   */
+  rename(file: LibraryFile, newName: string): Observable<LibraryFile[]> {
+    const keyPair = this._vault.keyPair();
+    const trimmed = newName.trim();
+    if (!keyPair || !trimmed) {
+      return this.refresh();
+    }
+    const manifest: AttachmentManifestV1 = { ...file.manifest, original_name: trimmed };
+    const sealed = this._crypto.createSealedBox(
+      Uint8Array.from(new TextEncoder().encode(JSON.stringify(manifest))),
+      keyPair.publicKey,
+    );
+    return this._upload
+      .updateManifest(file.id, Base64.fromUint8Array(sealed))
+      .pipe(switchMap(() => this.refresh()));
+  }
+
+  /** Remove a file from the library (referencing chats will tombstone it). */
+  remove(id: string): Observable<LibraryFile[]> {
+    return this._upload.remove(id).pipe(switchMap(() => this.refresh()));
+  }
+
+  /** List the conversations/messages that reference a library file. */
+  usages(id: string): Observable<AttachmentUsage[]> {
+    return this._upload.usages(id);
+  }
+
+  /** Download + decrypt the original file and save it to disk. */
+  async download(file: LibraryFile): Promise<void> {
+    const original = file.manifest.artifacts[0];
+    const fileName = file.record.files[0];
+    if (!original || !fileName) {
+      return;
+    }
+    const ciphertext = await this._upload.downloadArtifact(file.record.id, fileName);
+    const plaintext = this._crypto.openSecretBox(
+      ciphertext,
+      Base64.toUint8Array(original.key),
+    );
+    const blob = new Blob([plaintext as BlobPart], { type: file.mimeType });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = file.displayName;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   private toLibraryFile(record: AttachmentRecord): LibraryFile | null {

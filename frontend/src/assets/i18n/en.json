@@ -1164,7 +1164,8 @@
       "security": "Security & keys",
       "team": "Team & sharing",
       "usage": "Usage",
-      "memory": "Memory"
+      "memory": "Memory",
+      "library": "Library"
     },
     "placeholder": {
       "comingSoon": "This section is coming soon."

@@ -1164,7 +1164,8 @@
       "security": "Seguridad y claves",
       "team": "Equipo y uso compartido",
       "usage": "Uso",
-      "memory": "Memoria"
+      "memory": "Memoria",
+      "library": "Biblioteca"
     },
     "placeholder": {
       "comingSoon": "Esta sección estará disponible pronto."
