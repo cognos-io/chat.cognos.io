@@ -386,7 +386,10 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		if params.BillingStateRepo != nil && params.BillingService != nil {
 			basePlan = billing.PlanTypeTrial
 		}
-		effectiveMaxOutput := effectiveMaxOutputTokens(req.MaxOutputTokens, model, basePlan)
+		// The reasoning budget is sent explicitly and the output ceiling is floored
+		// above it, so Anthropic's max_tokens > thinking.budget_tokens holds even on
+		// the low trial ceiling. The raised ceiling is what the billing gate prices.
+		effectiveMaxOutput, reasoningBudget := reasoningOutputPlan(req.MaxOutputTokens, model, basePlan, req.ReasoningEffort)
 
 		conversationID := ""
 		if useConversationPath {
@@ -452,7 +455,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			} else {
 				// Refine the output ceiling to the user's actual plan before gating
 				// and before it is enforced on the provider request below.
-				effectiveMaxOutput = effectiveMaxOutputTokens(req.MaxOutputTokens, model, state.PlanType)
+				effectiveMaxOutput, reasoningBudget = reasoningOutputPlan(req.MaxOutputTokens, model, state.PlanType, req.ReasoningEffort)
 				estimatedCost := params.BillingService.CalculateCost(model, billing.Usage{
 					InputTokens:  estimatedInputTokens,
 					OutputTokens: int64(effectiveMaxOutput),
@@ -550,11 +553,12 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 
 		gatewayStartedAt := time.Now()
 		gatewayReq := gateway.CompleteRequest{
-			ProviderID:      model.ProviderID,
-			ProviderModelID: model.ProviderModelID,
-			Messages:        messages,
-			MaxOutputTokens: effectiveMaxOutput,
-			ReasoningEffort: req.ReasoningEffort,
+			ProviderID:         model.ProviderID,
+			ProviderModelID:    model.ProviderModelID,
+			Messages:           messages,
+			MaxOutputTokens:    effectiveMaxOutput,
+			ReasoningEffort:    req.ReasoningEffort,
+			ReasoningMaxTokens: reasoningBudget,
 		}
 
 		gatewayResp, clientDisconnected, _, err := streamGatewayCompletion(e, params, gatewayReq, owner.ID, req.RequestID)
@@ -901,6 +905,75 @@ func outputCapForPlan(plan billing.PlanType) int {
 	default:
 		return defaultMaxOutputTokens
 	}
+}
+
+// Reasoning-budget bounds. We send the thinking budget explicitly (rather than
+// letting the router derive one from the effort tier) so we can guarantee
+// Anthropic's invariant: max_tokens must be strictly greater than
+// thinking.budget_tokens. reasoningAnswerHeadroomTokens reserves room for the
+// visible answer once thinking is spent; minThinkingBudgetTokens is Anthropic's
+// floor for extended thinking.
+const (
+	reasoningAnswerHeadroomTokens = 4096
+	minThinkingBudgetTokens       = 1024
+)
+
+// reasoningBudgetTokens maps a reasoning effort tier to an explicit thinking
+// budget. It returns 0 when reasoning is disabled ("off"/"none"/empty). The
+// effort is assumed already validated against the model (see
+// AcceptsReasoningEffort); an unrecognised tier falls back to the medium budget.
+func reasoningBudgetTokens(effort string) int {
+	switch strings.ToLower(strings.TrimSpace(effort)) {
+	case "", "off", "none":
+		return 0
+	case "minimal", "low":
+		return 4096
+	case "medium":
+		return 8192
+	case "high":
+		return 16384
+	default:
+		return 8192
+	}
+}
+
+// reasoningOutputPlan resolves the output ceiling and explicit thinking budget
+// for a completion. The ceiling is what the billing gate prices and what we
+// enforce on the provider; the budget is the thinking allowance we send. When
+// reasoning is enabled the ceiling is floored above budget+answer-headroom so
+// Anthropic's max_tokens > thinking.budget_tokens always holds, and the budget
+// is shrunk if the model's own maximum can't hold budget+headroom. budget is 0
+// when reasoning is off, in which case the ceiling is the plain plan default.
+func reasoningOutputPlan(requested int, model catalogue.Model, plan billing.PlanType, effort string) (maxOutput, reasoningBudget int) {
+	maxOutput = effectiveMaxOutputTokens(requested, model, plan)
+
+	budget := reasoningBudgetTokens(effort)
+	if budget == 0 {
+		return maxOutput, 0
+	}
+
+	// Raise the ceiling so the budget plus room for the answer fits, then clamp
+	// to the model's own maximum.
+	if needed := budget + reasoningAnswerHeadroomTokens; needed > maxOutput {
+		maxOutput = needed
+	}
+	if model.MaxOutputTokens > 0 && maxOutput > model.MaxOutputTokens {
+		maxOutput = model.MaxOutputTokens
+	}
+
+	// Keep the budget strictly below max_tokens even when the model's ceiling is
+	// too small to hold the full budget+headroom.
+	if budget > maxOutput-reasoningAnswerHeadroomTokens {
+		budget = maxOutput - reasoningAnswerHeadroomTokens
+	}
+	if budget < minThinkingBudgetTokens {
+		budget = minThinkingBudgetTokens
+	}
+	if budget >= maxOutput {
+		budget = maxOutput - 1
+	}
+
+	return maxOutput, budget
 }
 
 // effectiveMaxOutputTokens is the output ceiling we both gate on and enforce at

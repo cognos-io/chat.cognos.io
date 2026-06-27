@@ -218,11 +218,93 @@ func seedReasoningModel(t testing.TB, app *tests.TestApp) {
 		Whitelisted:               true,
 		PrivacyTier:               "eu",
 		InputContextTokens:        64000,
+		MaxOutputTokens:           64000,
 		InputUSDPerMillionTokens:  1,
 		OutputUSDPerMillionTokens: 2,
 		ReasoningEfforts:          []string{"off", "low", "medium", "high"},
 		DefaultReasoningEffort:    "medium",
 	})
+}
+
+// TestCompletionReasoningBudgetFitsWithinOutputCeiling reproduces the Anthropic
+// extended-thinking 400 ("max_tokens must be greater than thinking.budget_tokens").
+// A trial account defaults to an 8192 output ceiling; when reasoning is enabled
+// the handler must raise that ceiling above the explicit thinking budget it
+// sends, so the provider's invariant holds. The mock gateway stands in for
+// Bedrock/Anthropic and rejects a request whose budget does not sit strictly
+// below the output ceiling.
+func TestCompletionReasoningBudgetFitsWithinOutputCeiling(t *testing.T) {
+	t.Parallel()
+
+	var gotMaxOutput, gotReasoningBudget int
+	gatewayClient := &gateway.MockClient{
+		CompleteStreamFunc: func(_ context.Context, req gateway.CompleteRequest) (<-chan gateway.CompleteStreamEvent, error) {
+			gotMaxOutput = req.MaxOutputTokens
+			gotReasoningBudget = req.ReasoningMaxTokens
+
+			ch := make(chan gateway.CompleteStreamEvent, 2)
+			// Mirror Anthropic on Bedrock: when reasoning is enabled the request
+			// must carry an explicit budget that sits strictly below max_tokens.
+			if req.ReasoningEffort != "" && req.ReasoningEffort != "off" {
+				if req.ReasoningMaxTokens <= 0 || req.MaxOutputTokens <= req.ReasoningMaxTokens {
+					ch <- gateway.CompleteStreamEvent{Err: errors.New("bifrost request failed: status=400")}
+					close(ch)
+					return ch, nil
+				}
+			}
+			ch <- gateway.CompleteStreamEvent{Delta: "answer"}
+			ch <- gateway.CompleteStreamEvent{Usage: &gateway.Usage{OutputTokens: 1}}
+			close(ch)
+			return ch, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "trial reasoning completion raises the output ceiling above the thinking budget",
+		Method: http.MethodPost,
+		URL:    "/api/v1/completions",
+		Body: strings.NewReader(`{
+			"model_id":"reasoning-model",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
+			"reasoning_effort":"high",
+			"messages":[{"role":"user","content":"hello"}]
+		}`),
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"type":"complete"`},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				BillingService: billing.NewService(),
+				BillingStateRepo: stubBillingStateRepo{
+					stateForUser: func(userID string) (billing.State, error) {
+						if userID != "uvi8zmr78j9y5hz" {
+							t.Fatalf("StateForUser(%q) unexpected user id", userID)
+						}
+						return billing.State{
+							PlanType:           billing.PlanTypeTrial,
+							BalanceRappen:      100_000,
+							BalanceMicroRappen: 100_000_000_000,
+						}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			seedReasoningModel(t, app)
+		},
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			if gotReasoningBudget <= 0 {
+				t.Fatalf("gateway received reasoning budget %d, want > 0 (explicit thinking budget)", gotReasoningBudget)
+			}
+			if gotMaxOutput <= gotReasoningBudget {
+				t.Fatalf("max output %d must exceed reasoning budget %d (Anthropic requires max_tokens > thinking.budget_tokens)", gotMaxOutput, gotReasoningBudget)
+			}
+		},
+	}
+
+	scenario.Test(t)
 }
 
 func TestConversationCompletePersistsEncryptedMessages(t *testing.T) {

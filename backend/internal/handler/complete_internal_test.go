@@ -4,7 +4,121 @@ import (
 	"testing"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
 )
+
+func TestReasoningBudgetTokens(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		effort string
+		want   int
+	}{
+		{effort: "", want: 0},
+		{effort: "off", want: 0},
+		{effort: "none", want: 0},
+		{effort: "  OFF ", want: 0},
+		{effort: "low", want: 4096},
+		{effort: "minimal", want: 4096},
+		{effort: "medium", want: 8192},
+		{effort: "high", want: 16384},
+		{effort: "unknown-tier", want: 8192},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.effort, func(t *testing.T) {
+			t.Parallel()
+			if got := reasoningBudgetTokens(tc.effort); got != tc.want {
+				t.Errorf("reasoningBudgetTokens(%q) = %d, want %d", tc.effort, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestReasoningOutputPlan(t *testing.T) {
+	t.Parallel()
+
+	model := catalogue.Model{MaxOutputTokens: 64000}
+	smallModel := catalogue.Model{MaxOutputTokens: 6000}
+
+	cases := []struct {
+		name            string
+		requested       int
+		model           catalogue.Model
+		plan            billing.PlanType
+		effort          string
+		wantMaxOutput   int
+		wantBudget      int
+		wantInvariant   bool // budget must sit strictly below maxOutput
+		wantNoReasoning bool
+	}{
+		{
+			name:            "reasoning off keeps the trial default ceiling",
+			model:           model,
+			plan:            billing.PlanTypeTrial,
+			effort:          "off",
+			wantMaxOutput:   8192,
+			wantBudget:      0,
+			wantNoReasoning: true,
+		},
+		{
+			name:          "trial high effort raises ceiling above the budget",
+			model:         model,
+			plan:          billing.PlanTypeTrial,
+			effort:        "high",
+			wantMaxOutput: 16384 + reasoningAnswerHeadroomTokens, // 20480, well above the 8192 trial cap
+			wantBudget:    16384,
+			wantInvariant: true,
+		},
+		{
+			name:          "paid medium effort fits within the higher ceiling",
+			model:         model,
+			plan:          billing.PlanTypePayG,
+			effort:        "medium",
+			wantMaxOutput: 32768, // paid cap already exceeds 8192+headroom
+			wantBudget:    8192,
+			wantInvariant: true,
+		},
+		{
+			name:          "explicit request is honoured when it already clears the budget",
+			requested:     40000,
+			model:         model,
+			plan:          billing.PlanTypeTrial,
+			effort:        "high",
+			wantMaxOutput: 40000,
+			wantBudget:    16384,
+			wantInvariant: true,
+		},
+		{
+			name:          "tiny model ceiling shrinks the budget but keeps the invariant",
+			model:         smallModel,
+			plan:          billing.PlanTypeTrial,
+			effort:        "high",
+			wantMaxOutput: 6000,
+			wantBudget:    6000 - reasoningAnswerHeadroomTokens, // 1904
+			wantInvariant: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			gotMax, gotBudget := reasoningOutputPlan(tc.requested, tc.model, tc.plan, tc.effort)
+			if gotMax != tc.wantMaxOutput {
+				t.Errorf("maxOutput = %d, want %d", gotMax, tc.wantMaxOutput)
+			}
+			if gotBudget != tc.wantBudget {
+				t.Errorf("budget = %d, want %d", gotBudget, tc.wantBudget)
+			}
+			if tc.wantNoReasoning && gotBudget != 0 {
+				t.Errorf("budget = %d, want 0 when reasoning is off", gotBudget)
+			}
+			if tc.wantInvariant && gotBudget >= gotMax {
+				t.Errorf("budget %d must be strictly below maxOutput %d (Anthropic invariant)", gotBudget, gotMax)
+			}
+		})
+	}
+}
 
 type stubFXRateProvider struct {
 	rate float64
