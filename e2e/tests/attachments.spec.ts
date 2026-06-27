@@ -148,6 +148,47 @@ test.describe('composer attachments', () => {
     expect(text).toMatch(/\[\[PII_EMAIL_[A-Z0-9]+\]\]/);
   });
 
+  test('hydrates attachment redaction tokens and survives a reload', async ({
+    page,
+  }) => {
+    await provisionUnlockedAccount(page);
+    // Attach to a brand-new chat (no prior turn) — attaching creates the
+    // conversation, mirroring the reported scenario where the attachment message
+    // is the first message in the thread.
+    await expect(page.getByTestId('attach-button')).toBeVisible();
+
+    const iban = 'DE75512108001245126199';
+    const email = 'cognos@example.com';
+    await setComposerFile(
+      page,
+      'sensitive.md',
+      'text/markdown',
+      `# Personal Information\n\nmy name is ${email}.\n\nMy IBAN is ${iban}\n`,
+    );
+    await expect(page.getByTestId('attachment-chip')).toContainText('sensitive.md');
+
+    // `[echo]` makes the mock reply with the assembled user turn (body + the
+    // attachment context block), so the redaction tokens surface in a rendered
+    // message and we can assert they hydrate back to the originals.
+    await page.getByLabel(COMPOSER_LABEL).fill('[echo] summarise the attached file');
+    const send = page.getByRole('button', { name: /^send$/i });
+    await expect(send).toBeEnabled();
+    await send.click();
+
+    // Bug 1: the mapping is associated with the conversation, so the placeholder
+    // hydrates to the original value (rendered as a redacted pill) — not shown raw.
+    await expect(page.getByText(email).first()).toBeVisible();
+    await expect(page.getByText(iban).first()).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('[[PII_EMAIL_');
+
+    // Bug 2: after a reload the attachment message decrypts and the tokens still
+    // hydrate from the persisted, conversation-scoped mappings.
+    await page.reload();
+    await expect(page.locator('body')).not.toContainText('Failed to decrypt message');
+    await expect(page.getByText(email).first()).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('[[PII_EMAIL_');
+  });
+
   test('removing a selected attachment clears it before send', async ({ page }) => {
     await provisionUnlockedAccount(page);
     await startConversation(page);
