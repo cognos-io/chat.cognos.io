@@ -344,6 +344,21 @@ export const reasoningDisablingEffort = (
 ): string | undefined =>
   ['off', 'none'].find((effort) => reasoningEfforts.includes(effort));
 
+// Output budget for title generation. Normally tiny (a title is a few words),
+// but when the model is a reasoning model we can't switch off, hidden reasoning
+// shares this budget — so give it enough headroom that the title text still
+// fits. Belt-and-braces alongside reasoningDisablingEffort.
+export const TITLE_MAX_OUTPUT_TOKENS = 15;
+export const TITLE_MAX_OUTPUT_TOKENS_WITH_REASONING = 2048;
+
+export const titleMaxOutputTokens = (reasoningEfforts: readonly string[]): number => {
+  const reasonsUnconditionally =
+    reasoningEfforts.length > 0 && !reasoningDisablingEffort(reasoningEfforts);
+  return reasonsUnconditionally
+    ? TITLE_MAX_OUTPUT_TOKENS_WITH_REASONING
+    : TITLE_MAX_OUTPUT_TOKENS;
+};
+
 export const applyCompletionStreamDelta = (
   existing: ReadonlyArray<Message>,
   request: MessageRequest,
@@ -2057,7 +2072,7 @@ export class MessageService {
     const model = this._modelService.selectedModel();
     return this._api
       .complete({
-        maxOutputTokens: 15,
+        maxOutputTokens: titleMaxOutputTokens(model.reasoningEfforts),
         persist: false,
         messages: [{ role: 'user', content: startingMessage }],
         modelId: model.id,
@@ -2065,7 +2080,8 @@ export class MessageService {
         systemPrompt: generateConversationSystemPrompt,
         // Disable reasoning when the model supports it — otherwise a reasoning
         // model burns the small output budget on hidden reasoning and returns
-        // no title text.
+        // no title text. When it can't be disabled, titleMaxOutputTokens widens
+        // the budget so the title still fits.
         reasoningEffort: reasoningDisablingEffort(model.reasoningEfforts),
       })
       .pipe(

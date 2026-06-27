@@ -9,6 +9,8 @@ import { Message } from '@app/interfaces/message';
 import { CompleteResponse, GenerateImageResponse } from './cognos-api.service';
 import {
   DELETED_MESSAGE_MARKER,
+  TITLE_MAX_OUTPUT_TOKENS,
+  TITLE_MAX_OUTPUT_TOKENS_WITH_REASONING,
   applyCompletionReasoningStreamDelta,
   applyCompletionStreamDelta,
   applyCompletionStreamResponse,
@@ -27,6 +29,7 @@ import {
   resolveCompletionFailureMessage,
   splitStreamDeltaForDisplay,
   streamingAssistantMessageId,
+  titleMaxOutputTokens,
 } from './message.service';
 
 const makeResponse = (overrides: Partial<CompleteResponse> = {}): CompleteResponse => ({
@@ -882,5 +885,27 @@ describe('reasoningDisablingEffort', () => {
     },
   ])('$name', ({ efforts, expected }) => {
     expect(reasoningDisablingEffort(efforts)).toBe(expected);
+  });
+});
+
+describe('titleMaxOutputTokens', () => {
+  it.each([
+    {
+      name: 'non-reasoning model keeps the tiny budget',
+      efforts: [],
+      expected: TITLE_MAX_OUTPUT_TOKENS,
+    },
+    {
+      name: 'reasoning model with an off tier keeps the tiny budget',
+      efforts: ['off', 'low', 'high'],
+      expected: TITLE_MAX_OUTPUT_TOKENS,
+    },
+    {
+      name: 'reasoning model that cannot disable reasoning gets headroom',
+      efforts: ['low', 'medium', 'high'],
+      expected: TITLE_MAX_OUTPUT_TOKENS_WITH_REASONING,
+    },
+  ])('$name', ({ efforts, expected }) => {
+    expect(titleMaxOutputTokens(efforts)).toBe(expected);
   });
 });
