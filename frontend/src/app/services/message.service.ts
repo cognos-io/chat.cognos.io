@@ -732,11 +732,17 @@ export class MessageService {
               take(1),
               switchMap((newConversation) => {
                 return combineLatest([
-                  // Generate a conversation title based on the first message
+                  // Generate a conversation title based on the first message.
+                  // Title generation (and its conversation PATCH) is best-effort:
+                  // swallow any failure so it can never error the combineLatest
+                  // and abort the user's in-flight answer stream.
                   this.generateAndSetConversationTitle(
                     newConversation.record,
                     messageRequest.content,
-                  ).pipe(startWith(newConversation)),
+                  ).pipe(
+                    startWith(newConversation),
+                    catchError(() => EMPTY),
+                  ),
                   // And send the message
                   this.sendMessage(messageRequest).pipe(
                     finalize(() => this._isNewConversation$.next(false)),
