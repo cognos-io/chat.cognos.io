@@ -10,6 +10,7 @@ import {
   combineLatest,
   concatMap,
   delay,
+  distinctUntilChanged,
   exhaustMap,
   filter,
   finalize,
@@ -638,6 +639,13 @@ export class MessageService {
       // when the conversation changes, load the messages from the backend
       (state) =>
         this._conversationService.conversation$.pipe(
+          // Only react when the *selected conversation* changes — not on every
+          // record mutation. A title PATCH (or any in-place record update)
+          // swaps the conversation object and would otherwise re-emit here,
+          // aborting the live /complete stream of the first message and
+          // reloading messages mid-turn. Gate on the id so we load + abort only
+          // on a genuine conversation switch.
+          distinctUntilChanged((a, b) => a?.record.id === b?.record.id),
           switchMap((conversation) => {
             this.abortActiveCompletion();
 
