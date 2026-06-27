@@ -43,7 +43,12 @@ export type RedactionType =
   | 'custom';
 
 /** Where a redacted source originated. Modelled now so documents reuse it. */
-export type RedactionSourceKind = 'message' | 'document' | 'document_chunk';
+export type RedactionSourceKind =
+  | 'message'
+  | 'document'
+  | 'document_chunk'
+  // Text extracted from a user-uploaded attachment (spec docs/specs/attachments.md).
+  | 'attachment';
 
 export interface RedactionSource {
   kind: RedactionSourceKind;

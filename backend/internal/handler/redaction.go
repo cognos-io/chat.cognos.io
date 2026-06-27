@@ -27,6 +27,7 @@ var validRedactionSourceKinds = map[string]bool{
 	"message":        true,
 	"document":       true,
 	"document_chunk": true,
+	"attachment":     true,
 }
 
 type redactionKeyResponse struct {
