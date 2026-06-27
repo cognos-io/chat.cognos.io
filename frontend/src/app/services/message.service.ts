@@ -332,6 +332,18 @@ export const buildCompletionMessages = (
 export const streamingAssistantMessageId = (requestId: string): string =>
   `${requestId}:assistant`;
 
+// reasoningDisablingEffort returns the reasoning-effort value that turns
+// reasoning off for a model, or undefined when the model has no such tier (a
+// non-reasoning model, where sending any effort would be rejected). Used for
+// short utility completions like title generation: a reasoning model would
+// otherwise spend the tiny output budget on hidden reasoning and return an
+// empty title. Requesty normalises the off-tier to "off"; "none" is accepted
+// as a synonym.
+export const reasoningDisablingEffort = (
+  reasoningEfforts: readonly string[],
+): string | undefined =>
+  ['off', 'none'].find((effort) => reasoningEfforts.includes(effort));
+
 export const applyCompletionStreamDelta = (
   existing: ReadonlyArray<Message>,
   request: MessageRequest,
@@ -2042,14 +2054,19 @@ export class MessageService {
   private generateConversationTitle(
     startingMessage: string,
   ): Observable<string | null> {
+    const model = this._modelService.selectedModel();
     return this._api
       .complete({
         maxOutputTokens: 15,
         persist: false,
         messages: [{ role: 'user', content: startingMessage }],
-        modelId: this._modelService.selectedModel().id,
+        modelId: model.id,
         personaId: generateConversationPersonaId,
         systemPrompt: generateConversationSystemPrompt,
+        // Disable reasoning when the model supports it — otherwise a reasoning
+        // model burns the small output budget on hidden reasoning and returns
+        // no title text.
+        reasoningEffort: reasoningDisablingEffort(model.reasoningEfforts),
       })
       .pipe(
         catchError((err) => {

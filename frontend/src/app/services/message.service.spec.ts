@@ -20,6 +20,7 @@ import {
   isCompletionAbortError,
   messageTreeAccessors,
   parseCompletionBillingRestriction,
+  reasoningDisablingEffort,
   regenerateContextPath,
   removeStreamingCompletionMessages,
   resolveCompletionErrorMessage,
@@ -849,5 +850,37 @@ describe('applyImageGenerationResponse', () => {
     const snapshot = existing[0].record_id;
     applyImageGenerationResponse(existing, 'req-1', response, attachment, 'blob:x');
     expect(existing[0].record_id).toBe(snapshot);
+  });
+});
+
+describe('reasoningDisablingEffort', () => {
+  it.each([
+    {
+      name: 'requesty reasoning model exposes off',
+      efforts: ['off', 'low', 'medium', 'high'],
+      expected: 'off',
+    },
+    {
+      name: 'model that uses none as its off tier',
+      efforts: ['none', 'low', 'high'],
+      expected: 'none',
+    },
+    {
+      name: 'prefers off when both are present',
+      efforts: ['none', 'off', 'high'],
+      expected: 'off',
+    },
+    {
+      name: 'reasoning model without an off tier',
+      efforts: ['low', 'medium', 'high'],
+      expected: undefined,
+    },
+    {
+      name: 'non-reasoning model has no efforts',
+      efforts: [],
+      expected: undefined,
+    },
+  ])('$name', ({ efforts, expected }) => {
+    expect(reasoningDisablingEffort(efforts)).toBe(expected);
   });
 });
