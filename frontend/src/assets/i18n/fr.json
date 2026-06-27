@@ -577,7 +577,8 @@
           "processing_failed": "Impossible de traiter ce fichier",
           "no_text_extracted": "Aucun texte n’a pu être extrait de ce fichier",
           "image_decode_failed": "Cette image n’a pas pu être lue"
-        }
+        },
+        "imageNeedsVision": "{{ model }} ne peut pas lire les images. Choisissez un modèle compatible avec la vision pour joindre des images."
       }
     },
     "conversation": {

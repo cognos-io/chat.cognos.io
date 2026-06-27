@@ -166,6 +166,7 @@ export const processAttachment = async (
       hasTextContext: output.ai.hasTextContext,
       textContext: output.ai.textContext,
       contextTruncated: output.ai.textContextTruncated,
+      imageContext: output.ai.imageContext,
     },
   };
 };

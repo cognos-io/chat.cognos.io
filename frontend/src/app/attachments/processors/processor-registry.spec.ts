@@ -21,6 +21,8 @@ describe('processor registry', () => {
       ['memo.docx', '', 'docx'],
       ['data.xlsx', '', 'excel'],
       ['data.xls', '', 'excel'],
+      ['cat.png', '', 'image'],
+      ['cat.jpeg', '', 'image'],
     ];
     for (const [name, mime, id] of cases) {
       expect(selectProcessor(defaultProcessors(), inputFor(name, mime)).id).toBe(id);
@@ -29,7 +31,7 @@ describe('processor registry', () => {
 
   it('fails closed for unsupported files', () => {
     expect(() =>
-      selectProcessor(defaultProcessors(), inputFor('photo.png', 'image/png')),
+      selectProcessor(defaultProcessors(), inputFor('clip.mp4', 'video/mp4')),
     ).toThrow(AttachmentProcessingError);
     try {
       selectProcessor(defaultProcessors(), inputFor('archive.zip'));

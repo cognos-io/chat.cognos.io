@@ -51,13 +51,33 @@ describe('buildCompletionAttachmentInputs', () => {
     });
   });
 
-  it('omits a context entry when there is no text context', () => {
+  it('omits a context entry when there is no text or image context', () => {
     const selected: SelectedAttachment[] = [
       { ...base, record: record('rec-x'), textContext: '   ' },
     ];
     const out = buildCompletionAttachmentInputs(selected);
     expect(out.attachmentIds).toEqual(['rec-x']);
     expect(out.attachmentContexts).toHaveLength(0);
+  });
+
+  it('maps an image attachment to image_base64 context', () => {
+    const selected: SelectedAttachment[] = [
+      {
+        ...base,
+        fileName: 'cat.png',
+        mimeType: 'image/png',
+        processorId: 'image',
+        record: record('rec-img'),
+        imageContext: { base64: 'AAAA', mimeType: 'image/webp', width: 10, height: 10 },
+      },
+    ];
+    const out = buildCompletionAttachmentInputs(selected);
+    expect(out.attachmentIds).toEqual(['rec-img']);
+    expect(out.attachmentContexts[0]).toMatchObject({
+      attachmentId: 'rec-img',
+      imageBase64: 'AAAA',
+      imageMimeType: 'image/webp',
+    });
   });
 });
 

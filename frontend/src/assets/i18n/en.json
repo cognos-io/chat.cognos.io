@@ -577,7 +577,8 @@
           "processing_failed": "Couldn’t process this file",
           "no_text_extracted": "No text could be extracted from this file",
           "image_decode_failed": "This image couldn’t be read"
-        }
+        },
+        "imageNeedsVision": "{{ model }} can’t read images. Switch to a vision-capable model to attach images."
       }
     },
     "conversation": {

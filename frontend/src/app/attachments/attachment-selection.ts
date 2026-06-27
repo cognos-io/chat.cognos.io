@@ -3,6 +3,7 @@ import {
   AttachmentProcessingErrorCode,
   AttachmentProcessingStage,
   EncryptedAttachmentDraft,
+  ImageAiContext,
 } from './attachment.types';
 
 /**
@@ -23,6 +24,9 @@ export interface SelectedAttachment {
   record?: AttachmentRecord;
   textContext?: string;
   contextTruncated?: boolean;
+  imageContext?: ImageAiContext;
+  /** True when this attachment is an image (gated to vision-capable models). */
+  isImage?: boolean;
 }
 
 export interface CompletionAttachmentContext {
@@ -32,6 +36,8 @@ export interface CompletionAttachmentContext {
   processorId: string;
   textContext?: string;
   contextTruncated?: boolean;
+  imageBase64?: string;
+  imageMimeType?: string;
 }
 
 export interface AttachmentCompletionPayload {
@@ -44,8 +50,9 @@ const isReady = (attachment: SelectedAttachment): boolean =>
 
 /**
  * buildCompletionAttachmentInputs maps ready attachments to the completion
- * request fields: the persisted ids and the transient provider context. Only
- * attachments with text context contribute a context entry.
+ * request fields: the persisted ids and the transient provider context. An
+ * attachment contributes a context entry when it has extracted text or a
+ * model-ready image.
  */
 export const buildCompletionAttachmentInputs = (
   selected: readonly SelectedAttachment[],
@@ -54,7 +61,10 @@ export const buildCompletionAttachmentInputs = (
   return {
     attachmentIds: ready.map((attachment) => attachment.record!.id),
     attachmentContexts: ready
-      .filter((attachment) => (attachment.textContext ?? '').trim().length > 0)
+      .filter(
+        (attachment) =>
+          (attachment.textContext ?? '').trim().length > 0 || !!attachment.imageContext,
+      )
       .map((attachment) => ({
         attachmentId: attachment.record!.id,
         displayName: attachment.fileName,
@@ -62,6 +72,8 @@ export const buildCompletionAttachmentInputs = (
         processorId: attachment.processorId,
         textContext: attachment.textContext,
         contextTruncated: attachment.contextTruncated,
+        imageBase64: attachment.imageContext?.base64,
+        imageMimeType: attachment.imageContext?.mimeType,
       })),
   };
 };

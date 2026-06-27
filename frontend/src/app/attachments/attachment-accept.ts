@@ -13,6 +13,22 @@ export const ACCEPTED_ATTACHMENT_EXTENSIONS = [
   '.docx',
   '.xlsx',
   '.xls',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.webp',
 ] as const;
 
 export const ACCEPTED_ATTACHMENT_ACCEPT = ACCEPTED_ATTACHMENT_EXTENSIONS.join(',');
+
+const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'];
+
+/** True for files the image processor handles — gated to vision models. */
+export const isImageFile = (file: File): boolean => {
+  if (file.type.startsWith('image/')) {
+    return true;
+  }
+  const dot = file.name.lastIndexOf('.');
+  const ext = dot >= 0 ? file.name.slice(dot + 1).toLowerCase() : '';
+  return IMAGE_EXTENSIONS.includes(ext);
+};

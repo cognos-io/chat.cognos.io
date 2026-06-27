@@ -36,7 +36,10 @@ import {
   type CognosRedactedTextLabels,
 } from '@cognos/ui-angular';
 
-import { ACCEPTED_ATTACHMENT_ACCEPT } from '@app/attachments/attachment-accept';
+import {
+  ACCEPTED_ATTACHMENT_ACCEPT,
+  isImageFile,
+} from '@app/attachments/attachment-accept';
 import { AttachmentProcessingService } from '@app/attachments/attachment-processing.service';
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import {
@@ -1323,12 +1326,30 @@ export class MessageFormComponent {
     if (!conversation?.keyPair) {
       return;
     }
+
+    // Images need a vision-capable model. Reject them with a clear notice when
+    // the current model can't read images, rather than failing later on send.
+    let rejectedImages = false;
+    let candidates = files;
+    if (!this.modelService.selectedModel().supportsVision) {
+      const filtered = files.filter((file) => !isImageFile(file));
+      rejectedImages = filtered.length < files.length;
+      candidates = filtered;
+    }
+
     const accepted = this.attachments.add(
-      files,
+      candidates,
       conversation.record.id,
       conversation.keyPair.publicKey,
     );
-    if (accepted < files.length) {
+
+    if (rejectedImages) {
+      this.attachmentNotice.set(
+        this._transloco.translate('chat.composer.attachments.imageNeedsVision', {
+          model: this.modelService.selectedModel().name,
+        }),
+      );
+    } else if (accepted < candidates.length) {
       this.attachmentNotice.set(
         this._transloco.translate('chat.composer.attachments.tooMany', {
           max: this.attachments.count(),

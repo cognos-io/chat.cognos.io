@@ -44,6 +44,8 @@ export interface CompleteAttachmentContext {
   processorId: string;
   textContext?: string;
   contextTruncated?: boolean;
+  imageBase64?: string;
+  imageMimeType?: string;
 }
 
 export interface CompleteRequest {
@@ -238,6 +240,8 @@ interface ApiCompletionAttachmentInput {
   processor_id: string;
   text_context?: string;
   context_truncated?: boolean;
+  image_base64?: string;
+  image_mime_type?: string;
 }
 
 interface ApiCompactionMessageInput {
@@ -612,6 +616,8 @@ export const mapCompleteRequest = (request: CompleteRequest): ApiCompleteRequest
     processor_id: context.processorId,
     text_context: context.textContext,
     context_truncated: context.contextTruncated,
+    image_base64: context.imageBase64,
+    image_mime_type: context.imageMimeType,
   })),
 });
 

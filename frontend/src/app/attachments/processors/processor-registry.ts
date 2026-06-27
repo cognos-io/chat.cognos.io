@@ -5,6 +5,7 @@ import {
 } from '../attachment.types';
 import { DocxProcessor } from './docx.processor';
 import { ExcelProcessor } from './excel.processor';
+import { ImageProcessor } from './image.processor';
 import { PdfProcessor } from './pdf.processor';
 import { TextProcessor } from './text.processor';
 
@@ -18,7 +19,7 @@ export const defaultProcessors = (): readonly AttachmentProcessor[] => [
   new PdfProcessor(),
   new DocxProcessor(),
   new ExcelProcessor(),
-  // ImageProcessor registers here in the vision phase.
+  new ImageProcessor(),
 ];
 
 export const selectProcessor = (

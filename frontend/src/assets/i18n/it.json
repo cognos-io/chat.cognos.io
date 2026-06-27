@@ -577,7 +577,8 @@
           "processing_failed": "Impossibile elaborare il file",
           "no_text_extracted": "Impossibile estrarre testo da questo file",
           "image_decode_failed": "Impossibile leggere questa immagine"
-        }
+        },
+        "imageNeedsVision": "{{ model }} non può leggere le immagini. Passa a un modello con visione per allegare immagini."
       }
     },
     "conversation": {

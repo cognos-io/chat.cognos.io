@@ -148,6 +148,8 @@ export class AttachmentProcessingService {
       draft,
       textContext: draft.ai.textContext,
       contextTruncated: draft.ai.contextTruncated,
+      imageContext: draft.ai.imageContext,
+      isImage: !!draft.ai.imageContext,
     });
 
     this._upload.upload(target.conversationId, draft).subscribe({
