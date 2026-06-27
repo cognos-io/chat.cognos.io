@@ -44,7 +44,12 @@ export class AttachmentProcessingService {
    * add queues files for processing. Returns the number actually accepted (the
    * per-message cap may reject extras). The caller surfaces the cap to the user.
    */
-  add(files: File[], ownerPublicKey: Uint8Array, preferRawForPdf = false): number {
+  add(
+    files: File[],
+    ownerPublicKey: Uint8Array,
+    preferRawForPdf = false,
+    redact = false,
+  ): number {
     const remaining =
       USER_ATTACHMENT_MAX_COUNT_PER_MESSAGE - this._attachments().length;
     const accepted = files.slice(0, Math.max(0, remaining));
@@ -69,6 +74,7 @@ export class AttachmentProcessingService {
         ownerPublicKey,
         limits: defaultAttachmentLimits(),
         preferRawForPdf,
+        redact,
       };
       this.ensureWorker().postMessage(request);
     }
@@ -179,6 +185,7 @@ export class AttachmentProcessingService {
       isImage: !!draft.ai.imageContext,
       fileContext: draft.ai.fileContext,
       isRawFile: !!draft.ai.fileContext,
+      redactionEntries: draft.ai.redactionEntries,
     });
 
     this._upload.upload(draft).subscribe({

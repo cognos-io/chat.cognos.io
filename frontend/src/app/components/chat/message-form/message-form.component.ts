@@ -1360,6 +1360,9 @@ export class MessageFormComponent {
       ownerPublicKey,
       // Send PDFs raw when the model accepts native files (better quality).
       this.modelService.selectedModel().supportsFileInput,
+      // Redact detected sensitive values in the extracted text at processing time
+      // (opt-out via the redaction toggle), so the provider never sees them.
+      this._redactionService.enabled(),
     );
 
     if (rejectedImages) {
@@ -1765,6 +1768,9 @@ export class MessageFormComponent {
         : undefined,
       attachmentContexts: attachmentInputs.attachmentContexts.length
         ? attachmentInputs.attachmentContexts
+        : undefined,
+      attachmentRedactionEntries: attachmentInputs.redactionEntries.length
+        ? attachmentInputs.redactionEntries
         : undefined,
     };
     this.messageService.sendMessage$.next(messageRequest);

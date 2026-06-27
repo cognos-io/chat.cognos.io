@@ -3,6 +3,7 @@
  * docs/specs/attachments.md). These are framework-free so they can be shared by
  * the Angular services and the attachment Web Worker.
  */
+import { RedactionEntry } from '@app/redaction';
 
 /** USER_ATTACHMENT_* limits (spec §8.4). */
 export const USER_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
@@ -132,6 +133,11 @@ export interface AttachmentManifestV1 {
     context_char_count?: number;
     context_truncated?: boolean;
   };
+  // Redaction mappings minted over the extracted text at processing time. They
+  // travel with the file (sealed in the manifest) so a reused library file keeps
+  // stable placeholders, and are merged into a conversation's redaction scope
+  // when the file is used there (spec docs/specs/pii-redaction.md §6.8).
+  redactions?: RedactionEntry[];
   created_at: string;
 }
 
@@ -161,10 +167,15 @@ export interface EncryptedAttachmentDraft {
   /** Transient provider context (never persisted). */
   ai: {
     hasTextContext: boolean;
+    // Already redacted when redaction was enabled at processing — placeholders,
+    // never raw values. The originals live only in `redactionEntries`.
     textContext?: string;
     contextTruncated?: boolean;
     imageContext?: ImageAiContext;
     fileContext?: FileAiContext;
+    // Mappings minted over the extracted text; merged into the conversation's
+    // redaction scope on send so the assistant's reply hydrates.
+    redactionEntries?: RedactionEntry[];
   };
 }
 
@@ -204,6 +215,9 @@ export type AttachmentWorkerRequest =
       // Public key the manifest + per-file keys are sealed to. The user's own
       // vault key, so the file is recoverable in any of their conversations.
       ownerPublicKey: Uint8Array;
+      // When true, redact detected sensitive values in the extracted text before
+      // it can reach the provider, minting mappings stored in the manifest.
+      redact?: boolean;
       limits?: AttachmentProcessingLimits;
       // When true and the file is a PDF, send the raw file to the model instead
       // of extracting text (the selected model supports native file input).

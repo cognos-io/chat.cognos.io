@@ -1,3 +1,5 @@
+import { RedactionEntry } from '@app/redaction';
+
 import { AttachmentRecord } from './attachment-upload.service';
 import {
   AttachmentProcessingErrorCode,
@@ -32,6 +34,12 @@ export interface SelectedAttachment {
   isImage?: boolean;
   /** True when this attachment is a raw file (gated to file-capable models). */
   isRawFile?: boolean;
+  /**
+   * Redaction mappings minted over the extracted text (when redaction is on).
+   * Persisted to the conversation's redaction scope on send so the tokens in the
+   * (already-redacted) textContext hydrate. Never sent to the provider.
+   */
+  redactionEntries?: RedactionEntry[];
 }
 
 /**
@@ -50,6 +58,7 @@ export interface LibrarySelection {
   contextTruncated?: boolean;
   imageContext?: ImageAiContext;
   fileContext?: FileAiContext;
+  redactionEntries?: RedactionEntry[];
 }
 
 export interface CompletionAttachmentContext {
@@ -69,6 +78,12 @@ export interface CompletionAttachmentContext {
 export interface AttachmentCompletionPayload {
   attachmentIds: string[];
   attachmentContexts: CompletionAttachmentContext[];
+  /**
+   * Aggregated redaction mappings across the ready attachments, deduped by token.
+   * Persisted to the conversation's redaction scope on send (never sent to the
+   * provider — the wire contexts carry only the already-redacted text).
+   */
+  redactionEntries: RedactionEntry[];
 }
 
 const isReady = (attachment: SelectedAttachment): boolean =>
@@ -84,7 +99,14 @@ export const buildCompletionAttachmentInputs = (
   selected: readonly SelectedAttachment[],
 ): AttachmentCompletionPayload => {
   const ready = selected.filter(isReady);
+  const redactionByToken = new Map<string, RedactionEntry>();
+  for (const attachment of ready) {
+    for (const entry of attachment.redactionEntries ?? []) {
+      redactionByToken.set(entry.token, entry);
+    }
+  }
   return {
+    redactionEntries: [...redactionByToken.values()],
     attachmentIds: ready.map((attachment) => attachment.record!.id),
     attachmentContexts: ready
       .filter(

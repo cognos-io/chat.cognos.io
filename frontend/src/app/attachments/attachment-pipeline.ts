@@ -1,5 +1,12 @@
 import { Base64 } from 'js-base64';
 
+import {
+  RedactionEntry,
+  applyRedactions,
+  defaultTokenGenerator,
+  detectSensitiveText,
+} from '@app/redaction';
+
 import { hashBytes } from '../crypto/hash';
 import { createSealedBox } from '../crypto/sealed-box';
 import { randomSecretKey, secretBox } from '../crypto/secret-box';
@@ -30,6 +37,9 @@ export interface ProcessAttachmentInput {
   // When true and the file is a PDF, skip text extraction and send the raw file
   // to the model (the selected model accepts native file input).
   preferRawForPdf?: boolean;
+  // When true, redact detected sensitive values in the extracted text before it
+  // can reach the provider. The minted mappings are stored in the manifest.
+  redact?: boolean;
 }
 
 const isPdf = (detected: { extension: string; detectedMimeType: string }): boolean =>
@@ -155,6 +165,27 @@ export const processAttachment = async (
   }
 
   const clientAttachmentId = newId();
+
+  // Redact the extracted text before it can reach the provider. The redacted
+  // form becomes the transient provider context; the mappings travel sealed in
+  // the manifest so a reused library file keeps stable placeholders.
+  let providerTextContext = output.ai.textContext;
+  let redactionEntries: RedactionEntry[] | undefined;
+  if (input.redact && providerTextContext && providerTextContext.trim().length > 0) {
+    const candidates = detectSensitiveText(providerTextContext);
+    if (candidates.length > 0) {
+      const redacted = applyRedactions(
+        providerTextContext,
+        candidates,
+        [],
+        defaultTokenGenerator,
+        { kind: 'attachment', id: clientAttachmentId },
+      );
+      providerTextContext = redacted.redactedText;
+      redactionEntries = redacted.newEntries;
+    }
+  }
+
   const manifest: AttachmentManifestV1 = {
     version: '1',
     kind: 'library_file',
@@ -171,6 +202,7 @@ export const processAttachment = async (
       context_char_count: output.ai.textContext?.length,
       context_truncated: output.ai.textContextTruncated,
     },
+    redactions: redactionEntries,
     created_at: new Date().toISOString(),
   };
 
@@ -193,10 +225,11 @@ export const processAttachment = async (
     },
     ai: {
       hasTextContext: output.ai.hasTextContext,
-      textContext: output.ai.textContext,
+      textContext: providerTextContext,
       contextTruncated: output.ai.textContextTruncated,
       imageContext: output.ai.imageContext,
       fileContext: output.ai.fileContext,
+      redactionEntries,
     },
   };
 };

@@ -191,6 +191,10 @@ export type MessageRequest = {
   // `attachmentContexts` is the transient provider context (never persisted).
   attachmentIds?: string[];
   attachmentContexts?: CompleteAttachmentContext[];
+  // Redaction mappings minted over attachment text at processing time. Merged
+  // into the conversation's redaction scope on send (persisted, never sent to the
+  // provider). The attachmentContexts already carry the redacted text.
+  attachmentRedactionEntries?: RedactionEntry[];
 };
 
 // REDACTION_INSTRUCTION tells the model to preserve placeholder tokens verbatim
@@ -1138,36 +1142,19 @@ export class MessageService {
       { kind: 'message', id: req.requestId },
     );
 
-    // Attachment text is untrusted user content too (spec docs/specs/attachments.md
-    // §9.5): redact each extracted text_context in lockstep with the body so a
-    // sensitive value never reaches the provider — not in the prompt and not in
-    // an attachment. Carry the body's mappings (and each prior attachment's)
-    // forward so a value shared across them collapses to one placeholder. Image
-    // and raw-file contexts are binary and pass through untouched.
-    const carried: RedactionEntry[] = [...newEntries];
-    const attachmentContexts = req.attachmentContexts?.map((context) => {
-      const text = context.textContext ?? '';
-      if (!text.trim()) {
-        return context;
-      }
-      const redacted = this._redactionService.prepareAttachmentText(
-        conversationId,
-        text,
-        carried,
-        customValues,
-        { kind: 'attachment', id: context.attachmentId },
-      );
-      if (redacted.newEntries.length === 0) {
-        return context;
-      }
-      carried.push(...redacted.newEntries);
-      return { ...context, textContext: redacted.redactedText };
-    });
+    // Attachment text is redacted at processing time and travels with the file
+    // (its mappings are minted there, stable per file). Here we only merge those
+    // mappings into this conversation's redaction scope so the placeholders in the
+    // already-redacted attachment context hydrate (spec docs/specs/pii-redaction.md
+    // §6.8). The wire attachmentContexts already carry redacted text — leave them.
+    const carried: RedactionEntry[] = [
+      ...newEntries,
+      ...(req.attachmentRedactionEntries ?? []),
+    ];
 
     return {
       ...req,
       content: redactedText,
-      attachmentContexts,
       redactionEntries: carried,
     };
   }

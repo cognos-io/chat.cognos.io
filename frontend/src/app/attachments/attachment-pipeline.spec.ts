@@ -63,6 +63,43 @@ describe('processAttachment', () => {
     expect(draft.ai.textContext).toBe('TOP SECRET CONTENT');
   });
 
+  it('redacts extracted text and stores the mappings in the manifest when asked', async () => {
+    const draft = await processAttachment({
+      fileName: 'pii.txt',
+      declaredMimeType: 'text/plain',
+      bytes: bytes('email me at jane@example.com about it'),
+      ownerPublicKey: keyPair.publicKey,
+      redact: true,
+    });
+
+    // The transient provider context is redacted — never the raw value.
+    expect(draft.ai.textContext).not.toContain('jane@example.com');
+    expect(draft.ai.textContext).toMatch(/\[\[PII_EMAIL_[A-Z0-9]+\]\]/);
+    expect(draft.ai.redactionEntries).toHaveLength(1);
+    expect(draft.ai.redactionEntries?.[0].original).toBe('jane@example.com');
+
+    // The mappings travel sealed in the manifest (recoverable for reuse).
+    const manifestBytes = openSealedBox(
+      Base64.toUint8Array(draft.manifestB64),
+      keyPair,
+    );
+    const manifest = JSON.parse(text(manifestBytes)) as AttachmentManifestV1;
+    expect(manifest.redactions).toHaveLength(1);
+    expect(manifest.redactions?.[0].original).toBe('jane@example.com');
+  });
+
+  it('leaves extracted text untouched when redaction is off', async () => {
+    const draft = await processAttachment({
+      fileName: 'pii.txt',
+      declaredMimeType: 'text/plain',
+      bytes: bytes('email me at jane@example.com'),
+      ownerPublicKey: keyPair.publicKey,
+      // redact omitted (defaults off)
+    });
+    expect(draft.ai.textContext).toContain('jane@example.com');
+    expect(draft.ai.redactionEntries).toBeUndefined();
+  });
+
   it('never exposes the filename or plaintext content in the sealed manifest', async () => {
     const draft = await run('my-private-file.txt', 'CONFIDENTIAL BODY TEXT');
     // The sealed base64 must not contain the plaintext name or content.
