@@ -7,17 +7,18 @@ import {
   input,
   output,
   signal,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosButtonComponent } from "../../button/button.component";
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosModalComponent } from "../../overlays/modal/modal.component";
-import { CognosTextFieldComponent } from "../../primitives/text-field/text-field.component";
-import { CognosFileBadgeComponent } from "../../files/file-badge/file-badge.component";
-import type { CognosVaultFile } from "../vault.types";
+import { CognosButtonComponent } from '../../button/button.component';
+import { CognosFileBadgeComponent } from '../../files/file-badge/file-badge.component';
+import { injectIsMobile } from '../../foundations/breakpoint';
+import { CognosIconComponent } from '../../icon/icon.component';
+import { CognosModalComponent } from '../../overlays/modal/modal.component';
+import { CognosTextFieldComponent } from '../../primitives/text-field/text-field.component';
+import type { CognosVaultFile } from '../vault.types';
 
 @Component({
-  selector: "cog-vault-picker",
+  selector: 'cog-vault-picker',
   standalone: true,
   imports: [
     CognosButtonComponent,
@@ -28,32 +29,57 @@ import type { CognosVaultFile } from "../vault.types";
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <cog-modal [open]="true" title="Attach from your Vault" [width]="520" [stickyFooter]="true" (close)="close.emit()">
+    <cog-modal
+      [open]="true"
+      title="Attach from your Vault"
+      [width]="520"
+      [stickyFooter]="true"
+      (close)="close.emit()"
+    >
       <div class="cog-vault-picker__body">
         <div class="cog-vault-picker__intro">
-          Reference encrypted files in this chat. They're decrypted on your device only when the model needs them, then sealed again.
+          Reference encrypted files in this chat. They're decrypted on your device only
+          when the model needs them, then sealed again.
         </div>
 
-        <cog-text-field icon="search" placeholder="Search the Vault" [value]="search()" (valueChange)="search.set($event)" />
+        <cog-text-field
+          icon="search"
+          placeholder="Search the Vault"
+          [value]="search()"
+          (valueChange)="search.set($event)"
+        />
 
         <div class="cog-vault-picker__list">
           @for (file of filteredFiles(); track file.id; let index = $index) {
-            <button class="cog-vault-picker__row" [class.cog-vault-picker__row--selected]="isSelected(file.id)" type="button" [style.border-top]="index > 0 ? '1px solid var(--cog-border)' : null" (click)="toggle(file.id)">
-              <span class="cog-vault-picker__checkbox" [class.cog-vault-picker__checkbox--selected]="isSelected(file.id)">
+            <button
+              class="cog-vault-picker__row"
+              [class.cog-vault-picker__row--selected]="isSelected(file.id)"
+              type="button"
+              [style.border-top]="index > 0 ? '1px solid var(--cog-border)' : null"
+              (click)="toggle(file.id)"
+            >
+              <span
+                class="cog-vault-picker__checkbox"
+                [class.cog-vault-picker__checkbox--selected]="isSelected(file.id)"
+              >
                 @if (isSelected(file.id)) {
                   <cog-icon name="check" [size]="12" tone="current" />
                 }
               </span>
 
               @if (file.kind === 'image' && file.img) {
-                <span class="cog-vault-picker__thumb"><img class="cog-vault-picker__thumb-image" [src]="file.img!" alt="" /></span>
+                <span class="cog-vault-picker__thumb"
+                  ><img class="cog-vault-picker__thumb-image" [src]="file.img!" alt=""
+                /></span>
               } @else {
                 <cog-file-badge [ext]="file.ext" [size]="30" [radius]="3" />
               }
 
               <span class="cog-vault-picker__copy">
                 <span class="cog-vault-picker__name">{{ file.name }}</span>
-                <span class="cog-vault-picker__details">{{ file.size }} · {{ file.meta }}</span>
+                <span class="cog-vault-picker__details"
+                  >{{ file.size }} · {{ file.meta }}</span
+                >
               </span>
 
               <cog-icon name="lock" [size]="12" tone="success" />
@@ -65,8 +91,20 @@ import type { CognosVaultFile } from "../vault.types";
       <div cogModalFooter class="cog-vault-picker__footer">
         <span class="cog-vault-picker__count">{{ selectedCount() }} selected</span>
         <div class="cog-vault-picker__actions">
-          <cog-button appearance="subtle" type="button" (click)="close.emit()">Cancel</cog-button>
-          <cog-button appearance="primary" icon="paperclip" type="button" (click)="attachSelection()">
+          <cog-button
+            appearance="subtle"
+            type="button"
+            [fullWidth]="isMobile()"
+            (click)="close.emit()"
+            >Cancel</cog-button
+          >
+          <cog-button
+            appearance="primary"
+            icon="paperclip"
+            type="button"
+            [fullWidth]="isMobile()"
+            (click)="attachSelection()"
+          >
             Attach {{ selectedCount() || '' }}
           </cog-button>
         </div>
@@ -188,16 +226,32 @@ import type { CognosVaultFile } from "../vault.types";
         display: flex;
         gap: 8px;
       }
+
+      /* Mobile sheet: stack the count above full-width actions (two at 50%). */
+      @media (max-width: 600px) {
+        .cog-vault-picker__footer {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .cog-vault-picker__actions {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+        }
+      }
     `,
   ],
 })
 export class CognosVaultPickerComponent {
+  // Full-width footer buttons on the mobile sheet (inline on desktop).
+  protected readonly isMobile = injectIsMobile();
+
   readonly files = input<CognosVaultFile[]>([]);
   readonly initialSelected = input<string[]>([]);
   readonly close = output<void>();
   readonly attach = output<string[]>();
 
-  protected readonly search = signal("");
+  protected readonly search = signal('');
   private readonly selectedIds = signal<Set<string>>(new Set());
   protected readonly filteredFiles = computed(() => {
     const query = this.search().trim().toLowerCase();
@@ -214,7 +268,7 @@ export class CognosVaultPickerComponent {
     });
   }
 
-  @HostListener("window:keydown.escape")
+  @HostListener('window:keydown.escape')
   protected onEscape(): void {
     this.close.emit();
   }

@@ -10,6 +10,7 @@ import {
 import type { CognosIconName } from '@cognos/ui/icons';
 
 import { CognosButtonComponent } from '../../button/button.component';
+import { injectIsMobile } from '../../foundations/breakpoint';
 import { CognosIconComponent } from '../../icon/icon.component';
 import { CognosModalComponent } from '../../overlays/modal/modal.component';
 import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.component';
@@ -137,6 +138,7 @@ export const COGNOS_REDACTED_TEXT_DEFAULT_LABELS: CognosRedactedTextLabels = {
             appearance="link"
             icon="settings"
             type="button"
+            [fullWidth]="isMobile()"
             (click)="onOpenSettings()"
           >
             {{ text().settings }}
@@ -145,7 +147,12 @@ export const COGNOS_REDACTED_TEXT_DEFAULT_LABELS: CognosRedactedTextLabels = {
           <span></span>
         }
 
-        <cog-button appearance="primary" type="button" (click)="closeDetails()">
+        <cog-button
+          appearance="primary"
+          type="button"
+          [fullWidth]="isMobile()"
+          (click)="closeDetails()"
+        >
           {{ text().done }}
         </cog-button>
       </div>
@@ -314,6 +321,9 @@ export const COGNOS_REDACTED_TEXT_DEFAULT_LABELS: CognosRedactedTextLabels = {
   ],
 })
 export class CognosRedactedTextComponent {
+  // Full-width footer buttons on the mobile sheet (inline on desktop).
+  protected readonly isMobile = injectIsMobile();
+
   readonly value = input.required<string>();
   readonly placeholder = input.required<string>();
   readonly kind = input<CognosRedactedTextKind>('custom');

@@ -4,16 +4,17 @@ import {
   HostListener,
   input,
   output,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosButtonComponent } from "../../button/button.component";
-import { CognosSectionMessageComponent } from "../../chat/section-message/section-message.component";
-import { CognosDocAttachmentComponent } from "../../files/doc-attachment/doc-attachment.component";
-import { CognosModalComponent } from "../../overlays/modal/modal.component";
-import type { CognosVaultFile } from "../vault.types";
+import { CognosButtonComponent } from '../../button/button.component';
+import { CognosSectionMessageComponent } from '../../chat/section-message/section-message.component';
+import { CognosDocAttachmentComponent } from '../../files/doc-attachment/doc-attachment.component';
+import { injectIsMobile } from '../../foundations/breakpoint';
+import { CognosModalComponent } from '../../overlays/modal/modal.component';
+import type { CognosVaultFile } from '../vault.types';
 
 @Component({
-  selector: "cog-confirm-shred",
+  selector: 'cog-confirm-shred',
   standalone: true,
   imports: [
     CognosButtonComponent,
@@ -34,7 +35,9 @@ import type { CognosVaultFile } from "../vault.types";
     >
       <div class="cog-confirm-shred__body">
         <p class="cog-confirm-shred__text">
-          Shredding destroys the encryption key for <strong>{{ file().name }}</strong>. The ciphertext can never be opened again — not by you, not by anyone with whom it was shared, not by Cognos.
+          Shredding destroys the encryption key for <strong>{{ file().name }}</strong
+          >. The ciphertext can never be opened again — not by you, not by anyone with
+          whom it was shared, not by Cognos.
         </p>
 
         <div class="cog-confirm-shred__preview">
@@ -50,20 +53,29 @@ import type { CognosVaultFile } from "../vault.types";
         @if (file().refs > 0) {
           <div class="cog-confirm-shred__warning">
             <cog-section-message tone="info" icon="link">
-              It's referenced in {{ file().refs }} chat{{ file().refs === 1 ? '' : 's' }}. Those messages will keep their text, but the file behind them will be unrecoverable.
+              It's referenced in {{ file().refs }} chat{{
+                file().refs === 1 ? '' : 's'
+              }}. Those messages will keep their text, but the file behind them will be
+              unrecoverable.
             </cog-section-message>
           </div>
         }
       </div>
 
       <div cogModalFooter class="cog-confirm-shred__footer">
-        <cog-button appearance="subtle" type="button" (click)="close.emit()">
+        <cog-button
+          appearance="subtle"
+          type="button"
+          [fullWidth]="isMobile()"
+          (click)="close.emit()"
+        >
           Cancel
         </cog-button>
         <cog-button
           appearance="danger"
           icon="shield-x"
           type="button"
+          [fullWidth]="isMobile()"
           (click)="confirmShred()"
         >
           Shred permanently
@@ -94,15 +106,26 @@ import type { CognosVaultFile } from "../vault.types";
         justify-content: flex-end;
         gap: 8px;
       }
+
+      /* Mobile sheet: full-width buttons, two side-by-side at 50% each. */
+      @media (max-width: 600px) {
+        .cog-confirm-shred__footer {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+        }
+      }
     `,
   ],
 })
 export class CognosConfirmShredComponent {
+  // Full-width footer buttons on the mobile sheet (inline on desktop).
+  protected readonly isMobile = injectIsMobile();
+
   readonly file = input.required<CognosVaultFile>();
   readonly close = output<void>();
   readonly confirm = output<CognosVaultFile>();
 
-  @HostListener("window:keydown.escape")
+  @HostListener('window:keydown.escape')
   protected onEscape(): void {
     this.close.emit();
   }
