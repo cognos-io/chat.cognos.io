@@ -82,7 +82,10 @@ test.describe('POST /v1/auth/logout contract', () => {
       // Re-auth with the same credentials so we can confirm the vault
       // session row is gone (the prior token is dead — see the
       // refresh test above).
-      const setup = await request.newContext({ baseURL: POCKETBASE_URL });
+      const setup = await request.newContext({
+        baseURL: POCKETBASE_URL,
+        ignoreHTTPSErrors: true,
+      });
       const reauth = await setup.post('/api/collections/users/auth-with-password', {
         data: { identity: user.account.email, password: user.account.password },
       });
@@ -92,6 +95,7 @@ test.describe('POST /v1/auth/logout contract', () => {
 
       const refreshed = await request.newContext({
         baseURL: POCKETBASE_URL,
+        ignoreHTTPSErrors: true,
         extraHTTPHeaders: { Authorization: `Bearer ${reauthBody.token}` },
       });
       try {

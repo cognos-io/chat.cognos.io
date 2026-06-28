@@ -1,5 +1,7 @@
 import { Page, expect, test } from '@playwright/test';
-import { ServerResponse, createServer } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { ServerResponse } from 'node:http';
+import { createServer } from 'node:https';
 
 import { makeTestAccount } from './fixtures';
 import {
@@ -12,6 +14,9 @@ import {
   gotoRegister,
   submitRegister,
 } from './helpers';
+
+const TLS_CERT = process.env.E2E_TLS_CERT ?? '/tmp/cognos.crt';
+const TLS_KEY = process.env.E2E_TLS_KEY ?? '/tmp/cognos.key';
 
 const corsHeaders = {
   'access-control-allow-origin': '*',
@@ -82,49 +87,52 @@ async function provisionUnlockedAccount(page: Page) {
 test('a failed title update does not abort the answer stream', async ({ page }) => {
   const replyText = 'Answer that must survive a title failure';
 
-  const server = createServer((request, response) => {
-    if (request.method === 'OPTIONS') {
-      response.writeHead(204, corsHeaders);
+  const server = createServer(
+    { cert: readFileSync(TLS_CERT), key: readFileSync(TLS_KEY) },
+    (request, response) => {
+      if (request.method === 'OPTIONS') {
+        response.writeHead(204, corsHeaders);
+        response.end();
+        return;
+      }
+
+      const url = new URL(request.url ?? '/', 'http://127.0.0.1');
+
+      if (url.pathname === '/title') {
+        writeSseHeaders(response);
+        setTimeout(() => {
+          response.end(
+            `data: ${JSON.stringify({
+              type: 'complete',
+              response: completionResponse('Generated title', 'title'),
+            })}\n\n`,
+          );
+        }, 150);
+        return;
+      }
+
+      if (url.pathname === '/main') {
+        writeSseHeaders(response);
+        // First token immediately so the answer is visibly mid-stream when the
+        // title PATCH fails.
+        response.write(
+          `data: ${JSON.stringify({ type: 'delta', delta: 'Answer ' })}\n\n`,
+        );
+        setTimeout(() => {
+          response.end(
+            `data: ${JSON.stringify({
+              type: 'complete',
+              response: completionResponse(replyText, 'main'),
+            })}\n\n`,
+          );
+        }, 2000);
+        return;
+      }
+
+      response.writeHead(404, { ...corsHeaders });
       response.end();
-      return;
-    }
-
-    const url = new URL(request.url ?? '/', 'http://127.0.0.1');
-
-    if (url.pathname === '/title') {
-      writeSseHeaders(response);
-      setTimeout(() => {
-        response.end(
-          `data: ${JSON.stringify({
-            type: 'complete',
-            response: completionResponse('Generated title', 'title'),
-          })}\n\n`,
-        );
-      }, 150);
-      return;
-    }
-
-    if (url.pathname === '/main') {
-      writeSseHeaders(response);
-      // First token immediately so the answer is visibly mid-stream when the
-      // title PATCH fails.
-      response.write(
-        `data: ${JSON.stringify({ type: 'delta', delta: 'Answer ' })}\n\n`,
-      );
-      setTimeout(() => {
-        response.end(
-          `data: ${JSON.stringify({
-            type: 'complete',
-            response: completionResponse(replyText, 'main'),
-          })}\n\n`,
-        );
-      }, 2000);
-      return;
-    }
-
-    response.writeHead(404, { ...corsHeaders });
-    response.end();
-  });
+    },
+  );
 
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
@@ -135,7 +143,7 @@ test('a failed title update does not abort the answer stream', async ({ page }) 
   if (!address || typeof address === 'string') {
     throw new Error('Failed to determine mock stream server address.');
   }
-  const base = `http://127.0.0.1:${address.port}`;
+  const base = `https://127.0.0.1:${address.port}`;
 
   try {
     await provisionUnlockedAccount(page);

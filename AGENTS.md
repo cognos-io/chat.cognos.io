@@ -71,9 +71,8 @@ with other development ports.
 - `just e2e-api` runs the **API** e2e specs (`e2e/tests/*-api.spec.ts`) on isolated ports
   (PocketBase `8095`, mock AI `18085`) and a separate data dir (`backend/testdata/pb_data`), so they
   run cleanly alongside a running `just dev` (which holds `4200`/`8090`). Prefer this for API tests.
-- `just e2e` runs the full suite (browser + API) on the default ports `4200`/`8090`. The browser
-  specs need those exact ports because the dev frontend build hard-codes the backend URL, so **stop
-  `just dev` first** or you'll hit port conflicts.
+- `just e2e` runs the full suite (browser + API) on the same isolated HTTPS E2E stack. Browser specs
+  use a production-style frontend build served by PocketBase, not Angular's live dev server.
 - Both auto-start their own backend + mock AI provider; you don't need `just dev` running.
 
 ### Data access

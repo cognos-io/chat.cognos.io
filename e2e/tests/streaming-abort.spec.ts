@@ -1,5 +1,6 @@
 import { Page, expect, test } from '@playwright/test';
-import { createServer } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { createServer } from 'node:https';
 
 import { makeTestAccount } from './fixtures';
 import {
@@ -12,6 +13,9 @@ import {
   gotoRegister,
   submitRegister,
 } from './helpers';
+
+const TLS_CERT = process.env.E2E_TLS_CERT ?? '/tmp/cognos.crt';
+const TLS_KEY = process.env.E2E_TLS_KEY ?? '/tmp/cognos.key';
 
 const corsHeaders = {
   'access-control-allow-origin': '*',
@@ -131,41 +135,44 @@ test('streaming survives the concurrent title update across multiple turns', asy
 
   let nextReply = 0;
 
-  const server = createServer((request, response) => {
-    if (request.method === 'OPTIONS') {
-      response.writeHead(204, corsHeaders);
-      response.end();
-      return;
-    }
+  const server = createServer(
+    { cert: readFileSync(TLS_CERT), key: readFileSync(TLS_KEY) },
+    (request, response) => {
+      if (request.method === 'OPTIONS') {
+        response.writeHead(204, corsHeaders);
+        response.end();
+        return;
+      }
 
-    const reply = replies[Math.min(nextReply, replies.length - 1)];
-    nextReply += 1;
+      const reply = replies[Math.min(nextReply, replies.length - 1)];
+      nextReply += 1;
 
-    response.writeHead(200, {
-      ...corsHeaders,
-      'cache-control': 'no-cache, no-transform',
-      connection: 'keep-alive',
-      'content-type': 'text/event-stream',
-    });
-    response.flushHeaders();
+      response.writeHead(200, {
+        ...corsHeaders,
+        'cache-control': 'no-cache, no-transform',
+        connection: 'keep-alive',
+        'content-type': 'text/event-stream',
+      });
+      response.flushHeaders();
 
-    // First token — arrives before the title round-trip, so the streaming
-    // placeholder becomes visible.
-    response.write(
-      `data: ${JSON.stringify({ type: 'delta', delta: reply.firstDelta })}\n\n`,
-    );
-
-    // Remaining tokens + completion arrive after the title PATCH would land.
-    setTimeout(() => {
+      // First token — arrives before the title round-trip, so the streaming
+      // placeholder becomes visible.
       response.write(
-        `data: ${JSON.stringify({ type: 'delta', delta: reply.restDelta })}\n\n`,
+        `data: ${JSON.stringify({ type: 'delta', delta: reply.firstDelta })}\n\n`,
       );
 
+      // Remaining tokens + completion arrive after the title PATCH would land.
       setTimeout(() => {
-        response.end(completeEvent(reply));
+        response.write(
+          `data: ${JSON.stringify({ type: 'delta', delta: reply.restDelta })}\n\n`,
+        );
+
+        setTimeout(() => {
+          response.end(completeEvent(reply));
+        }, 1200);
       }, 1200);
-    }, 1200);
-  });
+    },
+  );
 
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
@@ -190,7 +197,7 @@ test('streaming survives the concurrent title update across multiple turns', asy
         await route.continue();
         return;
       }
-      await route.continue({ url: `http://127.0.0.1:${address.port}/stream` });
+      await route.continue({ url: `https://127.0.0.1:${address.port}/stream` });
     });
 
     // --- Turn 1: first message on a brand-new conversation (the race) ---

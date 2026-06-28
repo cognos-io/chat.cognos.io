@@ -69,6 +69,7 @@
   "private": true,
   "scripts": {
     "build": "ng build",
+    "build:e2e": "ng build --configuration e2e",
     "extract-i18n": "ng extract-i18n --output-path=src/locale --format=xlf2",
     "format": "prettier --write \"src/**/*.{ts,js,json,html,scss,css,md}\"",
     "lint": "ng lint --fix",

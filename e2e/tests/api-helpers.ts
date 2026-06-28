@@ -2,7 +2,13 @@ import { APIRequestContext, expect, request } from '@playwright/test';
 
 import { TestAccount, makeTestAccount } from './fixtures';
 
-export const POCKETBASE_URL = process.env.E2E_POCKETBASE_URL ?? 'http://localhost:8090';
+export const POCKETBASE_URL =
+  process.env.E2E_POCKETBASE_URL ?? 'https://cognos.local:8095';
+
+const API_CONTEXT_OPTIONS = {
+  baseURL: POCKETBASE_URL,
+  ignoreHTTPSErrors: true,
+};
 
 export interface ProvisionedApiUser {
   account: TestAccount;
@@ -21,7 +27,7 @@ export interface ProvisionedApiUser {
 export async function provisionApiUser(): Promise<ProvisionedApiUser> {
   const account = makeTestAccount();
 
-  const setup = await request.newContext({ baseURL: POCKETBASE_URL });
+  const setup = await request.newContext(API_CONTEXT_OPTIONS);
 
   const created = await setup.post('/api/collections/users/records', {
     data: {
@@ -47,7 +53,7 @@ export async function provisionApiUser(): Promise<ProvisionedApiUser> {
   await setup.dispose();
 
   const api = await request.newContext({
-    baseURL: POCKETBASE_URL,
+    ...API_CONTEXT_OPTIONS,
     extraHTTPHeaders: { Authorization: `Bearer ${authedBody.token}` },
   });
 
@@ -65,5 +71,5 @@ export async function provisionApiUser(): Promise<ProvisionedApiUser> {
  * test user's token into the request.
  */
 export async function newAnonymousApi(): Promise<APIRequestContext> {
-  return request.newContext({ baseURL: POCKETBASE_URL });
+  return request.newContext(API_CONTEXT_OPTIONS);
 }

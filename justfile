@@ -77,27 +77,19 @@ dev: frontend backend mock-ai
 dev-test:
     @just _dev backend-test
 
-# Run the Playwright end-to-end tests. Requires the backend running (just backend).
+# Run the Playwright end-to-end tests on isolated ports/data.
 [working-directory("e2e")]
-e2e:
+e2e: mkcert
     @pnpm exec playwright test
 
-# Run only the API e2e specs on isolated ports + data dir, so they run cleanly
-# alongside a live `just dev` stack (no 4200/8090 conflicts). Skips the frontend
-# dev server (API specs don't need it) and uses backend/testdata/pb_data.
+# Run only the API e2e specs. Skips the frontend build/static serving.
 [working-directory("e2e")]
-e2e-api:
-    @E2E_SKIP_FRONTEND=1 \
-        E2E_POCKETBASE_URL=http://127.0.0.1:8095 \
-        E2E_POCKETBASE_DIR=./testdata/pb_data \
-        E2E_AI_MOCK_URL=http://127.0.0.1:18085 \
-        E2E_AI_MOCK_HEALTH_URL=http://127.0.0.1:18085/health \
-        E2E_AI_MOCK_PORT=18085 \
-        pnpm exec playwright test api.spec
+e2e-api: mkcert
+    @E2E_SKIP_FRONTEND=1 pnpm exec playwright test api.spec
 
 # Open the Playwright UI runner
 [working-directory("e2e")]
-e2e-ui:
+e2e-ui: mkcert
     @pnpm exec playwright test --ui
 
 # Install Playwright browsers (one-time setup)

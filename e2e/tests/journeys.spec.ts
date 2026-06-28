@@ -137,10 +137,11 @@ test.describe('high-level user journeys', () => {
 
     await page.getByRole('button', { name: /open conversation menu/i }).click();
     await page.getByRole('menuitem', { name: /^pin$/i }).click();
-    await expect(page.getByText(/^pinned$/i)).toBeVisible();
 
     await page.getByRole('button', { name: /open conversation menu/i }).click();
-    await page.getByRole('menuitem', { name: /^unpin$/i }).click();
+    const unpinMenuItem = page.getByRole('menuitem', { name: /^unpin$/i });
+    await expect(unpinMenuItem).toBeVisible();
+    await unpinMenuItem.click();
 
     await expect
       .poll(() => apiPaths.some((path) => path === '/api/v1/user-preferences'))

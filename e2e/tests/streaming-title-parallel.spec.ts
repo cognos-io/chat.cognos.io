@@ -1,5 +1,7 @@
 import { Page, expect, test } from '@playwright/test';
-import { IncomingMessage, ServerResponse, createServer } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { IncomingMessage, ServerResponse } from 'node:http';
+import { createServer } from 'node:https';
 
 import { makeTestAccount } from './fixtures';
 import {
@@ -12,6 +14,9 @@ import {
   gotoRegister,
   submitRegister,
 } from './helpers';
+
+const TLS_CERT = process.env.E2E_TLS_CERT ?? '/tmp/cognos.crt';
+const TLS_KEY = process.env.E2E_TLS_KEY ?? '/tmp/cognos.key';
 
 const corsHeaders = {
   'access-control-allow-origin': '*',
@@ -131,6 +136,7 @@ function runParallelCompletionScenario(
     };
 
     const server = createServer(
+      { cert: readFileSync(TLS_CERT), key: readFileSync(TLS_KEY) },
       (request: IncomingMessage, response: ServerResponse) => {
         if (request.method === 'OPTIONS') {
           response.writeHead(204, corsHeaders);
@@ -204,7 +210,7 @@ function runParallelCompletionScenario(
     if (!address || typeof address === 'string') {
       throw new Error('Failed to determine mock stream server address.');
     }
-    const base = `http://127.0.0.1:${address.port}`;
+    const base = `https://127.0.0.1:${address.port}`;
 
     try {
       await provisionUnlockedAccount(page);

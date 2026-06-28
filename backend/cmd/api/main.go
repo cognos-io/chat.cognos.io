@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"time"
@@ -23,8 +25,10 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	bifrostschemas "github.com/maximhq/bifrost/core/schemas"
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+	"github.com/pocketbase/pocketbase/tools/hook"
 	"github.com/spf13/cobra"
 
 	_ "github.com/cognos-io/chat.cognos.io/backend/db/migrations" // import migration files
@@ -58,6 +62,38 @@ type appHookParams struct {
 func NewServer() *pocketbase.PocketBase {
 	app := pocketbase.New()
 
+	var publicDir string
+	app.RootCmd.PersistentFlags().StringVar(
+		&publicDir,
+		"publicDir",
+		"",
+		"the directory to serve static files from",
+	)
+
+	var indexFallback bool
+	app.RootCmd.PersistentFlags().BoolVar(
+		&indexFallback,
+		"indexFallback",
+		false,
+		"fallback static file requests to index.html for SPA routes",
+	)
+
+	var tlsCert string
+	app.RootCmd.PersistentFlags().StringVar(
+		&tlsCert,
+		"tlsCert",
+		"",
+		"the TLS certificate file to use for HTTPS",
+	)
+
+	var tlsKey string
+	app.RootCmd.PersistentFlags().StringVar(
+		&tlsKey,
+		"tlsKey",
+		"",
+		"the TLS private key file to use for HTTPS",
+	)
+
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		Dir:         "./db/migrations",
 		Automigrate: true,
@@ -89,6 +125,41 @@ func NewServer() *pocketbase.PocketBase {
 	syncCmd.Flags().Bool("force-disable-absent", false,
 		"disable models missing from Requesty even if many are absent (manual cleanup)")
 	app.RootCmd.AddCommand(syncCmd)
+
+	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		if tlsCert == "" && tlsKey == "" {
+			return e.Next()
+		}
+		if tlsCert == "" || tlsKey == "" {
+			return fmt.Errorf("--tlsCert and --tlsKey must be provided together")
+		}
+
+		cert, err := tls.LoadX509KeyPair(tlsCert, tlsKey)
+		if err != nil {
+			return fmt.Errorf("load TLS certificate: %w", err)
+		}
+
+		cfg := &tls.Config{MinVersion: tls.VersionTLS12}
+		if e.Server.TLSConfig != nil {
+			cfg = e.Server.TLSConfig.Clone()
+		}
+		cfg.Certificates = []tls.Certificate{cert}
+		cfg.GetCertificate = nil
+		e.Server.TLSConfig = cfg
+
+		return e.Next()
+	})
+
+	app.OnServe().Bind(&hook.Handler[*core.ServeEvent]{
+		Func: func(e *core.ServeEvent) error {
+			if publicDir != "" && !e.Router.HasRoute(http.MethodGet, "/{path...}") {
+				e.Router.GET("/{path...}", apis.Static(os.DirFS(publicDir), indexFallback))
+			}
+
+			return e.Next()
+		},
+		Priority: 999,
+	})
 
 	return app
 }

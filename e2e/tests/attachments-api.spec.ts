@@ -14,11 +14,14 @@ const CONVERSATION_DATA = Buffer.from(
 
 interface AttachmentResponse {
   id: string;
-  conversation: string;
-  message?: string;
   size_bytes: number;
   files: string[];
   data: string;
+}
+
+interface AttachmentUsageResponse {
+  conversation: string;
+  message: string;
 }
 
 interface MessageListResponse {
@@ -52,23 +55,19 @@ async function createConversationWithKey(
 
 async function uploadAttachment(
   user: Awaited<ReturnType<typeof provisionApiUser>>,
-  conversationID: string,
   ciphertext: Buffer,
   manifestB64: string,
 ): Promise<AttachmentResponse> {
-  const res = await user.api.post(
-    `/api/v1/conversations/${conversationID}/attachments`,
-    {
-      multipart: {
-        data: manifestB64,
-        files: {
-          name: 'art-0.enc',
-          mimeType: 'application/octet-stream',
-          buffer: ciphertext,
-        },
+  const res = await user.api.post('/api/v1/attachments', {
+    multipart: {
+      data: manifestB64,
+      files: {
+        name: 'art-0.enc',
+        mimeType: 'application/octet-stream',
+        buffer: ciphertext,
       },
     },
-  );
+  });
   expect(res.ok(), `upload: ${res.status()} ${await res.text()}`).toBe(true);
   return (await res.json()) as AttachmentResponse;
 }
@@ -92,11 +91,11 @@ async function readStreamText(res: APIResponse): Promise<string> {
   return content;
 }
 
-test.describe('conversation attachments API', () => {
+test.describe('attachment library API', () => {
   test('unauthenticated callers cannot create attachments', async () => {
     const api = await newAnonymousApi();
     try {
-      const res = await api.post('/api/v1/conversations/anyconv00000001/attachments', {
+      const res = await api.post('/api/v1/attachments', {
         multipart: {
           data: 'AAAA',
           files: {
@@ -115,25 +114,17 @@ test.describe('conversation attachments API', () => {
   test('participant uploads and downloads ciphertext, round-trip exact', async () => {
     const user = await provisionApiUser();
     try {
-      const conversationID = await createConversationWithKey(user);
       const ciphertext = randomBytes(64);
       const manifest = randomBytes(48).toString('base64');
 
-      const created = await uploadAttachment(
-        user,
-        conversationID,
-        ciphertext,
-        manifest,
-      );
+      const created = await uploadAttachment(user, ciphertext, manifest);
       expect(created.id).toBeTruthy();
-      expect(created.conversation).toBe(conversationID);
       expect(created.size_bytes).toBe(ciphertext.length);
       expect(created.files).toHaveLength(1);
-      expect(created.message ?? '').toBe(''); // draft, not yet linked
       expect(created.data).toBe(manifest);
 
       const dl = await user.api.get(
-        `/api/v1/conversations/${conversationID}/attachments/${created.id}/files/${created.files[0]}`,
+        `/api/v1/attachments/${created.id}/files/${created.files[0]}`,
       );
       expect(dl.ok(), `download: ${dl.status()}`).toBe(true);
       const body = await dl.body();
@@ -147,21 +138,18 @@ test.describe('conversation attachments API', () => {
     const owner = await provisionApiUser();
     const stranger = await provisionApiUser();
     try {
-      const conversationID = await createConversationWithKey(owner);
       const created = await uploadAttachment(
         owner,
-        conversationID,
         randomBytes(32),
         randomBytes(16).toString('base64'),
       );
 
-      const list = await stranger.api.get(
-        `/api/v1/conversations/${conversationID}/attachments`,
-      );
-      expect(list.status()).toBe(404);
+      const list = await stranger.api.get('/api/v1/attachments');
+      expect(list.ok(), `list: ${list.status()} ${await list.text()}`).toBe(true);
+      expect((await list.json()) as AttachmentResponse[]).toEqual([]);
 
       const dl = await stranger.api.get(
-        `/api/v1/conversations/${conversationID}/attachments/${created.id}/files/${created.files[0]}`,
+        `/api/v1/attachments/${created.id}/files/${created.files[0]}`,
       );
       expect(dl.status()).toBe(404);
     } finally {
@@ -176,7 +164,6 @@ test.describe('conversation attachments API', () => {
       const conversationID = await createConversationWithKey(user);
       const created = await uploadAttachment(
         user,
-        conversationID,
         randomBytes(32),
         randomBytes(16).toString('base64'),
       );
@@ -211,12 +198,16 @@ test.describe('conversation attachments API', () => {
       expect(content).toContain('untrusted user-provided data');
       expect(content).toContain(docBody);
 
-      // The draft attachment is now linked to a message.
-      const listRes = await user.api.get(
-        `/api/v1/conversations/${conversationID}/attachments`,
-      );
-      const attachments = (await listRes.json()) as AttachmentResponse[];
-      expect(attachments[0].message ?? '').not.toBe('');
+      // The library attachment is now linked to a message usage.
+      const usagesRes = await user.api.get(`/api/v1/attachments/${created.id}/usages`);
+      expect(
+        usagesRes.ok(),
+        `usages: ${usagesRes.status()} ${await usagesRes.text()}`,
+      ).toBe(true);
+      const usages = (await usagesRes.json()) as AttachmentUsageResponse[];
+      expect(usages).toHaveLength(1);
+      expect(usages[0].conversation).toBe(conversationID);
+      expect(usages[0].message).not.toBe('');
 
       // No persisted message ciphertext may contain the plaintext context.
       const msgRes = await user.api.get(
@@ -231,20 +222,19 @@ test.describe('conversation attachments API', () => {
     }
   });
 
-  test('completion rejects an attachment id from another conversation', async () => {
-    const user = await provisionApiUser();
+  test('completion rejects an attachment id owned by another user', async () => {
+    const owner = await provisionApiUser();
+    const stranger = await provisionApiUser();
     try {
-      const conversationA = await createConversationWithKey(user);
-      const conversationB = await createConversationWithKey(user);
+      const conversationID = await createConversationWithKey(stranger);
       const foreign = await uploadAttachment(
-        user,
-        conversationB,
+        owner,
         randomBytes(16),
         randomBytes(16).toString('base64'),
       );
 
-      const res = await user.api.post(
-        `/api/v1/conversations/${conversationA}/complete`,
+      const res = await stranger.api.post(
+        `/api/v1/conversations/${conversationID}/complete`,
         {
           data: {
             model_id: APPROVED_MODEL_ID,
@@ -258,7 +248,8 @@ test.describe('conversation attachments API', () => {
       expect(res.status()).toBe(400);
       expect(await res.text()).toContain('Invalid attachment reference');
     } finally {
-      await user.api.dispose();
+      await owner.api.dispose();
+      await stranger.api.dispose();
     }
   });
 });
