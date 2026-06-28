@@ -18,6 +18,11 @@ var softDeleteExcludedCollections = []string{
 	"conversation_public_keys",
 	"conversation_secret_keys",
 	"user_key_pairs",
+	// Removing a library file should erase it immediately: the sealed manifest
+	// holds per-file keys (sealed to the owner), so a 30-day retention snapshot
+	// would needlessly extend the lifetime of that key material. The ciphertext
+	// bytes are removed with the record regardless (spec docs/specs/attachments.md).
+	"user_attachments",
 }
 
 func ShouldCopyDeletedRecord(collectionName string) bool {

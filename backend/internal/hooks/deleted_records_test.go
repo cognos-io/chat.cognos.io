@@ -14,6 +14,11 @@ func TestShouldCopyDeletedRecord(t *testing.T) {
 		{name: "user key pairs", collectionName: "user_key_pairs", want: false},
 		{name: "conversation public keys", collectionName: "conversation_public_keys", want: false},
 		{name: "conversation secret keys", collectionName: "conversation_secret_keys", want: false},
+		// Library files hold per-file keys in their sealed manifest, so removal
+		// must erase immediately rather than linger in the retention snapshot.
+		{name: "user attachments", collectionName: "user_attachments", want: false},
+		// The usage join is plaintext routing only — still soft-deleted for audit.
+		{name: "attachment usages", collectionName: "attachment_usages", want: true},
 		{name: "ordinary collection", collectionName: "user_preferences", want: true},
 	}
 

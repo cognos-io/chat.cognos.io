@@ -19,6 +19,7 @@ purges `deleted` rows older than 30 days.
 - `conversation_public_keys`
 - `conversation_secret_keys`
 - `user_key_pairs`
+- `user_attachments`
 
 Why exclude these: they hold key material. Copying a wrapped key into a
 retention table that lives 30 days extends the window during which a DB
@@ -27,16 +28,14 @@ is also low — the
 [key-version-read-gate](./key-version-read-gate.md) already preserves the
 historical row in its original table, just invisibly to the API.
 
-**Attachments are _not_ excluded.** Removing a file from the
-[attachment library](./attachment-processing.md) soft-deletes the
-`user_attachments` row, so its snapshot lives in `deleted` for up to 30 days.
-The snapshot carries the record metadata + the **sealed manifest** (per-file keys
-sealed to the owner's vault key) but **not** the protected ciphertext file bytes —
-those are removed with the record. So a removed file's content is unrecoverable
-even inside the retention window, and the manifest left behind is useless without
-the bytes and decryptable only by the owner. The `attachment_usages` join is
-likewise snapshotted (plaintext routing ids only). If stricter immediate erasure
-of the manifest is ever required, add `user_attachments` to the excluded list above.
+`user_attachments` is excluded for the same reason: a
+[library file's](./attachment-processing.md) sealed manifest holds the per-file
+keys (sealed to the owner's vault key), so removal must erase it immediately rather
+than leave that key material in a 30-day snapshot. The protected ciphertext bytes
+are removed with the record regardless, so a removed file is unrecoverable at once.
+The plaintext `attachment_usages` join is **not** excluded — it carries only
+routing ids (conversation, message, attachment), so it keeps the normal audit
+snapshot.
 
 ```mermaid
 flowchart LR

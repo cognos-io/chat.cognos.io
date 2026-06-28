@@ -165,6 +165,7 @@ per message, capped extracted context, and a per-user storage quota.
   (see [completion-pipeline](./completion-pipeline.md)).
 - **Lifecycle** — a referenced file survives message expiry/deletion
   ([expired-message-cleanup](./expired-message-cleanup.md)); removal tombstones
-  referencing chats; soft-delete retention of the (key-less) manifest is covered in
-  [soft-delete-retention](./soft-delete-retention.md).
+  referencing chats and **erases immediately** — `user_attachments` is excluded
+  from soft-delete retention so the sealed manifest isn't snapshotted
+  ([soft-delete-retention](./soft-delete-retention.md)).
 - **Full threat model**: [docs/specs/attachments.md](../specs/attachments.md).
