@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 
-import { Observable, firstValueFrom, from, map, switchMap } from 'rxjs';
+import { Observable, catchError, firstValueFrom, from, map, of, switchMap } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 
@@ -212,6 +212,22 @@ export class AttachmentLibraryService {
     anchor.download = file.displayName;
     anchor.click();
     URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Fetch a library record by id and materialise it. Used to re-derive the
+   * provider context for an attachment referenced by an earlier message, so a
+   * stateless model keeps seeing it on follow-up turns. Resolves to null if the
+   * file is gone or can't be opened.
+   */
+  materializeById(attachmentId: string): Observable<LibrarySelection | null> {
+    return this._upload.get(attachmentId).pipe(
+      switchMap((record) => {
+        const file = this.toLibraryFile(record);
+        return file ? this.materialize(file) : of(null);
+      }),
+      catchError(() => of(null)),
+    );
   }
 
   private toLibraryFile(record: AttachmentRecord): LibraryFile | null {

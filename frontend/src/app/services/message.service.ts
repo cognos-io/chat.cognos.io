@@ -35,6 +35,8 @@ import {
   selectActiveBranch,
 } from '@cognos/ui-angular';
 
+import { AttachmentLibraryService } from '@app/attachments/attachment-library.service';
+import { collectPathAttachmentRefs } from '@app/attachments/attachment-selection';
 import { AttachmentUploadService } from '@app/attachments/attachment-upload.service';
 import { AttachmentManifestV1 } from '@app/attachments/attachment.types';
 import { MessageAttachmentChip } from '@app/components/chat/message-attachment-chip/message-attachment-chip.component';
@@ -619,6 +621,7 @@ export class MessageService {
   private readonly _api = inject(CognosApiService);
   private readonly _vaultService = inject(VaultService);
   private readonly _uploadService = inject(AttachmentUploadService);
+  private readonly _attachmentLibrary = inject(AttachmentLibraryService);
   private readonly _redactionService = inject(RedactionService);
   private readonly _projectService = inject(ProjectService);
   private readonly _compactionService = inject(CompactionService);
@@ -809,7 +812,26 @@ export class MessageService {
             );
           }
 
-          return this.sendMessage(messageRequest);
+          // Re-attach the context for files referenced earlier in this thread so
+          // the model keeps seeing them on follow-up turns (only the current
+          // selection's ids are linked to the new message).
+          return this.gatherHistoricalAttachmentContexts(
+            messageRequest.attachmentIds ?? [],
+          ).pipe(
+            switchMap((historicalContexts) =>
+              this.sendMessage(
+                historicalContexts.length
+                  ? {
+                      ...messageRequest,
+                      attachmentContexts: [
+                        ...(messageRequest.attachmentContexts ?? []),
+                        ...historicalContexts,
+                      ],
+                    }
+                  : messageRequest,
+              ),
+            ),
+          );
         }),
       ),
 
@@ -1532,6 +1554,48 @@ export class MessageService {
    * "private" cue without any fetch. The owner resolves the library record; a
    * missing record (deleted) becomes a "removed" tombstone.
    */
+  /**
+   * Re-derive provider context for attachments referenced earlier in the active
+   * path (excluding the current message's own selection). A stateless model
+   * forgets an attachment after the turn it was sent on, so its content must be
+   * re-sent on follow-up turns. Their redaction mappings are already in the
+   * conversation scope, so only the (redacted) text context is rebuilt here.
+   */
+  private gatherHistoricalAttachmentContexts(
+    currentSelectionIds: string[],
+  ): Observable<CompleteAttachmentContext[]> {
+    const path = this.state.activeBranch().path;
+    const refs = collectPathAttachmentRefs(path, new Set(currentSelectionIds));
+    if (refs.length === 0) {
+      return of([]);
+    }
+    return forkJoin(
+      refs.map((ref) =>
+        this._attachmentLibrary.materializeById(ref.attachmentId).pipe(
+          map((sel): CompleteAttachmentContext | null =>
+            sel
+              ? {
+                  attachmentId: sel.record.id,
+                  displayName: sel.fileName,
+                  detectedMimeType: sel.mimeType,
+                  processorId: sel.processorId ?? 'library',
+                  textContext: sel.textContext,
+                  contextTruncated: sel.contextTruncated,
+                }
+              : null,
+          ),
+        ),
+      ),
+    ).pipe(
+      map((contexts) =>
+        contexts.filter(
+          (c): c is CompleteAttachmentContext =>
+            !!c && (c.textContext ?? '').trim().length > 0,
+        ),
+      ),
+    );
+  }
+
   resolveAttachmentChips(message: Message): Observable<MessageAttachmentChip[]> {
     const uploads = (message.decryptedData.attachments ?? []).filter(
       (a) => a.kind === 'user_upload' && !!a.attachment_id,

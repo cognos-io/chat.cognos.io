@@ -135,3 +135,37 @@ export const buildCompletionAttachmentInputs = (
 export const hasPendingAttachments = (
   selected: readonly SelectedAttachment[],
 ): boolean => selected.some((a) => a.state !== 'ready' && a.state !== 'failed');
+
+/** A user-upload attachment referenced by a message in the conversation path. */
+export interface PathAttachmentRef {
+  attachmentId: string;
+  messageId?: string;
+}
+
+/**
+ * Collect the user-upload attachment references carried by messages in the active
+ * path, so a follow-up turn can re-send their context (a stateless model forgets
+ * an attachment otherwise). Deduped by attachment id, and `excludeIds` (the
+ * current composer selection) are skipped so they aren't sent twice.
+ */
+export const collectPathAttachmentRefs = (
+  messages: readonly {
+    record_id?: string;
+    decryptedData?: { attachments?: { kind?: string; attachment_id?: string }[] };
+  }[],
+  excludeIds: ReadonlySet<string> = new Set(),
+): PathAttachmentRef[] => {
+  const seen = new Set<string>(excludeIds);
+  const refs: PathAttachmentRef[] = [];
+  for (const message of messages) {
+    for (const attachment of message.decryptedData?.attachments ?? []) {
+      const id = attachment.attachment_id;
+      if (attachment.kind !== 'user_upload' || !id || seen.has(id)) {
+        continue;
+      }
+      seen.add(id);
+      refs.push({ attachmentId: id, messageId: message.record_id });
+    }
+  }
+  return refs;
+};

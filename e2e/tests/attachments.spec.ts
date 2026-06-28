@@ -298,6 +298,51 @@ test.describe('composer attachments', () => {
     await expect(page.locator('body')).not.toContainText('[[PII_IBAN_');
   });
 
+  test('keeps an attachment available to the model on follow-up messages', async ({
+    page,
+  }) => {
+    await provisionUnlockedAccount(page);
+    await expect(page.getByTestId('attach-button')).toBeVisible();
+
+    // Capture the attachment_contexts on every completion request.
+    const sentContexts: Array<Array<{ attachment_id?: string }>> = [];
+    await page.route('**/complete', async (route) => {
+      if (route.request().method() === 'POST') {
+        const body = route.request().postDataJSON() as {
+          attachment_contexts?: Array<{ attachment_id?: string }>;
+        };
+        sentContexts.push(body.attachment_contexts ?? []);
+      }
+      await route.continue();
+    });
+
+    await setComposerFile(
+      page,
+      'cognos_test.txt',
+      'text/plain',
+      'My IBAN is DE75512108001245126199',
+    );
+    await expect(page.getByTestId('attachment-chip')).toContainText('cognos_test.txt');
+    await page.getByLabel(COMPOSER_LABEL).fill("what's my iban?");
+    await page.getByRole('button', { name: /^send$/i }).click();
+    await expect(page.getByText('Mocked assistant reply')).toBeVisible();
+
+    const beforeFollowUp = sentContexts.length;
+
+    // Follow-up turn with NO new attachment.
+    await page.getByLabel(COMPOSER_LABEL).fill("what's my name?");
+    await page.getByRole('button', { name: /^send$/i }).click();
+    await expect(page.getByText('Mocked assistant reply')).toHaveCount(2);
+
+    // The follow-up completion must still carry the attachment context, so the
+    // stateless model can answer about the file it was given earlier.
+    const followUpRequests = sentContexts.slice(beforeFollowUp);
+    expect(followUpRequests.length).toBeGreaterThan(0);
+    expect(
+      followUpRequests.some((contexts) => contexts.some((c) => !!c.attachment_id)),
+    ).toBe(true);
+  });
+
   test('dedupes an identical re-upload to a single library entry', async ({ page }) => {
     await provisionUnlockedAccount(page);
     await expect(page.getByTestId('attach-button')).toBeVisible();

@@ -1,6 +1,7 @@
 import {
   SelectedAttachment,
   buildCompletionAttachmentInputs,
+  collectPathAttachmentRefs,
   hasPendingAttachments,
 } from './attachment-selection';
 
@@ -78,6 +79,43 @@ describe('buildCompletionAttachmentInputs', () => {
       imageBase64: 'AAAA',
       imageMimeType: 'image/webp',
     });
+  });
+});
+
+describe('collectPathAttachmentRefs', () => {
+  const msg = (
+    recordId: string,
+    attachments?: { kind: string; attachment_id?: string }[],
+  ) => ({
+    record_id: recordId,
+    decryptedData: { attachments },
+  });
+
+  it('collects user_upload refs from the path, deduped and sender-attributed', () => {
+    const refs = collectPathAttachmentRefs([
+      msg('m0', [{ kind: 'user_upload', attachment_id: 'a1' }]),
+      msg('m1'), // assistant reply, no attachments
+      msg('m2', [{ kind: 'user_upload', attachment_id: 'a1' }]), // same file referenced again
+    ]);
+    expect(refs).toEqual([{ attachmentId: 'a1', messageId: 'm0' }]);
+  });
+
+  it('excludes the current selection ids (so they are not sent twice)', () => {
+    const refs = collectPathAttachmentRefs(
+      [msg('m0', [{ kind: 'user_upload', attachment_id: 'a1' }])],
+      new Set(['a1']),
+    );
+    expect(refs).toEqual([]);
+  });
+
+  it('ignores generated images and entries without an id', () => {
+    const refs = collectPathAttachmentRefs([
+      msg('m0', [
+        { kind: 'generated_image', attachment_id: 'img1' },
+        { kind: 'user_upload' },
+      ]),
+    ]);
+    expect(refs).toEqual([]);
   });
 });
 
