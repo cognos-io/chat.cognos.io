@@ -110,6 +110,10 @@ export class AttachmentProcessingService {
         isImage: !!file.imageContext,
         fileContext: file.fileContext,
         isRawFile: !!file.fileContext,
+        // Carry the file's redaction mappings so they're merged into the
+        // conversation on send and the placeholders hydrate (regression: a
+        // reused/deduped file otherwise shows raw [[PII_…]] tokens).
+        redactionEntries: file.redactionEntries,
       };
       this._attachments.update((list) => [...list, selection]);
     }

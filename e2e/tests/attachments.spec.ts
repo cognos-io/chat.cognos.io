@@ -263,6 +263,41 @@ test.describe('composer attachments', () => {
     await expect(page.getByText('Mocked assistant reply').nth(1)).toBeVisible();
   });
 
+  test('reusing a redacted library file in a new chat hydrates its placeholders', async ({
+    page,
+  }) => {
+    await provisionUnlockedAccount(page);
+    await expect(page.getByTestId('attach-button')).toBeVisible();
+
+    const iban = 'DE75512108001245126199';
+    // Upload a file with PII in chat A — redacted at processing, mappings stored
+    // in the manifest and added to chat A's redaction scope on send.
+    await setComposerFile(page, 'cognos_test.txt', 'text/plain', `My IBAN is ${iban}`);
+    await expect(page.getByTestId('attachment-chip')).toContainText('cognos_test.txt');
+    await page.getByLabel(COMPOSER_LABEL).fill('first chat');
+    await page.getByRole('button', { name: /^send$/i }).click();
+    await expect(page.getByText('Mocked assistant reply')).toBeVisible();
+
+    // Start a NEW chat and reuse the same file from the library.
+    await page.getByRole('button', { name: /new chat/i }).click();
+    await page.getByTestId('attach-button').click();
+    await page.getByTestId('attach-from-library').click();
+    await page.getByTestId('library-list').getByText('cognos_test.txt').click();
+    await page.getByTestId('library-attach-selected').click();
+    await expect(page.getByTestId('attachment-chip')).toContainText('cognos_test.txt');
+
+    // `[echo]` returns the assembled turn (incl. the redacted attachment block),
+    // so its tokens render and must hydrate — proving the file's mappings were
+    // merged into THIS new conversation, not only the one it was uploaded in.
+    await page.getByLabel(COMPOSER_LABEL).fill("[echo] what's my iban?");
+    const send = page.getByRole('button', { name: /^send$/i });
+    await expect(send).toBeEnabled();
+    await send.click();
+
+    await expect(page.getByText(iban).first()).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('[[PII_IBAN_');
+  });
+
   test('dedupes an identical re-upload to a single library entry', async ({ page }) => {
     await provisionUnlockedAccount(page);
     await expect(page.getByTestId('attach-button')).toBeVisible();
