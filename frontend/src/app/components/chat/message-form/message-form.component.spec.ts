@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 
 import { Subject } from 'rxjs';
 
+import { AttachmentLibraryService } from '@app/attachments/attachment-library.service';
 import { AttachmentProcessingService } from '@app/attachments/attachment-processing.service';
 import { Message } from '@app/interfaces/message';
 import { BillingService } from '@app/services/billing.service';
@@ -135,7 +136,25 @@ describe('MessageFormComponent', () => {
             add: vi.fn(),
             remove: vi.fn(),
             clear: vi.fn(),
-            completionInputs: () => ({ attachmentIds: [], attachmentContexts: [] }),
+            completionInputs: () => ({
+              attachmentIds: [],
+              attachmentContexts: [],
+              redactionEntries: [],
+            }),
+          },
+        },
+        // The composer injects AttachmentLibraryService for the "from library"
+        // flow; stub it so its real PocketBase-backed dependency chain
+        // (AttachmentUploadService -> Client) isn't constructed in unit tests.
+        {
+          provide: AttachmentLibraryService,
+          useValue: {
+            files: signal([]),
+            loaded: signal(false),
+            materialize: vi.fn(),
+            splitNewVsExisting: vi.fn(() =>
+              Promise.resolve({ toUpload: [], existing: [] }),
+            ),
           },
         },
         { provide: VaultService, useValue: { keyPair$: new Subject() } },
