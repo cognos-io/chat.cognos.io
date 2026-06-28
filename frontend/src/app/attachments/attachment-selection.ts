@@ -154,10 +154,16 @@ export const collectPathAttachmentRefs = (
     decryptedData?: { attachments?: { kind?: string; attachment_id?: string }[] };
   }[],
   excludeIds: ReadonlySet<string> = new Set(),
+  excludeMessageIds: ReadonlySet<string> = new Set(),
 ): PathAttachmentRef[] => {
   const seen = new Set<string>(excludeIds);
   const refs: PathAttachmentRef[] = [];
   for (const message of messages) {
+    // Messages folded into a compaction summary are dropped from the raw context,
+    // so re-sending their attachment would be wasted cost — skip them.
+    if (message.record_id && excludeMessageIds.has(message.record_id)) {
+      continue;
+    }
     for (const attachment of message.decryptedData?.attachments ?? []) {
       const id = attachment.attachment_id;
       if (attachment.kind !== 'user_upload' || !id || seen.has(id)) {

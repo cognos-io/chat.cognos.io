@@ -108,6 +108,18 @@ describe('collectPathAttachmentRefs', () => {
     expect(refs).toEqual([]);
   });
 
+  it('skips attachments on messages folded into a compaction summary', () => {
+    const refs = collectPathAttachmentRefs(
+      [
+        msg('m0', [{ kind: 'user_upload', attachment_id: 'a1' }]), // compacted
+        msg('m2', [{ kind: 'user_upload', attachment_id: 'a2' }]), // still live
+      ],
+      new Set(),
+      new Set(['m0']),
+    );
+    expect(refs).toEqual([{ attachmentId: 'a2', messageId: 'm2' }]);
+  });
+
   it('ignores generated images and entries without an id', () => {
     const refs = collectPathAttachmentRefs([
       msg('m0', [

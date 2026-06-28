@@ -1565,7 +1565,17 @@ export class MessageService {
     currentSelectionIds: string[],
   ): Observable<CompleteAttachmentContext[]> {
     const path = this.state.activeBranch().path;
-    const refs = collectPathAttachmentRefs(path, new Set(currentSelectionIds));
+    // Skip attachments whose message is already folded into a compaction summary
+    // (it's excluded from the raw context, so its attachment shouldn't be re-sent).
+    const compaction = this.selectCompactionForContext([...path].reverse());
+    const coveredMessageIds = compaction
+      ? new Set(compaction.payload.covered_message_ids)
+      : new Set<string>();
+    const refs = collectPathAttachmentRefs(
+      path,
+      new Set(currentSelectionIds),
+      coveredMessageIds,
+    );
     if (refs.length === 0) {
       return of([]);
     }
