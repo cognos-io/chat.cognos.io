@@ -27,6 +27,17 @@ is also low — the
 [key-version-read-gate](./key-version-read-gate.md) already preserves the
 historical row in its original table, just invisibly to the API.
 
+**Attachments are _not_ excluded.** Removing a file from the
+[attachment library](./attachment-processing.md) soft-deletes the
+`user_attachments` row, so its snapshot lives in `deleted` for up to 30 days.
+The snapshot carries the record metadata + the **sealed manifest** (per-file keys
+sealed to the owner's vault key) but **not** the protected ciphertext file bytes —
+those are removed with the record. So a removed file's content is unrecoverable
+even inside the retention window, and the manifest left behind is useless without
+the bytes and decryptable only by the owner. The `attachment_usages` join is
+likewise snapshotted (plaintext routing ids only). If stricter immediate erasure
+of the manifest is ever required, add `user_attachments` to the excluded list above.
+
 ```mermaid
 flowchart LR
   D[DELETE row in collection X] --> E{X in excluded list?}

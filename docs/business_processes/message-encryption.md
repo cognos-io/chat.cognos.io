@@ -52,6 +52,13 @@ Anything the **server** doesn't need to query goes inside the encrypted
 - `expires` — by contrast, stays a **plaintext column**. The expiry-cleanup
   job (`FindExpiredMessages`) has to query it server-side, so it cannot be
   hidden in the blob. It carries only an expiry instant, not a send time.
+- `attachments` — references to files on the message live **inside** the blob:
+  `user_upload` (kind + library `attachment_id` + display mime) and
+  `generated_image` (sealed key + mime). So the message never reveals to the
+  server which library file it used; the separate plaintext `attachment_usages`
+  join records `(conversation, message, attachment)` for the library's "used in"
+  view and the removed-file tombstone (see
+  [attachment-processing](./attachment-processing.md)).
 
 `MessageRecordData` (backend `internal/chat/messaging.go`) and the frontend
 `MessageData` zod schema must stay in sync — both carry `created_at` as an

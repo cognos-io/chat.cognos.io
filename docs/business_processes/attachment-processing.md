@@ -120,7 +120,11 @@ Never plaintext at rest:
 - original filename, MIME type, file bytes;
 - extracted text, image artifacts;
 - redaction originals/mappings;
-- the attachment manifest.
+- the attachment manifest;
+- the content hash — the blake2b plaintext hash used for dedup lives **inside the
+  sealed manifest**, never as a plaintext column. A plaintext content hash would
+  enable confirmation-of-file attacks, so dedup is performed client-side after the
+  owner decrypts their own library.
 
 ## The library
 
@@ -146,3 +150,21 @@ extracted content.
 
 Limits still apply across all processors: max original file size, max attachments
 per message, capped extracted context, and a per-user storage quota.
+
+## Security summary & related processes
+
+- **Encryption scope** — per-file keys + manifest sealed to the owner's vault key;
+  owner-only, reusable across chats. Co-participants/public viewers can't decrypt
+  ("private file attached"). See [participant-access-control](./participant-access-control.md)
+  and [conversation-key-rotation](./conversation-key-rotation.md) (library files are
+  user-keyed, so rotation doesn't reach them).
+- **Redaction** — detected values are tokenised in the worker before upload; the
+  provider only ever sees placeholders, even on reuse. See
+  [pii-redaction spec](../specs/pii-redaction.md) §6.8.
+- **Prompt injection** — attachment text is wrapped as untrusted content server-side
+  (see [completion-pipeline](./completion-pipeline.md)).
+- **Lifecycle** — a referenced file survives message expiry/deletion
+  ([expired-message-cleanup](./expired-message-cleanup.md)); removal tombstones
+  referencing chats; soft-delete retention of the (key-less) manifest is covered in
+  [soft-delete-retention](./soft-delete-retention.md).
+- **Full threat model**: [docs/specs/attachments.md](../specs/attachments.md).

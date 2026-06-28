@@ -25,6 +25,12 @@ other periodic load. Why bulk delete: a single SQL statement avoids the
 per-record Pocketbase hook overhead — these deletions are not user-driven
 and don't need the soft-delete audit copy.
 
+Attachments: deleting a message cascades its `attachment_usages` join rows
+(FK `cascadeDelete`), but **not** the `user_attachments` library file — that
+relation is intentionally non-cascade, so a file the user uploaded survives the
+expiry of any message that referenced it and stays in their library (see
+[attachment-processing](./attachment-processing.md)).
+
 The companion job `cleanUpDeletedRecordJob` keeps the
 [soft-delete retention](./soft-delete-retention.md) window honest by
 removing audit rows older than 30 days.

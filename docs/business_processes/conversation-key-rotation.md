@@ -91,6 +91,20 @@ Read paths automatically pick up the new generation — see
 [key-version-read-gate](./key-version-read-gate.md). Old-generation rows
 stay in the DB as audit data but never surface through the API.
 
+### What rotation does and doesn't reach
+
+Rotation re-keys **conversation-sealed** data: message blobs and
+`generated_image` attachments (sealed to the conversation public key) become
+undecryptable to a revoked participant at the new generation.
+
+**User-upload (library) attachments are not conversation-sealed** — they are
+sealed to the uploader's own vault key and owned by that user (see
+[attachment-processing](./attachment-processing.md)). Rotation therefore neither
+affects nor revokes them: a revoked participant never had access to another
+user's library file in the first place (it shows as "private file attached"), and
+they keep their own files because those were always theirs. There is no
+conversation-scoped attachment key to rotate.
+
 ## Bulk revocation
 
 `revoked_user_ids` is a list, so a single call can remove 1 or N users.

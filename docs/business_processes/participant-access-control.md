@@ -32,3 +32,16 @@ id is valid. A 403 would let an attacker probe for live conversation IDs.
 The completion handler explicitly performs `IsActive` **before** consulting
 the conversation record so the existence-leak window is also closed for
 the gateway path.
+
+## Attachments are owner-scoped, not participant-scoped
+
+The attachment library is a **separate access model**: the `/api/v1/attachments/*`
+endpoints gate on file **ownership** (`user_attachments.owner == caller`), not on
+conversation participation, and return `404` to anyone else so ids never leak. A
+user references their own files in any conversation they participate in; they can
+never read another user's file. Consequently a co-participant — or a public-share
+viewer — cannot decrypt a file another participant attached: the message shows a
+**"private file attached"** cue instead of the contents, decided from the message
+sender's identity (never by probing the backend). The `attachment_usages`
+("used in") lookup is likewise owner-gated. See
+[attachment-processing](./attachment-processing.md).
