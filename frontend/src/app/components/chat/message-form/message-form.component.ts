@@ -1,5 +1,4 @@
 import { A11yModule } from '@angular/cdk/a11y';
-import { Dialog } from '@angular/cdk/dialog';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { isPlatformBrowser } from '@angular/common';
@@ -46,7 +45,7 @@ import {
   LibraryFile,
 } from '@app/attachments/attachment-library.service';
 import { AttachmentProcessingService } from '@app/attachments/attachment-processing.service';
-import { LibraryPickerDialogComponent } from '@app/attachments/library-picker/library-picker-dialog.component';
+import { LibraryPickerComponent } from '@app/attachments/library-picker/library-picker-dialog.component';
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import {
   RedactionCandidate,
@@ -68,7 +67,6 @@ import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
 import { RedactionService } from '@app/services/redaction.service';
 import { VaultService } from '@app/services/vault.service';
-import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 import { redactionKindFor, redactionModalLabels } from '../redaction-ui';
 import { ComposerToolsComponent } from './composer-tools/composer-tools.component';
@@ -99,6 +97,7 @@ function escapeHtml(value: string): string {
     PersonaSwitcherComponent,
     PersonaChipsComponent,
     PersonaAvatarComponent,
+    LibraryPickerComponent,
     TranslocoModule,
   ],
   template: `
@@ -693,6 +692,12 @@ function escapeHtml(value: string): string {
         </div>
       }
     </form>
+
+    <app-library-picker
+      [open]="libraryPickerOpen()"
+      (attachSelected)="onLibraryAttach($event)"
+      (closed)="libraryPickerOpen.set(false)"
+    />
   `,
   styles: `
     .message-form {
@@ -1344,36 +1349,38 @@ export class MessageFormComponent {
     this._attachmentInput()?.nativeElement.click();
   }
 
-  // Open the library picker; on confirm, materialise each chosen file (decrypt
-  // its text context + redaction mappings) and inject it as a ready selection.
+  readonly libraryPickerOpen = signal(false);
+
+  // Show the inline library picker (standard modal on desktop, sheet on mobile).
   openLibraryPicker(): void {
     this.attachmentNotice.set(null);
-    const ref = this._dialog.open<LibraryFile[]>(LibraryPickerDialogComponent, {
-      ...cognosDialogOptions,
-    });
-    ref.closed.subscribe((chosen) => {
-      if (!chosen || chosen.length === 0) {
-        return;
-      }
-      forkJoin(chosen.map((file) => this._library.materialize(file))).subscribe({
-        next: (selections) => {
-          const accepted = this.attachments.addFromLibrary(selections);
-          if (accepted < selections.length) {
-            this.attachmentNotice.set(
-              this._transloco.translate('chat.composer.attachments.tooMany', {
-                max: this.attachments.count(),
-              }),
-            );
-          }
-        },
-        error: () => {
+    this.libraryPickerOpen.set(true);
+  }
+
+  // On confirm: materialise each chosen file (decrypt its text context + redaction
+  // mappings) and inject it as a ready selection.
+  onLibraryAttach(chosen: LibraryFile[]): void {
+    if (chosen.length === 0) {
+      return;
+    }
+    forkJoin(chosen.map((file) => this._library.materialize(file))).subscribe({
+      next: (selections) => {
+        const accepted = this.attachments.addFromLibrary(selections);
+        if (accepted < selections.length) {
           this.attachmentNotice.set(
-            this._transloco.translate(
-              'chat.composer.attachments.errors.processing_failed',
-            ),
+            this._transloco.translate('chat.composer.attachments.tooMany', {
+              max: this.attachments.count(),
+            }),
           );
-        },
-      });
+        }
+      },
+      error: () => {
+        this.attachmentNotice.set(
+          this._transloco.translate(
+            'chat.composer.attachments.errors.processing_failed',
+          ),
+        );
+      },
     });
   }
 
@@ -1542,7 +1549,6 @@ export class MessageFormComponent {
 
   private readonly _redactionService = inject(RedactionService);
   private readonly _vault = inject(VaultService);
-  private readonly _dialog = inject(Dialog);
   private readonly _library = inject(AttachmentLibraryService);
 
   // Debounced draft drives the preview so detection never blocks typing

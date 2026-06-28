@@ -1,10 +1,11 @@
-import { DialogRef } from '@angular/cdk/dialog';
 import {
   ChangeDetectionStrategy,
   Component,
-  OnInit,
   computed,
+  effect,
   inject,
+  input,
+  output,
   signal,
 } from '@angular/core';
 
@@ -12,32 +13,37 @@ import { TranslocoModule } from '@jsverse/transloco';
 
 import {
   CognosButtonComponent,
-  CognosDialogSurfaceComponent,
   CognosIconComponent,
+  CognosModalComponent,
 } from '@cognos/ui-angular';
+
+import { DeviceService } from '@app/services/device.service';
 
 import { AttachmentLibraryService, LibraryFile } from '../attachment-library.service';
 
 /**
- * Library picker: lists the user's uploaded files, filters by name, and returns
- * the selected files so the composer can re-attach them without re-uploading.
- * Closes with the chosen LibraryFile[] (or undefined on cancel).
+ * Library picker. Uses the standard `cog-modal` (centred dialog on desktop,
+ * bottom sheet on mobile, matching the PII redaction modal) to list the user's
+ * uploaded files, filter by name, and return the selected files so the composer
+ * can re-attach them without re-uploading.
  */
 @Component({
-  selector: 'app-library-picker-dialog',
+  selector: 'app-library-picker',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CognosDialogSurfaceComponent,
+    CognosModalComponent,
     CognosButtonComponent,
     CognosIconComponent,
     TranslocoModule,
   ],
   template: `
-    <cog-dialog-surface
+    <cog-modal
       *transloco="let t"
+      [open]="open()"
+      [width]="560"
+      [stickyFooter]="true"
       [title]="t('library.picker.title')"
-      [footer]="true"
       (close)="cancel()"
     >
       <input
@@ -75,30 +81,31 @@ import { AttachmentLibraryService, LibraryFile } from '../attachment-library.ser
         </ul>
       }
 
-      <div cogDialogFooter>
-        <cog-button appearance="subtle" (click)="cancel()">{{
+      <div cogModalFooter class="library-picker__footer">
+        <cog-button appearance="subtle" [fullWidth]="isMobile()" (click)="cancel()">{{
           t('library.picker.cancel')
         }}</cog-button>
         <cog-button
           appearance="primary"
           data-testid="library-attach-selected"
+          [fullWidth]="isMobile()"
           [disabled]="selected().size === 0"
-          (click)="attach()"
+          (click)="attachSelectedFiles()"
           >{{
             t('library.picker.attachSelected', { count: selected().size })
           }}</cog-button
         >
       </div>
-    </cog-dialog-surface>
+    </cog-modal>
   `,
   styles: [
     `
       .library-picker__search {
         width: 100%;
-        padding: 0.5rem 0.75rem;
-        margin-bottom: 0.75rem;
-        border: 1px solid var(--cog-color-border, rgba(0, 0, 0, 0.1));
-        border-radius: 0.5rem;
+        padding: var(--cog-space-100);
+        margin-bottom: var(--cog-space-100);
+        border: 1px solid var(--cog-border);
+        border-radius: var(--cog-radius-sm);
         font: inherit;
       }
       .library-picker__list {
@@ -111,13 +118,13 @@ import { AttachmentLibraryService, LibraryFile } from '../attachment-library.ser
       .library-picker__row {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem;
-        border-radius: 0.5rem;
+        gap: var(--cog-space-100);
+        padding: var(--cog-space-100);
+        border-radius: var(--cog-radius-sm);
         cursor: pointer;
       }
       .library-picker__row:hover {
-        background: var(--cog-color-surface-hover, rgba(0, 0, 0, 0.05));
+        background: var(--cog-surface-hover);
       }
       .library-picker__name {
         flex: 1;
@@ -127,21 +134,43 @@ import { AttachmentLibraryService, LibraryFile } from '../attachment-library.ser
         white-space: nowrap;
       }
       .library-picker__size {
-        color: var(--cog-color-text-subtle, rgba(0, 0, 0, 0.55));
-        font-size: 0.8125rem;
+        color: var(--cog-text-subtle);
+        font-size: var(--cog-fs-body-sm, 0.8125rem);
       }
       .library-picker__empty {
-        color: var(--cog-color-text-subtle, rgba(0, 0, 0, 0.55));
-        margin: 1rem 0;
+        color: var(--cog-text-subtle);
+        margin: var(--cog-space-200) 0;
         text-align: center;
+      }
+      /* Desktop: right-aligned actions. */
+      .library-picker__footer {
+        display: flex;
+        width: 100%;
+        justify-content: flex-end;
+        gap: var(--cog-space-100);
+      }
+      /* Mobile sheet: full-width buttons, two side-by-side at 50% each. */
+      @media (max-width: 600px) {
+        .library-picker__footer {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+        }
       }
     `,
   ],
 })
-export class LibraryPickerDialogComponent implements OnInit {
-  private readonly _dialogRef = inject(DialogRef<LibraryFile[]>);
+export class LibraryPickerComponent {
   private readonly _library = inject(AttachmentLibraryService);
+  private readonly _device = inject(DeviceService);
 
+  /** Whether the picker is shown. The host drives this. */
+  readonly open = input(false);
+  /** Emits the chosen files when the user confirms. */
+  readonly attachSelected = output<LibraryFile[]>();
+  /** Emits when the picker should close (cancel or after a successful attach). */
+  readonly closed = output<void>();
+
+  readonly isMobile = this._device.isMobile;
   readonly query = signal('');
   readonly selected = signal<Set<string>>(new Set());
 
@@ -149,15 +178,17 @@ export class LibraryPickerDialogComponent implements OnInit {
   readonly filtered = computed(() => {
     const q = this.query().trim().toLowerCase();
     const files = this.files();
-    if (!q) {
-      return files;
-    }
-    return files.filter((f) => f.displayName.toLowerCase().includes(q));
+    return q ? files.filter((f) => f.displayName.toLowerCase().includes(q)) : files;
   });
 
-  ngOnInit(): void {
-    this._library.refresh().subscribe({ error: () => undefined });
-  }
+  // Refresh the library and reset selection each time the picker opens.
+  private readonly _onOpen = effect(() => {
+    if (this.open()) {
+      this.query.set('');
+      this.selected.set(new Set());
+      this._library.refresh().subscribe({ error: () => undefined });
+    }
+  });
 
   toggle(id: string): void {
     this.selected.update((set) => {
@@ -171,13 +202,16 @@ export class LibraryPickerDialogComponent implements OnInit {
     });
   }
 
-  attach(): void {
+  attachSelectedFiles(): void {
     const chosen = this.files().filter((f) => this.selected().has(f.id));
-    this._dialogRef.close(chosen);
+    if (chosen.length > 0) {
+      this.attachSelected.emit(chosen);
+    }
+    this.closed.emit();
   }
 
   cancel(): void {
-    this._dialogRef.close(undefined);
+    this.closed.emit();
   }
 
   formatSize(bytes: number): string {
