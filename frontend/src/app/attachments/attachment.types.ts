@@ -26,7 +26,7 @@ export interface DetectedFileType {
   extension: string; // lowercased, no dot (e.g. "txt")
   declaredMimeType: string; // browser-provided File.type (may be empty)
   detectedMimeType: string; // our best guess used for the manifest
-  family: 'text' | 'document' | 'spreadsheet' | 'image' | 'unknown';
+  family: 'text' | 'document' | 'image' | 'unknown';
 }
 
 export interface ProcessorInput {

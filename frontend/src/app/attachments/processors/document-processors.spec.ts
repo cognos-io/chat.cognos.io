@@ -1,7 +1,6 @@
 import { detectFileType } from '../attachment-type-detection';
 import { ProcessorInput, defaultAttachmentLimits } from '../attachment.types';
 import { DocxProcessor } from './docx.processor';
-import { ExcelProcessor } from './excel.processor';
 import { PdfProcessor } from './pdf.processor';
 
 const inputFor = (
@@ -60,30 +59,6 @@ describe('document processors (injected extractors)', () => {
       const p = new DocxProcessor(async () => 'hello from docx');
       const out = await p.process(inputFor('memo.docx'));
       expect(out.ai.textContext).toBe('hello from docx');
-    });
-  });
-
-  describe('ExcelProcessor', () => {
-    it('accepts .xlsx and legacy .xls', () => {
-      const p = new ExcelProcessor(async () => 'x');
-      expect(p.canProcess(inputFor('data.xlsx'))).toBe(true);
-      expect(p.canProcess(inputFor('data.xls'))).toBe(true);
-      expect(p.canProcess(inputFor('data.numbers'))).toBe(false);
-    });
-
-    it('extracts sheet text', async () => {
-      const p = new ExcelProcessor(async () => '# Sheet1\na,b\n1,2');
-      const out = await p.process(inputFor('data.xlsx'));
-      expect(out.ai.textContext).toContain('a,b');
-    });
-
-    it('truncates to the per-file context cap', async () => {
-      const p = new ExcelProcessor(async () => 'x'.repeat(50));
-      const out = await p.process(
-        inputFor('data.xlsx', '', { maxBytes: 1_000_000, maxContextCharsPerFile: 10 }),
-      );
-      expect(out.ai.textContext).toHaveLength(10);
-      expect(out.ai.textContextTruncated).toBe(true);
     });
   });
 });

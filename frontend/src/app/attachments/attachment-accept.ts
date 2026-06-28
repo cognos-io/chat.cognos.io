@@ -11,8 +11,6 @@ export const ACCEPTED_ATTACHMENT_EXTENSIONS = [
   '.json',
   '.pdf',
   '.docx',
-  '.xlsx',
-  '.xls',
   '.png',
   '.jpg',
   '.jpeg',

@@ -19,8 +19,6 @@ describe('processor registry', () => {
       ['notes.txt', '', 'text'],
       ['report.pdf', '', 'pdf'],
       ['memo.docx', '', 'docx'],
-      ['data.xlsx', '', 'excel'],
-      ['data.xls', '', 'excel'],
       ['cat.png', '', 'image'],
       ['cat.jpeg', '', 'image'],
     ];
@@ -33,6 +31,10 @@ describe('processor registry', () => {
     expect(() =>
       selectProcessor(defaultProcessors(), inputFor('clip.mp4', 'video/mp4')),
     ).toThrow(AttachmentProcessingError);
+    // Spreadsheets are no longer accepted (xlsx parsing removed for launch).
+    expect(() => selectProcessor(defaultProcessors(), inputFor('data.xlsx'))).toThrow(
+      AttachmentProcessingError,
+    );
     try {
       selectProcessor(defaultProcessors(), inputFor('archive.zip'));
     } catch (err) {

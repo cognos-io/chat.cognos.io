@@ -20,11 +20,6 @@ const DOCUMENT_EXTENSIONS: Record<string, string> = {
   docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
 
-const SPREADSHEET_EXTENSIONS: Record<string, string> = {
-  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  xls: 'application/vnd.ms-excel',
-};
-
 const IMAGE_EXTENSIONS: Record<string, string> = {
   png: 'image/png',
   jpg: 'image/jpeg',
@@ -69,16 +64,6 @@ export const detectFileType = (
       declaredMimeType: declared,
       detectedMimeType: documentMime ?? declared,
       family: 'document',
-    };
-  }
-
-  const spreadsheetMime = SPREADSHEET_EXTENSIONS[extension];
-  if (spreadsheetMime) {
-    return {
-      extension,
-      declaredMimeType: declared,
-      detectedMimeType: spreadsheetMime,
-      family: 'spreadsheet',
     };
   }
 
