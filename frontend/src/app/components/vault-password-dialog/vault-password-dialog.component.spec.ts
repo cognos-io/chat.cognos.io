@@ -172,7 +172,7 @@ describe('VaultPasswordDialogComponent', () => {
     ) as HTMLButtonElement;
 
     expect(fixture.nativeElement.textContent).toContain(
-      'I have copied my Account Key to a safe place and acknowledge that if I lose it I will also not be able to access my account.',
+      'I have copied my Account Key to a safe place and understand that if I lose it, Cognos cannot recover my encrypted chats.',
     );
     expect(submitButton.disabled).toBe(true);
 

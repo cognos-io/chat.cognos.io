@@ -70,8 +70,8 @@ import { CognosModalComponent } from '../modal/modal.component';
           </header>
           <p class="cog-security-modal__caveat-copy">
             To generate a reply, the model has to read your message in cleartext — for
-            the moment it runs, on Swiss soil. We re-encrypt the result the instant it’s
-            ready and retain nothing.
+            the moment it runs, in the region you choose. We re-encrypt the reply as
+            soon as it’s generated and don’t store the plaintext.
           </p>
 
           <div class="cog-security-modal__flow">

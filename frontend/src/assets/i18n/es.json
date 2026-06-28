@@ -136,7 +136,7 @@
     },
     "memory": {
       "title": "Tu memoria",
-      "subtitle": "Datos que has fijado en tu memoria personal. Están cifrados, solo tú puedes leerlos y se añaden al contexto de cada chat.",
+      "subtitle": "Datos que has fijado en tu memoria personal. Se almacenan cifrados y se añaden al contexto de cada chat.",
       "save": "Guardar",
       "saved": "Memoria guardada"
     }
@@ -240,7 +240,7 @@
         "inactive": "Tus chats siguen cifrados y legibles. Elige un plan para volver a enviar mensajes.",
         "payg": "Compra créditos y úsalos en cualquier modelo. Un mínimo de CHF 10 mantiene tu cuenta activa cada mes.",
         "trial": "Estás en la prueba gratuita. Elige un plan para seguir enviando cuando se agote.",
-        "unlimited": "Mensajes ilimitados en todos los modelos de Cognos, con potencia de cálculo Swiss-cloud prioritaria."
+        "unlimited": "Mensajes ilimitados en todos los modelos de Cognos, con potencia de cálculo prioritaria."
       },
       "breadcrumbs": {
         "planBilling": "Plan y facturación",
@@ -366,14 +366,14 @@
         "sendingPaused": "Envío en pausa",
         "trialUsedUp": "Créditos de prueba agotados"
       },
-      "subtitle": "Tus chats de prueba siguen aquí y son totalmente legibles. Elige un plan para enviar nuevos mensajes — el mismo cifrado, la misma computación suiza.",
+      "subtitle": "Tus chats de prueba siguen aquí y son totalmente legibles. Elige un plan para enviar mensajes nuevos: el mismo cifrado, la misma privacidad.",
       "title": "Sigue, en privado",
       "unlimited": {
-        "blurb": "Mensajes ilimitados en todos los modelos de Cognos, con potencia de cálculo Swiss-cloud prioritaria.",
+        "blurb": "Mensajes ilimitados en todos los modelos de Cognos, con potencia de cálculo prioritaria.",
         "cta": "Pasar a Unlimited",
         "features": {
           "cancel": "Cancela cuando quieras — funciona hasta el fin del periodo",
-          "priority": "Computación Swiss-cloud y on-prem prioritaria",
+          "priority": "Computación prioritaria en todos los modelos",
           "skills": "Todas las habilidades, biblioteca de prompts y compartir",
           "unlimited": "Mensajes ilimitados en todos los modelos"
         },
@@ -406,7 +406,7 @@
       "switch": "Cambiar",
       "title": "Cambiar de plan",
       "unlimited": {
-        "desc": "Mensajes ilimitados en todos los modelos de Cognos, con potencia de cálculo Swiss-cloud prioritaria.",
+        "desc": "Mensajes ilimitados en todos los modelos de Cognos, con potencia de cálculo prioritaria.",
         "name": "Unlimited",
         "tag": "Recomendado"
       },
@@ -509,7 +509,7 @@
         }
       },
       "clearMessages": "Borrar todos los mensajes",
-      "encrypted": "Cifrado de extremo a extremo · las claves se cifran antes de la copia de seguridad",
+      "encrypted": "Cifrado · tus claves se cifran antes de la copia de seguridad",
       "label": "Escribe a Cognos — se guarda cifrado; se envía a tu proveedor para responder",
       "locked": {
         "body": "Puedes leer todo aquí. Elige un plan para enviar mensajes nuevos.",
@@ -798,7 +798,7 @@
         "private": "privado suizo eu soberano"
       },
       "manageInSettings": "Gestiona modelos, predeterminados y ocultos en Ajustes",
-      "privacyFooter": "Cifrado de extremo a extremo · las claves nunca salen de este dispositivo",
+      "privacyFooter": "Almacenado cifrado · descifrado solo para generar respuestas",
       "projectDefaultUnavailable": "El modelo predeterminado de este proyecto no está disponible en tu plan; se usa tu propio modelo predeterminado."
     },
     "personas": {
@@ -954,14 +954,14 @@
       "copied": "Copiado",
       "copy": "Copiar",
       "copyError": "No se pudo copiar el enlace.",
-      "createBody": "Solo las personas con el enlace pueden ver esta conversación, pero verán todos los mensajes, pasados y futuros, hasta que dejes de compartir. La clave de descifrado está en el propio enlace y nunca llega a nuestros servidores, así que compártelo solo con las personas que elijas.",
+      "createBody": "Cualquier persona con este enlace puede abrir y leer esta conversación —todos los mensajes, pasados y futuros— hasta que dejes de compartirla. La clave de descifrado vive en el propio enlace y nunca llega a nuestros servidores, así que compártelo solo con personas de confianza.",
       "reasoningWarning": "Los mensajes compartidos también incluyen el razonamiento del modelo (su «pensamiento»), que puede repetir la consulta y revelar detalles sensibles que la respuesta final omite.",
       "createError": "No se pudo crear un enlace público, inténtalo de nuevo.",
       "createHeading": "Crear un enlace público",
       "createLink": "Crear enlace público",
       "linkAriaLabel": "Enlace público para compartir",
       "revokeError": "No se pudo dejar de compartir, inténtalo de nuevo.",
-      "sharedBody": "Solo las personas con este enlace pueden ver esta conversación. Verán todos los mensajes —pasados y futuros— hasta que dejes de compartir.",
+      "sharedBody": "Cualquier persona con este enlace puede abrir y leer esta conversación —todos los mensajes, pasados y futuros— hasta que dejes de compartirla.",
       "sharedHeading": "Enlace público",
       "stopSharing": "Dejar de compartir",
       "title": "Compartir conversación"
@@ -969,7 +969,7 @@
     "vaultPassword": {
       "accountKey": "Clave de cuenta",
       "accountKeyRequired": "La Clave de cuenta es obligatoria",
-      "acknowledge": "He copiado mi Clave de cuenta en un lugar seguro y reconozco que si la pierdo tampoco podré acceder a mi cuenta.",
+      "acknowledge": "He copiado mi Clave de cuenta en un lugar seguro y entiendo que, si la pierdo, Cognos no podrá recuperar mis chats cifrados.",
       "acknowledgeRequired": "Confirma que has copiado tu Clave de cuenta y que aceptas el riesgo de recuperación.",
       "copiedMsg": "Guárdala en un lugar seguro antes de continuar.",
       "copiedTitle": "Clave de cuenta copiada",
@@ -1147,7 +1147,7 @@
     "emptyMessage": "Este mensaje está vacío.",
     "encrypted": "Cifrado",
     "encryptedAt": "Cifrado · {{time}}",
-    "encryptedTitle": "Cifrado de extremo a extremo",
+    "encryptedTitle": "Conversación cifrada",
     "promoAfter": "y regístrate hoy mismo.",
     "promoBefore": "Cognos cifra tus chats de IA. Esta es una conversación pública, pero solo las personas con el enlace pueden descifrarla y leerla. Si te importa mantener tus chats de IA privados y seguros, prefieres un servicio europeo y quieres tanto modelos propietarios como de código abierto, ve a",
     "sharedSecurely": "Compartido de forma segura · descifrado en tu navegador",
