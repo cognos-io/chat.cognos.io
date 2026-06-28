@@ -719,6 +719,37 @@ function escapeHtml(value: string): string {
       gap: var(--cog-space-100, 8px);
     }
 
+    /* Attach (Upload / From library) dropdown — matches the Tools menu surface. */
+    .message-form__attach-menu {
+      display: grid;
+      gap: var(--cog-space-050);
+      width: min(220px, calc(100vw - var(--cog-space-200)));
+      padding: var(--cog-space-050);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-md, var(--cog-radius-sm));
+      background: var(--cog-surface);
+      box-shadow: var(--cog-shadow-200, 0 8px 24px rgba(0, 0, 0, 0.12));
+    }
+
+    .message-form__attach-menu-item {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-100);
+      width: 100%;
+      padding: var(--cog-space-100);
+      border: none;
+      border-radius: var(--cog-radius-sm);
+      background: transparent;
+      color: var(--cog-text);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .message-form__attach-menu-item:hover {
+      background: var(--cog-surface-hover);
+    }
+
     .message-form__chip {
       display: inline-flex;
       align-items: center;
