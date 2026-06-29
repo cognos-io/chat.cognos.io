@@ -21,6 +21,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/mfa"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 	"github.com/go-co-op/gocron/v2"
 	bifrostschemas "github.com/maximhq/bifrost/core/schemas"
@@ -367,6 +368,9 @@ func bindAppHooks(
 		hooks.ForbidUserEmailChanges(app)
 		// Per-account brute-force lockout, on top of the per-IP rate limit.
 		hooks.EnforceLoginLockout(app)
+		// Authenticator-app MFA: withhold the auth token for enrolled users until
+		// a second factor is supplied (docs/specs/mfa-and-passkeys.md).
+		hooks.EnforceMFALogin(app, mfa.NewStore(app))
 
 		if params.CronScheduler != nil {
 			expiredMessagesRepo := chat.NewPocketBaseMessageRepo(app)
