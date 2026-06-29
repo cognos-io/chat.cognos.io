@@ -9,6 +9,8 @@ import {
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
+  CognosChoiceChip,
+  CognosChoiceChipGroupComponent,
   CognosEmptyStateComponent,
   CognosIconComponent,
   CognosListComponent,
@@ -77,6 +79,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
     CognosListItemComponent,
     CognosEmptyStateComponent,
     CognosSearchFieldComponent,
+    CognosChoiceChipGroupComponent,
     TranslocoModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -183,29 +186,20 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
           (valueChange)="onSearchValue($event)"
         />
 
-        <div
-          class="models__chips"
-          role="group"
-          [attr.aria-label]="t('account.dataProcessing.modelsAvailable')"
+        <cog-choice-chip-group
+          [options]="filterOptions(t)"
+          [value]="activeFilter()"
+          [ariaLabel]="t('account.dataProcessing.modelsAvailable')"
+          allowDeselect
+          (valueChange)="setFilter($event)"
         >
-          @for (chip of filterChips; track chip.key) {
-            <button
-              type="button"
-              class="models__chip"
-              [class.models__chip--active]="activeFilter() === chip.key"
-              [attr.aria-pressed]="activeFilter() === chip.key"
-              (click)="toggleFilter(chip.key)"
-            >
-              {{ t(chip.labelKey) }}
-            </button>
-          }
           @if (hiddenModelsCount() > 0) {
             <button type="button" class="models__reset" (click)="resetHidden()">
               <cog-icon name="rotate-cw" [size]="14" tone="current" />
               {{ t('account.dataProcessing.resetHidden') }}
             </button>
           }
-        </div>
+        </cog-choice-chip-group>
 
         <cog-list>
           @for (model of visibleModels(); track model.id) {
@@ -545,33 +539,6 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       font-size: var(--cog-fs-caption);
     }
 
-    .models__chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--cog-space-075);
-    }
-
-    .models__chip {
-      display: inline-flex;
-      align-items: center;
-      min-height: 32px;
-      padding: 0 var(--cog-space-100);
-      border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-pill, 999px);
-      background: var(--cog-surface);
-      color: var(--cog-text-subtle);
-      font: inherit;
-      font-size: var(--cog-fs-caption);
-      cursor: pointer;
-    }
-
-    .models__chip--active {
-      border-color: var(--cog-brand);
-      background: var(--cog-selected-bg, rgba(46, 160, 67, 0.12));
-      color: var(--cog-brand);
-      font-weight: var(--cog-fw-semibold);
-    }
-
     .models__reset {
       display: inline-flex;
       align-items: center;
@@ -810,8 +777,15 @@ export class DataProcessingComponent {
     this.searchQuery.set(value);
   }
 
-  protected toggleFilter(filter: QuickFilter): void {
-    this.activeFilter.update((current) => (current === filter ? null : filter));
+  protected filterOptions(t: (key: string) => string): CognosChoiceChip[] {
+    return this.filterChips.map((chip) => ({
+      value: chip.key,
+      label: t(chip.labelKey),
+    }));
+  }
+
+  protected setFilter(value: string | null): void {
+    this.activeFilter.set(value as QuickFilter | null);
   }
 
   protected isPinned(modelId: string): boolean {

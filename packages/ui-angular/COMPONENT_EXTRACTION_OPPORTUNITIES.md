@@ -14,9 +14,10 @@ extraction.
 - ✅ **`cog-page-header`** — done. Backs `app-settings-page`.
 - ✅ **`cog-auth-page`** — done. Adopted by all six auth pages (login, register, forgot/reset
   password, verify/confirm email); each dropped its duplicated layout CSS.
-- ⬜ Remaining below (`cog-field`, `cog-choice-chip-group`, `cog-choice-card-group`,
-  `cog-avatar-picker`, `cog-record-list`) — not started. Further adoption of the shipped primitives
-  across the other listed sites is also outstanding.
+- ✅ **`cog-choice-chip-group`** — done. Adopted by the model catalogue filter chips.
+- ⬜ Remaining below (`cog-field`, `cog-choice-card-group`, `cog-avatar-picker`, `cog-record-list`)
+  — not started. Further adoption of the shipped primitives across the other listed sites is also
+  outstanding.
 
 ## `cog-card` / section card
 

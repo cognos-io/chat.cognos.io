@@ -10,6 +10,7 @@ export * from './lib/primitives/list/list.component';
 export * from './lib/primitives/list/list-item.component';
 export * from './lib/primitives/empty-state/empty-state.component';
 export * from './lib/primitives/search-field/search-field.component';
+export * from './lib/primitives/choice-chip-group/choice-chip-group.component';
 export * from './lib/overlays/menu/menu.component';
 export * from './lib/overlays/sheet/sheet.component';
 export * from './lib/overlays/modal/modal.component';
