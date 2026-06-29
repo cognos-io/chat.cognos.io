@@ -2,18 +2,42 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  forwardRef,
   input,
-  output,
-} from "@angular/core";
-import type { CognosIconName } from "@cognos/ui/icons";
+  model,
+  signal,
+} from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
-import { CognosIconComponent } from "../../icon/icon.component";
+import type { CognosIconName } from '@cognos/ui/icons';
 
+import { CognosIconComponent } from '../../icon/icon.component';
+
+export type CognosTextFieldSize = 'md' | 'lg';
+
+/**
+ * CognosTextFieldComponent (`cog-text-field`) is the styled single-line input.
+ * It works two ways:
+ *   - uncontrolled/value binding: `[value]` + `(valueChange)`
+ *   - reactive/template forms: `formControlName` / `[(ngModel)]` (it is a
+ *     ControlValueAccessor)
+ *
+ * `size="lg"` (44px, radius-sm) matches the auth/onboarding field look; the
+ * default `md` (36px) suits dense settings forms. Pair with `cog-field` for a
+ * label + hint/error.
+ */
 @Component({
-  selector: "cog-text-field",
+  selector: 'cog-text-field',
   standalone: true,
   imports: [CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => CognosTextFieldComponent),
+      multi: true,
+    },
+  ],
   template: `
     <label [class]="fieldClass()">
       @if (icon()) {
@@ -24,13 +48,16 @@ import { CognosIconComponent } from "../../icon/icon.component";
 
       <input
         class="cog-text-field__control"
-        [disabled]="disabled()"
+        [disabled]="effectiveDisabled()"
         [placeholder]="placeholder()"
         [readOnly]="readonly()"
         [type]="type()"
         [value]="value()"
+        [attr.autocomplete]="autocomplete() || null"
+        [attr.inputmode]="inputmode() || null"
         [attr.aria-label]="ariaLabel() || placeholder() || null"
         (input)="onInput($event)"
+        (blur)="onTouched()"
       />
     </label>
   `,
@@ -56,6 +83,11 @@ import { CognosIconComponent } from "../../icon/icon.component";
         &:focus-within {
           border-color: var(--cog-brand);
           background: var(--cog-input-bg-focus);
+        }
+
+        &.cog-text-field--lg {
+          min-height: 44px;
+          border-radius: var(--cog-radius-sm);
         }
 
         &.cog-text-field--disabled {
@@ -94,28 +126,52 @@ import { CognosIconComponent } from "../../icon/icon.component";
     `,
   ],
 })
-export class CognosTextFieldComponent {
+export class CognosTextFieldComponent implements ControlValueAccessor {
   readonly icon = input<CognosIconName | null>(null);
-  readonly value = input("");
-  readonly placeholder = input("");
-  readonly type = input("text");
-  readonly ariaLabel = input("");
+  readonly value = model('');
+  readonly placeholder = input('');
+  readonly type = input('text');
+  readonly autocomplete = input('');
+  readonly inputmode = input<string | null>(null);
+  readonly ariaLabel = input('');
   readonly disabled = input(false);
   readonly readonly = input(false);
-  readonly valueChange = output<string>();
+  readonly size = input<CognosTextFieldSize>('md');
+
+  // Disabled can come from the input or from a reactive form (setDisabledState).
+  private readonly _disabledByForm = signal(false);
+  protected readonly effectiveDisabled = computed(
+    () => this.disabled() || this._disabledByForm(),
+  );
+
+  private _onChange: (value: string) => void = () => {};
+  protected onTouched: () => void = () => {};
 
   protected readonly fieldClass = computed(() => {
-    const classes = ["cog-text-field"];
-
-    if (this.disabled()) {
-      classes.push("cog-text-field--disabled");
+    const classes = ['cog-text-field', `cog-text-field--${this.size()}`];
+    if (this.effectiveDisabled()) {
+      classes.push('cog-text-field--disabled');
     }
-
-    return classes.join(" ");
+    return classes.join(' ');
   });
 
   protected onInput(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    this.valueChange.emit(target.value);
+    const next = (event.target as HTMLInputElement).value;
+    this.value.set(next);
+    this._onChange(next);
+  }
+
+  // --- ControlValueAccessor ---
+  writeValue(value: string): void {
+    this.value.set(value ?? '');
+  }
+  registerOnChange(fn: (value: string) => void): void {
+    this._onChange = fn;
+  }
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
+  }
+  setDisabledState(isDisabled: boolean): void {
+    this._disabledByForm.set(isDisabled);
   }
 }

@@ -15,7 +15,9 @@ extraction.
 - ✅ **`cog-auth-page`** — done. Adopted by all six auth pages (login, register, forgot/reset
   password, verify/confirm email); each dropped its duplicated layout CSS.
 - ✅ **`cog-choice-chip-group`** — done. Adopted by the model catalogue filter chips.
-- ⬜ Remaining below (`cog-field`, `cog-choice-card-group`, `cog-avatar-picker`, `cog-record-list`)
+- ✅ **`cog-field`** (+ `cog-text-field` is now a ControlValueAccessor with a `size` variant) —
+  done. Adopted by the account profile/email/password fields.
+- ⬜ Remaining below (`cog-choice-card-group`, `cog-avatar-picker`, `cog-record-list`)
   — not started. Further adoption of the shipped primitives across the other listed sites is also
   outstanding.
 

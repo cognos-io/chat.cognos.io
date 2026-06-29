@@ -1,24 +1,24 @@
-import { moduleMetadata, type Meta, type StoryObj } from "@storybook/angular";
+import { type Meta, type StoryObj, moduleMetadata } from '@storybook/angular';
 
-import { CognosTextFieldComponent } from "./text-field.component";
+import { CognosTextFieldComponent } from './text-field.component';
 
 type StoryArgs = {
-  icon: "search" | "lock" | null;
+  icon: 'search' | 'lock' | null;
   placeholder: string;
   value: string;
 };
 
 const meta: Meta<StoryArgs> = {
-  title: "Primitives/Text Field",
+  title: 'Primitives/Text Field',
   decorators: [
     moduleMetadata({
       imports: [CognosTextFieldComponent],
     }),
   ],
   args: {
-    icon: "search",
-    placeholder: "Search chats",
-    value: "",
+    icon: 'search',
+    placeholder: 'Search chats',
+    value: '',
   },
   render: (args) => ({
     props: args,
@@ -42,6 +42,6 @@ export const Empty: Story = {};
 
 export const Prefilled: Story = {
   args: {
-    value: "Procurement policy",
+    value: 'Procurement policy',
   },
 };

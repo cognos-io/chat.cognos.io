@@ -13,6 +13,7 @@ import {
   CognosAvatarComponent,
   CognosButtonComponent,
   CognosCardComponent,
+  CognosFieldComponent,
   CognosIconComponent,
   CognosTextFieldComponent,
   CognosToastService,
@@ -50,6 +51,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
   imports: [
     CognosAvatarComponent,
     CognosCardComponent,
+    CognosFieldComponent,
     CognosIconComponent,
     CognosTextFieldComponent,
     CognosButtonComponent,
@@ -76,15 +78,14 @@ import { deriveProfileName } from '@app/utils/profile-identity';
           [subtitle]="t('account.profile.subtitle')"
         >
           <div class="account__fields">
-            <div class="account__field">
-              <span class="account__label">{{ t('account.profile.displayName') }}</span>
+            <cog-field [label]="t('account.profile.displayName')">
               <cog-text-field
                 [ariaLabel]="t('account.profile.displayName')"
                 [placeholder]="t('account.profile.displayNamePlaceholder')"
                 [value]="displayName()"
                 (valueChange)="displayName.set($event)"
               />
-            </div>
+            </cog-field>
 
             <fieldset class="account__field account__fieldset">
               <legend class="account__label">{{ t('account.profile.avatar') }}</legend>
@@ -185,17 +186,15 @@ import { deriveProfileName } from '@app/utils/profile-identity';
           [subtitle]="t('account.email.subtitle')"
         >
           <div class="account__fields">
-            <div class="account__field">
-              <span class="account__label">{{ t('account.email.current') }}</span>
+            <cog-field [label]="t('account.email.current')">
               <cog-text-field
                 [ariaLabel]="t('account.email.current')"
                 [value]="email()"
                 [readonly]="true"
                 [disabled]="true"
               />
-            </div>
-            <div class="account__field">
-              <span class="account__label">{{ t('account.email.new') }}</span>
+            </cog-field>
+            <cog-field [label]="t('account.email.new')">
               <cog-text-field
                 [ariaLabel]="t('account.email.new')"
                 type="email"
@@ -203,7 +202,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
                 [value]="newEmail()"
                 (valueChange)="newEmail.set($event)"
               />
-            </div>
+            </cog-field>
           </div>
 
           @if (emailChangeError()) {
@@ -229,17 +228,15 @@ import { deriveProfileName } from '@app/utils/profile-identity';
           [subtitle]="t('account.password.subtitle')"
         >
           <div class="account__fields">
-            <div class="account__field">
-              <span class="account__label">{{ t('account.password.current') }}</span>
+            <cog-field [label]="t('account.password.current')">
               <cog-text-field
                 [ariaLabel]="t('account.password.current')"
                 type="password"
                 [value]="currentPassword()"
                 (valueChange)="currentPassword.set($event)"
               />
-            </div>
-            <div class="account__field">
-              <span class="account__label">{{ t('account.password.new') }}</span>
+            </cog-field>
+            <cog-field [label]="t('account.password.new')">
               <cog-text-field
                 [ariaLabel]="t('account.password.new')"
                 type="password"
@@ -247,7 +244,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
                 [value]="newPassword()"
                 (valueChange)="newPassword.set($event)"
               />
-            </div>
+            </cog-field>
           </div>
 
           @if (passwordError()) {
