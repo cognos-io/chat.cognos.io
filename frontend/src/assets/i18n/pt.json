@@ -937,6 +937,8 @@
       "inChats": "Em {{ count }} conversas",
       "none": "Sem referências"
     },
+    "usagesHeading": "Usado nestas conversas",
+    "usagesUntitled": "Conversa sem título",
     "picker": {
       "title": "Anexar da biblioteca",
       "searchPlaceholder": "Pesquisar arquivos",

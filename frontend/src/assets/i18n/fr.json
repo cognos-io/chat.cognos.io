@@ -937,6 +937,8 @@
       "inChats": "Dans {{ count }} conversations",
       "none": "Non référencé"
     },
+    "usagesHeading": "Utilisé dans ces conversations",
+    "usagesUntitled": "Conversation sans titre",
     "picker": {
       "title": "Joindre depuis la bibliothèque",
       "searchPlaceholder": "Rechercher des fichiers",

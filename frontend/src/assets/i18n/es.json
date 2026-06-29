@@ -937,6 +937,8 @@
       "inChats": "En {{ count }} chats",
       "none": "Sin referencias"
     },
+    "usagesHeading": "Usado en estos chats",
+    "usagesUntitled": "Chat sin título",
     "picker": {
       "title": "Adjuntar desde la biblioteca",
       "searchPlaceholder": "Buscar archivos",

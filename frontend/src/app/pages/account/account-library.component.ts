@@ -7,6 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { firstValueFrom } from 'rxjs';
 
@@ -18,6 +19,7 @@ import {
   type CognosFilterChipOption,
   CognosFilterChipsComponent,
   CognosIconButtonComponent,
+  CognosIconComponent,
   CognosModalComponent,
   CognosSearchFieldComponent,
   CognosToastService,
@@ -34,19 +36,30 @@ import {
   AttachmentLibraryService,
   LibraryFile,
 } from '@app/attachments/attachment-library.service';
+import { AttachmentUsage } from '@app/attachments/attachment-upload.service';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { SettingsPageComponent } from '@app/components/settings/settings-page.component';
+import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 type ViewMode = 'grid' | 'list';
+type ModalView = 'actions' | 'rename' | 'usages';
 
 /** One library file paired with its display-side vault projection. */
 interface LibraryRow {
   file: LibraryFile;
   vault: CognosVaultFile;
   refsText: string;
+  /** Distinct conversations that reference the file (drives the clickable count). */
+  chatCount: number;
+}
+
+/** A conversation that references the open file, for the "used in" view. */
+interface UsageLink {
+  conversationId: string;
+  title: string;
 }
 
 /**
@@ -66,10 +79,12 @@ interface LibraryRow {
     CognosEmptyStateComponent,
     CognosFilterChipsComponent,
     CognosIconButtonComponent,
+    CognosIconComponent,
     CognosModalComponent,
     CognosSearchFieldComponent,
     CognosVaultCardComponent,
     CognosVaultListRowComponent,
+    RouterLink,
     TranslocoModule,
     SettingsPageComponent,
   ],
@@ -120,8 +135,10 @@ interface LibraryRow {
                   [file]="row.vault"
                   [moreLabel]="t('library.fileActions')"
                   [refsText]="row.refsText"
+                  [refsInteractive]="row.chatCount > 0"
                   (open)="openMenu(row.file)"
                   (more)="openMenu(row.file)"
+                  (refsClick)="openUsages(row.file)"
                 />
               }
             </div>
@@ -134,8 +151,10 @@ interface LibraryRow {
                   [top]="index > 0"
                   [moreLabel]="t('library.fileActions')"
                   [refsText]="row.refsText"
+                  [refsInteractive]="row.chatCount > 0"
                   (open)="openMenu(row.file)"
                   (more)="openMenu(row.file)"
+                  (refsClick)="openUsages(row.file)"
                 />
               }
             </div>
@@ -151,57 +170,88 @@ interface LibraryRow {
         [title]="menuFile()?.displayName ?? ''"
         (close)="closeMenu()"
       >
-        @if (renaming()) {
-          <label class="library__rename-label" for="library-rename-input">{{
-            t('library.rename')
-          }}</label>
-          <input
-            id="library-rename-input"
-            class="library__rename"
-            data-testid="library-rename-input"
-            [value]="renameDraft()"
-            (input)="renameDraft.set($any($event.target).value)"
-            (keydown.enter)="commitRename()"
-            (keydown.escape)="renaming.set(false)"
-          />
-          <div class="library__modal-footer">
-            <cog-button
-              appearance="subtle"
-              [fullWidth]="isMobile()"
-              (click)="renaming.set(false)"
-              >{{ t('library.cancel') }}</cog-button
-            >
-            <cog-button
-              appearance="primary"
-              [fullWidth]="isMobile()"
-              (click)="commitRename()"
-              >{{ t('library.renameSave') }}</cog-button
-            >
-          </div>
-        } @else {
-          <div class="library__actions">
-            <cog-button
-              appearance="subtle"
-              icon="pencil"
-              [fullWidth]="true"
-              (click)="startRename()"
-              >{{ t('library.rename') }}</cog-button
-            >
-            <cog-button
-              appearance="subtle"
-              icon="download"
-              [fullWidth]="true"
-              (click)="downloadAndClose()"
-              >{{ t('library.download') }}</cog-button
-            >
-            <cog-button
-              appearance="danger"
-              icon="x"
-              [fullWidth]="true"
-              (click)="removeAndClose()"
-              >{{ t('library.remove') }}</cog-button
-            >
-          </div>
+        @switch (modalView()) {
+          @case ('rename') {
+            <label class="library__rename-label" for="library-rename-input">{{
+              t('library.rename')
+            }}</label>
+            <input
+              id="library-rename-input"
+              class="library__rename"
+              data-testid="library-rename-input"
+              [value]="renameDraft()"
+              (input)="renameDraft.set($any($event.target).value)"
+              (keydown.enter)="commitRename()"
+              (keydown.escape)="modalView.set('actions')"
+            />
+            <div class="library__modal-footer">
+              <cog-button
+                appearance="subtle"
+                [fullWidth]="isMobile()"
+                (click)="modalView.set('actions')"
+                >{{ t('library.cancel') }}</cog-button
+              >
+              <cog-button
+                appearance="primary"
+                [fullWidth]="isMobile()"
+                (click)="commitRename()"
+                >{{ t('library.renameSave') }}</cog-button
+              >
+            </div>
+          }
+          @case ('usages') {
+            <p class="library__usages-heading">{{ t('library.usagesHeading') }}</p>
+            <ul class="library__usages" data-testid="library-usages-list">
+              @for (usage of currentUsageLinks(); track usage.conversationId) {
+                <a
+                  class="library__usage"
+                  [routerLink]="['/', 'c', usage.conversationId]"
+                  [attr.data-testid]="'library-usage-' + usage.conversationId"
+                  (click)="closeMenu()"
+                >
+                  <cog-icon name="message-square" [size]="16" tone="text-subtle" />
+                  <span class="library__usage-title">{{ usage.title }}</span>
+                  <cog-icon name="chevron-right" [size]="16" tone="text-subtlest" />
+                </a>
+              }
+            </ul>
+          }
+          @default {
+            <div class="library__actions">
+              @if (currentChatCount() > 0) {
+                <cog-button
+                  appearance="subtle"
+                  icon="link"
+                  [fullWidth]="true"
+                  (click)="modalView.set('usages')"
+                  >{{
+                    t('library.refs.inChats', { count: currentChatCount() })
+                  }}</cog-button
+                >
+              }
+              <cog-button
+                appearance="subtle"
+                icon="pencil"
+                [fullWidth]="true"
+                (click)="startRename()"
+                >{{ t('library.rename') }}</cog-button
+              >
+              <cog-button
+                appearance="subtle"
+                icon="download"
+                [fullWidth]="true"
+                (click)="downloadAndClose()"
+                >{{ t('library.download') }}</cog-button
+              >
+              <cog-button
+                appearance="danger"
+                icon="x"
+                [fullWidth]="true"
+                (click)="removeAndClose()"
+                >{{ t('library.remove') }}</cog-button
+              >
+            </div>
+          }
         }
       </cog-modal>
     </ng-container>
@@ -264,6 +314,40 @@ interface LibraryRow {
         gap: var(--cog-space-100);
         margin-top: var(--cog-space-150);
       }
+      .library__usages-heading {
+        margin: 0 0 var(--cog-space-100);
+        color: var(--cog-text-subtle);
+        font-size: var(--cog-fs-body-sm);
+      }
+      .library__usages {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--cog-space-025, 2px);
+        max-height: 50vh;
+        overflow-y: auto;
+      }
+      .library__usage {
+        display: flex;
+        align-items: center;
+        gap: var(--cog-space-100);
+        padding: var(--cog-space-100);
+        border-radius: var(--cog-radius-sm);
+        color: var(--cog-text);
+        text-decoration: none;
+      }
+      .library__usage:hover {
+        background: var(--cog-surface-hover);
+      }
+      .library__usage-title {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
       @media (max-width: 600px) {
         .library__modal-footer {
           display: grid;
@@ -280,6 +364,7 @@ export class AccountLibraryComponent {
   private readonly _toast = inject(CognosToastService);
   private readonly _vault = inject(VaultService);
   private readonly _device = inject(DeviceService);
+  private readonly _conversations = inject(ConversationService);
 
   // Refresh once the vault key is available — covers a deep-link / hard reload
   // where the key unlocks asynchronously after the component mounts.
@@ -297,12 +382,13 @@ export class AccountLibraryComponent {
   readonly filter = signal<CognosVaultFilter>('all');
   readonly view = signal<ViewMode>('grid');
   readonly renameDraft = signal('');
-  readonly usageCounts = signal<Record<string, number>>({});
+  /** Referencing usages per file id (one entry per message; deduped to chats). */
+  readonly usagesByFile = signal<Record<string, AttachmentUsage[]>>({});
 
   /** The file whose action sheet is open (null = closed). */
   readonly menuFile = signal<LibraryFile | null>(null);
-  /** Whether the action sheet is showing the rename sub-view. */
-  readonly renaming = signal(false);
+  /** Which sub-view the action sheet shows. */
+  readonly modalView = signal<ModalView>('actions');
 
   readonly files = this._library.files;
 
@@ -329,17 +415,50 @@ export class AccountLibraryComponent {
       file,
       vault: this.toVaultFile(file),
       refsText: this.refsTextFor(file),
+      chatCount: this.chatCountFor(file.id),
     })),
   );
 
+  /** Distinct referencing conversations (with titles) for the open file. */
+  readonly currentUsageLinks = computed<UsageLink[]>(() => {
+    const file = this.menuFile();
+    if (!file) {
+      return [];
+    }
+    const conversations = this._conversations.conversationList();
+    const fallback = this._transloco.translate('library.usagesUntitled');
+    const usages = this.usagesByFile()[file.id] ?? [];
+    return [...new Set(usages.map((usage) => usage.conversation))].map(
+      (conversationId) => {
+        const title = conversations
+          .find((conversation) => conversation.record.id === conversationId)
+          ?.decryptedData.title.trim();
+        return { conversationId, title: title || fallback };
+      },
+    );
+  });
+
+  readonly currentChatCount = computed(() => this.currentUsageLinks().length);
+
   openMenu(file: LibraryFile): void {
-    this.renaming.set(false);
     this.menuFile.set(file);
+    this.modalView.set('actions');
+  }
+
+  openUsages(file: LibraryFile): void {
+    this.menuFile.set(file);
+    this.modalView.set('usages');
+    // Refresh in case references changed since the eager load.
+    this._library.usages(file.id).subscribe({
+      next: (usages) =>
+        this.usagesByFile.update((all) => ({ ...all, [file.id]: usages })),
+      error: () => undefined,
+    });
   }
 
   closeMenu(): void {
     this.menuFile.set(null);
-    this.renaming.set(false);
+    this.modalView.set('actions');
   }
 
   startRename(): void {
@@ -348,7 +467,7 @@ export class AccountLibraryComponent {
       return;
     }
     this.renameDraft.set(file.displayName);
-    this.renaming.set(true);
+    this.modalView.set('rename');
   }
 
   commitRename(): void {
@@ -396,20 +515,28 @@ export class AccountLibraryComponent {
     });
   }
 
-  // Eagerly load reference counts so cards can show "In N chats". The usages
-  // endpoint is per-file, so this fans out one request per file; fine for a
-  // personal library, and a bulk count endpoint is the future optimisation.
+  // Eagerly load references so cards can show "In N chats" and link to them. The
+  // usages endpoint is per-file, so this fans out one request per file; fine for
+  // a personal library, and a bulk endpoint is the future optimisation.
   private loadAllUsages(files: LibraryFile[]): void {
     for (const file of files) {
       this._library.usages(file.id).subscribe({
         next: (usages) =>
-          this.usageCounts.update((counts) => ({
-            ...counts,
-            [file.id]: usages.length,
-          })),
+          this.usagesByFile.update((all) => ({ ...all, [file.id]: usages })),
         error: () => undefined,
       });
     }
+  }
+
+  // A file can be referenced by several messages in the same conversation, so we
+  // count distinct conversations ("chats"), not raw references. Returns -1 while
+  // the count is still unknown so callers can hide the line.
+  private chatCountFor(id: string): number {
+    const usages = this.usagesByFile()[id];
+    if (usages === undefined) {
+      return -1;
+    }
+    return new Set(usages.map((usage) => usage.conversation)).size;
   }
 
   private kindOf(file: LibraryFile): CognosVaultFileKind {
@@ -428,7 +555,7 @@ export class AccountLibraryComponent {
 
   private toVaultFile(file: LibraryFile): CognosVaultFile {
     const ext = deriveFileExtension(file.displayName);
-    const count = this.usageCounts()[file.id];
+    const count = this.chatCountFor(file.id);
     return {
       id: file.id,
       name: file.displayName,
@@ -436,7 +563,7 @@ export class AccountLibraryComponent {
       size: this.formatSize(file.sizeBytes),
       meta: resolveFileType(ext).label,
       kind: this.kindOf(file),
-      refs: count ?? 0,
+      refs: count > 0 ? count : 0,
       when: this.formatDate(file.createdAt),
     };
   }
@@ -444,8 +571,8 @@ export class AccountLibraryComponent {
   // Empty string hides the reference line until the count is known, so we never
   // flash a misleading "Not referenced".
   private refsTextFor(file: LibraryFile): string {
-    const count = this.usageCounts()[file.id];
-    if (count === undefined) {
+    const count = this.chatCountFor(file.id);
+    if (count < 0) {
       return '';
     }
     return count > 0

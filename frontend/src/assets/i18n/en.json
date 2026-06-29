@@ -937,6 +937,8 @@
       "inChats": "In {{ count }} chats",
       "none": "Not referenced"
     },
+    "usagesHeading": "Used in these chats",
+    "usagesUntitled": "Untitled chat",
     "picker": {
       "title": "Attach from library",
       "searchPlaceholder": "Search files",

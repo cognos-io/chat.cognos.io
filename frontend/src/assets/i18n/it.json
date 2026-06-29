@@ -937,6 +937,8 @@
       "inChats": "In {{ count }} chat",
       "none": "Non referenziato"
     },
+    "usagesHeading": "Usato in queste chat",
+    "usagesUntitled": "Chat senza titolo",
     "picker": {
       "title": "Allega dalla libreria",
       "searchPlaceholder": "Cerca file",

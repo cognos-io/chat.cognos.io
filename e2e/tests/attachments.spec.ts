@@ -389,7 +389,16 @@ test.describe('composer attachments', () => {
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(list).toContainText('renamed.txt');
 
-    // Open the action sheet again and remove it (confirm the dialog).
+    // The reference count links to the chats that use the file: click it and
+    // follow the link back to the conversation.
+    await page.getByRole('button', { name: 'In 1 chats' }).first().click();
+    const usages = page.getByTestId('library-usages-list');
+    await expect(usages.getByRole('link')).toHaveCount(1);
+    await usages.getByRole('link').first().click();
+    await expect(page).toHaveURL(chatUrl);
+
+    // Return to the library, open the action sheet again, and remove it.
+    await page.goto('/account/library');
     await page.getByRole('button', { name: 'File actions' }).first().click();
     await page.getByRole('button', { name: 'Remove' }).click();
     await page.getByRole('button', { name: 'Yes' }).click();
