@@ -14,7 +14,9 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
   CognosButtonComponent,
+  CognosEmptyStateComponent,
   CognosIconComponent,
+  CognosSearchFieldComponent,
   CognosToastService,
 } from '@cognos/ui-angular';
 
@@ -40,6 +42,8 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
   imports: [
     CognosButtonComponent,
     CognosIconComponent,
+    CognosSearchFieldComponent,
+    CognosEmptyStateComponent,
     TranslocoModule,
     SettingsPageComponent,
   ],
@@ -49,17 +53,14 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
         [heading]="t('library.title')"
         [subtitle]="t('library.subtitle')"
       >
-        <input
-          type="search"
-          class="library__search"
-          data-testid="library-page-search"
-          [attr.placeholder]="t('library.searchPlaceholder')"
-          [attr.aria-label]="t('library.searchPlaceholder')"
-          (input)="query.set($any($event.target).value)"
+        <cog-search-field
+          [placeholder]="t('library.searchPlaceholder')"
+          [ariaLabel]="t('library.searchPlaceholder')"
+          (valueChange)="query.set($event)"
         />
 
         @if (filtered().length === 0) {
-          <p class="library__empty">{{ t('library.empty') }}</p>
+          <cog-empty-state [message]="t('library.empty')" role="status" />
         } @else {
           <ul class="library__list" data-testid="library-page-list">
             @for (file of filtered(); track file.id) {
@@ -124,20 +125,6 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
   `,
   styles: [
     `
-      .library__search {
-        width: 100%;
-        min-height: 44px;
-        padding: 0 var(--cog-space-150);
-        border: 1px solid var(--cog-border);
-        border-radius: var(--cog-radius-md);
-        background: var(--cog-surface);
-        color: var(--cog-text);
-        font: inherit;
-        outline: 0;
-      }
-      .library__search:focus {
-        border-color: var(--cog-brand);
-      }
       .library__list {
         list-style: none;
         margin: 0;
@@ -186,11 +173,6 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
         gap: var(--cog-space-050);
         flex-wrap: wrap;
         align-items: center;
-      }
-      .library__empty {
-        color: var(--cog-text-subtle);
-        text-align: center;
-        margin: var(--cog-space-300) 0;
       }
     `,
   ],

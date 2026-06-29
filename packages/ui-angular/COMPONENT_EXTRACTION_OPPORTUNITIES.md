@@ -4,6 +4,17 @@ Scope: `frontend/src/app` compared against the current `@cognos/ui-angular` libr
 below are limited to UI patterns seen in more than two places, so this intentionally avoids one-off
 extraction.
 
+## Status
+
+- ✅ **`cog-card`** — done. Adopted by account, MFA, memory, placeholder; danger tone.
+- ✅ **`cog-list` / `cog-list-item`** — done. Adopted by MFA trusted devices + the data-processing
+  model catalogue list.
+- ✅ **`cog-empty-state`** — done. Adopted by the file library and the model catalogue empty result.
+- ✅ **`cog-search-field`** — done. Adopted by the file library and the model catalogue search.
+- ⬜ Remaining below (`cog-auth-page`, `cog-field`, `cog-choice-chip-group`,
+  `cog-choice-card-group`, `cog-avatar-picker`, `cog-page-header`, `cog-record-list`) — not started.
+  Further adoption of the shipped primitives across the other listed sites is also outstanding.
+
 ## `cog-card` / section card
 
 **Recommendation:** use the existing `CognosCardComponent` rather than creating another component.

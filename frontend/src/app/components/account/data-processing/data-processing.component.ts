@@ -8,7 +8,14 @@ import {
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
-import { CognosIconComponent, CognosLozengeComponent } from '@cognos/ui-angular';
+import {
+  CognosEmptyStateComponent,
+  CognosIconComponent,
+  CognosListComponent,
+  CognosListItemComponent,
+  CognosLozengeComponent,
+  CognosSearchFieldComponent,
+} from '@cognos/ui-angular';
 import type { CognosIconName } from '@cognos/ui/icons';
 
 import { localizedModelDescription } from '@app/i18n/model-copy';
@@ -63,7 +70,15 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
 @Component({
   selector: 'app-data-processing',
   standalone: true,
-  imports: [CognosIconComponent, CognosLozengeComponent, TranslocoModule],
+  imports: [
+    CognosIconComponent,
+    CognosLozengeComponent,
+    CognosListComponent,
+    CognosListItemComponent,
+    CognosEmptyStateComponent,
+    CognosSearchFieldComponent,
+    TranslocoModule,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section
@@ -161,18 +176,12 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
 
         <p class="models__hint">{{ t('account.dataProcessing.manageHint') }}</p>
 
-        <label class="models__search">
-          <cog-icon name="search" [size]="16" tone="text-subtle" />
-          <input
-            type="text"
-            class="models__search-input"
-            autocomplete="off"
-            [attr.aria-label]="t('account.dataProcessing.modelsAvailable')"
-            [placeholder]="t('chat.models.search.placeholder')"
-            [value]="searchQuery()"
-            (input)="onSearch($event)"
-          />
-        </label>
+        <cog-search-field
+          [ariaLabel]="t('account.dataProcessing.modelsAvailable')"
+          [placeholder]="t('chat.models.search.placeholder')"
+          [value]="searchQuery()"
+          (valueChange)="onSearchValue($event)"
+        />
 
         <div
           class="models__chips"
@@ -198,86 +207,90 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
           }
         </div>
 
-        <ul class="models__list">
+        <cog-list>
           @for (model of visibleModels(); track model.id) {
-            <li
-              class="models__row"
+            <cog-list-item
               [class.models__row--locked]="!model.isEligible"
               [class.models__row--hidden]="isHidden(model.id)"
             >
-              <span class="models__icon">
-                <cog-icon
-                  [name]="model.isEligible ? 'server' : 'lock'"
-                  [size]="16"
-                  tone="current"
-                />
-              </span>
-              <span class="models__body">
-                <span class="models__name">
-                  {{ model.name }}
-                  @if (isDefault(model)) {
-                    <cog-lozenge tone="green">{{
-                      t('account.dataProcessing.defaultBadge')
-                    }}</cog-lozenge>
-                  }
-                  @if (isHidden(model.id)) {
-                    <cog-lozenge tone="neutral">{{
-                      t('account.dataProcessing.hiddenBadge')
-                    }}</cog-lozenge>
+              <div class="models__row">
+                <span class="models__icon">
+                  <cog-icon
+                    [name]="model.isEligible ? 'server' : 'lock'"
+                    [size]="16"
+                    tone="current"
+                  />
+                </span>
+                <span class="models__body">
+                  <span class="models__name">
+                    {{ model.name }}
+                    @if (isDefault(model)) {
+                      <cog-lozenge tone="green">{{
+                        t('account.dataProcessing.defaultBadge')
+                      }}</cog-lozenge>
+                    }
+                    @if (isHidden(model.id)) {
+                      <cog-lozenge tone="neutral">{{
+                        t('account.dataProcessing.hiddenBadge')
+                      }}</cog-lozenge>
+                    }
+                  </span>
+                  <span class="models__desc">{{ describe(model, t) }}</span>
+                </span>
+                <span class="models__meta">
+                  <cog-lozenge [tone]="model.isEligible ? 'green' : 'neutral'">
+                    {{ regionBadge(model) }}
+                  </cog-lozenge>
+                  @if (model.isEligible) {
+                    <span class="models__context">{{
+                      t('account.dataProcessing.context', {
+                        size: formatContext(model.inputContextLength),
+                      })
+                    }}</span>
+                  } @else {
+                    <span class="models__locked">
+                      <cog-icon name="lock" [size]="12" tone="current" />
+                      {{
+                        model.ineligibilityReason ||
+                          t('account.dataProcessing.needsBroaderRegion')
+                      }}
+                    </span>
                   }
                 </span>
-                <span class="models__desc">{{ describe(model, t) }}</span>
-              </span>
-              <span class="models__meta">
-                <cog-lozenge [tone]="model.isEligible ? 'green' : 'neutral'">
-                  {{ regionBadge(model) }}
-                </cog-lozenge>
-                @if (model.isEligible) {
-                  <span class="models__context">{{
-                    t('account.dataProcessing.context', {
-                      size: formatContext(model.inputContextLength),
-                    })
-                  }}</span>
-                } @else {
-                  <span class="models__locked">
-                    <cog-icon name="lock" [size]="12" tone="current" />
+                <span class="models__actions">
+                  <button
+                    type="button"
+                    class="models__action models__action--pin"
+                    [class.models__action--on]="isPinned(model.id)"
+                    [attr.aria-pressed]="isPinned(model.id)"
+                    [attr.title]="
+                      isPinned(model.id) ? t('chat.models.unpin') : t('chat.models.pin')
+                    "
+                    (click)="togglePin(model.id)"
+                  >
+                    <cog-icon name="pin" [size]="14" tone="current" />
+                  </button>
+                  <button
+                    type="button"
+                    class="models__action models__action--text"
+                    (click)="toggleHidden(model.id)"
+                  >
                     {{
-                      model.ineligibilityReason ||
-                        t('account.dataProcessing.needsBroaderRegion')
+                      isHidden(model.id)
+                        ? t('account.dataProcessing.unhideModel')
+                        : t('account.dataProcessing.hideModel')
                     }}
-                  </span>
-                }
-              </span>
-              <span class="models__actions">
-                <button
-                  type="button"
-                  class="models__action models__action--pin"
-                  [class.models__action--on]="isPinned(model.id)"
-                  [attr.aria-pressed]="isPinned(model.id)"
-                  [attr.title]="
-                    isPinned(model.id) ? t('chat.models.unpin') : t('chat.models.pin')
-                  "
-                  (click)="togglePin(model.id)"
-                >
-                  <cog-icon name="pin" [size]="14" tone="current" />
-                </button>
-                <button
-                  type="button"
-                  class="models__action models__action--text"
-                  (click)="toggleHidden(model.id)"
-                >
-                  {{
-                    isHidden(model.id)
-                      ? t('account.dataProcessing.unhideModel')
-                      : t('account.dataProcessing.hideModel')
-                  }}
-                </button>
-              </span>
-            </li>
+                  </button>
+                </span>
+              </div>
+            </cog-list-item>
           } @empty {
-            <li class="models__empty">{{ t('chat.models.search.noResults') }}</li>
+            <cog-empty-state
+              [message]="t('chat.models.search.noResults')"
+              role="status"
+            />
           }
-        </ul>
+        </cog-list>
 
         @if (!isFiltering() && orderedModels().length > collapsedLimit) {
           <button
@@ -503,23 +516,12 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       font-size: var(--cog-fs-caption);
     }
 
-    .models__list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-
     .models__row {
       display: grid;
       grid-template-columns: 32px minmax(0, 1fr) auto auto;
       align-items: center;
       gap: var(--cog-space-125);
-      padding: var(--cog-space-150) var(--cog-space-050);
-      border-bottom: 1px solid var(--cog-border-subtle, var(--cog-border));
-    }
-
-    .models__row:last-child {
-      border-bottom: 0;
+      width: 100%;
     }
 
     .models__row--locked {
@@ -541,33 +543,6 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       margin: 0;
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-caption);
-    }
-
-    .models__search {
-      display: flex;
-      align-items: center;
-      gap: var(--cog-space-075);
-      padding: 0 var(--cog-space-100);
-      border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-sm);
-      background: var(--cog-surface-raised, var(--cog-surface));
-    }
-
-    .models__search:focus-within {
-      border-color: var(--cog-brand);
-    }
-
-    .models__search-input {
-      flex: 1 1 auto;
-      border: 0;
-      background: transparent;
-      padding: var(--cog-space-100) 0;
-      color: var(--cog-text);
-      font: inherit;
-    }
-
-    .models__search-input:focus {
-      outline: 0;
     }
 
     .models__chips {
@@ -654,13 +629,6 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
 
     .models__action--text:hover {
       color: var(--cog-text);
-    }
-
-    .models__empty {
-      padding: var(--cog-space-200) var(--cog-space-050);
-      color: var(--cog-text-subtle);
-      font-size: var(--cog-fs-caption);
-      text-align: center;
     }
 
     .models__icon {
@@ -838,8 +806,8 @@ export class DataProcessingComponent {
 
   protected readonly selectedModelId = computed(() => this._models.selectedModel().id);
 
-  protected onSearch(event: Event): void {
-    this.searchQuery.set((event.target as HTMLInputElement).value);
+  protected onSearchValue(value: string): void {
+    this.searchQuery.set(value);
   }
 
   protected toggleFilter(filter: QuickFilter): void {
