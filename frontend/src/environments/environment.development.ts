@@ -15,7 +15,7 @@ export const environment = {
   // /account. Flip to true to ship a section (can graduate to per-user later).
   featureFlags: {
     usage: false,
-    security: true,
+    security: false,
     team: false,
     notifications: false,
     // Encrypted projects — on in development so the shell and e2e can exercise

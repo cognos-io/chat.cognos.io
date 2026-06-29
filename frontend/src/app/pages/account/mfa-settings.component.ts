@@ -13,11 +13,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import QRCode from 'qrcode';
 
-import {
-  CognosBreadcrumbsComponent,
-  CognosButtonComponent,
-  CognosToastService,
-} from '@cognos/ui-angular';
+import { CognosButtonComponent, CognosToastService } from '@cognos/ui-angular';
 
 import { MfaService, MfaStatus, TrustedDevice } from '@services/mfa.service';
 
@@ -29,31 +25,17 @@ type View =
   | 'recovery'
   | 'disable';
 
+// MfaSettingsComponent is an embeddable card (rendered inside the Account page,
+// below "Change password") that manages authenticator-app MFA: enrolment,
+// recovery codes, disable, and trusted devices. It renders as account-style
+// card sections so it sits inline with the rest of the account settings.
 @Component({
-  selector: 'app-security',
+  selector: 'app-mfa-settings',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    TranslocoModule,
-    DatePipe,
-    CognosBreadcrumbsComponent,
-    CognosButtonComponent,
-  ],
+  imports: [ReactiveFormsModule, TranslocoModule, DatePipe, CognosButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ng-container *transloco="let t">
-      <header class="security__header">
-        <cog-breadcrumbs
-          [items]="[
-            { label: 'Cognos' },
-            { label: t('settings.title') },
-            { label: t('settings.security.title'), current: true },
-          ]"
-        />
-        <h1 class="security__title">{{ t('settings.security.title') }}</h1>
-        <p class="security__lead">{{ t('settings.security.lead') }}</p>
-      </header>
-
       <!-- Two-factor authentication -->
       <section class="security__card">
         <div class="security__row">
@@ -355,19 +337,7 @@ type View =
   `,
   styles: `
     :host {
-      display: block;
-      max-width: 920px;
-    }
-    .security__header {
-      display: grid;
-      gap: var(--cog-space-050);
-      margin: var(--cog-space-150) 0 var(--cog-space-250, 20px);
-    }
-    .security__title {
-      margin: 0;
-      color: var(--cog-text);
-      font-size: var(--cog-fs-h-lg);
-      font-weight: var(--cog-fw-h-lg);
+      display: contents;
     }
     .security__card {
       display: grid;
@@ -376,7 +346,6 @@ type View =
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
       padding: var(--cog-space-250, 20px);
-      margin-bottom: var(--cog-space-200);
     }
     .security__row {
       display: flex;
@@ -386,8 +355,8 @@ type View =
     }
     .security__h2 {
       margin: 0 0 var(--cog-space-050);
-      font-size: var(--cog-fs-h-md);
-      font-weight: var(--cog-fw-h-md);
+      font-size: var(--cog-fs-h-sm);
+      font-weight: var(--cog-fw-semibold);
       color: var(--cog-text);
     }
     .security__h3 {
@@ -507,7 +476,7 @@ type View =
     }
   `,
 })
-export class SecurityComponent implements OnInit {
+export class MfaSettingsComponent implements OnInit {
   private readonly _mfa = inject(MfaService);
   private readonly _fb = inject(FormBuilder);
   private readonly _transloco = inject(TranslocoService);

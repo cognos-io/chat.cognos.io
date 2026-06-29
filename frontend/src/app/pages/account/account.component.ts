@@ -29,6 +29,7 @@ import {
   coerceAvatarColor,
   coerceAvatarIcon,
 } from '@app/interfaces/avatar';
+import { MfaSettingsComponent } from '@app/pages/account/mfa-settings.component';
 import { AuthService } from '@app/services/auth.service';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ConversationService } from '@app/services/conversation.service';
@@ -54,6 +55,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
     CognosToggleComponent,
     DataProcessingComponent,
     LanguageSwitcherComponent,
+    MfaSettingsComponent,
     TranslocoModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -292,6 +294,9 @@ import { deriveProfileName } from '@app/utils/profile-identity';
           </cog-button>
         </div>
       </section>
+
+      <!-- Two-factor authentication (rendered as account-style cards). -->
+      <app-mfa-settings />
 
       <section class="account__card" aria-labelledby="account-data-heading">
         <h2 id="account-data-heading" class="account__card-title">
