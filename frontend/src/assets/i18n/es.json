@@ -919,6 +919,24 @@
     "usedIn": "Usado en {{ count }} chats",
     "usedInEmpty": "Aún no se usa en ningún chat",
     "addedOn": "Añadido el {{ date }}",
+    "fileActions": "Acciones del archivo",
+    "noMatches": "Ningún archivo coincide con tu búsqueda",
+    "cancel": "Cancelar",
+    "filters": {
+      "all": "Todos",
+      "documents": "Documentos",
+      "images": "Imágenes",
+      "sheets": "Hojas",
+      "audio": "Audio"
+    },
+    "view": {
+      "grid": "Vista de cuadrícula",
+      "list": "Vista de lista"
+    },
+    "refs": {
+      "inChats": "En {{ count }} chats",
+      "none": "Sin referencias"
+    },
     "picker": {
       "title": "Adjuntar desde la biblioteca",
       "searchPlaceholder": "Buscar archivos",

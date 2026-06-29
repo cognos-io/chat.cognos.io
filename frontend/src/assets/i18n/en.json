@@ -919,6 +919,24 @@
     "usedIn": "Used in {{ count }} chats",
     "usedInEmpty": "Not used in any chat yet",
     "addedOn": "Added {{ date }}",
+    "fileActions": "File actions",
+    "noMatches": "No files match your search",
+    "cancel": "Cancel",
+    "filters": {
+      "all": "All",
+      "documents": "Documents",
+      "images": "Images",
+      "sheets": "Sheets",
+      "audio": "Audio"
+    },
+    "view": {
+      "grid": "Grid view",
+      "list": "List view"
+    },
+    "refs": {
+      "inChats": "In {{ count }} chats",
+      "none": "Not referenced"
+    },
     "picker": {
       "title": "Attach from library",
       "searchPlaceholder": "Search files",
