@@ -40,7 +40,7 @@
 
 .pb__card {
   border: 1px solid var(--cog-border);
-  border-radius: var(--cog-radius-lg, 16px);
+  border-radius: var(--cog-radius-md);
   background: var(--cog-surface);
   padding: var(--cog-space-250, 20px);
   margin-bottom: var(--cog-space-200);
@@ -288,7 +288,7 @@
   min-width: 40px;
   height: 28px;
   padding: 0 var(--cog-space-075);
-  border-radius: var(--cog-radius-sm, 6px);
+  border-radius: var(--cog-radius-sm);
   background: var(--cog-text);
   color: var(--cog-surface);
   font-size: var(--cog-fs-caption);
@@ -377,7 +377,7 @@
   justify-content: center;
   padding: var(--cog-space-050);
   border: 0;
-  border-radius: var(--cog-radius-sm, 8px);
+  border-radius: var(--cog-radius-sm);
   background: none;
   cursor: pointer;
 
@@ -396,7 +396,7 @@
     calc(-1 * var(--cog-space-250, 20px));
   padding: var(--cog-space-150) var(--cog-space-250, 20px);
   border-top: 1px solid var(--cog-border);
-  border-radius: 0 0 var(--cog-radius-lg, 16px) var(--cog-radius-lg, 16px);
+  border-radius: 0 0 var(--cog-radius-md) var(--cog-radius-md);
   background: var(--cog-surface-sunken, var(--cog-app-bg));
   color: var(--cog-text-subtlest);
   font-size: var(--cog-fs-caption);

@@ -23,7 +23,6 @@ import {
   LibraryFile,
 } from '@app/attachments/attachment-library.service';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
-import { SettingsCardComponent } from '@app/components/settings/settings-card.component';
 import { SettingsPageComponent } from '@app/components/settings/settings-page.component';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
@@ -43,83 +42,83 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     CognosIconComponent,
     TranslocoModule,
     SettingsPageComponent,
-    SettingsCardComponent,
   ],
   template: `
     <ng-container *transloco="let t">
-      <app-settings-page [heading]="t('library.title')">
-        <app-settings-card [subtitle]="t('library.subtitle')">
-          <input
-            type="search"
-            class="library__search"
-            data-testid="library-page-search"
-            [attr.placeholder]="t('library.searchPlaceholder')"
-            [attr.aria-label]="t('library.searchPlaceholder')"
-            (input)="query.set($any($event.target).value)"
-          />
+      <app-settings-page
+        [heading]="t('library.title')"
+        [subtitle]="t('library.subtitle')"
+      >
+        <input
+          type="search"
+          class="library__search"
+          data-testid="library-page-search"
+          [attr.placeholder]="t('library.searchPlaceholder')"
+          [attr.aria-label]="t('library.searchPlaceholder')"
+          (input)="query.set($any($event.target).value)"
+        />
 
-          @if (filtered().length === 0) {
-            <p class="library__empty">{{ t('library.empty') }}</p>
-          } @else {
-            <ul class="library__list" data-testid="library-page-list">
-              @for (file of filtered(); track file.id) {
-                <li class="library__item" [attr.data-testid]="'library-row-' + file.id">
-                  <cog-icon name="file-text" [size]="20" tone="text-subtle" />
-                  <div class="library__main">
-                    @if (editingId() === file.id) {
-                      <input
-                        class="library__rename"
-                        data-testid="library-rename-input"
-                        [value]="file.displayName"
-                        (input)="renameDraft.set($any($event.target).value)"
-                        (keydown.enter)="commitRename(file)"
-                        (keydown.escape)="editingId.set(null)"
-                      />
-                    } @else {
-                      <span class="library__name" [title]="file.displayName">{{
-                        file.displayName
-                      }}</span>
+        @if (filtered().length === 0) {
+          <p class="library__empty">{{ t('library.empty') }}</p>
+        } @else {
+          <ul class="library__list" data-testid="library-page-list">
+            @for (file of filtered(); track file.id) {
+              <li class="library__item" [attr.data-testid]="'library-row-' + file.id">
+                <cog-icon name="file-text" [size]="20" tone="text-subtle" />
+                <div class="library__main">
+                  @if (editingId() === file.id) {
+                    <input
+                      class="library__rename"
+                      data-testid="library-rename-input"
+                      [value]="file.displayName"
+                      (input)="renameDraft.set($any($event.target).value)"
+                      (keydown.enter)="commitRename(file)"
+                      (keydown.escape)="editingId.set(null)"
+                    />
+                  } @else {
+                    <span class="library__name" [title]="file.displayName">{{
+                      file.displayName
+                    }}</span>
+                  }
+                  <span class="library__meta">
+                    {{ formatSize(file.sizeBytes) }}
+                    @if (usageCounts()[file.id] !== undefined) {
+                      · {{ t('library.usedIn', { count: usageCounts()[file.id] }) }}
                     }
-                    <span class="library__meta">
-                      {{ formatSize(file.sizeBytes) }}
-                      @if (usageCounts()[file.id] !== undefined) {
-                        · {{ t('library.usedIn', { count: usageCounts()[file.id] }) }}
-                      }
-                    </span>
-                  </div>
-                  <div class="library__actions">
-                    @if (editingId() === file.id) {
-                      <cog-button appearance="primary" (click)="commitRename(file)">{{
-                        t('library.renameSave')
-                      }}</cog-button>
-                    } @else {
-                      <cog-button
-                        appearance="subtle"
-                        (click)="loadUsages(file)"
-                        [attr.data-testid]="'library-usedin-' + file.id"
-                        >{{
-                          t('library.usedIn', { count: usageCounts()[file.id] ?? '…' })
-                        }}</cog-button
-                      >
-                      <cog-button appearance="subtle" (click)="download(file)">{{
-                        t('library.download')
-                      }}</cog-button>
-                      <cog-button appearance="subtle" (click)="startRename(file)">{{
-                        t('library.rename')
-                      }}</cog-button>
-                      <cog-button
-                        appearance="danger"
-                        [attr.data-testid]="'library-remove-' + file.id"
-                        (click)="remove(file)"
-                        >{{ t('library.remove') }}</cog-button
-                      >
-                    }
-                  </div>
-                </li>
-              }
-            </ul>
-          }
-        </app-settings-card>
+                  </span>
+                </div>
+                <div class="library__actions">
+                  @if (editingId() === file.id) {
+                    <cog-button appearance="primary" (click)="commitRename(file)">{{
+                      t('library.renameSave')
+                    }}</cog-button>
+                  } @else {
+                    <cog-button
+                      appearance="subtle"
+                      (click)="loadUsages(file)"
+                      [attr.data-testid]="'library-usedin-' + file.id"
+                      >{{
+                        t('library.usedIn', { count: usageCounts()[file.id] ?? '…' })
+                      }}</cog-button
+                    >
+                    <cog-button appearance="subtle" (click)="download(file)">{{
+                      t('library.download')
+                    }}</cog-button>
+                    <cog-button appearance="subtle" (click)="startRename(file)">{{
+                      t('library.rename')
+                    }}</cog-button>
+                    <cog-button
+                      appearance="danger"
+                      [attr.data-testid]="'library-remove-' + file.id"
+                      (click)="remove(file)"
+                      >{{ t('library.remove') }}</cog-button
+                    >
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        }
       </app-settings-page>
     </ng-container>
   `,
@@ -129,16 +128,15 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
         width: 100%;
         min-height: 44px;
         padding: 0 var(--cog-space-150);
-        border: 2px solid var(--cog-border);
-        border-radius: var(--cog-radius-sm);
-        background: var(--cog-input-bg);
+        border: 1px solid var(--cog-border);
+        border-radius: var(--cog-radius-md);
+        background: var(--cog-surface);
         color: var(--cog-text);
         font: inherit;
         outline: 0;
       }
       .library__search:focus {
         border-color: var(--cog-brand);
-        background: var(--cog-input-bg-focus);
       }
       .library__list {
         list-style: none;
@@ -154,7 +152,8 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
         gap: var(--cog-space-150);
         padding: var(--cog-space-150);
         border: 1px solid var(--cog-border);
-        border-radius: var(--cog-radius-sm);
+        border-radius: var(--cog-radius-md);
+        background: var(--cog-surface);
       }
       .library__main {
         flex: 1;
