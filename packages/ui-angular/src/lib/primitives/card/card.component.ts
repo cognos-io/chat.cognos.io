@@ -64,6 +64,12 @@ export type CognosCardTone = 'default' | 'danger';
         padding: var(--cog-space-250, 20px);
       }
 
+      /* Danger tone: a tinted surface + red border to flag destructive actions. */
+      .cog-card--danger {
+        border-color: var(--cog-danger);
+        background: var(--cog-loz-red-bg);
+      }
+
       .cog-card__head {
         display: flex;
         align-items: flex-start;
