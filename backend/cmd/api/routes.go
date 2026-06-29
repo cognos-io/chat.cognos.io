@@ -14,6 +14,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/compaction"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/mfa"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -126,7 +127,21 @@ func addPocketBaseRoutes(
 	paddleOveragePriceID string,
 	attachmentMaxFileBytes int64,
 	attachmentStorageCapBytes int64,
+	mfaCipher *mfa.SeedCipher,
 ) {
+	// Shared MFA dependencies for the auth-completion and management endpoints.
+	mfaStore := mfa.NewStore(app)
+	mfaIssuer := app.Settings().Meta.AppName
+	if mfaIssuer == "" {
+		mfaIssuer = "Cognos"
+	}
+	mfaParams := handler.MFAParams{
+		App:    app,
+		Store:  mfaStore,
+		Cipher: mfaCipher,
+		Issuer: mfaIssuer,
+		Logger: logger,
+	}
 	// Paddle webhook: unauthenticated (verified by HMAC) and unthrottled so we
 	// never drop Paddle's retries. Bad signatures are rejected before any write.
 	e.Router.POST(
@@ -321,6 +336,24 @@ func addPocketBaseRoutes(
 		handler.AccountDelete(app),
 	).Bind(
 		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// MFA login completion. Unauthenticated by design: the caller holds an
+	// mfaSessionId (proof the password factor passed), not a token yet. Rate
+	// limited by IP; brute-force is further bounded by the per-session burn and
+	// per-account cooldown enforced inside the handlers.
+	e.Router.POST(
+		"/api/v1/auth/mfa/totp",
+		handler.MFACompleteTOTP(mfaParams),
+	).Bind(
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/auth/mfa/recovery",
+		handler.MFACompleteRecovery(mfaParams),
+	).Bind(
 		rateLimiterMiddleware(app),
 	)
 

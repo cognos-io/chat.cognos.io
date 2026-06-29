@@ -328,6 +328,18 @@ func bindAppHooks(
 			completionStopper = handler.NewCompletionStopper()
 		}
 
+		// TOTP seed cipher. Absent key => enrolment endpoints report "not
+		// configured" rather than ever storing a plaintext seed. A present but
+		// malformed key is a hard boot error.
+		var mfaCipher *mfa.SeedCipher
+		if params.Config != nil && params.Config.MFATOTPEncryptionKey != "" {
+			c, err := mfa.NewSeedCipher(params.Config.MFATOTPEncryptionKey)
+			if err != nil {
+				return fmt.Errorf("mfa: invalid TOTP encryption key: %w", err)
+			}
+			mfaCipher = c
+		}
+
 		addPocketBaseRoutes(
 			e,
 			app,
@@ -354,6 +366,7 @@ func bindAppHooks(
 			paddleOveragePriceID,
 			params.AttachmentMaxFileBytes,
 			params.AttachmentStorageCapBytes,
+			mfaCipher,
 		)
 
 		hooks.SoftDelete(app)

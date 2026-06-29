@@ -12,11 +12,13 @@ import (
 
 // Collection names. Centralised so handlers/hooks never hardcode strings.
 const (
-	collTOTP            = "user_mfa_totp"
-	collAuthSessions    = "mfa_auth_sessions"
-	collRecoveryCodes   = "mfa_recovery_codes"
-	collTrustedDevices  = "mfa_trusted_devices"
-	usersCollectionName = "users"
+	collTOTP           = "user_mfa_totp"
+	collAuthSessions   = "mfa_auth_sessions"
+	collRecoveryCodes  = "mfa_recovery_codes"
+	collTrustedDevices = "mfa_trusted_devices"
+
+	// UsersCollection is the PocketBase auth collection MFA hangs off.
+	UsersCollection = "users"
 )
 
 // ErrNotFound is returned when a looked-up MFA record does not exist (or is no

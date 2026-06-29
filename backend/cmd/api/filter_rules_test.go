@@ -167,6 +167,9 @@ func setupTestAppWithHookParams(t testing.TB, params appHookParams) *tests.TestA
 		InfomaniakAPIKey:    "test-infomaniak-key",
 		InfomaniakProductID: "test-product-id",
 		RequestyAPIKey:      "test-requesty-key",
+		// A fixed 32-byte (base64) key so MFA TOTP enrolment/verification works in
+		// tests. testMFAKeyB64 is defined in mfa_test_helpers.go.
+		MFATOTPEncryptionKey: testMFAKeyB64,
 	}
 	params.App = app
 	if params.Config == nil {
