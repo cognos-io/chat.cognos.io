@@ -242,7 +242,16 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                     [attr.aria-expanded]="reasoningExpanded()"
                     (click)="toggleReasoning()"
                   >
-                    <cog-icon name="brain" [size]="14" aria-hidden="true" />
+                    <span
+                      class="message-list-item__reasoning-icon"
+                      [class.is-spinning]="message.isStreaming"
+                      aria-hidden="true"
+                    >
+                      <cog-icon
+                        [name]="message.isStreaming ? 'loader' : 'brain'"
+                        [size]="14"
+                      />
+                    </span>
                     {{ reasoningToggleLabel() }}
                     <span
                       class="message-list-item__reasoning-caret"
@@ -474,6 +483,26 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
 
     .message-list-item__reasoning-toggle:hover {
       color: var(--cog-text-subtle);
+    }
+
+    .message-list-item__reasoning-icon {
+      display: inline-flex;
+    }
+
+    .message-list-item__reasoning-icon.is-spinning {
+      animation: reasoning-spin 0.9s linear infinite;
+    }
+
+    @keyframes reasoning-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .message-list-item__reasoning-icon.is-spinning {
+        animation: none;
+      }
     }
 
     .message-list-item__reasoning-toggle:focus-visible {
@@ -720,10 +749,10 @@ export class MessageListItemComponent implements OnChanges {
     return !!reasoning && reasoning.trim() !== '';
   }
 
-  // Open while streaming (live thinking), collapsed once complete, unless the
-  // user has manually toggled the disclosure.
+  // Collapsed by default (including while streaming) so live reasoning stays out
+  // of the way; the user opens it explicitly. Their manual toggle wins.
   reasoningExpanded(): boolean {
-    return this._reasoningOverride() ?? !!this.message?.isStreaming;
+    return this._reasoningOverride() ?? false;
   }
 
   toggleReasoning(): void {
