@@ -1,6 +1,6 @@
 # MFA and Passkeys — Architecture Specification
 
-**Status:** Draft  
+**Status:** P0 (authenticator-app TOTP) implemented; P1 (passkeys) not started  
 **Scope:** PocketBase auth hardening for Cognos accounts  
 **Stack:** Go backend, Angular frontend, PocketBase v0.39.1, TOTP, WebAuthn/passkeys
 
@@ -489,21 +489,33 @@ P1 passkey tests:
 
 ## Rollout
 
-1. Add dependencies: a TOTP library (e.g. `pquerna/otp`) and, for P1, a WebAuthn library (e.g.
-   `go-webauthn/webauthn`). Neither is in `go.mod` today.
-2. Add tests for direct password-auth interception **and** for the refresh / MFA-token-issuance
-   pass-through (the infinite-loop guard).
-3. Add TOTP, MFA session, recovery-code, and trusted-MFA-device migrations. Verify the `SoftDelete`
-   hook (`internal/hooks`) supports excluding these auth collections from snapshots; extend it if
-   not.
-4. Add TOTP enrolment/confirm/verify endpoints, the TOTP brute-force throttle, and trusted-device
-   issue/verify/revoke.
-5. Add frontend MFA login (distinct `mfa_required` handling), settings state, and "remember this
+1. ✅ Add the TOTP dependency (`pquerna/otp`). _(P1 WebAuthn lib still to add.)_
+2. ✅ Tests for direct password-auth interception **and** the refresh / MFA-token-issuance
+   pass-through (the infinite-loop guard) — Go (`cmd/api/mfa_login_test.go`) + e2e
+   (`e2e/tests/mfa-api.spec.ts`).
+3. ✅ TOTP, MFA-session, recovery-code, and trusted-MFA-device migrations; the four collections are
+   excluded from `SoftDelete` snapshots (`internal/hooks/deleted_records.go`).
+4. ✅ TOTP enrol/confirm/verify endpoints, the TOTP brute-force throttle (per-session burn +
+   per-account cooldown), and trusted-device issue/verify/revoke.
+5. ✅ Frontend MFA login (distinct `mfa_required` handling), settings state, and "remember this
    device" opt-in, in all 6 locales.
-6. Ship authenticator-app MFA behind the existing `/account/security` route (currently a
-   placeholder).
-7. Add passkey storage and WebAuthn endpoints (RP ID configured per environment).
-8. Decide separately whether passkeys can become a first factor.
+6. ✅ Authenticator-app MFA shipped behind the `/account/security` route (`security` flag on).
+7. ⬜ Add passkey storage and WebAuthn endpoints (RP ID configured per environment).
+8. ⬜ Decide separately whether passkeys can become a first factor.
+
+### Implementation notes (P0)
+
+- Interception: `internal/hooks/mfa_login.go` (`OnRecordAuthRequest`); it writes the `mfa_required`
+  body directly because PocketBase sanitises `ApiError.Data`.
+- Primitives: `internal/mfa` (seed-at-rest cipher, TOTP verify with matched-step capture,
+  token/recovery hashing). Persistence + throttle/lockout: `internal/mfa/store.go`.
+- Handlers: `internal/handler/mfa.go` (completion) and `mfa_manage.go` (enrol/disable/devices).
+- Frontend: `services/mfa.service.ts`, the login MFA step, and
+  `pages/account/security.component.ts`.
+- Server key: `COGNOS_MFA_TOTP_ENCRYPTION_KEY` (base64 32 bytes). Absent ⇒ enrolment returns "not
+  configured" rather than storing a plaintext seed. **Must be set in production** for MFA to work.
+- Replay protection (`last_accepted_step`) advances only on the login path, not on authenticated
+  confirm/regenerate, so a genuine login in the same 30s window as enrolment is not rejected.
 
 ## Business process docs
 
