@@ -46,45 +46,17 @@
 
     <fieldset class="persona-editor__field" [disabled]="readOnly()">
       <legend>{{ t('personas.editor.iconLegend') }}</legend>
-      <div
-        class="persona-editor__icon-grid"
-        role="radiogroup"
-        [attr.aria-label]="t('personas.editor.iconLegend')"
-      >
-        @for (option of icons; track option) {
-          <button
-            type="button"
-            class="persona-editor__icon-button"
-            [class.is-selected]="icon() === option"
-            [attr.aria-label]="t('personas.editor.iconOption', { icon: option })"
-            [attr.aria-pressed]="icon() === option"
-            (click)="selectIcon(option)"
-          >
-            <cog-icon [name]="option" [size]="18" />
-          </button>
-        }
-      </div>
-    </fieldset>
-
-    <fieldset class="persona-editor__field" [disabled]="readOnly()">
-      <legend>{{ t('personas.editor.colourLegend') }}</legend>
-      <div
-        class="persona-editor__color-row"
-        role="radiogroup"
-        [attr.aria-label]="t('personas.editor.colourLegend')"
-      >
-        @for (option of colors; track option) {
-          <button
-            type="button"
-            class="persona-editor__color-swatch"
-            [class]="'persona-editor__color-swatch--' + option"
-            [class.is-selected]="color() === option"
-            [attr.aria-label]="t('personas.editor.colourOption', { colour: option })"
-            [attr.aria-pressed]="color() === option"
-            (click)="selectColor(option)"
-          ></button>
-        }
-      </div>
+      <cog-avatar-picker
+        [icons]="icons"
+        [colors]="colors"
+        [selectedIcon]="icon()"
+        [selectedColor]="color()"
+        [name]="name()"
+        [iconAriaLabel]="t('personas.editor.iconLegend')"
+        [colorAriaLabel]="t('personas.editor.colourLegend')"
+        (iconChange)="selectIcon($event)"
+        (colorChange)="selectColor($event)"
+      />
     </fieldset>
 
     <label class="persona-editor__field">

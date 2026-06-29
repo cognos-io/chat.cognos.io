@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 
 import {
+  CognosAvatarPickerComponent,
   CognosButtonComponent,
   CognosDialogSurfaceComponent,
 } from '@cognos/ui-angular';
@@ -19,6 +20,7 @@ import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/
 import {
   ProjectColor,
   ProjectIcon,
+  coerceProjectIcon,
   defaultProjectColor,
   defaultProjectIcon,
   projectColors,
@@ -36,6 +38,7 @@ import { ProjectService } from '@app/services/project.service';
   imports: [
     FormsModule,
     TranslocoModule,
+    CognosAvatarPickerComponent,
     CognosButtonComponent,
     CognosDialogSurfaceComponent,
     PersonaAvatarComponent,
@@ -114,48 +117,17 @@ import { ProjectService } from '@app/services/project.service';
           <legend class="project-settings__label">
             {{ t('projects.settings.iconLegend') }}
           </legend>
-          <div
-            class="project-settings__icon-grid"
-            role="radiogroup"
-            [attr.aria-label]="t('projects.settings.iconLegend')"
-          >
-            @for (option of icons; track option) {
-              <button
-                type="button"
-                class="project-settings__icon-button"
-                [class.is-selected]="icon() === option"
-                [attr.aria-pressed]="icon() === option"
-                (click)="icon.set(option)"
-              >
-                <app-persona-avatar [icon]="option" [color]="color()" [size]="28" />
-              </button>
-            }
-          </div>
-        </fieldset>
-
-        <fieldset class="project-settings__field">
-          <legend class="project-settings__label">
-            {{ t('projects.settings.colourLegend') }}
-          </legend>
-          <div
-            class="project-settings__color-row"
-            role="radiogroup"
-            [attr.aria-label]="t('projects.settings.colourLegend')"
-          >
-            @for (option of colors; track option) {
-              <button
-                type="button"
-                class="project-settings__color-swatch"
-                [class]="'project-settings__color-swatch--' + option"
-                [class.is-selected]="color() === option"
-                [attr.aria-label]="
-                  t('personas.editor.colourOption', { colour: option })
-                "
-                [attr.aria-pressed]="color() === option"
-                (click)="color.set(option)"
-              ></button>
-            }
-          </div>
+          <cog-avatar-picker
+            [icons]="icons"
+            [colors]="colors"
+            [selectedIcon]="icon()"
+            [selectedColor]="color()"
+            [name]="name()"
+            [iconAriaLabel]="t('projects.settings.iconLegend')"
+            [colorAriaLabel]="t('projects.settings.colourLegend')"
+            (iconChange)="selectIcon($event)"
+            (colorChange)="color.set($event)"
+          />
         </fieldset>
       </div>
 
@@ -245,98 +217,6 @@ import { ProjectService } from '@app/services/project.service';
       border-color: var(--cog-brand);
       background: var(--cog-input-bg-focus);
     }
-
-    .project-settings__icon-grid {
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      gap: var(--cog-space-075);
-    }
-
-    .project-settings__icon-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      aspect-ratio: 1;
-      border: 1px solid transparent;
-      border-radius: var(--cog-radius-sm);
-      background: transparent;
-      cursor: pointer;
-      transition: border-color var(--cog-dur-fast) var(--cog-ease-standard);
-    }
-
-    .project-settings__icon-button:hover {
-      border-color: var(--cog-border);
-    }
-
-    .project-settings__icon-button.is-selected {
-      border-color: var(--cog-brand);
-      box-shadow: 0 0 0 1px var(--cog-brand);
-    }
-
-    .project-settings__color-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--cog-space-100);
-    }
-
-    .project-settings__color-swatch {
-      inline-size: 28px;
-      block-size: 28px;
-      border-radius: 999px;
-      border: 2px solid transparent;
-      background: var(--swatch-bg, #eef0f3);
-      cursor: pointer;
-    }
-
-    .project-settings__color-swatch.is-selected {
-      border-color: var(--cog-brand);
-      box-shadow: 0 0 0 2px var(--cog-surface);
-      outline: 2px solid var(--cog-brand);
-    }
-
-    .project-settings__color-swatch--green {
-      --swatch-bg: #dcfce7;
-    }
-    .project-settings__color-swatch--blue {
-      --swatch-bg: #dbeafe;
-    }
-    .project-settings__color-swatch--indigo {
-      --swatch-bg: #e0e7ff;
-    }
-    .project-settings__color-swatch--violet {
-      --swatch-bg: #ede9fe;
-    }
-    .project-settings__color-swatch--teal {
-      --swatch-bg: #ccfbf1;
-    }
-    .project-settings__color-swatch--sky {
-      --swatch-bg: #e0f2fe;
-    }
-    .project-settings__color-swatch--amber {
-      --swatch-bg: #fef3c7;
-    }
-    .project-settings__color-swatch--orange {
-      --swatch-bg: #ffedd5;
-    }
-    .project-settings__color-swatch--pink {
-      --swatch-bg: #fce7f3;
-    }
-    .project-settings__color-swatch--slate {
-      --swatch-bg: #eef0f3;
-    }
-    /* "No fill": a surface circle with a hairline border and a diagonal slash. */
-    .project-settings__color-swatch--transparent {
-      background:
-        linear-gradient(
-          to top right,
-          transparent calc(50% - 1px),
-          var(--cog-text-subtlest, #94a3b8) calc(50% - 1px),
-          var(--cog-text-subtlest, #94a3b8) calc(50% + 1px),
-          transparent calc(50% + 1px)
-        ),
-        var(--cog-surface, #fff);
-      box-shadow: inset 0 0 0 1px var(--cog-border, #e2e8f0);
-    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -361,6 +241,10 @@ export class ProjectSettingsDialogComponent {
   protected readonly description = signal('');
   protected readonly icon = signal<ProjectIcon>(defaultProjectIcon);
   protected readonly color = signal<ProjectColor>(defaultProjectColor);
+
+  protected selectIcon(icon: string): void {
+    this.icon.set(coerceProjectIcon(icon));
+  }
   // '' means "no project default" — fall back to the member's personal default.
   protected readonly defaultModelId = signal('');
   protected readonly saving = signal(false);

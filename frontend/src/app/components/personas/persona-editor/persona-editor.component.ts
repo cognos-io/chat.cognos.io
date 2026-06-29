@@ -12,12 +12,18 @@ import { FormsModule } from '@angular/forms';
 
 import { TranslocoModule } from '@jsverse/transloco';
 
-import { CognosButtonComponent, CognosIconComponent } from '@cognos/ui-angular';
+import {
+  CognosAvatarPickerComponent,
+  CognosButtonComponent,
+  CognosIconComponent,
+} from '@cognos/ui-angular';
 
 import {
   Persona,
   PersonaColor,
   PersonaIcon,
+  coercePersonaColor,
+  coercePersonaIcon,
   defaultPersonaColor,
   defaultPersonaIcon,
   personaColors,
@@ -31,7 +37,13 @@ import { PersonaInput, PersonaService } from '@app/services/persona.service';
 @Component({
   selector: 'app-persona-editor',
   standalone: true,
-  imports: [FormsModule, CognosButtonComponent, CognosIconComponent, TranslocoModule],
+  imports: [
+    FormsModule,
+    CognosAvatarPickerComponent,
+    CognosButtonComponent,
+    CognosIconComponent,
+    TranslocoModule,
+  ],
   templateUrl: './persona-editor.component.html',
   styleUrl: './persona-editor.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -90,12 +102,12 @@ export class PersonaEditorComponent {
     this.closed.emit();
   }
 
-  protected selectIcon(icon: PersonaIcon): void {
-    this.icon.set(icon);
+  protected selectIcon(icon: string): void {
+    this.icon.set(coercePersonaIcon(icon));
   }
 
-  protected selectColor(color: PersonaColor): void {
-    this.color.set(color);
+  protected selectColor(color: string): void {
+    this.color.set(coercePersonaColor(color));
   }
 
   protected duplicate(): void {
