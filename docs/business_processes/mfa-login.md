@@ -12,22 +12,42 @@ When MFA is enabled, login is:
 
 1. User enters email + password.
 2. PocketBase validates the password.
-3. The backend intercepts the auth response and returns `mfaSessionId` instead
-   of an auth token.
+3. The backend intercepts the auth response. If the request carries a valid
+   trusted-MFA-device token (see below), it issues the normal auth token and the
+   code step is skipped. Otherwise it returns a distinct `mfa_required` response
+   carrying `mfaSessionId` instead of an auth token.
 4. User enters the 6-digit code from their authenticator app.
 5. Backend verifies the code, consumes the session, and issues the normal auth
-   token.
+   token. Repeated bad codes burn the session and trip a per-account cooldown.
 
 ```mermaid
 flowchart TD
   A[password login] --> B{MFA enabled?}
   B -- no --> C[issue auth token]
-  B -- yes --> D[return mfaSessionId]
+  B -- yes --> T{trusted device token valid?}
+  T -- yes --> C
+  T -- no --> D[return mfa_required + mfaSessionId]
   D --> E[authenticator app code]
   E --> F{valid + unexpired session?}
   F -- yes --> C
   F -- no --> G[reject]
 ```
+
+## Remember this device
+
+To avoid prompting for a code on every return after the 30-minute idle logout, a
+device that completes a full code challenge may be remembered. On opt-in the
+backend issues a trusted-MFA-device token (random secret, stored server-side as a
+hash only) that waives the code step for a bounded window (e.g. 30 days).
+
+A trusted-MFA-device token:
+
+- waives **only** the second factor — it never decrypts data; the Account Key (or
+  trusted-device vault session) is still required to open encrypted content
+- is bound to one user and expires
+- is revoked on logout, MFA disable, recovery-code regeneration, and password
+  change
+- is independent of the trusted-*vault* device, which stores the data unlock key
 
 MFA protects account access. It does not decrypt chat data. The Account Key (or
 trusted-device vault session) is still required after login to open encrypted
