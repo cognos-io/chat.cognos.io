@@ -1165,6 +1165,27 @@ export class CognosApiService {
     return new Uint8Array(await response.arrayBuffer());
   }
 
+  // fetchPublicAttachmentBytes downloads a shared message's attachment ciphertext
+  // through the unauthenticated public-share route (gated by the link token). The
+  // bytes are decrypted client-side with the conversation key from the fragment.
+  fetchPublicAttachmentBytes(token: string, messageId: string): Observable<Uint8Array> {
+    return from(this.downloadPublicAttachment(token, messageId));
+  }
+
+  private async downloadPublicAttachment(
+    token: string,
+    messageId: string,
+  ): Promise<Uint8Array> {
+    const url = `${this._baseUrl}/api/v1/public/conversations/${encodeURIComponent(
+      token,
+    )}/messages/${encodeURIComponent(messageId)}/attachment`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`failed to fetch attachment (${response.status})`);
+    }
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
   completeStream(
     request: CompleteRequest,
     signal?: AbortSignal,

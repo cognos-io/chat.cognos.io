@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { EMPTY, catchError, of, switchMap } from 'rxjs';
+import { EMPTY, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { Base64 } from 'js-base64';
@@ -19,6 +19,7 @@ import {
   CognosAssistantMessageComponent,
   CognosBranchSwitcherComponent,
   CognosIconComponent,
+  CognosImageGridComponent,
   CognosUserMessageComponent,
   type MessageBranchInfo,
   type MessageTreeAccessors,
@@ -73,6 +74,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
     CognosAssistantMessageComponent,
     CognosBranchSwitcherComponent,
     CognosIconComponent,
+    CognosImageGridComponent,
     CognosLogoComponent,
     MessageAttachmentChipComponent,
     TranslocoModule,
@@ -218,6 +220,12 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
               }"
             />
           }
+          @if (imageUrls(message).length) {
+            <cog-image-grid
+              [images]="imageUrls(message)"
+              [encryptedLabel]="t('chat.message.imageEncrypted')"
+            />
+          }
           @if (message.decryptedData.content) {
             <markdown
               class="public-conversation__text"
@@ -225,7 +233,9 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
               katex
               [data]="renderBody(message.decryptedData.content)"
             ></markdown>
-          } @else if (userUploadAttachments(message).length === 0) {
+          } @else if (
+            userUploadAttachments(message).length === 0 && !hasGeneratedImage(message)
+          ) {
             <p class="public-conversation__muted">{{ t('public.emptyMessage') }}</p>
           }
         }
@@ -439,6 +449,71 @@ export class PublicConversationComponent implements OnInit {
     );
   }
 
+  // Decrypted image blob URLs for a message (empty until hydrated / on failure).
+  imageUrls(message: Message): string[] {
+    return (message.record_id && this._imageUrls()[message.record_id]) || [];
+  }
+
+  // True when a message carries a generated image (sealed to the conversation
+  // key, so a public viewer *can* decrypt it). Used to suppress the empty-message
+  // notice while the image hydrates.
+  hasGeneratedImage(message: Message): boolean {
+    return (message.decryptedData.attachments ?? []).some((a) => !!a.sealed_key);
+  }
+
+  // Fetch + decrypt each message's generated image(s) into blob URLs. Mirrors the
+  // authenticated chat path, but over the token-gated public byte endpoint. A
+  // failure for one message leaves it imageless rather than breaking the view.
+  private hydrateImages(messages: Message[]): void {
+    const keyPair = this._conversationKeyPair;
+    if (!keyPair) {
+      return;
+    }
+    for (const message of messages) {
+      const recordId = message.record_id;
+      const attachments = (message.decryptedData.attachments ?? []).filter(
+        (a) => !!a.sealed_key,
+      );
+      if (!recordId || attachments.length === 0) {
+        continue;
+      }
+      forkJoin(
+        attachments.map((attachment) =>
+          this.decryptImage(recordId, attachment, keyPair),
+        ),
+      ).subscribe((urls) => {
+        const resolved = urls.filter((url): url is string => !!url);
+        if (resolved.length) {
+          this._imageUrls.update((map) => ({ ...map, [recordId]: resolved }));
+        }
+      });
+    }
+  }
+
+  private decryptImage(
+    recordId: string,
+    attachment: { sealed_key?: string; mime_type?: string },
+    keyPair: KeyPair,
+  ) {
+    return this._api.fetchPublicAttachmentBytes(this._token, recordId).pipe(
+      map((ciphertext): string | null => {
+        if (!attachment.sealed_key) {
+          return null;
+        }
+        const symmetricKey = this._crypto.openSealedBox(
+          Base64.toUint8Array(attachment.sealed_key),
+          keyPair,
+        );
+        const imageBytes = this._crypto.openSecretBox(ciphertext, symmetricKey);
+        const blob = new Blob([imageBytes as BlobPart], {
+          type: attachment.mime_type || 'image/png',
+        });
+        return URL.createObjectURL(blob);
+      }),
+      catchError(() => of(null)),
+    );
+  }
+
   // Two-stage sensitive-value reveal. A reader always starts with sensitive
   // values hidden (placeholders); they can only be revealed if the sharer chose
   // an include-sensitive link (which carries the redaction key, gated by the URL
@@ -450,6 +525,12 @@ export class PublicConversationComponent implements OnInit {
   private readonly _redactionEntries = signal<Map<string, RedactionEntry>>(new Map());
   private _redactionKeyPair: KeyPair | null = null;
   private _token = '';
+
+  // Conversation keypair (recovered from the URL fragment) retained so generated
+  // images can be decrypted after the messages load, plus the resulting blob
+  // URLs keyed by message record id.
+  private _conversationKeyPair: KeyPair | null = null;
+  private readonly _imageUrls = signal<Record<string, string[]>>({});
 
   // The full decrypted message set, plus the per-fork branch selection (parent
   // id -> chosen child id). The active path + branch metadata are derived from
@@ -549,7 +630,10 @@ export class PublicConversationComponent implements OnInit {
 
           return this._api.listPublicConversationMessages(token).pipe(
             switchMap((list) => {
-              this._messages.set(this.decryptMessages(list.items, conversationKeyPair));
+              const messages = this.decryptMessages(list.items, conversationKeyPair);
+              this._conversationKeyPair = conversationKeyPair;
+              this._messages.set(messages);
+              this.hydrateImages(messages);
               this.state.set('ready');
               return EMPTY;
             }),
