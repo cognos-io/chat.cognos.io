@@ -9,6 +9,9 @@ approach to ProtonMail which encrypts user emails.
 - `backend/` the Go API. Powered by Pocketbase,
 - `frontend/` an Angular v21 application. The chat interface that decrypts messages, sends to the
   backend etc.
+- `packages/ui-angular/` the shared Angular component library (`@cognos/ui-angular`). **Before
+  building frontend UI, check `packages/ui-angular/COMPONENTS.md`** for an existing component to
+  reuse; extract a new one there when a UI pattern repeats more than twice.
 - `web/` marketing pages in Astro
 
 ## Guidelines
