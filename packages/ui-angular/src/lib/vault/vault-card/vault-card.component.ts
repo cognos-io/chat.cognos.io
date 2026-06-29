@@ -60,17 +60,28 @@ import type { CognosVaultFile } from '../vault.types';
 
       <div class="cog-vault-card__footer">
         @if (refsLabel()) {
-          <span
-            class="cog-vault-card__refs"
-            [class.cog-vault-card__refs--linked]="file().refs > 0"
-          >
-            <cog-icon
-              name="link"
-              [size]="12"
-              [tone]="file().refs > 0 ? 'link' : 'text-subtlest'"
-            />
-            <span>{{ refsLabel() }}</span>
-          </span>
+          @if (refsInteractive()) {
+            <button
+              type="button"
+              class="cog-vault-card__refs cog-vault-card__refs--linked cog-vault-card__refs--button"
+              (click)="$event.stopPropagation(); refsClick.emit()"
+            >
+              <cog-icon name="link" [size]="12" tone="link" />
+              <span>{{ refsLabel() }}</span>
+            </button>
+          } @else {
+            <span
+              class="cog-vault-card__refs"
+              [class.cog-vault-card__refs--linked]="file().refs > 0"
+            >
+              <cog-icon
+                name="link"
+                [size]="12"
+                [tone]="file().refs > 0 ? 'link' : 'text-subtlest'"
+              />
+              <span>{{ refsLabel() }}</span>
+            </span>
+          }
         } @else {
           <span></span>
         }
@@ -203,6 +214,24 @@ import type { CognosVaultFile } from '../vault.types';
       .cog-vault-card__refs--linked {
         color: var(--cog-link);
       }
+
+      .cog-vault-card__refs--button {
+        border: 0;
+        background: none;
+        padding: 0;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .cog-vault-card__refs--button:hover span {
+        text-decoration: underline;
+      }
+
+      .cog-vault-card__refs--button:focus-visible {
+        outline: 2px solid var(--cog-brand);
+        outline-offset: 2px;
+        border-radius: var(--cog-radius-xs);
+      }
     `,
   ],
 })
@@ -218,9 +247,16 @@ export class CognosVaultCardComponent {
    * empty string to hide the reference line entirely (e.g. count not yet known).
    */
   readonly refsText = input<string | null>(null);
+  /**
+   * When true, the reference line renders as a button that emits `refsClick`
+   * (e.g. to open the list of referencing chats). Only meaningful when there is
+   * something to show — host gates this on a non-zero count.
+   */
+  readonly refsInteractive = input(false);
   readonly toggle = output<CognosVaultFile>();
   readonly open = output<CognosVaultFile>();
   readonly more = output<CognosVaultFile>();
+  readonly refsClick = output<void>();
 
   protected readonly refsLabel = computed(() => {
     const custom = this.refsText();

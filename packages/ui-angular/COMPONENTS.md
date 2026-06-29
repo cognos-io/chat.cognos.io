@@ -81,7 +81,9 @@ These "vault" file-browsing surfaces are reused by the app's **File library** pa
 (`account-library.component.ts`). Their visible strings default to English but can be
 overridden for i18n: `cog-filter-chips` takes a translated `options` array,
 `cog-vault-card`/`cog-vault-list-row` take `moreLabel` (the ⋯ action's accessible label)
-and `refsText` (footer reference text; pass `''` to hide it until a count is known).
+and `refsText` (footer reference text; pass `''` to hide it until a count is known). Set
+`refsInteractive` to render that reference line as a button that emits `refsClick` (e.g.
+to open the list of chats that reference the file).
 
 | Selector                                                                        | When to use                                                              |
 | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |

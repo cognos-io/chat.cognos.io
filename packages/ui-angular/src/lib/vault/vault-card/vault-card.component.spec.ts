@@ -62,4 +62,20 @@ describe('CognosVaultCardComponent', () => {
     const more = fixture.nativeElement.querySelector('button[aria-label]');
     expect(more?.getAttribute('aria-label')).toBe('File actions');
   });
+
+  it('renders the reference line as a button and emits refsClick when interactive', () => {
+    const fixture = render();
+    fixture.componentRef.setInput('refsInteractive', true);
+    fixture.detectChanges();
+
+    let clicked = 0;
+    fixture.componentInstance.refsClick.subscribe(() => (clicked += 1));
+
+    const refs = (fixture.nativeElement as HTMLElement).querySelector(
+      'button.cog-vault-card__refs',
+    ) as HTMLButtonElement | null;
+    expect(refs).not.toBeNull();
+    refs?.click();
+    expect(clicked).toBe(1);
+  });
 });

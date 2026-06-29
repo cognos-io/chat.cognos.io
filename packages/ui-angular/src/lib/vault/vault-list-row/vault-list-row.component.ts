@@ -42,17 +42,28 @@ import type { CognosVaultFile } from '../vault.types';
       </div>
 
       @if (refsLabel()) {
-        <span
-          class="cog-vault-list-row__refs"
-          [class.cog-vault-list-row__refs--linked]="file().refs > 0"
-        >
-          <cog-icon
-            name="link"
-            [size]="12"
-            [tone]="file().refs > 0 ? 'link' : 'text-subtlest'"
-          />
-          <span>{{ refsLabel() }}</span>
-        </span>
+        @if (refsInteractive()) {
+          <button
+            type="button"
+            class="cog-vault-list-row__refs cog-vault-list-row__refs--linked cog-vault-list-row__refs--button"
+            (click)="$event.stopPropagation(); refsClick.emit()"
+          >
+            <cog-icon name="link" [size]="12" tone="link" />
+            <span>{{ refsLabel() }}</span>
+          </button>
+        } @else {
+          <span
+            class="cog-vault-list-row__refs"
+            [class.cog-vault-list-row__refs--linked]="file().refs > 0"
+          >
+            <cog-icon
+              name="link"
+              [size]="12"
+              [tone]="file().refs > 0 ? 'link' : 'text-subtlest'"
+            />
+            <span>{{ refsLabel() }}</span>
+          </span>
+        }
       }
       <cog-icon name="lock" [size]="13" tone="success" />
       <cog-icon-button
@@ -142,6 +153,24 @@ import type { CognosVaultFile } from '../vault.types';
       .cog-vault-list-row__refs--linked {
         color: var(--cog-link);
       }
+
+      .cog-vault-list-row__refs--button {
+        border: 0;
+        background: none;
+        padding: 0;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .cog-vault-list-row__refs--button:hover span {
+        text-decoration: underline;
+      }
+
+      .cog-vault-list-row__refs--button:focus-visible {
+        outline: 2px solid var(--cog-brand);
+        outline-offset: 2px;
+        border-radius: var(--cog-radius-xs);
+      }
     `,
   ],
 })
@@ -156,8 +185,15 @@ export class CognosVaultListRowComponent {
    * count not yet known).
    */
   readonly refsText = input<string | null>(null);
+  /**
+   * When true, the reference line renders as a button that emits `refsClick`
+   * (e.g. to open the list of referencing chats). Host gates this on a non-zero
+   * count.
+   */
+  readonly refsInteractive = input(false);
   readonly open = output<CognosVaultFile>();
   readonly more = output<CognosVaultFile>();
+  readonly refsClick = output<void>();
 
   protected readonly refsLabel = computed(() => {
     const custom = this.refsText();
