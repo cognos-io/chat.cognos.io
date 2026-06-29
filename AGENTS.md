@@ -84,3 +84,7 @@ It's important to write tests so that users cannot access unauthorised data. The
 access to the data they are allowed (either as the owner or a team/organisation etc.).
 
 See `@backend/cmd/api/filter_rules_test.go` for examples of how this is done with Pocketbase.
+
+`@docs/api-permissions.md` is the map of every `/api/v1` endpoint's auth + scope rule and the
+test that enforces it, plus the checklist for adding a new endpoint (authorize, register in the
+auth-surface guardrail, add a cross-user denial test). Keep it current when adding endpoints.
