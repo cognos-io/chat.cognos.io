@@ -10,12 +10,14 @@ export type CognosCardTone = 'default' | 'danger';
  *
  *   <cog-card [heading]="'Password'" [subtitle]="'…'">
  *     ...body...
- *     <div card-actions><cog-button>Change password</cog-button></div>
+ *     <cog-button card-actions>Change password</cog-button>
  *   </cog-card>
  *
  * Slots:
  *   [card-heading-actions] — trailing control on the heading row (badge, toggle).
- *   [card-actions]         — bottom-right action buttons.
+ *   [card-actions]         — bottom-right action buttons. For multiple actions put
+ *                            `card-actions` on each button (don't wrap them in one
+ *                            element) so they're spaced by the row's gap.
  *
  * Cards with a bespoke header (no fixed heading/subtitle) can omit the inputs
  * and project their own markup into the default slot.

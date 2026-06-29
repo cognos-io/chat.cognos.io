@@ -37,10 +37,8 @@ export const WithHeadingActions: Story = {
         <cog-card heading="Two-factor authentication" subtitle="Require a code from an authenticator app each time you sign in.">
           <cog-lozenge card-heading-actions tone="green">Enabled</cog-lozenge>
           <p style="margin:0;color:var(--cog-text-subtle);">10 of your recovery codes remain</p>
-          <div card-actions>
-            <cog-button appearance="default">Regenerate</cog-button>
-            <cog-button appearance="danger">Disable</cog-button>
-          </div>
+          <cog-button card-actions appearance="default">Regenerate</cog-button>
+          <cog-button card-actions appearance="danger">Disable</cog-button>
         </cog-card>
       </div>
     `,
