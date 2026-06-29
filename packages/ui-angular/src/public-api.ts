@@ -17,6 +17,7 @@ export * from './lib/overlays/security-modal/security-modal.component';
 export * from './lib/overlays/dialog-surface/dialog-surface.component';
 export * from './lib/navigation/nav-item/nav-item.component';
 export * from './lib/navigation/breadcrumbs/breadcrumbs.component';
+export * from './lib/navigation/page-header/page-header.component';
 export * from './lib/navigation/drawer/drawer.component';
 export * from './lib/chat/section-message/section-message.component';
 export * from './lib/chat/user-message/user-message.component';
