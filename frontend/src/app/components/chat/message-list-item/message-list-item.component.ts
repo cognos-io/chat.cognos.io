@@ -307,6 +307,21 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                 } @else {
                   <app-redacted-markdown [content]="message.decryptedData.content" />
                 }
+              } @else if (message.isStreaming) {
+                <!-- Still generating and nothing to show yet. A reasoning model
+                     already signals activity via the "Thinking…" toggle, so only
+                     show the typing indicator when there is no reasoning. -->
+                @if (!hasReasoning()) {
+                  <p
+                    class="message-list-item__typing"
+                    role="status"
+                    [attr.aria-label]="t('chat.message.reasoningThinking')"
+                  >
+                    <span class="message-list-item__typing-dot"></span>
+                    <span class="message-list-item__typing-dot"></span>
+                    <span class="message-list-item__typing-dot"></span>
+                  </p>
+                }
               } @else {
                 <p class="message-list-item__empty">
                   {{ t('chat.message.emptyAssistant') }}
@@ -457,6 +472,50 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       margin: 0;
       color: var(--cog-text-subtlest);
       font-style: italic;
+    }
+
+    .message-list-item__typing {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin: 0;
+      padding: var(--cog-space-050) 0;
+    }
+
+    .message-list-item__typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: var(--cog-radius-pill);
+      background: var(--cog-text-subtlest);
+      animation: message-typing 1.2s ease-in-out infinite;
+    }
+
+    .message-list-item__typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .message-list-item__typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes message-typing {
+      0%,
+      60%,
+      100% {
+        opacity: 0.25;
+        transform: translateY(0);
+      }
+      30% {
+        opacity: 1;
+        transform: translateY(-2px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .message-list-item__typing-dot {
+        animation: none;
+        opacity: 0.5;
+      }
     }
 
     .message-list-item__streaming {
