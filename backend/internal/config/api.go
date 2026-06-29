@@ -97,6 +97,11 @@ type APIConfig struct {
 	PaddlePricePAYGOverage      string `koanf:"paddle.price_payg_overage"`
 	PaddlePriceUnlimitedMonthly string `koanf:"paddle.price_unlimited_monthly"`
 	PaddlePriceUnlimitedAnnual  string `koanf:"paddle.price_unlimited_annual"`
+	// MFA. MFATOTPEncryptionKey is a server-held key (base64-encoded 32 bytes)
+	// used to encrypt TOTP seeds at rest. Without it, TOTP enrolment is disabled
+	// (we never store seeds in plaintext). Rotate by issuing a new key and
+	// re-enrolling; the secret_key_id column records which key sealed each seed.
+	MFATOTPEncryptionKey string `koanf:"mfa.totp_encryption_key"`
 }
 
 // MustLoadAPIConfig loads the API configuration or panics if an error occurs.
@@ -173,6 +178,7 @@ func MustLoadAPIConfig(logger *slog.Logger) *APIConfig {
 		{envVar: "COGNOS_REQUESTY_API_KEY_FILE", apply: func(value string) { c.RequestyAPIKey = value }},
 		{envVar: "COGNOS_PADDLE_API_KEY_FILE", apply: func(value string) { c.PaddleAPIKey = value }},
 		{envVar: "COGNOS_PADDLE_WEBHOOK_SECRET_FILE", apply: func(value string) { c.PaddleWebhookSecret = value }},
+		{envVar: "COGNOS_MFA_TOTP_ENCRYPTION_KEY_FILE", apply: func(value string) { c.MFATOTPEncryptionKey = value }},
 	} {
 		value, err := fileEnvValue(override.envVar)
 		if err != nil {

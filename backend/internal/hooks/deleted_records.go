@@ -23,6 +23,13 @@ var softDeleteExcludedCollections = []string{
 	// would needlessly extend the lifetime of that key material. The ciphertext
 	// bytes are removed with the record regardless (spec docs/specs/attachments.md).
 	"user_attachments",
+	// MFA material is auth material: a deleted TOTP seed, recovery code, auth
+	// session, or trusted-device token must disappear at once, never linger in a
+	// retention snapshot (spec docs/specs/mfa-and-passkeys.md).
+	"user_mfa_totp",
+	"mfa_auth_sessions",
+	"mfa_recovery_codes",
+	"mfa_trusted_devices",
 }
 
 func ShouldCopyDeletedRecord(collectionName string) bool {
