@@ -145,8 +145,8 @@ import type { CognosVaultFile } from '../vault.types';
         align-items: center;
         gap: 5px;
         color: var(--cog-text-subtlest);
-        font-size: var(--cog-fs-body);
-        line-height: var(--cog-lh-body);
+        font-size: var(--cog-fs-body-sm);
+        line-height: var(--cog-lh-body-sm);
         white-space: nowrap;
       }
 
