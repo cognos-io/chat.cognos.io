@@ -5,6 +5,8 @@ export * from './lib/primitives/lozenge/lozenge.component';
 export * from './lib/primitives/toggle/toggle.component';
 export * from './lib/primitives/text-field/text-field.component';
 export * from './lib/primitives/avatar/avatar.component';
+export * from './lib/primitives/list/list.component';
+export * from './lib/primitives/list/list-item.component';
 export * from './lib/overlays/menu/menu.component';
 export * from './lib/overlays/sheet/sheet.component';
 export * from './lib/overlays/modal/modal.component';

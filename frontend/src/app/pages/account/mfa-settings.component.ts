@@ -13,7 +13,12 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import QRCode from 'qrcode';
 
-import { CognosButtonComponent, CognosToastService } from '@cognos/ui-angular';
+import {
+  CognosButtonComponent,
+  CognosListComponent,
+  CognosListItemComponent,
+  CognosToastService,
+} from '@cognos/ui-angular';
 
 import { MfaService, MfaStatus, TrustedDevice } from '@services/mfa.service';
 
@@ -33,7 +38,14 @@ type View =
 @Component({
   selector: 'app-mfa-settings',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslocoModule, DatePipe, CognosButtonComponent],
+  imports: [
+    ReactiveFormsModule,
+    TranslocoModule,
+    DatePipe,
+    CognosButtonComponent,
+    CognosListComponent,
+    CognosListItemComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ng-container *transloco="let t">
@@ -297,9 +309,9 @@ type View =
           @if (devices().length === 0) {
             <p class="security__muted">{{ t('settings.security.devicesEmpty') }}</p>
           } @else {
-            <ul class="security__devices">
+            <cog-list>
               @for (device of devices(); track device.id) {
-                <li class="security__device">
+                <cog-list-item>
                   <div>
                     <span class="security__device-label">{{
                       device.label || '—'
@@ -323,9 +335,9 @@ type View =
                   <cog-button appearance="subtle" (click)="revokeDevice(device.id)">
                     {{ t('settings.security.revoke') }}
                   </cog-button>
-                </li>
+                </cog-list-item>
               }
-            </ul>
+            </cog-list>
           }
         </section>
       }
@@ -445,24 +457,6 @@ type View =
       border-radius: var(--cog-radius-sm);
       font-family: var(--cog-font-mono, monospace);
       letter-spacing: 0.06em;
-    }
-    .security__devices {
-      display: grid;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-    .security__device {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--cog-space-150);
-      padding: var(--cog-space-150) 0;
-      border-bottom: 1px solid var(--cog-border);
-    }
-    .security__device:last-child {
-      border-bottom: 0;
-      padding-bottom: 0;
     }
     .security__device-label {
       display: block;
