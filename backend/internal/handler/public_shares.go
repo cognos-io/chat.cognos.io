@@ -383,6 +383,45 @@ func PublicConversationMessagesList(app core.App) func(e *core.RequestEvent) err
 	}
 }
 
+// PublicConversationMessageAttachment serves the encrypted bytes of a shared
+// message's attachment (e.g. a generated image), gated by the public-share token
+// rather than auth. The bytes are ciphertext — the anonymous reader decrypts
+// them client-side with the conversation key recovered from the URL fragment.
+// Mirrors the participant-gated ConversationMessageAttachment route.
+func PublicConversationMessageAttachment(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		_, conversation, err := publicShareByToken(app, e.Request.PathValue("token"))
+		if err != nil {
+			return err
+		}
+
+		messageID := e.Request.PathValue("messageID")
+		if messageID == "" {
+			return apis.NewBadRequestError("Message ID is required", nil)
+		}
+
+		// The message must belong to the shared conversation; otherwise return the
+		// same not-found as a missing attachment so ids can't be probed.
+		record, err := app.FindRecordById("messages", messageID)
+		if err != nil || record.GetString("conversation") != conversation.Id {
+			return apis.NewNotFoundError("Attachment not found", nil)
+		}
+
+		filename := record.GetString("attachment")
+		if filename == "" {
+			return apis.NewNotFoundError("Attachment not found", nil)
+		}
+
+		fsys, err := app.NewFilesystem()
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to open file storage", err)
+		}
+		defer fsys.Close()
+
+		return fsys.Serve(e.Response, e.Request, record.BaseFilesPath()+"/"+filename, filename)
+	}
+}
+
 // publicShareByToken resolves a share token to its share record and the
 // conversation it points at, returning a uniform 404 for any miss so the
 // endpoint never reveals whether a token once existed.

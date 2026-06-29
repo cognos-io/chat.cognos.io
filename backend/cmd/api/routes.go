@@ -547,6 +547,15 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	// Encrypted bytes of a shared message's attachment (e.g. a generated image),
+	// gated by the share token. Ciphertext — decrypted client-side.
+	e.Router.GET(
+		"/api/v1/public/conversations/{token}/messages/{messageID}/attachment",
+		handler.PublicConversationMessageAttachment(app),
+	).Bind(
+		rateLimiterMiddleware(app),
+	)
+
 	// Redaction mappings for a public share — only resolves for
 	// include-sensitive shares; redacted-only shares 404 here.
 	e.Router.GET(

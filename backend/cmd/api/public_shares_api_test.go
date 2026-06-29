@@ -76,6 +76,73 @@ func seedPublicShareScenarioApp(t testing.TB) *tests.TestApp {
 	return app
 }
 
+// seedPublicShareWithAttachmentApp extends the public-share scenario with a
+// message that carries an encrypted attachment in the shared conversation, plus
+// a foreign conversation + attachment message that the token must NOT expose.
+func seedPublicShareWithAttachmentApp(t testing.TB) *tests.TestApp {
+	t.Helper()
+	app := seedPublicShareScenarioApp(t)
+	seedMessageWithAttachment(t, app, shareAttachmentMessageID, shareConversationID)
+
+	seedOwnedConversation(t, app, foreignConversationID, "test1@example.com")
+	seedMessageWithAttachment(t, app, foreignMessageID, foreignConversationID)
+	return app
+}
+
+const (
+	shareAttachmentMessageID = "cpsapimsgatt001"
+	foreignConversationID    = "cpsapiforeign01"
+	foreignMessageID         = "cpsapifmsg00001"
+)
+
+// TestPublicConversationMessageAttachment pins the token-gated byte endpoint:
+// the shared conversation's attachment is served to an anonymous reader, while
+// a missing attachment, a foreign conversation's message, and an unknown token
+// all return the same neutral 404.
+func TestPublicConversationMessageAttachment(t *testing.T) {
+	t.Parallel()
+
+	base := "/api/v1/public/conversations/"
+	scenarios := []tests.ApiScenario{
+		{
+			Name:            "shared message attachment bytes are served without auth",
+			Method:          http.MethodGet,
+			URL:             base + shareToken + "/messages/" + shareAttachmentMessageID + "/attachment",
+			ExpectedStatus:  http.StatusOK,
+			ExpectedContent: []string{"encrypted-bytes"},
+			TestAppFactory:  seedPublicShareWithAttachmentApp,
+		},
+		{
+			Name:            "a message without an attachment is 404",
+			Method:          http.MethodGet,
+			URL:             base + shareToken + "/messages/" + shareMessageID + "/attachment",
+			ExpectedStatus:  http.StatusNotFound,
+			ExpectedContent: []string{"Attachment not found"},
+			TestAppFactory:  seedPublicShareWithAttachmentApp,
+		},
+		{
+			Name:            "a message in another conversation is 404",
+			Method:          http.MethodGet,
+			URL:             base + shareToken + "/messages/" + foreignMessageID + "/attachment",
+			ExpectedStatus:  http.StatusNotFound,
+			ExpectedContent: []string{"Attachment not found"},
+			TestAppFactory:  seedPublicShareWithAttachmentApp,
+		},
+		{
+			Name:            "an unknown token is 404",
+			Method:          http.MethodGet,
+			URL:             base + "totallyunknowntoken00000000000000/messages/" + shareAttachmentMessageID + "/attachment",
+			ExpectedStatus:  http.StatusNotFound,
+			ExpectedContent: []string{`"status":404`},
+			TestAppFactory:  seedPublicShareWithAttachmentApp,
+		},
+	}
+
+	for _, scenario := range scenarios {
+		scenario.Test(t)
+	}
+}
+
 func TestPublicConversationEndpointsNoAuth(t *testing.T) {
 	t.Parallel()
 

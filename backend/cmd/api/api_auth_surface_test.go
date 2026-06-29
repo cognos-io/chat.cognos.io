@@ -72,6 +72,11 @@ var apiV1Routes = []struct {
 	// rate-limited by IP. There is no user session to authenticate.
 	{http.MethodGet, "/api/v1/public/conversations/{token}", true},
 	{http.MethodGet, "/api/v1/public/conversations/{token}/messages", true},
+	{
+		http.MethodGet,
+		"/api/v1/public/conversations/{token}/messages/{messageID}/attachment",
+		true,
+	},
 }
 
 // TestAPIv1RoutesEnforceAuth is a guardrail: every /api/v1 route must reject
