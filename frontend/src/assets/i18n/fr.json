@@ -208,6 +208,19 @@
       "success": "Votre e-mail est vérifié. Merci de votre confirmation.",
       "title": "Vérifier votre e-mail",
       "verifying": "Vérification de votre e-mail…"
+    },
+    "mfa": {
+      "totpPrompt": "Saisissez le code à 6 chiffres de votre application d'authentification.",
+      "recoveryPrompt": "Saisissez l'un de vos codes de récupération.",
+      "codeLabel": "Code d'authentification",
+      "recoveryLabel": "Code de récupération",
+      "rememberDevice": "Se souvenir de cet appareil pendant 30 jours",
+      "verify": "Vérifier",
+      "verifying": "Vérification…",
+      "useRecovery": "Utiliser plutôt un code de récupération",
+      "useApp": "Utiliser plutôt votre application d'authentification",
+      "back": "Retour à la connexion",
+      "invalid": "Ce code est incorrect. Veuillez réessayer."
     }
   },
   "billing": {
@@ -1170,7 +1183,49 @@
     "placeholder": {
       "comingSoon": "Cette section arrive bientôt."
     },
-    "title": "Paramètres"
+    "title": "Paramètres",
+    "security": {
+      "title": "Sécurité",
+      "lead": "Protégez votre compte avec une deuxième étape de connexion.",
+      "mfaHeading": "Authentification à deux facteurs",
+      "mfaDescription": "Exigez un code d'une application d'authentification à chaque connexion. Votre compte reste protégé même si votre mot de passe est volé.",
+      "statusOn": "Activée",
+      "statusOff": "Non activée",
+      "enable": "Activer l'authentification à deux facteurs",
+      "passwordLabel": "Confirmez votre mot de passe",
+      "continue": "Continuer",
+      "cancel": "Annuler",
+      "scanInstruction": "Scannez ce QR code avec votre application d'authentification, ou saisissez la clé de configuration manuellement.",
+      "manualKeyLabel": "Clé de configuration",
+      "confirmInstruction": "Saisissez le code à 6 chiffres de votre application pour terminer l'activation.",
+      "codeLabel": "Code d'authentification",
+      "verifyEnable": "Vérifier et activer",
+      "recoveryTitle": "Enregistrez vos codes de récupération",
+      "recoveryIntro": "Conservez-les en lieu sûr. Chaque code ne fonctionne qu'une fois. Si vous perdez votre application d'authentification, ils sont le seul moyen de récupérer votre compte — nous ne pouvons pas les restaurer pour vous.",
+      "copyCodes": "Copier les codes",
+      "copied": "Copié",
+      "downloadCodes": "Télécharger",
+      "recoveryDone": "J'ai enregistré mes codes de récupération",
+      "recoveryRemaining": "Il vous reste {{count}} codes de récupération",
+      "regenerate": "Régénérer les codes de récupération",
+      "regenerateHint": "Les nouveaux codes remplacent les anciens et déconnectent tous les appareils de confiance. Un code actuel de votre application est requis.",
+      "disableHeading": "Désactiver l'authentification à deux facteurs",
+      "disableIntro": "Saisissez votre mot de passe et un code actuel pour désactiver l'authentification à deux facteurs.",
+      "disable": "Désactiver",
+      "confirmDisable": "Désactiver l'authentification à deux facteurs",
+      "devicesHeading": "Appareils de confiance",
+      "devicesIntro": "Ces appareils peuvent ignorer l'étape du code jusqu'à l'expiration de leur confiance. Révoquez ceux que vous ne reconnaissez pas.",
+      "devicesEmpty": "Aucun appareil de confiance.",
+      "revoke": "Révoquer",
+      "added": "Ajouté le {{date}}",
+      "lastUsed": "Dernière utilisation le {{date}}",
+      "expires": "Expire le {{date}}",
+      "wrongPassword": "Mot de passe incorrect.",
+      "wrongCode": "Ce code est incorrect.",
+      "genericError": "Une erreur s'est produite. Veuillez réessayer.",
+      "enabledToast": "L'authentification à deux facteurs est activée.",
+      "disabledToast": "L'authentification à deux facteurs est désactivée."
+    }
   },
   "models": {
     "description": {

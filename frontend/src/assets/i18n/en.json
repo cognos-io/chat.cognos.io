@@ -208,6 +208,19 @@
       "success": "Your email is verified. Thanks for confirming.",
       "title": "Verify your email",
       "verifying": "Verifying your email…"
+    },
+    "mfa": {
+      "totpPrompt": "Enter the 6-digit code from your authenticator app.",
+      "recoveryPrompt": "Enter one of your recovery codes.",
+      "codeLabel": "Authentication code",
+      "recoveryLabel": "Recovery code",
+      "rememberDevice": "Remember this device for 30 days",
+      "verify": "Verify",
+      "verifying": "Verifying…",
+      "useRecovery": "Use a recovery code instead",
+      "useApp": "Use your authenticator app instead",
+      "back": "Back to sign in",
+      "invalid": "That code wasn't right. Please try again."
     }
   },
   "billing": {
@@ -1170,7 +1183,49 @@
     "placeholder": {
       "comingSoon": "This section is coming soon."
     },
-    "title": "Settings"
+    "title": "Settings",
+    "security": {
+      "title": "Security",
+      "lead": "Protect your account with a second sign-in step.",
+      "mfaHeading": "Two-factor authentication",
+      "mfaDescription": "Require a code from an authenticator app each time you sign in. This protects your account even if your password is stolen.",
+      "statusOn": "Enabled",
+      "statusOff": "Not enabled",
+      "enable": "Enable two-factor authentication",
+      "passwordLabel": "Confirm your password",
+      "continue": "Continue",
+      "cancel": "Cancel",
+      "scanInstruction": "Scan this QR code with your authenticator app, or enter the setup key manually.",
+      "manualKeyLabel": "Setup key",
+      "confirmInstruction": "Enter the 6-digit code from your app to finish enabling.",
+      "codeLabel": "Authentication code",
+      "verifyEnable": "Verify and enable",
+      "recoveryTitle": "Save your recovery codes",
+      "recoveryIntro": "Store these somewhere safe. Each code works once. If you lose your authenticator, they are the only way back into your account — we cannot recover them for you.",
+      "copyCodes": "Copy codes",
+      "copied": "Copied",
+      "downloadCodes": "Download",
+      "recoveryDone": "I've saved my recovery codes",
+      "recoveryRemaining": "{{count}} of your recovery codes remain",
+      "regenerate": "Regenerate recovery codes",
+      "regenerateHint": "New codes replace the old ones and sign out all trusted devices. You'll need a current code from your app.",
+      "disableHeading": "Disable two-factor authentication",
+      "disableIntro": "Enter your password and a current code to turn off two-factor authentication.",
+      "disable": "Disable",
+      "confirmDisable": "Turn off two-factor authentication",
+      "devicesHeading": "Trusted devices",
+      "devicesIntro": "These devices can skip the code step until their trust expires. Revoke any you don't recognise.",
+      "devicesEmpty": "No trusted devices.",
+      "revoke": "Revoke",
+      "added": "Added {{date}}",
+      "lastUsed": "Last used {{date}}",
+      "expires": "Expires {{date}}",
+      "wrongPassword": "Incorrect password.",
+      "wrongCode": "That code wasn't right.",
+      "genericError": "Something went wrong. Please try again.",
+      "enabledToast": "Two-factor authentication is on.",
+      "disabledToast": "Two-factor authentication is off."
+    }
   },
   "models": {
     "description": {

@@ -208,6 +208,19 @@
       "success": "Ihre E-Mail ist bestätigt. Danke für die Bestätigung.",
       "title": "E-Mail bestätigen",
       "verifying": "Ihre E-Mail wird bestätigt…"
+    },
+    "mfa": {
+      "totpPrompt": "Gib den 6-stelligen Code aus deiner Authenticator-App ein.",
+      "recoveryPrompt": "Gib einen deiner Wiederherstellungscodes ein.",
+      "codeLabel": "Authentifizierungscode",
+      "recoveryLabel": "Wiederherstellungscode",
+      "rememberDevice": "Dieses Gerät 30 Tage merken",
+      "verify": "Bestätigen",
+      "verifying": "Wird geprüft…",
+      "useRecovery": "Stattdessen einen Wiederherstellungscode verwenden",
+      "useApp": "Stattdessen die Authenticator-App verwenden",
+      "back": "Zurück zur Anmeldung",
+      "invalid": "Dieser Code war nicht korrekt. Bitte versuche es erneut."
     }
   },
   "billing": {
@@ -1170,7 +1183,49 @@
     "placeholder": {
       "comingSoon": "Dieser Bereich ist bald verfügbar."
     },
-    "title": "Einstellungen"
+    "title": "Einstellungen",
+    "security": {
+      "title": "Sicherheit",
+      "lead": "Schütze dein Konto mit einem zweiten Anmeldeschritt.",
+      "mfaHeading": "Zwei-Faktor-Authentifizierung",
+      "mfaDescription": "Verlange bei jeder Anmeldung einen Code aus einer Authenticator-App. So bleibt dein Konto geschützt, selbst wenn dein Passwort gestohlen wird.",
+      "statusOn": "Aktiviert",
+      "statusOff": "Nicht aktiviert",
+      "enable": "Zwei-Faktor-Authentifizierung aktivieren",
+      "passwordLabel": "Bestätige dein Passwort",
+      "continue": "Weiter",
+      "cancel": "Abbrechen",
+      "scanInstruction": "Scanne diesen QR-Code mit deiner Authenticator-App oder gib den Einrichtungsschlüssel manuell ein.",
+      "manualKeyLabel": "Einrichtungsschlüssel",
+      "confirmInstruction": "Gib den 6-stelligen Code aus deiner App ein, um die Aktivierung abzuschliessen.",
+      "codeLabel": "Authentifizierungscode",
+      "verifyEnable": "Bestätigen und aktivieren",
+      "recoveryTitle": "Speichere deine Wiederherstellungscodes",
+      "recoveryIntro": "Bewahre sie an einem sicheren Ort auf. Jeder Code funktioniert einmal. Wenn du deine Authenticator-App verlierst, sind sie der einzige Weg zurück in dein Konto — wir können sie nicht für dich wiederherstellen.",
+      "copyCodes": "Codes kopieren",
+      "copied": "Kopiert",
+      "downloadCodes": "Herunterladen",
+      "recoveryDone": "Ich habe meine Wiederherstellungscodes gespeichert",
+      "recoveryRemaining": "{{count}} deiner Wiederherstellungscodes verbleiben",
+      "regenerate": "Wiederherstellungscodes neu erstellen",
+      "regenerateHint": "Neue Codes ersetzen die alten und melden alle vertrauenswürdigen Geräte ab. Du brauchst einen aktuellen Code aus deiner App.",
+      "disableHeading": "Zwei-Faktor-Authentifizierung deaktivieren",
+      "disableIntro": "Gib dein Passwort und einen aktuellen Code ein, um die Zwei-Faktor-Authentifizierung auszuschalten.",
+      "disable": "Deaktivieren",
+      "confirmDisable": "Zwei-Faktor-Authentifizierung ausschalten",
+      "devicesHeading": "Vertrauenswürdige Geräte",
+      "devicesIntro": "Diese Geräte können den Code-Schritt überspringen, bis ihr Vertrauen abläuft. Widerrufe alle, die du nicht erkennst.",
+      "devicesEmpty": "Keine vertrauenswürdigen Geräte.",
+      "revoke": "Widerrufen",
+      "added": "Hinzugefügt {{date}}",
+      "lastUsed": "Zuletzt verwendet {{date}}",
+      "expires": "Läuft ab {{date}}",
+      "wrongPassword": "Falsches Passwort.",
+      "wrongCode": "Dieser Code war nicht korrekt.",
+      "genericError": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+      "enabledToast": "Zwei-Faktor-Authentifizierung ist aktiv.",
+      "disabledToast": "Zwei-Faktor-Authentifizierung ist deaktiviert."
+    }
   },
   "models": {
     "description": {

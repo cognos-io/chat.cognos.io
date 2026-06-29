@@ -15,7 +15,9 @@ export const environment = {
   // /account. Flip to true to ship a section (can graduate to per-user later).
   featureFlags: {
     usage: false,
-    security: false,
+    // Account security: authenticator-app MFA, recovery codes, trusted devices
+    // (docs/specs/mfa-and-passkeys.md).
+    security: true,
     team: false,
     notifications: false,
     // Encrypted projects (shared workspaces). Off until sharing (phase 2) is

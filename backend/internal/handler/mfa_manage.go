@@ -128,7 +128,11 @@ func MFAConfirmTOTP(params MFAParams) func(e *core.RequestEvent) error {
 			return apis.NewBadRequestError("Start enrolment first", nil)
 		}
 
-		ok, step, err := verifyTOTPRecord(params, totp, req.Code)
+		// Note: confirmation does NOT advance last_accepted_step. Replay
+		// protection guards the unauthenticated login path; burning the timestep
+		// here would wrongly reject a genuine login made in the same 30s window
+		// right after enrolling.
+		ok, _, err := verifyTOTPRecord(params, totp, req.Code)
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify code", err)
 		}
@@ -136,9 +140,6 @@ func MFAConfirmTOTP(params MFAParams) func(e *core.RequestEvent) error {
 			return apis.NewBadRequestError("Incorrect code", nil)
 		}
 
-		if err := params.Store.RecordTOTPUse(totp, step); err != nil {
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to confirm enrolment", err)
-		}
 		if err := params.Store.MarkTOTPVerified(totp); err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to confirm enrolment", err)
 		}
@@ -237,15 +238,14 @@ func MFARegenerateRecoveryCodes(params MFAParams) func(e *core.RequestEvent) err
 		if err != nil {
 			return apis.NewBadRequestError("MFA is not enabled", nil)
 		}
-		ok, step, err := verifyTOTPRecord(params, totp, req.Code)
+		// As with confirmation, do not advance last_accepted_step here (this is an
+		// authenticated management action, not the login path).
+		ok, _, err := verifyTOTPRecord(params, totp, req.Code)
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to verify code", err)
 		}
 		if !ok {
 			return apis.NewBadRequestError("Incorrect code", nil)
-		}
-		if err := params.Store.RecordTOTPUse(totp, step); err != nil {
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to regenerate codes", err)
 		}
 
 		plain, hashes := mfa.GenerateRecoveryCodes(mfa.RecoveryCodeCount)

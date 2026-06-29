@@ -118,11 +118,9 @@ export const routes: Routes = [
       {
         path: 'security',
         canActivate: [featureFlagGuard],
-        data: { title: 'Security & keys', featureFlag: 'security' },
+        data: { title: 'Security', featureFlag: 'security' },
         loadComponent: () =>
-          import('./pages/account/settings-placeholder.component').then(
-            (m) => m.SettingsPlaceholderComponent,
-          ),
+          import('./pages/account/security.component').then((m) => m.SecurityComponent),
       },
       {
         path: 'team',

@@ -25,9 +25,15 @@ import { signalSlice } from 'ngxtension/signal-slice';
 
 import { TypedPocketBase } from '../types/pocketbase-types';
 import { ErrorService } from './error.service';
+import { MfaService } from './mfa.service';
 import { TrustedUnlockService } from './trusted-unlock.service';
 
-export type LoginStatus = 'pending' | 'authenticating' | 'success' | 'error';
+export type LoginStatus =
+  | 'pending'
+  | 'authenticating'
+  | 'mfa_required'
+  | 'success'
+  | 'error';
 
 export type AuthUser = AuthModel | null | undefined;
 
@@ -40,12 +46,16 @@ interface AuthState {
   status: LoginStatus;
   user: AuthUser;
   email: string;
+  // Set when a password sign-in is accepted but a second factor is required.
+  // Cleared once login completes or the user backs out.
+  mfaSessionId: string;
 }
 
 const initialState: AuthState = {
   status: 'pending',
   user: null,
   email: '',
+  mfaSessionId: '',
 };
 
 @Injectable({
@@ -59,9 +69,15 @@ export class AuthService implements OnDestroy {
   private readonly _router = inject(Router);
   private readonly _trustedUnlockService = inject(TrustedUnlockService);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _mfaService = inject(MfaService);
 
   readonly login$ = new Subject<LoginRequest>();
   readonly logout$ = new Subject<boolean>();
+
+  // Emits when password auth succeeds but the account requires a second factor.
+  private readonly _mfaChallenge$ = new Subject<{ sessionId: string }>();
+  // Emits to return the UI to the password step (user backed out of MFA).
+  private readonly _mfaReset$ = new Subject<void>();
 
   private readonly _user$ = new Subject<AuthUser>();
   private readonly _userAuthenticating$ = this.login$.pipe(
@@ -74,13 +90,29 @@ export class AuthService implements OnDestroy {
   private state = signalSlice({
     initialState,
     sources: [
-      this.login$.pipe(map(() => ({ status: 'authenticating' as LoginStatus }))),
+      this.login$.pipe(
+        map(({ email }) => ({
+          status: 'authenticating' as LoginStatus,
+          email,
+          mfaSessionId: '',
+        })),
+      ),
+      this._mfaChallenge$.pipe(
+        map(({ sessionId }) => ({
+          status: 'mfa_required' as LoginStatus,
+          mfaSessionId: sessionId,
+        })),
+      ),
+      this._mfaReset$.pipe(
+        map(() => ({ status: 'pending' as LoginStatus, mfaSessionId: '' })),
+      ),
       this._user$.pipe(
         map((response: AuthUser) => {
           return {
             status: response ? ('success' as LoginStatus) : ('pending' as LoginStatus),
             user: response,
             email: response?.['email'] ?? '',
+            mfaSessionId: '',
           };
         }),
       ),
@@ -112,6 +144,7 @@ export class AuthService implements OnDestroy {
   user = this.state.user;
   user$ = toObservable(this.user);
   email = this.state.email;
+  mfaSessionId = this.state.mfaSessionId;
 
   constructor() {
     defer(() => this.checkAndRefreshToken())
@@ -158,10 +191,33 @@ export class AuthService implements OnDestroy {
   }
 
   loginWithPassword(email: string, password: string) {
+    // Present a remembered trusted-device token so an enrolled user on a known
+    // device can skip the code step (the backend waives the second factor).
+    const deviceToken = this._mfaService.deviceToken(email);
+    const options = deviceToken
+      ? { headers: { 'X-Cognos-MFA-Device': deviceToken } }
+      : undefined;
+
     return from(
-      this._pb.collection(this._authCollection).authWithPassword(email, password),
+      this._pb
+        .collection(this._authCollection)
+        .authWithPassword(email, password, options),
     ).pipe(
       catchError((error) => {
+        // A correct password for an MFA-enrolled account is not an error — it's
+        // a prompt for the second factor. Surface the session id instead.
+        const response = (
+          error as { response?: { code?: string; mfaSessionId?: string } }
+        )?.response;
+        if (
+          (error as { status?: number })?.status === 401 &&
+          response?.code === 'mfa_required' &&
+          response?.mfaSessionId
+        ) {
+          this._mfaChallenge$.next({ sessionId: response.mfaSessionId });
+          return EMPTY;
+        }
+
         this._errorService.alert(
           this._transloco.translate('errors.invalidCredentials'),
         );
@@ -169,6 +225,41 @@ export class AuthService implements OnDestroy {
         return throwError(() => error);
       }),
     );
+  }
+
+  /**
+   * Complete a sign-in that is waiting on a second factor. On success the MFA
+   * service saves the issued token into the authStore, which drives the rest of
+   * the login/vault flow exactly like a normal sign-in.
+   */
+  completeMfa(
+    method: 'totp' | 'recovery',
+    code: string,
+    rememberDevice: boolean,
+  ): Observable<AuthUser> {
+    const sessionId = this.mfaSessionId();
+    const email = this.email();
+    if (!sessionId) {
+      return throwError(() => new Error('No active MFA session'));
+    }
+
+    const complete$ =
+      method === 'totp'
+        ? this._mfaService.completeTotp(sessionId, code, email, rememberDevice)
+        : this._mfaService.completeRecovery(sessionId, code, email, rememberDevice);
+
+    return complete$.pipe(
+      map((record) => record as AuthUser),
+      catchError((error) => {
+        console.error('MFA completion failed', error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  /** Return to the password step (user cancelled the second-factor prompt). */
+  resetMfaChallenge(): void {
+    this._mfaReset$.next();
   }
 
   register(email: string, password: string): Observable<unknown> {

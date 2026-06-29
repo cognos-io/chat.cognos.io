@@ -208,6 +208,19 @@
       "success": "Tu correo está verificado. Gracias por confirmarlo.",
       "title": "Verifica tu correo",
       "verifying": "Verificando tu correo…"
+    },
+    "mfa": {
+      "totpPrompt": "Introduce el código de 6 dígitos de tu aplicación de autenticación.",
+      "recoveryPrompt": "Introduce uno de tus códigos de recuperación.",
+      "codeLabel": "Código de autenticación",
+      "recoveryLabel": "Código de recuperación",
+      "rememberDevice": "Recordar este dispositivo durante 30 días",
+      "verify": "Verificar",
+      "verifying": "Verificando…",
+      "useRecovery": "Usar un código de recuperación en su lugar",
+      "useApp": "Usar tu aplicación de autenticación en su lugar",
+      "back": "Volver al inicio de sesión",
+      "invalid": "Ese código no es correcto. Inténtalo de nuevo."
     }
   },
   "billing": {
@@ -1170,7 +1183,49 @@
     "placeholder": {
       "comingSoon": "Esta sección estará disponible pronto."
     },
-    "title": "Ajustes"
+    "title": "Ajustes",
+    "security": {
+      "title": "Seguridad",
+      "lead": "Protege tu cuenta con un segundo paso de inicio de sesión.",
+      "mfaHeading": "Autenticación de dos factores",
+      "mfaDescription": "Exige un código de una aplicación de autenticación cada vez que inicies sesión. Esto protege tu cuenta aunque roben tu contraseña.",
+      "statusOn": "Activada",
+      "statusOff": "No activada",
+      "enable": "Activar la autenticación de dos factores",
+      "passwordLabel": "Confirma tu contraseña",
+      "continue": "Continuar",
+      "cancel": "Cancelar",
+      "scanInstruction": "Escanea este código QR con tu aplicación de autenticación, o introduce la clave de configuración manualmente.",
+      "manualKeyLabel": "Clave de configuración",
+      "confirmInstruction": "Introduce el código de 6 dígitos de tu aplicación para terminar de activarla.",
+      "codeLabel": "Código de autenticación",
+      "verifyEnable": "Verificar y activar",
+      "recoveryTitle": "Guarda tus códigos de recuperación",
+      "recoveryIntro": "Guárdalos en un lugar seguro. Cada código funciona una vez. Si pierdes tu aplicación de autenticación, son la única forma de recuperar tu cuenta — no podemos recuperarlos por ti.",
+      "copyCodes": "Copiar códigos",
+      "copied": "Copiado",
+      "downloadCodes": "Descargar",
+      "recoveryDone": "He guardado mis códigos de recuperación",
+      "recoveryRemaining": "Te quedan {{count}} códigos de recuperación",
+      "regenerate": "Regenerar códigos de recuperación",
+      "regenerateHint": "Los nuevos códigos reemplazan a los antiguos y cierran la sesión de todos los dispositivos de confianza. Necesitarás un código actual de tu aplicación.",
+      "disableHeading": "Desactivar la autenticación de dos factores",
+      "disableIntro": "Introduce tu contraseña y un código actual para desactivar la autenticación de dos factores.",
+      "disable": "Desactivar",
+      "confirmDisable": "Desactivar la autenticación de dos factores",
+      "devicesHeading": "Dispositivos de confianza",
+      "devicesIntro": "Estos dispositivos pueden omitir el paso del código hasta que caduque su confianza. Revoca los que no reconozcas.",
+      "devicesEmpty": "No hay dispositivos de confianza.",
+      "revoke": "Revocar",
+      "added": "Añadido el {{date}}",
+      "lastUsed": "Último uso el {{date}}",
+      "expires": "Caduca el {{date}}",
+      "wrongPassword": "Contraseña incorrecta.",
+      "wrongCode": "Ese código no es correcto.",
+      "genericError": "Algo salió mal. Inténtalo de nuevo.",
+      "enabledToast": "La autenticación de dos factores está activada.",
+      "disabledToast": "La autenticación de dos factores está desactivada."
+    }
   },
   "models": {
     "description": {

@@ -3,10 +3,11 @@ import { Router, provideRouter } from '@angular/router';
 
 import PocketBase from 'pocketbase';
 
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, of, throwError } from 'rxjs';
 
 import { AuthService } from './auth.service';
 import { ErrorService } from './error.service';
+import { MfaService } from './mfa.service';
 import { TrustedUnlockService } from './trusted-unlock.service';
 
 describe('AuthService', () => {
@@ -35,6 +36,13 @@ describe('AuthService', () => {
 
   const trustedUnlockService = {
     clearAllUnlockKeys: vi.fn(),
+  };
+
+  const mfaService = {
+    deviceToken: vi.fn<(email: string) => string | null>(() => null),
+    clearDeviceToken: vi.fn(),
+    completeTotp: vi.fn(),
+    completeRecovery: vi.fn(),
   };
 
   const authStore = {
@@ -74,6 +82,10 @@ describe('AuthService', () => {
     errorService.alert.mockReset();
     trustedUnlockService.clearAllUnlockKeys.mockReset();
     trustedUnlockService.clearAllUnlockKeys.mockResolvedValue(undefined);
+    mfaService.deviceToken.mockReset();
+    mfaService.deviceToken.mockReturnValue(null);
+    mfaService.completeTotp.mockReset();
+    mfaService.completeRecovery.mockReset();
 
     TestBed.configureTestingModule({
       providers: [
@@ -82,6 +94,7 @@ describe('AuthService', () => {
         { provide: PocketBase, useValue: pocketbase },
         { provide: ErrorService, useValue: errorService },
         { provide: TrustedUnlockService, useValue: trustedUnlockService },
+        { provide: MfaService, useValue: mfaService },
       ],
     });
 
@@ -112,11 +125,76 @@ describe('AuthService', () => {
     expect(authWithPassword).toHaveBeenCalledWith(
       'person@example.com',
       'wrong password',
+      undefined,
     );
     expect(errorService.alert).toHaveBeenCalledWith('Invalid email or password');
     expect(service.status()).toBe('error');
     expect(service.user()).toBeNull();
     expect(service.email()).toBe('');
+  });
+
+  it('challenges for a second factor when the backend requires MFA', async () => {
+    // A correct password for an MFA-enrolled account is reported by PocketBase as
+    // a 401 with our mfa_required body — not a credential error.
+    authWithPassword.mockRejectedValueOnce({
+      status: 401,
+      response: { code: 'mfa_required', mfaSessionId: 'sess-1' },
+    });
+
+    service.login$.next({ email: 'person@example.com', password: 'correct-pw' });
+
+    await flushPromises();
+
+    expect(service.status()).toBe('mfa_required');
+    expect(service.mfaSessionId()).toBe('sess-1');
+    expect(service.email()).toBe('person@example.com');
+    // It must NOT look like a failed login.
+    expect(errorService.alert).not.toHaveBeenCalled();
+  });
+
+  it('presents a remembered trusted-device token on login', async () => {
+    mfaService.deviceToken.mockReturnValue('device-token-1');
+    authWithPassword.mockResolvedValueOnce({ token: 't', record: { id: 'u' } });
+
+    service.login$.next({ email: 'person@example.com', password: 'correct-pw' });
+    await flushPromises();
+
+    expect(mfaService.deviceToken).toHaveBeenCalledWith('person@example.com');
+    expect(authWithPassword).toHaveBeenCalledWith('person@example.com', 'correct-pw', {
+      headers: { 'X-Cognos-MFA-Device': 'device-token-1' },
+    });
+  });
+
+  it('completes a second factor via the MFA service with the active session', async () => {
+    authWithPassword.mockRejectedValueOnce({
+      status: 401,
+      response: { code: 'mfa_required', mfaSessionId: 'sess-1' },
+    });
+    mfaService.completeTotp.mockReturnValue(
+      of({ id: 'u', email: 'person@example.com' }),
+    );
+
+    service.login$.next({ email: 'person@example.com', password: 'correct-pw' });
+    await flushPromises();
+
+    await lastValueFrom(service.completeMfa('totp', '123456', true));
+
+    expect(mfaService.completeTotp).toHaveBeenCalledWith(
+      'sess-1',
+      '123456',
+      'person@example.com',
+      true,
+    );
+  });
+
+  it('rejects MFA completion when there is no active session', async () => {
+    mfaService.completeTotp.mockReturnValue(
+      throwError(() => new Error('should not be called')),
+    );
+    await expect(
+      lastValueFrom(service.completeMfa('totp', '123456', false)),
+    ).rejects.toThrow(/no active mfa session/i);
+    expect(mfaService.completeTotp).not.toHaveBeenCalled();
   });
 
   it('updates the auth state from a valid auth-store change event', () => {
