@@ -64,9 +64,11 @@ type View =
 
           @case ('overview') {
             @if (!status()?.enabled) {
-              <cog-button appearance="primary" (click)="startEnrol()">
-                {{ t('settings.security.enable') }}
-              </cog-button>
+              <div class="security__actions">
+                <cog-button appearance="primary" (click)="startEnrol()">
+                  {{ t('settings.security.enable') }}
+                </cog-button>
+              </div>
             } @else {
               <p class="security__muted">
                 {{
@@ -410,7 +412,9 @@ type View =
     .security__actions {
       display: flex;
       flex-wrap: wrap;
+      justify-content: flex-end;
       gap: var(--cog-space-100);
+      margin-top: var(--cog-space-100);
     }
     .security__error {
       margin: 0;
