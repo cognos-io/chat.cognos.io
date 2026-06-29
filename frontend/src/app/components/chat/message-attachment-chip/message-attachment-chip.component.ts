@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 
 import { TranslocoModule } from '@jsverse/transloco';
 
-import { CognosIconComponent } from '@cognos/ui-angular';
+import { CognosDocAttachmentComponent, CognosIconComponent } from '@cognos/ui-angular';
 
 /**
  * One user-upload attachment as it appears inside a message bubble. The state
@@ -31,29 +31,17 @@ export interface MessageAttachmentChip {
   selector: 'app-message-attachment-chip',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, CognosIconComponent],
+  imports: [TranslocoModule, CognosIconComponent, CognosDocAttachmentComponent],
   template: `
     <ng-container *transloco="let t">
       @if (chip().state === 'resolved') {
-        <button
-          type="button"
-          class="message-attachment-chip"
+        <cog-doc-attachment
           data-testid="message-attachment-chip"
-          [attr.aria-label]="
-            t('chat.message.attachment.download', { name: chip().fileName })
-          "
-          (click)="download.emit(chip())"
-        >
-          <span class="message-attachment-chip__icon">
-            <cog-icon name="file-text" [size]="18" tone="text-subtle" />
-          </span>
-          <span class="message-attachment-chip__body">
-            <span class="message-attachment-chip__name">{{ chip().fileName }}</span>
-            <span class="message-attachment-chip__subtitle">{{
-              t('chat.message.attachment.subtitleDocument')
-            }}</span>
-          </span>
-        </button>
+          [name]="chip().fileName ?? ''"
+          [meta]="t('chat.message.attachment.subtitleDocument')"
+          [clickable]="true"
+          (open)="download.emit(chip())"
+        />
       } @else {
         <div
           class="message-attachment-chip message-attachment-chip--muted"
@@ -82,7 +70,9 @@ export interface MessageAttachmentChip {
       :host {
         display: block;
       }
-      .message-attachment-chip {
+      /* The resolved file now renders via cog-doc-attachment; these styles
+         cover only the muted tombstone/private states below. */
+      .message-attachment-chip--muted {
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
@@ -91,15 +81,6 @@ export interface MessageAttachmentChip {
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface-sunken);
-        font: inherit;
-        text-align: left;
-        cursor: pointer;
-      }
-      button.message-attachment-chip:hover {
-        background: var(--cog-surface-hover);
-      }
-      .message-attachment-chip--muted {
-        cursor: default;
         opacity: 0.7;
       }
       .message-attachment-chip__icon {
@@ -122,10 +103,6 @@ export interface MessageAttachmentChip {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-      }
-      .message-attachment-chip__subtitle {
-        font-size: 0.8125rem;
-        color: var(--cog-text-subtle);
       }
     `,
   ],
