@@ -448,7 +448,6 @@ type View =
     }
     .security__devices {
       display: grid;
-      gap: var(--cog-space-100);
       margin: 0;
       padding: 0;
       list-style: none;
@@ -458,9 +457,12 @@ type View =
       align-items: center;
       justify-content: space-between;
       gap: var(--cog-space-150);
-      border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-sm);
-      padding: var(--cog-space-150);
+      padding: var(--cog-space-150) 0;
+      border-bottom: 1px solid var(--cog-border);
+    }
+    .security__device:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
     }
     .security__device-label {
       display: block;
