@@ -23,6 +23,7 @@ type View =
   | 'enrolPassword'
   | 'enrolScan'
   | 'recovery'
+  | 'regenerate'
   | 'disable';
 
 // MfaSettingsComponent is an embeddable card (rendered inside the Account page,
@@ -247,53 +248,46 @@ type View =
               </div>
             </form>
           }
+
+          @case ('regenerate') {
+            <h3 class="security__h3">{{ t('settings.security.regenerate') }}</h3>
+            <p class="security__muted">{{ t('settings.security.regenerateHint') }}</p>
+            <form
+              class="security__form"
+              [formGroup]="regenForm"
+              (ngSubmit)="submitRegenerate()"
+            >
+              <label class="security__field">
+                <span class="security__label">{{
+                  t('settings.security.codeLabel')
+                }}</span>
+                <input
+                  class="security__input"
+                  inputmode="numeric"
+                  autocomplete="one-time-code"
+                  placeholder="123456"
+                  formControlName="code"
+                />
+              </label>
+              @if (error()) {
+                <p class="security__error">{{ error() }}</p>
+              }
+              <div class="security__actions">
+                <cog-button
+                  appearance="primary"
+                  type="submit"
+                  [disabled]="busy() || regenForm.invalid"
+                >
+                  {{ t('settings.security.regenerate') }}
+                </cog-button>
+                <cog-button appearance="subtle" type="button" (click)="cancel()">
+                  {{ t('settings.security.cancel') }}
+                </cog-button>
+              </div>
+            </form>
+          }
         }
       </section>
-
-      <!-- Regenerate recovery codes (inline code prompt) -->
-      @if (regenerating()) {
-        <section class="security__card">
-          <h3 class="security__h3">{{ t('settings.security.regenerate') }}</h3>
-          <p class="security__muted">{{ t('settings.security.regenerateHint') }}</p>
-          <form
-            class="security__form"
-            [formGroup]="regenForm"
-            (ngSubmit)="submitRegenerate()"
-          >
-            <label class="security__field">
-              <span class="security__label">{{
-                t('settings.security.codeLabel')
-              }}</span>
-              <input
-                class="security__input"
-                inputmode="numeric"
-                autocomplete="one-time-code"
-                placeholder="123456"
-                formControlName="code"
-              />
-            </label>
-            @if (error()) {
-              <p class="security__error">{{ error() }}</p>
-            }
-            <div class="security__actions">
-              <cog-button
-                appearance="primary"
-                type="submit"
-                [disabled]="busy() || regenForm.invalid"
-              >
-                {{ t('settings.security.regenerate') }}
-              </cog-button>
-              <cog-button
-                appearance="subtle"
-                type="button"
-                (click)="regenerating.set(false)"
-              >
-                {{ t('settings.security.cancel') }}
-              </cog-button>
-            </div>
-          </form>
-        </section>
-      }
 
       <!-- Trusted devices -->
       @if (status()?.enabled) {
@@ -496,7 +490,6 @@ export class MfaSettingsComponent implements OnInit {
   readonly qrDataUrl = signal('');
   readonly recoveryCodes = signal<string[]>([]);
   readonly copied = signal(false);
-  readonly regenerating = signal(false);
 
   readonly passwordForm = this._fb.nonNullable.group({
     password: ['', [Validators.required]],
@@ -593,7 +586,7 @@ export class MfaSettingsComponent implements OnInit {
   startRegenerate(): void {
     this.error.set('');
     this.regenForm.reset({ code: '' });
-    this.regenerating.set(true);
+    this.view.set('regenerate');
   }
 
   submitRegenerate(): void {
@@ -606,7 +599,6 @@ export class MfaSettingsComponent implements OnInit {
       .pipe(takeUntilDestroyed(this._destroyRef))
       .subscribe({
         next: (codes) => {
-          this.regenerating.set(false);
           this.recoveryCodes.set(codes);
           this.busy.set(false);
           this.view.set('recovery');
