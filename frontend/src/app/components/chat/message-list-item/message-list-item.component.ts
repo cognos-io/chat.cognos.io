@@ -419,6 +419,13 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       min-width: 0;
     }
 
+    .message-list-item__attachments {
+      display: flex;
+      flex-direction: column;
+      gap: var(--cog-space-100);
+      margin-bottom: var(--cog-space-150);
+    }
+
     .message-list-item__actions {
       display: flex;
       gap: var(--cog-space-050);

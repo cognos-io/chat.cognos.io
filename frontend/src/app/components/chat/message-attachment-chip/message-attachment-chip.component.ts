@@ -40,6 +40,7 @@ export interface MessageAttachmentChip {
           [name]="chip().fileName ?? ''"
           [meta]="t('chat.message.attachment.subtitleDocument')"
           [clickable]="true"
+          [showEncrypted]="false"
           (open)="download.emit(chip())"
         />
       } @else {
