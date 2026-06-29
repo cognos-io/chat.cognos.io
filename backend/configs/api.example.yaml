@@ -76,6 +76,23 @@ paddle:
   price_unlimited_monthly: ""
   price_unlimited_annual: ""
 
+# --- MFA (two-factor authentication) ------------------------------------------
+# Server-held key that encrypts authenticator-app (TOTP) seeds at rest. Base64
+# of exactly 32 random bytes. REQUIRED for MFA: while unset, the enrolment
+# endpoints return "MFA is not configured" and no one can turn on 2FA (we never
+# store a seed in plaintext). Existing sign-ins are unaffected.
+#
+# Generate one with:   openssl rand -base64 32
+#
+# Treat it like any other secret: set it via the env var or a mounted secret
+# file in production, NOT in a committed config file. Rotating the key strands
+# already-enrolled seeds (affected users must re-enrol); secret_key_id records
+# which key sealed each row.
+# Env override: COGNOS_MFA_TOTP_ENCRYPTION_KEY
+# Secret file override: COGNOS_MFA_TOTP_ENCRYPTION_KEY_FILE
+mfa:
+  totp_encryption_key: ""
+
 # --- Env-only (not loaded from YAML) ------------------------------------------
 # BILLING_FX_RATE_FALLBACK_USD_CHF — fallback USD→CHF rate when the live rate
 # is unavailable. Defaults to 0.88. Set via environment variable only.

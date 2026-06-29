@@ -229,6 +229,12 @@ are trust blockers for "secure AI chat" marketing. Owner: you, separate PR.
   `backend/secrets/` files and reference them via the `_FILE` vars; drop the
   inline keys from `api.local.yaml`/`.env` so plaintext secrets never sit in a
   general config file.
+- 🔑 **Set `COGNOS_MFA_TOTP_ENCRYPTION_KEY` (new, required for MFA).** Base64 of
+  32 random bytes — generate with `openssl rand -base64 32`. Until it is set,
+  TOTP enrolment returns "MFA is not configured" (sign-in is unaffected). Mount
+  it via `COGNOS_MFA_TOTP_ENCRYPTION_KEY_FILE` like the other secrets. Rotating
+  it strands already-enrolled seeds (re-enrol needed). See
+  `docs/specs/mfa-and-passkeys.md` and `backend/README.md`.
 
 ## Notes for reviewers
 

@@ -31,6 +31,26 @@ In the `configs` directory copy the `api.example.yaml` to an environment specifi
 For production, prefer `COGNOS_*` environment variables and `COGNOS_*_FILE` secret-file inputs
 instead of mounting a plaintext config file into the container.
 
+### Two-factor authentication (MFA)
+
+Authenticator-app (TOTP) MFA needs a server-held key to encrypt TOTP seeds at rest:
+`COGNOS_MFA_TOTP_ENCRYPTION_KEY` — **base64 of exactly 32 random bytes**.
+
+This is **required in production**: while it is unset, the enrolment endpoints return
+"MFA is not configured" and no one can turn on 2FA (we never store a seed in plaintext). Existing
+password sign-ins keep working regardless.
+
+Generate one securely:
+
+```sh
+openssl rand -base64 32
+```
+
+Set it like any other secret — via the env var, or a mounted secret file referenced by
+`COGNOS_MFA_TOTP_ENCRYPTION_KEY_FILE` — never in a committed config file. Rotating the key strands
+already-enrolled seeds (affected users must re-enrol); the `secret_key_id` column records which key
+sealed each row. See `docs/specs/mfa-and-passkeys.md`.
+
 ## Requesty model sync
 
 The AI model catalogue (`ai_models`) is curated by us, but a sync keeps Requesty-provided models
