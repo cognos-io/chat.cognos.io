@@ -390,8 +390,9 @@ test.describe('composer attachments', () => {
     await expect(list).toContainText('renamed.txt');
 
     // The reference count links to the chats that use the file: click it and
-    // follow the link back to the conversation.
-    await page.getByRole('button', { name: 'In 1 chats' }).first().click();
+    // follow the link back to the conversation. Use an exact name so we hit the
+    // reference button, not the card (whose a11y name includes the same text).
+    await page.getByRole('button', { name: 'In 1 chats', exact: true }).click();
     const usages = page.getByTestId('library-usages-list');
     await expect(usages.getByRole('link')).toHaveCount(1);
     await usages.getByRole('link').first().click();

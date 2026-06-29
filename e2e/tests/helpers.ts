@@ -83,9 +83,12 @@ export async function copyAccountKey(page: Page): Promise<void> {
 }
 
 export async function acknowledgeAccountKey(page: Page): Promise<void> {
+  // Match a stable prefix of the label so minor copy tweaks (e.g.
+  // "acknowledge" → "understand") don't silently break account provisioning
+  // across the whole browser suite.
   await page
     .getByRole('checkbox', {
-      name: /i have copied my account key to a safe place and acknowledge that if i lose it/i,
+      name: /i have copied my account key to a safe place/i,
     })
     .check();
 }
