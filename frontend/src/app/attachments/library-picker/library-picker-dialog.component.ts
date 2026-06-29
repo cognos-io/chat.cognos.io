@@ -15,6 +15,7 @@ import {
   CognosButtonComponent,
   CognosIconComponent,
   CognosModalComponent,
+  CognosSearchFieldComponent,
 } from '@cognos/ui-angular';
 
 import { DeviceService } from '@app/services/device.service';
@@ -35,6 +36,7 @@ import { AttachmentLibraryService, LibraryFile } from '../attachment-library.ser
     CognosModalComponent,
     CognosButtonComponent,
     CognosIconComponent,
+    CognosSearchFieldComponent,
     TranslocoModule,
   ],
   template: `
@@ -46,13 +48,12 @@ import { AttachmentLibraryService, LibraryFile } from '../attachment-library.ser
       [title]="t('library.picker.title')"
       (close)="cancel()"
     >
-      <input
-        type="search"
+      <cog-search-field
         class="library-picker__search"
-        data-testid="library-search"
-        [attr.placeholder]="t('library.picker.searchPlaceholder')"
-        [attr.aria-label]="t('library.picker.searchPlaceholder')"
-        (input)="query.set($any($event.target).value)"
+        [placeholder]="t('library.picker.searchPlaceholder')"
+        [ariaLabel]="t('library.picker.searchPlaceholder')"
+        [value]="query()"
+        (valueChange)="query.set($event)"
       />
 
       @if (filtered().length === 0) {
@@ -101,12 +102,8 @@ import { AttachmentLibraryService, LibraryFile } from '../attachment-library.ser
   styles: [
     `
       .library-picker__search {
-        width: 100%;
-        padding: var(--cog-space-100);
+        display: block;
         margin-bottom: var(--cog-space-100);
-        border: 1px solid var(--cog-border);
-        border-radius: var(--cog-radius-sm);
-        font: inherit;
       }
       .library-picker__list {
         list-style: none;

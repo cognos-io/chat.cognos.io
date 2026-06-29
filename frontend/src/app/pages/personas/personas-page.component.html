@@ -37,16 +37,13 @@
   </header>
 
   <div class="personas-page__toolbar">
-    <label class="personas-page__search">
-      <cog-icon name="search" [size]="16" />
-      <input
-        type="search"
-        [placeholder]="t('personas.page.searchPlaceholder')"
-        [attr.aria-label]="t('personas.page.searchPlaceholder')"
-        [ngModel]="query()"
-        (ngModelChange)="query.set($event)"
-      />
-    </label>
+    <cog-search-field
+      class="personas-page__search"
+      [placeholder]="t('personas.page.searchPlaceholder')"
+      [ariaLabel]="t('personas.page.searchPlaceholder')"
+      [value]="query()"
+      (valueChange)="query.set($event)"
+    />
 
     <div
       class="personas-page__view-toggle"

@@ -79,25 +79,8 @@
 }
 
 .personas-page__search {
-  display: flex;
-  align-items: center;
-  gap: var(--cog-space-100, 8px);
   flex: 1;
   max-inline-size: 340px;
-  padding: var(--cog-space-100, 8px) var(--cog-space-150, 12px);
-  border: 1px solid var(--cog-border, #e2e8f0);
-  border-radius: var(--cog-radius-sm, 8px);
-  background: var(--cog-surface, #ffffff);
-  color: var(--cog-text-subtle, #64748b);
-}
-
-.personas-page__search input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--cog-text, #0f172a);
-  font: inherit;
 }
 
 .personas-page__view-toggle {

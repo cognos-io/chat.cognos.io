@@ -10,15 +10,16 @@ extraction.
 - ✅ **`cog-list` / `cog-list-item`** — done. Adopted by MFA trusted devices + the data-processing
   model catalogue list.
 - ✅ **`cog-empty-state`** — done. Adopted by the file library and the model catalogue empty result.
-- ✅ **`cog-search-field`** — done. Adopted by the file library and the model catalogue search.
+- ✅ **`cog-search-field`** — done. Adopted by the file library, model catalogue, personas page, and
+  library-picker dialog.
 - ✅ **`cog-page-header`** — done. Backs `app-settings-page`.
 - ✅ **`cog-auth-page`** — done. Adopted by all six auth pages (login, register, forgot/reset
   password, verify/confirm email); each dropped its duplicated layout CSS.
 - ✅ **`cog-choice-chip-group`** — done. Adopted by the model catalogue filter chips.
 - ✅ **`cog-field`** (+ `cog-text-field` is now a ControlValueAccessor with a `size` variant) —
   done. Adopted by the account profile/email/password fields.
-- ✅ **`cog-avatar-picker`** — done. Adopted by the account avatar fieldset (colour tiles are live
-  `cog-avatar` previews). Persona/project pickers can adopt next.
+- ✅ **`cog-avatar-picker`** — done. Adopted by the account, persona-editor, and project-settings
+  pickers (colour tiles are live `cog-avatar` previews).
 - ⛔ **`cog-choice-card-group`**, **`cog-record-list`** — intentionally not built
   (over-optimisation: diverse content / `cog-list-item` already suffices). Revisit only if usage
   forces it. — not started. Further adoption of the shipped primitives across the other listed sites
