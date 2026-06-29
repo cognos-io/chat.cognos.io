@@ -158,6 +158,45 @@ test.describe('attachment library API', () => {
     }
   });
 
+  test('a non-owner cannot read another user’s attachment usages', async () => {
+    const owner = await provisionApiUser();
+    const stranger = await provisionApiUser();
+    try {
+      const created = await uploadAttachment(
+        owner,
+        randomBytes(32),
+        randomBytes(16).toString('base64'),
+      );
+
+      // The owner can read usages (none yet) — proves the endpoint works.
+      const ownerRes = await owner.api.get(`/api/v1/attachments/${created.id}/usages`);
+      expect(
+        ownerRes.ok(),
+        `owner usages: ${ownerRes.status()} ${await ownerRes.text()}`,
+      ).toBe(true);
+      expect((await ownerRes.json()) as AttachmentUsageResponse[]).toEqual([]);
+
+      // A stranger gets the same not-found as a missing id — the id is never
+      // confirmed to a non-owner.
+      const strangerRes = await stranger.api.get(
+        `/api/v1/attachments/${created.id}/usages`,
+      );
+      expect(strangerRes.status()).toBe(404);
+
+      // And an unauthenticated caller is rejected outright.
+      const anon = await newAnonymousApi();
+      try {
+        const res = await anon.get(`/api/v1/attachments/${created.id}/usages`);
+        expect(res.status()).toBe(401);
+      } finally {
+        await anon.dispose();
+      }
+    } finally {
+      await owner.api.dispose();
+      await stranger.api.dispose();
+    }
+  });
+
   test('completion wraps attachment context as untrusted and links the attachment', async () => {
     const user = await provisionApiUser();
     try {

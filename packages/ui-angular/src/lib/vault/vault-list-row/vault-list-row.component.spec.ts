@@ -72,4 +72,30 @@ describe('CognosVaultListRowComponent', () => {
     refs?.click();
     expect(clicked).toBe(1);
   });
+
+  it('emits open when the row itself is clicked', () => {
+    const fixture = render();
+    let opened: string | undefined;
+    fixture.componentInstance.open.subscribe((file) => (opened = file.id));
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLElement>('.cog-vault-list-row')
+      ?.click();
+
+    expect(opened).toBe('v1');
+  });
+
+  it('does not emit open when the interactive reference button is clicked', () => {
+    const fixture = render();
+    fixture.componentRef.setInput('refsInteractive', true);
+    fixture.detectChanges();
+    let opened = 0;
+    fixture.componentInstance.open.subscribe(() => (opened += 1));
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('button.cog-vault-list-row__refs')
+      ?.click();
+
+    expect(opened).toBe(0);
+  });
 });

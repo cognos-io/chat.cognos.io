@@ -78,4 +78,40 @@ describe('CognosVaultCardComponent', () => {
     refs?.click();
     expect(clicked).toBe(1);
   });
+
+  it('renders the reference line as a plain span when not interactive', () => {
+    const fixture = render();
+    expect(
+      fixture.nativeElement.querySelector('button.cog-vault-card__refs'),
+    ).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('span.cog-vault-card__refs'),
+    ).not.toBeNull();
+  });
+
+  it('emits open when the card itself is clicked', () => {
+    const fixture = render();
+    let opened: string | undefined;
+    fixture.componentInstance.open.subscribe((file) => (opened = file.id));
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLElement>('.cog-vault-card')
+      ?.click();
+
+    expect(opened).toBe('v1');
+  });
+
+  it('does not emit open when the interactive reference button is clicked', () => {
+    const fixture = render();
+    fixture.componentRef.setInput('refsInteractive', true);
+    fixture.detectChanges();
+    let opened = 0;
+    fixture.componentInstance.open.subscribe(() => (opened += 1));
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('button.cog-vault-card__refs')
+      ?.click();
+
+    expect(opened).toBe(0);
+  });
 });

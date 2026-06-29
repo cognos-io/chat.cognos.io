@@ -52,4 +52,27 @@ describe('CognosFilterChipsComponent', () => {
 
     expect(emitted).toEqual(['image']);
   });
+
+  it('marks the active value as selected', () => {
+    const fixture = render();
+    fixture.componentRef.setInput('value', 'sheet');
+    fixture.detectChanges();
+
+    const selected = (fixture.nativeElement as HTMLElement).querySelector(
+      '.cog-filter-chips__chip--selected',
+    );
+    expect(selected?.textContent?.trim()).toBe('Sheets');
+  });
+
+  it('renders no chips when given an empty options array', () => {
+    const fixture = render();
+    fixture.componentRef.setInput('options', []);
+    fixture.detectChanges();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '.cog-filter-chips__chip',
+      ),
+    ).toHaveLength(0);
+  });
 });
