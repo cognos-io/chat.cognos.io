@@ -382,14 +382,16 @@ test.describe('composer attachments', () => {
     const list = page.getByTestId('library-page-list');
     await expect(list).toContainText('managed.txt');
 
-    // Rename the file.
-    await page.getByRole('button', { name: 'Rename' }).first().click();
+    // Open the file's action sheet and rename it.
+    await page.getByRole('button', { name: 'File actions' }).first().click();
+    await page.getByRole('button', { name: 'Rename' }).click();
     await page.getByTestId('library-rename-input').fill('renamed.txt');
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(list).toContainText('renamed.txt');
 
-    // Remove it (confirm the dialog).
-    await page.getByRole('button', { name: 'Remove' }).first().click();
+    // Open the action sheet again and remove it (confirm the dialog).
+    await page.getByRole('button', { name: 'File actions' }).first().click();
+    await page.getByRole('button', { name: 'Remove' }).click();
     await page.getByRole('button', { name: 'Yes' }).click();
     await expect(page.getByTestId('library-page-list')).toHaveCount(0);
 
