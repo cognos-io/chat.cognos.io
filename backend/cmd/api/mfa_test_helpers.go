@@ -81,6 +81,32 @@ func enrollVerifiedTOTP(t *testing.T, app *tests.TestApp) (userID, secret string
 	return user.Id, secret
 }
 
+// enrollPendingTOTP seeds an UNVERIFIED TOTP credential (as MFAEnrolTOTP would)
+// without enabling MFA, returning the base32 secret for code generation.
+func enrollPendingTOTP(t *testing.T, app *tests.TestApp) (userID, secret string) {
+	t.Helper()
+
+	user, err := app.FindAuthRecordByEmail("users", testUserEmail)
+	if err != nil {
+		t.Fatalf("find user: %v", err)
+	}
+
+	key, err := mfa.GenerateSecret("Cognos", testUserEmail)
+	if err != nil {
+		t.Fatalf("generate secret: %v", err)
+	}
+
+	cipher := testMFACipher(t)
+	ct, nonce, err := cipher.Seal([]byte(key.Secret()))
+	if err != nil {
+		t.Fatalf("seal seed: %v", err)
+	}
+	if _, err := mfa.NewStore(app).UpsertEnrolment(user.Id, ct, nonce, cipher.KeyID()); err != nil {
+		t.Fatalf("upsert enrolment: %v", err)
+	}
+	return user.Id, key.Secret()
+}
+
 // openSession creates an MFA auth session and returns the raw token.
 func openSession(t *testing.T, app *tests.TestApp, userID string) string {
 	t.Helper()

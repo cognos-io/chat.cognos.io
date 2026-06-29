@@ -357,6 +357,23 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	// MFA management (authenticated): enrolment, disablement, recovery-code
+	// regeneration, and trusted-device administration.
+	e.Router.GET("/api/v1/mfa", handler.MFAStatus(mfaParams)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.POST("/api/v1/mfa/totp/enrol", handler.MFAEnrolTOTP(mfaParams)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.POST("/api/v1/mfa/totp/confirm", handler.MFAConfirmTOTP(mfaParams)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.POST("/api/v1/mfa/totp/disable", handler.MFADisableTOTP(mfaParams)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.POST("/api/v1/mfa/recovery-codes", handler.MFARegenerateRecoveryCodes(mfaParams)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.GET("/api/v1/mfa/trusted-devices", handler.MFAListTrustedDevices(mfaParams)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.DELETE("/api/v1/mfa/trusted-devices/{id}", handler.MFARevokeTrustedDevice(mfaParams)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+
 	e.Router.DELETE(
 		"/api/v1/conversations/{conversationID}",
 		handler.ConversationsDelete(app),
@@ -937,6 +954,12 @@ func addPocketBaseRoutes(
 			if err := app.Delete(record); err != nil {
 				logger.Warn("failed to clear vault session on logout", "err", err)
 			}
+		}
+
+		// Logging out drops MFA device trust too: a shared/forgotten machine
+		// should not stay second-factor-exempt after the user signs out.
+		if err := mfaStore.RevokeAllTrustedDevices(re.Auth.Id); err != nil {
+			logger.Warn("failed to revoke trusted MFA devices on logout", "err", err)
 		}
 
 		return re.NoContent(http.StatusNoContent)

@@ -307,6 +307,47 @@ func (s *Store) TrustedDeviceValid(userID, rawToken string) bool {
 	return true
 }
 
+// ListActiveTrustedDevices returns a user's non-revoked, unexpired devices,
+// for the security settings list.
+func (s *Store) ListActiveTrustedDevices(userID string) ([]*core.Record, error) {
+	records, err := s.app.FindAllRecords(collTrustedDevices, dbx.HashExp{"user": userID})
+	if err != nil {
+		return nil, err
+	}
+	now := types.NowDateTime()
+	active := make([]*core.Record, 0, len(records))
+	for _, record := range records {
+		if !record.GetDateTime("revoked_at").IsZero() {
+			continue
+		}
+		if expires := record.GetDateTime("expires_at"); expires.IsZero() || expires.Before(now) {
+			continue
+		}
+		active = append(active, record)
+	}
+	return active, nil
+}
+
+// RevokeTrustedDevice revokes a single device by id, but only if it belongs to
+// the given user. Returns ErrNotFound otherwise.
+func (s *Store) RevokeTrustedDevice(userID, deviceID string) error {
+	record, err := s.app.FindRecordById(collTrustedDevices, deviceID)
+	if err != nil {
+		if isNoRows(err) {
+			return ErrNotFound
+		}
+		return err
+	}
+	if record.GetString("user") != userID {
+		return ErrNotFound
+	}
+	if !record.GetDateTime("revoked_at").IsZero() {
+		return nil
+	}
+	record.Set("revoked_at", types.NowDateTime())
+	return s.app.Save(record)
+}
+
 // RevokeAllTrustedDevices marks every active trust for a user as revoked. Used
 // on logout, MFA disable, recovery-code regeneration, and password change.
 func (s *Store) RevokeAllTrustedDevices(userID string) error {
