@@ -177,9 +177,9 @@ import type { CognosVaultFile } from '../vault.types';
         display: -webkit-box;
         overflow: hidden;
         color: var(--cog-text);
-        font-size: 13.5px;
+        font-size: var(--cog-fs-body);
         font-weight: var(--cog-fw-semibold);
-        line-height: 1.35;
+        line-height: var(--cog-lh-body);
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
       }
@@ -187,8 +187,8 @@ import type { CognosVaultFile } from '../vault.types';
       .cog-vault-card__details {
         margin-top: 3px;
         color: var(--cog-text-subtlest);
-        font-size: 12px;
-        line-height: 1.4;
+        font-size: var(--cog-fs-body-sm);
+        line-height: var(--cog-lh-body-sm);
       }
 
       .cog-vault-card__footer {
@@ -207,19 +207,22 @@ import type { CognosVaultFile } from '../vault.types';
         align-items: center;
         gap: 5px;
         color: var(--cog-text-subtlest);
-        font-size: 11.5px;
-        line-height: 1.4;
+        font-size: var(--cog-fs-body);
+        line-height: var(--cog-lh-body);
       }
 
       .cog-vault-card__refs--linked {
         color: var(--cog-link);
       }
 
+      /* Reset button chrome but keep the font from .cog-vault-card__refs — the
+         font shorthand here would inherit the (larger) ambient size. */
       .cog-vault-card__refs--button {
         border: 0;
         background: none;
         padding: 0;
-        font: inherit;
+        font-family: inherit;
+        font-weight: inherit;
         cursor: pointer;
       }
 
