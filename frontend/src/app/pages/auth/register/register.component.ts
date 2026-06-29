@@ -8,7 +8,11 @@ import { EMPTY, catchError } from 'rxjs';
 import { TranslocoModule } from '@jsverse/transloco';
 import { filterNil } from 'ngxtension/filter-nil';
 
-import { CognosButtonComponent, CognosLozengeComponent } from '@cognos/ui-angular';
+import {
+  CognosAuthPageComponent,
+  CognosButtonComponent,
+  CognosLozengeComponent,
+} from '@cognos/ui-angular';
 
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
@@ -19,6 +23,7 @@ import { AuthService } from '@services/auth.service';
   selector: 'app-register',
   standalone: true,
   imports: [
+    CognosAuthPageComponent,
     ReactiveFormsModule,
     RouterLink,
     TranslocoModule,
@@ -29,8 +34,8 @@ import { AuthService } from '@services/auth.service';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="auth-page">
-      <section class="auth-page__card" *transloco="let t">
+    <cog-auth-page>
+      <ng-container *transloco="let t">
         <app-cognos-logo class="auth-page__logo" palette="dark"></app-cognos-logo>
         <div class="auth-page__eyebrow">
           <cog-lozenge tone="green">{{ t('auth.register.beta') }}</cog-lozenge>
@@ -99,130 +104,8 @@ import { AuthService } from '@services/auth.service';
           {{ t('auth.register.haveAccount') }}
           <a routerLink="/auth/login">{{ t('auth.register.login') }}</a>
         </p>
-      </section>
-    </div>
-  `,
-  styles: `
-    .auth-page {
-      display: grid;
-      min-height: 100vh;
-      min-height: 100svh;
-      place-items: center;
-      padding: var(--cog-space-300);
-      background:
-        radial-gradient(
-          circle at top left,
-          color-mix(in srgb, var(--cog-success-bg) 78%, transparent),
-          transparent 35%
-        ),
-        var(--cog-app-bg);
-    }
-
-    .auth-page__card {
-      display: grid;
-      width: min(100%, 460px);
-      gap: var(--cog-space-150);
-      border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-md);
-      background: var(--cog-surface);
-      box-shadow: var(--cog-shadow-raised);
-      padding: var(--cog-space-400);
-    }
-
-    .auth-page__form,
-    .auth-page__field {
-      display: grid;
-      gap: var(--cog-space-150);
-    }
-
-    .auth-page__logo {
-      height: 28px;
-    }
-
-    .auth-page__title,
-    .auth-page__lead,
-    .auth-page__hint,
-    .auth-page__legal,
-    .auth-page__switch {
-      margin: 0;
-    }
-
-    .auth-page__title {
-      color: var(--cog-text);
-      font-size: var(--cog-fs-display);
-      font-weight: var(--cog-fw-display);
-      line-height: var(--cog-lh-display);
-      letter-spacing: var(--cog-ls-display);
-      text-wrap: balance;
-    }
-
-    .auth-page__lead,
-    .auth-page__legal,
-    .auth-page__hint,
-    .auth-page__switch {
-      color: var(--cog-text-subtle);
-      font-size: var(--cog-fs-body);
-      line-height: var(--cog-lh-body);
-      text-wrap: pretty;
-    }
-
-    .auth-page__label {
-      color: var(--cog-text);
-      font-size: var(--cog-fs-body-sm);
-      font-weight: var(--cog-fw-semibold);
-      line-height: var(--cog-lh-body-sm);
-    }
-
-    .auth-page__input {
-      min-height: 44px;
-      border: 2px solid var(--cog-border);
-      border-radius: var(--cog-radius-sm);
-      background: var(--cog-input-bg);
-      color: var(--cog-text);
-      padding: 0 var(--cog-space-150);
-      font: inherit;
-      outline: 0;
-    }
-
-    .auth-page__input:focus {
-      border-color: var(--cog-brand);
-      background: var(--cog-input-bg-focus);
-    }
-
-    .auth-page__legal a,
-    .auth-page__switch a {
-      color: var(--cog-link);
-    }
-
-    .auth-page__loading-copy {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--cog-space-100);
-    }
-
-    .auth-page__loading-copy app-loading-indicator {
-      padding: 0;
-    }
-
-    @media (max-width: 640px) {
-      .auth-page {
-        place-items: stretch;
-        padding: 0;
-      }
-
-      .auth-page__card {
-        width: 100%;
-        max-width: none;
-        min-height: 100svh;
-        border: 0;
-        border-radius: 0;
-        box-shadow: none;
-        background: transparent;
-        padding: var(--cog-space-400) var(--cog-space-300)
-          calc(env(safe-area-inset-bottom, 0px) + var(--cog-space-500));
-        align-content: end;
-      }
-    }
+      </ng-container>
+    </cog-auth-page>
   `,
 })
 export class RegisterComponent {

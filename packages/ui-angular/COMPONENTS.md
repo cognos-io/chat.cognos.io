@@ -12,13 +12,14 @@ When something is used in **more than two** places and no component fits, extrac
 
 ## Layout & structure
 
-| Selector                                 | When to use                                                                                                                                               |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cog-page-header`                        | Top of a page: breadcrumbs + title + optional subtitle + trailing actions slot.                                                                           |
-| `cog-card`                               | A settings/section card: bordered surface, heading/subtitle, `[card-heading-actions]` + `[card-actions]` slots, `tone="danger"` for destructive sections. |
-| `cog-list` / `cog-list-item`             | A borderless, hairline-divided vertical list of records (devices, models, members). Item is a flex row (content left, actions right).                     |
-| `cog-empty-state`                        | The centred, muted "nothing here" block for empty lists/searches (optional icon/title/message + actions slot).                                            |
-| `cog-desktop-shell` / `cog-mobile-shell` | App frame (sidebar/nav + content) for desktop / mobile.                                                                                                   |
+| Selector                                 | When to use                                                                                                                                                               |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cog-page-header`                        | Top of a page: breadcrumbs + title + optional subtitle + trailing actions slot.                                                                                           |
+| `cog-card`                               | A settings/section card: bordered surface, heading/subtitle, `[card-heading-actions]` + `[card-actions]` slots, `tone="danger"` for destructive sections.                 |
+| `cog-list` / `cog-list-item`             | A borderless, hairline-divided vertical list of records (devices, models, members). Item is a flex row (content left, actions right).                                     |
+| `cog-empty-state`                        | The centred, muted "nothing here" block for empty lists/searches (optional icon/title/message + actions slot).                                                            |
+| `cog-auth-page`                          | Shared layout for unauthenticated pages (login, register, password/email flows): gradient background, centred card, and `auth-page__*` typography for the projected form. |
+| `cog-desktop-shell` / `cog-mobile-shell` | App frame (sidebar/nav + content) for desktop / mobile.                                                                                                                   |
 
 ## Inputs & primitives
 
