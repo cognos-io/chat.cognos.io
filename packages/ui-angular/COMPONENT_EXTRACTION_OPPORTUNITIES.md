@@ -17,9 +17,12 @@ extraction.
 - ✅ **`cog-choice-chip-group`** — done. Adopted by the model catalogue filter chips.
 - ✅ **`cog-field`** (+ `cog-text-field` is now a ControlValueAccessor with a `size` variant) —
   done. Adopted by the account profile/email/password fields.
-- ⬜ Remaining below (`cog-choice-card-group`, `cog-avatar-picker`, `cog-record-list`)
-  — not started. Further adoption of the shipped primitives across the other listed sites is also
-  outstanding.
+- ✅ **`cog-avatar-picker`** — done. Adopted by the account avatar fieldset (colour tiles are live
+  `cog-avatar` previews). Persona/project pickers can adopt next.
+- ⛔ **`cog-choice-card-group`**, **`cog-record-list`** — intentionally not built
+  (over-optimisation: diverse content / `cog-list-item` already suffices). Revisit only if usage
+  forces it. — not started. Further adoption of the shipped primitives across the other listed sites
+  is also outstanding.
 
 ## `cog-card` / section card
 

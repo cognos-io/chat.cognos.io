@@ -35,6 +35,7 @@ When something is used in **more than two** places and no component fits, extrac
 | `cog-icon`                        | Render a named icon (`@cognos/ui/icons`).                                                                                                     |
 | `cog-lozenge`                     | A small status/label badge (tones: neutral/blue/green/purple/red).                                                                            |
 | `cog-avatar` / `cog-avatar-group` | A user/entity avatar (initials/icon/colour) / stacked avatars.                                                                                |
+| `cog-avatar-picker`               | Pick an avatar icon + colour. Colour swatches are live `cog-avatar` previews (palette comes from `cog-avatar`, no hardcoded colours).         |
 
 ## Navigation & overlays
 

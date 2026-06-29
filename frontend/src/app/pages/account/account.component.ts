@@ -11,10 +11,10 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
   CognosAvatarComponent,
+  CognosAvatarPickerComponent,
   CognosButtonComponent,
   CognosCardComponent,
   CognosFieldComponent,
-  CognosIconComponent,
   CognosTextFieldComponent,
   CognosToastService,
   CognosToggleComponent,
@@ -26,7 +26,6 @@ import { SettingsPageComponent } from '@app/components/settings/settings-page.co
 import {
   AvatarColor,
   AvatarIcon,
-  avatarColors,
   avatarIcons,
   coerceAvatarColor,
   coerceAvatarIcon,
@@ -50,9 +49,9 @@ import { deriveProfileName } from '@app/utils/profile-identity';
   standalone: true,
   imports: [
     CognosAvatarComponent,
+    CognosAvatarPickerComponent,
     CognosCardComponent,
     CognosFieldComponent,
-    CognosIconComponent,
     CognosTextFieldComponent,
     CognosButtonComponent,
     CognosToggleComponent,
@@ -98,48 +97,17 @@ import { deriveProfileName } from '@app/utils/profile-identity';
                   [size]="40"
                 />
 
-                <div class="account__avatar-pickers">
-                  <div
-                    class="account__icon-grid"
-                    role="radiogroup"
-                    [attr.aria-label]="t('account.profile.iconAria')"
-                  >
-                    @for (option of icons; track option) {
-                      <button
-                        type="button"
-                        class="account__icon-button"
-                        [class.is-selected]="avatarIcon() === option"
-                        [attr.aria-label]="
-                          t('account.profile.iconOptionAria', { name: option })
-                        "
-                        [attr.aria-pressed]="avatarIcon() === option"
-                        (click)="selectIcon(option)"
-                      >
-                        <cog-icon [name]="option" [size]="18" tone="current" />
-                      </button>
-                    }
-                  </div>
-
-                  <div
-                    class="account__color-row"
-                    role="radiogroup"
-                    [attr.aria-label]="t('account.profile.colorAria')"
-                  >
-                    @for (option of colors; track option) {
-                      <button
-                        type="button"
-                        class="account__color-swatch"
-                        [class]="'account__color-swatch--' + option"
-                        [class.is-selected]="avatarColor() === option"
-                        [attr.aria-label]="
-                          t('account.profile.colorOptionAria', { name: option })
-                        "
-                        [attr.aria-pressed]="avatarColor() === option"
-                        (click)="selectColor(option)"
-                      ></button>
-                    }
-                  </div>
-                </div>
+                <cog-avatar-picker
+                  class="account__avatar-pickers"
+                  [icons]="icons"
+                  [selectedIcon]="avatarIcon() ?? null"
+                  [selectedColor]="avatarColor()"
+                  [name]="avatarName()"
+                  [iconAriaLabel]="t('account.profile.iconAria')"
+                  [colorAriaLabel]="t('account.profile.colorAria')"
+                  (iconChange)="selectIcon($event)"
+                  (colorChange)="selectColor($event)"
+                />
               </div>
             </fieldset>
           </div>
@@ -466,99 +434,6 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       border: 0;
     }
 
-    .account__icon-grid {
-      display: grid;
-      grid-template-columns: repeat(10, 1fr);
-      gap: var(--cog-space-075);
-    }
-
-    .account__icon-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      aspect-ratio: 1;
-      border: 2px solid var(--cog-border);
-      border-radius: var(--cog-radius-sm);
-      background: var(--cog-surface);
-      color: var(--cog-text-subtle);
-      cursor: pointer;
-      transition:
-        border-color var(--cog-dur-fast) var(--cog-ease-standard),
-        color var(--cog-dur-fast) var(--cog-ease-standard);
-    }
-
-    .account__icon-button:hover {
-      color: var(--cog-text);
-    }
-
-    .account__icon-button.is-selected {
-      border-color: var(--cog-brand);
-      color: var(--cog-text);
-    }
-
-    .account__color-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--cog-space-075);
-    }
-
-    .account__color-swatch {
-      inline-size: 28px;
-      block-size: 28px;
-      border: 2px solid transparent;
-      border-radius: var(--cog-radius-pill);
-      cursor: pointer;
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
-    }
-
-    .account__color-swatch.is-selected {
-      border-color: var(--cog-text);
-    }
-
-    .account__color-swatch--green {
-      background: #dcfce7;
-    }
-    .account__color-swatch--blue {
-      background: #dbeafe;
-    }
-    .account__color-swatch--indigo {
-      background: #e0e7ff;
-    }
-    .account__color-swatch--violet {
-      background: #ede9fe;
-    }
-    .account__color-swatch--teal {
-      background: #ccfbf1;
-    }
-    .account__color-swatch--sky {
-      background: #e0f2fe;
-    }
-    .account__color-swatch--amber {
-      background: #fef3c7;
-    }
-    .account__color-swatch--orange {
-      background: #ffedd5;
-    }
-    .account__color-swatch--pink {
-      background: #fce7f3;
-    }
-    .account__color-swatch--slate {
-      background: #eef0f3;
-    }
-    /* "No fill": a surface circle with a diagonal slash (border comes from the
-       swatch's inset shadow). */
-    .account__color-swatch--transparent {
-      background:
-        linear-gradient(
-          to top right,
-          transparent calc(50% - 1px),
-          var(--cog-text-subtlest, #94a3b8) calc(50% - 1px),
-          var(--cog-text-subtlest, #94a3b8) calc(50% + 1px),
-          transparent calc(50% + 1px)
-        ),
-        var(--cog-surface, #fff);
-    }
-
     .account__actions {
       display: flex;
       justify-content: flex-end;
@@ -631,7 +506,6 @@ export class AccountComponent {
 
   protected readonly email = this._auth.email;
   protected readonly icons = avatarIcons;
-  protected readonly colors = avatarColors;
 
   // The persisted profile values, read live from the auth record.
   private readonly _persistedDisplayName = computed(
@@ -697,9 +571,13 @@ export class AccountComponent {
     deriveProfileName(this.displayName(), this.email()),
   );
 
-  selectIcon(icon: AvatarIcon): void {
+  selectIcon(icon: string): void {
+    const coerced = coerceAvatarIcon(icon);
+    if (!coerced) {
+      return;
+    }
     // Re-selecting the active icon clears it, falling back to initials.
-    this.avatarIcon.update((current) => (current === icon ? undefined : icon));
+    this.avatarIcon.update((current) => (current === coerced ? undefined : coerced));
   }
 
   selectColor(color: AvatarColor): void {

@@ -6,6 +6,7 @@ export * from './lib/primitives/toggle/toggle.component';
 export * from './lib/primitives/text-field/text-field.component';
 export * from './lib/primitives/field/field.component';
 export * from './lib/primitives/avatar/avatar.component';
+export * from './lib/primitives/avatar-picker/avatar-picker.component';
 export * from './lib/primitives/card/card.component';
 export * from './lib/primitives/list/list.component';
 export * from './lib/primitives/list/list-item.component';
