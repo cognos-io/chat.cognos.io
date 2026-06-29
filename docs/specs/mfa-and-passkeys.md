@@ -19,18 +19,45 @@ MFA is **authenticator-app only**.
 
 Passkey-only login is a later decision. Fresh devices still need the Account Key to decrypt data.
 
+## Resolved decisions
+
+These were open in earlier drafts and are now settled:
+
+1. **Lockout is acceptable; recovery favours security.** Losing both the authenticator and all
+   recovery codes results in permanent loss of _auth_ access. This is a justifiable risk because the
+   data was already gated by the Account Key. Therefore:
+   - An email-verified password reset does **not** disable MFA. The new password still hits the MFA
+     interceptor.
+   - There is no self-service MFA reset. The only way to clear MFA without a valid code is a
+     deliberate, audited support action (out of scope for this spec to automate).
+2. **"Remember this device" for MFA ships in P0.** The existing 30-minute idle auto-logout would
+   otherwise force a TOTP code on every return to an idle session. A signed, server-issued
+   trusted-MFA-device token lets a previously-verified device skip the TOTP step for a bounded
+   window without weakening first-device or fresh-device sign-in. See _Trusted MFA devices_ below.
+
 ## Current auth baseline
 
 From the current codebase:
 
 - `users` is a PocketBase auth collection.
-- Password auth is enabled with `email` as the only identity field.
-- OAuth2 is disabled (`1760000011_harden_users_auth_surface.go`).
-- Passwords are auth-only; encrypted data is unlocked by the Account Key (`account_key_v2`).
-- Password minimum length is 12.
-- Per-account password lockout exists: 5 failed attempts locks the account for 15 minutes.
-- PocketBase auth rate limits cover password, reset, verification, and email-change flows.
-- The frontend currently calls `authWithPassword()` directly and treats success as a complete login.
+- Password auth is enabled with `email` as the only identity field
+  (`1760000011_harden_users_auth_surface.go`).
+- OAuth2 is disabled (same migration). `OTP` and `MFA` are not explicitly configured — they sit at
+  PocketBase's defaults (disabled). P0 should set them to `false` explicitly as documented
+  hardening.
+- Passwords are auth-only; encrypted data is unlocked by the Account Key. The `account_key_v2`
+  marker lives on `user_key_pairs.unlock_scheme` (`1760000034`), not on `users`.
+- Password minimum length is 12 (`min_password_length` collection option).
+- Per-account password lockout exists: 5 failed attempts locks the account for 15 minutes
+  (`internal/hooks/login_lockout.go`, hidden fields `failed_login_attempts` / `locked_until`).
+- PocketBase auth rate limits cover password, reset, verification, and email-change flows
+  (`internal/hooks/rate_limits.go`).
+- Custom endpoints are registered under `/api/v1/*` in `cmd/api/routes.go` via
+  `addPocketBaseRoutes`, bound with `apis.RequireAuth()` + a rate-limiter middleware. This is the
+  pattern P0/P1 endpoints follow.
+- The frontend currently calls `authWithPassword()` directly (`auth.service.ts`) and treats success
+  as a complete login. It also auto-refreshes the token every 5 minutes — relevant to interception
+  (see below).
 
 ## Goals
 
@@ -92,6 +119,12 @@ mfa_enrolled_at date optional
 Clients must not be able to PATCH these fields directly. Enrolment and disablement go through
 first-party endpoints only.
 
+`users.mfa_enabled` is the **authoritative, denormalized** flag the interceptor reads — it is
+already on the loaded auth record, so the hot path needs no extra query. The
+`user_mfa_totp.verified_at` / `disabled_at` columns are the audit detail. To avoid drift, always
+write `mfa_enabled` in the same transaction as the TOTP-row state change; never let one say enabled
+while the other says disabled.
+
 ### Data model
 
 Add `user_mfa_totp` with all collection API rules locked (`nil`). One active row per user.
@@ -138,24 +171,51 @@ created
 ```
 
 Recovery codes are generated once at enrolment, shown once, and stored only as hashes. They are for
-account access recovery, not a weaker day-to-day MFA channel.
+account access recovery, not a weaker day-to-day MFA channel. Generate a fixed set (10 codes), each
+with ≥128 bits of entropy, hashed with a slow/keyed hash. **They recover auth access only — they do
+not restore data.** A user who completes login via recovery code still needs the Account Key to
+decrypt (see _Resolved decisions_: there is no other reset path).
 
 Exclude `user_mfa_totp`, `mfa_auth_sessions`, and `mfa_recovery_codes` from soft-delete snapshots.
 They are auth material and should disappear immediately.
 
 ### Password login interception
 
-Add an `OnRecordAuthRequest("users")` hook:
+Add an `OnRecordAuthRequest("users")` hook.
+**This is the correct interception point and the only one that works**: `OnRecordAuthRequest` fires
+_before_ the token is serialized into the response, so returning an error from it (before calling
+`e.Next()`) suppresses the token. `OnRecordAuthWithPasswordRequest` (used by the lockout hook)
+cannot be used for this — by the time its `e.Next()` returns, the auth response has already been
+written.
 
-- if `AuthMethod != "password"`, continue
+Hook logic:
+
+- if `e.AuthMethod` is not the password sign-in method, continue (return `e.Next()`)
 - if `mfa_enabled != true`, continue and return the normal PocketBase token
-- if `mfa_enabled == true`:
+- if the request carries a valid **trusted-MFA-device** token for this user, continue and return the
+  normal token (see _Trusted MFA devices_)
+- otherwise:
     - create a short-lived `mfa_auth_sessions` row
-    - return `401` with `{ "mfaSessionId": "..." }`
+    - return a distinct **MFA-required** error (HTTP `401` with a stable, machine-readable code such
+      as `mfa_required` plus `{ "mfaSessionId": "..." }` in the error data) — **not** a bare `401`,
+      so the frontend can branch to the TOTP step instead of treating it as session expiry
     - do not return the password-auth token
 
 This protects even callers who hit PocketBase's `/api/collections/users/auth-with-password` route
 directly.
+
+#### Load-bearing constraint: do not re-intercept refresh or the MFA token issuance
+
+`OnRecordAuthRequest` fires on **every** path that mints a token — including `authRefresh` (the
+frontend refreshes every 5 minutes) and the token issued by the P0 `/api/v1/auth/mfa/totp` endpoint
+itself. Both must pass through, or MFA users can never refresh and TOTP completion loops forever.
+
+- The `e.AuthMethod` guard above must be verified against the actual constant values in PocketBase
+  v0.39.1 (password vs. OAuth2 vs. OTP vs. refresh). Add explicit tests for each.
+- The MFA-completion endpoints (`/totp`, `/recovery`, and P1 passkey verify) must issue their token
+  in a way the interceptor lets through — e.g. issue under a non-password auth method like `"mfa"`,
+  or set a request-context bypass flag that the hook honours. This must be tested as a regression
+  guard against the infinite-loop failure mode.
 
 ### TOTP verification
 
@@ -174,7 +234,21 @@ Verification rules:
 - reject replay by consuming the MFA session
 - reject duplicate use of the same or older TOTP timestep via `last_accepted_step`
 - update `last_used_at` on success
-- issue the normal PocketBase auth response after success
+- issue the normal PocketBase auth response after success (under a non-password auth method so the
+  interceptor passes it through — see above)
+
+#### TOTP brute-force lockout
+
+The password lockout does not protect TOTP — a 6-digit code with a ±1 window is far more guessable
+than a 12-char password. P0 must add its own failure throttle so the second factor is not weaker
+than the first:
+
+- count failed code attempts against the `mfa_auth_sessions` row; burn the session after a small
+  number of failures (e.g. 5), forcing the user back through password auth
+- track failures per user as well, and apply a cooldown mirroring the existing password lockout (5
+  failures → 15-minute lock) so an attacker cannot just keep minting fresh sessions
+- the same throttle applies to `/recovery`
+- rate limits remain per session, user, and IP on top of this
 
 ### Frontend login flow
 
@@ -220,7 +294,45 @@ Add first-party authenticated endpoints:
 | `POST` | `/api/v1/mfa/recovery-codes` | Regenerate recovery codes after current code       |
 
 Enrolment must not set `mfa_enabled=true` until the user proves they can generate a valid code.
-Disablement requires both the current password and the current TOTP code.
+Disablement requires both the current password and the current TOTP code. Starting enrolment should
+also require a fresh password check, so a borrowed trusted-device session cannot silently add a
+factor.
+
+### Trusted MFA devices ("remember this device")
+
+To avoid prompting for a TOTP code on every return after the 30-minute idle logout, a device that
+has completed a full TOTP (or recovery, or passkey) challenge may be remembered for a bounded
+window.
+
+- On successful MFA completion, if the user opts in, issue a **trusted-MFA-device token**: a random
+  high-entropy secret returned to the client and stored only as a hash server-side. The client keeps
+  it in a long-lived, `HttpOnly`-equivalent store (or app storage) separate from the auth token.
+- On password login, the frontend presents this token; the interceptor verifies the hash, the user
+  match, and expiry, and if valid skips the TOTP step and returns the normal token.
+- Properties:
+    - bound to one user; expires after a fixed window (e.g. 30 days)
+    - single source of truth is the hash row; the raw value is shown to the client once
+    - revoked on: explicit logout, MFA disable, recovery-code regeneration, and password change
+    - listed and individually revocable in the security settings UI
+    - **never** unlocks data — it only waives the second auth factor; the Account Key /
+      trusted-vault session is still required to decrypt
+- This is distinct from the existing trusted-*vault* device (which stores the data unlock key). The
+  two are independent: a device can be MFA-trusted without being vault-trusted and vice versa.
+
+Add `mfa_trusted_devices` with all collection API rules locked (`nil`):
+
+```txt
+id
+user relation -> users
+token_hash text unique
+label text optional
+expires_at date
+last_used_at date optional
+revoked_at date optional
+created
+```
+
+Exclude `mfa_trusted_devices` from soft-delete snapshots; it is auth material.
 
 ## P1 design — passkeys
 
@@ -348,6 +460,13 @@ P0 API tests:
 - Recovery code works once and cannot be reused.
 - Existing login lockout still triggers before MFA.
 - Rate limits cover TOTP and recovery-code verification.
+- Token auto-refresh for an `mfa_enabled` user is **not** re-intercepted (no second TOTP demand).
+- The token issued by `/totp` and `/recovery` is **not** re-intercepted (no infinite loop).
+- Repeated bad TOTP codes burn the MFA session and trip the per-user cooldown.
+- An email-verified password reset does **not** disable MFA (login still demands a code).
+- A valid trusted-MFA-device token skips TOTP; an expired/revoked/wrong-user one does not.
+- Logout, MFA disable, recovery-code regeneration, and password change all revoke trusted devices.
+- A trusted-MFA-device token does not unlock data (Account Key still required).
 
 P0 browser tests:
 
@@ -355,6 +474,8 @@ P0 browser tests:
 - Login with MFA shows the authenticator-code step and then opens the vault flow.
 - Enrolment shows QR/manual secret, requires a first valid code, then shows recovery codes once.
 - Refresh after MFA login preserves the existing auth/vault behaviour.
+- "Remember this device" skips the TOTP step on the next sign-in within the window.
+- Returning after the 30-minute idle logout on a remembered device does not re-prompt for TOTP.
 
 P1 passkey tests:
 
@@ -368,13 +489,21 @@ P1 passkey tests:
 
 ## Rollout
 
-1. Add tests for direct password-auth interception.
-2. Add TOTP, MFA session, and recovery-code migrations.
-3. Add TOTP enrolment/confirm/verify endpoints.
-4. Add frontend MFA login and settings state.
-5. Ship authenticator-app MFA behind a visible account setting.
-6. Add passkey storage and WebAuthn endpoints.
-7. Decide separately whether passkeys can become a first factor.
+1. Add dependencies: a TOTP library (e.g. `pquerna/otp`) and, for P1, a WebAuthn library (e.g.
+   `go-webauthn/webauthn`). Neither is in `go.mod` today.
+2. Add tests for direct password-auth interception **and** for the refresh / MFA-token-issuance
+   pass-through (the infinite-loop guard).
+3. Add TOTP, MFA session, recovery-code, and trusted-MFA-device migrations. Verify the `SoftDelete`
+   hook (`internal/hooks`) supports excluding these auth collections from snapshots; extend it if
+   not.
+4. Add TOTP enrolment/confirm/verify endpoints, the TOTP brute-force throttle, and trusted-device
+   issue/verify/revoke.
+5. Add frontend MFA login (distinct `mfa_required` handling), settings state, and "remember this
+   device" opt-in, in all 6 locales.
+6. Ship authenticator-app MFA behind the existing `/account/security` route (currently a
+   placeholder).
+7. Add passkey storage and WebAuthn endpoints (RP ID configured per environment).
+8. Decide separately whether passkeys can become a first factor.
 
 ## Business process docs
 
