@@ -72,9 +72,6 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       aria-labelledby="data-processing-heading"
     >
       <header class="data-processing__head">
-        <span class="data-processing__head-icon">
-          <cog-icon name="server" [size]="18" tone="current" />
-        </span>
         <div class="data-processing__head-text">
           <h2 id="data-processing-heading" class="data-processing__title">
             {{ t('account.dataProcessing.title') }}
@@ -328,20 +325,9 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
 
     .data-processing__head {
       display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: start;
       gap: var(--cog-space-125);
-    }
-
-    .data-processing__head-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: var(--cog-radius-sm);
-      background: var(--cog-info-bg, var(--cog-surface-raised));
-      color: var(--cog-text-subtle);
     }
 
     .data-processing__head-text {
