@@ -4,23 +4,19 @@ import {
   computed,
   input,
   output,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosFileBadgeComponent } from "../file-badge/file-badge.component";
-import { CognosProgressComponent } from "../progress/progress.component";
-import { deriveFileExtension, resolveFileType } from "../file-types";
+import { CognosIconComponent } from '../../icon/icon.component';
+import { CognosFileBadgeComponent } from '../file-badge/file-badge.component';
+import { deriveFileExtension, resolveFileType } from '../file-types';
+import { CognosProgressComponent } from '../progress/progress.component';
 
-export type CognosDocAttachmentState = "sealed" | "encrypting" | "error";
+export type CognosDocAttachmentState = 'sealed' | 'encrypting' | 'error';
 
 @Component({
-  selector: "cog-doc-attachment",
+  selector: 'cog-doc-attachment',
   standalone: true,
-  imports: [
-    CognosFileBadgeComponent,
-    CognosIconComponent,
-    CognosProgressComponent,
-  ],
+  imports: [CognosFileBadgeComponent, CognosIconComponent, CognosProgressComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article
@@ -39,7 +35,7 @@ export type CognosDocAttachmentState = "sealed" | "encrypting" | "error";
         <div class="cog-doc-attachment__name">{{ name() }}</div>
 
         @switch (state()) {
-          @case ("encrypting") {
+          @case ('encrypting') {
             <div class="cog-doc-attachment__progress-wrap">
               <cog-progress [value]="progress()" [height]="4" />
               <div class="cog-doc-attachment__meta cog-doc-attachment__meta--subtle">
@@ -48,7 +44,7 @@ export type CognosDocAttachmentState = "sealed" | "encrypting" | "error";
               </div>
             </div>
           }
-          @case ("error") {
+          @case ('error') {
             <div class="cog-doc-attachment__meta cog-doc-attachment__meta--danger">
               <cog-icon name="triangle-alert" [size]="12" tone="danger" />
               <span>Couldn't encrypt — tap to retry</span>
@@ -56,11 +52,17 @@ export type CognosDocAttachmentState = "sealed" | "encrypting" | "error";
           }
           @default {
             <div class="cog-doc-attachment__meta-row">
-              <span class="cog-doc-attachment__meta cog-doc-attachment__meta--subtle">{{ resolvedMeta() }}</span>
-              <span class="cog-doc-attachment__meta cog-doc-attachment__meta--success">
-                <cog-icon name="lock" [size]="11" tone="success" />
-                <span>Encrypted</span>
-              </span>
+              <span class="cog-doc-attachment__meta cog-doc-attachment__meta--subtle">{{
+                resolvedMeta()
+              }}</span>
+              @if (showEncrypted()) {
+                <span
+                  class="cog-doc-attachment__meta cog-doc-attachment__meta--success"
+                >
+                  <cog-icon name="lock" [size]="11" tone="success" />
+                  <span>Encrypted</span>
+                </span>
+              }
             </div>
           }
         }
@@ -69,7 +71,13 @@ export type CognosDocAttachmentState = "sealed" | "encrypting" | "error";
       <ng-content select="[cogDocAttachmentTrailing]" />
 
       @if (showRemove()) {
-        <button class="cog-doc-attachment__remove" type="button" aria-label="Remove attachment" title="Remove attachment" (click)="$event.stopPropagation(); remove.emit()">
+        <button
+          class="cog-doc-attachment__remove"
+          type="button"
+          aria-label="Remove attachment"
+          title="Remove attachment"
+          (click)="$event.stopPropagation(); remove.emit()"
+        >
           <cog-icon name="x" [size]="14" tone="text-subtlest" />
         </button>
       }
@@ -189,15 +197,21 @@ export type CognosDocAttachmentState = "sealed" | "encrypting" | "error";
   ],
 })
 export class CognosDocAttachmentComponent {
-  readonly name = input("document.pdf");
+  readonly name = input('document.pdf');
   readonly ext = input<string | null>(null);
-  readonly size = input("320 KB");
+  readonly size = input('320 KB');
   readonly meta = input<string | null>(null);
-  readonly state = input<CognosDocAttachmentState>("sealed");
+  readonly state = input<CognosDocAttachmentState>('sealed');
   readonly progress = input(0);
   readonly width = input<number | string>(280);
   readonly clickable = input(false);
   readonly removeable = input(false);
+  /**
+   * Whether to show the "Encrypted" lock indicator in the sealed state. Defaults
+   * to true; hosts can hide it where encryption is already signalled nearby (e.g.
+   * an attachment inside a message bubble that already shows an encrypted badge).
+   */
+  readonly showEncrypted = input(true);
   readonly open = output<void>();
   readonly retry = output<void>();
   readonly remove = output<void>();
@@ -206,34 +220,35 @@ export class CognosDocAttachmentComponent {
     () => this.ext() || deriveFileExtension(this.name()),
   );
   protected readonly resolvedMeta = computed(
-    () => this.meta() || `${resolveFileType(this.resolvedExt()).label} · ${this.size()}`,
+    () =>
+      this.meta() || `${resolveFileType(this.resolvedExt()).label} · ${this.size()}`,
   );
   protected readonly roundedProgress = computed(() => Math.round(this.progress()));
   protected readonly widthStyle = computed(() =>
-    typeof this.width() === "number" ? `${this.width()}px` : this.width(),
+    typeof this.width() === 'number' ? `${this.width()}px` : this.width(),
   );
   protected readonly interactive = computed(
-    () => this.clickable() || this.state() === "error",
+    () => this.clickable() || this.state() === 'error',
   );
   protected readonly showRemove = computed(
-    () => this.removeable() && this.state() !== "encrypting",
+    () => this.removeable() && this.state() !== 'encrypting',
   );
   protected readonly attachmentClass = computed(() => {
-    const classes = ["cog-doc-attachment"];
+    const classes = ['cog-doc-attachment'];
 
     if (this.interactive()) {
-      classes.push("cog-doc-attachment--interactive");
+      classes.push('cog-doc-attachment--interactive');
     }
 
-    if (this.state() === "error") {
-      classes.push("cog-doc-attachment--error");
+    if (this.state() === 'error') {
+      classes.push('cog-doc-attachment--error');
     }
 
-    return classes.join(" ");
+    return classes.join(' ');
   });
 
   protected onCardClick(): void {
-    if (this.state() === "error") {
+    if (this.state() === 'error') {
       this.retry.emit();
       return;
     }
