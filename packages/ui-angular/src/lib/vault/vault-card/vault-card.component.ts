@@ -4,21 +4,17 @@ import {
   computed,
   input,
   output,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-button.component";
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosFileBadgeComponent } from "../../files/file-badge/file-badge.component";
-import type { CognosVaultFile } from "../vault.types";
+import { CognosFileBadgeComponent } from '../../files/file-badge/file-badge.component';
+import { CognosIconComponent } from '../../icon/icon.component';
+import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-button.component';
+import type { CognosVaultFile } from '../vault.types';
 
 @Component({
-  selector: "cog-vault-card",
+  selector: 'cog-vault-card',
   standalone: true,
-  imports: [
-    CognosFileBadgeComponent,
-    CognosIconButtonComponent,
-    CognosIconComponent,
-  ],
+  imports: [CognosFileBadgeComponent, CognosIconButtonComponent, CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article
@@ -32,19 +28,28 @@ import type { CognosVaultFile } from "../vault.types";
     >
       <div class="cog-vault-card__header">
         @if (file().kind === 'image' && file().img) {
-          <span class="cog-vault-card__thumb"><img class="cog-vault-card__thumb-image" [src]="file().img!" alt="" /></span>
+          <span class="cog-vault-card__thumb"
+            ><img class="cog-vault-card__thumb-image" [src]="file().img!" alt=""
+          /></span>
         } @else {
           <cog-file-badge [ext]="file().ext" [size]="40" [radius]="4" />
         }
 
         @if (selectable()) {
-          <span class="cog-vault-card__selection" [class.cog-vault-card__selection--selected]="selected()">
+          <span
+            class="cog-vault-card__selection"
+            [class.cog-vault-card__selection--selected]="selected()"
+          >
             @if (selected()) {
               <cog-icon name="check" [size]="12" tone="current" />
             }
           </span>
         } @else {
-          <cog-icon-button name="more-horizontal" title="More" (click)="$event.stopPropagation(); more.emit(file())" />
+          <cog-icon-button
+            name="more-horizontal"
+            [title]="moreLabel()"
+            (click)="$event.stopPropagation(); more.emit(file())"
+          />
         }
       </div>
 
@@ -54,10 +59,21 @@ import type { CognosVaultFile } from "../vault.types";
       </div>
 
       <div class="cog-vault-card__footer">
-        <span class="cog-vault-card__refs" [class.cog-vault-card__refs--linked]="file().refs > 0">
-          <cog-icon name="link" [size]="12" [tone]="file().refs > 0 ? 'link' : 'text-subtlest'" />
-          <span>{{ file().refs > 0 ? 'In ' + file().refs + ' chats' : 'Not referenced' }}</span>
-        </span>
+        @if (refsLabel()) {
+          <span
+            class="cog-vault-card__refs"
+            [class.cog-vault-card__refs--linked]="file().refs > 0"
+          >
+            <cog-icon
+              name="link"
+              [size]="12"
+              [tone]="file().refs > 0 ? 'link' : 'text-subtlest'"
+            />
+            <span>{{ refsLabel() }}</span>
+          </span>
+        } @else {
+          <span></span>
+        }
         <cog-icon name="lock" [size]="12" tone="success" />
       </div>
     </article>
@@ -194,25 +210,40 @@ export class CognosVaultCardComponent {
   readonly file = input.required<CognosVaultFile>();
   readonly selectable = input(false);
   readonly selected = input(false);
+  /** Accessible label for the "more" action; pass a translated string for i18n. */
+  readonly moreLabel = input('More');
+  /**
+   * Footer reference text. `null` (default) renders the built-in English
+   * "In N chats" / "Not referenced". Pass a translated string to override, or an
+   * empty string to hide the reference line entirely (e.g. count not yet known).
+   */
+  readonly refsText = input<string | null>(null);
   readonly toggle = output<CognosVaultFile>();
   readonly open = output<CognosVaultFile>();
   readonly more = output<CognosVaultFile>();
 
-  protected readonly interactive = computed(
-    () => this.selectable() || !!this.file(),
-  );
+  protected readonly refsLabel = computed(() => {
+    const custom = this.refsText();
+    if (custom !== null) {
+      return custom;
+    }
+    const refs = this.file().refs;
+    return refs > 0 ? `In ${refs} chats` : 'Not referenced';
+  });
+
+  protected readonly interactive = computed(() => this.selectable() || !!this.file());
   protected readonly cardClass = computed(() => {
-    const classes = ["cog-vault-card"];
+    const classes = ['cog-vault-card'];
 
     if (this.interactive()) {
-      classes.push("cog-vault-card--interactive");
+      classes.push('cog-vault-card--interactive');
     }
 
     if (this.selected()) {
-      classes.push("cog-vault-card--selected");
+      classes.push('cog-vault-card--selected');
     }
 
-    return classes.join(" ");
+    return classes.join(' ');
   });
 
   protected onCardClick(): void {

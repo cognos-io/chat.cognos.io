@@ -77,9 +77,15 @@ When something is used in **more than two** places and no component fits, extrac
 
 ## Vault
 
+These "vault" file-browsing surfaces are reused by the app's **File library** page
+(`account-library.component.ts`). Their visible strings default to English but can be
+overridden for i18n: `cog-filter-chips` takes a translated `options` array,
+`cog-vault-card`/`cog-vault-list-row` take `moreLabel` (the ⋯ action's accessible label)
+and `refsText` (footer reference text; pass `''` to hide it until a count is known).
+
 | Selector                                                                        | When to use                                                              |
 | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `cog-vault-page` / `cog-vault-card` / `cog-vault-list-row` / `cog-vault-picker` | Vault browsing surfaces.                                                 |
+| `cog-vault-page` / `cog-vault-card` / `cog-vault-list-row` / `cog-vault-picker` | File-browsing surfaces (grid card, list row, full page, picker).         |
 | `cog-storage-meter`                                                             | Storage-usage meter.                                                     |
-| `cog-filter-chips`                                                              | Vault-specific filter chips (domain-specific; not a generic chip group). |
+| `cog-filter-chips`                                                              | File-kind filter chips (pass translated `options` for i18n).             |
 | `cog-confirm-shred`                                                             | Destructive "shred" confirmation.                                        |

@@ -1,28 +1,34 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  output,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import type { CognosVaultFilter } from "../vault.types";
+import type { CognosVaultFilter } from '../vault.types';
 
-const FILTER_OPTIONS: Array<{ value: CognosVaultFilter; label: string }> = [
-  { value: "all", label: "All" },
-  { value: "doc", label: "Documents" },
-  { value: "image", label: "Images" },
-  { value: "sheet", label: "Sheets" },
-  { value: "audio", label: "Audio" },
+export type CognosFilterChipOption = {
+  value: CognosVaultFilter;
+  label: string;
+};
+
+/** English defaults — host apps pass translated `options` for i18n. */
+export const DEFAULT_FILTER_OPTIONS: CognosFilterChipOption[] = [
+  { value: 'all', label: 'All' },
+  { value: 'doc', label: 'Documents' },
+  { value: 'image', label: 'Images' },
+  { value: 'sheet', label: 'Sheets' },
+  { value: 'audio', label: 'Audio' },
 ];
 
 @Component({
-  selector: "cog-filter-chips",
+  selector: 'cog-filter-chips',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="cog-filter-chips">
-      @for (option of options; track option.value) {
-        <button class="cog-filter-chips__chip" [class.cog-filter-chips__chip--selected]="option.value === value()" type="button" (click)="change.emit(option.value)">
+      @for (option of options(); track option.value) {
+        <button
+          class="cog-filter-chips__chip"
+          [class.cog-filter-chips__chip--selected]="option.value === value()"
+          type="button"
+          (click)="change.emit(option.value)"
+        >
           {{ option.label }}
         </button>
       }
@@ -67,7 +73,8 @@ const FILTER_OPTIONS: Array<{ value: CognosVaultFilter; label: string }> = [
   ],
 })
 export class CognosFilterChipsComponent {
-  readonly value = input<CognosVaultFilter>("all");
+  readonly value = input<CognosVaultFilter>('all');
+  /** Filter options + labels. Defaults to English; pass translated labels for i18n. */
+  readonly options = input<CognosFilterChipOption[]>(DEFAULT_FILTER_OPTIONS);
   readonly change = output<CognosVaultFilter>();
-  protected readonly options = FILTER_OPTIONS;
 }
