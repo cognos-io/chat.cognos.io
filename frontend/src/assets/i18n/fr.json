@@ -908,6 +908,7 @@
   },
   "library": {
     "title": "Bibliothèque de fichiers",
+    "subtitle": "Les fichiers que vous avez téléversés, chiffrés dans votre navigateur — réutilisables dans n'importe quelle conversation.",
     "searchPlaceholder": "Rechercher des fichiers",
     "empty": "Aucun fichier dans votre bibliothèque",
     "rename": "Renommer",

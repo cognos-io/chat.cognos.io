@@ -908,6 +908,7 @@
   },
   "library": {
     "title": "File library",
+    "subtitle": "Files you've uploaded, encrypted in your browser — reuse them across any chat.",
     "searchPlaceholder": "Search files",
     "empty": "No files in your library yet",
     "rename": "Rename",

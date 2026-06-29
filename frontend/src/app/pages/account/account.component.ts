@@ -11,7 +11,6 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
   CognosAvatarComponent,
-  CognosBreadcrumbsComponent,
   CognosButtonComponent,
   CognosIconComponent,
   CognosTextFieldComponent,
@@ -21,6 +20,7 @@ import {
 
 import { DataProcessingComponent } from '@app/components/account/data-processing/data-processing.component';
 import { LanguageSwitcherComponent } from '@app/components/language-switcher/language-switcher.component';
+import { SettingsPageComponent } from '@app/components/settings/settings-page.component';
 import {
   AvatarColor,
   AvatarIcon,
@@ -47,7 +47,6 @@ import { deriveProfileName } from '@app/utils/profile-identity';
   selector: 'app-account',
   standalone: true,
   imports: [
-    CognosBreadcrumbsComponent,
     CognosAvatarComponent,
     CognosIconComponent,
     CognosTextFieldComponent,
@@ -56,391 +55,372 @@ import { deriveProfileName } from '@app/utils/profile-identity';
     DataProcessingComponent,
     LanguageSwitcherComponent,
     MfaSettingsComponent,
+    SettingsPageComponent,
     TranslocoModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ng-container *transloco="let t">
-      <header class="account__header">
-        <cog-breadcrumbs
-          [items]="[
-            { label: 'Cognos' },
-            { label: t('account.breadcrumbs.settings') },
-            { label: t('account.breadcrumbs.account'), current: true },
-          ]"
-        />
-        <h1 class="account__title">{{ t('account.title') }}</h1>
-      </header>
-
-      <section class="account__card" aria-labelledby="account-language-heading">
-        <h2 id="account-language-heading" class="account__card-title">
-          {{ t('account.language.title') }}
-        </h2>
-        <p class="account__card-subtitle">{{ t('account.language.subtitle') }}</p>
-        <div class="account__actions">
-          <app-language-switcher></app-language-switcher>
-        </div>
-      </section>
-
-      <section class="account__card" aria-labelledby="account-profile-heading">
-        <h2 id="account-profile-heading" class="account__card-title">
-          {{ t('account.profile.title') }}
-        </h2>
-        <p class="account__card-subtitle">{{ t('account.profile.subtitle') }}</p>
-
-        <div class="account__fields">
-          <div class="account__field">
-            <span class="account__label">{{ t('account.profile.displayName') }}</span>
-            <cog-text-field
-              [ariaLabel]="t('account.profile.displayName')"
-              [placeholder]="t('account.profile.displayNamePlaceholder')"
-              [value]="displayName()"
-              (valueChange)="displayName.set($event)"
-            />
+      <app-settings-page [heading]="t('account.title')">
+        <section class="account__card" aria-labelledby="account-language-heading">
+          <h2 id="account-language-heading" class="account__card-title">
+            {{ t('account.language.title') }}
+          </h2>
+          <p class="account__card-subtitle">{{ t('account.language.subtitle') }}</p>
+          <div class="account__actions">
+            <app-language-switcher></app-language-switcher>
           </div>
+        </section>
 
-          <fieldset class="account__field account__fieldset">
-            <legend class="account__label">{{ t('account.profile.avatar') }}</legend>
-            <div class="account__avatar">
-              <cog-avatar
-                class="account__avatar-preview"
-                [name]="avatarName()"
-                [icon]="avatarIcon() ?? null"
-                [color]="avatarIcon() ? avatarColor() : ''"
-                [size]="40"
+        <section class="account__card" aria-labelledby="account-profile-heading">
+          <h2 id="account-profile-heading" class="account__card-title">
+            {{ t('account.profile.title') }}
+          </h2>
+          <p class="account__card-subtitle">{{ t('account.profile.subtitle') }}</p>
+
+          <div class="account__fields">
+            <div class="account__field">
+              <span class="account__label">{{ t('account.profile.displayName') }}</span>
+              <cog-text-field
+                [ariaLabel]="t('account.profile.displayName')"
+                [placeholder]="t('account.profile.displayNamePlaceholder')"
+                [value]="displayName()"
+                (valueChange)="displayName.set($event)"
               />
-
-              <div class="account__avatar-pickers">
-                <div
-                  class="account__icon-grid"
-                  role="radiogroup"
-                  [attr.aria-label]="t('account.profile.iconAria')"
-                >
-                  @for (option of icons; track option) {
-                    <button
-                      type="button"
-                      class="account__icon-button"
-                      [class.is-selected]="avatarIcon() === option"
-                      [attr.aria-label]="
-                        t('account.profile.iconOptionAria', { name: option })
-                      "
-                      [attr.aria-pressed]="avatarIcon() === option"
-                      (click)="selectIcon(option)"
-                    >
-                      <cog-icon [name]="option" [size]="18" tone="current" />
-                    </button>
-                  }
-                </div>
-
-                <div
-                  class="account__color-row"
-                  role="radiogroup"
-                  [attr.aria-label]="t('account.profile.colorAria')"
-                >
-                  @for (option of colors; track option) {
-                    <button
-                      type="button"
-                      class="account__color-swatch"
-                      [class]="'account__color-swatch--' + option"
-                      [class.is-selected]="avatarColor() === option"
-                      [attr.aria-label]="
-                        t('account.profile.colorOptionAria', { name: option })
-                      "
-                      [attr.aria-pressed]="avatarColor() === option"
-                      (click)="selectColor(option)"
-                    ></button>
-                  }
-                </div>
-              </div>
             </div>
-          </fieldset>
-        </div>
 
-        <div class="account__actions">
-          <cog-button
-            appearance="primary"
-            [disabled]="saving() || !dirty()"
-            (click)="save()"
-          >
-            {{ saving() ? t('account.profile.saving') : t('account.profile.save') }}
-          </cog-button>
-        </div>
-      </section>
-
-      <app-data-processing />
-
-      <section class="account__card" aria-labelledby="account-redaction-heading">
-        <div class="account__redaction-header">
-          <div class="account__redaction-text">
-            <h2 id="account-redaction-heading" class="account__card-title">
-              {{ t('account.redaction.title') }}
-            </h2>
-            <p class="account__card-subtitle">
-              {{ t('account.redaction.subtitle') }}
-            </p>
-          </div>
-          <div class="account__redaction-control">
-            <span class="account__redaction-state">
-              {{
-                redactionEnabled()
-                  ? t('account.redaction.on')
-                  : t('account.redaction.off')
-              }}
-            </span>
-            <cog-toggle
-              [checked]="redactionEnabled()"
-              [label]="t('account.redaction.toggleLabel')"
-              (checkedChange)="setRedactionEnabled($event)"
-            />
-          </div>
-        </div>
-        @if (!redactionEnabled()) {
-          <p class="account__redaction-warning" role="status">
-            {{ t('account.redaction.disabledNote') }}
-          </p>
-        }
-      </section>
-
-      <section class="account__card" aria-labelledby="account-email-heading">
-        <h2 id="account-email-heading" class="account__card-title">
-          {{ t('account.email.title') }}
-        </h2>
-        <p class="account__card-subtitle">{{ t('account.email.subtitle') }}</p>
-
-        <div class="account__fields">
-          <div class="account__field">
-            <span class="account__label">{{ t('account.email.current') }}</span>
-            <cog-text-field
-              [ariaLabel]="t('account.email.current')"
-              [value]="email()"
-              [readonly]="true"
-              [disabled]="true"
-            />
-          </div>
-          <div class="account__field">
-            <span class="account__label">{{ t('account.email.new') }}</span>
-            <cog-text-field
-              [ariaLabel]="t('account.email.new')"
-              type="email"
-              [placeholder]="t('common.emailPlaceholder')"
-              [value]="newEmail()"
-              (valueChange)="newEmail.set($event)"
-            />
-          </div>
-        </div>
-
-        @if (emailChangeError()) {
-          <p class="account__error">{{ emailChangeError() }}</p>
-        }
-
-        <div class="account__actions">
-          <cog-button
-            appearance="primary"
-            [disabled]="!canRequestEmailChange()"
-            (click)="requestEmailChange()"
-          >
-            {{
-              requestingEmailChange()
-                ? t('account.email.sending')
-                : t('account.email.send')
-            }}
-          </cog-button>
-        </div>
-      </section>
-
-      <section class="account__card" aria-labelledby="account-password-heading">
-        <h2 id="account-password-heading" class="account__card-title">
-          {{ t('account.password.title') }}
-        </h2>
-        <p class="account__card-subtitle">{{ t('account.password.subtitle') }}</p>
-
-        <div class="account__fields">
-          <div class="account__field">
-            <span class="account__label">{{ t('account.password.current') }}</span>
-            <cog-text-field
-              [ariaLabel]="t('account.password.current')"
-              type="password"
-              [value]="currentPassword()"
-              (valueChange)="currentPassword.set($event)"
-            />
-          </div>
-          <div class="account__field">
-            <span class="account__label">{{ t('account.password.new') }}</span>
-            <cog-text-field
-              [ariaLabel]="t('account.password.new')"
-              type="password"
-              [placeholder]="t('account.password.newPlaceholder')"
-              [value]="newPassword()"
-              (valueChange)="newPassword.set($event)"
-            />
-          </div>
-        </div>
-
-        @if (passwordError()) {
-          <p class="account__error">{{ passwordError() }}</p>
-        }
-
-        <div class="account__actions">
-          <cog-button
-            appearance="primary"
-            [disabled]="!canChangePassword()"
-            (click)="changePassword()"
-          >
-            {{
-              changingPassword()
-                ? t('account.password.changing')
-                : t('account.password.change')
-            }}
-          </cog-button>
-        </div>
-      </section>
-
-      <!-- Two-factor authentication (rendered as account-style cards). -->
-      <app-mfa-settings />
-
-      <section class="account__card" aria-labelledby="account-data-heading">
-        <h2 id="account-data-heading" class="account__card-title">
-          {{ t('account.data.title') }}
-        </h2>
-        <p class="account__card-subtitle">{{ t('account.data.subtitle') }}</p>
-        <div class="account__actions">
-          <cog-button
-            appearance="default"
-            icon="download"
-            [disabled]="exporting()"
-            (click)="exportData()"
-          >
-            {{ exporting() ? t('account.data.preparing') : t('account.data.download') }}
-          </cog-button>
-        </div>
-      </section>
-
-      <section
-        class="account__card account__danger"
-        aria-labelledby="account-danger-heading"
-      >
-        <h2 id="account-danger-heading" class="account__card-title">
-          {{ t('account.danger.title') }}
-        </h2>
-
-        <div class="account__danger-row">
-          <div class="account__danger-copy">
-            <p class="account__danger-title">
-              {{ t('account.danger.deleteChatsTitle') }}
-            </p>
-            <p class="account__card-subtitle">
-              {{ t('account.danger.deleteChatsSubtitle') }}
-            </p>
-          </div>
-
-          @if (confirmingDeleteChats()) {
-            <div class="account__danger-confirm">
-              <cog-button
-                appearance="danger"
-                [disabled]="deletingChats()"
-                (click)="deleteAllChats()"
-              >
-                {{
-                  deletingChats()
-                    ? t('account.danger.deleting')
-                    : t('account.danger.deleteChatsConfirm')
-                }}
-              </cog-button>
-              <cog-button
-                appearance="subtle"
-                [disabled]="deletingChats()"
-                (click)="confirmingDeleteChats.set(false)"
-              >
-                {{ t('common.cancel') }}
-              </cog-button>
-            </div>
-          } @else {
-            <cog-button appearance="danger" (click)="confirmingDeleteChats.set(true)">
-              {{ t('account.danger.deleteChatsTitle') }}
-            </cog-button>
-          }
-        </div>
-
-        <hr class="account__danger-divider" />
-
-        <div class="account__danger-row">
-          <div class="account__danger-copy">
-            <p class="account__danger-title">
-              {{ t('account.danger.deleteAccountTitle') }}
-            </p>
-            <p class="account__card-subtitle">
-              {{ t('account.danger.deleteAccountSubtitle') }}
-            </p>
-
-            @if (confirmingDeleteAccount()) {
-              <div class="account__field account__danger-confirm-field">
-                <span
-                  class="account__hint"
-                  [innerHTML]="
-                    t('account.danger.typeToConfirm', {
-                      word: '<strong>DELETE</strong>',
-                    })
-                  "
-                ></span>
-                <cog-text-field
-                  [ariaLabel]="t('account.danger.confirmFieldAria')"
-                  placeholder="DELETE"
-                  [value]="deleteAccountConfirmText()"
-                  (valueChange)="deleteAccountConfirmText.set($event)"
+            <fieldset class="account__field account__fieldset">
+              <legend class="account__label">{{ t('account.profile.avatar') }}</legend>
+              <div class="account__avatar">
+                <cog-avatar
+                  class="account__avatar-preview"
+                  [name]="avatarName()"
+                  [icon]="avatarIcon() ?? null"
+                  [color]="avatarIcon() ? avatarColor() : ''"
+                  [size]="40"
                 />
+
+                <div class="account__avatar-pickers">
+                  <div
+                    class="account__icon-grid"
+                    role="radiogroup"
+                    [attr.aria-label]="t('account.profile.iconAria')"
+                  >
+                    @for (option of icons; track option) {
+                      <button
+                        type="button"
+                        class="account__icon-button"
+                        [class.is-selected]="avatarIcon() === option"
+                        [attr.aria-label]="
+                          t('account.profile.iconOptionAria', { name: option })
+                        "
+                        [attr.aria-pressed]="avatarIcon() === option"
+                        (click)="selectIcon(option)"
+                      >
+                        <cog-icon [name]="option" [size]="18" tone="current" />
+                      </button>
+                    }
+                  </div>
+
+                  <div
+                    class="account__color-row"
+                    role="radiogroup"
+                    [attr.aria-label]="t('account.profile.colorAria')"
+                  >
+                    @for (option of colors; track option) {
+                      <button
+                        type="button"
+                        class="account__color-swatch"
+                        [class]="'account__color-swatch--' + option"
+                        [class.is-selected]="avatarColor() === option"
+                        [attr.aria-label]="
+                          t('account.profile.colorOptionAria', { name: option })
+                        "
+                        [attr.aria-pressed]="avatarColor() === option"
+                        (click)="selectColor(option)"
+                      ></button>
+                    }
+                  </div>
+                </div>
               </div>
+            </fieldset>
+          </div>
+
+          <div class="account__actions">
+            <cog-button
+              appearance="primary"
+              [disabled]="saving() || !dirty()"
+              (click)="save()"
+            >
+              {{ saving() ? t('account.profile.saving') : t('account.profile.save') }}
+            </cog-button>
+          </div>
+        </section>
+
+        <app-data-processing />
+
+        <section class="account__card" aria-labelledby="account-redaction-heading">
+          <div class="account__redaction-header">
+            <div class="account__redaction-text">
+              <h2 id="account-redaction-heading" class="account__card-title">
+                {{ t('account.redaction.title') }}
+              </h2>
+              <p class="account__card-subtitle">
+                {{ t('account.redaction.subtitle') }}
+              </p>
+            </div>
+            <div class="account__redaction-control">
+              <span class="account__redaction-state">
+                {{
+                  redactionEnabled()
+                    ? t('account.redaction.on')
+                    : t('account.redaction.off')
+                }}
+              </span>
+              <cog-toggle
+                [checked]="redactionEnabled()"
+                [label]="t('account.redaction.toggleLabel')"
+                (checkedChange)="setRedactionEnabled($event)"
+              />
+            </div>
+          </div>
+          @if (!redactionEnabled()) {
+            <p class="account__redaction-warning" role="status">
+              {{ t('account.redaction.disabledNote') }}
+            </p>
+          }
+        </section>
+
+        <section class="account__card" aria-labelledby="account-email-heading">
+          <h2 id="account-email-heading" class="account__card-title">
+            {{ t('account.email.title') }}
+          </h2>
+          <p class="account__card-subtitle">{{ t('account.email.subtitle') }}</p>
+
+          <div class="account__fields">
+            <div class="account__field">
+              <span class="account__label">{{ t('account.email.current') }}</span>
+              <cog-text-field
+                [ariaLabel]="t('account.email.current')"
+                [value]="email()"
+                [readonly]="true"
+                [disabled]="true"
+              />
+            </div>
+            <div class="account__field">
+              <span class="account__label">{{ t('account.email.new') }}</span>
+              <cog-text-field
+                [ariaLabel]="t('account.email.new')"
+                type="email"
+                [placeholder]="t('common.emailPlaceholder')"
+                [value]="newEmail()"
+                (valueChange)="newEmail.set($event)"
+              />
+            </div>
+          </div>
+
+          @if (emailChangeError()) {
+            <p class="account__error">{{ emailChangeError() }}</p>
+          }
+
+          <div class="account__actions">
+            <cog-button
+              appearance="primary"
+              [disabled]="!canRequestEmailChange()"
+              (click)="requestEmailChange()"
+            >
+              {{
+                requestingEmailChange()
+                  ? t('account.email.sending')
+                  : t('account.email.send')
+              }}
+            </cog-button>
+          </div>
+        </section>
+
+        <section class="account__card" aria-labelledby="account-password-heading">
+          <h2 id="account-password-heading" class="account__card-title">
+            {{ t('account.password.title') }}
+          </h2>
+          <p class="account__card-subtitle">{{ t('account.password.subtitle') }}</p>
+
+          <div class="account__fields">
+            <div class="account__field">
+              <span class="account__label">{{ t('account.password.current') }}</span>
+              <cog-text-field
+                [ariaLabel]="t('account.password.current')"
+                type="password"
+                [value]="currentPassword()"
+                (valueChange)="currentPassword.set($event)"
+              />
+            </div>
+            <div class="account__field">
+              <span class="account__label">{{ t('account.password.new') }}</span>
+              <cog-text-field
+                [ariaLabel]="t('account.password.new')"
+                type="password"
+                [placeholder]="t('account.password.newPlaceholder')"
+                [value]="newPassword()"
+                (valueChange)="newPassword.set($event)"
+              />
+            </div>
+          </div>
+
+          @if (passwordError()) {
+            <p class="account__error">{{ passwordError() }}</p>
+          }
+
+          <div class="account__actions">
+            <cog-button
+              appearance="primary"
+              [disabled]="!canChangePassword()"
+              (click)="changePassword()"
+            >
+              {{
+                changingPassword()
+                  ? t('account.password.changing')
+                  : t('account.password.change')
+              }}
+            </cog-button>
+          </div>
+        </section>
+
+        <!-- Two-factor authentication (rendered as account-style cards). -->
+        <app-mfa-settings />
+
+        <section class="account__card" aria-labelledby="account-data-heading">
+          <h2 id="account-data-heading" class="account__card-title">
+            {{ t('account.data.title') }}
+          </h2>
+          <p class="account__card-subtitle">{{ t('account.data.subtitle') }}</p>
+          <div class="account__actions">
+            <cog-button
+              appearance="default"
+              icon="download"
+              [disabled]="exporting()"
+              (click)="exportData()"
+            >
+              {{
+                exporting() ? t('account.data.preparing') : t('account.data.download')
+              }}
+            </cog-button>
+          </div>
+        </section>
+
+        <section
+          class="account__card account__danger"
+          aria-labelledby="account-danger-heading"
+        >
+          <h2 id="account-danger-heading" class="account__card-title">
+            {{ t('account.danger.title') }}
+          </h2>
+
+          <div class="account__danger-row">
+            <div class="account__danger-copy">
+              <p class="account__danger-title">
+                {{ t('account.danger.deleteChatsTitle') }}
+              </p>
+              <p class="account__card-subtitle">
+                {{ t('account.danger.deleteChatsSubtitle') }}
+              </p>
+            </div>
+
+            @if (confirmingDeleteChats()) {
+              <div class="account__danger-confirm">
+                <cog-button
+                  appearance="danger"
+                  [disabled]="deletingChats()"
+                  (click)="deleteAllChats()"
+                >
+                  {{
+                    deletingChats()
+                      ? t('account.danger.deleting')
+                      : t('account.danger.deleteChatsConfirm')
+                  }}
+                </cog-button>
+                <cog-button
+                  appearance="subtle"
+                  [disabled]="deletingChats()"
+                  (click)="confirmingDeleteChats.set(false)"
+                >
+                  {{ t('common.cancel') }}
+                </cog-button>
+              </div>
+            } @else {
+              <cog-button appearance="danger" (click)="confirmingDeleteChats.set(true)">
+                {{ t('account.danger.deleteChatsTitle') }}
+              </cog-button>
             }
           </div>
 
-          @if (confirmingDeleteAccount()) {
-            <div class="account__danger-confirm">
+          <hr class="account__danger-divider" />
+
+          <div class="account__danger-row">
+            <div class="account__danger-copy">
+              <p class="account__danger-title">
+                {{ t('account.danger.deleteAccountTitle') }}
+              </p>
+              <p class="account__card-subtitle">
+                {{ t('account.danger.deleteAccountSubtitle') }}
+              </p>
+
+              @if (confirmingDeleteAccount()) {
+                <div class="account__field account__danger-confirm-field">
+                  <span
+                    class="account__hint"
+                    [innerHTML]="
+                      t('account.danger.typeToConfirm', {
+                        word: '<strong>DELETE</strong>',
+                      })
+                    "
+                  ></span>
+                  <cog-text-field
+                    [ariaLabel]="t('account.danger.confirmFieldAria')"
+                    placeholder="DELETE"
+                    [value]="deleteAccountConfirmText()"
+                    (valueChange)="deleteAccountConfirmText.set($event)"
+                  />
+                </div>
+              }
+            </div>
+
+            @if (confirmingDeleteAccount()) {
+              <div class="account__danger-confirm">
+                <cog-button
+                  appearance="danger"
+                  [disabled]="deletingAccount() || !canDeleteAccount()"
+                  (click)="deleteAccount()"
+                >
+                  {{
+                    deletingAccount()
+                      ? t('account.danger.deleting')
+                      : t('account.danger.deleteAccountConfirm')
+                  }}
+                </cog-button>
+                <cog-button
+                  appearance="subtle"
+                  [disabled]="deletingAccount()"
+                  (click)="cancelDeleteAccount()"
+                >
+                  {{ t('common.cancel') }}
+                </cog-button>
+              </div>
+            } @else {
               <cog-button
                 appearance="danger"
-                [disabled]="deletingAccount() || !canDeleteAccount()"
-                (click)="deleteAccount()"
+                (click)="confirmingDeleteAccount.set(true)"
               >
-                {{
-                  deletingAccount()
-                    ? t('account.danger.deleting')
-                    : t('account.danger.deleteAccountConfirm')
-                }}
+                {{ t('account.danger.deleteAccountTitle') }}
               </cog-button>
-              <cog-button
-                appearance="subtle"
-                [disabled]="deletingAccount()"
-                (click)="cancelDeleteAccount()"
-              >
-                {{ t('common.cancel') }}
-              </cog-button>
-            </div>
-          } @else {
-            <cog-button appearance="danger" (click)="confirmingDeleteAccount.set(true)">
-              {{ t('account.danger.deleteAccountTitle') }}
-            </cog-button>
-          }
-        </div>
-      </section>
+            }
+          </div>
+        </section>
+      </app-settings-page>
     </ng-container>
   `,
   styles: `
     :host {
-      display: flex;
-      flex-direction: column;
-      gap: var(--cog-space-200, 16px);
-      max-width: 920px;
-    }
-
-    .account__header {
-      display: grid;
-      gap: var(--cog-space-050);
-      margin: var(--cog-space-150) 0 0;
-    }
-
-    .account__title {
-      margin: 0;
-      color: var(--cog-text);
-      font-size: var(--cog-fs-h-lg);
-      font-weight: var(--cog-fw-h-lg);
+      display: block;
     }
 
     .account__card {

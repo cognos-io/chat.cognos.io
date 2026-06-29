@@ -14,12 +14,13 @@ import { EMPTY, catchError, finalize, forkJoin } from 'rxjs';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
-  CognosBreadcrumbsComponent,
   CognosButtonComponent,
   CognosIconComponent,
   CognosToastService,
 } from '@cognos/ui-angular';
 
+import { SettingsCardComponent } from '@app/components/settings/settings-card.component';
+import { SettingsPageComponent } from '@app/components/settings/settings-page.component';
 import { CompactionDurableMemory } from '@app/interfaces/compaction';
 import { RedactionEntry } from '@app/redaction';
 import { RedactionService } from '@app/services/redaction.service';
@@ -35,99 +36,57 @@ import { VaultService } from '@app/services/vault.service';
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    CognosBreadcrumbsComponent,
     CognosButtonComponent,
     CognosIconComponent,
     TranslocoModule,
+    SettingsPageComponent,
+    SettingsCardComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ng-container *transloco="let t">
-      <header class="memory-page__header">
-        <cog-breadcrumbs
-          [items]="[
-            { label: 'Cognos' },
-            { label: t('account.breadcrumbs.settings') },
-            { label: t('account.breadcrumbs.memory'), current: true },
-          ]"
-        />
-        <h1 class="memory-page__title">{{ t('account.memory.title') }}</h1>
-        <p class="memory-page__subtitle">{{ t('account.memory.subtitle') }}</p>
-      </header>
+      <app-settings-page
+        [heading]="t('account.memory.title')"
+        [subtitle]="t('account.memory.subtitle')"
+      >
+        <app-settings-card>
+          @if (redactionEnabled()) {
+            <p class="memory-page__redaction-info">
+              <cog-icon name="shield-check" [size]="14" tone="current" />
+              {{ t('chat.memory.redactionInfo') }}
+            </p>
+          }
 
-      <section class="memory-page__card">
-        @if (redactionEnabled()) {
-          <p class="memory-page__redaction-info">
-            <cog-icon name="shield-check" [size]="14" tone="current" />
-            {{ t('chat.memory.redactionInfo') }}
-          </p>
-        }
+          <form [formGroup]="form" class="memory-page__form">
+            <div class="memory-page__field">
+              <label for="user-memory-items">{{ t('chat.memory.items') }}</label>
+              <textarea
+                id="user-memory-items"
+                rows="10"
+                formControlName="items"
+                [placeholder]="t('chat.memory.linePlaceholder')"
+              ></textarea>
+              @if (itemsRedactions().length > 0) {
+                <p class="memory-page__redacted-note">
+                  <span>{{ t('chat.memory.redactedNote') }}</span>
+                  @for (value of itemsRedactions(); track value) {
+                    <mark>{{ value }}</mark>
+                  }
+                </p>
+              }
+            </div>
+          </form>
 
-        <form [formGroup]="form" class="memory-page__form">
-          <div class="memory-page__field">
-            <label for="user-memory-items">{{ t('chat.memory.items') }}</label>
-            <textarea
-              id="user-memory-items"
-              rows="10"
-              formControlName="items"
-              [placeholder]="t('chat.memory.linePlaceholder')"
-            ></textarea>
-            @if (itemsRedactions().length > 0) {
-              <p class="memory-page__redacted-note">
-                <span>{{ t('chat.memory.redactedNote') }}</span>
-                @for (value of itemsRedactions(); track value) {
-                  <mark>{{ value }}</mark>
-                }
-              </p>
-            }
+          <div card-actions>
+            <cog-button appearance="primary" [disabled]="saving()" (click)="save()">
+              {{ t('account.memory.save') }}
+            </cog-button>
           </div>
-        </form>
-
-        <div class="memory-page__actions">
-          <cog-button appearance="primary" [disabled]="saving()" (click)="save()">
-            {{ t('account.memory.save') }}
-          </cog-button>
-        </div>
-      </section>
+        </app-settings-card>
+      </app-settings-page>
     </ng-container>
   `,
   styles: `
-    :host {
-      display: flex;
-      flex-direction: column;
-      gap: var(--cog-space-200, 16px);
-      max-width: 920px;
-    }
-
-    .memory-page__header {
-      display: grid;
-      gap: var(--cog-space-050);
-      margin: var(--cog-space-150) 0 0;
-    }
-
-    .memory-page__title {
-      margin: 0;
-      color: var(--cog-text);
-      font-size: var(--cog-fs-h-lg);
-      font-weight: var(--cog-fw-h-lg);
-    }
-
-    .memory-page__subtitle {
-      margin: 0;
-      color: var(--cog-text-subtle);
-      font-size: var(--cog-fs-body-sm);
-      line-height: var(--cog-lh-body-sm);
-    }
-
-    .memory-page__card {
-      display: grid;
-      gap: var(--cog-space-200);
-      border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-md);
-      background: var(--cog-surface);
-      padding: var(--cog-space-250, 20px);
-    }
-
     .memory-page__redaction-info {
       display: flex;
       align-items: center;

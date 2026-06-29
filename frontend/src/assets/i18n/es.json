@@ -908,6 +908,7 @@
   },
   "library": {
     "title": "Biblioteca de archivos",
+    "subtitle": "Archivos que has subido, cifrados en tu navegador: reutilízalos en cualquier chat.",
     "searchPlaceholder": "Buscar archivos",
     "empty": "Aún no hay archivos en tu biblioteca",
     "rename": "Renombrar",

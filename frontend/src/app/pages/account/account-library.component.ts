@@ -23,6 +23,8 @@ import {
   LibraryFile,
 } from '@app/attachments/attachment-library.service';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
+import { SettingsCardComponent } from '@app/components/settings/settings-card.component';
+import { SettingsPageComponent } from '@app/components/settings/settings-page.component';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
@@ -36,147 +38,160 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
   selector: 'app-account-library',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CognosButtonComponent, CognosIconComponent, TranslocoModule],
+  imports: [
+    CognosButtonComponent,
+    CognosIconComponent,
+    TranslocoModule,
+    SettingsPageComponent,
+    SettingsCardComponent,
+  ],
   template: `
     <ng-container *transloco="let t">
-      <header class="library-page__header">
-        <h1 class="library-page__title">{{ t('library.title') }}</h1>
-      </header>
+      <app-settings-page [heading]="t('library.title')">
+        <app-settings-card [subtitle]="t('library.subtitle')">
+          <input
+            type="search"
+            class="library__search"
+            data-testid="library-page-search"
+            [attr.placeholder]="t('library.searchPlaceholder')"
+            [attr.aria-label]="t('library.searchPlaceholder')"
+            (input)="query.set($any($event.target).value)"
+          />
 
-      <input
-        type="search"
-        class="library-page__search"
-        data-testid="library-page-search"
-        [attr.placeholder]="t('library.searchPlaceholder')"
-        [attr.aria-label]="t('library.searchPlaceholder')"
-        (input)="query.set($any($event.target).value)"
-      />
-
-      @if (filtered().length === 0) {
-        <p class="library-page__empty">{{ t('library.empty') }}</p>
-      } @else {
-        <ul class="library-page__list" data-testid="library-page-list">
-          @for (file of filtered(); track file.id) {
-            <li
-              class="library-page__item"
-              [attr.data-testid]="'library-row-' + file.id"
-            >
-              <cog-icon name="file-text" [size]="20" tone="text-subtle" />
-              <div class="library-page__main">
-                @if (editingId() === file.id) {
-                  <input
-                    class="library-page__rename"
-                    [value]="file.displayName"
-                    (input)="renameDraft.set($any($event.target).value)"
-                    (keydown.enter)="commitRename(file)"
-                    (keydown.escape)="editingId.set(null)"
-                  />
-                } @else {
-                  <span class="library-page__name" [title]="file.displayName">{{
-                    file.displayName
-                  }}</span>
-                }
-                <span class="library-page__meta">
-                  {{ formatSize(file.sizeBytes) }}
-                  @if (usageCounts()[file.id] !== undefined) {
-                    · {{ t('library.usedIn', { count: usageCounts()[file.id] }) }}
-                  }
-                </span>
-              </div>
-              <div class="library-page__actions">
-                @if (editingId() === file.id) {
-                  <cog-button appearance="primary" (click)="commitRename(file)">{{
-                    t('library.renameSave')
-                  }}</cog-button>
-                } @else {
-                  <cog-button
-                    appearance="subtle"
-                    (click)="loadUsages(file)"
-                    [attr.data-testid]="'library-usedin-' + file.id"
-                    >{{
-                      t('library.usedIn', { count: usageCounts()[file.id] ?? '…' })
-                    }}</cog-button
-                  >
-                  <cog-button appearance="subtle" (click)="download(file)">{{
-                    t('library.download')
-                  }}</cog-button>
-                  <cog-button appearance="subtle" (click)="startRename(file)">{{
-                    t('library.rename')
-                  }}</cog-button>
-                  <cog-button
-                    appearance="danger"
-                    [attr.data-testid]="'library-remove-' + file.id"
-                    (click)="remove(file)"
-                    >{{ t('library.remove') }}</cog-button
-                  >
-                }
-              </div>
-            </li>
+          @if (filtered().length === 0) {
+            <p class="library__empty">{{ t('library.empty') }}</p>
+          } @else {
+            <ul class="library__list" data-testid="library-page-list">
+              @for (file of filtered(); track file.id) {
+                <li class="library__item" [attr.data-testid]="'library-row-' + file.id">
+                  <cog-icon name="file-text" [size]="20" tone="text-subtle" />
+                  <div class="library__main">
+                    @if (editingId() === file.id) {
+                      <input
+                        class="library__rename"
+                        data-testid="library-rename-input"
+                        [value]="file.displayName"
+                        (input)="renameDraft.set($any($event.target).value)"
+                        (keydown.enter)="commitRename(file)"
+                        (keydown.escape)="editingId.set(null)"
+                      />
+                    } @else {
+                      <span class="library__name" [title]="file.displayName">{{
+                        file.displayName
+                      }}</span>
+                    }
+                    <span class="library__meta">
+                      {{ formatSize(file.sizeBytes) }}
+                      @if (usageCounts()[file.id] !== undefined) {
+                        · {{ t('library.usedIn', { count: usageCounts()[file.id] }) }}
+                      }
+                    </span>
+                  </div>
+                  <div class="library__actions">
+                    @if (editingId() === file.id) {
+                      <cog-button appearance="primary" (click)="commitRename(file)">{{
+                        t('library.renameSave')
+                      }}</cog-button>
+                    } @else {
+                      <cog-button
+                        appearance="subtle"
+                        (click)="loadUsages(file)"
+                        [attr.data-testid]="'library-usedin-' + file.id"
+                        >{{
+                          t('library.usedIn', { count: usageCounts()[file.id] ?? '…' })
+                        }}</cog-button
+                      >
+                      <cog-button appearance="subtle" (click)="download(file)">{{
+                        t('library.download')
+                      }}</cog-button>
+                      <cog-button appearance="subtle" (click)="startRename(file)">{{
+                        t('library.rename')
+                      }}</cog-button>
+                      <cog-button
+                        appearance="danger"
+                        [attr.data-testid]="'library-remove-' + file.id"
+                        (click)="remove(file)"
+                        >{{ t('library.remove') }}</cog-button
+                      >
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
           }
-        </ul>
-      }
+        </app-settings-card>
+      </app-settings-page>
     </ng-container>
   `,
   styles: [
     `
-      .library-page__title {
-        margin: 0 0 1rem;
-      }
-      .library-page__search {
+      .library__search {
         width: 100%;
-        padding: 0.5rem 0.75rem;
-        margin-bottom: 1rem;
-        border: 1px solid var(--cog-color-border, rgba(0, 0, 0, 0.1));
-        border-radius: 0.5rem;
+        min-height: 44px;
+        padding: 0 var(--cog-space-150);
+        border: 2px solid var(--cog-border);
+        border-radius: var(--cog-radius-sm);
+        background: var(--cog-input-bg);
+        color: var(--cog-text);
         font: inherit;
+        outline: 0;
       }
-      .library-page__list {
+      .library__search:focus {
+        border-color: var(--cog-brand);
+        background: var(--cog-input-bg-focus);
+      }
+      .library__list {
         list-style: none;
         margin: 0;
         padding: 0;
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: var(--cog-space-100);
       }
-      .library-page__item {
+      .library__item {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem;
-        border: 1px solid var(--cog-color-border, rgba(0, 0, 0, 0.1));
-        border-radius: 0.625rem;
+        gap: var(--cog-space-150);
+        padding: var(--cog-space-150);
+        border: 1px solid var(--cog-border);
+        border-radius: var(--cog-radius-sm);
       }
-      .library-page__main {
+      .library__main {
         flex: 1;
         min-width: 0;
         display: flex;
         flex-direction: column;
       }
-      .library-page__name {
-        font-weight: 600;
+      .library__name {
+        font-weight: var(--cog-fw-semibold);
+        color: var(--cog-text);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      .library-page__rename {
+      .library__rename {
         font: inherit;
-        padding: 0.25rem 0.5rem;
-        border: 1px solid var(--cog-color-border, rgba(0, 0, 0, 0.2));
-        border-radius: 0.375rem;
+        padding: var(--cog-space-050) var(--cog-space-100);
+        border: 2px solid var(--cog-border);
+        border-radius: var(--cog-radius-sm);
+        background: var(--cog-input-bg);
+        color: var(--cog-text);
+        outline: 0;
       }
-      .library-page__meta {
-        font-size: 0.8125rem;
-        color: var(--cog-color-text-subtle, rgba(0, 0, 0, 0.55));
+      .library__meta {
+        font-size: var(--cog-fs-body-sm);
+        color: var(--cog-text-subtle);
       }
-      .library-page__actions {
+      .library__actions {
         display: flex;
-        gap: 0.25rem;
+        gap: var(--cog-space-050);
         flex-wrap: wrap;
+        align-items: center;
       }
-      .library-page__empty {
-        color: var(--cog-color-text-subtle, rgba(0, 0, 0, 0.55));
+      .library__empty {
+        color: var(--cog-text-subtle);
         text-align: center;
-        margin: 2rem 0;
+        margin: var(--cog-space-300) 0;
       }
     `,
   ],

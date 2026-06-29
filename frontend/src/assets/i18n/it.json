@@ -908,6 +908,7 @@
   },
   "library": {
     "title": "Libreria file",
+    "subtitle": "File che hai caricato, cifrati nel tuo browser: riutilizzabili in qualsiasi chat.",
     "searchPlaceholder": "Cerca file",
     "empty": "Nessun file nella tua libreria",
     "rename": "Rinomina",

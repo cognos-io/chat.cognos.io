@@ -384,7 +384,7 @@ test.describe('composer attachments', () => {
 
     // Rename the file.
     await page.getByRole('button', { name: 'Rename' }).first().click();
-    await page.locator('.library-page__rename').fill('renamed.txt');
+    await page.getByTestId('library-rename-input').fill('renamed.txt');
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(list).toContainText('renamed.txt');
 

@@ -908,6 +908,7 @@
   },
   "library": {
     "title": "Biblioteca de arquivos",
+    "subtitle": "Ficheiros que carregou, cifrados no seu navegador — reutilize-os em qualquer conversa.",
     "searchPlaceholder": "Pesquisar arquivos",
     "empty": "Ainda não há arquivos na sua biblioteca",
     "rename": "Renomear",

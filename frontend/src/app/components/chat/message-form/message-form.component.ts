@@ -707,7 +707,7 @@ function escapeHtml(value: string): string {
     }
 
     .message-form--drag-over .message-form__panel {
-      outline: 2px dashed var(--cog-color-border-accent, #4f8cff);
+      outline: 2px dashed var(--cog-brand);
       outline-offset: 2px;
     }
 
@@ -761,14 +761,14 @@ function escapeHtml(value: string): string {
       gap: var(--cog-space-50, 6px);
       max-width: 16rem;
       padding: 4px 8px;
-      border: 1px solid var(--cog-color-border-subtle, #d0d0d0);
-      border-radius: var(--cog-radius-200, 8px);
-      background: var(--cog-color-surface-subtle, #f5f5f5);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-md);
+      background: var(--cog-surface-sunken);
       font-size: 0.8125rem;
     }
 
     .message-form__chip--failed {
-      border-color: var(--cog-color-border-danger, #e0a0a0);
+      border-color: var(--cog-danger);
     }
 
     .message-form__chip-name {
@@ -779,7 +779,7 @@ function escapeHtml(value: string): string {
 
     .message-form__chip-size,
     .message-form__chip-status {
-      color: var(--cog-color-text-subtle, #777);
+      color: var(--cog-text-subtle);
       flex-shrink: 0;
     }
 
@@ -790,17 +790,17 @@ function escapeHtml(value: string): string {
       background: transparent;
       cursor: pointer;
       padding: 0;
-      color: var(--cog-color-text-subtle, #777);
+      color: var(--cog-text-subtle);
     }
 
     .message-form__chip-remove:hover {
-      color: var(--cog-color-text, #111);
+      color: var(--cog-text);
     }
 
     .message-form__attachment-notice {
       margin: 0;
       font-size: 0.8125rem;
-      color: var(--cog-color-text-subtle, #777);
+      color: var(--cog-text-subtle);
     }
 
     /* Mobile model selector presented as a bottom sheet (spec §4.5). */

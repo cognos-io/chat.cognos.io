@@ -3,63 +3,30 @@ import { ActivatedRoute } from '@angular/router';
 
 import { TranslocoModule } from '@jsverse/transloco';
 
-import { CognosBreadcrumbsComponent } from '@cognos/ui-angular';
+import { SettingsCardComponent } from '@app/components/settings/settings-card.component';
+import { SettingsPageComponent } from '@app/components/settings/settings-page.component';
 
-// SettingsPlaceholderComponent renders a "coming soon" settings page. The page
-// title comes from route data so a single component backs every not-yet-built
-// settings section.
+// SettingsPlaceholderComponent renders a "coming soon" settings page using the
+// shared settings shell, so flagged-off sections look like the real ones. The
+// page title comes from route data.
 @Component({
   selector: 'app-settings-placeholder',
   standalone: true,
-  imports: [CognosBreadcrumbsComponent, TranslocoModule],
+  imports: [SettingsPageComponent, SettingsCardComponent, TranslocoModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ng-container *transloco="let t">
-      <header class="placeholder__header">
-        <cog-breadcrumbs
-          [items]="[
-            { label: 'Cognos' },
-            { label: t('settings.title') },
-            { label: title, current: true },
-          ]"
-        />
-        <h1 class="placeholder__title">{{ title }}</h1>
-      </header>
-
-      <section class="placeholder__card">
-        <p>{{ t('settings.placeholder.comingSoon') }}</p>
-      </section>
+      <app-settings-page [heading]="title">
+        <app-settings-card>
+          <p class="placeholder__text">{{ t('settings.placeholder.comingSoon') }}</p>
+        </app-settings-card>
+      </app-settings-page>
     </ng-container>
   `,
   styles: `
-    :host {
-      display: block;
-      max-width: 920px;
-    }
-
-    .placeholder__header {
-      display: grid;
-      gap: var(--cog-space-050);
-      margin: var(--cog-space-150) 0 var(--cog-space-250, 20px);
-    }
-
-    .placeholder__title {
+    .placeholder__text {
       margin: 0;
-      color: var(--cog-text);
-      font-size: var(--cog-fs-h-lg);
-      font-weight: var(--cog-fw-h-lg);
-    }
-
-    .placeholder__card {
-      border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-md);
-      background: var(--cog-surface);
-      padding: var(--cog-space-250, 20px);
       color: var(--cog-text-subtle);
-    }
-
-    .placeholder__card p {
-      margin: 0;
     }
   `,
 })

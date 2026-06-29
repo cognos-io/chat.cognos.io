@@ -908,6 +908,7 @@
   },
   "library": {
     "title": "Dateibibliothek",
+    "subtitle": "Von dir hochgeladene Dateien, in deinem Browser verschlüsselt – in jedem Chat wiederverwendbar.",
     "searchPlaceholder": "Dateien suchen",
     "empty": "Noch keine Dateien in Ihrer Bibliothek",
     "rename": "Umbenennen",

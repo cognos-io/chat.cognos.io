@@ -88,15 +88,15 @@ export interface MessageAttachmentChip {
         gap: 0.5rem;
         max-width: 100%;
         padding: 0.5rem 0.75rem;
-        border: 1px solid var(--cog-color-border, rgba(0, 0, 0, 0.1));
-        border-radius: 0.625rem;
-        background: var(--cog-color-surface, rgba(0, 0, 0, 0.03));
+        border: 1px solid var(--cog-border);
+        border-radius: var(--cog-radius-sm);
+        background: var(--cog-surface-sunken);
         font: inherit;
         text-align: left;
         cursor: pointer;
       }
       button.message-attachment-chip:hover {
-        background: var(--cog-color-surface-hover, rgba(0, 0, 0, 0.06));
+        background: var(--cog-surface-hover);
       }
       .message-attachment-chip--muted {
         cursor: default;
@@ -108,8 +108,8 @@ export interface MessageAttachmentChip {
         justify-content: center;
         width: 2rem;
         height: 2rem;
-        border-radius: 0.5rem;
-        background: var(--cog-color-accent-subtle, rgba(59, 130, 246, 0.12));
+        border-radius: var(--cog-radius-sm);
+        background: var(--cog-surface-sunken);
         flex: none;
       }
       .message-attachment-chip__body {
@@ -125,7 +125,7 @@ export interface MessageAttachmentChip {
       }
       .message-attachment-chip__subtitle {
         font-size: 0.8125rem;
-        color: var(--cog-color-text-subtle, rgba(0, 0, 0, 0.55));
+        color: var(--cog-text-subtle);
       }
     `,
   ],
