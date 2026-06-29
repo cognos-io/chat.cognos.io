@@ -3,7 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 
 import { TranslocoModule } from '@jsverse/transloco';
 
-import { SettingsCardComponent } from '@app/components/settings/settings-card.component';
+import { CognosCardComponent } from '@cognos/ui-angular';
+
 import { SettingsPageComponent } from '@app/components/settings/settings-page.component';
 
 // SettingsPlaceholderComponent renders a "coming soon" settings page using the
@@ -12,14 +13,14 @@ import { SettingsPageComponent } from '@app/components/settings/settings-page.co
 @Component({
   selector: 'app-settings-placeholder',
   standalone: true,
-  imports: [SettingsPageComponent, SettingsCardComponent, TranslocoModule],
+  imports: [SettingsPageComponent, CognosCardComponent, TranslocoModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ng-container *transloco="let t">
       <app-settings-page [heading]="title">
-        <app-settings-card>
+        <cog-card>
           <p class="placeholder__text">{{ t('settings.placeholder.comingSoon') }}</p>
-        </app-settings-card>
+        </cog-card>
       </app-settings-page>
     </ng-container>
   `,

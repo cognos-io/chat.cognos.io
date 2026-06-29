@@ -15,6 +15,7 @@ import QRCode from 'qrcode';
 
 import {
   CognosButtonComponent,
+  CognosCardComponent,
   CognosListComponent,
   CognosListItemComponent,
   CognosToastService,
@@ -43,6 +44,7 @@ type View =
     TranslocoModule,
     DatePipe,
     CognosButtonComponent,
+    CognosCardComponent,
     CognosListComponent,
     CognosListItemComponent,
   ],
@@ -50,25 +52,23 @@ type View =
   template: `
     <ng-container *transloco="let t">
       <!-- Two-factor authentication -->
-      <section class="security__card">
-        <div class="security__row">
-          <div>
-            <h2 class="security__h2">{{ t('settings.security.mfaHeading') }}</h2>
-            <p class="security__muted">{{ t('settings.security.mfaDescription') }}</p>
-          </div>
-          @if (view() !== 'loading') {
-            <span
-              class="security__badge"
-              [class.security__badge--on]="status()?.enabled"
-            >
-              {{
-                status()?.enabled
-                  ? t('settings.security.statusOn')
-                  : t('settings.security.statusOff')
-              }}
-            </span>
-          }
-        </div>
+      <cog-card
+        [heading]="t('settings.security.mfaHeading')"
+        [subtitle]="t('settings.security.mfaDescription')"
+      >
+        @if (view() !== 'loading') {
+          <span
+            card-heading-actions
+            class="security__badge"
+            [class.security__badge--on]="status()?.enabled"
+          >
+            {{
+              status()?.enabled
+                ? t('settings.security.statusOn')
+                : t('settings.security.statusOff')
+            }}
+          </span>
+        }
 
         @switch (view()) {
           @case ('loading') {
@@ -299,13 +299,14 @@ type View =
             </form>
           }
         }
-      </section>
+      </cog-card>
 
       <!-- Trusted devices -->
       @if (status()?.enabled) {
-        <section class="security__card">
-          <h2 class="security__h2">{{ t('settings.security.devicesHeading') }}</h2>
-          <p class="security__muted">{{ t('settings.security.devicesIntro') }}</p>
+        <cog-card
+          [heading]="t('settings.security.devicesHeading')"
+          [subtitle]="t('settings.security.devicesIntro')"
+        >
           @if (devices().length === 0) {
             <p class="security__muted">{{ t('settings.security.devicesEmpty') }}</p>
           } @else {
@@ -339,33 +340,13 @@ type View =
               }
             </cog-list>
           }
-        </section>
+        </cog-card>
       }
     </ng-container>
   `,
   styles: `
     :host {
       display: contents;
-    }
-    .security__card {
-      display: grid;
-      gap: var(--cog-space-200);
-      border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-md);
-      background: var(--cog-surface);
-      padding: var(--cog-space-250, 20px);
-    }
-    .security__row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: var(--cog-space-200);
-    }
-    .security__h2 {
-      margin: 0 0 var(--cog-space-050);
-      font-size: var(--cog-fs-h-sm);
-      font-weight: var(--cog-fw-semibold);
-      color: var(--cog-text);
     }
     .security__h3 {
       margin: 0;

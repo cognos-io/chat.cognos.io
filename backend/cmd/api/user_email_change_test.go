@@ -74,4 +74,3 @@ func TestUserEmailChangeConfirmChangesEmail(t *testing.T) {
 
 	scenario.Test(t)
 }
-

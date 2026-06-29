@@ -14,7 +14,7 @@ import (
 // evaluates each `@collection.X.*` clause as an independent existence
 // check (verified experimentally), so we cannot express
 // "exists a participants row matching conversation AND user AND
-// removed_at = ''" inside a single rule.
+// removed_at = ”" inside a single rule.
 //
 // Instead of half-strict rules that leak access across conversations to
 // revoked participants, we lock the collection routes entirely. Every

@@ -12,6 +12,7 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import {
   CognosAvatarComponent,
   CognosButtonComponent,
+  CognosCardComponent,
   CognosIconComponent,
   CognosTextFieldComponent,
   CognosToastService,
@@ -48,6 +49,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
   standalone: true,
   imports: [
     CognosAvatarComponent,
+    CognosCardComponent,
     CognosIconComponent,
     CognosTextFieldComponent,
     CognosButtonComponent,
@@ -62,22 +64,17 @@ import { deriveProfileName } from '@app/utils/profile-identity';
   template: `
     <ng-container *transloco="let t">
       <app-settings-page [heading]="t('account.title')">
-        <section class="account__card" aria-labelledby="account-language-heading">
-          <h2 id="account-language-heading" class="account__card-title">
-            {{ t('account.language.title') }}
-          </h2>
-          <p class="account__card-subtitle">{{ t('account.language.subtitle') }}</p>
-          <div class="account__actions">
-            <app-language-switcher></app-language-switcher>
-          </div>
-        </section>
+        <cog-card
+          [heading]="t('account.language.title')"
+          [subtitle]="t('account.language.subtitle')"
+        >
+          <app-language-switcher card-actions></app-language-switcher>
+        </cog-card>
 
-        <section class="account__card" aria-labelledby="account-profile-heading">
-          <h2 id="account-profile-heading" class="account__card-title">
-            {{ t('account.profile.title') }}
-          </h2>
-          <p class="account__card-subtitle">{{ t('account.profile.subtitle') }}</p>
-
+        <cog-card
+          [heading]="t('account.profile.title')"
+          [subtitle]="t('account.profile.subtitle')"
+        >
           <div class="account__fields">
             <div class="account__field">
               <span class="account__label">{{ t('account.profile.displayName') }}</span>
@@ -146,57 +143,47 @@ import { deriveProfileName } from '@app/utils/profile-identity';
             </fieldset>
           </div>
 
-          <div class="account__actions">
-            <cog-button
-              appearance="primary"
-              [disabled]="saving() || !dirty()"
-              (click)="save()"
-            >
-              {{ saving() ? t('account.profile.saving') : t('account.profile.save') }}
-            </cog-button>
-          </div>
-        </section>
+          <cog-button
+            card-actions
+            appearance="primary"
+            [disabled]="saving() || !dirty()"
+            (click)="save()"
+          >
+            {{ saving() ? t('account.profile.saving') : t('account.profile.save') }}
+          </cog-button>
+        </cog-card>
 
         <app-data-processing />
 
-        <section class="account__card" aria-labelledby="account-redaction-heading">
-          <div class="account__redaction-header">
-            <div class="account__redaction-text">
-              <h2 id="account-redaction-heading" class="account__card-title">
-                {{ t('account.redaction.title') }}
-              </h2>
-              <p class="account__card-subtitle">
-                {{ t('account.redaction.subtitle') }}
-              </p>
-            </div>
-            <div class="account__redaction-control">
-              <span class="account__redaction-state">
-                {{
-                  redactionEnabled()
-                    ? t('account.redaction.on')
-                    : t('account.redaction.off')
-                }}
-              </span>
-              <cog-toggle
-                [checked]="redactionEnabled()"
-                [label]="t('account.redaction.toggleLabel')"
-                (checkedChange)="setRedactionEnabled($event)"
-              />
-            </div>
+        <cog-card
+          [heading]="t('account.redaction.title')"
+          [subtitle]="t('account.redaction.subtitle')"
+        >
+          <div card-heading-actions class="account__redaction-control">
+            <span class="account__redaction-state">
+              {{
+                redactionEnabled()
+                  ? t('account.redaction.on')
+                  : t('account.redaction.off')
+              }}
+            </span>
+            <cog-toggle
+              [checked]="redactionEnabled()"
+              [label]="t('account.redaction.toggleLabel')"
+              (checkedChange)="setRedactionEnabled($event)"
+            />
           </div>
           @if (!redactionEnabled()) {
             <p class="account__redaction-warning" role="status">
               {{ t('account.redaction.disabledNote') }}
             </p>
           }
-        </section>
+        </cog-card>
 
-        <section class="account__card" aria-labelledby="account-email-heading">
-          <h2 id="account-email-heading" class="account__card-title">
-            {{ t('account.email.title') }}
-          </h2>
-          <p class="account__card-subtitle">{{ t('account.email.subtitle') }}</p>
-
+        <cog-card
+          [heading]="t('account.email.title')"
+          [subtitle]="t('account.email.subtitle')"
+        >
           <div class="account__fields">
             <div class="account__field">
               <span class="account__label">{{ t('account.email.current') }}</span>
@@ -223,27 +210,24 @@ import { deriveProfileName } from '@app/utils/profile-identity';
             <p class="account__error">{{ emailChangeError() }}</p>
           }
 
-          <div class="account__actions">
-            <cog-button
-              appearance="primary"
-              [disabled]="!canRequestEmailChange()"
-              (click)="requestEmailChange()"
-            >
-              {{
-                requestingEmailChange()
-                  ? t('account.email.sending')
-                  : t('account.email.send')
-              }}
-            </cog-button>
-          </div>
-        </section>
+          <cog-button
+            card-actions
+            appearance="primary"
+            [disabled]="!canRequestEmailChange()"
+            (click)="requestEmailChange()"
+          >
+            {{
+              requestingEmailChange()
+                ? t('account.email.sending')
+                : t('account.email.send')
+            }}
+          </cog-button>
+        </cog-card>
 
-        <section class="account__card" aria-labelledby="account-password-heading">
-          <h2 id="account-password-heading" class="account__card-title">
-            {{ t('account.password.title') }}
-          </h2>
-          <p class="account__card-subtitle">{{ t('account.password.subtitle') }}</p>
-
+        <cog-card
+          [heading]="t('account.password.title')"
+          [subtitle]="t('account.password.subtitle')"
+        >
           <div class="account__fields">
             <div class="account__field">
               <span class="account__label">{{ t('account.password.current') }}</span>
@@ -270,57 +254,45 @@ import { deriveProfileName } from '@app/utils/profile-identity';
             <p class="account__error">{{ passwordError() }}</p>
           }
 
-          <div class="account__actions">
-            <cog-button
-              appearance="primary"
-              [disabled]="!canChangePassword()"
-              (click)="changePassword()"
-            >
-              {{
-                changingPassword()
-                  ? t('account.password.changing')
-                  : t('account.password.change')
-              }}
-            </cog-button>
-          </div>
-        </section>
+          <cog-button
+            card-actions
+            appearance="primary"
+            [disabled]="!canChangePassword()"
+            (click)="changePassword()"
+          >
+            {{
+              changingPassword()
+                ? t('account.password.changing')
+                : t('account.password.change')
+            }}
+          </cog-button>
+        </cog-card>
 
         <!-- Two-factor authentication (rendered as account-style cards). -->
         <app-mfa-settings />
 
-        <section class="account__card" aria-labelledby="account-data-heading">
-          <h2 id="account-data-heading" class="account__card-title">
-            {{ t('account.data.title') }}
-          </h2>
-          <p class="account__card-subtitle">{{ t('account.data.subtitle') }}</p>
-          <div class="account__actions">
-            <cog-button
-              appearance="default"
-              icon="download"
-              [disabled]="exporting()"
-              (click)="exportData()"
-            >
-              {{
-                exporting() ? t('account.data.preparing') : t('account.data.download')
-              }}
-            </cog-button>
-          </div>
-        </section>
-
-        <section
-          class="account__card account__danger"
-          aria-labelledby="account-danger-heading"
+        <cog-card
+          [heading]="t('account.data.title')"
+          [subtitle]="t('account.data.subtitle')"
         >
-          <h2 id="account-danger-heading" class="account__card-title">
-            {{ t('account.danger.title') }}
-          </h2>
+          <cog-button
+            card-actions
+            appearance="default"
+            icon="download"
+            [disabled]="exporting()"
+            (click)="exportData()"
+          >
+            {{ exporting() ? t('account.data.preparing') : t('account.data.download') }}
+          </cog-button>
+        </cog-card>
 
+        <cog-card [heading]="t('account.danger.title')" tone="danger">
           <div class="account__danger-row">
             <div class="account__danger-copy">
               <p class="account__danger-title">
                 {{ t('account.danger.deleteChatsTitle') }}
               </p>
-              <p class="account__card-subtitle">
+              <p class="account__danger-desc">
                 {{ t('account.danger.deleteChatsSubtitle') }}
               </p>
             </div>
@@ -360,7 +332,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
               <p class="account__danger-title">
                 {{ t('account.danger.deleteAccountTitle') }}
               </p>
-              <p class="account__card-subtitle">
+              <p class="account__danger-desc">
                 {{ t('account.danger.deleteAccountSubtitle') }}
               </p>
 
@@ -414,47 +386,13 @@ import { deriveProfileName } from '@app/utils/profile-identity';
               </cog-button>
             }
           </div>
-        </section>
+        </cog-card>
       </app-settings-page>
     </ng-container>
   `,
   styles: `
     :host {
       display: block;
-    }
-
-    .account__card {
-      display: grid;
-      gap: var(--cog-space-100);
-      border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-md);
-      background: var(--cog-surface);
-      padding: var(--cog-space-250, 20px);
-    }
-
-    .account__card-title {
-      margin: 0;
-      color: var(--cog-text);
-      font-size: var(--cog-fs-h-sm);
-      font-weight: var(--cog-fw-semibold);
-    }
-
-    .account__card-subtitle {
-      margin: 0;
-      color: var(--cog-text-subtle);
-      font-size: var(--cog-fs-body-sm);
-    }
-
-    .account__redaction-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--cog-space-200);
-    }
-
-    .account__redaction-text {
-      display: grid;
-      gap: var(--cog-space-100);
     }
 
     .account__redaction-control {
@@ -630,13 +568,11 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       margin-top: var(--cog-space-100);
     }
 
-    .account__danger {
-      border-color: var(--cog-danger-border, #f1c0c0);
-      background: var(--cog-danger-surface, #fef2f2);
-    }
-
-    .account__danger .account__card-title {
-      color: var(--cog-danger-text, #b91c1c);
+    .account__danger-desc {
+      margin: 0;
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body);
+      line-height: var(--cog-lh-body);
     }
 
     .account__danger-row {
@@ -656,7 +592,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
     .account__danger-title {
       margin: 0;
       color: var(--cog-text);
-      font-size: var(--cog-fs-body-sm);
+      font-size: var(--cog-fs-body);
       font-weight: var(--cog-fw-semibold);
     }
 

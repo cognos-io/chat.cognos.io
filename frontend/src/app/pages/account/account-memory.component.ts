@@ -15,11 +15,11 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
   CognosButtonComponent,
+  CognosCardComponent,
   CognosIconComponent,
   CognosToastService,
 } from '@cognos/ui-angular';
 
-import { SettingsCardComponent } from '@app/components/settings/settings-card.component';
 import { SettingsPageComponent } from '@app/components/settings/settings-page.component';
 import { CompactionDurableMemory } from '@app/interfaces/compaction';
 import { RedactionEntry } from '@app/redaction';
@@ -40,7 +40,7 @@ import { VaultService } from '@app/services/vault.service';
     CognosIconComponent,
     TranslocoModule,
     SettingsPageComponent,
-    SettingsCardComponent,
+    CognosCardComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -49,7 +49,7 @@ import { VaultService } from '@app/services/vault.service';
         [heading]="t('account.memory.title')"
         [subtitle]="t('account.memory.subtitle')"
       >
-        <app-settings-card>
+        <cog-card>
           @if (redactionEnabled()) {
             <p class="memory-page__redaction-info">
               <cog-icon name="shield-check" [size]="14" tone="current" />
@@ -82,7 +82,7 @@ import { VaultService } from '@app/services/vault.service';
               {{ t('account.memory.save') }}
             </cog-button>
           </div>
-        </app-settings-card>
+        </cog-card>
       </app-settings-page>
     </ng-container>
   `,

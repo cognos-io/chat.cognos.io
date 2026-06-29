@@ -42,8 +42,8 @@ func TestBillingInvoicePDFRejectsOtherCustomer(t *testing.T) {
 	t.Parallel()
 	fake := &fakePaddleClient{txnCustomerID: "ctm_someone_else", invoicePDFURL: "https://paddle.com/secret.pdf"}
 	scenario := tests.ApiScenario{
-		Name:           "pdf for another customer's invoice is 404",
-		Method:         http.MethodGet,
+		Name:            "pdf for another customer's invoice is 404",
+		Method:          http.MethodGet,
 		URL:             "/api/v1/billing/invoices/txn_x/pdf",
 		ExpectedStatus:  http.StatusNotFound,
 		ExpectedContent: []string{"Invoice not found"},

@@ -346,8 +346,8 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
     .data-processing__subtitle {
       margin: 0;
       color: var(--cog-text-subtle);
-      font-size: var(--cog-fs-body-sm);
-      line-height: var(--cog-lh-body-sm);
+      font-size: var(--cog-fs-body);
+      line-height: var(--cog-lh-body);
       text-wrap: pretty;
     }
 
