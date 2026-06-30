@@ -13,9 +13,26 @@ import { deriveModelCostTier } from './model-cost-tier';
 // (see docs/specs/composer-model-discovery.md §7). Nothing here calls an API or
 // reads prompt text — search runs entirely client-side.
 
-// The composer's required capability when a tool is active. null means no tool,
-// so every model passes. Mirrors modelSupportsCapability in the selector.
-export type RequiredCapability = 'image_generation' | null;
+// The capability the current composer state requires of the model. The composer
+// is never in a "no constraint" state: plain chat requires `text_completion`,
+// the image tool requires `image_generation` (spec
+// docs/specs/tool-aware-model-selection.md §2). `null` remains a valid input —
+// the account-settings model list passes it to show every model unfiltered.
+export type RequiredCapability = 'text_completion' | 'image_generation' | null;
+
+// CAPABILITY_CONTEXT_TEXT is the context key for plain text completion. Its
+// remembered default lives in `defaultModelId` (not `toolModelDefaults`), so the
+// chat default is byte-for-byte backward compatible (spec §5).
+export const CAPABILITY_CONTEXT_TEXT = 'text';
+
+// capabilityContextKey maps a required capability to the stable key used to
+// store the user's per-context default model (spec §2/§5). Text completion (and
+// the unconstrained `null`) map to the `"text"` context.
+export function capabilityContextKey(capability: RequiredCapability): string {
+  return capability === 'image_generation'
+    ? 'image_generation'
+    : CAPABILITY_CONTEXT_TEXT;
+}
 
 // Quick capability filters surfaced as chips. 'recommended' is the default chip.
 export type QuickFilter =
@@ -135,7 +152,8 @@ export function matchesQuickFilter(
   }
 }
 
-// modelSupportsCapability gates a model against an active composer tool.
+// modelSupportsCapability gates a model against the active capability context.
+// `null` (no constraint) matches every model.
 export function modelSupportsCapability(
   model: Model,
   capability: RequiredCapability,
@@ -143,6 +161,8 @@ export function modelSupportsCapability(
   switch (capability) {
     case 'image_generation':
       return model.supportsImageGeneration;
+    case 'text_completion':
+      return model.supportsTextCompletion;
     case null:
       return true;
   }

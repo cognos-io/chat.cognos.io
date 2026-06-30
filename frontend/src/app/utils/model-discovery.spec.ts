@@ -7,10 +7,12 @@ import {
   ModelCapabilityMetadata,
 } from './model-capability-metadata';
 import {
+  CAPABILITY_CONTEXT_TEXT,
   LONG_CONTEXT_THRESHOLD,
   RECENT_MODELS_LIMIT,
   addRecentModel,
   buildSearchSynonyms,
+  capabilityContextKey,
   flattenGroups,
   formatContextWindow,
   isLongContextModel,
@@ -19,6 +21,7 @@ import {
   matchesQuickFilter,
   modelMatchesSearch,
   modelStrengthPills,
+  modelSupportsCapability,
   normalizeSearchText,
   orderModels,
   resolveDefaultModel,
@@ -326,6 +329,58 @@ describe('orderModels', () => {
   });
 });
 
+describe('modelSupportsCapability', () => {
+  it('gates text completion on supportsTextCompletion', () => {
+    expect(
+      modelSupportsCapability(
+        makeModel({ supportsTextCompletion: true }),
+        'text_completion',
+      ),
+    ).toBe(true);
+    expect(
+      modelSupportsCapability(
+        makeModel({ supportsTextCompletion: false }),
+        'text_completion',
+      ),
+    ).toBe(false);
+  });
+
+  it('gates image generation on supportsImageGeneration', () => {
+    expect(
+      modelSupportsCapability(
+        makeModel({ supportsImageGeneration: true }),
+        'image_generation',
+      ),
+    ).toBe(true);
+    expect(
+      modelSupportsCapability(
+        makeModel({ supportsImageGeneration: false }),
+        'image_generation',
+      ),
+    ).toBe(false);
+  });
+
+  it('matches every model when the capability is null', () => {
+    expect(
+      modelSupportsCapability(
+        makeModel({ supportsTextCompletion: false, supportsImageGeneration: false }),
+        null,
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('capabilityContextKey', () => {
+  it('maps image generation to its own context key', () => {
+    expect(capabilityContextKey('image_generation')).toBe('image_generation');
+  });
+
+  it('maps text completion and null to the text context', () => {
+    expect(capabilityContextKey('text_completion')).toBe(CAPABILITY_CONTEXT_TEXT);
+    expect(capabilityContextKey(null)).toBe(CAPABILITY_CONTEXT_TEXT);
+  });
+});
+
 describe('resolveDefaultModel', () => {
   const models = [
     makeModel({ id: 'session' }),
@@ -404,6 +459,26 @@ describe('resolveDefaultModel', () => {
   it('returns undefined when no eligible model exists', () => {
     const none = [makeModel({ id: 'x', isEligible: false })];
     expect(resolveDefaultModel({ models: none })).toBeUndefined();
+  });
+
+  it('skips an image-only session pick under the text-completion capability', () => {
+    // The session pick is an image-only model, but text completion is required,
+    // so resolution falls through to the eligible text model (spec §6).
+    const mixed = [
+      makeModel({
+        id: 'image-only',
+        supportsTextCompletion: false,
+        supportsImageGeneration: true,
+      }),
+      makeModel({ id: 'text' }),
+    ];
+    expect(
+      resolveDefaultModel({
+        models: mixed,
+        sessionSelectedId: 'image-only',
+        requiredCapability: 'text_completion',
+      })?.id,
+    ).toBe('text');
   });
 });
 

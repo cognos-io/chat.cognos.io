@@ -28,6 +28,7 @@ import { ModelCostTier, deriveModelCostTier } from '@app/utils/model-cost-tier';
 import {
   MODEL_FILTER_CHIPS,
   QuickFilter,
+  RequiredCapability,
   SearchContext,
   buildSearchSynonyms,
   flattenGroups,
@@ -568,8 +569,10 @@ export class ModelSelectorComponent {
   // Layout chrome differs (sheet header vs bare dropdown) but content is shared.
   readonly layout = input<ModelSelectorLayout>('dropdown');
 
-  // Restrict the list to models supporting an active composer tool (image gen).
-  readonly requiredCapability = input<'image_generation' | null>(null);
+  // Restrict the list to models that can do the current task: `text_completion`
+  // in plain chat, `image_generation` when the image tool is on. `null` (account
+  // settings) shows every model. See docs/specs/tool-aware-model-selection.md.
+  readonly requiredCapability = input<RequiredCapability>(null);
 
   @Output() readonly modelSelected = new EventEmitter<Model>();
   // Asked to close (sheet X / Escape / settings link). The host owns open state.
