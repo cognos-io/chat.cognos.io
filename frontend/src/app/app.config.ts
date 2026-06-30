@@ -10,6 +10,7 @@ import { MARKED_EXTENSIONS, SANITIZE, provideMarkdown } from 'ngx-markdown';
 import { routes } from './app.routes';
 import { provideAppI18n } from './i18n/transloco.providers';
 import { providePocketbase } from './services/pocketbase.service.provider';
+import { provideAppTheme } from './theme/theme.providers';
 
 // Angular's built-in HTML sanitizer strips elements that GitHub/Obsidian
 // markdown relies on (task-list checkboxes, callout SVG icons, footnote
@@ -35,5 +36,6 @@ export const appConfig: ApplicationConfig = {
     }),
     providePocketbase(),
     ...provideAppI18n(),
+    ...provideAppTheme(),
   ],
 };

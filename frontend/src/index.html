@@ -2,6 +2,34 @@
 <html lang="en" data-theme="light" data-accent="emerald">
   <head>
     <meta charset="utf-8" />
+    <!--
+      Appearance theme flash guard. Runs synchronously before any stylesheet
+      applies so the first paint is in the user's chosen theme (no light/dark
+      flash). Mirrors resolveTheme() in app/theme/theme.ts; the ThemeService
+      takes over once Angular boots. Keep this logic tiny and dependency-free.
+    -->
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem('cognos:theme');
+          if (pref !== 'light' && pref !== 'dark' && pref !== 'system') {
+            pref = 'system';
+          }
+          var resolved = pref;
+          if (pref === 'system') {
+            resolved =
+              window.matchMedia &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light';
+          }
+          document.documentElement.setAttribute('data-theme', resolved);
+          document.documentElement.style.colorScheme = resolved;
+        } catch (e) {
+          /* localStorage/matchMedia unavailable — fall back to the static default. */
+        }
+      })();
+    </script>
     <title>Cognos - Privacy friendly AI</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

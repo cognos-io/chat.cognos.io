@@ -413,6 +413,31 @@ export class AuthService implements OnDestroy {
     );
   }
 
+  // Persist the user's appearance theme preference onto their own record. Like
+  // the language, the theme is not sensitive: it must apply before the vault is
+  // unlocked (so the app doesn't flash the wrong theme on load) and follow the
+  // user across devices, so it is stored in plaintext rather than in the
+  // encrypted preferences payload. Value is one of light|dark|system.
+  setPreferredTheme(theme: string): Observable<AuthUser> {
+    const userId = this.user()?.['id'] as string | undefined;
+    if (!userId) {
+      return throwError(() => new Error('Not authenticated'));
+    }
+
+    return from(
+      this._pb
+        .collection(this._authCollection)
+        .update(userId, { preferred_theme: theme }),
+    ).pipe(
+      map((record) => record as AuthUser),
+      catchError((error) => {
+        // Non-fatal: the theme still applies locally this session.
+        console.error('Unable to save theme preference', error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
   // Change the account password. Under account_key_v2 the password is
   // authentication-only (not part of the data key), so this is a pure auth
   // operation — no key material is re-wrapped. PocketBase verifies oldPassword
