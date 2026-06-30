@@ -71,9 +71,11 @@ See `tokens.json` / `tokens.css`. Key semantic roles components should use:
   `surface-pressed`
 - Text: `text`, `text-subtle`, `text-subtlest`, `text-disabled`
 - Lines: `border`, `border-bold`
+- Neutral fill: `neutral-bg` (neutral surface for placeholders/avatars)
 - Brand/accent: `brand`, `brand-hover`, `brand-pressed`, `on-brand`, `link`, `selected-bg`,
   `selected-text`, `selected-border`
-- Status: `success(-bg/-text)`, `danger(-text)`, `info(-bg/-text)`
+- Status: `success(-bg/-text/-border)`, `danger(-text/-bg/-border)`,
+  `warning(-bg/-text)`, `info(-bg/-text)`
 - Lozenge tones: `loz-{neutral|blue|green|purple|red}-{bg|fg}`
 
 > **Accent vs. semantic green:** the brand accent is emerald, but the success/

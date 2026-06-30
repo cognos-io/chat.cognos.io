@@ -14,6 +14,7 @@
   --cog-surface-sunken: #f7f8f9;
   --cog-surface-hover: #f1f2f4;
   --cog-surface-pressed: #dcdfe4;
+  --cog-neutral-bg: #dcdfe4;
 
   --cog-text: #172b4d;
   --cog-text-subtle: #44546f;
@@ -29,8 +30,14 @@
   --cog-success: #22a06b;
   --cog-success-bg: #dcfff1;
   --cog-success-text: #216e4e;
+  --cog-success-border: #7ee2b8;
   --cog-danger: #c9372c;
   --cog-danger-text: #ae2a19;
+  --cog-danger-bg: #ffedeb;
+  --cog-danger-border: #f1c0c0;
+  --cog-warning: #b8770b;
+  --cog-warning-bg: #fff7d6;
+  --cog-warning-text: #8a5a00;
   --cog-info: #0c66e4;
   --cog-info-bg: #e9f2ff;
   --cog-info-text: #0c66e4;
@@ -46,10 +53,8 @@
   --cog-loz-red-bg: #ffedeb;
   --cog-loz-red-fg: #ae2a19;
 
-  --cog-shadow-raised:
-    0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
-  --cog-shadow-overlay:
-    0 8px 12px rgba(9, 30, 66, 0.15), 0 0 1px rgba(9, 30, 66, 0.31);
+  --cog-shadow-raised: 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+  --cog-shadow-overlay: 0 8px 12px rgba(9, 30, 66, 0.15), 0 0 1px rgba(9, 30, 66, 0.31);
 }
 
 /* ============================ THEME: DARK =============================== */
@@ -61,6 +66,7 @@
   --cog-surface-sunken: #161a1d;
   --cog-surface-hover: #22272b;
   --cog-surface-pressed: #282e33;
+  --cog-neutral-bg: #2c333a;
 
   --cog-text: #c7d1db;
   --cog-text-subtle: #9fadbc;
@@ -76,8 +82,14 @@
   --cog-success: #4bce97;
   --cog-success-bg: #164b35;
   --cog-success-text: #7ee2b8;
+  --cog-success-border: #216e4e;
   --cog-danger: #f87168;
   --cog-danger-text: #ff9c8f;
+  --cog-danger-bg: #5d1f1a;
+  --cog-danger-border: #ae2a19;
+  --cog-warning: #e2b203;
+  --cog-warning-bg: #332e1b;
+  --cog-warning-text: #f5cd47;
   --cog-info: #579dff;
   --cog-info-bg: #1c2b41;
   --cog-info-text: #85b8ff;
@@ -93,10 +105,8 @@
   --cog-loz-red-bg: #5d1f1a;
   --cog-loz-red-fg: #ff9c8f;
 
-  --cog-shadow-raised:
-    0 1px 1px rgba(3, 4, 4, 0.5), 0 0 1px rgba(3, 4, 4, 0.6);
-  --cog-shadow-overlay:
-    0 8px 12px rgba(3, 4, 4, 0.56), 0 0 1px rgba(3, 4, 4, 0.6);
+  --cog-shadow-raised: 0 1px 1px rgba(3, 4, 4, 0.5), 0 0 1px rgba(3, 4, 4, 0.6);
+  --cog-shadow-overlay: 0 8px 12px rgba(3, 4, 4, 0.56), 0 0 1px rgba(3, 4, 4, 0.6);
 }
 
 /* ============================ ACCENT: EMERALD =========================== */
