@@ -40,6 +40,8 @@ approach to ProtonMail which encrypts user emails.
 - Write and maintain documentation for humans with poor attention spans.
 - Use i18n and make sure all translations are provided in all supported languages and not just
   English.
+- Use `packages/ui` design tokens (`--cog-*`) for UI colour, spacing, type, radius, shadow and
+  motion; avoid hard-coded visual values in `packages/ui-angular`, `frontend` and `web`.
 
 ## Tools
 
