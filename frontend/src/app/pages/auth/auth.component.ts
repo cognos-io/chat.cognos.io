@@ -16,6 +16,14 @@ import { LanguageSwitcherComponent } from '@app/components/language-switcher/lan
         min-height: 100svh;
       }
 
+      .auth-shell__content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        block-size: 100%;
+        inline-size: 100%;
+      }
+
       .auth-shell__lang {
         position: fixed;
         top: var(--cog-space-200);

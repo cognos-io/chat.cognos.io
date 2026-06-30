@@ -119,22 +119,78 @@ const iceBreakers: IceBreaker[] = [
   selector: 'app-icebreakers',
   standalone: true,
   imports: [TranslocoModule],
-  template: `<ul class="grid grid-cols-1 gap-4 lg:grid-cols-2" *transloco="let t">
+  template: `<ul class="icebreakers" *transloco="let t">
     @for (ib of iceBreakers(); track ib) {
-      <li
-        class="border-1 col-span-1 rounded-lg bg-white shadow transition-all duration-150 ease-in-out hover:bg-slate-50"
-      >
-        <button
-          class="prose prose-headings:m-0 rounded-lg px-6 py-4 text-left"
-          (click)="iceBreakerSelected.emit(ib)"
-        >
-          <h4>{{ t('chat.icebreakers.items.' + ib.id + '.title') }}</h4>
-          <p>{{ t('chat.icebreakers.items.' + ib.id + '.description') }}</p>
+      <li class="icebreakers__card">
+        <button class="icebreakers__button" (click)="iceBreakerSelected.emit(ib)">
+          <h4 class="icebreakers__title">
+            {{ t('chat.icebreakers.items.' + ib.id + '.title') }}
+          </h4>
+          <p class="icebreakers__description">
+            {{ t('chat.icebreakers.items.' + ib.id + '.description') }}
+          </p>
         </button>
       </li>
     }
   </ul>`,
-  styles: ``,
+  styles: [
+    `
+      .icebreakers {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--cog-space-200);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      @media (min-width: 1024px) {
+        .icebreakers {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .icebreakers__card {
+        border: 1px solid var(--cog-border);
+        border-radius: var(--cog-radius-md);
+        background: var(--cog-surface);
+        box-shadow: var(--cog-shadow-raised);
+        transition: background var(--cog-dur-medium) var(--cog-ease-standard);
+      }
+
+      .icebreakers__card:hover {
+        background: var(--cog-surface-hover);
+      }
+
+      .icebreakers__button {
+        display: block;
+        inline-size: 100%;
+        padding: var(--cog-space-200) var(--cog-space-300);
+        border: none;
+        border-radius: var(--cog-radius-md);
+        background: transparent;
+        text-align: start;
+        cursor: pointer;
+        font-family: var(--cog-font);
+        color: var(--cog-text);
+      }
+
+      .icebreakers__title {
+        margin: 0;
+        font-size: var(--cog-fs-h-sm);
+        font-weight: var(--cog-fw-h-sm);
+        line-height: var(--cog-lh-h-sm);
+        color: var(--cog-text);
+      }
+
+      .icebreakers__description {
+        margin: var(--cog-space-050) 0 0;
+        font-size: var(--cog-fs-body);
+        line-height: var(--cog-lh-body);
+        color: var(--cog-text-subtle);
+      }
+    `,
+  ],
 })
 export class IcebreakersComponent {
   public readonly iceBreakers = signal<IceBreaker[]>([]);

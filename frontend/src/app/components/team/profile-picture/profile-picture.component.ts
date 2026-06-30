@@ -8,13 +8,20 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
   standalone: true,
   imports: [NgOptimizedImage, TranslocoModule],
   template: ` <img
-    class="rounded-lg  shadow-xl"
+    class="profile-picture"
     width="160"
     height="160"
     [ngSrc]="profilePicturePath"
     [alt]="_transloco.translate('dialogs.profilePicture.alt', { name: profileName })"
   />`,
-  styles: ``,
+  styles: [
+    `
+      .profile-picture {
+        border-radius: var(--cog-radius-md);
+        box-shadow: var(--cog-shadow-overlay);
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfilePictureComponent {
