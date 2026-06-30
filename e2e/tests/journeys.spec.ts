@@ -222,4 +222,17 @@ test.describe('high-level user journeys', () => {
       )
       .toBe(true);
   });
+
+  test('the sidebar always shows the Cognos logo', async ({ page }) => {
+    await provisionUnlockedAccount(page);
+
+    // The brand logo lives in the shared sidebar header. It must render at a
+    // real size — a regression once collapsed it to a zero-size SVG.
+    const logo = page.getByTestId('sidebar-brand').getByRole('img', { name: 'Cognos' });
+    await expect(logo).toBeVisible();
+
+    const box = await logo.boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThan(0);
+    expect(box?.height ?? 0).toBeGreaterThan(0);
+  });
 });

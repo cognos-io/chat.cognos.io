@@ -18,7 +18,7 @@ import { BillingService } from '@app/services/billing.service';
   imports: [CognosLogoComponent, CognosLozengeComponent, TranslocoModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="sidebar-brand" *transloco="let t">
+    <div class="sidebar-brand" data-testid="sidebar-brand" *transloco="let t">
       <app-cognos-logo class="sidebar-brand__logo" palette="dark" />
       @if (billing.isTrial()) {
         <cog-lozenge tone="neutral">{{ t('chat.sidebar.plan.trial') }}</cog-lozenge>
