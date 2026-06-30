@@ -22,6 +22,7 @@ sequenceDiagram
 
   FE->>H: messages, model_id, persona_id, system_prompt
   H->>H: validate body, lookup model, inject persona prompt
+  Note over H: capability gate<br/>(see model-capability-gating)
   Note over H: privacy_tier check<br/>(see privacy-tier-gating)
   alt conversation path
     H->>DB: participants.IsActive ➜ 404 if not

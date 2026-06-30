@@ -350,6 +350,11 @@ search at the bottom keeps it directly above the on-screen keyboard on mobile.
 - **Description:** Keep default-model behaviour **implicit**: selecting a model is what makes it the
   user's default. There is no separate "Set as my default" action. Users still get a sane default
   even if they have never actively chosen one.
+
+> **Extended by [tool-aware-model-selection.md](./tool-aware-model-selection.md):** the implicit
+> default is being made **per capability context** (one for chat, one for image generation, …), so
+> toggling a composer tool restores the right model. Plain-chat behaviour and `defaultModelId` are
+> unchanged; the tool contexts add `toolModelDefaults`.
 - **User story:** As a user, I want the model I pick to stick as my default for new chats without
   managing a separate default setting.
 - **Priority:** P1
@@ -554,6 +559,7 @@ Proposed additions:
 ```txt
 recentModels: string[]
 hiddenModels: string[]
+toolModelDefaults: Record<string, string>   // per-capability-context default; see tool-aware-model-selection.md §5
 ```
 
 Rules:

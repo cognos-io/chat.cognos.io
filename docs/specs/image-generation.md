@@ -507,6 +507,10 @@ pending a live run for final confirmation of the response shape and whether cost
   composer blocks the send and offers to re-enable image generation or switch model.
 - Image-capable model badges/labels are visible when image generation is enabled.
 
+> The model↔tool coupling — filtering the picker by the current task, auto-switching the model when
+> the image tool is toggled, and remembering the user's model per task — is specified in
+> [tool-aware-model-selection.md](./tool-aware-model-selection.md).
+
 ### Backend integration tests
 
 - `GET /api/v1/models` includes `supports_image_generation` and `supports_text_completion` for every
