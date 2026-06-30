@@ -15,6 +15,7 @@ import { AuthService } from '../../services/auth.service';
 import { BillingService } from '../../services/billing.service';
 import { CompactionService } from '../../services/compaction.service';
 import { ConversationDuplicateService } from '../../services/conversation-duplicate.service';
+import { ConversationSearchService } from '../../services/conversation-search.service';
 import { ConversationService } from '../../services/conversation.service';
 import { DeviceService } from '../../services/device.service';
 import { ExportService } from '../../services/export.service';
@@ -56,6 +57,17 @@ describe('ChatComponent', () => {
   const messageService = {
     messages,
     resetState: vi.fn(),
+  };
+
+  // Fake the on-device search index: inactive by default so the sidebar renders
+  // the normal Projects/Pinned/Recent navigation in these tests.
+  const searchService = {
+    setQuery: vi.fn(),
+    isActive: signal(false),
+    isHydrating: signal(false),
+    showNoResults: signal(false),
+    results: signal<Conversation[]>([]),
+    query: signal(''),
   };
 
   // The conversation list items rendered for pinned/recent conversations inject
@@ -118,6 +130,7 @@ describe('ChatComponent', () => {
           },
         },
         { provide: ConversationService, useValue: conversationService },
+        { provide: ConversationSearchService, useValue: searchService },
         { provide: CompactionService, useValue: { compactionsFor: () => [] } },
         {
           provide: ConversationDuplicateService,
@@ -196,10 +209,10 @@ describe('ChatComponent', () => {
     expect(component.drawerOpen()).toBe(false);
   });
 
-  it('forwards search changes to the conversation filter', () => {
+  it('forwards search changes to the on-device search index', () => {
     component.onSearchChange('policy');
 
-    expect(conversationService.filter$.next).toHaveBeenCalledWith('policy');
+    expect(searchService.setQuery).toHaveBeenCalledWith('policy');
   });
 
   it('opens the unlock dialog when the key pair becomes unavailable', () => {

@@ -39,6 +39,35 @@
     </div>
   </ng-template>
 
+  <ng-template #navSearchResults>
+    <div class="chat-shell__conversation-sections">
+      @if (search.isHydrating() && search.results().length === 0) {
+        <p class="chat-shell__search-status" role="status">
+          {{ t('chat.list.searchingMessages') }}
+        </p>
+      }
+      @if (search.results().length > 0) {
+        <section class="chat-shell__section">
+          <header class="chat-shell__section-heading">
+            {{ t('chat.list.searchResults') }}
+          </header>
+          <div class="chat-shell__conversation-list">
+            @for (conversation of search.results(); track conversation.record.id) {
+              <app-conversation-list-item
+                [conversation]="conversation"
+              ></app-conversation-list-item>
+            }
+          </div>
+        </section>
+      }
+      @if (search.showNoResults()) {
+        <p class="chat-shell__search-status" role="status">
+          {{ t('chat.list.noMatches') }}
+        </p>
+      }
+    </div>
+  </ng-template>
+
   <ng-template #navProjects>
     @if (projectsEnabled && projects().length > 0) {
       <section class="chat-shell__section">
@@ -167,8 +196,12 @@
       <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
       <ng-container *ngTemplateOutlet="navSearch"></ng-container>
       <div class="chat-shell__scroll">
-        <ng-container *ngTemplateOutlet="navProjects"></ng-container>
-        <ng-container *ngTemplateOutlet="navConversations"></ng-container>
+        @if (search.isActive()) {
+          <ng-container *ngTemplateOutlet="navSearchResults"></ng-container>
+        } @else {
+          <ng-container *ngTemplateOutlet="navProjects"></ng-container>
+          <ng-container *ngTemplateOutlet="navConversations"></ng-container>
+        }
       </div>
     </div>
   </ng-template>
@@ -223,8 +256,12 @@
 
       <div cogMobileDrawer class="chat-shell__drawer-body">
         <div class="chat-shell__scroll">
-          <ng-container *ngTemplateOutlet="navProjects"></ng-container>
-          <ng-container *ngTemplateOutlet="navConversations"></ng-container>
+          @if (search.isActive()) {
+            <ng-container *ngTemplateOutlet="navSearchResults"></ng-container>
+          } @else {
+            <ng-container *ngTemplateOutlet="navProjects"></ng-container>
+            <ng-container *ngTemplateOutlet="navConversations"></ng-container>
+          }
         </div>
       </div>
 

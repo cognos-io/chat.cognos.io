@@ -29,6 +29,7 @@ import { SidebarBrandComponent } from '@app/components/sidebar-brand/sidebar-bra
 import { VaultUnlockGateDirective } from '@app/directives/vault-unlock-gate.directive';
 import { Conversation } from '@app/interfaces/conversation';
 import { BillingService } from '@app/services/billing.service';
+import { ConversationSearchService } from '@app/services/conversation-search.service';
 import { DeviceService } from '@app/services/device.service';
 import { MessageService } from '@app/services/message.service';
 import { ProjectConversationService } from '@app/services/project-conversation.service';
@@ -73,6 +74,7 @@ export class ChatComponent {
 
   readonly router = inject(Router);
   readonly conversationService = inject(ConversationService);
+  readonly search = inject(ConversationSearchService);
   readonly billing = inject(BillingService);
   readonly device = inject(DeviceService);
   readonly drawerOpen = signal(false);
@@ -158,7 +160,8 @@ export class ChatComponent {
   }
 
   onSearchChange(value: string) {
-    this.conversationService.filter$.next(value);
+    // Drives the on-device Orama index (replaces the old substring filter$).
+    this.search.setQuery(value);
   }
 
   openDrawer() {
