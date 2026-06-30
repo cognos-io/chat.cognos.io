@@ -315,6 +315,14 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			return apis.NewBadRequestError("Invalid model ID", nil)
 		}
 
+		// Image-generation-only models (e.g. gemini-2.5-flash-image) can't answer
+		// a text completion. The composer gates this, but enforce server-side too
+		// so a direct /complete call can't reach the provider with an image-only
+		// model and fail there (capability bypass + clear error).
+		if !model.SupportsTextCompletion {
+			return apis.NewBadRequestError("This model can't be used for text completion", nil)
+		}
+
 		userTier := catalogue.NormalizePrivacyTier(e.Auth.GetString("privacy_tier"))
 		if !catalogue.IsEligibleForTier(userTier, model.PrivacyTier) {
 			return apis.NewForbiddenError("Model is not available for the user's privacy tier", nil)

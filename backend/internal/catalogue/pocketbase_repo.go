@@ -105,6 +105,7 @@ func (r *PocketBaseRepo) ActiveModels(_ context.Context) ([]Model, error) {
 			HostingRegion:       strings.TrimSpace(record.GetString("hosting_region")),
 			ProviderDescription: provider.Description,
 
+			SupportsTextCompletion:   record.GetBool("supports_text_completion"),
 			SupportsImageGeneration:  record.GetBool("supports_image_generation"),
 			ImageGenerationTransport: strings.TrimSpace(record.GetString("image_generation_transport")),
 			ReasoningEfforts:         normaliseEfforts(record.GetStringSlice("reasoning_efforts")),

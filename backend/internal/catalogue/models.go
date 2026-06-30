@@ -49,6 +49,13 @@ type Model struct {
 	HostingCountry      string        `json:"hosting_country,omitempty"`
 	HostingRegion       string        `json:"hosting_region,omitempty"`
 	ProviderDescription string        `json:"provider_description,omitempty"`
+	// SupportsTextCompletion marks a model that can answer ordinary text
+	// completions. Most chat models can; image-generation-only models (e.g.
+	// gemini-2.5-flash-image) cannot, and must set this false so the completion
+	// handler rejects them before any provider call. Defaults false on a brand
+	// new record, so a freshly curated image-only model is safe by default —
+	// existing text models are seeded true by migration.
+	SupportsTextCompletion bool `json:"supports_text_completion"`
 	// SupportsImageGeneration marks a model that can generate images. Distinct
 	// from image input/vision support.
 	SupportsImageGeneration bool `json:"supports_image_generation"`
