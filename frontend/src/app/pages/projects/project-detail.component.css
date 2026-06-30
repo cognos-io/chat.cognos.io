@@ -283,14 +283,15 @@
 .project-detail__danger-name {
   margin: 0;
   color: var(--cog-text);
-  font-size: var(--cog-fs-body-sm);
+  font-size: var(--cog-fs-body);
   font-weight: var(--cog-fw-semibold);
 }
 
 .project-detail__danger-desc {
   margin: var(--cog-space-025) 0 0;
   color: var(--cog-text-subtle);
-  font-size: var(--cog-fs-body-sm);
+  font-size: var(--cog-fs-body);
+  line-height: var(--cog-lh-body);
 }
 
 .project-detail__danger-confirm {
