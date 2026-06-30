@@ -72,4 +72,28 @@ test.describe('conversation search', () => {
     await expect(searchResultsHeading).toHaveCount(0);
     await expect(page.getByText('Recent', { exact: true })).toBeVisible();
   });
+
+  test('matches a project chat without expanding the project', async ({ page }) => {
+    await provisionUnlockedAccount(page);
+
+    // Create a project, then a chat inside it, and send a distinctive message.
+    await page.goto('/account/projects');
+    await page.getByPlaceholder('e.g. Acme launch').fill('Legal matters');
+    await page.getByRole('button', { name: 'Create project' }).click();
+    await expect(page.getByTestId('project-name')).toHaveText('Legal matters');
+
+    await page.locator('.project-detail__chats-header').getByRole('button').click();
+    await expect(page.getByLabel(COMPOSER_LABEL)).toBeVisible();
+    await sendFirstMessage(page, 'Notes on the flamingosanctuary lease clause');
+
+    // The sidebar excludes project chats from Recent, so none are listed until a
+    // search surfaces them (spec §6.2: no need to expand the project first).
+    const conversationLinks = page.locator('a[href^="/c/"]');
+    await expect(conversationLinks).toHaveCount(0);
+
+    const search = page.getByPlaceholder(SEARCH_PLACEHOLDER, { exact: true });
+    await search.fill('flamingosanctuary');
+    await expect(page.getByText('Search results', { exact: true })).toBeVisible();
+    await expect(conversationLinks).toHaveCount(1);
+  });
 });
