@@ -153,7 +153,7 @@ import { ModelService } from '@app/services/model.service';
 
     .composer-tools__copy {
       display: grid;
-      gap: 2px;
+      gap: var(--cog-space-025);
     }
 
     .composer-tools__copy--clickable {
@@ -162,7 +162,7 @@ import { ModelService } from '@app/services/model.service';
     }
 
     .composer-tools__title {
-      font-weight: 600;
+      font-weight: var(--cog-fw-semibold);
       font-size: var(--cog-fs-body);
       line-height: var(--cog-lh-body);
       color: var(--cog-text);

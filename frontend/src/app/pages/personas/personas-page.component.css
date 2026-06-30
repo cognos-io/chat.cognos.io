@@ -63,10 +63,10 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: var(--cog-fw-bold);
   color: var(--cog-success-text);
   background: var(--cog-success-bg);
-  padding: 2px 6px;
+  padding: var(--cog-space-025) var(--cog-space-075);
   border-radius: 999px;
 }
 
@@ -152,12 +152,12 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: var(--cog-fs-caption);
-  font-weight: 700;
+  font-weight: var(--cog-fw-bold);
   color: var(--cog-text-subtle);
 }
 
 .personas-page__section-heading span {
-  font-weight: 600;
+  font-weight: var(--cog-fw-semibold);
   opacity: 0.7;
 }
 
@@ -213,12 +213,12 @@
 .persona-card__heading {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--cog-space-050);
   min-inline-size: 0;
 }
 
 .persona-card__name {
-  font-weight: 600;
+  font-weight: var(--cog-fw-semibold);
   color: var(--cog-text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -228,14 +228,14 @@
 .persona-card__badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--cog-space-050);
 }
 
 .persona-card__badge {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: var(--cog-fw-bold);
   padding: 1px 5px;
   border-radius: var(--cog-radius-sm);
 }
@@ -256,7 +256,7 @@
 .persona-card__actions {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--cog-space-025);
 }
 
 .persona-card__action {
@@ -303,7 +303,7 @@
 }
 
 .persona-card--new__label {
-  font-weight: 600;
+  font-weight: var(--cog-fw-semibold);
   color: var(--cog-text);
 }
 

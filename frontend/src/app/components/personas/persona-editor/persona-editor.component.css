@@ -38,7 +38,7 @@
 .persona-editor__title {
   margin: 0;
   font-size: var(--cog-fs-h-sm);
-  font-weight: 700;
+  font-weight: var(--cog-fw-bold);
   color: var(--cog-text);
 }
 
@@ -46,7 +46,7 @@
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--cog-space-050);
   color: var(--cog-text-subtle);
   font-size: var(--cog-fs-caption);
 }
@@ -56,7 +56,7 @@
   background: transparent;
   color: var(--cog-text-subtle);
   cursor: pointer;
-  padding: 4px;
+  padding: var(--cog-space-050);
   border-radius: var(--cog-radius-sm);
 }
 
@@ -95,7 +95,7 @@
 .persona-editor__label {
   padding: 0;
   font-size: var(--cog-fs-caption);
-  font-weight: 600;
+  font-weight: var(--cog-fw-semibold);
   color: var(--cog-text-subtle);
 }
 
@@ -143,7 +143,7 @@
 .persona-editor__delete {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--cog-space-050);
   border: none;
   background: transparent;
   color: var(--cog-danger-text);

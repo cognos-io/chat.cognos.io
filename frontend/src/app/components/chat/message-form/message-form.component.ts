@@ -793,7 +793,7 @@ function escapeHtml(value: string): string {
       align-items: center;
       gap: var(--cog-space-075);
       max-width: 16rem;
-      padding: 4px 8px;
+      padding: var(--cog-space-050) var(--cog-space-100);
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface-sunken);
@@ -862,7 +862,7 @@ function escapeHtml(value: string): string {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 2px;
+      padding: var(--cog-space-025);
       border: 0;
       background: transparent;
       color: var(--cog-text-subtle);
@@ -1020,7 +1020,7 @@ function escapeHtml(value: string): string {
       padding: var(--cog-space-050) var(--cog-space-075) var(--cog-space-075);
       color: var(--cog-text-subtlest);
       font-size: var(--cog-fs-caption);
-      font-weight: 600;
+      font-weight: var(--cog-fw-semibold);
       letter-spacing: 0.06em;
       text-transform: uppercase;
     }
@@ -1053,7 +1053,7 @@ function escapeHtml(value: string): string {
     }
 
     .message-form__reasoning-option-icon {
-      margin-block-start: 2px;
+      margin-block-start: var(--cog-space-025);
       color: var(--cog-text-subtle);
       flex: none;
     }
@@ -1065,7 +1065,7 @@ function escapeHtml(value: string): string {
 
     .message-form__reasoning-option-text {
       display: grid;
-      gap: 2px;
+      gap: var(--cog-space-025);
       flex: 1;
       min-width: 0;
     }
@@ -1081,7 +1081,7 @@ function escapeHtml(value: string): string {
     }
 
     .message-form__reasoning-option-check {
-      margin-block-start: 4px;
+      margin-block-start: var(--cog-space-050);
       color: var(--cog-brand);
       flex: none;
     }
@@ -1179,7 +1179,7 @@ function escapeHtml(value: string): string {
       border-radius: var(--cog-radius-pill);
       background: var(--cog-surface);
       box-shadow: var(--cog-shadow-overlay);
-      padding: 4px 10px;
+      padding: var(--cog-space-050) 10px;
       color: var(--cog-text);
       font: inherit;
       font-size: var(--cog-fs-caption);
@@ -1276,7 +1276,7 @@ function escapeHtml(value: string): string {
 
     .message-form__locked-copy {
       display: grid;
-      gap: 2px;
+      gap: var(--cog-space-025);
       flex: 1;
       min-width: 0;
     }

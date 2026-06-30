@@ -100,7 +100,7 @@ export interface MessageAttachmentChip {
         min-width: 0;
       }
       .message-attachment-chip__name {
-        font-weight: 600;
+        font-weight: var(--cog-fw-semibold);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;

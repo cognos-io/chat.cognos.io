@@ -145,7 +145,7 @@ import { VaultService } from '@app/services/vault.service';
       background: var(--cog-loz-purple-bg);
       color: var(--cog-text);
       border-radius: var(--cog-radius-xs);
-      padding: 0 4px;
+      padding: 0 var(--cog-space-050);
     }
 
     .memory-page__readonly {

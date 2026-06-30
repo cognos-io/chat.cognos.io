@@ -396,7 +396,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       transform: translate(-50%, calc(-100% - 8px));
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: var(--cog-space-025);
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
@@ -477,7 +477,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     .message-list-item__typing {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: var(--cog-space-050);
       margin: 0;
       padding: var(--cog-space-050) 0;
     }

@@ -60,7 +60,7 @@
   gap: var(--cog-space-050);
   border-radius: var(--cog-radius-pill);
   background: var(--cog-surface-hover);
-  padding: 4px 12px;
+  padding: var(--cog-space-050) var(--cog-space-150);
   color: var(--cog-text-subtle);
   font-size: var(--cog-fs-caption);
   font-weight: var(--cog-fw-semibold);
@@ -85,7 +85,7 @@
 /* Interval toggle */
 .pricing__interval {
   display: inline-flex;
-  gap: 2px;
+  gap: var(--cog-space-025);
   border: 1px solid var(--cog-border);
   border-radius: var(--cog-radius-md);
   background: var(--cog-surface-sunken);
@@ -278,7 +278,7 @@
 }
 
 .pricing__assurance p {
-  margin: 2px 0 0;
+  margin: var(--cog-space-025) 0 0;
   color: var(--cog-text-subtle);
   font-size: var(--cog-fs-body-sm);
   line-height: var(--cog-lh-body-sm);

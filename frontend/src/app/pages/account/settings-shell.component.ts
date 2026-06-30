@@ -195,7 +195,7 @@ interface SettingsNavItem {
 
     .settings__menu {
       display: grid;
-      gap: 2px;
+      gap: var(--cog-space-025);
       align-content: start;
     }
 

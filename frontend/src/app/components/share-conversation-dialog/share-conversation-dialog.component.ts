@@ -211,7 +211,7 @@ type ShareState = 'checking' | 'idle' | 'shared';
 
     .share-dialog__mode-text {
       display: grid;
-      gap: 2px;
+      gap: var(--cog-space-025);
     }
 
     .share-dialog__mode-label {

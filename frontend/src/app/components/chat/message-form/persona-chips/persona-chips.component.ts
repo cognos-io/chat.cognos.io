@@ -69,7 +69,7 @@ import { PersonaService } from '@app/services/persona.service';
       display: inline-flex;
       align-items: center;
       gap: var(--cog-space-050);
-      padding: 4px 10px 4px 6px;
+      padding: var(--cog-space-050) 10px var(--cog-space-050) var(--cog-space-075);
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-pill);
       background: var(--cog-surface);

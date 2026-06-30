@@ -288,7 +288,7 @@
 }
 
 .project-detail__danger-desc {
-  margin: 2px 0 0;
+  margin: var(--cog-space-025) 0 0;
   color: var(--cog-text-subtle);
   font-size: var(--cog-fs-body-sm);
 }

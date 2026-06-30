@@ -147,7 +147,7 @@
 .projects-page__item-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--cog-space-025);
   min-width: 0;
 }
 

@@ -337,7 +337,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
       border-radius: var(--cog-radius-pill);
       background: var(--cog-surface);
       color: var(--cog-text);
-      padding: 6px 12px;
+      padding: var(--cog-space-075) var(--cog-space-150);
       font: inherit;
       font-size: var(--cog-fs-body-sm);
       cursor: pointer;

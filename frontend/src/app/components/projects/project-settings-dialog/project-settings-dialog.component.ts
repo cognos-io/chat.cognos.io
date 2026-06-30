@@ -164,7 +164,7 @@ import { ProjectService } from '@app/services/project.service';
 
     .project-settings__preview-text {
       display: grid;
-      gap: 2px;
+      gap: var(--cog-space-025);
       min-width: 0;
     }
 

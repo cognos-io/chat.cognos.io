@@ -364,7 +364,7 @@ type View =
     .security__badge {
       flex: none;
       border-radius: var(--cog-radius-pill);
-      padding: 2px 10px;
+      padding: var(--cog-space-025) 10px;
       font-size: var(--cog-fs-body-sm);
       background: var(--cog-neutral-bg);
       color: var(--cog-text-subtle);

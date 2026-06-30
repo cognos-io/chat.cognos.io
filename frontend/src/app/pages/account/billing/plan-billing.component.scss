@@ -307,7 +307,7 @@
 
 .pb__payment-details {
   display: grid;
-  gap: 2px;
+  gap: var(--cog-space-025);
 }
 
 .pb__payment-number {
@@ -344,7 +344,7 @@
 
 .pb__invoice-main {
   display: grid;
-  gap: 2px;
+  gap: var(--cog-space-025);
   flex: 1;
   min-width: 0;
 }

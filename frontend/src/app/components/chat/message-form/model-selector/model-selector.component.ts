@@ -342,7 +342,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       background: transparent;
       border-radius: var(--cog-radius-sm);
       padding: var(--cog-space-100);
-      padding-right: 40px;
+      padding-right: var(--cog-space-500);
       text-align: left;
       cursor: pointer;
       color: var(--cog-text);
@@ -504,7 +504,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       gap: var(--cog-space-075);
       overflow-x: auto;
       scrollbar-width: none;
-      padding-bottom: 2px;
+      padding-bottom: var(--cog-space-025);
     }
 
     .model-selector__chips::-webkit-scrollbar {

@@ -103,7 +103,7 @@ const PLAN_LABEL_KEYS: Record<BillingPlanType, string> = {
 
     .sidebar-profile__body {
       display: grid;
-      gap: 2px;
+      gap: var(--cog-space-025);
       min-width: 0;
       flex: 1;
     }

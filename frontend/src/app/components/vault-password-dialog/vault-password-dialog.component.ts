@@ -399,7 +399,7 @@ const validateUnlockForm = (
     }
 
     .vault-password-dialog__checkbox-row--acknowledge input {
-      margin-top: 2px;
+      margin-top: var(--cog-space-025);
     }
 
     .vault-password-dialog__error {
