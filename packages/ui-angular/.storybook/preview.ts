@@ -1,5 +1,9 @@
 import type { Preview } from '@storybook/angular';
 
+// Load the design tokens so library components render against the real
+// --cog-* variables (matching the app), not their inline fallbacks.
+import '@cognos/ui/tokens.css';
+
 const preview: Preview = {
   parameters: {
     layout: 'centered',
