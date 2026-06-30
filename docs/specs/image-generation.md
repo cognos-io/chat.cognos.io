@@ -501,13 +501,19 @@ pending a live run for final confirmation of the response shape and whether cost
 - User enables image generation with an unsupported selected model and sees an alert; send is
   blocked.
 - User switches from an unsupported model to a supported model mid-conversation and can send.
-- User disables image generation and can send a normal text completion with the same model.
+- User disables image generation and can send a normal text completion with the same model — but
+  only when that model supports text completion. An image-generation-only model (e.g.
+  `gemini-2-5-flash-image`) is _not_ sendable as a text completion: with the image tool off the
+  composer blocks the send and offers to re-enable image generation or switch model.
 - Image-capable model badges/labels are visible when image generation is enabled.
 
 ### Backend integration tests
 
-- `GET /api/v1/models` includes `supports_image_generation` for every model.
+- `GET /api/v1/models` includes `supports_image_generation` and `supports_text_completion` for every
+  model (the image-only model reports `supports_text_completion: false`).
 - Image generation request with unsupported model returns an error before gateway invocation.
+- Text completion request (`/completions` and `/conversations/{id}/complete`) with an
+  image-generation-only model returns a 400 before any persistence or gateway invocation.
 - Image generation request with privacy-tier-ineligible model returns the existing eligibility error
   before gateway invocation.
 - Successful image generation persists encrypted assistant message data and an encrypted protected
