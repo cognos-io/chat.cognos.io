@@ -46,6 +46,7 @@ import {
   Message,
   MessageAttachment,
   MessageData,
+  assertMessageBindings,
   isMessageFromUser,
   parseMessageData,
 } from '@app/interfaces/message';
@@ -216,26 +217,10 @@ type CompleteErrorBody = {
   next_step?: string;
 };
 
-// assertMessageBindings is the second-line defence after sealed-box decryption.
-// Even if a sealed box opens (the keypair is correct), the decrypted payload
-// must still claim to belong to the conversation and parent we read it from —
-// otherwise an attacker who swaps ciphertext across rows could rebind a message
-// into a different thread. Throwing here forces the catch in decryptMessage to
-// show the "Failed to decrypt message" placeholder instead of trusting it.
-export const assertMessageBindings = (
-  decrypted: { conversation_id?: string; parent_message_id?: string },
-  record: { conversation: string; parent_message?: string },
-): void => {
-  if (decrypted.conversation_id && decrypted.conversation_id !== record.conversation) {
-    throw new Error('Message conversation binding mismatch');
-  }
-  if (
-    decrypted.parent_message_id !== undefined &&
-    decrypted.parent_message_id !== record.parent_message
-  ) {
-    throw new Error('Message parent binding mismatch');
-  }
-};
+// assertMessageBindings now lives in @app/interfaces/message so the search index
+// shares the exact same binding rule. Re-exported here to keep existing imports
+// (and the message.service spec) working unchanged.
+export { assertMessageBindings };
 
 // buildCompletionMessageContext walks the conversation newest-first and
 // produces the chronological prompt context. It enforces the per-message

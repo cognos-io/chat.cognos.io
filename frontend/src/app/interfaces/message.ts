@@ -1,4 +1,7 @@
+import { Base64 } from 'js-base64';
 import { z } from 'zod';
+
+import { KeyPair } from './key-pair';
 
 export const MessageDataVersion = z.enum(['1']);
 export type MessageDataVersion = z.infer<typeof MessageDataVersion>;
@@ -93,4 +96,49 @@ export interface Message {
 
 export const isMessageFromUser = (messageData: MessageData): boolean => {
   return messageData.owner_id !== undefined && messageData.owner_id.trim() !== '';
+};
+
+// assertMessageBindings is the second-line defence after sealed-box decryption.
+// Even if a sealed box opens (the keypair is correct), the decrypted payload
+// must still claim to belong to the conversation and parent we read it from —
+// otherwise an attacker who swaps ciphertext across rows could rebind a message
+// into a different thread. Throwing here forces the caller to discard it rather
+// than trust it. Shared by MessageService (display) and the search index so both
+// apply the identical binding rule.
+export const assertMessageBindings = (
+  decrypted: { conversation_id?: string; parent_message_id?: string },
+  record: { conversation: string; parent_message?: string },
+): void => {
+  if (decrypted.conversation_id && decrypted.conversation_id !== record.conversation) {
+    throw new Error('Message conversation binding mismatch');
+  }
+  if (
+    decrypted.parent_message_id !== undefined &&
+    decrypted.parent_message_id !== record.parent_message
+  ) {
+    throw new Error('Message parent binding mismatch');
+  }
+};
+
+// decryptMessageData is the stateless decrypt+verify path used by the search
+// index. It does NOT touch any active-conversation state (unlike
+// MessageService.decryptMessage), so search hydration can decrypt arbitrary
+// conversations without mutating the open chat. Returns null on any failure
+// (bad keypair, parse error, binding mismatch) so callers index nothing rather
+// than the "Failed to decrypt message" placeholder. `openSealedBox` is injected
+// to keep this module free of the Angular CryptoService dependency.
+export const decryptMessageData = (
+  record: { data: string; conversation: string; parent_message?: string },
+  keyPair: KeyPair,
+  openSealedBox: (sealedBox: Uint8Array, keyPair: KeyPair) => Uint8Array,
+): MessageData | null => {
+  try {
+    const decrypted = parseMessageData(
+      openSealedBox(Base64.toUint8Array(record.data), keyPair),
+    );
+    assertMessageBindings(decrypted, record);
+    return decrypted;
+  } catch {
+    return null;
+  }
 };
