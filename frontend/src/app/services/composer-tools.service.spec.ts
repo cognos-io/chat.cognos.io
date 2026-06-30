@@ -38,22 +38,40 @@ function makeModel(overrides: Partial<Model>): Model {
   };
 }
 
-function setup(options: { selected: Model; list: Model[] }) {
+function setup(options: {
+  selected: Model;
+  list: Model[];
+  // Optional resolver so a test can model ModelService's capability-aware
+  // selection: setActiveCapability swaps the selected model for the context.
+  resolveForCapability?: (capability: string) => Model;
+}) {
   const selectModel = vi.fn();
+  const selectedModel = signal(options.selected);
+  const setActiveCapability = vi.fn((capability: string) => {
+    if (options.resolveForCapability) {
+      selectedModel.set(options.resolveForCapability(capability));
+    }
+  });
   TestBed.configureTestingModule({
     providers: [
       ComposerToolsService,
       {
         provide: ModelService,
         useValue: {
-          selectedModel: signal(options.selected),
+          selectedModel,
           modelList: signal(options.list),
           selectModel,
+          setActiveCapability,
         },
       },
     ],
   });
-  return { service: TestBed.inject(ComposerToolsService), selectModel };
+  return {
+    service: TestBed.inject(ComposerToolsService),
+    selectModel,
+    selectedModel,
+    setActiveCapability,
+  };
 }
 
 describe('ComposerToolsService', () => {
@@ -76,6 +94,98 @@ describe('ComposerToolsService', () => {
     service.toggleImageGeneration();
     expect(service.imageGenerationEnabled()).toBe(true);
     expect(service.requiredCapability()).toBe('image_generation');
+  });
+
+  it('requires text completion when no tool is active', () => {
+    const { service } = setup({ selected: textModel, list: [textModel] });
+    expect(service.requiredCapability()).toBe('text_completion');
+    service.setImageGeneration(true);
+    expect(service.requiredCapability()).toBe('image_generation');
+  });
+
+  it('pushes the active capability to ModelService on construction and toggle', () => {
+    const { service, setActiveCapability } = setup({
+      selected: textModel,
+      list: [textModel],
+    });
+    expect(setActiveCapability).toHaveBeenCalledWith('text_completion');
+    service.setImageGeneration(true);
+    expect(setActiveCapability).toHaveBeenLastCalledWith('image_generation');
+  });
+
+  it('announces an auto-switch with the new model and direction', () => {
+    const imageModel = makeModel({
+      id: 'gemini',
+      displayName: 'Gemini',
+      supportsImageGeneration: true,
+      supportsTextCompletion: false,
+    });
+    const { service } = setup({
+      selected: textModel,
+      list: [textModel, imageModel],
+      resolveForCapability: (cap) =>
+        cap === 'image_generation' ? imageModel : textModel,
+    });
+    expect(service.autoSwitchNotice()).toBeNull();
+
+    service.setImageGeneration(true);
+    expect(service.autoSwitchNotice()).toEqual(
+      expect.objectContaining({ direction: 'to_image', modelName: 'Gemini' }),
+    );
+
+    service.setImageGeneration(false);
+    expect(service.autoSwitchNotice()).toEqual(
+      expect.objectContaining({ direction: 'to_text' }),
+    );
+  });
+
+  it('flags a privacy-tier change in the auto-switch notice', () => {
+    const chModel = makeModel({ id: 'ch', privacyTier: 'ch_only' });
+    const imageModel = makeModel({
+      id: 'gemini',
+      privacyTier: 'eu',
+      supportsImageGeneration: true,
+      supportsTextCompletion: false,
+    });
+    const { service } = setup({
+      selected: chModel,
+      list: [chModel, imageModel],
+      resolveForCapability: (cap) =>
+        cap === 'image_generation' ? imageModel : chModel,
+    });
+
+    service.setImageGeneration(true);
+    expect(service.autoSwitchNotice()?.tierChanged).toBe(true);
+    expect(service.autoSwitchNotice()?.tier).toBe('eu');
+  });
+
+  it('emits no notice when a capable model needs no switch', () => {
+    const multimodal = makeModel({ id: 'both', supportsImageGeneration: true });
+    const { service } = setup({
+      selected: multimodal,
+      list: [multimodal],
+      resolveForCapability: () => multimodal,
+    });
+    service.setImageGeneration(true);
+    expect(service.autoSwitchNotice()).toBeNull();
+  });
+
+  it('dismisses the auto-switch notice', () => {
+    const imageModel = makeModel({
+      id: 'gemini',
+      supportsImageGeneration: true,
+      supportsTextCompletion: false,
+    });
+    const { service } = setup({
+      selected: textModel,
+      list: [textModel, imageModel],
+      resolveForCapability: (cap) =>
+        cap === 'image_generation' ? imageModel : textModel,
+    });
+    service.setImageGeneration(true);
+    expect(service.autoSwitchNotice()).not.toBeNull();
+    service.dismissAutoSwitch();
+    expect(service.autoSwitchNotice()).toBeNull();
   });
 
   it('flags the selected model as unsupported only when the tool is on', () => {

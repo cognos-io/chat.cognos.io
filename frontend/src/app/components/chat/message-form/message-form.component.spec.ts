@@ -58,12 +58,14 @@ describe('MessageFormComponent', () => {
     selectedModelUnsupported,
     selectedModelTextIncompatible,
     requiredCapability: computed(() =>
-      imageGenerationEnabled() ? 'image_generation' : null,
+      imageGenerationEnabled() ? 'image_generation' : 'text_completion',
     ),
     suggestedImageModel: signal(null),
+    autoSwitchNotice: signal(null),
     toggleImageGeneration: () => imageGenerationEnabled.update((v) => !v),
     setImageGeneration: (value: boolean) => imageGenerationEnabled.set(value),
     useSuggestedImageModel: vi.fn(),
+    dismissAutoSwitch: vi.fn(),
     reset: vi.fn(),
   };
 

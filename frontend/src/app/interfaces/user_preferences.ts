@@ -26,6 +26,12 @@ export const UserPreferencesData = z.object({
   // Model ids the user has hidden from the normal selector. Managed in account
   // settings. Unknown ids are ignored at read time, so stale entries are safe.
   hiddenModels: z.array(z.string()).default([]),
+  // The user's preferred model per capability context (e.g. "image_generation"),
+  // keyed by context. The plain-chat ("text") default stays in `defaultModelId`,
+  // so this only holds tool contexts and existing payloads need no migration.
+  // Toggling a composer tool restores that context's model; unknown/ineligible
+  // ids are ignored at read time (spec docs/specs/tool-aware-model-selection.md §5).
+  toolModelDefaults: z.record(z.string(), z.string()).default({}),
 });
 export type UserPreferencesData = z.infer<typeof UserPreferencesData>;
 
@@ -40,6 +46,7 @@ export const emptyPreferences: UserPreferencesData = {
   modelReasoningEfforts: {},
   recentModels: [],
   hiddenModels: [],
+  toolModelDefaults: {},
 };
 
 /**

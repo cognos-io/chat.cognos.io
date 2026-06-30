@@ -553,6 +553,12 @@
         "imageOnlyHint": "Turn on Generate image to use it, or pick a text model.",
         "enableImage": "Turn on Generate image"
       },
+      "modelSwitch": {
+        "toImage": "Switched to {{ model }} for image generation",
+        "toText": "Switched back to {{ model }}",
+        "tierChange": "This model runs in a different region ({{ region }}).",
+        "dismiss": "Dismiss"
+      },
       "reasoning": {
         "title": "Reasoning effort",
         "efforts": {

@@ -553,6 +553,12 @@
         "imageOnlyHint": "Activa Generar imagen para usarlo, o elige un modelo de texto.",
         "enableImage": "Activar Generar imagen"
       },
+      "modelSwitch": {
+        "toImage": "Se cambió a {{ model }} para generar imágenes",
+        "toText": "Se volvió a {{ model }}",
+        "tierChange": "Este modelo se ejecuta en otra región ({{ region }}).",
+        "dismiss": "Descartar"
+      },
       "reasoning": {
         "title": "Esfuerzo de razonamiento",
         "efforts": {

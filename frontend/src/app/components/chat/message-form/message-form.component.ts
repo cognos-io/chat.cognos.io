@@ -205,6 +205,39 @@ function escapeHtml(value: string): string {
             </ul>
           }
 
+          @if (composerTools.autoSwitchNotice(); as notice) {
+            <div class="message-form__model-switch" role="status">
+              <cog-icon name="rotate-cw" [size]="14" tone="text-subtle" />
+              <span class="message-form__model-switch-copy">
+                {{
+                  t(
+                    notice.direction === 'to_image'
+                      ? 'chat.composer.modelSwitch.toImage'
+                      : 'chat.composer.modelSwitch.toText',
+                    { model: notice.modelName }
+                  )
+                }}
+                @if (notice.tierChanged) {
+                  <span class="message-form__model-switch-tier">
+                    {{
+                      t('chat.composer.modelSwitch.tierChange', {
+                        region: t('account.dataProcessing.regionBadge.' + notice.tier),
+                      })
+                    }}
+                  </span>
+                }
+              </span>
+              <button
+                type="button"
+                class="message-form__model-switch-dismiss"
+                [attr.aria-label]="t('chat.composer.modelSwitch.dismiss')"
+                (click)="composerTools.dismissAutoSwitch()"
+              >
+                <cog-icon name="x" [size]="14" />
+              </button>
+            </div>
+          }
+
           @if (attachmentNotice()) {
             <p class="message-form__attachment-notice" role="status">
               {{ attachmentNotice() }}
@@ -799,8 +832,45 @@ function escapeHtml(value: string): string {
 
     .message-form__attachment-notice {
       margin: 0;
-      font-size: 0.8125rem;
+      font-size: var(--cog-fs-caption);
       color: var(--cog-text-subtle);
+    }
+
+    .message-form__model-switch {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--cog-space-075);
+      padding: var(--cog-space-075) var(--cog-space-100);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface-hover);
+      font-size: var(--cog-fs-caption);
+      color: var(--cog-text);
+    }
+
+    .message-form__model-switch-copy {
+      flex: 1;
+      line-height: var(--cog-lh-caption, 1.4);
+    }
+
+    .message-form__model-switch-tier {
+      display: block;
+      color: var(--cog-text-subtle);
+    }
+
+    .message-form__model-switch-dismiss {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+      border: 0;
+      background: transparent;
+      color: var(--cog-text-subtle);
+      cursor: pointer;
+    }
+
+    .message-form__model-switch-dismiss:hover {
+      color: var(--cog-text);
     }
 
     /* Mobile model selector presented as a bottom sheet (spec §4.5). */

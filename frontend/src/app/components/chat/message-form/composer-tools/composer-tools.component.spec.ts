@@ -56,6 +56,7 @@ describe('ComposerToolsComponent', () => {
             selectedModel: signal(textModel),
             modelList: signal([textModel]),
             selectModel: vi.fn(),
+            setActiveCapability: vi.fn(),
           },
         },
       ],

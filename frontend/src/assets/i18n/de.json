@@ -553,6 +553,12 @@
         "imageOnlyHint": "Aktivieren Sie „Bild erzeugen“, um es zu nutzen, oder wählen Sie ein Textmodell.",
         "enableImage": "„Bild erzeugen“ aktivieren"
       },
+      "modelSwitch": {
+        "toImage": "Zu {{ model }} für die Bilderzeugung gewechselt",
+        "toText": "Zurück zu {{ model }} gewechselt",
+        "tierChange": "Dieses Modell läuft in einer anderen Region ({{ region }}).",
+        "dismiss": "Schließen"
+      },
       "reasoning": {
         "title": "Denkaufwand",
         "efforts": {

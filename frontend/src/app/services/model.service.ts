@@ -1,11 +1,16 @@
-import { Injectable, computed, inject } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { Observable, catchError, map, of, switchMap } from 'rxjs';
 
 import { signalSlice } from 'ngxtension/signal-slice';
 
 import { Model, PrivacyTier, loadingModel } from '@app/interfaces/model';
-import { resolveDefaultModel } from '@app/utils/model-discovery';
+import {
+  CAPABILITY_CONTEXT_TEXT,
+  RequiredCapability,
+  capabilityContextKey,
+  resolveDefaultModel,
+} from '@app/utils/model-discovery';
 
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
@@ -57,6 +62,18 @@ export class ModelService {
   private readonly _preferences = inject(UserPreferencesService);
   private readonly _projects = inject(ProjectService);
 
+  // The capability the composer currently requires (text completion by default,
+  // image generation when that tool is on). Pushed in by ComposerToolsService —
+  // ModelService must not depend on it (that would be a DI cycle), so the arrow
+  // points the other way. Drives capability-aware selection + the per-context
+  // default (spec docs/specs/tool-aware-model-selection.md §2/§6).
+  private readonly _activeCapability = signal<RequiredCapability>('text_completion');
+
+  // Declared before `state` so the selectedModel selector can read it.
+  setActiveCapability(capability: RequiredCapability): void {
+    this._activeCapability.set(capability);
+  }
+
   private readonly state = signalSlice({
     initialState,
     sources: [
@@ -86,18 +103,30 @@ export class ModelService {
     selectors: (state) => ({
       selectedModel: () => {
         const modelList = state.modelList();
-        // Resolution order (spec §5.6/§5.7): explicit session pick → encrypted
-        // project default → encrypted user default → recommended eligible →
-        // first eligible visible. Hidden/ineligible/stale ids fall through. The
-        // final fallbacks keep a model selected even when none are eligible.
+        // Resolution is per the active capability context (tool-aware-model-
+        // selection.md §6). Every candidate must be eligible AND capable of the
+        // context: session pick → project default → per-context default →
+        // recommended → first eligible. Because resolution is capability-gated,
+        // toggling a tool re-resolves to the right model automatically — that is
+        // the auto-switch (§4.2). Hidden/ineligible/incapable/stale ids fall
+        // through; the final fallbacks keep a model selected regardless.
+        const capability = this._activeCapability();
+        const contextKey = capabilityContextKey(capability);
+        // The "text" context default stays in defaultModelId (backward compat);
+        // tool contexts read their remembered model from toolModelDefaults (§5).
+        const perContextDefault =
+          contextKey === CAPABILITY_CONTEXT_TEXT
+            ? this._preferences.defaultModelId()
+            : (this._preferences.toolModelDefaults()[contextKey] ?? '');
         return (
           resolveDefaultModel({
             models: modelList,
             sessionSelectedId: state.selectedModelId(),
             projectDefaultId:
               this._projects.selectedProject()?.decryptedData.defaultModelId,
-            userDefaultId: this._preferences.defaultModelId(),
+            userDefaultId: perContextDefault,
             hiddenIds: this._preferences.hiddenModels(),
+            requiredCapability: capability,
           }) ??
           modelList[0] ??
           loadingModel
@@ -121,11 +150,18 @@ export class ModelService {
             if (!model || !model.isEligible) {
               return {};
             }
-            // Picking a model also makes it the default, persisted to the single
-            // preferences object so it is restored next session / on new devices.
-            // The default stays implicit (spec §5.6): selecting is the only way
-            // to set it. Selecting also records the model as recently used.
-            this._preferences.setDefaultModel(id);
+            // Picking a model also makes it the implicit default for the *active
+            // capability context* (spec §4.3): a chat pick updates defaultModelId,
+            // an image-context pick updates toolModelDefaults["image_generation"].
+            // Selecting in one context never overwrites another's default, so a
+            // user keeps a chat model and an image model independently. Selecting
+            // also records the model as recently used.
+            const contextKey = capabilityContextKey(this._activeCapability());
+            if (contextKey === CAPABILITY_CONTEXT_TEXT) {
+              this._preferences.setDefaultModel(id);
+            } else {
+              this._preferences.setToolModelDefault(contextKey, id);
+            }
             this._preferences.markRecentModel(id);
             return {
               selectedModelId: id,

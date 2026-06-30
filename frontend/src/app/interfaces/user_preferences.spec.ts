@@ -56,6 +56,14 @@ describe('parseUserPreferencesData', () => {
     expect(parsed.hiddenModels).toEqual([]);
   });
 
+  it('defaults toolModelDefaults to an empty map for older payloads', () => {
+    // Per-context model defaults are new; older payloads must decrypt to {} so
+    // toggling a tool resolves a default rather than throwing (tool-aware spec §5).
+    const payload = encode(JSON.stringify({ pinnedConversations: ['c-1'] }));
+
+    expect(parseUserPreferencesData(payload).toolModelDefaults).toEqual({});
+  });
+
   it('rejects payloads missing pinnedConversations', () => {
     const payload = encode(JSON.stringify({ pinnedModels: [] }));
     expect(() => parseUserPreferencesData(payload)).toThrow();
@@ -95,6 +103,7 @@ describe('serializeUserPreferencesData', () => {
       modelReasoningEfforts: { 'm-1': 'high' },
       recentModels: ['m-1', 'm-2'],
       hiddenModels: ['m-3'],
+      toolModelDefaults: { image_generation: 'm-2' },
     };
 
     const serialized = serializeUserPreferencesData(original);

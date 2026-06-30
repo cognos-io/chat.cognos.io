@@ -58,6 +58,10 @@ export class UserPreferencesService {
   private readonly _unpinPersona = new Subject<string>();
   private readonly _setDefaultPersona = new Subject<string>();
   private readonly _setDefaultModel = new Subject<string>();
+  private readonly _setToolModelDefault = new Subject<{
+    contextKey: string;
+    modelId: string;
+  }>();
   private readonly _markRecentPersona = new Subject<string>();
   private readonly _markRecentModel = new Subject<string>();
   private readonly _hideModel = new Subject<string>();
@@ -230,6 +234,29 @@ export class UserPreferencesService {
             }),
           ),
         ),
+      // Set a per-capability-context default model, local then remote. Keyed by
+      // context (e.g. "image_generation") so toggling a tool restores its model.
+      (state) =>
+        this._setToolModelDefault.pipe(
+          map(({ contextKey, modelId }) => ({
+            toolModelDefaults: {
+              ...state().toolModelDefaults,
+              [contextKey]: modelId,
+            },
+          })),
+        ),
+      (state) =>
+        this._setToolModelDefault.pipe(
+          concatMap(({ contextKey, modelId }) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              toolModelDefaults: {
+                ...state().toolModelDefaults,
+                [contextKey]: modelId,
+              },
+            }),
+          ),
+        ),
       // Toggle PII redaction, local then remote
       () =>
         this._setRedactionEnabled.pipe(
@@ -357,6 +384,7 @@ export class UserPreferencesService {
       unpinPersona: this._unpinPersona,
       setDefaultPersona: this._setDefaultPersona,
       setDefaultModel: this._setDefaultModel,
+      setToolModelDefault: this._setToolModelDefault,
       markRecentPersona: this._markRecentPersona,
       markRecentModel: this._markRecentModel,
       hideModel: this._hideModel,
@@ -392,6 +420,9 @@ export class UserPreferencesService {
   public setDefaultModel = (modelId: string) => {
     this.state.setDefaultModel(modelId);
   };
+  public setToolModelDefault = (contextKey: string, modelId: string) => {
+    this.state.setToolModelDefault({ contextKey, modelId });
+  };
   public markRecentPersona = (personaId: string) => {
     this.state.markRecentPersona(personaId);
   };
@@ -425,6 +456,7 @@ export class UserPreferencesService {
   public modelReasoningEfforts = this.state.modelReasoningEfforts;
   public recentModels = this.state.recentModels;
   public hiddenModels = this.state.hiddenModels;
+  public toolModelDefaults = this.state.toolModelDefaults;
 
   // private methods
   private addConversationIdToPinnedConversations(

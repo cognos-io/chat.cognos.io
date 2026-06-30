@@ -57,8 +57,10 @@ describe('ModelService', () => {
   let httpController: HttpTestingController;
   let authUser$: BehaviorSubject<unknown>;
   let setDefaultModel: ReturnType<typeof vi.fn>;
+  let setToolModelDefault: ReturnType<typeof vi.fn>;
   let markRecentModel: ReturnType<typeof vi.fn>;
   let defaultModelId: WritableSignal<string>;
+  let toolModelDefaults: WritableSignal<Record<string, string>>;
   let hiddenModels: WritableSignal<string[]>;
   let selectedProject: WritableSignal<{
     decryptedData: { defaultModelId: string };
@@ -67,8 +69,10 @@ describe('ModelService', () => {
   beforeEach(() => {
     authUser$ = new BehaviorSubject<unknown>(null);
     setDefaultModel = vi.fn();
+    setToolModelDefault = vi.fn();
     markRecentModel = vi.fn();
     defaultModelId = signal('');
+    toolModelDefaults = signal<Record<string, string>>({});
     hiddenModels = signal<string[]>([]);
     selectedProject = signal<{
       decryptedData: { defaultModelId: string };
@@ -91,7 +95,9 @@ describe('ModelService', () => {
           useValue: {
             defaultModelId,
             setDefaultModel,
+            setToolModelDefault,
             markRecentModel,
+            toolModelDefaults,
             hiddenModels,
           },
         },
@@ -239,6 +245,104 @@ describe('ModelService', () => {
     // When the decrypted default arrives it wins reactively (no race).
     defaultModelId.set('model-b');
     expect(service.selectedModel().id).toBe('model-b');
+  });
+
+  it('filters image-only models out of the default text-completion context', () => {
+    authUser$.next({ id: 'user-1' });
+    const request = httpController.expectOne('http://localhost:8090/api/v1/models');
+    request.flush({
+      privacy_tier: 'global',
+      models: [
+        makeModel('image-only', {
+          supports_image_generation: true,
+          supports_text_completion: false,
+        }),
+        makeModel('text-model'),
+      ],
+    });
+
+    // The default context is text completion, so an image-only model is never
+    // resolved as the selected model (spec §4.1).
+    expect(service.selectedModel().id).toBe('text-model');
+  });
+
+  it('auto-switches between text and image models as the context changes', () => {
+    authUser$.next({ id: 'user-1' });
+    const request = httpController.expectOne('http://localhost:8090/api/v1/models');
+    request.flush({
+      privacy_tier: 'global',
+      models: [
+        makeModel('text-model'),
+        makeModel('image-model', {
+          supports_image_generation: true,
+          supports_text_completion: false,
+        }),
+      ],
+    });
+
+    expect(service.selectedModel().id).toBe('text-model');
+
+    // Turning the image tool on resolves to an image-capable model (§4.2).
+    service.setActiveCapability('image_generation');
+    expect(service.selectedModel().id).toBe('image-model');
+
+    // Turning it off returns to the chat model — no image-only model is left
+    // selected for text (the bug this feature fixes).
+    service.setActiveCapability('text_completion');
+    expect(service.selectedModel().id).toBe('text-model');
+  });
+
+  it('prefers the remembered per-context default for the active context', () => {
+    authUser$.next({ id: 'user-1' });
+    const request = httpController.expectOne('http://localhost:8090/api/v1/models');
+    request.flush({
+      privacy_tier: 'global',
+      models: [
+        makeModel('text-model'),
+        makeModel('image-a', {
+          supports_image_generation: true,
+          supports_text_completion: false,
+        }),
+        makeModel('image-b', {
+          supports_image_generation: true,
+          supports_text_completion: false,
+        }),
+      ],
+    });
+
+    service.setActiveCapability('image_generation');
+    // A remembered image default wins over the first eligible image model.
+    toolModelDefaults.set({ image_generation: 'image-b' });
+    expect(service.selectedModel().id).toBe('image-b');
+  });
+
+  it('persists an explicit pick to the active context slot, not the chat default', () => {
+    authUser$.next({ id: 'user-1' });
+    const request = httpController.expectOne('http://localhost:8090/api/v1/models');
+    request.flush({
+      privacy_tier: 'global',
+      models: [
+        makeModel('text-model'),
+        makeModel('image-a', {
+          supports_image_generation: true,
+          supports_text_completion: false,
+        }),
+      ],
+    });
+
+    // An image-context pick writes the tool default, never defaultModelId (§4.3).
+    service.setActiveCapability('image_generation');
+    service.selectModel('image-a');
+    expect(setToolModelDefault).toHaveBeenCalledExactlyOnceWith(
+      'image_generation',
+      'image-a',
+    );
+    expect(setDefaultModel).not.toHaveBeenCalled();
+
+    // A chat-context pick still writes the chat default.
+    service.setActiveCapability('text_completion');
+    service.selectModel('text-model');
+    expect(setDefaultModel).toHaveBeenCalledExactlyOnceWith('text-model');
   });
 
   it('prefers an eligible project default over the user default', () => {
