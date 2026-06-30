@@ -138,7 +138,7 @@ export type CognosModelImageState = 'done' | 'generating';
 
       .cog-model-image__sparkles {
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: var(--cog-space-100);
         color: var(--cog-link);
         font-size: 22px;
       }
@@ -146,7 +146,7 @@ export type CognosModelImageState = 'done' | 'generating';
       .cog-model-image__meta {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: var(--cog-space-100);
         margin-top: 10px;
       }
 
@@ -157,11 +157,11 @@ export type CognosModelImageState = 'done' | 'generating';
       }
 
       .cog-model-image__prompt {
-        margin-top: 8px;
+        margin-top: var(--cog-space-100);
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface-hover);
-        padding: 8px 11px;
+        padding: var(--cog-space-100) 11px;
         color: var(--cog-text-subtle);
         font-size: 12.5px;
         line-height: 1.45;
@@ -175,13 +175,13 @@ export type CognosModelImageState = 'done' | 'generating';
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 8px;
-        margin-top: 8px;
+        gap: var(--cog-space-100);
+        margin-top: var(--cog-space-100);
       }
 
       .cog-model-image__tools {
         display: flex;
-        gap: 2px;
+        gap: var(--cog-space-025);
       }
 
       @keyframes cog-model-image-shimmer {

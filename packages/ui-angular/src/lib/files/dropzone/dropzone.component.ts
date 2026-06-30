@@ -7,12 +7,12 @@ import {
   output,
   signal,
   viewChild,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
+import { CognosIconComponent } from '../../icon/icon.component';
 
 @Component({
-  selector: "cog-dropzone",
+  selector: 'cog-dropzone',
   standalone: true,
   imports: [CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,14 +30,25 @@ import { CognosIconComponent } from "../../icon/icon.component";
       (dragleave)="onDragLeave($event)"
       (drop)="onDrop($event)"
     >
-      <input #picker class="cog-dropzone__picker" type="file" (change)="onPickerChange($event)" />
+      <input
+        #picker
+        class="cog-dropzone__picker"
+        type="file"
+        (change)="onPickerChange($event)"
+      />
 
       <span class="cog-dropzone__icon-wrap">
-        <cog-icon [name]="dragging() ? 'lock' : 'upload-cloud'" [size]="22" tone="selected" />
+        <cog-icon
+          [name]="dragging() ? 'lock' : 'upload-cloud'"
+          [size]="22"
+          tone="selected"
+        />
       </span>
 
       <div class="cog-dropzone__title">
-        {{ dragging() ? "Drop to encrypt & add" : "Drag files here to add to your Vault" }}
+        {{
+          dragging() ? 'Drop to encrypt & add' : 'Drag files here to add to your Vault'
+        }}
       </div>
       <div class="cog-dropzone__subtitle">
         or <span class="cog-dropzone__link">browse your device</span>
@@ -62,13 +73,13 @@ import { CognosIconComponent } from "../../icon/icon.component";
         border: 2px dashed var(--cog-border-bold);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
-        padding: 32px 24px;
+        padding: var(--cog-space-400) var(--cog-space-300);
         transition:
           background-color 120ms var(--cog-ease-standard),
           border-color 120ms var(--cog-ease-standard);
 
         &.cog-dropzone--compact {
-          padding: 20px 18px;
+          padding: var(--cog-space-250) 18px;
         }
 
         &.cog-dropzone--dragging {
@@ -90,7 +101,7 @@ import { CognosIconComponent } from "../../icon/icon.component";
         display: inline-flex;
         width: 46px;
         height: 46px;
-        margin-bottom: 12px;
+        margin-bottom: var(--cog-space-150);
         align-items: center;
         justify-content: center;
         border-radius: var(--cog-radius-pill);
@@ -109,7 +120,7 @@ import { CognosIconComponent } from "../../icon/icon.component";
       }
 
       .cog-dropzone__subtitle {
-        margin-top: 4px;
+        margin-top: var(--cog-space-050);
         color: var(--cog-text-subtle);
         font-size: var(--cog-fs-body-sm);
         line-height: var(--cog-lh-body-sm);
@@ -123,7 +134,7 @@ import { CognosIconComponent } from "../../icon/icon.component";
       .cog-dropzone__footer {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: var(--cog-space-075);
         margin-top: 14px;
         color: var(--cog-text-subtlest);
         font-size: 11.5px;
@@ -133,24 +144,24 @@ import { CognosIconComponent } from "../../icon/icon.component";
   ],
 })
 export class CognosDropzoneComponent {
-  private readonly picker = viewChild<ElementRef<HTMLInputElement>>("picker");
+  private readonly picker = viewChild<ElementRef<HTMLInputElement>>('picker');
   private readonly dragDepth = signal(0);
 
   readonly compact = input(false);
   readonly filesSelected = output<FileList | undefined>();
   protected readonly dragging = computed(() => this.dragDepth() > 0);
   protected readonly dropzoneClass = computed(() => {
-    const classes = ["cog-dropzone"];
+    const classes = ['cog-dropzone'];
 
     if (this.compact()) {
-      classes.push("cog-dropzone--compact");
+      classes.push('cog-dropzone--compact');
     }
 
     if (this.dragging()) {
-      classes.push("cog-dropzone--dragging");
+      classes.push('cog-dropzone--dragging');
     }
 
-    return classes.join(" ");
+    return classes.join(' ');
   });
 
   protected browse(): void {
@@ -180,6 +191,6 @@ export class CognosDropzoneComponent {
   protected onPickerChange(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.filesSelected.emit(target.files ?? undefined);
-    target.value = "";
+    target.value = '';
   }
 }

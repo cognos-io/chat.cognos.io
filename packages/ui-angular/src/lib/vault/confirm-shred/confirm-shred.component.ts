@@ -87,7 +87,7 @@ import type { CognosVaultFile } from '../vault.types';
     `
       .cog-confirm-shred__body {
         display: grid;
-        gap: 16px;
+        gap: var(--cog-space-200);
       }
 
       .cog-confirm-shred__text {
@@ -104,7 +104,7 @@ import type { CognosVaultFile } from '../vault.types';
       .cog-confirm-shred__footer {
         display: flex;
         justify-content: flex-end;
-        gap: 8px;
+        gap: var(--cog-space-100);
       }
 
       /* Mobile sheet: full-width buttons, two side-by-side at 50% each. */

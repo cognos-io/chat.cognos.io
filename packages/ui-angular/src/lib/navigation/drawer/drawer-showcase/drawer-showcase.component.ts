@@ -1,18 +1,14 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import { CognosButtonComponent } from "../../../button/button.component";
-import { CognosIconComponent } from "../../../icon/icon.component";
-import { CognosTextFieldComponent } from "../../../primitives/text-field/text-field.component";
-import { CognosLozengeComponent } from "../../../primitives/lozenge/lozenge.component";
-import { CognosNavItemComponent } from "../../nav-item/nav-item.component";
-import { CognosDrawerComponent } from "../drawer.component";
+import { CognosButtonComponent } from '../../../button/button.component';
+import { CognosIconComponent } from '../../../icon/icon.component';
+import { CognosLozengeComponent } from '../../../primitives/lozenge/lozenge.component';
+import { CognosTextFieldComponent } from '../../../primitives/text-field/text-field.component';
+import { CognosNavItemComponent } from '../../nav-item/nav-item.component';
+import { CognosDrawerComponent } from '../drawer.component';
 
 @Component({
-  selector: "cog-drawer-showcase",
+  selector: 'cog-drawer-showcase',
   standalone: true,
   imports: [
     CognosButtonComponent,
@@ -51,17 +47,32 @@ import { CognosDrawerComponent } from "../drawer.component";
             >
               <cog-nav-item label="Data Protection Act — impact" [indent]="1" />
               <cog-nav-item label="Consultation response draft" [indent]="1" />
-              <cog-nav-item label="Cross-border data transfer memo" [indent]="1" [pinned]="true" />
+              <cog-nav-item
+                label="Cross-border data transfer memo"
+                [indent]="1"
+                [pinned]="true"
+              />
             </cog-nav-item>
-            <cog-nav-item icon="graduation-cap" label="Lycée — Year 11" meta="2" [expandable]="true" />
+            <cog-nav-item
+              icon="graduation-cap"
+              label="Lycée — Year 11"
+              meta="2"
+              [expandable]="true"
+            />
             <cog-nav-item icon="lock" label="Private" meta="1" [expandable]="true" />
           </div>
         </section>
 
-        <section class="cog-drawer-showcase__section cog-drawer-showcase__section--grow">
+        <section
+          class="cog-drawer-showcase__section cog-drawer-showcase__section--grow"
+        >
           <h2 class="cog-drawer-showcase__section-title">Recent</h2>
           <div class="cog-drawer-showcase__list">
-            <cog-nav-item icon="message-square" label="FOI request — draft reply" [selected]="true" />
+            <cog-nav-item
+              icon="message-square"
+              label="FOI request — draft reply"
+              [selected]="true"
+            />
             <cog-nav-item icon="message-square" label="Encryption key rotation" />
             <cog-nav-item icon="message-square" label="Summarise procurement PDF" />
             <cog-nav-item icon="message-square" label="FOI request triage" />
@@ -133,7 +144,7 @@ import { CognosDrawerComponent } from "../drawer.component";
 
       .cog-drawer-showcase__list {
         display: grid;
-        gap: 6px;
+        gap: var(--cog-space-075);
       }
 
       .cog-drawer-showcase__security {
@@ -176,5 +187,5 @@ import { CognosDrawerComponent } from "../drawer.component";
 })
 export class CognosDrawerShowcaseComponent {
   readonly open = input(true);
-  readonly title = input("Cognos");
+  readonly title = input('Cognos');
 }

@@ -1,17 +1,12 @@
-import { NgTemplateOutlet } from "@angular/common";
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  output,
-} from "@angular/core";
+import { NgTemplateOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosFileBadgeComponent } from "../../files/file-badge/file-badge.component";
-import type { CognosVaultFile } from "../../vault/vault.types";
+import { CognosFileBadgeComponent } from '../../files/file-badge/file-badge.component';
+import { CognosIconComponent } from '../../icon/icon.component';
+import type { CognosVaultFile } from '../../vault/vault.types';
 
 @Component({
-  selector: "cog-source-card",
+  selector: 'cog-source-card',
   standalone: true,
   imports: [CognosFileBadgeComponent, CognosIconComponent, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,7 +23,9 @@ import type { CognosVaultFile } from "../../vault/vault.types";
 
     <ng-template #content>
       @if (file().kind === 'image' && file().img) {
-        <span class="cog-source-card__thumb"><img class="cog-source-card__thumb-image" [src]="file().img!" alt="" /></span>
+        <span class="cog-source-card__thumb"
+          ><img class="cog-source-card__thumb-image" [src]="file().img!" alt=""
+        /></span>
       } @else {
         <cog-file-badge [ext]="file().ext" [size]="30" [radius]="3" />
       }
@@ -104,7 +101,7 @@ import type { CognosVaultFile } from "../../vault/vault.types";
       .cog-source-card__header {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: var(--cog-space-100);
       }
 
       .cog-source-card__name {
@@ -122,7 +119,7 @@ import type { CognosVaultFile } from "../../vault/vault.types";
       }
 
       .cog-source-card__quote {
-        margin: 8px 0 0;
+        margin: var(--cog-space-100) 0 0;
         border-left: 2px solid var(--cog-border);
         padding-left: 10px;
         color: var(--cog-text-subtle);
@@ -134,8 +131,8 @@ import type { CognosVaultFile } from "../../vault/vault.types";
 })
 export class CognosSourceCardComponent {
   readonly file = input.required<CognosVaultFile>();
-  readonly locator = input("");
-  readonly quote = input("");
+  readonly locator = input('');
+  readonly quote = input('');
   readonly clickable = input(false);
   readonly open = output<CognosVaultFile>();
 }

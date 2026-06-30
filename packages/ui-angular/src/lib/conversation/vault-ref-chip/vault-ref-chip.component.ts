@@ -8,29 +8,44 @@ import {
   output,
   signal,
   viewChild,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosFileBadgeComponent } from "../../files/file-badge/file-badge.component";
-import type { CognosVaultFile } from "../../vault/vault.types";
+import { CognosFileBadgeComponent } from '../../files/file-badge/file-badge.component';
+import { CognosIconComponent } from '../../icon/icon.component';
+import type { CognosVaultFile } from '../../vault/vault.types';
 
 @Component({
-  selector: "cog-vault-ref-chip",
+  selector: 'cog-vault-ref-chip',
   standalone: true,
   imports: [CognosFileBadgeComponent, CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="cog-vault-ref-chip" #root>
-      <button class="cog-vault-ref-chip__trigger" type="button" [disabled]="!canExpand()" (click)="togglePopover()">
+      <button
+        class="cog-vault-ref-chip__trigger"
+        type="button"
+        [disabled]="!canExpand()"
+        (click)="togglePopover()"
+      >
         <cog-icon name="folder-lock" [size]="14" tone="selected" />
         <span class="cog-vault-ref-chip__label">{{ label() }}</span>
         @if (canExpand()) {
-          <cog-icon [name]="open() ? 'chevron-down' : 'chevron-right'" [size]="12" tone="selected" />
+          <cog-icon
+            [name]="open() ? 'chevron-down' : 'chevron-right'"
+            [size]="12"
+            tone="selected"
+          />
         }
       </button>
 
       @if (clearable()) {
-        <button class="cog-vault-ref-chip__clear" type="button" aria-label="Clear Vault references" title="Clear Vault references" (click)="$event.stopPropagation(); clear.emit()">
+        <button
+          class="cog-vault-ref-chip__clear"
+          type="button"
+          aria-label="Clear Vault references"
+          title="Clear Vault references"
+          (click)="$event.stopPropagation(); clear.emit()"
+        >
           <cog-icon name="x" [size]="12" tone="selected" />
         </button>
       }
@@ -71,7 +86,7 @@ import type { CognosVaultFile } from "../../vault/vault.types";
         display: inline-flex;
         min-height: 30px;
         align-items: center;
-        gap: 6px;
+        gap: var(--cog-space-075);
         border-radius: var(--cog-radius-pill);
         padding: 0 10px;
         cursor: pointer;
@@ -100,7 +115,7 @@ import type { CognosVaultFile } from "../../vault/vault.types";
         display: inline-flex;
         width: 24px;
         height: 24px;
-        margin-left: 4px;
+        margin-left: var(--cog-space-050);
         align-items: center;
         justify-content: center;
         border-radius: var(--cog-radius-pill);
@@ -114,7 +129,7 @@ import type { CognosVaultFile } from "../../vault/vault.types";
         z-index: 10;
         display: grid;
         min-width: 260px;
-        gap: 8px;
+        gap: var(--cog-space-100);
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
@@ -125,7 +140,7 @@ import type { CognosVaultFile } from "../../vault/vault.types";
       .cog-vault-ref-chip__item {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: var(--cog-space-100);
       }
 
       .cog-vault-ref-chip__item-name {
@@ -142,7 +157,7 @@ import type { CognosVaultFile } from "../../vault/vault.types";
   ],
 })
 export class CognosVaultRefChipComponent {
-  private readonly root = viewChild<ElementRef<HTMLElement>>("root");
+  private readonly root = viewChild<ElementRef<HTMLElement>>('root');
 
   readonly files = input<CognosVaultFile[]>([]);
   readonly expandable = input(true);
@@ -163,7 +178,7 @@ export class CognosVaultRefChipComponent {
     return `Using ${files.length} files from your Vault`;
   });
 
-  @HostListener("document:click", ["$event"])
+  @HostListener('document:click', ['$event'])
   protected onDocumentClick(event: Event): void {
     if (!this.open()) {
       return;

@@ -180,7 +180,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
 
       .cog-assistant-message__typing {
         display: inline-flex;
-        gap: 4px;
+        gap: var(--cog-space-050);
         color: var(--cog-text-subtlest);
       }
 

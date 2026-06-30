@@ -133,7 +133,7 @@ import type { CognosVaultFile } from '../vault.types';
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
-        gap: 8px;
+        gap: var(--cog-space-100);
       }
 
       .cog-vault-card__thumb {

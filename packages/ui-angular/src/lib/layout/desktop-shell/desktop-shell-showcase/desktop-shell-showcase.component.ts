@@ -305,7 +305,7 @@ import { CognosDesktopShellComponent } from '../desktop-shell.component';
 
       .cog-desktop-shell-showcase__list {
         display: grid;
-        gap: 6px;
+        gap: var(--cog-space-075);
       }
 
       .cog-desktop-shell-showcase__security {

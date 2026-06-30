@@ -139,14 +139,14 @@ export type CognosDocAttachmentState = 'sealed' | 'encrypting' | 'error';
       }
 
       .cog-doc-attachment__progress-wrap {
-        margin-top: 6px;
+        margin-top: var(--cog-space-075);
       }
 
       .cog-doc-attachment__meta-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
-        margin-top: 2px;
+        gap: var(--cog-space-075);
+        margin-top: var(--cog-space-025);
       }
 
       .cog-doc-attachment__meta {
@@ -164,7 +164,7 @@ export type CognosDocAttachmentState = 'sealed' | 'encrypting' | 'error';
       }
 
       .cog-doc-attachment__meta--danger {
-        margin-top: 2px;
+        margin-top: var(--cog-space-025);
         color: var(--cog-danger);
       }
 

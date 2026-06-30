@@ -4,21 +4,17 @@ import {
   computed,
   input,
   output,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosFileBadgeComponent } from "../file-badge/file-badge.component";
-import { CognosProgressComponent } from "../progress/progress.component";
-import { deriveFileExtension } from "../file-types";
+import { CognosIconComponent } from '../../icon/icon.component';
+import { CognosFileBadgeComponent } from '../file-badge/file-badge.component';
+import { deriveFileExtension } from '../file-types';
+import { CognosProgressComponent } from '../progress/progress.component';
 
 @Component({
-  selector: "cog-upload-row",
+  selector: 'cog-upload-row',
   standalone: true,
-  imports: [
-    CognosFileBadgeComponent,
-    CognosIconComponent,
-    CognosProgressComponent,
-  ],
+  imports: [CognosFileBadgeComponent, CognosIconComponent, CognosProgressComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="cog-upload-row">
@@ -27,11 +23,16 @@ import { deriveFileExtension } from "../file-types";
       <div class="cog-upload-row__copy">
         <div class="cog-upload-row__header">
           <span class="cog-upload-row__name">{{ name() }}</span>
-          <span class="cog-upload-row__status">{{ done() ? "Sealed" : roundedProgress() + "%" }}</span>
+          <span class="cog-upload-row__status">{{
+            done() ? 'Sealed' : roundedProgress() + '%'
+          }}</span>
         </div>
 
         <div class="cog-upload-row__progress">
-          <cog-progress [value]="progress()" [tone]="done() ? 'var(--cog-success)' : 'var(--cog-brand)'" />
+          <cog-progress
+            [value]="progress()"
+            [tone]="done() ? 'var(--cog-success)' : 'var(--cog-brand)'"
+          />
         </div>
 
         <div class="cog-upload-row__meta">
@@ -46,7 +47,13 @@ import { deriveFileExtension } from "../file-types";
       </div>
 
       @if (!done() && cancellable()) {
-        <button class="cog-upload-row__cancel" type="button" aria-label="Cancel upload" title="Cancel upload" (click)="cancel.emit()">
+        <button
+          class="cog-upload-row__cancel"
+          type="button"
+          aria-label="Cancel upload"
+          title="Cancel upload"
+          (click)="cancel.emit()"
+        >
           <cog-icon name="x" [size]="15" tone="text-subtlest" />
         </button>
       }
@@ -61,11 +68,11 @@ import { deriveFileExtension } from "../file-types";
       .cog-upload-row {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: var(--cog-space-150);
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface);
-        padding: 10px 12px;
+        padding: 10px var(--cog-space-150);
       }
 
       .cog-upload-row__copy {
@@ -76,7 +83,7 @@ import { deriveFileExtension } from "../file-types";
       .cog-upload-row__header {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: var(--cog-space-100);
       }
 
       .cog-upload-row__name {
@@ -99,7 +106,7 @@ import { deriveFileExtension } from "../file-types";
       }
 
       .cog-upload-row__progress {
-        margin-top: 6px;
+        margin-top: var(--cog-space-075);
       }
 
       .cog-upload-row__meta {
@@ -137,7 +144,7 @@ import { deriveFileExtension } from "../file-types";
   ],
 })
 export class CognosUploadRowComponent {
-  readonly name = input("");
+  readonly name = input('');
   readonly ext = input<string | null>(null);
   readonly progress = input(0);
   readonly done = input(false);

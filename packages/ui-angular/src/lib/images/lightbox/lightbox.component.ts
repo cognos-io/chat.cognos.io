@@ -82,7 +82,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: var(--cog-space-150);
         padding: 14px 18px;
         color: #fff;
       }
@@ -91,7 +91,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
         display: flex;
         min-width: 0;
         align-items: center;
-        gap: 12px;
+        gap: var(--cog-space-150);
       }
 
       .cog-lightbox__title {
@@ -106,7 +106,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
       .cog-lightbox__actions {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: var(--cog-space-100);
       }
 
       .cog-lightbox__action {
@@ -137,7 +137,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
         flex: 1;
         align-items: center;
         justify-content: center;
-        padding: 0 24px 28px;
+        padding: 0 var(--cog-space-300) 28px;
       }
 
       .cog-lightbox__image {

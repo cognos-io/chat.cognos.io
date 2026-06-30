@@ -95,7 +95,7 @@ import { CognosImageThumbComponent } from '../image-thumb/image-thumb.component'
         min-height: 22px;
         border-radius: var(--cog-radius-pill);
         background: rgba(9, 30, 66, 0.62);
-        padding: 0 8px;
+        padding: 0 var(--cog-space-100);
         color: #fff;
         font-size: 11px;
         font-weight: var(--cog-fw-semibold);

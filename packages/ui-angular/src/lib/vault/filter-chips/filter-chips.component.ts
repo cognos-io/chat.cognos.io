@@ -51,7 +51,7 @@ export const DEFAULT_FILTER_OPTIONS: CognosFilterChipOption[] = [
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-pill);
         background: var(--cog-surface);
-        padding: 0 12px;
+        padding: 0 var(--cog-space-150);
         color: var(--cog-text-subtle);
         font-size: 13px;
         line-height: 1.4;

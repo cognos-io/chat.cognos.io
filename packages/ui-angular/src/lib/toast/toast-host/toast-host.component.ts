@@ -67,13 +67,13 @@ import { CognosToastService } from '../toast.service';
         min-width: 300px;
         max-width: 420px;
         align-items: flex-start;
-        gap: 12px;
+        gap: var(--cog-space-150);
         pointer-events: auto;
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         box-shadow: var(--cog-shadow-overlay);
-        padding: 12px 12px 12px 14px;
+        padding: var(--cog-space-150) var(--cog-space-150) var(--cog-space-150) 14px;
         animation: cog-toast-enter 180ms var(--cog-ease-standard);
       }
 
@@ -113,7 +113,7 @@ import { CognosToastService } from '../toast.service';
       }
 
       .cog-toast__msg {
-        margin-top: 2px;
+        margin-top: var(--cog-space-025);
         color: var(--cog-text-subtle);
         font-size: 12.5px;
         line-height: 1.45;

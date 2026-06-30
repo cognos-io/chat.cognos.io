@@ -197,7 +197,7 @@ import { CognosMobileShellComponent } from '../mobile-shell.component';
 
       .cog-mobile-shell-showcase__list {
         display: grid;
-        gap: 6px;
+        gap: var(--cog-space-075);
       }
 
       .cog-mobile-shell-showcase__security {

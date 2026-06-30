@@ -115,8 +115,8 @@ import type { CognosVaultFile } from '../vault.types';
     `
       .cog-vault-picker__body {
         display: grid;
-        gap: 12px;
-        padding-top: 4px;
+        gap: var(--cog-space-150);
+        padding-top: var(--cog-space-050);
       }
 
       .cog-vault-picker__intro {
@@ -136,7 +136,7 @@ import type { CognosVaultFile } from '../vault.types';
         display: flex;
         width: 100%;
         align-items: center;
-        gap: 12px;
+        gap: var(--cog-space-150);
         border-right: 0;
         border-bottom: 0;
         border-left: 0;
@@ -213,7 +213,7 @@ import type { CognosVaultFile } from '../vault.types';
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 8px;
+        gap: var(--cog-space-100);
       }
 
       .cog-vault-picker__count {
@@ -224,7 +224,7 @@ import type { CognosVaultFile } from '../vault.types';
 
       .cog-vault-picker__actions {
         display: flex;
-        gap: 8px;
+        gap: var(--cog-space-100);
       }
 
       /* Mobile sheet: stack the count above full-width actions (two at 50%). */

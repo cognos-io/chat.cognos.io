@@ -1,15 +1,10 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
-import type { CognosStorageSegment } from "../vault.types";
+import { CognosIconComponent } from '../../icon/icon.component';
+import type { CognosStorageSegment } from '../vault.types';
 
 @Component({
-  selector: "cog-storage-meter",
+  selector: 'cog-storage-meter',
   standalone: true,
   imports: [CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,19 +15,28 @@ import type { CognosStorageSegment } from "../vault.types";
           <cog-icon name="hard-drive" [size]="14" tone="text-subtle" />
           <span>Vault storage</span>
         </span>
-        <span class="cog-storage-meter__summary"><strong>{{ used() }}</strong> of {{ total() }}</span>
+        <span class="cog-storage-meter__summary"
+          ><strong>{{ used() }}</strong> of {{ total() }}</span
+        >
       </div>
 
       <div class="cog-storage-meter__bar">
         @for (segment of segments(); track segment.label) {
-          <span class="cog-storage-meter__segment" [class]="segmentClass(segment.tone)" [style.width.%]="segmentWidth(segment)"></span>
+          <span
+            class="cog-storage-meter__segment"
+            [class]="segmentClass(segment.tone)"
+            [style.width.%]="segmentWidth(segment)"
+          ></span>
         }
       </div>
 
       <div class="cog-storage-meter__legend">
         @for (segment of segments(); track segment.label) {
           <span class="cog-storage-meter__legend-item">
-            <span class="cog-storage-meter__legend-swatch" [class]="segmentClass(segment.tone)"></span>
+            <span
+              class="cog-storage-meter__legend-swatch"
+              [class]="segmentClass(segment.tone)"
+            ></span>
             <span>{{ segment.label }}</span>
           </span>
         }
@@ -54,7 +58,7 @@ import type { CognosStorageSegment } from "../vault.types";
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
-        padding: 14px 16px;
+        padding: 14px var(--cog-space-200);
       }
 
       .cog-storage-meter__header {
@@ -90,11 +94,15 @@ import type { CognosStorageSegment } from "../vault.types";
 
       .cog-storage-meter__bar {
         display: flex;
-        gap: 2px;
+        gap: var(--cog-space-025);
         height: 8px;
         overflow: hidden;
         border-radius: var(--cog-radius-pill);
-        background: color-mix(in srgb, var(--cog-surface-hover) 72%, var(--cog-surface-pressed));
+        background: color-mix(
+          in srgb,
+          var(--cog-surface-hover) 72%,
+          var(--cog-surface-pressed)
+        );
       }
 
       .cog-storage-meter__segment,
@@ -119,7 +127,7 @@ import type { CognosStorageSegment } from "../vault.types";
       .cog-storage-meter__legend {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px 16px;
+        gap: var(--cog-space-100) var(--cog-space-200);
         margin-top: 11px;
       }
 
@@ -127,7 +135,7 @@ import type { CognosStorageSegment } from "../vault.types";
       .cog-storage-meter__note {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: var(--cog-space-075);
         color: var(--cog-text-subtle);
         font-size: 12px;
         line-height: 1.4;
@@ -148,24 +156,24 @@ import type { CognosStorageSegment } from "../vault.types";
   ],
 })
 export class CognosStorageMeterComponent {
-  readonly width = input<number | string>("100%");
-  readonly used = input("1.6 GB");
-  readonly total = input("5 GB");
+  readonly width = input<number | string>('100%');
+  readonly used = input('1.6 GB');
+  readonly total = input('5 GB');
   readonly segments = input<CognosStorageSegment[]>([
-    { label: "Documents", tone: "blue", used: 17 },
-    { label: "Images", tone: "purple", used: 9 },
-    { label: "Sheets", tone: "green", used: 4 },
-    { label: "Audio", tone: "red", used: 2 },
+    { label: 'Documents', tone: 'blue', used: 17 },
+    { label: 'Images', tone: 'purple', used: 9 },
+    { label: 'Sheets', tone: 'green', used: 4 },
+    { label: 'Audio', tone: 'red', used: 2 },
   ]);
 
   private readonly totalUsed = computed(() =>
     this.segments().reduce((sum, segment) => sum + segment.used, 0),
   );
   protected readonly widthStyle = computed(() =>
-    typeof this.width() === "number" ? `${this.width()}px` : this.width(),
+    typeof this.width() === 'number' ? `${this.width()}px` : this.width(),
   );
 
-  protected segmentClass(tone: CognosStorageSegment["tone"]): string {
+  protected segmentClass(tone: CognosStorageSegment['tone']): string {
     return `cog-storage-meter__segment--${tone}`;
   }
 

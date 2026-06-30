@@ -96,7 +96,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
         justify-content: flex-end;
         gap: var(--cog-space-050);
         margin-top: var(--cog-space-100);
-        padding-inline-end: 2px;
+        padding-inline-end: var(--cog-space-025);
         color: var(--cog-text-subtlest);
         font-size: var(--cog-fs-caption);
         line-height: var(--cog-lh-caption);
@@ -112,7 +112,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
 
       .cog-user-message__loader {
         display: inline-flex;
-        gap: 2px;
+        gap: var(--cog-space-025);
       }
 
       .cog-user-message__loader span {

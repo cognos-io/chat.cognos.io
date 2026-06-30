@@ -4,16 +4,16 @@ import {
   computed,
   input,
   output,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosFileBadgeComponent } from "../file-badge/file-badge.component";
-import { deriveFileExtension } from "../file-types";
+import { CognosIconComponent } from '../../icon/icon.component';
+import { CognosFileBadgeComponent } from '../file-badge/file-badge.component';
+import { deriveFileExtension } from '../file-types';
 
-export type CognosAttachChipState = "sealed" | "encrypting";
+export type CognosAttachChipState = 'sealed' | 'encrypting';
 
 @Component({
-  selector: "cog-attach-chip",
+  selector: 'cog-attach-chip',
   standalone: true,
   imports: [CognosFileBadgeComponent, CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,14 +22,20 @@ export type CognosAttachChipState = "sealed" | "encrypting";
       <cog-file-badge [ext]="resolvedExt()" [size]="22" [radius]="3" />
       <span class="cog-attach-chip__name">{{ name() }}</span>
 
-      @if (state() === "encrypting") {
+      @if (state() === 'encrypting') {
         <cog-icon name="loader" [size]="12" tone="text-subtlest" />
       } @else {
         <cog-icon name="lock" [size]="11" tone="success" />
       }
 
       @if (removeable()) {
-        <button class="cog-attach-chip__remove" type="button" aria-label="Remove attachment" title="Remove attachment" (click)="remove.emit()">
+        <button
+          class="cog-attach-chip__remove"
+          type="button"
+          aria-label="Remove attachment"
+          title="Remove attachment"
+          (click)="remove.emit()"
+        >
           <cog-icon name="x" [size]="13" tone="text-subtlest" />
         </button>
       }
@@ -46,12 +52,12 @@ export type CognosAttachChipState = "sealed" | "encrypting";
         display: inline-flex;
         max-width: 220px;
         align-items: center;
-        gap: 8px;
+        gap: var(--cog-space-100);
         overflow: hidden;
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface);
-        padding: 0 6px 0 7px;
+        padding: 0 var(--cog-space-075) 0 7px;
         min-height: 34px;
       }
 
@@ -90,9 +96,9 @@ export type CognosAttachChipState = "sealed" | "encrypting";
   ],
 })
 export class CognosAttachChipComponent {
-  readonly name = input("");
+  readonly name = input('');
   readonly ext = input<string | null>(null);
-  readonly state = input<CognosAttachChipState>("sealed");
+  readonly state = input<CognosAttachChipState>('sealed');
   readonly removeable = input(false);
   readonly remove = output<void>();
 

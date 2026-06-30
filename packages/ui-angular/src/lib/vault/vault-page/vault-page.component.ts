@@ -5,27 +5,27 @@ import {
   input,
   output,
   signal,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosButtonComponent } from "../../button/button.component";
-import { CognosBreadcrumbsComponent } from "../../navigation/breadcrumbs/breadcrumbs.component";
-import { CognosFilterChipsComponent } from "../filter-chips/filter-chips.component";
-import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-button.component";
-import { CognosLozengeComponent } from "../../primitives/lozenge/lozenge.component";
-import { CognosTextFieldComponent } from "../../primitives/text-field/text-field.component";
-import { CognosStorageMeterComponent } from "../storage-meter/storage-meter.component";
-import { CognosVaultCardComponent } from "../vault-card/vault-card.component";
-import { CognosVaultListRowComponent } from "../vault-list-row/vault-list-row.component";
-import { CognosDropzoneComponent } from "../../files/dropzone/dropzone.component";
-import { CognosIconComponent } from "../../icon/icon.component";
+import { CognosButtonComponent } from '../../button/button.component';
+import { CognosDropzoneComponent } from '../../files/dropzone/dropzone.component';
+import { CognosIconComponent } from '../../icon/icon.component';
+import { CognosBreadcrumbsComponent } from '../../navigation/breadcrumbs/breadcrumbs.component';
+import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-button.component';
+import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.component';
+import { CognosTextFieldComponent } from '../../primitives/text-field/text-field.component';
+import { CognosFilterChipsComponent } from '../filter-chips/filter-chips.component';
+import { CognosStorageMeterComponent } from '../storage-meter/storage-meter.component';
+import { CognosVaultCardComponent } from '../vault-card/vault-card.component';
+import { CognosVaultListRowComponent } from '../vault-list-row/vault-list-row.component';
 import type {
   CognosStorageSegment,
   CognosVaultFile,
   CognosVaultFilter,
-} from "../vault.types";
+} from '../vault.types';
 
 @Component({
-  selector: "cog-vault-page",
+  selector: 'cog-vault-page',
   standalone: true,
   imports: [
     CognosBreadcrumbsComponent,
@@ -59,7 +59,12 @@ import type {
             </div>
           </div>
 
-          <cog-button appearance="primary" icon="upload" type="button" (click)="addFiles.emit()">
+          <cog-button
+            appearance="primary"
+            icon="upload"
+            type="button"
+            (click)="addFiles.emit()"
+          >
             Add files
           </cog-button>
         </div>
@@ -72,38 +77,68 @@ import type {
           </span>
           <h2 class="cog-vault-page__empty-title">Your Vault is empty</h2>
           <p class="cog-vault-page__empty-copy">
-            Add documents, images or notes once and reference them in any chat. Everything is encrypted on this device — only you hold the keys.
+            Add documents, images or notes once and reference them in any chat.
+            Everything is encrypted on this device — only you hold the keys.
           </p>
           <cog-dropzone (filesSelected)="filesDropped.emit($event)" />
         </div>
       } @else {
         <div class="cog-vault-page__toolbar">
           <div class="cog-vault-page__search">
-            <cog-text-field icon="search" placeholder="Search the Vault" [value]="search()" (valueChange)="search.set($event)" />
+            <cog-text-field
+              icon="search"
+              placeholder="Search the Vault"
+              [value]="search()"
+              (valueChange)="search.set($event)"
+            />
           </div>
 
           <cog-filter-chips [value]="filter()" (change)="filter.set($event)" />
 
           <div class="cog-vault-page__view-toggle">
-            <cog-icon-button name="layout-grid" title="Grid view" [selected]="view() === 'grid'" (click)="view.set('grid')" />
-            <cog-icon-button name="list" title="List view" [selected]="view() === 'list'" (click)="view.set('list')" />
+            <cog-icon-button
+              name="layout-grid"
+              title="Grid view"
+              [selected]="view() === 'grid'"
+              (click)="view.set('grid')"
+            />
+            <cog-icon-button
+              name="list"
+              title="List view"
+              [selected]="view() === 'list'"
+              (click)="view.set('list')"
+            />
           </div>
         </div>
 
         <div class="cog-vault-page__storage">
-          <cog-storage-meter [used]="storageUsed()" [total]="storageTotal()" [segments]="storageSegments()" [width]="'100%'" />
+          <cog-storage-meter
+            [used]="storageUsed()"
+            [total]="storageTotal()"
+            [segments]="storageSegments()"
+            [width]="'100%'"
+          />
         </div>
 
         @if (view() === 'grid') {
           <div class="cog-vault-page__grid">
             @for (file of filteredFiles(); track file.id) {
-              <cog-vault-card [file]="file" (open)="fileOpen.emit($event)" (more)="fileMore.emit($event)" />
+              <cog-vault-card
+                [file]="file"
+                (open)="fileOpen.emit($event)"
+                (more)="fileMore.emit($event)"
+              />
             }
           </div>
         } @else {
           <div class="cog-vault-page__list">
             @for (file of filteredFiles(); track file.id; let index = $index) {
-              <cog-vault-list-row [file]="file" [top]="index > 0" (open)="fileOpen.emit($event)" (more)="fileMore.emit($event)" />
+              <cog-vault-list-row
+                [file]="file"
+                [top]="index > 0"
+                (open)="fileOpen.emit($event)"
+                (more)="fileMore.emit($event)"
+              />
             }
           </div>
         }
@@ -127,14 +162,14 @@ import type {
       .cog-vault-page__header {
         border-bottom: 1px solid var(--cog-border);
         background: var(--cog-surface);
-        padding: 14px 20px 16px;
+        padding: 14px var(--cog-space-250) var(--cog-space-200);
       }
 
       .cog-vault-page__title-row {
         display: flex;
         align-items: flex-start;
         gap: 14px;
-        margin-top: 6px;
+        margin-top: var(--cog-space-075);
       }
 
       .cog-vault-page__tile,
@@ -167,7 +202,7 @@ import type {
       .cog-vault-page__meta {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: var(--cog-space-100);
         margin-top: 3px;
         color: var(--cog-text-subtle);
         font-size: 13px;
@@ -179,7 +214,7 @@ import type {
         flex-wrap: wrap;
         align-items: center;
         gap: 10px;
-        padding: 16px 20px 0;
+        padding: var(--cog-space-200) var(--cog-space-250) 0;
       }
 
       .cog-vault-page__search {
@@ -189,24 +224,24 @@ import type {
 
       .cog-vault-page__view-toggle {
         display: flex;
-        gap: 2px;
+        gap: var(--cog-space-025);
         margin-inline-start: auto;
       }
 
       .cog-vault-page__storage {
-        padding: 14px 20px 0;
+        padding: 14px var(--cog-space-250) 0;
       }
 
       .cog-vault-page__grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-        gap: 12px;
-        padding: 14px 20px 24px;
+        gap: var(--cog-space-150);
+        padding: 14px var(--cog-space-250) var(--cog-space-300);
       }
 
       .cog-vault-page__list {
         overflow: hidden;
-        margin: 14px 20px 24px;
+        margin: 14px var(--cog-space-250) var(--cog-space-300);
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
@@ -215,7 +250,7 @@ import type {
       .cog-vault-page__empty {
         max-width: 520px;
         margin: 0 auto;
-        padding: 40px 28px 48px;
+        padding: var(--cog-space-500) 28px var(--cog-space-600);
         text-align: center;
       }
 
@@ -236,7 +271,7 @@ import type {
 
       .cog-vault-page__empty-copy {
         max-width: 420px;
-        margin: 8px auto 22px;
+        margin: var(--cog-space-100) auto 22px;
         color: var(--cog-text-subtle);
         font-size: 14px;
         line-height: 1.55;
@@ -246,13 +281,13 @@ import type {
 })
 export class CognosVaultPageComponent {
   readonly files = input<CognosVaultFile[]>([]);
-  readonly storageUsed = input("1.6 GB");
-  readonly storageTotal = input("5 GB");
+  readonly storageUsed = input('1.6 GB');
+  readonly storageTotal = input('5 GB');
   readonly storageSegments = input<CognosStorageSegment[]>([
-    { label: "Documents", tone: "blue", used: 17 },
-    { label: "Images", tone: "purple", used: 9 },
-    { label: "Sheets", tone: "green", used: 4 },
-    { label: "Audio", tone: "red", used: 2 },
+    { label: 'Documents', tone: 'blue', used: 17 },
+    { label: 'Images', tone: 'purple', used: 9 },
+    { label: 'Sheets', tone: 'green', used: 4 },
+    { label: 'Audio', tone: 'red', used: 2 },
   ]);
   readonly empty = input(false);
   readonly addFiles = output<void>();
@@ -261,17 +296,17 @@ export class CognosVaultPageComponent {
   readonly fileMore = output<CognosVaultFile>();
 
   protected readonly breadcrumbs = [
-    { label: "Cognos" },
-    { label: "Vault", current: true },
+    { label: 'Cognos' },
+    { label: 'Vault', current: true },
   ];
-  protected readonly search = signal("");
-  protected readonly filter = signal<CognosVaultFilter>("all");
-  protected readonly view = signal<"grid" | "list">("grid");
+  protected readonly search = signal('');
+  protected readonly filter = signal<CognosVaultFilter>('all');
+  protected readonly view = signal<'grid' | 'list'>('grid');
   protected readonly filteredFiles = computed(() => {
     const query = this.search().trim().toLowerCase();
 
     return this.files().filter((file) => {
-      const matchesFilter = this.filter() === "all" || file.kind === this.filter();
+      const matchesFilter = this.filter() === 'all' || file.kind === this.filter();
       const matchesQuery = !query || file.name.toLowerCase().includes(query);
       return matchesFilter && matchesQuery;
     });

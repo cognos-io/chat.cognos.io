@@ -1,23 +1,24 @@
-import { ChangeDetectionStrategy, Component, input } from "@angular/core";
-import { cognosIconNames } from "@cognos/ui/icons";
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+
+import { cognosIconNames } from '@cognos/ui/icons';
 
 import {
   CognosIconComponent,
   type CognosIconSize,
   type CognosIconTone,
-} from "../../icon/icon.component";
+} from '../../icon/icon.component';
 
 const toneSamples = [
-  { label: "text", tone: "text" },
-  { label: "subtle", tone: "text-subtle" },
-  { label: "selected", tone: "selected" },
-  { label: "link", tone: "link" },
-  { label: "brand", tone: "brand" },
-  { label: "success", tone: "success" },
+  { label: 'text', tone: 'text' },
+  { label: 'subtle', tone: 'text-subtle' },
+  { label: 'selected', tone: 'selected' },
+  { label: 'link', tone: 'link' },
+  { label: 'brand', tone: 'brand' },
+  { label: 'success', tone: 'success' },
 ] as const satisfies ReadonlyArray<{ label: string; tone: CognosIconTone }>;
 
 @Component({
-  selector: "cog-icon-showcase",
+  selector: 'cog-icon-showcase',
   standalone: true,
   imports: [CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,8 +32,8 @@ const toneSamples = [
         <div class="icon-showcase__eyebrow">Lucide iconography</div>
         <h1 class="icon-showcase__title">Canonical Cognos icon set</h1>
         <p class="icon-showcase__description">
-          The grid uses the selected size and tone control. The preview row below
-          shows the same lock icon across a few semantic token colours.
+          The grid uses the selected size and tone control. The preview row below shows
+          the same lock icon across a few semantic token colours.
         </p>
       </header>
 
@@ -59,9 +60,9 @@ const toneSamples = [
     `
       .icon-showcase {
         display: grid;
-        gap: 24px;
+        gap: var(--cog-space-300);
         max-width: 1200px;
-        padding: 24px;
+        padding: var(--cog-space-300);
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-app-bg);
@@ -69,7 +70,7 @@ const toneSamples = [
 
         & .icon-showcase__header {
           display: grid;
-          gap: 8px;
+          gap: var(--cog-space-100);
         }
 
         & .icon-showcase__eyebrow {
@@ -101,7 +102,7 @@ const toneSamples = [
         & .icon-showcase__tones {
           display: flex;
           flex-wrap: wrap;
-          gap: 12px;
+          gap: var(--cog-space-150);
         }
 
         & .icon-showcase__tone-card,
@@ -114,9 +115,9 @@ const toneSamples = [
         & .icon-showcase__tone-card {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: var(--cog-space-100);
           min-width: 120px;
-          padding: 10px 12px;
+          padding: 10px var(--cog-space-150);
         }
 
         & .icon-showcase__tone-label {
@@ -127,7 +128,7 @@ const toneSamples = [
 
         & .icon-showcase__grid {
           display: grid;
-          gap: 12px;
+          gap: var(--cog-space-150);
           grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
         }
 
@@ -135,8 +136,8 @@ const toneSamples = [
           display: grid;
           min-height: 120px;
           justify-items: center;
-          gap: 12px;
-          padding: 16px 12px;
+          gap: var(--cog-space-150);
+          padding: var(--cog-space-200) var(--cog-space-150);
           text-align: center;
         }
 
@@ -151,10 +152,10 @@ const toneSamples = [
   ],
 })
 export class CognosIconShowcaseComponent {
-  readonly accent = input<"blue" | "emerald">("emerald");
+  readonly accent = input<'blue' | 'emerald'>('emerald');
   readonly size = input<CognosIconSize>(18);
-  readonly theme = input<"dark" | "light">("light");
-  readonly tone = input<CognosIconTone>("text-subtle");
+  readonly theme = input<'dark' | 'light'>('light');
+  readonly tone = input<CognosIconTone>('text-subtle');
 
   protected readonly iconNames = cognosIconNames;
   protected readonly samples = toneSamples;

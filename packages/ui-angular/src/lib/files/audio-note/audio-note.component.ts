@@ -6,14 +6,17 @@ import {
   input,
   signal,
   viewChild,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
+import { CognosIconComponent } from '../../icon/icon.component';
 
-const AUDIO_BARS = [6, 11, 18, 9, 22, 14, 26, 17, 9, 20, 28, 13, 7, 19, 24, 11, 16, 8, 21, 14, 10, 23, 17, 9, 13, 7];
+const AUDIO_BARS = [
+  6, 11, 18, 9, 22, 14, 26, 17, 9, 20, 28, 13, 7, 19, 24, 11, 16, 8, 21, 14, 10, 23, 17,
+  9, 13, 7,
+];
 
 @Component({
-  selector: "cog-audio-note",
+  selector: 'cog-audio-note',
   standalone: true,
   imports: [CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,13 +30,22 @@ const AUDIO_BARS = [6, 11, 18, 9, 22, 14, 26, 17, 9, 20, 28, 13, 7, 19, 24, 11, 
         (timeupdate)="onTimeUpdate()"
       ></audio>
 
-      <button class="cog-audio-note__toggle" type="button" [attr.aria-label]="playing() ? 'Pause audio note' : 'Play audio note'" (click)="togglePlayback()">
+      <button
+        class="cog-audio-note__toggle"
+        type="button"
+        [attr.aria-label]="playing() ? 'Pause audio note' : 'Play audio note'"
+        (click)="togglePlayback()"
+      >
         <cog-icon [name]="playing() ? 'pause' : 'play'" [size]="16" tone="current" />
       </button>
 
       <div class="cog-audio-note__waveform" aria-hidden="true">
         @for (bar of bars; track $index; let index = $index) {
-          <span class="cog-audio-note__bar" [class.cog-audio-note__bar--played]="index < playedBars()" [style.height.px]="bar"></span>
+          <span
+            class="cog-audio-note__bar"
+            [class.cog-audio-note__bar--played]="index < playedBars()"
+            [style.height.px]="bar"
+          ></span>
         }
       </div>
 
@@ -54,12 +66,12 @@ const AUDIO_BARS = [6, 11, 18, 9, 22, 14, 26, 17, 9, 20, 28, 13, 7, 19, 24, 11, 
         width: min(100%, 280px);
         max-width: 100%;
         align-items: center;
-        gap: 12px;
+        gap: var(--cog-space-150);
         box-sizing: border-box;
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
-        padding: 9px 12px 9px 9px;
+        padding: 9px var(--cog-space-150) 9px 9px;
       }
 
       .cog-audio-note__toggle {
@@ -86,7 +98,7 @@ const AUDIO_BARS = [6, 11, 18, 9, 22, 14, 26, 17, 9, 20, 28, 13, 7, 19, 24, 11, 
         height: 30px;
         flex: 1;
         align-items: center;
-        gap: 2px;
+        gap: var(--cog-space-025);
       }
 
       .cog-audio-note__bar {
@@ -119,9 +131,9 @@ const AUDIO_BARS = [6, 11, 18, 9, 22, 14, 26, 17, 9, 20, 28, 13, 7, 19, 24, 11, 
   ],
 })
 export class CognosAudioNoteComponent {
-  private readonly player = viewChild<ElementRef<HTMLAudioElement>>("player");
+  private readonly player = viewChild<ElementRef<HTMLAudioElement>>('player');
 
-  readonly duration = input("0:42");
+  readonly duration = input('0:42');
   readonly src = input<string | null>(null);
   readonly width = input(280);
 
@@ -189,5 +201,5 @@ function formatDuration(durationInSeconds: number): string {
   const totalSeconds = Math.max(0, Math.round(durationInSeconds));
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }

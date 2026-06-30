@@ -49,10 +49,10 @@ import { CognosButtonComponent } from '../../button/button.component';
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: var(--cog-space-150);
         border-bottom: 1px solid var(--cog-border);
         background: var(--cog-surface);
-        padding: 10px 12px;
+        padding: 10px var(--cog-space-150);
       }
 
       .cog-code-block__lang {

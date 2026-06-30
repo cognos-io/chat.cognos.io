@@ -61,14 +61,14 @@ export type CognosSource = {
 
       .cog-sources-row {
         display: grid;
-        gap: 8px;
+        gap: var(--cog-space-100);
       }
 
       .cog-sources-row__trigger {
         display: inline-flex;
         align-items: center;
         justify-content: space-between;
-        gap: 8px;
+        gap: var(--cog-space-100);
         border: 0;
         background: transparent;
         padding: 0;
@@ -79,7 +79,7 @@ export type CognosSource = {
       .cog-sources-row__trigger-copy {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: var(--cog-space-075);
         font-size: 13px;
         line-height: 1.4;
       }
@@ -92,7 +92,7 @@ export type CognosSource = {
 
       .cog-sources-row__list {
         display: grid;
-        gap: 8px;
+        gap: var(--cog-space-100);
       }
     `,
   ],
