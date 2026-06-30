@@ -14,7 +14,7 @@
 .persona-editor__header {
   display: flex;
   align-items: center;
-  gap: var(--cog-space-125, 10px);
+  gap: var(--cog-space-150);
   padding: var(--cog-space-150, 14px);
   border-block-end: 1px solid var(--cog-border, #e2e8f0);
 }
@@ -74,9 +74,9 @@
 .persona-editor__notice {
   display: flex;
   gap: var(--cog-space-100, 8px);
-  padding: var(--cog-space-125, 10px);
+  padding: var(--cog-space-150);
   border-radius: var(--cog-radius-sm, 8px);
-  background: var(--cog-info-surface, #eff6ff);
+  background: var(--cog-info-bg, #eff6ff);
   color: var(--cog-info-text, #1e40af);
   font-size: var(--cog-fs-caption, 13px);
   line-height: 1.4;
@@ -85,7 +85,7 @@
 .persona-editor__field {
   display: flex;
   flex-direction: column;
-  gap: var(--cog-space-75, 6px);
+  gap: var(--cog-space-075);
   margin: 0;
   padding: 0;
   border: none;
@@ -105,7 +105,7 @@
   border-radius: var(--cog-radius-sm, 8px);
   background: var(--cog-surface, #ffffff);
   color: var(--cog-text, #0f172a);
-  padding: var(--cog-space-100, 8px) var(--cog-space-125, 10px);
+  padding: var(--cog-space-100, 8px) var(--cog-space-150);
   font: inherit;
 }
 

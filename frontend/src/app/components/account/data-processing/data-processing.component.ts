@@ -334,7 +334,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: start;
-      gap: var(--cog-space-125);
+      gap: var(--cog-space-150);
     }
 
     .data-processing__head-text {
@@ -366,12 +366,12 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
 
     .data-processing__tier {
       display: grid;
-      gap: var(--cog-space-125);
+      gap: var(--cog-space-150);
       align-content: start;
       border: 2px solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
-      padding: var(--cog-space-175, 16px);
+      padding: var(--cog-space-200);
       text-align: left;
       cursor: pointer;
       font: inherit;
@@ -382,7 +382,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
     }
 
     .data-processing__tier:hover:not(:disabled) {
-      border-color: var(--cog-border-strong, var(--cog-text-subtlest));
+      border-color: var(--cog-border-bold, var(--cog-text-subtlest));
     }
 
     .data-processing__tier:disabled {
@@ -420,7 +420,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
     .data-processing__tier-radio {
       width: 16px;
       height: 16px;
-      border: 2px solid var(--cog-border-strong, var(--cog-text-subtlest));
+      border: 2px solid var(--cog-border-bold, var(--cog-text-subtlest));
       border-radius: var(--cog-radius-pill);
     }
 
@@ -459,7 +459,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
     .data-processing__retention {
       display: grid;
       grid-template-columns: auto minmax(0, 1fr);
-      gap: var(--cog-space-125);
+      gap: var(--cog-space-150);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-success-bg, rgba(46, 160, 67, 0.1));
       padding: var(--cog-space-150);
@@ -514,7 +514,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       display: grid;
       grid-template-columns: 32px minmax(0, 1fr) auto auto;
       align-items: center;
-      gap: var(--cog-space-125);
+      gap: var(--cog-space-150);
       width: 100%;
     }
 
@@ -686,7 +686,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       margin: var(--cog-space-050) 0 0;
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface-raised, rgba(0, 0, 0, 0.03));
-      padding: var(--cog-space-100) var(--cog-space-125);
+      padding: var(--cog-space-100) var(--cog-space-150);
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-caption);
       line-height: var(--cog-lh-caption);

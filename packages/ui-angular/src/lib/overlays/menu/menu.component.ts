@@ -1,12 +1,8 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  output,
-} from "@angular/core";
-import type { CognosIconName } from "@cognos/ui/icons";
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
+import type { CognosIconName } from '@cognos/ui/icons';
+
+import { CognosIconComponent } from '../../icon/icon.component';
 
 export type CognosMenuItem = {
   title: string;
@@ -18,7 +14,7 @@ export type CognosMenuItem = {
 };
 
 @Component({
-  selector: "cog-menu",
+  selector: 'cog-menu',
   standalone: true,
   imports: [CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -90,7 +86,7 @@ export type CognosMenuItem = {
         width: 100%;
         min-height: 36px;
         align-items: center;
-        gap: var(--cog-space-125, 10px);
+        gap: var(--cog-space-150);
         border: 0;
         background: transparent;
         color: var(--cog-text);
@@ -154,14 +150,12 @@ export type CognosMenuItem = {
   ],
 })
 export class CognosMenuComponent {
-  readonly label = input("");
+  readonly label = input('');
   readonly items = input<CognosMenuItem[]>([]);
   readonly itemSelect = output<number>();
 
   protected itemClass(item: CognosMenuItem): string {
-    return item.selected
-      ? "cog-menu__item cog-menu__item--selected"
-      : "cog-menu__item";
+    return item.selected ? 'cog-menu__item cog-menu__item--selected' : 'cog-menu__item';
   }
 
   protected onSelect(index: number): void {

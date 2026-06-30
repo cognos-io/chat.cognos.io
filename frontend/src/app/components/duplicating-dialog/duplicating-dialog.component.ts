@@ -49,7 +49,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 
     .duplicating-dialog__title {
       margin: 0;
-      font-size: var(--cog-fs-h4, 1rem);
+      font-size: var(--cog-fs-h-sm, 1rem);
       font-weight: var(--cog-fw-semibold);
       color: var(--cog-text);
     }

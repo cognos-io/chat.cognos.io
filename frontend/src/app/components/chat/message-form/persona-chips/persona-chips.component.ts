@@ -83,12 +83,12 @@ import { PersonaService } from '@app/services/persona.service';
     }
 
     .persona-chips__chip:hover {
-      border-color: var(--cog-border-strong, #cbd5e1);
+      border-color: var(--cog-border-bold, #cbd5e1);
     }
 
     .persona-chips__chip.is-active {
       border-color: var(--cog-brand, #16a34a);
-      background: var(--cog-success-surface, #f0fdf4);
+      background: var(--cog-success-bg, #f0fdf4);
       color: var(--cog-success-text, #15803d);
       font-weight: var(--cog-fw-semibold, 600);
       padding-left: 10px;

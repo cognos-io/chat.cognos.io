@@ -280,7 +280,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
 
     .model-selector__sheet-title {
       margin: 0;
-      font-size: var(--cog-fs-title);
+      font-size: var(--cog-fs-h-md);
       font-weight: var(--cog-fw-semibold);
     }
 

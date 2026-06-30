@@ -766,7 +766,7 @@ function escapeHtml(value: string): string {
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-md, var(--cog-radius-sm));
       background: var(--cog-surface);
-      box-shadow: var(--cog-shadow-200, 0 8px 24px rgba(0, 0, 0, 0.12));
+      box-shadow: var(--cog-shadow-overlay);
     }
 
     .message-form__attach-menu-item {
@@ -791,7 +791,7 @@ function escapeHtml(value: string): string {
     .message-form__chip {
       display: inline-flex;
       align-items: center;
-      gap: var(--cog-space-50, 6px);
+      gap: var(--cog-space-075);
       max-width: 16rem;
       padding: 4px 8px;
       border: 1px solid var(--cog-border);
@@ -1012,14 +1012,14 @@ function escapeHtml(value: string): string {
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-md, 12px);
       background: var(--cog-surface, #fff);
-      box-shadow: var(--cog-shadow-lg, 0 12px 32px rgb(0 0 0 / 14%));
+      box-shadow: var(--cog-shadow-overlay);
     }
 
     .message-form__reasoning-menu-heading {
       margin: 0;
       padding: var(--cog-space-050) var(--cog-space-075) var(--cog-space-075);
       color: var(--cog-text-subtlest);
-      font-size: var(--cog-fs-body-xs, 11px);
+      font-size: var(--cog-fs-caption, 11px);
       font-weight: 600;
       letter-spacing: 0.06em;
       text-transform: uppercase;

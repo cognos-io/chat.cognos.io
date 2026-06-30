@@ -77,7 +77,7 @@
   gap: var(--cog-space-100);
   margin: var(--cog-space-100) 0 var(--cog-space-075);
   color: var(--cog-text);
-  font-size: var(--cog-fs-h-xl, 32px);
+  font-size: var(--cog-fs-display);
   font-weight: var(--cog-fw-h-lg);
 }
 
@@ -208,7 +208,7 @@
 
 .pb__usage-total {
   color: var(--cog-text);
-  font-size: var(--cog-fs-h-xl, 32px);
+  font-size: var(--cog-fs-display);
   font-weight: var(--cog-fw-h-lg);
   line-height: 1;
 }

@@ -374,7 +374,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
 
     .account__redaction-warning {
       margin: var(--cog-space-150) 0 0;
-      color: var(--cog-text-danger, var(--cog-danger, #b42318));
+      color: var(--cog-danger-text, var(--cog-danger, #b42318));
       font-size: var(--cog-fs-body-sm);
       line-height: var(--cog-lh-body-sm);
     }

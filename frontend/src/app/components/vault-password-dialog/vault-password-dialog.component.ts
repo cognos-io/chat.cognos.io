@@ -259,7 +259,7 @@ const validateUnlockForm = (
     .vault-password-dialog__status-card {
       display: grid;
       grid-template-columns: auto 1fr;
-      gap: var(--cog-space-125);
+      gap: var(--cog-space-150);
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface-raised, var(--cog-surface));
@@ -391,7 +391,7 @@ const validateUnlockForm = (
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface-raised, var(--cog-surface));
-      padding: var(--cog-space-125);
+      padding: var(--cog-space-150);
     }
 
     .vault-password-dialog__checkbox-row input {

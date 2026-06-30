@@ -23,7 +23,7 @@
 
 .project-detail__title {
   margin: 0;
-  font-size: var(--cog-fs-title, 24px);
+  font-size: var(--cog-fs-h-lg);
   font-weight: 650;
   color: var(--cog-text, #0f172a);
   overflow-wrap: anywhere;
@@ -48,7 +48,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--cog-space-100, 8px);
-  padding: var(--cog-space-150, 12px) var(--cog-space-175, 14px);
+  padding: var(--cog-space-150, 12px) var(--cog-space-200);
   border: 1px solid var(--cog-border, #e2e8f0);
   border-radius: var(--cog-radius-md, 12px);
   background: var(--cog-surface, #fff);
@@ -207,10 +207,10 @@
 .project-detail__chat {
   display: flex;
   align-items: center;
-  gap: var(--cog-space-125, 10px);
+  gap: var(--cog-space-150);
   inline-size: 100%;
   text-align: start;
-  padding: var(--cog-space-125, 10px) var(--cog-space-150, 12px);
+  padding: var(--cog-space-150) var(--cog-space-150, 12px);
   border: 0;
   background: transparent;
   font: inherit;
@@ -253,7 +253,7 @@
 .project-detail__danger {
   margin-block-start: var(--cog-space-200, 16px);
   border-color: var(--cog-danger-border, #f1c0c0);
-  background: var(--cog-danger-surface, #fef2f2);
+  background: var(--cog-danger-bg, #fef2f2);
 }
 
 .project-detail__danger-heading {

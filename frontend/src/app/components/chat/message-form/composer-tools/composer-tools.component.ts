@@ -131,7 +131,7 @@ import { ModelService } from '@app/services/model.service';
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-md, var(--cog-radius-sm));
       background: var(--cog-surface);
-      box-shadow: var(--cog-shadow-200, 0 8px 24px rgba(0, 0, 0, 0.12));
+      box-shadow: var(--cog-shadow-overlay);
     }
 
     .composer-tools__row {

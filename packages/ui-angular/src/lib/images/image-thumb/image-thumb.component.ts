@@ -61,7 +61,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
         width: 100%;
         overflow: hidden;
         border: 1px solid var(--cog-border);
-        background: var(--cog-sunken, var(--cog-surface-hover));
+        background: var(--cog-surface-sunken, var(--cog-surface-hover));
         padding: 0;
         line-height: 0;
 

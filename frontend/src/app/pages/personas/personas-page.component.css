@@ -18,7 +18,7 @@
 .personas-page__breadcrumb {
   display: flex;
   align-items: center;
-  gap: var(--cog-space-75, 6px);
+  gap: var(--cog-space-075);
   color: var(--cog-text-subtle, #64748b);
   font-size: var(--cog-fs-caption, 13px);
 }
@@ -66,7 +66,7 @@
   font-size: 10px;
   font-weight: 700;
   color: var(--cog-success-text, #15803d);
-  background: var(--cog-success-surface, #dcfce7);
+  background: var(--cog-success-bg, #dcfce7);
   padding: 2px 6px;
   border-radius: 999px;
 }
@@ -95,7 +95,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--cog-space-75, 6px) var(--cog-space-100, 8px);
+  padding: var(--cog-space-075) var(--cog-space-100, 8px);
   border: none;
   background: transparent;
   color: var(--cog-text-subtle, #64748b);
@@ -145,7 +145,7 @@
 .personas-page__section {
   display: flex;
   flex-direction: column;
-  gap: var(--cog-space-125, 10px);
+  gap: var(--cog-space-150);
 }
 
 .personas-page__section-heading {
@@ -194,13 +194,13 @@
 }
 
 .persona-card:hover {
-  border-color: var(--cog-border-strong, #cbd5e1);
+  border-color: var(--cog-border-bold, #cbd5e1);
   box-shadow: 0 1px 3px rgb(15 23 42 / 0.08);
 }
 
 .persona-card.is-active {
   border-color: var(--cog-brand, #16a34a);
-  background: var(--cog-success-surface, #f0fdf4);
+  background: var(--cog-success-bg, #f0fdf4);
   box-shadow: 0 0 0 1px var(--cog-brand, #16a34a);
 }
 
@@ -208,7 +208,7 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: start;
-  gap: var(--cog-space-125, 10px);
+  gap: var(--cog-space-150);
 }
 
 .persona-card__heading {
@@ -296,7 +296,7 @@
 .persona-card--new {
   align-items: center;
   justify-content: center;
-  gap: var(--cog-space-75, 6px);
+  gap: var(--cog-space-075);
   text-align: center;
   border-style: dashed;
   color: var(--cog-text-subtle, #64748b);

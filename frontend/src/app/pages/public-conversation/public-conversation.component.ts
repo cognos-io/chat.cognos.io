@@ -303,7 +303,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
       .public-conversation__promo-inner {
         flex-direction: column;
         align-items: flex-start;
-        gap: var(--cog-space-125, 10px);
+        gap: var(--cog-space-150);
       }
     }
 

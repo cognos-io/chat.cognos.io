@@ -58,7 +58,7 @@
   &--active {
     background: var(--cog-surface);
     color: var(--cog-text);
-    box-shadow: var(--cog-shadow-sm, 0 1px 3px rgb(0 0 0 / 12%));
+    box-shadow: var(--cog-shadow-raised);
   }
 }
 

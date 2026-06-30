@@ -133,8 +133,8 @@
 .projects-page__item {
   display: flex;
   align-items: center;
-  gap: var(--cog-space-125, 10px);
-  padding: var(--cog-space-125, 10px) var(--cog-space-150, 12px);
+  gap: var(--cog-space-150);
+  padding: var(--cog-space-150) var(--cog-space-150, 12px);
   text-decoration: none;
   color: inherit;
   transition: background-color var(--cog-dur-fast) var(--cog-ease-standard);
