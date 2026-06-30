@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   UserPreferencesData,
@@ -21,11 +21,27 @@ class TestTextDecoder {
 const encode = (value: string): Uint8Array => new TestTextEncoder().encode(value);
 const decode = (bytes: Uint8Array): string => new TestTextDecoder().decode(bytes);
 
+// These fakes are installed on the global scope, so they must be torn down after
+// the suite — vitest can run other spec files in the same worker, and a leaked
+// fake TextDecoder (which ignores the `fatal` flag) makes invalid-UTF-8 decodes
+// silently succeed elsewhere (e.g. text.processor.spec). Save and restore the
+// real globals to keep the pollution scoped to this file.
+const realTextEncoder = globalThis.TextEncoder;
+const realTextDecoder = globalThis.TextDecoder;
+
+const installFakeTextCodecs = (): void => {
+  globalThis.TextEncoder = TestTextEncoder as typeof TextEncoder;
+  globalThis.TextDecoder = TestTextDecoder as typeof TextDecoder;
+};
+
+const restoreTextCodecs = (): void => {
+  globalThis.TextEncoder = realTextEncoder;
+  globalThis.TextDecoder = realTextDecoder;
+};
+
 describe('parseUserPreferencesData', () => {
-  beforeAll(() => {
-    globalThis.TextEncoder = TestTextEncoder as typeof TextEncoder;
-    globalThis.TextDecoder = TestTextDecoder as typeof TextDecoder;
-  });
+  beforeAll(installFakeTextCodecs);
+  afterAll(restoreTextCodecs);
 
   it('parses a fully populated payload', () => {
     const payload = encode(
@@ -86,10 +102,8 @@ describe('parseUserPreferencesData', () => {
 });
 
 describe('serializeUserPreferencesData', () => {
-  beforeAll(() => {
-    globalThis.TextEncoder = TestTextEncoder as typeof TextEncoder;
-    globalThis.TextDecoder = TestTextDecoder as typeof TextDecoder;
-  });
+  beforeAll(installFakeTextCodecs);
+  afterAll(restoreTextCodecs);
 
   it('round-trips through parseUserPreferencesData', () => {
     const original: UserPreferencesData = {
