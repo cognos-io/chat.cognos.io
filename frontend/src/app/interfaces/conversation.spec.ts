@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, test } from 'vitest';
 
 import {
   Conversation,
@@ -24,10 +24,21 @@ class TestTextDecoder {
 const encode = (value: string): Uint8Array => new TestTextEncoder().encode(value);
 const decode = (bytes: Uint8Array): string => new TestTextDecoder().decode(bytes);
 
+// These fakes live on the global scope, so restore the real codecs after the
+// suite — a leaked fake TextDecoder (which ignores the `fatal` flag) makes
+// invalid-UTF-8 decodes silently succeed in other spec files sharing the worker.
+const realTextEncoder = globalThis.TextEncoder;
+const realTextDecoder = globalThis.TextDecoder;
+
 describe('conversation data parse and serialize', () => {
   beforeAll(() => {
     globalThis.TextEncoder = TestTextEncoder as typeof TextEncoder;
     globalThis.TextDecoder = TestTextDecoder as typeof TextDecoder;
+  });
+
+  afterAll(() => {
+    globalThis.TextEncoder = realTextEncoder;
+    globalThis.TextDecoder = realTextDecoder;
   });
 
   interface validTestCase {

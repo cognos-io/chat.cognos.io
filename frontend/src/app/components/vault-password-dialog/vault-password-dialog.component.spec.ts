@@ -37,6 +37,9 @@ describe('buildEmergencyKitText', () => {
 describe('VaultPasswordDialogComponent', () => {
   let fixture: ComponentFixture<VaultPasswordDialogComponent>;
   let component: VaultPasswordDialogComponent;
+  // Saved so the faked navigator.clipboard never leaks into other spec files
+  // that share this worker's global scope.
+  let originalClipboardDescriptor: PropertyDescriptor | undefined;
 
   const unlockError = signal<string | null>(null);
   const generatedAccountKey = signal<string | null>(null);
@@ -55,6 +58,10 @@ describe('VaultPasswordDialogComponent', () => {
     clearUnlockError.mockReset();
     toastService.notify.mockReset();
 
+    originalClipboardDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis.navigator,
+      'clipboard',
+    );
     Object.defineProperty(globalThis.navigator, 'clipboard', {
       configurable: true,
       value: {
@@ -101,6 +108,18 @@ describe('VaultPasswordDialogComponent', () => {
     fixture = TestBed.createComponent(VaultPasswordDialogComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    if (originalClipboardDescriptor) {
+      Object.defineProperty(
+        globalThis.navigator,
+        'clipboard',
+        originalClipboardDescriptor,
+      );
+    } else {
+      Reflect.deleteProperty(globalThis.navigator, 'clipboard');
+    }
   });
 
   it('renders the unlock error inside the dialog', () => {
