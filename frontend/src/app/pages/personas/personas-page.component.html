@@ -20,9 +20,9 @@
         <h1 class="personas-page__title">{{ t('personas.page.title') }}</h1>
         <p class="personas-page__subtitle">
           {{ t('personas.page.subtitle') }}
-          <span class="personas-page__badge">{{
+          <cog-lozenge tone="green">{{
             t('personas.page.encryptedBadge')
-          }}</span>
+          }}</cog-lozenge>
         </p>
       </div>
       <cog-button
@@ -160,19 +160,19 @@
         <span class="persona-card__name">{{ persona.name }}</span>
         <span class="persona-card__badges">
           @if (isActive(persona)) {
-            <span class="persona-card__badge persona-card__badge--active">{{
+            <cog-lozenge tone="green">{{
               t('personas.page.badges.active')
-            }}</span>
+            }}</cog-lozenge>
           }
           @if (isDefault(persona)) {
-            <span class="persona-card__badge persona-card__badge--default">{{
+            <cog-lozenge tone="blue">{{
               t('personas.page.badges.default')
-            }}</span>
+            }}</cog-lozenge>
           }
           @if (persona.source === 'cognos') {
-            <span class="persona-card__badge persona-card__badge--official">{{
+            <cog-lozenge tone="neutral">{{
               t('personas.page.badges.official')
-            }}</span>
+            }}</cog-lozenge>
           }
         </span>
       </span>

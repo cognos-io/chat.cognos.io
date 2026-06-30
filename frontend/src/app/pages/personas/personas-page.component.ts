@@ -15,6 +15,7 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import {
   CognosButtonComponent,
   CognosIconComponent,
+  CognosLozengeComponent,
   CognosSearchFieldComponent,
 } from '@cognos/ui-angular';
 
@@ -46,6 +47,7 @@ type ViewMode = 'grid' | 'list';
     RouterLink,
     CognosButtonComponent,
     CognosIconComponent,
+    CognosLozengeComponent,
     CognosSearchFieldComponent,
     PersonaAvatarComponent,
     PersonaEditorComponent,

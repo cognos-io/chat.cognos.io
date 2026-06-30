@@ -59,17 +59,6 @@
   font-size: var(--cog-fs-body);
 }
 
-.personas-page__badge {
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 10px;
-  font-weight: var(--cog-fw-bold);
-  color: var(--cog-success-text);
-  background: var(--cog-success-bg);
-  padding: var(--cog-space-025) var(--cog-space-075);
-  border-radius: var(--cog-radius-pill);
-}
-
 .personas-page__toolbar {
   display: flex;
   align-items: center;
@@ -229,28 +218,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--cog-space-050);
-}
-
-.persona-card__badge {
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 10px;
-  font-weight: var(--cog-fw-bold);
-  padding: 1px 5px;
-  border-radius: var(--cog-radius-sm);
-}
-
-.persona-card__badge--active {
-  color: var(--cog-success-text);
-}
-
-.persona-card__badge--default {
-  color: var(--cog-brand);
-}
-
-.persona-card__badge--official {
-  color: var(--cog-text-subtle);
-  background: var(--cog-surface-sunken);
 }
 
 .persona-card__actions {
