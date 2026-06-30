@@ -1,6 +1,17 @@
 # Appearance theme: light, dark, and system
 
-Status: Draft
+Status: Implemented
+
+Implementation notes:
+
+- Pure helpers + types live in `frontend/src/app/theme/theme.ts`; the runtime
+  `ThemeService` is in `frontend/src/app/services/theme.service.ts` and is
+  started by `provideAppTheme()` (`frontend/src/app/theme/theme.providers.ts`).
+- The first-paint flash guard is an inline script in `frontend/src/index.html`.
+- The Appearance card uses `app-theme-switcher`
+  (`frontend/src/app/components/theme-switcher/`), a `cog-choice-chip-group`.
+- `users.preferred_theme` is added by
+  `backend/db/migrations/1760000065_users_preferred_theme.go`.
 
 Cognos already has semantic light and dark theme tokens in
 `packages/ui/styles/themes.css`. This spec defines how the frontend exposes those themes to users,
