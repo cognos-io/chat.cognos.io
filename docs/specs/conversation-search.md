@@ -441,7 +441,11 @@ denial tests first.
 Search hydration benefits from faster encrypted message reads, but HTTP/CDN caching is broader than
 search and has its own security rules. Keep it separate from the Orama implementation.
 
-See: [encrypted-api-response-caching](./encrypted-api-response-caching.md).
+See:
+
+- [encrypted-api-response-caching](./encrypted-api-response-caching.md) — repeat-load caching.
+- [conversation-load-request-reduction](./conversation-load-request-reduction.md) — first-load
+  request fan-out (embedding key material in the conversation list).
 
 ## 15. Open questions
 

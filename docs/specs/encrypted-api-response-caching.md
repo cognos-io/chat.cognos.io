@@ -33,6 +33,13 @@ Search hydration and chat navigation can fetch the same encrypted blobs repeated
 The browser still has to decrypt locally, but HTTP caching can avoid reloading unchanged ciphertext
 from PocketBase/API.
 
+> Caching reduces **repeat** loads. The **first** load's request fan-out (per-conversation key
+> fetches) is a separate, higher-leverage fix — see
+> [conversation-load-request-reduction](./conversation-load-request-reduction.md). Once that spec
+> embeds key material in the conversation list, the list response carries the keys too, so the list
+> ETag/validator (§13) must hash that material; rotation already bumps `key_version`, which is in
+> both the response and the validator.
+
 ## 2. Candidate responses
 
 Explore only encrypted read responses:
