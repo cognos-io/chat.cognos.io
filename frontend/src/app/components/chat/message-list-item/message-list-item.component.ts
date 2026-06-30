@@ -575,7 +575,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       height: 0;
       border-block: 4px solid transparent;
       border-inline-start: 5px solid currentColor;
-      transition: transform 120ms ease;
+      transition: transform var(--cog-dur-fast) var(--cog-ease-standard);
     }
 
     .message-list-item__reasoning-caret.is-open {

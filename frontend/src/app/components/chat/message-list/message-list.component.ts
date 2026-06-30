@@ -204,7 +204,7 @@ import {
 
     .message-list__circle {
       position: absolute;
-      border-radius: 9999px;
+      border-radius: var(--cog-radius-pill);
       filter: blur(52px);
       opacity: 0.5;
     }

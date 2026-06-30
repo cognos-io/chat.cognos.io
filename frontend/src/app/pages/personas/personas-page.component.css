@@ -67,7 +67,7 @@
   color: var(--cog-success-text);
   background: var(--cog-success-bg);
   padding: var(--cog-space-025) var(--cog-space-075);
-  border-radius: 999px;
+  border-radius: var(--cog-radius-pill);
 }
 
 .personas-page__toolbar {
@@ -187,9 +187,9 @@
   background: var(--cog-surface);
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease,
-    background 0.15s ease;
+    border-color var(--cog-dur-medium) var(--cog-ease-standard),
+    box-shadow var(--cog-dur-medium) var(--cog-ease-standard),
+    background var(--cog-dur-medium) var(--cog-ease-standard);
 }
 
 .persona-card:hover {
@@ -270,9 +270,9 @@
   opacity: 0;
   cursor: pointer;
   transition:
-    opacity 0.15s ease,
-    color 0.15s ease,
-    background 0.15s ease;
+    opacity var(--cog-dur-medium) var(--cog-ease-standard),
+    color var(--cog-dur-medium) var(--cog-ease-standard),
+    background var(--cog-dur-medium) var(--cog-ease-standard);
 }
 
 .persona-card__action:hover {

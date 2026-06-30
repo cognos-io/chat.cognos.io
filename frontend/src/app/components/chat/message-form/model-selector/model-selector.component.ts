@@ -274,7 +274,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       transform: translateX(-50%);
       width: 36px;
       height: 4px;
-      border-radius: 999px;
+      border-radius: var(--cog-radius-pill);
       background: var(--cog-border);
     }
 
@@ -518,7 +518,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       min-height: 32px;
       padding: 0 var(--cog-space-100);
       border: 1px solid var(--cog-border);
-      border-radius: 999px;
+      border-radius: var(--cog-radius-pill);
       background: var(--cog-surface);
       color: var(--cog-text-subtle);
       font: inherit;
