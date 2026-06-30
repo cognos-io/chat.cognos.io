@@ -54,7 +54,7 @@ import {
         min-height: 100vh;
         /* Single source of truth for the nav column width across every shell
            (chat, settings, …). Override on an ancestor for a one-off layout. */
-        --cog-desktop-shell-nav-width: 360px;
+        --_nav-width: 360px;
       }
 
       /* Fixed-viewport mode: the shell fills the screen and the content area
@@ -69,7 +69,7 @@ import {
       .cog-desktop-shell {
         display: grid;
         min-height: 100vh;
-        grid-template-columns: var(--cog-desktop-shell-nav-width, 360px) minmax(0, 1fr);
+        grid-template-columns: var(--_nav-width, 360px) minmax(0, 1fr);
         background: var(--cog-app-bg);
       }
 

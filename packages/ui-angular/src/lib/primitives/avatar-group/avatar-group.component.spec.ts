@@ -1,9 +1,10 @@
-import { TestBed } from "@angular/core/testing";
-import { describe, expect, it } from "vitest";
+import { TestBed } from '@angular/core/testing';
 
-import { CognosAvatarGroupComponent } from "./avatar-group.component";
+import { describe, expect, it } from 'vitest';
 
-describe("CognosAvatarGroupComponent", () => {
+import { CognosAvatarGroupComponent } from './avatar-group.component';
+
+describe('CognosAvatarGroupComponent', () => {
   function render(inputs: Record<string, unknown> = {}) {
     const fixture = TestBed.createComponent(CognosAvatarGroupComponent);
     for (const [key, value] of Object.entries(inputs)) {
@@ -13,26 +14,30 @@ describe("CognosAvatarGroupComponent", () => {
     return fixture;
   }
 
-  it("renders one avatar per item", () => {
+  it('renders one avatar per item', () => {
     const fixture = render({
-      items: [{ name: "Ada" }, { name: "Grace" }, { group: true }],
+      items: [{ name: 'Ada' }, { name: 'Grace' }, { group: true }],
     });
 
-    const avatars = fixture.nativeElement.querySelectorAll("cog-avatar");
+    const avatars = fixture.nativeElement.querySelectorAll('cog-avatar');
     expect(avatars).toHaveLength(3);
   });
 
-  it("derives the overlap from the configured size", () => {
-    const fixture = render({ items: [{ name: "Ada" }], size: 40 });
-    const group = fixture.nativeElement.querySelector(".cog-avatar-group") as HTMLElement;
+  it('derives the overlap from the configured size', () => {
+    const fixture = render({ items: [{ name: 'Ada' }], size: 40 });
+    const group = fixture.nativeElement.querySelector(
+      '.cog-avatar-group',
+    ) as HTMLElement;
 
-    expect(group.style.getPropertyValue("--cog-avatar-group-overlap")).toBe("11px");
+    expect(group.style.getPropertyValue('--_avatar-overlap')).toBe('11px');
   });
 
-  it("falls back to size 32 for unsupported sizes", () => {
-    const fixture = render({ items: [{ name: "Ada" }], size: "9001" });
-    const group = fixture.nativeElement.querySelector(".cog-avatar-group") as HTMLElement;
+  it('falls back to size 32 for unsupported sizes', () => {
+    const fixture = render({ items: [{ name: 'Ada' }], size: '9001' });
+    const group = fixture.nativeElement.querySelector(
+      '.cog-avatar-group',
+    ) as HTMLElement;
 
-    expect(group.style.getPropertyValue("--cog-avatar-group-overlap")).toBe("9px");
+    expect(group.style.getPropertyValue('--_avatar-overlap')).toBe('9px');
   });
 });

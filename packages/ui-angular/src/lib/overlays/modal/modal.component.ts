@@ -30,7 +30,7 @@ export type CognosModalTitleTone = 'default' | 'info' | 'success' | 'danger';
 
         <section
           [class]="modalClass()"
-          [style.--cog-modal-width]="width() + 'px'"
+          [style.--_modal-width]="width() + 'px'"
           aria-modal="true"
           role="dialog"
         >
@@ -93,7 +93,7 @@ export type CognosModalTitleTone = 'default' | 'info' | 'success' | 'danger';
         position: relative;
         z-index: 1;
         display: grid;
-        width: min(100%, var(--cog-modal-width));
+        width: min(100%, var(--_modal-width));
         /* Cap the panel to the centred area (viewport minus .cog-modal's
            padding) so a tall modal never overflows the screen. The body row is
            minmax(0, 1fr) and scrolls; the header/footer stay pinned. */

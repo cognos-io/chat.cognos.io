@@ -14,7 +14,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
   imports: [CognosIconButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section [class]="surfaceClass()" [style.--cog-dialog-surface-width]="widthVar()">
+    <section [class]="surfaceClass()" [style.--_surface-width]="widthVar()">
       <header class="cog-dialog-surface__header">
         <div class="cog-dialog-surface__heading">
           <h2 class="cog-dialog-surface__title">{{ title() }}</h2>
@@ -51,7 +51,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
 
       .cog-dialog-surface {
         display: grid;
-        width: var(--cog-dialog-surface-width, auto);
+        width: var(--_surface-width, auto);
         border: 1px solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);

@@ -34,7 +34,7 @@ export type CognosIconTone =
     <svg
       #svg
       [class]="iconClass()"
-      [style.--cog-icon-size.px]="size()"
+      [style.--_icon-size.px]="size()"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -55,8 +55,8 @@ export type CognosIconTone =
 
       .cog-icon {
         display: block;
-        width: var(--cog-icon-size, 16px);
-        height: var(--cog-icon-size, 16px);
+        width: var(--_icon-size, 16px);
+        height: var(--_icon-size, 16px);
         flex: none;
         stroke-width: var(--cog-icon-stroke);
 

@@ -1,14 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 import {
   CognosAvatarComponent,
   type CognosAvatarSize,
-} from "../avatar/avatar.component";
+} from '../avatar/avatar.component';
 
 const COGNOS_AVATAR_GROUP_SIZES = [26, 28, 32, 36, 40] as const;
 
@@ -17,15 +12,12 @@ export type CognosAvatarGroupItem =
   | { group: true; name?: string };
 
 @Component({
-  selector: "cog-avatar-group",
+  selector: 'cog-avatar-group',
   standalone: true,
   imports: [CognosAvatarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <span
-      class="cog-avatar-group"
-      [style.--cog-avatar-group-overlap.px]="overlap()"
-    >
+    <span class="cog-avatar-group" [style.--_avatar-overlap.px]="overlap()">
       @for (item of items(); track item.group ? 'group-' + $index : item.name) {
         <span class="cog-avatar-group__item">
           <cog-avatar
@@ -53,7 +45,7 @@ export type CognosAvatarGroupItem =
       }
 
       .cog-avatar-group__item + .cog-avatar-group__item {
-        margin-inline-start: calc(var(--cog-avatar-group-overlap) * -1);
+        margin-inline-start: calc(var(--_avatar-overlap) * -1);
       }
     `,
   ],

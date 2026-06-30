@@ -17,7 +17,7 @@ describe('CognosDialogSurfaceComponent', () => {
     fixture.nativeElement.querySelector('.cog-dialog-surface') as HTMLElement;
 
   const widthVar = (fixture: ReturnType<typeof render>) =>
-    surface(fixture).style.getPropertyValue('--cog-dialog-surface-width').trim();
+    surface(fixture).style.getPropertyValue('--_surface-width').trim();
 
   it('shrinks to fit content when no width is set', () => {
     const fixture = render(null);

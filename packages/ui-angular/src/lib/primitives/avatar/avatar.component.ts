@@ -75,54 +75,54 @@ export type CognosAvatarColor = (typeof COGNOS_AVATAR_COLORS)[number];
         }
 
         &.cog-avatar--icon {
-          background: var(--cog-avatar-bg, #eef0f3);
-          color: var(--cog-avatar-fg, #475569);
+          background: var(--_avatar-bg, #eef0f3);
+          color: var(--_avatar-fg, #475569);
         }
       }
 
       .cog-avatar--green {
-        --cog-avatar-bg: #dcfce7;
-        --cog-avatar-fg: #15803d;
+        --_avatar-bg: #dcfce7;
+        --_avatar-fg: #15803d;
       }
       .cog-avatar--blue {
-        --cog-avatar-bg: #dbeafe;
-        --cog-avatar-fg: #1d4ed8;
+        --_avatar-bg: #dbeafe;
+        --_avatar-fg: #1d4ed8;
       }
       .cog-avatar--indigo {
-        --cog-avatar-bg: #e0e7ff;
-        --cog-avatar-fg: #4338ca;
+        --_avatar-bg: #e0e7ff;
+        --_avatar-fg: #4338ca;
       }
       .cog-avatar--violet {
-        --cog-avatar-bg: #ede9fe;
-        --cog-avatar-fg: #6d28d9;
+        --_avatar-bg: #ede9fe;
+        --_avatar-fg: #6d28d9;
       }
       .cog-avatar--teal {
-        --cog-avatar-bg: #ccfbf1;
-        --cog-avatar-fg: #0f766e;
+        --_avatar-bg: #ccfbf1;
+        --_avatar-fg: #0f766e;
       }
       .cog-avatar--sky {
-        --cog-avatar-bg: #e0f2fe;
-        --cog-avatar-fg: #0369a1;
+        --_avatar-bg: #e0f2fe;
+        --_avatar-fg: #0369a1;
       }
       .cog-avatar--amber {
-        --cog-avatar-bg: #fef3c7;
-        --cog-avatar-fg: #b45309;
+        --_avatar-bg: #fef3c7;
+        --_avatar-fg: #b45309;
       }
       .cog-avatar--orange {
-        --cog-avatar-bg: #ffedd5;
-        --cog-avatar-fg: #c2410c;
+        --_avatar-bg: #ffedd5;
+        --_avatar-fg: #c2410c;
       }
       .cog-avatar--pink {
-        --cog-avatar-bg: #fce7f3;
-        --cog-avatar-fg: #be185d;
+        --_avatar-bg: #fce7f3;
+        --_avatar-fg: #be185d;
       }
       .cog-avatar--slate {
-        --cog-avatar-bg: #eef0f3;
-        --cog-avatar-fg: #475569;
+        --_avatar-bg: #eef0f3;
+        --_avatar-fg: #475569;
       }
       .cog-avatar--transparent {
-        --cog-avatar-bg: transparent;
-        --cog-avatar-fg: var(--cog-text-subtle, #475569);
+        --_avatar-bg: transparent;
+        --_avatar-fg: var(--cog-text-subtle, #475569);
         box-shadow: none;
       }
     `,
