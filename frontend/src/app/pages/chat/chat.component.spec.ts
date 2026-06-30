@@ -46,7 +46,6 @@ describe('ChatComponent', () => {
 
   const conversationService = {
     conversation: selectedConversation,
-    filter$: { next: vi.fn() },
     hasPinnedConversations: () => pinnedConversations().length > 0,
     pinnedConversations,
     hasNonPinnedConversations: () => recentConversations().length > 0,

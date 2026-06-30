@@ -45,7 +45,6 @@ export const UserSecretKeyNotFoundError = new Error('User secret key not found')
 interface ConversationState {
   conversations: Array<Conversation>;
   selectedConversationId: string;
-  filter: string;
   isTemporaryConversation: boolean;
   expirationDuration: string;
 }
@@ -53,7 +52,6 @@ interface ConversationState {
 const initialState: ConversationState = {
   conversations: [],
   selectedConversationId: '',
-  filter: '',
   isTemporaryConversation: false,
   expirationDuration: '',
 };
@@ -77,7 +75,6 @@ export class ConversationService {
   private readonly _newConversation$ = this.newConversation$.pipe(
     map((data) => ({ ...data, title: data.title.trim() })),
   );
-  readonly filter$ = new Subject<string>();
   readonly deleteConversation$ = new Subject<string>(); // conversationId
 
   // state
@@ -119,12 +116,6 @@ export class ConversationService {
             selectedConversationId: conversationId,
             isTemporaryConversation: false,
           };
-        }),
-      ),
-      // When filter emits, apply the filter
-      this.filter$.pipe(
-        map((filter) => {
-          return { filter };
         }),
       ),
       // When the user's key pair changes, reload or clear the conversations.
@@ -186,31 +177,23 @@ export class ConversationService {
         ),
     ],
     selectors: (state) => {
-      const filteredConversations = computed(() => {
-        // Standalone conversations make up the Pinned/Recent lists. Project
-        // conversations are surfaced under their project's collapsible group in
-        // the sidebar instead, so they're excluded here to avoid showing twice.
-        // (They remain in state.conversations() so opening one still resolves.)
-        const all = state
-          .conversations()
-          .filter((conversation) => !conversation.record.project);
-
-        const filter = state.filter().trim().toLowerCase();
-        if (filter === '') return all;
-
-        return all.filter((conversation) =>
-          conversation.decryptedData.title.toLowerCase().includes(filter),
-        );
-      });
+      // Standalone conversations make up the Pinned/Recent lists. Project
+      // conversations are surfaced under their project's collapsible group in
+      // the sidebar instead, so they're excluded here to avoid showing twice.
+      // (They remain in state.conversations() so opening one still resolves.)
+      // Sidebar search is no longer a substring filter here — it's handled
+      // on-device by ConversationSearchService over all conversations.
+      const standaloneConversations = computed(() =>
+        state.conversations().filter((conversation) => !conversation.record.project),
+      );
 
       const orderedConversations = computed(() => {
-        return sortConversationsByUpdated(filteredConversations());
+        return sortConversationsByUpdated(standaloneConversations());
       });
 
       const pinnedConversationIds = this._userPreferencesService.pinnedConversationIds;
 
       return {
-        filteredConversations,
         orderedConversations,
         // Every loaded conversation, standalone AND project (project ones are
         // merged in via upsertConversations). The search index needs the full
