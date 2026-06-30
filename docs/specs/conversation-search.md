@@ -13,7 +13,11 @@ V1 should be **client-side, encrypted-at-rest, and lazy**.
 - Index **recent messages** only after the user searches or the browser is idle.
 - Cache decrypted search text **in memory only** for V1.
 - Use Orama BM25 ranking, not substring filtering.
+- Stem with the **user's selected UI language**; one stemmer per index, rebuilt on locale change.
 - Do not implement embeddings or semantic search here.
+
+This spec's design decisions are settled. See [§16 Resolved decisions](#16-resolved-decisions) for
+the log; the remaining genuine unknowns live in [§15 Open questions](#15-open-questions).
 
 ## 1. Why change it
 
@@ -135,11 +139,24 @@ One Orama document per conversation:
 {
   id: string;              // conversation id
   title: string;           // decrypted title
-  recentMessages: string;  // joined recent decrypted message content; empty until hydrated
+  recentMessages: string;  // joined decrypted message `content`; empty until hydrated
   updatedMs: number;       // for tie-breaks outside Orama
   projectId?: string;
 }
 ```
+
+### 7.1 What feeds `recentMessages`
+
+The decrypted message (`MessageData` in `frontend/src/app/interfaces/message.ts`) carries
+`content`, an optional `reasoning`, a role, and a tombstone flag. The indexing rule is precise:
+
+- Index the decrypted `content` only, for both user and assistant messages.
+- **Exclude `reasoning`** — it is not user-authored and is a non-goal (§5).
+- **Exclude tombstoned/soft-deleted messages** — their `content` is `null` once cleared, so they
+  drop out naturally; never index the role/timestamp scaffold that remains.
+- Join the surviving `content` strings newest-first, capped per §9.2.
+
+So one document indexes exactly: the conversation **title** + the concatenated message **content**.
 
 Do not include:
 
@@ -175,7 +192,8 @@ search(db, {
     title: 4,
     recentMessages: 1,
   },
-  threshold: 0.6,
+  threshold: 0, // require ALL query terms — see note below
+  tolerance: 1, // typo / light-inflection recall safety net
   relevance: {
     k: 1.2,
     b: 0.75,
@@ -189,12 +207,49 @@ Rationale:
 - Titles are short and user-authored, so title hits should rank highest.
 - Recent message text can be long, so title needs an explicit boost.
 - Keep Orama BM25 defaults until tests or real usage show a problem.
-- `threshold: 0.6` avoids very broad multi-word queries returning every chat that shares one common
-  token.
+- **`threshold: 0`** returns only documents that contain **all** the query terms. In Orama,
+  `threshold` is the _fraction of partial matches to include_: `1` (the default) returns any chat
+  sharing one common token, `0` requires every term. A multi-word query like "lease clause" should
+  surface chats containing both words, so `0` matches the intended behaviour. (An earlier draft used
+  `0.6`, which is permissive — the opposite of the stated goal.)
+- **`tolerance: 1`** allows one edit-distance typo per token. It is the recall safety net for
+  stemming gaps (e.g. `lease`/`leases`) and for content whose language differs from the active
+  stemmer (§8.1). Raise it only with tests — higher tolerance adds false positives and cost.
 
 Tune only with tests. Do not tweak BM25 parameters by feel.
 
+### 8.1 Tokenization and language (i18n)
+
+The decrypted corpus is multilingual (en/de/fr/es/pt/it). Orama uses **one stemmer per index**, so
+we bind the index language to the user's **active Transloco UI locale**:
+
+- On index build, **lazy-import the active locale's stemmer** from `@orama/stemmers` via a dynamic
+  `import()` and pass it through the tokenizer component with `stemming: true`. Only one stemmer is
+  ever loaded, so the bundle stays small.
+- Orama applies the same tokenizer to documents **and** the query, so stemming stays consistent for
+  free.
+- **Rebuild the index on locale change.** This reuses the same rebuild hook as a material
+  conversation-list change (§9.1). Locale switches are rare.
+- All six supported locales exist in Orama's stemmer set, so there is no unsupported-language
+  branch.
+- Assumption: a user mostly writes in their UI language. When content language ≠ UI language the
+  stemmer is suboptimal, but `tolerance: 1` keeps recall acceptable rather than dropping hits.
+- **Out of scope:** CJK and other non-space-delimited scripts. The min-query-length rule (§9) and
+  default tokenizer assume Latin-script, space-delimited text.
+
 ## 9. Lazy hydration
+
+### 9.0 Query gating
+
+Before any search or hydration runs, the raw input is gated:
+
+- **Minimum 3 characters** (trimmed). Shorter input shows the normal Projects/Pinned/Recent
+  navigation and triggers no hydration.
+- **Debounce 400 ms**, then `distinctUntilChanged`, so hydration never fires per keystroke.
+- Clearing the query takes an immediate reset path — the user should not wait 400 ms to get their
+  navigation back.
+
+See §12 for how this maps onto the RxJS pipeline.
 
 ### 9.1 Initial index
 
@@ -206,22 +261,28 @@ After vault unlock and conversation decrypt:
 
 ### 9.2 Query-time hydration
 
-When the user enters a non-empty query:
+When a gated query (§9.0) arrives:
 
 1. Search the title-only / partially hydrated index immediately.
-2. Pick conversations that are not hydrated yet, newest first.
-3. Fetch page 1 of messages for those conversations (`page_size=100` max today).
-4. Decrypt in the browser with that conversation's keypair.
-5. Join recent non-deleted message content into `recentMessages`.
-6. Rebuild or update the Orama document.
-7. Re-run the current search and update results.
+2. **Eagerly load project conversations** if they are not already in the store. Project chats are
+   normally fetched lazily as projects expand; on the first search of a session we fetch them up
+   front so search covers them. This is acceptable because users search infrequently.
+3. Pick conversations that are not hydrated yet, newest first.
+4. Fetch page 1 of messages for those conversations. Page 1 is the newest 100 messages — the backend
+   sorts by `created` descending and caps `page_size` at 100
+   (`backend/internal/handler/conversations.go`).
+5. Decrypt in the browser with that conversation's keypair (run the existing binding checks).
+6. Join surviving message `content` (per §7.1) into `recentMessages`.
+7. Update the Orama document (remove + insert).
+8. Re-run the current search and update results.
 
 Hydration should be bounded:
 
 - hydrate at most 10 conversations at a time;
 - cap each `recentMessages` string to about 8 KB;
 - skip conversations whose keypair is unavailable;
-- stop scheduling new hydration when the query is cleared.
+- stop scheduling new hydration when the query changes or clears — `switchMap` cancels in-flight
+  message fetches (§12), so superseded queries waste no network or decrypt work.
 
 ### 9.3 Idle hydration
 
@@ -233,7 +294,10 @@ Optional but useful after V1 is stable:
 
 ## 10. Cache and invalidation
 
-V1 cache is in memory only.
+V1 cache is in memory only. **The Orama DB itself is the cache** — hydrated `recentMessages` text
+lives in the index and persists across queries (a query cancelled by `switchMap` keeps whatever it
+already inserted). A side `Map<conversationId, revision>` records the key below so we can detect
+staleness; there is no separate text store.
 
 Cache key:
 
@@ -254,7 +318,8 @@ Cache value:
 Invalidate when:
 
 - `last_activity_at` or `updated` changes;
-- conversation title changes;
+- conversation title changes — this updates the document's `title` field only; it does **not**
+  invalidate hydrated `recentMessages`, since the message text is unaffected by a title edit;
 - a message is soft-deleted or hard-deleted in that conversation;
 - the conversation is deleted;
 - the vault locks;
@@ -276,23 +341,59 @@ as a separate security decision.
 - Clear the in-memory index and cache on vault lock/logout.
 - Keep message content out of analytics events.
 
-## 12. Implementation notes for later
+## 12. Search service architecture
 
-Suggested frontend shape:
+### 12.1 It replaces the current filter
 
-- Add `ConversationSearchIndexService`.
-- It reads loaded conversations from `ConversationService` and `ProjectConversationService`.
-- It owns:
-    - Orama DB lifecycle;
-    - query signal;
-    - scored result ids;
-    - hydration queue;
-    - in-memory cache.
-- It uses `CognosApiService.listConversationMessages()` directly.
-- Extract message decryption into a small pure helper so search and `MessageService` share the same
-  binding checks.
+Today: `ChatComponent.onSearchChange()` → `ConversationService.filter$` (a `Subject<string>`) →
+`filteredConversations` (a `title.includes()` computed) → `orderedConversations` → sidebar template.
 
-Avoid introducing a generic search abstraction until at least two search areas need BM25.
+V1 introduces `ConversationSearchIndexService` as the **owner of the query and results**, replacing
+the substring `filter$` path. The sidebar binds its input to this service and renders the flat
+"Search results" list (§6.2) from it when the query is active; the empty-query path keeps rendering
+the existing Projects/Pinned/Recent groups. Standardise on Orama here — but do **not** build a
+generic search abstraction until a second area needs BM25.
+
+`ConversationSearchIndexService` reads loaded conversations from `ConversationService` and
+`ProjectConversationService` and owns:
+
+- Orama DB lifecycle (build, locale-driven rebuild, teardown on lock/logout);
+- the query signal/subject;
+- scored result ids;
+- the bounded hydration queue;
+- the in-memory cache + revision map (§10).
+
+It calls `CognosApiService.listConversationMessages()` directly (never `MessageService`, to avoid
+mutating active-chat state). Extract message decryption into a small pure helper so search and
+`MessageService` share the same `assertMessageBindings()` checks.
+
+### 12.2 Race-safe pipeline (RxJS `switchMap`)
+
+`CognosApiService` returns Observables, so cancellation is idiomatic. The query flows through:
+
+```txt
+query$ (Subject<string>)
+  → debounceTime(400)
+  → map(trim) → distinctUntilChanged()
+  → branch:
+       length < 3  → reset to Projects/Pinned/Recent, no hydration
+       otherwise   → switchMap(query => hydrateAndSearch$(query))
+  → toSignal → searchResults
+```
+
+`switchMap` is the core race protection: a new query tears down the previous query's inner stream,
+which **cancels its in-flight `listConversationMessages` HTTP requests** — not merely discards their
+results. A manual generation counter would still waste the network and decrypt work. Inside
+`hydrateAndSearch$(query)`:
+
+1. emit the synchronous Orama search over the current index immediately;
+2. eagerly load project conversations on first search (§9.2);
+3. pick un-hydrated candidates newest-first (cap 10), fetch → decrypt → `remove+insert`;
+4. re-run the search and emit after each batch (incremental result updates).
+
+Because every conversation insert is atomic, a mid-flight `switchMap` cancellation never corrupts a
+half-written document; it only stops scheduling further inserts. Inserts already made stay cached
+(§10).
 
 ## 13. Test plan
 
@@ -303,19 +404,30 @@ Write tests before implementation.
 - Title match appears immediately.
 - Recent-message-only match appears after hydration.
 - Title hit outranks message-only hit for the same term.
+- A multi-word query requires **all** terms (`threshold: 0`): a chat containing only one of two
+  query words does not match.
+- `tolerance: 1` recovers a single-character typo / simple inflection.
 - Query clearing cancels/suppresses pending hydration results.
+- A query change mid-hydration (`switchMap`) does not emit the superseded query's results.
+- A query under 3 characters triggers no hydration and shows normal navigation.
 - Cache is reused when `last_activity_at` is unchanged.
 - Cache invalidates when `last_activity_at` changes.
+- A title change updates the title field without invalidating hydrated `recentMessages`.
 - Deleted/tombstoned message content is not indexed.
+- Reasoning text is not indexed.
 - Decryption failure does not index the fallback error string.
+- Locale-based stemming: an inflected query matches inflected content in the active UI locale; the
+  index rebuilds when the locale changes.
 - Search hydration does not mutate `MessageService.messages()` or selected conversation state.
 
 ### Browser e2e
 
 - Searching by chat title still works.
 - Searching by a word in a recent message finds the chat after JIT hydration.
+- Typing fewer than 3 characters shows normal navigation and runs no search.
 - Clearing search restores Projects/Pinned/Recent navigation.
-- A project chat can match search once project conversations are loaded.
+- A project chat matches search even before its project is expanded (eager project load on first
+  search).
 - The on-device search hint is visible.
 
 ### API/security e2e
@@ -333,7 +445,26 @@ See: [encrypted-api-response-caching](./encrypted-api-response-caching.md).
 
 ## 15. Open questions
 
+These are genuine V2+ unknowns, deliberately out of V1 scope:
+
 - Should V2 show message snippets in results, or is chat-row-only better for privacy?
-- Should persistent encrypted search cache be worth the extra security surface?
+- Should a persistent encrypted search cache be worth the extra security surface?
 - Should older pages hydrate on demand when the first 100 messages do not find enough results?
-- Is encrypted response caching useful enough after in-memory search hydration cache exists?
+- Is encrypted response caching useful enough after the in-memory search hydration cache exists?
+- Should we detect content language per conversation (vs. trusting the UI locale) if real usage
+  shows frequent language mismatches?
+
+## 16. Resolved decisions
+
+Settled during spec review — recorded so they are not relitigated:
+
+| #                | Decision                                                                                                                                                                                                  |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Library          | Stay on Orama v3 (sync API). No alternative search library — none handles a mixed-language corpus better, and Orama keeps the door open for the V2 semantic/hybrid path.                                  |
+| Stemming         | One stemmer per index, bound to the **active Transloco UI locale**; lazy-import that stemmer from `@orama/stemmers`; rebuild on locale change. `tolerance: 1` as the recall safety net. CJK out of scope. |
+| Threshold        | `threshold: 0` (require all query terms). The earlier `0.6` was permissive and contradicted the stated goal.                                                                                              |
+| Indexed fields   | Conversation **title** + message **content** only. Exclude reasoning, tombstoned messages, attachments.                                                                                                   |
+| Pipeline         | `ConversationSearchIndexService` **replaces** `ConversationService.filter$`; standardise on Orama. No generic search abstraction until a second area needs BM25.                                          |
+| Race control     | RxJS `switchMap` (cancels in-flight fetches), `debounceTime(400)`, `distinctUntilChanged`, **min 3 chars**.                                                                                               |
+| Project coverage | **Eagerly load** project conversations on the first search of a session.                                                                                                                                  |
+| Cache            | The Orama DB **is** the in-memory cache; a side revision map drives invalidation. A title change updates the title field without dropping hydrated message text.                                          |

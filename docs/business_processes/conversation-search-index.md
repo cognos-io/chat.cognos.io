@@ -34,7 +34,12 @@ sequenceDiagram
 
 - Index **titles immediately** after conversation decryption.
 - Index **recent messages lazily** when the user searches or the browser is idle.
-- Cache hydrated message text **in memory only** for V1.
+- Index conversation **title + message content only**.
+- Search runs after a **3-character minimum** and a **400 ms debounce**; it requires **all** query
+  terms (BM25 `threshold: 0`).
+- Stem with the user's **active UI language** — one stemmer per index, rebuilt on locale change.
+- **Eagerly load project conversations** on the first search of a session.
+- Cache hydrated message text **in memory only** for V1; the Orama index itself is the cache.
 - Invalidate a chat's cached search text when its `last_activity_at` or `updated` value changes.
 - Clear the whole index on vault lock, logout, or account switch.
 - Do not index deleted-message content, reasoning text, or attachment text in V1.
