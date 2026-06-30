@@ -38,17 +38,21 @@ Grid-aligned spacing and font-weight literals were tokenised in a visually-neutr
 values, fixed dimensions, `calc()`/negatives, media-chrome scrims (image/lightbox) and the
 `styles.scss` alpha-mask gradients were deliberately left raw.
 
-### Still open (genuine judgment calls, not done)
+### Judgment calls — done
 
-- **Motion:** transition durations are written as `0.15s`/`0.1s`/`0.26s` with `ease`. These
-  match `--cog-dur-medium/fast/sheet`, but the easing is plain `ease`, not
-  `--cog-ease-standard` — converting would change the curve, so it needs a deliberate motion
-  pass rather than a mechanical swap.
-- **Pill radius near-miss:** a few badges use `border-radius: 999px` instead of
-  `--cog-radius-pill` (9999px). Same visual intent, different literal.
-- **Hand-rolled lozenges:** the persona card/page badges reimplement the Lozenge spec inline
-  (uppercase, 10–11px, 700, small padding). They could use `<cog-lozenge>` or the lozenge
-  tokens directly instead of bespoke CSS.
+- **Motion:** state transitions (hover/selection/caret) now use
+  `var(--cog-dur-medium|fast) var(--cog-ease-standard)` instead of raw `0.15s`/`120ms ease`.
+  Continuous spinners/blinks/shimmers and the progress fill deliberately keep their
+  `linear`/`ease-in-out`/`ease-out` timing — they aren't state-motion.
+- **Pill radius:** `border-radius: 999px`/`9999px` literals replaced with `--cog-radius-pill`.
+- **Lozenges:** the four hand-rolled persona badges now use `<cog-lozenge>` (tones:
+  encrypted/active green, default blue, official neutral); bespoke badge CSS removed.
+
+### Still open
+
+- **Tailwind utilities:** a few elements (e.g. `icebreakers.component.ts`) style via Tailwind
+  classes (`bg-white`, `bg-slate-50`, `duration-150 ease-in-out`) rather than `--cog-*`.
+  Migrating Tailwind usage to tokens is a separate, larger standardisation.
 
 ---
 
