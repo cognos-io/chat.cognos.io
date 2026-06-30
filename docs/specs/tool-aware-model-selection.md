@@ -1,6 +1,6 @@
 # Tool-Aware Model Selection
 
-**Status:** Draft
+**Status:** Implemented (Phases 1–3)
 **Scope:** Coupling composer tools to model capability; per-capability-context model defaults
 (encrypted); auto-switching the selected model when a tool is toggled; treating text completion as a
 first-class capability. Frontend product behaviour; relies on the backend capability gate.
@@ -233,12 +233,12 @@ Follow the project preference: high-level e2e first, then unit tests for pure lo
 
 ## 10. Milestones
 
-| Phase | Deliverable                                                                                                                                                                                      |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1     | `text_completion` capability + non-null required capability → picker filters image-only models out of chat; resolution replaces a now-incapable selection. Closes the bug class at the selector. |
-| 2     | Auto-switch on toggle (§4.2) + localised, tier-aware notice (§4.4). Reads `defaultModelId` only; no new storage yet.                                                                             |
-| 3     | Per-context defaults (`toolModelDefaults`, §4.3/§5) in encrypted preferences; resolution prefers them; tests + opacity assertions.                                                               |
-| later | Generalise context key to multi-tool combinations as web search etc. land.                                                                                                                       |
+| Phase     | Deliverable                                                                                                                                                                                      |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 ✅      | `text_completion` capability + non-null required capability → picker filters image-only models out of chat; resolution replaces a now-incapable selection. Closes the bug class at the selector. |
+| 2 ✅      | Auto-switch on toggle (§4.2) + localised, tier-aware notice (§4.4).                                                                                                                              |
+| 3 ✅      | Per-context defaults (`toolModelDefaults`, §4.3/§5) in encrypted preferences; resolution prefers them; tests + opacity assertions.                                                               |
+| later     | Generalise context key to multi-tool combinations as web search etc. land.                                                                                                                       |
 
 ## 11. Risks
 
