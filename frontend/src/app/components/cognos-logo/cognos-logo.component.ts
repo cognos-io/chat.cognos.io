@@ -6,7 +6,13 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
   standalone: true,
   imports: [CommonModule],
   templateUrl: `./cognos_logo--horizontal.svg`,
-  styles: ``,
+  styles: `
+    .cognos-logo__svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CognosLogoComponent {
