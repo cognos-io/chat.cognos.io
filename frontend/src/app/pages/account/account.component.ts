@@ -23,6 +23,7 @@ import {
 import { DataProcessingComponent } from '@app/components/account/data-processing/data-processing.component';
 import { LanguageSwitcherComponent } from '@app/components/language-switcher/language-switcher.component';
 import { SettingsPageComponent } from '@app/components/settings/settings-page.component';
+import { ThemeSwitcherComponent } from '@app/components/theme-switcher/theme-switcher.component';
 import {
   AvatarColor,
   AvatarIcon,
@@ -59,6 +60,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
     LanguageSwitcherComponent,
     MfaSettingsComponent,
     SettingsPageComponent,
+    ThemeSwitcherComponent,
     TranslocoModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,6 +72,13 @@ import { deriveProfileName } from '@app/utils/profile-identity';
           [subtitle]="t('account.language.subtitle')"
         >
           <app-language-switcher card-actions></app-language-switcher>
+        </cog-card>
+
+        <cog-card
+          [heading]="t('account.appearance.title')"
+          [subtitle]="t('account.appearance.subtitle')"
+        >
+          <app-theme-switcher card-actions />
         </cog-card>
 
         <cog-card

@@ -92,6 +92,16 @@
       "emailChange": "No se pudo iniciar el cambio de correo. Comprueba la dirección e inténtalo de nuevo.",
       "passwordChange": "No se pudo cambiar tu contraseña. Comprueba tu contraseña actual e inténtalo de nuevo."
     },
+    "appearance": {
+      "dark": "Oscuro",
+      "label": "Tema",
+      "light": "Claro",
+      "subtitle": "Elige cómo se ve Cognos en este dispositivo.",
+      "system": "Sistema",
+      "systemHintDark": "Sigue tu dispositivo. Actualmente en modo oscuro.",
+      "systemHintLight": "Sigue tu dispositivo. Actualmente en modo claro.",
+      "title": "Apariencia"
+    },
     "language": {
       "subtitle": "Elige el idioma de la interfaz de Cognos. Tu elección se guarda en tu cuenta y se aplica en todos tus dispositivos.",
       "title": "Idioma"

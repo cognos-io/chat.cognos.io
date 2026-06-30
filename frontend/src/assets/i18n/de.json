@@ -92,6 +92,16 @@
       "emailChange": "Die E-Mail-Änderung konnte nicht gestartet werden. Prüfen Sie die Adresse und versuchen Sie es erneut.",
       "passwordChange": "Ihr Passwort konnte nicht geändert werden. Prüfen Sie Ihr aktuelles Passwort und versuchen Sie es erneut."
     },
+    "appearance": {
+      "dark": "Dunkel",
+      "label": "Design",
+      "light": "Hell",
+      "subtitle": "Wählen Sie, wie Cognos auf diesem Gerät aussieht.",
+      "system": "System",
+      "systemHintDark": "Folgt Ihrem Gerät. Aktuell wird der dunkle Modus verwendet.",
+      "systemHintLight": "Folgt Ihrem Gerät. Aktuell wird der helle Modus verwendet.",
+      "title": "Darstellung"
+    },
     "language": {
       "subtitle": "Wählen Sie die Sprache für die Cognos-Oberfläche. Ihre Auswahl wird in Ihrem Konto gespeichert und gilt auf allen Ihren Geräten.",
       "title": "Sprache"

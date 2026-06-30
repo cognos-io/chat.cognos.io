@@ -92,6 +92,16 @@
       "emailChange": "Impossible de démarrer le changement d'e-mail. Vérifiez l'adresse et réessayez.",
       "passwordChange": "Impossible de changer votre mot de passe. Vérifiez votre mot de passe actuel et réessayez."
     },
+    "appearance": {
+      "dark": "Sombre",
+      "label": "Thème",
+      "light": "Clair",
+      "subtitle": "Choisissez l'apparence de Cognos sur cet appareil.",
+      "system": "Système",
+      "systemHintDark": "Suit votre appareil. Mode sombre actuellement utilisé.",
+      "systemHintLight": "Suit votre appareil. Mode clair actuellement utilisé.",
+      "title": "Apparence"
+    },
     "language": {
       "subtitle": "Choisissez la langue de l'interface Cognos. Votre choix est enregistré sur votre compte et s'applique sur tous vos appareils.",
       "title": "Langue"

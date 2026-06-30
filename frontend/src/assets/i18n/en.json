@@ -92,6 +92,16 @@
       "emailChange": "Could not start the email change. Check the address and try again.",
       "passwordChange": "Could not change your password. Check your current password and try again."
     },
+    "appearance": {
+      "dark": "Dark",
+      "label": "Theme",
+      "light": "Light",
+      "subtitle": "Choose how Cognos looks on this device.",
+      "system": "System",
+      "systemHintDark": "Following your device. Currently using dark mode.",
+      "systemHintLight": "Following your device. Currently using light mode.",
+      "title": "Appearance"
+    },
     "language": {
       "subtitle": "Choose the language for the Cognos interface. Your choice is saved to your account and applies on all your devices.",
       "title": "Language"
