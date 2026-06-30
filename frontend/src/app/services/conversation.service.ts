@@ -212,6 +212,11 @@ export class ConversationService {
       return {
         filteredConversations,
         orderedConversations,
+        // Every loaded conversation, standalone AND project (project ones are
+        // merged in via upsertConversations). The search index needs the full
+        // set with keypairs; the sidebar lists use the filtered/partitioned
+        // selectors above instead.
+        allConversations: computed(() => state.conversations()),
         selectedConversation: () => {
           const selectedConversationId = state.selectedConversationId();
           return state
@@ -342,6 +347,8 @@ export class ConversationService {
   readonly conversation = this.state.selectedConversation;
   readonly conversation$ = toObservable(this.conversation);
   readonly conversationList = this.state.orderedConversations;
+  // All loaded conversations (standalone + project), for the search index.
+  readonly allConversations = this.state.allConversations;
 
   readonly pinnedConversations = this.state.pinnedConversations;
   readonly hasPinnedConversations = computed(
