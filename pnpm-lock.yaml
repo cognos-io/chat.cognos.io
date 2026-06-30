@@ -79,6 +79,12 @@ importers:
       '@jsverse/transloco':
         specifier: ^8.4.0
         version: 8.4.0(@angular/core@21.2.17(@angular/compiler@21.2.17)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)(typescript@5.9.3)
+      '@orama/orama':
+        specifier: ^3.1.18
+        version: 3.1.18
+      '@orama/stemmers':
+        specifier: ^3.1.18
+        version: 3.1.18
       '@paddle/paddle-js':
         specifier: ^1.6.4
         version: 1.6.4
@@ -3078,6 +3084,14 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
+
+  '@orama/orama@3.1.18':
+    resolution: {integrity: sha512-a61ljmRVVyG5MC/698C8/FfFDw5a8LOIvyOLW5fztgUXqUpc1jOfQzOitSCbge657OgXXThmY3Tk8fpiDb4UcA==}
+    engines: {node: '>= 20.0.0'}
+
+  '@orama/stemmers@3.1.18':
+    resolution: {integrity: sha512-xXs5fpiUvBs4jJZtnayJmUSomdxxiwwwvTbAzPHSyI6geLM7bxXHgpVlYz4JeMBycHX8bHF7j9m7F35BxhuZ8g==}
+    engines: {node: '>= 20.0.0'}
 
   '@oslojs/encoding@1.1.0':
     resolution: {integrity: sha512-70wQhgYmndg4GCPxPPxPGevRKqTIJ2Nh4OkiMWmDAVYsTQ+Ta7Sq+rPevXyXGdzr30/qZBnyOalCszoMxlyldQ==}
@@ -12845,6 +12859,10 @@ snapshots:
 
   '@nx/nx-win32-x64-msvc@19.8.14':
     optional: true
+
+  '@orama/orama@3.1.18': {}
+
+  '@orama/stemmers@3.1.18': {}
 
   '@oslojs/encoding@1.1.0': {}
 

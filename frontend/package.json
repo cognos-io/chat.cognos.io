@@ -12,6 +12,8 @@
     "@cognos/ui": "workspace:*",
     "@cognos/ui-angular": "workspace:*",
     "@jsverse/transloco": "^8.4.0",
+    "@orama/orama": "^3.1.18",
+    "@orama/stemmers": "^3.1.18",
     "@paddle/paddle-js": "^1.6.4",
     "argon2id": "^1.0.1",
     "blakejs": "^1.2.1",
