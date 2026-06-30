@@ -46,6 +46,8 @@ function modelsPayload() {
         id: 'image-model',
         name: 'Flash Image',
         supports_image_generation: true,
+        // Image-only (like gemini-2.5-flash-image): can't do text completion.
+        supports_text_completion: false,
       },
     ],
   };
@@ -153,20 +155,21 @@ test.describe('image generation', () => {
     await expect(page.getByRole('button', { name: 'Sovereign Text' })).toBeVisible();
   });
 
-  test('the tools menu warns on an incapable model and filters the selector', async ({
+  test('auto-switches to an image model and filters the selector when the tool is on', async ({
     page,
   }) => {
     await page.getByRole('button', { name: 'Tools' }).click();
     await page.getByRole('switch', { name: 'Generate image' }).click();
-
-    // The selected text model can't generate images: an inline warning appears.
-    await expect(page.getByText(/can't generate images/i)).toBeVisible();
-
     // Close the tools menu so its backdrop doesn't swallow the next click.
     await page.keyboard.press('Escape');
 
+    // The composer auto-switched the selected model to the image-capable one
+    // (the trigger now shows it) and announced the switch.
+    await expect(page.getByRole('button', { name: 'Flash Image' })).toBeVisible();
+    await expect(page.getByText(/Switched to .*Flash Image/i)).toBeVisible();
+
     // The model selector now lists only image-capable models.
-    await page.getByRole('button', { name: 'Sovereign Text' }).click();
+    await page.getByRole('button', { name: 'Flash Image' }).click();
     await expect(
       page.getByRole('listbox', { name: 'Pick your AI model' }),
     ).toBeVisible();
@@ -174,14 +177,26 @@ test.describe('image generation', () => {
     await expect(page.getByRole('option', { name: /Sovereign Text/ })).toHaveCount(0);
   });
 
+  test('switches back to the chat model when the image tool is turned off', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: 'Tools' }).click();
+    await page.getByRole('switch', { name: 'Generate image' }).click();
+    await expect(page.getByRole('button', { name: 'Flash Image' })).toBeVisible();
+
+    // Turning the tool back off returns to the chat model — no image-only model
+    // is left selected for text (the bug this feature fixes).
+    await page.getByRole('switch', { name: 'Generate image' }).click();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: 'Sovereign Text' })).toBeVisible();
+  });
+
   test('generates and renders a decrypted image', async ({ page }) => {
     await page.getByRole('button', { name: 'Tools' }).click();
     await page.getByRole('switch', { name: 'Generate image' }).click();
-
-    // Switch to the suggested image-capable model via the warning's action.
-    await page.getByRole('button', { name: /Use .*Flash Image/ }).click();
-    // Close the tools menu.
+    // The composer auto-switched to the image model; no manual pick needed.
     await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: 'Flash Image' })).toBeVisible();
 
     const composer = page.getByLabel(
       'Message Cognos — stored encrypted; sent to your provider to reply',
