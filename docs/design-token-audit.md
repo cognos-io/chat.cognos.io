@@ -30,14 +30,25 @@ Priority 1 and the colour work in Priority 2 are **done**. Summary of what shipp
 - **Storybook now loads the tokens** (`preview.ts`), so library components render against the
   real `--cog-*` variables rather than their inline fallbacks.
 
-### Deliberately left for review (Priority 3, raw scale)
+### Priority 3 (raw scale) — done
 
-The raw spacing/weight values (≈107 grid-matching `gap/padding/margin` occurrences, ≈16
-`font-weight` literals, spread thinly across ~40 files) were **not** blanket-converted. They
-render identically today, this tier was filed as "review" not "fix", and an automated sweep
-risks mis-handling shorthands and coincidental grid matches. Tokenise these per-file when
-touching the component. Media chrome in the image/lightbox components (always-dark scrims +
-white text) and the `styles.scss` alpha-mask gradients are intentionally non-token and stay.
+Grid-aligned spacing and font-weight literals were tokenised in a visually-neutral sweep
+(exact scale matches only): raw `gap`/`padding`/`margin` → `--cog-space-*` and
+`font-weight` → `--cog-fw-*`, across 21 frontend files + 26 ui-angular components. Non-grid
+values, fixed dimensions, `calc()`/negatives, media-chrome scrims (image/lightbox) and the
+`styles.scss` alpha-mask gradients were deliberately left raw.
+
+### Still open (genuine judgment calls, not done)
+
+- **Motion:** transition durations are written as `0.15s`/`0.1s`/`0.26s` with `ease`. These
+  match `--cog-dur-medium/fast/sheet`, but the easing is plain `ease`, not
+  `--cog-ease-standard` — converting would change the curve, so it needs a deliberate motion
+  pass rather than a mechanical swap.
+- **Pill radius near-miss:** a few badges use `border-radius: 999px` instead of
+  `--cog-radius-pill` (9999px). Same visual intent, different literal.
+- **Hand-rolled lozenges:** the persona card/page badges reimplement the Lozenge spec inline
+  (uppercase, 10–11px, 700, small padding). They could use `<cog-lozenge>` or the lozenge
+  tokens directly instead of bespoke CSS.
 
 ---
 
