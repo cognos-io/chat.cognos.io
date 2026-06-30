@@ -1339,6 +1339,7 @@ export class MessageFormComponent {
       this.modelService.selectedModel().isEligible &&
       !this.billing.isSendingLocked() &&
       !this.composerTools.selectedModelUnsupported() &&
+      !this.composerTools.selectedModelTextIncompatible() &&
       !this.attachments.hasPending(),
   );
 

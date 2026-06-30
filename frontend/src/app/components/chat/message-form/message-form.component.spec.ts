@@ -52,9 +52,11 @@ describe('MessageFormComponent', () => {
   // without pulling in the real service (and its ModelService dependency).
   const imageGenerationEnabled = signal(false);
   const selectedModelUnsupported = signal(false);
+  const selectedModelTextIncompatible = signal(false);
   const composerTools = {
     imageGenerationEnabled,
     selectedModelUnsupported,
+    selectedModelTextIncompatible,
     requiredCapability: computed(() =>
       imageGenerationEnabled() ? 'image_generation' : null,
     ),
@@ -70,6 +72,7 @@ describe('MessageFormComponent', () => {
     messages.set([]);
     imageGenerationEnabled.set(false);
     selectedModelUnsupported.set(false);
+    selectedModelTextIncompatible.set(false);
     selectedModel.set({
       id: 'model-1',
       name: 'Claude Sonnet',

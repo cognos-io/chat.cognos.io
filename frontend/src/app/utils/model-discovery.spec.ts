@@ -40,6 +40,7 @@ function makeModel(overrides: Partial<Model> = {}): Model {
     contentTypes: ['text'],
     inputContextLength: 8_192,
     pricing: { inputUsdPerMillionTokens: 1, outputUsdPerMillionTokens: 1 },
+    supportsTextCompletion: true,
     supportsImageGeneration: false,
     supportsVision: false,
     supportsFileInput: false,

@@ -548,7 +548,10 @@
         },
         "unsupported": "{{ model }} kann keine Bilder erzeugen",
         "switchHint": "Wechseln Sie zu einem Modell, das dies unterstützt:",
-        "useModel": "{{ model }} verwenden"
+        "useModel": "{{ model }} verwenden",
+        "imageOnly": "{{ model }} kann nur Bilder erzeugen",
+        "imageOnlyHint": "Aktivieren Sie „Bild erzeugen“, um es zu nutzen, oder wählen Sie ein Textmodell.",
+        "enableImage": "„Bild erzeugen“ aktivieren"
       },
       "reasoning": {
         "title": "Denkaufwand",

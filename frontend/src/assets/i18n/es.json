@@ -548,7 +548,10 @@
         },
         "unsupported": "{{ model }} no puede generar imágenes",
         "switchHint": "Cambia a un modelo compatible:",
-        "useModel": "Usar {{ model }}"
+        "useModel": "Usar {{ model }}",
+        "imageOnly": "{{ model }} solo puede generar imágenes",
+        "imageOnlyHint": "Activa Generar imagen para usarlo, o elige un modelo de texto.",
+        "enableImage": "Activar Generar imagen"
       },
       "reasoning": {
         "title": "Esfuerzo de razonamiento",

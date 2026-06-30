@@ -34,6 +34,15 @@ export class ComposerToolsService {
       !this._modelService.selectedModel().supportsImageGeneration,
   );
 
+  // The inverse mismatch: no tool routes to image generation, but the selected
+  // model can ONLY generate images. A normal text send would fail at the
+  // provider, so the composer blocks it and offers to turn the image tool on.
+  readonly selectedModelTextIncompatible = computed(
+    () =>
+      !this.imageGenerationEnabled() &&
+      !this._modelService.selectedModel().supportsTextCompletion,
+  );
+
   // The model we suggest switching to when the selected one can't generate
   // images: the configured preferred model if it's in the catalogue and
   // eligible, otherwise the first eligible image-capable model.

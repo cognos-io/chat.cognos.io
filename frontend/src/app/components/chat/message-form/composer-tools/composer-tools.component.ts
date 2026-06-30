@@ -95,6 +95,31 @@ import { ModelService } from '@app/services/model.service';
           }
         </div>
       }
+
+      @if (tools.selectedModelTextIncompatible()) {
+        <div class="composer-tools__warning" role="alert">
+          <p class="composer-tools__warning-text">
+            <cog-icon name="triangle-alert" [size]="14" />
+            {{
+              t('chat.composer.tools.imageOnly', {
+                model: modelService.selectedModel().name,
+              })
+            }}
+          </p>
+          <p class="composer-tools__warning-hint">
+            {{ t('chat.composer.tools.imageOnlyHint') }}
+          </p>
+          <cog-button
+            class="composer-tools__use"
+            appearance="subtle"
+            icon="image"
+            type="button"
+            (click)="tools.setImageGeneration(true)"
+          >
+            {{ t('chat.composer.tools.enableImage') }}
+          </cog-button>
+        </div>
+      }
     </div>
   `,
   styles: `

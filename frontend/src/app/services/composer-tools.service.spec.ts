@@ -21,6 +21,7 @@ function makeModel(overrides: Partial<Model>): Model {
     contentTypes: ['text'],
     inputContextLength: 1000,
     pricing: { inputUsdPerMillionTokens: 0, outputUsdPerMillionTokens: 0 },
+    supportsTextCompletion: true,
     supportsImageGeneration: false,
     supportsVision: false,
     supportsFileInput: false,
@@ -82,6 +83,31 @@ describe('ComposerToolsService', () => {
     expect(service.selectedModelUnsupported()).toBe(false);
     service.setImageGeneration(true);
     expect(service.selectedModelUnsupported()).toBe(true);
+  });
+
+  it('flags an image-only model as text-incompatible only when the tool is off', () => {
+    // Image-only model selected with the image tool off: a normal text send
+    // would fail at the provider, so the composer must block it. Turning the
+    // tool on routes to image generation instead, clearing the block.
+    const imageOnlyModel = makeModel({
+      id: 'gemini-2-5-flash-image',
+      supportsImageGeneration: true,
+      supportsTextCompletion: false,
+    });
+    const { service } = setup({
+      selected: imageOnlyModel,
+      list: [imageOnlyModel],
+    });
+    expect(service.selectedModelTextIncompatible()).toBe(true);
+    service.setImageGeneration(true);
+    expect(service.selectedModelTextIncompatible()).toBe(false);
+  });
+
+  it('never flags a text-capable model as text-incompatible', () => {
+    const { service } = setup({ selected: textModel, list: [textModel] });
+    expect(service.selectedModelTextIncompatible()).toBe(false);
+    service.setImageGeneration(true);
+    expect(service.selectedModelTextIncompatible()).toBe(false);
   });
 
   it('prefers the configured model as the suggestion', () => {

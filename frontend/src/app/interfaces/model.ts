@@ -34,6 +34,10 @@ export const Model = z.object({
   isOpenSource: z.boolean().optional(),
   hostingCountry: z.string().optional(),
   hostingRegion: z.string().optional(),
+  // Can answer ordinary text completions. Image-generation-only models are
+  // false; everything else is true. Defaults true so an older API response that
+  // omits it keeps text models sendable.
+  supportsTextCompletion: z.boolean().default(true),
   supportsImageGeneration: z.boolean().default(false),
   // Objective capability flags synced from the provider catalogue (Requesty).
   // Vision = can read images as input (distinct from image generation).
@@ -88,6 +92,7 @@ export const loadingModel: Model = {
   },
   noRetention: false,
   isOpenSource: false,
+  supportsTextCompletion: true,
   supportsImageGeneration: false,
   supportsVision: false,
   supportsFileInput: false,
