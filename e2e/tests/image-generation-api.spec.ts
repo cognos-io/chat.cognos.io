@@ -20,6 +20,7 @@ const MOCK_PNG = Buffer.from(
 interface ImageModel {
   id: string;
   supports_image_generation?: boolean;
+  supports_text_completion?: boolean;
   image_generation_transport?: string;
 }
 
@@ -80,11 +81,15 @@ test.describe('image generation API', () => {
     const image = body.models.find((m) => m.id === IMAGE_MODEL_ID);
     expect(image, 'image model present in catalogue').toBeTruthy();
     expect(image?.supports_image_generation).toBe(true);
+    // Image-only: the catalogue must mark it as not text-capable so the
+    // composer and the /complete guard both reject text use.
+    expect(image?.supports_text_completion).toBe(false);
     // The backend-only routing field must never be exposed to clients.
     expect(image?.image_generation_transport).toBeUndefined();
 
     const text = body.models.find((m) => m.id === TEXT_MODEL_ID);
     expect(text?.supports_image_generation ?? false).toBe(false);
+    expect(text?.supports_text_completion).toBe(true);
   });
 
   test('generates and persists an encrypted image attachment', async () => {

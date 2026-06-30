@@ -44,6 +44,10 @@ interface MessageListResponse {
 }
 
 const APPROVED_MODEL_ID = 'llama-3-3-infomaniak';
+// gemini-2-5-flash-image is seeded image-generation-only (migration 1760000049
+// enables image generation; 1760000064 leaves supports_text_completion false),
+// so it must be rejected by the text-completion path.
+const IMAGE_ONLY_MODEL_ID = 'gemini-2-5-flash-image';
 const DEFAULT_PERSONA_ID = 'cognos:simple-assistant';
 const DEFAULT_SYSTEM_PROMPT = 'You are a helpful test persona.';
 
@@ -315,6 +319,27 @@ test.describe('non-persisted /completions API', () => {
     }
   });
 
+  test('rejects an image-only model before calling the provider', async () => {
+    // Regression (docs/bugs/2026-06-30-image-only-model-text-completion.md): an
+    // image-generation-only model must not be routed through text completion,
+    // even via a direct API call that bypasses the composer's guard.
+    const user = await provisionApiUser();
+    try {
+      const res = await user.api.post('/api/v1/completions', {
+        data: {
+          model_id: IMAGE_ONLY_MODEL_ID,
+          persona_id: DEFAULT_PERSONA_ID,
+          system_prompt: DEFAULT_SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: 'describe a fox' }],
+        },
+      });
+      expect(res.status()).toBe(400);
+      expect(await res.text()).toContain('text completion');
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
   test('rejects unknown model_id', async () => {
     const user = await provisionApiUser();
     try {
@@ -499,6 +524,41 @@ test.describe('persisted /conversations/{id}/complete API', () => {
       expect(list.totalItems).toBeGreaterThanOrEqual(2);
       const longestCiphertext = Math.max(...list.items.map((m) => m.data.length));
       expect(longestCiphertext).toBeGreaterThan(5000);
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
+  test('rejects an image-only model on the persisted complete path', async () => {
+    // The exact bug path: image model selected, image tool off, normal text
+    // prompt sent to /conversations/{id}/complete. The guard must reject it
+    // before persistence or any provider call.
+    const user = await provisionApiUser();
+    try {
+      const conversationID = await createConversationWithKey(user);
+
+      const res = await user.api.post(
+        `/api/v1/conversations/${conversationID}/complete`,
+        {
+          data: {
+            model_id: IMAGE_ONLY_MODEL_ID,
+            persona_id: DEFAULT_PERSONA_ID,
+            system_prompt: DEFAULT_SYSTEM_PROMPT,
+            messages: [{ role: 'user', content: 'hello there' }],
+          },
+        },
+      );
+      expect(res.status()).toBe(400);
+      expect(await res.text()).toContain('text completion');
+
+      // Nothing was persisted — the rejection happens before the user message
+      // is saved.
+      const listRes = await user.api.get(
+        `/api/v1/conversations/${conversationID}/messages`,
+      );
+      expect(listRes.ok()).toBe(true);
+      const list = (await listRes.json()) as { totalItems: number };
+      expect(list.totalItems).toBe(0);
     } finally {
       await user.api.dispose();
     }
