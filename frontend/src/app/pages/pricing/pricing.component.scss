@@ -59,7 +59,7 @@
   align-items: center;
   gap: var(--cog-space-050);
   border-radius: var(--cog-radius-pill);
-  background: var(--cog-surface-hover, rgba(0, 0, 0, 0.05));
+  background: var(--cog-surface-hover);
   padding: 4px 12px;
   color: var(--cog-text-subtle);
   font-size: var(--cog-fs-caption);
@@ -88,7 +88,7 @@
   gap: 2px;
   border: 1px solid var(--cog-border);
   border-radius: var(--cog-radius-md);
-  background: var(--cog-surface-sunken, var(--cog-surface));
+  background: var(--cog-surface-sunken);
   padding: 3px;
 }
 
@@ -109,7 +109,7 @@
 .pricing__interval-option--active {
   background: var(--cog-surface);
   color: var(--cog-text);
-  box-shadow: var(--cog-shadow-raised, 0 1px 2px rgba(0, 0, 0, 0.12));
+  box-shadow: var(--cog-shadow-raised);
 }
 
 /* Plans */
@@ -129,9 +129,9 @@
   gap: var(--cog-space-150);
   align-content: start;
   border: 1px solid var(--cog-border);
-  border-radius: var(--cog-radius-lg, 16px);
+  border-radius: var(--cog-radius-lg);
   background: var(--cog-surface);
-  padding: var(--cog-space-250, 20px);
+  padding: var(--cog-space-250);
 }
 
 .pricing__card--featured {
@@ -247,7 +247,7 @@
 }
 
 .pricing__guarantee-body {
-  margin: var(--cog-space-025, 2px) 0 0;
+  margin: var(--cog-space-025) 0 0;
   color: var(--cog-success-text);
   font-size: var(--cog-fs-body-sm);
   line-height: var(--cog-lh-body-sm);
@@ -292,7 +292,7 @@
 }
 
 .pricing__link {
-  color: var(--cog-link, var(--cog-brand));
+  color: var(--cog-link);
   text-decoration: none;
 }
 

@@ -220,12 +220,12 @@ interface SettingsNavItem {
     }
 
     .settings__menu-item:hover {
-      background: var(--cog-surface-hover, rgba(0, 0, 0, 0.04));
+      background: var(--cog-surface-hover);
     }
 
     .settings__menu-item--active {
-      background: var(--cog-selected-bg, rgba(46, 160, 67, 0.12));
-      color: var(--cog-selected-text, var(--cog-text));
+      background: var(--cog-selected-bg);
+      color: var(--cog-selected-text);
     }
 
     .settings__navfooter,

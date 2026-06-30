@@ -262,7 +262,7 @@ const validateUnlockForm = (
       gap: var(--cog-space-150);
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
-      background: var(--cog-surface-raised, var(--cog-surface));
+      background: var(--cog-surface-raised);
       padding: var(--cog-space-150);
     }
 
@@ -301,7 +301,7 @@ const validateUnlockForm = (
       gap: var(--cog-space-100);
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
-      background: var(--cog-surface-raised, var(--cog-surface));
+      background: var(--cog-surface-raised);
       padding: var(--cog-space-150);
     }
 
@@ -345,7 +345,7 @@ const validateUnlockForm = (
       border: 0;
       background: transparent;
       padding: 0;
-      color: var(--cog-link, var(--cog-brand));
+      color: var(--cog-link);
       font: inherit;
       font-size: var(--cog-fs-body-sm);
       font-weight: var(--cog-fw-semibold);
@@ -368,7 +368,7 @@ const validateUnlockForm = (
     }
 
     .vault-password-dialog__input--code {
-      font-family: var(--cog-font-mono, monospace);
+      font-family: var(--cog-font-mono);
       text-transform: uppercase;
     }
 
@@ -390,7 +390,7 @@ const validateUnlockForm = (
       align-items: start;
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
-      background: var(--cog-surface-raised, var(--cog-surface));
+      background: var(--cog-surface-raised);
       padding: var(--cog-space-150);
     }
 

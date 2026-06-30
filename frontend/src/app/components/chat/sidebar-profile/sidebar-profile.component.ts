@@ -97,7 +97,7 @@ const PLAN_LABEL_KEYS: Record<BillingPlanType, string> = {
 
     .sidebar-profile:hover,
     .sidebar-profile:focus-visible {
-      background: var(--cog-surface-hover, rgba(0, 0, 0, 0.04));
+      background: var(--cog-surface-hover);
       outline: 0;
     }
 

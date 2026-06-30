@@ -254,25 +254,25 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
       width: 100%;
       max-width: 760px;
       margin: 0 auto;
-      padding: var(--cog-space-300, 24px) var(--cog-space-200, 16px);
+      padding: var(--cog-space-300) var(--cog-space-200);
       display: grid;
-      gap: var(--cog-space-300, 24px);
+      gap: var(--cog-space-300);
       align-content: start;
     }
 
     /* Subtle full-width promo band pinned beneath the conversation. */
     .public-conversation__promo {
-      border-top: 1px solid var(--cog-border, #e2e2e2);
-      background: var(--cog-surface-sunken, #f6f7f9);
+      border-top: 1px solid var(--cog-border);
+      background: var(--cog-surface-sunken);
     }
 
     .public-conversation__promo-inner {
       max-width: 760px;
       margin: 0 auto;
-      padding: var(--cog-space-250, 20px) var(--cog-space-200, 16px);
+      padding: var(--cog-space-250) var(--cog-space-200);
       display: flex;
       align-items: center;
-      gap: var(--cog-space-200, 16px);
+      gap: var(--cog-space-200);
     }
 
     .public-conversation__promo-logo {
@@ -284,14 +284,14 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
 
     .public-conversation__promo-text {
       margin: 0;
-      color: var(--cog-text-subtle, #6b6b6b);
-      font-size: var(--cog-fs-caption, 13px);
-      line-height: var(--cog-lh-body, 1.5);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-body);
     }
 
     .public-conversation__promo-text a {
-      color: var(--cog-brand, #15803d);
-      font-weight: var(--cog-fw-semibold, 600);
+      color: var(--cog-brand);
+      font-weight: var(--cog-fw-semibold);
       text-decoration: none;
     }
 
@@ -311,9 +311,9 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: var(--cog-space-200, 16px);
-      padding-bottom: var(--cog-space-150, 12px);
-      border-bottom: 1px solid var(--cog-border, #e2e2e2);
+      gap: var(--cog-space-200);
+      padding-bottom: var(--cog-space-150);
+      border-bottom: 1px solid var(--cog-border);
     }
 
     .public-conversation__logo {
@@ -324,41 +324,41 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
     .public-conversation__bar-actions {
       display: flex;
       align-items: center;
-      gap: var(--cog-space-150, 12px);
+      gap: var(--cog-space-150);
     }
 
     .public-conversation__lock {
-      color: var(--cog-text-subtle, #6b6b6b);
-      font-size: var(--cog-fs-body-sm, 13px);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm);
     }
 
     .public-conversation__reveal {
-      border: 1px solid var(--cog-border, #e2e2e2);
-      border-radius: var(--cog-radius-pill, 999px);
-      background: var(--cog-surface, #fff);
-      color: var(--cog-text, #1a1a1a);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-pill);
+      background: var(--cog-surface);
+      color: var(--cog-text);
       padding: 6px 12px;
       font: inherit;
-      font-size: var(--cog-fs-body-sm, 13px);
+      font-size: var(--cog-fs-body-sm);
       cursor: pointer;
     }
 
     .public-conversation__reveal:hover {
-      border-color: var(--cog-brand, #15803d);
+      border-color: var(--cog-brand);
     }
 
     .public-conversation__reasoning {
-      margin-block-start: var(--cog-space-100, 8px);
-      border-inline-start: 2px solid var(--cog-border, #e2e2e2);
-      padding-inline-start: var(--cog-space-100, 8px);
+      margin-block-start: var(--cog-space-100);
+      border-inline-start: 2px solid var(--cog-border);
+      padding-inline-start: var(--cog-space-100);
     }
 
     .public-conversation__reasoning-summary {
       display: inline-flex;
       align-items: center;
-      gap: var(--cog-space-050, 4px);
-      color: var(--cog-text-subtle, #6b6b6b);
-      font-size: var(--cog-fs-body-sm, 13px);
+      gap: var(--cog-space-050);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm);
       cursor: pointer;
       list-style: none;
     }
@@ -369,33 +369,33 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
 
     /* Fainter than the answer so the reasoning reads as secondary context. */
     .public-conversation__reasoning-text {
-      color: var(--cog-text-subtle, #6b6b6b);
-      font-size: var(--cog-fs-body-sm, 13px);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm);
     }
 
     /* The honesty caption matches the reasoning text exactly, but italic. */
     .public-conversation__reasoning-note {
-      margin: var(--cog-space-100, 8px) 0 0;
-      color: var(--cog-text-subtle, #6b6b6b);
-      font-size: var(--cog-fs-body-sm, 13px);
+      margin: var(--cog-space-100) 0 0;
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm);
       font-style: italic;
     }
 
     .public-conversation__status,
     .public-conversation__empty {
-      color: var(--cog-text-subtle, #6b6b6b);
+      color: var(--cog-text-subtle);
       text-align: center;
     }
 
     .public-conversation__empty h1 {
-      color: var(--cog-text, #1a1a1a);
-      font-size: var(--cog-fs-h-md, 22px);
+      color: var(--cog-text);
+      font-size: var(--cog-fs-h-md);
     }
 
     .public-conversation__title {
-      color: var(--cog-text, #1a1a1a);
-      font-size: var(--cog-fs-h-lg, 28px);
-      margin: 0 0 var(--cog-space-200, 16px);
+      color: var(--cog-text);
+      font-size: var(--cog-fs-h-lg);
+      margin: 0 0 var(--cog-space-200);
     }
 
     .public-conversation__messages {
@@ -403,20 +403,20 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
       margin: 0;
       padding: 0;
       display: grid;
-      gap: var(--cog-space-200, 16px);
+      gap: var(--cog-space-200);
     }
 
     .public-conversation__muted {
       margin: 0;
-      color: var(--cog-text-subtlest, #9a9a9a);
+      color: var(--cog-text-subtlest);
       font-style: italic;
     }
 
     .public-conversation__text {
       display: block;
-      color: var(--cog-text, #1a1a1a);
+      color: var(--cog-text);
       word-break: break-word;
-      line-height: var(--cog-lh-body, 1.5);
+      line-height: var(--cog-lh-body);
     }
 
     .public-conversation__text :first-child {

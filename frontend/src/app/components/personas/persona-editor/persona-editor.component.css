@@ -5,9 +5,9 @@
 .persona-editor {
   display: flex;
   flex-direction: column;
-  background: var(--cog-surface, #ffffff);
-  border: 1px solid var(--cog-border, #e2e8f0);
-  border-radius: var(--cog-radius-md, 12px);
+  background: var(--cog-surface);
+  border: 1px solid var(--cog-border);
+  border-radius: var(--cog-radius-md);
   overflow: hidden;
 }
 
@@ -15,8 +15,8 @@
   display: flex;
   align-items: center;
   gap: var(--cog-space-150);
-  padding: var(--cog-space-150, 14px);
-  border-block-end: 1px solid var(--cog-border, #e2e8f0);
+  padding: var(--cog-space-150);
+  border-block-end: 1px solid var(--cog-border);
 }
 
 .persona-editor__avatar {
@@ -25,7 +25,7 @@
   justify-content: center;
   inline-size: 36px;
   block-size: 36px;
-  border-radius: var(--cog-radius-sm, 8px);
+  border-radius: var(--cog-radius-sm);
   background: var(--swatch-bg, #eef0f3);
   color: var(--swatch-fg, #475569);
 }
@@ -37,9 +37,9 @@
 
 .persona-editor__title {
   margin: 0;
-  font-size: var(--cog-fs-h-sm, 16px);
+  font-size: var(--cog-fs-h-sm);
   font-weight: 700;
-  color: var(--cog-text, #0f172a);
+  color: var(--cog-text);
 }
 
 .persona-editor__subtitle {
@@ -47,38 +47,38 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  color: var(--cog-text-subtle, #64748b);
-  font-size: var(--cog-fs-caption, 12px);
+  color: var(--cog-text-subtle);
+  font-size: var(--cog-fs-caption);
 }
 
 .persona-editor__close {
   border: none;
   background: transparent;
-  color: var(--cog-text-subtle, #64748b);
+  color: var(--cog-text-subtle);
   cursor: pointer;
   padding: 4px;
-  border-radius: var(--cog-radius-sm, 6px);
+  border-radius: var(--cog-radius-sm);
 }
 
 .persona-editor__close:hover {
-  background: var(--cog-surface-sunken, #eef2f6);
+  background: var(--cog-surface-sunken);
 }
 
 .persona-editor__body {
-  padding: var(--cog-space-150, 14px);
+  padding: var(--cog-space-150);
   display: flex;
   flex-direction: column;
-  gap: var(--cog-space-150, 14px);
+  gap: var(--cog-space-150);
 }
 
 .persona-editor__notice {
   display: flex;
-  gap: var(--cog-space-100, 8px);
+  gap: var(--cog-space-100);
   padding: var(--cog-space-150);
-  border-radius: var(--cog-radius-sm, 8px);
-  background: var(--cog-info-bg, #eff6ff);
-  color: var(--cog-info-text, #1e40af);
-  font-size: var(--cog-fs-caption, 13px);
+  border-radius: var(--cog-radius-sm);
+  background: var(--cog-info-bg);
+  color: var(--cog-info-text);
+  font-size: var(--cog-fs-caption);
   line-height: 1.4;
 }
 
@@ -94,18 +94,18 @@
 .persona-editor__field legend,
 .persona-editor__label {
   padding: 0;
-  font-size: var(--cog-fs-caption, 12px);
+  font-size: var(--cog-fs-caption);
   font-weight: 600;
-  color: var(--cog-text-subtle, #64748b);
+  color: var(--cog-text-subtle);
 }
 
 .persona-editor__field input,
 .persona-editor__field textarea {
-  border: 1px solid var(--cog-border, #e2e8f0);
-  border-radius: var(--cog-radius-sm, 8px);
-  background: var(--cog-surface, #ffffff);
-  color: var(--cog-text, #0f172a);
-  padding: var(--cog-space-100, 8px) var(--cog-space-150);
+  border: 1px solid var(--cog-border);
+  border-radius: var(--cog-radius-sm);
+  background: var(--cog-surface);
+  color: var(--cog-text);
+  padding: var(--cog-space-100) var(--cog-space-150);
   font: inherit;
 }
 
@@ -116,24 +116,24 @@
 
 .persona-editor__field input:read-only,
 .persona-editor__field textarea:read-only {
-  background: var(--cog-surface-sunken, #f6f7f9);
-  color: var(--cog-text-subtle, #64748b);
+  background: var(--cog-surface-sunken);
+  color: var(--cog-text-subtle);
 }
 
 .persona-editor__field:disabled .persona-editor__default {
   display: flex;
   align-items: center;
-  gap: var(--cog-space-100, 8px);
-  font-size: var(--cog-fs-body, 14px);
-  color: var(--cog-text, #0f172a);
+  gap: var(--cog-space-100);
+  font-size: var(--cog-fs-body);
+  color: var(--cog-text);
 }
 
 .persona-editor__footer {
   display: flex;
   align-items: center;
-  gap: var(--cog-space-100, 8px);
-  padding: var(--cog-space-150, 14px);
-  border-block-start: 1px solid var(--cog-border, #e2e8f0);
+  gap: var(--cog-space-100);
+  padding: var(--cog-space-150);
+  border-block-start: 1px solid var(--cog-border);
 }
 
 .persona-editor__footer-spacer {
@@ -146,7 +146,7 @@
   gap: 4px;
   border: none;
   background: transparent;
-  color: var(--cog-danger-text, #dc2626);
+  color: var(--cog-danger-text);
   cursor: pointer;
   font: inherit;
 }

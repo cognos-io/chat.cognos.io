@@ -754,7 +754,7 @@ function escapeHtml(value: string): string {
       padding: 0;
       display: flex;
       flex-wrap: wrap;
-      gap: var(--cog-space-100, 8px);
+      gap: var(--cog-space-100);
     }
 
     /* Attach (Upload / From library) dropdown — matches the Tools menu surface. */
@@ -764,7 +764,7 @@ function escapeHtml(value: string): string {
       width: min(220px, calc(100vw - var(--cog-space-200)));
       padding: var(--cog-space-050);
       border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-md, var(--cog-radius-sm));
+      border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
       box-shadow: var(--cog-shadow-overlay);
     }
@@ -850,7 +850,7 @@ function escapeHtml(value: string): string {
 
     .message-form__model-switch-copy {
       flex: 1;
-      line-height: var(--cog-lh-caption, 1.4);
+      line-height: var(--cog-lh-caption);
     }
 
     .message-form__model-switch-tier {
@@ -877,7 +877,7 @@ function escapeHtml(value: string): string {
     .model-sheet-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.4);
+      background: var(--cog-scrim);
       z-index: 1000;
     }
 
@@ -1010,8 +1010,8 @@ function escapeHtml(value: string): string {
       max-width: 22rem;
       padding: var(--cog-space-075);
       border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-md, 12px);
-      background: var(--cog-surface, #fff);
+      border-radius: var(--cog-radius-md);
+      background: var(--cog-surface);
       box-shadow: var(--cog-shadow-overlay);
     }
 
@@ -1019,7 +1019,7 @@ function escapeHtml(value: string): string {
       margin: 0;
       padding: var(--cog-space-050) var(--cog-space-075) var(--cog-space-075);
       color: var(--cog-text-subtlest);
-      font-size: var(--cog-fs-caption, 11px);
+      font-size: var(--cog-fs-caption);
       font-weight: 600;
       letter-spacing: 0.06em;
       text-transform: uppercase;
@@ -1031,7 +1031,7 @@ function escapeHtml(value: string): string {
       gap: var(--cog-space-100);
       width: 100%;
       border: 0;
-      border-radius: var(--cog-radius-sm, 8px);
+      border-radius: var(--cog-radius-sm);
       background: none;
       padding: var(--cog-space-075);
       text-align: start;
@@ -1040,10 +1040,7 @@ function escapeHtml(value: string): string {
     }
 
     .message-form__reasoning-option:hover {
-      background: var(
-        --cog-surface-hover,
-        color-mix(in srgb, var(--cog-text) 5%, transparent)
-      );
+      background: var(--cog-surface-hover);
     }
 
     .message-form__reasoning-option:focus-visible {
@@ -1074,13 +1071,13 @@ function escapeHtml(value: string): string {
     }
 
     .message-form__reasoning-option-label {
-      font-size: var(--cog-fs-body-lg, 16px);
+      font-size: var(--cog-fs-body-lg);
       line-height: 1.2;
     }
 
     .message-form__reasoning-option-desc {
       color: var(--cog-text-subtle);
-      font-size: var(--cog-fs-body-sm, 13px);
+      font-size: var(--cog-fs-body-sm);
     }
 
     .message-form__reasoning-option-check {
@@ -1231,7 +1228,7 @@ function escapeHtml(value: string): string {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      font-weight: var(--cog-fw-semibold, 600);
+      font-weight: var(--cog-fw-semibold);
     }
 
     @media (max-width: 767px) {
@@ -1261,7 +1258,7 @@ function escapeHtml(value: string): string {
       flex-wrap: wrap;
       border: 1px dashed var(--cog-border);
       border-radius: var(--cog-radius-md);
-      background: var(--cog-surface-sunken, var(--cog-surface));
+      background: var(--cog-surface-sunken);
       padding: var(--cog-space-150) var(--cog-space-200);
     }
 

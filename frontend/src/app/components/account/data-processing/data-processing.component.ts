@@ -345,7 +345,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
     .data-processing__title {
       margin: 0;
       color: var(--cog-text);
-      font-size: var(--cog-fs-h-sm, var(--cog-fs-body));
+      font-size: var(--cog-fs-h-sm);
       font-weight: var(--cog-fw-semibold);
       line-height: var(--cog-lh-body);
     }
@@ -382,7 +382,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
     }
 
     .data-processing__tier:hover:not(:disabled) {
-      border-color: var(--cog-border-bold, var(--cog-text-subtlest));
+      border-color: var(--cog-border-bold);
     }
 
     .data-processing__tier:disabled {
@@ -392,7 +392,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
 
     .data-processing__tier--active {
       border-color: var(--cog-brand);
-      background: var(--cog-selected-bg, rgba(46, 160, 67, 0.08));
+      background: var(--cog-selected-bg);
     }
 
     .data-processing__tier-top {
@@ -408,19 +408,19 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       width: 32px;
       height: 32px;
       border-radius: var(--cog-radius-sm);
-      background: var(--cog-surface-raised, rgba(0, 0, 0, 0.04));
+      background: var(--cog-surface-raised);
       color: var(--cog-text-subtle);
     }
 
     .data-processing__tier--active .data-processing__tier-icon {
       background: var(--cog-brand);
-      color: var(--cog-on-brand, #fff);
+      color: var(--cog-on-brand);
     }
 
     .data-processing__tier-radio {
       width: 16px;
       height: 16px;
-      border: 2px solid var(--cog-border-bold, var(--cog-text-subtlest));
+      border: 2px solid var(--cog-border-bold);
       border-radius: var(--cog-radius-pill);
     }
 
@@ -461,13 +461,13 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       grid-template-columns: auto minmax(0, 1fr);
       gap: var(--cog-space-150);
       border-radius: var(--cog-radius-sm);
-      background: var(--cog-success-bg, rgba(46, 160, 67, 0.1));
+      background: var(--cog-success-bg);
       padding: var(--cog-space-150);
     }
 
     .data-processing__retention-title {
       margin: 0 0 var(--cog-space-025);
-      color: var(--cog-success-text, var(--cog-text));
+      color: var(--cog-success-text);
       font-size: var(--cog-fs-body-sm);
       font-weight: var(--cog-fw-semibold);
       line-height: var(--cog-lh-body-sm);
@@ -475,7 +475,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
 
     .data-processing__retention-body {
       margin: 0;
-      color: var(--cog-success-text, var(--cog-text-subtle));
+      color: var(--cog-success-text);
       font-size: var(--cog-fs-caption);
       line-height: var(--cog-lh-caption);
       text-wrap: pretty;
@@ -542,7 +542,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
     .models__reset {
       display: inline-flex;
       align-items: center;
-      gap: var(--cog-space-050, 4px);
+      gap: var(--cog-space-050);
       margin-left: auto;
       border: 0;
       background: transparent;
@@ -605,13 +605,13 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       width: 32px;
       height: 32px;
       border-radius: var(--cog-radius-sm);
-      background: var(--cog-surface-raised, rgba(0, 0, 0, 0.04));
+      background: var(--cog-surface-raised);
       color: var(--cog-text-subtle);
     }
 
     .models__body {
       display: grid;
-      gap: var(--cog-space-025, 2px);
+      gap: var(--cog-space-025);
       min-width: 0;
     }
 
@@ -631,7 +631,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
     .models__meta {
       display: grid;
       justify-items: end;
-      gap: var(--cog-space-025, 2px);
+      gap: var(--cog-space-025);
       text-align: right;
       white-space: nowrap;
     }
@@ -654,7 +654,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
 
     .models__show-more:hover {
       color: var(--cog-text);
-      background: var(--cog-surface-raised, rgba(0, 0, 0, 0.04));
+      background: var(--cog-surface-raised);
     }
 
     .models__show-more cog-icon {
@@ -685,7 +685,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       gap: var(--cog-space-075);
       margin: var(--cog-space-050) 0 0;
       border-radius: var(--cog-radius-sm);
-      background: var(--cog-surface-raised, rgba(0, 0, 0, 0.03));
+      background: var(--cog-surface-raised);
       padding: var(--cog-space-100) var(--cog-space-150);
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-caption);

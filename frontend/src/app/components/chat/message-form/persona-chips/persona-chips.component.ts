@@ -62,20 +62,20 @@ import { PersonaService } from '@app/services/persona.service';
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: var(--cog-space-075, 6px);
+      gap: var(--cog-space-075);
     }
 
     .persona-chips__chip {
       display: inline-flex;
       align-items: center;
-      gap: var(--cog-space-050, 6px);
+      gap: var(--cog-space-050);
       padding: 4px 10px 4px 6px;
-      border: 1px solid var(--cog-border, #e2e8f0);
-      border-radius: var(--cog-radius-pill, 999px);
-      background: var(--cog-surface, #ffffff);
-      color: var(--cog-text, #0f172a);
+      border: 1px solid var(--cog-border);
+      border-radius: var(--cog-radius-pill);
+      background: var(--cog-surface);
+      color: var(--cog-text);
       font: inherit;
-      font-size: var(--cog-fs-caption, 13px);
+      font-size: var(--cog-fs-caption);
       cursor: pointer;
       transition:
         border-color var(--cog-dur-fast) var(--cog-ease-standard),
@@ -83,20 +83,20 @@ import { PersonaService } from '@app/services/persona.service';
     }
 
     .persona-chips__chip:hover {
-      border-color: var(--cog-border-bold, #cbd5e1);
+      border-color: var(--cog-border-bold);
     }
 
     .persona-chips__chip.is-active {
-      border-color: var(--cog-brand, #16a34a);
-      background: var(--cog-success-bg, #f0fdf4);
-      color: var(--cog-success-text, #15803d);
-      font-weight: var(--cog-fw-semibold, 600);
+      border-color: var(--cog-brand);
+      background: var(--cog-success-bg);
+      color: var(--cog-success-text);
+      font-weight: var(--cog-fw-semibold);
       padding-left: 10px;
     }
 
     .persona-chips__chip--all {
       border-style: dashed;
-      color: var(--cog-text-subtle, #64748b);
+      color: var(--cog-text-subtle);
       padding-left: 10px;
     }
 

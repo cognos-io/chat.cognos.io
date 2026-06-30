@@ -42,23 +42,23 @@ import { TranslocoModule } from '@jsverse/transloco';
       width: 2rem;
       height: 2rem;
       border-radius: 50%;
-      border: 3px solid var(--cog-border, rgba(0, 0, 0, 0.1));
+      border: 3px solid var(--cog-border);
       border-top-color: var(--cog-brand);
       animation: duplicating-spin 0.8s linear infinite;
     }
 
     .duplicating-dialog__title {
       margin: 0;
-      font-size: var(--cog-fs-h-sm, 1rem);
+      font-size: var(--cog-fs-h-sm);
       font-weight: var(--cog-fw-semibold);
       color: var(--cog-text);
     }
 
     .duplicating-dialog__warning {
       margin: 0;
-      font-size: var(--cog-fs-body-sm, 0.875rem);
+      font-size: var(--cog-fs-body-sm);
       line-height: var(--cog-lh-body);
-      color: var(--cog-text-subtle, var(--cog-text-subtlest));
+      color: var(--cog-text-subtle);
     }
 
     @keyframes duplicating-spin {

@@ -1,7 +1,7 @@
 :host {
   display: flex;
   flex-direction: column;
-  gap: var(--cog-space-200, 16px);
+  gap: var(--cog-space-200);
   max-width: 920px;
 }
 
@@ -30,7 +30,7 @@
   border: 1px solid var(--cog-border);
   border-radius: var(--cog-radius-md);
   background: var(--cog-surface);
-  padding: var(--cog-space-250, 20px);
+  padding: var(--cog-space-250);
 }
 
 .projects-page__card-title {
@@ -42,13 +42,13 @@
 
 .projects-page__form {
   display: grid;
-  gap: var(--cog-space-150, 12px);
+  gap: var(--cog-space-150);
   margin-top: var(--cog-space-050);
 }
 
 .projects-page__field {
   display: grid;
-  gap: var(--cog-space-050, 4px);
+  gap: var(--cog-space-050);
 }
 
 .projects-page__label {
@@ -60,7 +60,7 @@
 .projects-page__field input,
 .projects-page__field textarea {
   inline-size: 100%;
-  padding: var(--cog-space-100, 8px) var(--cog-space-150, 12px);
+  padding: var(--cog-space-100) var(--cog-space-150);
   border: 1px solid var(--cog-border);
   border-radius: var(--cog-radius-sm);
   font: inherit;
@@ -134,14 +134,14 @@
   display: flex;
   align-items: center;
   gap: var(--cog-space-150);
-  padding: var(--cog-space-150) var(--cog-space-150, 12px);
+  padding: var(--cog-space-150) var(--cog-space-150);
   text-decoration: none;
   color: inherit;
   transition: background-color var(--cog-dur-fast) var(--cog-ease-standard);
 }
 
 .projects-page__item:hover {
-  background: var(--cog-surface-hover, rgba(0, 0, 0, 0.02));
+  background: var(--cog-surface-hover);
 }
 
 .projects-page__item-text {

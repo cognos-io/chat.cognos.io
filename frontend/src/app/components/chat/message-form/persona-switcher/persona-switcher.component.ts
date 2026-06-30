@@ -78,7 +78,7 @@ import { PersonaService } from '@app/services/persona.service';
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface-raised);
-      box-shadow: var(--cog-shadow-overlay, 0 10px 30px rgba(0, 0, 0, 0.12));
+      box-shadow: var(--cog-shadow-overlay);
       padding: var(--cog-space-075);
     }
 
@@ -87,7 +87,7 @@ import { PersonaService } from '@app/services/persona.service';
       margin: 0;
       padding: 0;
       display: grid;
-      gap: var(--cog-space-025, 2px);
+      gap: var(--cog-space-025);
     }
 
     .persona-switcher__row {
@@ -109,12 +109,12 @@ import { PersonaService } from '@app/services/persona.service';
 
     .persona-switcher__row:hover,
     .persona-switcher__row:focus-visible {
-      background: var(--cog-surface-hover, rgba(0, 0, 0, 0.04));
+      background: var(--cog-surface-hover);
       outline: 0;
     }
 
     .persona-switcher__row--active {
-      background: var(--cog-selected-bg, rgba(46, 160, 67, 0.12));
+      background: var(--cog-selected-bg);
     }
 
     .persona-switcher__body {
@@ -143,7 +143,7 @@ import { PersonaService } from '@app/services/persona.service';
       align-items: center;
       gap: var(--cog-space-100);
       width: 100%;
-      margin-top: var(--cog-space-050, 4px);
+      margin-top: var(--cog-space-050);
       padding: var(--cog-space-100);
       border: 0;
       border-top: 1px solid var(--cog-border);
@@ -156,7 +156,7 @@ import { PersonaService } from '@app/services/persona.service';
 
     .persona-switcher__manage:hover,
     .persona-switcher__manage:focus-visible {
-      background: var(--cog-surface-hover, rgba(0, 0, 0, 0.04));
+      background: var(--cog-surface-hover);
       outline: 0;
     }
   `,

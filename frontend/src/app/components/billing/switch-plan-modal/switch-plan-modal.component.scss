@@ -27,8 +27,8 @@
   display: flex;
   gap: var(--cog-space-050);
   padding: var(--cog-space-050);
-  border-radius: var(--cog-radius-md, 12px);
-  background: var(--cog-surface-sunken, var(--cog-border));
+  border-radius: var(--cog-radius-md);
+  background: var(--cog-surface-sunken);
 
   @media (max-width: 600px) {
     width: 100%;
@@ -43,7 +43,7 @@
   gap: var(--cog-space-075);
   padding: var(--cog-space-100) var(--cog-space-200);
   border: 0;
-  border-radius: var(--cog-radius-sm, 8px);
+  border-radius: var(--cog-radius-sm);
   background: none;
   color: var(--cog-text-subtle);
   font-size: var(--cog-fs-body);
@@ -64,9 +64,9 @@
 
 .spm__seg-badge {
   padding: 2px var(--cog-space-075);
-  border-radius: var(--cog-radius-pill, 999px);
-  background: var(--cog-success-bg, var(--cog-selected-bg, var(--cog-border)));
-  color: var(--cog-success-text, var(--cog-text-subtle));
+  border-radius: var(--cog-radius-pill);
+  background: var(--cog-success-bg);
+  color: var(--cog-success-text);
   font-size: var(--cog-fs-caption);
   font-weight: var(--cog-fw-semibold);
   letter-spacing: var(--cog-ls-overline);
@@ -78,12 +78,12 @@
   gap: var(--cog-space-100);
   padding: var(--cog-space-150);
   border: 1px solid var(--cog-border);
-  border-radius: var(--cog-radius-md, 12px);
+  border-radius: var(--cog-radius-md);
   background: var(--cog-surface);
 
   &--current {
-    border-color: var(--cog-success-border, var(--cog-success-text, #1a7f54));
-    background: var(--cog-success-bg, var(--cog-surface));
+    border-color: var(--cog-success-border);
+    background: var(--cog-success-bg);
   }
 }
 
@@ -96,12 +96,12 @@
 .spm__plan-name {
   color: var(--cog-text);
   font-size: var(--cog-fs-body);
-  font-weight: var(--cog-fw-h-md, 600);
+  font-weight: var(--cog-fw-h-md);
 }
 
 .spm__current {
   margin-left: auto;
-  color: var(--cog-success-text, #1a7f54);
+  color: var(--cog-success-text);
   font-size: var(--cog-fs-body-sm);
   font-weight: var(--cog-fw-semibold);
 }
@@ -122,7 +122,7 @@
 
 .spm__price-amount {
   color: var(--cog-text);
-  font-size: var(--cog-fs-h-lg, 28px);
+  font-size: var(--cog-fs-h-lg);
   font-weight: var(--cog-fw-h-lg);
 }
 
@@ -132,7 +132,7 @@
 }
 
 .spm__price-sub {
-  margin-top: var(--cog-space-025, 2px);
+  margin-top: var(--cog-space-025);
   color: var(--cog-text-subtlest);
   font-size: var(--cog-fs-caption);
 }

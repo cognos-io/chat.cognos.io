@@ -42,7 +42,7 @@
   border: 1px solid var(--cog-border);
   border-radius: var(--cog-radius-md);
   background: var(--cog-surface);
-  padding: var(--cog-space-250, 20px);
+  padding: var(--cog-space-250);
   margin-bottom: var(--cog-space-200);
 }
 
@@ -84,7 +84,7 @@
 .pb__plan-price {
   color: var(--cog-text-subtle);
   font-size: var(--cog-fs-body);
-  font-weight: var(--cog-fw-regular, 400);
+  font-weight: var(--cog-fw-regular);
 }
 
 .pb__plan-blurb {
@@ -104,13 +104,13 @@
 
 .pb__aside {
   display: grid;
-  gap: var(--cog-space-025, 2px);
+  gap: var(--cog-space-025);
   /* Hug the content rather than stretching to the plan column's height. */
   align-self: start;
   align-content: start;
   border: 1px solid var(--cog-border);
   border-radius: var(--cog-radius-md);
-  background: var(--cog-surface-sunken, var(--cog-app-bg));
+  background: var(--cog-surface-sunken);
   padding: var(--cog-space-150);
 }
 
@@ -245,7 +245,7 @@
 .pb__bar-sub {
   margin-left: var(--cog-space-050);
   color: var(--cog-text-subtle);
-  font-weight: var(--cog-fw-regular, 400);
+  font-weight: var(--cog-fw-regular);
 }
 
 .pb__bar-value {
@@ -292,7 +292,7 @@
   background: var(--cog-text);
   color: var(--cog-surface);
   font-size: var(--cog-fs-caption);
-  font-weight: var(--cog-fw-bold, 700);
+  font-weight: var(--cog-fw-bold);
   font-style: italic;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -382,7 +382,7 @@
   cursor: pointer;
 
   &:hover {
-    background: var(--cog-surface-sunken, var(--cog-border));
+    background: var(--cog-surface-sunken);
   }
 }
 
@@ -392,12 +392,12 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--cog-space-050);
-  margin: var(--cog-space-200) calc(-1 * var(--cog-space-250, 20px))
-    calc(-1 * var(--cog-space-250, 20px));
-  padding: var(--cog-space-150) var(--cog-space-250, 20px);
+  margin: var(--cog-space-200) calc(-1 * var(--cog-space-250))
+    calc(-1 * var(--cog-space-250));
+  padding: var(--cog-space-150) var(--cog-space-250);
   border-top: 1px solid var(--cog-border);
   border-radius: 0 0 var(--cog-radius-md) var(--cog-radius-md);
-  background: var(--cog-surface-sunken, var(--cog-app-bg));
+  background: var(--cog-surface-sunken);
   color: var(--cog-text-subtlest);
   font-size: var(--cog-fs-caption);
 }

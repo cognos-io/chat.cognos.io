@@ -30,7 +30,7 @@ import { PersonaColor } from '@app/interfaces/persona';
       justify-content: center;
       inline-size: calc(var(--persona-avatar-size) * 1px);
       block-size: calc(var(--persona-avatar-size) * 1px);
-      border-radius: var(--cog-radius-sm, 8px);
+      border-radius: var(--cog-radius-sm);
       background: var(--persona-avatar-bg, #eef0f3);
       color: var(--persona-avatar-fg, #475569);
     }
@@ -77,7 +77,7 @@ import { PersonaColor } from '@app/interfaces/persona';
     }
     .persona-avatar--transparent {
       --persona-avatar-bg: transparent;
-      --persona-avatar-fg: var(--cog-text-subtle, #475569);
+      --persona-avatar-fg: var(--cog-text-subtle);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

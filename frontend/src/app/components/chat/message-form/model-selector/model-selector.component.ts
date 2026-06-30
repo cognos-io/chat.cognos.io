@@ -246,7 +246,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface-raised);
-      box-shadow: var(--cog-shadow-overlay, 0 10px 30px rgba(0, 0, 0, 0.12));
+      box-shadow: var(--cog-shadow-overlay);
       overflow: hidden;
     }
 
@@ -353,12 +353,12 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
 
     .model-selector__row:hover,
     .model-selector__row:focus-visible {
-      background: var(--cog-surface-hover, rgba(0, 0, 0, 0.04));
+      background: var(--cog-surface-hover);
       outline: 0;
     }
 
     .model-selector__row--active {
-      background: var(--cog-selected-bg, rgba(46, 160, 67, 0.12));
+      background: var(--cog-selected-bg);
     }
 
     .model-selector__row--disabled {
@@ -368,7 +368,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
 
     .model-selector__body {
       display: grid;
-      gap: var(--cog-space-050, 4px);
+      gap: var(--cog-space-050);
       min-width: 0;
     }
 
@@ -389,13 +389,13 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
     .model-selector__pills {
       display: inline-flex;
       flex-wrap: wrap;
-      gap: var(--cog-space-050, 4px);
+      gap: var(--cog-space-050);
     }
 
     .model-selector__pill {
       padding: 1px var(--cog-space-075);
       border-radius: var(--cog-radius-xs);
-      background: var(--cog-surface-sunken, rgba(0, 0, 0, 0.05));
+      background: var(--cog-surface-sunken);
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-caption);
       line-height: 1.6;
@@ -493,7 +493,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
     .model-selector__privacy {
       display: flex;
       align-items: center;
-      gap: var(--cog-space-050, 4px);
+      gap: var(--cog-space-050);
       margin: 0;
       color: var(--cog-text-subtlest);
       font-size: var(--cog-fs-caption);
@@ -529,7 +529,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
 
     .model-selector__chip--active {
       border-color: var(--cog-brand);
-      background: var(--cog-selected-bg, rgba(46, 160, 67, 0.12));
+      background: var(--cog-selected-bg);
       color: var(--cog-brand);
       font-weight: var(--cog-fw-semibold);
     }

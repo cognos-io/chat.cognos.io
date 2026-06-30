@@ -374,14 +374,14 @@ import { deriveProfileName } from '@app/utils/profile-identity';
 
     .account__redaction-warning {
       margin: var(--cog-space-150) 0 0;
-      color: var(--cog-danger-text, var(--cog-danger, #b42318));
+      color: var(--cog-danger-text);
       font-size: var(--cog-fs-body-sm);
       line-height: var(--cog-lh-body-sm);
     }
 
     .account__fields {
       display: grid;
-      gap: var(--cog-space-200, 16px);
+      gap: var(--cog-space-200);
       margin-top: var(--cog-space-100);
       min-width: 0;
     }
@@ -423,7 +423,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
 
     .account__error {
       margin: 0;
-      color: var(--cog-danger-text, #b91c1c);
+      color: var(--cog-danger-text);
       font-size: var(--cog-fs-caption);
       line-height: var(--cog-lh-caption);
     }
@@ -484,7 +484,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       height: 1px;
       border: 0;
       margin: var(--cog-space-150) 0 0;
-      background: var(--cog-danger-border, #f1c0c0);
+      background: var(--cog-danger-border);
     }
   `,
 })

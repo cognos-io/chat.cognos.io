@@ -34,7 +34,7 @@ import { CognosPageHeaderComponent } from '@cognos/ui-angular';
     :host {
       display: flex;
       flex-direction: column;
-      gap: var(--cog-space-200, 16px);
+      gap: var(--cog-space-200);
       max-width: 920px;
     }
   `,

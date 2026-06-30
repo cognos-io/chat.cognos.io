@@ -270,7 +270,7 @@ interface UsageLink {
       }
       .library__view-toggle {
         display: flex;
-        gap: var(--cog-space-025, 2px);
+        gap: var(--cog-space-025);
         margin-inline-start: auto;
       }
       .library__grid {
@@ -325,7 +325,7 @@ interface UsageLink {
         padding: 0;
         display: flex;
         flex-direction: column;
-        gap: var(--cog-space-025, 2px);
+        gap: var(--cog-space-025);
         max-height: 50vh;
         overflow-y: auto;
       }

@@ -129,7 +129,7 @@ import { ModelService } from '@app/services/model.service';
       width: min(360px, calc(100vw - var(--cog-space-200)));
       padding: var(--cog-space-100);
       border: 1px solid var(--cog-border);
-      border-radius: var(--cog-radius-md, var(--cog-radius-sm));
+      border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
       box-shadow: var(--cog-shadow-overlay);
     }
@@ -164,7 +164,7 @@ import { ModelService } from '@app/services/model.service';
     .composer-tools__title {
       font-weight: 600;
       font-size: var(--cog-fs-body);
-      line-height: var(--cog-lh-body, 1.4);
+      line-height: var(--cog-lh-body);
       color: var(--cog-text);
     }
 
@@ -179,9 +179,9 @@ import { ModelService } from '@app/services/model.service';
       gap: var(--cog-space-075);
       margin-top: var(--cog-space-050);
       padding: var(--cog-space-100);
-      border: 1px solid var(--cog-warning, #c2870b);
+      border: 1px solid var(--cog-warning);
       border-radius: var(--cog-radius-sm);
-      background: color-mix(in srgb, var(--cog-warning, #c2870b) 12%, transparent);
+      background: color-mix(in srgb, var(--cog-warning) 12%, transparent);
     }
 
     .composer-tools__warning-text {
@@ -190,8 +190,8 @@ import { ModelService } from '@app/services/model.service';
       gap: var(--cog-space-075);
       margin: 0;
       font-size: var(--cog-fs-body);
-      line-height: var(--cog-lh-body, 1.4);
-      color: var(--cog-warning-text, #8a5a00);
+      line-height: var(--cog-lh-body);
+      color: var(--cog-warning-text);
     }
 
     .composer-tools__warning-hint {
@@ -202,8 +202,8 @@ import { ModelService } from '@app/services/model.service';
 
     .composer-tools__use {
       align-self: start;
-      box-shadow: inset 0 0 0 1px var(--cog-warning, #c2870b);
-      color: var(--cog-warning-text, #8a5a00);
+      box-shadow: inset 0 0 0 1px var(--cog-warning);
+      color: var(--cog-warning-text);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

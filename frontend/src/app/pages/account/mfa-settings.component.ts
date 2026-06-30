@@ -350,7 +350,7 @@ type View =
     }
     .security__h3 {
       margin: 0;
-      font-size: var(--cog-fs-h-sm, 1rem);
+      font-size: var(--cog-fs-h-sm);
       font-weight: var(--cog-fw-semibold);
       color: var(--cog-text);
     }
@@ -363,15 +363,15 @@ type View =
     }
     .security__badge {
       flex: none;
-      border-radius: var(--cog-radius-pill, 999px);
+      border-radius: var(--cog-radius-pill);
       padding: 2px 10px;
       font-size: var(--cog-fs-body-sm);
-      background: var(--cog-neutral-bg, #eee);
+      background: var(--cog-neutral-bg);
       color: var(--cog-text-subtle);
     }
     .security__badge--on {
       background: var(--cog-success-bg);
-      color: var(--cog-success-text, var(--cog-text));
+      color: var(--cog-success-text);
     }
     .security__form,
     .security__field {
@@ -405,7 +405,7 @@ type View =
     }
     .security__error {
       margin: 0;
-      color: var(--cog-danger-text, #b00020);
+      color: var(--cog-danger-text);
       font-size: var(--cog-fs-body-sm);
     }
     .security__qr {
@@ -417,7 +417,7 @@ type View =
     }
     .security__secret {
       display: inline-block;
-      font-family: var(--cog-font-mono, monospace);
+      font-family: var(--cog-font-mono);
       font-size: var(--cog-fs-body);
       letter-spacing: 0.08em;
       background: var(--cog-input-bg);
@@ -436,7 +436,7 @@ type View =
       background: var(--cog-input-bg);
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
-      font-family: var(--cog-font-mono, monospace);
+      font-family: var(--cog-font-mono);
       letter-spacing: 0.06em;
     }
     .security__device-label {

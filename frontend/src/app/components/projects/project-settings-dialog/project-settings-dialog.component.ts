@@ -159,7 +159,7 @@ import { ProjectService } from '@app/services/project.service';
       gap: var(--cog-space-150);
       padding: var(--cog-space-150);
       border-radius: var(--cog-radius-md);
-      background: var(--cog-surface-sunken, var(--cog-surface));
+      background: var(--cog-surface-sunken);
     }
 
     .project-settings__preview-text {
@@ -171,7 +171,7 @@ import { ProjectService } from '@app/services/project.service';
     .project-settings__preview-name {
       color: var(--cog-text);
       font-weight: var(--cog-fw-semibold);
-      font-size: var(--cog-fs-body-lg, 16px);
+      font-size: var(--cog-fs-body-lg);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;

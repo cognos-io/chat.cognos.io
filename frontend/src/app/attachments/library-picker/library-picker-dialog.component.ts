@@ -132,7 +132,7 @@ import { AttachmentLibraryService, LibraryFile } from '../attachment-library.ser
       }
       .library-picker__size {
         color: var(--cog-text-subtle);
-        font-size: var(--cog-fs-body-sm, 0.8125rem);
+        font-size: var(--cog-fs-body-sm);
       }
       .library-picker__empty {
         color: var(--cog-text-subtle);

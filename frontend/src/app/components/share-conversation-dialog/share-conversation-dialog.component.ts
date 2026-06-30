@@ -226,11 +226,11 @@ type ShareState = 'checking' | 'idle' | 'shared';
     }
 
     .share-dialog__mode-hint--warn {
-      color: var(--cog-danger-text, var(--cog-danger, #b42318));
+      color: var(--cog-danger-text);
     }
 
     .share-dialog__copy p.share-dialog__reasoning-note {
-      color: var(--cog-danger-text, var(--cog-danger, #b42318));
+      color: var(--cog-danger-text);
       font-size: var(--cog-fs-body-sm);
     }
   `,
