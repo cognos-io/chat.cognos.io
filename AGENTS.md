@@ -43,6 +43,31 @@ approach to ProtonMail which encrypts user emails.
 - Use `packages/ui` design tokens (`--cog-*`) for UI colour, spacing, type, radius, shadow and
   motion; avoid hard-coded visual values in `packages/ui-angular`, `frontend` and `web`.
 
+## Internationalisation (i18n)
+
+We ship the same six languages everywhere. Provide every translation in all six — never
+English-only. Cognos is a **Swiss company serving a European audience**, so always translate to the
+**European regional variant**, not the Latin-American / Brazilian / US one:
+
+| Code | Locale                        | Watch out for                                                                            |
+| ---- | ----------------------------- | ---------------------------------------------------------------------------------------- |
+| `en` | English (British, en-GB)      | `-ise`/`colour`/`organisation`, not US spellings                                         |
+| `de` | Swiss Standard German (de-CH) | Use **`ss`, never `ß`** (Swiss orthography); informal **du**                             |
+| `fr` | French (fr-CH / standard)     | Polite **vous** in marketing copy                                                        |
+| `es` | European Spanish (es-ES)      | `ordenador`/`móvil` (not `computadora`/`celular`); informal **tú**                       |
+| `pt` | European Portuguese (pt-PT)   | `ecrã`/`palavra-passe`/`anónimo`/`contacto`/`dispositivo`; informal **tu**, **not você** |
+| `it` | Italian (it-CH / standard)    | Informal **tu**                                                                          |
+
+- The catalogue registry is `frontend/src/app/i18n/languages.ts`; keep it and every locale file in
+  sync. Frontend catalogs live in `frontend/src/assets/i18n/<code>.json`; the marketing site's in
+  `web/src/i18n/locales/<code>.json`.
+- Keep the JSON key structure **identical** across all locales, and preserve inline `<b>` markup and
+  `{{ var }}` interpolation placeholders untouched.
+- Marketing copy in `web/` is plain-language and privacy-first: write for non-technical readers, and
+  **never** use "end-to-end", "zero-knowledge", "ciphertext"/"plaintext" or similar jargon. Keep
+  every privacy claim aligned with `docs/security-model.md` (e.g. "we keep no copy we can read",
+  "kept in Switzerland or Europe" — not "the data never leaves your device").
+
 ## Tools
 
 | Use ✅        | Do not use ❌                    |
