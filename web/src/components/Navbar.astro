@@ -1,5 +1,6 @@
 ---
 import Icon from './Icon.astro';
+import Logo from './Logo.astro';
 import { SIGN_IN_URL, SIGN_UP_URL } from '../config';
 import type { Translator } from '../i18n/ui';
 
@@ -11,7 +12,7 @@ const { t } = Astro.props;
 
 <nav class="navbar" data-open="false">
   <div class="wrap navbar__inner">
-    <a class="brand" href="#top"><span class="gem"></span> Cognos</a>
+    <a class="brand" href="#top" aria-label="Cognos"><Logo class="brand-logo" /></a>
 
     <button
       class="nav-toggle"

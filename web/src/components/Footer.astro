@@ -1,5 +1,6 @@
 ---
 import Icon from './Icon.astro';
+import Logo from './Logo.astro';
 import { languages, locales, localizedPath, type Lang, type Translator } from '../i18n/ui';
 
 interface Props {
@@ -16,7 +17,7 @@ const year = new Date().getFullYear();
   <div class="wrap">
     <div class="footer-grid">
       <div>
-        <a class="brand" href="#top"><span class="gem"></span> Cognos</a>
+        <a class="brand" href="#top" aria-label="Cognos"><Logo class="brand-logo" /></a>
         <p class="fdesc">{t('footer.desc')}</p>
       </div>
       <div>

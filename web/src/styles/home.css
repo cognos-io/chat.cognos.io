@@ -121,7 +121,7 @@ section {
 }
 h2.sec-h {
   font-size: clamp(28px, 3.6vw, 42px);
-  font-weight: 800;
+  font-weight: var(--cog-fw-bold);
   line-height: 1.1;
   margin: 0;
 }
@@ -135,7 +135,7 @@ h2.sec-h {
 .eyebrow {
   font-family: var(--ff-mono);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: var(--cog-fw-medium);
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
@@ -144,12 +144,15 @@ h2.sec-h {
 }
 
 /* ============================ BUTTONS ================================== */
+/* Aligned with @cognos/ui `cog-button`: --cog-radius-xs, medium label
+   weight, brand colour states and the same focus-visible ring. Marketing
+   keeps larger padding and a subtle hover lift for landing-page presence. */
 .btn {
   font-family: var(--ff-display);
-  font-weight: 600;
+  font-weight: var(--cog-fw-medium);
   font-size: 0.95rem;
   line-height: 1.2;
-  border-radius: 10px;
+  border-radius: var(--cog-radius-xs);
   padding: 0.7rem 1.25rem;
   border: 1.5px solid transparent;
   cursor: pointer;
@@ -162,11 +165,15 @@ h2.sec-h {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--cog-space-075);
 }
 .btn svg {
   width: 17px;
   height: 17px;
+}
+.btn:focus-visible {
+  outline: 2px solid var(--cog-brand);
+  outline-offset: 2px;
 }
 .btn-lg {
   padding: 0.85rem 1.6rem;
@@ -206,7 +213,7 @@ h2.sec-h {
   gap: 6px;
   font-family: var(--ff-mono);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: var(--cog-fw-semibold);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   padding: 4px 9px;
@@ -250,29 +257,17 @@ h2.sec-h {
   gap: 16px;
 }
 .brand {
-  font-weight: 700;
-  font-size: 1.32rem;
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  color: var(--ink);
+  color: var(--cog-text);
 }
-.gem {
-  width: 24px;
-  height: 24px;
-  transform: rotate(45deg);
-  background: linear-gradient(135deg, var(--brand-bright), var(--brand));
-  border-radius: 6px;
-  position: relative;
-  box-shadow: var(--shadow-brand-sm);
-  flex: none;
+.brand-logo {
+  display: block;
+  width: auto;
+  height: 26px;
 }
-.gem::after {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  border: 2px solid rgba(255, 255, 255, 0.85);
-  border-radius: 3px;
+.brand:hover {
+  color: var(--brand);
 }
 .nav-links {
   display: flex;
@@ -285,7 +280,7 @@ h2.sec-h {
 .nav-link {
   color: var(--ink-sub);
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: var(--cog-fw-medium);
   padding: 0.4rem 0.9rem;
   border-radius: var(--cog-radius-md);
 }
@@ -413,7 +408,7 @@ h2.sec-h {
 }
 h1.hero-h {
   font-size: clamp(40px, 5.4vw, 66px);
-  font-weight: 800;
+  font-weight: var(--cog-fw-bold);
   line-height: 1.02;
   letter-spacing: -0.035em;
   margin: 0;
@@ -477,7 +472,7 @@ h1.hero-h .em {
   position: absolute;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--cog-radius-lg);
   box-shadow: var(--shadow-ink);
 }
 .card-them {
@@ -510,7 +505,7 @@ h1.hero-h .em {
 }
 .card-them .snippet {
   background: var(--sunken);
-  border-radius: 10px;
+  border-radius: var(--cog-radius-md);
   padding: 12px 14px;
   font-size: 13.5px;
   color: var(--ink-sub);
@@ -566,12 +561,13 @@ h1.hero-h .em {
 }
 .card-us .nm {
   font-family: var(--ff-display);
-  font-weight: 700;
+  font-weight: var(--cog-fw-bold);
   font-size: 14px;
 }
 .card-us .ubub {
   background: var(--brand-bg);
-  border-radius: 12px 12px 4px 12px;
+  border-radius: var(--cog-radius-md) var(--cog-radius-md) var(--cog-radius-sm)
+    var(--cog-radius-md);
   padding: 11px 13px;
   font-size: 13.5px;
   color: var(--ink);
@@ -594,7 +590,7 @@ h1.hero-h .em {
 .card-us .fp .sh {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: var(--cog-radius-md);
   background: var(--brand-bg);
   display: grid;
   place-items: center;
@@ -607,7 +603,7 @@ h1.hero-h .em {
 }
 .card-us .fp .t {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: var(--cog-fw-semibold);
 }
 .card-us .fp .m {
   font-family: var(--ff-mono);
@@ -635,7 +631,7 @@ h1.hero-h .em {
 .vs-card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--cog-radius-lg);
   height: 100%;
   overflow: hidden;
 }
@@ -645,7 +641,7 @@ h1.hero-h .em {
   font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: var(--cog-fw-semibold);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -689,7 +685,7 @@ h1.hero-h .em {
 }
 .vs-us li b {
   color: var(--ink);
-  font-weight: 600;
+  font-weight: var(--cog-fw-semibold);
 }
 .vs-card.vs-us {
   border-color: color-mix(in srgb, var(--brand) 30%, transparent);
@@ -705,7 +701,7 @@ h1.hero-h .em {
 .fcard {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--cog-radius-lg);
   padding: 28px;
   height: 100%;
   transition:
@@ -721,7 +717,7 @@ h1.hero-h .em {
 .ficon {
   width: 46px;
   height: 46px;
-  border-radius: 12px;
+  border-radius: var(--cog-radius-md);
   background: var(--brand-bg);
   display: grid;
   place-items: center;
@@ -734,7 +730,7 @@ h1.hero-h .em {
 }
 .fcard h3 {
   font-size: 1.18rem;
-  font-weight: 700;
+  font-weight: var(--cog-fw-bold);
   margin: 0 0 8px;
 }
 .fcard p {
@@ -751,7 +747,7 @@ h1.hero-h .em {
 .aud-card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--cog-radius-lg);
   padding: 30px;
   height: 100%;
   transition:
@@ -773,7 +769,7 @@ h1.hero-h .em {
 }
 .aud-top h3 {
   font-size: 1.32rem;
-  font-weight: 800;
+  font-weight: var(--cog-fw-bold);
   margin: 0 0 5px;
 }
 .aud-card ul {
@@ -798,7 +794,7 @@ h1.hero-h .em {
 }
 .aud-card li b {
   color: var(--ink);
-  font-weight: 600;
+  font-weight: var(--cog-fw-semibold);
 }
 .aud-price {
   font-family: var(--ff-mono);
@@ -816,7 +812,7 @@ h1.hero-h .em {
 /* ============================ CTA ================================== */
 .cta-band {
   background: linear-gradient(155deg, #18402f, #0e2a20);
-  border-radius: 24px;
+  border-radius: var(--cog-radius-lg);
   padding: 64px 40px;
   text-align: center;
   position: relative;
@@ -836,7 +832,7 @@ h1.hero-h .em {
   position: relative;
   color: #fff;
   font-size: clamp(28px, 4vw, 46px);
-  font-weight: 800;
+  font-weight: var(--cog-fw-bold);
   line-height: 1.05;
   margin: 0;
 }
@@ -904,7 +900,7 @@ footer h5 {
   text-transform: uppercase;
   color: var(--ink-subtle);
   margin: 0 0 14px;
-  font-weight: 600;
+  font-weight: var(--cog-fw-semibold);
 }
 footer a.flink {
   display: block;
