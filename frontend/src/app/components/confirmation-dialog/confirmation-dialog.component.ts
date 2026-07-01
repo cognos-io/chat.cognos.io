@@ -5,13 +5,19 @@ import { TranslocoModule } from '@jsverse/transloco';
 
 import {
   CognosButtonComponent,
+  CognosDialogActionsComponent,
   CognosDialogSurfaceComponent,
 } from '@cognos/ui-angular';
 
 @Component({
   selector: 'app-confirmation-dialog',
   standalone: true,
-  imports: [CognosDialogSurfaceComponent, CognosButtonComponent, TranslocoModule],
+  imports: [
+    CognosDialogSurfaceComponent,
+    CognosDialogActionsComponent,
+    CognosButtonComponent,
+    TranslocoModule,
+  ],
   template: `
     <cog-dialog-surface
       *transloco="let t"
@@ -21,14 +27,14 @@ import {
     >
       <p class="confirmation-dialog__message">{{ data.message }}</p>
 
-      <div cogDialogFooter>
+      <cog-dialog-actions cogDialogFooter>
         <cog-button appearance="subtle" (click)="close()">{{
           t('dialogs.confirm.no')
         }}</cog-button>
         <cog-button appearance="danger" (click)="confirm()">{{
           t('dialogs.confirm.yes')
         }}</cog-button>
-      </div>
+      </cog-dialog-actions>
     </cog-dialog-surface>
   `,
   styles: `

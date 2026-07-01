@@ -40,13 +40,19 @@
   align-items: center;
   gap: var(--cog-space-075);
   flex: none;
-  padding: var(--cog-space-075) var(--cog-space-150);
+  // Match the 32px height of the sibling header buttons (cog-button /
+  // cog-icon-button). border-box keeps the 1px border inside that height.
+  box-sizing: border-box;
+  min-height: 32px;
+  padding: 0 var(--cog-space-150);
   border: 1px solid #f59e0b;
   border-radius: var(--cog-radius-sm);
   background: #fffbeb;
   color: #b45309;
   font: inherit;
+  font-size: var(--cog-fs-label);
   font-weight: var(--cog-fw-semibold);
+  line-height: var(--cog-lh-label);
   cursor: pointer;
   transition: background var(--cog-dur-fast) var(--cog-ease-standard);
 }

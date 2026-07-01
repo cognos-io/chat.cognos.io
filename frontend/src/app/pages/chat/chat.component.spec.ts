@@ -81,7 +81,7 @@ describe('ChatComponent', () => {
   // The chat header injects PublicShareService -> CognosApiService -> PocketBase
   // Client. Stub it so the component test does not construct that chain.
   const publicShareService = {
-    existingShareUrl: vi.fn().mockReturnValue(of(null)),
+    existingShare: vi.fn().mockReturnValue(of(null)),
     share: vi.fn().mockReturnValue(of('')),
     revoke: vi.fn().mockReturnValue(of(undefined)),
   };

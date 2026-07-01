@@ -16,6 +16,15 @@ import {
 import { CryptoService } from './crypto.service';
 import { RedactionService } from './redaction.service';
 
+// PublicShareLink describes a conversation's live public link: the URL plus the
+// mode it was created with, so callers can tell whether sensitive values are
+// restored for readers. The server echoes the effective mode, so this reflects
+// any fallback (e.g. include-sensitive on a conversation with nothing redacted).
+export interface PublicShareLink {
+  url: string;
+  mode: PublicShareMode;
+}
+
 // PublicShareService owns the client-side crypto for public links. The server
 // only ever sees ciphertext + a throwaway public key; the secret half of the
 // public-share keypair lives in the URL fragment and is never transmitted.
@@ -24,9 +33,9 @@ import { RedactionService } from './redaction.service';
 //     public-share public key (so an anonymous reader holding the fragment can
 //     recover it) and seal the fragment secret to the conversation public key
 //     (so any participant can rebuild the same link).
-//   • existingShareUrl(): a participant rebuilds the live link from the
+//   • existingShare(): a participant rebuilds the live link from the
 //     server-held share_secret using the conversation keypair they already
-//     hold. 404 → not shared → null.
+//     hold, alongside its mode. 404 → not shared → null.
 @Injectable({
   providedIn: 'root',
 })
@@ -43,7 +52,7 @@ export class PublicShareService {
   share(
     conversation: Conversation,
     mode: PublicShareMode = 'redacted_only',
-  ): Observable<string> {
+  ): Observable<PublicShareLink> {
     const publicShareKeyPair = this._crypto.newKeyPair();
 
     const wrappedConversationSecretKey = this._crypto.createSealedBox(
@@ -95,18 +104,26 @@ export class PublicShareService {
           });
 
     return create$.pipe(
-      map((res) => this.buildShareUrl(res.token, publicShareKeyPair.secretKey)),
+      map(
+        (res): PublicShareLink => ({
+          url: this.buildShareUrl(res.token, publicShareKeyPair.secretKey),
+          mode: res.mode,
+        }),
+      ),
     );
   }
 
-  existingShareUrl(conversation: Conversation): Observable<string | null> {
+  existingShare(conversation: Conversation): Observable<PublicShareLink | null> {
     return this._api.getPublicShare(conversation.record.id).pipe(
-      map((res) => {
+      map((res): PublicShareLink => {
         const publicShareSecretKey = this._crypto.openSealedBox(
           Base64.toUint8Array(res.share_secret),
           conversation.keyPair,
         );
-        return this.buildShareUrl(res.token, publicShareSecretKey);
+        return {
+          url: this.buildShareUrl(res.token, publicShareSecretKey),
+          mode: res.mode,
+        };
       }),
       catchError((err: { status?: number }) =>
         err?.status === 404 ? of(null) : throwError(() => err),

@@ -13,12 +13,11 @@ import { TranslocoModule } from '@jsverse/transloco';
 
 import {
   CognosButtonComponent,
+  CognosDialogActionsComponent,
   CognosIconComponent,
   CognosModalComponent,
   CognosSearchFieldComponent,
 } from '@cognos/ui-angular';
-
-import { DeviceService } from '@app/services/device.service';
 
 import { AttachmentLibraryService, LibraryFile } from '../attachment-library.service';
 
@@ -34,6 +33,7 @@ import { AttachmentLibraryService, LibraryFile } from '../attachment-library.ser
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CognosModalComponent,
+    CognosDialogActionsComponent,
     CognosButtonComponent,
     CognosIconComponent,
     CognosSearchFieldComponent,
@@ -82,21 +82,20 @@ import { AttachmentLibraryService, LibraryFile } from '../attachment-library.ser
         </ul>
       }
 
-      <div cogModalFooter class="library-picker__footer">
-        <cog-button appearance="subtle" [fullWidth]="isMobile()" (click)="cancel()">{{
+      <cog-dialog-actions cogModalFooter mobile="split">
+        <cog-button appearance="subtle" (click)="cancel()">{{
           t('library.picker.cancel')
         }}</cog-button>
         <cog-button
           appearance="primary"
           data-testid="library-attach-selected"
-          [fullWidth]="isMobile()"
           [disabled]="selected().size === 0"
           (click)="attachSelectedFiles()"
           >{{
             t('library.picker.attachSelected', { count: selected().size })
           }}</cog-button
         >
-      </div>
+      </cog-dialog-actions>
     </cog-modal>
   `,
   styles: [
@@ -139,26 +138,11 @@ import { AttachmentLibraryService, LibraryFile } from '../attachment-library.ser
         margin: var(--cog-space-200) 0;
         text-align: center;
       }
-      /* Desktop: right-aligned actions. */
-      .library-picker__footer {
-        display: flex;
-        width: 100%;
-        justify-content: flex-end;
-        gap: var(--cog-space-100);
-      }
-      /* Mobile sheet: full-width buttons, two side-by-side at 50% each. */
-      @media (max-width: 600px) {
-        .library-picker__footer {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-        }
-      }
     `,
   ],
 })
 export class LibraryPickerComponent {
   private readonly _library = inject(AttachmentLibraryService);
-  private readonly _device = inject(DeviceService);
 
   /** Whether the picker is shown. The host drives this. */
   readonly open = input(false);
@@ -167,7 +151,6 @@ export class LibraryPickerComponent {
   /** Emits when the picker should close (cancel or after a successful attach). */
   readonly closed = output<void>();
 
-  readonly isMobile = this._device.isMobile;
   readonly query = signal('');
   readonly selected = signal<Set<string>>(new Set());
 

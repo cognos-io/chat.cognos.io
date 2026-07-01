@@ -16,6 +16,7 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
   CognosButtonComponent,
+  CognosDialogActionsComponent,
   CognosDialogSurfaceComponent,
 } from '@cognos/ui-angular';
 
@@ -38,6 +39,7 @@ const notBlankValidator = (): ValidatorFn => {
   imports: [
     ReactiveFormsModule,
     CognosDialogSurfaceComponent,
+    CognosDialogActionsComponent,
     CognosButtonComponent,
     TranslocoModule,
   ],
@@ -81,7 +83,7 @@ const notBlankValidator = (): ValidatorFn => {
         </div>
       </form>
 
-      <div cogDialogFooter>
+      <cog-dialog-actions cogDialogFooter>
         <cog-button appearance="subtle" (click)="close()">{{
           t('common.cancel')
         }}</cog-button>
@@ -94,7 +96,7 @@ const notBlankValidator = (): ValidatorFn => {
         >
           {{ t('dialogs.editConversation.save') }}
         </cog-button>
-      </div>
+      </cog-dialog-actions>
     </cog-dialog-surface>
   `,
   styles: `

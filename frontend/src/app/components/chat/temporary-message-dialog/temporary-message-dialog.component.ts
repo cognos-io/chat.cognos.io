@@ -6,6 +6,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 
 import {
   CognosButtonComponent,
+  CognosDialogActionsComponent,
   CognosDialogSurfaceComponent,
 } from '@cognos/ui-angular';
 
@@ -27,6 +28,7 @@ export const expiringDurations = [
   imports: [
     ReactiveFormsModule,
     CognosDialogSurfaceComponent,
+    CognosDialogActionsComponent,
     CognosButtonComponent,
     TranslocoModule,
   ],
@@ -58,14 +60,14 @@ export const expiringDurations = [
           </div>
         </div>
 
-        <div cogDialogFooter>
+        <cog-dialog-actions cogDialogFooter>
           <cog-button appearance="subtle" (click)="close()">{{
             t('common.cancel')
           }}</cog-button>
           <cog-button appearance="primary" (click)="onSave()">{{
             t('chat.temporary.save')
           }}</cog-button>
-        </div>
+        </cog-dialog-actions>
       </cog-dialog-surface>
     </ng-container>
   `,

@@ -1,8 +1,9 @@
 import type { Preview } from '@storybook/angular';
 
-// Load the design tokens so library components render against the real
-// --cog-* variables (matching the app), not their inline fallbacks.
-import '@cognos/ui/tokens.css';
+// The design tokens + app styles (so components render against the real --cog-*
+// variables, not their inline fallbacks) are loaded via the `styles` array in
+// angular.json's build-storybook target. They must not be `import`ed here: the
+// token stylesheet uses `@import`, which webpack can't parse as a JS module.
 
 const preview: Preview = {
   parameters: {

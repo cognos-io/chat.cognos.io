@@ -10,6 +10,7 @@ import { CognosButtonComponent } from '../../button/button.component';
 import { CognosSectionMessageComponent } from '../../chat/section-message/section-message.component';
 import { CognosDocAttachmentComponent } from '../../files/doc-attachment/doc-attachment.component';
 import { injectIsMobile } from '../../foundations/breakpoint';
+import { CognosDialogActionsComponent } from '../../overlays/dialog-actions/dialog-actions.component';
 import { CognosModalComponent } from '../../overlays/modal/modal.component';
 import type { CognosVaultFile } from '../vault.types';
 
@@ -18,6 +19,7 @@ import type { CognosVaultFile } from '../vault.types';
   standalone: true,
   imports: [
     CognosButtonComponent,
+    CognosDialogActionsComponent,
     CognosDocAttachmentComponent,
     CognosModalComponent,
     CognosSectionMessageComponent,
@@ -62,7 +64,7 @@ import type { CognosVaultFile } from '../vault.types';
         }
       </div>
 
-      <div cogModalFooter class="cog-confirm-shred__footer">
+      <cog-dialog-actions cogModalFooter mobile="split">
         <cog-button
           appearance="subtle"
           type="button"
@@ -80,7 +82,7 @@ import type { CognosVaultFile } from '../vault.types';
         >
           Shred permanently
         </cog-button>
-      </div>
+      </cog-dialog-actions>
     </cog-modal>
   `,
   styles: [
@@ -99,20 +101,6 @@ import type { CognosVaultFile } from '../vault.types';
 
       .cog-confirm-shred__text strong {
         color: var(--cog-text);
-      }
-
-      .cog-confirm-shred__footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: var(--cog-space-100);
-      }
-
-      /* Mobile sheet: full-width buttons, two side-by-side at 50% each. */
-      @media (max-width: 600px) {
-        .cog-confirm-shred__footer {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-        }
       }
     `,
   ],

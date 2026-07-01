@@ -1,11 +1,10 @@
-import { moduleMetadata, type Meta, type StoryObj } from "@storybook/angular";
-import type { CognosIconName } from "@cognos/ui/icons";
+import { type Meta, type StoryObj, moduleMetadata } from '@storybook/angular';
 
-import { CognosButtonComponent } from "../../button/button.component";
-import {
-  CognosModalComponent,
-  type CognosModalTitleTone,
-} from "./modal.component";
+import type { CognosIconName } from '@cognos/ui/icons';
+
+import { CognosButtonComponent } from '../../button/button.component';
+import { CognosDialogActionsComponent } from '../dialog-actions/dialog-actions.component';
+import { CognosModalComponent, type CognosModalTitleTone } from './modal.component';
 
 type StoryArgs = {
   open: boolean;
@@ -17,31 +16,35 @@ type StoryArgs = {
 };
 
 const meta: Meta<StoryArgs> = {
-  title: "Overlays/Modal",
+  title: 'Overlays/Modal',
   decorators: [
     moduleMetadata({
-      imports: [CognosButtonComponent, CognosModalComponent],
+      imports: [
+        CognosButtonComponent,
+        CognosDialogActionsComponent,
+        CognosModalComponent,
+      ],
     }),
   ],
   parameters: {
-    layout: "fullscreen",
+    layout: 'fullscreen',
   },
   argTypes: {
     titleIcon: {
-      control: "select",
-      options: [null, "shield-x", "lock", "info", "shield-check"],
+      control: 'select',
+      options: [null, 'shield-x', 'lock', 'info', 'shield-check'],
     },
     titleTone: {
-      control: "inline-radio",
-      options: ["default", "info", "success", "danger"],
+      control: 'inline-radio',
+      options: ['default', 'info', 'success', 'danger'],
     },
   },
   args: {
     open: true,
     stickyFooter: true,
-    title: "Grant decrypt access",
+    title: 'Grant decrypt access',
     titleIcon: null,
-    titleTone: "default",
+    titleTone: 'default',
     width: 540,
   },
   render: (args) => ({
@@ -62,10 +65,10 @@ const meta: Meta<StoryArgs> = {
           </div>
         </div>
 
-        <div cogModalFooter>
+        <cog-dialog-actions cogModalFooter mobile="stack">
           <cog-button appearance="subtle">Cancel</cog-button>
           <cog-button appearance="primary">Grant access</cog-button>
-        </div>
+        </cog-dialog-actions>
       </cog-modal>
     `,
   }),
@@ -79,9 +82,9 @@ export const Default: Story = {};
 
 export const Destructive: Story = {
   args: {
-    title: "Shred this file?",
-    titleIcon: "shield-x",
-    titleTone: "danger",
+    title: 'Shred this file?',
+    titleIcon: 'shield-x',
+    titleTone: 'danger',
     width: 460,
   },
 };

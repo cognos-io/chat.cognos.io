@@ -440,11 +440,11 @@ export class ChatHeaderComponent {
 
   private _refreshShareState(conversation: Conversation) {
     const id = conversation.record.id;
-    this._publicShare.existingShareUrl(conversation).subscribe({
-      next: (url) => {
+    this._publicShare.existingShare(conversation).subscribe({
+      next: (share) => {
         // Ignore a late response for a conversation the user already left.
         if (this._conversationId() === id) {
-          this.isShared.set(url !== null);
+          this.isShared.set(share !== null);
         }
       },
       error: () => {

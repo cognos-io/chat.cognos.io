@@ -16,6 +16,7 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
   CognosButtonComponent,
+  CognosDialogActionsComponent,
   CognosDialogSurfaceComponent,
   CognosIconComponent,
 } from '@cognos/ui-angular';
@@ -41,6 +42,7 @@ import { RedactionService } from '@app/services/redaction.service';
   imports: [
     ReactiveFormsModule,
     CognosDialogSurfaceComponent,
+    CognosDialogActionsComponent,
     CognosButtonComponent,
     CognosIconComponent,
     TranslocoModule,

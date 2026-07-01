@@ -47,7 +47,7 @@
     <p class="conversation-memory__empty">{{ t('chat.memory.empty') }}</p>
   }
 
-  <div cogDialogFooter>
+  <cog-dialog-actions cogDialogFooter>
     <cog-button appearance="subtle" (click)="close()">
       {{ t('common.cancel') }}
     </cog-button>
@@ -56,5 +56,5 @@
         {{ t('chat.memory.save') }}
       </cog-button>
     }
-  </div>
+  </cog-dialog-actions>
 </cog-dialog-surface>

@@ -5,6 +5,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 
 import {
   CognosButtonComponent,
+  CognosDialogActionsComponent,
   CognosDialogSurfaceComponent,
 } from '@cognos/ui-angular';
 
@@ -15,6 +16,7 @@ import { ProfilePictureComponent } from '../team/profile-picture/profile-picture
   standalone: true,
   imports: [
     CognosDialogSurfaceComponent,
+    CognosDialogActionsComponent,
     CognosButtonComponent,
     ProfilePictureComponent,
     TranslocoModule,
@@ -67,11 +69,11 @@ import { ProfilePictureComponent } from '../team/profile-picture/profile-picture
         </div>
       </div>
 
-      <div cogDialogFooter>
+      <cog-dialog-actions cogDialogFooter>
         <cog-button appearance="primary" (click)="close()">{{
           t('dialogs.contactHelp.done')
         }}</cog-button>
-      </div>
+      </cog-dialog-actions>
     </cog-dialog-surface>
   `,
   styles: `

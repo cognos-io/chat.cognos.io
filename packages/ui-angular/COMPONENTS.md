@@ -34,21 +34,23 @@ When something is used in **more than two** places and no component fits, extrac
 | `cog-toggle`                      | A boolean on/off switch.                                                                                                                      |
 | `cog-icon`                        | Render a named icon (`@cognos/ui/icons`).                                                                                                     |
 | `cog-lozenge`                     | A small status/label badge (tones: neutral/blue/green/purple/red).                                                                            |
+| `cog-callout`                     | A tinted note/warning box with optional leading icon (tones: neutral/info/success/warning/danger). Projects rich text (supports `<strong>`).  |
 | `cog-avatar` / `cog-avatar-group` | A user/entity avatar (initials/icon/colour) / stacked avatars.                                                                                |
 | `cog-avatar-picker`               | Pick an avatar icon + colour. Colour swatches are live `cog-avatar` previews (palette comes from `cog-avatar`, no hardcoded colours).         |
 
 ## Navigation & overlays
 
-| Selector                           | When to use                                                              |
-| ---------------------------------- | ------------------------------------------------------------------------ |
-| `cog-breadcrumbs`                  | Breadcrumb trail (usually via `cog-page-header`).                        |
-| `cog-nav-item`                     | A sidebar/nav row.                                                       |
-| `cog-drawer`                       | A slide-in panel.                                                        |
-| `cog-menu`                         | A dropdown/popover menu.                                                 |
-| `cog-sheet`                        | A bottom sheet (mobile-style).                                           |
-| `cog-modal` / `cog-dialog-surface` | A centred dialog / the reusable dialog surface chrome.                   |
-| `cog-security-modal`               | A security-sensitive confirmation modal.                                 |
-| `cog-toast-host`                   | App toast outlet (use `CognosToastService.notify(...)` to raise toasts). |
+| Selector                           | When to use                                                                                                                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `cog-breadcrumbs`                  | Breadcrumb trail (usually via `cog-page-header`).                                                                                                                                    |
+| `cog-nav-item`                     | A sidebar/nav row.                                                                                                                                                                   |
+| `cog-drawer`                       | A slide-in panel.                                                                                                                                                                    |
+| `cog-menu`                         | A dropdown/popover menu.                                                                                                                                                             |
+| `cog-sheet`                        | A bottom sheet (mobile-style).                                                                                                                                                       |
+| `cog-modal` / `cog-dialog-surface` | A centred dialog / the reusable dialog surface chrome.                                                                                                                               |
+| `cog-dialog-actions`               | The footer action row for any dialog surface — projects buttons, handles gap/alignment (`align`) + mobile layout (`mobile`). Put it in the footer slot instead of a bespoke `<div>`. |
+| `cog-security-modal`               | A security-sensitive confirmation modal.                                                                                                                                             |
+| `cog-toast-host`                   | App toast outlet (use `CognosToastService.notify(...)` to raise toasts).                                                                                                             |
 
 ## Files & images
 
@@ -85,9 +87,9 @@ and `refsText` (footer reference text; pass `''` to hide it until a count is kno
 `refsInteractive` to render that reference line as a button that emits `refsClick` (e.g.
 to open the list of chats that reference the file).
 
-| Selector                                                                        | When to use                                                              |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `cog-vault-page` / `cog-vault-card` / `cog-vault-list-row` / `cog-vault-picker` | File-browsing surfaces (grid card, list row, full page, picker).         |
-| `cog-storage-meter`                                                             | Storage-usage meter.                                                     |
-| `cog-filter-chips`                                                              | File-kind filter chips (pass translated `options` for i18n).             |
-| `cog-confirm-shred`                                                             | Destructive "shred" confirmation.                                        |
+| Selector                                                                        | When to use                                                      |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `cog-vault-page` / `cog-vault-card` / `cog-vault-list-row` / `cog-vault-picker` | File-browsing surfaces (grid card, list row, full page, picker). |
+| `cog-storage-meter`                                                             | Storage-usage meter.                                             |
+| `cog-filter-chips`                                                              | File-kind filter chips (pass translated `options` for i18n).     |
+| `cog-confirm-shred`                                                             | Destructive "shred" confirmation.                                |

@@ -13,6 +13,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 import {
   CognosAvatarPickerComponent,
   CognosButtonComponent,
+  CognosDialogActionsComponent,
   CognosDialogSurfaceComponent,
 } from '@cognos/ui-angular';
 
@@ -41,6 +42,7 @@ import { ProjectService } from '@app/services/project.service';
     CognosAvatarPickerComponent,
     CognosButtonComponent,
     CognosDialogSurfaceComponent,
+    CognosDialogActionsComponent,
     PersonaAvatarComponent,
   ],
   template: `
@@ -131,7 +133,7 @@ import { ProjectService } from '@app/services/project.service';
         </fieldset>
       </div>
 
-      <div cogDialogFooter>
+      <cog-dialog-actions cogDialogFooter>
         <cog-button appearance="subtle" (click)="close()">
           {{ t('common.cancel') }}
         </cog-button>
@@ -144,7 +146,7 @@ import { ProjectService } from '@app/services/project.service';
         >
           {{ saving() ? t('projects.saving') : t('projects.save') }}
         </cog-button>
-      </div>
+      </cog-dialog-actions>
     </cog-dialog-surface>
   `,
   styles: `

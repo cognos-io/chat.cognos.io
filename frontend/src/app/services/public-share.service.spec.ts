@@ -102,15 +102,16 @@ describe('PublicShareService', () => {
   it('seals the conversation secret to the share key and the share key to the conversation', async () => {
     const conversation = buildConversation(crypto);
 
-    const url = await firstValueFrom(service.share(conversation));
-    expect(url).toContain('/p/tok123#');
+    const link = await firstValueFrom(service.share(conversation));
+    expect(link.url).toContain('/p/tok123#');
+    expect(link.mode).toBe('redacted_only');
     const request = api.lastCreateRequest;
     expect(request).not.toBeNull();
 
     // The URL fragment carries the public-share secret key. Re-derive the
     // keypair and confirm it opens the wrapped conversation secret back to
     // the original conversation secret key — the anonymous-reader path.
-    const fragmentSecret = Base64.toUint8Array(fragmentOf(url));
+    const fragmentSecret = Base64.toUint8Array(fragmentOf(link.url));
     const publicShareKeyPair = crypto.keyPairFromSecretKey(fragmentSecret);
     const recoveredConvSecret = crypto.openSealedBox(
       Base64.toUint8Array(request!.wrapped_conversation_secret_key),
@@ -144,10 +145,11 @@ describe('PublicShareService', () => {
       mode: 'redacted_only',
     };
 
-    const url = await firstValueFrom(service.existingShareUrl(conversation));
-    expect(url).not.toBeNull();
-    expect(url).toContain('/p/tok999#');
-    const fragmentSecret = Base64.toUint8Array(fragmentOf(url!));
+    const share = await firstValueFrom(service.existingShare(conversation));
+    expect(share).not.toBeNull();
+    expect(share!.url).toContain('/p/tok999#');
+    expect(share!.mode).toBe('redacted_only');
+    const fragmentSecret = Base64.toUint8Array(fragmentOf(share!.url));
     expect(Array.from(fragmentSecret)).toEqual(
       Array.from(publicShareKeyPair.secretKey),
     );
@@ -164,8 +166,8 @@ describe('PublicShareService', () => {
     const conversation = buildConversation(crypto);
     api.getResponse = { status: 404 };
 
-    const url = await firstValueFrom(service.existingShareUrl(conversation));
-    expect(url).toBeNull();
+    const share = await firstValueFrom(service.existingShare(conversation));
+    expect(share).toBeNull();
   });
 
   it('propagates non-404 errors', async () => {
@@ -173,7 +175,7 @@ describe('PublicShareService', () => {
     api.getResponse = { status: 500 };
 
     await expect(
-      firstValueFrom(service.existingShareUrl(conversation)),
+      firstValueFrom(service.existingShare(conversation)),
     ).rejects.toMatchObject({ status: 500 });
   });
 });

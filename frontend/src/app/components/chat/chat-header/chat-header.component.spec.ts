@@ -65,7 +65,7 @@ describe('ChatHeaderComponent', () => {
   };
 
   const publicShareService = {
-    existingShareUrl: vi.fn().mockReturnValue(of(null)),
+    existingShare: vi.fn().mockReturnValue(of(null)),
   };
 
   const redactionRevision = signal(0);
@@ -100,7 +100,7 @@ describe('ChatHeaderComponent', () => {
     valuesHidden.set(false);
     redactionEntries.set(new Map());
     vi.clearAllMocks();
-    publicShareService.existingShareUrl.mockReturnValue(of(null));
+    publicShareService.existingShare.mockReturnValue(of(null));
 
     dialogOpen = vi.fn().mockReturnValue({ closed: of(true) });
 
@@ -229,8 +229,8 @@ describe('ChatHeaderComponent', () => {
   });
 
   it('warns with a Shared control when the conversation has a public link', () => {
-    publicShareService.existingShareUrl.mockReturnValue(
-      of('https://cognos.local/p/abc#k'),
+    publicShareService.existingShare.mockReturnValue(
+      of({ url: 'https://cognos.local/p/abc#k', mode: 'redacted_only' }),
     );
     selectedConversation.set(makeConversation('c-1', 'Saved chat'));
     fixture.detectChanges();
