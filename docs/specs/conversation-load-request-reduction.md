@@ -1,9 +1,18 @@
 # Conversation Load — Request Reduction Spec
 
-**Status:** Draft / exploration
+**Status:** Fix 1 shipped; Fixes 2 & 4 blocked on infra (see §8).
 **Scope:** Cut the request fan-out when the app loads the conversation list. This is about **how
 many requests** the first load makes, not about caching repeat reads (see
 [encrypted-api-response-caching](./encrypted-api-response-caching.md)).
+
+> **Implementation note (Fix 1 done).** `GET /api/v1/conversations` now embeds the requesting
+> user's current-generation `public_key`, `public_key_signature`, and `wrapped_secret_key` per
+> conversation; the client decrypts from the list with zero per-conversation key requests and falls
+> back to the key endpoints when a conversation omits them. Authorisation is pinned by
+> `backend/cmd/api/conversation_list_keys_test.go` (cross-user denial, per-caller scoping,
+> current-generation-only, stale-key omission, outsider isolation) and the
+> `conversation-keys-api` Playwright e2e. The raw key collections remain fully locked
+> (`TestChatCollectionRulesAreLocked`), so the handler is the only read path.
 
 ## 0. Read this first
 
@@ -94,12 +103,16 @@ public-share/copy flows, and as the fallback when the list omits a conversation'
 
 ## 3. Fix 2 — same-origin serving (kill preflights)
 
-Half the requests are `OPTIONS` only because the browser goes cross-origin with an auth header.
+Half the requests are `OPTIONS` only because the browser goes cross-origin carrying the
+`Authorization: Bearer` header (confirmed transport — see §8), which is never a "simple" request.
 
-- PocketBase already serves the production SPA via `--publicDir` (the e2e stack runs this way). If
-  prod is deployed same-origin, there are **zero** preflights.
-- If prod splits app and API across hosts, reverse-proxy `/api` under the app origin so requests are
-  same-origin.
+- **Recommended: collapse to one origin.** Serve the SPA at `app.cognos.io` and the API at
+  `app.cognos.io/api`. PocketBase already serves the SPA via `--publicDir` _and_ the API under
+  `/api/*` in the same process (the e2e stack runs exactly this), so this is a hosting/DNS change,
+  not new infra. Same-origin ⇒ **zero** preflights and no CORS config to maintain.
+- Bunny CDN sits in front of that single origin; configure it to pass `/api/*` through to origin
+  (cache only what's explicitly marked cacheable — see the caching spec) while caching static SPA
+  assets.
 - `Access-Control-Max-Age` is a weak fallback: it caches preflights per-URL, and conversation URLs
   are unique, so it barely helps. Same-origin is the real fix.
 
@@ -108,7 +121,7 @@ This is independent of Fix 1 — together they take conversation load from ~`4N`
 ## 4. Fix 4 — HTTP/2 at the edge
 
 300 requests on HTTP/1.1 is brutal (6-connection cap, head-of-line blocking). On HTTP/2 they
-multiplex over one connection. Confirm the production reverse proxy serves h2/h3. This does not
+multiplex over one connection. Confirm the Bunny edge (and origin) serve h2/h3. This does not
 reduce the count; Fixes 1 and 2 do that.
 
 ## 5. Relationship to caching
@@ -156,7 +169,22 @@ denial test.
 ## 8. Open questions
 
 - Should the per-conversation key GET endpoints eventually be deprecated for reads once the list
-  path is proven, or kept indefinitely as the fallback?
-- Is prod currently same-origin (PocketBase `--publicDir`) or split-host? That decides whether Fix 2
-  is already done.
-- Does the edge serve HTTP/2/3 today?
+  path is proven, or kept indefinitely as the fallback? (They are still needed for create/rotate,
+  copy/share, and the missing-key fallback, so deprecation is read-only at most.)
+- **Prod is split-host today, but the fix is easy.** Stack is Hetzner (PocketBase) behind Bunny
+  CDN; the SPA and API are on separate origins, so cross-origin auth'd GETs preflight. The
+  recommended Fix 2 is to **serve both from one origin**: `app.cognos.io` for the SPA and
+  `app.cognos.io/api` for the API. PocketBase already serves the SPA via `--publicDir` _and_ the
+  API under `/api/*` in the same process (the e2e stack runs exactly this way), so this is a
+  hosting/DNS change, not a reverse-proxy build. Same-origin ⇒ the browser issues **zero**
+  preflights, independent of the auth transport.
+- **Auth transport is confirmed Bearer-header, not cookie.** `new PocketBase(url)` uses the default
+  `LocalAuthStore` (token in localStorage) and every `/api/v1` call sets
+  `Authorization: Bearer <token>` (`cognos-api.service.ts` `authHeaders()`); there is no
+  `withCredentials`/cookie. This matters for the **caching** spec: its cookie-vary principal-scoping
+  options don't apply — Bunny must vary on the `Authorization` header or a client-set opaque
+  namespace header, or (simplest for phase 0) only CDN-cache static SPA assets and keep
+  authenticated API responses origin-only with browser `ETag`/`304`. The Bunny `CDN-Tag` purge
+  design itself is fine.
+- Does the edge serve HTTP/2/3 today? Still unconfirmed (ops). Lower priority — Fix 1 already
+  collapses the fan-out regardless.

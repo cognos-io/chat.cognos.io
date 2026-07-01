@@ -262,3 +262,70 @@ test.describe('conversation secret-key API', () => {
     }
   });
 });
+
+interface ConversationListEntry {
+  id: string;
+  key_version: number;
+  public_key?: string;
+  public_key_signature?: string;
+  wrapped_secret_key?: string;
+}
+
+test.describe('conversation list key embedding', () => {
+  test('embeds current-generation key material so load needs no key requests', async () => {
+    const user = await provisionApiUser();
+    try {
+      const conversationID = await createConversation(user);
+      const publicKey = randomBase64(32);
+      const publicKeySignature = randomBase64(32);
+      const wrappedSecretKey = randomBase64(64);
+
+      await user.api.post(`/api/v1/conversations/${conversationID}/public-key`, {
+        data: { public_key: publicKey, public_key_signature: publicKeySignature },
+      });
+      await user.api.post(`/api/v1/conversations/${conversationID}/secret-key`, {
+        data: { secret_key: wrappedSecretKey },
+      });
+
+      const list = await user.api.get('/api/v1/conversations');
+      expect(list.ok(), `list: ${list.status()} ${await list.text()}`).toBe(true);
+      const entries = (await list.json()) as ConversationListEntry[];
+      const entry = entries.find((e) => e.id === conversationID);
+      expect(entry, 'created conversation present in list').toBeTruthy();
+      // Everything the client needs to decrypt the title travels with the list:
+      // no follow-up public-key/secret-key requests on the happy path.
+      expect(entry?.public_key).toBe(publicKey);
+      expect(entry?.public_key_signature).toBe(publicKeySignature);
+      expect(entry?.wrapped_secret_key).toBe(wrappedSecretKey);
+      expect(entry?.key_version).toBe(1);
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
+  test('never embeds another participant — outsider list excludes the conversation', async () => {
+    const owner = await provisionApiUser();
+    const outsider = await provisionApiUser();
+    try {
+      const conversationID = await createConversation(owner);
+      const wrappedSecretKey = randomBase64(64);
+      await owner.api.post(`/api/v1/conversations/${conversationID}/public-key`, {
+        data: { public_key: randomBase64(32), public_key_signature: randomBase64(32) },
+      });
+      await owner.api.post(`/api/v1/conversations/${conversationID}/secret-key`, {
+        data: { secret_key: wrappedSecretKey },
+      });
+
+      const list = await outsider.api.get('/api/v1/conversations');
+      expect(list.ok()).toBe(true);
+      const body = await list.text();
+      // The outsider is not a participant: neither the conversation nor the
+      // owner's wrapped key may surface in their list.
+      expect(body).not.toContain(conversationID);
+      expect(body).not.toContain(wrappedSecretKey);
+    } finally {
+      await owner.api.dispose();
+      await outsider.api.dispose();
+    }
+  });
+});

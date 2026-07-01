@@ -495,43 +495,147 @@ export class ConversationService {
    * @returns (Observable<KeyPair>)
    */
   private fetchConversationKeyPair(conversationId: string): Observable<KeyPair> {
+    return this.fetchConversationPublicKeyRecord(conversationId).pipe(
+      switchMap((record) => {
+        const publicKey = Base64.toUint8Array(record.public_key);
+        // Verify the public key BEFORE fetching the wrapped secret key so a
+        // bad/missing signature short-circuits without the extra request.
+        const userSecretKey = this.verifyConversationPublicKey(
+          conversationId,
+          publicKey,
+          record.public_key_signature
+            ? Base64.toUint8Array(record.public_key_signature)
+            : null,
+        );
+
+        return this.fetchConversationSecretKey(conversationId).pipe(
+          map((wrappedSecretKey) => ({
+            publicKey,
+            secretKey: this.unwrapConversationSecretKey(
+              publicKey,
+              wrappedSecretKey,
+              userSecretKey,
+            ),
+          })),
+        );
+      }),
+    );
+  }
+
+  /**
+   * deriveConversationKeyPair - reconstructs a conversation key pair from its
+   * wire key material: the conversation public key, this user's MAC signature
+   * over it, and the secret key wrapped for this user. Verifies the signature
+   * then unwraps the secret key. Used by the embedded-list happy path; the
+   * per-conversation endpoint fallback reuses the same verify/unwrap
+   * primitives so the two never drift.
+   *
+   * @param conversationId (string)
+   * @param publicKey (Uint8Array) - conversation public key
+   * @param publicKeySignature (Uint8Array | null) - stored MAC over the key
+   * @param wrappedSecretKey (Uint8Array) - secret key wrapped for this user
+   * @returns (KeyPair)
+   */
+  private deriveConversationKeyPair(
+    conversationId: string,
+    publicKey: Uint8Array,
+    publicKeySignature: Uint8Array | null,
+    wrappedSecretKey: Uint8Array,
+  ): KeyPair {
+    const userSecretKey = this.verifyConversationPublicKey(
+      conversationId,
+      publicKey,
+      publicKeySignature,
+    );
+    return {
+      publicKey,
+      secretKey: this.unwrapConversationSecretKey(
+        publicKey,
+        wrappedSecretKey,
+        userSecretKey,
+      ),
+    };
+  }
+
+  /**
+   * verifyConversationPublicKey - checks the stored MAC over a conversation
+   * public key against one recomputed from the user's secret key. Returns the
+   * user secret key on success so the caller can unwrap; throws on a missing
+   * or mismatched signature.
+   */
+  private verifyConversationPublicKey(
+    conversationId: string,
+    publicKey: Uint8Array,
+    publicKeySignature: Uint8Array | null,
+  ): Uint8Array {
     const userSecretKey = this._vaultService.keyPair()?.secretKey;
     if (!userSecretKey) {
       throw UserSecretKeyNotFoundError;
     }
+    if (!publicKeySignature) {
+      throw new Error('Conversation public key signature missing');
+    }
 
-    return this.fetchConversationPublicKeyRecord(conversationId).pipe(
-      switchMap((record) => {
-        if (!record.public_key_signature) {
-          throw new Error('Conversation public key signature missing');
-        }
-
-        const publicKey = Base64.toUint8Array(record.public_key);
-        const publicKeySignature = this.computeConversationPublicKeySignature(
-          conversationId,
-          publicKey,
-          userSecretKey,
-        );
-        const expectedSignature = Base64.toUint8Array(record.public_key_signature);
-        if (!this._cryptoService.equalBytes(publicKeySignature, expectedSignature)) {
-          throw new Error('Conversation public key signature mismatch');
-        }
-
-        return this.fetchConversationSecretKey(conversationId).pipe(
-          map((secretKey) => {
-            const sharedKey = this._cryptoService.sharedKey(publicKey, userSecretKey);
-            const decryptedSecretKey = this._cryptoService.openBox(
-              secretKey,
-              sharedKey,
-            );
-            return {
-              publicKey,
-              secretKey: decryptedSecretKey,
-            };
-          }),
-        );
-      }),
+    const expectedSignature = this.computeConversationPublicKeySignature(
+      conversationId,
+      publicKey,
+      userSecretKey,
     );
+    if (!this._cryptoService.equalBytes(expectedSignature, publicKeySignature)) {
+      throw new Error('Conversation public key signature mismatch');
+    }
+
+    return userSecretKey;
+  }
+
+  /**
+   * unwrapConversationSecretKey - opens the per-user wrapped conversation
+   * secret key with the shared key derived from the conversation public key
+   * and the user secret key.
+   */
+  private unwrapConversationSecretKey(
+    publicKey: Uint8Array,
+    wrappedSecretKey: Uint8Array,
+    userSecretKey: Uint8Array,
+  ): Uint8Array {
+    const sharedKey = this._cryptoService.sharedKey(publicKey, userSecretKey);
+    return this._cryptoService.openBox(wrappedSecretKey, sharedKey);
+  }
+
+  /**
+   * resolveConversationKeyPair - prefers the key material embedded in the
+   * conversation-list response, decrypting in-process with zero extra
+   * requests. Falls back to the per-conversation key endpoints when the list
+   * omitted the material (a partially-keyed conversation), when the record
+   * came from a create/update response that carries no embedded keys, or when
+   * the embedded blob is unusable.
+   *
+   * @param record (ConversationRecord)
+   * @returns (Observable<KeyPair>)
+   */
+  private resolveConversationKeyPair(record: ConversationRecord): Observable<KeyPair> {
+    if (record.public_key && record.public_key_signature && record.wrapped_secret_key) {
+      try {
+        return of(
+          this.deriveConversationKeyPair(
+            record.id,
+            Base64.toUint8Array(record.public_key),
+            Base64.toUint8Array(record.public_key_signature),
+            Base64.toUint8Array(record.wrapped_secret_key),
+          ),
+        );
+      } catch (error) {
+        // A malformed or tampered embedded blob must not strand the
+        // conversation — fall back to the authoritative endpoints, which
+        // apply the same verification.
+        console.warn(
+          'Embedded conversation key material unusable; falling back to key endpoints',
+          error,
+        );
+      }
+    }
+
+    return this.fetchConversationKeyPair(record.id);
   }
 
   /**
@@ -591,7 +695,7 @@ export class ConversationService {
    * @returns (Observable<Conversation>)
    */
   private fetchConversation(record: ConversationRecord): Observable<Conversation> {
-    return this.fetchConversationKeyPair(record.id).pipe(
+    return this.resolveConversationKeyPair(record).pipe(
       map((keyPair) => {
         return {
           record,

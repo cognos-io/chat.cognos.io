@@ -237,10 +237,18 @@ rate.
 
 ### Recommendation
 
+> **Confirmed transport:** the app authenticates with `Authorization: Bearer <token>` (PocketBase
+> default `LocalAuthStore`, token in localStorage) — there is **no auth cookie**. So Option A
+> (vary on auth cookie) is out, and Option B's namespace must be a **request header**, not a
+> cookie. Prefer Option C (`X-Cognos-Cache-Namespace`) or, simplest for phase 0, do not CDN-cache
+> authenticated API responses at all: cache only static SPA assets at the edge and rely on browser
+> `ETag`/`304` for the API. Revisit header-vary only once same-origin hosting (`app.cognos.io/api`)
+> lands and the namespace can be set safely.
+
 For Bunny phase 0:
 
-1. Use a dedicated opaque `cog_cache_ns` cookie or request header.
-2. Configure Bunny Vary Cache on that one value, not the full auth cookie.
+1. Use a dedicated opaque `cog_cache_ns` **request header** (not a cookie — see above).
+2. Configure Bunny Vary Cache on that one value, not the full `Authorization` header.
 3. Include a server-side access/cache generation in the namespace where practical.
 4. Still purge on mutation. Namespace rotation is defence-in-depth, not a replacement for purge.
 

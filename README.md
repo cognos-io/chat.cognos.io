@@ -123,14 +123,13 @@ steps to going live for posterity.
         - Bring up the docker compose infrastructure (Caddy + Pocketbase + Backups)
             - `docker compose up --build --detach`
 - Frontend:
-    - Angular app deployed to Cloudflare Pages
-    - Connect Cloudflare Pages to Github repo. Build from Angular template in `frontend` directory.
-- DNS on Cloudflare:
-    - Cloudflare is domain registrar and DNS
+    - Angular app (`frontend/`) built and served from the Hetzner host, fronted by Bunny CDN.
+- DNS on Bunny.net:
+    - Bunny.net is the DNS provider
     - `api.cognos.io` -> Backend LB IP on Hetzner
     - `cognos.io` -> CNAME to Ghost.io
-    - `app.cognos.io` -> Frontend Angular app on Cloudflare Pages
-    - `chat.cognos.io` -> (alias) Frontend Angular app on Cloudflare Pages
+    - `app.cognos.io` -> Frontend Angular app on Hetzner (via Bunny CDN)
+    - `chat.cognos.io` -> (alias) Frontend Angular app on Hetzner (via Bunny CDN)
 
 ### External dependencies
 
@@ -139,8 +138,8 @@ steps to going live for posterity.
     - +$10/month copilot
 - Hetzner
     - $15/month
-- Cloudflare
-    - $5/month + usage
+- Bunny.net (CDN + DNS)
+    - usage-based
 - Ghost
     - $300/year
 - Borgbase

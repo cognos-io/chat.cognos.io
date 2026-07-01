@@ -25,6 +25,13 @@ export interface ConversationRecord {
   // project instead). Its key is wrapped by the project content key rather
   // than per-participant.
   project?: string;
+  // Current-generation key material embedded by the conversation-list endpoint
+  // so the client decrypts without a per-conversation key round-trip. Present
+  // only on the list response (not on create/update responses); the loader
+  // falls back to the per-conversation key endpoints when any are absent.
+  public_key?: string;
+  public_key_signature?: string;
+  wrapped_secret_key?: string;
 }
 
 /**

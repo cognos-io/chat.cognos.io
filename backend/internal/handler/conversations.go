@@ -31,6 +31,16 @@ type conversationRecordResponse struct {
 	// next refresh without breaking offline copies.
 	KeyVersion     int    `json:"key_version"`
 	LastActivityAt string `json:"last_activity_at,omitempty"`
+	// The list embeds the current-generation key material the requesting
+	// user needs to decrypt `data` without a per-conversation key round-trip
+	// (see the conversation-load business process). These are empty — and
+	// omitted — when the current generation's key material is missing, so the
+	// client falls back to the per-conversation key endpoints for that one
+	// rather than the whole list failing. They mirror the project-conversation
+	// list, which already embeds its wrapped key inline.
+	PublicKey          string `json:"public_key,omitempty"`
+	PublicKeySignature string `json:"public_key_signature,omitempty"`
+	WrappedSecretKey   string `json:"wrapped_secret_key,omitempty"`
 }
 
 type createConversationRequest struct {
@@ -94,11 +104,47 @@ func ConversationsList(app core.App) func(e *core.RequestEvent) error {
 
 		response := make([]conversationRecordResponse, 0, len(records))
 		for _, record := range records {
-			response = append(response, conversationRecordToResponse(record))
+			entry := conversationRecordToResponse(record)
+			// Embed the requesting user's current-generation key material so
+			// the client decrypts the title without a per-conversation
+			// public-key/secret-key round-trip. Missing material leaves the
+			// fields empty (omitted from the JSON) and the client falls back.
+			entry.PublicKey, entry.PublicKeySignature, entry.WrappedSecretKey =
+				conversationKeyMaterial(app, record.Id, user.ID, entry.KeyVersion)
+			response = append(response, entry)
 		}
 
 		return e.JSON(http.StatusOK, response)
 	}
+}
+
+// conversationKeyMaterial returns the public key, its signature, and the
+// requesting user's wrapped secret key for the conversation's current
+// generation — the exact rows the per-conversation key endpoints would return
+// to this user under the key-version-read-gate. It returns all-empty when
+// either the public key or the user's wrapped secret key is missing for the
+// current generation, so a partially-keyed conversation degrades to the
+// per-conversation fallback instead of leaking a half-usable keypair.
+func conversationKeyMaterial(app core.App, conversationID, userID string, keyVersion int) (publicKey, publicKeySignature, wrappedSecretKey string) {
+	pub, err := app.FindFirstRecordByFilter(
+		"conversation_public_keys",
+		"conversation = {:conversation} && key_version = {:version}",
+		dbx.Params{"conversation": conversationID, "version": keyVersion},
+	)
+	if err != nil || pub == nil {
+		return "", "", ""
+	}
+
+	sec, err := app.FindFirstRecordByFilter(
+		"conversation_secret_keys",
+		"conversation = {:conversation} && user = {:user} && key_version = {:version}",
+		dbx.Params{"conversation": conversationID, "user": userID, "version": keyVersion},
+	)
+	if err != nil || sec == nil {
+		return "", "", ""
+	}
+
+	return pub.GetString("public_key"), pub.GetString("public_key_signature"), sec.GetString("secret_key")
 }
 
 func ConversationsCreate(app core.App) func(e *core.RequestEvent) error {
