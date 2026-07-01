@@ -1,213 +1,213 @@
 {
   "meta": {
-    "title": "Cognos — AI you can tell anything",
-    "description": "Most AI keeps what you type and trains on it. Cognos doesn't. We keep no copy of your chats we can read, your personal details are hidden before your message is sent, and the AI forgets your chat the moment it answers. Handled in Switzerland or Europe."
+    "title": "Cognos — l'IA a cui puoi dire tutto",
+    "description": "Quasi tutte le IA conservano quello che scrivi e lo usano per addestrarsi. Cognos no. Non teniamo nessuna copia leggibile delle tue chat, i tuoi dati personali vengono nascosti prima che il messaggio parta, e l'IA dimentica la conversazione nel momento in cui risponde. Tutto gestito in Svizzera o in Europa."
   },
   "nav": {
-    "how": "How it works",
-    "compare": "Compare",
-    "features": "Features",
-    "pricing": "Plans",
-    "security": "Security",
-    "signIn": "Sign in",
-    "cta": "Get started"
+    "how": "Come funziona",
+    "compare": "Confronta",
+    "features": "Funzioni",
+    "pricing": "Piani",
+    "security": "Sicurezza",
+    "signIn": "Accedi",
+    "cta": "Inizia ora"
   },
   "hero": {
-    "badge": "Private AI",
-    "titleBefore": "The AI you can finally",
-    "titleEm": "tell everything.",
+    "badge": "IA privata",
+    "titleBefore": "L'IA a cui puoi finalmente",
+    "titleEm": "dire tutto.",
     "titleAfter": "",
-    "lead": "Every other AI keeps what you type — and uses it to train its next model. Your health. Your money. Your worries. All sitting on someone else's computer. Cognos works the other way round. We keep no copy of your chats we can read. Your personal details are hidden before anything is sent. And the AI forgets your chat the moment it answers.",
-    "ctaPrimary": "Get started",
-    "ctaSecondary": "See how it works",
-    "finehint": "From CHF 10/month · 60-day money-back guarantee · Handled in Switzerland or Europe",
+    "lead": "Ogni altra IA conserva quello che scrivi e lo usa per addestrare il suo prossimo modello. La tua salute. I tuoi soldi. Le tue preoccupazioni. Tutto sul computer di qualcun altro. Cognos funziona al contrario. Non teniamo nessuna copia leggibile delle tue chat. I tuoi dati personali vengono nascosti prima che parta qualsiasi cosa. E l'IA dimentica la conversazione nel momento in cui risponde.",
+    "ctaPrimary": "Inizia ora",
+    "ctaSecondary": "Guarda come funziona",
+    "finehint": "Da CHF 10/mese · Soddisfatti o rimborsati entro 60 giorni · Gestita in Svizzera o in Europa",
     "assure": {
-      "zeroKnowledge": "No copy we can read",
-      "swiss": "Kept in Switzerland or Europe",
-      "openProtocol": "Never used to train AI"
+      "zeroKnowledge": "Nessuna copia leggibile",
+      "swiss": "Tenuta in Svizzera o in Europa",
+      "openProtocol": "Mai usata per addestrare l'IA"
     },
     "them": {
-      "label": "other-ai.com · saved forever",
-      "snippet": "\"Here are my bank statements — can I afford to take three months off work?\"",
-      "tagStored": "Saved",
-      "tagTrained": "Trained on",
-      "tagReadable": "Readable",
-      "leak": "kept forever · could be handed over"
+      "label": "other-ai.com · salvato per sempre",
+      "snippet": "\"Ecco i miei estratti conto — posso permettermi di prendermi tre mesi di pausa dal lavoro?\"",
+      "tagStored": "Salvato",
+      "tagTrained": "Usato per l'addestramento",
+      "tagReadable": "Leggibile",
+      "leak": "tenuto per sempre · potrebbe essere consegnato"
     },
     "us": {
       "name": "Cognos",
-      "badge": "Private",
-      "bubble": "\"Here are my bank statements — can I afford to take three months off work?\"",
-      "reply": "Yes — with room to spare. Here's a month-by-month plan based on what you actually spend…",
-      "fpTitle": "Only you can open this",
-      "fpMeta": "Locked with your key"
+      "badge": "Privato",
+      "bubble": "\"Ecco i miei estratti conto — posso permettermi di prendermi tre mesi di pausa dal lavoro?\"",
+      "reply": "Sì — e con un po' di margine. Ecco un piano mese per mese basato su quanto spendi davvero…",
+      "fpTitle": "Solo tu puoi aprirla",
+      "fpMeta": "Chiusa con la tua chiave"
     }
   },
   "contrast": {
-    "eyebrow": "The difference",
-    "title": "Same question. Very different outcome.",
-    "lead": "With most AI, privacy is a setting you hope you found. With Cognos, it's just how it works.",
+    "eyebrow": "La differenza",
+    "title": "Stessa domanda. Risultato molto diverso.",
+    "lead": "Con quasi tutte le IA, la privacy è un'impostazione che speri di aver trovato. Con Cognos è semplicemente come funziona.",
     "them": {
-      "title": "A typical AI",
+      "title": "Una tipica IA",
       "items": [
-        "Keeps your messages — often forever",
-        "Uses them to train its next model",
-        "Staff and contractors can read them",
-        "Can be handed over if a court asks",
-        "Stored who knows where"
+        "Conserva i tuoi messaggi — spesso per sempre",
+        "Li usa per addestrare il suo prossimo modello",
+        "Dipendenti e collaboratori possono leggerli",
+        "Possono essere consegnati se un tribunale lo chiede",
+        "Salvati chissà dove"
       ]
     },
     "us": {
       "title": "Cognos",
       "items": [
-        "<b>Keeps no copy we can read</b>",
-        "<b>Never used to train AI</b>",
-        "<b>Only you can open your chats</b> — with your key",
-        "<b>Hides your personal details</b> before anything is sent",
-        "<b>Kept in Switzerland or Europe</b> — you choose"
+        "<b>Non tiene nessuna copia leggibile</b>",
+        "<b>Mai usata per addestrare l'IA</b>",
+        "<b>Solo tu puoi aprire le tue chat</b> — con la tua chiave",
+        "<b>Nasconde i tuoi dati personali</b> prima che parta qualsiasi cosa",
+        "<b>Tenuta in Svizzera o in Europa</b> — scegli tu"
       ]
     }
   },
   "how": {
-    "eyebrow": "How it works",
-    "title": "Privacy isn't a setting here. It's how it's built.",
-    "lead": "Four things happen every time you hit send — automatically, without you lifting a finger.",
-    "cta": "Get started",
+    "eyebrow": "Come funziona",
+    "title": "Qui la privacy non è un'impostazione. È come è fatta.",
+    "lead": "Quattro cose succedono ogni volta che premi invio — in automatico, senza che tu muova un dito.",
+    "cta": "Inizia ora",
     "steps": [
       {
-        "title": "1 · Your details get hidden",
-        "body": "Things like your email, bank details and ID are swapped for placeholders — before your message ever leaves your screen."
+        "title": "1 · I tuoi dati vengono nascosti",
+        "body": "Cose come la tua email, i dati bancari e il documento vengono sostituiti con segnaposti — prima che il messaggio lasci il tuo schermo."
       },
       {
-        "title": "2 · The AI answers, then forgets",
-        "body": "Your message goes to a trusted AI in Switzerland or Europe. It replies, and keeps nothing."
+        "title": "2 · L'IA risponde, poi dimentica",
+        "body": "Il tuo messaggio va a un'IA affidabile in Svizzera o in Europa. Risponde, e non tiene nulla."
       },
       {
-        "title": "3 · Your chat gets locked away",
-        "body": "We save your conversation in a form we can't read. No readable copy is ever kept."
+        "title": "3 · La tua chat viene messa sotto chiave",
+        "body": "Salviamo la tua conversazione in una forma che non possiamo leggere. Nessuna copia leggibile viene mai tenuta."
       },
       {
-        "title": "4 · Only you hold the key",
-        "body": "Your chats open with your key — a private key only you have. Your password just signs you in."
+        "title": "4 · La chiave ce l'hai solo tu",
+        "body": "Le tue chat si aprono con la tua chiave — una chiave privata che hai solo tu. La password serve solo per accedere."
       }
     ]
   },
   "features": {
-    "eyebrow": "What you get",
-    "title": "Privacy you can actually see",
-    "lead": "Simple controls that keep your life your own.",
+    "eyebrow": "Cosa ottieni",
+    "title": "Una privacy che puoi vedere davvero",
+    "lead": "Controlli semplici che tengono la tua vita solo tua.",
     "items": [
       {
-        "title": "Nothing readable is kept",
-        "body": "We save your chats in a form we can't read — so there's nothing to leak, sell, or hand over."
+        "title": "Non si tiene niente di leggibile",
+        "body": "Salviamo le tue chat in una forma che non possiamo leggere — così non c'è niente da far trapelare, vendere o consegnare."
       },
       {
-        "title": "Your details, hidden automatically",
-        "body": "Emails, bank details, ID numbers and passwords are hidden before your message is sent. On by default."
+        "title": "I tuoi dati, nascosti in automatico",
+        "body": "Email, dati bancari, numeri di documento e password vengono nascosti prima che il messaggio parta. Attivo di default."
       },
       {
-        "title": "You pick where it's handled",
-        "body": "Keep everything in Switzerland, or open up to Europe for more AI models to choose from.",
-        "pills": ["Switzerland", "Europe", "No training"]
+        "title": "Scegli tu dove viene gestita",
+        "body": "Tieni tutto in Svizzera, oppure apri all'Europa per avere più modelli di IA tra cui scegliere.",
+        "pills": ["Svizzera", "Europa", "Nessun addestramento"]
       },
       {
-        "title": "Messages that delete themselves",
-        "body": "Set a timer and your chat disappears — from your device and from us. Gone means gone."
+        "title": "Messaggi che si cancellano da soli",
+        "body": "Imposta un timer e la tua chat sparisce — dal tuo dispositivo e da noi. Sparita vuol dire sparita."
       },
       {
-        "title": "Incognito mode",
-        "body": "Start a chat that's never saved. Close it, and there's nothing left behind."
+        "title": "Modalità in incognito",
+        "body": "Inizia una chat che non viene mai salvata. La chiudi, e non resta niente."
       },
       {
-        "title": "Your key, your data",
-        "body": "Only your key opens your chats. Forgot your password? Reset it — your chats stay safe."
+        "title": "La tua chiave, i tuoi dati",
+        "body": "Solo la tua chiave apre le tue chat. Hai dimenticato la password? Reimpostala — le tue chat restano al sicuro."
       }
     ]
   },
   "audience": {
-    "eyebrow": "Simple pricing",
-    "titleLine1": "Pay for the AI.",
-    "titleLine2": "The privacy comes free.",
-    "lead": "Two ways to pay. The same privacy either way. Not for you? You have 60 days to get your money back.",
+    "eyebrow": "Prezzi semplici",
+    "titleLine1": "Paghi per l'IA.",
+    "titleLine2": "La privacy è inclusa.",
+    "lead": "Due modi per pagare. La stessa privacy in entrambi i casi. Non fa per te? Hai 60 giorni per riavere i tuoi soldi.",
     "individuals": {
-      "title": "Pay as you go",
-      "badge": "From CHF 10/mo",
+      "title": "Paghi quanto usi",
+      "badge": "Da CHF 10/mese",
       "items": [
-        "Only pay for what you actually use",
-        "Every chat gets the full privacy treatment",
-        "Self-deleting messages and incognito included",
-        "Switzerland or Europe, with dozens of AI models"
+        "Paghi solo per quello che usi davvero",
+        "Ogni chat riceve la privacy completa",
+        "Messaggi che si cancellano da soli e incognito inclusi",
+        "Svizzera o Europa, con decine di modelli di IA"
       ],
-      "price": "<b>Pay as you go</b> · from CHF 10/month"
+      "price": "<b>Paghi quanto usi</b> · da CHF 10/mese"
     },
     "business": {
-      "title": "Unlimited",
-      "badge": "Best value",
+      "title": "Illimitato",
+      "badge": "Miglior valore",
       "items": [
-        "<b>Unlimited chats</b>, across every AI model we offer",
-        "Stay in Switzerland whenever you want to",
-        "Keep your whole history — always private",
-        "Download or delete everything, anytime"
+        "<b>Chat illimitate</b>, su ogni modello di IA che offriamo",
+        "Resta in Svizzera ogni volta che vuoi",
+        "Tieni tutta la tua cronologia — sempre privata",
+        "Scarica o cancella tutto, quando vuoi"
       ],
-      "price": "<b>Unlimited</b> · CHF 100/month or CHF 1000/year"
+      "price": "<b>Illimitato</b> · CHF 100/mese o CHF 1000/anno"
     },
-    "roadmap": "Need it for a team? Single sign-on and private hosting are on the way — get in touch."
+    "roadmap": "Ti serve per un team? Accesso unico e hosting privato stanno arrivando — scrivici."
   },
   "security": {
-    "eyebrow": "The short version",
-    "title": "You stay in control.",
-    "lead": "No fine print. Here's exactly what we do — and don't do — with your chats.",
+    "eyebrow": "In breve",
+    "title": "Il controllo resta a te.",
+    "lead": "Niente scritte in piccolo. Ecco esattamente cosa facciamo — e cosa non facciamo — con le tue chat.",
     "items": [
       {
-        "title": "We keep no copy we can read",
-        "body": "Your chats are saved locked. We never keep a version we — or anyone else — can read."
+        "title": "Non teniamo nessuna copia leggibile",
+        "body": "Le tue chat vengono salvate sotto chiave. Non teniamo mai una versione che noi — o chiunque altro — possa leggere."
       },
       {
-        "title": "Never used to train AI",
-        "body": "Your words don't train anyone's model. Not ours, not the AI's. Ever."
+        "title": "Mai usate per addestrare l'IA",
+        "body": "Le tue parole non addestrano il modello di nessuno. Non il nostro, non quello dell'IA. Mai."
       },
       {
-        "title": "Switzerland or Europe only",
-        "body": "Your messages are handled under strong European privacy laws. You pick where."
+        "title": "Solo Svizzera o Europa",
+        "body": "I tuoi messaggi vengono gestiti sotto le forti leggi europee sulla privacy. Scegli tu dove."
       },
       {
-        "title": "Only you hold the key",
-        "body": "Your chats open with your key alone — and you can delete everything whenever you like."
+        "title": "La chiave ce l'hai solo tu",
+        "body": "Le tue chat si aprono solo con la tua chiave — e puoi cancellare tutto quando vuoi."
       }
     ]
   },
   "cta": {
-    "titleBefore": "Stop handing your private life to AI.",
-    "titleMake": "Start",
-    "titleEm": "protecting it.",
-    "lead": "Ask the questions you'd never type into a normal chatbot. With Cognos, they stay yours.",
-    "individuals": "Get started",
-    "business": "See how it works"
+    "titleBefore": "Smetti di consegnare la tua vita privata all'IA.",
+    "titleMake": "Inizia a",
+    "titleEm": "proteggerla.",
+    "lead": "Fai le domande che non scriveresti mai in un chatbot normale. Con Cognos restano tue.",
+    "individuals": "Inizia ora",
+    "business": "Guarda come funziona"
   },
   "footer": {
-    "desc": "Private AI. We keep no copy of your chats that we can read — only you hold the key.",
+    "desc": "IA privata. Non teniamo nessuna copia leggibile delle tue chat — la chiave ce l'hai solo tu.",
     "product": {
-      "heading": "Product",
-      "features": "Features",
-      "how": "How it works",
-      "compare": "Compare",
-      "pricing": "Plans"
+      "heading": "Prodotto",
+      "features": "Funzioni",
+      "how": "Come funziona",
+      "compare": "Confronta",
+      "pricing": "Piani"
     },
     "security": {
       "heading": "Privacy",
-      "audits": "How it works",
-      "protocol": "Where it's handled",
-      "keyVerification": "Hiding your details",
-      "onprem": "Your key & data"
+      "audits": "Come funziona",
+      "protocol": "Dove viene gestita",
+      "keyVerification": "Nascondere i tuoi dati",
+      "onprem": "La tua chiave e i tuoi dati"
     },
     "company": {
-      "heading": "Company",
-      "about": "About",
+      "heading": "Azienda",
+      "about": "Chi siamo",
       "privacy": "Privacy",
-      "contact": "Contact"
+      "contact": "Contatti"
     },
-    "language": "Language",
-    "copyright": "© {{ year }} Cognos. Made in Switzerland.",
-    "killer": "This page isn't watching you either."
+    "language": "Lingua",
+    "copyright": "© {{ year }} Cognos. Fatto in Svizzera.",
+    "killer": "Nemmeno questa pagina ti sta osservando."
   }
 }
