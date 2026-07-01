@@ -1,0 +1,65 @@
+---
+import Icon from './Icon.astro';
+import type { Translator } from '../i18n/ui';
+
+interface Props {
+  t: Translator;
+}
+const { t } = Astro.props;
+const indItems = t.raw<string[]>('audience.individuals.items');
+const bizItems = t.raw<string[]>('audience.business.items');
+---
+
+<section class="sec-pad" id="audience">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">{t('audience.eyebrow')}</span>
+      <h2 class="sec-h">
+        {t('audience.titleLine1')}<br />{t('audience.titleLine2')}
+      </h2>
+      <p>{t('audience.lead')}</p>
+    </div>
+    <div class="grid grid--2" style="margin-top: 40px;">
+      <div class="reveal">
+        <div class="aud-card">
+          <div class="aud-top">
+            <span class="ficon"><Icon name="Gauge" size={22} /></span>
+            <div>
+              <h3>{t('audience.individuals.title')}</h3>
+              <span class="pill pill-green"><Icon name="Check" size={12} /> {t('audience.individuals.badge')}</span>
+            </div>
+          </div>
+          <ul>
+            {indItems.map((item) => (
+              <li><Icon name="Check" size={18} /> <span set:html={item} /></li>
+            ))}
+          </ul>
+          <div class="aud-price" set:html={t('audience.individuals.price')} />
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="aud-card aud-biz">
+          <div class="aud-top">
+            <span class="ficon"><Icon name="Infinity" size={22} /></span>
+            <div>
+              <h3>{t('audience.business.title')}</h3>
+              <span class="pill pill-blue"><Icon name="Sparkles" size={12} /> {t('audience.business.badge')}</span>
+            </div>
+          </div>
+          <ul>
+            {bizItems.map((item) => (
+              <li><Icon name="Check" size={18} /> <span set:html={item} /></li>
+            ))}
+          </ul>
+          <div class="aud-price" set:html={t('audience.business.price')} />
+        </div>
+      </div>
+    </div>
+    <p
+      class="reveal"
+      style="text-align: center; margin-top: 28px; color: var(--ink-subtle); font-size: 0.9rem;"
+    >
+      {t('audience.roadmap')}
+    </p>
+  </div>
+</section>

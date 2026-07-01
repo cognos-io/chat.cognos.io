@@ -1,0 +1,213 @@
+{
+  "meta": {
+    "title": "Cognos — AI you can tell anything",
+    "description": "Most AI keeps what you type and trains on it. Cognos doesn't. We keep no copy of your chats we can read, your personal details are hidden before your message is sent, and the AI forgets your chat the moment it answers. Handled in Switzerland or Europe."
+  },
+  "nav": {
+    "how": "How it works",
+    "compare": "Compare",
+    "features": "Features",
+    "pricing": "Plans",
+    "security": "Security",
+    "signIn": "Sign in",
+    "cta": "Get started"
+  },
+  "hero": {
+    "badge": "Private AI",
+    "titleBefore": "The AI you can finally",
+    "titleEm": "tell everything.",
+    "titleAfter": "",
+    "lead": "Every other AI keeps what you type — and uses it to train its next model. Your health. Your money. Your worries. All sitting on someone else's computer. Cognos works the other way round. We keep no copy of your chats we can read. Your personal details are hidden before anything is sent. And the AI forgets your chat the moment it answers.",
+    "ctaPrimary": "Get started",
+    "ctaSecondary": "See how it works",
+    "finehint": "From CHF 10/month · 60-day money-back guarantee · Handled in Switzerland or Europe",
+    "assure": {
+      "zeroKnowledge": "No copy we can read",
+      "swiss": "Kept in Switzerland or Europe",
+      "openProtocol": "Never used to train AI"
+    },
+    "them": {
+      "label": "other-ai.com · saved forever",
+      "snippet": "\"Here are my bank statements — can I afford to take three months off work?\"",
+      "tagStored": "Saved",
+      "tagTrained": "Trained on",
+      "tagReadable": "Readable",
+      "leak": "kept forever · could be handed over"
+    },
+    "us": {
+      "name": "Cognos",
+      "badge": "Private",
+      "bubble": "\"Here are my bank statements — can I afford to take three months off work?\"",
+      "reply": "Yes — with room to spare. Here's a month-by-month plan based on what you actually spend…",
+      "fpTitle": "Only you can open this",
+      "fpMeta": "Locked with your key"
+    }
+  },
+  "contrast": {
+    "eyebrow": "The difference",
+    "title": "Same question. Very different outcome.",
+    "lead": "With most AI, privacy is a setting you hope you found. With Cognos, it's just how it works.",
+    "them": {
+      "title": "A typical AI",
+      "items": [
+        "Keeps your messages — often forever",
+        "Uses them to train its next model",
+        "Staff and contractors can read them",
+        "Can be handed over if a court asks",
+        "Stored who knows where"
+      ]
+    },
+    "us": {
+      "title": "Cognos",
+      "items": [
+        "<b>Keeps no copy we can read</b>",
+        "<b>Never used to train AI</b>",
+        "<b>Only you can open your chats</b> — with your key",
+        "<b>Hides your personal details</b> before anything is sent",
+        "<b>Kept in Switzerland or Europe</b> — you choose"
+      ]
+    }
+  },
+  "how": {
+    "eyebrow": "How it works",
+    "title": "Privacy isn't a setting here. It's how it's built.",
+    "lead": "Four things happen every time you hit send — automatically, without you lifting a finger.",
+    "cta": "Get started",
+    "steps": [
+      {
+        "title": "1 · Your details get hidden",
+        "body": "Things like your email, bank details and ID are swapped for placeholders — before your message ever leaves your screen."
+      },
+      {
+        "title": "2 · The AI answers, then forgets",
+        "body": "Your message goes to a trusted AI in Switzerland or Europe. It replies, and keeps nothing."
+      },
+      {
+        "title": "3 · Your chat gets locked away",
+        "body": "We save your conversation in a form we can't read. No readable copy is ever kept."
+      },
+      {
+        "title": "4 · Only you hold the key",
+        "body": "Your chats open with your key — a private key only you have. Your password just signs you in."
+      }
+    ]
+  },
+  "features": {
+    "eyebrow": "What you get",
+    "title": "Privacy you can actually see",
+    "lead": "Simple controls that keep your life your own.",
+    "items": [
+      {
+        "title": "Nothing readable is kept",
+        "body": "We save your chats in a form we can't read — so there's nothing to leak, sell, or hand over."
+      },
+      {
+        "title": "Your details, hidden automatically",
+        "body": "Emails, bank details, ID numbers and passwords are hidden before your message is sent. On by default."
+      },
+      {
+        "title": "You pick where it's handled",
+        "body": "Keep everything in Switzerland, or open up to Europe for more AI models to choose from.",
+        "pills": ["Switzerland", "Europe", "No training"]
+      },
+      {
+        "title": "Messages that delete themselves",
+        "body": "Set a timer and your chat disappears — from your device and from us. Gone means gone."
+      },
+      {
+        "title": "Incognito mode",
+        "body": "Start a chat that's never saved. Close it, and there's nothing left behind."
+      },
+      {
+        "title": "Your key, your data",
+        "body": "Only your key opens your chats. Forgot your password? Reset it — your chats stay safe."
+      }
+    ]
+  },
+  "audience": {
+    "eyebrow": "Simple pricing",
+    "titleLine1": "Pay for the AI.",
+    "titleLine2": "The privacy comes free.",
+    "lead": "Two ways to pay. The same privacy either way. Not for you? You have 60 days to get your money back.",
+    "individuals": {
+      "title": "Pay as you go",
+      "badge": "From CHF 10/mo",
+      "items": [
+        "Only pay for what you actually use",
+        "Every chat gets the full privacy treatment",
+        "Self-deleting messages and incognito included",
+        "Switzerland or Europe, with dozens of AI models"
+      ],
+      "price": "<b>Pay as you go</b> · from CHF 10/month"
+    },
+    "business": {
+      "title": "Unlimited",
+      "badge": "Best value",
+      "items": [
+        "<b>Unlimited chats</b>, across every AI model we offer",
+        "Stay in Switzerland whenever you want to",
+        "Keep your whole history — always private",
+        "Download or delete everything, anytime"
+      ],
+      "price": "<b>Unlimited</b> · CHF 100/month or CHF 1000/year"
+    },
+    "roadmap": "Need it for a team? Single sign-on and private hosting are on the way — get in touch."
+  },
+  "security": {
+    "eyebrow": "The short version",
+    "title": "You stay in control.",
+    "lead": "No fine print. Here's exactly what we do — and don't do — with your chats.",
+    "items": [
+      {
+        "title": "We keep no copy we can read",
+        "body": "Your chats are saved locked. We never keep a version we — or anyone else — can read."
+      },
+      {
+        "title": "Never used to train AI",
+        "body": "Your words don't train anyone's model. Not ours, not the AI's. Ever."
+      },
+      {
+        "title": "Switzerland or Europe only",
+        "body": "Your messages are handled under strong European privacy laws. You pick where."
+      },
+      {
+        "title": "Only you hold the key",
+        "body": "Your chats open with your key alone — and you can delete everything whenever you like."
+      }
+    ]
+  },
+  "cta": {
+    "titleBefore": "Stop handing your private life to AI.",
+    "titleMake": "Start",
+    "titleEm": "protecting it.",
+    "lead": "Ask the questions you'd never type into a normal chatbot. With Cognos, they stay yours.",
+    "individuals": "Get started",
+    "business": "See how it works"
+  },
+  "footer": {
+    "desc": "Private AI. We keep no copy of your chats that we can read — only you hold the key.",
+    "product": {
+      "heading": "Product",
+      "features": "Features",
+      "how": "How it works",
+      "compare": "Compare",
+      "pricing": "Plans"
+    },
+    "security": {
+      "heading": "Privacy",
+      "audits": "How it works",
+      "protocol": "Where it's handled",
+      "keyVerification": "Hiding your details",
+      "onprem": "Your key & data"
+    },
+    "company": {
+      "heading": "Company",
+      "about": "About",
+      "privacy": "Privacy",
+      "contact": "Contact"
+    },
+    "language": "Language",
+    "copyright": "© {{ year }} Cognos. Made in Switzerland.",
+    "killer": "This page isn't watching you either."
+  }
+}

@@ -1,0 +1,41 @@
+---
+import Icon from './Icon.astro';
+import type { Translator } from '../i18n/ui';
+
+interface Props {
+  t: Translator;
+}
+const { t } = Astro.props;
+// List copy carries light inline <b> emphasis; these are trusted, static,
+// author-controlled strings rendered with set:html.
+const themItems = t.raw<string[]>('contrast.them.items');
+const usItems = t.raw<string[]>('contrast.us.items');
+---
+
+<section class="contrast sec-pad" id="compare">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">{t('contrast.eyebrow')}</span>
+      <h2 class="sec-h">{t('contrast.title')}</h2>
+      <p>{t('contrast.lead')}</p>
+    </div>
+    <div class="grid grid--2" style="margin-top: 40px;">
+      <div class="vs-card vs-them reveal">
+        <div class="vh"><Icon name="TriangleAlert" size={15} /> {t('contrast.them.title')}</div>
+        <ul>
+          {themItems.map((item) => (
+            <li><Icon name="X" size={18} /> <span set:html={item} /></li>
+          ))}
+        </ul>
+      </div>
+      <div class="vs-card vs-us reveal">
+        <div class="vh"><Icon name="ShieldCheck" size={15} /> {t('contrast.us.title')}</div>
+        <ul>
+          {usItems.map((item) => (
+            <li><Icon name="Check" size={18} /> <span set:html={item} /></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>

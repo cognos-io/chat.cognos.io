@@ -1,0 +1,98 @@
+---
+import '../styles/tokens.css';
+import '../styles/home.css';
+import { locales, localizedPath, type Lang } from '../i18n/ui';
+
+export interface Props {
+  lang: Lang;
+  title: string;
+  description: string;
+  /** Logical path (locale-agnostic) for building hreflang alternates. */
+  path?: string;
+}
+
+const { lang, title, description, path = '/' } = Astro.props;
+const site = Astro.site;
+---
+
+<!doctype html>
+<html lang={lang} data-theme="light" data-accent="emerald">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    {
+      /* hreflang alternates so search engines pair up the six locales. */
+      site &&
+        locales.map((code) => (
+          <link
+            rel="alternate"
+            hreflang={code}
+            href={new URL(localizedPath(code, path), site).href}
+          />
+        ))
+    }
+    {
+      site && (
+        <link
+          rel="alternate"
+          hreflang="x-default"
+          href={new URL(localizedPath('en', path), site).href}
+        />
+      )
+    }
+  </head>
+  <body>
+    <slot />
+
+    <script>
+      // Scroll-reveal + mobile nav. Progressive enhancement only — content is
+      // fully visible without JS, and reveals are skipped when the user prefers
+      // reduced motion.
+      const nav = document.querySelector<HTMLElement>('.navbar');
+      const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle');
+      toggle?.addEventListener('click', () => {
+        const open = nav?.getAttribute('data-open') === 'true';
+        nav?.setAttribute('data-open', String(!open));
+        toggle.setAttribute('aria-expanded', String(!open));
+      });
+
+      const els = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!reduce && 'IntersectionObserver' in window) {
+        els.forEach((el, i) => {
+          el.style.transitionDelay = `${(i % 4) * 60}ms`;
+          el.classList.add('armed');
+        });
+        const inView = (el: Element) => {
+          const r = el.getBoundingClientRect();
+          return r.top < (window.innerHeight || 0) && r.bottom > 0;
+        };
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((e) => {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.1, rootMargin: '0px 0px -6% 0px' },
+        );
+        els.forEach((el) => (inView(el) ? el.classList.add('in') : io.observe(el)));
+        setTimeout(() => els.forEach((el) => el.classList.add('in')), 1200);
+      }
+    </script>
+  </body>
+</html>

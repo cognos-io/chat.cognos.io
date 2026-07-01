@@ -1,0 +1,44 @@
+---
+import Icon from './Icon.astro';
+import { SIGN_UP_URL } from '../config';
+import type { Translator } from '../i18n/ui';
+
+interface Props {
+  t: Translator;
+}
+const { t } = Astro.props;
+const steps = t.raw<{ title: string; body: string }[]>('how.steps');
+const stepIcons = ['Eraser', 'Server', 'FileLock2', 'KeyRound'] as const;
+---
+
+<section class="sec-pad" id="how">
+  <div class="wrap">
+    <div class="split split--5-7">
+      <div class="reveal">
+        <span class="eyebrow" style="color: var(--brand);">{t('how.eyebrow')}</span>
+        <h2 class="sec-h" style="margin-top: 8px;">{t('how.title')}</h2>
+        <p style="color: var(--ink-sub); font-size: 1.08rem; margin-top: 14px; line-height: 1.6;">
+          {t('how.lead')}
+        </p>
+        <a class="btn btn-primary" href={SIGN_UP_URL} style="margin-top: 16px;">
+          <Icon name="Lock" size={17} /> {t('how.cta')}
+        </a>
+      </div>
+      <div>
+        <div class="grid grid--sm-2" style="gap: 12px;">
+          {
+            steps.map((step, i) => (
+              <div class="reveal">
+                <div class="fcard">
+                  <div class="ficon"><Icon name={stepIcons[i]} size={22} /></div>
+                  <h3>{step.title}</h3>
+                  <p>{step.body}</p>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

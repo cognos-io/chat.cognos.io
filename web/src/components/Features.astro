@@ -1,0 +1,50 @@
+---
+import Icon from './Icon.astro';
+import type { Translator } from '../i18n/ui';
+
+interface Props {
+  t: Translator;
+}
+const { t } = Astro.props;
+
+interface Feature {
+  title: string;
+  body: string;
+  pills?: string[];
+}
+const items = t.raw<Feature[]>('features.items');
+const icons = ['Lock', 'Eraser', 'Server', 'Timer', 'EyeOff', 'KeyRound'] as const;
+const pillClasses = ['pill-green', 'pill-blue', 'pill-purple'];
+---
+
+<section class="sec-pad band" id="features">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">{t('features.eyebrow')}</span>
+      <h2 class="sec-h">{t('features.title')}</h2>
+      <p>{t('features.lead')}</p>
+    </div>
+    <div class="grid grid--3" style="margin-top: 40px;">
+      {
+        items.map((item, i) => (
+          <div class="reveal">
+            <div class="fcard">
+              <div class="ficon"><Icon name={icons[i]} size={22} /></div>
+              <h3>{item.title}</h3>
+              <p>
+                {item.body}
+                {item.pills && (
+                  <span style="display: inline-flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;">
+                    {item.pills.map((label, pi) => (
+                      <span class={`pill ${pillClasses[pi] ?? 'pill-green'}`}>{label}</span>
+                    ))}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

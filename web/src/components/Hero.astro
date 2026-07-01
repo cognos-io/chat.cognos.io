@@ -1,0 +1,81 @@
+---
+import Icon from './Icon.astro';
+import { SIGN_UP_URL } from '../config';
+import type { Translator } from '../i18n/ui';
+
+interface Props {
+  t: Translator;
+}
+const { t } = Astro.props;
+---
+
+<header class="hero" id="top">
+  <div class="hero-bg">
+    <span class="mesh1"></span><span class="mesh2"></span><span class="grid-lines"></span>
+  </div>
+  <div class="wrap">
+    <div class="split split--6-6">
+      <div>
+        <span class="hero-badge eyebrow"><span class="dot"></span> {t('hero.badge')}</span>
+        <h1 class="hero-h">
+          {t('hero.titleBefore')} <span class="em">{t('hero.titleEm')}</span> {t('hero.titleAfter')}
+        </h1>
+        <p class="hero-lead">{t('hero.lead')}</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary btn-lg" href={SIGN_UP_URL}>
+            <Icon name="Lock" size={17} /> {t('hero.ctaPrimary')}
+          </a>
+          <a class="btn btn-outline btn-lg" href="#how">
+            {t('hero.ctaSecondary')} <Icon name="ArrowRight" size={17} />
+          </a>
+        </div>
+        <div class="hero-finehint">
+          <Icon name="Check" size={13} /> {t('hero.finehint')}
+        </div>
+        <div class="hero-assure">
+          <span><Icon name="ShieldCheck" size={15} /> {t('hero.assure.zeroKnowledge')}</span>
+          <span><Icon name="MapPin" size={15} /> {t('hero.assure.swiss')}</span>
+          <span><Icon name="CodeXml" size={15} /> {t('hero.assure.openProtocol')}</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="hero-visual">
+          <!-- Their AI (the fear) -->
+          <div class="card-float card-them reveal">
+            <div class="winbar">
+              <i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i
+                style="background:#28C840"></i>
+              <span class="lbl">{t('hero.them.label')}</span>
+            </div>
+            <div class="snippet">{t('hero.them.snippet')}</div>
+            <div class="tags">
+              <span class="pill pill-red"><Icon name="Database" size={12} /> {t('hero.them.tagStored')}</span>
+              <span class="pill pill-red"><Icon name="Brain" size={12} /> {t('hero.them.tagTrained')}</span>
+              <span class="pill pill-red"><Icon name="Eye" size={12} /> {t('hero.them.tagReadable')}</span>
+            </div>
+            <div class="leakbar"><Icon name="TriangleAlert" size={13} /> {t('hero.them.leak')}</div>
+          </div>
+
+          <!-- Cognos (the safety) -->
+          <div class="card-float card-us float-y reveal">
+            <div class="ushead">
+              <span class="av"><Icon name="Lock" size={15} /></span>
+              <span class="nm">{t('hero.us.name')}</span>
+              <span class="pill pill-green"><Icon name="ShieldCheck" size={12} /> {t('hero.us.badge')}</span>
+            </div>
+            <div class="ubub">{t('hero.us.bubble')}</div>
+            <div class="reply">{t('hero.us.reply')}</div>
+            <div class="fp">
+              <span class="sh"><Icon name="KeyRound" size={15} /></span>
+              <div>
+                <div class="t">{t('hero.us.fpTitle')}</div>
+                <div class="m">{t('hero.us.fpMeta')}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,31 @@
+---
+import Icon from './Icon.astro';
+import { SIGN_UP_URL, BUSINESS_URL } from '../config';
+import type { Translator } from '../i18n/ui';
+
+interface Props {
+  t: Translator;
+}
+const { t } = Astro.props;
+---
+
+<section style="padding-bottom: 84px;" id="cta">
+  <div class="wrap">
+    <div class="cta-band reveal">
+      <div class="glow"></div>
+      <h2>
+        {t('cta.titleBefore')}<br />{t('cta.titleMake')}
+        <span class="em">{t('cta.titleEm')}</span>
+      </h2>
+      <p>{t('cta.lead')}</p>
+      <div class="btns">
+        <a class="btn btn-lg btn-light2" href={SIGN_UP_URL}>
+          <Icon name="Lock" size={17} /> {t('cta.individuals')}
+        </a>
+        <a class="btn btn-lg btn-ghost2" href="#how">
+          <Icon name="ArrowRight" size={17} /> {t('cta.business')}
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

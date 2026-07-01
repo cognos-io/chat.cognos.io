@@ -1,0 +1,65 @@
+---
+import Icon from './Icon.astro';
+import { languages, locales, localizedPath, type Lang, type Translator } from '../i18n/ui';
+
+interface Props {
+  t: Translator;
+  lang: Lang;
+  /** Logical path of the current page, for building the language links. */
+  path?: string;
+}
+const { t, lang, path = '/' } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="#top"><span class="gem"></span> Cognos</a>
+        <p class="fdesc">{t('footer.desc')}</p>
+      </div>
+      <div>
+        <h5>{t('footer.product.heading')}</h5>
+        <a class="flink" href="#features">{t('footer.product.features')}</a>
+        <a class="flink" href="#how">{t('footer.product.how')}</a>
+        <a class="flink" href="#compare">{t('footer.product.compare')}</a>
+        <a class="flink" href="#audience">{t('footer.product.pricing')}</a>
+      </div>
+      <div>
+        <h5>{t('footer.security.heading')}</h5>
+        <a class="flink" href="#security">{t('footer.security.audits')}</a>
+        <a class="flink" href="#security">{t('footer.security.protocol')}</a>
+        <a class="flink" href="#security">{t('footer.security.keyVerification')}</a>
+        <a class="flink" href="#audience">{t('footer.security.onprem')}</a>
+      </div>
+      <div>
+        <h5>{t('footer.company.heading')}</h5>
+        <a class="flink" href="#top">{t('footer.company.about')}</a>
+        <a class="flink" href="#top">{t('footer.company.privacy')}</a>
+        <a class="flink" href="#top">{t('footer.company.contact')}</a>
+      </div>
+    </div>
+
+    <nav class="lang-switch" aria-label={t('footer.language')}>
+      <Icon name="Languages" size={14} />
+      {
+        locales.map((code) => (
+          <a
+            href={localizedPath(code, path)}
+            hreflang={code}
+            lang={code}
+            aria-current={code === lang ? 'true' : undefined}
+          >
+            {languages[code]}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="fbottom">
+      <span>{t('footer.copyright', { year })}</span>
+      <span class="kl"><Icon name="ShieldCheck" size={13} /> {t('footer.killer')}</span>
+    </div>
+  </div>
+</footer>

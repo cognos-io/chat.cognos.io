@@ -1,0 +1,57 @@
+/* =========================================================================
+   Marketing token layer.
+
+   The homepage design is expressed entirely through @cognos/ui `--cog-*`
+   tokens — the single source of truth for brand colour, type and motion. The
+   aliases below keep the design's original semantic names (--brand, --ink,
+   --line …) so the stylesheet reads naturally, but every one resolves to a
+   cog token. The designer worked from the cog palette, so this mapping is
+   essentially lossless.
+
+   The only raw value is `--brand-bright` (emerald-400) — it is the emerald
+   accent's dark-mode brand shade from the same cog ramp, used purely for the
+   decorative hero/CTA glows that have no light-theme semantic token.
+   ========================================================================= */
+
+@import '@cognos/ui/tokens.css';
+
+:root {
+  /* Brand */
+  --brand: var(--cog-brand); /* #1f845a */
+  --brand-hover: var(--cog-brand-hover); /* #216e4e */
+  --brand-deep: var(--cog-brand-pressed); /* #164b35 */
+  --brand-bg: var(--cog-selected-bg); /* #dcfff1 */
+  --brand-bright: #4bce97; /* emerald-400, cog dark-mode brand; decorative glow only */
+
+  /* Ink & surface */
+  --ink: var(--cog-text);
+  --ink-sub: var(--cog-text-subtle);
+  --ink-subtle: var(--cog-text-subtlest);
+  --line: var(--cog-border);
+  --sunken: var(--cog-surface-sunken);
+  --surface: var(--cog-surface);
+
+  /* Status */
+  --danger: var(--cog-danger);
+  --danger-bg: var(--cog-danger-bg);
+  --danger-fg: var(--cog-danger-text);
+  --blue: var(--cog-info);
+  --blue-bg: var(--cog-info-bg);
+  --purple: var(--cog-loz-purple-fg);
+  --purple-bg: var(--cog-loz-purple-bg);
+
+  /* Type — aligned to the cog font families */
+  --ff-display: var(--cog-font-noto);
+  --ff-body: var(--cog-font-noto);
+  --ff-mono: var(--cog-font-mono);
+
+  /* Motion — identical curve to the designer's easing */
+  --ease: var(--cog-ease-standard);
+
+  /* Brand-tinted decorative shadows/glows, derived from the brand token */
+  --glow-brand: color-mix(in srgb, var(--brand) 22%, transparent);
+  --shadow-brand-sm: 0 10px 24px -10px color-mix(in srgb, var(--brand) 60%, transparent);
+  --shadow-brand-md: 0 16px 30px -12px color-mix(in srgb, var(--brand) 65%, transparent);
+  --shadow-brand-lg: 0 40px 70px -22px color-mix(in srgb, var(--brand) 40%, transparent);
+  --shadow-ink: 0 30px 60px -24px color-mix(in srgb, var(--ink) 28%, transparent);
+}

@@ -1,0 +1,49 @@
+---
+// Build-time inlined Lucide icon. Sources the same `lucide` package the app's
+// shared icon set (`@cognos/ui/icons`) is built on, and renders the SVG with
+// the identical attributes as `<cog-icon>` in packages/ui-angular — so the
+// marketing site speaks the same visual icon language as the product, with
+// zero client-side JavaScript.
+import * as lucide from 'lucide';
+
+export interface Props {
+  /** Lucide export name in PascalCase, e.g. `ShieldCheck`, `KeyRound`. */
+  name: keyof typeof lucide;
+  /** Square pixel size. Defaults to 20 (a comfortable inline size). */
+  size?: number;
+  /** Accessible label. When set the icon is exposed as an image; otherwise it is hidden. */
+  title?: string;
+  class?: string;
+}
+
+type IconNode = ReadonlyArray<readonly [string, Record<string, string | number>]>;
+
+const { name, size = 20, title, class: className } = Astro.props;
+
+const node = lucide[name] as unknown as IconNode | undefined;
+if (!node) {
+  throw new Error(`[Icon] unknown lucide icon: "${String(name)}"`);
+}
+---
+
+<svg
+  class={className}
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  focusable="false"
+  role={title ? 'img' : 'presentation'}
+  aria-hidden={title ? undefined : 'true'}
+  aria-label={title ?? undefined}
+>
+  {title && <title>{title}</title>}
+  {node.map(([tag, attrs]) => {
+    const Tag = tag as any;
+    return <Tag {...attrs} />;
+  })}
+</svg>

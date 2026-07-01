@@ -1,0 +1,42 @@
+---
+import Icon from './Icon.astro';
+import { SIGN_IN_URL, SIGN_UP_URL } from '../config';
+import type { Translator } from '../i18n/ui';
+
+interface Props {
+  t: Translator;
+}
+const { t } = Astro.props;
+---
+
+<nav class="navbar" data-open="false">
+  <div class="wrap navbar__inner">
+    <a class="brand" href="#top"><span class="gem"></span> Cognos</a>
+
+    <button
+      class="nav-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <Icon name="Menu" size={22} />
+    </button>
+
+    <div class="nav-center">
+      <ul class="nav-links">
+        <li><a class="nav-link" href="#how">{t('nav.how')}</a></li>
+        <li><a class="nav-link" href="#compare">{t('nav.compare')}</a></li>
+        <li><a class="nav-link" href="#features">{t('nav.features')}</a></li>
+        <li><a class="nav-link" href="#audience">{t('nav.pricing')}</a></li>
+        <li><a class="nav-link" href="#security">{t('nav.security')}</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-actions">
+      <a class="btn btn-outline" href={SIGN_IN_URL}>{t('nav.signIn')}</a>
+      <a class="btn btn-primary" href={SIGN_UP_URL}>
+        <Icon name="Lock" size={17} /> {t('nav.cta')}
+      </a>
+    </div>
+  </div>
+</nav>

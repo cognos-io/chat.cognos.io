@@ -1,0 +1,13 @@
+---
+// Prefixed locales: /de/, /fr/, /es/, /pt/, /it/.
+import Home from '../../components/Home.astro';
+import { nonDefaultLocales, type Lang } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return nonDefaultLocales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params as { lang: Lang };
+---
+
+<Home lang={lang} />
