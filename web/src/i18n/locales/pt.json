@@ -9,6 +9,7 @@
     "features": "Funcionalidades",
     "pricing": "Planos",
     "security": "Segurança",
+    "business": "Para empresas",
     "signIn": "Entrar",
     "cta": "Começar"
   },
@@ -20,7 +21,7 @@
     "lead": "Todas as outras IAs guardam o que escreves — e usam isso para treinar o próximo modelo. A tua saúde. O teu dinheiro. As tuas preocupações. Tudo parado no computador de outra pessoa. A Cognos funciona ao contrário. Não guardamos nenhuma cópia das tuas conversas que consigamos ler. Os teus dados pessoais ficam escondidos antes de qualquer coisa sair. E a IA esquece a tua conversa assim que responde.",
     "ctaPrimary": "Começar",
     "ctaSecondary": "Ver como funciona",
-    "finehint": "A partir de CHF 15/mês · Garantia de reembolso de 60 dias · Tratado na Suíça ou na Europa",
+    "finehint": "Experimenta primeiro — saldo inicial grátis, sem cartão · A partir de CHF 15/mês · Garantia de reembolso de 60 dias",
     "assure": {
       "zeroKnowledge": "Nenhuma cópia que consigamos ler",
       "swiss": "Guardado na Suíça ou na Europa",
@@ -129,12 +130,13 @@
     "titleLine1": "Paga pela IA.",
     "titleLine2": "A privacidade é grátis.",
     "lead": "Duas formas de pagar. A mesma privacidade nas duas. Não é para ti? Tens 60 dias para receber o teu dinheiro de volta.",
+    "vatNote": "Preços em CHF, IVA incluído.",
     "individuals": {
       "title": "Paga conforme usas",
       "currency": "CHF",
       "amount": "15",
       "period": "/ mês mínimo",
-      "tagline": "Paga só pelo que usas mesmo — carrega quando quiseres, sem compromisso.",
+      "tagline": "Pagas só pelo que usas — carregas saldo e cada conversa gasta um pouco. A maioria das conversas do dia a dia custa apenas alguns cêntimos.",
       "items": [
         "Toda a conversa recebe <b>a proteção completa</b>",
         "Mensagens que se apagam sozinhas e modo anónimo incluídos",
@@ -158,7 +160,7 @@
       ],
       "cta": "Escolher Ilimitado"
     },
-    "roadmap": "Precisas disto para uma equipa? Início de sessão único e alojamento privado estão a caminho — ",
+    "roadmap": "Precisas disto para uma equipa? Início de sessão único e controlos de administração estão a caminho — ",
     "roadmapLink": "entra em contacto",
     "roadmapAfter": "."
   },
@@ -200,11 +202,12 @@
       "features": "Funcionalidades",
       "how": "Como funciona",
       "compare": "Comparar",
-      "pricing": "Planos"
+      "pricing": "Planos",
+      "business": "Para empresas"
     },
     "security": {
       "heading": "Privacidade",
-      "audits": "Como funciona",
+      "audits": "O que guardamos",
       "protocol": "Onde é tratado",
       "keyVerification": "Esconder os teus dados",
       "onprem": "A tua chave e os teus dados"
@@ -257,6 +260,159 @@
         }
       ]
     },
+    "about": {
+      "metaTitle": "Sobre — Cognos",
+      "metaDescription": "Porque é que a Cognos existe, aquilo a que nos obrigamos e a pequena equipa suíça que constrói uma IA privada pela arquitetura, não por uma política.",
+      "eyebrow": "Sobre a Cognos",
+      "title": "A privacidade não devia ser uma opção. Devia ser o alicerce.",
+      "lead": "Construímos uma IA privada pela arquitetura, não por uma política — porque uma promessa pode ser quebrada e uma intimação pode ter resposta, mas com a matemática não se discute.",
+      "origin": {
+        "eyebrow": "Porque começámos",
+        "title": "O que tens de mais privado não devia estar legível no servidor de outra pessoa.",
+        "body": [
+          "Todos os assistentes de IA veem os teus pensamentos por acabar antes de qualquer outra pessoa — as tuas questões de saúde, as tuas finanças, a mensagem que estás a escrever ao teu chefe. A maior parte disso fica guardada, legível, por tempo indefinido, numa infraestrutura que não controlas nem podes verificar.",
+          "Não achámos que essa troca fosse necessária. A ideia de não guardar nenhuma cópia legível não é nova — é assim que a mensagem privada funciona há mais de uma década. Construímos a Cognos para a trazer à IA: as tuas conversas são guardadas trancadas e só abrem com uma chave que és só tu a deter, por isso o assistente funciona exatamente da mesma forma — mas não nos fica nada para divulgar, vender ou ser obrigado a entregar.",
+          "Estamos na Suíça de propósito — um dos regimes de proteção de dados mais fortes que existem e um estímulo útil para construir as coisas bem à primeira."
+        ],
+        "quote": "Construímo-la de forma a que a única cópia que guardamos seja uma que não conseguimos ler. Não é uma promessa — é algo que podes verificar.",
+        "quoteAttribution": "Princípios da Cognos"
+      },
+      "principles": {
+        "eyebrow": "Aquilo a que nos obrigamos",
+        "title": "Quatro princípios, sem exceções",
+        "items": [
+          {
+            "title": "Privada pela arquitetura",
+            "body": "Se uma funcionalidade nos obrigar a ler os teus dados, não a lançamos. Sem exceções por crescimento ou conveniência."
+          },
+          {
+            "title": "Soberania suíça",
+            "body": "Operada a partir de um dos regimes de privacidade mais fortes do mundo, por opção."
+          },
+          {
+            "title": "Aberta por predefinição",
+            "body": "As partes que tocam nos teus dados estão abertas a inspeção. Confia menos em nós — verifica-nos."
+          },
+          {
+            "title": "Sem padrões enganadores",
+            "body": "A privacidade não é uma opção escondida. Está ativa por predefinição e assim se mantém."
+          }
+        ]
+      },
+      "milestones": {
+        "eyebrow": "Marcos",
+        "title": "Construído com cuidado, não à pressa",
+        "lead": "Uma boa encriptação não premeia a pressa. Cada passo foi verificado antes de ser lançado.",
+        "items": [
+          {
+            "date": "2024 · Lucerna",
+            "title": "Nasce a Cognos",
+            "body": "Começou com uma única pergunta: porque é que usar IA tem de significar abdicar da tua privacidade?"
+          },
+          {
+            "date": "2025",
+            "title": "Lançamento público para particulares",
+            "body": "Os particulares podem inscrever-se: conversas privadas, mensagens que se apagam sozinhas e uma chave que só tu tens."
+          },
+          {
+            "date": "2025",
+            "title": "Expansão",
+            "body": "Novas funcionalidades: geração de imagens, mais segurança e melhores modelos."
+          }
+        ]
+      },
+      "team": {
+        "eyebrow": "A equipa",
+        "title": "Pequena, e de propósito",
+        "lead": "Um grupo focado que reúne criptografia, produto e infraestrutura de nível suíço — pequeno o suficiente para que ninguém tome um atalho sem que se note.",
+        "items": [
+          {
+            "title": "Criptografia",
+            "body": "Desenho e auditorias do protocolo"
+          },
+          {
+            "title": "Infraestrutura",
+            "body": "Alojamento suíço e europeu"
+          },
+          {
+            "title": "Produto e design",
+            "body": "Tornar a privacidade compreensível"
+          },
+          {
+            "title": "Apoio",
+            "body": "Pessoas, não bots"
+          }
+        ]
+      },
+      "cta": {
+        "titleBefore": "Vem ver como é",
+        "titleEm": "mesmo",
+        "titleAfter": "construído.",
+        "lead": "Ou se preferires simplesmente começar a usá-la — também resulta.",
+        "primary": "Inscreve-te hoje",
+        "secondary": "Contacta-nos"
+      }
+    },
+    "business": {
+      "metaTitle": "Cognos para empresas — IA privada no trabalho",
+      "metaDescription": "Usa IA no trabalho com clientes sem entregar os dados deles. As conversas ficam guardadas numa forma que não conseguimos ler, são tratadas na Suíça ou na Europa e nunca são usadas para treinar IA.",
+      "eyebrow": "Cognos para empresas",
+      "title": "Uma IA que os teus clientes aprovariam.",
+      "lead": "A tua equipa já quer trabalhar com IA. A questão é onde acabam os dados dos teus clientes. Com a Cognos, as conversas ficam guardadas numa forma que não conseguimos ler, são tratadas na Suíça ou na Europa e nunca são usadas para treinar IA.",
+      "who": {
+        "eyebrow": "Para quem é",
+        "title": "Feito para trabalho que vive da confidencialidade",
+        "lead": "Se os teus clientes te contam coisas em confiança, a IA que usas não as devia passar a ninguém.",
+        "items": [
+          {
+            "title": "Escritórios de advogados",
+            "body": "Redige, resume e pesquisa sem que os dados dos clientes fiquem legíveis no servidor de outra pessoa."
+          },
+          {
+            "title": "Contabilistas e fiduciárias",
+            "body": "Trabalha com números e declarações — nomes, contas e outros dados são escondidos antes de algo ser enviado."
+          },
+          {
+            "title": "Saúde",
+            "body": "Escreve notas, cartas e relatórios enquanto os dados dos pacientes ficam escondidos e nenhuma cópia legível da conversa é guardada."
+          },
+          {
+            "title": "Agências e consultoras",
+            "body": "Usa IA em projetos de clientes sem que os planos deles acabem nos dados de treino de alguém."
+          }
+        ]
+      },
+      "why": {
+        "eyebrow": "Porquê a Cognos no trabalho",
+        "title": "A mesma IA. Sem a exposição.",
+        "body": [
+          "A maioria das ferramentas de IA guarda o que a tua equipa escreve — e consegue lê-lo. Cada contrato colado, nota de paciente ou email de cliente torna-se um risco. A Cognos funciona ao contrário: não guardamos nenhuma cópia legível das conversas da tua equipa, e os dados pessoais são escondidos antes mesmo de a mensagem ser enviada.",
+          "Tudo é tratado na Suíça ou na Europa, sob algumas das leis de privacidade mais fortes do mundo. Quando um cliente perguntar para onde vão os dados dele, tens uma resposta clara."
+        ],
+        "points": [
+          "<b>Nenhuma cópia que consigamos ler</b> — as conversas de cada pessoa só abrem com a sua própria chave",
+          "<b>Dados de clientes escondidos automaticamente</b> antes de algo ser enviado",
+          "<b>Tratado na Suíça ou na Europa</b> — tu escolhes",
+          "<b>Nunca usado para treinar IA</b> — nem a nossa, nem a de ninguém"
+        ]
+      },
+      "pricing": {
+        "title": "Preço simples por pessoa",
+        "body": "O plano Ilimitado custa CHF 150 por pessoa / mês, IVA incluído — conversas ilimitadas em todos os modelos de IA que oferecemos. Ou paga conforme usas, a partir de CHF 15/mês. O início de sessão único e os controlos de administração estão a caminho."
+      },
+      "form": {
+        "heading": "Pergunta-nos o que quiseres",
+        "note": "Conta-nos um pouco sobre a tua equipa e respondemos dentro de um dia útil. Este formulário abre a tua própria aplicação de e-mail — nada passa por este site nem fica aqui guardado.",
+        "name": "Nome",
+        "email": "Email de trabalho",
+        "company": "Empresa",
+        "teamSize": "Tamanho da equipa",
+        "sizes": ["1–5 pessoas", "6–20 pessoas", "21–50 pessoas", "Mais de 50"],
+        "message": "Para que usaria a tua equipa a Cognos?",
+        "submit": "Pedir mais informações",
+        "footnote": "Da tua caixa de correio para a nossa · nunca usado para treinar nada"
+      }
+    },
     "contact": {
       "metaTitle": "Contacto — Cognos",
       "metaDescription": "Questões sobre a encriptação, uma implementação empresarial ou algo que encontraste no protocolo — é assim que contactas a equipa Cognos.",
@@ -270,11 +426,11 @@
         },
         {
           "title": "Empresas",
-          "body": "Implementação on-prem, SSO e planos para equipas."
+          "body": "SSO, planos para equipas e controlos de administração."
         },
         {
           "title": "Divulgação de segurança",
-          "body": "Encontraste uma vulnerabilidade? Temos um programa de divulgação remunerado."
+          "body": "Encontraste uma vulnerabilidade? Conta-nos primeiro — os relatórios chegam diretamente a quem os pode corrigir."
         },
         {
           "title": "Imprensa",
@@ -300,6 +456,14 @@
         "submit": "Enviar mensagem",
         "footnote": "Da tua caixa de correio para a nossa · nunca usado para treinar nada"
       }
+    },
+    "notFound": {
+      "metaTitle": "Página não encontrada — Cognos",
+      "metaDescription": "Esta página não existe. Volta à página inicial da Cognos.",
+      "eyebrow": "404",
+      "title": "Esta página não existe.",
+      "lead": "O link pode ser antigo, ou a morada estar mal escrita. Nada se perdeu — nunca houve aqui nada.",
+      "cta": "Voltar à página inicial"
     }
   }
 }

@@ -1,0 +1,170 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from './Navbar.astro';
+import Footer from './Footer.astro';
+import Icon from './Icon.astro';
+import { SIGN_UP_URL } from '../config';
+import { localizedPath, useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const base = 'pages.about';
+
+const originBody = t.raw<string[]>(`${base}.origin.body`);
+
+interface Principle {
+  title: string;
+  body: string;
+}
+const principles = t.raw<Principle[]>(`${base}.principles.items`);
+const principleIcons = ['Lock', 'Landmark', 'Code2', 'Ban'] as const;
+
+interface Milestone {
+  date: string;
+  title: string;
+  body: string;
+}
+const milestones = t.raw<Milestone[]>(`${base}.milestones.items`);
+
+interface TeamItem {
+  title: string;
+  body: string;
+}
+const team = t.raw<TeamItem[]>(`${base}.team.items`);
+const teamIcons = ['KeyRound', 'Server', 'LayoutDashboard', 'LifeBuoy'] as const;
+---
+
+<BaseLayout
+  lang={lang}
+  title={t(`${base}.metaTitle`)}
+  description={t(`${base}.metaDescription`)}
+  path="/about"
+>
+  <Navbar t={t} lang={lang} path="/about" />
+  <main class="text-page about-page">
+    <header class="text-page__hero">
+      <div class="wrap">
+        <div class="text-page__hero-copy reveal">
+          <span class="eyebrow text-brand">{t(`${base}.eyebrow`)}</span>
+          <h1 class="text-page__title">{t(`${base}.title`)}</h1>
+          <p class="text-page__lead">{t(`${base}.lead`)}</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="text-page__section">
+      <div class="wrap split split--5-7">
+        <div class="reveal">
+          <span class="eyebrow text-brand">{t(`${base}.origin.eyebrow`)}</span>
+          <h2 class="about-h2">{t(`${base}.origin.title`)}</h2>
+          <div class="about-prose">
+            {originBody.map((p) => <p>{p}</p>)}
+          </div>
+        </div>
+        <div class="reveal">
+          <figure class="about-quote">
+            <Icon name="Quote" size={22} />
+            <blockquote>{t(`${base}.origin.quote`)}</blockquote>
+            <figcaption>— {t(`${base}.origin.quoteAttribution`)}</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec-pad band">
+      <div class="wrap">
+        <div class="sec-head reveal">
+          <span class="eyebrow text-brand">{t(`${base}.principles.eyebrow`)}</span>
+          <h2 class="sec-h">{t(`${base}.principles.title`)}</h2>
+        </div>
+        <div class="grid grid--4 section-grid">
+          {
+            principles.map((item, i) => (
+              <div class="reveal">
+                <div class="fcard">
+                  <div class="ficon">
+                    <Icon name={principleIcons[i]} size={22} />
+                  </div>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="text-page__section">
+      <div class="wrap split split--5-7">
+        <div class="reveal">
+          <span class="eyebrow text-brand">{t(`${base}.milestones.eyebrow`)}</span>
+          <h2 class="about-h2">{t(`${base}.milestones.title`)}</h2>
+          <p class="lead-copy">{t(`${base}.milestones.lead`)}</p>
+        </div>
+        <ol class="timeline reveal">
+          {
+            milestones.map((m) => (
+              <li class="timeline-item">
+                <span class="timeline-dot" aria-hidden="true" />
+                <span class="timeline-date mono">{m.date}</span>
+                <h3 class="timeline-title">{m.title}</h3>
+                <p class="timeline-body">{m.body}</p>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </section>
+
+    <section class="sec-pad band">
+      <div class="wrap">
+        <div class="sec-head reveal">
+          <span class="eyebrow text-brand">{t(`${base}.team.eyebrow`)}</span>
+          <h2 class="sec-h">{t(`${base}.team.title`)}</h2>
+          <p>{t(`${base}.team.lead`)}</p>
+        </div>
+        <div class="grid grid--4 section-grid">
+          {
+            team.map((item, i) => (
+              <div class="reveal">
+                <div class="team-card">
+                  <div class="ficon">
+                    <Icon name={teamIcons[i]} size={22} />
+                  </div>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="section-tail">
+      <div class="wrap">
+        <div class="cta-band reveal">
+          <div class="glow"></div>
+          <h2>
+            {t(`${base}.cta.titleBefore`)} <span class="em">{t(`${base}.cta.titleEm`)}</span>{' '}
+            {t(`${base}.cta.titleAfter`)}
+          </h2>
+          <p>{t(`${base}.cta.lead`)}</p>
+          <div class="btns">
+            <a class="btn btn-lg btn-light2" href={SIGN_UP_URL}>
+              <Icon name="Lock" size={17} /> {t(`${base}.cta.primary`)}
+            </a>
+            <a class="btn btn-lg btn-ghost2" href={localizedPath(lang, '/contact')}>
+              <Icon name="Mail" size={17} /> {t(`${base}.cta.secondary`)}
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer t={t} lang={lang} path="/about" />
+</BaseLayout>

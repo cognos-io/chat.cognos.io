@@ -1,0 +1,34 @@
+---
+// Static error page served for any unknown URL. It is served from a single
+// file for every locale, so it uses the default-locale dictionary.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
+import { defaultLang, localizedPath, useTranslations } from '../i18n/ui';
+
+const lang = defaultLang;
+const t = useTranslations(lang);
+const base = 'pages.notFound';
+---
+
+<BaseLayout lang={lang} title={t(`${base}.metaTitle`)} description={t(`${base}.metaDescription`)}>
+  <Navbar t={t} lang={lang} path="/" />
+  <main class="text-page">
+    <header class="text-page__hero">
+      <div class="wrap">
+        <div class="text-page__hero-copy reveal">
+          <span class="eyebrow text-brand mono">{t(`${base}.eyebrow`)}</span>
+          <h1 class="text-page__title">{t(`${base}.title`)}</h1>
+          <p class="text-page__lead">{t(`${base}.lead`)}</p>
+          <div class="mt-200">
+            <a class="btn btn-primary btn-lg" href={localizedPath(lang)}>
+              <Icon name="ArrowLeft" size={17} /> {t(`${base}.cta`)}
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+  </main>
+  <Footer t={t} lang={lang} path="/" />
+</BaseLayout>

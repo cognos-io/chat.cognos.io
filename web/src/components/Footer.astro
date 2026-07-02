@@ -35,17 +35,18 @@ const year = new Date().getFullYear();
         <a class="flink" href={anchor('#how')}>{t('footer.product.how')}</a>
         <a class="flink" href={anchor('#compare')}>{t('footer.product.compare')}</a>
         <a class="flink" href={anchor('#audience')}>{t('footer.product.pricing')}</a>
+        <a class="flink" href={page('/business')}>{t('footer.product.business')}</a>
       </div>
       <div>
         <h2 class="footer-heading">{t('footer.security.heading')}</h2>
         <a class="flink" href={anchor('#security')}>{t('footer.security.audits')}</a>
-        <a class="flink" href={anchor('#security')}>{t('footer.security.protocol')}</a>
-        <a class="flink" href={anchor('#security')}>{t('footer.security.keyVerification')}</a>
-        <a class="flink" href={anchor('#audience')}>{t('footer.security.onprem')}</a>
+        <a class="flink" href={anchor('#features')}>{t('footer.security.protocol')}</a>
+        <a class="flink" href={anchor('#how')}>{t('footer.security.keyVerification')}</a>
+        <a class="flink" href={anchor('#features')}>{t('footer.security.onprem')}</a>
       </div>
       <div>
         <h2 class="footer-heading">{t('footer.company.heading')}</h2>
-        <a class="flink" href={anchor('#top')}>{t('footer.company.about')}</a>
+        <a class="flink" href={page('/about')}>{t('footer.company.about')}</a>
         <a class="flink" href={page('/privacy')}>{t('footer.company.privacy')}</a>
         <a class="flink" href={page('/terms')}>{t('footer.company.terms')}</a>
         <a class="flink" href={page('/contact')}>{t('footer.company.contact')}</a>

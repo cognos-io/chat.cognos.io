@@ -13,6 +13,18 @@ export interface Props {
 
 const { lang, title, description, path = '/' } = Astro.props;
 const site = Astro.site;
+const canonical = site ? new URL(localizedPath(lang, path), site).href : undefined;
+
+// Open Graph locale territories, matching the European regional variants the
+// copy is written in (en-GB, de-CH, …).
+const ogLocales: Record<Lang, string> = {
+  en: 'en_GB',
+  de: 'de_CH',
+  fr: 'fr_CH',
+  es: 'es_ES',
+  pt: 'pt_PT',
+  it: 'it_CH',
+};
 ---
 
 <!doctype html>
@@ -25,11 +37,20 @@ const site = Astro.site;
 
     <title>{title}</title>
     <meta name="description" content={description} />
+    {canonical && <link rel="canonical" href={canonical} />}
 
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta property="og:site_name" content="Cognos" />
+    {canonical && <meta property="og:url" content={canonical} />}
+    <meta property="og:locale" content={ogLocales[lang]} />
+    {
+      locales
+        .filter((code) => code !== lang)
+        .map((code) => <meta property="og:locale:alternate" content={ogLocales[code]} />)
+    }
+    <meta name="twitter:card" content="summary" />
 
     {
       /* hreflang alternates so search engines pair up the six locales. */

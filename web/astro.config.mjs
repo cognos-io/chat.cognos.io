@@ -1,4 +1,5 @@
 // @ts-check
+import sitemap from '@astrojs/sitemap';
 import { defineConfig } from 'astro/config';
 
 // The marketing site ships in the same six languages as the app. Keep this
@@ -15,4 +16,21 @@ export default defineConfig({
       prefixDefaultLocale: false,
     },
   },
+  integrations: [
+    sitemap({
+      // Keep the error page out of the sitemap.
+      filter: (page) => !page.includes('/404'),
+      i18n: {
+        defaultLocale: 'en',
+        locales: {
+          en: 'en',
+          de: 'de',
+          fr: 'fr',
+          es: 'es',
+          pt: 'pt',
+          it: 'it',
+        },
+      },
+    }),
+  ],
 });

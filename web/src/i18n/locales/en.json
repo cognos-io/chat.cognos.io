@@ -9,6 +9,7 @@
     "features": "Features",
     "pricing": "Plans",
     "security": "Security",
+    "business": "For business",
     "signIn": "Sign in",
     "cta": "Get started"
   },
@@ -20,7 +21,7 @@
     "lead": "Every other AI keeps what you type — and uses it to train its next model. Your health. Your money. Your worries. All sitting on someone else's computer. Cognos works the other way round. We keep no copy of your chats we can read. Your personal details are hidden before anything is sent. And the AI forgets your chat the moment it answers.",
     "ctaPrimary": "Get started",
     "ctaSecondary": "See how it works",
-    "finehint": "From CHF 15/month · 60-day money-back guarantee · Handled in Switzerland or Europe",
+    "finehint": "Try it first — free starter credit, no card needed · From CHF 15/month · 60-day money-back guarantee",
     "assure": {
       "zeroKnowledge": "No copy we can read",
       "swiss": "Kept in Switzerland or Europe",
@@ -129,12 +130,13 @@
     "titleLine1": "Pay for the AI.",
     "titleLine2": "The privacy comes free.",
     "lead": "Two ways to pay. The same privacy either way. Not for you? You have 60 days to get your money back.",
+    "vatNote": "Prices in CHF, VAT included.",
     "individuals": {
       "title": "Pay as you go",
       "currency": "CHF",
       "amount": "15",
       "period": "/ month minimum",
-      "tagline": "Only pay for what you actually use — top up anytime, no lock-in.",
+      "tagline": "Only pay for what you use — top up credit and each chat draws a little from it. Most everyday chats cost just a few rappen.",
       "items": [
         "Every chat gets the <b>full privacy treatment</b>",
         "Self-deleting messages & incognito included",
@@ -158,7 +160,7 @@
       ],
       "cta": "Go Unlimited"
     },
-    "roadmap": "Need it for a team? Single sign-on and private hosting are on the way — ",
+    "roadmap": "Need it for a team? Single sign-on and admin controls are on the way — ",
     "roadmapLink": "get in touch",
     "roadmapAfter": "."
   },
@@ -200,11 +202,12 @@
       "features": "Features",
       "how": "How it works",
       "compare": "Compare",
-      "pricing": "Plans"
+      "pricing": "Plans",
+      "business": "For business"
     },
     "security": {
       "heading": "Privacy",
-      "audits": "How it works",
+      "audits": "What we keep",
       "protocol": "Where it's handled",
       "keyVerification": "Hiding your details",
       "onprem": "Your key & data"
@@ -257,6 +260,159 @@
         }
       ]
     },
+    "about": {
+      "metaTitle": "About — Cognos",
+      "metaDescription": "Why Cognos exists, what we hold ourselves to, and the small Swiss team building AI that's private by architecture, not by policy.",
+      "eyebrow": "About Cognos",
+      "title": "Privacy shouldn't be a setting. It should be the foundation.",
+      "lead": "We build AI that's private by architecture, not by policy — because a promise can be broken and a subpoena can be answered, but maths can't be argued with.",
+      "origin": {
+        "eyebrow": "Why we started",
+        "title": "The most private thing you own shouldn't live on someone else's server, readable.",
+        "body": [
+          "Every AI assistant sees your unfinished thoughts before anyone else does — your health questions, your finances, the message you're drafting to your boss. Most of that gets kept, readable, indefinitely, on infrastructure you don't control and can't audit.",
+          "We didn't think that trade-off was necessary. The idea of keeping no readable copy isn't new — it's how private messaging has worked for over a decade. We built Cognos to bring it to AI: your chats are saved locked, opened only by a key you hold, so the assistant works exactly the same — but there's nothing left for us to leak, sell, or be forced to hand over.",
+          "We're based in Switzerland, deliberately — one of the strongest privacy and data-protection regimes anywhere, and a useful forcing function to build things right the first time."
+        ],
+        "quote": "We built it so the only copy we keep is one we can't read. That's not a promise — it's something you can verify.",
+        "quoteAttribution": "Cognos engineering principles"
+      },
+      "principles": {
+        "eyebrow": "What we hold ourselves to",
+        "title": "Four principles, no exceptions",
+        "items": [
+          {
+            "title": "Privacy by architecture",
+            "body": "If a feature would require us to read your data, we don't ship it. No exceptions for growth or convenience."
+          },
+          {
+            "title": "Swiss sovereignty",
+            "body": "Run out of one of the world's strongest privacy regimes, by choice."
+          },
+          {
+            "title": "Open by default",
+            "body": "The parts that touch your data are open for inspection. Trust us less — verify us instead."
+          },
+          {
+            "title": "No dark patterns",
+            "body": "Privacy isn't a buried toggle. It's on by default, and it stays that way."
+          }
+        ]
+      },
+      "milestones": {
+        "eyebrow": "Milestones",
+        "title": "Built deliberately, not quickly",
+        "lead": "Good encryption doesn't reward moving fast. Each step was reviewed before it shipped.",
+        "items": [
+          {
+            "date": "2024 · Luzern",
+            "title": "Cognos created",
+            "body": "Started with a single question: why does using AI mean giving up your privacy?"
+          },
+          {
+            "date": "2025",
+            "title": "Public launch for individuals",
+            "body": "Individuals can sign up: private chat, self-deleting messages, and a key only you hold."
+          },
+          {
+            "date": "2025",
+            "title": "Expansion",
+            "body": "Feature expansion to image generation, security and better models."
+          }
+        ]
+      },
+      "team": {
+        "eyebrow": "The team",
+        "title": "Small, and deliberately so",
+        "lead": "A focused group spanning cryptography, product, and Swiss-grade infrastructure — small enough that nobody ships a shortcut unnoticed.",
+        "items": [
+          {
+            "title": "Cryptography",
+            "body": "Protocol design & reviews"
+          },
+          {
+            "title": "Infrastructure",
+            "body": "Swiss & European hosting"
+          },
+          {
+            "title": "Product & design",
+            "body": "Making privacy legible"
+          },
+          {
+            "title": "Support",
+            "body": "Humans, not bots"
+          }
+        ]
+      },
+      "cta": {
+        "titleBefore": "Come see how it's",
+        "titleEm": "actually",
+        "titleAfter": "built.",
+        "lead": "Or if you'd rather just start using it — that works too.",
+        "primary": "Sign Up Today",
+        "secondary": "Contact us"
+      }
+    },
+    "business": {
+      "metaTitle": "Cognos for business — private AI at work",
+      "metaDescription": "Bring AI to client work without handing over client data. Chats are kept in a form we can't read, handled in Switzerland or Europe, and never used to train AI.",
+      "eyebrow": "Cognos for business",
+      "title": "AI your clients would sign off on.",
+      "lead": "Your team already wants to use AI. The question is where your clients' details end up. With Cognos, chats are kept in a form we can't read, handled in Switzerland or Europe, and never used to train AI.",
+      "who": {
+        "eyebrow": "Who it's for",
+        "title": "Built for work that runs on confidentiality",
+        "lead": "If clients tell you things in confidence, the AI you use shouldn't pass them on.",
+        "items": [
+          {
+            "title": "Law firms",
+            "body": "Draft, summarise and research case material without client details sitting readable on someone else's server."
+          },
+          {
+            "title": "Accountants & fiduciaries",
+            "body": "Work through figures and filings — names, account numbers and other details are hidden before anything is sent."
+          },
+          {
+            "title": "Healthcare",
+            "body": "Write notes, letters and reports while patient details stay hidden and no readable copy of the chat is kept."
+          },
+          {
+            "title": "Agencies & consultancies",
+            "body": "Use AI on client projects without their plans ending up in anyone's training data."
+          }
+        ]
+      },
+      "why": {
+        "eyebrow": "Why Cognos at work",
+        "title": "The same AI. None of the exposure.",
+        "body": [
+          "Most AI tools keep what your team types — and can read it. That turns every pasted contract, patient note or client email into a risk. Cognos works the other way round: we keep no copy of your team's chats that we can read, and personal details are hidden before a message is even sent.",
+          "Everything is handled in Switzerland or Europe, under some of the strongest privacy laws anywhere. When a client asks where their data goes, you have a straight answer."
+        ],
+        "points": [
+          "<b>No copy we can read</b> — each person's chats open with their key alone",
+          "<b>Client details hidden automatically</b> before anything is sent",
+          "<b>Handled in Switzerland or Europe</b> — you choose",
+          "<b>Never used to train AI</b> — not ours, not anyone’s"
+        ]
+      },
+      "pricing": {
+        "title": "Simple per-person pricing",
+        "body": "Unlimited is CHF 150 per person / month, VAT included — unlimited chats across every AI model we offer. Or pay as you go from CHF 15/month. Single sign-on and admin controls are on the way."
+      },
+      "form": {
+        "heading": "Ask us anything",
+        "note": "Tell us a little about your team and we'll reply within one business day. This form opens your own email app — nothing is sent through or stored on this website.",
+        "name": "Name",
+        "email": "Work email",
+        "company": "Company",
+        "teamSize": "Team size",
+        "sizes": ["1–5 people", "6–20 people", "21–50 people", "More than 50"],
+        "message": "What would your team use it for?",
+        "submit": "Request more information",
+        "footnote": "From your inbox to ours · never used to train anything"
+      }
+    },
     "contact": {
       "metaTitle": "Contact — Cognos",
       "metaDescription": "Questions about the encryption, a business deployment, or something you found in the protocol — here's how to reach the Cognos team.",
@@ -270,11 +426,11 @@
         },
         {
           "title": "Business & enterprise",
-          "body": "On-prem deployment, SSO, and team plans."
+          "body": "SSO, team plans, and admin controls."
         },
         {
           "title": "Security disclosure",
-          "body": "Found a vulnerability? We run a paid disclosure programme."
+          "body": "Found a vulnerability? Tell us first — reports go straight to the people who can fix them."
         },
         {
           "title": "Press",
@@ -300,6 +456,14 @@
         "submit": "Send message",
         "footnote": "From your inbox to ours · never used to train anything"
       }
+    },
+    "notFound": {
+      "metaTitle": "Page not found — Cognos",
+      "metaDescription": "This page doesn't exist. Head back to the Cognos homepage.",
+      "eyebrow": "404",
+      "title": "This page doesn't exist.",
+      "lead": "The link may be old, or the address mistyped. Nothing was lost — it was never here.",
+      "cta": "Back to the homepage"
     }
   }
 }

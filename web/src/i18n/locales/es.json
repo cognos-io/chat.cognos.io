@@ -9,6 +9,7 @@
     "features": "Funciones",
     "pricing": "Planes",
     "security": "Seguridad",
+    "business": "Para empresas",
     "signIn": "Iniciar sesión",
     "cta": "Empezar"
   },
@@ -20,7 +21,7 @@
     "lead": "Las demás IA guardan lo que escribes y lo usan para entrenar su próximo modelo. Tu salud. Tu dinero. Tus preocupaciones. Todo en el ordenador de otra persona. Cognos funciona al revés. No guardamos ninguna copia de tus chats que podamos leer. Tus datos personales se ocultan antes de enviar nada. Y la IA olvida tu chat en cuanto responde.",
     "ctaPrimary": "Empezar",
     "ctaSecondary": "Ver cómo funciona",
-    "finehint": "Desde CHF 15/mes · 60 días para recuperar tu dinero · Se gestiona en Suiza o en Europa",
+    "finehint": "Pruébalo primero: saldo inicial gratis, sin tarjeta · Desde CHF 15/mes · 60 días para recuperar tu dinero",
     "assure": {
       "zeroKnowledge": "Ninguna copia que podamos leer",
       "swiss": "Se guarda en Suiza o en Europa",
@@ -129,12 +130,13 @@
     "titleLine1": "Paga por la IA.",
     "titleLine2": "La privacidad es gratis.",
     "lead": "Dos formas de pagar. La misma privacidad en ambos casos. ¿No es para ti? Tienes 60 días para recuperar tu dinero.",
+    "vatNote": "Precios en CHF, IVA incluido.",
     "individuals": {
       "title": "Paga según lo que uses",
       "currency": "CHF",
       "amount": "15",
       "period": "/ mes mínimo",
-      "tagline": "Solo pagas por lo que usas de verdad: recarga cuando quieras, sin compromisos.",
+      "tagline": "Paga solo por lo que usas: recargas saldo y cada chat consume un poco. La mayoría de los chats del día a día cuestan solo unos céntimos.",
       "items": [
         "Cada chat recibe <b>toda la protección</b>",
         "Mensajes que se borran solos e incógnito incluidos",
@@ -158,7 +160,7 @@
       ],
       "cta": "Pásate a Ilimitado"
     },
-    "roadmap": "¿Lo necesitas para un equipo? El inicio de sesión único y el alojamiento privado están en camino: ",
+    "roadmap": "¿Lo necesitas para un equipo? El inicio de sesión único y los controles de administración están en camino: ",
     "roadmapLink": "escríbenos",
     "roadmapAfter": "."
   },
@@ -200,11 +202,12 @@
       "features": "Funciones",
       "how": "Cómo funciona",
       "compare": "Comparar",
-      "pricing": "Planes"
+      "pricing": "Planes",
+      "business": "Para empresas"
     },
     "security": {
       "heading": "Privacidad",
-      "audits": "Cómo funciona",
+      "audits": "Qué guardamos",
       "protocol": "Dónde se gestiona",
       "keyVerification": "Ocultar tus datos",
       "onprem": "Tu clave y tus datos"
@@ -257,6 +260,159 @@
         }
       ]
     },
+    "about": {
+      "metaTitle": "Quiénes somos — Cognos",
+      "metaDescription": "Por qué existe Cognos, lo que nos exigimos y el pequeño equipo suizo que crea una IA privada por su arquitectura, no por una política.",
+      "eyebrow": "Sobre Cognos",
+      "title": "La privacidad no debería ser una opción. Debería ser la base.",
+      "lead": "Creamos una IA privada por su arquitectura, no por una política, porque una promesa se puede romper y una orden judicial se puede responder, pero con las matemáticas no se discute.",
+      "origin": {
+        "eyebrow": "Por qué empezamos",
+        "title": "Lo más privado que tienes no debería estar legible en el servidor de otra persona.",
+        "body": [
+          "Todo asistente de IA ve tus pensamientos a medio formar antes que nadie: tus dudas de salud, tus finanzas, el mensaje que le estás escribiendo a tu jefe. La mayor parte de eso se guarda, legible, de forma indefinida, en una infraestructura que no controlas ni puedes revisar.",
+          "No creíamos que ese sacrificio fuera necesario. La idea de no guardar ninguna copia legible no es nueva: así funciona la mensajería privada desde hace más de una década. Creamos Cognos para llevarla a la IA: tus conversaciones se guardan bajo llave y solo se abren con una clave que tienes tú, así que el asistente funciona exactamente igual, pero no nos queda nada que filtrar, vender o entregar por obligación.",
+          "Estamos en Suiza a propósito: uno de los marcos de protección de datos más sólidos que existen y un buen acicate para hacer las cosas bien desde el principio."
+        ],
+        "quote": "Lo diseñamos para que la única copia que guardamos sea una que no podemos leer. No es una promesa: es algo que puedes verificar.",
+        "quoteAttribution": "Principios de Cognos"
+      },
+      "principles": {
+        "eyebrow": "Lo que nos exigimos",
+        "title": "Cuatro principios, sin excepciones",
+        "items": [
+          {
+            "title": "Privacidad por arquitectura",
+            "body": "Si una función nos obliga a leer tus datos, no la lanzamos. Sin excepciones por crecimiento o comodidad."
+          },
+          {
+            "title": "Soberanía suiza",
+            "body": "Operado desde uno de los marcos de privacidad más sólidos del mundo, por decisión propia."
+          },
+          {
+            "title": "Abierto por defecto",
+            "body": "Las partes que tocan tus datos están abiertas a inspección. Confía menos en nosotros: verifícanos."
+          },
+          {
+            "title": "Sin patrones engañosos",
+            "body": "La privacidad no es una casilla escondida. Está activada de serie y así se queda."
+          }
+        ]
+      },
+      "milestones": {
+        "eyebrow": "Hitos",
+        "title": "Construido con cuidado, no con prisa",
+        "lead": "Un buen cifrado no premia las prisas. Cada paso se revisó antes de publicarse.",
+        "items": [
+          {
+            "date": "2024 · Lucerna",
+            "title": "Nace Cognos",
+            "body": "Empezó con una sola pregunta: ¿por qué usar la IA tiene que significar renunciar a tu privacidad?"
+          },
+          {
+            "date": "2025",
+            "title": "Lanzamiento público para particulares",
+            "body": "Los particulares pueden registrarse: chat privado, mensajes que se borran solos y una clave que solo tienes tú."
+          },
+          {
+            "date": "2025",
+            "title": "Expansión",
+            "body": "Nuevas funciones: generación de imágenes, más seguridad y mejores modelos."
+          }
+        ]
+      },
+      "team": {
+        "eyebrow": "El equipo",
+        "title": "Pequeño, y a propósito",
+        "lead": "Un grupo reducido que abarca criptografía, producto e infraestructura de nivel suizo, lo bastante pequeño como para que nadie tome un atajo sin que se note.",
+        "items": [
+          {
+            "title": "Criptografía",
+            "body": "Diseño y auditorías del protocolo"
+          },
+          {
+            "title": "Infraestructura",
+            "body": "Alojamiento suizo y europeo"
+          },
+          {
+            "title": "Producto y diseño",
+            "body": "Hacer la privacidad comprensible"
+          },
+          {
+            "title": "Soporte",
+            "body": "Personas, no bots"
+          }
+        ]
+      },
+      "cta": {
+        "titleBefore": "Ven a ver cómo está",
+        "titleEm": "de verdad",
+        "titleAfter": "construido.",
+        "lead": "O si prefieres simplemente empezar a usarlo, también vale.",
+        "primary": "Regístrate hoy",
+        "secondary": "Contáctanos"
+      }
+    },
+    "business": {
+      "metaTitle": "Cognos para empresas — IA privada en el trabajo",
+      "metaDescription": "Usa la IA en el trabajo con clientes sin entregar sus datos. Los chats se guardan en una forma que no podemos leer, se gestionan en Suiza o en Europa y nunca se usan para entrenar IA.",
+      "eyebrow": "Cognos para empresas",
+      "title": "Una IA que tus clientes aprobarían.",
+      "lead": "Tu equipo ya quiere trabajar con IA. La cuestión es dónde acaban los datos de tus clientes. Con Cognos, los chats se guardan en una forma que no podemos leer, se gestionan en Suiza o en Europa y nunca se usan para entrenar IA.",
+      "who": {
+        "eyebrow": "Para quién es",
+        "title": "Hecho para trabajos que viven de la confidencialidad",
+        "lead": "Si tus clientes te cuentan cosas en confianza, la IA que usas no debería pasarlas a nadie.",
+        "items": [
+          {
+            "title": "Despachos de abogados",
+            "body": "Redacta, resume e investiga sin que los datos de tus clientes queden legibles en el servidor de otro."
+          },
+          {
+            "title": "Asesorías y contables",
+            "body": "Trabaja con cifras y declaraciones: nombres, números de cuenta y otros datos se ocultan antes de enviar nada."
+          },
+          {
+            "title": "Sanidad",
+            "body": "Escribe notas, cartas e informes mientras los datos de los pacientes permanecen ocultos y no se guarda ninguna copia legible del chat."
+          },
+          {
+            "title": "Agencias y consultoras",
+            "body": "Usa la IA en proyectos de clientes sin que sus planes acaben en los datos de entrenamiento de nadie."
+          }
+        ]
+      },
+      "why": {
+        "eyebrow": "Por qué Cognos en el trabajo",
+        "title": "La misma IA. Sin la exposición.",
+        "body": [
+          "La mayoría de las herramientas de IA guardan lo que escribe tu equipo — y pueden leerlo. Cada contrato pegado, nota de paciente o correo de un cliente se convierte en un riesgo. Cognos funciona al revés: no guardamos ninguna copia legible de los chats de tu equipo, y los datos personales se ocultan antes incluso de enviar el mensaje.",
+          "Todo se gestiona en Suiza o en Europa, bajo algunas de las leyes de privacidad más estrictas del mundo. Cuando un cliente pregunte dónde van sus datos, tienes una respuesta clara."
+        ],
+        "points": [
+          "<b>Ninguna copia que podamos leer</b>: los chats de cada persona solo se abren con su propia clave",
+          "<b>Datos de clientes ocultos automáticamente</b> antes de enviar nada",
+          "<b>Se gestiona en Suiza o en Europa</b> — tú eliges",
+          "<b>Nunca se usa para entrenar IA</b> — ni la nuestra ni la de nadie"
+        ]
+      },
+      "pricing": {
+        "title": "Precio sencillo por persona",
+        "body": "El plan Ilimitado cuesta CHF 150 por persona / mes, IVA incluido: chats ilimitados con todos los modelos de IA que ofrecemos. O paga según lo que uses desde CHF 15/mes. El inicio de sesión único y los controles de administración están en camino."
+      },
+      "form": {
+        "heading": "Pregúntanos lo que quieras",
+        "note": "Cuéntanos un poco sobre tu equipo y te responderemos en un día laborable. Este formulario abre tu propia aplicación de correo: nada pasa por esta web ni se guarda en ella.",
+        "name": "Nombre",
+        "email": "Correo de trabajo",
+        "company": "Empresa",
+        "teamSize": "Tamaño del equipo",
+        "sizes": ["1–5 personas", "6–20 personas", "21–50 personas", "Más de 50"],
+        "message": "¿Para qué lo usaría tu equipo?",
+        "submit": "Pedir más información",
+        "footnote": "De tu correo al nuestro · nunca se usa para entrenar nada"
+      }
+    },
     "contact": {
       "metaTitle": "Contacto — Cognos",
       "metaDescription": "Dudas sobre el cifrado, un despliegue para tu empresa o algo que has encontrado en el protocolo: así puedes contactar con el equipo de Cognos.",
@@ -270,11 +426,11 @@
         },
         {
           "title": "Empresas",
-          "body": "Despliegue on-prem, SSO y planes para equipos."
+          "body": "SSO, planes para equipos y controles de administración."
         },
         {
           "title": "Aviso de seguridad",
-          "body": "¿Has encontrado una vulnerabilidad? Tenemos un programa de divulgación remunerado."
+          "body": "¿Has encontrado una vulnerabilidad? Cuéntanoslo primero: los avisos llegan directamente a quienes pueden corregirla."
         },
         {
           "title": "Prensa",
@@ -300,6 +456,14 @@
         "submit": "Enviar mensaje",
         "footnote": "De tu correo al nuestro · nunca se usa para entrenar nada"
       }
+    },
+    "notFound": {
+      "metaTitle": "Página no encontrada — Cognos",
+      "metaDescription": "Esta página no existe. Vuelve a la página de inicio de Cognos.",
+      "eyebrow": "404",
+      "title": "Esta página no existe.",
+      "lead": "Puede que el enlace sea antiguo o que la dirección esté mal escrita. No se ha perdido nada: aquí nunca hubo nada.",
+      "cta": "Volver al inicio"
     }
   }
 }

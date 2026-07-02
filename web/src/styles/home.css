@@ -96,6 +96,9 @@ svg {
   .grid--3 {
     grid-template-columns: repeat(3, 1fr);
   }
+  .grid--4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 @media (min-width: 576px) {
   .grid--sm-2 {
@@ -897,6 +900,15 @@ h1.hero-h .em {
   color: var(--ink);
   font-weight: var(--cog-fw-semibold);
 }
+.price-vat {
+  color: var(--ink-subtle);
+  font-size: var(--cog-fs-body-xs);
+  line-height: var(--cog-lh-body);
+  margin: var(--cog-space-050) 0 0;
+}
+.price-card--featured .price-vat {
+  color: var(--cta-muted);
+}
 
 /* Feature list — divider above, pushes the CTA to the card foot. */
 .price-list {
@@ -1287,6 +1299,121 @@ h1.hero-h .em {
   .text-page__fact dd {
     margin: 0;
   }
+}
+
+/* ============================ ABOUT ================================= */
+.about-h2 {
+  font-size: clamp(26px, 3.4vw, 34px);
+  font-weight: var(--cog-fw-bold);
+  line-height: 1.15;
+  margin: var(--cog-space-100) 0 0;
+  text-wrap: balance;
+}
+.about-prose {
+  color: var(--ink-sub);
+  font-size: var(--cog-fs-body);
+  line-height: 1.75;
+  margin-top: var(--cog-space-250);
+  display: grid;
+  gap: var(--cog-space-250);
+}
+.about-quote {
+  background: linear-gradient(155deg, var(--cta-bg-start), var(--cta-bg-end));
+  border-radius: var(--cog-radius-lg);
+  padding: clamp(28px, 3vw, 40px);
+  color: var(--on-brand);
+  margin: 0;
+}
+.about-quote svg {
+  color: var(--brand-bright);
+}
+.about-quote blockquote {
+  margin: var(--cog-space-200) 0 0;
+  color: var(--cta-muted);
+  font-size: var(--cog-fs-body-lg);
+  line-height: var(--cog-lh-body-lg);
+  text-wrap: pretty;
+}
+.about-quote figcaption {
+  margin-top: var(--cog-space-200);
+  color: var(--brand-bright);
+  font-family: var(--ff-mono);
+  font-size: var(--cog-fs-body-xs);
+}
+
+/* Milestones timeline. */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 2px solid var(--line);
+}
+.timeline-item {
+  position: relative;
+  padding: 0 0 var(--cog-space-400) var(--cog-space-300);
+}
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+.timeline-dot {
+  position: absolute;
+  left: calc(-6px - 1px);
+  top: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--brand);
+}
+.timeline-date {
+  display: block;
+  color: var(--ink-subtle);
+  font-size: var(--cog-fs-body-xs);
+  font-weight: var(--cog-fw-semibold);
+}
+.timeline-title {
+  color: var(--ink);
+  font-size: var(--cog-fs-body-lg);
+  font-weight: var(--cog-fw-bold);
+  margin: var(--cog-space-050) 0 var(--cog-space-050);
+}
+.timeline-body {
+  color: var(--ink-sub);
+  font-size: var(--cog-fs-body-sm);
+  line-height: var(--cog-lh-body-sm);
+  margin: 0;
+}
+
+/* Team grid — centred variant of .fcard. */
+.team-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--cog-radius-lg);
+  padding: 28px;
+  height: 100%;
+  text-align: center;
+  transition:
+    transform 0.25s var(--ease),
+    box-shadow 0.25s var(--ease),
+    border-color 0.25s;
+}
+.team-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-ink);
+  border-color: color-mix(in srgb, var(--brand) 18%, var(--line));
+}
+.team-card .ficon {
+  margin-inline: auto;
+}
+.team-card h3 {
+  font-size: var(--cog-fs-body-lg);
+  font-weight: var(--cog-fw-bold);
+  margin: 0 0 4px;
+}
+.team-card p {
+  color: var(--ink-sub);
+  font-size: var(--cog-fs-body-sm);
+  margin: 0;
 }
 
 /* ============================ CONTACT ============================== */

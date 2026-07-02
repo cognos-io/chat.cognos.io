@@ -1,0 +1,138 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from './Navbar.astro';
+import Footer from './Footer.astro';
+import Icon from './Icon.astro';
+import type { Lang, Translator } from '../i18n/ui';
+
+interface Tab {
+  label: string;
+  href: string;
+  current?: boolean;
+}
+
+interface AsideItem {
+  label: string;
+  href: string;
+}
+
+interface Fact {
+  label: string;
+  value: string;
+}
+
+interface Props {
+  lang: Lang;
+  path: string;
+  title: string;
+  description: string;
+  heading: string;
+  eyebrow: string;
+  lead: string;
+  navLabel?: string;
+  tabs?: Tab[];
+  asideItems?: AsideItem[];
+  facts?: Fact[];
+  updatedLabel?: string;
+  updatedValue?: string;
+  t: Translator;
+}
+
+const {
+  lang,
+  path,
+  title,
+  description,
+  heading,
+  eyebrow,
+  lead,
+  navLabel,
+  tabs = [],
+  asideItems = [],
+  facts = [],
+  updatedLabel,
+  updatedValue,
+  t,
+} = Astro.props;
+---
+
+<BaseLayout lang={lang} title={title} description={description} path={path}>
+  <Navbar t={t} lang={lang} path={path} />
+  <main class="text-page">
+    <header class="text-page__hero">
+      <div class="wrap">
+        <div class="text-page__hero-copy reveal">
+          <span class="eyebrow text-brand">{eyebrow}</span>
+          <h1 class="text-page__title">{heading}</h1>
+          <p class="text-page__lead">{lead}</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="text-page__section">
+      <div class="wrap text-page__grid">
+        {
+          asideItems.length > 0 && (
+            <aside class="text-page__aside" aria-label={navLabel}>
+              <div class="text-page__aside-inner">
+                {navLabel && <p class="text-page__aside-label">{navLabel}</p>}
+                <nav class="text-page__toc">
+                  {asideItems.map((item, index) => (
+                    <a class="text-page__toc-link" href={item.href}>
+                      <span>{index + 1}</span>
+                      {item.label}
+                    </a>
+                  ))}
+                </nav>
+                {facts.length > 0 && (
+                  <dl class="text-page__facts">
+                    {facts.map((fact) => (
+                      <div class="text-page__fact">
+                        <dt>{fact.label}</dt>
+                        <dd>{fact.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+              </div>
+            </aside>
+          )
+        }
+
+        <article class="text-page__article">
+          {
+            tabs.length > 0 && (
+              <nav class="text-page__tabs" aria-label={navLabel}>
+                {tabs.map((tab) => (
+                  <a
+                    class:list={['text-page__tab', { 'text-page__tab--current': tab.current }]}
+                    href={tab.href}
+                    aria-current={tab.current ? 'page' : undefined}
+                  >
+                    {tab.label}
+                  </a>
+                ))}
+          </nav>
+            )
+          }
+          <header class="text-page__article-head">
+            <h2>{heading}</h2>
+            {
+              updatedLabel &&
+                updatedValue && (
+                  <p class="text-page__updated">
+                    <span aria-hidden="true"><Icon name="CalendarClock" size={13} /></span>
+                    {updatedLabel} {updatedValue}
+                  </p>
+                )
+            }
+          </header>
+          <div class="text-page__body">
+            <slot />
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+  <Footer t={t} lang={lang} path={path} />
+</BaseLayout>

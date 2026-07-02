@@ -1,0 +1,160 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from './Navbar.astro';
+import Footer from './Footer.astro';
+import Icon from './Icon.astro';
+import { CONTACT_EMAILS } from '../config';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const base = 'pages.business';
+
+interface WhoItem {
+  title: string;
+  body: string;
+}
+// Copy comes from the catalog; icons are locale-independent and zipped by
+// position (same pattern as Features.astro and ContactPage.astro).
+const who = t.raw<WhoItem[]>(`${base}.who.items`);
+const whoIcons = ['Scale', 'Calculator', 'Stethoscope', 'Briefcase'] as const;
+
+const whyBody = t.raw<string[]>(`${base}.why.body`);
+// Light inline <b> emphasis; trusted, static, author-controlled strings
+// rendered with set:html (same as Audience.astro).
+const whyPoints = t.raw<string[]>(`${base}.why.points`);
+const sizes = t.raw<string[]>(`${base}.form.sizes`);
+---
+
+<BaseLayout
+  lang={lang}
+  title={t(`${base}.metaTitle`)}
+  description={t(`${base}.metaDescription`)}
+  path="/business"
+>
+  <Navbar t={t} lang={lang} path="/business" />
+  <main class="text-page business-page">
+    <header class="text-page__hero">
+      <div class="wrap">
+        <div class="text-page__hero-copy reveal">
+          <span class="eyebrow text-brand">{t(`${base}.eyebrow`)}</span>
+          <h1 class="text-page__title">{t(`${base}.title`)}</h1>
+          <p class="text-page__lead">{t(`${base}.lead`)}</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="sec-pad band">
+      <div class="wrap">
+        <div class="sec-head reveal">
+          <span class="eyebrow text-brand">{t(`${base}.who.eyebrow`)}</span>
+          <h2 class="sec-h">{t(`${base}.who.title`)}</h2>
+          <p>{t(`${base}.who.lead`)}</p>
+        </div>
+        <div class="grid grid--4 section-grid">
+          {
+            who.map((item, i) => (
+              <div class="reveal">
+                <div class="fcard">
+                  <div class="ficon">
+                    <Icon name={whoIcons[i]} size={22} />
+                  </div>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="text-page__section">
+      <div class="wrap contact-grid">
+        <div class="reveal">
+          <span class="eyebrow text-brand">{t(`${base}.why.eyebrow`)}</span>
+          <h2 class="about-h2">{t(`${base}.why.title`)}</h2>
+          <div class="about-prose">
+            {whyBody.map((p) => <p>{p}</p>)}
+          </div>
+          <ul class="price-list">
+            {
+              whyPoints.map((item) => (
+                <li>
+                  <Icon name="Check" size={18} /> <span set:html={item} />
+                </li>
+              ))
+            }
+          </ul>
+
+          <dl class="contact-facts">
+            <div class="contact-fact">
+              <span class="contact-fact__icon"><Icon name="Users" size={18} /></span>
+              <div>
+                <dt>{t(`${base}.pricing.title`)}</dt>
+                <dd>{t(`${base}.pricing.body`)}</dd>
+              </div>
+            </div>
+          </dl>
+        </div>
+
+        <aside class="contact-form-card reveal">
+          <h2>{t(`${base}.form.heading`)}</h2>
+          <p class="contact-form__note">{t(`${base}.form.note`)}</p>
+          <form class="contact-form business-form" data-email={CONTACT_EMAILS.sales}>
+            <label class="contact-field">
+              <span>{t(`${base}.form.name`)}</span>
+              <input name="name" type="text" required autocomplete="name" />
+            </label>
+            <label class="contact-field">
+              <span>{t(`${base}.form.email`)}</span>
+              <input name="email" type="email" required autocomplete="work email" />
+            </label>
+            <label class="contact-field">
+              <span>{t(`${base}.form.company`)}</span>
+              <input name="company" type="text" required autocomplete="organization" />
+            </label>
+            <label class="contact-field">
+              <span>{t(`${base}.form.teamSize`)}</span>
+              <span class="contact-select">
+                <select name="teamSize">
+                  {sizes.map((size) => <option value={size}>{size}</option>)}
+                </select>
+                <Icon name="ChevronDown" size={16} />
+              </span>
+            </label>
+            <label class="contact-field">
+              <span>{t(`${base}.form.message`)}</span>
+              <textarea name="message" rows="5" required></textarea>
+            </label>
+            <button class="btn btn-primary btn-lg contact-form__submit" type="submit">
+              <Icon name="Send" size={17} /> {t(`${base}.form.submit`)}
+            </button>
+            <p class="contact-form__footnote">
+              <Icon name="Lock" size={13} /> {t(`${base}.form.footnote`)}
+            </p>
+          </form>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <Footer t={t} lang={lang} path="/business" />
+</BaseLayout>
+
+<script>
+  // The site is static, so "send" composes the message in the visitor's own
+  // email app — nothing passes through (or is stored on) this website. Same
+  // pattern as the contact page, routed straight to the sales inbox.
+  const form = document.querySelector<HTMLFormElement>('.business-form');
+  form?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const to = form.dataset.email ?? '';
+    const data = new FormData(form);
+    const subject = `[Business] ${data.get('name')} — ${data.get('company')}`;
+    const body = `${data.get('message')}\n\n— ${data.get('name')} <${data.get('email')}>\n${data.get('company')} · ${data.get('teamSize')}`;
+    window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  });
+</script>

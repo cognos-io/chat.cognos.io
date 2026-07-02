@@ -9,6 +9,7 @@
     "features": "Funktionen",
     "pricing": "Tarife",
     "security": "Sicherheit",
+    "business": "Für Unternehmen",
     "signIn": "Anmelden",
     "cta": "Loslegen"
   },
@@ -20,7 +21,7 @@
     "lead": "Jede andere KI behält, was du schreibst — und nutzt es, um ihr nächstes Modell zu trainieren. Deine Gesundheit. Dein Geld. Deine Sorgen. Alles liegt auf dem Computer von jemand anderem. Cognos macht es andersherum. Wir bewahren keine lesbare Kopie deiner Chats auf. Deine persönlichen Angaben werden versteckt, bevor irgendetwas rausgeht. Und die KI vergisst deinen Chat, sobald sie geantwortet hat.",
     "ctaPrimary": "Loslegen",
     "ctaSecondary": "So funktioniert's",
-    "finehint": "Ab CHF 15/Monat · 60 Tage Geld-zurück-Garantie · In der Schweiz oder in Europa",
+    "finehint": "Probier es zuerst aus — Startguthaben geschenkt, keine Karte nötig · Ab CHF 15/Monat · 60 Tage Geld-zurück-Garantie",
     "assure": {
       "zeroKnowledge": "Keine lesbare Kopie",
       "swiss": "In der Schweiz oder in Europa",
@@ -129,12 +130,13 @@
     "titleLine1": "Bezahl für die KI.",
     "titleLine2": "Die Privatsphäre gibt's gratis.",
     "lead": "Zwei Wege zu zahlen. Die gleiche Privatsphäre bei beiden. Nichts für dich? Du hast 60 Tage, um dein Geld zurückzubekommen.",
+    "vatNote": "Preise in CHF, inkl. MwSt.",
     "individuals": {
       "title": "Zahl nach Verbrauch",
       "currency": "CHF",
       "amount": "15",
       "period": "/ Monat mindestens",
-      "tagline": "Zahl nur für das, was du wirklich nutzt — jederzeit aufladen, keine Bindung.",
+      "tagline": "Zahl nur für das, was du nutzt — du lädst Guthaben auf, und jeder Chat verbraucht ein wenig davon. Die meisten Alltags-Chats kosten nur ein paar Rappen.",
       "items": [
         "Jeder Chat bekommt den <b>vollen Schutz</b>",
         "Selbstlöschende Nachrichten & Inkognito inklusive",
@@ -158,7 +160,7 @@
       ],
       "cta": "Unbegrenzt wählen"
     },
-    "roadmap": "Für ein Team? Einmal-Anmeldung und private Server sind bald da — ",
+    "roadmap": "Für ein Team? Einmal-Anmeldung und Admin-Kontrollen sind bald da — ",
     "roadmapLink": "melde dich",
     "roadmapAfter": "."
   },
@@ -200,11 +202,12 @@
       "features": "Funktionen",
       "how": "So funktioniert's",
       "compare": "Vergleich",
-      "pricing": "Tarife"
+      "pricing": "Tarife",
+      "business": "Für Unternehmen"
     },
     "security": {
       "heading": "Privatsphäre",
-      "audits": "So funktioniert's",
+      "audits": "Was wir behalten",
       "protocol": "Wo alles läuft",
       "keyVerification": "Deine Angaben verstecken",
       "onprem": "Dein Schlüssel & deine Daten"
@@ -257,6 +260,159 @@
         }
       ]
     },
+    "about": {
+      "metaTitle": "Über uns — Cognos",
+      "metaDescription": "Warum es Cognos gibt, woran wir uns messen lassen, und das kleine Schweizer Team, das KI baut, die durch ihre Architektur privat ist – nicht durch eine Richtlinie.",
+      "eyebrow": "Über Cognos",
+      "title": "Privatsphäre sollte keine Einstellung sein. Sie sollte das Fundament sein.",
+      "lead": "Wir bauen KI, die durch ihre Architektur privat ist, nicht durch eine Richtlinie – denn ein Versprechen lässt sich brechen und eine Vorladung lässt sich beantworten, aber mit der Mathematik lässt sich nicht streiten.",
+      "origin": {
+        "eyebrow": "Warum wir angefangen haben",
+        "title": "Das Privateste, das du besitzt, sollte nicht lesbar auf dem Server eines anderen liegen.",
+        "body": [
+          "Jeder KI-Assistent sieht deine unfertigen Gedanken, bevor es sonst jemand tut – deine Gesundheitsfragen, deine Finanzen, die Nachricht, die du gerade an deine Chefin schreibst. Das meiste davon wird lesbar und zeitlich unbegrenzt gespeichert, auf einer Infrastruktur, die du nicht kontrollierst und nicht überprüfen kannst.",
+          "Wir hielten diesen Kompromiss für unnötig. Die Idee, keine lesbare Kopie aufzubewahren, ist nicht neu – so funktioniert privates Messaging schon seit über einem Jahrzehnt. Wir haben Cognos gebaut, um sie zur KI zu bringen: Deine Chats werden verschlüsselt gespeichert und nur mit einem Schlüssel geöffnet, den du hältst. Der Assistent arbeitet genau gleich – aber uns bleibt nichts, das wir preisgeben, verkaufen oder herausgeben müssten.",
+          "Wir sitzen bewusst in der Schweiz – einem der stärksten Datenschutzräume überhaupt und ein nützlicher Antrieb, die Dinge von Anfang an richtig zu bauen."
+        ],
+        "quote": "Wir haben es so gebaut, dass die einzige Kopie, die wir behalten, eine ist, die wir nicht lesen können. Das ist kein Versprechen – es ist etwas, das du überprüfen kannst.",
+        "quoteAttribution": "Cognos-Grundsätze"
+      },
+      "principles": {
+        "eyebrow": "Woran wir uns messen lassen",
+        "title": "Vier Grundsätze, keine Ausnahmen",
+        "items": [
+          {
+            "title": "Privat durch Architektur",
+            "body": "Wenn eine Funktion voraussetzt, dass wir deine Daten lesen, bauen wir sie nicht. Keine Ausnahmen für Wachstum oder Bequemlichkeit."
+          },
+          {
+            "title": "Schweizer Souveränität",
+            "body": "Betrieben aus einem der stärksten Datenschutzräume der Welt – aus Überzeugung."
+          },
+          {
+            "title": "Offen von Haus aus",
+            "body": "Die Teile, die deine Daten berühren, sind einsehbar. Vertrau uns weniger – überprüf uns stattdessen."
+          },
+          {
+            "title": "Keine dunklen Muster",
+            "body": "Privatsphäre ist kein versteckter Schalter. Sie ist standardmässig an und bleibt es."
+          }
+        ]
+      },
+      "milestones": {
+        "eyebrow": "Meilensteine",
+        "title": "Bewusst gebaut, nicht schnell",
+        "lead": "Gute Verschlüsselung belohnt keine Eile. Jeder Schritt wurde geprüft, bevor er live ging.",
+        "items": [
+          {
+            "date": "2024 · Luzern",
+            "title": "Cognos gegründet",
+            "body": "Begonnen mit einer einzigen Frage: Warum bedeutet es, KI zu nutzen, die eigene Privatsphäre aufzugeben?"
+          },
+          {
+            "date": "2025",
+            "title": "Öffentlicher Start für Einzelpersonen",
+            "body": "Einzelpersonen können sich anmelden: privater Chat, Nachrichten, die sich selbst löschen, und ein Schlüssel, den nur du hältst."
+          },
+          {
+            "date": "2025",
+            "title": "Erweiterung",
+            "body": "Ausbau um Bildgenerierung, mehr Sicherheit und bessere Modelle."
+          }
+        ]
+      },
+      "team": {
+        "eyebrow": "Das Team",
+        "title": "Klein, und das mit Absicht",
+        "lead": "Eine fokussierte Gruppe aus Kryptografie, Produkt und Infrastruktur auf Schweizer Niveau – klein genug, dass niemand unbemerkt eine Abkürzung nimmt.",
+        "items": [
+          {
+            "title": "Kryptografie",
+            "body": "Protokolldesign & Prüfungen"
+          },
+          {
+            "title": "Infrastruktur",
+            "body": "Hosting in der Schweiz & Europa"
+          },
+          {
+            "title": "Produkt & Design",
+            "body": "Privatsphäre verständlich machen"
+          },
+          {
+            "title": "Support",
+            "body": "Menschen, keine Bots"
+          }
+        ]
+      },
+      "cta": {
+        "titleBefore": "Sieh dir an, wie es",
+        "titleEm": "wirklich",
+        "titleAfter": "gebaut ist.",
+        "lead": "Oder wenn du lieber einfach loslegst – das geht auch.",
+        "primary": "Heute anmelden",
+        "secondary": "Kontaktiere uns"
+      }
+    },
+    "business": {
+      "metaTitle": "Cognos für Unternehmen — private KI bei der Arbeit",
+      "metaDescription": "Nutze KI für Kundenarbeit, ohne Kundendaten aus der Hand zu geben. Chats werden in einer Form gespeichert, die wir nicht lesen können — in der Schweiz oder in Europa, und nie zum KI-Training genutzt.",
+      "eyebrow": "Cognos für Unternehmen",
+      "title": "KI, die deine Kundschaft absegnen würde.",
+      "lead": "Dein Team will längst mit KI arbeiten. Die Frage ist, wo die Angaben deiner Kundschaft landen. Bei Cognos werden Chats in einer Form gespeichert, die wir nicht lesen können — in der Schweiz oder in Europa, und nie zum KI-Training genutzt.",
+      "who": {
+        "eyebrow": "Für wen es ist",
+        "title": "Gebaut für Arbeit, die von Vertraulichkeit lebt",
+        "lead": "Wenn Menschen dir etwas im Vertrauen erzählen, sollte deine KI es nicht weitergeben.",
+        "items": [
+          {
+            "title": "Kanzleien",
+            "body": "Entwerfe, fasse zusammen und recherchiere, ohne dass Mandantendaten lesbar auf dem Server von jemand anderem liegen."
+          },
+          {
+            "title": "Treuhand & Buchhaltung",
+            "body": "Arbeite mit Zahlen und Abschlüssen — Namen, Kontodaten und andere Angaben werden versteckt, bevor etwas rausgeht."
+          },
+          {
+            "title": "Gesundheitswesen",
+            "body": "Schreib Notizen, Briefe und Berichte, während Patientenangaben versteckt bleiben und keine lesbare Kopie des Chats aufbewahrt wird."
+          },
+          {
+            "title": "Agenturen & Beratungen",
+            "body": "Nutz KI für Kundenprojekte, ohne dass deren Pläne in irgendwelchen Trainingsdaten landen."
+          }
+        ]
+      },
+      "why": {
+        "eyebrow": "Warum Cognos bei der Arbeit",
+        "title": "Die gleiche KI. Ohne das Risiko.",
+        "body": [
+          "Die meisten KI-Tools behalten, was dein Team tippt — und können es lesen. Damit wird jeder eingefügte Vertrag, jede Patientennotiz und jede Kunden-E-Mail zum Risiko. Cognos macht es andersherum: Wir bewahren keine lesbare Kopie der Chats deines Teams auf, und persönliche Angaben werden versteckt, bevor eine Nachricht überhaupt rausgeht.",
+          "Alles wird in der Schweiz oder in Europa verarbeitet, unter einigen der strengsten Datenschutzgesetze überhaupt. Wenn deine Kundschaft fragt, wo ihre Daten landen, hast du eine klare Antwort."
+        ],
+        "points": [
+          "<b>Keine lesbare Kopie bei uns</b> — die Chats jeder Person öffnen sich allein mit ihrem Schlüssel",
+          "<b>Kundendaten automatisch versteckt</b>, bevor etwas rausgeht",
+          "<b>In der Schweiz oder in Europa</b> — du entscheidest",
+          "<b>Nie zum KI-Training genutzt</b> — weder für unseres noch für irgendein anderes"
+        ]
+      },
+      "pricing": {
+        "title": "Einfacher Preis pro Person",
+        "body": "Unbegrenzt kostet CHF 150 pro Person / Monat, inkl. MwSt. — unbegrenzte Chats über alle KI-Modelle, die wir anbieten. Oder zahl nach Verbrauch ab CHF 15/Monat. Einmal-Anmeldung fürs Team und Admin-Kontrollen sind bald da."
+      },
+      "form": {
+        "heading": "Frag uns alles",
+        "note": "Erzähl uns kurz von deinem Team — wir antworten innerhalb eines Werktags. Dieses Formular öffnet deine eigene E-Mail-App — nichts läuft über diese Website oder wird hier gespeichert.",
+        "name": "Name",
+        "email": "Geschäftliche E-Mail",
+        "company": "Unternehmen",
+        "teamSize": "Teamgrösse",
+        "sizes": ["1–5 Personen", "6–20 Personen", "21–50 Personen", "Mehr als 50"],
+        "message": "Wofür würde dein Team es nutzen?",
+        "submit": "Mehr Informationen anfordern",
+        "footnote": "Von deinem Postfach direkt zu uns · wird nie für Training verwendet"
+      }
+    },
     "contact": {
       "metaTitle": "Kontakt — Cognos",
       "metaDescription": "Fragen zur Verschlüsselung, ein Business-Deployment oder etwas, das dir im Protokoll aufgefallen ist — so erreichst du das Cognos-Team.",
@@ -270,11 +426,11 @@
         },
         {
           "title": "Business & Enterprise",
-          "body": "On-Prem-Deployment, SSO und Team-Tarife."
+          "body": "SSO, Team-Tarife und Admin-Kontrollen."
         },
         {
           "title": "Sicherheitsmeldung",
-          "body": "Eine Schwachstelle gefunden? Wir betreiben ein bezahltes Disclosure-Programm."
+          "body": "Eine Schwachstelle gefunden? Sag es zuerst uns — Meldungen gehen direkt an die Leute, die sie beheben können."
         },
         {
           "title": "Presse",
@@ -300,6 +456,14 @@
         "submit": "Nachricht senden",
         "footnote": "Von deinem Postfach direkt zu uns · wird nie für Training verwendet"
       }
+    },
+    "notFound": {
+      "metaTitle": "Seite nicht gefunden — Cognos",
+      "metaDescription": "Diese Seite gibt es nicht. Zurück zur Cognos-Startseite.",
+      "eyebrow": "404",
+      "title": "Diese Seite gibt es nicht.",
+      "lead": "Der Link ist vielleicht alt oder die Adresse vertippt. Es ist nichts verloren gegangen — hier war nie etwas.",
+      "cta": "Zurück zur Startseite"
     }
   }
 }

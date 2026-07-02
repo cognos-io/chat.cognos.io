@@ -1,12 +1,13 @@
 ---
 import Icon from './Icon.astro';
-import { SIGN_UP_URL, BUSINESS_URL } from '../config';
-import type { Translator } from '../i18n/ui';
+import { SIGN_UP_URL } from '../config';
+import { localizedPath, type Lang, type Translator } from '../i18n/ui';
 
 interface Props {
   t: Translator;
+  lang: Lang;
 }
-const { t } = Astro.props;
+const { t, lang } = Astro.props;
 // List copy carries light inline <b> emphasis; these are trusted, static,
 // author-controlled strings rendered with set:html.
 const indItems = t.raw<string[]>('audience.individuals.items');
@@ -37,6 +38,7 @@ const bizItems = t.raw<string[]>('audience.business.items');
             <span class="price-per">{t('audience.individuals.period')}</span>
           </div>
           <p class="price-sub">{t('audience.individuals.tagline')}</p>
+          <p class="price-vat">{t('audience.vatNote')}</p>
           <ul class="price-list">
             {
               indItems.map((item) => (
@@ -68,6 +70,7 @@ const bizItems = t.raw<string[]>('audience.business.items');
             <span class="price-per">{t('audience.business.period')}</span>
           </div>
           <p class="price-sub" set:html={t('audience.business.annual')} />
+          <p class="price-vat">{t('audience.vatNote')}</p>
           <ul class="price-list">
             {
               bizItems.map((item) => (
@@ -85,7 +88,7 @@ const bizItems = t.raw<string[]>('audience.business.items');
     </div>
 
     <p class="roadmap-note reveal">
-      {t('audience.roadmap')}<a class="roadmap-link" href={BUSINESS_URL}
+      {t('audience.roadmap')}<a class="roadmap-link" href={localizedPath(lang, '/business')}
         >{t('audience.roadmapLink')}</a
       >{t('audience.roadmapAfter')}
     </p>

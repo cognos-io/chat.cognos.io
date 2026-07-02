@@ -2,7 +2,7 @@
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
 import { SIGN_IN_URL, SIGN_UP_URL } from '../config';
-import { homeAnchor, type Lang, type Translator } from '../i18n/ui';
+import { homeAnchor, localizedPath, type Lang, type Translator } from '../i18n/ui';
 
 interface Props {
   t: Translator;
@@ -34,6 +34,7 @@ const anchor = (hash: string) => homeAnchor(lang, path, hash);
         <li><a class="nav-link" href={anchor('#features')}>{t('nav.features')}</a></li>
         <li><a class="nav-link" href={anchor('#audience')}>{t('nav.pricing')}</a></li>
         <li><a class="nav-link" href={anchor('#security')}>{t('nav.security')}</a></li>
+        <li><a class="nav-link" href={localizedPath(lang, '/business')}>{t('nav.business')}</a></li>
       </ul>
     </div>
 

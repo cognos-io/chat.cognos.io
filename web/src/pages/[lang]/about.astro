@@ -1,0 +1,13 @@
+---
+// Prefixed locales: /de/about, /fr/about, …
+import AboutPage from '../../components/AboutPage.astro';
+import { nonDefaultLocales, type Lang } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return nonDefaultLocales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params as { lang: Lang };
+---
+
+<AboutPage lang={lang} />
