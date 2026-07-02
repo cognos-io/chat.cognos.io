@@ -23,3 +23,7 @@ go.work
 
 # Don't include the pb_data directory
 pb_data/
+
+# rapid (property testing) failure-reproduction artifacts are machine/time
+# specific — regenerated on failure, never committed
+testdata/rapid/
