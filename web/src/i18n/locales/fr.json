@@ -259,18 +259,47 @@
     },
     "contact": {
       "metaTitle": "Contact — Cognos",
-      "metaDescription": "Contactez l'équipe Cognos.",
+      "metaDescription": "Une question sur le chiffrement, un déploiement en entreprise ou une découverte dans le protocole — voici comment joindre l'équipe Cognos.",
       "eyebrow": "Contact",
-      "title": "Contactez-nous",
-      "lead": "Des questions sur la confidentialité, les offres ou l'arrivée de Cognos dans votre équipe ? Nous serions ravis de vous lire.",
-      "placeholder": "Ceci est un espace réservé. Un formulaire de contact complet arrive bientôt.",
-      "sections": [
+      "title": "Parlez à un humain, pas à une file de tickets.",
+      "lead": "Une question sur le chiffrement, un déploiement en entreprise ou une découverte dans le protocole — voici comment nous joindre.",
+      "channels": [
         {
-          "heading": "Équipes et entreprises",
-          "body": "Besoin d'une connexion unique ou d'un hébergement privé pour votre organisation ? Dites-nous ce que vous cherchez et nous vous aiderons à démarrer."
+          "title": "Support général",
+          "body": "Questions de compte, de facturation ou d'application. Nous répondons sous un jour ouvré."
+        },
+        {
+          "title": "Business & entreprises",
+          "body": "Déploiement sur site, SSO et offres pour équipes."
+        },
+        {
+          "title": "Signalement de sécurité",
+          "body": "Vous avez trouvé une vulnérabilité ? Nous menons un programme de divulgation rémunéré."
+        },
+        {
+          "title": "Presse",
+          "body": "Interviews, briefings et ressources médias."
         }
       ],
-      "cta": "Écrivez-nous"
+      "pgp": "PGP disponible",
+      "location": {
+        "title": "Zurich, Suisse",
+        "body": "Cognos AG · Une société suisse. Vos conversations restent en Suisse ou en Europe — c'est vous qui choisissez."
+      },
+      "hours": {
+        "title": "Horaires",
+        "body": "Du lundi au vendredi, 9h00–18h00 CET. Les signalements de sécurité sont surveillés en continu."
+      },
+      "form": {
+        "heading": "Envoyer un message",
+        "note": "Ce formulaire ouvre votre propre application d'e-mail — rien ne transite par ce site ni n'y est conservé.",
+        "name": "Nom",
+        "email": "E-mail",
+        "topic": "Sujet",
+        "message": "Message",
+        "submit": "Envoyer le message",
+        "footnote": "De votre boîte mail à la nôtre · jamais utilisé pour entraîner quoi que ce soit"
+      }
     }
   }
 }

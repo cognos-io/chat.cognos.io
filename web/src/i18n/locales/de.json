@@ -259,18 +259,47 @@
     },
     "contact": {
       "metaTitle": "Kontakt — Cognos",
-      "metaDescription": "Nimm Kontakt mit dem Cognos-Team auf.",
+      "metaDescription": "Fragen zur Verschlüsselung, ein Business-Deployment oder etwas, das dir im Protokoll aufgefallen ist — so erreichst du das Cognos-Team.",
       "eyebrow": "Kontakt",
-      "title": "Melde dich",
-      "lead": "Fragen zu Privatsphäre, Tarifen oder dazu, Cognos in dein Team zu holen? Wir freuen uns, von dir zu hören.",
-      "placeholder": "Das ist ein Platzhalter. Ein vollständiges Kontaktformular ist bald da.",
-      "sections": [
+      "title": "Sprich mit einem Menschen, nicht mit einer Ticket-Warteschlange.",
+      "lead": "Ob eine Frage zur Verschlüsselung, ein Business-Deployment oder etwas, das dir im Protokoll aufgefallen ist — so erreichst du uns.",
+      "channels": [
         {
-          "heading": "Teams & Unternehmen",
-          "body": "Brauchst du Einmal-Anmeldung oder private Server für deine Organisation? Sag uns, was du suchst, und wir helfen dir bei der Einrichtung."
+          "title": "Allgemeiner Support",
+          "body": "Fragen zu Konto, Abrechnung oder App. Wir antworten innerhalb eines Werktags."
+        },
+        {
+          "title": "Business & Enterprise",
+          "body": "On-Prem-Deployment, SSO und Team-Tarife."
+        },
+        {
+          "title": "Sicherheitsmeldung",
+          "body": "Eine Schwachstelle gefunden? Wir betreiben ein bezahltes Disclosure-Programm."
+        },
+        {
+          "title": "Presse",
+          "body": "Interviews, Briefings und Medienmaterial."
         }
       ],
-      "cta": "Melde dich"
+      "pgp": "PGP verfügbar",
+      "location": {
+        "title": "Zürich, Schweiz",
+        "body": "Cognos AG · Ein Schweizer Unternehmen. Deine Chats bleiben in der Schweiz oder in Europa — du entscheidest."
+      },
+      "hours": {
+        "title": "Erreichbarkeit",
+        "body": "Montag–Freitag, 9:00–18:00 Uhr MEZ. Sicherheitsmeldungen werden laufend überwacht."
+      },
+      "form": {
+        "heading": "Nachricht senden",
+        "note": "Dieses Formular öffnet deine eigene E-Mail-App — nichts läuft über diese Website oder wird hier gespeichert.",
+        "name": "Name",
+        "email": "E-Mail",
+        "topic": "Thema",
+        "message": "Nachricht",
+        "submit": "Nachricht senden",
+        "footnote": "Von deinem Postfach direkt zu uns · wird nie für Training verwendet"
+      }
     }
   }
 }

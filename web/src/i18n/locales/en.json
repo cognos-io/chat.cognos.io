@@ -259,18 +259,47 @@
     },
     "contact": {
       "metaTitle": "Contact — Cognos",
-      "metaDescription": "Get in touch with the Cognos team.",
-      "eyebrow": "Contact",
-      "title": "Get in touch",
-      "lead": "Questions about privacy, plans, or bringing Cognos to your team? We'd love to hear from you.",
-      "placeholder": "This is a placeholder. A full contact form is on the way.",
-      "sections": [
+      "metaDescription": "Questions about the encryption, a business deployment, or something you found in the protocol — here's how to reach the Cognos team.",
+      "eyebrow": "Get in touch",
+      "title": "Talk to a human, not a ticket queue.",
+      "lead": "Whether it's a question about the encryption, a business deployment, or something you found in the protocol — here's how to reach us.",
+      "channels": [
         {
-          "heading": "Teams & business",
-          "body": "Need single sign-on or private hosting for your organisation? Tell us what you're looking for and we'll help you get set up."
+          "title": "General support",
+          "body": "Account, billing, or app questions. We reply within one business day."
+        },
+        {
+          "title": "Business & enterprise",
+          "body": "On-prem deployment, SSO, and team plans."
+        },
+        {
+          "title": "Security disclosure",
+          "body": "Found a vulnerability? We run a paid disclosure programme."
+        },
+        {
+          "title": "Press",
+          "body": "Interviews, briefings, and media assets."
         }
       ],
-      "cta": "Get in touch"
+      "pgp": "PGP available",
+      "location": {
+        "title": "Zurich, Switzerland",
+        "body": "Cognos AG · A Swiss company. Your chats are kept in Switzerland or Europe — you choose."
+      },
+      "hours": {
+        "title": "Hours",
+        "body": "Monday–Friday, 9:00–18:00 CET. Security reports are monitored continuously."
+      },
+      "form": {
+        "heading": "Send a message",
+        "note": "This form opens your own email app — nothing is sent through or stored on this website.",
+        "name": "Name",
+        "email": "Email",
+        "topic": "Topic",
+        "message": "Message",
+        "submit": "Send message",
+        "footnote": "From your inbox to ours · never used to train anything"
+      }
     }
   }
 }

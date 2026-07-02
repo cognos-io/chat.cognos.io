@@ -259,18 +259,47 @@
     },
     "contact": {
       "metaTitle": "Contacto — Cognos",
-      "metaDescription": "Ponte en contacto con el equipo de Cognos.",
+      "metaDescription": "Dudas sobre el cifrado, un despliegue para tu empresa o algo que has encontrado en el protocolo: así puedes contactar con el equipo de Cognos.",
       "eyebrow": "Contacto",
-      "title": "Ponte en contacto",
-      "lead": "¿Preguntas sobre privacidad, planes o llevar Cognos a tu equipo? Nos encantaría saber de ti.",
-      "placeholder": "Esto es un marcador de posición. Pronto habrá un formulario de contacto completo.",
-      "sections": [
+      "title": "Habla con una persona, no con una cola de tickets.",
+      "lead": "Ya sea una duda sobre el cifrado, un despliegue para tu empresa o algo que has encontrado en el protocolo: así puedes contactarnos.",
+      "channels": [
         {
-          "heading": "Equipos y empresas",
-          "body": "¿Necesitas inicio de sesión único o alojamiento privado para tu organización? Cuéntanos qué buscas y te ayudaremos a empezar."
+          "title": "Soporte general",
+          "body": "Dudas sobre la cuenta, la facturación o la aplicación. Respondemos en un día laborable."
+        },
+        {
+          "title": "Empresas",
+          "body": "Despliegue on-prem, SSO y planes para equipos."
+        },
+        {
+          "title": "Aviso de seguridad",
+          "body": "¿Has encontrado una vulnerabilidad? Tenemos un programa de divulgación remunerado."
+        },
+        {
+          "title": "Prensa",
+          "body": "Entrevistas, briefings y material para medios."
         }
       ],
-      "cta": "Escríbenos"
+      "pgp": "PGP disponible",
+      "location": {
+        "title": "Zúrich, Suiza",
+        "body": "Cognos AG · Una empresa suiza. Tus chats se quedan en Suiza o en Europa: tú eliges."
+      },
+      "hours": {
+        "title": "Horario",
+        "body": "De lunes a viernes, 9:00–18:00 CET. Los avisos de seguridad se supervisan de forma continua."
+      },
+      "form": {
+        "heading": "Envía un mensaje",
+        "note": "Este formulario abre tu propia aplicación de correo: nada pasa por esta web ni se guarda en ella.",
+        "name": "Nombre",
+        "email": "Correo electrónico",
+        "topic": "Tema",
+        "message": "Mensaje",
+        "submit": "Enviar mensaje",
+        "footnote": "De tu correo al nuestro · nunca se usa para entrenar nada"
+      }
     }
   }
 }

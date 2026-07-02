@@ -259,18 +259,47 @@
     },
     "contact": {
       "metaTitle": "Contacto — Cognos",
-      "metaDescription": "Entra em contacto com a equipa da Cognos.",
+      "metaDescription": "Questões sobre a encriptação, uma implementação empresarial ou algo que encontraste no protocolo — é assim que contactas a equipa Cognos.",
       "eyebrow": "Contacto",
-      "title": "Entra em contacto",
-      "lead": "Perguntas sobre privacidade, planos ou levar a Cognos para a tua equipa? Vamos adorar saber de ti.",
-      "placeholder": "Isto é um marcador de posição. Um formulário de contacto completo está a caminho.",
-      "sections": [
+      "title": "Fala com uma pessoa, não com uma fila de tickets.",
+      "lead": "Seja uma questão sobre a encriptação, uma implementação empresarial ou algo que encontraste no protocolo — é assim que nos contactas.",
+      "channels": [
         {
-          "heading": "Equipas e empresas",
-          "body": "Precisas de início de sessão único ou alojamento privado para a tua organização? Diz-nos o que procuras e ajudamos-te a começar."
+          "title": "Suporte geral",
+          "body": "Questões de conta, faturação ou da aplicação. Respondemos no prazo de um dia útil."
+        },
+        {
+          "title": "Empresas",
+          "body": "Implementação on-prem, SSO e planos para equipas."
+        },
+        {
+          "title": "Divulgação de segurança",
+          "body": "Encontraste uma vulnerabilidade? Temos um programa de divulgação remunerado."
+        },
+        {
+          "title": "Imprensa",
+          "body": "Entrevistas, briefings e materiais para os média."
         }
       ],
-      "cta": "Entra em contacto"
+      "pgp": "PGP disponível",
+      "location": {
+        "title": "Zurique, Suíça",
+        "body": "Cognos AG · Uma empresa suíça. As tuas conversas ficam na Suíça ou na Europa — tu é que escolhes."
+      },
+      "hours": {
+        "title": "Horário",
+        "body": "De segunda a sexta, 9:00–18:00 CET. Os relatórios de segurança são monitorizados continuamente."
+      },
+      "form": {
+        "heading": "Envia uma mensagem",
+        "note": "Este formulário abre a tua própria aplicação de e-mail — nada passa por este site nem fica aqui guardado.",
+        "name": "Nome",
+        "email": "E-mail",
+        "topic": "Tema",
+        "message": "Mensagem",
+        "submit": "Enviar mensagem",
+        "footnote": "Da tua caixa de correio para a nossa · nunca usado para treinar nada"
+      }
     }
   }
 }

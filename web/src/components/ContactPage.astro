@@ -1,0 +1,154 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from './Navbar.astro';
+import Footer from './Footer.astro';
+import Icon from './Icon.astro';
+import { CONTACT_EMAILS } from '../config';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const base = 'pages.contact';
+
+interface Channel {
+  title: string;
+  body: string;
+}
+// Copy comes from the catalog; icon + address are locale-independent and
+// zipped by position (same pattern as Features.astro).
+const channels = t.raw<Channel[]>(`${base}.channels`);
+const channelMeta = [
+  { icon: 'LifeBuoy', email: CONTACT_EMAILS.support, pgp: false },
+  { icon: 'Building2', email: CONTACT_EMAILS.sales, pgp: false },
+  { icon: 'ShieldAlert', email: CONTACT_EMAILS.security, pgp: true },
+  { icon: 'Newspaper', email: CONTACT_EMAILS.press, pgp: false },
+] as const;
+---
+
+<BaseLayout
+  lang={lang}
+  title={t(`${base}.metaTitle`)}
+  description={t(`${base}.metaDescription`)}
+  path="/contact"
+>
+  <Navbar t={t} lang={lang} path="/contact" />
+  <main class="text-page contact-page">
+    <header class="text-page__hero">
+      <div class="wrap">
+        <div class="text-page__hero-copy reveal">
+          <span class="eyebrow text-brand">{t(`${base}.eyebrow`)}</span>
+          <h1 class="text-page__title">{t(`${base}.title`)}</h1>
+          <p class="text-page__lead">{t(`${base}.lead`)}</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="text-page__section">
+      <div class="wrap contact-grid">
+        <div class="reveal">
+          <div class="contact-cards">
+            {
+              channels.map((channel, i) => (
+                <article class="contact-card">
+                  <span class="ficon">
+                    <Icon name={channelMeta[i].icon} size={20} />
+                  </span>
+                  <div>
+                    <h3>{channel.title}</h3>
+                    <p>{channel.body}</p>
+                    <p class="contact-card__mailrow">
+                      <a class="contact-card__mail" href={`mailto:${channelMeta[i].email}`}>
+                        <Icon name="Mail" size={13} /> {channelMeta[i].email}
+                      </a>
+                      {channelMeta[i].pgp && (
+                        <span class="contact-card__pgp">
+                          <Icon name="KeyRound" size={13} /> {t(`${base}.pgp`)}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </article>
+              ))
+            }
+          </div>
+
+          <dl class="contact-facts">
+            <div class="contact-fact">
+              <span class="contact-fact__icon"><Icon name="MapPin" size={18} /></span>
+              <div>
+                <dt>{t(`${base}.location.title`)}</dt>
+                <dd>{t(`${base}.location.body`)}</dd>
+              </div>
+            </div>
+            <div class="contact-fact">
+              <span class="contact-fact__icon"><Icon name="Clock" size={18} /></span>
+              <div>
+                <dt>{t(`${base}.hours.title`)}</dt>
+                <dd>{t(`${base}.hours.body`)}</dd>
+              </div>
+            </div>
+          </dl>
+        </div>
+
+        <aside class="contact-form-card reveal">
+          <h2>{t(`${base}.form.heading`)}</h2>
+          <p class="contact-form__note">{t(`${base}.form.note`)}</p>
+          <form
+            class="contact-form"
+            data-emails={JSON.stringify(channelMeta.map((c) => c.email))}
+          >
+            <label class="contact-field">
+              <span>{t(`${base}.form.name`)}</span>
+              <input name="name" type="text" required autocomplete="name" />
+            </label>
+            <label class="contact-field">
+              <span>{t(`${base}.form.email`)}</span>
+              <input name="email" type="email" required autocomplete="email" />
+            </label>
+            <label class="contact-field">
+              <span>{t(`${base}.form.topic`)}</span>
+              <span class="contact-select">
+                <select name="topic">
+                  {channels.map((channel, i) => <option value={i}>{channel.title}</option>)}
+                </select>
+                <Icon name="ChevronDown" size={16} />
+              </span>
+            </label>
+            <label class="contact-field">
+              <span>{t(`${base}.form.message`)}</span>
+              <textarea name="message" rows="5" required></textarea>
+            </label>
+            <button class="btn btn-primary btn-lg contact-form__submit" type="submit">
+              <Icon name="Send" size={17} /> {t(`${base}.form.submit`)}
+            </button>
+            <p class="contact-form__footnote">
+              <Icon name="Lock" size={13} /> {t(`${base}.form.footnote`)}
+            </p>
+          </form>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <Footer t={t} lang={lang} path="/contact" />
+</BaseLayout>
+
+<script>
+  // The site is static, so "send" composes the message in the visitor's own
+  // email app — nothing passes through (or is stored on) this website. The
+  // topic select routes to the matching team address.
+  const form = document.querySelector<HTMLFormElement>('.contact-form');
+  form?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const emails: string[] = JSON.parse(form.dataset.emails ?? '[]');
+    const data = new FormData(form);
+    const topic = form.querySelector<HTMLSelectElement>('select[name="topic"]');
+    const to = emails[Number(data.get('topic'))] ?? emails[0];
+    const label = topic?.selectedOptions[0]?.textContent?.trim() ?? '';
+    const subject = `[${label}] ${data.get('name')}`;
+    const body = `${data.get('message')}\n\n— ${data.get('name')} <${data.get('email')}>`;
+    window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  });
+</script>

@@ -1,14 +1,11 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import Navbar from './Navbar.astro';
-import Footer from './Footer.astro';
-import { BUSINESS_URL } from '../config';
-import { useTranslations, type Lang } from '../i18n/ui';
+import TextPage from './TextPage.astro';
+import { localizedPath, useTranslations, type Lang } from '../i18n/ui';
 
 interface Props {
   lang: Lang;
   /** Which standalone page to render — keys live under `pages.<page>`. */
-  page: 'privacy' | 'terms' | 'contact';
+  page: 'privacy' | 'terms';
 }
 const { lang, page } = Astro.props;
 const t = useTranslations(lang);
@@ -20,45 +17,50 @@ interface Section {
   body: string;
 }
 const sections = t.raw<Section[]>(`${base}.sections`) ?? [];
-// The contact page carries a call-to-action; the legal pages do not.
-const cta = page === 'contact' ? t(`${base}.cta`) : null;
+const legalTabs = [
+  {
+    label: t('pages.privacy.title'),
+    href: localizedPath(lang, '/privacy'),
+    current: page === 'privacy',
+  },
+  {
+    label: t('pages.terms.title'),
+    href: localizedPath(lang, '/terms'),
+    current: page === 'terms',
+  },
+];
+const asideItems = sections.map((section, index) => ({
+  label: section.heading,
+  href: `#section-${index + 1}`,
+}));
+const navLabel = t(`${base}.eyebrow`);
 ---
 
-<BaseLayout
+<TextPage
   lang={lang}
   title={t(`${base}.metaTitle`)}
   description={t(`${base}.metaDescription`)}
+  heading={t(`${base}.title`)}
   path={path}
+  eyebrow={t(`${base}.eyebrow`)}
+  lead={t(`${base}.lead`)}
+  navLabel={navLabel}
+  tabs={legalTabs}
+  asideItems={asideItems}
+  t={t}
 >
-  <Navbar t={t} lang={lang} path={path} />
-  <main>
-    <section class="sec-pad" id="top">
-      <div class="wrap wrap--prose">
-        <div class="page-head reveal">
-          <span class="eyebrow text-brand">{t(`${base}.eyebrow`)}</span>
-          <h1 class="page-h mt-100">{t(`${base}.title`)}</h1>
-          <p class="lead-copy">{t(`${base}.lead`)}</p>
-          <p class="page-note">{t(`${base}.placeholder`)}</p>
-        </div>
-        <div class="prose">
-          {
-            sections.map((s) => (
-              <section class="prose-block reveal">
-                <h2>{s.heading}</h2>
-                <p>{s.body}</p>
-              </section>
-            ))
-          }
-        </div>
-        {
-          cta && (
-            <a class="btn btn-primary btn-lg page-cta reveal" href={BUSINESS_URL}>
-              {cta}
-            </a>
-          )
-        }
-      </div>
-    </section>
-  </main>
-  <Footer t={t} lang={lang} path={path} />
-</BaseLayout>
+  <aside class="text-page__callout">
+    <strong>{t(`${base}.placeholder`)}</strong>
+  </aside>
+  {
+    sections.map((s, index) => (
+      <section id={`section-${index + 1}`}>
+        <h2>
+          <span class="text-page__section-number">{index + 1}</span>
+          {s.heading}
+        </h2>
+        <p>{s.body}</p>
+      </section>
+    ))
+  }
+</TextPage>

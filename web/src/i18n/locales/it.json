@@ -259,18 +259,47 @@
     },
     "contact": {
       "metaTitle": "Contatti — Cognos",
-      "metaDescription": "Mettiti in contatto con il team di Cognos.",
+      "metaDescription": "Domande sulla cifratura, un deployment aziendale o qualcosa che hai trovato nel protocollo — ecco come raggiungere il team di Cognos.",
       "eyebrow": "Contatti",
-      "title": "Scrivici",
-      "lead": "Domande su privacy, piani o su come portare Cognos nel tuo team? Ci farebbe piacere sentirti.",
-      "placeholder": "Questo è un segnaposto. Un modulo di contatto completo sta arrivando.",
-      "sections": [
+      "title": "Parla con una persona, non con una coda di ticket.",
+      "lead": "Che sia una domanda sulla cifratura, un deployment aziendale o qualcosa che hai trovato nel protocollo — ecco come raggiungerci.",
+      "channels": [
         {
-          "heading": "Team e aziende",
-          "body": "Ti serve l'accesso unico o l'hosting privato per la tua organizzazione? Dicci cosa cerchi e ti aiuteremo a iniziare."
+          "title": "Supporto generale",
+          "body": "Domande su account, fatturazione o app. Rispondiamo entro un giorno lavorativo."
+        },
+        {
+          "title": "Business e aziende",
+          "body": "Deployment on-prem, SSO e piani per team."
+        },
+        {
+          "title": "Segnalazioni di sicurezza",
+          "body": "Hai trovato una vulnerabilità? Abbiamo un programma di divulgazione retribuito."
+        },
+        {
+          "title": "Stampa",
+          "body": "Interviste, briefing e materiali per i media."
         }
       ],
-      "cta": "Scrivici"
+      "pgp": "PGP disponibile",
+      "location": {
+        "title": "Zurigo, Svizzera",
+        "body": "Cognos AG · Un'azienda svizzera. Le tue chat restano in Svizzera o in Europa — scegli tu."
+      },
+      "hours": {
+        "title": "Orari",
+        "body": "Dal lunedì al venerdì, 9:00–18:00 CET. Le segnalazioni di sicurezza sono monitorate continuamente."
+      },
+      "form": {
+        "heading": "Invia un messaggio",
+        "note": "Questo modulo apre la tua app di posta — nulla passa da questo sito né vi viene salvato.",
+        "name": "Nome",
+        "email": "E-mail",
+        "topic": "Argomento",
+        "message": "Messaggio",
+        "submit": "Invia messaggio",
+        "footnote": "Dalla tua casella di posta alla nostra · mai usato per addestrare nulla"
+      }
     }
   }
 }

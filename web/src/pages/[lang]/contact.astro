@@ -1,6 +1,6 @@
 ---
 // Prefixed locales: /de/contact, /fr/contact, …
-import LegalPage from '../../components/LegalPage.astro';
+import ContactPage from '../../components/ContactPage.astro';
 import { nonDefaultLocales, type Lang } from '../../i18n/ui';
 
 export function getStaticPaths() {
@@ -10,4 +10,4 @@ export function getStaticPaths() {
 const { lang } = Astro.params as { lang: Lang };
 ---
 
-<LegalPage lang={lang} page="contact" />
+<ContactPage lang={lang} />
