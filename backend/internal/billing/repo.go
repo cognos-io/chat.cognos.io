@@ -96,10 +96,31 @@ func (r *PocketBaseRepo) RecordUsage(record UsageRecord) error {
 			if err != nil {
 				return err
 			}
+
+			// Re-read the CURRENT balance inside the transaction and apply the
+			// usage cost as a delta. The BalanceAfterMicroRappen the caller
+			// precomputed comes from a state snapshot taken before the provider
+			// call — two concurrent completions carrying the same snapshot would
+			// otherwise each persist the same absolute value and lose one
+			// deduction.
+			currentMicro := int64(billingRecord.GetInt("balance_microrappen"))
+			currentRappen := int64(billingRecord.GetInt("balance_rappen"))
+			// Legacy rows predate the micro-rappen column; derive it from the
+			// rappen balance (mirrors StateForUser).
+			if currentMicro == 0 && currentRappen > 0 {
+				currentMicro = currentRappen * MicroRappenPerRappen
+			}
+			balanceAfterMicro := currentMicro - record.UserCostMicroRappen
+			balanceAfterRappen := FloorRappenFromMicro(balanceAfterMicro)
+
+			// The ledger row records the actually-applied before/after values.
+			record.BalanceAfterMicroRappen = &balanceAfterMicro
+			record.BalanceAfterRappen = &balanceAfterRappen
+
 			// balance_microrappen is the precise source of truth; balance_rappen
 			// is the floored display projection (never overstates remaining).
-			billingRecord.Set("balance_microrappen", *record.BalanceAfterMicroRappen)
-			billingRecord.Set("balance_rappen", FloorRappenFromMicro(*record.BalanceAfterMicroRappen))
+			billingRecord.Set("balance_microrappen", balanceAfterMicro)
+			billingRecord.Set("balance_rappen", balanceAfterRappen)
 			if err := txApp.Save(billingRecord); err != nil {
 				return err
 			}

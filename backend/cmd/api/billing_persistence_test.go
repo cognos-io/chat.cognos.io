@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
@@ -372,6 +374,191 @@ func TestCompletionsDebitRealisticSubRappenTurnFromTrialBalance(t *testing.T) {
 	}
 
 	scenario.Test(t)
+}
+
+// TestPocketBaseBillingRepoRecordUsageAppliesDeltaInsideTransaction pins the
+// concurrency-safe deduction semantics: RecordUsage must re-read the balance
+// inside its transaction and subtract the usage cost from the CURRENT balance,
+// not persist the absolute BalanceAfterMicroRappen precomputed from a stale
+// snapshot. The ledger row must record the actually-applied before/after.
+func TestPocketBaseBillingRepoRecordUsageAppliesDeltaInsideTransaction(t *testing.T) {
+	t.Parallel()
+
+	staleAfterMicro := int64(999_000_000) // deliberately wrong snapshot value
+	staleAfterRappen := int64(999)
+
+	testCases := []struct {
+		name string
+		// seeded user_billing row
+		seedRappen int64
+		seedMicro  int64
+		// usage being recorded
+		costMicro int64
+		// expected persisted balances
+		wantMicro  int64
+		wantRappen int64
+	}{
+		{
+			name:       "deducts cost from current balance not snapshot",
+			seedRappen: 150,
+			seedMicro:  150_000_000,
+			costMicro:  12_200_000,
+			wantMicro:  137_800_000,
+			wantRappen: 137, // floored display projection
+		},
+		{
+			name:       "legacy row derives micro balance from rappen",
+			seedRappen: 200,
+			seedMicro:  0, // pre-micro-rappen row
+			costMicro:  500_000,
+			wantMicro:  199_500_000,
+			wantRappen: 199,
+		},
+		{
+			name:       "balance may go negative but display floors at zero",
+			seedRappen: 0,
+			seedMicro:  300_000,
+			costMicro:  1_000_000,
+			wantMicro:  -700_000,
+			wantRappen: 0,
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			app := setupTestApp(t)
+			defer app.Cleanup()
+
+			billingRecord, err := app.FindFirstRecordByData("user_billing", "user_id", "uvi8zmr78j9y5hz")
+			if err != nil {
+				t.Fatalf("FindFirstRecordByData(user_billing) error = %v", err)
+			}
+			billingRecord.Set("plan_type", string(billing.PlanTypeTrial))
+			billingRecord.Set("balance_rappen", tc.seedRappen)
+			billingRecord.Set("balance_microrappen", tc.seedMicro)
+			if err := app.Save(billingRecord); err != nil {
+				t.Fatalf("Save(user_billing) error = %v", err)
+			}
+
+			repo := billing.NewPocketBaseRepo(app)
+			if err := repo.RecordUsage(billing.UsageRecord{
+				UserID:                  "uvi8zmr78j9y5hz",
+				EventID:                 fmt.Sprintf("evt-delta-%d", i),
+				ModelID:                 "llama-3-3-infomaniak",
+				PlanType:                billing.PlanTypeTrial,
+				Type:                    billing.UsageTransactionType,
+				AmountMicroRappen:       -tc.costMicro,
+				UserCostMicroRappen:     tc.costMicro,
+				UserCostRappen:          billing.CeilRappenFromMicro(tc.costMicro),
+				AmountRappen:            -billing.CeilRappenFromMicro(tc.costMicro),
+				FXRateUSDCHF:            1,
+				BalanceAfterRappen:      &staleAfterRappen,
+				BalanceAfterMicroRappen: &staleAfterMicro,
+			}); err != nil {
+				t.Fatalf("RecordUsage() error = %v", err)
+			}
+
+			got, err := app.FindFirstRecordByData("user_billing", "user_id", "uvi8zmr78j9y5hz")
+			if err != nil {
+				t.Fatalf("FindFirstRecordByData(user_billing) error = %v", err)
+			}
+			if gotMicro := int64(got.GetInt("balance_microrappen")); gotMicro != tc.wantMicro {
+				t.Errorf("balance_microrappen = %d, want %d", gotMicro, tc.wantMicro)
+			}
+			if gotRappen := int64(got.GetInt("balance_rappen")); gotRappen != tc.wantRappen {
+				t.Errorf("balance_rappen = %d, want %d", gotRappen, tc.wantRappen)
+			}
+
+			// The ledger row must reflect the ACTUAL applied after-balance, not
+			// the stale snapshot the caller precomputed.
+			tx, err := app.FindFirstRecordByData("balance_transactions", "event_id", fmt.Sprintf("evt-delta-%d", i))
+			if err != nil {
+				t.Fatalf("FindFirstRecordByData(balance_transactions) error = %v", err)
+			}
+			if gotAfter := int64(tx.GetInt("balance_after_microrappen")); gotAfter != tc.wantMicro {
+				t.Errorf("balance_after_microrappen = %d, want %d", gotAfter, tc.wantMicro)
+			}
+			if gotAfter := int64(tx.GetInt("balance_after_rappen")); gotAfter != tc.wantRappen {
+				t.Errorf("balance_after_rappen = %d, want %d", gotAfter, tc.wantRappen)
+			}
+		})
+	}
+}
+
+// TestPocketBaseBillingRepoRecordUsageConcurrentDeductions is the race
+// regression: two completions that both snapshot the balance before the
+// provider call must still deduct BOTH costs. SQLite serialises the writes, so
+// this proves the in-transaction delta logic (not raw parallelism): every
+// concurrent caller carries the SAME stale snapshot, and the final balance must
+// still equal start - sum(costs).
+func TestPocketBaseBillingRepoRecordUsageConcurrentDeductions(t *testing.T) {
+	t.Parallel()
+
+	app := setupTestApp(t)
+	defer app.Cleanup()
+
+	const (
+		startMicro = int64(200_000_000)
+		costMicro  = int64(3_000_000)
+		workers    = 8
+	)
+
+	setUserBillingRecord(t, app, seedUserBillingRecordInput{
+		UserID:        "uvi8zmr78j9y5hz",
+		PlanType:      string(billing.PlanTypeTrial),
+		BalanceRappen: 200,
+	})
+
+	repo := billing.NewPocketBaseRepo(app)
+
+	// Every worker uses the same stale pre-call snapshot, exactly like two
+	// racing completion handlers would.
+	staleAfter := startMicro - costMicro
+	staleAfterRappen := billing.FloorRappenFromMicro(staleAfter)
+
+	var wg sync.WaitGroup
+	errs := make(chan error, workers)
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func(n int) {
+			defer wg.Done()
+			after := staleAfter
+			afterRappen := staleAfterRappen
+			errs <- repo.RecordUsage(billing.UsageRecord{
+				UserID:                  "uvi8zmr78j9y5hz",
+				EventID:                 fmt.Sprintf("evt-race-%d", n),
+				ModelID:                 "llama-3-3-infomaniak",
+				PlanType:                billing.PlanTypeTrial,
+				Type:                    billing.UsageTransactionType,
+				AmountMicroRappen:       -costMicro,
+				UserCostMicroRappen:     costMicro,
+				FXRateUSDCHF:            1,
+				BalanceAfterRappen:      &afterRappen,
+				BalanceAfterMicroRappen: &after,
+			})
+		}(i)
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("RecordUsage() error = %v", err)
+		}
+	}
+
+	got, err := app.FindFirstRecordByData("user_billing", "user_id", "uvi8zmr78j9y5hz")
+	if err != nil {
+		t.Fatalf("FindFirstRecordByData(user_billing) error = %v", err)
+	}
+	want := startMicro - int64(workers)*costMicro
+	if gotMicro := int64(got.GetInt("balance_microrappen")); gotMicro != want {
+		t.Errorf("balance_microrappen = %d, want %d (every concurrent deduction must apply)", gotMicro, want)
+	}
+	if gotRappen := int64(got.GetInt("balance_rappen")); gotRappen != billing.FloorRappenFromMicro(want) {
+		t.Errorf("balance_rappen = %d, want %d", gotRappen, billing.FloorRappenFromMicro(want))
+	}
 }
 
 type seedUserBillingRecordInput struct {
