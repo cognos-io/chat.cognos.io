@@ -120,8 +120,8 @@ export const routes: Routes = [
         canActivate: [featureFlagGuard],
         data: { title: 'Security & keys', featureFlag: 'security' },
         loadComponent: () =>
-          import('./pages/account/settings-placeholder.component').then(
-            (m) => m.SettingsPlaceholderComponent,
+          import('./pages/account/account-security.component').then(
+            (m) => m.AccountSecurityComponent,
           ),
       },
       {

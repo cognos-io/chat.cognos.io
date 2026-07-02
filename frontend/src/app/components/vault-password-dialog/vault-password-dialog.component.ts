@@ -22,32 +22,59 @@ import { LanguageSwitcherComponent } from '@app/components/language-switcher/lan
 
 import { VaultService } from '../../services/vault.service';
 
-// Plain-text "Emergency Kit" the user can download at onboarding. It is the
-// 1Password-style printable record of the one secret they must never lose.
-export function buildEmergencyKitText(accountKey: string, email?: string): string {
-  const lines = [
-    'COGNOS EMERGENCY KIT',
-    '',
-    'Your Account Key is the ONLY thing that can decrypt your data.',
-    'Store it somewhere safe and private — a password manager, or printed and',
-    'locked away. Anyone who has it can read your chats.',
-    '',
-  ];
-  if (email) {
-    lines.push(`Account: ${email}`);
+// Localised, ready-to-render strings for the Emergency Kit document. The kit is
+// the doc a user reads in a crisis, so it must be in their language; the pure
+// builder stays TranslocoService-free and testable by taking these in.
+export interface EmergencyKitStrings {
+  title: string;
+  intro: string;
+  keyLabel: string;
+  what: string;
+  lose: string;
+  footer: string;
+  // Already-interpolated "Account: user@example.com". Omit to leave it out.
+  account?: string;
+}
+
+// Resolve the Emergency Kit strings from the i18n catalogue at download time,
+// so both the vault dialog and the Security & keys page localise it the same way.
+export function emergencyKitStringsFrom(
+  transloco: TranslocoService,
+  email?: string,
+): EmergencyKitStrings {
+  return {
+    title: transloco.translate('dialogs.vaultPassword.kit.title'),
+    intro: transloco.translate('dialogs.vaultPassword.kit.intro'),
+    keyLabel: transloco.translate('dialogs.vaultPassword.kit.keyLabel'),
+    what: transloco.translate('dialogs.vaultPassword.kit.what'),
+    lose: transloco.translate('dialogs.vaultPassword.kit.lose'),
+    footer: transloco.translate('dialogs.vaultPassword.kit.footer'),
+    account: email
+      ? transloco.translate('dialogs.vaultPassword.kit.account', { email })
+      : undefined,
+  };
+}
+
+// Plain-text "Emergency Kit" the user can download at onboarding (and re-download
+// later from Security & keys). It is the 1Password-style printable record of the
+// one secret they must never lose.
+export function buildEmergencyKitText(
+  accountKey: string,
+  strings: EmergencyKitStrings,
+): string {
+  const lines = [strings.title, '', strings.intro, ''];
+  if (strings.account) {
+    lines.push(strings.account);
   }
   lines.push(
-    'Account Key:',
+    strings.keyLabel,
     accountKey,
     '',
-    'What it does:',
-    '- Unlocks your encrypted chats on a new device.',
-    '- Your password only signs you in; this key decrypts your data.',
+    strings.what,
     '',
-    'If you lose it:',
-    '- Cognos never stores your Account Key, so your data cannot be recovered.',
+    strings.lose,
     '',
-    'Cognos · https://cognos.io',
+    strings.footer,
   );
   return lines.join('\n');
 }
@@ -191,16 +218,29 @@ const validateUnlockForm = (
                   t('dialogs.vaultPassword.accountKeyRequired')
                 }}</span>
               }
+              <span class="vault-password-dialog__hint">{{
+                t('dialogs.vaultPassword.cantFindKey')
+              }}</span>
             </div>
           }
 
           @if (vaultService.isNewKeyPair()) {
             <label
               class="vault-password-dialog__checkbox-row vault-password-dialog__checkbox-row--acknowledge"
+              [class.vault-password-dialog__checkbox-row--disabled]="!savedActionDone()"
             >
-              <input formControlName="accountKeySaved" type="checkbox" />
+              <input
+                formControlName="accountKeySaved"
+                type="checkbox"
+                [attr.disabled]="savedActionDone() ? null : true"
+              />
               <span>{{ t('dialogs.vaultPassword.acknowledge') }}</span>
             </label>
+            @if (!savedActionDone()) {
+              <span class="vault-password-dialog__hint">{{
+                t('dialogs.vaultPassword.saveFirstHint')
+              }}</span>
+            }
             @if (vaultForm.hasError('accountKeySavedRequired')) {
               <span class="vault-password-dialog__error">{{
                 t('dialogs.vaultPassword.acknowledgeRequired')
@@ -402,6 +442,18 @@ const validateUnlockForm = (
       margin-top: var(--cog-space-025);
     }
 
+    .vault-password-dialog__checkbox-row--disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .vault-password-dialog__hint {
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+      text-wrap: pretty;
+    }
+
     .vault-password-dialog__error {
       color: var(--cog-danger);
       font-size: var(--cog-fs-caption);
@@ -447,6 +499,12 @@ export class VaultPasswordDialogComponent {
   // share / screenshots).
   readonly showAccountKey = signal(false);
 
+  // The Account Key can never be shown again after this dialog, so we refuse to
+  // let the user tick "I've saved it" until they have actually copied it or
+  // downloaded the Emergency Kit at least once. A single rushed click here is
+  // otherwise the difference between a customer and an unrecoverable account.
+  readonly savedActionDone = signal(false);
+
   readonly vaultForm = this.fb.group(
     {
       accountKey: [''],
@@ -466,9 +524,17 @@ export class VaultPasswordDialogComponent {
       return;
     }
 
-    const blob = new Blob([buildEmergencyKitText(accountKey)], {
-      type: 'text/plain;charset=utf-8',
-    });
+    const blob = new Blob(
+      [
+        buildEmergencyKitText(
+          accountKey,
+          emergencyKitStringsFrom(this._transloco, this.vaultService.accountEmail()),
+        ),
+      ],
+      {
+        type: 'text/plain;charset=utf-8',
+      },
+    );
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -477,6 +543,7 @@ export class VaultPasswordDialogComponent {
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
+    this.savedActionDone.set(true);
 
     this.toastService.notify({
       title: this._transloco.translate('dialogs.vaultPassword.kitDownloadedTitle'),
@@ -504,6 +571,8 @@ export class VaultPasswordDialogComponent {
       });
       return;
     }
+
+    this.savedActionDone.set(true);
 
     this.toastService.notify({
       title: this._transloco.translate('dialogs.vaultPassword.copiedTitle'),

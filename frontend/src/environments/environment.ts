@@ -15,7 +15,9 @@ export const environment = {
   // /account. Flip to true to ship a section (can graduate to per-user later).
   featureFlags: {
     usage: false,
-    security: false,
+    // Security & keys: real page (Emergency Kit re-download, password change,
+    // two-factor management). Shipped on.
+    security: true,
     team: false,
     notifications: false,
     // Encrypted projects (shared workspaces). Off until sharing (phase 2) is

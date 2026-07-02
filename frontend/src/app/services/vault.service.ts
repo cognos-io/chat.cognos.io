@@ -15,6 +15,7 @@ import {
   throwError,
 } from 'rxjs';
 
+import { TranslocoService } from '@jsverse/transloco';
 import setupWasm from 'argon2id/lib/setup';
 import { Base64 } from 'js-base64';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -131,6 +132,7 @@ export class VaultService {
   private readonly _cryptoService = inject(CryptoService);
   private readonly _authService = inject(AuthService);
   private readonly _trustedUnlockService = inject(TrustedUnlockService);
+  private readonly _transloco = inject(TranslocoService);
 
   readonly generatedAccountKey = signal<string | null>(null);
   readonly wasLocked = signal(false);
@@ -158,7 +160,7 @@ export class VaultService {
                 })),
                 catchError(() => {
                   this.unlockError.set(
-                    'Error creating your encrypted backup. Please try again.',
+                    this._transloco.translate('vault.errors.createBackup'),
                   );
                   return EMPTY;
                 }),
@@ -175,9 +177,7 @@ export class VaultService {
               }),
               map((keyPair) => ({ keyPair })),
               catchError(() => {
-                this.unlockError.set(
-                  'Error unlocking your encrypted backup. Please check your details and try again.',
-                );
+                this.unlockError.set(this._transloco.translate('vault.errors.unlock'));
                 return EMPTY;
               }),
             );
@@ -272,6 +272,14 @@ export class VaultService {
   keyPair = this.state.keyPair;
   isRestoring = this.state.isRestoring;
   keyPair$ = toObservable(this.keyPair);
+
+  // Whether the vault is currently unlocked (a decrypted key pair is in memory).
+  readonly isUnlocked = computed(() => !!this.keyPair());
+
+  // The signed-in account's email, surfaced for the Emergency Kit document.
+  readonly accountEmail = computed(
+    () => (this._authService.user()?.['email'] as string | undefined) ?? undefined,
+  );
 
   /**
    * Canonical fingerprint of the unlocked public key — base64(blake2b(publicKey)).

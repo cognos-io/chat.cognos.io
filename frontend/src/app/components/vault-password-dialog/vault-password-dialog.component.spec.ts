@@ -7,6 +7,7 @@ import { CognosToastService } from '@cognos/ui-angular';
 import { LanguageService } from '../../services/language.service';
 import { VaultService } from '../../services/vault.service';
 import {
+  EmergencyKitStrings,
   VaultPasswordDialogComponent,
   buildEmergencyKitText,
 } from './vault-password-dialog.component';
@@ -14,23 +15,33 @@ import {
 describe('buildEmergencyKitText', () => {
   const key = 'ABCD-EF12-3456-7890'; // gitleaks:allow — fake test value
 
-  it('includes the Account Key verbatim', () => {
-    expect(buildEmergencyKitText(key)).toContain(key);
+  const strings = (account?: string): EmergencyKitStrings => ({
+    title: 'COGNOS EMERGENCY KIT',
+    intro: 'Your Account Key is the only thing that can unlock your data.',
+    keyLabel: 'Account Key:',
+    what: 'What it does:\n- Unlocks your encrypted chats on a new device.',
+    lose: 'If you lose it:\n- We keep no copy, so your data cannot be recovered.',
+    footer: 'Cognos · https://cognos.io',
+    account,
   });
 
-  it('explains it is the sole decryption/recovery key and is unrecoverable', () => {
-    const text = buildEmergencyKitText(key).toLowerCase();
-    expect(text).toContain('account key');
-    expect(text).toContain('decrypt');
+  it('includes the Account Key verbatim', () => {
+    expect(buildEmergencyKitText(key, strings())).toContain(key);
+  });
+
+  it('composes the provided localised sections including the unrecoverable warning', () => {
+    const text = buildEmergencyKitText(key, strings());
+    expect(text).toContain('COGNOS EMERGENCY KIT');
+    expect(text).toContain('Account Key:');
     // The whole point of the kit: losing it means the data is gone.
     expect(text).toContain('cannot be recovered');
   });
 
-  it('includes the email when provided and omits the label when not', () => {
-    expect(buildEmergencyKitText(key, 'person@example.com')).toContain(
-      'person@example.com',
-    );
-    expect(buildEmergencyKitText(key)).not.toContain('Account:');
+  it('includes the account line when provided and omits it when not', () => {
+    expect(
+      buildEmergencyKitText(key, strings('Account: person@example.com')),
+    ).toContain('person@example.com');
+    expect(buildEmergencyKitText(key, strings())).not.toContain('Account:');
   });
 });
 
@@ -82,6 +93,7 @@ describe('VaultPasswordDialogComponent', () => {
             unlockError,
             unlockRequest$,
             clearUnlockError,
+            accountEmail: () => undefined,
           },
         },
         {

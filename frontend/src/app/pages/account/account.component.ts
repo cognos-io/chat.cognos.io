@@ -31,7 +31,6 @@ import {
   coerceAvatarColor,
   coerceAvatarIcon,
 } from '@app/interfaces/avatar';
-import { MfaSettingsComponent } from '@app/pages/account/mfa-settings.component';
 import { AuthService } from '@app/services/auth.service';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ConversationService } from '@app/services/conversation.service';
@@ -58,7 +57,6 @@ import { deriveProfileName } from '@app/utils/profile-identity';
     CognosToggleComponent,
     DataProcessingComponent,
     LanguageSwitcherComponent,
-    MfaSettingsComponent,
     SettingsPageComponent,
     ThemeSwitcherComponent,
     TranslocoModule,
@@ -200,50 +198,8 @@ import { deriveProfileName } from '@app/utils/profile-identity';
           </cog-button>
         </cog-card>
 
-        <cog-card
-          [heading]="t('account.password.title')"
-          [subtitle]="t('account.password.subtitle')"
-        >
-          <div class="account__fields">
-            <cog-field [label]="t('account.password.current')">
-              <cog-text-field
-                [ariaLabel]="t('account.password.current')"
-                type="password"
-                [value]="currentPassword()"
-                (valueChange)="currentPassword.set($event)"
-              />
-            </cog-field>
-            <cog-field [label]="t('account.password.new')">
-              <cog-text-field
-                [ariaLabel]="t('account.password.new')"
-                type="password"
-                [placeholder]="t('account.password.newPlaceholder')"
-                [value]="newPassword()"
-                (valueChange)="newPassword.set($event)"
-              />
-            </cog-field>
-          </div>
-
-          @if (passwordError()) {
-            <p class="account__error">{{ passwordError() }}</p>
-          }
-
-          <cog-button
-            card-actions
-            appearance="primary"
-            [disabled]="!canChangePassword()"
-            (click)="changePassword()"
-          >
-            {{
-              changingPassword()
-                ? t('account.password.changing')
-                : t('account.password.change')
-            }}
-          </cog-button>
-        </cog-card>
-
-        <!-- Two-factor authentication (rendered as account-style cards). -->
-        <app-mfa-settings />
+        <!-- Password change and two-factor authentication now live on the
+             Security & keys page (/account/security). -->
 
         <cog-card
           [heading]="t('account.data.title')"
@@ -534,17 +490,6 @@ export class AccountComponent {
 
   protected readonly saving = signal(false);
 
-  protected readonly currentPassword = signal('');
-  protected readonly newPassword = signal('');
-  protected readonly changingPassword = signal(false);
-  protected readonly passwordError = signal<string | null>(null);
-  protected readonly canChangePassword = computed(
-    () =>
-      !this.changingPassword() &&
-      this.currentPassword().length > 0 &&
-      this.newPassword().length >= 12,
-  );
-
   protected readonly newEmail = signal('');
   protected readonly requestingEmailChange = signal(false);
   protected readonly emailChangeError = signal<string | null>(null);
@@ -614,31 +559,6 @@ export class AccountComponent {
         },
         error: () => this.saving.set(false),
       });
-  }
-
-  changePassword(): void {
-    if (!this.canChangePassword()) {
-      return;
-    }
-
-    this.changingPassword.set(true);
-    this.passwordError.set(null);
-    this._auth.changePassword(this.currentPassword(), this.newPassword()).subscribe({
-      next: () => {
-        this.changingPassword.set(false);
-        this.currentPassword.set('');
-        this.newPassword.set('');
-        this._toast.notify({
-          title: this._transloco.translate('account.toasts.passwordChanged'),
-        });
-      },
-      error: () => {
-        this.changingPassword.set(false);
-        this.passwordError.set(
-          this._transloco.translate('account.errors.passwordChange'),
-        );
-      },
-    });
   }
 
   requestEmailChange(): void {
