@@ -34,6 +34,7 @@ import {
   CognosRedactedTextComponent,
   type CognosRedactedTextKind,
   type CognosRedactedTextLabels,
+  CognosToastService,
 } from '@cognos/ui-angular';
 
 import {
@@ -54,6 +55,7 @@ import {
   resolveOverlaps,
   tokenTypeCode,
 } from '@app/redaction';
+import { AuthService } from '@app/services/auth.service';
 import { BillingService } from '@app/services/billing.service';
 import { ComposerToolsService } from '@app/services/composer-tools.service';
 import { ConversationService } from '@app/services/conversation.service';
@@ -112,7 +114,38 @@ function escapeHtml(value: string): string {
       (drop)="onAttachmentDrop($event)"
       *transloco="let t"
     >
-      @if (billing.isSendingLocked()) {
+      @if (auth.needsEmailVerification()) {
+        <div class="message-form__locked-wrap">
+          <div class="message-form__locked" role="status">
+            <span class="message-form__locked-icon">
+              <cog-icon name="mail" [size]="18" tone="text-subtle" />
+            </span>
+            <span class="message-form__locked-copy">
+              <span class="message-form__locked-title">{{
+                t('chat.composer.verify.title')
+              }}</span>
+              <span class="message-form__locked-body">
+                {{ t('chat.composer.verify.body', { email: auth.email() }) }}
+              </span>
+            </span>
+            <span class="message-form__locked-actions">
+              <cog-button
+                appearance="primary"
+                icon="mail"
+                type="button"
+                [disabled]="emailResending()"
+                (click)="resendVerification()"
+              >
+                {{
+                  emailResending()
+                    ? t('chat.composer.verify.resending')
+                    : t('chat.composer.verify.resend')
+                }}
+              </cog-button>
+            </span>
+          </div>
+        </div>
+      } @else if (billing.isSendingLocked()) {
         <div class="message-form__locked-wrap">
           <div class="message-form__locked" role="status">
             <span class="message-form__locked-icon">
@@ -267,6 +300,7 @@ function escapeHtml(value: string): string {
               name="message-form"
               [placeholder]="t('chat.composer.placeholder')"
               [readOnly]="isStreaming()"
+              (keydown.enter)="onEnterKey($event)"
               (keydown.control.enter)="isMac ? undefined : sendMessage()"
               (keydown.meta.enter)="isMac ? sendMessage() : undefined"
               (mouseup)="onComposerMouseUp($event)"
@@ -1376,6 +1410,11 @@ export class MessageFormComponent {
   public readonly personaService = inject(PersonaService);
   public readonly modelService = inject(ModelService);
   public readonly billing = inject(BillingService);
+  public readonly auth = inject(AuthService);
+  private readonly _toast = inject(CognosToastService);
+
+  // True while a "resend verification email" request is in flight.
+  readonly emailResending = signal(false);
   // Composer tool state (image generation, …) — shared with the tools menu and
   // the model selector so toggling a tool drives send routing, model filtering
   // and the unsupported-model warning consistently.
@@ -1405,6 +1444,7 @@ export class MessageFormComponent {
     () =>
       this.modelService.selectedModel().isEligible &&
       !this.billing.isSendingLocked() &&
+      !this.auth.needsEmailVerification() &&
       !this.composerTools.selectedModelUnsupported() &&
       !this.composerTools.selectedModelTextIncompatible() &&
       !this.attachments.hasPending(),
@@ -1852,6 +1892,32 @@ export class MessageFormComponent {
     void this._router.navigate(['/pricing']);
   }
 
+  // Resend the email-verification link to the signed-in address. On success a
+  // toast confirms where to look; the composer unlocks by itself once the user
+  // clicks the link and the refreshed auth record reports `verified`.
+  resendVerification() {
+    if (this.emailResending()) {
+      return;
+    }
+    const email = this.auth.email();
+    if (!email) {
+      return;
+    }
+    this.emailResending.set(true);
+    this.auth.requestVerification(email).subscribe({
+      next: () => {
+        this.emailResending.set(false);
+        this._toast.notify({
+          title: this._transloco.translate('chat.composer.verify.sent'),
+          msg: this._transloco.translate('chat.composer.verify.sentBody', { email }),
+          tone: 'success',
+          icon: 'mail',
+        });
+      },
+      error: () => this.emailResending.set(false),
+    });
+  }
+
   toggleModelSelector() {
     this.modelSelectorOpen.update((open) => !open);
   }
@@ -1934,6 +2000,20 @@ export class MessageFormComponent {
       return;
     }
 
+    this.sendMessage();
+  }
+
+  // Enter sends; Shift+Enter inserts a newline (handled by the textarea's
+  // default, since Angular's `keydown.enter` only matches Enter with no
+  // modifiers). On mobile the on-screen Return key must stay a newline —
+  // sending there is the tap-target's job — so we leave the default alone.
+  // Skip while an IME composition is active (e.g. selecting a CJK candidate
+  // with Enter) so we never send a half-composed word.
+  onEnterKey(event: Event) {
+    if (this.isMobile() || (event as KeyboardEvent).isComposing) {
+      return;
+    }
+    event.preventDefault();
     this.sendMessage();
   }
 

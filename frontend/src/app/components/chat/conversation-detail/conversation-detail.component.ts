@@ -4,7 +4,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { TranslocoModule } from '@jsverse/transloco';
 
-import { CognosIconButtonComponent } from '@cognos/ui-angular';
+import {
+  CognosButtonComponent,
+  CognosIconButtonComponent,
+  CognosIconComponent,
+} from '@cognos/ui-angular';
 
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { ConversationService } from '@app/services/conversation.service';
@@ -21,7 +25,9 @@ import { MessageListComponent } from '../message-list/message-list.component';
     MessageFormComponent,
     MessageListComponent,
     LoadingIndicatorComponent,
+    CognosButtonComponent,
     CognosIconButtonComponent,
+    CognosIconComponent,
     TranslocoModule,
   ],
   template: `
@@ -50,6 +56,25 @@ import { MessageListComponent } from '../message-list/message-list.component';
             </div>
           }
         </div>
+
+        @if (messageService.sendFailed()) {
+          <div class="conversation-detail__retry" role="alert">
+            <cog-icon name="triangle-alert" [size]="18" tone="danger" />
+            <div class="conversation-detail__retry-copy">
+              <p class="conversation-detail__retry-title">
+                {{ t('chat.retry.title') }}
+              </p>
+              <p class="conversation-detail__retry-body">{{ t('chat.retry.body') }}</p>
+            </div>
+            <cog-button
+              appearance="default"
+              icon="rotate-cw"
+              (click)="messageService.retryFailedSend()"
+            >
+              {{ t('chat.retry.action') }}
+            </cog-button>
+          </div>
+        }
 
         <div class="conversation-detail__composer">
           <app-message-form></app-message-form>
@@ -90,6 +115,38 @@ import { MessageListComponent } from '../message-list/message-list.component';
       position: absolute;
       right: var(--cog-space-200);
       bottom: var(--cog-space-200);
+    }
+
+    .conversation-detail__retry {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-150);
+      width: 100%;
+      max-width: var(--chat-container-width);
+      margin: var(--cog-space-150) auto 0;
+      padding: var(--cog-space-150);
+      border: 1px solid var(--cog-danger-border);
+      border-radius: var(--cog-radius-md);
+      background: var(--cog-danger-bg);
+    }
+
+    .conversation-detail__retry-copy {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .conversation-detail__retry-title {
+      margin: 0;
+      color: var(--cog-text);
+      font-size: var(--cog-fs-body-sm);
+      font-weight: var(--cog-fw-semibold);
+    }
+
+    .conversation-detail__retry-body {
+      margin: var(--cog-space-025) 0 0;
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
     }
 
     .conversation-detail__composer {

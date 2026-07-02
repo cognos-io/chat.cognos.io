@@ -27,6 +27,9 @@ import { PaddleService } from '@app/services/paddle.service';
 const ACTIVATION_POLL_INTERVAL_MS = 2500;
 const ACTIVATION_POLL_MAX_ATTEMPTS = 40;
 
+// Below this remaining PAYG credit (in CHF) we show a low-balance nudge.
+const PAYG_LOW_BALANCE_CHF = 2;
+
 // BillingService is the frontend's single source of truth for the user's plan
 // state. It backs the trial pill/credit card, the locked-chat surfaces, and the
 // pricing page. The balance is shown to the user but is never authoritative —
@@ -64,6 +67,18 @@ export class BillingService {
   // Unlimited plans aren't billed per message, so per-model cost framing is
   // irrelevant and hidden for them.
   readonly isUnlimited = computed(() => this.planType() === 'unlimited');
+  // Pay-as-you-go: prepaid credit that rolls over. Unlike trial there is no
+  // seed denominator, so the sidebar shows the absolute balance and warns when
+  // it runs low.
+  readonly isPayg = computed(() => this.planType() === 'payg');
+  // Warn (but don't lock) when a PAYG balance drops below this many francs, so
+  // the user can top up before a send is refused.
+  readonly isPaygBalanceLow = computed(
+    () =>
+      this.isPayg() &&
+      this.balanceChf() > 0 &&
+      this.balanceChf() < PAYG_LOW_BALANCE_CHF,
+  );
 
   // Sending is locked when there's no active plan, or a trial whose credit is
   // spent (server said so this session, or the balance has reached zero).

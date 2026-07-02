@@ -210,6 +210,8 @@
     <ng-container *ngTemplateOutlet="navActions"></ng-container>
     @if (billing.isTrial()) {
       <app-trial-credit-card></app-trial-credit-card>
+    } @else if (billing.isPayg()) {
+      <app-payg-balance-card></app-payg-balance-card>
     }
     <app-sidebar-profile></app-sidebar-profile>
   </ng-template>

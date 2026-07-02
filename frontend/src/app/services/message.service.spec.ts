@@ -18,10 +18,12 @@ import {
   buildCompletionMessages,
   buildDeletedMessageData,
   isCompletionAbortError,
+  isEmailNotVerifiedError,
   messageTreeAccessors,
   parseCompletionBillingRestriction,
   reasoningDisablingEffort,
   regenerateContextPath,
+  removeStreamingAssistantMessage,
   removeStreamingCompletionMessages,
   resolveCompletionErrorMessage,
   resolveCompletionFailureMessage,
@@ -123,7 +125,7 @@ describe('isCompletionAbortError', () => {
 });
 
 describe('resolveCompletionErrorMessage', () => {
-  it('uses the structured trial exhaustion message for 402 responses', () => {
+  it('passes through the backend billing message for 402 responses', () => {
     const error = new HttpErrorResponse({
       status: 402,
       error: {
@@ -133,48 +135,37 @@ describe('resolveCompletionErrorMessage', () => {
       },
     });
 
-    expect(resolveCompletionErrorMessage(error)).toBe(
-      'Your free trial has been used up.',
-    );
-  });
-
-  it('uses the structured inactive-plan message for 402 responses', () => {
-    const error = new HttpErrorResponse({
-      status: 402,
-      error: {
-        error: 'INACTIVE',
-        message: 'Choose a plan to keep chatting.',
-        next_step: 'subscribe',
-      },
+    expect(resolveCompletionErrorMessage(error)).toEqual({
+      kind: 'literal',
+      value: 'Your free trial has been used up.',
     });
-
-    expect(resolveCompletionErrorMessage(error)).toBe(
-      'Choose a plan to keep chatting.',
-    );
   });
 
-  it('falls back to the legacy rate-limit copy for 429 responses', () => {
+  it('uses a friendlier localised key for 429 responses', () => {
     const error = new HttpErrorResponse({ status: 429 });
 
-    expect(resolveCompletionErrorMessage(error)).toBe(
-      'Rate limiting error, you are sending too many messages. Please wait a few seconds before sending another message.',
-    );
+    expect(resolveCompletionErrorMessage(error)).toEqual({
+      kind: 'key',
+      key: 'chat.errors.completion.rateLimited',
+    });
   });
 
-  it('falls back to a generic billing message when 402 lacks structured details', () => {
+  it('falls back to a localised billing key when 402 lacks structured details', () => {
     const error = new HttpErrorResponse({ status: 402 });
 
-    expect(resolveCompletionErrorMessage(error)).toBe(
-      'Your account needs an active plan before you can keep chatting.',
-    );
+    expect(resolveCompletionErrorMessage(error)).toEqual({
+      kind: 'key',
+      key: 'chat.errors.completion.needPlan',
+    });
   });
 
-  it('falls back to a generic error message for other failures', () => {
+  it('falls back to a localised generic key for other failures', () => {
     const error = new HttpErrorResponse({ status: 500 });
 
-    expect(resolveCompletionErrorMessage(error)).toBe(
-      'An error occurred while sending the message.',
-    );
+    expect(resolveCompletionErrorMessage(error)).toEqual({
+      kind: 'key',
+      key: 'chat.errors.completion.generic',
+    });
   });
 });
 
@@ -185,15 +176,52 @@ describe('resolveCompletionFailureMessage', () => {
       error: { message: 'Choose a plan to keep chatting.' },
     });
 
-    expect(resolveCompletionFailureMessage(error)).toBe(
-      'Choose a plan to keep chatting.',
-    );
+    expect(resolveCompletionFailureMessage(error)).toEqual({
+      kind: 'literal',
+      value: 'Choose a plan to keep chatting.',
+    });
   });
 
   it('returns a plain Error message for non-HTTP failures', () => {
-    expect(resolveCompletionFailureMessage(new Error('stream exploded'))).toBe(
-      'stream exploded',
-    );
+    expect(resolveCompletionFailureMessage(new Error('stream exploded'))).toEqual({
+      kind: 'literal',
+      value: 'stream exploded',
+    });
+  });
+
+  it('returns a generic key when the failure carries no message', () => {
+    expect(resolveCompletionFailureMessage(undefined)).toEqual({
+      kind: 'key',
+      key: 'chat.errors.completion.generic',
+    });
+  });
+});
+
+describe('isEmailNotVerifiedError', () => {
+  it('detects a 403 EMAIL_NOT_VERIFIED body', () => {
+    const error = new HttpErrorResponse({
+      status: 403,
+      error: { error: 'EMAIL_NOT_VERIFIED', message: 'Verify your email…' },
+    });
+    expect(isEmailNotVerifiedError(error)).toBe(true);
+  });
+
+  it('ignores a 403 with a different code', () => {
+    const error = new HttpErrorResponse({
+      status: 403,
+      error: { error: 'FORBIDDEN' },
+    });
+    expect(isEmailNotVerifiedError(error)).toBe(false);
+  });
+
+  it('ignores non-403 responses and non-HTTP errors', () => {
+    expect(
+      isEmailNotVerifiedError(
+        new HttpErrorResponse({ status: 402, error: { error: 'EMAIL_NOT_VERIFIED' } }),
+      ),
+    ).toBe(false);
+    expect(isEmailNotVerifiedError(new Error('boom'))).toBe(false);
+    expect(isEmailNotVerifiedError(undefined)).toBe(false);
   });
 });
 
@@ -490,6 +518,23 @@ describe('stream completion helpers', () => {
     );
 
     expect(removeStreamingCompletionMessages(streaming, 'req-1')).toEqual([]);
+  });
+
+  it('keeps the user message but drops the assistant placeholder on a retryable failure', () => {
+    const streaming = applyCompletionStreamDelta(
+      [userMessage()],
+      { requestId: 'req-1', content: 'hello' },
+      'partial',
+      'persona-1',
+      'model-1',
+    );
+
+    const kept = removeStreamingAssistantMessage(streaming, 'req-1');
+    expect(kept).toHaveLength(1);
+    expect(kept[0].record_id).toBe('req-1');
+    expect(kept.some((m) => m.record_id === streamingAssistantMessageId('req-1'))).toBe(
+      false,
+    );
   });
 
   it('accumulates reasoning deltas separately from answer content', () => {

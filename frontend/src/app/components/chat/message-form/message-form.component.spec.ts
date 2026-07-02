@@ -7,6 +7,7 @@ import { Subject } from 'rxjs';
 import { AttachmentLibraryService } from '@app/attachments/attachment-library.service';
 import { AttachmentProcessingService } from '@app/attachments/attachment-processing.service';
 import { Message } from '@app/interfaces/message';
+import { AuthService } from '@app/services/auth.service';
 import { BillingService } from '@app/services/billing.service';
 import { ComposerToolsService } from '@app/services/composer-tools.service';
 import { ConversationService } from '@app/services/conversation.service';
@@ -168,6 +169,14 @@ describe('MessageFormComponent', () => {
           useValue: {
             isSendingLocked: signal(false),
             refresh: vi.fn(),
+          },
+        },
+        {
+          provide: AuthService,
+          useValue: {
+            needsEmailVerification: signal(false),
+            email: signal('user@example.com'),
+            requestVerification: vi.fn(),
           },
         },
       ],

@@ -19,6 +19,7 @@ import { BillingLockBannerComponent } from '@app/components/billing/billing-lock
 import { BillingPastDueBannerComponent } from '@app/components/billing/billing-past-due-banner/billing-past-due-banner.component';
 import { ChatHeaderComponent } from '@app/components/chat/chat-header/chat-header.component';
 import { ConversationListItemComponent } from '@app/components/chat/conversation-list/conversation-list-item/conversation-list-item.component';
+import { PaygBalanceCardComponent } from '@app/components/chat/payg-balance-card/payg-balance-card.component';
 import { SidebarProfileComponent } from '@app/components/chat/sidebar-profile/sidebar-profile.component';
 import { TrialCreditCardComponent } from '@app/components/chat/trial-credit-card/trial-credit-card.component';
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
@@ -58,6 +59,7 @@ import { ConversationService } from '../../services/conversation.service';
     PersonaAvatarComponent,
     SidebarProfileComponent,
     TrialCreditCardComponent,
+    PaygBalanceCardComponent,
     BillingLockBannerComponent,
     BillingPastDueBannerComponent,
     SidebarAccountActionsComponent,

@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, computed, inject } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 import {
@@ -17,6 +17,7 @@ import {
   forkJoin,
   from,
   map,
+  merge,
   of,
   startWith,
   switchMap,
@@ -24,6 +25,7 @@ import {
   tap,
 } from 'rxjs';
 
+import { TranslocoService } from '@jsverse/transloco';
 import { Base64 } from 'js-base64';
 import { filterNil } from 'ngxtension/filter-nil';
 import { signalSlice } from 'ngxtension/signal-slice';
@@ -513,25 +515,64 @@ export const removeStreamingCompletionMessages = (
   );
 };
 
-export const resolveCompletionErrorMessage = (error: HttpErrorResponse): string => {
+// removeStreamingAssistantMessage drops only the optimistic assistant reply and
+// keeps the user's turn in the thread. Used on a retryable mid-stream failure so
+// the user's message isn't silently deleted and can be re-sent.
+export const removeStreamingAssistantMessage = (
+  existing: ReadonlyArray<Message>,
+  requestId: string,
+): Message[] => {
+  const assistantId = streamingAssistantMessageId(requestId);
+  return existing.filter((message) => message.record_id !== assistantId);
+};
+
+// CompletionErrorCopy is either a localisation key (translated at the call site
+// that has TranslocoService) or a literal string the backend controls and we
+// pass through verbatim (a 402 body.message). Keeping the pure resolver free of
+// TranslocoService means it stays trivially unit-testable.
+export type CompletionErrorCopy =
+  | { kind: 'key'; key: string }
+  | { kind: 'literal'; value: string };
+
+export const resolveCompletionErrorMessage = (
+  error: HttpErrorResponse,
+): CompletionErrorCopy => {
   switch (error.status) {
     case 402: {
       const body = error.error as CompleteErrorBody | null;
       if (typeof body?.message === 'string' && body.message.trim() !== '') {
-        return body.message;
+        // Backend-authored billing copy — pass through so it stays authoritative.
+        return { kind: 'literal', value: body.message };
       }
-      return 'Your account needs an active plan before you can keep chatting.';
+      return { kind: 'key', key: 'chat.errors.completion.needPlan' };
     }
     case 429:
-      return 'Rate limiting error, you are sending too many messages. Please wait a few seconds before sending another message.';
+      return { kind: 'key', key: 'chat.errors.completion.rateLimited' };
     default:
-      return 'An error occurred while sending the message.';
+      return { kind: 'key', key: 'chat.errors.completion.generic' };
   }
+};
+
+// isEmailNotVerifiedError recognises the 403 the AI-consuming endpoints return
+// when the user's email is still unverified (mirrors the billing restriction
+// shape). The caller surfaces a calm locked-composer state rather than a toast.
+export const isEmailNotVerifiedError = (error: unknown): boolean => {
+  if (!(error instanceof HttpErrorResponse) || error.status !== 403) {
+    return false;
+  }
+  const body = error.error as { error?: string } | null;
+  return body?.error === 'EMAIL_NOT_VERIFIED';
 };
 
 // parseCompletionBillingRestriction recognises the structured 402 the
 // /complete endpoint returns when billing blocks a send (spec §12.7). It
 // returns null for any other error so the caller falls back to a toast.
+//
+// The backend billing service (backend/internal/billing/service.go
+// EvaluateAccess) only emits two codes: INACTIVE and TRIAL_EXHAUSTED. PAYG has
+// no separate "exhausted" code — it accrues overage and is billed, and a lapsed
+// PAYG subscription surfaces here as INACTIVE — so both are handled already and
+// PAYG users get the same calm locked-composer state rather than a raw toast.
 export const parseCompletionBillingRestriction = (
   error: unknown,
 ): CompletionBillingRestriction | null => {
@@ -561,14 +602,16 @@ export const parseCompletionBillingRestriction = (
   };
 };
 
-export const resolveCompletionFailureMessage = (error: unknown): string => {
+export const resolveCompletionFailureMessage = (
+  error: unknown,
+): CompletionErrorCopy => {
   if (error instanceof HttpErrorResponse) {
     return resolveCompletionErrorMessage(error);
   }
   if (error instanceof Error && error.message.trim() !== '') {
-    return error.message;
+    return { kind: 'literal', value: error.message };
   }
-  return 'An error occurred while sending the message.';
+  return { kind: 'key', key: 'chat.errors.completion.generic' };
 };
 
 export const isCompletionAbortError = (error: unknown): boolean => {
@@ -611,6 +654,17 @@ export class MessageService {
   private readonly _projectService = inject(ProjectService);
   private readonly _compactionService = inject(CompactionService);
   private readonly _scopedMemory = inject(ScopedMemoryService);
+  private readonly _transloco = inject(TranslocoService);
+
+  // Retry-after-failure state. On a retryable mid-stream failure we keep the
+  // user's message in the thread and remember the (already-redacted) request so
+  // an inline "Retry" affordance can re-send it without re-typing or re-redacting.
+  private _failedRequest: MessageRequest | null = null;
+  private readonly _sendFailed = signal(false);
+  readonly sendFailed = this._sendFailed.asReadonly();
+  // Feeds already-redacted requests straight into the send pipeline (bypassing
+  // the redaction step), so a retry reuses the exact original request.
+  private readonly _resend$ = new Subject<MessageRequest>();
 
   private _activeCompletionAbort: AbortController | null = null;
   private _activeCompletionRequestId = '';
@@ -675,6 +729,10 @@ export class MessageService {
           distinctUntilChanged((a, b) => a?.record.id === b?.record.id),
           switchMap((conversation) => {
             this.abortActiveCompletion();
+            // A conversation switch clears any pending retry affordance so the
+            // banner never leaks onto a different thread.
+            this._failedRequest = null;
+            this._sendFailed.set(false);
 
             if (!conversation) {
               return of(initialState);
@@ -708,9 +766,13 @@ export class MessageService {
           }),
         ),
 
-      // when a message is sent, add it to the list of messages and send it to our upstream API
-      this._cleanedMessage$.pipe(
+      // when a message is sent, add it to the list of messages and send it to our upstream API.
+      // `_resend$` re-injects an already-redacted failed request for retry.
+      merge(this._cleanedMessage$, this._resend$).pipe(
         tap(() => {
+          // A fresh send clears any prior failed-send retry affordance.
+          this._failedRequest = null;
+          this._sendFailed.set(false);
           const conversation = this._conversationService.conversation();
           if (!conversation) {
             return;
@@ -1075,7 +1137,7 @@ export class MessageService {
       // Show to the user the message failed to decrypt
       console.error('Message decryption failed', error);
       decryptedData = {
-        content: 'Failed to decrypt message',
+        content: this._transloco.translate('chat.message.decryptFailed'),
       };
     }
 
@@ -1346,15 +1408,31 @@ export class MessageService {
         }
 
         console.error('Error sending message');
-        this.reportCompletionError(err);
+        const handled = this.reportCompletionError(err);
 
         if (!shouldApplyCompletionUpdate()) {
           return EMPTY;
         }
 
+        if (handled) {
+          // Billing lock / email-not-verified: the locked-composer surface
+          // carries the recovery path, so clear the optimistic turn entirely.
+          return of({
+            status: MessageStatus.ErrorSending,
+            messages: removeStreamingCompletionMessages(
+              this.state().messages,
+              messageRequest.requestId,
+            ),
+          });
+        }
+
+        // Retryable failure: keep the user's message in the thread and remember
+        // the request so the inline "Retry" affordance can re-send it.
+        this._failedRequest = messageRequest;
+        this._sendFailed.set(true);
         return of({
           status: MessageStatus.ErrorSending,
-          messages: removeStreamingCompletionMessages(
+          messages: removeStreamingAssistantMessage(
             this.state().messages,
             messageRequest.requestId,
           ),
@@ -1936,18 +2014,53 @@ export class MessageService {
     });
   }
 
-  // reportCompletionError routes a failed completion to the right surface: a
-  // billing 402 opens the plan-selection gate (and syncs plan state); anything
-  // else falls back to a danger toast.
-  private reportCompletionError(err: unknown): void {
+  // reportCompletionError routes a failed completion to the right surface and
+  // reports whether it "handled" the error with a locked-composer state.
+  // Returns true for a billing 402 (opens the plan gate + syncs plan state) or
+  // an EMAIL_NOT_VERIFIED 403 (the verify-email composer state carries the
+  // recovery path) — both suppress the toast. Returns false for a retryable
+  // failure so the caller keeps the user's message and shows an inline retry.
+  private reportCompletionError(err: unknown): boolean {
     const restriction = parseCompletionBillingRestriction(err);
     if (restriction) {
       // Lock the composer + surface the in-chat billing banners. No toast — the
       // locked-chat UI and the pricing page carry the recovery path.
       this._billingService.markSendingBlocked(restriction);
+      return true;
+    }
+    if (isEmailNotVerifiedError(err)) {
+      // The verify-email composer state (driven by the user's verified flag)
+      // already tells the user what to do — no toast, and no retry affordance.
+      return true;
+    }
+    return false;
+  }
+
+  // translateCompletionError resolves a CompletionErrorCopy into a display
+  // string (translating a key, or passing a backend-authored literal through).
+  private translateCompletionError(err: unknown): string {
+    const copy = resolveCompletionFailureMessage(err);
+    return copy.kind === 'literal' ? copy.value : this._transloco.translate(copy.key);
+  }
+
+  // retryFailedSend re-sends the last failed message. The user's message is
+  // still in the thread (kept on failure); we remove that optimistic turn and
+  // re-inject the original already-redacted request so the send path re-adds it
+  // and streams a fresh reply — no re-typing, no double redaction.
+  retryFailedSend(): void {
+    const request = this._failedRequest;
+    if (!request) {
       return;
     }
-    this._errorService.alert(resolveCompletionFailureMessage(err));
+    this._failedRequest = null;
+    this._sendFailed.set(false);
+    // Drop the kept optimistic user turn; the resend re-adds it with the same id.
+    this.state.deleteMessage({
+      messageId: request.requestId,
+      deleteChildren: false,
+      deleteSiblings: false,
+    });
+    this._resend$.next(request);
   }
 
   stopActiveCompletion(): void {
@@ -2380,7 +2493,7 @@ export class MessageService {
       }),
       catchError((err) => {
         console.error('Error deleting message');
-        this._errorService.alert(resolveCompletionFailureMessage(err));
+        this._errorService.alert(this.translateCompletionError(err));
         return EMPTY;
       }),
     );

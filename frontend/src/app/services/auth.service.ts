@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { Injectable, OnDestroy, computed, inject } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
@@ -145,6 +145,16 @@ export class AuthService implements OnDestroy {
   user$ = toObservable(this.user);
   email = this.state.email;
   mfaSessionId = this.state.mfaSessionId;
+
+  // Whether the signed-in user still needs to confirm their email. AI-consuming
+  // endpoints return 403 EMAIL_NOT_VERIFIED until they do, so the chat composer
+  // reads this to show a calm "confirm your email" state. PocketBase re-resolves
+  // the auth record (including `verified`) on token refresh and re-emits `user`,
+  // so this flips to false — and the composer unlocks — without a full reload.
+  readonly needsEmailVerification = computed(() => {
+    const user = this.user();
+    return !!user && user['verified'] !== true;
+  });
 
   constructor() {
     defer(() => this.checkAndRefreshToken())
