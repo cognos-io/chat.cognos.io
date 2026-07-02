@@ -18,6 +18,22 @@ type refundRequest struct {
 	ReasonText string `json:"reason_text"`
 }
 
+// maxLoggedReasonChars caps how much of the user-supplied refund reason ever
+// reaches the log stream. The reason is not persisted anywhere (v0 records the
+// request in the log only), so this is the sole sink to bound.
+const maxLoggedReasonChars = 500
+
+// truncateReasonForLog trims the free-text reason to maxLoggedReasonChars
+// runes, appending an ellipsis when truncated. Rune-based so multi-byte
+// characters are never split.
+func truncateReasonForLog(reason string) string {
+	runes := []rune(reason)
+	if len(runes) <= maxLoggedReasonChars {
+		return reason
+	}
+	return string(runes[:maxLoggedReasonChars]) + "…"
+}
+
 // BillingRefundRequest is the v0 self-serve refund request (spec §12.5). It does
 // not issue a refund — refunds are operator-driven via the admin CLI (§7.3).
 // For now it records the request in the log for operator follow-up (email
@@ -36,7 +52,7 @@ func BillingRefundRequest(params BillingRefundRequestParams) func(e *core.Reques
 
 		if params.Logger != nil {
 			params.Logger.Info("billing refund requested",
-				"user_id", user.Id, "reason", strings.TrimSpace(req.ReasonText))
+				"user_id", user.Id, "reason", truncateReasonForLog(strings.TrimSpace(req.ReasonText)))
 		}
 
 		return e.JSON(http.StatusOK, map[string]string{"status": "received"})

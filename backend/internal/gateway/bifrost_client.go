@@ -405,6 +405,24 @@ func (c *BifrostClient) logProviderError(providerID, modelID string, bifrostErr 
 	c.logger.Error("bifrost request failed", attrs...)
 }
 
+// ClampBifrostLogLevel bounds the bifrost log level so it is never more
+// verbose than "warn" outside dev mode: the upstream library may log request
+// bodies — i.e. plaintext prompts — at debug/info, and Cognos never logs user
+// content. Returns the effective level and whether it was clamped (so the
+// caller can log a warning). Unrecognised/empty levels pass through untouched;
+// parseBifrostLogLevel already defaults those to "error".
+func ClampBifrostLogLevel(level string, devMode bool) (string, bool) {
+	if devMode {
+		return level, false
+	}
+	switch strings.ToLower(strings.TrimSpace(level)) {
+	case string(schemas.LogLevelDebug), string(schemas.LogLevelInfo):
+		return string(schemas.LogLevelWarn), true
+	default:
+		return level, false
+	}
+}
+
 func parseBifrostLogLevel(level string) schemas.LogLevel {
 	switch strings.ToLower(strings.TrimSpace(level)) {
 	case string(schemas.LogLevelDebug):

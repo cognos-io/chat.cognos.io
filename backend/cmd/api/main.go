@@ -197,7 +197,18 @@ func bindAppHooks(
 			if err := ensureActiveProvidersConfigured(context.Background(), catalogueService, account); err != nil {
 				return err
 			}
-			managedGateway, err = gateway.NewConfiguredBifrostClient(account, params.Config.BifrostLogLevel, app.Logger())
+			// Never let bifrost log more verbosely than warn outside dev mode —
+			// the upstream library may log request bodies (plaintext prompts)
+			// at debug/info, and Cognos never logs user content.
+			bifrostLogLevel, clamped := gateway.ClampBifrostLogLevel(params.Config.BifrostLogLevel, app.IsDev())
+			if clamped {
+				app.Logger().Warn(
+					"bifrost log level clamped outside dev mode (debug/info may log plaintext prompts)",
+					"configured", params.Config.BifrostLogLevel,
+					"effective", bifrostLogLevel,
+				)
+			}
+			managedGateway, err = gateway.NewConfiguredBifrostClient(account, bifrostLogLevel, app.Logger())
 			if err != nil {
 				return err
 			}
