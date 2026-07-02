@@ -46,6 +46,15 @@ export function localizedPath(lang: Lang, path = '/'): string {
   return lang === defaultLang ? clean : `/${lang}${clean === '/' ? '' : clean}`;
 }
 
+/**
+ * An in-page anchor that stays a plain hash on the homepage but points back to
+ * the (locale-aware) homepage from any other page — so the shared navbar and
+ * footer section links work from the standalone pages too.
+ */
+export function homeAnchor(lang: Lang, currentPath: string, hash: string): string {
+  return currentPath === '/' ? hash : `${localizedPath(lang)}${hash}`;
+}
+
 type Dict = Record<string, unknown>;
 
 function resolve(dict: unknown, key: string): unknown {

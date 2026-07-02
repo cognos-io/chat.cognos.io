@@ -213,10 +213,64 @@
       "heading": "Company",
       "about": "About",
       "privacy": "Privacy",
+      "terms": "Terms",
       "contact": "Contact"
     },
     "language": "Language",
     "copyright": "© {{ year }} Cognos. Made in Switzerland.",
     "killer": "This page isn't watching you either."
+  },
+  "pages": {
+    "privacy": {
+      "metaTitle": "Privacy Policy — Cognos",
+      "metaDescription": "How Cognos handles your information. We keep no copy of your chats we can read.",
+      "eyebrow": "Privacy",
+      "title": "Privacy Policy",
+      "lead": "How we handle your information — in plain language, privacy first.",
+      "placeholder": "This is a placeholder. Our full privacy policy is being finalised and will appear here before launch.",
+      "sections": [
+        {
+          "heading": "What we keep",
+          "body": "We keep no copy of your chats that we can read. Your messages are locked so only you can open them."
+        },
+        {
+          "heading": "What we never do",
+          "body": "We never use your words to train AI, and we never sell your data. Everything is handled in Switzerland or Europe."
+        }
+      ]
+    },
+    "terms": {
+      "metaTitle": "Terms of Service — Cognos",
+      "metaDescription": "The terms for using Cognos.",
+      "eyebrow": "Terms",
+      "title": "Terms of Service",
+      "lead": "The agreement between you and Cognos when you use the service.",
+      "placeholder": "This is a placeholder. Our full terms of service are being finalised and will appear here before launch.",
+      "sections": [
+        {
+          "heading": "Using Cognos",
+          "body": "You can use Cognos for your own lawful purposes. You're responsible for keeping your account key safe — it's the only thing that can open your chats."
+        },
+        {
+          "heading": "Payments & refunds",
+          "body": "Plans are billed as described on our pricing page. Not for you? You have 60 days to get your money back."
+        }
+      ]
+    },
+    "contact": {
+      "metaTitle": "Contact — Cognos",
+      "metaDescription": "Get in touch with the Cognos team.",
+      "eyebrow": "Contact",
+      "title": "Get in touch",
+      "lead": "Questions about privacy, plans, or bringing Cognos to your team? We'd love to hear from you.",
+      "placeholder": "This is a placeholder. A full contact form is on the way.",
+      "sections": [
+        {
+          "heading": "Teams & business",
+          "body": "Need single sign-on or private hosting for your organisation? Tell us what you're looking for and we'll help you get set up."
+        }
+      ],
+      "cta": "Get in touch"
+    }
   }
 }

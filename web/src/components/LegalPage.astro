@@ -1,0 +1,64 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from './Navbar.astro';
+import Footer from './Footer.astro';
+import { BUSINESS_URL } from '../config';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  /** Which standalone page to render — keys live under `pages.<page>`. */
+  page: 'privacy' | 'terms' | 'contact';
+}
+const { lang, page } = Astro.props;
+const t = useTranslations(lang);
+const base = `pages.${page}`;
+const path = `/${page}`;
+
+interface Section {
+  heading: string;
+  body: string;
+}
+const sections = t.raw<Section[]>(`${base}.sections`) ?? [];
+// The contact page carries a call-to-action; the legal pages do not.
+const cta = page === 'contact' ? t(`${base}.cta`) : null;
+---
+
+<BaseLayout
+  lang={lang}
+  title={t(`${base}.metaTitle`)}
+  description={t(`${base}.metaDescription`)}
+  path={path}
+>
+  <Navbar t={t} lang={lang} path={path} />
+  <main>
+    <section class="sec-pad" id="top">
+      <div class="wrap wrap--prose">
+        <div class="page-head reveal">
+          <span class="eyebrow text-brand">{t(`${base}.eyebrow`)}</span>
+          <h1 class="page-h mt-100">{t(`${base}.title`)}</h1>
+          <p class="lead-copy">{t(`${base}.lead`)}</p>
+          <p class="page-note">{t(`${base}.placeholder`)}</p>
+        </div>
+        <div class="prose">
+          {
+            sections.map((s) => (
+              <section class="prose-block reveal">
+                <h2>{s.heading}</h2>
+                <p>{s.body}</p>
+              </section>
+            ))
+          }
+        </div>
+        {
+          cta && (
+            <a class="btn btn-primary btn-lg page-cta reveal" href={BUSINESS_URL}>
+              {cta}
+            </a>
+          )
+        }
+      </div>
+    </section>
+  </main>
+  <Footer t={t} lang={lang} path={path} />
+</BaseLayout>

@@ -19,7 +19,7 @@ const t = useTranslations(lang);
 ---
 
 <BaseLayout lang={lang} title={t('meta.title')} description={t('meta.description')} path="/">
-  <Navbar t={t} />
+  <Navbar t={t} lang={lang} path="/" />
   <main>
     <Hero t={t} />
     <Contrast t={t} />

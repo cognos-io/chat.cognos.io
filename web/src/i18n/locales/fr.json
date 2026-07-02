@@ -213,10 +213,64 @@
       "heading": "Entreprise",
       "about": "À propos",
       "privacy": "Confidentialité",
+      "terms": "Conditions",
       "contact": "Contact"
     },
     "language": "Langue",
     "copyright": "© {{ year }} Cognos. Fait en Suisse.",
     "killer": "Cette page non plus ne vous surveille pas."
+  },
+  "pages": {
+    "privacy": {
+      "metaTitle": "Confidentialité — Cognos",
+      "metaDescription": "Comment Cognos traite vos données. Nous ne gardons aucune copie lisible de vos conversations.",
+      "eyebrow": "Confidentialité",
+      "title": "Politique de confidentialité",
+      "lead": "Comment nous traitons vos informations — en langage clair, la confidentialité d'abord.",
+      "placeholder": "Ceci est un espace réservé. Notre politique de confidentialité complète est en cours de finalisation et apparaîtra ici avant le lancement.",
+      "sections": [
+        {
+          "heading": "Ce que nous gardons",
+          "body": "Nous ne gardons aucune copie lisible de vos conversations. Vos messages sont verrouillés pour que vous seul puissiez les ouvrir."
+        },
+        {
+          "heading": "Ce que nous ne faisons jamais",
+          "body": "Nous n'utilisons jamais vos mots pour entraîner une IA, et nous ne vendons jamais vos données. Tout est traité en Suisse ou en Europe."
+        }
+      ]
+    },
+    "terms": {
+      "metaTitle": "Conditions d'utilisation — Cognos",
+      "metaDescription": "Les conditions d'utilisation de Cognos.",
+      "eyebrow": "Conditions",
+      "title": "Conditions d'utilisation",
+      "lead": "L'accord entre vous et Cognos lorsque vous utilisez le service.",
+      "placeholder": "Ceci est un espace réservé. Nos conditions d'utilisation complètes sont en cours de finalisation et apparaîtront ici avant le lancement.",
+      "sections": [
+        {
+          "heading": "Utiliser Cognos",
+          "body": "Vous pouvez utiliser Cognos à vos propres fins légales. Il vous revient de garder votre clé de compte en sécurité — elle seule peut ouvrir vos conversations."
+        },
+        {
+          "heading": "Paiements et remboursements",
+          "body": "Les offres sont facturées comme indiqué sur notre page tarifs. Pas convaincu ? Vous avez 60 jours pour être remboursé."
+        }
+      ]
+    },
+    "contact": {
+      "metaTitle": "Contact — Cognos",
+      "metaDescription": "Contactez l'équipe Cognos.",
+      "eyebrow": "Contact",
+      "title": "Contactez-nous",
+      "lead": "Des questions sur la confidentialité, les offres ou l'arrivée de Cognos dans votre équipe ? Nous serions ravis de vous lire.",
+      "placeholder": "Ceci est un espace réservé. Un formulaire de contact complet arrive bientôt.",
+      "sections": [
+        {
+          "heading": "Équipes et entreprises",
+          "body": "Besoin d'une connexion unique ou d'un hébergement privé pour votre organisation ? Dites-nous ce que vous cherchez et nous vous aiderons à démarrer."
+        }
+      ],
+      "cta": "Écrivez-nous"
+    }
   }
 }

@@ -2,17 +2,21 @@
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
 import { SIGN_IN_URL, SIGN_UP_URL } from '../config';
-import type { Translator } from '../i18n/ui';
+import { homeAnchor, type Lang, type Translator } from '../i18n/ui';
 
 interface Props {
   t: Translator;
+  lang: Lang;
+  /** Logical path of the current page, so section links can point back home. */
+  path?: string;
 }
-const { t } = Astro.props;
+const { t, lang, path = '/' } = Astro.props;
+const anchor = (hash: string) => homeAnchor(lang, path, hash);
 ---
 
 <nav class="navbar" data-open="false">
   <div class="wrap navbar__inner">
-    <a class="brand" href="#top" aria-label="Cognos"><Logo class="brand-logo" /></a>
+    <a class="brand" href={anchor('#top')} aria-label="Cognos"><Logo class="brand-logo" /></a>
 
     <button
       class="nav-toggle"
@@ -25,11 +29,11 @@ const { t } = Astro.props;
 
     <div class="nav-center">
       <ul class="nav-links">
-        <li><a class="nav-link" href="#how">{t('nav.how')}</a></li>
-        <li><a class="nav-link" href="#compare">{t('nav.compare')}</a></li>
-        <li><a class="nav-link" href="#features">{t('nav.features')}</a></li>
-        <li><a class="nav-link" href="#audience">{t('nav.pricing')}</a></li>
-        <li><a class="nav-link" href="#security">{t('nav.security')}</a></li>
+        <li><a class="nav-link" href={anchor('#how')}>{t('nav.how')}</a></li>
+        <li><a class="nav-link" href={anchor('#compare')}>{t('nav.compare')}</a></li>
+        <li><a class="nav-link" href={anchor('#features')}>{t('nav.features')}</a></li>
+        <li><a class="nav-link" href={anchor('#audience')}>{t('nav.pricing')}</a></li>
+        <li><a class="nav-link" href={anchor('#security')}>{t('nav.security')}</a></li>
       </ul>
     </div>
 

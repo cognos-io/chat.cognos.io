@@ -114,7 +114,7 @@ svg {
   margin-top: var(--cog-space-150);
 }
 .text-brand {
-  color: var(--brand);
+  color: var(--brand-deep);
 }
 .mt-100 {
   margin-top: var(--cog-space-100);
@@ -139,7 +139,7 @@ section {
   text-align: center;
 }
 .sec-head .eyebrow {
-  color: var(--brand);
+  color: var(--brand-deep);
   display: block;
   margin-bottom: 12px;
 }
@@ -1001,6 +1001,54 @@ h1.hero-h .em {
   text-decoration: underline;
 }
 
+/* ==================== STANDALONE PAGES (legal/contact) ============== */
+.wrap--prose {
+  max-width: 760px;
+}
+.page-head {
+  max-width: 640px;
+}
+h1.page-h {
+  font-size: 34px;
+  font-weight: var(--cog-fw-bold);
+  line-height: 1.1;
+  margin: 0;
+}
+@media (min-width: 768px) {
+  h1.page-h {
+    font-size: 44px;
+  }
+}
+.page-note {
+  margin-top: var(--cog-space-250);
+  padding: 14px 18px;
+  border: 1px dashed color-mix(in srgb, var(--brand) 35%, var(--line));
+  border-radius: var(--cog-radius-md);
+  background: var(--brand-bg);
+  color: var(--brand-deep);
+  font-size: var(--cog-fs-body-sm);
+  line-height: var(--cog-lh-body-sm);
+}
+.prose {
+  margin-top: var(--cog-space-600);
+  display: grid;
+  gap: var(--cog-space-500);
+}
+.prose-block h2 {
+  font-size: var(--cog-fs-h-md);
+  font-weight: var(--cog-fw-bold);
+  margin: 0 0 var(--cog-space-100);
+}
+.prose-block p {
+  color: var(--ink-sub);
+  font-size: var(--cog-fs-body-lg);
+  line-height: var(--cog-lh-body-lg);
+  margin: 0;
+}
+.page-cta {
+  margin-top: var(--cog-space-600);
+}
+
 /* ============================ CTA ================================== */
 .cta-band {
   background: linear-gradient(155deg, var(--cta-bg-start), var(--cta-bg-end));
@@ -1096,7 +1144,7 @@ footer .fdesc {
   max-width: 18rem;
   line-height: 1.6;
 }
-footer h5 {
+footer .footer-heading {
   font-family: var(--ff-mono);
   font-size: 11px;
   letter-spacing: 0.12em;

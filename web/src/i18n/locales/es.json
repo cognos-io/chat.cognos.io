@@ -213,10 +213,64 @@
       "heading": "Empresa",
       "about": "Quiénes somos",
       "privacy": "Privacidad",
+      "terms": "Términos",
       "contact": "Contacto"
     },
     "language": "Idioma",
     "copyright": "© {{ year }} Cognos. Hecho en Suiza.",
     "killer": "Esta página tampoco te está vigilando."
+  },
+  "pages": {
+    "privacy": {
+      "metaTitle": "Privacidad — Cognos",
+      "metaDescription": "Cómo trata Cognos tus datos. No guardamos ninguna copia legible de tus chats.",
+      "eyebrow": "Privacidad",
+      "title": "Política de privacidad",
+      "lead": "Cómo tratamos tu información — en lenguaje claro y con la privacidad por delante.",
+      "placeholder": "Esto es un marcador de posición. Nuestra política de privacidad completa se está terminando y aparecerá aquí antes del lanzamiento.",
+      "sections": [
+        {
+          "heading": "Qué guardamos",
+          "body": "No guardamos ninguna copia legible de tus chats. Tus mensajes quedan cerrados para que solo tú puedas abrirlos."
+        },
+        {
+          "heading": "Qué no hacemos nunca",
+          "body": "Nunca usamos tus palabras para entrenar IA y nunca vendemos tus datos. Todo se trata en Suiza o en Europa."
+        }
+      ]
+    },
+    "terms": {
+      "metaTitle": "Términos del servicio — Cognos",
+      "metaDescription": "Los términos para usar Cognos.",
+      "eyebrow": "Términos",
+      "title": "Términos del servicio",
+      "lead": "El acuerdo entre tú y Cognos cuando usas el servicio.",
+      "placeholder": "Esto es un marcador de posición. Nuestros términos del servicio completos se están terminando y aparecerán aquí antes del lanzamiento.",
+      "sections": [
+        {
+          "heading": "Usar Cognos",
+          "body": "Puedes usar Cognos para tus propios fines legales. Eres responsable de mantener a salvo tu clave de cuenta: es lo único que puede abrir tus chats."
+        },
+        {
+          "heading": "Pagos y reembolsos",
+          "body": "Los planes se cobran como se describe en nuestra página de precios. ¿No es para ti? Tienes 60 días para recuperar tu dinero."
+        }
+      ]
+    },
+    "contact": {
+      "metaTitle": "Contacto — Cognos",
+      "metaDescription": "Ponte en contacto con el equipo de Cognos.",
+      "eyebrow": "Contacto",
+      "title": "Ponte en contacto",
+      "lead": "¿Preguntas sobre privacidad, planes o llevar Cognos a tu equipo? Nos encantaría saber de ti.",
+      "placeholder": "Esto es un marcador de posición. Pronto habrá un formulario de contacto completo.",
+      "sections": [
+        {
+          "heading": "Equipos y empresas",
+          "body": "¿Necesitas inicio de sesión único o alojamiento privado para tu organización? Cuéntanos qué buscas y te ayudaremos a empezar."
+        }
+      ],
+      "cta": "Escríbenos"
+    }
   }
 }
