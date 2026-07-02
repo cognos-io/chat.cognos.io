@@ -17,7 +17,7 @@ test('picking a model persists as the default and survives a reload', async ({
   const account = makeTestAccount();
   await gotoRegister(page);
   await fillRegisterForm(page, account);
-  await submitRegister(page);
+  await submitRegister(page, account);
   await expectAccountKeyDialogForNewUser(page);
   await captureGeneratedAccountKey(page);
   await acknowledgeAccountKey(page);

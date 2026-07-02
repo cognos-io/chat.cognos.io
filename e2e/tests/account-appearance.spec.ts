@@ -17,7 +17,7 @@ async function registerAndOpenAccount(page: Page): Promise<void> {
   const account = makeTestAccount();
   await gotoRegister(page);
   await fillRegisterForm(page, account);
-  await submitRegister(page);
+  await submitRegister(page, account);
   await expectAccountKeyDialogForNewUser(page);
   await captureGeneratedAccountKey(page);
   await acknowledgeAccountKey(page);

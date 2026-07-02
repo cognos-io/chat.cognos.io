@@ -58,7 +58,7 @@ test.describe('auth + account key flow', () => {
 
     await gotoRegister(page);
     await fillRegisterForm(page, account);
-    await submitRegister(page);
+    await submitRegister(page, account);
 
     await expectAccountKeyDialogForNewUser(page);
 
@@ -85,7 +85,7 @@ test.describe('auth + account key flow', () => {
 
     await gotoRegister(page);
     await fillRegisterForm(page, account);
-    await submitRegister(page);
+    await submitRegister(page, account);
 
     await expectAccountKeyDialogForNewUser(page);
     const accountKey = await captureGeneratedAccountKey(page);
@@ -118,7 +118,7 @@ test.describe('auth + account key flow', () => {
 
     await gotoRegister(page);
     await fillRegisterForm(page, account);
-    await submitRegister(page);
+    await submitRegister(page, account);
 
     await expectAccountKeyDialogForNewUser(page);
 
@@ -145,7 +145,7 @@ test.describe('auth + account key flow', () => {
 
     await gotoRegister(page);
     await fillRegisterForm(page, account);
-    await submitRegister(page);
+    await submitRegister(page, account);
 
     await expectAccountKeyDialogForNewUser(page);
 
@@ -170,7 +170,7 @@ test.describe('auth + account key flow', () => {
 
     await gotoRegister(page);
     await fillRegisterForm(page, account);
-    await submitRegister(page);
+    await submitRegister(page, account);
 
     await expectAccountKeyDialogForNewUser(page);
 
@@ -219,7 +219,7 @@ test.describe('auth + account key flow', () => {
 
     await gotoRegister(page);
     await fillRegisterForm(page, account);
-    await submitRegister(page);
+    await submitRegister(page, account);
 
     await expectAccountKeyDialogForNewUser(page);
 

@@ -69,6 +69,16 @@ var testUsers = []struct {
 		PrivacyTier: "eu",
 		Verified:    true,
 	},
+	// Deliberately unverified: pins the EMAIL_NOT_VERIFIED gate on the
+	// AI-consuming endpoints (see email_verification_test.go).
+	{
+		ID:          "unverifieduser1",
+		Email:       "unverified@example.com",
+		Username:    "unverified",
+		Password:    "password-1234",
+		PrivacyTier: "eu",
+		Verified:    false,
+	},
 }
 
 var testUserKeyPairs = []struct {

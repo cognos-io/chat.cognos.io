@@ -1,5 +1,6 @@
 import { Page, expect } from '@playwright/test';
 
+import { markUserVerifiedByEmail } from './api-helpers';
 import { TestAccount } from './fixtures';
 
 export async function gotoRegister(page: Page): Promise<void> {
@@ -24,8 +25,15 @@ export async function fillRegisterForm(
   await page.getByLabel('Password', { exact: true }).fill(account.password);
 }
 
-export async function submitRegister(page: Page): Promise<void> {
+export async function submitRegister(page: Page, account?: TestAccount): Promise<void> {
   await page.getByRole('button', { name: /create account/i }).click();
+  // AI endpoints require a verified email and the e2e stack has no SMTP, so
+  // browser flows mark the freshly-registered user verified via the e2e
+  // superuser (simulating the user clicking the verification link). Callers
+  // that deliberately want an unverified user simply omit the account.
+  if (account) {
+    await markUserVerifiedByEmail(account.email);
+  }
 }
 
 export async function fillLoginForm(page: Page, account: TestAccount): Promise<void> {

@@ -41,7 +41,7 @@ async function provisionUnlockedAccount(page: Page) {
 
   await gotoRegister(page);
   await fillRegisterForm(page, account);
-  await submitRegister(page);
+  await submitRegister(page, account);
 
   await expectAccountKeyDialogForNewUser(page);
 

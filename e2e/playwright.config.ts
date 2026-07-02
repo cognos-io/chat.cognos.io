@@ -33,6 +33,14 @@ const FRONTEND_DIST_DIR =
   process.env.E2E_FRONTEND_DIST_DIR ?? '../frontend/dist/browser';
 const TLS_CERT = process.env.E2E_TLS_CERT ?? '/tmp/cognos.crt';
 const TLS_KEY = process.env.E2E_TLS_KEY ?? '/tmp/cognos.key';
+// E2E-only superuser used by the API helpers to mark provisioned users as
+// email-verified (AI endpoints require a verified email; the e2e stack has no
+// SMTP). Test-only credentials on an isolated data dir — not real secrets.
+const E2E_SUPERUSER_EMAIL =
+  process.env.E2E_SUPERUSER_EMAIL ?? 'e2e-superuser@example.com';
+const E2E_SUPERUSER_PASSWORD =
+  process.env.E2E_SUPERUSER_PASSWORD ?? 'e2e-superuser-password-1234'; // gitleaks:allow
+
 const BACKEND_ENV = [
   'COGNOS_INFOMANIAK_API_KEY=e2e-dummy-key',
   `COGNOS_INFOMANIAK_URL=${AI_MOCK_URL}`,
@@ -63,6 +71,12 @@ const TLS_CERT_COMMAND =
 const BACKEND_COMMAND = [
   ...TLS_CERT_COMMAND,
   ...(SKIP_FRONTEND ? [] : ['pnpm --dir .. --filter @cognos/chat build:e2e']),
+  // Idempotently provision the e2e superuser the API helpers use to mark
+  // freshly-registered users as email-verified.
+  [
+    ...BACKEND_ENV,
+    `go run ./cmd/api superuser upsert ${E2E_SUPERUSER_EMAIL} ${E2E_SUPERUSER_PASSWORD} --dir=${POCKETBASE_DIR}`,
+  ].join(' '),
   [...BACKEND_ENV, BACKEND_SERVE_ARGS.join(' ')].join(' '),
 ].join(' && ');
 

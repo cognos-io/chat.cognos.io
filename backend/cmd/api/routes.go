@@ -771,11 +771,15 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	// AI-consuming endpoints additionally require a verified email address
+	// (handler.RequireVerifiedEmail): completions, regenerate, image generation
+	// and model-driven compaction all trigger paid provider calls.
 	e.Router.POST(
 		"/api/v1/completions",
 		handler.Complete(completeParams),
 	).Bind(
 		apis.RequireAuth(),
+		handler.RequireVerifiedEmail(),
 		rateLimiterMiddleware(app),
 	)
 
@@ -792,6 +796,7 @@ func addPocketBaseRoutes(
 		handler.CompleteConversation(completeParams),
 	).Bind(
 		apis.RequireAuth(),
+		handler.RequireVerifiedEmail(),
 		rateLimiterMiddleware(app),
 	)
 
@@ -800,6 +805,7 @@ func addPocketBaseRoutes(
 		handler.RegenerateConversation(completeParams),
 	).Bind(
 		apis.RequireAuth(),
+		handler.RequireVerifiedEmail(),
 		rateLimiterMiddleware(app),
 	)
 
@@ -808,6 +814,7 @@ func addPocketBaseRoutes(
 		handler.GenerateConversationImage(completeParams),
 	).Bind(
 		apis.RequireAuth(),
+		handler.RequireVerifiedEmail(),
 		rateLimiterMiddleware(app),
 	)
 
@@ -883,6 +890,7 @@ func addPocketBaseRoutes(
 		handler.CompactionCreate(compactionParams),
 	).Bind(
 		apis.RequireAuth(),
+		handler.RequireVerifiedEmail(),
 		rateLimiterMiddleware(app),
 	)
 
@@ -1025,11 +1033,13 @@ func addPocketBaseRoutes(
 		"Number of personas in the system",
 	)
 
+	// Operator-only: exposes aggregate counters (user/conversation/message
+	// totals) that must never be readable by a regular authenticated user.
 	e.Router.GET(
 		"/metrics",
 		apis.WrapStdHandler(promhttp.HandlerFor(registry, promhttp.HandlerOpts{})),
 	).Bind(
-		apis.RequireAuth(),
+		apis.RequireSuperuserAuth(),
 	)
 }
 

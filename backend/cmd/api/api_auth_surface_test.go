@@ -1,9 +1,15 @@
 package main
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -18,72 +24,169 @@ const requireAuthMessage = "The request requires valid record authorization toke
 
 var routeParamPattern = regexp.MustCompile(`\{[^}]+\}`)
 
-// apiV1Routes is the full /api/v1 surface and whether each route is
-// intentionally public. New routes MUST be added here: the existence check in
-// the test fails if a listed route is renamed or removed, keeping this table in
-// lock-step with the router.
-var apiV1Routes = []struct {
-	method string
-	path   string
-	public bool
-}{
-	{http.MethodGet, "/api/v1/models", false},
-	{http.MethodGet, "/api/v1/billing", false},
-	{http.MethodGet, "/api/v1/billing/transactions", false},
-	{http.MethodGet, "/api/v1/billing/usage", false},
-	{http.MethodPost, "/api/v1/billing/checkout", false},
-	{http.MethodPost, "/api/v1/billing/portal", false},
-	{http.MethodGet, "/api/v1/billing/invoices", false},
-	{http.MethodPost, "/api/v1/billing/cancel", false},
-	{http.MethodPost, "/api/v1/billing/resume", false},
-	{http.MethodGet, "/api/v1/conversations", false},
-	{http.MethodPost, "/api/v1/conversations", false},
-	{http.MethodPatch, "/api/v1/conversations/{conversationID}", false},
-	{http.MethodDelete, "/api/v1/conversations/{conversationID}", false},
-	{http.MethodGet, "/api/v1/conversations/{conversationID}/messages", false},
-	{http.MethodGet, "/api/v1/conversations/{conversationID}/participants", false},
-	{http.MethodPost, "/api/v1/conversations/{conversationID}/participants", false},
-	{http.MethodPost, "/api/v1/conversations/{conversationID}/rotate", false},
-	{http.MethodGet, "/api/v1/conversations/{conversationID}/public-share", false},
-	{http.MethodPost, "/api/v1/conversations/{conversationID}/public-share", false},
-	{http.MethodDelete, "/api/v1/conversations/{conversationID}/public-share", false},
-	{http.MethodPatch, "/api/v1/messages/{messageID}", false},
-	{http.MethodDelete, "/api/v1/messages/{messageID}", false},
-	{http.MethodGet, "/api/v1/user-key-pair", false},
-	{http.MethodPost, "/api/v1/user-key-pair", false},
-	{http.MethodPatch, "/api/v1/user-key-pair/{keyPairID}", false},
-	{http.MethodGet, "/api/v1/conversations/{conversationID}/public-key", false},
-	{http.MethodPost, "/api/v1/conversations/{conversationID}/public-key", false},
-	{http.MethodPatch, "/api/v1/conversations/{conversationID}/public-key/{publicKeyID}", false},
-	{http.MethodGet, "/api/v1/conversations/{conversationID}/secret-key", false},
-	{http.MethodPost, "/api/v1/conversations/{conversationID}/secret-key", false},
-	{http.MethodGet, "/api/v1/user-preferences", false},
-	{http.MethodPost, "/api/v1/user-preferences", false},
-	{http.MethodPatch, "/api/v1/user-preferences/{preferencesID}", false},
-	{http.MethodGet, "/api/v1/vault-session", false},
-	{http.MethodPut, "/api/v1/vault-session", false},
-	{http.MethodDelete, "/api/v1/vault-session", false},
-	{http.MethodPost, "/api/v1/completions", false},
-	{http.MethodPost, "/api/v1/completions/{requestID}/stop", false},
-	{http.MethodPost, "/api/v1/conversations/{conversationID}/complete", false},
-	{http.MethodPost, "/api/v1/conversations/{conversationID}/regenerate", false},
-
-	// Intentionally public: token-gated by the share secret in the path and
-	// rate-limited by IP. There is no user session to authenticate.
-	{http.MethodGet, "/api/v1/public/conversations/{token}", true},
-	{http.MethodGet, "/api/v1/public/conversations/{token}/messages", true},
-	{
-		http.MethodGet,
-		"/api/v1/public/conversations/{token}/messages/{messageID}/attachment",
-		true,
-	},
+// publicAPIv1Routes is the ONLY set of /api/v1 routes allowed to answer an
+// anonymous request. Each is gated by a secret in the path or a one-time proof
+// and IP rate-limited; adding to this list is a security decision — keep it
+// short and documented (docs/api-permissions.md).
+var publicAPIv1Routes = map[string]string{
+	// Token-gated by the share secret in the path; the URL fragment (held only
+	// by the client) is what decrypts the payload.
+	"GET /api/v1/public/conversations/{token}":                                 "share token",
+	"GET /api/v1/public/conversations/{token}/messages":                        "share token",
+	"GET /api/v1/public/conversations/{token}/messages/{messageID}/attachment": "share token",
+	"GET /api/v1/public/conversations/{token}/redaction-entries":               "share token (include-sensitive only)",
+	// Anonymous id→name catalogue for the shared-conversation page.
+	"GET /api/v1/public/models": "public model catalogue",
+	// MFA login completion: the caller holds an mfaSessionId (proof the
+	// password factor passed), not an auth token yet.
+	"POST /api/v1/auth/mfa/totp":     "mfa session proof",
+	"POST /api/v1/auth/mfa/recovery": "mfa session proof",
 }
 
-// TestAPIv1RoutesEnforceAuth is a guardrail: every /api/v1 route must reject
-// anonymous callers with a RequireAuth 401, except the explicitly public ones,
-// which must stay reachable. It locks the whole surface against a regression
-// where a route silently loses its RequireAuth() binding.
+// emailVerificationGatedRoutes are the AI-consuming routes that must
+// additionally reject users without a verified email (403 EMAIL_NOT_VERIFIED).
+// Kept in lock-step with the RequireVerifiedEmail() bindings in routes.go and
+// the behavioural coverage in email_verification_test.go.
+var emailVerificationGatedRoutes = map[string]struct{}{
+	"POST /api/v1/completions":                                {},
+	"POST /api/v1/conversations/{conversationID}/complete":    {},
+	"POST /api/v1/conversations/{conversationID}/regenerate":  {},
+	"POST /api/v1/conversations/{conversationID}/image":       {},
+	"POST /api/v1/conversations/{conversationID}/compactions": {},
+}
+
+// minExpectedAPIv1Routes guards the enumerator itself: if the parser ever
+// silently finds a fraction of the surface (e.g. registration moves to a
+// helper it doesn't understand), the test must fail loudly rather than pass
+// vacuously. Raise it as the surface grows; never lower it to "fix" a failure
+// without understanding why the count dropped.
+const minExpectedAPIv1Routes = 80
+
+var routerHTTPMethods = map[string]string{
+	"GET":     http.MethodGet,
+	"POST":    http.MethodPost,
+	"PATCH":   http.MethodPatch,
+	"PUT":     http.MethodPut,
+	"DELETE":  http.MethodDelete,
+	"HEAD":    http.MethodHead,
+	"OPTIONS": http.MethodOptions,
+	"SEARCH":  "SEARCH",
+}
+
+// enumerateRegisteredAPIv1Routes discovers every route registered in this
+// package by parsing its (non-test) source with go/parser and collecting
+// router registration calls: e.Router.GET("/path", …), .POST, .Route(method,
+// path, …) and friends. PocketBase's router keeps its route list unexported,
+// so source enumeration is the reliable way to guarantee a newly added route
+// can never silently skip this guardrail — every custom route in the backend
+// is registered inside package main (go-routing convention: routes.go is the
+// API surface map). Each discovered route is then cross-checked against the
+// live router with HasRoute, so a stale or mis-parsed entry also fails.
+func enumerateRegisteredAPIv1Routes(t *testing.T) []string {
+	t.Helper()
+
+	files, err := filepath.Glob("*.go")
+	if err != nil {
+		t.Fatalf("glob package sources: %v", err)
+	}
+
+	found := map[string]struct{}{}
+	fset := token.NewFileSet()
+
+	for _, file := range files {
+		if strings.HasSuffix(file, "_test.go") {
+			continue
+		}
+
+		parsed, err := parser.ParseFile(fset, file, nil, parser.SkipObjectResolution)
+		if err != nil {
+			t.Fatalf("parse %s: %v", file, err)
+		}
+
+		ast.Inspect(parsed, func(n ast.Node) bool {
+			call, ok := n.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+			sel, ok := call.Fun.(*ast.SelectorExpr)
+			if !ok {
+				return true
+			}
+
+			method := ""
+			pathArg := -1
+			if httpMethod, ok := routerHTTPMethods[sel.Sel.Name]; ok && len(call.Args) >= 1 {
+				method = httpMethod
+				pathArg = 0
+			} else if sel.Sel.Name == "Route" && len(call.Args) >= 2 {
+				if lit, ok := call.Args[0].(*ast.BasicLit); ok && lit.Kind == token.STRING {
+					if m, err := strconv.Unquote(lit.Value); err == nil {
+						method = strings.ToUpper(m)
+					}
+				}
+				pathArg = 1
+			} else {
+				return true
+			}
+
+			lit, ok := call.Args[pathArg].(*ast.BasicLit)
+			if !ok || lit.Kind != token.STRING {
+				return true
+			}
+			path, err := strconv.Unquote(lit.Value)
+			if err != nil || !strings.HasPrefix(path, "/api/v1") {
+				return true
+			}
+
+			found[method+" "+path] = struct{}{}
+			return true
+		})
+	}
+
+	routes := make([]string, 0, len(found))
+	for route := range found {
+		routes = append(routes, route)
+	}
+	sort.Strings(routes)
+
+	if len(routes) < minExpectedAPIv1Routes {
+		t.Fatalf(
+			"enumerated only %d /api/v1 routes, expected at least %d — the source enumerator is broken or the surface shrank",
+			len(routes), minExpectedAPIv1Routes,
+		)
+	}
+
+	return routes
+}
+
+// TestAPIv1RoutesEnforceAuth is a guardrail over the ENTIRE registered /api/v1
+// surface, enumerated from the package source (see
+// enumerateRegisteredAPIv1Routes): every route must reject anonymous callers
+// with a RequireAuth 401 unless it is on the explicit public allowlist, which
+// must stay reachable. AI-consuming routes must additionally reject
+// authenticated-but-unverified users with 403 EMAIL_NOT_VERIFIED. A new route
+// is picked up automatically — it can only become public (or skip the
+// verification gate) by an explicit allowlist change here.
 func TestAPIv1RoutesEnforceAuth(t *testing.T) {
+	routes := enumerateRegisteredAPIv1Routes(t)
+
+	// Every allowlisted/gated entry must exist, so a rename can't leave a
+	// stale allowlist entry silently allowing the wrong route.
+	routeSet := map[string]struct{}{}
+	for _, rt := range routes {
+		routeSet[rt] = struct{}{}
+	}
+	for rt := range publicAPIv1Routes {
+		if _, ok := routeSet[rt]; !ok {
+			t.Fatalf("public allowlist entry %q is not a registered route — update publicAPIv1Routes", rt)
+		}
+	}
+	for rt := range emailVerificationGatedRoutes {
+		if _, ok := routeSet[rt]; !ok {
+			t.Fatalf("verification-gate entry %q is not a registered route — update emailVerificationGatedRoutes", rt)
+		}
+	}
+
 	app := setupTestApp(t)
 	defer app.Cleanup()
 
@@ -94,46 +197,83 @@ func TestAPIv1RoutesEnforceAuth(t *testing.T) {
 
 	serveEvent := &core.ServeEvent{App: app, Router: baseRouter}
 	triggerErr := app.OnServe().Trigger(serveEvent, func(e *core.ServeEvent) error {
+		// Bind the unverified seed user for requests carrying this header, so
+		// the same mux serves both the anonymous and the unverified probes.
+		unverified, err := app.FindAuthRecordByEmail("users", "unverified@example.com")
+		if err != nil {
+			return err
+		}
+		const unverifiedProbeHeader = "X-Test-Unverified-Auth"
+		e.Router.BindFunc(func(re *core.RequestEvent) error {
+			if re.Request.Header.Get(unverifiedProbeHeader) == "1" {
+				re.Auth = unverified
+			}
+			return re.Next()
+		})
+
 		mux, err := e.Router.BuildMux()
 		if err != nil {
 			return err
 		}
 
-		for _, rt := range apiV1Routes {
+		probe := func(method, path string, headers map[string]string) *httptest.ResponseRecorder {
+			// Fresh rate-limit bucket per probe.
+			resetRouteRateLimiters()
+			reqPath := routeParamPattern.ReplaceAllString(path, "x")
+			recorder := httptest.NewRecorder()
+			req := httptest.NewRequest(method, reqPath, nil)
+			req.Header.Set("content-type", "application/json")
+			for k, v := range headers {
+				req.Header.Set(k, v)
+			}
+			mux.ServeHTTP(recorder, req)
+			return recorder
+		}
+
+		for _, rt := range routes {
 			rt := rt
-			t.Run(rt.method+" "+rt.path, func(t *testing.T) {
-				// 1) The route exists exactly as listed (catches renames/removals).
-				if !e.Router.HasRoute(rt.method, rt.path) {
-					t.Fatalf("route is not registered — update apiV1Routes")
+			parts := strings.SplitN(rt, " ", 2)
+			method, path := parts[0], parts[1]
+
+			t.Run(rt, func(t *testing.T) {
+				// 1) The parsed route is actually registered (catches a parser
+				//    bug or a registration the parser saw but the router lost).
+				if !e.Router.HasRoute(method, path) {
+					t.Fatalf("route was parsed from source but is not registered on the router")
 				}
 
-				// 2) Probe it anonymously (fresh rate-limit bucket per probe).
-				resetRouteRateLimiters()
-				reqPath := routeParamPattern.ReplaceAllString(rt.path, "x")
-				recorder := httptest.NewRecorder()
-				req := httptest.NewRequest(rt.method, reqPath, nil)
-				req.Header.Set("content-type", "application/json")
-				mux.ServeHTTP(recorder, req)
-
+				// 2) Anonymous probe.
+				recorder := probe(method, path, nil)
 				body := recorder.Body.String()
 				blockedByAuth := recorder.Code == http.StatusUnauthorized &&
 					strings.Contains(body, requireAuthMessage)
 
-				if rt.public {
+				if _, isPublic := publicAPIv1Routes[rt]; isPublic {
 					if blockedByAuth {
-						t.Errorf(
-							"public route should be reachable anonymously, got %d: %s",
-							recorder.Code, body,
-						)
+						t.Errorf("public route should be reachable anonymously, got %d: %s", recorder.Code, body)
 					}
-					return
+				} else if !blockedByAuth {
+					t.Errorf("route must reject anonymous access with a RequireAuth 401, got %d: %s", recorder.Code, body)
 				}
 
-				if !blockedByAuth {
-					t.Errorf(
-						"route must reject anonymous access with a RequireAuth 401, got %d: %s",
-						recorder.Code, body,
-					)
+				// 3) Unverified-user probe: AI-consuming routes must 403 with
+				//    the machine-readable EMAIL_NOT_VERIFIED code; only GET
+				//    routes are additionally asserted NOT to be gated (probing
+				//    non-gated mutating routes with real auth would write).
+				if _, gated := emailVerificationGatedRoutes[rt]; gated {
+					recorder := probe(method, path, map[string]string{"X-Test-Unverified-Auth": "1"})
+					if recorder.Code != http.StatusForbidden ||
+						!strings.Contains(recorder.Body.String(), `"error":"EMAIL_NOT_VERIFIED"`) {
+						t.Errorf(
+							"AI-consuming route must reject unverified users with 403 EMAIL_NOT_VERIFIED, got %d: %s",
+							recorder.Code, recorder.Body.String(),
+						)
+					}
+				} else if method == http.MethodGet {
+					recorder := probe(method, path, map[string]string{"X-Test-Unverified-Auth": "1"})
+					if strings.Contains(recorder.Body.String(), `"error":"EMAIL_NOT_VERIFIED"`) {
+						t.Errorf("non-AI route must not be verification-gated, got %d: %s", recorder.Code, recorder.Body.String())
+					}
 				}
 			})
 		}

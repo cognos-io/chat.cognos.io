@@ -19,7 +19,7 @@ async function provisionUnlockedAccount(page: Page) {
   const account = makeTestAccount();
   await gotoRegister(page);
   await fillRegisterForm(page, account);
-  await submitRegister(page);
+  await submitRegister(page, account);
   await expectAccountKeyDialogForNewUser(page);
   const accountKey = await captureGeneratedAccountKey(page);
   await copyAccountKey(page);

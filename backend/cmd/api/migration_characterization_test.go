@@ -37,7 +37,7 @@ func TestMetricsRouteWorksAcrossFreshApps(t *testing.T) {
 
 	for i := range 2 {
 		scenario := tests.ApiScenario{
-			Name:           "metrics route works on fresh app " + string(rune('1'+i)),
+			Name:           "metrics route works for superusers on fresh app " + string(rune('1'+i)),
 			Method:         http.MethodGet,
 			URL:            "/metrics",
 			ExpectedStatus: http.StatusOK,
@@ -46,10 +46,68 @@ func TestMetricsRouteWorksAcrossFreshApps(t *testing.T) {
 				"process_cpu_seconds_total",
 			},
 			TestAppFactory: setupTestApp,
-			BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+			BeforeTestFunc: withSuperuserAuth(),
 		}
 
 		scenario.Test(t)
+	}
+}
+
+// /metrics exposes operational counters (user/conversation/message totals) —
+// operator data, not user data. It must be superuser-only: a regular
+// authenticated user is 403'd and an anonymous caller is 401'd.
+func TestMetricsRouteRejectsNonSuperusers(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []tests.ApiScenario{
+		{
+			Name:           "metrics rejects a regular authenticated user",
+			Method:         http.MethodGet,
+			URL:            "/metrics",
+			ExpectedStatus: http.StatusForbidden,
+			ExpectedContent: []string{
+				`"message":"The authorized record is not allowed to perform this action."`,
+			},
+			TestAppFactory: setupTestApp,
+			BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+		},
+		{
+			Name:           "metrics rejects anonymous callers",
+			Method:         http.MethodGet,
+			URL:            "/metrics",
+			ExpectedStatus: http.StatusUnauthorized,
+			ExpectedContent: []string{
+				`"message":"The request requires valid record authorization token."`,
+			},
+			TestAppFactory: setupTestApp,
+		},
+	}
+
+	for _, scenario := range scenarios {
+		scenario.Test(t)
+	}
+}
+
+// withSuperuserAuth seeds a superuser record and authenticates the request as
+// it (the test seed data deliberately contains no superusers).
+func withSuperuserAuth() func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+	return func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+		collection, err := app.FindCollectionByNameOrId(core.CollectionNameSuperusers)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		record := core.NewRecord(collection)
+		record.Set("email", "superuser@example.com")
+		record.SetPassword("password-1234")
+		if err := app.Save(record); err != nil {
+			t.Fatal(err)
+		}
+
+		e.Router.BindFunc(func(re *core.RequestEvent) error {
+			re.Auth = record
+			return re.Next()
+		})
 	}
 }
 
