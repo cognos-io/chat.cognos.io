@@ -223,6 +223,7 @@ func seedReasoningModel(t testing.TB, app *tests.TestApp) {
 		OutputUSDPerMillionTokens: 2,
 		ReasoningEfforts:          []string{"off", "low", "medium", "high"},
 		DefaultReasoningEffort:    "medium",
+		SupportsTextCompletion:    true,
 	})
 }
 

@@ -42,6 +42,8 @@ type modelSeed struct {
 	TagRecordIDs              []string
 	ReasoningEfforts          []string
 	DefaultReasoningEffort    string
+	SupportsTextCompletion    bool
+	SupportsImageGeneration   bool
 }
 
 func seedAIProvider(t testing.TB, app *tests.TestApp, seed providerSeed) string {
@@ -115,6 +117,8 @@ func seedAIModel(t testing.TB, app *tests.TestApp, seed modelSeed) string {
 		record.Set("reasoning_efforts", seed.ReasoningEfforts)
 	}
 	record.Set("default_reasoning_effort", seed.DefaultReasoningEffort)
+	record.Set("supports_text_completion", seed.SupportsTextCompletion)
+	record.Set("supports_image_generation", seed.SupportsImageGeneration)
 	if err := app.Save(record); err != nil {
 		t.Fatalf("Save(ai_models %q) error = %v", seed.ModelID, err)
 	}
