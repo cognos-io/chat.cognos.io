@@ -34,12 +34,17 @@ Cognos now uses PocketBase's built-in `users` auth collection locally. No Ory se
 1. Create a user in the `users` auth collection with:
    - an email address
    - a password
+   - **`verified` ticked** — AI endpoints (completions, image generation) are gated on a verified
+     email (see `docs/business_processes/email-verification-gate.md`), and local dev has no SMTP to
+     send a real verification link, so set it manually here
 1. Open the frontend and log in with that email and password
 
 Notes:
 
 - the frontend development environment already points at `http://localhost:8090`
 - local backend data is served from `backend/pb_data`
+- unverified users can sign in and read, but sending a message returns `403 EMAIL_NOT_VERIFIED`
+  until the account is verified
 - Account Key and local unlock behavior are documented in `docs/security-model.md`
 
 ## Deployment

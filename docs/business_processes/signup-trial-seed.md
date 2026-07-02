@@ -27,3 +27,8 @@ flowchart LR
 The trial is consumed via the [billing access gate](./billing-access-gate.md);
 when the balance can no longer cover the next request's upper-bound estimate,
 the user transitions to `inactive`.
+
+The seed is granted at signup, but it cannot be **spent** until the user
+verifies their email — every AI-consuming endpoint sits behind the
+[email verification gate](./email-verification-gate.md). This stops scripted
+throwaway accounts from draining provider budget on the seeded credit.

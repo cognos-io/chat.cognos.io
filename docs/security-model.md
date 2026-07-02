@@ -31,12 +31,25 @@ The browser client is trusted to:
 - encrypt and decrypt local key material
 - decrypt stored chat ciphertext
 - derive unlock keys from user secrets
+- render untrusted model output safely (see below)
+
+Because the client holds decrypted key material in memory, **script injection in
+the client is equivalent to key compromise**. Model responses are untrusted
+input: they are rendered as markdown through DOMPurify with scripts, event
+handlers and unsafe URLs removed, and additionally with `style` attributes and
+`form`/`input`/`button` elements forbidden — so a malicious or prompt-injected
+response cannot paint a full-viewport overlay or a fake "re-enter your Account
+Key" form (`frontend/src/app/markdown/sanitize-markdown.ts`). A same-origin
+Content-Security-Policy served at the app edge is the complementary defence
+(tracked as pre-GA hardening).
 
 ### The server
 
 The server is trusted to:
 
 - authenticate users
+- require a verified email before spending AI-provider budget (abuse control —
+  see `business_processes/email-verification-gate.md`)
 - store encrypted records
 - route plaintext prompts to approved AI providers
 - encrypt messages before persistence
