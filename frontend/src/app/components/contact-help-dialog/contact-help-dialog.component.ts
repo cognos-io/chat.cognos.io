@@ -25,6 +25,7 @@ import { ProfilePictureComponent } from '../team/profile-picture/profile-picture
     <cog-dialog-surface
       *transloco="let t"
       [title]="t('dialogs.contactHelp.title')"
+      [closeLabel]="t('common.close')"
       [footer]="true"
       (close)="close()"
     >

@@ -47,6 +47,7 @@ const notBlankValidator = (): ValidatorFn => {
     <cog-dialog-surface
       *transloco="let t"
       [title]="t('dialogs.editConversation.title')"
+      [closeLabel]="t('common.close')"
       [footer]="true"
       [width]="560"
       (close)="close()"

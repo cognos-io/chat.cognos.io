@@ -52,6 +52,7 @@ type ShareState = 'checking' | 'idle' | 'shared';
       iconTone="success"
       [title]="t('dialogs.share.title')"
       [subtitle]="t('dialogs.share.subtitle')"
+      [closeLabel]="t('common.close')"
       [footer]="true"
       [width]="560"
       (close)="close()"

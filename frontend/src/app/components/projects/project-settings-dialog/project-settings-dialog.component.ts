@@ -49,6 +49,7 @@ import { ProjectService } from '@app/services/project.service';
     <cog-dialog-surface
       *transloco="let t"
       [title]="t('projects.settings.title')"
+      [closeLabel]="t('common.close')"
       [footer]="true"
       [width]="560"
       (close)="close()"

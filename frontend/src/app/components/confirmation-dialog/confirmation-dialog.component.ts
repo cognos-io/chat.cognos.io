@@ -22,6 +22,7 @@ import {
     <cog-dialog-surface
       *transloco="let t"
       [title]="t('dialogs.confirm.title')"
+      [closeLabel]="t('common.close')"
       [footer]="true"
       (close)="close()"
     >

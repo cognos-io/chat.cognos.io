@@ -36,6 +36,7 @@ export const expiringDurations = [
     <ng-container *transloco="let t">
       <cog-dialog-surface
         [title]="t('chat.temporary.title')"
+        [closeLabel]="t('common.close')"
         [footer]="true"
         [width]="560"
         (close)="close()"
