@@ -25,5 +25,6 @@ go.work
 pb_data/
 
 # rapid (property testing) failure-reproduction artifacts are machine/time
-# specific — regenerated on failure, never committed
-testdata/rapid/
+# specific — regenerated on failure, never committed. Glob matches the
+# per-package testdata/rapid/ dirs at any depth.
+**/testdata/rapid/
