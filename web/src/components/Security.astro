@@ -14,14 +14,14 @@ const icons = ['FileLock2', 'Ban', 'Landmark', 'KeyRound'] as const;
   <div class="wrap">
     <div class="split">
       <div class="reveal">
-        <span class="eyebrow" style="color: var(--brand);">{t('security.eyebrow')}</span>
-        <h2 class="sec-h" style="margin-top: 8px;">{t('security.title')}</h2>
-        <p style="color: var(--ink-sub); font-size: 1.08rem; margin-top: 14px; line-height: 1.6;">
+        <span class="eyebrow text-brand">{t('security.eyebrow')}</span>
+        <h2 class="sec-h mt-100">{t('security.title')}</h2>
+        <p class="lead-copy">
           {t('security.lead')}
         </p>
       </div>
       <div>
-        <div class="grid grid--sm-2" style="gap: 12px;">
+        <div class="grid grid--sm-2 grid--compact">
           {
             items.map((item, i) => (
               <div class="reveal">

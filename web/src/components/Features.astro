@@ -24,7 +24,7 @@ const pillClasses = ['pill-green', 'pill-blue', 'pill-purple'];
       <h2 class="sec-h">{t('features.title')}</h2>
       <p>{t('features.lead')}</p>
     </div>
-    <div class="grid grid--3" style="margin-top: 40px;">
+    <div class="grid grid--3 section-grid">
       {
         items.map((item, i) => (
           <div class="reveal">
@@ -34,7 +34,7 @@ const pillClasses = ['pill-green', 'pill-blue', 'pill-purple'];
               <p>
                 {item.body}
                 {item.pills && (
-                  <span style="display: inline-flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;">
+                  <span class="pill-row">
                     {item.pills.map((label, pi) => (
                       <span class={`pill ${pillClasses[pi] ?? 'pill-green'}`}>{label}</span>
                     ))}

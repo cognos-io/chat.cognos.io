@@ -70,9 +70,13 @@ backend-test:
 mock-ai:
     @go run ./cmd/mock-ai-provider
 
+# Run the web/marketing pages
+web:
+    @pnpm --filter @cognos/web dev
+
 # Run frontend, backend and the mock AI provider together
 [parallel]
-dev: frontend backend mock-ai
+dev: frontend backend mock-ai web
 
 dev-test:
     @just _dev backend-test
