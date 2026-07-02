@@ -261,7 +261,7 @@
       "blurb": {
         "cancelsSoon": "Tu plan está programado para cancelarse. Sigue funcionando hasta el final del periodo.",
         "inactive": "Tus chats siguen cifrados y legibles. Elige un plan para volver a enviar mensajes.",
-        "payg": "Compra créditos y úsalos en cualquier modelo. Un mínimo de CHF 10 mantiene tu cuenta activa cada mes.",
+        "payg": "Compra créditos y úsalos en cualquier modelo. Un mínimo de CHF 15 mantiene tu cuenta activa cada mes.",
         "trial": "Estás en la prueba gratuita. Elige un plan para seguir enviando cuando se agote.",
         "unlimited": "Mensajes ilimitados en todos los modelos de Cognos, con potencia de cálculo prioritaria."
       },
@@ -332,9 +332,9 @@
         "messagesSince": "mensajes desde el {{ date }}",
         "noLimit": "Sin límite",
         "noneRecorded": "Aún no se ha registrado uso este periodo.",
-        "notePayg": "El consumo por encima del mínimo de CHF 10 se mide por uso de tokens y se añade a tu próxima factura.",
+        "notePayg": "El consumo por encima del mínimo de CHF 15 se mide por uso de tokens y se añade a tu próxima factura.",
         "noteUnlimited": "Unlimited cubre el uso individual normal — la computación se mide internamente solo para mantener el servicio justo.",
-        "spentSince": "gastado desde el {{ date }} · CHF 10 mínimo",
+        "spentSince": "gastado desde el {{ date }} · CHF 15 mínimo",
         "title": "Uso de este periodo"
       }
     },
@@ -371,7 +371,7 @@
       "monthly": "Mensual",
       "monthsFree": "2 meses gratis",
       "payg": {
-        "blurb": "Compra créditos y úsalos en cualquier modelo. Un mínimo de CHF 10 mantiene tu cuenta activa cada mes.",
+        "blurb": "Compra créditos y úsalos en cualquier modelo. Un mínimo de CHF 15 mantiene tu cuenta activa cada mes.",
         "cta": "Empezar con créditos",
         "features": {
           "credits": "Los créditos funcionan en todos los modelos y habilidades",
@@ -379,7 +379,7 @@
           "payForUse": "Paga solo por lo que realmente uses",
           "rollover": "Los créditos no usados se acumulan mientras esté activa"
         },
-        "fine": "El consumo por encima del mínimo de CHF 10 se mide por mensaje.",
+        "fine": "El consumo por encima del mínimo de CHF 15 se mide por mensaje.",
         "name": "Pay as you go",
         "priceNote": "Facturado mensualmente · recarga cuando quieras",
         "tag": "Flexible",
@@ -418,7 +418,7 @@
       "monthsFree": "2 meses gratis",
       "note": "Los cambios surten efecto de inmediato. Garantía de devolución de 60 días en ambos planes.",
       "payg": {
-        "desc": "Compra créditos y úsalos en cualquier modelo. Un mínimo mensual de CHF 10 mantiene tu cuenta activa.",
+        "desc": "Compra créditos y úsalos en cualquier modelo. Un mínimo mensual de CHF 15 mantiene tu cuenta activa.",
         "name": "Pay as you go",
         "per": "/ mes mín.",
         "sub": "Créditos en cada modelo · facturado mensualmente",

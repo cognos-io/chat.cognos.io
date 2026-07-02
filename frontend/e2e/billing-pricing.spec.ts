@@ -65,8 +65,8 @@ test('the pricing page presents both plans, the guarantee and a working interval
   // Both plans are present with their badges and prices.
   await expect(page.getByRole('heading', { name: 'Pay as you go' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Unlimited' })).toBeVisible();
-  await expect(page.getByText('CHF 10', { exact: true })).toBeVisible();
-  await expect(page.getByText('CHF 100', { exact: true })).toBeVisible();
+  await expect(page.getByText('CHF 15', { exact: true })).toBeVisible();
+  await expect(page.getByText('CHF 150', { exact: true })).toBeVisible();
 
   // Guarantee + assurances + footer.
   await expect(page.getByText('60-day money-back guarantee')).toBeVisible();
@@ -75,7 +75,7 @@ test('the pricing page presents both plans, the guarantee and a working interval
 
   // Switching to yearly re-prices the Unlimited plan.
   await page.getByRole('button', { name: /Yearly/ }).click();
-  await expect(page.getByText("CHF 1'000", { exact: true })).toBeVisible();
+  await expect(page.getByText("CHF 1'500", { exact: true })).toBeVisible();
 });
 
 test('choosing a plan creates a checkout and redirects to the Paddle URL', async ({

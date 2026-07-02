@@ -15,6 +15,7 @@ import {
   CognosLozengeComponent,
 } from '@cognos/ui-angular';
 
+import { BILLING_PRICES } from '@app/billing/pricing';
 import { CheckoutPlan } from '@app/interfaces/billing';
 import { BillingService } from '@app/services/billing.service';
 
@@ -116,7 +117,7 @@ type BillingInterval = 'monthly' | 'yearly';
             </p>
 
             <p class="pricing__price">
-              <span class="pricing__price-amount">CHF 10</span>
+              <span class="pricing__price-amount">{{ prices.paygMinimum }}</span>
               <span class="pricing__price-unit">{{
                 t('billing.pricing.payg.unit')
               }}</span>
@@ -166,7 +167,7 @@ type BillingInterval = 'monthly' | 'yearly';
 
             @if (interval() === 'monthly') {
               <p class="pricing__price">
-                <span class="pricing__price-amount">CHF 100</span>
+                <span class="pricing__price-amount">{{ prices.unlimitedMonthly }}</span>
                 <span class="pricing__price-unit">{{
                   t('billing.pricing.unlimited.perMonth')
                 }}</span>
@@ -174,14 +175,14 @@ type BillingInterval = 'monthly' | 'yearly';
               <p class="pricing__price-note pricing__price-note--accent">
                 {{
                   t('billing.pricing.unlimited.savesMonthly', {
-                    yearly: "CHF 1'000",
-                    saving: 'CHF 200',
+                    yearly: prices.unlimitedAnnual,
+                    saving: prices.unlimitedAnnualSaving,
                   })
                 }}
               </p>
             } @else {
               <p class="pricing__price">
-                <span class="pricing__price-amount">CHF 1'000</span>
+                <span class="pricing__price-amount">{{ prices.unlimitedAnnual }}</span>
                 <span class="pricing__price-unit">{{
                   t('billing.pricing.unlimited.perYear')
                 }}</span>
@@ -277,6 +278,7 @@ export class PricingComponent {
   public readonly billing = inject(BillingService);
 
   readonly interval = signal<BillingInterval>('monthly');
+  protected readonly prices = BILLING_PRICES;
 
   constructor() {
     // On the redirect return from a hosted checkout, kick off the shared poll.

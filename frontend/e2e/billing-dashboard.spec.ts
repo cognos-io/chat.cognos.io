@@ -67,7 +67,7 @@ test('active unlimited dashboard shows plan, renewal, usage and the settings nav
   // Plan card.
   await expect(page.getByRole('heading', { name: 'Plan & billing' })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Unlimited/ })).toBeVisible();
-  await expect(page.getByText('CHF 100 / month').first()).toBeVisible();
+  await expect(page.getByText('CHF 150 / month').first()).toBeVisible();
   await expect(page.getByText('Active', { exact: true })).toBeVisible();
   await expect(page.getByText('Renews')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Switch plan' })).toBeVisible();
@@ -147,7 +147,7 @@ test('dashboard renders the saved card and Paddle invoices', async ({ page }) =>
             invoice_number: 'CG-26-0002',
             status: 'paid',
             currency: 'CHF',
-            amount_minor: 10000,
+            amount_minor: 15000,
             billed_at: '2026-04-14T00:00:00Z',
           },
         ],
@@ -165,7 +165,7 @@ test('dashboard renders the saved card and Paddle invoices', async ({ page }) =>
   // Invoice row with number, status and amount.
   await expect(page.getByText('Invoice CG-26-0002')).toBeVisible();
   await expect(page.getByText('Paid', { exact: true })).toBeVisible();
-  await expect(page.getByText('CHF 100.00')).toBeVisible();
+  await expect(page.getByText('CHF 150.00')).toBeVisible();
 
   // The Paddle brand mark renders (Synced with Paddle + invoices footer).
   await expect(page.getByRole('img', { name: 'Paddle' }).first()).toBeVisible();

@@ -20,7 +20,7 @@
     "lead": "Jede andere KI behält, was du schreibst — und nutzt es, um ihr nächstes Modell zu trainieren. Deine Gesundheit. Dein Geld. Deine Sorgen. Alles liegt auf dem Computer von jemand anderem. Cognos macht es andersherum. Wir bewahren keine lesbare Kopie deiner Chats auf. Deine persönlichen Angaben werden versteckt, bevor irgendetwas rausgeht. Und die KI vergisst deinen Chat, sobald sie geantwortet hat.",
     "ctaPrimary": "Loslegen",
     "ctaSecondary": "So funktioniert's",
-    "finehint": "Ab CHF 10/Monat · 60 Tage Geld-zurück-Garantie · In der Schweiz oder in Europa",
+    "finehint": "Ab CHF 15/Monat · 60 Tage Geld-zurück-Garantie · In der Schweiz oder in Europa",
     "assure": {
       "zeroKnowledge": "Keine lesbare Kopie",
       "swiss": "In der Schweiz oder in Europa",
@@ -132,7 +132,7 @@
     "individuals": {
       "title": "Zahl nach Verbrauch",
       "currency": "CHF",
-      "amount": "10",
+      "amount": "15",
       "period": "/ Monat mindestens",
       "tagline": "Zahl nur für das, was du wirklich nutzt — jederzeit aufladen, keine Bindung.",
       "items": [
@@ -147,9 +147,9 @@
       "title": "Unbegrenzt",
       "badge": "Bester Wert",
       "currency": "CHF",
-      "amount": "100",
+      "amount": "150",
       "period": "/ Monat",
-      "annual": "oder <b>CHF 1000 / Jahr</b> — zwei Monate gratis.",
+      "annual": "oder <b>CHF 1500 / Jahr</b> — zwei Monate gratis.",
       "items": [
         "<b>Unbegrenzte Chats</b>, über alle KI-Modelle, die wir anbieten",
         "Bleib in der Schweiz, wann immer du willst",

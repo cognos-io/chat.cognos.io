@@ -20,6 +20,7 @@ import {
   CognosProgressComponent,
 } from '@cognos/ui-angular';
 
+import { BILLING_PRICES } from '@app/billing/pricing';
 import { BillingPastDueBannerComponent } from '@app/components/billing/billing-past-due-banner/billing-past-due-banner.component';
 import { SwitchPlanModalComponent } from '@app/components/billing/switch-plan-modal/switch-plan-modal.component';
 import { PaddleLogoComponent } from '@app/components/paddle-logo/paddle-logo.component';
@@ -295,15 +296,15 @@ export class PlanBillingComponent {
     ) {
       return billing.interval === 'annual'
         ? this._transloco.translate('billing.plan.price.perYear', {
-            price: "CHF 1'000",
+            price: BILLING_PRICES.unlimitedAnnual,
           })
         : this._transloco.translate('billing.plan.price.perMonth', {
-            price: 'CHF 100',
+            price: BILLING_PRICES.unlimitedMonthly,
           });
     }
     if (billing.plan_type === 'payg' || billing.previous_plan_type === 'payg') {
       return this._transloco.translate('billing.plan.price.perMonthMin', {
-        price: 'CHF 10',
+        price: BILLING_PRICES.paygMinimum,
       });
     }
     return '';

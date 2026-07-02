@@ -17,6 +17,7 @@ import {
   CognosModalComponent,
 } from '@cognos/ui-angular';
 
+import { BILLING_PRICES } from '@app/billing/pricing';
 import { BillingPlanType, CheckoutPlan } from '@app/interfaces/billing';
 
 type BillingPeriod = 'monthly' | 'yearly';
@@ -61,6 +62,7 @@ export class SwitchPlanModalComponent {
   }
 
   protected readonly paygIsCurrent = computed(() => this.currentPlan() === 'payg');
+  protected readonly prices = BILLING_PRICES;
 
   // Which Unlimited price the toggle currently targets.
   protected readonly unlimitedTarget = computed<CheckoutPlan>(() =>
@@ -76,7 +78,9 @@ export class SwitchPlanModalComponent {
   });
 
   protected readonly unlimitedPrice = computed(() =>
-    this.billingPeriod() === 'yearly' ? "CHF 1'000" : 'CHF 100',
+    this.billingPeriod() === 'yearly'
+      ? BILLING_PRICES.unlimitedAnnual
+      : BILLING_PRICES.unlimitedMonthly,
   );
 
   protected readonly unlimitedPer = computed(() =>
@@ -89,8 +93,8 @@ export class SwitchPlanModalComponent {
     this.billingPeriod() === 'yearly'
       ? this._transloco.translate('billing.switch.unlimitedSubYearly')
       : this._transloco.translate('billing.switch.unlimitedSubMonthly', {
-          yearly: "CHF 1'000",
-          saving: 'CHF 200',
+          yearly: BILLING_PRICES.unlimitedAnnual,
+          saving: BILLING_PRICES.unlimitedAnnualSaving,
         }),
   );
 

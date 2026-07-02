@@ -20,7 +20,7 @@
     "lead": "Todas as outras IAs guardam o que escreves — e usam isso para treinar o próximo modelo. A tua saúde. O teu dinheiro. As tuas preocupações. Tudo parado no computador de outra pessoa. A Cognos funciona ao contrário. Não guardamos nenhuma cópia das tuas conversas que consigamos ler. Os teus dados pessoais ficam escondidos antes de qualquer coisa sair. E a IA esquece a tua conversa assim que responde.",
     "ctaPrimary": "Começar",
     "ctaSecondary": "Ver como funciona",
-    "finehint": "A partir de CHF 10/mês · Garantia de reembolso de 60 dias · Tratado na Suíça ou na Europa",
+    "finehint": "A partir de CHF 15/mês · Garantia de reembolso de 60 dias · Tratado na Suíça ou na Europa",
     "assure": {
       "zeroKnowledge": "Nenhuma cópia que consigamos ler",
       "swiss": "Guardado na Suíça ou na Europa",
@@ -132,7 +132,7 @@
     "individuals": {
       "title": "Paga conforme usas",
       "currency": "CHF",
-      "amount": "10",
+      "amount": "15",
       "period": "/ mês mínimo",
       "tagline": "Paga só pelo que usas mesmo — carrega quando quiseres, sem compromisso.",
       "items": [
@@ -147,9 +147,9 @@
       "title": "Ilimitado",
       "badge": "Melhor custo-benefício",
       "currency": "CHF",
-      "amount": "100",
+      "amount": "150",
       "period": "/ mês",
-      "annual": "ou <b>CHF 1000 / ano</b> — dois meses grátis.",
+      "annual": "ou <b>CHF 1500 / ano</b> — dois meses grátis.",
       "items": [
         "<b>Conversas ilimitadas</b>, em todos os modelos de IA que oferecemos",
         "Fica na Suíça sempre que quiseres",

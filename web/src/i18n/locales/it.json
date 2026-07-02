@@ -20,7 +20,7 @@
     "lead": "Ogni altra IA conserva quello che scrivi e lo usa per addestrare il suo prossimo modello. La tua salute. I tuoi soldi. Le tue preoccupazioni. Tutto sul computer di qualcun altro. Cognos funziona al contrario. Non teniamo nessuna copia leggibile delle tue chat. I tuoi dati personali vengono nascosti prima che parta qualsiasi cosa. E l'IA dimentica la conversazione nel momento in cui risponde.",
     "ctaPrimary": "Inizia ora",
     "ctaSecondary": "Guarda come funziona",
-    "finehint": "Da CHF 10/mese · Soddisfatti o rimborsati entro 60 giorni · Gestita in Svizzera o in Europa",
+    "finehint": "Da CHF 15/mese · Soddisfatti o rimborsati entro 60 giorni · Gestita in Svizzera o in Europa",
     "assure": {
       "zeroKnowledge": "Nessuna copia leggibile",
       "swiss": "Tenuta in Svizzera o in Europa",
@@ -132,7 +132,7 @@
     "individuals": {
       "title": "Paghi quanto usi",
       "currency": "CHF",
-      "amount": "10",
+      "amount": "15",
       "period": "/ mese minimo",
       "tagline": "Paghi solo per quello che usi davvero — ricarichi quando vuoi, senza vincoli.",
       "items": [
@@ -147,9 +147,9 @@
       "title": "Illimitato",
       "badge": "Miglior valore",
       "currency": "CHF",
-      "amount": "100",
+      "amount": "150",
       "period": "/ mese",
-      "annual": "oppure <b>CHF 1000 / anno</b> — due mesi gratis.",
+      "annual": "oppure <b>CHF 1500 / anno</b> — due mesi gratis.",
       "items": [
         "<b>Chat illimitate</b>, su ogni modello di IA che offriamo",
         "Resta in Svizzera ogni volta che vuoi",

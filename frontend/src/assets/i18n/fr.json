@@ -261,7 +261,7 @@
       "blurb": {
         "cancelsSoon": "Votre offre est programmée pour être annulée. Elle reste active jusqu'à la fin de la période.",
         "inactive": "Vos discussions restent chiffrées et lisibles. Choisissez une offre pour recommencer à envoyer des messages.",
-        "payg": "Achetez des crédits et utilisez-les sur n'importe quel modèle. Un minimum de CHF 10 garde votre compte actif chaque mois.",
+        "payg": "Achetez des crédits et utilisez-les sur n'importe quel modèle. Un minimum de CHF 15 garde votre compte actif chaque mois.",
         "trial": "Vous êtes en essai gratuit. Choisissez une offre pour continuer à envoyer une fois l'essai terminé.",
         "unlimited": "Messages illimités sur tous les modèles Cognos, avec une puissance de calcul prioritaire."
       },
@@ -332,9 +332,9 @@
         "messagesSince": "messages depuis le {{ date }}",
         "noLimit": "Sans limite",
         "noneRecorded": "Aucune utilisation enregistrée cette période pour le moment.",
-        "notePayg": "La consommation au-delà du minimum de CHF 10 est facturée selon l'utilisation de jetons et ajoutée à votre prochaine facture.",
+        "notePayg": "La consommation au-delà du minimum de CHF 15 est facturée selon l'utilisation de jetons et ajoutée à votre prochaine facture.",
         "noteUnlimited": "Unlimited couvre une utilisation individuelle normale — le calcul est mesuré en interne uniquement pour garder le service équitable.",
-        "spentSince": "dépensé depuis le {{ date }} · CHF 10 minimum",
+        "spentSince": "dépensé depuis le {{ date }} · CHF 15 minimum",
         "title": "Utilisation cette période"
       }
     },
@@ -371,7 +371,7 @@
       "monthly": "Mensuel",
       "monthsFree": "2 mois offerts",
       "payg": {
-        "blurb": "Achetez des crédits et utilisez-les sur n'importe quel modèle. Un minimum de CHF 10 garde votre compte actif chaque mois.",
+        "blurb": "Achetez des crédits et utilisez-les sur n'importe quel modèle. Un minimum de CHF 15 garde votre compte actif chaque mois.",
         "cta": "Commencer avec des crédits",
         "features": {
           "credits": "Les crédits fonctionnent sur chaque modèle et compétence",
@@ -379,7 +379,7 @@
           "payForUse": "Payez uniquement ce que vous utilisez réellement",
           "rollover": "Les crédits non utilisés sont reportés tant que le compte est actif"
         },
-        "fine": "La consommation au-delà du minimum de CHF 10 est facturée par message.",
+        "fine": "La consommation au-delà du minimum de CHF 15 est facturée par message.",
         "name": "Pay as you go",
         "priceNote": "Facturé mensuellement · rechargez à tout moment",
         "tag": "Flexible",
@@ -418,7 +418,7 @@
       "monthsFree": "2 mois offerts",
       "note": "Les changements prennent effet immédiatement. Garantie satisfait ou remboursé de 60 jours sur les deux offres.",
       "payg": {
-        "desc": "Achetez des crédits et utilisez-les sur n'importe quel modèle. Un minimum mensuel de CHF 10 garde votre compte actif.",
+        "desc": "Achetez des crédits et utilisez-les sur n'importe quel modèle. Un minimum mensuel de CHF 15 garde votre compte actif.",
         "name": "Pay as you go",
         "per": "/ mois min.",
         "sub": "Crédits sur chaque modèle · facturé mensuellement",

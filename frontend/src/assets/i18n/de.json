@@ -261,7 +261,7 @@
       "blurb": {
         "cancelsSoon": "Ihr Tarif wird gekündigt. Er funktioniert bis zum Ende der Periode weiter.",
         "inactive": "Ihre Chats bleiben verschlüsselt und lesbar. Wählen Sie einen Tarif, um wieder Nachrichten zu senden.",
-        "payg": "Kaufen Sie Guthaben und nutzen Sie es für jedes Modell. Ein Minimum von CHF 10 hält Ihr Konto jeden Monat aktiv.",
+        "payg": "Kaufen Sie Guthaben und nutzen Sie es für jedes Modell. Ein Minimum von CHF 15 hält Ihr Konto jeden Monat aktiv.",
         "trial": "Sie nutzen die kostenlose Testphase. Wählen Sie einen Tarif, um weiterhin Nachrichten zu senden, sobald sie endet.",
         "unlimited": "Unbegrenzt Nachrichten über alle Cognos-Modelle, mit priorisierter Rechenleistung."
       },
@@ -332,9 +332,9 @@
         "messagesSince": "Nachrichten seit {{ date }}",
         "noLimit": "Kein Limit",
         "noneRecorded": "In dieser Periode noch keine Nutzung erfasst.",
-        "notePayg": "Verbrauch über dem Minimum von CHF 10 wird nach Token-Nutzung berechnet und Ihrer nächsten Rechnung hinzugefügt.",
+        "notePayg": "Verbrauch über dem Minimum von CHF 15 wird nach Token-Nutzung berechnet und Ihrer nächsten Rechnung hinzugefügt.",
         "noteUnlimited": "Unlimited deckt die normale individuelle Nutzung ab — die Rechenleistung wird nur intern gemessen, um den Dienst fair zu halten.",
-        "spentSince": "ausgegeben seit {{ date }} · CHF 10 Minimum",
+        "spentSince": "ausgegeben seit {{ date }} · CHF 15 Minimum",
         "title": "Nutzung in dieser Periode"
       }
     },
@@ -371,7 +371,7 @@
       "monthly": "Monatlich",
       "monthsFree": "2 Monate gratis",
       "payg": {
-        "blurb": "Kaufen Sie Guthaben und nutzen Sie es für jedes Modell. Ein Minimum von CHF 10 hält Ihr Konto jeden Monat aktiv.",
+        "blurb": "Kaufen Sie Guthaben und nutzen Sie es für jedes Modell. Ein Minimum von CHF 15 hält Ihr Konto jeden Monat aktiv.",
         "cta": "Mit Guthaben starten",
         "features": {
           "credits": "Guthaben funktioniert für jedes Modell und jeden Skill",
@@ -379,7 +379,7 @@
           "payForUse": "Zahlen Sie nur für das, was Sie tatsächlich nutzen",
           "rollover": "Ungenutztes Guthaben wird übertragen, solange aktiv"
         },
-        "fine": "Verbrauch über dem Minimum von CHF 10 wird pro Nachricht abgerechnet.",
+        "fine": "Verbrauch über dem Minimum von CHF 15 wird pro Nachricht abgerechnet.",
         "name": "Pay as you go",
         "priceNote": "Monatlich abgerechnet · jederzeit aufladen",
         "tag": "Flexibel",
@@ -418,7 +418,7 @@
       "monthsFree": "2 Monate gratis",
       "note": "Änderungen werden sofort wirksam. 60 Tage Geld-zurück-Garantie für beide Tarife.",
       "payg": {
-        "desc": "Kaufen Sie Guthaben und nutzen Sie es für jedes Modell. Ein monatliches Minimum von CHF 10 hält Ihr Konto aktiv.",
+        "desc": "Kaufen Sie Guthaben und nutzen Sie es für jedes Modell. Ein monatliches Minimum von CHF 15 hält Ihr Konto aktiv.",
         "name": "Pay as you go",
         "per": "/ Mt. min.",
         "sub": "Guthaben für jedes Modell · monatlich abgerechnet",

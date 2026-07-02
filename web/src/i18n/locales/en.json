@@ -20,7 +20,7 @@
     "lead": "Every other AI keeps what you type — and uses it to train its next model. Your health. Your money. Your worries. All sitting on someone else's computer. Cognos works the other way round. We keep no copy of your chats we can read. Your personal details are hidden before anything is sent. And the AI forgets your chat the moment it answers.",
     "ctaPrimary": "Get started",
     "ctaSecondary": "See how it works",
-    "finehint": "From CHF 10/month · 60-day money-back guarantee · Handled in Switzerland or Europe",
+    "finehint": "From CHF 15/month · 60-day money-back guarantee · Handled in Switzerland or Europe",
     "assure": {
       "zeroKnowledge": "No copy we can read",
       "swiss": "Kept in Switzerland or Europe",
@@ -132,7 +132,7 @@
     "individuals": {
       "title": "Pay as you go",
       "currency": "CHF",
-      "amount": "10",
+      "amount": "15",
       "period": "/ month minimum",
       "tagline": "Only pay for what you actually use — top up anytime, no lock-in.",
       "items": [
@@ -147,9 +147,9 @@
       "title": "Unlimited",
       "badge": "Best value",
       "currency": "CHF",
-      "amount": "100",
+      "amount": "150",
       "period": "/ month",
-      "annual": "or <b>CHF 1000 / year</b> — two months free.",
+      "annual": "or <b>CHF 1500 / year</b> — two months free.",
       "items": [
         "<b>Unlimited chats</b>, across every AI model we offer",
         "Stay in Switzerland whenever you want to",
