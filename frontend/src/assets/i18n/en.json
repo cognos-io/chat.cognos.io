@@ -192,7 +192,12 @@
       "login": "Log in",
       "passwordPlaceholder": "At least 12 characters",
       "submit": "Create account",
-      "title": "Create your Cognos account"
+      "title": "Create your Cognos account",
+      "hints": {
+        "emailInvalid": "Enter a valid email address.",
+        "passwordLength": "Use at least 12 characters.",
+        "passwordOk": "Password length looks good."
+      }
     },
     "reset": {
       "backToLogin": "Back to log in",
@@ -532,7 +537,7 @@
         }
       },
       "clearMessages": "Clear all messages",
-      "encrypted": "Encrypted · your keys are encrypted before backup",
+      "encrypted": "Private · we keep no copy we can read",
       "label": "Message Cognos — stored encrypted; sent to your provider to reply",
       "locked": {
         "body": "You can read everything here. Pick a plan to send new messages.",
@@ -544,8 +549,8 @@
       "placeholder": "Message with Cognos",
       "send": "Send",
       "stop": "Stop",
-      "shortcutMac": "Cmd + Enter to send",
-      "shortcutOther": "Ctrl + Enter to send",
+      "shortcutMac": "Enter to send · Shift + Enter for a new line",
+      "shortcutOther": "Enter to send · Shift + Enter for a new line",
       "tools": {
         "label": "Tools",
         "webSearch": {
@@ -616,6 +621,14 @@
         },
         "imageNeedsVision": "{{ model }} can’t read images. Switch to a vision-capable model to attach images.",
         "fileNeedsFileModel": "{{ model }} can’t read files. Switch to a model that supports files, or remove the file."
+      },
+      "verify": {
+        "title": "Confirm your email to start chatting",
+        "body": "We sent a link to {{email}}. Open it to confirm your address, then you can start sending messages.",
+        "resend": "Resend email",
+        "resending": "Sending…",
+        "sent": "Verification email sent",
+        "sentBody": "Check {{email}} for the confirmation link."
       }
     },
     "conversation": {
@@ -776,7 +789,8 @@
       "reasoningThinking": "Thinking…",
       "reasoningDisclaimer": "Reasoning supplied by the model. It may be incomplete or incorrect.",
       "regenerate": "Regenerate response",
-      "copied": "Copied"
+      "copied": "Copied",
+      "decryptFailed": "This message couldn't be unlocked on this device."
     },
     "models": {
       "costTier": {
@@ -911,6 +925,25 @@
       "addToUser": "User",
       "addToProject": "Project",
       "items": "What to remember"
+    },
+    "errors": {
+      "completion": {
+        "needPlan": "Your account needs an active plan before you can keep chatting.",
+        "rateLimited": "You're sending messages too quickly. Please wait a moment and try again.",
+        "generic": "Something went wrong sending your message. Please try again."
+      }
+    },
+    "payg": {
+      "balanceLabel": "Balance",
+      "detail": "{{amount}} of credit remaining",
+      "low": "Low balance",
+      "lowWarning": "Your balance is running low. Top up to keep chatting without interruption.",
+      "manage": "Manage plan"
+    },
+    "retry": {
+      "title": "Your message wasn't sent",
+      "body": "Something interrupted the reply. Your message is still here — try sending it again.",
+      "action": "Retry"
     }
   },
   "common": {
@@ -1032,6 +1065,7 @@
       "accountKeyRequired": "Account Key is required",
       "acknowledge": "I have copied my Account Key to a safe place and understand that if I lose it, Cognos cannot recover my encrypted chats.",
       "acknowledgeRequired": "Please confirm that you copied your Account Key and accept the recovery risk.",
+      "saveFirstHint": "Copy your Account Key or download the Emergency Kit first — you won't be able to see it again.",
       "copiedMsg": "Store it somewhere safe before you continue.",
       "copiedTitle": "Account Key copied",
       "copyAccountKey": "Copy Account Key",
@@ -1054,7 +1088,17 @@
       "titleUnlock": "Unlock backup",
       "unlockBackup": "Unlock encrypted backup",
       "unlockBody": "After you unlock, this browser stays unlocked across refreshes and new tabs. You will need your Account Key again after locking the account, logging out, or clearing browser storage.",
-      "unlockIntro": "Enter your Account Key to unlock this device."
+      "unlockIntro": "Enter your Account Key to unlock this device.",
+      "kit": {
+        "title": "COGNOS EMERGENCY KIT",
+        "intro": "Your Account Key is the only thing that can unlock your data.\nStore it somewhere safe and private — a password manager, or printed and\nlocked away. Anyone who has it can read your chats.",
+        "account": "Account: {{email}}",
+        "keyLabel": "Account Key:",
+        "what": "What it does:\n- Unlocks your encrypted chats on a new device.\n- Your password only signs you in; this key unlocks your data.",
+        "lose": "If you lose it:\n- We keep no copy of your Account Key, so your data cannot be recovered.",
+        "footer": "Cognos · https://cognos.io"
+      },
+      "cantFindKey": "Can't find your Account Key? Look for the cognos-emergency-kit.txt file you saved when you signed up."
     }
   },
   "errors": {
@@ -1272,7 +1316,21 @@
       "wrongCode": "That code wasn't right.",
       "genericError": "Something went wrong. Please try again.",
       "enabledToast": "Two-factor authentication is on.",
-      "disabledToast": "Two-factor authentication is off."
+      "disabledToast": "Two-factor authentication is off.",
+      "pageLead": "Manage your Account Key, password and two-factor authentication.",
+      "kit": {
+        "title": "Account Key & Emergency Kit",
+        "description": "Your Account Key unlocks your encrypted data. Download a fresh copy of your Emergency Kit or copy the key while your data is unlocked.",
+        "download": "Download Emergency Kit",
+        "copy": "Copy Account Key",
+        "lockedTitle": "Unlock to manage your keys",
+        "lockedBody": "Your data is locked on this device. Unlock it first, then you can download your Emergency Kit here.",
+        "unavailableTitle": "Your Account Key isn't kept on this device",
+        "unavailableBody": "For your security we never keep a copy of your Account Key after you unlock. Keep the Emergency Kit you saved when you signed up — it's the only way to unlock your data on a new device.",
+        "copiedToast": "Account Key copied",
+        "downloadedToast": "Emergency Kit downloaded"
+      },
+      "passwordHeading": "Password"
     }
   },
   "models": {
@@ -1310,6 +1368,12 @@
       "qwen3-32b": "Alibaba's open model, strong at multilingual chat and tools.",
       "qwen3-next-80b-a3b-thinking": "Alibaba's open reasoning model with extended thinking.",
       "swiss-ai-apertus-70b-instruct-2509-infomaniak": "Switzerland's fully open, transparent model for multilingual tasks."
+    }
+  },
+  "vault": {
+    "errors": {
+      "createBackup": "Something went wrong creating your encrypted backup. Please try again.",
+      "unlock": "That Account Key didn't match, so we couldn't unlock your data. Check it and try again."
     }
   }
 }

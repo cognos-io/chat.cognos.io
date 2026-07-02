@@ -192,7 +192,12 @@
       "login": "Se connecter",
       "passwordPlaceholder": "Au moins 12 caractères",
       "submit": "Créer un compte",
-      "title": "Créez votre compte Cognos"
+      "title": "Créez votre compte Cognos",
+      "hints": {
+        "emailInvalid": "Saisissez une adresse e-mail valide.",
+        "passwordLength": "Utilisez au moins 12 caractères.",
+        "passwordOk": "La longueur du mot de passe est correcte."
+      }
     },
     "reset": {
       "backToLogin": "Retour à la connexion",
@@ -532,7 +537,7 @@
         }
       },
       "clearMessages": "Effacer tous les messages",
-      "encrypted": "Chiffré · vos clés sont chiffrées avant la sauvegarde",
+      "encrypted": "Privé · nous n'en gardons aucune copie lisible",
       "label": "Écrire à Cognos — stocké chiffré ; envoyé à votre fournisseur pour répondre",
       "locked": {
         "body": "Vous pouvez tout lire ici. Choisissez un forfait pour envoyer de nouveaux messages.",
@@ -544,8 +549,8 @@
       "placeholder": "Écrire avec Cognos",
       "send": "Envoyer",
       "stop": "Arrêter",
-      "shortcutMac": "Cmd + Entrée pour envoyer",
-      "shortcutOther": "Ctrl + Entrée pour envoyer",
+      "shortcutMac": "Entrée pour envoyer · Maj + Entrée pour un saut de ligne",
+      "shortcutOther": "Entrée pour envoyer · Maj + Entrée pour un saut de ligne",
       "tools": {
         "label": "Outils",
         "webSearch": {
@@ -616,6 +621,14 @@
         },
         "imageNeedsVision": "{{ model }} ne peut pas lire les images. Choisissez un modèle compatible avec la vision pour joindre des images.",
         "fileNeedsFileModel": "{{ model }} ne peut pas lire les fichiers. Choisissez un modèle compatible avec les fichiers ou retirez le fichier."
+      },
+      "verify": {
+        "title": "Confirmez votre e-mail pour commencer à discuter",
+        "body": "Nous avons envoyé un lien à {{email}}. Ouvrez-le pour confirmer votre adresse, puis vous pourrez envoyer des messages.",
+        "resend": "Renvoyer l'e-mail",
+        "resending": "Envoi…",
+        "sent": "E-mail de vérification envoyé",
+        "sentBody": "Vérifiez {{email}} pour trouver le lien de confirmation."
       }
     },
     "conversation": {
@@ -776,7 +789,8 @@
       "reasoningThinking": "Réflexion…",
       "reasoningDisclaimer": "Raisonnement fourni par le modèle. Il peut être incomplet ou incorrect.",
       "regenerate": "Régénérer la réponse",
-      "copied": "Copié"
+      "copied": "Copié",
+      "decryptFailed": "Ce message n'a pas pu être déverrouillé sur cet appareil."
     },
     "models": {
       "costTier": {
@@ -911,6 +925,25 @@
       "addToUser": "Utilisateur",
       "addToProject": "Projet",
       "items": "À retenir"
+    },
+    "errors": {
+      "completion": {
+        "needPlan": "Votre compte a besoin d'un forfait actif avant de pouvoir continuer à discuter.",
+        "rateLimited": "Vous envoyez des messages trop rapidement. Veuillez patienter un instant et réessayer.",
+        "generic": "Un problème est survenu lors de l'envoi de votre message. Veuillez réessayer."
+      }
+    },
+    "payg": {
+      "balanceLabel": "Solde",
+      "detail": "{{amount}} de crédit restant",
+      "low": "Solde faible",
+      "lowWarning": "Votre solde est presque épuisé. Rechargez-le pour continuer à discuter sans interruption.",
+      "manage": "Gérer le forfait"
+    },
+    "retry": {
+      "title": "Votre message n'a pas été envoyé",
+      "body": "Un incident a interrompu la réponse. Votre message est toujours là — réessayez de l'envoyer.",
+      "action": "Réessayer"
     }
   },
   "common": {
@@ -1032,6 +1065,7 @@
       "accountKeyRequired": "La clé de compte est requise",
       "acknowledge": "J'ai copié ma clé de compte dans un endroit sûr et je comprends que si je la perds, Cognos ne pourra pas récupérer mes conversations chiffrées.",
       "acknowledgeRequired": "Veuillez confirmer que vous avez copié votre clé de compte et que vous acceptez le risque lié à la récupération.",
+      "saveFirstHint": "Copiez d'abord votre clé de compte ou téléchargez le kit d'urgence — vous ne pourrez plus la revoir.",
       "copiedMsg": "Rangez-la dans un endroit sûr avant de continuer.",
       "copiedTitle": "Clé de compte copiée",
       "copyAccountKey": "Copier la clé de compte",
@@ -1054,7 +1088,17 @@
       "titleUnlock": "Déverrouiller la sauvegarde",
       "unlockBackup": "Déverrouiller la sauvegarde chiffrée",
       "unlockBody": "Une fois déverrouillé, ce navigateur reste déverrouillé après les actualisations et dans les nouveaux onglets. Vous aurez de nouveau besoin de votre clé de compte après avoir verrouillé le compte, vous être déconnecté ou avoir vidé le stockage du navigateur.",
-      "unlockIntro": "Saisissez votre clé de compte pour déverrouiller cet appareil."
+      "unlockIntro": "Saisissez votre clé de compte pour déverrouiller cet appareil.",
+      "kit": {
+        "title": "KIT D'URGENCE COGNOS",
+        "intro": "Votre clé de compte est la seule chose capable de déverrouiller vos données.\nConservez-la en lieu sûr et privé — un gestionnaire de mots de passe, ou imprimée et\nrangée sous clé. Quiconque la possède peut lire vos conversations.",
+        "account": "Compte : {{email}}",
+        "keyLabel": "Clé de compte :",
+        "what": "Ce qu'elle fait :\n- Déverrouille vos conversations chiffrées sur un nouvel appareil.\n- Votre mot de passe ne fait que vous connecter ; cette clé déverrouille vos données.",
+        "lose": "Si vous la perdez :\n- Nous ne conservons aucune copie de votre clé de compte, vos données ne peuvent donc pas être récupérées.",
+        "footer": "Cognos · https://cognos.io"
+      },
+      "cantFindKey": "Vous ne trouvez pas votre clé de compte ? Recherchez le fichier cognos-emergency-kit.txt que vous avez enregistré lors de votre inscription."
     }
   },
   "errors": {
@@ -1272,7 +1316,21 @@
       "wrongCode": "Ce code est incorrect.",
       "genericError": "Une erreur s'est produite. Veuillez réessayer.",
       "enabledToast": "L'authentification à deux facteurs est activée.",
-      "disabledToast": "L'authentification à deux facteurs est désactivée."
+      "disabledToast": "L'authentification à deux facteurs est désactivée.",
+      "pageLead": "Gérez votre clé de compte, votre mot de passe et l'authentification à deux facteurs.",
+      "kit": {
+        "title": "Clé de compte et kit d'urgence",
+        "description": "Votre clé de compte déverrouille vos données chiffrées. Téléchargez une nouvelle copie de votre kit d'urgence ou copiez la clé pendant que vos données sont déverrouillées.",
+        "download": "Télécharger le kit d'urgence",
+        "copy": "Copier la clé de compte",
+        "lockedTitle": "Déverrouillez pour gérer vos clés",
+        "lockedBody": "Vos données sont verrouillées sur cet appareil. Déverrouillez-les d'abord, puis vous pourrez télécharger votre kit d'urgence ici.",
+        "unavailableTitle": "Votre clé de compte n'est pas conservée sur cet appareil",
+        "unavailableBody": "Pour votre sécurité, nous ne conservons jamais de copie de votre clé de compte après le déverrouillage. Conservez le kit d'urgence enregistré lors de votre inscription — c'est le seul moyen de déverrouiller vos données sur un nouvel appareil.",
+        "copiedToast": "Clé de compte copiée",
+        "downloadedToast": "Kit d'urgence téléchargé"
+      },
+      "passwordHeading": "Mot de passe"
     }
   },
   "models": {
@@ -1310,6 +1368,12 @@
       "qwen3-32b": "Modèle ouvert d'Alibaba, performant en conversation multilingue et outils.",
       "qwen3-next-80b-a3b-thinking": "Modèle de raisonnement ouvert d'Alibaba avec réflexion approfondie.",
       "swiss-ai-apertus-70b-instruct-2509-infomaniak": "Le modèle suisse entièrement ouvert et transparent pour les tâches multilingues."
+    }
+  },
+  "vault": {
+    "errors": {
+      "createBackup": "Un problème est survenu lors de la création de votre sauvegarde chiffrée. Veuillez réessayer.",
+      "unlock": "Cette clé de compte ne correspond pas, nous n'avons donc pas pu déverrouiller vos données. Vérifiez-la et réessayez."
     }
   }
 }

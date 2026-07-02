@@ -192,7 +192,12 @@
       "login": "Accedi",
       "passwordPlaceholder": "Almeno 12 caratteri",
       "submit": "Crea account",
-      "title": "Crea il tuo account Cognos"
+      "title": "Crea il tuo account Cognos",
+      "hints": {
+        "emailInvalid": "Inserisci un indirizzo e-mail valido.",
+        "passwordLength": "Usa almeno 12 caratteri.",
+        "passwordOk": "La lunghezza della password è adeguata."
+      }
     },
     "reset": {
       "backToLogin": "Torna all'accesso",
@@ -532,7 +537,7 @@
         }
       },
       "clearMessages": "Cancella tutti i messaggi",
-      "encrypted": "Cifrato · le tue chiavi vengono cifrate prima del backup",
+      "encrypted": "Privato · non ne conserviamo alcuna copia leggibile",
       "label": "Scrivi a Cognos — archiviato cifrato; inviato al tuo provider per rispondere",
       "locked": {
         "body": "Puoi leggere tutto qui. Scegli un piano per inviare nuovi messaggi.",
@@ -544,8 +549,8 @@
       "placeholder": "Scrivi con Cognos",
       "send": "Invia",
       "stop": "Interrompi",
-      "shortcutMac": "Cmd + Invio per inviare",
-      "shortcutOther": "Ctrl + Invio per inviare",
+      "shortcutMac": "Invio per inviare · Maiusc + Invio per andare a capo",
+      "shortcutOther": "Invio per inviare · Maiusc + Invio per andare a capo",
       "tools": {
         "label": "Strumenti",
         "webSearch": {
@@ -616,6 +621,14 @@
         },
         "imageNeedsVision": "{{ model }} non può leggere le immagini. Passa a un modello con visione per allegare immagini.",
         "fileNeedsFileModel": "{{ model }} non può leggere i file. Passa a un modello che supporta i file o rimuovi il file."
+      },
+      "verify": {
+        "title": "Conferma la tua e-mail per iniziare a chattare",
+        "body": "Abbiamo inviato un link a {{email}}. Aprilo per confermare il tuo indirizzo, poi potrai inviare messaggi.",
+        "resend": "Invia di nuovo l'e-mail",
+        "resending": "Invio…",
+        "sent": "E-mail di verifica inviata",
+        "sentBody": "Controlla {{email}} per il link di conferma."
       }
     },
     "conversation": {
@@ -776,7 +789,8 @@
       "reasoningThinking": "Sto ragionando…",
       "reasoningDisclaimer": "Ragionamento fornito dal modello. Potrebbe essere incompleto o errato.",
       "regenerate": "Rigenera risposta",
-      "copied": "Copiato"
+      "copied": "Copiato",
+      "decryptFailed": "Non è stato possibile sbloccare questo messaggio su questo dispositivo."
     },
     "models": {
       "costTier": {
@@ -911,6 +925,25 @@
       "addToUser": "Utente",
       "addToProject": "Progetto",
       "items": "Cosa ricordare"
+    },
+    "errors": {
+      "completion": {
+        "needPlan": "Il tuo account ha bisogno di un piano attivo prima di poter continuare a chattare.",
+        "rateLimited": "Stai inviando messaggi troppo rapidamente. Attendi un momento e riprova.",
+        "generic": "Si è verificato un problema durante l'invio del messaggio. Riprova."
+      }
+    },
+    "payg": {
+      "balanceLabel": "Saldo",
+      "detail": "{{amount}} di credito rimanente",
+      "low": "Saldo basso",
+      "lowWarning": "Il tuo saldo si sta esaurendo. Ricaricalo per continuare a chattare senza interruzioni.",
+      "manage": "Gestisci piano"
+    },
+    "retry": {
+      "title": "Il tuo messaggio non è stato inviato",
+      "body": "Qualcosa ha interrotto la risposta. Il tuo messaggio è ancora qui: prova a inviarlo di nuovo.",
+      "action": "Riprova"
     }
   },
   "common": {
@@ -1032,6 +1065,7 @@
       "accountKeyRequired": "La Chiave dell'account è obbligatoria",
       "acknowledge": "Ho copiato la mia Chiave dell'account in un luogo sicuro e comprendo che, se la perdo, Cognos non potrà recuperare le mie chat cifrate.",
       "acknowledgeRequired": "Conferma di aver copiato la tua Chiave dell'account e di accettare il rischio di recupero.",
+      "saveFirstHint": "Copia prima la tua chiave dell'account o scarica il kit di emergenza: non potrai più rivederla.",
       "copiedMsg": "Conservala in un luogo sicuro prima di continuare.",
       "copiedTitle": "Chiave dell'account copiata",
       "copyAccountKey": "Copia Chiave dell'account",
@@ -1054,7 +1088,17 @@
       "titleUnlock": "Sblocca backup",
       "unlockBackup": "Sblocca backup crittografato",
       "unlockBody": "Dopo lo sblocco, questo browser rimane sbloccato dopo gli aggiornamenti e nelle nuove schede. Avrai di nuovo bisogno della tua Chiave dell'account dopo aver bloccato l'account, effettuato la disconnessione o cancellato l'archiviazione del browser.",
-      "unlockIntro": "Inserisci la tua Chiave dell'account per sbloccare questo dispositivo."
+      "unlockIntro": "Inserisci la tua Chiave dell'account per sbloccare questo dispositivo.",
+      "kit": {
+        "title": "KIT DI EMERGENZA COGNOS",
+        "intro": "La tua chiave dell'account è l'unica cosa che può sbloccare i tuoi dati.\nConservala in un luogo sicuro e privato — un gestore di password, oppure stampata e\nchiusa a chiave. Chiunque la possieda può leggere le tue chat.",
+        "account": "Account: {{email}}",
+        "keyLabel": "Chiave dell'account:",
+        "what": "Cosa fa:\n- Sblocca le tue chat cifrate su un nuovo dispositivo.\n- La tua password serve solo ad accedere; questa chiave sblocca i tuoi dati.",
+        "lose": "Se la perdi:\n- Non conserviamo alcuna copia della tua chiave dell'account, quindi i tuoi dati non possono essere recuperati.",
+        "footer": "Cognos · https://cognos.io"
+      },
+      "cantFindKey": "Non trovi la tua chiave dell'account? Cerca il file cognos-emergency-kit.txt che hai salvato durante la registrazione."
     }
   },
   "errors": {
@@ -1272,7 +1316,21 @@
       "wrongCode": "Codice non corretto.",
       "genericError": "Qualcosa è andato storto. Riprova.",
       "enabledToast": "L'autenticazione a due fattori è attiva.",
-      "disabledToast": "L'autenticazione a due fattori è disattivata."
+      "disabledToast": "L'autenticazione a due fattori è disattivata.",
+      "pageLead": "Gestisci la tua chiave dell'account, la password e l'autenticazione a due fattori.",
+      "kit": {
+        "title": "Chiave dell'account e kit di emergenza",
+        "description": "La tua chiave dell'account sblocca i tuoi dati cifrati. Scarica una nuova copia del tuo kit di emergenza o copia la chiave mentre i tuoi dati sono sbloccati.",
+        "download": "Scarica il kit di emergenza",
+        "copy": "Copia la chiave dell'account",
+        "lockedTitle": "Sblocca per gestire le tue chiavi",
+        "lockedBody": "I tuoi dati sono bloccati su questo dispositivo. Sbloccali prima, poi potrai scaricare qui il tuo kit di emergenza.",
+        "unavailableTitle": "La tua chiave dell'account non è conservata su questo dispositivo",
+        "unavailableBody": "Per la tua sicurezza non conserviamo mai una copia della tua chiave dell'account dopo lo sblocco. Conserva il kit di emergenza salvato durante la registrazione: è l'unico modo per sbloccare i tuoi dati su un nuovo dispositivo.",
+        "copiedToast": "Chiave dell'account copiata",
+        "downloadedToast": "Kit di emergenza scaricato"
+      },
+      "passwordHeading": "Password"
     }
   },
   "models": {
@@ -1310,6 +1368,12 @@
       "qwen3-32b": "Modello aperto di Alibaba, efficace in chat multilingue e strumenti.",
       "qwen3-next-80b-a3b-thinking": "Modello di ragionamento aperto di Alibaba con pensiero esteso.",
       "swiss-ai-apertus-70b-instruct-2509-infomaniak": "Il modello svizzero completamente aperto e trasparente per attività multilingue."
+    }
+  },
+  "vault": {
+    "errors": {
+      "createBackup": "Si è verificato un problema durante la creazione del tuo backup cifrato. Riprova.",
+      "unlock": "Quella chiave dell'account non corrisponde, quindi non è stato possibile sbloccare i tuoi dati. Controllala e riprova."
     }
   }
 }

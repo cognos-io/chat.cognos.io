@@ -2,11 +2,11 @@
   "account": {
     "redaction": {
       "title": "Ocultação de dados pessoais",
-      "subtitle": "Deteta valores sensíveis (e-mails, IBANs, números de identificação, etc.) e substitui-os por marcadores antes de enviar as suas mensagens aos fornecedores de IA. Ativado por predefinição.",
+      "subtitle": "Deteta valores sensíveis (e-mails, IBANs, números de identificação, etc.) e substitui-os por marcadores antes de enviar as tuas mensagens aos fornecedores de IA. Ativado por predefinição.",
       "toggleLabel": "Ocultar valores sensíveis",
       "on": "Ativado",
       "off": "Desativado",
-      "disabledNote": "A ocultação está desativada. As novas mensagens incluirão os valores sensíveis na íntegra. As conversas que já ocultou permanecem protegidas."
+      "disabledNote": "A ocultação está desativada. As novas mensagens incluirão os valores sensíveis na íntegra. As conversas que já ocultaste permanecem protegidas."
     },
     "breadcrumbs": {
       "account": "Conta",
@@ -14,22 +14,22 @@
       "memory": "Memória"
     },
     "danger": {
-      "confirmFieldAria": "Escreva DELETE para confirmar",
+      "confirmFieldAria": "Escreve DELETE para confirmar",
       "deleteAccountConfirm": "Eliminar a minha conta",
-      "deleteAccountSubtitle": "Eliminamos permanentemente a sua conta e os seus dados de conversa encriptados, chaves e personas. Os registos necessários para faturação, impostos, prevenção de fraude ou conformidade legal podem ser mantidos. Isto não pode ser anulado.",
+      "deleteAccountSubtitle": "Eliminamos permanentemente a tua conta e os teus dados de conversa encriptados, chaves e personas. Os registos necessários para faturação, impostos, prevenção de fraude ou conformidade legal podem ser mantidos. Isto não pode ser anulado.",
       "deleteAccountTitle": "Eliminar conta",
       "deleteChatsConfirm": "Sim, eliminar tudo",
-      "deleteChatsSubtitle": "Elimine permanentemente cada conversa e as suas mensagens. Isto não pode ser anulado.",
+      "deleteChatsSubtitle": "Elimina permanentemente cada conversa e as suas mensagens. Isto não pode ser anulado.",
       "deleteChatsTitle": "Eliminar todas as conversas",
       "deleting": "A eliminar…",
       "title": "Zona de perigo",
-      "typeToConfirm": "Escreva {{ word }} para confirmar."
+      "typeToConfirm": "Escreve {{ word }} para confirmar."
     },
     "data": {
       "download": "Transferir os meus dados",
       "preparing": "A preparar…",
-      "subtitle": "Transfira todas as suas conversas e mensagens — descriptografadas no seu navegador — como um ficheiro JSON.",
-      "title": "Os seus dados"
+      "subtitle": "Transfere todas as tuas conversas e mensagens — desencriptadas no teu navegador — como um ficheiro JSON.",
+      "title": "Os teus dados"
     },
     "dataProcessing": {
       "badge": {
@@ -38,8 +38,8 @@
         "global": "Global"
       },
       "context": "{{ size }} de contexto",
-      "footnoteMany": "{{ count }} modelos adicionais são desbloqueados se alargar a sua região de processamento — continuam fornecedores sem retenção, continua encriptado.",
-      "footnoteOne": "{{ count }} modelo adicional é desbloqueado se alargar a sua região de processamento — continuam fornecedores sem retenção, continua encriptado.",
+      "footnoteMany": "{{ count }} modelos adicionais são desbloqueados se alargares a tua região de processamento — continuam fornecedores sem retenção, continua encriptado.",
+      "footnoteOne": "{{ count }} modelo adicional é desbloqueado se alargares a tua região de processamento — continuam fornecedores sem retenção, continua encriptado.",
       "modelCount": "{{ count }} modelos",
       "modelsAvailable": "Modelos disponíveis",
       "modelsOf": "{{ eligible }} de {{ total }}",
@@ -50,9 +50,9 @@
         "eu": "UE",
         "global": "Global"
       },
-      "retentionBody": "Os fornecedores aprovados processam as suas mensagens sob termos de não retenção e não treino, e a Cognos nunca armazena pedidos ou respostas em texto simples — o seu histórico de conversas é guardado encriptado. Esta definição apenas controla a jurisdição por onde passam as suas mensagens enquanto um modelo responde, e quais modelos isso disponibiliza.",
+      "retentionBody": "Os fornecedores aprovados processam as tuas mensagens sob termos de não retenção e não treino, e a Cognos nunca armazena pedidos ou respostas em texto simples — o teu histórico de conversas é guardado encriptado. Esta definição apenas controla a jurisdição por onde passam as tuas mensagens enquanto um modelo responde, e quais modelos isso disponibiliza.",
       "retentionTitle": "Sem retenção de texto simples — em todas as regiões",
-      "subtitle": "Escolha onde as suas mensagens podem ser processadas. Isto é a única coisa que altera quais modelos pode usar — não tem efeito sobre como as suas conversas são armazenadas: o seu histórico é sempre guardado encriptado, nunca como texto simples.",
+      "subtitle": "Escolhe onde as tuas mensagens podem ser processadas. Isto é a única coisa que altera quais modelos podes usar — não tem efeito sobre como as tuas conversas são armazenadas: o teu histórico é sempre guardado encriptado, nunca como texto simples.",
       "tiers": {
         "ch_only": {
           "blurb": "Processado apenas em solo suíço — no local e na nuvem suíça.",
@@ -78,32 +78,32 @@
       "resetHidden": "Repor modelos ocultos",
       "hiddenBadge": "Oculto",
       "defaultBadge": "Predefinido",
-      "manageHint": "Pesquise, fixe, oculte ou defina o seu modelo predefinido."
+      "manageHint": "Pesquisa, fixa, oculta ou define o teu modelo predefinido."
     },
     "email": {
       "current": "E-mail atual",
       "new": "Novo e-mail",
       "send": "Enviar link de confirmação",
       "sending": "A enviar…",
-      "subtitle": "O seu e-mail serve apenas para iniciar sessão e receber avisos da conta — nunca desbloqueia os seus dados. Alterá-lo é seguro e nunca afeta as suas conversas encriptadas.",
+      "subtitle": "O teu e-mail serve apenas para iniciar sessão e receber avisos da conta — nunca desbloqueia os teus dados. Alterá-lo é seguro e nunca afeta as tuas conversas encriptadas.",
       "title": "E-mail"
     },
     "errors": {
-      "emailChange": "Não foi possível iniciar a alteração de e-mail. Verifique o endereço e tente novamente.",
-      "passwordChange": "Não foi possível alterar a sua palavra-passe. Verifique a sua palavra-passe atual e tente novamente."
+      "emailChange": "Não foi possível iniciar a alteração de e-mail. Verifica o endereço e tenta novamente.",
+      "passwordChange": "Não foi possível alterar a tua palavra-passe. Verifica a tua palavra-passe atual e tenta novamente."
     },
     "appearance": {
       "dark": "Escuro",
       "label": "Tema",
       "light": "Claro",
-      "subtitle": "Escolha como a Cognos aparece neste dispositivo.",
+      "subtitle": "Escolhe como a Cognos aparece neste dispositivo.",
       "system": "Sistema",
-      "systemHintDark": "A seguir o seu dispositivo. Atualmente no modo escuro.",
-      "systemHintLight": "A seguir o seu dispositivo. Atualmente no modo claro.",
+      "systemHintDark": "A seguir o teu dispositivo. Atualmente no modo escuro.",
+      "systemHintLight": "A seguir o teu dispositivo. Atualmente no modo claro.",
       "title": "Aparência"
     },
     "language": {
-      "subtitle": "Escolha o idioma da interface da Cognos. A sua escolha é guardada na sua conta e aplica-se em todos os seus dispositivos.",
+      "subtitle": "Escolhe o idioma da interface da Cognos. A tua escolha é guardada na tua conta e aplica-se em todos os teus dispositivos.",
       "title": "Idioma"
     },
     "password": {
@@ -112,41 +112,41 @@
       "current": "Palavra-passe atual",
       "new": "Nova palavra-passe",
       "newPlaceholder": "Pelo menos 12 caracteres",
-      "subtitle": "A sua palavra-passe serve apenas para iniciar sessão — não desbloqueia os seus dados (isso é a sua Chave de Conta). Alterá-la é seguro e nunca afeta as suas conversas encriptadas.",
+      "subtitle": "A tua palavra-passe serve apenas para iniciar sessão — não desbloqueia os teus dados (isso é a tua Chave de Conta). Alterá-la é seguro e nunca afeta as tuas conversas encriptadas.",
       "title": "Palavra-passe"
     },
     "profile": {
       "avatar": "Avatar",
       "colorAria": "Cor do avatar",
       "colorOptionAria": "Cor {{ name }}",
-      "displayName": "Nome de exibição",
-      "displayNamePlaceholder": "Adicione um nome de exibição",
+      "displayName": "Nome de apresentação",
+      "displayNamePlaceholder": "Adiciona um nome de apresentação",
       "iconAria": "Ícone de avatar",
       "iconOptionAria": "Ícone {{ name }}",
       "save": "Guardar perfil",
       "saving": "A guardar…",
-      "subtitle": "O seu nome de exibição aparece nas suas mensagens e nas conversas partilhadas.",
+      "subtitle": "O teu nome de apresentação aparece nas tuas mensagens e nas conversas partilhadas.",
       "title": "Perfil"
     },
     "title": "Conta",
     "toasts": {
-      "accountDeleted": "A sua conta foi eliminada",
-      "deleteAccountConflict": "Cancele o seu plano antes de eliminar a sua conta",
-      "deleteAccountError": "Não foi possível eliminar a sua conta",
+      "accountDeleted": "A tua conta foi eliminada",
+      "deleteAccountConflict": "Cancela o teu plano antes de eliminares a tua conta",
+      "deleteAccountError": "Não foi possível eliminar a tua conta",
       "deleteChatsError": "Não foi possível eliminar as conversas",
       "deletedManyChats": "{{ count }} conversas eliminadas",
       "deletedOneChat": "1 conversa eliminada",
-      "emailLinkSentMsg": "Abra o link que enviámos para {{ email }} para concluir a alteração do seu e-mail.",
+      "emailLinkSentMsg": "Abre o link que enviámos para {{ email }} para concluíres a alteração do teu e-mail.",
       "emailLinkSentTitle": "Link de confirmação enviado",
-      "exportError": "Não foi possível exportar os seus dados",
+      "exportError": "Não foi possível exportar os teus dados",
       "exportedMany": "{{ count }} conversas exportadas",
       "exportedOne": "1 conversa exportada",
       "passwordChanged": "Palavra-passe alterada",
       "profileUpdated": "Perfil atualizado"
     },
     "memory": {
-      "title": "A sua memória",
-      "subtitle": "Factos que fixou na sua memória pessoal. São armazenados encriptados e adicionados ao contexto de cada conversa.",
+      "title": "A tua memória",
+      "subtitle": "Factos que fixaste na tua memória pessoal. São armazenados encriptados e adicionados ao contexto de cada conversa.",
       "save": "Guardar",
       "saved": "Memória guardada"
     }
@@ -156,93 +156,98 @@
       "continueToLogin": "Continuar para o início de sessão",
       "error": "Esse link não funcionou — pode ter expirado, já ter sido utilizado, ou a palavra-passe estava incorreta.",
       "goToLogin": "Ir para o início de sessão",
-      "lead": "Introduza a sua palavra-passe para concluir a alteração do e-mail. A sua palavra-passe serve apenas para iniciar sessão — isto nunca afeta as suas conversas encriptadas.",
-      "missingToken": "Falta o token a este link de confirmação. Volte a clicar no link do seu e-mail.",
+      "lead": "Introduz a tua palavra-passe para concluíres a alteração do e-mail. A tua palavra-passe serve apenas para iniciar sessão — isto nunca afeta as tuas conversas encriptadas.",
+      "missingToken": "Falta o token a este link de confirmação. Volta a clicar no link do teu e-mail.",
       "submit": "Confirmar alteração de e-mail",
-      "submitting": "A confirmar o seu novo e-mail…",
-      "success": "O seu e-mail foi alterado. Inicie sessão novamente com o seu novo e-mail.",
-      "title": "Confirme o seu novo e-mail"
+      "submitting": "A confirmar o teu novo e-mail…",
+      "success": "O teu e-mail foi alterado. Inicia sessão novamente com o teu novo e-mail.",
+      "title": "Confirma o teu novo e-mail"
     },
     "forgot": {
       "backToLogin": "Voltar ao início de sessão",
-      "lead": "Introduza o seu e-mail e enviar-lhe-emos um link para definir uma nova palavra-passe. A sua palavra-passe é usada apenas para iniciar sessão, por isso repô-la nunca afeta as suas conversas encriptadas.",
+      "lead": "Introduz o teu e-mail e enviar-te-emos um link para definires uma nova palavra-passe. A tua palavra-passe é usada apenas para iniciar sessão, por isso repô-la nunca afeta as tuas conversas encriptadas.",
       "sending": "A enviar…",
-      "sent": "Se existir uma conta para {{ email }}, enviámos um link para repor a palavra-passe. Verifique a sua caixa de entrada e siga o link para escolher uma nova palavra-passe.",
-      "sentNote": "A sua palavra-passe serve apenas para iniciar sessão — nunca desbloqueia as suas conversas encriptadas, por isso repô-la é seguro e mantém o seu histórico intacto.",
+      "sent": "Se existir uma conta para {{ email }}, enviámos um link para repor a palavra-passe. Verifica a tua caixa de entrada e segue o link para escolheres uma nova palavra-passe.",
+      "sentNote": "A tua palavra-passe serve apenas para iniciar sessão — nunca desbloqueia as tuas conversas encriptadas, por isso repô-la é seguro e mantém o teu histórico intacto.",
       "submit": "Enviar link de reposição",
-      "title": "Repor a sua palavra-passe"
+      "title": "Repor a tua palavra-passe"
     },
     "login": {
-      "error": "Não foi possível iniciar a sua sessão. Verifique o seu e-mail e palavra-passe e tente novamente.",
-      "forgot": "Esqueceu-se da palavra-passe?",
-      "lead": "Converse com os modelos mais recentes sem abrir mão do controlo dos seus dados. Novos dispositivos também podem pedir a sua Chave de Conta.",
-      "legalPrefix": "Ao registar-se, aceita a nossa",
-      "needAccount": "Precisa de uma conta?",
+      "error": "Não foi possível iniciar a tua sessão. Verifica o teu e-mail e palavra-passe e tenta novamente.",
+      "forgot": "Esqueceste-te da palavra-passe?",
+      "lead": "Conversa com os modelos mais recentes sem abdicares do controlo dos teus dados. Novos dispositivos também podem pedir a tua Chave de Conta.",
+      "legalPrefix": "Ao registares-te, aceitas a nossa",
+      "needAccount": "Precisas de uma conta?",
       "register": "Registar",
       "signingIn": "A iniciar sessão…",
       "submit": "Iniciar sessão",
-      "title": "Comece com uma IA que prioriza a privacidade"
+      "title": "Começa com uma IA que dá prioridade à privacidade"
     },
     "register": {
       "beta": "Beta privada",
       "creating": "A criar conta…",
-      "haveAccount": "Já tem uma conta?",
-      "lead": "Comece com o seu e-mail e palavra-passe. Logo após o registo, a Cognos irá gerar uma Chave de Conta para o desbloqueio encriptado em novos dispositivos.",
-      "legalPrefix": "Ao criar uma conta, aceita a nossa",
+      "haveAccount": "Já tens uma conta?",
+      "lead": "Começa com o teu e-mail e palavra-passe. Logo após o registo, a Cognos irá gerar uma Chave de Conta para o desbloqueio encriptado em novos dispositivos.",
+      "legalPrefix": "Ao criares uma conta, aceitas a nossa",
       "login": "Iniciar sessão",
       "passwordPlaceholder": "Pelo menos 12 caracteres",
       "submit": "Criar conta",
-      "title": "Crie a sua conta Cognos"
+      "title": "Cria a tua conta Cognos",
+      "hints": {
+        "emailInvalid": "Introduz um endereço de e-mail válido.",
+        "passwordLength": "Usa pelo menos 12 caracteres.",
+        "passwordOk": "O comprimento da palavra-passe está bom."
+      }
     },
     "reset": {
       "backToLogin": "Voltar ao início de sessão",
       "confirmNewPassword": "Confirmar nova palavra-passe",
-      "confirmPlaceholder": "Volte a introduzir a sua palavra-passe",
+      "confirmPlaceholder": "Volta a introduzir a tua palavra-passe",
       "continueToLogin": "Continuar para o início de sessão",
       "error": "Esse link de reposição não funcionou — pode ter expirado ou já ter sido utilizado.",
-      "lead": "Escolha uma nova palavra-passe com pelo menos 12 caracteres. A sua palavra-passe é usada apenas para iniciar sessão, por isso isto não afetará as suas conversas encriptadas.",
+      "lead": "Escolhe uma nova palavra-passe com pelo menos 12 caracteres. A tua palavra-passe é usada apenas para iniciar sessão, por isso isto não afetará as tuas conversas encriptadas.",
       "mismatch": "As palavras-passe não coincidem.",
-      "missingToken": "Falta o token a este link. Solicite um novo link e tente novamente.",
+      "missingToken": "Falta o token a este link. Pede um novo link e tenta novamente.",
       "newPassword": "Nova palavra-passe",
       "requestNewLink": "Solicitar um novo link",
       "resetting": "A repor…",
       "submit": "Repor palavra-passe",
-      "success": "A sua palavra-passe foi reposta. As suas conversas encriptadas permanecem intactas — a sua palavra-passe serve apenas para iniciar sessão.",
-      "title": "Escolha uma nova palavra-passe"
+      "success": "A tua palavra-passe foi reposta. As tuas conversas encriptadas permanecem intactas — a tua palavra-passe serve apenas para iniciar sessão.",
+      "title": "Escolhe uma nova palavra-passe"
     },
     "verify": {
       "continueToLogin": "Continuar para o início de sessão",
       "error": "Esse link de verificação não funcionou — pode ter expirado ou já ter sido utilizado.",
       "goToLogin": "Ir para o início de sessão",
-      "missingToken": "Falta o token a este link de verificação. Volte a clicar no link do seu e-mail.",
-      "success": "O seu e-mail está verificado. Obrigado por confirmar.",
-      "title": "Verifique o seu e-mail",
-      "verifying": "A verificar o seu e-mail…"
+      "missingToken": "Falta o token a este link de verificação. Volta a clicar no link do teu e-mail.",
+      "success": "O teu e-mail está verificado. Obrigado por confirmares.",
+      "title": "Verifica o teu e-mail",
+      "verifying": "A verificar o teu e-mail…"
     },
     "mfa": {
-      "totpPrompt": "Introduza o código de 6 dígitos da sua aplicação de autenticação.",
-      "recoveryPrompt": "Introduza um dos seus códigos de recuperação.",
+      "totpPrompt": "Introduz o código de 6 dígitos da tua aplicação de autenticação.",
+      "recoveryPrompt": "Introduz um dos teus códigos de recuperação.",
       "codeLabel": "Código de autenticação",
       "recoveryLabel": "Código de recuperação",
       "rememberDevice": "Memorizar este dispositivo durante 30 dias",
       "verify": "Verificar",
       "verifying": "A verificar…",
       "useRecovery": "Usar um código de recuperação",
-      "useApp": "Usar a sua aplicação de autenticação",
+      "useApp": "Usar a tua aplicação de autenticação",
       "back": "Voltar ao início de sessão",
-      "invalid": "Esse código não está correto. Tente novamente."
+      "invalid": "Esse código não está correto. Tenta novamente."
     }
   },
   "billing": {
     "lock": {
-      "body": "Os seus chats permanecem cifrados e legíveis. Escolha um plano para voltar a enviar mensagens.",
+      "body": "Os teus chats permanecem cifrados e legíveis. Escolhe um plano para voltares a enviar mensagens.",
       "choosePlan": "Escolher um plano",
-      "titleInactive": "O seu plano está inativo",
-      "titleTrialUsedUp": "Os seus créditos de teste acabaram"
+      "titleInactive": "O teu plano está inativo",
+      "titleTrialUsedUp": "Os teus créditos de teste acabaram"
     },
     "pastDue": {
-      "body": "Atualize o seu cartão para manter o seu plano — o seu acesso continua por agora.",
-      "title": "Não conseguimos cobrar o seu último pagamento",
+      "body": "Atualiza o teu cartão para manteres o teu plano — o teu acesso continua por agora.",
+      "title": "Não conseguimos cobrar o teu último pagamento",
       "updateCard": "Atualizar cartão"
     },
     "plan": {
@@ -254,15 +259,15 @@
         "updateCard": "Atualizar cartão"
       },
       "aside": {
-        "cancelsSoonNote": "Mantém-se totalmente ativo até lá. Retome a qualquer momento antes para o manter.",
+        "cancelsSoonNote": "Mantém-se totalmente ativo até lá. Retoma a qualquer momento antes para o manteres.",
         "inactiveCaption": "Envio em pausa · chats legíveis",
         "trialCredit": "crédito de teste restante"
       },
       "blurb": {
-        "cancelsSoon": "O seu plano está definido para cancelar. Continua a funcionar até ao fim do período.",
-        "inactive": "Os seus chats permanecem cifrados e legíveis. Escolha um plano para voltar a enviar mensagens.",
-        "payg": "Compre créditos e utilize-os em qualquer modelo. Um mínimo de CHF 15 mantém a sua conta ativa todos os meses.",
-        "trial": "Está no teste gratuito. Escolha um plano para continuar a enviar quando o teste terminar.",
+        "cancelsSoon": "O teu plano está definido para cancelar. Continua a funcionar até ao fim do período.",
+        "inactive": "Os teus chats permanecem cifrados e legíveis. Escolhe um plano para voltares a enviar mensagens.",
+        "payg": "Compra créditos e utiliza-os em qualquer modelo. Um mínimo de CHF 15 mantém a tua conta ativa todos os meses.",
+        "trial": "Estás no teste gratuito. Escolhe um plano para continuares a enviar quando o teste terminar.",
         "unlimited": "Mensagens ilimitadas em todos os modelos Cognos, com poder de computação prioritário."
       },
       "breadcrumbs": {
@@ -293,7 +298,7 @@
         "downloadPdf": "Descarregar fatura PDF",
         "foot": "As faturas e recibos de IVA são emitidos pela Paddle.com Market Ltd, o nosso comerciante registado.",
         "invoiceLabel": "Fatura {{ number }}",
-        "note": "As suas faturas e recibos de IVA estão disponíveis no seu portal Paddle.",
+        "note": "As tuas faturas e recibos de IVA estão disponíveis no teu portal Paddle.",
         "openPortal": "Abrir portal Paddle",
         "title": "Faturas"
       },
@@ -307,7 +312,7 @@
         "card": "Cartão",
         "expires": "Expira {{ expiry }}",
         "noCard": "Nenhum cartão disponível",
-        "note": "A faturação é processada pela Paddle, o nosso fornecedor de pagamentos. Guardamos um token, nunca o número do seu cartão.",
+        "note": "A faturação é processada pela Paddle, o nosso fornecedor de pagamentos. Guardamos um token, nunca o número do teu cartão.",
         "title": "Método de pagamento",
         "update": "Atualizar"
       },
@@ -332,7 +337,7 @@
         "messagesSince": "mensagens desde {{ date }}",
         "noLimit": "Sem limite",
         "noneRecorded": "Ainda não há utilização registada neste período.",
-        "notePayg": "O consumo acima do mínimo de CHF 15 é medido pela utilização de tokens e adicionado à sua próxima fatura.",
+        "notePayg": "O consumo acima do mínimo de CHF 15 é medido pela utilização de tokens e adicionado à tua próxima fatura.",
         "noteUnlimited": "O Unlimited cobre a utilização individual normal — a computação é medida internamente apenas para manter o serviço justo.",
         "spentSince": "gasto desde {{ date }} · CHF 15 mínimo",
         "title": "Utilização neste período"
@@ -340,9 +345,9 @@
     },
     "pricing": {
       "activating": {
-        "normal": "Um momento — estamos a confirmar o seu pagamento. Isto costuma demorar apenas alguns segundos.",
-        "slow": "Está a demorar mais do que o habitual. O seu plano aparecerá aqui assim que o pagamento for confirmado — não é preciso pagar de novo.",
-        "title": "A ativar o seu plano…"
+        "normal": "Um momento — estamos a confirmar o teu pagamento. Isto costuma demorar apenas alguns segundos.",
+        "slow": "Está a demorar mais do que o habitual. O teu plano aparecerá aqui assim que o pagamento for confirmado — não é preciso pagar de novo.",
+        "title": "A ativar o teu plano…"
       },
       "assurances": {
         "encrypted": {
@@ -350,7 +355,7 @@
           "title": "Faturação cifrada"
         },
         "noLockIn": {
-          "body": "Mude de plano ou cancele nas definições quando quiser.",
+          "body": "Muda de plano ou cancela nas definições quando quiseres.",
           "title": "Sem fidelização"
         },
         "readable": {
@@ -358,30 +363,30 @@
           "title": "Os chats de teste continuam legíveis"
         }
       },
-      "back": "Voltar aos seus chats",
+      "back": "Voltar aos teus chats",
       "footer": {
-        "link": "Fale connosco",
+        "link": "Fala connosco",
         "text": "Preços em CHF, IVA incluído. Dúvidas sobre um plano?"
       },
       "guarantee": {
-        "body": "Não é o ideal para si? Cancele no prazo de 60 dias após o primeiro pagamento para um reembolso total — em qualquer dos planos, sem perguntas.",
+        "body": "Não é o ideal para ti? Cancela no prazo de 60 dias após o primeiro pagamento para um reembolso total — em qualquer dos planos, sem perguntas.",
         "title": "Garantia de devolução de 60 dias"
       },
       "intervalAria": "Intervalo de faturação",
       "monthly": "Mensal",
       "monthsFree": "2 meses grátis",
       "payg": {
-        "blurb": "Compre créditos e utilize-os em qualquer modelo. Um mínimo de CHF 15 mantém a sua conta ativa todos os meses.",
+        "blurb": "Compra créditos e utiliza-os em qualquer modelo. Um mínimo de CHF 15 mantém a tua conta ativa todos os meses.",
         "cta": "Começar com créditos",
         "features": {
           "credits": "Os créditos funcionam em todos os modelos e competências",
           "noCommitment": "Sem compromisso anual",
-          "payForUse": "Pague apenas pelo que realmente usar",
+          "payForUse": "Paga apenas pelo que realmente usares",
           "rollover": "Os créditos não usados transitam enquanto a conta estiver ativa"
         },
         "fine": "O consumo acima do mínimo de CHF 15 é medido por mensagem.",
         "name": "Pay as you go",
-        "priceNote": "Faturado mensalmente · carregue quando quiser",
+        "priceNote": "Faturado mensalmente · carrega quando quiseres",
         "tag": "Flexível",
         "unit": "/ mês mín."
       },
@@ -389,13 +394,13 @@
         "sendingPaused": "Envio em pausa",
         "trialUsedUp": "Créditos de teste esgotados"
       },
-      "subtitle": "As suas conversas de teste continuam aqui e totalmente legíveis. Escolha um plano para enviar novas mensagens — a mesma encriptação, a mesma privacidade.",
-      "title": "Continue, em privado",
+      "subtitle": "As tuas conversas de teste continuam aqui e totalmente legíveis. Escolhe um plano para enviares novas mensagens — a mesma encriptação, a mesma privacidade.",
+      "title": "Continua, em privado",
       "unlimited": {
         "blurb": "Mensagens ilimitadas em todos os modelos Cognos, com poder de computação prioritário.",
         "cta": "Mudar para Unlimited",
         "features": {
-          "cancel": "Cancele quando quiser — funciona até ao fim do período",
+          "cancel": "Cancela quando quiseres — funciona até ao fim do período",
           "priority": "Computação prioritária em todos os modelos",
           "skills": "Todas as competências, biblioteca de prompts e partilha",
           "unlimited": "Mensagens ilimitadas em todos os modelos"
@@ -404,7 +409,7 @@
         "name": "Unlimited",
         "perMonth": "/ mês",
         "perYear": "/ ano",
-        "savesMonthly": "{{ yearly }}/ano poupa-lhe {{ saving }}",
+        "savesMonthly": "{{ yearly }}/ano poupa-te {{ saving }}",
         "savesYearly": "Dois meses grátis em relação ao mensal",
         "tag": "Recomendado"
       },
@@ -418,7 +423,7 @@
       "monthsFree": "2 meses grátis",
       "note": "As alterações têm efeito imediato. Garantia de devolução de 60 dias em ambos os planos.",
       "payg": {
-        "desc": "Compre créditos e utilize-os em qualquer modelo. Um mínimo mensal de CHF 15 mantém a sua conta ativa.",
+        "desc": "Compra créditos e utiliza-os em qualquer modelo. Um mínimo mensal de CHF 15 mantém a tua conta ativa.",
         "name": "Pay as you go",
         "per": "/ mês mín.",
         "sub": "Créditos em cada modelo · faturado mensalmente",
@@ -433,14 +438,14 @@
         "name": "Unlimited",
         "tag": "Recomendado"
       },
-      "unlimitedSubMonthly": "{{ yearly }} / ano poupa-lhe {{ saving }}",
+      "unlimitedSubMonthly": "{{ yearly }} / ano poupa-te {{ saving }}",
       "unlimitedSubYearly": "Dois meses grátis em relação ao pagamento mensal",
       "yearly": "Anual"
     },
     "toasts": {
-      "genericError": "Algo correu mal. Tente novamente.",
-      "refundError": "Não foi possível enviar o seu pedido de reembolso. Tente novamente.",
-      "switchError": "Não foi possível mudar o seu plano. Tente novamente."
+      "genericError": "Algo correu mal. Tenta novamente.",
+      "refundError": "Não foi possível enviar o teu pedido de reembolso. Tenta novamente.",
+      "switchError": "Não foi possível mudar o teu plano. Tenta novamente."
     }
   },
   "chat": {
@@ -448,10 +453,10 @@
       "modal": {
         "title": "Informações pessoais ocultadas",
         "detected": "detetado e protegido neste dispositivo",
-        "explainer": "O Cognos encontrou um valor sensível nesta mensagem e substituiu-o por um marcador de posição antes de algo sair do seu dispositivo. O modelo de IA só vê o marcador, nunca o valor real.",
-        "youSee": "Você vê",
+        "explainer": "O Cognos encontrou um valor sensível nesta mensagem e substituiu-o por um marcador de posição antes de algo sair do teu dispositivo. O modelo de IA só vê o marcador, nunca o valor real.",
+        "youSee": "Tu vês",
         "modelSees": "O modelo vê",
-        "notice": "O valor real nunca sai deste dispositivo. O Cognos envia apenas o marcador ao modelo e depois restaura-o no seu navegador quando a resposta chega.",
+        "notice": "O valor real nunca sai deste dispositivo. O Cognos envia apenas o marcador ao modelo e depois restaura-o no teu navegador quando a resposta chega.",
         "copy": "Copiar",
         "settings": "Definições de ocultação",
         "done": "Concluído"
@@ -460,28 +465,28 @@
     "bento": {
       "items": {
         "disappearing": {
-          "medium": "Defina um temporizador para que as suas mensagens sejam eliminadas permanentemente após um certo tempo",
-          "small": "Defina um temporizador para as suas mensagens",
+          "medium": "Define um temporizador para que as tuas mensagens sejam eliminadas permanentemente após um certo tempo",
+          "small": "Define um temporizador para as tuas mensagens",
           "title": "Mensagens que desaparecem"
         },
         "encrypted": {
-          "medium": "Usamos encriptação forte para manter os seus dados seguros e privados",
+          "medium": "Usamos encriptação forte para manter os teus dados seguros e privados",
           "small": "Seguro e privado",
           "title": "Mensagens encriptadas"
         },
         "incognito": {
-          "medium": "Opção de entrar no modo anónimo, onde as suas conversas nunca são guardadas",
+          "medium": "Opção de entrar no modo anónimo, onde as tuas conversas nunca são guardadas",
           "small": "As conversas nunca são guardadas",
           "title": "Conversas anónimas"
         },
         "lockAnytime": {
-          "medium": "Bloqueie a sua conta assim que se afastar; permanece desbloqueada neste dispositivo até bloquear ou terminar a sessão",
-          "small": "Bloqueie com um toque",
-          "title": "Bloqueie a qualquer momento"
+          "medium": "Bloqueia a tua conta assim que te afastares; permanece desbloqueada neste dispositivo até bloqueares ou terminares a sessão",
+          "small": "Bloqueia com um toque",
+          "title": "Bloqueia a qualquer momento"
         },
         "multiModel": {
-          "medium": "Use modelos de IA proprietários e de código aberto para obter os melhores resultados",
-          "small": "Escolha entre uma variedade de modelos de IA",
+          "medium": "Usa modelos de IA proprietários e de código aberto para obteres os melhores resultados",
+          "small": "Escolhe entre uma variedade de modelos de IA",
           "title": "Suporte a vários modelos"
         },
         "noRetention": {
@@ -490,9 +495,9 @@
           "title": "Fornecedores sem retenção"
         },
         "onlyYou": {
-          "medium": "O seu histórico de conversas é armazenado encriptado — só você detém as chaves para o desencriptar",
-          "small": "Você detém as chaves",
-          "title": "Só você pode desencriptar"
+          "medium": "O teu histórico de conversas é armazenado encriptado — só tu deténs as chaves para o desencriptar",
+          "small": "Tu deténs as chaves",
+          "title": "Só tu podes desencriptar"
         }
       }
     },
@@ -532,20 +537,20 @@
         }
       },
       "clearMessages": "Limpar todas as mensagens",
-      "encrypted": "Encriptado · as suas chaves são encriptadas antes da cópia de segurança",
-      "label": "Escreva para o Cognos — guardado encriptado; enviado ao seu fornecedor para responder",
+      "encrypted": "Privado · não guardamos nenhuma cópia que possamos ler",
+      "label": "Escreve para o Cognos — guardado encriptado; enviado ao teu fornecedor para responder",
       "locked": {
-        "body": "Pode ler tudo aqui. Escolha um plano para enviar novas mensagens.",
+        "body": "Podes ler tudo aqui. Escolhe um plano para enviares novas mensagens.",
         "comparePlans": "Comparar planos",
-        "guarantee": "Garantia de reembolso de 60 dias · cancele quando quiser",
+        "guarantee": "Garantia de reembolso de 60 dias · cancela quando quiseres",
         "title": "O envio está em pausa",
         "upgrade": "Atualizar plano"
       },
-      "placeholder": "Escreva com o Cognos",
+      "placeholder": "Escreve com o Cognos",
       "send": "Enviar",
       "stop": "Parar",
-      "shortcutMac": "Cmd + Enter para enviar",
-      "shortcutOther": "Ctrl + Enter para enviar",
+      "shortcutMac": "Enter para enviar · Shift + Enter para uma nova linha",
+      "shortcutOther": "Enter para enviar · Shift + Enter para uma nova linha",
       "tools": {
         "label": "Ferramentas",
         "webSearch": {
@@ -557,10 +562,10 @@
           "description": "Cria imagens a partir de uma descrição de texto."
         },
         "unsupported": "{{ model }} não consegue gerar imagens",
-        "switchHint": "Mude para um modelo compatível:",
+        "switchHint": "Muda para um modelo compatível:",
         "useModel": "Usar {{ model }}",
         "imageOnly": "{{ model }} só consegue gerar imagens",
-        "imageOnlyHint": "Ative Gerar imagem para usá-lo, ou escolha um modelo de texto.",
+        "imageOnlyHint": "Ativa Gerar imagem para o usares, ou escolhe um modelo de texto.",
         "enableImage": "Ativar Gerar imagem"
       },
       "modelSwitch": {
@@ -588,34 +593,42 @@
       },
       "switchPersona": "Mudar de persona — {{ name }}",
       "attachments": {
-        "add": "Anexar arquivo",
+        "add": "Anexar ficheiro",
         "menu": {
-          "upload": "Enviar arquivo",
+          "upload": "Carregar ficheiro",
           "fromLibrary": "Da biblioteca"
         },
         "remove": "Remover {{ name }}",
-        "unavailable": "Desbloqueie seu cofre antes de anexar arquivos",
-        "tooMany": "Você pode anexar até {{ max }} arquivos",
-        "providerNotice": "Os arquivos anexados são enviados ao provedor de IA quando usados",
-        "dropHint": "Solte arquivos para anexar",
+        "unavailable": "Desbloqueia o teu cofre antes de anexares ficheiros",
+        "tooMany": "Podes anexar até {{ max }} ficheiros",
+        "providerNotice": "Os ficheiros anexados são enviados ao fornecedor de IA quando usados",
+        "dropHint": "Larga os ficheiros para anexar",
         "state": {
           "queued": "Na fila…",
-          "processing": "Processando…",
-          "encrypting": "Criptografando…",
-          "uploading": "Enviando…",
+          "processing": "A processar…",
+          "encrypting": "A encriptar…",
+          "uploading": "A carregar…",
           "failed": "Falhou"
         },
         "errors": {
-          "unsupported_type": "Tipo de arquivo não suportado",
-          "file_too_large": "Arquivo muito grande",
-          "decode_failed": "Não foi possível ler o arquivo como texto",
-          "empty_file": "O arquivo está vazio",
-          "processing_failed": "Não foi possível processar o arquivo",
-          "no_text_extracted": "Não foi possível extrair texto deste arquivo",
+          "unsupported_type": "Tipo de ficheiro não suportado",
+          "file_too_large": "Ficheiro demasiado grande",
+          "decode_failed": "Não foi possível ler o ficheiro como texto",
+          "empty_file": "O ficheiro está vazio",
+          "processing_failed": "Não foi possível processar o ficheiro",
+          "no_text_extracted": "Não foi possível extrair texto deste ficheiro",
           "image_decode_failed": "Não foi possível ler esta imagem"
         },
-        "imageNeedsVision": "{{ model }} não consegue ler imagens. Mude para um modelo com visão para anexar imagens.",
-        "fileNeedsFileModel": "{{ model }} não consegue ler arquivos. Mude para um modelo compatível com arquivos ou remova o arquivo."
+        "imageNeedsVision": "{{ model }} não consegue ler imagens. Muda para um modelo com visão para anexares imagens.",
+        "fileNeedsFileModel": "{{ model }} não consegue ler ficheiros. Muda para um modelo compatível com ficheiros ou remove o ficheiro."
+      },
+      "verify": {
+        "title": "Confirma o teu e-mail para começar a conversar",
+        "body": "Enviámos uma ligação para {{email}}. Abre-a para confirmar o teu endereço e depois podes começar a enviar mensagens.",
+        "resend": "Reenviar e-mail",
+        "resending": "A enviar…",
+        "sent": "E-mail de confirmação enviado",
+        "sentBody": "Verifica {{email}} para encontrar a ligação de confirmação."
       }
     },
     "conversation": {
@@ -626,16 +639,16 @@
     "empty": {
       "disappearingMessages": "Mensagens temporárias:",
       "disappearingOff": "Desativado",
-      "incognitoBody": "As suas mensagens não serão guardadas. Se sair desta conversa ou a limpar, não conseguirá recuperá-las.",
+      "incognitoBody": "As tuas mensagens não serão guardadas. Se saíres desta conversa ou a limpares, não conseguirás recuperá-las.",
       "incognitoTitle": "Modo anónimo ativado",
-      "secureBody": "Comece por enviar uma mensagem através do campo abaixo.",
+      "secureBody": "Começa por enviar uma mensagem através do campo abaixo.",
       "secureTitle": "Mensagens de IA seguras",
       "temporaryChat": "Conversa temporária"
     },
     "header": {
       "clearMessages": "Limpar mensagens",
       "delete": "Eliminar",
-      "deleteConfirm": "Tem a certeza de que quer eliminar esta conversa?",
+      "deleteConfirm": "Tens a certeza de que queres eliminar esta conversa?",
       "export": "Exportar",
       "menu": "Menu da conversa",
       "newChat": "Nova conversa",
@@ -722,10 +735,10 @@
     },
     "list": {
       "delete": "Eliminar",
-      "deleteConfirm": "Tem a certeza de que pretende eliminar esta conversa?",
+      "deleteConfirm": "Tens a certeza de que pretendes eliminar esta conversa?",
       "edit": "Editar",
       "newChat": "Nova conversa",
-      "newChatLockedTitle": "Escolha um plano para iniciar uma nova conversa",
+      "newChatLockedTitle": "Escolhe um plano para iniciares uma nova conversa",
       "openMenu": "Abrir o menu da conversa",
       "pin": "Fixar",
       "pinned": "Fixadas",
@@ -748,7 +761,7 @@
       "copyRedacted": "Copiar ocultado",
       "redactedMarker": "[ocultado]",
       "delete": "Eliminar mensagem",
-      "deleteConfirm": "Tem a certeza de que pretende eliminar esta mensagem?",
+      "deleteConfirm": "Tens a certeza de que pretendes eliminar esta mensagem?",
       "deleted": "Mensagem eliminada",
       "disappearAfter": "As novas mensagens desta conversa desaparecerão após {{ duration }}",
       "edit": "Editar mensagem",
@@ -756,17 +769,17 @@
       "editInputAria": "Editar mensagem",
       "editSave": "Guardar",
       "empty": "Esta mensagem está vazia.",
-      "emptyAssistant": "Esta mensagem está vazia ou a IA não gerou uma resposta, tente novamente.",
-      "imageUnavailable": "Não foi possível carregar ou descifrar esta imagem.",
+      "emptyAssistant": "Esta mensagem está vazia ou a IA não gerou uma resposta, tenta novamente.",
+      "imageUnavailable": "Não foi possível carregar ou desencriptar esta imagem.",
       "imageLoading": "A carregar imagem…",
       "imageEncrypted": "Encriptado",
       "imageDownload": "Transferir",
       "imageClose": "Fechar",
       "attachment": {
-        "download": "Baixar {{ name }}",
+        "download": "Transferir {{ name }}",
         "subtitleDocument": "Documento",
-        "removed": "Arquivo removido",
-        "private": "Arquivo privado anexado"
+        "removed": "Ficheiro removido",
+        "private": "Ficheiro privado anexado"
       },
       "encrypted": "Encriptado",
       "encryptedWithTime": "Encriptado · {{ time }}",
@@ -776,7 +789,8 @@
       "reasoningThinking": "A pensar…",
       "reasoningDisclaimer": "Raciocínio fornecido pelo modelo. Pode estar incompleto ou incorreto.",
       "regenerate": "Gerar resposta novamente",
-      "copied": "Copiado"
+      "copied": "Copiado",
+      "decryptFailed": "Não foi possível desbloquear esta mensagem neste dispositivo."
     },
     "models": {
       "costTier": {
@@ -788,7 +802,7 @@
       "explainer": "O custo mostra aproximadamente quanto cada modelo gasta por mensagem. Modelos mais caros custam mais do que os mais baratos.",
       "imageFilter": "A mostrar modelos que conseguem gerar imagens.",
       "noImageModels": "Nenhum modelo disponível consegue gerar imagens.",
-      "pickAria": "Escolha o seu modelo de IA",
+      "pickAria": "Escolhe o teu modelo de IA",
       "pin": "Fixar modelo",
       "unpin": "Desafixar modelo",
       "filters": {
@@ -819,7 +833,7 @@
       },
       "search": {
         "placeholder": "Pesquisar modelos, p. ex. «barato», «visão», «privado»…",
-        "noResults": "Nenhum modelo corresponde. Limpe a pesquisa ou os filtros.",
+        "noResults": "Nenhum modelo corresponde. Limpa a pesquisa ou os filtros.",
         "showHidden": "Mostrar correspondências ocultas",
         "privacyNote": "Pesquisado neste dispositivo — nunca enviado a um servidor"
       },
@@ -834,7 +848,7 @@
       },
       "manageInSettings": "Gerir modelos, predefinições e ocultos nas Definições",
       "privacyFooter": "Armazenado encriptado · desencriptado apenas para gerar respostas",
-      "projectDefaultUnavailable": "O modelo predefinido deste projeto não está disponível no seu plano — é usado o seu próprio predefinido."
+      "projectDefaultUnavailable": "O modelo predefinido deste projeto não está disponível no teu plano — é usado o teu próprio predefinido."
     },
     "personas": {
       "all": "Todas",
@@ -847,8 +861,8 @@
       "creditLeft": "CHF {{ amount }} restantes",
       "help": "Ajuda",
       "lock": "Bloquear",
-      "lockTitle": "Bloqueia a sua conta e não termina a sua sessão.",
-      "lockedToastMsg": "Este dispositivo precisa agora da sua Chave de Conta para desbloquear novamente.",
+      "lockTitle": "Bloqueia a tua conta e não termina a tua sessão.",
+      "lockedToastMsg": "Este dispositivo precisa agora da tua Chave de Conta para desbloquear novamente.",
       "lockedToastTitle": "Conta bloqueada",
       "logout": "Terminar sessão",
       "plan": {
@@ -861,7 +875,7 @@
       "viewPlans": "Ver planos"
     },
     "temporary": {
-      "body": "Para mais privacidade, todas as novas mensagens desaparecerão deste chat após a duração selecionada abaixo. Também pode manter uma mensagem manualmente antes de expirar.",
+      "body": "Para mais privacidade, todas as novas mensagens desaparecerão deste chat após a duração selecionada abaixo. Também podes manter uma mensagem manualmente antes de expirar.",
       "durations": {
         "days180": "180 dias",
         "days7": "7 dias",
@@ -869,7 +883,7 @@
         "hours24": "24 horas",
         "off": "Desativado"
       },
-      "lead": "Faça as suas mensagens desaparecerem.",
+      "lead": "Faz as tuas mensagens desaparecerem.",
       "note": "Isto não afetará as mensagens existentes e pode ser desativado a qualquer momento.",
       "save": "Guardar",
       "title": "Mensagens temporárias"
@@ -877,14 +891,14 @@
     "trial": {
       "choosePlan": "Escolher um plano",
       "creditLabel": "Crédito de avaliação",
-      "detail": "{{ amount }} restantes da sua avaliação de {{ total }}",
+      "detail": "{{ amount }} restantes da tua avaliação de {{ total }}",
       "usedUp": "Esgotado"
     },
     "toasts": {
       "exported": "Conversa exportada",
       "exportError": "Não foi possível exportar esta conversa",
       "duplicated": "Conversa duplicada",
-      "duplicateError": "Não foi possível duplicar esta conversa. Tente novamente.",
+      "duplicateError": "Não foi possível duplicar esta conversa. Tenta novamente.",
       "duplicateAttachments": "As conversas com anexos ainda não podem ser duplicadas.",
       "duplicateTooLarge": "Esta conversa é demasiado grande para ser duplicada.",
       "duplicateProject": "As conversas de projeto ainda não podem ser duplicadas."
@@ -892,31 +906,50 @@
     "copy": {
       "titleSuffix": "(cópia)",
       "loadingTitle": "A duplicar conversa…",
-      "loadingWarning": "Mantenha este separador aberto. Fechar ou recarregar pode cancelar a duplicação."
+      "loadingWarning": "Mantém este separador aberto. Fechar ou recarregar pode cancelar a duplicação."
     },
     "memory": {
       "title": "Memória da conversa",
-      "intro": "O Cognos resume mensagens antigas para manter esta conversa dentro dos limites do modelo. Reveja e edite o que ele lembra — um item por linha.",
+      "intro": "O Cognos resume mensagens antigas para manter esta conversa dentro dos limites do modelo. Revê e edita o que fica guardado — um item por linha.",
       "narrative": "Resumo recente",
       "linePlaceholder": "Um item por linha",
       "empty": "Ainda nada foi compactado nesta conversa.",
       "save": "Guardar memória",
-      "saveError": "Não foi possível guardar a memória da conversa. Tente novamente.",
+      "saveError": "Não foi possível guardar a memória da conversa. Tenta novamente.",
       "addAction": "Adicionar à memória",
       "added": "Adicionado à memória",
-      "addError": "Não foi possível adicionar à memória. Tente novamente.",
+      "addError": "Não foi possível adicionar à memória. Tenta novamente.",
       "redactionInfo": "Os valores sensíveis são armazenados ocultados — o modelo só vê marcadores de posição.",
       "redactedNote": "Armazenado ocultado:",
       "addToConversation": "Conversa",
       "addToUser": "Utilizador",
       "addToProject": "Projeto",
       "items": "O que recordar"
+    },
+    "errors": {
+      "completion": {
+        "needPlan": "A tua conta precisa de um plano ativo antes de poderes continuar a conversar.",
+        "rateLimited": "Estás a enviar mensagens demasiado depressa. Aguarda um momento e tenta novamente.",
+        "generic": "Algo correu mal ao enviar a tua mensagem. Tenta novamente."
+      }
+    },
+    "payg": {
+      "balanceLabel": "Saldo",
+      "detail": "{{amount}} de crédito restante",
+      "low": "Saldo baixo",
+      "lowWarning": "O teu saldo está a ficar baixo. Carrega-o para continuares a conversar sem interrupções.",
+      "manage": "Gerir plano"
+    },
+    "retry": {
+      "title": "A tua mensagem não foi enviada",
+      "body": "Algo interrompeu a resposta. A tua mensagem ainda está aqui — tenta enviá-la novamente.",
+      "action": "Tentar novamente"
     }
   },
   "common": {
     "cancel": "Cancelar",
     "email": "E-mail",
-    "emailPlaceholder": "voce@exemplo.com",
+    "emailPlaceholder": "tu@exemplo.pt",
     "password": "Palavra-passe",
     "passwordPlaceholder": "••••••••",
     "privacyTerms": "Política de Privacidade e Termos",
@@ -929,31 +962,31 @@
     "close": "Fechar"
   },
   "library": {
-    "title": "Biblioteca de arquivos",
-    "subtitle": "Ficheiros que carregou, cifrados no seu navegador — reutilize-os em qualquer conversa.",
-    "searchPlaceholder": "Pesquisar arquivos",
-    "empty": "Ainda não há arquivos na sua biblioteca",
+    "title": "Biblioteca de ficheiros",
+    "subtitle": "Ficheiros que carregaste, encriptados no teu navegador — reutiliza-os em qualquer conversa.",
+    "searchPlaceholder": "Pesquisar ficheiros",
+    "empty": "Ainda não há ficheiros na tua biblioteca",
     "rename": "Renomear",
-    "renameSave": "Salvar",
+    "renameSave": "Guardar",
     "remove": "Remover",
-    "removeConfirm": "Remover este arquivo da sua biblioteca? As conversas que o usaram mostrarão «Arquivo removido».",
-    "download": "Baixar",
+    "removeConfirm": "Remover este ficheiro da tua biblioteca? As conversas que o usaram mostrarão «Ficheiro removido».",
+    "download": "Transferir",
     "usedIn": "Usado em {{ count }} conversas",
     "usedInEmpty": "Ainda não usado em nenhuma conversa",
     "addedOn": "Adicionado em {{ date }}",
-    "fileActions": "Ações do arquivo",
-    "noMatches": "Nenhum arquivo corresponde à sua busca",
+    "fileActions": "Ações do ficheiro",
+    "noMatches": "Nenhum ficheiro corresponde à tua pesquisa",
     "cancel": "Cancelar",
     "filters": {
       "all": "Todos",
       "documents": "Documentos",
       "images": "Imagens",
-      "sheets": "Planilhas",
+      "sheets": "Folhas de cálculo",
       "audio": "Áudio"
     },
     "view": {
-      "grid": "Visualização em grade",
-      "list": "Visualização em lista"
+      "grid": "Vista de grelha",
+      "list": "Vista de lista"
     },
     "refs": {
       "inChats": "Em {{ count }} conversas",
@@ -963,8 +996,8 @@
     "usagesUntitled": "Conversa sem título",
     "picker": {
       "title": "Anexar da biblioteca",
-      "searchPlaceholder": "Pesquisar arquivos",
-      "empty": "Ainda não há arquivos na sua biblioteca",
+      "searchPlaceholder": "Pesquisar ficheiros",
+      "empty": "Ainda não há ficheiros na tua biblioteca",
       "cancel": "Cancelar",
       "attachSelected": "Anexar ({{ count }})"
     }
@@ -979,17 +1012,17 @@
       "done": "Concluído",
       "emailLabel": "E-mail:",
       "introAfter": "— o fundador, para apoio direto.",
-      "introBefore": "Se está a ter problemas, pode contactar-me —",
-      "outro": "Diga-me com o que está a ter dificuldades e terei todo o gosto em ajudá-lo a melhorá-lo consigo.",
-      "thanks": "Obrigado por usar o Cognos.",
+      "introBefore": "Se estás a ter problemas, podes contactar-me —",
+      "outro": "Diz-me com o que estás a ter dificuldades e terei todo o gosto em ajudar-te a melhorá-lo contigo.",
+      "thanks": "Obrigado por usares o Cognos.",
       "threemaLabel": "Threema:",
-      "title": "Precisa de ajuda? Quer contactar-me?"
+      "title": "Precisas de ajuda? Queres contactar-me?"
     },
     "editConversation": {
-      "disappearingBody": "Para mais privacidade, todas as novas mensagens desaparecerão desta conversa após a duração selecionada abaixo. Também pode optar por manter manualmente uma mensagem antes de expirar.",
+      "disappearingBody": "Para mais privacidade, todas as novas mensagens desaparecerão desta conversa após a duração selecionada abaixo. Também podes optar por manter manualmente uma mensagem antes de expirar.",
       "disappearingHeading": "Ativar mensagens que desaparecem",
       "disappearingNote": "Isto não afeta as mensagens existentes e pode ser desativado a qualquer momento.",
-      "error": "Não foi possível editar a conversa, tente novamente mais tarde.",
+      "error": "Não foi possível editar a conversa, tenta novamente mais tarde.",
       "nameLabel": "Alterar o nome",
       "save": "Guardar",
       "title": "Editar conversa"
@@ -1004,13 +1037,13 @@
         "redactedHint": "Os leitores podem decifrar a conversa, mas os valores sensíveis permanecem como marcadores de posição.",
         "recommended": "Recomendado",
         "sensitiveLabel": "Incluir valores sensíveis",
-        "sensitiveHint": "Qualquer pessoa com este link pode ver os valores sensíveis restaurados. Use apenas com pessoas autorizadas a ver os originais.",
+        "sensitiveHint": "Qualquer pessoa com este link pode ver os valores sensíveis restaurados. Usa apenas com pessoas autorizadas a ver os originais.",
         "higherRisk": "Risco mais elevado"
       },
       "title": "Partilhar conversa",
       "subtitle": "Conversa encriptada ponta a ponta",
-      "body": "Qualquer pessoa com esta ligação pode abrir e ler esta conversa — todas as mensagens, passadas e futuras — até deixar de a partilhar.",
-      "keyNote": "A chave de desencriptação está na própria ligação e <strong>nunca chega aos nossos servidores</strong>. Qualquer pessoa com a ligação pode lê-la, por isso partilhe-a apenas com pessoas em quem confia.",
+      "body": "Qualquer pessoa com esta ligação pode abrir e ler esta conversa — todas as mensagens, passadas e futuras — até deixares de a partilhar.",
+      "keyNote": "A chave de desencriptação está na própria ligação e <strong>nunca chega aos nossos servidores</strong>. Qualquer pessoa com a ligação pode lê-la, por isso partilha-a apenas com pessoas em quem confias.",
       "reasoningWarning": "As mensagens partilhadas também incluem o raciocínio do modelo (o seu «pensamento»), que pode repetir o pedido e revelar detalhes sensíveis que a resposta final omite.",
       "checking": "A verificar o estado de partilha…",
       "publicLinkLabel": "Ligação pública",
@@ -1024,62 +1057,73 @@
       "createLink": "Criar ligação pública",
       "stopSharing": "Parar de partilhar",
       "copyError": "Não foi possível copiar a ligação.",
-      "createError": "Não foi possível criar uma ligação pública, tente novamente.",
-      "revokeError": "Não foi possível parar de partilhar, tente novamente."
+      "createError": "Não foi possível criar uma ligação pública, tenta novamente.",
+      "revokeError": "Não foi possível parar de partilhar, tenta novamente."
     },
     "vaultPassword": {
       "accountKey": "Chave de Conta",
       "accountKeyRequired": "A Chave de Conta é obrigatória",
       "acknowledge": "Copiei a minha Chave de Conta para um local seguro e compreendo que, se a perder, a Cognos não conseguirá recuperar as minhas conversas encriptadas.",
-      "acknowledgeRequired": "Confirme que copiou a sua Chave de Conta e que aceita o risco de recuperação.",
-      "copiedMsg": "Guarde-a num local seguro antes de continuar.",
+      "acknowledgeRequired": "Confirma que copiaste a tua Chave de Conta e que aceitas o risco de recuperação.",
+      "saveFirstHint": "Copia primeiro a tua Chave de Conta ou transfere o kit de emergência — não a poderás ver novamente.",
+      "copiedMsg": "Guarda-a num local seguro antes de continuares.",
       "copiedTitle": "Chave de Conta copiada",
       "copyAccountKey": "Copiar Chave de Conta",
-      "copyFailedMsg": "Selecione e guarde a Chave de Conta manualmente antes de continuar.",
+      "copyFailedMsg": "Seleciona e guarda a Chave de Conta manualmente antes de continuares.",
       "copyFailedTitle": "Não foi possível copiar a Chave de Conta",
       "createBackup": "Criar cópia de segurança encriptada",
       "downloadKit": "Transferir kit de emergência",
       "hide": "Ocultar",
-      "kitDownloadedMsg": "Guarde o ficheiro num local seguro antes de continuar.",
+      "kitDownloadedMsg": "Guarda o ficheiro num local seguro antes de continuares.",
       "kitDownloadedTitle": "Kit de emergência transferido",
       "lockedBadge": "Bloqueada",
-      "lockedBody": "Desbloqueie para continuar. Este bloqueio apenas limpa o acesso de confiança local e não termina a sua sessão.",
+      "lockedBody": "Desbloqueia para continuar. Este bloqueio apenas limpa o acesso de confiança local e não termina a tua sessão.",
       "lockedOnDevice": "Conta bloqueada neste dispositivo",
       "logOut": "Terminar sessão",
-      "newIntro": "O Cognos gerou uma Chave de Conta única para esta cópia de segurança encriptada. Guarde-a agora. É a única coisa que pode desencriptar os seus dados — a sua palavra-passe apenas o autentica, e um novo dispositivo só precisa desta Chave de Conta.",
-      "newWarning": "Mantenha esta Chave de Conta privada — qualquer pessoa que a tenha pode desencriptar os seus dados. O Cognos nunca armazena a Chave de Conta em texto simples, por isso, se a perder, os seus dados não poderão ser recuperados.",
+      "newIntro": "O Cognos gerou uma Chave de Conta única para esta cópia de segurança encriptada. Guarda-a agora. É a única coisa que pode desencriptar os teus dados — a tua palavra-passe apenas te autentica, e um novo dispositivo só precisa desta Chave de Conta.",
+      "newWarning": "Mantém esta Chave de Conta privada — qualquer pessoa que a tenha pode desencriptar os teus dados. O Cognos nunca armazena a Chave de Conta em texto simples, por isso, se a perderes, os teus dados não poderão ser recuperados.",
       "show": "Mostrar",
       "titleLocked": "Conta bloqueada",
-      "titleNew": "Proteja a sua cópia de segurança encriptada",
+      "titleNew": "Protege a tua cópia de segurança encriptada",
       "titleUnlock": "Desbloquear cópia de segurança",
       "unlockBackup": "Desbloquear cópia de segurança encriptada",
-      "unlockBody": "Depois de desbloquear, este navegador permanece desbloqueado entre atualizações e novos separadores. Precisará novamente da sua Chave de Conta depois de bloquear a conta, terminar sessão ou limpar o armazenamento do navegador.",
-      "unlockIntro": "Introduza a sua Chave de Conta para desbloquear este dispositivo."
+      "unlockBody": "Depois de desbloqueares, este navegador permanece desbloqueado entre atualizações e novos separadores. Precisarás novamente da tua Chave de Conta depois de bloqueares a conta, terminares sessão ou limpares o armazenamento do navegador.",
+      "unlockIntro": "Introduz a tua Chave de Conta para desbloqueares este dispositivo.",
+      "kit": {
+        "title": "KIT DE EMERGÊNCIA COGNOS",
+        "intro": "A tua Chave de Conta é a única coisa que pode desbloquear os teus dados.\nGuarda-a num local seguro e privado — num gestor de palavras-passe, ou impressa e\nfechada à chave. Quem a tiver consegue ler as tuas conversas.",
+        "account": "Conta: {{email}}",
+        "keyLabel": "Chave de Conta:",
+        "what": "O que faz:\n- Desbloqueia as tuas conversas encriptadas num novo dispositivo.\n- A tua palavra-passe só inicia a sessão; esta chave desbloqueia os teus dados.",
+        "lose": "Se a perderes:\n- Não guardamos nenhuma cópia da tua Chave de Conta, por isso os teus dados não podem ser recuperados.",
+        "footer": "Cognos · https://cognos.io"
+      },
+      "cantFindKey": "Não encontras a tua Chave de Conta? Procura o ficheiro cognos-emergency-kit.txt que guardaste quando te registaste."
     }
   },
   "errors": {
     "confirmEmailChange": "Não foi possível confirmar a alteração do e-mail. O link pode ter expirado.",
-    "createAccount": "Não foi possível criar a sua conta",
+    "createAccount": "Não foi possível criar a tua conta",
     "deletePersona": "Falha ao eliminar a persona",
     "fetchPreferences": "Falha ao carregar as preferências do utilizador",
-    "fetchUser": "Falha ao carregar o utilizador, atualize a página e tente novamente.",
+    "fetchUser": "Falha ao carregar o utilizador, atualiza a página e tenta novamente.",
     "invalidCredentials": "E-mail ou palavra-passe inválidos",
-    "listAuthMethods": "Não foi possível carregar os métodos de login",
+    "listAuthMethods": "Não foi possível carregar os métodos de início de sessão",
     "loadPersonas": "Falha ao carregar as personas",
-    "openInvoice": "Não foi possível abrir a fatura. Tente novamente.",
-    "openPortal": "Não foi possível abrir o portal de faturação. Tente novamente.",
+    "openInvoice": "Não foi possível abrir a fatura. Tenta novamente.",
+    "openPortal": "Não foi possível abrir o portal de faturação. Tenta novamente.",
     "refreshToken": "Erro ao atualizar o token de autenticação",
-    "resetPassword": "Não foi possível redefinir a palavra-passe. O link pode ter expirado.",
+    "resetPassword": "Não foi possível repor a palavra-passe. O link pode ter expirado.",
     "savePersona": "Falha ao guardar a persona",
     "savePreferences": "Falha ao guardar as preferências do utilizador",
-    "sendPasswordReset": "Não foi possível enviar o e-mail de redefinição da palavra-passe",
+    "sendPasswordReset": "Não foi possível enviar o e-mail de reposição da palavra-passe",
     "sendVerification": "Não foi possível enviar o e-mail de verificação",
-    "somethingWentWrong": "Algo deu errado",
-    "startCheckout": "Não foi possível iniciar o pagamento. Tente novamente.",
+    "somethingWentWrong": "Algo correu mal",
+    "startCheckout": "Não foi possível iniciar o pagamento. Tenta novamente.",
     "startEmailChange": "Não foi possível iniciar a alteração do e-mail",
     "updatePersona": "Falha ao atualizar a persona",
     "updatePreferences": "Falha ao atualizar as preferências do utilizador",
-    "updateProfile": "Não foi possível atualizar o seu perfil",
+    "updateProfile": "Não foi possível atualizar o teu perfil",
     "updateRegion": "Não foi possível atualizar a região de processamento de dados",
     "verifyEmail": "Não foi possível verificar o e-mail. O link pode ter expirado."
   },
@@ -1092,34 +1136,34 @@
       "closeButton": "Fechar",
       "colourLegend": "Cor",
       "colourOption": "Cor {{colour}}",
-      "delete": "Excluir",
+      "delete": "Eliminar",
       "descriptionLabel": "Descrição",
       "duplicateToEdit": "Duplicar para editar",
-      "encryptedSubtitle": "Criptografada no seu navegador",
+      "encryptedSubtitle": "Encriptada no teu navegador",
       "iconLegend": "Ícone",
       "iconOption": "Ícone {{icon}}",
       "instructionsLabel": "Instruções",
       "nameLabel": "Nome",
       "notice": {
-        "body": "— personas oficiais não podem ser editadas. Duplique-a para criar a sua própria versão que você pode ajustar.",
+        "body": "— personas oficiais não podem ser editadas. Duplica-a para criares a tua própria versão, que podes ajustar.",
         "lead": "Persona oficial"
       },
-      "readOnlySubtitle": "Somente leitura · fornecida pelo Cognos",
-      "save": "Salvar persona criptografada",
-      "titleCreate": "Crie a sua",
+      "readOnlySubtitle": "Apenas leitura · fornecida pelo Cognos",
+      "save": "Guardar persona encriptada",
+      "titleCreate": "Cria a tua",
       "titleEdit": "Editar persona",
-      "useAsDefault": "Usar como minha persona padrão"
+      "useAsDefault": "Usar como a minha persona predefinida"
     },
     "page": {
       "actions": {
-        "defaultForNewChats": "Padrão para novos chats",
-        "defaultPersona": "Persona padrão",
+        "defaultForNewChats": "Predefinida para novas conversas",
+        "defaultPersona": "Persona predefinida",
         "edit": "Editar",
         "editPersona": "Editar persona",
         "pin": "Fixar",
         "pinPersona": "Fixar persona",
-        "setDefault": "Definir como padrão",
-        "setDefaultPersona": "Definir como persona padrão",
+        "setDefault": "Definir como predefinida",
+        "setDefaultPersona": "Definir como persona predefinida",
         "unpin": "Desafixar",
         "unpinPersona": "Desafixar persona",
         "view": "Ver",
@@ -1127,26 +1171,26 @@
       },
       "badges": {
         "active": "Ativa",
-        "default": "Padrão",
+        "default": "Predefinida",
         "official": "Oficial"
       },
-      "breadcrumb": "Trilha de navegação",
+      "breadcrumb": "Caminho de navegação",
       "empty": "Nenhuma persona corresponde a “{{query}}”.",
-      "encryptedBadge": "Criptografado",
-      "gridView": "Exibição em grade",
-      "listView": "Exibição em lista",
-      "myPersonas": "Minhas personas",
+      "encryptedBadge": "Encriptado",
+      "gridView": "Vista de grelha",
+      "listView": "Vista de lista",
+      "myPersonas": "As minhas personas",
       "newPersona": "Nova persona",
-      "newPersonaHint": "Escreva suas próprias instruções — criptografadas no seu navegador.",
+      "newPersonaHint": "Escreve as tuas próprias instruções — encriptadas no teu navegador.",
       "searchPlaceholder": "Pesquisar personas",
       "sections": {
         "official": "Oficiais",
         "pinned": "Fixadas",
         "recent": "Usadas recentemente"
       },
-      "subtitle": "Como o Cognos responde — mude a qualquer momento",
+      "subtitle": "Como o Cognos responde — muda a qualquer momento",
       "title": "Personas",
-      "viewMode": "Modo de exibição"
+      "viewMode": "Modo de visualização"
     }
   },
   "projects": {
@@ -1163,7 +1207,7 @@
     "descriptionPlaceholder": "Sobre o que é este projeto?",
     "edit": "Editar",
     "empty": "Ainda não há projetos.",
-    "emptyHint": "Crie o seu primeiro projeto para agrupar conversas relacionadas num espaço de trabalho encriptado.",
+    "emptyHint": "Cria o teu primeiro projeto para agrupares conversas relacionadas num espaço de trabalho encriptado.",
     "loading": "A carregar…",
     "nameLabel": "Nome do projeto",
     "namePlaceholder": "ex. Lançamento Acme",
@@ -1173,13 +1217,13 @@
     "notFound": "Projeto não encontrado.",
     "save": "Guardar alterações",
     "saving": "A guardar…",
-    "subtitle": "Agrupe conversas relacionadas num espaço de trabalho encriptado.",
+    "subtitle": "Agrupa conversas relacionadas num espaço de trabalho encriptado.",
     "title": "Projetos",
-    "yourProjects": "Os seus projetos",
+    "yourProjects": "Os teus projetos",
     "instructions": {
       "heading": "Instruções do projeto",
       "edit": "Editar instruções",
-      "placeholder": "Adicione instruções que se apliquem a todas as conversas deste projeto…",
+      "placeholder": "Adiciona instruções que se apliquem a todas as conversas deste projeto…",
       "empty": "Adicionar instruções do projeto"
     },
     "settings": {
@@ -1209,10 +1253,10 @@
     "encrypted": "Encriptado",
     "encryptedAt": "Encriptado · {{time}}",
     "encryptedTitle": "Conversa encriptada",
-    "promoAfter": "e registe-se hoje mesmo.",
-    "promoBefore": "O Cognos encripta os seus chats de IA. Esta é uma conversa pública, mas apenas as pessoas com a ligação podem desencriptá-la e lê-la. Se se importa em manter os seus chats de IA privados e seguros, prefere um serviço europeu e quer tanto modelos proprietários como de código aberto, vá a",
-    "sharedSecurely": "Partilhado com segurança · desencriptado no seu navegador",
-    "unavailableBody": "A conversa partilhada pode ter deixado de ser partilhada, ou a ligação está incompleta. Peça uma nova ligação à pessoa que a partilhou.",
+    "promoAfter": "e regista-te hoje mesmo.",
+    "promoBefore": "O Cognos encripta os teus chats de IA. Esta é uma conversa pública, mas apenas as pessoas com a ligação podem desencriptá-la e lê-la. Se queres manter os teus chats de IA privados e seguros, preferes um serviço europeu e queres tanto modelos proprietários como de código aberto, vai a",
+    "sharedSecurely": "Partilhado com segurança · desencriptado no teu navegador",
+    "unavailableBody": "A conversa partilhada pode ter deixado de ser partilhada, ou a ligação está incompleta. Pede uma nova ligação à pessoa que a partilhou.",
     "unavailableTitle": "Esta ligação não está disponível"
   },
   "settings": {
@@ -1234,35 +1278,35 @@
     "title": "Definições",
     "security": {
       "title": "Segurança",
-      "lead": "Proteja a sua conta com um segundo passo de início de sessão.",
+      "lead": "Protege a tua conta com um segundo passo de início de sessão.",
       "mfaHeading": "Autenticação de dois fatores",
-      "mfaDescription": "Exija um código de uma aplicação de autenticação sempre que iniciar sessão. Isto protege a sua conta mesmo que a sua palavra-passe seja roubada.",
+      "mfaDescription": "Exige um código de uma aplicação de autenticação sempre que inicias sessão. Isto protege a tua conta mesmo que a tua palavra-passe seja roubada.",
       "statusOn": "Ativada",
       "statusOff": "Não ativada",
       "enable": "Ativar a autenticação de dois fatores",
-      "passwordLabel": "Confirme a sua palavra-passe",
+      "passwordLabel": "Confirma a tua palavra-passe",
       "continue": "Continuar",
       "cancel": "Cancelar",
-      "scanInstruction": "Leia este código QR com a sua aplicação de autenticação, ou introduza a chave de configuração manualmente.",
+      "scanInstruction": "Lê este código QR com a tua aplicação de autenticação, ou introduz a chave de configuração manualmente.",
       "manualKeyLabel": "Chave de configuração",
-      "confirmInstruction": "Introduza o código de 6 dígitos da sua aplicação para concluir a ativação.",
+      "confirmInstruction": "Introduz o código de 6 dígitos da tua aplicação para concluíres a ativação.",
       "codeLabel": "Código de autenticação",
       "verifyEnable": "Verificar e ativar",
-      "recoveryTitle": "Guarde os seus códigos de recuperação",
-      "recoveryIntro": "Guarde-os num local seguro. Cada código funciona uma vez. Se perder a sua aplicação de autenticação, são a única forma de recuperar a sua conta — não os podemos recuperar por si.",
+      "recoveryTitle": "Guarda os teus códigos de recuperação",
+      "recoveryIntro": "Guarda-os num local seguro. Cada código funciona uma vez. Se perderes a tua aplicação de autenticação, são a única forma de recuperares a tua conta — não os podemos recuperar por ti.",
       "copyCodes": "Copiar códigos",
       "copied": "Copiado",
       "downloadCodes": "Transferir",
       "recoveryDone": "Guardei os meus códigos de recuperação",
-      "recoveryRemaining": "Restam {{count}} dos seus códigos de recuperação",
+      "recoveryRemaining": "Restam {{count}} dos teus códigos de recuperação",
       "regenerate": "Gerar novos códigos de recuperação",
-      "regenerateHint": "Os novos códigos substituem os antigos e terminam a sessão em todos os dispositivos fiáveis. Precisará de um código atual da sua aplicação.",
+      "regenerateHint": "Os novos códigos substituem os antigos e terminam a sessão em todos os dispositivos fiáveis. Precisarás de um código atual da tua aplicação.",
       "disableHeading": "Desativar a autenticação de dois fatores",
-      "disableIntro": "Introduza a sua palavra-passe e um código atual para desativar a autenticação de dois fatores.",
+      "disableIntro": "Introduz a tua palavra-passe e um código atual para desativares a autenticação de dois fatores.",
       "disable": "Desativar",
       "confirmDisable": "Desativar a autenticação de dois fatores",
       "devicesHeading": "Dispositivos fiáveis",
-      "devicesIntro": "Estes dispositivos podem ignorar o passo do código até a sua confiança expirar. Revogue os que não reconhecer.",
+      "devicesIntro": "Estes dispositivos podem ignorar o passo do código até a sua confiança expirar. Revoga os que não reconheceres.",
       "devicesEmpty": "Sem dispositivos fiáveis.",
       "revoke": "Revogar",
       "added": "Adicionado a {{date}}",
@@ -1270,9 +1314,23 @@
       "expires": "Expira a {{date}}",
       "wrongPassword": "Palavra-passe incorreta.",
       "wrongCode": "Esse código não está correto.",
-      "genericError": "Algo correu mal. Tente novamente.",
+      "genericError": "Algo correu mal. Tenta novamente.",
       "enabledToast": "A autenticação de dois fatores está ativada.",
-      "disabledToast": "A autenticação de dois fatores está desativada."
+      "disabledToast": "A autenticação de dois fatores está desativada.",
+      "pageLead": "Gere a tua Chave de Conta, a palavra-passe e a autenticação de dois fatores.",
+      "kit": {
+        "title": "Chave de Conta e Kit de Emergência",
+        "description": "A tua Chave de Conta desbloqueia os teus dados encriptados. Transfere uma nova cópia do teu Kit de Emergência ou copia a chave enquanto os teus dados estão desbloqueados.",
+        "download": "Transferir Kit de Emergência",
+        "copy": "Copiar Chave de Conta",
+        "lockedTitle": "Desbloqueia para gerir as tuas chaves",
+        "lockedBody": "Os teus dados estão bloqueados neste dispositivo. Desbloqueia-os primeiro e depois podes transferir aqui o teu Kit de Emergência.",
+        "unavailableTitle": "A tua Chave de Conta não é guardada neste dispositivo",
+        "unavailableBody": "Para tua segurança, nunca guardamos uma cópia da tua Chave de Conta depois de desbloqueares. Mantém o Kit de Emergência que guardaste quando te registaste — é a única forma de desbloquear os teus dados num novo dispositivo.",
+        "copiedToast": "Chave de Conta copiada",
+        "downloadedToast": "Kit de Emergência transferido"
+      },
+      "passwordHeading": "Palavra-passe"
     }
   },
   "models": {
@@ -1281,12 +1339,12 @@
       "claude-opus-4-8": "O modelo mais capaz da Anthropic para raciocínio complexo e programação.",
       "claude-sonnet-4-6": "Modelo equilibrado da Anthropic — raciocínio forte a uma velocidade prática.",
       "gemini-2-5-pro": "Modelo de alta capacidade do Google para raciocínio em contextos longos.",
-      "gemini-3-1-flash-lite": "O Gemini mais rápido e econômico do Google para tarefas de grande volume.",
+      "gemini-3-1-flash-lite": "O Gemini mais rápido e económico do Google para tarefas de grande volume.",
       "gemini-3-5-flash": "Modelo multimodal rápido do Google que equilibra velocidade e qualidade.",
       "gemma-3-27b-it": "Modelo de instrução aberto do Google para chat de uso geral.",
       "glm-5-2": "Modelo aberto da Zhipu, forte em raciocínio, programação e uso de ferramentas.",
       "google-gemma-4-31b-it-infomaniak": "Modelo de instrução aberto do Google para chat de uso geral.",
-      "gpt-4o-mini": "Modelo multimodal pequeno da OpenAI para tarefas rápidas e econômicas.",
+      "gpt-4o-mini": "Modelo multimodal pequeno da OpenAI para tarefas rápidas e económicas.",
       "gpt-5-5": "Modelo principal da OpenAI para raciocínio avançado e trabalho multimodal.",
       "gpt-5-mini": "Um GPT-5 menor e mais rápido para raciocínio com custo controlado.",
       "gpt-5-nano": "O GPT-5 menor e mais barato da OpenAI para tarefas de grande volume.",
@@ -1294,8 +1352,8 @@
       "hermes-4-405b": "Grande modelo aberto e orientável da Nous Research para raciocínio.",
       "hermes-4-70b": "Modelo aberto da Nous Research — raciocínio capaz em tamanho menor.",
       "kimi-k2-6": "Modelo agêntico aberto da Moonshot, forte no uso de ferramentas com contextos longos.",
-      "llama-3-3-70b-instruct": "Modelo de instrução aberto da Meta para chat multilíngue.",
-      "llama-3-3-infomaniak": "Modelo de instrução aberto da Meta para chat multilíngue.",
+      "llama-3-3-70b-instruct": "Modelo de instrução aberto da Meta para chat multilingue.",
+      "llama-3-3-infomaniak": "Modelo de instrução aberto da Meta para chat multilingue.",
       "minimax-m2-5": "Modelo aberto da MiniMax criado para fluxos agênticos e programação.",
       "mistralai-ministral-3-14b-instruct-2512-infomaniak": "Modelo aberto compacto e eficiente da Mistral para tarefas rápidas.",
       "mistralai-mistral-small-4-119b-2603-infomaniak": "Modelo aberto capaz da Mistral que equilibra qualidade e eficiência.",
@@ -1307,9 +1365,15 @@
       "qwen-qwen3-5-397b-a17b-fp8-infomaniak": "Modelo MoE aberto principal da Alibaba para tarefas exigentes.",
       "qwen3-235b-a22b-instruct-2507": "Grande modelo MoE aberto da Alibaba para raciocínio avançado.",
       "qwen3-30b-a3b-instruct-2507": "Modelo MoE aberto e eficiente da Alibaba para raciocínio do dia a dia.",
-      "qwen3-32b": "Modelo aberto da Alibaba, forte em chat multilíngue e ferramentas.",
+      "qwen3-32b": "Modelo aberto da Alibaba, forte em chat multilingue e ferramentas.",
       "qwen3-next-80b-a3b-thinking": "Modelo de raciocínio aberto da Alibaba com pensamento estendido.",
-      "swiss-ai-apertus-70b-instruct-2509-infomaniak": "O modelo suíço totalmente aberto e transparente para tarefas multilíngues."
+      "swiss-ai-apertus-70b-instruct-2509-infomaniak": "O modelo suíço totalmente aberto e transparente para tarefas multilingues."
+    }
+  },
+  "vault": {
+    "errors": {
+      "createBackup": "Algo correu mal ao criar a tua cópia de segurança encriptada. Tenta novamente.",
+      "unlock": "Essa Chave de Conta não correspondeu, por isso não conseguimos desbloquear os teus dados. Verifica-a e tenta novamente."
     }
   }
 }
