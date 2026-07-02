@@ -33,7 +33,7 @@ h4,
 .display,
 .brand {
   font-family: var(--ff-display);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 a {
@@ -83,6 +83,12 @@ svg {
   gap: 24px;
   grid-template-columns: 1fr;
 }
+.grid--compact {
+  gap: var(--cog-space-150);
+}
+.section-grid {
+  margin-top: var(--cog-space-500);
+}
 @media (min-width: 768px) {
   .grid--2 {
     grid-template-columns: repeat(2, 1fr);
@@ -100,6 +106,24 @@ svg {
 .stack-gap {
   display: grid;
   gap: 12px;
+}
+.lead-copy {
+  color: var(--ink-sub);
+  font-size: var(--cog-fs-body-lg);
+  line-height: var(--cog-lh-body-lg);
+  margin-top: var(--cog-space-150);
+}
+.text-brand {
+  color: var(--brand);
+}
+.mt-100 {
+  margin-top: var(--cog-space-100);
+}
+.mt-200 {
+  margin-top: var(--cog-space-200);
+}
+.section-tail {
+  padding-bottom: calc(var(--cog-space-800) + var(--cog-space-250));
 }
 
 /* ============================ SECTIONS ================================= */
@@ -120,14 +144,25 @@ section {
   margin-bottom: 12px;
 }
 h2.sec-h {
-  font-size: clamp(28px, 3.6vw, 42px);
+  font-size: 28px;
   font-weight: var(--cog-fw-bold);
   line-height: 1.1;
   margin: 0;
 }
+@media (min-width: 768px) {
+  h2.sec-h {
+    font-size: 36px;
+  }
+}
+@media (min-width: 1200px) {
+  h2.sec-h {
+    font-size: 42px;
+  }
+}
 .sec-head p {
   color: var(--ink-sub);
-  font-size: 1.1rem;
+  font-size: var(--cog-fs-body-lg);
+  line-height: var(--cog-lh-body-lg);
   margin: 14px auto 0;
 }
 
@@ -150,7 +185,7 @@ h2.sec-h {
 .btn {
   font-family: var(--ff-display);
   font-weight: var(--cog-fw-medium);
-  font-size: 0.95rem;
+  font-size: var(--cog-fs-label);
   line-height: 1.2;
   border-radius: var(--cog-radius-xs);
   padding: 0.7rem 1.25rem;
@@ -177,12 +212,12 @@ h2.sec-h {
 }
 .btn-lg {
   padding: 0.85rem 1.6rem;
-  font-size: 1.02rem;
+  font-size: var(--cog-fs-body-lg);
 }
 .btn-primary {
   background: var(--brand);
   border-color: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   box-shadow: var(--shadow-brand-sm);
 }
 .btn-primary:hover {
@@ -219,6 +254,12 @@ h2.sec-h {
   padding: 4px 9px;
   border-radius: var(--cog-radius-pill);
   line-height: 1;
+}
+.pill-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--cog-space-075);
+  margin-top: var(--cog-space-150);
 }
 .pill svg {
   width: 12px;
@@ -279,7 +320,7 @@ h2.sec-h {
 }
 .nav-link {
   color: var(--ink-sub);
-  font-size: 0.95rem;
+  font-size: var(--cog-fs-label);
   font-weight: var(--cog-fw-medium);
   padding: 0.4rem 0.9rem;
   border-radius: var(--cog-radius-md);
@@ -380,8 +421,8 @@ h2.sec-h {
       transparent 1px
     );
   background-size: 48px 48px;
-  -webkit-mask-image: radial-gradient(circle at 30% 30%, #000, transparent 75%);
-  mask-image: radial-gradient(circle at 30% 30%, #000, transparent 75%);
+  -webkit-mask-image: radial-gradient(circle at 30% 30%, black, transparent 75%);
+  mask-image: radial-gradient(circle at 30% 30%, black, transparent 75%);
 }
 .hero .wrap {
   position: relative;
@@ -407,17 +448,27 @@ h2.sec-h {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent);
 }
 h1.hero-h {
-  font-size: clamp(40px, 5.4vw, 66px);
+  font-size: 40px;
   font-weight: var(--cog-fw-bold);
   line-height: 1.02;
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
   margin: 0;
+}
+@media (min-width: 768px) {
+  h1.hero-h {
+    font-size: 56px;
+  }
+}
+@media (min-width: 1200px) {
+  h1.hero-h {
+    font-size: 66px;
+  }
 }
 h1.hero-h .em {
   color: var(--brand);
 }
 .hero-lead {
-  font-size: 1.18rem;
+  font-size: var(--cog-fs-body-lg);
   color: var(--ink-sub);
   line-height: 1.55;
   max-width: 30rem;
@@ -450,7 +501,7 @@ h1.hero-h .em {
   flex-wrap: wrap;
   margin-top: 26px;
   color: var(--ink-subtle);
-  font-size: 0.85rem;
+  font-size: var(--cog-fs-body-sm);
 }
 .hero-assure span {
   display: inline-flex;
@@ -495,6 +546,15 @@ h1.hero-h .em {
   height: 9px;
   border-radius: 50%;
   display: inline-block;
+}
+.card-them .winbar .winbar__dot--close {
+  background: var(--window-close);
+}
+.card-them .winbar .winbar__dot--minimise {
+  background: var(--window-minimise);
+}
+.card-them .winbar .winbar__dot--maximise {
+  background: var(--window-maximise);
 }
 .card-them .winbar .lbl {
   font-family: var(--ff-mono);
@@ -557,7 +617,7 @@ h1.hero-h .em {
 .card-us .av svg {
   width: 15px;
   height: 15px;
-  color: #fff;
+  color: var(--on-brand);
 }
 .card-us .nm {
   font-family: var(--ff-display);
@@ -729,89 +789,221 @@ h1.hero-h .em {
   color: var(--brand-deep);
 }
 .fcard h3 {
-  font-size: 1.18rem;
+  font-size: var(--cog-fs-h-md);
   font-weight: var(--cog-fw-bold);
   margin: 0 0 8px;
 }
 .fcard p {
   color: var(--ink-sub);
-  font-size: 0.96rem;
-  line-height: 1.55;
+  font-size: var(--cog-fs-body);
+  line-height: var(--cog-lh-body);
   margin: 0;
 }
 .fcard .pill {
   margin-top: 2px;
 }
 
-/* ============================ AUDIENCE =============================== */
-.aud-card {
+/* ============================ PRICING =============================== */
+.price-grid {
+  align-items: stretch;
+}
+.price-card {
+  display: flex;
+  flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--cog-radius-lg);
-  padding: 30px;
+  padding: 32px;
   height: 100%;
   transition:
     transform 0.25s var(--ease),
-    box-shadow 0.25s var(--ease);
+    box-shadow 0.25s var(--ease),
+    border-color 0.25s;
 }
-.aud-card:hover {
-  transform: translateY(-3px);
+.price-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-ink);
+  border-color: color-mix(in srgb, var(--brand) 18%, var(--line));
 }
-.aud-card.aud-biz {
-  border-color: color-mix(in srgb, var(--brand) 32%, transparent);
-  box-shadow: var(--shadow-brand-lg);
-}
-.aud-top {
+
+/* Header: icon, plan name, optional badge pushed to the trailing edge. */
+.price-head {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
 }
-.aud-top h3 {
-  font-size: 1.32rem;
+.price-head .ficon {
+  margin-bottom: 0;
+}
+.price-head h3 {
+  font-size: var(--cog-fs-h-md);
   font-weight: var(--cog-fw-bold);
-  margin: 0 0 5px;
-}
-.aud-card ul {
-  list-style: none;
   margin: 0;
-  padding: 0;
 }
-.aud-card li {
+.price-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  font-weight: var(--cog-fw-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: var(--cog-radius-pill);
+  line-height: 1;
+  background: var(--brand-bright);
+  color: var(--brand-deep);
+}
+.price-badge svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Price figure: superscript currency, oversized amount, muted period. */
+.price-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--ink);
+}
+.price-cur {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: var(--cog-fw-bold);
+  align-self: flex-start;
+  margin-top: 8px;
+}
+.price-amt {
+  font-family: var(--ff-display);
+  font-size: 66px;
+  font-weight: var(--cog-fw-bold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.price-per {
+  color: var(--ink-subtle);
+  font-size: var(--cog-fs-body);
+}
+.price-sub {
+  color: var(--ink-sub);
+  font-size: var(--cog-fs-body);
+  line-height: var(--cog-lh-body);
+  margin: 14px 0 0;
+}
+.price-sub b {
+  color: var(--ink);
+  font-weight: var(--cog-fw-semibold);
+}
+
+/* Feature list — divider above, pushes the CTA to the card foot. */
+.price-list {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 24px 0 0;
+  border-top: 1px solid var(--line);
+}
+.price-list li {
   display: flex;
   gap: 11px;
-  padding: 9px 0;
+  padding: 8px 0;
   font-size: 15px;
   color: var(--ink-sub);
   line-height: 1.5;
 }
-.aud-card li svg {
+.price-list li svg {
   width: 18px;
   height: 18px;
   flex: none;
   margin-top: 2px;
   color: var(--brand);
 }
-.aud-card li b {
+.price-list li b {
   color: var(--ink);
   font-weight: var(--cog-fw-semibold);
 }
-.aud-price {
-  font-family: var(--ff-mono);
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  color: var(--ink-subtle);
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
+.price-cta {
+  width: 100%;
+  margin-top: 28px;
 }
-.aud-price b {
-  color: var(--ink);
+
+/* Featured (Unlimited) card — deep-green surface derived from brand tokens. */
+.price-card--featured {
+  border-color: color-mix(in srgb, var(--brand) 30%, transparent);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--brand-deep) 88%, black),
+    color-mix(in srgb, var(--brand-deep) 55%, black)
+  );
+  box-shadow: var(--shadow-brand-lg);
+}
+.price-card--featured:hover {
+  border-color: color-mix(in srgb, var(--brand-bright) 45%, transparent);
+}
+.price-card--featured .ficon {
+  background: color-mix(in srgb, var(--on-brand) 12%, transparent);
+}
+.price-card--featured .ficon svg {
+  color: var(--brand-bright);
+}
+.price-card--featured h3 {
+  color: var(--on-brand);
+}
+.price-card--featured .price-figure {
+  color: var(--on-brand);
+}
+.price-card--featured .price-cur {
+  color: var(--brand-bright);
+}
+.price-card--featured .price-per {
+  color: var(--cta-muted);
+}
+.price-card--featured .price-sub {
+  color: var(--cta-muted);
+}
+.price-card--featured .price-sub b {
+  color: var(--brand-bright);
+}
+.price-card--featured .price-list {
+  border-top-color: color-mix(in srgb, var(--on-brand) 16%, transparent);
+}
+.price-card--featured .price-list li {
+  color: color-mix(in srgb, var(--on-brand) 82%, var(--brand-deep));
+}
+.price-card--featured .price-list li svg {
+  color: var(--brand-bright);
+}
+.price-card--featured .price-list li b {
+  color: var(--on-brand);
+}
+
+/* Solid mint CTA on the dark card — bright green mixed from brand tokens. */
+.price-cta--featured {
+  background: color-mix(in srgb, var(--brand-bright) 80%, var(--brand));
+  border-color: transparent;
+  color: var(--brand-deep);
+  box-shadow: var(--shadow-brand-sm);
+}
+.price-cta--featured:hover {
+  background: var(--brand-bright);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-brand-md);
+}
+
+.roadmap-link {
+  color: var(--brand);
+  font-weight: var(--cog-fw-semibold);
+}
+.roadmap-link:hover {
+  color: var(--brand-deep);
+  text-decoration: underline;
 }
 
 /* ============================ CTA ================================== */
 .cta-band {
-  background: linear-gradient(155deg, #18402f, #0e2a20);
+  background: linear-gradient(155deg, var(--cta-bg-start), var(--cta-bg-end));
   border-radius: var(--cog-radius-lg);
   padding: 64px 40px;
   text-align: center;
@@ -830,19 +1022,30 @@ h1.hero-h .em {
 }
 .cta-band h2 {
   position: relative;
-  color: #fff;
-  font-size: clamp(28px, 4vw, 46px);
+  color: var(--on-brand);
+  font-size: 28px;
   font-weight: var(--cog-fw-bold);
   line-height: 1.05;
   margin: 0;
+}
+@media (min-width: 768px) {
+  .cta-band h2 {
+    font-size: 40px;
+  }
+}
+@media (min-width: 1200px) {
+  .cta-band h2 {
+    font-size: 46px;
+  }
 }
 .cta-band h2 .em {
   color: var(--brand-bright);
 }
 .cta-band p {
   position: relative;
-  color: #b9c9c1;
-  font-size: 1.12rem;
+  color: var(--cta-muted);
+  font-size: var(--cog-fs-body-lg);
+  line-height: var(--cog-lh-body-lg);
   max-width: 30rem;
   margin: 16px auto 0;
 }
@@ -855,19 +1058,19 @@ h1.hero-h .em {
   flex-wrap: wrap;
 }
 .cta-band .btn-light2 {
-  background: #fff;
+  background: var(--on-brand);
   color: var(--brand-deep);
 }
 .cta-band .btn-light2:hover {
-  background: #eafff5;
+  background: var(--brand-bg);
 }
 .cta-band .btn-ghost2 {
   background: transparent;
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
-  color: #fff;
+  border: 1.5px solid var(--cta-ghost-border);
+  color: var(--on-brand);
 }
 .cta-band .btn-ghost2:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--cta-ghost-hover);
 }
 
 /* ============================ FOOTER =============================== */
@@ -888,7 +1091,7 @@ footer {
 }
 footer .fdesc {
   color: var(--ink-subtle);
-  font-size: 0.9rem;
+  font-size: var(--cog-fs-body-sm);
   margin-top: 14px;
   max-width: 18rem;
   line-height: 1.6;
@@ -905,7 +1108,7 @@ footer h5 {
 footer a.flink {
   display: block;
   color: var(--ink-sub);
-  font-size: 0.92rem;
+  font-size: var(--cog-fs-body-sm);
   margin-bottom: 10px;
 }
 footer a.flink:hover {
@@ -920,7 +1123,7 @@ footer a.flink:hover {
   padding-top: 22px;
   border-top: 1px solid var(--line);
   color: var(--ink-subtle);
-  font-size: 0.82rem;
+  font-size: var(--cog-fs-caption);
 }
 .fbottom .kl {
   font-family: var(--ff-mono);
@@ -955,6 +1158,12 @@ footer a.flink:hover {
 }
 .lang-switch a:hover {
   color: var(--ink);
+}
+.roadmap-note {
+  text-align: center;
+  margin-top: var(--cog-space-400);
+  color: var(--ink-subtle);
+  font-size: var(--cog-fs-body-sm);
 }
 
 /* ============================ MOTION =============================== */

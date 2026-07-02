@@ -1,11 +1,14 @@
 ---
 import Icon from './Icon.astro';
+import { SIGN_UP_URL, BUSINESS_URL } from '../config';
 import type { Translator } from '../i18n/ui';
 
 interface Props {
   t: Translator;
 }
 const { t } = Astro.props;
+// List copy carries light inline <b> emphasis; these are trusted, static,
+// author-controlled strings rendered with set:html.
 const indItems = t.raw<string[]>('audience.individuals.items');
 const bizItems = t.raw<string[]>('audience.business.items');
 ---
@@ -19,47 +22,72 @@ const bizItems = t.raw<string[]>('audience.business.items');
       </h2>
       <p>{t('audience.lead')}</p>
     </div>
-    <div class="grid grid--2" style="margin-top: 40px;">
+
+    <div class="grid grid--2 section-grid price-grid">
+      <!-- Pay as you go -->
       <div class="reveal">
-        <div class="aud-card">
-          <div class="aud-top">
+        <div class="price-card">
+          <div class="price-head">
             <span class="ficon"><Icon name="Gauge" size={22} /></span>
-            <div>
-              <h3>{t('audience.individuals.title')}</h3>
-              <span class="pill pill-green"><Icon name="Check" size={12} /> {t('audience.individuals.badge')}</span>
-            </div>
+            <h3>{t('audience.individuals.title')}</h3>
           </div>
-          <ul>
-            {indItems.map((item) => (
-              <li><Icon name="Check" size={18} /> <span set:html={item} /></li>
-            ))}
+          <div class="price-figure">
+            <span class="price-cur">{t('audience.individuals.currency')}</span>
+            <span class="price-amt">{t('audience.individuals.amount')}</span>
+            <span class="price-per">{t('audience.individuals.period')}</span>
+          </div>
+          <p class="price-sub">{t('audience.individuals.tagline')}</p>
+          <ul class="price-list">
+            {
+              indItems.map((item) => (
+                <li>
+                  <Icon name="Check" size={18} /> <span set:html={item} />
+                </li>
+              ))
+            }
           </ul>
-          <div class="aud-price" set:html={t('audience.individuals.price')} />
+          <a class="btn btn-lg btn-outline price-cta" href={SIGN_UP_URL}>
+            {t('audience.individuals.cta')}
+          </a>
         </div>
       </div>
+
+      <!-- Unlimited -->
       <div class="reveal">
-        <div class="aud-card aud-biz">
-          <div class="aud-top">
+        <div class="price-card price-card--featured">
+          <div class="price-head">
             <span class="ficon"><Icon name="Infinity" size={22} /></span>
-            <div>
-              <h3>{t('audience.business.title')}</h3>
-              <span class="pill pill-blue"><Icon name="Sparkles" size={12} /> {t('audience.business.badge')}</span>
-            </div>
+            <h3>{t('audience.business.title')}</h3>
+            <span class="price-badge">
+              <Icon name="Sparkles" size={12} /> {t('audience.business.badge')}
+            </span>
           </div>
-          <ul>
-            {bizItems.map((item) => (
-              <li><Icon name="Check" size={18} /> <span set:html={item} /></li>
-            ))}
+          <div class="price-figure">
+            <span class="price-cur">{t('audience.business.currency')}</span>
+            <span class="price-amt">{t('audience.business.amount')}</span>
+            <span class="price-per">{t('audience.business.period')}</span>
+          </div>
+          <p class="price-sub" set:html={t('audience.business.annual')} />
+          <ul class="price-list">
+            {
+              bizItems.map((item) => (
+                <li>
+                  <Icon name="Check" size={18} /> <span set:html={item} />
+                </li>
+              ))
+            }
           </ul>
-          <div class="aud-price" set:html={t('audience.business.price')} />
+          <a class="btn btn-lg price-cta price-cta--featured" href={SIGN_UP_URL}>
+            {t('audience.business.cta')}
+          </a>
         </div>
       </div>
     </div>
-    <p
-      class="reveal"
-      style="text-align: center; margin-top: 28px; color: var(--ink-subtle); font-size: 0.9rem;"
-    >
-      {t('audience.roadmap')}
+
+    <p class="roadmap-note reveal">
+      {t('audience.roadmap')}<a class="roadmap-link" href={BUSINESS_URL}
+        >{t('audience.roadmapLink')}</a
+      >{t('audience.roadmapAfter')}
     </p>
   </div>
 </section>

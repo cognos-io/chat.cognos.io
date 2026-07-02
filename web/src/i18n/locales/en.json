@@ -131,27 +131,36 @@
     "lead": "Two ways to pay. The same privacy either way. Not for you? You have 60 days to get your money back.",
     "individuals": {
       "title": "Pay as you go",
-      "badge": "From CHF 10/mo",
+      "currency": "CHF",
+      "amount": "10",
+      "period": "/ month minimum",
+      "tagline": "Only pay for what you actually use — top up anytime, no lock-in.",
       "items": [
-        "Only pay for what you actually use",
-        "Every chat gets the full privacy treatment",
-        "Self-deleting messages and incognito included",
-        "Switzerland or Europe, with dozens of AI models"
+        "Every chat gets the <b>full privacy treatment</b>",
+        "Self-deleting messages & incognito included",
+        "Switzerland or Europe, with dozens of AI models",
+        "Spend nothing in months you don't use it"
       ],
-      "price": "<b>Pay as you go</b> · from CHF 10/month"
+      "cta": "Start pay as you go"
     },
     "business": {
       "title": "Unlimited",
       "badge": "Best value",
+      "currency": "CHF",
+      "amount": "100",
+      "period": "/ month",
+      "annual": "or <b>CHF 1000 / year</b> — two months free.",
       "items": [
         "<b>Unlimited chats</b>, across every AI model we offer",
         "Stay in Switzerland whenever you want to",
         "Keep your whole history — always private",
         "Download or delete everything, anytime"
       ],
-      "price": "<b>Unlimited</b> · CHF 100/month or CHF 1000/year"
+      "cta": "Go Unlimited"
     },
-    "roadmap": "Need it for a team? Single sign-on and private hosting are on the way — get in touch."
+    "roadmap": "Need it for a team? Single sign-on and private hosting are on the way — ",
+    "roadmapLink": "get in touch",
+    "roadmapAfter": "."
   },
   "security": {
     "eyebrow": "The short version",

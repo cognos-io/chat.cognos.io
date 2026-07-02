@@ -131,27 +131,36 @@
     "lead": "Deux façons de payer. La même confidentialité dans les deux cas. Pas convaincu ? Vous avez 60 jours pour être remboursé.",
     "individuals": {
       "title": "À l'usage",
-      "badge": "À partir de CHF 10/mois",
+      "currency": "CHF",
+      "amount": "10",
+      "period": "/ mois minimum",
+      "tagline": "Ne payez que ce que vous utilisez vraiment — rechargez quand vous voulez, sans engagement.",
       "items": [
-        "Ne payez que ce que vous utilisez vraiment",
-        "Chaque conversation reçoit toute la protection",
+        "Chaque conversation reçoit <b>toute la protection</b>",
         "Messages qui s'effacent et mode incognito inclus",
-        "Suisse ou Europe, avec des dizaines de modèles d'IA"
+        "Suisse ou Europe, avec des dizaines de modèles d'IA",
+        "Ne payez rien les mois où vous ne l'utilisez pas"
       ],
-      "price": "<b>À l'usage</b> · à partir de CHF 10/mois"
+      "cta": "Commencer à l'usage"
     },
     "business": {
       "title": "Illimité",
       "badge": "Meilleur prix",
+      "currency": "CHF",
+      "amount": "100",
+      "period": "/ mois",
+      "annual": "ou <b>CHF 1000 / an</b> — deux mois offerts.",
       "items": [
         "<b>Conversations illimitées</b>, sur tous les modèles d'IA que nous proposons",
         "Restez en Suisse quand vous le souhaitez",
         "Gardez tout votre historique — toujours privé",
         "Téléchargez ou supprimez tout, quand vous voulez"
       ],
-      "price": "<b>Illimité</b> · CHF 100/mois ou CHF 1000/an"
+      "cta": "Passer à l'illimité"
     },
-    "roadmap": "Besoin pour une équipe ? La connexion unique et l'hébergement privé arrivent bientôt — écrivez-nous."
+    "roadmap": "Besoin pour une équipe ? La connexion unique et l'hébergement privé arrivent bientôt — ",
+    "roadmapLink": "écrivez-nous",
+    "roadmapAfter": "."
   },
   "security": {
     "eyebrow": "En résumé",

@@ -131,27 +131,36 @@
     "lead": "Dos formas de pagar. La misma privacidad en ambos casos. ¿No es para ti? Tienes 60 días para recuperar tu dinero.",
     "individuals": {
       "title": "Paga según lo que uses",
-      "badge": "Desde CHF 10/mes",
+      "currency": "CHF",
+      "amount": "10",
+      "period": "/ mes mínimo",
+      "tagline": "Solo pagas por lo que usas de verdad: recarga cuando quieras, sin compromisos.",
       "items": [
-        "Solo pagas por lo que usas de verdad",
-        "Cada chat recibe la protección completa de privacidad",
+        "Cada chat recibe <b>toda la protección</b>",
         "Mensajes que se borran solos e incógnito incluidos",
-        "Suiza o Europa, con decenas de modelos de IA"
+        "Suiza o Europa, con decenas de modelos de IA",
+        "No pagas nada los meses que no lo usas"
       ],
-      "price": "<b>Paga según lo que uses</b> · desde CHF 10/mes"
+      "cta": "Empezar según lo que uses"
     },
     "business": {
       "title": "Ilimitado",
       "badge": "La mejor opción",
+      "currency": "CHF",
+      "amount": "100",
+      "period": "/ mes",
+      "annual": "o <b>CHF 1000 / año</b> — dos meses gratis.",
       "items": [
         "<b>Chats ilimitados</b>, con todos los modelos de IA que ofrecemos",
         "Quédate en Suiza siempre que quieras",
         "Guarda todo tu historial, siempre privado",
         "Descárgalo o bórralo todo cuando quieras"
       ],
-      "price": "<b>Ilimitado</b> · CHF 100/mes o CHF 1000/año"
+      "cta": "Pásate a Ilimitado"
     },
-    "roadmap": "¿Lo necesitas para un equipo? El inicio de sesión único y el alojamiento privado están en camino: escríbenos."
+    "roadmap": "¿Lo necesitas para un equipo? El inicio de sesión único y el alojamiento privado están en camino: ",
+    "roadmapLink": "escríbenos",
+    "roadmapAfter": "."
   },
   "security": {
     "eyebrow": "En pocas palabras",

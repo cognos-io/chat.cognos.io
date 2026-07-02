@@ -131,27 +131,36 @@
     "lead": "Zwei Wege zu zahlen. Die gleiche Privatsphäre bei beiden. Nichts für dich? Du hast 60 Tage, um dein Geld zurückzubekommen.",
     "individuals": {
       "title": "Zahl nach Verbrauch",
-      "badge": "Ab CHF 10/Mt.",
+      "currency": "CHF",
+      "amount": "10",
+      "period": "/ Monat mindestens",
+      "tagline": "Zahl nur für das, was du wirklich nutzt — jederzeit aufladen, keine Bindung.",
       "items": [
-        "Zahl nur für das, was du wirklich nutzt",
-        "Jeder Chat bekommt den vollen Schutz",
-        "Selbstlöschende Nachrichten und Inkognito inklusive",
-        "Schweiz oder Europa, mit Dutzenden KI-Modellen"
+        "Jeder Chat bekommt den <b>vollen Schutz</b>",
+        "Selbstlöschende Nachrichten & Inkognito inklusive",
+        "Schweiz oder Europa, mit Dutzenden KI-Modellen",
+        "Zahl nichts in Monaten, in denen du es nicht nutzt"
       ],
-      "price": "<b>Zahl nach Verbrauch</b> · ab CHF 10/Monat"
+      "cta": "Nach Verbrauch starten"
     },
     "business": {
       "title": "Unbegrenzt",
       "badge": "Bester Wert",
+      "currency": "CHF",
+      "amount": "100",
+      "period": "/ Monat",
+      "annual": "oder <b>CHF 1000 / Jahr</b> — zwei Monate gratis.",
       "items": [
         "<b>Unbegrenzte Chats</b>, über alle KI-Modelle, die wir anbieten",
         "Bleib in der Schweiz, wann immer du willst",
         "Behalte deinen ganzen Verlauf — immer privat",
         "Lade alles herunter oder lösche es, jederzeit"
       ],
-      "price": "<b>Unbegrenzt</b> · CHF 100/Monat oder CHF 1000/Jahr"
+      "cta": "Unbegrenzt wählen"
     },
-    "roadmap": "Für ein Team? Einmal-Anmeldung und private Server sind bald da — melde dich."
+    "roadmap": "Für ein Team? Einmal-Anmeldung und private Server sind bald da — ",
+    "roadmapLink": "melde dich",
+    "roadmapAfter": "."
   },
   "security": {
     "eyebrow": "Die Kurzfassung",
