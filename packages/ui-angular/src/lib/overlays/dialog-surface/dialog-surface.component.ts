@@ -39,7 +39,12 @@ export type CognosDialogSurfaceIconTone = 'default' | 'info' | 'success' | 'dang
         <ng-content select="[cogDialogHeaderActions]" />
 
         @if (dismissible()) {
-          <cog-icon-button name="x" title="Close" size="lg" (click)="onClose()" />
+          <cog-icon-button
+            name="x"
+            [title]="closeLabel()"
+            size="lg"
+            (click)="onClose()"
+          />
         }
       </header>
 
@@ -148,6 +153,12 @@ export class CognosDialogSurfaceComponent {
   readonly subtitle = input('');
   readonly footer = input(false);
   readonly dismissible = input(true);
+  /**
+   * Accessible label / tooltip for the close button. Defaults to the English
+   * "Close"; apps should pass their translated `common.close` so the shared lib
+   * stays app-agnostic while remaining localised in-app.
+   */
+  readonly closeLabel = input('Close');
   /**
    * Optional leading icon rendered in a tinted chip beside the title, matching
    * `cog-modal`. Unset (default) renders no chip so existing dialogs are

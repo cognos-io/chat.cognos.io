@@ -40,17 +40,17 @@ When something is used in **more than two** places and no component fits, extrac
 
 ## Navigation & overlays
 
-| Selector                           | When to use                                                                                                                                                                          |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `cog-breadcrumbs`                  | Breadcrumb trail (usually via `cog-page-header`).                                                                                                                                    |
-| `cog-nav-item`                     | A sidebar/nav row.                                                                                                                                                                   |
-| `cog-drawer`                       | A slide-in panel.                                                                                                                                                                    |
-| `cog-menu`                         | A dropdown/popover menu.                                                                                                                                                             |
-| `cog-sheet`                        | A bottom sheet (mobile-style).                                                                                                                                                       |
-| `cog-modal` / `cog-dialog-surface` | A centred dialog / the reusable dialog surface chrome.                                                                                                                               |
-| `cog-dialog-actions`               | The footer action row for any dialog surface — projects buttons, handles gap/alignment (`align`) + mobile layout (`mobile`). Put it in the footer slot instead of a bespoke `<div>`. |
-| `cog-security-modal`               | A security-sensitive confirmation modal.                                                                                                                                             |
-| `cog-toast-host`                   | App toast outlet (use `CognosToastService.notify(...)` to raise toasts).                                                                                                             |
+| Selector                           | When to use                                                                                                                                                                                                |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cog-breadcrumbs`                  | Breadcrumb trail (usually via `cog-page-header`).                                                                                                                                                          |
+| `cog-nav-item`                     | A sidebar/nav row.                                                                                                                                                                                         |
+| `cog-drawer`                       | A slide-in panel.                                                                                                                                                                                          |
+| `cog-menu`                         | A dropdown/popover menu.                                                                                                                                                                                   |
+| `cog-sheet`                        | A bottom sheet (mobile-style).                                                                                                                                                                             |
+| `cog-modal` / `cog-dialog-surface` | A centred dialog / the reusable dialog surface chrome. `cog-dialog-surface` takes a `closeLabel` input (default `"Close"`) — pass the app's translated `common.close` so the close button stays localised. |
+| `cog-dialog-actions`               | The footer action row for any dialog surface — projects buttons, handles gap/alignment (`align`) + mobile layout (`mobile`). Put it in the footer slot instead of a bespoke `<div>`.                       |
+| `cog-security-modal`               | A security-sensitive confirmation modal.                                                                                                                                                                   |
+| `cog-toast-host`                   | App toast outlet (use `CognosToastService.notify(...)` to raise toasts).                                                                                                                                   |
 
 ## Files & images
 

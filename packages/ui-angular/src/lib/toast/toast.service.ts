@@ -15,6 +15,8 @@ export type CognosToastInput = {
   tone?: CognosToastTone;
   icon?: CognosIconName;
   action?: CognosToastAction;
+  // Auto-dismiss delay in ms. A value <= 0 keeps the toast until the user
+  // dismisses it manually (e.g. a long error message they need time to read).
   duration?: number;
 };
 
@@ -42,7 +44,11 @@ export class CognosToastService {
     };
 
     this.itemsState.update((items) => [...items, toast]);
-    globalThis.setTimeout(() => this.dismiss(toast.id), toast.duration);
+    // A non-positive duration means "sticky": leave it up until the user
+    // dismisses it via the toast's close button.
+    if (toast.duration > 0) {
+      globalThis.setTimeout(() => this.dismiss(toast.id), toast.duration);
+    }
 
     return toast.id;
   }

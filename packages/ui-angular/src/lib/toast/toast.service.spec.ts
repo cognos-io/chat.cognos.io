@@ -41,6 +41,21 @@ describe('CognosToastService', () => {
     }
   });
 
+  it('does not schedule auto-dismiss for a sticky (duration <= 0) toast', () => {
+    const service = new CognosToastService();
+    const setTimeoutSpy = vi
+      .spyOn(globalThis, 'setTimeout')
+      .mockReturnValue(0 as never);
+    // The spy is shared across tests in this file; reset its call history so we
+    // only observe this notify() call.
+    setTimeoutSpy.mockClear();
+
+    service.notify({ title: 'Long error', msg: 'stays up', duration: 0 });
+
+    expect(service.items()).toHaveLength(1);
+    expect(setTimeoutSpy).not.toHaveBeenCalled();
+  });
+
   it('runs an action and dismisses the toast', () => {
     const service = new CognosToastService();
     vi.spyOn(globalThis, 'setTimeout').mockReturnValue(0 as never);
