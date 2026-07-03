@@ -1,9 +1,10 @@
 package billing
 
-// DefaultPAYGMinCommitRappen is the CHF 10.00 minimum commit billed per PAYG
-// cycle (spec §4.4, BILLING_PAYG_MIN_COMMIT_RAPPEN). Usage above this is posted
-// as a one-time overage charge at cycle end.
-const DefaultPAYGMinCommitRappen = 1000
+// DefaultPAYGMinCommitRappen is the CHF 15.00 minimum commit billed per PAYG
+// cycle (spec §4.4, BILLING_PAYG_MIN_COMMIT_RAPPEN). It must match the
+// cognos-payg Paddle price. Usage above this is posted as a one-time overage
+// charge at cycle end.
+const DefaultPAYGMinCommitRappen = 1500
 
 // CycleSummary is the locally-computed view of a closed PAYG cycle: what the
 // user actually used, what we therefore expect Paddle to bill, and the overage

@@ -297,7 +297,7 @@ func cycleSummaryFor(t *testing.T, app *tests.TestApp, subID string) *core.Recor
 func TestPaddleWebhookUpdatedRollsOverPaygCycle(t *testing.T) {
 	app, mux := activatePAYG(t)
 
-	// CHF 23.40 of usage in the closing (June) cycle → expect a CHF 13.40 overage.
+	// CHF 23.40 of usage in the closing (June) cycle → expect a CHF 8.40 overage.
 	seedUsage(t, app, time.Date(2026, 6, 5, 12, 0, 0, 0, time.UTC), 2000)
 	seedUsage(t, app, time.Date(2026, 6, 20, 12, 0, 0, 0, time.UTC), 340)
 	// A row outside the cycle must not be counted.
@@ -318,8 +318,8 @@ func TestPaddleWebhookUpdatedRollsOverPaygCycle(t *testing.T) {
 	if got := summary.GetInt("local_expected_bill_rappen"); got != 2340 {
 		t.Errorf("local_expected_bill_rappen = %d, want 2340", got)
 	}
-	if got := summary.GetInt("overage_charge_rappen"); got != 1340 {
-		t.Errorf("overage_charge_rappen = %d, want 1340", got)
+	if got := summary.GetInt("overage_charge_rappen"); got != 840 {
+		t.Errorf("overage_charge_rappen = %d, want 840", got)
 	}
 
 	// The user_billing snapshot advanced to the new cycle.
@@ -358,7 +358,7 @@ func TestPaddleWebhookRolloverPostsOverageCharge(t *testing.T) {
 	fake := &fakePaddleClient{chargeTxnID: "txn_overage_1"}
 	app, mux := activatePAYGWithClient(t, fake)
 
-	// CHF 23.40 usage in the June cycle → CHF 13.40 overage (1340 rappen).
+	// CHF 23.40 usage in the June cycle → CHF 8.40 overage (840 rappen).
 	seedUsage(t, app, time.Date(2026, 6, 5, 12, 0, 0, 0, time.UTC), 2340)
 
 	if rec := postWebhook(mux, paygRolloverBody, signPaddle(t, webhookSecret, paygRolloverBody)); rec.Code != http.StatusOK {
@@ -374,8 +374,8 @@ func TestPaddleWebhookRolloverPostsOverageCharge(t *testing.T) {
 	if fake.chargePriceID != "pri_payg_overage" {
 		t.Errorf("charge price = %q, want pri_payg_overage", fake.chargePriceID)
 	}
-	if fake.chargeQuantity != 1340 {
-		t.Errorf("charge quantity = %d, want 1340", fake.chargeQuantity)
+	if fake.chargeQuantity != 840 {
+		t.Errorf("charge quantity = %d, want 840", fake.chargeQuantity)
 	}
 
 	summary := cycleSummaryFor(t, app, "sub_payg")
@@ -394,7 +394,7 @@ func TestPaddleWebhookRolloverWithinCommitPostsNothing(t *testing.T) {
 	fake := &fakePaddleClient{}
 	app, mux := activatePAYGWithClient(t, fake)
 
-	// CHF 3.42 usage — under the CHF 10 commit, so no overage charge.
+	// CHF 3.42 usage — under the CHF 15 commit, so no overage charge.
 	seedUsage(t, app, time.Date(2026, 6, 5, 12, 0, 0, 0, time.UTC), 342)
 
 	if rec := postWebhook(mux, paygRolloverBody, signPaddle(t, webhookSecret, paygRolloverBody)); rec.Code != http.StatusOK {
@@ -499,7 +499,7 @@ func TestPaddleWebhookTransactionCompletedRecordsCycle(t *testing.T) {
 	if got := summary.GetInt("paddle_billed_rappen"); got != 1500 {
 		t.Errorf("paddle_billed_rappen = %d, want 1500", got)
 	}
-	// Billed (1500) >= local expected (max(1500,1000)=1500) → reconciled.
+	// Billed (1500) >= local expected (max(1500,1500)=1500) → reconciled.
 	if !summary.GetBool("reconciled") {
 		t.Error("reconciled should be true when Paddle billed at least the expected amount")
 	}

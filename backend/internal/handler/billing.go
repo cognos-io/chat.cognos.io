@@ -33,6 +33,10 @@ type billingResponse struct {
 	CancelAtPeriodEnd     bool             `json:"cancel_at_period_end"`
 	RefundEligibleUntilAt string           `json:"refund_eligible_until_at,omitempty"`
 	PreviousPlanType      billing.PlanType `json:"previous_plan_type,omitempty"`
+	// PaygMinCommitCHF is the PAYG monthly minimum (the cognos-payg Paddle
+	// price). Always present so pricing surfaces can show it before purchase;
+	// the UI must never hardcode this amount.
+	PaygMinCommitCHF float64 `json:"payg_min_commit_chf"`
 }
 
 type billingTransaction struct {
@@ -55,6 +59,8 @@ type BillingGetParams struct {
 	StateRepo billing.StateRepo
 	// PlanByPrice maps a Paddle price id to its plan + interval.
 	PlanByPrice map[string]PlanMeta
+	// MinCommitRappen is the configured PAYG minimum commit per cycle.
+	MinCommitRappen int64
 }
 
 type BillingTransactionsParams struct {
@@ -85,8 +91,9 @@ func BillingGet(params BillingGetParams) func(e *core.RequestEvent) error {
 		if err != nil {
 			if errors.Is(err, billing.ErrStateNotFound) {
 				return e.JSON(http.StatusOK, billingResponse{
-					PlanType: billing.PlanTypeInactive,
-					Status:   "inactive",
+					PlanType:         billing.PlanTypeInactive,
+					Status:           "inactive",
+					PaygMinCommitCHF: minCommitCHF(params.MinCommitRappen),
 				})
 			}
 			if params.Logger != nil {
@@ -95,8 +102,19 @@ func BillingGet(params BillingGetParams) func(e *core.RequestEvent) error {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to load billing state", err)
 		}
 
-		return e.JSON(http.StatusOK, buildBillingResponse(state, params.PlanByPrice))
+		resp := buildBillingResponse(state, params.PlanByPrice)
+		resp.PaygMinCommitCHF = minCommitCHF(params.MinCommitRappen)
+		return e.JSON(http.StatusOK, resp)
 	}
+}
+
+// minCommitCHF converts the configured PAYG minimum commit to CHF, falling
+// back to the default so the field is never zero when unconfigured.
+func minCommitCHF(rappen int64) float64 {
+	if rappen <= 0 {
+		rappen = billing.DefaultPAYGMinCommitRappen
+	}
+	return float64(rappen) / 100
 }
 
 // buildBillingResponse derives the dashboard view from raw billing state. A

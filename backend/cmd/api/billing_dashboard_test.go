@@ -85,6 +85,35 @@ func TestBillingGetReportsActiveUnlimited(t *testing.T) {
 	scenario.Test(t)
 }
 
+// The PAYG monthly minimum is exposed on every billing response so the UI can
+// show the configured floor instead of hardcoding it.
+func TestBillingGetExposesPaygMinCommit(t *testing.T) {
+	t.Parallel()
+	scenario := tests.ApiScenario{
+		Name:           "active payg exposes the CHF 15 minimum commit",
+		Method:         http.MethodGet,
+		URL:            "/api/v1/billing",
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"plan_type":"payg"`,
+			`"status":"active"`,
+			`"payg_min_commit_chf":15`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			app := setupBillingApp(t, nil)
+			updateUserBilling(t, app, testUserID, map[string]any{
+				"plan_type":           "payg",
+				"paddle_price_id":     "pri_payg",
+				"paddle_cycle_end_at": "2026-07-01 00:00:00.000Z",
+				"plan_ends_at":        "",
+			})
+			return app
+		},
+		BeforeTestFunc: withRecordAuth("users", "test1@example.com"),
+	}
+	scenario.Test(t)
+}
+
 func TestBillingGetReportsPastDue(t *testing.T) {
 	t.Parallel()
 	scenario := tests.ApiScenario{

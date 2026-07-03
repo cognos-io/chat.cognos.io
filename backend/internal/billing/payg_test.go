@@ -5,7 +5,7 @@ import "testing"
 func TestComputeCycleSummary(t *testing.T) {
 	t.Parallel()
 
-	const commit = DefaultPAYGMinCommitRappen // 1000 = CHF 10.00
+	const commit = DefaultPAYGMinCommitRappen // 1500 = CHF 15.00
 
 	tests := []struct {
 		name         string
@@ -14,12 +14,12 @@ func TestComputeCycleSummary(t *testing.T) {
 		wantExpected int64
 		wantOverage  int64
 	}{
-		{"no usage bills the floor", 0, 0, 1000, 0},
-		{"under the commit bills the floor", 342, 342, 1000, 0},
-		{"exactly the commit, no overage", 1000, 1000, 1000, 0},
-		{"one rappen over bills one rappen overage", 1001, 1001, 1001, 1},
-		{"well over the commit (CHF 23.40)", 2340, 2340, 2340, 1340},
-		{"negative usage is clamped to the floor", -50, 0, 1000, 0},
+		{"no usage bills the floor", 0, 0, 1500, 0},
+		{"under the commit bills the floor", 342, 342, 1500, 0},
+		{"exactly the commit, no overage", 1500, 1500, 1500, 0},
+		{"one rappen over bills one rappen overage", 1501, 1501, 1501, 1},
+		{"well over the commit (CHF 23.40)", 2340, 2340, 2340, 840},
+		{"negative usage is clamped to the floor", -50, 0, 1500, 0},
 	}
 
 	for _, tc := range tests {

@@ -168,9 +168,10 @@ func addPocketBaseRoutes(
 	e.Router.GET(
 		"/api/v1/billing",
 		handler.BillingGet(handler.BillingGetParams{
-			Logger:      logger,
-			StateRepo:   billingStateRepo,
-			PlanByPrice: paddlePlanByPrice,
+			Logger:          logger,
+			StateRepo:       billingStateRepo,
+			PlanByPrice:     paddlePlanByPrice,
+			MinCommitRappen: paddleMinCommitRappen,
 		}),
 	).Bind(
 		apis.RequireAuth(),

@@ -52,7 +52,7 @@ func TestRetryUnpostedOveragesReposts(t *testing.T) {
 	// A closed cycle with an overage that never got a txn id (charge failed).
 	seedCycleSummary(t, app, "cyclesumm000001", map[string]any{
 		"paddle_subscription_id":     "sub_payg",
-		"overage_charge_rappen":      1340,
+		"overage_charge_rappen":      840,
 		"local_expected_bill_rappen": 2340,
 		"paddle_overage_txn_id":      "",
 		"reconciled":                 false,
@@ -81,8 +81,8 @@ func TestRetryUnpostedOveragesReposts(t *testing.T) {
 	if fake.chargeCalls != 1 {
 		t.Errorf("charge calls = %d, want 1", fake.chargeCalls)
 	}
-	if fake.chargeQuantity != 1340 {
-		t.Errorf("charge quantity = %d, want 1340", fake.chargeQuantity)
+	if fake.chargeQuantity != 840 {
+		t.Errorf("charge quantity = %d, want 840", fake.chargeQuantity)
 	}
 	if fake.chargeIdemKey != "overage_cyclesumm000001" {
 		t.Errorf("idempotency key = %q, want overage_cyclesumm000001", fake.chargeIdemKey)

@@ -45,7 +45,7 @@ func TestBillingChangePlanUpgradesPaygToUnlimited(t *testing.T) {
 				"paddle_cycle_start_at":  "2026-06-01 00:00:00.000Z",
 				"paddle_cycle_end_at":    "2026-07-01 00:00:00.000Z",
 			})
-			// CHF 23.40 of PAYG usage in the open cycle → CHF 13.40 final overage.
+			// CHF 23.40 of PAYG usage in the open cycle → CHF 8.40 final overage.
 			seedUsageRow(t, app, "uchange00000001", testUserID, "m", 2340, "2026-06-15 12:00:00.000Z")
 			return app
 		},
@@ -67,8 +67,8 @@ func TestBillingChangePlanUpgradesPaygToUnlimited(t *testing.T) {
 			if fake.chargeCalls != 1 {
 				t.Errorf("final overage charge calls = %d, want 1", fake.chargeCalls)
 			}
-			if fake.chargeQuantity != 1340 {
-				t.Errorf("final overage quantity = %d, want 1340", fake.chargeQuantity)
+			if fake.chargeQuantity != 840 {
+				t.Errorf("final overage quantity = %d, want 840", fake.chargeQuantity)
 			}
 			// Local state reflects the new plan immediately.
 			record, err := app.FindFirstRecordByData("user_billing", "user_id", testUserID)

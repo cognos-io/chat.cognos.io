@@ -5,6 +5,7 @@ import { newAnonymousApi, provisionApiUser } from './api-helpers';
 interface BillingResponse {
   plan_type: string;
   balance_chf: number;
+  payg_min_commit_chf: number;
 }
 
 interface BillingTransaction {
@@ -64,6 +65,10 @@ test.describe('billing status API', () => {
       // Balance must never be negative in the response — server-side
       // rounding could otherwise leak a stale debit state to the UI.
       expect(body.balance_chf).toBeGreaterThanOrEqual(0);
+      // The PAYG monthly minimum is always exposed so no UI surface has to
+      // hardcode the amount (CHF 15 by default, operator-configurable).
+      expect(typeof body.payg_min_commit_chf).toBe('number');
+      expect(body.payg_min_commit_chf).toBeGreaterThan(0);
     } finally {
       await user.api.dispose();
     }
