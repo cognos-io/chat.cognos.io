@@ -22,7 +22,10 @@ export async function fillRegisterForm(
   await page.getByLabel('Email').fill(account.email);
   // Single password entry — there is no confirmation field (a typo is
   // recoverable via password reset, which no longer affects encrypted data).
-  await page.getByLabel('Password', { exact: true }).fill(account.password);
+  // The field's accessible name starts with "Password" but also carries the
+  // inline length hint ("Use at least 12 characters."), so an exact match
+  // would never resolve.
+  await page.getByLabel(/^Password\b/).fill(account.password);
 }
 
 export async function submitRegister(page: Page, account?: TestAccount): Promise<void> {
