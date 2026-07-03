@@ -25,6 +25,7 @@ import { UserKeyPairsRecord, UserKeyPairsResponse } from '@app/types/pocketbase-
 
 import { KeyPair } from '@interfaces/key-pair';
 
+import { Analytics } from './analytics/analytics';
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
@@ -133,6 +134,16 @@ export class VaultService {
   private readonly _authService = inject(AuthService);
   private readonly _trustedUnlockService = inject(TrustedUnlockService);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _analytics = inject(Analytics);
+
+  // Whether the vault has been unlocked at any point during this JS session
+  // (module lifetime only — never stored). Distinguishes a fresh session's
+  // unlock prompt from a re-lock (e.g. the 30-min idle logout) for the
+  // vault_unlock_prompted trigger prop.
+  private _hasUnlockedThisSession = false;
+  // Dedupe: the prompt event fires once per locked period, not on every
+  // re-render/shell handover of the dialog.
+  private _unlockPromptTracked = false;
 
   readonly generatedAccountKey = signal<string | null>(null);
   readonly wasLocked = signal(false);
@@ -152,6 +163,12 @@ export class VaultService {
                 tap(() => {
                   this.wasLocked.set(false);
                   this.clearUnlockError();
+                  this._markUnlocked();
+                  // The user could only submit after confirming they saved the
+                  // Account Key, and the backup now exists server-side.
+                  this._analytics.track('onboarding_step_completed', {
+                    step: 'account_key_saved',
+                  });
                 }),
                 map(({ keyPair, keyPairRecord: createdKeyPairRecord }) => ({
                   keyPair,
@@ -174,6 +191,7 @@ export class VaultService {
               tap(() => {
                 this.wasLocked.set(false);
                 this.clearUnlockError();
+                this._markUnlocked();
               }),
               map((keyPair) => ({ keyPair })),
               catchError(() => {
@@ -353,6 +371,30 @@ export class VaultService {
     this.unlockError.set(null);
   }
 
+  /**
+   * Called by VaultUnlockGateDirective whenever it opens the unlock prompt.
+   * Emits vault_unlock_prompted with a coarse trigger: 'new_session' when the
+   * vault has not been unlocked in this JS session yet, 'idle_logout' when it
+   * was unlocked earlier and re-locked (e.g. the idle auto-logout). Deduped per
+   * locked period, and skipped entirely for the create-backup onboarding dialog
+   * (that is not an unlock prompt).
+   */
+  notifyUnlockPrompted(): void {
+    if (this.isNewKeyPair() || this._unlockPromptTracked) {
+      return;
+    }
+    this._unlockPromptTracked = true;
+    this._analytics.track('vault_unlock_prompted', {
+      trigger: this._hasUnlockedThisSession ? 'idle_logout' : 'new_session',
+    });
+  }
+
+  private _markUnlocked(): void {
+    this._hasUnlockedThisSession = true;
+    // Re-arm the prompt event for the next locked period.
+    this._unlockPromptTracked = false;
+  }
+
   lock() {
     this.lock$.next();
   }
@@ -478,6 +520,9 @@ export class VaultService {
       this.assertTrustedUserKeyContext(keyPairRecord);
       const keyPair = this.unpackKeyPairRecord(keyPairRecord, storedUnlockKey);
       this.persistTrustedUserKeyContext(keyPairRecord);
+      // Trusted-device restore counts as an unlock: if the vault re-locks
+      // later this session, the next prompt is a re-entry, not a new session.
+      this._markUnlocked();
       return { keyPair };
     } catch {
       await this._trustedUnlockService.clearUnlockKey(this._authService.user()?.['id']);

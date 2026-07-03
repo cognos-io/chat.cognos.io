@@ -16,6 +16,7 @@ import {
   CheckoutResponse,
   CompletionBillingRestriction,
 } from '@app/interfaces/billing';
+import { Analytics } from '@app/services/analytics/analytics';
 import { AuthService } from '@app/services/auth.service';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ErrorService } from '@app/services/error.service';
@@ -31,6 +32,15 @@ const ACTIVATION_POLL_MAX_ATTEMPTS = 40;
 // value (payg_min_commit_chf) is authoritative — this only avoids showing
 // CHF 0.00 during the first load.
 const DEFAULT_PAYG_MIN_COMMIT_CHF = 15;
+
+// Which surface a checkout was started from — the `entry` prop on the
+// `checkout_started` analytics event (docs/specs/product-analytics.md §7.2).
+export type CheckoutEntry = 'pricing' | 'trial_lock' | 'billing';
+
+// The analytics `plan` prop is the coarse plan family, not the billing
+// interval (spec enum: payg | unlimited).
+const checkoutPlanProp = (plan: CheckoutPlan): 'payg' | 'unlimited' =>
+  plan === 'payg' ? 'payg' : 'unlimited';
 
 // BillingService is the frontend's single source of truth for the user's plan
 // state. It backs the trial pill/credit card, the locked-chat surfaces, and the
@@ -49,6 +59,14 @@ export class BillingService {
   private readonly _auth = inject(AuthService);
   private readonly _language = inject(LanguageService);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _analytics = inject(Analytics);
+
+  // Last plan a checkout was started for, so `checkout_completed` (which the
+  // Paddle overlay reports without context) can carry the plan prop.
+  private _lastCheckoutPlan: 'payg' | 'unlimited' | null = null;
+  // trial_exhausted fires at most once per session — the first blocking 402,
+  // not every blocked send attempt.
+  private _trialExhaustedTracked = false;
 
   private readonly _state = signal<BillingState | null>(null);
   // This cycle's PAYG usage total (CHF); null until fetched for a PAYG plan.
@@ -112,9 +130,15 @@ export class BillingService {
 
     // The Paddle.js overlay completes in-page (no redirect back), so reuse the
     // activation poll the moment checkout completes.
-    this._paddle.checkoutCompleted$
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => this.pollActivation());
+    this._paddle.checkoutCompleted$.pipe(takeUntilDestroyed()).subscribe(() => {
+      // Trial→paid conversion, attributed to the last-started plan. Paddle's
+      // webhooks stay the revenue source of truth (spec §8).
+      this._analytics.track(
+        'checkout_completed',
+        this._lastCheckoutPlan ? { plan: this._lastCheckoutPlan } : undefined,
+      );
+      this.pollActivation();
+    });
   }
 
   readonly checkoutPending = this._checkoutPending.asReadonly();
@@ -173,11 +197,19 @@ export class BillingService {
   // Paddle.js overlay for it. When the overlay isn't configured we fall back to
   // a full redirect to the hosted checkout; Paddle returns the user to the
   // pricing page with ?status=activating so the poll can take over.
-  beginCheckout(plan: CheckoutPlan): void {
+  beginCheckout(plan: CheckoutPlan, entry: CheckoutEntry): void {
     if (this._checkoutPending()) {
       return;
     }
     this._checkoutPending.set(true);
+
+    // Which prompt converts + plan preference. Fired on intent, before the
+    // transaction is created, so abandoned starts are visible too.
+    this._lastCheckoutPlan = checkoutPlanProp(plan);
+    this._analytics.track('checkout_started', {
+      plan: this._lastCheckoutPlan,
+      entry,
+    });
 
     const origin = this._document.location.origin;
     this._api
@@ -226,11 +258,25 @@ export class BillingService {
       .pipe(
         tap((res) => {
           if (res.status === 'checkout' && res.checkout_url) {
+            // No live subscription — this is a fresh checkout started from the
+            // billing settings surface.
+            this._lastCheckoutPlan = checkoutPlanProp(plan);
+            this._analytics.track('checkout_started', {
+              plan: this._lastCheckoutPlan,
+              entry: 'billing',
+            });
             void this._launchCheckout({
               transaction_id: res.transaction_id,
               checkout_url: res.checkout_url,
             });
           } else {
+            if (res.status === 'changed') {
+              // Up/downgrade pattern; both values are closed plan enums.
+              this._analytics.track('plan_changed', {
+                from: this.planType() ?? 'unknown',
+                to: checkoutPlanProp(plan),
+              });
+            }
             this.refresh();
           }
         }),
@@ -242,6 +288,9 @@ export class BillingService {
   // then pointed at the link once the backend mints it. 'payment' deep-links to
   // the card form when available.
   openPortal(target: 'overview' | 'payment' = 'overview'): void {
+    // Self-serve billing health.
+    this._analytics.track('billing_portal_opened');
+
     const view = this._document.defaultView;
     const tab = view?.open('about:blank', '_blank') ?? null;
     if (tab) {
@@ -348,6 +397,12 @@ export class BillingService {
   // surfaces appear immediately, and reflects an inactive plan locally.
   markSendingBlocked(restriction: CompletionBillingRestriction): void {
     this._sendBlocked.set(true);
+    // The server 402 with TRIAL_EXHAUSTED is the authoritative "trial used up"
+    // signal (a used-up trial keeps a near-zero, not exactly zero, balance).
+    if (restriction.code === 'TRIAL_EXHAUSTED' && !this._trialExhaustedTracked) {
+      this._trialExhaustedTracked = true;
+      this._analytics.track('trial_exhausted');
+    }
     if (restriction.code === 'INACTIVE') {
       const current = this._state();
       this._state.set({

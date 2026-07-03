@@ -97,6 +97,7 @@ describe('ChatComponent', () => {
     isRestoring,
     publicKeyFingerprint: signal(''),
     lock: vi.fn(),
+    notifyUnlockPrompted: vi.fn(),
   };
 
   beforeEach(async () => {

@@ -314,6 +314,9 @@ export class PricingComponent {
         : this.interval() === 'yearly'
           ? 'unlimited_annual'
           : 'unlimited_monthly';
-    this.billing.beginCheckout(plan);
+    // Every locked-chat surface funnels through this page, so a locked user
+    // checking out here started from the trial-lock prompt; otherwise it's a
+    // plain pricing-page checkout.
+    this.billing.beginCheckout(plan, this.locked() ? 'trial_lock' : 'pricing');
   }
 }

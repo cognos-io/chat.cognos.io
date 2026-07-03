@@ -3,7 +3,9 @@ import { Injectable, inject } from '@angular/core';
 
 import PocketBase from 'pocketbase';
 
-import { Observable, map } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
+
+import { Analytics } from '@app/services/analytics/analytics';
 
 import { environment } from '@environments/environment';
 
@@ -54,6 +56,7 @@ const toRecord = (response: ApiAttachmentResponse): AttachmentRecord => ({
 export class AttachmentUploadService {
   private readonly _http = inject(HttpClient);
   private readonly _pb = inject(PocketBase);
+  private readonly _analytics = inject(Analytics);
   private readonly _baseUrl = environment.pocketbaseBaseUrl;
 
   /** Upload an encrypted draft into the user's library. */
@@ -76,7 +79,11 @@ export class AttachmentUploadService {
       .post<ApiAttachmentResponse>(`${this._baseUrl}/api/v1/attachments`, form, {
         headers: this.authHeaders(),
       })
-      .pipe(map(toRecord));
+      .pipe(
+        map(toRecord),
+        // Feature adoption only — never a filename, size, or id.
+        tap(() => this._analytics.track('attachment_added')),
+      );
   }
 
   /** List every library record the user owns (newest first). */

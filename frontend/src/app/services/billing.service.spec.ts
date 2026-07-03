@@ -89,7 +89,7 @@ describe('BillingService.beginCheckout', () => {
     const service = build();
     createCheckout.mockReturnValue(of({ checkout_url: 'https://pay.paddle.com/x' }));
 
-    service.beginCheckout('unlimited_annual');
+    service.beginCheckout('unlimited_annual', 'pricing');
 
     expect(createCheckout).toHaveBeenCalledWith({
       plan: 'unlimited_annual',
@@ -105,8 +105,8 @@ describe('BillingService.beginCheckout', () => {
     // Never completes — keeps the checkout pending.
     createCheckout.mockReturnValue(of());
 
-    service.beginCheckout('payg');
-    service.beginCheckout('payg');
+    service.beginCheckout('payg', 'pricing');
+    service.beginCheckout('payg', 'pricing');
 
     expect(createCheckout).toHaveBeenCalledTimes(1);
     expect(service.checkoutPending()).toBe(true);
@@ -118,7 +118,7 @@ describe('BillingService.beginCheckout', () => {
     const service = build();
     createCheckout.mockReturnValue(throwError(() => new Error('boom')));
 
-    service.beginCheckout('payg');
+    service.beginCheckout('payg', 'pricing');
 
     expect(alert).toHaveBeenCalledOnce();
     expect(service.checkoutPending()).toBe(false);
@@ -134,7 +134,7 @@ describe('BillingService.beginCheckout', () => {
       of({ transaction_id: 'txn_1', checkout_url: 'https://pay.paddle.com/x' }),
     );
 
-    service.beginCheckout('payg');
+    service.beginCheckout('payg', 'pricing');
     await Promise.resolve();
 
     // openCheckout receives the transaction id, the user's email, and the
@@ -150,7 +150,7 @@ describe('BillingService.beginCheckout', () => {
     paddleEnabled = true;
     createCheckout.mockReturnValue(of({ checkout_url: 'https://pay.paddle.com/x' }));
 
-    service.beginCheckout('payg');
+    service.beginCheckout('payg', 'pricing');
 
     expect(openCheckout).not.toHaveBeenCalled();
     expect(location.href).toBe('https://pay.paddle.com/x');

@@ -1,13 +1,14 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, inject } from '@angular/core';
 
-import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, tap, throwError } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 
 import { Conversation } from '@app/interfaces/conversation';
 import { KeyPair } from '@app/interfaces/key-pair';
 
+import { Analytics } from './analytics/analytics';
 import {
   type ApiCreatePublicShareResponse,
   CognosApiService,
@@ -44,6 +45,7 @@ export class PublicShareService {
   private readonly _crypto = inject(CryptoService);
   private readonly _redaction = inject(RedactionService);
   private readonly _document = inject(DOCUMENT);
+  private readonly _analytics = inject(Analytics);
 
   // share mints a public link. Redacted-only (default) hands the reader only the
   // conversation key, so PII placeholders stay placeholders. Include-sensitive
@@ -104,6 +106,8 @@ export class PublicShareService {
           });
 
     return create$.pipe(
+      // Adoption only — never the token, URL, or mode of a specific share.
+      tap(() => this._analytics.track('share_created')),
       map(
         (res): PublicShareLink => ({
           url: this.buildShareUrl(res.token, publicShareKeyPair.secretKey),

@@ -32,7 +32,10 @@ describe('VaultUnlockGateDirective', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: Dialog, useValue: { open: dialogOpen } },
-        { provide: VaultService, useValue: { keyPair, isRestoring } },
+        {
+          provide: VaultService,
+          useValue: { keyPair, isRestoring, notifyUnlockPrompted: vi.fn() },
+        },
       ],
     });
   });

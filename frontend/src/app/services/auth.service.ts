@@ -16,6 +16,7 @@ import {
   repeat,
   retry,
   switchMap,
+  tap,
   throwError,
   timer,
 } from 'rxjs';
@@ -24,6 +25,7 @@ import { TranslocoService } from '@jsverse/transloco';
 import { signalSlice } from 'ngxtension/signal-slice';
 
 import { TypedPocketBase } from '../types/pocketbase-types';
+import { Analytics } from './analytics/analytics';
 import { ErrorService } from './error.service';
 import { MfaService } from './mfa.service';
 import { TrustedUnlockService } from './trusted-unlock.service';
@@ -70,6 +72,7 @@ export class AuthService implements OnDestroy {
   private readonly _trustedUnlockService = inject(TrustedUnlockService);
   private readonly _transloco = inject(TranslocoService);
   private readonly _mfaService = inject(MfaService);
+  private readonly _analytics = inject(Analytics);
 
   readonly login$ = new Subject<LoginRequest>();
   readonly logout$ = new Subject<boolean>();
@@ -213,6 +216,9 @@ export class AuthService implements OnDestroy {
         .collection(this._authCollection)
         .authWithPassword(email, password, options),
     ).pipe(
+      // Password-only sign-in completed (an MFA-enrolled account surfaces
+      // mfa_required below instead, and completes via completeMfa).
+      tap(() => this._analytics.track('login_completed', { mfa: false })),
       catchError((error) => {
         // A correct password for an MFA-enrolled account is not an error — it's
         // a prompt for the second factor. Surface the session id instead.
@@ -259,6 +265,7 @@ export class AuthService implements OnDestroy {
         : this._mfaService.completeRecovery(sessionId, code, email, rememberDevice);
 
     return complete$.pipe(
+      tap(() => this._analytics.track('login_completed', { mfa: true })),
       map((record) => record as AuthUser),
       catchError((error) => {
         console.error('MFA completion failed', error);
@@ -344,6 +351,12 @@ export class AuthService implements OnDestroy {
     return from(
       this._pb.collection(this._authCollection).confirmVerification(token),
     ).pipe(
+      // Onboarding funnel: the email step is done (no identifiers attached).
+      tap(() =>
+        this._analytics.track('onboarding_step_completed', {
+          step: 'email_verified',
+        }),
+      ),
       catchError((error) => {
         this._errorService.alert(this._transloco.translate('errors.verifyEmail'));
         console.error(error);

@@ -7,6 +7,7 @@ import { Observable, map, tap } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 import { TypedPocketBase } from '../types/pocketbase-types';
+import { Analytics } from './analytics/analytics';
 
 export interface MfaStatus {
   enabled: boolean;
@@ -47,6 +48,7 @@ interface CompletionResponse {
 export class MfaService {
   private readonly _http = inject(HttpClient);
   private readonly _pb: TypedPocketBase = inject(PocketBase);
+  private readonly _analytics = inject(Analytics);
   private readonly _baseUrl = environment.pocketbaseBaseUrl;
 
   /** localStorage key prefix for the trusted-device token, scoped by email. */
@@ -78,7 +80,11 @@ export class MfaService {
         { code },
         { headers: this.authHeaders() },
       )
-      .pipe(map((r) => r.recoveryCodes));
+      .pipe(
+        // Security feature adoption; fired only once enrolment is confirmed.
+        tap(() => this._analytics.track('mfa_enrolled')),
+        map((r) => r.recoveryCodes),
+      );
   }
 
   disable(password: string, code: string): Observable<void> {

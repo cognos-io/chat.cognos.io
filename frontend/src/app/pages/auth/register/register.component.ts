@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
 
@@ -17,6 +17,7 @@ import {
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 
+import { Analytics, signupSource } from '@services/analytics/analytics';
 import { AuthService } from '@services/auth.service';
 
 @Component({
@@ -155,6 +156,15 @@ export class RegisterComponent {
   readonly authService = inject(AuthService);
   private readonly _fb = inject(FormBuilder);
   private readonly _router = inject(Router);
+  private readonly _analytics = inject(Analytics);
+
+  // Marketing attribution (docs/specs/product-analytics.md §6.5): the site's
+  // CTAs append ?ref=<location>. Read once, kept in component memory only —
+  // never stored — and mapped onto the closed source enum ('direct'/'other'
+  // for absent/unknown), so it can never carry a free-form string.
+  private readonly _signupSource = signupSource(
+    inject(ActivatedRoute).snapshot.queryParamMap.get('ref'),
+  );
 
   readonly loading = signal(false);
 
@@ -198,6 +208,7 @@ export class RegisterComponent {
         }),
       )
       .subscribe(() => {
+        this._analytics.track('signup_completed', { source: this._signupSource });
         this.loading.set(false);
       });
   }

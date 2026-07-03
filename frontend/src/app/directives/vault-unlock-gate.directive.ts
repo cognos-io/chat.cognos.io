@@ -42,10 +42,15 @@ export class VaultUnlockGateDirective {
         return;
       }
 
-      this._dialogRef ??= this._dialog.open(VaultPasswordDialogComponent, {
-        ...cognosDialogOptions,
-        disableClose: true,
-      });
+      if (!this._dialogRef) {
+        // Quantifies the Account-Key re-entry pain; the service dedupes per
+        // locked period (shell handovers re-open the same prompt).
+        this._vault.notifyUnlockPrompted();
+        this._dialogRef = this._dialog.open(VaultPasswordDialogComponent, {
+          ...cognosDialogOptions,
+          disableClose: true,
+        });
+      }
     });
 
     // Closing on destroy hands the prompt over cleanly when navigating between

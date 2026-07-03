@@ -10,6 +10,7 @@ import { DuplicatingDialogComponent } from '@app/components/duplicating-dialog/d
 import { Conversation } from '@app/interfaces/conversation';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
+import { Analytics } from './analytics/analytics';
 import {
   CannotDuplicateAttachmentsError,
   CannotDuplicateProjectError,
@@ -31,6 +32,7 @@ export class ConversationDuplicateService {
   private readonly _toast = inject(CognosToastService);
   private readonly _transloco = inject(TranslocoService);
   private readonly _router = inject(Router);
+  private readonly _analytics = inject(Analytics);
 
   // Source conversation ids with an in-flight duplicate. Tracked as a set so
   // concurrent duplicates of different chats each disable only their own action.
@@ -72,6 +74,8 @@ export class ConversationDuplicateService {
 
     try {
       const duplicate = await this._copy.duplicate(source, this.duplicateTitle(source));
+      // v1 scope validation — no conversation identifiers attached.
+      this._analytics.track('conversation_duplicated');
       this._toast.notify({
         title: this._transloco.translate('chat.toasts.duplicated'),
       });

@@ -34,6 +34,7 @@ import {
 } from '../interfaces/conversation';
 import { KeyPair } from '../interfaces/key-pair';
 import { ConversationsExpiryDurationOptions } from '../types/pocketbase-types';
+import { Analytics } from './analytics/analytics';
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
@@ -68,6 +69,7 @@ export class ConversationService {
   private readonly _api = inject(CognosApiService);
   private readonly _router = inject(Router);
   private readonly _userPreferencesService = inject(UserPreferencesService);
+  private readonly _analytics = inject(Analytics);
 
   // sources
   readonly selectConversation$ = new Subject<string>(); // conversationId
@@ -395,6 +397,8 @@ export class ConversationService {
           return this.saveConversationKeyPair(record.id, conversationKeyPair).pipe(
             // Return the newly created conversation
             map(() => {
+              // Engagement baseline — no props, no identifiers.
+              this._analytics.track('conversation_created');
               return {
                 record,
                 decryptedData: data,

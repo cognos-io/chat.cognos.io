@@ -12,6 +12,7 @@ import {
   resolveDefaultModel,
 } from '@app/utils/model-discovery';
 
+import { Analytics, modelProp } from './analytics/analytics';
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
 import { ProjectService } from './project.service';
@@ -61,6 +62,7 @@ export class ModelService {
   private readonly _api = inject(CognosApiService);
   private readonly _preferences = inject(UserPreferencesService);
   private readonly _projects = inject(ProjectService);
+  private readonly _analytics = inject(Analytics);
 
   // The capability the composer currently requires (text completion by default,
   // image generation when that tool is on). Pushed in by ComposerToolsService —
@@ -163,6 +165,9 @@ export class ModelService {
               this._preferences.setToolModelDefault(contextKey, id);
             }
             this._preferences.markRecentModel(id);
+            // Catalogue curation signal — the id is our catalogue data, not
+            // user content.
+            this._analytics.track('model_selected', { model: modelProp(id) });
             return {
               selectedModelId: id,
             };

@@ -65,6 +65,7 @@ import {
 } from '@app/redaction';
 import { parseBackendDate } from '@app/utils/timestamp';
 
+import { Analytics, modelProp } from './analytics/analytics';
 import { AuthService } from './auth.service';
 import { BillingService } from './billing.service';
 import {
@@ -614,6 +615,36 @@ export const resolveCompletionFailureMessage = (
   return { kind: 'key', key: 'chat.errors.completion.generic' };
 };
 
+// completionFailureReason maps a completion failure onto the closed
+// `message_failed.reason` analytics enum (docs/specs/product-analytics.md
+// §7.2). Conservative on purpose: only clearly-attributable failures get a
+// specific reason; everything ambiguous is 'other'. Never carries the error
+// payload.
+export const completionFailureReason = (
+  error: unknown,
+): 'rate_limited' | 'provider_error' | 'balance' | 'other' => {
+  if (parseCompletionBillingRestriction(error)) {
+    return 'balance';
+  }
+  if (error instanceof HttpErrorResponse) {
+    if (error.status === 429) {
+      return 'rate_limited';
+    }
+    if (error.status >= 500) {
+      return 'provider_error';
+    }
+  }
+  return 'other';
+};
+
+// reasoningEffortProp maps the model's effort tier onto the closed
+// `message_sent.reasoning` analytics enum. '' (model takes none) and any
+// unrecognised tier report as 'none'.
+export const reasoningEffortProp = (
+  effort: string | undefined,
+): 'none' | 'low' | 'medium' | 'high' =>
+  effort === 'low' || effort === 'medium' || effort === 'high' ? effort : 'none';
+
 export const isCompletionAbortError = (error: unknown): boolean => {
   if (error instanceof DOMException && error.name === 'AbortError') {
     return true;
@@ -655,6 +686,7 @@ export class MessageService {
   private readonly _compactionService = inject(CompactionService);
   private readonly _scopedMemory = inject(ScopedMemoryService);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _analytics = inject(Analytics);
 
   // Retry-after-failure state. On a retryable mid-stream failure we keep the
   // user's message in the thread and remember the (already-redacted) request so
@@ -1390,6 +1422,13 @@ export class MessageService {
             };
           case 'complete':
             completed = true;
+            // Fire-and-forget: model mix / attachments / reasoning demand.
+            // Enum + boolean props only — never message content.
+            this._analytics.track('message_sent', {
+              model: modelProp(request.modelId),
+              attachments: (messageRequest.attachmentIds?.length ?? 0) > 0,
+              reasoning: reasoningEffortProp(request.reasoningEffort),
+            });
             return {
               status: MessageStatus.Success,
               messages: applyCompletionStreamResponse(
@@ -1409,6 +1448,10 @@ export class MessageService {
 
         console.error('Error sending message');
         const handled = this.reportCompletionError(err);
+        // Reason is a closed enum; the error payload never leaves the app.
+        this._analytics.track('message_failed', {
+          reason: completionFailureReason(err),
+        });
 
         if (!shouldApplyCompletionUpdate()) {
           return EMPTY;
@@ -1494,13 +1537,24 @@ export class MessageService {
   ): Observable<Partial<MessageState>> {
     this.state.setStatus(MessageStatus.Sending);
 
+    const modelId = this._modelService.selectedModel().id;
+
     return this._api
       .generateConversationImage(conversation.record.id, {
         prompt: messageRequest.content,
-        modelId: this._modelService.selectedModel().id,
+        modelId,
         requestId: messageRequest.requestId,
       })
       .pipe(
+        // Image generations count as sent messages for activation/model mix.
+        // They carry no user uploads and take no reasoning parameter.
+        tap(() =>
+          this._analytics.track('message_sent', {
+            model: modelProp(modelId),
+            attachments: false,
+            reasoning: 'none',
+          }),
+        ),
         switchMap((response) =>
           this.renderImageResponse(response, conversation, messageRequest.requestId),
         ),
