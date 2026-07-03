@@ -325,6 +325,10 @@
         {
           "heading": "What we never do",
           "body": "We never use your words to train AI, and we never sell your data. Everything is handled in Switzerland or Europe."
+        },
+        {
+          "heading": "Anonymous statistics",
+          "body": "We use privacy-friendly analytics to understand which pages are visited and which features help. It sets no cookies, stores nothing on your device and collects no personal data — visits are counted anonymously, in aggregate, on servers in Europe. If your browser asks us not to track you, we don't."
         }
       ]
     },
