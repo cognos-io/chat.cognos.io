@@ -79,6 +79,14 @@ steps to going live for posterity.
 - Email (needed in a few places):
     - Mailgun, using the Climacrux account
     - Verify the `sendmail.cognos.io` domain for sending emails
+- Analytics (Plausible, EU cloud — see `docs/specs/product-analytics.md`):
+    - Create two sites in the Plausible dashboard: `cognos.io` and `app.cognos.io`
+    - The site domains are the only "ID" Plausible needs; they are already wired in code and
+      must match the dashboard exactly:
+        - marketing: `data-domain` in `web/src/layouts/BaseLayout.astro`
+        - app: `analytics.plausibleDomain` in `frontend/src/environments/environment.ts`
+    - No API key or secret is required to send events; define the §7 goals/funnels in the
+      dashboard after the first events arrive
 - Backups:
     - Create a new backup repository and SSH key pair on BorgBase
     - Store the Borg passphrase, dedicated backup SSH key, and known_hosts entry as host secrets
