@@ -4,6 +4,16 @@ This is the monorepo for [cognos.io](https://cognos.io/), an AI chat application
 encrypts user messages server side that can only be decrypted by the user. This is a similar
 approach to ProtonMail which encrypts user emails.
 
+## Claude Orchestration workflow
+
+**Important**: If you are not Claude or Fable, skip this section.
+
+You (Fable) are the orchestrator. Plan, decompose, synthesize. Reasoning-heavy phases use
+@deep-reasoner. Mechanical work use @fast-worker. High-stakes decisions: task Opus + Codex on the
+same problem in parallel, synthesize the best of both, without showing either the other's answer.
+Keep your own context lean and focused. Project manage, delegate effectively and orchestrate. Gather
+knowledge because that is how you can make the best decisions.
+
 ## Project structure
 
 - `backend/` the Go API. Powered by Pocketbase,
