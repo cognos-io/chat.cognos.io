@@ -380,16 +380,47 @@ cognos.io pageview → cta_click {location} → app signup_completed {source=loc
   Plausible's revenue-on-custom-events (amount + currency on `checkout_completed`) is
   acceptable — amounts are our data, not the user's — but it's P1.
 
-## 9. KPIs to watch (first 90 days)
+## 9. KPI registry
 
-| Question                        | Metric                                                                               |
-| ------------------------------- | ------------------------------------------------------------------------------------ |
-| Is marketing working?           | visit → `cta_click` → `signup_completed` rate, per locale and per `location`         |
-| Do users activate?              | `signup_completed` → first `message_sent` rate; `onboarding_step_completed` drop-off |
-| Is the Account Key UX hurting?  | `vault_unlock_prompted` per active day, `trigger` split                              |
-| Which models matter?            | `message_sent.model` distribution (drives provider consolidation)                    |
-| Does the trial convert?         | `trial_exhausted` → `checkout_completed` rate; `entry` split on `checkout_started`   |
-| Which features earn their keep? | `attachment_added`, `share_created`, `conversation_duplicated` per weekly active     |
+This is the canonical list of what we act on and exactly which events feed each number.
+Company-of-one rules: a metric only earns a row here if a bad number changes what gets
+built next; everything else is noise. Adding a KPI = adding it here in the same PR
+(same registry rule as §7).
+
+**North star: paying customers / MRR — read from Paddle, never from Plausible.**
+Analytics exist to diagnose the funnel feeding that number, not to restate it.
+
+### 9.1 Weekly funnel KPIs (checked in the Friday review — ~15 minutes)
+
+| #   | KPI            | Formula (aggregate counts)                                                                                                        | Events in                                                                                            | Bad number → do this                                                                                                                                         |
+| --- | -------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| K1  | Visit → signup | `signup_completed` ÷ `cognos.io` unique visitors; segment by locale (path) and placement                                          | `cognos.io` pageviews + `cta_click {location}`; app `signup_completed {source}`                      | Low overall → landing copy. Low for one locale → that locale's copy. `cta_click` high but signups low → register page                                        |
+| K2  | Activation     | Plausible funnel `signup_completed → message_sent` (same-session); cross-check `conversation_created` ÷ `signup_completed` weekly | `signup_completed`, `onboarding_step_completed {step}`, first `message_sent`                         | Drop before `email_verified` → verification mail UX; before `account_key_saved` → Account Key step; after → empty-chat UX                                    |
+| K3  | Trial → paid   | `checkout_completed` ÷ `trial_exhausted`; `entry` split on `checkout_started`; started−completed gap                              | `trial_exhausted`, `checkout_started {plan, entry}`, `checkout_completed {plan}` (+ Paddle webhooks) | Few `trial_exhausted` → trial seed too big / no engagement (check K2). Starts without completes → checkout friction. Low `trial_lock` entry → upgrade prompt |
+
+### 9.2 Monthly diagnostics (consulted when deciding the roadmap, not watched weekly)
+
+| #   | Diagnostic           | Formula                                                                          | Events in                                                   | Decision it informs                                                |
+| --- | -------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------ |
+| D1  | Account Key friction | `vault_unlock_prompted` ÷ `app.cognos.io` daily visitors; `trigger` split        | `vault_unlock_prompted {trigger}`                           | Whether passkey/PIN quick-unlock is the next UX investment         |
+| D2  | Model demand         | `message_sent` distribution by `model`; `reasoning` split                        | `message_sent {model, reasoning}`, `model_selected {model}` | Catalogue curation; Infomaniak/Requesty provider decisions         |
+| D3  | Reliability          | `message_failed` ÷ `message_sent`; `reason` split                                | `message_failed {reason}`, `message_sent`                   | Which provider/limit work hurts users most                         |
+| D4  | Feature pull         | `attachment_added`, `share_created`, `conversation_duplicated` ÷ weekly visitors | those three events                                          | Keep/expand/drop: attachments library rework, sharing, duplication |
+
+### 9.3 Reading rules (honesty about what cookieless aggregates can say)
+
+- Every ratio is a **count ratio**, not a per-user rate: Plausible has no user identity
+  (§3.1/§3.7), so "activation" is approximated by the same-session funnel plus the weekly
+  count cross-check. Numbers are directional — good enough to rank problems, not to report
+  precision percentages.
+- Baseline for the first 2–4 weeks before setting any target; act on **trends and splits**
+  (locale, `source`, `entry`, `reason`), not week-to-week wobble at small volume.
+- Where Paddle and Plausible overlap (K3), Paddle wins; a persistent gap between
+  `checkout_completed` and `subscription.created` is itself a K3 signal (§8).
+
+Dashboard setup this implies (the §11 manual step): goals for every §7 event, plus three
+funnels — `cognos.io` pageview → `cta_click`; app `signup_completed` → `message_sent`;
+app `trial_exhausted` → `checkout_started` → `checkout_completed`.
 
 ## 10. Testing
 
@@ -418,8 +449,9 @@ Per repo convention: red/green, tables, e2e for behaviour.
 
 ## 11. Rollout checklist
 
-- [ ] Create Plausible sites `cognos.io` and `app.cognos.io`; define goals/funnels for §7 events
-      (dashboard access required — the only manual step left)
+- [ ] Create Plausible sites `cognos.io` and `app.cognos.io`; define the goals + three
+      funnels listed at the end of §9.3 (dashboard access required — the only manual step
+      left; see also the README deployment note)
 - [x] `web/`: `src/lib/analytics.ts`, prod-only script tag in `BaseLayout.astro`, delegated listener
 - [x] `web/`: `data-track` attributes on all CTAs (§5.3) + `signUpUrl(location)` helper in
       `config.ts`
