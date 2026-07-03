@@ -40,6 +40,23 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
 
+      # Analytics vendor strings stay confined to the adapter files, the
+      # environment config, and the specs that test them
+      # (docs/specs/product-analytics.md §10).
+      - name: analytics grep guardrail
+        run: |
+          if git grep -n 'plausible\.io' -- \
+            ':!docs/specs/product-analytics.md' \
+            ':!web/src/lib/analytics.ts' \
+            ':!web/src/layouts/BaseLayout.astro' \
+            ':!web/scripts/check-analytics.mjs' \
+            ':!frontend/src/environments/' \
+            ':!frontend/src/app/services/analytics/' \
+            ':!e2e/tests/analytics.spec.ts'; then
+            echo '::error::plausible.io referenced outside the allowed analytics files (docs/specs/product-analytics.md §10)'
+            exit 1
+          fi
+
       - name: setup pnpm
         uses: pnpm/action-setup@v4
 
@@ -69,6 +86,14 @@ jobs:
 
       - name: build ui-angular
         run: pnpm --dir packages/ui-angular exec ng build ui-angular
+
+      - name: build web
+        run: pnpm --filter @cognos/web build
+
+      # Asserts the production build carries the Plausible tag + data-track
+      # CTAs and that the vendor string stays confined to the adapter files.
+      - name: check web analytics build
+        run: pnpm --filter @cognos/web test
 
   e2e:
     runs-on: ubuntu-latest
