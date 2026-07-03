@@ -1828,3 +1828,522 @@ footer a.flink:hover {
     scroll-behavior: auto;
   }
 }
+
+/* ============================ REDACTION ================================ */
+/* "Hiding your details" section: a drag-to-compare letter (you vs the AI) and
+   an animated single-message round trip. All colour, type, space, radius and
+   motion resolve to @cognos/ui --cog-* tokens (via tokens.css aliases). */
+
+/* -- Part A: drag-to-compare letter -- */
+.rs {
+  max-width: 900px;
+  margin: var(--cog-space-500) auto 0;
+}
+.rs-win {
+  border: 1px solid var(--line);
+  border-radius: var(--cog-radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-ink);
+  overflow: hidden;
+}
+.rs-win .winbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: var(--cog-space-100) var(--cog-space-150);
+  background: var(--sunken);
+  border-bottom: 1px solid var(--line);
+}
+.rs-win .winbar i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.rs-win .winbar .winbar__dot--close {
+  background: var(--window-close);
+}
+.rs-win .winbar .winbar__dot--minimise {
+  background: var(--window-minimise);
+}
+.rs-win .winbar .winbar__dot--maximise {
+  background: var(--window-maximise);
+}
+.rs-win .winbar .lbl {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 6px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-subtle);
+}
+.rs-win .winbar .lbl svg {
+  width: 12px;
+  height: 12px;
+}
+
+.rs-stage {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.rs-layer {
+  margin: 0;
+  padding: var(--cog-space-500) clamp(var(--cog-space-200), 4vw, var(--cog-space-400))
+    var(--cog-space-400);
+  font-family: var(--ff-mono);
+  font-size: clamp(11px, 1.5vw, 13.5px);
+  line-height: 2;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  tab-size: 2;
+}
+/* Overlay ("you") sits over the base ("the AI"), clipped to the left of the
+   divider so the same letter morphs from originals to placeholders at the seam. */
+.rs-you {
+  position: absolute;
+  inset: 0;
+  background: var(--surface);
+  clip-path: inset(0 calc(100% - var(--pos)) 0 0);
+}
+.rs-layer .val,
+.rs-layer .tok {
+  display: inline-block;
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: pre;
+  padding: 0 0.2ch;
+  border-radius: var(--cog-radius-xs);
+  vertical-align: bottom;
+}
+.rs-layer .val {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+}
+.rs-layer .tok {
+  color: var(--surface);
+  background: var(--ink);
+  /* Keep the value layer's exact font metrics: `ch` is font-size-relative, so
+     any font-size/letter-spacing change here would make equal `Nch` widths
+     render at different pixels between the two layers and drift the seam. */
+}
+
+.rs-tag {
+  position: absolute;
+  top: var(--cog-space-150);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: var(--cog-radius-pill);
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+}
+.rs-tag svg {
+  width: 13px;
+  height: 13px;
+}
+.rs-tag--you {
+  left: var(--cog-space-150);
+  background: var(--brand-bg);
+  color: var(--brand-deep);
+}
+.rs-tag--ai {
+  right: var(--cog-space-150);
+  background: var(--sunken);
+  color: var(--ink-sub);
+  border: 1px solid var(--line);
+}
+
+.rs-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--pos);
+  width: 2px;
+  transform: translateX(-1px);
+  background: var(--brand);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 25%, transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+.rs-handle {
+  position: absolute;
+  top: 50%;
+  left: var(--pos);
+  z-index: 3;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--cog-radius-pill);
+  border: 2px solid var(--brand);
+  background: var(--surface);
+  color: var(--brand-deep);
+  cursor: ew-resize;
+  box-shadow: var(--shadow-brand-sm);
+  touch-action: none;
+}
+.rs-handle svg {
+  width: 15px;
+  height: 15px;
+  margin: 0 -3px;
+}
+.rs-handle:focus-visible {
+  outline: 2px solid var(--cog-brand);
+  outline-offset: 2px;
+}
+.rs-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: var(--cog-space-150);
+  color: var(--ink-subtle);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+}
+.rs-hint svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* -- Part B: animated round trip -- */
+.redact-flow-split {
+  margin-top: var(--cog-space-800);
+  align-items: center;
+}
+.rf-steps {
+  list-style: none;
+  margin: var(--cog-space-250) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cog-space-100);
+}
+.rf-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--cog-radius-pill);
+  background: var(--surface);
+  color: var(--ink-sub);
+  font-size: var(--cog-fs-body-sm);
+  transition:
+    background 0.3s var(--ease),
+    border-color 0.3s var(--ease),
+    color 0.3s var(--ease);
+}
+.rf-step__ico {
+  display: grid;
+  place-items: center;
+  color: var(--ink-subtle);
+  transition: color 0.3s var(--ease);
+}
+.rf-step b {
+  color: var(--brand-deep);
+}
+.rf-steps[data-active='0'] .rf-step[data-step='0'],
+.rf-steps[data-active='1'] .rf-step[data-step='1'],
+.rf-steps[data-active='2'] .rf-step[data-step='2'] {
+  border-color: var(--brand);
+  background: var(--brand-bg);
+  color: var(--brand-deep);
+}
+.rf-steps[data-active='0'] .rf-step[data-step='0'] .rf-step__ico,
+.rf-steps[data-active='1'] .rf-step[data-step='1'] .rf-step__ico,
+.rf-steps[data-active='2'] .rf-step[data-step='2'] .rf-step__ico {
+  color: var(--brand);
+}
+
+.rf-win {
+  border: 1px solid color-mix(in srgb, var(--brand) 22%, transparent);
+  border-radius: var(--cog-radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-brand-lg);
+  overflow: hidden;
+}
+.rf-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: var(--cog-space-150);
+  background: var(--sunken);
+  border-bottom: 1px solid var(--line);
+}
+.rf-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--ff-display);
+  font-weight: var(--cog-fw-bold);
+  font-size: 14px;
+}
+.rf-mark {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--cog-radius-sm);
+  background: var(--brand);
+  color: var(--on-brand);
+}
+.rf-mark svg {
+  width: 13px;
+  height: 13px;
+}
+.rf-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.rf-model {
+  background: var(--surface);
+  color: var(--ink-sub);
+  border: 1px solid var(--line);
+}
+.rf-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: var(--cog-radius-pill);
+  background: var(--brand-bg);
+  color: var(--brand-deep);
+  font-family: var(--ff-mono);
+  font-size: 11px;
+}
+.rf-toggle svg {
+  width: 12px;
+  height: 12px;
+}
+.rf-switch {
+  position: relative;
+  display: inline-block;
+  width: 22px;
+  height: 13px;
+  border-radius: var(--cog-radius-pill);
+  background: var(--brand);
+}
+.rf-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--on-brand);
+}
+
+.rf-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--cog-space-100);
+  padding: var(--cog-space-200);
+  min-height: 300px;
+}
+.rf-file {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--cog-radius-md);
+  background: var(--sunken);
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--ink-sub);
+}
+.rf-file svg {
+  width: 13px;
+  height: 13px;
+}
+.rf-bubble {
+  max-width: 90%;
+  padding: 10px 13px;
+  border-radius: var(--cog-radius-md);
+  font-size: 13.5px;
+  line-height: 1.55;
+  animation: rfIn 0.45s var(--ease) both;
+}
+.rf-bubble--you {
+  align-self: flex-end;
+  background: var(--brand-bg);
+  color: var(--ink);
+  border-bottom-right-radius: var(--cog-radius-sm);
+}
+.rf-bubble--ai {
+  align-self: flex-start;
+  background: var(--sunken);
+  color: var(--ink);
+  border-bottom-left-radius: var(--cog-radius-sm);
+}
+.rf-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  animation: rfIn 0.45s var(--ease) both;
+}
+.rf-note svg {
+  width: 12px;
+  height: 12px;
+}
+.rf-note--sent {
+  align-self: flex-end;
+  color: var(--brand-deep);
+}
+.rf-note--restored {
+  align-self: flex-start;
+  color: var(--ink-sub);
+}
+.rf-thinking {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-subtle);
+}
+.rf-thinking span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-subtle);
+  animation: rfDot 1.2s var(--ease) infinite;
+}
+.rf-thinking span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.rf-thinking span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* PII morph: value and placeholder stacked; opacity crossfades per phase. */
+.pii-morph {
+  position: relative;
+  display: inline-block;
+  height: 1.35em;
+  vertical-align: bottom;
+}
+.pii-morph > span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: pre;
+  padding: 0 0.2ch;
+  border-radius: var(--cog-radius-xs);
+  transition: opacity 0.5s var(--ease);
+}
+.pii-v {
+  background: color-mix(in srgb, var(--brand) 16%, transparent);
+  color: var(--ink);
+}
+.pii-t {
+  background: var(--ink);
+  color: var(--surface);
+  font-family: var(--ff-mono);
+  font-size: 0.82em;
+  line-height: 1.55;
+}
+
+/* Resting / no-JS / phase-3 state: sent, thinking done, reply restored. */
+.rf-bubble--you .pii-v {
+  opacity: 0;
+}
+.rf-bubble--you .pii-t {
+  opacity: 1;
+}
+.rf-bubble--ai .pii-v {
+  opacity: 1;
+}
+.rf-bubble--ai .pii-t {
+  opacity: 0;
+}
+
+/* Phase 0 — you typed it: originals visible, nothing sent yet. */
+.rf-win[data-phase='0'] .rf-bubble--you .pii-v {
+  opacity: 1;
+}
+.rf-win[data-phase='0'] .rf-bubble--you .pii-t {
+  opacity: 0;
+}
+.rf-win[data-phase='0'] .rf-note--sent,
+.rf-win[data-phase='0'] .rf-bubble--ai,
+.rf-win[data-phase='0'] .rf-note--restored {
+  display: none;
+}
+
+/* Phase 1 — sent with details hidden; the AI is thinking. */
+.rf-win[data-phase='1'] .rf-thinking {
+  display: flex;
+}
+.rf-win[data-phase='1'] .rf-bubble--ai,
+.rf-win[data-phase='1'] .rf-note--restored {
+  display: none;
+}
+
+/* Phase 2 — reply arrives, still as placeholders. */
+.rf-win[data-phase='2'] .rf-bubble--ai .pii-v {
+  opacity: 0;
+}
+.rf-win[data-phase='2'] .rf-bubble--ai .pii-t {
+  opacity: 1;
+}
+.rf-win[data-phase='2'] .rf-note--restored {
+  display: none;
+}
+
+@keyframes rfIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes rfDot {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-bubble,
+  .rf-note {
+    animation: none;
+  }
+  .rf-thinking span {
+    animation: none;
+  }
+  .pii-morph > span {
+    transition: none;
+  }
+}

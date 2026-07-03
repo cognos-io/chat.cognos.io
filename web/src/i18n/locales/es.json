@@ -93,6 +93,92 @@
       }
     ]
   },
+  "redaction": {
+    "eyebrow": "Tus datos, ocultos",
+    "title": "Tus datos se ocultan antes de que la IA los vea.",
+    "lead": "Escribe o pega lo que quieras. Cognos detecta correos, números de teléfono, datos bancarios y números de identidad y los sustituye por marcadores — antes de que tu mensaje salga de tu pantalla. La IA responde con los marcadores y solo tú vuelves a ver los valores reales.",
+    "you": "Lo que ves tú",
+    "ai": "Lo que ve la IA",
+    "docName": "nota-a-la-gestora.txt",
+    "drag": "Arrastra para comparar",
+    "letter": [
+      {
+        "text": "EXPEDIENTE DE CLIENTE — CIERRE ANUAL\n\nHola Sofia:\n\nPrepara las cuentas anuales, por favor. La clienta confirmará por correo en "
+      },
+      {
+        "v": "michael.weber@example.com",
+        "tok": "[[PII_EMAIL_A8F2KD]]"
+      },
+      {
+        "text": " o por teléfono en el "
+      },
+      {
+        "v": "+41 79 555 01 22",
+        "tok": "[[PII_PHONE_K3M9QX]]"
+      },
+      {
+        "text": ".\n\nLa nómina se abona en el IBAN "
+      },
+      {
+        "v": "CH93 0076 2011 6238 5295 7",
+        "tok": "[[PII_IBAN_Q7K9M2]]"
+      },
+      {
+        "text": ", y el número de la seguridad social es "
+      },
+      {
+        "v": "756.1234.5678.97",
+        "tok": "[[PII_AHV_R4T8YB]]"
+      },
+      {
+        "text": ".\n\nLa tarjeta registrada para gastos es la "
+      },
+      {
+        "v": "4917 4840 0000 0008",
+        "tok": "[[PII_CARD_W2P6ND]]"
+      },
+      {
+        "text": ".\n\nAvísame de cualquier cosa rara antes de presentarlo. ¡Gracias!"
+      }
+    ],
+    "flow": {
+      "eyebrow": "La ida y la vuelta",
+      "title": "La IA hace el trabajo. Nunca sabe quién eres.",
+      "lead": "Observa un mensaje en su ida y vuelta: tus datos se ocultan al salir y se restauran solo para ti al volver.",
+      "toggle": "Ocultando datos",
+      "model": "Claude",
+      "file": "informe-siniestro.pdf",
+      "msg": [
+        {
+          "text": "Resume esto y redacta una respuesta amable para "
+        },
+        {
+          "v": "michael.weber@example.com",
+          "tok": "[[PII_EMAIL_A8F2KD]]"
+        },
+        {
+          "text": "."
+        }
+      ],
+      "sent": "Enviado — datos ocultos",
+      "thinking": "Cognos está pensando…",
+      "reply": [
+        {
+          "text": "Hecho. Aquí tienes una respuesta amable para "
+        },
+        {
+          "v": "michael.weber@example.com",
+          "tok": "[[PII_EMAIL_A8F2KD]]"
+        },
+        {
+          "text": " lista para enviar."
+        }
+      ],
+      "restored": "Restaurado — visible solo para ti",
+      "steps": ["Ocultar datos", "Preguntar a la IA", "Restaurar para ti"]
+    },
+    "cta": "Empezar"
+  },
   "features": {
     "eyebrow": "Lo que consigues",
     "title": "Una privacidad que de verdad se nota",

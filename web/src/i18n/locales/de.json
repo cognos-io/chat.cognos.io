@@ -93,6 +93,92 @@
       }
     ]
   },
+  "redaction": {
+    "eyebrow": "Deine Daten bleiben verborgen",
+    "title": "Deine Daten sind verborgen, bevor die KI sie je sieht.",
+    "lead": "Schreib oder füg etwas ein. Cognos erkennt Dinge wie E-Mail-Adressen, Telefonnummern, Bankdaten und Ausweisnummern und ersetzt sie durch Platzhalter – bevor deine Nachricht deinen Bildschirm verlässt. Die KI antwortet mit den Platzhaltern, und nur du siehst die echten Werte wieder eingesetzt.",
+    "you": "Was du siehst",
+    "ai": "Was die KI sieht",
+    "docName": "notiz-an-treuhaenderin.txt",
+    "drag": "Zum Vergleichen ziehen",
+    "letter": [
+      {
+        "text": "KUNDENAKTE — JAHRESABSCHLUSS\n\nHallo Sofia,\n\nBitte bereite den Jahresabschluss vor. Die Kundin meldet sich per E-Mail unter "
+      },
+      {
+        "v": "michael.weber@example.com",
+        "tok": "[[PII_EMAIL_A8F2KD]]"
+      },
+      {
+        "text": " oder telefonisch unter "
+      },
+      {
+        "v": "+41 79 555 01 22",
+        "tok": "[[PII_PHONE_K3M9QX]]"
+      },
+      {
+        "text": ".\n\nDer Lohn geht auf IBAN "
+      },
+      {
+        "v": "CH93 0076 2011 6238 5295 7",
+        "tok": "[[PII_IBAN_Q7K9M2]]"
+      },
+      {
+        "text": ", und die AHV-Nummer lautet "
+      },
+      {
+        "v": "756.1234.5678.97",
+        "tok": "[[PII_AHV_R4T8YB]]"
+      },
+      {
+        "text": ".\n\nDie hinterlegte Karte für Spesen ist "
+      },
+      {
+        "v": "4917 4840 0000 0008",
+        "tok": "[[PII_CARD_W2P6ND]]"
+      },
+      {
+        "text": ".\n\nMelde alles Ungewöhnliche, bevor wir einreichen. Danke!"
+      }
+    ],
+    "flow": {
+      "eyebrow": "Hin und zurück",
+      "title": "Die KI macht die Arbeit. Wer du bist, erfährt sie nie.",
+      "lead": "Sieh einer Nachricht beim Hin und Zurück zu: Deine Daten werden auf dem Hinweg verborgen und nur für dich auf dem Rückweg wiederhergestellt.",
+      "toggle": "Daten verbergen",
+      "model": "Claude",
+      "file": "schadenbericht.pdf",
+      "msg": [
+        {
+          "text": "Fasse das zusammen und entwirf eine freundliche Antwort an "
+        },
+        {
+          "v": "michael.weber@example.com",
+          "tok": "[[PII_EMAIL_A8F2KD]]"
+        },
+        {
+          "text": "."
+        }
+      ],
+      "sent": "Gesendet — Daten verborgen",
+      "thinking": "Cognos denkt nach…",
+      "reply": [
+        {
+          "text": "Erledigt. Hier ist eine freundliche Antwort an "
+        },
+        {
+          "v": "michael.weber@example.com",
+          "tok": "[[PII_EMAIL_A8F2KD]]"
+        },
+        {
+          "text": " zum Versenden."
+        }
+      ],
+      "restored": "Wiederhergestellt — nur für dich sichtbar",
+      "steps": ["Daten verbergen", "KI fragen", "Für dich wiederherstellen"]
+    },
+    "cta": "Loslegen"
+  },
   "features": {
     "eyebrow": "Das bekommst du",
     "title": "Privatsphäre, die du wirklich siehst",

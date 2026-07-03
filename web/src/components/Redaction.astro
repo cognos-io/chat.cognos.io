@@ -1,0 +1,240 @@
+---
+import Icon from './Icon.astro';
+import { SIGN_UP_URL } from '../config';
+import type { Translator } from '../i18n/ui';
+
+interface Props {
+  t: Translator;
+}
+const { t } = Astro.props;
+
+// A letter is an ordered list of parts: plain prose (`text`, translatable) and
+// sensitive spans (`v` = the original value the owner sees, `tok` = the
+// placeholder the AI sees). Values and tokens are identical across every
+// locale — only the prose translates — so the two comparison layers always
+// line up character-for-character.
+type Part = { text?: string; v?: string; tok?: string };
+const letter = t.raw<Part[]>('redaction.letter');
+const msg = t.raw<Part[]>('redaction.flow.msg');
+const reply = t.raw<Part[]>('redaction.flow.reply');
+const steps = t.raw<string[]>('redaction.flow.steps');
+const stepIcons = ['EyeOff', 'Send', 'Sparkles'] as const;
+
+// Monospace: one character is one `ch`. Reserving the wider of {value, token}
+// on both layers keeps the wipe pixel-aligned instead of reflowing at the seam.
+// +1ch covers the box's own horizontal padding (border-box) so the longest
+// value/token is never clipped. Applied to both layers, so they stay aligned.
+const chWidth = (p: Part) => `${Math.max((p.v ?? '').length, (p.tok ?? '').length) + 1}ch`;
+---
+
+<section class="redact sec-pad" id="redaction">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow text-brand">{t('redaction.eyebrow')}</span>
+      <h2 class="sec-h">{t('redaction.title')}</h2>
+      <p>{t('redaction.lead')}</p>
+    </div>
+
+    <!-- ============ Part A — drag-to-compare letter ============ -->
+    <div class="rs reveal" data-redact-slider>
+      <div class="rs-win">
+        <div class="winbar">
+          <i class="winbar__dot--close"></i><i class="winbar__dot--minimise"></i><i
+            class="winbar__dot--maximise"></i>
+          <span class="lbl"><Icon name="FileText" size={12} /> {t('redaction.docName')}</span>
+        </div>
+
+        <div class="rs-stage" style={`--pos:52%`}>
+          <span class="rs-tag rs-tag--you"><Icon name="Eye" size={13} /> {t('redaction.you')}</span>
+          <span class="rs-tag rs-tag--ai"><Icon name="Bot" size={13} /> {t('redaction.ai')}</span>
+
+          <!-- Base layer: what the AI sees (placeholders) -->
+          <pre class="rs-layer rs-ai" aria-hidden="true">{
+            letter.map((p) =>
+              p.tok ? <span class="tok" style={`width:${chWidth(p)}`}>{p.tok}</span> : p.text,
+            )
+          }</pre>
+
+          <!-- Overlay: what you see (originals), clipped to the left of the divider -->
+          <pre class="rs-layer rs-you">{
+            letter.map((p) =>
+              p.v ? <span class="val" style={`width:${chWidth(p)}`}>{p.v}</span> : p.text,
+            )
+          }</pre>
+
+          <div class="rs-divider" aria-hidden="true"></div>
+          <button
+            type="button"
+            class="rs-handle"
+            role="slider"
+            tabindex="0"
+            aria-label={t('redaction.drag')}
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="52"
+          >
+            <Icon name="ChevronLeft" size={15} /><Icon name="ChevronRight" size={15} />
+          </button>
+        </div>
+      </div>
+      <p class="rs-hint mono"><Icon name="MoveHorizontal" size={13} /> {t('redaction.drag')}</p>
+    </div>
+
+    <!-- ============ Part B — animated round trip ============ -->
+    <div class="split split--5-7 redact-flow-split">
+      <div class="reveal">
+        <span class="eyebrow text-brand">{t('redaction.flow.eyebrow')}</span>
+        <h2 class="sec-h mt-100">{t('redaction.flow.title')}</h2>
+        <p class="lead-copy">{t('redaction.flow.lead')}</p>
+
+        <ol class="rf-steps" data-redact-steps>
+          {
+            steps.map((label, i) => (
+              <li class="rf-step" data-step={i}>
+                <span class="rf-step__ico"><Icon name={stepIcons[i]} size={15} /></span>
+                <span>
+                  <b>{i + 1}</b> · {label}
+                </span>
+              </li>
+            ))
+          }
+        </ol>
+
+        <a class="btn btn-primary mt-200" href={SIGN_UP_URL}>
+          <Icon name="Lock" size={17} /> {t('redaction.cta')}
+        </a>
+      </div>
+
+      <div class="reveal">
+        <div class="rf-win" data-redact-flow>
+          <div class="rf-head">
+            <span class="rf-brand"><span class="rf-mark"><Icon name="Lock" size={13} /></span> Cognos</span>
+            <span class="rf-tools">
+              <span class="pill rf-model">{t('redaction.flow.model')}</span>
+              <span class="rf-toggle"><Icon name="Shield" size={12} /> {t('redaction.flow.toggle')}<i
+                  class="rf-switch"></i></span>
+            </span>
+          </div>
+
+          <div class="rf-body">
+            <div class="rf-file"><Icon name="Paperclip" size={13} /> {t('redaction.flow.file')}</div>
+
+            <div class="rf-bubble rf-bubble--you">
+              {
+                msg.map((p) =>
+                  p.v ? (
+                    <span class="pii-morph" style={`width:${chWidth(p)}`}>
+                      <span class="pii-v">{p.v}</span>
+                      <span class="pii-t">{p.tok}</span>
+                    </span>
+                  ) : (
+                    p.text
+                  ),
+                )
+              }
+            </div>
+            <div class="rf-note rf-note--sent"><Icon name="ShieldCheck" size={12} /> {t('redaction.flow.sent')}</div>
+
+            <div class="rf-thinking"><span></span><span></span><span></span> {t('redaction.flow.thinking')}</div>
+
+            <div class="rf-bubble rf-bubble--ai">
+              {
+                reply.map((p) =>
+                  p.v ? (
+                    <span class="pii-morph" style={`width:${chWidth(p)}`}>
+                      <span class="pii-v">{p.v}</span>
+                      <span class="pii-t">{p.tok}</span>
+                    </span>
+                  ) : (
+                    p.text
+                  ),
+                )
+              }
+            </div>
+            <div class="rf-note rf-note--restored"><Icon name="Eye" size={12} /> {t('redaction.flow.restored')}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Progressive enhancement: without JS the slider rests at 52% and the flow
+  // shows its restored end-state (see CSS). Both respect reduced-motion.
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // -- Part A: drag-to-compare --------------------------------------------
+  const slider = document.querySelector<HTMLElement>('[data-redact-slider]');
+  const stage = slider?.querySelector<HTMLElement>('.rs-stage');
+  const handle = slider?.querySelector<HTMLButtonElement>('.rs-handle');
+  if (stage && handle) {
+    const setPos = (pct: number) => {
+      const clamped = Math.min(100, Math.max(0, pct));
+      stage.style.setProperty('--pos', `${clamped}%`);
+      handle.setAttribute('aria-valuenow', String(Math.round(clamped)));
+    };
+    const fromClientX = (x: number) => {
+      const r = stage.getBoundingClientRect();
+      setPos(((x - r.left) / r.width) * 100);
+    };
+    let dragging = false;
+    const start = (e: PointerEvent) => {
+      dragging = true;
+      handle.setPointerCapture(e.pointerId);
+      fromClientX(e.clientX);
+    };
+    stage.addEventListener('pointerdown', (e) => {
+      // Ignore drags starting on the buttons of the winbar etc.
+      dragging = true;
+      fromClientX(e.clientX);
+    });
+    handle.addEventListener('pointerdown', start);
+    window.addEventListener('pointermove', (e) => dragging && fromClientX(e.clientX));
+    window.addEventListener('pointerup', () => (dragging = false));
+    handle.addEventListener('keydown', (e) => {
+      const now = Number(handle.getAttribute('aria-valuenow')) || 52;
+      const step = e.shiftKey ? 10 : 4;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') setPos(now - step);
+      else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') setPos(now + step);
+      else if (e.key === 'Home') setPos(0);
+      else if (e.key === 'End') setPos(100);
+      else return;
+      e.preventDefault();
+    });
+  }
+
+  // -- Part B: round-trip animation ---------------------------------------
+  // A tiny state machine drives a `data-phase` attribute; CSS does the rest.
+  // 0 hide → 1 sent (morph to tokens, thinking) → 2 reply (tokens) → 3 restore.
+  const flow = document.querySelector<HTMLElement>('[data-redact-flow]');
+  const stepList = document.querySelector<HTMLElement>('[data-redact-steps]');
+  if (flow) {
+    if (reduce) {
+      flow.setAttribute('data-phase', '3');
+      stepList?.setAttribute('data-active', '2');
+    } else {
+      const timings = [2200, 2600, 2400, 3400]; // ms per phase
+      const stepForPhase = [0, 1, 1, 2];
+      let phase = 0;
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          flow.toggleAttribute('data-paused', !entry.isIntersecting);
+        });
+      });
+      io.observe(flow);
+      const tick = () => {
+        if (!flow.hasAttribute('data-paused')) {
+          flow.setAttribute('data-phase', String(phase));
+          stepList?.setAttribute('data-active', String(stepForPhase[phase]));
+          const wait = timings[phase];
+          phase = (phase + 1) % 4;
+          window.setTimeout(tick, wait);
+        } else {
+          window.setTimeout(tick, 500);
+        }
+      };
+      tick();
+    }
+  }
+</script>

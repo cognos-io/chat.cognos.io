@@ -93,6 +93,92 @@
       }
     ]
   },
+  "redaction": {
+    "eyebrow": "Hiding your details",
+    "title": "Your details are hidden before the AI ever sees them.",
+    "lead": "Type or paste anything. Cognos spots things like emails, phone numbers, bank details and ID numbers and swaps them for placeholders — before your message leaves your screen. The AI answers using the placeholders, and only you ever see the real values put back.",
+    "you": "What you see",
+    "ai": "What the AI sees",
+    "docName": "note-to-accountant.txt",
+    "drag": "Drag to compare",
+    "letter": [
+      {
+        "text": "CLIENT FILE — YEAR-END REVIEW\n\nHi Sofia,\n\nPlease prepare the year-end accounts. The client will confirm by email at "
+      },
+      {
+        "v": "michael.weber@example.com",
+        "tok": "[[PII_EMAIL_A8F2KD]]"
+      },
+      {
+        "text": " or by phone on "
+      },
+      {
+        "v": "+41 79 555 01 22",
+        "tok": "[[PII_PHONE_K3M9QX]]"
+      },
+      {
+        "text": ".\n\nSalary is paid to IBAN "
+      },
+      {
+        "v": "CH93 0076 2011 6238 5295 7",
+        "tok": "[[PII_IBAN_Q7K9M2]]"
+      },
+      {
+        "text": ", and the social-security number is "
+      },
+      {
+        "v": "756.1234.5678.97",
+        "tok": "[[PII_AHV_R4T8YB]]"
+      },
+      {
+        "text": ".\n\nThe card on file for expenses is "
+      },
+      {
+        "v": "4917 4840 0000 0008",
+        "tok": "[[PII_CARD_W2P6ND]]"
+      },
+      {
+        "text": ".\n\nFlag anything unusual before we file. Thanks!"
+      }
+    ],
+    "flow": {
+      "eyebrow": "The round trip",
+      "title": "The AI does the work. It never learns who you are.",
+      "lead": "Watch one message make the round trip: your details are hidden on the way out, and restored just for you on the way back.",
+      "toggle": "Hiding details",
+      "model": "Claude",
+      "file": "claim-report.pdf",
+      "msg": [
+        {
+          "text": "Summarise this and draft a friendly reply to "
+        },
+        {
+          "v": "michael.weber@example.com",
+          "tok": "[[PII_EMAIL_A8F2KD]]"
+        },
+        {
+          "text": "."
+        }
+      ],
+      "sent": "Sent — details hidden",
+      "thinking": "Cognos is thinking…",
+      "reply": [
+        {
+          "text": "Done. Here's a friendly reply to "
+        },
+        {
+          "v": "michael.weber@example.com",
+          "tok": "[[PII_EMAIL_A8F2KD]]"
+        },
+        {
+          "text": " ready to send."
+        }
+      ],
+      "restored": "Restored — visible only to you",
+      "steps": ["Hide details", "Ask the AI", "Restore for you"]
+    },
+    "cta": "Get started"
+  },
   "features": {
     "eyebrow": "What you get",
     "title": "Privacy you can actually see",

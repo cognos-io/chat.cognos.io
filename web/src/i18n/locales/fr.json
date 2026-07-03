@@ -93,6 +93,92 @@
       }
     ]
   },
+  "redaction": {
+    "eyebrow": "Vos informations, masquées",
+    "title": "Vos informations sont masquées avant même que l’IA ne les voie.",
+    "lead": "Écrivez ou collez ce que vous voulez. Cognos repère les e-mails, numéros de téléphone, coordonnées bancaires et numéros d’identité et les remplace par des espaces réservés — avant que votre message ne quitte votre écran. L’IA répond avec les espaces réservés, et vous seul revoyez les vraies valeurs.",
+    "you": "Ce que vous voyez",
+    "ai": "Ce que l’IA voit",
+    "docName": "note-au-fiduciaire.txt",
+    "drag": "Glissez pour comparer",
+    "letter": [
+      {
+        "text": "DOSSIER CLIENT — CLÔTURE ANNUELLE\n\nBonjour Sofia,\n\nMerci de préparer les comptes annuels. La cliente confirmera par e-mail à "
+      },
+      {
+        "v": "michael.weber@example.com",
+        "tok": "[[PII_EMAIL_A8F2KD]]"
+      },
+      {
+        "text": " ou par téléphone au "
+      },
+      {
+        "v": "+41 79 555 01 22",
+        "tok": "[[PII_PHONE_K3M9QX]]"
+      },
+      {
+        "text": ".\n\nLe salaire est versé sur l’IBAN "
+      },
+      {
+        "v": "CH93 0076 2011 6238 5295 7",
+        "tok": "[[PII_IBAN_Q7K9M2]]"
+      },
+      {
+        "text": ", et le numéro de sécurité sociale est "
+      },
+      {
+        "v": "756.1234.5678.97",
+        "tok": "[[PII_AHV_R4T8YB]]"
+      },
+      {
+        "text": ".\n\nLa carte enregistrée pour les frais est la "
+      },
+      {
+        "v": "4917 4840 0000 0008",
+        "tok": "[[PII_CARD_W2P6ND]]"
+      },
+      {
+        "text": ".\n\nSignalez tout élément inhabituel avant le dépôt. Merci !"
+      }
+    ],
+    "flow": {
+      "eyebrow": "L’aller-retour",
+      "title": "L’IA fait le travail. Elle ne sait jamais qui vous êtes.",
+      "lead": "Suivez un message dans son aller-retour : vos informations sont masquées à l’envoi, et restaurées pour vous seul au retour.",
+      "toggle": "Masquage activé",
+      "model": "Claude",
+      "file": "rapport-sinistre.pdf",
+      "msg": [
+        {
+          "text": "Résumez ceci et rédigez une réponse amicale à "
+        },
+        {
+          "v": "michael.weber@example.com",
+          "tok": "[[PII_EMAIL_A8F2KD]]"
+        },
+        {
+          "text": "."
+        }
+      ],
+      "sent": "Envoyé — informations masquées",
+      "thinking": "Cognos réfléchit…",
+      "reply": [
+        {
+          "text": "C’est fait. Voici une réponse amicale à "
+        },
+        {
+          "v": "michael.weber@example.com",
+          "tok": "[[PII_EMAIL_A8F2KD]]"
+        },
+        {
+          "text": " prête à envoyer."
+        }
+      ],
+      "restored": "Restauré — visible pour vous seul",
+      "steps": ["Masquer", "Demander à l’IA", "Restaurer pour vous"]
+    },
+    "cta": "Commencer"
+  },
   "features": {
     "eyebrow": "Ce que vous obtenez",
     "title": "Une confidentialité que vous pouvez vraiment voir",
