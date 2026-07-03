@@ -264,14 +264,79 @@ describe('AuthService', () => {
     authRefresh.mockResolvedValue({});
 
     authStore.isValid = true;
+    // A verified user only refreshes on the slow 5-minute loop (an unverified
+    // one additionally polls fast — covered by its own tests below).
     authChangeHandler?.('token-123', {
       id: 'user-1',
       email: 'person@example.com',
+      verified: true,
     });
 
     await vi.advanceTimersByTimeAsync(refreshIntervalMs);
 
     expect(authRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  describe('unverified-email refresh polling', () => {
+    const pollIntervalMs = 5_000;
+
+    const signIn = (verified: boolean) => {
+      authStore.isValid = true;
+      authChangeHandler?.('token-123', {
+        id: 'user-1',
+        email: 'person@example.com',
+        verified,
+      });
+      // Flush the toObservable effect so the poll (re)evaluates its condition.
+      TestBed.tick();
+    };
+
+    it('polls a token refresh while the user is unverified and stops once verified', async () => {
+      // The refreshed record reports verified — the SDK saves it into the
+      // authStore, which is what flips needsEmailVerification in production.
+      authRefresh.mockImplementation(async () => {
+        authChangeHandler?.('token-123', {
+          id: 'user-1',
+          email: 'person@example.com',
+          verified: true,
+        });
+        return {};
+      });
+
+      signIn(false);
+
+      await vi.advanceTimersByTimeAsync(pollIntervalMs);
+      expect(authRefresh).toHaveBeenCalledTimes(1);
+      expect(service.user()?.['verified']).toBe(true);
+
+      // Verified now — no further polling (the 5-minute loop is far away).
+      TestBed.tick();
+      await vi.advanceTimersByTimeAsync(pollIntervalMs * 4);
+      expect(authRefresh).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not poll when the signed-in user is already verified', async () => {
+      signIn(true);
+
+      await vi.advanceTimersByTimeAsync(pollIntervalMs * 4);
+      expect(authRefresh).not.toHaveBeenCalled();
+    });
+
+    it('keeps polling when a refresh attempt fails transiently', async () => {
+      authRefresh.mockRejectedValueOnce(new Error('network down'));
+      authRefresh.mockResolvedValue({});
+
+      signIn(false);
+
+      await vi.advanceTimersByTimeAsync(pollIntervalMs);
+      expect(authRefresh).toHaveBeenCalledTimes(1);
+
+      // The failed attempt must not kill the poll — the next tick retries.
+      await vi.advanceTimersByTimeAsync(pollIntervalMs);
+      expect(authRefresh).toHaveBeenCalledTimes(2);
+      // And the transient failure is not surfaced as a user-facing error.
+      expect(errorService.alert).not.toHaveBeenCalled();
+    });
   });
 
   it('redirects to logout when a stale session refresh returns 401', async () => {

@@ -30,6 +30,14 @@ import { ErrorService } from './error.service';
 import { MfaService } from './mfa.service';
 import { TrustedUnlockService } from './trusted-unlock.service';
 
+// How often to re-check the auth record while the signed-in user is still
+// unverified. Verification happens out-of-band (the user clicks the emailed
+// link, usually in another tab or on another device), so this tab only learns
+// about it by refreshing the token. Kept short so the composer unlocks within
+// a few seconds of the click; the poll only runs while verification is
+// pending, so the steady-state cost is zero.
+const UNVERIFIED_REFRESH_INTERVAL_MS = 5_000;
+
 export type LoginStatus =
   | 'pending'
   | 'authenticating'
@@ -172,6 +180,34 @@ export class AuthService implements OnDestroy {
             return timer(delay);
           },
         }),
+      )
+      .subscribe();
+
+    // A user confirms their email by clicking the emailed link — typically in
+    // another tab — so this tab's auth record goes stale (`verified` stays
+    // false) and the composer would stay locked until the 5-minute refresh
+    // above. While (and only while) verification is pending, refresh the token
+    // on a short interval: the refreshed record lands in the authStore, which
+    // re-emits `user` and flips `needsEmailVerification`, unlocking the
+    // composer without a manual reload. Stops as soon as the record reports
+    // verified or the user signs out.
+    toObservable(this.needsEmailVerification)
+      .pipe(
+        switchMap((pending) =>
+          pending
+            ? timer(
+                UNVERIFIED_REFRESH_INTERVAL_MS,
+                UNVERIFIED_REFRESH_INTERVAL_MS,
+              ).pipe(
+                switchMap(() =>
+                  // Transient failures are non-fatal — the next tick retries,
+                  // and the 5-minute loop above owns hard 401 handling.
+                  this.checkAndRefreshToken().pipe(catchError(() => EMPTY)),
+                ),
+              )
+            : EMPTY,
+        ),
+        takeUntilDestroyed(),
       )
       .subscribe();
 

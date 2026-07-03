@@ -78,6 +78,7 @@ export async function markUserVerifiedByEmail(email: string): Promise<void> {
   const headers = { Authorization: `Bearer ${superToken}` };
 
   let userId = '';
+  let lastResult = '';
   const deadline = Date.now() + 10_000;
   for (;;) {
     const listed = await setup.get('/api/collections/users/records', {
@@ -90,9 +91,14 @@ export async function markUserVerifiedByEmail(email: string): Promise<void> {
         userId = body.items[0].id;
         break;
       }
+      lastResult = `200 with ${body.items.length} matching users`;
+    } else {
+      lastResult = `${listed.status()} ${await listed.text()}`;
     }
     if (Date.now() > deadline) {
-      throw new Error(`user ${email} not found to mark verified`);
+      throw new Error(
+        `user ${email} not found to mark verified (last response: ${lastResult})`,
+      );
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
