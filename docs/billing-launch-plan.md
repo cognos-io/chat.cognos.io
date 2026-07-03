@@ -57,7 +57,7 @@ handled at all. Everything below hangs off these.
 
 ### Phase 1 — ✅ PAYG cycle-end overage charge (spec §11) — LAUNCH-BLOCKING
 
-Without this, PAYG only ever bills the CHF 10 floor and never charges usage above it.
+Without this, PAYG only ever bills the CHF 15 floor and never charges usage above it.
 
 1. ✅ **Paddle client:**
    `CreateOneTimeCharge(ctx, subscriptionID, priceID, quantity, idempotencyKey)` →
@@ -82,8 +82,8 @@ Without this, PAYG only ever bills the CHF 10 floor and never charges usage abov
 - **Tests:** unit — overage math (Phase 0); client httptest for the charge call (success, bad
   quantity, Paddle error). Integration — rollover with overage posts the right amount once; within
   the commit posts nothing; a charge failure still advances the cycle.
-- **Acceptance:** ✅ a PAYG cycle with CHF 23.40 usage posts a CHF 13.40 overage charge exactly
-  once; ✅ a cycle ≤ CHF 10 posts nothing; ✅ re-delivered rollover doesn't double-charge.
+- **Acceptance:** ✅ a PAYG cycle with CHF 23.40 usage posts a CHF 8.40 overage charge exactly
+  once; ✅ a cycle ≤ CHF 15 posts nothing; ✅ re-delivered rollover doesn't double-charge.
 
 ---
 

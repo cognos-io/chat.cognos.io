@@ -10,7 +10,7 @@ Behaviour reference is `docs/specs/billing.md`; the build status is in
 ### 1.1 Paddle dashboard (live account)
 
 - Create the four prices (CHF, excl. tax) and copy their `pri_…` ids:
-    - `cognos-payg` — recurring monthly, **CHF 10.00** (the minimum commit).
+    - `cognos-payg` — recurring monthly, **CHF 15.00** (the minimum commit).
     - `cognos-payg-overage` — **one-time**, **CHF 0.01** unit (overage is billed
       as `quantity = overage in Rappen` of this price).
     - `cognos-unlimited-m` — recurring monthly, **CHF 100.00**.
@@ -38,7 +38,7 @@ Secrets should come from files/secret-store, never committed.
 | `paddle.price_payg_overage`               | `COGNOS_PADDLE_PRICE_PAYG_OVERAGE`                     | `pri_…` (required for PAYG overage) |
 | `paddle.price_unlimited_monthly`          | `COGNOS_PADDLE_PRICE_UNLIMITED_MONTHLY`                | `pri_…`                             |
 | `paddle.price_unlimited_annual`           | `COGNOS_PADDLE_PRICE_UNLIMITED_ANNUAL`                 | `pri_…`                             |
-| `billing.payg_min_commit_rappen`          | `COGNOS_BILLING_PAYG_MIN_COMMIT_RAPPEN`                | default `1000` (CHF 10)             |
+| `billing.payg_min_commit_rappen`          | `COGNOS_BILLING_PAYG_MIN_COMMIT_RAPPEN`                | default `1500` (CHF 15)             |
 | `billing.unlimited_fair_use_alert_rappen` | `COGNOS_BILLING_UNLIMITED_FAIR_USE_ALERT_RAPPEN`       | default `20000` (CHF 200)           |
 | `billing.trial_seed_rappen`               | `COGNOS_BILLING_TRIAL_SEED_RAPPEN`                     | default `200` (CHF 2)               |
 
@@ -62,9 +62,9 @@ instead) — set it.
 
 ## 2. How billing behaves (operator view)
 
-- **PAYG** bills `max(usage, CHF 10)` per cycle: Paddle charges the CHF 10
+- **PAYG** bills `max(usage, CHF 15)` per cycle: Paddle charges the CHF 15
   commit up front each cycle; at cycle rollover (`subscription.updated`) we sum
-  the closing cycle's ledger usage and, if it exceeds CHF 10, post a one-time
+  the closing cycle's ledger usage and, if it exceeds CHF 15, post a one-time
   overage charge (`overage_<cycle_id>` idempotency key) billed on the next
   renewal. Each closed cycle is a row in `payg_cycle_summaries`.
 - **Unlimited** never bills per request; usage is recorded (`amount_rappen=0`,
