@@ -1,6 +1,6 @@
 # Product Analytics — Privacy-Respecting Event Tracking
 
-**Status:** Draft
+**Status:** Implemented — Plausible site setup (dashboard) outstanding
 **Scope:** `web/` (marketing site) and `frontend/` (Angular app). No backend changes.
 **Stack:** Plausible Analytics (EU-hosted) in production, `console.debug` in development,
 behind a swappable interface on both surfaces.
@@ -147,16 +147,23 @@ one delegated listener in the existing `BaseLayout.astro` script handles all of 
 ```ts
 document.addEventListener('click', (e) => {
   const el = (e.target as Element).closest<HTMLElement>('[data-track]');
-  if (!el) return;
-  track(el.dataset.track as WebAnalyticsEvent, {
-    location: el.dataset.trackLocation ?? 'unknown',
-    target: el.dataset.trackTarget ?? 'unknown',
-  });
+  if (!el?.dataset.track) return;
+  // Props are built generically from data-track-* attributes:
+  // data-track-location → location, data-track-target → target,
+  // data-track-to → to. Attributes are authored statically, so the
+  // prop set stays a closed enum by construction.
+  track(el.dataset.track as WebAnalyticsEvent, propsFromDataset(el.dataset));
 });
 ```
 
+The same listener serves `locale_switched` — the footer language links carry
+`data-track="locale_switched" data-track-to={code}`.
+
 `location` values (enum): `navbar`, `hero`, `how_it_works`, `pricing_individuals`,
-`pricing_business`, `cta_individuals`, `cta_business`, `contact`, `footer`.
+`pricing_business`, `cta_individuals`, `redaction`, `about` — live today.
+Reserved but currently unused: `cta_business` (the CTA band's business button is an
+in-page `#how` anchor, not a link to `/business`), `contact` (the contact page
+converts via mailto links, untracked in v1) and `footer` (no signup CTA exists there).
 `target` values: `signup`, `signin`, `business`.
 
 ### 5.4 Signup attribution (`ref`)
@@ -203,7 +210,10 @@ export function provideAnalytics(): Provider[] {
 }
 ```
 
-- `provideAnalytics()` goes in `app.config.ts` alongside `providePocketbase()` etc.
+- `provideAnalytics()` goes in `app.config.ts` alongside `providePocketbase()` etc. It
+  lives in its own `analytics.providers.ts` (not `analytics.ts`) so `test-providers.ts`
+  can import the token without transitively pulling `@angular/router` into the test
+  harness bootstrap.
 - Tests provide `NoopAnalytics` (or just `ConsoleAnalytics`); swapping vendors later means
   writing one new class implementing `Analytics`.
 - Scaffold with `ng generate` per repo convention.
@@ -275,6 +285,11 @@ string longer than 32 characters or contains `@`, and any prop key outside the c
 In production the guard silently drops the offending prop. This makes "someone passed the
 conversation title into props" a test failure, not a data leak.
 
+Model catalogue ids are the one legitimate value that can trip the `@` rule
+(provider-synced ids like `o4-mini@eastus2`), so a `modelProp()` normaliser maps `@` to
+`:` and clamps to 32 characters before the guard sees the value — a real id is never
+dropped, and the guard stays strict for everything else.
+
 ### 6.5 Signup source
 
 `RegisterComponent` reads `?ref=` on arrival, keeps it in memory (component state only —
@@ -336,6 +351,12 @@ components — `message.service.ts` (`message_sent`/`message_failed`),
 `conversation-duplicate.service.ts`, `vault.service.ts`. One `inject(Analytics)` + one
 `track()` call per site keeps instrumentation reviewable.
 
+**Note on `vault_unlock_prompted.trigger`:** no explicit idle-logout signal exists in
+the app today, so the trigger is derived: a prompt before any unlock in the current JS
+session reports `new_session`; a prompt after the vault was unlocked earlier in the
+session and re-locked reports `idle_logout`. Deduped per locked period, and the
+create-backup onboarding dialog (a new key pair, not an unlock) is excluded.
+
 **Explicitly not tracked:** message content/length, conversation titles, search queries,
 persona contents, redaction hits, error payloads, anything on the public share page beyond
 the sanitised pageview.
@@ -384,27 +405,33 @@ Per repo convention: red/green, tables, e2e for behaviour.
   requests** to `plausible.io` across a full login → send-message → logout journey (this is
   the "dev/e2e never spams events" guarantee, and would also catch an accidental vendor
   script).
-- **e2e (web):** in `astro dev`, assert no plausible script tag is rendered; in a
-  production build (`astro build && astro preview`), assert the tag is present and
-  `data-track` attributes exist on all §5.3 CTAs.
-- **Grep guardrail (CI or lint):** no `plausible.io` string outside the two adapter files
-  and `BaseLayout.astro`.
+- **Web build check (`web/scripts/check-analytics.mjs`, wired as `pnpm --filter
+  @cognos/web test`):** after `astro build`, assert the built homepage carries the
+  Plausible tag + queue shim and `data-track` on the key CTAs, and that `plausible.io`
+  appears in `web/src/` only in `lib/analytics.ts` and `layouts/BaseLayout.astro`.
+  (Dev builds tree-shake the tag out via `import.meta.env.PROD` — verified manually,
+  no separate web e2e suite.)
+- **Grep guardrail (CI):** no `plausible.io` string outside the adapter files
+  (`web/src/lib/analytics.ts`, `web/src/layouts/BaseLayout.astro`, the frontend
+  `services/analytics/` module), the frontend `environments/` files (which hold the
+  API host), the web check script, the root-suite analytics e2e spec and this spec.
 
 ## 11. Rollout checklist
 
 - [ ] Create Plausible sites `cognos.io` and `app.cognos.io`; define goals/funnels for §7 events
-- [ ] `web/`: `src/lib/analytics.ts`, prod-only script tag in `BaseLayout.astro`, delegated listener
-- [ ] `web/`: `data-track` attributes on all CTAs (§5.3) + `signUpUrl(location)` helper in
+      (dashboard access required — the only manual step left)
+- [x] `web/`: `src/lib/analytics.ts`, prod-only script tag in `BaseLayout.astro`, delegated listener
+- [x] `web/`: `data-track` attributes on all CTAs (§5.3) + `signUpUrl(location)` helper in
       `config.ts`
-- [ ] `web/`: privacy page updated in **all six locales** — plain language, e.g. "We use
+- [x] `web/`: privacy page updated in **all six locales** — plain language, e.g. "We use
       privacy-friendly analytics that use no cookies and collect no personal data; visits
       are counted in aggregate on servers in Europe." (no jargon, per marketing rules)
-- [ ] `frontend/`: `Analytics` abstraction + three impls + `provideAnalytics()` in `app.config.ts`
-- [ ] `frontend/`: environment `analytics` block (prod on; dev + e2e off)
-- [ ] `frontend/`: router pageview subscription + `routePattern()` helper
-- [ ] `frontend/`: instrument §7.2 events in owning services
-- [ ] `frontend/`: `ref` → `source` plumbing in `RegisterComponent`
-- [ ] Tests per §10
+- [x] `frontend/`: `Analytics` abstraction + three impls + `provideAnalytics()` in `app.config.ts`
+- [x] `frontend/`: environment `analytics` block (prod on; dev + e2e off)
+- [x] `frontend/`: router pageview subscription + `routePattern()` helper
+- [x] `frontend/`: instrument §7.2 events in owning services
+- [x] `frontend/`: `ref` → `source` plumbing in `RegisterComponent`
+- [x] Tests per §10 (incl. the grep guardrail + web build check in CI)
 - [ ] If a CSP ships later: `script-src plausible.io` (web) and `connect-src plausible.io`
       (app) — noted for the same-origin `app.cognos.io` hosting plan
 
