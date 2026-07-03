@@ -1,12 +1,14 @@
 ---
 import Icon from './Icon.astro';
 import { signUpUrl } from '../config';
-import type { Translator } from '../i18n/ui';
+import { localizedPath } from '../i18n/ui';
+import type { Lang, Translator } from '../i18n/ui';
 
 interface Props {
   t: Translator;
+  lang: Lang;
 }
-const { t } = Astro.props;
+const { t, lang } = Astro.props;
 ---
 
 <section class="section-tail" id="cta">
@@ -28,7 +30,13 @@ const { t } = Astro.props;
         >
           <Icon name="Lock" size={17} /> {t('cta.individuals')}
         </a>
-        <a class="btn btn-lg btn-ghost2" href="#how">
+        <a
+          class="btn btn-lg btn-ghost2"
+          href={localizedPath(lang, '/business')}
+          data-track="cta_click"
+          data-track-location="cta_business"
+          data-track-target="business"
+        >
           <Icon name="ArrowRight" size={17} /> {t('cta.business')}
         </a>
       </div>

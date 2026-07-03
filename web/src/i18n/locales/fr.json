@@ -216,7 +216,7 @@
     "titleLine1": "Payez pour l'IA.",
     "titleLine2": "La confidentialité est offerte.",
     "lead": "Deux façons de payer. La même confidentialité dans les deux cas. Pas convaincu ? Vous avez 60 jours pour être remboursé.",
-    "vatNote": "Prix en CHF, TVA incluse.",
+    "vatNote": "Prix en CHF, TVA ajoutée au paiement.",
     "individuals": {
       "title": "À l'usage",
       "currency": "CHF",
@@ -279,7 +279,7 @@
     "titleEm": "la protéger.",
     "lead": "Posez les questions que vous n'oseriez jamais taper dans un chatbot ordinaire. Avec Cognos, elles restent les vôtres.",
     "individuals": "Commencer",
-    "business": "Voir comment ça marche"
+    "business": "Pour les entreprises"
   },
   "footer": {
     "desc": "L'IA privée. Nous n'en gardons aucune copie lisible — vous seul avez la clé.",
@@ -488,7 +488,7 @@
       },
       "pricing": {
         "title": "Un prix simple par personne",
-        "body": "L'offre Illimité est à CHF 150 par personne / mois, TVA incluse — conversations illimitées sur tous les modèles d'IA que nous proposons. Ou payez à l'usage à partir de CHF 15/mois. La connexion unique et les contrôles d'administration arrivent bientôt."
+        "body": "L'offre Illimité est à CHF 150 par personne / mois, TVA ajoutée au paiement — conversations illimitées sur tous les modèles d'IA que nous proposons. Ou payez à l'usage à partir de CHF 15/mois. La connexion unique et les contrôles d'administration arrivent bientôt."
       },
       "form": {
         "heading": "Posez-nous vos questions",

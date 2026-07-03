@@ -216,7 +216,7 @@
     "titleLine1": "Paga por la IA.",
     "titleLine2": "La privacidad es gratis.",
     "lead": "Dos formas de pagar. La misma privacidad en ambos casos. ¿No es para ti? Tienes 60 días para recuperar tu dinero.",
-    "vatNote": "Precios en CHF, IVA incluido.",
+    "vatNote": "Precios en CHF, IVA añadido al pagar.",
     "individuals": {
       "title": "Paga según lo que uses",
       "currency": "CHF",
@@ -279,7 +279,7 @@
     "titleEm": "protegerla.",
     "lead": "Haz las preguntas que nunca escribirías en un chatbot normal. Con Cognos, siguen siendo tuyas.",
     "individuals": "Empezar",
-    "business": "Ver cómo funciona"
+    "business": "Para empresas"
   },
   "footer": {
     "desc": "IA privada. No guardamos ninguna copia de tus chats que podamos leer: solo tú tienes la llave.",
@@ -488,7 +488,7 @@
       },
       "pricing": {
         "title": "Precio sencillo por persona",
-        "body": "El plan Ilimitado cuesta CHF 150 por persona / mes, IVA incluido: chats ilimitados con todos los modelos de IA que ofrecemos. O paga según lo que uses desde CHF 15/mes. El inicio de sesión único y los controles de administración están en camino."
+        "body": "El plan Ilimitado cuesta CHF 150 por persona / mes, IVA añadido al pagar: chats ilimitados con todos los modelos de IA que ofrecemos. O paga según lo que uses desde CHF 15/mes. El inicio de sesión único y los controles de administración están en camino."
       },
       "form": {
         "heading": "Pregúntanos lo que quieras",

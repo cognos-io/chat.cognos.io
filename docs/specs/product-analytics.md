@@ -160,10 +160,10 @@ The same listener serves `locale_switched` — the footer language links carry
 `data-track="locale_switched" data-track-to={code}`.
 
 `location` values (enum): `navbar`, `hero`, `how_it_works`, `pricing_individuals`,
-`pricing_business`, `cta_individuals`, `redaction`, `about` — live today.
-Reserved but currently unused: `cta_business` (the CTA band's business button is an
-in-page `#how` anchor, not a link to `/business`), `contact` (the contact page
-converts via mailto links, untracked in v1) and `footer` (no signup CTA exists there).
+`pricing_business`, `cta_individuals`, `cta_business`, `redaction`, `about` — live
+today (`cta_business` links to the `/business` page with `target: business`, no `ref`).
+Reserved but currently unused: `contact` (the contact page converts via mailto links,
+untracked in v1) and `footer` (no signup CTA exists there).
 `target` values: `signup`, `signin`, `business`.
 
 ### 5.4 Signup attribution (`ref`)

@@ -216,7 +216,7 @@
     "titleLine1": "Bezahl für die KI.",
     "titleLine2": "Die Privatsphäre gibt's gratis.",
     "lead": "Zwei Wege zu zahlen. Die gleiche Privatsphäre bei beiden. Nichts für dich? Du hast 60 Tage, um dein Geld zurückzubekommen.",
-    "vatNote": "Preise in CHF, inkl. MwSt.",
+    "vatNote": "Preise in CHF, MwSt. beim Checkout berechnet.",
     "individuals": {
       "title": "Zahl nach Verbrauch",
       "currency": "CHF",
@@ -279,7 +279,7 @@
     "titleEm": "zu schützen.",
     "lead": "Stell die Fragen, die du nie in einen normalen Chatbot tippen würdest. Mit Cognos bleiben sie dein.",
     "individuals": "Loslegen",
-    "business": "So funktioniert's"
+    "business": "Für Unternehmen"
   },
   "footer": {
     "desc": "Private KI. Wir bewahren keine lesbare Kopie deiner Chats auf — nur du hast den Schlüssel.",
@@ -488,7 +488,7 @@
       },
       "pricing": {
         "title": "Einfacher Preis pro Person",
-        "body": "Unbegrenzt kostet CHF 150 pro Person / Monat, inkl. MwSt. — unbegrenzte Chats über alle KI-Modelle, die wir anbieten. Oder zahl nach Verbrauch ab CHF 15/Monat. Einmal-Anmeldung fürs Team und Admin-Kontrollen sind bald da."
+        "body": "Unbegrenzt kostet CHF 150 pro Person / Monat, zzgl. MwSt. beim Checkout — unbegrenzte Chats über alle KI-Modelle, die wir anbieten. Oder zahl nach Verbrauch ab CHF 15/Monat. Einmal-Anmeldung fürs Team und Admin-Kontrollen sind bald da."
       },
       "form": {
         "heading": "Frag uns alles",

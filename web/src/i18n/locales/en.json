@@ -216,7 +216,7 @@
     "titleLine1": "Pay for the AI.",
     "titleLine2": "The privacy comes free.",
     "lead": "Two ways to pay. The same privacy either way. Not for you? You have 60 days to get your money back.",
-    "vatNote": "Prices in CHF, VAT included.",
+    "vatNote": "Prices in CHF, VAT added at checkout.",
     "individuals": {
       "title": "Pay as you go",
       "currency": "CHF",
@@ -279,7 +279,7 @@
     "titleEm": "protecting it.",
     "lead": "Ask the questions you'd never type into a normal chatbot. With Cognos, they stay yours.",
     "individuals": "Get started",
-    "business": "See how it works"
+    "business": "For business"
   },
   "footer": {
     "desc": "Private AI. We keep no copy of your chats that we can read — only you hold the key.",
@@ -488,7 +488,7 @@
       },
       "pricing": {
         "title": "Simple per-person pricing",
-        "body": "Unlimited is CHF 150 per person / month, VAT included — unlimited chats across every AI model we offer. Or pay as you go from CHF 15/month. Single sign-on and admin controls are on the way."
+        "body": "Unlimited is CHF 150 per person / month, plus VAT added at checkout — unlimited chats across every AI model we offer. Or pay as you go from CHF 15/month. Single sign-on and admin controls are on the way."
       },
       "form": {
         "heading": "Ask us anything",
