@@ -266,7 +266,7 @@
       "blurb": {
         "cancelsSoon": "Your plan is set to cancel. It keeps working until the end of the period.",
         "inactive": "Your chats stay encrypted and readable. Choose a plan to start sending again.",
-        "payg": "Buy credits and spend them on any model. A CHF 15 minimum keeps your account active each month.",
+        "payg": "Pay for what you use on any model. Your monthly bill is at least CHF 15 — usage above that is billed automatically.",
         "trial": "You're on the free trial. Choose a plan to keep sending once it runs out.",
         "unlimited": "Unlimited messages across every Cognos model, with priority compute."
       },
@@ -337,10 +337,12 @@
         "messagesSince": "messages since {{ date }}",
         "noLimit": "No limit",
         "noneRecorded": "No usage recorded yet this period.",
-        "notePayg": "Spend above the CHF 15 minimum is metered by token usage and added to your next invoice.",
+        "notePayg": "Your monthly bill is at least {{ min }}. Usage above it is metered by token usage and added to your next invoice automatically.",
         "noteUnlimited": "Unlimited covers normal individual use — compute is metered internally only to keep the service fair.",
         "spentSince": "spent since {{ date }} · CHF 15 minimum",
-        "title": "Usage this period"
+        "title": "Usage this period",
+        "overMinimum": "{{ overage }} above your {{ min }} minimum will be added to your next invoice automatically.",
+        "underMinimum": "Covered by your {{ min }} monthly minimum — nothing extra is due this cycle."
       }
     },
     "pricing": {
@@ -376,17 +378,17 @@
       "monthly": "Monthly",
       "monthsFree": "2 months free",
       "payg": {
-        "blurb": "Buy credits and spend them on any model. A CHF 15 minimum keeps your account active each month.",
-        "cta": "Start with credits",
+        "blurb": "Pay for what you use on any model. Your monthly bill is at least CHF 15 — usage above that is billed automatically.",
+        "cta": "Start pay as you go",
         "features": {
-          "credits": "Credits work on every model and skill",
+          "everyModel": "Works with every model and skill",
           "noCommitment": "No annual commitment",
-          "payForUse": "Pay only for what you actually run",
-          "rollover": "Unused credits roll over while active"
+          "overageAuto": "Usage above CHF 15 is billed automatically",
+          "payForUse": "Pay only for what you actually run"
         },
-        "fine": "Spend above the CHF 15 minimum is metered per message.",
+        "fine": "Usage is metered per message. Each month you pay CHF 15 or your actual usage, whichever is higher.",
         "name": "Pay as you go",
-        "priceNote": "Billed monthly · top up anytime",
+        "priceNote": "Billed monthly · cancel anytime",
         "tag": "Flexible",
         "unit": "/ month min."
       },
@@ -423,10 +425,10 @@
       "monthsFree": "2 months free",
       "note": "Changes take effect immediately. 60-day money-back guarantee on either plan.",
       "payg": {
-        "desc": "Buy credits and spend them on any model. A CHF 15 monthly minimum keeps your account active.",
+        "desc": "Pay for what you use on any model. Your monthly bill is at least CHF 15.",
         "name": "Pay as you go",
         "per": "/ mo min.",
-        "sub": "Credits on every model · billed monthly",
+        "sub": "Metered usage on every model · billed monthly",
         "tag": "Flexible"
       },
       "perMonth": "/ month",
@@ -934,11 +936,10 @@
       }
     },
     "payg": {
-      "balanceLabel": "Balance",
-      "detail": "{{amount}} of credit remaining",
-      "low": "Low balance",
-      "lowWarning": "Your balance is running low. Top up to keep chatting without interruption.",
-      "manage": "Manage plan"
+      "manage": "View billing",
+      "overMinimum": "{{ overage }} above your {{ min }} minimum — added to your next invoice automatically.",
+      "title": "This month",
+      "underMinimum": "Included in your {{ min }} monthly minimum — nothing extra to pay."
     },
     "retry": {
       "title": "Your message wasn't sent",

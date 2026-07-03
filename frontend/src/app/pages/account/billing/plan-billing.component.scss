@@ -219,6 +219,14 @@
   font-size: var(--cog-fs-body-sm);
 }
 
+/* Where this cycle stands against the PAYG monthly minimum. */
+.pb__usage-minimum {
+  margin: var(--cog-space-050) 0 var(--cog-space-150);
+  color: var(--cog-text-subtle);
+  font-size: var(--cog-fs-body-sm);
+  line-height: var(--cog-lh-body-sm);
+}
+
 .pb__bars {
   display: grid;
   gap: var(--cog-space-150);

@@ -266,7 +266,7 @@
       "blurb": {
         "cancelsSoon": "Tu plan está programado para cancelarse. Sigue funcionando hasta el final del periodo.",
         "inactive": "Tus chats siguen cifrados y legibles. Elige un plan para volver a enviar mensajes.",
-        "payg": "Compra créditos y úsalos en cualquier modelo. Un mínimo de CHF 15 mantiene tu cuenta activa cada mes.",
+        "payg": "Paga por lo que usas en cualquier modelo. Tu factura mensual es de al menos CHF 15; el consumo por encima se factura automáticamente.",
         "trial": "Estás en la prueba gratuita. Elige un plan para seguir enviando cuando se agote.",
         "unlimited": "Mensajes ilimitados en todos los modelos de Cognos, con potencia de cálculo prioritaria."
       },
@@ -337,10 +337,12 @@
         "messagesSince": "mensajes desde el {{ date }}",
         "noLimit": "Sin límite",
         "noneRecorded": "Aún no se ha registrado uso este periodo.",
-        "notePayg": "El consumo por encima del mínimo de CHF 15 se mide por uso de tokens y se añade a tu próxima factura.",
+        "notePayg": "Tu factura mensual es de al menos {{ min }}. El consumo por encima se mide por uso de tokens y se añade automáticamente a tu próxima factura.",
         "noteUnlimited": "Unlimited cubre el uso individual normal — la computación se mide internamente solo para mantener el servicio justo.",
         "spentSince": "gastado desde el {{ date }} · CHF 15 mínimo",
-        "title": "Uso de este periodo"
+        "title": "Uso de este periodo",
+        "overMinimum": "{{ overage }} por encima de tu mínimo de {{ min }} se añadirán automáticamente a tu próxima factura.",
+        "underMinimum": "Cubierto por tu mínimo mensual de {{ min }} — nada extra que pagar este ciclo."
       }
     },
     "pricing": {
@@ -376,17 +378,17 @@
       "monthly": "Mensual",
       "monthsFree": "2 meses gratis",
       "payg": {
-        "blurb": "Compra créditos y úsalos en cualquier modelo. Un mínimo de CHF 15 mantiene tu cuenta activa cada mes.",
-        "cta": "Empezar con créditos",
+        "blurb": "Paga por lo que usas en cualquier modelo. Tu factura mensual es de al menos CHF 15; el consumo por encima se factura automáticamente.",
+        "cta": "Empezar con Pay as you go",
         "features": {
-          "credits": "Los créditos funcionan en todos los modelos y habilidades",
+          "everyModel": "Funciona con todos los modelos y habilidades",
           "noCommitment": "Sin compromiso anual",
-          "payForUse": "Paga solo por lo que realmente uses",
-          "rollover": "Los créditos no usados se acumulan mientras esté activa"
+          "overageAuto": "El consumo por encima de CHF 15 se factura automáticamente",
+          "payForUse": "Paga solo por lo que realmente uses"
         },
-        "fine": "El consumo por encima del mínimo de CHF 15 se mide por mensaje.",
+        "fine": "El consumo se mide por mensaje. Cada mes pagas CHF 15 o tu consumo real, lo que sea mayor.",
         "name": "Pay as you go",
-        "priceNote": "Facturado mensualmente · recarga cuando quieras",
+        "priceNote": "Facturado mensualmente · cancela cuando quieras",
         "tag": "Flexible",
         "unit": "/ mes mín."
       },
@@ -423,10 +425,10 @@
       "monthsFree": "2 meses gratis",
       "note": "Los cambios surten efecto de inmediato. Garantía de devolución de 60 días en ambos planes.",
       "payg": {
-        "desc": "Compra créditos y úsalos en cualquier modelo. Un mínimo mensual de CHF 15 mantiene tu cuenta activa.",
+        "desc": "Paga por lo que usas en cualquier modelo. Tu factura mensual es de al menos CHF 15.",
         "name": "Pay as you go",
         "per": "/ mes mín.",
-        "sub": "Créditos en cada modelo · facturado mensualmente",
+        "sub": "Consumo medido en cada modelo · facturado mensualmente",
         "tag": "Flexible"
       },
       "perMonth": "/ mes",
@@ -934,11 +936,10 @@
       }
     },
     "payg": {
-      "balanceLabel": "Saldo",
-      "detail": "{{amount}} de crédito restante",
-      "low": "Saldo bajo",
-      "lowWarning": "Tu saldo se está agotando. Recárgalo para seguir chateando sin interrupciones.",
-      "manage": "Gestionar plan"
+      "manage": "Ver facturación",
+      "overMinimum": "{{ overage }} por encima de tu mínimo de {{ min }} — se añade automáticamente a tu próxima factura.",
+      "title": "Este mes",
+      "underMinimum": "Incluido en tu mínimo mensual de {{ min }} — nada extra que pagar."
     },
     "retry": {
       "title": "Tu mensaje no se envió",

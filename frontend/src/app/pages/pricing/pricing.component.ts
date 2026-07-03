@@ -288,9 +288,9 @@ export class PricingComponent {
   }
 
   protected readonly paygFeatures = [
-    { key: 'billing.pricing.payg.features.credits', muted: false },
+    { key: 'billing.pricing.payg.features.everyModel', muted: false },
     { key: 'billing.pricing.payg.features.payForUse', muted: false },
-    { key: 'billing.pricing.payg.features.rollover', muted: false },
+    { key: 'billing.pricing.payg.features.overageAuto', muted: false },
     { key: 'billing.pricing.payg.features.noCommitment', muted: true },
   ];
 

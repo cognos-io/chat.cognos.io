@@ -27,8 +27,10 @@ import { PaddleService } from '@app/services/paddle.service';
 const ACTIVATION_POLL_INTERVAL_MS = 2500;
 const ACTIVATION_POLL_MAX_ATTEMPTS = 40;
 
-// Below this remaining PAYG credit (in CHF) we show a low-balance nudge.
-const PAYG_LOW_BALANCE_CHF = 2;
+// Fallback for the PAYG monthly minimum until the API responds. The server
+// value (payg_min_commit_chf) is authoritative — this only avoids showing
+// CHF 0.00 during the first load.
+const DEFAULT_PAYG_MIN_COMMIT_CHF = 15;
 
 // BillingService is the frontend's single source of truth for the user's plan
 // state. It backs the trial pill/credit card, the locked-chat surfaces, and the
@@ -49,6 +51,8 @@ export class BillingService {
   private readonly _transloco = inject(TranslocoService);
 
   private readonly _state = signal<BillingState | null>(null);
+  // This cycle's PAYG usage total (CHF); null until fetched for a PAYG plan.
+  private readonly _paygUsageChf = signal<number | null>(null);
   private readonly _checkoutPending = signal(false);
   private readonly _activating = signal(false);
   private readonly _activationSlow = signal(false);
@@ -67,17 +71,21 @@ export class BillingService {
   // Unlimited plans aren't billed per message, so per-model cost framing is
   // irrelevant and hidden for them.
   readonly isUnlimited = computed(() => this.planType() === 'unlimited');
-  // Pay-as-you-go: prepaid credit that rolls over. Unlike trial there is no
-  // seed denominator, so the sidebar shows the absolute balance and warns when
-  // it runs low.
+  // Pay-as-you-go: metered usage billed monthly with a minimum charge. There
+  // is no prepaid credit and nothing to top up — usage below the minimum is
+  // covered by it, and anything above is added to the next invoice
+  // automatically by Paddle. The sidebar shows the running monthly cost.
   readonly isPayg = computed(() => this.planType() === 'payg');
-  // Warn (but don't lock) when a PAYG balance drops below this many francs, so
-  // the user can top up before a send is refused.
-  readonly isPaygBalanceLow = computed(
-    () =>
-      this.isPayg() &&
-      this.balanceChf() > 0 &&
-      this.balanceChf() < PAYG_LOW_BALANCE_CHF,
+  // The PAYG monthly minimum charge, as configured server-side.
+  readonly paygMinCommitChf = computed(
+    () => this._state()?.paygMinCommitChf ?? DEFAULT_PAYG_MIN_COMMIT_CHF,
+  );
+  // This cycle's metered usage in CHF; null until the usage endpoint responds.
+  readonly paygUsageChf = computed(() => this._paygUsageChf());
+  // Usage beyond the minimum — the part that will appear as an extra line on
+  // the next invoice. Zero while usage is still covered by the minimum.
+  readonly paygOverageChf = computed(() =>
+    Math.max(0, (this._paygUsageChf() ?? 0) - this.paygMinCommitChf()),
   );
 
   // Sending is locked when there's no active plan, or a trial whose credit is
@@ -119,15 +127,36 @@ export class BillingService {
   // activation poll subscribes to this; `refresh` is the fire-and-forget form.
   fetchState(): Observable<BillingApiResponse> {
     return this._api.getBilling().pipe(
-      tap((res) =>
+      tap((res) => {
         this._state.set({
           planType: res.plan_type,
           status: res.status,
           balanceChf: res.balance_chf ?? 0,
           trialSeedChf: res.trial_seed_chf ?? 0,
-        }),
-      ),
+          paygMinCommitChf: res.payg_min_commit_chf,
+        });
+        // PAYG cost lives in the usage ledger, not the plan state, so keep the
+        // sidebar's monthly total in step with every state refresh (including
+        // the post-completion reconcile).
+        if (res.plan_type === 'payg') {
+          this._refreshPaygUsage();
+        }
+      }),
     );
+  }
+
+  // _refreshPaygUsage re-fetches this cycle's metered usage total. Failures
+  // leave the last known figure — the card is informational, never a gate.
+  private _refreshPaygUsage(): void {
+    this._api.getBillingUsage().subscribe({
+      next: (usage) =>
+        this._paygUsageChf.set(
+          usage.by_model.reduce((sum, row) => sum + row.cost_chf, 0),
+        ),
+      error: () => {
+        /* keep the previous total */
+      },
+    });
   }
 
   // refresh re-fetches the authoritative plan state. Failures (e.g. not yet

@@ -103,6 +103,9 @@ export interface BillingApiResponse {
   cancel_at_period_end?: boolean;
   refund_eligible_until_at?: string;
   previous_plan_type?: BillingPlanType;
+  // The PAYG monthly minimum (server-configured, matches the Paddle price).
+  // Present on every response so no surface has to hardcode the amount.
+  payg_min_commit_chf?: number;
 }
 
 // BillingState is the normalised view the frontend holds in a signal.
@@ -111,6 +114,7 @@ export interface BillingState {
   status?: BillingStatus;
   balanceChf: number;
   trialSeedChf: number;
+  paygMinCommitChf?: number;
 }
 
 // Per-model usage rollup from `GET /api/v1/billing/usage` (ledger metadata

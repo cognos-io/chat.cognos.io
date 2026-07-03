@@ -375,6 +375,24 @@ export class PlanBillingComponent {
     (this.usage()?.by_model ?? []).reduce((sum, row) => sum + row.cost_chf, 0),
   );
 
+  // The PAYG monthly minimum charge (server-configured). Usage below it is
+  // covered by the minimum; usage above it is added to the next invoice
+  // automatically, so the dashboard states which side the user is on.
+  protected readonly paygMinChf = computed(
+    () => this.billing()?.payg_min_commit_chf ?? 15,
+  );
+  protected readonly paygOverageChf = computed(() =>
+    Math.max(0, this.usageTotalCostChf() - this.paygMinChf()),
+  );
+  // How far this cycle's usage is through the minimum, for the progress bar.
+  protected readonly paygMinimumProgress = computed(() =>
+    Math.min(100, Math.round((this.usageTotalCostChf() / this.paygMinChf()) * 100)),
+  );
+
+  protected chf(amount: number): string {
+    return `CHF ${amount.toFixed(2)}`;
+  }
+
   protected barWidth(value: number): number {
     return Math.round((value / this.usageMax()) * 100);
   }

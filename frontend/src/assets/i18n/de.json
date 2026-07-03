@@ -266,7 +266,7 @@
       "blurb": {
         "cancelsSoon": "Dein Tarif wird gekündigt. Er funktioniert bis zum Ende der Periode weiter.",
         "inactive": "Deine Chats bleiben verschlüsselt und lesbar. Wähle einen Tarif, um wieder Nachrichten zu senden.",
-        "payg": "Kaufe Guthaben und nutze es für jedes Modell. Ein Minimum von CHF 15 hält dein Konto jeden Monat aktiv.",
+        "payg": "Zahle für das, was du nutzt — auf jedem Modell. Deine Monatsrechnung beträgt mindestens CHF 15; Verbrauch darüber wird automatisch abgerechnet.",
         "trial": "Du nutzt die kostenlose Testphase. Wähle einen Tarif, um weiterhin Nachrichten zu senden, sobald sie endet.",
         "unlimited": "Unbegrenzt Nachrichten über alle Cognos-Modelle, mit priorisierter Rechenleistung."
       },
@@ -337,10 +337,12 @@
         "messagesSince": "Nachrichten seit {{ date }}",
         "noLimit": "Kein Limit",
         "noneRecorded": "In dieser Periode noch keine Nutzung erfasst.",
-        "notePayg": "Verbrauch über dem Minimum von CHF 15 wird nach Token-Nutzung berechnet und deiner nächsten Rechnung hinzugefügt.",
+        "notePayg": "Deine Monatsrechnung beträgt mindestens {{ min }}. Verbrauch darüber wird nach Token-Nutzung berechnet und automatisch deiner nächsten Rechnung hinzugefügt.",
         "noteUnlimited": "Unlimited deckt die normale individuelle Nutzung ab — die Rechenleistung wird nur intern gemessen, um den Dienst fair zu halten.",
         "spentSince": "ausgegeben seit {{ date }} · CHF 15 Minimum",
-        "title": "Nutzung in dieser Periode"
+        "title": "Nutzung in dieser Periode",
+        "overMinimum": "{{ overage }} über deinem Minimum von {{ min }} werden automatisch deiner nächsten Rechnung hinzugefügt.",
+        "underMinimum": "Durch dein monatliches Minimum von {{ min }} gedeckt — in diesem Zyklus fällt nichts zusätzlich an."
       }
     },
     "pricing": {
@@ -376,17 +378,17 @@
       "monthly": "Monatlich",
       "monthsFree": "2 Monate gratis",
       "payg": {
-        "blurb": "Kaufe Guthaben und nutze es für jedes Modell. Ein Minimum von CHF 15 hält dein Konto jeden Monat aktiv.",
-        "cta": "Mit Guthaben starten",
+        "blurb": "Zahle für das, was du nutzt — auf jedem Modell. Deine Monatsrechnung beträgt mindestens CHF 15; Verbrauch darüber wird automatisch abgerechnet.",
+        "cta": "Mit Pay as you go starten",
         "features": {
-          "credits": "Guthaben funktioniert für jedes Modell und jeden Skill",
+          "everyModel": "Funktioniert mit jedem Modell und jedem Skill",
           "noCommitment": "Keine jährliche Bindung",
-          "payForUse": "Zahle nur für das, was du tatsächlich nutzt",
-          "rollover": "Ungenutztes Guthaben wird übertragen, solange aktiv"
+          "overageAuto": "Verbrauch über CHF 15 wird automatisch abgerechnet",
+          "payForUse": "Zahle nur für das, was du tatsächlich nutzt"
         },
-        "fine": "Verbrauch über dem Minimum von CHF 15 wird pro Nachricht abgerechnet.",
+        "fine": "Der Verbrauch wird pro Nachricht gemessen. Du zahlst jeden Monat CHF 15 oder deinen tatsächlichen Verbrauch — je nachdem, was höher ist.",
         "name": "Pay as you go",
-        "priceNote": "Monatlich abgerechnet · jederzeit aufladen",
+        "priceNote": "Monatlich abgerechnet · jederzeit kündbar",
         "tag": "Flexibel",
         "unit": "/ Monat min."
       },
@@ -423,10 +425,10 @@
       "monthsFree": "2 Monate gratis",
       "note": "Änderungen werden sofort wirksam. 60 Tage Geld-zurück-Garantie für beide Tarife.",
       "payg": {
-        "desc": "Kaufe Guthaben und nutze es für jedes Modell. Ein monatliches Minimum von CHF 15 hält dein Konto aktiv.",
+        "desc": "Zahle für das, was du nutzt — auf jedem Modell. Deine Monatsrechnung beträgt mindestens CHF 15.",
         "name": "Pay as you go",
         "per": "/ Mt. min.",
-        "sub": "Guthaben für jedes Modell · monatlich abgerechnet",
+        "sub": "Gemessener Verbrauch auf jedem Modell · monatlich abgerechnet",
         "tag": "Flexibel"
       },
       "perMonth": "/ Monat",
@@ -934,11 +936,10 @@
       }
     },
     "payg": {
-      "balanceLabel": "Guthaben",
-      "detail": "{{amount}} Guthaben übrig",
-      "low": "Niedriges Guthaben",
-      "lowWarning": "Dein Guthaben wird knapp. Lade es auf, um ohne Unterbrechung weiterzuchatten.",
-      "manage": "Plan verwalten"
+      "manage": "Abrechnung ansehen",
+      "overMinimum": "{{ overage }} über deinem Minimum von {{ min }} — wird automatisch deiner nächsten Rechnung hinzugefügt.",
+      "title": "Diesen Monat",
+      "underMinimum": "Im monatlichen Minimum von {{ min }} enthalten — nichts zusätzlich zu zahlen."
     },
     "retry": {
       "title": "Deine Nachricht wurde nicht gesendet",

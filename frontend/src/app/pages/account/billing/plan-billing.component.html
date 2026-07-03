@@ -168,6 +168,21 @@
                 })
               }}
             </div>
+            @if (paygOverageChf() > 0) {
+              <p class="pb__usage-minimum">
+                {{
+                  t('billing.plan.usage.overMinimum', {
+                    overage: chf(paygOverageChf()),
+                    min: chf(paygMinChf()),
+                  })
+                }}
+              </p>
+            } @else {
+              <cog-progress [value]="paygMinimumProgress()" [height]="6" />
+              <p class="pb__usage-minimum">
+                {{ t('billing.plan.usage.underMinimum', { min: chf(paygMinChf()) }) }}
+              </p>
+            }
           } @else {
             <div class="pb__usage-total">
               {{ usage.message_count.toLocaleString('en-CH') }}
@@ -203,7 +218,7 @@
           <p class="pb__usage-note">
             <cog-icon name="info" [size]="14" tone="text-subtlest" />
             @if (isPayg()) {
-              {{ t('billing.plan.usage.notePayg') }}
+              {{ t('billing.plan.usage.notePayg', { min: chf(paygMinChf()) }) }}
             } @else {
               {{ t('billing.plan.usage.noteUnlimited') }}
             }

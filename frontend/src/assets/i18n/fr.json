@@ -266,7 +266,7 @@
       "blurb": {
         "cancelsSoon": "Votre offre est programmée pour être annulée. Elle reste active jusqu'à la fin de la période.",
         "inactive": "Vos discussions restent chiffrées et lisibles. Choisissez une offre pour recommencer à envoyer des messages.",
-        "payg": "Achetez des crédits et utilisez-les sur n'importe quel modèle. Un minimum de CHF 15 garde votre compte actif chaque mois.",
+        "payg": "Payez ce que vous utilisez, sur n'importe quel modèle. Votre facture mensuelle est d'au moins CHF 15 ; la consommation au-delà est facturée automatiquement.",
         "trial": "Vous êtes en essai gratuit. Choisissez une offre pour continuer à envoyer une fois l'essai terminé.",
         "unlimited": "Messages illimités sur tous les modèles Cognos, avec une puissance de calcul prioritaire."
       },
@@ -337,10 +337,12 @@
         "messagesSince": "messages depuis le {{ date }}",
         "noLimit": "Sans limite",
         "noneRecorded": "Aucune utilisation enregistrée cette période pour le moment.",
-        "notePayg": "La consommation au-delà du minimum de CHF 15 est facturée selon l'utilisation de jetons et ajoutée à votre prochaine facture.",
+        "notePayg": "Votre facture mensuelle est d'au moins {{ min }}. La consommation au-delà est facturée selon l'utilisation de jetons et ajoutée automatiquement à votre prochaine facture.",
         "noteUnlimited": "Unlimited couvre une utilisation individuelle normale — le calcul est mesuré en interne uniquement pour garder le service équitable.",
         "spentSince": "dépensé depuis le {{ date }} · CHF 15 minimum",
-        "title": "Utilisation cette période"
+        "title": "Utilisation cette période",
+        "overMinimum": "{{ overage }} au-delà de votre minimum de {{ min }} seront ajoutés automatiquement à votre prochaine facture.",
+        "underMinimum": "Couvert par votre minimum mensuel de {{ min }} — rien de plus à payer ce cycle."
       }
     },
     "pricing": {
@@ -376,17 +378,17 @@
       "monthly": "Mensuel",
       "monthsFree": "2 mois offerts",
       "payg": {
-        "blurb": "Achetez des crédits et utilisez-les sur n'importe quel modèle. Un minimum de CHF 15 garde votre compte actif chaque mois.",
-        "cta": "Commencer avec des crédits",
+        "blurb": "Payez ce que vous utilisez, sur n'importe quel modèle. Votre facture mensuelle est d'au moins CHF 15 ; la consommation au-delà est facturée automatiquement.",
+        "cta": "Commencer avec Pay as you go",
         "features": {
-          "credits": "Les crédits fonctionnent sur chaque modèle et compétence",
+          "everyModel": "Fonctionne avec chaque modèle et compétence",
           "noCommitment": "Sans engagement annuel",
-          "payForUse": "Payez uniquement ce que vous utilisez réellement",
-          "rollover": "Les crédits non utilisés sont reportés tant que le compte est actif"
+          "overageAuto": "La consommation au-delà de CHF 15 est facturée automatiquement",
+          "payForUse": "Payez uniquement ce que vous utilisez réellement"
         },
-        "fine": "La consommation au-delà du minimum de CHF 15 est facturée par message.",
+        "fine": "La consommation est mesurée par message. Chaque mois, vous payez CHF 15 ou votre consommation réelle, selon le montant le plus élevé.",
         "name": "Pay as you go",
-        "priceNote": "Facturé mensuellement · rechargez à tout moment",
+        "priceNote": "Facturé mensuellement · résiliable à tout moment",
         "tag": "Flexible",
         "unit": "/ mois min."
       },
@@ -423,10 +425,10 @@
       "monthsFree": "2 mois offerts",
       "note": "Les changements prennent effet immédiatement. Garantie satisfait ou remboursé de 60 jours sur les deux offres.",
       "payg": {
-        "desc": "Achetez des crédits et utilisez-les sur n'importe quel modèle. Un minimum mensuel de CHF 15 garde votre compte actif.",
+        "desc": "Payez ce que vous utilisez, sur n'importe quel modèle. Votre facture mensuelle est d'au moins CHF 15.",
         "name": "Pay as you go",
         "per": "/ mois min.",
-        "sub": "Crédits sur chaque modèle · facturé mensuellement",
+        "sub": "Consommation mesurée sur chaque modèle · facturé mensuellement",
         "tag": "Flexible"
       },
       "perMonth": "/ mois",
@@ -934,11 +936,10 @@
       }
     },
     "payg": {
-      "balanceLabel": "Solde",
-      "detail": "{{amount}} de crédit restant",
-      "low": "Solde faible",
-      "lowWarning": "Votre solde est presque épuisé. Rechargez-le pour continuer à discuter sans interruption.",
-      "manage": "Gérer le forfait"
+      "manage": "Voir la facturation",
+      "overMinimum": "{{ overage }} au-delà de votre minimum de {{ min }} — ajouté automatiquement à votre prochaine facture.",
+      "title": "Ce mois-ci",
+      "underMinimum": "Inclus dans votre minimum mensuel de {{ min }} — rien de plus à payer."
     },
     "retry": {
       "title": "Votre message n'a pas été envoyé",

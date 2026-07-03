@@ -373,3 +373,83 @@ describe('BillingService.pollActivation', () => {
     expect(service.activating()).toBe(true);
   });
 });
+
+describe('BillingService PAYG usage vs minimum', () => {
+  const build = (opts: {
+    minCommitChf?: number;
+    usageCostsChf?: number[];
+    usageFails?: boolean;
+  }): BillingService => {
+    const getBilling = vi.fn().mockReturnValue(
+      of({
+        plan_type: 'payg',
+        status: 'active',
+        balance_chf: 0,
+        trial_seed_chf: 0,
+        payg_min_commit_chf: opts.minCommitChf,
+      }),
+    );
+    const getBillingUsage = vi.fn().mockReturnValue(
+      opts.usageFails
+        ? throwError(() => new Error('unavailable'))
+        : of({
+            period_start: '2026-06-01T00:00:00Z',
+            message_count: opts.usageCostsChf?.length ?? 0,
+            by_model: (opts.usageCostsChf ?? []).map((cost, i) => ({
+              model_id: `model-${i}`,
+              count: 1,
+              cost_chf: cost,
+            })),
+          }),
+    );
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        BillingService,
+        { provide: CognosApiService, useValue: { getBilling, getBillingUsage } },
+        { provide: ErrorService, useValue: { alert: vi.fn() } },
+        {
+          provide: PaddleService,
+          useValue: { enabled: false, checkoutCompleted$: new Subject() },
+        },
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: AuthService, useValue: { email: () => '' } },
+        {
+          provide: DOCUMENT,
+          useValue: { location: { href: '' }, defaultView: { open: vi.fn() } },
+        },
+      ],
+    });
+    return TestBed.inject(BillingService);
+  };
+
+  // Sunny: usage below the minimum is covered by it — no overage.
+  it('sums per-model usage and reports no overage below the minimum', () => {
+    const service = build({ minCommitChf: 15, usageCostsChf: [1.2, 2.22] });
+    expect(service.isPayg()).toBe(true);
+    expect(service.paygUsageChf()).toBeCloseTo(3.42);
+    expect(service.paygMinCommitChf()).toBe(15);
+    expect(service.paygOverageChf()).toBe(0);
+  });
+
+  // Sunny: anything above the minimum is the overage Paddle bills automatically.
+  it('reports the overage once usage passes the minimum', () => {
+    const service = build({ minCommitChf: 15, usageCostsChf: [20, 3.4] });
+    expect(service.paygUsageChf()).toBeCloseTo(23.4);
+    expect(service.paygOverageChf()).toBeCloseTo(8.4);
+  });
+
+  // Rainy: an older backend without the field still shows a sane minimum.
+  it('falls back to CHF 15 when the API omits the minimum', () => {
+    const service = build({ usageCostsChf: [] });
+    expect(service.paygMinCommitChf()).toBe(15);
+  });
+
+  // Rainy: a failed usage fetch leaves the total unknown rather than lying
+  // with a zero, and the overage stays zero (informational, never a gate).
+  it('keeps usage null and overage zero when the usage endpoint fails', () => {
+    const service = build({ minCommitChf: 15, usageFails: true });
+    expect(service.paygUsageChf()).toBeNull();
+    expect(service.paygOverageChf()).toBe(0);
+  });
+});
