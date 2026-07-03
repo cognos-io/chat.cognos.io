@@ -9,6 +9,7 @@ import { MARKED_EXTENSIONS, SANITIZE, provideMarkdown } from 'ngx-markdown';
 import { routes } from './app.routes';
 import { provideAppI18n } from './i18n/transloco.providers';
 import { sanitizeMarkdown } from './markdown/sanitize-markdown';
+import { provideAnalytics } from './services/analytics/analytics.providers';
 import { providePocketbase } from './services/pocketbase.service.provider';
 import { provideAppTheme } from './theme/theme.providers';
 
@@ -26,6 +27,7 @@ export const appConfig: ApplicationConfig = {
       ],
     }),
     providePocketbase(),
+    ...provideAnalytics(),
     ...provideAppI18n(),
     ...provideAppTheme(),
   ],

@@ -2,6 +2,8 @@ import { importProvidersFrom } from '@angular/core';
 
 import { Translation, TranslocoTestingModule } from '@jsverse/transloco';
 
+import { Analytics } from './app/services/analytics/analytics';
+import { NoopAnalytics } from './app/services/analytics/noop-analytics';
 import en from './assets/i18n/en.json';
 
 // Global providers applied to every unit test's TestBed (wired via the
@@ -13,6 +15,9 @@ import en from './assets/i18n/en.json';
 // real English catalog so specs that assert on visible UI text see the same
 // strings as production.
 export default [
+  // Instrumented services inject the Analytics token; every spec gets the
+  // swallow-everything implementation so no test ever emits an event.
+  { provide: Analytics, useClass: NoopAnalytics },
   importProvidersFrom(
     TranslocoTestingModule.forRoot({
       langs: { en: en as unknown as Translation },

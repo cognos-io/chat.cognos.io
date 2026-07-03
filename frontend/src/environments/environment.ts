@@ -10,6 +10,14 @@ export const environment = {
   // disables the overlay and falls back to the hosted checkout URL.
   paddleClientToken: '',
   paddleEnvironment: 'production' as 'sandbox' | 'production',
+  // Privacy-respecting product analytics (docs/specs/product-analytics.md).
+  // Enabled only in production; events are enums/booleans, never content or
+  // identifiers. Dev/e2e log to the console instead.
+  analytics: {
+    enabled: true,
+    plausibleDomain: 'app.cognos.io',
+    plausibleApiHost: 'https://plausible.io',
+  },
   // Build-time feature flags. One per not-yet-shipped settings section; the
   // settings nav hides flagged-off sections and their routes redirect to
   // /account. Flip to true to ship a section (can graduate to per-user later).
