@@ -1,6 +1,6 @@
 ---
 import Icon from './Icon.astro';
-import { SIGN_UP_URL } from '../config';
+import { signUpUrl } from '../config';
 import { localizedPath, type Lang, type Translator } from '../i18n/ui';
 
 interface Props {
@@ -48,7 +48,13 @@ const bizItems = t.raw<string[]>('audience.business.items');
               ))
             }
           </ul>
-          <a class="btn btn-lg btn-outline price-cta" href={SIGN_UP_URL}>
+          <a
+            class="btn btn-lg btn-outline price-cta"
+            href={signUpUrl('pricing_individuals')}
+            data-track="cta_click"
+            data-track-location="pricing_individuals"
+            data-track-target="signup"
+          >
             {t('audience.individuals.cta')}
           </a>
         </div>
@@ -80,7 +86,13 @@ const bizItems = t.raw<string[]>('audience.business.items');
               ))
             }
           </ul>
-          <a class="btn btn-lg price-cta price-cta--featured" href={SIGN_UP_URL}>
+          <a
+            class="btn btn-lg price-cta price-cta--featured"
+            href={signUpUrl('pricing_business')}
+            data-track="cta_click"
+            data-track-location="pricing_business"
+            data-track-target="signup"
+          >
             {t('audience.business.cta')}
           </a>
         </div>

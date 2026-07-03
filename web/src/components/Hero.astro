@@ -1,6 +1,6 @@
 ---
 import Icon from './Icon.astro';
-import { SIGN_UP_URL } from '../config';
+import { signUpUrl } from '../config';
 import type { Translator } from '../i18n/ui';
 
 interface Props {
@@ -22,7 +22,13 @@ const { t } = Astro.props;
         </h1>
         <p class="hero-lead">{t('hero.lead')}</p>
         <div class="hero-cta">
-          <a class="btn btn-primary btn-lg" href={SIGN_UP_URL}>
+          <a
+            class="btn btn-primary btn-lg"
+            href={signUpUrl('hero')}
+            data-track="cta_click"
+            data-track-location="hero"
+            data-track-target="signup"
+          >
             <Icon name="Lock" size={17} /> {t('hero.ctaPrimary')}
           </a>
           <a class="btn btn-outline btn-lg" href="#how">

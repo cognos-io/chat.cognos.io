@@ -1,6 +1,6 @@
 ---
 import Icon from './Icon.astro';
-import { SIGN_UP_URL } from '../config';
+import { signUpUrl } from '../config';
 import type { Translator } from '../i18n/ui';
 
 interface Props {
@@ -20,7 +20,13 @@ const stepIcons = ['Eraser', 'Server', 'FileLock2', 'KeyRound'] as const;
         <p class="lead-copy">
           {t('how.lead')}
         </p>
-        <a class="btn btn-primary mt-200" href={SIGN_UP_URL}>
+        <a
+          class="btn btn-primary mt-200"
+          href={signUpUrl('how_it_works')}
+          data-track="cta_click"
+          data-track-location="how_it_works"
+          data-track-target="signup"
+        >
           <Icon name="Lock" size={17} /> {t('how.cta')}
         </a>
       </div>

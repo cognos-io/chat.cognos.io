@@ -62,6 +62,8 @@ const year = new Date().getFullYear();
             hreflang={code}
             lang={code}
             aria-current={code === lang ? 'true' : undefined}
+            data-track="locale_switched"
+            data-track-to={code}
           >
             {languages[code]}
           </a>

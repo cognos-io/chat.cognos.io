@@ -1,7 +1,7 @@
 ---
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
-import { SIGN_IN_URL, SIGN_UP_URL } from '../config';
+import { SIGN_IN_URL, signUpUrl } from '../config';
 import { homeAnchor, localizedPath, type Lang, type Translator } from '../i18n/ui';
 
 interface Props {
@@ -39,8 +39,20 @@ const anchor = (hash: string) => homeAnchor(lang, path, hash);
     </div>
 
     <div class="nav-actions">
-      <a class="btn btn-outline" href={SIGN_IN_URL}>{t('nav.signIn')}</a>
-      <a class="btn btn-primary" href={SIGN_UP_URL}>
+      <a
+        class="btn btn-outline"
+        href={SIGN_IN_URL}
+        data-track="cta_click"
+        data-track-location="navbar"
+        data-track-target="signin">{t('nav.signIn')}</a
+      >
+      <a
+        class="btn btn-primary"
+        href={signUpUrl('navbar')}
+        data-track="cta_click"
+        data-track-location="navbar"
+        data-track-target="signup"
+      >
         <Icon name="Lock" size={17} /> {t('nav.cta')}
       </a>
     </div>

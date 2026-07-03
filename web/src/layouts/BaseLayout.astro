@@ -53,6 +53,23 @@ const ogLocales: Record<Lang, string> = {
     <meta name="twitter:card" content="summary" />
 
     {
+      /* Privacy-friendly analytics — production builds only. The queue shim
+         lets track() calls fire before the deferred script has loaded. */
+      import.meta.env.PROD && (
+        <>
+          <script defer data-domain="cognos.io" src="https://plausible.io/js/script.js" is:inline />
+          <script is:inline>
+            window.plausible =
+              window.plausible ||
+              function () {
+                (window.plausible.q = window.plausible.q || []).push(arguments);
+              };
+          </script>
+        </>
+      )
+    }
+
+    {
       /* hreflang alternates so search engines pair up the six locales. */
       site &&
         locales.map((code) => (
@@ -77,6 +94,23 @@ const ogLocales: Record<Lang, string> = {
     <slot />
 
     <script>
+      import { track, type EventProps, type WebAnalyticsEvent } from '../lib/analytics';
+
+      // Declarative analytics: one delegated listener picks up every element
+      // carrying data-track, with props built from its data-track-* attributes
+      // (data-track-location → location, data-track-to → to, …).
+      document.addEventListener('click', (e) => {
+        const el = (e.target as Element).closest<HTMLElement>('[data-track]');
+        if (!el?.dataset.track) return;
+        const props: EventProps = {};
+        for (const [key, value] of Object.entries(el.dataset)) {
+          if (key === 'track' || !key.startsWith('track') || value === undefined) continue;
+          const prop = key.slice('track'.length);
+          props[prop.charAt(0).toLowerCase() + prop.slice(1)] = value;
+        }
+        track(el.dataset.track as WebAnalyticsEvent, props);
+      });
+
       // Scroll-reveal + mobile nav. Progressive enhancement only — content is
       // fully visible without JS, and reveals are skipped when the user prefers
       // reduced motion.
