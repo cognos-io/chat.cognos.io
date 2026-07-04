@@ -1,0 +1,43 @@
+---
+import type { LegalBlock } from '../lib/legal';
+
+interface Props {
+  block: LegalBlock;
+}
+const { block } = Astro.props;
+---
+
+{'p' in block && <p set:html={block.p} />}
+{
+  'ul' in block && (
+    <ul>
+      {block.ul.map((item) => (
+        <li set:html={item} />
+      ))}
+    </ul>
+  )
+}
+{
+  'table' in block && (
+    <div class="text-page__table-wrap">
+      <table class="text-page__table">
+        <thead>
+          <tr>
+            {block.table.head.map((cell) => (
+              <th scope="col" set:html={cell} />
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {block.table.rows.map((row) => (
+            <tr>
+              {row.map((cell) => (
+                <td set:html={cell} />
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}

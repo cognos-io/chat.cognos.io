@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Navbar from './Navbar.astro';
 import Footer from './Footer.astro';
 import Icon from './Icon.astro';
-import { CONTACT_EMAILS } from '../config';
+import { CONTACT_EMAILS, COMPANY } from '../config';
 import { useTranslations, type Lang } from '../i18n/ui';
 
 interface Props {
@@ -88,6 +88,29 @@ const channelMeta = [
               <div>
                 <dt>{t(`${base}.hours.title`)}</dt>
                 <dd>{t(`${base}.hours.body`)}</dd>
+              </div>
+            </div>
+            <div class="contact-fact">
+              <span class="contact-fact__icon"><Icon name="Landmark" size={18} /></span>
+              <div>
+                <dt>{t(`${base}.imprint.title`)}</dt>
+                <dd>
+                  {COMPANY.legalName}<br />
+                  {
+                    COMPANY.addressLines.map((line, i) => (
+                      <>
+                        {i > 0 && <br />}
+                        {line}
+                      </>
+                    ))
+                  }
+                </dd>
+                <dd class="contact-fact__reg">
+                  {t(`${base}.imprint.uidLabel`)}{' '}
+                  <a href={COMPANY.registerUrl} target="_blank" rel="noopener noreferrer">
+                    {COMPANY.uid}
+                  </a>
+                </dd>
               </div>
             </div>
           </dl>

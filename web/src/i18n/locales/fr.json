@@ -315,40 +315,14 @@
       "metaDescription": "Comment Cognos traite vos données. Nous ne gardons aucune copie lisible de vos conversations.",
       "eyebrow": "Confidentialité",
       "title": "Politique de confidentialité",
-      "lead": "Comment nous traitons vos informations — en langage clair, la confidentialité d'abord.",
-      "placeholder": "Ceci est un espace réservé. Notre politique de confidentialité complète est en cours de finalisation et apparaîtra ici avant le lancement.",
-      "sections": [
-        {
-          "heading": "Ce que nous gardons",
-          "body": "Nous ne gardons aucune copie lisible de vos conversations. Vos messages sont verrouillés pour que vous seul puissiez les ouvrir."
-        },
-        {
-          "heading": "Ce que nous ne faisons jamais",
-          "body": "Nous n'utilisons jamais vos mots pour entraîner une IA, et nous ne vendons jamais vos données. Tout est traité en Suisse ou en Europe."
-        },
-        {
-          "heading": "Statistiques anonymes",
-          "body": "Nous utilisons des statistiques respectueuses de la vie privée pour comprendre quelles pages sont consultées et quelles fonctions sont utiles. Aucun cookie n'est déposé, rien n'est enregistré sur votre appareil et aucune donnée personnelle n'est collectée — les visites sont comptées de manière anonyme et agrégée, sur des serveurs situés en Europe. Si votre navigateur nous demande de ne pas vous suivre, nous respectons ce choix."
-        }
-      ]
+      "lead": "Comment nous traitons vos informations — en langage clair, la confidentialité d'abord."
     },
     "terms": {
       "metaTitle": "Conditions d'utilisation — Cognos",
       "metaDescription": "Les conditions d'utilisation de Cognos.",
       "eyebrow": "Conditions",
       "title": "Conditions d'utilisation",
-      "lead": "L'accord entre vous et Cognos lorsque vous utilisez le service.",
-      "placeholder": "Ceci est un espace réservé. Nos conditions d'utilisation complètes sont en cours de finalisation et apparaîtront ici avant le lancement.",
-      "sections": [
-        {
-          "heading": "Utiliser Cognos",
-          "body": "Vous pouvez utiliser Cognos à vos propres fins légales. Il vous revient de garder votre clé de compte en sécurité — elle seule peut ouvrir vos conversations."
-        },
-        {
-          "heading": "Paiements et remboursements",
-          "body": "Les offres sont facturées comme indiqué sur notre page tarifs. Pas convaincu ? Vous avez 60 jours pour être remboursé."
-        }
-      ]
+      "lead": "L'accord entre vous et Cognos lorsque vous utilisez le service."
     },
     "about": {
       "metaTitle": "À propos — Cognos",
@@ -535,6 +509,10 @@
       "hours": {
         "title": "Horaires",
         "body": "Du lundi au vendredi, 9h00–18h00 CET. Les signalements de sécurité sont surveillés en continu."
+      },
+      "imprint": {
+        "title": "Mentions légales",
+        "uidLabel": "Numéro d’entreprise"
       },
       "form": {
         "heading": "Envoyer un message",

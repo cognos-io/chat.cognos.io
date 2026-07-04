@@ -1,6 +1,8 @@
 ---
 import TextPage from './TextPage.astro';
+import LegalBlock from './LegalBlock.astro';
 import { localizedPath, useTranslations, type Lang } from '../i18n/ui';
+import type { LegalBlock as Block, LegalSection } from '../lib/legal';
 
 interface Props {
   lang: Lang;
@@ -12,11 +14,15 @@ const t = useTranslations(lang);
 const base = `pages.${page}`;
 const path = `/${page}`;
 
-interface Section {
-  heading: string;
-  body: string;
+const intro = t.raw<Block[]>(`${base}.intro`) ?? [];
+const sections = t.raw<LegalSection[]>(`${base}.sections`) ?? [];
+
+interface Fact {
+  label: string;
+  value: string;
 }
-const sections = t.raw<Section[]>(`${base}.sections`) ?? [];
+const facts = t.raw<Fact[]>(`${base}.facts`) ?? [];
+
 const legalTabs = [
   {
     label: t('pages.privacy.title'),
@@ -47,19 +53,30 @@ const navLabel = t(`${base}.eyebrow`);
   navLabel={navLabel}
   tabs={legalTabs}
   asideItems={asideItems}
+  facts={facts}
+  updatedLabel={t(`${base}.effectiveLabel`)}
+  updatedValue={t(`${base}.effectiveDate`)}
   t={t}
 >
-  <aside class="text-page__callout">
-    <strong>{t(`${base}.placeholder`)}</strong>
-  </aside>
   {
-    sections.map((s, index) => (
+    intro.length > 0 && (
+      <div class="text-page__intro">
+        {intro.map((block) => (
+          <LegalBlock block={block} />
+        ))}
+      </div>
+    )
+  }
+  {
+    sections.map((section, index) => (
       <section id={`section-${index + 1}`}>
         <h2>
           <span class="text-page__section-number">{index + 1}</span>
-          {s.heading}
+          {section.heading}
         </h2>
-        <p>{s.body}</p>
+        {section.blocks.map((block) => (
+          <LegalBlock block={block} />
+        ))}
       </section>
     ))
   }

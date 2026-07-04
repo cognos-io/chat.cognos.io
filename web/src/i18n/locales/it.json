@@ -315,40 +315,14 @@
       "metaDescription": "Come Cognos tratta i tuoi dati. Non conserviamo nessuna copia leggibile delle tue chat.",
       "eyebrow": "Privacy",
       "title": "Informativa sulla privacy",
-      "lead": "Come trattiamo le tue informazioni — in parole semplici e con la privacy al primo posto.",
-      "placeholder": "Questo è un segnaposto. La nostra informativa sulla privacy completa è in fase di finalizzazione e apparirà qui prima del lancio.",
-      "sections": [
-        {
-          "heading": "Cosa conserviamo",
-          "body": "Non conserviamo nessuna copia leggibile delle tue chat. I tuoi messaggi sono bloccati così che solo tu possa aprirli."
-        },
-        {
-          "heading": "Cosa non facciamo mai",
-          "body": "Non usiamo mai le tue parole per addestrare l'IA e non vendiamo mai i tuoi dati. Tutto viene trattato in Svizzera o in Europa."
-        },
-        {
-          "heading": "Statistiche anonime",
-          "body": "Usiamo statistiche rispettose della privacy per capire quali pagine vengono visitate e quali funzioni sono utili. Non impostano cookie, non salvano nulla sul tuo dispositivo e non raccolgono dati personali: le visite vengono contate in forma anonima e aggregata su server in Europa. Se il tuo browser ci chiede di non tracciarti, lo rispettiamo."
-        }
-      ]
+      "lead": "Come trattiamo le tue informazioni — in parole semplici e con la privacy al primo posto."
     },
     "terms": {
       "metaTitle": "Termini di servizio — Cognos",
       "metaDescription": "I termini per usare Cognos.",
       "eyebrow": "Termini",
       "title": "Termini di servizio",
-      "lead": "L'accordo tra te e Cognos quando usi il servizio.",
-      "placeholder": "Questo è un segnaposto. I nostri termini di servizio completi sono in fase di finalizzazione e appariranno qui prima del lancio.",
-      "sections": [
-        {
-          "heading": "Usare Cognos",
-          "body": "Puoi usare Cognos per i tuoi scopi leciti. Sei responsabile di custodire la tua chiave dell'account — è l'unica cosa che può aprire le tue chat."
-        },
-        {
-          "heading": "Pagamenti e rimborsi",
-          "body": "I piani vengono fatturati come descritto nella nostra pagina dei prezzi. Non fa per te? Hai 60 giorni per riavere i tuoi soldi."
-        }
-      ]
+      "lead": "L'accordo tra te e Cognos quando usi il servizio."
     },
     "about": {
       "metaTitle": "Chi siamo — Cognos",
@@ -535,6 +509,10 @@
       "hours": {
         "title": "Orari",
         "body": "Dal lunedì al venerdì, 9:00–18:00 CET. Le segnalazioni di sicurezza sono monitorate continuamente."
+      },
+      "imprint": {
+        "title": "Note legali",
+        "uidLabel": "ID azienda"
       },
       "form": {
         "heading": "Invia un messaggio",

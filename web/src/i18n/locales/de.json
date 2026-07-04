@@ -315,40 +315,14 @@
       "metaDescription": "Wie Cognos mit deinen Daten umgeht. Wir behalten keine lesbare Kopie deiner Chats.",
       "eyebrow": "Datenschutz",
       "title": "Datenschutzerklärung",
-      "lead": "Wie wir mit deinen Daten umgehen — verständlich und mit Privatsphäre zuerst.",
-      "placeholder": "Das ist ein Platzhalter. Unsere vollständige Datenschutzerklärung wird gerade fertiggestellt und erscheint hier vor dem Start.",
-      "sections": [
-        {
-          "heading": "Was wir behalten",
-          "body": "Wir behalten keine lesbare Kopie deiner Chats. Deine Nachrichten sind so gesperrt, dass nur du sie öffnen kannst."
-        },
-        {
-          "heading": "Was wir nie tun",
-          "body": "Wir nutzen deine Worte nie, um KI zu trainieren, und wir verkaufen deine Daten nie. Alles wird in der Schweiz oder in Europa verarbeitet."
-        },
-        {
-          "heading": "Anonyme Statistiken",
-          "body": "Wir nutzen datenschutzfreundliche Statistiken, um zu verstehen, welche Seiten besucht werden und welche Funktionen helfen. Dabei werden keine Cookies gesetzt, nichts auf deinem Gerät gespeichert und keine persönlichen Daten erfasst — Besuche werden anonym und gesammelt auf Servern in Europa gezählt. Wenn dein Browser uns bittet, dich nicht zu verfolgen, respektieren wir das."
-        }
-      ]
+      "lead": "Wie wir mit deinen Daten umgehen — verständlich und mit Privatsphäre zuerst."
     },
     "terms": {
       "metaTitle": "Nutzungsbedingungen — Cognos",
       "metaDescription": "Die Bedingungen für die Nutzung von Cognos.",
       "eyebrow": "Bedingungen",
       "title": "Nutzungsbedingungen",
-      "lead": "Die Vereinbarung zwischen dir und Cognos, wenn du den Dienst nutzt.",
-      "placeholder": "Das ist ein Platzhalter. Unsere vollständigen Nutzungsbedingungen werden gerade fertiggestellt und erscheinen hier vor dem Start.",
-      "sections": [
-        {
-          "heading": "Cognos nutzen",
-          "body": "Du kannst Cognos für deine eigenen rechtmässigen Zwecke nutzen. Du bist dafür verantwortlich, deinen Konto-Schlüssel sicher aufzubewahren — nur er kann deine Chats öffnen."
-        },
-        {
-          "heading": "Zahlungen & Rückerstattungen",
-          "body": "Die Tarife werden wie auf unserer Preisseite beschrieben abgerechnet. Nichts für dich? Du hast 60 Tage, um dein Geld zurückzubekommen."
-        }
-      ]
+      "lead": "Die Vereinbarung zwischen dir und Cognos, wenn du den Dienst nutzt."
     },
     "about": {
       "metaTitle": "Über uns — Cognos",
@@ -535,6 +509,10 @@
       "hours": {
         "title": "Erreichbarkeit",
         "body": "Montag–Freitag, 9:00–18:00 Uhr MEZ. Sicherheitsmeldungen werden laufend überwacht."
+      },
+      "imprint": {
+        "title": "Impressum",
+        "uidLabel": "Firmen-ID"
       },
       "form": {
         "heading": "Nachricht senden",

@@ -32,3 +32,15 @@ export const CONTACT_EMAILS = {
   security: 'security@cognos.io',
   press: 'press@cognos.io',
 } as const;
+
+// Legal entity behind Cognos, shown in the /contact imprint (legal notice) and
+// the legal pages. Same in every locale, so it lives here rather than in the
+// i18n catalogs. `uid` is the Swiss company identifier; `registerUrl` opens the
+// official commercial-register extract.
+export const COMPANY = {
+  legalName: 'Climacrux GmbH',
+  addressLines: ['St. Niklausenstrasse 96', '6047 Kastanienbaum', 'Switzerland'],
+  uid: 'CHE-372.115.477',
+  registerUrl:
+    'https://lu.chregister.ch/cr-portal/auszug/auszug.xhtml?uid=CHE-372.115.477#',
+} as const;

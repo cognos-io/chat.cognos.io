@@ -1227,6 +1227,42 @@ h1.hero-h .em {
   border-top: 1px solid var(--line);
   margin: var(--cog-space-500) 0;
 }
+/* Lead-in paragraphs, set off from the numbered sections below. */
+.text-page__intro {
+  padding-bottom: var(--cog-space-300);
+  border-bottom: 1px solid var(--line);
+}
+.text-page__intro > * + *,
+.text-page__body :where(section) > * + * {
+  margin-top: var(--cog-space-200);
+}
+/* Subprocessor table — scrolls inside its own container on narrow screens. */
+.text-page__table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--line);
+  border-radius: var(--cog-radius-md);
+}
+.text-page__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--cog-fs-body-sm);
+  line-height: var(--cog-lh-body-sm);
+}
+.text-page__table :where(th, td) {
+  padding: var(--cog-space-100) var(--cog-space-150);
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+.text-page__table :where(thead th) {
+  color: var(--ink);
+  font-weight: var(--cog-fw-semibold);
+  background: var(--sunken);
+}
+.text-page__table :where(tbody tr:last-child td) {
+  border-bottom: 0;
+}
 @media (min-width: 960px) {
   .text-page__grid {
     grid-template-columns: minmax(220px, 260px) minmax(0, 760px);
@@ -1532,6 +1568,15 @@ h1.hero-h .em {
   font-size: var(--cog-fs-body-sm);
   line-height: var(--cog-lh-body-sm);
   margin: 0;
+}
+.contact-fact__reg {
+  margin-top: var(--cog-space-075);
+}
+.contact-fact__reg a {
+  color: var(--brand-deep);
+  font-weight: var(--cog-fw-medium);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }
 
 /* The form card echoes the app's TextField language: 2px border that turns

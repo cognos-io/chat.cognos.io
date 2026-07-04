@@ -316,37 +316,1216 @@
       "eyebrow": "Privacy",
       "title": "Privacy Policy",
       "lead": "How we handle your information — in plain language, privacy first.",
-      "placeholder": "This is a placeholder. Our full privacy policy is being finalised and will appear here before launch.",
+      "effectiveLabel": "Last updated",
+      "effectiveDate": "2 July 2026",
+      "facts": [
+        {
+          "label": "Controller",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Privacy contact",
+          "value": "privacy@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Cognos is an encrypted AI chat application by <b>Climacrux GmbH</b>, St. Niklausenstrasse 96, 6047 Kastanienbaum, Switzerland."
+        },
+        {
+          "p": "We built Cognos for private, useful AI conversations. This policy explains what we collect, what we do with it, and what we deliberately do not do."
+        },
+        {
+          "p": "For privacy questions, contact us at <a href=\"mailto:privacy@cognos.io\">privacy@cognos.io</a>."
+        }
+      ],
       "sections": [
         {
-          "heading": "What we keep",
-          "body": "We keep no copy of your chats that we can read. Your messages are locked so only you can open them."
+          "heading": "The short version",
+          "blocks": [
+            {
+              "p": "Cognos stores your chat history in an encrypted form."
+            },
+            {
+              "p": "That means:"
+            },
+            {
+              "ul": [
+                "<b>Stored chat history is encrypted so Cognos cannot read it from storage.</b>",
+                "<b>Live AI requests are processed in plaintext by our backend and the selected AI provider so the AI can answer.</b>",
+                "<b>We do not use your chats to train our own models.</b>",
+                "<b>We do not sell your personal data.</b>",
+                "<b>We do not share your data for advertising.</b>",
+                "<b>We require approved AI providers not to use Cognos chats for training.</b>"
+              ]
+            },
+            {
+              "p": "This is not the same as full end-to-end encryption for the entire AI request path. Your stored history is protected, but when you send a message, that message has to be processed so the AI can respond."
+            }
+          ]
         },
         {
-          "heading": "What we never do",
-          "body": "We never use your words to train AI, and we never sell your data. Everything is handled in Switzerland or Europe."
+          "heading": "Who is responsible for your data?",
+          "blocks": [
+            {
+              "p": "The controller is:"
+            },
+            {
+              "p": "<b>Climacrux GmbH</b><br>St. Niklausenstrasse 96<br>6047 Kastanienbaum<br>Switzerland"
+            },
+            {
+              "p": "Email: <a href=\"mailto:privacy@cognos.io\">privacy@cognos.io</a>"
+            },
+            {
+              "p": "We have not appointed a Data Protection Officer. We have not confirmed an EU or UK representative. This section may be updated after legal review."
+            }
+          ]
         },
         {
-          "heading": "Anonymous statistics",
-          "body": "We use privacy-friendly analytics to understand which pages are visited and which features help. It sets no cookies, stores nothing on your device and collects no personal data — visits are counted anonymously, in aggregate, on servers in Europe. If your browser asks us not to track you, we don't."
+          "heading": "Who can use Cognos?",
+          "blocks": [
+            {
+              "p": "Cognos is intended for users aged <b>16 or older</b>, unless a different age applies under local law or after legal review."
+            },
+            {
+              "p": "Cognos is available worldwide, with a primary focus on Switzerland, the UK, Germany, France, Spain, Portugal, and Italy."
+            },
+            {
+              "p": "This policy currently covers the <b>Cognos web app</b>."
+            }
+          ]
+        },
+        {
+          "heading": "Account data",
+          "blocks": [
+            {
+              "p": "We collect the information needed to create, secure, and manage your account, such as:"
+            },
+            {
+              "ul": [
+                "email address",
+                "password hash and authentication data",
+                "preferred language, theme, model, and privacy tier",
+                "avatar icon and colour",
+                "multi-factor authentication status, if enabled",
+                "account settings and preferences",
+                "billing status and subscription references"
+              ]
+            },
+            {
+              "p": "Current sign-in is email/password. Google and Apple login may be added later. Authenticator-app MFA is supported. Passkeys are planned."
+            }
+          ]
+        },
+        {
+          "heading": "Chat data",
+          "blocks": [
+            {
+              "p": "Your chats may include:"
+            },
+            {
+              "ul": [
+                "messages and prompts",
+                "AI responses",
+                "generated content",
+                "conversation titles",
+                "summaries and memory used to make conversations work better",
+                "supported file-derived context",
+                "personas and settings",
+                "redaction mappings"
+              ]
+            },
+            {
+              "p": "Stored chat history is encrypted at rest and decrypted client-side. Cognos does not store your Account Key on our servers."
+            },
+            {
+              "p": "During a live AI request, your message is processed in plaintext by Cognos backend systems and by the selected AI provider so the AI can generate a response."
+            }
+          ]
+        },
+        {
+          "heading": "Files and attachments",
+          "blocks": [
+            {
+              "p": "You may upload supported files such as text, documents, PDFs, DOCX files, images, and code-like text."
+            },
+            {
+              "p": "Files are processed in the browser where possible for extraction, redaction, and encryption. They are encrypted before upload. File context may be sent to an AI provider when you use that file in a message."
+            },
+            {
+              "p": "We do not use uploaded files to train models."
+            },
+            {
+              "p": "We have not found current use of third-party OCR, transcription, malware scanning, or audio upload vendors. If this changes, this policy will be updated."
+            }
+          ]
+        },
+        {
+          "heading": "Billing data",
+          "blocks": [
+            {
+              "p": "Payments are handled by <b>Paddle</b>."
+            },
+            {
+              "p": "Cognos does not store full payment card details. Paddle handles payment cards, tax, checkout, and invoices."
+            },
+            {
+              "p": "Cognos may store:"
+            },
+            {
+              "ul": [
+                "Paddle customer and subscription IDs",
+                "billing status",
+                "invoice metadata",
+                "business name",
+                "VAT number",
+                "billing country",
+                "usage ledger data",
+                "limited card display details, such as brand, last four digits, or expiry, if provided by Paddle"
+              ]
+            },
+            {
+              "p": "Billing records are linked to your account, but not to your chat content."
+            }
+          ]
+        },
+        {
+          "heading": "Technical and usage data",
+          "blocks": [
+            {
+              "p": "We collect limited operational data to run, secure, and bill for the service, such as:"
+            },
+            {
+              "ul": [
+                "IP address",
+                "user agent",
+                "timestamps",
+                "routes and request status",
+                "error information",
+                "model used",
+                "provider used",
+                "privacy tier",
+                "token counts",
+                "cost and latency metadata",
+                "billing identifiers"
+              ]
+            },
+            {
+              "p": "We do <b>not</b> intentionally log prompts, completions, message content, or encryption keys."
+            },
+            {
+              "p": "Approximate region may be inferred from your IP address by infrastructure or analytics providers. We do not collect precise location."
+            }
+          ]
+        },
+        {
+          "heading": "Analytics",
+          "blocks": [
+            {
+              "p": "Cognos may use privacy-friendly product analytics, such as Plausible, to understand aggregate product usage."
+            },
+            {
+              "p": "If enabled, analytics are intended to be cookieless and not to include chat content, prompts, completions, or personal identifiers."
+            },
+            {
+              "p": "We do not use session replay, heatmaps, keystroke logging, screen recording, or advertising pixels."
+            },
+            {
+              "p": "We aim to respect Do Not Track and Global Privacy Control signals where applicable."
+            }
+          ]
+        },
+        {
+          "heading": "What we use data for",
+          "blocks": [
+            {
+              "p": "We process data to:"
+            },
+            {
+              "ul": [
+                "provide the Cognos chat service",
+                "store encrypted chat history",
+                "route AI requests to selected models and providers",
+                "manage accounts, login, and MFA",
+                "process subscriptions and billing",
+                "provide support",
+                "secure the service",
+                "prevent abuse",
+                "maintain logs needed for operations and security",
+                "improve product reliability and usability",
+                "comply with legal, tax, and accounting obligations"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Legal bases",
+          "blocks": [
+            {
+              "p": "Where GDPR-style rules apply, we rely on these legal bases:"
+            },
+            {
+              "ul": [
+                "<b>Contract:</b> to provide Cognos, manage accounts, process subscriptions, and deliver AI responses.",
+                "<b>Legitimate interests:</b> to secure the service, prevent abuse, maintain essential logs, debug issues, and improve the product.",
+                "<b>Legal obligation:</b> to keep records required for tax, accounting, and legal compliance.",
+                "<b>Consent:</b> where required, for optional marketing or non-essential analytics."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "AI providers and model routing",
+          "blocks": [
+            {
+              "p": "Cognos lets users choose models. Model availability is gated by the user’s selected privacy tier, such as Switzerland-only, EU, or global options."
+            },
+            {
+              "p": "When you send a message, Cognos routes the request to the selected or eligible AI provider. That provider processes the prompt and response so the AI can answer."
+            },
+            {
+              "p": "We do not use your chats to train our own models."
+            },
+            {
+              "p": "We require approved AI providers not to use Cognos user data for training. Exact provider retention terms depend on our contracts and provider configuration."
+            },
+            {
+              "p": "Current or expected AI infrastructure includes:"
+            },
+            {
+              "ul": [
+                "Infomaniak for Swiss-hosted models",
+                "Requesty as an EU gateway",
+                "underlying model providers or hosts, to be confirmed in the subprocessor table"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Subprocessors: who helps us run Cognos?",
+          "blocks": [
+            {
+              "p": "We use a small number of service providers to operate Cognos."
+            },
+            {
+              "p": "Some help us host the app, send emails, process payments, store encrypted backups, deliver the website, or provide AI responses. They may process personal data only for those purposes."
+            },
+            {
+              "p": "Important distinction:"
+            },
+            {
+              "ul": [
+                "hosting and backup providers mainly process encrypted stored data and technical metadata",
+                "billing providers process payment and invoice data",
+                "email providers process email addresses and email content",
+                "AI providers process plaintext prompts and responses during live AI requests so the AI can answer"
+              ]
+            },
+            {
+              "p": "We do not let service providers sell Cognos user data or use it for advertising."
+            },
+            {
+              "p": "Some providers process only encrypted data or technical metadata. AI providers are different: they process live prompts and responses in plaintext so the AI can answer. Stored chat history remains encrypted so Cognos cannot read it from storage."
+            },
+            {
+              "table": {
+                "head": [
+                  "Provider",
+                  "What they do",
+                  "What they may process",
+                  "Location",
+                  "Plaintext access?"
+                ],
+                "rows": [
+                  [
+                    "Hetzner",
+                    "Hosting",
+                    "Account data, encrypted stored data, logs, metadata",
+                    "Germany / EU",
+                    "No stored chat plaintext; may process technical metadata"
+                  ],
+                  [
+                    "Bunny.net",
+                    "CDN/DNS",
+                    "IP addresses and request metadata",
+                    "EU/global",
+                    "No chat content"
+                  ],
+                  ["BorgBase", "Backups", "Encrypted backups", "EU", "No chat content"],
+                  [
+                    "Scaleway",
+                    "Transactional email",
+                    "Email address and email metadata",
+                    "EU",
+                    "Email content only"
+                  ],
+                  [
+                    "Paddle",
+                    "Billing and subscriptions",
+                    "Billing, tax, invoice, and payment metadata",
+                    "US / EU / UK",
+                    "Billing data only"
+                  ],
+                  [
+                    "Infomaniak",
+                    "Swiss AI models",
+                    "Live prompts and responses",
+                    "Switzerland",
+                    "Yes, for live AI requests"
+                  ],
+                  [
+                    "Requesty",
+                    "AI gateway",
+                    "Live prompts, responses, model metadata",
+                    "EU / UK",
+                    "Yes, for live AI requests"
+                  ],
+                  [
+                    "AI providers via Requesty",
+                    "AI responses",
+                    "Live prompts and responses",
+                    "EU",
+                    "Yes, for live AI requests"
+                  ],
+                  [
+                    "Plausible",
+                    "Analytics, if enabled",
+                    "Aggregate usage events",
+                    "EU",
+                    "No chat content"
+                  ]
+                ]
+              }
+            },
+            {
+              "p": "We require AI providers used with Cognos not to use Cognos user data for model training. Exact retention and routing terms depend on the provider and selected privacy tier. We use contractual safeguards where required, including data processing agreements and international transfer protections."
+            }
+          ]
+        },
+        {
+          "heading": "Encryption and security",
+          "blocks": [
+            {
+              "p": "Cognos uses client-side encryption for stored chat data."
+            },
+            {
+              "p": "In practical terms:"
+            },
+            {
+              "ul": [
+                "stored chat history is encrypted at rest",
+                "stored files and attachments are encrypted at rest",
+                "conversation titles, summaries, memory, personas, attachment manifests, artifacts, and redaction mappings are encrypted at rest",
+                "your Account Key is generated client-side and is not sent to Cognos servers",
+                "private keys are encrypted client-side before backup",
+                "conversation and file keys are wrapped or sealed for authorised users",
+                "live AI requests are processed in plaintext so the AI can answer"
+              ]
+            },
+            {
+              "p": "We also use security measures such as:"
+            },
+            {
+              "ul": [
+                "TLS in transit",
+                "access controls",
+                "route authorisation",
+                "MFA support",
+                "rate limits",
+                "password lockout",
+                "hardened containers",
+                "firewall controls",
+                "backups",
+                "operational monitoring"
+              ]
+            },
+            {
+              "p": "Cognos staff should not be able to read stored chat content from the database. Staff access to production systems is restricted. Staff are not permitted to inspect plaintext live request flows except where strictly necessary and authorised for security or operational reasons."
+            },
+            {
+              "p": "Further incident response and access-control details are being finalised."
+            }
+          ]
+        },
+        {
+          "heading": "What we do not do",
+          "blocks": [
+            {
+              "p": "We do not:"
+            },
+            {
+              "ul": [
+                "sell your personal data",
+                "share your personal data for advertising",
+                "use your chats to train Cognos models",
+                "intentionally log prompts or AI completions",
+                "store full payment card details",
+                "use advertising pixels",
+                "use session replay, heatmaps, or keystroke logging",
+                "scan encrypted stored chat history for advertising or profiling"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Sharing with vendors",
+          "blocks": [
+            {
+              "p": "We use service providers to run Cognos. These vendors may process personal data only as needed to provide their services."
+            },
+            {
+              "p": "Current or planned service providers include:"
+            },
+            {
+              "ul": [
+                "Hetzner, for app/backend hosting",
+                "Bunny.net, for CDN/DNS",
+                "BorgBase, for backups",
+                "Scaleway, for transactional email",
+                "Paddle, for payments, subscriptions, tax, and invoices",
+                "Infomaniak, for Swiss AI infrastructure",
+                "Requesty, for AI gateway services",
+                "Ghost, for marketing site infrastructure",
+                "GitHub, for development infrastructure",
+                "Grafana Alloy or related tooling, for server monitoring",
+                "Plausible, if launched, for cookieless analytics"
+              ]
+            },
+            {
+              "p": "Some providers may process data outside Switzerland, the EU, or the EEA. Where required, we use appropriate safeguards such as data processing agreements and standard contractual clauses."
+            }
+          ]
+        },
+        {
+          "heading": "International transfers",
+          "blocks": [
+            {
+              "p": "Cognos is operated by a Swiss company. Core app/backend hosting is currently on Hetzner infrastructure in Falkenstein, Germany. The frontend may be served through Hetzner and Bunny.net."
+            },
+            {
+              "p": "Depending on your selected privacy tier, AI provider, billing interactions, email delivery, CDN routing, support, or infrastructure services, your data may be processed in other countries."
+            },
+            {
+              "p": "Where required, we use contractual and legal safeguards for international transfers."
+            }
+          ]
+        },
+        {
+          "heading": "Cookies and local storage",
+          "blocks": [
+            {
+              "p": "Cognos uses local storage and similar technologies for essential app functionality and preferences, such as:"
+            },
+            {
+              "ul": [
+                "language",
+                "theme",
+                "encrypted vault-session data",
+                "authentication state"
+              ]
+            },
+            {
+              "p": "Paddle may use its own cookies or storage during checkout."
+            },
+            {
+              "p": "If Plausible analytics is enabled, it is intended to be cookieless."
+            },
+            {
+              "p": "We do not currently use Google Analytics, PostHog, Meta Pixel, LinkedIn Ads, Sentry, or advertising cookies."
+            }
+          ]
+        },
+        {
+          "heading": "Public sharing",
+          "blocks": [
+            {
+              "p": "Cognos supports public chat sharing."
+            },
+            {
+              "p": "If you choose to make a chat public or share it through a public link, people with access to that link may be able to view the shared content. Only share conversations you are comfortable disclosing."
+            }
+          ]
+        },
+        {
+          "heading": "Sensitive data",
+          "blocks": [
+            {
+              "p": "Cognos is designed for private questions, but you should avoid adding unnecessary sensitive personal data, confidential business data, health data, financial data, government IDs, or secrets."
+            },
+            {
+              "p": "Encryption and redaction reduce exposure, but they do not eliminate all risk. Live AI requests still require plaintext processing by Cognos backend systems and the selected AI provider."
+            }
+          ]
+        },
+        {
+          "heading": "Data retention",
+          "blocks": [
+            {
+              "p": "We keep data only as long as needed for the purposes described in this policy."
+            },
+            {
+              "p": "Current retention approach:"
+            },
+            {
+              "ul": [
+                "account data is kept while your account exists",
+                "chat data is kept until you delete it, it expires, or your account is deleted",
+                "deleted ordinary records are snapshotted for 30 days in a deleted-record table",
+                "key material and user attachment records are excluded from that 30-day deleted-record snapshot",
+                "removed user attachments are hard-deleted",
+                "financial records may be detached from your account and retained as required for accounting, tax, or legal purposes",
+                "backups follow a rotation of hourly, daily, weekly, monthly, and yearly snapshots",
+                "yearly backups may be kept for up to 10 years"
+              ]
+            },
+            {
+              "p": "Exact retention periods for operational logs, support messages, abuse/security records, and some billing records are still being finalised."
+            }
+          ]
+        },
+        {
+          "heading": "Account deletion",
+          "blocks": [
+            {
+              "p": "You can delete your account, subject to any steps needed to cancel an active paid plan first."
+            },
+            {
+              "p": "Account deletion removes user-owned:"
+            },
+            {
+              "ul": [
+                "conversations",
+                "messages",
+                "keys",
+                "projects, where applicable",
+                "personas",
+                "preferences",
+                "vault sessions"
+              ]
+            },
+            {
+              "p": "Financial records may be retained in detached form where required for legal, tax, accounting, refund, fraud-prevention, or compliance reasons."
+            }
+          ]
+        },
+        {
+          "heading": "Your choices and rights",
+          "blocks": [
+            {
+              "p": "Depending on where you live, you may have rights to:"
+            },
+            {
+              "ul": [
+                "access your personal data",
+                "correct inaccurate data",
+                "delete your data",
+                "export your data",
+                "object to certain processing",
+                "restrict certain processing",
+                "withdraw consent",
+                "complain to a data protection authority"
+              ]
+            },
+            {
+              "p": "Cognos supports browser-side export for conversations and data. You can also delete conversations and manage account settings in the app."
+            },
+            {
+              "p": "To make a privacy request, email <a href=\"mailto:privacy@cognos.io\">privacy@cognos.io</a>."
+            },
+            {
+              "p": "We may need to verify your identity before fulfilling a request."
+            }
+          ]
+        },
+        {
+          "heading": "Emails",
+          "blocks": [
+            {
+              "p": "We send transactional emails such as:"
+            },
+            {
+              "ul": [
+                "account verification",
+                "password reset",
+                "authentication and security messages",
+                "billing and subscription messages",
+                "support replies"
+              ]
+            },
+            {
+              "p": "Marketing emails or newsletters are not currently confirmed. If we send marketing emails, you will be able to opt out."
+            }
+          ]
+        },
+        {
+          "heading": "Law enforcement and legal requests",
+          "blocks": [
+            {
+              "p": "We may disclose information if legally required."
+            },
+            {
+              "p": "If we receive a valid legal request for stored chat content, Cognos can only provide the encrypted content and metadata it has. Cognos cannot decrypt stored chat history from storage without the user’s Account Key and relevant keys."
+            },
+            {
+              "p": "Live AI request processing and metadata are different from encrypted stored history and may be subject to normal operational and legal processes."
+            }
+          ]
+        },
+        {
+          "heading": "Children",
+          "blocks": [
+            {
+              "p": "Cognos is not intended for children under 16. If you believe a child has used Cognos in violation of this policy, contact us at <a href=\"mailto:privacy@cognos.io\">privacy@cognos.io</a>."
+            }
+          ]
+        },
+        {
+          "heading": "Changes to this policy",
+          "blocks": [
+            {
+              "p": "We may update this policy as Cognos changes or as legal requirements evolve."
+            },
+            {
+              "p": "If changes are material, we will provide reasonable notice, such as through the app or by email."
+            }
+          ]
         }
       ]
     },
     "terms": {
-      "metaTitle": "Terms of Service — Cognos",
-      "metaDescription": "The terms for using Cognos.",
+      "metaTitle": "Terms of Use — Cognos",
+      "metaDescription": "The terms for using Cognos, the encrypted AI chat app from Climacrux GmbH.",
       "eyebrow": "Terms",
-      "title": "Terms of Service",
+      "title": "Terms of Use",
       "lead": "The agreement between you and Cognos when you use the service.",
-      "placeholder": "This is a placeholder. Our full terms of service are being finalised and will appear here before launch.",
-      "sections": [
+      "effectiveLabel": "Effective",
+      "effectiveDate": "2 July 2026",
+      "facts": [
         {
-          "heading": "Using Cognos",
-          "body": "You can use Cognos for your own lawful purposes. You're responsible for keeping your account key safe — it's the only thing that can open your chats."
+          "label": "Provider",
+          "value": "Climacrux GmbH"
         },
         {
-          "heading": "Payments & refunds",
-          "body": "Plans are billed as described on our pricing page. Not for you? You have 60 days to get your money back."
+          "label": "Registered",
+          "value": "CHE-372.115.477"
+        },
+        {
+          "label": "Legal contact",
+          "value": "legal@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Welcome to <b>Cognos</b>, an encrypted AI chat application provided by <b>Climacrux GmbH</b>, St. Niklausenstrasse 96, 6047 Kastanienbaum, Switzerland."
+        },
+        {
+          "p": "These Terms explain how you may use Cognos. We have tried to keep them readable. They are still a legal agreement, so please read them before using the service."
+        },
+        {
+          "p": "If you use Cognos on behalf of a company or organisation, you confirm that you have authority to accept these Terms for that organisation. In that case, “you” means both you and that organisation."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "The short version",
+          "blocks": [
+            {
+              "p": "Here are the main points:"
+            },
+            {
+              "ul": [
+                "Cognos is an AI chat app for research, writing, productivity, coding, drafting, and analysis.",
+                "You need an account to use Cognos.",
+                "Cognos stores supported chat data encrypted so that Cognos cannot read it from storage.",
+                "Cognos is <b>not</b> broadly described as “end-to-end encrypted” or “zero-knowledge”. Live AI requests are processed in plaintext by our backend and by selected AI providers so the AI can respond.",
+                "You own your prompts, chats, uploaded files, and outputs, subject to applicable law and third-party rights.",
+                "We do not use your chats to train Cognos models.",
+                "AI output can be wrong, incomplete, outdated, biased, offensive, or unsuitable.",
+                "Do not use Cognos as a replacement for professional legal, medical, financial, emergency, safety-critical, employment, insurance, credit, or similar advice.",
+                "Do not abuse the service, break the law, harm others, upload illegal content, or try to bypass our security or usage limits.",
+                "Paid plans renew automatically unless cancelled.",
+                "We may change features, models, providers, limits, prices, and plans.",
+                "The service is provided “as is” and “as available”, within the limits allowed by law."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Who we are",
+          "blocks": [
+            {
+              "p": "Cognos is provided by:"
+            },
+            {
+              "p": "<b>Climacrux GmbH</b><br>St. Niklausenstrasse 96<br>6047 Kastanienbaum<br>Switzerland"
+            },
+            {
+              "p": "Legal contact: <a href=\"mailto:legal@cognos.io\">legal@cognos.io</a>"
+            },
+            {
+              "p": "Company registration number: <a href=\"https://lu.chregister.ch/cr-portal/auszug/auszug.xhtml?uid=CHE-372.115.477#\">CHE-372.115.477</a>"
+            }
+          ]
+        },
+        {
+          "heading": "Who may use Cognos",
+          "blocks": [
+            {
+              "p": "You may use Cognos if:"
+            },
+            {
+              "ul": [
+                "you are at least <b>16 years old</b>, unless a higher age is required by law where you live;",
+                "you can legally enter into these Terms;",
+                "you are not prohibited from using Cognos under applicable law; and",
+                "your account has not been suspended or terminated by us."
+              ]
+            },
+            {
+              "p": "Cognos is available worldwide unless we say otherwise. We may restrict access in some countries or regions if required by law, compliance rules, security concerns, payment availability, provider restrictions, or operational reasons."
+            }
+          ]
+        },
+        {
+          "heading": "Accounts",
+          "blocks": [
+            {
+              "p": "You need an account to use Cognos."
+            },
+            {
+              "p": "You must provide accurate account information and keep it up to date. You are responsible for keeping your login credentials secure. Cognos currently supports email/password login and authenticator-app multi-factor authentication. Other login methods may be added later."
+            },
+            {
+              "p": "You are responsible for activity under your account, unless the activity happened because of our failure to protect systems under our control."
+            },
+            {
+              "p": "You may delete your account yourself. If you have an active paid plan, you may need to cancel it first."
+            },
+            {
+              "p": "We may suspend or terminate your account if we reasonably believe that:"
+            },
+            {
+              "ul": [
+                "you breached these Terms;",
+                "you failed to pay amounts due;",
+                "you used Cognos illegally, abusively, fraudulently, or harmfully;",
+                "your account creates a security, compliance, or operational risk;",
+                "you attempted to bypass limits, security controls, or payment systems;",
+                "your use places excessive load on our infrastructure; or",
+                "we are required or reasonably expected to act for legal, regulatory, or provider-compliance reasons."
+              ]
+            },
+            {
+              "p": "Where practical and legally permitted, we will try to give notice before suspending or terminating access. In urgent cases, we may act immediately."
+            }
+          ]
+        },
+        {
+          "heading": "What Cognos is",
+          "blocks": [
+            {
+              "p": "Cognos is an AI chat application. You can use it to generate, transform, analyse, summarise, draft, code, brainstorm, and discuss content."
+            },
+            {
+              "p": "Cognos is a productivity, research, writing, and chat tool. It is not a professional adviser, emergency service, legal service, medical device, financial adviser, insurance adviser, employment decision tool, credit decision tool, or safety-critical system."
+            },
+            {
+              "p": "You are responsible for reviewing and deciding how to use any output."
+            }
+          ]
+        },
+        {
+          "heading": "Encryption and account keys",
+          "blocks": [
+            {
+              "p": "Cognos is designed to protect stored chat history and related private data."
+            },
+            {
+              "p": "For supported data, Cognos stores content encrypted so that Cognos cannot read it from storage. This may include chat message content, chat titles, conversation memories or summaries, personas, files, attachment manifests, redaction mappings, and private-key backups."
+            },
+            {
+              "p": "Some data is not encrypted as chat content because we need it to operate the service. This may include account email and authentication data, billing data, routing and ownership metadata, model identifiers, token and cost metadata, expiry fields, and operational logs."
+            },
+            {
+              "p": "Important: Cognos should not be understood as broadly “end-to-end encrypted” or “zero-knowledge”. During live AI requests, your prompt and relevant context are processed in plaintext by the Cognos backend and by selected third-party AI providers or gateways so the AI can generate a response."
+            },
+            {
+              "p": "Climacrux cannot read stored chat history from the database. Staff access to live plaintext request content is prohibited by policy except where strictly necessary for security, abuse prevention, debugging, legal compliance, or service operation, and subject to internal controls."
+            },
+            {
+              "p": "You control your <b>Account Key</b>. Your Account Key is not sent to or stored by Cognos. Private keys may be encrypted client-side before backup."
+            },
+            {
+              "p": "If you lose your Account Key, we may not be able to recover your encrypted chat history. If you lose both your password and your Account Key, your encrypted data may also be unrecoverable."
+            },
+            {
+              "p": "Password recovery by email may be available, but it does not guarantee recovery of encrypted data."
+            }
+          ]
+        },
+        {
+          "heading": "AI providers",
+          "blocks": [
+            {
+              "p": "Cognos uses third-party AI providers, gateways, and model hosts to process live AI requests. Specific provider details are described in our Privacy Policy, so we can keep provider information accurate without changing these Terms each time."
+            },
+            {
+              "p": "By using Cognos, you understand that live prompts, relevant context, files, and outputs may be sent to selected third-party providers so they can process your request."
+            },
+            {
+              "p": "We do not allow providers to use your chats to train Cognos models. Provider-specific processing is described in our Privacy Policy and, where applicable, their own terms or data-processing commitments."
+            }
+          ]
+        },
+        {
+          "heading": "AI output",
+          "blocks": [
+            {
+              "p": "AI systems are imperfect. Outputs may be inaccurate, incomplete, outdated, biased, offensive, unsafe, or unsuitable for your situation."
+            },
+            {
+              "p": "You must not rely on Cognos as the sole basis for:"
+            },
+            {
+              "ul": [
+                "legal, medical, financial, tax, accounting, or other professional advice;",
+                "emergency decisions;",
+                "safety-critical decisions;",
+                "employment, housing, credit, insurance, healthcare, legal status, public-benefit, or similar high-impact decisions;",
+                "decisions that could seriously affect a person’s rights, safety, finances, health, or livelihood."
+              ]
+            },
+            {
+              "p": "You are responsible for checking outputs before using, publishing, sending, or relying on them."
+            }
+          ]
+        },
+        {
+          "heading": "Your content",
+          "blocks": [
+            {
+              "p": "“Your content” means prompts, chats, uploaded files, documents, images, instructions, and other material you submit to Cognos. It also includes outputs generated for you, to the extent rights in those outputs can legally belong to you."
+            },
+            {
+              "p": "You own your content, subject to applicable law and third-party rights."
+            },
+            {
+              "p": "You give Climacrux a limited licence to process your content only as needed to:"
+            },
+            {
+              "ul": [
+                "provide Cognos;",
+                "process AI requests;",
+                "store and sync your encrypted chat history;",
+                "secure, maintain, and troubleshoot the service;",
+                "prevent abuse, fraud, and misuse;",
+                "comply with law; and",
+                "improve service reliability, safety, and functionality, subject to our privacy commitments and no-training promises."
+              ]
+            },
+            {
+              "p": "You are responsible for your content. You must have the rights and permissions needed to upload, process, and use it."
+            },
+            {
+              "p": "You may share outputs publicly if lawful, but you are responsible for how you use them. Do not present AI output as human-written, professional, verified, or authoritative where doing so would be misleading."
+            }
+          ]
+        },
+        {
+          "heading": "What you may not do",
+          "blocks": [
+            {
+              "p": "Do not use Cognos to do, assist, encourage, or conceal anything unlawful, harmful, abusive, deceptive, exploitative, or infringing."
+            },
+            {
+              "p": "You must not use Cognos for:"
+            },
+            {
+              "ul": [
+                "illegal activity or illegal content;",
+                "child sexual abuse material or sexual exploitation;",
+                "terrorism, violent extremism, or serious violence;",
+                "malware, credential theft, phishing, spam, scams, or fraud;",
+                "privacy violations, doxxing, stalking, harassment, or abuse;",
+                "infringement of intellectual-property, confidentiality, or personality rights;",
+                "impersonation or deceptive activity;",
+                "bypassing safety systems, security controls, filters, limits, or billing systems;",
+                "reverse engineering, scraping, automated account creation, model extraction, or rate-limit bypassing;",
+                "security testing, probing, scanning, or attacking systems without written permission;",
+                "excessive infrastructure use or interference with service operation;",
+                "reselling, sublicensing, renting, or providing third-party access without our written permission;",
+                "using bots, automated tools, or unofficial APIs unless we expressly allow it; or",
+                "making regulated or high-impact decisions as the sole basis for outcomes affecting people."
+              ]
+            },
+            {
+              "p": "We may enforce these rules using technical controls, account limits, suspension, termination, reporting, or other measures."
+            }
+          ]
+        },
+        {
+          "heading": "Business and organisation use",
+          "blocks": [
+            {
+              "p": "If an organisation uses Cognos, that organisation is responsible for its users and for ensuring that its use of Cognos complies with law, internal policies, and these Terms."
+            },
+            {
+              "p": "Business customers may contact us if they need a separate data-processing agreement, order form, enterprise agreement, security review, or procurement documentation. We do not provide those by default unless agreed separately in writing."
+            },
+            {
+              "p": "If there is a separate written agreement between you and Climacrux, that agreement controls where it conflicts with these Terms."
+            }
+          ]
+        },
+        {
+          "heading": "Payments, plans, and renewals",
+          "blocks": [
+            {
+              "p": "Cognos is a paid product, although we may offer free trials, trial credits, free credits, beta access, or promotional access."
+            },
+            {
+              "p": "Prices, plan features, usage limits, fair-use thresholds, supported models, and billing terms are shown in the app, at checkout, or in an applicable order form. We avoid listing exact prices in these Terms because plans may change."
+            },
+            {
+              "p": "Payments may be processed by a third-party payment provider or merchant of record, such as Paddle. Payment processing, taxes, invoices, chargebacks, and some refund handling may be subject to that provider’s terms and processes."
+            },
+            {
+              "p": "Paid subscriptions renew automatically unless cancelled before renewal. You can cancel anytime, usually effective at the end of the current billing period unless the checkout page or applicable plan terms say otherwise."
+            },
+            {
+              "p": "Usage-based or pay-as-you-go plans may include minimum commitments, credits, usage ledgers, overages, or other usage rules shown in the app or checkout flow."
+            },
+            {
+              "p": "You are responsible for taxes, fees, and charges associated with your purchase, except where a payment provider or merchant of record handles them directly."
+            }
+          ]
+        },
+        {
+          "heading": "Refunds",
+          "blocks": [
+            {
+              "p": "We may offer a money-back guarantee, refund window, trial credit, or similar promotion for certain plans. Where offered, the applicable terms will be shown in the app, checkout page, plan page, or refund policy."
+            },
+            {
+              "p": "A refund or money-back guarantee may depend on fair use. We may deny refund requests where we reasonably believe there has been abuse, excessive usage, fraud, breach of these Terms, repeated refund requests, chargeback abuse, or other unfair use of the refund policy."
+            },
+            {
+              "p": "Nothing in these Terms limits mandatory refund, withdrawal, cancellation, or consumer rights that apply under the law where you live."
+            }
+          ]
+        },
+        {
+          "heading": "Changes to Cognos",
+          "blocks": [
+            {
+              "p": "Cognos will change over time."
+            },
+            {
+              "p": "We may add, remove, suspend, or change features, models, providers, prices, plans, limits, fair-use thresholds, integrations, availability, and technical requirements."
+            },
+            {
+              "p": "We may also discontinue Cognos or parts of it. Where practical, we will try to give reasonable notice before material changes or discontinuation."
+            },
+            {
+              "p": "We are not responsible for third-party AI providers changing, suspending, limiting, or discontinuing their models or services."
+            }
+          ]
+        },
+        {
+          "heading": "Service availability",
+          "blocks": [
+            {
+              "p": "Cognos is provided on an “as is” and “as available” basis."
+            },
+            {
+              "p": "We do not promise uninterrupted access, specific uptime, error-free operation, permanent storage, or continued availability of any model, feature, provider, or plan."
+            },
+            {
+              "p": "We may suspend the service for maintenance, security, provider outages, legal reasons, abuse prevention, or operational needs."
+            }
+          ]
+        },
+        {
+          "heading": "Export and deletion",
+          "blocks": [
+            {
+              "p": "Cognos may provide browser-side export tools so you can export supported data."
+            },
+            {
+              "p": "You may delete your account, subject to active billing cancellation and any technical, legal, security, or backup-retention limits."
+            },
+            {
+              "p": "Some records may be retained where needed for billing, tax, security, abuse prevention, legal compliance, dispute handling, or legitimate business records. Encrypted backups or logs may persist for a limited time before deletion according to our retention practices."
+            },
+            {
+              "p": "More details are provided in our Privacy Policy."
+            }
+          ]
+        },
+        {
+          "heading": "Our intellectual property",
+          "blocks": [
+            {
+              "p": "Climacrux GmbH owns Cognos, including the Cognos brand, software, user interface, website, documentation, service design, and related materials."
+            },
+            {
+              "p": "You may use Cognos only as intended and as allowed by these Terms."
+            },
+            {
+              "p": "You must not copy, modify, host, sell, rent, sublicense, reverse engineer, decompile, scrape, or reuse Cognos or its software, interface, documentation, branding, or service design except where allowed by law or by a separate written licence."
+            },
+            {
+              "p": "The names, logos, and trademarks of Cognos and Climacrux may not be used without our permission."
+            },
+            {
+              "p": "Third-party AI providers, model creators, and software providers retain their own rights."
+            }
+          ]
+        },
+        {
+          "heading": "Feedback",
+          "blocks": [
+            {
+              "p": "If you send us feedback, suggestions, bug reports, or ideas, you allow us to use them without restriction or compensation. This does not give us ownership of your private content."
+            }
+          ]
+        },
+        {
+          "heading": "Privacy",
+          "blocks": [
+            {
+              "p": "Our Privacy Policy explains how we collect, use, share, protect, and retain personal data."
+            },
+            {
+              "p": "Because Cognos involves encrypted storage and live AI processing, please read the Privacy Policy carefully. It describes provider use, account data, billing data, operational logs, encryption limits, and your rights."
+            },
+            {
+              "p": "If these Terms and the Privacy Policy conflict, these Terms control the contractual use of Cognos, and the Privacy Policy controls personal-data processing unless the law requires otherwise."
+            }
+          ]
+        },
+        {
+          "heading": "Warranties",
+          "blocks": [
+            {
+              "p": "To the maximum extent allowed by law, Cognos is provided without warranties of any kind, whether express, implied, or statutory."
+            },
+            {
+              "p": "We do not warrant that:"
+            },
+            {
+              "ul": [
+                "Cognos will meet your needs;",
+                "outputs will be accurate or suitable;",
+                "the service will be uninterrupted, secure, or error-free;",
+                "data will always be recoverable;",
+                "any specific model or provider will remain available; or",
+                "defects will be corrected by a specific time."
+              ]
+            },
+            {
+              "p": "Some jurisdictions do not allow certain warranty exclusions. In those cases, the exclusions apply only to the extent allowed by law."
+            }
+          ]
+        },
+        {
+          "heading": "Liability",
+          "blocks": [
+            {
+              "p": "To the maximum extent allowed by law, Climacrux GmbH is not liable for indirect, incidental, special, consequential, exemplary, or punitive damages, or for loss of profits, revenue, goodwill, data, business, opportunities, or reputation."
+            },
+            {
+              "p": "To the maximum extent allowed by law, our total liability for claims relating to Cognos is limited to the greater of:"
+            },
+            {
+              "ul": [
+                "the amount you paid to Climacrux for Cognos in the 12 months before the event giving rise to the claim; or",
+                "CHF 100 if you did not pay for Cognos during that period."
+              ]
+            },
+            {
+              "p": "Nothing in these Terms limits liability where it would be unlawful to do so, including liability for intent, gross negligence, fraud, death or personal injury caused by negligence, or mandatory consumer rights."
+            }
+          ]
+        },
+        {
+          "heading": "Indemnity",
+          "blocks": [
+            {
+              "p": "If you are using Cognos as a business or organisation, you agree to indemnify Climacrux GmbH against claims, losses, liabilities, damages, costs, and expenses arising from:"
+            },
+            {
+              "ul": [
+                "your breach of these Terms;",
+                "your unlawful use of Cognos;",
+                "your content;",
+                "your violation of intellectual-property, privacy, confidentiality, or other rights; or",
+                "misuse of Cognos by your users."
+              ]
+            },
+            {
+              "p": "For consumers, this section applies only to the extent allowed by applicable law."
+            }
+          ]
+        },
+        {
+          "heading": "Termination",
+          "blocks": [
+            {
+              "p": "You may stop using Cognos at any time."
+            },
+            {
+              "p": "We may suspend or terminate your access as described in these Terms."
+            },
+            {
+              "p": "After termination, your right to use Cognos ends. Sections that by their nature should survive will continue to apply, including sections on ownership, payments due, disclaimers, liability, indemnity, governing law, and dispute resolution."
+            }
+          ]
+        },
+        {
+          "heading": "Changes to these Terms",
+          "blocks": [
+            {
+              "p": "We may update these Terms from time to time."
+            },
+            {
+              "p": "If changes are material, we will notify you by email, in-app notice, website notice, or another reasonable method."
+            },
+            {
+              "p": "The updated Terms will apply from the effective date shown. If you continue using Cognos after that date, you accept the updated Terms, subject to mandatory consumer rights."
+            },
+            {
+              "p": "If you do not agree to the updated Terms, you must stop using Cognos and, if applicable, cancel your paid plan."
+            }
+          ]
+        },
+        {
+          "heading": "Governing law and courts",
+          "blocks": [
+            {
+              "p": "These Terms are governed by Swiss law, excluding conflict-of-law rules."
+            },
+            {
+              "p": "The courts of Lucerne, Switzerland have jurisdiction, subject to mandatory consumer-protection and jurisdiction rights that may apply where you live."
+            },
+            {
+              "p": "If you are a consumer in Switzerland, the EU/EEA, the UK, or another jurisdiction with mandatory consumer rights, nothing in these Terms removes rights that cannot legally be waived."
+            }
+          ]
+        },
+        {
+          "heading": "Contact",
+          "blocks": [
+            {
+              "p": "For legal questions about these Terms, contact:"
+            },
+            {
+              "p": "<a href=\"mailto:legal@cognos.io\">legal@cognos.io</a>"
+            },
+            {
+              "p": "<b>Climacrux GmbH</b><br>St. Niklausenstrasse 96<br>6047 Kastanienbaum<br>Switzerland"
+            }
+          ]
         }
       ]
     },
@@ -535,6 +1714,10 @@
       "hours": {
         "title": "Hours",
         "body": "Monday–Friday, 9:00–18:00 CET. Security reports are monitored continuously."
+      },
+      "imprint": {
+        "title": "Legal notice",
+        "uidLabel": "Company ID"
       },
       "form": {
         "heading": "Send a message",

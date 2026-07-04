@@ -315,40 +315,14 @@
       "metaDescription": "Como a Cognos trata os teus dados. Não guardamos nenhuma cópia legível das tuas conversas.",
       "eyebrow": "Privacidade",
       "title": "Política de privacidade",
-      "lead": "Como tratamos a tua informação — em linguagem clara e com a privacidade em primeiro lugar.",
-      "placeholder": "Isto é um marcador de posição. A nossa política de privacidade completa está a ser finalizada e aparecerá aqui antes do lançamento.",
-      "sections": [
-        {
-          "heading": "O que guardamos",
-          "body": "Não guardamos nenhuma cópia legível das tuas conversas. As tuas mensagens ficam trancadas para que só tu as possas abrir."
-        },
-        {
-          "heading": "O que nunca fazemos",
-          "body": "Nunca usamos as tuas palavras para treinar IA e nunca vendemos os teus dados. Tudo é tratado na Suíça ou na Europa."
-        },
-        {
-          "heading": "Estatísticas anónimas",
-          "body": "Utilizamos estatísticas que respeitam a privacidade para perceber que páginas são visitadas e que funções são úteis. Não instalam cookies, não guardam nada no teu dispositivo e não recolhem dados pessoais — as visitas são contadas de forma anónima e agregada, em servidores na Europa. Se o teu navegador nos pedir para não te seguirmos, respeitamos esse pedido."
-        }
-      ]
+      "lead": "Como tratamos a tua informação — em linguagem clara e com a privacidade em primeiro lugar."
     },
     "terms": {
       "metaTitle": "Termos de utilização — Cognos",
       "metaDescription": "Os termos para utilizar a Cognos.",
       "eyebrow": "Termos",
       "title": "Termos de utilização",
-      "lead": "O acordo entre ti e a Cognos quando utilizas o serviço.",
-      "placeholder": "Isto é um marcador de posição. Os nossos termos de utilização completos estão a ser finalizados e aparecerão aqui antes do lançamento.",
-      "sections": [
-        {
-          "heading": "Utilizar a Cognos",
-          "body": "Podes utilizar a Cognos para os teus próprios fins legais. És responsável por manter a tua chave de conta em segurança — é a única coisa que pode abrir as tuas conversas."
-        },
-        {
-          "heading": "Pagamentos e reembolsos",
-          "body": "Os planos são cobrados conforme descrito na nossa página de preços. Não é para ti? Tens 60 dias para receber o teu dinheiro de volta."
-        }
-      ]
+      "lead": "O acordo entre ti e a Cognos quando utilizas o serviço."
     },
     "about": {
       "metaTitle": "Sobre — Cognos",
@@ -535,6 +509,10 @@
       "hours": {
         "title": "Horário",
         "body": "De segunda a sexta, 9:00–18:00 CET. Os relatórios de segurança são monitorizados continuamente."
+      },
+      "imprint": {
+        "title": "Aviso legal",
+        "uidLabel": "ID da empresa"
       },
       "form": {
         "heading": "Envia uma mensagem",
