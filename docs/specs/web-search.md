@@ -138,6 +138,12 @@ Acceptance criteria:
 - Citation titles/snippets are rendered as plain text bindings — never through markdown/HTML.
 - Hover card is keyboard-accessible (focusable marker, Escape closes) and works on touch (tap
   toggles).
+- Hover card uses the shared `cogHoverIntent` primitive (`@cognos/ui-angular`,
+  `behaviors/hover-intent` — Storybook "Behaviors/Hover intent (safe triangle)"): an
+  Amazon-style safe-triangle funnel with a 500ms grace period lets the pointer cross the gap
+  from marker to card without the card closing, and viewport-aware placement (flip + clamp,
+  8px margin) means the card never overflows the viewport or causes a page-width jump.
+  Keyboard/touch/Escape/scroll paths bypass the funnel and stay immediate.
 - If the provider returns citations without usable indices, markers are omitted and the
   sources dropdown alone is shown — never guess anchor positions.
 - Title-less proxy-URL citations (Vertex grounding redirects with no resolvable domain) are
