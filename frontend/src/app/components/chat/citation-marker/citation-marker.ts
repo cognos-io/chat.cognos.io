@@ -13,10 +13,11 @@ import { CognosIconComponent } from '@cognos/ui-angular';
 
 import {
   Citation,
-  citationAvatarLetter,
   citationDomainLabel,
   sanitizeCitationUrl,
 } from '@app/utils/citations';
+
+import { avatarLetter } from '../message-sources/message-sources';
 
 // CitationMarker is the inline, superscript-style numbered chip inserted into an
 // answer at a citation anchor (spec docs/specs/web-search.md §4.1a). Hovering,
@@ -220,8 +221,14 @@ export class CitationMarker {
   protected readonly number = computed(() => this.index() + 1);
   protected readonly title = computed(() => (this.citation().title ?? '').trim());
   protected readonly snippet = computed(() => (this.citation().snippet ?? '').trim());
-  protected readonly domain = computed(() => citationDomainLabel(this.citation()));
-  protected readonly letter = computed(() => citationAvatarLetter(this.citation()));
+  // The proxy-redirect host is never shown; a title-less proxy source falls back
+  // to a localised generic label instead (spec §4.1a).
+  protected readonly domain = computed(
+    () =>
+      citationDomainLabel(this.citation()) ||
+      this._transloco.translate('chat.message.sources.webResult'),
+  );
+  protected readonly letter = computed(() => avatarLetter(this.domain()));
   protected readonly safeUrl = computed(() => sanitizeCitationUrl(this.citation().url));
   protected readonly openLabel = computed(() =>
     this._transloco.translate('chat.message.sources.open'),

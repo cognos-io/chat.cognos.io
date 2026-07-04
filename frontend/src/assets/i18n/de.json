@@ -799,7 +799,8 @@
         "searchedOne": "{{ count }} Quelle durchsucht",
         "searchedOther": "{{ count }} Quellen durchsucht",
         "open": "Quelle öffnen",
-        "marker": "Quelle {{ number }}: {{ domain }}"
+        "marker": "Quelle {{ number }}: {{ domain }}",
+        "webResult": "Webquelle"
       }
     },
     "models": {

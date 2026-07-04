@@ -88,7 +88,10 @@ export function citationDomainLabel(citation: Citation): string {
   if (host && !PROXY_HOSTS.includes(host)) {
     return host;
   }
-  return title || host || '';
+  // The host is a grounding-redirect proxy (or the URL is unusable): never show
+  // the proxy host as the label. Fall back to the title if any, else empty — the
+  // UI substitutes a localised generic label ("Web source").
+  return title;
 }
 
 /**

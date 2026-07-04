@@ -799,7 +799,8 @@
         "searchedOne": "{{ count }} fonte consultada",
         "searchedOther": "{{ count }} fontes consultadas",
         "open": "Abrir fonte",
-        "marker": "Fonte {{ number }}: {{ domain }}"
+        "marker": "Fonte {{ number }}: {{ domain }}",
+        "webResult": "Fonte web"
       }
     },
     "models": {

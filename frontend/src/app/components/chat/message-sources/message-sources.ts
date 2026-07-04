@@ -14,10 +14,17 @@ import { CognosIconComponent } from '@cognos/ui-angular';
 
 import {
   Citation,
-  citationAvatarLetter,
   citationDomainLabel,
   sanitizeCitationUrl,
 } from '@app/utils/citations';
+
+// avatarLetter derives the letter-avatar character from an already-resolved
+// display label (which may be the localised "Web source" fallback), so the
+// avatar matches the shown domain. Shared with CitationMarker.
+export function avatarLetter(displayLabel: string): string {
+  const match = displayLabel.match(/[a-z0-9]/i);
+  return match ? match[0].toUpperCase() : '?';
+}
 
 // A citation prepared for display: the raw source plus its derived, sanitised
 // presentation fields, so the template binds plain values only.
@@ -240,16 +247,22 @@ export class MessageSources {
 
   protected readonly open = signal(false);
 
-  protected readonly displaySources = computed<DisplayCitation[]>(() =>
-    this.citations().map((citation, index) => ({
-      number: index + 1,
-      letter: citationAvatarLetter(citation),
-      title: (citation.title ?? '').trim(),
-      domain: citationDomainLabel(citation),
-      snippet: (citation.snippet ?? '').trim(),
-      href: sanitizeCitationUrl(citation.url),
-    })),
-  );
+  protected readonly displaySources = computed<DisplayCitation[]>(() => {
+    // The proxy-redirect host is never shown; a title-less proxy source falls
+    // back to a localised generic label (spec §4.1a).
+    const fallback = this._transloco.translate('chat.message.sources.webResult');
+    return this.citations().map((citation, index) => {
+      const domain = citationDomainLabel(citation) || fallback;
+      return {
+        number: index + 1,
+        letter: avatarLetter(domain),
+        title: (citation.title ?? '').trim(),
+        domain,
+        snippet: (citation.snippet ?? '').trim(),
+        href: sanitizeCitationUrl(citation.url),
+      };
+    });
+  });
 
   protected readonly countLabel = computed(() => {
     const count = this.citations().length;

@@ -49,6 +49,14 @@ describe('citationDomainLabel', () => {
     expect(citationDomainLabel(citation)).toBe('Breaking news from Reuters');
   });
 
+  it('returns empty for a title-less proxy source (never the proxy host)', () => {
+    const citation: Citation = {
+      url: 'https://vertexaisearch.cloud.google.com/grounding-api-redirect/abc',
+    };
+    // No usable label — the UI substitutes a localised generic ("Web source").
+    expect(citationDomainLabel(citation)).toBe('');
+  });
+
   it('falls back to the URL hostname (www stripped) when the title is prose', () => {
     const citation: Citation = {
       url: 'https://www.example.com/article',
