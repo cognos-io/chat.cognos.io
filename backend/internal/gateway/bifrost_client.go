@@ -28,6 +28,35 @@ type BifrostClient struct {
 	shutdown  bifrostShutdowner
 	account   schemas.Account
 	logger    *slog.Logger
+	// resolver rewrites grounding-redirect citation URLs to their destination.
+	// Nil disables resolution (citations pass through untouched).
+	resolver GroundingResolver
+}
+
+// SetGroundingResolver installs the grounding-redirect resolver used to rewrite
+// citation URLs before they are streamed and persisted. Safe to leave unset
+// (nil disables resolution).
+func (c *BifrostClient) SetGroundingResolver(resolver GroundingResolver) {
+	if c == nil {
+		return
+	}
+	c.resolver = resolver
+}
+
+// resolveCitations rewrites grounding-redirect URLs to their destination and
+// logs only counts — never URLs. It is a no-op when no resolver is configured.
+func (c *BifrostClient) resolveCitations(ctx context.Context, citations []Citation) []Citation {
+	if c == nil || c.resolver == nil || len(citations) == 0 {
+		return citations
+	}
+	resolved, resolvedCount, failedCount := c.resolver.Resolve(ctx, citations)
+	if c.logger != nil && (resolvedCount > 0 || failedCount > 0) {
+		c.logger.Info("resolved grounding-redirect citations",
+			"resolved_count", resolvedCount,
+			"failed_count", failedCount,
+		)
+	}
+	return resolved
 }
 
 func NewBifrostClient(
@@ -96,6 +125,7 @@ func (c *BifrostClient) Complete(ctx context.Context, req CompleteRequest) (Comp
 	}
 
 	content, reasoning, citations, anchors, searchCount := extractResponsesOutput(resp.Output, annotationOffsetUnit(req.ProviderModelID))
+	citations = c.resolveCitations(ctx, citations)
 	usage := responsesUsage(resp.Usage)
 	usage.SearchCount = searchCount
 
@@ -142,20 +172,23 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 		// annotationOffsetUnit).
 		unit := annotationOffsetUnit(req.ProviderModelID)
 		citationIndex := make(map[string]int)
+		var citations []Citation
 		var visible strings.Builder
 		var pending []rawAnchor
 		searchStarted := false
 		searchCount := 0
 
-		// addCitation records a source under its URL (first occurrence wins),
-		// appending a newly-seen one to the event, and returns its stable index.
-		addCitation := func(event *CompleteStreamEvent, url, title string) int {
+		// addCitation records a source under its URL (first occurrence wins) and
+		// returns its stable index. Citations are accumulated and emitted once at
+		// the terminal event — after grounding-redirect resolution — so the SSE
+		// frames and the persisted message already carry resolved destination URLs.
+		addCitation := func(url, title string) int {
 			if idx, seen := citationIndex[url]; seen {
 				return idx
 			}
 			idx := len(citationIndex)
 			citationIndex[url] = idx
-			event.Citations = append(event.Citations, Citation{URL: url, Title: title})
+			citations = append(citations, Citation{URL: url, Title: title})
 			return idx
 		}
 
@@ -180,7 +213,7 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 			// rather than the event type. Anchors are buffered and resolved at the
 			// terminal event (offset units and full text are only known then).
 			if ann := resp.Annotation; ann != nil && ann.URL != nil && strings.TrimSpace(*ann.URL) != "" {
-				idx := addCitation(&event, *ann.URL, derefString(ann.Title))
+				idx := addCitation(*ann.URL, derefString(ann.Title))
 				if ann.StartIndex != nil && ann.EndIndex != nil {
 					pending = append(pending, rawAnchor{citationIndex: idx, start: *ann.StartIndex, end: *ann.EndIndex})
 				}
@@ -204,7 +237,7 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 					if webSearchItemIsReal(resp.Item) {
 						searchCount++
 						for _, src := range webSearchActionCitations(resp.Item) {
-							addCitation(&event, src.URL, src.Title)
+							addCitation(src.URL, src.Title)
 						}
 						event.SearchActivity = SearchActivityCompleted
 					}
@@ -224,6 +257,11 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 				}
 			case schemas.ResponsesStreamResponseTypeCompleted,
 				schemas.ResponsesStreamResponseTypeIncomplete:
+				// Resolve grounding-redirect citation URLs to their destination
+				// before emitting them, so the live stream and the sealed history
+				// both carry the durable link. Anchors reference stable indices, so
+				// URL rewrites don't disturb them.
+				event.Citations = c.resolveCitations(ctx, citations)
 				event.CitationAnchors = resolveAnchors(visible.String(), unit, pending)
 				usage := responsesUsage(nil)
 				if resp.Response != nil {

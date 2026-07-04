@@ -82,6 +82,11 @@ type APIConfig struct {
 	// (COGNOS_REQUESTY_FORCE_DISABLE_ABSENT=true). Off by default; the CLI has a
 	// per-run --force-disable-absent flag for one-off cleanups.
 	RequestyForceDisableAbsent bool `koanf:"requesty.force_disable_absent"`
+	// GatewayGroundingRedirectPrefix is the URL prefix whose citations are
+	// resolved to their destination per completion (Vertex/Gemini grounding
+	// redirects). Empty falls back to gateway.DefaultGroundingRedirectPrefix.
+	// e2e overrides it to the mock provider's origin.
+	GatewayGroundingRedirectPrefix string `koanf:"gateway.grounding_redirect_prefix"`
 	// Billing
 	BillingTrialSeedRappen             int64 `koanf:"billing.trial_seed_rappen"`
 	BillingPaygMinCommitRappen         int64 `koanf:"billing.payg_min_commit_rappen"`

@@ -298,11 +298,11 @@ func TestCompleteStreamSearchCountCountsCompletedRealSearches(t *testing.T) {
 	}
 }
 
-// When a citation has already been emitted and the stream then fails before the
-// terminal event, the gateway surfaces the citation first, then the error — it
-// never swallows work already streamed to the client. (The handler discards the
-// partial response on error; this pins the gateway half of that contract.)
-func TestCompleteStreamEmitsCitationsThenErrorOnMidStreamFailure(t *testing.T) {
+// A mid-stream failure before the terminal event surfaces the structured error
+// code and emits NO citations: citations are accumulated and only emitted (after
+// grounding-redirect resolution) at the terminal event, which the failure never
+// reaches. The handler discards the partial response on error regardless.
+func TestCompleteStreamMidStreamFailureSurfacesErrorNoCitations(t *testing.T) {
 	t.Parallel()
 
 	citations, _, _, _, err := collectStream(t, webSearchReq(),
@@ -318,8 +318,8 @@ func TestCompleteStreamEmitsCitationsThenErrorOnMidStreamFailure(t *testing.T) {
 	if !strings.Contains(err.Error(), "provider_overloaded") {
 		t.Fatalf("error = %v, want the structured code surfaced", err)
 	}
-	if len(citations) != 1 || citations[0].URL != "https://cited.example/a" {
-		t.Fatalf("citations = %#v, want the pre-error citation still emitted", citations)
+	if len(citations) != 0 {
+		t.Fatalf("citations = %#v, want none emitted before the terminal event", citations)
 	}
 }
 

@@ -208,10 +208,17 @@ func bindAppHooks(
 					"effective", bifrostLogLevel,
 				)
 			}
-			managedGateway, err = gateway.NewConfiguredBifrostClient(account, bifrostLogLevel, app.Logger())
+			bifrostClient, err := gateway.NewConfiguredBifrostClient(account, bifrostLogLevel, app.Logger())
 			if err != nil {
 				return err
 			}
+			// Resolve provider grounding-redirect citation URLs (Vertex/Gemini) to
+			// their destination per completion — no server-side cache, no click
+			// tracking, never logging a URL.
+			bifrostClient.SetGroundingResolver(
+				gateway.NewHTTPGroundingResolver(params.Config.GatewayGroundingRedirectPrefix, app.Logger()),
+			)
+			managedGateway = bifrostClient
 			catalogueService.Invalidate()
 		}
 

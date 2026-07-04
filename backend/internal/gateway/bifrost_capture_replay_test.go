@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"strings"
@@ -22,14 +23,14 @@ import (
 // replayCapture parses a captured SSE stream and runs it through CompleteStream
 // for the given provider model id, returning the normalised output plus the
 // reference visible answer (accumulated text deltas) for anchor cross-checks.
-func replayCapture(t *testing.T, path, providerModelID string) (citations []Citation, anchors []CitationAnchor, activity []string, usage *Usage, refText string) {
+// captureChunks parses a captured SSE file into stream chunks and the visible
+// answer text (accumulated deltas).
+func captureChunks(t *testing.T, path string) ([]*schemas.BifrostStreamChunk, string) {
 	t.Helper()
-
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read capture %s: %v", path, err)
 	}
-
 	var chunks []*schemas.BifrostStreamChunk
 	var textB strings.Builder
 	for _, line := range strings.Split(string(raw), "\n") {
@@ -49,13 +50,108 @@ func replayCapture(t *testing.T, path, providerModelID string) (citations []Cita
 		}
 		chunks = append(chunks, &schemas.BifrostStreamChunk{BifrostResponsesStreamResponse: &resp})
 	}
+	return chunks, textB.String()
+}
 
+func replayCapture(t *testing.T, path, providerModelID string) (citations []Citation, anchors []CitationAnchor, activity []string, usage *Usage, refText string) {
+	t.Helper()
+
+	chunks, refText := captureChunks(t, path)
 	req := CompleteRequest{ProviderID: "requesty", ProviderModelID: providerModelID, WebSearch: true}
 	citations, anchors, activity, usage, streamErr := collectStream(t, req, chunks...)
 	if streamErr != nil {
 		t.Fatalf("replay stream error = %v", streamErr)
 	}
-	return citations, anchors, activity, usage, textB.String()
+	return citations, anchors, activity, usage, refText
+}
+
+// spyResolver records the citations the gateway hands it and rewrites only
+// prefix-matching URLs, so a test can prove resolution is wired at the citation
+// finalisation point and attempted only for prefix URLs — without real HTTP.
+type spyResolver struct {
+	prefix    string
+	callCount int
+	seen      []Citation
+}
+
+func (s *spyResolver) Resolve(_ context.Context, citations []Citation) ([]Citation, int, int) {
+	s.callCount++
+	s.seen = append(s.seen, citations...)
+	out := make([]Citation, len(citations))
+	copy(out, citations)
+	resolved := 0
+	for i := range out {
+		if strings.HasPrefix(out[i].URL, s.prefix) {
+			out[i].URL += "#resolved"
+			resolved++
+		}
+	}
+	return out, resolved, 0
+}
+
+func replayCaptureCitations(t *testing.T, path, providerModelID string, resolver GroundingResolver) []Citation {
+	t.Helper()
+	chunks, _ := captureChunks(t, path)
+	stream := make(chan *schemas.BifrostStreamChunk, len(chunks)+1)
+	for _, c := range chunks {
+		stream <- c
+	}
+	close(stream)
+
+	client := NewBifrostClient(&stubBifrostRequester{respStream: stream}, nil, nil, nil)
+	client.SetGroundingResolver(resolver)
+	out, err := client.CompleteStream(context.Background(),
+		CompleteRequest{ProviderID: "requesty", ProviderModelID: providerModelID, WebSearch: true})
+	if err != nil {
+		t.Fatalf("CompleteStream() error = %v", err)
+	}
+	var citations []Citation
+	for event := range out {
+		if event.Err != nil {
+			t.Fatalf("stream error = %v", event.Err)
+		}
+		citations = append(citations, event.Citations...)
+	}
+	return citations
+}
+
+// The gateway routes accumulated citations through the resolver at the terminal
+// event, and only prefix URLs are rewritten. The Gemini capture's proxy URLs all
+// match the Vertex prefix (resolution attempted); the Azure capture's real URLs
+// do not (untouched).
+func TestCaptureReplayResolutionWiring(t *testing.T) {
+	t.Parallel()
+
+	t.Run("gemini proxy URLs are all prefix-matched", func(t *testing.T) {
+		t.Parallel()
+		spy := &spyResolver{prefix: DefaultGroundingRedirectPrefix}
+		citations := replayCaptureCitations(t, "testdata/stream-vertex-gemini.sse", "vertex/gemini-3.5-flash@eu", spy)
+		if spy.callCount != 1 {
+			t.Fatalf("resolver call count = %d, want 1 (invoked once at finalisation)", spy.callCount)
+		}
+		if len(citations) != 5 {
+			t.Fatalf("citations = %d, want 5", len(citations))
+		}
+		for i, c := range citations {
+			if !strings.HasSuffix(c.URL, "#resolved") {
+				t.Fatalf("citation[%d] = %q, want it prefix-matched and resolved", i, c.URL)
+			}
+		}
+	})
+
+	t.Run("azure real URLs are not prefix-matched", func(t *testing.T) {
+		t.Parallel()
+		spy := &spyResolver{prefix: DefaultGroundingRedirectPrefix}
+		citations := replayCaptureCitations(t, "testdata/stream-azure-gpt55.sse", "azure/openai-responses/gpt-5.5@swedencentral", spy)
+		if len(citations) != 15 {
+			t.Fatalf("citations = %d, want 15", len(citations))
+		}
+		for i, c := range citations {
+			if strings.Contains(c.URL, "#resolved") {
+				t.Fatalf("citation[%d] = %q, want it untouched (not under the Vertex prefix)", i, c.URL)
+			}
+		}
+	})
 }
 
 func TestCaptureReplayVertexGemini(t *testing.T) {
