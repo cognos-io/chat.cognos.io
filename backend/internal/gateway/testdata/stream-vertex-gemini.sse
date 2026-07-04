@@ -1,0 +1,120 @@
+event: response.created
+data: {"type":"response.created","sequence_number":0,"response":{"created_at":1783162851,"id":"4-dIao2-DPSvn_EP6snXuAk","model":"gemini-3.5-flash","object":"response","status":"in_progress","output":[]}}
+
+event: response.in_progress
+data: {"type":"response.in_progress","sequence_number":1,"response":{"created_at":1783162851,"id":"4-dIao2-DPSvn_EP6snXuAk","model":"gemini-3.5-flash","object":"response","status":"in_progress","output":[]}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","sequence_number":2,"output_index":0,"item_id":"","item":{"id":"","type":"message","role":"assistant","status":"in_progress","content":[]}}
+
+event: response.content_part.added
+data: {"type":"response.content_part.added","sequence_number":3,"item_id":"","output_index":0,"content_index":0,"part":{"type":"output_text","text":"","annotations":[]}}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":3,"item_id":"","output_index":0,"content_index":0,"delta":"SYSTEME","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":4,"item_id":"","output_index":0,"content_index":0,"delta":": Le salaire minimum légal dans le canton de Genève est de **24,5","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":5,"item_id":"","output_index":0,"content_index":0,"delta":"9 CHF brut par heure**. \n\nCe montant,","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":6,"item_id":"","output_index":0,"content_index":0,"delta":" en vigueur depuis le 1er janvier 2026, est ajusté chaque année en fonction de l'indice des prix à","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":7,"item_id":"","output_index":0,"content_index":0,"delta":" la consommation. \n\nQuelques précisions importantes :\n* **Exceptions","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":8,"item_id":"","output_index":0,"content_index":0,"delta":" sectorielles :** Un tarif dérogatoire est appliqué pour les secteurs de l'agriculture et de la floriculture, où","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":9,"item_id":"","output_index":0,"content_index":0,"delta":" le salaire minimum est fixé à **18,07 CHF brut par heure**","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":10,"item_id":"","output_index":0,"content_index":0,"delta":".\n* **Jobs d'été pour les étudiants :** Suite à une votation canton","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":11,"item_id":"","output_index":0,"content_index":0,"delta":"ale en mars 2026, une déduction de 25 % s'applique aux salaires des étudiants","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":12,"item_id":"","output_index":0,"content_index":0,"delta":" effectuant des jobs de vacances (pour un maximum de 60 jours par année civile), ce qui ramène leur","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":13,"item_id":"","output_index":0,"content_index":0,"delta":" salaire minimum à **18,44 CHF brut par heure** pour ces contrats spécifiques","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":14,"item_id":"","output_index":0,"content_index":0,"delta":".","logprobs":[],"obfuscation":""}
+
+event: response.output_text.done
+data: {"type":"response.output_text.done","sequence_number":15,"item_id":"","output_index":0,"text":"SYSTEME: Le salaire minimum légal dans le canton de Genève est de **24,59 CHF brut par heure**. \n\nCe montant, en vigueur depuis le 1er janvier 2026, est ajusté chaque année en fonction de l'indice des prix à la consommation. \n\nQuelques précisions importantes :\n* **Exceptions sectorielles :** Un tarif dérogatoire est appliqué pour les secteurs de l'agriculture et de la floriculture, où le salaire minimum est fixé à **18,07 CHF brut par heure**.\n* **Jobs d'été pour les étudiants :** Suite à une votation cantonale en mars 2026, une déduction de 25 % s'applique aux salaires des étudiants effectuant des jobs de vacances (pour un maximum de 60 jours par année civile), ce qui ramène leur salaire minimum à **18,44 CHF brut par heure** pour ces contrats spécifiques.","logprobs":null}
+
+event: response.content_part.done
+data: {"type":"response.content_part.done","sequence_number":16,"item_id":"","output_index":0,"content_index":0,"part":{"type":"output_text","text":"SYSTEME: Le salaire minimum légal dans le canton de Genève est de **24,59 CHF brut par heure**. \n\nCe montant, en vigueur depuis le 1er janvier 2026, est ajusté chaque année en fonction de l'indice des prix à la consommation. \n\nQuelques précisions importantes :\n* **Exceptions sectorielles :** Un tarif dérogatoire est appliqué pour les secteurs de l'agriculture et de la floriculture, où le salaire minimum est fixé à **18,07 CHF brut par heure**.\n* **Jobs d'été pour les étudiants :** Suite à une votation cantonale en mars 2026, une déduction de 25 % s'applique aux salaires des étudiants effectuant des jobs de vacances (pour un maximum de 60 jours par année civile), ce qui ramène leur salaire minimum à **18,44 CHF brut par heure** pour ces contrats spécifiques.","annotations":[]}}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","sequence_number":17,"output_index":0,"item_id":"","item":{"id":"","type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"SYSTEME: Le salaire minimum légal dans le canton de Genève est de **24,59 CHF brut par heure**. \n\nCe montant, en vigueur depuis le 1er janvier 2026, est ajusté chaque année en fonction de l'indice des prix à la consommation. \n\nQuelques précisions importantes :\n* **Exceptions sectorielles :** Un tarif dérogatoire est appliqué pour les secteurs de l'agriculture et de la floriculture, où le salaire minimum est fixé à **18,07 CHF brut par heure**.\n* **Jobs d'été pour les étudiants :** Suite à une votation cantonale en mars 2026, une déduction de 25 % s'applique aux salaires des étudiants effectuant des jobs de vacances (pour un maximum de 60 jours par année civile), ce qui ramène leur salaire minimum à **18,44 CHF brut par heure** pour ces contrats spécifiques.","annotations":[]}]}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","sequence_number":18,"output_index":1,"item_id":"","item":{"id":"","type":"reasoning","status":"in_progress","summary":[]}}
+
+event: response.reasoning_summary_part.added
+data: {"type":"response.reasoning_summary_part.added","sequence_number":19,"item_id":"","output_index":1,"summary_index":0,"part":{"text":"","type":"summary_text"}}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","sequence_number":20,"output_index":1,"item_id":"","item":{"id":"","type":"reasoning","encrypted_content":"AY89a18oMPy0YXdeE8aWpt0GEAT8AWTaaO0aBzU2qixigg5sntEKqHcTKra9lv1s5s8=","status":"completed","summary":[]}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","sequence_number":21,"output_index":2,"item_id":"","item":{"id":"","type":"message","role":"assistant","status":"in_progress","content":[]}}
+
+event: response.content_part.added
+data: {"type":"response.content_part.added","sequence_number":22,"item_id":"","output_index":2,"content_index":0,"part":{"type":"output_text","text":"","annotations":[]}}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.delta","sequence_number":22,"item_id":"","output_index":2,"content_index":0,"annotation_index":0,"annotation":{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQrkaSX8INEHNE_vwnwsNVodXXsneKdTwo-aRxlsF18TnIutJpB21gHNu-yCnK2mYh-YjXDLFin6JAz1sT0IXhkJBHnh5RFTH0RAExvcWur4YZwJ6BBFEUTqxqQbeyPdiS7xHNQuO8EqAufBk_cKbKbN6KRj7T92VbVRuSnv0F9HSjxefRP_Zc876N9eogwBoZtYylXBUfoFA=","title":"admin.ch","start_index":0,"end_index":96}}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.delta","sequence_number":23,"item_id":"","output_index":2,"content_index":0,"annotation_index":1,"annotation":{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEoixjAHqWNxvefOlsASG-k2PdAzvR2jeKVx5967FjuSvAHAJXUoec07UUNwrOi_rvgs57bn3XNTZCBf3rPRnZpqP8BnHY4J6EObd3it1RQ1djQEnAizUaUrov2Tne24HJIiNq40CSqwf4CG7_u9Z2ORrngNNsgFD0suryRYdtkcLXMneGgsOHnr7UD14JqgF70","title":"ge.ch","start_index":0,"end_index":96}}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.delta","sequence_number":24,"item_id":"","output_index":2,"content_index":0,"annotation_index":2,"annotation":{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQrkaSX8INEHNE_vwnwsNVodXXsneKdTwo-aRxlsF18TnIutJpB21gHNu-yCnK2mYh-YjXDLFin6JAz1sT0IXhkJBHnh5RFTH0RAExvcWur4YZwJ6BBFEUTqxqQbeyPdiS7xHNQuO8EqAufBk_cKbKbN6KRj7T92VbVRuSnv0F9HSjxefRP_Zc876N9eogwBoZtYylXBUfoFA=","title":"admin.ch","start_index":100,"end_index":228}}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.delta","sequence_number":25,"item_id":"","output_index":2,"content_index":0,"annotation_index":3,"annotation":{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEoixjAHqWNxvefOlsASG-k2PdAzvR2jeKVx5967FjuSvAHAJXUoec07UUNwrOi_rvgs57bn3XNTZCBf3rPRnZpqP8BnHY4J6EObd3it1RQ1djQEnAizUaUrov2Tne24HJIiNq40CSqwf4CG7_u9Z2ORrngNNsgFD0suryRYdtkcLXMneGgsOHnr7UD14JqgF70","title":"ge.ch","start_index":100,"end_index":228}}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.delta","sequence_number":26,"item_id":"","output_index":2,"content_index":0,"annotation_index":4,"annotation":{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHYXS1awLmN4n4wAJ4o1ChMS7gxr9sW20kLuqNDS_cdI3zKdpm-sno78QGH_O0p27C0jr7M2zYp9t2l-HF4wFQGg96SnF1R7whVrGe2Ofy17gC90kuetJjVFpvAmX6DBJ6_hqHvpayxP4wd0H59fAahFD7Ypd7iAgwB7gw9VMTzodEGCw==","title":"newlandchase.com","start_index":232,"end_index":457}}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.delta","sequence_number":27,"item_id":"","output_index":2,"content_index":0,"annotation_index":5,"annotation":{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRZjYtDVGFBi4SzOcdBNpRT1WmlVFPoDW-xvnNzM42AUH1mDjAmBiuUJjZhaD8Fph37NFnVtHJuBuuIuWdzQWgaDCV0YUvRGGf8m6gzP3e74YXJYi5bvsDyJQg8A-m6eA5jRVql6MliT83ToV8BotvzMk=","title":"fer-ge.ch","start_index":232,"end_index":457}}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.delta","sequence_number":28,"item_id":"","output_index":2,"content_index":0,"annotation_index":6,"annotation":{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnMhJUNSQ2HSxPy50b7k2TtC2ZU-70R2VJZLX1LdaQoUCl3fyL-S-zGfdXE5vtZXywpzlj1vRuNRdlCg4CG7FNtpfBCUyfXod05S7xXA5CZBkcbAz8ribViouHhED-q3369k-9Jm98PcJtHy5ll1kIRL0ammxV-_fSHFcRW_H4m2-qJD8XIClQ2RgrWCRjDlhJfSid","title":"swissinfo.ch","start_index":459,"end_index":787}}
+
+event: response.output_text.done
+data: {"type":"response.output_text.done","sequence_number":29,"item_id":"","output_index":2,"text":"","logprobs":null}
+
+event: response.content_part.done
+data: {"type":"response.content_part.done","sequence_number":30,"item_id":"","output_index":2,"content_index":0,"part":{"type":"output_text","text":"","annotations":[]}}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","sequence_number":31,"output_index":2,"item_id":"","item":{"id":"","type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"","annotations":[{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQrkaSX8INEHNE_vwnwsNVodXXsneKdTwo-aRxlsF18TnIutJpB21gHNu-yCnK2mYh-YjXDLFin6JAz1sT0IXhkJBHnh5RFTH0RAExvcWur4YZwJ6BBFEUTqxqQbeyPdiS7xHNQuO8EqAufBk_cKbKbN6KRj7T92VbVRuSnv0F9HSjxefRP_Zc876N9eogwBoZtYylXBUfoFA=","title":"admin.ch","start_index":0,"end_index":96},{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEoixjAHqWNxvefOlsASG-k2PdAzvR2jeKVx5967FjuSvAHAJXUoec07UUNwrOi_rvgs57bn3XNTZCBf3rPRnZpqP8BnHY4J6EObd3it1RQ1djQEnAizUaUrov2Tne24HJIiNq40CSqwf4CG7_u9Z2ORrngNNsgFD0suryRYdtkcLXMneGgsOHnr7UD14JqgF70","title":"ge.ch","start_index":0,"end_index":96},{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQrkaSX8INEHNE_vwnwsNVodXXsneKdTwo-aRxlsF18TnIutJpB21gHNu-yCnK2mYh-YjXDLFin6JAz1sT0IXhkJBHnh5RFTH0RAExvcWur4YZwJ6BBFEUTqxqQbeyPdiS7xHNQuO8EqAufBk_cKbKbN6KRj7T92VbVRuSnv0F9HSjxefRP_Zc876N9eogwBoZtYylXBUfoFA=","title":"admin.ch","start_index":100,"end_index":228},{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEoixjAHqWNxvefOlsASG-k2PdAzvR2jeKVx5967FjuSvAHAJXUoec07UUNwrOi_rvgs57bn3XNTZCBf3rPRnZpqP8BnHY4J6EObd3it1RQ1djQEnAizUaUrov2Tne24HJIiNq40CSqwf4CG7_u9Z2ORrngNNsgFD0suryRYdtkcLXMneGgsOHnr7UD14JqgF70","title":"ge.ch","start_index":100,"end_index":228},{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHYXS1awLmN4n4wAJ4o1ChMS7gxr9sW20kLuqNDS_cdI3zKdpm-sno78QGH_O0p27C0jr7M2zYp9t2l-HF4wFQGg96SnF1R7whVrGe2Ofy17gC90kuetJjVFpvAmX6DBJ6_hqHvpayxP4wd0H59fAahFD7Ypd7iAgwB7gw9VMTzodEGCw==","title":"newlandchase.com","start_index":232,"end_index":457},{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRZjYtDVGFBi4SzOcdBNpRT1WmlVFPoDW-xvnNzM42AUH1mDjAmBiuUJjZhaD8Fph37NFnVtHJuBuuIuWdzQWgaDCV0YUvRGGf8m6gzP3e74YXJYi5bvsDyJQg8A-m6eA5jRVql6MliT83ToV8BotvzMk=","title":"fer-ge.ch","start_index":232,"end_index":457},{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnMhJUNSQ2HSxPy50b7k2TtC2ZU-70R2VJZLX1LdaQoUCl3fyL-S-zGfdXE5vtZXywpzlj1vRuNRdlCg4CG7FNtpfBCUyfXod05S7xXA5CZBkcbAz8ribViouHhED-q3369k-9Jm98PcJtHy5ll1kIRL0ammxV-_fSHFcRW_H4m2-qJD8XIClQ2RgrWCRjDlhJfSid","title":"swissinfo.ch","start_index":459,"end_index":787}]}]}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","sequence_number":32,"output_index":3,"item_id":"","item":{"id":"","type":"web_search_call","status":"in_progress","action":{"type":"search"}}}
+
+event: response.web_search_call.in_progress
+data: {"type":"response.web_search_call.in_progress","sequence_number":33,"output_index":3,"item_id":""}
+
+event: response.web_search_call.searching
+data: {"type":"response.web_search_call.searching","sequence_number":34,"output_index":3,"item_id":""}
+
+event: response.web_search_call.completed
+data: {"type":"response.web_search_call.completed","sequence_number":35,"output_index":3,"item_id":""}
+
+event: response.output_item.done
+data: {"type":"response.output_item.added","sequence_number":36,"output_index":3,"item_id":"","item":{"id":"","type":"web_search_call","status":"completed","action":{"type":"search","queries":["Geneva minimum wage July 2026"],"query":"Geneva minimum wage July 2026","sources":[{"type":"url","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQrkaSX8INEHNE_vwnwsNVodXXsneKdTwo-aRxlsF18TnIutJpB21gHNu-yCnK2mYh-YjXDLFin6JAz1sT0IXhkJBHnh5RFTH0RAExvcWur4YZwJ6BBFEUTqxqQbeyPdiS7xHNQuO8EqAufBk_cKbKbN6KRj7T92VbVRuSnv0F9HSjxefRP_Zc876N9eogwBoZtYylXBUfoFA="},{"type":"url","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEoixjAHqWNxvefOlsASG-k2PdAzvR2jeKVx5967FjuSvAHAJXUoec07UUNwrOi_rvgs57bn3XNTZCBf3rPRnZpqP8BnHY4J6EObd3it1RQ1djQEnAizUaUrov2Tne24HJIiNq40CSqwf4CG7_u9Z2ORrngNNsgFD0suryRYdtkcLXMneGgsOHnr7UD14JqgF70"},{"type":"url","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHYXS1awLmN4n4wAJ4o1ChMS7gxr9sW20kLuqNDS_cdI3zKdpm-sno78QGH_O0p27C0jr7M2zYp9t2l-HF4wFQGg96SnF1R7whVrGe2Ofy17gC90kuetJjVFpvAmX6DBJ6_hqHvpayxP4wd0H59fAahFD7Ypd7iAgwB7gw9VMTzodEGCw=="},{"type":"url","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRZjYtDVGFBi4SzOcdBNpRT1WmlVFPoDW-xvnNzM42AUH1mDjAmBiuUJjZhaD8Fph37NFnVtHJuBuuIuWdzQWgaDCV0YUvRGGf8m6gzP3e74YXJYi5bvsDyJQg8A-m6eA5jRVql6MliT83ToV8BotvzMk="},{"type":"url","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnMhJUNSQ2HSxPy50b7k2TtC2ZU-70R2VJZLX1LdaQoUCl3fyL-S-zGfdXE5vtZXywpzlj1vRuNRdlCg4CG7FNtpfBCUyfXod05S7xXA5CZBkcbAz8ribViouHhED-q3369k-9Jm98PcJtHy5ll1kIRL0ammxV-_fSHFcRW_H4m2-qJD8XIClQ2RgrWCRjDlhJfSid"}]}}}
+
+event: response.completed
+data: {"type":"response.completed","sequence_number":37,"response":{"created_at":1783162851,"id":"4-dIao2-DPSvn_EP6snXuAk","model":"gemini-3.5-flash","object":"response","status":"completed","output":[{"id":"","type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"SYSTEME: Le salaire minimum légal dans le canton de Genève est de **24,59 CHF brut par heure**. \n\nCe montant, en vigueur depuis le 1er janvier 2026, est ajusté chaque année en fonction de l'indice des prix à la consommation. \n\nQuelques précisions importantes :\n* **Exceptions sectorielles :** Un tarif dérogatoire est appliqué pour les secteurs de l'agriculture et de la floriculture, où le salaire minimum est fixé à **18,07 CHF brut par heure**.\n* **Jobs d'été pour les étudiants :** Suite à une votation cantonale en mars 2026, une déduction de 25 % s'applique aux salaires des étudiants effectuant des jobs de vacances (pour un maximum de 60 jours par année civile), ce qui ramène leur salaire minimum à **18,44 CHF brut par heure** pour ces contrats spécifiques.","annotations":[]}]},{"id":"","type":"reasoning","encrypted_content":"AY89a18oMPy0YXdeE8aWpt0GEAT8AWTaaO0aBzU2qixigg5sntEKqHcTKra9lv1s5s8=","status":"completed","summary":[]},{"id":"","type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"","annotations":[{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQrkaSX8INEHNE_vwnwsNVodXXsneKdTwo-aRxlsF18TnIutJpB21gHNu-yCnK2mYh-YjXDLFin6JAz1sT0IXhkJBHnh5RFTH0RAExvcWur4YZwJ6BBFEUTqxqQbeyPdiS7xHNQuO8EqAufBk_cKbKbN6KRj7T92VbVRuSnv0F9HSjxefRP_Zc876N9eogwBoZtYylXBUfoFA=","title":"admin.ch","start_index":0,"end_index":96},{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEoixjAHqWNxvefOlsASG-k2PdAzvR2jeKVx5967FjuSvAHAJXUoec07UUNwrOi_rvgs57bn3XNTZCBf3rPRnZpqP8BnHY4J6EObd3it1RQ1djQEnAizUaUrov2Tne24HJIiNq40CSqwf4CG7_u9Z2ORrngNNsgFD0suryRYdtkcLXMneGgsOHnr7UD14JqgF70","title":"ge.ch","start_index":0,"end_index":96},{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQrkaSX8INEHNE_vwnwsNVodXXsneKdTwo-aRxlsF18TnIutJpB21gHNu-yCnK2mYh-YjXDLFin6JAz1sT0IXhkJBHnh5RFTH0RAExvcWur4YZwJ6BBFEUTqxqQbeyPdiS7xHNQuO8EqAufBk_cKbKbN6KRj7T92VbVRuSnv0F9HSjxefRP_Zc876N9eogwBoZtYylXBUfoFA=","title":"admin.ch","start_index":100,"end_index":228},{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEoixjAHqWNxvefOlsASG-k2PdAzvR2jeKVx5967FjuSvAHAJXUoec07UUNwrOi_rvgs57bn3XNTZCBf3rPRnZpqP8BnHY4J6EObd3it1RQ1djQEnAizUaUrov2Tne24HJIiNq40CSqwf4CG7_u9Z2ORrngNNsgFD0suryRYdtkcLXMneGgsOHnr7UD14JqgF70","title":"ge.ch","start_index":100,"end_index":228},{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHYXS1awLmN4n4wAJ4o1ChMS7gxr9sW20kLuqNDS_cdI3zKdpm-sno78QGH_O0p27C0jr7M2zYp9t2l-HF4wFQGg96SnF1R7whVrGe2Ofy17gC90kuetJjVFpvAmX6DBJ6_hqHvpayxP4wd0H59fAahFD7Ypd7iAgwB7gw9VMTzodEGCw==","title":"newlandchase.com","start_index":232,"end_index":457},{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRZjYtDVGFBi4SzOcdBNpRT1WmlVFPoDW-xvnNzM42AUH1mDjAmBiuUJjZhaD8Fph37NFnVtHJuBuuIuWdzQWgaDCV0YUvRGGf8m6gzP3e74YXJYi5bvsDyJQg8A-m6eA5jRVql6MliT83ToV8BotvzMk=","title":"fer-ge.ch","start_index":232,"end_index":457},{"type":"url_citation","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnMhJUNSQ2HSxPy50b7k2TtC2ZU-70R2VJZLX1LdaQoUCl3fyL-S-zGfdXE5vtZXywpzlj1vRuNRdlCg4CG7FNtpfBCUyfXod05S7xXA5CZBkcbAz8ribViouHhED-q3369k-9Jm98PcJtHy5ll1kIRL0ammxV-_fSHFcRW_H4m2-qJD8XIClQ2RgrWCRjDlhJfSid","title":"swissinfo.ch","start_index":459,"end_index":787}]}]},{"id":"","type":"web_search_call","status":"completed","action":{"type":"search","queries":["Geneva minimum wage July 2026"],"query":"Geneva minimum wage July 2026","sources":[{"type":"url","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQrkaSX8INEHNE_vwnwsNVodXXsneKdTwo-aRxlsF18TnIutJpB21gHNu-yCnK2mYh-YjXDLFin6JAz1sT0IXhkJBHnh5RFTH0RAExvcWur4YZwJ6BBFEUTqxqQbeyPdiS7xHNQuO8EqAufBk_cKbKbN6KRj7T92VbVRuSnv0F9HSjxefRP_Zc876N9eogwBoZtYylXBUfoFA="},{"type":"url","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEoixjAHqWNxvefOlsASG-k2PdAzvR2jeKVx5967FjuSvAHAJXUoec07UUNwrOi_rvgs57bn3XNTZCBf3rPRnZpqP8BnHY4J6EObd3it1RQ1djQEnAizUaUrov2Tne24HJIiNq40CSqwf4CG7_u9Z2ORrngNNsgFD0suryRYdtkcLXMneGgsOHnr7UD14JqgF70"},{"type":"url","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHYXS1awLmN4n4wAJ4o1ChMS7gxr9sW20kLuqNDS_cdI3zKdpm-sno78QGH_O0p27C0jr7M2zYp9t2l-HF4wFQGg96SnF1R7whVrGe2Ofy17gC90kuetJjVFpvAmX6DBJ6_hqHvpayxP4wd0H59fAahFD7Ypd7iAgwB7gw9VMTzodEGCw=="},{"type":"url","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRZjYtDVGFBi4SzOcdBNpRT1WmlVFPoDW-xvnNzM42AUH1mDjAmBiuUJjZhaD8Fph37NFnVtHJuBuuIuWdzQWgaDCV0YUvRGGf8m6gzP3e74YXJYi5bvsDyJQg8A-m6eA5jRVql6MliT83ToV8BotvzMk="},{"type":"url","url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnMhJUNSQ2HSxPy50b7k2TtC2ZU-70R2VJZLX1LdaQoUCl3fyL-S-zGfdXE5vtZXywpzlj1vRuNRdlCg4CG7FNtpfBCUyfXod05S7xXA5CZBkcbAz8ribViouHhED-q3369k-9Jm98PcJtHy5ll1kIRL0ammxV-_fSHFcRW_H4m2-qJD8XIClQ2RgrWCRjDlhJfSid"}]}}],"usage":{"input_tokens":8461,"input_tokens_details":{"cached_tokens":0},"output_tokens":249,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":8710,"cost":0.0149325}}}
+

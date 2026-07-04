@@ -1,0 +1,117 @@
+event: response.created
+data: {"type":"response.created","sequence_number":0,"response":{"created_at":1783175508,"id":"rqsty-cmpl-f7efa3cf-8ecc-4213-a4a1-5ecbc4875bc3","model":"gpt-5.5","object":"response","status":"in_progress","output":[]}}
+
+event: response.in_progress
+data: {"type":"response.in_progress","sequence_number":1,"response":{"created_at":1783175508,"id":"rqsty-cmpl-f7efa3cf-8ecc-4213-a4a1-5ecbc4875bc3","model":"gpt-5.5","object":"response","status":"in_progress","output":[]}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","sequence_number":2,"output_index":0,"item_id":"","item":{"id":"","type":"web_search_call","status":"in_progress","action":{"type":"search"}}}
+
+event: response.web_search_call.in_progress
+data: {"type":"response.web_search_call.in_progress","sequence_number":3,"output_index":0,"item_id":""}
+
+event: response.web_search_call.searching
+data: {"type":"response.web_search_call.searching","sequence_number":4,"output_index":0,"item_id":""}
+
+event: response.web_search_call.completed
+data: {"type":"response.web_search_call.completed","sequence_number":5,"output_index":0,"item_id":""}
+
+event: response.output_item.done
+data: {"type":"response.output_item.added","sequence_number":6,"output_index":0,"item_id":"","item":{"id":"","type":"web_search_call","status":"completed","action":{"type":"search","queries":["Geneva canton minimum wage 2026 current hourly minimum wage canton de Genève salaire minimum 2026"],"query":"Geneva canton minimum wage 2026 current hourly minimum wage canton de Genève salaire minimum 2026","sources":[{"type":"url","url":"https://www.mission-geneve.dfae.admin.ch/en/manual-labour-minimum-wage-in-the-canton-of-geneva"},{"type":"url","url":"https://www.ge.ch/actualite/salaire-minimum-2026-faites-vos-calculs-21-10-2025"},{"type":"url","url":"https://www.rister.ch/en/post/switzerland-minimum-wage-cantons/"},{"type":"url","url":"https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025"},{"type":"url","url":"https://checkeverything.ch/en/blog/geneva-minimum-wage-2026"},{"type":"url","url":"https://www.publicnow.com/view/85F1454FD5999751261D09E508EE84BA49495242"},{"type":"url","url":"https://checkeverything.ch/fr/blog/geneve-salaire-minimum-2026"},{"type":"url","url":"https://fer-ge.ch/web/fer-ge/w/salaire-minimum-2026"},{"type":"url","url":"https://www.fed-group.ch/en/fed-group/young-talents/minimum-wage"},{"type":"url","url":"https://gastrosuisse.ch/assets/fr/droit/notices/salaire-minimum/gastrosuisse-notice-salaires-minimaux-geneve-2026.pdf"},{"type":"url","url":"https://lohncheck.ch/en/articles/minimum-wage-geneva-2026"},{"type":"url","url":"https://www.rister.ch/post/salaire-minimum-geneve/"},{"type":"url","url":"https://www.mission-geneve.dfae.admin.ch/fr/manuel-salaire-minimum-dans-le-canton-de-geneve"},{"type":"url","url":"https://lohncheck.ch/fr/articles/salaire-minimum-geneve-2026"},{"type":"url","url":"https://newlandchase.com/geneva-announces-updated-minimum-wage-for-2026/"}]}}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","sequence_number":7,"output_index":1,"item_id":"","item":{"id":"","type":"web_search_call","status":"in_progress","action":{"type":"search"}}}
+
+event: response.web_search_call.in_progress
+data: {"type":"response.web_search_call.in_progress","sequence_number":8,"output_index":1,"item_id":""}
+
+event: response.web_search_call.searching
+data: {"type":"response.web_search_call.searching","sequence_number":9,"output_index":1,"item_id":""}
+
+event: response.web_search_call.completed
+data: {"type":"response.web_search_call.completed","sequence_number":10,"output_index":1,"item_id":""}
+
+event: response.output_item.done
+data: {"type":"response.output_item.added","sequence_number":11,"output_index":1,"item_id":"","item":{"id":"","type":"web_search_call","status":"completed","action":{"type":"search","queries":[""]}}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","sequence_number":12,"output_index":2,"item_id":"","item":{"id":"","type":"message","role":"assistant","status":"in_progress","content":[]}}
+
+event: response.content_part.added
+data: {"type":"response.content_part.added","sequence_number":13,"item_id":"","output_index":2,"content_index":0,"part":{"type":"output_text","text":"","annotations":[]}}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":13,"item_id":"","output_index":2,"content_index":0,"delta":"SYSTEME: Il n’ex","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":14,"item_id":"","output_index":2,"content_index":0,"delta":"iste **pas de salaire minimum fédéral suisse** applicable","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":15,"item_id":"","output_index":2,"content_index":0,"delta":" à tout","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":16,"item_id":"","output_index":2,"content_index":0,"delta":" le pays. En","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":17,"item_id":"","output_index":2,"content_index":0,"delta":" revanche, le **","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":18,"item_id":"","output_index":2,"content_index":0,"delta":"canton de Genève** a un salaire minimum cantonal légal","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":19,"item_id":"","output_index":2,"content_index":0,"delta":".\n\nAu **mois de juillet 2026**, le","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":20,"item_id":"","output_index":2,"content_index":0,"delta":" salaire minimum genevois est de","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":21,"item_id":"","output_index":2,"content_index":0,"delta":" **24,59 CHF brut par heure**, en","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":22,"item_id":"","output_index":2,"content_index":0,"delta":" vigueur **depuis le 1er janvier 202","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":23,"item_id":"","output_index":2,"content_index":0,"delta":"6**. Le site officiel du canton de Genève confirme ce montant","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":24,"item_id":"","output_index":2,"content_index":0,"delta":", et la Mission Genève/DFAE indique","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":25,"item_id":"","output_index":2,"content_index":0,"delta":" aussi que le salaire horaire brut est","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":26,"item_id":"","output_index":2,"content_index":0,"delta":" de **24,59 CHF** depuis","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":27,"item_id":"","output_index":2,"content_index":0,"delta":" cette date. ([ge.ch](https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025))\n\nÀ noter : Genève","logprobs":[],"obfuscation":""}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.delta","sequence_number":28,"item_id":"","output_index":2,"content_index":0,"annotation_index":0,"annotation":{"type":"url_citation","url":"https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025","title":"Le salaire minimum genevois 2026 s'établira à 24.59 fr. de l'heure","start_index":468,"end_index":569}}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":29,"item_id":"","output_index":2,"content_index":0,"delta":" prévoit un taux différent pour certains secteurs comme **l","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":30,"item_id":"","output_index":2,"content_index":0,"delta":"’agriculture et la floriculture**, fixé à **18","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":31,"item_id":"","output_index":2,"content_index":0,"delta":",07 CHF brut par heure** dès 2026. ","logprobs":[],"obfuscation":""}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":32,"item_id":"","output_index":2,"content_index":0,"delta":"([ge.ch](https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025))","logprobs":[],"obfuscation":""}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.delta","sequence_number":33,"item_id":"","output_index":2,"content_index":0,"annotation_index":1,"annotation":{"type":"url_citation","url":"https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025","title":"Le salaire minimum genevois 2026 s'établira à 24.59 fr. de l'heure","start_index":727,"end_index":828}}
+
+event: response.output_text.done
+data: {"type":"response.output_text.done","sequence_number":34,"item_id":"","output_index":2,"text":"SYSTEME: Il n’existe **pas de salaire minimum fédéral suisse** applicable à tout le pays. En revanche, le **canton de Genève** a un salaire minimum cantonal légal.\n\nAu **mois de juillet 2026**, le salaire minimum genevois est de **24,59 CHF brut par heure**, en vigueur **depuis le 1er janvier 2026**. Le site officiel du canton de Genève confirme ce montant, et la Mission Genève/DFAE indique aussi que le salaire horaire brut est de **24,59 CHF** depuis cette date. ([ge.ch](https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025))\n\nÀ noter : Genève prévoit un taux différent pour certains secteurs comme **l’agriculture et la floriculture**, fixé à **18,07 CHF brut par heure** dès 2026. ([ge.ch](https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025))","logprobs":null}
+
+event: response.content_part.done
+data: {"type":"response.content_part.done","sequence_number":35,"item_id":"","output_index":2,"content_index":0,"part":{"type":"output_text","text":"SYSTEME: Il n’existe **pas de salaire minimum fédéral suisse** applicable à tout le pays. En revanche, le **canton de Genève** a un salaire minimum cantonal légal.\n\nAu **mois de juillet 2026**, le salaire minimum genevois est de **24,59 CHF brut par heure**, en vigueur **depuis le 1er janvier 2026**. Le site officiel du canton de Genève confirme ce montant, et la Mission Genève/DFAE indique aussi que le salaire horaire brut est de **24,59 CHF** depuis cette date. ([ge.ch](https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025))\n\nÀ noter : Genève prévoit un taux différent pour certains secteurs comme **l’agriculture et la floriculture**, fixé à **18,07 CHF brut par heure** dès 2026. ([ge.ch](https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025))","annotations":[]}}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","sequence_number":36,"output_index":2,"item_id":"","item":{"id":"","type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"SYSTEME: Il n’existe **pas de salaire minimum fédéral suisse** applicable à tout le pays. En revanche, le **canton de Genève** a un salaire minimum cantonal légal.\n\nAu **mois de juillet 2026**, le salaire minimum genevois est de **24,59 CHF brut par heure**, en vigueur **depuis le 1er janvier 2026**. Le site officiel du canton de Genève confirme ce montant, et la Mission Genève/DFAE indique aussi que le salaire horaire brut est de **24,59 CHF** depuis cette date. ([ge.ch](https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025))\n\nÀ noter : Genève prévoit un taux différent pour certains secteurs comme **l’agriculture et la floriculture**, fixé à **18,07 CHF brut par heure** dès 2026. ([ge.ch](https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025))","annotations":[{"type":"url_citation","url":"https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025","title":"Le salaire minimum genevois 2026 s'établira à 24.59 fr. de l'heure","start_index":468,"end_index":569},{"type":"url_citation","url":"https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025","title":"Le salaire minimum genevois 2026 s'établira à 24.59 fr. de l'heure","start_index":727,"end_index":828}]}]}}
+
+event: response.completed
+data: {"type":"response.completed","sequence_number":37,"response":{"created_at":1783175508,"id":"rqsty-cmpl-f7efa3cf-8ecc-4213-a4a1-5ecbc4875bc3","model":"gpt-5.5","object":"response","status":"completed","output":[{"id":"","type":"web_search_call","status":"completed","action":{"type":"search","queries":["Geneva canton minimum wage 2026 current hourly minimum wage canton de Genève salaire minimum 2026"],"query":"Geneva canton minimum wage 2026 current hourly minimum wage canton de Genève salaire minimum 2026","sources":[{"type":"url","url":"https://www.mission-geneve.dfae.admin.ch/en/manual-labour-minimum-wage-in-the-canton-of-geneva"},{"type":"url","url":"https://www.ge.ch/actualite/salaire-minimum-2026-faites-vos-calculs-21-10-2025"},{"type":"url","url":"https://www.rister.ch/en/post/switzerland-minimum-wage-cantons/"},{"type":"url","url":"https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025"},{"type":"url","url":"https://checkeverything.ch/en/blog/geneva-minimum-wage-2026"},{"type":"url","url":"https://www.publicnow.com/view/85F1454FD5999751261D09E508EE84BA49495242"},{"type":"url","url":"https://checkeverything.ch/fr/blog/geneve-salaire-minimum-2026"},{"type":"url","url":"https://fer-ge.ch/web/fer-ge/w/salaire-minimum-2026"},{"type":"url","url":"https://www.fed-group.ch/en/fed-group/young-talents/minimum-wage"},{"type":"url","url":"https://gastrosuisse.ch/assets/fr/droit/notices/salaire-minimum/gastrosuisse-notice-salaires-minimaux-geneve-2026.pdf"},{"type":"url","url":"https://lohncheck.ch/en/articles/minimum-wage-geneva-2026"},{"type":"url","url":"https://www.rister.ch/post/salaire-minimum-geneve/"},{"type":"url","url":"https://www.mission-geneve.dfae.admin.ch/fr/manuel-salaire-minimum-dans-le-canton-de-geneve"},{"type":"url","url":"https://lohncheck.ch/fr/articles/salaire-minimum-geneve-2026"},{"type":"url","url":"https://newlandchase.com/geneva-announces-updated-minimum-wage-for-2026/"}]}},{"id":"","type":"web_search_call","status":"completed","action":{"type":"search","queries":[""]}},{"id":"","type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"SYSTEME: Il n’existe **pas de salaire minimum fédéral suisse** applicable à tout le pays. En revanche, le **canton de Genève** a un salaire minimum cantonal légal.\n\nAu **mois de juillet 2026**, le salaire minimum genevois est de **24,59 CHF brut par heure**, en vigueur **depuis le 1er janvier 2026**. Le site officiel du canton de Genève confirme ce montant, et la Mission Genève/DFAE indique aussi que le salaire horaire brut est de **24,59 CHF** depuis cette date. ([ge.ch](https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025))\n\nÀ noter : Genève prévoit un taux différent pour certains secteurs comme **l’agriculture et la floriculture**, fixé à **18,07 CHF brut par heure** dès 2026. ([ge.ch](https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025))","annotations":[{"type":"url_citation","url":"https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025","title":"Le salaire minimum genevois 2026 s'établira à 24.59 fr. de l'heure","start_index":468,"end_index":569},{"type":"url_citation","url":"https://www.ge.ch/actualite/salaire-minimum-genevois-2026-etablira-2459-fr-heure-1-10-2025","title":"Le salaire minimum genevois 2026 s'établira à 24.59 fr. de l'heure","start_index":727,"end_index":828}]}]}],"usage":{"input_tokens":10404,"input_tokens_details":{"cached_tokens":0},"output_tokens":477,"output_tokens_details":{"reasoning_tokens":280},"total_tokens":10881,"cost":0.06633}}}
+
