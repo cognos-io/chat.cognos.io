@@ -91,6 +91,16 @@ const maxSystemPromptChars = 20000
 // any other provider.
 const requestyProviderID = "requesty"
 
+// webSearchEnabledForModel is the server-side web-search gate. Web search is
+// opt-out — nil (omitted) or an explicit true requests it — but it only ever
+// reaches the provider for a search-capable, Requesty-routed model. Any other
+// model silently drops the tool (never a 400), so switching to a non-capable
+// model mid-conversation degrades gracefully (spec §4.3, §5.2).
+func webSearchEnabledForModel(reqWebSearch *bool, model catalogue.Model) bool {
+	requested := reqWebSearch == nil || *reqWebSearch
+	return requested && model.SupportsWebSearch && model.ProviderID == requestyProviderID
+}
+
 // maxContextSummaryChars bounds the injected compaction summary independently of
 // the system prompt so a long summary cannot be used to blow the prompt budget.
 const maxContextSummaryChars = 12000
@@ -373,8 +383,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		// mid-conversation degrades gracefully (spec §4.3, §5.2). Computed here,
 		// before the billing gate below, so the pre-call estimate can add a
 		// worst-case search fee.
-		webSearchRequested := req.WebSearch == nil || *req.WebSearch
-		enableWebSearch := webSearchRequested && model.SupportsWebSearch && model.ProviderID == requestyProviderID
+		enableWebSearch := webSearchEnabledForModel(req.WebSearch, model)
 
 		// Image attachments require a vision-capable model. The UI gates this, but
 		// enforce server-side too (capability bypass + clear error).
