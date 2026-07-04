@@ -18,6 +18,7 @@ import {
   isLongContextModel,
   isLowCostModel,
   isReasoningModel,
+  isWebSearchModel,
   matchesQuickFilter,
   modelMatchesSearch,
   modelStrengthPills,
@@ -520,6 +521,18 @@ describe('modelStrengthPills', () => {
     expect(modelStrengthPills(lowCostSwiss)).not.toContain('lowCost');
     expect(modelStrengthPills(lowCostSwiss)).not.toContain('private');
   });
+
+  it.each([
+    [true, true],
+    [false, false],
+  ])(
+    'includes the webSearch pill iff supportsWebSearch is %s',
+    (supportsWebSearch, expected) => {
+      const model = makeModel({ supportsWebSearch });
+      expect(isWebSearchModel(model)).toBe(expected);
+      expect(modelStrengthPills(model).includes('webSearch')).toBe(expected);
+    },
+  );
 });
 
 describe('addRecentModel', () => {
