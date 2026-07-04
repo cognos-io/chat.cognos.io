@@ -132,6 +132,83 @@ func TestRequestySyncNeverDisablesOnEmptyFetchEvenForced(t *testing.T) {
 	}
 }
 
+// A model whose supports_web_search flag was previously true gets downgraded
+// to false on the next sync when Requesty reports it outside the EU — the
+// flag must never survive non-EU-hosted serving (spec Decision 2), even if
+// Requesty itself still reports the model as search-capable.
+func TestRequestySyncForcesWebSearchOffOutsideEU(t *testing.T) {
+	t.Parallel()
+	app := setupTestApp(t)
+
+	enabled := enabledRequestyModels(t, app)
+	if len(enabled) == 0 {
+		t.Fatalf("need >=1 enabled requesty model")
+	}
+
+	target := enabled[0]
+	target.Set("supports_web_search", true)
+	if err := app.Save(target); err != nil {
+		t.Fatalf("seed supports_web_search=true: %v", err)
+	}
+
+	fetcher := stubFetcher{models: []requestysync.RequestyModel{
+		{
+			ID:                target.GetString("provider_model_id"),
+			SupportsWebSearch: true, // Requesty still says capable...
+			Geolocation:       "us", // ...but not EU-hosted.
+		},
+	}}
+
+	if _, err := requestysync.NewService(app, fetcher, nil).Run(context.Background(), requestysync.SyncOptions{}); err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+
+	got, err := app.FindRecordById("ai_models", target.Id)
+	if err != nil {
+		t.Fatalf("reload model: %v", err)
+	}
+	if got.GetBool("supports_web_search") {
+		t.Fatal("supports_web_search should be downgraded to false outside the EU")
+	}
+}
+
+// The mirror case: an EU-hosted, search-capable model keeps the flag on.
+func TestRequestySyncKeepsWebSearchForEUHostedModel(t *testing.T) {
+	t.Parallel()
+	app := setupTestApp(t)
+
+	enabled := enabledRequestyModels(t, app)
+	if len(enabled) == 0 {
+		t.Fatalf("need >=1 enabled requesty model")
+	}
+
+	target := enabled[0]
+	target.Set("supports_web_search", false)
+	if err := app.Save(target); err != nil {
+		t.Fatalf("seed supports_web_search=false: %v", err)
+	}
+
+	fetcher := stubFetcher{models: []requestysync.RequestyModel{
+		{
+			ID:                target.GetString("provider_model_id"),
+			SupportsWebSearch: true,
+			Geolocation:       "eu",
+		},
+	}}
+
+	if _, err := requestysync.NewService(app, fetcher, nil).Run(context.Background(), requestysync.SyncOptions{}); err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+
+	got, err := app.FindRecordById("ai_models", target.Id)
+	if err != nil {
+		t.Fatalf("reload model: %v", err)
+	}
+	if !got.GetBool("supports_web_search") {
+		t.Fatal("supports_web_search should be enabled for an EU-hosted, search-capable model")
+	}
+}
+
 type stubFetcher struct {
 	models []requestysync.RequestyModel
 }

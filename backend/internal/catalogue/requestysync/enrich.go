@@ -46,6 +46,17 @@ func reasoningEffortsFor(model RequestyModel) ([]string, string) {
 	return standardReasoningEfforts, standardDefaultReasoningEffort
 }
 
+// supportsWebSearchFor forces the web-search capability off unless Requesty
+// reports the model as EU-hosted (spec Decision 2 — data residency: search
+// stays inside the EU boundary). This is an exact string match on the flat
+// geolocation field, deliberately not an id-suffix regex — curated ids and
+// Requesty's serving region can diverge (see NormalizeID's "@region"
+// stripping), so geolocation is the only field that reliably reflects where
+// the model actually runs.
+func supportsWebSearchFor(model RequestyModel) bool {
+	return model.SupportsWebSearch && model.Geolocation == "eu"
+}
+
 // perMillion converts a per-token price to per-million-tokens (our stored unit).
 func perMillion(perToken float64) float64 {
 	return perToken * 1_000_000

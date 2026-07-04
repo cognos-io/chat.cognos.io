@@ -71,6 +71,41 @@ func TestImageGenerationEnabledRequiresFlagAndTransport(t *testing.T) {
 	}
 }
 
+// supports_web_search must only survive EU-hosted serving (spec Decision 2):
+// exact "eu" geolocation keeps it, everything else forces it off, regardless
+// of what Requesty reports for SupportsWebSearch itself.
+func TestSupportsWebSearchForRequiresExactEUGeolocation(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		supports    bool
+		geolocation string
+		want        bool
+	}{
+		{"eu is kept", true, "eu", true},
+		{"global is forced false", true, "global", false},
+		{"us is forced false", true, "us", false},
+		{"uk is forced false", true, "uk", false},
+		{"ap is forced false", true, "ap", false},
+		{"sg is forced false", true, "sg", false},
+		{"empty geolocation is forced false", true, "", false},
+		{"missing geolocation field (zero value) is forced false", true, "", false},
+		{"case mismatch is forced false (exact match only)", true, "EU", false},
+		{"eu but Requesty itself says unsupported stays false", false, "eu", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := supportsWebSearchFor(RequestyModel{SupportsWebSearch: tt.supports, Geolocation: tt.geolocation})
+			if got != tt.want {
+				t.Errorf("supportsWebSearchFor(supports=%v, geolocation=%q) = %v, want %v",
+					tt.supports, tt.geolocation, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestPerMillionConvertsPerTokenPrice(t *testing.T) {
 	t.Parallel()
 	if got := perMillion(0.0000011); got != 1.1 {
