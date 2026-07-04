@@ -1,8 +1,8 @@
 # Document Generation — client-side DOCX / PDF / XLSX
 
-- **Version:** 0.2
-- **Status:** Draft (analysis + design; nothing implemented) — library choice, facade rule and
-  activation UX settled (§18 Decisions 4–10)
+- **Version:** 0.3
+- **Status:** Phases 0–1 implemented ("Download as…" DOCX/PDF/MD, commits
+  `89242715`…`654c1c64`); Phases 2–5 designed, not built. Decisions 4–11 settled (§18).
 - **Stack:** Angular frontend (Web Worker rendering pipeline), Go backend (Phase 4 tool loop only)
 - **Scope:** Letting the model produce downloadable documents (DOCX, PDF, XLSX; PPTX deferred)
   inside encrypted conversations, with all file bytes produced, encrypted and delivered
