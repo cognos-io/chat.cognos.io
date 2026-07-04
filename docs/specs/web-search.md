@@ -139,7 +139,12 @@ Acceptance criteria:
   toggles).
 - If the provider returns citations without usable indices, markers are omitted and the
   sources dropdown alone is shown — never guess anchor positions.
-- Styled entirely with `--cog-*` design tokens.
+- Title-less proxy-URL citations (Vertex grounding redirects with no resolvable domain) are
+  shown with a localised "Web source" fallback label — never the proxy hostname, and never
+  dropped (anchor indices are stable, dropping would desync them).
+- Styled entirely with `--cog-*` design tokens. (Implementation note: `external-link`/`globe`
+  aren't in the `@cognos/ui` Lucide registry, so the registered `link` icon is used — adding
+  the richer icons to `packages/ui` is a cosmetic follow-up.)
 
 ### 4.2 Opt-out control (P0)
 
@@ -445,8 +450,8 @@ per house rules. New keys:
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | 0     | Spike: live Responses API call through Requesty per EU provider family — citation/anchor shapes, search events, Infomaniak translation                  | ✅ (Gemini verified; Anthropic/Azure legs blocked on org allowlist → launch gates) |
 | 1     | Backend: gateway migration to `ResponsesStreamRequest` (regression-clean), web_search tool flag, `web_search` SSE event, encrypted citation persistence | ✅ commits `3c3146c8`…`70b69cc7`                                                   |
-| 2     | Frontend: composer toggle (auto-on/opt-out), stream handling, sources dropdown + inline markers + hover card, pill, i18n ×6                             | ☐                                                                                  |
-| 3     | Billing: `search_count` metering, floor fee, pre-call estimate; catalogue EU-only enforcement                                                           | ☐                                                                                  |
+| 2     | Frontend: composer toggle (auto-on/opt-out), stream handling, sources dropdown + inline markers + hover card, pill, i18n ×6                             | ✅ commits `4afa21b5`…`14982ed6`                                                   |
+| 3     | Billing: `search_count` metering, floor fee, pre-call estimate; catalogue EU-only enforcement                                                           | ✅ commits `e2de4951`, `957740f1` (+ ledger column follow-up)                      |
 | 4     | Launch gates: Requesty cost-pass-through confirmation, strict EU enforcement enabled, security-model.md updated                                         | ☐                                                                                  |
 
 **Rollout-order caveat:** `requestysync` already refreshes `supports_web_search` from Requesty
