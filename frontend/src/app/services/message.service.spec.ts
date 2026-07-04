@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
+import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
 import { ROOT_PARENT_KEY, selectActiveBranch } from '@cognos/ui-angular';
@@ -643,6 +644,83 @@ describe('stream completion helpers', () => {
     expect(assistant?.decryptedData.citation_anchors).toEqual([
       { citation: 0, start: 0, end: 5 },
     ]);
+  });
+
+  it('drops accumulated citations when the assistant placeholder is removed on error (pinned)', () => {
+    // On a retryable stream error MessageService calls
+    // removeStreamingAssistantMessage, so citations accumulated on the
+    // placeholder are discarded — they only survive via the encrypted `complete`
+    // carry-over path. Pins that an errored turn is NOT a partial-with-sources.
+    const streaming = applyCompletionWebSearchStreamDelta(
+      applyCompletionStreamDelta(
+        [userMessage()],
+        { requestId: 'req-1', content: 'hello' },
+        'partial answer',
+        'persona-1',
+        'model-1',
+      ),
+      { requestId: 'req-1', content: 'hello' },
+      { type: 'web_search', citations: [{ url: 'https://a.com' }] },
+      'persona-1',
+      'model-1',
+    );
+    expect(
+      streaming.find((m) => m.record_id === streamingAssistantMessageId('req-1'))
+        ?.decryptedData.citations,
+    ).toHaveLength(1);
+
+    const kept = removeStreamingAssistantMessage(streaming, 'req-1');
+    expect(kept.map((m) => m.record_id)).toEqual(['req-1']); // only the user message
+    expect(kept.some((m) => (m.decryptedData.citations?.length ?? 0) > 0)).toBe(false);
+  });
+
+  it('accumulates incremental citations with stable, deduped indices (property)', () => {
+    const urlPool = [
+      'https://a.com',
+      'https://b.com',
+      'https://c.com',
+      'https://d.com',
+    ];
+    const frameArb = fc
+      .array(fc.constantFrom(...urlPool), { maxLength: 4 })
+      .map((urls) => ({
+        type: 'web_search' as const,
+        citations: urls.map((url) => ({ url })),
+      }));
+
+    fc.assert(
+      fc.property(fc.array(frameArb, { maxLength: 8 }), (frames) => {
+        let messages: Message[] = [userMessage()];
+        const snapshots: string[][] = [];
+        for (const frame of frames) {
+          messages = applyCompletionWebSearchStreamDelta(
+            messages,
+            { requestId: 'req-1', content: 'hello' },
+            frame,
+            'persona-1',
+            'model-1',
+          );
+          const urls = (
+            messages.find((m) => m.record_id === streamingAssistantMessageId('req-1'))
+              ?.decryptedData.citations ?? []
+          ).map((c) => c.url);
+          snapshots.push(urls);
+        }
+
+        const final = snapshots.length ? snapshots[snapshots.length - 1] : [];
+        // Duplicate-free by URL.
+        expect(new Set(final).size).toBe(final.length);
+        // Accumulated order == first-appearance order across all frames.
+        expect(final).toEqual([
+          ...new Set(frames.flatMap((f) => f.citations.map((c) => c.url))),
+        ]);
+        // Stable indices: every earlier snapshot is a prefix of the final list,
+        // so an index once assigned never resolves to a different URL later.
+        for (const snap of snapshots) {
+          expect(final.slice(0, snap.length)).toEqual(snap);
+        }
+      }),
+    );
   });
 
   it('keeps the user message but drops the assistant placeholder on a retryable failure', () => {
