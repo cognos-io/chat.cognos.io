@@ -116,6 +116,42 @@ export async function markUserVerifiedByEmail(email: string): Promise<void> {
 }
 
 /**
+ * Toggle an ai_models capability flag via the e2e superuser. Used to enable
+ * `supports_web_search` on a model at runtime (the flag ships off in prod until
+ * the whole feature lands). The backend busts its catalogue cache on ai_models
+ * updates, so the change takes effect on the next completion.
+ */
+export async function setModelFlag(
+  modelId: string,
+  field: string,
+  value: boolean,
+): Promise<void> {
+  const setup = await request.newContext(API_CONTEXT_OPTIONS);
+  const superToken = await superuserToken(setup);
+  const headers = { Authorization: `Bearer ${superToken}` };
+
+  const listed = await setup.get('/api/collections/ai_models/records', {
+    params: { filter: `model_id='${modelId}'`, perPage: 1 },
+    headers,
+  });
+  expect(listed.ok(), `find model: ${listed.status()} ${await listed.text()}`).toBe(
+    true,
+  );
+  const body = (await listed.json()) as { items: { id: string }[] };
+  expect(body.items.length, `model ${modelId} not found`).toBe(1);
+
+  const patched = await setup.patch(
+    `/api/collections/ai_models/records/${body.items[0].id}`,
+    { data: { [field]: value }, headers },
+  );
+  expect(patched.ok(), `patch model: ${patched.status()} ${await patched.text()}`).toBe(
+    true,
+  );
+
+  await setup.dispose();
+}
+
+/**
  * Register a fresh PocketBase user and return an authenticated request
  * context. The participant / billing / models API surface doesn't require
  * the user's encryption material to be set up — the UI tests cover that

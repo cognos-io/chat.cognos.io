@@ -53,6 +53,11 @@ type completeRequest struct {
 	// provider. It is wrapped as untrusted material, counted by the billing gate,
 	// and never persisted or logged.
 	AttachmentContexts []completionAttachmentInput `json:"attachment_contexts,omitempty"`
+	// WebSearch opts this turn into provider-native web search. Nil (omitted)
+	// means the default: on for search-capable models. The client sends an
+	// explicit false to opt out. The tool is only ever sent for search-capable,
+	// Requesty-routed models; it is silently dropped otherwise (never a 400).
+	WebSearch *bool `json:"web_search,omitempty"`
 }
 
 // completionAttachmentInput is one attachment's transient provider context. It
@@ -80,6 +85,11 @@ type completionAttachmentInput struct {
 type CompleteRequest = completeRequest
 
 const maxSystemPromptChars = 20000
+
+// requestyProviderID is the only provider that speaks the web-search tool
+// (via its Responses API). The web-search gate never enables the tool for
+// any other provider.
+const requestyProviderID = "requesty"
 
 // maxContextSummaryChars bounds the injected compaction summary independently of
 // the system prompt so a long summary cannot be used to blow the prompt budget.
@@ -182,10 +192,33 @@ func completionStopKey(ownerID string, requestID string) string {
 }
 
 type completeStreamResponse struct {
-	Type     string            `json:"type"`
-	Delta    string            `json:"delta,omitempty"`
-	Message  string            `json:"message,omitempty"`
-	Response *completeResponse `json:"response,omitempty"`
+	Type    string `json:"type"`
+	Delta   string `json:"delta,omitempty"`
+	Message string `json:"message,omitempty"`
+	// Citations, CitationAnchors and SearchActivity ride on `web_search` events.
+	// They are INCREMENTAL: Citations are only the sources newly seen on this
+	// event (de-duplicated by URL upstream, with stable indices), CitationAnchors
+	// reference those stable indices, and SearchActivity reports a lifecycle
+	// transition. The client accumulates them across the stream.
+	Citations       []citationPayload       `json:"citations,omitempty"`
+	CitationAnchors []citationAnchorPayload `json:"citation_anchors,omitempty"`
+	SearchActivity  string                  `json:"search_activity,omitempty"`
+	Response        *completeResponse       `json:"response,omitempty"`
+}
+
+// citationPayload and citationAnchorPayload are the wire shapes for citations on
+// the `web_search` SSE event and in the persisted MessageRecordData — identical
+// keys so the client parses one shape for both.
+type citationPayload struct {
+	URL     string `json:"url"`
+	Title   string `json:"title,omitempty"`
+	Snippet string `json:"snippet,omitempty"`
+}
+
+type citationAnchorPayload struct {
+	Citation int `json:"citation"`
+	Start    int `json:"start"`
+	End      int `json:"end"`
 }
 
 type CompleteHandlerParams struct {
@@ -567,6 +600,13 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			}
 		}
 
+		// Web search is opt-out (default on when omitted) but only ever reaches the
+		// provider for search-capable, Requesty-routed models. Otherwise the tool
+		// is silently dropped — no 400 — so switching to a non-capable model
+		// mid-conversation degrades gracefully (spec §4.3, §5.2).
+		webSearchRequested := req.WebSearch == nil || *req.WebSearch
+		enableWebSearch := webSearchRequested && model.SupportsWebSearch && model.ProviderID == requestyProviderID
+
 		gatewayStartedAt := time.Now()
 		gatewayReq := gateway.CompleteRequest{
 			ProviderID:         model.ProviderID,
@@ -575,6 +615,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			MaxOutputTokens:    effectiveMaxOutput,
 			ReasoningEffort:    req.ReasoningEffort,
 			ReasoningMaxTokens: reasoningBudget,
+			WebSearch:          enableWebSearch,
 		}
 
 		gatewayResp, clientDisconnected, _, err := streamGatewayCompletion(e, params, gatewayReq, owner.ID, req.RequestID)
@@ -605,19 +646,31 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 
 		assistantCreatedAt := time.Now().UTC().Format(time.RFC3339)
 
+		// Web-search observability: counts only. Citation URLs/titles are message
+		// content and must never be logged (same discipline as safeErrorSummary).
+		if enableWebSearch && (gatewayResp.Usage.SearchCount > 0 || len(gatewayResp.Citations) > 0) {
+			params.Logger.Info("completion used web search",
+				"provider", model.ProviderID,
+				"search_count", gatewayResp.Usage.SearchCount,
+				"citation_count", len(gatewayResp.Citations),
+			)
+		}
+
 		var assistantMessageRecord *core.Record
 		if shouldPersist {
 			err, assistantMessageRecord = params.MessageRepo.EncryptAndPersistMessage(
 				conversation,
 				assistantParentID,
 				chat.MessageRecordData{
-					Content:      gatewayResp.Message.Content,
-					Reasoning:    gatewayResp.Reasoning,
-					PersonaID:    req.PersonaID,
-					ModelID:      model.ID,
-					CreatedAt:    assistantCreatedAt,
-					InputTokens:  gatewayResp.Usage.InputTokens,
-					OutputTokens: gatewayResp.Usage.OutputTokens,
+					Content:         gatewayResp.Message.Content,
+					Reasoning:       gatewayResp.Reasoning,
+					PersonaID:       req.PersonaID,
+					ModelID:         model.ID,
+					CreatedAt:       assistantCreatedAt,
+					InputTokens:     gatewayResp.Usage.InputTokens,
+					OutputTokens:    gatewayResp.Usage.OutputTokens,
+					Citations:       toMessageCitations(gatewayResp.Citations),
+					CitationAnchors: toMessageCitationAnchors(gatewayResp.CitationAnchors),
 				},
 			)
 			if err != nil {
@@ -751,11 +804,67 @@ func streamGatewayCompletion(
 			Type:  "reasoning_delta",
 			Delta: reasoning,
 		})
+	}, func(citations []gateway.Citation, anchors []gateway.CitationAnchor, activity string) error {
+		return writeCompleteStreamEvent(e, completeStreamResponse{
+			Type:            "web_search",
+			Citations:       toCitationPayloads(citations),
+			CitationAnchors: toCitationAnchorPayloads(anchors),
+			SearchActivity:  activity,
+		})
 	}, func() error {
 		return writeCompleteStreamHeartbeat(e)
 	}, func(err error) {
 		params.Logger.Info("client disconnected during completion stream", "err", err)
 	})
+}
+
+// toCitationPayloads / toCitationAnchorPayloads convert the gateway-neutral
+// citation types to the SSE/persistence wire shape.
+func toCitationPayloads(citations []gateway.Citation) []citationPayload {
+	if len(citations) == 0 {
+		return nil
+	}
+	out := make([]citationPayload, 0, len(citations))
+	for _, c := range citations {
+		out = append(out, citationPayload{URL: c.URL, Title: c.Title, Snippet: c.Snippet})
+	}
+	return out
+}
+
+func toCitationAnchorPayloads(anchors []gateway.CitationAnchor) []citationAnchorPayload {
+	if len(anchors) == 0 {
+		return nil
+	}
+	out := make([]citationAnchorPayload, 0, len(anchors))
+	for _, a := range anchors {
+		out = append(out, citationAnchorPayload{Citation: a.CitationIndex, Start: a.StartIndex, End: a.EndIndex})
+	}
+	return out
+}
+
+// toMessageCitations / toMessageCitationAnchors convert the gateway-neutral
+// citation types to the persisted MessageRecordData shape. Citations are message
+// content — encrypted at rest, never logged.
+func toMessageCitations(citations []gateway.Citation) []chat.MessageCitation {
+	if len(citations) == 0 {
+		return nil
+	}
+	out := make([]chat.MessageCitation, 0, len(citations))
+	for _, c := range citations {
+		out = append(out, chat.MessageCitation{URL: c.URL, Title: c.Title, Snippet: c.Snippet})
+	}
+	return out
+}
+
+func toMessageCitationAnchors(anchors []gateway.CitationAnchor) []chat.MessageCitationAnchor {
+	if len(anchors) == 0 {
+		return nil
+	}
+	out := make([]chat.MessageCitationAnchor, 0, len(anchors))
+	for _, a := range anchors {
+		out = append(out, chat.MessageCitationAnchor{Citation: a.CitationIndex, Start: a.StartIndex, End: a.EndIndex})
+	}
+	return out
 }
 
 func collectGatewayStream(
@@ -764,6 +873,7 @@ func collectGatewayStream(
 	req gateway.CompleteRequest,
 	onDelta func(string) error,
 	onReasoning func(string) error,
+	onWebSearch func([]gateway.Citation, []gateway.CitationAnchor, string) error,
 	onHeartbeat func() error,
 	onClientDisconnect func(error),
 ) (gateway.CompleteResponse, bool, bool, error) {
@@ -773,6 +883,7 @@ func collectGatewayStream(
 		req,
 		onDelta,
 		onReasoning,
+		onWebSearch,
 		onHeartbeat,
 		onClientDisconnect,
 		completeStreamHeartbeatInterval,
@@ -785,6 +896,7 @@ func collectGatewayStreamWithHeartbeat(
 	req gateway.CompleteRequest,
 	onDelta func(string) error,
 	onReasoning func(string) error,
+	onWebSearch func([]gateway.Citation, []gateway.CitationAnchor, string) error,
 	onHeartbeat func() error,
 	onClientDisconnect func(error),
 	heartbeatInterval time.Duration,
@@ -805,6 +917,11 @@ func collectGatewayStreamWithHeartbeat(
 	var builder strings.Builder
 	var reasoningBuilder strings.Builder
 	usage := gateway.Usage{}
+	// Citations/anchors arrive incrementally and already de-duplicated by URL
+	// with stable indices, so appending in arrival order yields the final
+	// ordered set the assistant message persists.
+	var citations []gateway.Citation
+	var citationAnchors []gateway.CitationAnchor
 	clientDisconnected := false
 
 	finalResponse := func() gateway.CompleteResponse {
@@ -813,8 +930,10 @@ func collectGatewayStreamWithHeartbeat(
 				Role:    "assistant",
 				Content: builder.String(),
 			},
-			Reasoning: reasoningBuilder.String(),
-			Usage:     usage,
+			Reasoning:       reasoningBuilder.String(),
+			Citations:       citations,
+			CitationAnchors: citationAnchors,
+			Usage:           usage,
 		}
 	}
 
@@ -849,6 +968,16 @@ func collectGatewayStreamWithHeartbeat(
 				builder.WriteString(event.Delta)
 				if !clientDisconnected {
 					if err := onDelta(event.Delta); err != nil {
+						clientDisconnected = true
+						onClientDisconnect(err)
+					}
+				}
+			}
+			if len(event.Citations) > 0 || len(event.CitationAnchors) > 0 || event.SearchActivity != "" {
+				citations = append(citations, event.Citations...)
+				citationAnchors = append(citationAnchors, event.CitationAnchors...)
+				if !clientDisconnected && onWebSearch != nil {
+					if err := onWebSearch(event.Citations, event.CitationAnchors, event.SearchActivity); err != nil {
 						clientDisconnected = true
 						onClientDisconnect(err)
 					}

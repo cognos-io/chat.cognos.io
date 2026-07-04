@@ -215,6 +215,25 @@ func bindAppHooks(
 			catalogueService.Invalidate()
 		}
 
+		// Bust the catalogue cache whenever a model or provider record changes so
+		// capability edits (e.g. toggling a model's web-search support) take effect
+		// on the next request rather than after the cache TTL. Otherwise a stale
+		// cache would keep serving pre-edit capability flags for up to the TTL.
+		for _, collection := range []string{"ai_models", "ai_providers"} {
+			app.OnRecordAfterCreateSuccess(collection).BindFunc(func(e *core.RecordEvent) error {
+				catalogueService.Invalidate()
+				return e.Next()
+			})
+			app.OnRecordAfterUpdateSuccess(collection).BindFunc(func(e *core.RecordEvent) error {
+				catalogueService.Invalidate()
+				return e.Next()
+			})
+			app.OnRecordAfterDeleteSuccess(collection).BindFunc(func(e *core.RecordEvent) error {
+				catalogueService.Invalidate()
+				return e.Next()
+			})
+		}
+
 		keyPairRepo := params.KeyPairRepo
 		if keyPairRepo == nil {
 			keyPairRepo = auth.NewPocketBaseKeyPairRepo(app)

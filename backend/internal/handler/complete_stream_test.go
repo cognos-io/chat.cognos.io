@@ -63,6 +63,7 @@ func TestCollectGatewayStreamContinuesAfterClientDisconnect(t *testing.T) {
 			return nil
 		},
 		func(string) error { return nil },
+		func([]gateway.Citation, []gateway.CitationAnchor, string) error { return nil },
 		func() error { return nil },
 		func(error) {},
 	)
@@ -108,6 +109,7 @@ func TestCollectGatewayStreamSeparatesReasoningFromAnswer(t *testing.T) {
 		gateway.CompleteRequest{ProviderID: "requesty", ProviderModelID: "model"},
 		func(delta string) error { answerWrites = append(answerWrites, delta); return nil },
 		func(reasoning string) error { reasoningWrites = append(reasoningWrites, reasoning); return nil },
+		func([]gateway.Citation, []gateway.CitationAnchor, string) error { return nil },
 		func() error { return nil },
 		func(error) {},
 	)
@@ -159,6 +161,7 @@ func TestCollectGatewayStreamPersistsPartialWhenStopped(t *testing.T) {
 			return nil
 		},
 		func(string) error { return nil },
+		func([]gateway.Citation, []gateway.CitationAnchor, string) error { return nil },
 		func() error { return nil },
 		func(error) {},
 		time.Hour,
@@ -198,6 +201,7 @@ func TestCollectGatewayStreamSendsHeartbeatWhileWaitingForDeltas(t *testing.T) {
 		gateway.CompleteRequest{ProviderID: "infomaniak", ProviderModelID: "model"},
 		func(string) error { return nil },
 		func(string) error { return nil },
+		func([]gateway.Citation, []gateway.CitationAnchor, string) error { return nil },
 		func() error {
 			if heartbeatWrites == 0 {
 				ch <- gateway.CompleteStreamEvent{Delta: "done"}
@@ -226,6 +230,66 @@ func TestCollectGatewayStreamSendsHeartbeatWhileWaitingForDeltas(t *testing.T) {
 	}
 }
 
+func TestCollectGatewayStreamAccumulatesWebSearch(t *testing.T) {
+	t.Parallel()
+
+	gatewayClient := &gateway.MockClient{
+		CompleteStreamFunc: func(_ context.Context, _ gateway.CompleteRequest) (<-chan gateway.CompleteStreamEvent, error) {
+			ch := make(chan gateway.CompleteStreamEvent, 4)
+			ch <- gateway.CompleteStreamEvent{Delta: "answer"}
+			ch <- gateway.CompleteStreamEvent{
+				Citations:       []gateway.Citation{{URL: "https://a.example", Title: "a.example"}},
+				CitationAnchors: []gateway.CitationAnchor{{CitationIndex: 0, StartIndex: 0, EndIndex: 6}},
+			}
+			ch <- gateway.CompleteStreamEvent{SearchActivity: gateway.SearchActivityCompleted}
+			ch <- gateway.CompleteStreamEvent{Usage: &gateway.Usage{SearchCount: 1}}
+			close(ch)
+			return ch, nil
+		},
+	}
+
+	webSearchEvents := 0
+	var activities []string
+	resp, clientDisconnected, stopped, err := collectGatewayStream(
+		context.Background(),
+		gatewayClient,
+		gateway.CompleteRequest{ProviderID: "requesty", ProviderModelID: "model", WebSearch: true},
+		func(string) error { return nil },
+		func(string) error { return nil },
+		func(_ []gateway.Citation, _ []gateway.CitationAnchor, activity string) error {
+			webSearchEvents++
+			if activity != "" {
+				activities = append(activities, activity)
+			}
+			return nil
+		},
+		func() error { return nil },
+		func(error) {},
+	)
+	if err != nil {
+		t.Fatalf("collectGatewayStream() error = %v", err)
+	}
+	if clientDisconnected || stopped {
+		t.Fatalf("clientDisconnected=%v stopped=%v, want both false", clientDisconnected, stopped)
+	}
+	// One event carried citations+anchors, a separate event carried activity.
+	if webSearchEvents != 2 {
+		t.Fatalf("web search events = %d, want 2", webSearchEvents)
+	}
+	if len(resp.Citations) != 1 || resp.Citations[0].URL != "https://a.example" {
+		t.Fatalf("accumulated citations = %+v", resp.Citations)
+	}
+	if len(resp.CitationAnchors) != 1 || resp.CitationAnchors[0].EndIndex != 6 {
+		t.Fatalf("accumulated anchors = %+v", resp.CitationAnchors)
+	}
+	if resp.Usage.SearchCount != 1 {
+		t.Fatalf("search count = %d, want 1", resp.Usage.SearchCount)
+	}
+	if len(activities) != 1 || activities[0] != gateway.SearchActivityCompleted {
+		t.Fatalf("activities = %v, want [completed]", activities)
+	}
+}
+
 func TestCollectGatewayStreamReturnsGatewayError(t *testing.T) {
 	t.Parallel()
 
@@ -246,6 +310,7 @@ func TestCollectGatewayStreamReturnsGatewayError(t *testing.T) {
 		gateway.CompleteRequest{ProviderID: "infomaniak", ProviderModelID: "model"},
 		func(string) error { return nil },
 		func(string) error { return nil },
+		func([]gateway.Citation, []gateway.CitationAnchor, string) error { return nil },
 		func() error { return nil },
 		func(error) {},
 	)

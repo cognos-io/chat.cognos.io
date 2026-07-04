@@ -32,6 +32,30 @@ type MessageRecordData struct {
 	// stored as protected files on the message record. The bytes never live in
 	// this payload — only the metadata needed to fetch and decrypt them.
 	Attachments []MessageAttachment `json:"attachments,omitempty"`
+	// Citations and CitationAnchors are the web sources a search-grounded answer
+	// referenced. They are message content: encrypted at rest alongside Content,
+	// and only counts (never URLs/titles) are ever logged. Absent unless web
+	// search ran. Keep in sync with the frontend MessageData interface.
+	Citations       []MessageCitation       `json:"citations,omitempty"`
+	CitationAnchors []MessageCitationAnchor `json:"citation_anchors,omitempty"`
+}
+
+// MessageCitation is one web source referenced by a search-grounded answer.
+// Title is the displayable name/domain; Snippet is an optional one-line
+// description. Mirrors the frontend MessageData citation shape.
+type MessageCitation struct {
+	URL     string `json:"url"`
+	Title   string `json:"title,omitempty"`
+	Snippet string `json:"snippet,omitempty"`
+}
+
+// MessageCitationAnchor marks the span of the answer a citation annotates.
+// Citation is the index into Citations; Start/End are Unicode code-point (rune)
+// offsets into Content. Absent when the provider gave no usable offsets.
+type MessageCitationAnchor struct {
+	Citation int `json:"citation"`
+	Start    int `json:"start"`
+	End      int `json:"end"`
 }
 
 // MessageAttachment is the decrypted metadata for one encrypted attachment.
