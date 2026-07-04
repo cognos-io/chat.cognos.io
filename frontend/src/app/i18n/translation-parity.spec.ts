@@ -29,6 +29,34 @@ function flattenKeys(value: unknown, prefix = ''): string[] {
 const locales: Record<string, unknown> = { de, es, fr, it: itLocale, pt };
 const englishKeys = new Set(flattenKeys(en));
 
+// getPath reads a dotted leaf value (string) from a locale object, or undefined.
+function getPath(source: unknown, path: string): string | undefined {
+  const value = path
+    .split('.')
+    .reduce<unknown>(
+      (node, key) =>
+        node && typeof node === 'object'
+          ? (node as Record<string, unknown>)[key]
+          : undefined,
+      source,
+    );
+  return typeof value === 'string' ? value : undefined;
+}
+
+// Every web-search string the feature renders (spec docs/specs/web-search.md §9).
+const WEB_SEARCH_KEYS = [
+  'chat.composer.tools.webSearch.title',
+  'chat.composer.tools.webSearch.description',
+  'chat.composer.tools.webSearch.unsupported',
+  'chat.models.strengths.webSearch',
+  'chat.message.searching',
+  'chat.message.sources.searchedOne',
+  'chat.message.sources.searchedOther',
+  'chat.message.sources.open',
+  'chat.message.sources.marker',
+  'chat.message.sources.webResult',
+];
+
 describe('i18n translation parity', () => {
   for (const [name, translation] of Object.entries(locales)) {
     it(`${name}.json has exactly the same keys as en.json`, () => {
@@ -84,4 +112,25 @@ describe('i18n translation parity', () => {
       expect(englishKeys.has(key), `en.json missing ${key}`).toBe(true);
     }
   });
+
+  it('includes every web-search key in English', () => {
+    for (const key of WEB_SEARCH_KEYS) {
+      expect(englishKeys.has(key), `en.json missing ${key}`).toBe(true);
+      expect(getPath(en, key)?.trim(), `en.json empty ${key}`).toBeTruthy();
+    }
+  });
+
+  for (const [name, translation] of Object.entries(locales)) {
+    it(`${name}.json translates every web-search key (non-empty, not the English string)`, () => {
+      for (const key of WEB_SEARCH_KEYS) {
+        const value = getPath(translation, key);
+        expect(value?.trim(), `${name}.json empty/missing ${key}`).toBeTruthy();
+        // A value identical to English signals an untranslated placeholder. None
+        // of these keys are proper nouns, so every locale must differ from en.
+        expect(value, `${name}.json ${key} is still the English string`).not.toBe(
+          getPath(en, key),
+        );
+      }
+    });
+  }
 });
