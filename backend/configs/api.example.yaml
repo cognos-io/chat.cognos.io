@@ -53,8 +53,18 @@ requesty:
 # Starting trial balance granted to new accounts, in Swiss Rappen (centimes).
 # Must be > 0; defaults to 200 (CHF 2.00) when unset or non-positive.
 # Env override: COGNOS_BILLING_TRIAL_SEED_RAPPEN
+#
+# Per-search floor fee added to a completion's cost whenever it used provider
+# web search (in micro-rappen; 1 rappen = 1_000_000 micro-rappen). Applied on
+# top of token/provider cost regardless of whether a provider-reported total
+# was trusted, because Requesty has not confirmed its reported cost includes
+# the provider's own search fee (docs/specs/web-search.md §5.4, §14 Q1).
+# Must be > 0; defaults to 900_000 (CHF 0.009, ~USD 0.01 + margin) when unset
+# or non-positive — it must never resolve to zero, or search would be free.
+# Env override: COGNOS_BILLING_WEB_SEARCH_FLOOR_MICRO_RAPPEN
 billing:
   trial_seed_rappen: 200
+  web_search_floor_micro_rappen: 900000
 
 # --- Paddle (payments) --------------------------------------------------------
 # Optional: without api_key the /api/v1/billing/{checkout,portal,cancel,resume}

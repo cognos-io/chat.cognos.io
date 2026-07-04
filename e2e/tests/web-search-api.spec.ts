@@ -24,6 +24,11 @@ const MOCK_CITATION_TITLE = 'example.com';
 const MOCK_SOURCE_PROXY_URL =
   'https://vertexaisearch.cloud.google.com/grounding-api-redirect/MOCKPROXY';
 const MOCK_DEFAULT_REPLY = 'Mocked assistant reply';
+// Appending this anywhere in the last user message opts the mock Responses
+// handler into reporting a bare-float provider cost on the terminal usage
+// event (cmd/mock-ai-provider: costSentinel / mockProviderCostUSD).
+const MOCK_COST_SENTINEL = '[cost]';
+const MOCK_PROVIDER_COST_USD = 0.0387346;
 
 interface SseCitation {
   url: string;
@@ -120,6 +125,36 @@ interface PersistedMessage {
   citations?: SseCitation[];
   citation_anchors?: SseCitationAnchor[];
   content?: string;
+}
+
+interface BillingTransaction {
+  amount_chf: number;
+  type: string;
+  model_id?: string;
+}
+
+// newestUsageTransaction reads the caller's billing ledger and returns the
+// most recent `usage` row — the one the just-completed request produced.
+async function newestUsageTransaction(
+  user: Awaited<ReturnType<typeof provisionApiUser>>,
+): Promise<BillingTransaction> {
+  const res = await user.api.get('/api/v1/billing/transactions');
+  expect(res.ok(), `transactions: ${res.status()} ${await res.text()}`).toBe(true);
+  const body = (await res.json()) as { transactions: BillingTransaction[] };
+  const newest = body.transactions.find((t) => t.type === 'usage');
+  expect(newest, 'no usage transaction recorded').toBeTruthy();
+  return newest!;
+}
+
+// Fresh e2e users land on the trial plan (DefaultTrialStateSeed), where usage
+// is metered as a real balance debit — the floor-fee assertions below only
+// hold on a metered plan (trial/payg), never on unlimited.
+async function isMeteredPlan(
+  user: Awaited<ReturnType<typeof provisionApiUser>>,
+): Promise<boolean> {
+  const res = await user.api.get('/api/v1/billing');
+  const body = (await res.json()) as { plan_type: string };
+  return body.plan_type === 'trial' || body.plan_type === 'payg';
 }
 
 // decryptMessages fetches every stored message and opens the sealed box with
@@ -270,6 +305,88 @@ test.describe('web search /conversations/{id}/complete API', () => {
       expect(stream.deltaText).not.toBe(MOCK_WEB_SEARCH_REPLY);
       expect(stream.citations).toHaveLength(0);
       expect(stream.activities).toHaveLength(0);
+    } finally {
+      await user.api.dispose();
+    }
+  });
+});
+
+test.describe('web search billing: per-search floor fee', () => {
+  test('search with no provider-reported cost: floor fee alone is charged', async () => {
+    const user = await provisionApiUser();
+    try {
+      const metered = await isMeteredPlan(user);
+      const { conversationID } = await createConversationWithRealKey(user);
+
+      // Default on, capable model, no [cost] sentinel: the mock reports zero
+      // provider cost, so any charge at all can only come from the floor fee.
+      const res = await user.api.post(
+        `/api/v1/conversations/${conversationID}/complete`,
+        {
+          data: {
+            model_id: WEB_SEARCH_MODEL_ID,
+            persona_id: DEFAULT_PERSONA_ID,
+            system_prompt: DEFAULT_SYSTEM_PROMPT,
+            messages: [{ role: 'user', content: 'what is the minimum wage' }],
+          },
+        },
+      );
+      expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
+      const stream = await readWebSearchStream(res);
+      expect(stream.deltaText).toBe(MOCK_WEB_SEARCH_REPLY);
+
+      if (!metered) return; // unlimited plans record no per-turn deduction.
+
+      const txn = await newestUsageTransaction(user);
+      expect(txn.model_id).toBe(WEB_SEARCH_MODEL_ID);
+      // Token cost on the mock's 1-input/1-output-token usage rounds to
+      // nothing at whole-rappen granularity; the seeded floor fee
+      // (CHF 0.009, config default) rounds up to CHF 0.01 on its own — so a
+      // non-trivial charge here proves the floor applied.
+      expect(Math.abs(txn.amount_chf)).toBeGreaterThanOrEqual(0.01);
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
+  test('search with a reported provider cost: floor fee is still added on top', async () => {
+    const user = await provisionApiUser();
+    try {
+      const metered = await isMeteredPlan(user);
+      const { conversationID } = await createConversationWithRealKey(user);
+
+      const res = await user.api.post(
+        `/api/v1/conversations/${conversationID}/complete`,
+        {
+          data: {
+            model_id: WEB_SEARCH_MODEL_ID,
+            persona_id: DEFAULT_PERSONA_ID,
+            system_prompt: DEFAULT_SYSTEM_PROMPT,
+            messages: [
+              {
+                role: 'user',
+                content: `what is the minimum wage ${MOCK_COST_SENTINEL}`,
+              },
+            ],
+          },
+        },
+      );
+      expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
+      const stream = await readWebSearchStream(res);
+      expect(stream.deltaText).toBe(MOCK_WEB_SEARCH_REPLY);
+
+      if (!metered) return;
+
+      const txn = await newestUsageTransaction(user);
+      // Provider cost * 22% margin * 0.88 fx ≈ CHF 0.0416, which alone rounds
+      // to CHF 0.04 at whole-rappen granularity (the UsedProviderCost path).
+      // The floor fee (CHF 0.009) pushes the total past the next rappen
+      // boundary to CHF 0.05 — proving it is added REGARDLESS of the
+      // provider-reported cost (spec §5.4 Decision 4, amended by the spike),
+      // not skipped once a provider total is trusted.
+      const providerCostOnlyCHF = MOCK_PROVIDER_COST_USD * 1.22 * 0.88; // default margin_bps / FX fallback
+      expect(Math.round(providerCostOnlyCHF * 100)).toBe(4);
+      expect(Math.abs(txn.amount_chf)).toBeCloseTo(0.05, 2);
     } finally {
       await user.api.dispose();
     }

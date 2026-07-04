@@ -25,6 +25,11 @@ type UsageRecord struct {
 	OperationType OperationType
 	// GeneratedImageCount is the number of images produced (0 for text).
 	GeneratedImageCount int64
+	// SearchCount is the number of provider web searches this usage
+	// performed (0 when web search was off or unused). Recorded for
+	// reconciliation; search itself is still a "text" OperationType, not a
+	// new one (spec §5.4).
+	SearchCount int64
 	// *Rappen fields are the rounded projection persisted for readability.
 	AmountRappen       int64
 	ProviderCostRappen int64
@@ -52,6 +57,9 @@ type BuildUsageRecordInput struct {
 	OperationType OperationType
 	// GeneratedImageCount is the number of images produced (0 for text).
 	GeneratedImageCount int64
+	// SearchCount is the number of provider web searches this usage
+	// performed (0 for a normal completion).
+	SearchCount int64
 }
 
 type LedgerRepo interface {
@@ -77,6 +85,7 @@ func (s *Service) BuildUsageRecord(state State, input BuildUsageRecordInput) Usa
 		Type:                    UsageTransactionType,
 		OperationType:           operationType,
 		GeneratedImageCount:     input.GeneratedImageCount,
+		SearchCount:             input.SearchCount,
 		ProviderCostRappen:      providerCostRappen,
 		UserCostRappen:          userCostRappen,
 		ProviderCostMicroRappen: providerCostMicroRappen,

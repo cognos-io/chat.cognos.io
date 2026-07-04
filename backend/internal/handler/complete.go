@@ -367,6 +367,15 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			return apis.NewBadRequestError("Reasoning effort is not supported for this model", nil)
 		}
 
+		// Web search is opt-out (default on when omitted) but only ever reaches the
+		// provider for search-capable, Requesty-routed models. Otherwise the tool
+		// is silently dropped — no 400 — so switching to a non-capable model
+		// mid-conversation degrades gracefully (spec §4.3, §5.2). Computed here,
+		// before the billing gate below, so the pre-call estimate can add a
+		// worst-case search fee.
+		webSearchRequested := req.WebSearch == nil || *req.WebSearch
+		enableWebSearch := webSearchRequested && model.SupportsWebSearch && model.ProviderID == requestyProviderID
+
 		// Image attachments require a vision-capable model. The UI gates this, but
 		// enforce server-side too (capability bypass + clear error).
 		attachmentImages, attachmentImageBytes := collectAttachmentImages(req.AttachmentContexts)
@@ -498,9 +507,18 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 				// Refine the output ceiling to the user's actual plan before gating
 				// and before it is enforced on the provider request below.
 				effectiveMaxOutput, reasoningBudget = reasoningOutputPlan(req.MaxOutputTokens, model, state.PlanType, req.ReasoningEffort)
+				// Add one worst-case search fee to the estimate when web search
+				// will be sent for this request, so the 402 gate stays honest
+				// without over-blocking small balances on a turn that may not
+				// end up searching at all (spec §5.4).
+				estimatedSearchCount := int64(0)
+				if enableWebSearch {
+					estimatedSearchCount = 1
+				}
 				estimatedCost := params.BillingService.CalculateCost(model, billing.Usage{
 					InputTokens:  estimatedInputTokens,
 					OutputTokens: int64(effectiveMaxOutput),
+					SearchCount:  estimatedSearchCount,
 				}, completionUSDToCHFRate(params))
 				if restriction := params.BillingService.EvaluateAccess(state, estimatedCost.CostMicroRappen); restriction != nil {
 					return e.JSON(http.StatusPaymentRequired, completeBillingRestrictionResponse(*restriction, estimatedCost.CostCHF))
@@ -600,13 +618,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			}
 		}
 
-		// Web search is opt-out (default on when omitted) but only ever reaches the
-		// provider for search-capable, Requesty-routed models. Otherwise the tool
-		// is silently dropped — no 400 — so switching to a non-capable model
-		// mid-conversation degrades gracefully (spec §4.3, §5.2).
-		webSearchRequested := req.WebSearch == nil || *req.WebSearch
-		enableWebSearch := webSearchRequested && model.SupportsWebSearch && model.ProviderID == requestyProviderID
-
+		// enableWebSearch was computed above, before the billing gate.
 		gatewayStartedAt := time.Now()
 		gatewayReq := gateway.CompleteRequest{
 			ProviderID:         model.ProviderID,
@@ -688,6 +700,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			CacheCreationInputTokens: gatewayResp.Usage.CacheCreationInputTokens,
 			CacheReadInputTokens:     gatewayResp.Usage.CacheReadInputTokens,
 			ProviderCostUSD:          gatewayResp.Usage.ProviderCostUSD,
+			SearchCount:              int64(gatewayResp.Usage.SearchCount),
 		}, usdToCHFRate)
 
 		if billingState != nil {
@@ -700,6 +713,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 					FXRateUSDCHF: usdToCHFRate,
 					InputTokens:  gatewayResp.Usage.InputTokens,
 					OutputTokens: gatewayResp.Usage.OutputTokens,
+					SearchCount:  int64(gatewayResp.Usage.SearchCount),
 				})
 				if err := params.BillingLedgerRepo.RecordUsage(usageRecord); err != nil {
 					params.Logger.Error("failed to record billing usage", "err", err)

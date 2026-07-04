@@ -411,6 +411,154 @@ func TestFloorRappenFromMicro(t *testing.T) {
 	}
 }
 
+// CalculateCost's web-search floor fee matrix: the floor must apply whenever
+// SearchCount > 0, regardless of whether a provider-reported cost was
+// trusted (Decision 4 as amended by the spike — Requesty hasn't confirmed
+// its reported total includes the provider's own search fee).
+func TestCalculateCostWebSearchFloorFeeMatrix(t *testing.T) {
+	t.Parallel()
+
+	model := catalogue.Model{
+		Pricing: catalogue.Pricing{
+			InputUSDPerMillionTokens:  1,
+			OutputUSDPerMillionTokens: 2,
+		},
+	}
+	providerCostUSD := 0.05
+
+	tests := []struct {
+		name             string
+		usage            Usage
+		floorMicroRappen int64
+		usdToCHFRate     float64
+		wantFloorApplied bool
+		wantSearchCount  int64
+	}{
+		{
+			name:             "no search: token cost only, no floor",
+			usage:            Usage{InputTokens: 100, OutputTokens: 200},
+			floorMicroRappen: 900_000,
+			usdToCHFRate:     0.9,
+			wantFloorApplied: false,
+		},
+		{
+			name:             "no search with provider cost: no floor",
+			usage:            Usage{ProviderCostUSD: &providerCostUSD},
+			floorMicroRappen: 900_000,
+			usdToCHFRate:     0.9,
+			wantFloorApplied: false,
+		},
+		{
+			name:             "search with token cost: floor added on top",
+			usage:            Usage{InputTokens: 100, OutputTokens: 200, SearchCount: 1},
+			floorMicroRappen: 900_000,
+			usdToCHFRate:     0.9,
+			wantFloorApplied: true,
+			wantSearchCount:  1,
+		},
+		{
+			name:             "search WITH provider cost trusted: floor still added (Decision 4 amended)",
+			usage:            Usage{ProviderCostUSD: &providerCostUSD, SearchCount: 1},
+			floorMicroRappen: 900_000,
+			usdToCHFRate:     0.9,
+			wantFloorApplied: true,
+			wantSearchCount:  1,
+		},
+		{
+			name:             "multiple searches multiply the floor",
+			usage:            Usage{ProviderCostUSD: &providerCostUSD, SearchCount: 3},
+			floorMicroRappen: 900_000,
+			usdToCHFRate:     0.9,
+			wantFloorApplied: true,
+			wantSearchCount:  3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			service := NewServiceWithOptions(DefaultMarginBPS, tt.floorMicroRappen)
+			baseline := NewServiceWithOptions(DefaultMarginBPS, tt.floorMicroRappen).CalculateCost(
+				model, Usage{
+					InputTokens:              tt.usage.InputTokens,
+					OutputTokens:             tt.usage.OutputTokens,
+					CacheCreationInputTokens: tt.usage.CacheCreationInputTokens,
+					CacheReadInputTokens:     tt.usage.CacheReadInputTokens,
+					ProviderCostUSD:          tt.usage.ProviderCostUSD,
+					// SearchCount deliberately zero for the baseline.
+				}, tt.usdToCHFRate)
+
+			got := service.CalculateCost(model, tt.usage, tt.usdToCHFRate)
+
+			if got.SearchCount != tt.wantSearchCount {
+				t.Errorf("CalculateCost(...).SearchCount = %d, want %d", got.SearchCount, tt.wantSearchCount)
+			}
+			if got.UsedProviderCost != (tt.usage.ProviderCostUSD != nil) {
+				t.Errorf("CalculateCost(...).UsedProviderCost = %v, want %v", got.UsedProviderCost, tt.usage.ProviderCostUSD != nil)
+			}
+
+			wantFloorMicroRappen := int64(0)
+			if tt.wantFloorApplied {
+				wantFloorMicroRappen = tt.usage.SearchCount * tt.floorMicroRappen
+			}
+			gotFloorMicroRappen := got.CostMicroRappen - baseline.CostMicroRappen
+			if gotFloorMicroRappen != wantFloorMicroRappen {
+				t.Errorf("floor delta = %d micro-rappen, want %d (got=%d baseline=%d)",
+					gotFloorMicroRappen, wantFloorMicroRappen, got.CostMicroRappen, baseline.CostMicroRappen)
+			}
+		})
+	}
+}
+
+// The configured default (900_000 micro-rappen = CHF 0.009 = 0.9 rappen) is
+// what a bare NewService() uses, and it must never resolve to zero.
+func TestCalculateCostDefaultWebSearchFloorNeverFree(t *testing.T) {
+	t.Parallel()
+
+	service := NewService()
+	if service.WebSearchFloorMicroRappen != DefaultWebSearchFloorMicroRappen {
+		t.Fatalf("NewService().WebSearchFloorMicroRappen = %d, want %d",
+			service.WebSearchFloorMicroRappen, DefaultWebSearchFloorMicroRappen)
+	}
+
+	withoutSearch := service.CalculateCost(catalogue.Model{}, Usage{}, 0.9)
+	withSearch := service.CalculateCost(catalogue.Model{}, Usage{SearchCount: 1}, 0.9)
+
+	if withSearch.CostMicroRappen <= withoutSearch.CostMicroRappen {
+		t.Fatalf("a search must never be free: with-search micro-rappen = %d, without = %d",
+			withSearch.CostMicroRappen, withoutSearch.CostMicroRappen)
+	}
+	if withSearch.CostMicroRappen-withoutSearch.CostMicroRappen != DefaultWebSearchFloorMicroRappen {
+		t.Fatalf("floor delta = %d, want %d",
+			withSearch.CostMicroRappen-withoutSearch.CostMicroRappen, DefaultWebSearchFloorMicroRappen)
+	}
+}
+
+func TestNewServiceWithOptionsFloorDefaults(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name             string
+		floorMicroRappen int64
+		want             int64
+	}{
+		{name: "positive override honoured", floorMicroRappen: 5_000, want: 5_000},
+		{name: "zero falls back to default", floorMicroRappen: 0, want: DefaultWebSearchFloorMicroRappen},
+		{name: "negative falls back to default", floorMicroRappen: -1, want: DefaultWebSearchFloorMicroRappen},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := NewServiceWithOptions(DefaultMarginBPS, tt.floorMicroRappen)
+			if got.WebSearchFloorMicroRappen != tt.want {
+				t.Errorf("NewServiceWithOptions(_, %d).WebSearchFloorMicroRappen = %d, want %d",
+					tt.floorMicroRappen, got.WebSearchFloorMicroRappen, tt.want)
+			}
+		})
+	}
+}
+
 func TestNewServiceWithMargin(t *testing.T) {
 	t.Parallel()
 

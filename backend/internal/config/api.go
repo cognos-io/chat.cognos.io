@@ -89,6 +89,11 @@ type APIConfig struct {
 	// BillingMarginBPS is the markup over provider cost in basis points
 	// (2200 = 22%). Defaults to billing.DefaultMarginBPS.
 	BillingMarginBPS int64 `koanf:"billing.margin_bps"`
+	// BillingWebSearchFloorMicroRappen is the per-search floor fee added
+	// whenever a completion counts provider web searches. Unset or
+	// non-positive falls back to billing.DefaultWebSearchFloorMicroRappen —
+	// it must never resolve to zero, or search would be silently free.
+	BillingWebSearchFloorMicroRappen int64 `koanf:"billing.web_search_floor_micro_rappen"`
 	// Paddle (payments). Prices are Paddle price IDs (pri_...).
 	PaddleAPIBase               string `koanf:"paddle.api_base"`
 	PaddleAPIKey                string `koanf:"paddle.api_key"`
@@ -164,6 +169,10 @@ func MustLoadAPIConfig(logger *slog.Logger) *APIConfig {
 
 	if c.BillingMarginBPS <= 0 {
 		c.BillingMarginBPS = billing.DefaultMarginBPS
+	}
+
+	if c.BillingWebSearchFloorMicroRappen <= 0 {
+		c.BillingWebSearchFloorMicroRappen = billing.DefaultWebSearchFloorMicroRappen
 	}
 
 	if strings.TrimSpace(c.PaddleAPIBase) == "" {

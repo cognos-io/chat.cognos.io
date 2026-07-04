@@ -252,10 +252,16 @@ func bindAppHooks(
 		billingService := params.BillingService
 		if billingService == nil {
 			marginBPS := int64(billing.DefaultMarginBPS)
-			if params.Config != nil && params.Config.BillingMarginBPS > 0 {
-				marginBPS = params.Config.BillingMarginBPS
+			webSearchFloorMicroRappen := int64(billing.DefaultWebSearchFloorMicroRappen)
+			if params.Config != nil {
+				if params.Config.BillingMarginBPS > 0 {
+					marginBPS = params.Config.BillingMarginBPS
+				}
+				if params.Config.BillingWebSearchFloorMicroRappen > 0 {
+					webSearchFloorMicroRappen = params.Config.BillingWebSearchFloorMicroRappen
+				}
 			}
-			billingService = billing.NewServiceWithMargin(marginBPS)
+			billingService = billing.NewServiceWithOptions(marginBPS, webSearchFloorMicroRappen)
 		}
 
 		billingRepo := billing.NewPocketBaseRepo(app)

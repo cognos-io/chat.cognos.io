@@ -170,6 +170,57 @@ func TestBuildUsageRecordTrialDeductsBalance(t *testing.T) {
 	}
 }
 
+// search_count is recorded on the usage record for reconciliation, without
+// introducing a new OperationType — search still rides on a "text" turn.
+func TestBuildUsageRecordRecordsSearchCount(t *testing.T) {
+	t.Parallel()
+
+	service := NewService()
+	cost := service.CalculateCost(catalogueModelForLedgerTest(), Usage{
+		InputTokens:  12,
+		OutputTokens: 34,
+		SearchCount:  2,
+	}, 1)
+
+	got := service.BuildUsageRecord(State{PlanType: PlanTypePayG}, BuildUsageRecordInput{
+		UserID:       "user-1",
+		EventID:      "evt-search",
+		ModelID:      "claude-sonnet-4-6",
+		Cost:         cost,
+		FXRateUSDCHF: 1,
+		InputTokens:  12,
+		OutputTokens: 34,
+		SearchCount:  2,
+	})
+
+	if got.SearchCount != 2 {
+		t.Errorf("BuildUsageRecord(...).SearchCount = %d, want 2", got.SearchCount)
+	}
+	if got.OperationType != OperationTypeText {
+		t.Errorf("BuildUsageRecord(...).OperationType = %q, want %q (no new OperationType for search)",
+			got.OperationType, OperationTypeText)
+	}
+}
+
+func TestBuildUsageRecordDefaultsSearchCountToZero(t *testing.T) {
+	t.Parallel()
+
+	service := NewService()
+	cost := service.CalculateCost(catalogueModelForLedgerTest(), Usage{InputTokens: 10, OutputTokens: 5}, 1)
+
+	got := service.BuildUsageRecord(State{PlanType: PlanTypePayG}, BuildUsageRecordInput{
+		UserID:       "user-1",
+		EventID:      "evt-1",
+		ModelID:      "llama-3-3-infomaniak",
+		Cost:         cost,
+		FXRateUSDCHF: 1,
+	})
+
+	if got.SearchCount != 0 {
+		t.Errorf("BuildUsageRecord(...).SearchCount = %d, want 0", got.SearchCount)
+	}
+}
+
 func catalogueModelForLedgerTest() catalogue.Model {
 	return catalogue.Model{
 		Pricing: catalogue.Pricing{
