@@ -28,5 +28,6 @@ pb_data/
 # specific — regenerated on failure, never committed. Glob matches the
 # per-package testdata/rapid/ dirs at any depth.
 **/testdata/rapid/
-# compiled test helper binary (built by e2e tooling)
-mock-ai-provider
+# compiled test helper binary (built by e2e tooling); anchored so it never
+# matches the cmd/mock-ai-provider source directory
+/mock-ai-provider
