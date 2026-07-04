@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/maximhq/bifrost/core/schemas"
 )
@@ -73,76 +74,6 @@ func (s *stubBifrostRequester) ImageGenerationRequest(
 type stubBifrostShutdowner struct{ called bool }
 
 func (s *stubBifrostShutdowner) Shutdown() { s.called = true }
-
-func TestBuildMessageContentTextOnly(t *testing.T) {
-	t.Parallel()
-
-	content := buildMessageContent("hello", nil, nil)
-	if content.ContentStr == nil || *content.ContentStr != "hello" {
-		t.Fatalf("text-only content = %+v, want ContentStr=hello", content)
-	}
-	if content.ContentBlocks != nil {
-		t.Fatalf("text-only content should not use blocks")
-	}
-}
-
-func TestBuildMessageContentWithImages(t *testing.T) {
-	t.Parallel()
-
-	content := buildMessageContent("describe this", []MessageImage{
-		{Base64: "QUJD", MimeType: "image/png"},
-	}, nil)
-	if content.ContentStr != nil {
-		t.Fatalf("multimodal content should not use ContentStr")
-	}
-	if len(content.ContentBlocks) != 2 {
-		t.Fatalf("want 2 blocks (text+image), got %d", len(content.ContentBlocks))
-	}
-	if content.ContentBlocks[0].Type != schemas.ChatContentBlockTypeText ||
-		content.ContentBlocks[0].Text == nil || *content.ContentBlocks[0].Text != "describe this" {
-		t.Fatalf("first block should be the prompt text: %+v", content.ContentBlocks[0])
-	}
-	image := content.ContentBlocks[1]
-	if image.Type != schemas.ChatContentBlockTypeImage || image.ImageURLStruct == nil {
-		t.Fatalf("second block should be an image: %+v", image)
-	}
-	if image.ImageURLStruct.URL != "data:image/png;base64,QUJD" {
-		t.Fatalf("image data URL = %q", image.ImageURLStruct.URL)
-	}
-}
-
-func TestBuildMessageContentImageOnly(t *testing.T) {
-	t.Parallel()
-
-	content := buildMessageContent("", []MessageImage{{Base64: "QQ==", MimeType: "image/jpeg"}}, nil)
-	if len(content.ContentBlocks) != 1 || content.ContentBlocks[0].Type != schemas.ChatContentBlockTypeImage {
-		t.Fatalf("image-only content should be a single image block: %+v", content.ContentBlocks)
-	}
-}
-
-func TestBuildMessageContentWithFile(t *testing.T) {
-	t.Parallel()
-
-	content := buildMessageContent("summarise", nil, []MessageFile{
-		{Base64: "JVBERi0=", MimeType: "application/pdf", Filename: "report.pdf"},
-	})
-	if content.ContentStr != nil {
-		t.Fatalf("file content should not use ContentStr")
-	}
-	if len(content.ContentBlocks) != 2 {
-		t.Fatalf("want 2 blocks (text+file), got %d", len(content.ContentBlocks))
-	}
-	file := content.ContentBlocks[1]
-	if file.Type != schemas.ChatContentBlockTypeFile || file.File == nil {
-		t.Fatalf("second block should be a file: %+v", file)
-	}
-	if file.File.FileData == nil || *file.File.FileData != "data:application/pdf;base64,JVBERi0=" {
-		t.Fatalf("file data URL = %v", file.File.FileData)
-	}
-	if file.File.Filename == nil || *file.File.Filename != "report.pdf" {
-		t.Fatalf("file name = %v", file.File.Filename)
-	}
-}
 
 func TestBuildResponsesRequestMapsCoreFields(t *testing.T) {
 	t.Parallel()
@@ -375,22 +306,13 @@ func TestBifrostClientCompleteMapsRequestAndResponse(t *testing.T) {
 	t.Parallel()
 
 	requester := &stubBifrostRequester{
-		resp: &schemas.BifrostChatResponse{
-			Choices: []schemas.BifrostResponseChoice{{
-				ChatNonStreamResponseChoice: &schemas.ChatNonStreamResponseChoice{
-					Message: &schemas.ChatMessage{
-						Role: schemas.ChatMessageRoleAssistant,
-						Content: &schemas.ChatMessageContent{
-							ContentStr: stringPtr("Hi there"),
-						},
-					},
-				},
-			}},
-			Usage: &schemas.BifrostLLMUsage{
-				PromptTokens:     12,
-				CompletionTokens: 34,
-				TotalTokens:      46,
-				PromptTokensDetails: &schemas.ChatPromptTokensDetails{
+		respResp: &schemas.BifrostResponsesResponse{
+			Output: []schemas.ResponsesMessage{responsesTextItem("Hi there")},
+			Usage: &schemas.ResponsesResponseUsage{
+				InputTokens:  12,
+				OutputTokens: 34,
+				TotalTokens:  46,
+				InputTokensDetails: &schemas.ResponsesResponseInputTokens{
 					CachedReadTokens:  5,
 					CachedWriteTokens: 6,
 				},
@@ -402,35 +324,31 @@ func TestBifrostClientCompleteMapsRequestAndResponse(t *testing.T) {
 	client := NewBifrostClient(requester, shutdowner, nil, nil)
 
 	got, err := client.Complete(context.Background(), CompleteRequest{
-		ProviderID:      "infomaniak",
-		ProviderModelID: "llama-3.3-70b-instruct",
+		ProviderID:      "requesty",
+		ProviderModelID: "gpt-mock",
 		Messages: []Message{{
 			Role:    "user",
 			Content: "Hello",
-			Name:    "alice",
 		}},
 		MaxOutputTokens: 512,
 	})
 	if err != nil {
 		t.Fatalf("Complete() error = %v, want nil", err)
 	}
-	if requester.req.Provider != schemas.ModelProvider("infomaniak") {
-		t.Fatalf("request provider = %q, want %q", requester.req.Provider, "infomaniak")
+	if requester.respReq.Provider != schemas.ModelProvider("requesty") {
+		t.Fatalf("request provider = %q, want %q", requester.respReq.Provider, "requesty")
 	}
-	if requester.req.Model != "llama-3.3-70b-instruct" {
-		t.Fatalf("request model = %q, want %q", requester.req.Model, "llama-3.3-70b-instruct")
+	if requester.respReq.Model != "gpt-mock" {
+		t.Fatalf("request model = %q, want %q", requester.respReq.Model, "gpt-mock")
 	}
-	if requester.req.Params == nil || requester.req.Params.MaxCompletionTokens == nil || *requester.req.Params.MaxCompletionTokens != 512 {
-		t.Fatalf("request max completion tokens = %#v, want 512", requester.req.Params)
+	if requester.respReq.Params == nil || requester.respReq.Params.MaxOutputTokens == nil || *requester.respReq.Params.MaxOutputTokens != 512 {
+		t.Fatalf("request max output tokens = %#v, want 512", requester.respReq.Params)
 	}
-	if len(requester.req.Input) != 1 {
-		t.Fatalf("len(request input) = %d, want %d", len(requester.req.Input), 1)
+	if len(requester.respReq.Input) != 1 {
+		t.Fatalf("len(request input) = %d, want %d", len(requester.respReq.Input), 1)
 	}
-	if requester.req.Input[0].Name == nil || *requester.req.Input[0].Name != "alice" {
-		t.Fatalf("request name = %#v, want alice", requester.req.Input[0].Name)
-	}
-	if requester.req.Input[0].Content == nil || requester.req.Input[0].Content.ContentStr == nil || *requester.req.Input[0].Content.ContentStr != "Hello" {
-		t.Fatalf("request content = %#v, want Hello", requester.req.Input[0].Content)
+	if requester.respReq.Input[0].Content == nil || requester.respReq.Input[0].Content.ContentStr == nil || *requester.respReq.Input[0].Content.ContentStr != "Hello" {
+		t.Fatalf("request content = %#v, want Hello", requester.respReq.Input[0].Content)
 	}
 	if got.Message.Role != "assistant" || got.Message.Content != "Hi there" {
 		t.Fatalf("Complete() message = %#v, want assistant/Hi there", got.Message)
@@ -455,28 +373,26 @@ func TestBifrostClientCompleteMapsReasoning(t *testing.T) {
 	t.Parallel()
 
 	reasoning := "First I weigh the constraints, then I answer."
+	reasoningType := schemas.ResponsesMessageTypeReasoning
+	reasoningBlockType := schemas.ResponsesOutputMessageContentTypeReasoning
 	requester := &stubBifrostRequester{
-		resp: &schemas.BifrostChatResponse{
-			Choices: []schemas.BifrostResponseChoice{{
-				ChatNonStreamResponseChoice: &schemas.ChatNonStreamResponseChoice{
-					Message: &schemas.ChatMessage{
-						Role: schemas.ChatMessageRoleAssistant,
-						Content: &schemas.ChatMessageContent{
-							ContentStr: stringPtr("The answer is 42."),
-						},
-						ChatAssistantMessage: &schemas.ChatAssistantMessage{
-							Reasoning: stringPtr(reasoning),
+		respResp: &schemas.BifrostResponsesResponse{
+			Output: []schemas.ResponsesMessage{
+				{
+					Type: &reasoningType,
+					Content: &schemas.ResponsesMessageContent{
+						ContentBlocks: []schemas.ResponsesMessageContentBlock{
+							{Type: reasoningBlockType, Text: stringPtr(reasoning)},
 						},
 					},
 				},
-			}},
-			Usage: &schemas.BifrostLLMUsage{
-				PromptTokens:     10,
-				CompletionTokens: 20,
-				TotalTokens:      30,
-				CompletionTokensDetails: &schemas.ChatCompletionTokensDetails{
-					ReasoningTokens: 8,
-				},
+				responsesTextItem("The answer is 42."),
+			},
+			Usage: &schemas.ResponsesResponseUsage{
+				InputTokens:         10,
+				OutputTokens:        20,
+				TotalTokens:         30,
+				OutputTokensDetails: &schemas.ResponsesResponseOutputTokens{ReasoningTokens: 8},
 			},
 		},
 	}
@@ -497,148 +413,12 @@ func TestBifrostClientCompleteMapsReasoning(t *testing.T) {
 	}
 }
 
-func TestBifrostClientBuildsReasoningEffortParam(t *testing.T) {
-	t.Parallel()
-
-	cases := []struct {
-		name       string
-		effort     string
-		wantNil    bool
-		wantEffort *string
-	}{
-		{name: "empty sends no reasoning param", effort: "", wantNil: true},
-		{name: "off omits the reasoning param entirely", effort: "off", wantNil: true},
-		{name: "none omits the reasoning param entirely", effort: "none", wantNil: true},
-		{name: "medium passes through as effort", effort: "medium", wantEffort: stringPtr("medium")},
-		{name: "model-specific tier passes through", effort: "ultra", wantEffort: stringPtr("ultra")},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			requester := &stubBifrostRequester{
-				resp: &schemas.BifrostChatResponse{
-					Choices: []schemas.BifrostResponseChoice{{
-						ChatNonStreamResponseChoice: &schemas.ChatNonStreamResponseChoice{
-							Message: &schemas.ChatMessage{
-								Role:    schemas.ChatMessageRoleAssistant,
-								Content: &schemas.ChatMessageContent{ContentStr: stringPtr("hi")},
-							},
-						},
-					}},
-				},
-			}
-			client := NewBifrostClient(requester, nil, nil, nil)
-			if _, err := client.Complete(context.Background(), CompleteRequest{
-				ProviderID:      "requesty",
-				ProviderModelID: "model",
-				ReasoningEffort: tc.effort,
-			}); err != nil {
-				t.Fatalf("Complete() error = %v", err)
-			}
-
-			reasoning := (*schemas.ChatReasoning)(nil)
-			if requester.req.Params != nil {
-				reasoning = requester.req.Params.Reasoning
-			}
-			if tc.wantNil {
-				if reasoning != nil {
-					t.Fatalf("reasoning param = %#v, want nil", reasoning)
-				}
-				return
-			}
-			if reasoning == nil {
-				t.Fatalf("reasoning param = nil, want set")
-			}
-			if tc.wantEffort != nil {
-				if reasoning.Effort == nil || *reasoning.Effort != *tc.wantEffort {
-					t.Fatalf("reasoning.Effort = %#v, want %q", reasoning.Effort, *tc.wantEffort)
-				}
-			}
-		})
-	}
-}
-
-func TestBifrostClientSendsExplicitReasoningBudget(t *testing.T) {
-	t.Parallel()
-
-	cases := []struct {
-		name            string
-		effort          string
-		budget          int
-		wantNoReasoning bool
-		wantBudget      *int
-	}{
-		{name: "budget set with effort sends thinking budget", effort: "high", budget: 16384, wantBudget: intPtr(16384)},
-		{name: "zero budget omits the field", effort: "high", budget: 0, wantBudget: nil},
-		{name: "off omits the reasoning param so the budget never rides along", effort: "off", budget: 16384, wantNoReasoning: true},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			requester := &stubBifrostRequester{
-				resp: &schemas.BifrostChatResponse{
-					Choices: []schemas.BifrostResponseChoice{{
-						ChatNonStreamResponseChoice: &schemas.ChatNonStreamResponseChoice{
-							Message: &schemas.ChatMessage{
-								Role:    schemas.ChatMessageRoleAssistant,
-								Content: &schemas.ChatMessageContent{ContentStr: stringPtr("hi")},
-							},
-						},
-					}},
-				},
-			}
-			client := NewBifrostClient(requester, nil, nil, nil)
-			if _, err := client.Complete(context.Background(), CompleteRequest{
-				ProviderID:         "requesty",
-				ProviderModelID:    "model",
-				ReasoningEffort:    tc.effort,
-				ReasoningMaxTokens: tc.budget,
-			}); err != nil {
-				t.Fatalf("Complete() error = %v", err)
-			}
-
-			reasoning := (*schemas.ChatReasoning)(nil)
-			if requester.req.Params != nil {
-				reasoning = requester.req.Params.Reasoning
-			}
-			if tc.wantNoReasoning {
-				if reasoning != nil {
-					t.Fatalf("reasoning param = %#v, want nil for a disabling effort", reasoning)
-				}
-				return
-			}
-			if reasoning == nil {
-				t.Fatalf("reasoning param = nil, want set for effort %q", tc.effort)
-			}
-			switch {
-			case tc.wantBudget == nil:
-				if reasoning.MaxTokens != nil {
-					t.Fatalf("reasoning.MaxTokens = %d, want nil", *reasoning.MaxTokens)
-				}
-			default:
-				if reasoning.MaxTokens == nil || *reasoning.MaxTokens != *tc.wantBudget {
-					t.Fatalf("reasoning.MaxTokens = %#v, want %d", reasoning.MaxTokens, *tc.wantBudget)
-				}
-			}
-		})
-	}
-}
-
 func TestBifrostClientCompleteOmitsReasoningWhenAbsent(t *testing.T) {
 	t.Parallel()
 
 	requester := &stubBifrostRequester{
-		resp: &schemas.BifrostChatResponse{
-			Choices: []schemas.BifrostResponseChoice{{
-				ChatNonStreamResponseChoice: &schemas.ChatNonStreamResponseChoice{
-					Message: &schemas.ChatMessage{
-						Role:    schemas.ChatMessageRoleAssistant,
-						Content: &schemas.ChatMessageContent{ContentStr: stringPtr("Hi")},
-					},
-				},
-			}},
+		respResp: &schemas.BifrostResponsesResponse{
+			Output: []schemas.ResponsesMessage{responsesTextItem("Hi")},
 		},
 	}
 	client := NewBifrostClient(requester, nil, nil, nil)
@@ -658,13 +438,14 @@ func TestBifrostClientCompleteOmitsReasoningWhenAbsent(t *testing.T) {
 func TestBifrostClientCompleteStreamSeparatesReasoningDeltas(t *testing.T) {
 	t.Parallel()
 
-	stream := make(chan *schemas.BifrostStreamChunk, 3)
-	stream <- streamChunk(stringPtr("Let me "), nil)
-	stream <- streamChunk(nil, stringPtr("think about this"))
-	stream <- streamChunk(stringPtr("Answer"), nil)
+	stream := make(chan *schemas.BifrostStreamChunk, 4)
+	stream <- respTextChunk("Let me ")
+	stream <- respReasoningChunk("think about this")
+	stream <- respTextChunk("Answer")
+	stream <- respCompletedChunk(&schemas.ResponsesResponseUsage{InputTokens: 1, OutputTokens: 2, TotalTokens: 3})
 	close(stream)
 
-	requester := &stubBifrostRequester{stream: stream}
+	requester := &stubBifrostRequester{respStream: stream}
 	client := NewBifrostClient(requester, nil, nil, nil)
 
 	out, err := client.CompleteStream(context.Background(), CompleteRequest{ProviderID: "requesty", ProviderModelID: "model"})
@@ -673,12 +454,16 @@ func TestBifrostClientCompleteStreamSeparatesReasoningDeltas(t *testing.T) {
 	}
 
 	var answer, reasoning strings.Builder
+	var usage *Usage
 	for event := range out {
 		if event.Err != nil {
 			t.Fatalf("stream event error = %v", event.Err)
 		}
 		answer.WriteString(event.Delta)
 		reasoning.WriteString(event.ReasoningDelta)
+		if event.Usage != nil {
+			usage = event.Usage
+		}
 	}
 
 	if answer.String() != "Let me Answer" {
@@ -687,23 +472,24 @@ func TestBifrostClientCompleteStreamSeparatesReasoningDeltas(t *testing.T) {
 	if reasoning.String() != "think about this" {
 		t.Fatalf("reasoning = %q, want %q", reasoning.String(), "think about this")
 	}
+	if usage == nil || usage.TotalTokens != 3 {
+		t.Fatalf("usage = %#v, want total tokens 3 from the terminal event", usage)
+	}
 }
 
-func TestBifrostClientCompleteFlattensTextBlocks(t *testing.T) {
+func TestBifrostClientCompleteJoinsOutputTextBlocks(t *testing.T) {
 	t.Parallel()
 
+	textType := schemas.ResponsesOutputMessageContentTypeText
+	messageType := schemas.ResponsesMessageTypeMessage
 	requester := &stubBifrostRequester{
-		resp: &schemas.BifrostChatResponse{
-			Choices: []schemas.BifrostResponseChoice{{
-				ChatNonStreamResponseChoice: &schemas.ChatNonStreamResponseChoice{
-					Message: &schemas.ChatMessage{
-						Role: schemas.ChatMessageRoleAssistant,
-						Content: &schemas.ChatMessageContent{
-							ContentBlocks: []schemas.ChatContentBlock{
-								{Text: stringPtr("Hello")},
-								{Text: stringPtr(" world")},
-							},
-						},
+		respResp: &schemas.BifrostResponsesResponse{
+			Output: []schemas.ResponsesMessage{{
+				Type: &messageType,
+				Content: &schemas.ResponsesMessageContent{
+					ContentBlocks: []schemas.ResponsesMessageContentBlock{
+						{Type: textType, Text: stringPtr("Hello")},
+						{Type: textType, Text: stringPtr(" world")},
 					},
 				},
 			}},
@@ -711,12 +497,168 @@ func TestBifrostClientCompleteFlattensTextBlocks(t *testing.T) {
 	}
 
 	client := NewBifrostClient(requester, nil, nil, nil)
-	got, err := client.Complete(context.Background(), CompleteRequest{ProviderID: "infomaniak", ProviderModelID: "model"})
+	got, err := client.Complete(context.Background(), CompleteRequest{ProviderID: "requesty", ProviderModelID: "model"})
 	if err != nil {
 		t.Fatalf("Complete() error = %v, want nil", err)
 	}
 	if got.Message.Content != "Hello world" {
 		t.Fatalf("Complete() content = %q, want %q", got.Message.Content, "Hello world")
+	}
+}
+
+func TestBifrostClientCompleteStreamCitationsAndAnchors(t *testing.T) {
+	t.Parallel()
+
+	// Answer carries an accented word so byte offsets differ from rune offsets.
+	// "Le salaire minimum " is 19 ASCII bytes; "légal" is 6 bytes / 5 runes.
+	answer := "Le salaire minimum légal est fixé."
+	startByte := strings.Index(answer, "légal")
+	endByte := startByte + len("légal")
+
+	stream := make(chan *schemas.BifrostStreamChunk, 8)
+	stream <- respTextChunk(answer)
+	// Annotation arrives AFTER the text (this family's ordering) and carries a
+	// usable {url,title}. Its offsets are UTF-8 byte offsets.
+	stream <- respAnnotationChunk("https://example.com/wage", "example.com", startByte, endByte)
+	// A web_search_call item + its title-less proxy source, added at the end.
+	stream <- respSearchItemAddedChunk()
+	stream <- respSearchActivityChunk(schemas.ResponsesStreamResponseTypeWebSearchCallCompleted)
+	stream <- respSearchSourcesChunk("https://vertexaisearch.example/redirect/x")
+	stream <- respCompletedChunk(&schemas.ResponsesResponseUsage{InputTokens: 5, OutputTokens: 9, TotalTokens: 14})
+	close(stream)
+
+	requester := &stubBifrostRequester{respStream: stream}
+	client := NewBifrostClient(requester, nil, nil, nil)
+
+	out, err := client.CompleteStream(context.Background(), CompleteRequest{ProviderID: "requesty", ProviderModelID: "model", WebSearch: true})
+	if err != nil {
+		t.Fatalf("CompleteStream() error = %v", err)
+	}
+
+	var citations []Citation
+	var anchors []CitationAnchor
+	var activity []string
+	var usage *Usage
+	for event := range out {
+		if event.Err != nil {
+			t.Fatalf("stream event error = %v", event.Err)
+		}
+		citations = append(citations, event.Citations...)
+		anchors = append(anchors, event.CitationAnchors...)
+		if event.SearchActivity != "" {
+			activity = append(activity, event.SearchActivity)
+		}
+		if event.Usage != nil {
+			usage = event.Usage
+		}
+	}
+
+	if len(citations) != 2 {
+		t.Fatalf("citations = %#v, want 2 (annotation + unseen proxy source)", citations)
+	}
+	if citations[0].URL != "https://example.com/wage" || citations[0].Title != "example.com" {
+		t.Fatalf("first citation = %#v, want the annotation source with title", citations[0])
+	}
+	if citations[1].URL != "https://vertexaisearch.example/redirect/x" || citations[1].Title != "" {
+		t.Fatalf("second citation = %#v, want the title-less proxy source", citations[1])
+	}
+	if len(anchors) != 1 {
+		t.Fatalf("anchors = %#v, want 1", anchors)
+	}
+	// Byte offsets [19,25] convert to code-point offsets [19,24].
+	wantStart := utf8.RuneCountInString(answer[:startByte])
+	wantEnd := utf8.RuneCountInString(answer[:endByte])
+	if anchors[0].CitationIndex != 0 || anchors[0].StartIndex != wantStart || anchors[0].EndIndex != wantEnd {
+		t.Fatalf("anchor = %#v, want citation 0 spanning code points [%d,%d]", anchors[0], wantStart, wantEnd)
+	}
+	if len(activity) == 0 || activity[len(activity)-1] != SearchActivityCompleted {
+		t.Fatalf("search activity = %#v, want it to end with completed", activity)
+	}
+	if usage == nil || usage.SearchCount != 1 {
+		t.Fatalf("usage = %#v, want SearchCount 1 from one web_search_call item", usage)
+	}
+}
+
+func TestBifrostClientCompleteStreamDeDupesCitationsByURL(t *testing.T) {
+	t.Parallel()
+
+	answer := "abcdefghij"
+	stream := make(chan *schemas.BifrostStreamChunk, 5)
+	stream <- respTextChunk(answer)
+	stream <- respAnnotationChunk("https://dup.example/a", "dup.example", 0, 3)
+	stream <- respAnnotationChunk("https://dup.example/a", "dup.example", 4, 7)
+	stream <- respCompletedChunk(&schemas.ResponsesResponseUsage{})
+	close(stream)
+
+	requester := &stubBifrostRequester{respStream: stream}
+	client := NewBifrostClient(requester, nil, nil, nil)
+	out, err := client.CompleteStream(context.Background(), CompleteRequest{ProviderID: "requesty", ProviderModelID: "model", WebSearch: true})
+	if err != nil {
+		t.Fatalf("CompleteStream() error = %v", err)
+	}
+
+	var citations []Citation
+	var anchors []CitationAnchor
+	for event := range out {
+		citations = append(citations, event.Citations...)
+		anchors = append(anchors, event.CitationAnchors...)
+	}
+	if len(citations) != 1 {
+		t.Fatalf("citations = %#v, want 1 (de-duplicated by URL)", citations)
+	}
+	if len(anchors) != 2 {
+		t.Fatalf("anchors = %#v, want 2 spans referencing the single citation", anchors)
+	}
+	for _, a := range anchors {
+		if a.CitationIndex != 0 {
+			t.Fatalf("anchor %#v, want CitationIndex 0", a)
+		}
+	}
+}
+
+func TestBifrostClientCompleteStreamDropsUnusableAnchors(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name              string
+		answer            string
+		start, end        int
+		wantCitationCount int
+		wantAnchorCount   int
+	}{
+		{name: "out of range end drops anchor, keeps citation", answer: "short", start: 0, end: 999, wantCitationCount: 1, wantAnchorCount: 0},
+		{name: "inverted offsets drop anchor", answer: "abcdef", start: 5, end: 2, wantCitationCount: 1, wantAnchorCount: 0},
+		{name: "offset inside a multi-byte rune drops anchor", answer: "café", start: 0, end: 4, wantCitationCount: 1, wantAnchorCount: 0},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			stream := make(chan *schemas.BifrostStreamChunk, 4)
+			stream <- respTextChunk(tc.answer)
+			stream <- respAnnotationChunk("https://x.example/a", "x.example", tc.start, tc.end)
+			stream <- respCompletedChunk(&schemas.ResponsesResponseUsage{})
+			close(stream)
+
+			requester := &stubBifrostRequester{respStream: stream}
+			client := NewBifrostClient(requester, nil, nil, nil)
+			out, err := client.CompleteStream(context.Background(), CompleteRequest{ProviderID: "requesty", ProviderModelID: "model", WebSearch: true})
+			if err != nil {
+				t.Fatalf("CompleteStream() error = %v", err)
+			}
+			var citations []Citation
+			var anchors []CitationAnchor
+			for event := range out {
+				citations = append(citations, event.Citations...)
+				anchors = append(anchors, event.CitationAnchors...)
+			}
+			if len(citations) != tc.wantCitationCount {
+				t.Fatalf("citations = %d, want %d (anchor unusable, citation still shown)", len(citations), tc.wantCitationCount)
+			}
+			if len(anchors) != tc.wantAnchorCount {
+				t.Fatalf("anchors = %d, want %d (never guess)", len(anchors), tc.wantAnchorCount)
+			}
+		})
 	}
 }
 
@@ -728,7 +670,7 @@ func TestBifrostClientCompletePropagatesBifrostError(t *testing.T) {
 	statusCode := 400
 	errorType := "invalid_request_error"
 	requester := &stubBifrostRequester{
-		err: &schemas.BifrostError{
+		respErr: &schemas.BifrostError{
 			StatusCode: &statusCode,
 			Error: &schemas.ErrorField{
 				Type:    &errorType,
@@ -759,7 +701,7 @@ func TestBifrostClientCompleteLogsStructuredErrorFields(t *testing.T) {
 	errorType := "provider_error"
 	errorCode := "not_found"
 	requester := &stubBifrostRequester{
-		err: &schemas.BifrostError{
+		respErr: &schemas.BifrostError{
 			StatusCode: &statusCode,
 			Error: &schemas.ErrorField{
 				Type:    &errorType,
@@ -850,19 +792,108 @@ func stringPtr(v string) *string { return &v }
 
 func intPtr(v int) *int { return &v }
 
-// streamChunk builds a single streaming chunk carrying an optional answer delta
-// and/or reasoning delta, mirroring how providers interleave the two.
-func streamChunk(content, reasoning *string) *schemas.BifrostStreamChunk {
+// responsesTextItem builds a completed assistant message output item carrying a
+// single output_text block — the common non-streaming shape.
+func responsesTextItem(text string) schemas.ResponsesMessage {
+	messageType := schemas.ResponsesMessageTypeMessage
+	role := schemas.ResponsesInputMessageRoleAssistant
+	return schemas.ResponsesMessage{
+		Type: &messageType,
+		Role: &role,
+		Content: &schemas.ResponsesMessageContent{
+			ContentBlocks: []schemas.ResponsesMessageContentBlock{
+				{Type: schemas.ResponsesOutputMessageContentTypeText, Text: &text},
+			},
+		},
+	}
+}
+
+// respTextChunk builds an output_text.delta stream chunk.
+func respTextChunk(delta string) *schemas.BifrostStreamChunk {
 	return &schemas.BifrostStreamChunk{
-		BifrostChatResponse: &schemas.BifrostChatResponse{
-			Choices: []schemas.BifrostResponseChoice{{
-				ChatStreamResponseChoice: &schemas.ChatStreamResponseChoice{
-					Delta: &schemas.ChatStreamResponseChoiceDelta{
-						Content:   content,
-						Reasoning: reasoning,
+		BifrostResponsesStreamResponse: &schemas.BifrostResponsesStreamResponse{
+			Type:  schemas.ResponsesStreamResponseTypeOutputTextDelta,
+			Delta: &delta,
+		},
+	}
+}
+
+// respReasoningChunk builds a reasoning_summary_text.delta stream chunk.
+func respReasoningChunk(delta string) *schemas.BifrostStreamChunk {
+	return &schemas.BifrostStreamChunk{
+		BifrostResponsesStreamResponse: &schemas.BifrostResponsesStreamResponse{
+			Type:  schemas.ResponsesStreamResponseTypeReasoningSummaryTextDelta,
+			Delta: &delta,
+		},
+	}
+}
+
+// respAnnotationChunk mirrors the real Requesty quirk: the event's type is
+// output_text.delta while it carries a url_citation annotation with UTF-8 byte
+// offsets.
+func respAnnotationChunk(url, title string, startByte, endByte int) *schemas.BifrostStreamChunk {
+	return &schemas.BifrostStreamChunk{
+		BifrostResponsesStreamResponse: &schemas.BifrostResponsesStreamResponse{
+			Type: schemas.ResponsesStreamResponseTypeOutputTextDelta,
+			Annotation: &schemas.ResponsesOutputMessageContentTextAnnotation{
+				Type:       "url_citation",
+				URL:        &url,
+				Title:      &title,
+				StartIndex: &startByte,
+				EndIndex:   &endByte,
+			},
+		},
+	}
+}
+
+// respSearchItemAddedChunk builds an output_item.added for a web_search_call
+// item (drives SearchCount).
+func respSearchItemAddedChunk() *schemas.BifrostStreamChunk {
+	wsType := schemas.ResponsesMessageTypeWebSearchCall
+	return &schemas.BifrostStreamChunk{
+		BifrostResponsesStreamResponse: &schemas.BifrostResponsesStreamResponse{
+			Type: schemas.ResponsesStreamResponseTypeOutputItemAdded,
+			Item: &schemas.ResponsesMessage{Type: &wsType},
+		},
+	}
+}
+
+// respSearchActivityChunk builds a web_search_call activity event.
+func respSearchActivityChunk(t schemas.ResponsesStreamResponseType) *schemas.BifrostStreamChunk {
+	return &schemas.BifrostStreamChunk{
+		BifrostResponsesStreamResponse: &schemas.BifrostResponsesStreamResponse{Type: t},
+	}
+}
+
+// respSearchSourcesChunk builds an output_item.done for a web_search_call item
+// carrying title-less proxy action sources.
+func respSearchSourcesChunk(urls ...string) *schemas.BifrostStreamChunk {
+	wsType := schemas.ResponsesMessageTypeWebSearchCall
+	sources := make([]schemas.ResponsesWebSearchToolCallActionSearchSource, 0, len(urls))
+	for _, u := range urls {
+		sources = append(sources, schemas.ResponsesWebSearchToolCallActionSearchSource{Type: "url", URL: u})
+	}
+	return &schemas.BifrostStreamChunk{
+		BifrostResponsesStreamResponse: &schemas.BifrostResponsesStreamResponse{
+			Type: schemas.ResponsesStreamResponseTypeOutputItemDone,
+			Item: &schemas.ResponsesMessage{
+				Type: &wsType,
+				ResponsesToolMessage: &schemas.ResponsesToolMessage{
+					Action: &schemas.ResponsesToolMessageActionStruct{
+						ResponsesWebSearchToolCallAction: &schemas.ResponsesWebSearchToolCallAction{Sources: sources},
 					},
 				},
-			}},
+			},
+		},
+	}
+}
+
+// respCompletedChunk builds the terminal response.completed event carrying usage.
+func respCompletedChunk(usage *schemas.ResponsesResponseUsage) *schemas.BifrostStreamChunk {
+	return &schemas.BifrostStreamChunk{
+		BifrostResponsesStreamResponse: &schemas.BifrostResponsesStreamResponse{
+			Type:     schemas.ResponsesStreamResponseTypeCompleted,
+			Response: &schemas.BifrostResponsesResponse{Usage: usage},
 		},
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"unicode/utf8"
 
 	bifrost "github.com/maximhq/bifrost/core"
 	"github.com/maximhq/bifrost/core/schemas"
@@ -79,13 +80,13 @@ func (c *BifrostClient) Complete(ctx context.Context, req CompleteRequest) (Comp
 		return CompleteResponse{}, fmt.Errorf("bifrost client is not configured")
 	}
 
-	chatReq, err := c.buildChatRequest(req)
+	responsesReq, err := c.buildResponsesRequest(req)
 	if err != nil {
 		return CompleteResponse{}, err
 	}
 
 	bifrostCtx := schemas.NewBifrostContext(ctx, schemas.NoDeadline)
-	resp, bifrostErr := c.requester.ChatCompletionRequest(bifrostCtx, chatReq)
+	resp, bifrostErr := c.requester.ResponsesRequest(bifrostCtx, responsesReq)
 	if bifrostErr != nil {
 		c.logBifrostError(req, bifrostErr)
 		return CompleteResponse{}, fmt.Errorf("bifrost request failed: %s", safeErrorSummary(bifrostErr))
@@ -93,42 +94,20 @@ func (c *BifrostClient) Complete(ctx context.Context, req CompleteRequest) (Comp
 	if resp == nil {
 		return CompleteResponse{}, fmt.Errorf("bifrost returned nil response")
 	}
-	if len(resp.Choices) == 0 {
-		return CompleteResponse{}, fmt.Errorf("bifrost returned no completion choices")
-	}
 
-	message := resp.Choices[0].Message
-	if message == nil {
-		return CompleteResponse{}, fmt.Errorf("bifrost returned an empty completion message")
-	}
-
-	content := extractMessageContent(message)
-	usage := resp.Usage
-	if usage == nil {
-		usage = &schemas.BifrostLLMUsage{}
-	}
-
-	var providerCostUSD *float64
-	if usage.Cost != nil {
-		totalCost := usage.Cost.TotalCost
-		providerCostUSD = &totalCost
-	}
+	content, reasoning, citations, anchors := extractResponsesOutput(resp.Output)
+	usage := responsesUsage(resp.Usage)
+	usage.SearchCount = countResponsesSearchItems(resp.Output)
 
 	return CompleteResponse{
 		Message: Message{
-			Role:    string(message.Role),
+			Role:    "assistant",
 			Content: content,
 		},
-		Reasoning: extractReasoning(message),
-		Usage: Usage{
-			InputTokens:              int64(usage.PromptTokens),
-			OutputTokens:             int64(usage.CompletionTokens),
-			TotalTokens:              int64(usage.TotalTokens),
-			CacheCreationInputTokens: int64(cachedWriteTokens(usage)),
-			CacheReadInputTokens:     int64(cachedReadTokens(usage)),
-			ReasoningTokens:          int64(reasoningTokens(usage)),
-			ProviderCostUSD:          providerCostUSD,
-		},
+		Reasoning:       reasoning,
+		Citations:       citations,
+		CitationAnchors: anchors,
+		Usage:           usage,
 	}, nil
 }
 
@@ -137,13 +116,13 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 		return nil, fmt.Errorf("bifrost client is not configured")
 	}
 
-	chatReq, err := c.buildChatRequest(req)
+	responsesReq, err := c.buildResponsesRequest(req)
 	if err != nil {
 		return nil, err
 	}
 
 	bifrostCtx := schemas.NewBifrostContext(ctx, schemas.NoDeadline)
-	stream, bifrostErr := c.requester.ChatCompletionStreamRequest(bifrostCtx, chatReq)
+	stream, bifrostErr := c.requester.ResponsesStreamRequest(bifrostCtx, responsesReq)
 	if bifrostErr != nil {
 		c.logBifrostError(req, bifrostErr)
 		return nil, fmt.Errorf("bifrost request failed: %s", safeErrorSummary(bifrostErr))
@@ -156,6 +135,13 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 	go func() {
 		defer close(out)
 
+		// De-duplicate citations by URL with stable indices, and accumulate the
+		// visible answer so annotation byte offsets can be converted to code
+		// points against the text they index into.
+		citationIndex := make(map[string]int)
+		var visible strings.Builder
+		searchItems := 0
+
 		for chunk := range stream {
 			if chunk == nil {
 				continue
@@ -165,42 +151,76 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 				out <- CompleteStreamEvent{Err: fmt.Errorf("bifrost request failed: %s", safeErrorSummary(chunk.BifrostError))}
 				return
 			}
-			if chunk.BifrostChatResponse == nil {
+			resp := chunk.BifrostResponsesStreamResponse
+			if resp == nil {
 				continue
 			}
 
 			event := CompleteStreamEvent{}
-			if usage := chunk.BifrostChatResponse.Usage; usage != nil {
-				providerCostUSD := (*float64)(nil)
-				if usage.Cost != nil {
-					totalCost := usage.Cost.TotalCost
-					providerCostUSD = &totalCost
+
+			// Citation annotation. Requesty mislabels these as output_text.delta
+			// while carrying an annotation field, so key off the annotation
+			// pointer rather than the event type.
+			if ann := resp.Annotation; ann != nil && ann.URL != nil && strings.TrimSpace(*ann.URL) != "" {
+				url := *ann.URL
+				idx, seen := citationIndex[url]
+				if !seen {
+					idx = len(citationIndex)
+					citationIndex[url] = idx
+					event.Citations = append(event.Citations, Citation{URL: url, Title: derefString(ann.Title)})
 				}
-				event.Usage = &Usage{
-					InputTokens:              int64(usage.PromptTokens),
-					OutputTokens:             int64(usage.CompletionTokens),
-					TotalTokens:              int64(usage.TotalTokens),
-					CacheCreationInputTokens: int64(cachedWriteTokens(usage)),
-					CacheReadInputTokens:     int64(cachedReadTokens(usage)),
-					ReasoningTokens:          int64(reasoningTokens(usage)),
-					ProviderCostUSD:          providerCostUSD,
+				if anchor, ok := responsesAnchor(visible.String(), ann, idx); ok {
+					event.CitationAnchors = append(event.CitationAnchors, anchor)
 				}
 			}
 
-			for _, choice := range chunk.BifrostChatResponse.Choices {
-				delta := choice.ChatStreamResponseChoice
-				if delta == nil || delta.Delta == nil {
-					continue
+			switch resp.Type {
+			case schemas.ResponsesStreamResponseTypeOutputTextDelta:
+				// Annotation-bearing chunks share this type but carry no text.
+				if resp.Annotation == nil && resp.Delta != nil {
+					event.Delta = *resp.Delta
+					visible.WriteString(*resp.Delta)
 				}
-				if delta.Delta.Content != nil {
-					event.Delta += *delta.Delta.Content
+			case schemas.ResponsesStreamResponseTypeReasoningSummaryTextDelta:
+				if resp.Delta != nil {
+					event.ReasoningDelta = *resp.Delta
 				}
-				if delta.Delta.Reasoning != nil {
-					event.ReasoningDelta += *delta.Delta.Reasoning
+			case schemas.ResponsesStreamResponseTypeWebSearchCallInProgress,
+				schemas.ResponsesStreamResponseTypeWebSearchCallSearching:
+				event.SearchActivity = SearchActivityStarted
+			case schemas.ResponsesStreamResponseTypeWebSearchCallCompleted:
+				event.SearchActivity = SearchActivityCompleted
+			case schemas.ResponsesStreamResponseTypeOutputItemAdded:
+				// SearchCount is derived by counting distinct web_search_call items;
+				// this family reports no search-count usage field.
+				if isWebSearchItem(resp.Item) {
+					searchItems++
 				}
+			case schemas.ResponsesStreamResponseTypeOutputItemDone:
+				// action.sources give proxy URLs with no title; add only those we
+				// have not already cited from an annotation.
+				for _, cit := range webSearchActionCitations(resp.Item) {
+					if _, seen := citationIndex[cit.URL]; seen {
+						continue
+					}
+					citationIndex[cit.URL] = len(citationIndex)
+					event.Citations = append(event.Citations, cit)
+				}
+			case schemas.ResponsesStreamResponseTypeCompleted,
+				schemas.ResponsesStreamResponseTypeIncomplete:
+				if resp.Response != nil {
+					usage := responsesUsage(resp.Response.Usage)
+					usage.SearchCount = searchItems
+					event.Usage = &usage
+				}
+			case schemas.ResponsesStreamResponseTypeFailed,
+				schemas.ResponsesStreamResponseTypeError:
+				out <- CompleteStreamEvent{Err: fmt.Errorf("bifrost request failed: %s", responsesStreamError(resp))}
+				return
 			}
 
-			if event.Delta == "" && event.ReasoningDelta == "" && event.Usage == nil {
+			if event.Delta == "" && event.ReasoningDelta == "" && event.Usage == nil &&
+				len(event.Citations) == 0 && len(event.CitationAnchors) == 0 && event.SearchActivity == "" {
 				continue
 			}
 
@@ -352,176 +372,182 @@ func buildResponsesMessageContent(
 	return &schemas.ResponsesMessageContent{ContentBlocks: blocks}
 }
 
-func (c *BifrostClient) buildChatRequest(req CompleteRequest) (*schemas.BifrostChatRequest, error) {
-	if strings.TrimSpace(req.ProviderID) == "" {
-		return nil, fmt.Errorf("bifrost provider id is required")
+// responsesUsage maps Bifrost's Responses usage onto the neutral Usage. Provider
+// cost lives at usage.cost as a bare float (Requesty's shape) and is verified to
+// be pure token cost with no search surcharge. SearchCount is filled by the
+// caller (this family reports no search-count usage field).
+func responsesUsage(u *schemas.ResponsesResponseUsage) Usage {
+	if u == nil {
+		return Usage{}
 	}
-	if strings.TrimSpace(req.ProviderModelID) == "" {
-		return nil, fmt.Errorf("bifrost model id is required")
+	usage := Usage{
+		InputTokens:  int64(u.InputTokens),
+		OutputTokens: int64(u.OutputTokens),
+		TotalTokens:  int64(u.TotalTokens),
 	}
-
-	messages := make([]schemas.ChatMessage, 0, len(req.Messages))
-	for _, message := range req.Messages {
-		content := message.Content
-		name := strings.TrimSpace(message.Name)
-		messages = append(messages, schemas.ChatMessage{
-			Name:    nullableString(name),
-			Role:    schemas.ChatMessageRole(message.Role),
-			Content: buildMessageContent(content, message.Images, message.Files),
-		})
-	}
-
-	chatReq := &schemas.BifrostChatRequest{
-		Provider: schemas.ModelProvider(req.ProviderID),
-		Model:    req.ProviderModelID,
-		Input:    messages,
-	}
-	if req.MaxOutputTokens > 0 || req.ReasoningEffort != "" || req.JSONResponseFormat {
-		chatReq.Params = &schemas.ChatParameters{}
-	}
-	if req.MaxOutputTokens > 0 {
-		chatReq.Params.MaxCompletionTokens = &req.MaxOutputTokens
-	}
-	if reasoning := reasoningParam(req.ReasoningEffort); reasoning != nil {
-		// Send the thinking budget explicitly (Anthropic's thinking.budget_tokens)
-		// so we own the max_tokens > budget invariant rather than depending on the
-		// router's effort→budget mapping. reasoningParam only returns non-nil for
-		// an enabled tier, so a budget here is always for active reasoning.
-		if req.ReasoningMaxTokens > 0 {
-			budget := req.ReasoningMaxTokens
-			reasoning.MaxTokens = &budget
+	if d := u.InputTokensDetails; d != nil {
+		usage.CacheReadInputTokens = int64(d.CachedReadTokens)
+		usage.CacheCreationInputTokens = int64(d.CachedWriteTokens)
+		if w := d.CachedWriteTokenDetails; w != nil {
+			usage.CacheCreationInputTokens = int64(w.CachedWriteTokens5m + w.CachedWriteTokens1h)
 		}
-		chatReq.Params.Reasoning = reasoning
 	}
-	if req.JSONResponseFormat {
-		// OpenAI-compatible JSON mode. Bifrost passes this through to the
-		// provider; providers that don't support it ignore it, so the caller must
-		// still tolerate non-JSON output.
-		var responseFormat interface{} = map[string]string{"type": "json_object"}
-		chatReq.Params.ResponseFormat = &responseFormat
+	if d := u.OutputTokensDetails; d != nil {
+		usage.ReasoningTokens = int64(d.ReasoningTokens)
 	}
-
-	return chatReq, nil
+	if u.Cost != nil {
+		cost := u.Cost.TotalCost
+		usage.ProviderCostUSD = &cost
+	}
+	return usage
 }
 
-// reasoningParam translates a user-selected effort into Bifrost's reasoning
-// parameter. Empty AND the disabling tiers ("off"/"none") return nil, so NO
-// reasoning parameter is sent — that is the portable, OpenAI-compatible way to
-// request no extended thinking.
-//
-// We must NOT send effort "none" to disable: Requesty is a Bifrost custom
-// provider, which skips reasoning normalisation and forwards the param verbatim.
-// Requesty/Bedrock then reads the mere presence of a reasoning param as
-// "thinking on" and applies a default budget — so "none" actually ENABLES
-// thinking, and a small max_tokens (e.g. title generation's ~15) trips
-// Anthropic's "max_tokens > thinking.budget_tokens" 400. Omitting the param
-// leaves Claude at its thinking-off default. Every other tier passes through
-// verbatim.
-func reasoningParam(effort string) *schemas.ChatReasoning {
-	switch strings.ToLower(strings.TrimSpace(effort)) {
-	case "", "off", "none":
+// extractResponsesOutput flattens a non-streaming Responses output into the
+// neutral answer, reasoning, and citations. Annotations may sit on a separate
+// output item from the visible text, so offsets are converted against the text
+// accumulated so far (in output order), matching how the stream path works.
+func extractResponsesOutput(output []schemas.ResponsesMessage) (content, reasoning string, citations []Citation, anchors []CitationAnchor) {
+	var contentB, reasoningB strings.Builder
+	citationIndex := make(map[string]int)
+
+	addCitation := func(url string, title *string) (int, bool) {
+		if strings.TrimSpace(url) == "" {
+			return 0, false
+		}
+		if idx, seen := citationIndex[url]; seen {
+			return idx, false
+		}
+		idx := len(citationIndex)
+		citationIndex[url] = idx
+		citations = append(citations, Citation{URL: url, Title: derefString(title)})
+		return idx, true
+	}
+
+	for i := range output {
+		item := &output[i]
+		if isWebSearchItem(item) {
+			for _, cit := range webSearchActionCitations(item) {
+				addCitation(cit.URL, &cit.Title)
+			}
+			continue
+		}
+		if item.Content != nil {
+			for bi := range item.Content.ContentBlocks {
+				block := &item.Content.ContentBlocks[bi]
+				switch block.Type {
+				case schemas.ResponsesOutputMessageContentTypeText:
+					if block.Text != nil {
+						contentB.WriteString(*block.Text)
+					}
+					if t := block.ResponsesOutputMessageContentText; t != nil {
+						for ai := range t.Annotations {
+							ann := &t.Annotations[ai]
+							if ann.URL == nil {
+								continue
+							}
+							idx, _ := addCitation(*ann.URL, ann.Title)
+							if anchor, ok := responsesAnchor(contentB.String(), ann, idx); ok {
+								anchors = append(anchors, anchor)
+							}
+						}
+					}
+				case schemas.ResponsesOutputMessageContentTypeReasoning:
+					if block.Text != nil {
+						reasoningB.WriteString(*block.Text)
+					}
+				}
+			}
+		}
+		if item.ResponsesReasoning != nil {
+			for _, summary := range item.Summary {
+				reasoningB.WriteString(summary.Text)
+			}
+		}
+	}
+	return contentB.String(), reasoningB.String(), citations, anchors
+}
+
+// countResponsesSearchItems counts distinct web_search_call items in a
+// non-streaming output — the neutral SearchCount for the non-stream path.
+func countResponsesSearchItems(output []schemas.ResponsesMessage) int {
+	count := 0
+	for i := range output {
+		if isWebSearchItem(&output[i]) {
+			count++
+		}
+	}
+	return count
+}
+
+// isWebSearchItem reports whether a Responses output item is a web_search_call.
+func isWebSearchItem(item *schemas.ResponsesMessage) bool {
+	return item != nil && item.Type != nil && *item.Type == schemas.ResponsesMessageTypeWebSearchCall
+}
+
+// webSearchActionCitations extracts citations from a web_search_call item's
+// action sources. These are proxy URLs with (usually) no title — de-dup happens
+// at the call site so annotation-derived citations win.
+func webSearchActionCitations(item *schemas.ResponsesMessage) []Citation {
+	if !isWebSearchItem(item) || item.ResponsesToolMessage == nil || item.Action == nil ||
+		item.Action.ResponsesWebSearchToolCallAction == nil {
 		return nil
-	default:
-		return &schemas.ChatReasoning{Effort: &effort}
 	}
-}
-
-// buildMessageContent renders a gateway message into Bifrost content. With no
-// images or files it stays a plain string; otherwise it becomes multimodal
-// content blocks (an optional text block, then image_url data-URL blocks, then
-// file data-URL blocks).
-func buildMessageContent(
-	content string,
-	images []MessageImage,
-	files []MessageFile,
-) *schemas.ChatMessageContent {
-	if len(images) == 0 && len(files) == 0 {
-		text := content
-		return &schemas.ChatMessageContent{ContentStr: &text}
-	}
-
-	blocks := make([]schemas.ChatContentBlock, 0, len(images)+len(files)+1)
-	if content != "" {
-		text := content
-		blocks = append(blocks, schemas.ChatContentBlock{
-			Type: schemas.ChatContentBlockTypeText,
-			Text: &text,
-		})
-	}
-	for _, image := range images {
-		dataURL := "data:" + image.MimeType + ";base64," + image.Base64
-		blocks = append(blocks, schemas.ChatContentBlock{
-			Type:           schemas.ChatContentBlockTypeImage,
-			ImageURLStruct: &schemas.ChatInputImage{URL: dataURL},
-		})
-	}
-	for _, file := range files {
-		dataURL := "data:" + file.MimeType + ";base64," + file.Base64
-		filename := file.Filename
-		fileType := file.MimeType
-		blocks = append(blocks, schemas.ChatContentBlock{
-			Type: schemas.ChatContentBlockTypeFile,
-			File: &schemas.ChatInputFile{
-				FileData: &dataURL,
-				Filename: &filename,
-				FileType: &fileType,
-			},
-		})
-	}
-	return &schemas.ChatMessageContent{ContentBlocks: blocks}
-}
-
-func extractMessageContent(message *schemas.ChatMessage) string {
-	if message == nil || message.Content == nil {
-		return ""
-	}
-	if message.Content.ContentStr != nil {
-		return *message.Content.ContentStr
-	}
-
-	var builder strings.Builder
-	for _, block := range message.Content.ContentBlocks {
-		if block.Text != nil {
-			builder.WriteString(*block.Text)
+	var citations []Citation
+	for _, src := range item.Action.ResponsesWebSearchToolCallAction.Sources {
+		if strings.TrimSpace(src.URL) == "" {
+			continue
 		}
+		citations = append(citations, Citation{URL: src.URL, Title: derefString(src.Title)})
 	}
-	return builder.String()
+	return citations
 }
 
-// extractReasoning returns the provider-normalised reasoning text for an
-// assistant message, or "" when the model exposes none. Bifrost folds the
-// provider-specific shapes (OpenAI "reasoning", xAI "reasoning_content",
-// DeepSeek thinking) into the single ChatAssistantMessage.Reasoning field.
-func extractReasoning(message *schemas.ChatMessage) string {
-	if message == nil || message.ChatAssistantMessage == nil || message.Reasoning == nil {
-		return ""
+// responsesAnchor converts a url_citation annotation's UTF-8 byte offsets into a
+// code-point (rune) CitationAnchor against text. It returns ok=false when the
+// offsets are absent, out of range, not on rune boundaries, or inverted — the
+// caller drops such anchors rather than guessing (spec §7).
+func responsesAnchor(text string, ann *schemas.ResponsesOutputMessageContentTextAnnotation, citationIndex int) (CitationAnchor, bool) {
+	if ann == nil || ann.StartIndex == nil || ann.EndIndex == nil {
+		return CitationAnchor{}, false
 	}
-	return *message.Reasoning
+	start, ok := byteOffsetToRuneOffset(text, *ann.StartIndex)
+	if !ok {
+		return CitationAnchor{}, false
+	}
+	end, ok := byteOffsetToRuneOffset(text, *ann.EndIndex)
+	if !ok || start > end {
+		return CitationAnchor{}, false
+	}
+	return CitationAnchor{CitationIndex: citationIndex, StartIndex: start, EndIndex: end}, true
 }
 
-func reasoningTokens(usage *schemas.BifrostLLMUsage) int {
-	if usage == nil || usage.CompletionTokensDetails == nil {
-		return 0
+// byteOffsetToRuneOffset converts a UTF-8 byte offset within text to a code-point
+// (rune) offset. ok is false when the offset is negative, past the end, or lands
+// inside a multi-byte rune.
+func byteOffsetToRuneOffset(text string, byteOffset int) (int, bool) {
+	if byteOffset < 0 || byteOffset > len(text) {
+		return 0, false
 	}
-	return usage.CompletionTokensDetails.ReasoningTokens
+	if byteOffset < len(text) && !utf8.RuneStart(text[byteOffset]) {
+		return 0, false
+	}
+	return utf8.RuneCountInString(text[:byteOffset]), true
 }
 
-func cachedReadTokens(usage *schemas.BifrostLLMUsage) int {
-	if usage == nil || usage.PromptTokensDetails == nil {
-		return 0
+// responsesStreamError builds a safe summary of an in-band Responses error event.
+// It uses only structured codes — never the free-text Message/Param, which can
+// echo plaintext user content — mirroring safeErrorSummary.
+func responsesStreamError(resp *schemas.BifrostResponsesStreamResponse) string {
+	if resp == nil {
+		return "unspecified provider error"
 	}
-	return usage.PromptTokensDetails.CachedReadTokens
-}
-
-func cachedWriteTokens(usage *schemas.BifrostLLMUsage) int {
-	if usage == nil || usage.PromptTokensDetails == nil {
-		return 0
+	if resp.Code != nil && strings.TrimSpace(*resp.Code) != "" {
+		return "code=" + *resp.Code
 	}
-	if usage.PromptTokensDetails.CachedWriteTokenDetails != nil {
-		return usage.PromptTokensDetails.CachedWriteTokenDetails.CachedWriteTokens5m +
-			usage.PromptTokensDetails.CachedWriteTokenDetails.CachedWriteTokens1h
+	if resp.Response != nil && resp.Response.Error != nil && strings.TrimSpace(resp.Response.Error.Code) != "" {
+		return "code=" + resp.Response.Error.Code
 	}
-	return usage.PromptTokensDetails.CachedWriteTokens
+	return "unspecified provider error"
 }
 
 func (c *BifrostClient) logBifrostError(req CompleteRequest, bifrostErr *schemas.BifrostError) {

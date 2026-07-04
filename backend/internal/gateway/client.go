@@ -68,14 +68,48 @@ type Usage struct {
 	// text — and defaults to 0 for models that do not report it.
 	ReasoningTokens int64
 	ProviderCostUSD *float64
+	// SearchCount is the number of provider web searches observed for this
+	// completion (distinct web_search_call items on the stream). It is an
+	// aggregate count only — never query text — and defaults to 0.
+	SearchCount int
 }
+
+// Citation is a web source referenced by an assistant answer. Title is the
+// displayable name/domain the provider supplies; Snippet is optional and often
+// empty. All three are treated as message content: encrypted at rest, never
+// logged.
+type Citation struct {
+	URL     string
+	Title   string
+	Snippet string
+}
+
+// CitationAnchor marks the span of the assistant answer a citation annotates.
+// StartIndex/EndIndex are Unicode code-point (rune) offsets into the answer text
+// — the gateway converts provider UTF-8 byte offsets to code points before
+// emitting, and drops anchors whose offsets are unusable rather than guessing.
+type CitationAnchor struct {
+	CitationIndex int
+	StartIndex    int
+	EndIndex      int
+}
+
+// Search activity states carried on CompleteStreamEvent.SearchActivity.
+const (
+	SearchActivityStarted   = "started"
+	SearchActivityCompleted = "completed"
+)
 
 type CompleteResponse struct {
 	Message Message
 	// Reasoning is provider-returned reasoning text, when the model exposes it.
 	// It is treated as assistant content: encrypted at rest, never logged.
 	Reasoning string
-	Usage     Usage
+	// Citations and CitationAnchors are the web sources referenced by the answer
+	// (populated only when web search ran). Treated as message content.
+	Citations       []Citation
+	CitationAnchors []CitationAnchor
+	Usage           Usage
 }
 
 type CompleteStreamEvent struct {
@@ -83,8 +117,15 @@ type CompleteStreamEvent struct {
 	// ReasoningDelta is a chunk of provider reasoning text, kept separate from
 	// Delta so it never mixes into the final answer.
 	ReasoningDelta string
-	Usage          *Usage
-	Err            error
+	// Citations are web sources newly referenced on this event (de-duplicated by
+	// URL across the stream, with stable indices). CitationAnchors point spans of
+	// the answer at those citations by index. SearchActivity reports web-search
+	// lifecycle ("started"/"completed"). All optional.
+	Citations       []Citation
+	CitationAnchors []CitationAnchor
+	SearchActivity  string
+	Usage           *Usage
+	Err             error
 }
 
 // ImageTransport selects how an image is generated. Requesty exposes two,
