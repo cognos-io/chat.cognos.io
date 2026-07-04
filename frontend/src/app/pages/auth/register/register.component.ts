@@ -49,8 +49,8 @@ import { AuthService } from '@services/auth.service';
           [formGroup]="registerForm"
           (ngSubmit)="onSubmit()"
         >
-          <label class="auth-page__field" for="email">
-            <span class="auth-page__label">{{ t('common.email') }}</span>
+          <div class="auth-page__field">
+            <label class="auth-page__label" for="email">{{ t('common.email') }}</label>
             <input
               id="email"
               class="auth-page__input"
@@ -58,18 +58,29 @@ import { AuthService } from '@services/auth.service';
               type="email"
               autocomplete="email"
               [placeholder]="t('common.emailPlaceholder')"
+              [attr.aria-describedby]="
+                registerForm.controls.email.touched &&
+                registerForm.controls.email.invalid
+                  ? 'email-error'
+                  : null
+              "
             />
             @if (
               registerForm.controls.email.touched && registerForm.controls.email.invalid
             ) {
-              <span class="register__field-msg register__field-msg--error">
+              <span
+                id="email-error"
+                class="register__field-msg register__field-msg--error"
+              >
                 {{ t('auth.register.hints.emailInvalid') }}
               </span>
             }
-          </label>
+          </div>
 
-          <label class="auth-page__field" for="password">
-            <span class="auth-page__label">{{ t('common.password') }}</span>
+          <div class="auth-page__field">
+            <label class="auth-page__label" for="password">{{
+              t('common.password')
+            }}</label>
             <input
               id="password"
               class="auth-page__input"
@@ -77,25 +88,35 @@ import { AuthService } from '@services/auth.service';
               type="password"
               autocomplete="new-password"
               [placeholder]="t('auth.register.passwordPlaceholder')"
+              aria-describedby="password-hint"
             />
             @switch (passwordHintState()) {
               @case ('ok') {
-                <span class="register__field-msg register__field-msg--ok">
+                <span
+                  id="password-hint"
+                  class="register__field-msg register__field-msg--ok"
+                >
                   {{ t('auth.register.hints.passwordOk') }}
                 </span>
               }
               @case ('error') {
-                <span class="register__field-msg register__field-msg--error">
+                <span
+                  id="password-hint"
+                  class="register__field-msg register__field-msg--error"
+                >
                   {{ t('auth.register.hints.passwordLength') }}
                 </span>
               }
               @default {
-                <span class="register__field-msg register__field-msg--hint">
+                <span
+                  id="password-hint"
+                  class="register__field-msg register__field-msg--hint"
+                >
                   {{ t('auth.register.hints.passwordLength') }}
                 </span>
               }
             }
-          </label>
+          </div>
 
           <cog-button
             appearance="primary"
