@@ -59,12 +59,12 @@ requesty:
 # top of token/provider cost regardless of whether a provider-reported total
 # was trusted, because Requesty has not confirmed its reported cost includes
 # the provider's own search fee (docs/specs/web-search.md §5.4, §14 Q1).
-# Must be > 0; defaults to 900_000 (CHF 0.009, ~USD 0.01 + margin) when unset
+# Must be > 0; defaults to 1_100_000 (CHF 0.011, ~USD 0.015 + margin) when unset
 # or non-positive — it must never resolve to zero, or search would be free.
 # Env override: COGNOS_BILLING_WEB_SEARCH_FLOOR_MICRO_RAPPEN
 billing:
   trial_seed_rappen: 200
-  web_search_floor_micro_rappen: 900000
+  web_search_floor_micro_rappen: 1100000
 
 # --- Paddle (payments) --------------------------------------------------------
 # Optional: without api_key the /api/v1/billing/{checkout,portal,cancel,resume}

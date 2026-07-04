@@ -29,14 +29,11 @@ const (
 	// DefaultWebSearchFloorMicroRappen is the per-search floor fee added to a
 	// completion's cost whenever it counted any provider web searches
 	// (Usage.SearchCount > 0), configurable via
-	// billing.web_search_floor_micro_rappen. Seeded from Anthropic's
-	// ~USD 0.01/search fee plus the standard margin baked in: at a
-	// representative ~0.88 USD→CHF rate that is roughly CHF 0.009 per
-	// search = 0.9 rappen = 900_000 micro-rappen (MicroRappenPerRappen =
-	// 1_000_000 micro-rappen per rappen — do not confuse the two units).
+	// billing.web_search_floor_micro_rappen. MicroRappenPerRappen =
+	// 1_000_000 micro-rappen per rappen — do not confuse the two units.
 	// Unset or non-positive configuration always falls back to this default;
 	// it must never resolve to zero, or search would be silently free.
-	DefaultWebSearchFloorMicroRappen = 900_000
+	DefaultWebSearchFloorMicroRappen = 1_100_000
 )
 
 // CeilRappenFromMicro converts a non-negative micro-rappen amount to whole

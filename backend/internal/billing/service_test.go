@@ -511,7 +511,7 @@ func TestCalculateCostWebSearchFloorFeeMatrix(t *testing.T) {
 	}
 }
 
-// The configured default (900_000 micro-rappen = CHF 0.009 = 0.9 rappen) is
+// The configured default (1_100_000 micro-rappen = CHF 0.011 = 1.1 rappen) is
 // what a bare NewService() uses, and it must never resolve to zero.
 func TestCalculateCostDefaultWebSearchFloorNeverFree(t *testing.T) {
 	t.Parallel()
