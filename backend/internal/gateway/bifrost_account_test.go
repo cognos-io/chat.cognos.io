@@ -48,6 +48,46 @@ func TestNewStaticAccountFromAPIConfigBuildsInfomaniakCustomProvider(t *testing.
 	}
 }
 
+func TestNewStaticAccountFromAPIConfigGatesInfomaniakToChatFallback(t *testing.T) {
+	t.Parallel()
+
+	account, err := NewStaticAccountFromAPIConfig(&config.APIConfig{
+		InfomaniakAPIKey:    "test-key",
+		InfomaniakProductID: "product-123",
+		RequestyAPIKey:      "requesty-key",
+	})
+	if err != nil {
+		t.Fatalf("NewStaticAccountFromAPIConfig() error = %v, want nil", err)
+	}
+
+	infomaniak, err := account.GetConfigForProvider(schemas.ModelProvider("infomaniak"))
+	if err != nil {
+		t.Fatalf("GetConfigForProvider(infomaniak) error = %v, want nil", err)
+	}
+	if infomaniak.CustomProviderConfig == nil || infomaniak.CustomProviderConfig.AllowedRequests == nil {
+		t.Fatal("infomaniak AllowedRequests = nil, want chat-only gate")
+	}
+	// Chat is allowed; Responses is not — so Bifrost falls back to Chat Completions.
+	if !infomaniak.CustomProviderConfig.IsOperationAllowed(schemas.ChatCompletionStreamRequest) {
+		t.Fatal("infomaniak should allow chat completion stream")
+	}
+	if infomaniak.CustomProviderConfig.IsOperationAllowed(schemas.ResponsesStreamRequest) {
+		t.Fatal("infomaniak should NOT allow the Responses stream (forces chat fallback)")
+	}
+	if infomaniak.CustomProviderConfig.IsOperationAllowed(schemas.ResponsesRequest) {
+		t.Fatal("infomaniak should NOT allow Responses (forces chat fallback)")
+	}
+
+	// Requesty is left ungated so it uses the native Responses API.
+	requesty, err := account.GetConfigForProvider(schemas.ModelProvider("requesty"))
+	if err != nil {
+		t.Fatalf("GetConfigForProvider(requesty) error = %v, want nil", err)
+	}
+	if requesty.CustomProviderConfig == nil || requesty.CustomProviderConfig.AllowedRequests != nil {
+		t.Fatalf("requesty AllowedRequests = %#v, want nil (native Responses)", requesty.CustomProviderConfig)
+	}
+}
+
 func TestNewStaticAccountFromAPIConfigBuildsRequestyEUGatewayByDefault(t *testing.T) {
 	t.Parallel()
 

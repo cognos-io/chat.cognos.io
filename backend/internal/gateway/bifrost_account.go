@@ -48,7 +48,19 @@ func NewStaticAccountFromAPIConfig(cfg *config.APIConfig) (*StaticAccount, error
 		}
 		account.addProvider(
 			schemas.ModelProvider("infomaniak"),
-			openAIProviderConfig(baseURL, &schemas.CustomProviderConfig{BaseProviderType: schemas.OpenAI}),
+			// Infomaniak speaks only Chat Completions, so gate the custom provider
+			// to the chat operations. Bifrost then transparently translates our
+			// Responses API calls into Chat Completions for Infomaniak (its
+			// shouldFallbackResponsesToChat path), letting the gateway drive every
+			// provider through a single Responses code path. Requesty (below) is
+			// left ungated so it uses the native Responses API.
+			openAIProviderConfig(baseURL, &schemas.CustomProviderConfig{
+				BaseProviderType: schemas.OpenAI,
+				AllowedRequests: &schemas.AllowedRequests{
+					ChatCompletion:       true,
+					ChatCompletionStream: true,
+				},
+			}),
 			providerKey("infomaniak", cfg.InfomaniakAPIKey),
 		)
 	}
