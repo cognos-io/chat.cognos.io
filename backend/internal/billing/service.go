@@ -25,6 +25,18 @@ const (
 	// exact cost in micro-rappen and only round to whole rappen when money
 	// actually leaves the system (balance display, Paddle charge).
 	MicroRappenPerRappen = 1_000_000
+
+	// DefaultWebSearchFloorMicroRappen is the per-search floor fee added to a
+	// completion's cost whenever it counted any provider web searches
+	// (Usage.SearchCount > 0), configurable via
+	// billing.web_search_floor_micro_rappen. Seeded from Anthropic's
+	// ~USD 0.01/search fee plus the standard margin baked in: at a
+	// representative ~0.88 USD→CHF rate that is roughly CHF 0.009 per
+	// search = 0.9 rappen = 900_000 micro-rappen (MicroRappenPerRappen =
+	// 1_000_000 micro-rappen per rappen — do not confuse the two units).
+	// Unset or non-positive configuration always falls back to this default;
+	// it must never resolve to zero, or search would be silently free.
+	DefaultWebSearchFloorMicroRappen = 900_000
 )
 
 // CeilRappenFromMicro converts a non-negative micro-rappen amount to whole
@@ -84,6 +96,13 @@ type Usage struct {
 	CacheCreationInputTokens int64
 	CacheReadInputTokens     int64
 	ProviderCostUSD          *float64
+	// SearchCount is the number of provider web searches this completion
+	// performed (0 when web search was off or unused). Drives the
+	// per-search floor fee in CalculateCost regardless of whether
+	// ProviderCostUSD is also set (spec §5.4 Decision 4, amended by the
+	// spike — Requesty has not confirmed its reported cost includes the
+	// provider's own search fee).
+	SearchCount int64
 }
 
 type CostBreakdown struct {
@@ -100,23 +119,43 @@ type CostBreakdown struct {
 	CostMicroRappen         int64
 	ProviderCostMicroRappen int64
 	UsedProviderCost        bool
+	// SearchCount mirrors the Usage.SearchCount that produced this
+	// breakdown, so callers building a ledger record don't need to re-read
+	// gateway.Usage.
+	SearchCount int64
 }
 
 type Service struct {
 	MarginBPS int64
+	// WebSearchFloorMicroRappen is the per-search fee CalculateCost adds
+	// whenever Usage.SearchCount > 0. Always positive — see
+	// DefaultWebSearchFloorMicroRappen.
+	WebSearchFloorMicroRappen int64
 }
 
 func NewService() *Service {
-	return NewServiceWithMargin(DefaultMarginBPS)
+	return NewServiceWithOptions(DefaultMarginBPS, DefaultWebSearchFloorMicroRappen)
 }
 
 // NewServiceWithMargin builds a Service with a configurable markup in basis
-// points. Non-positive values fall back to DefaultMarginBPS.
+// points and the default web-search floor fee. Non-positive margin falls
+// back to DefaultMarginBPS.
 func NewServiceWithMargin(marginBPS int64) *Service {
+	return NewServiceWithOptions(marginBPS, DefaultWebSearchFloorMicroRappen)
+}
+
+// NewServiceWithOptions builds a Service with a configurable margin (basis
+// points) and web-search floor fee (micro-rappen per search). Non-positive
+// values fall back to their defaults — the floor in particular must never
+// resolve to zero, or search would be silently free.
+func NewServiceWithOptions(marginBPS, webSearchFloorMicroRappen int64) *Service {
 	if marginBPS <= 0 {
 		marginBPS = DefaultMarginBPS
 	}
-	return &Service{MarginBPS: marginBPS}
+	if webSearchFloorMicroRappen <= 0 {
+		webSearchFloorMicroRappen = DefaultWebSearchFloorMicroRappen
+	}
+	return &Service{MarginBPS: marginBPS, WebSearchFloorMicroRappen: webSearchFloorMicroRappen}
 }
 
 func (s *Service) CalculateCost(
@@ -128,6 +167,30 @@ func (s *Service) CalculateCost(
 	userCostUSD := s.applyMargin(providerCostUSD)
 	costCHF := userCostUSD * usdToCHFRate
 	providerCostCHF := providerCostUSD * usdToCHFRate
+
+	// Web-search floor fee: added whenever the completion counted any search
+	// invocations, REGARDLESS of whether a provider-reported total was
+	// trusted above (UsedProviderCost). Requesty has not confirmed that its
+	// reported cost includes the underlying provider's own search fee (spec
+	// §14 Q1), so Decision 4 as amended by the spike is to always add the
+	// floor on top when SearchCount > 0 — over-charging slightly beats
+	// silently eating the cost, and revisit once pass-through is confirmed.
+	//
+	// WebSearchFloorMicroRappen is already a user-facing, post-margin price
+	// (the configured default is seeded from the provider's per-search fee
+	// *plus* margin baked in — see DefaultWebSearchFloorMicroRappen), so it
+	// is added directly in CHF/micro-rappen terms here rather than run back
+	// through applyMargin, which would margin it a second time.
+	var searchFloorMicroRappen int64
+	if usage.SearchCount > 0 {
+		searchFloorMicroRappen = usage.SearchCount * s.WebSearchFloorMicroRappen
+	}
+	// 1 CHF = 100 rappen = 100 * MicroRappenPerRappen micro-rappen.
+	searchFloorCHF := float64(searchFloorMicroRappen) / (100 * MicroRappenPerRappen)
+	costCHF += searchFloorCHF
+	if usdToCHFRate > 0 {
+		userCostUSD += searchFloorCHF / usdToCHFRate
+	}
 
 	return CostBreakdown{
 		InputTokens:              usage.InputTokens,
@@ -143,6 +206,7 @@ func (s *Service) CalculateCost(
 		CostMicroRappen:         int64(math.Round(costCHF * 100 * MicroRappenPerRappen)),
 		ProviderCostMicroRappen: int64(math.Round(providerCostCHF * 100 * MicroRappenPerRappen)),
 		UsedProviderCost:        usage.ProviderCostUSD != nil,
+		SearchCount:             usage.SearchCount,
 	}
 }
 

@@ -132,7 +132,7 @@ func (s *Service) Run(ctx context.Context, opts SyncOptions) (Summary, error) {
 		for field, want := range map[string]bool{
 			"supports_vision":       model.SupportsVision,
 			"supports_tool_calling": model.SupportsToolCalling,
-			"supports_web_search":   model.SupportsWebSearch,
+			"supports_web_search":   supportsWebSearchFor(model),
 			"supports_computer_use": model.SupportsComputerUse,
 		} {
 			if record.GetBool(field) != want {

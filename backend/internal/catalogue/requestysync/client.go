@@ -33,6 +33,11 @@ type RequestyModel struct {
 	OutputPrice             float64 `json:"output_price"`
 	ContextWindow           int     `json:"context_window"`
 	MaxOutputTokens         int     `json:"max_output_tokens"`
+	// Geolocation is Requesty's flat data-residency field for where the model
+	// is actually served (e.g. "eu", "us", "global"). It gates
+	// supports_web_search (spec Decision 2): only exactly "eu" keeps the
+	// capability, regardless of what SupportsWebSearch reports.
+	Geolocation string `json:"geolocation"`
 }
 
 // Client fetches the Requesty model catalogue. It carries no secrets beyond the
