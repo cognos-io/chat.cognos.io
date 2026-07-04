@@ -18,6 +18,13 @@ type stubBifrostRequester struct {
 	req       *schemas.BifrostChatRequest
 	streamReq *schemas.BifrostChatRequest
 
+	respResp      *schemas.BifrostResponsesResponse
+	respErr       *schemas.BifrostError
+	respStream    chan *schemas.BifrostStreamChunk
+	respStreamErr *schemas.BifrostError
+	respReq       *schemas.BifrostResponsesRequest
+	respStreamReq *schemas.BifrostResponsesRequest
+
 	imageResp *schemas.BifrostImageGenerationResponse
 	imageErr  *schemas.BifrostError
 	imageReq  *schemas.BifrostImageGenerationRequest
@@ -37,6 +44,22 @@ func (s *stubBifrostRequester) ChatCompletionStreamRequest(
 ) (chan *schemas.BifrostStreamChunk, *schemas.BifrostError) {
 	s.streamReq = req
 	return s.stream, s.streamErr
+}
+
+func (s *stubBifrostRequester) ResponsesRequest(
+	_ *schemas.BifrostContext,
+	req *schemas.BifrostResponsesRequest,
+) (*schemas.BifrostResponsesResponse, *schemas.BifrostError) {
+	s.respReq = req
+	return s.respResp, s.respErr
+}
+
+func (s *stubBifrostRequester) ResponsesStreamRequest(
+	_ *schemas.BifrostContext,
+	req *schemas.BifrostResponsesRequest,
+) (chan *schemas.BifrostStreamChunk, *schemas.BifrostError) {
+	s.respStreamReq = req
+	return s.respStream, s.respStreamErr
 }
 
 func (s *stubBifrostRequester) ImageGenerationRequest(
