@@ -250,6 +250,38 @@ describe('parseCompleteStreamData', () => {
       message: 'Failed to process completion',
     });
   });
+
+  it('tolerates unknown extra fields on a web_search frame and its citations', () => {
+    // Forward-compat: a provider (or a newer backend) may add fields. Unknown
+    // keys at the frame, citation and anchor level are ignored, not fatal.
+    const frame = JSON.stringify({
+      type: 'web_search',
+      provider: 'vertex-gemini', // unknown top-level field
+      citations: [{ url: 'https://ok.com', title: 't', favicon: 'x' }],
+      citation_anchors: [{ citation: 0, start: 1, end: 2, confidence: 0.9 }],
+      search_activity: 'started',
+    });
+
+    expect(parseCompleteStreamData(frame)).toEqual({
+      type: 'web_search',
+      citations: [{ url: 'https://ok.com', title: 't' }],
+      anchors: [{ citation: 0, start: 1, end: 2 }],
+      searchActivity: 'started',
+    });
+  });
+
+  it('throws on a malformed (non-JSON) frame so the stream surfaces it (pinned)', () => {
+    // parseCompleteStreamData does not swallow JSON.parse errors; the stream
+    // reader turns a throw here into subscriber.error. Pinned so a corrupt frame
+    // aborts the stream rather than being silently skipped.
+    expect(() => parseCompleteStreamData('{"type":"web_search"')).toThrow();
+  });
+
+  it('throws on an unknown event type (pinned)', () => {
+    expect(() => parseCompleteStreamData('{"type":"mystery"}')).toThrow(
+      /Unknown completion stream event type/,
+    );
+  });
 });
 
 describe('mapCompleteResponse', () => {
