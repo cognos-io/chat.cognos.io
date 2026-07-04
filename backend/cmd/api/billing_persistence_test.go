@@ -123,6 +123,7 @@ func TestPocketBaseBillingRepoRecordUsageUpdatesTrialBalanceAndWritesTransaction
 		FXRateUSDCHF:            1,
 		InputTokens:             8,
 		OutputTokens:            4,
+		SearchCount:             2,
 		BalanceAfterRappen:      &balanceAfter,
 		BalanceAfterMicroRappen: &balanceAfterMicro,
 	}); err != nil {
@@ -173,6 +174,12 @@ func TestPocketBaseBillingRepoRecordUsageUpdatesTrialBalanceAndWritesTransaction
 	}
 	if got := transactionRecord.GetInt("output_tokens"); got != 4 {
 		t.Errorf("balance_transactions.output_tokens = %d, want %d", got, 4)
+	}
+	// search_count must persist independently of amount/user_cost so a
+	// web-search floor fee on this row can be re-derived later (the ledger's
+	// documented auditability invariant).
+	if got := transactionRecord.GetInt("search_count"); got != 2 {
+		t.Errorf("balance_transactions.search_count = %d, want %d", got, 2)
 	}
 	if got := transactionRecord.GetDateTime("occurred_at"); got.IsZero() {
 		t.Fatal("balance_transactions.occurred_at unexpectedly zero")

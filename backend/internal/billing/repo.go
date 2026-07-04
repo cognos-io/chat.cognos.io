@@ -147,6 +147,7 @@ func (r *PocketBaseRepo) RecordUsage(record UsageRecord) error {
 		transactionRecord.Set("fx_rate_usd_chf", record.FXRateUSDCHF)
 		transactionRecord.Set("input_tokens", record.InputTokens)
 		transactionRecord.Set("output_tokens", record.OutputTokens)
+		transactionRecord.Set("search_count", record.SearchCount)
 		transactionRecord.Set("description", record.ModelID)
 		if record.BalanceAfterRappen != nil {
 			transactionRecord.Set("balance_after_rappen", *record.BalanceAfterRappen)
