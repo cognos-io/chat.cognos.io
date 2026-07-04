@@ -309,6 +309,86 @@ test.describe('web search /conversations/{id}/complete API', () => {
       await user.api.dispose();
     }
   });
+
+  test('persist:false temporary turn: web_search streams but nothing is stored', async () => {
+    const user = await provisionApiUser();
+    try {
+      const { conversationID, keyPair } = await createConversationWithRealKey(user);
+
+      // A temporary (non-persisted) turn on a capable model: the tool still runs
+      // and citations stream live, but neither the user turn nor the assistant
+      // answer — and therefore no citations — is ever written to the store.
+      const res = await user.api.post(
+        `/api/v1/conversations/${conversationID}/complete`,
+        {
+          data: {
+            model_id: WEB_SEARCH_MODEL_ID,
+            persona_id: DEFAULT_PERSONA_ID,
+            system_prompt: DEFAULT_SYSTEM_PROMPT,
+            persist: false,
+            messages: [{ role: 'user', content: 'what is the minimum wage' }],
+          },
+        },
+      );
+      expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
+
+      const stream = await readWebSearchStream(res);
+      expect(stream.deltaText).toBe(MOCK_WEB_SEARCH_REPLY);
+      expect(stream.citations).toHaveLength(2);
+      expect(stream.activities).toContain('completed');
+
+      const messages = await decryptMessages(user, conversationID, keyPair);
+      expect(messages, 'a persist:false turn must store no messages').toHaveLength(0);
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
+  test('web search + attachment context coexist: both apply, answer persists citations', async () => {
+    const user = await provisionApiUser();
+    try {
+      const { conversationID, keyPair } = await createConversationWithRealKey(user);
+
+      // Web search (default on) alongside a transient attachment context: the
+      // tool still goes on the wire and citations come back, and the attachment
+      // text is folded into the user turn — the two contexts do not clash.
+      const res = await user.api.post(
+        `/api/v1/conversations/${conversationID}/complete`,
+        {
+          data: {
+            model_id: WEB_SEARCH_MODEL_ID,
+            persona_id: DEFAULT_PERSONA_ID,
+            system_prompt: DEFAULT_SYSTEM_PROMPT,
+            messages: [
+              { role: 'user', content: 'summarise the note and check the web' },
+            ],
+            attachment_contexts: [
+              {
+                attachment_id: 'att-e2e-websearch',
+                display_name: 'note.txt',
+                detected_mime_type: 'text/plain',
+                processor_id: 'text',
+                text_context: 'A short cantonal minimum-wage note.',
+              },
+            ],
+          },
+        },
+      );
+      expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
+
+      const stream = await readWebSearchStream(res);
+      expect(stream.deltaText).toBe(MOCK_WEB_SEARCH_REPLY);
+      expect(stream.citations).toHaveLength(2);
+      expect(stream.activities).toContain('completed');
+
+      const messages = await decryptMessages(user, conversationID, keyPair);
+      const assistant = messages.find((m) => m.decoded.citations !== undefined);
+      expect(assistant, 'assistant answer with citations not persisted').toBeTruthy();
+      expect(assistant!.decoded.citations).toHaveLength(2);
+    } finally {
+      await user.api.dispose();
+    }
+  });
 });
 
 test.describe('web search billing: per-search floor fee', () => {
