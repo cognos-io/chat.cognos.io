@@ -150,7 +150,7 @@ interface DisplayCitation {
 
     .message-sources__list {
       display: grid;
-      gap: var(--cog-space-075);
+      gap: var(--cog-space-025);
       margin: 0;
       padding: 0;
       list-style: none;
@@ -158,7 +158,7 @@ interface DisplayCitation {
 
     .message-sources__row {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: var(--cog-space-100);
       border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
