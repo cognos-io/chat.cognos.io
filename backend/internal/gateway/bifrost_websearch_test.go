@@ -178,7 +178,7 @@ func TestExtractResponsesOutputDropsAnnotationWithoutURL(t *testing.T) {
 		},
 	}}
 
-	_, _, citations, anchors := extractResponsesOutput(output)
+	_, _, citations, anchors, _ := extractResponsesOutput(output, offsetUnitUnknown)
 	if len(citations) != 0 {
 		t.Fatalf("citations = %#v, want none (URL-less annotation dropped)", citations)
 	}
@@ -208,10 +208,11 @@ func TestCompleteStreamKeepsZeroLengthAnchor(t *testing.T) {
 	}
 }
 
-// An annotation arriving BEFORE any visible text has no text to index into, so
-// its byte offsets are out of range against the empty accumulator: the anchor is
-// dropped, but the citation itself is still surfaced.
-func TestCompleteStreamAnnotationBeforeAnyTextDropsAnchorKeepsCitation(t *testing.T) {
+// Anchors are resolved once at the terminal event against the COMPLETE answer,
+// not against the text seen so far — so an annotation that arrives before its
+// text (offsets would be out of range against the empty accumulator at arrival)
+// still resolves correctly against the finished text.
+func TestCompleteStreamAnnotationBeforeTextResolvesAgainstCompleteAnswer(t *testing.T) {
 	t.Parallel()
 
 	citations, anchors, _, _, err := collectStream(t, webSearchReq(),
@@ -223,30 +224,77 @@ func TestCompleteStreamAnnotationBeforeAnyTextDropsAnchorKeepsCitation(t *testin
 		t.Fatalf("stream error = %v", err)
 	}
 	if len(citations) != 1 {
-		t.Fatalf("citations = %#v, want the citation surfaced even with an unusable anchor", citations)
+		t.Fatalf("citations = %#v, want the citation surfaced", citations)
 	}
-	if len(anchors) != 0 {
-		t.Fatalf("anchors = %#v, want none (offset out of range against empty text, never guessed)", anchors)
+	// "model" is an unknown family → strict byte validation; [0,5] is a valid
+	// rune-aligned byte span of "some answer text" → kept.
+	if len(anchors) != 1 || anchors[0].StartIndex != 0 || anchors[0].EndIndex != 5 {
+		t.Fatalf("anchors = %#v, want one anchor [0,5] resolved against the complete answer", anchors)
 	}
 }
 
-// SearchCount is the number of web_search_call output_item.added events. Real
-// Vertex Gemini sends an empty item_id, so there is no id to de-duplicate on:
-// this pins that each added event counts once (two added ⇒ count 2).
-func TestCompleteStreamSearchCountCountsEachAddedItem(t *testing.T) {
+// An anchor whose offsets exceed the complete answer is dropped (never guessed),
+// but the citation is still surfaced.
+func TestCompleteStreamOutOfRangeAnchorDroppedKeepsCitation(t *testing.T) {
 	t.Parallel()
 
+	citations, anchors, _, _, err := collectStream(t, webSearchReq(),
+		respTextChunk("short"),
+		respAnnotationChunk("https://x.example/a", "x.example", 0, 999),
+		respCompletedChunk(&schemas.ResponsesResponseUsage{}),
+	)
+	if err != nil {
+		t.Fatalf("stream error = %v", err)
+	}
+	if len(citations) != 1 {
+		t.Fatalf("citations = %#v, want the citation surfaced even with an unusable anchor", citations)
+	}
+	if len(anchors) != 0 {
+		t.Fatalf("anchors = %#v, want none (offset out of range, never guessed)", anchors)
+	}
+}
+
+// SearchCount is the number of COMPLETED, real web_search_call items — never the
+// in-progress "added" events (which would double-count, since Requesty mistypes
+// the completed done event as another added), and never a phantom search (empty
+// query, no sources). item_id is empty on Gemini, so counting keys off status +
+// content, not an id.
+func TestCompleteStreamSearchCountCountsCompletedRealSearches(t *testing.T) {
+	t.Parallel()
+
+	// Two real searches (each an in-progress added + a completed item with
+	// sources) plus a phantom completed item that must be excluded.
+	phantomType := schemas.ResponsesMessageTypeWebSearchCall
+	phantomStatus := "completed"
+	phantom := &schemas.BifrostStreamChunk{
+		BifrostResponsesStreamResponse: &schemas.BifrostResponsesStreamResponse{
+			Type: schemas.ResponsesStreamResponseTypeOutputItemAdded, // Requesty mistype
+			Item: &schemas.ResponsesMessage{
+				Type:   &phantomType,
+				Status: &phantomStatus,
+				ResponsesToolMessage: &schemas.ResponsesToolMessage{
+					Action: &schemas.ResponsesToolMessageActionStruct{
+						ResponsesWebSearchToolCallAction: &schemas.ResponsesWebSearchToolCallAction{Queries: []string{""}},
+					},
+				},
+			},
+		},
+	}
+
 	_, _, _, usage, err := collectStream(t, webSearchReq(),
+		respSearchItemAddedChunk(),
+		respSearchSourcesChunk("https://a.example/1"),
+		respSearchItemAddedChunk(),
+		respSearchSourcesChunk("https://b.example/2"),
+		phantom,
 		respTextChunk("answer"),
-		respSearchItemAddedChunk(),
-		respSearchItemAddedChunk(),
 		respCompletedChunk(&schemas.ResponsesResponseUsage{}),
 	)
 	if err != nil {
 		t.Fatalf("stream error = %v", err)
 	}
 	if usage == nil || usage.SearchCount != 2 {
-		t.Fatalf("usage = %#v, want SearchCount 2 (one per web_search_call added event)", usage)
+		t.Fatalf("usage = %#v, want SearchCount 2 (two completed real searches; phantom excluded)", usage)
 	}
 }
 
@@ -313,6 +361,81 @@ func TestByteOffsetToRuneOffsetProperty(t *testing.T) {
 			if want := utf8.RuneCountInString(s[:off]); got != want {
 				t.Fatalf("byteOffsetToRuneOffset(%q, %d) = %d, want %d", s, off, got, want)
 			}
+		}
+	})
+}
+
+// annotationOffsetUnit maps provider families to their citation-offset encoding,
+// verified against the captured streams in testdata/.
+func TestAnnotationOffsetUnit(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		providerModelID string
+		want            offsetUnit
+	}{
+		{"vertex/gemini-3.5-flash@eu", offsetUnitBytes},
+		{"vertex/gemini-2.5-pro@europe-west1", offsetUnitBytes},
+		{"azure/openai-responses/gpt-5.5@swedencentral", offsetUnitCodePoints},
+		{"azure/openai-responses/gpt-4.1-mini@francecentral", offsetUnitCodePoints},
+		{"openai/gpt-5.5", offsetUnitCodePoints},
+		{"bedrock/claude-sonnet-4-6@eu-central-1", offsetUnitUnknown},
+		{"azure/gpt-5-nano@swedencentral", offsetUnitUnknown},
+		{"", offsetUnitUnknown},
+	}
+	for _, tc := range cases {
+		if got := annotationOffsetUnit(tc.providerModelID); got != tc.want {
+			t.Fatalf("annotationOffsetUnit(%q) = %v, want %v", tc.providerModelID, got, tc.want)
+		}
+	}
+}
+
+// Property: resolveAnchors runs per offset unit. In byte mode a rune-aligned byte
+// span converts to its code-point span; in code-point mode an in-bounds span
+// passes through unchanged. Neither mode ever panics or yields an inverted or
+// out-of-bounds rune span.
+func TestResolveAnchorsPerUnitProperty(t *testing.T) {
+	t.Parallel()
+
+	rapid.Check(t, func(t *rapid.T) {
+		text := rapid.String().Draw(t, "text")
+		runeLen := utf8.RuneCountInString(text)
+
+		// Byte mode: choose two rune-boundary byte offsets.
+		boundaries := []int{0}
+		for b := range text {
+			if b != 0 {
+				boundaries = append(boundaries, b)
+			}
+		}
+		boundaries = append(boundaries, len(text))
+		i := rapid.IntRange(0, len(boundaries)-1).Draw(t, "i")
+		j := rapid.IntRange(0, len(boundaries)-1).Draw(t, "j")
+		startByte, endByte := boundaries[i], boundaries[j]
+		if startByte > endByte {
+			startByte, endByte = endByte, startByte
+		}
+		byteAnchors := resolveAnchors(text, offsetUnitBytes, []rawAnchor{{citationIndex: 0, start: startByte, end: endByte}})
+		if len(byteAnchors) != 1 {
+			t.Fatalf("byte mode dropped a valid rune-aligned span [%d,%d] of %q", startByte, endByte, text)
+		}
+		if want := utf8.RuneCountInString(text[:startByte]); byteAnchors[0].StartIndex != want {
+			t.Fatalf("byte mode start = %d, want %d", byteAnchors[0].StartIndex, want)
+		}
+		if want := utf8.RuneCountInString(text[:endByte]); byteAnchors[0].EndIndex != want {
+			t.Fatalf("byte mode end = %d, want %d", byteAnchors[0].EndIndex, want)
+		}
+
+		// Code-point mode: choose two in-bounds code-point offsets; they pass
+		// through unchanged.
+		cpStart := rapid.IntRange(0, runeLen).Draw(t, "cpStart")
+		cpEnd := rapid.IntRange(0, runeLen).Draw(t, "cpEnd")
+		if cpStart > cpEnd {
+			cpStart, cpEnd = cpEnd, cpStart
+		}
+		cpAnchors := resolveAnchors(text, offsetUnitCodePoints, []rawAnchor{{citationIndex: 0, start: cpStart, end: cpEnd}})
+		if len(cpAnchors) != 1 || cpAnchors[0].StartIndex != cpStart || cpAnchors[0].EndIndex != cpEnd {
+			t.Fatalf("code-point mode = %#v, want pass-through [%d,%d]", cpAnchors, cpStart, cpEnd)
 		}
 	})
 }

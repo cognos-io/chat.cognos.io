@@ -95,9 +95,9 @@ func (c *BifrostClient) Complete(ctx context.Context, req CompleteRequest) (Comp
 		return CompleteResponse{}, fmt.Errorf("bifrost returned nil response")
 	}
 
-	content, reasoning, citations, anchors := extractResponsesOutput(resp.Output)
+	content, reasoning, citations, anchors, searchCount := extractResponsesOutput(resp.Output, annotationOffsetUnit(req.ProviderModelID))
 	usage := responsesUsage(resp.Usage)
-	usage.SearchCount = countResponsesSearchItems(resp.Output)
+	usage.SearchCount = searchCount
 
 	return CompleteResponse{
 		Message: Message{
@@ -135,12 +135,29 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 	go func() {
 		defer close(out)
 
-		// De-duplicate citations by URL with stable indices, and accumulate the
-		// visible answer so annotation byte offsets can be converted to code
-		// points against the text they index into.
+		// De-duplicate citations by URL with stable indices; accumulate the visible
+		// answer so annotation offsets can be resolved against the text they index
+		// into; buffer raw anchors and resolve them all at the terminal event
+		// against the complete text (offset units are family-dependent — see
+		// annotationOffsetUnit).
+		unit := annotationOffsetUnit(req.ProviderModelID)
 		citationIndex := make(map[string]int)
 		var visible strings.Builder
-		searchItems := 0
+		var pending []rawAnchor
+		searchStarted := false
+		searchCount := 0
+
+		// addCitation records a source under its URL (first occurrence wins),
+		// appending a newly-seen one to the event, and returns its stable index.
+		addCitation := func(event *CompleteStreamEvent, url, title string) int {
+			if idx, seen := citationIndex[url]; seen {
+				return idx
+			}
+			idx := len(citationIndex)
+			citationIndex[url] = idx
+			event.Citations = append(event.Citations, Citation{URL: url, Title: title})
+			return idx
+		}
 
 		for chunk := range stream {
 			if chunk == nil {
@@ -159,18 +176,38 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 			event := CompleteStreamEvent{}
 
 			// Citation annotation. Requesty mislabels these as output_text.delta
-			// while carrying an annotation field, so key off the annotation
-			// pointer rather than the event type.
+			// while carrying an annotation field, so key off the annotation pointer
+			// rather than the event type. Anchors are buffered and resolved at the
+			// terminal event (offset units and full text are only known then).
 			if ann := resp.Annotation; ann != nil && ann.URL != nil && strings.TrimSpace(*ann.URL) != "" {
-				url := *ann.URL
-				idx, seen := citationIndex[url]
-				if !seen {
-					idx = len(citationIndex)
-					citationIndex[url] = idx
-					event.Citations = append(event.Citations, Citation{URL: url, Title: derefString(ann.Title)})
+				idx := addCitation(&event, *ann.URL, derefString(ann.Title))
+				if ann.StartIndex != nil && ann.EndIndex != nil {
+					pending = append(pending, rawAnchor{citationIndex: idx, start: *ann.StartIndex, end: *ann.EndIndex})
 				}
-				if anchor, ok := responsesAnchor(visible.String(), ann, idx); ok {
-					event.CitationAnchors = append(event.CitationAnchors, anchor)
+			}
+
+			// Web search call items. Requesty mistypes output_item.done as
+			// output_item.added in the JSON body (same mistype family as the
+			// annotation events), so the done never carries its own event type —
+			// key off the item's status instead. A completed item with a real query
+			// or ≥1 source is a genuine search: harvest its sources and count it
+			// once. A completed item with an empty query and no sources is a phantom
+			// (observed on Azure gpt-5.5) — it must not count or emit activity.
+			if isWebSearchItem(resp.Item) {
+				switch derefString(resp.Item.Status) {
+				case "in_progress":
+					if !searchStarted {
+						searchStarted = true
+						event.SearchActivity = SearchActivityStarted
+					}
+				case "completed":
+					if webSearchItemIsReal(resp.Item) {
+						searchCount++
+						for _, src := range webSearchActionCitations(resp.Item) {
+							addCitation(&event, src.URL, src.Title)
+						}
+						event.SearchActivity = SearchActivityCompleted
+					}
 				}
 			}
 
@@ -185,34 +222,15 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 				if resp.Delta != nil {
 					event.ReasoningDelta = *resp.Delta
 				}
-			case schemas.ResponsesStreamResponseTypeWebSearchCallInProgress,
-				schemas.ResponsesStreamResponseTypeWebSearchCallSearching:
-				event.SearchActivity = SearchActivityStarted
-			case schemas.ResponsesStreamResponseTypeWebSearchCallCompleted:
-				event.SearchActivity = SearchActivityCompleted
-			case schemas.ResponsesStreamResponseTypeOutputItemAdded:
-				// SearchCount is derived by counting distinct web_search_call items;
-				// this family reports no search-count usage field.
-				if isWebSearchItem(resp.Item) {
-					searchItems++
-				}
-			case schemas.ResponsesStreamResponseTypeOutputItemDone:
-				// action.sources give proxy URLs with no title; add only those we
-				// have not already cited from an annotation.
-				for _, cit := range webSearchActionCitations(resp.Item) {
-					if _, seen := citationIndex[cit.URL]; seen {
-						continue
-					}
-					citationIndex[cit.URL] = len(citationIndex)
-					event.Citations = append(event.Citations, cit)
-				}
 			case schemas.ResponsesStreamResponseTypeCompleted,
 				schemas.ResponsesStreamResponseTypeIncomplete:
+				event.CitationAnchors = resolveAnchors(visible.String(), unit, pending)
+				usage := responsesUsage(nil)
 				if resp.Response != nil {
-					usage := responsesUsage(resp.Response.Usage)
-					usage.SearchCount = searchItems
-					event.Usage = &usage
+					usage = responsesUsage(resp.Response.Usage)
 				}
+				usage.SearchCount = searchCount
+				event.Usage = &usage
 			case schemas.ResponsesStreamResponseTypeFailed,
 				schemas.ResponsesStreamResponseTypeError:
 				out <- CompleteStreamEvent{Err: fmt.Errorf("bifrost request failed: %s", responsesStreamError(resp))}
@@ -403,31 +421,36 @@ func responsesUsage(u *schemas.ResponsesResponseUsage) Usage {
 }
 
 // extractResponsesOutput flattens a non-streaming Responses output into the
-// neutral answer, reasoning, and citations. Annotations may sit on a separate
-// output item from the visible text, so offsets are converted against the text
-// accumulated so far (in output order), matching how the stream path works.
-func extractResponsesOutput(output []schemas.ResponsesMessage) (content, reasoning string, citations []Citation, anchors []CitationAnchor) {
+// neutral answer, reasoning, citations, anchors and search count. It mirrors the
+// streaming path: sources are harvested from completed web_search_call items
+// (phantom searches excluded), annotations add citations and buffer anchors, and
+// the anchors are resolved once against the complete text using the family's
+// offset unit.
+func extractResponsesOutput(output []schemas.ResponsesMessage, unit offsetUnit) (content, reasoning string, citations []Citation, anchors []CitationAnchor, searchCount int) {
 	var contentB, reasoningB strings.Builder
 	citationIndex := make(map[string]int)
+	var pending []rawAnchor
 
-	addCitation := func(url string, title *string) (int, bool) {
-		if strings.TrimSpace(url) == "" {
-			return 0, false
-		}
+	addCitation := func(url, title string) int {
 		if idx, seen := citationIndex[url]; seen {
-			return idx, false
+			return idx
 		}
 		idx := len(citationIndex)
 		citationIndex[url] = idx
-		citations = append(citations, Citation{URL: url, Title: derefString(title)})
-		return idx, true
+		citations = append(citations, Citation{URL: url, Title: title})
+		return idx
 	}
 
 	for i := range output {
 		item := &output[i]
 		if isWebSearchItem(item) {
-			for _, cit := range webSearchActionCitations(item) {
-				addCitation(cit.URL, &cit.Title)
+			// Only genuine searches count and contribute sources; a phantom
+			// (empty query, no sources) is ignored (Azure gpt-5.5).
+			if webSearchItemIsReal(item) {
+				searchCount++
+				for _, src := range webSearchActionCitations(item) {
+					addCitation(src.URL, src.Title)
+				}
 			}
 			continue
 		}
@@ -442,12 +465,12 @@ func extractResponsesOutput(output []schemas.ResponsesMessage) (content, reasoni
 					if t := block.ResponsesOutputMessageContentText; t != nil {
 						for ai := range t.Annotations {
 							ann := &t.Annotations[ai]
-							if ann.URL == nil {
+							if ann.URL == nil || strings.TrimSpace(*ann.URL) == "" {
 								continue
 							}
-							idx, _ := addCitation(*ann.URL, ann.Title)
-							if anchor, ok := responsesAnchor(contentB.String(), ann, idx); ok {
-								anchors = append(anchors, anchor)
+							idx := addCitation(*ann.URL, derefString(ann.Title))
+							if ann.StartIndex != nil && ann.EndIndex != nil {
+								pending = append(pending, rawAnchor{citationIndex: idx, start: *ann.StartIndex, end: *ann.EndIndex})
 							}
 						}
 					}
@@ -464,19 +487,8 @@ func extractResponsesOutput(output []schemas.ResponsesMessage) (content, reasoni
 			}
 		}
 	}
-	return contentB.String(), reasoningB.String(), citations, anchors
-}
-
-// countResponsesSearchItems counts distinct web_search_call items in a
-// non-streaming output — the neutral SearchCount for the non-stream path.
-func countResponsesSearchItems(output []schemas.ResponsesMessage) int {
-	count := 0
-	for i := range output {
-		if isWebSearchItem(&output[i]) {
-			count++
-		}
-	}
-	return count
+	anchors = resolveAnchors(contentB.String(), unit, pending)
+	return contentB.String(), reasoningB.String(), citations, anchors, searchCount
 }
 
 // isWebSearchItem reports whether a Responses output item is a web_search_call.
@@ -484,9 +496,36 @@ func isWebSearchItem(item *schemas.ResponsesMessage) bool {
 	return item != nil && item.Type != nil && *item.Type == schemas.ResponsesMessageTypeWebSearchCall
 }
 
+// webSearchItemIsReal reports whether a web_search_call carried a real query or
+// returned at least one source. Requesty (Azure gpt-5.5) sometimes emits a
+// phantom search — a completed item with an empty query and no sources — which
+// must not count toward billing or emit search activity.
+func webSearchItemIsReal(item *schemas.ResponsesMessage) bool {
+	if item == nil || item.ResponsesToolMessage == nil || item.Action == nil {
+		return false
+	}
+	action := item.Action.ResponsesWebSearchToolCallAction
+	if action == nil {
+		return false
+	}
+	if len(action.Sources) > 0 {
+		return true
+	}
+	if action.Query != nil && strings.TrimSpace(*action.Query) != "" {
+		return true
+	}
+	for _, q := range action.Queries {
+		if strings.TrimSpace(q) != "" {
+			return true
+		}
+	}
+	return false
+}
+
 // webSearchActionCitations extracts citations from a web_search_call item's
-// action sources. These are proxy URLs with (usually) no title — de-dup happens
-// at the call site so annotation-derived citations win.
+// action sources. Sources may be provider proxy URLs (Vertex) or real
+// destination URLs (Azure); titles are usually absent (de-dup at the call site
+// lets an annotation title win when present).
 func webSearchActionCitations(item *schemas.ResponsesMessage) []Citation {
 	if !isWebSearchItem(item) || item.ResponsesToolMessage == nil || item.Action == nil ||
 		item.Action.ResponsesWebSearchToolCallAction == nil {
@@ -502,23 +541,124 @@ func webSearchActionCitations(item *schemas.ResponsesMessage) []Citation {
 	return citations
 }
 
-// responsesAnchor converts a url_citation annotation's UTF-8 byte offsets into a
-// code-point (rune) CitationAnchor against text. It returns ok=false when the
-// offsets are absent, out of range, not on rune boundaries, or inverted — the
-// caller drops such anchors rather than guessing (spec §7).
-func responsesAnchor(text string, ann *schemas.ResponsesOutputMessageContentTextAnnotation, citationIndex int) (CitationAnchor, bool) {
-	if ann == nil || ann.StartIndex == nil || ann.EndIndex == nil {
-		return CitationAnchor{}, false
+// offsetUnit is the encoding a provider family uses for url_citation
+// start_index/end_index.
+type offsetUnit int
+
+const (
+	// offsetUnitBytes: UTF-8 byte offsets (Vertex Gemini).
+	offsetUnitBytes offsetUnit = iota
+	// offsetUnitCodePoints: Unicode code-point offsets (Azure OpenAI / OpenAI).
+	offsetUnitCodePoints
+	// offsetUnitUnknown: family not recognised — never guess (see resolveAnchors).
+	offsetUnitUnknown
+)
+
+// annotationOffsetUnit selects the citation-offset encoding by provider family,
+// verified empirically against captured streams in testdata/:
+//
+//	vertex/gemini*                      → UTF-8 BYTE offsets   (stream-vertex-raw.txt)
+//	azure/openai-responses/*, *openai*  → Unicode CODE-POINT offsets
+//	                                      (stream-azure-gpt55-raw.txt: max end_index
+//	                                       828 == code-point length; byte length 846)
+//	anything else                       → unknown (strict byte-only validation)
+//
+// The units genuinely differ: applying byte→rune to Azure's code-point offsets
+// silently corrupts anchors (offset 468 lands on an ASCII byte, so a rune-boundary
+// check does not catch it).
+func annotationOffsetUnit(providerModelID string) offsetUnit {
+	id := strings.ToLower(strings.TrimSpace(providerModelID))
+	switch {
+	case strings.HasPrefix(id, "vertex/gemini"):
+		return offsetUnitBytes
+	case strings.HasPrefix(id, "azure/openai-responses/"),
+		strings.HasPrefix(id, "openai/"),
+		strings.Contains(id, "openai"):
+		return offsetUnitCodePoints
+	default:
+		return offsetUnitUnknown
 	}
-	start, ok := byteOffsetToRuneOffset(text, *ann.StartIndex)
+}
+
+// rawAnchor is an unresolved citation anchor: a citation index plus the
+// provider's raw start/end offsets (in the family's offset unit).
+type rawAnchor struct {
+	citationIndex int
+	start, end    int
+}
+
+// resolveAnchors converts raw provider offsets into code-point CitationAnchors
+// against text, per the family's offset unit. Anchors that are out of range,
+// inverted, or (for byte offsets) land inside a multi-byte rune are dropped —
+// never guessed (spec §7). For an unknown family it applies strict byte-only
+// validation: if every anchor is a valid byte offset it treats them as bytes,
+// otherwise it drops them all (code points would be plausible but unproven).
+func resolveAnchors(text string, unit offsetUnit, raws []rawAnchor) []CitationAnchor {
+	if len(raws) == 0 {
+		return nil
+	}
+	switch unit {
+	case offsetUnitCodePoints:
+		return resolveCodePointAnchors(text, raws)
+	case offsetUnitBytes:
+		return resolveByteAnchors(text, raws)
+	default:
+		return resolveUnknownAnchors(text, raws)
+	}
+}
+
+// resolveByteAnchors treats offsets as UTF-8 bytes, dropping individually
+// invalid anchors and keeping the valid ones.
+func resolveByteAnchors(text string, raws []rawAnchor) []CitationAnchor {
+	var out []CitationAnchor
+	for _, r := range raws {
+		if anchor, ok := byteAnchor(text, r); ok {
+			out = append(out, anchor)
+		}
+	}
+	return out
+}
+
+// resolveCodePointAnchors treats offsets as code points, validating bounds and
+// dropping individually invalid anchors.
+func resolveCodePointAnchors(text string, raws []rawAnchor) []CitationAnchor {
+	runeLen := utf8.RuneCountInString(text)
+	var out []CitationAnchor
+	for _, r := range raws {
+		if r.start < 0 || r.end < r.start || r.end > runeLen {
+			continue
+		}
+		out = append(out, CitationAnchor{CitationIndex: r.citationIndex, StartIndex: r.start, EndIndex: r.end})
+	}
+	return out
+}
+
+// resolveUnknownAnchors applies strict all-or-nothing byte validation: only if
+// EVERY anchor is a valid, rune-aligned byte offset does it accept the byte
+// interpretation; otherwise it drops all anchors rather than guess.
+func resolveUnknownAnchors(text string, raws []rawAnchor) []CitationAnchor {
+	out := make([]CitationAnchor, 0, len(raws))
+	for _, r := range raws {
+		anchor, ok := byteAnchor(text, r)
+		if !ok {
+			return nil
+		}
+		out = append(out, anchor)
+	}
+	return out
+}
+
+// byteAnchor resolves one anchor under the byte interpretation.
+func byteAnchor(text string, r rawAnchor) (CitationAnchor, bool) {
+	start, ok := byteOffsetToRuneOffset(text, r.start)
 	if !ok {
 		return CitationAnchor{}, false
 	}
-	end, ok := byteOffsetToRuneOffset(text, *ann.EndIndex)
+	end, ok := byteOffsetToRuneOffset(text, r.end)
 	if !ok || start > end {
 		return CitationAnchor{}, false
 	}
-	return CitationAnchor{CitationIndex: citationIndex, StartIndex: start, EndIndex: end}, true
+	return CitationAnchor{CitationIndex: r.citationIndex, StartIndex: start, EndIndex: end}, true
 }
 
 // byteOffsetToRuneOffset converts a UTF-8 byte offset within text to a code-point

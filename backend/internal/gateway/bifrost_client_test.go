@@ -520,9 +520,9 @@ func TestBifrostClientCompleteStreamCitationsAndAnchors(t *testing.T) {
 	// Annotation arrives AFTER the text (this family's ordering) and carries a
 	// usable {url,title}. Its offsets are UTF-8 byte offsets.
 	stream <- respAnnotationChunk("https://example.com/wage", "example.com", startByte, endByte)
-	// A web_search_call item + its title-less proxy source, added at the end.
+	// A web_search_call item (in-progress → started) then its completed item with
+	// a title-less proxy source (drives the citation + "completed" activity).
 	stream <- respSearchItemAddedChunk()
-	stream <- respSearchActivityChunk(schemas.ResponsesStreamResponseTypeWebSearchCallCompleted)
 	stream <- respSearchSourcesChunk("https://vertexaisearch.example/redirect/x")
 	stream <- respCompletedChunk(&schemas.ResponsesResponseUsage{InputTokens: 5, OutputTokens: 9, TotalTokens: 14})
 	close(stream)
@@ -846,38 +846,36 @@ func respAnnotationChunk(url, title string, startByte, endByte int) *schemas.Bif
 	}
 }
 
-// respSearchItemAddedChunk builds an output_item.added for a web_search_call
-// item (drives SearchCount).
+// respSearchItemAddedChunk builds an output_item.added for an in-progress
+// web_search_call item (drives the "started" activity signal).
 func respSearchItemAddedChunk() *schemas.BifrostStreamChunk {
 	wsType := schemas.ResponsesMessageTypeWebSearchCall
+	status := "in_progress"
 	return &schemas.BifrostStreamChunk{
 		BifrostResponsesStreamResponse: &schemas.BifrostResponsesStreamResponse{
 			Type: schemas.ResponsesStreamResponseTypeOutputItemAdded,
-			Item: &schemas.ResponsesMessage{Type: &wsType},
+			Item: &schemas.ResponsesMessage{Type: &wsType, Status: &status},
 		},
 	}
 }
 
-// respSearchActivityChunk builds a web_search_call activity event.
-func respSearchActivityChunk(t schemas.ResponsesStreamResponseType) *schemas.BifrostStreamChunk {
-	return &schemas.BifrostStreamChunk{
-		BifrostResponsesStreamResponse: &schemas.BifrostResponsesStreamResponse{Type: t},
-	}
-}
-
-// respSearchSourcesChunk builds an output_item.done for a web_search_call item
-// carrying title-less proxy action sources.
+// respSearchSourcesChunk builds a COMPLETED web_search_call item carrying action
+// sources. Requesty mistypes these done events as output_item.added, so the
+// helper mirrors that: the event type is added while the item status is
+// completed. Sources make the search real (drives SearchCount + completion).
 func respSearchSourcesChunk(urls ...string) *schemas.BifrostStreamChunk {
 	wsType := schemas.ResponsesMessageTypeWebSearchCall
+	status := "completed"
 	sources := make([]schemas.ResponsesWebSearchToolCallActionSearchSource, 0, len(urls))
 	for _, u := range urls {
 		sources = append(sources, schemas.ResponsesWebSearchToolCallActionSearchSource{Type: "url", URL: u})
 	}
 	return &schemas.BifrostStreamChunk{
 		BifrostResponsesStreamResponse: &schemas.BifrostResponsesStreamResponse{
-			Type: schemas.ResponsesStreamResponseTypeOutputItemDone,
+			Type: schemas.ResponsesStreamResponseTypeOutputItemAdded,
 			Item: &schemas.ResponsesMessage{
-				Type: &wsType,
+				Type:   &wsType,
+				Status: &status,
 				ResponsesToolMessage: &schemas.ResponsesToolMessage{
 					Action: &schemas.ResponsesToolMessageActionStruct{
 						ResponsesWebSearchToolCallAction: &schemas.ResponsesWebSearchToolCallAction{Sources: sources},
