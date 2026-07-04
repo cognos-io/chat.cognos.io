@@ -157,6 +157,112 @@ test.describe('web search', () => {
     await expect(page.locator('app-citation-marker button').first()).toBeVisible();
   });
 
+  // The hover-intent "safe triangle": moving the pointer from the citation
+  // number, across the gap, into the card must keep the card open long enough
+  // to click "Open source". This is the user's exact repro of the closing-gap
+  // bug (docs/specs/web-search.md §4.1a + the cogHoverIntent primitive).
+  test('safe triangle keeps the hover card open across the gap to Open source', async ({
+    page,
+  }) => {
+    await provisionUnlockedAccount(page);
+    await selectWebSearchModel(page);
+    await sendWebSearchQuery(page);
+
+    const marker = page.locator('app-citation-marker button').first();
+    await expect(marker).toBeVisible();
+    await marker.scrollIntoViewIfNeeded();
+    await marker.hover();
+
+    const card = page.locator('app-citation-marker [role="dialog"]').first();
+    await expect(card).toBeVisible();
+    const openLink = page
+      .locator('app-citation-marker a')
+      .filter({ hasText: /open source/i })
+      .first();
+    await expect(openLink).toBeVisible();
+
+    // Move slowly from the marker into the card centre. A straight path stays
+    // inside the funnel, so the card must not close mid-traverse.
+    const box = await card.boundingBox();
+    if (!box) throw new Error('hover card has no box');
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 25 });
+    await expect(openLink).toBeVisible();
+
+    // Don't let the external source actually navigate in CI; the popup event
+    // still fires, proving the link was reachable and clickable.
+    await page.context().route('https://example.com/**', (route) => route.abort());
+    const popupPromise = page.waitForEvent('popup');
+    await openLink.click();
+    const popup = await popupPromise;
+    expect(popup).toBeTruthy();
+    await popup.close();
+  });
+
+  test('moving the pointer away from the funnel closes the hover card', async ({
+    page,
+  }) => {
+    await provisionUnlockedAccount(page);
+    await selectWebSearchModel(page);
+    await sendWebSearchQuery(page);
+
+    const marker = page.locator('app-citation-marker button').first();
+    await expect(marker).toBeVisible();
+    await marker.scrollIntoViewIfNeeded();
+    const mb = await marker.boundingBox();
+    if (!mb) throw new Error('marker has no box');
+    await marker.hover();
+
+    const openLink = page
+      .locator('app-citation-marker a')
+      .filter({ hasText: /open source/i })
+      .first();
+    await expect(openLink).toBeVisible();
+
+    // Move sideways at the marker's own height — the funnel narrows to a point
+    // at the marker, so a horizontal move exits it immediately regardless of
+    // whether the card was placed above or below. The card must close.
+    await page.mouse.move(2, mb.y + mb.height / 2, { steps: 12 });
+    await expect(openLink).toBeHidden();
+  });
+
+  test('near the viewport edge the hover card stays fully on-screen', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 520, height: 820 });
+    await provisionUnlockedAccount(page);
+    await selectWebSearchModel(page);
+    await sendWebSearchQuery(page);
+
+    const marker = page.locator('app-citation-marker button').first();
+    await expect(marker).toBeVisible();
+    await marker.scrollIntoViewIfNeeded();
+    await marker.hover();
+
+    const card = page.locator('app-citation-marker [role="dialog"]').first();
+    await expect(card).toBeVisible();
+
+    // The card is fully inside the viewport and never widens the page.
+    const overflow = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+    }));
+    expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth);
+
+    const box = await card.boundingBox();
+    if (!box) throw new Error('hover card has no box');
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(overflow.clientWidth);
+
+    // The funnel still works: the pointer can reach the card from the marker.
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 20 });
+    await expect(
+      page
+        .locator('app-citation-marker a')
+        .filter({ hasText: /open source/i })
+        .first(),
+    ).toBeVisible();
+  });
+
   test('opting out sends no web search tool, so the reply has no sources', async ({
     page,
   }) => {
