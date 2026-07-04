@@ -12,6 +12,7 @@ import {
   isMessageFromUser,
   parseMessageData,
 } from '@app/interfaces/message';
+import { saveBlob } from '@app/utils/save-blob';
 
 import { CognosApiService } from './cognos-api.service';
 import { ConversationService } from './conversation.service';
@@ -307,14 +308,7 @@ export class ExportService {
   }
 
   private download(blob: Blob, filename: string): void {
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = filename;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
+    saveBlob(blob, filename);
   }
 }
 

@@ -63,6 +63,7 @@ import {
   containsRedactionToken,
   resolveOverlaps,
 } from '@app/redaction';
+import { saveBlob } from '@app/utils/save-blob';
 import { parseBackendDate } from '@app/utils/timestamp';
 
 import { Analytics, modelProp } from './analytics/analytics';
@@ -1934,15 +1935,11 @@ export class MessageService {
           ciphertext,
           Base64.toUint8Array(chip.originalKeyB64!),
         );
-        const blob = new Blob([plaintext as BlobPart], {
-          type: chip.mimeType || 'application/octet-stream',
-        });
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = chip.fileName || 'attachment';
-        anchor.click();
-        URL.revokeObjectURL(url);
+        saveBlob(
+          plaintext,
+          chip.fileName || 'attachment',
+          chip.mimeType || 'application/octet-stream',
+        );
       })
       .catch(() => {
         /* best-effort download; surface nothing on failure */
