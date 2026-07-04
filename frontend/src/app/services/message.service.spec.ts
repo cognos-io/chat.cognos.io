@@ -12,6 +12,7 @@ import {
   applyCompletionReasoningStreamDelta,
   applyCompletionStreamDelta,
   applyCompletionStreamResponse,
+  applyCompletionWebSearchStreamDelta,
   applyImageGenerationResponse,
   assertMessageBindings,
   buildCompletionMessageContext,
@@ -518,6 +519,130 @@ describe('stream completion helpers', () => {
     );
 
     expect(removeStreamingCompletionMessages(streaming, 'req-1')).toEqual([]);
+  });
+
+  it('accumulates incremental web-search citations and anchors on the stream', () => {
+    const first = applyCompletionWebSearchStreamDelta(
+      [userMessage()],
+      { requestId: 'req-1', content: 'hello' },
+      { type: 'web_search', citations: [{ url: 'https://a.com' }] },
+      'persona-1',
+      'model-1',
+    );
+    const second = applyCompletionWebSearchStreamDelta(
+      first,
+      { requestId: 'req-1', content: 'hello' },
+      {
+        type: 'web_search',
+        citations: [{ url: 'https://b.com' }],
+        anchors: [{ citation: 1, start: 0, end: 3 }],
+      },
+      'persona-1',
+      'model-1',
+    );
+
+    const assistant = second[1];
+    expect(assistant.record_id).toBe(streamingAssistantMessageId('req-1'));
+    expect(assistant.decryptedData.citations).toEqual([
+      { url: 'https://a.com' },
+      { url: 'https://b.com' },
+    ]);
+    expect(assistant.decryptedData.citation_anchors).toEqual([
+      { citation: 1, start: 0, end: 3 },
+    ]);
+  });
+
+  it('dedupes repeated citation URLs and anchors across frames', () => {
+    const first = applyCompletionWebSearchStreamDelta(
+      [userMessage()],
+      { requestId: 'req-1', content: 'hello' },
+      {
+        type: 'web_search',
+        citations: [{ url: 'https://a.com' }],
+        anchors: [{ citation: 0, start: 0, end: 3 }],
+      },
+      'persona-1',
+      'model-1',
+    );
+    const second = applyCompletionWebSearchStreamDelta(
+      first,
+      { requestId: 'req-1', content: 'hello' },
+      {
+        type: 'web_search',
+        citations: [{ url: 'https://a.com' }],
+        anchors: [{ citation: 0, start: 0, end: 3 }],
+      },
+      'persona-1',
+      'model-1',
+    );
+
+    expect(second[1].decryptedData.citations).toHaveLength(1);
+    expect(second[1].decryptedData.citation_anchors).toHaveLength(1);
+  });
+
+  it('shows searching only before any answer text, ignoring late activity', () => {
+    // "started" with no content yet → searching visible.
+    const searchingEarly = applyCompletionWebSearchStreamDelta(
+      [userMessage()],
+      { requestId: 'req-1', content: 'hello' },
+      { type: 'web_search', searchActivity: 'started' },
+      'persona-1',
+      'model-1',
+    );
+    expect(searchingEarly[1].isSearching).toBe(true);
+
+    // Once answer text exists, a late "started" is a visual no-op.
+    const withAnswer = applyCompletionStreamDelta(
+      searchingEarly,
+      { requestId: 'req-1', content: 'hello' },
+      'the answer',
+      'persona-1',
+      'model-1',
+    );
+    const lateStart = applyCompletionWebSearchStreamDelta(
+      withAnswer,
+      { requestId: 'req-1', content: 'hello' },
+      { type: 'web_search', searchActivity: 'started' },
+      'persona-1',
+      'model-1',
+    );
+    expect(lateStart[1].isSearching).toBe(false);
+  });
+
+  it('carries accumulated citations onto the final message on completion', () => {
+    const streaming = applyCompletionWebSearchStreamDelta(
+      applyCompletionStreamDelta(
+        [userMessage()],
+        { requestId: 'req-1', content: 'hello' },
+        'hello back',
+        'persona-1',
+        'model-1',
+      ),
+      { requestId: 'req-1', content: 'hello' },
+      {
+        type: 'web_search',
+        citations: [{ url: 'https://a.com', title: 'a.com' }],
+        anchors: [{ citation: 0, start: 0, end: 5 }],
+      },
+      'persona-1',
+      'model-1',
+    );
+
+    // The terminal complete event carries NO citations (they live in the
+    // persisted encrypted blob) — the accumulated ones must survive on display.
+    const result = applyCompletionStreamResponse(
+      streaming,
+      'req-1',
+      makeResponse({ userMessageId: 'user-1' }),
+    );
+
+    const assistant = result.find((message) => message.record_id === 'asst-1');
+    expect(assistant?.decryptedData.citations).toEqual([
+      { url: 'https://a.com', title: 'a.com' },
+    ]);
+    expect(assistant?.decryptedData.citation_anchors).toEqual([
+      { citation: 0, start: 0, end: 5 },
+    ]);
   });
 
   it('keeps the user message but drops the assistant placeholder on a retryable failure', () => {

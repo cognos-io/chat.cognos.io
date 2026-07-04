@@ -123,6 +123,20 @@ describe('mapCompleteRequest', () => {
     expect(wire.request_id).toBeUndefined();
     expect(wire.max_output_tokens).toBeUndefined();
     expect(wire.persist).toBeUndefined();
+    // web_search is omitted unless the user explicitly opts out.
+    expect(wire.web_search).toBeUndefined();
+  });
+
+  it('carries an explicit web_search opt-out onto the wire', () => {
+    const wire = mapCompleteRequest({
+      messages: [],
+      modelId: 'm',
+      personaId: 'a',
+      systemPrompt: 'prompt',
+      webSearch: false,
+    });
+
+    expect(wire.web_search).toBe(false);
   });
 });
 
@@ -176,6 +190,54 @@ describe('parseCompleteStreamData', () => {
       type: 'reasoning_delta',
       delta: 'thinking',
     });
+  });
+
+  it('maps a well-formed web_search frame, camelCasing citation_anchors', () => {
+    const frame = JSON.stringify({
+      type: 'web_search',
+      citations: [{ url: 'https://reuters.com', title: 'reuters.com', snippet: '' }],
+      citation_anchors: [{ citation: 0, start: 19, end: 24 }],
+      search_activity: 'started',
+    });
+
+    expect(parseCompleteStreamData(frame)).toEqual({
+      type: 'web_search',
+      citations: [{ url: 'https://reuters.com', title: 'reuters.com', snippet: '' }],
+      anchors: [{ citation: 0, start: 19, end: 24 }],
+      searchActivity: 'started',
+    });
+  });
+
+  it('maps a pure-activity web_search frame with no citations', () => {
+    expect(
+      parseCompleteStreamData('{"type":"web_search","search_activity":"completed"}'),
+    ).toEqual({
+      type: 'web_search',
+      searchActivity: 'completed',
+    });
+  });
+
+  it('ignores malformed citations/anchors/activity in a web_search frame', () => {
+    const frame = JSON.stringify({
+      type: 'web_search',
+      citations: [{ title: 'no url here' }, { url: 'https://ok.com' }],
+      citation_anchors: [{ citation: 'bad' }, { citation: 0, start: 1, end: 2 }],
+      search_activity: 'nonsense',
+    });
+
+    // The url-less citation and the malformed anchor are dropped; the bad
+    // activity string is ignored (a benign no-op frame), never throwing.
+    expect(parseCompleteStreamData(frame)).toEqual({
+      type: 'web_search',
+      citations: [{ url: 'https://ok.com' }],
+      anchors: [{ citation: 0, start: 1, end: 2 }],
+    });
+  });
+
+  it('returns an empty web_search event when the payload is entirely malformed', () => {
+    expect(parseCompleteStreamData('{"type":"web_search","citations":"oops"}')).toEqual(
+      { type: 'web_search' },
+    );
   });
 
   it('passes stream error events through verbatim', () => {

@@ -57,6 +57,32 @@ describe('parseMessageData', () => {
     expect(parsed.owner_id).toBeUndefined();
   });
 
+  it('round-trips web-search citations and anchors (spec §7)', () => {
+    const payload = encode(
+      JSON.stringify({
+        content: 'The sky is blue',
+        citations: [
+          { url: 'https://reuters.com', title: 'reuters.com', snippet: '' },
+          { url: 'https://bbc.co.uk' },
+        ],
+        citation_anchors: [{ citation: 0, start: 11, end: 15 }],
+      }),
+    );
+    const parsed = parseMessageData(payload);
+
+    expect(parsed.citations).toEqual([
+      { url: 'https://reuters.com', title: 'reuters.com', snippet: '' },
+      { url: 'https://bbc.co.uk' },
+    ]);
+    expect(parsed.citation_anchors).toEqual([{ citation: 0, start: 11, end: 15 }]);
+  });
+
+  it('treats a message without citations as valid (non-search messages)', () => {
+    const parsed = parseMessageData(encode(JSON.stringify({ content: 'plain' })));
+    expect(parsed.citations).toBeUndefined();
+    expect(parsed.citation_anchors).toBeUndefined();
+  });
+
   it('allows nullable content for placeholder records', () => {
     const payload = encode(JSON.stringify({ content: null }));
     const parsed = parseMessageData(payload);

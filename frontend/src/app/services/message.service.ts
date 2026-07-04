@@ -87,6 +87,7 @@ import {
   renderCombinedMemory,
   shouldTriggerCompaction,
 } from './compaction.service';
+import { ComposerToolsService } from './composer-tools.service';
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
@@ -452,11 +453,116 @@ export const applyCompletionReasoningStreamDelta = (
   ];
 };
 
+// applyCompletionWebSearchStreamDelta accumulates web-search metadata on the
+// streaming assistant message (spec docs/specs/web-search.md §7). Citations are
+// incremental — each frame carries only newly-seen sources with stable indices —
+// so they are appended (deduped by URL as a guard); anchors are appended and
+// deduped by (citation,start,end). `searchActivity` drives the transient
+// `isSearching` flag; a late "started" after the answer has begun is ignored so
+// it stays a visual no-op (Vertex Gemini emits activity after the text). Mirrors
+// applyCompletionReasoningStreamDelta, creating the placeholder if a pure
+// activity frame arrives first.
+export const applyCompletionWebSearchStreamDelta = (
+  existing: ReadonlyArray<Message>,
+  request: MessageRequest,
+  event: Extract<CompleteStreamEvent, { type: 'web_search' }>,
+  personaId: string,
+  modelId: string,
+): Message[] => {
+  const assistantId = streamingAssistantMessageId(request.requestId);
+  const assistantIndex = existing.findIndex(
+    (message) => message.record_id === assistantId,
+  );
+
+  const merge = (data: MessageData): MessageData => {
+    const seenUrls = new Set((data.citations ?? []).map((citation) => citation.url));
+    const nextCitations = [...(data.citations ?? [])];
+    for (const citation of event.citations ?? []) {
+      if (!seenUrls.has(citation.url)) {
+        seenUrls.add(citation.url);
+        nextCitations.push(citation);
+      }
+    }
+
+    const anchorKey = (anchor: { citation: number; start: number; end: number }) =>
+      `${anchor.citation}:${anchor.start}:${anchor.end}`;
+    const seenAnchors = new Set((data.citation_anchors ?? []).map(anchorKey));
+    const nextAnchors = [...(data.citation_anchors ?? [])];
+    for (const anchor of event.anchors ?? []) {
+      const key = anchorKey(anchor);
+      if (!seenAnchors.has(key)) {
+        seenAnchors.add(key);
+        nextAnchors.push(anchor);
+      }
+    }
+
+    return {
+      ...data,
+      ...(nextCitations.length ? { citations: nextCitations } : {}),
+      ...(nextAnchors.length ? { citation_anchors: nextAnchors } : {}),
+    };
+  };
+
+  // A "started" event only shows the status when nothing has been answered yet;
+  // a "completed" event (or a late "started" after text) clears/ignores it.
+  const resolveSearching = (content: string | null | undefined, current?: boolean) => {
+    if (event.searchActivity === 'started') {
+      return !content;
+    }
+    if (event.searchActivity === 'completed') {
+      return false;
+    }
+    return current ?? false;
+  };
+
+  if (assistantIndex >= 0) {
+    return existing.map((message, index) =>
+      index === assistantIndex
+        ? {
+            ...message,
+            isStreaming: true,
+            isSearching: resolveSearching(
+              message.decryptedData.content,
+              message.isSearching,
+            ),
+            decryptedData: merge(message.decryptedData),
+          }
+        : message,
+    );
+  }
+
+  return [
+    ...existing,
+    {
+      record_id: assistantId,
+      parentMessageId: request.parentMessageId,
+      createdAt: new Date(),
+      isStreaming: true,
+      isSearching: resolveSearching(''),
+      decryptedData: merge({
+        content: '',
+        persona_id: personaId,
+        model_id: modelId,
+      }),
+    },
+  ];
+};
+
 export const applyCompletionStreamResponse = (
   existing: ReadonlyArray<Message>,
   requestId: string,
   resp: CompleteResponse,
 ): Message[] => {
+  // Citations accumulated during streaming are NOT echoed on the terminal
+  // `complete` event (they live in the persisted encrypted blob for reload), so
+  // carry them from the streaming placeholder onto the rebuilt assistant message
+  // — otherwise the sources vanish until the next reload.
+  const streaming = existing.find(
+    (message) => message.record_id === streamingAssistantMessageId(requestId),
+  );
+  const citations = streaming?.decryptedData.citations;
+  const citationAnchors = streaming?.decryptedData.citation_anchors;
+
   const messages = existing
     .filter((message) => message.record_id !== streamingAssistantMessageId(requestId))
     .map((message) =>
@@ -465,7 +571,24 @@ export const applyCompletionStreamResponse = (
         : message,
     );
 
-  return buildCompletionMessages(messages, resp);
+  const built = buildCompletionMessages(messages, resp);
+
+  if (!citations?.length && !citationAnchors?.length) {
+    return built;
+  }
+
+  return built.map((message) =>
+    message.record_id === resp.assistantMessage.id
+      ? {
+          ...message,
+          decryptedData: {
+            ...message.decryptedData,
+            ...(citations?.length ? { citations } : {}),
+            ...(citationAnchors?.length ? { citation_anchors: citationAnchors } : {}),
+          },
+        }
+      : message,
+  );
 };
 
 // applyImageGenerationResponse swaps the optimistic user message's temporary id
@@ -677,6 +800,7 @@ export class MessageService {
   private readonly _cryptoService = inject(CryptoService);
   private readonly _errorService = inject(ErrorService);
   private readonly _modelService = inject(ModelService);
+  private readonly _composerTools = inject(ComposerToolsService);
   private readonly _api = inject(CognosApiService);
   private readonly _vaultService = inject(VaultService);
   private readonly _uploadService = inject(AttachmentUploadService);
@@ -1361,6 +1485,7 @@ export class MessageService {
       requestId: messageRequest.requestId,
       reasoningEffort: this._modelService.selectedReasoningEffort() || undefined,
       contextSummary,
+      webSearch: this.webSearchRequestFlag(),
       attachmentIds: messageRequest.attachmentIds,
       attachmentContexts: messageRequest.attachmentContexts,
     };
@@ -1416,6 +1541,16 @@ export class MessageService {
                 this.state().messages,
                 streamingRequest,
                 event.delta,
+                request.personaId,
+                request.modelId,
+              ),
+            };
+          case 'web_search':
+            return {
+              messages: applyCompletionWebSearchStreamDelta(
+                this.state().messages,
+                streamingRequest,
+                event,
                 request.personaId,
                 request.modelId,
               ),
@@ -1877,6 +2012,7 @@ export class MessageService {
       requestId,
       reasoningEffort: this._modelService.selectedReasoningEffort() || undefined,
       contextSummary,
+      webSearch: this.webSearchRequestFlag(),
     };
 
     // Only requestId + parentMessageId are read by the streaming helpers.
@@ -1934,6 +2070,20 @@ export class MessageService {
                 this.state().messages,
                 streamingRequest,
                 event.delta,
+                request.personaId,
+                request.modelId,
+              ),
+              branchSelections: {
+                ...this.state().branchSelections,
+                [parentId]: streamingAssistantMessageId(requestId),
+              },
+            };
+          case 'web_search':
+            return {
+              messages: applyCompletionWebSearchStreamDelta(
+                this.state().messages,
+                streamingRequest,
+                event,
                 request.personaId,
                 request.modelId,
               ),
@@ -2170,6 +2320,14 @@ export class MessageService {
         return index === 0 ? of(chunkEvent) : of(chunkEvent).pipe(delay(0));
       }),
     );
+  }
+
+  // webSearchRequestFlag maps the composer's web-search state onto the request
+  // field (spec §4.2): `false` when search is off (opted out, or the model can't
+  // search), otherwise `undefined` so the field is omitted and the backend
+  // applies its auto-on default for capable models.
+  private webSearchRequestFlag(): boolean | undefined {
+    return this._composerTools.webSearchEnabled() ? undefined : false;
   }
 
   private createMessageContext(): {

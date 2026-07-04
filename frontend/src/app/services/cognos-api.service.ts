@@ -27,6 +27,7 @@ import {
   UserKeyPairsResponse,
   UserPreferencesResponse,
 } from '@app/types/pocketbase-types';
+import { Citation, CitationAnchor } from '@app/utils/citations';
 
 import { environment } from '@environments/environment';
 
@@ -69,6 +70,10 @@ export interface CompleteRequest {
   // provider context (spec §9.5). Empty/omitted for messages without uploads.
   attachmentIds?: string[];
   attachmentContexts?: CompleteAttachmentContext[];
+  // Web-search opt-out (spec docs/specs/web-search.md §4.2). Sent explicitly
+  // `false` when the user turns search off (or the model can't search); omitted
+  // otherwise so the backend applies its auto-on default for capable models.
+  webSearch?: boolean;
 }
 
 export interface CompleteResponse {
@@ -99,6 +104,10 @@ export interface CompleteResponse {
   };
 }
 
+// Web-search activity signal (spec §4.4). May arrive after the answer text on
+// some provider families (Vertex Gemini), where it is a visual no-op.
+export type WebSearchActivity = 'started' | 'completed';
+
 export type CompleteStreamEvent =
   | {
       type: 'delta';
@@ -109,6 +118,16 @@ export type CompleteStreamEvent =
       // into the final answer content.
       type: 'reasoning_delta';
       delta: string;
+    }
+  | {
+      // Web-search metadata (spec docs/specs/web-search.md §7). Incremental:
+      // `citations` carries only newly-seen sources with stable indices, which
+      // the client accumulates; `anchors` index the accumulated list. All fields
+      // optional — pure-activity frames exist.
+      type: 'web_search';
+      citations?: Citation[];
+      anchors?: CitationAnchor[];
+      searchActivity?: WebSearchActivity;
     }
   | {
       type: 'complete';
@@ -237,6 +256,7 @@ interface ApiCompleteRequest {
   context_summary?: string;
   attachment_ids?: string[];
   attachment_contexts?: ApiCompletionAttachmentInput[];
+  web_search?: boolean;
 }
 
 interface ApiCompletionAttachmentInput {
@@ -347,6 +367,15 @@ interface ApiCompleteStreamReasoningDeltaEvent {
   delta: string;
 }
 
+// Raw SSE `web_search` frame (snake_case, untransformed). `citation_anchors`
+// entries carry `citation`/`start`/`end`; all fields omitempty upstream.
+interface ApiCompleteStreamWebSearchEvent {
+  type: 'web_search';
+  citations?: { url: string; title?: string; snippet?: string }[];
+  citation_anchors?: { citation: number; start: number; end: number }[];
+  search_activity?: 'started' | 'completed';
+}
+
 interface ApiCompleteStreamCompleteEvent {
   type: 'complete';
   response: ApiCompleteResponse;
@@ -360,6 +389,7 @@ interface ApiCompleteStreamErrorEvent {
 export type ApiCompleteStreamEvent =
   | ApiCompleteStreamDeltaEvent
   | ApiCompleteStreamReasoningDeltaEvent
+  | ApiCompleteStreamWebSearchEvent
   | ApiCompleteStreamCompleteEvent
   | ApiCompleteStreamErrorEvent;
 
@@ -617,6 +647,7 @@ export const mapCompleteRequest = (request: CompleteRequest): ApiCompleteRequest
   reasoning_effort: request.reasoningEffort,
   persist: request.persist,
   context_summary: request.contextSummary,
+  web_search: request.webSearch,
   attachment_ids: request.attachmentIds,
   attachment_contexts: request.attachmentContexts?.map((context) => ({
     attachment_id: context.attachmentId,
@@ -662,6 +693,57 @@ export const mapCompleteResponse = (
   },
 });
 
+// mapWebSearchEvent normalises a raw `web_search` frame into the client event,
+// defensively dropping malformed citations/anchors so a garbled payload becomes
+// a benign no-op event rather than throwing and aborting the stream (spec §7:
+// "malformed frames ignored"; all fields omitempty; pure-activity frames exist).
+const mapWebSearchEvent = (
+  event: ApiCompleteStreamWebSearchEvent,
+): Extract<CompleteStreamEvent, { type: 'web_search' }> => {
+  const citations: Citation[] = Array.isArray(event.citations)
+    ? event.citations
+        .filter(
+          (citation): citation is { url: string; title?: string; snippet?: string } =>
+            !!citation && typeof citation.url === 'string',
+        )
+        .map((citation) => ({
+          url: citation.url,
+          ...(typeof citation.title === 'string' ? { title: citation.title } : {}),
+          ...(typeof citation.snippet === 'string'
+            ? { snippet: citation.snippet }
+            : {}),
+        }))
+    : [];
+
+  const anchors: CitationAnchor[] = Array.isArray(event.citation_anchors)
+    ? event.citation_anchors
+        .filter(
+          (anchor): anchor is { citation: number; start: number; end: number } =>
+            !!anchor &&
+            typeof anchor.citation === 'number' &&
+            typeof anchor.start === 'number' &&
+            typeof anchor.end === 'number',
+        )
+        .map((anchor) => ({
+          citation: anchor.citation,
+          start: anchor.start,
+          end: anchor.end,
+        }))
+    : [];
+
+  const searchActivity =
+    event.search_activity === 'started' || event.search_activity === 'completed'
+      ? event.search_activity
+      : undefined;
+
+  return {
+    type: 'web_search',
+    ...(citations.length ? { citations } : {}),
+    ...(anchors.length ? { anchors } : {}),
+    ...(searchActivity ? { searchActivity } : {}),
+  };
+};
+
 export const parseCompleteStreamData = (data: string): CompleteStreamEvent => {
   const event = JSON.parse(data) as ApiCompleteStreamEvent;
 
@@ -676,6 +758,8 @@ export const parseCompleteStreamData = (data: string): CompleteStreamEvent => {
         type: 'reasoning_delta',
         delta: event.delta,
       };
+    case 'web_search':
+      return mapWebSearchEvent(event);
     case 'complete':
       return {
         type: 'complete',

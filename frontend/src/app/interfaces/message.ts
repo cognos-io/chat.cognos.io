@@ -31,6 +31,34 @@ export const MessageAttachment = z.object({
 export type MessageAttachment = z.infer<typeof MessageAttachment>;
 
 /**
+ * MessageCitation is one web-search source stored inside the encrypted message
+ * blob (spec docs/specs/web-search.md §7). Same inner shape as the SSE
+ * `web_search` frame so the client parses one shape for live and reload.
+ * `title`/`snippet` are omitempty on the wire (proxy sources arrive title-less;
+ * snippet is currently always empty from the Gemini family).
+ */
+export const MessageCitation = z.object({
+  url: z.string(),
+  title: z.string().optional(),
+  snippet: z.string().optional(),
+});
+export type MessageCitation = z.infer<typeof MessageCitation>;
+
+/**
+ * MessageCitationAnchor ties a span of `content` to a citation. `start`/`end`
+ * are offsets in Unicode CODE POINTS (the gateway normalised provider byte
+ * offsets → code points); the frontend converts code points → UTF-16 indices
+ * when slicing. Omitted entirely when the provider gave no usable indices →
+ * dropdown-only rendering.
+ */
+export const MessageCitationAnchor = z.object({
+  citation: z.number(),
+  start: z.number(),
+  end: z.number(),
+});
+export type MessageCitationAnchor = z.infer<typeof MessageCitationAnchor>;
+
+/**
  * MessageData is the decrypted data object of a message.
  *
  * As the message is encrypted and written in the backend, this
@@ -61,6 +89,13 @@ export const MessageData = z.object({
   output_tokens: z.number().optional(),
   // Encrypted attachments (e.g. generated images) referenced by this message.
   attachments: z.array(MessageAttachment).optional(),
+  // Web-search sources cited by this assistant message, and the inline anchors
+  // that position numbered markers in `content` (spec docs/specs/web-search.md
+  // §7). snake_case matches the backend MessageRecordData and the SSE frame.
+  // Both absent on messages that did not search; citation_anchors absent when
+  // the provider gave no usable offsets (dropdown-only rendering).
+  citations: z.array(MessageCitation).optional(),
+  citation_anchors: z.array(MessageCitationAnchor).optional(),
   // Tombstone flag set when the message is soft-deleted. The content is cleared
   // but the role/parent/timestamp are preserved so the thread structure and the
   // LLM context marker stay correct.
@@ -89,6 +124,10 @@ export interface Message {
   expires?: Date;
   parentMessageId?: string;
   isStreaming?: boolean;
+  // Client-only transient flag: a web search is in progress for this streaming
+  // assistant message (spec docs/specs/web-search.md §4.4). Never persisted;
+  // drives the "Searching the web…" status while streaming.
+  isSearching?: boolean;
   // Client-only object URLs for decrypted attachments (e.g. generated images),
   // populated after the encrypted file is fetched and decrypted. Never persisted.
   imageUrls?: string[];
