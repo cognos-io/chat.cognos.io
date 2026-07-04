@@ -123,7 +123,9 @@ test.describe('web search', () => {
     await expect(row).toBeVisible();
     await expect(row).toHaveAttribute('href', MOCK_CITATION_URL);
     await expect(row).toHaveAttribute('target', '_blank');
+    // No referrer leaks the chat origin: rel carries both tokens (spec §4.1a).
     await expect(row).toHaveAttribute('rel', /noopener/);
+    await expect(row).toHaveAttribute('rel', /noreferrer/);
 
     // --- Inline citation marker + hover card ---
     const marker = page.locator('app-citation-marker button').first();
@@ -138,11 +140,44 @@ test.describe('web search', () => {
     await expect(openLink).toHaveAttribute('href', MOCK_CITATION_URL);
     await expect(openLink).toHaveAttribute('target', '_blank');
     await expect(openLink).toHaveAttribute('rel', /noopener/);
+    await expect(openLink).toHaveAttribute('rel', /noreferrer/);
+
+    // --- Hover card keyboard access: focus opens it, Escape closes it ---
+    await page.mouse.move(0, 0); // drop the hover so focus alone drives the card
+    await expect(openLink).toBeHidden();
+    await marker.focus();
+    await expect(openLink).toBeVisible();
+    await marker.press('Escape');
+    await expect(openLink).toBeHidden();
 
     // --- Sources survive a reload (decrypted from the persisted message) ---
     await page.reload();
     await expect(page.getByText(MOCK_REPLY_TAIL)).toBeVisible();
     await expect(page.locator('app-message-sources')).toBeVisible();
     await expect(page.locator('app-citation-marker button').first()).toBeVisible();
+  });
+
+  test('opting out sends no web search tool, so the reply has no sources', async ({
+    page,
+  }) => {
+    await provisionUnlockedAccount(page);
+    await selectWebSearchModel(page);
+
+    // Turn web search OFF in the Tools menu before sending.
+    await page.getByRole('button', { name: 'Tools' }).click();
+    const toggle = page.locator('app-composer-tools').getByRole('switch').first();
+    await expect(toggle).toBeChecked();
+    await toggle.click();
+    await expect(toggle).not.toBeChecked();
+    await page.keyboard.press('Escape'); // dismiss the tools menu
+
+    // With the tool dropped, the mock provider returns its default reply and no
+    // citations (mirrors the "no tool on the wire" API-level assertion).
+    await page.getByLabel(MESSAGE_LABEL).fill('What is the minimum wage in Geneva?');
+    await page.getByRole('button', { name: /^send$/i }).click();
+    await expect(page.getByText('Mocked assistant reply')).toBeVisible();
+
+    await expect(page.locator('app-message-sources')).toHaveCount(0);
+    await expect(page.locator('app-citation-marker')).toHaveCount(0);
   });
 });
