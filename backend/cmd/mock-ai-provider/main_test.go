@@ -103,6 +103,230 @@ func TestSelectReplySwitchesOnTokenCap(t *testing.T) {
 	}
 }
 
+func postResponses(t *testing.T, body map[string]any) *httptest.ResponseRecorder {
+	t.Helper()
+	payload, err := json.Marshal(body)
+	if err != nil {
+		t.Fatalf("marshal request: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/v1/responses", bytes.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	routes(slog.New(slog.NewTextHandler(io.Discard, nil))).ServeHTTP(rec, req)
+	return rec
+}
+
+func parseResponsesStream(t *testing.T, rec *httptest.ResponseRecorder) []responsesStreamEvent {
+	t.Helper()
+	var events []responsesStreamEvent
+	for _, raw := range strings.Split(rec.Body.String(), "\n") {
+		if !strings.HasPrefix(raw, "data: ") {
+			continue
+		}
+		data := strings.TrimPrefix(raw, "data: ")
+		if data == "[DONE]" {
+			continue
+		}
+		var ev responsesStreamEvent
+		if err := json.Unmarshal([]byte(data), &ev); err != nil {
+			t.Fatalf("unmarshal event %q: %v", data, err)
+		}
+		events = append(events, ev)
+	}
+	return events
+}
+
+func TestResponsesContentText(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		raw  string
+		want string
+	}{
+		{name: "plain string", raw: `"hello"`, want: "hello"},
+		{name: "input_text blocks", raw: `[{"type":"input_text","text":"a"},{"type":"input_text","text":"b"}]`, want: "ab"},
+		{name: "empty", raw: ``, want: ""},
+		{name: "unknown shape ignored", raw: `{"foo":1}`, want: ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := responsesContentText(json.RawMessage(tc.raw))
+			if got != tc.want {
+				t.Fatalf("responsesContentText(%s) = %q, want %q", tc.raw, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestResponsesStreamBasicReply(t *testing.T) {
+	t.Parallel()
+
+	rec := postResponses(t, map[string]any{
+		"model":  "eu-model",
+		"stream": true,
+		"input":  []map[string]any{{"role": "user", "content": "hi"}},
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	events := parseResponsesStream(t, rec)
+
+	var text strings.Builder
+	sawCompleted := false
+	for _, ev := range events {
+		if ev.Type == "response.output_text.delta" && ev.Annotation == nil {
+			text.WriteString(ev.Delta)
+		}
+		if ev.Type == "response.completed" {
+			sawCompleted = true
+			if ev.Response == nil || ev.Response.Usage == nil {
+				t.Fatalf("completed event missing usage: %+v", ev)
+			}
+			if ev.Response.Usage.Cost != nil {
+				t.Fatalf("default stream should report no cost, got %v", *ev.Response.Usage.Cost)
+			}
+		}
+	}
+	if text.String() != "Mocked assistant reply" {
+		t.Fatalf("reply = %q, want %q", text.String(), "Mocked assistant reply")
+	}
+	if !sawCompleted {
+		t.Fatal("no response.completed event")
+	}
+}
+
+func TestResponsesStreamWebSearch(t *testing.T) {
+	t.Parallel()
+
+	rec := postResponses(t, map[string]any{
+		"model":  "eu-model",
+		"stream": true,
+		"input":  []map[string]any{{"role": "user", "content": "what is the minimum wage"}},
+		"tools":  []map[string]any{{"type": "web_search"}},
+	})
+	events := parseResponsesStream(t, rec)
+
+	var text strings.Builder
+	var annotation *responsesAnnotation
+	sawSearchCompleted := false
+	var sources []responsesSource
+	for _, ev := range events {
+		if ev.Type == "response.output_text.delta" && ev.Annotation == nil {
+			text.WriteString(ev.Delta)
+		}
+		if ev.Annotation != nil {
+			annotation = ev.Annotation
+		}
+		if ev.Type == "response.web_search_call.completed" {
+			sawSearchCompleted = true
+		}
+		if ev.Type == "response.output_item.done" && ev.Item != nil && ev.Item.Type == "web_search_call" && ev.Item.Action != nil {
+			sources = ev.Item.Action.Sources
+		}
+	}
+
+	if text.String() != webSearchReply {
+		t.Fatalf("reply = %q, want the accented web-search reply", text.String())
+	}
+	if annotation == nil {
+		t.Fatal("no url_citation annotation on the stream")
+	}
+	if annotation.URL != mockCitationURL || annotation.Title != mockCitationTitle {
+		t.Fatalf("annotation = %+v, want the citation fixture", annotation)
+	}
+	// Offsets are UTF-8 byte offsets into the reply.
+	wantStart := strings.Index(webSearchReply, webSearchAnchor)
+	wantEnd := wantStart + len(webSearchAnchor)
+	if annotation.StartIndex != wantStart || annotation.EndIndex != wantEnd {
+		t.Fatalf("annotation offsets = [%d,%d], want byte offsets [%d,%d]", annotation.StartIndex, annotation.EndIndex, wantStart, wantEnd)
+	}
+	if !sawSearchCompleted {
+		t.Fatal("no web_search_call.completed activity event")
+	}
+	if len(sources) != 1 || sources[0].URL != mockSourceProxyURL || sources[0].Title != "" {
+		t.Fatalf("action sources = %+v, want a single title-less proxy source", sources)
+	}
+}
+
+func TestResponsesStreamCostSentinel(t *testing.T) {
+	t.Parallel()
+
+	rec := postResponses(t, map[string]any{
+		"model":  "eu-model",
+		"stream": true,
+		"input":  []map[string]any{{"role": "user", "content": costSentinel + " price it"}},
+	})
+	events := parseResponsesStream(t, rec)
+
+	for _, ev := range events {
+		if ev.Type == "response.completed" {
+			if ev.Response == nil || ev.Response.Usage == nil || ev.Response.Usage.Cost == nil {
+				t.Fatalf("expected a provider cost under the [cost] sentinel: %+v", ev)
+			}
+			if *ev.Response.Usage.Cost != mockProviderCostUSD {
+				t.Fatalf("cost = %v, want %v", *ev.Response.Usage.Cost, mockProviderCostUSD)
+			}
+			return
+		}
+	}
+	t.Fatal("no response.completed event")
+}
+
+func TestResponsesStreamReasoning(t *testing.T) {
+	t.Parallel()
+
+	rec := postResponses(t, map[string]any{
+		"model":  "eu-model",
+		"stream": true,
+		"input":  []map[string]any{{"role": "user", "content": reasonPrefix + " explain"}},
+	})
+	events := parseResponsesStream(t, rec)
+
+	sawReasoning := false
+	for _, ev := range events {
+		if ev.Type == "response.reasoning_summary_text.delta" && ev.Delta == reasoningTrace {
+			sawReasoning = true
+		}
+		if ev.Type == "response.completed" {
+			if ev.Response == nil || ev.Response.Usage == nil || ev.Response.Usage.OutputTokensDetails == nil ||
+				ev.Response.Usage.OutputTokensDetails.ReasoningTokens != reasoningTokenCount {
+				t.Fatalf("expected reasoning_tokens=%d in usage: %+v", reasoningTokenCount, ev)
+			}
+		}
+	}
+	if !sawReasoning {
+		t.Fatal("no reasoning_summary_text.delta with the canned trace")
+	}
+}
+
+func TestResponsesNonStreamReply(t *testing.T) {
+	t.Parallel()
+
+	rec := postResponses(t, map[string]any{
+		"model":  "eu-model",
+		"stream": false,
+		"input":  []map[string]any{{"role": "user", "content": "hi"}},
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	var resp responsesObject
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+	if resp.Status != "completed" || len(resp.Output) == 0 {
+		t.Fatalf("response = %+v, want a completed output", resp)
+	}
+	if resp.Output[0].Content[0].Text != "Mocked assistant reply" {
+		t.Fatalf("content = %q, want the assistant reply", resp.Output[0].Content[0].Text)
+	}
+	if resp.Usage == nil || resp.Usage.Cost != nil {
+		t.Fatalf("usage = %+v, want tokens and no default cost", resp.Usage)
+	}
+}
+
 func TestRoutesHealthAndCompletionsContract(t *testing.T) {
 	t.Parallel()
 

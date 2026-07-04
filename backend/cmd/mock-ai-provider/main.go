@@ -77,6 +77,7 @@ func routes(logger *slog.Logger) http.Handler {
 		writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 	})
 	mux.HandleFunc("POST /v1/chat/completions", chatCompletionsHandler(logger))
+	mux.HandleFunc("POST /v1/responses", responsesHandler(logger))
 	mux.HandleFunc("POST /v1/images/generations", imagesGenerationHandler(logger))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("not found", "method", r.Method, "path", r.URL.Path)
@@ -336,18 +337,25 @@ func isCompactionRequest(req chatCompletionRequest) bool {
 // title; everything else is treated as a real assistant turn. Keeping it
 // pure makes the conditional unit-testable without spinning up the server.
 func selectReply(req chatCompletionRequest) string {
-	if isCompactionRequest(req) {
-		return mockCompactionReply
-	}
 	tokenCap := req.MaxTokens
 	if tokenCap == 0 {
 		tokenCap = req.MaxCompletionTokens
 	}
+	return replyFor(lastUserContent(req), tokenCap, isCompactionRequest(req))
+}
+
+// replyFor is the shared reply heuristic used by both the Chat Completions and
+// Responses endpoints, so the two speak identically. Compaction wins, then the
+// tiny-budget title call, then echo, then the default assistant reply.
+func replyFor(lastUser string, tokenCap int, compaction bool) string {
+	if compaction {
+		return mockCompactionReply
+	}
 	if tokenCap > 0 && tokenCap <= 20 {
 		return "Mocked conversation title"
 	}
-	if last := lastUserContent(req); strings.HasPrefix(last, echoPrefix) {
-		return strings.TrimPrefix(last, echoPrefix)
+	if strings.HasPrefix(lastUser, echoPrefix) {
+		return strings.TrimPrefix(lastUser, echoPrefix)
 	}
 	return "Mocked assistant reply"
 }
@@ -362,6 +370,357 @@ func lastUserContent(req chatCompletionRequest) string {
 	}
 	return ""
 }
+
+// --- OpenAI Responses API (used by the Requesty gateway path) ---
+//
+// The mock mirrors the real Vertex-Gemini-through-Requesty stream shape captured
+// in the web-search spike so it is an honest regression harness, not an idealised
+// one. In particular:
+//   - url_citation annotations arrive on a SEPARATE, empty message output item
+//     (a later output_index), never co-located with the visible text;
+//   - annotation-bearing events report data.type "response.output_text.delta"
+//     (Requesty mislabels them) while carrying an "annotation" field, so a
+//     consumer must key off the annotation, not the type;
+//   - annotation start/end offsets are UTF-8 BYTE offsets (webSearchReply carries
+//     an accented word so byte and rune offsets differ);
+//   - action.sources are proxy redirect URLs with no title;
+//   - web_search_call activity events arrive at the END of the stream;
+//   - usage.cost is a bare float, only reported under the [cost] sentinel so the
+//     default stream stays cost-free and byte-identical to the chat path.
+const (
+	// webSearchReply is returned for web-search Responses requests. "légal" is
+	// accented, so the citation's byte offsets differ from its code-point offsets.
+	webSearchReply = "Le salaire minimum légal est fixé par le canton."
+	// webSearchAnchor is the substring the mock citation anchors onto.
+	webSearchAnchor = "légal"
+	// costSentinel opts a Responses request into reporting a provider cost.
+	costSentinel = "[cost]"
+	// mockProviderCostUSD is the bare-float cost reported under [cost], mirroring
+	// what Requesty returns for EU providers.
+	mockProviderCostUSD = 0.0387346
+	// Citation fixtures. The annotation carries a usable {url,title} (title is the
+	// displayable domain); the action source is a title-less proxy redirect URL.
+	mockCitationURL    = "https://example.com/geneva-minimum-wage"
+	mockCitationTitle  = "example.com"
+	mockSourceProxyURL = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/MOCKPROXY"
+)
+
+type responsesRequest struct {
+	Model           string             `json:"model"`
+	Stream          bool               `json:"stream"`
+	MaxOutputTokens int                `json:"max_output_tokens"`
+	Input           []responsesInput   `json:"input"`
+	Tools           []responsesReqTool `json:"tools"`
+}
+
+type responsesReqTool struct {
+	Type string `json:"type"`
+}
+
+type responsesInput struct {
+	Role    string          `json:"role"`
+	Content json.RawMessage `json:"content"`
+}
+
+// Responses stream/response wire shapes (only the fields the gateway reads).
+type responsesStreamEvent struct {
+	Type            string               `json:"type"`
+	SequenceNumber  int                  `json:"sequence_number"`
+	OutputIndex     *int                 `json:"output_index,omitempty"`
+	ContentIndex    *int                 `json:"content_index,omitempty"`
+	ItemID          string               `json:"item_id,omitempty"`
+	Delta           string               `json:"delta,omitempty"`
+	Text            string               `json:"text,omitempty"`
+	AnnotationIndex *int                 `json:"annotation_index,omitempty"`
+	Annotation      *responsesAnnotation `json:"annotation,omitempty"`
+	Item            *responsesItem       `json:"item,omitempty"`
+	Response        *responsesObject     `json:"response,omitempty"`
+}
+
+type responsesAnnotation struct {
+	Type       string `json:"type"`
+	URL        string `json:"url"`
+	Title      string `json:"title"`
+	StartIndex int    `json:"start_index"`
+	EndIndex   int    `json:"end_index"`
+}
+
+type responsesItem struct {
+	ID      string                 `json:"id"`
+	Type    string                 `json:"type"`
+	Status  string                 `json:"status,omitempty"`
+	Role    string                 `json:"role,omitempty"`
+	Content []responsesContentBlk  `json:"content,omitempty"`
+	Action  *responsesSearchAction `json:"action,omitempty"`
+}
+
+type responsesContentBlk struct {
+	Type        string                `json:"type"`
+	Text        string                `json:"text"`
+	Annotations []responsesAnnotation `json:"annotations"`
+}
+
+type responsesSearchAction struct {
+	Type    string            `json:"type"`
+	Query   string            `json:"query,omitempty"`
+	Sources []responsesSource `json:"sources,omitempty"`
+}
+
+type responsesSource struct {
+	Type  string `json:"type"`
+	URL   string `json:"url"`
+	Title string `json:"title,omitempty"`
+}
+
+type responsesObject struct {
+	ID        string          `json:"id"`
+	Object    string          `json:"object"`
+	CreatedAt int64           `json:"created_at"`
+	Model     string          `json:"model"`
+	Status    string          `json:"status"`
+	Output    []responsesItem `json:"output"`
+	Usage     *responsesUsage `json:"usage,omitempty"`
+}
+
+type responsesUsage struct {
+	InputTokens         int                     `json:"input_tokens"`
+	OutputTokens        int                     `json:"output_tokens"`
+	TotalTokens         int                     `json:"total_tokens"`
+	OutputTokensDetails *responsesOutputDetails `json:"output_tokens_details,omitempty"`
+	// Cost is a bare float, matching what Requesty returns; nil = not reported.
+	Cost *float64 `json:"cost,omitempty"`
+}
+
+type responsesOutputDetails struct {
+	ReasoningTokens int `json:"reasoning_tokens,omitempty"`
+}
+
+func responsesHandler(logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req responsesRequest
+		if r.ContentLength != 0 {
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				logger.Warn("decode failed", "err", err)
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
+				return
+			}
+		}
+
+		model := req.Model
+		if model == "" {
+			model = "mock-model"
+		}
+
+		lastUser := responsesLastUserText(req)
+		reply := replyFor(lastUser, req.MaxOutputTokens, responsesIsCompaction(req))
+		reasoning := ""
+		if strings.HasPrefix(lastUser, reasonPrefix) {
+			reasoning = reasoningTrace
+		}
+		webSearch := responsesHasWebSearchTool(req)
+		// A web search request with the default reply gets the accented answer so
+		// the citation exercises byte→rune offset conversion.
+		if webSearch && reply == "Mocked assistant reply" {
+			reply = webSearchReply
+		}
+		var cost *float64
+		if strings.Contains(lastUser, costSentinel) {
+			c := mockProviderCostUSD
+			cost = &c
+		}
+
+		logger.Info("responses completion", "model", model, "stream", req.Stream, "web_search", webSearch)
+
+		if req.Stream {
+			writeResponsesStream(w, logger, model, reply, reasoning, webSearch, cost)
+			return
+		}
+		writeResponsesJSON(w, model, reply, reasoning, webSearch, cost)
+	}
+}
+
+// writeResponsesStream emits a Responses-API SSE stream mirroring the real Vertex
+// shape. Bifrost reads the `data:` JSON (keying off data.type), so no `event:`
+// line is needed.
+func writeResponsesStream(
+	w http.ResponseWriter,
+	logger *slog.Logger,
+	model, reply, reasoning string,
+	webSearch bool,
+	cost *float64,
+) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		logger.Error("streaming unsupported: ResponseWriter is not a Flusher")
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "streaming unsupported"})
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.WriteHeader(http.StatusOK)
+
+	const respID = "resp-mock"
+	created := time.Now().Unix()
+	seq := 0
+	send := func(ev responsesStreamEvent) {
+		ev.SequenceNumber = seq
+		seq++
+		payload, _ := json.Marshal(ev)
+		_, _ = fmt.Fprintf(w, "data: %s\n\n", payload)
+		flusher.Flush()
+	}
+	inProgress := &responsesObject{ID: respID, Object: "response", CreatedAt: created, Model: model, Status: "in_progress", Output: []responsesItem{}}
+
+	send(responsesStreamEvent{Type: "response.created", Response: inProgress})
+	send(responsesStreamEvent{Type: "response.in_progress", Response: inProgress})
+
+	// Visible answer on output item 0.
+	send(responsesStreamEvent{Type: "response.output_item.added", OutputIndex: ptrInt(0), Item: &responsesItem{Type: "message", Role: "assistant", Status: "in_progress"}})
+	send(responsesStreamEvent{Type: "response.content_part.added", OutputIndex: ptrInt(0), ContentIndex: ptrInt(0)})
+	if reasoning != "" {
+		send(responsesStreamEvent{Type: "response.reasoning_summary_text.delta", OutputIndex: ptrInt(0), Delta: reasoning})
+	}
+	send(responsesStreamEvent{Type: "response.output_text.delta", OutputIndex: ptrInt(0), ContentIndex: ptrInt(0), Delta: reply})
+	send(responsesStreamEvent{Type: "response.output_text.done", OutputIndex: ptrInt(0), ContentIndex: ptrInt(0), Text: reply})
+	send(responsesStreamEvent{Type: "response.content_part.done", OutputIndex: ptrInt(0), ContentIndex: ptrInt(0)})
+	send(responsesStreamEvent{Type: "response.output_item.done", OutputIndex: ptrInt(0), Item: &responsesItem{
+		Type: "message", Role: "assistant", Status: "completed",
+		Content: []responsesContentBlk{{Type: "output_text", Text: reply, Annotations: []responsesAnnotation{}}},
+	}})
+
+	if webSearch {
+		startByte := strings.Index(reply, webSearchAnchor)
+		endByte := startByte + len(webSearchAnchor)
+		if startByte < 0 {
+			startByte, endByte = 0, len(reply)
+		}
+
+		// Citation annotation on a SECOND, empty message item. Requesty mislabels
+		// these as output_text.delta while carrying an annotation — mirror that.
+		send(responsesStreamEvent{Type: "response.output_item.added", OutputIndex: ptrInt(1), Item: &responsesItem{Type: "message", Role: "assistant", Status: "in_progress"}})
+		send(responsesStreamEvent{Type: "response.content_part.added", OutputIndex: ptrInt(1), ContentIndex: ptrInt(0)})
+		send(responsesStreamEvent{
+			Type: "response.output_text.delta", OutputIndex: ptrInt(1), ContentIndex: ptrInt(0), AnnotationIndex: ptrInt(0),
+			Annotation: &responsesAnnotation{Type: "url_citation", URL: mockCitationURL, Title: mockCitationTitle, StartIndex: startByte, EndIndex: endByte},
+		})
+		send(responsesStreamEvent{Type: "response.output_item.done", OutputIndex: ptrInt(1), Item: &responsesItem{Type: "message", Role: "assistant", Status: "completed"}})
+
+		// web_search_call item + activity events arrive at the end of the stream.
+		send(responsesStreamEvent{Type: "response.output_item.added", OutputIndex: ptrInt(2), Item: &responsesItem{Type: "web_search_call", Status: "in_progress"}})
+		send(responsesStreamEvent{Type: "response.web_search_call.in_progress", OutputIndex: ptrInt(2)})
+		send(responsesStreamEvent{Type: "response.web_search_call.searching", OutputIndex: ptrInt(2)})
+		send(responsesStreamEvent{Type: "response.web_search_call.completed", OutputIndex: ptrInt(2)})
+		send(responsesStreamEvent{Type: "response.output_item.done", OutputIndex: ptrInt(2), Item: &responsesItem{
+			Type: "web_search_call", Status: "completed",
+			Action: &responsesSearchAction{Type: "search", Query: "mock query", Sources: []responsesSource{{Type: "url", URL: mockSourceProxyURL}}},
+		}})
+	}
+
+	// Terminal event carries usage (and cost, when requested).
+	usage := &responsesUsage{InputTokens: 1, OutputTokens: 1, TotalTokens: 2, Cost: cost}
+	if reasoning != "" {
+		usage.OutputTokensDetails = &responsesOutputDetails{ReasoningTokens: reasoningTokenCount}
+	}
+	send(responsesStreamEvent{Type: "response.completed", Response: &responsesObject{
+		ID: respID, Object: "response", CreatedAt: created, Model: model, Status: "completed", Output: []responsesItem{}, Usage: usage,
+	}})
+
+	_, _ = fmt.Fprint(w, "data: [DONE]\n\n")
+	flusher.Flush()
+}
+
+// writeResponsesJSON serves the non-streaming Responses request. Annotations sit
+// on the message content block here (the non-stream shape); web search adds a
+// web_search_call output item with proxy action sources.
+func writeResponsesJSON(w http.ResponseWriter, model, reply, reasoning string, webSearch bool, cost *float64) {
+	content := responsesContentBlk{Type: "output_text", Text: reply, Annotations: []responsesAnnotation{}}
+	output := []responsesItem{}
+	if webSearch {
+		startByte := strings.Index(reply, webSearchAnchor)
+		endByte := startByte + len(webSearchAnchor)
+		if startByte < 0 {
+			startByte, endByte = 0, len(reply)
+		}
+		content.Annotations = append(content.Annotations, responsesAnnotation{
+			Type: "url_citation", URL: mockCitationURL, Title: mockCitationTitle, StartIndex: startByte, EndIndex: endByte,
+		})
+	}
+	output = append(output, responsesItem{Type: "message", Role: "assistant", Status: "completed", Content: []responsesContentBlk{content}})
+	if webSearch {
+		output = append(output, responsesItem{
+			Type: "web_search_call", Status: "completed",
+			Action: &responsesSearchAction{Type: "search", Query: "mock query", Sources: []responsesSource{{Type: "url", URL: mockSourceProxyURL}}},
+		})
+	}
+
+	usage := &responsesUsage{InputTokens: 1, OutputTokens: 1, TotalTokens: 2, Cost: cost}
+	if reasoning != "" {
+		usage.OutputTokensDetails = &responsesOutputDetails{ReasoningTokens: reasoningTokenCount}
+	}
+	writeJSON(w, http.StatusOK, responsesObject{
+		ID: "resp-mock", Object: "response", CreatedAt: time.Now().Unix(), Model: model, Status: "completed", Output: output, Usage: usage,
+	})
+}
+
+// responsesLastUserText returns the text of the final user input message.
+func responsesLastUserText(req responsesRequest) string {
+	for i := len(req.Input) - 1; i >= 0; i-- {
+		if req.Input[i].Role == "user" {
+			return responsesContentText(req.Input[i].Content)
+		}
+	}
+	return ""
+}
+
+// responsesContentText extracts plain text from a Responses content field, which
+// is either a JSON string or an array of {type,text} input blocks.
+func responsesContentText(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	var asString string
+	if err := json.Unmarshal(raw, &asString); err == nil {
+		return asString
+	}
+	var blocks []struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	}
+	if err := json.Unmarshal(raw, &blocks); err == nil {
+		var b strings.Builder
+		for _, block := range blocks {
+			b.WriteString(block.Text)
+		}
+		return b.String()
+	}
+	return ""
+}
+
+// responsesIsCompaction reports whether a system/developer input carries the
+// compaction system prompt.
+func responsesIsCompaction(req responsesRequest) bool {
+	for _, m := range req.Input {
+		if m.Role == "system" || m.Role == "developer" {
+			if strings.Contains(responsesContentText(m.Content), compactionSystemMarker) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func responsesHasWebSearchTool(req responsesRequest) bool {
+	for _, tool := range req.Tools {
+		if tool.Type == "web_search" {
+			return true
+		}
+	}
+	return false
+}
+
+func ptrInt(i int) *int { return &i }
 
 // mockPNGBase64 is a valid 1x1 PNG, base64-encoded. Small enough to keep tests
 // fast, real enough to round-trip through base64/data-URI decoding.
