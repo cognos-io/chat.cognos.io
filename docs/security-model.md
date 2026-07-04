@@ -606,8 +606,12 @@ What this changes about exposure:
   and Requesty's documented zero-retention proxying. This is the feature's residual exposure
   and the reason for the opt-out and the plain-language disclosure in the composer.
 - Some providers return **redirect URLs** for sources (e.g. Vertex grounding links via
-  `vertexaisearch.cloud.google.com`); opening a source then routes the click through that
-  provider. Source links open with `rel="noopener noreferrer"` so the chat origin is not leaked.
+  `vertexaisearch.cloud.google.com`). The backend resolves these **server-side, once per
+  completion** (fixed-prefix allowlist; destination captured from the redirect header, never
+  fetched; no mapping cache, no click tracking), so the user's click goes directly to the
+  publisher — Google sees a single fetch from Cognos's server, never the user's IP or choice
+  of source. If resolution fails, the proxy URL is kept. Source links always open with
+  `rel="noopener noreferrer"` so the chat origin is not leaked.
 
 What does not change:
 

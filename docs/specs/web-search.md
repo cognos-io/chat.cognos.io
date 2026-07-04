@@ -291,8 +291,35 @@ Bifrost v1.5.12 fully models the Responses API, so no raw-params workaround is n
   `MessageRecordData` before `EncryptAndPersistMessage`. Keep the struct in lockstep with the
   frontend `MessageData` interface (existing sync-warning comment applies).
 - **Logging:** citations (URLs/titles) are message content. Log only counts
-  (`search_count`, `citation_count`), never URLs, titles, or query text — same rule as
-  `safeErrorSummary`.
+  (`search_count`, `citation_count`, `resolved_count`/`failed_count`), never URLs, titles, or
+  query text — same rule as `safeErrorSummary`.
+
+### 5.2a Grounding-redirect resolution (Decision 9)
+
+Vertex Gemini citation URLs are `vertexaisearch.cloud.google.com/grounding-api-redirect/…`
+proxies: clicking routes the user through Google, and the links **expire after ~30 days**
+while the encrypted history lives on. The gateway therefore resolves them **server-side, once
+per completion**, before the `web_search` SSE frame and before persistence — so the stream,
+the UI, and the sealed message all carry the real destination URL, and user clicks go straight
+to the publisher (Google sees one fetch from Cognos, never the user).
+
+- Legal basis (researched): grey-area-defensible — nothing in Google's grounding terms
+  requires the redirect URI for source display (exact-rendering applies to Search Suggestion
+  chips only), Google's own docs print destination URLs in citation examples, and one-time
+  resolution for display-to-the-prompting-user is the ecosystem norm. Red lines honoured:
+  **no server-side cache of redirect→destination mappings** (that would be "building an index
+  of Links" — resolution is strictly per-completion), no click tracking, no crawling of
+  destinations (the destination is never fetched, only the `Location` header captured).
+- Mechanics: only URLs matching the configured prefix (`gateway.grounding_redirect_prefix` /
+  `COGNOS_GATEWAY_GROUNDING_REDIRECT_PREFIX`, default the real Vertex host; e2e points it at
+  the mock) are ever fetched — fixed allowlist, no SSRF surface. ≤2 hops while on the prefix
+  host; first off-host `Location` is the destination (validated absolute http/https, never
+  fetched). Budgets: 1.5 s/URL, concurrency 4, 3 s per completion. Any failure (timeout,
+  expiry 404, loop, bad destination) keeps the proxy URL — graceful.
+- Consequence for the stream contract: citations are accumulated and emitted **once at the
+  terminal event** (rather than incrementally mid-stream) so resolution can complete first.
+  Frames keep the same shape and remain additive; Gemini's annotations arrived at stream end
+  anyway, so perceived latency is unchanged.
 
 ### 5.3 Catalogue
 
@@ -504,16 +531,17 @@ landed.** Pre-launch this is low stakes, but the ordering is load-bearing.
 
 ## 13. Resolved decisions
 
-| #   | Decision               | Resolution                                                                                                                                                                       |
-| --- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Architecture           | Requesty-native `{"type": "web_search"}` tool only; no Cognos agent loop (server or browser) in v1                                                                               |
-| 2   | Data residency         | EU-hosted searchable models only; sync forces `supports_web_search=false` otherwise; no Sonar                                                                                    |
-| 3   | Activation UX          | Auto-on for capable models; per-conversation opt-out via the composer Tools row; model decides per turn                                                                          |
-| 4   | Billing                | Provider cost pass-through when reported; configured per-search floor fee otherwise (and until pass-through is confirmed)                                                        |
-| 5   | Citation storage       | Inside encrypted `MessageData` (`citations[]`), never plaintext; ledger sees only `search_count`                                                                                 |
-| 6   | Model-switch behaviour | Search is best-effort: unsupported model ⇒ tool dropped silently, no forced model switch                                                                                         |
-| 7   | API surface            | Migrate the Requesty gateway path to the Responses API (Bifrost `ResponsesStreamRequest`) — newer surface, richer citations (indices for inline markers), explicit search events |
-| 8   | Sources UX             | "Searched N sources" dropdown collapsed by default; numbered inline citation chips with hover card ("Open source" → `_blank` + `noopener noreferrer`) per design                 |
+| #   | Decision               | Resolution                                                                                                                                                                                                         |
+| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Architecture           | Requesty-native `{"type": "web_search"}` tool only; no Cognos agent loop (server or browser) in v1                                                                                                                 |
+| 2   | Data residency         | EU-hosted searchable models only; sync forces `supports_web_search=false` otherwise; no Sonar                                                                                                                      |
+| 3   | Activation UX          | Auto-on for capable models; per-conversation opt-out via the composer Tools row; model decides per turn                                                                                                            |
+| 4   | Billing                | Provider cost pass-through when reported; configured per-search floor fee otherwise (and until pass-through is confirmed)                                                                                          |
+| 5   | Citation storage       | Inside encrypted `MessageData` (`citations[]`), never plaintext; ledger sees only `search_count`                                                                                                                   |
+| 6   | Model-switch behaviour | Search is best-effort: unsupported model ⇒ tool dropped silently, no forced model switch                                                                                                                           |
+| 7   | API surface            | Migrate the Requesty gateway path to the Responses API (Bifrost `ResponsesStreamRequest`) — newer surface, richer citations (indices for inline markers), explicit search events                                   |
+| 8   | Sources UX             | "Searched N sources" dropdown collapsed by default; numbered inline citation chips with hover card ("Open source" → `_blank` + `noopener noreferrer`) per design                                                   |
+| 9   | Redirect resolution    | Vertex grounding-redirect citation URLs are resolved server-side once per completion (no mapping cache, no click tracking, destination never fetched) — privacy + 30-day link-rot fix; failures keep the proxy URL |
 
 ### Deferred to future specs
 
