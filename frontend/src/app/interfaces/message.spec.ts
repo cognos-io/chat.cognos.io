@@ -1,6 +1,12 @@
+import fc from 'fast-check';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { MessageData, isMessageFromUser, parseMessageData } from './message';
+import {
+  MessageData,
+  decryptMessageData,
+  isMessageFromUser,
+  parseMessageData,
+} from './message';
 
 class TestTextEncoder {
   encode(input: string): Uint8Array {
@@ -81,6 +87,43 @@ describe('parseMessageData', () => {
     const parsed = parseMessageData(encode(JSON.stringify({ content: 'plain' })));
     expect(parsed.citations).toBeUndefined();
     expect(parsed.citation_anchors).toBeUndefined();
+  });
+
+  it('tolerates unknown fields by stripping them (forward-compat)', () => {
+    const parsed = parseMessageData(
+      encode(JSON.stringify({ content: 'x', future_field: 42, citations: [] })),
+    );
+    expect(parsed.content).toBe('x');
+    expect((parsed as Record<string, unknown>)['future_field']).toBeUndefined();
+  });
+
+  it('rejects citation_anchors with wrong field types', () => {
+    const payload = encode(
+      JSON.stringify({
+        content: 'x',
+        citation_anchors: [{ citation: 'nope', start: 0, end: 1 }],
+      }),
+    );
+    expect(() => parseMessageData(payload)).toThrow();
+  });
+
+  it('rejects a non-array citations field', () => {
+    const payload = encode(JSON.stringify({ content: 'x', citations: 'oops' }));
+    expect(() => parseMessageData(payload)).toThrow();
+  });
+
+  it('never throws on arbitrary citations/anchor garbage — safeParse succeeds or fails cleanly (property)', () => {
+    fc.assert(
+      fc.property(fc.jsonValue(), fc.jsonValue(), (citations, citationAnchors) => {
+        const result = MessageData.safeParse({
+          content: 'x',
+          citations,
+          citation_anchors: citationAnchors,
+        });
+        // Whatever the garbage, parsing is a clean boolean outcome, never a throw.
+        expect(typeof result.success).toBe('boolean');
+      }),
+    );
   });
 
   it('allows nullable content for placeholder records', () => {
@@ -187,5 +230,43 @@ describe('isMessageFromUser', () => {
 
   it('returns false when owner_id is whitespace only', () => {
     expect(isMessageFromUser({ ...base, owner_id: '   ' })).toBe(false);
+  });
+});
+
+describe('decryptMessageData', () => {
+  // Uses the real TextDecoder (the faked codecs are scoped to the
+  // parseMessageData suite and restored in its afterAll).
+  const enc = (obj: unknown): Uint8Array =>
+    new TextEncoder().encode(JSON.stringify(obj));
+  const keyPair = {
+    publicKey: new Uint8Array(),
+    secretKey: new Uint8Array(),
+  } as never;
+
+  it('returns the parsed data on a clean decrypt + binding (happy path)', () => {
+    const open = () => enc({ content: 'hi', conversation_id: 'c1' });
+    const result = decryptMessageData(
+      { data: 'AAAA', conversation: 'c1' },
+      keyPair,
+      open,
+    );
+    expect(result?.content).toBe('hi');
+  });
+
+  it('returns null when the decrypted payload fails schema validation (pinned)', () => {
+    // Bad citations type → MessageData.parse throws → decryptMessageData swallows
+    // it and returns null, so the search index skips the record instead of
+    // indexing junk or surfacing a decrypt-failed placeholder.
+    const open = () => enc({ content: 'hi', citations: 'not-an-array' });
+    expect(
+      decryptMessageData({ data: 'AAAA', conversation: 'c1' }, keyPair, open),
+    ).toBeNull();
+  });
+
+  it('returns null on a conversation binding mismatch', () => {
+    const open = () => enc({ content: 'hi', conversation_id: 'OTHER' });
+    expect(
+      decryptMessageData({ data: 'AAAA', conversation: 'c1' }, keyPair, open),
+    ).toBeNull();
   });
 });
