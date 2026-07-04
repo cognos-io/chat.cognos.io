@@ -188,10 +188,10 @@ Acceptance criteria:
 - Verify in the Phase-0 spike that Requesty actually forwards these events per provider family
   (the live response is the source of truth); if a family doesn't emit them, degrade to
   citations-only for that family.
-- **Spike result (Vertex Gemini EU):** the events are forwarded but arrive _after_ the full
-  answer has streamed — too late for a live indicator. Vertex Gemini therefore ships
-  **citations-only** (no "Searching…" status). Anthropic/Azure OpenAI behaviour still
-  unverified (org allowlist blocker).
+- **Spike results:** Vertex Gemini forwards the events _after_ the full answer — citations-only
+  on that family. Azure OpenAI forwards them _before_ the answer — the live "Searching…"
+  status works there. The frontend's show-only-before-content gating handles both without
+  per-family switches. Anthropic behaviour still unverified (org allowlist blocker).
 
 ## 5. Backend changes
 
@@ -248,9 +248,29 @@ Bifrost v1.5.12 fully models the Responses API, so no raw-params workaround is n
     `web_search_call` output items. Cost matched pure token price exactly — **no visible
     search surcharge** (evidence for the §5.4 floor fee).
     - `system`-role input message honoured (open Q5 confirmed for this family).
-    - Anthropic EU and Azure OpenAI EU legs are **blocked by a Requesty org-level provider
-    allowlist** ("Provider blocked by policy" — only Vertex/Gemini currently enabled); rerun
-    once the org dashboard allowlists those providers (launch-gate task).
+    - Anthropic EU legs remain **blocked by the Requesty org provider allowlist**; Azure
+    OpenAI was enabled and verified (below).
+- **Live spike findings — Azure OpenAI EU (`gpt-5.5@swedencentral`, `gpt-5.4@francecentral`),
+  verified:**
+    - **Annotation offsets are Unicode code-point offsets** — the opposite of Gemini's UTF-8
+    bytes. Offset units are therefore **family-dependent**: the gateway selects the unit per
+    provider family (vertex/gemini → bytes; azure/openai-responses → code points; unknown
+    families → strict validation, drop anchors rather than guess).
+    - Annotations sit on the **same** output item as the visible text (no Gemini empty-item
+    quirk); `action.sources` carry **real destination URLs** (no proxy) and the matching
+    annotation `title` is a real page title.
+    - `web_search_call` events arrive **before** the answer text — a live "Searching…" status
+    genuinely works on this family (the frontend's show-only-before-content logic handles
+    both orderings without per-family gating).
+    - **Requesty mistypes `output_item.done` as `output_item.added`** in the JSON body (both
+    families; the SSE `event:` line is correct). Handling must be type-agnostic or
+    `action.sources` are dropped on the streaming path (gpt-5.5: 15 sources, only 1
+    annotated) and `SearchCount` double-counts.
+    - gpt-5.5 emitted a **phantom search** (`queries: [""]`, zero sources) — such items must
+    not count toward `SearchCount` or emit activity.
+    - Cost = exact token price on both models — **third independent confirmation** that no
+    search surcharge passes through Requesty's reported cost (floor fee stands).
+    - `system`-role input honoured on both models.
 
 ### 5.2 Handler
 
@@ -501,8 +521,9 @@ landed.** Pre-launch this is low stakes, but the ordering is load-bearing.
 
 1. Does Requesty's reported cost include provider search fees? (Launch gate — ask support.)
    - todo(ewan): ask support
-   - Spike evidence (Gemini): cost matched pure token price to the last digit — no search
-     surcharge visible. Floor fee validated for that family at least.
+   - Spike evidence: cost matched pure token price to the last digit on **all three live
+     calls** (Gemini, Azure gpt-5.5, Azure gpt-5.4) — no search surcharge visible anywhere.
+     Floor fee validated empirically across both testable families.
    - Follow-up finding: the search DID run (executed query + grounding sources + ~8.5k input
      tokens of injected results in the capture) but **Requesty's own logs show no web search**
      — Vertex grounding is a native provider feature, invisible to Requesty's tool
@@ -512,10 +533,11 @@ landed.** Pre-launch this is low stakes, but the ordering is load-bearing.
      provider-side grounding fee, not the tokens.
 2. Does Requesty forward the Responses API `response.web_search_call.*` events per provider
    family?
-   - **Partially resolved:** Vertex Gemini — yes, but after the answer (citations-only UX for
-     that family). Anthropic EU / Azure OpenAI EU — **blocked by the Requesty org provider
-     allowlist** ("Provider blocked by policy"); todo(ewan): enable Anthropic + Azure OpenAI
-     providers in the Requesty org dashboard, then rerun the spike legs.
+   - **Resolved for two of three families:** Vertex Gemini — yes, but after the answer
+     (citations-only UX). Azure OpenAI — yes, before the answer (live status works). Anthropic
+     EU — **still blocked by the Requesty org provider allowlist**; todo(ewan): enable the
+     Anthropic provider in the dashboard, then rerun that leg (request template in the spike
+     scratchpad; captures for the other families are in backend testdata).
 3. ~~Does Bifrost translate Responses API requests for Chat-Completions-only providers
    (Infomaniak)?~~ **Resolved:** yes, via per-provider `AllowedRequests` opt-in fallback
    producing Responses-shaped streams — single gateway code path. See §5.1.
