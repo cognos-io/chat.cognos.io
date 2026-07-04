@@ -291,4 +291,38 @@ describe('ComposerToolsService', () => {
     service.setWebSearch(true);
     expect(service.webSearchEnabled()).toBe(false);
   });
+
+  it('recomputes to off when the model is switched to a non-capable one mid-conversation', () => {
+    // Search is best-effort (spec §4.3): switching to a model that can't search
+    // silently disables it — no error, no forced switch — and re-enables when a
+    // capable model is selected again.
+    const { service, selectedModel } = setup({
+      selected: searchModel,
+      list: [searchModel, textModel],
+    });
+    expect(service.webSearchEnabled()).toBe(true);
+
+    selectedModel.set(textModel);
+    expect(service.webSearchSupported()).toBe(false);
+    expect(service.webSearchEnabled()).toBe(false);
+
+    selectedModel.set(searchModel);
+    expect(service.webSearchEnabled()).toBe(true);
+  });
+
+  it('preserves the per-conversation opt-out across a model switch', () => {
+    // The opt-out is user intent for the conversation; a transient switch to a
+    // non-capable model must not silently clear it once a capable model returns.
+    const { service, selectedModel } = setup({
+      selected: searchModel,
+      list: [searchModel, textModel],
+    });
+    service.setWebSearch(false);
+    expect(service.webSearchEnabled()).toBe(false);
+
+    selectedModel.set(textModel);
+    selectedModel.set(searchModel);
+    // Still opted out — only reset() clears it.
+    expect(service.webSearchEnabled()).toBe(false);
+  });
 });
