@@ -22,10 +22,15 @@ const DEFAULT_SYSTEM_PROMPT = 'You are a helpful test persona.';
 // anchors a citation onto "légal", so byte offsets differ from code points.
 const MOCK_WEB_SEARCH_REPLY = 'Le salaire minimum légal est fixé par le canton.';
 const MOCK_WEB_SEARCH_ANCHOR = 'légal';
-const MOCK_CITATION_URL = 'https://example.com/geneva-minimum-wage';
 const MOCK_CITATION_TITLE = 'example.com';
-const MOCK_SOURCE_PROXY_URL =
-  'https://vertexaisearch.cloud.google.com/grounding-api-redirect/MOCKPROXY';
+// The Vertex fixture emits grounding-redirect proxy URLs; the gateway resolver
+// (pointed at the mock's origin in e2e) rewrites them to these destinations,
+// which are what the stream and the sealed history carry.
+const MOCK_RESOLVED_ANNO_URL = 'https://www.ge.ch/geneva-minimum-wage-2026';
+const MOCK_RESOLVED_SOURCE_URL = 'https://www.admin.ch/geneva-wage';
+// Sentinel making the annotation cite an expired (404) redirect, so resolution
+// fails and the proxy URL is kept.
+const MOCK_EXPIRED_SENTINEL = '[expired]';
 const MOCK_DEFAULT_REPLY = 'Mocked assistant reply';
 // Azure-shaped fixture (cmd/mock-ai-provider): code-point offsets, the citation
 // annotation on the same item as the text, three real-URL action sources (more
@@ -224,14 +229,15 @@ test.describe('web search /conversations/{id}/complete API', () => {
       expect(stream.deltaText).toBe(MOCK_WEB_SEARCH_REPLY);
       expect(stream.activities).toContain('completed');
 
-      // Two citations: the annotation source (with title) + the title-less proxy
-      // action source, de-duplicated by URL.
+      // Two citations, both grounding-redirect proxy URLs resolved to their
+      // destination server-side. The annotation keeps its title; the action
+      // source is title-less.
       expect(stream.citations).toHaveLength(2);
       expect(stream.citations[0]).toMatchObject({
-        url: MOCK_CITATION_URL,
+        url: MOCK_RESOLVED_ANNO_URL,
         title: MOCK_CITATION_TITLE,
       });
-      expect(stream.citations[1].url).toBe(MOCK_SOURCE_PROXY_URL);
+      expect(stream.citations[1].url).toBe(MOCK_RESOLVED_SOURCE_URL);
       expect(stream.citations[1].title ?? '').toBe('');
 
       // One anchor at code-point offsets (byte offsets converted).
@@ -248,22 +254,65 @@ test.describe('web search /conversations/{id}/complete API', () => {
         end: wantEnd,
       });
 
-      // Persistence: the assistant message carries citations + anchors, encrypted
-      // at rest (the citation URL must not appear in the stored ciphertext).
+      // Persistence: the sealed message carries the RESOLVED destination URLs +
+      // anchors, encrypted at rest (the URL must not appear in the ciphertext).
       const messages = await decryptMessages(user, conversationID, keyPair);
       const assistant = messages.find((m) => m.decoded.citations !== undefined);
       expect(assistant, 'assistant message with citations not persisted').toBeTruthy();
       expect(assistant!.decoded.citations).toHaveLength(2);
-      expect(assistant!.decoded.citations![0].url).toBe(MOCK_CITATION_URL);
+      expect(assistant!.decoded.citations![0].url).toBe(MOCK_RESOLVED_ANNO_URL);
+      expect(assistant!.decoded.citations![1].url).toBe(MOCK_RESOLVED_SOURCE_URL);
       expect(assistant!.decoded.citation_anchors).toEqual([
         { citation: 0, start: wantStart, end: wantEnd },
       ]);
       for (const m of messages) {
-        expect(m.raw).not.toContain(MOCK_CITATION_URL);
+        expect(m.raw).not.toContain(MOCK_RESOLVED_ANNO_URL);
         expect(Buffer.from(m.raw, 'base64').toString('utf8')).not.toContain(
-          MOCK_CITATION_URL,
+          MOCK_RESOLVED_ANNO_URL,
         );
       }
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
+  test('expired grounding redirect (404): the proxy URL is kept, other sources still resolve', async () => {
+    const user = await provisionApiUser();
+    try {
+      const { conversationID, keyPair } = await createConversationWithRealKey(user);
+
+      // The sentinel makes the annotation cite an expired (404) redirect; the
+      // resolver keeps its proxy URL while the source redirect still resolves.
+      const res = await user.api.post(
+        `/api/v1/conversations/${conversationID}/complete`,
+        {
+          data: {
+            model_id: WEB_SEARCH_MODEL_ID,
+            persona_id: DEFAULT_PERSONA_ID,
+            system_prompt: DEFAULT_SYSTEM_PROMPT,
+            messages: [
+              { role: 'user', content: `check the web ${MOCK_EXPIRED_SENTINEL}` },
+            ],
+          },
+        },
+      );
+      expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
+
+      const stream = await readWebSearchStream(res);
+      expect(stream.citations).toHaveLength(2);
+      // The expired annotation redirect is kept as the (unresolved) proxy URL.
+      expect(stream.citations[0].url).toContain('/grounding-redirect/expired');
+      expect(stream.citations[0].url).not.toContain('www.ge.ch');
+      // The source redirect still resolved to its destination.
+      expect(stream.citations[1].url).toBe(MOCK_RESOLVED_SOURCE_URL);
+
+      const messages = await decryptMessages(user, conversationID, keyPair);
+      const assistant = messages.find((m) => m.decoded.citations !== undefined);
+      expect(assistant, 'assistant message with citations not persisted').toBeTruthy();
+      expect(assistant!.decoded.citations![0].url).toContain(
+        '/grounding-redirect/expired',
+      );
+      expect(assistant!.decoded.citations![1].url).toBe(MOCK_RESOLVED_SOURCE_URL);
     } finally {
       await user.api.dispose();
     }

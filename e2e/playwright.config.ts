@@ -49,6 +49,9 @@ const BACKEND_ENV = [
   // works offline (the mock serves both transports).
   'COGNOS_REQUESTY_API_KEY=e2e-dummy-key',
   `COGNOS_REQUESTY_URL=${AI_MOCK_URL}`,
+  // Point the grounding-redirect resolver at the mock's own origin so its
+  // Vertex-shaped fixture proxy URLs resolve offline (never to real Google).
+  `COGNOS_GATEWAY_GROUNDING_REDIRECT_PREFIX=${AI_MOCK_URL}/grounding-redirect/`,
   // Fixed 32-byte (base64) key so MFA TOTP enrolment works in e2e. Test-only,
   // not a real secret — it only ever seals throwaway seeds on the e2e stack.
   'COGNOS_MFA_TOTP_ENCRYPTION_KEY=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=', // gitleaks:allow

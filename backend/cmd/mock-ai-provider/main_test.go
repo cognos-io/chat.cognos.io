@@ -197,6 +197,36 @@ func TestResponsesStreamBasicReply(t *testing.T) {
 	}
 }
 
+func TestGroundingRedirectEndpoint(t *testing.T) {
+	t.Parallel()
+
+	handler := routes(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	cases := []struct {
+		token        string
+		wantStatus   int
+		wantLocation string
+	}{
+		{token: groundingTokenAnno, wantStatus: http.StatusFound, wantLocation: groundingDestAnno},
+		{token: groundingTokenSource, wantStatus: http.StatusFound, wantLocation: groundingDestSource},
+		{token: groundingTokenExpired, wantStatus: http.StatusNotFound},
+		{token: "misc", wantStatus: http.StatusFound, wantLocation: "https://example.com/resolved/misc"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.token, func(t *testing.T) {
+			t.Parallel()
+			req := httptest.NewRequest(http.MethodGet, groundingRedirectPath+tc.token, nil)
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, req)
+			if rec.Code != tc.wantStatus {
+				t.Fatalf("status = %d, want %d", rec.Code, tc.wantStatus)
+			}
+			if got := rec.Header().Get("Location"); got != tc.wantLocation {
+				t.Fatalf("Location = %q, want %q", got, tc.wantLocation)
+			}
+		})
+	}
+}
+
 func TestResponsesStreamWebSearch(t *testing.T) {
 	t.Parallel()
 
@@ -235,8 +265,12 @@ func TestResponsesStreamWebSearch(t *testing.T) {
 	if annotation == nil {
 		t.Fatal("no url_citation annotation on the stream")
 	}
-	if annotation.URL != mockCitationURL || annotation.Title != mockCitationTitle {
-		t.Fatalf("annotation = %+v, want the citation fixture", annotation)
+	// The mock emits grounding-redirect proxy URLs under the request origin
+	// (httptest.NewRequest defaults the host to "example.com"). The gateway
+	// resolver — not the mock — rewrites these to destinations.
+	const proxyBase = "http://example.com" + groundingRedirectPath
+	if annotation.URL != proxyBase+groundingTokenAnno || annotation.Title != mockCitationTitle {
+		t.Fatalf("annotation = %+v, want the proxy citation fixture", annotation)
 	}
 	// Offsets are UTF-8 byte offsets into the reply.
 	wantStart := strings.Index(webSearchReply, webSearchAnchor)
@@ -247,7 +281,7 @@ func TestResponsesStreamWebSearch(t *testing.T) {
 	if !sawSearchCompleted {
 		t.Fatal("no web_search_call.completed activity event")
 	}
-	if len(sources) != 1 || sources[0].URL != mockSourceProxyURL || sources[0].Title != "" {
+	if len(sources) != 1 || sources[0].URL != proxyBase+groundingTokenSource || sources[0].Title != "" {
 		t.Fatalf("action sources = %+v, want a single title-less proxy source", sources)
 	}
 }

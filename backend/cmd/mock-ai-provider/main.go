@@ -79,6 +79,7 @@ func routes(logger *slog.Logger) http.Handler {
 	})
 	mux.HandleFunc("POST /v1/chat/completions", chatCompletionsHandler(logger))
 	mux.HandleFunc("POST /v1/responses", responsesHandler(logger))
+	mux.HandleFunc("GET /grounding-redirect/{token}", groundingRedirectHandler(logger))
 	mux.HandleFunc("POST /v1/images/generations", imagesGenerationHandler(logger))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("not found", "method", r.Method, "path", r.URL.Path)
@@ -399,11 +400,22 @@ const (
 	// mockProviderCostUSD is the bare-float cost reported under [cost], mirroring
 	// what Requesty returns for EU providers.
 	mockProviderCostUSD = 0.0387346
-	// Citation fixtures. The annotation carries a usable {url,title} (title is the
-	// displayable domain); the action source is a title-less proxy redirect URL.
-	mockCitationURL    = "https://example.com/geneva-minimum-wage"
-	mockCitationTitle  = "example.com"
-	mockSourceProxyURL = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/MOCKPROXY"
+	// Citation fixtures. The Vertex-shaped fixture emits grounding-redirect PROXY
+	// URLs under the mock's own origin (built from the request Host), so the
+	// gateway resolver — when pointed at the mock's origin in e2e — resolves them
+	// to their destination, while in dev (real Vertex prefix) they never match and
+	// no network call is made. mockCitationTitle is the annotation's display title.
+	mockCitationTitle = "example.com"
+	// Grounding-redirect endpoint tokens + their 302 destinations.
+	groundingRedirectPath = "/grounding-redirect/"
+	groundingTokenAnno    = "anno"
+	groundingTokenSource  = "src"
+	groundingTokenExpired = "expired"
+	groundingDestAnno     = "https://www.ge.ch/geneva-minimum-wage-2026"
+	groundingDestSource   = "https://www.admin.ch/geneva-wage"
+	// groundingExpiredSentinel in the user message makes the annotation cite an
+	// expired (404) redirect, so resolution fails and the proxy URL is kept.
+	groundingExpiredSentinel = "[expired]"
 
 	// Azure-flavoured fixtures (models whose id contains "openai"): Unicode
 	// CODE-POINT offsets, annotations on the SAME item as the text, real
@@ -519,6 +531,28 @@ type responsesOutputDetails struct {
 	ReasoningTokens int `json:"reasoning_tokens,omitempty"`
 }
 
+// groundingRedirectHandler mimics a provider grounding-redirect endpoint: it
+// 302s a synthetic token to its destination (never the token's URL is logged),
+// or 404s the "expired" token so the resolver's failure path can be exercised.
+func groundingRedirectHandler(logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token := r.PathValue("token")
+		logger.Info("grounding redirect", "token", token)
+		switch token {
+		case groundingTokenExpired:
+			w.WriteHeader(http.StatusNotFound)
+			return
+		case groundingTokenAnno:
+			w.Header().Set("Location", groundingDestAnno)
+		case groundingTokenSource:
+			w.Header().Set("Location", groundingDestSource)
+		default:
+			w.Header().Set("Location", "https://example.com/resolved/"+token)
+		}
+		w.WriteHeader(http.StatusFound)
+	}
+}
+
 func responsesHandler(logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req responsesRequest
@@ -559,13 +593,18 @@ func responsesHandler(logger *slog.Logger) http.HandlerFunc {
 			cost = &c
 		}
 
+		// The Vertex fixture emits grounding-redirect proxy URLs under this origin
+		// so the gateway resolver (pointed here in e2e) can resolve them.
+		proxyBase := "http://" + r.Host + groundingRedirectPath
+		expired := strings.Contains(lastUser, groundingExpiredSentinel)
+
 		logger.Info("responses completion", "model", model, "stream", req.Stream, "web_search", webSearch)
 
 		if req.Stream {
-			writeResponsesStream(w, logger, model, reply, reasoning, webSearch, cost)
+			writeResponsesStream(w, logger, model, reply, reasoning, webSearch, cost, proxyBase, expired)
 			return
 		}
-		writeResponsesJSON(w, model, reply, reasoning, webSearch, cost)
+		writeResponsesJSON(w, model, reply, reasoning, webSearch, cost, proxyBase, expired)
 	}
 }
 
@@ -578,6 +617,8 @@ func writeResponsesStream(
 	model, reply, reasoning string,
 	webSearch bool,
 	cost *float64,
+	proxyBase string,
+	expired bool,
 ) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -671,18 +712,28 @@ func writeResponsesStream(
 			if startByte < 0 {
 				startByte, endByte = 0, len(reply)
 			}
+			// Grounding-redirect proxy URLs under the mock's origin. The annotation
+			// uses the expired token when the [expired] sentinel is present so the
+			// resolver's failure path keeps the proxy.
+			annoToken := groundingTokenAnno
+			if expired {
+				annoToken = groundingTokenExpired
+			}
+			annoURL := proxyBase + annoToken
+			sourceURL := proxyBase + groundingTokenSource
+
 			// Citation annotation on a SECOND, empty message item (byte offsets).
 			send(responsesStreamEvent{Type: "response.output_item.added", OutputIndex: ptrInt(1), Item: &responsesItem{Type: "message", Role: "assistant", Status: "in_progress"}})
 			send(responsesStreamEvent{Type: "response.content_part.added", OutputIndex: ptrInt(1), ContentIndex: ptrInt(0)})
 			send(responsesStreamEvent{
 				Type: "response.output_text.delta", OutputIndex: ptrInt(1), ContentIndex: ptrInt(0), AnnotationIndex: ptrInt(0),
-				Annotation: &responsesAnnotation{Type: "url_citation", URL: mockCitationURL, Title: mockCitationTitle, StartIndex: startByte, EndIndex: endByte},
+				Annotation: &responsesAnnotation{Type: "url_citation", URL: annoURL, Title: mockCitationTitle, StartIndex: startByte, EndIndex: endByte},
 			})
 			send(responsesStreamEvent{Type: "response.output_item.done", OutputIndex: ptrInt(1), Item: &responsesItem{Type: "message", Role: "assistant", Status: "completed"}})
 
 			// Search AFTER the text (mistyped done carries the sources).
 			searchLifecycle(2)
-			send(completedSearchItem(2, &responsesSearchAction{Type: "search", Query: "mock query", Sources: []responsesSource{{Type: "url", URL: mockSourceProxyURL}}}))
+			send(completedSearchItem(2, &responsesSearchAction{Type: "search", Query: "mock query", Sources: []responsesSource{{Type: "url", URL: sourceURL}}}))
 		}
 	}
 
@@ -713,7 +764,7 @@ func codePointSpan(text, target string) (int, int) {
 // writeResponsesJSON serves the non-streaming Responses request. Annotations sit
 // on the message content block here (the non-stream shape); web search adds a
 // web_search_call output item with proxy action sources.
-func writeResponsesJSON(w http.ResponseWriter, model, reply, reasoning string, webSearch bool, cost *float64) {
+func writeResponsesJSON(w http.ResponseWriter, model, reply, reasoning string, webSearch bool, cost *float64, proxyBase string, expired bool) {
 	content := responsesContentBlk{Type: "output_text", Text: reply, Annotations: []responsesAnnotation{}}
 	output := []responsesItem{}
 	if webSearch {
@@ -722,15 +773,19 @@ func writeResponsesJSON(w http.ResponseWriter, model, reply, reasoning string, w
 		if startByte < 0 {
 			startByte, endByte = 0, len(reply)
 		}
+		annoToken := groundingTokenAnno
+		if expired {
+			annoToken = groundingTokenExpired
+		}
 		content.Annotations = append(content.Annotations, responsesAnnotation{
-			Type: "url_citation", URL: mockCitationURL, Title: mockCitationTitle, StartIndex: startByte, EndIndex: endByte,
+			Type: "url_citation", URL: proxyBase + annoToken, Title: mockCitationTitle, StartIndex: startByte, EndIndex: endByte,
 		})
 	}
 	output = append(output, responsesItem{Type: "message", Role: "assistant", Status: "completed", Content: []responsesContentBlk{content}})
 	if webSearch {
 		output = append(output, responsesItem{
 			Type: "web_search_call", Status: "completed",
-			Action: &responsesSearchAction{Type: "search", Query: "mock query", Sources: []responsesSource{{Type: "url", URL: mockSourceProxyURL}}},
+			Action: &responsesSearchAction{Type: "search", Query: "mock query", Sources: []responsesSource{{Type: "url", URL: proxyBase + groundingTokenSource}}},
 		})
 	}
 
