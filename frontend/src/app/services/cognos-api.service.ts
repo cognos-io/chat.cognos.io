@@ -744,34 +744,47 @@ const mapWebSearchEvent = (
   };
 };
 
-export const parseCompleteStreamData = (data: string): CompleteStreamEvent => {
-  const event = JSON.parse(data) as ApiCompleteStreamEvent;
+// parseCompleteStreamData decodes one SSE `data:` frame into a stream event, or
+// null when the frame must be skipped. Per spec §10 a malformed or unrecognised
+// frame is ignored so a single bad frame never aborts the whole stream: a
+// JSON/shape error is skipped with a static warning, and an unknown event type
+// is skipped silently for forward-compatibility with newer backend event kinds.
+export const parseCompleteStreamData = (data: string): CompleteStreamEvent | null => {
+  try {
+    const event = JSON.parse(data) as ApiCompleteStreamEvent;
 
-  switch (event.type) {
-    case 'delta':
-      return {
-        type: 'delta',
-        delta: event.delta,
-      };
-    case 'reasoning_delta':
-      return {
-        type: 'reasoning_delta',
-        delta: event.delta,
-      };
-    case 'web_search':
-      return mapWebSearchEvent(event);
-    case 'complete':
-      return {
-        type: 'complete',
-        response: mapCompleteResponse(event.response),
-      };
-    case 'error':
-      return {
-        type: 'error',
-        message: event.message,
-      };
-    default:
-      throw new Error('Unknown completion stream event type');
+    switch (event.type) {
+      case 'delta':
+        return {
+          type: 'delta',
+          delta: event.delta,
+        };
+      case 'reasoning_delta':
+        return {
+          type: 'reasoning_delta',
+          delta: event.delta,
+        };
+      case 'web_search':
+        return mapWebSearchEvent(event);
+      case 'complete':
+        return {
+          type: 'complete',
+          response: mapCompleteResponse(event.response),
+        };
+      case 'error':
+        return {
+          type: 'error',
+          message: event.message,
+        };
+      default:
+        // Unknown event type: skip silently so a newer backend event kind never
+        // breaks an older client (spec §10 forward-compat).
+        return null;
+    }
+  } catch {
+    // Never log the frame body — it is message content (security-model §4).
+    console.warn('Skipping malformed completion stream frame');
+    return null;
   }
 };
 
@@ -1840,14 +1853,18 @@ export class CognosApiService {
         .join('\n');
 
       if (data !== '') {
+        // Spec §10: a null event is a skipped (malformed/unknown) frame — the
+        // stream continues with the next frame rather than aborting.
         const event = parseCompleteStreamData(data);
-        if (event.type === 'error') {
-          subscriber.error(
-            new Error(event.message || 'Failed to process completion stream.'),
-          );
-          return '';
+        if (event) {
+          if (event.type === 'error') {
+            subscriber.error(
+              new Error(event.message || 'Failed to process completion stream.'),
+            );
+            return '';
+          }
+          subscriber.next(event);
         }
-        subscriber.next(event);
       }
 
       separatorIndex = remaining.indexOf('\n\n');
@@ -1862,13 +1879,15 @@ export class CognosApiService {
         .join('\n');
       if (finalData !== '') {
         const event = parseCompleteStreamData(finalData);
-        if (event.type === 'error') {
-          subscriber.error(
-            new Error(event.message || 'Failed to process completion stream.'),
-          );
-          return '';
+        if (event) {
+          if (event.type === 'error') {
+            subscriber.error(
+              new Error(event.message || 'Failed to process completion stream.'),
+            );
+            return '';
+          }
+          subscriber.next(event);
         }
-        subscriber.next(event);
       }
       return '';
     }

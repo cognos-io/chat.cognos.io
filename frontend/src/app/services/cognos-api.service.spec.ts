@@ -7,10 +7,11 @@ import { TestBed } from '@angular/core/testing';
 
 import PocketBase from 'pocketbase';
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   CognosApiService,
+  CompleteStreamEvent,
   mapCompleteRequest,
   mapCompleteResponse,
   parseCompleteStreamData,
@@ -48,6 +49,107 @@ describe('CognosApiService', () => {
     request.flush(null);
     httpController.verify();
     TestBed.resetTestingModule();
+  });
+
+  describe('completeStream frame resilience (spec §10)', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+      TestBed.resetTestingModule();
+    });
+
+    const frame = (obj: unknown): string => `data: ${JSON.stringify(obj)}\n\n`;
+
+    const completeResponse = {
+      request_id: 'req-1',
+      assistant_message: {
+        id: 'asst-1',
+        content: 'Hello',
+        persona_id: 'p',
+        model_id: 'm',
+        created_at: '2026-01-02T03:04:05.000Z',
+      },
+      usage: {
+        input_tokens: 1,
+        output_tokens: 1,
+        total_tokens: 2,
+        cache_creation_input_tokens: 0,
+        cache_read_input_tokens: 0,
+        reasoning_tokens: 0,
+        cost_usd: 0,
+        cost_chf: 0,
+        cost_rappen: 0,
+        used_provider_cost: false,
+      },
+    };
+
+    it('skips malformed and unknown frames yet still applies deltas and completes', async () => {
+      // A malformed frame (truncated JSON) and an unknown event type sit between
+      // valid deltas; the stream must deliver every good event and complete
+      // normally rather than aborting on the bad frames.
+      const body =
+        frame({ type: 'delta', delta: 'Hel' }) +
+        'data: {"type":"web_search"\n\n' + // malformed JSON → skipped (warns)
+        frame({ type: 'mystery', surprise: 1 }) + // unknown type → skipped (silent)
+        frame({ type: 'delta', delta: 'lo' }) +
+        frame({ type: 'complete', response: completeResponse });
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        body: new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(body));
+            controller.close();
+          },
+        }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          CognosApiService,
+          {
+            provide: PocketBase,
+            useValue: { authStore: { token: 'test-token' } },
+          },
+        ],
+      });
+      const service = TestBed.inject(CognosApiService);
+
+      const events: CompleteStreamEvent[] = [];
+      await new Promise<void>((resolve, reject) => {
+        service
+          .completeStream({
+            messages: [],
+            modelId: 'm',
+            personaId: 'p',
+            systemPrompt: '',
+          })
+          .subscribe({
+            next: (event) => events.push(event),
+            error: reject,
+            complete: resolve,
+          });
+      });
+
+      // Both valid deltas survived, in order; the complete event closed it out.
+      expect(events.map((e) => e.type)).toEqual(['delta', 'delta', 'complete']);
+      expect(events.filter((e) => e.type === 'delta').map((e) => e.delta)).toEqual([
+        'Hel',
+        'lo',
+      ]);
+
+      // The malformed frame warned once with a static, payload-free message; the
+      // unknown-type frame was skipped silently (no extra warning).
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Skipping malformed completion stream frame',
+      );
+    });
   });
 });
 
@@ -270,17 +372,16 @@ describe('parseCompleteStreamData', () => {
     });
   });
 
-  it('throws on a malformed (non-JSON) frame so the stream surfaces it (pinned)', () => {
-    // parseCompleteStreamData does not swallow JSON.parse errors; the stream
-    // reader turns a throw here into subscriber.error. Pinned so a corrupt frame
-    // aborts the stream rather than being silently skipped.
-    expect(() => parseCompleteStreamData('{"type":"web_search"')).toThrow();
+  it('skips a malformed (non-JSON) frame instead of failing the stream (spec §10)', () => {
+    // Spec §10: a corrupt frame is ignored (returns null) so the stream reader
+    // continues with the next frame rather than aborting the whole completion.
+    expect(parseCompleteStreamData('{"type":"web_search"')).toBeNull();
   });
 
-  it('throws on an unknown event type (pinned)', () => {
-    expect(() => parseCompleteStreamData('{"type":"mystery"}')).toThrow(
-      /Unknown completion stream event type/,
-    );
+  it('skips an unknown event type silently (spec §10 forward-compat)', () => {
+    // A frame that parses but carries a type this client does not know is
+    // skipped, so a newer backend event kind never breaks an older client.
+    expect(parseCompleteStreamData('{"type":"mystery"}')).toBeNull();
   });
 });
 
