@@ -26,6 +26,7 @@ describe('modelCapabilityMetadata', () => {
       expect(modelCapabilityMetadata(id)).toEqual({
         recommended: true,
         recommendedDefaultFor: ['chat'],
+        recommendedForPrivacyTiers: [],
         fast: true,
         powerful: false,
         aliases: [],
