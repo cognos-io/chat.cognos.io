@@ -77,6 +77,32 @@ When something is used in **more than two** places and no component fits, extrac
 | `cog-source-card` / `cog-sources-row`                                | Citation source card / row.                               |
 | `cog-vault-ref-chip`                                                 | A reference chip to a vault item.                         |
 
+## Behaviours (directives & utilities)
+
+Not components — reusable behaviour primitives. Import from `@cognos/ui-angular`.
+
+| Name                                       | When to use                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cogHoverIntent` + `cogHoverIntentPopover` | Any **hover-triggered** popover/tooltip/hover-card. Adds the Amazon-style "safe triangle" (moving diagonally toward the popover keeps it open across the gap) **and** viewport-aware placement (flips/shifts so the card never overflows the screen). Touch tap toggles, keyboard focus + Escape + scroll are handled. See `SafeTriangleDirective`. |
+
+Adopt in ~3 lines — put the directive on the trigger wrapper, gate the popover with its `opened()`
+signal, and mark the popover element (it self-registers via DI, works inside `@if`):
+
+```html
+<span cogHoverIntent #hi="cogHoverIntent" [cogHoverIntentPlacement]="'top'" [cogHoverIntentGraceMs]="500">
+  <button [attr.aria-expanded]="hi.opened()">…</button>
+  @if (hi.opened()) {
+    <div cogHoverIntentPopover role="dialog">…</div>
+  }
+</span>
+```
+
+Pure geometry (triangle maths + `placePopover` flip/shift) lives in
+`lib/behaviors/hover-intent/hover-intent-geometry.ts` (DOM-free, tree-shakeable, property-tested).
+Story: `lib/behaviors/hover-intent/safe-triangle.stories.ts` (Behaviors/Hover intent) — includes a
+translucent funnel-debug overlay and a near-edge flip demo. First consumer: the chat citation hover
+card (`frontend/.../citation-marker`).
+
 ## Vault
 
 These "vault" file-browsing surfaces are reused by the app's **File library** page
