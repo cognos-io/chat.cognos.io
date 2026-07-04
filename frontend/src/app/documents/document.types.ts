@@ -73,3 +73,32 @@ export class DocumentRenderError extends Error {
     this.name = 'DocumentRenderError';
   }
 }
+
+/**
+ * Render worker protocol (spec docs/specs/document-generation.md §7), mirroring
+ * the attachment worker's request/event shape (attachment.types.ts). Markdown
+ * "rendering" is a pass-through done on the main thread — only docx/pdf need
+ * the worker (and its lazily-loaded heavy libraries).
+ */
+export type DocumentWorkerRequest =
+  | {
+      type: 'render';
+      requestId: string;
+      format: Exclude<DocFormat, 'markdown'>;
+      markdown: string;
+      images: DocImage[];
+      options: RenderOptions;
+    }
+  | {
+      type: 'cancel';
+      requestId: string;
+    };
+
+export interface DocumentWorkerErrorPayload {
+  code: DocumentErrorCode;
+  message: string;
+}
+
+export type DocumentWorkerEvent =
+  | { type: 'rendered'; requestId: string; bytes: Uint8Array }
+  | { type: 'failed'; requestId: string; error: DocumentWorkerErrorPayload };
