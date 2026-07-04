@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -214,5 +215,62 @@ describe('SafeTriangleDirective', () => {
     expect(el.style.position).toBe('fixed');
     expect(el.style.left).toMatch(/px$/);
     expect(el.style.top).toMatch(/px$/);
+  });
+
+  it('falls back to a perpendicular placement, and the funnel still tracks the live rect', () => {
+    const domRect = (r: {
+      left: number;
+      top: number;
+      right: number;
+      bottom: number;
+    }): DOMRect =>
+      ({
+        ...r,
+        x: r.left,
+        y: r.top,
+        width: r.right - r.left,
+        height: r.bottom - r.top,
+        toJSON: () => ({}),
+      }) as DOMRect;
+
+    fixture.componentInstance.autoPlace.set(true);
+    fixture.detectChanges();
+    openByHover();
+    const el = card() as HTMLElement;
+
+    // Tall card + tiny viewport + top-left trigger: neither top nor bottom fits,
+    // but the right side does → the card must be placed beside the trigger.
+    Object.defineProperty(el, 'offsetWidth', { value: 200, configurable: true });
+    Object.defineProperty(el, 'offsetHeight', { value: 280, configurable: true });
+    wrapper().getBoundingClientRect = () =>
+      domRect({ left: 10, top: 10, right: 30, bottom: 26 });
+    Object.defineProperty(document.documentElement, 'clientWidth', {
+      value: 400,
+      configurable: true,
+    });
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      value: 300,
+      configurable: true,
+    });
+
+    // Re-run the placement effect with the mocked dimensions.
+    fixture.componentInstance.autoPlace.set(false);
+    fixture.detectChanges();
+    fixture.componentInstance.autoPlace.set(true);
+    fixture.detectChanges();
+
+    const directive = fixture.debugElement
+      .query(By.directive(SafeTriangleDirective))
+      .injector.get(SafeTriangleDirective);
+    expect(directive.placedPlacement()).toBe('right');
+
+    // The funnel reads the live rect: with the card now to the right, leaving
+    // the trigger into the gap toward it keeps the card open.
+    el.getBoundingClientRect = () =>
+      domRect({ left: 36, top: 10, right: 236, bottom: 290 });
+    fire(wrapper(), 'pointerleave', { pointerType: 'mouse', clientX: 30, clientY: 18 });
+    fire(document, 'pointermove', { clientX: 34, clientY: 60 });
+    fixture.detectChanges();
+    expect(opened()).toBe(true);
   });
 });

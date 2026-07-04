@@ -188,27 +188,80 @@ function spaceFor(placement: Placement, trigger: RectLike, viewport: Viewport): 
   }
 }
 
-function fits(
+/** Axis-aligned rectangle overlap. Edges that merely touch do NOT intersect. */
+export function rectsIntersect(a: RectLike, b: RectLike): boolean {
+  return !(
+    a.right <= b.left ||
+    a.left >= b.right ||
+    a.bottom <= b.top ||
+    a.top >= b.bottom
+  );
+}
+
+// Grow a rect by `by` px on every side (used to require a gap-sized clearance
+// ring around the trigger).
+function inflate(rect: RectLike, by: number): RectLike {
+  return {
+    left: rect.left - by,
+    top: rect.top - by,
+    right: rect.right + by,
+    bottom: rect.bottom + by,
+  };
+}
+
+// True when the rect sits fully inside the viewport, inset by `margin`.
+function withinViewport(rect: RectLike, viewport: Viewport, margin: number): boolean {
+  return (
+    rect.left >= margin &&
+    rect.top >= margin &&
+    rect.right <= viewport.width - margin &&
+    rect.bottom <= viewport.height - margin
+  );
+}
+
+// Build the rect for a candidate side: the main axis sits `gap` away from the
+// trigger, the cross axis aligns to the trigger's start edge, and BOTH axes are
+// clamped into the viewport. Clamping the main axis can pull the card back over
+// the trigger when space is tight — that overlap is what the caller rejects via
+// the inflated-trigger test, which is why placement is never allowed to cover
+// the trigger.
+function candidateRect(
   placement: Placement,
   trigger: RectLike,
   size: Size,
   viewport: Viewport,
   gap: number,
   margin: number,
-): boolean {
-  const need =
-    (placement === 'top' || placement === 'bottom' ? size.height : size.width) +
-    gap +
-    margin;
-  return spaceFor(placement, trigger, viewport) >= need;
+): RectLike {
+  let left: number;
+  let top: number;
+  if (placement === 'top' || placement === 'bottom') {
+    top = placement === 'top' ? trigger.top - gap - size.height : trigger.bottom + gap;
+    top = clamp(top, margin, viewport.height - margin - size.height);
+    left = clamp(trigger.left, margin, viewport.width - margin - size.width);
+  } else {
+    left = placement === 'left' ? trigger.left - gap - size.width : trigger.right + gap;
+    left = clamp(left, margin, viewport.width - margin - size.width);
+    top = clamp(trigger.top, margin, viewport.height - margin - size.height);
+  }
+  return { left, top, right: left + size.width, bottom: top + size.height };
 }
 
 /**
- * Viewport-aware placement. Starts from the preferred side, flips to the
- * opposite side when that fits better, then clamps BOTH axes so the returned
- * rect stays fully inside the viewport (inset by `margin`) — so it never widens
- * the page or overflows an edge. If the popover is larger than the viewport on
- * an axis it is pinned to the near margin (documented degenerate case).
+ * Viewport-aware placement that never covers the trigger.
+ *
+ * Candidate order: preferred side → its opposite → the two perpendicular sides.
+ * The first candidate that fits fully inside the viewport (inset by `margin`)
+ * AND keeps at least `gap` clearance from the trigger on every side wins — the
+ * clearance is enforced by testing intersection against the trigger inflated by
+ * `gap`, so a candidate that clamping has pulled back onto (or too close to) the
+ * trigger is rejected in favour of the next side. Cross-axis sliding keeps the
+ * card in view without moving it over the trigger.
+ *
+ * Degenerate fallback (tiny viewport where NO side has room): the side with the
+ * most free space is chosen and clamped into the viewport. This is the only
+ * case where the card may cover part of the trigger; clamping keeps that
+ * overlap as small as the viewport allows.
  *
  * The result rect is in the same client coordinate space as the inputs, so the
  * caller can position the popover with `position: fixed; left; top`.
@@ -223,38 +276,29 @@ export function placePopover(
   const gap = options.gap ?? 6;
   const margin = options.margin ?? 8;
 
-  const flipped = opposite(preferred);
-  let placement: Placement;
-  if (fits(preferred, trigger, size, viewport, gap, margin)) {
-    placement = preferred;
-  } else if (fits(flipped, trigger, size, viewport, gap, margin)) {
-    placement = flipped;
-  } else {
-    // Neither side fully fits: choose the roomier one, then clamp into view.
-    placement =
-      spaceFor(preferred, trigger, viewport) >= spaceFor(flipped, trigger, viewport)
-        ? preferred
-        : flipped;
+  const perpendiculars: Placement[] =
+    preferred === 'top' || preferred === 'bottom'
+      ? ['left', 'right']
+      : ['top', 'bottom'];
+  const candidates: Placement[] = [preferred, opposite(preferred), ...perpendiculars];
+  const forbidden = inflate(trigger, gap);
+
+  for (const placement of candidates) {
+    const rect = candidateRect(placement, trigger, size, viewport, gap, margin);
+    if (withinViewport(rect, viewport, margin) && !rectsIntersect(rect, forbidden)) {
+      return { placement, rect };
+    }
   }
 
-  // Ideal main-axis coordinate for the chosen side; cross axis aligns to the
-  // trigger's start edge. Both are clamped into the viewport afterwards.
-  let left: number;
-  let top: number;
-  if (placement === 'top' || placement === 'bottom') {
-    top = placement === 'top' ? trigger.top - gap - size.height : trigger.bottom + gap;
-    left = trigger.left;
-  } else {
-    left = placement === 'left' ? trigger.left - gap - size.width : trigger.right + gap;
-    top = trigger.top;
-  }
-
-  left = clamp(left, margin, viewport.width - margin - size.width);
-  top = clamp(top, margin, viewport.height - margin - size.height);
-
+  // No side fits without covering the trigger or leaving the viewport.
+  const fallback = candidates.reduce((best, placement) =>
+    spaceFor(placement, trigger, viewport) > spaceFor(best, trigger, viewport)
+      ? placement
+      : best,
+  );
   return {
-    placement,
-    rect: { left, top, right: left + size.width, bottom: top + size.height },
+    placement: fallback,
+    rect: candidateRect(fallback, trigger, size, viewport, gap, margin),
   };
 }
 

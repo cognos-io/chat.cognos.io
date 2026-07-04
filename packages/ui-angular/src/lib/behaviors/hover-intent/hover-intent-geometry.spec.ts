@@ -13,6 +13,7 @@ import {
   hoverFunnel,
   placePopover,
   pointInTriangle,
+  rectsIntersect,
 } from './hover-intent-geometry';
 
 const rect = (left: number, top: number, right: number, bottom: number): RectLike => ({
@@ -190,6 +191,67 @@ describe('placePopover', () => {
     expect(out.left).toBe(8);
     expect(out.top).toBe(8);
   });
+
+  // Regression (user screenshot): a top-edge trigger with placement 'top' used
+  // to clamp the card back down ONTO the number. It must flip below instead.
+  it('never covers the trigger: top-edge trigger + placement top flips below', () => {
+    const trigger = rect(200, 4, 220, 22); // hugging the top edge
+    const { placement, rect: out } = placePopover(trigger, size, viewport, {
+      placement: 'top',
+      gap: 6,
+      margin: 8,
+    });
+    expect(placement).toBe('bottom');
+    expect(rectsIntersect(out, trigger)).toBe(false);
+    expect(out.top).toBeGreaterThanOrEqual(trigger.bottom); // sits fully below
+  });
+
+  it('picks a perpendicular side when both vertical sides are blocked', () => {
+    // Tiny viewport: a tall card fits neither above nor below the trigger, but
+    // there is room to the right → the card must go beside it, not over it.
+    const tinyViewport = { width: 400, height: 300 };
+    const trigger = rect(10, 10, 30, 26);
+    const tall = { width: 200, height: 280 };
+    const { placement, rect: out } = placePopover(trigger, tall, tinyViewport, {
+      placement: 'top',
+      gap: 6,
+      margin: 8,
+    });
+    expect(placement).toBe('right');
+    expect(rectsIntersect(out, trigger)).toBe(false);
+    expect(out.left).toBeGreaterThanOrEqual(trigger.right); // sits fully to the right
+  });
+
+  it('keeps the full gap: a top placement clamped to within the gap flips below', () => {
+    // 'top' at the full gap would poke above the margin, so it clamps down to
+    // margin — leaving only a 2px gap to the trigger (no overlap, but < gap).
+    // That is not good enough: it must flip below to keep the configured gap.
+    const trigger = rect(200, 130, 220, 150);
+    const { placement, rect: out } = placePopover(trigger, size, viewport, {
+      placement: 'top',
+      gap: 6,
+      margin: 8,
+    });
+    expect(placement).toBe('bottom');
+    expect(out.top - trigger.bottom).toBeGreaterThanOrEqual(6); // ≥ gap clearance
+  });
+
+  it('degenerate fallback: no side fits → roomiest side, clamped, still in-viewport', () => {
+    // Centred trigger in a tiny viewport with a card too big for every side:
+    // no placement can clear it, so we accept some overlap but the rect must
+    // still stay fully inside the viewport.
+    const tinyViewport = { width: 260, height: 260 };
+    const trigger = rect(120, 120, 140, 140);
+    const big = { width: 240, height: 240 };
+    const { rect: out } = placePopover(trigger, big, tinyViewport, {
+      gap: 6,
+      margin: 8,
+    });
+    expect(out.left).toBeGreaterThanOrEqual(8);
+    expect(out.top).toBeGreaterThanOrEqual(8);
+    expect(out.right).toBeLessThanOrEqual(tinyViewport.width - 8);
+    expect(out.bottom).toBeLessThanOrEqual(tinyViewport.height - 8);
+  });
 });
 
 // --- Property tests ---------------------------------------------------------
@@ -306,6 +368,39 @@ describe('property: placePopover stays in the viewport', () => {
           expect(out.top).toBeGreaterThanOrEqual(margin);
           expect(out.right).toBeLessThanOrEqual(viewport.width - margin);
           expect(out.bottom).toBeLessThanOrEqual(viewport.height - margin);
+        },
+      ),
+    );
+  });
+
+  it('never intersects the trigger nor the viewport when a side has room', () => {
+    // Popover ≤ 300 in a 1000x800 viewport → at least one side always has room
+    // for any small trigger, so the result must be a real (non-overlapping) fit.
+    fc.assert(
+      fc.property(
+        triggerArb,
+        finite(1, 300),
+        finite(1, 300),
+        fc.constantFrom(...placements),
+        (trigger, w, h, placement) => {
+          const viewport = { width: 1000, height: 800 };
+          const margin = 8;
+          const { rect: out } = placePopover(
+            trigger,
+            { width: w, height: h },
+            viewport,
+            {
+              placement,
+              margin,
+            },
+          );
+          // In-viewport …
+          expect(out.left).toBeGreaterThanOrEqual(margin);
+          expect(out.top).toBeGreaterThanOrEqual(margin);
+          expect(out.right).toBeLessThanOrEqual(viewport.width - margin);
+          expect(out.bottom).toBeLessThanOrEqual(viewport.height - margin);
+          // … and never covering the trigger.
+          expect(rectsIntersect(out, trigger)).toBe(false);
         },
       ),
     );
