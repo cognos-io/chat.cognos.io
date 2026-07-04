@@ -9,6 +9,9 @@ import { type KeyPairB64, generateKeyPair, openSealed } from './crypto-helpers';
 // flips supports_web_search on at runtime via the superuser (beforeAll). No
 // other spec references this model, so the flag change is isolated.
 const WEB_SEARCH_MODEL_ID = 'claude-sonnet-4-6';
+// An Azure OpenAI (Responses) model — the mock returns the Azure-shaped stream
+// for it (code-point offsets, real-URL sources, a phantom search).
+const WEB_SEARCH_AZURE_MODEL_ID = 'responses-gpt-5-5';
 // Infomaniak model: never web-search-capable, exercises the silent-drop gate.
 const INFOMANIAK_MODEL_ID = 'llama-3-3-infomaniak';
 const DEFAULT_PERSONA_ID = 'cognos:simple-assistant';
@@ -24,6 +27,15 @@ const MOCK_CITATION_TITLE = 'example.com';
 const MOCK_SOURCE_PROXY_URL =
   'https://vertexaisearch.cloud.google.com/grounding-api-redirect/MOCKPROXY';
 const MOCK_DEFAULT_REPLY = 'Mocked assistant reply';
+// Azure-shaped fixture (cmd/mock-ai-provider): code-point offsets, the citation
+// annotation on the same item as the text, three real-URL action sources (more
+// than the single annotated URL), and a phantom empty search that must not add
+// a citation.
+const MOCK_AZURE_REPLY =
+  'Le salaire minimum légal à Genève est de 24,59 CHF brut par heure.';
+const MOCK_AZURE_ANCHOR = 'légal';
+const MOCK_AZURE_CITATION_URL = 'https://www.ge.ch/actualite/salaire-minimum-2026';
+const MOCK_AZURE_SOURCE_COUNT = 3;
 // Appending this anywhere in the last user message opts the mock Responses
 // handler into reporting a bare-float provider cost on the terminal usage
 // event (cmd/mock-ai-provider: costSentinel / mockProviderCostUSD).
@@ -179,6 +191,10 @@ async function decryptMessages(
 
 test.beforeAll(async () => {
   await setModelFlag(WEB_SEARCH_MODEL_ID, 'supports_web_search', true);
+  // The Azure Responses model ships non-whitelisted; whitelist it (runtime only,
+  // prod unaffected) so the completion path accepts it, and enable web search.
+  await setModelFlag(WEB_SEARCH_AZURE_MODEL_ID, 'whitelisted', true);
+  await setModelFlag(WEB_SEARCH_AZURE_MODEL_ID, 'supports_web_search', true);
 });
 
 test.describe('web search /conversations/{id}/complete API', () => {
@@ -385,6 +401,57 @@ test.describe('web search /conversations/{id}/complete API', () => {
       const assistant = messages.find((m) => m.decoded.citations !== undefined);
       expect(assistant, 'assistant answer with citations not persisted').toBeTruthy();
       expect(assistant!.decoded.citations).toHaveLength(2);
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
+  test('Azure family: action sources exceed annotations; phantom search adds no citation', async () => {
+    const user = await provisionApiUser();
+    try {
+      const { conversationID, keyPair } = await createConversationWithRealKey(user);
+
+      const res = await user.api.post(
+        `/api/v1/conversations/${conversationID}/complete`,
+        {
+          data: {
+            model_id: WEB_SEARCH_AZURE_MODEL_ID,
+            persona_id: DEFAULT_PERSONA_ID,
+            system_prompt: DEFAULT_SYSTEM_PROMPT,
+            messages: [{ role: 'user', content: 'what is the minimum wage' }],
+          },
+        },
+      );
+      expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
+
+      const stream = await readWebSearchStream(res);
+      expect(stream.deltaText).toBe(MOCK_AZURE_REPLY);
+
+      // The search returned three real-URL sources; only one URL is annotated,
+      // and the phantom empty search contributes nothing → three citations.
+      expect(stream.citations).toHaveLength(MOCK_AZURE_SOURCE_COUNT);
+      expect(stream.citations.map((c) => c.url)).toContain(MOCK_AZURE_CITATION_URL);
+
+      // A single anchor with CODE-POINT offsets (not byte offsets) referencing
+      // the annotated citation.
+      const before = MOCK_AZURE_REPLY.slice(
+        0,
+        MOCK_AZURE_REPLY.indexOf(MOCK_AZURE_ANCHOR),
+      );
+      const wantStart = [...before].length;
+      const wantEnd = wantStart + [...MOCK_AZURE_ANCHOR].length;
+      expect(stream.anchors).toHaveLength(1);
+      const citedURL = stream.citations[stream.anchors[0].citation].url;
+      expect(citedURL).toBe(MOCK_AZURE_CITATION_URL);
+      expect(stream.anchors[0].start).toBe(wantStart);
+      expect(stream.anchors[0].end).toBe(wantEnd);
+
+      // Persisted encrypted message carries all sources + the anchor.
+      const messages = await decryptMessages(user, conversationID, keyPair);
+      const assistant = messages.find((m) => m.decoded.citations !== undefined);
+      expect(assistant, 'assistant answer with citations not persisted').toBeTruthy();
+      expect(assistant!.decoded.citations).toHaveLength(MOCK_AZURE_SOURCE_COUNT);
+      expect(assistant!.decoded.citation_anchors).toHaveLength(1);
     } finally {
       await user.api.dispose();
     }
