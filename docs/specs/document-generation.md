@@ -240,10 +240,11 @@ Acceptance criteria:
   (`string | number | boolean | date | formula`), column widths, number formats (`#,##0.00`,
   `dd.mm.yyyy`, `%`), bold header row, freeze panes.
 - Formulas are written as formula strings (recalculated by Excel/LibreOffice on open). A
-  client-side sanity pass evaluates a supported subset (SUM/AVG/COUNT/IF/arithmetic + A1
-  references) and flags `#REF!`-class errors back into the card as a warning — we cannot run
-  LibreOffice-recalc validation in a browser (the one competitor safety net we can't copy;
-  see Open question 1 re `hyperformula`).
+  **hand-rolled reference validator** (not a full evaluator) checks that A1/range references
+  point inside the emitted sheets and flags `#REF!`-class errors back into the card as a
+  warning. `hyperformula` is **excluded — GPLv3** (Decision 11); full LibreOffice-recalc
+  validation is impossible in a browser (the one competitor safety net we can't copy). Full
+  subset _evaluation_ is deferred until real usage shows reference-checking isn't enough.
 - Cell/row caps enforced at parse time (see §6.4) — the source must fit the existing 1 MB
   `messages.data` column with sealing overhead, minus the rest of the reply.
 
@@ -403,7 +404,7 @@ Design rules:
 - **Stateless continuation.** The client replays the turn context plus accumulated
   `function_call`/`function_call_output` items each round; we do not depend on provider-side
   `previous_response_id` state (Requesty's documented surface is chat-completions-shaped;
-  statefulness through the router is unverified — the Phase-4 spike settles it, §14 Q3).
+  statefulness through the router is unverified — the Phase-4 spike settles it, §14 Q2).
   Reasoning items must be replayed alongside function calls or reasoning models 400.
 - **Hard iteration cap** (default 4) and per-loop token budget; agentic loops re-bill the
   growing context every round (~4× single-shot is the published rule of thumb). Keep tool
@@ -482,11 +483,9 @@ labels), model-selector strength pill for Phase 4 only. Plural forms where count
 
 ## 14. Open questions
 
-1. **Formula sanity pass:** hand-rolled subset evaluator vs `hyperformula` (GPLv3 — licence
-   likely disqualifying) vs shipping without recalc warnings in P1.
-2. **DOCX TOC UX:** accept Word's "update fields" prompt, or omit TOC support in v1 and
+1. **DOCX TOC UX:** accept Word's "update fields" prompt, or omit TOC support in v1 and
    revisit with typst-rendered PDF where TOCs compute properly?
-3. **Requesty function-tool passthrough** (Phase 4): the _questions_ — do streamed
+2. **Requesty function-tool passthrough** (Phase 4): the _questions_ — do streamed
    `function_call` argument deltas and `function_call_output` continuation survive the
    Requesty Responses path per provider family; is `previous_response_id` usable through the
    router — are answered empirically by the Phase-4 live spike (same method as web-search
@@ -554,3 +553,4 @@ labels), model-selector strength pill for Phase 4 only. Plural forms where count
 | 8   | Activation UX        | Tool is **on by default** (models may create documents unprompted); the composer Tools row is an explicit per-conversation opt-out — same mechanics as web search                                                                 |
 | 9   | No enablement hint   | When the tool is off and the user asks for a file, the reply stays plain text — no "turn on document creation" detection/hint in v1                                                                                               |
 | 10  | Requesty passthrough | Function-tool passthrough questions are settled empirically by the Phase-4 live spike (web-search Phase-0 method) before any loop code lands                                                                                      |
+| 11  | Licence red line     | **No GPLv3 / copyleft dependencies** — `hyperformula` excluded; where no permissively-licensed alternative exists we exclude the capability or roll our own (e.g. hand-rolled formula reference validator, §5.3)                  |
