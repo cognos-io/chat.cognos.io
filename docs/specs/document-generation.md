@@ -493,14 +493,14 @@ labels), model-selector strength pill for Phase 4 only. Plural forms where count
 
 ## 15. Milestones
 
-| Phase | Deliverable                                                                                                                                                     | Status |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 0     | Spike: render worker + `docx`/`pdfmake` golden samples; open-in-Word/LibreOffice/Pages/Google-Docs matrix; bundle + CSP + Trusted Types verification            | ☐      |
-| 1     | "Download as…" (DOCX/PDF/MD) on any assistant message — hydration, image embedding, filename rules, i18n ×6                                                     | ☐      |
-| 2     | `<cog-doc>` contract + stream parser + document card + composer toggle + fail-open paths; mock-AI provider emits blocks; e2e                                    | ☐      |
-| 3     | XLSX sheet spec + caps + formula warnings; Save to library                                                                                                      | ☐      |
-| 4     | Browser tool loop: Requesty spike → `client_tools`/`tool_call` SSE/`continue` endpoint → `create_document`/`update_document`; billing rounds; capability gating | ☐      |
-| 5     | (Deferred) sandboxed code execution per §10; PPTX; typst.ts premium PDF                                                                                         | —      |
+| Phase | Deliverable                                                                                                                                                     | Status                                                                                              |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 0     | Spike: render worker + `docx`/`pdfmake` golden samples; open-in-Word/LibreOffice/Pages/Google-Docs matrix; bundle + CSP + Trusted Types verification            | ✅ folded into Phase 1 (golden bytes verified in e2e; **manual open-in-apps QA still to run**)      |
+| 1     | "Download as…" (DOCX/PDF/MD) on any assistant message — hydration, image embedding, filename rules, i18n ×6                                                     | ✅ commits `89242715`…`654c1c64` (business process: `../business_processes/document-generation.md`) |
+| 2     | `<cog-doc>` contract + stream parser + document card + composer toggle + fail-open paths; mock-AI provider emits blocks; e2e                                    | ☐                                                                                                   |
+| 3     | XLSX sheet spec + caps + formula warnings; Save to library                                                                                                      | ☐                                                                                                   |
+| 4     | Browser tool loop: Requesty spike → `client_tools`/`tool_call` SSE/`continue` endpoint → `create_document`/`update_document`; billing rounds; capability gating | ☐                                                                                                   |
+| 5     | (Deferred) sandboxed code execution per §10; PPTX; typst.ts premium PDF                                                                                         | —                                                                                                   |
 
 ## 16. Testing
 
