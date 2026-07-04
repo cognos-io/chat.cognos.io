@@ -39,6 +39,7 @@ import {
   MessageAttachmentChip,
   MessageAttachmentChipComponent,
 } from '@app/components/chat/message-attachment-chip/message-attachment-chip.component';
+import { MessageSources } from '@app/components/chat/message-sources/message-sources';
 import { RedactedMarkdownComponent } from '@app/components/chat/redacted-markdown/redacted-markdown.component';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { MemoryScope } from '@app/interfaces/compaction';
@@ -53,6 +54,7 @@ import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
 import { RedactionService } from '@app/services/redaction.service';
 import { ScopedMemoryService } from '@app/services/scoped-memory.service';
+import { Citation, CitationAnchor } from '@app/utils/citations';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 @Component({
@@ -60,6 +62,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
   standalone: true,
   imports: [
     RedactedMarkdownComponent,
+    MessageSources,
     MessageAttachmentChipComponent,
     ClipboardModule,
     NgTemplateOutlet,
@@ -234,6 +237,24 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
               [time]="messageTime()"
               [branchCount]="branchPointCount()"
             >
+              @if (showSearching()) {
+                <p
+                  class="message-list-item__searching"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <cog-icon name="search" [size]="14" class="is-spinning" />
+                  {{ t('chat.message.searching') }}
+                </p>
+              }
+
+              @if (citations().length) {
+                <app-message-sources
+                  class="message-list-item__sources"
+                  [citations]="citations()"
+                />
+              }
+
               @if (hasReasoning()) {
                 <div class="message-list-item__reasoning">
                   <button
@@ -305,7 +326,11 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                     {{ hydrated(message.decryptedData.content) }}
                   </p>
                 } @else {
-                  <app-redacted-markdown [content]="message.decryptedData.content" />
+                  <app-redacted-markdown
+                    [content]="message.decryptedData.content"
+                    [citations]="citations()"
+                    [citationAnchors]="citationAnchors()"
+                  />
                 }
               } @else if (message.isStreaming) {
                 <!-- Still generating and nothing to show yet. A reasoning model
@@ -521,6 +546,31 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     .message-list-item__streaming {
       margin: 0;
       white-space: pre-wrap;
+    }
+
+    .message-list-item__searching {
+      display: flex;
+      align-items: center;
+      gap: var(--cog-space-075);
+      margin: 0 0 var(--cog-space-100);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm);
+    }
+
+    .message-list-item__searching .is-spinning {
+      display: inline-flex;
+      animation: reasoning-spin 0.9s linear infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .message-list-item__searching .is-spinning {
+        animation: none;
+      }
+    }
+
+    .message-list-item__sources {
+      display: block;
+      margin-block-end: var(--cog-space-100);
     }
 
     .message-list-item__reasoning {
@@ -806,6 +856,29 @@ export class MessageListItemComponent implements OnChanges {
   hasReasoning(): boolean {
     const reasoning = this.message?.decryptedData.reasoning;
     return !!reasoning && reasoning.trim() !== '';
+  }
+
+  // Web-search sources cited by this assistant message (spec §4.1a). Empty for
+  // messages that did not search.
+  citations(): Citation[] {
+    return this.message?.decryptedData.citations ?? [];
+  }
+
+  // Inline citation anchors positioning numbered markers in the answer body.
+  // Empty when the provider gave no usable offsets → sources dropdown only.
+  citationAnchors(): CitationAnchor[] {
+    return this.message?.decryptedData.citation_anchors ?? [];
+  }
+
+  // The transient "Searching the web…" status shows only while streaming with a
+  // search in progress and before any answer text — so a late activity event
+  // (Vertex Gemini emits it after the answer) is a visual no-op (spec §4.4).
+  showSearching(): boolean {
+    return (
+      !!this.message?.isStreaming &&
+      !!this.message?.isSearching &&
+      !this.message?.decryptedData.content
+    );
   }
 
   // Collapsed by default (including while streaming) so live reasoning stays out

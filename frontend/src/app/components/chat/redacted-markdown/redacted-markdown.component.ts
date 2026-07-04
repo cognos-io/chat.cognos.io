@@ -6,6 +6,7 @@ import {
   DestroyRef,
   ElementRef,
   EnvironmentInjector,
+  computed,
   createComponent,
   effect,
   inject,
@@ -20,7 +21,15 @@ import { CognosRedactedTextComponent } from '@cognos/ui-angular';
 import { RedactionEntry } from '@app/redaction';
 import { ConversationService } from '@app/services/conversation.service';
 import { RedactionService } from '@app/services/redaction.service';
+import {
+  Citation,
+  CitationAnchor,
+  citationMarkerToken,
+  injectCitationMarkers,
+  insertCitationMarkers,
+} from '@app/utils/citations';
 
+import { CitationMarker } from '../citation-marker/citation-marker';
 import {
   redactionKindFor,
   redactionModalLabels,
@@ -35,17 +44,24 @@ import { injectRedactionPills } from './redaction-pills';
  * received a placeholder). Stored content is never mutated — this is a display
  * layer over the already-redacted text.
  *
+ * When web-search `citations`/`citationAnchors` are supplied (spec
+ * docs/specs/web-search.md §4.1a), numbered citation-marker tokens are inserted
+ * into the RAW markdown at the anchor offsets BEFORE rendering (offsets index
+ * the source, not the rendered DOM), then hydrated into interactive
+ * `app-citation-marker` chips after render — the same token/hydrate strategy as
+ * redaction pills.
+ *
  * Implementation: markdown renders the tokens as literal text; after each
  * render we walk the resulting text nodes and swap tokens for live component
  * instances. This preserves all markdown structure (headings, lists, code)
- * around the pills, which a naive split-and-rejoin would break.
+ * around the pills and chips, which a naive split-and-rejoin would break.
  */
 @Component({
   selector: 'app-redacted-markdown',
   standalone: true,
   imports: [MarkdownComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<markdown emoji katex [data]="content()" (ready)="hydratePills()" />`,
+  template: `<markdown emoji katex [data]="renderedContent()" (ready)="render()" />`,
   styles: `
     :host {
       display: block;
@@ -63,6 +79,22 @@ export class RedactedMarkdownComponent {
   /** The stored, redacted content (tokens intact — NOT hydrated). */
   readonly content = input.required<string>();
 
+  /** Web-search sources cited by this message (empty → no inline markers). */
+  readonly citations = input<Citation[]>([]);
+  /** Inline anchors positioning citation markers in `content` (code points). */
+  readonly citationAnchors = input<CitationAnchor[]>([]);
+
+  // The content actually rendered: raw content with citation-marker tokens
+  // spliced in at the anchor offsets. Identical to `content` when there are no
+  // anchors, so non-search messages are byte-for-byte unchanged.
+  protected readonly renderedContent = computed(() =>
+    insertCitationMarkers(
+      this.content(),
+      this.citationAnchors(),
+      this.citations().length,
+    ),
+  );
+
   // Each injected pill, with the host element it replaced the token text with
   // and the token it stands for — so clearPills can restore the DOM to its
   // raw-token state, keeping hydratePills idempotent across repeat calls.
@@ -72,16 +104,37 @@ export class RedactedMarkdownComponent {
     token: string;
   }[] = [];
 
+  // Each injected citation chip, with the host it replaced the token with and
+  // the citation index it stands for — so clearCiteChips can restore the token
+  // text, keeping hydration idempotent across repeat calls.
+  private _citeChips: {
+    ref: ComponentRef<CitationMarker>;
+    host: HTMLElement;
+    index: number;
+  }[] = [];
+
   constructor() {
     // Mappings load asynchronously; when they arrive (revision bumps), re-run
-    // the swap so tokens that were raw become pills.
+    // the swap so tokens that were raw become pills. Also re-run when citations
+    // or anchors change so late-arriving sources hydrate their markers.
     effect(() => {
       this._redaction.revision();
       this._redaction.valuesHidden();
-      this.content();
-      queueMicrotask(() => this.hydratePills());
+      this.renderedContent();
+      this.citations();
+      queueMicrotask(() => this.render());
     });
-    inject(DestroyRef).onDestroy(() => this.clearPills());
+    inject(DestroyRef).onDestroy(() => {
+      this.clearPills();
+      this.clearCiteChips();
+    });
+  }
+
+  // render runs both post-render passes: redaction pills first, then citation
+  // markers. Called on markdown (ready) and whenever inputs change.
+  render(): void {
+    this.hydratePills();
+    this.hydrateCitations();
   }
 
   // hydratePills replaces every known token in the rendered markdown with a pill
@@ -109,6 +162,22 @@ export class RedactedMarkdownComponent {
     );
   }
 
+  // hydrateCitations replaces every citation-marker token with a chip component.
+  private hydrateCitations(): void {
+    this.clearCiteChips();
+
+    const citations = this.citations();
+    if (citations.length === 0) {
+      return;
+    }
+    const markdownEl = this._host.nativeElement.querySelector('markdown');
+    if (!markdownEl) {
+      return;
+    }
+
+    injectCitationMarkers(markdownEl, (index) => this.createCiteChip(index, citations));
+  }
+
   private createPill(token: string, entry: RedactionEntry): HTMLElement {
     const ref = createComponent(CognosRedactedTextComponent, {
       environmentInjector: this._envInjector,
@@ -126,6 +195,25 @@ export class RedactedMarkdownComponent {
     return host;
   }
 
+  // createCiteChip builds a citation-marker chip for a citation index. Out-of-
+  // range indices (marker token referencing a missing citation) leave the token
+  // text in place rather than rendering a broken chip.
+  private createCiteChip(index: number, citations: Citation[]): Node {
+    const citation = citations[index];
+    if (!citation) {
+      return document.createTextNode('');
+    }
+    const ref = createComponent(CitationMarker, {
+      environmentInjector: this._envInjector,
+    });
+    ref.setInput('index', index);
+    ref.setInput('citation', citation);
+    this._appRef.attachView(ref.hostView);
+    const host = ref.location.nativeElement as HTMLElement;
+    this._citeChips.push({ ref, host, index });
+    return host;
+  }
+
   // clearPills restores each pill's host back to the raw token text before
   // destroying the component, so a subsequent hydratePills() pass sees the
   // tokens again and can re-inject. Without this, a second pass would destroy
@@ -138,5 +226,19 @@ export class RedactedMarkdownComponent {
       ref.destroy();
     }
     this._pills = [];
+  }
+
+  // clearCiteChips mirrors clearPills for citation markers, restoring the token
+  // text so a subsequent hydration pass can re-inject.
+  private clearCiteChips(): void {
+    for (const { ref, host, index } of this._citeChips) {
+      host.parentNode?.replaceChild(
+        document.createTextNode(citationMarkerToken(index)),
+        host,
+      );
+      this._appRef.detachView(ref.hostView);
+      ref.destroy();
+    }
+    this._citeChips = [];
   }
 }
