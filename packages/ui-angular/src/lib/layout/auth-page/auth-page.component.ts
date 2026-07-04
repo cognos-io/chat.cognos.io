@@ -15,14 +15,23 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
  *     <h1 class="auth-page__title">…</h1>
  *     <p class="auth-page__lead">…</p>
  *     <form class="auth-page__form">
- *       <label class="auth-page__field">
- *         <span class="auth-page__label">…</span>
- *         <input class="auth-page__input" … />
- *       </label>
+ *       <div class="auth-page__field">
+ *         <label class="auth-page__label" for="email">…</label>
+ *         <input id="email" class="auth-page__input" … />
+ *       </div>
  *       <cog-button …>…</cog-button>
  *     </form>
  *     <p class="auth-page__switch"><a …>…</a></p>
  *   </cog-auth-page>
+ *
+ * `auth-page__field` is a plain `<div>`, not a `<label>` — the `<label for>`
+ * inside it names only the control it points at. Never nest hint/error text
+ * inside the label element: the browser folds any text content of a wrapping
+ * label into the control's accessible name (so "Password" + a hint reads as
+ * one garbled name to screen readers and breaks `getByLabel`-style queries).
+ * Put hint/error text in a sibling element with its own `id` and wire it up
+ * with `[attr.aria-describedby]` on the input instead — a description, not
+ * part of the name. See `register.component.ts` for a worked example.
  *
  * Uses ViewEncapsulation.None so it can style projected content; every selector
  * is namespaced under the unique `.auth-page` prefix to keep it safely global.
