@@ -45,7 +45,10 @@ describe('DataProcessingComponent', () => {
   let modelList: WritableSignal<Model[]>;
   let privacyTier: WritableSignal<PrivacyTier>;
   let setPrivacyTier: ReturnType<typeof vi.fn>;
+  let pinnedModels: WritableSignal<string[]>;
   let hiddenModels: WritableSignal<string[]>;
+  let modelQuickFilter: WritableSignal<'fast' | null>;
+  let setModelQuickFilter: ReturnType<typeof vi.fn>;
   let hideModel: ReturnType<typeof vi.fn>;
   let unhideModel: ReturnType<typeof vi.fn>;
   let resetHiddenModels: ReturnType<typeof vi.fn>;
@@ -54,7 +57,12 @@ describe('DataProcessingComponent', () => {
     modelList = signal<Model[]>([]);
     privacyTier = signal<PrivacyTier>('eu');
     setPrivacyTier = vi.fn().mockReturnValue(of({}));
+    pinnedModels = signal<string[]>([]);
     hiddenModels = signal<string[]>([]);
+    modelQuickFilter = signal<'fast' | null>(null);
+    setModelQuickFilter = vi.fn((filter: 'fast' | null) =>
+      modelQuickFilter.set(filter),
+    );
     hideModel = vi.fn();
     unhideModel = vi.fn();
     resetHiddenModels = vi.fn();
@@ -70,7 +78,10 @@ describe('DataProcessingComponent', () => {
         {
           provide: UserPreferencesService,
           useValue: {
+            pinnedModels,
             hiddenModels,
+            modelQuickFilter,
+            setModelQuickFilter,
             isModelPinned: () => false,
             isModelHidden: (id: string) => hiddenModels().includes(id),
             pinModel: vi.fn(),
@@ -136,6 +147,20 @@ describe('DataProcessingComponent', () => {
 
     component['searchQuery'].set('gemini');
     expect(component['orderedModels']().map((m) => m.id)).toEqual(['gemini-flash']);
+  });
+
+  it('drops a quick filter when all matching eligible models are hidden', () => {
+    modelList.set([model('gpt-5-nano', 'eu'), model('plain', 'eu')]);
+    component['setFilter']('fast');
+    expect(component['activeFilter']()).toBe('fast');
+
+    hiddenModels.set(['gpt-5-nano']);
+    fixture.detectChanges();
+
+    expect(component['activeFilter']()).toBeNull();
+    expect(component['availableFilterChips']().map((chip) => chip.key)).not.toContain(
+      'fast',
+    );
   });
 
   it('shows every match when searching, bypassing the collapse limit', () => {

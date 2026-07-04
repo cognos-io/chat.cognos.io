@@ -283,4 +283,38 @@ describe('UserPreferencesService', () => {
     expect(recent.length).toBe(8);
     expect(new Set(recent).size).toBe(recent.length);
   });
+
+  it('persists the model quick filter, including no active filter', async () => {
+    api.getUserPreferences.mockReturnValue(
+      of({
+        id: 'prefs-1',
+        data: Base64.fromUint8Array(
+          serializeUserPreferencesData({ pinnedConversations: [] }),
+        ),
+      }),
+    );
+    api.updateUserPreferences.mockImplementation(
+      (_recordId: string, payload: { data: string }) =>
+        of({ id: 'prefs-1', data: payload.data }),
+    );
+
+    emitKeyPair(currentKeyPair);
+    await flushPromises();
+
+    service.setModelQuickFilter('fast');
+    await flushPromises();
+    expect(service.modelQuickFilter()).toBe('fast');
+    expect(
+      decodePreferences(api.updateUserPreferences.mock.calls.at(-1)![1])
+        .modelQuickFilter,
+    ).toBe('fast');
+
+    service.setModelQuickFilter(null);
+    await flushPromises();
+    expect(service.modelQuickFilter()).toBeNull();
+    expect(
+      decodePreferences(api.updateUserPreferences.mock.calls.at(-1)![1])
+        .modelQuickFilter,
+    ).toBeNull();
+  });
 });

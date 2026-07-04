@@ -127,6 +127,19 @@ describe('matchesQuickFilter', () => {
     expect(matchesQuickFilter(makeModel(), null, meta)).toBe(true);
   });
 
+  it('matches pinned models from the caller-provided pinned ids', () => {
+    expect(
+      matchesQuickFilter(makeModel({ id: 'pinned-1' }), 'pinned', meta, 'eu', [
+        'pinned-1',
+      ]),
+    ).toBe(true);
+    expect(
+      matchesQuickFilter(makeModel({ id: 'other' }), 'pinned', meta, 'eu', [
+        'pinned-1',
+      ]),
+    ).toBe(false);
+  });
+
   it('uses curated metadata for recommended/fast/powerful', () => {
     expect(matchesQuickFilter(makeModel({ id: 'rec-1' }), 'recommended', meta)).toBe(
       true,
@@ -144,6 +157,9 @@ describe('matchesQuickFilter', () => {
       matchesQuickFilter(makeModel({ reasoningEfforts: ['low'] }), 'reasoning', meta),
     ).toBe(true);
     expect(
+      matchesQuickFilter(makeModel({ supportsWebSearch: true }), 'web_search', meta),
+    ).toBe(true);
+    expect(
       matchesQuickFilter(makeModel({ supportsVision: true }), 'vision', meta),
     ).toBe(true);
     expect(
@@ -152,6 +168,28 @@ describe('matchesQuickFilter', () => {
         'long_context',
         meta,
       ),
+    ).toBe(true);
+  });
+
+  it('limits recommended matches to the current data-processing tier when set', () => {
+    const tieredMeta = metaFor({
+      swiss: { recommended: true, recommendedForPrivacyTiers: ['ch_only'] },
+      europe: { recommended: true, recommendedForPrivacyTiers: ['eu', 'global'] },
+    });
+
+    expect(
+      matchesQuickFilter(
+        makeModel({ id: 'swiss' }),
+        'recommended',
+        tieredMeta,
+        'ch_only',
+      ),
+    ).toBe(true);
+    expect(
+      matchesQuickFilter(makeModel({ id: 'swiss' }), 'recommended', tieredMeta, 'eu'),
+    ).toBe(false);
+    expect(
+      matchesQuickFilter(makeModel({ id: 'europe' }), 'recommended', tieredMeta, 'eu'),
     ).toBe(true);
   });
 });
@@ -178,6 +216,8 @@ describe('modelMatchesSearch', () => {
     expect(modelMatchesSearch(image, 'image')).toBe(true);
     const vision = makeModel({ supportsVision: true });
     expect(modelMatchesSearch(vision, 'vision')).toBe(true);
+    const web = makeModel({ supportsWebSearch: true });
+    expect(modelMatchesSearch(web, 'web search')).toBe(true);
     const reasoning = makeModel({ reasoningEfforts: ['high'] });
     expect(modelMatchesSearch(reasoning, 'reasoning')).toBe(true);
   });
@@ -219,10 +259,13 @@ describe('buildSearchSynonyms', () => {
   it('expands localised intent terms to English anchors, NFD-folded', () => {
     const synonyms = buildSearchSynonyms({
       lowCost: 'günstig billig',
+      webSearch: 'web suchen',
       private: 'privat schweiz',
       unknownIntent: 'ignored',
     });
     expect(synonyms['gunstig']).toEqual(['low cost']);
+    expect(synonyms['web']).toEqual(['web search']);
+    expect(synonyms['suchen']).toEqual(['web search']);
     expect(synonyms['billig']).toEqual(['low cost']);
     expect(synonyms['schweiz']).toEqual(['private']);
     // Intents without a known anchor are dropped.
@@ -317,6 +360,24 @@ describe('orderModels', () => {
     expect(flattenGroups(groups).map((m) => m.id)).toEqual(['c']);
   });
 
+  it('applies the pinned quick filter to pinned models only', () => {
+    const groups = orderModels({
+      models,
+      pinnedIds: ['b', 'd'],
+      recentIds: ['c'],
+      hiddenIds: [],
+      quickFilter: 'pinned',
+      meta,
+    });
+
+    expect(groupMap(groups)).toEqual({
+      pinned: ['b', 'd'],
+      recent: [],
+      recommended: [],
+      other: [],
+    });
+  });
+
   it('keeps ineligible models in the list (shown disabled by the UI)', () => {
     const withIneligible = [...models, makeModel({ id: 'locked', isEligible: false })];
     const groups = orderModels({
@@ -327,6 +388,30 @@ describe('orderModels', () => {
       meta,
     });
     expect(flattenGroups(groups).map((m) => m.id)).toContain('locked');
+  });
+
+  it('uses tier-aware recommendations for the recommended group', () => {
+    const tiered = [
+      makeModel({ id: 'swiss' }),
+      makeModel({ id: 'europe' }),
+      makeModel({ id: 'other' }),
+    ];
+    const tieredMeta = metaFor({
+      swiss: { recommended: true, recommendedForPrivacyTiers: ['ch_only'] },
+      europe: { recommended: true, recommendedForPrivacyTiers: ['eu'] },
+    });
+
+    const groups = orderModels({
+      models: tiered,
+      pinnedIds: [],
+      recentIds: [],
+      hiddenIds: [],
+      privacyTier: 'eu',
+      meta: tieredMeta,
+    });
+
+    expect(groupMap(groups)['recommended']).toEqual(['europe']);
+    expect(groupMap(groups)['other']).toEqual(['swiss', 'other']);
   });
 });
 
@@ -440,6 +525,59 @@ describe('resolveDefaultModel', () => {
         meta,
       })?.id,
     ).toBe('rec-image');
+  });
+
+  it('is tier-aware when picking a recommended default', () => {
+    const tiered = [
+      makeModel({ id: 'swiss' }),
+      makeModel({ id: 'europe' }),
+      makeModel({ id: 'plain' }),
+    ];
+    const tieredMeta = metaFor({
+      swiss: {
+        recommended: true,
+        recommendedDefaultFor: ['chat'],
+        recommendedForPrivacyTiers: ['ch_only'],
+      },
+      europe: {
+        recommended: true,
+        recommendedDefaultFor: ['chat'],
+        recommendedForPrivacyTiers: ['eu', 'global'],
+      },
+    });
+
+    expect(
+      resolveDefaultModel({
+        models: tiered,
+        privacyTier: 'ch_only',
+        meta: tieredMeta,
+      })?.id,
+    ).toBe('swiss');
+    expect(
+      resolveDefaultModel({
+        models: tiered,
+        privacyTier: 'eu',
+        meta: tieredMeta,
+      })?.id,
+    ).toBe('europe');
+  });
+
+  it('uses the curated EU and Swiss catalogue defaults', () => {
+    const defaults = [
+      makeModel({ id: 'gemini-3-5-flash', privacyTier: 'eu' }),
+      makeModel({
+        id: 'qwen-qwen3-5-122b-a10b-fp8-infomaniak',
+        privacyTier: 'ch_only',
+      }),
+      makeModel({ id: 'plain' }),
+    ];
+
+    expect(resolveDefaultModel({ models: defaults, privacyTier: 'eu' })?.id).toBe(
+      'gemini-3-5-flash',
+    );
+    expect(resolveDefaultModel({ models: defaults, privacyTier: 'ch_only' })?.id).toBe(
+      'qwen-qwen3-5-122b-a10b-fp8-infomaniak',
+    );
   });
 
   it('falls back to the first eligible visible model when nothing is recommended', () => {

@@ -816,12 +816,19 @@
       "pickAria": "Pick your AI model",
       "pin": "Pin model",
       "unpin": "Unpin model",
+      "unavailable": {
+        "badge": "Unavailable",
+        "generic": "This model is not available for your account.",
+        "privacyTier": "Needs {{ required }} processing. Your current setting is {{ current }}."
+      },
       "filters": {
+        "pinned": "Pinned",
         "recommended": "Recommended",
         "fast": "Fast",
         "powerful": "Powerful",
         "lowCost": "Low cost",
         "reasoning": "Reasoning",
+        "webSearch": "Web search",
         "image": "Image",
         "longContext": "Long context",
         "vision": "Vision"
@@ -854,6 +861,7 @@
         "fast": "fast quick speed",
         "powerful": "powerful smart quality best",
         "reasoning": "reasoning thinking logic",
+        "webSearch": "web search internet current live",
         "image": "image vision picture",
         "longContext": "long context large",
         "private": "private swiss switzerland eu sovereign"

@@ -1,5 +1,19 @@
 import { z } from 'zod';
 
+export const ModelQuickFilter = z.enum([
+  'pinned',
+  'recommended',
+  'fast',
+  'powerful',
+  'low_cost',
+  'reasoning',
+  'web_search',
+  'image',
+  'vision',
+  'long_context',
+]);
+export type ModelQuickFilter = z.infer<typeof ModelQuickFilter>;
+
 export const UserPreferencesData = z.object({
   pinnedConversations: z.array(z.string()),
   pinnedModels: z.array(z.string()).default([]),
@@ -32,6 +46,10 @@ export const UserPreferencesData = z.object({
   // Toggling a composer tool restores that context's model; unknown/ineligible
   // ids are ignored at read time (spec docs/specs/tool-aware-model-selection.md §5).
   toolModelDefaults: z.record(z.string(), z.string()).default({}),
+  // Last quick filter chosen in the model explorer. null means no filter, and
+  // is intentionally remembered so the composer/settings do not re-enable
+  // Recommended on the user's next visit.
+  modelQuickFilter: ModelQuickFilter.nullable().default(null),
 });
 export type UserPreferencesData = z.infer<typeof UserPreferencesData>;
 
@@ -47,6 +65,7 @@ export const emptyPreferences: UserPreferencesData = {
   recentModels: [],
   hiddenModels: [],
   toolModelDefaults: {},
+  modelQuickFilter: null,
 };
 
 /**

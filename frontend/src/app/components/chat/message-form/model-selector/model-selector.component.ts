@@ -18,6 +18,7 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import { CognosIconComponent, CognosLozengeComponent } from '@cognos/ui-angular';
 
+import { localizedModelIneligibility } from '@app/i18n/model-ineligibility';
 import { Model } from '@app/interfaces/model';
 import { BillingService } from '@app/services/billing.service';
 import { ModelService } from '@app/services/model.service';
@@ -27,12 +28,14 @@ import { modelCapabilityMetadata } from '@app/utils/model-capability-metadata';
 import { ModelCostTier, deriveModelCostTier } from '@app/utils/model-cost-tier';
 import {
   MODEL_FILTER_CHIPS,
+  ModelFilterChip,
   QuickFilter,
   RequiredCapability,
   SearchContext,
   buildSearchSynonyms,
   flattenGroups,
   formatContextWindow,
+  matchesQuickFilter,
   modelStrengthPills,
   modelSupportsCapability,
   orderModels,
@@ -102,6 +105,12 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
                   [class.model-selector__row--active]="model.id === selectedModelId()"
                   [class.model-selector__row--disabled]="!model.isEligible"
                   [attr.aria-selected]="model.id === selectedModelId()"
+                  [attr.aria-describedby]="
+                    !model.isEligible ? ineligibilityId(model) : null
+                  "
+                  [attr.title]="
+                    !model.isEligible ? ineligibilityReason(model, t) : null
+                  "
                   [disabled]="!model.isEligible"
                   (click)="onSelectModel(model)"
                 >
@@ -121,6 +130,11 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
                           {{ t('chat.models.costTier.' + costTier(model)) }}
                         </cog-lozenge>
                       }
+                      @if (!model.isEligible) {
+                        <cog-lozenge tone="red">
+                          {{ t('chat.models.unavailable.badge') }}
+                        </cog-lozenge>
+                      }
                     </span>
 
                     @if (strengthPills(model).length) {
@@ -137,10 +151,14 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
                       {{ metaLine(model, t) }}
                     </span>
 
-                    @if (!model.isEligible && model.ineligibilityReason) {
-                      <span class="model-selector__reason">{{
-                        model.ineligibilityReason
-                      }}</span>
+                    @if (!model.isEligible) {
+                      <span
+                        class="model-selector__reason"
+                        [id]="ineligibilityId(model)"
+                      >
+                        <cog-icon name="lock" [size]="12" tone="current" />
+                        {{ ineligibilityReason(model, t) }}
+                      </span>
                     }
                   </span>
 
@@ -213,7 +231,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
           role="group"
           [attr.aria-label]="t('chat.models.pickAria')"
         >
-          @for (chip of filterChips; track chip.key) {
+          @for (chip of availableFilterChips(); track chip.key) {
             <button
               type="button"
               class="model-selector__chip"
@@ -408,8 +426,12 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
     }
 
     .model-selector__reason {
-      color: var(--cog-text-subtlest);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-050);
+      color: var(--cog-text-subtle);
       font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
     }
 
     .model-selector__check {
@@ -578,8 +600,6 @@ export class ModelSelectorComponent {
   // Asked to close (sheet X / Escape / settings link). The host owns open state.
   @Output() readonly closed = new EventEmitter<void>();
 
-  protected readonly filterChips = MODEL_FILTER_CHIPS;
-
   // Frozen on open so rows don't jump while interacting (spec §7). The selector
   // is created fresh each time it opens, so these snapshots are per-open.
   private readonly _pinned: readonly string[] = [...this._preferences.pinnedModels()];
@@ -587,7 +607,9 @@ export class ModelSelectorComponent {
   private readonly _hidden = new Set(this._preferences.hiddenModels());
 
   protected readonly searchQuery = signal('');
-  protected readonly activeFilter = signal<QuickFilter | null>('recommended');
+  protected readonly activeFilter = signal<QuickFilter | null>(
+    this._preferences.modelQuickFilter(),
+  );
   protected readonly showHidden = signal(false);
 
   // Localised synonym map, built once from the active language's i18n catalogue.
@@ -611,18 +633,24 @@ export class ModelSelectorComponent {
     return !model || !model.isEligible;
   });
 
-  // Whether any eligible, non-hidden model is recommended under the current
-  // capability. If none, we drop the default Recommended chip so the list isn't
-  // empty for a tier without recommendations.
-  private readonly recommendedAvailable = computed(() =>
-    this._modelService
-      .modelList()
-      .some(
-        (model) =>
-          modelSupportsCapability(model, this.requiredCapability()) &&
-          !this._hidden.has(model.id) &&
-          modelCapabilityMetadata(model.id).recommended,
-      ),
+  protected readonly availableFilterChips = computed<ModelFilterChip[]>(() =>
+    MODEL_FILTER_CHIPS.filter((chip) =>
+      this._modelService
+        .modelList()
+        .some(
+          (model) =>
+            model.isEligible &&
+            modelSupportsCapability(model, this.requiredCapability()) &&
+            !this._hidden.has(model.id) &&
+            matchesQuickFilter(
+              model,
+              chip.key,
+              modelCapabilityMetadata,
+              this._modelService.privacyTier(),
+              this._pinned,
+            ),
+        ),
+    ),
   );
 
   // Search index context, shared by groups() and hasHiddenMatches() so a hidden
@@ -647,6 +675,7 @@ export class ModelSelectorComponent {
       pinnedIds: this._pinned,
       recentIds: this._recent,
       hiddenIds: [...this._hidden],
+      privacyTier: this._modelService.privacyTier(),
       requiredCapability: this.requiredCapability(),
       quickFilter: this.activeFilter(),
       query: this.searchQuery(),
@@ -672,6 +701,7 @@ export class ModelSelectorComponent {
           pinnedIds: this._pinned,
           recentIds: this._recent,
           hiddenIds: [...this._hidden],
+          privacyTier: this._modelService.privacyTier(),
           requiredCapability: this.requiredCapability(),
           quickFilter: this.activeFilter(),
           query: this.searchQuery(),
@@ -683,10 +713,17 @@ export class ModelSelectorComponent {
   });
 
   constructor() {
-    // Drop the default Recommended chip when nothing recommended is available.
+    // Drop a remembered chip when the current tier/capability/hidden set has no
+    // usable matches, so opening the picker never starts in an empty category.
     effect(() => {
-      if (this.activeFilter() === 'recommended' && !this.recommendedAvailable()) {
-        this.activeFilter.set(null);
+      const active = this.activeFilter();
+      const loaded = this._modelService.modelList().length > 0;
+      if (
+        loaded &&
+        active !== null &&
+        !this.availableFilterChips().some((chip) => chip.key === active)
+      ) {
+        this.setActiveFilter(null);
       }
     });
 
@@ -717,12 +754,17 @@ export class ModelSelectorComponent {
     // Typing overrides the default Recommended chip so a name search isn't
     // narrowed to recommendations (spec §5.3). An explicitly chosen chip stays.
     if (value && this.activeFilter() === 'recommended') {
-      this.activeFilter.set(null);
+      this.setActiveFilter(null);
     }
   }
 
   protected toggleFilter(filter: QuickFilter): void {
-    this.activeFilter.update((current) => (current === filter ? null : filter));
+    this.setActiveFilter(this.activeFilter() === filter ? null : filter);
+  }
+
+  private setActiveFilter(filter: QuickFilter | null): void {
+    this.activeFilter.set(filter);
+    this._preferences.setModelQuickFilter(filter);
   }
 
   protected costTier(model: Model): ModelCostTier {
@@ -764,6 +806,17 @@ export class ModelSelectorComponent {
       return '🇪🇺';
     }
     return '🌐';
+  }
+
+  protected ineligibilityId(model: Model): string {
+    return 'model-selector-ineligible-' + model.id;
+  }
+
+  protected ineligibilityReason(
+    model: Model,
+    t: (key: string, params?: Record<string, string>) => string,
+  ): string {
+    return localizedModelIneligibility(model, this._modelService.privacyTier(), t);
   }
 
   protected isPinned(modelId: string): boolean {

@@ -816,12 +816,19 @@
       "pickAria": "Scegli il tuo modello di IA",
       "pin": "Fissa il modello",
       "unpin": "Rimuovi il modello fissato",
+      "unavailable": {
+        "badge": "Non disponibile",
+        "generic": "Questo modello non è disponibile per il tuo account.",
+        "privacyTier": "Richiede trattamento in {{ required }}. La tua impostazione attuale è {{ current }}."
+      },
       "filters": {
+        "pinned": "Fissati",
         "recommended": "Consigliato",
         "fast": "Veloce",
         "powerful": "Potente",
         "lowCost": "Economico",
         "reasoning": "Ragionamento",
+        "webSearch": "Ricerca web",
         "image": "Immagine",
         "longContext": "Contesto ampio",
         "vision": "Visione"
@@ -854,6 +861,7 @@
         "fast": "veloce rapido",
         "powerful": "potente intelligente qualità",
         "reasoning": "ragionamento pensare logica",
+        "webSearch": "ricerca web internet attuale live",
         "image": "immagine visione foto",
         "longContext": "contesto ampio lungo",
         "private": "privato svizzero eu sovrano"

@@ -76,6 +76,11 @@ describe('i18n translation parity', () => {
     // guards the specific keys the composer/settings selector depends on.
     for (const key of [
       'chat.models.filters.recommended',
+      'chat.models.filters.pinned',
+      'chat.models.unavailable.badge',
+      'chat.models.unavailable.generic',
+      'chat.models.unavailable.privacyTier',
+      'chat.models.filters.webSearch',
       'chat.models.filters.image',
       'chat.models.filters.longContext',
       'chat.models.sections.pinned',
@@ -87,6 +92,7 @@ describe('i18n translation parity', () => {
       'chat.models.search.showHidden',
       'chat.models.search.privacyNote',
       'chat.models.synonyms.lowCost',
+      'chat.models.synonyms.webSearch',
       'chat.models.synonyms.private',
       'chat.models.manageInSettings',
       'chat.models.privacyFooter',

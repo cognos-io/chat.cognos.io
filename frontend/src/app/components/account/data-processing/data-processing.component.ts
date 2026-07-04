@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -21,6 +22,7 @@ import {
 import type { CognosIconName } from '@cognos/ui/icons';
 
 import { localizedModelDescription } from '@app/i18n/model-copy';
+import { localizedModelIneligibility } from '@app/i18n/model-ineligibility';
 import { Model, PrivacyTier } from '@app/interfaces/model';
 import { AuthService } from '@app/services/auth.service';
 import { ModelService } from '@app/services/model.service';
@@ -28,6 +30,7 @@ import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { deriveModelCostTier } from '@app/utils/model-cost-tier';
 import {
   MODEL_FILTER_CHIPS,
+  ModelFilterChip,
   QuickFilter,
   buildSearchSynonyms,
   formatContextWindow,
@@ -244,10 +247,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
                   } @else {
                     <span class="models__locked">
                       <cog-icon name="lock" [size]="12" tone="current" />
-                      {{
-                        model.ineligibilityReason ||
-                          t('account.dataProcessing.needsBroaderRegion')
-                      }}
+                      {{ ineligibilityReason(model, t) }}
                     </span>
                   }
                 </span>
@@ -721,8 +721,9 @@ export class DataProcessingComponent {
   // Search + quick-filter state. The settings list shares the composer's pure
   // discovery logic (model-discovery), but presents a fuller management view.
   protected readonly searchQuery = signal('');
-  protected readonly activeFilter = signal<QuickFilter | null>(null);
-  protected readonly filterChips = MODEL_FILTER_CHIPS;
+  protected readonly activeFilter = signal<QuickFilter | null>(
+    this._preferences.modelQuickFilter(),
+  );
 
   private readonly _synonyms = buildSearchSynonyms(
     this._transloco.translateObject('chat.models.synonyms') ?? {},
@@ -730,6 +731,23 @@ export class DataProcessingComponent {
 
   protected readonly isFiltering = computed(
     () => !!this.searchQuery().trim() || this.activeFilter() !== null,
+  );
+
+  protected readonly availableFilterChips = computed<ModelFilterChip[]>(() =>
+    MODEL_FILTER_CHIPS.filter((chip) =>
+      this._modelList().some(
+        (model) =>
+          model.isEligible &&
+          !this._preferences.isModelHidden(model.id) &&
+          matchesQuickFilter(
+            model,
+            chip.key,
+            undefined,
+            this.currentTier(),
+            this._preferences.pinnedModels(),
+          ),
+      ),
+    ),
   );
 
   // The catalogue filtered by search + quick filter, eligible-first then locked
@@ -741,7 +759,13 @@ export class DataProcessingComponent {
     return [...this._modelList()]
       .filter(
         (model) =>
-          matchesQuickFilter(model, filter) &&
+          matchesQuickFilter(
+            model,
+            filter,
+            undefined,
+            this.currentTier(),
+            this._preferences.pinnedModels(),
+          ) &&
           modelMatchesSearch(model, query, {
             costTierLabel: (m) =>
               this._transloco.translate(
@@ -773,19 +797,35 @@ export class DataProcessingComponent {
 
   protected readonly selectedModelId = computed(() => this._models.selectedModel().id);
 
+  constructor() {
+    effect(() => {
+      const active = this.activeFilter();
+      const loaded = this._modelList().length > 0;
+      if (
+        loaded &&
+        active !== null &&
+        !this.availableFilterChips().some((chip) => chip.key === active)
+      ) {
+        this.setFilter(null);
+      }
+    });
+  }
+
   protected onSearchValue(value: string): void {
     this.searchQuery.set(value);
   }
 
   protected filterOptions(t: (key: string) => string): CognosChoiceChip[] {
-    return this.filterChips.map((chip) => ({
+    return this.availableFilterChips().map((chip) => ({
       value: chip.key,
       label: t(chip.labelKey),
     }));
   }
 
   protected setFilter(value: string | null): void {
-    this.activeFilter.set(value as QuickFilter | null);
+    const filter = value as QuickFilter | null;
+    this.activeFilter.set(filter);
+    this._preferences.setModelQuickFilter(filter);
   }
 
   protected isPinned(modelId: string): boolean {
@@ -832,6 +872,13 @@ export class DataProcessingComponent {
     return key
       ? this._transloco.translate('account.dataProcessing.regionBadge.' + key)
       : model.privacyTier;
+  }
+
+  protected ineligibilityReason(
+    model: Model,
+    t: (key: string, params?: Record<string, string>) => string,
+  ): string {
+    return localizedModelIneligibility(model, this.currentTier(), t);
   }
 
   // Human-friendly context window (e.g. 128000 → "128K"). Shared with the

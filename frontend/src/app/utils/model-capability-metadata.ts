@@ -4,6 +4,7 @@
 // name or price (see docs/specs/composer-model-discovery.md §6.2 and the
 // "fast/powerful are subjective" risk in §12). Unknown ids resolve to empty
 // metadata so the catalogue can grow without code changes.
+import { PrivacyTier } from '@app/interfaces/model';
 
 // Purposes a model can be a recommended default for. Drives contextual default
 // resolution (e.g. image tool active → prefer an image-capable recommendation).
@@ -12,6 +13,9 @@ export type ModelPurpose = 'chat' | 'image' | 'reasoning' | 'long_context';
 export interface ModelCapabilityMetadata {
   // Surfaced under the "Recommended" filter and used as a default candidate.
   recommended: boolean;
+  // Optional data-processing tiers where this recommendation applies. Empty
+  // means every tier where the model is eligible.
+  recommendedForPrivacyTiers: PrivacyTier[];
   // The purposes this model is a good recommended default for.
   recommendedDefaultFor: ModelPurpose[];
   // Curated speed/power signals. Not derivable from public metadata, so they
@@ -25,6 +29,7 @@ export interface ModelCapabilityMetadata {
 
 export const EMPTY_MODEL_CAPABILITY_METADATA: ModelCapabilityMetadata = {
   recommended: false,
+  recommendedForPrivacyTiers: [],
   recommendedDefaultFor: [],
   fast: false,
   powerful: false,
@@ -37,19 +42,21 @@ export const EMPTY_MODEL_CAPABILITY_METADATA: ModelCapabilityMetadata = {
 // curated judgements, never inferred from name or price.
 //
 // Seed decisions (2026-06): recommended default for EU/global users is
-// gemini-3-5-flash; the Swiss (ch_only) recommended default is the largest
-// Infomaniak Qwen; the image default is gemini-2-5-flash-image.
+// gemini-3-5-flash; the Swiss (ch_only) recommended default is Qwen3.5 122B
+// on Infomaniak; the image default is gemini-2-5-flash-image.
 export const MODEL_CAPABILITY_METADATA: Readonly<
   Record<string, Partial<ModelCapabilityMetadata>>
 > = {
   // --- recommended defaults -------------------------------------------------
   'gemini-3-5-flash': {
     recommended: true,
+    recommendedForPrivacyTiers: ['eu', 'global'],
     recommendedDefaultFor: ['chat'],
     fast: true,
   },
   'qwen-qwen3-5-122b-a10b-fp8-infomaniak': {
     recommended: true,
+    recommendedForPrivacyTiers: ['ch_only'],
     recommendedDefaultFor: ['chat'],
   },
   'gemini-2-5-flash-image': {

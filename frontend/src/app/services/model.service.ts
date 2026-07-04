@@ -129,6 +129,7 @@ export class ModelService {
             userDefaultId: perContextDefault,
             hiddenIds: this._preferences.hiddenModels(),
             requiredCapability: capability,
+            privacyTier: state.privacyTier(),
           }) ??
           modelList[0] ??
           loadingModel

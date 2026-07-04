@@ -72,6 +72,9 @@ export class UserPreferencesService {
     modelId: string;
     effort: string;
   }>();
+  private readonly _setModelQuickFilter = new Subject<
+    UserPreferencesData['modelQuickFilter']
+  >();
 
   // Most-recently-used personas are capped so the "recently used" group and the
   // in-chat switcher stay short.
@@ -293,6 +296,20 @@ export class UserPreferencesService {
             }),
           ),
         ),
+      // Remember model explorer filter, including null (no active filter).
+      () =>
+        this._setModelQuickFilter.pipe(
+          map((modelQuickFilter) => ({ modelQuickFilter })),
+        ),
+      (state) =>
+        this._setModelQuickFilter.pipe(
+          concatMap((modelQuickFilter) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              modelQuickFilter,
+            }),
+          ),
+        ),
       // Mark persona recently used, local then remote
       (state) =>
         this._markRecentPersona.pipe(
@@ -392,6 +409,7 @@ export class UserPreferencesService {
       resetHiddenModels: this._resetHiddenModels,
       setRedactionEnabled: this._setRedactionEnabled,
       setModelReasoningEffort: this._setModelReasoningEffort,
+      setModelQuickFilter: this._setModelQuickFilter,
     },
   });
 
@@ -444,6 +462,9 @@ export class UserPreferencesService {
   public setModelReasoningEffort = (modelId: string, effort: string) => {
     this.state.setModelReasoningEffort({ modelId, effort });
   };
+  public setModelQuickFilter = (filter: UserPreferencesData['modelQuickFilter']) => {
+    this.state.setModelQuickFilter(filter);
+  };
 
   // selectors
   public pinnedConversationIds = this.state.pinnedConversations;
@@ -457,6 +478,7 @@ export class UserPreferencesService {
   public recentModels = this.state.recentModels;
   public hiddenModels = this.state.hiddenModels;
   public toolModelDefaults = this.state.toolModelDefaults;
+  public modelQuickFilter = this.state.modelQuickFilter;
 
   // private methods
   private addConversationIdToPinnedConversations(

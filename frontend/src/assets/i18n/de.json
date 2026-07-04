@@ -816,12 +816,19 @@
       "pickAria": "Wähle dein KI-Modell",
       "pin": "Modell anheften",
       "unpin": "Modell lösen",
+      "unavailable": {
+        "badge": "Nicht verfügbar",
+        "generic": "Dieses Modell ist für dein Konto nicht verfügbar.",
+        "privacyTier": "Benötigt Verarbeitung in {{ required }}. Deine aktuelle Einstellung ist {{ current }}."
+      },
       "filters": {
+        "pinned": "Angeheftet",
         "recommended": "Empfohlen",
         "fast": "Schnell",
         "powerful": "Leistungsstark",
         "lowCost": "Günstig",
         "reasoning": "Logik",
+        "webSearch": "Websuche",
         "image": "Bild",
         "longContext": "Grosser Kontext",
         "vision": "Bildverständnis"
@@ -854,6 +861,7 @@
         "fast": "schnell flott",
         "powerful": "leistungsstark intelligent qualität",
         "reasoning": "logik denken schlussfolgern",
+        "webSearch": "websuche web internet aktuell live",
         "image": "bild vision foto",
         "longContext": "grosser kontext lang",
         "private": "privat schweiz eu souverän"

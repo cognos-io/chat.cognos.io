@@ -1,4 +1,4 @@
-import { Model } from '@app/interfaces/model';
+import { Model, PrivacyTier } from '@app/interfaces/model';
 
 import {
   ModelCapabilityMetadata,
@@ -34,13 +34,15 @@ export function capabilityContextKey(capability: RequiredCapability): string {
     : CAPABILITY_CONTEXT_TEXT;
 }
 
-// Quick capability filters surfaced as chips. 'recommended' is the default chip.
+// Quick capability filters surfaced as chips.
 export type QuickFilter =
+  | 'pinned'
   | 'recommended'
   | 'fast'
   | 'powerful'
   | 'low_cost'
   | 'reasoning'
+  | 'web_search'
   | 'image'
   | 'vision'
   | 'long_context';
@@ -53,11 +55,13 @@ export interface ModelFilterChip {
 }
 
 export const MODEL_FILTER_CHIPS: readonly ModelFilterChip[] = [
+  { key: 'pinned', labelKey: 'chat.models.filters.pinned' },
   { key: 'recommended', labelKey: 'chat.models.filters.recommended' },
   { key: 'fast', labelKey: 'chat.models.filters.fast' },
   { key: 'powerful', labelKey: 'chat.models.filters.powerful' },
   { key: 'low_cost', labelKey: 'chat.models.filters.lowCost' },
   { key: 'reasoning', labelKey: 'chat.models.filters.reasoning' },
+  { key: 'web_search', labelKey: 'chat.models.filters.webSearch' },
   { key: 'image', labelKey: 'chat.models.filters.image' },
   { key: 'vision', labelKey: 'chat.models.filters.vision' },
   { key: 'long_context', labelKey: 'chat.models.filters.longContext' },
@@ -118,8 +122,18 @@ export function isLongContextModel(model: Model): boolean {
   return model.inputContextLength >= LONG_CONTEXT_THRESHOLD;
 }
 
-export function isRecommendedModel(model: Model, meta: MetadataLookup): boolean {
-  return meta(model.id).recommended;
+export function isRecommendedModel(
+  model: Model,
+  meta: MetadataLookup,
+  privacyTier?: PrivacyTier,
+): boolean {
+  const metadata = meta(model.id);
+  return (
+    metadata.recommended &&
+    (metadata.recommendedForPrivacyTiers.length === 0 ||
+      (privacyTier !== undefined &&
+        metadata.recommendedForPrivacyTiers.includes(privacyTier)))
+  );
 }
 
 export function isFastModel(model: Model, meta: MetadataLookup): boolean {
@@ -136,12 +150,16 @@ export function matchesQuickFilter(
   model: Model,
   filter: QuickFilter | null,
   meta: MetadataLookup = defaultMetadata,
+  privacyTier?: PrivacyTier,
+  pinnedIds: readonly string[] = [],
 ): boolean {
   switch (filter) {
     case null:
       return true;
+    case 'pinned':
+      return pinnedIds.includes(model.id);
     case 'recommended':
-      return isRecommendedModel(model, meta);
+      return isRecommendedModel(model, meta, privacyTier);
     case 'fast':
       return isFastModel(model, meta);
     case 'powerful':
@@ -150,6 +168,8 @@ export function matchesQuickFilter(
       return isLowCostModel(model);
     case 'reasoning':
       return isReasoningModel(model);
+    case 'web_search':
+      return isWebSearchModel(model);
     case 'image':
       return isImageModel(model);
     case 'vision':
@@ -210,6 +230,7 @@ export function modelSearchHaystack(model: Model, ctx: SearchContext = {}): stri
 
   if (isImageModel(model)) parts.push('image generation');
   if (isVisionModel(model)) parts.push('vision');
+  if (isWebSearchModel(model)) parts.push('web search');
   if (isReasoningModel(model)) parts.push('reasoning');
   if (isLowCostModel(model)) parts.push('low cost cheap');
   if (isLongContextModel(model)) parts.push('long context');
@@ -237,6 +258,7 @@ export const SEARCH_INTENT_ANCHORS: Readonly<Record<string, string>> = {
   fast: 'fast',
   powerful: 'powerful',
   reasoning: 'reasoning',
+  webSearch: 'web search',
   image: 'image',
   longContext: 'long context',
   private: 'private',
@@ -343,6 +365,7 @@ export interface OrderModelsInput {
   // Most-recent-first.
   recentIds: readonly string[];
   hiddenIds: readonly string[];
+  privacyTier?: PrivacyTier;
   requiredCapability?: RequiredCapability;
   quickFilter?: QuickFilter | null;
   query?: string;
@@ -360,12 +383,15 @@ export function orderModels(input: OrderModelsInput): ModelGroup[] {
   const hidden = new Set(input.hiddenIds);
   const capability = input.requiredCapability ?? null;
   const quickFilter = input.quickFilter ?? null;
+  const privacyTier = input.privacyTier;
   const searchContext: SearchContext = { meta, ...input.searchContext };
 
   const visible = input.models.filter((model) => {
     if (!modelSupportsCapability(model, capability)) return false;
     if (!input.showHidden && hidden.has(model.id)) return false;
-    if (!matchesQuickFilter(model, quickFilter, meta)) return false;
+    if (!matchesQuickFilter(model, quickFilter, meta, privacyTier, input.pinnedIds)) {
+      return false;
+    }
     if (!modelMatchesSearch(model, input.query ?? '', searchContext)) return false;
     return true;
   });
@@ -389,7 +415,9 @@ export function orderModels(input: OrderModelsInput): ModelGroup[] {
   const pinned = take(input.pinnedIds);
   const recent = take(input.recentIds);
   const recommended = take(
-    visible.filter((model) => meta(model.id).recommended).map((model) => model.id),
+    visible
+      .filter((model) => isRecommendedModel(model, meta, privacyTier))
+      .map((model) => model.id),
   );
   const other = visible.filter((model) => !used.has(model.id));
 
@@ -418,6 +446,7 @@ export interface ResolveDefaultInput {
   // Encrypted user default.
   userDefaultId?: string;
   hiddenIds?: readonly string[];
+  privacyTier?: PrivacyTier;
   requiredCapability?: RequiredCapability;
   meta?: MetadataLookup;
 }
@@ -468,13 +497,19 @@ export function resolveDefaultModel(input: ResolveDefaultInput): Model | undefin
   const eligibleVisible = input.models.filter((model) =>
     isUsableDefault(model, hidden, capability),
   );
-  const recommendedForPurpose = eligibleVisible.find((model) =>
-    meta(model.id).recommendedDefaultFor.includes(purpose),
-  );
+  const recommendedForPurpose = eligibleVisible.find((model) => {
+    const metadata = meta(model.id);
+    return (
+      isRecommendedModel(model, meta, input.privacyTier) &&
+      metadata.recommendedDefaultFor.includes(purpose)
+    );
+  });
   if (recommendedForPurpose) {
     return recommendedForPurpose;
   }
-  const anyRecommended = eligibleVisible.find((model) => meta(model.id).recommended);
+  const anyRecommended = eligibleVisible.find((model) =>
+    isRecommendedModel(model, meta, input.privacyTier),
+  );
   if (anyRecommended) {
     return anyRecommended;
   }

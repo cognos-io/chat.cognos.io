@@ -67,6 +67,8 @@ describe('modelSupportsCapability', () => {
 describe('ModelSelectorComponent', () => {
   let fixture: ComponentFixture<ModelSelectorComponent>;
   let selectModel: ReturnType<typeof vi.fn>;
+  let setModelQuickFilter: ReturnType<typeof vi.fn>;
+  let modelQuickFilter: ReturnType<typeof signal<'recommended' | null>>;
   let hiddenModels: ReturnType<typeof signal<string[]>>;
   let selectedProject: ReturnType<
     typeof signal<{ decryptedData: { defaultModelId: string } } | null>
@@ -85,6 +87,10 @@ describe('ModelSelectorComponent', () => {
 
   beforeEach(async () => {
     selectModel = vi.fn();
+    setModelQuickFilter = vi.fn((filter: 'recommended' | null) =>
+      modelQuickFilter.set(filter),
+    );
+    modelQuickFilter = signal<'recommended' | null>('recommended');
     hiddenModels = signal<string[]>(['hidden-model']);
     selectedProject = signal<{ decryptedData: { defaultModelId: string } } | null>(
       null,
@@ -99,6 +105,7 @@ describe('ModelSelectorComponent', () => {
           useValue: {
             modelList: signal([recommended, plain, hidden]),
             selectedModel: signal(recommended),
+            privacyTier: signal('eu'),
             selectModel,
           },
         },
@@ -108,6 +115,8 @@ describe('ModelSelectorComponent', () => {
             pinnedModels: signal<string[]>([]),
             recentModels: signal<string[]>([]),
             hiddenModels,
+            modelQuickFilter,
+            setModelQuickFilter,
             isModelPinned: () => false,
             pinModel: vi.fn(),
             unpinModel: vi.fn(),
@@ -132,6 +141,15 @@ describe('ModelSelectorComponent', () => {
     expect(rowNames()).toEqual(['Gemini Flash']);
   });
 
+  it('restores no active filter when that was the remembered state', () => {
+    modelQuickFilter.set(null);
+    fixture = TestBed.createComponent(ModelSelectorComponent);
+    fixture.detectChanges();
+
+    expect(rowNames()).toContain('Gemini Flash');
+    expect(rowNames()).toContain('Plain Model');
+  });
+
   it('shows all eligible models when the Recommended chip is toggled off', () => {
     const recommendedChip = fixture.nativeElement.querySelector(
       '.model-selector__chip',
@@ -143,6 +161,7 @@ describe('ModelSelectorComponent', () => {
     expect(rowNames()).toContain('Gemini Flash');
     expect(rowNames()).toContain('Plain Model');
     expect(rowNames()).not.toContain('Hidden Model');
+    expect(setModelQuickFilter).toHaveBeenCalledWith(null);
   });
 
   it('narrows by search and overrides the default Recommended chip', () => {
