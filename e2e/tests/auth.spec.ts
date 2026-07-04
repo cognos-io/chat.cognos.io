@@ -92,8 +92,9 @@ test.describe('auth + account key flow', () => {
     await acknowledgeAccountKey(page);
     await createEncryptedBackup(page);
 
-    // Change the password from account settings.
-    await page.goto('/account');
+    // Change the password from Security & keys (relocated off the Account
+    // home in b7d99232 — the password card no longer lives at /account).
+    await page.goto('/account/security');
     await page.getByLabel('Current password').fill(account.password);
     await page.getByLabel('New password').fill(newPassword);
     await page.getByRole('button', { name: /change password/i }).click();

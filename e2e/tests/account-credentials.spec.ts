@@ -11,10 +11,11 @@ import {
   submitRegister,
 } from './helpers';
 
-// The account page lets a signed-in user change their email and password.
-// Email change goes through PocketBase's verified request → confirm flow (which
-// needs email delivery), so here we exercise only the request-side UI and its
-// validation — the SMTP-dependent confirmation is covered by backend tests.
+// A signed-in user changes their email from the Account home (/account) and
+// their password from Security & keys (/account/security). Email change goes
+// through PocketBase's verified request → confirm flow (which needs email
+// delivery), so here we exercise only the request-side UI and its validation —
+// the SMTP-dependent confirmation is covered by backend tests.
 test.describe('account credentials surface', () => {
   test('email card validates the new address before enabling the request', async ({
     page,
@@ -61,7 +62,9 @@ test.describe('account credentials surface', () => {
     await acknowledgeAccountKey(page);
     await createEncryptedBackup(page);
 
-    await page.goto('/account');
+    // The password card lives on Security & keys, not the Account home (moved
+    // in b7d99232, before this test was last touched).
+    await page.goto('/account/security');
 
     await expect(page.getByLabel('Current password')).toBeVisible();
     await expect(page.getByLabel('New password')).toBeVisible();
