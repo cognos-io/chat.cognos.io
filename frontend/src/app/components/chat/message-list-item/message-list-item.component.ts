@@ -42,6 +42,8 @@ import {
 import { MessageSources } from '@app/components/chat/message-sources/message-sources';
 import { RedactedMarkdownComponent } from '@app/components/chat/redacted-markdown/redacted-markdown.component';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
+import { DocumentExportService } from '@app/documents/document-export.service';
+import { DocFormat } from '@app/documents/document.types';
 import { MemoryScope } from '@app/interfaces/compaction';
 import { Message, isMessageFromUser } from '@app/interfaces/message';
 import { Model } from '@app/interfaces/model';
@@ -144,6 +146,31 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
               [title]="t('chat.message.regenerate')"
               (click)="onRegenerate()"
             />
+          }
+
+          @if (canDownload()) {
+            <span class="message-list-item__download-wrap">
+              <cog-icon-button
+                name="download"
+                [tone]="downloadFailed() ? 'danger' : undefined"
+                [title]="
+                  downloadFailed()
+                    ? t('chat.message.documentRenderFailed')
+                    : t('chat.message.download')
+                "
+                [selected]="downloadMenuOpen()"
+                [disabled]="exporting()"
+                (click)="toggleDownloadMenu($event)"
+              />
+              @if (downloadMenuOpen()) {
+                <div class="message-list-item__download-menu">
+                  <cog-menu
+                    [items]="downloadMenuItems()"
+                    (itemSelect)="onDownloadSelect($event)"
+                  />
+                </div>
+              }
+            </span>
           }
 
           @if (message.expires) {
@@ -492,6 +519,18 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       z-index: 10;
     }
 
+    .message-list-item__download-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .message-list-item__download-menu {
+      position: absolute;
+      top: calc(100% + var(--cog-space-050));
+      left: 0;
+      z-index: 10;
+    }
+
     .message-list-item__empty,
     .message-list-item__deleted {
       margin: 0;
@@ -692,6 +731,7 @@ export class MessageListItemComponent implements OnChanges {
   private readonly _compactionService = inject(CompactionService);
   private readonly _scopedMemory = inject(ScopedMemoryService);
   private readonly _toast = inject(CognosToastService);
+  private readonly _documentExport = inject(DocumentExportService);
   private readonly _cdr = inject(ChangeDetectorRef);
   private readonly _dialog = inject(Dialog);
   private readonly _transloco = inject(TranslocoService);
@@ -711,8 +751,20 @@ export class MessageListItemComponent implements OnChanges {
   readonly copied = signal(false);
   private _copiedTimer?: ReturnType<typeof setTimeout>;
 
+  // Download-options menu (docx/pdf/markdown) offered on completed assistant
+  // messages. `exporting` guards against overlapping renders (the worker call
+  // is async); `downloadFailed` mirrors `copied` — a transient error state on
+  // the same button, shown for a moment then reverted.
+  readonly downloadMenuOpen = signal(false);
+  readonly exporting = signal(false);
+  readonly downloadFailed = signal(false);
+  private _downloadFailedTimer?: ReturnType<typeof setTimeout>;
+
   constructor() {
-    inject(DestroyRef).onDestroy(() => clearTimeout(this._copiedTimer));
+    inject(DestroyRef).onDestroy(() => {
+      clearTimeout(this._copiedTimer);
+      clearTimeout(this._downloadFailedTimer);
+    });
   }
 
   onCopied(): void {
@@ -946,15 +998,16 @@ export class MessageListItemComponent implements OnChanges {
     this.copyMenuOpen.set(false);
   }
 
-  // Close the copy menu when clicking anywhere outside this message item.
+  // Close the copy/download menus when clicking anywhere outside this message item.
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (!this.copyMenuOpen()) {
+    if (!this.copyMenuOpen() && !this.downloadMenuOpen()) {
       return;
     }
     const target = event.target;
     if (target instanceof Node && !this._elementRef.nativeElement.contains(target)) {
       this.copyMenuOpen.set(false);
+      this.downloadMenuOpen.set(false);
     }
   }
 
@@ -1150,6 +1203,65 @@ export class MessageListItemComponent implements OnChanges {
     if (this.message) {
       this._messageService.regenerate(this.message);
     }
+  }
+
+  // A completed assistant message with content can be exported to a file
+  // (spec docs/specs/document-generation.md §5.1). record_id is not required —
+  // export works on any decrypted content, unlike regenerate/delete which need
+  // a persisted record to act on.
+  canDownload(): boolean {
+    const message = this.message;
+    return (
+      !!message &&
+      !isMessageFromUser(message.decryptedData) &&
+      !message.isStreaming &&
+      !message.decryptedData.deleted &&
+      !!message.decryptedData.content
+    );
+  }
+
+  downloadMenuItems(): CognosMenuItem[] {
+    return [
+      { title: this._transloco.translate('chat.message.downloadDocx') },
+      { title: this._transloco.translate('chat.message.downloadPdf') },
+      { title: this._transloco.translate('chat.message.downloadMarkdown') },
+    ];
+  }
+
+  toggleDownloadMenu(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.downloadMenuOpen.update((open) => !open);
+  }
+
+  // Renders and downloads the message in the chosen format. `exporting` blocks
+  // overlapping calls (the render worker call is async) rather than relying
+  // solely on the disabled button, since the guard must hold even if it's
+  // invoked programmatically.
+  onDownloadSelect(index: number): void {
+    this.downloadMenuOpen.set(false);
+    const message = this.message;
+    const format: DocFormat | undefined = (['docx', 'pdf', 'markdown'] as const)[index];
+    if (!message || !format || this.exporting()) {
+      return;
+    }
+    this.exporting.set(true);
+    this._documentExport
+      .downloadMessageAs(message, format)
+      .catch(() => this.onDownloadFailed())
+      .finally(() => {
+        this.exporting.set(false);
+        this._cdr.markForCheck();
+      });
+  }
+
+  private onDownloadFailed(): void {
+    this.downloadFailed.set(true);
+    clearTimeout(this._downloadFailedTimer);
+    this._downloadFailedTimer = setTimeout(() => {
+      this.downloadFailed.set(false);
+      this._cdr.markForCheck();
+    }, 2000);
   }
 
   // Inline-edit state for a user message. Editing forks the conversation: the
