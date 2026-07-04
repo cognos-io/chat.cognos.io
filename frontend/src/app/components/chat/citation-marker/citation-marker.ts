@@ -4,12 +4,15 @@ import {
   computed,
   inject,
   input,
-  signal,
 } from '@angular/core';
 
 import { TranslocoService } from '@jsverse/transloco';
 
-import { CognosIconComponent } from '@cognos/ui-angular';
+import {
+  CognosIconComponent,
+  HoverIntentPopoverDirective,
+  SafeTriangleDirective,
+} from '@cognos/ui-angular';
 
 import {
   Citation,
@@ -33,29 +36,26 @@ import { avatarLetter } from '../message-sources/message-sources';
 @Component({
   selector: 'app-citation-marker',
   standalone: true,
-  imports: [CognosIconComponent],
+  imports: [CognosIconComponent, SafeTriangleDirective, HoverIntentPopoverDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <span
-      class="citation-marker"
-      (mouseenter)="reveal()"
-      (mouseleave)="dismiss()"
-      (focusin)="reveal()"
-      (focusout)="dismiss()"
-    >
+    <span class="citation-marker" cogHoverIntent #hi="cogHoverIntent">
       <button
         type="button"
         class="citation-marker__chip"
-        [attr.aria-expanded]="open()"
+        [attr.aria-expanded]="hi.opened()"
         [attr.aria-label]="chipLabel()"
-        (click)="toggle()"
-        (keydown.escape)="close($event)"
       >
         {{ number() }}
       </button>
 
-      @if (open()) {
-        <span class="citation-marker__card" role="dialog" [attr.aria-label]="domain()">
+      @if (hi.opened()) {
+        <span
+          class="citation-marker__card"
+          cogHoverIntentPopover
+          role="dialog"
+          [attr.aria-label]="domain()"
+        >
           <span class="citation-marker__head">
             <span class="citation-marker__avatar" aria-hidden="true">{{
               letter()
@@ -127,9 +127,9 @@ import { avatarLetter } from '../message-sources/message-sources';
     }
 
     .citation-marker__card {
-      position: absolute;
-      bottom: calc(100% + var(--cog-space-050));
-      left: 0;
+      /* Position (fixed left/top) is owned by the cogHoverIntent directive,
+         which keeps the card inside the viewport and drives the hover funnel. */
+      position: fixed;
       z-index: 20;
       display: grid;
       gap: var(--cog-space-075);
@@ -216,8 +216,6 @@ export class CitationMarker {
   readonly index = input.required<number>();
   readonly citation = input.required<Citation>();
 
-  protected readonly open = signal(false);
-
   protected readonly number = computed(() => this.index() + 1);
   protected readonly title = computed(() => (this.citation().title ?? '').trim());
   protected readonly snippet = computed(() => (this.citation().snippet ?? '').trim());
@@ -239,23 +237,4 @@ export class CitationMarker {
       domain: this.domain(),
     }),
   );
-
-  protected reveal(): void {
-    this.open.set(true);
-  }
-
-  protected dismiss(): void {
-    this.open.set(false);
-  }
-
-  protected toggle(): void {
-    this.open.update((value) => !value);
-  }
-
-  protected close(event: Event): void {
-    if (this.open()) {
-      event.stopPropagation();
-      this.open.set(false);
-    }
-  }
 }
