@@ -98,6 +98,13 @@ export function isVisionModel(model: Model): boolean {
   return model.supportsVision;
 }
 
+// Web search = the model can search the public web and cite live sources
+// (spec docs/specs/web-search.md §4.3). EU-only enforcement lives server-side;
+// the flag as delivered already reflects it.
+export function isWebSearchModel(model: Model): boolean {
+  return model.supportsWebSearch;
+}
+
 // Reasoning is declared by the model offering reasoning-effort tiers (§5.3).
 export function isReasoningModel(model: Model): boolean {
   return (model.reasoningEfforts ?? []).length > 0;
@@ -315,6 +322,7 @@ export function modelStrengthPills(
   if (isReasoningModel(model)) keys.push('reasoning');
   if (isImageModel(model)) keys.push('image');
   if (isVisionModel(model)) keys.push('vision');
+  if (isWebSearchModel(model)) keys.push('webSearch');
   if (isLongContextModel(model)) keys.push('longContext');
   return keys;
 }

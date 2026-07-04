@@ -26,21 +26,33 @@ import { ModelService } from '@app/services/model.service';
   ],
   template: `
     <div class="composer-tools" *transloco="let t">
-      <!-- Web search ships later; shown disabled so the menu reads complete. -->
-      <div class="composer-tools__row composer-tools__row--disabled">
+      <!-- Web search: on by default for capable models, per-conversation
+           opt-out; disabled with a hint when the selected model can't search. -->
+      <div
+        class="composer-tools__row"
+        [class.composer-tools__row--disabled]="!tools.webSearchSupported()"
+      >
         <cog-icon name="search" [size]="18" tone="text-subtle" />
-        <div class="composer-tools__copy">
+        <label
+          class="composer-tools__copy"
+          [class.composer-tools__copy--clickable]="tools.webSearchSupported()"
+          [attr.for]="tools.webSearchSupported() ? webSearchToggleId : null"
+        >
           <span class="composer-tools__title">{{
             t('chat.composer.tools.webSearch.title')
           }}</span>
           <span class="composer-tools__desc">{{
-            t('chat.composer.tools.webSearch.description')
+            tools.webSearchSupported()
+              ? t('chat.composer.tools.webSearch.description')
+              : t('chat.composer.tools.webSearch.unsupported')
           }}</span>
-        </div>
+        </label>
         <cog-toggle
-          [checked]="false"
-          [disabled]="true"
+          [inputId]="webSearchToggleId"
+          [checked]="tools.webSearchEnabled()"
+          [disabled]="!tools.webSearchSupported()"
           [label]="t('chat.composer.tools.webSearch.title')"
+          (checkedChange)="tools.setWebSearch($event)"
         />
       </div>
 
@@ -214,4 +226,6 @@ export class ComposerToolsComponent {
 
   // Ties the Generate image label to its switch so clicking the text toggles it.
   readonly imageToggleId = 'composer-tool-image';
+  // Same, for the Web search switch.
+  readonly webSearchToggleId = 'composer-tool-web-search';
 }
