@@ -20,14 +20,15 @@ const WEB_SEARCH_MODEL_NAME = 'Claude Sonnet 4.6';
 
 // The mock provider (cmd/mock-ai-provider) returns this accented reply and
 // anchors a citation onto "légal" whenever the web_search tool is on the wire.
-// The proxy URL is a Vertex grounding-redirect link; its displayable domain
-// lives in the citation title (example.com), which is what the UI must show.
+// The annotation URL is a grounding-redirect PROXY link that the backend
+// resolves server-side to the real destination before streaming/persisting —
+// so the UI must show the destination URL with the domain title.
 // The inline citation chip is inserted right after the anchored word "légal",
 // splitting the reply's text node — so assert on a contiguous tail fragment.
 const MOCK_REPLY_TAIL = 'est fixé par le canton.';
-// citation[0]: the annotation source (real URL + domain title). The chip and the
-// first source row both resolve to this.
-const MOCK_CITATION_URL = 'https://example.com/geneva-minimum-wage';
+// citation[0]: the annotation source, post-resolution (destination URL,
+// domain title). The chip and the first source row both resolve to this.
+const MOCK_CITATION_URL = 'https://www.ge.ch/geneva-minimum-wage-2026';
 const MOCK_CITATION_TITLE = 'example.com';
 // citation[1]: the title-less grounding-redirect proxy source. Its host must
 // never surface as a label — the UI shows a generic fallback instead.
@@ -190,7 +191,7 @@ test.describe('web search', () => {
 
     // Don't let the external source actually navigate in CI; the popup event
     // still fires, proving the link was reachable and clickable.
-    await page.context().route('https://example.com/**', (route) => route.abort());
+    await page.context().route('https://www.ge.ch/**', (route) => route.abort());
     const popupPromise = page.waitForEvent('popup');
     await openLink.click();
     const popup = await popupPromise;
