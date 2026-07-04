@@ -38,12 +38,10 @@ Properties this gives us:
   only, never URLs, titles, or query text.
 - **EU residency is enforced at sync time, not request time** — a model that
   isn't EU-hosted can never present the capability in the first place.
-- **Users click real URLs, not Google proxies.** Vertex grounding-redirect
-  links are resolved server-side once per completion (destination captured
-  from the redirect, never fetched; **never cached** — Google's terms forbid
-  building a Link index) before streaming and sealing. Clicks go straight to
-  the publisher, and stored citations don't rot when the proxy expires
-  (~30 days). Resolution failures keep the proxy URL.
+- **Users click real URLs, not Google proxies** — Vertex grounding-redirect
+  links are resolved server-side before streaming and sealing; see
+  [grounding-redirect-resolution](./grounding-redirect-resolution.md) for the
+  full rule and its compliance constraints.
 - **Silent drop keeps model switching safe**: changing to a non-searching model
   mid-conversation just loses the tool, never errors.
 - **Every search is billed**: a per-search floor fee applies whenever the
