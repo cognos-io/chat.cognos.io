@@ -557,7 +557,8 @@
         "label": "Tools",
         "webSearch": {
           "title": "Web search",
-          "description": "Search the public web and cite live sources in the answer."
+          "description": "The model can look things up on the web. Your question may be sent to a search engine.",
+          "unsupported": "This model can't search the web. Choose another model to use it."
         },
         "generateImage": {
           "title": "Generate image",
@@ -792,7 +793,14 @@
       "reasoningDisclaimer": "Reasoning supplied by the model. It may be incomplete or incorrect.",
       "regenerate": "Regenerate response",
       "copied": "Copied",
-      "decryptFailed": "This message couldn't be unlocked on this device."
+      "decryptFailed": "This message couldn't be unlocked on this device.",
+      "searching": "Searching the web…",
+      "sources": {
+        "searchedOne": "Searched {{ count }} source",
+        "searchedOther": "Searched {{ count }} sources",
+        "open": "Open source",
+        "marker": "Source {{ number }}: {{ domain }}"
+      }
     },
     "models": {
       "costTier": {
@@ -831,7 +839,8 @@
         "lowCost": "Low cost",
         "private": "Private",
         "powerful": "Powerful",
-        "vision": "Vision"
+        "vision": "Vision",
+        "webSearch": "Web search"
       },
       "search": {
         "placeholder": "Search models, e.g. “cheap”, “vision”, “private”…",

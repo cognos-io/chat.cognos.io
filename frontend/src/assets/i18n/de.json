@@ -557,7 +557,8 @@
         "label": "Werkzeuge",
         "webSearch": {
           "title": "Websuche",
-          "description": "Durchsucht das öffentliche Web und zitiert aktuelle Quellen in der Antwort."
+          "description": "Das Modell kann Dinge im Web nachschlagen. Deine Frage wird dabei möglicherweise an eine Suchmaschine gesendet.",
+          "unsupported": "Dieses Modell kann nicht im Web suchen. Wähle ein anderes Modell, um die Funktion zu nutzen."
         },
         "generateImage": {
           "title": "Bild erzeugen",
@@ -792,7 +793,14 @@
       "reasoningDisclaimer": "Begründung vom Modell bereitgestellt. Sie kann unvollständig oder falsch sein.",
       "regenerate": "Antwort neu generieren",
       "copied": "Kopiert",
-      "decryptFailed": "Diese Nachricht konnte auf diesem Gerät nicht entsperrt werden."
+      "decryptFailed": "Diese Nachricht konnte auf diesem Gerät nicht entsperrt werden.",
+      "searching": "Suche im Web…",
+      "sources": {
+        "searchedOne": "{{ count }} Quelle durchsucht",
+        "searchedOther": "{{ count }} Quellen durchsucht",
+        "open": "Quelle öffnen",
+        "marker": "Quelle {{ number }}: {{ domain }}"
+      }
     },
     "models": {
       "costTier": {
@@ -831,7 +839,8 @@
         "lowCost": "Günstig",
         "private": "Privat",
         "powerful": "Leistungsstark",
-        "vision": "Bildverständnis"
+        "vision": "Bildverständnis",
+        "webSearch": "Websuche"
       },
       "search": {
         "placeholder": "Modelle suchen, z. B. „günstig“, „vision“, „privat“…",

@@ -557,7 +557,8 @@
         "label": "Ferramentas",
         "webSearch": {
           "title": "Pesquisa na web",
-          "description": "Pesquisa na web pública e cita fontes ao vivo na resposta."
+          "description": "O modelo pode procurar informação na web. A tua pergunta pode ser enviada a um motor de busca.",
+          "unsupported": "Este modelo não consegue pesquisar na web. Escolhe outro modelo para a usar."
         },
         "generateImage": {
           "title": "Gerar imagem",
@@ -792,7 +793,14 @@
       "reasoningDisclaimer": "Raciocínio fornecido pelo modelo. Pode estar incompleto ou incorreto.",
       "regenerate": "Gerar resposta novamente",
       "copied": "Copiado",
-      "decryptFailed": "Não foi possível desbloquear esta mensagem neste dispositivo."
+      "decryptFailed": "Não foi possível desbloquear esta mensagem neste dispositivo.",
+      "searching": "A pesquisar na web…",
+      "sources": {
+        "searchedOne": "{{ count }} fonte consultada",
+        "searchedOther": "{{ count }} fontes consultadas",
+        "open": "Abrir fonte",
+        "marker": "Fonte {{ number }}: {{ domain }}"
+      }
     },
     "models": {
       "costTier": {
@@ -831,7 +839,8 @@
         "lowCost": "Económico",
         "private": "Privado",
         "powerful": "Potente",
-        "vision": "Visão"
+        "vision": "Visão",
+        "webSearch": "Pesquisa web"
       },
       "search": {
         "placeholder": "Pesquisar modelos, p. ex. «barato», «visão», «privado»…",

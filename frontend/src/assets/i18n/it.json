@@ -557,7 +557,8 @@
         "label": "Strumenti",
         "webSearch": {
           "title": "Ricerca web",
-          "description": "Cerca nel web pubblico e cita fonti in tempo reale nella risposta."
+          "description": "Il modello può cercare informazioni sul web. La tua domanda potrebbe essere inviata a un motore di ricerca.",
+          "unsupported": "Questo modello non può cercare sul web. Scegli un altro modello per usarla."
         },
         "generateImage": {
           "title": "Genera immagine",
@@ -792,7 +793,14 @@
       "reasoningDisclaimer": "Ragionamento fornito dal modello. Potrebbe essere incompleto o errato.",
       "regenerate": "Rigenera risposta",
       "copied": "Copiato",
-      "decryptFailed": "Non è stato possibile sbloccare questo messaggio su questo dispositivo."
+      "decryptFailed": "Non è stato possibile sbloccare questo messaggio su questo dispositivo.",
+      "searching": "Ricerca sul web…",
+      "sources": {
+        "searchedOne": "{{ count }} fonte consultata",
+        "searchedOther": "{{ count }} fonti consultate",
+        "open": "Apri fonte",
+        "marker": "Fonte {{ number }}: {{ domain }}"
+      }
     },
     "models": {
       "costTier": {
@@ -831,7 +839,8 @@
         "lowCost": "Economico",
         "private": "Privato",
         "powerful": "Potente",
-        "vision": "Visione"
+        "vision": "Visione",
+        "webSearch": "Ricerca web"
       },
       "search": {
         "placeholder": "Cerca modelli, es. «economico», «visione», «privato»…",

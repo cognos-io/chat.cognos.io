@@ -557,7 +557,8 @@
         "label": "Outils",
         "webSearch": {
           "title": "Recherche web",
-          "description": "Recherche sur le web public et cite des sources en direct dans la réponse."
+          "description": "Le modèle peut rechercher des informations sur le web. Votre question est susceptible d'être envoyée à un moteur de recherche.",
+          "unsupported": "Ce modèle ne peut pas effectuer de recherche sur le web. Choisissez un autre modèle pour l'utiliser."
         },
         "generateImage": {
           "title": "Générer une image",
@@ -792,7 +793,14 @@
       "reasoningDisclaimer": "Raisonnement fourni par le modèle. Il peut être incomplet ou incorrect.",
       "regenerate": "Régénérer la réponse",
       "copied": "Copié",
-      "decryptFailed": "Ce message n'a pas pu être déverrouillé sur cet appareil."
+      "decryptFailed": "Ce message n'a pas pu être déverrouillé sur cet appareil.",
+      "searching": "Recherche sur le web…",
+      "sources": {
+        "searchedOne": "{{ count }} source consultée",
+        "searchedOther": "{{ count }} sources consultées",
+        "open": "Ouvrir la source",
+        "marker": "Source {{ number }} : {{ domain }}"
+      }
     },
     "models": {
       "costTier": {
@@ -831,7 +839,8 @@
         "lowCost": "Économique",
         "private": "Privé",
         "powerful": "Puissant",
-        "vision": "Vision"
+        "vision": "Vision",
+        "webSearch": "Recherche web"
       },
       "search": {
         "placeholder": "Rechercher des modèles, p. ex. « pas cher », « vision », « privé »…",
