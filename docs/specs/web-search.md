@@ -534,10 +534,14 @@ landed.** Pre-launch this is low stakes, but the ordering is load-bearing.
 2. Does Requesty forward the Responses API `response.web_search_call.*` events per provider
    family?
    - **Resolved for two of three families:** Vertex Gemini — yes, but after the answer
-     (citations-only UX). Azure OpenAI — yes, before the answer (live status works). Anthropic
-     EU — **still blocked by the Requesty org provider allowlist**; todo(ewan): enable the
-     Anthropic provider in the dashboard, then rerun that leg (request template in the spike
-     scratchpad; captures for the other families are in backend testdata).
+     (citations-only UX). Azure OpenAI — yes, before the answer (live status works).
+   - **Claude family — deliberately deferred:** Anthropic direct offers no zero-data-retention
+     in Europe, so Claude runs via Bedrock (current org setup) or Vertex. Only **Vertex**
+     Claude supports web search; Bedrock Claude has no `supports_web_search`, so today's
+     Claude models are simply non-searching (tool never attached). When the org switches
+     Claude from Bedrock to Vertex (planned, for tool support), run the `vertex/claude*` spike
+     leg first and add the family to the gateway's verified offset-unit table — until then it
+     sits in the unknown-family fallback (anchors dropped, citations kept).
 3. ~~Does Bifrost translate Responses API requests for Chat-Completions-only providers
    (Infomaniak)?~~ **Resolved:** yes, via per-provider `AllowedRequests` opt-in fallback
    producing Responses-shaped streams — single gateway code path. See §5.1.
