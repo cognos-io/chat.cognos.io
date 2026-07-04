@@ -7,10 +7,11 @@ name: model-capability-gating
 
 Each model in the catalogue declares what it can **produce**:
 
-| Capability        | Flag                        | Operation                              |
-| ----------------- | --------------------------- | -------------------------------------- |
-| Text completion   | `supports_text_completion`  | `/completions`, `/…/complete`          |
-| Image generation  | `supports_image_generation` | `/…/image`                             |
+| Capability       | Flag                        | Operation                                 |
+| ---------------- | --------------------------- | ----------------------------------------- |
+| Text completion  | `supports_text_completion`  | `/completions`, `/…/complete`             |
+| Image generation | `supports_image_generation` | `/…/image`                                |
+| Web search       | `supports_web_search`       | tool inside `/completions`, `/…/complete` |
 
 These are independent. Most chat models are text-only. The Gemini image model is
 **image-only** (`supports_text_completion: false`). A future multimodal model
@@ -32,6 +33,11 @@ Enforced in **two places**:
       for text completion"
     - image generation + `!supports_image_generation` → "Model does not support
       image generation"
+
+**Exception — web search gates differently.** It is a tool _inside_ a text
+completion, not the requested operation, so an incapable model gets the tool
+**silently dropped** (no `400`) and the completion proceeds. See
+[web-search](./web-search.md).
 
 ```mermaid
 flowchart LR

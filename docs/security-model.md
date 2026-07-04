@@ -589,7 +589,38 @@ from the union above.)
 - Scoped redaction inherits the best-effort detection caveat (§14.1): only recognised
   high-confidence values are tokenised.
 
-## 17. Open limitations
+## 17. Web search (provider-native)
+
+The model can search the web during a completion when the selected model supports it (on by
+default for capable models; per-conversation opt-out in the composer). Cognos never calls a
+search engine itself: the backend attaches one `web_search` tool declaration and the AI
+provider performs the search.
+
+What this changes about exposure:
+
+- The search query is **derived by the model from the conversation context**, which was already
+  redacted client-side (§14) before leaving the device — so redacted values can only reach the
+  search backend as placeholder tokens.
+- The query reaches the **provider's search backend** (e.g. Google's index behind Gemini
+  grounding). That backend's retention sits **outside** both Cognos's no-persistence boundary
+  and Requesty's documented zero-retention proxying. This is the feature's residual exposure
+  and the reason for the opt-out and the plain-language disclosure in the composer.
+- Some providers return **redirect URLs** for sources (e.g. Vertex grounding links via
+  `vertexaisearch.cloud.google.com`); opening a source then routes the click through that
+  provider. Source links open with `rel="noopener noreferrer"` so the chat origin is not leaked.
+
+What does not change:
+
+- The in-flight plaintext boundary (§2–§4) already covers this flow; no new plaintext at rest.
+- Citations (URLs, titles, snippets) are message content: streamed to the client, then sealed
+  into the encrypted message blob. The server-visible surface gains only an aggregate
+  `search_count` on the billing ledger. Logs carry counts only — never URLs, titles, or query
+  text.
+- Web search is only offered on **EU-hosted** models served through the EU router; the model
+  catalogue sync forces the capability off for anything else. (The search index behind the
+  provider's tool remains global — marketing copy must not claim otherwise.)
+
+## 18. Open limitations
 
 This model does **not** attempt to protect against a malicious server during live completion
 requests, because the backend must see plaintext to call AI providers (this includes the compaction
@@ -603,7 +634,7 @@ This model is designed to protect against:
 - accidental internal access to stored chat history
 - server-side compromise that does not also obtain the user's Account Key
 
-## 18. Related implementation areas
+## 19. Related implementation areas
 
 Primary implementation areas:
 
@@ -619,6 +650,13 @@ Primary implementation areas:
 - `frontend/src/app/interfaces/model.ts`
 - `backend/internal/handler/secure_records.go` (VaultSession{Get,Upsert,Delete})
 - `backend/db/migrations/*_created_vault_session_wrap_keys.go`
+
+Web search (§17):
+
+- `backend/internal/gateway/bifrost_client.go` (tool attachment, citation normalisation)
+- `backend/internal/handler/complete.go` (`enableWebSearch` gate, SSE, encrypted persistence)
+- `backend/internal/catalogue/requestysync/enrich.go` (EU-only capability predicate)
+- `docs/specs/web-search.md`, `docs/business_processes/web-search.md`
 
 Compaction, memory, and scoped redaction (§15–§16):
 

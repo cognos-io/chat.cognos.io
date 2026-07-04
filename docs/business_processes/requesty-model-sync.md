@@ -18,10 +18,15 @@ models exist or where they run.
 | `reasoning_efforts` + `default_reasoning_effort`     | `enabled`, `whitelisted`                            |
 | `input/output_usd_per_million_tokens`                | `privacy_tier`, `hosting_country`, `hosting_region` |
 | `input_context_tokens`, `max_output_tokens`          | which models exist, name, slug, tags                |
+| capability flags incl. `supports_web_search`         |                                                     |
 
-Requesty's `geolocation` is informational only — **residency stays curated**, so
-the sync can never silently move a model out of region or re-enable one you
-disabled.
+Requesty's `geolocation` never _moves_ a model — **residency stays curated**, so
+the sync can never silently relocate a model or re-enable one you disabled. It
+is used in exactly one fail-safe direction: `supports_web_search` survives the
+sync **only when `geolocation == "eu"`** (exact string match — never an
+id-suffix regex, which would assert EU residency more strongly than Requesty
+itself does). Any other value forces the flag off, so a mislabelled model loses
+web search rather than gaining it. See [web-search](./web-search.md).
 
 ## How it runs
 
