@@ -646,11 +646,12 @@ describe('stream completion helpers', () => {
     ]);
   });
 
-  it('drops accumulated citations when the assistant placeholder is removed on error (pinned)', () => {
+  it('drops accumulated citations when the assistant placeholder is removed on error', () => {
     // On a retryable stream error MessageService calls
     // removeStreamingAssistantMessage, so citations accumulated on the
     // placeholder are discarded — they only survive via the encrypted `complete`
-    // carry-over path. Pins that an errored turn is NOT a partial-with-sources.
+    // carry-over path. Locks in that an errored turn is NOT a
+    // partial-with-sources.
     const streaming = applyCompletionWebSearchStreamDelta(
       applyCompletionStreamDelta(
         [userMessage()],

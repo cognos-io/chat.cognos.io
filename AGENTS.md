@@ -98,6 +98,12 @@ English-only. Cognos is a **Swiss company serving a European audience**, so alwa
 Tests should cover sunny, rainy and edge cases including invalid data gets handled correctly
 and behaviour is expected.
 
+Some tests "pin" behaviour: they assert what the code **currently does** (a quirk, default, or
+wire contract we depend on) rather than what anyone designed. If a pin test fails after an
+intentional change, update the test deliberately — it exists to make behaviour changes
+conscious, never accidental. Write pin comments so the reader knows why the current behaviour
+was kept.
+
 When testing locally, run the backend, frontend and web on non-standard ports so as not to conflict
 with other development ports.
 

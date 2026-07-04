@@ -253,7 +253,7 @@ describe('decryptMessageData', () => {
     expect(result?.content).toBe('hi');
   });
 
-  it('returns null when the decrypted payload fails schema validation (pinned)', () => {
+  it('returns null when the decrypted payload fails schema validation', () => {
     // Bad citations type → MessageData.parse throws → decryptMessageData swallows
     // it and returns null, so the search index skips the record instead of
     // indexing junk or surfacing a decrypt-failed placeholder.

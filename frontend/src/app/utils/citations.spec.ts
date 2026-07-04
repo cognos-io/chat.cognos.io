@@ -174,9 +174,10 @@ describe('insertCitationMarkers', () => {
     );
   });
 
-  // Named regression rows for anchor shapes the property test explores in bulk —
-  // documenting the exact pinned behaviour for each degenerate anchor.
-  describe('degenerate anchor shapes (pinned behaviour)', () => {
+  // Named regression rows for anchor shapes the property test explores in bulk.
+  // These document what the code currently does with each degenerate anchor —
+  // change them deliberately, not by accident (see CLAUDE.md on "pin" tests).
+  describe('degenerate anchor shapes (documents current behaviour)', () => {
     it('drops an inverted anchor (end < start), never guessing', () => {
       expect(
         insertCitationMarkers('abcdef', [{ citation: 0, start: 5, end: 2 }], 1),
@@ -208,10 +209,11 @@ describe('insertCitationMarkers', () => {
       expect(findMarkerIndices(out)).toEqual([0]);
     });
 
-    it('inserts inside markdown emphasis markers when the anchor spans them (pinned)', () => {
+    it('inserts inside markdown emphasis markers when the anchor spans them', () => {
       // The anchor indexes the RAW markdown, so a marker can land between the
-      // closing "bold" text and the "**" delimiters. We pin this rather than
-      // trying to be markdown-aware (spec §6: insert on the source, not the DOM).
+      // closing "bold" text and the "**" delimiters. Intentional: we insert on
+      // the source, not the DOM, and don't try to be markdown-aware (spec §6).
+      // This test locks that choice in.
       const out = insertCitationMarkers(
         '**bold**',
         [{ citation: 0, start: 2, end: 6 }],
@@ -220,10 +222,10 @@ describe('insertCitationMarkers', () => {
       expect(out).toBe(`**bold${citationMarkerToken(0)}**`);
     });
 
-    it('emits the marker on otherwise-empty content when the anchor is at 0 (pinned)', () => {
+    it('emits the marker on otherwise-empty content when the anchor is at 0', () => {
       // Empty content + a zero-length anchor at offset 0 is in range, so the
-      // marker is emitted (not dropped). Pinned so a future "drop empties" change
-      // is a conscious decision, not an accident.
+      // marker is emitted (not dropped). Locked in so a future "drop empties"
+      // change is a conscious decision, not an accident.
       expect(insertCitationMarkers('', [{ citation: 0, start: 0, end: 0 }], 1)).toBe(
         citationMarkerToken(0),
       );
