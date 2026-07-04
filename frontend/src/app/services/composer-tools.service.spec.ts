@@ -244,4 +244,51 @@ describe('ComposerToolsService', () => {
     service.useSuggestedImageModel();
     expect(selectModel).toHaveBeenCalledWith('gemini-2-5-flash-image');
   });
+
+  // ---- web search (spec docs/specs/web-search.md §4.2) --------------------
+
+  const searchModel = makeModel({ id: 'search-1', supportsWebSearch: true });
+
+  it('reports web search unsupported and disabled for a non-capable model', () => {
+    const { service } = setup({ selected: textModel, list: [textModel] });
+    expect(service.webSearchSupported()).toBe(false);
+    expect(service.webSearchEnabled()).toBe(false);
+  });
+
+  it('is on by default for a capable model', () => {
+    const { service } = setup({ selected: searchModel, list: [searchModel] });
+    expect(service.webSearchSupported()).toBe(true);
+    expect(service.webSearchEnabled()).toBe(true);
+  });
+
+  it('opts out per conversation without touching the model or capability', () => {
+    const { service, selectModel, setActiveCapability } = setup({
+      selected: searchModel,
+      list: [searchModel],
+    });
+    setActiveCapability.mockClear();
+
+    service.setWebSearch(false);
+    expect(service.webSearchEnabled()).toBe(false);
+    // Search never forces a model change or a capability change.
+    expect(selectModel).not.toHaveBeenCalled();
+    expect(service.requiredCapability()).toBe('text_completion');
+
+    service.toggleWebSearch();
+    expect(service.webSearchEnabled()).toBe(true);
+  });
+
+  it('clears the web-search opt-out on reset', () => {
+    const { service } = setup({ selected: searchModel, list: [searchModel] });
+    service.setWebSearch(false);
+    expect(service.webSearchEnabled()).toBe(false);
+    service.reset();
+    expect(service.webSearchEnabled()).toBe(true);
+  });
+
+  it('stays off when the model cannot search even if opted in', () => {
+    const { service } = setup({ selected: textModel, list: [textModel] });
+    service.setWebSearch(true);
+    expect(service.webSearchEnabled()).toBe(false);
+  });
 });

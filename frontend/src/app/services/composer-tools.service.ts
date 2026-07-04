@@ -35,6 +35,25 @@ export class ComposerToolsService {
 
   readonly imageGenerationEnabled = signal(false);
 
+  // Per-conversation web-search opt-out (spec docs/specs/web-search.md §4.2).
+  // Search is on by default for capable models; this flips it off for the
+  // current composer state. Reset when leaving a conversation, mirroring the
+  // image-generation mechanics. Unlike image generation it drives NO capability
+  // change and NO auto model switch — search is best-effort.
+  private readonly _webSearchOptOut = signal(false);
+
+  // True when the selected model can search the web.
+  readonly webSearchSupported = computed(
+    () => this._modelService.selectedModel().supportsWebSearch,
+  );
+
+  // The effective web-search state: on when the model supports it and the user
+  // hasn't opted out. Read by the composer toggle and by MessageService to set
+  // the request's opt-out flag.
+  readonly webSearchEnabled = computed(
+    () => this.webSearchSupported() && !this._webSearchOptOut(),
+  );
+
   // The capability the current composer state requires of the model. Never null:
   // plain chat requires text completion, the image tool requires image
   // generation (spec §2). The model selector filters on this, and ModelService
@@ -87,6 +106,16 @@ export class ComposerToolsService {
     this.applyImageGeneration(!this.imageGenerationEnabled(), true);
   }
 
+  // setWebSearch records the user's opt-in/out for the current conversation.
+  // No-op-safe when the model can't search (the toggle is disabled then).
+  setWebSearch(enabled: boolean): void {
+    this._webSearchOptOut.set(!enabled);
+  }
+
+  toggleWebSearch(): void {
+    this.setWebSearch(!this.webSearchEnabled());
+  }
+
   setImageGeneration(enabled: boolean): void {
     this.applyImageGeneration(enabled, true);
   }
@@ -106,6 +135,7 @@ export class ComposerToolsService {
     // A state reset (e.g. leaving a conversation), not a user toggle — never
     // announce a switch for it.
     this.applyImageGeneration(false, false);
+    this._webSearchOptOut.set(false);
   }
 
   // applyImageGeneration flips the tool, pushes the new required capability to
