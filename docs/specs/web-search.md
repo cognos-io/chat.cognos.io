@@ -1,7 +1,8 @@
 # Web Search
 
-- **Version:** 0.2 Draft — sources UI design + Responses API migration folded in
-- **Status:** Not started
+- **Version:** 0.3
+- **Status:** Implemented (Phases 0–3) — pending launch gates (§11 Phase 4: Requesty org
+  provider allowlist, support confirmations, strict EU enforcement)
 - **Stack:** Go (PocketBase + Bifrost gateway), Angular frontend, Requesty EU router
 - **Scope:** Provider-native web search for Requesty-routed, EU-hosted models. No Cognos-side
   agent loop, no Infomaniak search (deferred).
