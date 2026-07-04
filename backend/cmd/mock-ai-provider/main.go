@@ -22,6 +22,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unicode/utf8"
 )
 
 func main() {
@@ -403,7 +404,29 @@ const (
 	mockCitationURL    = "https://example.com/geneva-minimum-wage"
 	mockCitationTitle  = "example.com"
 	mockSourceProxyURL = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/MOCKPROXY"
+
+	// Azure-flavoured fixtures (models whose id contains "openai"): Unicode
+	// CODE-POINT offsets, annotations on the SAME item as the text, real
+	// destination URLs as action sources, search events BEFORE the text, and a
+	// phantom empty search. "légal" is accented so code points differ from bytes.
+	azureWebSearchReply = "Le salaire minimum légal à Genève est de 24,59 CHF brut par heure."
+	azureAnchorText     = "légal"
+	azureCitationURL    = "https://www.ge.ch/actualite/salaire-minimum-2026"
 )
+
+// azureSourceURLs are the real destination URLs the Azure fixture's search
+// returns — more sources than are annotated, so citations exceed anchors.
+var azureSourceURLs = []string{
+	azureCitationURL,
+	"https://www.admin.ch/minimum-wage-canton-geneva",
+	"https://example.com/geneva-wage-2026",
+}
+
+// isAzureResponsesModel reports whether the model id selects the Azure OpenAI
+// fixture shape (code-point offsets etc.), matching the gateway's family split.
+func isAzureResponsesModel(model string) bool {
+	return strings.Contains(strings.ToLower(model), "openai")
+}
 
 type responsesRequest struct {
 	Model           string             `json:"model"`
@@ -463,6 +486,7 @@ type responsesContentBlk struct {
 type responsesSearchAction struct {
 	Type    string            `json:"type"`
 	Query   string            `json:"query,omitempty"`
+	Queries []string          `json:"queries,omitempty"`
 	Sources []responsesSource `json:"sources,omitempty"`
 }
 
@@ -518,10 +542,16 @@ func responsesHandler(logger *slog.Logger) http.HandlerFunc {
 			reasoning = reasoningTrace
 		}
 		webSearch := responsesHasWebSearchTool(req)
-		// A web search request with the default reply gets the accented answer so
-		// the citation exercises byte→rune offset conversion.
+		// A web search request with the default reply gets an accented answer so
+		// the citation exercises offset conversion — the Azure fixture uses its own
+		// reply (code-point offsets) and the default (Vertex-shaped) reply uses
+		// byte offsets.
 		if webSearch && reply == "Mocked assistant reply" {
-			reply = webSearchReply
+			if isAzureResponsesModel(model) {
+				reply = azureWebSearchReply
+			} else {
+				reply = webSearchReply
+			}
 		}
 		var cost *float64
 		if strings.Contains(lastUser, costSentinel) {
@@ -576,46 +606,84 @@ func writeResponsesStream(
 	send(responsesStreamEvent{Type: "response.created", Response: inProgress})
 	send(responsesStreamEvent{Type: "response.in_progress", Response: inProgress})
 
-	// Visible answer on output item 0.
-	send(responsesStreamEvent{Type: "response.output_item.added", OutputIndex: ptrInt(0), Item: &responsesItem{Type: "message", Role: "assistant", Status: "in_progress"}})
-	send(responsesStreamEvent{Type: "response.content_part.added", OutputIndex: ptrInt(0), ContentIndex: ptrInt(0)})
-	if reasoning != "" {
-		send(responsesStreamEvent{Type: "response.reasoning_summary_text.delta", OutputIndex: ptrInt(0), Delta: reasoning})
+	// completedSearchItem builds a web_search_call "done" event. Requesty mistypes
+	// these as output_item.added in the JSON body, so mirror that: the JSON type
+	// is added while the item status is completed.
+	completedSearchItem := func(idx int, action *responsesSearchAction) responsesStreamEvent {
+		return responsesStreamEvent{Type: "response.output_item.added", OutputIndex: ptrInt(idx), Item: &responsesItem{Type: "web_search_call", Status: "completed", Action: action}}
 	}
-	send(responsesStreamEvent{Type: "response.output_text.delta", OutputIndex: ptrInt(0), ContentIndex: ptrInt(0), Delta: reply})
-	send(responsesStreamEvent{Type: "response.output_text.done", OutputIndex: ptrInt(0), ContentIndex: ptrInt(0), Text: reply})
-	send(responsesStreamEvent{Type: "response.content_part.done", OutputIndex: ptrInt(0), ContentIndex: ptrInt(0)})
-	send(responsesStreamEvent{Type: "response.output_item.done", OutputIndex: ptrInt(0), Item: &responsesItem{
-		Type: "message", Role: "assistant", Status: "completed",
-		Content: []responsesContentBlk{{Type: "output_text", Text: reply, Annotations: []responsesAnnotation{}}},
-	}})
+	searchLifecycle := func(idx int) {
+		send(responsesStreamEvent{Type: "response.output_item.added", OutputIndex: ptrInt(idx), Item: &responsesItem{Type: "web_search_call", Status: "in_progress", Action: &responsesSearchAction{Type: "search"}}})
+		send(responsesStreamEvent{Type: "response.web_search_call.in_progress", OutputIndex: ptrInt(idx)})
+		send(responsesStreamEvent{Type: "response.web_search_call.searching", OutputIndex: ptrInt(idx)})
+		send(responsesStreamEvent{Type: "response.web_search_call.completed", OutputIndex: ptrInt(idx)})
+	}
 
-	if webSearch {
-		startByte := strings.Index(reply, webSearchAnchor)
-		endByte := startByte + len(webSearchAnchor)
-		if startByte < 0 {
-			startByte, endByte = 0, len(reply)
+	if webSearch && isAzureResponsesModel(model) {
+		// Azure shape: searches BEFORE the text (a real one + a phantom), then a
+		// message whose annotations sit on the SAME item, with code-point offsets.
+		sources := make([]responsesSource, 0, len(azureSourceURLs))
+		for _, u := range azureSourceURLs {
+			sources = append(sources, responsesSource{Type: "url", URL: u})
 		}
+		searchLifecycle(0)
+		send(completedSearchItem(0, &responsesSearchAction{Type: "search", Query: "geneva minimum wage 2026", Sources: sources}))
+		// Phantom search: empty query, no sources — must not count or cite.
+		searchLifecycle(1)
+		send(completedSearchItem(1, &responsesSearchAction{Type: "search", Queries: []string{""}}))
 
-		// Citation annotation on a SECOND, empty message item. Requesty mislabels
-		// these as output_text.delta while carrying an annotation — mirror that.
-		send(responsesStreamEvent{Type: "response.output_item.added", OutputIndex: ptrInt(1), Item: &responsesItem{Type: "message", Role: "assistant", Status: "in_progress"}})
-		send(responsesStreamEvent{Type: "response.content_part.added", OutputIndex: ptrInt(1), ContentIndex: ptrInt(0)})
+		startCP, endCP := codePointSpan(reply, azureAnchorText)
+		send(responsesStreamEvent{Type: "response.output_item.added", OutputIndex: ptrInt(2), Item: &responsesItem{Type: "message", Role: "assistant", Status: "in_progress"}})
+		send(responsesStreamEvent{Type: "response.content_part.added", OutputIndex: ptrInt(2), ContentIndex: ptrInt(0)})
+		if reasoning != "" {
+			send(responsesStreamEvent{Type: "response.reasoning_summary_text.delta", OutputIndex: ptrInt(2), Delta: reasoning})
+		}
+		send(responsesStreamEvent{Type: "response.output_text.delta", OutputIndex: ptrInt(2), ContentIndex: ptrInt(0), Delta: reply})
+		// Annotation on the SAME item as the text (mislabeled output_text.delta).
 		send(responsesStreamEvent{
-			Type: "response.output_text.delta", OutputIndex: ptrInt(1), ContentIndex: ptrInt(0), AnnotationIndex: ptrInt(0),
-			Annotation: &responsesAnnotation{Type: "url_citation", URL: mockCitationURL, Title: mockCitationTitle, StartIndex: startByte, EndIndex: endByte},
+			Type: "response.output_text.delta", OutputIndex: ptrInt(2), ContentIndex: ptrInt(0), AnnotationIndex: ptrInt(0),
+			Annotation: &responsesAnnotation{Type: "url_citation", URL: azureCitationURL, Title: "", StartIndex: startCP, EndIndex: endCP},
 		})
-		send(responsesStreamEvent{Type: "response.output_item.done", OutputIndex: ptrInt(1), Item: &responsesItem{Type: "message", Role: "assistant", Status: "completed"}})
-
-		// web_search_call item + activity events arrive at the end of the stream.
-		send(responsesStreamEvent{Type: "response.output_item.added", OutputIndex: ptrInt(2), Item: &responsesItem{Type: "web_search_call", Status: "in_progress"}})
-		send(responsesStreamEvent{Type: "response.web_search_call.in_progress", OutputIndex: ptrInt(2)})
-		send(responsesStreamEvent{Type: "response.web_search_call.searching", OutputIndex: ptrInt(2)})
-		send(responsesStreamEvent{Type: "response.web_search_call.completed", OutputIndex: ptrInt(2)})
+		send(responsesStreamEvent{Type: "response.output_text.done", OutputIndex: ptrInt(2), ContentIndex: ptrInt(0), Text: reply})
 		send(responsesStreamEvent{Type: "response.output_item.done", OutputIndex: ptrInt(2), Item: &responsesItem{
-			Type: "web_search_call", Status: "completed",
-			Action: &responsesSearchAction{Type: "search", Query: "mock query", Sources: []responsesSource{{Type: "url", URL: mockSourceProxyURL}}},
+			Type: "message", Role: "assistant", Status: "completed",
+			Content: []responsesContentBlk{{Type: "output_text", Text: reply, Annotations: []responsesAnnotation{{Type: "url_citation", URL: azureCitationURL, StartIndex: startCP, EndIndex: endCP}}}},
 		}})
+	} else {
+		// Default (Vertex Gemini) shape: text first, then a separate empty
+		// annotation item (byte offsets), then the search AFTER the text.
+		send(responsesStreamEvent{Type: "response.output_item.added", OutputIndex: ptrInt(0), Item: &responsesItem{Type: "message", Role: "assistant", Status: "in_progress"}})
+		send(responsesStreamEvent{Type: "response.content_part.added", OutputIndex: ptrInt(0), ContentIndex: ptrInt(0)})
+		if reasoning != "" {
+			send(responsesStreamEvent{Type: "response.reasoning_summary_text.delta", OutputIndex: ptrInt(0), Delta: reasoning})
+		}
+		send(responsesStreamEvent{Type: "response.output_text.delta", OutputIndex: ptrInt(0), ContentIndex: ptrInt(0), Delta: reply})
+		send(responsesStreamEvent{Type: "response.output_text.done", OutputIndex: ptrInt(0), ContentIndex: ptrInt(0), Text: reply})
+		send(responsesStreamEvent{Type: "response.content_part.done", OutputIndex: ptrInt(0), ContentIndex: ptrInt(0)})
+		send(responsesStreamEvent{Type: "response.output_item.done", OutputIndex: ptrInt(0), Item: &responsesItem{
+			Type: "message", Role: "assistant", Status: "completed",
+			Content: []responsesContentBlk{{Type: "output_text", Text: reply, Annotations: []responsesAnnotation{}}},
+		}})
+
+		if webSearch {
+			startByte := strings.Index(reply, webSearchAnchor)
+			endByte := startByte + len(webSearchAnchor)
+			if startByte < 0 {
+				startByte, endByte = 0, len(reply)
+			}
+			// Citation annotation on a SECOND, empty message item (byte offsets).
+			send(responsesStreamEvent{Type: "response.output_item.added", OutputIndex: ptrInt(1), Item: &responsesItem{Type: "message", Role: "assistant", Status: "in_progress"}})
+			send(responsesStreamEvent{Type: "response.content_part.added", OutputIndex: ptrInt(1), ContentIndex: ptrInt(0)})
+			send(responsesStreamEvent{
+				Type: "response.output_text.delta", OutputIndex: ptrInt(1), ContentIndex: ptrInt(0), AnnotationIndex: ptrInt(0),
+				Annotation: &responsesAnnotation{Type: "url_citation", URL: mockCitationURL, Title: mockCitationTitle, StartIndex: startByte, EndIndex: endByte},
+			})
+			send(responsesStreamEvent{Type: "response.output_item.done", OutputIndex: ptrInt(1), Item: &responsesItem{Type: "message", Role: "assistant", Status: "completed"}})
+
+			// Search AFTER the text (mistyped done carries the sources).
+			searchLifecycle(2)
+			send(completedSearchItem(2, &responsesSearchAction{Type: "search", Query: "mock query", Sources: []responsesSource{{Type: "url", URL: mockSourceProxyURL}}}))
+		}
 	}
 
 	// Terminal event carries usage (and cost, when requested).
@@ -629,6 +697,17 @@ func writeResponsesStream(
 
 	_, _ = fmt.Fprint(w, "data: [DONE]\n\n")
 	flusher.Flush()
+}
+
+// codePointSpan returns the code-point [start,end) offsets of target within text,
+// or [0, runeLen) when target is absent.
+func codePointSpan(text, target string) (int, int) {
+	byteIdx := strings.Index(text, target)
+	if byteIdx < 0 {
+		return 0, utf8.RuneCountInString(text)
+	}
+	start := utf8.RuneCountInString(text[:byteIdx])
+	return start, start + utf8.RuneCountInString(target)
 }
 
 // writeResponsesJSON serves the non-streaming Responses request. Annotations sit

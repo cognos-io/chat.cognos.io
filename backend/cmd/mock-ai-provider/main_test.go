@@ -222,7 +222,9 @@ func TestResponsesStreamWebSearch(t *testing.T) {
 		if ev.Type == "response.web_search_call.completed" {
 			sawSearchCompleted = true
 		}
-		if ev.Type == "response.output_item.done" && ev.Item != nil && ev.Item.Type == "web_search_call" && ev.Item.Action != nil {
+		// The completed web_search_call item is mistyped as output_item.added
+		// (Requesty quirk), so key off the item's status, not the event type.
+		if ev.Item != nil && ev.Item.Type == "web_search_call" && ev.Item.Status == "completed" && ev.Item.Action != nil {
 			sources = ev.Item.Action.Sources
 		}
 	}
@@ -247,6 +249,79 @@ func TestResponsesStreamWebSearch(t *testing.T) {
 	}
 	if len(sources) != 1 || sources[0].URL != mockSourceProxyURL || sources[0].Title != "" {
 		t.Fatalf("action sources = %+v, want a single title-less proxy source", sources)
+	}
+}
+
+func TestResponsesStreamAzureShape(t *testing.T) {
+	t.Parallel()
+
+	rec := postResponses(t, map[string]any{
+		"model":  "azure/openai-responses/gpt-5.5@swedencentral",
+		"stream": true,
+		"input":  []map[string]any{{"role": "user", "content": "what is the minimum wage"}},
+		"tools":  []map[string]any{{"type": "web_search"}},
+	})
+	events := parseResponsesStream(t, rec)
+
+	var text strings.Builder
+	var annotation *responsesAnnotation
+	realSources := 0
+	phantomSeen := false
+	firstTextSeq := -1
+	firstSearchSeq := -1
+	annotationSameItemAsText := false
+	for i, ev := range events {
+		if ev.Type == "response.output_text.delta" && ev.Annotation == nil {
+			if firstTextSeq < 0 {
+				firstTextSeq = i
+			}
+			text.WriteString(ev.Delta)
+		}
+		if ev.Annotation != nil {
+			annotation = ev.Annotation
+			// Azure annotations sit on the same message item as the text (output_index 2).
+			if ev.OutputIndex != nil && *ev.OutputIndex == 2 {
+				annotationSameItemAsText = true
+			}
+		}
+		if ev.Item != nil && ev.Item.Type == "web_search_call" {
+			if firstSearchSeq < 0 {
+				firstSearchSeq = i
+			}
+			if ev.Item.Status == "completed" && ev.Item.Action != nil {
+				if len(ev.Item.Action.Sources) > 0 {
+					realSources = len(ev.Item.Action.Sources)
+				} else {
+					phantomSeen = true
+				}
+			}
+		}
+	}
+
+	if text.String() != azureWebSearchReply {
+		t.Fatalf("reply = %q, want the Azure fixture reply", text.String())
+	}
+	// Search events come BEFORE the text on this family.
+	if firstSearchSeq < 0 || firstTextSeq < 0 || firstSearchSeq >= firstTextSeq {
+		t.Fatalf("search (seq %d) must precede text (seq %d)", firstSearchSeq, firstTextSeq)
+	}
+	if realSources != len(azureSourceURLs) {
+		t.Fatalf("real search sources = %d, want %d real destination URLs", realSources, len(azureSourceURLs))
+	}
+	if !phantomSeen {
+		t.Fatal("expected a phantom completed search (empty query, no sources)")
+	}
+	if annotation == nil || !annotationSameItemAsText {
+		t.Fatal("expected a url_citation annotation on the same item as the text")
+	}
+	// Offsets are CODE POINTS: "légal" starts at code point 19 (byte 19 too here,
+	// but the end differs — "légal" is 5 code points / 6 bytes).
+	wantStart, wantEnd := codePointSpan(azureWebSearchReply, azureAnchorText)
+	if annotation.StartIndex != wantStart || annotation.EndIndex != wantEnd {
+		t.Fatalf("annotation offsets = [%d,%d], want code points [%d,%d]", annotation.StartIndex, annotation.EndIndex, wantStart, wantEnd)
+	}
+	if annotation.URL != azureCitationURL {
+		t.Fatalf("annotation URL = %q, want %q", annotation.URL, azureCitationURL)
 	}
 }
 
