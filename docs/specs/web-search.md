@@ -182,6 +182,10 @@ Acceptance criteria:
 - Verify in the Phase-0 spike that Requesty actually forwards these events per provider family
   (the live response is the source of truth); if a family doesn't emit them, degrade to
   citations-only for that family.
+- **Spike result (Vertex Gemini EU):** the events are forwarded but arrive _after_ the full
+  answer has streamed — too late for a live indicator. Vertex Gemini therefore ships
+  **citations-only** (no "Searching…" status). Anthropic/Azure OpenAI behaviour still
+  unverified (org allowlist blocker).
 
 ## 5. Backend changes
 
@@ -193,9 +197,14 @@ Bifrost v1.5.12 fully models the Responses API, so no raw-params workaround is n
   **`ResponsesStreamRequest`** (and the non-stream equivalent), building a
   `BifrostResponsesRequest` instead of `BifrostChatRequest`. The `gateway.Client` interface and
   neutral types are unchanged — the migration is contained inside the Bifrost client.
-    - Spike question: does Bifrost translate Responses requests for providers that only speak
-    Chat Completions (Infomaniak)? If yes, migrate both providers; if not, keep Infomaniak on
-    the chat path behind the same interface and route per provider.
+    - **Resolved (Phase-0 design):** Bifrost translates Responses→Chat, but only when the
+    custom provider's `AllowedRequests` allowlist disallows Responses while allowing Chat
+    (`shouldFallbackResponsesToChat`); the fallback stream is fully Responses-shaped
+    (deltas, reasoning, terminal usage/cost). So: **single Responses code path for both
+    providers** — Requesty keeps `AllowedRequests` nil (native `/v1/responses`), Infomaniak
+    gets `AllowedRequests{ChatCompletion, ChatCompletionStream}` and transparently falls back
+    to `/v1/chat/completions`. Leaving `AllowedRequests` nil for Infomaniak would 404 — the
+    fallback must be opted into explicitly.
     - Regression watch: reasoning deltas, JSON mode (`ResponseFormat` → Responses `text.format`),
     stop handling, usage/cost fields — all must survive the migration unchanged (covered by the
     existing e2e suite).
@@ -212,6 +221,30 @@ Bifrost v1.5.12 fully models the Responses API, so no raw-params workaround is n
 - Verify against a live call what each EU provider family (Anthropic, Azure OpenAI, Vertex
   Gemini) actually returns through Requesty and normalise in the gateway so the handler and
   client see one shape. Live response is the source of truth (Open question 2).
+- **Live spike findings — Vertex Gemini EU (`vertex/gemini-3.5-flash@eu`), verified:**
+    - `url_citation` annotations arrive with indices on
+    `response.output_text.annotation.added`, **but attached to a second, empty synthetic
+    message item** — the gateway must join annotations onto the real text item by output
+    order, never assume same-item co-location.
+    - **Annotation offsets are UTF-8 byte offsets** (verified against accented text). The
+    gateway must normalise byte offsets → Unicode code-point (rune) offsets before emitting
+    `CitationAnchors`; §7 defines the stored contract as code points. Unit-test with
+    multi-byte text (é/è/emoji).
+    - `action.sources` entries are `{type, url}` only — no title/snippet — and the URLs are
+    `vertexaisearch.cloud.google.com/grounding-api-redirect/...` proxy links, not real source
+    URLs. The displayable domain lives in the matching annotation's `title`. Gateway
+    cross-references by URL; sources alone are unusable for the UI.
+    - `web_search_call.in_progress/.searching/.completed` events exist but arrive **after**
+    the full answer and annotations (sequence end) — useless for live status on this family
+    (see 4.4 degradation).
+    - Usage on `response.completed`: tokens + `cost`; **no search-count field**
+    (`num_search_queries` does not exist) — search count must be derived by counting
+    `web_search_call` output items. Cost matched pure token price exactly — **no visible
+    search surcharge** (evidence for the §5.4 floor fee).
+    - `system`-role input message honoured (open Q5 confirmed for this family).
+    - Anthropic EU and Azure OpenAI EU legs are **blocked by a Requesty org-level provider
+    allowlist** ("Provider blocked by policy" — only Vertex/Gemini currently enabled); rerun
+    once the org dashboard allowlists those providers (launch-gate task).
 
 ### 5.2 Handler
 
@@ -232,9 +265,19 @@ Bifrost v1.5.12 fully models the Responses API, so no raw-params workaround is n
 ### 5.3 Catalogue
 
 - `requestysync` continues to sync `supports_web_search` from Requesty, **but the flag must
-  only survive for EU-hosted serving** (Decision 2). Enforce in sync: if the model's
-  geolocation isn't EU (or the model isn't served via the EU router), force
-  `supports_web_search = false` regardless of what Requesty reports.
+  only survive for EU-hosted serving** (Decision 2). Enforced predicate (settled by the
+  Phase-0 models-API spike):
+  `supports_web_search := raw.supports_web_search && raw.geolocation == "eu"` — exact string
+  match on Requesty's flat `geolocation` field, **never** an id-suffix regex (`@europe-*`):
+  the field is Requesty's own EU claim; an id regex would assert EU residency more strongly
+  than Requesty does.
+- Spike findings that shape this rule: the EU router hostname does **not** filter or annotate
+  the catalogue (identical 560 models on both routers), so enforcement must be field-based;
+  ~20 of 161 searchable models qualify (EU Claude-on-Vertex, Azure OpenAI France/Sweden, and
+  only two Gemini `@eu` aliases — Requesty mislabels single-region Gemini pins like
+  `@europe-west1` as `global`, and direct-API Anthropic models are never EU). Under-inclusion
+  is the fail-safe direction; the Gemini mislabelling is flagged to Requesty support (§14 Q1
+  follow-up).
 - Enable Requesty **strict EU enforcement** on the org so a non-EU endpoint is rejected
   server-side even if misconfigured. Document in deployment steps.
 
@@ -242,14 +285,21 @@ Bifrost v1.5.12 fully models the Responses API, so no raw-params workaround is n
 
 Decision 4: **pass-through with floor.**
 
-- `gateway.Usage` gains `SearchCount int` (from provider/Requesty usage metadata when
-  reported; otherwise count distinct search invocations observed on the stream, else 0).
+- `gateway.Usage` gains `SearchCount int` — **derived by counting `web_search_call` output
+  items on the stream** (spike-verified: no search-count usage field exists; and Gemini's
+  reported `cost` matched pure token price exactly, i.e. no search surcharge passes through —
+  the floor fee is doing real work).
 - `CalculateCost`:
     - When `ProviderCostUSD` is present (`UsedProviderCost`), trust it — Requesty's reported
     total should include the provider's search fee — and apply the existing margin.
-    - When absent, add `SearchCount × configured per-search price` (micro-rappen, config key
-    e.g. `COGNOS_BILLING_WEB_SEARCH_RAPPEN`, seeded from Anthropic's ~USD 10/1k searches +
-    margin) on top of token cost.
+    - When absent, add `SearchCount × configured per-search price` on top of token cost.
+    - The per-search floor price is **operator-configurable in micro-rappen** (whole rappen is
+    too coarse: Anthropic's ~USD 10/1k ≈ 0.9 rappen/search before margin):
+    `billing.web_search_floor_micro_rappen` in `configs/api.*.yaml` — documented in
+    `configs/api.example.yaml` alongside `trial_seed_rappen` — with env override
+    `COGNOS_BILLING_WEB_SEARCH_FLOOR_MICRO_RAPPEN` via the existing koanf mapping. Ship a
+    sensible default in code (≈ Anthropic per-search fee + margin) so an unset value never
+    means free searches; tweak once Requesty support answers the pass-through question.
 - New `OperationType` is **not** needed — search happens inside a `text` completion; the
   ledger record gains a `search_count` detail field for reconciliation instead.
 - Pre-call gate: add one worst-case search fee to the estimate when the tool will be sent
@@ -292,19 +342,40 @@ Decision 4: **pass-through with floor.**
 
 No new collections. One extension to the encrypted per-message blob:
 
+Persisted JSON keys (snake_case, matching the existing `MessageData` convention — implemented
+in commit `70b69cc7`, identical inner shape on the SSE `web_search` frame and in the encrypted
+blob so the client parses one shape for live and reload):
+
 ```ts
 // interfaces/message.ts — MessageData (encrypted at rest)
 citations?: {
   url: string;
-  title: string;
-  snippet?: string; // one-line description shown in the dropdown and hover card
+  title?: string; // omitempty — proxy action sources arrive title-less
+  snippet?: string; // omitempty — currently always empty from the Gemini family
 }[];
-citationAnchors?: {
-  citation: number; // index into citations[]
-  start: number; // offsets into the raw markdown content
-  end: number;
-}[]; // omitted when the provider gave no usable indices → dropdown-only rendering
+citation_anchors?: {
+  citation: number; // stable index into citations[]
+  start: number; // offsets into `content`, in Unicode CODE POINTS
+  end: number; //   (gateway already normalised provider byte offsets → code points;
+}[]; //             frontend converts code points → UTF-16 indices when slicing)
+// omitted when the provider gave no usable indices → dropdown-only rendering
 ```
+
+SSE `web_search` frame (incremental — `citations` carries only newly-seen sources with stable
+indices; the client accumulates; `search_activity` is `"started"|"completed"` and may arrive
+after the answer text; all payload fields omitempty):
+
+```json
+{
+  "type": "web_search",
+  "citations": [{ "url": "https://…", "title": "…", "snippet": "" }],
+  "citation_anchors": [{ "citation": 0, "start": 19, "end": 24 }],
+  "search_activity": "started"
+}
+```
+
+Citations are NOT duplicated into the terminal `complete` event — live accumulation mirrors
+the reasoning-delta pattern; reload reads the decrypted message.
 
 Backend `MessageRecordData` mirrors it. Plaintext DB columns are unchanged; the server-visible
 surface gains only the aggregate `search_count` on the billing ledger record.
@@ -370,26 +441,34 @@ per house rules. New keys:
 
 ## 11. Milestones
 
-| Phase | Deliverable                                                                                                                                             | Status |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 0     | Spike: live Responses API call through Requesty per EU provider family — citation/anchor shapes, search events, Infomaniak translation                  | ☐      |
-| 1     | Backend: gateway migration to `ResponsesStreamRequest` (regression-clean), web_search tool flag, `web_search` SSE event, encrypted citation persistence | ☐      |
-| 2     | Frontend: composer toggle (auto-on/opt-out), stream handling, sources dropdown + inline markers + hover card, pill, i18n ×6                             | ☐      |
-| 3     | Billing: `search_count` metering, floor fee, pre-call estimate; catalogue EU-only enforcement                                                           | ☐      |
-| 4     | Launch gates: Requesty cost-pass-through confirmation, strict EU enforcement enabled, security-model.md updated                                         | ☐      |
+| Phase | Deliverable                                                                                                                                             | Status                                                                             |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| 0     | Spike: live Responses API call through Requesty per EU provider family — citation/anchor shapes, search events, Infomaniak translation                  | ✅ (Gemini verified; Anthropic/Azure legs blocked on org allowlist → launch gates) |
+| 1     | Backend: gateway migration to `ResponsesStreamRequest` (regression-clean), web_search tool flag, `web_search` SSE event, encrypted citation persistence | ✅ commits `3c3146c8`…`70b69cc7`                                                   |
+| 2     | Frontend: composer toggle (auto-on/opt-out), stream handling, sources dropdown + inline markers + hover card, pill, i18n ×6                             | ☐                                                                                  |
+| 3     | Billing: `search_count` metering, floor fee, pre-call estimate; catalogue EU-only enforcement                                                           | ☐                                                                                  |
+| 4     | Launch gates: Requesty cost-pass-through confirmation, strict EU enforcement enabled, security-model.md updated                                         | ☐                                                                                  |
+
+**Rollout-order caveat:** `requestysync` already refreshes `supports_web_search` from Requesty
+on every run, so production model rows may carry the flag TODAY. Because the handler is
+auto-on (Decision 3), deploying Phase 1 would start running (unbilled, un-EU-filtered)
+searches. **Do not deploy this branch until Phase 3 (floor fee + EU-only sync predicate) has
+landed.** Pre-launch this is low stakes, but the ordering is load-bearing.
 
 ## 12. Risks
 
-| Risk                                                                                                | Mitigation                                                                                                             |
-| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Responses API migration regresses existing completion behaviour (reasoning, JSON mode, stop, usage) | Contained behind `gateway.Client`; existing e2e suite + Responses-speaking mock provider as the regression harness     |
-| Infomaniak (Chat Completions only) breaks if migrated blindly                                       | Spike Bifrost's cross-protocol translation first; else route Infomaniak on the chat path per provider                  |
-| Citation/anchor shape varies by provider family behind Requesty                                     | Normalise in gateway; live-verify each EU provider family in the spike; degrade to dropdown-only when indices unusable |
-| Anchor offsets don't align with rendered markdown                                                   | Insert markers into the raw markdown pre-render (redaction-pill pattern); drop out-of-range anchors, never guess       |
-| Search fees not included in Requesty-reported cost → margin loss                                    | Floor fee added whenever `search_count > 0` until pass-through is confirmed in writing                                 |
-| Auto-on surprises privacy-sensitive users                                                           | Plain-language disclosure in the Tools row, per-conversation opt-out, security-model.md honesty                        |
-| EU-hosted searchable models answer worse than Sonar                                                 | Accepted trade-off (Decision 2); revisit if Requesty adds an EU Sonar variant                                          |
-| Model switches mid-conversation to a non-capable model                                              | Tool silently dropped; no error, no forced switch                                                                      |
+| Risk                                                                                                | Mitigation                                                                                                                                                   |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Responses API migration regresses existing completion behaviour (reasoning, JSON mode, stop, usage) | Contained behind `gateway.Client`; existing e2e suite + Responses-speaking mock provider as the regression harness                                           |
+| Infomaniak (Chat Completions only) breaks if migrated blindly                                       | Spike Bifrost's cross-protocol translation first; else route Infomaniak on the chat path per provider                                                        |
+| Citation/anchor shape varies by provider family behind Requesty                                     | Normalise in gateway; live-verify each EU provider family in the spike; degrade to dropdown-only when indices unusable                                       |
+| Anchor offsets don't align with rendered markdown                                                   | Insert markers into the raw markdown pre-render (redaction-pill pattern); drop out-of-range anchors, never guess                                             |
+| Search fees not included in Requesty-reported cost → margin loss                                    | Floor fee added whenever `search_count > 0` until pass-through is confirmed in writing                                                                       |
+| Auto-on surprises privacy-sensitive users                                                           | Plain-language disclosure in the Tools row, per-conversation opt-out, security-model.md honesty                                                              |
+| EU-hosted searchable models answer worse than Sonar                                                 | Accepted trade-off (Decision 2); revisit if Requesty adds an EU Sonar variant                                                                                |
+| Model switches mid-conversation to a non-capable model                                              | Tool silently dropped; no error, no forced switch                                                                                                            |
+| Vertex Gemini citation URLs are Google grounding-redirect proxies, not real source URLs             | Show the domain from the annotation title (avatar + label); "Open source" follows the redirect — works, but flag the redirect hop in the security-model note |
+| Byte-offset anchors misplace markers on non-ASCII text                                              | Gateway normalises to code points; frontend converts to UTF-16; unit tests with accented/emoji text                                                          |
 
 ## 13. Resolved decisions
 
@@ -416,12 +495,27 @@ per house rules. New keys:
 
 1. Does Requesty's reported cost include provider search fees? (Launch gate — ask support.)
    - todo(ewan): ask support
+   - Spike evidence (Gemini): cost matched pure token price to the last digit — no search
+     surcharge visible. Floor fee validated for that family at least.
+   - Follow-up finding: the search DID run (executed query + grounding sources + ~8.5k input
+     tokens of injected results in the capture) but **Requesty's own logs show no web search**
+     — Vertex grounding is a native provider feature, invisible to Requesty's tool
+     observability, hence never metered. Sharpened support question: "is Vertex grounding
+     billed at all through you, and if so where does it appear?" Note the injected grounding
+     results DO inflate input tokens, which we already bill — the floor fee covers the
+     provider-side grounding fee, not the tokens.
 2. Does Requesty forward the Responses API `response.web_search_call.*` events per provider
-   family? (The event types exist in the API and in Bifrost v1.5.12's schemas; what each
-   provider family actually emits through Requesty is unverified.)
-   - todo(agent+ewan): implement and check response as source of truth
-3. Does Bifrost translate Responses API requests for Chat-Completions-only providers
-   (Infomaniak), or do we route per provider? — settle in the spike.
-4. Exact EU-geolocation signal in the Requesty models API the sync should key off
-   (`geolocation: "eu"` vs region-pinned variants like `@europe-west1`)
-   — settle in the spike.
+   family?
+   - **Partially resolved:** Vertex Gemini — yes, but after the answer (citations-only UX for
+     that family). Anthropic EU / Azure OpenAI EU — **blocked by the Requesty org provider
+     allowlist** ("Provider blocked by policy"); todo(ewan): enable Anthropic + Azure OpenAI
+     providers in the Requesty org dashboard, then rerun the spike legs.
+3. ~~Does Bifrost translate Responses API requests for Chat-Completions-only providers
+   (Infomaniak)?~~ **Resolved:** yes, via per-provider `AllowedRequests` opt-in fallback
+   producing Responses-shaped streams — single gateway code path. See §5.1.
+4. System prompt placement on the Responses path: `system`-role input message (recommended —
+   zero change to `persona.BuildMessages`) vs top-level `instructions` — confirm each provider
+   family honours the system input item in the live spike.
+5. ~~Exact EU-geolocation signal in the Requesty models API the sync should key off~~
+   **Resolved (Phase-0 spike):** exact match `geolocation == "eu"`; router hostname carries no
+   geo signal; id-suffix matching rejected as over-permissive. See §5.3.
