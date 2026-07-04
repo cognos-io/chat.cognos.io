@@ -144,6 +144,233 @@ func TestBuildMessageContentWithFile(t *testing.T) {
 	}
 }
 
+func TestBuildResponsesRequestMapsCoreFields(t *testing.T) {
+	t.Parallel()
+
+	client := NewBifrostClient(&stubBifrostRequester{}, nil, nil, nil)
+	got, err := client.buildResponsesRequest(CompleteRequest{
+		ProviderID:      "requesty",
+		ProviderModelID: "some-model",
+		Messages: []Message{
+			{Role: "system", Content: "You are helpful"},
+			{Role: "user", Content: "Hello"},
+		},
+		MaxOutputTokens: 512,
+	})
+	if err != nil {
+		t.Fatalf("buildResponsesRequest() error = %v, want nil", err)
+	}
+	if got.Provider != schemas.ModelProvider("requesty") {
+		t.Fatalf("provider = %q, want requesty", got.Provider)
+	}
+	if got.Model != "some-model" {
+		t.Fatalf("model = %q, want some-model", got.Model)
+	}
+	if len(got.Input) != 2 {
+		t.Fatalf("len(input) = %d, want 2", len(got.Input))
+	}
+	if got.Input[0].Role == nil || *got.Input[0].Role != schemas.ResponsesInputMessageRoleSystem {
+		t.Fatalf("first input role = %#v, want system", got.Input[0].Role)
+	}
+	if got.Input[0].Content == nil || got.Input[0].Content.ContentStr == nil || *got.Input[0].Content.ContentStr != "You are helpful" {
+		t.Fatalf("first input content = %#v, want the system prompt as a string", got.Input[0].Content)
+	}
+	if got.Input[1].Role == nil || *got.Input[1].Role != schemas.ResponsesInputMessageRoleUser {
+		t.Fatalf("second input role = %#v, want user", got.Input[1].Role)
+	}
+	if got.Params == nil || got.Params.MaxOutputTokens == nil || *got.Params.MaxOutputTokens != 512 {
+		t.Fatalf("max output tokens = %#v, want 512", got.Params)
+	}
+}
+
+func TestBuildResponsesRequestReasoning(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name       string
+		effort     string
+		budget     int
+		wantNil    bool
+		wantEffort string
+		wantBudget *int
+	}{
+		{name: "empty omits reasoning", effort: "", wantNil: true},
+		{name: "off omits reasoning", effort: "off", wantNil: true},
+		{name: "none omits reasoning", effort: "none", wantNil: true},
+		{name: "medium passes through", effort: "medium", wantEffort: "medium"},
+		{name: "model-specific tier passes through", effort: "ultra", wantEffort: "ultra"},
+		{name: "budget rides along with an enabled tier", effort: "high", budget: 16384, wantEffort: "high", wantBudget: intPtr(16384)},
+		{name: "off never carries a budget", effort: "off", budget: 16384, wantNil: true},
+	}
+
+	client := NewBifrostClient(&stubBifrostRequester{}, nil, nil, nil)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := client.buildResponsesRequest(CompleteRequest{
+				ProviderID:         "requesty",
+				ProviderModelID:    "model",
+				ReasoningEffort:    tc.effort,
+				ReasoningMaxTokens: tc.budget,
+			})
+			if err != nil {
+				t.Fatalf("buildResponsesRequest() error = %v", err)
+			}
+			var reasoning *schemas.ResponsesParametersReasoning
+			if got.Params != nil {
+				reasoning = got.Params.Reasoning
+			}
+			if tc.wantNil {
+				if reasoning != nil {
+					t.Fatalf("reasoning = %#v, want nil", reasoning)
+				}
+				return
+			}
+			if reasoning == nil || reasoning.Effort == nil || *reasoning.Effort != tc.wantEffort {
+				t.Fatalf("reasoning effort = %#v, want %q", reasoning, tc.wantEffort)
+			}
+			switch {
+			case tc.wantBudget == nil:
+				if reasoning.MaxTokens != nil {
+					t.Fatalf("reasoning max tokens = %d, want nil", *reasoning.MaxTokens)
+				}
+			default:
+				if reasoning.MaxTokens == nil || *reasoning.MaxTokens != *tc.wantBudget {
+					t.Fatalf("reasoning max tokens = %#v, want %d", reasoning.MaxTokens, *tc.wantBudget)
+				}
+			}
+		})
+	}
+}
+
+func TestBuildResponsesRequestJSONMode(t *testing.T) {
+	t.Parallel()
+
+	client := NewBifrostClient(&stubBifrostRequester{}, nil, nil, nil)
+	got, err := client.buildResponsesRequest(CompleteRequest{
+		ProviderID:         "requesty",
+		ProviderModelID:    "model",
+		JSONResponseFormat: true,
+	})
+	if err != nil {
+		t.Fatalf("buildResponsesRequest() error = %v", err)
+	}
+	if got.Params == nil || got.Params.Text == nil || got.Params.Text.Format == nil {
+		t.Fatalf("text format = %#v, want json_object format", got.Params)
+	}
+	if got.Params.Text.Format.Type != "json_object" {
+		t.Fatalf("text format type = %q, want json_object", got.Params.Text.Format.Type)
+	}
+}
+
+func TestBuildResponsesRequestWebSearchTool(t *testing.T) {
+	t.Parallel()
+
+	client := NewBifrostClient(&stubBifrostRequester{}, nil, nil, nil)
+
+	t.Run("enabled adds tool and include", func(t *testing.T) {
+		t.Parallel()
+		got, err := client.buildResponsesRequest(CompleteRequest{
+			ProviderID:      "requesty",
+			ProviderModelID: "model",
+			WebSearch:       true,
+		})
+		if err != nil {
+			t.Fatalf("buildResponsesRequest() error = %v", err)
+		}
+		if got.Params == nil || len(got.Params.Tools) != 1 {
+			t.Fatalf("tools = %#v, want a single web_search tool", got.Params)
+		}
+		if got.Params.Tools[0].Type != schemas.ResponsesToolTypeWebSearch {
+			t.Fatalf("tool type = %q, want web_search", got.Params.Tools[0].Type)
+		}
+		if !containsString(got.Params.Include, "web_search_call.action.sources") {
+			t.Fatalf("include = %#v, want the action sources flag", got.Params.Include)
+		}
+	})
+
+	t.Run("disabled sends no tool or include", func(t *testing.T) {
+		t.Parallel()
+		got, err := client.buildResponsesRequest(CompleteRequest{
+			ProviderID:      "requesty",
+			ProviderModelID: "model",
+			WebSearch:       false,
+		})
+		if err != nil {
+			t.Fatalf("buildResponsesRequest() error = %v", err)
+		}
+		if got.Params != nil && len(got.Params.Tools) != 0 {
+			t.Fatalf("tools = %#v, want none", got.Params.Tools)
+		}
+		if got.Params != nil && len(got.Params.Include) != 0 {
+			t.Fatalf("include = %#v, want none", got.Params.Include)
+		}
+	})
+}
+
+func TestBuildResponsesMessageContent(t *testing.T) {
+	t.Parallel()
+
+	t.Run("text only stays a string", func(t *testing.T) {
+		t.Parallel()
+		content := buildResponsesMessageContent("hello", nil, nil)
+		if content.ContentStr == nil || *content.ContentStr != "hello" {
+			t.Fatalf("content = %#v, want ContentStr=hello", content)
+		}
+		if content.ContentBlocks != nil {
+			t.Fatalf("text-only content should not use blocks")
+		}
+	})
+
+	t.Run("image becomes input_image block", func(t *testing.T) {
+		t.Parallel()
+		content := buildResponsesMessageContent("describe this", []MessageImage{
+			{Base64: "QUJD", MimeType: "image/png"},
+		}, nil)
+		if len(content.ContentBlocks) != 2 {
+			t.Fatalf("want 2 blocks (text+image), got %d", len(content.ContentBlocks))
+		}
+		if content.ContentBlocks[0].Type != schemas.ResponsesInputMessageContentBlockTypeText ||
+			content.ContentBlocks[0].Text == nil || *content.ContentBlocks[0].Text != "describe this" {
+			t.Fatalf("first block should be the prompt text: %#v", content.ContentBlocks[0])
+		}
+		image := content.ContentBlocks[1]
+		if image.Type != schemas.ResponsesInputMessageContentBlockTypeImage ||
+			image.ResponsesInputMessageContentBlockImage == nil || image.ImageURL == nil ||
+			*image.ImageURL != "data:image/png;base64,QUJD" {
+			t.Fatalf("second block should be an input_image data URL: %#v", image)
+		}
+	})
+
+	t.Run("file becomes input_file block", func(t *testing.T) {
+		t.Parallel()
+		content := buildResponsesMessageContent("summarise", nil, []MessageFile{
+			{Base64: "JVBERi0=", MimeType: "application/pdf", Filename: "report.pdf"},
+		})
+		if len(content.ContentBlocks) != 2 {
+			t.Fatalf("want 2 blocks (text+file), got %d", len(content.ContentBlocks))
+		}
+		file := content.ContentBlocks[1]
+		if file.Type != schemas.ResponsesInputMessageContentBlockTypeFile ||
+			file.ResponsesInputMessageContentBlockFile == nil || file.FileData == nil ||
+			*file.FileData != "data:application/pdf;base64,JVBERi0=" {
+			t.Fatalf("second block should be an input_file data URL: %#v", file)
+		}
+		if file.Filename == nil || *file.Filename != "report.pdf" {
+			t.Fatalf("file name = %#v, want report.pdf", file.Filename)
+		}
+	})
+}
+
+func containsString(values []string, want string) bool {
+	for _, v := range values {
+		if v == want {
+			return true
+		}
+	}
+	return false
+}
+
 func TestBifrostClientCompleteMapsRequestAndResponse(t *testing.T) {
 	t.Parallel()
 

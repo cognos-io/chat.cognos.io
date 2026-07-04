@@ -211,6 +211,147 @@ func (c *BifrostClient) CompleteStream(ctx context.Context, req CompleteRequest)
 	return out, nil
 }
 
+// buildResponsesRequest maps a gateway CompleteRequest onto Bifrost's Responses
+// API request. The system prompt arrives as an ordinary system-role message in
+// req.Messages (built by the handler's persona layer), so it is mapped as a
+// system-role input item — no separate Instructions handling. Web search, when
+// requested, adds the provider-native web_search tool plus the include flag that
+// returns the searched sources.
+func (c *BifrostClient) buildResponsesRequest(req CompleteRequest) (*schemas.BifrostResponsesRequest, error) {
+	if strings.TrimSpace(req.ProviderID) == "" {
+		return nil, fmt.Errorf("bifrost provider id is required")
+	}
+	if strings.TrimSpace(req.ProviderModelID) == "" {
+		return nil, fmt.Errorf("bifrost model id is required")
+	}
+
+	input := make([]schemas.ResponsesMessage, 0, len(req.Messages))
+	for _, message := range req.Messages {
+		role := schemas.ResponsesMessageRoleType(message.Role)
+		msgType := schemas.ResponsesMessageTypeMessage
+		input = append(input, schemas.ResponsesMessage{
+			Type:    &msgType,
+			Role:    &role,
+			Content: buildResponsesMessageContent(message.Content, message.Images, message.Files),
+		})
+	}
+
+	responsesReq := &schemas.BifrostResponsesRequest{
+		Provider: schemas.ModelProvider(req.ProviderID),
+		Model:    req.ProviderModelID,
+		Input:    input,
+	}
+	if req.MaxOutputTokens > 0 || req.ReasoningEffort != "" || req.JSONResponseFormat || req.WebSearch {
+		responsesReq.Params = &schemas.ResponsesParameters{}
+	}
+	if req.MaxOutputTokens > 0 {
+		maxTokens := req.MaxOutputTokens
+		responsesReq.Params.MaxOutputTokens = &maxTokens
+	}
+	if reasoning := responsesReasoningParam(req.ReasoningEffort); reasoning != nil {
+		// Send the thinking budget explicitly (Anthropic's thinking.budget_tokens)
+		// so we own the max_tokens > budget invariant rather than depending on the
+		// router's effort→budget mapping. responsesReasoningParam only returns
+		// non-nil for an enabled tier, so a budget here is always for active
+		// reasoning.
+		if req.ReasoningMaxTokens > 0 {
+			budget := req.ReasoningMaxTokens
+			reasoning.MaxTokens = &budget
+		}
+		responsesReq.Params.Reasoning = reasoning
+	}
+	if req.JSONResponseFormat {
+		// OpenAI-compatible JSON mode on the Responses API (text.format instead of
+		// chat's response_format). Bifrost passes this through to the provider;
+		// providers that don't support it ignore it, so the caller must still
+		// tolerate non-JSON output.
+		responsesReq.Params.Text = &schemas.ResponsesTextConfig{
+			Format: &schemas.ResponsesTextConfigFormat{Type: "json_object"},
+		}
+	}
+	if req.WebSearch {
+		// Provider-native web search: Requesty maps {"type":"web_search"} to the
+		// underlying provider's own search. Include the action sources so the
+		// searched pages come back for citation rendering.
+		responsesReq.Params.Tools = append(responsesReq.Params.Tools, schemas.ResponsesTool{
+			Type: schemas.ResponsesToolTypeWebSearch,
+		})
+		responsesReq.Params.Include = append(responsesReq.Params.Include, "web_search_call.action.sources")
+	}
+
+	return responsesReq, nil
+}
+
+// responsesReasoningParam translates a user-selected effort into Bifrost's
+// Responses reasoning parameter. Empty AND the disabling tiers ("off"/"none")
+// return nil, so NO reasoning parameter is sent — that is the portable,
+// OpenAI-compatible way to request no extended thinking.
+//
+// We must NOT send effort "none" to disable: Requesty is a Bifrost custom
+// provider, which skips reasoning normalisation and forwards the param verbatim.
+// Requesty/Bedrock then reads the mere presence of a reasoning param as
+// "thinking on" and applies a default budget — so "none" actually ENABLES
+// thinking, and a small max_tokens (e.g. title generation's ~15) trips
+// Anthropic's "max_tokens > thinking.budget_tokens" 400. Omitting the param
+// leaves Claude at its thinking-off default. Every other tier passes through
+// verbatim.
+func responsesReasoningParam(effort string) *schemas.ResponsesParametersReasoning {
+	switch strings.ToLower(strings.TrimSpace(effort)) {
+	case "", "off", "none":
+		return nil
+	default:
+		e := effort
+		return &schemas.ResponsesParametersReasoning{Effort: &e}
+	}
+}
+
+// buildResponsesMessageContent renders a gateway message into Bifrost Responses
+// content. With no images or files it stays a plain string; otherwise it becomes
+// input content blocks (an optional input_text block, then input_image data-URL
+// blocks, then input_file data-URL blocks).
+func buildResponsesMessageContent(
+	content string,
+	images []MessageImage,
+	files []MessageFile,
+) *schemas.ResponsesMessageContent {
+	if len(images) == 0 && len(files) == 0 {
+		text := content
+		return &schemas.ResponsesMessageContent{ContentStr: &text}
+	}
+
+	blocks := make([]schemas.ResponsesMessageContentBlock, 0, len(images)+len(files)+1)
+	if content != "" {
+		text := content
+		blocks = append(blocks, schemas.ResponsesMessageContentBlock{
+			Type: schemas.ResponsesInputMessageContentBlockTypeText,
+			Text: &text,
+		})
+	}
+	for _, image := range images {
+		dataURL := "data:" + image.MimeType + ";base64," + image.Base64
+		blocks = append(blocks, schemas.ResponsesMessageContentBlock{
+			Type: schemas.ResponsesInputMessageContentBlockTypeImage,
+			ResponsesInputMessageContentBlockImage: &schemas.ResponsesInputMessageContentBlockImage{
+				ImageURL: &dataURL,
+			},
+		})
+	}
+	for _, file := range files {
+		dataURL := "data:" + file.MimeType + ";base64," + file.Base64
+		filename := file.Filename
+		fileType := file.MimeType
+		blocks = append(blocks, schemas.ResponsesMessageContentBlock{
+			Type: schemas.ResponsesInputMessageContentBlockTypeFile,
+			ResponsesInputMessageContentBlockFile: &schemas.ResponsesInputMessageContentBlockFile{
+				FileData: &dataURL,
+				Filename: &filename,
+				FileType: &fileType,
+			},
+		})
+	}
+	return &schemas.ResponsesMessageContent{ContentBlocks: blocks}
+}
+
 func (c *BifrostClient) buildChatRequest(req CompleteRequest) (*schemas.BifrostChatRequest, error) {
 	if strings.TrimSpace(req.ProviderID) == "" {
 		return nil, fmt.Errorf("bifrost provider id is required")

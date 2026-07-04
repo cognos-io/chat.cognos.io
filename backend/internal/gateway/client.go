@@ -49,6 +49,12 @@ type CompleteRequest struct {
 	// models that advertise structured-output support; callers must still tolerate
 	// non-JSON output, as not every provider honours the hint.
 	JSONResponseFormat bool
+	// WebSearch, when true, adds the provider-native web search tool to the
+	// request (Responses API {"type":"web_search"}) and asks for the searched
+	// sources back. Only set it for search-capable, Requesty-routed models; the
+	// caller is responsible for that gate. The model still decides per turn
+	// whether to actually search.
+	WebSearch bool
 }
 
 type Usage struct {
