@@ -11,6 +11,8 @@ import { Message } from '@app/interfaces/message';
 import { CompleteResponse, GenerateImageResponse } from './cognos-api.service';
 import {
   DELETED_MESSAGE_MARKER,
+  TITLE_GENERATION_USER_MESSAGE_PREFIX,
+  TITLE_INPUT_MAX_CHARS,
   applyCompletionReasoningStreamDelta,
   applyCompletionStreamDelta,
   applyCompletionStreamResponse,
@@ -20,6 +22,7 @@ import {
   buildCompletionMessageContext,
   buildCompletionMessages,
   buildDeletedMessageData,
+  buildTitleGenerationUserMessage,
   composeSystemPromptSections,
   isCompletionAbortError,
   isEmailNotVerifiedError,
@@ -1134,6 +1137,28 @@ describe('reasoningDisablingEffort', () => {
     },
   ])('$name', ({ efforts, expected }) => {
     expect(reasoningDisablingEffort(efforts)).toBe(expected);
+  });
+});
+
+describe('buildTitleGenerationUserMessage', () => {
+  it('frames the user message with a title instruction prefix', () => {
+    expect(buildTitleGenerationUserMessage('Fix my React hooks bug')).toBe(
+      `${TITLE_GENERATION_USER_MESSAGE_PREFIX}Fix my React hooks bug`,
+    );
+  });
+
+  it('trims surrounding whitespace before framing', () => {
+    expect(buildTitleGenerationUserMessage('  Summarize this PDF  ')).toBe(
+      `${TITLE_GENERATION_USER_MESSAGE_PREFIX}Summarize this PDF`,
+    );
+  });
+
+  it('truncates long first messages to the title input cap', () => {
+    const longMessage = 'a'.repeat(TITLE_INPUT_MAX_CHARS + 50);
+
+    expect(buildTitleGenerationUserMessage(longMessage)).toBe(
+      `${TITLE_GENERATION_USER_MESSAGE_PREFIX}${'a'.repeat(TITLE_INPUT_MAX_CHARS)}`,
+    );
   });
 });
 

@@ -375,6 +375,21 @@ export const reasoningDisablingEffort = (
 // business process — so this tiny value is always safe to send.
 export const TITLE_MAX_OUTPUT_TOKENS = 15;
 
+// Title generation only needs the start of the first message to infer the
+// user's goal; cap input so long pastes do not inflate latency or cost.
+export const TITLE_INPUT_MAX_CHARS = 250;
+
+export const TITLE_GENERATION_USER_MESSAGE_PREFIX = 'Title this message:\n\n';
+
+export const buildTitleGenerationUserMessage = (startingMessage: string): string => {
+  const trimmed = startingMessage.trim();
+  const excerpt =
+    trimmed.length > TITLE_INPUT_MAX_CHARS
+      ? trimmed.slice(0, TITLE_INPUT_MAX_CHARS)
+      : trimmed;
+  return `${TITLE_GENERATION_USER_MESSAGE_PREFIX}${excerpt}`;
+};
+
 // titleReasoningEffort picks the reasoning effort for a title completion:
 //   - the off tier when the model has one (cheapest — no hidden reasoning);
 //   - otherwise the lowest declared tier, so the backend sizes an explicit
@@ -2642,7 +2657,12 @@ export class MessageService {
       .complete({
         maxOutputTokens: TITLE_MAX_OUTPUT_TOKENS,
         persist: false,
-        messages: [{ role: 'user', content: startingMessage }],
+        messages: [
+          {
+            role: 'user',
+            content: buildTitleGenerationUserMessage(startingMessage),
+          },
+        ],
         modelId: model.id,
         personaId: generateConversationPersonaId,
         systemPrompt: generateConversationSystemPrompt,
