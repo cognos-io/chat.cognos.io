@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
 import { Base64 } from 'js-base64';
 
+import { CogDocBlock } from '@app/documents/cog-doc/cog-doc.types';
 import { Conversation } from '@app/interfaces/conversation';
 import { Message, MessageAttachment } from '@app/interfaces/message';
 import { CognosApiService } from '@app/services/cognos-api.service';
@@ -13,6 +14,7 @@ import { CryptoService } from '@app/services/crypto.service';
 import { RedactionService } from '@app/services/redaction.service';
 import { saveBlob } from '@app/utils/save-blob';
 
+import { filenameBaseFromSpec, renderOptionsFromSpec } from './cog-doc/cog-doc-parser';
 import { documentFilename, documentMimeType } from './document-source';
 import { DocumentWorkerClient } from './document-worker.client';
 import {
@@ -71,16 +73,11 @@ export class DocumentExportService {
     }
 
     const conversation = this._conversations.conversation();
-    const hydrated = this._redaction.hydrate(
-      conversation?.record.id,
-      content,
-      conversation?.record.project,
-    );
+    const hydrated = this.hydrate(content, conversation);
 
     const conversationTitle = conversation?.decryptedData.title?.trim() || undefined;
     const baseName = conversationTitle ?? firstH1(hydrated);
-    const fallback = this._transloco.translate('chat.message.documentDefaultName');
-    const filename = documentFilename(baseName, format, fallback);
+    const filename = documentFilename(baseName, format, this.defaultFilenameFallback());
 
     if (format === 'markdown') {
       this._saveBlob(renderMarkdownFile(hydrated), filename, documentMimeType(format));
@@ -88,7 +85,63 @@ export class DocumentExportService {
     }
 
     const images = await this.decryptGeneratedImages(message, conversation);
-    const options: RenderOptions = { title: baseName };
+    await this.renderAndSave(format, hydrated, images, { title: baseName }, filename);
+  }
+
+  /**
+   * downloadCogDoc renders a model-authored `<cog-doc>` block (spec
+   * docs/specs/document-generation.md §5.2) to a file. Only a fully parsed,
+   * non-truncated block can be exported — 'streaming'/'invalid' blocks (or a
+   * block whose `spec` failed validation) throw the same `empty_document`
+   * error as an empty message, so the caller's existing failure UI applies
+   * unchanged.
+   */
+  async downloadCogDoc(block: CogDocBlock, message: Message): Promise<void> {
+    if (block.state !== 'ready' || !block.spec) {
+      throw new DocumentRenderError('empty_document', 'Document is not ready');
+    }
+    const spec = block.spec;
+
+    const conversation = this._conversations.conversation();
+    const hydrated = this.hydrate(block.body, conversation);
+
+    const baseName = filenameBaseFromSpec(spec, block.body) ?? undefined;
+    const filename = documentFilename(
+      baseName,
+      spec.format,
+      this.defaultFilenameFallback(),
+    );
+
+    const images = await this.decryptGeneratedImages(message, conversation);
+    const options = renderOptionsFromSpec(spec);
+    await this.renderAndSave(spec.format, hydrated, images, options, filename);
+  }
+
+  // hydrate resolves redaction placeholders in `content` back to their
+  // originals for the given conversation/project scope — the same scoping
+  // rule display uses, so the exported file shows real values.
+  private hydrate(content: string, conversation: Conversation | undefined): string {
+    return this._redaction.hydrate(
+      conversation?.record.id,
+      content,
+      conversation?.record.project,
+    );
+  }
+
+  private defaultFilenameFallback(): string {
+    return this._transloco.translate('chat.message.documentDefaultName');
+  }
+
+  // renderAndSave is the shared docx/pdf tail: render via the worker, then
+  // trigger the download. Markdown export never reaches here (it's a direct
+  // encode, no worker round trip).
+  private async renderAndSave(
+    format: Exclude<DocFormat, 'markdown'>,
+    hydrated: string,
+    images: DocImage[],
+    options: RenderOptions,
+    filename: string,
+  ): Promise<void> {
     const bytes = await this._workerClient.render(format, hydrated, images, options);
     this._saveBlob(bytes, filename, documentMimeType(format));
   }

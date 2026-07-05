@@ -1,12 +1,15 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { Component, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 
 import { of } from 'rxjs';
 
 import { CognosToastService } from '@cognos/ui-angular';
 
+import { DocumentCardComponent } from '@app/components/chat/document-card/document-card.component';
 import { RedactedMarkdownComponent } from '@app/components/chat/redacted-markdown/redacted-markdown.component';
+import { CogDocBlock } from '@app/documents/cog-doc/cog-doc.types';
 import { DocumentExportService } from '@app/documents/document-export.service';
 import { DocumentRenderError } from '@app/documents/document.types';
 import { Message } from '@app/interfaces/message';
@@ -34,6 +37,19 @@ class StubRedactedMarkdownComponent {
   @Input() content = '';
   @Input() citations: unknown[] = [];
   @Input() citationAnchors: unknown[] = [];
+}
+
+// Likewise stands in for the document card so segment-rendering tests can
+// assert on what block/message it received without exercising the render
+// worker / DocumentExportService plumbing (covered by document-card's own spec).
+@Component({
+  selector: 'app-document-card',
+  standalone: true,
+  template: '{{ block.state }}',
+})
+class StubDocumentCardComponent {
+  @Input() block!: CogDocBlock;
+  @Input() message: unknown;
 }
 
 function buildMessage(overrides: Partial<Message> = {}): Message {
@@ -111,8 +127,8 @@ describe('MessageListItemComponent - download action', () => {
       ],
     })
       .overrideComponent(MessageListItemComponent, {
-        remove: { imports: [RedactedMarkdownComponent] },
-        add: { imports: [StubRedactedMarkdownComponent] },
+        remove: { imports: [RedactedMarkdownComponent, DocumentCardComponent] },
+        add: { imports: [StubRedactedMarkdownComponent, StubDocumentCardComponent] },
       })
       .compileComponents();
 
@@ -231,5 +247,162 @@ describe('MessageListItemComponent - download action', () => {
 
     expect(downloadMessageAs).toHaveBeenCalledTimes(1);
     expect(downloadMessageAs).toHaveBeenCalledWith(component.message, 'docx');
+  });
+});
+
+describe('MessageListItemComponent - document segment rendering', () => {
+  let fixture: ComponentFixture<MessageListItemComponent>;
+  let component: MessageListItemComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MessageListItemComponent],
+      providers: [
+        { provide: ModelService, useValue: { getModel: vi.fn() } },
+        { provide: PersonaService, useValue: { getPersona: vi.fn() } },
+        {
+          provide: MessageService,
+          useValue: {
+            branchInfo: vi.fn(() => undefined),
+            branchPointCount: vi.fn(() => 0),
+            resolveAttachmentChips: vi.fn(() => of([])),
+            decryptMessageImages: vi.fn(() => of([])),
+          },
+        },
+        {
+          provide: ConversationService,
+          useValue: {
+            conversation: () => undefined,
+            isTemporaryConversation: () => true,
+          },
+        },
+        {
+          provide: RedactionService,
+          useValue: {
+            hydrate: vi.fn((_id: unknown, content: string) => content),
+            revision: () => 0,
+            enabled: () => false,
+            valuesHidden: () => false,
+            combinedEntriesFor: () => new Map(),
+          },
+        },
+        { provide: CompactionService, useValue: { addManualFact: vi.fn() } },
+        {
+          provide: ScopedMemoryService,
+          useValue: { addUserFact: vi.fn(), addProjectFact: vi.fn() },
+        },
+        { provide: CognosToastService, useValue: { notify: vi.fn() } },
+        { provide: Dialog, useValue: { open: vi.fn(() => ({ closed: of(false) })) } },
+        { provide: DocumentExportService, useValue: { downloadCogDoc: vi.fn() } },
+      ],
+    })
+      .overrideComponent(MessageListItemComponent, {
+        remove: { imports: [RedactedMarkdownComponent, DocumentCardComponent] },
+        add: { imports: [StubRedactedMarkdownComponent, StubDocumentCardComponent] },
+      })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(MessageListItemComponent);
+    component = fixture.componentInstance;
+  });
+
+  function markdownStubs(): StubRedactedMarkdownComponent[] {
+    return fixture.debugElement
+      .queryAll(By.directive(StubRedactedMarkdownComponent))
+      .map((el) => el.componentInstance as StubRedactedMarkdownComponent);
+  }
+
+  function documentCardStubs(): StubDocumentCardComponent[] {
+    return fixture.debugElement
+      .queryAll(By.directive(StubDocumentCardComponent))
+      .map((el) => el.componentInstance as StubDocumentCardComponent);
+  }
+
+  it("pin: a plain-text message (single markdown segment) renders exactly today's path", () => {
+    component.message = assistantMessage({
+      decryptedData: {
+        content: 'Hello world',
+        citations: [{ url: 'https://example.com', title: 'Example' }],
+        citation_anchors: [{ citation: 0, start: 0, end: 5 }],
+      },
+    });
+    fixture.detectChanges();
+
+    expect(documentCardStubs().length).toBe(0);
+    const markdown = markdownStubs();
+    expect(markdown.length).toBe(1);
+    expect(markdown[0].content).toBe('Hello world');
+    // The single-segment fast path is the only one that still hydrates inline
+    // citation markers, since offsets safely index the whole (unsegmented) content.
+    expect(markdown[0].citationAnchors).toEqual([{ citation: 0, start: 0, end: 5 }]);
+  });
+
+  it('renders a document card for a closed, valid <cog-doc> block', () => {
+    component.message = assistantMessage({
+      decryptedData: {
+        content: `<cog-doc spec='{"format":"docx","title":"Report"}'>\n# Report\n\nBody\n</cog-doc>`,
+      },
+    });
+    fixture.detectChanges();
+
+    const cards = documentCardStubs();
+    expect(cards.length).toBe(1);
+    expect(cards[0].block.state).toBe('ready');
+    expect(cards[0].block.spec?.title).toBe('Report');
+    expect(cards[0].message).toBe(component.message);
+  });
+
+  it('shows the streaming state on an in-progress <cog-doc> block', () => {
+    component.message = assistantMessage({
+      isStreaming: true,
+      decryptedData: {
+        content: `<cog-doc spec='{"format":"docx"}'>\nStill writing…`,
+      },
+    });
+    fixture.detectChanges();
+
+    const cards = documentCardStubs();
+    expect(cards.length).toBe(1);
+    expect(cards[0].block.state).toBe('streaming');
+  });
+
+  it('falls open to markdown + a note for an invalid (unparsable spec) block', () => {
+    component.message = assistantMessage({
+      decryptedData: {
+        content: `<cog-doc broken>\nBody\n</cog-doc>`,
+      },
+    });
+    fixture.detectChanges();
+
+    expect(documentCardStubs().length).toBe(0);
+    const markdown = markdownStubs();
+    expect(markdown.length).toBe(1);
+    expect(markdown[0].content).toContain('<cog-doc broken>');
+    expect(fixture.nativeElement.textContent).toContain(
+      "Couldn't build this file — showing its content instead.",
+    );
+  });
+
+  it('suppresses inline citation anchors once segmentation is active, keeping the sources dropdown', () => {
+    component.message = assistantMessage({
+      decryptedData: {
+        content: `Intro text.\n\n<cog-doc spec='{"format":"docx"}'>\n# Report\n\nBody\n</cog-doc>`,
+        citations: [{ url: 'https://example.com', title: 'Example' }],
+        citation_anchors: [{ citation: 0, start: 0, end: 5 }],
+      },
+    });
+    fixture.detectChanges();
+
+    // Sources dropdown still lists the citation.
+    expect(fixture.nativeElement.querySelector('app-message-sources')).not.toBeNull();
+
+    const markdown = markdownStubs();
+    expect(markdown.length).toBe(1);
+    expect(markdown[0].content).toBe('Intro text.\n\n');
+    // No citationAnchors binding for segmented markdown — the stub's default
+    // (empty array) proves the input was never bound to the real anchors.
+    expect(markdown[0].citationAnchors).toEqual([]);
+
+    expect(documentCardStubs().length).toBe(1);
   });
 });

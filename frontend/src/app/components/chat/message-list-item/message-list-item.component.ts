@@ -35,6 +35,7 @@ import {
   MessageBranchInfo,
 } from '@cognos/ui-angular';
 
+import { DocumentCardComponent } from '@app/components/chat/document-card/document-card.component';
 import {
   MessageAttachmentChip,
   MessageAttachmentChipComponent,
@@ -42,6 +43,8 @@ import {
 import { MessageSources } from '@app/components/chat/message-sources/message-sources';
 import { RedactedMarkdownComponent } from '@app/components/chat/redacted-markdown/redacted-markdown.component';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
+import { segmentMessageContent } from '@app/documents/cog-doc/cog-doc-parser';
+import { MessageSegment } from '@app/documents/cog-doc/cog-doc.types';
 import { DocumentExportService } from '@app/documents/document-export.service';
 import { DocFormat } from '@app/documents/document.types';
 import { MemoryScope } from '@app/interfaces/compaction';
@@ -64,6 +67,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
   standalone: true,
   imports: [
     RedactedMarkdownComponent,
+    DocumentCardComponent,
     MessageSources,
     MessageAttachmentChipComponent,
     ClipboardModule,
@@ -348,16 +352,43 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                   {{ t('chat.message.imageUnavailable') }}
                 </p>
               } @else if (message.decryptedData.content) {
-                @if (message.isStreaming) {
-                  <p class="message-list-item__streaming">
-                    {{ hydrated(message.decryptedData.content) }}
-                  </p>
+                @let segments = messageSegments();
+                @if (segments.length === 1 && segments[0].kind === 'markdown') {
+                  <!-- The overwhelmingly common case (no <cog-doc> block): keep
+                       today's render path byte-identical, including the
+                       streaming/plain-text shortcut, spec §5.2. -->
+                  @if (message.isStreaming) {
+                    <p class="message-list-item__streaming">
+                      {{ hydrated(message.decryptedData.content) }}
+                    </p>
+                  } @else {
+                    <app-redacted-markdown
+                      [content]="message.decryptedData.content"
+                      [citations]="citations()"
+                      [citationAnchors]="citationAnchors()"
+                    />
+                  }
                 } @else {
-                  <app-redacted-markdown
-                    [content]="message.decryptedData.content"
-                    [citations]="citations()"
-                    [citationAnchors]="citationAnchors()"
-                  />
+                  <!--
+                    A <cog-doc> block is present: render each segment in order.
+                    Citation-anchor offsets index the FULL raw content, which no
+                    longer matches any single segment's text, so inline citation
+                    markers are suppressed here — the sources dropdown above
+                    still lists every source (spec §5.2, web-search "never guess
+                    anchor positions" rule).
+                  -->
+                  @for (segment of segments; track $index) {
+                    @if (segment.kind === 'markdown') {
+                      <app-redacted-markdown [content]="segment.text" />
+                    } @else if (segment.block.state === 'invalid') {
+                      <app-redacted-markdown [content]="segment.block.raw" />
+                      <p class="message-list-item__document-note">
+                        {{ t('chat.message.documentInvalid') }}
+                      </p>
+                    } @else {
+                      <app-document-card [block]="segment.block" [message]="message" />
+                    }
+                  }
                 }
               } @else if (message.isStreaming) {
                 <!-- Still generating and nothing to show yet. A reasoning model
@@ -585,6 +616,13 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     .message-list-item__streaming {
       margin: 0;
       white-space: pre-wrap;
+    }
+
+    .message-list-item__document-note {
+      margin: 0;
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body-sm);
+      font-style: italic;
     }
 
     .message-list-item__searching {
@@ -920,6 +958,17 @@ export class MessageListItemComponent implements OnChanges {
   // Empty when the provider gave no usable offsets → sources dropdown only.
   citationAnchors(): CitationAnchor[] {
     return this.message?.decryptedData.citation_anchors ?? [];
+  }
+
+  // Splits the assistant content into ordered markdown/document segments
+  // (spec docs/specs/document-generation.md §5.2, §6). Called directly from the
+  // template rather than cached in a signal: the parser has a single-scan fast
+  // path for the overwhelmingly common "no <cog-doc> block" case, so
+  // re-running it every change-detection pass is cheap.
+  messageSegments(): MessageSegment[] {
+    return segmentMessageContent(this.message?.decryptedData.content, {
+      streaming: !!this.message?.isStreaming,
+    });
   }
 
   // The transient "Searching the web…" status shows only while streaming with a
