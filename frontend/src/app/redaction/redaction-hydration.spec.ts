@@ -4,6 +4,7 @@ import {
   containsRedactionToken,
   extractTokens,
   hydrateRedactedText,
+  splitRedactionSegments,
 } from './redaction-hydration';
 import { RedactionEntry } from './redaction-types';
 
@@ -75,6 +76,54 @@ describe('hydrateRedactedText', () => {
   it('returns the text unchanged when there are no entries', () => {
     expect(hydrateRedactedText('mail [[PII_EMAIL_A8F2KD]]', [])).toBe(
       'mail [[PII_EMAIL_A8F2KD]]',
+    );
+  });
+});
+
+describe('splitRedactionSegments', () => {
+  it('splits text into plain runs and known-token segments in order', () => {
+    const segments = splitRedactionSegments('to [[PII_EMAIL_A8F2KD]] now', entries);
+    expect(segments).toEqual([
+      { text: 'to ' },
+      { text: '[[PII_EMAIL_A8F2KD]]', entry: entries[0] },
+      { text: ' now' },
+    ]);
+  });
+
+  it('marks unknown tokens as plain text (no entry)', () => {
+    const segments = splitRedactionSegments('x [[PII_PHONE_ZZ0000]] y', entries);
+    expect(segments).toEqual([
+      { text: 'x ' },
+      { text: '[[PII_PHONE_ZZ0000]]', entry: undefined },
+      { text: ' y' },
+    ]);
+  });
+
+  it('handles a token at the very start and end', () => {
+    const segments = splitRedactionSegments(
+      '[[PII_EMAIL_A8F2KD]][[PII_IBAN_Q7K9M2]]',
+      entries,
+    );
+    expect(segments).toEqual([
+      { text: '[[PII_EMAIL_A8F2KD]]', entry: entries[0] },
+      { text: '[[PII_IBAN_Q7K9M2]]', entry: entries[1] },
+    ]);
+  });
+
+  it('returns a single plain segment for token-free text', () => {
+    expect(splitRedactionSegments('Quarterly Report', entries)).toEqual([
+      { text: 'Quarterly Report' },
+    ]);
+  });
+
+  it('returns no segments for empty text', () => {
+    expect(splitRedactionSegments('', entries)).toEqual([]);
+  });
+
+  it('is stateless across calls (shared global regex not leaked)', () => {
+    const text = 'a [[PII_EMAIL_A8F2KD]] b';
+    expect(splitRedactionSegments(text, entries)).toEqual(
+      splitRedactionSegments(text, entries),
     );
   });
 });
