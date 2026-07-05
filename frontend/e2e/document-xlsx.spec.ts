@@ -260,6 +260,12 @@ test.describe('XLSX document card (spec §5.3)', () => {
     // would guarantee a failure.
     await expect(card.getByRole('button', { name: 'Save to library' })).toHaveCount(0);
 
+    // A spreadsheet card is download-only: sheet-spec JSON is not prose, so
+    // unlike docx/pdf there is no expand caret and no inline preview.
+    await expect(card.locator('.document-card__caret')).toHaveCount(0);
+    await card.locator('.document-card__header').click();
+    await expect(card.locator('.document-card__preview')).toHaveCount(0);
+
     const downloadPromise = page.waitForEvent('download');
     await card.getByRole('button', { name: 'Download' }).click();
     const download = await downloadPromise;

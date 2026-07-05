@@ -5,6 +5,9 @@ import { RedactedMarkdownComponent } from '@app/components/chat/redacted-markdow
 import { CogDocBlock } from '@app/documents/cog-doc/cog-doc.types';
 import { DocumentExportService } from '@app/documents/document-export.service';
 import { Message } from '@app/interfaces/message';
+import { RedactionEntry } from '@app/redaction';
+import { ConversationService } from '@app/services/conversation.service';
+import { RedactionService } from '@app/services/redaction.service';
 
 import { DocumentCardComponent } from './document-card.component';
 
@@ -32,15 +35,36 @@ function buildBlock(overrides: Partial<CogDocBlock> = {}): CogDocBlock {
 
 const message = { record_id: 'msg-1', decryptedData: { content: '' } } as Message;
 
+function redactionEntry(
+  token: string,
+  original: string,
+  type: RedactionEntry['type'] = 'custom',
+): RedactionEntry {
+  return {
+    version: '1',
+    token,
+    original,
+    type,
+    normalized: original,
+    detector: 'manual',
+  };
+}
+
 describe('DocumentCardComponent', () => {
   let fixture: ComponentFixture<DocumentCardComponent>;
   const downloadCogDoc = vi.fn();
   const saveCogDocToLibrary = vi.fn();
+  // Token→entry map the RedactionService stub resolves the title against; a test
+  // seeds it before setBlock to exercise title hydration.
+  let redactionEntries: Map<string, RedactionEntry>;
+  let valuesHidden = false;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     downloadCogDoc.mockResolvedValue(undefined);
     saveCogDocToLibrary.mockResolvedValue(undefined);
+    redactionEntries = new Map();
+    valuesHidden = false;
 
     await TestBed.configureTestingModule({
       imports: [DocumentCardComponent],
@@ -48,6 +72,18 @@ describe('DocumentCardComponent', () => {
         {
           provide: DocumentExportService,
           useValue: { downloadCogDoc, saveCogDocToLibrary },
+        },
+        {
+          provide: ConversationService,
+          useValue: { conversation: () => undefined },
+        },
+        {
+          provide: RedactionService,
+          useValue: {
+            revision: () => 0,
+            valuesHidden: () => valuesHidden,
+            combinedEntriesFor: () => redactionEntries,
+          },
         },
       ],
     })
@@ -98,6 +134,48 @@ describe('DocumentCardComponent', () => {
     expect(
       fixture.nativeElement.querySelector('.document-card__title').textContent.trim(),
     ).toBe('Document');
+  });
+
+  describe('redaction placeholders in the title', () => {
+    it('hydrates a known token to its real value as a pill, not the placeholder', () => {
+      redactionEntries.set(
+        '[[PII_CUSTOM_HM04KU]]',
+        redactionEntry('[[PII_CUSTOM_HM04KU]]', 'Ada Lovelace'),
+      );
+      setBlock(
+        buildBlock({
+          spec: { format: 'pdf', title: 'Business Card - [[PII_CUSTOM_HM04KU]]' },
+        }),
+      );
+
+      const title = fixture.nativeElement.querySelector('.document-card__title');
+      const pill = title.querySelector('cog-redacted-text');
+      expect(pill).not.toBeNull();
+      // The real value is shown; the raw placeholder token never leaks to the UI.
+      expect(title.textContent).toContain('Ada Lovelace');
+      expect(title.textContent).not.toContain('[[PII_CUSTOM_HM04KU]]');
+      // Plain-text portion of the title stays intact around the pill.
+      expect(title.textContent).toContain('Business Card -');
+    });
+
+    it('leaves an unknown token as plain placeholder text (no pill)', () => {
+      // Nothing seeded in redactionEntries → the token maps to nothing.
+      setBlock(
+        buildBlock({ spec: { format: 'pdf', title: 'Card - [[PII_CUSTOM_ZZZZZZ]]' } }),
+      );
+
+      const title = fixture.nativeElement.querySelector('.document-card__title');
+      expect(title.querySelector('cog-redacted-text')).toBeNull();
+      expect(title.textContent).toContain('[[PII_CUSTOM_ZZZZZZ]]');
+    });
+
+    it('renders a token-free title as plain text', () => {
+      setBlock(buildBlock({ spec: { format: 'docx', title: 'Quarterly Report' } }));
+
+      const title = fixture.nativeElement.querySelector('.document-card__title');
+      expect(title.querySelector('cog-redacted-text')).toBeNull();
+      expect(title.textContent.trim()).toBe('Quarterly Report');
+    });
   });
 
   it('shows the plain uppercase format tag, untranslated', () => {
@@ -314,17 +392,22 @@ describe('DocumentCardComponent', () => {
     expect(fixture.nativeElement.querySelector('.document-card__preview')).toBeNull();
   });
 
-  it('renders an xlsx body as plain text (JSON, not markdown)', () => {
+  it('offers no preview for xlsx cards — the header is static, not expandable', () => {
+    // Sheet-spec JSON is not prose; dumping it into the card is noise, not
+    // help. A spreadsheet card is download-only (docx/pdf keep the preview).
     const sheetBody = '{"sheets":[{"name":"Sheet1","rows":[["A",1]]}]}';
     setBlock(buildBlock({ spec: { format: 'xlsx' }, body: sheetBody }));
 
-    headerButton().click();
-    fixture.detectChanges();
+    const header = headerButton();
+    // Non-interactive: a plain <div>, no expand caret, no aria-expanded.
+    expect(header.tagName).toBe('DIV');
+    expect(header.getAttribute('aria-expanded')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.document-card__caret')).toBeNull();
 
-    const preview = fixture.nativeElement.querySelector('.document-card__preview-code');
-    expect(preview).not.toBeNull();
-    expect(preview.textContent).toContain(sheetBody);
-    // The markdown pipeline must not be used for xlsx bodies.
+    // Clicking it does nothing — no preview ever appears.
+    header.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.document-card__preview')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-redacted-markdown')).toBeNull();
   });
 

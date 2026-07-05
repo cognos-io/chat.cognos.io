@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,12 +15,21 @@ import {
   CognosButtonComponent,
   CognosCalloutComponent,
   CognosIconComponent,
+  CognosRedactedTextComponent,
 } from '@cognos/ui-angular';
 
 import { RedactedMarkdownComponent } from '@app/components/chat/redacted-markdown/redacted-markdown.component';
+import {
+  redactionKindFor,
+  redactionModalLabels,
+  redactionTypeLabel,
+} from '@app/components/chat/redaction-ui';
 import { CogDocBlock } from '@app/documents/cog-doc/cog-doc.types';
 import { DocumentExportService } from '@app/documents/document-export.service';
 import { Message } from '@app/interfaces/message';
+import { splitRedactionSegments } from '@app/redaction';
+import { ConversationService } from '@app/services/conversation.service';
+import { RedactionService } from '@app/services/redaction.service';
 
 /**
  * DocumentCardComponent shows a model-authored `<cog-doc>` block (spec
@@ -33,43 +43,72 @@ import { Message } from '@app/interfaces/message';
  * this card (spec §3.5), so this component only ever needs to distinguish
  * 'streaming' from 'ready'.
  *
- * xlsx bodies are sheet-spec JSON, not markdown (spec §6.3), so the preview
- * renders them as a plain text block rather than through the markdown
- * pipeline — feeding JSON through `RedactedMarkdownComponent` would produce
- * nonsense formatting (stray `_`/`*`/`#` treated as markdown syntax). This
- * means redaction pills embedded in sheet cell strings show as raw tokens in
- * the preview rather than hydrating, unlike the docx/pdf preview — an
- * accepted trade for a simple, safe text binding (no markdown parsing of
- * model-authored JSON).
+ * xlsx bodies are sheet-spec JSON, not prose (spec §6.3), so a spreadsheet
+ * card offers no preview at all: the header is static (no expand caret) and
+ * only the Download action is shown. Dumping raw sheet JSON into the card was
+ * more noise than help — the document is a render, not text to read inline.
+ * docx/pdf keep the collapsed-by-default markdown preview.
  */
 @Component({
   selector: 'app-document-card',
   standalone: true,
   imports: [
+    NgTemplateOutlet,
     CognosButtonComponent,
     CognosCalloutComponent,
     CognosIconComponent,
+    CognosRedactedTextComponent,
     RedactedMarkdownComponent,
     TranslocoModule,
   ],
   template: `
     <div class="document-card" *transloco="let t">
-      <button
-        type="button"
-        class="document-card__header"
-        [attr.aria-expanded]="expanded()"
-        (click)="toggleExpanded()"
-      >
+      <ng-template #headerBody>
         <cog-icon name="file-text" [size]="18" tone="text-subtle" />
-        <span class="document-card__title">{{ title() }}</span>
+        <span class="document-card__title">
+          @for (segment of titleSegments(); track $index) {
+            @if (segment.pill; as pill) {
+              <!-- A redaction placeholder in the title (e.g. a name the model
+                   never saw): hydrate it to the real value as a pill so the
+                   user sees their own words, highlighted to show it stayed
+                   private. -->
+              <cog-redacted-text
+                [value]="pill.value"
+                [placeholder]="pill.placeholder"
+                [kind]="pill.kind"
+                [label]="pill.label"
+                [labels]="pillLabels()"
+                [showSettings]="false"
+                [masked]="valuesHidden()"
+              />
+            } @else {
+              {{ segment.text }}
+            }
+          }
+        </span>
         <span class="document-card__format">{{ formatLabel() }}</span>
-        <cog-icon
-          class="document-card__caret"
-          [name]="expanded() ? 'chevron-down' : 'chevron-right'"
-          [size]="14"
-          tone="text-subtlest"
-        />
-      </button>
+      </ng-template>
+
+      @if (canPreview()) {
+        <button
+          type="button"
+          class="document-card__header"
+          [attr.aria-expanded]="expanded()"
+          (click)="toggleExpanded()"
+        >
+          <ng-container [ngTemplateOutlet]="headerBody" />
+          <cog-icon
+            class="document-card__caret"
+            [name]="expanded() ? 'chevron-down' : 'chevron-right'"
+            [size]="14"
+            tone="text-subtlest"
+          />
+        </button>
+      } @else {
+        <div class="document-card__header document-card__header--static">
+          <ng-container [ngTemplateOutlet]="headerBody" />
+        </div>
+      }
 
       <div class="document-card__status">
         @switch (block().state) {
@@ -117,13 +156,9 @@ import { Message } from '@app/interfaces/message';
         </cog-callout>
       }
 
-      @if (expanded()) {
+      @if (canPreview() && expanded()) {
         <div class="document-card__preview" role="region">
-          @if (isXlsx()) {
-            <pre class="document-card__preview-code">{{ block().body }}</pre>
-          } @else {
-            <app-redacted-markdown [content]="block().body" />
-          }
+          <app-redacted-markdown [content]="block().body" />
         </div>
       }
     </div>
@@ -154,6 +189,10 @@ import { Message } from '@app/interfaces/message';
       font: inherit;
       text-align: left;
       cursor: pointer;
+    }
+
+    .document-card__header--static {
+      cursor: default;
     }
 
     .document-card__header:focus-visible {
@@ -226,25 +265,14 @@ import { Message } from '@app/interfaces/message';
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-body-sm);
     }
-
-    .document-card__preview-code {
-      overflow: auto;
-      margin: 0;
-      border-radius: var(--cog-radius-sm);
-      background: var(--cog-surface-sunken);
-      padding: var(--cog-space-100);
-      color: var(--cog-text);
-      font-family: var(--cog-font-mono);
-      font-size: var(--cog-fs-caption);
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DocumentCardComponent {
   private readonly _documentExport = inject(DocumentExportService);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _redaction = inject(RedactionService);
+  private readonly _conversation = inject(ConversationService);
 
   readonly block = input.required<CogDocBlock>();
   readonly message = input.required<Message>();
@@ -270,6 +298,11 @@ export class DocumentCardComponent {
   // permissively-licensed sheet processor lands (spec §5.4).
   protected readonly canSaveToLibrary = computed(() => !this.isXlsx());
 
+  // xlsx bodies are sheet-spec JSON, not prose — there's nothing worth reading
+  // inline, so a spreadsheet card is download-only: no expand caret, no
+  // preview. docx/pdf keep the collapsed markdown preview.
+  protected readonly canPreview = computed(() => !this.isXlsx());
+
   protected readonly title = computed(() => {
     const spec = this.block().spec;
     return (
@@ -282,6 +315,41 @@ export class DocumentCardComponent {
   protected readonly formatLabel = computed(
     () => this.block().spec?.format.toUpperCase() ?? '',
   );
+
+  // Whether redacted values are globally masked (••••••). Bound straight to the
+  // pill so toggling it live-updates the title, matching the message body.
+  protected readonly valuesHidden = this._redaction.valuesHidden;
+
+  // Same explainer-modal copy for every pill; recomputed only via the template.
+  protected readonly pillLabels = computed(() => redactionModalLabels(this._transloco));
+
+  // The title split into plain-text runs and hydrated redaction pills. Model-
+  // authored titles carry the same placeholder tokens as the message (a name,
+  // an email…), so we resolve each to its real value against the conversation's
+  // scoped redaction map and hand the template ready-made pill inputs. Reads
+  // revision() so tokens that were raw before the map loaded become pills once
+  // it arrives; unknown tokens stay as plain placeholder text.
+  protected readonly titleSegments = computed(() => {
+    this._redaction.revision();
+    const conversation = this._conversation.conversation();
+    const entries = this._redaction.combinedEntriesFor(
+      conversation?.record.id,
+      conversation?.record.project,
+    );
+    return splitRedactionSegments(this.title(), [...entries.values()]).map((segment) =>
+      segment.entry
+        ? {
+            text: segment.text,
+            pill: {
+              value: segment.entry.original,
+              placeholder: segment.entry.token,
+              kind: redactionKindFor(segment.entry.type),
+              label: redactionTypeLabel(this._transloco, segment.entry.type),
+            },
+          }
+        : { text: segment.text, pill: undefined },
+    );
+  });
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {
