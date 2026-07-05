@@ -22,10 +22,14 @@ Two entry points, one render path:
 2. **Model-created documents** — the composer's "Create documents" tool
    (on by default, per-conversation opt-out) appends a byte-stable
    `<cog-doc>` output contract to the system prompt. The model emits the
-   document as a tagged block inside its normal reply; the client shows a
-   live card while it streams and renders the file on download. The raw
-   block persists inside the sealed message like any other content — the
-   card re-renders from history for free.
+   document (DOCX, PDF or XLSX) as a tagged block inside its normal reply;
+   the client shows a live card while it streams and renders the file on
+   download. Revisions are conversational: the contract requires the model
+   to re-emit the complete updated document, so history is the version
+   trail. The raw block persists inside the sealed message like any other
+   content — the card re-renders from history for free. "Save to library"
+   routes the rendered bytes through the encrypted attachments pipeline
+   (vault-sealed, redaction mappings travel with the file).
 
 ```mermaid
 flowchart LR
@@ -53,7 +57,10 @@ Properties this gives us:
 - **Renderer performs zero network I/O.** Libraries are lazy-loaded
   same-origin chunks; remote markdown image URLs are dropped (alt text
   kept); links are sanitised to `http(s)`. A generated file can never
-  phone home.
+  phone home — including spreadsheets: network/exec-capable formula
+  functions (`WEBSERVICE`, `HYPERLINK`, DDE pipes, …) are downgraded to
+  literal text with a visible warning; out-of-range cell references get
+  an advisory warning without blocking the file.
 - **Fail open to text.** The markdown→DocIR mapper is total — unknown or
   hostile input degrades (HTML stripped, KaTeX/footnotes stay literal),
   never throws. A truncated or malformed `<cog-doc>` block degrades to
@@ -75,8 +82,9 @@ Authoritative code: `frontend/src/app/documents/` —
 `document-export.service.ts` (hydrate → route → deliver),
 `markdown/markdown-to-docir.ts` (the total mapper),
 `renderers/` (docx/pdf/markdown facades + `doc-styles.ts` metadata
-hygiene), `workers/document-render.worker.ts`,
+hygiene), `sheets/` (sheet spec + formula validator + xlsx facade),
+`workers/document-render.worker.ts`,
 `cog-doc/` (block parser + prompt contract),
 `../components/chat/document-card/` (the card). Spec:
-`docs/specs/document-generation.md` (Phases 1–2 of 5 shipped — XLSX,
-save-to-library and the browser tool loop build on this same path).
+`docs/specs/document-generation.md` (Phases 1–3 of 5 shipped — the
+browser tool loop and sandboxed code execution build on this same path).
