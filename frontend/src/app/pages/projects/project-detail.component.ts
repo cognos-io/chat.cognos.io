@@ -25,6 +25,7 @@ import {
   Conversation,
   partitionConversationsByPinned,
 } from '@app/interfaces/conversation';
+import { NEW_PROJECT_CHAT_TITLE } from '@app/services/message.service';
 import { ProjectConversationService } from '@app/services/project-conversation.service';
 import { ProjectService } from '@app/services/project.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
@@ -186,14 +187,16 @@ export class ProjectDetailComponent {
       return;
     }
     this.creatingChat.set(true);
-    this._projectConversations.create(project, { title: 'New chat' }).subscribe({
-      next: (conversation) => {
-        this.creatingChat.set(false);
-        this._router.navigate(['/', 'c', conversation.record.id]);
-      },
-      error: () => {
-        this.creatingChat.set(false);
-      },
-    });
+    this._projectConversations
+      .create(project, { title: NEW_PROJECT_CHAT_TITLE })
+      .subscribe({
+        next: (conversation) => {
+          this.creatingChat.set(false);
+          this._router.navigate(['/', 'c', conversation.record.id]);
+        },
+        error: () => {
+          this.creatingChat.set(false);
+        },
+      });
   }
 }

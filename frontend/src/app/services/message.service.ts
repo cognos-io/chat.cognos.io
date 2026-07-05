@@ -390,6 +390,24 @@ export const buildTitleGenerationUserMessage = (startingMessage: string): string
   return `${TITLE_GENERATION_USER_MESSAGE_PREFIX}${excerpt}`;
 };
 
+// Placeholder titles a conversation carries before its first message: the
+// standalone flow creates lazily with NEW_CONVERSATION_TITLE, while project
+// chats are created eagerly (before any message) with NEW_PROJECT_CHAT_TITLE.
+// A conversation still holding one of these — or no title — has not been
+// titled yet, so it's safe to auto-generate a title from the first message
+// without clobbering a name the user chose.
+export const NEW_CONVERSATION_TITLE = 'New Conversation';
+export const NEW_PROJECT_CHAT_TITLE = 'New chat';
+
+export const isPlaceholderConversationTitle = (title: string | undefined): boolean => {
+  const trimmed = (title ?? '').trim();
+  return (
+    trimmed === '' ||
+    trimmed === NEW_CONVERSATION_TITLE ||
+    trimmed === NEW_PROJECT_CHAT_TITLE
+  );
+};
+
 // titleReasoningEffort picks the reasoning effort for a title completion:
 //   - the off tier when the model has one (cheapest — no hidden reasoning);
 //   - otherwise the lowest declared tier, so the backend sizes an explicit
@@ -1020,6 +1038,12 @@ export class MessageService {
             },
           };
 
+          // Whether the conversation had no messages before this send — the
+          // signal we use to auto-title an already-existing conversation on its
+          // first message (project chats are created before any message, so
+          // they never hit the new-conversation branch below).
+          const hadNoMessages = this.state.messages().length === 0;
+
           this.state.addMessage(msg);
 
           const conversation = this._conversationService.conversation();
@@ -1029,7 +1053,7 @@ export class MessageService {
           if (!conversation && !this._conversationService.isTemporaryConversation()) {
             this._isNewConversation$.next(true);
             this._conversationService.newConversation$.next({
-              title: 'New Conversation',
+              title: NEW_CONVERSATION_TITLE,
             });
 
             return this._conversationService.conversation$.pipe(
@@ -1060,7 +1084,7 @@ export class MessageService {
           // Re-attach the context for files referenced earlier in this thread so
           // the model keeps seeing them on follow-up turns (only the current
           // selection's ids are linked to the new message).
-          return this.gatherHistoricalAttachmentContexts(
+          const send$ = this.gatherHistoricalAttachmentContexts(
             messageRequest.attachmentIds ?? [],
           ).pipe(
             switchMap((historicalContexts) =>
@@ -1077,6 +1101,31 @@ export class MessageService {
               ),
             ),
           );
+
+          // Auto-title an already-existing conversation on its first message
+          // when it still carries a placeholder title. Project chats are
+          // created eagerly (before any message) so they skip the branch above
+          // and would otherwise stay titled "New chat". Best-effort and run
+          // alongside the send, mirroring the new-conversation flow: swallow any
+          // failure so it can never abort the in-flight answer stream.
+          if (
+            conversation &&
+            hadNoMessages &&
+            isPlaceholderConversationTitle(conversation.decryptedData.title)
+          ) {
+            return combineLatest([
+              this.generateAndSetConversationTitle(
+                conversation.record,
+                messageRequest.content,
+              ).pipe(
+                startWith(null),
+                catchError(() => EMPTY),
+              ),
+              send$,
+            ]).pipe(map(([, state]) => state));
+          }
+
+          return send$;
         }),
       ),
 

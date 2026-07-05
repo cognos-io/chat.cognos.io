@@ -26,6 +26,7 @@ import {
   composeSystemPromptSections,
   isCompletionAbortError,
   isEmailNotVerifiedError,
+  isPlaceholderConversationTitle,
   messageTreeAccessors,
   parseCompletionBillingRestriction,
   reasoningDisablingEffort,
@@ -1159,6 +1160,33 @@ describe('buildTitleGenerationUserMessage', () => {
     expect(buildTitleGenerationUserMessage(longMessage)).toBe(
       `${TITLE_GENERATION_USER_MESSAGE_PREFIX}${'a'.repeat(TITLE_INPUT_MAX_CHARS)}`,
     );
+  });
+});
+
+describe('isPlaceholderConversationTitle', () => {
+  it.each([
+    // A conversation that has not been titled yet — the standalone lazy-create
+    // default, the eager project-chat default, an empty title, and whitespace.
+    { name: 'standalone default', title: 'New Conversation', expected: true },
+    { name: 'project-chat default', title: 'New chat', expected: true },
+    { name: 'empty string', title: '', expected: true },
+    { name: 'whitespace only', title: '   ', expected: true },
+    {
+      name: 'default with surrounding whitespace',
+      title: '  New chat  ',
+      expected: true,
+    },
+    { name: 'undefined title', title: undefined, expected: true },
+    // A user-chosen title must never be treated as a placeholder, so first-send
+    // auto-titling can't clobber it.
+    { name: 'user-chosen title', title: 'Budget planning', expected: false },
+    {
+      name: 'title containing the default word',
+      title: 'New pricing model',
+      expected: false,
+    },
+  ])('$name → $expected', ({ title, expected }) => {
+    expect(isPlaceholderConversationTitle(title)).toBe(expected);
   });
 });
 
