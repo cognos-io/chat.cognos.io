@@ -80,6 +80,20 @@ export type CognosModalTitleTone = 'default' | 'info' | 'success' | 'danger';
         display: grid;
         place-items: center;
         padding: var(--cog-space-300);
+        /* The modal renders inline in the DOM (fixed, not portalled), so it
+           inherits text styling from wherever the trigger sits. A trigger in a
+           styled container — e.g. a redaction pill inside a truncated,
+           white-space: nowrap, semibold document title — would otherwise leak
+           that styling into the modal's prose (one-line overflow, bold copy).
+           Reset the inherited text baseline so the modal reads the same
+           regardless of launch context; descendants that set their own type
+           (title, labels, buttons) are unaffected. */
+        white-space: normal;
+        font-weight: var(--cog-fw-regular);
+        font-style: normal;
+        letter-spacing: normal;
+        text-transform: none;
+        text-align: start;
       }
 
       .cog-modal__scrim {
