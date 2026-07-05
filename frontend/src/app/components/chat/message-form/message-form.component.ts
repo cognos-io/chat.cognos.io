@@ -809,11 +809,11 @@ function escapeHtml(value: string): string {
       gap: var(--cog-space-100);
       width: 100%;
       padding: var(--cog-space-100);
+      font-size: var(--cog-fs-body);
       border: none;
       border-radius: var(--cog-radius-sm);
       background: transparent;
       color: var(--cog-text);
-      font: inherit;
       text-align: left;
       cursor: pointer;
     }
