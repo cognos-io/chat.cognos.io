@@ -651,6 +651,22 @@ export const applyCompletionStreamResponse = (
   );
 };
 
+// swapOptimisticUserMessageId replaces the optimistic user message's temporary
+// request id with the backend-persisted id. Only present on first generation;
+// regenerate creates no user message, so the array is returned unchanged.
+const swapOptimisticUserMessageId = (
+  existing: ReadonlyArray<Message>,
+  requestId: string,
+  userMessageId: string | undefined,
+): Message[] =>
+  userMessageId
+    ? existing.map((message) =>
+        message.record_id === requestId
+          ? { ...message, record_id: userMessageId }
+          : message,
+      )
+    : [...existing];
+
 // applyImageGenerationResponse swaps the optimistic user message's temporary id
 // for the persisted one and appends the generated-image assistant message,
 // carrying the decrypted image object URL for display. Pure — returns a new
@@ -662,15 +678,11 @@ export const applyImageGenerationResponse = (
   attachment: MessageAttachment,
   imageUrl: string,
 ): Message[] => {
-  // Swap the optimistic user message's temporary id for the persisted one (only
-  // present on first generation; regenerate creates no user message).
-  const messages = resp.user_message_id
-    ? existing.map((message) =>
-        message.record_id === requestId
-          ? { ...message, record_id: resp.user_message_id }
-          : message,
-      )
-    : [...existing];
+  const messages = swapOptimisticUserMessageId(
+    existing,
+    requestId,
+    resp.user_message_id,
+  );
 
   const assistant: Message = {
     record_id: resp.assistant_message.id,
@@ -684,6 +696,34 @@ export const applyImageGenerationResponse = (
       attachments: [attachment],
     },
     imageUrls: [imageUrl],
+  };
+
+  return [...messages, assistant];
+};
+
+// applyImageTextResponse handles the text-fallback path: the image model
+// answered with words (a refusal, question, or description) instead of an image,
+// so the backend persisted a normal text assistant message. Append it as an
+// ordinary reply with no attachment or image URL. Pure.
+export const applyImageTextResponse = (
+  existing: ReadonlyArray<Message>,
+  requestId: string,
+  resp: GenerateImageResponse,
+): Message[] => {
+  const messages = swapOptimisticUserMessageId(
+    existing,
+    requestId,
+    resp.user_message_id,
+  );
+
+  const assistant: Message = {
+    record_id: resp.assistant_message.id,
+    parentMessageId: resp.assistant_message.parent_message_id,
+    createdAt: parseBackendDate(resp.assistant_message.created_at),
+    decryptedData: {
+      content: resp.assistant_message.content ?? '',
+      model_id: resp.assistant_message.model_id,
+    },
   };
 
   return [...messages, assistant];
@@ -1765,10 +1805,18 @@ export class MessageService {
 
     const modelId = this._modelService.selectedModel().id;
 
+    // Send the prior turns (redacted, same as completions) so a chat-transport
+    // image model keeps context. The optimistic prompt is already in state, so
+    // the active branch path includes it as the last user message.
+    const { messages } = this.buildRequestContext(
+      [...this.state.activeBranch().path].reverse(),
+    );
+
     return this._api
       .generateConversationImage(conversation.record.id, {
         prompt: messageRequest.content,
         modelId,
+        messages,
         requestId: messageRequest.requestId,
       })
       .pipe(
@@ -1806,10 +1854,16 @@ export class MessageService {
 
     this.state.setStatus(MessageStatus.Sending);
 
+    // History up to and including the prompt being regenerated, so a
+    // chat-transport image model keeps the same context the original had.
+    const contextPath = regenerateContextPath(this.state.activeBranch().path, parentId);
+    const { messages } = this.buildRequestContext([...contextPath].reverse());
+
     return this._api
       .generateConversationImage(conversation.record.id, {
         prompt,
         modelId,
+        messages,
         parentMessageId: parentId,
         requestId: self.crypto.randomUUID(),
       })
@@ -1819,18 +1873,29 @@ export class MessageService {
       );
   }
 
-  // renderImageResponse decrypts the generated attachment and folds the new image
-  // message into state. Shared by generation and regeneration.
+  // renderImageResponse folds the new assistant message into state. Shared by
+  // generation and regeneration. Two shapes come back: an image attachment
+  // (decrypt it for display) or, when the model answered with words instead of
+  // an image, a plain text message (append it as an ordinary reply).
   private renderImageResponse(
     response: GenerateImageResponse,
     conversation: Conversation,
     requestId: string,
   ): Observable<Partial<MessageState>> {
+    const rawAttachment = response.assistant_message.attachment;
+    if (!rawAttachment) {
+      // Text fallback — no decryption needed, fold it in synchronously.
+      return of({
+        status: MessageStatus.Success,
+        messages: applyImageTextResponse(this.state().messages, requestId, response),
+      });
+    }
+
     const attachment: MessageAttachment = {
-      kind: response.assistant_message.attachment.kind,
-      mime_type: response.assistant_message.attachment.mime_type,
-      sealed_key: response.assistant_message.attachment.sealed_key,
-      file_name: response.assistant_message.attachment.file_name,
+      kind: rawAttachment.kind,
+      mime_type: rawAttachment.mime_type,
+      sealed_key: rawAttachment.sealed_key,
+      file_name: rawAttachment.file_name,
     };
     return this.decryptAttachmentToUrl(
       response.assistant_message.id,

@@ -18,6 +18,7 @@ import {
   applyCompletionStreamResponse,
   applyCompletionWebSearchStreamDelta,
   applyImageGenerationResponse,
+  applyImageTextResponse,
   assertMessageBindings,
   buildCompletionMessageContext,
   buildCompletionMessages,
@@ -1106,6 +1107,65 @@ describe('applyImageGenerationResponse', () => {
     const snapshot = existing[0].record_id;
     applyImageGenerationResponse(existing, 'req-1', response, attachment, 'blob:x');
     expect(existing[0].record_id).toBe(snapshot);
+  });
+});
+
+describe('applyImageTextResponse', () => {
+  // Text-fallback response: the image model answered with words instead of an
+  // image, so the backend persisted a plain text assistant message (no
+  // attachment, no content encryption needed on the client).
+  const response: GenerateImageResponse = {
+    request_id: 'req-1',
+    user_message_id: 'user-real-1',
+    assistant_message: {
+      id: 'assistant-1',
+      parent_message_id: 'user-real-1',
+      model_id: 'gemini-2-5-flash-image',
+      created_at: '2026-06-22T12:00:00Z',
+      content: "I can't generate that, but here's a description.",
+    },
+    usage: {
+      input_tokens: 7,
+      output_tokens: 20,
+      total_tokens: 27,
+      cost_usd: 0.001,
+      cost_chf: 0.001,
+      cost_rappen: 1,
+      used_provider_cost: true,
+    },
+  };
+
+  it('appends a plain text assistant message with no attachment', () => {
+    const existing: Message[] = [
+      {
+        record_id: 'req-1',
+        createdAt: new Date('2026-06-22T11:59:59Z'),
+        decryptedData: { content: 'draw a cat wearing a hat', owner_id: 'u1' },
+      },
+    ];
+
+    const result = applyImageTextResponse(existing, 'req-1', response);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].record_id).toBe('user-real-1');
+
+    const assistant = result[1];
+    expect(assistant.record_id).toBe('assistant-1');
+    expect(assistant.parentMessageId).toBe('user-real-1');
+    expect(assistant.decryptedData.content).toBe(
+      "I can't generate that, but here's a description.",
+    );
+    // Rendered as an ordinary reply — no attachment, no image URL.
+    expect(assistant.decryptedData.attachments).toBeUndefined();
+    expect(assistant.imageUrls).toBeUndefined();
+  });
+
+  it('falls back to empty content when the backend omits it', () => {
+    const result = applyImageTextResponse([], 'req-1', {
+      ...response,
+      assistant_message: { ...response.assistant_message, content: undefined },
+    });
+    expect(result[0].decryptedData.content).toBe('');
   });
 });
 

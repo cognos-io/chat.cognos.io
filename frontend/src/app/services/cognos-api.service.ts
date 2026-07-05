@@ -141,6 +141,10 @@ export type CompleteStreamEvent =
 export interface GenerateImageRequest {
   prompt: string;
   modelId: string;
+  // Prior conversation context (redacted, same shape completions send) so a
+  // chat-transport image model keeps context. The current prompt is the last
+  // user message. Optional — omitted for the dedicated Images API transport.
+  messages?: CompletionMessageRequest[];
   // When set, regenerates: the new image is parented to this existing message
   // instead of creating a fresh user prompt message.
   parentMessageId?: string;
@@ -157,12 +161,17 @@ export interface GenerateImageResponse {
     parent_message_id?: string;
     model_id: string;
     created_at: string;
-    attachment: {
+    // Present when an image was generated. Absent when the model answered with
+    // text instead (see `content`).
+    attachment?: {
       kind: string;
       mime_type: string;
       file_name: string;
       sealed_key: string;
     };
+    // The assistant's text reply when the model returned words instead of an
+    // image. Empty/absent when an image was generated.
+    content?: string;
   };
   usage: {
     input_tokens: number;
@@ -1229,6 +1238,7 @@ export class CognosApiService {
       {
         prompt: request.prompt,
         model_id: request.modelId,
+        messages: request.messages,
         parent_message_id: request.parentMessageId,
         request_id: request.requestId,
       },
