@@ -81,6 +81,30 @@ import { ModelService } from '@app/services/model.service';
         />
       </div>
 
+      <!-- Create documents: on by default, per-conversation opt-out, no
+           capability gating — every text model can emit the block (spec
+           docs/specs/document-generation.md §5.2). -->
+      <div class="composer-tools__row">
+        <cog-icon name="file-text" [size]="18" tone="text-subtle" />
+        <label
+          class="composer-tools__copy composer-tools__copy--clickable"
+          [attr.for]="documentsToggleId"
+        >
+          <span class="composer-tools__title">{{
+            t('chat.composer.tools.documents.title')
+          }}</span>
+          <span class="composer-tools__desc">{{
+            t('chat.composer.tools.documents.description')
+          }}</span>
+        </label>
+        <cog-toggle
+          [inputId]="documentsToggleId"
+          [checked]="tools.documentsEnabled()"
+          [label]="t('chat.composer.tools.documents.title')"
+          (checkedChange)="tools.setDocuments($event)"
+        />
+      </div>
+
       @if (tools.selectedModelUnsupported()) {
         <div class="composer-tools__warning" role="alert">
           <p class="composer-tools__warning-text">
@@ -228,4 +252,6 @@ export class ComposerToolsComponent {
   readonly imageToggleId = 'composer-tool-image';
   // Same, for the Web search switch.
   readonly webSearchToggleId = 'composer-tool-web-search';
+  // Same, for the Create documents switch.
+  readonly documentsToggleId = 'composer-tool-documents';
 }

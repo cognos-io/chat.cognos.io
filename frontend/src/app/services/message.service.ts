@@ -42,6 +42,7 @@ import { collectPathAttachmentRefs } from '@app/attachments/attachment-selection
 import { AttachmentUploadService } from '@app/attachments/attachment-upload.service';
 import { AttachmentManifestV1 } from '@app/attachments/attachment.types';
 import { MessageAttachmentChip } from '@app/components/chat/message-attachment-chip/message-attachment-chip.component';
+import { COG_DOC_INSTRUCTION } from '@app/documents/cog-doc/cog-doc-instruction';
 import { CompletionBillingRestriction } from '@app/interfaces/billing';
 import { Conversation } from '@app/interfaces/conversation';
 import {
@@ -215,6 +216,31 @@ const REDACTION_INSTRUCTION =
   'Some sensitive values in this conversation have been replaced with ' +
   'placeholders like [[PII_EMAIL_A8F2KD]]. Preserve these placeholders exactly ' +
   'in your response; do not invent, alter, or remove them.';
+
+// composeSystemPromptSections joins the system-prompt building blocks in the
+// stable order the wire contract depends on (spec
+// docs/specs/document-generation.md §5.2/§6, Decision 8): project/persona
+// instructions first, then the documents contract (only when the "Create
+// documents" tool is on — absent entirely when it's off, so the payload stays
+// byte-identical to today for opted-out conversations), then the redaction
+// instruction last, unchanged from its existing position. Exported as a pure
+// function so it's testable without instantiating MessageService's full
+// dependency graph.
+export function composeSystemPromptSections(
+  instructions: string,
+  personaPrompt: string,
+  documentsEnabled: boolean,
+  hasRedactions: boolean,
+): string {
+  return [
+    instructions,
+    personaPrompt.trim(),
+    documentsEnabled ? COG_DOC_INSTRUCTION : '',
+    hasRedactions ? REDACTION_INSTRUCTION : '',
+  ]
+    .filter((part) => part.length > 0)
+    .join('\n\n');
+}
 
 type CompleteErrorBody = {
   error?: string;
@@ -2339,9 +2365,11 @@ export class MessageService {
   // Builds the system prompt sent with a completion. When the conversation
   // belongs to a project, the project's instructions are prepended to the
   // persona prompt so every chat in the project inherits that guidance — with
-  // any PII in them redacted (see redactProjectInstructions). The redaction
-  // instruction is appended whenever the prompt or context carries placeholders,
-  // so the model preserves them across the round-trip.
+  // any PII in them redacted (see redactProjectInstructions). The documents
+  // contract is appended when the "Create documents" tool is enabled (absent
+  // entirely when the user opted out, so the payload is unchanged from today).
+  // The redaction instruction is appended whenever the prompt or context
+  // carries placeholders, so the model preserves them across the round-trip.
   private composeSystemPrompt(
     personaPrompt: string,
     conversation: Conversation | null | undefined,
@@ -2363,13 +2391,12 @@ export class MessageService {
         containsRedactionToken(context.textContext ?? ''),
       ) ??
         false);
-    return [
+    return composeSystemPromptSections(
       instructions,
-      personaPrompt.trim(),
-      hasRedactions ? REDACTION_INSTRUCTION : '',
-    ]
-      .filter((part) => part.length > 0)
-      .join('\n\n');
+      personaPrompt,
+      this._composerTools.documentsEnabled(),
+      hasRedactions,
+    );
   }
 
   // Returns a project's instructions with PII replaced by placeholder tokens,

@@ -560,6 +560,10 @@
           "description": "Le modèle peut rechercher des informations sur le web. Votre question est susceptible d'être envoyée à un moteur de recherche.",
           "unsupported": "Ce modèle ne peut pas effectuer de recherche sur le web. Choisissez un autre modèle pour l'utiliser."
         },
+        "documents": {
+          "title": "Créer des documents",
+          "description": "Le modèle peut créer des fichiers téléchargeables comme des documents Word et des PDF. Les fichiers sont générés sur votre appareil."
+        },
         "generateImage": {
           "title": "Générer une image",
           "description": "Crée des images à partir d'une description textuelle."
@@ -767,7 +771,9 @@
       "deleteConfirm": "Voulez-vous vraiment supprimer ce message ?",
       "deleted": "Message supprimé",
       "disappearAfter": "Les nouveaux messages de cette conversation disparaîtront après {{ duration }}",
+      "documentCreating": "Création du document…",
       "documentDefaultName": "Document",
+      "documentInvalid": "Impossible de générer ce fichier — son contenu est affiché à la place.",
       "documentRenderFailed": "Le fichier n'a pas pu être créé. Veuillez réessayer.",
       "download": "Télécharger",
       "downloadDocx": "Document Word (.docx)",

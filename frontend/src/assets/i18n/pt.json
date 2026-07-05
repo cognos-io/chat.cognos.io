@@ -560,6 +560,10 @@
           "description": "O modelo pode procurar informação na web. A tua pergunta pode ser enviada a um motor de busca.",
           "unsupported": "Este modelo não consegue pesquisar na web. Escolhe outro modelo para a usar."
         },
+        "documents": {
+          "title": "Criar documentos",
+          "description": "O modelo pode criar ficheiros transferíveis como documentos Word e PDF. Os ficheiros são criados no teu dispositivo."
+        },
         "generateImage": {
           "title": "Gerar imagem",
           "description": "Cria imagens a partir de uma descrição de texto."
@@ -767,7 +771,9 @@
       "deleteConfirm": "Tens a certeza de que pretendes eliminar esta mensagem?",
       "deleted": "Mensagem eliminada",
       "disappearAfter": "As novas mensagens desta conversa desaparecerão após {{ duration }}",
+      "documentCreating": "A criar o documento…",
       "documentDefaultName": "Documento",
+      "documentInvalid": "Não foi possível criar este ficheiro — o conteúdo é mostrado em alternativa.",
       "documentRenderFailed": "Não foi possível criar o ficheiro. Tenta novamente.",
       "download": "Transferir",
       "downloadDocx": "Documento Word (.docx)",

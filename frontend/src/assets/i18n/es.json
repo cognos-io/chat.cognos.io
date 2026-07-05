@@ -560,6 +560,10 @@
           "description": "El modelo puede buscar información en la web. Tu pregunta podría enviarse a un motor de búsqueda.",
           "unsupported": "Este modelo no puede buscar en la web. Elige otro modelo para usarla."
         },
+        "documents": {
+          "title": "Crear documentos",
+          "description": "El modelo puede crear archivos descargables como documentos de Word y PDF. Los archivos se generan en tu dispositivo."
+        },
         "generateImage": {
           "title": "Generar imagen",
           "description": "Crea imágenes a partir de una descripción de texto."
@@ -767,7 +771,9 @@
       "deleteConfirm": "¿Seguro que quieres eliminar este mensaje?",
       "deleted": "Mensaje eliminado",
       "disappearAfter": "Los nuevos mensajes de este chat desaparecerán después de {{ duration }}",
+      "documentCreating": "Creando el documento…",
       "documentDefaultName": "Documento",
+      "documentInvalid": "No se ha podido generar este archivo; se muestra su contenido en su lugar.",
       "documentRenderFailed": "No se ha podido crear el archivo. Inténtalo de nuevo.",
       "download": "Descargar",
       "downloadDocx": "Documento de Word (.docx)",

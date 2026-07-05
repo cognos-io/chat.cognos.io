@@ -560,6 +560,10 @@
           "description": "The model can look things up on the web. Your question may be sent to a search engine.",
           "unsupported": "This model can't search the web. Choose another model to use it."
         },
+        "documents": {
+          "title": "Create documents",
+          "description": "The model can create downloadable files like Word documents and PDFs. Files are built on your device."
+        },
         "generateImage": {
           "title": "Generate image",
           "description": "Create images from a text description."
@@ -767,7 +771,9 @@
       "deleteConfirm": "Are you sure you want to delete this message?",
       "deleted": "Deleted message",
       "disappearAfter": "New messages in this conversation will disappear after {{ duration }}",
+      "documentCreating": "Creating document…",
       "documentDefaultName": "Document",
+      "documentInvalid": "Couldn't build this file — showing its content instead.",
       "documentRenderFailed": "Couldn't create the file. Please try again.",
       "download": "Download",
       "downloadDocx": "Word document (.docx)",

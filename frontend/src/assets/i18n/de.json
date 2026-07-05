@@ -560,6 +560,10 @@
           "description": "Das Modell kann Dinge im Web nachschlagen. Deine Frage wird dabei möglicherweise an eine Suchmaschine gesendet.",
           "unsupported": "Dieses Modell kann nicht im Web suchen. Wähle ein anderes Modell, um die Funktion zu nutzen."
         },
+        "documents": {
+          "title": "Dokumente erstellen",
+          "description": "Das Modell kann herunterladbare Dateien wie Word-Dokumente und PDFs erstellen. Dateien werden auf deinem Gerät erstellt."
+        },
         "generateImage": {
           "title": "Bild erzeugen",
           "description": "Erstellt Bilder aus einer Textbeschreibung."
@@ -767,7 +771,9 @@
       "deleteConfirm": "Möchtest du diese Nachricht wirklich löschen?",
       "deleted": "Gelöschte Nachricht",
       "disappearAfter": "Neue Nachrichten in dieser Konversation verschwinden nach {{ duration }}",
+      "documentCreating": "Dokument wird erstellt…",
       "documentDefaultName": "Dokument",
+      "documentInvalid": "Diese Datei konnte nicht erstellt werden – stattdessen wird der Inhalt angezeigt.",
       "documentRenderFailed": "Die Datei konnte nicht erstellt werden. Bitte versuche es erneut.",
       "download": "Herunterladen",
       "downloadDocx": "Word-Dokument (.docx)",

@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ROOT_PARENT_KEY, selectActiveBranch } from '@cognos/ui-angular';
 
+import { COG_DOC_INSTRUCTION } from '@app/documents/cog-doc/cog-doc-instruction';
 import { Message } from '@app/interfaces/message';
 
 import { CompleteResponse, GenerateImageResponse } from './cognos-api.service';
@@ -19,6 +20,7 @@ import {
   buildCompletionMessageContext,
   buildCompletionMessages,
   buildDeletedMessageData,
+  composeSystemPromptSections,
   isCompletionAbortError,
   isEmailNotVerifiedError,
   messageTreeAccessors,
@@ -1164,5 +1166,39 @@ describe('titleReasoningEffort', () => {
     },
   ])('$name', ({ efforts, expected }) => {
     expect(titleReasoningEffort(efforts)).toBe(expected);
+  });
+});
+
+// composeSystemPrompt (spec docs/specs/document-generation.md §5.2/§6, Decision
+// 8) delegates its joining logic to this exported pure function so it's
+// testable without instantiating MessageService's full dependency graph.
+describe('composeSystemPromptSections', () => {
+  it('omits the documents contract when the tool is opted out', () => {
+    const prompt = composeSystemPromptSections('', 'Be helpful.', false, false);
+    expect(prompt).not.toContain(COG_DOC_INSTRUCTION);
+    expect(prompt).toBe('Be helpful.');
+  });
+
+  it('appends the documents contract when the tool is enabled', () => {
+    const prompt = composeSystemPromptSections('', 'Be helpful.', true, false);
+    expect(prompt).toContain(COG_DOC_INSTRUCTION);
+  });
+
+  it('keeps the redaction instruction last, after the documents contract', () => {
+    const prompt = composeSystemPromptSections('', 'Be helpful.', true, true);
+    const docIndex = prompt.indexOf(COG_DOC_INSTRUCTION);
+    const redactionIndex = prompt.indexOf('[[PII_EMAIL_A8F2KD]]');
+    expect(docIndex).toBeGreaterThan(-1);
+    expect(redactionIndex).toBeGreaterThan(docIndex);
+  });
+
+  it('leaves the prompt untouched when neither documents nor redaction apply', () => {
+    const prompt = composeSystemPromptSections(
+      'Project instructions.',
+      'Be helpful.',
+      false,
+      false,
+    );
+    expect(prompt).toBe('Project instructions.\n\nBe helpful.');
   });
 });

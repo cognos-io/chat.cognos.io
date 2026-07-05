@@ -90,4 +90,32 @@ describe('ComposerToolsComponent', () => {
     fixture.detectChanges();
     expect(tools.imageGenerationEnabled()).toBe(true);
   });
+
+  // ---- documents (spec docs/specs/document-generation.md §5.2) ------------
+
+  it('renders the Create documents row on by default with no unsupported state', () => {
+    const toggleButton: HTMLButtonElement = fixture.nativeElement.querySelector(
+      'button#composer-tool-documents[role="switch"]',
+    );
+
+    expect(toggleButton).toBeTruthy();
+    expect(toggleButton.getAttribute('aria-checked')).toBe('true');
+    expect(
+      fixture.nativeElement.querySelector('label[for="composer-tool-documents"]'),
+    ).toBeTruthy();
+  });
+
+  it('toggles documents off and back on via the switch', () => {
+    const toggleButton: HTMLButtonElement = fixture.nativeElement.querySelector(
+      'button#composer-tool-documents[role="switch"]',
+    );
+
+    toggleButton.click();
+    fixture.detectChanges();
+    expect(tools.documentsEnabled()).toBe(false);
+
+    toggleButton.click();
+    fixture.detectChanges();
+    expect(tools.documentsEnabled()).toBe(true);
+  });
 });

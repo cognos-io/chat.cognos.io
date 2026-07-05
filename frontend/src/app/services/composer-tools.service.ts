@@ -54,6 +54,18 @@ export class ComposerToolsService {
     () => this.webSearchSupported() && !this._webSearchOptOut(),
   );
 
+  // Per-conversation "Create documents" opt-out (spec
+  // docs/specs/document-generation.md §5.2). On by default for every text
+  // model — no RequiredCapability change and no auto model switch: any model
+  // can emit the `<cog-doc>` block, quality varies but correctness does not
+  // (Principle 2). Reset alongside the web-search opt-out.
+  private readonly _documentsOptOut = signal(false);
+
+  // The effective documents-tool state: on unless the user opted out for this
+  // conversation. Read by the composer toggle and by MessageService to decide
+  // whether to append the document contract to the system prompt.
+  readonly documentsEnabled = computed(() => !this._documentsOptOut());
+
   // The capability the current composer state requires of the model. Never null:
   // plain chat requires text completion, the image tool requires image
   // generation (spec §2). The model selector filters on this, and ModelService
@@ -116,6 +128,16 @@ export class ComposerToolsService {
     this.setWebSearch(!this.webSearchEnabled());
   }
 
+  // setDocuments records the user's opt-in/out of "Create documents" for the
+  // current conversation.
+  setDocuments(enabled: boolean): void {
+    this._documentsOptOut.set(!enabled);
+  }
+
+  toggleDocuments(): void {
+    this.setDocuments(!this.documentsEnabled());
+  }
+
   setImageGeneration(enabled: boolean): void {
     this.applyImageGeneration(enabled, true);
   }
@@ -136,6 +158,7 @@ export class ComposerToolsService {
     // announce a switch for it.
     this.applyImageGeneration(false, false);
     this._webSearchOptOut.set(false);
+    this._documentsOptOut.set(false);
   }
 
   // applyImageGeneration flips the tool, pushes the new required capability to

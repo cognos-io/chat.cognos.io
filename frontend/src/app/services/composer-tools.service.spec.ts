@@ -325,4 +325,37 @@ describe('ComposerToolsService', () => {
     // Still opted out — only reset() clears it.
     expect(service.webSearchEnabled()).toBe(false);
   });
+
+  // ---- documents (spec docs/specs/document-generation.md §5.2) ------------
+
+  it('is on by default regardless of model capability', () => {
+    // No RequiredCapability gating: every text model can emit the block.
+    const { service } = setup({ selected: textModel, list: [textModel] });
+    expect(service.documentsEnabled()).toBe(true);
+  });
+
+  it('opts out per conversation without touching the model or capability', () => {
+    const { service, selectModel, setActiveCapability } = setup({
+      selected: textModel,
+      list: [textModel],
+    });
+    setActiveCapability.mockClear();
+
+    service.setDocuments(false);
+    expect(service.documentsEnabled()).toBe(false);
+    expect(selectModel).not.toHaveBeenCalled();
+    expect(setActiveCapability).not.toHaveBeenCalled();
+    expect(service.requiredCapability()).toBe('text_completion');
+
+    service.toggleDocuments();
+    expect(service.documentsEnabled()).toBe(true);
+  });
+
+  it('clears the documents opt-out on reset', () => {
+    const { service } = setup({ selected: textModel, list: [textModel] });
+    service.setDocuments(false);
+    expect(service.documentsEnabled()).toBe(false);
+    service.reset();
+    expect(service.documentsEnabled()).toBe(true);
+  });
 });
