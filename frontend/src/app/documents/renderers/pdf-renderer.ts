@@ -22,10 +22,13 @@ import {
 import {
   CODE_FONT_PDF,
   DOCUMENT_CREATOR,
+  FOOTER_MARGIN_PT,
+  HEADER_MARGIN_PT,
   PAGE_MARGIN_PT,
   TYPE_SCALE,
   USABLE_WIDTH_PT,
   headingStyleName,
+  normalizedHeaderText,
 } from './doc-styles';
 
 // Minimal surface this renderer needs from the loaded library — a fake
@@ -76,6 +79,7 @@ export const createPdfRenderer = (
     try {
       const pdfMake = await loadLib();
       const content = doc.blocks.flatMap((block) => mapBlock(block, images));
+      const headerText = normalizedHeaderText(opts.header);
 
       const docDefinition = {
         pageSize: 'A4',
@@ -87,10 +91,33 @@ export const createPdfRenderer = (
           creator: DOCUMENT_CREATOR,
           producer: DOCUMENT_CREATOR,
         },
+        // opts.lang: pdfmake's docDefinition has no document-language metadata
+        // field (checked its TDocumentDefinitions typings/docs) — intentional
+        // no-op here; see docx-renderer.ts for where `lang` actually applies.
         defaultStyle: { fontSize: TYPE_SCALE.Normal.pt },
         styles: buildStyles(),
         content,
         images: buildImageMap(images),
+        ...(headerText
+          ? {
+              header: {
+                text: headerText,
+                style: 'Header',
+                alignment: 'center',
+                margin: HEADER_MARGIN_PT,
+              },
+            }
+          : {}),
+        ...(opts.footer?.pageNumbers
+          ? {
+              footer: (currentPage: number, pageCount: number) => ({
+                text: `${currentPage} / ${pageCount}`,
+                style: 'Header',
+                alignment: 'center',
+                margin: FOOTER_MARGIN_PT,
+              }),
+            }
+          : {}),
       };
 
       const pdfDoc = pdfMake.createPdf(docDefinition);
@@ -120,6 +147,7 @@ function buildStyles(): Record<string, Record<string, unknown>> {
     code: { font: CODE_FONT_PDF, fontSize: TYPE_SCALE.Code.pt, margin: [0, 2, 0, 2] },
     link: { color: '#1a73e8', decoration: 'underline' },
     Caption: { fontSize: TYPE_SCALE.Caption.pt, color: `#${TYPE_SCALE.Caption.color}` },
+    Header: { fontSize: TYPE_SCALE.Header.pt, color: `#${TYPE_SCALE.Header.color}` },
   };
 }
 

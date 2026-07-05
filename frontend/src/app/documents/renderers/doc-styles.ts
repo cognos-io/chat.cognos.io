@@ -20,6 +20,11 @@ export const PAGE_MARGIN_PT: [number, number, number, number] = [72, 72, 72, 72]
 export const PAGE_WIDTH_PT = 595.28;
 export const USABLE_WIDTH_PT = PAGE_WIDTH_PT - PAGE_MARGIN_PT[0] - PAGE_MARGIN_PT[2];
 
+// Margins for the pdfmake header/footer content nodes, which live in the
+// page's top/bottom margin area rather than the body flow.
+export const HEADER_MARGIN_PT: [number, number, number, number] = [40, 20, 40, 0];
+export const FOOTER_MARGIN_PT: [number, number, number, number] = [40, 0, 40, 20];
+
 // docx font name for code; pdfmake's standard-14 font family name is
 // different casing/spelling, so the two are kept separate.
 export const CODE_FONT_DOCX = 'Courier New';
@@ -49,6 +54,9 @@ export const TYPE_SCALE = {
   Quote: { pt: 11, halfPt: 22, italics: true },
   Code: { pt: 10, halfPt: 20 },
   Caption: { pt: 9, halfPt: 18, color: '888888' },
+  // Kept distinct from Caption (identical today) so the two can diverge
+  // independently later without an implicit coupling.
+  Header: { pt: 9, halfPt: 18, color: '888888' },
 } as const satisfies Record<string, StyleSpec>;
 
 export type HeadingStyleName = 'Heading1' | 'Heading2' | 'Heading3' | 'Heading4';
@@ -56,6 +64,14 @@ export type HeadingStyleName = 'Heading1' | 'Heading2' | 'Heading3' | 'Heading4'
 // Headings 5-6 visually reuse the Heading4 scale.
 export const headingStyleName = (level: 1 | 2 | 3 | 4 | 5 | 6): HeadingStyleName =>
   level <= 4 ? (`Heading${level}` as HeadingStyleName) : 'Heading4';
+
+// normalizedHeaderText trims a caller-supplied page header down to `undefined`
+// when it's empty/whitespace-only, so both renderers agree on "no header"
+// without duplicating the trim/emptiness check.
+export const normalizedHeaderText = (header?: string): string | undefined => {
+  const trimmed = header?.trim();
+  return trimmed ? trimmed : undefined;
+};
 
 // documentDateRoundedToDay strips time-of-day so generated file metadata
 // cannot be used to infer precisely when a user was active (a .docx is a zip

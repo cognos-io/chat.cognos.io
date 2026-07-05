@@ -29,6 +29,7 @@ import {
   USABLE_WIDTH_TWIPS,
   documentDateRoundedToDay,
   headingStyleName,
+  normalizedHeaderText,
 } from './doc-styles';
 
 export type DocxLib = typeof Docx;
@@ -77,18 +78,32 @@ export const createDocxRenderer = (
       const docx = await loadLib();
       const children = doc.blocks.flatMap((block) => mapBlock(docx, block, images));
       const now = documentDateRoundedToDay(new Date());
+      const landscape = opts.page?.orientation === 'landscape';
+      // docx's own createPageSize swaps width/height internally whenever
+      // `orientation: LANDSCAPE` is set (verified against
+      // node_modules/docx/dist/index.mjs) — passing the canonical A4
+      // width/height plus the orientation flag is correct; pre-swapping them
+      // here as well double-swaps and produces a landscape-flagged page with
+      // portrait-shaped (narrower-than-tall) dimensions in the XML.
+      const pageSize = {
+        width: PAGE_SIZE_TWIPS.width,
+        height: PAGE_SIZE_TWIPS.height,
+        orientation: landscape
+          ? docx.PageOrientation.LANDSCAPE
+          : docx.PageOrientation.PORTRAIT,
+      };
 
       const document = new docx.Document({
         creator: DOCUMENT_CREATOR,
         lastModifiedBy: DOCUMENT_CREATOR,
         title: opts.title,
-        styles: buildStyles(docx),
+        styles: buildStyles(docx, opts),
         numbering: buildNumbering(docx),
         sections: [
           {
             properties: {
               page: {
-                size: { width: PAGE_SIZE_TWIPS.width, height: PAGE_SIZE_TWIPS.height },
+                size: pageSize,
                 margin: {
                   top: PAGE_MARGIN_TWIPS,
                   right: PAGE_MARGIN_TWIPS,
@@ -97,6 +112,8 @@ export const createDocxRenderer = (
                 },
               },
             },
+            headers: buildHeaders(docx, opts.header),
+            footers: buildFooters(docx, opts.footer?.pageNumbers),
             children,
           },
         ],
@@ -145,7 +162,7 @@ export function scrubDocxTimestamps(bytes: Uint8Array, roundedDate: Date): Uint8
   }
 }
 
-function buildStyles(docx: DocxLib) {
+function buildStyles(docx: DocxLib, opts: RenderOptions) {
   const headingStyle = (
     id: 'Heading1' | 'Heading2' | 'Heading3' | 'Heading4',
     spec: StyleSpec,
@@ -162,7 +179,10 @@ function buildStyles(docx: DocxLib) {
   return {
     default: {
       document: {
-        run: { size: TYPE_SCALE.Normal.halfPt },
+        run: {
+          size: TYPE_SCALE.Normal.halfPt,
+          language: opts.lang ? { value: opts.lang } : undefined,
+        },
         paragraph: { spacing: { after: 120 } },
       },
     },
@@ -200,7 +220,64 @@ function buildStyles(docx: DocxLib) {
         next: 'Normal',
         run: { size: TYPE_SCALE.Caption.halfPt, color: TYPE_SCALE.Caption.color },
       },
+      {
+        id: 'Header',
+        name: 'Header',
+        basedOn: 'Normal',
+        next: 'Normal',
+        run: { size: TYPE_SCALE.Header.halfPt, color: TYPE_SCALE.Header.color },
+      },
     ],
+  };
+}
+
+// buildHeaders returns a section `headers` option with a single centred,
+// Header-styled paragraph, or `undefined` when there's no (non-whitespace)
+// header text to show — an absent `headers` option renders no header at all.
+function buildHeaders(
+  docx: DocxLib,
+  header: string | undefined,
+): { default: InstanceType<DocxLib['Header']> } | undefined {
+  const text = normalizedHeaderText(header);
+  if (!text) {
+    return undefined;
+  }
+  return {
+    default: new docx.Header({
+      children: [
+        new docx.Paragraph({
+          style: 'Header',
+          alignment: docx.AlignmentType.CENTER,
+          children: [new docx.TextRun(text)],
+        }),
+      ],
+    }),
+  };
+}
+
+// buildFooters returns a section `footers` option with a single centred
+// "current / total" page-number paragraph built from docx's PageNumber field
+// children, or `undefined` when page numbers weren't requested.
+function buildFooters(
+  docx: DocxLib,
+  pageNumbers: boolean | undefined,
+): { default: InstanceType<DocxLib['Footer']> } | undefined {
+  if (!pageNumbers) {
+    return undefined;
+  }
+  return {
+    default: new docx.Footer({
+      children: [
+        new docx.Paragraph({
+          alignment: docx.AlignmentType.CENTER,
+          children: [
+            new docx.TextRun({
+              children: [docx.PageNumber.CURRENT, ' / ', docx.PageNumber.TOTAL_PAGES],
+            }),
+          ],
+        }),
+      ],
+    }),
   };
 }
 

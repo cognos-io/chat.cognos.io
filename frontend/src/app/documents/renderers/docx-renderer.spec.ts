@@ -12,17 +12,26 @@ import {
   scrubDocxTimestamps,
 } from './docx-renderer';
 
+interface CapturedHeaderOptions {
+  children: { options: CapturedParagraphOptions }[];
+}
+
 interface CapturedDocumentOptions {
   creator?: string;
   lastModifiedBy?: string;
   title?: string;
+  styles?: {
+    default?: { document?: { run?: { language?: { value?: string } } } };
+  };
   sections: {
     properties: {
       page: {
-        size: { width: number; height: number };
+        size: { width: number; height: number; orientation?: string };
         margin: { top: number; right: number; bottom: number; left: number };
       };
     };
+    headers?: { default: { options: CapturedHeaderOptions } };
+    footers?: { default: { options: CapturedHeaderOptions } };
   }[];
 }
 
@@ -87,6 +96,12 @@ function createFakeDocx() {
       tableCalls.push(options);
     }
   }
+  class FakeHeader {
+    constructor(public options: CapturedHeaderOptions) {}
+  }
+  class FakeFooter {
+    constructor(public options: CapturedHeaderOptions) {}
+  }
 
   const toArrayBuffer = vi.fn(
     async () => new TextEncoder().encode('fake-docx-bytes').buffer,
@@ -101,6 +116,8 @@ function createFakeDocx() {
     Table: FakeTable,
     TableRow: FakeTableRow,
     TableCell: FakeTableCell,
+    Header: FakeHeader,
+    Footer: FakeFooter,
     Packer: { toArrayBuffer },
     HeadingLevel: {
       HEADING_1: 'Heading1',
@@ -115,6 +132,8 @@ function createFakeDocx() {
     ShadingType: { CLEAR: 'clear' },
     WidthType: { DXA: 'dxa' },
     LevelFormat: { DECIMAL: 'decimal' },
+    PageNumber: { CURRENT: 'CURRENT', TOTAL_PAGES: 'TOTAL_PAGES' },
+    PageOrientation: { PORTRAIT: 'portrait', LANDSCAPE: 'landscape' },
   } as unknown as DocxLib;
 
   return {
@@ -189,7 +208,7 @@ describe('createDocxRenderer', () => {
     await render(fakeDocx, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {});
 
     const page = documentCalls[0].sections[0].properties.page;
-    expect(page.size).toEqual({ width: 11906, height: 16838 });
+    expect(page.size).toMatchObject({ width: 11906, height: 16838 });
     expect(page.margin).toEqual({ top: 1440, right: 1440, bottom: 1440, left: 1440 });
   });
 
@@ -267,6 +286,130 @@ describe('createDocxRenderer', () => {
     expect(hyperlinkCalls).toHaveLength(1);
     expect(hyperlinkCalls[0].link).toBe('https://example.com/safe');
     expect(JSON.stringify(hyperlinkCalls)).not.toMatch(/javascript:/i);
+  });
+
+  it('defaults to A4 portrait dimensions', async () => {
+    const { fakeDocx, documentCalls } = createFakeDocx();
+    await render(fakeDocx, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {});
+
+    expect(documentCalls[0].sections[0].properties.page.size).toEqual({
+      width: 11906,
+      height: 16838,
+      orientation: 'portrait',
+    });
+  });
+
+  it('sets the orientation flag (keeping canonical width/height) for a landscape page option', async () => {
+    // docx's own createPageSize swaps width/height internally whenever
+    // `orientation: LANDSCAPE` is set (verified against
+    // node_modules/docx/dist/index.mjs) — passing canonical A4 width/height
+    // here is correct; pre-swapping them ourselves as well would double-swap
+    // and produce a landscape-flagged page with portrait-shaped dimensions
+    // (caught by the real-bytes smoke check against actual document.xml).
+    const { fakeDocx, documentCalls } = createFakeDocx();
+    await render(fakeDocx, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      page: { size: 'A4', orientation: 'landscape' },
+    });
+
+    expect(documentCalls[0].sections[0].properties.page.size).toEqual({
+      width: 11906,
+      height: 16838,
+      orientation: 'landscape',
+    });
+  });
+
+  it('has no headers/footers by default', async () => {
+    const { fakeDocx, documentCalls } = createFakeDocx();
+    await render(fakeDocx, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {});
+
+    expect(documentCalls[0].sections[0].headers).toBeUndefined();
+    expect(documentCalls[0].sections[0].footers).toBeUndefined();
+  });
+
+  it('sets a centred, Header-styled default header from a header option', async () => {
+    const { fakeDocx, documentCalls } = createFakeDocx();
+    await render(fakeDocx, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      header: 'Quarterly Report',
+    });
+
+    const headerParagraph =
+      documentCalls[0].sections[0].headers?.default.options.children[0].options;
+    expect(headerParagraph?.style).toBe('Header');
+    expect(JSON.stringify(headerParagraph?.children)).toContain('Quarterly Report');
+  });
+
+  it('omits the header entirely when it is empty or whitespace-only', async () => {
+    const { fakeDocx, documentCalls } = createFakeDocx();
+    await render(fakeDocx, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      header: '   ',
+    });
+
+    expect(documentCalls[0].sections[0].headers).toBeUndefined();
+  });
+
+  it('defines a Header paragraph style at 9pt grey', async () => {
+    const { fakeDocx, documentCalls } = createFakeDocx();
+    await render(fakeDocx, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      header: 'Quarterly Report',
+    });
+
+    const styles = documentCalls[0].styles as unknown as {
+      paragraphStyles: { id: string; run: { size: number; color: string } }[];
+    };
+    const headerStyle = styles.paragraphStyles.find((s) => s.id === 'Header');
+    expect(headerStyle?.run).toEqual({ size: 18, color: '888888' });
+  });
+
+  it('builds a page-number footer from PageNumber field children when requested', async () => {
+    const { fakeDocx, documentCalls } = createFakeDocx();
+    await render(fakeDocx, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      footer: { pageNumbers: true },
+    });
+
+    const footerParagraph =
+      documentCalls[0].sections[0].footers?.default.options.children[0].options;
+    const run = footerParagraph?.children?.[0] as {
+      options: { children: unknown[] };
+    };
+    expect(run.options.children).toEqual(['CURRENT', ' / ', 'TOTAL_PAGES']);
+  });
+
+  it('omits the footer when pageNumbers is false or absent', async () => {
+    const { fakeDocx, documentCalls } = createFakeDocx();
+    await render(fakeDocx, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      footer: { pageNumbers: false },
+    });
+
+    expect(documentCalls[0].sections[0].footers).toBeUndefined();
+  });
+
+  it('supports a header and page-number footer together', async () => {
+    const { fakeDocx, documentCalls } = createFakeDocx();
+    await render(fakeDocx, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      header: 'Quarterly Report',
+      footer: { pageNumbers: true },
+    });
+
+    expect(documentCalls[0].sections[0].headers).toBeDefined();
+    expect(documentCalls[0].sections[0].footers).toBeDefined();
+  });
+
+  it('applies a lang option to the default document run language', async () => {
+    const { fakeDocx, documentCalls } = createFakeDocx();
+    await render(fakeDocx, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      lang: 'de-CH',
+    });
+
+    expect(documentCalls[0].styles?.default?.document?.run?.language).toEqual({
+      value: 'de-CH',
+    });
+  });
+
+  it('leaves the document run language unset when no lang option is given', async () => {
+    const { fakeDocx, documentCalls } = createFakeDocx();
+    await render(fakeDocx, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {});
+
+    expect(documentCalls[0].styles?.default?.document?.run?.language).toBeUndefined();
   });
 });
 

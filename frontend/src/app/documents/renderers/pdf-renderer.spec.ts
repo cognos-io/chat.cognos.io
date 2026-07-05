@@ -16,6 +16,8 @@ interface CapturedDocDefinition {
   styles: Record<string, Json>;
   content: Json[];
   images: Record<string, string>;
+  header?: { text: string; style?: string; alignment?: string; margin?: number[] };
+  footer?: (currentPage: number, pageCount: number) => Json;
 }
 
 function createFakePdfLib(getBufferImpl?: () => Promise<ArrayBuffer>) {
@@ -102,6 +104,17 @@ describe('createPdfRenderer', () => {
     expect(dd.pageMargins).toEqual([72, 72, 72, 72]);
   });
 
+  it('accepts a lang option as a no-op (pdfmake has no doc-language metadata)', async () => {
+    const { fakeLib, createPdf } = createFakePdfLib();
+    await render(fakeLib, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      lang: 'de-CH',
+    });
+
+    // No field on the docDefinition should carry the lang value — asserting
+    // there's nowhere for it to have leaked to, not that it was applied.
+    expect(JSON.stringify(capturedDocDefinition(createPdf))).not.toContain('de-CH');
+  });
+
   it('honours a landscape page option', async () => {
     const { fakeLib, createPdf } = createFakePdfLib();
     await render(fakeLib, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
@@ -109,6 +122,75 @@ describe('createPdfRenderer', () => {
     });
 
     expect(capturedDocDefinition(createPdf).pageOrientation).toBe('landscape');
+  });
+
+  it('has no header/footer by default', async () => {
+    const { fakeLib, createPdf } = createFakePdfLib();
+    await render(fakeLib, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {});
+
+    const dd = capturedDocDefinition(createPdf);
+    expect(dd.header).toBeUndefined();
+    expect(dd.footer).toBeUndefined();
+  });
+
+  it('sets a centred header from a non-empty header option', async () => {
+    const { fakeLib, createPdf } = createFakePdfLib();
+    await render(fakeLib, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      header: 'Quarterly Report',
+    });
+
+    const dd = capturedDocDefinition(createPdf);
+    expect(dd.header).toMatchObject({ text: 'Quarterly Report', alignment: 'center' });
+  });
+
+  it('omits the header entirely when it is empty or whitespace-only', async () => {
+    const { fakeLib, createPdf } = createFakePdfLib();
+    await render(fakeLib, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      header: '   ',
+    });
+
+    expect(capturedDocDefinition(createPdf).header).toBeUndefined();
+  });
+
+  it('produces a "current / total" footer when pageNumbers is requested', async () => {
+    const { fakeLib, createPdf } = createFakePdfLib();
+    await render(fakeLib, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      footer: { pageNumbers: true },
+    });
+
+    const footer = capturedDocDefinition(createPdf).footer;
+    expect(footer).toBeTypeOf('function');
+    expect(footer?.(2, 7)).toMatchObject({ text: '2 / 7', alignment: 'center' });
+  });
+
+  it('omits the footer when pageNumbers is false or absent', async () => {
+    const { fakeLib, createPdf } = createFakePdfLib();
+    await render(fakeLib, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      footer: { pageNumbers: false },
+    });
+
+    expect(capturedDocDefinition(createPdf).footer).toBeUndefined();
+  });
+
+  it('supports a header and page-number footer together', async () => {
+    const { fakeLib, createPdf } = createFakePdfLib();
+    await render(fakeLib, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {
+      header: 'Quarterly Report',
+      footer: { pageNumbers: true },
+    });
+
+    const dd = capturedDocDefinition(createPdf);
+    expect(dd.header).toMatchObject({ text: 'Quarterly Report' });
+    expect(dd.footer?.(1, 3)).toMatchObject({ text: '1 / 3' });
+  });
+
+  it('defines a Header style (9pt grey) used by header/footer text', async () => {
+    const { fakeLib, createPdf } = createFakePdfLib();
+    await render(fakeLib, { blocks: [{ type: 'paragraph', inlines: [] }] }, [], {});
+
+    const headerStyle = capturedDocDefinition(createPdf).styles['Header'];
+    expect(headerStyle['fontSize']).toBe(9);
+    expect(headerStyle['color']).toBe('#888888');
   });
 
   it('defines heading and code styles matching the shared type scale', async () => {
