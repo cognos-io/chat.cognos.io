@@ -175,7 +175,7 @@ func chatCompletionsHandler(logger *slog.Logger) http.HandlerFunc {
 		// response enabled, then reads choices[].message.images[].
 		if isImageModel(model) {
 			logger.Info("chat image completion", "model", model)
-			writeChatImageResponse(w, model)
+			writeChatImageResponse(w, model, req)
 			return
 		}
 
@@ -975,7 +975,36 @@ type chatImageResponse struct {
 	Usage   chatImageUsage    `json:"usage"`
 }
 
-func writeChatImageResponse(w http.ResponseWriter, model string) {
+// imageTextFallbackReply is the text an image model returns instead of an image
+// when the prompt contains imageTextFallbackMarker. Exercises the text-fallback
+// path (the model answered with words). Kept in one place so e2e can assert it.
+const (
+	imageTextFallbackMarker = "text-only"
+	imageTextFallbackReply  = "I can't create that image, but here's a description instead."
+)
+
+func writeChatImageResponse(w http.ResponseWriter, model string, req chatCompletionRequest) {
+	// Test hook: when the prompt asks for text, answer with words and no image so
+	// the caller exercises the graceful text-fallback path.
+	if strings.Contains(strings.ToLower(lastUserContent(req)), imageTextFallbackMarker) {
+		writeJSON(w, http.StatusOK, chatImageResponse{
+			ID:      "chatcmpl-mock-image-text",
+			Object:  "chat.completion",
+			Created: time.Now().Unix(),
+			Model:   model,
+			Choices: []chatImageChoice{{
+				Index:        0,
+				FinishReason: "stop",
+				Message: chatImageMessage{
+					Role:    "assistant",
+					Content: imageTextFallbackReply,
+				},
+			}},
+			Usage: chatImageUsage{PromptTokens: 7, CompletionTokens: 20, TotalTokens: 27, Cost: 0.0001},
+		})
+		return
+	}
+
 	writeJSON(w, http.StatusOK, chatImageResponse{
 		ID:      "chatcmpl-mock-image",
 		Object:  "chat.completion",

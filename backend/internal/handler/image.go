@@ -70,6 +70,12 @@ func ConversationMessageAttachment(params CompleteHandlerParams) func(e *core.Re
 type generateImageRequest struct {
 	Prompt  string `json:"prompt"`
 	ModelID string `json:"model_id"`
+	// Messages is the prior conversation context (oldest-first, redacted
+	// plaintext) the client sends so a chat-transport image model keeps context.
+	// The current prompt is the last user message. Optional: an empty list falls
+	// back to sending just Prompt. Never persisted — forwarded to the provider
+	// only, exactly like the completion endpoint's messages.
+	Messages []completionMessage `json:"messages,omitempty"`
 	// ParentMessageID, when set, regenerates: the new image is parented to this
 	// existing message instead of creating a fresh user prompt message.
 	ParentMessageID string `json:"parent_message_id,omitempty"`
@@ -92,11 +98,17 @@ type imageAttachmentResponse struct {
 }
 
 type assistantImageMessageResponse struct {
-	ID              string                  `json:"id"`
-	ParentMessageID string                  `json:"parent_message_id,omitempty"`
-	ModelID         string                  `json:"model_id"`
-	CreatedAt       string                  `json:"created_at"`
-	Attachment      imageAttachmentResponse `json:"attachment"`
+	ID              string `json:"id"`
+	ParentMessageID string `json:"parent_message_id,omitempty"`
+	ModelID         string `json:"model_id"`
+	CreatedAt       string `json:"created_at"`
+	// Attachment carries the generated image. Nil when the model answered with
+	// text instead — in that case Content holds the reply and the client renders
+	// it as a normal assistant message.
+	Attachment *imageAttachmentResponse `json:"attachment,omitempty"`
+	// Content is the assistant's text reply for the text-fallback path. Empty
+	// when an image was generated.
+	Content string `json:"content,omitempty"`
 }
 
 type generateImageResponse struct {
@@ -246,13 +258,44 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 			ProviderID:      model.ProviderID,
 			ProviderModelID: model.ProviderModelID,
 			Prompt:          req.Prompt,
+			Messages:        imageChatHistory(req),
 			Transport:       gateway.ImageTransport(model.ImageGenerationTransport),
 			OutputFormat:    "png",
 		})
-		if err != nil || len(imageResp.Images) == 0 || len(imageResp.Images[0].Bytes) == 0 {
+		if err != nil {
 			cleanupPromptMessage()
 			params.Logger.Error("image generation upstream request failed", "provider", model.ProviderID, "err", err)
 			return apis.NewApiError(http.StatusServiceUnavailable, "Failed to generate image", nil)
+		}
+
+		hasImage := len(imageResp.Images) > 0 && len(imageResp.Images[0].Bytes) > 0
+
+		// Text fallback: the model answered with words instead of an image (a
+		// refusal, a clarifying question, or a description). Persist it as a
+		// normal text assistant message rather than failing the request.
+		if !hasImage {
+			if strings.TrimSpace(imageResp.Text) == "" {
+				cleanupPromptMessage()
+				params.Logger.Error("image generation returned no image or text", "provider", model.ProviderID)
+				return apis.NewApiError(http.StatusServiceUnavailable, "Failed to generate image", nil)
+			}
+			return respondImageTextFallback(e, imageTextFallback{
+				params:            params,
+				conversation:      conversation,
+				conversationID:    conversationID,
+				model:             model,
+				text:              imageResp.Text,
+				usage:             imageResp.Usage,
+				assistantParentID: assistantParentID,
+				userMessageRecord: userMessageRecord,
+				ownerID:           owner.ID,
+				requestID:         req.RequestID,
+				usdToCHFRate:      usdToCHFRate,
+				billingState:      billingState,
+				userTier:          userTier,
+				gatewayStartedAt:  gatewayStartedAt,
+				cleanup:           cleanupPromptMessage,
+			})
 		}
 
 		image := imageResp.Images[0]
@@ -352,7 +395,7 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 				ParentMessageID: assistantParentID,
 				ModelID:         model.ID,
 				CreatedAt:       assistantCreatedAt,
-				Attachment: imageAttachmentResponse{
+				Attachment: &imageAttachmentResponse{
 					Kind:      "generated_image",
 					MimeType:  image.MimeType,
 					FileName:  assistantMessageRecord.GetString("attachment"),
@@ -370,4 +413,150 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 			},
 		})
 	}
+}
+
+// imageChatHistory maps the client-sent conversation context onto gateway
+// messages so a chat-transport image model keeps context. Returns nil when no
+// history was sent, letting the gateway fall back to a single prompt message.
+// Never persisted — forwarded to the provider only, like completion messages.
+func imageChatHistory(req generateImageRequest) []gateway.Message {
+	if len(req.Messages) == 0 {
+		return nil
+	}
+	messages := make([]gateway.Message, 0, len(req.Messages))
+	for _, msg := range req.Messages {
+		messages = append(messages, gateway.Message{
+			Role:    msg.Role,
+			Content: msg.Content,
+			Name:    msg.Name,
+		})
+	}
+	return messages
+}
+
+// imageTextFallback carries what respondImageTextFallback needs to persist a
+// text reply an image model returned instead of an image.
+type imageTextFallback struct {
+	params            CompleteHandlerParams
+	conversation      chat.Conversation
+	conversationID    string
+	model             catalogue.Model
+	text              string
+	usage             gateway.Usage
+	assistantParentID string
+	userMessageRecord *core.Record
+	ownerID           string
+	requestID         string
+	usdToCHFRate      float64
+	billingState      *billing.State
+	userTier          catalogue.PrivacyTier
+	gatewayStartedAt  time.Time
+	cleanup           func()
+}
+
+// respondImageTextFallback persists the model's text reply as a normal encrypted
+// assistant message, bills it as a text turn, and returns the text response. It
+// mirrors the completion pipeline's post-provider bookkeeping (billing,
+// analytics, activity bump) so a text answer to an image request behaves like an
+// ordinary assistant turn the user can continue from.
+func respondImageTextFallback(e *core.RequestEvent, f imageTextFallback) error {
+	params := f.params
+
+	assistantCreatedAt := time.Now().UTC().Format(time.RFC3339)
+	err, assistantMessageRecord := params.MessageRepo.EncryptAndPersistMessage(
+		f.conversation,
+		f.assistantParentID,
+		chat.MessageRecordData{
+			ModelID:      f.model.ID,
+			Content:      f.text,
+			CreatedAt:    assistantCreatedAt,
+			InputTokens:  f.usage.InputTokens,
+			OutputTokens: f.usage.OutputTokens,
+		},
+	)
+	if err != nil {
+		f.cleanup()
+		params.Logger.Error("failed to save image text-fallback message", "err", err)
+		return apis.NewApiError(http.StatusInternalServerError, "Failed to store response", nil)
+	}
+
+	costBreakdown := params.BillingService.CalculateCost(f.model, billing.Usage{
+		InputTokens:     f.usage.InputTokens,
+		OutputTokens:    f.usage.OutputTokens,
+		ProviderCostUSD: f.usage.ProviderCostUSD,
+	}, f.usdToCHFRate)
+
+	eventID := uuid.NewString()
+	if f.billingState != nil {
+		if params.BillingLedgerRepo != nil {
+			usageRecord := params.BillingService.BuildUsageRecord(*f.billingState, billing.BuildUsageRecordInput{
+				UserID:       f.ownerID,
+				EventID:      eventID,
+				ModelID:      f.model.ID,
+				Cost:         costBreakdown,
+				FXRateUSDCHF: f.usdToCHFRate,
+				InputTokens:  f.usage.InputTokens,
+				OutputTokens: f.usage.OutputTokens,
+				// A text reply is billed as a text turn, not an image (no image
+				// was produced), so GeneratedImageCount stays 0.
+				OperationType: billing.OperationTypeText,
+			})
+			if err := params.BillingLedgerRepo.RecordUsage(usageRecord); err != nil {
+				params.Logger.Error("failed to record image text-fallback billing usage", "err", err)
+			}
+		}
+
+		if params.UsageEmitter != nil {
+			billingUserID := f.billingState.BillingUserID
+			if billingUserID == "" {
+				billingUserID = f.ownerID
+			}
+			usageEvent := analytics.BuildUsageEvent(analytics.BuildUsageEventInput{
+				EventID:       eventID,
+				OccurredAt:    time.Now().UTC(),
+				BillingUserID: billingUserID,
+				PlanType:      f.billingState.PlanType,
+				Model:         f.model,
+				PrivacyTier:   f.userTier,
+				Cost:          costBreakdown,
+				FXRateUSDCHF:  f.usdToCHFRate,
+				LatencyMS:     time.Since(f.gatewayStartedAt).Milliseconds(),
+			})
+			if err := params.UsageEmitter.Emit(usageEvent); err != nil {
+				params.Logger.Error("failed to emit image text-fallback analytics event", "err", err)
+			}
+		}
+	}
+
+	if params.ConversationRepo != nil {
+		if err := params.ConversationRepo.BumpActivity(f.conversationID, chat.ActivityMessageCreated); err != nil {
+			params.Logger.Error("failed to bump conversation activity time", "err", err)
+		}
+	}
+
+	userMessageID := ""
+	if f.userMessageRecord != nil {
+		userMessageID = f.userMessageRecord.Id
+	}
+
+	return e.JSON(http.StatusOK, generateImageResponse{
+		RequestID:     f.requestID,
+		UserMessageID: userMessageID,
+		AssistantMessage: assistantImageMessageResponse{
+			ID:              assistantMessageRecord.Id,
+			ParentMessageID: f.assistantParentID,
+			ModelID:         f.model.ID,
+			CreatedAt:       assistantCreatedAt,
+			Content:         f.text,
+		},
+		Usage: usageResponse{
+			InputTokens:      f.usage.InputTokens,
+			OutputTokens:     f.usage.OutputTokens,
+			TotalTokens:      f.usage.TotalTokens,
+			CostUSD:          costBreakdown.CostUSD,
+			CostCHF:          costBreakdown.CostCHF,
+			CostRappen:       costBreakdown.CostRappen,
+			UsedProviderCost: costBreakdown.UsedProviderCost,
+		},
+	})
 }

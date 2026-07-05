@@ -10,9 +10,12 @@ result is an image, persisted with the same no-plaintext-at-rest rule as
 messages: the bytes are encrypted before any durable write and only the holder
 of the conversation key can decrypt them.
 
-`POST /api/v1/conversations/{id}/image` — `{ prompt, model_id, parent_message_id? }`.
+`POST /api/v1/conversations/{id}/image` — `{ prompt, model_id, messages?, parent_message_id? }`.
 Capability, privacy tier and billing are all enforced **before** the provider is
-called (same gates as the [completion pipeline](./completion-pipeline.md)).
+called (same gates as the [completion pipeline](./completion-pipeline.md)). `messages`
+is the prior conversation context (redacted, same shape completions send) so a
+chat-transport model keeps context; it is forwarded to the provider only, never
+persisted.
 
 ## Two transports, chosen per model
 
@@ -21,10 +24,13 @@ The catalogue records `image_generation_transport` (backend-only) per model:
 - **`images_api`** — OpenAI `gpt-image-*`. Bifrost's `/v1/images/generations`;
   returns `data[].b64_json`.
 - **`chat_completions`** — Google Gemini `*-flash-image-*` (the ZDR/EU models).
-  Bifrost's chat endpoint returns the image inline at
-  `choices[].message.images[]`. Bifrost doesn't model that field, so the gateway
-  enables raw-response capture **for this request only** and parses the data URI
-  out of the raw JSON.
+  Sends the prior turns (`messages`) so the model keeps context. Bifrost's chat
+  endpoint returns the image inline at `choices[].message.images[]`. Bifrost
+  doesn't model that field, so the gateway enables raw-response capture **for
+  this request only** and parses the data URI out of the raw JSON. It also reads
+  `choices[].message.content`: if the model replies with **text and no image**
+  (a refusal or clarifying question), that text is surfaced and saved as a normal
+  assistant message instead of failing — see the diagram below.
 
 The frontend only sees `supports_image_generation`; it never picks the transport.
 
@@ -44,17 +50,21 @@ sequenceDiagram
   else regenerate (parent set)
     H->>DB: verify parent belongs to conversation
   end
-  H->>GW: GenerateImage (transport per model)
-  GW-->>H: image bytes (+ usage)
-  alt failed
-    H->>DB: DELETE prompt message (cleanup; no-op on regenerate)
-    H-->>FE: 503
-  else
+  H->>GW: GenerateImage (transport per model, + history)
+  GW-->>H: image bytes, OR text, OR neither (+ usage)
+  alt image returned
     H->>H: random symmetric key, secretbox the bytes,<br/>seal the key to the conversation public key
     H->>F: write ciphertext (protected file on the message)
     H->>DB: encrypt + INSERT assistant message<br/>(carries the sealed key)
     H->>H: record usage as operation_type=image_generation
     H-->>FE: message refs + sealed key (never bytes)
+  else text returned (no image)
+    H->>DB: encrypt + INSERT assistant text message
+    H->>H: record usage as operation_type=text
+    H-->>FE: assistant_message.content (no attachment)
+  else neither
+    H->>DB: DELETE prompt message (cleanup; no-op on regenerate)
+    H-->>FE: 503
   end
 ```
 

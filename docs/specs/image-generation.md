@@ -367,6 +367,14 @@ Why this shape:
 
 ### 7.5 Failure handling
 
+- **Text instead of an image is NOT a failure.** A chat-transport model may answer an image request
+  with words — a refusal, a clarifying question, or a description — at `choices[].message.content`.
+  When the response carries text but no image, the gateway returns it as `ImageResponse.Text` (never
+  an error), and the handler persists it as a **normal encrypted text assistant message** (no
+  attachment), billed as a text turn (`operation_type: text`, `generated_image_count: 0`). The
+  response then carries `assistant_message.content` and omits `assistant_message.attachment`; the
+  client renders it as an ordinary reply. Only a response with **neither** an image **nor** text is
+  a provider failure (503, prompt message cleaned up).
 - If provider generation fails before any message is persisted, return an upstream error and persist
   nothing.
 - If the user message has already been persisted and provider generation fails, delete the user
@@ -429,13 +437,18 @@ which dispatches on `ImageRequest.Transport`. Both transports return decoded ima
 
 **Chat Completions transport** (`chat_completions` — Google Gemini `*-flash-image-*`, the ZDR path):
 
-- Calls Bifrost's `ChatCompletionRequest` (`POST /v1/chat/completions`) with the prompt as a single
-  user message.
+- Calls Bifrost's `ChatCompletionRequest` (`POST /v1/chat/completions`) with the
+  **prior conversation turns** (`ImageRequest.Messages`, oldest-first) so the model keeps context —
+  e.g. "make it blue" refers to the image described earlier. The client sends this history exactly
+  as it does for completions (redacted plaintext, never persisted server-side); an empty list falls
+  back to a single user message built from the prompt.
 - Bifrost's typed chat response has **no field** for generated images (true through v1.5.22), so the
   gateway sets Bifrost's `SendBackRawResponse` flag **per request** (via the
   `BifrostContextKeySendBackRawResponse` context key — never globally, so raw provider plaintext is
   not captured on the text-completion path) and parses the image out of the raw provider JSON at
   `choices[].message.images[].image_url.url` (a `data:image/...;base64,...` URI, decoded to bytes).
+  It also reads `choices[].message.content` so a **text-only** answer can be surfaced as
+  `ImageResponse.Text` rather than treated as a failure (see §7.5).
 - Usage is read from the typed response and includes `ProviderCostUSD` when Bifrost reports
   `usage.Cost.TotalCost`.
 

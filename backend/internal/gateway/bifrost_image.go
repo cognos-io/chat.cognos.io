@@ -175,12 +175,16 @@ func (c *BifrostClient) generateImageViaChat(ctx context.Context, req ImageReque
 		return ImageResponse{}, fmt.Errorf("bifrost returned nil image chat response")
 	}
 
-	images, providerCostUSD, err := extractChatImages(resp.ExtraFields.RawResponse, req.OutputFormat)
+	images, text, providerCostUSD, err := extractChatImages(resp.ExtraFields.RawResponse, req.OutputFormat)
 	if err != nil {
 		return ImageResponse{}, err
 	}
-	if len(images) == 0 {
-		return ImageResponse{}, fmt.Errorf("chat completion returned no generated images")
+	// A model may answer an image request with words (a refusal, a clarifying
+	// question, or a plain description). That is a valid response, not a failure:
+	// surface the text so the caller can persist it as a normal message. Only a
+	// truly empty response (no image AND no text) is an error.
+	if len(images) == 0 && text == "" {
+		return ImageResponse{}, fmt.Errorf("chat completion returned neither an image nor text")
 	}
 
 	usage := chatImageUsage(resp.Usage)
@@ -190,7 +194,7 @@ func (c *BifrostClient) generateImageViaChat(ctx context.Context, req ImageReque
 		usage.ProviderCostUSD = providerCostUSD
 	}
 
-	return ImageResponse{Images: images, Usage: usage}, nil
+	return ImageResponse{Images: images, Text: text, Usage: usage}, nil
 }
 
 func buildImageChatRequest(req ImageRequest) (*schemas.BifrostChatRequest, error) {
@@ -198,11 +202,22 @@ func buildImageChatRequest(req ImageRequest) (*schemas.BifrostChatRequest, error
 		return nil, err
 	}
 
-	prompt := req.Prompt
-	messages := []schemas.ChatMessage{{
-		Role:    schemas.ChatMessageRoleUser,
-		Content: &schemas.ChatMessageContent{ContentStr: &prompt},
-	}}
+	// Send the prior conversation turns so the model keeps context (e.g. "make
+	// it blue" refers to the image described earlier). When no history is
+	// supplied, fall back to a single user message built from the prompt.
+	source := req.Messages
+	if len(source) == 0 {
+		source = []Message{{Role: "user", Content: req.Prompt}}
+	}
+
+	messages := make([]schemas.ChatMessage, 0, len(source))
+	for _, msg := range source {
+		content := msg.Content
+		messages = append(messages, schemas.ChatMessage{
+			Role:    chatMessageRole(msg.Role),
+			Content: &schemas.ChatMessageContent{ContentStr: &content},
+		})
+	}
 
 	return &schemas.BifrostChatRequest{
 		Provider: schemas.ModelProvider(strings.TrimSpace(req.ProviderID)),
@@ -211,23 +226,40 @@ func buildImageChatRequest(req ImageRequest) (*schemas.BifrostChatRequest, error
 	}, nil
 }
 
-// extractChatImages parses generated images and the provider-reported cost out
-// of the raw chat-completion JSON. Requesty returns images at
-// choices[].message.images[].image_url.url as data URIs, and the cost at
-// usage.cost (a field Bifrost's typed usage does not carry).
-func extractChatImages(rawResponse interface{}, outputFormat string) (images []GeneratedImage, providerCostUSD *float64, err error) {
+// chatMessageRole maps our role string onto Bifrost's role enum, defaulting to
+// user for anything unrecognised (an empty or malformed role must never be sent
+// as a bare string).
+func chatMessageRole(role string) schemas.ChatMessageRole {
+	switch strings.ToLower(strings.TrimSpace(role)) {
+	case "assistant":
+		return schemas.ChatMessageRoleAssistant
+	case "system":
+		return schemas.ChatMessageRoleSystem
+	default:
+		return schemas.ChatMessageRoleUser
+	}
+}
+
+// extractChatImages parses generated images, any text reply, and the
+// provider-reported cost out of the raw chat-completion JSON. Requesty returns
+// images at choices[].message.images[].image_url.url as data URIs, text at
+// choices[].message.content, and the cost at usage.cost (a field Bifrost's
+// typed usage does not carry). The text is returned so the caller can fall back
+// to a normal message when the model answered with words instead of an image.
+func extractChatImages(rawResponse interface{}, outputFormat string) (images []GeneratedImage, text string, providerCostUSD *float64, err error) {
 	rawBytes, err := rawJSONBytes(rawResponse)
 	if err != nil {
-		return nil, nil, err
+		return nil, "", nil, err
 	}
 	if len(rawBytes) == 0 {
-		return nil, nil, nil
+		return nil, "", nil, nil
 	}
 
 	var parsed struct {
 		Choices []struct {
 			Message struct {
-				Images []struct {
+				Content string `json:"content"`
+				Images  []struct {
 					ImageURL struct {
 						URL string `json:"url"`
 					} `json:"image_url"`
@@ -239,19 +271,23 @@ func extractChatImages(rawResponse interface{}, outputFormat string) (images []G
 		} `json:"usage"`
 	}
 	if err := json.Unmarshal(rawBytes, &parsed); err != nil {
-		return nil, nil, fmt.Errorf("parse chat image response: %w", err)
+		return nil, "", nil, fmt.Errorf("parse chat image response: %w", err)
 	}
 
+	var textParts []string
 	for _, choice := range parsed.Choices {
 		for _, img := range choice.Message.Images {
 			bytes, mime, decErr := decodeImageDataURI(img.ImageURL.URL, outputFormat)
 			if decErr != nil {
-				return nil, nil, decErr
+				return nil, "", nil, decErr
 			}
 			images = append(images, GeneratedImage{Bytes: bytes, MimeType: mime})
 		}
+		if trimmed := strings.TrimSpace(choice.Message.Content); trimmed != "" {
+			textParts = append(textParts, trimmed)
+		}
 	}
-	return images, parsed.Usage.Cost, nil
+	return images, strings.Join(textParts, "\n\n"), parsed.Usage.Cost, nil
 }
 
 // decodeImageDataURI decodes a base64 data URI ("data:image/png;base64,...").

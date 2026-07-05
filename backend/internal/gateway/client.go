@@ -148,6 +148,12 @@ type ImageRequest struct {
 	ProviderID      string
 	ProviderModelID string
 	Prompt          string
+	// Messages is the prior conversation context (oldest-first) sent alongside
+	// the prompt so a chat-transport image model keeps context. The current
+	// prompt is the last user message; Prompt still carries it verbatim for the
+	// Images API transport, which takes a single prompt and ignores Messages.
+	// Empty falls back to a single user message built from Prompt.
+	Messages []Message
 	// Transport selects the provider API. Empty defaults to the Images API.
 	Transport ImageTransport
 	// N is the number of images to generate (defaults to 1 when <= 0).
@@ -170,7 +176,12 @@ type GeneratedImage struct {
 
 type ImageResponse struct {
 	Images []GeneratedImage
-	Usage  Usage
+	// Text is the assistant's text reply when a chat-transport model answered
+	// with words instead of an image (e.g. a refusal or a clarifying question).
+	// The caller falls back to persisting this as a normal text message rather
+	// than failing. Empty when the provider returned images.
+	Text  string
+	Usage Usage
 }
 
 type Client interface {

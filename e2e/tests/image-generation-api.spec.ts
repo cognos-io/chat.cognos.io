@@ -32,14 +32,22 @@ interface GenerateImageResponse {
     parent_message_id?: string;
     model_id: string;
     created_at: string;
-    attachment: {
+    attachment?: {
       kind: string;
       mime_type: string;
       file_name: string;
       sealed_key: string;
     };
+    content?: string;
   };
 }
+
+// The mock returns text (no image) when the prompt contains this marker,
+// exercising the graceful text-fallback path (imageTextFallbackReply in the
+// mock provider).
+const TEXT_FALLBACK_PROMPT = 'draw a fox but reply text-only';
+const TEXT_FALLBACK_REPLY =
+  "I can't create that image, but here's a description instead.";
 
 const CONVERSATION_DATA = Buffer.from(
   JSON.stringify({ title: 'image generation e2e' }),
@@ -124,6 +132,29 @@ test.describe('image generation API', () => {
     expect(bytes.equals(MOCK_PNG), 'stored attachment must be encrypted').toBe(false);
     // PNG magic header must not appear — the file starts with a secretbox nonce.
     expect(bytes.subarray(0, 4).equals(MOCK_PNG.subarray(0, 4))).toBe(false);
+  });
+
+  test('falls back to a text message when the model returns text, not an image', async () => {
+    const user = await provisionApiUser();
+    const conversationID = await createConversationWithKey(user);
+
+    const res = await user.api.post(`/api/v1/conversations/${conversationID}/image`, {
+      data: {
+        model_id: IMAGE_MODEL_ID,
+        prompt: TEXT_FALLBACK_PROMPT,
+        request_id: 'img-text-e2e-1',
+      },
+    });
+    // A text answer to an image request is a success, not the old 503.
+    expect(res.ok(), `image-text: ${res.status()} ${await res.text()}`).toBe(true);
+    const body = (await res.json()) as GenerateImageResponse;
+
+    // The reply is a normal assistant message: text content, no attachment.
+    expect(body.assistant_message.content).toBe(TEXT_FALLBACK_REPLY);
+    expect(body.assistant_message.attachment).toBeUndefined();
+    // The prompt was still persisted as a user message the reply is parented to.
+    expect(body.user_message_id).toBeTruthy();
+    expect(body.assistant_message.parent_message_id).toBe(body.user_message_id);
   });
 
   test('rejects a text-only model before calling the provider', async () => {

@@ -147,12 +147,43 @@ func TestBifrostClientGenerateImageViaChatParsesRawResponse(t *testing.T) {
 	}
 }
 
-func TestBifrostClientGenerateImageViaChatErrorsWhenNoImage(t *testing.T) {
+func TestBifrostClientGenerateImageViaChatReturnsTextFallback(t *testing.T) {
 	t.Parallel()
 
-	// A text-only chat response (no images array) must be a clear error, not a
+	// A text-only chat response (no images array) is a valid answer — a refusal,
+	// clarifying question, or description — not a failure. The client surfaces
+	// the text so the caller can persist it as a normal message.
+	rawResponse := json.RawMessage(`{"choices":[{"message":{"role":"assistant","content":"I can't generate that, but I can describe it."}}]}`)
+	requester := &stubBifrostRequester{
+		resp: &schemas.BifrostChatResponse{
+			ExtraFields: schemas.BifrostResponseExtraFields{RawResponse: rawResponse},
+		},
+	}
+	client := NewBifrostClient(requester, nil, nil, nil)
+
+	resp, err := client.GenerateImage(context.Background(), ImageRequest{
+		ProviderID:      "requesty",
+		ProviderModelID: "vertex/google/gemini-2.5-flash-image-preview",
+		Prompt:          "a watercolour fox",
+		Transport:       ImageTransportChatCompletions,
+	})
+	if err != nil {
+		t.Fatalf("expected no error for a text-only response, got %v", err)
+	}
+	if len(resp.Images) != 0 {
+		t.Errorf("expected no images, got %d", len(resp.Images))
+	}
+	if resp.Text != "I can't generate that, but I can describe it." {
+		t.Errorf("text = %q, want the model's reply", resp.Text)
+	}
+}
+
+func TestBifrostClientGenerateImageViaChatErrorsWhenEmpty(t *testing.T) {
+	t.Parallel()
+
+	// A truly empty response (no image AND no text) is still a clear error, not a
 	// silent empty success.
-	rawResponse := json.RawMessage(`{"choices":[{"message":{"role":"assistant","content":"I cannot do that."}}]}`)
+	rawResponse := json.RawMessage(`{"choices":[{"message":{"role":"assistant","content":""}}]}`)
 	requester := &stubBifrostRequester{
 		resp: &schemas.BifrostChatResponse{
 			ExtraFields: schemas.BifrostResponseExtraFields{RawResponse: rawResponse},
@@ -167,7 +198,52 @@ func TestBifrostClientGenerateImageViaChatErrorsWhenNoImage(t *testing.T) {
 		Transport:       ImageTransportChatCompletions,
 	})
 	if err == nil {
-		t.Fatal("expected an error when the chat response carries no image")
+		t.Fatal("expected an error when the chat response carries neither image nor text")
+	}
+}
+
+func TestBifrostClientGenerateImageViaChatSendsHistory(t *testing.T) {
+	t.Parallel()
+
+	// When history is supplied it must all reach the provider (oldest-first),
+	// so a chat-transport image model keeps context ("make it blue" refers to
+	// the earlier turn). Return text so the call succeeds without image bytes.
+	rawResponse := json.RawMessage(`{"choices":[{"message":{"role":"assistant","content":"ok"}}]}`)
+	requester := &stubBifrostRequester{
+		resp: &schemas.BifrostChatResponse{
+			ExtraFields: schemas.BifrostResponseExtraFields{RawResponse: rawResponse},
+		},
+	}
+	client := NewBifrostClient(requester, nil, nil, nil)
+
+	_, err := client.GenerateImage(context.Background(), ImageRequest{
+		ProviderID:      "requesty",
+		ProviderModelID: "vertex/google/gemini-2.5-flash-image-preview",
+		Prompt:          "make it blue",
+		Transport:       ImageTransportChatCompletions,
+		Messages: []Message{
+			{Role: "user", Content: "draw a fox"},
+			{Role: "assistant", Content: "here is a fox"},
+			{Role: "user", Content: "make it blue"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("GenerateImage returned error: %v", err)
+	}
+	if requester.req == nil {
+		t.Fatal("expected a chat completion request to be sent")
+	}
+	if got := len(requester.req.Input); got != 3 {
+		t.Fatalf("sent %d messages, want 3 (full history)", got)
+	}
+	if requester.req.Input[0].Role != schemas.ChatMessageRoleUser ||
+		requester.req.Input[1].Role != schemas.ChatMessageRoleAssistant {
+		t.Errorf("roles not mapped in order: %v, %v",
+			requester.req.Input[0].Role, requester.req.Input[1].Role)
+	}
+	if requester.req.Input[0].Content == nil || requester.req.Input[0].Content.ContentStr == nil ||
+		*requester.req.Input[0].Content.ContentStr != "draw a fox" {
+		t.Errorf("first message content not mapped: %+v", requester.req.Input[0].Content)
 	}
 }
 
