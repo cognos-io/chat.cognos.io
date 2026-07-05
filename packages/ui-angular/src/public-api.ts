@@ -60,5 +60,6 @@ export * from './lib/conversation/sources-row/sources-row.component';
 export * from './lib/conversation/vault-ref-chip/vault-ref-chip.component';
 export * from './lib/behaviors/hover-intent/hover-intent-geometry';
 export * from './lib/behaviors/hover-intent/safe-triangle.directive';
+export * from './lib/behaviors/anchored-popover/anchored-popover.directive';
 export * from './lib/toast/toast.service';
 export * from './lib/toast/toast-host/toast-host.component';

@@ -21,6 +21,7 @@ import { Observable } from 'rxjs';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
+  AnchoredPopoverDirective,
   CognosAssistantMessageComponent,
   CognosBranchSwitcherComponent,
   CognosButtonComponent,
@@ -72,6 +73,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     MessageAttachmentChipComponent,
     ClipboardModule,
     NgTemplateOutlet,
+    AnchoredPopoverDirective,
     CognosAssistantMessageComponent,
     CognosUserMessageComponent,
     CognosIconButtonComponent,
@@ -117,7 +119,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                   (click)="toggleCopyMenu($event)"
                 />
                 @if (copyMenuOpen()) {
-                  <div class="message-list-item__copy-menu">
+                  <div class="message-list-item__copy-menu" cogAnchoredPopover>
                     <cog-menu
                       [items]="copyMenuItems()"
                       (itemSelect)="onCopySelect($event)"
@@ -167,7 +169,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                 (click)="toggleDownloadMenu($event)"
               />
               @if (downloadMenuOpen()) {
-                <div class="message-list-item__download-menu">
+                <div class="message-list-item__download-menu" cogAnchoredPopover>
                   <cog-menu
                     [items]="downloadMenuItems()"
                     (itemSelect)="onDownloadSelect($event)"
@@ -543,11 +545,13 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
       display: inline-flex;
     }
 
+    /* Position (fixed left/top) is owned by the cogAnchoredPopover directive,
+       which flips/clamps the menu inside the viewport — so it opens upward near
+       the composer instead of being clipped behind it. z-index clears the
+       composer (matches the memory popover). */
     .message-list-item__copy-menu {
-      position: absolute;
-      top: calc(100% + var(--cog-space-050));
-      left: 0;
-      z-index: 10;
+      position: fixed;
+      z-index: 60;
     }
 
     .message-list-item__download-wrap {
@@ -556,10 +560,8 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     }
 
     .message-list-item__download-menu {
-      position: absolute;
-      top: calc(100% + var(--cog-space-050));
-      left: 0;
-      z-index: 10;
+      position: fixed;
+      z-index: 60;
     }
 
     .message-list-item__empty,
