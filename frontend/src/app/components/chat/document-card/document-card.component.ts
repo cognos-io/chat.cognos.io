@@ -91,6 +91,20 @@ import { Message } from '@app/interfaces/message';
                   : t('chat.message.download')
               }}
             </cog-button>
+            <cog-button
+              appearance="subtle"
+              icon="folder"
+              [disabled]="saving()"
+              (click)="saveToLibrary()"
+            >
+              {{
+                saveFailed()
+                  ? t('chat.message.documentSaveFailed')
+                  : saved()
+                    ? t('chat.message.documentSavedToLibrary')
+                    : t('chat.message.documentSaveToLibrary')
+              }}
+            </cog-button>
           }
         }
       </div>
@@ -175,6 +189,7 @@ import { Message } from '@app/interfaces/message';
     .document-card__status {
       display: flex;
       align-items: center;
+      gap: var(--cog-space-075);
     }
 
     .document-card__creating {
@@ -236,7 +251,14 @@ export class DocumentCardComponent {
   protected readonly downloading = signal(false);
   protected readonly downloadFailed = signal(false);
   protected readonly showFormulaWarning = signal(false);
+  // Save-to-library has its own in-flight/feedback state, independent of
+  // Download's — the two actions can be triggered independently and must
+  // not fight over the same button label (spec §5.4).
+  protected readonly saving = signal(false);
+  protected readonly saved = signal(false);
+  protected readonly saveFailed = signal(false);
   private _downloadFailedTimer?: ReturnType<typeof setTimeout>;
+  private _saveFeedbackTimer?: ReturnType<typeof setTimeout>;
 
   protected readonly isXlsx = computed(() => this.block().spec?.format === 'xlsx');
 
@@ -254,7 +276,10 @@ export class DocumentCardComponent {
   );
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => clearTimeout(this._downloadFailedTimer));
+    inject(DestroyRef).onDestroy(() => {
+      clearTimeout(this._downloadFailedTimer);
+      clearTimeout(this._saveFeedbackTimer);
+    });
   }
 
   protected toggleExpanded(): void {
@@ -279,6 +304,28 @@ export class DocumentCardComponent {
     clearTimeout(this._downloadFailedTimer);
     this._downloadFailedTimer = setTimeout(() => {
       this.downloadFailed.set(false);
+    }, 2000);
+  }
+
+  protected saveToLibrary(): void {
+    if (this.saving()) {
+      return;
+    }
+    this.saving.set(true);
+    this.saved.set(false);
+    this.saveFailed.set(false);
+    this._documentExport
+      .saveCogDocToLibrary(this.block(), this.message())
+      .then(() => this.onSaveFeedback(this.saved))
+      .catch(() => this.onSaveFeedback(this.saveFailed))
+      .finally(() => this.saving.set(false));
+  }
+
+  private onSaveFeedback(flag: typeof this.saved): void {
+    flag.set(true);
+    clearTimeout(this._saveFeedbackTimer);
+    this._saveFeedbackTimer = setTimeout(() => {
+      flag.set(false);
     }, 2000);
   }
 }

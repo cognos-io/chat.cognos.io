@@ -9,6 +9,7 @@ import {
 } from './attachment-selection';
 import { AttachmentUploadService } from './attachment-upload.service';
 import {
+  AttachmentProcessingError,
   AttachmentProcessingStage,
   AttachmentWorkerEvent,
   AttachmentWorkerRequest,
@@ -16,6 +17,13 @@ import {
   USER_ATTACHMENT_MAX_COUNT_PER_MESSAGE,
   defaultAttachmentLimits,
 } from './attachment.types';
+
+/** A pending one-off save-to-library request, correlated by requestId outside
+ * the composer's `_attachments` selection (see `saveToLibrary`). */
+interface PendingLibrarySave {
+  resolve: () => void;
+  reject: (error: AttachmentProcessingError) => void;
+}
 
 let localIdCounter = 0;
 const nextLocalId = (): string => `att-${Date.now()}-${(localIdCounter += 1)}`;
@@ -32,6 +40,9 @@ export class AttachmentProcessingService {
 
   private worker: Worker | null = null;
   private readonly _attachments = signal<SelectedAttachment[]>([]);
+  // requestId -> pending saveToLibrary() call. Kept separate from
+  // `_attachments` so a card save never surfaces as a composer chip.
+  private readonly _libraryRequests = new Map<string, PendingLibrarySave>();
 
   readonly attachments = this._attachments.asReadonly();
   readonly hasPending = computed(() => hasPendingAttachments(this._attachments()));
@@ -142,6 +153,33 @@ export class AttachmentProcessingService {
     this._attachments.set([]);
   }
 
+  /**
+   * saveToLibrary runs one file through the same worker pipeline as a
+   * composer attachment (process → encrypt → upload), but as a one-off
+   * request correlated outside `_attachments` — a card's "Save to library"
+   * action must never make a chip appear in the composer. `preferRawForPdf`
+   * is always false here: the library save isn't tied to any particular
+   * model's capabilities, so PDFs always get a text-extraction artifact for
+   * later reuse instead of raw-file-only storage.
+   */
+  saveToLibrary(file: File, ownerPublicKey: Uint8Array, redact = false): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const requestId = nextLocalId();
+      this._libraryRequests.set(requestId, { resolve, reject });
+
+      const request: AttachmentWorkerRequest = {
+        type: 'process',
+        requestId,
+        file,
+        ownerPublicKey,
+        limits: defaultAttachmentLimits(),
+        preferRawForPdf: false,
+        redact,
+      };
+      this.ensureWorker().postMessage(request);
+    });
+  }
+
   /** Map ready attachments to the completion request fields. */
   completionInputs(): AttachmentCompletionPayload {
     return buildCompletionAttachmentInputs(this._attachments());
@@ -162,6 +200,12 @@ export class AttachmentProcessingService {
   }
 
   private onWorkerEvent(event: AttachmentWorkerEvent): void {
+    const pendingLibrarySave = this._libraryRequests.get(event.requestId);
+    if (pendingLibrarySave) {
+      this.onLibraryWorkerEvent(event, pendingLibrarySave);
+      return;
+    }
+
     switch (event.type) {
       case 'progress':
         this.patch(event.requestId, { state: event.stage });
@@ -171,6 +215,37 @@ export class AttachmentProcessingService {
         break;
       case 'failed':
         this.patch(event.requestId, { state: 'failed', errorCode: event.error.code });
+        break;
+    }
+  }
+
+  // onLibraryWorkerEvent handles worker events for a saveToLibrary() request:
+  // upload on success, reject on failure. It never touches `_attachments`.
+  private onLibraryWorkerEvent(
+    event: AttachmentWorkerEvent,
+    pending: PendingLibrarySave,
+  ): void {
+    switch (event.type) {
+      case 'progress':
+        break;
+      case 'ready':
+        this._libraryRequests.delete(event.requestId);
+        this._upload.upload(event.result).subscribe({
+          next: () => pending.resolve(),
+          error: () =>
+            pending.reject(
+              new AttachmentProcessingError(
+                'processing_failed',
+                'Failed to upload the file to the library',
+              ),
+            ),
+        });
+        break;
+      case 'failed':
+        this._libraryRequests.delete(event.requestId);
+        pending.reject(
+          new AttachmentProcessingError(event.error.code, event.error.message),
+        );
         break;
     }
   }

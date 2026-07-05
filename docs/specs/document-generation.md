@@ -1,9 +1,9 @@
 # Document Generation — client-side DOCX / PDF / XLSX
 
-- **Version:** 0.4
-- **Status:** Phases 0–2 implemented ("Download as…" + model-created `<cog-doc>` documents
-  with revision round-trips); Phase 3 (XLSX + save-to-library) in progress; Phases 4–5
-  designed, not built. Decisions 4–11 settled (§18). Developer map:
+- **Version:** 0.5
+- **Status:** Phases 0–3 implemented ("Download as…", model-created `<cog-doc>` documents with
+  revision round-trips, XLSX, and save-to-library — §5.4 note on the xlsx library-save gap);
+  Phases 4–5 designed, not built. Decisions 4–11 settled (§18). Developer map:
   `frontend/src/app/documents/README.md`.
 - **Stack:** Angular frontend (Web Worker rendering pipeline), Go backend (Phase 4 tool loop only)
 - **Scope:** Letting the model produce downloadable documents (DOCX, PDF, XLSX; PPTX deferred)
@@ -264,6 +264,16 @@ Acceptance criteria:
 - The saved file appears in `/account/library` with the generated filename; dedup by content
   hash applies as for uploads.
 - No automatic saving. Downloads and saves are explicit user actions.
+
+**Known gap (xlsx):** the attachment worker pipeline routes every save through the same processor
+registry as a user upload (`frontend/src/app/attachments/processors/processor-registry.ts`), which
+has **no XLSX processor** — spreadsheet text extraction was removed for launch (see the
+"Spreadsheets are no longer accepted" pin test in `processor-registry.spec.ts`). A generated `.xlsx`
+document therefore always fails closed with the translated `documentSaveFailed` message; docx and
+pdf save successfully (mammoth/pdfjs extract text from the renderer's own valid output without
+issue). Fixing this means either resurrecting XLSX text extraction (reverses a deliberate launch
+decision) or adding a save path that bypasses text extraction for library saves — both are follow-up
+decisions, not bundled into this change.
 
 ### 5.5 Browser tool loop — the agentic harness (P2 — Phase 4)
 

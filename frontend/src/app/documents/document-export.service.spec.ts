@@ -5,12 +5,14 @@ import { of } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { AttachmentProcessingService } from '@app/attachments/attachment-processing.service';
 import { Conversation } from '@app/interfaces/conversation';
 import { Message } from '@app/interfaces/message';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { CryptoService } from '@app/services/crypto.service';
 import { RedactionService } from '@app/services/redaction.service';
+import { VaultService } from '@app/services/vault.service';
 
 import { CogDocBlock } from './cog-doc/cog-doc.types';
 import {
@@ -47,6 +49,11 @@ describe('DocumentExportService', () => {
   const render = vi.fn();
   const renderSheet = vi.fn();
   const saveBlob = vi.fn();
+  const redactionEnabled = vi.fn(() => false);
+  const keyPair = vi.fn((): { publicKey: Uint8Array } | undefined => ({
+    publicKey: new Uint8Array([7, 7, 7]),
+  }));
+  const saveToLibrary = vi.fn();
 
   let currentConversation: Conversation | undefined = conversation;
   let service: DocumentExportService;
@@ -55,12 +62,15 @@ describe('DocumentExportService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     hydrate.mockImplementation((_id: unknown, content: string) => content);
+    redactionEnabled.mockReturnValue(false);
+    keyPair.mockReturnValue({ publicKey: new Uint8Array([7, 7, 7]) });
+    saveToLibrary.mockResolvedValue(undefined);
     currentConversation = conversation;
 
     TestBed.configureTestingModule({
       providers: [
         DocumentExportService,
-        { provide: RedactionService, useValue: { hydrate } },
+        { provide: RedactionService, useValue: { hydrate, enabled: redactionEnabled } },
         {
           provide: ConversationService,
           useValue: { conversation: () => currentConversation },
@@ -72,6 +82,8 @@ describe('DocumentExportService', () => {
           useValue: { render, renderSheet } as unknown as DocumentWorkerClient,
         },
         { provide: DOCUMENT_SAVE_BLOB, useValue: saveBlob },
+        { provide: VaultService, useValue: { keyPair } },
+        { provide: AttachmentProcessingService, useValue: { saveToLibrary } },
       ],
     });
     // TranslocoService is provided globally (test-providers.ts) with the real
@@ -499,6 +511,102 @@ describe('DocumentExportService', () => {
         ).rejects.toMatchObject({ name: 'DocumentRenderError', code: 'render_failed' });
         expect(saveBlob).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('saveCogDocToLibrary', () => {
+    function buildBlock(overrides: Partial<CogDocBlock> = {}): CogDocBlock {
+      return {
+        state: 'ready',
+        spec: { format: 'docx', filename: 'my-file' },
+        body: '# Report\n\nBody',
+        raw: "<cog-doc spec='{}'>\n# Report\n\nBody\n</cog-doc>",
+        ...overrides,
+      };
+    }
+
+    it('never triggers a download (no saveBlob call)', async () => {
+      render.mockResolvedValue(new Uint8Array([1, 2, 3]));
+
+      await service.saveCogDocToLibrary(buildBlock(), buildMessage('x'));
+
+      expect(saveBlob).not.toHaveBeenCalled();
+    });
+
+    it('builds a File with the rendered bytes, filename and mime, and hands it to the processing service', async () => {
+      render.mockResolvedValue(new Uint8Array([1, 2, 3]));
+
+      await service.saveCogDocToLibrary(buildBlock(), buildMessage('x'));
+
+      expect(saveToLibrary).toHaveBeenCalledTimes(1);
+      const [file, ownerPublicKey, redact] = saveToLibrary.mock.calls[0];
+      expect(file).toBeInstanceOf(File);
+      expect(file.name).toBe('my-file.docx');
+      expect(file.type).toBe(
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      );
+      expect(new Uint8Array(await file.arrayBuffer())).toEqual(
+        new Uint8Array([1, 2, 3]),
+      );
+      expect(ownerPublicKey).toEqual(new Uint8Array([7, 7, 7]));
+      expect(redact).toBe(false);
+    });
+
+    it('passes the current redaction toggle value through to the processing service', async () => {
+      render.mockResolvedValue(new Uint8Array([1]));
+      redactionEnabled.mockReturnValue(true);
+
+      await service.saveCogDocToLibrary(buildBlock(), buildMessage('x'));
+
+      expect(saveToLibrary.mock.calls[0][2]).toBe(true);
+    });
+
+    it('routes xlsx through renderSheet, same as downloadCogDoc', async () => {
+      renderSheet.mockResolvedValue({ bytes: new Uint8Array([9]), warnings: [] });
+
+      await service.saveCogDocToLibrary(
+        buildBlock({
+          spec: { format: 'xlsx', title: 'Revenue' },
+          body: '{"sheets":[]}',
+        }),
+        buildMessage('x'),
+      );
+
+      expect(render).not.toHaveBeenCalled();
+      const [file] = saveToLibrary.mock.calls[0];
+      expect(file.name).toBe('Revenue.xlsx');
+      expect(file.type).toBe(
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+    });
+
+    it('rejects a block that is not ready without calling the processing service', async () => {
+      await expect(
+        service.saveCogDocToLibrary(
+          buildBlock({ state: 'streaming' }),
+          buildMessage('x'),
+        ),
+      ).rejects.toMatchObject({ code: 'empty_document' });
+      expect(saveToLibrary).not.toHaveBeenCalled();
+    });
+
+    it('rejects with a DocumentRenderError when the vault is locked, without rendering the failure as a download', async () => {
+      render.mockResolvedValue(new Uint8Array([1]));
+      keyPair.mockReturnValue(undefined);
+
+      await expect(
+        service.saveCogDocToLibrary(buildBlock(), buildMessage('x')),
+      ).rejects.toMatchObject({ name: 'DocumentRenderError', code: 'render_failed' });
+      expect(saveToLibrary).not.toHaveBeenCalled();
+    });
+
+    it('propagates a processing service failure', async () => {
+      render.mockResolvedValue(new Uint8Array([1]));
+      saveToLibrary.mockRejectedValue(new Error('upload failed'));
+
+      await expect(
+        service.saveCogDocToLibrary(buildBlock(), buildMessage('x')),
+      ).rejects.toThrow('upload failed');
     });
   });
 });

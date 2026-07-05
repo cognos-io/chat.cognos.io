@@ -35,14 +35,21 @@ const message = { record_id: 'msg-1', decryptedData: { content: '' } } as Messag
 describe('DocumentCardComponent', () => {
   let fixture: ComponentFixture<DocumentCardComponent>;
   const downloadCogDoc = vi.fn();
+  const saveCogDocToLibrary = vi.fn();
 
   beforeEach(async () => {
     vi.clearAllMocks();
     downloadCogDoc.mockResolvedValue(undefined);
+    saveCogDocToLibrary.mockResolvedValue(undefined);
 
     await TestBed.configureTestingModule({
       imports: [DocumentCardComponent],
-      providers: [{ provide: DocumentExportService, useValue: { downloadCogDoc } }],
+      providers: [
+        {
+          provide: DocumentExportService,
+          useValue: { downloadCogDoc, saveCogDocToLibrary },
+        },
+      ],
     })
       .overrideComponent(DocumentCardComponent, {
         remove: { imports: [RedactedMarkdownComponent] },
@@ -65,6 +72,12 @@ describe('DocumentCardComponent', () => {
 
   function downloadButton(): HTMLButtonElement | null {
     return fixture.nativeElement.querySelector('.document-card__status button');
+  }
+
+  function saveButton(): HTMLButtonElement | null {
+    return (
+      fixture.nativeElement.querySelectorAll('.document-card__status button')[1] ?? null
+    );
   }
 
   it('titles the card from spec.title first', () => {
@@ -164,6 +177,107 @@ describe('DocumentCardComponent', () => {
     await Promise.resolve();
 
     expect(downloadCogDoc).toHaveBeenCalledTimes(1);
+  });
+
+  describe('save to library', () => {
+    it('shows no save button while streaming', () => {
+      setBlock(buildBlock({ state: 'streaming', spec: null, body: '' }));
+
+      expect(saveButton()).toBeNull();
+    });
+
+    it('shows a Save to library button when ready', () => {
+      setBlock(buildBlock());
+
+      expect(saveButton()?.textContent?.trim()).toBe('Save to library');
+    });
+
+    it('calls DocumentExportService.saveCogDocToLibrary on click', async () => {
+      const block = buildBlock();
+      setBlock(block);
+
+      saveButton()?.click();
+      await Promise.resolve();
+
+      expect(saveCogDocToLibrary).toHaveBeenCalledWith(block, message);
+    });
+
+    it('shows a transient success label that reverts after a couple of seconds', async () => {
+      vi.useFakeTimers();
+      setBlock(buildBlock());
+
+      saveButton()?.click();
+      await vi.advanceTimersByTimeAsync(0);
+      fixture.detectChanges();
+
+      expect(saveButton()?.textContent?.trim()).toBe('Saved to library');
+
+      await vi.advanceTimersByTimeAsync(2000);
+      fixture.detectChanges();
+
+      expect(saveButton()?.textContent?.trim()).toBe('Save to library');
+      vi.useRealTimers();
+    });
+
+    it('shows a transient failure label that reverts after a couple of seconds', async () => {
+      vi.useFakeTimers();
+      saveCogDocToLibrary.mockRejectedValue(new Error('boom'));
+      setBlock(buildBlock());
+
+      saveButton()?.click();
+      await vi.advanceTimersByTimeAsync(0);
+      fixture.detectChanges();
+
+      expect(saveButton()?.textContent?.trim()).toBe(
+        "Couldn't save the file. Please try again.",
+      );
+
+      await vi.advanceTimersByTimeAsync(2000);
+      fixture.detectChanges();
+
+      expect(saveButton()?.textContent?.trim()).toBe('Save to library');
+      vi.useRealTimers();
+    });
+
+    it('ignores a second click while a save is in flight', async () => {
+      let resolveFirst: () => void = () => undefined;
+      saveCogDocToLibrary.mockReturnValueOnce(
+        new Promise<void>((resolve) => {
+          resolveFirst = resolve;
+        }),
+      );
+      setBlock(buildBlock());
+
+      saveButton()?.click();
+      fixture.detectChanges();
+      expect(saveButton()?.disabled).toBe(true);
+
+      saveButton()?.click();
+      resolveFirst();
+      await Promise.resolve();
+
+      expect(saveCogDocToLibrary).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not affect the Download button state (independent in-flight guards)', async () => {
+      let resolveSave: () => void = () => undefined;
+      saveCogDocToLibrary.mockReturnValueOnce(
+        new Promise<void>((resolve) => {
+          resolveSave = resolve;
+        }),
+      );
+      setBlock(buildBlock());
+
+      saveButton()?.click();
+      fixture.detectChanges();
+      expect(downloadButton()?.disabled).toBe(false);
+
+      downloadButton()?.click();
+      await Promise.resolve();
+      resolveSave();
+
+      expect(downloadCogDoc).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('collapses the preview by default and expands it on header click', () => {

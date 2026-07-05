@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
 import { Base64 } from 'js-base64';
 
+import { AttachmentProcessingService } from '@app/attachments/attachment-processing.service';
 import { CogDocBlock } from '@app/documents/cog-doc/cog-doc.types';
 import { Conversation } from '@app/interfaces/conversation';
 import { Message, MessageAttachment } from '@app/interfaces/message';
@@ -12,6 +13,7 @@ import { CognosApiService } from '@app/services/cognos-api.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { CryptoService } from '@app/services/crypto.service';
 import { RedactionService } from '@app/services/redaction.service';
+import { VaultService } from '@app/services/vault.service';
 import { saveBlob } from '@app/utils/save-blob';
 
 import { filenameBaseFromSpec, renderOptionsFromSpec } from './cog-doc/cog-doc-parser';
@@ -66,6 +68,8 @@ export class DocumentExportService {
   private readonly _transloco = inject(TranslocoService);
   private readonly _workerClient = inject(DOCUMENT_WORKER_CLIENT);
   private readonly _saveBlob = inject(DOCUMENT_SAVE_BLOB);
+  private readonly _vault = inject(VaultService);
+  private readonly _attachmentProcessing = inject(AttachmentProcessingService);
 
   async downloadMessageAs(message: Message, format: DocFormat): Promise<void> {
     const content = message.decryptedData.content;
@@ -90,22 +94,24 @@ export class DocumentExportService {
   }
 
   /**
-   * downloadCogDoc renders a model-authored `<cog-doc>` block (spec
-   * docs/specs/document-generation.md §5.2/§5.3) to a file. Only a fully
+   * renderCogDoc renders a model-authored `<cog-doc>` block (spec
+   * docs/specs/document-generation.md §5.2/§5.3) to bytes without triggering
+   * any side effect (no download, no upload) — the shared seam for
+   * `downloadCogDoc` and `saveCogDocToLibrary` (spec §5.4). Only a fully
    * parsed, non-truncated block can be exported — 'streaming'/'invalid'
    * blocks (or a block whose `spec` failed validation) throw the same
-   * `empty_document` error as an empty message, so the caller's existing
-   * failure UI applies unchanged.
-   *
-   * Returns the formula validator's advisory warnings for xlsx documents
-   * (non-empty array), or `undefined` for docx/pdf and for a warning-free
-   * xlsx render — the caller (document-card) surfaces them after the
-   * download resolves.
+   * `empty_document` error as an empty message, so callers' existing failure
+   * UI applies unchanged.
    */
-  async downloadCogDoc(
+  async renderCogDoc(
     block: CogDocBlock,
     message: Message,
-  ): Promise<SheetWarning[] | undefined> {
+  ): Promise<{
+    bytes: Uint8Array;
+    filename: string;
+    mime: string;
+    warnings?: SheetWarning[];
+  }> {
     if (block.state !== 'ready' || !block.spec) {
       throw new DocumentRenderError('empty_document', 'Document is not ready');
     }
@@ -121,6 +127,7 @@ export class DocumentExportService {
       this.defaultFilenameFallback(),
     );
     const options = renderOptionsFromSpec(spec);
+    const mime = documentMimeType(spec.format);
 
     if (spec.format === 'xlsx') {
       // xlsx bodies are sheet-spec JSON, not markdown (spec §6.3), and never
@@ -130,13 +137,72 @@ export class DocumentExportService {
         hydrated,
         options,
       );
-      this._saveBlob(bytes, filename, documentMimeType(spec.format));
-      return warnings.length > 0 ? warnings : undefined;
+      return {
+        bytes,
+        filename,
+        mime,
+        warnings: warnings.length > 0 ? warnings : undefined,
+      };
     }
 
     const images = await this.decryptGeneratedImages(message, conversation);
-    await this.renderAndSave(spec.format, hydrated, images, options, filename);
-    return undefined;
+    const bytes = await this._workerClient.render(
+      spec.format,
+      hydrated,
+      images,
+      options,
+    );
+    return { bytes, filename, mime };
+  }
+
+  /**
+   * downloadCogDoc renders a `<cog-doc>` block and triggers a browser
+   * download (spec §5.2/§5.3). Returns the formula validator's advisory
+   * warnings for xlsx documents (non-empty array), or `undefined` for
+   * docx/pdf and for a warning-free xlsx render — the caller
+   * (document-card) surfaces them after the download resolves.
+   */
+  async downloadCogDoc(
+    block: CogDocBlock,
+    message: Message,
+  ): Promise<SheetWarning[] | undefined> {
+    const { bytes, filename, mime, warnings } = await this.renderCogDoc(block, message);
+    this._saveBlob(bytes, filename, mime);
+    return warnings;
+  }
+
+  /**
+   * saveCogDocToLibrary renders a `<cog-doc>` block and hands the bytes to
+   * the encrypted attachment pipeline as a one-off save (spec §5.4) — the
+   * bytes are frozen at the current renderer version, unlike the live
+   * re-render `downloadCogDoc` performs on every click. This never touches
+   * the composer's attachment selection (`AttachmentProcessingService.saveToLibrary`
+   * correlates outside it), so no chip appears from a card save.
+   */
+  async saveCogDocToLibrary(block: CogDocBlock, message: Message): Promise<void> {
+    const { bytes, filename, mime } = await this.renderCogDoc(block, message);
+    // Copy into a plain ArrayBuffer so the File part type is unambiguous (TS
+    // rejects a possibly-SharedArrayBuffer-backed Uint8Array) — mirrors
+    // attachment-upload.service.ts's Blob construction.
+    const buffer = bytes.buffer.slice(
+      bytes.byteOffset,
+      bytes.byteOffset + bytes.byteLength,
+    ) as ArrayBuffer;
+    const file = new File([buffer], filename, { type: mime });
+
+    // The library seals to the user's own vault key (not the conversation
+    // key), so the file is recoverable in any conversation — same source the
+    // composer's attach flow uses (message-form.component.ts).
+    const ownerPublicKey = this._vault.keyPair()?.publicKey;
+    if (!ownerPublicKey) {
+      throw new DocumentRenderError('render_failed', 'Vault is locked');
+    }
+
+    await this._attachmentProcessing.saveToLibrary(
+      file,
+      ownerPublicKey,
+      this._redaction.enabled(),
+    );
   }
 
   // hydrate resolves redaction placeholders in `content` back to their
