@@ -361,8 +361,8 @@
           "title": "Nessun vincolo"
         },
         "readable": {
-          "body": "Nulla viene eliminato quando la prova termina.",
-          "title": "Le chat di prova restano leggibili"
+          "body": "Anche se il tuo abbonamento termina, puoi sempre leggere e scaricare le chat precedenti: semplicemente non puoi più inviare nuovi messaggi.",
+          "title": "Le tue chat restano leggibili"
         }
       },
       "back": "Torna alle tue chat",

@@ -361,8 +361,8 @@
           "title": "Sans engagement"
         },
         "readable": {
-          "body": "Rien n'est supprimé à la fin de l'essai.",
-          "title": "Les discussions d'essai restent lisibles"
+          "body": "Même si votre abonnement s'arrête, vous pouvez toujours consulter et télécharger vos anciennes discussions — vous ne pouvez simplement plus envoyer de nouveaux messages.",
+          "title": "Vos discussions restent lisibles"
         }
       },
       "back": "Retour à vos discussions",

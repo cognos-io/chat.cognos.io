@@ -361,8 +361,8 @@
           "title": "Sem fidelização"
         },
         "readable": {
-          "body": "Nada é eliminado quando o teste termina.",
-          "title": "Os chats de teste continuam legíveis"
+          "body": "Mesmo que a tua subscrição termine, podes sempre ler e transferir as tuas conversas anteriores — só não podes enviar novas mensagens.",
+          "title": "As tuas conversas continuam legíveis"
         }
       },
       "back": "Voltar aos teus chats",

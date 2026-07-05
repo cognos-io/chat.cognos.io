@@ -361,8 +361,8 @@
           "title": "Sin permanencia"
         },
         "readable": {
-          "body": "No se elimina nada cuando termina la prueba.",
-          "title": "Los chats de prueba siguen legibles"
+          "body": "Aunque tu suscripción termine, siempre puedes leer y descargar tus chats anteriores; solo no puedes enviar mensajes nuevos.",
+          "title": "Tus chats siguen legibles"
         }
       },
       "back": "Volver a tus chats",

@@ -361,8 +361,8 @@
           "title": "Keine Bindung"
         },
         "readable": {
-          "body": "Beim Ende des Tests wird nichts gelöscht.",
-          "title": "Test-Chats bleiben lesbar"
+          "body": "Auch wenn dein Abo endet, kannst du deine früheren Chats weiterhin lesen und herunterladen – du kannst nur keine neuen Nachrichten mehr senden.",
+          "title": "Deine Chats bleiben lesbar"
         }
       },
       "back": "Zurück zu deinen Chats",

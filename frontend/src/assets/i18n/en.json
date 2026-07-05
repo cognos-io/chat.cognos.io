@@ -361,8 +361,8 @@
           "title": "No lock-in"
         },
         "readable": {
-          "body": "Nothing is deleted when the trial ends.",
-          "title": "Trial chats stay readable"
+          "body": "Even if your subscription stops, you can still read and download your past chats — you just can't send new messages.",
+          "title": "Your chats stay readable"
         }
       },
       "back": "Back to your chats",
