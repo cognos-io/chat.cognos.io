@@ -91,20 +91,22 @@ import { Message } from '@app/interfaces/message';
                   : t('chat.message.download')
               }}
             </cog-button>
-            <cog-button
-              appearance="subtle"
-              icon="folder"
-              [disabled]="saving()"
-              (click)="saveToLibrary()"
-            >
-              {{
-                saveFailed()
-                  ? t('chat.message.documentSaveFailed')
-                  : saved()
-                    ? t('chat.message.documentSavedToLibrary')
-                    : t('chat.message.documentSaveToLibrary')
-              }}
-            </cog-button>
+            @if (canSaveToLibrary()) {
+              <cog-button
+                appearance="subtle"
+                icon="folder"
+                [disabled]="saving()"
+                (click)="saveToLibrary()"
+              >
+                {{
+                  saveFailed()
+                    ? t('chat.message.documentSaveFailed')
+                    : saved()
+                      ? t('chat.message.documentSavedToLibrary')
+                      : t('chat.message.documentSaveToLibrary')
+                }}
+              </cog-button>
+            }
           }
         }
       </div>
@@ -261,6 +263,12 @@ export class DocumentCardComponent {
   private _saveFeedbackTimer?: ReturnType<typeof setTimeout>;
 
   protected readonly isXlsx = computed(() => this.block().spec?.format === 'xlsx');
+
+  // The attachment registry deliberately accepts no spreadsheets (pinned in
+  // processor-registry.spec.ts), so an xlsx library save always fails closed —
+  // hide the action rather than offer a guaranteed failure. Revisit if a
+  // permissively-licensed sheet processor lands (spec §5.4).
+  protected readonly canSaveToLibrary = computed(() => !this.isXlsx());
 
   protected readonly title = computed(() => {
     const spec = this.block().spec;

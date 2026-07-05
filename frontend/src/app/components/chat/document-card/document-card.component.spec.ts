@@ -192,6 +192,21 @@ describe('DocumentCardComponent', () => {
       expect(saveButton()?.textContent?.trim()).toBe('Save to library');
     });
 
+    it('hides the save button for xlsx blocks', () => {
+      // The attachment registry accepts no spreadsheets (pinned in
+      // processor-registry.spec.ts), so an xlsx save always fails closed —
+      // the card must not offer a guaranteed failure (spec §5.4).
+      setBlock(
+        buildBlock({
+          spec: { v: 1, format: 'xlsx', title: 'Sheet' },
+          body: '{"sheets":[{"name":"S","rows":[["A"]]}]}',
+        }),
+      );
+
+      expect(saveButton()).toBeNull();
+      expect(downloadButton()).not.toBeNull();
+    });
+
     it('calls DocumentExportService.saveCogDocToLibrary on click', async () => {
       const block = buildBlock();
       setBlock(block);
