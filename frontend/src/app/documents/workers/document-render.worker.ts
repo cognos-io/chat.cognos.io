@@ -8,6 +8,9 @@ import {
 import { markdownToDocIR } from '../markdown/markdown-to-docir';
 import { renderDocx } from '../renderers/docx-renderer';
 import { renderPdf } from '../renderers/pdf-renderer';
+import { validateSheetSpec } from '../sheets/formula-validator';
+import { renderSheet } from '../sheets/sheet-renderer';
+import { parseSheetSpec } from '../sheets/sheet-spec.types';
 
 /**
  * Thin Web Worker wrapper around the framework-free render pipeline so the
@@ -61,10 +64,59 @@ const handleRender = async (
   }
 };
 
+// A cap breach (too many sheets/rows/cells, an over-length formula) is a
+// distinct, translatable failure from "the JSON didn't parse" or "a field
+// was the wrong shape" — reported as 'source_too_large' so the card can show
+// a more specific message than the generic render_failed one.
+const isCapError = (errors: string[]): boolean =>
+  errors.some((error) => error.includes('too_many') || error.includes('too_large'));
+
+const handleRenderSheet = async (
+  req: Extract<DocumentWorkerRequest, { type: 'render-sheet' }>,
+): Promise<void> => {
+  const { requestId } = req;
+  try {
+    const { spec, errors } = parseSheetSpec(req.body);
+    if (!spec) {
+      throw new DocumentRenderError(
+        isCapError(errors) ? 'source_too_large' : 'render_failed',
+        errors.join('; ') || 'Invalid sheet spec',
+      );
+    }
+
+    if (cancelled.has(requestId)) {
+      cancelled.delete(requestId);
+      return;
+    }
+
+    const { spec: validated, warnings } = validateSheetSpec(spec);
+
+    if (cancelled.has(requestId)) {
+      cancelled.delete(requestId);
+      return;
+    }
+
+    const bytes = await renderSheet(validated, req.options);
+
+    if (cancelled.has(requestId)) {
+      cancelled.delete(requestId);
+      return;
+    }
+
+    post({ type: 'rendered', requestId, bytes, warnings }, [bytes.buffer]);
+  } catch (err) {
+    post({ type: 'failed', requestId, error: toErrorPayload(err) });
+  }
+};
+
 addEventListener('message', (event: MessageEvent<DocumentWorkerRequest>) => {
   const req = event.data;
   if (req.type === 'cancel') {
     cancelled.add(req.requestId);
+    return;
+  }
+  if (req.type === 'render-sheet') {
+    void handleRenderSheet(req);
     return;
   }
   void handleRender(req);

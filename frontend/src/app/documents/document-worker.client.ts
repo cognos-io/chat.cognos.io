@@ -10,6 +10,7 @@ import {
   DocumentWorkerRequest,
   RenderOptions,
 } from './document.types';
+import { SheetWarning } from './sheets/formula-validator';
 
 export type DocumentWorkerFactory = () => Worker;
 
@@ -18,8 +19,13 @@ const defaultWorkerFactory: DocumentWorkerFactory = () =>
     type: 'module',
   });
 
+interface RenderedPayload {
+  bytes: Uint8Array;
+  warnings?: SheetWarning[];
+}
+
 interface PendingRequest {
-  resolve: (bytes: Uint8Array) => void;
+  resolve: (event: RenderedPayload) => void;
   reject: (err: DocumentRenderError) => void;
 }
 
@@ -46,6 +52,20 @@ export class DocumentWorkerClient {
     images: DocImage[],
     options: RenderOptions,
   ): Promise<Uint8Array> {
+    if (format === 'xlsx') {
+      // xlsx documents are sheet-spec JSON, not markdown, and have no
+      // DocIR/images to carry — always routed through renderSheet()
+      // instead, which also surfaces validator warnings. This parameter's
+      // type widens to include 'xlsx' automatically now that DocFormat
+      // does (kept in sync with the CogDocSpec format union rather than
+      // duplicated), but no caller actually reaches this branch: a
+      // CogDocBlock's spec.format is 'docx' | 'pdf' only.
+      throw new DocumentRenderError(
+        'unsupported_format',
+        'Use renderSheet() for xlsx documents',
+      );
+    }
+
     const requestId = nextRequestId();
     const request: DocumentWorkerRequest = {
       type: 'render',
@@ -60,8 +80,39 @@ export class DocumentWorkerClient {
     const transfer = images.map((image) => image.bytes.buffer);
 
     return new Promise<Uint8Array>((resolve, reject) => {
-      this.pending.set(requestId, { resolve, reject });
+      this.pending.set(requestId, {
+        resolve: (event) => resolve(event.bytes),
+        reject,
+      });
       this.ensureWorker().postMessage(request, transfer);
+    });
+  }
+
+  /**
+   * renderSheet renders a `<cog-doc format="xlsx">` sheet-spec body (spec
+   * docs/specs/document-generation.md §5.3). Unlike render(), it also
+   * surfaces the formula validator's advisory warnings — the caller decides
+   * whether/how to show them on the document card.
+   */
+  renderSheet(
+    body: string,
+    options: RenderOptions,
+  ): Promise<{ bytes: Uint8Array; warnings: SheetWarning[] }> {
+    const requestId = nextRequestId();
+    const request: DocumentWorkerRequest = {
+      type: 'render-sheet',
+      requestId,
+      body,
+      options,
+    };
+
+    return new Promise((resolve, reject) => {
+      this.pending.set(requestId, {
+        resolve: (event) =>
+          resolve({ bytes: event.bytes, warnings: event.warnings ?? [] }),
+        reject,
+      });
+      this.ensureWorker().postMessage(request);
     });
   }
 
@@ -84,7 +135,7 @@ export class DocumentWorkerClient {
     this.pending.delete(event.requestId);
 
     if (event.type === 'rendered') {
-      pending.resolve(event.bytes);
+      pending.resolve({ bytes: event.bytes, warnings: event.warnings });
     } else {
       pending.reject(new DocumentRenderError(event.error.code, event.error.message));
     }

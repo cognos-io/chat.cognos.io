@@ -113,4 +113,67 @@ describe('DocumentWorkerClient', () => {
 
     expect(workerFactory).toHaveBeenCalledTimes(1);
   });
+
+  it('throws synchronously for format "xlsx" (routed through renderSheet instead)', () => {
+    const { client } = setup();
+    expect(() => client.render('xlsx', '{}', [], {})).toThrow(
+      expect.objectContaining({ code: 'unsupported_format' }),
+    );
+  });
+});
+
+describe('DocumentWorkerClient.renderSheet', () => {
+  it('posts a render-sheet request and resolves with bytes + warnings', async () => {
+    const { fakeWorker, client } = setup();
+
+    const promise = client.renderSheet('{"sheets":[]}', {});
+    const request = lastRequest(fakeWorker) as DocumentWorkerRequest & {
+      type: 'render-sheet';
+    };
+    expect(request.type).toBe('render-sheet');
+    expect(request.body).toBe('{"sheets":[]}');
+
+    fakeWorker.emit({
+      type: 'rendered',
+      requestId: request.requestId,
+      bytes: new Uint8Array([1]),
+      warnings: [{ sheet: 'S', cell: 'A1', kind: 'unknown_sheet', detail: 'x' }],
+    });
+
+    await expect(promise).resolves.toEqual({
+      bytes: new Uint8Array([1]),
+      warnings: [{ sheet: 'S', cell: 'A1', kind: 'unknown_sheet', detail: 'x' }],
+    });
+  });
+
+  it('defaults warnings to an empty array when the event omits them', async () => {
+    const { fakeWorker, client } = setup();
+
+    const promise = client.renderSheet('{"sheets":[]}', {});
+    const { requestId } = lastRequest(fakeWorker);
+    fakeWorker.emit({ type: 'rendered', requestId, bytes: new Uint8Array([2]) });
+
+    await expect(promise).resolves.toEqual({
+      bytes: new Uint8Array([2]),
+      warnings: [],
+    });
+  });
+
+  it('rejects with a DocumentRenderError on a failed event', async () => {
+    const { fakeWorker, client } = setup();
+
+    const promise = client.renderSheet('{"sheets":[]}', {});
+    const { requestId } = lastRequest(fakeWorker);
+    fakeWorker.emit({
+      type: 'failed',
+      requestId,
+      error: { code: 'render_failed', message: 'boom' },
+    });
+
+    await expect(promise).rejects.toMatchObject({
+      name: 'DocumentRenderError',
+      code: 'render_failed',
+      message: 'boom',
+    });
+  });
 });

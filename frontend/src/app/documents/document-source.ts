@@ -36,12 +36,14 @@ const EXTENSION_BY_FORMAT: Record<DocFormat, string> = {
   docx: '.docx',
   pdf: '.pdf',
   markdown: '.md',
+  xlsx: '.xlsx',
 };
 
 const MIME_TYPE_BY_FORMAT: Record<DocFormat, string> = {
   docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   pdf: 'application/pdf',
   markdown: 'text/markdown',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 };
 
 /**

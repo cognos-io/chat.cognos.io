@@ -1,8 +1,9 @@
 // Shared, framework-free contract for the documents module (spec
 // docs/specs/document-generation.md §7). No Angular imports allowed here —
 // this module runs inside the render worker as well as the main thread.
+import { SheetWarning } from './sheets/formula-validator';
 
-export type DocFormat = 'docx' | 'pdf' | 'markdown'; // 'xlsx' reserved for Phase 3
+export type DocFormat = 'docx' | 'pdf' | 'markdown' | 'xlsx';
 
 export interface DocIR {
   blocks: DocBlock[];
@@ -77,16 +78,29 @@ export class DocumentRenderError extends Error {
 /**
  * Render worker protocol (spec docs/specs/document-generation.md §7), mirroring
  * the attachment worker's request/event shape (attachment.types.ts). Markdown
- * "rendering" is a pass-through done on the main thread — only docx/pdf need
- * the worker (and its lazily-loaded heavy libraries).
+ * "rendering" is a pass-through done on the main thread — only docx/pdf/xlsx
+ * need the worker (and their lazily-loaded heavy libraries).
+ *
+ * xlsx is a separate request variant (`render-sheet`), not a third `format`
+ * value on `render`: its body is sheet-spec JSON, not markdown, and it has no
+ * DocIR/images to carry (README "Adding a format": "Non-DocIR formats (XLSX)
+ * get their own source type and renderer"). Keeping `render`'s `format`
+ * literal to `'docx' | 'pdf'` means DocumentWorkerClient.render() keeps its
+ * existing signature and callers untouched.
  */
 export type DocumentWorkerRequest =
   | {
       type: 'render';
       requestId: string;
-      format: Exclude<DocFormat, 'markdown'>;
+      format: 'docx' | 'pdf';
       markdown: string;
       images: DocImage[];
+      options: RenderOptions;
+    }
+  | {
+      type: 'render-sheet';
+      requestId: string;
+      body: string;
       options: RenderOptions;
     }
   | {
@@ -99,6 +113,14 @@ export interface DocumentWorkerErrorPayload {
   message: string;
 }
 
+// `warnings` is only ever populated for a `render-sheet` response (the
+// formula validator's advisory findings, spec §5.3); docx/pdf renders never
+// set it, so existing `{ bytes }`-only callers are unaffected.
 export type DocumentWorkerEvent =
-  | { type: 'rendered'; requestId: string; bytes: Uint8Array }
+  | {
+      type: 'rendered';
+      requestId: string;
+      bytes: Uint8Array;
+      warnings?: SheetWarning[];
+    }
   | { type: 'failed'; requestId: string; error: DocumentWorkerErrorPayload };
