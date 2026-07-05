@@ -62,6 +62,10 @@ import { RedactionService } from '@app/services/redaction.service';
 import { ScopedMemoryService } from '@app/services/scoped-memory.service';
 import { Citation, CitationAnchor } from '@app/utils/citations';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
+import {
+  StreamingMarkdownSplit,
+  splitStreamingMarkdown,
+} from '@app/utils/streaming-markdown';
 
 @Component({
   selector: 'app-message-list-item',
@@ -360,9 +364,20 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
                        today's render path byte-identical, including the
                        streaming/plain-text shortcut, spec §5.2. -->
                   @if (message.isStreaming) {
-                    <p class="message-list-item__streaming">
-                      {{ hydrated(message.decryptedData.content) }}
-                    </p>
+                    <!-- Progressive render: completed blocks (up to the last
+                         blank-line boundary) render as markdown while the
+                         in-progress block stays plain text. Citations are
+                         withheld until completion — their anchor offsets index
+                         the FULL content and won't match a partial prefix. -->
+                    @let split = streamingSplit(message.decryptedData.content);
+                    @if (split.stable) {
+                      <app-redacted-markdown [content]="split.stable" />
+                    }
+                    @if (split.tail) {
+                      <p class="message-list-item__streaming">
+                        {{ hydrated(split.tail) }}
+                      </p>
+                    }
                   } @else {
                     <app-redacted-markdown
                       [content]="message.decryptedData.content"
@@ -971,6 +986,15 @@ export class MessageListItemComponent implements OnChanges {
     return segmentMessageContent(this.message?.decryptedData.content, {
       streaming: !!this.message?.isStreaming,
     });
+  }
+
+  // Splits streaming content into a complete-blocks prefix (rendered as
+  // markdown) and an in-progress tail (shown as plain text). Called from the
+  // template like messageSegments(): it's a cheap linear scan, and the stable
+  // string only changes when a block completes, so the markdown component
+  // re-renders once per block rather than once per token.
+  streamingSplit(content?: string | null): StreamingMarkdownSplit {
+    return splitStreamingMarkdown(content);
   }
 
   // The transient "Searching the web…" status shows only while streaming with a
