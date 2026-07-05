@@ -773,6 +773,7 @@
       "disappearAfter": "As novas mensagens desta conversa desaparecerão após {{ duration }}",
       "documentCreating": "A criar o documento…",
       "documentDefaultName": "Documento",
+      "documentFormulaWarning": "Algumas fórmulas nesta folha de cálculo devem ser verificadas.",
       "documentInvalid": "Não foi possível criar este ficheiro — o conteúdo é mostrado em alternativa.",
       "documentRenderFailed": "Não foi possível criar o ficheiro. Tenta novamente.",
       "download": "Transferir",

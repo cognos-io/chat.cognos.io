@@ -773,6 +773,7 @@
       "disappearAfter": "Les nouveaux messages de cette conversation disparaîtront après {{ duration }}",
       "documentCreating": "Création du document…",
       "documentDefaultName": "Document",
+      "documentFormulaWarning": "Certaines formules de cette feuille de calcul méritent d'être vérifiées.",
       "documentInvalid": "Impossible de générer ce fichier — son contenu est affiché à la place.",
       "documentRenderFailed": "Le fichier n'a pas pu être créé. Veuillez réessayer.",
       "download": "Télécharger",

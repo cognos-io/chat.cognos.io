@@ -12,12 +12,24 @@ describe('COG_DOC_INSTRUCTION', () => {
     expect(COG_DOC_INSTRUCTION).toContain('no code fence');
   });
 
-  it('covers both v1 formats and the optional spec keys', () => {
+  it('covers all v1 formats and the optional spec keys', () => {
     expect(COG_DOC_INSTRUCTION).toContain('"docx"');
     expect(COG_DOC_INSTRUCTION).toContain('"pdf"');
+    expect(COG_DOC_INSTRUCTION).toContain('"xlsx"');
     for (const key of ['"page"', '"header"', '"footer"', '"lang"']) {
       expect(COG_DOC_INSTRUCTION).toContain(key);
     }
+  });
+
+  it('describes the xlsx body as JSON with typed cells and formulas', () => {
+    // The xlsx body is sheet-spec JSON, not markdown (spec §6.3) — this is
+    // the one clause models most need spelled out, since every other format
+    // rule assumes a markdown body.
+    expect(COG_DOC_INSTRUCTION).toContain('the body is JSON, not markdown');
+    expect(COG_DOC_INSTRUCTION).toContain('"sheets"');
+    expect(COG_DOC_INSTRUCTION).toContain('"freezeHeader"');
+    expect(COG_DOC_INSTRUCTION).toContain('{"f":"SUM(B2:B2)"}');
+    expect(COG_DOC_INSTRUCTION).toContain('never precomputed numbers');
   });
 
   it('requires full-replacement re-emission for document revisions', () => {

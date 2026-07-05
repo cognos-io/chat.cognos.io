@@ -24,6 +24,7 @@ import {
   RenderOptions,
 } from './document.types';
 import { renderMarkdownFile } from './renderers/markdown-renderer';
+import { SheetWarning } from './sheets/formula-validator';
 
 /**
  * DI seams for the two side effects that would otherwise make this service
@@ -90,13 +91,21 @@ export class DocumentExportService {
 
   /**
    * downloadCogDoc renders a model-authored `<cog-doc>` block (spec
-   * docs/specs/document-generation.md §5.2) to a file. Only a fully parsed,
-   * non-truncated block can be exported — 'streaming'/'invalid' blocks (or a
-   * block whose `spec` failed validation) throw the same `empty_document`
-   * error as an empty message, so the caller's existing failure UI applies
-   * unchanged.
+   * docs/specs/document-generation.md §5.2/§5.3) to a file. Only a fully
+   * parsed, non-truncated block can be exported — 'streaming'/'invalid'
+   * blocks (or a block whose `spec` failed validation) throw the same
+   * `empty_document` error as an empty message, so the caller's existing
+   * failure UI applies unchanged.
+   *
+   * Returns the formula validator's advisory warnings for xlsx documents
+   * (non-empty array), or `undefined` for docx/pdf and for a warning-free
+   * xlsx render — the caller (document-card) surfaces them after the
+   * download resolves.
    */
-  async downloadCogDoc(block: CogDocBlock, message: Message): Promise<void> {
+  async downloadCogDoc(
+    block: CogDocBlock,
+    message: Message,
+  ): Promise<SheetWarning[] | undefined> {
     if (block.state !== 'ready' || !block.spec) {
       throw new DocumentRenderError('empty_document', 'Document is not ready');
     }
@@ -111,10 +120,23 @@ export class DocumentExportService {
       spec.format,
       this.defaultFilenameFallback(),
     );
+    const options = renderOptionsFromSpec(spec);
+
+    if (spec.format === 'xlsx') {
+      // xlsx bodies are sheet-spec JSON, not markdown (spec §6.3), and never
+      // carry images — but hydration still applies, since sheet cell strings
+      // can contain redaction tokens like any other message content.
+      const { bytes, warnings } = await this._workerClient.renderSheet(
+        hydrated,
+        options,
+      );
+      this._saveBlob(bytes, filename, documentMimeType(spec.format));
+      return warnings.length > 0 ? warnings : undefined;
+    }
 
     const images = await this.decryptGeneratedImages(message, conversation);
-    const options = renderOptionsFromSpec(spec);
     await this.renderAndSave(spec.format, hydrated, images, options, filename);
+    return undefined;
   }
 
   // hydrate resolves redaction placeholders in `content` back to their

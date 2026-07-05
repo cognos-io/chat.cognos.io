@@ -45,6 +45,7 @@ describe('DocumentExportService', () => {
   const openSealedBox = vi.fn();
   const openSecretBox = vi.fn();
   const render = vi.fn();
+  const renderSheet = vi.fn();
   const saveBlob = vi.fn();
 
   let currentConversation: Conversation | undefined = conversation;
@@ -68,7 +69,7 @@ describe('DocumentExportService', () => {
         { provide: CryptoService, useValue: { openSealedBox, openSecretBox } },
         {
           provide: DOCUMENT_WORKER_CLIENT,
-          useValue: { render } as unknown as DocumentWorkerClient,
+          useValue: { render, renderSheet } as unknown as DocumentWorkerClient,
         },
         { provide: DOCUMENT_SAVE_BLOB, useValue: saveBlob },
       ],
@@ -404,6 +405,100 @@ describe('DocumentExportService', () => {
         service.downloadCogDoc(buildBlock(), buildMessage('x')),
       ).rejects.toMatchObject({ name: 'DocumentRenderError', code: 'render_failed' });
       expect(saveBlob).not.toHaveBeenCalled();
+    });
+
+    describe('xlsx routing (spec §5.3)', () => {
+      function buildSheetBlock(overrides: Partial<CogDocBlock> = {}): CogDocBlock {
+        return buildBlock({
+          spec: { format: 'xlsx', title: 'Revenue' },
+          body: '{"sheets":[{"name":"Sheet1","rows":[["A"]]}]}',
+          raw: "<cog-doc spec='{}'>\n{}\n</cog-doc>",
+          ...overrides,
+        });
+      }
+
+      it('routes xlsx through renderSheet instead of render', async () => {
+        renderSheet.mockResolvedValue({ bytes: new Uint8Array([1]), warnings: [] });
+
+        await service.downloadCogDoc(buildSheetBlock(), buildMessage('x'));
+
+        expect(render).not.toHaveBeenCalled();
+        expect(renderSheet).toHaveBeenCalledWith(
+          '{"sheets":[{"name":"Sheet1","rows":[["A"]]}]}',
+          { title: 'Revenue' },
+        );
+        expect(saveBlob).toHaveBeenCalledWith(
+          new Uint8Array([1]),
+          'Revenue.xlsx',
+          expect.stringContaining('spreadsheetml'),
+        );
+      });
+
+      it('hydrates the sheet body (cell strings can carry redaction tokens)', async () => {
+        renderSheet.mockResolvedValue({ bytes: new Uint8Array([1]), warnings: [] });
+        hydrate.mockReturnValue('{"sheets":[{"name":"Sheet1","rows":[["hydrated"]]}]}');
+
+        await service.downloadCogDoc(buildSheetBlock(), buildMessage('x'));
+
+        expect(hydrate).toHaveBeenCalledWith(
+          'conv-1',
+          '{"sheets":[{"name":"Sheet1","rows":[["A"]]}]}',
+          'proj-1',
+        );
+        expect(renderSheet).toHaveBeenCalledWith(
+          '{"sheets":[{"name":"Sheet1","rows":[["hydrated"]]}]}',
+          expect.any(Object),
+        );
+      });
+
+      it('resolves with undefined when the formula validator raises no warnings', async () => {
+        renderSheet.mockResolvedValue({ bytes: new Uint8Array([1]), warnings: [] });
+
+        await expect(
+          service.downloadCogDoc(buildSheetBlock(), buildMessage('x')),
+        ).resolves.toBeUndefined();
+      });
+
+      it('resolves with the formula validator warnings when present', async () => {
+        const warnings = [
+          { kind: 'ref_out_of_range', sheet: 'Sheet1', cell: 'B2', detail: 'B2' },
+        ];
+        renderSheet.mockResolvedValue({ bytes: new Uint8Array([1]), warnings });
+
+        await expect(
+          service.downloadCogDoc(buildSheetBlock(), buildMessage('x')),
+        ).resolves.toEqual(warnings);
+      });
+
+      it('never decrypts generated images for xlsx (no image support, spec §5.3)', async () => {
+        renderSheet.mockResolvedValue({ bytes: new Uint8Array([1]), warnings: [] });
+
+        const message = buildMessage('carrier', {
+          decryptedData: {
+            content: 'carrier',
+            attachments: [
+              {
+                kind: 'generated_image',
+                mime_type: 'image/png',
+                sealed_key: 'c2VhbGVk',
+              },
+            ],
+          },
+        });
+
+        await service.downloadCogDoc(buildSheetBlock(), message);
+
+        expect(fetchAttachmentBytes).not.toHaveBeenCalled();
+      });
+
+      it('propagates a renderSheet failure as a DocumentRenderError', async () => {
+        renderSheet.mockRejectedValue(new DocumentRenderError('render_failed', 'boom'));
+
+        await expect(
+          service.downloadCogDoc(buildSheetBlock(), buildMessage('x')),
+        ).rejects.toMatchObject({ name: 'DocumentRenderError', code: 'render_failed' });
+        expect(saveBlob).not.toHaveBeenCalled();
+      });
     });
   });
 });

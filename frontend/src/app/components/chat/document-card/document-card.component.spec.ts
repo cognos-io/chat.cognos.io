@@ -95,6 +95,14 @@ describe('DocumentCardComponent', () => {
     ).toBe('PDF');
   });
 
+  it('shows XLSX as the format tag for spreadsheet documents', () => {
+    setBlock(buildBlock({ spec: { format: 'xlsx' } }));
+
+    expect(
+      fixture.nativeElement.querySelector('.document-card__format').textContent.trim(),
+    ).toBe('XLSX');
+  });
+
   it('shows the creating status while streaming, with no download button', () => {
     setBlock(buildBlock({ state: 'streaming', spec: null, body: '' }));
 
@@ -175,5 +183,73 @@ describe('DocumentCardComponent', () => {
     headerButton().click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.document-card__preview')).toBeNull();
+  });
+
+  it('renders an xlsx body as plain text (JSON, not markdown)', () => {
+    const sheetBody = '{"sheets":[{"name":"Sheet1","rows":[["A",1]]}]}';
+    setBlock(buildBlock({ spec: { format: 'xlsx' }, body: sheetBody }));
+
+    headerButton().click();
+    fixture.detectChanges();
+
+    const preview = fixture.nativeElement.querySelector('.document-card__preview-code');
+    expect(preview).not.toBeNull();
+    expect(preview.textContent).toContain(sheetBody);
+    // The markdown pipeline must not be used for xlsx bodies.
+    expect(fixture.nativeElement.querySelector('app-redacted-markdown')).toBeNull();
+  });
+
+  describe('formula warning line', () => {
+    it('stays hidden when the download resolves with no warnings', async () => {
+      downloadCogDoc.mockResolvedValue(undefined);
+      setBlock(buildBlock({ spec: { format: 'xlsx' } }));
+
+      downloadButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('cog-callout')).toBeNull();
+    });
+
+    it('shows a persistent warning line when the download resolves with warnings', async () => {
+      downloadCogDoc.mockResolvedValue([
+        { kind: 'ref_out_of_range', sheet: 'Sheet1', cell: 'B2', detail: 'B2' },
+      ]);
+      setBlock(buildBlock({ spec: { format: 'xlsx' } }));
+
+      downloadButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+
+      const callout = fixture.nativeElement.querySelector('cog-callout');
+      expect(callout).not.toBeNull();
+      expect(fixture.nativeElement.textContent).toContain(
+        'Some formulas in this spreadsheet may need checking.',
+      );
+
+      // Persistent: unlike the transient failure label, it does not clear on
+      // its own.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('cog-callout')).not.toBeNull();
+    });
+
+    it('clears the warning line at the start of the next download', async () => {
+      downloadCogDoc.mockResolvedValueOnce([
+        { kind: 'ref_out_of_range', sheet: 'Sheet1', cell: 'B2', detail: 'B2' },
+      ]);
+      setBlock(buildBlock({ spec: { format: 'xlsx' } }));
+
+      downloadButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('cog-callout')).not.toBeNull();
+
+      downloadCogDoc.mockResolvedValueOnce(undefined);
+      downloadButton()?.click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('cog-callout')).toBeNull();
+    });
   });
 });

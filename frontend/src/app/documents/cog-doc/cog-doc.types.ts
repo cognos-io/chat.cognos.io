@@ -16,7 +16,7 @@ export const COG_DOC_MAX_SOURCE_BYTES = 256 * 1024;
 export const cogDocSpecSchema = z
   .object({
     v: z.literal(1).optional(),
-    format: z.enum(['docx', 'pdf']), // 'xlsx' joins in Phase 3 (§5.3)
+    format: z.enum(['docx', 'pdf', 'xlsx']), // xlsx: Phase 3 (§5.3)
     title: z.string().max(300).optional(),
     filename: z.string().max(200).optional(),
     lang: z.string().max(35).optional(),

@@ -129,6 +129,21 @@ describe('segmentMessageContent', () => {
     });
   });
 
+  it('accepts "xlsx" as a valid format (spec §5.3) while pptx stays invalid', () => {
+    const content = [
+      '<cog-doc spec=\'{"format":"xlsx","title":"Revenue"}\'>',
+      '{"sheets":[]}',
+      '</cog-doc>',
+    ].join('\n');
+
+    const segments = segmentMessageContent(content, { streaming: false });
+
+    expect(segments[0]).toMatchObject({
+      kind: 'document',
+      block: { state: 'ready', spec: { format: 'xlsx', title: 'Revenue' } },
+    });
+  });
+
   it('ignores unknown spec keys (schema strips them, forward compat)', () => {
     const content = [
       '<cog-doc spec=\'{"format":"docx","futureKey":"x"}\'>',

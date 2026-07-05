@@ -10,7 +10,11 @@ import {
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
-import { CognosButtonComponent, CognosIconComponent } from '@cognos/ui-angular';
+import {
+  CognosButtonComponent,
+  CognosCalloutComponent,
+  CognosIconComponent,
+} from '@cognos/ui-angular';
 
 import { RedactedMarkdownComponent } from '@app/components/chat/redacted-markdown/redacted-markdown.component';
 import { CogDocBlock } from '@app/documents/cog-doc/cog-doc.types';
@@ -28,12 +32,22 @@ import { Message } from '@app/interfaces/message';
  * that case open to plain markdown at the segment level instead of rendering
  * this card (spec §3.5), so this component only ever needs to distinguish
  * 'streaming' from 'ready'.
+ *
+ * xlsx bodies are sheet-spec JSON, not markdown (spec §6.3), so the preview
+ * renders them as a plain text block rather than through the markdown
+ * pipeline — feeding JSON through `RedactedMarkdownComponent` would produce
+ * nonsense formatting (stray `_`/`*`/`#` treated as markdown syntax). This
+ * means redaction pills embedded in sheet cell strings show as raw tokens in
+ * the preview rather than hydrating, unlike the docx/pdf preview — an
+ * accepted trade for a simple, safe text binding (no markdown parsing of
+ * model-authored JSON).
  */
 @Component({
   selector: 'app-document-card',
   standalone: true,
   imports: [
     CognosButtonComponent,
+    CognosCalloutComponent,
     CognosIconComponent,
     RedactedMarkdownComponent,
     TranslocoModule,
@@ -81,9 +95,19 @@ import { Message } from '@app/interfaces/message';
         }
       </div>
 
+      @if (showFormulaWarning()) {
+        <cog-callout tone="warning" icon="triangle-alert">
+          {{ t('chat.message.documentFormulaWarning') }}
+        </cog-callout>
+      }
+
       @if (expanded()) {
         <div class="document-card__preview" role="region">
-          <app-redacted-markdown [content]="block().body" />
+          @if (isXlsx()) {
+            <pre class="document-card__preview-code">{{ block().body }}</pre>
+          } @else {
+            <app-redacted-markdown [content]="block().body" />
+          }
         </div>
       }
     </div>
@@ -185,6 +209,19 @@ import { Message } from '@app/interfaces/message';
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-body-sm);
     }
+
+    .document-card__preview-code {
+      overflow: auto;
+      margin: 0;
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface-sunken);
+      padding: var(--cog-space-100);
+      color: var(--cog-text);
+      font-family: var(--cog-font-mono);
+      font-size: var(--cog-fs-caption);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -198,7 +235,10 @@ export class DocumentCardComponent {
   protected readonly expanded = signal(false);
   protected readonly downloading = signal(false);
   protected readonly downloadFailed = signal(false);
+  protected readonly showFormulaWarning = signal(false);
   private _downloadFailedTimer?: ReturnType<typeof setTimeout>;
+
+  protected readonly isXlsx = computed(() => this.block().spec?.format === 'xlsx');
 
   protected readonly title = computed(() => {
     const spec = this.block().spec;
@@ -226,8 +266,10 @@ export class DocumentCardComponent {
       return;
     }
     this.downloading.set(true);
+    this.showFormulaWarning.set(false);
     this._documentExport
       .downloadCogDoc(this.block(), this.message())
+      .then((warnings) => this.showFormulaWarning.set(!!warnings?.length))
       .catch(() => this.onDownloadFailed())
       .finally(() => this.downloading.set(false));
   }

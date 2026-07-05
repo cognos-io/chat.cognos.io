@@ -773,6 +773,7 @@
       "disappearAfter": "New messages in this conversation will disappear after {{ duration }}",
       "documentCreating": "Creating document…",
       "documentDefaultName": "Document",
+      "documentFormulaWarning": "Some formulas in this spreadsheet may need checking.",
       "documentInvalid": "Couldn't build this file — showing its content instead.",
       "documentRenderFailed": "Couldn't create the file. Please try again.",
       "download": "Download",

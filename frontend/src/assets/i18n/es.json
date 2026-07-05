@@ -773,6 +773,7 @@
       "disappearAfter": "Los nuevos mensajes de este chat desaparecerán después de {{ duration }}",
       "documentCreating": "Creando el documento…",
       "documentDefaultName": "Documento",
+      "documentFormulaWarning": "Conviene revisar algunas fórmulas de esta hoja de cálculo.",
       "documentInvalid": "No se ha podido generar este archivo; se muestra su contenido en su lugar.",
       "documentRenderFailed": "No se ha podido crear el archivo. Inténtalo de nuevo.",
       "download": "Descargar",

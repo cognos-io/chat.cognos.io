@@ -773,6 +773,7 @@
       "disappearAfter": "Neue Nachrichten in dieser Konversation verschwinden nach {{ duration }}",
       "documentCreating": "Dokument wird erstellt…",
       "documentDefaultName": "Dokument",
+      "documentFormulaWarning": "Einige Formeln in dieser Tabelle solltest du überprüfen.",
       "documentInvalid": "Diese Datei konnte nicht erstellt werden – stattdessen wird der Inhalt angezeigt.",
       "documentRenderFailed": "Die Datei konnte nicht erstellt werden. Bitte versuche es erneut.",
       "download": "Herunterladen",
