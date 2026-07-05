@@ -1,8 +1,10 @@
 # Document Generation — client-side DOCX / PDF / XLSX
 
-- **Version:** 0.3
-- **Status:** Phases 0–1 implemented ("Download as…" DOCX/PDF/MD, commits
-  `89242715`…`654c1c64`); Phases 2–5 designed, not built. Decisions 4–11 settled (§18).
+- **Version:** 0.4
+- **Status:** Phases 0–2 implemented ("Download as…" + model-created `<cog-doc>` documents
+  with revision round-trips); Phase 3 (XLSX + save-to-library) in progress; Phases 4–5
+  designed, not built. Decisions 4–11 settled (§18). Developer map:
+  `frontend/src/app/documents/README.md`.
 - **Stack:** Angular frontend (Web Worker rendering pipeline), Go backend (Phase 4 tool loop only)
 - **Scope:** Letting the model produce downloadable documents (DOCX, PDF, XLSX; PPTX deferred)
   inside encrypted conversations, with all file bytes produced, encrypted and delivered
@@ -497,7 +499,7 @@ labels), model-selector strength pill for Phase 4 only. Plural forms where count
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | 0     | Spike: render worker + `docx`/`pdfmake` golden samples; open-in-Word/LibreOffice/Pages/Google-Docs matrix; bundle + CSP + Trusted Types verification            | ✅ folded into Phase 1 (golden bytes verified in e2e; **manual open-in-apps QA still to run**)      |
 | 1     | "Download as…" (DOCX/PDF/MD) on any assistant message — hydration, image embedding, filename rules, i18n ×6                                                     | ✅ commits `89242715`…`654c1c64` (business process: `../business_processes/document-generation.md`) |
-| 2     | `<cog-doc>` contract + stream parser + document card + composer toggle + fail-open paths; mock-AI provider emits blocks; e2e                                    | ☐                                                                                                   |
+| 2     | `<cog-doc>` contract + stream parser + document card + composer toggle + fail-open paths; mock-AI provider emits blocks; e2e                                    | ✅ commits `225968ce`…`60e24281` incl. revision round-trip contract + module README                 |
 | 3     | XLSX sheet spec + caps + formula warnings; Save to library                                                                                                      | ☐                                                                                                   |
 | 4     | Browser tool loop: Requesty spike → `client_tools`/`tool_call` SSE/`continue` endpoint → `create_document`/`update_document`; billing rounds; capability gating | ☐                                                                                                   |
 | 5     | (Deferred) sandboxed code execution per §10; PPTX; typst.ts premium PDF                                                                                         | —                                                                                                   |
