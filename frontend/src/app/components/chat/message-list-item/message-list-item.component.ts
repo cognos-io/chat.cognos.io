@@ -320,9 +320,19 @@ import {
                   @if (reasoningExpanded()) {
                     <div class="message-list-item__reasoning-body" role="region">
                       @if (message.isStreaming) {
-                        <p class="message-list-item__streaming">
-                          {{ message.decryptedData.reasoning }}
-                        </p>
+                        <!-- Progressive render, matching the answer body:
+                             completed blocks render as markdown, the in-progress
+                             tail stays plain text until its block closes. -->
+                        @let reasoningSplit =
+                          streamingSplit(message.decryptedData.reasoning);
+                        @if (reasoningSplit.stable) {
+                          <app-redacted-markdown [content]="reasoningSplit.stable" />
+                        }
+                        @if (reasoningSplit.tail) {
+                          <p class="message-list-item__streaming">
+                            {{ reasoningSplit.tail }}
+                          </p>
+                        }
                       } @else {
                         <app-redacted-markdown
                           [content]="message.decryptedData.reasoning ?? ''"
