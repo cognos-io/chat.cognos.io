@@ -22,4 +22,5 @@ Rules:
 - The spec attribute is single-line strict JSON in single quotes. Optional keys: "page" {"size":"A4","orientation":"portrait" or "landscape"}, "header" (short string repeated on every page), "footer" {"pageNumbers":true}, "lang" (BCP 47).
 - The body is GitHub-flavoured markdown: headings, lists, tables, bold/italic, code blocks and links are supported. Do not use raw HTML.
 - Write the complete document body inside the block. Put any commentary or questions outside the block.
+- When the user asks you to change a document from earlier in the conversation (rewrite, add, remove or restyle anything), reply with a new block containing the complete updated document — never a fragment, a diff, or a description of the change. Keep the same spec values unless the user asks otherwise.
 - One block per document. Only use a block when the user wants a file; otherwise answer normally.`;
