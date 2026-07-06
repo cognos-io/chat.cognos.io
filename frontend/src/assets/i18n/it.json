@@ -852,10 +852,7 @@
       "sections": {
         "pinned": "Fissati",
         "recent": "Recenti",
-        "recommended": "Consigliati",
-        "region_ch": "Svizzera",
-        "region_eu": "Europa",
-        "region_global": "Globale"
+        "recommended": "Consigliati"
       },
       "strengths": {
         "everyday": "Quotidiano",
@@ -891,11 +888,11 @@
       "sort": {
         "label": "Ordina modelli",
         "recommended": "Consigliato",
-        "newest": "Recenti",
+        "newest": "Novità",
         "cost": "Costo",
-        "region": "Regione",
         "costAsc": "Costo, crescente",
-        "costDesc": "Costo, decrescente"
+        "costDesc": "Costo, decrescente",
+        "recent": "Recenti"
       }
     },
     "personas": {

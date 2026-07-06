@@ -17,7 +17,12 @@ import { RouterLink } from '@angular/router';
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
-import { CognosIconComponent, CognosLozengeComponent } from '@cognos/ui-angular';
+import {
+  CognosIconComponent,
+  CognosLozengeComponent,
+  CognosSegmentedControlComponent,
+  CognosSegmentedOption,
+} from '@cognos/ui-angular';
 
 import { localizedModelIneligibility } from '@app/i18n/model-ineligibility';
 import { Model } from '@app/interfaces/model';
@@ -35,7 +40,6 @@ import {
   SearchContext,
   SortMode,
   buildSearchSynonyms,
-  flattenGroups,
   formatContextWindow,
   matchesQuickFilter,
   modelStrengthPills,
@@ -46,7 +50,7 @@ import {
 // The segmented sort control's buttons. 'cost' is one segment that toggles
 // between ascending and descending on repeated taps; the other keys map 1:1 to
 // a SortMode.
-type SortSegmentKey = 'recommended' | 'newest' | 'cost' | 'region';
+type SortSegmentKey = 'recommended' | 'newest' | 'cost' | 'recent';
 
 interface SortSegment {
   key: SortSegmentKey;
@@ -57,7 +61,7 @@ const SORT_SEGMENTS: readonly SortSegment[] = [
   { key: 'recommended', labelKey: 'chat.models.sort.recommended' },
   { key: 'newest', labelKey: 'chat.models.sort.newest' },
   { key: 'cost', labelKey: 'chat.models.sort.cost' },
-  { key: 'region', labelKey: 'chat.models.sort.region' },
+  { key: 'recent', labelKey: 'chat.models.sort.recent' },
 ];
 
 // How the selector is presented. The same content renders as a compact dropdown
@@ -71,6 +75,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
     CommonModule,
     CognosIconComponent,
     CognosLozengeComponent,
+    CognosSegmentedControlComponent,
     RouterLink,
     TranslocoModule,
   ],
@@ -102,112 +107,98 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
         </p>
       }
 
-      <!-- Scrollable, grouped model list (top). -->
+      <!-- Scrollable, flat model list (top), ordered by the chosen sort. -->
       <div
         class="model-selector__list"
         role="listbox"
         [attr.aria-label]="t('chat.models.pickAria')"
       >
-        @for (group of groups(); track group.key) {
-          @if (group.models.length) {
-            @if (group.key !== 'other') {
-              <p class="model-selector__section">
-                {{ t('chat.models.sections.' + group.key) }}
-              </p>
-            }
-            @for (model of group.models; track model.id) {
-              <div class="model-selector__row-wrap">
-                <button
-                  type="button"
-                  role="option"
-                  class="model-selector__row"
-                  [class.model-selector__row--active]="model.id === selectedModelId()"
-                  [class.model-selector__row--disabled]="!model.isEligible"
-                  [attr.aria-selected]="model.id === selectedModelId()"
-                  [attr.aria-describedby]="
-                    !model.isEligible ? ineligibilityId(model) : null
-                  "
-                  [attr.title]="
-                    !model.isEligible ? ineligibilityReason(model, t) : null
-                  "
-                  [disabled]="!model.isEligible"
-                  (click)="onSelectModel(model)"
-                >
-                  <span class="model-selector__body">
-                    <span class="model-selector__heading">
-                      <span class="model-selector__name">{{ model.displayName }}</span>
-                      @if (!model.isEligible) {
-                        <cog-lozenge tone="red">
-                          {{ t('chat.models.unavailable.badge') }}
-                        </cog-lozenge>
-                      }
-                      @if (!hideCost()) {
-                        <cog-lozenge
-                          class="model-selector__cost"
-                          [tone]="costTierTone(model)"
-                          [attr.title]="
-                            t('chat.models.estimatedCost', {
-                              cost: t('chat.models.costTier.' + costTier(model)),
-                            })
-                          "
-                        >
-                          {{ t('chat.models.costTier.' + costTier(model)) }}
-                        </cog-lozenge>
-                      }
-                    </span>
+        @for (model of models(); track model.id) {
+          <div class="model-selector__row-wrap">
+            <button
+              type="button"
+              role="option"
+              class="model-selector__row"
+              [class.model-selector__row--active]="model.id === selectedModelId()"
+              [class.model-selector__row--disabled]="!model.isEligible"
+              [attr.aria-selected]="model.id === selectedModelId()"
+              [attr.aria-describedby]="
+                !model.isEligible ? ineligibilityId(model) : null
+              "
+              [attr.title]="!model.isEligible ? ineligibilityReason(model, t) : null"
+              [disabled]="!model.isEligible"
+              (click)="onSelectModel(model)"
+            >
+              <span class="model-selector__body">
+                <span class="model-selector__heading">
+                  <span class="model-selector__name">{{ model.displayName }}</span>
+                  @if (!model.isEligible) {
+                    <cog-lozenge tone="red">
+                      {{ t('chat.models.unavailable.badge') }}
+                    </cog-lozenge>
+                  }
+                  @if (!hideCost()) {
+                    <cog-lozenge
+                      class="model-selector__cost"
+                      [tone]="costTierTone(model)"
+                      [attr.title]="
+                        t('chat.models.estimatedCost', {
+                          cost: t('chat.models.costTier.' + costTier(model)),
+                        })
+                      "
+                    >
+                      {{ t('chat.models.costTier.' + costTier(model)) }}
+                    </cog-lozenge>
+                  }
+                </span>
 
-                    @if (strengthPills(model).length) {
-                      <span class="model-selector__pills">
-                        @for (key of strengthPills(model); track key) {
-                          <span class="model-selector__pill">
-                            {{ t('chat.models.strengths.' + key) }}
-                          </span>
-                        }
-                      </span>
-                    }
-
-                    <span class="model-selector__meta">
-                      {{ metaLine(model, t) }}
-                    </span>
-
-                    @if (!model.isEligible) {
-                      <span
-                        class="model-selector__reason"
-                        [id]="ineligibilityId(model)"
-                      >
-                        <cog-icon name="lock" [size]="12" tone="current" />
-                        {{ ineligibilityReason(model, t) }}
+                @if (strengthPills(model).length) {
+                  <span class="model-selector__pills">
+                    @for (key of strengthPills(model); track key) {
+                      <span class="model-selector__pill">
+                        {{ t('chat.models.strengths.' + key) }}
                       </span>
                     }
                   </span>
+                }
 
-                  <span class="model-selector__check-slot">
-                    @if (model.id === selectedModelId()) {
-                      <cog-icon
-                        class="model-selector__check"
-                        name="check"
-                        [size]="16"
-                        tone="success"
-                      />
-                    }
+                <span class="model-selector__meta">
+                  {{ metaLine(model, t) }}
+                </span>
+
+                @if (!model.isEligible) {
+                  <span class="model-selector__reason" [id]="ineligibilityId(model)">
+                    <cog-icon name="lock" [size]="12" tone="current" />
+                    {{ ineligibilityReason(model, t) }}
                   </span>
-                </button>
+                }
+              </span>
 
-                <button
-                  type="button"
-                  class="model-selector__pin-button"
-                  [class.model-selector__pin-button--pinned]="isPinned(model.id)"
-                  [attr.title]="
-                    isPinned(model.id) ? t('chat.models.unpin') : t('chat.models.pin')
-                  "
-                  [attr.aria-pressed]="isPinned(model.id)"
-                  (click)="onTogglePin($event, model)"
-                >
-                  <cog-icon name="pin" [size]="14" tone="current" />
-                </button>
-              </div>
-            }
-          }
+              <span class="model-selector__check-slot">
+                @if (model.id === selectedModelId()) {
+                  <cog-icon
+                    class="model-selector__check"
+                    name="check"
+                    [size]="16"
+                    tone="success"
+                  />
+                }
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="model-selector__pin-button"
+              [class.model-selector__pin-button--pinned]="isPinned(model.id)"
+              [attr.title]="
+                isPinned(model.id) ? t('chat.models.unpin') : t('chat.models.pin')
+              "
+              [attr.aria-pressed]="isPinned(model.id)"
+              (click)="onTogglePin($event, model)"
+            >
+              <cog-icon name="pin" [size]="14" tone="current" />
+            </button>
+          </div>
         }
 
         @if (isEmpty()) {
@@ -247,41 +238,12 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
           {{ t('chat.models.search.privacyNote') }}
         </p>
 
-        <div
-          class="model-selector__sort"
-          role="group"
-          [attr.aria-label]="t('chat.models.sort.label')"
-        >
-          @for (segment of sortSegments; track segment.key) {
-            <button
-              type="button"
-              class="model-selector__sort-option"
-              [class.model-selector__sort-option--active]="
-                activeSortSegment() === segment.key
-              "
-              [attr.aria-pressed]="activeSortSegment() === segment.key"
-              (click)="onSortSegment(segment.key)"
-            >
-              {{ t(segment.labelKey) }}
-              @if (activeSortSegment() === 'cost' && segment.key === 'cost') {
-                <cog-icon
-                  class="model-selector__sort-arrow"
-                  [class.model-selector__sort-arrow--asc]="costAscending()"
-                  name="chevron-down"
-                  [size]="12"
-                  tone="current"
-                  [attr.aria-label]="
-                    t(
-                      costAscending()
-                        ? 'chat.models.sort.costAsc'
-                        : 'chat.models.sort.costDesc'
-                    )
-                  "
-                />
-              }
-            </button>
-          }
-        </div>
+        <cog-segmented-control
+          [options]="sortOptions()"
+          [value]="activeSortSegment()"
+          [ariaLabel]="t('chat.models.sort.label')"
+          (select)="onSortSegment($event)"
+        />
 
         <div
           class="model-selector__chips"
@@ -388,19 +350,6 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       flex: 1 1 auto;
       overflow-y: auto;
       padding: var(--cog-space-075);
-    }
-
-    .model-selector__section {
-      display: flex;
-      align-items: center;
-      gap: var(--cog-space-075);
-      margin: var(--cog-space-075) 0 var(--cog-space-025);
-      padding: 0 var(--cog-space-075);
-      color: var(--cog-text-subtlest);
-      font-size: var(--cog-fs-caption);
-      font-weight: var(--cog-fw-semibold);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
     }
 
     .model-selector__row-wrap {
@@ -599,58 +548,6 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       font-size: var(--cog-fs-caption);
     }
 
-    /* Segmented control for the list ordering. Distinct from the capability
-       filter chips below it: a single connected track so it reads as "pick one
-       ordering", not "toggle a filter". */
-    .model-selector__sort {
-      display: flex;
-      gap: 2px;
-      padding: 2px;
-      border-radius: var(--cog-radius-sm);
-      background: var(--cog-surface-sunken);
-    }
-
-    .model-selector__sort-option {
-      flex: 1 1 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--cog-space-025);
-      min-height: 30px;
-      padding: 0 var(--cog-space-075);
-      border: 0;
-      border-radius: var(--cog-radius-xs);
-      background: transparent;
-      color: var(--cog-text-subtle);
-      font: inherit;
-      font-size: var(--cog-fs-caption);
-      cursor: pointer;
-      white-space: nowrap;
-      transition:
-        background-color var(--cog-dur-fast) var(--cog-ease-standard),
-        color var(--cog-dur-fast) var(--cog-ease-standard);
-    }
-
-    .model-selector__sort-option:hover {
-      color: var(--cog-text);
-    }
-
-    .model-selector__sort-option--active {
-      background: var(--cog-surface-raised);
-      color: var(--cog-text);
-      font-weight: var(--cog-fw-semibold);
-      box-shadow: var(--cog-shadow-raised);
-    }
-
-    /* The chevron points down for high→low; rotate it to point up for low→high. */
-    .model-selector__sort-arrow {
-      transition: transform var(--cog-dur-fast) var(--cog-ease-standard);
-    }
-
-    .model-selector__sort-arrow--asc {
-      transform: rotate(180deg);
-    }
-
     .model-selector__chips {
       display: flex;
       gap: var(--cog-space-075);
@@ -791,7 +688,7 @@ export class ModelSelectorComponent implements OnInit {
     ),
   );
 
-  // Search index context, shared by groups() and hasHiddenMatches() so a hidden
+  // Search index context, shared by models() and hasHiddenMatches() so a hidden
   // model that matches only on its localised cost-tier/region label is found by
   // both (otherwise "show hidden matches" wouldn't surface it).
   private searchContext(): SearchContext {
@@ -807,7 +704,9 @@ export class ModelSelectorComponent implements OnInit {
     };
   }
 
-  protected readonly groups = computed(() =>
+  // The flat, ordered list of models rendered in the list. Pinned models are not
+  // hoisted — the "Pinned" filter chip surfaces them instead.
+  protected readonly models = computed(() =>
     orderModels({
       models: this._modelService.modelList(),
       pinnedIds: this._pinned,
@@ -823,9 +722,29 @@ export class ModelSelectorComponent implements OnInit {
     }),
   );
 
-  protected readonly isEmpty = computed(
-    () => flattenGroups(this.groups()).length === 0,
-  );
+  // Options for the sort segmented control. The active segment carries a
+  // direction chevron on Cost (flipped when ascending); computed so it updates
+  // as the sort changes.
+  protected readonly sortOptions = computed<CognosSegmentedOption[]>(() => {
+    const active = this.activeSortSegment();
+    const costActive = active === 'cost';
+    return this.sortSegments.map((segment) => ({
+      value: segment.key,
+      label: this._transloco.translate(segment.labelKey),
+      icon: segment.key === 'cost' && costActive ? 'chevron-down' : undefined,
+      iconRotated: segment.key === 'cost' && this.costAscending(),
+      iconLabel:
+        segment.key === 'cost' && costActive
+          ? this._transloco.translate(
+              this.costAscending()
+                ? 'chat.models.sort.costAsc'
+                : 'chat.models.sort.costDesc',
+            )
+          : undefined,
+    }));
+  });
+
+  protected readonly isEmpty = computed(() => this.models().length === 0);
 
   // Are there hidden models that match the current query (so we can offer
   // "show hidden matches")? Only meaningful when results are otherwise empty.
@@ -834,20 +753,18 @@ export class ModelSelectorComponent implements OnInit {
       return false;
     }
     return (
-      flattenGroups(
-        orderModels({
-          models: this._modelService.modelList(),
-          pinnedIds: this._pinned,
-          recentIds: this._recent,
-          hiddenIds: [...this._hidden],
-          privacyTier: this._modelService.privacyTier(),
-          requiredCapability: this.requiredCapability(),
-          quickFilter: this.activeFilter(),
-          query: this.searchQuery(),
-          showHidden: true,
-          searchContext: this.searchContext(),
-        }),
-      ).length > 0
+      orderModels({
+        models: this._modelService.modelList(),
+        pinnedIds: this._pinned,
+        recentIds: this._recent,
+        hiddenIds: [...this._hidden],
+        privacyTier: this._modelService.privacyTier(),
+        requiredCapability: this.requiredCapability(),
+        quickFilter: this.activeFilter(),
+        query: this.searchQuery(),
+        showHidden: true,
+        searchContext: this.searchContext(),
+      }).length > 0
     );
   });
 
@@ -925,12 +842,15 @@ export class ModelSelectorComponent implements OnInit {
 
   // Tapping a segment sets its sort. The 'cost' segment is bidirectional: the
   // first tap sorts cheapest-first, tapping it again flips to dearest-first.
-  protected onSortSegment(key: SortSegmentKey): void {
+  // `key` arrives as a string from the segmented control; it is always one of
+  // our own option values (a SortSegmentKey).
+  protected onSortSegment(key: string): void {
     if (key === 'cost') {
       this.setSortMode(this.sortMode() === 'cost_asc' ? 'cost_desc' : 'cost_asc');
       return;
     }
-    this.setSortMode(key);
+    // The non-cost segment keys are exactly the matching SortMode values.
+    this.setSortMode(key as SortMode);
   }
 
   // True when Cost sorts cheapest-first, so the chevron flips to point up.

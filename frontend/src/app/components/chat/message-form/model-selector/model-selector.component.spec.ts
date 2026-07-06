@@ -324,6 +324,7 @@ describe('ModelSelectorComponent sort control', () => {
     pricing: { inputUsdPerMillionTokens: 40, outputUsdPerMillionTokens: 40 },
   });
   let setModelSortMode: ReturnType<typeof vi.fn>;
+  let recentModels: ReturnType<typeof signal<string[]>>;
 
   function rowNames(fixture: ComponentFixture<ModelSelectorComponent>): string[] {
     return Array.from(
@@ -335,12 +336,13 @@ describe('ModelSelectorComponent sort control', () => {
     fixture: ComponentFixture<ModelSelectorComponent>,
   ): HTMLButtonElement[] {
     return Array.from(
-      fixture.nativeElement.querySelectorAll('.model-selector__sort-option'),
+      fixture.nativeElement.querySelectorAll('.cog-segmented__option'),
     ) as HTMLButtonElement[];
   }
 
   beforeEach(async () => {
     setModelSortMode = vi.fn();
+    recentModels = signal<string[]>([]);
 
     await TestBed.configureTestingModule({
       imports: [ModelSelectorComponent],
@@ -360,7 +362,7 @@ describe('ModelSelectorComponent sort control', () => {
           provide: UserPreferencesService,
           useValue: {
             pinnedModels: signal<string[]>([]),
-            recentModels: signal<string[]>([]),
+            recentModels,
             hiddenModels: signal<string[]>([]),
             modelQuickFilter: signal<QuickFilter | null>(null),
             setModelQuickFilter: vi.fn(),
@@ -382,7 +384,7 @@ describe('ModelSelectorComponent sort control', () => {
     fixture.detectChanges();
     expect(rowNames(fixture)).toEqual(['Older', 'Newer']);
 
-    // Segments are Recommended, Newest, Cost, Region.
+    // Segments are Recommended, Newest, Cost, Recent.
     sortButtons(fixture)[1].click();
     fixture.detectChanges();
 
@@ -406,5 +408,20 @@ describe('ModelSelectorComponent sort control', () => {
     // Second tap flips to dearest first.
     expect(rowNames(fixture)).toEqual(['Newer', 'Older']);
     expect(setModelSortMode).toHaveBeenLastCalledWith('cost_desc');
+  });
+
+  it('orders most-recently-used first under the Recent segment', () => {
+    // 'newer' was used most recently, so it should lead despite older's
+    // earlier catalogue position.
+    recentModels.set(['newer']);
+    const fixture = TestBed.createComponent(ModelSelectorComponent);
+    fixture.detectChanges();
+
+    // Segments are Recommended, Newest, Cost, Recent.
+    sortButtons(fixture)[3].click();
+    fixture.detectChanges();
+
+    expect(rowNames(fixture)).toEqual(['Newer', 'Older']);
+    expect(setModelSortMode).toHaveBeenCalledWith('recent');
   });
 });

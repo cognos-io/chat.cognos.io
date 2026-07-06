@@ -852,10 +852,7 @@
       "sections": {
         "pinned": "Fijados",
         "recent": "Recientes",
-        "recommended": "Recomendados",
-        "region_ch": "Suiza",
-        "region_eu": "Europa",
-        "region_global": "Global"
+        "recommended": "Recomendados"
       },
       "strengths": {
         "everyday": "Diario",
@@ -891,11 +888,11 @@
       "sort": {
         "label": "Ordenar modelos",
         "recommended": "Recomendado",
-        "newest": "Recientes",
+        "newest": "Novedades",
         "cost": "Coste",
-        "region": "Región",
         "costAsc": "Coste, de menor a mayor",
-        "costDesc": "Coste, de mayor a menor"
+        "costDesc": "Coste, de mayor a menor",
+        "recent": "Recientes"
       }
     },
     "personas": {

@@ -21,7 +21,7 @@ export const ModelSortMode = z.enum([
   'newest',
   'cost_asc',
   'cost_desc',
-  'region',
+  'recent',
 ]);
 export type ModelSortMode = z.infer<typeof ModelSortMode>;
 

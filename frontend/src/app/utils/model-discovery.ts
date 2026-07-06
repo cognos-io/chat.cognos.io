@@ -349,39 +349,14 @@ export function modelStrengthPills(
   return keys;
 }
 
-// ---- region ----------------------------------------------------------------
-
-// The hosting region a model is grouped under. Mirrors the privacy hierarchy
-// (Switzerland is the strongest tier), so this doubles as the flag shown per
-// row and the section a model falls into under the "Region" sort.
-export type ModelRegion = 'ch' | 'eu' | 'global';
-
-// modelRegion resolves a model to its hosting region. Country wins when set;
-// otherwise we fall back to the privacy tier (ch_only -> ch, eu -> eu). Anything
-// else — including an explicit "global" tier — is global.
-export function modelRegion(model: Model): ModelRegion {
-  const country = (model.hostingCountry ?? '').toUpperCase();
-  if (country === 'CH' || model.privacyTier === 'ch_only') {
-    return 'ch';
-  }
-  if (country === 'EU' || model.privacyTier === 'eu') {
-    return 'eu';
-  }
-  return 'global';
-}
-
 // ---- sorting ---------------------------------------------------------------
 
-// A user-chosen ordering for the model list. `recommended` is the default and
-// keeps the curated pinned -> recent -> recommended -> other grouping. The rest
-// keep pinned/recent hoisted and reorder only the bulk beneath them: `newest`
-// by release date, `cost_asc`/`cost_desc` by blended price, and `region` groups
-// the bulk into Switzerland/EU/Global sections.
-export type SortMode = 'recommended' | 'newest' | 'cost_asc' | 'cost_desc' | 'region';
-
-// Region sections are ordered most-private first (spec: Swiss company, CH is the
-// strongest privacy tier), then EU, then Global.
-const REGION_ORDER: readonly ModelRegion[] = ['ch', 'eu', 'global'];
+// A user-chosen ordering for the (flat) model list. `recommended` is the
+// default — curated picks first, then the rest. `newest` sorts by release date,
+// `cost_asc`/`cost_desc` by blended price, and `recent` by most-recently-used.
+// Pinned models are no longer hoisted into a section: the "Pinned" quick-filter
+// chip surfaces them instead.
+export type SortMode = 'recommended' | 'newest' | 'cost_asc' | 'cost_desc' | 'recent';
 
 // modelReleasedTime parses the release date to epoch millis for sorting, or
 // -Infinity when a model has no (or an unparseable) date so it sorts last under
@@ -395,10 +370,21 @@ export function modelReleasedTime(model: Model): number {
   return Number.isNaN(parsed) ? -Infinity : parsed;
 }
 
-// compareBySort returns a stable comparator for the flat-sort modes (newest and
-// cost). Ties return 0 so the caller's stable sort preserves the incoming
-// (curated) order. Region is handled by grouping, not this comparator.
-function compareBySort(mode: SortMode): (a: Model, b: Model) => number {
+interface SortContext {
+  meta: MetadataLookup;
+  privacyTier?: PrivacyTier;
+  // Most-recent-first list of used model ids (drives the `recent` sort).
+  recentIds: readonly string[];
+}
+
+// sortComparator returns a stable comparator for the chosen mode. Ties return 0
+// so Array.prototype.sort (stable) preserves the incoming curated order. The
+// `recommended` and `recent` modes sort by a rank (0 = leads) rather than a
+// value, keeping the natural order within each rank.
+function sortComparator(
+  mode: SortMode,
+  ctx: SortContext,
+): (a: Model, b: Model) => number {
   switch (mode) {
     case 'newest':
       return (a, b) => {
@@ -410,32 +396,31 @@ function compareBySort(mode: SortMode): (a: Model, b: Model) => number {
       return (a, b) => blendedModelCostUsd(a.pricing) - blendedModelCostUsd(b.pricing);
     case 'cost_desc':
       return (a, b) => blendedModelCostUsd(b.pricing) - blendedModelCostUsd(a.pricing);
-    default:
-      return () => 0;
+    case 'recent': {
+      // Lower index = more recent = earlier; models never used rank last.
+      const rank = (model: Model) => {
+        const index = ctx.recentIds.indexOf(model.id);
+        return index === -1 ? Number.POSITIVE_INFINITY : index;
+      };
+      return (a, b) => rank(a) - rank(b);
+    }
+    case 'recommended':
+    default: {
+      // Recommended picks first (rank 0), everything else after (rank 1).
+      const rank = (model: Model) =>
+        isRecommendedModel(model, ctx.meta, ctx.privacyTier) ? 0 : 1;
+      return (a, b) => rank(a) - rank(b);
+    }
   }
 }
 
 // ---- ordering pipeline -----------------------------------------------------
 
-export type ModelGroupKey =
-  | 'pinned'
-  | 'recent'
-  | 'recommended'
-  | 'other'
-  | 'region_ch'
-  | 'region_eu'
-  | 'region_global';
-
-export interface ModelGroup {
-  key: ModelGroupKey;
-  models: Model[];
-}
-
 export interface OrderModelsInput {
   models: Model[];
-  // Frozen pin order captured when the dropdown opens, so rows don't jump.
+  // Pinned model ids — used by the "pinned" quick filter, no longer hoisted.
   pinnedIds: readonly string[];
-  // Most-recent-first.
+  // Most-recent-first; drives the `recent` sort.
   recentIds: readonly string[];
   hiddenIds: readonly string[];
   privacyTier?: PrivacyTier;
@@ -444,19 +429,18 @@ export interface OrderModelsInput {
   query?: string;
   // When true, hidden models are kept (e.g. "show hidden matches").
   showHidden?: boolean;
-  // How to order the bulk beneath pinned/recent. Defaults to 'recommended'.
+  // How to order the list. Defaults to 'recommended'.
   sort?: SortMode;
   meta?: MetadataLookup;
   searchContext?: SearchContext;
 }
 
-// orderModels implements the §7 pipeline and returns grouped rows. The selected
-// model is NOT hoisted; it stays in its natural group (the UI marks it). Pinned
-// and Recent always lead (frozen order); the chosen sort reorders only the bulk
-// beneath them. Under the default 'recommended' sort the bulk keeps the curated
-// recommended → other grouping; under 'newest'/'cost_*' the bulk is a single
-// sorted list; under 'region' it splits into CH/EU/Global sections.
-export function orderModels(input: OrderModelsInput): ModelGroup[] {
+// orderModels filters the catalogue (capability, hidden, quick-filter, search)
+// and returns a single flat list ordered by the chosen sort. There are no
+// section groups: pinned models are reached via the "Pinned" quick-filter chip,
+// and the selected model is marked in place by the UI (not hoisted). The sort is
+// stable, so models tying on the sort key keep their curated catalogue order.
+export function orderModels(input: OrderModelsInput): Model[] {
   const meta = input.meta ?? defaultMetadata;
   const hidden = new Set(input.hiddenIds);
   const capability = input.requiredCapability ?? null;
@@ -475,73 +459,9 @@ export function orderModels(input: OrderModelsInput): ModelGroup[] {
     return true;
   });
 
-  const byId = new Map(visible.map((model) => [model.id, model]));
-  const used = new Set<string>();
-
-  const take = (ids: readonly string[]): Model[] => {
-    const picked: Model[] = [];
-    for (const id of ids) {
-      if (used.has(id)) continue;
-      const model = byId.get(id);
-      if (model) {
-        picked.push(model);
-        used.add(id);
-      }
-    }
-    return picked;
-  };
-
-  const pinned = take(input.pinnedIds);
-  const recent = take(input.recentIds);
-  const lead: ModelGroup[] = [
-    { key: 'pinned', models: pinned },
-    { key: 'recent', models: recent },
-  ];
-
-  // Default: keep the curated recommended → other grouping for the bulk.
-  if (sort === 'recommended') {
-    const recommended = take(
-      visible
-        .filter((model) => isRecommendedModel(model, meta, privacyTier))
-        .map((model) => model.id),
-    );
-    const other = visible.filter((model) => !used.has(model.id));
-    return [
-      ...lead,
-      { key: 'recommended', models: recommended },
-      { key: 'other', models: other },
-    ];
-  }
-
-  // Everything not pinned/recent is the bulk to be sorted/grouped.
-  const rest = visible.filter((model) => !used.has(model.id));
-
-  // Region: split the bulk into CH/EU/Global sections (most-private first).
-  if (sort === 'region') {
-    const sectionKey: Record<ModelRegion, ModelGroupKey> = {
-      ch: 'region_ch',
-      eu: 'region_eu',
-      global: 'region_global',
-    };
-    return [
-      ...lead,
-      ...REGION_ORDER.map((region) => ({
-        key: sectionKey[region],
-        models: rest.filter((model) => modelRegion(model) === region),
-      })),
-    ];
-  }
-
-  // Newest / cost: one flat, sorted bulk. Copy before sorting so the caller's
-  // array is untouched; the sort is stable so ties keep their curated order.
-  const sorted = [...rest].sort(compareBySort(sort));
-  return [...lead, { key: 'other', models: sorted }];
-}
-
-// flattenGroups collapses groups into a single ordered list (e.g. for keyboard
-// navigation or when section headers aren't rendered).
-export function flattenGroups(groups: ModelGroup[]): Model[] {
-  return groups.flatMap((group) => group.models);
+  return visible.sort(
+    sortComparator(sort, { meta, privacyTier, recentIds: input.recentIds }),
+  );
 }
 
 // ---- contextual default resolution -----------------------------------------

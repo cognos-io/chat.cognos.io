@@ -13,7 +13,6 @@ import {
   addRecentModel,
   buildSearchSynonyms,
   capabilityContextKey,
-  flattenGroups,
   formatContextWindow,
   isLongContextModel,
   isLowCostModel,
@@ -21,7 +20,6 @@ import {
   isWebSearchModel,
   matchesQuickFilter,
   modelMatchesSearch,
-  modelRegion,
   modelReleasedTime,
   modelStrengthPills,
   modelSupportsCapability,
@@ -292,24 +290,18 @@ describe('orderModels', () => {
   ];
   const meta = metaFor({ c: { recommended: true } });
 
-  function groupMap(groups: ReturnType<typeof orderModels>) {
-    return Object.fromEntries(groups.map((g) => [g.key, g.models.map((m) => m.id)]));
-  }
+  const ids = (result: ReturnType<typeof orderModels>) => result.map((m) => m.id);
 
-  it('partitions into pinned, recent, recommended, other without duplicates', () => {
-    const groups = orderModels({
+  it('returns one flat list with recommended models first by default', () => {
+    const result = orderModels({
       models,
       pinnedIds: ['b'],
       recentIds: ['d', 'b'],
       hiddenIds: [],
       meta,
     });
-    expect(groupMap(groups)).toEqual({
-      pinned: ['b'],
-      recent: ['d'], // b already pinned, not duplicated
-      recommended: ['c'],
-      other: ['a'],
-    });
+    // No grouping/hoisting: recommended (c) leads, the rest keep catalogue order.
+    expect(ids(result)).toEqual(['c', 'a', 'b', 'd']);
   });
 
   it('removes hidden models unless showHidden is set', () => {
@@ -320,7 +312,7 @@ describe('orderModels', () => {
       hiddenIds: ['a'],
       meta,
     });
-    expect(flattenGroups(hidden).map((m) => m.id)).not.toContain('a');
+    expect(ids(hidden)).not.toContain('a');
 
     const shown = orderModels({
       models,
@@ -330,7 +322,7 @@ describe('orderModels', () => {
       showHidden: true,
       meta,
     });
-    expect(flattenGroups(shown).map((m) => m.id)).toContain('a');
+    expect(ids(shown)).toContain('a');
   });
 
   it('applies the required capability filter', () => {
@@ -338,7 +330,7 @@ describe('orderModels', () => {
       ...models,
       makeModel({ id: 'img', supportsImageGeneration: true }),
     ];
-    const groups = orderModels({
+    const result = orderModels({
       models: withImage,
       pinnedIds: [],
       recentIds: [],
@@ -346,11 +338,11 @@ describe('orderModels', () => {
       requiredCapability: 'image_generation',
       meta,
     });
-    expect(flattenGroups(groups).map((m) => m.id)).toEqual(['img']);
+    expect(ids(result)).toEqual(['img']);
   });
 
   it('applies quick filter and search together', () => {
-    const groups = orderModels({
+    const result = orderModels({
       models,
       pinnedIds: [],
       recentIds: [],
@@ -359,11 +351,11 @@ describe('orderModels', () => {
       query: 'charlie',
       meta,
     });
-    expect(flattenGroups(groups).map((m) => m.id)).toEqual(['c']);
+    expect(ids(result)).toEqual(['c']);
   });
 
   it('applies the pinned quick filter to pinned models only', () => {
-    const groups = orderModels({
+    const result = orderModels({
       models,
       pinnedIds: ['b', 'd'],
       recentIds: ['c'],
@@ -371,28 +363,22 @@ describe('orderModels', () => {
       quickFilter: 'pinned',
       meta,
     });
-
-    expect(groupMap(groups)).toEqual({
-      pinned: ['b', 'd'],
-      recent: [],
-      recommended: [],
-      other: [],
-    });
+    expect(ids(result)).toEqual(['b', 'd']);
   });
 
   it('keeps ineligible models in the list (shown disabled by the UI)', () => {
     const withIneligible = [...models, makeModel({ id: 'locked', isEligible: false })];
-    const groups = orderModels({
+    const result = orderModels({
       models: withIneligible,
       pinnedIds: [],
       recentIds: [],
       hiddenIds: [],
       meta,
     });
-    expect(flattenGroups(groups).map((m) => m.id)).toContain('locked');
+    expect(ids(result)).toContain('locked');
   });
 
-  it('uses tier-aware recommendations for the recommended group', () => {
+  it('uses tier-aware recommendations for the default ordering', () => {
     const tiered = [
       makeModel({ id: 'swiss' }),
       makeModel({ id: 'europe' }),
@@ -403,7 +389,7 @@ describe('orderModels', () => {
       europe: { recommended: true, recommendedForPrivacyTiers: ['eu'] },
     });
 
-    const groups = orderModels({
+    const result = orderModels({
       models: tiered,
       pinnedIds: [],
       recentIds: [],
@@ -412,8 +398,24 @@ describe('orderModels', () => {
       meta: tieredMeta,
     });
 
-    expect(groupMap(groups)['recommended']).toEqual(['europe']);
-    expect(groupMap(groups)['other']).toEqual(['swiss', 'other']);
+    // Only the eu-recommended model leads; swiss is not recommended for eu.
+    expect(ids(result)).toEqual(['europe', 'swiss', 'other']);
+  });
+
+  it('does not mutate the caller-provided models array', () => {
+    const input = [
+      makeModel({ id: 'x', releasedAt: '2023-01-01T00:00:00Z' }),
+      makeModel({ id: 'y', releasedAt: '2025-01-01T00:00:00Z' }),
+    ];
+    const before = input.map((m) => m.id);
+    orderModels({
+      models: input,
+      pinnedIds: [],
+      recentIds: [],
+      hiddenIds: [],
+      sort: 'newest',
+    });
+    expect(input.map((m) => m.id)).toEqual(before);
   });
 });
 
@@ -431,27 +433,8 @@ describe('modelReleasedTime', () => {
   });
 });
 
-describe('modelRegion', () => {
-  it('prefers hosting country over privacy tier', () => {
-    expect(
-      modelRegion(makeModel({ hostingCountry: 'CH', privacyTier: 'global' })),
-    ).toBe('ch');
-    expect(
-      modelRegion(makeModel({ hostingCountry: 'EU', privacyTier: 'global' })),
-    ).toBe('eu');
-  });
-
-  it('falls back to the privacy tier when no country is set', () => {
-    expect(modelRegion(makeModel({ privacyTier: 'ch_only' }))).toBe('ch');
-    expect(modelRegion(makeModel({ privacyTier: 'eu' }))).toBe('eu');
-    expect(modelRegion(makeModel({ privacyTier: 'global' }))).toBe('global');
-  });
-});
-
 describe('orderModels sort modes', () => {
-  function groupMap(groups: ReturnType<typeof orderModels>) {
-    return Object.fromEntries(groups.map((g) => [g.key, g.models.map((m) => m.id)]));
-  }
+  const ids = (result: ReturnType<typeof orderModels>) => result.map((m) => m.id);
 
   const dated = [
     makeModel({ id: 'old', releasedAt: '2023-01-01T00:00:00Z' }),
@@ -460,33 +443,31 @@ describe('orderModels sort modes', () => {
     makeModel({ id: 'undated' }),
   ];
 
-  it("'newest' sorts the bulk most-recent-first with undated last", () => {
-    const groups = orderModels({
+  it("'newest' sorts most-recent-first with undated last", () => {
+    const result = orderModels({
       models: dated,
       pinnedIds: [],
       recentIds: [],
       hiddenIds: [],
       sort: 'newest',
     });
-    expect(groupMap(groups)['other']).toEqual(['new', 'mid', 'old', 'undated']);
+    expect(ids(result)).toEqual(['new', 'mid', 'old', 'undated']);
   });
 
-  it("keeps pinned and recent hoisted above a 'newest' sort", () => {
-    const groups = orderModels({
+  it("'recent' sorts most-recently-used first, unused last in catalogue order", () => {
+    const result = orderModels({
       models: dated,
-      pinnedIds: ['old'],
-      recentIds: ['undated'],
+      pinnedIds: [],
+      // Most-recent-first: mid used most recently, then old.
+      recentIds: ['mid', 'old'],
       hiddenIds: [],
-      sort: 'newest',
+      sort: 'recent',
     });
-    const map = groupMap(groups);
-    expect(map['pinned']).toEqual(['old']);
-    expect(map['recent']).toEqual(['undated']);
-    // Hoisted models are removed from the sorted bulk (no duplication).
-    expect(map['other']).toEqual(['new', 'mid']);
+    // mid, old lead by recency; new + undated keep their catalogue order after.
+    expect(ids(result)).toEqual(['mid', 'old', 'new', 'undated']);
   });
 
-  it("'cost_asc' and 'cost_desc' order the bulk by blended price", () => {
+  it("'cost_asc' and 'cost_desc' order by blended price", () => {
     const priced = [
       makeModel({
         id: 'cheap',
@@ -508,7 +489,7 @@ describe('orderModels sort modes', () => {
       hiddenIds: [],
       sort: 'cost_asc',
     });
-    expect(groupMap(asc)['other']).toEqual(['cheap', 'mid', 'pricey']);
+    expect(ids(asc)).toEqual(['cheap', 'mid', 'pricey']);
 
     const desc = orderModels({
       models: priced,
@@ -517,34 +498,7 @@ describe('orderModels sort modes', () => {
       hiddenIds: [],
       sort: 'cost_desc',
     });
-    expect(groupMap(desc)['other']).toEqual(['pricey', 'mid', 'cheap']);
-  });
-
-  it("'region' groups the bulk into CH, EU then Global sections", () => {
-    const regional = [
-      makeModel({ id: 'g', privacyTier: 'global' }),
-      makeModel({ id: 'ch', privacyTier: 'ch_only' }),
-      makeModel({ id: 'eu', privacyTier: 'eu' }),
-    ];
-    const groups = orderModels({
-      models: regional,
-      pinnedIds: [],
-      recentIds: [],
-      hiddenIds: [],
-      sort: 'region',
-    });
-    // Section order is most-private first.
-    expect(groups.map((g) => g.key)).toEqual([
-      'pinned',
-      'recent',
-      'region_ch',
-      'region_eu',
-      'region_global',
-    ]);
-    const map = groupMap(groups);
-    expect(map['region_ch']).toEqual(['ch']);
-    expect(map['region_eu']).toEqual(['eu']);
-    expect(map['region_global']).toEqual(['g']);
+    expect(ids(desc)).toEqual(['pricey', 'mid', 'cheap']);
   });
 });
 

@@ -852,10 +852,7 @@
       "sections": {
         "pinned": "Angeheftet",
         "recent": "Zuletzt",
-        "recommended": "Empfohlen",
-        "region_ch": "Schweiz",
-        "region_eu": "Europa",
-        "region_global": "Weltweit"
+        "recommended": "Empfohlen"
       },
       "strengths": {
         "everyday": "Alltag",
@@ -893,9 +890,9 @@
         "recommended": "Empfohlen",
         "newest": "Neueste",
         "cost": "Kosten",
-        "region": "Region",
         "costAsc": "Kosten, aufsteigend",
-        "costDesc": "Kosten, absteigend"
+        "costDesc": "Kosten, absteigend",
+        "recent": "Zuletzt"
       }
     },
     "personas": {

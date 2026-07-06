@@ -852,10 +852,7 @@
       "sections": {
         "pinned": "Pinned",
         "recent": "Recent",
-        "recommended": "Recommended",
-        "region_ch": "Switzerland",
-        "region_eu": "Europe",
-        "region_global": "Global"
+        "recommended": "Recommended"
       },
       "strengths": {
         "everyday": "Everyday",
@@ -893,9 +890,9 @@
         "recommended": "Recommended",
         "newest": "Newest",
         "cost": "Cost",
-        "region": "Region",
         "costAsc": "Cost, low to high",
-        "costDesc": "Cost, high to low"
+        "costDesc": "Cost, high to low",
+        "recent": "Recent"
       }
     },
     "personas": {

@@ -23,20 +23,21 @@ When something is used in **more than two** places and no component fits, extrac
 
 ## Inputs & primitives
 
-| Selector                          | When to use                                                                                                                                   |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cog-button`                      | Any button. `appearance`: primary / default / danger / subtle.                                                                                |
-| `cog-icon-button`                 | An icon-only button.                                                                                                                          |
-| `cog-text-field`                  | A styled single-line input — `[value]`/`(valueChange)` or `formControlName` (it's a ControlValueAccessor); `size="lg"` for auth-style fields. |
-| `cog-field`                       | A labelled form-field wrapper (label + projected control + optional hint/error). Pairs with `cog-text-field`.                                 |
-| `cog-search-field`                | A search input (leading magnifier, 44px, `valueChange`) for list/catalogue filters.                                                           |
-| `cog-choice-chip-group`           | A horizontal single-select pill group (model filters, billing interval, toggles). `allowDeselect` clears on re-click.                         |
-| `cog-toggle`                      | A boolean on/off switch.                                                                                                                      |
-| `cog-icon`                        | Render a named icon (`@cognos/ui/icons`).                                                                                                     |
-| `cog-lozenge`                     | A small status/label badge (tones: neutral/blue/green/purple/red).                                                                            |
-| `cog-callout`                     | A tinted note/warning box with optional leading icon (tones: neutral/info/success/warning/danger). Projects rich text (supports `<strong>`).  |
-| `cog-avatar` / `cog-avatar-group` | A user/entity avatar (initials/icon/colour) / stacked avatars.                                                                                |
-| `cog-avatar-picker`               | Pick an avatar icon + colour. Colour swatches are live `cog-avatar` previews (palette comes from `cog-avatar`, no hardcoded colours).         |
+| Selector                          | When to use                                                                                                                                                                                                           |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cog-button`                      | Any button. `appearance`: primary / default / danger / subtle.                                                                                                                                                        |
+| `cog-icon-button`                 | An icon-only button.                                                                                                                                                                                                  |
+| `cog-text-field`                  | A styled single-line input — `[value]`/`(valueChange)` or `formControlName` (it's a ControlValueAccessor); `size="lg"` for auth-style fields.                                                                         |
+| `cog-field`                       | A labelled form-field wrapper (label + projected control + optional hint/error). Pairs with `cog-text-field`.                                                                                                         |
+| `cog-search-field`                | A search input (leading magnifier, 44px, `valueChange`) for list/catalogue filters.                                                                                                                                   |
+| `cog-choice-chip-group`           | A horizontal single-select pill group (model filters, billing interval, toggles). `allowDeselect` clears on re-click.                                                                                                 |
+| `cog-segmented-control`           | A connected single-select track (sort modes, view/range switchers). `(select)` fires on every click — re-click the active segment for bidirectional toggles; per-option `icon`/`iconRotated` for a direction chevron. |
+| `cog-toggle`                      | A boolean on/off switch.                                                                                                                                                                                              |
+| `cog-icon`                        | Render a named icon (`@cognos/ui/icons`).                                                                                                                                                                             |
+| `cog-lozenge`                     | A small status/label badge (tones: neutral/blue/green/purple/red).                                                                                                                                                    |
+| `cog-callout`                     | A tinted note/warning box with optional leading icon (tones: neutral/info/success/warning/danger). Projects rich text (supports `<strong>`).                                                                          |
+| `cog-avatar` / `cog-avatar-group` | A user/entity avatar (initials/icon/colour) / stacked avatars.                                                                                                                                                        |
+| `cog-avatar-picker`               | Pick an avatar icon + colour. Colour swatches are live `cog-avatar` previews (palette comes from `cog-avatar`, no hardcoded colours).                                                                                 |
 
 ## Navigation & overlays
 
