@@ -229,6 +229,7 @@ interface ApiModel {
   is_open_source?: boolean;
   hosting_country?: string;
   hosting_region?: string;
+  released_at?: string;
   supports_text_completion?: boolean;
   supports_image_generation?: boolean;
   supports_vision?: boolean;
@@ -1927,6 +1928,7 @@ export class CognosApiService {
       isOpenSource: model.is_open_source,
       hostingCountry: model.hosting_country,
       hostingRegion: model.hosting_region,
+      releasedAt: model.released_at,
       // Default true: an image-only model reports false; any model (or older
       // API) that omits it is treated as text-capable.
       supportsTextCompletion: model.supports_text_completion ?? true,

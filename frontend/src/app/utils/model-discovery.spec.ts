@@ -21,6 +21,8 @@ import {
   isWebSearchModel,
   matchesQuickFilter,
   modelMatchesSearch,
+  modelRegion,
+  modelReleasedTime,
   modelStrengthPills,
   modelSupportsCapability,
   normalizeSearchText,
@@ -412,6 +414,137 @@ describe('orderModels', () => {
 
     expect(groupMap(groups)['recommended']).toEqual(['europe']);
     expect(groupMap(groups)['other']).toEqual(['swiss', 'other']);
+  });
+});
+
+describe('modelReleasedTime', () => {
+  it('parses an ISO date to epoch millis', () => {
+    expect(modelReleasedTime(makeModel({ releasedAt: '2024-01-01T00:00:00Z' }))).toBe(
+      Date.parse('2024-01-01T00:00:00Z'),
+    );
+  });
+
+  it('returns -Infinity for missing or unparseable dates so they sort last', () => {
+    expect(modelReleasedTime(makeModel({ releasedAt: undefined }))).toBe(-Infinity);
+    expect(modelReleasedTime(makeModel({ releasedAt: '' }))).toBe(-Infinity);
+    expect(modelReleasedTime(makeModel({ releasedAt: 'not-a-date' }))).toBe(-Infinity);
+  });
+});
+
+describe('modelRegion', () => {
+  it('prefers hosting country over privacy tier', () => {
+    expect(
+      modelRegion(makeModel({ hostingCountry: 'CH', privacyTier: 'global' })),
+    ).toBe('ch');
+    expect(
+      modelRegion(makeModel({ hostingCountry: 'EU', privacyTier: 'global' })),
+    ).toBe('eu');
+  });
+
+  it('falls back to the privacy tier when no country is set', () => {
+    expect(modelRegion(makeModel({ privacyTier: 'ch_only' }))).toBe('ch');
+    expect(modelRegion(makeModel({ privacyTier: 'eu' }))).toBe('eu');
+    expect(modelRegion(makeModel({ privacyTier: 'global' }))).toBe('global');
+  });
+});
+
+describe('orderModels sort modes', () => {
+  function groupMap(groups: ReturnType<typeof orderModels>) {
+    return Object.fromEntries(groups.map((g) => [g.key, g.models.map((m) => m.id)]));
+  }
+
+  const dated = [
+    makeModel({ id: 'old', releasedAt: '2023-01-01T00:00:00Z' }),
+    makeModel({ id: 'new', releasedAt: '2025-01-01T00:00:00Z' }),
+    makeModel({ id: 'mid', releasedAt: '2024-01-01T00:00:00Z' }),
+    makeModel({ id: 'undated' }),
+  ];
+
+  it("'newest' sorts the bulk most-recent-first with undated last", () => {
+    const groups = orderModels({
+      models: dated,
+      pinnedIds: [],
+      recentIds: [],
+      hiddenIds: [],
+      sort: 'newest',
+    });
+    expect(groupMap(groups)['other']).toEqual(['new', 'mid', 'old', 'undated']);
+  });
+
+  it("keeps pinned and recent hoisted above a 'newest' sort", () => {
+    const groups = orderModels({
+      models: dated,
+      pinnedIds: ['old'],
+      recentIds: ['undated'],
+      hiddenIds: [],
+      sort: 'newest',
+    });
+    const map = groupMap(groups);
+    expect(map['pinned']).toEqual(['old']);
+    expect(map['recent']).toEqual(['undated']);
+    // Hoisted models are removed from the sorted bulk (no duplication).
+    expect(map['other']).toEqual(['new', 'mid']);
+  });
+
+  it("'cost_asc' and 'cost_desc' order the bulk by blended price", () => {
+    const priced = [
+      makeModel({
+        id: 'cheap',
+        pricing: { inputUsdPerMillionTokens: 0.5, outputUsdPerMillionTokens: 0.5 },
+      }),
+      makeModel({
+        id: 'pricey',
+        pricing: { inputUsdPerMillionTokens: 30, outputUsdPerMillionTokens: 60 },
+      }),
+      makeModel({
+        id: 'mid',
+        pricing: { inputUsdPerMillionTokens: 3, outputUsdPerMillionTokens: 6 },
+      }),
+    ];
+    const asc = orderModels({
+      models: priced,
+      pinnedIds: [],
+      recentIds: [],
+      hiddenIds: [],
+      sort: 'cost_asc',
+    });
+    expect(groupMap(asc)['other']).toEqual(['cheap', 'mid', 'pricey']);
+
+    const desc = orderModels({
+      models: priced,
+      pinnedIds: [],
+      recentIds: [],
+      hiddenIds: [],
+      sort: 'cost_desc',
+    });
+    expect(groupMap(desc)['other']).toEqual(['pricey', 'mid', 'cheap']);
+  });
+
+  it("'region' groups the bulk into CH, EU then Global sections", () => {
+    const regional = [
+      makeModel({ id: 'g', privacyTier: 'global' }),
+      makeModel({ id: 'ch', privacyTier: 'ch_only' }),
+      makeModel({ id: 'eu', privacyTier: 'eu' }),
+    ];
+    const groups = orderModels({
+      models: regional,
+      pinnedIds: [],
+      recentIds: [],
+      hiddenIds: [],
+      sort: 'region',
+    });
+    // Section order is most-private first.
+    expect(groups.map((g) => g.key)).toEqual([
+      'pinned',
+      'recent',
+      'region_ch',
+      'region_eu',
+      'region_global',
+    ]);
+    const map = groupMap(groups);
+    expect(map['region_ch']).toEqual(['ch']);
+    expect(map['region_eu']).toEqual(['eu']);
+    expect(map['region_global']).toEqual(['g']);
   });
 });
 

@@ -34,6 +34,10 @@ export const Model = z.object({
   isOpenSource: z.boolean().optional(),
   hostingCountry: z.string().optional(),
   hostingRegion: z.string().optional(),
+  // Upstream release date as an ISO/RFC3339 string, when known. Curated
+  // server-side (sync only backfills it when empty). Drives the "Newest" sort
+  // in the composer model picker; models without a date sort last.
+  releasedAt: z.string().optional(),
   // Can answer ordinary text completions. Image-generation-only models are
   // false; everything else is true. Defaults true so an older API response that
   // omits it keeps text models sendable.
