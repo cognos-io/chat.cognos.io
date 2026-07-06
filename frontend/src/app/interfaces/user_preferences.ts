@@ -14,6 +14,17 @@ export const ModelQuickFilter = z.enum([
 ]);
 export type ModelQuickFilter = z.infer<typeof ModelQuickFilter>;
 
+// How the model picker orders the list. Kept in sync with SortMode in
+// utils/model-discovery. Remembered so the user's chosen ordering persists.
+export const ModelSortMode = z.enum([
+  'recommended',
+  'newest',
+  'cost_asc',
+  'cost_desc',
+  'region',
+]);
+export type ModelSortMode = z.infer<typeof ModelSortMode>;
+
 export const UserPreferencesData = z.object({
   pinnedConversations: z.array(z.string()),
   pinnedModels: z.array(z.string()).default([]),
@@ -50,6 +61,9 @@ export const UserPreferencesData = z.object({
   // is intentionally remembered so the composer/settings do not re-enable
   // Recommended on the user's next visit.
   modelQuickFilter: ModelQuickFilter.nullable().default(null),
+  // Last ordering chosen in the model picker. Defaults to 'recommended' (the
+  // curated grouping), so existing payloads that omit it keep today's order.
+  modelSortMode: ModelSortMode.default('recommended'),
 });
 export type UserPreferencesData = z.infer<typeof UserPreferencesData>;
 
@@ -66,6 +80,7 @@ export const emptyPreferences: UserPreferencesData = {
   hiddenModels: [],
   toolModelDefaults: {},
   modelQuickFilter: null,
+  modelSortMode: 'recommended',
 };
 
 /**

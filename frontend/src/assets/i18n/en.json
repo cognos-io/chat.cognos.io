@@ -852,7 +852,10 @@
       "sections": {
         "pinned": "Pinned",
         "recent": "Recent",
-        "recommended": "Recommended"
+        "recommended": "Recommended",
+        "region_ch": "Switzerland",
+        "region_eu": "Europe",
+        "region_global": "Global"
       },
       "strengths": {
         "everyday": "Everyday",
@@ -884,7 +887,16 @@
       },
       "manageInSettings": "Manage models, defaults & hidden in Settings",
       "privacyFooter": "Stored encrypted · decrypted only to generate replies",
-      "projectDefaultUnavailable": "Your project's default model isn't available on your plan — using your own default instead."
+      "projectDefaultUnavailable": "Your project's default model isn't available on your plan — using your own default instead.",
+      "sort": {
+        "label": "Sort models",
+        "recommended": "Recommended",
+        "newest": "Newest",
+        "cost": "Cost",
+        "region": "Region",
+        "costAsc": "Cost, low to high",
+        "costDesc": "Cost, high to low"
+      }
     },
     "personas": {
       "all": "All",

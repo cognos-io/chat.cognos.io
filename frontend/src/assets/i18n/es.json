@@ -852,7 +852,10 @@
       "sections": {
         "pinned": "Fijados",
         "recent": "Recientes",
-        "recommended": "Recomendados"
+        "recommended": "Recomendados",
+        "region_ch": "Suiza",
+        "region_eu": "Europa",
+        "region_global": "Global"
       },
       "strengths": {
         "everyday": "Diario",
@@ -884,7 +887,16 @@
       },
       "manageInSettings": "Gestiona modelos, predeterminados y ocultos en Ajustes",
       "privacyFooter": "Almacenado cifrado · descifrado solo para generar respuestas",
-      "projectDefaultUnavailable": "El modelo predeterminado de este proyecto no está disponible en tu plan; se usa tu propio modelo predeterminado."
+      "projectDefaultUnavailable": "El modelo predeterminado de este proyecto no está disponible en tu plan; se usa tu propio modelo predeterminado.",
+      "sort": {
+        "label": "Ordenar modelos",
+        "recommended": "Recomendado",
+        "newest": "Recientes",
+        "cost": "Coste",
+        "region": "Región",
+        "costAsc": "Coste, de menor a mayor",
+        "costDesc": "Coste, de mayor a menor"
+      }
     },
     "personas": {
       "all": "Todas",

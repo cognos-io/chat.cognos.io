@@ -117,6 +117,8 @@ describe('ModelSelectorComponent', () => {
             hiddenModels,
             modelQuickFilter,
             setModelQuickFilter,
+            modelSortMode: signal('recommended'),
+            setModelSortMode: vi.fn(),
             isModelPinned: () => false,
             pinModel: vi.fn(),
             unpinModel: vi.fn(),
@@ -273,6 +275,8 @@ describe('ModelSelectorComponent filterOverride', () => {
             hiddenModels: signal<string[]>([]),
             modelQuickFilter,
             setModelQuickFilter,
+            modelSortMode: signal('recommended'),
+            setModelSortMode: vi.fn(),
             isModelPinned: () => false,
             pinModel: vi.fn(),
             unpinModel: vi.fn(),
@@ -303,5 +307,104 @@ describe('ModelSelectorComponent filterOverride', () => {
 
     expect(rowNames(fixture)).toContain('Vision Model');
     expect(rowNames(fixture)).toContain('Plain Model');
+  });
+});
+
+describe('ModelSelectorComponent sort control', () => {
+  const older = makeModel({
+    id: 'older',
+    name: 'Older',
+    releasedAt: '2023-01-01T00:00:00Z',
+    pricing: { inputUsdPerMillionTokens: 1, outputUsdPerMillionTokens: 1 },
+  });
+  const newer = makeModel({
+    id: 'newer',
+    name: 'Newer',
+    releasedAt: '2025-01-01T00:00:00Z',
+    pricing: { inputUsdPerMillionTokens: 40, outputUsdPerMillionTokens: 40 },
+  });
+  let setModelSortMode: ReturnType<typeof vi.fn>;
+
+  function rowNames(fixture: ComponentFixture<ModelSelectorComponent>): string[] {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll('.model-selector__name'),
+    ).map((el) => (el as HTMLElement).textContent?.trim() ?? '');
+  }
+
+  function sortButtons(
+    fixture: ComponentFixture<ModelSelectorComponent>,
+  ): HTMLButtonElement[] {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll('.model-selector__sort-option'),
+    ) as HTMLButtonElement[];
+  }
+
+  beforeEach(async () => {
+    setModelSortMode = vi.fn();
+
+    await TestBed.configureTestingModule({
+      imports: [ModelSelectorComponent],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ModelService,
+          useValue: {
+            // Natural (curated) order is older-then-newer.
+            modelList: signal([older, newer]),
+            selectedModel: signal(older),
+            privacyTier: signal('eu'),
+            selectModel: vi.fn(),
+          },
+        },
+        {
+          provide: UserPreferencesService,
+          useValue: {
+            pinnedModels: signal<string[]>([]),
+            recentModels: signal<string[]>([]),
+            hiddenModels: signal<string[]>([]),
+            modelQuickFilter: signal<QuickFilter | null>(null),
+            setModelQuickFilter: vi.fn(),
+            modelSortMode: signal('recommended'),
+            setModelSortMode,
+            isModelPinned: () => false,
+            pinModel: vi.fn(),
+            unpinModel: vi.fn(),
+          },
+        },
+        { provide: BillingService, useValue: { isUnlimited: signal(false) } },
+        { provide: ProjectService, useValue: { selectedProject: signal(null) } },
+      ],
+    }).compileComponents();
+  });
+
+  it('reorders newest-first and persists the choice when Newest is picked', () => {
+    const fixture = TestBed.createComponent(ModelSelectorComponent);
+    fixture.detectChanges();
+    expect(rowNames(fixture)).toEqual(['Older', 'Newer']);
+
+    // Segments are Recommended, Newest, Cost, Region.
+    sortButtons(fixture)[1].click();
+    fixture.detectChanges();
+
+    expect(rowNames(fixture)).toEqual(['Newer', 'Older']);
+    expect(setModelSortMode).toHaveBeenCalledWith('newest');
+  });
+
+  it('toggles cost direction on repeated taps of the Cost segment', () => {
+    const fixture = TestBed.createComponent(ModelSelectorComponent);
+    fixture.detectChanges();
+
+    const cost = () => sortButtons(fixture)[2];
+    cost().click();
+    fixture.detectChanges();
+    // First tap: cheapest first.
+    expect(rowNames(fixture)).toEqual(['Older', 'Newer']);
+    expect(setModelSortMode).toHaveBeenLastCalledWith('cost_asc');
+
+    cost().click();
+    fixture.detectChanges();
+    // Second tap flips to dearest first.
+    expect(rowNames(fixture)).toEqual(['Newer', 'Older']);
+    expect(setModelSortMode).toHaveBeenLastCalledWith('cost_desc');
   });
 });

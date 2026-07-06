@@ -86,6 +86,12 @@ describe('parseUserPreferencesData', () => {
     expect(parseUserPreferencesData(payload).modelQuickFilter).toBeNull();
   });
 
+  it('defaults modelSortMode to recommended for older payloads', () => {
+    const payload = encode(JSON.stringify({ pinnedConversations: ['c-1'] }));
+
+    expect(parseUserPreferencesData(payload).modelSortMode).toBe('recommended');
+  });
+
   it('rejects payloads missing pinnedConversations', () => {
     const payload = encode(JSON.stringify({ pinnedModels: [] }));
     expect(() => parseUserPreferencesData(payload)).toThrow();
@@ -125,6 +131,7 @@ describe('serializeUserPreferencesData', () => {
       hiddenModels: ['m-3'],
       toolModelDefaults: { image_generation: 'm-2' },
       modelQuickFilter: 'fast',
+      modelSortMode: 'newest',
     };
 
     const serialized = serializeUserPreferencesData(original);

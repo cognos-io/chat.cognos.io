@@ -33,6 +33,7 @@ import {
   QuickFilter,
   RequiredCapability,
   SearchContext,
+  SortMode,
   buildSearchSynonyms,
   flattenGroups,
   formatContextWindow,
@@ -41,6 +42,23 @@ import {
   modelSupportsCapability,
   orderModels,
 } from '@app/utils/model-discovery';
+
+// The segmented sort control's buttons. 'cost' is one segment that toggles
+// between ascending and descending on repeated taps; the other keys map 1:1 to
+// a SortMode.
+type SortSegmentKey = 'recommended' | 'newest' | 'cost' | 'region';
+
+interface SortSegment {
+  key: SortSegmentKey;
+  labelKey: string;
+}
+
+const SORT_SEGMENTS: readonly SortSegment[] = [
+  { key: 'recommended', labelKey: 'chat.models.sort.recommended' },
+  { key: 'newest', labelKey: 'chat.models.sort.newest' },
+  { key: 'cost', labelKey: 'chat.models.sort.cost' },
+  { key: 'region', labelKey: 'chat.models.sort.region' },
+];
 
 // How the selector is presented. The same content renders as a compact dropdown
 // on desktop and a bottom-sheet on mobile (spec §4.5); only the chrome differs.
@@ -230,6 +248,42 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
         </p>
 
         <div
+          class="model-selector__sort"
+          role="group"
+          [attr.aria-label]="t('chat.models.sort.label')"
+        >
+          @for (segment of sortSegments; track segment.key) {
+            <button
+              type="button"
+              class="model-selector__sort-option"
+              [class.model-selector__sort-option--active]="
+                activeSortSegment() === segment.key
+              "
+              [attr.aria-pressed]="activeSortSegment() === segment.key"
+              (click)="onSortSegment(segment.key)"
+            >
+              {{ t(segment.labelKey) }}
+              @if (activeSortSegment() === 'cost' && segment.key === 'cost') {
+                <cog-icon
+                  class="model-selector__sort-arrow"
+                  [class.model-selector__sort-arrow--asc]="costAscending()"
+                  name="chevron-down"
+                  [size]="12"
+                  tone="current"
+                  [attr.aria-label]="
+                    t(
+                      costAscending()
+                        ? 'chat.models.sort.costAsc'
+                        : 'chat.models.sort.costDesc'
+                    )
+                  "
+                />
+              }
+            </button>
+          }
+        </div>
+
+        <div
           class="model-selector__chips"
           role="group"
           [attr.aria-label]="t('chat.models.pickAria')"
@@ -264,7 +318,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       flex-direction: column;
       width: min(420px, calc(100vw - var(--cog-space-200)));
       max-height: min(540px, calc(100vh - 120px));
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface-raised);
       box-shadow: var(--cog-shadow-overlay);
@@ -327,7 +381,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-caption);
       line-height: var(--cog-lh-caption);
-      border-bottom: 1px solid var(--cog-border);
+      border-bottom: var(--cog-border-width) solid var(--cog-border);
     }
 
     .model-selector__list {
@@ -504,7 +558,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       display: grid;
       gap: var(--cog-space-075);
       padding: var(--cog-space-100);
-      border-top: 1px solid var(--cog-border);
+      border-top: var(--cog-border-width) solid var(--cog-border);
       background: var(--cog-surface-raised);
     }
 
@@ -513,7 +567,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       align-items: center;
       gap: var(--cog-space-075);
       padding: 0 var(--cog-space-100);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface);
     }
@@ -545,6 +599,58 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       font-size: var(--cog-fs-caption);
     }
 
+    /* Segmented control for the list ordering. Distinct from the capability
+       filter chips below it: a single connected track so it reads as "pick one
+       ordering", not "toggle a filter". */
+    .model-selector__sort {
+      display: flex;
+      gap: 2px;
+      padding: 2px;
+      border-radius: var(--cog-radius-sm);
+      background: var(--cog-surface-sunken);
+    }
+
+    .model-selector__sort-option {
+      flex: 1 1 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--cog-space-025);
+      min-height: 30px;
+      padding: 0 var(--cog-space-075);
+      border: 0;
+      border-radius: var(--cog-radius-xs);
+      background: transparent;
+      color: var(--cog-text-subtle);
+      font: inherit;
+      font-size: var(--cog-fs-caption);
+      cursor: pointer;
+      white-space: nowrap;
+      transition:
+        background-color var(--cog-dur-fast) var(--cog-ease-standard),
+        color var(--cog-dur-fast) var(--cog-ease-standard);
+    }
+
+    .model-selector__sort-option:hover {
+      color: var(--cog-text);
+    }
+
+    .model-selector__sort-option--active {
+      background: var(--cog-surface-raised);
+      color: var(--cog-text);
+      font-weight: var(--cog-fw-semibold);
+      box-shadow: var(--cog-shadow-raised);
+    }
+
+    /* The chevron points down for high→low; rotate it to point up for low→high. */
+    .model-selector__sort-arrow {
+      transition: transform var(--cog-dur-fast) var(--cog-ease-standard);
+    }
+
+    .model-selector__sort-arrow--asc {
+      transform: rotate(180deg);
+    }
+
     .model-selector__chips {
       display: flex;
       gap: var(--cog-space-075);
@@ -563,7 +669,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       align-items: center;
       min-height: 32px;
       padding: 0 var(--cog-space-100);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-pill);
       background: var(--cog-surface);
       color: var(--cog-text-subtle);
@@ -640,6 +746,8 @@ export class ModelSelectorComponent implements OnInit {
   protected readonly activeFilter = signal<QuickFilter | null>(
     this._preferences.modelQuickFilter(),
   );
+  protected readonly sortMode = signal<SortMode>(this._preferences.modelSortMode());
+  protected readonly sortSegments = SORT_SEGMENTS;
   protected readonly showHidden = signal(false);
 
   // Localised synonym map, built once from the active language's i18n catalogue.
@@ -710,6 +818,7 @@ export class ModelSelectorComponent implements OnInit {
       quickFilter: this.activeFilter(),
       query: this.searchQuery(),
       showHidden: this.showHidden(),
+      sort: this.sortMode(),
       searchContext: this.searchContext(),
     }),
   );
@@ -806,6 +915,32 @@ export class ModelSelectorComponent implements OnInit {
   private setActiveFilter(filter: QuickFilter | null): void {
     this.activeFilter.set(filter);
     this._preferences.setModelQuickFilter(filter);
+  }
+
+  // The segment currently highlighted. Both cost directions map to 'cost'.
+  protected activeSortSegment(): SortSegmentKey {
+    const mode = this.sortMode();
+    return mode === 'cost_asc' || mode === 'cost_desc' ? 'cost' : mode;
+  }
+
+  // Tapping a segment sets its sort. The 'cost' segment is bidirectional: the
+  // first tap sorts cheapest-first, tapping it again flips to dearest-first.
+  protected onSortSegment(key: SortSegmentKey): void {
+    if (key === 'cost') {
+      this.setSortMode(this.sortMode() === 'cost_asc' ? 'cost_desc' : 'cost_asc');
+      return;
+    }
+    this.setSortMode(key);
+  }
+
+  // True when Cost sorts cheapest-first, so the chevron flips to point up.
+  protected costAscending(): boolean {
+    return this.sortMode() === 'cost_asc';
+  }
+
+  private setSortMode(mode: SortMode): void {
+    this.sortMode.set(mode);
+    this._preferences.setModelSortMode(mode);
   }
 
   protected costTier(model: Model): ModelCostTier {

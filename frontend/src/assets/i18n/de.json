@@ -852,7 +852,10 @@
       "sections": {
         "pinned": "Angeheftet",
         "recent": "Zuletzt",
-        "recommended": "Empfohlen"
+        "recommended": "Empfohlen",
+        "region_ch": "Schweiz",
+        "region_eu": "Europa",
+        "region_global": "Weltweit"
       },
       "strengths": {
         "everyday": "Alltag",
@@ -884,7 +887,16 @@
       },
       "manageInSettings": "Modelle, Standards & Ausgeblendete in den Einstellungen verwalten",
       "privacyFooter": "Verschlüsselt gespeichert · nur zum Erzeugen von Antworten entschlüsselt",
-      "projectDefaultUnavailable": "Das Standardmodell dieses Projekts ist in deinem Tarif nicht verfügbar – stattdessen wird dein eigener Standard verwendet."
+      "projectDefaultUnavailable": "Das Standardmodell dieses Projekts ist in deinem Tarif nicht verfügbar – stattdessen wird dein eigener Standard verwendet.",
+      "sort": {
+        "label": "Modelle sortieren",
+        "recommended": "Empfohlen",
+        "newest": "Neueste",
+        "cost": "Kosten",
+        "region": "Region",
+        "costAsc": "Kosten, aufsteigend",
+        "costDesc": "Kosten, absteigend"
+      }
     },
     "personas": {
       "all": "Alle",

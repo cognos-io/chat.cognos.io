@@ -852,7 +852,10 @@
       "sections": {
         "pinned": "Épinglés",
         "recent": "Récents",
-        "recommended": "Recommandés"
+        "recommended": "Recommandés",
+        "region_ch": "Suisse",
+        "region_eu": "Europe",
+        "region_global": "International"
       },
       "strengths": {
         "everyday": "Quotidien",
@@ -884,7 +887,16 @@
       },
       "manageInSettings": "Gérer les modèles, valeurs par défaut et masqués dans les Réglages",
       "privacyFooter": "Stocké chiffré · déchiffré uniquement pour générer les réponses",
-      "projectDefaultUnavailable": "Le modèle par défaut de ce projet n'est pas disponible avec votre offre — votre modèle par défaut est utilisé à la place."
+      "projectDefaultUnavailable": "Le modèle par défaut de ce projet n'est pas disponible avec votre offre — votre modèle par défaut est utilisé à la place.",
+      "sort": {
+        "label": "Trier les modèles",
+        "recommended": "Recommandé",
+        "newest": "Récents",
+        "cost": "Coût",
+        "region": "Région",
+        "costAsc": "Coût, croissant",
+        "costDesc": "Coût, décroissant"
+      }
     },
     "personas": {
       "all": "Tous",

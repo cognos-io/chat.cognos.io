@@ -75,6 +75,9 @@ export class UserPreferencesService {
   private readonly _setModelQuickFilter = new Subject<
     UserPreferencesData['modelQuickFilter']
   >();
+  private readonly _setModelSortMode = new Subject<
+    UserPreferencesData['modelSortMode']
+  >();
 
   // Most-recently-used personas are capped so the "recently used" group and the
   // in-chat switcher stay short.
@@ -310,6 +313,17 @@ export class UserPreferencesService {
             }),
           ),
         ),
+      // Remember the model picker's chosen ordering, local then remote.
+      () => this._setModelSortMode.pipe(map((modelSortMode) => ({ modelSortMode }))),
+      (state) =>
+        this._setModelSortMode.pipe(
+          concatMap((modelSortMode) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              modelSortMode,
+            }),
+          ),
+        ),
       // Mark persona recently used, local then remote
       (state) =>
         this._markRecentPersona.pipe(
@@ -410,6 +424,7 @@ export class UserPreferencesService {
       setRedactionEnabled: this._setRedactionEnabled,
       setModelReasoningEffort: this._setModelReasoningEffort,
       setModelQuickFilter: this._setModelQuickFilter,
+      setModelSortMode: this._setModelSortMode,
     },
   });
 
@@ -465,6 +480,9 @@ export class UserPreferencesService {
   public setModelQuickFilter = (filter: UserPreferencesData['modelQuickFilter']) => {
     this.state.setModelQuickFilter(filter);
   };
+  public setModelSortMode = (mode: UserPreferencesData['modelSortMode']) => {
+    this.state.setModelSortMode(mode);
+  };
 
   // selectors
   public pinnedConversationIds = this.state.pinnedConversations;
@@ -479,6 +497,7 @@ export class UserPreferencesService {
   public hiddenModels = this.state.hiddenModels;
   public toolModelDefaults = this.state.toolModelDefaults;
   public modelQuickFilter = this.state.modelQuickFilter;
+  public modelSortMode = this.state.modelSortMode;
 
   // private methods
   private addConversationIdToPinnedConversations(
