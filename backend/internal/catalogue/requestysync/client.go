@@ -33,6 +33,10 @@ type RequestyModel struct {
 	OutputPrice             float64 `json:"output_price"`
 	ContextWindow           int     `json:"context_window"`
 	MaxOutputTokens         int     `json:"max_output_tokens"`
+	// Created is the model's release/creation time as a Unix timestamp
+	// (seconds), following the OpenAI /v1/models envelope. Zero when Requesty
+	// omits it; used only to backfill an empty released_at (never to overwrite).
+	Created int64 `json:"created"`
 	// Geolocation is Requesty's flat data-residency field for where the model
 	// is actually served (e.g. "eu", "us", "global"). It gates
 	// supports_web_search (spec Decision 2): only exactly "eu" keeps the

@@ -153,6 +153,15 @@ func (s *Service) Run(ctx context.Context, opts SyncOptions) (Summary, error) {
 			changed = true
 		}
 
+		// Release date: backfill only when we have no date yet, so a curated
+		// value (which may correct a wrong or missing upstream one) always wins.
+		if released, ok := releasedAtBackfill(
+			model.Created, record.GetDateTime("released_at").IsZero(),
+		); ok {
+			record.Set("released_at", released)
+			changed = true
+		}
+
 		// Reasoning efforts: set only when the model reasons and none are set,
 		// so a curated/manual override is never clobbered.
 		if efforts, def := reasoningEffortsFor(model); efforts != nil &&

@@ -3,6 +3,7 @@ package requestysync
 import (
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestNormalizeIDStripsRegionAndCase(t *testing.T) {
@@ -101,6 +102,44 @@ func TestSupportsWebSearchForRequiresExactEUGeolocation(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("supportsWebSearchFor(supports=%v, geolocation=%q) = %v, want %v",
 					tt.supports, tt.geolocation, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestReleasedAtBackfillOnlyWhenEmptyAndPresent(t *testing.T) {
+	t.Parallel()
+
+	const created int64 = 1_700_000_000 // 2023-11-14T22:13:20Z
+
+	tests := []struct {
+		name           string
+		created        int64
+		existingIsZero bool
+		wantOK         bool
+	}{
+		{"present upstream, empty local -> backfill", created, true, true},
+		{"present upstream, existing local -> keep curated", created, false, false},
+		{"absent upstream, empty local -> nothing to set", 0, true, false},
+		{"absent upstream, existing local -> unchanged", 0, false, false},
+		{"negative upstream is ignored", -5, true, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, ok := releasedAtBackfill(tt.created, tt.existingIsZero)
+			if ok != tt.wantOK {
+				t.Fatalf("releasedAtBackfill(%d, %v) ok = %v, want %v",
+					tt.created, tt.existingIsZero, ok, tt.wantOK)
+			}
+			if ok {
+				want := time.Unix(tt.created, 0).UTC()
+				if !got.Equal(want) {
+					t.Fatalf("time = %v, want %v", got, want)
+				}
+				if got.Location() != time.UTC {
+					t.Fatalf("time not normalised to UTC: %v", got.Location())
+				}
 			}
 		})
 	}

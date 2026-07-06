@@ -1,6 +1,9 @@
 package requestysync
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 // standardReasoningEfforts is the uniform tier set Requesty normalises across
 // every provider it routes (it maps these to OpenAI effort strings or
@@ -60,6 +63,18 @@ func supportsWebSearchFor(model RequestyModel) bool {
 // perMillion converts a per-token price to per-million-tokens (our stored unit).
 func perMillion(perToken float64) float64 {
 	return perToken * 1_000_000
+}
+
+// releasedAtBackfill decides whether to backfill a model's release date from
+// Requesty's `created` timestamp. It returns the UTC time to store and true
+// only when the upstream timestamp is present (> 0) AND we hold no date yet
+// (existingIsZero). A curated/manual date always wins — it may deliberately
+// correct a wrong or missing upstream one — so we never overwrite.
+func releasedAtBackfill(created int64, existingIsZero bool) (time.Time, bool) {
+	if created <= 0 || !existingIsZero {
+		return time.Time{}, false
+	}
+	return time.Unix(created, 0).UTC(), true
 }
 
 // imageGenerationEnabled decides whether a model is advertised as image-capable.

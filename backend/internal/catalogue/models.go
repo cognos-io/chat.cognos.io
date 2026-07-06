@@ -49,6 +49,10 @@ type Model struct {
 	HostingCountry      string        `json:"hosting_country,omitempty"`
 	HostingRegion       string        `json:"hosting_region,omitempty"`
 	ProviderDescription string        `json:"provider_description,omitempty"`
+	// ReleasedAt is the model's upstream release date as an RFC3339 string
+	// (empty when unknown). Curated by operators; the Requesty sync only
+	// backfills it when empty. Drives the composer's "Newest" sort.
+	ReleasedAt string `json:"released_at,omitempty"`
 	// SupportsTextCompletion marks a model that can answer ordinary text
 	// completions. Most chat models can; image-generation-only models (e.g.
 	// gemini-2.5-flash-image) cannot, and must set this false so the completion

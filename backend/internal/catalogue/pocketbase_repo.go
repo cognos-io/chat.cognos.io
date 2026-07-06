@@ -3,6 +3,7 @@ package catalogue
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
@@ -120,6 +121,10 @@ func (r *PocketBaseRepo) ActiveModels(_ context.Context) ([]Model, error) {
 			SupportsCacheHints:       record.GetBool("supports_cache_hints"),
 			ApproxCharsPerToken:      record.GetInt("approx_chars_per_token"),
 			IsActive:                 true,
+		}
+
+		if released := record.GetDateTime("released_at"); !released.IsZero() {
+			model.ReleasedAt = released.Time().UTC().Format(time.RFC3339)
 		}
 
 		if model.Name == "" {
