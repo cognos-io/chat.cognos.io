@@ -408,18 +408,39 @@ export const isPlaceholderConversationTitle = (title: string | undefined): boole
   );
 };
 
-// titleReasoningEffort picks the reasoning effort for a title completion:
-//   - the off tier when the model has one (cheapest — no hidden reasoning);
-//   - otherwise the lowest declared tier, so the backend sizes an explicit
-//     thinking budget and floors max_tokens above it. A model that always
-//     reasons would otherwise 400 the tiny title request
-//     ("max_tokens must be greater than thinking.budget_tokens");
-//   - undefined for non-reasoning models, where any effort would be rejected.
+// titleReasoningEffort picks the reasoning effort for a title completion.
+//
+// Disabling reasoning by sending the off tier only actually stops a model that
+// does NOT reason by default (e.g. Claude, where omitting the param leaves
+// thinking off). A reasoning-native model — one whose default is a thinking
+// tier, like most Requesty-served reasoning models — keeps reasoning regardless,
+// so the tiny title budget is spent on hidden reasoning and the title comes back
+// empty or truncated. So we only take the cheap "off" path when the model's
+// default is explicitly no-reasoning; otherwise we send its lowest enabled tier
+// so the backend sizes an explicit thinking budget and floors max_tokens above
+// it (see the reasoning-output-budget business process), leaving room for the
+// title text. Non-reasoning models get undefined (any effort would be rejected).
 export const titleReasoningEffort = (
   reasoningEfforts: readonly string[],
-): string | undefined =>
-  reasoningDisablingEffort(reasoningEfforts) ??
-  reasoningEfforts.find((effort) => !['off', 'none'].includes(effort));
+  defaultReasoningEffort?: string,
+): string | undefined => {
+  const lowestEnabled = reasoningEfforts.find(
+    (effort) => !['off', 'none'].includes(effort),
+  );
+  // Only an explicit off/none default is trusted as "no reasoning by default";
+  // an unset default on a reasoning model is treated as "might reason", so we
+  // still size a budget rather than risk the tiny-ceiling truncation.
+  const defaultsToNoReasoning = ['off', 'none'].includes(
+    (defaultReasoningEffort ?? '').trim().toLowerCase(),
+  );
+  // Reasons regardless of an omitted param → give it a budget instead of a tiny
+  // ceiling. Only skip this when we can confirm the model defaults to no
+  // reasoning, where the off tier is genuinely free.
+  if (lowestEnabled && !defaultsToNoReasoning) {
+    return lowestEnabled;
+  }
+  return reasoningDisablingEffort(reasoningEfforts);
+};
 
 export const applyCompletionStreamDelta = (
   existing: ReadonlyArray<Message>,
@@ -2780,12 +2801,16 @@ export class MessageService {
         modelId: model.id,
         personaId: generateConversationPersonaId,
         systemPrompt: generateConversationSystemPrompt,
-        // Disable reasoning when the model supports it — otherwise a reasoning
-        // model burns the small output budget on hidden reasoning and returns
-        // no title text. When it can't be disabled, send the lowest tier so the
-        // backend sizes an explicit thinking budget and raises max_tokens above
-        // it (see the reasoning-output-budget business process).
-        reasoningEffort: titleReasoningEffort(model.reasoningEfforts),
+        // Pick a reasoning effort that leaves room for the title text: the off
+        // tier only when the model defaults to no reasoning, otherwise the
+        // lowest tier so the backend sizes a thinking budget and raises
+        // max_tokens above it. A reasoning-native model reasons regardless of an
+        // omitted param, so a bare off tier would burn the tiny budget on hidden
+        // reasoning and return an empty/truncated title.
+        reasoningEffort: titleReasoningEffort(
+          model.reasoningEfforts,
+          model.defaultReasoningEffort,
+        ),
       })
       .pipe(
         catchError((err) => {

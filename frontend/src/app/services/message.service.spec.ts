@@ -1255,30 +1255,51 @@ describe('titleReasoningEffort', () => {
     {
       name: 'non-reasoning model sends no effort',
       efforts: [],
+      defaultEffort: undefined,
       expected: undefined,
     },
     {
-      name: 'reasoning model with an off tier disables reasoning',
+      name: 'off tier is used only when the model defaults to no reasoning',
       efforts: ['off', 'low', 'high'],
+      defaultEffort: 'off',
       expected: 'off',
     },
     {
-      name: 'model using none as its off tier disables reasoning',
+      name: 'none is used as the off tier when the default is none',
       efforts: ['none', 'low', 'high'],
+      defaultEffort: 'none',
       expected: 'none',
+    },
+    {
+      // The reported bug: a reasoning-native model that offers an off tier but
+      // reasons by default must NOT be sent off (it reasons anyway and the tiny
+      // title budget is spent on hidden reasoning) — send its lowest tier so the
+      // backend sizes a budget with answer headroom.
+      name: 'reasoning-by-default model with an off tier still gets its lowest tier',
+      efforts: ['off', 'low', 'high'],
+      defaultEffort: 'medium',
+      expected: 'low',
+    },
+    {
+      name: 'an unset default on a reasoning model is treated as might-reason',
+      efforts: ['off', 'low', 'high'],
+      defaultEffort: undefined,
+      expected: 'low',
     },
     {
       name: 'model that cannot disable reasoning requests its lowest tier',
       efforts: ['low', 'medium', 'high'],
+      defaultEffort: 'medium',
       expected: 'low',
     },
     {
       name: 'lowest tier may be the only declared tier',
       efforts: ['high'],
+      defaultEffort: 'high',
       expected: 'high',
     },
-  ])('$name', ({ efforts, expected }) => {
-    expect(titleReasoningEffort(efforts)).toBe(expected);
+  ])('$name', ({ efforts, defaultEffort, expected }) => {
+    expect(titleReasoningEffort(efforts, defaultEffort)).toBe(expected);
   });
 });
 
