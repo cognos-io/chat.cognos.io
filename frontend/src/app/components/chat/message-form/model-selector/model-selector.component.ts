@@ -4,6 +4,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  OnInit,
   Output,
   afterNextRender,
   computed,
@@ -117,6 +118,11 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
                   <span class="model-selector__body">
                     <span class="model-selector__heading">
                       <span class="model-selector__name">{{ model.displayName }}</span>
+                      @if (!model.isEligible) {
+                        <cog-lozenge tone="red">
+                          {{ t('chat.models.unavailable.badge') }}
+                        </cog-lozenge>
+                      }
                       @if (!hideCost()) {
                         <cog-lozenge
                           class="model-selector__cost"
@@ -128,11 +134,6 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
                           "
                         >
                           {{ t('chat.models.costTier.' + costTier(model)) }}
-                        </cog-lozenge>
-                      }
-                      @if (!model.isEligible) {
-                        <cog-lozenge tone="red">
-                          {{ t('chat.models.unavailable.badge') }}
                         </cog-lozenge>
                       }
                     </span>
@@ -162,14 +163,16 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
                     }
                   </span>
 
-                  @if (model.id === selectedModelId()) {
-                    <cog-icon
-                      class="model-selector__check"
-                      name="check"
-                      [size]="16"
-                      tone="success"
-                    />
-                  }
+                  <span class="model-selector__check-slot">
+                    @if (model.id === selectedModelId()) {
+                      <cog-icon
+                        class="model-selector__check"
+                        name="check"
+                        [size]="16"
+                        tone="success"
+                      />
+                    }
+                  </span>
                 </button>
 
                 <button
@@ -392,7 +395,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
 
     .model-selector__heading {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       align-items: center;
       gap: var(--cog-space-075);
       min-width: 0;
@@ -402,6 +405,18 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       font-size: var(--cog-fs-body);
       font-weight: var(--cog-fw-semibold);
       line-height: var(--cog-lh-body);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Push the cost lozenge to the right edge of the row (col 1 has a uniform
+       width thanks to the fixed check slot) so tiers line up vertically across
+       models and are easy to compare. */
+    .model-selector__cost {
+      margin-left: auto;
+      flex: none;
     }
 
     .model-selector__pills {
@@ -432,6 +447,15 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-caption);
       line-height: var(--cog-lh-caption);
+    }
+
+    /* Always reserved (even when the row isn't selected) so col 1 keeps the same
+       width across rows and the cost lozenges align. Sized to the check icon. */
+    .model-selector__check-slot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--cog-space-200);
     }
 
     .model-selector__check {
@@ -580,7 +604,7 @@ export type ModelSelectorLayout = 'dropdown' | 'sheet';
   // carries an interaction handler (a11y lint); key events bubble up from rows.
   host: { '(keydown)': 'onKeydown($event)' },
 })
-export class ModelSelectorComponent {
+export class ModelSelectorComponent implements OnInit {
   private readonly _modelService = inject(ModelService);
   private readonly _preferences = inject(UserPreferencesService);
   private readonly _billing = inject(BillingService);
@@ -595,6 +619,12 @@ export class ModelSelectorComponent {
   // in plain chat, `image_generation` when the image tool is on. `null` (account
   // settings) shows every model. See docs/specs/tool-aware-model-selection.md.
   readonly requiredCapability = input<RequiredCapability>(null);
+
+  // A one-shot filter the composer asks us to pre-select for *this* open only —
+  // e.g. 'vision' after the user tried to attach an image to a non-vision model.
+  // Applied in ngOnInit without persisting, so the remembered filter returns on
+  // the next open.
+  readonly filterOverride = input<QuickFilter | null>(null);
 
   @Output() readonly modelSelected = new EventEmitter<Model>();
   // Asked to close (sheet X / Escape / settings link). The host owns open state.
@@ -736,6 +766,17 @@ export class ModelSelectorComponent {
           ?.focus();
       }
     });
+  }
+
+  ngOnInit(): void {
+    // Apply the composer's one-shot suggestion for this open only. We set the
+    // signal directly (not setActiveFilter) so it isn't persisted — the user's
+    // remembered filter is untouched and returns next time. The empty-category
+    // effect above still clears it if no model matches.
+    const override = this.filterOverride();
+    if (override) {
+      this.activeFilter.set(override);
+    }
   }
 
   // When the image tool is active and nothing matches, explain that no model can

@@ -39,6 +39,7 @@ import {
 
 import {
   ACCEPTED_ATTACHMENT_ACCEPT,
+  extractClipboardFiles,
   isImageFile,
 } from '@app/attachments/attachment-accept';
 import {
@@ -69,6 +70,7 @@ import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
 import { RedactionService } from '@app/services/redaction.service';
 import { VaultService } from '@app/services/vault.service';
+import { QuickFilter } from '@app/utils/model-discovery';
 
 import { redactionKindFor, redactionModalLabels } from '../redaction-ui';
 import { ComposerToolsComponent } from './composer-tools/composer-tools.component';
@@ -305,6 +307,7 @@ function escapeHtml(value: string): string {
               (keydown.meta.enter)="isMac ? sendMessage() : undefined"
               (mouseup)="onComposerMouseUp($event)"
               (contextmenu)="onComposerContextMenu($event)"
+              (paste)="onComposerPaste($event)"
               (input)="redactPopover.set(null)"
               (scroll)="onComposerScroll($event)"
             ></textarea>
@@ -461,6 +464,7 @@ function escapeHtml(value: string): string {
                 <app-model-selector
                   layout="dropdown"
                   [requiredCapability]="composerTools.requiredCapability()"
+                  [filterOverride]="modelFilterOverride()"
                   (modelSelected)="closeModelSelector()"
                   (closed)="closeModelSelector()"
                 ></app-model-selector>
@@ -482,6 +486,7 @@ function escapeHtml(value: string): string {
                 <app-model-selector
                   layout="sheet"
                   [requiredCapability]="composerTools.requiredCapability()"
+                  [filterOverride]="modelFilterOverride()"
                   (modelSelected)="closeModelSelector()"
                   (closed)="closeModelSelector()"
                 ></app-model-selector>
@@ -1520,6 +1525,17 @@ export class MessageFormComponent {
     this.acceptFiles(Array.from(event.dataTransfer?.files ?? []));
   }
 
+  onComposerPaste(event: ClipboardEvent): void {
+    // Only intercept when the clipboard carries supported files (e.g. a pasted
+    // screenshot). Plain/rich text paste is left to the browser untouched.
+    const files = extractClipboardFiles(event.clipboardData);
+    if (files.length === 0 || !this.canAttach()) {
+      return;
+    }
+    event.preventDefault();
+    this.acceptFiles(files);
+  }
+
   removeAttachment(localId: string): void {
     this.attachments.remove(localId);
   }
@@ -1566,6 +1582,7 @@ export class MessageFormComponent {
             model: this.modelService.selectedModel().displayName,
           }),
         );
+        this.armModelFilter('vision');
       }
       return;
     }
@@ -1622,12 +1639,17 @@ export class MessageFormComponent {
           model: this.modelService.selectedModel().displayName,
         }),
       );
+      this.armModelFilter('vision');
     } else if (accepted < candidateCount) {
       this.attachmentNotice.set(
         this._transloco.translate('chat.composer.attachments.tooMany', {
           max: this.attachments.count(),
         }),
       );
+    } else {
+      // Everything was accepted — clear any stale notice (e.g. an earlier
+      // "needs vision" warning left over before switching to a vision model).
+      this.attachmentNotice.set(null);
     }
   }
 
@@ -1844,10 +1866,28 @@ export class MessageFormComponent {
         document.body.style.overflow = '';
       });
     });
+
+    // The attachment notice is about the model in effect when it was shown (e.g.
+    // "GPT-OSS can't read images"). Switching models makes it stale, so clear it
+    // whenever the selected model changes — the user can re-attach if needed.
+    effect(() => {
+      this.modelService.selectedModel();
+      untracked(() => this.attachmentNotice.set(null));
+    });
   }
 
   readonly modelSelectorOpen = signal(false);
   readonly reasoningMenuOpen = signal(false);
+
+  // One-shot model-filter suggestion. When the user attempts something the
+  // current model can't do (e.g. paste an image without vision), we pre-select
+  // the matching filter the *next* time the picker opens — but only if that's
+  // soon (within the TTL) — then fall back to their remembered filter.
+  private static readonly ARMED_FILTER_TTL_MS = 3 * 60 * 1000;
+  private _armedFilter: QuickFilter | null = null;
+  private _armedFilterExpiresAt = 0;
+  // The filter handed to the selector for the current open (null = remembered).
+  readonly modelFilterOverride = signal<QuickFilter | null>(null);
 
   readonly modelSelectorPositions = [
     {
@@ -1919,11 +1959,29 @@ export class MessageFormComponent {
   }
 
   toggleModelSelector() {
+    if (!this.modelSelectorOpen()) {
+      // Opening: apply a live one-shot filter suggestion (if any), then consume
+      // it so it never applies to a later open.
+      const armed = this._armedFilter;
+      this.modelFilterOverride.set(
+        armed && Date.now() <= this._armedFilterExpiresAt ? armed : null,
+      );
+      this._armedFilter = null;
+      this._armedFilterExpiresAt = 0;
+    }
     this.modelSelectorOpen.update((open) => !open);
   }
 
   closeModelSelector() {
     this.modelSelectorOpen.set(false);
+  }
+
+  // Suggest a filter for the next picker open, if it happens soon. Used when the
+  // user attempts something the current model can't do (e.g. attach an image to
+  // a non-vision model) so the picker opens already narrowed to capable models.
+  private armModelFilter(filter: QuickFilter): void {
+    this._armedFilter = filter;
+    this._armedFilterExpiresAt = Date.now() + MessageFormComponent.ARMED_FILTER_TTL_MS;
   }
 
   toggleReasoningMenu() {

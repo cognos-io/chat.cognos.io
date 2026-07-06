@@ -9,7 +9,7 @@ import { BillingService } from '@app/services/billing.service';
 import { ModelService } from '@app/services/model.service';
 import { ProjectService } from '@app/services/project.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
-import { modelSupportsCapability } from '@app/utils/model-discovery';
+import { QuickFilter, modelSupportsCapability } from '@app/utils/model-discovery';
 
 import { ModelSelectorComponent } from './model-selector.component';
 
@@ -227,5 +227,81 @@ describe('ModelSelectorComponent', () => {
     selectedProject.set({ decryptedData: { defaultModelId: 'plain-model' } });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.model-selector__notice')).toBeNull();
+  });
+});
+
+describe('ModelSelectorComponent filterOverride', () => {
+  const visionModel = makeModel({
+    id: 'vision-model',
+    name: 'Vision Model',
+    supportsVision: true,
+  });
+  const plainModel = makeModel({ id: 'plain-model', name: 'Plain Model' });
+  let setModelQuickFilter: ReturnType<typeof vi.fn>;
+  let modelQuickFilter: ReturnType<typeof signal<QuickFilter | null>>;
+
+  function rowNames(fixture: ComponentFixture<ModelSelectorComponent>): string[] {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll('.model-selector__name'),
+    ).map((el) => (el as HTMLElement).textContent?.trim() ?? '');
+  }
+
+  beforeEach(async () => {
+    modelQuickFilter = signal<QuickFilter | null>(null);
+    setModelQuickFilter = vi.fn((filter: QuickFilter | null) =>
+      modelQuickFilter.set(filter),
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [ModelSelectorComponent],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ModelService,
+          useValue: {
+            modelList: signal([visionModel, plainModel]),
+            selectedModel: signal(plainModel),
+            privacyTier: signal('eu'),
+            selectModel: vi.fn(),
+          },
+        },
+        {
+          provide: UserPreferencesService,
+          useValue: {
+            pinnedModels: signal<string[]>([]),
+            recentModels: signal<string[]>([]),
+            hiddenModels: signal<string[]>([]),
+            modelQuickFilter,
+            setModelQuickFilter,
+            isModelPinned: () => false,
+            pinModel: vi.fn(),
+            unpinModel: vi.fn(),
+          },
+        },
+        { provide: BillingService, useValue: { isUnlimited: signal(false) } },
+        { provide: ProjectService, useValue: { selectedProject: signal(null) } },
+      ],
+    }).compileComponents();
+  });
+
+  it('pre-applies the override filter for this open without persisting it', () => {
+    const fixture = TestBed.createComponent(ModelSelectorComponent);
+    // Bind the input before the first change detection so ngOnInit sees it.
+    fixture.componentRef.setInput('filterOverride', 'vision');
+    fixture.detectChanges();
+
+    // Only vision-capable models are shown.
+    expect(rowNames(fixture)).toEqual(['Vision Model']);
+    // One-shot: the remembered filter is never written, so it returns next open.
+    expect(setModelQuickFilter).not.toHaveBeenCalledWith('vision');
+    expect(modelQuickFilter()).toBeNull();
+  });
+
+  it('uses the remembered filter when no override is given', () => {
+    const fixture = TestBed.createComponent(ModelSelectorComponent);
+    fixture.detectChanges();
+
+    expect(rowNames(fixture)).toContain('Vision Model');
+    expect(rowNames(fixture)).toContain('Plain Model');
   });
 });

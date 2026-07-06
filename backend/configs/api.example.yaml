@@ -51,7 +51,7 @@ requesty:
 
 # --- Billing ------------------------------------------------------------------
 # Starting trial balance granted to new accounts, in Swiss Rappen (centimes).
-# Must be > 0; defaults to 200 (CHF 2.00) when unset or non-positive.
+# Must be > 0; defaults to 100 (CHF 1.00) when unset or non-positive.
 # Env override: COGNOS_BILLING_TRIAL_SEED_RAPPEN
 #
 # Per-search floor fee added to a completion's cost whenever it used provider
@@ -63,7 +63,7 @@ requesty:
 # or non-positive — it must never resolve to zero, or search would be free.
 # Env override: COGNOS_BILLING_WEB_SEARCH_FLOOR_MICRO_RAPPEN
 billing:
-  trial_seed_rappen: 200
+  trial_seed_rappen: 100
   web_search_floor_micro_rappen: 1100000
 
 # --- Paddle (payments) --------------------------------------------------------
