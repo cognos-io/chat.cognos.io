@@ -4,6 +4,13 @@
       "title": "Ocultação de dados pessoais",
       "subtitle": "Deteta valores sensíveis (e-mails, IBANs, números de identificação, etc.) e substitui-os por marcadores antes de enviar as tuas mensagens aos fornecedores de IA. Ativado por predefinição.",
       "toggleLabel": "Ocultar valores sensíveis",
+      "modeLabel": "Deteção",
+      "modes": {
+        "off": "Desativada",
+        "simple": "Simples (rápida)",
+        "better": "Melhor (mais lenta)",
+        "comprehensive": "Abrangente (envia dados aos servidores da Cognos)"
+      },
       "on": "Ativado",
       "off": "Desativado",
       "disabledNote": "A ocultação está desativada. As novas mensagens incluirão os valores sensíveis na íntegra. As conversas que já ocultaste permanecem protegidas."
@@ -558,7 +565,18 @@
           "person": "Nome",
           "org": "Organização",
           "place": "Local",
-          "ip_address": "Endereço IP"
+          "ip_address": "Endereço IP",
+          "passport": "Passaporte",
+          "ch_driving_licence": "Carta de condução suíça",
+          "ch_postfinance": "Conta PostFinance",
+          "dob": "Data de nascimento",
+          "health": "Dados de saúde"
+        },
+        "severity": {
+          "critical": "Crítico",
+          "high": "Alto",
+          "medium": "Médio",
+          "low": "Baixo"
         }
       },
       "clearMessages": "Limpar todas as mensagens",
@@ -664,7 +682,7 @@
       },
       "redactionWarning": {
         "title": "Enviar dados sensíveis sem ocultar?",
-        "body": "Esta mensagem ainda contém {{ count }} valor(es) sensível(eis) detetado(s) que escolheste não ocultar. O teu fornecedor vê-los-á na íntegra.",
+        "body": "Esta mensagem ainda contém {{ count }} valor(es) sensível(eis) detetado(s) de nível {{ severity }} que escolheste não ocultar. O teu fornecedor vê-los-á na íntegra.",
         "redactAndSend": "Ocultar e enviar",
         "sendAnyway": "Enviar mesmo assim",
         "cancel": "Continuar a editar"

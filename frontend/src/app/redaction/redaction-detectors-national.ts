@@ -279,16 +279,19 @@ export const atSvnrDetector: Detector = {
   },
 };
 
-// Portugal NIF (9 digits).
-const NIF_RE = /\b\d{9}\b/g;
+// Portugal NIF (9 digits). Context is required because many ordinary 9-digit
+// identifiers pass the checksum.
+const NIF_RE =
+  /\b(?:nif|numero fiscal|número fiscal|tax number|tax id)\b[^\d]{0,24}\d{9}\b/gi;
 export const ptNifDetector: Detector = {
   id: 'pt-nif:v1',
   type: 'pt_nif',
   detect(text) {
     const out: RedactionCandidate[] = [];
     for (const m of matchAll(text, NIF_RE)) {
-      if (isValidNif(m[0])) {
-        out.push(candidate('pt_nif', 'pt-nif:v1', m, m[0], m[0]));
+      const value = m[0].match(/\d{9}\b/)?.[0];
+      if (value && isValidNif(value)) {
+        out.push(candidate('pt_nif', 'pt-nif:v1', m, value, value));
       }
     }
     return out;

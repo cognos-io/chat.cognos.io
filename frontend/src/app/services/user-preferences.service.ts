@@ -68,6 +68,10 @@ export class UserPreferencesService {
   private readonly _unhideModel = new Subject<string>();
   private readonly _resetHiddenModels = new Subject<void>();
   private readonly _setRedactionEnabled = new Subject<boolean>();
+  private readonly _setRedactionMode = new Subject<
+    UserPreferencesData['redactionMode']
+  >();
+  private readonly _setRedactionFirstRunSeen = new Subject<boolean>();
   private readonly _setMemoryEnabled = new Subject<boolean>();
   private readonly _setModelReasoningEffort = new Subject<{
     modelId: string;
@@ -267,7 +271,12 @@ export class UserPreferencesService {
       // Toggle PII redaction, local then remote
       () =>
         this._setRedactionEnabled.pipe(
-          map((enabled) => ({ redactionEnabled: enabled })),
+          map((enabled) => ({
+            redactionEnabled: enabled,
+            redactionMode: (enabled
+              ? 'simple'
+              : 'off') as UserPreferencesData['redactionMode'],
+          })),
         ),
       (state) =>
         this._setRedactionEnabled.pipe(
@@ -275,6 +284,39 @@ export class UserPreferencesService {
             this.upsertUserPreferences(state().recordId, {
               ...state(),
               redactionEnabled: enabled,
+              redactionMode: enabled ? 'simple' : 'off',
+            }),
+          ),
+        ),
+      // Set PII redaction mode, local then remote.
+      () =>
+        this._setRedactionMode.pipe(
+          map((redactionMode) => ({
+            redactionMode,
+            redactionEnabled: redactionMode !== 'off',
+          })),
+        ),
+      (state) =>
+        this._setRedactionMode.pipe(
+          concatMap((redactionMode) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              redactionMode,
+              redactionEnabled: redactionMode !== 'off',
+            }),
+          ),
+        ),
+      // Remember first-run redaction explainer dismissal.
+      () =>
+        this._setRedactionFirstRunSeen.pipe(
+          map((redactionFirstRunSeen) => ({ redactionFirstRunSeen })),
+        ),
+      (state) =>
+        this._setRedactionFirstRunSeen.pipe(
+          concatMap((redactionFirstRunSeen) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              redactionFirstRunSeen,
             }),
           ),
         ),
@@ -434,6 +476,8 @@ export class UserPreferencesService {
       unhideModel: this._unhideModel,
       resetHiddenModels: this._resetHiddenModels,
       setRedactionEnabled: this._setRedactionEnabled,
+      setRedactionMode: this._setRedactionMode,
+      setRedactionFirstRunSeen: this._setRedactionFirstRunSeen,
       setMemoryEnabled: this._setMemoryEnabled,
       setModelReasoningEffort: this._setModelReasoningEffort,
       setModelQuickFilter: this._setModelQuickFilter,
@@ -487,6 +531,12 @@ export class UserPreferencesService {
   public setRedactionEnabled = (enabled: boolean) => {
     this.state.setRedactionEnabled(enabled);
   };
+  public setRedactionMode = (mode: UserPreferencesData['redactionMode']) => {
+    this.state.setRedactionMode(mode);
+  };
+  public setRedactionFirstRunSeen = (seen: boolean) => {
+    this.state.setRedactionFirstRunSeen(seen);
+  };
   public setMemoryEnabled = (enabled: boolean) => {
     this.state.setMemoryEnabled(enabled);
   };
@@ -508,6 +558,8 @@ export class UserPreferencesService {
   public defaultPersonaId = this.state.defaultPersonaId;
   public defaultModelId = this.state.defaultModelId;
   public redactionEnabled = this.state.redactionEnabled;
+  public redactionMode = this.state.redactionMode;
+  public redactionFirstRunSeen = this.state.redactionFirstRunSeen;
   public memoryEnabled = this.state.memoryEnabled;
   public modelReasoningEfforts = this.state.modelReasoningEfforts;
   public recentModels = this.state.recentModels;

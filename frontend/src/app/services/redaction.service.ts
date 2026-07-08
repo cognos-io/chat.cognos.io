@@ -2,6 +2,7 @@ import { Injectable, effect, inject, signal } from '@angular/core';
 
 import { Observable, catchError, defer, map, of, switchMap, throwError } from 'rxjs';
 
+import { TranslocoService } from '@jsverse/transloco';
 import { Base64 } from 'js-base64';
 
 import { Conversation } from '@app/interfaces/conversation';
@@ -9,11 +10,13 @@ import { KeyPair } from '@app/interfaces/key-pair';
 import {
   RedactionCandidate,
   RedactionEntry,
+  type RedactionMode,
   RedactionSource,
   applyRedactions,
   buildCustomCandidates,
   defaultTokenGenerator,
   detectSensitiveText,
+  detectorsForMode,
   hydrateRedactedText,
   resolveOverlaps,
 } from '@app/redaction';
@@ -68,6 +71,7 @@ export class RedactionService {
   private readonly _auth = inject(AuthService);
   private readonly _conversationService = inject(ConversationService);
   private readonly _userPreferences = inject(UserPreferencesService);
+  private readonly _transloco = inject(TranslocoService);
 
   private readonly _state = new Map<string, ConversationRedaction>();
   private _loadedConversationId: string | null = null;
@@ -89,6 +93,7 @@ export class RedactionService {
   // Whether redaction is active for new messages. On by default (secure by
   // default); the user can turn it off in settings for all future messages.
   readonly enabled = this._userPreferences.redactionEnabled;
+  readonly mode = this._userPreferences.redactionMode;
 
   // Bumped whenever decrypted entries change, so templates can recompute
   // hydrated content reactively without threading the Map through signals.
@@ -102,6 +107,17 @@ export class RedactionService {
 
   toggleValuesHidden(): void {
     this.valuesHidden.update((hidden) => !hidden);
+  }
+
+  private clientDetectionMode(): Exclude<RedactionMode, 'comprehensive'> {
+    const mode = this.mode();
+    if (mode === 'comprehensive') {
+      // The comprehensive setting is shown as a disabled future option. If an
+      // old or malformed preference ever reaches the service, keep all work
+      // local and use the strongest client-only detector set.
+      return 'better';
+    }
+    return mode;
   }
 
   // Load and decrypt a conversation's mappings as soon as it becomes active, so
@@ -136,7 +152,14 @@ export class RedactionService {
 
   /** Tier 1 high-confidence detection for composer preview. Pure, no I/O. */
   detect(text: string): RedactionCandidate[] {
-    return detectSensitiveText(text);
+    const mode = this.clientDetectionMode();
+    if (mode === 'off') {
+      return [];
+    }
+    return detectSensitiveText(
+      text,
+      detectorsForMode(mode, this._transloco.getActiveLang()),
+    );
   }
 
   /**
@@ -152,7 +175,7 @@ export class RedactionService {
     selected?: RedactionCandidate[],
     source?: RedactionSource,
   ): { redactedText: string; newEntries: RedactionEntry[] } {
-    const candidates = selected ?? detectSensitiveText(text);
+    const candidates = selected ?? this.detect(text);
     if (candidates.length === 0) {
       return { redactedText: text, newEntries: [] };
     }
@@ -186,7 +209,7 @@ export class RedactionService {
     customValues: readonly string[] = [],
     source?: RedactionSource,
   ): { redactedText: string; newEntries: RedactionEntry[] } {
-    const auto = detectSensitiveText(text);
+    const auto = this.detect(text);
     const custom = buildCustomCandidates(text, customValues);
     const candidates = resolveOverlaps([...auto, ...custom]);
     if (candidates.length === 0) {

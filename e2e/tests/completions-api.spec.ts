@@ -479,6 +479,51 @@ test.describe('persisted /conversations/{id}/complete API', () => {
     }
   });
 
+  test('redacted prompt placeholders are encrypted at rest with no raw value exposure', async () => {
+    const user = await provisionApiUser();
+    try {
+      const conversationID = await createConversationWithKey(user);
+      const rawEmail = 'jane@example.com';
+      const placeholder = '[[PII_EMAIL_E2E123]]';
+
+      const res = await user.api.post(
+        `/api/v1/conversations/${conversationID}/complete`,
+        {
+          data: {
+            model_id: APPROVED_MODEL_ID,
+            persona_id: DEFAULT_PERSONA_ID,
+            system_prompt: DEFAULT_SYSTEM_PROMPT,
+            request_id: 'e2e-redacted-at-rest-1',
+            messages: [
+              {
+                role: 'user',
+                content: `Contact ${placeholder} about the account.`,
+              },
+            ],
+          },
+        },
+      );
+      expect(res.ok(), `complete: ${res.status()} ${await res.text()}`).toBe(true);
+      await readCompleteStream(res);
+
+      const listRes = await user.api.get(
+        `/api/v1/conversations/${conversationID}/messages?page=1&page_size=50`,
+      );
+      expect(listRes.ok()).toBe(true);
+      const list = (await listRes.json()) as MessageListResponse;
+
+      for (const item of list.items) {
+        expect(item.data).not.toContain(rawEmail);
+        expect(item.data).not.toContain(placeholder);
+        const decoded = Buffer.from(item.data, 'base64').toString('utf8');
+        expect(decoded).not.toContain(rawEmail);
+        expect(decoded).not.toContain(placeholder);
+      }
+    } finally {
+      await user.api.dispose();
+    }
+  });
+
   test('persists an assistant reply longer than the 5000-char text default', async () => {
     // Regression for "Must be no more than 5000 character(s)." on
     // /complete. messages.data holds base64(ciphertext); a long assistant

@@ -119,6 +119,41 @@ describe('parseUserPreferencesData', () => {
     const payload = encode('not json');
     expect(() => parseUserPreferencesData(payload)).toThrow();
   });
+
+  it('defaults redaction mode to simple and preserves first-run state', () => {
+    const parsed = UserPreferencesData.parse({
+      pinnedConversations: [],
+      redactionEnabled: true,
+    });
+
+    expect(parsed.redactionMode).toBe('simple');
+    expect(parsed.redactionFirstRunSeen).toBe(false);
+  });
+
+  it('keeps explicit redaction modes including better and off', () => {
+    expect(
+      UserPreferencesData.parse({
+        pinnedConversations: [],
+        redactionMode: 'better',
+      }).redactionMode,
+    ).toBe('better');
+    expect(
+      UserPreferencesData.parse({
+        pinnedConversations: [],
+        redactionMode: 'off',
+      }).redactionMode,
+    ).toBe('off');
+  });
+
+  it('migrates legacy disabled redaction to off mode', () => {
+    const parsed = UserPreferencesData.parse({
+      pinnedConversations: [],
+      redactionEnabled: false,
+    });
+
+    expect(parsed.redactionMode).toBe('off');
+    expect(parsed.redactionEnabled).toBe(false);
+  });
 });
 
 describe('serializeUserPreferencesData', () => {
@@ -134,6 +169,8 @@ describe('serializeUserPreferencesData', () => {
       defaultPersonaId: 'cognos:simple-assistant',
       defaultModelId: 'm-1',
       redactionEnabled: false,
+      redactionMode: 'off',
+      redactionFirstRunSeen: true,
       memoryEnabled: true,
       modelReasoningEfforts: { 'm-1': 'high' },
       recentModels: ['m-1', 'm-2'],

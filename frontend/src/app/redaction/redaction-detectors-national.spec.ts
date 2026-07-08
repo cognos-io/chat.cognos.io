@@ -185,6 +185,10 @@ describe('ptNifDetector', () => {
   it('rejects a wrong checksum (rainy)', () => {
     expect(ptNifDetector.detect('507306245')).toEqual([]);
   });
+
+  it('ignores valid checksum numbers without NIF context (edge)', () => {
+    expect(ptNifDetector.detect('invoice 507306244')).toEqual([]);
+  });
 });
 
 describe('esDniDetector / esNieDetector', () => {

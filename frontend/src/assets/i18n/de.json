@@ -4,6 +4,13 @@
       "title": "PII-Schwärzung",
       "subtitle": "Erkennt sensible Werte (E-Mails, IBANs, Ausweisnummern usw.) und ersetzt sie durch Platzhalter, bevor deine Nachrichten an KI-Anbieter gesendet werden. Standardmässig aktiviert.",
       "toggleLabel": "Sensible Werte schwärzen",
+      "modeLabel": "Erkennung",
+      "modes": {
+        "off": "Aus",
+        "simple": "Einfach (schnell)",
+        "better": "Besser (langsamer)",
+        "comprehensive": "Umfassend (sendet Daten an Cognos-Server)"
+      },
       "on": "Ein",
       "off": "Aus",
       "disabledNote": "Schwärzung ist aus. Neue Nachrichten enthalten sensible Werte vollständig. Bereits geschwärzte Unterhaltungen bleiben geschützt."
@@ -558,7 +565,18 @@
           "person": "Name",
           "org": "Organisation",
           "place": "Ort",
-          "ip_address": "IP-Adresse"
+          "ip_address": "IP-Adresse",
+          "passport": "Pass",
+          "ch_driving_licence": "Schweizer Führerausweis",
+          "ch_postfinance": "PostFinance-Konto",
+          "dob": "Geburtsdatum",
+          "health": "Gesundheitsdaten"
+        },
+        "severity": {
+          "critical": "Kritisch",
+          "high": "Hoch",
+          "medium": "Mittel",
+          "low": "Niedrig"
         }
       },
       "clearMessages": "Alle Nachrichten löschen",
@@ -664,7 +682,7 @@
       },
       "redactionWarning": {
         "title": "Sensible Daten ungeschwärzt senden?",
-        "body": "Diese Nachricht enthält noch {{ count }} erkannte(n) sensible(n) Wert(e), die du nicht schwärzen wolltest. Dein Anbieter sieht sie vollständig.",
+        "body": "Diese Nachricht enthält noch {{ count }} erkannte(n) sensible(n) Wert(e) mit Schweregrad {{ severity }}, die du nicht schwärzen wolltest. Dein Anbieter sieht sie vollständig.",
         "redactAndSend": "Schwärzen & senden",
         "sendAnyway": "Trotzdem senden",
         "cancel": "Weiter bearbeiten"

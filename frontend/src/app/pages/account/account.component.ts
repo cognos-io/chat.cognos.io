@@ -33,6 +33,7 @@ import {
   coerceAvatarColor,
   coerceAvatarIcon,
 } from '@app/interfaces/avatar';
+import type { RedactionMode } from '@app/redaction';
 import { AuthService } from '@app/services/auth.service';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ConversationService } from '@app/services/conversation.service';
@@ -161,20 +162,28 @@ import {
           [subtitle]="t('account.redaction.subtitle')"
         >
           <div card-heading-actions class="account__redaction-control">
-            <span class="account__redaction-state">
-              {{
-                redactionEnabled()
-                  ? t('account.redaction.on')
-                  : t('account.redaction.off')
-              }}
-            </span>
-            <cog-toggle
-              [checked]="redactionEnabled()"
-              [label]="t('account.redaction.toggleLabel')"
-              (checkedChange)="setRedactionEnabled($event)"
-            />
+            <label class="account__redaction-label" for="account-redaction-mode">
+              {{ t('account.redaction.modeLabel') }}
+            </label>
+            <select
+              id="account-redaction-mode"
+              class="account__redaction-select"
+              [value]="redactionMode()"
+              (change)="setRedactionMode($event)"
+            >
+              <option value="off">{{ t('account.redaction.modes.off') }}</option>
+              <option value="simple">
+                {{ t('account.redaction.modes.simple') }}
+              </option>
+              <option value="better">
+                {{ t('account.redaction.modes.better') }}
+              </option>
+              <option value="comprehensive" disabled>
+                {{ t('account.redaction.modes.comprehensive') }}
+              </option>
+            </select>
           </div>
-          @if (!redactionEnabled()) {
+          @if (redactionMode() === 'off') {
             <p class="account__redaction-warning" role="status">
               {{ t('account.redaction.disabledNote') }}
             </p>
@@ -378,9 +387,19 @@ import {
       gap: var(--cog-space-150);
     }
 
-    .account__redaction-state {
+    .account__redaction-label {
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-body-sm);
+    }
+
+    .account__redaction-select {
+      min-width: 220px;
+      border: 1px solid var(--cog-border-strong);
+      border-radius: var(--cog-radius-md);
+      background: var(--cog-surface);
+      color: var(--cog-text);
+      font: inherit;
+      padding: var(--cog-space-100) var(--cog-space-150);
     }
 
     .account__redaction-warning {
@@ -524,10 +543,16 @@ export class AccountComponent {
   private readonly _userPreferences = inject(UserPreferencesService);
 
   protected readonly redactionEnabled = this._userPreferences.redactionEnabled;
+  protected readonly redactionMode = this._userPreferences.redactionMode;
   protected readonly memoryEnabled = this._userPreferences.memoryEnabled;
 
   protected setRedactionEnabled(enabled: boolean): void {
     this._userPreferences.setRedactionEnabled(enabled);
+  }
+
+  protected setRedactionMode(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this._userPreferences.setRedactionMode(select.value as RedactionMode);
   }
 
   protected setMemoryEnabled(enabled: boolean): void {

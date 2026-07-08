@@ -4,6 +4,13 @@
       "title": "PII redaction",
       "subtitle": "Detect sensitive values (emails, IBANs, ID numbers and more) and replace them with placeholders before your messages are sent to AI providers. On by default.",
       "toggleLabel": "Redact sensitive values",
+      "modeLabel": "Detection",
+      "modes": {
+        "off": "Off",
+        "simple": "Simple (fast)",
+        "better": "Better (slower)",
+        "comprehensive": "Comprehensive (sends data to Cognos servers)"
+      },
       "on": "On",
       "off": "Off",
       "disabledNote": "Redaction is off. New messages you send will include sensitive values in full. Conversations you already redacted stay protected."
@@ -558,7 +565,18 @@
           "person": "Name",
           "org": "Organisation",
           "place": "Place",
-          "ip_address": "IP address"
+          "ip_address": "IP address",
+          "passport": "Passport",
+          "ch_driving_licence": "Swiss driving licence",
+          "ch_postfinance": "PostFinance account",
+          "dob": "Date of birth",
+          "health": "Health data"
+        },
+        "severity": {
+          "critical": "Critical",
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low"
         }
       },
       "clearMessages": "Clear all messages",
@@ -664,7 +682,7 @@
       },
       "redactionWarning": {
         "title": "Send sensitive data unredacted?",
-        "body": "This message still contains {{ count }} detected sensitive value(s) you chose not to redact. Your provider will see them in full.",
+        "body": "This message still contains {{ count }} {{ severity }} sensitive value(s) you chose not to redact. Your provider will see them in full.",
         "redactAndSend": "Redact & send",
         "sendAnyway": "Send anyway",
         "cancel": "Keep editing"

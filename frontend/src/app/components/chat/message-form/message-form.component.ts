@@ -53,8 +53,11 @@ import { LibraryPickerComponent } from '@app/attachments/library-picker/library-
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import {
   RedactionCandidate,
+  type RedactionSeverity,
   buildCustomCandidates,
   candidateKey,
+  compareSeverity,
+  redactionSeverity,
   resolveOverlaps,
   tokenTypeCode,
 } from '@app/redaction';
@@ -84,6 +87,11 @@ import { PersonaSwitcherComponent } from './persona-switcher/persona-switcher.co
 // <mark> tags we add are meant to be markup.
 function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+interface RedactionPreviewGroup {
+  severity: RedactionSeverity;
+  items: RedactionCandidate[];
 }
 
 @Component({
@@ -388,28 +396,33 @@ function escapeHtml(value: string): string {
 
               @if (redactionPreviewOpen()) {
                 <ul class="message-form__redaction-list">
-                  @for (item of redactionCandidates(); track redactionKeyOf(item)) {
-                    <li
-                      class="message-form__redaction-item"
-                      [class.message-form__redaction-item--off]="!isRedacted(item)"
-                    >
-                      <cog-redacted-text
-                        [value]="item.value"
-                        [placeholder]="redactionPlaceholder(item)"
-                        [kind]="redactionKind(item)"
-                        [label]="t('chat.composer.redaction.types.' + item.type)"
-                        [labels]="modalLabels()"
-                        [showSettings]="false"
-                      />
-                      <label class="message-form__redaction-toggle">
-                        <input
-                          type="checkbox"
-                          [checked]="isRedacted(item)"
-                          (change)="toggleRedaction(item)"
-                        />
-                        {{ t('chat.composer.redaction.redact') }}
-                      </label>
+                  @for (group of redactionPreviewGroups(); track group.severity) {
+                    <li class="message-form__redaction-group">
+                      {{ t('chat.composer.redaction.severity.' + group.severity) }}
                     </li>
+                    @for (item of group.items; track redactionKeyOf(item)) {
+                      <li
+                        class="message-form__redaction-item"
+                        [class.message-form__redaction-item--off]="!isRedacted(item)"
+                      >
+                        <cog-redacted-text
+                          [value]="item.value"
+                          [placeholder]="redactionPlaceholder(item)"
+                          [kind]="redactionKind(item)"
+                          [label]="t('chat.composer.redaction.types.' + item.type)"
+                          [labels]="modalLabels()"
+                          [showSettings]="false"
+                        />
+                        <label class="message-form__redaction-toggle">
+                          <input
+                            type="checkbox"
+                            [checked]="isRedacted(item)"
+                            (change)="toggleRedaction(item)"
+                          />
+                          {{ t('chat.composer.redaction.redact') }}
+                        </label>
+                      </li>
+                    }
                   }
 
                   @for (custom of activeCustomRedactions(); track custom) {
@@ -819,6 +832,12 @@ function escapeHtml(value: string): string {
                 {{
                   t('chat.composer.redactionWarning.body', {
                     count: pendingUnredactedCount(),
+                    severity: pendingUnredactedSeverity()
+                      ? t(
+                          'chat.composer.redaction.severity.' +
+                            pendingUnredactedSeverity()
+                        )
+                      : t('chat.composer.redaction.severity.medium'),
                   })
                 }}
               </p>
@@ -1250,6 +1269,18 @@ function escapeHtml(value: string): string {
       justify-content: space-between;
       gap: var(--cog-space-100);
       flex-wrap: wrap;
+    }
+
+    .message-form__redaction-group {
+      margin-top: var(--cog-space-050);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      font-weight: var(--cog-fw-semibold);
+      text-transform: uppercase;
+    }
+
+    .message-form__redaction-group:first-child {
+      margin-top: 0;
     }
 
     .message-form__redaction-item--off {
@@ -1808,6 +1839,22 @@ export class MessageFormComponent {
       : [],
   );
 
+  readonly redactionPreviewGroups = computed<RedactionPreviewGroup[]>(() => {
+    const groups = new Map<RedactionSeverity, RedactionCandidate[]>();
+    for (const candidate of this.redactionCandidates()) {
+      const severity = redactionSeverity(candidate.type);
+      const items = groups.get(severity) ?? [];
+      items.push(candidate);
+      groups.set(severity, items);
+    }
+    return Array.from(groups.entries())
+      .sort(([a], [b]) => compareSeverity(a, b))
+      .map(([severity, items]) => ({
+        severity,
+        items: items.sort((a, b) => a.start - b.start),
+      }));
+  });
+
   // Values manually redacted earlier in this conversation, so they're shown as
   // (auto-applied) redactions here too. Reactive to mappings loading via
   // revision(); the message service applies them on send.
@@ -1874,6 +1921,8 @@ export class MessageFormComponent {
   readonly redactionWarningOpen = signal(false);
   private readonly _pendingUnredacted = signal(0);
   readonly pendingUnredactedCount = this._pendingUnredacted.asReadonly();
+  private readonly _pendingUnredactedSeverity = signal<RedactionSeverity | null>(null);
+  readonly pendingUnredactedSeverity = this._pendingUnredactedSeverity.asReadonly();
 
   // Substrings the user manually selected to redact, and the floating "Redact"
   // action anchored to the pointer when there's a selection.
@@ -2229,6 +2278,11 @@ export class MessageFormComponent {
     const unredacted = this.unredactedDetected(contentValue);
     if (unredacted.length > 0) {
       this._pendingUnredacted.set(unredacted.length);
+      this._pendingUnredactedSeverity.set(
+        unredacted
+          .map((candidate) => redactionSeverity(candidate.type))
+          .sort(compareSeverity)[0] ?? null,
+      );
       this.redactionWarningOpen.set(true);
       return;
     }
@@ -2259,16 +2313,19 @@ export class MessageFormComponent {
   redactAndSend(): void {
     this._redactionDeselected.set(new Set());
     this.redactionWarningOpen.set(false);
+    this._pendingUnredactedSeverity.set(null);
     this._dispatchSend(this.messageForm.controls.content.value ?? '');
   }
 
   sendAnyway(): void {
     this.redactionWarningOpen.set(false);
+    this._pendingUnredactedSeverity.set(null);
     this._dispatchSend(this.messageForm.controls.content.value ?? '');
   }
 
   cancelRedactionWarning(): void {
     this.redactionWarningOpen.set(false);
+    this._pendingUnredactedSeverity.set(null);
   }
 
   private _dispatchSend(contentValue: string) {

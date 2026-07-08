@@ -41,6 +41,27 @@ every sensitive value is caught.
 - **Never logged.** Raw detected values and decrypted mappings never go to
   console, backend logs, analytics, or billing events.
 
+## User modes
+
+Users choose the detection depth in account settings:
+
+| Mode                | What happens                                                                            |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| **Off**             | No automatic detection. New prompts can leave the browser with sensitive values intact. |
+| **Simple (fast)**   | Fast local detector set. Good for common high-confidence values. Default.               |
+| **Better (slower)** | Adds local context, health, DOB, passport, driving-licence and account-style detectors. |
+| **Comprehensive**   | Disabled for now. Labelled as sending data to Cognos servers; not implemented.          |
+
+Important: `better` is still **local-only**. It does not send message text to Cognos servers.
+
+## What the user sees
+
+- The composer groups detections by severity: `critical`, `high`, `medium`, `low`.
+- Higher severity appears first.
+- The user can still deselect an item.
+- If they send with a deselected detected value, the warning names the highest severity.
+- If everything stays selected, sending is not interrupted.
+
 ```mermaid
 flowchart LR
   D[raw draft in browser] --> R{detect sensitive values}
@@ -60,6 +81,27 @@ flowchart LR
 | AI provider  | placeholder tokens in the prompt                        | the original sensitive value                                            |
 | Backend      | redacted message content, the plaintext token string    | the original value (sealed under redaction key)                         |
 | Public share | redacted content by default (placeholders stay as bars) | originals — unless it is an explicit **include-sensitive-values** share |
+
+## Quality checks
+
+When changing detectors, update the small synthetic corpus first:
+
+- `frontend/src/app/redaction/corpus/baseline-v2.json`
+- `frontend/src/app/redaction/redaction-corpus.spec.ts`
+
+The corpus test checks precision and recall for the shipped v2 detector set.
+Add near-miss negatives whenever a detector starts matching a new shape.
+
+No production text belongs in the corpus. Use fake examples only.
+
+## Leak checks
+
+There are two high-level no-leak tests:
+
+- Browser e2e: typed prompt values reach `/complete` as placeholders, not raw values.
+- API e2e: persisted message rows expose neither raw values nor redaction placeholders.
+
+If either test fails, treat it as a privacy regression.
 
 ## Storage & lock-down
 

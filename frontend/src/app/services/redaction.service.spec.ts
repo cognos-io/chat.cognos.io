@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { Observable, of, throwError } from 'rxjs';
 
+import { TranslocoService } from '@jsverse/transloco';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { Conversation } from '@app/interfaces/conversation';
@@ -65,6 +66,7 @@ class FakeApi {
 }
 
 const conversation = { record: { id: 'conv1' } } as Conversation;
+const translocoMock = { getActiveLang: () => 'en', load: () => of({}) };
 
 describe('RedactionService', () => {
   let service: RedactionService;
@@ -85,7 +87,11 @@ describe('RedactionService', () => {
         // The auto-load effect reads the active conversation; keep it null so
         // each test drives loading explicitly.
         { provide: ConversationService, useValue: { conversation: () => null } },
-        { provide: UserPreferencesService, useValue: { redactionEnabled: () => true } },
+        {
+          provide: UserPreferencesService,
+          useValue: { redactionEnabled: () => true, redactionMode: () => 'simple' },
+        },
+        { provide: TranslocoService, useValue: translocoMock },
       ],
     });
     service = TestBed.inject(RedactionService);
@@ -95,6 +101,67 @@ describe('RedactionService', () => {
     const candidates = service.detect('mail me at jane@example.com');
     expect(candidates).toHaveLength(1);
     expect(candidates[0].type).toBe('email');
+  });
+
+  it('keeps simple mode to high-confidence detectors', () => {
+    const candidates = service.detect('My date of birth is 1987-04-23.');
+    expect(candidates).toHaveLength(0);
+  });
+
+  it('uses better mode detectors for contextual values', () => {
+    TestBed.resetTestingModule();
+    api = new FakeApi();
+    const crypto = new CryptoService();
+    const userKeyPair = crypto.newKeyPair();
+
+    TestBed.configureTestingModule({
+      providers: [
+        RedactionService,
+        CryptoService,
+        { provide: CognosApiService, useValue: api },
+        { provide: VaultService, useValue: { keyPair: () => userKeyPair } },
+        { provide: AuthService, useValue: { user: () => ({ id: 'user1' }) } },
+        { provide: ConversationService, useValue: { conversation: () => null } },
+        {
+          provide: UserPreferencesService,
+          useValue: { redactionEnabled: () => true, redactionMode: () => 'better' },
+        },
+        { provide: TranslocoService, useValue: translocoMock },
+      ],
+    });
+    service = TestBed.inject(RedactionService);
+
+    const candidates = service.detect('My date of birth is 1987-04-23.');
+    expect(candidates.map((candidate) => candidate.type)).toContain('dob');
+  });
+
+  it('does not detect or redact when mode is off', () => {
+    TestBed.resetTestingModule();
+    api = new FakeApi();
+    const crypto = new CryptoService();
+    const userKeyPair = crypto.newKeyPair();
+
+    TestBed.configureTestingModule({
+      providers: [
+        RedactionService,
+        CryptoService,
+        { provide: CognosApiService, useValue: api },
+        { provide: VaultService, useValue: { keyPair: () => userKeyPair } },
+        { provide: AuthService, useValue: { user: () => ({ id: 'user1' }) } },
+        { provide: ConversationService, useValue: { conversation: () => null } },
+        {
+          provide: UserPreferencesService,
+          useValue: { redactionEnabled: () => false, redactionMode: () => 'off' },
+        },
+        { provide: TranslocoService, useValue: translocoMock },
+      ],
+    });
+    service = TestBed.inject(RedactionService);
+
+    expect(service.detect('mail jane@example.com')).toHaveLength(0);
+    const result = service.prepareRedaction('conv1', 'mail jane@example.com');
+    expect(result.redactedText).toBe('mail jane@example.com');
+    expect(result.newEntries).toHaveLength(0);
   });
 
   it('redacts outgoing text and keeps the original out of it', () => {

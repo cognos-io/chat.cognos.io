@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { RedactionMode } from '@app/redaction';
+
 export const ModelQuickFilter = z.enum([
   'pinned',
   'recommended',
@@ -25,7 +27,10 @@ export const ModelSortMode = z.enum([
 ]);
 export type ModelSortMode = z.infer<typeof ModelSortMode>;
 
-export const UserPreferencesData = z.object({
+export const RedactionModeSchema = z.enum(['off', 'simple', 'better', 'comprehensive']);
+export type RedactionModePreference = z.infer<typeof RedactionModeSchema>;
+
+const UserPreferencesDataShape = z.object({
   pinnedConversations: z.array(z.string()),
   pinnedModels: z.array(z.string()).default([]),
   // Persona state is kept here rather than on the personas collection so it
@@ -40,6 +45,10 @@ export const UserPreferencesData = z.object({
   // Browser PII redaction is on by default (secure by default). When the user
   // turns it off it stays off for future messages until re-enabled.
   redactionEnabled: z.boolean().default(true),
+  // v2 mode selector. `redactionEnabled` is kept for older encrypted payloads
+  // and for compatibility with existing call sites while this rolls out.
+  redactionMode: RedactionModeSchema.default('simple'),
+  redactionFirstRunSeen: z.boolean().default(false),
   // Personal memory is OFF by default (opt-in). While disabled, user memory is
   // never read into a chat's context nor written by "Add to memory". Existing
   // payloads that predate this key decrypt to false, so memory stays off until
@@ -70,7 +79,20 @@ export const UserPreferencesData = z.object({
   // curated grouping), so existing payloads that omit it keep today's order.
   modelSortMode: ModelSortMode.default('recommended'),
 });
+
+export const UserPreferencesData = z.preprocess((raw) => {
+  if (typeof raw !== 'object' || raw === null) {
+    return raw;
+  }
+  const data = raw as Record<string, unknown>;
+  if (data['redactionMode'] === undefined && data['redactionEnabled'] === false) {
+    return { ...data, redactionMode: 'off' };
+  }
+  return data;
+}, UserPreferencesDataShape);
 export type UserPreferencesData = z.infer<typeof UserPreferencesData>;
+
+export const redactionModeIsEnabled = (mode: RedactionMode): boolean => mode !== 'off';
 
 export const emptyPreferences: UserPreferencesData = {
   pinnedConversations: [],
@@ -80,6 +102,8 @@ export const emptyPreferences: UserPreferencesData = {
   defaultPersonaId: '',
   defaultModelId: '',
   redactionEnabled: true,
+  redactionMode: 'simple',
+  redactionFirstRunSeen: false,
   memoryEnabled: false,
   modelReasoningEfforts: {},
   recentModels: [],

@@ -19,6 +19,32 @@ This spec does **not** re-open key management, storage, public sharing, or the t
 are settled in v1 and unchanged here. New detectors and NLP hints flow through the existing
 `Detector` interface, token model, `redaction_entries` storage, and hydration pipeline untouched.
 
+## 0. Build status
+
+### Shipped in this branch
+
+- Settings now expose four modes: **Off**, **Simple (fast)**, **Better (slower)**, and disabled
+  **Comprehensive (sends data to Cognos servers)**.
+- `simple` keeps the fast v1 detector set. `better` adds local-only context, structured, and health
+  detectors.
+- Composer preview groups detected values by severity (`critical`, `high`, `medium`, `low`).
+- If a user opts out of redacting a detected value, the send warning includes the highest severity.
+- New detectors cover DOB context, passport, Swiss driving licence, PostFinance/account context,
+  Swiss health-insurance numbers, and health-keyword hints.
+- Corpus scoring exists at `frontend/src/app/redaction/corpus/baseline-v2.json` with a CI-style
+  threshold test in `redaction-corpus.spec.ts`.
+- Browser e2e asserts typed prompt values reach the provider only as placeholders.
+- API e2e asserts stored message rows expose neither raw values nor redaction placeholders.
+
+### Still open
+
+- First-run explainer modal.
+- Worker/NLP (`compromise`) mode.
+- User allowlist.
+- Chunked/incremental detection.
+- Privacy-safe local counters.
+- Real server-side comprehensive mode. The UI option is intentionally disabled.
+
 ## 1. Overview
 
 v1's engine is correct but quiet. It detects high-precision structured values on the main thread,
@@ -413,29 +439,32 @@ and chunking (Phase 5) are refinements once the core is proven.
 
 Phase 1 — severity + UX
 
-- [ ] Add `severity` type + pure type→severity map (`redaction-severity.ts`).
-- [ ] Group/colour preview by severity with `--cog-*` tokens; keep per-item toggle.
+- [x] Add `severity` type + pure type→severity map (`redaction-severity.ts`).
+- [x] Group preview by severity with `--cog-*` tokens; keep per-item toggle.
 - [ ] Add `redactionFirstRunSeen` preference + first-run explainer reusing existing modal.
-- [ ] i18n for all new copy in six locales.
+- [x] Add `redactionFirstRunSeen` preference storage.
+- [x] i18n for shipped new copy in six locales.
 
 Phase 2 — measurement
 
-- [ ] Build labelled corpus (`redaction/corpus/`), all detectors + six locales.
-- [ ] Build precision/recall scorer (`redaction-score.ts`).
-- [ ] Add CI gate: Tier 1 precision ≥ 0.99; documented thresholds per tier.
+- [x] Build initial labelled corpus (`redaction/corpus/`) with synthetic fixtures.
+- [x] Build precision/recall scorer (`redaction-score.ts`).
+- [x] Add threshold gate test for the initial v2 corpus.
+- [ ] Expand corpus to all detectors and all six locales before widening detector scope again.
+- [ ] Raise Tier 1 thresholds to the full documented gate once corpus coverage is broad enough.
 
 Phase 3 — detection depth
 
-- [ ] New structured detectors (§5) + `RedactionType` + severity map entries, with fixtures.
-- [ ] Context-aware middle tier (`redaction-detectors-context.ts`) + localised keyword lists.
-- [ ] Health detectors/flag (`redaction-detectors-health.ts`) + medical-homonym negatives.
+- [x] New structured detectors (§5) + `RedactionType` + severity map entries, with fixtures.
+- [x] Context-aware middle tier (`redaction-detectors-context.ts`) + localised keyword lists.
+- [x] Health detectors/flag (`redaction-detectors-health.ts`) + negative fixtures.
 
 Phase 4 — NLP worker
 
 - [ ] `redaction-detection.worker.ts` transport around the pure engine.
 - [ ] `compromise` wrapper (`redaction-detectors-nlp.ts`), lazy inside worker.
 - [ ] `nlpEnabled` preference; worker-error → synchronous fallback (no-fail-open test).
-- [ ] High-severity named confirm extending `redactionWarningOpen`.
+- [x] Severity-aware confirm extending `redactionWarningOpen`.
 
 Phase 5 — refinements
 
@@ -445,6 +474,6 @@ Phase 5 — refinements
 
 Cross-cutting
 
-- [ ] Update `docs/specs/pii-redaction.md` §23 "Deferred" list to point here as these land.
+- [x] Update `docs/specs/pii-redaction.md` §23 "Deferred" list to point here as these land.
 - [ ] Update `todo.md` "Sensitive-data detector" item as phases ship.
 - [ ] Update `docs/security-model.md` if the worker/NLP change any user-facing privacy claim.

@@ -413,10 +413,13 @@ Prefer wording like:
 
 ## 14. Browser PII redaction (optional layer)
 
-Cognos detects common high-confidence sensitive values (IBAN, email, credit card, API/private keys,
-Swiss AHV, UK NINo) in the browser and replaces them with stable placeholder tokens
-(`[[PII_<TYPE>_<RANDOM>]]`) **before** any completion request leaves the device. See
-`docs/specs/pii-redaction.md` for the full design.
+Cognos detects common sensitive values (IBAN, email, credit card, API/private keys, national IDs,
+health-card numbers, date-of-birth context, and some account/licence/passport patterns) in the
+browser and replaces them with stable placeholder tokens (`[[PII_<TYPE>_<RANDOM>]]`) **before** any
+completion request leaves the device. Users can choose **Off**, **Simple (fast)**, or **Better
+(slower)** detection in settings. **Better** is still local-only. The disabled **Comprehensive**
+option is labelled as server-assisted and is not active. See `docs/specs/pii-redaction.md` and
+`docs/specs/pii-redaction-v2.md` for the full design.
 
 ### 14.1 What this changes about the trust model
 

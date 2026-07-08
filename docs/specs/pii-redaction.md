@@ -879,10 +879,13 @@ Hydration:
 
 ### Deferred to follow-up (out of scope for this slice)
 
-- Tier 2 NLP detection (`compromise`) — the engine's pluggable `Detector` interface is ready for it.
+- Tier 2 NLP detection (`compromise`) — tracked in `docs/specs/pii-redaction-v2.md`.
+- First-run explainer, allowlist, chunked detection, and privacy-safe local counters — tracked in
+  `docs/specs/pii-redaction-v2.md`.
 - Participant-add redaction-key wrapping and redaction-key rotation (the key is currently wrapped
   for the creating user only; other participants see placeholders until this lands).
 - Temporary-chat in-memory hydration (temp chats redact before send but do not yet hydrate locally).
 - Block-send-on-mapping-failure: mappings persist best-effort after send (no PII is ever sent, but a
   persistence failure currently costs only the owner's own hydration).
-- Browser e2e (Playwright) coverage for the redaction flows and network no-leak assertions.
+- Browser/API e2e coverage now includes typed-prompt provider no-leak assertions and persisted-row
+  no-leak assertions; broader UX coverage remains in `docs/specs/pii-redaction-v2.md`.

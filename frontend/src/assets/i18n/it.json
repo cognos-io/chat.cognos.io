@@ -4,6 +4,13 @@
       "title": "Oscuramento dei dati personali",
       "subtitle": "Rileva valori sensibili (email, IBAN, numeri identificativi, ecc.) e li sostituisce con segnaposto prima che i messaggi vengano inviati ai fornitori di IA. Attivo per impostazione predefinita.",
       "toggleLabel": "Oscura valori sensibili",
+      "modeLabel": "Rilevamento",
+      "modes": {
+        "off": "Disattivato",
+        "simple": "Semplice (veloce)",
+        "better": "Migliore (più lento)",
+        "comprehensive": "Completo (invia dati ai server Cognos)"
+      },
       "on": "Attivo",
       "off": "Disattivato",
       "disabledNote": "L'oscuramento è disattivato. I nuovi messaggi includeranno i valori sensibili per intero. Le conversazioni già oscurate restano protette."
@@ -558,7 +565,18 @@
           "person": "Nome",
           "org": "Organizzazione",
           "place": "Luogo",
-          "ip_address": "Indirizzo IP"
+          "ip_address": "Indirizzo IP",
+          "passport": "Passaporto",
+          "ch_driving_licence": "Patente svizzera",
+          "ch_postfinance": "Conto PostFinance",
+          "dob": "Data di nascita",
+          "health": "Dati sanitari"
+        },
+        "severity": {
+          "critical": "Critico",
+          "high": "Alto",
+          "medium": "Medio",
+          "low": "Basso"
         }
       },
       "clearMessages": "Cancella tutti i messaggi",
@@ -664,7 +682,7 @@
       },
       "redactionWarning": {
         "title": "Inviare dati sensibili senza oscurarli?",
-        "body": "Questo messaggio contiene ancora {{ count }} valore/i sensibile/i rilevato/i che hai scelto di non oscurare. Il tuo fornitore li vedrà per intero.",
+        "body": "Questo messaggio contiene ancora {{ count }} valore/i sensibile/i rilevato/i di livello {{ severity }} che hai scelto di non oscurare. Il tuo fornitore li vedrà per intero.",
         "redactAndSend": "Oscura e invia",
         "sendAnyway": "Invia comunque",
         "cancel": "Continua a modificare"

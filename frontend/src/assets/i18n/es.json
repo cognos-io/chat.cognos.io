@@ -4,6 +4,13 @@
       "title": "Redacción de datos personales",
       "subtitle": "Detecta valores sensibles (correos, IBAN, números de identidad, etc.) y los reemplaza por marcadores antes de enviar tus mensajes a los proveedores de IA. Activado por defecto.",
       "toggleLabel": "Redactar valores sensibles",
+      "modeLabel": "Detección",
+      "modes": {
+        "off": "Desactivada",
+        "simple": "Simple (rápida)",
+        "better": "Mejor (más lenta)",
+        "comprehensive": "Completa (envía datos a servidores de Cognos)"
+      },
       "on": "Activado",
       "off": "Desactivado",
       "disabledNote": "La redacción está desactivada. Los nuevos mensajes incluirán los valores sensibles completos. Las conversaciones que ya redactaste siguen protegidas."
@@ -558,7 +565,18 @@
           "person": "Nombre",
           "org": "Organización",
           "place": "Lugar",
-          "ip_address": "Dirección IP"
+          "ip_address": "Dirección IP",
+          "passport": "Pasaporte",
+          "ch_driving_licence": "Permiso de conducir suizo",
+          "ch_postfinance": "Cuenta PostFinance",
+          "dob": "Fecha de nacimiento",
+          "health": "Datos de salud"
+        },
+        "severity": {
+          "critical": "Crítico",
+          "high": "Alto",
+          "medium": "Medio",
+          "low": "Bajo"
         }
       },
       "clearMessages": "Borrar todos los mensajes",
@@ -664,7 +682,7 @@
       },
       "redactionWarning": {
         "title": "¿Enviar datos sensibles sin redactar?",
-        "body": "Este mensaje todavía contiene {{ count }} valor(es) sensible(s) detectado(s) que elegiste no redactar. Tu proveedor los verá completos.",
+        "body": "Este mensaje todavía contiene {{ count }} valor(es) sensible(s) detectado(s) de nivel {{ severity }} que elegiste no redactar. Tu proveedor los verá completos.",
         "redactAndSend": "Redactar y enviar",
         "sendAnyway": "Enviar de todos modos",
         "cancel": "Seguir editando"

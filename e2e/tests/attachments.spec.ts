@@ -155,6 +155,42 @@ test.describe('composer attachments', () => {
     expect(sentSystemPrompt).toContain('placeholders');
   });
 
+  test('redacts typed prompt values before they reach the provider', async ({
+    page,
+  }) => {
+    await provisionUnlockedAccount(page);
+    await startConversation(page);
+
+    let sentMessages: Array<{ content?: string }> | undefined;
+    await page.route('**/complete', async (route) => {
+      if (route.request().method() === 'POST') {
+        const body = route.request().postDataJSON() as {
+          messages?: Array<{ content?: string }>;
+        };
+        sentMessages = body.messages;
+      }
+      await route.continue();
+    });
+
+    const email = 'jane@example.com';
+    const card = '4111111111111111';
+    await page
+      .getByLabel(COMPOSER_LABEL)
+      .fill(`Please help me with ${email} and card ${card}`);
+
+    const send = page.getByRole('button', { name: /^send$/i });
+    await expect(send).toBeEnabled();
+    await send.click();
+
+    await expect(page.getByText('Mocked assistant reply')).toBeVisible();
+
+    const content = sentMessages?.at(-1)?.content ?? '';
+    expect(content).not.toContain(email);
+    expect(content).not.toContain(card);
+    expect(content).toMatch(/\[\[PII_EMAIL_[A-Z0-9]+\]\]/);
+    expect(content).toMatch(/\[\[PII_CC_[A-Z0-9]+\]\]/);
+  });
+
   test('hydrates attachment redaction tokens and survives a reload', async ({
     page,
   }) => {

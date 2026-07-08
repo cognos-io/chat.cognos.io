@@ -1,0 +1,50 @@
+[
+  {
+    "id": "en-dob",
+    "locale": "en",
+    "text": "My date of birth is 1987-04-23.",
+    "expected": [{ "type": "dob", "value": "1987-04-23" }]
+  },
+  {
+    "id": "en-passport",
+    "locale": "en",
+    "text": "Passport CHX1234567 expires next year.",
+    "expected": [{ "type": "passport", "value": "CHX1234567" }]
+  },
+  {
+    "id": "en-driving-licence",
+    "locale": "en",
+    "text": "My driving licence is 123456789.",
+    "expected": [{ "type": "ch_driving_licence", "value": "123456789" }]
+  },
+  {
+    "id": "en-postfinance",
+    "locale": "en",
+    "text": "The PostFinance account is 12-345678-9.",
+    "expected": [{ "type": "ch_postfinance", "value": "12-345678-9" }]
+  },
+  {
+    "id": "en-health-insurance",
+    "locale": "en",
+    "text": "Insurance number 80756123456789012345 is on the card.",
+    "expected": [{ "type": "health", "value": "80756123456789012345" }]
+  },
+  {
+    "id": "negative-plain-number",
+    "locale": "en",
+    "text": "The invoice reference is 123456789.",
+    "expected": []
+  },
+  {
+    "id": "negative-date-without-context",
+    "locale": "en",
+    "text": "The release shipped on 1987-04-23.",
+    "expected": []
+  },
+  {
+    "id": "negative-account-without-context",
+    "locale": "en",
+    "text": "The formatting example is 12-345678-9.",
+    "expected": []
+  }
+]

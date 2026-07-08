@@ -4,6 +4,13 @@
       "title": "Masquage des données personnelles",
       "subtitle": "Détecte les valeurs sensibles (e-mails, IBAN, numéros d'identité, etc.) et les remplace par des espaces réservés avant l'envoi de vos messages aux fournisseurs d'IA. Activé par défaut.",
       "toggleLabel": "Masquer les valeurs sensibles",
+      "modeLabel": "Détection",
+      "modes": {
+        "off": "Désactivée",
+        "simple": "Simple (rapide)",
+        "better": "Meilleure (plus lente)",
+        "comprehensive": "Complète (envoie des données aux serveurs Cognos)"
+      },
       "on": "Activé",
       "off": "Désactivé",
       "disabledNote": "Le masquage est désactivé. Les nouveaux messages incluront les valeurs sensibles en entier. Les conversations déjà masquées restent protégées."
@@ -558,7 +565,18 @@
           "person": "Nom",
           "org": "Organisation",
           "place": "Lieu",
-          "ip_address": "Adresse IP"
+          "ip_address": "Adresse IP",
+          "passport": "Passeport",
+          "ch_driving_licence": "Permis de conduire suisse",
+          "ch_postfinance": "Compte PostFinance",
+          "dob": "Date de naissance",
+          "health": "Données de santé"
+        },
+        "severity": {
+          "critical": "Critique",
+          "high": "Élevé",
+          "medium": "Moyen",
+          "low": "Faible"
         }
       },
       "clearMessages": "Effacer tous les messages",
@@ -664,7 +682,7 @@
       },
       "redactionWarning": {
         "title": "Envoyer des données sensibles sans les masquer ?",
-        "body": "Ce message contient encore {{ count }} valeur(s) sensible(s) détectée(s) que vous avez choisi de ne pas masquer. Votre fournisseur les verra en clair.",
+        "body": "Ce message contient encore {{ count }} valeur(s) sensible(s) détectée(s) de niveau {{ severity }} que vous avez choisi de ne pas masquer. Votre fournisseur les verra en clair.",
         "redactAndSend": "Masquer et envoyer",
         "sendAnyway": "Envoyer quand même",
         "cancel": "Continuer la modification"

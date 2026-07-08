@@ -20,6 +20,11 @@ export type RedactionType =
   | 'credit_card'
   | 'secret'
   | 'phone'
+  | 'passport'
+  | 'ch_driving_licence'
+  | 'ch_postfinance'
+  | 'dob'
+  | 'health'
   // National identifiers / tax / health numbers (checksum-validated).
   | 'us_ssn'
   | 'uk_nino'
@@ -41,6 +46,38 @@ export type RedactionType =
   | 'place'
   // User-selected manual redaction (no detector).
   | 'custom';
+
+export const REDACTION_TYPES: readonly RedactionType[] = [
+  'iban',
+  'email',
+  'credit_card',
+  'secret',
+  'phone',
+  'passport',
+  'ch_driving_licence',
+  'ch_postfinance',
+  'dob',
+  'health',
+  'us_ssn',
+  'uk_nino',
+  'uk_nhs',
+  'fr_nir',
+  'it_codice_fiscale',
+  'it_partita_iva',
+  'de_steuer_id',
+  'ch_ahv',
+  'at_svnr',
+  'pt_nif',
+  'es_dni',
+  'es_nie',
+  'ip_address',
+  'person',
+  'org',
+  'place',
+  'custom',
+];
+
+export type RedactionMode = 'off' | 'simple' | 'better' | 'comprehensive';
 
 /** Where a redacted source originated. Modelled now so documents reuse it. */
 export type RedactionSourceKind =
