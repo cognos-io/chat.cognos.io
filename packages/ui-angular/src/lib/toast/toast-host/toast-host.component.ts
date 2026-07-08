@@ -69,7 +69,7 @@ import { CognosToastService } from '../toast.service';
         align-items: flex-start;
         gap: var(--cog-space-150);
         pointer-events: auto;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         box-shadow: var(--cog-shadow-overlay);

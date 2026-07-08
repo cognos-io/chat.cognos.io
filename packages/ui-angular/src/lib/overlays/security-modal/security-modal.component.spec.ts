@@ -2,16 +2,28 @@ import { TestBed } from '@angular/core/testing';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { CognosSecurityModalComponent } from './security-modal.component';
+import {
+  CognosSecurityModalComponent,
+  DEFAULT_SECURITY_MODAL_CONTENT,
+  type SecurityModalContent,
+} from './security-modal.component';
 
 describe('CognosSecurityModalComponent', () => {
   function render(
-    inputs: { open?: boolean; fingerprint?: string; verified?: boolean } = {},
+    inputs: {
+      open?: boolean;
+      fingerprint?: string;
+      verified?: boolean;
+      content?: SecurityModalContent;
+    } = {},
   ) {
     const fixture = TestBed.createComponent(CognosSecurityModalComponent);
     fixture.componentRef.setInput('open', inputs.open ?? true);
     fixture.componentRef.setInput('fingerprint', inputs.fingerprint ?? '');
     fixture.componentRef.setInput('verified', inputs.verified ?? false);
+    if (inputs.content) {
+      fixture.componentRef.setInput('content', inputs.content);
+    }
     fixture.detectChanges();
     return fixture;
   }
@@ -55,6 +67,35 @@ describe('CognosSecurityModalComponent', () => {
     expect(
       fixture.nativeElement.querySelector('.cog-security-modal__keys .cog-lozenge'),
     ).toBeNull();
+  });
+
+  it('renders the region-aware compute step, detail rows and links from content', () => {
+    const content: SecurityModalContent = {
+      ...DEFAULT_SECURITY_MODAL_CONTENT,
+      computeFlag: '🇪🇺',
+      computeTitle: 'EU gateway',
+      rows: [
+        { icon: 'sparkles', label: 'Model', value: 'Some Model · Some Provider' },
+        { icon: 'eraser', label: 'Auto-delete', value: 'After 30 days' },
+      ],
+      links: [
+        { label: 'How we keep it private', href: 'https://example.test/security' },
+      ],
+    };
+    const fixture = render({ content });
+    const text = fixture.nativeElement.textContent as string;
+
+    expect(text).toContain('EU gateway');
+    expect(text).toContain('🇪🇺');
+    expect(text).toContain('Some Model · Some Provider');
+    expect(text).toContain('After 30 days');
+
+    const link = fixture.nativeElement.querySelector(
+      '.cog-security-modal__link',
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('https://example.test/security');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
   });
 
   it('emits close when the footer action is pressed', () => {

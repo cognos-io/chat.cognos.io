@@ -72,7 +72,7 @@ import { LanguageService } from '@services/language.service';
       min-height: 36px;
       min-width: 84px;
       padding: 0 var(--cog-space-200);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface);
       color: var(--cog-text);
@@ -86,8 +86,8 @@ import { LanguageService } from '@services/language.service';
     }
 
     .lang-switcher__trigger:focus-visible {
-      outline: 2px solid var(--cog-brand);
-      outline-offset: 2px;
+      outline: var(--cog-border-width-strong) solid var(--cog-brand);
+      outline-offset: var(--cog-border-width-strong);
     }
 
     .lang-switcher__code {

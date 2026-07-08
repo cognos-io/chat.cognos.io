@@ -28,7 +28,7 @@
     "data": {
       "download": "Télécharger mes données",
       "preparing": "Préparation…",
-      "subtitle": "Téléchargez toutes vos conversations et messages — déchiffrés dans votre navigateur — au format JSON.",
+      "subtitle": "Téléchargez toutes vos conversations, vos personas, votre mémoire, vos projets et fichiers importés — déchiffrés dans votre navigateur.",
       "title": "Vos données"
     },
     "dataProcessing": {
@@ -142,13 +142,36 @@
       "exportedMany": "{{ count }} conversations exportées",
       "exportedOne": "1 conversation exportée",
       "passwordChanged": "Mot de passe modifié",
-      "profileUpdated": "Profil mis à jour"
+      "profileUpdated": "Profil mis à jour",
+      "retentionUpdated": "Réglage de suppression automatique enregistré",
+      "retentionError": "Impossible d'enregistrer le réglage de suppression automatique"
     },
     "memory": {
       "title": "Votre mémoire",
       "subtitle": "Des informations que vous avez épinglées dans votre mémoire personnelle. Elles sont stockées chiffrées et ajoutées au contexte de chaque conversation.",
       "save": "Enregistrer",
-      "saved": "Mémoire enregistrée"
+      "saved": "Mémoire enregistrée",
+      "toggleTitle": "Mémoire personnelle",
+      "toggleSubtitle": "Autorisez Cognos à mémoriser des informations vous concernant et à les ajouter au contexte des nouvelles conversations. Désactivée par défaut : activez-la pour utiliser la mémoire.",
+      "toggleLabel": "Utiliser la mémoire personnelle",
+      "on": "Activée",
+      "off": "Désactivée",
+      "enabledNote": "La mémoire est activée. Les nouvelles informations que vous ajoutez sont stockées chiffrées et incluses dans le contexte de vos conversations.",
+      "editorDisabledNote": "La mémoire personnelle est désactivée. Les éléments stockés sont affichés ici pour que vous puissiez les consulter ou les supprimer, mais rien de nouveau ne sera enregistré ni ajouté à vos conversations tant que vous n'aurez pas activé la mémoire.",
+      "delete": "Effacer la mémoire",
+      "deleting": "Effacement…",
+      "deleted": "Mémoire effacée",
+      "deleteError": "Impossible d'effacer votre mémoire. Veuillez réessayer."
+    },
+    "retention": {
+      "title": "Suppression automatique des discussions",
+      "subtitle": "Choisissez quand les conversations enregistrées sont supprimées. S'applique aux nouvelles discussions et à celles qui en héritent ; vous pouvez remplacer ce réglage pour chaque discussion.",
+      "note": "La suppression est définitive : une conversation supprimée et ses messages ne peuvent pas être récupérés. Décomptée à partir de la dernière activité de la discussion.",
+      "options": {
+        "never": "Jamais",
+        "sevenDays": "Après 7 jours",
+        "thirtyDays": "Après 30 jours"
+      }
     }
   },
   "auth": {
@@ -609,6 +632,8 @@
         "unavailable": "Déverrouillez votre coffre avant de joindre des fichiers",
         "tooMany": "Vous pouvez joindre jusqu’à {{ max }} fichiers",
         "providerNotice": "Les fichiers joints sont envoyés au fournisseur d’IA lorsqu’ils sont utilisés",
+        "truncated": "Tronqué",
+        "truncatedHint": "Seule la première partie de ce fichier a été envoyée à l’IA.",
         "dropHint": "Déposez des fichiers à joindre",
         "state": {
           "queued": "En file d’attente…",
@@ -636,6 +661,13 @@
         "resending": "Envoi…",
         "sent": "E-mail de vérification envoyé",
         "sentBody": "Vérifiez {{email}} pour trouver le lien de confirmation."
+      },
+      "redactionWarning": {
+        "title": "Envoyer des données sensibles sans les masquer ?",
+        "body": "Ce message contient encore {{ count }} valeur(s) sensible(s) détectée(s) que vous avez choisi de ne pas masquer. Votre fournisseur les verra en clair.",
+        "redactAndSend": "Masquer et envoyer",
+        "sendAnyway": "Envoyer quand même",
+        "cancel": "Continuer la modification"
       }
     },
     "conversation": {
@@ -670,7 +702,19 @@
       "hideValues": "Masquer les valeurs sensibles",
       "showValues": "Afficher les valeurs sensibles",
       "duplicate": "Dupliquer la conversation",
-      "memory": "Mémoire"
+      "memory": "Mémoire",
+      "enableMemory": "Utiliser la mémoire ici",
+      "disableMemory": "Ne pas utiliser la mémoire ici",
+      "memoryEnabledToast": "Mémoire activée pour cette conversation",
+      "memoryDisabledToast": "Mémoire désactivée pour cette conversation",
+      "memoryToggleError": "Impossible de mettre à jour la mémoire pour cette conversation",
+      "autoDelete": "Suppression automatique",
+      "autoDeleteValue": {
+        "inherit": "Réglage du compte",
+        "never": "Jamais",
+        "sevenDays": "7 jours",
+        "thirtyDays": "30 jours"
+      }
     },
     "icebreakers": {
       "items": {
@@ -988,6 +1032,71 @@
       "title": "Votre message n'a pas été envoyé",
       "body": "Un incident a interrompu la réponse. Votre message est toujours là — réessayez de l'envoyer.",
       "action": "Réessayer"
+    },
+    "accuracyDisclaimer": "L’IA peut se tromper. Vérifiez les informations importantes.",
+    "minimap": {
+      "label": "Navigateur de messages",
+      "jumpTo": "Aller au message : {{preview}}",
+      "noPreview": "(pas de texte)"
+    },
+    "privacy": {
+      "title": "Confidentialité et sécurité",
+      "seeDetails": "Voir les détails de confidentialité",
+      "receipt": "Traité par {{model}} · passerelle {{region}} · stocké chiffré · non utilisé pour l’entraînement · suppression automatique : {{retention}}",
+      "gateway": {
+        "ch_only": "Suisse",
+        "eu": "UE",
+        "global": "Monde"
+      },
+      "autoDelete": {
+        "off": "désactivée",
+        "days": "{{count}} jours"
+      },
+      "items": {
+        "stored": {
+          "title": "Chiffré sur cet appareil",
+          "copy": "Les messages sont scellés dans votre navigateur avant d’être stockés. Nous n’en gardons aucune copie lisible."
+        },
+        "readable": {
+          "title": "Vous seul pouvez les lire",
+          "copy": "Le déchiffrement a lieu sur votre appareil — ou sur ceux des personnes avec qui vous partagez explicitement."
+        },
+        "training": {
+          "title": "Non utilisé pour l’entraînement",
+          "copy": "Les fournisseurs approuvés répondent sous des conditions sans conservation ni entraînement. Vos conversations ne deviennent jamais des données d’entraînement."
+        },
+        "search": {
+          "title": "La recherche est locale",
+          "copy": "Votre historique est recherché sur cet appareil. Les requêtes ne nous sont jamais envoyées."
+        }
+      },
+      "caveat": {
+        "title": "La seule réserve honnête",
+        "copy": "Pour générer une réponse, le modèle doit lire votre message en clair — le temps de son exécution, dans la région que vous choisissez. Nous rechiffrons la réponse dès qu’elle est générée et ne stockons pas le texte en clair."
+      },
+      "flow": {
+        "device": "Votre appareil",
+        "encrypted": "Chiffré",
+        "reencrypted": "Rechiffré",
+        "compute": "En clair · transitoire"
+      },
+      "rows": {
+        "model": "Modèle",
+        "region": "Région",
+        "autoDelete": "Suppression automatique"
+      },
+      "keysLabel": "Vos clés",
+      "deviceKey": "Clé de l’appareil",
+      "verified": "Vérifiée",
+      "links": {
+        "security": "Comment nous préservons votre confidentialité",
+        "subprocessors": "Qui traite vos données"
+      }
+    },
+    "bookmark": {
+      "save": "Enregistrer dans les signets",
+      "saved": "Enregistré dans les signets",
+      "saveError": "Impossible d'enregistrer le signet. Veuillez réessayer."
     }
   },
   "common": {
@@ -1143,6 +1252,21 @@
         "footer": "Cognos · https://cognos.io"
       },
       "cantFindKey": "Vous ne trouvez pas votre clé de compte ? Recherchez le fichier cognos-emergency-kit.txt que vous avez enregistré lors de votre inscription."
+    },
+    "retention": {
+      "title": "Supprimer automatiquement cette discussion",
+      "body": "Choisissez quand cette conversation est supprimée, à compter de sa dernière activité.",
+      "note": "« Réglage du compte » suit le paramètre de votre compte. La suppression est définitive : les messages ne peuvent pas être récupérés.",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "saved": "Suppression automatique mise à jour",
+      "error": "Impossible de mettre à jour la suppression automatique. Veuillez réessayer.",
+      "options": {
+        "inherit": "Réglage du compte",
+        "never": "Jamais",
+        "sevenDays": "7 jours",
+        "thirtyDays": "30 jours"
+      }
     }
   },
   "errors": {
@@ -1314,7 +1438,8 @@
       "team": "Équipe et partage",
       "usage": "Utilisation",
       "memory": "Mémoire",
-      "library": "Bibliothèque"
+      "library": "Bibliothèque",
+      "bookmarks": "Signets"
     },
     "placeholder": {
       "comingSoon": "Cette section arrive bientôt."
@@ -1375,6 +1500,15 @@
         "downloadedToast": "Kit d'urgence téléchargé"
       },
       "passwordHeading": "Mot de passe"
+    },
+    "bookmarks": {
+      "title": "Vos signets",
+      "description": "Les passages que vous avez enregistrés depuis vos conversations. Ils sont stockés chiffrés — revenez à un message ou supprimez-en un.",
+      "empty": "Vous n'avez pas encore enregistré de signets. Surlignez du texte dans une conversation et choisissez « Enregistrer dans les signets ».",
+      "jump": "Aller",
+      "remove": "Supprimer",
+      "removed": "Signet supprimé",
+      "removeError": "Impossible de supprimer le signet. Veuillez réessayer."
     }
   },
   "models": {

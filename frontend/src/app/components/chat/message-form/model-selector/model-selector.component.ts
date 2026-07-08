@@ -46,6 +46,7 @@ import {
   modelSupportsCapability,
   orderModels,
 } from '@app/utils/model-discovery';
+import { regionFlag } from '@app/utils/region';
 
 // The segmented sort control's buttons. 'cost' is one segment that toggles
 // between ascending and descending on repeated taps; the other keys map 1:1 to
@@ -892,16 +893,10 @@ export class ModelSelectorComponent implements OnInit {
   }
 
   // A compact flag for the hosting region, replacing the country code to save
-  // space. Falls back to a globe for non-CH/EU hosting.
+  // space. Delegates to the shared helper so the selector, the per-answer
+  // privacy receipt and the privacy panel all resolve the region identically.
   protected regionFlag(model: Model): string {
-    const country = (model.hostingCountry ?? '').toUpperCase();
-    if (country === 'CH' || model.privacyTier === 'ch_only') {
-      return '🇨🇭';
-    }
-    if (country === 'EU' || model.privacyTier === 'eu') {
-      return '🇪🇺';
-    }
-    return '🌐';
+    return regionFlag(model);
   }
 
   protected ineligibilityId(model: Model): string {

@@ -48,7 +48,7 @@ export const DEFAULT_FILTER_OPTIONS: CognosFilterChipOption[] = [
 
       .cog-filter-chips__chip {
         min-height: 30px;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-pill);
         background: var(--cog-surface);
         padding: 0 var(--cog-space-150);
@@ -58,8 +58,8 @@ export const DEFAULT_FILTER_OPTIONS: CognosFilterChipOption[] = [
         cursor: pointer;
 
         &:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
         }
       }
 

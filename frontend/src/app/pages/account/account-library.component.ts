@@ -280,7 +280,7 @@ interface UsageLink {
       }
       .library__list {
         overflow: hidden;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
       }
@@ -299,7 +299,7 @@ interface UsageLink {
         width: 100%;
         font: inherit;
         padding: var(--cog-space-075) var(--cog-space-100);
-        border: 2px solid var(--cog-border);
+        border: var(--cog-border-width-strong) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-input-bg);
         color: var(--cog-text);

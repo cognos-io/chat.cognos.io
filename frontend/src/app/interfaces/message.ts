@@ -79,7 +79,21 @@ export const MessageData = z.object({
   // messages created before this field existed won't carry it.
   created_at: z.string().optional(),
   persona_id: z.string().optional(), // the persona used when generating the message
-  model_id: z.string().optional(), // the model used when generating the message
+  model_id: z.string().optional(), // the model REQUESTED when generating the message
+  // Immutable snapshot of the catalogue attributes of the model that ACTUALLY
+  // served this assistant turn, captured server-side at completion time. Unlike
+  // model_id (which is resolved against the LIVE catalogue at render time and so
+  // silently relabels if the catalogue changes), these pin what served the turn
+  // so the per-answer privacy receipt stays truthful. Catalogue metadata only.
+  // All optional: absent on user messages and on messages created before this
+  // existed — fall back to resolving model_id against the live catalogue then.
+  // Mirrors chat.ServedModel in the backend.
+  served_model_name: z.string().optional(),
+  served_provider_name: z.string().optional(),
+  served_provider_id: z.string().optional(),
+  served_privacy_tier: z.string().optional(), // "ch_only" | "eu" | "global"
+  served_hosting_country: z.string().optional(),
+  served_hosting_region: z.string().optional(),
   owner_id: z.string().optional(), // the user who sent the message
   // Provider usage counts for the turn that produced this assistant message:
   // input_tokens is the real prompt size that was sent, output_tokens the reply

@@ -8,16 +8,23 @@ import {
 export type TextExtractor = (bytes: Uint8Array) => Promise<string>;
 
 /**
- * runTextExtraction is the shared body for the document processors (PDF, DOCX,
- * Excel): run the injected extractor, fail with a clear `no_text_extracted`
- * error when nothing usable comes back (e.g. a scanned PDF), otherwise build the
- * standard extracted-text output. The extractor is injected so the processors
- * can be unit-tested without their heavy lazy-loaded libraries.
+ * runTextExtraction is the shared body for the document processors (PDF, DOCX):
+ * run the injected extractor, fail with a clear `no_text_extracted` error when
+ * nothing usable comes back (e.g. a scanned PDF), otherwise build the standard
+ * extracted-text output. The extractor is injected so the processors can be
+ * unit-tested without their heavy lazy-loaded libraries.
+ *
+ * An optional `fallback` extractor (e.g. OCR for a scanned/text-less PDF) runs
+ * strictly when the fast primary pass returns empty text. OCR is expensive, so
+ * it is gated behind the empty-text-layer condition and never runs otherwise.
+ * The final `no_text_extracted` throw still applies when the fallback also finds
+ * nothing.
  */
 export const runTextExtraction = async (
   extract: TextExtractor,
   input: ProcessorInput,
   normalizedType: string,
+  fallback?: TextExtractor,
 ): Promise<ProcessorOutput> => {
   let text: string;
   try {
@@ -27,6 +34,16 @@ export const runTextExtraction = async (
       'processing_failed',
       'Could not read this file',
     );
+  }
+  if (!text && fallback) {
+    try {
+      text = (await fallback(input.bytes)).trim();
+    } catch {
+      throw new AttachmentProcessingError(
+        'processing_failed',
+        'Could not read this file',
+      );
+    }
   }
   if (!text) {
     throw new AttachmentProcessingError(

@@ -25,6 +25,7 @@ import { CompactionDurableMemory } from '@app/interfaces/compaction';
 import { RedactionEntry } from '@app/redaction';
 import { RedactionService } from '@app/services/redaction.service';
 import { ScopedMemoryService } from '@app/services/scoped-memory.service';
+import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { VaultService } from '@app/services/vault.service';
 
 // AccountMemoryComponent is the settings page for the user's personal memory
@@ -50,6 +51,12 @@ import { VaultService } from '@app/services/vault.service';
         [subtitle]="t('account.memory.subtitle')"
       >
         <cog-card>
+          @if (!memoryEnabled()) {
+            <p class="memory-page__redaction-info" role="status">
+              <cog-icon name="info" [size]="14" tone="current" />
+              {{ t('account.memory.editorDisabledNote') }}
+            </p>
+          }
           @if (redactionEnabled()) {
             <p class="memory-page__redaction-info">
               <cog-icon name="shield-check" [size]="14" tone="current" />
@@ -77,8 +84,22 @@ import { VaultService } from '@app/services/vault.service';
             </div>
           </form>
 
-          <div card-actions>
-            <cog-button appearance="primary" [disabled]="saving()" (click)="save()">
+          <div card-actions class="memory-page__actions">
+            <cog-button
+              appearance="danger"
+              icon="eraser"
+              [disabled]="deleting() || !hasStoredMemory()"
+              (click)="clear()"
+            >
+              {{
+                deleting() ? t('account.memory.deleting') : t('account.memory.delete')
+              }}
+            </cog-button>
+            <cog-button
+              appearance="primary"
+              [disabled]="saving() || !memoryEnabled()"
+              (click)="save()"
+            >
               {{ t('account.memory.save') }}
             </cog-button>
           </div>
@@ -116,7 +137,7 @@ import { VaultService } from '@app/services/vault.service';
     .memory-page__field textarea {
       width: 100%;
       box-sizing: border-box;
-      border: 2px solid var(--cog-border);
+      border: var(--cog-border-width-strong) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-input-bg);
       color: var(--cog-text);
@@ -168,7 +189,10 @@ import { VaultService } from '@app/services/vault.service';
 
     .memory-page__actions {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--cog-space-150);
+      flex-wrap: wrap;
     }
   `,
 })
@@ -178,13 +202,20 @@ export class AccountMemoryComponent {
   private readonly _vault = inject(VaultService);
   private readonly _transloco = inject(TranslocoService);
   private readonly _toast = inject(CognosToastService);
+  private readonly _preferences = inject(UserPreferencesService);
 
   // Guards the one-shot load so the unlock effect doesn't reload on every
   // vault state change.
   private _loaded = false;
 
   readonly saving = signal(false);
+  readonly deleting = signal(false);
   readonly redactionEnabled = this._redaction.enabled;
+  readonly memoryEnabled = this._preferences.memoryEnabled;
+
+  // Whether there is a stored memory record to clear. Reads the memory signal so
+  // the Delete control enables/disables as memory is loaded, saved or cleared.
+  readonly hasStoredMemory = computed(() => !!this._scopedMemory.userMemory());
 
   readonly form = new FormGroup({
     items: new FormControl('', { nonNullable: true }),
@@ -248,6 +279,34 @@ export class AccountMemoryComponent {
           title: this._transloco.translate('account.memory.saved'),
         }),
       );
+  }
+
+  // clear deletes the stored personal memory (server record + local cache) and
+  // empties the editor. Available regardless of the opt-in toggle so a user can
+  // always remove what was captured before.
+  clear(): void {
+    if (this.deleting() || !this.hasStoredMemory()) {
+      return;
+    }
+    this.deleting.set(true);
+    this._scopedMemory
+      .deleteUserMemory()
+      .pipe(
+        finalize(() => this.deleting.set(false)),
+        catchError(() => {
+          this._toast.notify({
+            title: this._transloco.translate('account.memory.deleteError'),
+            tone: 'danger',
+          });
+          return EMPTY;
+        }),
+      )
+      .subscribe(() => {
+        this.form.setValue({ items: '' });
+        this._toast.notify({
+          title: this._transloco.translate('account.memory.deleted'),
+        });
+      });
   }
 
   private populate(): void {

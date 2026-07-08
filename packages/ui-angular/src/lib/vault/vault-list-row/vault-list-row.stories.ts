@@ -1,9 +1,8 @@
-import { moduleMetadata, type Meta, type StoryObj } from "@storybook/angular";
+import { type Meta, type StoryObj, moduleMetadata } from '@storybook/angular';
 
-import { STORY_VAULT_FILES } from "../../extension-story-data";
-import type { CognosVaultFile } from "../vault.types";
-
-import { CognosVaultListRowComponent } from "./vault-list-row.component";
+import { STORY_VAULT_FILES } from '../../extension-story-data';
+import type { CognosVaultFile } from '../vault.types';
+import { CognosVaultListRowComponent } from './vault-list-row.component';
 
 type StoryArgs = {
   file: CognosVaultFile;
@@ -13,12 +12,12 @@ type StoryArgs = {
 };
 
 const meta: Meta<StoryArgs> = {
-  title: "Extension/Vault/Vault List Row",
+  title: 'Extension/Vault/Vault List Row',
   decorators: [moduleMetadata({ imports: [CognosVaultListRowComponent] })],
   argTypes: {
-    file: { control: "object" },
-    more: { action: "more" },
-    open: { action: "open" },
+    file: { control: 'object' },
+    more: { action: 'more' },
+    open: { action: 'open' },
   },
   args: {
     file: STORY_VAULT_FILES[1],
@@ -26,7 +25,7 @@ const meta: Meta<StoryArgs> = {
   },
   render: (args) => ({
     props: args,
-    template: `<div style="width:720px; border:1px solid var(--cog-border); border-radius:var(--cog-radius-md); overflow:hidden; background:var(--cog-surface);"><cog-vault-list-row [file]="file" [top]="top" (open)="open($event)" (more)="more($event)" /></div>`,
+    template: `<div style="width:720px; border:var(--cog-border-width) solid var(--cog-border); border-radius:var(--cog-radius-md); overflow:hidden; background:var(--cog-surface);"><cog-vault-list-row [file]="file" [top]="top" (open)="open($event)" (more)="more($event)" /></div>`,
   }),
 };
 

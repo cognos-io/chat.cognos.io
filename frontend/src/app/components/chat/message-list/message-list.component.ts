@@ -30,6 +30,7 @@ import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loa
 import { Message } from '@app/interfaces/message';
 import { ConversationService } from '@app/services/conversation.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
+import { scrollMessageIntoView } from '@app/utils/scroll-to-message';
 
 import { MessageListItemComponent } from '../message-list-item/message-list-item.component';
 import {
@@ -289,6 +290,15 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
       left: 0,
       behavior: smooth ? 'smooth' : 'instant',
     });
+  }
+
+  /**
+   * Scroll a message into view by its persisted record id (used by the minimap
+   * and bookmark jump). Returns false when the message isn't in the currently
+   * rendered branch/page (paginated out, temporary chat, or still streaming).
+   */
+  scrollToMessage(recordId: string, smooth: boolean = true): boolean {
+    return scrollMessageIntoView(this._wrapper()?.nativeElement, recordId, smooth);
   }
 
   onScrollUp(): void {

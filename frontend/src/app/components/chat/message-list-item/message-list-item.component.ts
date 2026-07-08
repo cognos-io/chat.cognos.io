@@ -10,6 +10,7 @@ import {
   HostListener,
   Input,
   type OnChanges,
+  computed,
   effect,
   inject,
   signal,
@@ -36,6 +37,14 @@ import {
   MessageBranchInfo,
 } from '@cognos/ui-angular';
 
+import {
+  BookmarkAnchor,
+  captureAnchor,
+} from '@app/components/chat/bookmark-highlight/bookmark-anchor';
+import {
+  anchorFromRange,
+  plainText,
+} from '@app/components/chat/bookmark-highlight/bookmark-dom';
 import { DocumentCardComponent } from '@app/components/chat/document-card/document-card.component';
 import {
   MessageAttachmentChip,
@@ -53,15 +62,22 @@ import { Message, isMessageFromUser } from '@app/interfaces/message';
 import { Model } from '@app/interfaces/model';
 import { Persona } from '@app/interfaces/persona';
 import { containsRedactionToken } from '@app/redaction';
+import { AuthService } from '@app/services/auth.service';
+import { BookmarkService } from '@app/services/bookmark.service';
 import { CompactionService } from '@app/services/compaction.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { MessageService } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
+import { PrivacyPanelService } from '@app/services/privacy-panel.service';
 import { RedactionService } from '@app/services/redaction.service';
 import { ScopedMemoryService } from '@app/services/scoped-memory.service';
+import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { Citation, CitationAnchor } from '@app/utils/citations';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
+import { privacyReceiptLine } from '@app/utils/privacy-copy';
+import { effectiveRetentionDays } from '@app/utils/retention';
+import { resolveServedModel } from '@app/utils/served-model';
 import {
   StreamingMarkdownSplit,
   splitStreamingMarkdown,
@@ -242,7 +258,10 @@ import {
                   </div>
                 }
                 @if (message.decryptedData.content) {
-                  <app-redacted-markdown [content]="message.decryptedData.content" />
+                  <app-redacted-markdown
+                    [content]="message.decryptedData.content"
+                    [bookmarks]="bookmarksForMessage()"
+                  />
                 } @else if (!fileChips().length) {
                   <p class="message-list-item__empty">
                     {{ t('chat.message.empty') }}
@@ -352,7 +371,10 @@ import {
                 </p>
               } @else if (displayImageUrls().length) {
                 @if (message.decryptedData.content) {
-                  <app-redacted-markdown [content]="message.decryptedData.content" />
+                  <app-redacted-markdown
+                    [content]="message.decryptedData.content"
+                    [bookmarks]="bookmarksForMessage()"
+                  />
                 }
                 <cog-image-grid
                   [images]="displayImageUrls()"
@@ -393,6 +415,7 @@ import {
                       [content]="message.decryptedData.content"
                       [citations]="citations()"
                       [citationAnchors]="citationAnchors()"
+                      [bookmarks]="bookmarksForMessage()"
                     />
                   }
                 } @else {
@@ -436,6 +459,20 @@ import {
                 <p class="message-list-item__empty">
                   {{ t('chat.message.emptyAssistant') }}
                 </p>
+              }
+
+              @if (privacyReceipt(); as receipt) {
+                <!-- Per-answer privacy receipt: a quiet muted line that is also
+                     the entry point into the full per-chat privacy panel. -->
+                <button
+                  type="button"
+                  class="message-list-item__receipt"
+                  [title]="t('chat.privacy.seeDetails')"
+                  (click)="openPrivacyPanel()"
+                >
+                  <cog-icon name="shield-check" [size]="12" tone="text-subtlest" />
+                  <span class="message-list-item__receipt-text">{{ receipt }}</span>
+                </button>
               }
 
               @if (message.decryptedData.content || message.record_id) {
@@ -482,10 +519,18 @@ import {
             {{ t('chat.memory.addToProject') }}
           </button>
         }
-        <button type="button" (click)="addSelectionToMemory('user', pop.text)">
-          <cog-icon name="users" [size]="14" tone="current" />
-          {{ t('chat.memory.addToUser') }}
-        </button>
+        @if (canAddToUserMemory()) {
+          <button type="button" (click)="addSelectionToMemory('user', pop.text)">
+            <cog-icon name="users" [size]="14" tone="current" />
+            {{ t('chat.memory.addToUser') }}
+          </button>
+        }
+        @if (bookmarkCandidate()) {
+          <button type="button" (click)="saveBookmark()">
+            <cog-icon name="pin" [size]="14" tone="current" />
+            {{ t('chat.bookmark.save') }}
+          </button>
+        }
       </div>
     }
   `,
@@ -507,7 +552,7 @@ import {
       display: flex;
       flex-direction: column;
       gap: var(--cog-space-025);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
       box-shadow: var(--cog-shadow-overlay);
@@ -594,6 +639,34 @@ import {
       margin: 0;
       color: var(--cog-text-subtlest);
       font-style: italic;
+    }
+
+    /* Per-answer privacy receipt: intentionally quiet — a muted, small line that
+       reveals its full detail in the privacy panel on click. */
+    .message-list-item__receipt {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-050);
+      max-width: 100%;
+      border: 0;
+      background: transparent;
+      padding: var(--cog-space-025) 0;
+      color: var(--cog-text-subtlest);
+      font: inherit;
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .message-list-item__receipt:hover .message-list-item__receipt-text,
+    .message-list-item__receipt:focus-visible .message-list-item__receipt-text {
+      color: var(--cog-text-subtle);
+      text-decoration: underline;
+    }
+
+    .message-list-item__receipt-text {
+      min-width: 0;
     }
 
     .message-list-item__typing {
@@ -719,8 +792,8 @@ import {
     }
 
     .message-list-item__reasoning-toggle:focus-visible {
-      outline: 2px solid var(--cog-brand);
-      outline-offset: 2px;
+      outline: var(--cog-border-width-strong) solid var(--cog-brand);
+      outline-offset: var(--cog-border-width-strong);
       border-radius: var(--cog-radius-xs);
     }
 
@@ -739,7 +812,7 @@ import {
     .message-list-item__reasoning-body {
       margin-block-start: var(--cog-space-050);
       padding-inline-start: var(--cog-space-100);
-      border-inline-start: 2px solid var(--cog-border);
+      border-inline-start: var(--cog-border-width-strong) solid var(--cog-border);
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-body-sm);
     }
@@ -762,7 +835,7 @@ import {
       box-sizing: border-box;
       min-height: 64px;
       resize: vertical;
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-xs);
       background: var(--cog-input-bg);
       padding: var(--cog-space-100);
@@ -775,8 +848,8 @@ import {
     .message-list-item__edit-input:focus-visible {
       border-color: var(--cog-brand);
       background: var(--cog-input-bg-focus);
-      outline: 2px solid var(--cog-brand);
-      outline-offset: 1px;
+      outline: var(--cog-border-width-strong) solid var(--cog-brand);
+      outline-offset: var(--cog-border-width);
     }
 
     .message-list-item__edit-actions {
@@ -792,9 +865,13 @@ export class MessageListItemComponent implements OnChanges {
   private readonly _personaService = inject(PersonaService);
   private readonly _messageService = inject(MessageService);
   private readonly _conversationService = inject(ConversationService);
+  private readonly _authService = inject(AuthService);
+  private readonly _privacyPanel = inject(PrivacyPanelService);
   private readonly _redactionService = inject(RedactionService);
   private readonly _compactionService = inject(CompactionService);
   private readonly _scopedMemory = inject(ScopedMemoryService);
+  private readonly _bookmarkService = inject(BookmarkService);
+  private readonly _userPreferences = inject(UserPreferencesService);
   private readonly _toast = inject(CognosToastService);
   private readonly _documentExport = inject(DocumentExportService);
   private readonly _cdr = inject(ChangeDetectorRef);
@@ -883,6 +960,9 @@ export class MessageListItemComponent implements OnChanges {
 
   ngOnChanges(): void {
     const message = this.message;
+    // Keep the record-id signal in sync so bookmarksForMessage() (a computed)
+    // re-derives when this item is bound to a different message.
+    this._recordId.set(message?.record_id);
     const attachments = message?.decryptedData.attachments ?? [];
     if (!message?.record_id || attachments.length === 0) {
       return;
@@ -1102,22 +1182,48 @@ export class MessageListItemComponent implements OnChanges {
     null,
   );
 
+  // The record id of the bound message, mirrored into a signal so
+  // bookmarksForMessage() (a computed) tracks it (Input isn't reactive).
+  private readonly _recordId = signal<string | undefined>(undefined);
+
+  // A pending bookmark for the current selection: the text-quote anchor captured
+  // against the message's rendered-markdown root. Set alongside the memory
+  // popover, so the same floating menu offers "Save to bookmarks".
+  readonly bookmarkCandidate = signal<BookmarkAnchor | null>(null);
+
+  // The saved-bookmark anchors to paint over this message's main content. Reads
+  // the bookmark cache so late-loaded bookmarks paint once decrypted.
+  readonly bookmarksForMessage = computed<BookmarkAnchor[]>(() => {
+    const id = this._recordId();
+    if (!id) {
+      return [];
+    }
+    return this._bookmarkService.forMessage(id).map((bookmark) => ({
+      quote: bookmark.quote,
+      prefix: bookmark.prefix,
+      suffix: bookmark.suffix,
+    }));
+  });
+
   @HostListener('mouseup')
   onMouseUp(): void {
     if (!this.canAddToMemory()) {
       this.addToMemoryPopover.set(null);
+      this.bookmarkCandidate.set(null);
       return;
     }
     const selection = window.getSelection();
     const text = selection?.toString().trim() ?? '';
     if (!text || !selection || selection.rangeCount === 0) {
       this.addToMemoryPopover.set(null);
+      this.bookmarkCandidate.set(null);
       return;
     }
     // Only act on a selection that lives inside this message.
     const range = selection.getRangeAt(0);
     if (!this._elementRef.nativeElement.contains(range.commonAncestorContainer)) {
       this.addToMemoryPopover.set(null);
+      this.bookmarkCandidate.set(null);
       return;
     }
     const rect = range.getBoundingClientRect();
@@ -1125,6 +1231,77 @@ export class MessageListItemComponent implements OnChanges {
       x: rect.left + rect.width / 2,
       y: rect.top,
       text,
+    });
+    this.bookmarkCandidate.set(this.captureBookmarkAnchor(range));
+  }
+
+  // captureBookmarkAnchor builds a text-quote anchor from the selection, rooted
+  // at the closest app-redacted-markdown host so its offsets match the element
+  // the highlight is later painted over. Requires a persisted message.
+  private captureBookmarkAnchor(range: Range): BookmarkAnchor | null {
+    if (!this.message?.record_id) {
+      return null;
+    }
+    const root = this.markdownRootForRange(range);
+    if (root) {
+      return anchorFromRange(root, range);
+    }
+
+    const selectedText = range.toString().trim();
+    if (!selectedText) {
+      return null;
+    }
+    const candidates = Array.from(
+      this._elementRef.nativeElement.querySelectorAll<HTMLElement>(
+        'app-redacted-markdown',
+      ),
+    );
+    for (const candidate of candidates) {
+      const text = plainText(candidate);
+      const start = text.indexOf(selectedText);
+      if (start !== -1) {
+        return captureAnchor(text, start, start + selectedText.length);
+      }
+    }
+    return null;
+  }
+
+  private markdownRootForRange(range: Range): HTMLElement | null {
+    const startRoot = this.markdownRootForNode(range.startContainer);
+    const endRoot = this.markdownRootForNode(range.endContainer);
+    if (startRoot && startRoot === endRoot) {
+      return startRoot;
+    }
+    return null;
+  }
+
+  private markdownRootForNode(node: Node): HTMLElement | null {
+    const element = node instanceof Element ? node : (node.parentElement ?? null);
+    return element?.closest<HTMLElement>('app-redacted-markdown') ?? null;
+  }
+
+  // saveBookmark seals the pending anchor to the user's vault key and stores it,
+  // toasting success/error. Clears the selection and popover on completion.
+  saveBookmark(): void {
+    const anchor = this.bookmarkCandidate();
+    const conversation = this._conversationService.conversation();
+    const messageId = this.message?.record_id;
+    this.addToMemoryPopover.set(null);
+    this.bookmarkCandidate.set(null);
+    window.getSelection()?.removeAllRanges();
+    if (!anchor || !conversation || !messageId) {
+      return;
+    }
+    this._bookmarkService.create(conversation.record.id, messageId, anchor).subscribe({
+      next: () =>
+        this._toast.notify({
+          title: this._transloco.translate('chat.bookmark.saved'),
+        }),
+      error: () =>
+        this._toast.notify({
+          title: this._transloco.translate('chat.bookmark.saveError'),
+          tone: 'danger',
+        }),
     });
   }
 
@@ -1139,6 +1316,7 @@ export class MessageListItemComponent implements OnChanges {
       return;
     }
     this.addToMemoryPopover.set(null);
+    this.bookmarkCandidate.set(null);
   }
 
   // canAddToMemory gates the popover: a persisted conversation the user can
@@ -1151,6 +1329,12 @@ export class MessageListItemComponent implements OnChanges {
       !this._conversationService.isTemporaryConversation() &&
       !!conversation.keyPair
     );
+  }
+
+  // canAddToUserMemory reports whether the "User" scope option should appear —
+  // only when personal memory is switched on (otherwise the write is a no-op).
+  canAddToUserMemory(): boolean {
+    return this._userPreferences.memoryEnabled();
   }
 
   // canAddToProject reports whether the project-memory option should appear —
@@ -1429,6 +1613,32 @@ export class MessageListItemComponent implements OnChanges {
     }
 
     return this.persona?.name ?? this.model?.name ?? 'Cognos';
+  }
+
+  // The per-answer privacy receipt line, or null when it shouldn't show (no
+  // message, still streaming, deleted, or nothing to attribute it to). Prefers
+  // the served_* snapshot; falls back to the live catalogue via `this.model`.
+  privacyReceipt(): string | null {
+    const message = this.message;
+    if (!message || message.isStreaming || message.decryptedData.deleted) {
+      return null;
+    }
+    const served = resolveServedModel(message.decryptedData, this.model);
+    if (!served) {
+      return null;
+    }
+    const days = effectiveRetentionDays(
+      this._conversationService.conversation()?.record.retention_days,
+      this._authService.defaultRetentionDays(),
+    );
+    return privacyReceiptLine(served, days, (key, params) =>
+      this._transloco.translate(key, params),
+    );
+  }
+
+  // Open the full per-chat privacy panel (rendered once, in the chat header).
+  openPrivacyPanel(): void {
+    this._privacyPanel.open();
   }
 
   userMeta() {

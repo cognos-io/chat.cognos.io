@@ -78,8 +78,19 @@ type Payload struct {
 	SourceTokenEstimate  int `json:"source_token_estimate"`
 	SummaryTokenEstimate int `json:"summary_token_estimate"`
 
-	ModelID       string     `json:"model_id"`
-	PromptVersion string     `json:"prompt_version"`
-	OutputMode    OutputMode `json:"output_mode"`
-	CreatedAt     string     `json:"created_at"`
+	ModelID string `json:"model_id"`
+	// Served* snapshot the catalogue attributes of the model that ACTUALLY ran
+	// this compaction, captured at serve time so a later catalogue edit cannot
+	// relabel it — mirrors chat.ServedModel on assistant messages. Catalogue
+	// metadata only (never user content). Optional: compactions created before
+	// this existed omit them.
+	ServedModelName      string     `json:"served_model_name,omitempty"`
+	ServedProviderName   string     `json:"served_provider_name,omitempty"`
+	ServedProviderID     string     `json:"served_provider_id,omitempty"`
+	ServedPrivacyTier    string     `json:"served_privacy_tier,omitempty"`
+	ServedHostingCountry string     `json:"served_hosting_country,omitempty"`
+	ServedHostingRegion  string     `json:"served_hosting_region,omitempty"`
+	PromptVersion        string     `json:"prompt_version"`
+	OutputMode           OutputMode `json:"output_mode"`
+	CreatedAt            string     `json:"created_at"`
 }

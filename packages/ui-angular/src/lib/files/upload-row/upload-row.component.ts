@@ -69,7 +69,7 @@ import { CognosProgressComponent } from '../progress/progress.component';
         display: flex;
         align-items: center;
         gap: var(--cog-space-150);
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface);
         padding: 10px var(--cog-space-150);
@@ -136,8 +136,8 @@ import { CognosProgressComponent } from '../progress/progress.component';
         }
 
         &:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
         }
       }
     `,

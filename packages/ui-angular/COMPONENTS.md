@@ -68,15 +68,17 @@ When something is used in **more than two** places and no component fits, extrac
 
 ## Chat & conversation
 
-| Selector                                                             | When to use                                               |
-| -------------------------------------------------------------------- | --------------------------------------------------------- |
-| `cog-user-message` / `cog-assistant-message` / `cog-section-message` | Chat message bubbles (user / assistant / system-section). |
-| `cog-composer`                                                       | The chat message composer.                                |
-| `cog-branch-switcher`                                                | Switch between message-tree branches.                     |
-| `cog-redacted-text`                                                  | Render text with redaction pills.                         |
-| `cog-code-block`                                                     | A syntax-highlighted code block.                          |
-| `cog-source-card` / `cog-sources-row`                                | Citation source card / row.                               |
-| `cog-vault-ref-chip`                                                 | A reference chip to a vault item.                         |
+| Selector                                                             | When to use                                                                                                                                                                               |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cog-user-message` / `cog-assistant-message` / `cog-section-message` | Chat message bubbles (user / assistant / system-section).                                                                                                                                 |
+| `cog-composer`                                                       | The chat message composer.                                                                                                                                                                |
+| `cog-branch-switcher`                                                | Switch between message-tree branches.                                                                                                                                                     |
+| `cog-conversation-minimap`                                           | Slim right-gutter rail of ticks (one per turn) that previews on hover and emits `jump`; pass localised `ticks` (`{id, preview, ariaLabel}`) + `navLabel`, track `activeId`. Desktop-only. |
+| `cog-bookmark-list`                                                  | Settings-page list of saved highlights (quote + optional note) with Jump/Remove actions; pass mapped `bookmarks` (`{id, quote, note?}`) + localised `labels`, wire `jump`/`remove`.       |
+| `cog-redacted-text`                                                  | Render text with redaction pills.                                                                                                                                                         |
+| `cog-code-block`                                                     | A syntax-highlighted code block.                                                                                                                                                          |
+| `cog-source-card` / `cog-sources-row`                                | Citation source card / row.                                                                                                                                                               |
+| `cog-vault-ref-chip`                                                 | A reference chip to a vault item.                                                                                                                                                         |
 
 ## Behaviours (directives & utilities)
 
@@ -90,10 +92,15 @@ Adopt in ~3 lines — put the directive on the trigger wrapper, gate the popover
 signal, and mark the popover element (it self-registers via DI, works inside `@if`):
 
 ```html
-<span cogHoverIntent #hi="cogHoverIntent" [cogHoverIntentPlacement]="'top'" [cogHoverIntentGraceMs]="500">
+<span
+  cogHoverIntent
+  #hi="cogHoverIntent"
+  [cogHoverIntentPlacement]="'top'"
+  [cogHoverIntentGraceMs]="500"
+>
   <button [attr.aria-expanded]="hi.opened()">…</button>
   @if (hi.opened()) {
-    <div cogHoverIntentPopover role="dialog">…</div>
+  <div cogHoverIntentPopover role="dialog">…</div>
   }
 </span>
 ```

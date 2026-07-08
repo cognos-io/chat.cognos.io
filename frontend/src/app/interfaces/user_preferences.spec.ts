@@ -92,6 +92,14 @@ describe('parseUserPreferencesData', () => {
     expect(parseUserPreferencesData(payload).modelSortMode).toBe('recommended');
   });
 
+  it('defaults memoryEnabled to false for older payloads (opt-in)', () => {
+    // Personal memory is opt-in: payloads that predate the key must decrypt to
+    // false so memory stays off until the user explicitly enables it.
+    const payload = encode(JSON.stringify({ pinnedConversations: ['c-1'] }));
+
+    expect(parseUserPreferencesData(payload).memoryEnabled).toBe(false);
+  });
+
   it('rejects payloads missing pinnedConversations', () => {
     const payload = encode(JSON.stringify({ pinnedModels: [] }));
     expect(() => parseUserPreferencesData(payload)).toThrow();
@@ -126,6 +134,7 @@ describe('serializeUserPreferencesData', () => {
       defaultPersonaId: 'cognos:simple-assistant',
       defaultModelId: 'm-1',
       redactionEnabled: false,
+      memoryEnabled: true,
       modelReasoningEfforts: { 'm-1': 'high' },
       recentModels: ['m-1', 'm-2'],
       hiddenModels: ['m-3'],

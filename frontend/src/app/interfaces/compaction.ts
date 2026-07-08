@@ -32,6 +32,15 @@ export const CompactionPayload = z.object({
   source_token_estimate: z.number().default(0),
   summary_token_estimate: z.number().default(0),
   model_id: z.string().default(''),
+  // Snapshot of the catalogue attributes of the model that actually ran this
+  // compaction, captured server-side at serve time (mirrors chat.ServedModel on
+  // assistant messages). Catalogue metadata only; optional for older records.
+  served_model_name: z.string().optional(),
+  served_provider_name: z.string().optional(),
+  served_provider_id: z.string().optional(),
+  served_privacy_tier: z.string().optional(),
+  served_hosting_country: z.string().optional(),
+  served_hosting_region: z.string().optional(),
   prompt_version: z.string().default(''),
   output_mode: z.string().default(''),
   created_at: z.string().default(''),

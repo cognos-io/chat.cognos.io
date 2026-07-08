@@ -104,8 +104,8 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
     }
 
     .conversation-list-item__link:focus-visible {
-      outline: 2px solid var(--cog-brand);
-      outline-offset: 2px;
+      outline: var(--cog-border-width-strong) solid var(--cog-brand);
+      outline-offset: var(--cog-border-width-strong);
     }
 
     .conversation-list-item__link--active {

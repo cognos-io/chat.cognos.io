@@ -65,7 +65,8 @@ const featureBentoItems: FeatureBentoItem[] = [
       flex-direction: column;
       justify-content: space-between;
       gap: var(--cog-space-150);
-      border: 1px solid color-mix(in srgb, var(--cog-border) 72%, transparent);
+      border: var(--cog-border-width) solid
+        color-mix(in srgb, var(--cog-border) 72%, transparent);
       border-radius: var(--cog-radius-md);
       background: color-mix(in srgb, var(--cog-surface) 78%, transparent);
       padding: var(--cog-space-200);

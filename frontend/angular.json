@@ -51,6 +51,21 @@
                 "input": "node_modules/pdfjs-dist/build",
                 "output": "assets"
               },
+              {
+                "glob": "worker.min.js",
+                "input": "node_modules/tesseract.js/dist",
+                "output": "assets/tesseract"
+              },
+              {
+                "glob": "tesseract-core*lstm.wasm.js",
+                "input": "node_modules/tesseract.js-core",
+                "output": "assets/tesseract"
+              },
+              {
+                "glob": "eng.traineddata.gz",
+                "input": "node_modules/@tesseract.js-data/eng/4.0.0_best_int",
+                "output": "assets/tesseract"
+              },
               "src/_headers"
             ],
             "styles": [

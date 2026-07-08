@@ -1,0 +1,46 @@
+# syntax=docker/dockerfile:1
+
+FROM golang:1.26.4-alpine3.22 AS builder
+
+WORKDIR /src/backend
+
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+
+COPY backend ./
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/cognos-api ./cmd/api
+
+FROM alpine:3.22.1
+
+RUN apk add --no-cache ca-certificates socat tzdata && \
+    addgroup -g 1001 -S cognos && \
+    adduser -u 1001 -S -D -H -G cognos -h /app cognos && \
+    mkdir -p /app/db /app/configs /app/pb_data /run/cognos /tmp && \
+    chown -R cognos:cognos /app /run/cognos /tmp && \
+    chmod 700 /app/pb_data /run/cognos
+
+WORKDIR /app
+
+COPY --from=builder /out/cognos-api /usr/local/bin/cognos-api
+COPY --from=builder /src/backend/db ./db
+COPY --from=builder /src/backend/configs/api.example.yaml ./configs/api.example.yaml
+COPY container/backend/entrypoint.sh /usr/local/bin/cognos-backend-entrypoint
+
+RUN chmod 0755 /usr/local/bin/cognos-api /usr/local/bin/cognos-backend-entrypoint
+
+USER 1001:1001
+
+EXPOSE 8090
+
+# Required writable paths when the container is run with --read-only:
+# - /app/pb_data: PocketBase SQLite database, uploads, logs and migrations state.
+# - /tmp: temporary files used by Go/PocketBase dependencies.
+# - /run/cognos: optional Unix socket directory for Caddy.
+VOLUME ["/app/pb_data", "/tmp", "/run/cognos"]
+
+ENV COGNOS_BACKEND_HTTP_ADDR=0.0.0.0:8090 \
+    COGNOS_BACKEND_UNIX_SOCKET= \
+    COGNOS_BACKEND_UNIX_SOCKET_MODE=660
+
+ENTRYPOINT ["cognos-backend-entrypoint"]
+CMD ["serve"]

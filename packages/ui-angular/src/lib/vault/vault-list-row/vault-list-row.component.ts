@@ -91,20 +91,20 @@ import type { CognosVaultFile } from '../vault.types';
         }
 
         &:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: -2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: calc(var(--cog-border-width-strong) * -1);
         }
       }
 
       .cog-vault-list-row--top {
-        border-top: 1px solid var(--cog-border);
+        border-top: var(--cog-border-width) solid var(--cog-border);
       }
 
       .cog-vault-list-row__thumb {
         overflow: hidden;
         width: 34px;
         height: 34px;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
       }
 
@@ -170,8 +170,8 @@ import type { CognosVaultFile } from '../vault.types';
       }
 
       .cog-vault-list-row__refs--button:focus-visible {
-        outline: 2px solid var(--cog-brand);
-        outline-offset: 2px;
+        outline: var(--cog-border-width-strong) solid var(--cog-brand);
+        outline-offset: var(--cog-border-width-strong);
         border-radius: var(--cog-radius-xs);
       }
     `,

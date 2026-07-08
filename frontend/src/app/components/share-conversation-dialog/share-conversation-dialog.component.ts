@@ -289,7 +289,7 @@ type ShareState = 'checking' | 'idle' | 'shared';
       align-items: center;
       gap: var(--cog-space-075);
       min-height: 40px;
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-input-bg);
       padding: 0 var(--cog-space-150);
@@ -330,7 +330,7 @@ type ShareState = 'checking' | 'idle' | 'shared';
       gap: var(--cog-space-150);
       align-items: flex-start;
       padding: var(--cog-space-150);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       cursor: pointer;
       transition:

@@ -73,7 +73,7 @@
 
 .personas-page__view-toggle {
   display: inline-flex;
-  border: 1px solid var(--cog-border);
+  border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-sm);
   overflow: hidden;
   background: var(--cog-surface);
@@ -171,7 +171,7 @@
   gap: var(--cog-space-150);
   text-align: start;
   padding: var(--cog-space-150);
-  border: 1px solid var(--cog-border);
+  border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-md);
   background: var(--cog-surface);
   cursor: pointer;
@@ -189,7 +189,7 @@
 .persona-card.is-active {
   border-color: var(--cog-brand);
   background: var(--cog-success-bg);
-  box-shadow: 0 0 0 1px var(--cog-brand);
+  box-shadow: 0 0 0 var(--cog-border-width) var(--cog-brand);
 }
 
 .persona-card__top {

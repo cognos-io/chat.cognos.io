@@ -166,8 +166,12 @@ export interface GenerateImageResponse {
     attachment?: {
       kind: string;
       mime_type: string;
-      file_name: string;
-      sealed_key: string;
+      // Persisted (conversation) path: fetch the encrypted file + decrypt.
+      file_name?: string;
+      sealed_key?: string;
+      // Inline (temporary-chat) path: raw image bytes base64-encoded, never
+      // stored server-side. Present when kind === 'inline_image'.
+      data_base64?: string;
     };
     // The assistant's text reply when the model returned words instead of an
     // image. Empty/absent when an image was generated.
@@ -329,6 +333,21 @@ export interface ApiMemoryRecord {
 
 interface ApiMemoryListResponse {
   items: ApiMemoryRecord[];
+}
+
+// Bookmark records — ciphertext `data` plus plaintext conversation/message links
+// used to re-anchor the highlight and jump back.
+export interface ApiBookmarkRecord {
+  id: string;
+  conversation: string;
+  message: string;
+  data: string;
+  created: string;
+  updated: string;
+}
+
+interface ApiBookmarkListResponse {
+  items: ApiBookmarkRecord[];
 }
 
 // payload is the plaintext compaction the backend returns for immediate use. It
@@ -949,6 +968,41 @@ export class CognosApiService {
     );
   }
 
+  // updateConversationMemoryData persists a re-encrypted conversation `data`
+  // blob for the per-chat memory switch. The server stores it verbatim and does
+  // NOT bump last_activity_at or touch expiry_duration, so flipping the flag
+  // never reorders the sidebar or resets the auto-delete clock.
+  updateConversationMemoryData(
+    conversationId: string,
+    data: string,
+  ): Observable<ConversationRecord> {
+    return this._http.patch<ConversationRecord>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/memory`,
+      { data },
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // updateConversationRetention sets the per-conversation auto-delete window.
+  // Wire values: 0 = inherit account default, -1 = never, 7/30 = N days after
+  // last activity (see utils/retention.ts). The server does NOT bump the
+  // conversation's last_activity for this change; the response echoes the
+  // stored `retention_days`.
+  updateConversationRetention(
+    conversationId: string,
+    retentionDays: number,
+  ): Observable<ConversationRecord> {
+    return this._http.patch<ConversationRecord>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/retention`,
+      { retention_days: retentionDays },
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
   deleteConversation(conversationId: string): Observable<void> {
     return this._http.delete<void>(
       `${this._baseUrl}/api/v1/conversations/${conversationId}`,
@@ -1168,6 +1222,42 @@ export class CognosApiService {
     );
   }
 
+  deleteUserMemory(id: string): Observable<void> {
+    return this._http.delete<void>(`${this._baseUrl}/api/v1/user-memory/${id}`, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  // --- Bookmarks (client-encrypted highlighted spans) ---
+
+  listBookmarks(conversationId?: string): Observable<ApiBookmarkRecord[]> {
+    const url = new URL(`${this._baseUrl}/api/v1/bookmarks`);
+    if (conversationId) {
+      url.searchParams.set('conversation', conversationId);
+    }
+    return this._http
+      .get<ApiBookmarkListResponse>(url.toString(), { headers: this.authHeaders() })
+      .pipe(map((response) => response.items ?? []));
+  }
+
+  createBookmark(input: {
+    conversation: string;
+    message: string;
+    data: string;
+  }): Observable<ApiBookmarkRecord> {
+    return this._http.post<ApiBookmarkRecord>(
+      `${this._baseUrl}/api/v1/bookmarks`,
+      input,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  deleteBookmark(id: string): Observable<void> {
+    return this._http.delete<void>(`${this._baseUrl}/api/v1/bookmarks/${id}`, {
+      headers: this.authHeaders(),
+    });
+  }
+
   listProjectMemory(projectId: string): Observable<ApiMemoryRecord[]> {
     return this._http
       .get<ApiMemoryListResponse>(
@@ -1241,6 +1331,23 @@ export class CognosApiService {
         model_id: request.modelId,
         messages: request.messages,
         parent_message_id: request.parentMessageId,
+        request_id: request.requestId,
+      },
+      { headers: this.authHeaders() },
+    );
+  }
+
+  // generateImage runs a stateless image-generation request against the
+  // temporary-chat image endpoint. Nothing is persisted server-side; the image
+  // is returned inline as base64 on the response attachment. Single JSON
+  // response, like generateConversationImage.
+  generateImage(request: GenerateImageRequest): Observable<GenerateImageResponse> {
+    return this._http.post<GenerateImageResponse>(
+      `${this._baseUrl}/api/v1/images`,
+      {
+        prompt: request.prompt,
+        model_id: request.modelId,
+        messages: request.messages,
         request_id: request.requestId,
       },
       { headers: this.authHeaders() },

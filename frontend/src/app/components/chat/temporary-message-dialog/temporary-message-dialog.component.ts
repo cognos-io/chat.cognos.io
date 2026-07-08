@@ -98,7 +98,7 @@ export const expiringDurations = [
 
     .temporary-message-dialog__option {
       min-height: 40px;
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface);
       color: var(--cog-text);

@@ -303,7 +303,9 @@
       "about": "Über uns",
       "privacy": "Datenschutz",
       "terms": "Bedingungen",
-      "contact": "Kontakt"
+      "contact": "Kontakt",
+      "security": "Sicherheit",
+      "subprocessors": "Unterauftragsverarbeiter"
     },
     "language": "Sprache",
     "copyright": "© {{ year }} Cognos. Made in Switzerland.",
@@ -323,6 +325,281 @@
       "eyebrow": "Bedingungen",
       "title": "Nutzungsbedingungen",
       "lead": "Die Vereinbarung zwischen dir und Cognos, wenn du den Dienst nutzt."
+    },
+    "subprocessors": {
+      "metaTitle": "Unterauftragsverarbeiter — Cognos",
+      "metaDescription": "Die Anbieter, die uns beim Betrieb von Cognos helfen — was jeder tut, was er verarbeiten kann und wo. Die meisten berühren Daten nur in einer Form, die wir nicht lesen können.",
+      "eyebrow": "Unterauftragsverarbeiter",
+      "title": "Unterauftragsverarbeiter",
+      "lead": "Die kurze Liste vertrauenswürdiger Anbieter hinter Cognos — was jeder tut, was er verarbeiten kann und wo.",
+      "effectiveLabel": "Zuletzt aktualisiert",
+      "effectiveDate": "2. Juli 2026",
+      "facts": [
+        {
+          "label": "Verantwortlicher",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Datenschutzkontakt",
+          "value": "privacy@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Der Betrieb von Cognos erfordert eine Handvoll spezialisierter Anbieter — für Hosting, Backups, Konto-E-Mails, Zahlungen, die Auslieferung der Website und die KI selbst. Wir halten die Liste bewusst kurz."
+        },
+        {
+          "p": "Diese Seite nennt jeden Anbieter, auf den wir angewiesen sind, was er tut und was er verarbeiten kann. Sie ergänzt unsere <a href=\"/de/privacy\">Datenschutzerklärung</a>, die das Gesamtbild erläutert."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "So liest du diese Liste",
+          "blocks": [
+            {
+              "p": "Nicht jeder Anbieter sieht dasselbe. Der wichtige Unterschied ist der zwischen jenen, die Daten nur in einer für uns nicht lesbaren Form verarbeiten, und den KI-Anbietern, die deine Nachricht kurz verarbeiten, während sie antworten."
+            },
+            {
+              "ul": [
+                "Hosting- und Backup-Anbieter verarbeiten vor allem gespeicherte Daten, die verschlüsselt bleiben, sowie technische Angaben wie Zeitstempel",
+                "der Zahlungsanbieter verarbeitet Zahlungs- und Rechnungsdaten",
+                "der E-Mail-Anbieter verarbeitet deine E-Mail-Adresse und die E-Mails, die wir dir senden",
+                "KI-Anbieter verarbeiten deine Nachricht und ihre Antwort, während die KI antwortet — der einzige Moment, in dem deine Nachricht lesbar ist, und sie wird danach nie aufbewahrt"
+              ]
+            },
+            {
+              "p": "Was ein Anbieter auch tut: Dein gespeicherter Chatverlauf bleibt stets verschlüsselt gespeichert, in einer Form, die Cognos nicht lesen kann."
+            }
+          ]
+        },
+        {
+          "heading": "Die Anbieter, die wir nutzen",
+          "blocks": [
+            {
+              "table": {
+                "head": [
+                  "Anbieter",
+                  "Was sie tun",
+                  "Was sie verarbeiten können",
+                  "Wo",
+                  "Können sie deine Chats lesen?"
+                ],
+                "rows": [
+                  [
+                    "Hetzner",
+                    "Hosting",
+                    "Kontodaten, verschlüsselt gespeicherte Daten, Logs, technische Angaben",
+                    "Deutschland / EU",
+                    "Nein — gespeicherte Chats bleiben verschlüsselt"
+                  ],
+                  [
+                    "Bunny.net",
+                    "Auslieferung & DNS",
+                    "IP-Adressen und Anfragedaten",
+                    "EU / weltweit",
+                    "Nein"
+                  ],
+                  ["BorgBase", "Backups", "Verschlüsselte Backups", "EU", "Nein"],
+                  [
+                    "Scaleway",
+                    "Konto-E-Mails",
+                    "Deine E-Mail-Adresse und Nachrichtendaten",
+                    "EU",
+                    "Nur die E-Mails, die wir senden"
+                  ],
+                  [
+                    "Paddle",
+                    "Zahlungen & Abos",
+                    "Abrechnungs-, Steuer- und Rechnungsdaten",
+                    "USA / EU / UK",
+                    "Nein — nur Abrechnungsdaten"
+                  ],
+                  [
+                    "Infomaniak",
+                    "Schweizer KI-Modelle",
+                    "Deine Nachricht und ihre Antwort, während die KI arbeitet",
+                    "Schweiz",
+                    "Kurz, während die KI antwortet"
+                  ],
+                  [
+                    "Requesty",
+                    "KI-Gateway",
+                    "Deine Nachricht, ihre Antwort und Modelldaten",
+                    "EU / UK",
+                    "Kurz, während die KI antwortet"
+                  ],
+                  [
+                    "KI-Anbieter über Requesty",
+                    "KI-Antworten",
+                    "Deine Nachricht und ihre Antwort, während die KI arbeitet",
+                    "EU",
+                    "Kurz, während die KI antwortet"
+                  ],
+                  [
+                    "Plausible",
+                    "Website-Analyse, falls aktiviert",
+                    "Aggregierte, anonyme Nutzung",
+                    "EU",
+                    "Nein"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "heading": "Unsere Zusagen",
+          "blocks": [
+            {
+              "p": "Wir lassen keinen Anbieter Cognos-Nutzerdaten verkaufen oder für Werbung verwenden."
+            },
+            {
+              "p": "Wir verlangen von den mit Cognos genutzten KI-Anbietern, Cognos-Chats nicht zum Training ihrer Modelle zu verwenden. Genaue Aufbewahrung und Weiterleitung hängen vom Anbieter und der von dir gewählten Region ab."
+            },
+            {
+              "p": "Wo das Gesetz es verlangt, schliessen wir mit diesen Anbietern Vereinbarungen ab, einschliesslich Auftragsverarbeitungsverträgen und Schutzmassnahmen für Daten, die ausserhalb der Schweiz oder der EU verarbeitet werden."
+            },
+            {
+              "p": "Diese Liste ändert sich, während Cognos wächst. Wenn das geschieht, aktualisieren wir diese Seite. Fragen? Schreib an <a href=\"mailto:privacy@cognos.io\">privacy@cognos.io</a>."
+            }
+          ]
+        }
+      ]
+    },
+    "security": {
+      "metaTitle": "Sicherheit — Cognos",
+      "metaDescription": "Wie Cognos deine Chats privat hält: verschlüsselt in einer Form, die wir nicht lesen können, nur mit einem Schlüssel geöffnet, den du hältst, und in der Schweiz oder Europa verarbeitet.",
+      "eyebrow": "Sicherheit",
+      "title": "Sicherheit",
+      "lead": "Ein Blick in verständlicher Sprache darauf, wie Cognos gebaut ist, was wir sehen können und was nicht, und über die Grenzen, zu denen wir ehrlich sind.",
+      "effectiveLabel": "Zuletzt aktualisiert",
+      "effectiveDate": "2. Juli 2026",
+      "facts": [
+        {
+          "label": "Anbieter",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Datenschutzkontakt",
+          "value": "privacy@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Cognos ist eine KI-Chat-App, die so gebaut ist, dass deine gespeicherten Gespräche in einer Form aufbewahrt werden, die wir nicht lesen können. Diese Seite erklärt in verständlicher Sprache, wie das funktioniert."
+        },
+        {
+          "p": "Die genauen rechtlichen Details findest du in unserer <a href=\"/de/privacy\">Datenschutzerklärung</a>. Die Anbieter hinter Cognos findest du unter <a href=\"/de/subprocessors\">Unterauftragsverarbeiter</a>."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Wie Cognos gebaut ist",
+          "blocks": [
+            {
+              "p": "Bei jedem Chat wirken drei Teile zusammen, und jedem wird so wenig wie möglich anvertraut."
+            },
+            {
+              "ul": [
+                "<b>Dein Gerät</b> hält die Schlüssel. Deine Chats werden hier entschlüsselt und gelesen, nirgendwo sonst.",
+                "<b>Unsere Server</b> speichern deine Chats verschlüsselt, geben deine Nachricht an die KI weiter und verschlüsseln die Antwort wieder. Sie behalten nie eine für uns lesbare Kopie.",
+                "<b>Der KI-Anbieter</b> erhält deine Nachricht nur, während er antwortet, und behält danach nichts."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Wie deine Chats verschlüsselt werden",
+          "blocks": [
+            {
+              "p": "Wenn ein Gespräch gespeichert wird, wird es auf deinem Gerät verschlüsselt, bevor es uns erreicht — die Nachrichten, Titel, Zusammenfassungen und alle Dateien. Wir speichern nur die verschlüsselte Fassung, die wir nicht lesen können."
+            },
+            {
+              "p": "Nur dein Schlüssel kann es wieder öffnen, und das geschieht auf deinem Gerät, wenn du dich anmeldest."
+            }
+          ]
+        },
+        {
+          "heading": "Dein Schlüssel und dein Passwort",
+          "blocks": [
+            {
+              "p": "Du hast zwei getrennte Geheimnisse, jedes mit einer Aufgabe:"
+            },
+            {
+              "ul": [
+                "<b>Dein Passwort</b> meldet dich an. Vergisst du es, kannst du es per E-Mail zurücksetzen — deine Chats bleiben sicher, denn das Passwort öffnet sie nicht.",
+                "<b>Dein Account Key</b> ist derjenige, der deine Chats öffnet. Wir erhalten oder speichern ihn nie, also bewahre ihn sicher auf. Verlierst du ihn, können wir deine Chats nicht für dich wiederherstellen — das ist der Preis dafür, keine Kopie aufzubewahren, die wir lesen können."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Was wir sehen können und was nicht",
+          "blocks": [
+            {
+              "p": "Wir sehen die Angaben, die zum Betrieb des Dienstes nötig sind — deine Konto- und Abrechnungsdaten, welches Modell du genutzt hast, und technische Angaben wie Zeitstempel. Während die KI antwortet, ist deine Nachricht lesbar, damit die KI damit arbeiten kann."
+            },
+            {
+              "p": "Wir können deine gespeicherten Chats, Titel, Zusammenfassungen, Erinnerungen oder Dateien nicht aus dem Speicher lesen. Sie bleiben mit einem Schlüssel verschlüsselt, den wir nicht besitzen."
+            },
+            {
+              "p": "Bevor deine Nachricht dein Gerät verlässt, verbirgt Cognos ausserdem gängige persönliche Angaben — wie E-Mails, Telefonnummern, Bankdaten und Ausweisnummern — hinter Platzhaltern, sodass die KI mit Platzhaltern statt mit den echten Werten arbeitet."
+            }
+          ]
+        },
+        {
+          "heading": "Wo deine Daten verarbeitet werden",
+          "blocks": [
+            {
+              "p": "Cognos wird von einem Schweizer Unternehmen betrieben. Die App und ihre gespeicherten Daten werden in Europa gehostet, und du wählst, ob KI-Modelle nur in der Schweiz oder in ganz Europa laufen."
+            },
+            {
+              "p": "Wir bewahren Daten nur so lange auf, wie wir sie brauchen. Deine Chats bleiben, bis du sie löschst, sie ablaufen oder du dein Konto schliesst. Gelöschte Elemente werden kurz in einem Wiederherstellungs-Snapshot gehalten, bevor sie endgültig verschwinden, und Backups rotieren nach einem regelmässigen Zeitplan."
+            }
+          ]
+        },
+        {
+          "heading": "Wer uns beim Betrieb von Cognos hilft",
+          "blocks": [
+            {
+              "p": "Eine kurze Liste spezialisierter Anbieter hilft uns, die App zu hosten, E-Mails zu senden, Zahlungen abzuwickeln und die KI bereitzustellen. Die meisten verarbeiten Daten nur in einer Form, die wir nicht lesen können."
+            },
+            {
+              "p": "Die vollständige Liste — wer sie sind, was sie verarbeiten und wo — findest du auf der Seite <a href=\"/de/subprocessors\">Unterauftragsverarbeiter</a>."
+            }
+          ]
+        },
+        {
+          "heading": "Unabhängige Prüfung",
+          "blocks": [
+            {
+              "p": "Die Teile von Cognos, die deine Daten verarbeiten, stehen zur Einsicht offen, sodass du überprüfen kannst, was wir tun, statt uns beim Wort zu nehmen."
+            },
+            {
+              "p": "Cognos hat noch kein formelles, unabhängiges Sicherheitsaudit abgeschlossen. Wir sagen es hier klar, sobald sich das ändert."
+            }
+          ]
+        },
+        {
+          "heading": "Wogegen dies nicht schützt",
+          "blocks": [
+            {
+              "p": "Wir sind offen über die Grenzen:"
+            },
+            {
+              "ul": [
+                "Während die KI antwortet, muss deine Nachricht für unsere Systeme und den KI-Anbieter lesbar sein. Das ist der einzige Moment, in dem sie nicht verschlüsselt ist, und sie wird danach nie aufbewahrt.",
+                "Das Verbergen persönlicher Angaben erfolgt automatisch, ist aber nach bestem Bemühen — es erfasst gängige Dinge wie E-Mails und Kartennummern, aber nicht alles.",
+                "Wenn jemand an dein entsperrtes Gerät gelangt, kann er sehen, was du siehst. Sperren oder Abmelden schützt ein Gerät, von dem du dich entfernt hast.",
+                "Verlierst du deinen Account Key, können deine Chats nicht wiederhergestellt werden."
+              ]
+            },
+            {
+              "p": "Cognos ist gebaut, um deine gespeicherten Chats zu schützen, falls unser Speicher oder unsere Datenbank je kompromittiert wird — nicht, um deine Nachricht vor der KI zu verbergen, während sie antwortet."
+            }
+          ]
+        }
+      ]
     },
     "about": {
       "metaTitle": "Über uns — Cognos",

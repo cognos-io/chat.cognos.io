@@ -5,6 +5,7 @@ import (
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/catalogue"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 )
 
 func TestReasoningBudgetTokens(t *testing.T) {
@@ -223,5 +224,66 @@ func TestCompleteBillingRestrictionResponseLeavesEstimateUnsetWhenZeroFallback(t
 
 	if response.EstimatedCostCHF != nil {
 		t.Errorf("EstimatedCostCHF = %v, want nil when no restriction estimate and zero fallback", *response.EstimatedCostCHF)
+	}
+}
+
+func TestServedModelSnapshot(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name  string
+		model catalogue.Model
+		want  chat.ServedModel
+	}{
+		{
+			name: "fully populated ch_only model",
+			model: catalogue.Model{
+				ID:             "apertus-70b-swiss",
+				Name:           "Apertus 70B (Infomaniak)",
+				ProviderID:     "infomaniak",
+				ProviderName:   "Infomaniak",
+				PrivacyTier:    catalogue.PrivacyTierCHOnly,
+				HostingCountry: "CH",
+				HostingRegion:  "Switzerland",
+			},
+			want: chat.ServedModel{
+				ServedModelName:      "Apertus 70B (Infomaniak)",
+				ServedProviderName:   "Infomaniak",
+				ServedProviderID:     "infomaniak",
+				ServedPrivacyTier:    "ch_only",
+				ServedHostingCountry: "CH",
+				ServedHostingRegion:  "Switzerland",
+			},
+		},
+		{
+			name: "eu model without hosting metadata",
+			model: catalogue.Model{
+				ID:           "some-eu-model",
+				Name:         "Some EU Model",
+				ProviderID:   "requesty",
+				ProviderName: "Requesty",
+				PrivacyTier:  catalogue.PrivacyTierEU,
+			},
+			want: chat.ServedModel{
+				ServedModelName:    "Some EU Model",
+				ServedProviderName: "Requesty",
+				ServedProviderID:   "requesty",
+				ServedPrivacyTier:  "eu",
+			},
+		},
+		{
+			name:  "empty model yields empty snapshot",
+			model: catalogue.Model{},
+			want:  chat.ServedModel{},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := servedModelSnapshot(tc.model); got != tc.want {
+				t.Errorf("servedModelSnapshot(%+v) = %+v, want %+v", tc.model, got, tc.want)
+			}
+		})
 	}
 }

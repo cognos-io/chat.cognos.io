@@ -113,7 +113,7 @@ export type CognosModalTitleTone = 'default' | 'info' | 'success' | 'danger';
            minmax(0, 1fr) and scrolls; the header/footer stay pinned. */
         max-height: 100%;
         grid-template-rows: auto minmax(0, 1fr);
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         box-shadow: var(--cog-shadow-overlay);
@@ -196,7 +196,7 @@ export type CognosModalTitleTone = 'default' | 'info' | 'success' | 'danger';
         display: flex;
         justify-content: flex-end;
         gap: var(--cog-space-100);
-        border-top: 1px solid var(--cog-border);
+        border-top: var(--cog-border-width) solid var(--cog-border);
         padding: var(--cog-space-150) var(--cog-space-200);
       }
 

@@ -57,7 +57,7 @@ import type { CognosVaultFile } from '../../vault/vault.types';
         width: 100%;
         align-items: flex-start;
         gap: 10px;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface);
         padding: 10px 11px;
@@ -72,8 +72,8 @@ import type { CognosVaultFile } from '../../vault/vault.types';
         }
 
         &:is(button):focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
         }
       }
 
@@ -82,7 +82,7 @@ import type { CognosVaultFile } from '../../vault/vault.types';
         width: 30px;
         height: 30px;
         flex: none;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-xs);
       }
 
@@ -120,7 +120,7 @@ import type { CognosVaultFile } from '../../vault/vault.types';
 
       .cog-source-card__quote {
         margin: var(--cog-space-100) 0 0;
-        border-left: 2px solid var(--cog-border);
+        border-left: var(--cog-border-width-strong) solid var(--cog-border);
         padding-left: 10px;
         color: var(--cog-text-subtle);
         font-size: 13px;

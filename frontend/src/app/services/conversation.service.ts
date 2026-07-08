@@ -289,6 +289,28 @@ export class ConversationService {
           }),
         );
       },
+      // Reflects the per-chat memory switch in place after the server confirms
+      // the re-encrypted data blob. Returns a fresh array so computeds reading
+      // the selected conversation (e.g. the header menu label) recompute.
+      setConversationMemoryDisabledLocal: (
+        state,
+        $: Observable<{ id: string; disabled: boolean }>,
+      ) =>
+        $.pipe(
+          map(({ id, disabled }) => {
+            const conversations = state().conversations;
+            const index = conversations.findIndex((c) => c.record.id === id);
+            if (index === -1) return state();
+            conversations[index] = {
+              ...conversations[index],
+              decryptedData: {
+                ...conversations[index].decryptedData,
+                memoryDisabled: disabled,
+              },
+            };
+            return { conversations: [...conversations] };
+          }),
+        ),
       updateConversationUpdatedTimeNow: (state, $: Observable<{ id: string }>) =>
         $.pipe(
           map(({ id }) => {
@@ -298,6 +320,25 @@ export class ConversationService {
             const now = new Date().toISOString();
             conversations[index].record.updated = now;
             conversations[index].record.last_activity_at = now;
+            return {
+              conversations: [...conversations],
+            };
+          }),
+        ),
+      // Reflects a per-conversation auto-delete change in place. Deliberately
+      // touches ONLY record.retention_days — never `updated`/`last_activity_at`
+      // — so changing retention can't reorder the sidebar or move the deletion
+      // clock (the server owns activity timestamps).
+      setConversationRetentionDays: (
+        state,
+        $: Observable<{ id: string; retentionDays: number }>,
+      ) =>
+        $.pipe(
+          map(({ id, retentionDays }) => {
+            const conversations = state().conversations;
+            const index = conversations.findIndex((c) => c.record.id === id);
+            if (index === -1) return state();
+            conversations[index].record.retention_days = retentionDays;
             return {
               conversations: [...conversations],
             };
@@ -860,6 +901,66 @@ export class ConversationService {
       .pipe(
         tap((resp) => {
           this.state.updateConversationRecord(resp);
+        }),
+      );
+  }
+
+  // setConversationRetention sets the conversation's auto-delete window via the
+  // dedicated endpoint and reflects the server-confirmed value locally. It does
+  // not re-decrypt or touch activity timestamps (see setConversationRetentionDays).
+  setConversationRetention(
+    id: string,
+    retentionDays: number,
+  ): Observable<ConversationRecord> {
+    return this._api.updateConversationRetention(id, retentionDays).pipe(
+      tap((record) => {
+        this.state.setConversationRetentionDays({
+          id,
+          retentionDays: record.retention_days ?? retentionDays,
+        });
+      }),
+    );
+  }
+
+  // isConversationMemoryDisabled reports the per-chat "don't use my memory here"
+  // choice, read from the (decrypted) conversation data. Absent flag / unknown
+  // conversation → false (memory is used, subject to the account-wide opt-in).
+  isConversationMemoryDisabled(conversationId: string | null | undefined): boolean {
+    if (!conversationId) {
+      return false;
+    }
+    const conversation = this.state
+      .conversations()
+      .find((c) => c.record.id === conversationId);
+    return conversation?.decryptedData.memoryDisabled === true;
+  }
+
+  // setConversationMemoryDisabled flips the per-chat memory switch, whose flag
+  // lives inside the encrypted conversation data. It re-encrypts the data with
+  // the conversation's own key pair and persists it via the side-effect-free
+  // /memory endpoint (no activity bump, no expiry change), then reflects the
+  // choice locally. Because the flag rides inside `data`, the server never
+  // learns it and the setting syncs across the owner's devices.
+  setConversationMemoryDisabled(
+    id: string,
+    disabled: boolean,
+  ): Observable<ConversationRecord> {
+    const conversation = this.getConversation(id)();
+    if (!conversation) {
+      return throwError(() => new Error('Conversation not found'));
+    }
+
+    const data: ConversationData = {
+      ...conversation.decryptedData,
+      memoryDisabled: disabled,
+    };
+    const encryptedData = this.encryptConversationData(data, conversation.keyPair);
+
+    return this._api
+      .updateConversationMemoryData(id, Base64.fromUint8Array(encryptedData))
+      .pipe(
+        tap(() => {
+          this.state.setConversationMemoryDisabledLocal({ id, disabled });
         }),
       );
   }

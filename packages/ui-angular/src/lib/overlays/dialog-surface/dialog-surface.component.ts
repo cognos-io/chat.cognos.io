@@ -68,7 +68,7 @@ export type CognosDialogSurfaceIconTone = 'default' | 'info' | 'success' | 'dang
       .cog-dialog-surface {
         display: grid;
         width: var(--_surface-width, auto);
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         box-shadow: var(--cog-shadow-overlay);
@@ -142,7 +142,7 @@ export type CognosDialogSurfaceIconTone = 'default' | 'info' | 'success' | 'dang
         display: flex;
         justify-content: flex-end;
         gap: var(--cog-space-100);
-        border-top: 1px solid var(--cog-border);
+        border-top: var(--cog-border-width) solid var(--cog-border);
         padding: var(--cog-space-150) var(--cog-space-200);
       }
     `,

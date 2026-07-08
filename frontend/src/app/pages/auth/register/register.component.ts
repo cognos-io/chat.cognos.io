@@ -37,7 +37,7 @@ import { AuthService } from '@services/auth.service';
   template: `
     <cog-auth-page>
       <ng-container *transloco="let t">
-        <app-cognos-logo class="auth-page__logo" palette="dark"></app-cognos-logo>
+        <app-cognos-logo class="auth-page__logo"></app-cognos-logo>
         <div class="auth-page__eyebrow">
           <cog-lozenge tone="green">{{ t('auth.register.beta') }}</cog-lozenge>
         </div>

@@ -20,6 +20,16 @@ type MessageRecordData struct {
 	OwnerID   string `json:"owner_id,omitempty"`
 	PersonaID string `json:"persona_id,omitempty"`
 	ModelID   string `json:"model_id,omitempty"`
+	// ServedModel is an immutable snapshot of the catalogue attributes of the
+	// model that ACTUALLY served this (assistant) turn, captured at serve time.
+	// ModelID alone is the REQUESTED id, which the frontend otherwise resolves
+	// against the live catalogue at render time — so a later catalogue edit would
+	// silently relabel old answers. These fields pin what served the turn so the
+	// per-answer privacy receipt stays truthful. They are catalogue metadata
+	// (never user content), encrypted at rest alongside the rest of the message
+	// exactly like ModelID, and every field is optional (messages created before
+	// this existed simply omit them). Embedded so its keys flatten into the JSON.
+	ServedModel
 	// InputTokens/OutputTokens are the provider's real usage counts for the turn
 	// that produced this (assistant) message: InputTokens is the prompt size that
 	// was actually sent (system + context + user), OutputTokens the reply size.
@@ -38,6 +48,22 @@ type MessageRecordData struct {
 	// search ran. Keep in sync with the frontend MessageData interface.
 	Citations       []MessageCitation       `json:"citations,omitempty"`
 	CitationAnchors []MessageCitationAnchor `json:"citation_anchors,omitempty"`
+}
+
+// ServedModel is the snapshot of a model's catalogue attributes at the moment
+// it served a turn. All fields are catalogue metadata (safe to store, never user
+// content) and all are optional. It is embedded into MessageRecordData (and
+// mirrored on the compaction payload) so the client can render a per-answer
+// privacy receipt from what actually served the turn rather than the live
+// catalogue. Keep in sync with the frontend MessageData interface.
+type ServedModel struct {
+	// ServedModelName is the catalogue Name (full technical name) at serve time.
+	ServedModelName      string `json:"served_model_name,omitempty"`
+	ServedProviderName   string `json:"served_provider_name,omitempty"`
+	ServedProviderID     string `json:"served_provider_id,omitempty"`
+	ServedPrivacyTier    string `json:"served_privacy_tier,omitempty"` // "ch_only" | "eu" | "global"
+	ServedHostingCountry string `json:"served_hosting_country,omitempty"`
+	ServedHostingRegion  string `json:"served_hosting_region,omitempty"`
 }
 
 // MessageCitation is one web source referenced by a search-grounded answer.

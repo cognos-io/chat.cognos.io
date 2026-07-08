@@ -324,7 +324,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
     .data-processing {
       display: grid;
       gap: var(--cog-space-250);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
       padding: var(--cog-space-250);
@@ -368,7 +368,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
       display: grid;
       gap: var(--cog-space-150);
       align-content: start;
-      border: 2px solid var(--cog-border);
+      border: var(--cog-border-width-strong) solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
       padding: var(--cog-space-200);
@@ -420,7 +420,7 @@ const MODEL_REGION_BADGE_KEY: Record<PrivacyTier, string> = {
     .data-processing__tier-radio {
       width: 16px;
       height: 16px;
-      border: 2px solid var(--cog-border-bold);
+      border: var(--cog-border-width-strong) solid var(--cog-border-bold);
       border-radius: var(--cog-radius-pill);
     }
 

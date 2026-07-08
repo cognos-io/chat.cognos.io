@@ -111,7 +111,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
         gap: var(--cog-space-100);
         padding: 0 var(--cog-space-200);
         background: var(--cog-nav-bg);
-        border-bottom: 1px solid var(--cog-border);
+        border-bottom: var(--cog-border-width) solid var(--cog-border);
       }
 
       .cog-mobile-shell__title {

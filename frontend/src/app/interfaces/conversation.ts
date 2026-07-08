@@ -9,6 +9,11 @@ import { KeyPair } from './key-pair';
  */
 export const ConversationData = z.object({
   title: z.string().trim(),
+  // Per-chat "don't use my personal memory here" switch. Encrypted with the
+  // rest of the conversation data (the server never learns the choice) and
+  // therefore synced across the owner's devices. Absent on older records →
+  // treated as false (memory is used, subject to the account-wide opt-in).
+  memoryDisabled: z.boolean().optional(),
 });
 export type ConversationData = z.infer<typeof ConversationData>;
 
@@ -25,6 +30,11 @@ export interface ConversationRecord {
   // project instead). Its key is wrapped by the project content key rather
   // than per-participant.
   project?: string;
+  // Auto-delete (retention) window for this conversation, in days. Always
+  // present on server responses; optional here for older cached records. Wire
+  // values: 0 = inherit the account default, -1 = never, 7/30 = delete N days
+  // after last activity. See utils/retention.ts.
+  retention_days?: number;
   // Current-generation key material embedded by the conversation-list endpoint
   // so the client decrypts without a per-conversation key round-trip. Present
   // only on the list response (not on create/update responses); the loader

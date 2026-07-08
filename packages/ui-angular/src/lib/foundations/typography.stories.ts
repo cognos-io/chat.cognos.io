@@ -20,7 +20,7 @@ const meta: Meta = {
           </p>
         </header>
 
-        <div style="display:grid; gap: 16px; padding: 20px; border: 1px solid var(--cog-border); border-radius: var(--cog-radius-md); background: var(--cog-surface);">
+        <div style="display:grid; gap: 16px; padding: 20px; border: var(--cog-border-width) solid var(--cog-border); border-radius: var(--cog-radius-md); background: var(--cog-surface);">
           <div style="font-family: var(--cog-font); font-size: var(--cog-fs-display); line-height: var(--cog-lh-display); font-weight: var(--cog-fw-display); letter-spacing: var(--cog-ls-display);">
             Display
           </div>
@@ -42,7 +42,7 @@ const meta: Meta = {
         </div>
 
         <div style="display:grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
-          <section style="display:grid; gap: 8px; padding: 20px; border: 1px solid var(--cog-border); border-radius: var(--cog-radius-md); background: var(--cog-surface);">
+          <section style="display:grid; gap: 8px; padding: 20px; border: var(--cog-border-width) solid var(--cog-border); border-radius: var(--cog-radius-md); background: var(--cog-surface);">
             <div style="font-size: var(--cog-fs-overline); line-height: var(--cog-lh-overline); font-weight: var(--cog-fw-overline); letter-spacing: var(--cog-ls-overline); text-transform: var(--cog-tt-overline); color: var(--cog-text-subtlest);">
               Default system font
             </div>
@@ -51,7 +51,7 @@ const meta: Meta = {
             </div>
           </section>
 
-          <section style="display:grid; gap: 8px; padding: 20px; border: 1px solid var(--cog-border); border-radius: var(--cog-radius-md); background: var(--cog-surface);">
+          <section style="display:grid; gap: 8px; padding: 20px; border: var(--cog-border-width) solid var(--cog-border); border-radius: var(--cog-radius-md); background: var(--cog-surface);">
             <div style="font-size: var(--cog-fs-overline); line-height: var(--cog-lh-overline); font-weight: var(--cog-fw-overline); letter-spacing: var(--cog-ls-overline); text-transform: var(--cog-tt-overline); color: var(--cog-text-subtlest);">
               Noto Sans variable
             </div>
@@ -60,7 +60,7 @@ const meta: Meta = {
             </div>
           </section>
 
-          <section style="display:grid; gap: 8px; padding: 20px; border: 1px solid var(--cog-border); border-radius: var(--cog-radius-md); background: var(--cog-surface);">
+          <section style="display:grid; gap: 8px; padding: 20px; border: var(--cog-border-width) solid var(--cog-border); border-radius: var(--cog-radius-md); background: var(--cog-surface);">
             <div style="font-size: var(--cog-fs-overline); line-height: var(--cog-lh-overline); font-weight: var(--cog-fw-overline); letter-spacing: var(--cog-ls-overline); text-transform: var(--cog-tt-overline); color: var(--cog-text-subtlest);">
               Reddit Mono variable
             </div>

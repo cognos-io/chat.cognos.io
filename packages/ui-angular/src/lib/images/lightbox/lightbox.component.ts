@@ -126,8 +126,8 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
         }
 
         &:focus-visible {
-          outline: 2px solid #fff;
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid #fff;
+          outline-offset: var(--cog-border-width-strong);
         }
       }
 

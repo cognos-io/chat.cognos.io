@@ -97,7 +97,7 @@ export type CognosDocAttachmentState = 'sealed' | 'encrypting' | 'error';
         gap: 11px;
         box-sizing: border-box;
         overflow: hidden;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface);
         padding: 10px 11px;
@@ -114,8 +114,8 @@ export type CognosDocAttachmentState = 'sealed' | 'encrypting' | 'error';
         }
 
         &.cog-doc-attachment--interactive:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
         }
 
         &.cog-doc-attachment--error {
@@ -189,8 +189,8 @@ export type CognosDocAttachmentState = 'sealed' | 'encrypting' | 'error';
         }
 
         &:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
         }
       }
     `,

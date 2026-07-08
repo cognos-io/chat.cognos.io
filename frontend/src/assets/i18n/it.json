@@ -28,7 +28,7 @@
     "data": {
       "download": "Scarica i miei dati",
       "preparing": "Preparazione…",
-      "subtitle": "Scarica tutte le tue conversazioni e i tuoi messaggi — decifrati nel tuo browser — come file JSON.",
+      "subtitle": "Scarica tutte le tue conversazioni, le persona, la tua memoria, i tuoi progetti e i file caricati — decifrati nel tuo browser.",
       "title": "I tuoi dati"
     },
     "dataProcessing": {
@@ -142,13 +142,36 @@
       "exportedMany": "{{ count }} chat esportate",
       "exportedOne": "1 chat esportata",
       "passwordChanged": "Password modificata",
-      "profileUpdated": "Profilo aggiornato"
+      "profileUpdated": "Profilo aggiornato",
+      "retentionUpdated": "Impostazione predefinita di eliminazione automatica salvata",
+      "retentionError": "Impossibile salvare l'impostazione di eliminazione automatica"
     },
     "memory": {
       "title": "La tua memoria",
       "subtitle": "Fatti che hai fissato nella tua memoria personale. Vengono archiviati cifrati e aggiunti al contesto di ogni chat.",
       "save": "Salva",
-      "saved": "Memoria salvata"
+      "saved": "Memoria salvata",
+      "toggleTitle": "Memoria personale",
+      "toggleSubtitle": "Consenti a Cognos di ricordare informazioni su di te e di aggiungerle al contesto delle nuove chat. Disattivata per impostazione predefinita: attivala per iniziare a usare la memoria.",
+      "toggleLabel": "Usa la memoria personale",
+      "on": "Attiva",
+      "off": "Disattivata",
+      "enabledNote": "La memoria è attiva. Le nuove informazioni che aggiungi vengono memorizzate cifrate e incluse nel contesto delle tue chat.",
+      "editorDisabledNote": "La memoria personale è disattivata. Gli elementi memorizzati sono mostrati qui per consentirti di rivederli o eliminarli, ma non verrà salvato né aggiunto nulla di nuovo alle tue chat finché non attivi la memoria.",
+      "delete": "Cancella la memoria",
+      "deleting": "Cancellazione…",
+      "deleted": "Memoria cancellata",
+      "deleteError": "Impossibile cancellare la tua memoria. Riprova."
+    },
+    "retention": {
+      "title": "Eliminazione automatica delle chat",
+      "subtitle": "Scegli quando eliminare le conversazioni salvate. Vale per le nuove chat e per quelle che ereditano l'impostazione; puoi modificarla per ogni singola chat.",
+      "note": "L'eliminazione è definitiva: una conversazione eliminata e i suoi messaggi non possono essere recuperati. Conteggiata dall'ultima attività della chat.",
+      "options": {
+        "never": "Mai",
+        "sevenDays": "Dopo 7 giorni",
+        "thirtyDays": "Dopo 30 giorni"
+      }
     }
   },
   "auth": {
@@ -609,6 +632,8 @@
         "unavailable": "Sblocca il tuo vault prima di allegare file",
         "tooMany": "Puoi allegare fino a {{ max }} file",
         "providerNotice": "I file allegati vengono inviati al provider di IA quando vengono usati",
+        "truncated": "Troncato",
+        "truncatedHint": "Solo la prima parte di questo file è stata inviata all’IA.",
         "dropHint": "Rilascia i file da allegare",
         "state": {
           "queued": "In coda…",
@@ -636,6 +661,13 @@
         "resending": "Invio…",
         "sent": "E-mail di verifica inviata",
         "sentBody": "Controlla {{email}} per il link di conferma."
+      },
+      "redactionWarning": {
+        "title": "Inviare dati sensibili senza oscurarli?",
+        "body": "Questo messaggio contiene ancora {{ count }} valore/i sensibile/i rilevato/i che hai scelto di non oscurare. Il tuo fornitore li vedrà per intero.",
+        "redactAndSend": "Oscura e invia",
+        "sendAnyway": "Invia comunque",
+        "cancel": "Continua a modificare"
       }
     },
     "conversation": {
@@ -670,7 +702,19 @@
       "hideValues": "Nascondi valori sensibili",
       "showValues": "Mostra valori sensibili",
       "duplicate": "Duplica chat",
-      "memory": "Memoria"
+      "memory": "Memoria",
+      "enableMemory": "Usa la memoria qui",
+      "disableMemory": "Non usare la memoria qui",
+      "memoryEnabledToast": "Memoria attiva per questa chat",
+      "memoryDisabledToast": "Memoria disattivata per questa chat",
+      "memoryToggleError": "Impossibile aggiornare la memoria per questa chat",
+      "autoDelete": "Eliminazione automatica",
+      "autoDeleteValue": {
+        "inherit": "Impostazione dell'account",
+        "never": "Mai",
+        "sevenDays": "7 giorni",
+        "thirtyDays": "30 giorni"
+      }
     },
     "icebreakers": {
       "items": {
@@ -988,6 +1032,71 @@
       "title": "Il tuo messaggio non è stato inviato",
       "body": "Qualcosa ha interrotto la risposta. Il tuo messaggio è ancora qui: prova a inviarlo di nuovo.",
       "action": "Riprova"
+    },
+    "accuracyDisclaimer": "L’IA può commettere errori. Verifica le informazioni importanti.",
+    "minimap": {
+      "label": "Navigatore messaggi",
+      "jumpTo": "Vai al messaggio: {{preview}}",
+      "noPreview": "(nessun testo)"
+    },
+    "privacy": {
+      "title": "Privacy e sicurezza",
+      "seeDetails": "Vedi i dettagli sulla privacy",
+      "receipt": "Elaborato da {{model}} · gateway {{region}} · archiviato cifrato · non usato per l’addestramento · eliminazione automatica: {{retention}}",
+      "gateway": {
+        "ch_only": "Svizzera",
+        "eu": "UE",
+        "global": "Globale"
+      },
+      "autoDelete": {
+        "off": "disattivata",
+        "days": "{{count}} giorni"
+      },
+      "items": {
+        "stored": {
+          "title": "Cifrato su questo dispositivo",
+          "copy": "I messaggi vengono sigillati nel tuo browser prima di essere archiviati. Non ne conserviamo alcuna copia leggibile."
+        },
+        "readable": {
+          "title": "Solo tu puoi leggerli",
+          "copy": "La decifratura avviene sul tuo dispositivo — o su quelli delle persone con cui condividi esplicitamente."
+        },
+        "training": {
+          "title": "Non usato per l’addestramento",
+          "copy": "I fornitori approvati rispondono secondo condizioni senza conservazione né addestramento. Le tue chat non diventano mai dati di addestramento."
+        },
+        "search": {
+          "title": "La ricerca è locale",
+          "copy": "La tua cronologia viene cercata su questo dispositivo. Le query non ci vengono mai inviate."
+        }
+      },
+      "caveat": {
+        "title": "L’unica riserva onesta",
+        "copy": "Per generare una risposta, il modello deve leggere il tuo messaggio in chiaro — per il momento in cui viene eseguito, nella regione che scegli. Ricifriamo la risposta appena viene generata e non archiviamo il testo in chiaro."
+      },
+      "flow": {
+        "device": "Il tuo dispositivo",
+        "encrypted": "Cifrato",
+        "reencrypted": "Ricifrato",
+        "compute": "In chiaro · transitorio"
+      },
+      "rows": {
+        "model": "Modello",
+        "region": "Regione",
+        "autoDelete": "Eliminazione automatica"
+      },
+      "keysLabel": "Le tue chiavi",
+      "deviceKey": "Chiave del dispositivo",
+      "verified": "Verificata",
+      "links": {
+        "security": "Come proteggiamo la tua privacy",
+        "subprocessors": "Chi tratta i tuoi dati"
+      }
+    },
+    "bookmark": {
+      "save": "Salva nei segnalibri",
+      "saved": "Salvato nei segnalibri",
+      "saveError": "Impossibile salvare il segnalibro. Riprova."
     }
   },
   "common": {
@@ -1143,6 +1252,21 @@
         "footer": "Cognos · https://cognos.io"
       },
       "cantFindKey": "Non trovi la tua chiave dell'account? Cerca il file cognos-emergency-kit.txt che hai salvato durante la registrazione."
+    },
+    "retention": {
+      "title": "Elimina automaticamente questa chat",
+      "body": "Scegli quando eliminare questa conversazione, a partire dalla sua ultima attività.",
+      "note": "«Impostazione dell'account» segue l'impostazione del tuo account. L'eliminazione è definitiva: i messaggi non possono essere recuperati.",
+      "save": "Salva",
+      "saving": "Salvataggio…",
+      "saved": "Eliminazione automatica aggiornata",
+      "error": "Impossibile aggiornare l’eliminazione automatica. Riprova.",
+      "options": {
+        "inherit": "Impostazione dell'account",
+        "never": "Mai",
+        "sevenDays": "7 giorni",
+        "thirtyDays": "30 giorni"
+      }
     }
   },
   "errors": {
@@ -1314,7 +1438,8 @@
       "team": "Team e condivisione",
       "usage": "Utilizzo",
       "memory": "Memoria",
-      "library": "Libreria"
+      "library": "Libreria",
+      "bookmarks": "Segnalibri"
     },
     "placeholder": {
       "comingSoon": "Questa sezione sarà presto disponibile."
@@ -1375,6 +1500,15 @@
         "downloadedToast": "Kit di emergenza scaricato"
       },
       "passwordHeading": "Password"
+    },
+    "bookmarks": {
+      "title": "I tuoi segnalibri",
+      "description": "Passaggi che hai salvato dalle tue chat. Sono archiviati cifrati: torna a un messaggio o rimuovine uno.",
+      "empty": "Non hai ancora salvato nessun segnalibro. Seleziona del testo in una chat e scegli «Salva nei segnalibri».",
+      "jump": "Vai",
+      "remove": "Rimuovi",
+      "removed": "Segnalibro rimosso",
+      "removeError": "Impossibile rimuovere il segnalibro. Riprova."
     }
   },
   "models": {

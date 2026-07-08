@@ -54,7 +54,7 @@ export type CognosAttachChipState = 'sealed' | 'encrypting';
         align-items: center;
         gap: var(--cog-space-100);
         overflow: hidden;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface);
         padding: 0 var(--cog-space-075) 0 7px;
@@ -88,8 +88,8 @@ export type CognosAttachChipState = 'sealed' | 'encrypting';
         }
 
         &:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
         }
       }
     `,

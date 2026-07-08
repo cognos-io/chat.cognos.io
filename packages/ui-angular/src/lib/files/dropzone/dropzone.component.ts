@@ -70,7 +70,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
         place-items: center;
         text-align: center;
         cursor: pointer;
-        border: 2px dashed var(--cog-border-bold);
+        border: var(--cog-border-width-strong) dashed var(--cog-border-bold);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         padding: var(--cog-space-400) var(--cog-space-300);
@@ -88,8 +88,8 @@ import { CognosIconComponent } from '../../icon/icon.component';
         }
 
         &:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
         }
       }
 

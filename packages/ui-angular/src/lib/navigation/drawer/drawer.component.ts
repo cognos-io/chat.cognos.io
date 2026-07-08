@@ -75,7 +75,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
         width: min(86vw, 320px);
         height: 100%;
         grid-template-rows: auto minmax(0, 1fr);
-        border-right: 1px solid var(--cog-border);
+        border-right: var(--cog-border-width) solid var(--cog-border);
         background: var(--cog-nav-bg);
         box-shadow: var(--cog-shadow-overlay);
         animation: cog-drawer-enter var(--cog-dur-sheet) var(--cog-ease-standard);
@@ -107,7 +107,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
       }
 
       .cog-drawer__footer {
-        border-top: 1px solid var(--cog-border);
+        border-top: var(--cog-border-width) solid var(--cog-border);
         background: var(--cog-nav-bg);
         padding: var(--cog-space-150) var(--cog-space-100)
           calc(var(--cog-space-150) + env(safe-area-inset-bottom));

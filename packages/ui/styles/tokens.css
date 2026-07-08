@@ -8,12 +8,11 @@
   --cog-font-system: system-ui, sans-serif;
   --cog-font-atkinson: 'Atkinson Hyperlegible', system-ui, sans-serif;
   --cog-font-inter: 'Inter Variable', 'Inter', system-ui, sans-serif;
-  --cog-font-noto:
-    'Noto Sans Variable', 'Noto Sans', system-ui, sans-serif;
+  --cog-font-noto: 'Noto Sans Variable', 'Noto Sans', system-ui, sans-serif;
   --cog-font: var(--cog-font-system);
   --cog-font-mono:
-    'Reddit Mono Variable', 'Reddit Mono', 'SFMono-Regular', ui-monospace,
-    Menlo, Consolas, monospace;
+    'Reddit Mono Variable', 'Reddit Mono', 'SFMono-Regular', ui-monospace, Menlo,
+    Consolas, monospace;
 
   /* ----- Type scale ----- */
   --cog-fs-display: 24px;
@@ -101,6 +100,10 @@
   --cog-dur-medium: 150ms;
   --cog-dur-sheet: 260ms;
   --cog-ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ----- Stroke ----- */
+  --cog-border-width: 1px;
+  --cog-border-width-strong: 2px;
 
   /* ----- Icon ----- */
   --cog-icon-stroke: 2;

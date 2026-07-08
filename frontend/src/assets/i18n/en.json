@@ -28,7 +28,7 @@
     "data": {
       "download": "Download my data",
       "preparing": "Preparing…",
-      "subtitle": "Download all your conversations and messages — decrypted in your browser — as a JSON file.",
+      "subtitle": "Download all your conversations, personas, memory, projects and uploaded files — decrypted in your browser.",
       "title": "Your data"
     },
     "dataProcessing": {
@@ -142,13 +142,36 @@
       "exportedMany": "Exported {{ count }} chats",
       "exportedOne": "Exported 1 chat",
       "passwordChanged": "Password changed",
-      "profileUpdated": "Profile updated"
+      "profileUpdated": "Profile updated",
+      "retentionUpdated": "Auto-delete default saved",
+      "retentionError": "Couldn't save auto-delete default"
     },
     "memory": {
       "title": "Your memory",
       "subtitle": "Facts you've pinned to your personal memory. They're stored encrypted and added to the context of every chat.",
       "save": "Save",
-      "saved": "Memory saved"
+      "saved": "Memory saved",
+      "toggleTitle": "Personal memory",
+      "toggleSubtitle": "Let Cognos remember facts about you and add them to the context of new chats. Off by default — turn it on to start using memory.",
+      "toggleLabel": "Use personal memory",
+      "on": "On",
+      "off": "Off",
+      "enabledNote": "Memory is on. New facts you add are stored encrypted and included in the context of your chats.",
+      "editorDisabledNote": "Personal memory is off. Stored items are shown here so you can review or delete them, but nothing new will be saved or added to your chats until you turn memory on.",
+      "delete": "Clear memory",
+      "deleting": "Clearing…",
+      "deleted": "Memory cleared",
+      "deleteError": "Couldn't clear your memory. Please try again."
+    },
+    "retention": {
+      "title": "Auto-delete chats",
+      "subtitle": "Choose when saved conversations are deleted. Applies to new and inheriting chats; you can override any single chat.",
+      "note": "Deletion is permanent — a deleted conversation and its messages can't be recovered. Counted from each chat's last activity.",
+      "options": {
+        "never": "Never",
+        "sevenDays": "After 7 days",
+        "thirtyDays": "After 30 days"
+      }
     }
   },
   "auth": {
@@ -609,6 +632,8 @@
         "unavailable": "Unlock your vault before attaching files",
         "tooMany": "You can attach up to {{ max }} files",
         "providerNotice": "Attached files are sent to the AI provider when used",
+        "truncated": "Truncated",
+        "truncatedHint": "Only the first part of this file was sent to the AI.",
         "dropHint": "Drop files to attach",
         "state": {
           "queued": "Queued…",
@@ -636,6 +661,13 @@
         "resending": "Sending…",
         "sent": "Verification email sent",
         "sentBody": "Check {{email}} for the confirmation link."
+      },
+      "redactionWarning": {
+        "title": "Send sensitive data unredacted?",
+        "body": "This message still contains {{ count }} detected sensitive value(s) you chose not to redact. Your provider will see them in full.",
+        "redactAndSend": "Redact & send",
+        "sendAnyway": "Send anyway",
+        "cancel": "Keep editing"
       }
     },
     "conversation": {
@@ -670,7 +702,19 @@
       "hideValues": "Hide sensitive values",
       "showValues": "Show sensitive values",
       "duplicate": "Duplicate chat",
-      "memory": "Memory"
+      "memory": "Memory",
+      "enableMemory": "Use memory here",
+      "disableMemory": "Don't use memory here",
+      "memoryEnabledToast": "Memory on for this chat",
+      "memoryDisabledToast": "Memory off for this chat",
+      "memoryToggleError": "Couldn't update memory for this chat",
+      "autoDelete": "Auto-delete",
+      "autoDeleteValue": {
+        "inherit": "Account default",
+        "never": "Never",
+        "sevenDays": "7 days",
+        "thirtyDays": "30 days"
+      }
     },
     "icebreakers": {
       "items": {
@@ -988,6 +1032,71 @@
       "title": "Your message wasn't sent",
       "body": "Something interrupted the reply. Your message is still here — try sending it again.",
       "action": "Retry"
+    },
+    "accuracyDisclaimer": "AI can make mistakes. Verify important information.",
+    "minimap": {
+      "label": "Message navigator",
+      "jumpTo": "Jump to message: {{preview}}",
+      "noPreview": "(no text)"
+    },
+    "privacy": {
+      "title": "Privacy & security",
+      "seeDetails": "See privacy details",
+      "receipt": "Processed by {{model}} · {{region}} gateway · stored encrypted · not used for training · auto-delete: {{retention}}",
+      "gateway": {
+        "ch_only": "Switzerland",
+        "eu": "EU",
+        "global": "Global"
+      },
+      "autoDelete": {
+        "off": "off",
+        "days": "{{count}} days"
+      },
+      "items": {
+        "stored": {
+          "title": "Encrypted on this device",
+          "copy": "Messages are sealed in your browser before they’re stored. We keep no copy we can read."
+        },
+        "readable": {
+          "title": "Only you can read them",
+          "copy": "Decryption happens on your device — or the devices of people you explicitly share with."
+        },
+        "training": {
+          "title": "Not used for training",
+          "copy": "Approved providers answer under no-retention, no-training terms. Your chats never become training data."
+        },
+        "search": {
+          "title": "Search runs locally",
+          "copy": "Your history is searched on this device. Queries are never sent to us."
+        }
+      },
+      "caveat": {
+        "title": "The one honest caveat",
+        "copy": "To generate a reply, the model has to read your message in cleartext — for the moment it runs, in the region you choose. We re-encrypt the reply as soon as it’s generated and don’t store the plaintext."
+      },
+      "flow": {
+        "device": "Your device",
+        "encrypted": "Encrypted",
+        "reencrypted": "Re-encrypted",
+        "compute": "Plaintext · transient"
+      },
+      "rows": {
+        "model": "Model",
+        "region": "Region",
+        "autoDelete": "Auto-delete"
+      },
+      "keysLabel": "Your keys",
+      "deviceKey": "Device key",
+      "verified": "Verified",
+      "links": {
+        "security": "How we keep it private",
+        "subprocessors": "Who processes your data"
+      }
+    },
+    "bookmark": {
+      "save": "Save to bookmarks",
+      "saved": "Saved to bookmarks",
+      "saveError": "Couldn't save the bookmark. Please try again."
     }
   },
   "common": {
@@ -1143,6 +1252,21 @@
         "footer": "Cognos · https://cognos.io"
       },
       "cantFindKey": "Can't find your Account Key? Look for the cognos-emergency-kit.txt file you saved when you signed up."
+    },
+    "retention": {
+      "title": "Auto-delete this chat",
+      "body": "Choose when this conversation is deleted, counted from its last activity.",
+      "note": "“Account default” follows your account setting. Deletion is permanent — messages can't be recovered.",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Auto-delete updated",
+      "error": "Couldn't update auto-delete. Please try again.",
+      "options": {
+        "inherit": "Account default",
+        "never": "Never",
+        "sevenDays": "7 days",
+        "thirtyDays": "30 days"
+      }
     }
   },
   "errors": {
@@ -1314,7 +1438,8 @@
       "team": "Team & sharing",
       "usage": "Usage",
       "memory": "Memory",
-      "library": "Library"
+      "library": "Library",
+      "bookmarks": "Bookmarks"
     },
     "placeholder": {
       "comingSoon": "This section is coming soon."
@@ -1375,6 +1500,15 @@
         "downloadedToast": "Emergency Kit downloaded"
       },
       "passwordHeading": "Password"
+    },
+    "bookmarks": {
+      "title": "Your bookmarks",
+      "description": "Highlights you've saved from your chats. They're stored encrypted — jump back to a message or remove one.",
+      "empty": "You haven’t saved any bookmarks yet. Highlight text in a chat and choose “Save to bookmarks”.",
+      "jump": "Jump",
+      "remove": "Remove",
+      "removed": "Bookmark removed",
+      "removeError": "Couldn't remove the bookmark. Please try again."
     }
   },
   "models": {

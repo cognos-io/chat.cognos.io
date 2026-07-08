@@ -55,7 +55,9 @@ import type { CognosVaultFile } from '../vault.types';
               class="cog-vault-picker__row"
               [class.cog-vault-picker__row--selected]="isSelected(file.id)"
               type="button"
-              [style.border-top]="index > 0 ? '1px solid var(--cog-border)' : null"
+              [style.border-top]="
+                index > 0 ? 'var(--cog-border-width) solid var(--cog-border)' : null
+              "
               (click)="toggle(file.id)"
             >
               <span
@@ -128,7 +130,7 @@ import type { CognosVaultFile } from '../vault.types';
       .cog-vault-picker__list {
         overflow: auto;
         max-height: 320px;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
       }
 
@@ -157,7 +159,7 @@ import type { CognosVaultFile } from '../vault.types';
         flex: none;
         align-items: center;
         justify-content: center;
-        border: 2px solid var(--cog-border-bold);
+        border: var(--cog-border-width-strong) solid var(--cog-border-bold);
         border-radius: var(--cog-radius-xs);
         color: var(--cog-on-brand);
       }
@@ -171,7 +173,7 @@ import type { CognosVaultFile } from '../vault.types';
         overflow: hidden;
         width: 30px;
         height: 30px;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-xs);
       }
 

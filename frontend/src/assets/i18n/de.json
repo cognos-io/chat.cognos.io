@@ -28,7 +28,7 @@
     "data": {
       "download": "Meine Daten herunterladen",
       "preparing": "Wird vorbereitet…",
-      "subtitle": "Lade alle deine Konversationen und Nachrichten — in deinem Browser entschlüsselt — als JSON-Datei herunter.",
+      "subtitle": "Lade all deine Konversationen, Personas, dein Gedächtnis, deine Projekte und hochgeladenen Dateien — in deinem Browser entschlüsselt — herunter.",
       "title": "Deine Daten"
     },
     "dataProcessing": {
@@ -142,13 +142,36 @@
       "exportedMany": "{{ count }} Chats exportiert",
       "exportedOne": "1 Chat exportiert",
       "passwordChanged": "Passwort geändert",
-      "profileUpdated": "Profil aktualisiert"
+      "profileUpdated": "Profil aktualisiert",
+      "retentionUpdated": "Standard fürs automatische Löschen gespeichert",
+      "retentionError": "Standard fürs automatische Löschen konnte nicht gespeichert werden"
     },
     "memory": {
       "title": "Dein Gedächtnis",
       "subtitle": "Fakten, die du in deinem persönlichen Gedächtnis gespeichert hast. Sie werden verschlüsselt gespeichert und dem Kontext jedes Chats hinzugefügt.",
       "save": "Speichern",
-      "saved": "Gedächtnis gespeichert"
+      "saved": "Gedächtnis gespeichert",
+      "toggleTitle": "Persönliches Gedächtnis",
+      "toggleSubtitle": "Lass Cognos Fakten über dich merken und sie zum Kontext neuer Chats hinzufügen. Standardmässig aus – schalte es ein, um das Gedächtnis zu nutzen.",
+      "toggleLabel": "Persönliches Gedächtnis verwenden",
+      "on": "Ein",
+      "off": "Aus",
+      "enabledNote": "Das Gedächtnis ist ein. Neue Fakten, die du hinzufügst, werden verschlüsselt gespeichert und in den Kontext deiner Chats aufgenommen.",
+      "editorDisabledNote": "Das persönliche Gedächtnis ist aus. Gespeicherte Einträge werden hier angezeigt, damit du sie prüfen oder löschen kannst; es wird jedoch nichts Neues gespeichert oder deinen Chats hinzugefügt, bis du das Gedächtnis einschaltest.",
+      "delete": "Gedächtnis löschen",
+      "deleting": "Wird gelöscht …",
+      "deleted": "Gedächtnis gelöscht",
+      "deleteError": "Dein Gedächtnis konnte nicht gelöscht werden. Bitte versuche es erneut."
+    },
+    "retention": {
+      "title": "Chats automatisch löschen",
+      "subtitle": "Lege fest, wann gespeicherte Unterhaltungen gelöscht werden. Gilt für neue und übernehmende Chats; jeden einzelnen Chat kannst du überschreiben.",
+      "note": "Das Löschen ist endgültig – eine gelöschte Unterhaltung und ihre Nachrichten lassen sich nicht wiederherstellen. Gezählt ab der letzten Aktivität des Chats.",
+      "options": {
+        "never": "Nie",
+        "sevenDays": "Nach 7 Tagen",
+        "thirtyDays": "Nach 30 Tagen"
+      }
     }
   },
   "auth": {
@@ -609,6 +632,8 @@
         "unavailable": "Entsperre deinen Tresor, bevor du Dateien anhängst",
         "tooMany": "Du kannst bis zu {{ max }} Dateien anhängen",
         "providerNotice": "Angehängte Dateien werden bei Verwendung an den KI-Anbieter gesendet",
+        "truncated": "Gekürzt",
+        "truncatedHint": "Nur der erste Teil dieser Datei wurde an die KI gesendet.",
         "dropHint": "Dateien zum Anhängen ablegen",
         "state": {
           "queued": "In Warteschlange…",
@@ -636,6 +661,13 @@
         "resending": "Wird gesendet…",
         "sent": "Bestätigungs-E-Mail gesendet",
         "sentBody": "Prüfe {{email}} auf den Bestätigungslink."
+      },
+      "redactionWarning": {
+        "title": "Sensible Daten ungeschwärzt senden?",
+        "body": "Diese Nachricht enthält noch {{ count }} erkannte(n) sensible(n) Wert(e), die du nicht schwärzen wolltest. Dein Anbieter sieht sie vollständig.",
+        "redactAndSend": "Schwärzen & senden",
+        "sendAnyway": "Trotzdem senden",
+        "cancel": "Weiter bearbeiten"
       }
     },
     "conversation": {
@@ -670,7 +702,19 @@
       "hideValues": "Sensible Werte ausblenden",
       "showValues": "Sensible Werte anzeigen",
       "duplicate": "Chat duplizieren",
-      "memory": "Gedächtnis"
+      "memory": "Gedächtnis",
+      "enableMemory": "Gedächtnis hier verwenden",
+      "disableMemory": "Gedächtnis hier nicht verwenden",
+      "memoryEnabledToast": "Gedächtnis für diesen Chat ein",
+      "memoryDisabledToast": "Gedächtnis für diesen Chat aus",
+      "memoryToggleError": "Gedächtnis für diesen Chat konnte nicht aktualisiert werden",
+      "autoDelete": "Automatisch löschen",
+      "autoDeleteValue": {
+        "inherit": "Kontostandard",
+        "never": "Nie",
+        "sevenDays": "7 Tage",
+        "thirtyDays": "30 Tage"
+      }
     },
     "icebreakers": {
       "items": {
@@ -988,6 +1032,71 @@
       "title": "Deine Nachricht wurde nicht gesendet",
       "body": "Etwas hat die Antwort unterbrochen. Deine Nachricht ist noch da — versuche, sie erneut zu senden.",
       "action": "Erneut versuchen"
+    },
+    "accuracyDisclaimer": "KI kann Fehler machen. Überprüfe wichtige Informationen.",
+    "minimap": {
+      "label": "Nachrichtennavigation",
+      "jumpTo": "Zur Nachricht springen: {{preview}}",
+      "noPreview": "(kein Text)"
+    },
+    "privacy": {
+      "title": "Datenschutz & Sicherheit",
+      "seeDetails": "Datenschutzdetails ansehen",
+      "receipt": "Verarbeitet von {{model}} · Gateway {{region}} · verschlüsselt gespeichert · nicht fürs Training genutzt · automatisch löschen: {{retention}}",
+      "gateway": {
+        "ch_only": "Schweiz",
+        "eu": "EU",
+        "global": "Weltweit"
+      },
+      "autoDelete": {
+        "off": "aus",
+        "days": "{{count}} Tage"
+      },
+      "items": {
+        "stored": {
+          "title": "Auf diesem Gerät verschlüsselt",
+          "copy": "Nachrichten werden in deinem Browser versiegelt, bevor sie gespeichert werden. Wir behalten keine Kopie, die wir lesen können."
+        },
+        "readable": {
+          "title": "Nur du kannst sie lesen",
+          "copy": "Die Entschlüsselung erfolgt auf deinem Gerät – oder auf den Geräten der Personen, mit denen du ausdrücklich teilst."
+        },
+        "training": {
+          "title": "Nicht fürs Training genutzt",
+          "copy": "Zugelassene Anbieter antworten unter Bedingungen ohne Speicherung und ohne Training. Deine Chats werden nie zu Trainingsdaten."
+        },
+        "search": {
+          "title": "Suche läuft lokal",
+          "copy": "Dein Verlauf wird auf diesem Gerät durchsucht. Suchanfragen werden nie an uns gesendet."
+        }
+      },
+      "caveat": {
+        "title": "Der eine ehrliche Vorbehalt",
+        "copy": "Um eine Antwort zu erzeugen, muss das Modell deine Nachricht im Klartext lesen – für den Moment der Ausführung, in der von dir gewählten Region. Wir verschlüsseln die Antwort neu, sobald sie erzeugt ist, und speichern den Klartext nicht."
+      },
+      "flow": {
+        "device": "Dein Gerät",
+        "encrypted": "Verschlüsselt",
+        "reencrypted": "Neu verschlüsselt",
+        "compute": "Klartext · flüchtig"
+      },
+      "rows": {
+        "model": "Modell",
+        "region": "Region",
+        "autoDelete": "Automatisch löschen"
+      },
+      "keysLabel": "Deine Schlüssel",
+      "deviceKey": "Geräteschlüssel",
+      "verified": "Verifiziert",
+      "links": {
+        "security": "Wie wir es privat halten",
+        "subprocessors": "Wer deine Daten verarbeitet"
+      }
+    },
+    "bookmark": {
+      "save": "Als Lesezeichen speichern",
+      "saved": "Als Lesezeichen gespeichert",
+      "saveError": "Das Lesezeichen konnte nicht gespeichert werden. Bitte versuch es erneut."
     }
   },
   "common": {
@@ -1143,6 +1252,21 @@
         "footer": "Cognos · https://cognos.io"
       },
       "cantFindKey": "Du findest deinen Account-Schlüssel nicht? Suche nach der Datei cognos-emergency-kit.txt, die du bei der Registrierung gespeichert hast."
+    },
+    "retention": {
+      "title": "Diesen Chat automatisch löschen",
+      "body": "Lege fest, wann diese Unterhaltung gelöscht wird – gezählt ab der letzten Aktivität.",
+      "note": "„Kontostandard“ folgt deiner Kontoeinstellung. Das Löschen ist endgültig – Nachrichten lassen sich nicht wiederherstellen.",
+      "save": "Speichern",
+      "saving": "Wird gespeichert…",
+      "saved": "Automatisches Löschen aktualisiert",
+      "error": "Automatisches Löschen konnte nicht aktualisiert werden. Bitte versuche es erneut.",
+      "options": {
+        "inherit": "Kontostandard",
+        "never": "Nie",
+        "sevenDays": "7 Tage",
+        "thirtyDays": "30 Tage"
+      }
     }
   },
   "errors": {
@@ -1314,7 +1438,8 @@
       "team": "Team & Freigabe",
       "usage": "Nutzung",
       "memory": "Gedächtnis",
-      "library": "Bibliothek"
+      "library": "Bibliothek",
+      "bookmarks": "Lesezeichen"
     },
     "placeholder": {
       "comingSoon": "Dieser Bereich ist bald verfügbar."
@@ -1375,6 +1500,15 @@
         "downloadedToast": "Notfall-Kit heruntergeladen"
       },
       "passwordHeading": "Passwort"
+    },
+    "bookmarks": {
+      "title": "Deine Lesezeichen",
+      "description": "Markierungen, die du aus deinen Chats gespeichert hast. Sie werden verschlüsselt gespeichert – spring zu einer Nachricht zurück oder entferne eine.",
+      "empty": "Du hast noch keine Lesezeichen gespeichert. Markiere Text in einem Chat und wähle «Als Lesezeichen speichern».",
+      "jump": "Springen",
+      "remove": "Entfernen",
+      "removed": "Lesezeichen entfernt",
+      "removeError": "Das Lesezeichen konnte nicht entfernt werden. Bitte versuch es erneut."
     }
   },
   "models": {

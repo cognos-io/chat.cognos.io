@@ -68,6 +68,7 @@ export class UserPreferencesService {
   private readonly _unhideModel = new Subject<string>();
   private readonly _resetHiddenModels = new Subject<void>();
   private readonly _setRedactionEnabled = new Subject<boolean>();
+  private readonly _setMemoryEnabled = new Subject<boolean>();
   private readonly _setModelReasoningEffort = new Subject<{
     modelId: string;
     effort: string;
@@ -277,6 +278,17 @@ export class UserPreferencesService {
             }),
           ),
         ),
+      // Toggle personal memory (opt-in), local then remote
+      () => this._setMemoryEnabled.pipe(map((enabled) => ({ memoryEnabled: enabled }))),
+      (state) =>
+        this._setMemoryEnabled.pipe(
+          concatMap((enabled) =>
+            this.upsertUserPreferences(state().recordId, {
+              ...state(),
+              memoryEnabled: enabled,
+            }),
+          ),
+        ),
       // Remember a per-model reasoning effort, local then remote
       (state) =>
         this._setModelReasoningEffort.pipe(
@@ -422,6 +434,7 @@ export class UserPreferencesService {
       unhideModel: this._unhideModel,
       resetHiddenModels: this._resetHiddenModels,
       setRedactionEnabled: this._setRedactionEnabled,
+      setMemoryEnabled: this._setMemoryEnabled,
       setModelReasoningEffort: this._setModelReasoningEffort,
       setModelQuickFilter: this._setModelQuickFilter,
       setModelSortMode: this._setModelSortMode,
@@ -474,6 +487,9 @@ export class UserPreferencesService {
   public setRedactionEnabled = (enabled: boolean) => {
     this.state.setRedactionEnabled(enabled);
   };
+  public setMemoryEnabled = (enabled: boolean) => {
+    this.state.setMemoryEnabled(enabled);
+  };
   public setModelReasoningEffort = (modelId: string, effort: string) => {
     this.state.setModelReasoningEffort({ modelId, effort });
   };
@@ -492,6 +508,7 @@ export class UserPreferencesService {
   public defaultPersonaId = this.state.defaultPersonaId;
   public defaultModelId = this.state.defaultModelId;
   public redactionEnabled = this.state.redactionEnabled;
+  public memoryEnabled = this.state.memoryEnabled;
   public modelReasoningEfforts = this.state.modelReasoningEfforts;
   public recentModels = this.state.recentModels;
   public hiddenModels = this.state.hiddenModels;

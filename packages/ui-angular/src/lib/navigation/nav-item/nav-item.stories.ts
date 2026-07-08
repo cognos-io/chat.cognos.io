@@ -1,11 +1,11 @@
-import { moduleMetadata, type Meta, type StoryObj } from "@storybook/angular";
+import { type Meta, type StoryObj, moduleMetadata } from '@storybook/angular';
 
-import { CognosNavItemComponent } from "./nav-item.component";
+import { CognosNavItemComponent } from './nav-item.component';
 
 type StoryArgs = {
   expandable: boolean;
   expanded: boolean;
-  icon: "folder" | "lock" | "graduation-cap" | "landmark";
+  icon: 'folder' | 'lock' | 'graduation-cap' | 'landmark';
   indent: number;
   label: string;
   meta: string;
@@ -14,7 +14,7 @@ type StoryArgs = {
 };
 
 const meta: Meta<StoryArgs> = {
-  title: "Navigation/Nav Item",
+  title: 'Navigation/Nav Item',
   decorators: [
     moduleMetadata({
       imports: [CognosNavItemComponent],
@@ -23,17 +23,17 @@ const meta: Meta<StoryArgs> = {
   args: {
     expandable: false,
     expanded: false,
-    icon: "folder",
+    icon: 'folder',
     indent: 0,
-    label: "Policy review",
-    meta: "12",
+    label: 'Policy review',
+    meta: '12',
     pinned: false,
     selected: false,
   },
   render: (args) => ({
     props: args,
     template: `
-      <div style="width:280px; background:var(--cog-nav-bg); padding:12px; border:1px solid var(--cog-border); border-radius:8px;">
+      <div style="width:280px; background:var(--cog-nav-bg); padding:12px; border:var(--cog-border-width) solid var(--cog-border); border-radius:8px;">
         <cog-nav-item
           [expandable]="expandable"
           [expanded]="expanded"
@@ -68,7 +68,7 @@ export const Selected: Story = {
 export const Indented: Story = {
   args: {
     indent: 1,
-    label: "Shared with legal",
+    label: 'Shared with legal',
     pinned: true,
   },
 };
@@ -77,9 +77,9 @@ export const ExpandedGroup: Story = {
   args: {
     expandable: true,
     expanded: true,
-    icon: "landmark",
-    label: "Cantonal Policy",
-    meta: "",
+    icon: 'landmark',
+    label: 'Cantonal Policy',
+    meta: '',
   },
 };
 
@@ -87,8 +87,8 @@ export const CollapsedGroup: Story = {
   args: {
     expandable: true,
     expanded: false,
-    icon: "graduation-cap",
-    label: "Lycée — Year 11",
-    meta: "",
+    icon: 'graduation-cap',
+    label: 'Lycée — Year 11',
+    meta: '',
   },
 };

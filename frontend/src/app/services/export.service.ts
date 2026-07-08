@@ -5,6 +5,10 @@ import { firstValueFrom } from 'rxjs';
 import { zipSync } from 'fflate';
 import { Base64 } from 'js-base64';
 
+import {
+  AttachmentLibraryService,
+  LibraryFile,
+} from '@app/attachments/attachment-library.service';
 import { Conversation } from '@app/interfaces/conversation';
 import {
   MessageAttachment,
@@ -15,10 +19,22 @@ import {
 import { saveBlob } from '@app/utils/save-blob';
 
 import { CognosApiService } from './cognos-api.service';
+import { CompactionService } from './compaction.service';
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
+import { PersonaService } from './persona.service';
+import { ProjectService } from './project.service';
+import { ScopedMemoryService } from './scoped-memory.service';
 
 const MESSAGE_PAGE_SIZE = 100;
+
+// Skip library files larger than this from the export archive (recorded as
+// skipped in the manifest instead). Library uploads are already capped at
+// 10 MiB, so this is a safety net for an unexpectedly large stored original.
+const MAX_EXPORTED_ATTACHMENT_BYTES = 25 * 1024 * 1024;
+// Total budget for bundled library files, so an export of a big library stays a
+// reasonable download. Files that don't fit are recorded as skipped.
+const MAX_EXPORTED_ATTACHMENT_TOTAL_BYTES = 200 * 1024 * 1024;
 
 // ExportedAttachment references a decrypted image bundled alongside the JSON in
 // the export archive. `file` is the archive-relative path to the image bytes.
@@ -44,62 +60,146 @@ export interface ExportedMessage {
   attachments?: ExportedAttachment[];
 }
 
-// The decrypted image files gathered during an export, keyed by their
-// archive-relative path (matching ExportedAttachment.file).
-type ExportImages = Map<string, Uint8Array>;
+// The decrypted binary files gathered during an export, keyed by their
+// archive-relative path. Covers both generated images (images/) and library
+// files (files/).
+type ExportArchive = Map<string, Uint8Array>;
 
-const EXPORT_JSON_NAME = 'conversation.json';
+const EXPORT_JSON_NAME = 'export.json';
 
 export interface ExportedConversation {
   id: string;
   title: string;
   created: string;
   updated: string;
+  // The project this conversation belongs to, if any. This is the mapping of
+  // which conversations live under which project (see `projects` below).
+  project_id?: string;
   messages: ExportedMessage[];
 }
 
+// A custom persona the user authored (Cognos-provided personas are omitted —
+// they are not the user's data and are the same for everyone).
+export interface ExportedPersona {
+  id: string;
+  record_id?: string;
+  name: string;
+  description: string;
+  system_prompt: string;
+  icon: string;
+  color: string;
+}
+
+// A user project/folder's decrypted metadata. Conversation membership is
+// captured on each conversation's `project_id`.
+export interface ExportedProject {
+  id: string;
+  name: string;
+  description: string;
+  instructions: string;
+  icon: string;
+  color: string;
+  created: string;
+  updated: string;
+}
+
+// A single memory scope's decrypted items (durable memory bullet list).
+export interface ExportedScopedMemory {
+  items: string[];
+}
+
+// A project-scoped memory record, tagged with its project id.
+export interface ExportedProjectMemory extends ExportedScopedMemory {
+  project_id: string;
+}
+
+// One conversation compaction (durable memory + rolling narrative) — the
+// persisted, decrypted long-conversation memory for a conversation.
+export interface ExportedCompaction {
+  conversation_id: string;
+  record_id: string;
+  created_at: string;
+  output_mode: string;
+  durable_memory: string[];
+  rolling_narrative: string;
+}
+
+export interface ExportedMemory {
+  // The user's personal memory, or null when none is stored.
+  user: ExportedScopedMemory | null;
+  // Per-project memory scopes.
+  projects: ExportedProjectMemory[];
+  // Per-conversation compactions (durable conversation memory).
+  compactions: ExportedCompaction[];
+}
+
+// A user-uploaded library file. `file` is the archive path when the bytes were
+// bundled; `skipped` gives the reason when they were not (too large, or the
+// file could not be decrypted) so the export never fails on one bad file.
+export interface ExportedLibraryAttachment {
+  id: string;
+  name: string;
+  mime_type: string;
+  size_bytes: number;
+  created_at: string;
+  file?: string;
+  skipped?: string;
+}
+
 export interface ExportPayload {
-  version: '1';
+  // v2 adds personas, memory, projects and library attachments to the v1
+  // conversations/messages. v1 consumers reading `conversations` still work.
+  version: '2';
   exported_at: string;
   conversation_count: number;
   conversations: ExportedConversation[];
+  // Account-wide sections. Populated for a full-account export; empty/null for a
+  // single-conversation export (which only carries that conversation).
+  personas: ExportedPersona[];
+  projects: ExportedProject[];
+  memory: ExportedMemory;
+  attachments: ExportedLibraryAttachment[];
 }
 
-// ExportService gathers all of the user's conversations and messages and
-// decrypts them in the browser into a single JSON payload the user can
-// download. Decryption happens client-side only — no plaintext ever leaves the
-// device — which is the whole point of an export for an end-to-end encrypted
-// product.
+// ExportService gathers the user's data and decrypts it in the browser into a
+// single downloadable payload. Decryption happens client-side only — no
+// plaintext ever leaves the device — which is the whole point of an export for
+// an end-to-end encrypted product. A full-account export additionally bundles
+// custom personas, scoped memory, projects and the user's uploaded files.
 @Injectable({ providedIn: 'root' })
 export class ExportService {
   private readonly _api = inject(CognosApiService);
   private readonly _conversations = inject(ConversationService);
   private readonly _crypto = inject(CryptoService);
+  private readonly _personas = inject(PersonaService);
+  private readonly _projects = inject(ProjectService);
+  private readonly _memory = inject(ScopedMemoryService);
+  private readonly _compactions = inject(CompactionService);
+  private readonly _library = inject(AttachmentLibraryService);
 
   async buildExport(now: Date): Promise<ExportPayload> {
-    const { payload } = await this.gather(this._conversations.conversationList(), now);
+    const { payload } = await this.gather(this.allConversations(), now, true);
     return payload;
   }
 
-  // downloadExport builds the payload and triggers a browser download. When any
-  // conversation has generated images, the download is a .zip bundling the JSON
-  // with the decrypted images; otherwise it stays a plain .json.
+  // downloadExport builds the payload and triggers a browser download. When the
+  // export carries any binary data (generated images or library files) the
+  // download is a .zip bundling the JSON with those files; otherwise it stays a
+  // plain .json.
   async downloadExport(now: Date): Promise<ExportPayload> {
-    const { payload, images } = await this.gather(
-      this._conversations.conversationList(),
-      now,
-    );
-    this.deliver(payload, images, `cognos-export-${now.toISOString().slice(0, 10)}`);
+    const { payload, archive } = await this.gather(this.allConversations(), now, true);
+    this.deliver(payload, archive, `cognos-export-${now.toISOString().slice(0, 10)}`);
     return payload;
   }
 
   // Single-conversation variant, sharing the export format (one entry) so the
-  // file reads the same whether one chat or all of them were exported.
+  // file reads the same whether one chat or all of them were exported. Only that
+  // conversation and its compactions are included — not account-wide sections.
   async buildConversationExport(
     conversation: Conversation,
     now: Date,
   ): Promise<ExportPayload> {
-    const { payload } = await this.gather([conversation], now);
+    const { payload } = await this.gather([conversation], now, false);
     return payload;
   }
 
@@ -107,51 +207,70 @@ export class ExportService {
     conversation: Conversation,
     now: Date,
   ): Promise<ExportPayload> {
-    const { payload, images } = await this.gather([conversation], now);
-    this.deliver(payload, images, this.conversationFilename(conversation, now));
+    const { payload, archive } = await this.gather([conversation], now, false);
+    this.deliver(payload, archive, this.conversationFilename(conversation, now));
     return payload;
   }
 
-  // gather decrypts every conversation's messages and their image attachments,
-  // accumulating the decrypted image bytes into a single archive map shared
-  // across conversations (record ids are globally unique, so paths don't clash).
+  // A full export covers every loaded conversation — standalone AND project
+  // conversations (the latter are excluded from the sidebar list but are part of
+  // the user's data, and back the project→conversation mapping).
+  private allConversations(): Conversation[] {
+    return this._conversations.allConversations();
+  }
+
+  // gather decrypts every conversation's messages/attachments/compactions, and
+  // — for a full-account export — the user's personas, projects, scoped memory
+  // and library files, accumulating any binary bytes into a single archive map.
   private async gather(
     conversations: Conversation[],
     now: Date,
-  ): Promise<{ payload: ExportPayload; images: ExportImages }> {
-    const images: ExportImages = new Map();
+    fullAccount: boolean,
+  ): Promise<{ payload: ExportPayload; archive: ExportArchive }> {
+    const archive: ExportArchive = new Map();
     const exported: ExportedConversation[] = [];
+    const compactions: ExportedCompaction[] = [];
     for (const conversation of conversations) {
-      exported.push(await this.exportConversation(conversation, images));
+      exported.push(await this.exportConversation(conversation, archive));
+      compactions.push(...(await this.exportCompactions(conversation)));
     }
-    return { payload: this.wrap(exported, now), images };
-  }
 
-  private wrap(conversations: ExportedConversation[], now: Date): ExportPayload {
-    return {
-      version: '1',
+    const personas = fullAccount ? this.exportPersonas() : [];
+    const projects = fullAccount ? this.exportProjects() : [];
+    const userMemory = fullAccount ? await this.exportUserMemory() : null;
+    const projectMemory = fullAccount ? await this.exportProjectMemory() : [];
+    const attachments = fullAccount ? await this.exportLibrary(archive) : [];
+
+    const payload: ExportPayload = {
+      version: '2',
       exported_at: now.toISOString(),
-      conversation_count: conversations.length,
-      conversations,
+      conversation_count: exported.length,
+      conversations: exported,
+      personas,
+      projects,
+      memory: { user: userMemory, projects: projectMemory, compactions },
+      attachments,
     };
+    return { payload, archive };
   }
 
   private async exportConversation(
     conversation: Conversation,
-    images: ExportImages,
+    archive: ExportArchive,
   ): Promise<ExportedConversation> {
     return {
       id: conversation.record.id,
       title: conversation.decryptedData.title,
       created: conversation.record.created,
       updated: conversation.record.updated,
-      messages: await this.exportMessages(conversation, images),
+      project_id: conversation.record.project || undefined,
+      messages: await this.exportMessages(conversation, archive),
     };
   }
 
   private async exportMessages(
     conversation: Conversation,
-    images: ExportImages,
+    archive: ExportArchive,
   ): Promise<ExportedMessage[]> {
     const messages: ExportedMessage[] = [];
 
@@ -181,7 +300,7 @@ export class ExportService {
             conversation,
             record.id,
             data.attachments,
-            images,
+            archive,
           ),
         });
       }
@@ -197,14 +316,14 @@ export class ExportService {
   }
 
   // exportAttachments fetches and decrypts each image attachment, adds the bytes
-  // to the archive map, and returns the JSON references. Returns undefined when
-  // the message has no attachments (so the field stays absent for text turns).
-  // A failed fetch/decrypt skips that image rather than failing the whole export.
+  // to the archive, and returns the JSON references. Returns undefined when the
+  // message has no attachments (so the field stays absent for text turns). A
+  // failed fetch/decrypt skips that image rather than failing the whole export.
   private async exportAttachments(
     conversation: Conversation,
     messageId: string,
     attachments: MessageAttachment[] | undefined,
-    images: ExportImages,
+    archive: ExportArchive,
   ): Promise<ExportedAttachment[] | undefined> {
     if (!attachments?.length) {
       return undefined;
@@ -218,7 +337,7 @@ export class ExportService {
         continue;
       }
       const file = `images/${messageId}-${index}.${extForMime(attachment.mime_type)}`;
-      images.set(file, bytes);
+      archive.set(file, bytes);
       exported.push({
         kind: attachment.kind,
         mime_type: attachment.mime_type,
@@ -255,6 +374,145 @@ export class ExportService {
     }
   }
 
+  // exportCompactions loads and decrypts a conversation's compactions (its
+  // persisted durable/rolling memory). A failed load degrades to no compactions
+  // for that conversation rather than failing the whole export.
+  private async exportCompactions(
+    conversation: Conversation,
+  ): Promise<ExportedCompaction[]> {
+    try {
+      const compactions = await firstValueFrom(
+        this._compactions.load(conversation.record.id, conversation.keyPair),
+      );
+      return compactions.map((compaction) => ({
+        conversation_id: compaction.conversationId,
+        record_id: compaction.recordId,
+        created_at: compaction.payload.created_at,
+        output_mode: compaction.payload.output_mode,
+        durable_memory: compaction.payload.durable_memory.items,
+        rolling_narrative: compaction.payload.rolling_narrative,
+      }));
+    } catch {
+      return [];
+    }
+  }
+
+  // exportPersonas returns the user's custom personas (already decrypted in the
+  // PersonaService cache). Cognos-provided personas are not the user's data and
+  // are omitted.
+  private exportPersonas(): ExportedPersona[] {
+    return this._personas.customPersonas().map((persona) => ({
+      id: persona.id,
+      record_id: persona.recordId,
+      name: persona.name,
+      description: persona.description,
+      system_prompt: persona.systemPrompt,
+      icon: persona.icon,
+      color: persona.color,
+    }));
+  }
+
+  // exportProjects returns the user's projects (already decrypted in the
+  // ProjectService cache). Conversation membership is on each conversation's
+  // project_id.
+  private exportProjects(): ExportedProject[] {
+    return this._projects.projects().map((project) => ({
+      id: project.record.id,
+      name: project.decryptedData.name,
+      description: project.decryptedData.description,
+      instructions: project.decryptedData.instructions,
+      icon: project.decryptedData.icon,
+      color: project.decryptedData.color,
+      created: project.record.created,
+      updated: project.record.updated,
+    }));
+  }
+
+  // exportUserMemory loads and decrypts the user's personal memory. Degrades to
+  // null when none is stored or it cannot be loaded.
+  private async exportUserMemory(): Promise<ExportedScopedMemory | null> {
+    try {
+      const memory = await firstValueFrom(this._memory.loadUserMemory());
+      if (!memory) {
+        return null;
+      }
+      return { items: memory.payload.durable_memory.items };
+    } catch {
+      return null;
+    }
+  }
+
+  // exportProjectMemory loads and decrypts each project's memory scope. A scope
+  // that fails to load or is empty is omitted.
+  private async exportProjectMemory(): Promise<ExportedProjectMemory[]> {
+    const result: ExportedProjectMemory[] = [];
+    for (const project of this._projects.projects()) {
+      try {
+        const memory = await firstValueFrom(
+          this._memory.loadProjectMemory(project.record.id),
+        );
+        if (memory) {
+          result.push({
+            project_id: project.record.id,
+            items: memory.payload.durable_memory.items,
+          });
+        }
+      } catch {
+        // Skip a project memory scope that can't be loaded.
+      }
+    }
+    return result;
+  }
+
+  // exportLibrary decrypts each user-uploaded library file into the archive and
+  // returns a manifest. Files that are too large or fail to decrypt are recorded
+  // as skipped-with-reason rather than failing the whole export.
+  private async exportLibrary(
+    archive: ExportArchive,
+  ): Promise<ExportedLibraryAttachment[]> {
+    let files: LibraryFile[];
+    try {
+      files = await firstValueFrom(this._library.refresh());
+    } catch {
+      return [];
+    }
+
+    const manifest: ExportedLibraryAttachment[] = [];
+    let totalBytes = 0;
+    for (const file of files) {
+      const entry: ExportedLibraryAttachment = {
+        id: file.id,
+        name: file.displayName,
+        mime_type: file.mimeType,
+        size_bytes: file.sizeBytes,
+        created_at: file.createdAt,
+      };
+
+      if (file.sizeBytes > MAX_EXPORTED_ATTACHMENT_BYTES) {
+        entry.skipped = 'file_too_large';
+        manifest.push(entry);
+        continue;
+      }
+      if (totalBytes + file.sizeBytes > MAX_EXPORTED_ATTACHMENT_TOTAL_BYTES) {
+        entry.skipped = 'export_size_limit';
+        manifest.push(entry);
+        continue;
+      }
+
+      try {
+        const bytes = await this._library.decryptOriginal(file);
+        const path = `files/${file.id}-${sanitizeFilename(file.displayName)}`;
+        archive.set(path, bytes);
+        totalBytes += bytes.byteLength;
+        entry.file = path;
+      } catch {
+        entry.skipped = 'decrypt_failed';
+      }
+      manifest.push(entry);
+    }
+    return manifest;
+  }
+
   private decrypt(base64Data: string, conversation: Conversation): MessageData {
     try {
       return parseMessageData(
@@ -280,16 +538,17 @@ export class ExportService {
     return `cognos-${base}-${now.toISOString().slice(0, 10)}`;
   }
 
-  // deliver downloads the export: a plain .json when there are no images, or a
-  // .zip bundling conversation.json with the decrypted images/ folder otherwise.
+  // deliver downloads the export: a plain .json when there is no binary data, or
+  // a .zip bundling export.json with the decrypted images/ and files/ folders
+  // otherwise.
   private deliver(
     payload: ExportPayload,
-    images: ExportImages,
+    archive: ExportArchive,
     filename: string,
   ): void {
     const json = JSON.stringify(payload, null, 2);
 
-    if (images.size === 0) {
+    if (archive.size === 0) {
       this.download(new Blob([json], { type: 'application/json' }), `${filename}.json`);
       return;
     }
@@ -297,7 +556,7 @@ export class ExportService {
     const files: Record<string, Uint8Array> = {
       [EXPORT_JSON_NAME]: new TextEncoder().encode(json),
     };
-    for (const [path, bytes] of images) {
+    for (const [path, bytes] of archive) {
       files[path] = bytes;
     }
     const zipped = zipSync(files);
@@ -323,4 +582,11 @@ function extForMime(mimeType: string): string {
     default:
       return 'png';
   }
+}
+
+// sanitizeFilename keeps archive paths safe and predictable: a conservative
+// slug of the original name (which the user chose and could contain anything).
+function sanitizeFilename(name: string): string {
+  const cleaned = name.replace(/[^a-zA-Z0-9._-]+/g, '_').replace(/^_+|_+$/g, '');
+  return cleaned || 'file';
 }

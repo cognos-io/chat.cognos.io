@@ -31,7 +31,7 @@ import { AuthService } from '@services/auth.service';
   template: `
     <cog-auth-page>
       <ng-container *transloco="let t">
-        <app-cognos-logo class="auth-page__logo" palette="dark"></app-cognos-logo>
+        <app-cognos-logo class="auth-page__logo"></app-cognos-logo>
         <h1 class="auth-page__title">{{ t('auth.login.title') }}</h1>
         <p class="auth-page__lead">{{ t('auth.login.lead') }}</p>
 

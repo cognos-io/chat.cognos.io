@@ -303,7 +303,9 @@
       "about": "About",
       "privacy": "Privacy",
       "terms": "Terms",
-      "contact": "Contact"
+      "contact": "Contact",
+      "security": "Security",
+      "subprocessors": "Subprocessors"
     },
     "language": "Language",
     "copyright": "© {{ year }} Cognos. Made in Switzerland.",
@@ -596,7 +598,7 @@
               "ul": [
                 "Infomaniak for Swiss-hosted models",
                 "Requesty as an EU gateway",
-                "underlying model providers or hosts, to be confirmed in the subprocessor table"
+                "the underlying model providers and hosts listed on our Subprocessors page"
               ]
             }
           ]
@@ -628,74 +630,7 @@
               "p": "Some providers process only encrypted data or technical metadata. AI providers are different: they process live prompts and responses in plaintext so the AI can answer. Stored chat history remains encrypted so Cognos cannot read it from storage."
             },
             {
-              "table": {
-                "head": [
-                  "Provider",
-                  "What they do",
-                  "What they may process",
-                  "Location",
-                  "Plaintext access?"
-                ],
-                "rows": [
-                  [
-                    "Hetzner",
-                    "Hosting",
-                    "Account data, encrypted stored data, logs, metadata",
-                    "Germany / EU",
-                    "No stored chat plaintext; may process technical metadata"
-                  ],
-                  [
-                    "Bunny.net",
-                    "CDN/DNS",
-                    "IP addresses and request metadata",
-                    "EU/global",
-                    "No chat content"
-                  ],
-                  ["BorgBase", "Backups", "Encrypted backups", "EU", "No chat content"],
-                  [
-                    "Scaleway",
-                    "Transactional email",
-                    "Email address and email metadata",
-                    "EU",
-                    "Email content only"
-                  ],
-                  [
-                    "Paddle",
-                    "Billing and subscriptions",
-                    "Billing, tax, invoice, and payment metadata",
-                    "US / EU / UK",
-                    "Billing data only"
-                  ],
-                  [
-                    "Infomaniak",
-                    "Swiss AI models",
-                    "Live prompts and responses",
-                    "Switzerland",
-                    "Yes, for live AI requests"
-                  ],
-                  [
-                    "Requesty",
-                    "AI gateway",
-                    "Live prompts, responses, model metadata",
-                    "EU / UK",
-                    "Yes, for live AI requests"
-                  ],
-                  [
-                    "AI providers via Requesty",
-                    "AI responses",
-                    "Live prompts and responses",
-                    "EU",
-                    "Yes, for live AI requests"
-                  ],
-                  [
-                    "Plausible",
-                    "Analytics, if enabled",
-                    "Aggregate usage events",
-                    "EU",
-                    "No chat content"
-                  ]
-                ]
-              }
+              "p": "See our full, always-current subprocessor list — who each provider is, what they handle and where — on the <a href=\"/subprocessors\">Subprocessors</a> page."
             },
             {
               "p": "We require AI providers used with Cognos not to use Cognos user data for model training. Exact retention and routing terms depend on the provider and selected privacy tier. We use contractual safeguards where required, including data processing agreements and international transfer protections."
@@ -743,7 +678,7 @@
               "p": "Cognos staff should not be able to read stored chat content from the database. Staff access to production systems is restricted. Staff are not permitted to inspect plaintext live request flows except where strictly necessary and authorised for security or operational reasons."
             },
             {
-              "p": "Further incident response and access-control details are being finalised."
+              "p": "We maintain incident-response procedures and restrict production access to authorised staff on a need-to-know basis, with access logged and reviewed."
             }
           ]
         },
@@ -879,7 +814,7 @@
               ]
             },
             {
-              "p": "Exact retention periods for operational logs, support messages, abuse/security records, and some billing records are still being finalised."
+              "p": "Operational logs, support messages, and abuse or security records are kept only as long as needed for security, support, and legal obligations, then deleted or anonymised. Some billing records are kept for longer where accounting, tax, or legal rules require."
             }
           ]
         },
@@ -1524,6 +1459,281 @@
             },
             {
               "p": "<b>Climacrux GmbH</b><br>St. Niklausenstrasse 96<br>6047 Kastanienbaum<br>Switzerland"
+            }
+          ]
+        }
+      ]
+    },
+    "subprocessors": {
+      "metaTitle": "Subprocessors — Cognos",
+      "metaDescription": "The providers that help us run Cognos — what each one does, what it may handle and where. Most only ever touch data in a form we can’t read.",
+      "eyebrow": "Subprocessors",
+      "title": "Subprocessors",
+      "lead": "The short list of trusted providers behind Cognos — what each does, what it may handle, and where.",
+      "effectiveLabel": "Last updated",
+      "effectiveDate": "2 July 2026",
+      "facts": [
+        {
+          "label": "Controller",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Privacy contact",
+          "value": "privacy@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Running Cognos takes a handful of specialist providers — for hosting, backups, account emails, payments, delivering the website and the AI itself. We keep the list short on purpose."
+        },
+        {
+          "p": "This page names every provider we rely on, what it does and what it may handle. It sits alongside our <a href=\"/privacy\">Privacy Policy</a>, which explains the wider picture."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "How to read this list",
+          "blocks": [
+            {
+              "p": "Not every provider sees the same thing. The important difference is between the ones that only ever handle data in a form we can’t read, and the AI providers that briefly work with your message while they answer."
+            },
+            {
+              "ul": [
+                "hosting and backup providers mainly handle stored data that stays locked, plus technical details like timestamps",
+                "the payments provider handles payment and invoice details",
+                "the email provider handles your email address and the emails we send you",
+                "AI providers work with your message and its answer while the AI is responding — the one moment your message is readable, and it’s never kept afterwards"
+              ]
+            },
+            {
+              "p": "Whatever a provider is doing, your saved chat history always stays locked in storage, in a form Cognos can’t read."
+            }
+          ]
+        },
+        {
+          "heading": "The providers we use",
+          "blocks": [
+            {
+              "table": {
+                "head": [
+                  "Provider",
+                  "What they do",
+                  "What they may handle",
+                  "Where",
+                  "Can they read your chats?"
+                ],
+                "rows": [
+                  [
+                    "Hetzner",
+                    "Hosting",
+                    "Account details, locked stored data, logs, technical details",
+                    "Germany / EU",
+                    "No — stored chats stay locked"
+                  ],
+                  [
+                    "Bunny.net",
+                    "Content delivery & DNS",
+                    "IP addresses and request details",
+                    "EU / global",
+                    "No"
+                  ],
+                  ["BorgBase", "Backups", "Locked backups", "EU", "No"],
+                  [
+                    "Scaleway",
+                    "Account emails",
+                    "Your email address and message details",
+                    "EU",
+                    "Only the emails we send"
+                  ],
+                  [
+                    "Paddle",
+                    "Payments & subscriptions",
+                    "Billing, tax and invoice details",
+                    "US / EU / UK",
+                    "No — billing details only"
+                  ],
+                  [
+                    "Infomaniak",
+                    "Swiss AI models",
+                    "Your message and its answer, while the AI works",
+                    "Switzerland",
+                    "Briefly, while the AI answers"
+                  ],
+                  [
+                    "Requesty",
+                    "AI gateway",
+                    "Your message, its answer and model details",
+                    "EU / UK",
+                    "Briefly, while the AI answers"
+                  ],
+                  [
+                    "AI providers via Requesty",
+                    "AI answers",
+                    "Your message and its answer, while the AI works",
+                    "EU",
+                    "Briefly, while the AI answers"
+                  ],
+                  [
+                    "Plausible",
+                    "Website analytics, if enabled",
+                    "Aggregate, anonymous usage",
+                    "EU",
+                    "No"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "heading": "Our commitments",
+          "blocks": [
+            {
+              "p": "We don’t let any provider sell Cognos user data or use it for advertising."
+            },
+            {
+              "p": "We require the AI providers used with Cognos not to use Cognos chats to train their models. Exact retention and routing depend on the provider and the region you choose."
+            },
+            {
+              "p": "Where the law requires it, we put agreements in place with these providers, including data-processing agreements and protections for any data handled outside Switzerland or the EU."
+            },
+            {
+              "p": "This list changes as Cognos grows. When it does, we update this page. Questions? Email <a href=\"mailto:privacy@cognos.io\">privacy@cognos.io</a>."
+            }
+          ]
+        }
+      ]
+    },
+    "security": {
+      "metaTitle": "Security — Cognos",
+      "metaDescription": "How Cognos keeps your chats private: locked in a form we can’t read, opened only by a key you hold, and handled in Switzerland or Europe.",
+      "eyebrow": "Security",
+      "title": "Security",
+      "lead": "A plain-language look at how Cognos is built, what we can and can’t see, and the limits we’re honest about.",
+      "effectiveLabel": "Last updated",
+      "effectiveDate": "2 July 2026",
+      "facts": [
+        {
+          "label": "Provider",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Privacy contact",
+          "value": "privacy@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Cognos is an AI chat app built so that your saved conversations are kept in a form we can’t read. This page explains how that works, in plain language."
+        },
+        {
+          "p": "For the precise legal detail, see our <a href=\"/privacy\">Privacy Policy</a>. For the providers behind Cognos, see <a href=\"/subprocessors\">Subprocessors</a>."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "How Cognos is built",
+          "blocks": [
+            {
+              "p": "Three parts work together every time you chat, and each is trusted with as little as possible."
+            },
+            {
+              "ul": [
+                "<b>Your device</b> holds the keys. Your chats are unlocked and read here, and nowhere else.",
+                "<b>Our servers</b> store your chats locked, pass your message to the AI, and lock the answer away again. They never keep a copy we can read.",
+                "<b>The AI provider</b> receives your message only while it answers, then keeps nothing."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "How your chats are locked",
+          "blocks": [
+            {
+              "p": "When a conversation is saved, it’s locked on your device before it reaches us — the messages, titles, summaries and any files. We store only the locked version, which we can’t read."
+            },
+            {
+              "p": "Only your key can open it again, and that happens on your device when you sign in."
+            }
+          ]
+        },
+        {
+          "heading": "Your key and your password",
+          "blocks": [
+            {
+              "p": "You have two separate secrets, each with one job:"
+            },
+            {
+              "ul": [
+                "<b>Your password</b> signs you in. Forget it and you can reset it by email — your chats stay safe, because the password doesn’t unlock them.",
+                "<b>Your Account Key</b> is the one that opens your chats. We never receive it or store it, so keep it somewhere safe. If you lose it, we can’t recover your chats for you — that’s the trade-off for keeping no copy we can read."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "What we can and can’t see",
+          "blocks": [
+            {
+              "p": "We can see the details needed to run the service — your account and billing information, which model you used, and technical details like timestamps. While the AI is answering, your message is readable so the AI can work with it."
+            },
+            {
+              "p": "We can’t read your saved chats, titles, summaries, memory or files from storage. They stay locked with a key we don’t hold."
+            },
+            {
+              "p": "Before your message leaves your device, Cognos also hides common personal details — like emails, phone numbers, bank details and ID numbers — behind placeholders, so the AI works with placeholders instead of the real values."
+            }
+          ]
+        },
+        {
+          "heading": "Where your data is handled",
+          "blocks": [
+            {
+              "p": "Cognos is run by a Swiss company. The app and its stored data are hosted in Europe, and you choose whether AI models run in Switzerland only or across Europe."
+            },
+            {
+              "p": "We keep data only as long as we need it. Your chats stay until you delete them, they expire, or you close your account. Deleted items are held briefly in a recovery snapshot before they’re gone for good, and backups rotate on a regular schedule."
+            }
+          ]
+        },
+        {
+          "heading": "Who helps us run Cognos",
+          "blocks": [
+            {
+              "p": "A short list of specialist providers helps us host the app, send emails, take payments and provide the AI. Most only ever handle data in a form we can’t read."
+            },
+            {
+              "p": "See the full list — who they are, what they handle and where — on the <a href=\"/subprocessors\">Subprocessors</a> page."
+            }
+          ]
+        },
+        {
+          "heading": "Independent review",
+          "blocks": [
+            {
+              "p": "The parts of Cognos that handle your data are open for inspection, so you can verify what we do rather than take our word for it."
+            },
+            {
+              "p": "Cognos hasn’t yet completed a formal independent security audit. We’ll say so here plainly when that changes."
+            }
+          ]
+        },
+        {
+          "heading": "What this doesn’t protect against",
+          "blocks": [
+            {
+              "p": "We’re upfront about the limits:"
+            },
+            {
+              "ul": [
+                "While the AI answers, your message has to be readable to our systems and the AI provider. This is the one moment it isn’t locked, and it’s never kept afterwards.",
+                "Hiding personal details is automatic but best-effort — it catches common things like emails and card numbers, not everything.",
+                "If someone reaches your device while it’s unlocked, they can see what you can see. Locking or signing out protects a device you’ve stepped away from.",
+                "If you lose your Account Key, your chats can’t be recovered."
+              ]
+            },
+            {
+              "p": "Cognos is built to protect your saved chats if our storage or database is ever breached — not to hide your message from the AI while it’s answering."
             }
           ]
         }

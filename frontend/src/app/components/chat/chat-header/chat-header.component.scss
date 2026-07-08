@@ -45,7 +45,7 @@
   box-sizing: border-box;
   min-height: 32px;
   padding: 0 var(--cog-space-150);
-  border: 1px solid #f59e0b;
+  border: var(--cog-border-width) solid #f59e0b;
   border-radius: var(--cog-radius-sm);
   background: #fffbeb;
   color: #b45309;

@@ -30,7 +30,7 @@ const meta: Meta<StoryArgs> = {
   render: (args) => ({
     props: args,
     template: `
-      <div style="max-width: 480px; border: 1px solid var(--cog-border); border-radius: 8px; padding: 12px 16px;">
+      <div style="max-width: 480px; border: var(--cog-border-width) solid var(--cog-border); border-radius: 8px; padding: 12px 16px;">
         <cog-dialog-actions [align]="align" [mobile]="mobile">
           <cog-button appearance="subtle">Cancel</cog-button>
           <cog-button appearance="primary" icon="link">Create public link</cog-button>

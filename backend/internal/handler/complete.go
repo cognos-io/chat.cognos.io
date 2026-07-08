@@ -101,6 +101,21 @@ func webSearchEnabledForModel(reqWebSearch *bool, model catalogue.Model) bool {
 	return requested && model.SupportsWebSearch && model.ProviderID == requestyProviderID
 }
 
+// servedModelSnapshot captures the catalogue attributes of the resolved model
+// that served a turn, so the persisted assistant message records what ACTUALLY
+// served it (region/provider/tier) rather than relying on the live catalogue at
+// render time. Catalogue metadata only — safe to store, never user content.
+func servedModelSnapshot(model catalogue.Model) chat.ServedModel {
+	return chat.ServedModel{
+		ServedModelName:      model.Name,
+		ServedProviderName:   model.ProviderName,
+		ServedProviderID:     model.ProviderID,
+		ServedPrivacyTier:    string(model.PrivacyTier),
+		ServedHostingCountry: model.HostingCountry,
+		ServedHostingRegion:  model.HostingRegion,
+	}
+}
+
 // maxContextSummaryChars bounds the injected compaction summary independently of
 // the system prompt so a long summary cannot be used to blow the prompt budget.
 const maxContextSummaryChars = 12000
@@ -687,6 +702,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 					Reasoning:       gatewayResp.Reasoning,
 					PersonaID:       req.PersonaID,
 					ModelID:         model.ID,
+					ServedModel:     servedModelSnapshot(model),
 					CreatedAt:       assistantCreatedAt,
 					InputTokens:     gatewayResp.Usage.InputTokens,
 					OutputTokens:    gatewayResp.Usage.OutputTokens,

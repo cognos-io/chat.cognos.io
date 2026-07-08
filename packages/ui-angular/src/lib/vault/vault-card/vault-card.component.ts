@@ -100,7 +100,7 @@ import type { CognosVaultFile } from '../vault.types';
         min-height: 124px;
         flex-direction: column;
         gap: 11px;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         padding: 13px;
@@ -118,8 +118,8 @@ import type { CognosVaultFile } from '../vault.types';
         }
 
         &.cog-vault-card--interactive:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
         }
 
         &.cog-vault-card--selected {
@@ -140,7 +140,7 @@ import type { CognosVaultFile } from '../vault.types';
         overflow: hidden;
         width: 40px;
         height: 40px;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
       }
 
@@ -158,7 +158,7 @@ import type { CognosVaultFile } from '../vault.types';
         flex: none;
         align-items: center;
         justify-content: center;
-        border: 2px solid var(--cog-border-bold);
+        border: var(--cog-border-width-strong) solid var(--cog-border-bold);
         border-radius: var(--cog-radius-pill);
         color: var(--cog-on-brand);
       }
@@ -193,7 +193,7 @@ import type { CognosVaultFile } from '../vault.types';
 
       .cog-vault-card__footer {
         align-items: center;
-        border-top: 1px solid var(--cog-border);
+        border-top: var(--cog-border-width) solid var(--cog-border);
         padding-top: 9px;
       }
 
@@ -231,8 +231,8 @@ import type { CognosVaultFile } from '../vault.types';
       }
 
       .cog-vault-card__refs--button:focus-visible {
-        outline: 2px solid var(--cog-brand);
-        outline-offset: 2px;
+        outline: var(--cog-border-width-strong) solid var(--cog-brand);
+        outline-offset: var(--cog-border-width-strong);
         border-radius: var(--cog-radius-xs);
       }
     `,

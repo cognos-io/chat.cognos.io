@@ -77,7 +77,7 @@ import type { CognosVaultFile } from '../../vault/vault.types';
 
       .cog-vault-ref-chip__trigger,
       .cog-vault-ref-chip__clear {
-        border: 1px solid var(--cog-selected-border);
+        border: var(--cog-border-width) solid var(--cog-selected-border);
         background: var(--cog-selected-bg);
         color: var(--cog-selected-text);
       }
@@ -98,8 +98,8 @@ import type { CognosVaultFile } from '../../vault/vault.types';
 
       .cog-vault-ref-chip__trigger:focus-visible,
       .cog-vault-ref-chip__clear:focus-visible {
-        outline: 2px solid var(--cog-brand);
-        outline-offset: 2px;
+        outline: var(--cog-border-width-strong) solid var(--cog-brand);
+        outline-offset: var(--cog-border-width-strong);
       }
 
       .cog-vault-ref-chip__label {
@@ -130,7 +130,7 @@ import type { CognosVaultFile } from '../../vault/vault.types';
         display: grid;
         min-width: 260px;
         gap: var(--cog-space-100);
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         box-shadow: var(--cog-shadow-overlay);

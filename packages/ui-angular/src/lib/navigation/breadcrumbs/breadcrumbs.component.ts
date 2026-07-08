@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  output,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
 export type CognosBreadcrumbItem = {
   label: string;
@@ -11,7 +6,7 @@ export type CognosBreadcrumbItem = {
 };
 
 @Component({
-  selector: "cog-breadcrumbs",
+  selector: 'cog-breadcrumbs',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -60,8 +55,8 @@ export type CognosBreadcrumbItem = {
         }
 
         &:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
           border-radius: var(--cog-radius-xs);
         }
       }

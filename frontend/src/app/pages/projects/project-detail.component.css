@@ -49,7 +49,7 @@
   flex-direction: column;
   gap: var(--cog-space-100);
   padding: var(--cog-space-150) var(--cog-space-200);
-  border: 1px solid var(--cog-border);
+  border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-md);
   background: var(--cog-surface);
 }
@@ -126,7 +126,7 @@
   inline-size: 100%;
   box-sizing: border-box;
   padding: var(--cog-space-100) var(--cog-space-150);
-  border: 1px solid var(--cog-border);
+  border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-sm);
   font: inherit;
   color: var(--cog-text);
@@ -194,14 +194,14 @@
   margin: 0;
   padding: 0;
   display: grid;
-  border: 1px solid var(--cog-border);
+  border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-md);
   background: var(--cog-surface);
   overflow: hidden;
 }
 
 .project-detail__chat-list li + li .project-detail__chat {
-  border-top: 1px solid var(--cog-border);
+  border-top: var(--cog-border-width) solid var(--cog-border);
 }
 
 .project-detail__chat {

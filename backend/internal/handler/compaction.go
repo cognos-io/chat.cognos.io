@@ -214,15 +214,21 @@ func CompactionCreate(params CompactionHandlerParams) func(e *core.RequestEvent)
 		}
 
 		payload := compaction.Assemble(compaction.AssembleInput{
-			ConversationID:      conversationID,
-			AnchorMessageID:     req.AnchorMessageID,
-			Prior:               prior,
-			ParentCompactionID:  req.ParentCompactionID,
-			Messages:            inputMessages,
-			SourceTokenEstimate: req.SourceTokenEstimate,
-			ModelID:             model.ID,
-			OutputMode:          outputMode,
-			CreatedAt:           time.Now().UTC().Format(time.RFC3339),
+			ConversationID:       conversationID,
+			AnchorMessageID:      req.AnchorMessageID,
+			Prior:                prior,
+			ParentCompactionID:   req.ParentCompactionID,
+			Messages:             inputMessages,
+			SourceTokenEstimate:  req.SourceTokenEstimate,
+			ModelID:              model.ID,
+			ServedModelName:      model.Name,
+			ServedProviderName:   model.ProviderName,
+			ServedProviderID:     model.ProviderID,
+			ServedPrivacyTier:    string(model.PrivacyTier),
+			ServedHostingCountry: model.HostingCountry,
+			ServedHostingRegion:  model.HostingRegion,
+			OutputMode:           outputMode,
+			CreatedAt:            time.Now().UTC().Format(time.RFC3339),
 		}, parsed, compactionLevel)
 
 		record, err := params.CompactionRepo.Create(conversationID, conversation.PublicKey, payload)

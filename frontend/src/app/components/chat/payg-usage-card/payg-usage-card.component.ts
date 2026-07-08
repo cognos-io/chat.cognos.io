@@ -55,7 +55,7 @@ import { BillingService } from '@app/services/billing.service';
     .payg-usage {
       display: grid;
       gap: var(--cog-space-100);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
       padding: var(--cog-space-150);

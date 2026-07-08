@@ -79,8 +79,8 @@ export type CognosButtonType = 'button' | 'submit' | 'reset';
       }
 
       .cog-button:focus-visible {
-        outline: 2px solid var(--cog-brand);
-        outline-offset: 2px;
+        outline: var(--cog-border-width-strong) solid var(--cog-brand);
+        outline-offset: var(--cog-border-width-strong);
       }
 
       .cog-button:disabled {

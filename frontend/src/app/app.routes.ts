@@ -70,6 +70,16 @@ export const routes: Routes = [
           ),
       },
       {
+        // Saved bookmarks: the highlighted spans pinned across the user's
+        // chats. View the quote, jump back to the message, or remove it.
+        path: 'bookmarks',
+        data: { title: 'Bookmarks' },
+        loadComponent: () =>
+          import('./pages/account/account-bookmarks.component').then(
+            (m) => m.AccountBookmarksComponent,
+          ),
+      },
+      {
         // User-scoped attachment library: view, search, rename, download and
         // remove uploaded files, and see which chats use them.
         path: 'library',

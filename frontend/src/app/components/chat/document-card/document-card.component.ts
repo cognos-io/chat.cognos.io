@@ -171,7 +171,7 @@ import { RedactionService } from '@app/services/redaction.service';
     .document-card {
       display: grid;
       gap: var(--cog-space-100);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
       padding: var(--cog-space-100) var(--cog-space-150);
@@ -196,8 +196,8 @@ import { RedactionService } from '@app/services/redaction.service';
     }
 
     .document-card__header:focus-visible {
-      outline: 2px solid var(--cog-brand);
-      outline-offset: 2px;
+      outline: var(--cog-border-width-strong) solid var(--cog-brand);
+      outline-offset: var(--cog-border-width-strong);
       border-radius: var(--cog-radius-xs);
     }
 
@@ -260,7 +260,7 @@ import { RedactionService } from '@app/services/redaction.service';
     }
 
     .document-card__preview {
-      border-block-start: 1px solid var(--cog-border);
+      border-block-start: var(--cog-border-width) solid var(--cog-border);
       padding-block-start: var(--cog-space-100);
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-body-sm);

@@ -72,8 +72,8 @@ import { CognosImageThumbComponent } from '../image-thumb/image-thumb.component'
         line-height: 0;
 
         &:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
         }
       }
 
@@ -81,7 +81,7 @@ import { CognosImageThumbComponent } from '../image-thumb/image-thumb.component'
         display: block;
         max-width: min(100%, 320px);
         max-height: 260px;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
       }
 

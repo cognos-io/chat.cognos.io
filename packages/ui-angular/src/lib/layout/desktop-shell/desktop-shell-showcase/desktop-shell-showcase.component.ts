@@ -248,7 +248,7 @@ import { CognosDesktopShellComponent } from '../desktop-shell.component';
         display: flex;
         align-items: center;
         gap: var(--cog-space-150);
-        border-bottom: 1px solid var(--cog-border);
+        border-bottom: var(--cog-border-width) solid var(--cog-border);
         padding-bottom: var(--cog-space-150);
       }
 

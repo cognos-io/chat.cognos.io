@@ -12,6 +12,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/chat"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/participants"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/projectparticipants"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/retention"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -31,6 +32,12 @@ type conversationRecordResponse struct {
 	// next refresh without breaking offline copies.
 	KeyVersion     int    `json:"key_version"`
 	LastActivityAt string `json:"last_activity_at,omitempty"`
+	// RetentionDays is the per-conversation auto-delete override, always
+	// present so the client can render the current choice. Sentinel encoding:
+	// 0 = inherit the account default, -1 = never, N > 0 = delete N days after
+	// last activity. Resolved against the creator's default_retention_days by
+	// the background deletion job.
+	RetentionDays int `json:"retention_days"`
 	// The list embeds the current-generation key material the requesting
 	// user needs to decrypt `data` without a per-conversation key round-trip
 	// (see the conversation-load business process). These are empty — and
@@ -51,6 +58,27 @@ type createConversationRequest struct {
 type updateConversationRequest struct {
 	Data           string `json:"data"`
 	ExpiryDuration string `json:"expiry_duration,omitempty"`
+}
+
+// updateConversationRetentionRequest carries the per-conversation auto-delete
+// override. RetentionDays is a required pointer so an omitted field is a 400
+// rather than being silently read as 0 (inherit). Accepted values: -1 (never),
+// 0 (inherit account default), or 1..MaxRetentionDays (days after last
+// activity). Unlike the title update, this endpoint does not touch the
+// encrypted `data` and does not bump last_activity_at — changing retention must
+// not reset the very clock it configures.
+type updateConversationRetentionRequest struct {
+	RetentionDays *int `json:"retention_days"`
+}
+
+// updateConversationDataRequest carries a re-encrypted conversation `data` blob.
+// It backs the per-chat "don't use my memory here" switch, whose flag lives
+// INSIDE the client-encrypted data (so the server never learns the choice). Like
+// the retention update, this deliberately does not bump last_activity_at and
+// does not touch expiry_duration — flipping the flag must not reorder the
+// sidebar or reset the auto-delete clock.
+type updateConversationDataRequest struct {
+	Data string `json:"data"`
 }
 
 type messageRecordResponse struct {
@@ -241,6 +269,71 @@ func ConversationsUpdate(app core.App) func(e *core.RequestEvent) error {
 		record, err = app.FindRecordById("conversations", record.Id)
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to reload conversation", err)
+		}
+
+		return e.JSON(http.StatusOK, conversationRecordToResponse(record))
+	}
+}
+
+// ConversationRetentionUpdate sets a conversation's auto-delete override. Scope
+// is the same active-participant check as every other conversation mutation
+// (ownedConversationRecord → neutral 404 for a non-participant). It writes only
+// the plaintext retention_days metadata and deliberately does not bump
+// last_activity_at, so setting a window never postpones an already-overdue
+// deletion.
+func ConversationRetentionUpdate(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		record, err := ownedConversationRecord(app, e, e.Request.PathValue("conversationID"))
+		if err != nil {
+			return err
+		}
+
+		var req updateConversationRetentionRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Failed to read request data", err)
+		}
+		if req.RetentionDays == nil {
+			return apis.NewBadRequestError("retention_days is required", nil)
+		}
+		if *req.RetentionDays < retention.ConversationNever || *req.RetentionDays > retention.MaxRetentionDays {
+			return apis.NewBadRequestError("Invalid retention_days", nil)
+		}
+
+		record.Set("retention_days", *req.RetentionDays)
+		if err := app.Save(record); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to update retention", err)
+		}
+
+		return e.JSON(http.StatusOK, conversationRecordToResponse(record))
+	}
+}
+
+// ConversationMemoryDataUpdate persists a re-encrypted conversation `data` blob
+// for the per-chat memory switch. Scope is the same active-participant check as
+// every other conversation mutation (ownedConversationRecord → neutral 404 for
+// a non-participant). It writes ONLY the encrypted `data` field: it does not
+// touch expiry_duration and does not bump last_activity_at, so toggling "use my
+// memory in this chat" never reorders the sidebar or postpones an already-due
+// deletion. The base64 shape is validated by the collection field rules.
+func ConversationMemoryDataUpdate(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		record, err := ownedConversationRecord(app, e, e.Request.PathValue("conversationID"))
+		if err != nil {
+			return err
+		}
+
+		var req updateConversationDataRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Failed to read request data", err)
+		}
+		if strings.TrimSpace(req.Data) == "" {
+			return apis.NewBadRequestError("Conversation data is required", nil)
+		}
+
+		form := forms.NewRecordUpsert(app, record)
+		form.Load(map[string]any{"data": req.Data})
+		if err := form.Submit(); err != nil {
+			return apis.NewBadRequestError("Failed to update conversation", err)
 		}
 
 		return e.JSON(http.StatusOK, conversationRecordToResponse(record))
@@ -928,6 +1021,7 @@ func conversationRecordToResponse(record *core.Record) conversationRecordRespons
 		ExpiryDuration: record.GetString("expiry_duration"),
 		KeyVersion:     version,
 		LastActivityAt: record.GetString("last_activity_at"),
+		RetentionDays:  record.GetInt("retention_days"),
 	}
 }
 

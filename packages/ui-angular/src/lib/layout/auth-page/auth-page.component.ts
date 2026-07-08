@@ -69,7 +69,7 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
         display: grid;
         width: min(100%, 460px);
         gap: var(--cog-space-150);
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         box-shadow: var(--cog-shadow-raised);
@@ -122,7 +122,7 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
 
       .auth-page__input {
         min-height: 44px;
-        border: 2px solid var(--cog-border);
+        border: var(--cog-border-width-strong) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-input-bg);
         color: var(--cog-text);
@@ -148,7 +148,8 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
 
       .auth-page__success {
         color: var(--cog-text);
-        border: 1px solid var(--cog-success-border, var(--cog-border));
+        border: var(--cog-border-width) solid
+          var(--cog-success-border, var(--cog-border));
         background: var(--cog-success-bg);
         padding: var(--cog-space-200);
         border-radius: var(--cog-radius-sm);

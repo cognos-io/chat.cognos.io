@@ -40,6 +40,11 @@ export const UserPreferencesData = z.object({
   // Browser PII redaction is on by default (secure by default). When the user
   // turns it off it stays off for future messages until re-enabled.
   redactionEnabled: z.boolean().default(true),
+  // Personal memory is OFF by default (opt-in). While disabled, user memory is
+  // never read into a chat's context nor written by "Add to memory". Existing
+  // payloads that predate this key decrypt to false, so memory stays off until
+  // the user explicitly turns it on.
+  memoryEnabled: z.boolean().default(false),
   // Per-model reasoning-effort the user last chose, keyed by model id. Remembered
   // so reselecting a model restores the chosen intensity. Values are validated
   // against the model's declared options at use time, so stale entries are safe.
@@ -75,6 +80,7 @@ export const emptyPreferences: UserPreferencesData = {
   defaultPersonaId: '',
   defaultModelId: '',
   redactionEnabled: true,
+  memoryEnabled: false,
   modelReasoningEfforts: {},
   recentModels: [],
   hiddenModels: [],

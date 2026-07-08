@@ -3,6 +3,7 @@ import { Overlay } from '@angular/cdk/overlay';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   HostListener,
   computed,
@@ -10,6 +11,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
@@ -29,22 +31,37 @@ import {
 } from '@cognos/ui-angular';
 
 import { ConversationMemoryComponent } from '@app/components/chat/conversation-memory/conversation-memory.component';
+import { RetentionDialogComponent } from '@app/components/chat/retention-dialog/retention-dialog.component';
 import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog/confirmation-dialog.component';
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 import { ShareConversationDialogComponent } from '@app/components/share-conversation-dialog/share-conversation-dialog.component';
 import { Conversation } from '@app/interfaces/conversation';
+import { isMessageFromUser } from '@app/interfaces/message';
 import { AuthService } from '@app/services/auth.service';
 import { CompactionService } from '@app/services/compaction.service';
 import { ConversationDuplicateService } from '@app/services/conversation-duplicate.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { ExportService } from '@app/services/export.service';
+import { LanguageService } from '@app/services/language.service';
 import { MessageService } from '@app/services/message.service';
+import { ModelService } from '@app/services/model.service';
+import { PrivacyPanelService } from '@app/services/privacy-panel.service';
 import { ProjectService } from '@app/services/project.service';
 import { PublicShareService } from '@app/services/public-share.service';
 import { RedactionService } from '@app/services/redaction.service';
+import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
+import { buildPrivacyPanelContent } from '@app/utils/privacy-copy';
+import {
+  conversationRetentionLabelKey,
+  effectiveRetentionDays,
+  normalizeConversationRetention,
+} from '@app/utils/retention';
+import { resolveServedModel } from '@app/utils/served-model';
+
+import { environment } from '@environments/environment';
 
 type HeaderMenuAction =
   | 'share'
@@ -52,7 +69,9 @@ type HeaderMenuAction =
   | 'export'
   | 'duplicate'
   | 'memory'
+  | 'toggle-conversation-memory'
   | 'toggle-redaction-visibility'
+  | 'retention'
   | 'clear'
   | 'delete';
 
@@ -92,11 +111,15 @@ export class ChatHeaderComponent {
   private readonly _export = inject(ExportService);
   private readonly _toast = inject(CognosToastService);
   private readonly _duplicate = inject(ConversationDuplicateService);
+  private readonly _userPreferences = inject(UserPreferencesService);
+  private readonly _destroyRef = inject(DestroyRef);
+  private readonly _models = inject(ModelService);
+  private readonly _language = inject(LanguageService);
 
   readonly conversationService = inject(ConversationService);
+  readonly privacyPanel = inject(PrivacyPanelService);
 
   readonly menuOpen = signal(false);
-  readonly securityOpen = signal(false);
   readonly exporting = signal(false);
   // True when the current conversation has a live public share link, so the
   // Share control can warn the user that this chat is publicly readable.
@@ -206,11 +229,72 @@ export class ChatHeaderComponent {
     () => this.conversationService.conversation()?.record.id ?? null,
   );
 
+  // The region/model the panel reports: the latest assistant answer's served_*
+  // snapshot (ground truth of what served this chat) if there is one, else the
+  // currently-selected model. This is what fixes the old hardcoded "Swiss
+  // compute" — the compute-location now reflects the ACTUAL served region.
+  private readonly _servedModel = computed(() => {
+    const latestAnswer = [...this._messageService.messages()]
+      .reverse()
+      .find((message) => !isMessageFromUser(message.decryptedData));
+    const data = latestAnswer?.decryptedData;
+    const model = data?.model_id
+      ? this._models.getModel(data.model_id)
+      : this._models.selectedModel();
+    return resolveServedModel(data, model ?? this._models.selectedModel());
+  });
+
+  // Effective auto-delete for THIS conversation: the per-conversation override,
+  // else the account default (0 → never/off, 7, 30).
+  private readonly _effectiveRetentionDays = computed(() =>
+    effectiveRetentionDays(
+      this.conversationService.conversation()?.record.retention_days,
+      this._authService.defaultRetentionDays(),
+    ),
+  );
+
+  // Fully translated, conversation-specific copy for the unified privacy panel.
+  // Recomputes on language change (reads the active lang) and when the served
+  // model / retention change.
+  readonly privacyContent = computed(() => {
+    this._language.current(); // recompute translated copy on language switch
+    const served = this._servedModel();
+    if (!served) {
+      return undefined;
+    }
+    return buildPrivacyPanelContent({
+      served,
+      effectiveRetentionDays: this._effectiveRetentionDays(),
+      securityUrl: environment.marketingBaseUrl + '/security',
+      subprocessorsUrl: environment.marketingBaseUrl + '/subprocessors',
+      t: (key, params) => this._transloco.translate(key, params),
+    });
+  });
+
   // Whether the active conversation has any decrypted redaction mappings. Reads
   // revision() so it recomputes when mappings finish loading.
   private readonly _hasRedactions = computed(() => {
     this._redaction.revision();
     return this._redaction.entriesFor(this._conversationId() ?? undefined).size > 0;
+  });
+
+  // Whether the user has turned personal memory off for the active chat. Read
+  // from the (decrypted) conversation data, so it reflects the synced,
+  // encrypted per-chat choice.
+  private readonly _conversationMemoryDisabled = computed(
+    () =>
+      this.conversationService.conversation()?.decryptedData.memoryDisabled === true,
+  );
+
+  // The active conversation's auto-delete window, shown as the trailing label on
+  // the "Auto-delete" menu entry so the current setting is visible at a glance.
+  private readonly _retentionLabel = computed(() => {
+    const days = normalizeConversationRetention(
+      this.conversationService.conversation()?.record.retention_days,
+    );
+    return this._transloco.translate(
+      'chat.header.autoDeleteValue.' + conversationRetentionLabelKey(days),
+    );
   });
 
   private readonly _canClearMessages = computed(
@@ -282,6 +366,18 @@ export class ChatHeaderComponent {
         });
       }
 
+      // Per-chat personal-memory switch — only meaningful once the account-wide
+      // opt-in is on. Lets the user keep memory out of this one conversation.
+      if (this._userPreferences.memoryEnabled()) {
+        entries.push({
+          action: 'toggle-conversation-memory',
+          title: this._conversationMemoryDisabled()
+            ? this._transloco.translate('chat.header.enableMemory')
+            : this._transloco.translate('chat.header.disableMemory'),
+          icon: 'brain',
+        });
+      }
+
       // Mask/reveal redacted values in the rendered chat — only worth offering
       // once this conversation actually has something redacted.
       if (this._hasRedactions()) {
@@ -294,6 +390,14 @@ export class ChatHeaderComponent {
           icon: hidden ? 'eye' : 'eye-off',
         });
       }
+
+      // Per-conversation auto-delete, with the current window as a trailing hint.
+      entries.push({
+        action: 'retention',
+        title: this._transloco.translate('chat.header.autoDelete'),
+        icon: 'calendar',
+        trailing: this._retentionLabel(),
+      });
     }
 
     if (this._canClearMessages()) {
@@ -376,7 +480,57 @@ export class ChatHeaderComponent {
       case 'memory':
         this.onMemory();
         break;
+      case 'toggle-conversation-memory':
+        this.onToggleConversationMemory();
+        break;
+      case 'retention':
+        this.onRetention();
+        break;
     }
+  }
+
+  // onRetention opens the per-conversation auto-delete dialog. Uses the shared
+  // centred dialog chrome like Rename, since the flat overflow menu has no
+  // submenu affordance for the four retention options.
+  private onRetention() {
+    const conversationId = this._conversationId();
+    if (!conversationId) {
+      return;
+    }
+    this._dialog.open(RetentionDialogComponent, {
+      ...cognosDialogOptions,
+      data: { conversationId },
+    });
+  }
+
+  // onToggleConversationMemory flips whether personal memory is used for this
+  // one conversation, independent of the account-wide opt-in. The choice rides
+  // inside the encrypted conversation data, so it is persisted (and synced
+  // across the owner's devices) rather than kept in browser storage.
+  private onToggleConversationMemory() {
+    const conversationId = this._conversationId();
+    if (!conversationId) {
+      return;
+    }
+    const disabled = !this._conversationMemoryDisabled();
+    this.conversationService
+      .setConversationMemoryDisabled(conversationId, disabled)
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe({
+        next: () => {
+          this._toast.notify({
+            title: disabled
+              ? this._transloco.translate('chat.header.memoryDisabledToast')
+              : this._transloco.translate('chat.header.memoryEnabledToast'),
+          });
+        },
+        error: () => {
+          this._toast.notify({
+            title: this._transloco.translate('chat.header.memoryToggleError'),
+            tone: 'danger',
+          });
+        },
+      });
   }
 
   // onMemory opens the conversation-memory editor: a right-anchored drawer on
@@ -410,11 +564,11 @@ export class ChatHeaderComponent {
   }
 
   openSecurity() {
-    this.securityOpen.set(true);
+    this.privacyPanel.open();
   }
 
   closeSecurity() {
-    this.securityOpen.set(false);
+    this.privacyPanel.close();
   }
 
   onShare() {

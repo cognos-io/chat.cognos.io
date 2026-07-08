@@ -316,6 +316,22 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	e.Router.PATCH(
+		"/api/v1/conversations/{conversationID}/retention",
+		handler.ConversationRetentionUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/conversations/{conversationID}/memory",
+		handler.ConversationMemoryDataUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.POST(
 		"/api/v1/conversations/{conversationID}/copies",
 		handler.ConversationCopy(app),
@@ -784,6 +800,18 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	// Stateless (temporary-chat) image generation: mirrors /api/v1/completions.
+	// Returns the image inline as base64 and persists nothing, but is billed
+	// identically to the conversation-scoped image endpoint.
+	e.Router.POST(
+		"/api/v1/images",
+		handler.GenerateImage(completeParams),
+	).Bind(
+		apis.RequireAuth(),
+		handler.RequireVerifiedEmail(),
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.POST(
 		"/api/v1/completions/{requestID}/stop",
 		handler.StopCompletion(completionStopper),
@@ -945,6 +973,15 @@ func addPocketBaseRoutes(
 	e.Router.PATCH("/api/v1/project-memory/{id}", handler.ProjectMemoryUpdate(app)).
 		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
 	e.Router.DELETE("/api/v1/project-memory/{id}", handler.ProjectMemoryDelete(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+
+	// User-scoped bookmarks (owned by the authenticated user; create gated by
+	// conversation access).
+	e.Router.POST("/api/v1/bookmarks", handler.BookmarkCreate(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.GET("/api/v1/bookmarks", handler.BookmarkList(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.DELETE("/api/v1/bookmarks/{id}", handler.BookmarkDelete(app)).
 		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
 
 	// Scoped redaction (so user/project memory placeholders hydrate everywhere).

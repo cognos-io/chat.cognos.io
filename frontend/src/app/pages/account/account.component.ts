@@ -15,6 +15,8 @@ import {
   CognosButtonComponent,
   CognosCardComponent,
   CognosFieldComponent,
+  CognosSegmentedControlComponent,
+  type CognosSegmentedOption,
   CognosTextFieldComponent,
   CognosToastService,
   CognosToggleComponent,
@@ -37,6 +39,11 @@ import { ConversationService } from '@app/services/conversation.service';
 import { ExportService } from '@app/services/export.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { deriveProfileName } from '@app/utils/profile-identity';
+import {
+  ACCOUNT_RETENTION_OPTIONS,
+  parseRetentionSegmentValue,
+  retentionSegmentValue,
+} from '@app/utils/retention';
 
 // AccountComponent is the Account home (/account). It owns the user-facing
 // profile (display name + avatar), the email- and password-change cards, and a
@@ -54,6 +61,7 @@ import { deriveProfileName } from '@app/utils/profile-identity';
     CognosFieldComponent,
     CognosTextFieldComponent,
     CognosButtonComponent,
+    CognosSegmentedControlComponent,
     CognosToggleComponent,
     DataProcessingComponent,
     LanguageSwitcherComponent,
@@ -132,6 +140,23 @@ import { deriveProfileName } from '@app/utils/profile-identity';
         <app-data-processing />
 
         <cog-card
+          [heading]="t('account.retention.title')"
+          [subtitle]="t('account.retention.subtitle')"
+        >
+          <div class="account__retention">
+            <cog-segmented-control
+              [options]="retentionOptions(t)"
+              [value]="retentionValue()"
+              [ariaLabel]="t('account.retention.title')"
+              (select)="setDefaultRetention($event)"
+            />
+            <p class="account__retention-note" role="note">
+              {{ t('account.retention.note') }}
+            </p>
+          </div>
+        </cog-card>
+
+        <cog-card
           [heading]="t('account.redaction.title')"
           [subtitle]="t('account.redaction.subtitle')"
         >
@@ -152,6 +177,27 @@ import { deriveProfileName } from '@app/utils/profile-identity';
           @if (!redactionEnabled()) {
             <p class="account__redaction-warning" role="status">
               {{ t('account.redaction.disabledNote') }}
+            </p>
+          }
+        </cog-card>
+
+        <cog-card
+          [heading]="t('account.memory.toggleTitle')"
+          [subtitle]="t('account.memory.toggleSubtitle')"
+        >
+          <div card-heading-actions class="account__redaction-control">
+            <span class="account__redaction-state">
+              {{ memoryEnabled() ? t('account.memory.on') : t('account.memory.off') }}
+            </span>
+            <cog-toggle
+              [checked]="memoryEnabled()"
+              [label]="t('account.memory.toggleLabel')"
+              (checkedChange)="setMemoryEnabled($event)"
+            />
+          </div>
+          @if (memoryEnabled()) {
+            <p class="account__redaction-warning" role="status">
+              {{ t('account.memory.enabledNote') }}
             </p>
           }
         </cog-card>
@@ -344,6 +390,20 @@ import { deriveProfileName } from '@app/utils/profile-identity';
       line-height: var(--cog-lh-body-sm);
     }
 
+    .account__retention {
+      display: grid;
+      gap: var(--cog-space-150);
+      margin-top: var(--cog-space-100);
+    }
+
+    .account__retention-note {
+      margin: 0;
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+      text-wrap: pretty;
+    }
+
     .account__fields {
       display: grid;
       gap: var(--cog-space-200);
@@ -464,9 +524,45 @@ export class AccountComponent {
   private readonly _userPreferences = inject(UserPreferencesService);
 
   protected readonly redactionEnabled = this._userPreferences.redactionEnabled;
+  protected readonly memoryEnabled = this._userPreferences.memoryEnabled;
 
   protected setRedactionEnabled(enabled: boolean): void {
     this._userPreferences.setRedactionEnabled(enabled);
+  }
+
+  protected setMemoryEnabled(enabled: boolean): void {
+    this._userPreferences.setMemoryEnabled(enabled);
+  }
+
+  // Account-wide auto-delete default. The active segment reflects the stored
+  // value (never if unset); selecting one patches the user record.
+  protected readonly retentionValue = computed(() =>
+    retentionSegmentValue(this._auth.defaultRetentionDays()),
+  );
+
+  protected retentionOptions(t: (key: string) => string): CognosSegmentedOption[] {
+    return ACCOUNT_RETENTION_OPTIONS.map((option) => ({
+      value: retentionSegmentValue(option.days),
+      label: t('account.retention.options.' + option.labelKey),
+    }));
+  }
+
+  protected setDefaultRetention(value: string): void {
+    const days = parseRetentionSegmentValue(value);
+    if (days === this._auth.defaultRetentionDays()) {
+      return;
+    }
+    this._auth.setDefaultRetentionDays(days).subscribe({
+      next: () =>
+        this._toast.notify({
+          title: this._transloco.translate('account.toasts.retentionUpdated'),
+        }),
+      error: () =>
+        this._toast.notify({
+          title: this._transloco.translate('account.toasts.retentionError'),
+          tone: 'danger',
+        }),
+    });
   }
 
   protected readonly email = this._auth.email;

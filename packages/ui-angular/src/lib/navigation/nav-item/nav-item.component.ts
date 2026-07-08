@@ -7,17 +7,18 @@ import {
   input,
   output,
   signal,
-} from "@angular/core";
-import type { CognosIconName } from "@cognos/ui/icons";
+} from '@angular/core';
 
-import { CognosIconComponent } from "../../icon/icon.component";
+import type { CognosIconName } from '@cognos/ui/icons';
+
+import { CognosIconComponent } from '../../icon/icon.component';
 
 @Component({
-  selector: "cog-nav-item",
+  selector: 'cog-nav-item',
   standalone: true,
   imports: [CognosIconComponent],
   host: {
-    "[class.cog-nav-item-host--pinned]": "pinned()",
+    '[class.cog-nav-item-host--pinned]': 'pinned()',
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -98,16 +99,15 @@ import { CognosIconComponent } from "../../icon/icon.component";
         padding: 0 var(--cog-space-150);
         text-align: left;
         cursor: pointer;
-        transition: background-color var(--cog-dur-fast)
-          var(--cog-ease-standard);
+        transition: background-color var(--cog-dur-fast) var(--cog-ease-standard);
 
         &:hover {
           background: var(--cog-surface-hover);
         }
 
         &:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
         }
 
         &.cog-nav-item--selected {
@@ -117,7 +117,7 @@ import { CognosIconComponent } from "../../icon/icon.component";
         }
 
         &.cog-nav-item--selected::before {
-          content: "";
+          content: '';
           position: absolute;
           inset-block: 6px;
           inset-inline-start: 0;
@@ -164,8 +164,8 @@ import { CognosIconComponent } from "../../icon/icon.component";
 })
 export class CognosNavItemComponent {
   readonly icon = input<CognosIconName | null>(null);
-  readonly label = input("");
-  readonly meta = input("");
+  readonly label = input('');
+  readonly meta = input('');
   readonly selected = input(false);
   readonly indent = input(0);
   readonly pinned = input(false);
@@ -194,21 +194,21 @@ export class CognosNavItemComponent {
     }
 
     if (!this.expandable()) {
-      return "";
+      return '';
     }
 
     const childCount = this.childItems().length;
-    return childCount > 0 ? String(childCount) : "";
+    return childCount > 0 ? String(childCount) : '';
   });
 
   protected readonly itemClass = computed(() => {
-    const classes = ["cog-nav-item"];
+    const classes = ['cog-nav-item'];
 
     if (this.selected()) {
-      classes.push("cog-nav-item--selected");
+      classes.push('cog-nav-item--selected');
     }
 
-    return classes.join(" ");
+    return classes.join(' ');
   });
 
   protected readonly paddingStart = computed(

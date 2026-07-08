@@ -68,7 +68,7 @@ const AUDIO_BARS = [
         align-items: center;
         gap: var(--cog-space-150);
         box-sizing: border-box;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         padding: 9px var(--cog-space-150) 9px 9px;
@@ -88,8 +88,8 @@ const AUDIO_BARS = [
         cursor: pointer;
 
         &:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
         }
       }
 

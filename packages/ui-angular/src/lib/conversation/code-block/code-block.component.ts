@@ -40,7 +40,7 @@ import { CognosButtonComponent } from '../../button/button.component';
       .cog-code-block {
         overflow: hidden;
         width: min(100%, 480px);
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface-hover);
       }
@@ -50,7 +50,7 @@ import { CognosButtonComponent } from '../../button/button.component';
         align-items: center;
         justify-content: space-between;
         gap: var(--cog-space-150);
-        border-bottom: 1px solid var(--cog-border);
+        border-bottom: var(--cog-border-width) solid var(--cog-border);
         background: var(--cog-surface);
         padding: 10px var(--cog-space-150);
       }

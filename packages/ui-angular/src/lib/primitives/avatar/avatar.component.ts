@@ -66,7 +66,7 @@ export type CognosAvatarColor = (typeof COGNOS_AVATAR_COLORS)[number];
         background: var(--cog-brand);
         color: var(--cog-on-brand);
         font-weight: var(--cog-fw-semibold);
-        box-shadow: 0 0 0 2px var(--cog-surface);
+        box-shadow: 0 0 0 var(--cog-border-width-strong) var(--cog-surface);
         user-select: none;
 
         &.cog-avatar--group {

@@ -193,18 +193,27 @@ export class AttachmentLibraryService {
     return this._upload.usages(id);
   }
 
-  /** Download + decrypt the original file and save it to disk. */
-  async download(file: LibraryFile): Promise<void> {
+  /**
+   * Download + decrypt the original file's bytes in memory (nothing written to
+   * disk). Used by data export to bundle the plaintext file into the archive.
+   * Throws when the file has no stored original artifact.
+   */
+  async decryptOriginal(file: LibraryFile): Promise<Uint8Array> {
     const original = file.manifest.artifacts[0];
     const fileName = file.record.files[0];
     if (!original || !fileName) {
-      return;
+      throw new Error('library file has no original artifact');
     }
     const ciphertext = await this._upload.downloadArtifact(file.record.id, fileName);
-    const plaintext = this._crypto.openSecretBox(
-      ciphertext,
-      Base64.toUint8Array(original.key),
-    );
+    return this._crypto.openSecretBox(ciphertext, Base64.toUint8Array(original.key));
+  }
+
+  /** Download + decrypt the original file and save it to disk. */
+  async download(file: LibraryFile): Promise<void> {
+    if (!file.manifest.artifacts[0] || !file.record.files[0]) {
+      return;
+    }
+    const plaintext = await this.decryptOriginal(file);
     const blob = new Blob([plaintext as BlobPart], { type: file.mimeType });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');

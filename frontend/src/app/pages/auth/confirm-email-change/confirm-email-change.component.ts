@@ -36,7 +36,7 @@ type ConfirmState = 'form' | 'submitting' | 'success' | 'error' | 'missing-token
   template: `
     <cog-auth-page>
       <ng-container *transloco="let t">
-        <app-cognos-logo class="auth-page__logo" palette="dark"></app-cognos-logo>
+        <app-cognos-logo class="auth-page__logo"></app-cognos-logo>
         <h1 class="auth-page__title">{{ t('auth.confirmEmail.title') }}</h1>
 
         @switch (state()) {

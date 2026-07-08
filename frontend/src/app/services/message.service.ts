@@ -98,6 +98,7 @@ import { PersonaService } from './persona.service';
 import { ProjectService } from './project.service';
 import { RedactionService } from './redaction.service';
 import { ScopedMemoryService } from './scoped-memory.service';
+import { UserPreferencesService } from './user-preferences.service';
 import { VaultService } from './vault.service';
 
 export enum MessageStatus {
@@ -930,6 +931,7 @@ export class MessageService {
   private readonly _projectService = inject(ProjectService);
   private readonly _compactionService = inject(CompactionService);
   private readonly _scopedMemory = inject(ScopedMemoryService);
+  private readonly _userPreferences = inject(UserPreferencesService);
   private readonly _transloco = inject(TranslocoService);
   private readonly _analytics = inject(Analytics);
 
@@ -1500,8 +1502,11 @@ export class MessageService {
     const swallow = { error: () => undefined };
     this._compactionService.load(conversationId, keyPair).subscribe(swallow);
     // User memory follows the user everywhere; project memory only when the
-    // conversation belongs to a project. Both best-effort.
-    this._scopedMemory.loadUserMemory().subscribe(swallow);
+    // conversation belongs to a project. Both best-effort. Personal memory is
+    // only fetched when the opt-in toggle is on, so nothing is read while off.
+    if (this._userPreferences.memoryEnabled()) {
+      this._scopedMemory.loadUserMemory().subscribe(swallow);
+    }
     const projectId = conversation?.record.project;
     if (projectId) {
       this._scopedMemory.loadProjectMemory(projectId).subscribe(swallow);
@@ -1590,10 +1595,15 @@ export class MessageService {
       throw new Error('No conversation selected');
     }
 
-    // Image generation goes to a dedicated endpoint and persists an encrypted
-    // attachment, so it needs a real (non-temporary) conversation.
+    // Image generation runs against a dedicated endpoint. A saved conversation
+    // encrypts + persists the image as an attachment; a temporary chat uses the
+    // stateless endpoint that returns the image inline and stores nothing. Both
+    // are billed identically.
     if (messageRequest.imageGeneration) {
-      if (!conversation || isTemporaryConversation) {
+      if (isTemporaryConversation) {
+        return this.sendTemporaryImageGeneration(messageRequest);
+      }
+      if (!conversation) {
         this.reportCompletionError(
           new Error('Image generation requires a saved conversation'),
         );
@@ -1859,6 +1869,49 @@ export class MessageService {
       );
   }
 
+  // sendTemporaryImageGeneration runs an image request in a temporary chat. It
+  // hits the stateless endpoint, which returns the image inline (base64) and
+  // persists nothing — matching how temporary text completions are never saved.
+  // The optimistic user message stays in state; on success we append the image
+  // message built from the inline bytes. Billing is recorded server-side just
+  // like the persisted path.
+  private sendTemporaryImageGeneration(
+    messageRequest: MessageRequest,
+  ): Observable<Partial<MessageState>> {
+    this.state.setStatus(MessageStatus.Sending);
+
+    const modelId = this._modelService.selectedModel().id;
+
+    // Send the prior turns (redacted) so a chat-transport image model keeps
+    // context. The optimistic prompt is already the last user message in state.
+    const { messages } = this.buildRequestContext(
+      [...this.state.activeBranch().path].reverse(),
+    );
+
+    return this._api
+      .generateImage({
+        prompt: messageRequest.content,
+        modelId,
+        messages,
+        requestId: messageRequest.requestId,
+      })
+      .pipe(
+        tap(() =>
+          this._analytics.track('message_sent', {
+            model: modelProp(modelId),
+            attachments: false,
+            reasoning: 'none',
+          }),
+        ),
+        switchMap((response) =>
+          this.renderImageResponse(response, null, messageRequest.requestId),
+        ),
+        catchError((err: unknown) =>
+          this.handleImageError(err, messageRequest.requestId),
+        ),
+      );
+  }
+
   // regenerateImage produces a fresh image as a sibling of an existing image
   // message, reusing the original prompt and parenting to the same user message
   // (no new user turn) — the image counterpart of regenerateResponse.
@@ -1895,12 +1948,15 @@ export class MessageService {
   }
 
   // renderImageResponse folds the new assistant message into state. Shared by
-  // generation and regeneration. Two shapes come back: an image attachment
-  // (decrypt it for display) or, when the model answered with words instead of
-  // an image, a plain text message (append it as an ordinary reply).
+  // generation and regeneration. Three shapes come back:
+  //   - a persisted attachment (conversation chat): fetch + decrypt for display;
+  //   - an inline attachment (temporary chat): raw base64 bytes, no conversation
+  //     to decrypt against, so build a blob URL directly;
+  //   - no attachment (model answered with words): append a plain text reply.
+  // `conversation` is null for the temporary/inline path.
   private renderImageResponse(
     response: GenerateImageResponse,
-    conversation: Conversation,
+    conversation: Conversation | null,
     requestId: string,
   ): Observable<Partial<MessageState>> {
     const rawAttachment = response.assistant_message.attachment;
@@ -1918,6 +1974,32 @@ export class MessageService {
       sealed_key: rawAttachment.sealed_key,
       file_name: rawAttachment.file_name,
     };
+
+    // Inline (temporary chat): the bytes are in the response, nothing is stored
+    // server-side. Build the display URL directly — no fetch, no decrypt.
+    if (rawAttachment.data_base64) {
+      const bytes = Base64.toUint8Array(rawAttachment.data_base64);
+      const blob = new Blob([bytes as BlobPart], { type: rawAttachment.mime_type });
+      const imageUrl = URL.createObjectURL(blob);
+      return of({
+        status: MessageStatus.Success,
+        messages: applyImageGenerationResponse(
+          this.state().messages,
+          requestId,
+          response,
+          attachment,
+          imageUrl,
+        ),
+      });
+    }
+
+    // Persisted (conversation chat): fetch the encrypted file and decrypt it.
+    if (!conversation) {
+      return this.handleImageError(
+        new Error('Missing conversation for persisted image attachment'),
+        requestId,
+      );
+    }
     return this.decryptAttachmentToUrl(
       response.assistant_message.id,
       attachment,
@@ -2151,6 +2233,8 @@ export class MessageService {
 
     // Regenerating an image message re-runs image generation (the text
     // completion path would drop the image), parented to the same prompt.
+    // Temporary chats persist nothing, so there is no sibling to regenerate
+    // into — regenerate is a no-op there (v1).
     if ((message.decryptedData.attachments?.length ?? 0) > 0) {
       if (!conversation || isTemporaryConversation) {
         return EMPTY;
@@ -2599,6 +2683,16 @@ export class MessageService {
     return redactedText;
   }
 
+  // userMemoryUsedForConversation is the single source of truth for whether the
+  // user's personal memory applies to a given chat: the account-wide opt-in must
+  // be on, and the user must not have turned memory off for this conversation.
+  private userMemoryUsedForConversation(conversationId: string | null): boolean {
+    return (
+      this._userPreferences.memoryEnabled() &&
+      !this._conversationService.isConversationMemoryDisabled(conversationId)
+    );
+  }
+
   // buildRequestContext turns the active-branch path (newest-first) into the
   // outgoing completion context. When a valid compaction covers an older prefix
   // of the branch, those messages are dropped from the raw context and the
@@ -2622,7 +2716,12 @@ export class MessageService {
     const projectMemory = projectId
       ? this._scopedMemory.projectMemoryFor(projectId)
       : null;
-    const userMemory = this._scopedMemory.userMemory();
+    // Personal memory is injected only when it is used for this conversation:
+    // the account-wide toggle is on AND the user has not disabled memory for
+    // this specific chat (opt-in + per-chat override).
+    const userMemory = this.userMemoryUsedForConversation(conversationId)
+      ? this._scopedMemory.userMemory()
+      : null;
     const excludeMessageIds = compaction
       ? new Set(compaction.payload.covered_message_ids)
       : undefined;

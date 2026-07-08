@@ -13,6 +13,7 @@ import {
 import { ApiMemoryRecord, CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
 import { ProjectService } from './project.service';
+import { UserPreferencesService } from './user-preferences.service';
 import { VaultService } from './vault.service';
 
 const emptyDurableMemory = (): CompactionDurableMemory => ({
@@ -43,6 +44,7 @@ export class ScopedMemoryService {
   private readonly _crypto = inject(CryptoService);
   private readonly _vault = inject(VaultService);
   private readonly _projects = inject(ProjectService);
+  private readonly _preferences = inject(UserPreferencesService);
 
   private readonly _userMemory = signal<ScopedMemory | null>(null);
   private readonly _projectMemory = signal<Map<string, ScopedMemory | null>>(new Map());
@@ -98,6 +100,10 @@ export class ScopedMemoryService {
       return of(null);
     }
     const existing = this._userMemory();
+    // Opt-in gate: while personal memory is off, nothing is written.
+    if (!this._preferences.memoryEnabled()) {
+      return of(existing);
+    }
     const durableMemory = this.appendFact(existing, fact);
     if (!durableMemory) {
       return of(existing);
@@ -127,6 +133,10 @@ export class ScopedMemoryService {
     if (!keyPair) {
       return of(null);
     }
+    // Opt-in gate: while personal memory is off, nothing is written.
+    if (!this._preferences.memoryEnabled()) {
+      return of(this._userMemory());
+    }
     const existing = this._userMemory();
     const data = this.sealUser(buildPayload('user', durableMemory), keyPair.publicKey);
     const request = existing
@@ -137,6 +147,25 @@ export class ScopedMemoryService {
         const memory = this.toMemory(record, 'user', durableMemory);
         this._userMemory.set(memory);
         return memory;
+      }),
+    );
+  }
+
+  /**
+   * deleteUserMemory clears the stored personal memory. It deletes the server
+   * record (ciphertext) and empties the local cache. Safe to call when nothing
+   * is stored — it resolves immediately.
+   */
+  deleteUserMemory(): Observable<void> {
+    const existing = this._userMemory();
+    if (!existing) {
+      this._userMemory.set(null);
+      return of(void 0);
+    }
+    return this._api.deleteUserMemory(existing.recordId).pipe(
+      map(() => {
+        this._userMemory.set(null);
+        return void 0;
       }),
     );
   }

@@ -86,10 +86,13 @@
     </div>
   </header>
 
-  <cog-security-modal
-    [open]="securityOpen()"
-    [fingerprint]="fingerprint()"
-    [verified]="hasDeviceKey()"
-    (close)="closeSecurity()"
-  />
+  @if (privacyContent(); as content) {
+    <cog-security-modal
+      [open]="privacyPanel.isOpen()"
+      [content]="content"
+      [fingerprint]="fingerprint()"
+      [verified]="hasDeviceKey()"
+      (close)="closeSecurity()"
+    />
+  }
 </ng-container>

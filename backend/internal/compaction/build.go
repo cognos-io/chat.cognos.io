@@ -50,6 +50,12 @@ type AssembleInput struct {
 	Messages             []InputMessage
 	SourceTokenEstimate  int
 	ModelID              string
+	ServedModelName      string
+	ServedProviderName   string
+	ServedProviderID     string
+	ServedPrivacyTier    string
+	ServedHostingCountry string
+	ServedHostingRegion  string
 	OutputMode           OutputMode
 	CreatedAt            string
 	SummaryTokenEstimate int
@@ -79,6 +85,12 @@ func Assemble(in AssembleInput, parsed ParseResult, compactionLevel int) Payload
 		SourceTokenEstimate:  in.SourceTokenEstimate,
 		SummaryTokenEstimate: in.SummaryTokenEstimate,
 		ModelID:              in.ModelID,
+		ServedModelName:      in.ServedModelName,
+		ServedProviderName:   in.ServedProviderName,
+		ServedProviderID:     in.ServedProviderID,
+		ServedPrivacyTier:    in.ServedPrivacyTier,
+		ServedHostingCountry: in.ServedHostingCountry,
+		ServedHostingRegion:  in.ServedHostingRegion,
 		PromptVersion:        PromptVersion,
 		OutputMode:           in.OutputMode,
 		CreatedAt:            in.CreatedAt,

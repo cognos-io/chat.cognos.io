@@ -385,7 +385,7 @@ type View =
     }
     .security__input {
       min-height: 44px;
-      border: 2px solid var(--cog-border);
+      border: var(--cog-border-width-strong) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-input-bg);
       color: var(--cog-text);
@@ -421,7 +421,7 @@ type View =
       font-size: var(--cog-fs-body);
       letter-spacing: 0.08em;
       background: var(--cog-input-bg);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       padding: var(--cog-space-100) var(--cog-space-150);
       word-break: break-all;
@@ -434,7 +434,7 @@ type View =
       padding: var(--cog-space-150);
       list-style: none;
       background: var(--cog-input-bg);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       font-family: var(--cog-font-mono);
       letter-spacing: 0.06em;

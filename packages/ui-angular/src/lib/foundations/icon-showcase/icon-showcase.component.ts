@@ -63,7 +63,7 @@ const toneSamples = [
         gap: var(--cog-space-300);
         max-width: 1200px;
         padding: var(--cog-space-300);
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-app-bg);
         color: var(--cog-text);
@@ -107,7 +107,7 @@ const toneSamples = [
 
         & .icon-showcase__tone-card,
         & .icon-showcase__card {
-          border: 1px solid var(--cog-border);
+          border: var(--cog-border-width) solid var(--cog-border);
           border-radius: var(--cog-radius-sm);
           background: var(--cog-surface);
         }

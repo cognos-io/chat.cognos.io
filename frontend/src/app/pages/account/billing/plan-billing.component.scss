@@ -39,7 +39,7 @@
 }
 
 .pb__card {
-  border: 1px solid var(--cog-border);
+  border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-md);
   background: var(--cog-surface);
   padding: var(--cog-space-250);
@@ -108,7 +108,7 @@
   /* Hug the content rather than stretching to the plan column's height. */
   align-self: start;
   align-content: start;
-  border: 1px solid var(--cog-border);
+  border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-md);
   background: var(--cog-surface-sunken);
   padding: var(--cog-space-150);
@@ -278,7 +278,7 @@
 .pb__payment-note {
   margin-top: var(--cog-space-200);
   padding-top: var(--cog-space-200);
-  border-top: 1px solid var(--cog-border);
+  border-top: var(--cog-border-width) solid var(--cog-border);
 }
 
 /* Placeholder card row — mirrors the brand badge + label layout used once a
@@ -343,7 +343,7 @@
   align-items: center;
   gap: var(--cog-space-150);
   padding: var(--cog-space-150) 0;
-  border-bottom: 1px solid var(--cog-border);
+  border-bottom: var(--cog-border-width) solid var(--cog-border);
 }
 
 .pb__invoice:first-child {
@@ -403,7 +403,7 @@
   margin: var(--cog-space-200) calc(-1 * var(--cog-space-250))
     calc(-1 * var(--cog-space-250));
   padding: var(--cog-space-150) var(--cog-space-250);
-  border-top: 1px solid var(--cog-border);
+  border-top: var(--cog-border-width) solid var(--cog-border);
   border-radius: 0 0 var(--cog-radius-md) var(--cog-radius-md);
   background: var(--cog-surface-sunken);
   color: var(--cog-text-subtlest);

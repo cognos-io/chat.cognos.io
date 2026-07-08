@@ -29,6 +29,9 @@ import {
   insertCitationMarkers,
 } from '@app/utils/citations';
 
+import { BookmarkAnchor } from '../bookmark-highlight/bookmark-anchor';
+import { rangeForAnchor } from '../bookmark-highlight/bookmark-dom';
+import { BookmarkHighlightService } from '../bookmark-highlight/bookmark-highlight.service';
 import { CitationMarker } from '../citation-marker/citation-marker';
 import {
   redactionKindFor,
@@ -75,6 +78,7 @@ export class RedactedMarkdownComponent {
   private readonly _appRef = inject(ApplicationRef);
   private readonly _envInjector = inject(EnvironmentInjector);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _highlight = inject(BookmarkHighlightService);
 
   /** The stored, redacted content (tokens intact — NOT hydrated). */
   readonly content = input.required<string>();
@@ -83,6 +87,8 @@ export class RedactedMarkdownComponent {
   readonly citations = input<Citation[]>([]);
   /** Inline anchors positioning citation markers in `content` (code points). */
   readonly citationAnchors = input<CitationAnchor[]>([]);
+  /** Saved-bookmark anchors to paint over this message's rendered text. */
+  readonly bookmarks = input<BookmarkAnchor[]>([]);
 
   // The content actually rendered: raw content with citation-marker tokens
   // spliced in at the anchor offsets. Identical to `content` when there are no
@@ -122,19 +128,42 @@ export class RedactedMarkdownComponent {
       this._redaction.valuesHidden();
       this.renderedContent();
       this.citations();
+      this.bookmarks();
       queueMicrotask(() => this.render());
     });
     inject(DestroyRef).onDestroy(() => {
       this.clearPills();
       this.clearCiteChips();
+      this._highlight.unregister(this);
     });
   }
 
-  // render runs both post-render passes: redaction pills first, then citation
-  // markers. Called on markdown (ready) and whenever inputs change.
+  // render runs the post-render passes in order: redaction pills, then citation
+  // markers, then bookmark highlights LAST so they anchor over the FINAL text
+  // (pills/chips reshape it). Called on markdown (ready) and whenever inputs
+  // change.
   render(): void {
     this.hydratePills();
     this.hydrateCitations();
+    this.hydrateBookmarks();
+  }
+
+  // hydrateBookmarks locates each saved anchor in the rendered text and paints a
+  // Range for it via the CSS Custom Highlight API. The root is this component's
+  // host element — the SAME element the capture side anchors against, so offsets
+  // stay consistent. Anchors that no longer match (edited/re-redacted content)
+  // are dropped silently.
+  private hydrateBookmarks(): void {
+    const anchors = this.bookmarks();
+    if (anchors.length === 0) {
+      this._highlight.unregister(this);
+      return;
+    }
+    const root = this._host.nativeElement;
+    const ranges = anchors
+      .map((anchor) => rangeForAnchor(root, anchor))
+      .filter((range): range is Range => !!range);
+    this._highlight.register(this, ranges);
   }
 
   // hydratePills replaces every known token in the rendered markdown with a pill

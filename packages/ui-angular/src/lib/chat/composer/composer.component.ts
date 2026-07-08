@@ -1,22 +1,13 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  output,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import { CognosButtonComponent } from "../../button/button.component";
-import { CognosIconComponent } from "../../icon/icon.component";
-import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-button.component";
+import { CognosButtonComponent } from '../../button/button.component';
+import { CognosIconComponent } from '../../icon/icon.component';
+import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-button.component';
 
 @Component({
-  selector: "cog-composer",
+  selector: 'cog-composer',
   standalone: true,
-  imports: [
-    CognosButtonComponent,
-    CognosIconComponent,
-    CognosIconButtonComponent,
-  ],
+  imports: [CognosButtonComponent, CognosIconComponent, CognosIconButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="cog-composer">
@@ -37,9 +28,17 @@ import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-but
               <cog-icon name="chevron-down" [size]="16" tone="text-subtle" />
             </cog-button>
 
-            <cog-icon-button name="book-text" title="Prompts" (click)="onOpenPrompts()" />
+            <cog-icon-button
+              name="book-text"
+              title="Prompts"
+              (click)="onOpenPrompts()"
+            />
             <cog-icon-button name="sparkles" title="Skills" (click)="onOpenSkills()" />
-            <cog-icon-button name="paperclip" title="Attach file" (click)="onAttach()" />
+            <cog-icon-button
+              name="paperclip"
+              title="Attach file"
+              (click)="onAttach()"
+            />
           </div>
 
           <cog-button
@@ -74,7 +73,7 @@ import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-but
       .cog-composer__panel {
         display: grid;
         gap: var(--cog-space-150);
-        border: 2px solid var(--cog-border);
+        border: var(--cog-border-width-strong) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface);
         padding: var(--cog-space-150);
@@ -129,12 +128,10 @@ import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-but
   ],
 })
 export class CognosComposerComponent {
-  readonly value = input("");
-  readonly placeholder = input("Ask Cognos anything secure…");
-  readonly modelLabel = input("This device");
-  readonly securityText = input(
-    "End-to-end encrypted · keys never leave this device",
-  );
+  readonly value = input('');
+  readonly placeholder = input('Ask Cognos anything secure…');
+  readonly modelLabel = input('This device');
+  readonly securityText = input('End-to-end encrypted · keys never leave this device');
   readonly disabled = input(false);
   readonly sendDisabled = input(false);
   readonly valueChange = output<string>();

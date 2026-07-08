@@ -27,7 +27,7 @@
 .projects-page__card {
   display: grid;
   gap: var(--cog-space-100);
-  border: 1px solid var(--cog-border);
+  border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-md);
   background: var(--cog-surface);
   padding: var(--cog-space-250);
@@ -61,7 +61,7 @@
 .projects-page__field textarea {
   inline-size: 100%;
   padding: var(--cog-space-100) var(--cog-space-150);
-  border: 1px solid var(--cog-border);
+  border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-sm);
   font: inherit;
   color: var(--cog-text);
@@ -120,14 +120,14 @@
   margin: 0;
   padding: 0;
   display: grid;
-  border: 1px solid var(--cog-border);
+  border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-md);
   background: var(--cog-surface);
   overflow: hidden;
 }
 
 .projects-page__list li + li .projects-page__item {
-  border-top: 1px solid var(--cog-border);
+  border-top: var(--cog-border-width) solid var(--cog-border);
 }
 
 .projects-page__item {

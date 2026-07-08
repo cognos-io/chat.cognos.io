@@ -169,7 +169,8 @@ export const COGNOS_REDACTED_TEXT_DEFAULT_LABELS: CognosRedactedTextLabels = {
         border: 0;
         border-radius: var(--cog-radius-xs);
         background: var(--cog-loz-purple-bg);
-        box-shadow: inset 0 -1px 0 var(--cog-loz-purple-fg);
+        box-shadow: inset 0 calc(var(--cog-border-width) * -1) 0
+          var(--cog-loz-purple-fg);
         color: var(--cog-loz-purple-fg);
         cursor: pointer;
         padding: 1px var(--cog-space-075);
@@ -191,12 +192,13 @@ export const COGNOS_REDACTED_TEXT_DEFAULT_LABELS: CognosRedactedTextLabels = {
       }
 
       .cog-redacted-text:hover {
-        box-shadow: inset 0 -2px 0 var(--cog-loz-purple-fg);
+        box-shadow: inset 0 calc(var(--cog-border-width-strong) * -1) 0
+          var(--cog-loz-purple-fg);
       }
 
       .cog-redacted-text:focus-visible {
-        outline: 2px solid var(--cog-brand);
-        outline-offset: 2px;
+        outline: var(--cog-border-width-strong) solid var(--cog-brand);
+        outline-offset: var(--cog-border-width-strong);
       }
 
       .cog-redacted-text__details {
@@ -225,7 +227,7 @@ export const COGNOS_REDACTED_TEXT_DEFAULT_LABELS: CognosRedactedTextLabels = {
       .cog-redacted-text__comparison {
         display: grid;
         overflow: hidden;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
       }
@@ -239,7 +241,7 @@ export const COGNOS_REDACTED_TEXT_DEFAULT_LABELS: CognosRedactedTextLabels = {
       }
 
       .cog-redacted-text__comparison-row--muted {
-        border-top: 1px solid var(--cog-border);
+        border-top: var(--cog-border-width) solid var(--cog-border);
         background: var(--cog-surface-sunken);
       }
 

@@ -79,7 +79,7 @@ export interface MessageAttachmentChip {
         gap: 0.5rem;
         max-width: 100%;
         padding: 0.5rem 0.75rem;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface-sunken);
         opacity: 0.7;

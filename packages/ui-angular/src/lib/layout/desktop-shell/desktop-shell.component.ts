@@ -98,7 +98,7 @@ import {
 
       .cog-desktop-shell__nav {
         display: grid;
-        border-right: 1px solid var(--cog-border);
+        border-right: var(--cog-border-width) solid var(--cog-border);
         background: var(--cog-nav-bg);
       }
 
@@ -112,7 +112,7 @@ import {
       }
 
       .cog-desktop-shell__nav-footer {
-        border-top: 1px solid var(--cog-border);
+        border-top: var(--cog-border-width) solid var(--cog-border);
         background: var(--cog-nav-bg);
         padding: var(--cog-space-150) var(--cog-space-200);
       }

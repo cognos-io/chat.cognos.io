@@ -154,13 +154,13 @@ import type {
 
       .cog-vault-page {
         overflow: hidden;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-app-bg);
       }
 
       .cog-vault-page__header {
-        border-bottom: 1px solid var(--cog-border);
+        border-bottom: var(--cog-border-width) solid var(--cog-border);
         background: var(--cog-surface);
         padding: 14px var(--cog-space-250) var(--cog-space-200);
       }
@@ -242,7 +242,7 @@ import type {
       .cog-vault-page__list {
         overflow: hidden;
         margin: 14px var(--cog-space-250) var(--cog-space-300);
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
       }

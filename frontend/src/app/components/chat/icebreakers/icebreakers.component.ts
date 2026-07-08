@@ -151,7 +151,7 @@ const iceBreakers: IceBreaker[] = [
       }
 
       .icebreakers__card {
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         box-shadow: var(--cog-shadow-raised);

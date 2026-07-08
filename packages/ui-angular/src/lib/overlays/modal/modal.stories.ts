@@ -60,7 +60,7 @@ const meta: Meta<StoryArgs> = {
       >
         <div style="display:grid; gap:12px; color:var(--cog-text);">
           <p style="margin:0;">Share access with a public key fingerprint, never a raw export.</p>
-          <div style="padding:12px; border:1px solid var(--cog-border); border-radius:4px; background:var(--cog-surface-sunken); font-family:var(--cog-font-mono); color:var(--cog-text-subtle);">
+          <div style="padding:12px; border:var(--cog-border-width) solid var(--cog-border); border-radius:4px; background:var(--cog-surface-sunken); font-family:var(--cog-font-mono); color:var(--cog-text-subtle);">
             8F1A-22C4-0E17-7B9D
           </div>
         </div>

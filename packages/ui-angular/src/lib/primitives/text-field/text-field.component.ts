@@ -72,7 +72,7 @@ export type CognosTextFieldSize = 'md' | 'lg';
         min-height: 36px;
         align-items: center;
         gap: var(--cog-space-100);
-        border: 2px solid var(--cog-border);
+        border: var(--cog-border-width-strong) solid var(--cog-border);
         border-radius: var(--cog-radius-xs);
         background: var(--cog-input-bg);
         padding: 0 var(--cog-space-150);

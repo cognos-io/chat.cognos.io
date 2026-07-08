@@ -4,12 +4,12 @@ import {
   computed,
   input,
   output,
-} from "@angular/core";
+} from '@angular/core';
 
-import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-button.component";
+import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-button.component';
 
 @Component({
-  selector: "cog-sheet",
+  selector: 'cog-sheet',
   standalone: true,
   imports: [CognosIconButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -117,7 +117,7 @@ import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-but
       }
 
       .cog-sheet__footer {
-        border-top: 1px solid var(--cog-border);
+        border-top: var(--cog-border-width) solid var(--cog-border);
         background: var(--cog-surface);
         padding: var(--cog-space-150) var(--cog-space-200)
           calc(var(--cog-space-150) + env(safe-area-inset-bottom));
@@ -139,23 +139,23 @@ import { CognosIconButtonComponent } from "../../primitives/icon-button/icon-but
 })
 export class CognosSheetComponent {
   readonly open = input(false);
-  readonly title = input("");
+  readonly title = input('');
   readonly full = input(false);
   readonly stickyFooter = input(false);
   readonly close = output<void>();
 
   protected readonly sheetClass = computed(() => {
-    const classes = ["cog-sheet__panel"];
+    const classes = ['cog-sheet__panel'];
 
     if (this.full()) {
-      classes.push("cog-sheet__panel--full");
+      classes.push('cog-sheet__panel--full');
     }
 
     if (this.stickyFooter()) {
-      classes.push("cog-sheet__panel--footer");
+      classes.push('cog-sheet__panel--footer');
     }
 
-    return classes.join(" ");
+    return classes.join(' ');
   });
 
   protected onClose(): void {

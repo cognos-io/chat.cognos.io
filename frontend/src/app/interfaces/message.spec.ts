@@ -63,6 +63,37 @@ describe('parseMessageData', () => {
     expect(parsed.owner_id).toBeUndefined();
   });
 
+  it('round-trips the served-model privacy snapshot', () => {
+    const payload = encode(
+      JSON.stringify({
+        content: 'reply',
+        model_id: 'apertus-70b-swiss',
+        served_model_name: 'Apertus 70B (Infomaniak)',
+        served_provider_name: 'Infomaniak',
+        served_provider_id: 'infomaniak',
+        served_privacy_tier: 'ch_only',
+        served_hosting_country: 'CH',
+        served_hosting_region: 'Switzerland',
+      }),
+    );
+    const parsed = parseMessageData(payload);
+
+    expect(parsed.served_model_name).toBe('Apertus 70B (Infomaniak)');
+    expect(parsed.served_provider_name).toBe('Infomaniak');
+    expect(parsed.served_provider_id).toBe('infomaniak');
+    expect(parsed.served_privacy_tier).toBe('ch_only');
+    expect(parsed.served_hosting_country).toBe('CH');
+    expect(parsed.served_hosting_region).toBe('Switzerland');
+  });
+
+  it('leaves the served-model snapshot undefined on older messages', () => {
+    const parsed = parseMessageData(
+      encode(JSON.stringify({ content: 'reply', model_id: 'model-1' })),
+    );
+    expect(parsed.served_model_name).toBeUndefined();
+    expect(parsed.served_privacy_tier).toBeUndefined();
+  });
+
   it('round-trips web-search citations and anchors (spec §7)', () => {
     const payload = encode(
       JSON.stringify({

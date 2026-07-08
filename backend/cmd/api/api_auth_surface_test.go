@@ -49,6 +49,7 @@ var publicAPIv1Routes = map[string]string{
 // the behavioural coverage in email_verification_test.go.
 var emailVerificationGatedRoutes = map[string]struct{}{
 	"POST /api/v1/completions":                                {},
+	"POST /api/v1/images":                                     {},
 	"POST /api/v1/conversations/{conversationID}/complete":    {},
 	"POST /api/v1/conversations/{conversationID}/regenerate":  {},
 	"POST /api/v1/conversations/{conversationID}/image":       {},
@@ -60,7 +61,7 @@ var emailVerificationGatedRoutes = map[string]struct{}{
 // helper it doesn't understand), the test must fail loudly rather than pass
 // vacuously. Raise it as the surface grows; never lower it to "fix" a failure
 // without understanding why the count dropped.
-const minExpectedAPIv1Routes = 80
+const minExpectedAPIv1Routes = 83
 
 var routerHTTPMethods = map[string]string{
 	"GET":     http.MethodGet,

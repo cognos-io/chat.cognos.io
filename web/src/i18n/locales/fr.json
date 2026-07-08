@@ -303,7 +303,9 @@
       "about": "À propos",
       "privacy": "Confidentialité",
       "terms": "Conditions",
-      "contact": "Contact"
+      "contact": "Contact",
+      "security": "Sécurité",
+      "subprocessors": "Sous-traitants"
     },
     "language": "Langue",
     "copyright": "© {{ year }} Cognos. Fait en Suisse.",
@@ -323,6 +325,281 @@
       "eyebrow": "Conditions",
       "title": "Conditions d'utilisation",
       "lead": "L'accord entre vous et Cognos lorsque vous utilisez le service."
+    },
+    "subprocessors": {
+      "metaTitle": "Sous-traitants — Cognos",
+      "metaDescription": "Les prestataires qui nous aident à faire fonctionner Cognos — ce que fait chacun, ce qu’il peut traiter et où. La plupart ne touchent aux données que sous une forme que nous ne pouvons pas lire.",
+      "eyebrow": "Sous-traitants",
+      "title": "Sous-traitants",
+      "lead": "La courte liste des prestataires de confiance derrière Cognos — ce que fait chacun, ce qu’il peut traiter et où.",
+      "effectiveLabel": "Dernière mise à jour",
+      "effectiveDate": "2 juillet 2026",
+      "facts": [
+        {
+          "label": "Responsable",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Contact confidentialité",
+          "value": "privacy@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Faire fonctionner Cognos demande une poignée de prestataires spécialisés — pour l’hébergement, les sauvegardes, les e-mails de compte, les paiements, la diffusion du site et l’IA elle-même. Nous gardons la liste courte, volontairement."
+        },
+        {
+          "p": "Cette page nomme chaque prestataire dont nous dépendons, ce qu’il fait et ce qu’il peut traiter. Elle accompagne notre <a href=\"/fr/privacy\">politique de confidentialité</a>, qui explique le tableau d’ensemble."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Comment lire cette liste",
+          "blocks": [
+            {
+              "p": "Tous les prestataires ne voient pas la même chose. La différence importante se situe entre ceux qui ne traitent les données que sous une forme que nous ne pouvons pas lire, et les fournisseurs d’IA qui traitent brièvement votre message pendant qu’ils répondent."
+            },
+            {
+              "ul": [
+                "les prestataires d’hébergement et de sauvegarde traitent surtout des données stockées qui restent verrouillées, ainsi que des détails techniques comme les horodatages",
+                "le prestataire de paiement traite les détails de paiement et de facturation",
+                "le prestataire d’e-mail traite votre adresse e-mail et les e-mails que nous vous envoyons",
+                "les fournisseurs d’IA traitent votre message et sa réponse pendant que l’IA répond — le seul moment où votre message est lisible, et il n’est jamais conservé ensuite"
+              ]
+            },
+            {
+              "p": "Quoi que fasse un prestataire, votre historique de conversations enregistré reste toujours verrouillé dans le stockage, sous une forme que Cognos ne peut pas lire."
+            }
+          ]
+        },
+        {
+          "heading": "Les prestataires que nous utilisons",
+          "blocks": [
+            {
+              "table": {
+                "head": [
+                  "Prestataire",
+                  "Ce qu’il fait",
+                  "Ce qu’il peut traiter",
+                  "Où",
+                  "Peut-il lire vos conversations ?"
+                ],
+                "rows": [
+                  [
+                    "Hetzner",
+                    "Hébergement",
+                    "Données de compte, données stockées verrouillées, journaux, détails techniques",
+                    "Allemagne / UE",
+                    "Non — les conversations stockées restent verrouillées"
+                  ],
+                  [
+                    "Bunny.net",
+                    "Diffusion & DNS",
+                    "Adresses IP et détails des requêtes",
+                    "UE / mondial",
+                    "Non"
+                  ],
+                  ["BorgBase", "Sauvegardes", "Sauvegardes verrouillées", "UE", "Non"],
+                  [
+                    "Scaleway",
+                    "E-mails de compte",
+                    "Votre adresse e-mail et les détails des messages",
+                    "UE",
+                    "Uniquement les e-mails que nous envoyons"
+                  ],
+                  [
+                    "Paddle",
+                    "Paiements & abonnements",
+                    "Détails de facturation, de taxe et de facture",
+                    "É.-U. / UE / R.-U.",
+                    "Non — uniquement les données de facturation"
+                  ],
+                  [
+                    "Infomaniak",
+                    "Modèles d’IA suisses",
+                    "Votre message et sa réponse, pendant que l’IA travaille",
+                    "Suisse",
+                    "Brièvement, pendant que l’IA répond"
+                  ],
+                  [
+                    "Requesty",
+                    "Passerelle IA",
+                    "Votre message, sa réponse et les détails du modèle",
+                    "UE / R.-U.",
+                    "Brièvement, pendant que l’IA répond"
+                  ],
+                  [
+                    "Fournisseurs d’IA via Requesty",
+                    "Réponses de l’IA",
+                    "Votre message et sa réponse, pendant que l’IA travaille",
+                    "UE",
+                    "Brièvement, pendant que l’IA répond"
+                  ],
+                  [
+                    "Plausible",
+                    "Analyse du site, si activée",
+                    "Usage agrégé et anonyme",
+                    "UE",
+                    "Non"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "heading": "Nos engagements",
+          "blocks": [
+            {
+              "p": "Nous ne laissons aucun prestataire vendre les données des utilisateurs de Cognos ni les utiliser à des fins publicitaires."
+            },
+            {
+              "p": "Nous exigeons des fournisseurs d’IA utilisés avec Cognos qu’ils n’utilisent pas les conversations Cognos pour entraîner leurs modèles. La conservation et le routage exacts dépendent du fournisseur et de la région que vous choisissez."
+            },
+            {
+              "p": "Lorsque la loi l’exige, nous mettons en place des accords avec ces prestataires, y compris des accords de traitement des données et des protections pour toute donnée traitée hors de Suisse ou de l’UE."
+            },
+            {
+              "p": "Cette liste évolue à mesure que Cognos grandit. Le cas échéant, nous mettons cette page à jour. Des questions ? Écrivez à <a href=\"mailto:privacy@cognos.io\">privacy@cognos.io</a>."
+            }
+          ]
+        }
+      ]
+    },
+    "security": {
+      "metaTitle": "Sécurité — Cognos",
+      "metaDescription": "Comment Cognos garde vos conversations privées : verrouillées sous une forme que nous ne pouvons pas lire, ouvertes uniquement par une clé que vous détenez, et traitées en Suisse ou en Europe.",
+      "eyebrow": "Sécurité",
+      "title": "Sécurité",
+      "lead": "Un regard en langage clair sur la façon dont Cognos est conçu, sur ce que nous pouvons voir et ne pas voir, et sur les limites que nous assumons honnêtement.",
+      "effectiveLabel": "Dernière mise à jour",
+      "effectiveDate": "2 juillet 2026",
+      "facts": [
+        {
+          "label": "Fournisseur",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Contact confidentialité",
+          "value": "privacy@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Cognos est une application de chat IA conçue pour que vos conversations enregistrées soient conservées sous une forme que nous ne pouvons pas lire. Cette page explique comment cela fonctionne, en langage clair."
+        },
+        {
+          "p": "Pour le détail juridique précis, consultez notre <a href=\"/fr/privacy\">politique de confidentialité</a>. Pour les prestataires derrière Cognos, voir <a href=\"/fr/subprocessors\">Sous-traitants</a>."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Comment Cognos est conçu",
+          "blocks": [
+            {
+              "p": "Trois parties travaillent ensemble chaque fois que vous discutez, et à chacune on confie le moins possible."
+            },
+            {
+              "ul": [
+                "<b>Votre appareil</b> détient les clés. Vos conversations sont déverrouillées et lues ici, et nulle part ailleurs.",
+                "<b>Nos serveurs</b> stockent vos conversations verrouillées, transmettent votre message à l’IA, puis reverrouillent la réponse. Ils ne conservent jamais une copie que nous pouvons lire.",
+                "<b>Le fournisseur d’IA</b> reçoit votre message uniquement pendant qu’il répond, puis ne conserve rien."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Comment vos conversations sont verrouillées",
+          "blocks": [
+            {
+              "p": "Lorsqu’une conversation est enregistrée, elle est verrouillée sur votre appareil avant de nous parvenir — les messages, les titres, les résumés et les éventuels fichiers. Nous ne stockons que la version verrouillée, que nous ne pouvons pas lire."
+            },
+            {
+              "p": "Seule votre clé peut la rouvrir, et cela se produit sur votre appareil lorsque vous vous connectez."
+            }
+          ]
+        },
+        {
+          "heading": "Votre clé et votre mot de passe",
+          "blocks": [
+            {
+              "p": "Vous avez deux secrets distincts, chacun avec un seul rôle :"
+            },
+            {
+              "ul": [
+                "<b>Votre mot de passe</b> vous connecte. Si vous l’oubliez, vous pouvez le réinitialiser par e-mail — vos conversations restent en sécurité, car le mot de passe ne les déverrouille pas.",
+                "<b>Votre clé de compte</b> est celle qui ouvre vos conversations. Nous ne la recevons ni ne la stockons jamais, alors gardez-la en lieu sûr. Si vous la perdez, nous ne pouvons pas récupérer vos conversations pour vous — c’est la contrepartie de ne garder aucune copie que nous pouvons lire."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Ce que nous pouvons voir et ne pas voir",
+          "blocks": [
+            {
+              "p": "Nous pouvons voir les informations nécessaires pour faire fonctionner le service — vos données de compte et de facturation, le modèle que vous avez utilisé, et des détails techniques comme les horodatages. Pendant que l’IA répond, votre message est lisible afin que l’IA puisse travailler avec."
+            },
+            {
+              "p": "Nous ne pouvons pas lire vos conversations enregistrées, titres, résumés, mémoires ou fichiers depuis le stockage. Ils restent verrouillés par une clé que nous ne détenons pas."
+            },
+            {
+              "p": "Avant que votre message ne quitte votre appareil, Cognos masque aussi les données personnelles courantes — comme les e-mails, numéros de téléphone, coordonnées bancaires et numéros d’identité — derrière des marqueurs, de sorte que l’IA travaille avec des marqueurs plutôt qu’avec les vraies valeurs."
+            }
+          ]
+        },
+        {
+          "heading": "Où vos données sont traitées",
+          "blocks": [
+            {
+              "p": "Cognos est exploité par une entreprise suisse. L’application et ses données stockées sont hébergées en Europe, et vous choisissez si les modèles d’IA fonctionnent uniquement en Suisse ou dans toute l’Europe."
+            },
+            {
+              "p": "Nous ne conservons les données qu’aussi longtemps que nécessaire. Vos conversations restent jusqu’à ce que vous les supprimiez, qu’elles expirent ou que vous fermiez votre compte. Les éléments supprimés sont conservés brièvement dans un instantané de récupération avant de disparaître définitivement, et les sauvegardes tournent selon un calendrier régulier."
+            }
+          ]
+        },
+        {
+          "heading": "Qui nous aide à faire fonctionner Cognos",
+          "blocks": [
+            {
+              "p": "Une courte liste de prestataires spécialisés nous aide à héberger l’application, envoyer des e-mails, encaisser les paiements et fournir l’IA. La plupart ne traitent les données que sous une forme que nous ne pouvons pas lire."
+            },
+            {
+              "p": "Consultez la liste complète — qui ils sont, ce qu’ils traitent et où — sur la page <a href=\"/fr/subprocessors\">Sous-traitants</a>."
+            }
+          ]
+        },
+        {
+          "heading": "Examen indépendant",
+          "blocks": [
+            {
+              "p": "Les parties de Cognos qui traitent vos données sont ouvertes à l’inspection, afin que vous puissiez vérifier ce que nous faisons plutôt que de nous croire sur parole."
+            },
+            {
+              "p": "Cognos n’a pas encore réalisé d’audit de sécurité indépendant formel. Nous le dirons clairement ici dès que cela changera."
+            }
+          ]
+        },
+        {
+          "heading": "Ce contre quoi cela ne protège pas",
+          "blocks": [
+            {
+              "p": "Nous sommes francs sur les limites :"
+            },
+            {
+              "ul": [
+                "Pendant que l’IA répond, votre message doit être lisible par nos systèmes et le fournisseur d’IA. C’est le seul moment où il n’est pas verrouillé, et il n’est jamais conservé ensuite.",
+                "Le masquage des données personnelles est automatique mais au mieux — il repère les éléments courants comme les e-mails et les numéros de carte, pas tout.",
+                "Si quelqu’un accède à votre appareil pendant qu’il est déverrouillé, il peut voir ce que vous voyez. Verrouiller ou se déconnecter protège un appareil que vous avez laissé.",
+                "Si vous perdez votre clé de compte, vos conversations ne peuvent pas être récupérées."
+              ]
+            },
+            {
+              "p": "Cognos est conçu pour protéger vos conversations enregistrées si notre stockage ou notre base de données est un jour compromis — pas pour cacher votre message à l’IA pendant qu’elle répond."
+            }
+          ]
+        }
+      ]
     },
     "about": {
       "metaTitle": "À propos — Cognos",

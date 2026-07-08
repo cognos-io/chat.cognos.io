@@ -49,8 +49,8 @@ import { CognosIconComponent } from '../../icon/icon.component';
         cursor: pointer;
 
         &:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
           border-radius: var(--cog-radius-pill);
         }
 
@@ -76,7 +76,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
         width: 28px;
         height: 16px;
         align-items: center;
-        border: 1px solid var(--cog-border-bold);
+        border: var(--cog-border-width) solid var(--cog-border-bold);
         border-radius: var(--cog-radius-pill);
         background: transparent;
         transition:
@@ -94,7 +94,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
         border-radius: var(--cog-radius-pill);
         background: #ffffff;
         color: transparent;
-        box-shadow: 0 0 0 1px var(--cog-border-bold);
+        box-shadow: 0 0 0 var(--cog-border-width) var(--cog-border-bold);
         transition:
           transform var(--cog-dur-fast) var(--cog-ease-standard),
           color var(--cog-dur-fast) var(--cog-ease-standard),

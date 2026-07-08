@@ -24,6 +24,8 @@ import {
 import { TranslocoService } from '@jsverse/transloco';
 import { signalSlice } from 'ngxtension/signal-slice';
 
+import { normalizeAccountRetention } from '@app/utils/retention';
+
 import { TypedPocketBase } from '../types/pocketbase-types';
 import { Analytics } from './analytics/analytics';
 import { ErrorService } from './error.service';
@@ -166,6 +168,16 @@ export class AuthService implements OnDestroy {
     const user = this.user();
     return !!user && user['verified'] !== true;
   });
+
+  // The account-wide default auto-delete window (in days), read live from the
+  // user record. 0 (or unset) means never; 7/30 delete N days after a
+  // conversation's last activity. Normalised so an unexpected stored value
+  // never leaves the selector with no active option.
+  readonly defaultRetentionDays = computed(() =>
+    normalizeAccountRetention(
+      this.user()?.['default_retention_days'] as number | undefined,
+    ),
+  );
 
   constructor() {
     defer(() => this.checkAndRefreshToken())
@@ -492,6 +504,33 @@ export class AuthService implements OnDestroy {
       catchError((error) => {
         // Non-fatal: the theme still applies locally this session.
         console.error('Unable to save theme preference', error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  // Persist the account-wide default auto-delete window onto the user's own
+  // record. Like the language/theme, retention is not sensitive chat content,
+  // so it lives in plaintext on the auth record: it must apply server-side (the
+  // deletion job reads it) and follow the user across devices. The SDK saves
+  // the updated record into the authStore, which re-emits `user` — so the
+  // selector reflects the new value without a manual refetch. Value is one of
+  // 0 (never) | 7 | 30.
+  setDefaultRetentionDays(days: number): Observable<AuthUser> {
+    const userId = this.user()?.['id'] as string | undefined;
+    if (!userId) {
+      return throwError(() => new Error('Not authenticated'));
+    }
+
+    return from(
+      this._pb
+        .collection(this._authCollection)
+        .update(userId, { default_retention_days: days }),
+    ).pipe(
+      map((record) => record as AuthUser),
+      catchError((error) => {
+        // Non-fatal: surfaced to the caller, which shows an error toast.
+        console.error('Unable to save retention preference', error);
         return throwError(() => error);
       }),
     );

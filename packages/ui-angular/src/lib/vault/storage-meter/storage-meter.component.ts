@@ -55,7 +55,7 @@ import type { CognosStorageSegment } from '../vault.types';
       }
 
       .cog-storage-meter {
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         padding: 14px var(--cog-space-200);

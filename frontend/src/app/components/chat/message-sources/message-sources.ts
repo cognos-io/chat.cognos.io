@@ -139,8 +139,8 @@ interface DisplayCitation {
     }
 
     .message-sources__trigger:focus-visible {
-      outline: 2px solid var(--cog-brand);
-      outline-offset: 2px;
+      outline: var(--cog-border-width-strong) solid var(--cog-brand);
+      outline-offset: var(--cog-border-width-strong);
       border-radius: var(--cog-radius-xs);
     }
 
@@ -160,7 +160,7 @@ interface DisplayCitation {
       display: flex;
       align-items: center;
       gap: var(--cog-space-100);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       padding: var(--cog-space-075) var(--cog-space-100);
       background: var(--cog-surface);
@@ -174,8 +174,8 @@ interface DisplayCitation {
     }
 
     a.message-sources__row:focus-visible {
-      outline: 2px solid var(--cog-brand);
-      outline-offset: 2px;
+      outline: var(--cog-border-width-strong) solid var(--cog-brand);
+      outline-offset: var(--cog-border-width-strong);
     }
 
     .message-sources__avatar {

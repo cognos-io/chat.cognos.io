@@ -303,7 +303,7 @@ h2.sec-h {
 .brand {
   display: inline-flex;
   align-items: center;
-  color: var(--cog-text);
+  color: var(--cog-logo);
 }
 .brand-logo {
   display: block;

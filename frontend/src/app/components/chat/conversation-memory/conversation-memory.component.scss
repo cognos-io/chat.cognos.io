@@ -31,7 +31,7 @@
 
 .conversation-memory__field textarea {
   width: 100%;
-  border: 2px solid var(--cog-border);
+  border: var(--cog-border-width-strong) solid var(--cog-border);
   border-radius: var(--cog-radius-sm);
   background: var(--cog-input-bg);
   color: var(--cog-text);

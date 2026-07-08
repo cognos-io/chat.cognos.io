@@ -300,7 +300,7 @@ const validateUnlockForm = (
       display: grid;
       grid-template-columns: auto 1fr;
       gap: var(--cog-space-150);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface-raised);
       padding: var(--cog-space-150);
@@ -339,7 +339,7 @@ const validateUnlockForm = (
     .vault-password-dialog__account-key-card {
       display: grid;
       gap: var(--cog-space-100);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface-raised);
       padding: var(--cog-space-150);
@@ -398,7 +398,7 @@ const validateUnlockForm = (
 
     .vault-password-dialog__input {
       min-height: 40px;
-      border: 2px solid var(--cog-border);
+      border: var(--cog-border-width-strong) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-input-bg);
       color: var(--cog-text);
@@ -428,7 +428,7 @@ const validateUnlockForm = (
 
     .vault-password-dialog__checkbox-row--acknowledge {
       align-items: start;
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface-raised);
       padding: var(--cog-space-150);

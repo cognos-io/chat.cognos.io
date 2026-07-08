@@ -133,7 +133,7 @@ const notBlankValidator = (): ValidatorFn => {
 
     .edit-conversation-dialog__input {
       min-height: 40px;
-      border: 2px solid var(--cog-border);
+      border: var(--cog-border-width-strong) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-input-bg);
       color: var(--cog-text);
@@ -155,7 +155,7 @@ const notBlankValidator = (): ValidatorFn => {
 
     .edit-conversation-dialog__option {
       min-height: 40px;
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface);
       color: var(--cog-text);

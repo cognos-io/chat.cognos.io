@@ -23,7 +23,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
         justify-content: space-between;
         gap: var(--cog-space-150);
         padding: var(--cog-space-150) 0;
-        border-bottom: 1px solid var(--cog-border);
+        border-bottom: var(--cog-border-width) solid var(--cog-border);
       }
 
       :host:last-child {

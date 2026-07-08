@@ -83,7 +83,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
   template: `
     <main class="public-conversation" *transloco="let t">
       <header class="public-conversation__bar">
-        <app-cognos-logo class="public-conversation__logo" palette="dark" />
+        <app-cognos-logo class="public-conversation__logo" />
         <div class="public-conversation__bar-actions">
           @if (canRevealSensitive()) {
             <button
@@ -175,7 +175,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
 
     <footer class="public-conversation__promo" *transloco="let t">
       <div class="public-conversation__promo-inner">
-        <app-cognos-logo class="public-conversation__promo-logo" palette="dark" />
+        <app-cognos-logo class="public-conversation__promo-logo" />
         <p class="public-conversation__promo-text">
           {{ t('public.promoBefore') }}
           <a href="https://cognos.io/" target="_blank" rel="noopener noreferrer"
@@ -262,7 +262,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
 
     /* Subtle full-width promo band pinned beneath the conversation. */
     .public-conversation__promo {
-      border-top: 1px solid var(--cog-border);
+      border-top: var(--cog-border-width) solid var(--cog-border);
       background: var(--cog-surface-sunken);
     }
 
@@ -313,7 +313,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
       justify-content: space-between;
       gap: var(--cog-space-200);
       padding-bottom: var(--cog-space-150);
-      border-bottom: 1px solid var(--cog-border);
+      border-bottom: var(--cog-border-width) solid var(--cog-border);
     }
 
     .public-conversation__logo {
@@ -333,7 +333,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
     }
 
     .public-conversation__reveal {
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-pill);
       background: var(--cog-surface);
       color: var(--cog-text);
@@ -349,7 +349,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
 
     .public-conversation__reasoning {
       margin-block-start: var(--cog-space-100);
-      border-inline-start: 2px solid var(--cog-border);
+      border-inline-start: var(--cog-border-width-strong) solid var(--cog-border);
       padding-inline-start: var(--cog-space-100);
     }
 

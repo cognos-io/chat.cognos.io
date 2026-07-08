@@ -207,7 +207,7 @@ import { ProjectService } from '@app/services/project.service';
 
     .project-settings__input {
       min-height: 40px;
-      border: 2px solid var(--cog-border);
+      border: var(--cog-border-width-strong) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-input-bg);
       color: var(--cog-text);

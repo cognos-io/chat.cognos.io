@@ -61,7 +61,7 @@ export interface CognosChoiceChip {
         align-items: center;
         min-height: 32px;
         padding: 0 var(--cog-space-100);
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-pill);
         background: var(--cog-surface);
         color: var(--cog-text-subtle);

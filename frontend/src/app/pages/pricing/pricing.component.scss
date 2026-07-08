@@ -86,7 +86,7 @@
 .pricing__interval {
   display: inline-flex;
   gap: var(--cog-space-025);
-  border: 1px solid var(--cog-border);
+  border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-md);
   background: var(--cog-surface-sunken);
   padding: 3px;
@@ -128,14 +128,14 @@
   display: grid;
   gap: var(--cog-space-150);
   align-content: start;
-  border: 1px solid var(--cog-border);
+  border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-lg);
   background: var(--cog-surface);
   padding: var(--cog-space-250);
 }
 
 .pricing__card--featured {
-  border: 2px solid var(--cog-brand);
+  border: var(--cog-border-width-strong) solid var(--cog-brand);
 }
 
 .pricing__card-head {
@@ -193,7 +193,7 @@
   gap: var(--cog-space-100);
   margin: 0;
   padding: var(--cog-space-100) 0 0;
-  border-top: 1px solid var(--cog-border);
+  border-top: var(--cog-border-width) solid var(--cog-border);
   list-style: none;
 }
 

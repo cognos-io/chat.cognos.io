@@ -164,7 +164,7 @@ import { ModelService } from '@app/services/model.service';
       gap: var(--cog-space-050);
       width: min(360px, calc(100vw - var(--cog-space-200)));
       padding: var(--cog-space-100);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
       box-shadow: var(--cog-shadow-overlay);
@@ -215,7 +215,7 @@ import { ModelService } from '@app/services/model.service';
       gap: var(--cog-space-075);
       margin-top: var(--cog-space-050);
       padding: var(--cog-space-100);
-      border: 1px solid var(--cog-warning);
+      border: var(--cog-border-width) solid var(--cog-warning);
       border-radius: var(--cog-radius-sm);
       background: color-mix(in srgb, var(--cog-warning) 12%, transparent);
     }
@@ -238,7 +238,7 @@ import { ModelService } from '@app/services/model.service';
 
     .composer-tools__use {
       align-self: start;
-      box-shadow: inset 0 0 0 1px var(--cog-warning);
+      box-shadow: inset 0 0 0 var(--cog-border-width) var(--cog-warning);
       color: var(--cog-warning-text);
     }
   `,

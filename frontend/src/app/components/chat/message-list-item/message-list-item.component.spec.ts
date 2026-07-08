@@ -13,6 +13,8 @@ import { CogDocBlock } from '@app/documents/cog-doc/cog-doc.types';
 import { DocumentExportService } from '@app/documents/document-export.service';
 import { DocumentRenderError } from '@app/documents/document.types';
 import { Message } from '@app/interfaces/message';
+import { AuthService } from '@app/services/auth.service';
+import { BookmarkService } from '@app/services/bookmark.service';
 import { CompactionService } from '@app/services/compaction.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { MessageService } from '@app/services/message.service';
@@ -20,6 +22,7 @@ import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
 import { RedactionService } from '@app/services/redaction.service';
 import { ScopedMemoryService } from '@app/services/scoped-memory.service';
+import { UserPreferencesService } from '@app/services/user-preferences.service';
 
 import { MessageListItemComponent } from './message-list-item.component';
 
@@ -37,6 +40,7 @@ class StubRedactedMarkdownComponent {
   @Input() content = '';
   @Input() citations: unknown[] = [];
   @Input() citationAnchors: unknown[] = [];
+  @Input() bookmarks: unknown[] = [];
 }
 
 // Likewise stands in for the document card so segment-rendering tests can
@@ -106,6 +110,8 @@ describe('MessageListItemComponent - download action', () => {
             isTemporaryConversation: () => true,
           },
         },
+        { provide: AuthService, useValue: { defaultRetentionDays: () => 0 } },
+        { provide: UserPreferencesService, useValue: { memoryEnabled: () => false } },
         {
           provide: RedactionService,
           useValue: {
@@ -120,6 +126,10 @@ describe('MessageListItemComponent - download action', () => {
         {
           provide: ScopedMemoryService,
           useValue: { addUserFact: vi.fn(), addProjectFact: vi.fn() },
+        },
+        {
+          provide: BookmarkService,
+          useValue: { forMessage: () => [], create: vi.fn() },
         },
         { provide: CognosToastService, useValue: { notify: vi.fn() } },
         { provide: Dialog, useValue: { open: vi.fn(() => ({ closed: of(false) })) } },
@@ -276,6 +286,8 @@ describe('MessageListItemComponent - document segment rendering', () => {
             isTemporaryConversation: () => true,
           },
         },
+        { provide: AuthService, useValue: { defaultRetentionDays: () => 0 } },
+        { provide: UserPreferencesService, useValue: { memoryEnabled: () => false } },
         {
           provide: RedactionService,
           useValue: {
@@ -290,6 +302,10 @@ describe('MessageListItemComponent - document segment rendering', () => {
         {
           provide: ScopedMemoryService,
           useValue: { addUserFact: vi.fn(), addProjectFact: vi.fn() },
+        },
+        {
+          provide: BookmarkService,
+          useValue: { forMessage: () => [], create: vi.fn() },
         },
         { provide: CognosToastService, useValue: { notify: vi.fn() } },
         { provide: Dialog, useValue: { open: vi.fn(() => ({ closed: of(false) })) } },

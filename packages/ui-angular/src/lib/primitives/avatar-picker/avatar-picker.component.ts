@@ -97,7 +97,7 @@ import {
         align-items: center;
         justify-content: center;
         aspect-ratio: 1;
-        border: 2px solid var(--cog-border);
+        border: var(--cog-border-width-strong) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface);
         color: var(--cog-text-subtle);
@@ -125,7 +125,7 @@ import {
       .cog-avatar-picker__color {
         display: inline-flex;
         padding: 0;
-        border: 2px solid transparent;
+        border: var(--cog-border-width-strong) solid transparent;
         border-radius: var(--cog-radius-pill);
         background: none;
         cursor: pointer;

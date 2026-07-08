@@ -123,7 +123,7 @@ interface SettingsNavItem {
           (menuClick)="openDrawer()"
           (drawerClose)="closeDrawer()"
         >
-          <app-cognos-logo cogMobileBrand class="settings__logo" palette="dark" />
+          <app-cognos-logo cogMobileBrand class="settings__logo" />
 
           <router-outlet></router-outlet>
 
@@ -252,6 +252,7 @@ export class SettingsShellComponent {
       exact: true,
     },
     { labelKey: 'settings.nav.memory', link: '/account/memory', icon: 'brain' },
+    { labelKey: 'settings.nav.bookmarks', link: '/account/bookmarks', icon: 'pin' },
     { labelKey: 'settings.nav.library', link: '/account/library', icon: 'folder' },
     { labelKey: 'settings.nav.billing', link: '/account/billing', icon: 'landmark' },
     {

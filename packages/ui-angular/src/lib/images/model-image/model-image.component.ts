@@ -92,15 +92,15 @@ export type CognosModelImageState = 'done' | 'generating';
         line-height: 0;
 
         &:focus-visible {
-          outline: 2px solid var(--cog-brand);
-          outline-offset: 2px;
+          outline: var(--cog-border-width-strong) solid var(--cog-brand);
+          outline-offset: var(--cog-border-width-strong);
         }
       }
 
       .cog-model-image__img {
         display: block;
         width: 100%;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
       }
 
@@ -111,7 +111,7 @@ export type CognosModelImageState = 'done' | 'generating';
         align-items: center;
         justify-content: center;
         overflow: hidden;
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface-hover);
       }
@@ -158,7 +158,7 @@ export type CognosModelImageState = 'done' | 'generating';
 
       .cog-model-image__prompt {
         margin-top: var(--cog-space-100);
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface-hover);
         padding: var(--cog-space-100) 11px;

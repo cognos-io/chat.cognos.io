@@ -20,6 +20,7 @@ import { ConversationService } from '../../services/conversation.service';
 import { DeviceService } from '../../services/device.service';
 import { ExportService } from '../../services/export.service';
 import { MessageService } from '../../services/message.service';
+import { ModelService } from '../../services/model.service';
 import { ProjectConversationService } from '../../services/project-conversation.service';
 import { ProjectService } from '../../services/project.service';
 import { PublicShareService } from '../../services/public-share.service';
@@ -140,6 +141,17 @@ describe('ChatComponent', () => {
         { provide: ProjectConversationService, useValue: {} },
         { provide: DeviceService, useValue: { isMobile: signal(false) } },
         { provide: MessageService, useValue: messageService },
+        // The chat header injects ModelService (for the per-answer privacy
+        // panel's served-model/region resolution) -> CognosApiService ->
+        // PocketBase Client. Stub it so the component test does not construct
+        // that chain.
+        {
+          provide: ModelService,
+          useValue: {
+            getModel: () => undefined,
+            selectedModel: signal(undefined),
+          },
+        },
         { provide: UserPreferencesService, useValue: userPreferencesService },
         { provide: PublicShareService, useValue: publicShareService },
         {

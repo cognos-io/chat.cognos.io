@@ -151,6 +151,41 @@ extracted content.
 Limits still apply across all processors: max original file size, max attachments
 per message, capped extracted context, and a per-user storage quota.
 
+## PDF OCR fallback
+
+PDF processing has a fast path and a fallback path:
+
+```mermaid
+flowchart LR
+  A[PDF bytes in attachment worker] --> B[pdfjs text-layer extraction]
+  B --> C{Any text?}
+  C -- yes --> D[Use extracted text]
+  C -- no --> E[Render pages to OffscreenCanvas]
+  E --> F[tesseract.js OCR, English v1]
+  F --> G[Use recognised text]
+  D --> H[Redact if enabled]
+  G --> H
+  H --> I[Seal artifacts + manifest]
+```
+
+OCR only runs when the normal pdfjs text-layer pass returns no text. That keeps
+the common path fast and avoids paying OCR cost for ordinary PDFs. When needed,
+the attachment worker renders each page to an `OffscreenCanvas`, runs
+`tesseract.js` locally, joins the recognised page text, then continues through
+the same redaction, sealing and prompt-context flow as any other extracted text.
+
+The OCR worker, core wasm and English trained data are served from
+`/assets/tesseract` and loaded lazily. No page image or recognised text is sent
+to a third-party OCR service.
+
+OCR invariants:
+
+1. **Client-side only.** OCR happens inside the browser attachment worker.
+2. **Fallback only.** A PDF with a usable text layer never goes through OCR.
+3. **Same privacy path.** Recognised text is redacted before prompt use when
+   redaction is enabled, and sealed before upload.
+4. **English v1.** The first implementation recognises English only.
+
 ## Security summary & related processes
 
 - **Encryption scope** — per-file keys + manifest sealed to the owner's vault key;

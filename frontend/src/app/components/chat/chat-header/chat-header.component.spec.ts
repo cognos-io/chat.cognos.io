@@ -19,10 +19,13 @@ import { ConversationDuplicateService } from '@app/services/conversation-duplica
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { ExportService } from '@app/services/export.service';
+import { LanguageService } from '@app/services/language.service';
 import { MessageService } from '@app/services/message.service';
+import { ModelService } from '@app/services/model.service';
 import { ProjectService } from '@app/services/project.service';
 import { PublicShareService } from '@app/services/public-share.service';
 import { RedactionService } from '@app/services/redaction.service';
+import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { VaultService } from '@app/services/vault.service';
 
 import { ChatHeaderComponent } from './chat-header.component';
@@ -48,6 +51,8 @@ describe('ChatHeaderComponent', () => {
     conversation: selectedConversation,
     isTemporaryConversation: temporaryConversation,
     deleteConversation$,
+    isConversationMemoryDisabled: () => false,
+    setConversationMemoryDisabled: vi.fn().mockReturnValue(of(undefined)),
   };
 
   const messageService = {
@@ -62,7 +67,25 @@ describe('ChatHeaderComponent', () => {
 
   const authService = {
     email,
+    defaultRetentionDays: () => 0,
   };
+
+  // Minimal catalogue model so the privacy panel content can resolve a region
+  // when there is no assistant answer yet (falls back to the selected model).
+  const selectedModel = {
+    displayName: 'Test Model',
+    name: 'Test Model',
+    providerName: 'Test Provider',
+    privacyTier: 'ch_only',
+    hostingCountry: 'CH',
+  };
+  const modelService = {
+    getModel: () => undefined,
+    selectedModel: () => selectedModel,
+  };
+
+  const languageService = { current: () => 'en' };
+  const userPreferencesService = { memoryEnabled: () => false };
 
   const publicShareService = {
     existingShare: vi.fn().mockReturnValue(of(null)),
@@ -124,6 +147,9 @@ describe('ChatHeaderComponent', () => {
           provide: ConversationDuplicateService,
           useValue: duplicateService,
         },
+        { provide: ModelService, useValue: modelService },
+        { provide: LanguageService, useValue: languageService },
+        { provide: UserPreferencesService, useValue: userPreferencesService },
       ],
     }).compileComponents();
 
@@ -166,7 +192,13 @@ describe('ChatHeaderComponent', () => {
 
     const titles = component.menuItems().map((item) => item.title);
 
-    expect(titles).toEqual(['Rename', 'Export', 'Duplicate chat', 'Delete']);
+    expect(titles).toEqual([
+      'Rename',
+      'Export',
+      'Duplicate chat',
+      'Auto-delete',
+      'Delete',
+    ]);
     expect(
       component.menuItems().find((item) => item.title === 'Export')?.disabled,
     ).toBeFalsy();
@@ -221,6 +253,7 @@ describe('ChatHeaderComponent', () => {
       'Rename',
       'Export',
       'Duplicate chat',
+      'Auto-delete',
       'Delete',
     ]);
 
@@ -340,15 +373,15 @@ describe('ChatHeaderComponent', () => {
     expect(component.currentUserName()).toBe('Ewan Jones');
   });
 
-  it('toggles the security modal open and closed', () => {
-    expect(component.securityOpen()).toBe(false);
+  it('toggles the privacy panel open and closed', () => {
+    expect(component.privacyPanel.isOpen()).toBe(false);
 
     component.openSecurity();
     fixture.detectChanges();
-    expect(component.securityOpen()).toBe(true);
+    expect(component.privacyPanel.isOpen()).toBe(true);
 
     component.closeSecurity();
-    expect(component.securityOpen()).toBe(false);
+    expect(component.privacyPanel.isOpen()).toBe(false);
   });
 
   it('deletes the conversation after confirmation and navigates home', () => {

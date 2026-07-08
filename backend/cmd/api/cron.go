@@ -23,6 +23,11 @@ type DeletedRecordRepo interface {
 	DeleteCreatedBefore(cutoff time.Time) error
 }
 
+type ExpiredConversationsRepo interface {
+	FindExpiredConversationIDs(now time.Time) ([]string, error)
+	DeleteConversations(ids []string) (int, error)
+}
+
 type VaultSessionWrapKeyRepo interface {
 	DeleteIdleBefore(cutoff time.Time) error
 }
@@ -183,6 +188,42 @@ func syncRequestyModelsJob(
 			}
 		}),
 		gocron.WithStartAt(gocron.WithStartImmediately()),
+	)
+}
+
+// cleanUpExpiredConversationsJob enforces account- and per-conversation
+// auto-delete (retention): every ~30-60 minutes it permanently deletes
+// conversations whose effective retention window has elapsed (measured from
+// last activity), cascading to their messages/keys/participants/shares. It logs
+// counts only — never conversation content, ids, or user identifiers — per the
+// security rule. The common "nobody opted in" case finds nothing and is cheap.
+func cleanUpExpiredConversationsJob(
+	scheduler gocron.Scheduler,
+	logger *slog.Logger,
+	repo ExpiredConversationsRepo,
+) (gocron.Job, error) {
+	return scheduler.NewJob(
+		gocron.DurationRandomJob(
+			30*time.Minute,
+			60*time.Minute,
+		),
+		gocron.NewTask(func(logger *slog.Logger, repo ExpiredConversationsRepo) {
+			ids, err := repo.FindExpiredConversationIDs(time.Now().UTC())
+			if err != nil {
+				logger.Error("failed to find expired conversations", "err", err)
+				return
+			}
+			if len(ids) == 0 {
+				return
+			}
+			deleted, err := repo.DeleteConversations(ids)
+			if err != nil {
+				logger.Error("failed to delete some expired conversations",
+					"deleted", deleted, "eligible", len(ids), "err", err)
+				return
+			}
+			logger.Info("retention: deleted expired conversations", "count", deleted)
+		}, logger, repo),
 	)
 }
 

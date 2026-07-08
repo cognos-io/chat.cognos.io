@@ -1,6 +1,9 @@
 export const environment = {
   isDevelopment: true, // Has to be explicitly enabled
   pocketbaseBaseUrl: 'http://localhost:8090',
+  // Base URL of the marketing site, used for in-app links out to legal/trust
+  // pages (e.g. /security, /subprocessors). No trailing slash.
+  marketingBaseUrl: 'https://cognos.io',
   localVaultPassword: '',
   // Preferred model suggested when a user enables image generation on a model
   // that can't do it. Falls back to the first image-capable eligible model when

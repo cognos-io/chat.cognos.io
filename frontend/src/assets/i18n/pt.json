@@ -28,7 +28,7 @@
     "data": {
       "download": "Transferir os meus dados",
       "preparing": "A preparar…",
-      "subtitle": "Transfere todas as tuas conversas e mensagens — desencriptadas no teu navegador — como um ficheiro JSON.",
+      "subtitle": "Transfere todas as tuas conversas, personas, a tua memória, os teus projetos e ficheiros carregados — desencriptados no teu navegador.",
       "title": "Os teus dados"
     },
     "dataProcessing": {
@@ -142,13 +142,36 @@
       "exportedMany": "{{ count }} conversas exportadas",
       "exportedOne": "1 conversa exportada",
       "passwordChanged": "Palavra-passe alterada",
-      "profileUpdated": "Perfil atualizado"
+      "profileUpdated": "Perfil atualizado",
+      "retentionUpdated": "Predefinição de eliminação automática guardada",
+      "retentionError": "Não foi possível guardar a predefinição de eliminação automática"
     },
     "memory": {
       "title": "A tua memória",
       "subtitle": "Factos que fixaste na tua memória pessoal. São armazenados encriptados e adicionados ao contexto de cada conversa.",
       "save": "Guardar",
-      "saved": "Memória guardada"
+      "saved": "Memória guardada",
+      "toggleTitle": "Memória pessoal",
+      "toggleSubtitle": "Permite que o Cognos se lembre de factos sobre ti e os adicione ao contexto de novas conversas. Desativada por predefinição — ativa-a para começar a usar a memória.",
+      "toggleLabel": "Usar a memória pessoal",
+      "on": "Ativada",
+      "off": "Desativada",
+      "enabledNote": "A memória está ativada. Os novos factos que adicionas são guardados cifrados e incluídos no contexto das tuas conversas.",
+      "editorDisabledNote": "A memória pessoal está desativada. Os itens guardados são mostrados aqui para que os possas rever ou eliminar, mas nada de novo será guardado ou adicionado às tuas conversas até ativares a memória.",
+      "delete": "Limpar a memória",
+      "deleting": "A limpar…",
+      "deleted": "Memória limpa",
+      "deleteError": "Não foi possível limpar a tua memória. Tenta novamente."
+    },
+    "retention": {
+      "title": "Eliminar conversas automaticamente",
+      "subtitle": "Escolhe quando as conversas guardadas são eliminadas. Aplica-se às conversas novas e às que herdam a definição; podes alterar em cada conversa.",
+      "note": "A eliminação é permanente: uma conversa eliminada e as suas mensagens não podem ser recuperadas. Contada a partir da última atividade da conversa.",
+      "options": {
+        "never": "Nunca",
+        "sevenDays": "Após 7 dias",
+        "thirtyDays": "Após 30 dias"
+      }
     }
   },
   "auth": {
@@ -609,6 +632,8 @@
         "unavailable": "Desbloqueia o teu cofre antes de anexares ficheiros",
         "tooMany": "Podes anexar até {{ max }} ficheiros",
         "providerNotice": "Os ficheiros anexados são enviados ao fornecedor de IA quando usados",
+        "truncated": "Truncado",
+        "truncatedHint": "Só a primeira parte deste ficheiro foi enviada à IA.",
         "dropHint": "Larga os ficheiros para anexar",
         "state": {
           "queued": "Na fila…",
@@ -636,6 +661,13 @@
         "resending": "A enviar…",
         "sent": "E-mail de confirmação enviado",
         "sentBody": "Verifica {{email}} para encontrar a ligação de confirmação."
+      },
+      "redactionWarning": {
+        "title": "Enviar dados sensíveis sem ocultar?",
+        "body": "Esta mensagem ainda contém {{ count }} valor(es) sensível(eis) detetado(s) que escolheste não ocultar. O teu fornecedor vê-los-á na íntegra.",
+        "redactAndSend": "Ocultar e enviar",
+        "sendAnyway": "Enviar mesmo assim",
+        "cancel": "Continuar a editar"
       }
     },
     "conversation": {
@@ -670,7 +702,19 @@
       "hideValues": "Ocultar valores sensíveis",
       "showValues": "Mostrar valores sensíveis",
       "duplicate": "Duplicar conversa",
-      "memory": "Memória"
+      "memory": "Memória",
+      "enableMemory": "Usar a memória aqui",
+      "disableMemory": "Não usar a memória aqui",
+      "memoryEnabledToast": "Memória ativada para esta conversa",
+      "memoryDisabledToast": "Memória desativada para esta conversa",
+      "memoryToggleError": "Não foi possível atualizar a memória desta conversa",
+      "autoDelete": "Eliminar automaticamente",
+      "autoDeleteValue": {
+        "inherit": "Predefinição da conta",
+        "never": "Nunca",
+        "sevenDays": "7 dias",
+        "thirtyDays": "30 dias"
+      }
     },
     "icebreakers": {
       "items": {
@@ -988,6 +1032,71 @@
       "title": "A tua mensagem não foi enviada",
       "body": "Algo interrompeu a resposta. A tua mensagem ainda está aqui — tenta enviá-la novamente.",
       "action": "Tentar novamente"
+    },
+    "accuracyDisclaimer": "A IA pode cometer erros. Verifica informações importantes.",
+    "minimap": {
+      "label": "Navegador de mensagens",
+      "jumpTo": "Ir para a mensagem: {{preview}}",
+      "noPreview": "(sem texto)"
+    },
+    "privacy": {
+      "title": "Privacidade e segurança",
+      "seeDetails": "Ver detalhes de privacidade",
+      "receipt": "Processado por {{model}} · gateway {{region}} · guardado cifrado · não usado para treino · eliminação automática: {{retention}}",
+      "gateway": {
+        "ch_only": "Suíça",
+        "eu": "UE",
+        "global": "Global"
+      },
+      "autoDelete": {
+        "off": "desativada",
+        "days": "{{count}} dias"
+      },
+      "items": {
+        "stored": {
+          "title": "Cifrado neste dispositivo",
+          "copy": "As mensagens são seladas no teu navegador antes de serem guardadas. Não guardamos nenhuma cópia que possamos ler."
+        },
+        "readable": {
+          "title": "Só tu as podes ler",
+          "copy": "A decifração acontece no teu dispositivo — ou nos dispositivos das pessoas com quem partilhas explicitamente."
+        },
+        "training": {
+          "title": "Não usado para treino",
+          "copy": "Os fornecedores aprovados respondem sob condições sem retenção e sem treino. As tuas conversas nunca se tornam dados de treino."
+        },
+        "search": {
+          "title": "A pesquisa é local",
+          "copy": "O teu histórico é pesquisado neste dispositivo. As consultas nunca nos são enviadas."
+        }
+      },
+      "caveat": {
+        "title": "A única ressalva honesta",
+        "copy": "Para gerar uma resposta, o modelo tem de ler a tua mensagem em texto simples — durante o momento em que é executado, na região que escolheres. Voltamos a cifrar a resposta assim que é gerada e não guardamos o texto simples."
+      },
+      "flow": {
+        "device": "O teu dispositivo",
+        "encrypted": "Cifrado",
+        "reencrypted": "Novamente cifrado",
+        "compute": "Texto simples · transitório"
+      },
+      "rows": {
+        "model": "Modelo",
+        "region": "Região",
+        "autoDelete": "Eliminação automática"
+      },
+      "keysLabel": "As tuas chaves",
+      "deviceKey": "Chave do dispositivo",
+      "verified": "Verificada",
+      "links": {
+        "security": "Como mantemos a tua privacidade",
+        "subprocessors": "Quem processa os teus dados"
+      }
+    },
+    "bookmark": {
+      "save": "Guardar nos marcadores",
+      "saved": "Guardado nos marcadores",
+      "saveError": "Não foi possível guardar o marcador. Tenta novamente."
     }
   },
   "common": {
@@ -1143,6 +1252,21 @@
         "footer": "Cognos · https://cognos.io"
       },
       "cantFindKey": "Não encontras a tua Chave de Conta? Procura o ficheiro cognos-emergency-kit.txt que guardaste quando te registaste."
+    },
+    "retention": {
+      "title": "Eliminar esta conversa automaticamente",
+      "body": "Escolhe quando esta conversa é eliminada, a contar a partir da última atividade.",
+      "note": "«Predefinição da conta» segue a definição da tua conta. A eliminação é permanente: as mensagens não podem ser recuperadas.",
+      "save": "Guardar",
+      "saving": "A guardar…",
+      "saved": "Eliminação automática atualizada",
+      "error": "Não foi possível atualizar a eliminação automática. Tenta novamente.",
+      "options": {
+        "inherit": "Predefinição da conta",
+        "never": "Nunca",
+        "sevenDays": "7 dias",
+        "thirtyDays": "30 dias"
+      }
     }
   },
   "errors": {
@@ -1314,7 +1438,8 @@
       "team": "Equipa e partilha",
       "usage": "Utilização",
       "memory": "Memória",
-      "library": "Biblioteca"
+      "library": "Biblioteca",
+      "bookmarks": "Marcadores"
     },
     "placeholder": {
       "comingSoon": "Esta secção estará disponível em breve."
@@ -1375,6 +1500,15 @@
         "downloadedToast": "Kit de Emergência transferido"
       },
       "passwordHeading": "Palavra-passe"
+    },
+    "bookmarks": {
+      "title": "Os teus marcadores",
+      "description": "Excertos que guardaste das tuas conversas. São armazenados cifrados — volta a uma mensagem ou remove um.",
+      "empty": "Ainda não guardaste nenhum marcador. Seleciona texto numa conversa e escolhe «Guardar nos marcadores».",
+      "jump": "Ir",
+      "remove": "Remover",
+      "removed": "Marcador removido",
+      "removeError": "Não foi possível remover o marcador. Tenta novamente."
     }
   },
   "models": {

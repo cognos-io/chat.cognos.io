@@ -148,6 +148,8 @@ func (r *PocketBaseRepo) RecordUsage(record UsageRecord) error {
 		transactionRecord.Set("input_tokens", record.InputTokens)
 		transactionRecord.Set("output_tokens", record.OutputTokens)
 		transactionRecord.Set("search_count", record.SearchCount)
+		transactionRecord.Set("operation_type", string(record.OperationType))
+		transactionRecord.Set("generated_image_count", record.GeneratedImageCount)
 		transactionRecord.Set("description", record.ModelID)
 		if record.BalanceAfterRappen != nil {
 			transactionRecord.Set("balance_after_rappen", *record.BalanceAfterRappen)

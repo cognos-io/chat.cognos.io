@@ -298,6 +298,96 @@ describe('MessageFormComponent', () => {
     expect(messageService.sendMessage$.next).not.toHaveBeenCalled();
   });
 
+  it('blocks send and opens the confirm when a detected value is left un-redacted', () => {
+    const candidate = {
+      type: 'email' as const,
+      detector: 'email:v1',
+      start: 0,
+      end: 15,
+      value: 'me@example.com',
+      normalized: 'me@example.com',
+      confidence: 'high' as const,
+    };
+    // The stubbed detector now finds our candidate for any draft.
+    const redaction = TestBed.inject(RedactionService) as unknown as {
+      detect: (text: string) => (typeof candidate)[];
+    };
+    redaction.detect = () => [candidate];
+
+    component.messageForm.controls.content.setValue('email me@example.com');
+    // Opt OUT of redacting the detection — this is what makes the send risky.
+    component.toggleRedaction(candidate);
+
+    component.sendMessage();
+
+    // The message is held back and the blocking confirm is shown instead.
+    expect(component.redactionWarningOpen()).toBe(true);
+    expect(component.pendingUnredactedCount()).toBe(1);
+    expect(messageService.sendMessage$.next).not.toHaveBeenCalled();
+
+    // "Send anyway" dispatches the draft as-is (opt-out preserved).
+    component.sendAnyway();
+    expect(component.redactionWarningOpen()).toBe(false);
+    expect(messageService.sendMessage$.next).toHaveBeenCalledTimes(1);
+    const sentAnyway = vi.mocked(messageService.sendMessage$.next).mock.calls[0][0];
+    expect(sentAnyway.content).toBe('email me@example.com');
+    // The opt-out is preserved (one deselected key), so the value is NOT
+    // redacted on send.
+    expect(sentAnyway.redactionDeselected).toHaveLength(1);
+  });
+
+  it('"Redact & send" clears the opt-outs so every detected value is redacted', () => {
+    const candidate = {
+      type: 'email' as const,
+      detector: 'email:v1',
+      start: 0,
+      end: 15,
+      value: 'me@example.com',
+      normalized: 'me@example.com',
+      confidence: 'high' as const,
+    };
+    const redaction = TestBed.inject(RedactionService) as unknown as {
+      detect: (text: string) => (typeof candidate)[];
+    };
+    redaction.detect = () => [candidate];
+
+    component.messageForm.controls.content.setValue('email me@example.com');
+    component.toggleRedaction(candidate);
+    component.sendMessage();
+    expect(component.redactionWarningOpen()).toBe(true);
+
+    component.redactAndSend();
+
+    expect(component.redactionWarningOpen()).toBe(false);
+    expect(messageService.sendMessage$.next).toHaveBeenCalledTimes(1);
+    const sent = vi.mocked(messageService.sendMessage$.next).mock.calls[0][0];
+    // No opt-outs remain, so the detection is redacted before sending.
+    expect(sent.redactionDeselected).toEqual([]);
+  });
+
+  it('does not warn when every detected value will be redacted (the default)', () => {
+    const candidate = {
+      type: 'email' as const,
+      detector: 'email:v1',
+      start: 0,
+      end: 15,
+      value: 'me@example.com',
+      normalized: 'me@example.com',
+      confidence: 'high' as const,
+    };
+    const redaction = TestBed.inject(RedactionService) as unknown as {
+      detect: (text: string) => (typeof candidate)[];
+    };
+    redaction.detect = () => [candidate];
+
+    // Detection present, but nothing deselected → it will be redacted → no prompt.
+    component.messageForm.controls.content.setValue('email me@example.com');
+    component.sendMessage();
+
+    expect(component.redactionWarningOpen()).toBe(false);
+    expect(messageService.sendMessage$.next).toHaveBeenCalledTimes(1);
+  });
+
   it('sends an image request when the tool is on for a capable model', () => {
     composerTools.setImageGeneration(true);
     selectedModelUnsupported.set(false);

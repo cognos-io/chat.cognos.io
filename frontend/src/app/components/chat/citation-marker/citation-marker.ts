@@ -122,8 +122,8 @@ import { avatarLetter } from '../message-sources/message-sources';
     }
 
     .citation-marker__chip:focus-visible {
-      outline: 2px solid var(--cog-brand);
-      outline-offset: 1px;
+      outline: var(--cog-border-width-strong) solid var(--cog-brand);
+      outline-offset: var(--cog-border-width);
     }
 
     .citation-marker__card {
@@ -135,7 +135,7 @@ import { avatarLetter } from '../message-sources/message-sources';
       gap: var(--cog-space-075);
       width: min(320px, 80vw);
       padding: var(--cog-space-100);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
       box-shadow: var(--cog-shadow-overlay);

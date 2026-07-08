@@ -23,6 +23,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/hooks"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/mfa"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/retention"
 	"github.com/go-co-op/gocron/v2"
 	bifrostschemas "github.com/maximhq/bifrost/core/schemas"
 	"github.com/pocketbase/pocketbase"
@@ -444,6 +445,16 @@ func bindAppHooks(
 				params.CronScheduler,
 				app.Logger(),
 				deletedRecordRepo,
+			)
+			if err != nil {
+				return err
+			}
+
+			expiredConversationsRepo := retention.NewPocketBaseRepo(app)
+			_, err = cleanUpExpiredConversationsJob(
+				params.CronScheduler,
+				app.Logger(),
+				expiredConversationsRepo,
 			)
 			if err != nil {
 				return err

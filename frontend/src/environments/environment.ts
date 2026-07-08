@@ -1,6 +1,9 @@
 export const environment = {
   isDevelopment: false, // Has to be explicitly enabled
   pocketbaseBaseUrl: 'https://api.cognos.io',
+  // Base URL of the marketing site, used for in-app links out to legal/trust
+  // pages (e.g. /security, /subprocessors). No trailing slash.
+  marketingBaseUrl: 'https://cognos.io',
   localVaultPassword: '',
   // Preferred model suggested when a user enables image generation on a model
   // that can't do it. Falls back to the first image-capable eligible model when
@@ -28,8 +31,8 @@ export const environment = {
     security: true,
     team: false,
     notifications: false,
-    // Encrypted projects (shared workspaces). Off until sharing (phase 2) is
-    // complete.
-    projects: false,
+    // Encrypted projects (standalone workspaces, no sharing). Shipped on for
+    // launch; sharing (phase 2) is a later follow-up.
+    projects: true,
   },
 };

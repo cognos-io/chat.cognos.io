@@ -29,6 +29,8 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
   CognosButtonComponent,
+  CognosDialogActionsComponent,
+  CognosDialogSurfaceComponent,
   CognosIconButtonComponent,
   CognosIconComponent,
   CognosRedactedTextComponent,
@@ -93,6 +95,8 @@ function escapeHtml(value: string): string {
     A11yModule,
     OverlayModule,
     CognosButtonComponent,
+    CognosDialogActionsComponent,
+    CognosDialogSurfaceComponent,
     CognosIconButtonComponent,
     CognosIconComponent,
     CognosRedactedTextComponent,
@@ -216,6 +220,20 @@ function escapeHtml(value: string): string {
                     <span class="message-form__chip-size">{{
                       formatAttachmentSize(att.sizeBytes)
                     }}</span>
+                    @if (att.contextTruncated) {
+                      <span
+                        class="message-form__chip-truncated"
+                        [title]="t('chat.composer.attachments.truncatedHint')"
+                        data-testid="attachment-truncated"
+                      >
+                        <cog-icon
+                          name="triangle-alert"
+                          [size]="12"
+                          tone="text-subtle"
+                        />
+                        {{ t('chat.composer.attachments.truncated') }}
+                      </span>
+                    }
                   } @else if (att.state === 'failed') {
                     <span class="message-form__chip-status">{{
                       attachmentErrorLabel(att.errorCode)
@@ -770,6 +788,61 @@ function escapeHtml(value: string): string {
       (attachSelected)="onLibraryAttach($event)"
       (closed)="libraryPickerOpen.set(false)"
     />
+
+    <!-- Blocking confirm shown at send time when the draft still contains
+         detected sensitive values the user opted out of redacting. It never
+         appears when redaction is off, nothing is detected, or every detection
+         is going to be redacted (the default), so it adds no routine friction. -->
+    @if (redactionWarningOpen()) {
+      <ng-container *transloco="let t">
+        <div class="redaction-warning" role="presentation">
+          <div
+            class="redaction-warning__backdrop"
+            (click)="cancelRedactionWarning()"
+            aria-hidden="true"
+          ></div>
+          <div
+            class="redaction-warning__panel"
+            cdkTrapFocus
+            [cdkTrapFocusAutoCapture]="true"
+          >
+            <cog-dialog-surface
+              [title]="t('chat.composer.redactionWarning.title')"
+              [closeLabel]="t('common.close')"
+              icon="triangle-alert"
+              iconTone="danger"
+              [footer]="true"
+              [width]="480"
+              (close)="cancelRedactionWarning()"
+            >
+              <p class="redaction-warning__body">
+                {{
+                  t('chat.composer.redactionWarning.body', {
+                    count: pendingUnredactedCount(),
+                  })
+                }}
+              </p>
+
+              <cog-dialog-actions cogDialogFooter>
+                <cog-button appearance="subtle" (click)="cancelRedactionWarning()">
+                  {{ t('chat.composer.redactionWarning.cancel') }}
+                </cog-button>
+                <cog-button appearance="default" (click)="sendAnyway()">
+                  {{ t('chat.composer.redactionWarning.sendAnyway') }}
+                </cog-button>
+                <cog-button
+                  appearance="primary"
+                  icon="shield-check"
+                  (click)="redactAndSend()"
+                >
+                  {{ t('chat.composer.redactionWarning.redactAndSend') }}
+                </cog-button>
+              </cog-dialog-actions>
+            </cog-dialog-surface>
+          </div>
+        </div>
+      </ng-container>
+    }
   `,
   styles: `
     .message-form {
@@ -779,8 +852,8 @@ function escapeHtml(value: string): string {
     }
 
     .message-form--drag-over .message-form__panel {
-      outline: 2px dashed var(--cog-brand);
-      outline-offset: 2px;
+      outline: var(--cog-border-width-strong) dashed var(--cog-brand);
+      outline-offset: var(--cog-border-width-strong);
     }
 
     .message-form__file-input {
@@ -802,7 +875,7 @@ function escapeHtml(value: string): string {
       gap: var(--cog-space-050);
       width: min(220px, calc(100vw - var(--cog-space-200)));
       padding: var(--cog-space-050);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
       box-shadow: var(--cog-shadow-overlay);
@@ -833,7 +906,7 @@ function escapeHtml(value: string): string {
       gap: var(--cog-space-075);
       max-width: 16rem;
       padding: var(--cog-space-050) var(--cog-space-100);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface-sunken);
       font-size: 0.8125rem;
@@ -853,6 +926,16 @@ function escapeHtml(value: string): string {
     .message-form__chip-status {
       color: var(--cog-text-subtle);
       flex-shrink: 0;
+    }
+
+    .message-form__chip-truncated {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cog-space-50);
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      flex-shrink: 0;
+      cursor: help;
     }
 
     .message-form__chip-remove {
@@ -880,7 +963,7 @@ function escapeHtml(value: string): string {
       align-items: flex-start;
       gap: var(--cog-space-075);
       padding: var(--cog-space-075) var(--cog-space-100);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface-hover);
       font-size: var(--cog-fs-caption);
@@ -932,7 +1015,7 @@ function escapeHtml(value: string): string {
       position: relative;
       display: grid;
       gap: var(--cog-space-150);
-      border: 2px solid var(--cog-border);
+      border: var(--cog-border-width-strong) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-surface);
       padding: var(--cog-space-150);
@@ -963,7 +1046,6 @@ function escapeHtml(value: string): string {
       background: transparent;
       color: var(--cog-text);
       font: inherit;
-      font-size: 16px;
       line-height: var(--cog-lh-body-lg);
       outline: 0;
       padding: 0;
@@ -1001,7 +1083,6 @@ function escapeHtml(value: string): string {
          layers wrap at the identical column. */
       scrollbar-gutter: stable;
       font: inherit;
-      font-size: 16px;
       line-height: var(--cog-lh-body-lg);
       color: transparent;
     }
@@ -1048,7 +1129,7 @@ function escapeHtml(value: string): string {
       min-width: 17rem;
       max-width: 22rem;
       padding: var(--cog-space-075);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface);
       box-shadow: var(--cog-shadow-overlay);
@@ -1083,8 +1164,8 @@ function escapeHtml(value: string): string {
     }
 
     .message-form__reasoning-option:focus-visible {
-      outline: 2px solid var(--cog-brand);
-      outline-offset: -2px;
+      outline: var(--cog-border-width-strong) solid var(--cog-brand);
+      outline-offset: calc(var(--cog-border-width-strong) * -1);
     }
 
     .message-form__reasoning-option.is-selected {
@@ -1214,7 +1295,7 @@ function escapeHtml(value: string): string {
       display: inline-flex;
       align-items: center;
       gap: var(--cog-space-050);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-pill);
       background: var(--cog-surface);
       box-shadow: var(--cog-shadow-overlay);
@@ -1259,8 +1340,8 @@ function escapeHtml(value: string): string {
     }
 
     .message-form__persona:focus-visible {
-      outline: 2px solid var(--cog-brand);
-      outline-offset: 2px;
+      outline: var(--cog-border-width-strong) solid var(--cog-brand);
+      outline-offset: var(--cog-border-width-strong);
     }
 
     .message-form__persona-name {
@@ -1295,7 +1376,7 @@ function escapeHtml(value: string): string {
       align-items: center;
       gap: var(--cog-space-150);
       flex-wrap: wrap;
-      border: 1px dashed var(--cog-border);
+      border: var(--cog-border-width) dashed var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface-sunken);
       padding: var(--cog-space-150) var(--cog-space-200);
@@ -1310,7 +1391,7 @@ function escapeHtml(value: string): string {
       flex: none;
       border-radius: var(--cog-radius-pill);
       background: var(--cog-surface);
-      border: 1px solid var(--cog-border);
+      border: var(--cog-border-width) solid var(--cog-border);
     }
 
     .message-form__locked-copy {
@@ -1395,6 +1476,37 @@ function escapeHtml(value: string): string {
       .message-form__locked-actions cog-button {
         flex: 1;
       }
+    }
+
+    /* Blocking sensitive-data confirm: a scrim + centred dialog surface,
+       mirroring the mobile model sheet's backdrop pattern. */
+    .redaction-warning {
+      position: fixed;
+      inset: 0;
+      z-index: 1100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--cog-space-200);
+    }
+
+    .redaction-warning__backdrop {
+      position: absolute;
+      inset: 0;
+      background: var(--cog-scrim);
+    }
+
+    .redaction-warning__panel {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .redaction-warning__body {
+      margin: 0;
+      color: var(--cog-text);
+      font-size: var(--cog-fs-body);
+      line-height: var(--cog-lh-body);
     }
   `,
 })
@@ -1757,6 +1869,12 @@ export class MessageFormComponent {
   private readonly _redactionDeselected = signal<Set<string>>(new Set());
   readonly redactionPreviewOpen = signal(false);
 
+  // Blocking send-time confirm: open state + how many un-redacted detected
+  // values triggered it (shown in the dialog body).
+  readonly redactionWarningOpen = signal(false);
+  private readonly _pendingUnredacted = signal(0);
+  readonly pendingUnredactedCount = this._pendingUnredacted.asReadonly();
+
   // Substrings the user manually selected to redact, and the floating "Redact"
   // action anchored to the pointer when there's a selection.
   private readonly _customRedactions = signal<string[]>([]);
@@ -2105,6 +2223,55 @@ export class MessageFormComponent {
       return;
     }
 
+    // Blocking guard: the draft still contains detected sensitive values the
+    // user opted out of redacting. Confirm before they reach the provider in
+    // the clear. Nothing detected (or everything being redacted) → no prompt.
+    const unredacted = this.unredactedDetected(contentValue);
+    if (unredacted.length > 0) {
+      this._pendingUnredacted.set(unredacted.length);
+      this.redactionWarningOpen.set(true);
+      return;
+    }
+
+    this._dispatchSend(contentValue);
+  }
+
+  // Detected sensitive values still present in `content` that the user has
+  // opted OUT of redacting — i.e. what would reach the provider un-redacted.
+  // Empty when redaction is off or nothing has been deselected (the default),
+  // so the send-time warning stays silent unless the user made that choice.
+  private unredactedDetected(content: string): RedactionCandidate[] {
+    if (!this._redactionService.enabled()) {
+      return [];
+    }
+    const deselected = this._redactionDeselected();
+    if (deselected.size === 0) {
+      return [];
+    }
+    return this._redactionService
+      .detect(content)
+      .filter((candidate) => deselected.has(candidateKey(candidate)));
+  }
+
+  // The three confirm actions. "Redact & send" re-enables redaction for every
+  // detected value (clearing the opt-outs) then sends; "Send anyway" sends the
+  // draft as-is; cancel just closes the prompt and keeps the composer open.
+  redactAndSend(): void {
+    this._redactionDeselected.set(new Set());
+    this.redactionWarningOpen.set(false);
+    this._dispatchSend(this.messageForm.controls.content.value ?? '');
+  }
+
+  sendAnyway(): void {
+    this.redactionWarningOpen.set(false);
+    this._dispatchSend(this.messageForm.controls.content.value ?? '');
+  }
+
+  cancelRedactionWarning(): void {
+    this.redactionWarningOpen.set(false);
+  }
+
+  private _dispatchSend(contentValue: string) {
     this._previousMessage = contentValue;
     const attachmentInputs = this.attachments.completionInputs();
     const messageRequest: MessageRequest = {

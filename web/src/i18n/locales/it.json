@@ -303,7 +303,9 @@
       "about": "Chi siamo",
       "privacy": "Privacy",
       "terms": "Termini",
-      "contact": "Contatti"
+      "contact": "Contatti",
+      "security": "Sicurezza",
+      "subprocessors": "Subincaricati"
     },
     "language": "Lingua",
     "copyright": "© {{ year }} Cognos. Fatto in Svizzera.",
@@ -323,6 +325,281 @@
       "eyebrow": "Termini",
       "title": "Termini di servizio",
       "lead": "L'accordo tra te e Cognos quando usi il servizio."
+    },
+    "subprocessors": {
+      "metaTitle": "Subincaricati — Cognos",
+      "metaDescription": "I fornitori che ci aiutano a far funzionare Cognos — cosa fa ciascuno, cosa può trattare e dove. La maggior parte tocca i dati solo in una forma che non possiamo leggere.",
+      "eyebrow": "Subincaricati",
+      "title": "Subincaricati",
+      "lead": "La breve lista di fornitori affidabili dietro Cognos — cosa fa ciascuno, cosa può trattare e dove.",
+      "effectiveLabel": "Ultimo aggiornamento",
+      "effectiveDate": "2 luglio 2026",
+      "facts": [
+        {
+          "label": "Titolare",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Contatto privacy",
+          "value": "privacy@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Far funzionare Cognos richiede una manciata di fornitori specializzati — per hosting, backup, e-mail dell’account, pagamenti, distribuzione del sito e l’IA stessa. Teniamo la lista corta di proposito."
+        },
+        {
+          "p": "Questa pagina nomina ogni fornitore su cui contiamo, cosa fa e cosa può trattare. Accompagna la nostra <a href=\"/it/privacy\">informativa sulla privacy</a>, che spiega il quadro d’insieme."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Come leggere questa lista",
+          "blocks": [
+            {
+              "p": "Non tutti i fornitori vedono la stessa cosa. La differenza importante è tra quelli che trattano i dati solo in una forma che non possiamo leggere e i fornitori di IA che trattano brevemente il tuo messaggio mentre rispondono."
+            },
+            {
+              "ul": [
+                "i fornitori di hosting e backup trattano soprattutto dati archiviati che restano bloccati, oltre a dettagli tecnici come le marche temporali",
+                "il fornitore di pagamenti tratta i dettagli di pagamento e fattura",
+                "il fornitore di e-mail tratta il tuo indirizzo e-mail e le e-mail che ti inviamo",
+                "i fornitori di IA trattano il tuo messaggio e la sua risposta mentre l’IA risponde — l’unico momento in cui il tuo messaggio è leggibile, e non viene mai conservato dopo"
+              ]
+            },
+            {
+              "p": "Qualunque cosa faccia un fornitore, la tua cronologia delle chat salvata resta sempre bloccata nell’archivio, in una forma che Cognos non può leggere."
+            }
+          ]
+        },
+        {
+          "heading": "I fornitori che usiamo",
+          "blocks": [
+            {
+              "table": {
+                "head": [
+                  "Fornitore",
+                  "Cosa fa",
+                  "Cosa può trattare",
+                  "Dove",
+                  "Possono leggere le tue chat?"
+                ],
+                "rows": [
+                  [
+                    "Hetzner",
+                    "Hosting",
+                    "Dati dell’account, dati archiviati bloccati, log, dettagli tecnici",
+                    "Germania / UE",
+                    "No — le chat archiviate restano bloccate"
+                  ],
+                  [
+                    "Bunny.net",
+                    "Distribuzione & DNS",
+                    "Indirizzi IP e dettagli delle richieste",
+                    "UE / globale",
+                    "No"
+                  ],
+                  ["BorgBase", "Backup", "Backup bloccati", "UE", "No"],
+                  [
+                    "Scaleway",
+                    "E-mail dell’account",
+                    "Il tuo indirizzo e-mail e i dettagli dei messaggi",
+                    "UE",
+                    "Solo le e-mail che inviamo"
+                  ],
+                  [
+                    "Paddle",
+                    "Pagamenti e abbonamenti",
+                    "Dettagli di fatturazione, imposte e fatture",
+                    "USA / UE / UK",
+                    "No — solo dati di fatturazione"
+                  ],
+                  [
+                    "Infomaniak",
+                    "Modelli di IA svizzeri",
+                    "Il tuo messaggio e la sua risposta, mentre l’IA lavora",
+                    "Svizzera",
+                    "Brevemente, mentre l’IA risponde"
+                  ],
+                  [
+                    "Requesty",
+                    "Gateway IA",
+                    "Il tuo messaggio, la risposta e i dettagli del modello",
+                    "UE / UK",
+                    "Brevemente, mentre l’IA risponde"
+                  ],
+                  [
+                    "Fornitori di IA tramite Requesty",
+                    "Risposte dell’IA",
+                    "Il tuo messaggio e la sua risposta, mentre l’IA lavora",
+                    "UE",
+                    "Brevemente, mentre l’IA risponde"
+                  ],
+                  [
+                    "Plausible",
+                    "Analisi del sito, se attiva",
+                    "Uso aggregato e anonimo",
+                    "UE",
+                    "No"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "heading": "I nostri impegni",
+          "blocks": [
+            {
+              "p": "Non permettiamo a nessun fornitore di vendere i dati degli utenti di Cognos né di usarli per la pubblicità."
+            },
+            {
+              "p": "Richiediamo ai fornitori di IA usati con Cognos di non utilizzare le chat di Cognos per addestrare i loro modelli. La conservazione e l’instradamento esatti dipendono dal fornitore e dalla regione che scegli."
+            },
+            {
+              "p": "Dove la legge lo richiede, stipuliamo accordi con questi fornitori, inclusi accordi sul trattamento dei dati e protezioni per qualsiasi dato trattato fuori dalla Svizzera o dall’UE."
+            },
+            {
+              "p": "Questa lista cambia man mano che Cognos cresce. Quando accade, aggiorniamo questa pagina. Domande? Scrivi a <a href=\"mailto:privacy@cognos.io\">privacy@cognos.io</a>."
+            }
+          ]
+        }
+      ]
+    },
+    "security": {
+      "metaTitle": "Sicurezza — Cognos",
+      "metaDescription": "Come Cognos mantiene private le tue chat: bloccate in una forma che non possiamo leggere, aperte solo da una chiave che possiedi tu, e trattate in Svizzera o in Europa.",
+      "eyebrow": "Sicurezza",
+      "title": "Sicurezza",
+      "lead": "Uno sguardo in linguaggio chiaro a come è costruito Cognos, a cosa possiamo e non possiamo vedere, e ai limiti su cui siamo onesti.",
+      "effectiveLabel": "Ultimo aggiornamento",
+      "effectiveDate": "2 luglio 2026",
+      "facts": [
+        {
+          "label": "Fornitore",
+          "value": "Climacrux GmbH"
+        },
+        {
+          "label": "Contatto privacy",
+          "value": "privacy@cognos.io"
+        }
+      ],
+      "intro": [
+        {
+          "p": "Cognos è un’app di chat con IA costruita affinché le tue conversazioni salvate siano conservate in una forma che non possiamo leggere. Questa pagina spiega come funziona, in linguaggio chiaro."
+        },
+        {
+          "p": "Per il dettaglio giuridico preciso, consulta la nostra <a href=\"/it/privacy\">informativa sulla privacy</a>. Per i fornitori dietro Cognos, vedi <a href=\"/it/subprocessors\">Subincaricati</a>."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Come è costruito Cognos",
+          "blocks": [
+            {
+              "p": "Ogni volta che chatti, tre parti lavorano insieme, e a ciascuna si affida il meno possibile."
+            },
+            {
+              "ul": [
+                "<b>Il tuo dispositivo</b> custodisce le chiavi. Le tue chat vengono sbloccate e lette qui, e da nessun’altra parte.",
+                "<b>I nostri server</b> archiviano le tue chat bloccate, passano il tuo messaggio all’IA e ribloccano la risposta. Non conservano mai una copia che possiamo leggere.",
+                "<b>Il fornitore di IA</b> riceve il tuo messaggio solo mentre risponde, poi non conserva nulla."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Come vengono bloccate le tue chat",
+          "blocks": [
+            {
+              "p": "Quando una conversazione viene salvata, viene bloccata sul tuo dispositivo prima di arrivare a noi — i messaggi, i titoli, i riassunti e gli eventuali file. Archiviamo solo la versione bloccata, che non possiamo leggere."
+            },
+            {
+              "p": "Solo la tua chiave può riaprirla, e ciò avviene sul tuo dispositivo quando accedi."
+            }
+          ]
+        },
+        {
+          "heading": "La tua chiave e la tua password",
+          "blocks": [
+            {
+              "p": "Hai due segreti separati, ciascuno con un solo compito:"
+            },
+            {
+              "ul": [
+                "<b>La tua password</b> ti fa accedere. Se la dimentichi, puoi reimpostarla via e-mail — le tue chat restano al sicuro, perché la password non le sblocca.",
+                "<b>La tua chiave dell’account</b> è quella che apre le tue chat. Non la riceviamo né la archiviamo mai, quindi conservala in un luogo sicuro. Se la perdi, non possiamo recuperare le tue chat al posto tuo — è il prezzo del non conservare alcuna copia che possiamo leggere."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Cosa possiamo e non possiamo vedere",
+          "blocks": [
+            {
+              "p": "Possiamo vedere i dati necessari a far funzionare il servizio — le tue informazioni di account e fatturazione, quale modello hai usato e dettagli tecnici come le marche temporali. Mentre l’IA risponde, il tuo messaggio è leggibile affinché l’IA possa lavorarci."
+            },
+            {
+              "p": "Non possiamo leggere le tue chat salvate, i titoli, i riassunti, la memoria o i file dall’archivio. Restano bloccati con una chiave che non possediamo."
+            },
+            {
+              "p": "Prima che il tuo messaggio lasci il tuo dispositivo, Cognos nasconde anche i dati personali comuni — come e-mail, numeri di telefono, dati bancari e numeri di documenti — dietro segnaposto, così l’IA lavora con i segnaposto invece che con i valori reali."
+            }
+          ]
+        },
+        {
+          "heading": "Dove vengono trattati i tuoi dati",
+          "blocks": [
+            {
+              "p": "Cognos è gestito da un’azienda svizzera. L’app e i suoi dati archiviati sono ospitati in Europa, e tu scegli se i modelli di IA girano solo in Svizzera o in tutta Europa."
+            },
+            {
+              "p": "Conserviamo i dati solo per il tempo necessario. Le tue chat restano finché non le elimini, non scadono o non chiudi il tuo account. Gli elementi eliminati vengono tenuti brevemente in un’istantanea di recupero prima di sparire per sempre, e i backup ruotano secondo una pianificazione regolare."
+            }
+          ]
+        },
+        {
+          "heading": "Chi ci aiuta a far funzionare Cognos",
+          "blocks": [
+            {
+              "p": "Una breve lista di fornitori specializzati ci aiuta a ospitare l’app, inviare e-mail, incassare i pagamenti e fornire l’IA. La maggior parte tratta i dati solo in una forma che non possiamo leggere."
+            },
+            {
+              "p": "Consulta la lista completa — chi sono, cosa trattano e dove — nella pagina <a href=\"/it/subprocessors\">Subincaricati</a>."
+            }
+          ]
+        },
+        {
+          "heading": "Verifica indipendente",
+          "blocks": [
+            {
+              "p": "Le parti di Cognos che trattano i tuoi dati sono aperte all’ispezione, così puoi verificare ciò che facciamo invece di crederci sulla parola."
+            },
+            {
+              "p": "Cognos non ha ancora completato un audit di sicurezza indipendente formale. Lo diremo chiaramente qui non appena la cosa cambierà."
+            }
+          ]
+        },
+        {
+          "heading": "Contro cosa questo non protegge",
+          "blocks": [
+            {
+              "p": "Siamo franchi sui limiti:"
+            },
+            {
+              "ul": [
+                "Mentre l’IA risponde, il tuo messaggio deve essere leggibile per i nostri sistemi e per il fornitore di IA. È l’unico momento in cui non è bloccato, e non viene mai conservato dopo.",
+                "Nascondere i dati personali è automatico ma al meglio possibile — coglie le cose comuni come e-mail e numeri di carta, non tutto.",
+                "Se qualcuno raggiunge il tuo dispositivo mentre è sbloccato, può vedere ciò che vedi tu. Bloccare o disconnettersi protegge un dispositivo da cui ti sei allontanato.",
+                "Se perdi la tua chiave dell’account, le tue chat non possono essere recuperate."
+              ]
+            },
+            {
+              "p": "Cognos è costruito per proteggere le tue chat salvate se il nostro archivio o database venisse mai compromesso — non per nascondere il tuo messaggio all’IA mentre risponde."
+            }
+          ]
+        }
+      ]
     },
     "about": {
       "metaTitle": "Chi siamo — Cognos",

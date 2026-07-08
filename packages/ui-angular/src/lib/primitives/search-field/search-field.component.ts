@@ -45,7 +45,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
         min-height: 44px;
         align-items: center;
         gap: var(--cog-space-100);
-        border: 1px solid var(--cog-border);
+        border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         padding: 0 var(--cog-space-150);
