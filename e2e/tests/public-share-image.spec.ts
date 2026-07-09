@@ -110,6 +110,11 @@ test.describe('public share images', () => {
       const image = page.locator('cog-image-grid img').first();
       await expect(image).toBeVisible({ timeout: 20_000 });
       await expect(image).toHaveAttribute('src', /^blob:/);
+      await image.click();
+
+      const lightbox = page.locator('cog-lightbox');
+      await expect(lightbox).toBeVisible();
+      await expect(lightbox.locator('img')).toHaveAttribute('src', /^blob:/);
 
       // The image-only message must NOT fall back to the empty-message notice.
       await expect(page.getByText(/this message is empty/i)).toHaveCount(0);

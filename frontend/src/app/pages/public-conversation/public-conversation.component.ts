@@ -20,6 +20,7 @@ import {
   CognosBranchSwitcherComponent,
   CognosIconComponent,
   CognosImageGridComponent,
+  CognosLightboxComponent,
   CognosUserMessageComponent,
   type MessageBranchInfo,
   type MessageTreeAccessors,
@@ -75,6 +76,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
     CognosBranchSwitcherComponent,
     CognosIconComponent,
     CognosImageGridComponent,
+    CognosLightboxComponent,
     CognosLogoComponent,
     MessageAttachmentChipComponent,
     TranslocoModule,
@@ -224,6 +226,7 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
             <cog-image-grid
               [images]="imageUrls(message)"
               [encryptedLabel]="t('chat.message.imageEncrypted')"
+              (open)="openLightbox(message, $event)"
             />
           }
           @if (message.decryptedData.content) {
@@ -241,6 +244,19 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
         }
       </ng-container>
     </ng-template>
+
+    @if (lightboxUrl(); as src) {
+      <ng-container *transloco="let t">
+        <cog-lightbox
+          [src]="src"
+          [encryptedLabel]="t('chat.message.imageEncrypted')"
+          [downloadLabel]="t('chat.message.imageDownload')"
+          [closeLabel]="t('chat.message.imageClose')"
+          (close)="closeLightbox()"
+          (download)="downloadImage(src)"
+        />
+      </ng-container>
+    }
   `,
   styles: `
     :host {
@@ -435,6 +451,7 @@ export class PublicConversationComponent implements OnInit {
   private readonly _transloco = inject(TranslocoService);
 
   readonly state = signal<ViewState>('loading');
+  readonly lightboxUrl = signal<string | null>(null);
   // Raw decrypted title — may contain placeholder tokens, rendered via title().
   private readonly _rawTitle = signal('');
   readonly title = computed(() => this.renderText(this._rawTitle()));
@@ -459,6 +476,24 @@ export class PublicConversationComponent implements OnInit {
   // notice while the image hydrates.
   hasGeneratedImage(message: Message): boolean {
     return (message.decryptedData.attachments ?? []).some((a) => !!a.sealed_key);
+  }
+
+  openLightbox(message: Message, index: number): void {
+    const url = this.imageUrls(message)[index];
+    if (url) {
+      this.lightboxUrl.set(url);
+    }
+  }
+
+  closeLightbox(): void {
+    this.lightboxUrl.set(null);
+  }
+
+  downloadImage(url: string): void {
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'cognos-image.png';
+    anchor.click();
   }
 
   // Fetch + decrypt each message's generated image(s) into blob URLs. Mirrors the
