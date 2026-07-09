@@ -32,6 +32,7 @@ type conversationRecordResponse struct {
 	// next refresh without breaking offline copies.
 	KeyVersion     int    `json:"key_version"`
 	LastActivityAt string `json:"last_activity_at,omitempty"`
+	Project        string `json:"project,omitempty"`
 	// RetentionDays is the per-conversation auto-delete override, always
 	// present so the client can render the current choice. Sentinel encoding:
 	// 0 = inherit the account default, -1 = never, N > 0 = delete N days after
@@ -1021,6 +1022,7 @@ func conversationRecordToResponse(record *core.Record) conversationRecordRespons
 		ExpiryDuration: record.GetString("expiry_duration"),
 		KeyVersion:     version,
 		LastActivityAt: record.GetString("last_activity_at"),
+		Project:        record.GetString("project"),
 		RetentionDays:  record.GetInt("retention_days"),
 	}
 }

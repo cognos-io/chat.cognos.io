@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/participants"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/projectparticipants"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
@@ -45,6 +46,19 @@ type createProjectConversationRequest struct {
 	WrappedConversationSecretKey string `json:"wrapped_conversation_secret_key"`
 }
 
+type updateConversationProjectRequest struct {
+	// ProjectID is the target project. Empty removes the conversation from its
+	// current project and makes it standalone.
+	ProjectID string `json:"project_id"`
+	// WrappedConversationSecretKey is required when moving into a project. It is
+	// the existing conversation secret key wrapped by the target project's
+	// current content key.
+	WrappedConversationSecretKey string `json:"wrapped_conversation_secret_key"`
+	// WrappedSecretKey is required when removing from a project. It is the
+	// existing conversation secret key wrapped for the caller's Account key.
+	WrappedSecretKey string `json:"wrapped_secret_key"`
+}
+
 // ProjectConversationsList returns the conversations inside a project the
 // caller can access. Each entry carries its project-wrapped secret key so the
 // client can decrypt in one round-trip. Non-members get 404 (via
@@ -80,6 +94,124 @@ func ProjectConversationsList(app core.App) func(e *core.RequestEvent) error {
 		}
 
 		return e.JSON(http.StatusOK, response)
+	}
+}
+
+// ConversationProjectUpdate moves a conversation into a project, between
+// projects, or out to standalone. It changes both access metadata and key
+// wrapping in one transaction so the conversation is never half-moved.
+func ConversationProjectUpdate(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		caller := auth.ExtractUser(e)
+		if caller == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		conversationID := e.Request.PathValue("conversationID")
+		conversation, err := ownedConversationRecord(app, e, conversationID)
+		if err != nil {
+			return err
+		}
+		sourceProjectID := conversation.GetString("project")
+
+		var req updateConversationProjectRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Failed to read request data", err)
+		}
+		targetProjectID := strings.TrimSpace(req.ProjectID)
+		wrappedProjectSecretKey := strings.TrimSpace(req.WrappedConversationSecretKey)
+		wrappedCallerSecretKey := strings.TrimSpace(req.WrappedSecretKey)
+
+		if targetProjectID == sourceProjectID {
+			return apis.NewBadRequestError("Conversation is already in that project", nil)
+		}
+		if targetProjectID != "" && wrappedProjectSecretKey == "" {
+			return apis.NewBadRequestError("wrapped_conversation_secret_key is required", nil)
+		}
+		if targetProjectID == "" && sourceProjectID == "" {
+			return apis.NewBadRequestError("Conversation is already standalone", nil)
+		}
+		if targetProjectID == "" && wrappedCallerSecretKey == "" {
+			return apis.NewBadRequestError("wrapped_secret_key is required", nil)
+		}
+
+		if sourceProjectID != "" {
+			if err := requireProjectAdmin(app, sourceProjectID, caller.ID); err != nil {
+				return err
+			}
+		} else {
+			role, _, err := participants.NewPocketBaseRepo(app).ActiveRole(conversationID, caller.ID)
+			if err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to verify conversation role", err)
+			}
+			if role != participants.RoleAdmin {
+				return apis.NewForbiddenError("Only conversation admins can move this conversation", nil)
+			}
+		}
+
+		var targetProject *core.Record
+		if targetProjectID != "" {
+			targetProject, err = accessibleProjectRecord(app, e, targetProjectID)
+			if err != nil {
+				return err
+			}
+			if err := requireProjectAdmin(app, targetProjectID, caller.ID); err != nil {
+				return err
+			}
+		}
+
+		keyVersion := conversation.GetInt("key_version")
+		if keyVersion < 1 {
+			keyVersion = 1
+		}
+
+		if err := app.RunInTransaction(func(txApp core.App) error {
+			if err := deleteConversationAccessRows(txApp, conversationID); err != nil {
+				return err
+			}
+
+			if targetProjectID != "" {
+				conversation.Set("project", targetProjectID)
+				if err := txApp.Save(conversation); err != nil {
+					return err
+				}
+
+				collection, err := txApp.FindCollectionByNameOrId(projectConversationKeysCollection)
+				if err != nil {
+					return err
+				}
+				wrapping := core.NewRecord(collection)
+				wrapping.Set("project", targetProjectID)
+				wrapping.Set("conversation", conversationID)
+				wrapping.Set("conversation_key_version", keyVersion)
+				wrapping.Set("project_key_version", projectKeyVersionOf(targetProject))
+				wrapping.Set("wrapped_conversation_secret_key", wrappedProjectSecretKey)
+				return txApp.Save(wrapping)
+			}
+
+			conversation.Set("project", "")
+			if err := txApp.Save(conversation); err != nil {
+				return err
+			}
+
+			if err := upsertCallerAdminParticipant(txApp, conversationID, caller.ID); err != nil {
+				return err
+			}
+			collection, err := txApp.FindCollectionByNameOrId("conversation_secret_keys")
+			if err != nil {
+				return err
+			}
+			secretKey := core.NewRecord(collection)
+			secretKey.Set("conversation", conversationID)
+			secretKey.Set("user", caller.ID)
+			secretKey.Set("secret_key", wrappedCallerSecretKey)
+			secretKey.Set("key_version", keyVersion)
+			return txApp.Save(secretKey)
+		}); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to update conversation project", err)
+		}
+
+		return e.JSON(http.StatusOK, conversationRecordToResponse(conversation))
 	}
 }
 
@@ -179,6 +311,68 @@ func ProjectConversationsCreate(app core.App) func(e *core.RequestEvent) error {
 			projectConversationToResponse(conversation, projectKeyVersion, req.WrappedConversationSecretKey),
 		)
 	}
+}
+
+func requireProjectAdmin(app core.App, projectID, userID string) error {
+	role, active, err := projectparticipants.NewPocketBaseRepo(app).ActiveRole(projectID, userID)
+	if err != nil {
+		return apis.NewApiError(http.StatusInternalServerError, "Failed to verify project role", err)
+	}
+	if !active {
+		return apis.NewNotFoundError("Project not found", nil)
+	}
+	if role != projectparticipants.RoleAdmin {
+		return apis.NewForbiddenError("Only project admins can move conversations", nil)
+	}
+	return nil
+}
+
+func deleteConversationAccessRows(app core.App, conversationID string) error {
+	for _, collection := range []string{
+		participants.CollectionName,
+		"conversation_secret_keys",
+		projectConversationKeysCollection,
+	} {
+		records, err := app.FindRecordsByFilter(
+			collection,
+			"conversation = {:c}",
+			"",
+			500,
+			0,
+			dbx.Params{"c": conversationID},
+		)
+		if err != nil {
+			return err
+		}
+		for _, record := range records {
+			if err := app.Delete(record); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func upsertCallerAdminParticipant(app core.App, conversationID, userID string) error {
+	collection, err := app.FindCollectionByNameOrId(participants.CollectionName)
+	if err != nil {
+		return err
+	}
+
+	record, _ := app.FindFirstRecordByFilter(
+		participants.CollectionName,
+		"conversation = {:conversation} && user = {:user}",
+		dbx.Params{"conversation": conversationID, "user": userID},
+	)
+	if record == nil {
+		record = core.NewRecord(collection)
+		record.Set("conversation", conversationID)
+		record.Set("user", userID)
+	}
+	record.Set("role", string(participants.RoleAdmin))
+	record.Set("added_at", time.Now().UTC())
+	record.Set("removed_at", "")
+	return app.Save(record)
 }
 
 func projectConversationWrappedKey(app core.App, conversationID string, projectKeyVersion int) (string, error) {

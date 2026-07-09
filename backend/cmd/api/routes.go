@@ -463,6 +463,14 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	e.Router.PATCH(
+		"/api/v1/conversations/{conversationID}/project",
+		handler.ConversationProjectUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.GET(
 		"/api/v1/conversations/{conversationID}/participants",
 		handler.ConversationParticipantsList(app),

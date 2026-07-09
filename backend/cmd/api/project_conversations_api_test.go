@@ -285,6 +285,178 @@ func TestProjectConversationsExcludedFromMainConversationList(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestConversationProjectUpdateMovesStandaloneIntoProject(t *testing.T) {
+	t.Parallel()
+
+	projectID := "projmove0000001"
+	conversationID := "moveconv0000001"
+	wrappedProjectSecret := base64.StdEncoding.EncodeToString([]byte("wrapped-for-project"))
+
+	scenario := tests.ApiScenario{
+		Name:   "move a standalone conversation into a project",
+		Method: http.MethodPatch,
+		URL:    "/api/v1/conversations/" + conversationID + "/project",
+		Body: strings.NewReader(`{
+			"project_id":"` + projectID + `",
+			"wrapped_conversation_secret_key":"` + wrappedProjectSecret + `"
+		}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"id":"` + conversationID + `"`,
+			`"project":"` + projectID + `"`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedProject(t, app, projectID, "test1@example.com")
+			seedOwnedConversation(t, app, conversationID, "test1@example.com")
+			seedConversationKeyMaterial(
+				t,
+				app,
+				conversationID,
+				userID(t, app, "test1@example.com"),
+				1,
+				base64.StdEncoding.EncodeToString([]byte("public-key")),
+				"",
+				base64.StdEncoding.EncodeToString([]byte("wrapped-for-account")),
+			)
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			conversation, err := app.FindRecordById("conversations", conversationID)
+			if err != nil {
+				t.Fatalf("FindRecordById(conversations, %q) error = %v", conversationID, err)
+			}
+			if got := conversation.GetString("project"); got != projectID {
+				t.Fatalf("conversations.project = %q, want %q", got, projectID)
+			}
+			if got := countRows(t, app, "participants", "conversation = {:c}", dbx.Params{"c": conversationID}); got != 0 {
+				t.Fatalf("participants rows after project move = %d, want 0", got)
+			}
+			if got := countRows(t, app, "conversation_secret_keys", "conversation = {:c}", dbx.Params{"c": conversationID}); got != 0 {
+				t.Fatalf("conversation_secret_keys rows after project move = %d, want 0", got)
+			}
+			wrapping, err := app.FindFirstRecordByFilter(
+				"project_conversation_keys",
+				"conversation = {:c}",
+				dbx.Params{"c": conversationID},
+			)
+			if err != nil {
+				t.Fatalf("FindFirstRecordByFilter(project_conversation_keys) error = %v", err)
+			}
+			if got := wrapping.GetString("wrapped_conversation_secret_key"); got != wrappedProjectSecret {
+				t.Fatalf("wrapped_conversation_secret_key = %q, want %q", got, wrappedProjectSecret)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestConversationProjectUpdateRemovesProjectConversation(t *testing.T) {
+	t.Parallel()
+
+	projectID := "projmove0000002"
+	conversationID := "moveconv0000002"
+	wrappedAccountSecret := base64.StdEncoding.EncodeToString([]byte("wrapped-for-account"))
+
+	scenario := tests.ApiScenario{
+		Name:   "remove a conversation from a project",
+		Method: http.MethodPatch,
+		URL:    "/api/v1/conversations/" + conversationID + "/project",
+		Body: strings.NewReader(`{
+			"project_id":"",
+			"wrapped_secret_key":"` + wrappedAccountSecret + `"
+		}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"id":"` + conversationID + `"`,
+		},
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedProject(t, app, projectID, "test1@example.com")
+			seedProjectConversation(t, app, projectID, conversationID, "test1@example.com")
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			conversation, err := app.FindRecordById("conversations", conversationID)
+			if err != nil {
+				t.Fatalf("FindRecordById(conversations, %q) error = %v", conversationID, err)
+			}
+			if got := conversation.GetString("project"); got != "" {
+				t.Fatalf("conversations.project after removal = %q, want empty", got)
+			}
+			if got := countRows(t, app, "project_conversation_keys", "conversation = {:c}", dbx.Params{"c": conversationID}); got != 0 {
+				t.Fatalf("project_conversation_keys rows after removal = %d, want 0", got)
+			}
+			participant, err := app.FindFirstRecordByFilter(
+				"participants",
+				"conversation = {:c} && user = {:u}",
+				dbx.Params{"c": conversationID, "u": userID(t, app, "test1@example.com")},
+			)
+			if err != nil {
+				t.Fatalf("FindFirstRecordByFilter(participants) error = %v", err)
+			}
+			if got := participant.GetString("role"); got != "Admin" {
+				t.Fatalf("participants.role after removal = %q, want Admin", got)
+			}
+			secret, err := app.FindFirstRecordByFilter(
+				"conversation_secret_keys",
+				"conversation = {:c} && user = {:u}",
+				dbx.Params{"c": conversationID, "u": userID(t, app, "test1@example.com")},
+			)
+			if err != nil {
+				t.Fatalf("FindFirstRecordByFilter(conversation_secret_keys) error = %v", err)
+			}
+			if got := secret.GetString("secret_key"); got != wrappedAccountSecret {
+				t.Fatalf("conversation_secret_keys.secret_key = %q, want %q", got, wrappedAccountSecret)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestConversationProjectUpdateRequiresProjectAdmin(t *testing.T) {
+	t.Parallel()
+
+	projectID := "projmove0000003"
+	conversationID := "moveconv0000003"
+
+	scenario := tests.ApiScenario{
+		Name:   "viewer cannot remove a project conversation",
+		Method: http.MethodPatch,
+		URL:    "/api/v1/conversations/" + conversationID + "/project",
+		Body: strings.NewReader(`{
+			"project_id":"",
+			"wrapped_secret_key":"` + base64.StdEncoding.EncodeToString([]byte("wrapped")) + `"
+		}`),
+		ExpectedStatus:  http.StatusForbidden,
+		ExpectedContent: []string{`Only project admins can move conversations`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOwnedProject(t, app, projectID, "test1@example.com")
+			seedProjectConversation(t, app, projectID, conversationID, "test1@example.com")
+			guest, err := app.FindAuthRecordByEmail("users", "test2@example.com")
+			if err != nil {
+				t.Fatalf("FindAuthRecordByEmail(test2) = %v", err)
+			}
+			seedProjectParticipant(t, app, projectID, guest.Id, "Viewer")
+			withRecordAuth("users", "test2@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			conversation, err := app.FindRecordById("conversations", conversationID)
+			if err != nil {
+				t.Fatalf("FindRecordById(conversations, %q) error = %v", conversationID, err)
+			}
+			if got := conversation.GetString("project"); got != projectID {
+				t.Fatalf("conversations.project after forbidden removal = %q, want %q", got, projectID)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func TestProjectConversationCompleteRejectsNonMember(t *testing.T) {
 	t.Parallel()
 
@@ -424,6 +596,16 @@ func TestProjectConversationKeysCollectionRulesAreLocked(t *testing.T) {
 			t.Errorf("project_conversation_keys.%s rule = %q, want nil (locked)", op, *rule)
 		}
 	}
+}
+
+func countRows(t testing.TB, app *tests.TestApp, collection, filter string, params dbx.Params) int {
+	t.Helper()
+
+	records, err := app.FindRecordsByFilter(collection, filter, "", 500, 0, params)
+	if err != nil {
+		t.Fatalf("FindRecordsByFilter(%s, %q) error = %v", collection, filter, err)
+	}
+	return len(records)
 }
 
 // seedProjectConversation creates a conversation inside a project mirroring
