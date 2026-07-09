@@ -5,7 +5,7 @@ name: usage-cost-calculation
 
 # Usage Cost Calculation
 
-Every completion's user-facing cost runs through one canonical pipeline,
+Every Completion's Account-facing cost runs through one canonical pipeline,
 implemented in `billing.Service.CalculateCost`:
 
 ```text
@@ -39,7 +39,7 @@ The **web-search floor fee** exists because Requesty demonstrably does not
 meter provider-side search (a live grounded Gemini call billed pure token
 price), so a per-search fee would otherwise be silently eaten. It is added
 whenever `search_count > 0` — even when a provider-reported total was trusted —
-and is **already a post-margin user price** (default `1_100_000` µRp ≈ 1.1 rappen
+and is **already a post-margin Account holder price** (default `1_100_000` µRp ≈ 1.1 rappen
 per search, provider fee + margin baked in), so it is never run through the
 margin a second time. Configurable: `billing.web_search_floor_micro_rappen` /
 `COGNOS_BILLING_WEB_SEARCH_FLOOR_MICRO_RAPPEN`; non-positive values fall back

@@ -47,22 +47,22 @@ PocketBase/SQLite (primary store), DuckDB + Parquet/S3 (analytics)
 
 Cognos is an encrypted AI chat application. It works on the same privacy principle as ProtonMail:
 
-- Each user generates a **public/private key pair** on their device.
+- Each Account holder generates a **public/private key pair** on their device.
 - The **public key** is stored on the server.
 - The **private key is encrypted client-side** and may be backed up to the server to support
   cross-device access.
-- Unlocking a new device requires the user's **Account Key** (after signing in with the account
-  password): the password authenticates, while the Account Key alone unlocks the encrypted key
-  material. Trusted devices may cache a **locally wrapped unlock blob** until the user locks the
-  account, logs out, or clears browser storage.
+- Unlocking a new device requires the Account holder's **Account Key** (after signing in with the
+  account password): the password authenticates, while the Account Key alone unlocks the encrypted
+  key material. Trusted devices may cache a **locally wrapped unlock blob** until the Account holder
+  locks the account, logs out, or clears browser storage.
 - Each conversation has its own **conversation-scoped key material** so the product is built for
   future sharing from the start.
 - The backend encrypts persisted chat content with the **conversation's public encryption
   material**, while participant access to the decrypting key material is wrapped per participant.
-- The user's device downloads encrypted messages and **decrypts them locally** after unwrapping the
-  conversation key material it is allowed to access.
+- The Account holder's device downloads encrypted messages and **decrypts them locally** after
+  unwrapping the conversation key material it is allowed to access.
 
-The result: the server stores only ciphertext. Even if the database is compromised, user
+The result: the server stores only ciphertext. Even if the database is compromised, Account holder
 conversations cannot be read.
 
 ### What this document covers
@@ -70,15 +70,15 @@ conversations cannot be read.
 This document specifies the **backend and frontend rearchitecture** of Cognos. The primary goals
 of this work are:
 
-1. Introduce a **model selection system** that allows users to choose AI models based on their
-   privacy preferences.
+1. Introduce a **model selection system** that allows Account holders to choose AI models based on
+   their privacy preferences.
 2. Introduce a **Cognos-owned LLM gateway abstraction** so providers can be added or swapped
    without changing handler code. Bifrost is the first planned adapter, not the only possible
    implementation.
 3. Implement a **billing system** supporting pay-as-you-go (PAYG) and flat-rate subscriptions,
    with balances and plan changes managed manually for now.
-4. Implement an **analytics pipeline** that captures token usage and costs with no user-identifiable
-   content.
+4. Implement an **analytics pipeline** that captures token usage and costs with no Account
+   holder-identifiable content.
 5. Lay groundwork for **multi-modal support** (images, documents, audio) arriving in 3–6 months.
 
 ### What this document does NOT cover
@@ -148,15 +148,15 @@ of this work are:
 
 ### Key design principles
 
-| Principle                               | Implementation                                                                 |
-| --------------------------------------- | ------------------------------------------------------------------------------ |
-| No plaintext user content at rest       | All message content encrypted before persistence                               |
-| Build for sharing now                   | Conversation-scoped key material with per-participant wrapped access           |
-| Preserve operational chat behavior      | Threading and expiry stay first-class in the schema and API                    |
-| No user-identifiable data in analytics  | Analytics events use opaque `billing_user_id` only                             |
-| Single swappable gateway abstraction    | Cognos-owned gateway interface; Bifrost is an adapter choice, not the contract |
-| Easy model onboarding                   | Model catalogue defined in Go code, no database required                       |
-| Extensible to multi-modal               | Attachment array in encrypted payload; content type fields in usage analytics  |
+| Principle                                        | Implementation                                                                 |
+| ------------------------------------------------ | ------------------------------------------------------------------------------ |
+| No plaintext Account holder content at rest      | All message content encrypted before persistence                               |
+| Build for sharing now                            | Conversation-scoped key material with per-participant wrapped access           |
+| Preserve operational chat behavior               | Threading and expiry stay first-class in the schema and API                    |
+| No Account holder-identifiable data in analytics | Analytics events use opaque `billing_user_id` only                             |
+| Single swappable gateway abstraction             | Cognos-owned gateway interface; Bifrost is an adapter choice, not the contract |
+| Easy model onboarding                            | Model catalogue defined in Go code, no database required                       |
+| Extensible to multi-modal                        | Attachment array in encrypted payload; content type fields in usage analytics  |
 
 ---
 
@@ -233,9 +233,10 @@ There are exactly three tiers, ordered from most to least restrictive:
 | `eu`      | Europe                 | Models running in EU/EEA or Switzerland. No data retention.                |
 | `global`  | Global (Business APIs) | Major commercial APIs. No data retention, but data may transit outside EU. |
 
-A user on `ch_only` can only use models with `ch_only` in their tiers list. A user on `eu` can use
-models tagged `eu` or `ch_only`. A user on `global` can use any model. The tiers are
-**cumulative downward** — more permissive tiers include all more restrictive options.
+An Account holder on `ch_only` can only use models with `ch_only` in their tiers list. An Account
+holder on `eu` can use models tagged `eu` or `ch_only`. An Account holder on `global` can use any
+model. The tiers are **cumulative downward** — more permissive tiers include all more restrictive
+options.
 
 #### Model struct definition
 
@@ -244,7 +245,7 @@ models tagged `eu` or `ch_only`. A user on `global` can use any model. The tiers
 
 package catalogue
 
-// PrivacyTier represents a user's chosen privacy level.
+// PrivacyTier represents an Account holder's chosen privacy level.
 // Tiers are hierarchical: ch_only ⊂ eu ⊂ global.
 type PrivacyTier string
 
@@ -270,10 +271,10 @@ type Model struct {
     // Use kebab-case. Example: "llama-3-3-infomaniak"
     ID string
 
-    // DisplayName is shown to the user in the UI.
+    // DisplayName is shown to the Account holder in the UI.
     DisplayName string
 
-    // Description is a short user-facing description (1–2 sentences).
+    // Description is a short Account holder-facing description (1–2 sentences).
     Description string
 
     // Provider is the internal provider key used by Bifrost.
@@ -289,7 +290,7 @@ type Model struct {
     BaseURL string
 
     // EligibleTiers lists which privacy tiers may use this model.
-    // A model available to ch_only users should list [TierSwitzerlandOnly].
+    // A model available to ch_only Account holders should list [TierSwitzerlandOnly].
     // A model available to eu and ch_only should list both.
     EligibleTiers []PrivacyTier
 
@@ -500,7 +501,7 @@ contract.
 
 **Purpose:** Build the message system for future conversation sharing now, without changing the
 privacy posture. Persisted chat content must be encrypted with **conversation-scoped key
-material**, not directly against one user's long-term key.
+material**, not directly against one Account holder's long-term key.
 
 **Primary locations in codebase:** `internal/crypto/`, `internal/store/messages.go`,
 `internal/store/conversations.go`
@@ -525,8 +526,9 @@ implementation is:
 2. the backend stores the **conversation public key** and uses it to encrypt message/title
    ciphertext at write time
 3. the conversation's decrypting secret key material is **wrapped per participant** using that
-   participant's user public key
-4. the client unwraps the conversation key material locally after unlocking the user's private key
+   Participant's Account holder public key
+4. the client unwraps the Conversation key material locally after unlocking the Account holder's
+   private key
 
 This preserves the current server-side write capability while making the access model participant
 based rather than single-user based.
@@ -546,7 +548,8 @@ based rather than single-user based.
 The accepted account-level key-management model remains the **1Password-style Account Key model**.
 
 - Users authenticate with their normal **account password**.
-- Each user also has a generated high-entropy **Account Key** used when unlocking new devices.
+- Each Account holder also has a generated high-entropy **Account Key** used when unlocking new
+  devices.
 - The server may store an **encrypted private-key backup**, but must never store or receive the
   plaintext private key.
 - A new device requires both the **account password** and **Account Key** to unlock the encrypted
@@ -607,7 +610,7 @@ Everything else sensitive belongs inside ciphertext.
 
 The Angular client must:
 
-1. unlock the user's private key locally
+1. unlock the Account holder's private key locally
 2. fetch the participant's wrapped conversation key material for the conversation
 3. unwrap it locally
 4. decrypt message/title ciphertext locally
@@ -619,9 +622,9 @@ assistant messages safely.
 
 ### 4.4 Billing & Balance
 
-**Purpose:** Track user balances for PAYG users and record all transactions. Provide the service
-layer that deducts balance after each completion. In this phase, balances and plan changes are
-managed manually by the operator — payment processing is explicitly out of scope.
+**Purpose:** Track Account holder balances for PAYG Account holders and record all transactions.
+Provide the service layer that deducts balance after each completion. In this phase, balances and
+plan changes are managed manually by the operator — payment processing is explicitly out of scope.
 
 **Location in codebase:** `internal/billing/service.go`
 
@@ -657,7 +660,7 @@ cost_rappen = round(cost_chf * 100)  // Store as integer to avoid float drift
 - Never store as a float. This prevents rounding errors accumulating across thousands of
   transactions.
 - Example: CHF 15.23 balance = `1523` in the database.
-- When displaying to users, divide by 100.
+- When displaying to Account holders, divide by 100.
 
 #### Billing service interface
 
@@ -672,7 +675,7 @@ import (
     "time"
 )
 
-// PlanType represents a user's subscription plan.
+// PlanType represents an Account holder's subscription plan.
 type PlanType string
 
 const (
@@ -685,7 +688,7 @@ type DeductRequest struct {
     UserID       string
     EventID      string  // The analytics event ID, for audit trail linkage
     CostRappen   int64   // Cost in Rappen (already converted from USD)
-    ModelID      string  // For the transaction description shown to the user
+    ModelID      string  // For the transaction description shown to the Account holder
     InputTokens  int64
     OutputTokens int64
 }
@@ -696,8 +699,8 @@ type Service struct {
     fxRate FXRateProvider
 }
 
-// DeductBalance deducts the cost from a PAYG user's balance.
-// For flat_rate users, this records the usage but does NOT deduct.
+// DeductBalance deducts the cost from a PAYG Account holder's balance.
+// For flat_rate Account holders, this records the usage but does NOT deduct.
 // Returns an error only if the operation itself fails — insufficient balance
 // is handled by pre-checking with CanAfford().
 func (s *Service) DeductBalance(ctx context.Context, req DeductRequest) error {
@@ -707,7 +710,7 @@ func (s *Service) DeductBalance(ctx context.Context, req DeductRequest) error {
     }
 
     if plan == PlanFlatRate {
-        // Flat-rate users: record transaction for internal tracking only.
+        // Flat-rate Account holders: record transaction for internal tracking only.
         // Do not modify balance.
         return s.db.InsertTransaction(ctx, Transaction{
             UserID:      req.UserID,
@@ -737,8 +740,8 @@ func (s *Service) DeductBalance(ctx context.Context, req DeductRequest) error {
     return nil
 }
 
-// CanAfford checks whether a PAYG user has sufficient balance for an estimated cost.
-// Always returns true for flat_rate users.
+// CanAfford checks whether a PAYG Account holder has sufficient balance for an estimated cost.
+// Always returns true for flat_rate Account holders.
 // estimatedCostRappen should be a conservative estimate (e.g. max context window cost).
 func (s *Service) CanAfford(ctx context.Context, userID string, estimatedCostRappen int64) (bool, error) {
     plan, balance, err := s.db.GetUserBilling(ctx, userID)
@@ -757,20 +760,21 @@ func (s *Service) CanAfford(ctx context.Context, userID string, estimatedCostRap
 ### 4.5 Analytics & Usage Events
 
 **Purpose:** Record anonymised token usage and cost data for internal reporting, model cost
-analysis, and flat-rate overage monitoring. This data must contain **no user-identifiable content**
-— no message text, no conversation IDs, no email addresses.
+analysis, and flat-rate overage monitoring. This data must contain
+**no Account holder-identifiable content** — no message text, no conversation IDs, no email
+addresses.
 
 **Location in codebase:** `internal/analytics/emitter.go`
 
 #### Privacy design
 
-The only user-adjacent field in an analytics event is `billing_user_id`. This is an
+The only Account holder-adjacent field in an analytics event is `billing_user_id`. This is an
 **opaque internal identifier** that:
 
 - Exists in the `user_billing` table in PocketBase.
 - Has no direct join path to the `users` table from the analytics database.
 - Allows `SUM(cost_chf) GROUP BY billing_user_id` for invoicing.
-- Does **not** allow anyone reading the analytics database alone to identify a user.
+- Does **not** allow anyone reading the analytics database alone to identify an Account holder.
 
 The analytics database is stored separately from PocketBase. These are two distinct data stores with
 no shared connection string.
@@ -785,7 +789,7 @@ package analytics
 import "time"
 
 // UsageEvent is written to DuckDB / Parquet after every successful completion.
-// It must never contain: message content, conversation IDs, user IDs, email addresses,
+// It must never contain: message content, conversation IDs, Account holder IDs, email addresses,
 // public keys, or any field that could link back to encrypted chat content.
 type UsageEvent struct {
     // EventID is a UUID generated per completion. Also stored in balance_transactions
@@ -799,7 +803,7 @@ type UsageEvent struct {
     // Example: "2025-09"
     BillingPeriod string `parquet:"billing_period"`
 
-    // BillingUserID is the opaque user billing ID from user_billing.id.
+    // BillingUserID is the opaque Account holder billing ID from user_billing.id.
     // This is NOT users.id — it is a separate table's primary key.
     BillingUserID string `parquet:"billing_user_id"`
 
@@ -812,7 +816,7 @@ type UsageEvent struct {
     // Provider is the provider name. Example: "anthropic"
     Provider string `parquet:"provider"`
 
-    // PrivacyTier is the user's tier at time of request. Example: "eu"
+    // PrivacyTier is the Account holder's tier at time of request. Example: "eu"
     PrivacyTier string `parquet:"privacy_tier"`
 
     // ContentType is "text", "image", "audio", or "document".
@@ -946,11 +950,11 @@ or migration files. Below are the required collections and their fields.
 
 Add the following fields to the existing users collection:
 
-| Field                | Type | Notes                                                                 |
-| -------------------- | ---- | --------------------------------------------------------------------- |
-| `public_key`         | Text | Base64-encoded X25519 public key. Set on registration, never updated. |
-| `privacy_tier`       | Text | One of: `ch_only`, `eu`, `global`. Default: `eu`.                     |
-| `preferred_model_id` | Text | The user's last selected model ID. Used to pre-select in the UI.      |
+| Field                | Type | Notes                                                                      |
+| -------------------- | ---- | -------------------------------------------------------------------------- |
+| `public_key`         | Text | Base64-encoded X25519 public key. Set on registration, never updated.      |
+| `privacy_tier`       | Text | One of: `ch_only`, `eu`, `global`. Default: `eu`.                          |
+| `preferred_model_id` | Text | The Account holder's last selected model ID. Used to pre-select in the UI. |
 
 #### Table: `conversations` (new)
 
@@ -1088,7 +1092,7 @@ middleware (JWT or PocketBase session token in `Authorization: Bearer` header).
 
 #### `GET /api/v1/models`
 
-Returns the list of models available for the authenticated user's privacy tier.
+Returns the list of models available for the authenticated Account holder's privacy tier.
 
 **Response:**
 
@@ -1153,7 +1157,7 @@ Creates a new conversation and its initial participant/access-key records.
 
 #### `GET /api/v1/conversations`
 
-Returns all conversations accessible to the authenticated user (metadata only — no message
+Returns all Conversations accessible to the authenticated Account holder (metadata only — no message
 ciphertext).
 
 **Response:**
@@ -1267,13 +1271,13 @@ assistant message ciphertext for the permanent record.
 
 **Error responses:**
 
-| HTTP code                  | Condition                                             |
-| -------------------------- | ----------------------------------------------------- |
-| `402 Payment Required`     | Trial exhausted or inactive billing state             |
-| `403 Forbidden`            | Requested model not available for user's privacy tier |
-| `404 Not Found`            | Conversation not found or user lacks access           |
-| `422 Unprocessable Entity` | `model_id` not recognised                             |
-| `503 Service Unavailable`  | Gateway/provider call failed after retries            |
+| HTTP code                  | Condition                                                       |
+| -------------------------- | --------------------------------------------------------------- |
+| `402 Payment Required`     | Trial exhausted or inactive billing state                       |
+| `403 Forbidden`            | Requested model not available for Account holder's privacy tier |
+| `404 Not Found`            | Conversation not found or Account holder lacks access           |
+| `422 Unprocessable Entity` | `model_id` not recognised                                       |
+| `503 Service Unavailable`  | Gateway/provider call failed after retries                      |
 
 ---
 
@@ -1281,7 +1285,7 @@ assistant message ciphertext for the permanent record.
 
 #### `GET /api/v1/billing`
 
-Returns the user's current billing status.
+Returns the Account holder's current billing status.
 
 **Response (PAYG):**
 
@@ -1307,7 +1311,7 @@ Returns the user's current billing status.
 
 #### `GET /api/v1/billing/transactions`
 
-Returns the last 50 transactions for the authenticated user.
+Returns the last 50 transactions for the authenticated Account holder.
 
 **Response:**
 
@@ -1330,8 +1334,8 @@ Returns the last 50 transactions for the authenticated user.
 
 ## 7. Data Flow — Step by Step
 
-This section describes exactly what happens, in order, when a user sends a message. Engineers should
-implement this sequence precisely — no steps should be skipped or reordered.
+This section describes exactly what happens, in order, when an Account holder sends a message.
+Engineers should implement this sequence precisely — no steps should be skipped or reordered.
 
 ```text
 Client (Angular)                    Go Backend                    External
@@ -1340,12 +1344,12 @@ Client (Angular)                    Go Backend                    External
      │  {model_id, messages[plaintext]}  │                            │
      │──────────────────────────────────►│                            │
      │                                   │                            │
-     │                          1. Authenticate user                  │
+     │                          1. Authenticate Account holder                  │
      │                          2. Resolve conversation access        │
      │                             and current key_version            │
      │                          3. Validate model_id exists           │
      │                          4. Validate model is eligible         │
-     │                             for user's privacy_tier            │
+     │                             for Account holder's privacy_tier            │
      │                          5. [trial / inactive contract] Check  │
      │                             billing gate before provider call   │
      │                             → 402 if trial exhausted/inactive  │
@@ -1383,9 +1387,9 @@ Client (Angular)                    Go Backend                    External
 ### Critical rules for step ordering
 
 - **Balance checks happen before the provider call.** Never call the provider and then discover the
-  user is out of balance.
-- **Conversation access is resolved before persistence.** A user must not be able to write into a
-  conversation they cannot read.
+  Account holder is out of balance.
+- **Conversation access is resolved before persistence.** An Account holder must not be able to
+  write into a conversation they cannot read.
 - **Threading and expiry are part of the persistence contract.** `parent_message_id` and
   `expires_at` must survive the rewrite.
 - **Billing and message persistence must not silently drift apart.** If a provider call succeeds but
@@ -1490,7 +1494,7 @@ plan below must be read with these mandatory amendments:
 6. **Ship full billing records now.** Follow `docs/specs/billing.md` as the billing contract:
    trial/inactive paths may block, while PAYG is post-paid and should not be blocked for funds.
    `user_billing`, `balance_transactions`, and usage accounting remain in scope now.
-7. **Add browser E2E from the start.** Keep it high level and user-flow oriented.
+7. **Add browser E2E from the start.** Keep it high level and Account holder-flow oriented.
 
 Success criteria for the overall rework:
 
@@ -1561,7 +1565,7 @@ existing chat behaviour.
 _Current implementation status:_ PocketBase-backed `user_billing` and `balance_transactions`
 repositories are now wired by default in the API app, with transactional trial-balance updates on
 usage writes, legacy `flat_rate` rows normalized to `unlimited` on read, and automatic trial
-billing bootstrap for newly created users using the configured/default seed amount.
+billing bootstrap for newly created Account holders using the configured/default seed amount.
 
 **Review checkpoint 3:** Real provider calls, billing, and analytics all flow through the same
 contract and are covered by tests.
@@ -1749,7 +1753,7 @@ The detailed branch test plan lives in:
 - Use **red/green TDD** for each slice.
 - Default to **integration tests** for backend request flows.
 - Use **unit tests** for security/privacy logic, billing calculation, and catalogue eligibility.
-- Add **high-level browser E2E** for user-critical flows.
+- Add **high-level browser E2E** for Account holder-critical flows.
 - Keep browser E2E focused on behaviour, not styling.
 
 ### Unit tests
@@ -1769,7 +1773,7 @@ or guarded external adapters.
 
 | Test                      | What to verify                                                                                    |
 | ------------------------- | ------------------------------------------------------------------------------------------------- |
-| Models API                | Returns active models with eligibility metadata for the authenticated user                        |
+| Models API                | Returns active models with eligibility metadata for the authenticated Account holder              |
 | Conversation/message flow | Create conversation → send message → persist ciphertext only → list messages with thread metadata |
 | Threading and expiry      | `parent_message_id` and `expires_at` survive persistence and retrieval                            |
 | Access control            | Non-participants cannot read or write a conversation                                              |
@@ -1791,9 +1795,9 @@ Guard all provider tests with `RUN_INTEGRATION_TESTS=true`.
 
 At minimum, add high-level browser E2E for:
 
-1. authenticated user loads models from the backend
-2. authenticated user creates/selects a conversation
-3. authenticated user sends a message and receives a reply
+1. authenticated Account holder loads models from the backend
+2. authenticated Account holder creates/selects a Conversation
+3. authenticated Account holder sends a message and receives a reply
 4. conversation history reload still renders decrypted messages
 5. trial/inactive billing-restriction flow blocks sending before any completion request is made
 6. unavailable-model flow blocks sending before any completion request is made
@@ -1810,17 +1814,17 @@ Run `golangci-lint run` before every pull request. Zero lint errors permitted.
 
 These are non-negotiable. Any PR that violates these rules must be rejected.
 
-| Rule                                          | Detail                                                                                                                                                                                        |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **No plaintext content in database**          | The `messages` table must never contain readable message text. `ciphertext` column only.                                                                                                      |
-| **No user-identifiable content in analytics** | `usage_events` must never contain: user ID, email, conversation ID, message content, IP address.                                                                                              |
-| **Billing user ID isolation**                 | `billing_user_id` (from `user_billing.id`) is used in analytics — NOT `users.id`. These must never be joined from within the analytics database.                                              |
-| **No plaintext private key accepted**         | No endpoint may accept or log a plaintext private key. Encrypted private-key backup ciphertext is allowed, but if a plaintext private key appears in any log treat it as a security incident. |
-| **No logging of request content**             | The `messages` array from the `/complete` request body must never be written to application logs.                                                                                             |
-| **Balance as integer**                        | Balance must be stored as integer Rappen. Float balance storage is forbidden.                                                                                                                 |
-| **Atomic balance deduction**                  | Balance deduction and transaction insertion must be a single atomic database operation. Never deduct and then insert separately.                                                              |
-| **Provider API keys in env only**             | No API keys in code, config files, or version control.                                                                                                                                        |
-| **Data retention false for all models**       | Before adding any model to `AllModels`, confirm in writing that the provider has zero data retention.                                                                                         |
+| Rule                                                    | Detail                                                                                                                                                                                        |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No plaintext content in database**                    | The `messages` table must never contain readable message text. `ciphertext` column only.                                                                                                      |
+| **No Account holder-identifiable content in analytics** | `usage_events` must never contain: Account holder ID, email, Conversation ID, message content, IP address.                                                                                    |
+| **Billing user ID isolation**                           | `billing_user_id` (from `user_billing.id`) is used in analytics — NOT `users.id`. These must never be joined from within the analytics database.                                              |
+| **No plaintext private key accepted**                   | No endpoint may accept or log a plaintext private key. Encrypted private-key backup ciphertext is allowed, but if a plaintext private key appears in any log treat it as a security incident. |
+| **No logging of request content**                       | The `messages` array from the `/complete` request body must never be written to application logs.                                                                                             |
+| **Balance as integer**                                  | Balance must be stored as integer Rappen. Float balance storage is forbidden.                                                                                                                 |
+| **Atomic balance deduction**                            | Balance deduction and transaction insertion must be a single atomic database operation. Never deduct and then insert separately.                                                              |
+| **Provider API keys in env only**                       | No API keys in code, config files, or version control.                                                                                                                                        |
+| **Data retention false for all models**                 | Before adding any model to `AllModels`, confirm in writing that the provider has zero data retention.                                                                                         |
 
 ---
 
@@ -1864,8 +1868,8 @@ Cognos will use a **1Password-style Account Key model**.
 - Users also receive a generated high-entropy **Account Key** used to unlock new devices.
 - The server may store an **encrypted private-key backup** to support cross-device access.
 - The server must never store or receive the **plaintext private key**.
-- A **trusted device** may cache locally wrapped unlock material so the user does not need to
-  repeatedly enter the Account Key.
+- A **trusted device** may cache locally wrapped unlock material so the Account holder does not need
+  to repeatedly enter the Account Key.
 - A **new device** signs in with the account password, then requires the **Account Key** to unlock
   the encrypted key material. The password authenticates; the Account Key alone unlocks.
 - The Account Key is the deliberate security/usability tradeoff chosen for Cognos.
@@ -1875,12 +1879,13 @@ Cognos will use a **1Password-style Account Key model**.
 
 - Do **not** use `sha256(email + password)` as a vault or unlock key.
 - Use **Argon2id** with a random per-user salt for password-based derivation.
-- The user's **email must not be part of cryptographic identity** in a way that makes email
-  changes destructive.
+- The Account holder's **email must not be part of cryptographic identity** in a way that makes
+  email changes destructive.
 - **Password changes** are a pure auth operation — under `account_key_v2` the password is not a
   key input, so a change re-wraps nothing and never re-encrypts messages.
-- If the user loses the **Account Key**, encrypted data recovery is impossible (the password is
-  resettable and only authenticates). This is an accepted consequence of the chosen privacy posture.
+- If the Account holder loses the **Account Key**, encrypted data recovery is impossible (the
+  password is resettable and only authenticates). This is an accepted consequence of the chosen
+  privacy posture.
 
 ### 13.4 Current-state findings that affect implementation
 

@@ -7,8 +7,8 @@ name: grounding-redirect-resolution
 
 Vertex Gemini web-search citations arrive as Google proxy links
 (`vertexaisearch.cloud.google.com/grounding-api-redirect/…`), not real URLs.
-Left alone they route every user click through Google **and expire after
-~30 days**, rotting the links inside encrypted chat history.
+Left alone they route every Account holder click through Google **and expire after
+~30 days**, rotting the links inside encrypted Conversation history.
 
 The rule: **the backend resolves each proxy link once, per completion, to its
 destination URL — before the citation is streamed or sealed — and stores
@@ -28,15 +28,15 @@ flowchart LR
 
 Properties this gives us:
 
-- **User clicks go straight to the publisher.** Google sees a single fetch
-  from Cognos's server per source — never the user's IP or which source they
-  chose. Better privacy than the raw proxy, and links in history outlive the
+- **Account holder clicks go straight to the publisher.** Google sees a single
+  fetch from Cognos's server per source — never the Account holder's IP or which
+  source they chose. Better privacy than the raw proxy, and links in history outlive the
   30-day proxy expiry.
 - **Google's terms are respected by construction.** No redirect→destination
   mapping is ever cached or stored server-side (their terms forbid building an
   index of Links); the destination page is never fetched (only the redirect's
   `Location` header is read); there is no click tracking. The resolved URL
-  lives only in the stream and the user's encrypted message.
+  lives only in the stream and the Account holder's encrypted Message.
 - **No SSRF surface.** Only URLs matching the configured prefix
   (`gateway.grounding_redirect_prefix`, default the real Vertex host) are ever
   fetched — at most 2 hops while still on that host; the first off-host

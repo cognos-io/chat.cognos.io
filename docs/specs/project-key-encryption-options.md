@@ -25,18 +25,19 @@
 
 ## 1. Purpose
 
-Projects are expected to become shared workspaces. A project may eventually include multiple users,
-project chats, project instructions, files, memory, defaults, and other shared configuration.
+Projects are expected to become shared workspaces. A project may eventually include multiple Account
+holders, project chats, project instructions, files, memory, defaults, and other shared
+configuration.
 
 This spec deep-dives the key-management options for secure, private projects and recommends a path
 that fits the current Cognos architecture:
 
 - stored project content stays encrypted at rest
-- users decrypt project content client-side after unlocking their account keypair
+- Account holders decrypt project content client-side after unlocking their Account key pair
 - the server coordinates access but does not persist project plaintext
-- sharing can grant future users access without revealing project keys to the server
+- sharing can grant future Account holders access without revealing project keys to the server
 - revocation is honest about its limits: it blocks future access after rotation, but cannot erase
-  content a user already decrypted or old keys they already retained
+  content an Account holder already decrypted or old keys they already retained
 
 This complements `docs/specs/projects.md`, which defines the project product architecture and tracks
 implemented phases. This document focuses on the key hierarchy and the available cryptographic
@@ -48,7 +49,7 @@ The current implementation already uses the recommended foundation:
 
 ```txt
 User Account Key
-  ↓ unlocks local/private user keypair
+  ↓ unlocks local/private Account key pair
 User keypair
   ↓ opens sealed project key wrapper
 Project content key
@@ -62,9 +63,10 @@ Current implemented mechanics:
 
 - The browser generates a random project content key with `CryptoService.randomKey()`.
 - Project metadata is encrypted client-side with `secretBox(data, projectContentKey)`.
-- The project content key is sealed to the creator's user public key with
+- The project content key is sealed to the creator's Account holder public key with
   `createSealedBox(projectContentKey, userPublicKey)`.
-- `project_key_wrappings` stores one sealed project content key per `(project, user, key_version)`.
+- `project_key_wrappings` stores one sealed project content key per
+  `(project, Account holder, key_version)`.
 - `projects.data` stores opaque encrypted metadata. The server does not see project name,
   description, icon, colour, or instructions in plaintext.
 - Project conversations keep their own conversation keypair because the backend needs the
@@ -83,12 +85,12 @@ This baseline should be kept unless a later requirement justifies a more complex
   conversation titles are encrypted at rest.
 - The server never stores plaintext project content keys, conversation secret keys, file keys,
   memory contents, or project metadata.
-- A project member can decrypt project content on any unlocked device using their user keypair.
+- A Participant can decrypt project content on any unlocked device using their Account key pair.
 - Adding a participant never creates a membership row without the key material needed to decrypt.
 - Removing a participant requires key rotation before future writes continue.
 - Non-members receive `404` rather than `403` where a response would reveal project existence.
-- All synced key/preference state that is user-specific remains encrypted or wrapped; no plaintext
-  model/project preference data should be added as a shortcut.
+- All synced key/preference state that is Account holder-specific remains encrypted or wrapped; no
+  plaintext model/project preference data should be added as a shortcut.
 
 ### Desired
 
@@ -99,7 +101,8 @@ This baseline should be kept unless a later requirement justifies a more complex
 
 ### Non-goals
 
-- Preventing a formerly authorised user from retaining plaintext or old keys they already decrypted.
+- Preventing a formerly authorised Account holder from retaining plaintext or old keys they already
+  decrypted.
 - Protecting plaintext from the backend during an active AI completion request. The existing
   security model trusts the backend as a transient processor.
 - Server-side semantic search over encrypted project content.
@@ -153,7 +156,7 @@ can call the selected model provider. That plaintext must be treated as transien
 ### Option A — Per-project symmetric content key, wrapped to each participant
 
 **Summary:** Each project has one random symmetric project content key. The key is sealed to each
-participant's user public key. Project metadata and project-level child keys are encrypted under the
+Participant's public key. Project metadata and project-level child keys are encrypted under the
 project content key.
 
 ```txt
@@ -166,16 +169,17 @@ wrapped_project_key[user] = sealedBox(project_content_key, user_public_key)
 
 - simple mental model
 - already implemented for project metadata
-- efficient for small teams: one wrapper per user per project key version
+- efficient for small teams: one wrapper per Account holder per project key version
 - works with existing `CryptoService` primitives
 - project settings, instructions, defaults, files, and memory can share the same root key
-- easy for a newly invited user to decrypt all current project metadata after receiving one wrapper
+- easy for a newly invited Account holder to decrypt all current project metadata after receiving
+  one wrapper
 
 **Cons:**
 
 - any active project member with the content key can decrypt all content protected directly by that
   key version
-- revocation requires rotating the project content key and re-wrapping for remaining users
+- revocation requires rotating the project content key and re-wrapping for remaining Account holders
 - old content encrypted directly under old project keys remains decryptable by anyone who retained
   the old key
 - if used directly for every large resource, a single key compromise exposes too much historical
@@ -186,7 +190,7 @@ wrapped_project_key[user] = sealedBox(project_content_key, user_public_key)
 ### Option B — Per-resource keys, each wrapped to every participant
 
 **Summary:** Every project resource has its own random key. Each resource key is sealed to every
-participant's user public key.
+Participant's public key.
 
 ```txt
 file_key = random 32 bytes
@@ -197,14 +201,15 @@ wrapped_file_key[user] = sealedBox(file_key, user_public_key)
 **Pros:**
 
 - strong compartmentalisation
-- revocation can stop wrapping new resources for removed users
+- revocation can stop wrapping new resources for removed Account holders
 - resource-level sharing policies become possible
 - one compromised resource key does not expose the whole project
 
 **Cons:**
 
-- wrapper explosion: users × resources
-- inviting a new user to an existing project requires wrapping every resource key to the invitee
+- wrapper explosion: Account holders × resources
+- inviting a new Account holder to an existing project requires wrapping every resource key to the
+  invitee
 - list/load flows need many extra key rows and failure cases
 - more complex sync and transactional guarantees
 - too heavy for the current product needs
@@ -231,16 +236,17 @@ wrapped_file_key = secretBox(file_key, project_content_key)
 - matches the implemented project-conversation model
 - avoids per-resource × per-user wrapper explosion
 - keeps child resources compartmentalised from each other when they have their own keys
-- adding a user requires one project-key wrapper, not a rewrap of every child resource
+- adding an Account holder requires one project-key wrapper, not a rewrap of every child resource
 - project files can use per-file keys without needing per-user file wrappers
 - project conversations can keep the existing conversation public-key encryption path
 
 **Cons:**
 
-- any user who can open the project content key can open all child keys for that project key version
+- any Account holder who can open the project content key can open all child keys for that project
+  key version
 - revocation still needs project key rotation for future content
-- old child-key wrappers under old project keys remain usable for users who retained old project
-  content keys
+- old child-key wrappers under old project keys remain usable for Account holders who retained old
+  project content keys
 - more moving parts than Option A alone
 
 **Fit for Cognos:** Best fit. This is the recommended architecture.
@@ -260,7 +266,7 @@ UI.
 **Cons:**
 
 - project membership and conversation membership can drift
-- adding a user to a project requires wrapping every existing conversation secret key
+- adding an Account holder to a project requires wrapping every existing Conversation secret key
 - project-level files/memory still need a separate encryption model
 - project conversations no longer inherit project access cleanly
 - product semantics become confusing: is access controlled by project or by each chat?
@@ -277,7 +283,7 @@ read.
 
 - easiest sharing and revocation implementation
 - enables server-side search, previews, indexing, and automation
-- easier recovery if users lose keys
+- easier recovery if Account holders lose keys
 
 **Cons:**
 
@@ -304,7 +310,7 @@ for project key evolution.
 - significant complexity and implementation risk
 - browser/client state management is much harder
 - overkill for project metadata, files, and AI workspaces in the current product stage
-- still does not erase content a user already decrypted
+- still does not erase content an Account holder already decrypted
 - would require a broader cryptographic review and likely external libraries
 
 **Fit for Cognos:** Not for MVP. Reconsider only if Cognos becomes a large, real-time, multi-device
@@ -319,7 +325,7 @@ Recommended hierarchy:
 
 ```txt
 User Account Key
-  ↓ unlocks encrypted user private key backup
+  ↓ unlocks encrypted Account holder private key backup
 User keypair
   ↓ opens wrapped project content key
 Project content key, version N
@@ -343,13 +349,13 @@ Why this is the right tradeoff:
 - It avoids per-resource × per-user wrapper explosion.
 - It preserves the existing conversation encryption/completion path.
 - It leaves room for per-file and per-memory keys later without changing project sharing.
-- It is understandable enough to explain to users when revocation happens.
+- It is understandable enough to explain to Account holders when revocation happens.
 
 ## 7. Key lifecycle flows
 
 ### 7.1 Create project
 
-1. Browser requires unlocked user keypair.
+1. Browser requires unlocked Account key pair.
 2. Browser generates `project_content_key` with CSPRNG.
 3. Browser serialises project metadata.
 4. Browser encrypts metadata:
@@ -373,7 +379,7 @@ Why this is the right tradeoff:
 
 1. Backend returns project records where caller is an active project participant.
 2. Each response embeds the caller's `wrapped_project_key` for the current project `key_version`.
-3. Browser opens the wrapper with the user's unlocked keypair.
+3. Browser opens the wrapper with the Account holder's unlocked Account key pair.
 4. Browser decrypts project metadata with the project content key.
 5. If unwrap/decrypt fails, the client skips that project or shows a generic decrypt failure; it
    does not attempt server-side recovery.
@@ -382,10 +388,10 @@ Why this is the right tradeoff:
 
 There are two viable invite designs.
 
-#### Invite option 1 — exact user public-key lookup
+#### Invite option 1 — exact Account holder public-key lookup
 
-Admin browser searches an exact email/identifier, receives the target user's public key, and wraps
-the project content key immediately.
+Admin browser searches an exact email/identifier, receives the target Account holder's public key,
+and wraps the project content key immediately.
 
 ```txt
 wrapped_project_key[target] = sealedBox(project_content_key, target_public_key)
@@ -404,7 +410,7 @@ Pros:
 
 Cons:
 
-- public-key lookup can become a user-enumeration vector
+- public-key lookup can become an Account holder-enumeration vector
 - requires careful exact-match UX, rate limits, and generic responses
 
 #### Invite option 2 — invite-by-token, wrap on accept
@@ -414,8 +420,8 @@ in; their browser proves identity and creates/receives a wrapper at accept time.
 
 Pros:
 
-- reduces public user-enumeration pressure
-- works better for inviting users who do not yet have accounts
+- reduces public Account holder-enumeration pressure
+- works better for inviting Account holders who do not yet have accounts
 - target's current keypair is guaranteed to exist at accept time
 
 Cons:
@@ -482,7 +488,7 @@ Two acceptable v1 patterns:
 
 Recommendation:
 
-- Use direct project-key encryption for small user-confirmed memory items in v1.
+- Use direct project-key encryption for small Account holder-confirmed memory items in v1.
 - Move to per-memory keys only if memory grows large, needs item-level movement, or needs different
   sharing/retention semantics.
 
@@ -495,15 +501,15 @@ Do not store server-side embeddings for encrypted memory in v1; embeddings leak 
 Revocation means:
 
 ```txt
-Removed users cannot decrypt future content written under the new project key version.
+Removed Account holders cannot decrypt future content written under the new project key version.
 ```
 
 Revocation does **not** mean:
 
 ```txt
-Removed users lose content they already decrypted.
-Removed users lose old project keys they already extracted.
-Removed users lose old content encrypted under old keys unless old content is re-encrypted.
+Removed Account holders lose content they already decrypted.
+Removed Account holders lose old project keys they already extracted.
+Removed Account holders lose old content encrypted under old keys unless old content is re-encrypted.
 ```
 
 Product copy must say this plainly.
@@ -519,7 +525,7 @@ It cannot remove content they already viewed or copied.
 
 Use the same principle as conversation rotation:
 
-1. Admin chooses users to revoke.
+1. Admin chooses Account holders to revoke.
 2. Admin browser opens current project content key.
 3. Admin browser generates a new project content key.
 4. Admin browser wraps the new project key for every remaining active participant.
@@ -539,9 +545,9 @@ the current project state, it should be re-sealed under the new project key as p
 Current project metadata (`projects.data`) is one blob. If the project key rotates, the latest
 metadata should be re-encrypted under the new project key in the same admin flow where possible.
 
-If this is not done, a newly invited user after rotation may have a new project key but only see
-metadata encrypted under an old key. Therefore, project rotation should include a fresh encrypted
-`projects.data` blob under the new key.
+If this is not done, a newly invited Account holder after rotation may have a new project key but
+only see metadata encrypted under an old key. Therefore, project rotation should include a fresh
+encrypted `projects.data` blob under the new key.
 
 ### 8.4 Rotation and existing project conversations
 
@@ -564,7 +570,7 @@ Reject for normal rotation.
 - Future members can decrypt existing conversations if policy permits.
 
 Pros: efficient; no message re-encryption.  
-Cons: revoked users who retained old keys can still decrypt old conversations.
+Cons: revoked Account holders who retained old keys can still decrypt old Conversations.
 
 Recommended for v1 project rotation.
 
@@ -589,7 +595,8 @@ the project and the intended invitee cannot.
 Mitigations:
 
 - user public keys must be fetched from authenticated first-party APIs only
-- exact-match lookup responses should identify the target clearly without exposing extra user data
+- exact-match lookup responses should identify the target clearly without exposing extra Account
+  holder data
 - key records should be stable across email changes because email is not a cryptographic identity
 - invite acceptance should show the account identity being granted access
 - future high-security mode may display public-key fingerprints for manual verification
@@ -604,8 +611,8 @@ lookup.
 Possible hardening options:
 
 - key transparency log for user public keys
-- public-key fingerprints users can compare out-of-band
-- signed user-key records chained from account setup
+- public-key fingerprints Account holders can compare out-of-band
+- signed Account holder key records chained from account setup
 - WebAuthn/device-backed signing of key changes
 
 Recommendation:
@@ -705,16 +712,17 @@ the project content key. Do not create per-user file wrappers unless requirement
 - Wrong project key cannot open `projects.data`.
 - Project conversation secret key unwraps with project content key.
 - Wrong project key cannot unwrap project conversation secret key.
-- Project rotation can decrypt new metadata with new key and fails with revoked user's wrapper.
+- Project rotation can decrypt new metadata with new key and fails with revoked Account holder's
+  wrapper.
 - File key wrapping round-trips when files ship.
 - Memory payload encryption round-trips when memory ships.
 
 ### Browser e2e tests
 
 - Creator creates project and sees decrypted metadata.
-- Invited user accepts and sees decrypted project metadata.
-- Revoked user loses access to new project content after rotation.
-- Remaining users keep access after rotation.
+- Invited Account holder accepts and sees decrypted project metadata.
+- Revoked Account holder loses access to new project content after rotation.
+- Remaining Account holders keep access after rotation.
 - Project conversation completion persists encrypted messages only.
 - No plaintext project name, instructions, file name, memory content, or message content appears in
   API responses or database-visible payloads.
@@ -738,11 +746,11 @@ Recommended for v1 shared projects:
 
 - Keep the current **hybrid project root key + child resource key** model.
 - Use one project content key per project key version.
-- Seal the project content key to each active participant's user public key.
+- Seal the project content key to each active Participant's public key.
 - Encrypt project metadata directly under the project content key.
 - Wrap project conversation secret keys under the project content key.
 - Use per-file keys wrapped by the project content key when files ship.
 - Use forward-only rotation and honest product copy for revocation.
-- Prefer invite-by-token for unknown users; optionally add exact-email public-key lookup for known
-  users with enumeration protections.
+- Prefer invite-by-token for unknown Account holders; optionally add exact-email public-key lookup
+  for known Account holders with enumeration protections.
 - Defer MLS/key-transparency until the product needs stronger group identity guarantees.

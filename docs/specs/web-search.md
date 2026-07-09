@@ -42,7 +42,7 @@ stream events), which is exactly what the sources UI needs: inline citation anch
 
 ### Goals
 
-- Users on a search-capable model get current information without leaving the chat.
+- Account holders on a search-capable model get current information without leaving the chat.
 - Answers cite their sources; sources are rendered in the UI and stored **encrypted** with the
   message like all other message content.
 - Search stays inside the EU data boundary: only EU-hosted searchable models expose the
@@ -57,7 +57,7 @@ stream events), which is exactly what the sources UI needs: inline citation anch
   search API). Deferred; revisit if Infomaniak models need search.
 - **No search for Infomaniak models.** They keep `supports_web_search = false`.
 - **No Perplexity Sonar** or other non-EU-hosted searchable models (see Decision 2).
-- No user-tunable search options (context size, domain filters, location).
+- No Account holder-configurable search options (context size, domain filters, location).
 - No standalone "search the web" feature outside a chat completion.
 
 ## 2. Principles
@@ -95,8 +95,8 @@ sequenceDiagram
 
 Key properties:
 
-- The **user message is redacted client-side before send** (existing pipeline), so any search
-  query the model derives can only contain redaction tokens, not the raw values.
+- The **Account holder's message is redacted client-side before send** (existing pipeline), so any
+  search query the model derives can only contain redaction tokens, not the raw values.
 - Citations arrive on the stream, are shown live, and are folded into the assistant message's
   encrypted `MessageData` at persistence. Nothing search-related is stored in plaintext.
 - If the model chooses not to search, the request behaves exactly like today.
@@ -105,8 +105,8 @@ Key properties:
 
 ### 4.1 Search-grounded answers (P0)
 
-As a user on a search-capable model, when I ask about something current, the model searches the
-web and answers with citations.
+As an Account holder on a search-capable model, when I ask about something current, the model
+searches the web and answers with citations.
 
 Acceptance criteria:
 
@@ -155,7 +155,7 @@ Acceptance criteria:
 
 ### 4.2 Opt-out control (P0)
 
-As a privacy-conscious user, I can turn web search off for a conversation.
+As a privacy-conscious Account holder, I can turn web search off for a conversation.
 
 Acceptance criteria:
 
@@ -170,7 +170,7 @@ Acceptance criteria:
 
 ### 4.3 Capability visibility (P1)
 
-As a user choosing a model, I can see which models can search.
+As an Account holder choosing a model, I can see which models can search.
 
 Acceptance criteria:
 
@@ -183,7 +183,7 @@ Acceptance criteria:
 
 ### 4.4 Search activity indication (P1)
 
-As a user, I can see that the model is searching while I wait.
+As an Account holder, I can see that the model is searching while I wait.
 
 Acceptance criteria:
 
@@ -297,11 +297,11 @@ Bifrost v1.5.12 fully models the Responses API, so no raw-params workaround is n
 ### 5.2a Grounding-redirect resolution (Decision 9)
 
 Vertex Gemini citation URLs are `vertexaisearch.cloud.google.com/grounding-api-redirect/…`
-proxies: clicking routes the user through Google, and the links **expire after ~30 days**
+proxies: clicking routes the Account holder through Google, and the links **expire after ~30 days**
 while the encrypted history lives on. The gateway therefore resolves them **server-side, once
 per completion**, before the `web_search` SSE frame and before persistence — so the stream,
 the UI, and the sealed message all carry the real destination URL, and user clicks go straight
-to the publisher (Google sees one fetch from Cognos, never the user).
+to the publisher (Google sees one fetch from Cognos, never the Account holder).
 
 - Legal basis (researched): grey-area-defensible — nothing in Google's grounding terms
   requires the redirect URI for source display (exact-rendering applies to Search Suggestion
@@ -394,8 +394,8 @@ Decision 4: **pass-through with floor.**
   future tools). Extract if a second use appears.
 - **Rendering safety:** citation titles/snippets/domains are plain text bindings; URLs
   sanitised to `http(s)` only; links `target="_blank" rel="noopener noreferrer"`.
-- **Redaction interplay:** nothing new to do on the send path (context is pre-redacted).
-  Citations are third-party web content, not user PII — no redaction pass; stored encrypted.
+- **Redaction interplay:** nothing new to do on the send path (context is pre-redacted). Citations
+  are third-party web content, not Account holder PII — no redaction pass; stored encrypted.
 
 ## 7. Data model
 
@@ -523,7 +523,7 @@ landed.** Pre-launch this is low stakes, but the ordering is load-bearing.
 | Citation/anchor shape varies by provider family behind Requesty                                     | Normalise in gateway; live-verify each EU provider family in the spike; degrade to dropdown-only when indices unusable                                       |
 | Anchor offsets don't align with rendered markdown                                                   | Insert markers into the raw markdown pre-render (redaction-pill pattern); drop out-of-range anchors, never guess                                             |
 | Search fees not included in Requesty-reported cost → margin loss                                    | Floor fee added whenever `search_count > 0` until pass-through is confirmed in writing                                                                       |
-| Auto-on surprises privacy-sensitive users                                                           | Plain-language disclosure in the Tools row, per-conversation opt-out, security-model.md honesty                                                              |
+| Auto-on surprises privacy-conscious Account holders                                                 | Plain-language disclosure in the Tools row, per-conversation opt-out, security-model.md honesty                                                              |
 | EU-hosted searchable models answer worse than Sonar                                                 | Accepted trade-off (Decision 2); revisit if Requesty adds an EU Sonar variant                                                                                |
 | Model switches mid-conversation to a non-capable model                                              | Tool silently dropped; no error, no forced switch                                                                                                            |
 | Vertex Gemini citation URLs are Google grounding-redirect proxies, not real source URLs             | Show the domain from the annotation title (avatar + label); "Open source" follows the redirect — works, but flag the redirect hop in the security-model note |

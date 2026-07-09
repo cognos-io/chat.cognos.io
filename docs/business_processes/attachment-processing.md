@@ -1,19 +1,19 @@
 ---
-description: Client-side attachment processing, the user-scoped encrypted library, prompt-time use, redaction, and per-viewer visibility
+description: Client-side attachment processing, the Account-scoped encrypted Library, prompt-time use, Redaction, and per-viewer visibility
 name: attachment-processing
 ---
 
 # Attachment Processing & Library
 
-Users can attach supported files to a chat. The browser processes, redacts and
-encrypts those files **before upload**, then stores them in the user's **library**
-— a user-scoped collection of files that can be reused across any of their chats.
-The backend stores only ciphertext and operational metadata needed for access
-control and "used in" tracking.
+Account holders can attach supported files to a Conversation. The browser processes,
+redacts and encrypts those files **before upload**, then stores them in the Account
+holder's **Library** — an Account-scoped collection of files that can be reused
+across any of their Conversations. The backend stores only ciphertext and operational
+metadata needed for access control and "used in" tracking.
 
-A file belongs to the **user**, not a conversation: its per-artifact keys and its
-manifest are sealed to the user's personal (vault) key, so the owner can decrypt
-it anywhere. A conversation only _references_ a library file through a message.
+A file belongs to the **Account**, not a Conversation: its per-artifact keys and its
+manifest are sealed to the Account holder's personal Vault key, so the owner can
+decrypt it anywhere. A Conversation only _references_ a Library file through a Message.
 (Future: project libraries seal to a project key so a team can share files.)
 
 The same process applies to every supported type: text files, documents, images
@@ -30,7 +30,7 @@ sequenceDiagram
   participant C as /complete
   participant GW as Gateway
 
-  UI->>UI: user picks Upload or From library
+  UI->>UI: Account holder picks Upload or From library
   alt Upload (new file)
     UI->>UI: reject too large / too many; dedupe by content hash
     UI->>W: File + user (vault) public key + redact?
@@ -40,7 +40,7 @@ sequenceDiagram
     else supported
       W->>W: extract AI-safe artifact if available
       W->>W: redact extracted text → tokens + mappings (if redaction on)
-      W->>W: encrypt original + artifacts + manifest (sealed to user key)
+      W->>W: encrypt original + artifacts + manifest (sealed to Account key)
       UI->>API: POST ciphertext files + sealed manifest
       API->>API: auth + owner + size/quota limits
       API->>DB: INSERT user_attachments (owner-scoped)
@@ -64,9 +64,9 @@ sequenceDiagram
 ## Hard rules
 
 1. **Fail closed.** Unsupported type means no upload.
-2. **Seal to the user.** Original bytes, extracted text, image artifacts and the
-   manifest are encrypted in the browser and sealed to the user's vault key — not
-   the conversation key — so files are reusable and owner-only.
+2. **Seal to the Account.** Original bytes, extracted text, image artifacts and the
+   manifest are encrypted in the browser and sealed to the Account holder's Vault key —
+   not the Conversation key — so files are reusable and owner-only.
 3. **Use a worker.** Sniffing, extraction, image work, redaction and encryption
    do not run on the UI thread.
 4. **Redact as early as possible.** When redaction is on, detected sensitive
@@ -99,8 +99,8 @@ depends on who they are:
 - **Owner** → the file chip shows the name and downloads on click (decrypted
   client-side from the manifest).
 - **Owner, file deleted** → "File removed" tombstone.
-- **Co-participant or public-share viewer** → "Private file attached" — they
-  cannot decrypt another user's file. The state is decided from the message
+- **Co-participant or Public share viewer** → "Private file attached" — they
+  cannot decrypt another Account holder's file. The state is decided from the Message
   sender's identity, never by probing the backend (which 404s either way), so a
   filename never leaks. Project-scoped (shared-decryptable) files are a later step.
 
@@ -108,7 +108,7 @@ depends on who they are:
 
 Plaintext, by design:
 
-- authenticated user (the file owner);
+- authenticated Account holder (the file owner);
 - ciphertext file sizes and upload/update timestamps;
 - `attachment_usages` rows: which (conversation, message) reference a file —
   powers "used in chats" and the tombstone;
@@ -129,8 +129,8 @@ Never plaintext at rest:
 ## The library
 
 - **List / search** — the library page (`/account/library`) and the composer
-  "From library" picker list the user's files; names are decrypted client-side, so
-  search is client-side.
+  "From library" picker list the Account holder's files; names are decrypted client-side,
+  so search is client-side.
 - **Reuse** — attaching from the library references an existing file (no second
   upload); its redacted text context is re-derived client-side from the decrypted
   artifact + stored mappings.
@@ -143,13 +143,13 @@ Never plaintext at rest:
 ## Prompt-time use
 
 A library file can sit unused forever without reaching a provider. The provider
-only sees attachment content when the user sends a message that includes it. The
+only sees attachment content when the Account holder sends a Message that includes it. The
 backend wraps the transient (redacted) context as untrusted data, meters it in the
 billing gate, and persists only encrypted attachment references — never plaintext
 extracted content.
 
 Limits still apply across all processors: max original file size, max attachments
-per message, capped extracted context, and a per-user storage quota.
+per Message, capped extracted context, and a per-Account storage quota.
 
 ## PDF OCR fallback
 
@@ -192,7 +192,7 @@ OCR invariants:
   owner-only, reusable across chats. Co-participants/public viewers can't decrypt
   ("private file attached"). See [participant-access-control](./participant-access-control.md)
   and [conversation-key-rotation](./conversation-key-rotation.md) (library files are
-  user-keyed, so rotation doesn't reach them).
+  Account-keyed, so rotation doesn't reach them).
 - **Redaction** — detected values are tokenised in the worker before upload; the
   provider only ever sees placeholders, even on reuse. See
   [pii-redaction spec](../specs/pii-redaction.md) §6.8.

@@ -2,7 +2,7 @@
 
 **Status:** Draft
 **Scope:** Automatically compact older messages in the current active branch so long encrypted chats
-continue to fit model context windows without making the user manage summaries manually.
+continue to fit model context windows without making the Account holder manage summaries manually.
 **Related docs:**
 
 - `docs/security-model.md`
@@ -25,8 +25,8 @@ V1 is **background, encrypted, branch-aware, recursive compaction**.
 - The compaction table stores no plaintext summary, citations, token counts, anchor IDs, or covered
   message IDs. Those live inside the encrypted `data` blob.
 - The feature is transparent in normal mode. Future power-user mode can show what was compacted.
-- Compaction is opportunistic: it starts around **70%** context usage and must not block the user's
-  next message.
+- Compaction is opportunistic: it starts around **70%** context usage and must not block the Account
+  holder's next message.
 - The design is **provider-agnostic**. We support Infomaniak, Bifrost-routed, and Requesty-routed
   models, not only Anthropic/OpenAI. Every provider-specific capability (structured output, cache
   hints, exact tokenization) is **gated on model-capability metadata** (§6.4) and has a defined
@@ -41,7 +41,7 @@ That is simple, but it loses useful history silently:
 
 - long chats forget earlier decisions;
 - switching to a smaller-context model degrades abruptly;
-- future users will ask, “what got sent to the model?”;
+- future Account holders will ask, “what got sent to the model?”;
 - regenerating compactions after reload wastes money and time.
 
 ## 2. Goals
@@ -88,15 +88,15 @@ That is simple, but it loses useful history silently:
 
 ### 5.1 Transparent by default
 
-Normal users should not need to know compaction exists.
+Account holders should not need to know compaction exists.
 
 - No modal.
 - No blocking spinner.
 - No confirmation prompt.
 - No change to the normal send action.
 
-If compaction is still running when the user sends another message, the app sends with the best
-available context. The completed compaction is used on later sends.
+If compaction is still running when the Account holder sends another message, the app sends with the
+best available context. The completed compaction is used on later sends.
 
 ### 5.2 Future power-user visibility
 
@@ -166,9 +166,9 @@ Payload shape:
   durable_memory: {
     // A single flat list of memory items — stable facts and preferences,
     // decisions made, open questions, and important exact names or redaction
-    // placeholders (e.g. "[[PII_EMAIL_A8F2KD]] is the user's work email").
+    // placeholders (e.g. "[[PII_EMAIL_A8F2KD]] is the Account holder's work email").
     // Kept as one list (not separate buckets) so the user-facing memory reads
-    // as a simple bullet list users can understand and edit.
+    // as a simple bullet list Account holders can understand and edit.
     items: string[];
   };
   rolling_narrative: string; // concise prose of the recent arc
@@ -366,15 +366,15 @@ Either way the contract is the same payload schema, so downstream code does not 
 > that output is not recoverable the handler **automatically falls back** to the
 > delimited-text path (and a model without the capability uses delimited text
 > directly). `output_mode` records which path actually produced the stored
-> compaction. The choice is automatic per the user's selected model — never a
-> user setting and never a model override.
+> compaction. The choice is automatic per the Account holder's selected model — never an
+> Account holder setting and never a model override.
 
 ### 8.4 Prompt intent
 
 - Summarise the supplied conversation for future continuation.
-- Preserve user goals, stable facts, constraints, decisions, open tasks, and important exact names,
-  each as one short bullet in the `items` list.
-- Preserve PII redaction placeholders **exactly**, adding an `items` entry noting what each refers
+- Preserve Account holder goals, stable facts, constraints, decisions, open tasks, and important
+  exact names, each as one short bullet in the `items` list.
+- Preserve Redaction Placeholders **exactly**, adding an `items` entry noting what each refers
   to.
 - Use citation aliases like `[M3]` for important claims; every claim should carry an alias that
   exists in the input set.
@@ -510,9 +510,9 @@ the future power-user "≈18k → ≈1.4k tokens" display materially more accura
 
 Compaction must not block chat.
 
-- Start after a completed response, not before sending the user's current message.
+- Start after a completed response, not before sending the Account holder's current message.
 - Keep one in-flight compaction per conversation.
-- If the user sends while compaction runs, proceed without waiting.
+- If the Account holder sends while compaction runs, proceed without waiting.
 - If compaction fails, log non-content metadata and try again after a later response.
 - **Multi-device idempotency:** two devices may both cross 70% and POST. The `request_id`
   idempotency key (§7.1) dedupes concurrent creates, and the planner always picks the newest valid
@@ -588,10 +588,10 @@ V1 acceptance rule:
 ### 12.2 Redaction-mapping changes
 
 Redaction is applied client-side before send, and placeholders are summarised into the compaction
-`items` list (§8.2). If a user **later redacts more** of an already-covered message, the unredacted
-text could persist inside an existing summary. Therefore a redaction-mapping change to a covered
-message must invalidate (delete) the covering compaction and its fold-chain descendants, the same
-way deletion does (§12.1).
+`items` list (§8.2). If an Account holder **later redacts more** of an already-covered message, the
+unredacted text could persist inside an existing summary. Therefore a redaction-mapping change to a
+covered message must invalidate (delete) the covering compaction and its fold-chain descendants, the
+same way deletion does (§12.1).
 
 ### 12.3 Out-of-scope conversations
 
@@ -601,8 +601,8 @@ V1 does not create persisted compactions for:
 - conversations with disappearing-message expiry enabled;
 - project conversations.
 
-Reasons: a compaction could preserve content beyond the user's expected retention window; and
-project-level redaction has no content-key wrapping for redaction secrets yet (the known
+Reasons: a compaction could preserve content beyond the Account holder's expected retention window;
+and project-level redaction has no content-key wrapping for redaction secrets yet (the known
 project-redaction-keys gap), so project conversations cannot be safely compacted until that is
 closed.
 
@@ -666,13 +666,13 @@ text or summary text.
 
 - Should V1 return plaintext summary in the create response for immediate use, or only encrypted
   record data that the client decrypts?
-- Should a future setting let power users disable auto-compaction?
+- Should a future setting let Account holders disable auto-compaction?
 - Should a future compaction model be chosen per privacy tier and cost tier?
 - What is the right full-re-summarisation cadence `N` (§8.1, §10.3) to balance drift against cost?
 - Editing `durable_memory` in place is **accepted for V1**: weaker open models may merge
-  imperfectly, but the user can review and correct it in the conversation-memory drawer (header →
-  Memory, shown only when a compaction exists). The drawer hydrates redaction placeholders to
-  originals for the owner and re-redacts on save, then re-encrypts via the ciphertext-only PATCH
+  imperfectly, but the Account holder can review and correct it in the conversation-memory drawer
+  (header → Memory, shown only when a compaction exists). The drawer hydrates redaction placeholders
+  to originals for the owner and re-redacts on save, then re-encrypts via the ciphertext-only PATCH
   endpoint.
 - **Resolved (implemented):** real provider token counts are persisted per assistant turn and drive
   the trigger (§10.1); native structured output is capability-gated with a delimited-text fallback
@@ -683,10 +683,10 @@ text or summary text.
 
 ## 16. Manual (user-curated) memory
 
-Beyond automatic compaction, the user can **explicitly pin** snippets to a conversation's memory.
-Selecting text in any user/assistant message raises a floating **"Add to memory"** action (mirroring
-the composer's redact popover); choosing it persists the snippet to the conversation's manual
-memory.
+Beyond automatic compaction, the Account holder can **explicitly pin** snippets to a conversation's
+memory. Selecting text in any user/assistant message raises a floating **"Add to memory"** action
+(mirroring the composer's redact popover); choosing it persists the snippet to the conversation's
+manual memory.
 
 ### 16.1 Manual memory record
 
@@ -696,7 +696,7 @@ Manual memory is stored as a **compaction record with an empty `covered_message_
 - It is **branch-independent and always injected** (it is never selected as the active-branch prefix
   compaction, and the planner injects it alongside whichever prefix compaction is valid).
 - It is **never folded** by recursive compaction and **never invalidated** by message deletion (a
-  pinned snippet is an explicit user copy that should outlive its source message).
+  pinned snippet is an explicit Account holder copy that should outlive its source message).
 - It is created **without a model call** via `POST /conversations/{id}/compactions/manual`, which
   stores client-encrypted ciphertext exactly like the PATCH update path. Subsequent edits reuse
   PATCH.
@@ -710,7 +710,8 @@ never raw PII — consistent with messages and auto-compactions.
 ### 16.3 Scope and the drawer
 
 `"Add to memory"` is offered only on **persisted, non-project** conversations. The memory drawer
-(header → Memory) shows the user-curated manual memory in preference to the auto-compaction summary.
+(header → Memory) shows the Account holder-curated manual memory in preference to the
+auto-compaction summary.
 
 ### 16.4 User and project scopes (implemented)
 
@@ -718,8 +719,8 @@ The selection action is a **scope menu**: a pinned snippet can be added to **con
 **user**, or **project** memory (the project option appears only when the conversation belongs to a
 project).
 
-- **User memory** (`user_memory` collection): sealed to the user's vault public key, owned by the
-  user, injected into every conversation they have.
+- **Account holder memory** (`user_memory` collection): sealed to the Account holder's vault public
+  key, owned by the Account holder, injected into every Conversation they have.
 - **Project memory** (`project_memory` collection): encrypted with the project content key, gated by
   active project membership, injected into every conversation in that project.
 - Both are **client-encrypted, ciphertext-only** stores with the same CRUD shape as manual

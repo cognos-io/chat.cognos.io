@@ -39,13 +39,13 @@ The privacy constraint turns out not to be a handicap. Two research findings sha
 1. **The browser can do this well.** Anthropic's own document skills generate DOCX with
    `docx` (npm) and PPTX with `pptxgenjs` — browser-capable MIT JavaScript libraries — even
    though they run them server-side. Mature JS/WASM libraries cover every target format.
-2. **The document can be a _view_ of the message, not a stored artifact.** The model's output
-   is already text we encrypt and persist. If the model emits a structured **document source**
-   (markdown body + small options header) inside its reply, the client can render the actual
-   file bytes deterministically, on demand, in a Web Worker. The file bytes then never exist
-   anywhere but the user's device — not even transiently on Cognos servers. That is a stronger
-   property than image generation (where plaintext bytes transit the backend before sealing),
-   and it needs **zero new server surface, zero new storage, zero new data model** for v1.
+2. **The document can be a _view_ of the message, not a stored artifact.** The model's output is
+   already text we encrypt and persist. If the model emits a structured **document source**
+   (markdown body + small options header) inside its reply, the client can render the actual file
+   bytes deterministically, on demand, in a Web Worker. The file bytes then never exist anywhere but
+   the Account holder's device — not even transiently on Cognos servers. That is a stronger property
+   than image generation (where plaintext bytes transit the backend before sealing), and it needs
+   **zero new server surface, zero new storage, zero new data model** for v1.
 
 No mainstream competitor can generate documents client-side, and no open-source chat UI does it
 well (Open WebUI's jsPDF export is chronically broken; LibreChat has it as an open feature
@@ -57,7 +57,7 @@ architecture.
 - Users can ask the model for a document and download a real, well-formed `.docx` / `.pdf` /
   `.xlsx` that opens cleanly in Word, LibreOffice, Pages and Google Docs.
 - All file bytes are produced in the browser from the (already encrypted-at-rest) message
-  content. No document bytes on Cognos servers, plaintext or otherwise, unless the user
+  content. No document bytes on Cognos servers, plaintext or otherwise, unless the Account holder
   explicitly saves to their encrypted library.
 - Any existing assistant message can be exported as DOCX/PDF/Markdown with one action — no
   model involvement, works retroactively on all history.
@@ -75,7 +75,8 @@ architecture.
   deterministic renderer. A sandboxed interpreter is Phase 5, gated on the requirements in §10.
 - **No PPTX.** Industry-wide the weakest format (layout collisions even for ChatGPT agent);
   `pptxgenjs` makes it feasible later, but scope stays modest now.
-- **No editing of user-uploaded documents** (fill-in templates, tracked changes). Creation only.
+- **No editing of Account holder-uploaded documents** (fill-in templates, tracked changes). Creation
+  only.
 - **No native XLSX charts** — no open-source JS library writes them (SheetJS Pro only);
   fallback is chart-as-embedded-PNG, deferred.
 - **No server-side rendering fallback.** If a browser can't render (ancient device), the raw
@@ -137,7 +138,7 @@ nothing the model wrote.
 
 1. **The document is a render, not an upload.** File bytes are derived on demand from the
    encrypted message source. Nothing new is stored; nothing new transits the server. Save-to-
-   library is an explicit user action through the existing encrypted attachments pipeline.
+   library is an explicit Account holder action through the existing encrypted attachments pipeline.
 2. **Deterministic renderer, declarative source.** The model emits data; Cognos code turns it
    into bytes. The entire "model produced a corrupt file" failure class is eliminated by
    construction, and there is no code execution surface.
@@ -148,10 +149,10 @@ nothing the model wrote.
    only from already-decrypted conversation attachments. A generated file must never trigger a
    fetch to a model-chosen URL (exfiltration vector).
 5. **Fail open to text.** A malformed or truncated document block degrades to visible markdown
-   — the user always gets the content, never a broken card or a crash.
-6. **Works on every text model.** V1 uses plain structured emission (no tool-calling
-   capability required), so Infomaniak/CH-tier users are not excluded. The Phase-4 tool loop is
-   an enhancement gated on `supports_tool_calling`, not a prerequisite.
+   — the Account holder always gets the content, never a broken card or a crash.
+6. **Works on every text model.** V1 uses plain structured emission (no tool-calling capability
+   required), so Account holders on the Infomaniak/CH tier are not excluded. The Phase-4 tool loop
+   is an enhancement gated on `supports_tool_calling`, not a prerequisite.
 
 ## 4. How it works (V1/V2 — no tool loop)
 
@@ -187,7 +188,7 @@ Key properties:
 
 ### 5.1 Export any assistant message (P0 — Phase 1)
 
-As a user, I can download any assistant message — including all my existing history — as
+As an Account holder, I can download any assistant message — including all my existing history — as
 DOCX, PDF or Markdown from the message actions menu.
 
 Acceptance criteria:
@@ -195,7 +196,7 @@ Acceptance criteria:
 - Message actions gain "Download as…" → DOCX / PDF / Markdown.
 - Rendering input is the **hydrated** message markdown (redaction placeholders resolved
   client-side, exactly like display — `RedactedMarkdownComponent` precedent) so the file
-  contains real values, since it stays on the user's device.
+  contains real values, since it stays on the Account holder's device.
 - Markdown → document mapping covers headings, paragraphs, bold/italic/code, lists (nested),
   tables, blockquotes, links, horizontal rules, and images already present in the message
   (generated images decrypt → embed).
@@ -207,7 +208,7 @@ Acceptance criteria:
 
 ### 5.2 Model-created documents (P0 — Phase 2)
 
-As a user, I can ask for "a PDF brief" / "a Word report" / "a spreadsheet of X" and get a
+As an Account holder, I can ask for "a PDF brief" / "a Word report" / "a spreadsheet of X" and get a
 document card in the reply with a live preview of the content and a download button.
 
 Acceptance criteria:
@@ -215,10 +216,10 @@ Acceptance criteria:
 - A composer Tools row **"Create documents"** — **on by default** so models can do this
   unprompted; the row is an explicit per-conversation opt-out (mirroring web search mechanics
   in `ComposerToolsService`). When on, the system prompt gains the `<cog-doc>` output contract
-  (§6) and a short instruction to use it only when the user asks for a document/file.
+  (§6) and a short instruction to use it only when the Account holder asks for a document/file.
 - When the toggle is **off**, the contract is simply absent and the reply is plain text. We do
-  **not** surface a "turn on document creation" hint when the user asks for a file with the
-  tool off — no detection heuristics in v1 (Decision 9).
+  **not** surface a "turn on document creation" hint when the Account holder asks for a file with
+  the tool off — no detection heuristics in v1 (Decision 9).
 - No `RequiredCapability` change and no model auto-switch: every text model can emit the
   block; quality varies by model, correctness of the file does not (Principle 2).
 - The stream parser recognises an opening `<cog-doc …>` sentinel mid-stream and swaps the
@@ -233,7 +234,7 @@ Acceptance criteria:
 
 ### 5.3 XLSX (P1 — Phase 3)
 
-As a user, I can get a real spreadsheet: typed cells, formulas, number formats, multiple
+As an Account holder, I can get a real spreadsheet: typed cells, formulas, number formats, multiple
 sheets, frozen header rows.
 
 Acceptance criteria:
@@ -252,8 +253,8 @@ Acceptance criteria:
 
 ### 5.4 Save to library (P1 — Phase 3)
 
-As a user, I can keep a generated document in my encrypted file library and reuse it in other
-chats.
+As an Account holder, I can keep a generated document in my encrypted file library and reuse it in
+other chats.
 
 Acceptance criteria:
 
@@ -263,22 +264,23 @@ Acceptance criteria:
   upload. This _freezes_ bytes at the current renderer version (unlike live re-render).
 - The saved file appears in `/account/library` with the generated filename; dedup by content
   hash applies as for uploads.
-- No automatic saving. Downloads and saves are explicit user actions.
+- No automatic saving. Downloads and saves are explicit Account holder actions.
 
 **Known gap (xlsx):** the attachment worker pipeline routes every save through the same processor
-registry as a user upload (`frontend/src/app/attachments/processors/processor-registry.ts`), which
-has **no XLSX processor** — spreadsheet text extraction was removed for launch (see the
-"Spreadsheets are no longer accepted" pin test in `processor-registry.spec.ts`). A generated `.xlsx`
-document therefore always fails closed with the translated `documentSaveFailed` message; docx and
-pdf save successfully (mammoth/pdfjs extract text from the renderer's own valid output without
-issue). Fixing this means either resurrecting XLSX text extraction (reverses a deliberate launch
-decision) or adding a save path that bypasses text extraction for library saves — both are follow-up
-decisions, not bundled into this change.
+registry as an Account holder upload
+(`frontend/src/app/attachments/processors/processor-registry.ts`), which has **no XLSX processor** —
+spreadsheet text extraction was removed for launch (see the "Spreadsheets are no longer accepted"
+pin test in `processor-registry.spec.ts`). A generated `.xlsx` document therefore always fails
+closed with the translated `documentSaveFailed` message; docx and pdf save successfully
+(mammoth/pdfjs extract text from the renderer's own valid output without issue). Fixing this means
+either resurrecting XLSX text extraction (reverses a deliberate launch decision) or adding a save
+path that bypasses text extraction for library saves — both are follow-up decisions, not bundled
+into this change.
 
 ### 5.5 Browser tool loop — the agentic harness (P2 — Phase 4)
 
-As a user on a tool-capable model, document creation becomes an explicit tool the model can
-invoke (and correct) rather than an output format — and Cognos gains its first client-executed
+As an Account holder on a tool-capable model, document creation becomes an explicit tool the model
+can invoke (and correct) rather than an output format — and Cognos gains its first client-executed
 tool loop, reusable for future tools (attachment reading, chart rendering, …).
 
 This is the deliberate architectural step the product is leaning toward; §9 designs it. It
@@ -357,10 +359,10 @@ Cells: scalar, `{ "f": "…" }` formula, or `{ "v": …, "numFmt": "…", "bold"
   hygiene (§6.4, below) are enforced — once, regardless of library.
 - Pipeline: parse block → validate spec (zod) → map markdown AST / sheet JSON to library
   calls → `Blob` → transfer to main thread → object URL (revoked after download).
-- **Renderer metadata hygiene:** generated files carry no user-identifying metadata — core
+- **Renderer metadata hygiene:** generated files carry no Account holder-identifying metadata — core
   properties set to the document title only; creator/producer strings are a fixed
   `"Cognos"`; timestamps rounded to the day (a `.docx` is a zip of XML; its metadata is
-  read by anyone the user sends it to).
+  read by anyone the Account holder sends it to).
 - Brand fonts embedded in the pdfmake VFS from `packages/ui` typography; DOCX uses named
   styles mapped to `--cog-*` type scale equivalents so output looks like Cognos, not Times.
 - If `typst.ts` (WASM) is adopted later for premium PDF, instantiate via the existing
@@ -382,12 +384,12 @@ Phase 4 adds transient wire shapes only (§9.3); still no new storage.
 
 ### 9.1 What it is
 
-The Responses API supports **client-executed function tools**: the model returns
-`function_call` items; the caller executes and submits `function_call_output`; the model
-continues. Today Cognos has _no_ tool-execution loop anywhere (web search is provider-native
-and invisible to us). This phase builds the first one, with the browser as the executor —
-tools run against **decrypted data on the user's device**, which is the only place our model
-allows them to run.
+The Responses API supports **client-executed function tools**: the model returns `function_call`
+items; the caller executes and submits `function_call_output`; the model continues. Today Cognos has
+_no_ tool-execution loop anywhere (web search is provider-native and invisible to us). This phase
+builds the first one, with the browser as the executor — tools run against
+**decrypted data on the Account holder's device**, which is the only place our model allows them to
+run.
 
 Document tools are the first registrants:
 
@@ -405,7 +407,7 @@ sees only what it already sees today (message-shaped text). Bytes stay in the br
 client → POST /complete { …, client_tools: [toolDefs] }
 backend → provider: Responses request with function tools (strict schemas)
 provider → backend → client: SSE `tool_call` event {call_id, name, arguments}
-client: executes locally (render worker) — user-visible card shows activity
+client: executes locally (render worker) — Account holder-visible card shows activity
 client → POST /complete/{requestID}/continue { tool_outputs: [{call_id, output}] }
 … repeat ≤ N times …
 provider: final text → backend persists ONE assistant message (final turn) as today
@@ -422,7 +424,7 @@ Design rules:
   growing context every round (~4× single-shot is the published rule of thumb). Keep tool
   defs + instructions byte-stable for prompt caching; tool outputs are pruned to essentials.
 - **Persistence** happens once, on the terminal round — intermediate rounds are transient.
-  The user message is persisted on round 1 (existing behaviour); a loop abandoned mid-way
+  The Account holder message is persisted on round 1 (existing behaviour); a loop abandoned mid-way
   (tab close) persists the last completed text, mirroring today's detached-context rule.
 - **Billing:** each round is a metered completion through the existing gate; the pre-call
   estimate for round N includes accumulated tool traffic. No new `OperationType`; ledger
@@ -437,8 +439,8 @@ Design rules:
 
 ### 9.3 Why not ship the loop first?
 
-Because V2 delivers ~90 % of user value (single-shot generation with deterministic quality)
-with zero backend change, and the loop's marginal value — the model reacting to render
+Because V2 delivers ~90 % of Account holder value (single-shot generation with deterministic
+quality) with zero backend change, and the loop's marginal value — the model reacting to render
 warnings, multi-file tasks, targeted edits — depends on a renderer that exists and is proven.
 Building the loop first would mean designing the harness against an imaginary tool.
 
@@ -465,13 +467,13 @@ beats JS for spreadsheet work; its 12 MB / 4–5 s cost makes it a deliberate la
 - **In flight:** the document _source_ is assistant output — visible to backend + provider
   transiently exactly like every message today (`security-model.md` §2–§4). The rendered
   _file_ never transits any network in plaintext. Phase 4 tool results are counts/status only.
-- **Prompt injection → document content:** injected instructions (via attachments or web
-  search results) could make the model emit a document containing attacker-chosen text or
-  links. Mitigations: renderer executes nothing; links sanitised to `http(s)`; no remote
-  resource fetch at render or open time (no tracking pixels — images are embedded bytes);
-  the card previews content before the user downloads. Residual risk (user shares a
-  misleading document) is the same as copy-pasting a poisoned reply — documented, not solved.
-- **Metadata:** generated files carry no user identity (§7); filenames sanitised; logging
+- **Prompt injection → document content:** injected instructions (via attachments or web search
+  results) could make the model emit a document containing attacker-chosen text or links.
+  Mitigations: renderer executes nothing; links sanitised to `http(s)`; no remote resource fetch at
+  render or open time (no tracking pixels — images are embedded bytes); the card previews content
+  before the Account holder downloads. Residual risk (Account holder shares a misleading document)
+  is the same as copy-pasting a poisoned reply — documented, not solved.
+- **Metadata:** generated files carry no Account holder identity (§7); filenames sanitised; logging
   discipline unchanged — never log document titles, sources, or bodies; counts only
   (`document_count`, format, byte size class).
 - **Redaction:** hydration happens client-side immediately before render, so files contain
@@ -546,8 +548,8 @@ labels), model-selector strength pill for Phase 4 only. Plural forms where count
 | `write-excel-file` feature ceiling binds (data validation, richer conditional formatting) | Facade (§7) makes `exceljs` a pinned drop-in swap, not a rewrite; accepted trade for an actively maintained dependency          |
 | Renderer version drift changes bytes of "the same" document                               | Documents are views (like markdown rendering); Save-to-library freezes bytes when permanence matters                            |
 | Doc block bloats `messages.data` toward the 1 MB cap                                      | §6.4 caps + parse-time enforcement; XLSX JSON is the only realistic offender                                                    |
-| Word's "update fields" prompt (TOC) confuses users                                        | Open question 2; worst case ship without TOC                                                                                    |
-| Phase 4 loop cost surprises users                                                         | Iteration cap, budget, prompt caching, pre-call estimate covers accumulated rounds                                              |
+| Word's "update fields" prompt (TOC) confuses Account holders                              | Open question 2; worst case ship without TOC                                                                                    |
+| Phase 4 loop cost surprises Account holders                                               | Iteration cap, budget, prompt caching, pre-call estimate covers accumulated rounds                                              |
 | Prompt-injected content lands in a downloadable, shareable file                           | No code execution, link sanitisation, no remote fetches, preview-before-download; residual risk documented in security-model.md |
 | Future sandbox phase built on iframe+CSP because it looks easier                          | §2.3/§10 record the Claude Artifacts WebRTC exfil precedent as a hard "no" — WASM-interpreter-only                              |
 
@@ -563,6 +565,6 @@ labels), model-selector strength pill for Phase 4 only. Plural forms where count
 | 6   | Persistence of files | Explicit Save-to-library via existing attachments pipeline; downloads via object URL; nothing automatic                                                                                                                           |
 | 7   | Sandbox stance       | Deferred; when built, WASM interpreter with zero host network bindings — iframe/CSP/Worker-patching explicitly rejected                                                                                                           |
 | 8   | Activation UX        | Tool is **on by default** (models may create documents unprompted); the composer Tools row is an explicit per-conversation opt-out — same mechanics as web search                                                                 |
-| 9   | No enablement hint   | When the tool is off and the user asks for a file, the reply stays plain text — no "turn on document creation" detection/hint in v1                                                                                               |
+| 9   | No enablement hint   | When the tool is off and the Account holder asks for a file, the reply stays plain text — no "turn on document creation" detection/hint in v1                                                                                     |
 | 10  | Requesty passthrough | Function-tool passthrough questions are settled empirically by the Phase-4 live spike (web-search Phase-0 method) before any loop code lands                                                                                      |
 | 11  | Licence red line     | **No GPLv3 / copyleft dependencies** — `hyperformula` excluded; where no permissively-licensed alternative exists we exclude the capability or roll our own (e.g. hand-rolled formula reference validator, §5.3)                  |

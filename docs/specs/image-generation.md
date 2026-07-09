@@ -15,12 +15,12 @@ shipped flow works. This spec is kept as the design record (rationale + decision
 
 Resolved after reviewing the live backend and frontend code:
 
-- **Storage backend**: Encrypted image bytes are stored in a **PocketBase protected file
-  field**, not external object storage (no object store exists today). Protected files are not
-  publicly addressable; access is enforced through PocketBase access rules tied to conversation
+- **Storage backend**: Encrypted image bytes are stored in a **PocketBase protected file field**,
+  not external object storage (no object store exists today). Protected files are not publicly
+  addressable; access is enforced through PocketBase access rules tied to conversation
   participation, plus short-lived file tokens. Even though the bytes are already ciphertext, the
-  user stays in complete control of who can fetch their files. S3 can back PocketBase storage
-  later via configuration without code changes.
+  Account holder stays in complete control of who can fetch their files. S3 can back PocketBase
+  storage later via configuration without code changes.
 - **Encryption model**: Reuse the existing message scheme exactly. The server holds only a
   conversation **public** key and encrypts with an anonymous sealed box (`box.SealAnonymous`); it
   cannot decrypt. Clients decrypt with the conversation secret key. There is no new
@@ -43,7 +43,8 @@ content block. See §7.7 for the gateway design and §7.1/§6.2 for the catalogu
   provider plaintext is not captured on the common path. Upgrading Bifrost does not remove this
   need.
 - **ZDR drove Route B**: the EU-resident, zero-retention image model is Gemini-class, which only
-  generates via chat completions — so the chat transport is required, not optional, for ZDR users.
+  generates via chat completions — so the chat transport is required, not optional, for Account
+  holders on the Switzerland-only tier.
 - **Build sequence**: Update this spec first, then ship the model-capability slice (UI/API, no
   crypto) alongside the provider spike, then the encrypted-persistence MVP. (Spike: done — gateway
   image generation, image-flagged billing, and attachment encryption are implemented and tested;
@@ -51,9 +52,9 @@ content block. See §7.7 for the gateway design and §7.1/§6.2 for the catalogu
 
 ## 1. Overview
 
-Cognos will support image generation inside encrypted conversations. Users explicitly enable an
-image generation tool from the chat UI, choose a model that supports image generation, and receive
-generated images as assistant conversation content.
+Cognos will support image generation inside encrypted Conversations. Account holders explicitly
+enable an image generation tool from the chat UI, choose a model that supports image generation, and
+receive generated images as assistant conversation content.
 
 The privacy rule is unchanged from text messages: generated content may be processed in plaintext
 transiently while the request is active, but it must be encrypted before any durable persistence.
@@ -61,21 +62,21 @@ Generated image bytes must never be stored as plaintext in PocketBase, object st
 analytics, or billing records.
 
 Image generation support is model-specific. A model may support normal text chat without supporting
-image generation. The model catalogue must expose this capability so the UI can warn users and help
-them switch models without silently changing their selected model.
+image generation. The model catalogue must expose this capability so the UI can warn Account holders
+and help them switch models without silently changing their selected model.
 
 ## 2. Target Audience
 
-Primary users:
+Primary Account holders:
 
-- Cognos chat users who want to generate images from text prompts while keeping conversation history
+- Account holders who want to generate images from text prompts while keeping Conversation history
   encrypted at rest.
 - Users who switch models mid-conversation and need clear capability feedback before using image
   generation.
-- Privacy-conscious users who expect generated images to follow the same no-plaintext-at-rest rules
-  as chat messages.
+- Privacy-conscious Account holders who expect generated images to follow the same
+  no-plaintext-at-rest rules as chat messages.
 
-Secondary users:
+Secondary:
 
 - Operators maintaining the model catalogue and deciding which Requesty-backed models are safe to
   expose.
@@ -84,28 +85,30 @@ Secondary users:
 ## 3. Problem Statement
 
 Cognos currently supports encrypted text conversations, but image generation is not available as a
-first-class user action. Some integrated models, including some available through Requesty, support
-image generation and others do not. Without explicit model capability metadata, users can select a
-model, enable image generation, and only discover incompatibility after a failed request.
+first-class Account holder action. Some integrated models, including some available through
+Requesty, support image generation and others do not. Without explicit model capability metadata,
+Account holders can select a model, enable image generation, and only discover incompatibility after
+a failed request.
 
-Current workaround: users leave Cognos or manually use a separate image tool. This breaks the
-conversation flow and stores generated images outside Cognos' encrypted conversation model.
+Current workaround: Account holders leave Cognos or manually use a separate image tool. This breaks
+the conversation flow and stores generated images outside Cognos' encrypted conversation model.
 
 Cost of not solving it:
 
-- users cannot keep generated images in the same encrypted conversation history as the prompt that
-  created them;
+- Account holders cannot keep generated images in the same encrypted Conversation history as the
+  prompt that created them;
 - unsupported-model failures feel arbitrary;
 - model capability rules get duplicated or hard-coded in the frontend;
 - future image input work risks conflating input vision support with output image generation.
 
 ## 4. Goals
 
-- Let users explicitly enable image generation from the chat composer.
+- Let Account holders explicitly enable image generation from the chat composer.
 - Expose model-level image generation capability through the backend model catalogue.
-- Warn users when image generation is enabled but the selected model is unsuitable.
+- Warn Account holders when image generation is enabled but the selected model is unsuitable.
 - Make suitable models visually identifiable when image generation is enabled.
-- Allow users to switch models mid-conversation before sending an image generation request.
+- Allow Account holders to switch models mid-Conversation before sending an image generation
+  request.
 - Persist generated images only as encrypted objects, with encrypted message metadata pointing to
   them.
 - Reuse the existing conversation encryption model and the existing UI Angular image conversation
@@ -116,7 +119,7 @@ Cost of not solving it:
 
 - Image input, image analysis, or vision prompts. That is a separate feature.
 - Image editing, inpainting, variations, masks, or uploaded reference images.
-- Auto-switching the user's selected model when image generation is enabled.
+- Auto-switching the Account holder's selected model when image generation is enabled.
 - Public image galleries, share pages, or CDN-hosted plaintext images.
 - Server-side thumbnailing or metadata extraction from plaintext generated images after storage.
 - Reworking the full multimodal attachment architecture beyond what image generation needs.
@@ -127,8 +130,8 @@ Cost of not solving it:
 
 - **Description**: Add an explicit composer control that enables image generation for the next
   request.
-- **User Story**: As a user, I want to enable image generation intentionally so that Cognos treats
-  my next prompt as an image request instead of a normal text answer.
+- **User Story**: As an Account holder, I want to enable image generation intentionally so that
+  Cognos treats my next prompt as an image request instead of a normal text answer.
 - **Priority**: P0
 - **Acceptance Criteria**:
     - The composer has an accessible image generation control.
@@ -140,8 +143,8 @@ Cost of not solving it:
 ### 6.2 Model capability flag
 
 - **Description**: Mark each active model with whether it supports image generation.
-- **User Story**: As a user, I want Cognos to show which models can generate images so that I can
-  choose a compatible model before sending.
+- **User Story**: As an Account holder, I want Cognos to show which models can generate images so
+  that I can choose a compatible model before sending.
 - **Priority**: P0
 - **Acceptance Criteria**:
     - The backend model catalogue includes `supports_image_generation` for every active model.
@@ -156,24 +159,24 @@ Cost of not solving it:
 
 ### 6.3 Unsupported-model alerting
 
-- **Description**: Warn and block image generation when the user enables the tool with an
+- **Description**: Warn and block image generation when the Account holder enables the tool with an
   unsupported selected model.
-- **User Story**: As a user, I want a clear warning when my current model cannot generate images so
-  that I can switch models intentionally.
+- **User Story**: As an Account holder, I want a clear warning when my current model cannot generate
+  images so that I can switch models intentionally.
 - **Priority**: P0
 - **Acceptance Criteria**:
     - If image generation is enabled and the selected model does not support it, the UI shows an
     accessible alert.
     - The alert explains that the current model cannot generate images.
-    - The alert points the user to switch to a suitable model.
+    - The alert points the Account holder to switch to a suitable model.
     - The app does not auto-switch the selected model.
     - The image generation request cannot be submitted while the selected model is unsupported.
 
 ### 6.4 Suitable-model highlighting
 
 - **Description**: Make compatible models easy to identify while image generation is enabled.
-- **User Story**: As a user, I want image-capable models highlighted so that switching models is
-  quick and unsurprising.
+- **User Story**: As an Account holder, I want image-capable models highlighted so that switching
+  models is quick and unsurprising.
 - **Priority**: P0
 - **Acceptance Criteria**:
     - When image generation is enabled, the model selector visually distinguishes models that
@@ -193,9 +196,9 @@ Cost of not solving it:
 - **Acceptance Criteria**:
     - Image generation requests fail before the gateway call when `supports_image_generation` is
     false.
-    - Unsupported requests do not create user or assistant messages.
+    - Unsupported requests do not create Account holder or assistant messages.
     - Unsupported requests do not record usage ledger entries.
-    - Unsupported requests return a user-safe validation/business error without logging the prompt.
+    - Unsupported requests return a validation/business error without logging the prompt.
     - The handler validates privacy-tier eligibility and billing access before any paid provider
     request, as the text completion pipeline does.
 
@@ -203,8 +206,8 @@ Cost of not solving it:
 
 - **Description**: Store generated images as encrypted attachments referenced by encrypted assistant
   message data.
-- **User Story**: As a user, I want generated images stored in my conversation without plaintext
-  persistence so that images receive the same privacy treatment as messages.
+- **User Story**: As an Account holder, I want generated images stored in my Conversation without
+  plaintext persistence so that images receive the same privacy treatment as messages.
 - **Priority**: P0
 - **Acceptance Criteria**:
     - Provider image bytes are encrypted before writing to the PocketBase protected file field or
@@ -220,8 +223,8 @@ Cost of not solving it:
 
 - **Description**: Render generated images inside the conversation using the existing UI Angular
   image component.
-- **User Story**: As a user, I want generated images to appear in the conversation so that my prompt
-  and result stay together.
+- **User Story**: As an Account holder, I want generated images to appear in the Conversation so
+  that my prompt and result stay together.
 - **Priority**: P0
 - **Acceptance Criteria**:
     - Assistant image messages render through the existing image conversation component
@@ -381,9 +384,9 @@ Why this shape:
   message as the text completion pipeline does.
 - If encryption or the protected file write fails after provider success, return an internal error
   and ensure no plaintext image remains. Encrypted orphan files may be cleaned up asynchronously.
-- If assistant message persistence fails after the encrypted file write succeeds, delete the user
-  message and schedule encrypted file cleanup. (If the file is a field on the message record, this
-  cascades automatically.)
+- If assistant message persistence fails after the encrypted file write succeeds, delete the Account
+  holder message and schedule encrypted file cleanup. (If the file is a field on the message record,
+  this cascades automatically.)
 
 ### 7.6 Billing and analytics
 
@@ -393,7 +396,7 @@ plaintext attachment metadata.
 Usage/analytics records must capture only operational billing fields such as:
 
 - request ID/event ID;
-- billing user ID, not raw user ID;
+- billing Account holder ID, not raw Account holder ID;
 - model ID and provider ID;
 - content type or operation type: `image_generation`;
 - generated image count;
@@ -406,7 +409,7 @@ Usage/analytics records must capture only operational billing fields such as:
 - **Images API** (`gpt-image-*`): the response carries **no cost** — only token counts
   (`ImageUsage` has no `Cost` field). So provider-reported cost is unavailable on this path and the
   model **must** have an operator-managed price (per image, or via image token rates) before it can
-  be enabled for paid users.
+  be enabled for paid Account holders.
 - **Chat Completions** (Gemini): the response **may** carry `usage.Cost.TotalCost`. When present,
   prefer it and apply the existing margin, exactly as the text pipeline does; otherwise fall back to
   the operator-managed price. (Whether Gemini-via-Requesty actually reports cost is confirmed by the
@@ -475,8 +478,8 @@ pending a live run for final confirmation of the response shape and whether cost
   user messages in the conversation. Encrypted orphan cleanup is acceptable as a background task.
 - **Accessibility**: The image generation control, unsupported-model alert, model badges, image
   loading state, and image failure state must be keyboard-accessible and screen-reader-readable.
-- **Internationalisation**: All user-visible strings must be translated for every supported
-  frontend locale.
+- **Internationalisation**: All Account holder-visible strings must be translated for every
+  supported frontend locale.
 
 ## 9. Success Metrics
 
@@ -485,7 +488,7 @@ pending a live run for final confirmation of the response shape and whether cost
 | Unsupported image request prevention | 100% of unsupported selected-model sends are blocked before provider call                                  | Backend integration tests plus frontend E2E           |
 | Plaintext persistence regression     | 0 plaintext generated-image bytes, provider URLs, or prompts found in DB/object metadata/log test fixtures | Security-focused integration tests and log assertions |
 | Successful render path               | 95% of successful provider image responses render as conversation image messages in test/beta sessions     | Product analytics event without content plus beta QA  |
-| Model capability clarity             | 90% of beta users can identify an image-capable model without help                                         | Beta feedback prompt or usability checklist           |
+| Model capability clarity             | 90% of Account holders in beta can identify an image-capable model without help                            | Beta feedback prompt or usability checklist           |
 
 ## 10. Timeline & Milestones
 
@@ -504,7 +507,7 @@ pending a live run for final confirmation of the response shape and whether cost
 | Image input and image generation capabilities get conflated                              | Medium | Medium     | Use `supports_image_generation` as a separate field; reserve image input/vision capability for a later spec                                     |
 | Large image bytes land in the `messages.data` column instead of the protected file field | High   | Low        | Store bytes only in the protected file field; keep payloads to references + sealed key; add tests that message data never contains image base64 |
 | Billing undercharges image generation when provider cost is missing                      | Medium | Medium     | Require configured image generation pricing before enabling a model without provider-reported costs                                             |
-| UI auto-switches models and surprises users                                              | Medium | Low        | Make “do not auto-switch” an acceptance criterion and cover it in E2E                                                                           |
+| UI auto-switches models and surprises Account holders                                    | Medium | Low        | Make “do not auto-switch” an acceptance criterion and cover it in E2E                                                                           |
 
 ## 12. Test Plan
 
@@ -521,7 +524,7 @@ pending a live run for final confirmation of the response shape and whether cost
 - Image-capable model badges/labels are visible when image generation is enabled.
 
 > The model↔tool coupling — filtering the picker by the current task, auto-switching the model when
-> the image tool is toggled, and remembering the user's model per task — is specified in
+> the image tool is toggled, and remembering the Account holder's model per task — is specified in
 > [tool-aware-model-selection.md](./tool-aware-model-selection.md).
 
 ### Backend integration tests
@@ -535,7 +538,7 @@ pending a live run for final confirmation of the response shape and whether cost
   before gateway invocation.
 - Successful image generation persists encrypted assistant message data and an encrypted protected
   file.
-- Provider failure after user message persistence deletes the user message.
+- Provider failure after Account holder message persistence deletes the Account holder message.
 - Protected file write or message persistence failure leaves no plaintext image artefacts.
 - A chat-transport (Gemini) image is parsed from the raw provider response and persisted encrypted,
   with no raw provider JSON or `data:` URI written to logs or the database.
@@ -556,8 +559,8 @@ pending a live run for final confirmation of the response shape and whether cost
   metadata.
 - PocketBase message rows do not contain plaintext image bytes or provider URLs.
 - The protected file field receives encrypted bytes only.
-- A non-participant cannot fetch another user's attachment file even with a guessed record ID/file
-  name (protected-file access rules enforced).
+- A non-Participant cannot fetch another Account holder's attachment file even with a guessed record
+  ID/file name (protected-file access rules enforced).
 - Analytics and billing events contain model/cost/count metadata only, never content.
 
 ## 13. Open Decisions Before Implementation

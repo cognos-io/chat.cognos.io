@@ -1,15 +1,16 @@
-# Browser PII Redaction v2 — detection depth, severity, and measurement
+# Browser Redaction v2 — detection depth, severity, and measurement
 
 Follow-up to `docs/specs/pii-redaction.md` (the v1 spec, shipped Phases 1–4). v1 delivered a
-precision-first, always-on Tier 1 structured engine with encrypted per-conversation/project/user
-mappings, composer preview, and hydration. This spec covers the four deferred/weak areas that keep
-the feature from reading as a first-class trust differentiator:
+precision-first, always-on Tier 1 structured engine with encrypted
+per-conversation/project/Account-holder mappings, composer preview, and hydration. This spec covers
+the four deferred/weak areas that keep the feature from reading as a first-class trust
+differentiator:
 
 1. **Severity + informed-consent UX** — turn the silent, uniform preview into a graded signal with a
    first-run explainer and a category-gated confirm for high-severity data
    (health/financial/secret).
 2. **Detection depth** — new structured detectors, context-aware weak-signal promotion, a health
-   category, and a user-scoped allowlist ("never redact this").
+   category, and an Account holder-scoped allowlist ("never redact this").
 3. **Tier 2 NLP in a Web Worker** — wire the deferred `compromise` layer for names/orgs/places,
    off the main thread, so recall improves without freezing the composer.
 4. **Measurement** — a labelled fixture corpus scored for precision/recall per detector, CI gates so
@@ -28,13 +29,14 @@ are settled in v1 and unchanged here. New detectors and NLP hints flow through t
 - `simple` keeps the fast v1 detector set. `better` adds local-only context, structured, and health
   detectors.
 - Composer preview groups detected values by severity (`critical`, `high`, `medium`, `low`).
-- If a user opts out of redacting a detected value, the send warning includes the highest severity.
+- If an Account holder opts out of redacting a detected value, the send warning includes the highest
+  severity.
 - New detectors cover DOB context, passport, Swiss driving licence, PostFinance/account context,
   Swiss health-insurance numbers, and health-keyword hints.
 - Better mode now runs the local `compromise` person/org/place layer in a Web Worker, with
   synchronous structured detection as the fallback path.
-- Users can add a detected value to a sealed user-scoped "never redact this" list and remove it
-  again from `/account/memory`.
+- Account holders can add a detected value to a sealed Account holder-scoped "never redact this"
+  list and remove it again from `/account/memory`.
 - Corpus scoring exists at `frontend/src/app/redaction/corpus/baseline-v2.json` with a CI-style
   threshold test in `redaction-corpus.spec.ts`.
 - Browser e2e asserts typed prompt values reach the provider only as placeholders.
@@ -65,8 +67,8 @@ v2 keeps the pure/source-agnostic engine and adds four layers around it:
 
 ## 2. Goals
 
-- Make the _reason_ for a redaction legible: users learn, once, what was hidden and why, and
-  high-severity categories get an explicit "we found health/financial data" moment.
+- Make the _reason_ for a redaction legible: Account holders learn, once, what was hidden and why,
+  and high-severity categories get an explicit "we found health/financial data" moment.
 - Materially improve recall on names/addresses/prose (Tier 2) and on weak structured signals
   (phones without `+`, dates of birth, passport/licence numbers) without hurting Tier 1 precision.
 - Never block or jank the composer: NLP and large-paste detection run off the main thread.
@@ -100,7 +102,7 @@ Proposed tiers:
 | `critical` | `secret`                                                                            | Live credentials — immediate, automatable compromise.          |
 | `high`     | `credit_card`, `iban`, all national/tax IDs, health (`§7`)                          | Financial loss / special-category data (GDPR Art. 9).          |
 | `medium`   | `phone`, `us_ssn` contact-adjacent, `ip_address`, `person` (Tier 2), `org`, `place` | Identifying but lower direct harm; higher false-positive rate. |
-| `low`      | `email`, `custom`                                                                   | Commonly shared; user usually knows.                           |
+| `low`      | `email`, `custom`                                                                   | Commonly shared; Account holder usually knows.                 |
 
 Exact type→severity assignment lives in one pure map in the engine (mirroring `redactionKindFor` in
 `redaction-ui.ts`) so backend, preview, and renderer agree. Severity is a **derived** property, not
@@ -131,14 +133,14 @@ data migration.
     - Fires only when at least one candidate is detected on a draft, not on an empty composer.
     - Reuses the existing explainer modal machinery (`redactionModalLabels` / `cog-redacted-text`
     labels) rather than a bespoke dialog.
-    - Dismissing sets `redactionFirstRunSeen = true`; it never reappears for that user.
+    - Dismissing sets `redactionFirstRunSeen = true`; it never reappears for that Account holder.
     - Available again on demand from account settings (a "How redaction works" link) so dismissing
     is not destructive.
     - Localised in all six locales.
 
 ### 4.4 High-severity confirm on send (P1)
 
-- **Description**: When a `critical`/`high` severity value would be sent **raw** (the user
+- **Description**: When a `critical`/`high` severity value would be sent **raw** (the Account holder
   deselected it, or a future setting lets high-severity default to prompt), sending is gated by a
   confirm that names the category. This extends v1's existing `redactionWarningOpen` modal, which
   today only fires on any deselected item with uniform copy.
@@ -184,9 +186,11 @@ Add new `RedactionType` members for these and extend the severity map (§4.1). A
     within a small window (e.g. ±24 chars): `call|phone|tel|mobile|mob|fax` → `phone`;
     `dob|born|birth|d.o.b` → `dob`; `account|acct|a/c|iban|sort code` → account number.
     - Emitted at `medium` confidence, so — like Tier 2 — these are **surfaced but not silently
-    redacted by default** unless the user opts the category in (mirrors v1 §8.3 Tier 2 handling).
-    - Keyword lists are localised across the six languages (a French user writes "né le", a German
-    "geboren am").
+redacted by default** unless the Account holder opts the category in (mirrors v1 §8.3 Tier 2
+handling).
+    - Keyword lists are localised across the six languages (a French-speaking Account holder writes
+      "né le",
+    a German-speaking one "geboren am").
 - **Acceptance criteria**:
     - A 7–11 digit run adjacent to a phone keyword is detected as `phone`; the same run in isolation
     is not.
@@ -213,24 +217,25 @@ Add new `RedactionType` members for these and extend the severity map (§4.1). A
     the sentence.
     - Negative fixtures: common words with medical homonyms do not trigger in non-medical context.
 
-## 8. Detection depth — user allowlist (P2)
+## 8. Detection depth — Account holder allowlist (P2)
 
-- **Description**: A user-scoped "never redact this value" list, the symmetric mirror of the
-  existing user-scoped redaction store.
+- **Description**: An Account holder-scoped "never redact this value" list, the symmetric mirror of
+  the existing Account holder-scoped redaction store.
 - **Priority**: P2
-- **Rationale**: A value that trips a detector but is not sensitive to this user (an internal ID
-  shaped like an IBAN) currently must be deselected on every message. Without an allowlist, users
-  learn to ignore the preview — which erodes the whole feature.
-- **How it works**: Store allowlisted `normalized` values sealed to the user key, exactly like the
-  user-scoped redaction entries (`loadUserRedaction` path in `redaction.service.ts`). At detection
-  time, drop candidates whose `normalized` is allowlisted for this user. "Never redact this" is an
-  action on a preview pill; "Redact this again" reverses it from settings.
+- **Rationale**: A value that trips a detector but is not sensitive to this Account holder (an
+  internal ID shaped like an IBAN) currently must be deselected on every message. Without an
+  allowlist, Account holders learn to ignore the preview — which erodes the whole feature.
+- **How it works**: Store allowlisted `normalized` values sealed to the Account key, exactly like
+  the Account holder-scoped redaction entries (`loadUserRedaction` path in `redaction.service.ts`).
+  At detection time, drop candidates whose `normalized` is allowlisted for this Account holder.
+  "Never redact this" is an action on a preview pill; "Redact this again" reverses it from settings.
 - **Acceptance criteria**:
-    - Allowlisting a value removes it from the preview on subsequent drafts for that user only.
-    - Allowlist is scoped to the user, sealed to their key, never sent in plaintext.
+    - Allowlisting a value removes it from the preview on subsequent drafts for that Account holder
+      only.
+    - Allowlist is scoped to the Account holder, sealed to their key, never sent in plaintext.
     - A settings surface lists allowlisted entries and can remove them.
     - Allowlist is applied **after** detection and **before** the preview, so it never affects other
-    users or scopes.
+    Account holders or scopes.
 
 ## 9. Tier 2 NLP in a Web Worker (P1)
 
@@ -315,10 +320,10 @@ Add new `RedactionType` members for these and extend the severity map (§4.1). A
 ### 10.3 Privacy-safe local counters (P2)
 
 - **Description**: Counts-only signals — never values — to reveal precision problems the corpus
-  can't (e.g. a category users _always_ disable).
+  can't (e.g. a category Account holders _always_ disable).
 - **Priority**: P2
 - **How it works**:
-    - Increment client-side counters: per-type detection count, per-type user-deselect count,
+    - Increment client-side counters: per-type detection count, per-type deselect count,
     per-type allowlist count, NLP-enabled count. **No content, ever** — consistent with the
     "never log user data" rule and v1 §17 security NFRs.
     - Surfaced locally (or aggregated without content) for the team; opt-in and off by default, or
@@ -350,8 +355,9 @@ frontend/src/app/redaction/
   `hydrateRedactedText`, `redaction_entries` schema, key model, and public-share behaviour are all
   **unchanged**.
 - Severity is derived, never persisted (§4.1) — no backend migration.
-- The allowlist reuses the user-scoped seal-to-user-key path already in `redaction.service.ts`;
-  no new collection unless the allowlist needs server persistence across devices (decision §12).
+- The allowlist reuses the Account holder-scoped seal-to-user-key path already in
+  `redaction.service.ts`; no new collection unless the allowlist needs server persistence across
+  devices (decision §12).
 
 ## 12. Open decisions
 
@@ -359,11 +365,11 @@ frontend/src/app/redaction/
    **off by default at launch**, opt-in via a preference, because Tier 2 precision is unproven until
    the corpus (§10) exists. Revisit once §10.2 shows Tier 2 precision.
 2. **High-severity default behaviour** — should `critical`/`high` deselection be _possible_ at all,
-   or always force-redact? Recommend keep deselect possible (user autonomy) but always route it
-   through the §4.4 named confirm.
+   or always force-redact? Recommend keep deselect possible (Account holder autonomy) but always
+   route it through the §4.4 named confirm.
 3. **Allowlist persistence** — device-local only, or synced (new sealed collection)? Recommend
-   **synced/user-scoped sealed** for parity with existing user redaction entries, so it follows the
-   user across devices.
+   **synced/Account-holder-scoped sealed** for parity with existing Account holder redaction
+   entries, so it follows the Account holder across devices.
 4. **Counters** — strictly local, or opt-in aggregate? Recommend **strictly local first**; only add
    aggregate transport behind explicit consent if the team needs cross-user signal.
 5. **Context-tier default selection** — surfaced-deselected (like Tier 2) or selected-by-default?
@@ -398,7 +404,7 @@ frontend/src/app/redaction/
 - **Unit**: severity map is exhaustive over `RedactionType`; new structured detectors have
   positive+negative fixtures; context-tier keyword windows tested per locale; health detector
   negative fixtures for medical homonyms; allowlist drops only the allowlisted `normalized` value
-  and only for the user scope.
+  and only for the Account scope.
 - **Worker**: candidate-shape parity with the synchronous engine; NLP not loaded when disabled;
   worker-error → synchronous fallback (asserted to never send raw); large-paste responsiveness.
 - **Corpus/scoring**: scorer precision/recall correctness on a known mini-corpus; CI gate fails on a
@@ -427,15 +433,15 @@ and chunking (Phase 5) are refinements once the core is proven.
 
 ## 17. Risks and mitigations (delta from v1 §21)
 
-| Risk                                                        | Impact | Likelihood | Mitigation                                                                    |
-| ----------------------------------------------------------- | ------ | ---------- | ----------------------------------------------------------------------------- |
-| Tier 2 NLP floods preview with false positives              | Medium | High       | Off by default; surfaced-deselected; separate lower CI threshold; corpus.     |
-| Context tier promotes ordinary numbers (dates, order ids)   | Medium | Medium     | Keyword windows + negative fixtures; surfaced-deselected until corpus proves. |
-| High-severity confirm reintroduces friction users hate      | Medium | Medium     | Only on **deselected** high-severity; default all-selected send never gated.  |
-| Worker adds complexity / init failure sends raw content     | High   | Low        | Fail safe to synchronous Tier 1; explicit no-fail-open test.                  |
-| `compromise` bundle cost paid by users who never enable NLP | Low    | Medium     | Lazy-import inside worker; bundle assertion that it's absent when disabled.   |
-| Corpus contains real PII                                    | High   | Low        | Synthetic/curated only; review gate; zero-real-data acceptance criterion.     |
-| Counters leak values                                        | High   | Low        | Counts-only by construction; reviewed + tested no-value assertion.            |
+| Risk                                                                  | Impact | Likelihood | Mitigation                                                                    |
+| --------------------------------------------------------------------- | ------ | ---------- | ----------------------------------------------------------------------------- |
+| Tier 2 NLP floods preview with false positives                        | Medium | High       | Off by default; surfaced-deselected; separate lower CI threshold; corpus.     |
+| Context tier promotes ordinary numbers (dates, order ids)             | Medium | Medium     | Keyword windows + negative fixtures; surfaced-deselected until corpus proves. |
+| High-severity confirm reintroduces friction users hate                | Medium | Medium     | Only on **deselected** high-severity; default all-selected send never gated.  |
+| Worker adds complexity / init failure sends raw content               | High   | Low        | Fail safe to synchronous Tier 1; explicit no-fail-open test.                  |
+| `compromise` bundle cost paid by Account holders who never enable NLP | Low    | Medium     | Lazy-import inside worker; bundle assertion that it's absent when disabled.   |
+| Corpus contains real PII                                              | High   | Low        | Synthetic/curated only; review gate; zero-real-data acceptance criterion.     |
+| Counters leak values                                                  | High   | Low        | Counts-only by construction; reviewed + tested no-value assertion.            |
 
 ## 18. Implementation checklist
 
@@ -470,7 +476,8 @@ Phase 4 — NLP worker
 
 Phase 5 — refinements
 
-- [x] User allowlist (seal-to-user-key), settings surface, applied post-detect/pre-preview.
+- [x] Account holder allowlist (seal-to-user-key), settings surface, applied
+      post-detect/pre-preview.
 - [ ] Chunked/incremental detection for large drafts + attachment text.
 - [ ] Privacy-safe local counters (counts only) + no-value test.
 

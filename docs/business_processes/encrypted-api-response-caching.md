@@ -39,8 +39,9 @@ no-op purger. Bunny maps each prefix to a `CDN-Tag` purge.
 
 ## Strict cases
 
-For participant removal, project-member removal, deletes, delete-all-chats, account deletion and key
-rotation: either prove purge succeeds or do not CDN-cache the affected resources.
+For Participant removal, project Participant removal, deletes, delete-all-chats, Account deletion
+and Conversation key rotation: either prove purge succeeds or do not CDN-cache the affected
+resources.
 
 If purge is missed, stale ciphertext can be served until TTL expiry.
 

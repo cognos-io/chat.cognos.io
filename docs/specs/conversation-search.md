@@ -10,10 +10,11 @@ V1 should be **client-side, encrypted-at-rest, and lazy**.
 
 - Keep the backend ciphertext-only. No plaintext message search index on the server.
 - Index chat **titles** as soon as conversations decrypt.
-- Index **recent messages** only after the user searches or the browser is idle.
+- Index **recent messages** only after the Account holder searches or the browser is idle.
 - Cache decrypted search text **in memory only** for V1.
 - Use Orama BM25 ranking, not substring filtering.
-- Stem with the **user's selected UI language**; one stemmer per index, rebuilt on locale change.
+- Stem with the **Account holder's selected UI language**; one stemmer per index, rebuilt on locale
+  change.
 - Do not implement embeddings or semantic search here.
 
 This spec's design decisions are settled. See [§16 Resolved decisions](#16-resolved-decisions) for
@@ -22,12 +23,12 @@ the log; the remaining genuine unknowns live in [§15 Open questions](#15-open-q
 ## 1. Why change it
 
 Today the sidebar search is a case-insensitive `title.includes(query)` filter in
-`ConversationService`. That is fast, but it misses the real user need:
+`ConversationService`. That is fast, but it misses the real Account holder need:
 
 > “I remember we talked about the lease clause, but I do not remember the chat title.”
 
-Orama gives us a local search engine in the browser, so the user can search decrypted data without
-sending plaintext back to the API.
+Orama gives us a local search engine in the browser, so the Account holder can search decrypted data
+without sending plaintext back to the API.
 
 ## 2. Current state
 
@@ -106,7 +107,7 @@ Include:
 - standalone conversations;
 - loaded project conversations.
 
-Do not require the user to expand a project before its loaded chats can match.
+Do not require the Account holder to expand a project before its loaded chats can match.
 
 ### 6.3 Loading states
 
@@ -150,8 +151,8 @@ One Orama document per conversation:
 The decrypted message (`MessageData` in `frontend/src/app/interfaces/message.ts`) carries
 `content`, an optional `reasoning`, a role, and a tombstone flag. The indexing rule is precise:
 
-- Index the decrypted `content` only, for both user and assistant messages.
-- **Exclude `reasoning`** — it is not user-authored and is a non-goal (§5).
+- Index the decrypted `content` only, for both Account holder and assistant messages.
+- **Exclude `reasoning`** — it is not Account holder-authored and is a non-goal (§5).
 - **Exclude tombstoned/soft-deleted messages** — their `content` is `null` once cleared, so they
   drop out naturally; never index the role/timestamp scaffold that remains.
 - Join the surviving `content` strings newest-first, capped per §9.2.
@@ -164,7 +165,7 @@ Do not include:
 - reasoning text;
 - deleted-message content;
 - raw encrypted blobs;
-- user ids, emails, billing data, or participant metadata.
+- Account holder ids, emails, billing data, or Participant metadata.
 
 Suggested Orama schema:
 
@@ -204,7 +205,7 @@ search(db, {
 
 Rationale:
 
-- Titles are short and user-authored, so title hits should rank highest.
+- Titles are short and Account holder-authored, so title hits should rank highest.
 - Recent message text can be long, so title needs an explicit boost.
 - Keep Orama BM25 defaults until tests or real usage show a problem.
 - **`threshold: 0`** returns only documents that contain **all** the query terms. In Orama,
@@ -221,7 +222,7 @@ Tune only with tests. Do not tweak BM25 parameters by feel.
 ### 8.1 Tokenization and language (i18n)
 
 The decrypted corpus is multilingual (en/de/fr/es/pt/it). Orama uses **one stemmer per index**, so
-we bind the index language to the user's **active Transloco UI locale**:
+we bind the index language to the Account holder's **active Transloco UI locale**:
 
 - On index build, **lazy-import the active locale's stemmer** from `@orama/stemmers` via a dynamic
   `import()` and pass it through the tokenizer component with `stemming: true`. Only one stemmer is
@@ -232,8 +233,9 @@ we bind the index language to the user's **active Transloco UI locale**:
   conversation-list change (§9.1). Locale switches are rare.
 - All six supported locales exist in Orama's stemmer set, so there is no unsupported-language
   branch.
-- Assumption: a user mostly writes in their UI language. When content language ≠ UI language the
-  stemmer is suboptimal, but `tolerance: 1` keeps recall acceptable rather than dropping hits.
+- Assumption: an Account holder mostly writes in their UI language. When content language ≠ UI
+  language the stemmer is suboptimal, but `tolerance: 1` keeps recall acceptable rather than
+  dropping hits.
 - **Out of scope:** CJK and other non-space-delimited scripts. The min-query-length rule (§9) and
   default tokenizer assume Latin-script, space-delimited text.
 
@@ -246,8 +248,8 @@ Before any search or hydration runs, the raw input is gated:
 - **Minimum 3 characters** (trimmed). Shorter input shows the normal Projects/Pinned/Recent
   navigation and triggers no hydration.
 - **Debounce 400 ms**, then `distinctUntilChanged`, so hydration never fires per keystroke.
-- Clearing the query takes an immediate reset path — the user should not wait 400 ms to get their
-  navigation back.
+- Clearing the query takes an immediate reset path — the Account holder should not wait 400 ms to
+  get their navigation back.
 
 See §12 for how this maps onto the RxJS pipeline.
 
@@ -266,7 +268,7 @@ When a gated query (§9.0) arrives:
 1. Search the title-only / partially hydrated index immediately.
 2. **Eagerly load project conversations** if they are not already in the store. Project chats are
    normally fetched lazily as projects expand; on the first search of a session we fetch them up
-   front so search covers them. This is acceptable because users search infrequently.
+   front so search covers them. This is acceptable because Account holders search infrequently.
 3. Pick conversations that are not hydrated yet, newest first.
 4. Fetch page 1 of messages for those conversations. Page 1 is the newest 100 messages — the backend
    sorts by `created` descending and caps `page_size` at 100
@@ -323,7 +325,7 @@ Invalidate when:
 - a message is soft-deleted or hard-deleted in that conversation;
 - the conversation is deleted;
 - the vault locks;
-- the user logs out or switches account.
+- the Account holder logs out or switches account.
 
 Do **not** persist plaintext search text to localStorage or IndexedDB in V1. If persistent cache is
 needed later, it must be encrypted with a key unavailable while the vault is locked and documented

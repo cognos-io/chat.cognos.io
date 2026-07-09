@@ -1,5 +1,5 @@
 ---
-description: User and assistant message content is encrypted with the conversation's current public key before it ever touches durable storage
+description: Message content (user and assistant roles) is encrypted with the Conversation's current public key before it ever touches durable storage
 name: message-encryption
 ---
 

@@ -10,7 +10,7 @@ authentication and can later complete MFA sessions or become a first factor if
 we explicitly choose that product behaviour.
 
 A passkey stores a **public credential** on the server. The private key stays in
-the user's authenticator (iCloud Keychain, 1Password, hardware key, etc.).
+the Account holder's authenticator (iCloud Keychain, 1Password, hardware key, etc.).
 
 ```mermaid
 sequenceDiagram
@@ -32,8 +32,8 @@ Rules:
 - Origin and RP ID must match the Cognos app host.
 - Deleted or disabled credentials cannot authenticate.
 - Credential IDs and assertions are auth material; do not log them.
-- Passkeys do **not** unlock encrypted chats. The Account Key remains the data
-  recovery/unlock secret.
+- Passkeys do **not** unlock encrypted Conversations. The Account Key remains the
+  data recovery/Unlock secret.
 
-Fresh-device flow is therefore still: authenticate the account, then unlock the
-vault with the Account Key.
+Fresh-device flow is therefore still: authenticate the Account, then Unlock the
+Vault with the Account Key.

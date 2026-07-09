@@ -38,7 +38,7 @@ Properties this gives us:
   only, never URLs, titles, or query text.
 - **EU residency is enforced at sync time, not request time** — a model that
   isn't EU-hosted can never present the capability in the first place.
-- **Users click real URLs, not Google proxies** — Vertex grounding-redirect
+- **Account holders click real URLs, not Google proxies** — Vertex grounding-redirect
   links are resolved server-side before streaming and sealing; see
   [grounding-redirect-resolution](./grounding-redirect-resolution.md) for the
   full rule and its compliance constraints.

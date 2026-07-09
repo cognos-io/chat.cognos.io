@@ -6,13 +6,13 @@ many requests** the first load makes, not about caching repeat reads (see
 [encrypted-api-response-caching](./encrypted-api-response-caching.md)).
 
 > **Implementation note (Fix 1 done).** `GET /api/v1/conversations` now embeds the requesting
-> user's current-generation `public_key`, `public_key_signature`, and `wrapped_secret_key` per
-> conversation; the client decrypts from the list with zero per-conversation key requests and falls
-> back to the key endpoints when a conversation omits them. Authorisation is pinned by
+> Account holder's current-generation `public_key`, `public_key_signature`, and `wrapped_secret_key`
+> per conversation; the client decrypts from the list with zero per-conversation key requests and
+> falls back to the key endpoints when a conversation omits them. Authorisation is pinned by
 > `backend/cmd/api/conversation_list_keys_test.go` (cross-user denial, per-caller scoping,
-> current-generation-only, stale-key omission, outsider isolation) and the
-> `conversation-keys-api` Playwright e2e. The raw key collections remain fully locked
-> (`TestChatCollectionRulesAreLocked`), so the handler is the only read path.
+> current-generation-only, stale-key omission, outsider isolation) and the `conversation-keys-api`
+> Playwright e2e. The raw key collections remain fully locked (`TestChatCollectionRulesAreLocked`),
+> so the handler is the only read path.
 
 ## 0. Read this first
 
@@ -28,9 +28,9 @@ preflights. The fix order, by leverage:
 
 Hard rule:
 
-> Embedding keys must not widen access. The list returns only the **requesting user's** wrapped
-> secret key, at the conversation's **current** `key_version`, and only ciphertext/wrapped material
-> the same user could already fetch one-by-one.
+> Embedding keys must not widen access. The list returns only the **requesting Account holder's**
+> wrapped secret key, at the conversation's **current** `key_version`, and only ciphertext/wrapped
+> material the same Account holder could already fetch one-by-one.
 
 ## 1. The problem
 
@@ -70,7 +70,7 @@ decrypt without a follow-up request:
   // NEW — current-generation key material, scoped to the requester:
   "public_key": "…",
   "public_key_signature": "…",
-  "wrapped_secret_key": "…"          // wrapped for THIS user only
+  "wrapped_secret_key": "…"          // wrapped for THIS Account holder only
 }
 ```
 
@@ -81,8 +81,8 @@ This mirrors the project-conversation list, which already returns `public_key`,
 
 - Join `conversation_public_keys` and `conversation_secret_keys` when building the list.
 - Filter both to the conversation's **current** `key_version` and the secret key to the
-  **requesting user** — the exact predicate the `key-version-read-gate` business process already
-  enforces on the standalone key endpoints (`ownedConversationSecretKeyRecord`,
+  **requesting Account holder** — the exact predicate the `key-version-read-gate` business process
+  already enforces on the standalone key endpoints (`ownedConversationSecretKeyRecord`,
   `ConversationPublicKey` sort by `-key_version LIMIT 1`). Reuse it; do not re-derive.
 - Omit a conversation's key fields if its current-generation key material is missing rather than
   failing the whole list (the client falls back to the per-conversation endpoints for that one).
@@ -90,8 +90,8 @@ This mirrors the project-conversation list, which already returns `public_key`,
 ### 2.3 Frontend
 
 - `fetchConversation` decrypts straight from the list payload: verify `public_key_signature`, unwrap
-  `wrapped_secret_key` with the user shared key, decrypt `data` — no `getConversationPublicKey` /
-  `getConversationSecretKey` calls on the happy path.
+  `wrapped_secret_key` with the Account holder's shared key, decrypt `data` — no
+  `getConversationPublicKey` / `getConversationSecretKey` calls on the happy path.
 - Keep the per-conversation key endpoints for writes, rotation, and the missing-key fallback above.
 - The decrypt path already exists for project conversations; share it where practical.
 
@@ -139,13 +139,14 @@ design.
 
 ## 6. Security rules
 
-- The list returns only the requesting user's wrapped secret key — never another participant's.
+- The list returns only the requesting Account holder's wrapped secret key — never another
+  Participant's.
 - Only the **current** `key_version` key material is embedded; stale generations stay invisible, per
   `key-version-read-gate`.
 - No plaintext: the embedded fields are the same ciphertext/wrapped material the per-conversation
-  endpoints already return to this user.
-- Embedding must not change authorisation: the list already returns only conversations the user can
-  access; joining keys adds no new rows.
+  endpoints already return to this Account holder.
+- Embedding must not change authorisation: the list already returns only Conversations the Account
+  holder can access; joining keys adds no new rows.
 
 ## 7. Test plan
 
@@ -153,9 +154,10 @@ Write tests before implementation. This change touches the auth surface, so per
 `docs/api-permissions.md`: authorize, register in the auth-surface guardrail, add a cross-user
 denial test.
 
-- The list embeds `public_key`, `public_key_signature`, and the requesting user's
+- The list embeds `public_key`, `public_key_signature`, and the requesting Account holder's
   `wrapped_secret_key` for each accessible conversation.
-- A second user's wrapped secret key never appears in the first user's list (cross-user denial).
+- A second Account holder's wrapped secret key never appears in the first Account holder's list
+  (cross-Account-holder denial).
 - Only current-generation key material is embedded; after rotation the list carries the new
   generation, not the old.
 - A conversation missing current-generation key material omits its key fields rather than failing

@@ -112,7 +112,7 @@ This checklist is the living execution tracker for the rework.
     - [x] loading resets on register failure
     - [x] authenticated-user redirect back to chat is covered
 - [x] auth service hot-path unit coverage
-    - [x] rejected login transitions into the error state with user-facing alerting
+    - [x] rejected login transitions into the error state with Account holder-facing alerting
     - [x] valid auth-store updates populate success state and remembered email
     - [x] stale-session refresh redirects to logout on 401
     - [x] register chains account creation into sign-in with matching password confirm
@@ -122,7 +122,7 @@ This checklist is the living execution tracker for the rework.
     - [x] unlock keys round-trip through local storage plus server-held wrap keys
     - [x] failed wrap-key fetches invalidate stale local blobs
     - [x] logout-style cleanup removes all trusted-unlock blobs even on server delete failure
-- [x] user preferences hot-path unit coverage
+- [x] Account holder preferences hot-path unit coverage
     - [x] encrypted preferences hydrate after the key pair becomes available
     - [x] pin conversation deduplicates IDs before persisting
     - [x] unpin conversation removes IDs from the persisted payload
@@ -134,7 +134,7 @@ This checklist is the living execution tracker for the rework.
     - [x] missing record mac is rejected before secret-key decryption
     - [x] mismatched record mac is rejected before secret-key decryption
 - [x] high-level browser E2E baseline is green
-    - [x] authenticated user loads models from backend
+    - [x] authenticated Account holder loads models from backend
     - [x] auth route-link regression re-verified green after the login-page fix
 
 ### Verification
@@ -200,8 +200,9 @@ This checklist is the living execution tracker for the rework.
         on every conversation API response defaulting legacy 0/NULL rows to 1)
 - [ ] `backend/internal/store/messages.go`
     - [ ] message persistence helpers for the new schema
-- [x] `backend/internal/participants/repo.go` (lives under `participants` rather than `store/`,
-    same purpose: single source of truth for "is this user allowed to read this conversation")
+- [x] `backend/internal/participants/repo.go` (lives under `participants` rather than `store/`, same
+      purpose: single source of truth for "is this Account holder allowed to read this
+      Conversation")
     - [x] `IsActive(conversationID, userID)` with `removed_at IS NULL` filter
     - [x] `Add(conversationID, userID, role)` with duplicate-rejection via `ErrAlreadyParticipant`
     - [x] `ListActive(conversationID)` returns Membership rows ordered by added_at for the
@@ -223,9 +224,9 @@ This checklist is the living execution tracker for the rework.
         gated on participant access via `ownedConversationRecord`)
 - [x] `backend/internal/handler/complete.go`
     - [x] validate model ID
-    - [x] validate user tier eligibility
+    - [x] validate Account holder tier eligibility
     - [x] validate conversation access (participants.Repo gate before any gateway call)
-    - [x] persist user + assistant messages with preserved threading/expiry behaviour
+    - [x] persist Account holder + assistant messages with preserved threading/expiry behaviour
 
 ### Crypto files
 
@@ -250,7 +251,7 @@ This checklist is the living execution tracker for the rework.
 ### Existing backend files to update
 
 - [x] `backend/internal/auth/repo.go`
-    - [x] support user public-key lookup for participant key wrapping
+    - [x] support Account holder public-key lookup for Participant key wrapping
         (`UserPublicKey(userID)`; `ConversationPublicKey(conversationID)`
         returns the current generation row after rotation)
     - [x] direct repo coverage in `cmd/api/key_pair_repo_test.go`:
@@ -311,7 +312,7 @@ This checklist is the living execution tracker for the rework.
 - [ ] `backend/internal/billing/service.go`
     - [x] plan types
     - [x] affordability check
-    - [x] 20% margin on user-facing cost
+    - [x] 20% margin on Account holder-facing cost
     - [x] upper-bound preflight estimate for trial gate
     - [x] plan-aware usage ledger entry builder
     - [x] persistence-backed deduction/record logic
@@ -321,7 +322,7 @@ This checklist is the living execution tracker for the rework.
     - [x] PocketBase-backed usage ledger writes
     - [x] transactional trial balance update + usage row persistence
     - [x] legacy `flat_rate` → `unlimited` alias on read
-    - [x] idempotent trial-state bootstrap for users missing billing rows
+    - [x] idempotent trial-state bootstrap for Account holders missing billing rows
 - [x] `backend/internal/billing/bootstrap.go`
     - [x] default trial-state seed builder
 - [ ] `backend/internal/billing/fx_rate.go`
@@ -334,7 +335,7 @@ This checklist is the living execution tracker for the rework.
 - [ ] `backend/internal/analytics/event.go`
     - [x] usage event shape
     - [x] input/output/cache/provider-cost fields
-    - [x] exclude plaintext content and direct user identifiers
+    - [x] exclude plaintext content and direct Account holder identifiers
 - [x] `backend/internal/analytics/emitter.go`
     - [x] emitter seam / recording emitter
     - [x] buffered event writing
@@ -357,14 +358,14 @@ This checklist is the living execution tracker for the rework.
 
 - [ ] `backend/internal/handler/complete.go`
     - [x] support structured billing-restriction handler seam in tests
-    - [x] allow PAYG users through the preflight access policy
+    - [x] allow PAYG Account holders through the preflight access policy
     - [x] add preflight affordability check for trial / inactive contract
     - [x] record usage via ledger repo seam after successful completions
     - [x] emit analytics via emitter seam after successful completions
 - [ ] `backend/cmd/api/main.go`
     - [x] wire billing/emitter services
     - [x] default to PocketBase billing repos when test seams are not provided
-    - [x] auto-provision trial billing state for newly created users
+    - [x] auto-provision trial billing state for newly created Account holders
     - [x] default to BufferedEmitter + LoggerSink when no UsageEmitter seam is provided
 
 ### Manual-operations note
@@ -378,10 +379,10 @@ This checklist is the living execution tracker for the rework.
 
 - [x] trial/inactive affordability gate test passes
 - [x] PAYG/unlimited/trial usage recording path passes without blocking completions
-- [x] analytics payload excludes plaintext content and direct user identifiers
+- [x] analytics payload excludes plaintext content and direct Account holder identifiers
 - [x] input/output/cache/provider-cost fields are recorded as supported by the active provider
-- [x] newly created users receive a trial billing state automatically
-- [x] configured trial seed is applied during user billing bootstrap
+- [x] newly created Account holders receive a trial billing state automatically
+- [x] configured trial seed is applied during Account holder billing bootstrap
 
 ---
 
@@ -419,7 +420,7 @@ This checklist is the living execution tracker for the rework.
         receives the current generation without needing to track it
 - [x] `frontend/src/app/services/crypto.service.ts`
     - [x] `openSealedBox` decrypts with the receiver's full conversation
-        keypair (conversation-scoped, not user-scoped); covered by
+        keypair (Conversation-scoped, not Account holder-scoped); covered by
         `crypto.service.spec.ts` libsodium-shape round trip plus
         wrong-recipient / tampered-ciphertext rejection
 
@@ -437,9 +438,9 @@ This checklist is the living execution tracker for the rework.
 
 ### Required high-level scenarios
 
-- [x] authenticated user loads models from backend
-- [x] authenticated user creates or opens a conversation
-- [x] authenticated user sends a message and receives a response
+- [x] authenticated Account holder loads models from backend
+- [x] authenticated Account holder creates or opens a Conversation
+- [x] authenticated Account holder sends a message and receives a response
 - [x] conversation history reload still works
 - [x] trial/inactive billing restriction blocks sending
 - [x] unavailable model cannot be selected/sent
@@ -450,7 +451,7 @@ This checklist is the living execution tracker for the rework.
     typed shape, no provider-routing leak (`provider_model_id` /
     `base_url` / `api_key`), `preferred_model_id` omit-on-empty contract.
 - [x] billing + transactions API (`e2e/tests/billing-api.spec.ts`): auth
-    gate on both endpoints, newly-registered users always land on a known
+    gate on both endpoints, newly-registered Account holders always land on a known
     plan, CHF amounts (no Rappen leaks via field names or values), and
     per-user ledger scoping enforced across two live users.
 - [x] conversations + messages CRUD API (`e2e/tests/conversations-api.spec.ts`):
@@ -461,8 +462,8 @@ This checklist is the living execution tracker for the rework.
     (`e2e/tests/completions-api.spec.ts`): auth gate, full request-shape
     validation, non-persisted happy path drives the mock AI provider end-to-end,
     persisted happy path round-trips through the encryption envelope, and the
-    non-participant gate blocks message injection into another user's conversation.
-- [x] user-state API (`e2e/tests/user-state-api.spec.ts`):
+    non-Participant gate blocks message injection into another Account holder's Conversation.
+- [x] Account holder-state API (`e2e/tests/user-state-api.spec.ts`):
     /user-key-pair, /user-preferences, /vault-session all pinned for auth gate,
     POST/GET round-trip, owner-only PATCH, cross-user reject, and the
     vault-session PUT-as-upsert contract with strict 44-char wrap_key length.

@@ -7,15 +7,15 @@ A persona is not an autonomous agent. It is the selected system prompt for a com
 ## Goals
 
 - Let Cognos ship useful default personas.
-- Let users create private custom personas.
-- Keep custom persona contents encrypted at rest.
-- Let users switch persona at any point in a conversation.
+- Let Account holders create private Custom Personas.
+- Keep Custom Persona contents encrypted at rest.
+- Let Account holders switch Custom Persona at any point in a Conversation.
 - Keep the backend simple: it receives a prompt, uses it once, and does not store it.
 
 ## Non-goals
 
-- Tool use or actions on the user's behalf.
-- Sharing personas between users.
+- Tool use or actions on the Account holder's behalf.
+- Sharing Custom Personas between Account holders.
 - Project-scoped personas. That comes later.
 - Server-side editing or inspection of custom persona contents.
 
@@ -45,9 +45,9 @@ Answer directly. Use plain language...
 
 The markdown body is the system prompt.
 
-### User personas
+### Custom Personas
 
-User personas are private to one user.
+Custom Personas are private to one Account holder.
 
 The browser encrypts the full persona payload before sending it to the server:
 
@@ -122,8 +122,8 @@ Backend rules:
 
 Personas are selected per completion, not fixed per conversation.
 
-Users can change persona at any time. Each assistant message stores the `persona_id` used for that
-response inside the encrypted message metadata.
+Account holders can change Custom Persona at any time. Each assistant message stores the
+`persona_id` used for that response inside the encrypted message metadata.
 
 ## Security and privacy
 
@@ -134,7 +134,7 @@ Rules:
 - encrypt custom personas before storage
 - never store plaintext persona names, descriptions, or prompts
 - never log custom persona plaintext
-- only the owning user can list, create, update, or delete their persona records
+- only the owning Account holder can list, create, update, or delete their Custom Persona records
 - the backend may hold `system_prompt` in memory only long enough to call the model provider
 
 ## Future: project personas
@@ -143,9 +143,9 @@ Project personas should reuse the same encrypted payload shape.
 
 Differences:
 
-- scope is project, not user
+- scope is project, not Account holder
 - payload is encrypted with the project key
-- any project member with the project key can decrypt and use it
+- any Participant with the project key can decrypt and use it
 - access rules must follow project membership
 
 Do not add project personas until projects exist.

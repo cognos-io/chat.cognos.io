@@ -74,16 +74,17 @@ pricing, and the public-share / export review.
 
 ## 1. Problem Statement
 
-Users want to understand why an AI response was produced and whether they can trust it. Today Cognos
-shows only the final assistant answer plus usage/cost metadata. When a model or provider returns a
-reasoning summary, thinking block, or reasoning-token usage count, Cognos drops that information.
+Account holders want to understand why an AI response was produced and whether they can trust it.
+Today Cognos shows only the final assistant answer plus usage/cost metadata. When a model or
+provider returns a reasoning summary, thinking block, or reasoning-token usage count, Cognos drops
+that information.
 
 Cost of not solving it:
 
-- users cannot inspect available reasoning context inside Cognos;
+- Account holders cannot inspect available reasoning context inside Cognos;
 - model differences feel opaque;
 - reasoning-capable models provide less visible value;
-- users may wrongly assume Cognos hides useful transparency metadata.
+- Account holders may wrongly assume Cognos hides useful transparency metadata.
 
 Trust problem to avoid: exposing raw or implied hidden chain-of-thought as if it were a faithful
 record of model cognition. The UI must be clear that reasoning artefacts are model-generated output
@@ -91,13 +92,13 @@ and may be incomplete or wrong.
 
 ## 2. Target Audience
 
-Primary users:
+Primary Account holders:
 
-- Cognos chat users who want more transparency into model answers.
-- Power users comparing reasoning-capable models.
-- Privacy-conscious users who want transparency without plaintext persistence.
+- Account holders who want more transparency into model answers.
+- Account holders comparing reasoning-capable models.
+- Privacy-conscious Account holders who want transparency without plaintext persistence.
 
-Secondary users:
+Secondary:
 
 - Operators maintaining the model catalogue and provider adapters.
 - Support/debugging staff who need non-content usage metadata such as reasoning token counts.
@@ -137,8 +138,8 @@ Secondary users:
 
 ### 6.1 Reasoning display panel
 
-- **User Story:** As a user, I want to open a reasoning panel on answers that include provider
-  reasoning so that I can inspect extra context without cluttering the chat.
+- **User Story:** As an Account holder, I want to open a reasoning panel on answers that include
+  provider reasoning so that I can inspect extra context without cluttering the chat.
 - **Priority:** P0
 - **Acceptance Criteria:**
     - Messages with reasoning show a collapsed, accessible “Reasoning” disclosure.
@@ -151,8 +152,8 @@ Secondary users:
 
 ### 6.2 Streaming reasoning events
 
-- **User Story:** As a user, I want reasoning to appear while a reasoning-capable response streams
-  so that the interface feels transparent during longer generations.
+- **User Story:** As an Account holder, I want reasoning to appear while a reasoning-capable
+  response streams so that the interface feels transparent during longer generations.
 - **Priority:** P0 if provider streaming exposes reasoning; otherwise P1.
 - **Acceptance Criteria:**
     - SSE supports a `reasoning_delta` event, separate from answer deltas.
@@ -171,7 +172,7 @@ Terminal `complete` responses include reasoning only when present.
 
 ### 6.3 Encrypted reasoning persistence
 
-- **User Story:** As a privacy-conscious user, I want reasoning to receive the same
+- **User Story:** As a privacy-conscious Account holder, I want reasoning to receive the same
   encrypted-at-rest treatment as assistant answers so that transparency does not weaken privacy.
 - **Priority:** P0
 - **Acceptance Criteria:**
@@ -213,8 +214,8 @@ Suggested decrypted message payload addition:
 
 ### 6.5 Model catalogue capability
 
-- **User Story:** As a user, I want to know which models may show reasoning so that model selection
-  is less opaque.
+- **User Story:** As an Account holder, I want to know which models may show reasoning so that model
+  selection is less opaque.
 - **Priority:** P0
 - **Acceptance Criteria:**
     - The backend model catalogue exposes a reasoning capability for every active model.
@@ -229,8 +230,8 @@ Suggested decrypted message payload addition:
 
 ### 6.6 Usage and billing metadata
 
-- **User Story:** As a user, I want reasoning token counts included in usage information when
-  available so that cost feels understandable.
+- **User Story:** As an Account holder, I want reasoning token counts included in usage information
+  when available so that cost feels understandable.
 - **Priority:** P1
 - **Acceptance Criteria:**
     - API usage responses include `reasoning_tokens`, defaulting to `0`.

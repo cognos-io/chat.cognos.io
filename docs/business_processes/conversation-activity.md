@@ -27,6 +27,6 @@ this conversation changed".
 
 ## Rule for new code
 
-If a feature changes what the user sees in the conversation timeline, call the
-conversation activity bump helper with a metadata-only reason. Never pass message
+If a feature changes what the Account holder sees in the Conversation timeline, call
+the conversation activity bump helper with a metadata-only reason. Never pass message
 content, prompts, titles, emails, or decrypted data to that helper.

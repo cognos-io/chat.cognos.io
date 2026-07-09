@@ -56,7 +56,7 @@ Some models only reason when asked, and at a chosen intensity. Each model
 declares its accepted tiers in the catalogue (`reasoning_efforts`, e.g.
 `["off","low","medium","high"]`, plus a `default_reasoning_effort`). The
 composer shows a gauge selector **only for models that declare tiers**,
-defaulting to the model's default and remembering the user's per-model choice in
+defaulting to the Model's default and remembering the Account holder's per-model choice in
 their encrypted preferences. The chosen tier rides the completion as
 `reasoning_effort`; the handler forwards it only if the model declares it
 (otherwise `400`), and Bifrost maps it to the provider (`off` → reasoning

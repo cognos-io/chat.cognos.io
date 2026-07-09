@@ -9,10 +9,11 @@ The sidebar must decrypt every conversation's title to render it, which needs th
 keypair. The **rule**: the keys travel **with the list**, not as follow-up requests.
 
 `GET /api/v1/conversations` returns, per conversation, the encrypted `data` **and** the current
-key material the requesting user needs to decrypt it:
+key material the requesting Account holder needs to decrypt it:
 
 - `public_key` + `public_key_signature` (current generation);
-- `wrapped_secret_key` wrapped for **this user only**, at the conversation's current `key_version`.
+- `wrapped_secret_key` wrapped for **this Account only**, at the Conversation's current
+  `key_version`.
 
 This mirrors the project-conversation list, which already embeds
 `wrapped_conversation_secret_key`. The standalone per-conversation `GET …/public-key` and
@@ -24,17 +25,18 @@ secret-key GET, and a CORS preflight each). One batched read is the invariant.
 
 ## Rules
 
-- The list embeds only the **requesting user's** wrapped secret key — never another participant's.
-- Only the conversation's **current** `key_version` material is embedded (see
+- The list embeds only the **requesting Account's** wrapped secret key — never another
+  Participant's.
+- Only the Conversation's **current** `key_version` material is embedded (see
   [key-version-read-gate](./key-version-read-gate.md)); stale generations stay invisible.
-- A conversation missing current-generation keys omits its key fields; the client falls back to the
+- A Conversation missing current-generation keys omits its key fields; the client falls back to the
   per-conversation endpoints for that one rather than failing the whole list.
-- Embedding adds no rows the user could not already read; it must not widen access.
+- Embedding adds no rows the Account holder could not already read; it must not widen access.
 
 ```mermaid
 flowchart LR
-  Q[GET /api/v1/conversations] --> A[authorise: user's conversations only]
-  A --> J[join current-gen public_key + this user's wrapped secret_key]
+  Q[GET /api/v1/conversations] --> A[authorise: Account's Conversations only]
+  A --> J[join current-gen public_key + this Account's wrapped secret_key]
   J --> R[list: data + key material per conversation]
   R --> D[client verifies sig, unwraps key, decrypts title<br/>no follow-up key requests]
 ```

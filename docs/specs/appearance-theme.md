@@ -13,17 +13,17 @@ Implementation notes:
 - `users.preferred_theme` is added by
   `backend/db/migrations/1760000065_users_preferred_theme.go`.
 
-Cognos already has semantic light and dark theme tokens in
-`packages/ui/styles/themes.css`. This spec defines how the frontend exposes those themes to users,
-how `system` resolves, and how the active theme is applied without creating a second colour system.
+Cognos already has semantic light and dark theme tokens in `packages/ui/styles/themes.css`. This
+spec defines how the frontend exposes those themes to Account holders, how `system` resolves, and
+how the active theme is applied without creating a second colour system.
 
 ## Goals
 
 - Add an Appearance setting with exactly three choices: **Light**, **Dark**, and **System**.
-- Default new users and new devices to **System**.
+- Default new Account holders and new devices to **System**.
 - Apply the resolved theme automatically from the device preference when **System** is selected.
 - React to runtime device colour-scheme changes while **System** is selected.
-- Persist the user's chosen preference across reloads and signed-in devices.
+- Persist the Account holder's chosen preference across reloads and signed-in devices.
 - Keep UI colours sourced from existing `--cog-*` design tokens.
 
 ## Non-goals
@@ -35,7 +35,7 @@ how `system` resolves, and how the active theme is applied without creating a se
 
 ## Definitions
 
-Theme preference is what the user chooses:
+Theme preference is what the Account holder chooses:
 
 ```ts
 type ThemePreference = 'light' | 'dark' | 'system';
@@ -152,8 +152,8 @@ Use two layers, matching the language preference pattern:
 
 1. **Device-local:** `localStorage['cognos:theme']` stores the selected preference
    (`light`, `dark`, or `system`) so the next page load can apply before Angular and before auth.
-2. **Signed-in account:** add `users.preferred_theme` as an optional plaintext user field with valid
-   values `light`, `dark`, `system`.
+2. **Signed-in account:** add `users.preferred_theme` as an optional plaintext Account holder field
+   with valid values `light`, `dark`, `system`.
 
 Theme preference is not sensitive. It is intentionally not stored in the encrypted
 `user_preferences` payload because the app needs it before the vault is unlocked and before any
@@ -161,12 +161,12 @@ user data is decrypted.
 
 Authenticated reconciliation:
 
-- If the signed-in user has a valid `preferred_theme`, it becomes authoritative and is mirrored to
-  `localStorage`.
-- If the signed-in user has no saved theme, capture the current local preference to
+- If the signed-in Account holder has a valid `preferred_theme`, it becomes authoritative and is
+  mirrored to `localStorage`.
+- If the signed-in Account holder has no saved theme, capture the current local preference to
   `users.preferred_theme` once.
 - If saving to the backend fails, keep the local theme active for the current session and retry only
-  on the next user-initiated change or auth reconciliation.
+  on the next Account holder-initiated change or auth reconciliation.
 
 ## Runtime service shape
 
@@ -227,9 +227,9 @@ Required coverage:
 
 ## Acceptance criteria
 
-- A user can choose Light, Dark, or System from settings.
-- The default preference for new users/devices is System.
+- An Account holder can choose Light, Dark, or System from settings.
+- The default preference for new Account holders/devices is System.
 - The active theme is applied before the first Angular-rendered screen.
 - The app updates live when the OS theme changes and the preference is System.
-- The preference survives reloads and follows the signed-in user to another device.
+- The preference survives reloads and follows the signed-in Account holder to another device.
 - No new hard-coded UI colours are introduced in frontend or ui-angular components.

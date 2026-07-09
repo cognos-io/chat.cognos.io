@@ -11,7 +11,7 @@ This is a chat-level action from the sidebar menu or conversation detail menu.
 It is **not** the same as editing/regenerating a message, which creates a
 branch inside the same conversation.
 
-**v1 scope (2026-06-24):** standalone conversations only, PII redaction copied.
+**v1 scope (2026-06-24):** standalone conversations only, Redaction copied.
 The action is **disabled/blocked** when the source has attachments or belongs
 to a project (both deferred — never copied partially). Copy is one synchronous,
 all-or-nothing request capped at 500 messages. Full detail and the deferred-work
@@ -20,7 +20,7 @@ list live in the [spec §0.0](../specs/conversation-copy.md).
 A duplicate is a new conversation with a new keypair. Because message rows are
 sealed to the source conversation public key, the browser must decrypt and
 re-encrypt every copied payload before the backend stores it. If the source has
-PII redaction, the browser also creates a fresh redaction keypair, copies the
+Redaction, the browser also creates a fresh redaction keypair, copies the
 same placeholder-token map, and re-encrypts each original value under the
 duplicate redaction key.
 
@@ -49,10 +49,10 @@ Rules:
 - Update encrypted binding fields too: copied message blobs must refer to the
   duplicate `conversation_id` and copied `parent_message_id`.
 - If the source is in a project, create the duplicate in the **same project**.
-- If the source is standalone, create only one participant on the duplicate:
-  the copying user as `Admin`.
-- Copy PII redaction mappings with a fresh duplicate redaction keypair when
-  the source has redaction material.
+- If the source is standalone, create only one Participant on the duplicate:
+  the copying Account holder as `Admin`.
+- Copy Redaction mappings with a fresh duplicate redaction key pair when
+  the source has Redaction material.
 - Never copy `conversation_public_shares`; the duplicate starts unshared.
 - Never send plaintext title, message, reasoning, redaction original, or
   attachment plaintext to the backend.
@@ -67,9 +67,9 @@ The duplicate conversation secret key is wrapped by the current project content
 key and stored in `project_conversation_keys`. A project `Viewer` can read but
 cannot duplicate, because duplicating creates project content.
 
-Public/share nuance: copying a publicly shared chat does **not** copy the public
-URL, token, share key, or wrapped share secret. Authenticated standalone
-participants are not copied either; the duplicate is private to the copier.
+Public share nuance: copying a Conversation with a Public share does **not** copy the
+Public share URL, token, share key, or wrapped share secret. Authenticated standalone
+Participants are not copied either; the duplicate is private to the copying Account holder.
 
 Failure rule: the duplicate write must be transactional. If ID validation, key
 creation, message graph validation, attachment copying, or redaction copying
@@ -77,8 +77,8 @@ fails, nothing is persisted. This avoids half-created conversations with missing
 keys, partial message trees, or missing PII maps.
 
 UX rule: duplicating may take time because encryption happens in the browser.
-Show a blocking loading state that tells the user to keep the tab open and not
-reload until the duplicate completes. All labels, warnings, toasts, and errors
+Show a blocking loading state that tells the Account holder to keep the tab open
+and not reload until the duplicate completes. All labels, warnings, toasts, and errors
 must be translated in English, German, French, Spanish, Portuguese, and Italian.
 
 See the full product/architecture spec:

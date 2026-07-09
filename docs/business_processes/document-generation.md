@@ -5,14 +5,14 @@ name: document-generation
 
 # Document Generation (client-side)
 
-Users can download any assistant message as a real Word document, PDF or
-Markdown file — and can ask the model for one ("write me a PDF brief"),
+Account holders can download any assistant message as a real Word document, PDF or
+Markdown file — and can ask the Model for one ("write me a PDF brief"),
 which answers with a **document card** in the reply. Unlike competitors
 (server-side Python sandboxes), Cognos renders the file **in the browser**,
 from the already-decrypted message content, inside a Web Worker.
 
 The rule: **a document is a render, not an upload.** File bytes are derived
-on demand from the encrypted message source and go straight to the user's
+on demand from the encrypted message source and go straight to the Account holder's
 disk. Nothing new is stored; nothing document-shaped transits the network.
 
 Two entry points, one render path:
@@ -53,7 +53,7 @@ Properties this gives us:
 - **No identifying metadata.** Generated files carry creator/producer
   `Cognos` and day-rounded timestamps only (docx pack-time timestamps are
   rewritten inside the zip — the library offers no override). Anyone the
-  user sends the file to learns nothing about them.
+  Account holder sends the file to learns nothing about them.
 - **Renderer performs zero network I/O.** Libraries are lazy-loaded
   same-origin chunks; remote markdown image URLs are dropped (alt text
   kept); links are sanitised to `http(s)`. A generated file can never
@@ -69,7 +69,7 @@ Properties this gives us:
 - **Opt-out means byte-identical.** Turning "Create documents" off removes
   the contract from the system prompt entirely — the wire payload matches a
   pre-feature client, asserted in e2e. Nothing document-shaped leaks when
-  the user says no.
+  the Account holder opts out.
 - **Citation anchors never guess.** If a reply mixes web-search citations
   with a document block, inline citation markers are suppressed (offsets
   index the unsegmented content) and the sources dropdown carries all

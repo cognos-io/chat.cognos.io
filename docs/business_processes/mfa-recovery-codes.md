@@ -11,9 +11,9 @@ method.
 
 Process:
 
-1. User enables authenticator-app MFA.
-2. Backend generates a fixed set of 10 high-entropy (≥128-bit) recovery codes.
-3. Codes are shown once to the user.
+1. Account holder enables authenticator-app MFA.
+2. Backend generates a fixed set of 10 high-entropy (≥128-bit) MFA recovery codes.
+3. Codes are shown once to the Account holder.
 4. Backend stores only hashes.
 5. A used code is immediately marked used and cannot be reused.
 
@@ -31,7 +31,7 @@ Do not email recovery codes. Do not log them.
 
 Recovery favours security over convenience. A password reset does **not** disable
 or recover MFA — the new password still faces the code challenge. There is no
-self-service MFA reset. If both the authenticator and all recovery codes are lost,
-account access is unrecoverable except via a deliberate, audited support action.
+self-service MFA reset. If both the authenticator and all MFA recovery codes are lost,
+Account access is unrecoverable except via a deliberate, audited support action.
 This is an accepted risk: encrypted data was always governed by the Account Key,
 not by MFA.

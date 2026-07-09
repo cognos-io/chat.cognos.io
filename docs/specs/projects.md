@@ -11,19 +11,20 @@ plaintext transiently during completion requests, but it must not persist plaint
 
 ## Goals
 
-- Let users create encrypted projects with private names, descriptions, conversations, files, and
-  memory.
-- Let project admins share projects with other Cognos users.
+- Let Account holders create encrypted projects with private names, descriptions, Conversations,
+  files, and memory.
+- Let project admins share projects with other Account holders.
 - Let project members decrypt project content client-side.
 - Keep project names, file names, file contents, memory contents, and conversation titles encrypted
   at rest.
-- Make revocation explicit: removed users lose access to future project content after key rotation.
-- Reuse the existing Account Key, user keypair, conversation participant, and key-version patterns
-  where possible.
+- Make revocation explicit: removed Account holders lose access to future project content after key
+  rotation.
+- Reuse the existing Account Key, Account key pair, Conversation Participant, and key-version
+  patterns where possible.
 
 ## Non-goals
 
-- Preventing a previously-authorised user from keeping plaintext they already decrypted.
+- Preventing a previously-authorised Account holder from keeping plaintext they already decrypted.
 - Server-side semantic search over encrypted files or memory.
 - Server-side file previews, thumbnails, virus scanning, or OCR over encrypted uploads.
 - Public project sharing.
@@ -35,7 +36,7 @@ plaintext transiently during completion requests, but it must not persist plaint
 Projects should be the collaboration boundary.
 
 Each project has a random symmetric **project content key**. The browser generates this key and
-wraps it for each active project participant using that participant's user public key.
+wraps it for each active Participant using that Participant's public key.
 
 ```txt
 User private key
@@ -51,7 +52,7 @@ Wrapped project conversation keys
 Conversations inside a project should still have their own conversation keypair because the backend
 currently needs the conversation public key to encrypt persisted AI responses. The project key wraps
 conversation secret keys so project membership can grant access without storing one conversation
-secret-key wrapper per user per conversation.
+secret-key wrapper per Account holder per Conversation.
 
 ```txt
 Project content key
@@ -63,10 +64,10 @@ Conversation messages and metadata
 
 ## Cryptographic model
 
-### User keys
+### Account key pair
 
-Use the existing user keypair and Account Key unlock model. The server stores user public keys and
-encrypted private-key backups, but never sees plaintext private keys or Account Keys.
+Use the existing Account key pair and Account Key unlock model. The server stores user public keys
+and encrypted private-key backups, but never sees plaintext private keys or Account Keys.
 
 ### Project content key
 
@@ -168,7 +169,7 @@ Editor  can create and update project conversations, files, and memory
 Viewer  can read/decrypt project content but cannot mutate shared content
 ```
 
-A user with a non-empty `removed_at` is no longer active.
+An Account holder with a non-empty `removed_at` is no longer active.
 
 ### `project_key_wrappings`
 
@@ -247,7 +248,7 @@ Encrypted `data` field:
   "version": "1",
   "filename": "roadmap.pdf",
   "mime_type": "application/pdf",
-  "description": "Optional user note",
+  "description": "Optional Account holder note",
   "conversation_id": "optional",
   "uploaded_at": "2026-06-19T00:00:00Z"
 }
@@ -381,28 +382,28 @@ Backend rules:
 
 The project and creator participant row should be written transactionally.
 
-### Invite user
+### Invite Account holder
 
-1. Admin selects target user.
-2. Browser fetches target user's public key.
+1. Admin selects target Account holder.
+2. Browser fetches target Account holder's public key.
 3. Browser decrypts current project content key locally.
-4. Browser creates `wrapped_project_key` for the target user.
+4. Browser creates `wrapped_project_key` for the target Account holder.
 5. Backend transaction creates/activates participant row and stores wrapper.
 
 The backend must reject invites that create an active participant without a matching wrapped key.
 
-### Revoke user
+### Revoke Account holder
 
 Revocation requires key rotation.
 
 1. Admin browser fetches active participants.
 2. Admin browser generates a new project content key.
 3. Admin browser wraps the new project content key for every remaining active participant.
-4. Backend transaction soft-removes revoked users, bumps `project.key_version`, and stores the new
-   wrappers.
+4. Backend transaction soft-removes revoked Account holders, bumps `project.key_version`, and stores
+   the new wrappers.
 5. Future project writes use the new key version.
-6. Project conversations should rotate before accepting new messages if the revoked user had access
-   to the old conversation key.
+6. Project Conversations should rotate before accepting new messages if the revoked Account holder
+   had access to the old conversation key.
 
 Important product copy:
 
@@ -421,7 +422,7 @@ Possible project fields:
 ```txt
 rotation_pending boolean
 rotation_started_at timestamp optional
-rotation_started_by user optional
+rotation_started_by Account holder optional
 ```
 
 Rules:
@@ -454,8 +455,8 @@ Client-side memory keeps memory encrypted at rest, but has limitations:
 - selected memory is sent plaintext during completion requests
 - the model provider sees selected memory transiently
 
-For the first version, require user-confirmed memory writes. Avoid automatic memory extraction until
-there is a clear review UX and a safe deletion/editing flow.
+For the first version, require Account holder-confirmed memory writes. Avoid automatic memory
+extraction until there is a clear review UX and a safe deletion/editing flow.
 
 ## Plaintext leakage budget
 
@@ -477,7 +478,7 @@ The server must not persist:
 - conversation titles
 - message contents
 - filenames
-- file MIME types if user-supplied/sensitive
+- file MIME types if Account holder-supplied/sensitive
 - file contents
 - file-derived text
 - memory contents
@@ -486,7 +487,7 @@ The server must not persist:
 ## Implementation roadmap
 
 > **Build order note:** Phase 2 (sharing) is blocked on the deferred
-> user-discovery + billing gates, and ChatGPT-style projects are single-user
+> Account holder-discovery + billing gates, and ChatGPT-style projects are single-Account-holder
 > anyway. So the build order is **1 → 3 → (gates) → 2**. Phase 3 only ever
 > deals with single-owner projects until sharing ships, which keeps it
 > independent of Phase 2.
@@ -499,7 +500,7 @@ The server must not persist:
   key; content key sealed to each participant's public key).
 - ✅ `GET/POST/GET{id}/PATCH/DELETE /api/v1/projects`; create writes project +
   Admin participant + creator key wrapping transactionally; list/get embed the
-  caller's wrapper. Account deletion removes the user's projects.
+  caller's wrapper. Account deletion removes the Account holder's projects.
 - ✅ Frontend `ProjectService` + `/projects` list/detail shell behind the
   `projects` feature flag (on in dev).
 - ✅ Tests: API e2e (authz/404/locked-rules), crypto round-trip unit tests,
@@ -546,7 +547,7 @@ loaded for all projects on unlock so direct chat URLs resolve.
 
 - Add encrypted project memory records.
 - Add client-side memory retrieval and selection.
-- Add explicit user-confirmed memory creation/edit/delete.
+- Add explicit Account holder-confirmed memory creation/edit/delete.
 
 ## Required tests
 
@@ -565,7 +566,7 @@ loaded for all projects on unlock so direct chat URLs resolve.
 ### Crypto/client tests
 
 - Project metadata encrypt/decrypt round-trips.
-- Project key wrappers open only with the intended user's private key.
+- Project key wrappers open only with the intended Account holder's private key.
 - Project conversation secret key unwraps with the project content key.
 - File metadata and file key wrapping round-trip.
 - Memory payload encrypt/decrypt round-trips.
@@ -574,8 +575,8 @@ loaded for all projects on unlock so direct chat URLs resolve.
 ### E2E tests
 
 - User creates a project and sees decrypted name in the UI.
-- Invited user can unlock and view the project.
-- Revoked user cannot access content created after revocation.
+- Invited Account holder can unlock and view the project.
+- Revoked Account holder cannot access content created after revocation.
 - Project conversation completion persists only encrypted message records.
 - File upload does not send plaintext filename or file bytes to storage APIs.
 - Memory item does not appear plaintext in API responses or database records.
@@ -594,16 +595,17 @@ loaded for all projects on unlock so direct chat URLs resolve.
   re-wraps the project key for remaining members but does **not** re-encrypt existing project
   `data`, file keys, conversation keys, or memory. A revoked member who retained their old wrapped
   key can still decrypt pre-rotation content. This is an accepted limit and must be stated in
-  product copy (see "Revoke user"), not just "content they already decrypted".
+  product copy (see "Revoke Account holder"), not just "content they already decrypted".
 - **User discovery and billing attribution are deferred** and are explicit gates that must be
   decided _before_ Phase 2 sharing ships (see "Pre-Phase-2 gates" below).
 
 ## Gaps found during codebase review (must be built; not in original plan)
 
-- **No user public-key lookup exists.** There is no API or UI to fetch another user's public key by
-  email or ID (`backend/cmd/api/routes.go` has only conversation-scoped public-key routes). Every
-  sharing flow depends on the admin's browser obtaining the invitee's public key to wrap the project
-  key. This primitive — and its enumeration/privacy tradeoff — must be designed before Phase 2.
+- **No Account holder public-key lookup exists.** There is no API or UI to fetch another Account
+  holder's public key by email or ID (`backend/cmd/api/routes.go` has only conversation-scoped
+  public-key routes). Every sharing flow depends on the admin's browser obtaining the invitee's
+  public key to wrap the project key. This primitive — and its enumeration/privacy tradeoff — must
+  be designed before Phase 2.
 - **Multi-participant sharing is greenfield on the frontend.** The backend `participants` collection
   and conversation `/rotate` handler exist, but the client only has _public-link_ sharing
   (ephemeral-key sealed box, secret in URL fragment). There is no authenticated multi-participant
@@ -643,7 +645,8 @@ loaded for all projects on unlock so direct chat URLs resolve.
   rotations immediately. (Recommend synchronous-only for v1.)
 - Whether file MIME type should always be encrypted, or whether a small allowlisted plaintext media
   class is acceptable for UI optimisation. (Recommend always-encrypted for v1.)
-- Whether shared memory is user-confirmed only in v1, or whether assistant-suggested memory can be
-  added behind an explicit review step. (Recommend user-confirmed only for v1.)
+- Whether shared memory is Account holder-confirmed only in v1, or whether assistant-suggested
+  memory can be added behind an explicit review step. (Recommend Account holder-confirmed only for
+  v1.)
 - Whether project deletion should hard-delete child resources immediately or use a soft-delete
   recovery window. (Recommend soft-delete recovery window.)

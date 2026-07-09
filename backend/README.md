@@ -8,12 +8,13 @@ Target direction:
 
 - first-party Cognos API endpoints instead of long-term OpenAI compatibility
 - backend-driven model catalogue
-- encrypted private-key backup with a user **Account Key** for new-device unlock; persistent unlock
+- encrypted private-key backup with an **Account Key** for new-device unlock; persistent unlock
   uses a server-revocable split-key session (see `../docs/security-model.md`)
 - ciphertext-only message storage at rest
 
 See:
 
+- [`../CONTEXT.md`](../CONTEXT.md) — domain glossary
 - `../docs/security-model.md`
 - `../docs/specs/backend-model-selector.md`
 

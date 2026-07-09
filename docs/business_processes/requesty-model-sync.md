@@ -59,8 +59,8 @@ sequenceDiagram
 
 ## Invariants
 
-1. **Enrich-only.** Curation and compliance fields are never written. A model
-   appears, stays enabled, and keeps its tier/region only by curation.
+1. **Enrich-only.** Curation and compliance fields are never written. A Model
+   appears, stays enabled, and keeps its privacy tier/region only by curation.
 2. **No clobbering overrides.** `reasoning_efforts` is set only when empty, so a
    hand-tuned per-model tier list always wins.
 3. **Safe to run anytime.** Idempotent (writes only on change), tolerant of a

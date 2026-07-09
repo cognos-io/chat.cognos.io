@@ -13,7 +13,7 @@ and the hard privacy rules every event must obey.
 ## 1. Goals
 
 - Understand the marketing funnel: which pages, locales and CTAs actually produce signups.
-- Understand activation: how many new users reach their first sent message, and where they
+- Understand activation: how many new Account holders reach their first sent message, and where they
   drop off in onboarding.
 - Understand monetisation: trial exhaustion → checkout started → checkout completed, per plan.
 - Understand feature adoption (models, attachments, sharing, duplication, MFA) to guide
@@ -24,7 +24,7 @@ and the hard privacy rules every event must obey.
 
 ## 2. Non-goals
 
-- No session replay, heatmaps, or per-user behavioural profiles.
+- No session replay, heatmaps, or per-Account holder behavioural profiles.
 - No A/B testing framework (revisit later; the interface doesn't preclude it).
 - No backend/server-side event emission in v1 (Paddle webhooks already give us the revenue
   source of truth; see §8).
@@ -55,7 +55,7 @@ These are non-negotiable and every event in §7 was checked against them. They a
 6. **EU data residency.** Plausible Cloud is EU-hosted, consistent with our "kept in
    Switzerland or Europe" promise. Self-hosting remains an option behind the same interface.
 7. **Aggregate-only funnel stitching.** We never link an individual marketing visitor to an
-   app user or a Paddle customer. Cross-surface attribution uses a coarse `ref` label (§8).
+   Account holder or a Paddle customer. Cross-surface attribution uses a coarse `ref` label (§8).
 8. **Disclosed in plain language.** The privacy page must mention analytics before this
    ships (§11), in all six locales, following the no-jargon marketing rules.
 
@@ -378,7 +378,7 @@ cognos.io pageview → cta_click {location} → app signup_completed {source=loc
 - We do **not** send Paddle customer/transaction IDs to Plausible, and we do **not** put
   Plausible data into Paddle `custom_data`. If we later want revenue in dashboards,
   Plausible's revenue-on-custom-events (amount + currency on `checkout_completed`) is
-  acceptable — amounts are our data, not the user's — but it's P1.
+  acceptable — amounts are our data, not the Account holder's — but it's P1.
 
 ## 9. KPI registry
 
@@ -404,12 +404,12 @@ Analytics exist to diagnose the funnel feeding that number, not to restate it.
 | --- | -------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------ |
 | D1  | Account Key friction | `vault_unlock_prompted` ÷ `app.cognos.io` daily visitors; `trigger` split        | `vault_unlock_prompted {trigger}`                           | Whether passkey/PIN quick-unlock is the next UX investment         |
 | D2  | Model demand         | `message_sent` distribution by `model`; `reasoning` split                        | `message_sent {model, reasoning}`, `model_selected {model}` | Catalogue curation; Infomaniak/Requesty provider decisions         |
-| D3  | Reliability          | `message_failed` ÷ `message_sent`; `reason` split                                | `message_failed {reason}`, `message_sent`                   | Which provider/limit work hurts users most                         |
+| D3  | Reliability          | `message_failed` ÷ `message_sent`; `reason` split                                | `message_failed {reason}`, `message_sent`                   | Which provider/limit work hurts Account holders most               |
 | D4  | Feature pull         | `attachment_added`, `share_created`, `conversation_duplicated` ÷ weekly visitors | those three events                                          | Keep/expand/drop: attachments library rework, sharing, duplication |
 
 ### 9.3 Reading rules (honesty about what cookieless aggregates can say)
 
-- Every ratio is a **count ratio**, not a per-user rate: Plausible has no user identity
+- Every ratio is a **count ratio**, not a per-user rate: Plausible has no Account holder identity
   (§3.1/§3.7), so "activation" is approximated by the same-session funnel plus the weekly
   count cross-check. Numbers are directional — good enough to rank problems, not to report
   precision percentages.

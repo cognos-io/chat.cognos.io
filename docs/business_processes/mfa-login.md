@@ -10,13 +10,13 @@ account compromise would defeat it.
 
 When MFA is enabled, login is:
 
-1. User enters email + password.
-2. PocketBase validates the password.
+1. Account holder enters email + Account password.
+2. PocketBase validates the Account password.
 3. The backend intercepts the auth response. If the request carries a valid
    trusted-MFA-device token (see below), it issues the normal auth token and the
    code step is skipped. Otherwise it returns a distinct `mfa_required` response
    carrying `mfaSessionId` instead of an auth token.
-4. User enters the 6-digit code from their authenticator app.
+4. Account holder enters the 6-digit code from their authenticator app.
 5. Backend verifies the code, consumes the session, and issues the normal auth
    token. Repeated bad codes burn the session and trip a per-account cooldown.
 
@@ -44,11 +44,11 @@ A trusted-MFA-device token:
 
 - waives **only** the second factor — it never decrypts data; the Account Key (or
   trusted-device vault session) is still required to open encrypted content
-- is bound to one user and expires
+- is bound to one Account and expires
 - is revoked on logout, MFA disable, recovery-code regeneration, and password
   change
 - is independent of the trusted-*vault* device, which stores the data unlock key
 
-MFA protects account access. It does not decrypt chat data. The Account Key (or
-trusted-device vault session) is still required after login to open encrypted
+MFA protects Account access. It does not decrypt Conversation data. The Account Key
+(or trusted-device Vault session) is still required after login to open encrypted
 content.

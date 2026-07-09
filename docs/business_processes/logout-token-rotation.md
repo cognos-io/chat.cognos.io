@@ -1,5 +1,5 @@
 ---
-description: Logout rotates the user's auth token key and clears their cached vault wrap key
+description: Logout rotates the Account holder's auth token key and clears their cached Vault wrap key
 name: logout-token-rotation
 ---
 
@@ -9,10 +9,10 @@ name: logout-token-rotation
 
 1. **Rotate `tokenKey`** on the user record via `re.Auth.RefreshTokenKey()` +
    `app.Save`. Every Pocketbase auth token signed under the previous tokenKey
-   is now invalid, immediately revoking any still-live sessions for that user.
+   is now invalid, immediately revoking any still-live sessions for that Account holder.
 2. **Delete the vault session wrap key** from `vault_session_wrap_keys` so
    the server stops holding the convenience cache that would otherwise let
-   the next session re-open the vault without re-deriving from password.
+   the next session re-open the Vault without re-entering the Account Key.
 
 ```mermaid
 sequenceDiagram
@@ -25,7 +25,7 @@ sequenceDiagram
   BE-->>FE: 204
 ```
 
-Why both: rotating tokenKey alone would leave the wrap key cached server-side,
-so a stolen DB snapshot could still unlock the vault for someone with the
-user's password. Deleting the wrap key alone would still leave any
+Why both: rotating tokenKey alone would leave the wrap key cached server-side, so a stolen DB
+snapshot could still Unlock the Vault for someone with the Account holder's local Vault ciphertext
+and a valid auth token to fetch the wrap key. Deleting the wrap key alone would still leave any
 exfiltrated bearer token usable. Logout means **both** invariants reset.

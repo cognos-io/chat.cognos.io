@@ -19,7 +19,7 @@ Caller must be an `Admin` participant. Body carries:
   compromise of the conversation key, never a membership change).
 - A new conversation `public_key` (+ optional signature).
 - `wrapped_secret_keys[]` — one entry per **post-revoke** active
-  participant, each carrying the new secret key wrapped for that user's
+  Participant, each carrying the new secret key wrapped for that Participant's
   public key.
 
 Guards:
@@ -32,8 +32,8 @@ Guards:
 - Every id in `revoked_user_ids` must currently be active (`404` via
   `ErrParticipantNotFound` otherwise; nothing written).
 - `wrapped_secret_keys[]` must **exactly equal** the set of participants
-  who remain active after the revocation step. Missing user → rejected.
-  Extra user → rejected. Duplicate user → rejected.
+  who remain active after the revocation step. Missing Participant → rejected.
+  Extra Participant → rejected. Duplicate Participant → rejected.
 
 ```mermaid
 sequenceDiagram
@@ -62,7 +62,7 @@ sequenceDiagram
 ```
 
 Why both steps in one transaction: a revoke-then-rotate dance leaves a
-window where the revoked user is "removed" but new messages still use the
+window where the revoked Participant is "removed" but new Messages still use the
 old key — which they can still decrypt with the wrapped secret they
 already hold. Bundling them closes the gap: no other request observes the
 half-revoked / pre-rotated state.
@@ -81,11 +81,11 @@ it's the audit trail of "who was once allowed".
 
 Revocation removes access **immediately** for new reads (see
 [participant-access-control](./participant-access-control.md)). Existing
-wrapped secret keys held by the revoked user remain valid for the data
+wrapped secret keys held by the revoked Participant remain valid for the data
 they've already pulled — that's exactly what the rotation step in this
-same transaction handles: by bumping `key_version`, the revoked user has
+same transaction handles: by bumping `key_version`, the revoked Participant has
 no `conversation_secret_keys` row at the new generation and therefore
-cannot decrypt any future message.
+cannot decrypt any future Message.
 
 Read paths automatically pick up the new generation — see
 [key-version-read-gate](./key-version-read-gate.md). Old-generation rows
@@ -98,16 +98,16 @@ Rotation re-keys **conversation-sealed** data: message blobs and
 undecryptable to a revoked participant at the new generation.
 
 **User-upload (library) attachments are not conversation-sealed** — they are
-sealed to the uploader's own vault key and owned by that user (see
+sealed to the uploader's own Vault key and owned by that Account holder (see
 [attachment-processing](./attachment-processing.md)). Rotation therefore neither
-affects nor revokes them: a revoked participant never had access to another
-user's library file in the first place (it shows as "private file attached"), and
+affects nor revokes them: a revoked Participant never had access to another
+Account holder's library file in the first place (it shows as "private file attached"), and
 they keep their own files because those were always theirs. There is no
-conversation-scoped attachment key to rotate.
+Conversation-scoped attachment key to rotate.
 
 ## Bulk revocation
 
-`revoked_user_ids` is a list, so a single call can remove 1 or N users.
+`revoked_user_ids` is a list, so a single call can remove 1 or N Participants.
 Each removal happens inside the same transaction as the rotation, so a
-bulk revoke is atomic: either every named user is removed and the key is
+bulk revoke is atomic: either every named Participant is removed and the key is
 rotated, or nothing changes.

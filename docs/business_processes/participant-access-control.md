@@ -11,12 +11,12 @@ Every conversation-scoped endpoint resolves access through the same helper:
 participants.Repo.IsActive(conversationID, userID) bool
 ```
 
-A row counts as "active" iff `removed_at = ''`. Revoked members keep a
+A row counts as "active" iff `removed_at = ''`. Revoked Participants keep a
 historical row for audit but lose access immediately. Revocation is not a
 standalone operation — it only happens as part of
 [conversation-key-rotation](./conversation-key-rotation.md), which stamps
 `removed_at` and re-keys the conversation in a single transaction so the
-revoked user has no decryption material for any future message.
+revoked Participant has no decryption material for any future Message.
 
 | Endpoint                                     | Result for non-participant              |
 | -------------------------------------------- | --------------------------------------- |
@@ -37,9 +37,9 @@ the gateway path.
 
 The attachment library is a **separate access model**: the `/api/v1/attachments/*`
 endpoints gate on file **ownership** (`user_attachments.owner == caller`), not on
-conversation participation, and return `404` to anyone else so ids never leak. A
-user references their own files in any conversation they participate in; they can
-never read another user's file. Consequently a co-participant — or a public-share
+conversation participation, and return `404` to anyone else so ids never leak. An
+Account holder references their own files in any Conversation they participate in;
+they can never read another Account holder's file. Consequently a co-participant — or a public-share
 viewer — cannot decrypt a file another participant attached: the message shows a
 **"private file attached"** cue instead of the contents, decided from the message
 sender's identity (never by probing the backend). The `attachment_usages`

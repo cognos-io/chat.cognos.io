@@ -1,5 +1,5 @@
 ---
-description: All /api/v1/* routes go through an in-process token-bucket limiter keyed on user ID (or IP, if unauthenticated)
+description: All /api/v1/* routes go through an in-process token-bucket limiter keyed on Account ID (PocketBase user record, or IP if unauthenticated)
 name: rate-limiting
 ---
 

@@ -6,8 +6,8 @@ name: billing-access-gate
 # Billing Access Gate
 
 Before the gateway is called, `billing.Service.EvaluateAccess(state, estimate)`
-decides whether the user is allowed to spend on this request. The
-**estimate** is the upper-bound cost for the model (full input context ×
+decides whether the Account holder is allowed to spend on this request. The
+**estimate** is the upper-bound cost for the Model (full input context ×
 `max_output_tokens`, with margin and FX applied).
 
 | `plan_type` | Decision                                                                                    |
@@ -32,10 +32,10 @@ flowchart LR
 ```
 
 Why the upper bound, not a point estimate: the gate runs before the actual
-provider call, so the only safe budgeting unit is "the maximum this request
-could possibly cost." Anything looser risks letting a trial user run
+Provider call, so the only safe budgeting unit is "the maximum this request
+could possibly cost." Anything looser risks letting a trial Account run
 slightly negative.
 
 The actual cost (post-gateway) is recorded by the
 [usage-ledger](./usage-ledger.md) step and may be smaller than the estimate
-— the difference is not refunded, it stays in the user's balance.
+— the difference is not refunded, it stays in the Account's balance.

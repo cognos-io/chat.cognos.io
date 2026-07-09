@@ -22,18 +22,19 @@ top of that work — read it first.
 
 ## 1. Why
 
-A composer tool (image generation today; web search later) changes **what the model has to be able
-to do**. But the model picker treats the selected model as a single global default. So a user can
-select an image-only model, turn the image tool off, and be left on a model that can't answer a text
-prompt — the bug fixed in `docs/bugs/2026-06-30-image-only-model-text-completion.md`.
+A composer tool (image generation today; web search later) changes
+**what the model has to be able to do**. But the model picker treats the selected model as a single
+global default. So an Account holder can select an image-only model, turn the image tool off, and be
+left on a model that can't answer a text prompt — the bug fixed in
+`docs/bugs/2026-06-30-image-only-model-text-completion.md`.
 
-The current default is also too blunt: `defaultModelId` is one value. A user who likes Claude for
-chat and Gemini for images has to re-pick every time they toggle the tool, because selecting one
-overwrites the other.
+The current default is also too blunt: `defaultModelId` is one value. An Account holder who likes
+Claude for chat and Gemini for images has to re-pick every time they toggle the tool, because
+selecting one overwrites the other.
 
 This spec makes model selection **task-aware**: the picker only offers models that can do the
-current task, and Cognos remembers the user's preferred model **per task** so toggling a tool
-restores the right one.
+current task, and Cognos remembers the Account holder's preferred model **per task** so toggling a
+tool restores the right one.
 
 ## 2. Concepts
 
@@ -43,8 +44,8 @@ restores the right one.
   preferences. `"text"` when no tool is active, `"image_generation"` when the image tool is on.
   Future combinations sort + join, e.g. `"image_generation+web_search"`. There is always exactly one
   active context.
-- **Per-context default** — the model the user last _explicitly chose_ while that context was
-  active.
+- **Per-context default** — the model the Account holder last _explicitly chose_ while that context
+  was active.
 
 > **Key change from today:** text completion stops being the implicit "anything goes" state and
 > becomes a real capability (`text_completion` ← `Model.supportsTextCompletion`). Every context —
@@ -62,8 +63,8 @@ restores the right one.
   [model-capability-gating](../business_processes/model-capability-gating.md). UI cleverness never
   justifies removing that gate.
 - **System actions don't become preferences.** An auto-switch (§4.2) never writes a per-context
-  default; only an explicit user selection does (§4.3). Otherwise the picker would "learn" choices
-  the user never made.
+  default; only an explicit Account holder selection does (§4.3). Otherwise the picker would "learn"
+  choices the Account holder never made.
 - **Stale-safe.** An unknown / ineligible / no-longer-capable remembered model ID is ignored at read
   time and resolution falls through (§6).
 - **i18n.** Every new string ships in all six locales (`en/de/fr/es/it/pt`) per
@@ -73,8 +74,8 @@ restores the right one.
 
 ### 4.1 Text completion is a first-class capability — P0
 
-- **Story:** As a user, I never want to see a model in the picker that can't do what I'm about to
-  do.
+- **Story:** As an Account holder, I never want to see a model in the picker that can't do what I'm
+  about to do.
 - **Acceptance criteria:**
     - `modelSupportsCapability` understands `text_completion`, mapped to
       `Model.supportsTextCompletion`.
@@ -87,23 +88,24 @@ restores the right one.
 
 ### 4.2 Auto-switch the model when a tool is toggled — P0
 
-- **Story:** As a user, when I turn image generation on I want the model I last used for images;
-  when I turn it off I want my chat model back — without re-picking.
+- **Story:** As an Account holder, when I turn image generation on I want the model I last used for
+  images; when I turn it off I want my chat model back — without re-picking.
 - **Acceptance criteria:**
     - Toggling a tool changes the capability context and **re-resolves the selected model** for the
       new context via §6.
-    - Turning a tool **off** returns to the `"text"` context default (the user's chat model), so an
-      image-only model is never left selected for text — this is the structural fix for the bug.
-    - The switch fires before the user can send; `canSendMessage` is never satisfied with a model
-      that can't do the current task.
+    - Turning a tool **off** returns to the `"text"` context default (the Account holder's chat
+      model), so an image-only model is never left selected for text — this is the structural fix
+      for the bug.
+    - The switch fires before the Account holder can send; `canSendMessage` is never satisfied with
+      a model that can't do the current task.
     - Auto-switch is a **system action**: it does not write any per-context default (§4.3).
     - If no eligible, capable model exists for the new context, no switch happens and the fallback
       in §4.5 applies.
 
 ### 4.3 Remember the model per capability context — P0
 
-- **Story:** As a user, the model I pick while a tool is on should stick for that tool, and my chat
-  model should stick for chat — independently.
+- **Story:** As an Account holder, the model I pick while a tool is on should stick for that tool,
+  and my chat model should stick for chat — independently.
 - **Acceptance criteria:**
     - Explicitly selecting a model **while a context is active** persists it as that context's
       default (`"text"` → `defaultModelId`, unchanged; any other context →
@@ -116,8 +118,8 @@ restores the right one.
 
 ### 4.4 Announce every auto-switch — P0
 
-- **Story:** As a privacy-conscious user, if Cognos changes my model I want to know — especially if
-  it changes where my data is processed.
+- **Story:** As a privacy-conscious Account holder, if Cognos changes my model I want to know —
+  especially if it changes where my data is processed.
 - **Acceptance criteria:**
     - When §4.2 changes the selection, show a localised, dismissible notice naming the model and the
       reason, e.g. "Switched to {model} for image generation" / "Switched back to {model}".
@@ -130,8 +132,8 @@ restores the right one.
 
 ### 4.5 Fallback when no capable model exists — P0 (shipped)
 
-- **Story:** As a user whose privacy tier has no model for this tool, I want a clear explanation,
-  not a failed send.
+- **Story:** As an Account holder whose privacy tier has no model for this tool, I want a clear
+  explanation, not a failed send.
 - **Acceptance criteria:**
     - When the active context has no eligible, capable model, the composer **blocks the send** and
       the tools panel explains it (today: `selectedModelUnsupported` /
@@ -207,13 +209,13 @@ Follow the project preference: high-level e2e first, then unit tests for pure lo
 
 ### 9.1 Browser e2e (`frontend/e2e/`)
 
-- Toggle image on → selected model becomes the user's image model (or recommended image model on
-  first use); a switch notice appears.
+- Toggle image on → selected model becomes the Account holder's image model (or recommended image
+  model on first use); a switch notice appears.
 - Generate an image, toggle image off → selected model returns to the chat model; **no** image-only
   model is left selected.
 - Pick a non-default image model with the tool on, toggle off and on again → that image model is
   restored; the chat default is unchanged.
-- A `ch_only` user with no image model sees the §4.5 fallback, not a failed send.
+- An Account holder on `ch_only` with no image model sees the §4.5 fallback, not a failed send.
 - Plain chat with no tools shows no image-only model in the picker.
 
 ### 9.2 API e2e
@@ -242,13 +244,13 @@ Follow the project preference: high-level e2e first, then unit tests for pure lo
 
 ## 11. Risks
 
-| Risk                                                             | Mitigation                                                                                                                                                   |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Silent model change surprises users / leaks across privacy tiers | Always announce (§4.4); prefer same-or-more-private tier; state tier changes explicitly.                                                                     |
-| Auto-switch "learns" choices the user never made                 | System switches never write defaults; only explicit picks do (§3, §7).                                                                                       |
-| Remembered model becomes ineligible/incapable                    | Stale-safe read; resolution falls through (§3, §6).                                                                                                          |
-| Over-engineering for one image-only model                        | All of this dissolves when a text+image multimodal model lands (it satisfies every context). Build the minimum; don't pre-build a multi-tool restore matrix. |
-| Drift between UI capability flags and backend gate               | Single source: catalogue capability flags drive both; gate is authoritative; covered by API e2e (§9.2).                                                      |
+| Risk                                                                       | Mitigation                                                                                                                                                   |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Silent model change surprises Account holders / leaks across privacy tiers | Always announce (§4.4); prefer same-or-more-private tier; state tier changes explicitly.                                                                     |
+| Auto-switch "learns" choices the Account holder never made                 | System switches never write defaults; only explicit picks do (§3, §7).                                                                                       |
+| Remembered model becomes ineligible/incapable                              | Stale-safe read; resolution falls through (§3, §6).                                                                                                          |
+| Over-engineering for one image-only model                                  | All of this dissolves when a text+image multimodal model lands (it satisfies every context). Build the minimum; don't pre-build a multi-tool restore matrix. |
+| Drift between UI capability flags and backend gate                         | Single source: catalogue capability flags drive both; gate is authoritative; covered by API e2e (§9.2).                                                      |
 
 ## 12. Non-goals
 

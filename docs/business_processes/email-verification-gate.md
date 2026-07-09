@@ -1,20 +1,20 @@
 ---
-description: AI-consuming endpoints require a verified email; unverified users get a 403 EMAIL_NOT_VERIFIED
+description: AI-consuming endpoints require a verified email; unverified Accounts get a 403 EMAIL_NOT_VERIFIED
 name: email-verification-gate
 ---
 
 # Email Verification Gate
 
-Registration is open (anyone can create a `users` record), and every new user
-is [seeded a trial balance](./signup-trial-seed.md) on signup. To stop scripted
-throwaway accounts from minting free AI usage at our provider cost, every
-endpoint that spends money with an AI provider requires a **verified email**.
+Registration is open (anyone can create a `users` record), and every new Account
+is [seeded Trial credit](./signup-trial-seed.md) on signup. To stop scripted
+throwaway Accounts from minting free AI usage at our Provider cost, every
+endpoint that spends money with an AI Provider requires a **verified email**.
 
 The gate is the `handler.RequireVerifiedEmail()` middleware, bound **after**
 `apis.RequireAuth()` on the AI-consuming routes only. It reads the authenticated
-user record's `verified` field, which PocketBase re-resolves per request — so a
-user who confirms their email mid-session is unblocked on their **next** send
-with no re-login. Superusers bypass the gate.
+user record's `verified` field, which PocketBase re-resolves per request — so an
+Account holder who confirms their email mid-session is unblocked on their **next**
+send with no re-login. Superusers bypass the gate.
 
 ## What is gated
 
@@ -31,7 +31,7 @@ only actions that call a provider are.
 
 ## Response shape
 
-An unverified user hitting a gated route gets **HTTP 403** with the same
+An unverified Account holder hitting a gated route gets **HTTP 403** with the same
 structured body the billing gate uses, so the client can branch on `error`:
 
 ```json
@@ -51,5 +51,5 @@ The frontend maps the 403 to a calm "confirm your email" locked-composer state
 with a resend action, rather than a raw error toast.
 
 > **Production note:** this gate is only meaningful if SMTP is configured so
-> verification emails actually send. In local dev / e2e (no SMTP), mark the user
+> verification emails actually send. In local dev / e2e (no SMTP), mark the Account
 > `verified` via the PocketBase admin UI or a superuser — see the README.

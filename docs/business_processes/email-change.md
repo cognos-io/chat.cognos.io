@@ -7,8 +7,8 @@ name: email-change
 
 Email change is **enabled** through PocketBase's verified flow:
 `request-email-change` emails a confirmation link to the **new** address, and
-`confirm-email-change` applies the change once the user confirms with that token
-plus their current password.
+`confirm-email-change` applies the change once the Account holder confirms with
+that token plus their current Account password.
 
 Why this is safe under `account_key_v2`: the email is authentication-only
 metadata — it is **not** an input to any key derivation — so changing it never

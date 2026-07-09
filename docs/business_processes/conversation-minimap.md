@@ -6,16 +6,16 @@ name: conversation-minimap
 # Conversation Minimap
 
 The conversation minimap is a desktop right rail for long chats. It shows one
-tick per user turn in the **currently active branch**, lets the user preview the
-turn on hover, and jumps back to that message when clicked.
+tick per user turn in the **currently active branch**, lets the Account holder preview
+the turn on hover, and jumps back to that Message when clicked.
 
-It is navigation only: it does not change branch state, message content or
+It is navigation only: it does not change branch state, Message content or
 server data.
 
 ```mermaid
 flowchart LR
   A[MessageService active branch messages] --> B[Filter user messages]
-  B --> C[Drop deleted and temporary messages]
+  B --> C[Drop deleted and unsaved messages]
   C --> D[Keep most recent 20 ticks]
   D --> E[Render cog-conversation-minimap]
   E --> F[Hover preview]
@@ -52,9 +52,9 @@ sequenceDiagram
    `MessageService.messages()`, which is already the active branch, not from all
    sibling messages in the conversation.
 2. **Only user turns are indexed.** Assistant turns are excluded because the rail
-   is for finding the user's questions and instructions.
-3. **Only persisted messages can be jumped to.** Temporary or still-streaming
-   messages without a record id are skipped.
+   is for finding the Account holder's questions and instructions.
+3. **Only persisted messages can be jumped to.** Still-streaming messages
+   without a record id are skipped.
 4. **Deleted messages are skipped.** A tombstoned user turn must not remain as a
    jump target.
 5. **The library component stays presentational.** The app layer owns message

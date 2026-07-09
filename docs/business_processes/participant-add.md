@@ -43,5 +43,5 @@ key with no membership).
 Constraints enforced inline:
 
 - `user_id != caller.id` — the Admin cannot re-add themselves.
-- Target user must exist in `users`.
+- Target Account must exist in `users` (`user_id` in the API body).
 - Role must be one of `Admin / Editor / Viewer`.

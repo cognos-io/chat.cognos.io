@@ -9,7 +9,7 @@ name: usage-ledger
 becomes a billing fact. Called once per successful gateway response, inside
 a transaction.
 
-For **trial** users the same transaction also updates `user_billing.balance_rappen`
+For **trial** Accounts the same transaction also updates `user_billing.balance_rappen`
 so the running balance and the ledger row stay in lockstep:
 
 ```mermaid

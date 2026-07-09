@@ -5,10 +5,10 @@ name: conversation-compaction
 
 # Conversation Compaction
 
-Cognos compacts old context **in the background** so long chats keep working
-when the selected model's context window fills up.
+Cognos compacts old context **in the background** so long Conversations keep working
+when the selected Model's context window fills up.
 
-V1 is transparent to normal users:
+V1 is transparent to Account holders:
 
 - no modal;
 - no blocking spinner;
@@ -104,23 +104,23 @@ about **70%** of usable context.
 Compaction must not block chat:
 
 - one in-flight compaction per conversation;
-- if the user sends while compaction runs, send normally;
+- if the Account holder sends while compaction runs, send normally;
 - use the compaction on later sends once it exists;
-- failures are silent to the user and retried later.
+- failures are silent to the Account holder and retried later.
 
 ## Retention rule
 
 Do **not** create V1 compactions for:
 
-- temporary/incognito chats;
-- disappearing-message chats.
+- Temporary conversations;
+- Conversations with Disappearing messages.
 
-A persisted summary could otherwise outlive content the user expected to vanish.
+A persisted summary could otherwise outlive content the Account holder expected to vanish.
 
 ## Deletion rule
 
-If a user deletes a message, delete or invalidate every compaction covering that
-message. Because covered IDs are encrypted, the browser must identify affected
+If an Account holder deletes a Message, delete or invalidate every compaction covering
+that Message. Because covered IDs are encrypted, the browser must identify affected
 compactions after decryption and ask the backend to delete them.
 
 Hard invariant:

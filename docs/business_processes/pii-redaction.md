@@ -3,7 +3,7 @@ description: Sensitive values are detected and swapped for stable placeholder to
 name: pii-redaction
 ---
 
-# PII Redaction
+# Redaction
 
 Before a prompt ever leaves the browser, Cognos scans the text for common
 high-confidence sensitive values — IBANs, emails, phone numbers, credit cards,
@@ -23,8 +23,8 @@ every sensitive value is caught.
 
 - **Redact before send.** Detection and token substitution happen in the browser
   before the completion request is built — for normal send, title generation,
-  edited-message forks, regeneration context, temporary chats, and the text
-  extracted from attachments.
+  edited-message forks, regeneration context, Temporary conversations, and the text
+  extracted from Attachments.
 - **Tokens are model-safe and non-reversible.** Format `[[PII_<TYPE>_<RANDOM>]]`;
   the random suffix comes from Web Crypto and is **never** derived from the
   original value (no reversible encoding, no deterministic hash). The same
@@ -41,9 +41,9 @@ every sensitive value is caught.
 - **Never logged.** Raw detected values and decrypted mappings never go to
   console, backend logs, analytics, or billing events.
 
-## User modes
+## Detection modes
 
-Users choose the detection depth in account settings:
+Account holders choose the detection depth in account settings:
 
 | Mode                | What happens                                                                                                                                               |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -54,13 +54,13 @@ Users choose the detection depth in account settings:
 
 Important: `better` is still **local-only**. It does not send message text to Cognos servers.
 
-## What the user sees
+## What the Account holder sees
 
 - The composer groups detections by severity: `critical`, `high`, `medium`, `low`.
 - Higher severity appears first.
-- The user can still deselect an item.
-- The user can choose "Never redact this" on a detected value; the sealed user-scoped exception is
-  managed from `/account/memory` and only affects future messages.
+- The Account holder can still deselect an item.
+- The Account holder can choose "Never redact this" on a detected value; the sealed owner-scoped
+  exception is managed from `/account/memory` and only affects future messages.
 - If they send with a deselected detected value, the warning names the highest severity.
 - If everything stays selected, sending is not interrupted.
 
@@ -127,8 +127,8 @@ share `404`s both.
 
 ## Known limitation
 
-The redaction secret is currently wrapped for the **creating** participant/member
-only, so other participants see placeholders until participant-add re-wrapping
+The redaction secret is currently wrapped for the **creating** Participant
+only, so other Participants see Placeholders until participant-add re-wrapping
 lands. This is a coverage limit, not a leak: no one ever receives a value they
 should not, and provider exposure is unaffected. Redaction-key rotation is
 coupled to [conversation-key-rotation](./conversation-key-rotation.md) and

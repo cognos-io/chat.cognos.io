@@ -1,9 +1,12 @@
-# Browser PII Redaction
+# Browser Redaction
 
-Cognos will offer browser-side sensitive-data redaction for chat messages first, and document/file
-content later. The browser detects common sensitive values before a prompt leaves the device,
-replaces them with stable placeholders, stores the placeholder-to-original mapping encrypted under a
-separate redaction key, and restores the original values only in clients that hold that key.
+> **Vocabulary:** domain terms follow [CONTEXT.md](../../CONTEXT.md) (**Redaction**,
+> **Placeholder**, **Hydration**, **Conversation**, **Account holder**, etc.).
+
+Cognos will offer browser-side sensitive-data **Redaction** for Messages in Conversations first, and
+document/file content later. The browser detects common sensitive values before a prompt leaves the
+device, replaces them with stable placeholders, stores the placeholder-to-original mapping encrypted
+under a separate redaction key, and restores the original values only in clients that hold that key.
 
 The feature strengthens Cognos' existing encryption posture: model providers receive redacted
 content, the backend persists redacted message content, and public shares default to redacted-only
@@ -11,7 +14,7 @@ views.
 
 ## 1. Overview
 
-PII redaction is a client-side preprocessing and rendering layer for text sources in a conversation.
+Redaction is a client-side preprocessing and rendering layer for text sources in a Conversation.
 It has three jobs:
 
 1. detect high-confidence sensitive values in browser-controlled text,
@@ -19,7 +22,7 @@ It has three jobs:
 3. hydrate placeholder tokens back to original values only when the active viewer has explicit
    access to the redaction mapping.
 
-Example draft typed by a user:
+Example draft typed by an Account holder:
 
 ```txt
 Please check IBAN GB82 WEST 1234 5698 7654 32 for this invoice.
@@ -31,7 +34,7 @@ Text sent to the backend and model provider:
 Please check IBAN [[PII_IBAN_Q7K9M2]] for this invoice.
 ```
 
-Text rendered to the original user when the redaction key is available:
+Text rendered to the Account holder when the redaction key is available:
 
 ```txt
 Please check IBAN GB82 WEST 1234 5698 7654 32 for this invoice.
@@ -45,18 +48,18 @@ Please check IBAN [[PII_IBAN_Q7K9M2]] for this invoice.
 
 ## 2. Target audience
 
-Primary users:
+Primary Account holders:
 
-- privacy-conscious Cognos chat users who want to ask models about sensitive work or personal data
+- privacy-conscious Account holders who want to ask models about sensitive work or personal data
   without sending raw values to third-party model providers;
-- business users handling financial identifiers, customer contact details, or operational secrets in
-  prompts;
-- users who share conversations and need a safe default that does not disclose sensitive mappings to
-  public readers.
+- Account holders handling financial identifiers, customer contact details, or operational secrets
+  in prompts;
+- Account holders who share Conversations and need a safe default that does not disclose sensitive
+  mappings to public readers.
 
-Secondary users:
+Secondary:
 
-- future document-upload users who want model help over files without sending raw PII from extracted
+- Account holders who want model help over files without sending raw sensitive data from extracted
   document text;
 - admins/reviewers evaluating Cognos' data-minimisation story.
 
@@ -67,14 +70,14 @@ content to the backend and onward to approved model providers. This is acceptabl
 security model, but it creates avoidable exposure for structured sensitive values such as IBANs,
 email addresses, phone numbers, credit-card-like numbers, and API keys.
 
-Current workaround: users manually replace sensitive values before sending prompts, then mentally
-map model responses back to the originals. This is error-prone, slow, and easy to forget.
+Current workaround: Account holders manually replace sensitive values before sending prompts, then
+mentally map model responses back to the originals. This is error-prone, slow, and easy to forget.
 
 Cost of not solving it:
 
 - providers see sensitive raw values that are avoidably exposed;
-- users avoid using Cognos for useful high-value workflows;
-- shared conversations can expose sensitive values unless users manually scrub them;
+- Account holders avoid using Cognos for useful high-value workflows;
+- shared Conversations can expose sensitive values unless Account holders manually scrub them;
 - future file uploads would multiply exposure unless redaction is part of the source-ingestion
   model.
 
@@ -107,10 +110,10 @@ Cost of not solving it:
 
 ### 6.1 Browser-side detection and redaction
 
-- **Description**: Detect supported sensitive values in user-entered text and replace them with
-  placeholder tokens before completion requests are built.
-- **User story**: As a privacy-conscious user, I want Cognos to redact sensitive values before a
-  prompt is sent so that model providers receive only placeholders.
+- **Description**: Detect supported sensitive values in Account holder-entered text and replace them
+  with placeholder tokens before completion requests are built.
+- **User story**: As a privacy-conscious Account holder, I want Cognos to redact sensitive values
+  before a prompt is sent so that model providers receive only placeholders.
 - **Priority**: P0
 - **Acceptance criteria**:
     - Given a user message containing a supported IBAN, the completion request contains a
@@ -126,8 +129,8 @@ Cost of not solving it:
 
 - **Description**: Generate model-safe placeholders that are stable within a conversation and safe
   to expose to the backend/provider.
-- **User story**: As a user, I want placeholders to remain stable in a conversation so that model
-  replies can refer to the same redacted values consistently.
+- **User story**: As an Account holder, I want placeholders to remain stable in a Conversation so
+  that model replies can refer to the same redacted values consistently.
 - **Priority**: P0
 - **Acceptance criteria**:
     - Tokens use the format `[[PII_<TYPE>_<RANDOM>]]`, for example `[[PII_IBAN_Q7K9M2]]`.
@@ -143,8 +146,8 @@ Cost of not solving it:
 
 - **Description**: Persist token-to-original mappings as encrypted records under a dedicated
   redaction key.
-- **User story**: As a user, I want Cognos to remember redacted values securely so that my own UI
-  can restore them without exposing them to public shares by default.
+- **User story**: As an Account holder, I want Cognos to remember redacted values securely so that
+  my own UI can restore them without exposing them to Public Shares by default.
 - **Priority**: P0
 - **Acceptance criteria**:
     - Original sensitive values are stored only inside encrypted redaction-entry payloads.
@@ -153,15 +156,15 @@ Cost of not solving it:
     - The backend can associate a redaction entry with a conversation and token but cannot read the
     original value.
     - Deleting a conversation cascades deletion of its redaction keys and redaction entries.
-    - Unauthorized users cannot list, view, create, update, or delete redaction entries through
-    PocketBase collection APIs.
+    - Unauthorised Account holders cannot list, view, create, update, or delete redaction entries
+    through PocketBase collection APIs.
 
 ### 6.4 Local hydration for message display
 
 - **Description**: Replace placeholders with original values when rendering messages for a viewer
   who has the redaction key.
-- **User story**: As a user, I want to see my original values in the conversation so that redaction
-  protects external processing without making the chat unusable.
+- **User story**: As an Account holder, I want to see my original values in the Conversation so
+  that Redaction protects external processing without making the chat unusable.
 - **Priority**: P0
 - **Acceptance criteria**:
     - User messages render with original values when mappings are available.
@@ -172,17 +175,17 @@ Cost of not solving it:
 
 ### 6.5 Composer redaction preview
 
-- **Description**: Show users that sensitive values will be redacted without mutating the textarea
-  while they type.
-- **User story**: As a user, I want to know what Cognos will redact before I send so that I can
-  trust the feature and avoid surprise edits to my draft.
+- **Description**: Show Account holders that sensitive values will be redacted without mutating the
+  textarea while they type.
+- **User story**: As an Account holder, I want to know what Cognos will redact before I send so
+  that I can trust the feature and avoid surprise edits to my draft.
 - **Priority**: P1
 - **Acceptance criteria**:
     - The textarea content is not live-mutated during typing or paste.
     - The composer shows a count of detected sensitive values before send.
     - A preview of the redacted text is available without revealing values to the backend.
-    - High-confidence (Tier 1) detections are selected for redaction by default; the user can
-    deselect any individual detection to send it raw.
+    - High-confidence (Tier 1) detections are selected for redaction by default; the Account holder
+    can deselect any individual detection to send it raw.
     - Tier 2 (NLP) detections are shown unselected and require explicit opt-in per item.
     - Deselecting a detection sends that value in plaintext to the provider; the preview makes this
     consequence clear.
@@ -193,8 +196,8 @@ Cost of not solving it:
 
 - **Description**: Public shares default to redacted-only content, with a separate explicit mode to
   include redaction mappings.
-- **User story**: As a sharer, I want redacted-only sharing by default so that I can share useful
-  conversations without exposing sensitive values.
+- **User story**: As an Account holder sharing a Conversation, I want redacted-only sharing by
+  default so that I can share useful Conversations without exposing sensitive values.
 - **Priority**: P0
 - **Acceptance criteria**:
     - Creating a public share defaults to redacted-only.
@@ -210,8 +213,8 @@ Cost of not solving it:
 ### 6.7 Participant and key rotation integration
 
 - **Description**: Keep redaction-key access aligned with conversation participant access.
-- **User story**: As a conversation admin, I want redaction mappings to follow participant access so
-  that adding or removing people does not accidentally leak sensitive values.
+- **User story**: As an Admin Participant, I want redaction mappings to follow Participant access so
+  that adding or removing Participants does not accidentally leak sensitive values.
 - **Priority**: P0
 - **Acceptance criteria**:
     - Adding a participant wraps the redaction key for that participant when the participant
@@ -225,11 +228,11 @@ Cost of not solving it:
 
 ### 6.8 Attachment-source redaction (shipped)
 
-- **Description**: Text extracted from a user-uploaded attachment is redacted with the same engine
-  as the message body before it reaches the provider.
-- **User story**: As a user attaching a file with sensitive data, I want detected values in the
-  extracted text replaced with placeholders so the file workflow is not a weaker privacy path than
-  typing.
+- **Description**: Text extracted from an Account holder-uploaded attachment is redacted with the
+  same engine as the message body before it reaches the provider.
+- **User story**: As an Account holder attaching a file with sensitive data, I want detected values
+  in the extracted text replaced with placeholders so the file workflow is not a weaker privacy path
+  than typing.
 - **How it works**: `MessageService.redactRequest` redacts the message body, then redacts the
   attachment's `text_context` via `RedactionService.prepareAttachmentText`, threading the body's
   (and each earlier attachment's) freshly-minted entries forward so a shared value collapses to one
@@ -243,8 +246,9 @@ Cost of not solving it:
 
 - **Description**: Model redaction entries around generic text sources so documents can reuse the
   same redaction engine.
-- **User story**: As a future document-upload user, I want document text to use the same redaction
-  protection as chat messages so that file workflows do not create a weaker privacy path.
+- **User story**: As an Account holder uploading a document in future, I want document text to use
+  the same redaction protection as chat messages so that file workflows do not create a weaker
+  privacy path.
 - **Priority**: P1
 - **Acceptance criteria**:
     - Redaction-entry source metadata supports at least `message`, `attachment`, `document`, and
@@ -353,7 +357,8 @@ parsing via `libphonenumber-js` remains a later iteration.
 
 - Backed by `compromise` (MIT, ~250KB, no model download, returns character offsets).
 - Detects `PERSON`, `ORG`, `PLACE` as advisory candidates with `low`/`medium` confidence.
-- Off by default; the user opts in. Lazy-loaded so the bundle cost is only paid when enabled.
+- Off by default; the Account holder opts in. Lazy-loaded so the bundle cost is only paid when
+  enabled.
 - Tier 2 candidates are always surfaced in the preview as deselectable, never silently redacted,
   because of their higher false-positive rate.
 - The detector interface is pluggable so a higher-accuracy ML backend (e.g. GLiNER via WebGPU) can
@@ -365,7 +370,7 @@ parsing via `libphonenumber-js` remains a later iteration.
 - Each candidate carries a `confidence` (`low` | `medium` | `high`) and a stable `detector` id.
 - Overlapping detections resolve by highest confidence, then longest range.
 - Tier 1 high-confidence candidates are selected for redaction by default; Tier 2 candidates are
-  surfaced but require explicit user selection.
+  surfaced but require explicit selection by the Account holder.
 - All detectors share one `Detector` interface; tiers differ only in cost and confidence.
 
 ## 9. Architecture
@@ -458,7 +463,7 @@ Field meanings:
 - `key_version`: redaction-key generation;
 - `public_key`: the redaction keypair's public key for this generation (base64, denormalized per
   row; identical across a generation, safe to expose so clients can seal new entries);
-- `wrapped_secret_key`: the redaction secret key wrapped (DH `box`) for this user.
+- `wrapped_secret_key`: the redaction secret key wrapped (DH `box`) for this Account holder.
 
 Rules:
 
@@ -615,7 +620,7 @@ Critical integration points:
 2. first-message title generation;
 3. edited-message fork;
 4. regeneration context;
-5. temporary chats;
+5. Temporary Conversations;
 6. future document prompt context.
 
 The model receives a short non-sensitive instruction when placeholders exist:
@@ -635,11 +640,11 @@ Persisted messages:
 - if the assistant response includes known placeholders, the browser hydrates them for authorised
   display.
 
-Temporary chats:
+Temporary Conversations:
 
 - redaction still applies before provider calls;
-- mapping entries can live in memory only unless temporary chats become persistable;
-- public sharing does not apply to temporary chats.
+- mapping entries can live in memory only unless Temporary Conversations become persistable;
+- public sharing does not apply to Temporary Conversations.
 
 ## 14. Rendering and export
 
@@ -654,7 +659,7 @@ Hydration must be applied consistently to:
 - normal message list;
 - streaming assistant deltas where safe;
 - public conversation page when share mode includes sensitive values;
-- export flows when the user explicitly chooses to include sensitive values.
+- export flows when the Account holder explicitly chooses to include sensitive values.
 
 Export modes:
 
@@ -784,7 +789,7 @@ Hydration:
 
 ### 19.2 Frontend integration/e2e tests
 
-- User types a message with a supported IBAN; the composer shows redaction count.
+- Account holder types a message with a supported IBAN; the composer shows redaction count.
 - Sending the message posts only redacted content to the completion endpoint.
 - The rendered user message hydrates to the original for the owner.
 - Assistant response containing a token hydrates for the owner.
@@ -833,9 +838,10 @@ Hydration:
 
 ## 22. Decisions (resolved 2026-06-20)
 
-1. **Always-on or user-toggleable** → **Auto-redact with preview + per-item deselect.** Tier 1
-   high-confidence detections are selected by default; the user can deselect any item to send it
-   raw. Tier 2 NLP detections are opt-in per item. The textarea is never live-mutated.
+1. **Always-on or Account holder-toggleable** → **Auto-redact with preview + per-item deselect.**
+   Tier 1 high-confidence detections are selected by default; the Account holder can deselect any
+   item to send it raw. Tier 2 NLP detections are opt-in per item. The textarea is never
+   live-mutated.
 2. **Phase 2 NLP ambition** → **Lightweight pure-JS (`compromise`), opt-in, lazy-loaded.** Detector
    interface stays pluggable so a heavier ML backend (GLiNER/WebGPU) can be added later. Piiranha is
    excluded (non-commercial licence); Presidio is Python-only and not viable in-browser.
@@ -883,8 +889,9 @@ Hydration:
 - First-run explainer, allowlist, chunked detection, and privacy-safe local counters — tracked in
   `docs/specs/pii-redaction-v2.md`.
 - Participant-add redaction-key wrapping and redaction-key rotation (the key is currently wrapped
-  for the creating user only; other participants see placeholders until this lands).
-- Temporary-chat in-memory hydration (temp chats redact before send but do not yet hydrate locally).
+  for the creating Account holder only; other Participants see placeholders until this lands).
+- Temporary Conversation in-memory hydration (Temporary Conversations redact before send but do not
+  yet hydrate locally).
 - Block-send-on-mapping-failure: mappings persist best-effort after send (no PII is ever sent, but a
   persistence failure currently costs only the owner's own hydration).
 - Browser/API e2e coverage now includes typed-prompt provider no-leak assertions and persisted-row

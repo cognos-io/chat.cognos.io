@@ -1,18 +1,17 @@
 ---
-description: Server-side cached AES wrap key that lets a returning session reopen the local vault without re-deriving from password
+description: Server-side cached AES wrap key that lets a returning session reopen the local Vault without re-entering the Account Key
 name: vault-session
 ---
 
 # Vault Session
 
-The frontend's vault is encrypted with a key derived from the user's password
-(Argon2id). To avoid forcing the user to re-enter their password every time
-they refresh the tab, the wrapped vault key is encrypted **once more** with a
-random 32-byte AES key, and that AES "wrap key" is uploaded to
-`/api/v1/vault-session` and stored in the `vault_session_wrap_keys` table.
+The frontend **Vault** unlock key is derived from the **Account Key** (Argon2id). To avoid
+forcing the Account holder to re-enter their Account Key every time they refresh the tab, the
+wrapped unlock key is encrypted **once more** with a random 32-byte AES key, and that AES "wrap
+key" is uploaded to `/api/v1/vault-session` and stored in the `vault_session_wrap_keys` table.
 
-The session cookie controls whether the wrap key is fetchable; the wrap key
-itself is useless without the encrypted vault material held client-side.
+The session cookie controls whether the wrap key is fetchable; the wrap key itself is useless
+without the encrypted Vault material held client-side.
 
 Endpoints:
 

@@ -2,6 +2,8 @@
 
 End-to-end tests for chat.cognos.io powered by [Playwright](https://playwright.dev/).
 
+Domain vocabulary for specs and assertions: [`CONTEXT.md`](../CONTEXT.md).
+
 ## Prerequisites
 
 1. **Playwright browsers installed** (one-time):

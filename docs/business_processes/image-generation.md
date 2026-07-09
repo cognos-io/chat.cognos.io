@@ -5,7 +5,7 @@ name: image-generation
 
 # Image Generation
 
-Users enable a **Generate image** tool in the composer and send a prompt. The
+Account holders enable a **Generate image** tool in the composer and send a prompt. The
 result is an image, persisted with the same no-plaintext-at-rest rule as
 messages: the bytes are encrypted before any durable write and only the holder
 of the conversation key can decrypt them.

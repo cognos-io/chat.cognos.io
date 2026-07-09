@@ -7,9 +7,9 @@ name: conversation-search-index
 
 Sidebar search is **on-device**.
 
-The server returns the same encrypted conversations and messages it already does. The browser
-decrypts what the signed-in user can access, builds a temporary Orama BM25 index, and throws it away
-when the vault locks or the user logs out.
+The server returns the same encrypted Conversations and Messages it already does. The browser
+decrypts what the signed-in Account holder can access, builds a temporary Orama BM25 index, and
+throws it away when the Vault locks or the Account holder logs out.
 
 ```mermaid
 sequenceDiagram
@@ -22,9 +22,9 @@ sequenceDiagram
   API->>DB: read authorised ciphertext rows
   API-->>FE: encrypted conversation records
   FE->>FE: decrypt titles + build title index
-  FE->>FE: user types search
+  FE->>FE: Account holder types search
   FE->>FE: return title matches immediately
-  FE->>API: JIT fetch recent encrypted messages for candidate chats
+  FE->>API: JIT fetch recent encrypted Messages for candidate Conversations
   API-->>FE: encrypted message page
   FE->>FE: decrypt recent messages + update BM25 index
   FE->>FE: rerank results
@@ -33,15 +33,17 @@ sequenceDiagram
 ## Rules
 
 - Index **titles immediately** after conversation decryption.
-- Index **recent messages lazily** when the user searches or the browser is idle.
-- Index conversation **title + message content only**.
+- Index **recent Messages lazily** when the Account holder searches or the browser is idle.
+- Index Conversation **title + message content only**.
 - Search runs after a **3-character minimum** and a **400 ms debounce**; it requires **all** query
   terms (BM25 `threshold: 0`).
-- Stem with the user's **active UI language** — one stemmer per index, rebuilt on locale change.
-- **Eagerly load project conversations** on the first search of a session.
+- Stem with the Account holder's **active UI language** — one stemmer per index, rebuilt on locale
+  change.
+- **Eagerly load project Conversations** on the first search of a session.
 - Cache hydrated message text **in memory only** for V1; the Orama index itself is the cache.
-- Invalidate a chat's cached search text when its `last_activity_at` or `updated` value changes.
-- Clear the whole index on vault lock, logout, or account switch.
+- Invalidate a Conversation's cached search text when its `last_activity_at` or `updated` value
+  changes.
+- Clear the whole index on Vault lock, logout, or Account switch.
 - Do not index deleted-message content, reasoning text, or attachment text in V1.
 - Do not log queries, titles, messages, snippets, or Orama documents.
 
@@ -57,7 +59,7 @@ A title match should normally outrank a match buried in recent message text.
 
 ## Security invariant
 
-> Search must never create a durable plaintext copy of chat content.
+> Search must never create a durable plaintext copy of Conversation content.
 
 No plaintext search index in the backend. No plaintext search cache in localStorage or IndexedDB.
 

@@ -11,8 +11,8 @@ Read this first. The rest of the spec describes the full design; v1 deliberately
 **In v1:**
 
 - Standalone conversations only.
-- PII redaction copy (standalone): fresh duplicate redaction keypair, secret wrapped for the
-  copying user only.
+- Redaction copy (standalone): fresh duplicate redaction keypair, secret wrapped for the
+  copying Account holder only.
 - Client signs the duplicate `id + public_key` (reuses the existing creation signing path).
 - One synchronous request, one backend transaction, all-or-nothing. A message-count cap bounds the
   request (see §13).
@@ -37,9 +37,9 @@ partial copy):
 
 Use the user-facing label **“Duplicate chat”**.
 
-Why not “Fork chat”: Cognos already uses branching inside a conversation when a user edits or
-regenerates a message. “Fork” is technically accurate, but it sounds like developer tooling and
-conflicts with the existing branch UI.
+Why not “Fork chat”: Cognos already uses branching inside a conversation when an Account holder
+edits or regenerates a message. “Fork” is technically accurate, but it sounds like developer tooling
+and conflicts with the existing branch UI.
 
 Why not only “Copy chat”: “Copy” can sound like clipboard copy. “Duplicate chat” more clearly means
 “create a separate chat with the same history”. Internal docs can still call the process
@@ -51,15 +51,15 @@ A duplicated chat is a **new conversation** with:
 - the same project relation when the source conversation belongs to a project;
 - a fresh conversation keypair;
 - re-encrypted conversation metadata and message payloads;
-- a fresh redaction keypair and re-encrypted PII map when the source uses PII redaction;
+- a fresh redaction keypair and re-encrypted PII map when the source uses Redaction;
 - no copied public share link;
-- no copied standalone participants, except the user who made the duplicate.
+- no copied standalone participants, except the Account holder who made the duplicate.
 
 ## 1. Problem Statement
 
-Users sometimes want to preserve a full chat history and continue from a clean copy without changing
-or sharing the original. Today Cognos supports branching inside one conversation, but that is not
-the same product action:
+Account holders sometimes want to preserve a full chat history and continue from a clean copy
+without changing or sharing the original. Today Cognos supports branching inside one conversation,
+but that is not the same product action:
 
 - in-message branching keeps all versions inside the same conversation;
 - duplicating creates a separate conversation record;
@@ -80,7 +80,7 @@ A duplicate with a fresh keypair cannot reuse the original message ciphertext.
 - Re-encrypt all copied encrypted payloads for the duplicate.
 - Do not copy public share state.
 - Do not copy standalone conversation participants.
-- Copy PII redaction mappings by re-encrypting them under duplicate redaction keys.
+- Copy Redaction mappings by re-encrypting them under duplicate redaction keys.
 - Show clear in-progress UI and discourage closing/reloading while the browser is re-encrypting.
 - Translate all user-facing copy in every supported language.
 - Avoid logging plaintext message content during the process.
@@ -126,7 +126,7 @@ history before the backend can write it.
 - Install a best-effort `beforeunload` warning while local re-encryption or upload is in progress.
   This is a guardrail only; browsers may ignore custom text.
 - On success: navigate to the duplicate conversation and show a toast, e.g. “Chat duplicated”.
-- On failure: leave the user on the source conversation and show a generic error.
+- On failure: leave the Account holder on the source Conversation and show a generic error.
 - Error copy must not include message content, decrypted titles, or provider output.
 
 ### 5.3 Internationalisation
@@ -225,9 +225,9 @@ For a duplicate:
 If attachment byte copying is not implemented in the first backend slice, the Duplicate action must
 fail closed for conversations containing attachments rather than silently dropping them.
 
-### 6.5 PII redaction mappings
+### 6.5 Redaction mappings
 
-PII redaction mappings are not inside message rows. Messages contain placeholder tokens such as
+Redaction mappings are not inside message rows. Messages contain placeholder tokens such as
 `[[PII_EMAIL_ABC123]]`; the token→original map lives in separate encrypted redaction records.
 
 If a source conversation has a redaction key or redaction entries, the duplicate must copy the PII
@@ -243,7 +243,7 @@ Required rule:
 - when an entry's `source_kind` is `message`, rewrite `source_id` to the copied message ID;
 - re-encrypt each entry under the duplicate redaction secret key;
 - wrap the duplicate redaction secret key for the duplicate's authorised readers:
-    - standalone duplicate: wrap for the copying user only;
+    - standalone duplicate: wrap for the copying Account holder only;
     - project duplicate: follow the project conversation access model when project sharing supports
     redaction access;
 - persist duplicate redaction key material and entries in the same backend transaction as the
@@ -261,7 +261,7 @@ Public share state is never copied.
 - The duplicate starts private even when the source was publicly shared.
 
 For standalone shared conversations, authenticated participants are not copied either. The duplicate
-has only the copying user as Admin.
+has only the copying Account holder as Admin.
 
 For project conversations, project membership still controls access because the duplicate remains in
 the same project.
@@ -274,8 +274,8 @@ Any active participant who can read/decrypt the standalone source conversation m
 
 The duplicate is standalone and private:
 
-- `creator = current user`;
-- one `participants` row for current user with `role = Admin`;
+- `creator = current Account holder`;
+- one `participants` row for current Account holder with `role = Admin`;
 - no other source participants copied;
 - `key_version = 1`.
 
@@ -337,7 +337,7 @@ not write client or server code that assumes the signature is currently enforced
     "data": "base64 encrypted duplicate conversation data",
     "public_key": "base64 duplicate public key",
     "public_key_signature": "base64 signature over duplicate id + public key",
-    "wrapped_secret_key": "base64 duplicate secret key wrapped for current user",
+    "wrapped_secret_key": "base64 duplicate secret key wrapped for current Account holder",
     "expiry_duration": "optional"
   },
   "project_conversation_key": {
@@ -453,9 +453,9 @@ Nothing may be persisted if any step fails. This prevents half-state such as:
 - a duplicate conversation without the redaction map it needs to hydrate PII placeholders;
 - a duplicate of a publicly shared source that accidentally receives a share row.
 
-The transaction does not include the browser's local decrypt/re-encrypt work. If the user closes or
-reloads before the request commits, no backend state should exist. If the request reaches the
-backend, the backend either commits the complete duplicate or rolls it all back.
+The transaction does not include the browser's local decrypt/re-encrypt work. If the Account holder
+closes or reloads before the request commits, no backend state should exist. If the request reaches
+the backend, the backend either commits the complete duplicate or rolls it all back.
 
 ## 10. Message Graph Requirements
 
@@ -511,7 +511,7 @@ Functionality:
 - Copied encrypted payloads do not decrypt with stale/source conversation keys.
 - A source public share does not create a public share for the duplicate.
 - A project conversation duplicate is created in the same project.
-- PII redaction keys and redaction entries are copied with a fresh redaction keypair.
+- Redaction keys and redaction entries are copied with a fresh redaction keypair.
 - Copied redaction entries decrypt with the duplicate redaction key and not the source redaction
   key.
 - Attachments copy with re-sealed attachment keys when attachments are present.
@@ -523,7 +523,7 @@ Permissions:
 - A non-participant receives `404` and no gateway/provider call happens.
 - A project `Admin` or `Editor` can duplicate a project conversation.
 - A project `Viewer` receives `403` and no duplicate rows are written.
-- Unauthorized users receive `401`.
+- Unauthorised Account holders receive `401`.
 
 Conflict and transaction safety:
 
@@ -541,7 +541,7 @@ Security:
 - No plaintext title, message content, reasoning, redaction original, or attachment plaintext is
   stored in PocketBase plaintext columns.
 - Public-share records are absent for duplicates of shared sources.
-- Collection rules still prevent direct access to copied internals by unauthorised users.
+- Collection rules still prevent direct access to copied internals by unauthorised Account holders.
 
 ### Browser e2e tests
 
@@ -558,11 +558,11 @@ Functionality:
 Loading and recovery:
 
 - The loading dialog/sheet appears while duplication is in progress.
-- The loading UI tells the user to keep the tab open and avoid reload/close.
+- The loading UI tells the Account holder to keep the tab open and avoid reload/close.
 - Duplicate actions are disabled while the operation is in progress.
 - A simulated first `409 Conflict` causes the client to regenerate IDs and retry once.
-- A failed duplicate leaves the user on the source conversation and shows translated generic error
-  copy.
+- A failed duplicate leaves the Account holder on the source Conversation and shows translated
+  generic error copy.
 
 I18n:
 
@@ -611,7 +611,8 @@ Resolved for v1:
   The real pressure is payload/transaction size, which the cap handles. Batching across multiple
   transactions would reintroduce the half-state §9 exists to prevent: a partial tree has dangling
   parents (fails `assertMessageBindings`) and redaction entries pointing at messages that never
-  landed, and the user cannot tell a truncated duplicate from a complete one. So v1 stays atomic.
+  landed, and the Account holder cannot tell a truncated duplicate from a complete one. So v1 stays
+  atomic.
 - **Partial failures for attachments/redaction:** fail closed, never partial.
 - **Copy title suffix:** per-locale translated string (see §5.4); not the literal English
   "(copy)" in non-English locales.

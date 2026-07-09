@@ -2,17 +2,22 @@
 
 Cognos is an encrypted AI chat application.
 
+**Domain language:** see [`CONTEXT.md`](./CONTEXT.md) for canonical terms (Account, Conversation,
+Redaction, etc.). Specs and business-process docs follow that glossary.
+
 Target security model for this rework:
 
-- chat content is stored server-side as ciphertext only
+- Message content is stored server-side as ciphertext only
 - private keys are encrypted client-side before backup
-- new devices require the user's password and **Account Key** to unlock encrypted key material
+- new devices require the **Account Key** to unlock encrypted key material (the **Account password**
+  is sign-in only)
 - persistent unlock across refreshes and tabs uses a server-revocable split-key session: half the
   wrap key lives in local storage and half is held server-side, so neither half alone recovers the
   unlock key (see `docs/security-model.md`)
 
 See:
 
+- [`CONTEXT.md`](./CONTEXT.md)
 - `docs/security-model.md`
 - `docs/specs/backend-model-selector.md`
 

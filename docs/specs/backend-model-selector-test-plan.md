@@ -15,7 +15,7 @@ This is the branch test plan for the rework.
 - use **red/green TDD** for each implementation slice
 - prioritise **integration tests** for backend request flows
 - add **unit tests** for security/privacy logic and cost calculation
-- add **high-level browser E2E** for user-critical flows
+- add **high-level browser E2E** for Account holder-critical flows
 - keep tests focused on behaviour, not styling
 
 ---
@@ -57,12 +57,12 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - PocketBase billing repo coverage now includes legacy `flat_rate` alias mapping, missing-state
   handling, transactional trial balance updates, rollback on duplicate usage event IDs, and
   idempotent trial-state bootstrap
-- user-create hook coverage now confirms new users receive trial billing rows automatically and
-  that configured trial seed values override the default during bootstrap
+- Account holder-create hook coverage now confirms new Account holders receive trial billing rows
+  automatically and that configured trial seed values override the default during bootstrap
 - the legacy gateway bridge has unit coverage for request mapping, context propagation, and errors
 - prompt assembly logic (`aiagent.BuildMessages`) now has unit coverage for empty input, prompt
   system-message injection, caller-supplied system-message priority, duplicate-system stripping,
-  and example placement between the system message and user turn
+  and example placement between the system message and Account holder turn
 - the completion handler no longer imports the OpenAI SDK directly; the legacy compat package
   bridges only the legacy `/v1/chat/completions` proxy path
 - `/api/v1/models` integration coverage now asserts the response never includes
@@ -74,8 +74,8 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - `/api/v1/billing` integration coverage now exercises the auth gate plus trial/unlimited plan
   payloads and the inactive fallback when no billing row exists
 - `/api/v1/billing/transactions` integration coverage now exercises the auth gate, newest-first
-  ordering with CHF conversion, trial-row balance projection, and user-scoping so unrelated
-  users' ledger rows stay hidden
+  ordering with CHF conversion, trial-row balance projection, and Account holder-scoping so
+  unrelated Account holders' ledger rows stay hidden
 - `billing.CachedFXRateProvider` now has unit coverage for first-fetch population,
   within-TTL cache hits, post-TTL refresh from the upstream, fallback to the default rate when
   the upstream returns a non-positive value, and tolerance of a nil upstream wrapper
@@ -123,7 +123,7 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   integration coverage that the collection is restored with the original id
   `52et2jthsxn7mjr` (so existing PocketBase rules referencing `@collection.participants`
   still resolve), exposes the `conversation`/`user`/`role`/`added_at`/`removed_at` fields,
-  enforces a unique `(conversation, user)` index, and cascades participant rows when their
+  enforces a unique `(conversation, Account holder)` index, and cascades Participant rows when their
   parent conversation is deleted
 - `participants.PocketBaseRepo` now has integration coverage that `IsActive` returns false
   for non-participants and empty args, true for an active row, and false once `removed_at`
@@ -136,8 +136,8 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - completion handler integration coverage now pins that a non-participant POSTing to
   `/api/v1/conversations/{id}/complete` receives 404 with the same body shape as a missing
   conversation, no gateway `Complete` call happens, and no message rows are persisted —
-  closing the access leak where any authenticated user could append messages to another
-  user's conversation
+  closing the access leak where any authenticated Account holder could append messages to another
+  Account holder's Conversation
 - the `conversations` / `conversation_public_keys` / `conversation_secret_keys` collections
   all carry a `key_version` column now (default 1, backfilled). Integration coverage pins
   the field exists, `/api/v1/conversations` create/list responses report `key_version` as
@@ -161,13 +161,13 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   integration coverage that pins the security contract: only Admin participants can
   add (Editors are denied with 403, outsiders get the conversation-not-found 404),
   the body validates `user_id` / `role` / `wrapped_secret_key` (each rejected with a
-  focused 400 — no database write), the target user must exist, and the happy path
+  focused 400 — no database write), the target Account holder must exist, and the happy path
   writes the participant row + wrapped secret-key row atomically with the conversation's
-  current key_version. The repo gained `ActiveRole(conv, user)` so the handler can
+  current key_version. The repo gained `ActiveRole(conv, Account holder)` so the handler can
   gate on role without leaking PocketBase types.
 - `DELETE /api/v1/conversations/{id}/participants/{userID}` has been removed —
   revoking a participant without rotating the conversation key left a
-  forward-secrecy gap (the revoked user retained a valid wrapped secret
+  forward-secrecy gap (the revoked Account holder retained a valid wrapped secret
   for the current generation). Revocation is now folded into the rotation
   endpoint via the optional `revoked_user_ids[]` field. The repo's
   `Revoke` method survives unchanged and is now driven from inside the
@@ -183,8 +183,8 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   and the read-side current-generation filter picks v2.
   Revoke+rotate coverage (added when the standalone DELETE was removed):
   one or more `revoked_user_ids[]` get their `removed_at` stamped atomically with
-  the key bump (audit row intact, no v2 secret_keys row for the revoked user —
-  forward-secrecy preserved); bulk revocation of two users in one call works;
+  the key bump (audit row intact, no v2 secret_keys row for the revoked Account holder —
+  forward-secrecy preserved); bulk revocation of two Account holders in one call works;
   caller in `revoked_user_ids` is rejected with 400; a target who is not active
   is rejected with 404; duplicates and overlap with `wrapped_secret_keys` are
   rejected with 400; empty / omitted `revoked_user_ids` behaves as a pure
@@ -216,7 +216,7 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
     `TestMessagesCollectionRoutesLocked` /
     `TestParticipantsCollectionRoutesLocked` drive the live PocketBase
     server through every operation (list/view/create/update/delete where
-    applicable) for three user personas (owner / soft-revoked editor /
+    applicable) for three Account holder roles (owner / soft-revoked editor /
     outsider) and assert the canonical "Only superusers can perform this
     action" 403 every time.
 - `conversation_public_keys` unique index narrowed from `(conversation)` to
@@ -231,7 +231,7 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   401 for anonymous callers, typed catalogue shape with eligibility metadata for
   authenticated callers, hard guard against the internal routing fields
   (`provider_model_id` / `base_url` / `api_key`) ever appearing in the response,
-  and `preferred_model_id` is omitted (not serialised as null) for fresh users.
+  and `preferred_model_id` is omitted (not serialised as null) for fresh Account holders.
 - `e2e/tests/conversation-keys-api.spec.ts` pins the encryption-envelope endpoints
   end-to-end across 9 scenarios: `/public-key` (auth gate on GET/POST/PATCH,
   POST→GET round-trip at `key_version: 1`, second-POST rejected by the create
@@ -240,7 +240,7 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   `/secret-key` (auth gate on GET/POST, POST→GET round-trip stamps the wrapped
   key at the conversation's current generation, GET 404 for non-participants
   even when the row exists, empty `secret_key` rejected with 400).
-- `e2e/tests/user-state-api.spec.ts` pins the user-state surface end-to-end across
+- `e2e/tests/user-state-api.spec.ts` pins the Account holder-state surface end-to-end across
   17 scenarios: `/user-key-pair` (auth gate, GET-before-create 404, POST/GET
   round-trip, missing-field 400, owner-only PATCH, cross-user PATCH rejected),
   `/user-preferences` (auth gate, GET-before-create 404, POST/GET/PATCH
@@ -255,7 +255,7 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   PATCH/DELETE all return 401), POST creates at `key_version: 1` and echoes the
   ciphertext, POST rejects any `expiry_duration` outside the documented allow-list
   (covers superficially-valid values that `time.ParseDuration` would accept),
-  GET `/conversations` is scoped per user, PATCH and DELETE return the same 404
+  GET `/conversations` is scoped per Account holder, PATCH and DELETE return the same 404
   to non-participants as a missing conversation (no id-existence leak), PATCH
   preserves `key_version` (rotation is the only path that mutates it), DELETE
   removes the row, and `/messages` list returns the documented pagination envelope.
@@ -266,17 +266,17 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   trailing assistant role / unknown `model_id` / unknown `agent_id` all return
   focused 400s. Persisted `/conversations/{id}/complete`: anon 401, participant
   inside their own conversation completes and the messages list reflects both
-  the user + assistant turns, non-participant gets 404 (same shape as missing
+  the Account holder + assistant turns, non-Participant gets 404 (same shape as missing
   conversation) and the conversation stays empty. The persisted scenarios
   provision a placeholder `conversation_public_keys` row first — mirrors the
   frontend's create-then-key sequence and exercises the contract that the
   encryption envelope must be set up before completion can persist.
 - `e2e/tests/billing-api.spec.ts` pins the `/api/v1/billing` and
   `/api/v1/billing/transactions` contract end-to-end: 401 for anonymous callers,
-  a newly registered user lands on a recognised `plan_type` with a non-negative
+  a newly registered Account holder lands on a recognised `plan_type` with a non-negative
   numeric `balance_chf`, balances stay sub-1000 (catches Rappen-as-CHF leaks),
   the ledger response is a typed array, amounts never expose the raw `*_rappen`
-  field names, and the ledger is scoped per user (two fresh users' ledgers share
+  field names, and the ledger is scoped per Account holder (two fresh Account holders' ledgers share
   no transaction ids — locks the strongest privacy invariant outside the Go
   test harness).
 - `e2e/tests/logout-api.spec.ts` pins `POST /v1/auth/logout` end-to-end
@@ -302,7 +302,7 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - `auth.PocketBaseKeyPairRepo` now has direct integration coverage in
   `cmd/api/key_pair_repo_test.go` for both lookups:
   `UserPublicKey` returns the seeded 32-byte key on the happy path and
-  `ErrNoKeyPair` for an unknown user;
+  `ErrNoKeyPair` for an unknown Account holder;
   `ConversationPublicKey` round-trips a freshly inserted row, returns
   `ErrNoKeyPair` for a conversation with no key row, and — locking the
   contract behind fix 0681310 — returns the highest `key_version` row
@@ -318,7 +318,7 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   end-to-end against the live backend via Playwright's request fixture. Two
   scenarios:
     - **admin can list/add/revoke + rotate** (one long journey): registers two real
-    users through PocketBase, creates a conversation as the admin, asserts the
+    Account holders through PocketBase, creates a Conversation as the admin, asserts the
     auto-seeded Admin participant, checks the guest cannot see the conversation
     pre-share, adds the guest as Editor + wrapped secret key, confirms both
     `/conversations` and `/participants` reflect the new membership, proves the
@@ -352,7 +352,8 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
   and unpin persistence for conversation pinning
 - `CryptoService` coverage now includes constant-time byte comparison, box/secretBox round trips,
   and tampered-ciphertext failure paths
-- `VaultService` coverage now includes user key-pair record MAC integrity checks before decryption
+- `VaultService` coverage now includes Account holder key-pair record MAC integrity checks before
+  decryption
 - `parseConversationData` now has unit coverage for whitespace trimming, missing/non-string title
   rejection, malformed JSON rejection, and a zod strip-extras pin so attacker-injected or stale
   fields can never round-trip into ciphertext
@@ -362,7 +363,7 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - `ConversationService.fetchConversationKeyPair` now has unit coverage for the signature-mismatch
   reject path (and that the secret key fetch is skipped) plus the verified happy path that pins
   `openBox` is called with the conversation-shared key derived from the conversation public key +
-  user secret key, not from the user key pair alone
+  Account holder secret key, not from the Account key pair alone
 - `parseUserPreferencesData` now has unit coverage for default `pinnedModels`, missing/non-array
   `pinnedConversations` rejection, non-string-entry rejection, malformed JSON rejection, and a
   zod strip-extras pin so attacker-injected fields cannot survive a serialise → ciphertext round
@@ -498,7 +499,7 @@ Do **not** test CSS classes, spacing, or animation details here.
 - add/fix backend tests for `/api/v1/models`
 - add/fix catalogue unit tests
 - add gateway contract unit tests against a mock client
-- add first browser E2E skeleton: authenticated user loads models from backend
+- add first browser E2E skeleton: authenticated Account holder loads models from backend
 - get frontend unit/build baseline under control
 
 #### Phase 1 green
@@ -530,7 +531,7 @@ Add backend integration tests first for:
 
 Add frontend/browser tests for:
 
-1. user sends a message and gets a response back
+1. Account holder sends a message and gets a response back
 2. reloading the conversation still shows decrypted history
 3. thread/expiry behaviour does not regress at a high level
 
@@ -555,7 +556,7 @@ Add frontend/browser tests for:
 Add backend tests first for:
 
 1. trial affordability check blocks request before provider call
-2. inactive users receive the documented 402 contract before provider call
+2. inactive Account holders receive the documented 402 contract before provider call
 3. PAYG usage records correct `balance_transactions` and does not block for funds
 4. unlimited usage records metadata without deduction
 5. provider-reported cost wins when present
@@ -566,7 +567,7 @@ Add backend tests first for:
 Add browser E2E for:
 
 1. trial/inactive billing restriction blocks send
-2. unavailable model cannot be used by the user
+2. unavailable model cannot be used by the Account holder
 
 Add guarded real-adapter tests for:
 
@@ -616,36 +617,36 @@ Add guarded real-adapter tests for:
 
 ### Scenario 1 — Load models
 
-- sign in as a seeded user
+- sign in as a seeded Account holder
 - open the chat UI
 - verify models are loaded from the backend
 - verify at least one approved model is selectable
 
 ### Scenario 2 — Send message and receive reply
 
-- sign in as a seeded user with access to a conversation
+- sign in as a seeded Account holder with access to a Conversation
 - send a simple message
 - wait for the assistant reply
-- verify the user message and reply are rendered
+- verify the Account holder message and reply are rendered
 - do not assert on presentation details
 
 ### Scenario 3 — History reload
 
-- sign in as a seeded user with an existing conversation and encrypted messages
+- sign in as a seeded Account holder with an existing Conversation and encrypted messages
 - refresh or re-open the conversation
 - verify prior messages load and render again
 
 ### Scenario 4 — Trial / inactive billing restriction
 
-- seed a user in a billing-blocked state covered by the billing contract
+- seed an Account holder in a billing-blocked state covered by the billing contract
 - attempt to send a message
 - verify sending is blocked with the expected product behaviour
 
 ### Scenario 5 — Model eligibility
 
-- sign in as a restricted-tier user
+- sign in as a restricted-tier Account holder
 - verify ineligible models are clearly unavailable
-- verify user cannot send with an ineligible model
+- verify Account holder cannot send with an ineligible model
 
 ---
 

@@ -27,8 +27,8 @@ and don't need the soft-delete audit copy.
 
 Attachments: deleting a message cascades its `attachment_usages` join rows
 (FK `cascadeDelete`), but **not** the `user_attachments` library file — that
-relation is intentionally non-cascade, so a file the user uploaded survives the
-expiry of any message that referenced it and stays in their library (see
+relation is intentionally non-cascade, so a file the Account holder uploaded survives
+the expiry of any Message that referenced it and stays in their Library (see
 [attachment-processing](./attachment-processing.md)).
 
 The companion job `cleanUpDeletedRecordJob` keeps the

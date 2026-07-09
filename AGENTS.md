@@ -1,11 +1,13 @@
 # Cognos
 
 This is the monorepo for [cognos.io](https://cognos.io/), an AI chat application like ChatGPT that
-encrypts user messages server side that can only be decrypted by the user. This is a similar
-approach to ProtonMail which encrypts user emails.
+encrypts Messages server-side so only the Account holder can decrypt them — similar in spirit to
+ProtonMail for email.
 
 **Domain language:** see [`CONTEXT.md`](./CONTEXT.md) for canonical terms — use it when writing
 specs, docs, or user-facing copy so we stay consistent (e.g. Account vs User, Account Key).
+[`docs/business_processes/`](./docs/business_processes/) and [`docs/specs/`](./docs/specs/) follow
+that glossary in domain prose (code identifiers such as `user_id` stay unchanged).
 
 ## Claude Orchestration workflow
 

@@ -22,29 +22,33 @@ ranking/filtering, encrypted/local preferences
 ## 1. Overview
 
 The composer model selector currently presents a growing list of models, with pinning and cost
-visibility. As the catalogue expands, model names alone are not enough for users to quickly choose
-the right model.
+visibility. As the catalogue expands, model names alone are not enough for Account holders to
+quickly choose the right model.
 
 This work is about setting sane defaults and making it easy for people to find and use a specific
 model when they need one.
 
 This spec improves model discovery in both the compact composer selector and the more verbose model
-list in user settings, while preserving Cognos' privacy posture:
+list in account settings, while preserving Cognos' privacy posture:
 
 - model search, filters, ordering, hiding, recent models, and defaults are resolved in the browser
 - no composer/settings model search query is sent to the server
 - no plaintext preference payload is stored server-side
-- user-synced preferences continue to use the existing encrypted `user_preferences.data` blob
+- Account holder-synced preferences continue to use the existing encrypted `user_preferences.data`
+  blob
 - all UI copy is localised across the supported languages
 
 The product shift is from **model-name selection** to **default-first, purpose-aware selection**:
 
-1. Users who know nothing get a good model from the start for the current purpose.
-2. Users who are exploring can quickly understand each model's strengths and what to expect.
-3. Users who know exactly what they want have their models at their fingertips at all times.
+1. Account holders who know nothing get a good model from the start for the current purpose.
+2. Account holders who are exploring can quickly understand each model's strengths and what to
+   expect.
+3. Account holders who know exactly what they want have their models at their fingertips at all
+   times.
 
-The primary audience is non-technical and slightly technical users, so the UI should choose sensible
-defaults wherever possible rather than forcing users to understand model catalogues.
+The primary audience is non-technical and slightly technical Account holders, so the UI should
+choose sensible defaults wherever possible rather than forcing Account holders to understand model
+catalogues.
 
 The composer implementation should stay compact and mobile-first. The account settings model list
 can be more verbose and should act as the main management surface for defaults, hidden models, and
@@ -52,29 +56,30 @@ model preference review.
 
 ## 2. Target audience
 
-### Users who know nothing about models
+### Account holders who know nothing about models
 
-Users who do not know model names and should not need to. This is the primary audience. They should
-start with a good model for the current purpose and be able to chat without opening the selector.
+Account holders who do not know model names and should not need to. This is the primary audience.
+They should start with a good model for the current purpose and be able to chat without opening the
+selector.
 
-### Users who are exploring
+### Account holders who are exploring
 
-Users who understand broad trade-offs such as faster, cheaper, more private, better for reasoning,
-or able to generate images, but do not want to track provider/model naming. They need clear,
-plain-language strengths, rough expectations, and safe recommendations.
+Account holders who understand broad trade-offs such as faster, cheaper, more private, better for
+reasoning, or able to generate images, but do not want to track provider/model naming. They need
+clear, plain-language strengths, rough expectations, and safe recommendations.
 
-### Users who know what they want
+### Account holders who know what they want
 
-Users who frequently switch between specific models for cost, speed, reasoning, image generation,
-privacy region, or quality. They need fast access through pinned models, recent models, search,
-keyboard navigation, and defaults. Their controls must not make the default experience noisier for
-everyone else.
+Account holders who frequently switch between specific models for cost, speed, reasoning, image
+generation, privacy region, or quality. They need fast access through pinned models, recent models,
+search, keyboard navigation, and defaults. Their controls must not make the default experience
+noisier for everyone else.
 
-### Privacy-sensitive users
+### Privacy-conscious Account holders
 
-Users who choose Cognos because they expect private-by-design behaviour. They need the model picker
-to avoid leaking behaviour such as search terms, hidden models, favourite models, or project-level
-preferences in plaintext.
+Account holders who choose Cognos because they expect private-by-design behaviour. They need the
+model picker to avoid leaking behaviour such as search terms, hidden models, favourite models, or
+project-level preferences in plaintext.
 
 ## 3. Problem statement
 
@@ -92,15 +97,16 @@ Current relevant behaviour:
 - Image-generation mode filters models with `modelSupportsCapability(model, 'image_generation')`.
 - Cost tiers are derived client-side from `model.pricing` with `deriveModelCostTier()`.
 - Model descriptions are localised via `localizedModelDescription()` with catalogue fallback.
-- `ModelService.selectModel()` also sets the user's default model through encrypted preferences.
+- `ModelService.selectModel()` also sets the Account holder's default model through encrypted
+  preferences.
 - `UserPreferencesService` encrypts preferences client-side before storing them in PocketBase.
 
 Cost of not solving this:
 
-- users are asked to understand model differences before they can get value
-- users choose suboptimal models because the desired capability is hard to find
-- users overuse expensive/powerful models for simple tasks
-- users miss privacy-region options such as Switzerland/EU-hosted models
+- Account holders are asked to understand model differences before they can get value
+- Account holders choose suboptimal models because the desired capability is hard to find
+- Account holders overuse expensive/powerful models for simple tasks
+- Account holders miss privacy-region options such as Switzerland/EU-hosted models
 - adding more catalogue models makes the composer feel increasingly noisy
 
 ## 4. Principles and constraints
@@ -114,7 +120,7 @@ Cost of not solving this:
 - Prompt text must not be used for remote model ranking.
 - If an "Auto" model mode is introduced later, its first version must use local, explainable rules
   only.
-- User-specific preferences that sync between devices must live in the existing encrypted
+- Account holder-specific preferences that sync between devices must live in the existing encrypted
   `user_preferences.data` payload, not in plaintext account fields.
 - Local-only preferences may use browser storage only for non-key material. Do not store Account
   Keys, private keys, conversation keys, or plaintext chat content in browser storage.
@@ -144,9 +150,9 @@ Additional requirements for this feature:
   block to `translation-parity.spec.ts` for the new model-discovery key namespace, mirroring the
   existing conversation-copy canary.
 - **Search must be diacritic- and case-insensitive.** Normalise both the query and indexed strings
-  with `String.normalize('NFD')` + combining-mark stripping so a French/Portuguese/German user
-  searching `günstig`, `rápido`, or `raciocínio` matches. This is the search-quality-by-language
-  risk in §12.
+  with `String.normalize('NFD')` + combining-mark stripping so a French/Portuguese/German-speaking
+  Account holder searching `günstig`, `rápido`, or `raciocínio` matches. This is the
+  search-quality-by-language risk in §12.
 - **Curated capability metadata is i18n keys, not literals.** The `strengths` and expectation copy
   in §6.2 must resolve through Transloco keys, never ship as English strings in a TS map. Aliases
   used only for matching may stay as per-language data but must be parity-protected as above.
@@ -158,7 +164,7 @@ Additional requirements for this feature:
 
 ### 4.3 Default-first UX requirements
 
-The product must serve three modes without asking users to choose a mode explicitly:
+The product must serve three modes without asking Account holders to choose a mode explicitly:
 
 - **Know nothing:** pick a good eligible model automatically for the current purpose.
 - **Exploring:** explain strengths and rough expectations in plain language.
@@ -167,18 +173,18 @@ The product must serve three modes without asking users to choose a mode explici
 
 Requirements:
 
-- Prefer a good default over asking the user to configure the model picker.
-- The default composer state should work for users who do not know any model names.
+- Prefer a good default over asking the Account holder to configure the model picker.
+- The default composer state should work for Account holders who do not know any model names.
 - Keep advanced controls available but secondary, especially in the composer.
 - Recommendations must be explainable in plain language, for example "Good for everyday chat" or
   "Best when you need image generation".
 - Model rows should answer: what is this good for, what will it roughly cost, how private/where is
   it processed, and when should I choose it?
-- Do not expose raw provider/model complexity unless it helps the user's decision.
+- Do not expose raw provider/model complexity unless it helps the Account holder's decision.
 - Settings may show more detail, but should still start with recommended/default choices first.
 - If the app can infer a safe choice from non-sensitive local state, use it. Examples: active image
-  tool → image-capable models; project default exists → use project default; user privacy tier →
-  hide or de-emphasise unavailable models.
+  tool → image-capable models; project default exists → use project default; Account holder privacy
+  tier → hide or de-emphasise unavailable models.
 
 ### 4.4 Accessibility requirements
 
@@ -220,7 +226,8 @@ Requirements:
 - The desktop presentation is a popover anchored to the model button, opening upward into available
   space (existing primary CDK position).
 - Touch targets (rows, chips, close) are at least 44×44 px.
-- Search is not auto-focused on mobile; the list is visible first and the user taps to search.
+- Search is not auto-focused on mobile; the list is visible first and the Account holder taps to
+  search.
 - The same pure filtering/ordering logic feeds both presentations; only the container differs.
 
 **Layout (shared by both presentations).** The scrollable model list is at the **top**; the controls
@@ -243,20 +250,20 @@ search at the bottom keeps it directly above the on-screen keyboard on mobile.
 
 ### 5.1 Sane contextual defaults
 
-- **Description:** Select a sensible eligible model by default before the user has to think about
-  model choice.
-- **User story:** As a user who knows nothing about models, I want Cognos to start with a good model
-  for what I am doing so that I can send a message without configuring anything.
+- **Description:** Select a sensible eligible model by default before the Account holder has to
+  think about model choice.
+- **User story:** As an Account holder who knows nothing about models, I want Cognos to start with a
+  good model for what I am doing so that I can send a message without configuring anything.
 - **Priority:** P0
 - **Acceptance criteria:**
-    - Fresh users get a recommended eligible model without opening the selector.
+    - Fresh Account holders get a recommended eligible model without opening the selector.
     - Default resolution prefers purpose and eligibility over catalogue order.
     - The default adapts to non-sensitive local context where available, for example active image
       tool,
-    project default, user privacy tier, billing eligibility, and user default.
+    project default, Account holder privacy tier, billing eligibility, and Account holder default.
     - If a default cannot be used because it is hidden, ineligible, or unavailable, fallback is
       silent
-    unless the user is already viewing model settings/selector details.
+    unless the Account holder is already viewing model settings/selector details.
     - The chosen default is explainable in localised plain language when shown, for example "Good
       for
     everyday chat" or "Selected because image generation is on".
@@ -267,8 +274,8 @@ search at the bottom keeps it directly above the on-screen keyboard on mobile.
 
 - **Description:** Add a search input to the model selector. Search runs entirely in the browser
   over the loaded model catalogue and local metadata.
-- **User story:** As a user, I want to search by model name, provider, capability, privacy region,
-  or synonym so that I can find the right model without scanning the full list.
+- **User story:** As an Account holder, I want to search by model name, provider, capability,
+  privacy region, or synonym so that I can find the right model without scanning the full list.
 - **Priority:** P0
 - **Acceptance criteria:**
     - Search matches `Model.name`, `Model.providerName`, `Model.description`,
@@ -286,12 +293,13 @@ search at the bottom keeps it directly above the on-screen keyboard on mobile.
 ### 5.3 Quick capability filters
 
 - **Description:** Add filter chips above the model list for common intents.
-- **User story:** As a user, I want one-click filters like Fast, Low cost, Reasoning, Image, and
-  Long context so that I can narrow the list by task.
+- **User story:** As an Account holder, I want one-click filters like Fast, Low cost, Reasoning,
+  Image, and Long context so that I can narrow the list by task.
 - **Priority:** P0
 - **Acceptance criteria:**
     - Initial chips: Recommended, Fast, Powerful, Low cost, Reasoning, Image, Long context.
-    - Recommended is selected by default unless the user has an active search/filter, pinned/default
+    - Recommended is selected by default unless the Account holder has an active search/filter,
+      pinned/default
     model, or required composer capability that should take precedence.
     - Add a privacy chip such as Switzerland or Private only if the catalogue metadata supports it
     clearly and consistently.
@@ -311,8 +319,8 @@ search at the bottom keeps it directly above the on-screen keyboard on mobile.
 
 - **Description:** Preserve existing pinning and add recents so frequently used models are easier to
   reach without configuration.
-- **User story:** As a frequent user, I want my pinned and recently used models near the top so that
-  I can switch quickly.
+- **User story:** As an Account holder who frequently switches models, I want my pinned and recently
+  used models near the top so that I can switch quickly.
 - **Priority:** P0
 - **Acceptance criteria:**
     - Existing pinned behaviour remains: pinned model IDs come first and row order is stable while
@@ -329,9 +337,9 @@ search at the bottom keeps it directly above the on-screen keyboard on mobile.
 
 ### 5.5 Hidden models
 
-- **Description:** Let users hide models they never want to see in the normal selector.
-- **User story:** As a user, I want to hide irrelevant models so that the picker stays focused on my
-  choices.
+- **Description:** Let Account holders hide models they never want to see in the normal selector.
+- **User story:** As an Account holder, I want to hide irrelevant models so that the picker stays
+  focused on my choices.
 - **Priority:** P1
 - **Acceptance criteria:**
     - Hiding is managed **only in account settings**; the composer has no per-row hide/overflow
@@ -348,36 +356,36 @@ search at the bottom keeps it directly above the on-screen keyboard on mobile.
 ### 5.6 User default model
 
 - **Description:** Keep default-model behaviour **implicit**: selecting a model is what makes it the
-  user's default. There is no separate "Set as my default" action. Users still get a sane default
-  even if they have never actively chosen one.
+  Account holder's default. There is no separate "Set as my default" action. Account holders still
+  get a sane default even if they have never actively chosen one.
 
 > **Extended by [tool-aware-model-selection.md](./tool-aware-model-selection.md):** the implicit
 > default is being made **per capability context** (one for chat, one for image generation, …), so
 > toggling a composer tool restores the right model. Plain-chat behaviour and `defaultModelId` are
 > unchanged; the tool contexts add `toolModelDefaults`.
-- **User story:** As a user, I want the model I pick to stick as my default for new chats without
-  managing a separate default setting.
+- **User story:** As an Account holder, I want the model I pick to stick as my default for new chats
+  without managing a separate default setting.
 - **Priority:** P1
 - **Acceptance criteria:**
-    - Selecting a model persists it as the user default. This preserves current behaviour:
+    - Selecting a model persists it as the Account holder default. This preserves current behaviour:
     `selectModel()` writes `defaultModelId`. No explicit "Set as my default" control is added in the
     composer or settings.
     - Because the default is implicit, it _is_ the currently selected model. It needs no separate
     "DEFAULT" chip or extra highlight; the existing selected state (check icon / active row) conveys
     it in both the composer selector and the account settings model list.
     - `ModelService.selectedModel` fallback order becomes:
-    encrypted project default (in a project and eligible) → encrypted user default → recommended
-    eligible model → first eligible visible model.
+    encrypted project default (in a project and eligible) → encrypted Account holder default →
+    recommended eligible model → first eligible visible model.
     - Selecting a model also marks it recent (§5.4); recency does not change the default beyond the
     selection itself.
     - Default model ID remains in encrypted `user_preferences.data` through `defaultModelId`.
-    - No plaintext account/user field is added for model defaults.
+    - No plaintext account field is added for model defaults.
 
 ### 5.7 Project default model
 
 - **Description:** Allow a project to define a default model for conversations created in that
   project, without revealing the choice in plaintext.
-- **User story:** As a project member, I want a project-specific default model so that project chats
+- **User story:** As a Participant, I want a project-specific default model so that project chats
   use the model appropriate for that workspace.
 - **Priority:** P2
 - **Encryption design (no new key to import):** Projects already have a **project content key** — a
@@ -400,10 +408,11 @@ search at the bottom keeps it directly above the on-screen keyboard on mobile.
     - Resolution order is documented and tested:
     1. model selected for this chat/session
     2. encrypted project default, when in a project and eligible
-    3. encrypted user default, when eligible
+    3. encrypted Account holder default, when eligible
     4. recommended eligible model
     5. first eligible visible model
-    - If the project default is not eligible for the user's privacy tier or billing state, the UI
+    - If the project default is not eligible for the Account holder's privacy tier or billing state,
+      the UI
     shows a localised fallback explanation.
     - Stale-safe: an unknown or ineligible project `defaultModelId` is ignored and resolution falls
     through to the next source.
@@ -421,13 +430,13 @@ search at the bottom keeps it directly above the on-screen keyboard on mobile.
 
 - **Description:** Make capabilities, strengths, and rough expectations scannable without relying on
   long descriptions.
-- **User story:** As a user who is exploring models, I want to understand what each model is good
-  for and what trade-offs to expect so that I can choose confidently.
+- **User story:** As an Account holder who is exploring models, I want to understand what each model
+  is good for and what trade-offs to expect so that I can choose confidently.
 - **Priority:** P1
 - **Acceptance criteria:**
     - **Cost is shown via the existing cost lozenge only; there is no plain-language cost tier word
-    in the meta line.** The lozenge keeps its current behaviour: shown for metered plans, hidden for
-    unlimited plans. (Unlimited-plan users therefore see no cost signal, which is acceptable.)
+in the meta line.** The lozenge keeps its current behaviour: shown for metered plans, hidden for
+unlimited plans. (Unlimited-plan Account holders therefore see no cost signal, which is acceptable.)
     - Row anatomy: icon, model name with a region badge beside it
       (`ON-PREM`/`SWISS CLOUD`/`UK CLOUD`
     etc.), capability pills below the name, and a meta line of `context size · city · region-type`
@@ -445,8 +454,8 @@ search at the bottom keeps it directly above the on-screen keyboard on mobile.
 
 - **Description:** Reflect the same discovery and preference behaviour in the account settings model
   list, using the extra space there for more explanatory controls.
-- **User story:** As a user, I want to manage model preferences in settings so that the compact
-  composer stays quick while settings gives me a fuller overview.
+- **User story:** As an Account holder, I want to manage model preferences in settings so that the
+  compact composer stays quick while settings gives me a fuller overview.
 - **Priority:** P1
 - **Acceptance criteria:**
     - The account settings model list supports the same search and quick filters as the composer.
@@ -468,16 +477,16 @@ search at the bottom keeps it directly above the on-screen keyboard on mobile.
 ### 5.10 Optional future: Auto model mode
 
 - **Description:** Provide an "Auto" option that picks a model via transparent client-side rules.
-- **User story:** As a non-technical user, I want Cognos to pick a sensible model so that I do not
-  need to understand the catalogue.
+- **User story:** As a non-technical Account holder, I want Cognos to pick a sensible model so that
+  I do not need to understand the catalogue.
 - **Priority:** P2 / future
 - **Acceptance criteria:**
     - Auto mode is opt-in or clearly labelled.
-    - Auto mode should be considered if repeated usability testing shows users still hesitate at
-      model
+    - Auto mode should be considered if repeated usability testing shows Account holders still
+      hesitate at model
     choice even after search, filters, and recommended defaults.
     - First version uses only local rules: active composer tool, attachments, selected filters,
-    privacy tier, billing eligibility, project default, and user preference.
+    privacy tier, billing eligibility, project default, and Account holder preference.
     - Auto mode does not send prompt text or search data to the backend for ranking.
     - The UI explains why a model was selected, for example "Selected because image generation is
       on".
@@ -542,7 +551,7 @@ Rules:
   tier are product-owned values maintained here and reviewed whenever the catalogue changes
 
 If this mapping grows too large or needs backend ownership, expose it as public catalogue metadata
-in `/api/v1/models`; it must remain product metadata, not user-specific data.
+in `/api/v1/models`; it must remain product metadata, not Account holder-specific data.
 
 ### 6.3 User preferences
 
@@ -572,10 +581,11 @@ Rules:
 ### 6.4 Rejected: local-only browser storage
 
 A local-only `localStorage` MVP for `recentModels`/`hiddenModels` was considered and **rejected**.
-`recentModels` is behavioural metadata — which models a user actually uses — and `localStorage`
-under a key such as `cognos:model-selector:<user-id>` persists across logout and is readable by any
-script on the origin or by anyone on a shared machine. These fields must use encrypted sync via
-`UserPreferencesService` (§6.3) instead, inheriting the existing NaCl secretbox protection.
+`recentModels` is behavioural metadata — which models an Account holder actually uses — and
+`localStorage` under a key such as `cognos:model-selector:<user-id>` persists across logout and is
+readable by any script on the origin or by anyone on a shared machine. These fields must use
+encrypted sync via `UserPreferencesService` (§6.3) instead, inheriting the existing NaCl secretbox
+protection.
 
 If any non-syncing, UI-only state ever needs browser storage, it must store only non-sensitive UI
 state (never model usage history, key material, or message content) and be cleared on logout.
@@ -606,8 +616,8 @@ Rules:
   re-encrypt pipeline and read by decrypting `projects.data`. No plaintext project field is added.
 - Zod defaults must be backward compatible: existing projects have no such keys and default to `''`.
 - Stale-safe: unknown/ineligible IDs are ignored at read time and resolution falls through (§5.7).
-- This is distinct from the per-user encrypted `defaultModelId` in §6.3; project defaults are shared
-  among all members under the project content key.
+- This is distinct from the per-Account-holder encrypted `defaultModelId` in §6.3; project defaults
+  are shared among all Participants under the project content key.
 
 ## 7. Ordering and filtering model
 
@@ -626,7 +636,7 @@ The visible rows should be built with this pipeline:
 5. Apply active quick filter
 6. Apply fuzzy search query
 7. Partition/order:
-   a. pinned models, in user pin order
+   a. pinned models, in Account holder pin order
    b. recent models, most-recent first
    c. recommended models
    d. remaining models in catalogue order
@@ -648,7 +658,7 @@ Pinned order should continue to be frozen when the dropdown opens to avoid row j
 - **Security:** search terms, hidden models, recent models, pinned models, defaults, and project
   defaults must not be stored in plaintext on the server. No plaintext chat content is introduced by
   this feature. Filter-chip and model-row interactions must not emit analytics/telemetry events
-  carrying model IDs alongside a user identifier.
+  carrying model IDs alongside an Account holder identifier.
 - **Scalability:** the client-side approach must comfortably handle a 10x catalogue increase without
   backend search infrastructure. If catalogue size exceeds 500 models, add a memoised search index
   rather than a server endpoint.
@@ -662,14 +672,14 @@ Pinned order should continue to be frozen when the dropdown opens to avoid row j
 
 | Metric                                             | Target                                                                                                                                 | Measurement method                                                   |
 | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Time to first useful chat                          | Fresh users can send their first message without opening the model selector                                                            | Usability script / Playwright happy path                             |
-| Model selection time in usability script           | Median under 10 seconds for "find an image/reasoning/low-cost model" tasks with non-/slightly-technical users                          | Manual UX script or Playwright-assisted timing in a seeded catalogue |
+| Time to first useful chat                          | Fresh Account holders can send their first message without opening the model selector                                                  | Usability script / Playwright happy path                             |
+| Model selection time in usability script           | Median under 10 seconds for "find an image/reasoning/low-cost model" tasks with non-/slightly-technical Account holders                | Manual UX script or Playwright-assisted timing in a seeded catalogue |
 | Zero server calls during search/filter interaction | 0 API requests after catalogue load while typing/filtering                                                                             | Playwright network assertions                                        |
 | Translation coverage                               | 100% key parity across `en/de/fr/es/it/pt`                                                                                             | `translation-parity.spec.ts`                                         |
-| Preference plaintext leakage                       | 0 new plaintext user/project fields for recents, hidden models, or defaults                                                            | Code review + API e2e assertions                                     |
+| Preference plaintext leakage                       | 0 new plaintext Account holder/project fields for recents, hidden models, or defaults                                                  | Code review + API e2e assertions                                     |
 | Keyboard completion                                | User can open selector, search, move, select, and close without mouse                                                                  | Playwright e2e                                                       |
-| Default acceptance                                 | At least 70% of test users can start a chat without changing model and describe the default as reasonable                              | Usability script / product review                                    |
-| Exploration comprehension                          | At least 80% of test users can identify which model is better for image, reasoning, low-cost, and private use cases from the UI labels | Usability script / product review                                    |
+| Default acceptance                                 | At least 70% of test Account holders can start a chat without changing model and describe the default as reasonable                    | Usability script / product review                                    |
+| Exploration comprehension                          | At least 80% of test Account holders can identify which model is better for image, reasoning, low-cost, and private use cases          | Usability script / product review                                    |
 
 ## 10. Testing requirements
 
@@ -681,7 +691,8 @@ Add or extend tests under `frontend/e2e/`:
 
 - `models.spec.ts` or new `model-selector-discovery.spec.ts`
 - account settings model-list coverage in `account-*` or a dedicated `account-models.spec.ts`
-- fresh user can start a chat with the recommended default without opening the model selector
+- fresh Account holder can start a chat with the recommended default without opening the model
+  selector
 - search by model name
 - search by provider
 - search by capability synonym
@@ -711,8 +722,8 @@ Extend API tests only where encrypted preference persistence changes:
 Add pure tests for:
 
 - model search index/query matching
-- contextual default resolution for fresh users, image mode, project default, user default, hidden,
-  and ineligible models
+- contextual default resolution for fresh Account holders, image mode, project default, Account
+  holder default, hidden, and ineligible models
 - capability filter predicates
 - ordering pipeline with selected, pinned, recent, recommended, hidden, and ineligible models
 - default resolution prefers recommended eligible models before generic first eligible fallback
@@ -737,7 +748,7 @@ Add pure tests for:
 | ----------------------------------------------------------------------------------------------------- | ------ | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | The selector becomes visually overloaded with search, chips, pins, and badges                         | High   | Medium     | Keep the composer compact; move hide management entirely to settings (§5.5); no per-row overflow; use the responsive bottom-sheet on mobile (§4.5); test on mobile widths     |
 | Capability labels are misleading because `fast` and `powerful` are subjective                         | Medium | High       | Use explicit curated metadata; do not infer from names or cost; review labels when catalogue changes                                                                          |
-| Sane defaults are wrong for some users                                                                | Medium | Medium     | Make defaults easy to override, keep recommendations explainable, and prefer privacy/billing eligibility constraints before capability ranking                                |
+| Sane defaults are wrong for some Account holders                                                      | Medium | Medium     | Make defaults easy to override, keep recommendations explainable, and prefer privacy/billing eligibility constraints before capability ranking                                |
 | Preference changes accidentally add plaintext server fields                                           | High   | Low        | Store synced preferences only in encrypted `user_preferences.data`; add API/code-review checks                                                                                |
 | Nested row actions break listbox accessibility                                                        | Medium | Medium     | Revisit markup so row selection and per-row actions have valid keyboard semantics; cover with tests                                                                           |
 | Search quality varies by language                                                                     | Medium | Medium     | Start with stable metadata plus translated synonyms; normalise diacritics/case (`NFD`); use i18n parity tests; avoid relying only on English descriptions                     |
@@ -750,6 +761,6 @@ Add pure tests for:
 - Server-side personalised recommendations.
 - Server-side search endpoints for model picker queries.
 - Sending prompt text to a ranking service.
-- Logging model search terms or filter usage with user identifiers.
+- Logging model search terms or filter usage with Account holder identifiers.
 - Reworking the backend provider catalogue beyond optional public metadata additions.
 - Building a full model comparison page.

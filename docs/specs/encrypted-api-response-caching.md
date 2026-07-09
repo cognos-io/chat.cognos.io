@@ -119,7 +119,8 @@ Cons: new auth surface; more API/docs/tests; risks duplicating message-list sema
 
 ## 4. Browser cache path
 
-Browser caching is lower risk than CDN caching because the cache is local to the user agent.
+Browser caching is lower risk than CDN caching because the cache is local to the Account holder's
+browser.
 
 Investigate:
 
@@ -159,7 +160,7 @@ Phase 0 CDN caching should exclude:
 
 - multi-participant standalone conversations;
 - project conversations;
-- any endpoint whose access can be revoked by another user;
+- any endpoint whose access can be revoked by another Account holder;
 - key-material endpoints;
 - public-share endpoints.
 
@@ -215,7 +216,7 @@ HMAC(cache_secret, user_id + ':' + auth_generation + ':' + access_generation)
 
 Configure Bunny Vary Cache on that cookie.
 
-Pros: no raw user ID in the cache key; namespace can rotate.  
+Pros: no raw Account holder ID in the cache key; namespace can rotate.  
 Cons: still needs purge; stale clients can still present an old namespace until expiry.
 
 ### Option C — request header namespace
@@ -265,11 +266,11 @@ conversation:{conversationID}:messages:user:{principalHash}
 conversation:{conversationID}:messages:page:{page}:size:{pageSize}:user:{principalHash}
 ```
 
-Use `principalHash`, not raw user ID, if tags can appear in CDN logs.
+Use `principalHash`, not raw Account holder ID, if tags can appear in CDN logs.
 
 For Bunny, emit these as `CDN-Tag` values on responses. Purging
 `conversation:{conversationID}:messages:user:{principalHash}` should remove all cached message pages
-for that user's view of the conversation.
+for that Account holder's view of the Conversation.
 
 ## 9. Purge interface
 
@@ -327,7 +328,7 @@ delete-all-chats, key rotation.
 
 Recommended policy:
 
-- Do not CDN-cache these resources in phase 0 if they can be affected by another user.
+- Do not CDN-cache these resources in phase 0 if they can be affected by another Account holder.
 - If CDN caching is later enabled, require synchronous purge success before reporting success.
 - If purge fails, fail closed where possible and mark the cache feature unhealthy.
 - If the data mutation has already committed, return/alert as a critical incident and disable CDN

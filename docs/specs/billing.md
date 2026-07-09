@@ -29,20 +29,20 @@ PocketBase/SQLite (primary store), Paddle (subscriptions + usage overage charges
 
 ## 1. Overview & Goals
 
-Cognos charges all users for access. Two plans are offered, both billed in **CHF** (excluding
-tax — Paddle adds tax on top at checkout). All payments are processed through **Paddle**, which
-acts as the Merchant of Record and handles VAT / sales-tax compliance on our behalf.
+Cognos charges all Account holders for access. Two plans are offered, both billed in **CHF**
+(excluding tax — Paddle adds tax on top at checkout). All payments are processed through **Paddle**,
+which acts as the Merchant of Record and handles VAT / sales-tax compliance on our behalf.
 
 The product offers a **60-day money-back guarantee** on every first purchase. Users may also be
 refunded later at our discretion, with provider usage optionally deducted (see Section 7).
 
 ### Goals
 
-1. Charge users in CHF using Paddle as the only payment surface.
+1. Charge Account holders in CHF using Paddle as the only payment surface.
 2. Support two plans — **Pay-As-You-Go** and **Unlimited (with fair usage)** — plus a small free
    trial on signup that converts into a read-only state after exhaustion.
-3. Apply a **20% margin** to provider COGS on PAYG, transparently to the user (they see Cognos
-   prices, not provider prices).
+3. Apply a **20% margin** to provider COGS on PAYG, transparently to the Account holder (they see
+   Cognos prices, not provider prices).
 4. Bill PAYG via a **Paddle subscription with a CHF 15/month minimum commit**. Paddle has no
    usage-metering API, so usage accrues in our own `balance_transactions` ledger (the source of
    truth) and at cycle end we post a **single one-time overage charge** to Paddle for any usage
@@ -75,7 +75,7 @@ This document **supersedes** the billing portions of
 | Margin             | Not defined                        | **+20%** on provider USD cost, then convert to CHF                                                                |
 | Payment processor  | Not defined ("manual for now")     | **Paddle** (Merchant of Record, handles tax)                                                                      |
 | Free state         | Not defined                        | CHF 2 signup credit (per-user override via DB) → read-only after exhaustion                                       |
-| Refund policy      | Not defined                        | 60-day money-back, optional usage deduction, one refund per user lifetime                                         |
+| Refund policy      | Not defined                        | 60-day money-back, optional usage deduction, one refund per Account holder lifetime                               |
 | Business invoicing | Not defined                        | Surfaced at checkout (company name + VAT ID forwarded to Paddle)                                                  |
 | Currency           | Not defined                        | **CHF only**, end-to-end. EUR fallback only if Paddle doesn't yet support CHF subscriptions                       |
 
@@ -90,8 +90,8 @@ integration.
 
 ## 3. Plans
 
-There are exactly three billing states a user can be in. Every authenticated user is in **exactly
-one** at any moment.
+There are exactly three billing states an Account holder can be in. Every authenticated Account
+holder is in **exactly one** at any moment.
 
 | State            | Plan enum value | Price (excl. tax)                                                 | Usage handling                                                                                                                                                           |
 | ---------------- | --------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -104,17 +104,17 @@ one** at any moment.
 
 - Granted automatically on first successful signup.
 - Default seed amount **CHF 2.00 (200 rappen)**, configurable via `BILLING_TRIAL_SEED_RAPPEN`.
-- **Per-user override** supported via the `trial_seed_overrides` table (keyed on email, consumed
-  by the signup hook). Marketing / sales can pre-stage a larger seed for invited users without
-  changing the global default. See Section 9.2.
+- **Per-user override** supported via the `trial_seed_overrides` table (keyed on email, consumed by
+  the signup hook). Marketing / sales can pre-stage a larger seed for invited Account holders
+  without changing the global default. See Section 9.2.
 - Lives in `user_billing.balance_rappen` with `plan_type = "trial"`.
 - Usage deducts from the seed balance using the same PAYG cost formula (provider cost × 1.20 → CHF).
   Margin is applied even on trial so behaviour is identical post-conversion.
 - When balance would go below 0, the `/complete` request is rejected with `402` and the plan
   transitions to `inactive`. The current completion is not partially served.
 - Trial credit does **not** roll over into PAYG or Unlimited — it is consumed or expires.
-- A user is granted trial credit **exactly once** in their lifetime, keyed on `users.id`. Operators
-  can grant additional ad-hoc credit later via an `adjustment` transaction (Section 12.7).
+- An Account holder is granted trial credit **exactly once** in their lifetime, keyed on `users.id`.
+  Operators can grant additional ad-hoc credit later via an `adjustment` transaction (Section 12.7).
 
 ### 3.2 Pay-As-You-Go (minimum commit + cycle-end overage)
 
@@ -137,8 +137,8 @@ resulting amount. We never push per-completion events to Paddle.
   `CHF 15.00 (upcoming cycle minimum) + overage (previous cycle usage above the minimum)`. Because
   the floor is pre-paid before any usage, this **must be disclosed clearly at signup and on every
   invoice** — see Sections 13.2, 13.3, 13.5, and 15.
-- **Plan start**: Paddle `subscription.created` for `cognos-payg` → `plan_type = "payg"`. No
-  balance is set; the user's PAYG state is purely "subscribed to the minimum-commit product".
+- **Plan start**: Paddle `subscription.created` for `cognos-payg` → `plan_type = "payg"`. No balance
+  is set; the Account holder's PAYG state is purely "subscribed to the minimum-commit product".
 - **Per-completion accrual (Section 11)**: after each successful gateway call, the backend writes a
   local `usage` row only. There is **no** per-completion call to Paddle, so the HTTP response is
   never delayed for a billing provider.
@@ -150,13 +150,14 @@ resulting amount. We never push per-completion events to Paddle.
 - **Cycle invoice**: Paddle issues the cycle transaction (`transaction.completed` webhook) covering
   the commit plus any overage charge. We record it against the cycle for reconciliation but do
   **not** modify any balance — there is no balance.
-- **No "out of balance" state**: PAYG users are never blocked for funds. They could in principle
-  accrue arbitrary usage in a cycle, hence the soft spending-alert mechanism in Section 14.11.
+- **No "out of balance" state**: PAYG Account holders are never blocked for funds. They could in
+  principle accrue arbitrary usage in a cycle, hence the soft spending-alert mechanism in Section
+  14.11.
 - **Subscription cancellation**: at `period_end` the plan transitions to `inactive`. The final
   cycle's accrued usage is still billed by Paddle (commit + final overage charge).
 - **Failed payment**: Paddle's dunning runs. If Paddle marks the subscription `canceled` after
-  dunning gives up, the user drops to `inactive`. The unpaid transaction remains on the Paddle
-  customer record for collection.
+  dunning gives up, the Account holder drops to `inactive`. The unpaid transaction remains on the
+  Paddle customer record for collection.
 - **Plan switch PAYG → Unlimited**: takes effect immediately on Paddle's side; the final PAYG cycle
   is billed as normal (`max(usage_so_far, CHF 15)`, overage charged on close).
 
@@ -173,10 +174,10 @@ resulting amount. We never push per-completion events to Paddle.
 - Annual is a single Paddle subscription product; the CHF 200/yr discount is encoded directly in the
   product price (no coupon code required).
 - Renewal is automatic via Paddle. Cancellation = no auto-renew at next cycle boundary.
-- Every completion still writes a `usage` row to `balance_transactions` with
-  `amount_rappen = 0` (i.e. no balance impact) and the real cost recorded in
-  `provider_cost_rappen` / `user_cost_rappen` columns (see schema). This keeps a complete picture
-  of provider COGS per user for fair-use review (Section 8) without affecting their balance.
+- Every completion still writes a `usage` row to `balance_transactions` with `amount_rappen = 0`
+  (i.e. no balance impact) and the real cost recorded in `provider_cost_rappen` / `user_cost_rappen`
+  columns (see schema). This keeps a complete picture of provider COGS per Account holder for
+  fair-use review (Section 8) without affecting their balance.
 
 ### 3.4 Plan switches — summary
 
@@ -242,15 +243,16 @@ Why USD-first markup, then FX?
   they are never used to drive balance arithmetic.
 - The FX rate used for a transaction is stored alongside that transaction — never re-derived.
 - `balance_rappen` must never go negative for any plan. The completion handler reserves an
-  upper-bound cost (Section 14.5) before calling the gateway and rejects with `402` if the user
-  cannot afford it.
+  upper-bound cost (Section 14.5) before calling the gateway and rejects with `402` if the Account
+  holder cannot afford it.
 
 ### 4.3 FX rate
 
 - Source: ECB or SNB daily reference rate, fetched once per `FX_RATE_REFRESH_HOURS` (default 24).
 - Fallback constant in env (`FX_RATE_FALLBACK_USD_CHF`) used if the fetch fails on startup.
 - The rate snapshot used for a request is **captured at the time of the gateway call** — not at
-  cycle end. This locks the user-facing cost for that completion regardless of later FX moves.
+  cycle end. This locks the Account holder-facing cost for that completion regardless of later FX
+  moves.
 
 ### 4.4 Configurable values
 
@@ -324,7 +326,7 @@ PADDLE_PRICE_UNLIMITED_ANNUAL=pri_xxx
 
 | Paddle event             | What we do                                                                                                                                   |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `subscription.created`   | Transition user `trial`/`inactive` → `payg`/`unlimited`. Snapshot `paddle_subscription_id`, cycle bounds.                                    |
+| `subscription.created`   | Transition Account holder `trial`/`inactive` → `payg`/`unlimited`. Snapshot `paddle_subscription_id`, cycle bounds.                          |
 | `subscription.activated` | Defensive re-sync to `payg`/`unlimited` (e.g. after dunning recovery or trial end).                                                          |
 | `subscription.updated`   | Cycle rollover: post the closing cycle's PAYG overage charge (Section 11), record a new `payg_cycle_summaries` row, reset cycle bookkeeping. |
 | `subscription.canceled`  | Mark plan ending at `current_billing_period.ends_at` (or immediately if effective now). After it passes, transition to `inactive`.           |
@@ -380,12 +382,12 @@ sequenceDiagram
 
 The backend calls Paddle to:
 
-- Create a **checkout** when a logged-in user chooses a plan (`POST /transactions`, returning a
-  `checkout.url`), forwarding business invoicing details when supplied.
+- Create a **checkout** when a logged-in Account holder chooses a plan (`POST /transactions`,
+  returning a `checkout.url`), forwarding business invoicing details when supplied.
 - Post the **PAYG cycle-end overage charge** as a one-time charge on the subscription
   (`POST /subscriptions/{id}/charge` with the overage price/amount — Section 11).
-- Cancel / reactivate a user's subscription if they hit "cancel" in our UI (or we proxy to Paddle's
-  hosted customer portal — see 13.4).
+- Cancel / reactivate an Account holder's subscription if they hit "cancel" in our UI (or we proxy
+  to Paddle's hosted customer portal — see 13.4).
 - Issue **refunds** via the Paddle adjustments API (`POST /adjustments`, `action: refund`) as part
   of the money-back flow (Section 7).
 
@@ -415,7 +417,7 @@ stateDiagram-v2
     note right of trial
         balance = remaining
         seed credit (rappen)
-        consumed once per user
+        consumed once per Account holder
     end note
     note right of payg
         CHF 15/mo min commit
@@ -438,7 +440,7 @@ stateDiagram-v2
 
 Edges:
 
-- **signup**: PocketBase user `OnRecordAfterCreate` hook → `user_billing` row with
+- **signup**: PocketBase `OnRecordAfterCreate` hook → `user_billing` row with
   `plan_type='trial'`, `balance_rappen = override(email) ?? BILLING_TRIAL_SEED_RAPPEN`
   (default 200 = CHF 2.00).
 - **trial → inactive**: triggered inside the completion handler when `CanAfford` returns false.
@@ -453,7 +455,7 @@ Edges:
   immediate via a chargeback `adjustment.created`. For PAYG, Paddle still issues the final cycle
   invoice after the transition.
 
-A user's state and Paddle state must reconcile every cycle (Section 14.2).
+An Account holder's state and Paddle state must reconcile every cycle (Section 14.2).
 
 ---
 
@@ -463,14 +465,14 @@ A user's state and Paddle state must reconcile every cycle (Section 14.2).
 
 - **Window**: 60 calendar days from the **first successful Paddle payment of the active
   subscription** (`refund_eligible_until_at` is snapshotted at subscription creation).
-- **Trigger**: user emails support / clicks a "request refund" button. Initial implementation is
-  email-driven; an in-app self-serve refund flow can come later.
+- **Trigger**: Account holder emails support / clicks a "request refund" button. Initial
+  implementation is email-driven; an in-app self-serve refund flow can come later.
 - **Scope**: applies to the first paid period only (the initial monthly or annual payment). For
-  annual users, this is potentially significant — a full CHF 1000 refund is on the table for 60
-  days.
-- **Usage deduction**: at operator discretion, we may deduct the actual user-facing cost of usage
-  consumed in the refund period from the refund amount. The deducted figure uses the same PAYG
-  formula (provider cost × 1.20, converted to CHF at the snapshot FX rate).
+  annual Account holders, this is potentially significant — a full CHF 1000 refund is on the table
+  for 60 days.
+- **Usage deduction**: at operator discretion, we may deduct the actual Account holder-facing cost
+  of usage consumed in the refund period from the refund amount. The deducted figure uses the same
+  PAYG formula (provider cost × 1.20, converted to CHF at the snapshot FX rate).
 - **One-time per customer**: each `users.id` is eligible for the refund exactly once in their
   lifetime, even if they later sign up for a different plan.
 
@@ -513,7 +515,7 @@ sequenceDiagram
     Op-->>U: confirmation
 ```
 
-1. Support agent loads the user's `/admin/billing/{user_id}` page (or runs a CLI command):
+1. Support agent loads the Account holder's `/admin/billing/{user_id}` page (or runs a CLI command):
    `cognos refund --user=<id> --reason="..." --deduct-usage=<true|false>`
 2. The tool computes:
    - `gross_refund_rappen` = sum of Paddle transactions/subscription charges in the refund window
@@ -523,7 +525,7 @@ sequenceDiagram
    apportioned amount.
 4. A `refund` row is written with `paddle_adjustment_ids`, the breakdown, and the operator who
    authorised it.
-5. The user's plan is moved to `inactive` (refund implies they didn't want it).
+5. The Account holder's plan is moved to `inactive` (refund implies they didn't want it).
 6. `users.refund_used = true` is set to enforce one-per-lifetime.
 
 ### 7.4 Goodwill refunds outside the 60-day window
@@ -546,9 +548,10 @@ is **not** a license for industrial-scale automation.
 
 ### 8.1 Enforcement model
 
-**Monitor only. No automated user-facing block.** A nightly DuckDB query against the analytics
-parquet files identifies any `unlimited` user whose 30-day rolling user-facing cost exceeds
-`BILLING_UNLIMITED_FAIR_USE_ALERT_CHF` (default CHF 200/mo — i.e. 2× the monthly price).
+**Monitor only. No automated Account holder-facing block.** A nightly DuckDB query against the
+analytics parquet files identifies any `unlimited` Account holder whose 30-day rolling Account
+holder-facing cost exceeds `BILLING_UNLIMITED_FAIR_USE_ALERT_CHF` (default CHF 200/mo — i.e. 2× the
+monthly price).
 
 ```sql
 SELECT
@@ -606,13 +609,13 @@ threshold is published — it stays internal.
 
 #### `users` (additions)
 
-| Field                | Type | Notes                                                                  |
-| -------------------- | ---- | ---------------------------------------------------------------------- |
-| `refund_used`        | Bool | Default false. Set true when a refund has been issued (lifetime flag). |
-| `paddle_customer_id` | Text | Paddle's customer ID, set on first Paddle interaction. Nullable.       |
-| `business_name`      | Text | Company name for invoicing if the user buys for a business. Nullable.  |
-| `business_vat_id`    | Text | VAT/UID registration. Forwarded to Paddle at checkout. Nullable.       |
-| `business_country`   | Text | ISO 3166-1 alpha-2 country code for the business address. Nullable.    |
+| Field                | Type | Notes                                                                           |
+| -------------------- | ---- | ------------------------------------------------------------------------------- |
+| `refund_used`        | Bool | Default false. Set true when a refund has been issued (lifetime flag).          |
+| `paddle_customer_id` | Text | Paddle's customer ID, set on first Paddle interaction. Nullable.                |
+| `business_name`      | Text | Company name for invoicing if the Account holder buys for a business. Nullable. |
+| `business_vat_id`    | Text | VAT/UID registration. Forwarded to Paddle at checkout. Nullable.                |
+| `business_country`   | Text | ISO 3166-1 alpha-2 country code for the business address. Nullable.             |
 
 #### `user_billing` (rename / extend)
 
@@ -644,7 +647,7 @@ threshold is published — it stays internal.
 | `event_id`              | Text     | Existing — links to analytics `event_id` for `usage`. Null otherwise.                                      |
 | `paddle_transaction_id` | Text     | Null for most rows; populated for `refund` rows linking to the Paddle transaction the adjustment refunded. |
 | `provider_cost_rappen`  | Integer  | NEW. For `usage` rows only. The raw provider cost in CHF (no margin). Allows margin recomputation.         |
-| `user_cost_rappen`      | Integer  | NEW. For `usage` rows only. The marked-up user-facing cost in CHF. = `-amount_rappen` for PAYG.            |
+| `user_cost_rappen`      | Integer  | NEW. For `usage` rows only. The marked-up Account holder-facing cost in CHF. = `-amount_rappen` for PAYG.  |
 | `fx_rate_usd_chf`       | Double   | NEW. For `usage` rows only. The FX rate snapshot at request time.                                          |
 | `description`           | Text     | Existing.                                                                                                  |
 
@@ -687,15 +690,15 @@ Raw, deduplicated webhook log. Source of truth for everything Paddle tells us.
 Pre-staged trial credits matched on signup email. Allows marketing/sales to grant a larger trial
 seed to specific invitees without changing the global default.
 
-| Field           | Type     | Notes                                                                          |
-| --------------- | -------- | ------------------------------------------------------------------------------ |
-| `email`         | Text PK  | Lowercased.                                                                    |
-| `rappen`        | Integer  | The seed amount to grant on signup (instead of `BILLING_TRIAL_SEED_RAPPEN`).   |
-| `reason_text`   | Text     | e.g. "Conference giveaway 2026-06", "Partner programme".                       |
-| `set_by`        | Text     | Admin user who staged it.                                                      |
-| `set_at`        | DateTime |                                                                                |
-| `expires_at`    | DateTime | Override is ignored if the user signs up after this. Nullable.                 |
-| `consumed_at`   | DateTime | Set by the signup hook when used. After consumption, row is retained for audit.|
+| Field         | Type     | Notes                                                                           |
+| ------------- | -------- | ------------------------------------------------------------------------------- |
+| `email`       | Text PK  | Lowercased.                                                                     |
+| `rappen`      | Integer  | The seed amount to grant on signup (instead of `BILLING_TRIAL_SEED_RAPPEN`).    |
+| `reason_text` | Text     | e.g. "Conference giveaway 2026-06", "Partner programme".                        |
+| `set_by`      | Text     | Admin user who staged it.                                                       |
+| `set_at`      | DateTime |                                                                                 |
+| `expires_at`  | DateTime | Override is ignored if the Account holder signs up after this. Nullable.        |
+| `consumed_at` | DateTime | Set by the signup hook when used. After consumption, row is retained for audit. |
 
 #### `payg_cycle_summaries`
 
@@ -727,7 +730,7 @@ side-by-side, so any drift is investigable.
 > signature → 401, no DB write), stores every event once in `paddle_events`
 > (idempotent on the unique `paddle_event_id`; re-delivery → 200 `duplicate`),
 > then dispatches. Domain handlers wired now: `subscription.created` /
-> `subscription.activated` flip the user onto the price's plan and snapshot the
+> `subscription.activated` flip the Account holder onto the price's plan and snapshot the
 > subscription + cycle + `refund_eligible_until_at`; `subscription.updated`
 > refreshes the snapshot (plan/price, cycle window, scheduled cancellation) and
 > on a PAYG cycle rollover closes the prior cycle by writing an idempotent
@@ -741,7 +744,7 @@ side-by-side, so any drift is investigable.
 > billed amount against the matching `payg_cycle_summaries` row for audit, and a
 > ~5-minute gocron backstop re-posts any overage charge that never landed
 > (idempotency-key-safe). `adjustment.created` writes a `refunds` row (sets
-> `users.refund_used`; a `chargeback` action also drops the user to `inactive`,
+> `users.refund_used`; a `chargeback` action also drops the Account to `inactive`,
 > §7.5), and the invoices endpoint surfaces a REFUNDED badge by cross-referencing
 > that ledger. The exact per-cycle `reconciled` equality (pending live Paddle
 > timing verification) is the remaining fast-follow.
@@ -809,9 +812,9 @@ Each handler must be safe to run multiple times. Specifically:
 - `adjustment.created` (refund): keyed on `paddle_adjustment_id` — refuse to double-insert a
   `refund` row.
 
-### 10.4 Mapping Paddle customer ↔ Cognos user
+### 10.4 Mapping Paddle customer ↔ Cognos Account holder
 
-- When a Cognos user starts the checkout flow, we create the Paddle transaction/customer with
+- When an Account holder starts the checkout flow, we create the Paddle transaction/customer with
   `custom_data.user_id = users.id` (and persist the returned `paddle_customer_id` on `users`).
   Paddle includes the customer on every subsequent webhook for that customer.
 - The webhook handler resolves the Cognos user via `custom_data.user_id`. If it is missing
@@ -915,7 +918,7 @@ sequenceDiagram
 - If the charge fails permanently (4xx), the cycle summary is flagged with a `processing_error` and
   an operator alert fires. The local ledger is still authoritative for margin reporting; only that
   cycle's overage collection is affected, and an operator can backfill via a manual charge.
-- The user-facing `/complete` response is never blocked by anything in this section.
+- The Account holder-facing `/complete` response is never blocked by anything in this section.
 
 ### 11.4 Why minimum-commit-plus-overage (vs a meter or the earlier pre-paid sketch)
 
@@ -923,10 +926,10 @@ sequenceDiagram
   recurring commit + one cycle-end one-time charge reproduces it exactly with primitives Paddle
   does support.
 - No top-up packs, no balance ledger arithmetic, no per-request provider call.
-- Per-completion latency is unaffected: the user-facing 200 returns immediately after the local
-  ledger row is written; Paddle is touched only once per cycle.
-- The trade-off is that users can in theory accrue arbitrary in-cycle usage. The soft alert and
-  fair-use monitoring in Section 14.11 handle this.
+- Per-completion latency is unaffected: the Account holder-facing 200 returns immediately after the
+  local ledger row is written; Paddle is touched only once per cycle.
+- The trade-off is that Account holders can in theory accrue arbitrary in-cycle usage. The soft
+  alert and fair-use monitoring in Section 14.11 handle this.
 
 ---
 
@@ -980,11 +983,11 @@ For `trial`:
 
 > **Status — implemented.** `internal/paddle` (HTTP client), the
 > `BillingCheckout` handler, and the route are live. The handler resolves the
-> plan → Paddle price, mirrors business details onto the user, forwards
+> plan → Paddle price, mirrors business details onto the Account holder, forwards
 > `custom_data.user_id` + business to Paddle, returns the hosted `checkout_url`,
 > and persists the returned `paddle_customer_id`. Errors map cleanly: unknown
 > plan → 400, Paddle failure → 502, Paddle not configured → 503. The frontend
-> redirects to `checkout_url`; Paddle returns the user to
+> redirects to `checkout_url`; Paddle returns the Account holder to
 > `/account/billing?status=activating`, where the page polls until the
 > `subscription.created` webhook (Case 5) flips the plan, then drops back to
 > chat. The `accepted plan` keys are `payg`, `unlimited_monthly`,
@@ -1006,8 +1009,8 @@ Body:
 }
 ```
 
-`business` is optional and only set when the user has ticked "Buying for a business" on the
-pricing page. When present, it is forwarded to Paddle as the customer's `business` (name + tax
+`business` is optional and only set when the Account holder has ticked "Buying for a business" on
+the pricing page. When present, it is forwarded to Paddle as the customer's `business` (name + tax
 identifier) and `address` so the resulting invoice carries the company details. We also mirror the
 fields onto the local `users` record for display in our dashboard.
 
@@ -1017,8 +1020,8 @@ Response:
 { "checkout_url": "https://paddle.com/...?session=..." }
 ```
 
-The frontend redirects the user to `checkout_url`. After payment, Paddle redirects the user back
-to our app and fires `subscription.created` to the webhook.
+The frontend redirects the Account holder to `checkout_url`. After payment, Paddle redirects the
+Account holder back to our app and fires `subscription.created` to the webhook.
 
 ### 12.3 `POST /api/v1/billing/cancel`
 
@@ -1038,8 +1041,8 @@ Body:
 { "reason_text": "..." }
 ```
 
-For v0 this simply emails support@cognos with the user's details and reason. A self-serve refund
-flow is post-MVP.
+For v0 this simply emails support@cognos with the Account holder's details and reason. A self-serve
+refund flow is post-MVP.
 
 ### 12.6 Admin: `POST /admin/billing/refund` (operator-only)
 
@@ -1053,14 +1056,14 @@ Authenticated via admin session. Drives Section 7.3.
 
 ### 12.7 Error responses on `/complete`
 
-| HTTP code              | `code`             | Condition                                                              |
-| ---------------------- | ------------------ | ---------------------------------------------------------------------- |
-| `402 Payment Required` | `INACTIVE`         | `plan_type = 'inactive'`. User must subscribe.                         |
-| `402 Payment Required` | `TRIAL_EXHAUSTED`  | `plan_type = 'trial'` and `balance < estimated_cost`.                  |
-| `403 Forbidden`        | `MODEL_INELIGIBLE` | Selected model not allowed for user's privacy tier.                    |
+| HTTP code              | `code`             | Condition                                                     |
+| ---------------------- | ------------------ | ------------------------------------------------------------- |
+| `402 Payment Required` | `INACTIVE`         | `plan_type = 'inactive'`. User must subscribe.                |
+| `402 Payment Required` | `TRIAL_EXHAUSTED`  | `plan_type = 'trial'` and `balance < estimated_cost`.         |
+| `403 Forbidden`        | `MODEL_INELIGIBLE` | Selected model not allowed for Account holder's privacy tier. |
 
-PAYG users are **never** blocked for funds — usage accrues to the cycle invoice. Failed Paddle
-payment on a renewal causes a transition to `inactive`, which then 402s as `INACTIVE`.
+PAYG Account holders are **never** blocked for funds — usage accrues to the cycle invoice. Failed
+Paddle payment on a renewal causes a transition to `inactive`, which then 402s as `INACTIVE`.
 
 The 402 response includes a structured body so the client can show the right CTA without parsing
 text:
@@ -1093,8 +1096,8 @@ text:
 - The chat UI shows a modal: "Your free trial is used up. Pick a plan to keep chatting."
     - Two buttons: **Pay-As-You-Go (CHF 15/mo + usage)** and **Unlimited (CHF 100/mo)**.
     - Annual offer surfaced beneath: **"Save CHF 200 with Unlimited Annual (CHF 1000/yr)"**.
-- The PAYG option must state the up-front charge **before** the user commits — both on the button's
-  supporting line and on the final checkout confirmation. Required wording (or equivalent):
+- The PAYG option must state the up-front charge **before** the Account holder commits — both on the
+  button's supporting line and on the final checkout confirmation. Required wording (or equivalent):
   **"CHF 15.00 is charged now for this month's minimum. If your usage goes above CHF 15.00, the
   extra is added to your next monthly invoice. You're never charged less than CHF 15.00 per month
   while subscribed."** No dark patterns — the "charged now" amount is shown on the confirm button.
@@ -1122,11 +1125,10 @@ A single page at `/account/billing` showing:
 - Current plan + price + next renewal date.
 - **PAYG:** make the up-front floor explicit, then show in-cycle usage with a running total:
     - A fixed line at the top: **"CHF 15.00 monthly minimum — paid in advance on {cycle_start}."**
-    - The running total below it:
-      ("CHF 3.42 used this cycle — covered by your CHF 15.00 minimum; nothing extra due yet"
-      or "CHF 12.18 used this cycle — CHF 2.18 overage will be added to your invoice on
-      {next_renewal}"). A progress bar against the CHF 15.00 minimum helps users who want to "get
-      their money's worth" of the floor.
+    - The running total below it: ("CHF 3.42 used this cycle — covered by your CHF 15.00 minimum;
+      nothing extra due yet" or "CHF 12.18 used this cycle — CHF 2.18 overage will be added to your
+      invoice on {next_renewal}"). A progress bar against the CHF 15.00 minimum helps Account
+      holders who want to "get their money's worth" of the floor.
 - Current cycle usage breakdown (model × cost) with a per-row drill-down.
 - Recent transactions (latest 50). PAYG rows show `usage` only; Unlimited the same. Paddle invoice
   amounts surfaced from the matching `payg_cycle_summaries.paddle_billed_rappen`, with each invoice
@@ -1170,8 +1172,8 @@ customer-portal-sessions API (`POST /customer-portal-sessions`). We do not embed
 
 ### 14.1 Paddle webhook is delayed / never arrives
 
-- Nightly job re-checks: for every user with `paddle_cycle_end_at < now() - 1h`, attempt to fetch
-  the latest subscription state from Paddle's API and reconcile.
+- Nightly job re-checks: for every Account holder with `paddle_cycle_end_at < now() - 1h`, attempt
+  to fetch the latest subscription state from Paddle's API and reconcile.
 - If Paddle reports the subscription canceled but we still think it's active for > 24h, alert.
 
 ### 14.2 Reconciliation
@@ -1190,7 +1192,7 @@ optimistic-locked rows (we think active, Paddle canceled).
 ### 14.3 User deletes their account
 
 - Post the final PAYG overage charge for usage accrued in the open cycle before issuing the
-  cancellation, so Paddle's final invoice reflects everything the user actually used.
+  cancellation, so Paddle's final invoice reflects everything the Account holder actually used.
 - Cancel the active Paddle subscription immediately, null out `paddle_subscription_id`.
   Paddle still issues the final transaction for the commit + overage.
 - Keep `balance_transactions`, `payg_cycle_summaries`, `refunds`, `paddle_events` for audit.
@@ -1203,25 +1205,27 @@ optimistic-locked rows (we think active, Paddle canceled).
 
 ### 14.5 Estimating cost before the gateway call (trial only)
 
-- For **trial** users, the completion handler's `CanAfford` check uses an estimated upper bound:
-  `max_input_tokens × input_price + max_output_tokens × output_price`, both at catalogue rates
-  times the 1.20 margin times the current FX rate. If estimated > `balance_rappen`, return 402.
-- For **PAYG** users no upfront estimate is needed — usage just accrues to the cycle invoice.
-- For **Unlimited** users no estimate is needed.
+- For **trial** Account holders, the completion handler's `CanAfford` check uses an estimated upper
+  bound: `max_input_tokens × input_price + max_output_tokens × output_price`, both at catalogue
+  rates times the 1.20 margin times the current FX rate. If estimated > `balance_rappen`, return
+  402.
+- For **PAYG** Account holders no upfront estimate is needed — usage just accrues to the cycle
+  invoice.
+- For **Unlimited** Account holders no estimate is needed.
 
-### 14.6 Concurrent completions on the same user
+### 14.6 Concurrent completions on the same Account holder
 
 - For **trial**, the `balance_transactions` insert + `user_billing.balance_rappen` update must
   run in a single SQL transaction with row-level locking on `user_billing`. SQLite serialises
   writes per database file — acceptable for current scale; revisit if we shard.
 - For **PAYG**, the `usage` insert is independent per request; concurrency only matters for the
-  cycle-summary read-modify-write at rollover, which happens once per cycle per user.
+  cycle-summary read-modify-write at rollover, which happens once per cycle per Account holder.
 
 ### 14.7 PAYG overage charge failures
 
 - Transient failure (5xx, timeout): the reconcile job retries the one-time charge with exponential
-  backoff. The local `usage` row and cycle summary are the source of truth; nothing user-visible is
-  affected, and `paddle_overage_txn_id` stays null until the charge succeeds.
+  backoff. The local `usage` row and cycle summary are the source of truth; nothing Account
+  holder-visible is affected, and `paddle_overage_txn_id` stays null until the charge succeeds.
 - Permanent failure (4xx): the cycle summary is flagged with `processing_error` and an alert fires.
   An operator decides whether to post the charge manually or absorb the loss for that cycle.
 - The charge uses `idempotency_key = overage_<cycle_id>`, so retries never double-charge.
@@ -1254,18 +1258,18 @@ charges relative to the renewal transaction.
 
 ### 14.11 Soft in-cycle spending alert
 
-PAYG users can theoretically accrue large invoices in a cycle since there's no balance cap.
-A lightweight protection without a hard block:
+PAYG Account holders can theoretically accrue large invoices in a cycle since there's no balance
+cap. A lightweight protection without a hard block:
 
 - Whenever a `usage` row is written for PAYG and `local_usage_rappen` for the open cycle crosses
-  `BILLING_PAYG_SOFT_ALERT_RAPPEN` (default CHF 50), the system sends the user a one-time email/
-  in-app notice for that cycle: "You've used CHF 50 of PAYG this cycle. Heads up — you'll be
+  `BILLING_PAYG_SOFT_ALERT_RAPPEN` (default CHF 50), the system sends the Account holder a one-time
+  email/ in-app notice for that cycle: "You've used CHF 50 of PAYG this cycle. Heads up — you'll be
   billed for what you use."
 - Optionally a second notice at 2× the threshold.
-- These notices do not block the user. They exist so a runaway script can't silently rack up a
-  hundreds-of-francs invoice unnoticed.
-- A hard cap is intentionally not in this spec; if a user wants predictable billing they should
-  switch to Unlimited.
+- These notices do not block the Account holder. They exist so a runaway script can't silently rack
+  up a hundreds-of-francs invoice unnoticed.
+- A hard cap is intentionally not in this spec; if an Account holder wants predictable billing they
+  should switch to Unlimited.
 
 ---
 
@@ -1341,12 +1345,12 @@ existing test deployment isn't broken mid-rollout.
 
 ### Phase B5 — Refunds & admin
 
-| #    | Task                                                                       | Area               |
-| ---- | -------------------------------------------------------------------------- | ------------------ |
-| B5.1 | `refunds` table + migration                                                | `store`, migration |
-| B5.2 | CLI `cognos refund` + admin endpoint                                       | `cmd`, `handler`   |
-| B5.3 | Stubbed user-facing `POST /api/v1/billing/refund-request` (emails support) | `handler`          |
-| B5.4 | One-refund-per-lifetime enforcement                                        | `billing`          |
+| #    | Task                                                                                 | Area               |
+| ---- | ------------------------------------------------------------------------------------ | ------------------ |
+| B5.1 | `refunds` table + migration                                                          | `store`, migration |
+| B5.2 | CLI `cognos refund` + admin endpoint                                                 | `cmd`, `handler`   |
+| B5.3 | Stubbed Account holder-facing `POST /api/v1/billing/refund-request` (emails support) | `handler`          |
+| B5.4 | One-refund-per-lifetime enforcement                                                  | `billing`          |
 
 ### Phase B6 — Dashboard & marketing surfaces
 
@@ -1376,11 +1380,11 @@ contributors don't have to ask again.
 | --- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1   | Currency                                        | **CHF, end-to-end.** Being Swiss is part of the brand. EUR fallback only if Paddle doesn't yet support CHF subscriptions for our account.                                                                                                                          |
 | 2   | Trial seed amount                               | **CHF 2.00** default (`BILLING_TRIAL_SEED_RAPPEN=200`), with **per-user override** via the `trial_seed_overrides` table for marketing campaigns.                                                                                                                   |
-| 3   | One refund per user lifetime                    | **Yes.** Enforced via `users.refund_used`.                                                                                                                                                                                                                         |
+| 3   | One refund per Account holder lifetime          | **Yes.** Enforced via `users.refund_used`.                                                                                                                                                                                                                         |
 | 4   | Refunds outside the 60-day window               | **None**, except manual goodwill exceptions via `cognos refund --force`.                                                                                                                                                                                           |
 | 5   | PAYG mechanism                                  | **CHF 15/mo min commit + cycle-end overage charge.** Usage accrues locally (Paddle has no meter); one one-time charge per cycle for usage above the commit, so Paddle bills `max(sum, CHF 15)`.                                                                    |
 | 5a  | PAYG floor charged in advance                   | **Yes — the CHF 15 minimum is pre-paid** at checkout and on each renewal; overage is billed in arrears on the next invoice. **Must be disclosed** at signup, on the checkout confirm, on the pricing page, and as distinct invoice line items (§13.2, §13.5, §15). |
-| 6   | Fair-use threshold (Unlimited)                  | CHF 200/mo rolling 30-day user-cost. Internal alert only — not published.                                                                                                                                                                                          |
+| 6   | Fair-use threshold (Unlimited)                  | CHF 200/mo rolling 30-day Account holder cost. Internal alert only — not published.                                                                                                                                                                                |
 | 7   | Unlimited monthly → annual switch               | End-of-cycle, no pro-rata, no discount carried over.                                                                                                                                                                                                               |
 | 8   | 60-day window after plan switch                 | Carries forward against the **original** subscription start, not the new one.                                                                                                                                                                                      |
 | 9   | VAT display                                     | All UI shows excl. tax with "Tax added at checkout" note.                                                                                                                                                                                                          |
