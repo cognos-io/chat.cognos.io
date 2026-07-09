@@ -90,32 +90,30 @@ import { AuthService } from '@services/auth.service';
             </cog-button>
 
             @if (mfaError()) {
-              <p class="auth-page__hint">{{ mfaError() }}</p>
+              <p class="auth-page__hint" role="alert">{{ mfaError() }}</p>
             }
 
             <p class="auth-page__switch">
-              <a
-                role="button"
-                tabindex="0"
+              <button
+                type="button"
+                class="auth-page__link-button"
                 (click)="toggleMode()"
-                (keyup.enter)="toggleMode()"
               >
                 {{
                   mfaMode() === 'totp'
                     ? t('auth.mfa.useRecovery')
                     : t('auth.mfa.useApp')
                 }}
-              </a>
+              </button>
             </p>
             <p class="auth-page__switch">
-              <a
-                role="button"
-                tabindex="0"
+              <button
+                type="button"
+                class="auth-page__link-button"
                 (click)="backToLogin()"
-                (keyup.enter)="backToLogin()"
               >
                 {{ t('auth.mfa.back') }}
-              </a>
+              </button>
             </p>
           </form>
         } @else {
@@ -163,7 +161,7 @@ import { AuthService } from '@services/auth.service';
           </form>
 
           @if (authService.status() === 'error') {
-            <p class="auth-page__hint">{{ t('auth.login.error') }}</p>
+            <p class="auth-page__hint" role="alert">{{ t('auth.login.error') }}</p>
           }
 
           <p class="auth-page__switch">

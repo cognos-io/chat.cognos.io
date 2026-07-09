@@ -138,6 +138,9 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
                           <cog-branch-switcher
                             [index]="info.index"
                             [count]="info.count"
+                            [navLabel]="t('a11y.branchSwitch')"
+                            [previousLabel]="t('a11y.previousBranch')"
+                            [nextLabel]="t('a11y.nextBranch')"
                             (previous)="previousBranch(message)"
                             (next)="nextBranch(message)"
                           />
@@ -148,6 +151,11 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
                     <cog-assistant-message
                       [model]="assistantLabel(message)"
                       [showActions]="false"
+                      [encryptedLabel]="t('chat.message.encrypted')"
+                      [typingLabel]="t('a11y.assistantTyping')"
+                      [versionsTitle]="
+                        t('a11y.branchVersions', { count: branchPointCount(message) })
+                      "
                       [time]="messageTime(message)"
                       [branchCount]="branchPointCount(message)"
                     >
@@ -160,6 +168,9 @@ const publicTreeAccessors: MessageTreeAccessors<Message> = {
                           <cog-branch-switcher
                             [index]="info.index"
                             [count]="info.count"
+                            [navLabel]="t('a11y.branchSwitch')"
+                            [previousLabel]="t('a11y.previousBranch')"
+                            [nextLabel]="t('a11y.nextBranch')"
                             (previous)="previousBranch(message)"
                             (next)="nextBranch(message)"
                           />

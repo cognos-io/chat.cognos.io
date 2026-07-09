@@ -19,7 +19,7 @@ export type CognosMenuItem = {
   imports: [CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="cog-menu" role="menu">
+    <div class="cog-menu" role="group" [attr.aria-label]="label() || null">
       @if (label()) {
         <div class="cog-menu__label">{{ label() }}</div>
       }

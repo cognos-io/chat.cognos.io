@@ -16,7 +16,7 @@ import {
 
 import { ReplaySubject, debounceTime, fromEvent, takeUntil } from 'rxjs';
 
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 import {
@@ -258,6 +258,7 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
   @Output() readonly atBottom = new EventEmitter<boolean>();
 
   private readonly _dialog = inject(Dialog);
+  private readonly _transloco = inject(TranslocoService);
   private readonly _wrapper = viewChild('wrapper', { read: ElementRef });
   private readonly _firstLoad = signal(true);
   private readonly _atBottom = signal(false);
@@ -311,13 +312,18 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
 
   onDisappearingMessages(): void {
     this._dialog
-      .open(TemporaryMessageDialogComponent, cognosDialogOptions)
+      .open(
+        TemporaryMessageDialogComponent,
+        cognosDialogOptions(this._transloco.translate('chat.temporary.title')),
+      )
       .closed.subscribe();
   }
 
   onEditConversation(): void {
     this._dialog.open(EditConversationDialogComponent, {
-      ...cognosDialogOptions,
+      ...cognosDialogOptions(
+        this._transloco.translate('dialogs.editConversation.title'),
+      ),
       data: {
         conversationId: this.conversationService.conversation()?.record.id ?? '',
       },

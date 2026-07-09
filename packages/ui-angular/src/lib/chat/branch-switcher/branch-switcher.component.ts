@@ -21,17 +21,17 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
   imports: [CognosIconButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="cog-branch-switcher" role="group" aria-label="Switch response">
+    <div class="cog-branch-switcher" role="group" [attr.aria-label]="navLabel()">
       <cog-icon-button
         name="chevron-left"
-        title="Previous response"
+        [title]="previousLabel()"
         [disabled]="index() <= 1"
         (click)="previous.emit()"
       />
       <span class="cog-branch-switcher__label">{{ index() }} / {{ count() }}</span>
       <cog-icon-button
         name="chevron-right"
-        title="Next response"
+        [title]="nextLabel()"
         [disabled]="index() >= count()"
         (click)="next.emit()"
       />
@@ -61,6 +61,9 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
   ],
 })
 export class CognosBranchSwitcherComponent {
+  readonly navLabel = input('');
+  readonly previousLabel = input('');
+  readonly nextLabel = input('');
   /** 1-based position of the active branch. */
   readonly index = input.required<number>();
   /** Total number of sibling branches. */

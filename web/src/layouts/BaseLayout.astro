@@ -1,7 +1,7 @@
 ---
 import '../styles/tokens.css';
 import '../styles/home.css';
-import { locales, localizedPath, type Lang } from '../i18n/ui';
+import { locales, localizedPath, useTranslations, type Lang } from '../i18n/ui';
 
 export interface Props {
   lang: Lang;
@@ -12,6 +12,7 @@ export interface Props {
 }
 
 const { lang, title, description, path = '/' } = Astro.props;
+const t = useTranslations(lang);
 const site = Astro.site;
 const canonical = site ? new URL(localizedPath(lang, path), site).href : undefined;
 
@@ -91,6 +92,7 @@ const ogLocales: Record<Lang, string> = {
     }
   </head>
   <body>
+    <a href="#main-content" class="skip-link">{t('a11y.skipToContent')}</a>
     <slot />
 
     <script>

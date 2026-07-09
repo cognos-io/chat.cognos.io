@@ -142,7 +142,7 @@ type View =
               <img
                 class="security__qr"
                 [src]="qrDataUrl()"
-                alt=""
+                [alt]="t('settings.security.qrAlt')"
                 width="200"
                 height="200"
               />
@@ -186,7 +186,7 @@ type View =
           }
 
           @case ('recovery') {
-            <h3 class="security__h3">{{ t('settings.security.recoveryTitle') }}</h3>
+            <h2 class="security__h3">{{ t('settings.security.recoveryTitle') }}</h2>
             <p class="security__muted">{{ t('settings.security.recoveryIntro') }}</p>
             <ul class="security__codes">
               @for (code of recoveryCodes(); track code) {
@@ -213,7 +213,7 @@ type View =
           }
 
           @case ('disable') {
-            <h3 class="security__h3">{{ t('settings.security.disableHeading') }}</h3>
+            <h2 class="security__h3">{{ t('settings.security.disableHeading') }}</h2>
             <p class="security__muted">{{ t('settings.security.disableIntro') }}</p>
             <form
               class="security__form"
@@ -262,7 +262,7 @@ type View =
           }
 
           @case ('regenerate') {
-            <h3 class="security__h3">{{ t('settings.security.regenerate') }}</h3>
+            <h2 class="security__h3">{{ t('settings.security.regenerate') }}</h2>
             <p class="security__muted">{{ t('settings.security.regenerateHint') }}</p>
             <form
               class="security__form"

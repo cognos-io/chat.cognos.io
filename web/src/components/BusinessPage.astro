@@ -36,7 +36,7 @@ const sizes = t.raw<string[]>(`${base}.form.sizes`);
   path="/business"
 >
   <Navbar t={t} lang={lang} path="/business" />
-  <main class="text-page business-page">
+  <main id="main-content" class="text-page business-page">
     <header class="text-page__hero">
       <div class="wrap">
         <div class="text-page__hero-copy reveal">
@@ -111,7 +111,7 @@ const sizes = t.raw<string[]>(`${base}.form.sizes`);
             </label>
             <label class="contact-field">
               <span>{t(`${base}.form.email`)}</span>
-              <input name="email" type="email" required autocomplete="work email" />
+              <input name="email" type="email" required autocomplete="email" />
             </label>
             <label class="contact-field">
               <span>{t(`${base}.form.company`)}</span>

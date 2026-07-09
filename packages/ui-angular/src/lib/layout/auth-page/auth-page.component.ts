@@ -156,11 +156,17 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
       }
 
       .auth-page__legal a,
-      .auth-page__switch a {
+      .auth-page__switch a,
+      .auth-page__switch .auth-page__link-button {
         color: var(--cog-link);
       }
 
-      .auth-page__switch a[role='button'] {
+      .auth-page__switch .auth-page__link-button {
+        border: 0;
+        background: transparent;
+        padding: 0;
+        font: inherit;
+        text-align: inherit;
         cursor: pointer;
       }
 

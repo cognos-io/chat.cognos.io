@@ -1141,6 +1141,20 @@
       "saveError": "Couldn't save the bookmark. Please try again."
     }
   },
+  "a11y": {
+    "skipToContent": "Skip to main content",
+    "dismiss": "Dismiss",
+    "openNavigation": "Open navigation",
+    "breadcrumbs": "Breadcrumbs",
+    "branchSwitch": "Switch response",
+    "previousBranch": "Previous response",
+    "nextBranch": "Next response",
+    "assistantTyping": "Assistant is typing",
+    "branchVersions": "{{ count }} versions",
+    "removeAttachment": "Remove attachment",
+    "encryptingOnDevice": "Encrypting on this device",
+    "encryptRetry": "Couldn't encrypt — tap to retry"
+  },
   "common": {
     "cancel": "Cancel",
     "email": "Email",
@@ -1499,6 +1513,7 @@
       "continue": "Continue",
       "cancel": "Cancel",
       "scanInstruction": "Scan this QR code with your authenticator app, or enter the setup key manually.",
+      "qrAlt": "QR code to set up two-factor authentication",
       "manualKeyLabel": "Setup key",
       "confirmInstruction": "Enter the 6-digit code from your app to finish enabling.",
       "codeLabel": "Authentication code",

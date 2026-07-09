@@ -1,6 +1,8 @@
 import { Dialog, DialogRef } from '@angular/cdk/dialog';
 import { DestroyRef, Directive, effect, inject } from '@angular/core';
 
+import { TranslocoService } from '@jsverse/transloco';
+
 import { VaultPasswordDialogComponent } from '@app/components/vault-password-dialog/vault-password-dialog.component';
 import { VaultService } from '@app/services/vault.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
@@ -25,6 +27,7 @@ import { cognosDialogOptions } from '@app/utils/dialog-options';
 export class VaultUnlockGateDirective {
   private readonly _dialog = inject(Dialog);
   private readonly _vault = inject(VaultService);
+  private readonly _transloco = inject(TranslocoService);
   private _dialogRef: DialogRef<unknown, VaultPasswordDialogComponent> | null = null;
 
   constructor() {
@@ -47,7 +50,9 @@ export class VaultUnlockGateDirective {
         // locked period (shell handovers re-open the same prompt).
         this._vault.notifyUnlockPrompted();
         this._dialogRef = this._dialog.open(VaultPasswordDialogComponent, {
-          ...cognosDialogOptions,
+          ...cognosDialogOptions(
+            this._transloco.translate('dialogs.vaultPassword.titleUnlock'),
+          ),
           disableClose: true,
         });
       }

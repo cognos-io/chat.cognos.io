@@ -1,6 +1,8 @@
+import { A11yModule } from '@angular/cdk/a11y';
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   computed,
   input,
   output,
@@ -11,7 +13,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
 @Component({
   selector: 'cog-drawer',
   standalone: true,
-  imports: [CognosIconButtonComponent],
+  imports: [A11yModule, CognosIconButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (open()) {
@@ -25,16 +27,24 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
 
         <aside
           [class]="drawerClass()"
-          [attr.aria-label]="title() || null"
+          [attr.aria-label]="drawerAriaLabel()"
+          [attr.aria-labelledby]="drawerAriaLabelledBy()"
           aria-modal="true"
+          cdkTrapFocus
+          [cdkTrapFocusAutoCapture]="true"
           role="dialog"
         >
           <header class="cog-drawer__header">
             <ng-content select="[cogDrawerHeader]" />
             @if (title() && !hideTitle()) {
-              <h2 class="cog-drawer__title">{{ title() }}</h2>
+              <h2 [id]="titleId" class="cog-drawer__title">{{ title() }}</h2>
             }
-            <cog-icon-button name="x" size="lg" title="Close" (click)="onClose()" />
+            <cog-icon-button
+              name="x"
+              size="lg"
+              [title]="closeLabel()"
+              (click)="onClose()"
+            />
           </header>
 
           <div class="cog-drawer__body">
@@ -128,11 +138,15 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
   ],
 })
 export class CognosDrawerComponent {
+  private static nextTitleId = 0;
+
   readonly open = input(false);
-  readonly title = input('Navigation');
+  readonly title = input('');
+  readonly closeLabel = input('');
   readonly hideTitle = input(false);
   readonly stickyFooter = input(false);
   readonly close = output<void>();
+  protected readonly titleId = `cog-drawer-title-${++CognosDrawerComponent.nextTitleId}`;
 
   protected readonly drawerClass = computed(() => {
     const classes = ['cog-drawer__panel'];
@@ -144,7 +158,24 @@ export class CognosDrawerComponent {
     return classes.join(' ');
   });
 
+  protected readonly drawerAriaLabelledBy = computed(() =>
+    this.title() && !this.hideTitle() ? this.titleId : null,
+  );
+
+  protected readonly drawerAriaLabel = computed(() =>
+    this.title() && this.hideTitle() ? this.title() : null,
+  );
+
   protected onClose(): void {
     this.close.emit();
+  }
+
+  @HostListener('document:keydown.escape')
+  protected onEscapeKey(): void {
+    if (!this.open()) {
+      return;
+    }
+
+    this.onClose();
   }
 }

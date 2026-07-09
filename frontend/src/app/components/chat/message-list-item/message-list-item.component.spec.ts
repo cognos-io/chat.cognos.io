@@ -190,11 +190,13 @@ describe('MessageListItemComponent - download action', () => {
     expect(downloadButton()).not.toBeNull();
   });
 
-  it('opens a menu with three format options', () => {
+  it('opens a menu with three format options', async () => {
     component.message = assistantMessage();
     fixture.detectChanges();
 
     downloadButton()?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     const items = fixture.nativeElement.querySelectorAll(

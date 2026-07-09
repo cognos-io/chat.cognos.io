@@ -1,4 +1,22 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  InjectionToken,
+  Signal,
+  computed,
+  input,
+} from '@angular/core';
+
+let nextFieldId = 0;
+
+export type CognosFieldA11yContext = {
+  controlId: Signal<string>;
+  describedById: Signal<string | null>;
+};
+
+export const COG_FIELD_A11Y = new InjectionToken<CognosFieldA11yContext>(
+  'COG_FIELD_A11Y',
+);
 
 /**
  * CognosFieldComponent (`cog-field`) is the labelled form-field wrapper: a label
@@ -15,17 +33,18 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 @Component({
   selector: 'cog-field',
   standalone: true,
+  providers: [{ provide: COG_FIELD_A11Y, useExisting: CognosFieldComponent }],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="cog-field">
       @if (label()) {
-        <span class="cog-field__label">{{ label() }}</span>
+        <label class="cog-field__label" [attr.for]="controlId()">{{ label() }}</label>
       }
       <ng-content />
       @if (error()) {
-        <p class="cog-field__error" role="alert">{{ error() }}</p>
+        <p class="cog-field__error" role="alert" [id]="errorId()">{{ error() }}</p>
       } @else if (hint()) {
-        <p class="cog-field__hint">{{ hint() }}</p>
+        <p class="cog-field__hint" [id]="hintId()">{{ hint() }}</p>
       }
     </div>
   `,
@@ -65,7 +84,26 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   ],
 })
 export class CognosFieldComponent {
+  private readonly generatedId = `cog-field-${++nextFieldId}`;
+
   readonly label = input('');
+  readonly inputId = input('');
   readonly hint = input('');
   readonly error = input('');
+
+  protected readonly controlId = computed(() => this.inputId() || this.generatedId);
+  protected readonly hintId = computed(() => `${this.controlId()}-hint`);
+  protected readonly errorId = computed(() => `${this.controlId()}-error`);
+
+  readonly describedById = computed(() => {
+    if (this.error()) {
+      return this.errorId();
+    }
+
+    if (this.hint()) {
+      return this.hintId();
+    }
+
+    return null;
+  });
 }

@@ -1,4 +1,7 @@
-export const cognosDialogOptions = {
-  backdropClass: 'cog-dialog-backdrop',
-  panelClass: 'cog-dialog-panel',
-};
+export function cognosDialogOptions(ariaLabel?: string) {
+  return {
+    backdropClass: 'cog-dialog-backdrop',
+    panelClass: 'cog-dialog-panel',
+    ...(ariaLabel ? { ariaLabel } : {}),
+  };
+}

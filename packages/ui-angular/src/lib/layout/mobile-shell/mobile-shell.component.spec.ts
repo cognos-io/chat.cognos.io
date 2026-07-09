@@ -7,13 +7,14 @@ import { CognosMobileShellComponent } from './mobile-shell.component';
 describe('CognosMobileShellComponent', () => {
   it('emits menuClick when the menu button is pressed', () => {
     const fixture = TestBed.createComponent(CognosMobileShellComponent);
+    fixture.componentRef.setInput('menuButtonLabel', 'Open navigation');
     fixture.detectChanges();
 
     const listener = vi.fn();
     fixture.componentInstance.menuClick.subscribe(listener);
 
     const menuButton = fixture.nativeElement.querySelector(
-      'cog-icon-button[title="Open navigation"] button',
+      'cog-icon-button button',
     ) as HTMLButtonElement;
     menuButton.click();
 
@@ -25,9 +26,7 @@ describe('CognosMobileShellComponent', () => {
     fixture.componentRef.setInput('showMenuButton', false);
     fixture.detectChanges();
 
-    expect(
-      fixture.nativeElement.querySelector('cog-icon-button[title="Open navigation"]'),
-    ).toBeNull();
+    expect(fixture.nativeElement.querySelector('cog-icon-button')).toBeNull();
   });
 
   it("re-emits the drawer's close event as drawerClose", () => {

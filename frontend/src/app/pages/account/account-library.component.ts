@@ -168,6 +168,7 @@ interface UsageLink {
         [open]="menuFile() !== null"
         [width]="420"
         [title]="menuFile()?.displayName ?? ''"
+        [closeLabel]="t('common.close')"
         (close)="closeMenu()"
       >
         @switch (modalView()) {
@@ -501,7 +502,7 @@ export class AccountLibraryComponent {
     }
     const confirmed = await firstValueFrom(
       this._dialog.open<boolean>(ConfirmationDialogComponent, {
-        ...cognosDialogOptions,
+        ...cognosDialogOptions(this._transloco.translate('library.removeConfirm')),
         data: { message: this._transloco.translate('library.removeConfirm') },
       }).closed,
     );

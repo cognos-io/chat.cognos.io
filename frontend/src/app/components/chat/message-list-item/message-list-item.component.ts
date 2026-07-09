@@ -121,6 +121,9 @@ import {
             <cog-branch-switcher
               [index]="info.index"
               [count]="info.count"
+              [navLabel]="t('a11y.branchSwitch')"
+              [previousLabel]="t('a11y.previousBranch')"
+              [nextLabel]="t('a11y.nextBranch')"
               (previous)="onPreviousBranch()"
               (next)="onNextBranch()"
             />
@@ -136,6 +139,8 @@ import {
                   [tone]="copied() ? 'success' : undefined"
                   [title]="copied() ? t('chat.message.copied') : t('chat.message.copy')"
                   [selected]="copyMenuOpen()"
+                  [attr.aria-haspopup]="'menu'"
+                  [attr.aria-expanded]="copyMenuOpen()"
                   (click)="toggleCopyMenu($event)"
                 />
                 @if (copyMenuOpen()) {
@@ -186,6 +191,8 @@ import {
                 "
                 [selected]="downloadMenuOpen()"
                 [disabled]="exporting()"
+                [attr.aria-haspopup]="'menu'"
+                [attr.aria-expanded]="downloadMenuOpen()"
                 (click)="toggleDownloadMenu($event)"
               />
               @if (downloadMenuOpen()) {
@@ -316,6 +323,9 @@ import {
             <cog-assistant-message
               [model]="assistantLabel()"
               [showActions]="false"
+              [encryptedLabel]="t('chat.message.encrypted')"
+              [typingLabel]="t('a11y.assistantTyping')"
+              [versionsTitle]="t('a11y.branchVersions', { count: branchPointCount() })"
               [time]="messageTime()"
               [branchCount]="branchPointCount()"
             >
@@ -343,6 +353,7 @@ import {
                     type="button"
                     class="message-list-item__reasoning-toggle"
                     [attr.aria-expanded]="reasoningExpanded()"
+                    [attr.aria-controls]="reasoningRegionId()"
                     (click)="toggleReasoning()"
                   >
                     <span
@@ -363,7 +374,11 @@ import {
                     ></span>
                   </button>
                   @if (reasoningExpanded()) {
-                    <div class="message-list-item__reasoning-body" role="region">
+                    <div
+                      class="message-list-item__reasoning-body"
+                      role="region"
+                      [id]="reasoningRegionId()"
+                    >
                       @if (message.isStreaming) {
                         <!-- Progressive render, matching the answer body:
                              completed blocks render as markdown, the in-progress
@@ -1145,6 +1160,10 @@ export class MessageListItemComponent implements OnChanges {
     );
   }
 
+  reasoningRegionId(): string {
+    return `message-reasoning-${this.message?.record_id ?? 'pending'}`;
+  }
+
   // hydrated swaps placeholder tokens back to their originals for display only.
   // Stored content stays redacted; unknown tokens render as-is.
   hydrated(content?: string | null): string {
@@ -1705,7 +1724,7 @@ export class MessageListItemComponent implements OnChanges {
   onDeleteMessage(message: Message) {
     this._dialog
       .open(ConfirmationDialogComponent, {
-        ...cognosDialogOptions,
+        ...cognosDialogOptions(this._transloco.translate('chat.message.deleteConfirm')),
         data: {
           message: this._transloco.translate('chat.message.deleteConfirm'),
         },

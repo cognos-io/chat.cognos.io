@@ -51,13 +51,15 @@ type VerificationState = 'verifying' | 'success' | 'error' | 'missing-token';
             }}</a>
           }
           @case ('error') {
-            <p class="auth-page__hint">{{ t('auth.verify.error') }}</p>
+            <p class="auth-page__hint" role="alert">{{ t('auth.verify.error') }}</p>
             <a routerLink="/auth/login" class="auth-page__switch">{{
               t('auth.verify.goToLogin')
             }}</a>
           }
           @case ('missing-token') {
-            <p class="auth-page__hint">{{ t('auth.verify.missingToken') }}</p>
+            <p class="auth-page__hint" role="alert">
+              {{ t('auth.verify.missingToken') }}
+            </p>
             <a routerLink="/auth/login" class="auth-page__switch">{{
               t('auth.verify.goToLogin')
             }}</a>

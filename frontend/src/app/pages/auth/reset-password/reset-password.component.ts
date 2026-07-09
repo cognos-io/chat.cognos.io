@@ -54,7 +54,9 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null => {
 
         @switch (state()) {
           @case ('missing-token') {
-            <p class="auth-page__hint">{{ t('auth.reset.missingToken') }}</p>
+            <p class="auth-page__hint" role="alert">
+              {{ t('auth.reset.missingToken') }}
+            </p>
             <a routerLink="/auth/forgot-password" class="auth-page__switch">
               {{ t('auth.reset.requestNewLink') }}
             </a>
@@ -66,7 +68,7 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null => {
             }}</a>
           }
           @case ('error') {
-            <p class="auth-page__hint">{{ t('auth.reset.error') }}</p>
+            <p class="auth-page__hint" role="alert">{{ t('auth.reset.error') }}</p>
             <a routerLink="/auth/forgot-password" class="auth-page__switch">
               {{ t('auth.reset.requestNewLink') }}
             </a>
@@ -109,7 +111,9 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null => {
                 resetForm.hasError('mismatch') &&
                 resetForm.get('passwordConfirm')?.dirty
               ) {
-                <p class="auth-page__hint">{{ t('auth.reset.mismatch') }}</p>
+                <p class="auth-page__hint" role="alert">
+                  {{ t('auth.reset.mismatch') }}
+                </p>
               }
 
               <cog-button

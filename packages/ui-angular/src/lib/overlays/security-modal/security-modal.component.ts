@@ -124,6 +124,7 @@ export const DEFAULT_SECURITY_MODAL_CONTENT: SecurityModalContent = {
     <cog-modal
       [open]="open()"
       [title]="content().title"
+      [closeLabel]="content().closeLabel"
       [width]="580"
       [stickyFooter]="true"
       (close)="onClose()"

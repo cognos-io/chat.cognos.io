@@ -1,11 +1,13 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-loading-indicator',
   standalone: true,
   imports: [],
   template: `
-    <div class="loading-indicator" aria-label="Loading" role="status">
+    <div class="loading-indicator" [attr.aria-label]="loadingLabel" role="status">
       <span></span>
       <span></span>
       <span></span>
@@ -56,4 +58,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoadingIndicatorComponent {}
+export class LoadingIndicatorComponent {
+  private readonly _transloco = inject(TranslocoService);
+  protected readonly loadingLabel = this._transloco.translate('common.loading');
+}

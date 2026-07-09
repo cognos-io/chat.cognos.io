@@ -3,6 +3,7 @@
     @if (breadcrumbs().length) {
       <cog-breadcrumbs
         class="chat-header__breadcrumbs"
+        [navLabel]="t('a11y.breadcrumbs')"
         [items]="breadcrumbs()"
         (itemSelect)="onBreadcrumb($event)"
       />
@@ -72,6 +73,8 @@
               name="more-horizontal"
               [title]="t('chat.header.menu')"
               [selected]="menuOpen()"
+              [attr.aria-haspopup]="'menu'"
+              [attr.aria-expanded]="menuOpen()"
               (click)="toggleMenu($event)"
             />
 

@@ -126,7 +126,7 @@ export class ProjectDetailComponent {
 
   protected openSettings(): void {
     this._dialog.open(ProjectSettingsDialogComponent, {
-      ...cognosDialogOptions,
+      ...cognosDialogOptions(this._transloco.translate('projects.settings.title')),
       data: { projectId: this.projectId() },
     });
   }

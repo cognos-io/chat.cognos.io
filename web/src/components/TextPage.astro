@@ -30,6 +30,7 @@ interface Props {
   eyebrow: string;
   lead: string;
   navLabel?: string;
+  tocLabel?: string;
   tabs?: Tab[];
   asideItems?: AsideItem[];
   facts?: Fact[];
@@ -47,6 +48,7 @@ const {
   eyebrow,
   lead,
   navLabel,
+  tocLabel,
   tabs = [],
   asideItems = [],
   facts = [],
@@ -58,7 +60,7 @@ const {
 
 <BaseLayout lang={lang} title={title} description={description} path={path}>
   <Navbar t={t} lang={lang} path={path} />
-  <main class="text-page">
+  <main id="main-content" class="text-page">
     <header class="text-page__hero">
       <div class="wrap">
         <div class="text-page__hero-copy reveal">
@@ -73,7 +75,7 @@ const {
       <div class="wrap text-page__grid">
         {
           asideItems.length > 0 && (
-            <aside class="text-page__aside" aria-label={navLabel}>
+            <aside class="text-page__aside" aria-label={tocLabel}>
               <div class="text-page__aside-inner">
                 {navLabel && <p class="text-page__aside-label">{navLabel}</p>}
                 <nav class="text-page__toc">
@@ -116,7 +118,6 @@ const {
             )
           }
           <header class="text-page__article-head">
-            <h2>{heading}</h2>
             {
               updatedLabel &&
                 updatedValue && (

@@ -58,7 +58,10 @@ export class SidebarAccountActionsComponent {
   readonly actioned = output<void>();
 
   protected onOpenHelpDialog(): void {
-    this._dialog.open(ContactHelpDialogComponent, cognosDialogOptions);
+    this._dialog.open(
+      ContactHelpDialogComponent,
+      cognosDialogOptions(this._transloco.translate('dialogs.contactHelp.title')),
+    );
     this.actioned.emit();
   }
 

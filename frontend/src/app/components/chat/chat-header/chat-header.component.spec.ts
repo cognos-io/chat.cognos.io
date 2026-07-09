@@ -16,6 +16,7 @@ import { Project } from '@app/interfaces/project';
 import { AuthService } from '@app/services/auth.service';
 import { CompactionService } from '@app/services/compaction.service';
 import { ConversationDuplicateService } from '@app/services/conversation-duplicate.service';
+import { ConversationProjectActionsService } from '@app/services/conversation-project-actions.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { ExportService } from '@app/services/export.service';
@@ -109,6 +110,12 @@ describe('ChatHeaderComponent', () => {
     isDuplicatingSource: () => false,
     duplicate: vi.fn().mockResolvedValue(undefined),
   };
+  const projectActionsService = {
+    canMoveToProject: vi.fn().mockReturnValue(false),
+    canRemoveFromProject: vi.fn().mockReturnValue(false),
+    openMoveDialog: vi.fn(),
+    removeFromProject: vi.fn(),
+  };
 
   beforeEach(async () => {
     selectedConversation.set(undefined);
@@ -124,6 +131,8 @@ describe('ChatHeaderComponent', () => {
     redactionEntries.set(new Map());
     vi.clearAllMocks();
     publicShareService.existingShare.mockReturnValue(of(null));
+    projectActionsService.canMoveToProject.mockReturnValue(false);
+    projectActionsService.canRemoveFromProject.mockReturnValue(false);
 
     dialogOpen = vi.fn().mockReturnValue({ closed: of(true) });
 
@@ -146,6 +155,10 @@ describe('ChatHeaderComponent', () => {
         {
           provide: ConversationDuplicateService,
           useValue: duplicateService,
+        },
+        {
+          provide: ConversationProjectActionsService,
+          useValue: projectActionsService,
         },
         { provide: ModelService, useValue: modelService },
         { provide: LanguageService, useValue: languageService },

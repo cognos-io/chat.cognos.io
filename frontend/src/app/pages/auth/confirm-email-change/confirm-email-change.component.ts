@@ -69,13 +69,17 @@ type ConfirmState = 'form' | 'submitting' | 'success' | 'error' | 'missing-token
             }}</a>
           }
           @case ('error') {
-            <p class="auth-page__hint">{{ t('auth.confirmEmail.error') }}</p>
+            <p class="auth-page__hint" role="alert">
+              {{ t('auth.confirmEmail.error') }}
+            </p>
             <a routerLink="/auth/login" class="auth-page__switch">{{
               t('auth.confirmEmail.goToLogin')
             }}</a>
           }
           @case ('missing-token') {
-            <p class="auth-page__hint">{{ t('auth.confirmEmail.missingToken') }}</p>
+            <p class="auth-page__hint" role="alert">
+              {{ t('auth.confirmEmail.missingToken') }}
+            </p>
             <a routerLink="/auth/login" class="auth-page__switch">{{
               t('auth.confirmEmail.goToLogin')
             }}</a>

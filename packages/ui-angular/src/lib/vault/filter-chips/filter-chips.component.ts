@@ -21,11 +21,12 @@ export const DEFAULT_FILTER_OPTIONS: CognosFilterChipOption[] = [
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="cog-filter-chips">
+    <div class="cog-filter-chips" role="group" [attr.aria-label]="groupLabel() || null">
       @for (option of options(); track option.value) {
         <button
           class="cog-filter-chips__chip"
           [class.cog-filter-chips__chip--selected]="option.value === value()"
+          [attr.aria-pressed]="option.value === value()"
           type="button"
           (click)="change.emit(option.value)"
         >
@@ -74,6 +75,7 @@ export const DEFAULT_FILTER_OPTIONS: CognosFilterChipOption[] = [
 })
 export class CognosFilterChipsComponent {
   readonly value = input<CognosVaultFilter>('all');
+  readonly groupLabel = input('');
   /** Filter options + labels. Defaults to English; pass translated labels for i18n. */
   readonly options = input<CognosFilterChipOption[]>(DEFAULT_FILTER_OPTIONS);
   readonly change = output<CognosVaultFilter>();

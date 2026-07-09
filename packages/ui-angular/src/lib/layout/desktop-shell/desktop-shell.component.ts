@@ -41,7 +41,7 @@ import {
           </header>
         }
 
-        <main [class]="mainClass()">
+        <main id="main-content" [class]="mainClass()">
           <ng-content />
         </main>
       </div>

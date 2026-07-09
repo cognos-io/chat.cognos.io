@@ -26,6 +26,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
       <button
         [class]="itemClass()"
         [style.padding-inline-start.px]="paddingStart()"
+        [attr.aria-current]="selected() ? 'page' : null"
         [attr.aria-expanded]="expandable() ? isExpanded() : null"
         type="button"
         (click)="onClick()"

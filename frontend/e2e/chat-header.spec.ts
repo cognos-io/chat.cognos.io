@@ -133,11 +133,11 @@ test('persisted conversation header exposes the title, menu, share and security'
 
   // The overflow menu offers rename, a disabled export and delete.
   await page.getByRole('button', { name: 'Conversation menu', exact: true }).click();
-  await expect(page.getByRole('menuitem', { name: 'Rename' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Rename' })).toBeVisible();
   // Export is enabled at rest (it only disables mid-export).
-  await expect(page.getByRole('menuitem', { name: /Export/ })).toBeEnabled();
-  await expect(page.getByRole('menuitem', { name: 'Duplicate chat' })).toBeVisible();
-  await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Export/ })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Duplicate chat' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
 
   // Dismiss the menu before opening the modal.
   await page.keyboard.press('Escape');

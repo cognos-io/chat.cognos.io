@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   forwardRef,
+  inject,
   input,
   model,
   signal,
@@ -12,6 +13,9 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { CognosIconName } from '@cognos/ui/icons';
 
 import { CognosIconComponent } from '../../icon/icon.component';
+import { COG_FIELD_A11Y } from '../field/field.component';
+
+let nextTextFieldId = 0;
 
 export type CognosTextFieldSize = 'md' | 'lg';
 
@@ -53,8 +57,10 @@ export type CognosTextFieldSize = 'md' | 'lg';
         [readOnly]="readonly()"
         [type]="type()"
         [value]="value()"
+        [id]="controlId()"
         [attr.autocomplete]="autocomplete() || null"
         [attr.inputmode]="inputmode() || null"
+        [attr.aria-describedby]="controlAriaDescribedBy()"
         [attr.aria-label]="ariaLabel() || placeholder() || null"
         (input)="onInput($event)"
         (blur)="onTouched()"
@@ -127,13 +133,18 @@ export type CognosTextFieldSize = 'md' | 'lg';
   ],
 })
 export class CognosTextFieldComponent implements ControlValueAccessor {
+  private readonly fieldA11y = inject(COG_FIELD_A11Y, { optional: true });
+  private readonly generatedId = `cog-text-field-${++nextTextFieldId}`;
+
   readonly icon = input<CognosIconName | null>(null);
   readonly value = model('');
   readonly placeholder = input('');
   readonly type = input('text');
+  readonly inputId = input('');
   readonly autocomplete = input('');
   readonly inputmode = input<string | null>(null);
   readonly ariaLabel = input('');
+  readonly ariaDescribedby = input('');
   readonly disabled = input(false);
   readonly readonly = input(false);
   readonly size = input<CognosTextFieldSize>('md');
@@ -142,6 +153,12 @@ export class CognosTextFieldComponent implements ControlValueAccessor {
   private readonly _disabledByForm = signal(false);
   protected readonly effectiveDisabled = computed(
     () => this.disabled() || this._disabledByForm(),
+  );
+  protected readonly controlId = computed(
+    () => this.inputId() || this.fieldA11y?.controlId() || this.generatedId,
+  );
+  protected readonly controlAriaDescribedBy = computed(
+    () => this.ariaDescribedby() || this.fieldA11y?.describedById() || null,
   );
 
   private _onChange: (value: string) => void = () => {};

@@ -1,6 +1,8 @@
+import { A11yModule } from '@angular/cdk/a11y';
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   computed,
   input,
   output,
@@ -11,7 +13,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
 @Component({
   selector: 'cog-sheet',
   standalone: true,
-  imports: [CognosIconButtonComponent],
+  imports: [A11yModule, CognosIconButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (open()) {
@@ -23,13 +25,25 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
           (click)="onClose()"
         ></button>
 
-        <section [class]="sheetClass()" aria-modal="true" role="dialog">
+        <section
+          [class]="sheetClass()"
+          [attr.aria-labelledby]="titleId"
+          aria-modal="true"
+          cdkTrapFocus
+          [cdkTrapFocusAutoCapture]="true"
+          role="dialog"
+        >
           <div class="cog-sheet__handle"></div>
 
           @if (title() || full()) {
             <header class="cog-sheet__header">
-              <h2 class="cog-sheet__title">{{ title() }}</h2>
-              <cog-icon-button name="x" size="lg" title="Close" (click)="onClose()" />
+              <h2 [id]="titleId" class="cog-sheet__title">{{ title() }}</h2>
+              <cog-icon-button
+                name="x"
+                size="lg"
+                [title]="closeLabel()"
+                (click)="onClose()"
+              />
             </header>
           }
 
@@ -138,11 +152,15 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
   ],
 })
 export class CognosSheetComponent {
+  private static nextTitleId = 0;
+
   readonly open = input(false);
   readonly title = input('');
+  readonly closeLabel = input('');
   readonly full = input(false);
   readonly stickyFooter = input(false);
   readonly close = output<void>();
+  protected readonly titleId = `cog-sheet-title-${++CognosSheetComponent.nextTitleId}`;
 
   protected readonly sheetClass = computed(() => {
     const classes = ['cog-sheet__panel'];
@@ -160,5 +178,14 @@ export class CognosSheetComponent {
 
   protected onClose(): void {
     this.close.emit();
+  }
+
+  @HostListener('document:keydown.escape')
+  protected onEscapeKey(): void {
+    if (!this.open()) {
+      return;
+    }
+
+    this.onClose();
   }
 }

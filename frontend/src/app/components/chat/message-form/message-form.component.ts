@@ -909,7 +909,6 @@ interface RedactionPreviewGroup {
       gap: var(--cog-space-100);
     }
 
-    /* Attach (Upload / From library) dropdown — matches the Tools menu surface. */
     .message-form__attach-menu {
       display: grid;
       gap: var(--cog-space-050);
@@ -1035,7 +1034,6 @@ interface RedactionPreviewGroup {
       color: var(--cog-text);
     }
 
-    /* Mobile model selector presented as a bottom sheet (spec §4.5). */
     .model-sheet-backdrop {
       position: fixed;
       inset: 0;
@@ -1089,8 +1087,6 @@ interface RedactionPreviewGroup {
       line-height: var(--cog-lh-body-lg);
       outline: 0;
       padding: 0;
-      /* Wrapping + scrollbar gutter must match .message-form__highlights
-         exactly, or the overlay marks drift once the textarea scrolls. */
       white-space: pre-wrap;
       overflow-wrap: break-word;
       word-break: normal;
@@ -1101,9 +1097,6 @@ interface RedactionPreviewGroup {
       color: var(--cog-text-subtlest);
     }
 
-    /* Highlight overlay: a backdrop mirroring the textarea exactly, with marks
-       behind the (transparent-background) textarea text. Typography + box must
-       match .message-form__textarea char-for-char so marks line up. */
     .message-form__editor {
       position: relative;
     }
@@ -1375,7 +1368,6 @@ interface RedactionPreviewGroup {
       margin-left: auto;
     }
 
-    /* Mirrors the subtle model/tools buttons; native button to host the avatar. */
     .message-form__persona {
       display: inline-flex;
       box-sizing: border-box;

@@ -1,6 +1,10 @@
 <ng-container *transloco="let t">
   <header class="pb__header">
-    <cog-breadcrumbs [items]="breadcrumbs()" (itemSelect)="onBreadcrumb($event)" />
+    <cog-breadcrumbs
+      [navLabel]="t('a11y.breadcrumbs')"
+      [items]="breadcrumbs()"
+      (itemSelect)="onBreadcrumb($event)"
+    />
     <div class="pb__titlebar">
       <h1 class="pb__title">{{ t('billing.plan.title') }}</h1>
       <span class="pb__synced">

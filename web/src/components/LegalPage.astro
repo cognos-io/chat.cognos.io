@@ -50,6 +50,7 @@ const asideItems = sections.map((section, index) => ({
   href: `#section-${index + 1}`,
 }));
 const navLabel = t(`${base}.eyebrow`);
+const tocLabel = t('pages.tocLabel');
 ---
 
 <TextPage
@@ -61,6 +62,7 @@ const navLabel = t(`${base}.eyebrow`);
   eyebrow={t(`${base}.eyebrow`)}
   lead={t(`${base}.lead`)}
   navLabel={navLabel}
+  tocLabel={tocLabel}
   tabs={legalTabs}
   asideItems={asideItems}
   facts={facts}

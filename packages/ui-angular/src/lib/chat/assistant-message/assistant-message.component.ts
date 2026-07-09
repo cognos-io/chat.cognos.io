@@ -21,7 +21,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
             <span class="cog-assistant-message__model">{{ model() }}</span>
 
             @if (encrypted()) {
-              <cog-lozenge tone="green">Encrypted</cog-lozenge>
+              <cog-lozenge tone="green">{{ encryptedLabel() }}</cog-lozenge>
             }
 
             @if (time()) {
@@ -29,10 +29,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
             }
 
             @if (branchCount() > 1) {
-              <span
-                class="cog-assistant-message__branch"
-                [title]="branchCount() + ' versions'"
-              >
+              <span class="cog-assistant-message__branch" [title]="versionsTitle()">
                 <cog-icon name="git-branch" [size]="12" tone="text-subtle" />
                 {{ branchCount() }}
               </span>
@@ -41,8 +38,8 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
 
           @if (showActions()) {
             <div class="cog-assistant-message__actions">
-              <cog-icon-button name="copy" title="Copy message" />
-              <cog-icon-button name="rotate-cw" title="Regenerate response" />
+              <cog-icon-button name="copy" [title]="copyLabel()" />
+              <cog-icon-button name="rotate-cw" [title]="regenerateLabel()" />
             </div>
           }
         </header>
@@ -52,7 +49,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
         </div>
 
         @if (typing()) {
-          <div aria-label="Assistant is typing" class="cog-assistant-message__typing">
+          <div [attr.aria-label]="typingLabel()" class="cog-assistant-message__typing">
             <span></span><span></span><span></span>
           </div>
         }
@@ -60,7 +57,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
         @if (sources() > 0) {
           <button class="cog-assistant-message__sources" type="button">
             <cog-icon name="quote" [size]="14" tone="link" />
-            <span>{{ sources() }} source{{ sources() === 1 ? '' : 's' }}</span>
+            <span>{{ sourcesLabel() }}</span>
           </button>
         }
 
@@ -235,6 +232,12 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
 export class CognosAssistantMessageComponent {
   readonly model = input('Cognos');
   readonly encrypted = input(true);
+  readonly encryptedLabel = input('');
+  readonly typingLabel = input('');
+  readonly copyLabel = input('');
+  readonly regenerateLabel = input('');
+  readonly sourcesLabel = input('');
+  readonly versionsTitle = input('');
   readonly time = input('');
   readonly sources = input(0);
   readonly typing = input(false);

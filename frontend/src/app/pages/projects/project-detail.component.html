@@ -1,5 +1,6 @@
 <div *transloco="let t" class="project-detail">
   <cog-breadcrumbs
+    [navLabel]="t('a11y.breadcrumbs')"
     (itemSelect)="onBreadcrumb($event)"
     [items]="[
       { label: 'Cognos' },
@@ -63,6 +64,7 @@
           <textarea
             class="project-detail__textarea"
             rows="4"
+            [attr.aria-label]="t('projects.instructions.heading')"
             [ngModel]="instructionsDraft()"
             (ngModelChange)="instructionsDraft.set($event)"
             name="project-instructions"

@@ -4,6 +4,7 @@
     "description": "Most AI keeps what you type and trains on it. Cognos doesn't. We keep no copy of your chats we can read, your personal details are hidden before your message is sent, and the AI forgets your chat the moment it answers. Handled in Switzerland or Europe."
   },
   "nav": {
+    "toggle": "Toggle navigation",
     "how": "How it works",
     "compare": "Compare",
     "features": "Features",
@@ -1947,6 +1948,10 @@
       "title": "This page doesn't exist.",
       "lead": "The link may be old, or the address mistyped. Nothing was lost — it was never here.",
       "cta": "Back to the homepage"
-    }
+    },
+    "tocLabel": "Table of contents"
+  },
+  "a11y": {
+    "skipToContent": "Skip to main content"
   }
 }

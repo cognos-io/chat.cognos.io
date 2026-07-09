@@ -10,7 +10,7 @@ export type CognosBreadcrumbItem = {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <nav aria-label="Breadcrumbs" class="cog-breadcrumbs">
+    <nav [attr.aria-label]="navLabel()" class="cog-breadcrumbs">
       @for (item of items(); track item.label; let index = $index; let last = $last) {
         @if (!isCurrent(item, last)) {
           <button class="cog-breadcrumbs__link" type="button" (click)="onSelect(index)">
@@ -72,6 +72,7 @@ export type CognosBreadcrumbItem = {
   ],
 })
 export class CognosBreadcrumbsComponent {
+  readonly navLabel = input('');
   readonly items = input<CognosBreadcrumbItem[]>([]);
   readonly itemSelect = output<number>();
 

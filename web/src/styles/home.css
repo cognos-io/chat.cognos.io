@@ -26,6 +26,29 @@ body {
   overflow-x: hidden;
 }
 
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: var(--cog-space-150);
+  transform: translateY(-150%);
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--cog-radius-sm);
+  padding: var(--cog-space-100) var(--cog-space-150);
+  font-family: var(--ff-display);
+  font-size: var(--cog-fs-label);
+  font-weight: var(--cog-fw-medium);
+  z-index: 200;
+  transition: transform 0.15s var(--ease);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(var(--cog-space-150));
+  outline: 2px solid var(--cog-brand);
+  outline-offset: 2px;
+}
+
 h1,
 h2,
 h3,
@@ -1650,12 +1673,14 @@ h1.hero-h .em {
     border-color 0.15s var(--ease),
     background 0.15s var(--ease);
 }
-.contact-field input:focus,
-.contact-field select:focus,
-.contact-field textarea:focus {
-  outline: none;
+.contact-field input:focus-visible,
+.contact-field select:focus-visible,
+.contact-field textarea:focus-visible {
+  outline: 2px solid var(--cog-brand);
+  outline-offset: 2px;
   border-color: var(--brand);
   background: var(--cog-input-bg-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cog-brand) 20%, transparent);
 }
 .contact-field textarea {
   resize: vertical;

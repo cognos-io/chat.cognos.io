@@ -166,15 +166,13 @@
 }
 
 .persona-card {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--cog-space-150);
-  text-align: start;
-  padding: var(--cog-space-150);
+  padding: 0;
   border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-md);
   background: var(--cog-surface);
-  cursor: pointer;
   transition:
     border-color var(--cog-dur-medium) var(--cog-ease-standard),
     box-shadow var(--cog-dur-medium) var(--cog-ease-standard),
@@ -192,9 +190,27 @@
   box-shadow: 0 0 0 var(--cog-border-width) var(--cog-brand);
 }
 
+.persona-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cog-space-150);
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  padding: var(--cog-space-150);
+  cursor: pointer;
+}
+
+.persona-card__body:focus-visible {
+  outline: var(--cog-border-width-strong) solid var(--cog-brand);
+  outline-offset: var(--cog-border-width-strong);
+  border-radius: var(--cog-radius-md);
+}
+
 .persona-card__top {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   gap: var(--cog-space-150);
 }
@@ -224,6 +240,9 @@
   display: inline-flex;
   align-items: center;
   gap: var(--cog-space-025);
+  position: absolute;
+  top: var(--cog-space-150);
+  right: var(--cog-space-150);
 }
 
 .persona-card__action {
@@ -232,6 +251,9 @@
   justify-content: center;
   inline-size: 26px;
   block-size: 26px;
+  border: 0;
+  background: transparent;
+  padding: 0;
   border-radius: var(--cog-radius-sm);
   color: var(--cog-text-subtlest);
   opacity: 0;
@@ -249,6 +271,7 @@
 
 .persona-card:hover .persona-card__action,
 .persona-card__action:focus-visible,
+.persona-card:focus-within .persona-card__action,
 .persona-card__pin.is-pinned,
 .persona-card__default.is-default {
   opacity: 1;
@@ -263,6 +286,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--cog-space-075);
+  padding: var(--cog-space-150);
   text-align: center;
   border-style: dashed;
   color: var(--cog-text-subtle);

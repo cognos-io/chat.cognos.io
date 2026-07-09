@@ -117,6 +117,8 @@ interface SettingsNavItem {
         <cog-mobile-shell
           [fillViewport]="true"
           title=""
+          [menuButtonLabel]="t('a11y.openNavigation')"
+          [drawerCloseLabel]="t('common.close')"
           [drawerTitle]="t('settings.title')"
           [drawerOpen]="drawerOpen()"
           [drawerFooter]="true"

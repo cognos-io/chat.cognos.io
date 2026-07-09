@@ -525,7 +525,7 @@ export class ChatHeaderComponent {
       return;
     }
     this._dialog.open(RetentionDialogComponent, {
-      ...cognosDialogOptions,
+      ...cognosDialogOptions(this._transloco.translate('dialogs.retention.title')),
       data: { conversationId },
     });
   }
@@ -569,11 +569,15 @@ export class ChatHeaderComponent {
     }
     const mobile = this._device.isMobile();
     const position = this._overlay.position().global();
+    const dialogOptions = cognosDialogOptions(
+      this._transloco.translate('chat.memory.title'),
+    );
     this._dialog.open(ConversationMemoryComponent, {
-      backdropClass: cognosDialogOptions.backdropClass,
+      backdropClass: dialogOptions.backdropClass,
       panelClass: mobile
-        ? ['cog-dialog-panel', 'cog-dialog-panel--sheet']
-        : ['cog-dialog-panel', 'cog-dialog-panel--drawer'],
+        ? [dialogOptions.panelClass, 'cog-dialog-panel--sheet']
+        : [dialogOptions.panelClass, 'cog-dialog-panel--drawer'],
+      ariaLabel: dialogOptions.ariaLabel,
       positionStrategy: mobile
         ? position.bottom('0')
         : position.right('0').top('0').bottom('0'),
@@ -621,7 +625,7 @@ export class ChatHeaderComponent {
 
     this._dialog
       .open(ShareConversationDialogComponent, {
-        ...cognosDialogOptions,
+        ...cognosDialogOptions(this._transloco.translate('dialogs.share.title')),
         data: { conversationId },
       })
       .closed.subscribe(() => {
@@ -683,7 +687,7 @@ export class ChatHeaderComponent {
     }
 
     this._dialog.open(EditConversationDialogComponent, {
-      ...cognosDialogOptions,
+      ...cognosDialogOptions(this._transloco.translate('chat.header.rename')),
       data: { conversationId },
     });
   }
@@ -697,7 +701,7 @@ export class ChatHeaderComponent {
 
     this._dialog
       .open(ConfirmationDialogComponent, {
-        ...cognosDialogOptions,
+        ...cognosDialogOptions(this._transloco.translate('chat.header.deleteConfirm')),
         data: {
           message: this._transloco.translate('chat.header.deleteConfirm'),
         },

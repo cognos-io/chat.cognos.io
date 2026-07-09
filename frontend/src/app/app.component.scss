@@ -1,0 +1,16 @@
+.app-skip-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(-120%);
+  z-index: 1300;
+  border-radius: 0 0 var(--cog-radius-sm) 0;
+  background: var(--cog-brand);
+  color: var(--cog-brand-contrast);
+  padding: var(--cog-space-100) var(--cog-space-150);
+  text-decoration: none;
+}
+
+.app-skip-link:focus {
+  transform: translateY(0);
+}

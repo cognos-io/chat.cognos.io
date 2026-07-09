@@ -46,7 +46,9 @@ export class ConversationProjectActionsService {
   openMoveDialog(conversation: Conversation): void {
     this._dialog
       .open<Project | undefined>(ConversationProjectDialogComponent, {
-        ...cognosDialogOptions,
+        ...cognosDialogOptions(
+          this._transloco.translate('chat.projectActions.moveDialogTitle'),
+        ),
         data: { conversation },
       })
       .closed.pipe(

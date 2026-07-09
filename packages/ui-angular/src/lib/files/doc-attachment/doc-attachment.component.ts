@@ -40,14 +40,14 @@ export type CognosDocAttachmentState = 'sealed' | 'encrypting' | 'error';
               <cog-progress [value]="progress()" [height]="4" />
               <div class="cog-doc-attachment__meta cog-doc-attachment__meta--subtle">
                 <cog-icon name="loader" [size]="11" tone="text-subtlest" />
-                <span>Encrypting on this device · {{ roundedProgress() }}%</span>
+                <span>{{ encryptingLabel() }} · {{ roundedProgress() }}%</span>
               </div>
             </div>
           }
           @case ('error') {
             <div class="cog-doc-attachment__meta cog-doc-attachment__meta--danger">
               <cog-icon name="triangle-alert" [size]="12" tone="danger" />
-              <span>Couldn't encrypt — tap to retry</span>
+              <span>{{ retryLabel() }}</span>
             </div>
           }
           @default {
@@ -60,7 +60,7 @@ export type CognosDocAttachmentState = 'sealed' | 'encrypting' | 'error';
                   class="cog-doc-attachment__meta cog-doc-attachment__meta--success"
                 >
                   <cog-icon name="lock" [size]="11" tone="success" />
-                  <span>Encrypted</span>
+                  <span>{{ encryptedLabel() }}</span>
                 </span>
               }
             </div>
@@ -74,8 +74,8 @@ export type CognosDocAttachmentState = 'sealed' | 'encrypting' | 'error';
         <button
           class="cog-doc-attachment__remove"
           type="button"
-          aria-label="Remove attachment"
-          title="Remove attachment"
+          [attr.aria-label]="removeLabel()"
+          [title]="removeLabel()"
           (click)="$event.stopPropagation(); remove.emit()"
         >
           <cog-icon name="x" [size]="14" tone="text-subtlest" />
@@ -212,6 +212,10 @@ export class CognosDocAttachmentComponent {
    * an attachment inside a message bubble that already shows an encrypted badge).
    */
   readonly showEncrypted = input(true);
+  readonly encryptedLabel = input('');
+  readonly encryptingLabel = input('');
+  readonly retryLabel = input('');
+  readonly removeLabel = input('');
   readonly open = output<void>();
   readonly retry = output<void>();
   readonly remove = output<void>();

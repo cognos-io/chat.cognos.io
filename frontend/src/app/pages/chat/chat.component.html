@@ -233,9 +233,9 @@
         }
       }
 
-      <main class="chat-page__content" role="main">
+      <div class="chat-page__content">
         <router-outlet></router-outlet>
-      </main>
+      </div>
     </div>
   </ng-template>
 
@@ -244,6 +244,8 @@
       [fillViewport]="true"
       [padded]="false"
       title=""
+      [menuButtonLabel]="t('a11y.openNavigation')"
+      [drawerCloseLabel]="t('common.close')"
       [drawerTitle]="t('chat.conversation.drawerTitle')"
       [drawerOpen]="drawerOpen()"
       [drawerFooter]="true"

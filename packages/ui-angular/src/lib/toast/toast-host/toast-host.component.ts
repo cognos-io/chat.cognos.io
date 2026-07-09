@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 
 import { CognosIconComponent } from '../../icon/icon.component';
 import { CognosToastService } from '../toast.service';
@@ -9,7 +9,7 @@ import { CognosToastService } from '../toast.service';
   imports: [CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="cog-toast-host">
+    <div class="cog-toast-host" role="status" aria-live="polite" aria-atomic="true">
       @for (toast of toastService.items(); track toast.id) {
         <div class="cog-toast" [class]="toastClass(toast.tone)">
           <span class="cog-toast__badge">
@@ -35,8 +35,8 @@ import { CognosToastService } from '../toast.service';
           <button
             class="cog-toast__dismiss"
             type="button"
-            aria-label="Dismiss"
-            title="Dismiss"
+            [attr.aria-label]="dismissLabel()"
+            [title]="dismissLabel()"
             (click)="toastService.dismiss(toast.id)"
           >
             <cog-icon name="x" [size]="14" tone="text-subtlest" />
@@ -165,6 +165,7 @@ import { CognosToastService } from '../toast.service';
   ],
 })
 export class CognosToastHostComponent {
+  readonly dismissLabel = input('');
   protected readonly toastService = inject(CognosToastService);
 
   protected toastClass(tone: 'success' | 'info' | 'danger'): string {

@@ -158,7 +158,7 @@ export class CognosDialogSurfaceComponent {
    * "Close"; apps should pass their translated `common.close` so the shared lib
    * stays app-agnostic while remaining localised in-app.
    */
-  readonly closeLabel = input('Close');
+  readonly closeLabel = input('');
   /**
    * Optional leading icon rendered in a tinted chip beside the title, matching
    * `cog-modal`. Unset (default) renders no chip so existing dialogs are

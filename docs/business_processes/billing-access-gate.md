@@ -14,7 +14,7 @@ decides whether the Account holder is allowed to spend on this request. The
 | ----------- | ------------------------------------------------------------------------------------------- |
 | `inactive`  | **Block** — `402 INACTIVE`, message `"Choose a plan to keep chatting."`                     |
 | `trial`     | **Block if** `balance_rappen < estimate_rappen` — `402 TRIAL_EXHAUSTED` with balance + cost |
-| `payg`      | Pass — usage will be metered post-paid via Polar (see [billing spec](../specs/billing.md))  |
+| `payg`      | Pass — usage will be metered post-paid via Paddle (see [billing spec](../specs/billing.md)) |
 | `unlimited` | Pass — flat-rate plan, no per-request gating                                                |
 
 ```mermaid

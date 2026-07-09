@@ -74,6 +74,8 @@ type ConversationMenuEntry = CognosMenuItem & { action: ConversationMenuAction }
             name="more-horizontal"
             [title]="t('chat.list.openMenu')"
             [selected]="menuOpen()"
+            [attr.aria-haspopup]="'menu'"
+            [attr.aria-expanded]="menuOpen()"
             (click)="toggleMenu($event)"
           />
 
@@ -303,7 +305,7 @@ export class ConversationListItemComponent {
 
   onEditConversation(conversationId: string) {
     this._dialog.open(EditConversationDialogComponent, {
-      ...cognosDialogOptions,
+      ...cognosDialogOptions(this._transloco.translate('chat.list.edit')),
       data: { conversationId },
     });
   }
@@ -311,7 +313,7 @@ export class ConversationListItemComponent {
   onDeleteConversation(conversationId: string) {
     this._dialog
       .open(ConfirmationDialogComponent, {
-        ...cognosDialogOptions,
+        ...cognosDialogOptions(this._transloco.translate('chat.list.deleteConfirm')),
         data: {
           message: this._transloco.translate('chat.list.deleteConfirm'),
         },

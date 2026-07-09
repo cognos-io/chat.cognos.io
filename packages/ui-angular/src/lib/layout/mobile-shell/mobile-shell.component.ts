@@ -24,7 +24,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
           <cog-icon-button
             name="menu"
             size="lg"
-            title="Open navigation"
+            [title]="menuButtonLabel()"
             (click)="onMenuClick()"
           />
         }
@@ -41,7 +41,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
         </div>
       </header>
 
-      <main [class]="mainClass()">
+      <main id="main-content" [class]="mainClass()">
         <ng-content />
       </main>
 
@@ -53,6 +53,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
         [open]="drawerOpen()"
         [stickyFooter]="drawerFooter()"
         [title]="drawerTitle()"
+        [closeLabel]="drawerCloseLabel()"
         (close)="onDrawerClose()"
       >
         <ng-content select="[cogMobileDrawer]" />
@@ -152,8 +153,10 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
 })
 export class CognosMobileShellComponent {
   readonly title = input('Cognos');
+  readonly menuButtonLabel = input('');
+  readonly drawerCloseLabel = input('');
   readonly drawerOpen = input(false);
-  readonly drawerTitle = input('Navigation');
+  readonly drawerTitle = input('');
   readonly drawerFooter = input(false);
   readonly showMenuButton = input(true);
   /** Fill the viewport and scroll the main area internally. */

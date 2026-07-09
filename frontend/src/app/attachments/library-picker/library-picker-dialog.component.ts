@@ -46,6 +46,7 @@ import { AttachmentLibraryService, LibraryFile } from '../attachment-library.ser
       [width]="560"
       [stickyFooter]="true"
       [title]="t('library.picker.title')"
+      [closeLabel]="t('common.close')"
       (close)="cancel()"
     >
       <cog-search-field

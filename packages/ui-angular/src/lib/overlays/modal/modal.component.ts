@@ -1,6 +1,8 @@
+import { A11yModule } from '@angular/cdk/a11y';
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   computed,
   input,
   output,
@@ -16,7 +18,7 @@ export type CognosModalTitleTone = 'default' | 'info' | 'success' | 'danger';
 @Component({
   selector: 'cog-modal',
   standalone: true,
-  imports: [CognosIconButtonComponent, CognosIconComponent],
+  imports: [A11yModule, CognosIconButtonComponent, CognosIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (open()) {
@@ -31,7 +33,10 @@ export type CognosModalTitleTone = 'default' | 'info' | 'success' | 'danger';
         <section
           [class]="modalClass()"
           [style.--_modal-width]="width() + 'px'"
+          [attr.aria-labelledby]="titleId"
           aria-modal="true"
+          cdkTrapFocus
+          [cdkTrapFocusAutoCapture]="true"
           role="dialog"
         >
           <header class="cog-modal__header">
@@ -47,11 +52,11 @@ export type CognosModalTitleTone = 'default' | 'info' | 'success' | 'danger';
                   </span>
                 }
 
-                <h2 class="cog-modal__title">{{ title() }}</h2>
+                <h2 [id]="titleId" class="cog-modal__title">{{ title() }}</h2>
               </div>
             </div>
 
-            <cog-icon-button name="x" title="Close" (click)="onClose()" />
+            <cog-icon-button name="x" [title]="closeLabel()" (click)="onClose()" />
           </header>
 
           <div class="cog-modal__body">
@@ -219,13 +224,17 @@ export type CognosModalTitleTone = 'default' | 'info' | 'success' | 'danger';
   ],
 })
 export class CognosModalComponent {
+  private static nextTitleId = 0;
+
   readonly open = input(false);
   readonly title = input('');
+  readonly closeLabel = input('');
   readonly titleIcon = input<CognosIconName | null>(null);
   readonly titleTone = input<CognosModalTitleTone>('default');
   readonly width = input(540);
   readonly stickyFooter = input(false);
   readonly close = output<void>();
+  protected readonly titleId = `cog-modal-title-${++CognosModalComponent.nextTitleId}`;
 
   protected readonly modalClass = computed(() => {
     const classes = ['cog-modal__panel'];
@@ -256,5 +265,14 @@ export class CognosModalComponent {
 
   protected onClose(): void {
     this.close.emit();
+  }
+
+  @HostListener('document:keydown.escape')
+  protected onEscapeKey(): void {
+    if (!this.open()) {
+      return;
+    }
+
+    this.onClose();
   }
 }

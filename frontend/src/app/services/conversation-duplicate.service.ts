@@ -60,7 +60,7 @@ export class ConversationDuplicateService {
     this.markInProgress(sourceId, true);
 
     const dialogRef = this._dialog.open(DuplicatingDialogComponent, {
-      ...cognosDialogOptions,
+      ...cognosDialogOptions(this._transloco.translate('chat.copy.loadingTitle')),
       disableClose: true,
     });
     // Best-effort guardrail: browsers may show a generic prompt only. It
