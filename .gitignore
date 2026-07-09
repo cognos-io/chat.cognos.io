@@ -167,3 +167,6 @@ backup/secrets/*
 !backup/secrets/.gitignore
 
 .DS_Store
+
+.pnpm-store/
+web/test-results/

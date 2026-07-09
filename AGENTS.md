@@ -53,6 +53,11 @@ knowledge because that is how you can make the best decisions.
 - ask clarifying questions. minimise assumptions. use the decision maker skill for fast decisions
   but ask if that also is unsure.
 - Write and maintain documentation for humans with poor attention spans.
+- **Accessibility is very important.** Ship accessible UI by default: semantic HTML, correct ARIA
+  (labels, live regions, expanded/haspopup, landmarks), keyboard operability and focus management
+  (including traps in modals/drawers), visible focus styles, and meaningful alt/accessible names.
+  User-visible strings exposed to assistive tech must be translated in all six languages — never
+  hardcode English in shared components or `aria-label`/`title` attributes.
 - Use i18n and make sure all translations are provided in all supported languages and not just
   English.
 - Use `packages/ui` design tokens (`--cog-*`) for UI colour, spacing, type, radius, shadow and

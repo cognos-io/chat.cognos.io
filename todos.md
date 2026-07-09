@@ -12,6 +12,6 @@
       their own account?)
 - [ ] power user mode - e.g. show token counts on message. Where is the current context. Surface any
       compactions to the user
-- [ ] Subresource integrity for javascript files
+- [x] Subresource integrity for javascript files
 - [ ] Continuous delivery to bunny.net cdn (frontend & web files)
 - [ ] Continuous building of container image (backend)

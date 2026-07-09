@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
 test('skip link targets the main landmark on the homepage', async ({ page }) => {
