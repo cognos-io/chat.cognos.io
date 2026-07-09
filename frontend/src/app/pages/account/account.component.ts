@@ -161,33 +161,30 @@ import {
           [heading]="t('account.redaction.title')"
           [subtitle]="t('account.redaction.subtitle')"
         >
-          <div card-heading-actions class="account__redaction-control">
-            <label class="account__redaction-label" for="account-redaction-mode">
-              {{ t('account.redaction.modeLabel') }}
-            </label>
-            <select
-              id="account-redaction-mode"
-              class="account__redaction-select"
-              [value]="redactionMode()"
-              (change)="setRedactionMode($event)"
-            >
-              <option value="off">{{ t('account.redaction.modes.off') }}</option>
-              <option value="simple">
-                {{ t('account.redaction.modes.simple') }}
-              </option>
-              <option value="better">
-                {{ t('account.redaction.modes.better') }}
-              </option>
-              <option value="comprehensive" disabled>
-                {{ t('account.redaction.modes.comprehensive') }}
-              </option>
-            </select>
-          </div>
           @if (redactionMode() === 'off') {
             <p class="account__redaction-warning" role="status">
               {{ t('account.redaction.disabledNote') }}
             </p>
           }
+          <select
+            card-actions
+            id="account-redaction-mode"
+            class="account__redaction-select"
+            [attr.aria-label]="t('account.redaction.modeLabel')"
+            [value]="redactionMode()"
+            (change)="setRedactionMode($event)"
+          >
+            <option value="off">{{ t('account.redaction.modes.off') }}</option>
+            <option value="simple">
+              {{ t('account.redaction.modes.simple') }}
+            </option>
+            <option value="better">
+              {{ t('account.redaction.modes.better') }}
+            </option>
+            <option value="comprehensive" disabled>
+              {{ t('account.redaction.modes.comprehensive') }}
+            </option>
+          </select>
         </cog-card>
 
         <cog-card
@@ -387,19 +384,26 @@ import {
       gap: var(--cog-space-150);
     }
 
-    .account__redaction-label {
-      color: var(--cog-text-subtle);
-      font-size: var(--cog-fs-body-sm);
-    }
-
     .account__redaction-select {
+      min-height: 36px;
       min-width: 220px;
-      border: 1px solid var(--cog-border-strong);
-      border-radius: var(--cog-radius-md);
+      border: var(--cog-border-width) solid var(--cog-border);
+      border-radius: var(--cog-radius-sm);
       background: var(--cog-surface);
       color: var(--cog-text);
       font: inherit;
-      padding: var(--cog-space-100) var(--cog-space-150);
+      cursor: pointer;
+      padding: 0 var(--cog-space-200);
+      transition: background-color var(--cog-dur-fast) var(--cog-ease-standard);
+    }
+
+    .account__redaction-select:hover {
+      background: var(--cog-surface-hover);
+    }
+
+    .account__redaction-select:focus-visible {
+      outline: var(--cog-border-width-strong) solid var(--cog-brand);
+      outline-offset: var(--cog-border-width-strong);
     }
 
     .account__redaction-warning {
