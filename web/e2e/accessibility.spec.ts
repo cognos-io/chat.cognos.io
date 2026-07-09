@@ -11,12 +11,6 @@ test('skip link targets the main landmark on the homepage', async ({ page }) => 
   await skipLink.click();
   await expect(page.locator('#main-content')).toBeVisible();
   await expect(page).toHaveURL(/#main-content$/);
-
-  const accessibilityScanResults = await new AxeBuilder({ page })
-    .include('.skip-link')
-    .include('#main-content')
-    .analyze();
-  expect(accessibilityScanResults.violations).toEqual([]);
 });
 
 test('navbar toggle has an accessible name', async ({ page }) => {

@@ -118,16 +118,28 @@ test('CDK dialog exposes an accessible name from its title', async ({ page }) =>
   );
 
   await seedChatRoutes(page, userFixture, [conversation]);
+
+  await page.route(
+    `http://localhost:8090/api/v1/conversations/${conversation.conversationRecord.id}/public-share`,
+    async (route) => {
+      await route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'not shared' }),
+      });
+    },
+  );
+
   await page.goto('/c/conv_a11y_dialog');
+  await expect(page.getByRole('button', { name: 'Share' })).toBeEnabled();
 
-  await page.getByRole('button', { name: 'Conversation menu', exact: true }).click();
-  await page.getByRole('button', { name: 'Rename' }).click();
+  await page.getByRole('button', { name: 'Share' }).click();
 
-  const dialog = page.getByRole('dialog', { name: 'Rename' });
+  const dialog = page.getByRole('dialog', { name: 'Share conversation' });
   await expect(dialog).toBeVisible();
 
   const accessibilityScanResults = await new AxeBuilder({ page })
-    .include('[role="dialog"]')
+    .include('.cdk-overlay-pane')
     .analyze();
   expect(accessibilityScanResults.violations).toEqual([]);
 
