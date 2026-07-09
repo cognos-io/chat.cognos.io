@@ -148,6 +148,7 @@ func TestProjectListOnlyReturnsOwnProjects(t *testing.T) {
 		ExpectedStatus: http.StatusOK,
 		ExpectedContent: []string{
 			`"id":"ownedproj000001"`,
+			`"caller_role":"Admin"`,
 		},
 		TestAppFactory: setupTestApp,
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
@@ -183,6 +184,7 @@ func TestProjectGetEmbedsCallerKeyWrapping(t *testing.T) {
 			`"id":"` + projectID + `"`,
 			// seedOwnedProject stores base64("wrapped") as the wrapping.
 			`"wrapped_project_key":"` + base64.StdEncoding.EncodeToString([]byte("wrapped")) + `"`,
+			`"caller_role":"Admin"`,
 		},
 		TestAppFactory: setupTestApp,
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {

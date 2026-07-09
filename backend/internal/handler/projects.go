@@ -32,6 +32,7 @@ type projectRecordResponse struct {
 	WrappedProjectKey string `json:"wrapped_project_key,omitempty"`
 	KeyVersion        int    `json:"key_version"`
 	ArchivedAt        string `json:"archived_at,omitempty"`
+	CallerRole        string `json:"caller_role,omitempty"`
 }
 
 type createProjectRequest struct {
@@ -85,6 +86,11 @@ func ProjectsList(app core.App) func(e *core.RequestEvent) error {
 				return apis.NewApiError(http.StatusInternalServerError, "Failed to load project key", err)
 			}
 			item.WrappedProjectKey = wrapped
+			role, _, err := projectparticipants.NewPocketBaseRepo(app).ActiveRole(record.Id, user.ID)
+			if err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to load project role", err)
+			}
+			item.CallerRole = string(role)
 			response = append(response, item)
 		}
 
@@ -178,6 +184,11 @@ func ProjectsGet(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to load project key", err)
 		}
 		response.WrappedProjectKey = wrapped
+		role, _, err := projectparticipants.NewPocketBaseRepo(app).ActiveRole(record.Id, user.ID)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load project role", err)
+		}
+		response.CallerRole = string(role)
 		return e.JSON(http.StatusOK, response)
 	}
 }
