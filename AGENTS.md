@@ -80,18 +80,19 @@ English-only. Cognos is a **Swiss company serving a European audience**, so alwa
 
 ## Tools
 
-| Use ✅        | Do not use ❌                    |
-| ------------- | -------------------------------- |
-| `uv`          | `pip` `pipenv` etc               |
-| `just`        | `make`                           |
-| `podman`      | `docker`                         |
-| `dragonflydb` | `redis`                          |
-| `ty`          | `mypy` `pyright`                 |
-| `pnpm`        | `npm` `yarn` `bun`               |
-| `paddle`      | `stripe` `polar` `lemon squeezy` |
-| `http`        | `curl` `wget`                    |
-| `uv run`      | `python3` `python`               |
-| `mise`        | `nvm` `gvm` `asdf` etc           |
+| Use ✅                          | Do not use ❌                    |
+| ------------------------------- | -------------------------------- |
+| `uv`                            | `pip` `pipenv` etc               |
+| `just`                          | `make`                           |
+| `podman`                        | `docker`                         |
+| `dragonflydb`                   | `redis`                          |
+| `ty`                            | `mypy` `pyright`                 |
+| `pnpm`                          | `npm` `yarn` `bun`               |
+| `paddle`                        | `stripe` `polar` `lemon squeezy` |
+| `http`                          | `curl` `wget`                    |
+| `uv run`                        | `python3` `python`               |
+| `mise`                          | `nvm` `gvm` `asdf` etc           |
+| `rumdl` for markdown formatting | `prettier`                       |
 
 ## Testing
 
