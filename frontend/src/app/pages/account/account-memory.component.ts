@@ -104,6 +104,42 @@ import { VaultService } from '@app/services/vault.service';
             </cog-button>
           </div>
         </cog-card>
+
+        <cog-card>
+          <section class="memory-page__allowlist">
+            <header class="memory-page__allowlist-head">
+              <h2>{{ t('account.memory.allowlist.title') }}</h2>
+              <p>{{ t('account.memory.allowlist.subtitle') }}</p>
+            </header>
+
+            @if (allowlistedValues().length > 0) {
+              <ul class="memory-page__allowlist-list">
+                @for (item of allowlistedValues(); track item.token) {
+                  <li class="memory-page__allowlist-item">
+                    <span>
+                      <strong>{{ item.value }}</strong>
+                      <small>{{
+                        t('chat.composer.redaction.types.' + item.type)
+                      }}</small>
+                    </span>
+                    <cog-button
+                      appearance="subtle"
+                      icon="rotate-cw"
+                      [disabled]="removingAllowlistToken() === item.token"
+                      (click)="removeAllowlist(item.token)"
+                    >
+                      {{ t('account.memory.allowlist.redactAgain') }}
+                    </cog-button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="memory-page__empty">
+                {{ t('account.memory.allowlist.empty') }}
+              </p>
+            }
+          </section>
+        </cog-card>
       </app-settings-page>
     </ng-container>
   `,
@@ -194,6 +230,60 @@ import { VaultService } from '@app/services/vault.service';
       gap: var(--cog-space-150);
       flex-wrap: wrap;
     }
+
+    .memory-page__allowlist {
+      display: grid;
+      gap: var(--cog-space-150);
+    }
+
+    .memory-page__allowlist-head h2 {
+      margin: 0;
+      color: var(--cog-text);
+      font-size: var(--cog-fs-h-sm);
+      font-weight: var(--cog-fw-semibold);
+    }
+
+    .memory-page__allowlist-head p,
+    .memory-page__empty {
+      margin: var(--cog-space-050) 0 0;
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-body);
+    }
+
+    .memory-page__allowlist-list {
+      display: grid;
+      gap: var(--cog-space-075);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .memory-page__allowlist-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--cog-space-150);
+      padding-block: var(--cog-space-075);
+      border-block-start: var(--cog-border-width) solid var(--cog-border-subtle);
+    }
+
+    .memory-page__allowlist-item span {
+      display: grid;
+      min-width: 0;
+      gap: var(--cog-space-025);
+    }
+
+    .memory-page__allowlist-item strong {
+      overflow-wrap: anywhere;
+      color: var(--cog-text);
+      font-size: var(--cog-fs-body);
+      font-weight: var(--cog-fw-semibold);
+    }
+
+    .memory-page__allowlist-item small {
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+    }
   `,
 })
 export class AccountMemoryComponent {
@@ -210,8 +300,10 @@ export class AccountMemoryComponent {
 
   readonly saving = signal(false);
   readonly deleting = signal(false);
+  readonly removingAllowlistToken = signal<string | null>(null);
   readonly redactionEnabled = this._redaction.enabled;
   readonly memoryEnabled = this._preferences.memoryEnabled;
+  readonly allowlistedValues = computed(() => this._redaction.allowlistedValues());
 
   // Whether there is a stored memory record to clear. Reads the memory signal so
   // the Delete control enables/disables as memory is loaded, saved or cleared.
@@ -307,6 +399,30 @@ export class AccountMemoryComponent {
           title: this._transloco.translate('account.memory.deleted'),
         });
       });
+  }
+
+  removeAllowlist(token: string): void {
+    if (this.removingAllowlistToken()) {
+      return;
+    }
+    this.removingAllowlistToken.set(token);
+    this._redaction
+      .removeAllowlistedValue(token)
+      .pipe(
+        finalize(() => this.removingAllowlistToken.set(null)),
+        catchError(() => {
+          this._toast.notify({
+            title: this._transloco.translate('account.memory.allowlist.deleteError'),
+            tone: 'danger',
+          });
+          return EMPTY;
+        }),
+      )
+      .subscribe(() =>
+        this._toast.notify({
+          title: this._transloco.translate('account.memory.allowlist.deleted'),
+        }),
+      );
   }
 
   private populate(): void {

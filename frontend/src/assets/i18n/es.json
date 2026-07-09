@@ -168,7 +168,15 @@
       "delete": "Borrar la memoria",
       "deleting": "Borrando…",
       "deleted": "Memoria borrada",
-      "deleteError": "No se pudo borrar tu memoria. Inténtalo de nuevo."
+      "deleteError": "No se pudo borrar tu memoria. Inténtalo de nuevo.",
+      "allowlist": {
+        "title": "Valores que nunca se ocultan",
+        "subtitle": "Estos valores seguirán visibles en mensajes futuros. Si quitas uno, volverá a ocultarse a partir de entonces.",
+        "empty": "No hay valores excluidos de la ocultación.",
+        "redactAgain": "Ocultar de nuevo",
+        "deleted": "El valor volverá a ocultarse",
+        "deleteError": "No se pudo actualizar la lista de ocultación. Inténtalo de nuevo."
+      }
     },
     "retention": {
       "title": "Eliminación automática de chats",
@@ -543,6 +551,8 @@
         "redactAction": "Redactar",
         "remembered": "Recordado",
         "remove": "Quitar",
+        "neverRedact": "No redactar nunca",
+        "allowlistError": "No se pudo añadir esto a tus excepciones de redacción.",
         "types": {
           "iban": "IBAN",
           "custom": "Personalizado",

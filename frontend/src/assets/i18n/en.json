@@ -168,7 +168,15 @@
       "delete": "Clear memory",
       "deleting": "Clearing…",
       "deleted": "Memory cleared",
-      "deleteError": "Couldn't clear your memory. Please try again."
+      "deleteError": "Couldn't clear your memory. Please try again.",
+      "allowlist": {
+        "title": "Values never redacted",
+        "subtitle": "These values stay visible in future messages. Removing one means it will be redacted again from then on.",
+        "empty": "No values are exempt from redaction.",
+        "redactAgain": "Redact again",
+        "deleted": "Value will be redacted again",
+        "deleteError": "Couldn't update the redaction list. Please try again."
+      }
     },
     "retention": {
       "title": "Auto-delete chats",
@@ -543,6 +551,8 @@
         "redactAction": "Redact",
         "remembered": "Remembered",
         "remove": "Remove",
+        "neverRedact": "Never redact this",
+        "allowlistError": "Couldn't add this to your redaction exceptions.",
         "types": {
           "iban": "IBAN",
           "custom": "Custom",

@@ -191,6 +191,44 @@ test.describe('composer attachments', () => {
     expect(content).toMatch(/\[\[PII_CC_[A-Z0-9]+\]\]/);
   });
 
+  test('better mode redacts NLP-detected names before they reach the provider', async ({
+    page,
+  }) => {
+    await provisionUnlockedAccount(page);
+
+    await page.goto('/account');
+    await page.getByLabel('Detection').selectOption('better');
+    await expect(page.getByLabel('Detection')).toHaveValue('better');
+    await page.goto('/');
+
+    let sentMessages: Array<{ content?: string }> | undefined;
+    await page.route('**/complete', async (route) => {
+      if (route.request().method() === 'POST') {
+        const body = route.request().postDataJSON() as {
+          messages?: Array<{ content?: string }>;
+        };
+        sentMessages = body.messages;
+      }
+      await route.continue();
+    });
+
+    const prompt = 'My name is John Doe. What is my name?';
+    await page.getByLabel(COMPOSER_LABEL).fill(prompt);
+    await expect(page.locator('.message-form__redaction')).toContainText(
+      'Redacting 1 sensitive value',
+    );
+
+    const send = page.getByRole('button', { name: /^send$/i });
+    await expect(send).toBeEnabled();
+    await send.click();
+
+    await expect(page.getByText('Mocked assistant reply')).toBeVisible();
+
+    const content = sentMessages?.at(-1)?.content ?? '';
+    expect(content).not.toContain('John Doe');
+    expect(content).toMatch(/\[\[PII_PERSON_[A-Z0-9]+\]\]/);
+  });
+
   test('hydrates attachment redaction tokens and survives a reload', async ({
     page,
   }) => {

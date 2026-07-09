@@ -168,7 +168,15 @@
       "delete": "Effacer la mémoire",
       "deleting": "Effacement…",
       "deleted": "Mémoire effacée",
-      "deleteError": "Impossible d'effacer votre mémoire. Veuillez réessayer."
+      "deleteError": "Impossible d'effacer votre mémoire. Veuillez réessayer.",
+      "allowlist": {
+        "title": "Valeurs jamais masquées",
+        "subtitle": "Ces valeurs restent visibles dans les futurs messages. Si vous en retirez une, elle sera de nouveau masquée à partir de ce moment.",
+        "empty": "Aucune valeur n'est exclue du masquage.",
+        "redactAgain": "Masquer à nouveau",
+        "deleted": "La valeur sera de nouveau masquée",
+        "deleteError": "Impossible de mettre à jour la liste de masquage. Veuillez réessayer."
+      }
     },
     "retention": {
       "title": "Suppression automatique des discussions",
@@ -543,6 +551,8 @@
         "redactAction": "Masquer",
         "remembered": "Mémorisé",
         "remove": "Retirer",
+        "neverRedact": "Ne jamais masquer",
+        "allowlistError": "Impossible d'ajouter ceci à vos exceptions de masquage.",
         "types": {
           "iban": "IBAN",
           "custom": "Personnalisé",

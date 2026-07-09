@@ -203,6 +203,8 @@ describe('MessageFormComponent', () => {
       // nothing), so both lists are empty.
       redactionDeselected: [],
       redactionCustom: [],
+      redactionCandidatesContent: '',
+      redactionCandidates: [],
       // Image generation is off by default.
       imageGeneration: false,
     });

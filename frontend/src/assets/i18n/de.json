@@ -168,7 +168,15 @@
       "delete": "Gedächtnis löschen",
       "deleting": "Wird gelöscht …",
       "deleted": "Gedächtnis gelöscht",
-      "deleteError": "Dein Gedächtnis konnte nicht gelöscht werden. Bitte versuche es erneut."
+      "deleteError": "Dein Gedächtnis konnte nicht gelöscht werden. Bitte versuche es erneut.",
+      "allowlist": {
+        "title": "Nie redigierte Werte",
+        "subtitle": "Diese Werte bleiben in künftigen Nachrichten sichtbar. Wenn du einen entfernst, wird er ab dann wieder redigiert.",
+        "empty": "Keine Werte sind von der Redigierung ausgenommen.",
+        "redactAgain": "Wieder redigieren",
+        "deleted": "Wert wird wieder redigiert",
+        "deleteError": "Die Redigierungsliste konnte nicht aktualisiert werden. Bitte versuche es erneut."
+      }
     },
     "retention": {
       "title": "Chats automatisch löschen",
@@ -543,6 +551,8 @@
         "redactAction": "Schwärzen",
         "remembered": "Gemerkt",
         "remove": "Entfernen",
+        "neverRedact": "Nie schwärzen",
+        "allowlistError": "Das konnte nicht zu deinen Schwärzungsausnahmen hinzugefügt werden.",
         "types": {
           "iban": "IBAN",
           "custom": "Benutzerdefiniert",

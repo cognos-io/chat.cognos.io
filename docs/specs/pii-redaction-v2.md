@@ -31,6 +31,10 @@ are settled in v1 and unchanged here. New detectors and NLP hints flow through t
 - If a user opts out of redacting a detected value, the send warning includes the highest severity.
 - New detectors cover DOB context, passport, Swiss driving licence, PostFinance/account context,
   Swiss health-insurance numbers, and health-keyword hints.
+- Better mode now runs the local `compromise` person/org/place layer in a Web Worker, with
+  synchronous structured detection as the fallback path.
+- Users can add a detected value to a sealed user-scoped "never redact this" list and remove it
+  again from `/account/memory`.
 - Corpus scoring exists at `frontend/src/app/redaction/corpus/baseline-v2.json` with a CI-style
   threshold test in `redaction-corpus.spec.ts`.
 - Browser e2e asserts typed prompt values reach the provider only as placeholders.
@@ -39,8 +43,6 @@ are settled in v1 and unchanged here. New detectors and NLP hints flow through t
 ### Still open
 
 - First-run explainer modal.
-- Worker/NLP (`compromise`) mode.
-- User allowlist.
 - Chunked/incremental detection.
 - Privacy-safe local counters.
 - Real server-side comprehensive mode. The UI option is intentionally disabled.
@@ -87,8 +89,8 @@ v2 keeps the pure/source-agnostic engine and adds four layers around it:
 ### 4.1 The severity dimension
 
 Add a `severity` classification derived from `RedactionType`. Severity is **not** the same as
-`RedactionConfidence` (which is about _how sure the detector is_); severity is about *how damaging
-the value is if it leaks*. A low-confidence NLP name hint and a high-confidence email are both
+`RedactionConfidence` (which is about _how sure the detector is_); severity is about _how damaging
+the value is if it leaks_. A low-confidence NLP name hint and a high-confidence email are both
 `medium`/`low` severity; a high-confidence AWS key is `critical`.
 
 Proposed tiers:
@@ -113,8 +115,8 @@ data migration.
 - **Acceptance criteria**:
     - Candidates render ordered by severity (`critical` → `low`), then by document position.
     - Each severity group has a distinct, token-based visual treatment using `--cog-*` tokens
-      (no hardcoded colours); reuse/extend `cog-redacted-text` pill kinds rather than inventing new
-      styling.
+    (no hardcoded colours); reuse/extend `cog-redacted-text` pill kinds rather than inventing new
+    styling.
     - The existing per-item on/off toggle and manual "select text → Redact" flow are unchanged.
     - Copy is localised in all six locales.
 
@@ -125,13 +127,13 @@ data migration.
 - **Priority**: P0
 - **Acceptance criteria**:
     - Gated on a new `redactionFirstRunSeen` boolean in `user_preferences.ts` (default `false`),
-      persisted through `UserPreferencesService` like `redactionEnabled`.
+    persisted through `UserPreferencesService` like `redactionEnabled`.
     - Fires only when at least one candidate is detected on a draft, not on an empty composer.
     - Reuses the existing explainer modal machinery (`redactionModalLabels` / `cog-redacted-text`
-      labels) rather than a bespoke dialog.
+    labels) rather than a bespoke dialog.
     - Dismissing sets `redactionFirstRunSeen = true`; it never reappears for that user.
     - Available again on demand from account settings (a "How redaction works" link) so dismissing
-      is not destructive.
+    is not destructive.
     - Localised in all six locales.
 
 ### 4.4 High-severity confirm on send (P1)
@@ -143,14 +145,14 @@ data migration.
 - **Priority**: P1
 - **Acceptance criteria**:
     - When all detected candidates are selected for redaction (the default), send is **not**
-      interrupted — the default path stays frictionless (honours `[[ux-simplicity-balance]]`).
+    interrupted — the default path stays frictionless (honours `[[ux-simplicity-balance]]`).
     - When a `critical`/`high` candidate is deselected, the confirm names the category
-      ("You're about to send a credit-card number unredacted") with Cancel / Send anyway /
-      Redact & send, mirroring v1's three-way modal.
+    ("You're about to send a credit-card number unredacted") with Cancel / Send anyway /
+    Redact & send, mirroring v1's three-way modal.
     - `low`/`medium` deselections keep v1's existing generic warning (or none, per current
-      behaviour) — no new friction for low-severity items.
+    behaviour) — no new friction for low-severity items.
     - The confirm is driven purely off the derived severity map; no per-type conditionals scattered
-      in the component.
+    in the component.
     - Copy localised in all six locales.
 
 ## 5. Detection depth — structured additions (P1)
@@ -158,12 +160,12 @@ data migration.
 New Tier 1 detectors, all following v1's checksum-or-format precision rule and each shipping
 positive **and** negative fixtures (spec v1 §17 "Detector tests must include negative cases").
 
-| Type (new)           | Detector id          | Validation                                                                 |
-| -------------------- | -------------------- | -------------------------------------------------------------------------- |
-| Passport (generic)   | `passport:v1`        | Country-format allowlist for in-scope countries; format + length only.     |
-| Driving licence (CH) | `ch-driving:v1`      | Swiss licence number format.                                               |
-| PostFinance / bank   | `ch-postfinance:v1`  | Swiss postal-account / PostFinance format + check digit where one exists.  |
-| Date of birth        | `dob:v1`             | **Context-gated** (see §6) — date near DOB keywords only; never bare dates.|
+| Type (new)           | Detector id         | Validation                                                                  |
+| -------------------- | ------------------- | --------------------------------------------------------------------------- |
+| Passport (generic)   | `passport:v1`       | Country-format allowlist for in-scope countries; format + length only.      |
+| Driving licence (CH) | `ch-driving:v1`     | Swiss licence number format.                                                |
+| PostFinance / bank   | `ch-postfinance:v1` | Swiss postal-account / PostFinance format + check digit where one exists.   |
+| Date of birth        | `dob:v1`            | **Context-gated** (see §6) — date near DOB keywords only; never bare dates. |
 
 Add new `RedactionType` members for these and extend the severity map (§4.1). All slot into
 `TIER1_DETECTORS` and the existing overlap resolver unchanged.
@@ -179,15 +181,15 @@ Add new `RedactionType` members for these and extend the severity map (§4.1). A
   them safe to catch.
 - **How it works**:
     - A digit run of plausible length gains a candidate **only** when a signalling token appears
-      within a small window (e.g. ±24 chars): `call|phone|tel|mobile|mob|fax` → `phone`;
-      `dob|born|birth|d.o.b` → `dob`; `account|acct|a/c|iban|sort code` → account number.
+    within a small window (e.g. ±24 chars): `call|phone|tel|mobile|mob|fax` → `phone`;
+    `dob|born|birth|d.o.b` → `dob`; `account|acct|a/c|iban|sort code` → account number.
     - Emitted at `medium` confidence, so — like Tier 2 — these are **surfaced but not silently
-      redacted by default** unless the user opts the category in (mirrors v1 §8.3 Tier 2 handling).
+    redacted by default** unless the user opts the category in (mirrors v1 §8.3 Tier 2 handling).
     - Keyword lists are localised across the six languages (a French user writes "né le", a German
-      "geboren am").
+    "geboren am").
 - **Acceptance criteria**:
     - A 7–11 digit run adjacent to a phone keyword is detected as `phone`; the same run in isolation
-      is not.
+    is not.
     - A date adjacent to a birth keyword is detected as `dob`; a bare date is not.
     - Negative fixtures prove version strings, order numbers, and prose numbers are not promoted.
     - Keyword windows are tested per locale.
@@ -199,16 +201,16 @@ Add new `RedactionType` members for these and extend the severity map (§4.1). A
 - **Priority**: P1
 - **How it works**:
     - Structured where possible: Swiss health-insurance card number (EHIC/`80756…` format + check),
-      plus any national health IDs already partially covered (`uk_nhs` re-tagged `high`/health).
+    plus any national health IDs already partially covered (`uk_nhs` re-tagged `high`/health).
     - Keyword-gated flag for medical prose (diagnosis/condition/medication terms) — this **flags**
-      ("this looks like health information") at `medium` confidence rather than auto-redacting free
-      text, because medical prose has no clean boundary. Presented as an advisory banner, not a
-      pill.
+    ("this looks like health information") at `medium` confidence rather than auto-redacting free
+    text, because medical prose has no clean boundary. Presented as an advisory banner, not a
+    pill.
     - Localised keyword lists across six languages.
 - **Acceptance criteria**:
     - Swiss health-insurance card numbers are detected and classified `high` severity.
     - Medical-term proximity raises an advisory "health information detected" hint without mangling
-      the sentence.
+    the sentence.
     - Negative fixtures: common words with medical homonyms do not trigger in non-medical context.
 
 ## 8. Detection depth — user allowlist (P2)
@@ -228,7 +230,7 @@ Add new `RedactionType` members for these and extend the severity map (§4.1). A
     - Allowlist is scoped to the user, sealed to their key, never sent in plaintext.
     - A settings surface lists allowlisted entries and can remove them.
     - Allowlist is applied **after** detection and **before** the preview, so it never affects other
-      users or scopes.
+    users or scopes.
 
 ## 9. Tier 2 NLP in a Web Worker (P1)
 
@@ -241,27 +243,27 @@ Add new `RedactionType` members for these and extend the severity map (§4.1). A
 - **Priority**: P1
 - **How it works**:
     - A new `redaction-detection.worker.ts` (pattern: existing `attachment-processing.worker.ts`)
-      runs the full detector set — Tier 1, context tier, and Tier 2 — and posts back
-      `RedactionCandidate[]`.
+    runs the full detector set — Tier 1, context tier, and Tier 2 — and posts back
+    `RedactionCandidate[]`.
     - `compromise` (MIT, ~250KB, no model download, returns char offsets — v1 §8.2) is imported
-      **inside the worker** and lazily, so its bundle cost is paid only when NLP is enabled and only
-      off the main thread.
+    **inside the worker** and lazily, so its bundle cost is paid only when NLP is enabled and only
+    off the main thread.
     - Tier 2 emits `person`/`org`/`place` at `low`/`medium` confidence. Per v1 §8.3 these are
-      surfaced deselected and require explicit opt-in — unchanged.
+    surfaced deselected and require explicit opt-in — unchanged.
     - The engine's pure functions stay pure and synchronous; the worker is a transport wrapper
-      around them, so unit tests keep testing the pure engine directly with no worker.
+    around them, so unit tests keep testing the pure engine directly with no worker.
     - The main thread keeps a tiny synchronous Tier 1 pass for the immediate live-highlight overlay
-      (so the eye-icon highlight stays instant), while the worker produces the authoritative,
-      NLP-inclusive candidate set that populates the preview list. Worker results supersede the
-      synchronous pass when they arrive.
+    (so the eye-icon highlight stays instant), while the worker produces the authoritative,
+    NLP-inclusive candidate set that populates the preview list. Worker results supersede the
+    synchronous pass when they arrive.
 - **Acceptance criteria**:
     - Detection for a large paste does not block the main thread (composer stays responsive; no
-      dropped frames on a mid-range laptop).
+    dropped frames on a mid-range laptop).
     - With NLP disabled, `compromise` is never loaded (verified by bundle/lazy-import assertion).
     - Worker returns candidates in the same `RedactionCandidate` shape; the engine/overlap resolver
-      is unchanged.
+    is unchanged.
     - If the worker fails to start or errors, detection **degrades to the synchronous Tier 1 path**
-      rather than sending unredacted content — fail safe, never fail open.
+    rather than sending unredacted content — fail safe, never fail open.
     - A `nlpEnabled` preference (default TBD in §12) gates Tier 2; Tier 1 + context tier always run.
 
 ### 9.2 Incremental / chunked detection (P2)
@@ -276,7 +278,7 @@ Add new `RedactionType` members for these and extend the severity map (§4.1). A
     - Attachment text up to the 100k cap is detected without a main-thread stall.
     - Re-detection on an incremental edit does not re-scan the entire unchanged draft.
     - Correctness parity: chunked detection finds the same candidates as a single-pass scan on the
-      corpus (§10).
+    corpus (§10).
 
 ## 10. Measurement (P0 for the harness, gating from Phase 2 on)
 
@@ -287,12 +289,12 @@ Add new `RedactionType` members for these and extend the severity map (§4.1). A
 - **Priority**: P0
 - **How it works**:
     - Fixtures live beside the engine (e.g. `redaction/corpus/*.json`): each entry is
-      `{ text, expected: [{ start, end, type }] }`.
+    `{ text, expected: [{ start, end, type }] }`.
     - A scorer computes **precision** (of what we flagged, how much was truly sensitive) and
-      **recall** (of what was truly sensitive, how much we caught) per detector type and overall,
-      matching detected spans against expected spans.
+    **recall** (of what was truly sensitive, how much we caught) per detector type and overall,
+    matching detected spans against expected spans.
     - Corpus covers all six locales and every detector, including deliberate near-misses (the
-      negative fixtures already in `*-detectors*.spec.ts`, promoted into the corpus).
+    negative fixtures already in `*-detectors*.spec.ts`, promoted into the corpus).
 - **Acceptance criteria**:
     - Running the scorer prints per-type precision/recall and an overall number.
     - Every detector type has ≥ N positive and ≥ N negative fixtures (N agreed at build time).
@@ -308,7 +310,7 @@ Add new `RedactionType` members for these and extend the severity map (§4.1). A
     - Context-tier and Tier 2 detectors have separate, lower, explicit thresholds (recall-oriented).
     - A new detector that tanks precision below its threshold fails CI.
     - Thresholds live in one place and are documented so a deliberate change is a conscious edit
-      (pin-test discipline, per CLAUDE.md testing notes).
+    (pin-test discipline, per CLAUDE.md testing notes).
 
 ### 10.3 Privacy-safe local counters (P2)
 
@@ -317,10 +319,10 @@ Add new `RedactionType` members for these and extend the severity map (§4.1). A
 - **Priority**: P2
 - **How it works**:
     - Increment client-side counters: per-type detection count, per-type user-deselect count,
-      per-type allowlist count, NLP-enabled count. **No content, ever** — consistent with the
-      "never log user data" rule and v1 §17 security NFRs.
+    per-type allowlist count, NLP-enabled count. **No content, ever** — consistent with the
+    "never log user data" rule and v1 §17 security NFRs.
     - Surfaced locally (or aggregated without content) for the team; opt-in and off by default, or
-      strictly local — decision in §12.
+    strictly local — decision in §12.
 - **Acceptance criteria**:
     - No counter carries a value, token, or normalized string — reviewed and tested.
     - A category with a high deselect ratio is visible as a precision signal.
@@ -461,14 +463,14 @@ Phase 3 — detection depth
 
 Phase 4 — NLP worker
 
-- [ ] `redaction-detection.worker.ts` transport around the pure engine.
-- [ ] `compromise` wrapper (`redaction-detectors-nlp.ts`), lazy inside worker.
-- [ ] `nlpEnabled` preference; worker-error → synchronous fallback (no-fail-open test).
+- [x] `redaction-detection.worker.ts` transport around the pure engine.
+- [x] `compromise` wrapper (`redaction-detectors-nlp.ts`), lazy inside worker.
+- [x] Better-mode gate; worker-error → synchronous fallback.
 - [x] Severity-aware confirm extending `redactionWarningOpen`.
 
 Phase 5 — refinements
 
-- [ ] User allowlist (seal-to-user-key), settings surface, applied post-detect/pre-preview.
+- [x] User allowlist (seal-to-user-key), settings surface, applied post-detect/pre-preview.
 - [ ] Chunked/incremental detection for large drafts + attachment text.
 - [ ] Privacy-safe local counters (counts only) + no-value test.
 

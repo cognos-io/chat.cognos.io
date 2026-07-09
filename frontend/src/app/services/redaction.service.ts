@@ -8,16 +8,21 @@ import { Base64 } from 'js-base64';
 import { Conversation } from '@app/interfaces/conversation';
 import { KeyPair } from '@app/interfaces/key-pair';
 import {
+  RedactionAllowlistItem,
   RedactionCandidate,
+  RedactionDetectionWorkerClient,
   RedactionEntry,
   type RedactionMode,
   RedactionSource,
+  allowlistEntry,
+  allowlistItem,
   applyRedactions,
   buildCustomCandidates,
   defaultTokenGenerator,
   detectSensitiveText,
   detectorsForMode,
   hydrateRedactedText,
+  isAllowlistEntry,
   resolveOverlaps,
 } from '@app/redaction';
 
@@ -79,7 +84,9 @@ export class RedactionService {
   // User-scoped redaction: token→original sealed to the user's own key (no
   // separate keypair). Loaded once; merged into hydration everywhere (spec §16).
   private readonly _userEntries = new Map<string, RedactionEntry>();
+  private readonly _userAllowlist = new Map<string, RedactionEntry>();
   private _userLoaded = false;
+  private readonly _worker = new RedactionDetectionWorkerClient();
 
   // Project-scoped redaction: a per-project redaction keypair (independent of the
   // content key) + decrypted entries, merged into hydration for the project's
@@ -156,10 +163,32 @@ export class RedactionService {
     if (mode === 'off') {
       return [];
     }
-    return detectSensitiveText(
-      text,
-      detectorsForMode(mode, this._transloco.getActiveLang()),
+    return this.filterAllowlisted(
+      detectSensitiveText(
+        text,
+        detectorsForMode(mode, this._transloco.getActiveLang()),
+      ),
     );
+  }
+
+  async detectForPreview(text: string): Promise<RedactionCandidate[]> {
+    const mode = this.clientDetectionMode();
+    if (mode === 'off') {
+      return [];
+    }
+    const locale = this._transloco.getActiveLang();
+    const fallback = () =>
+      this.filterAllowlisted(detectSensitiveText(text, detectorsForMode(mode, locale)));
+    if (mode !== 'better') {
+      return fallback();
+    }
+    try {
+      return this.filterAllowlisted(
+        await this._worker.detect({ text, mode, locale, nlp: true }),
+      );
+    } catch {
+      return fallback();
+    }
   }
 
   /**
@@ -424,10 +453,15 @@ export class RedactionService {
     return this._api.listUserRedactionEntries().pipe(
       map((res) => {
         this._userEntries.clear();
+        this._userAllowlist.clear();
         for (const item of res.items) {
           const entry = this.tryDecryptEntry(item.data, userKeyPair);
           if (entry) {
-            this._userEntries.set(entry.token, entry);
+            if (isAllowlistEntry(entry)) {
+              this._userAllowlist.set(entry.token, entry);
+            } else {
+              this._userEntries.set(entry.token, entry);
+            }
           }
         }
         this.revision.update((v) => v + 1);
@@ -461,8 +495,38 @@ export class RedactionService {
     return this._api.createUserRedactionEntries({ entries: apiEntries }).pipe(
       map(() => {
         for (const entry of newEntries) {
-          this._userEntries.set(entry.token, entry);
+          if (isAllowlistEntry(entry)) {
+            this._userAllowlist.set(entry.token, entry);
+          } else {
+            this._userEntries.set(entry.token, entry);
+          }
         }
+        this.revision.update((v) => v + 1);
+      }),
+    );
+  }
+
+  allowlistedValues(): RedactionAllowlistItem[] {
+    this.revision();
+    return Array.from(this._userAllowlist.values()).map(allowlistItem);
+  }
+
+  allowlistCandidate(candidate: RedactionCandidate): Observable<void> {
+    if (this.isCandidateAllowlisted(candidate)) {
+      return of(undefined);
+    }
+    return this.persistUserRedaction([
+      allowlistEntry(candidate.type, candidate.value, candidate.normalized),
+    ]);
+  }
+
+  removeAllowlistedValue(token: string): Observable<void> {
+    if (!this._userAllowlist.has(token)) {
+      return of(undefined);
+    }
+    return this._api.deleteUserRedactionEntry(token).pipe(
+      map(() => {
+        this._userAllowlist.delete(token);
         this.revision.update((v) => v + 1);
       }),
     );
@@ -554,6 +618,22 @@ export class RedactionService {
     }
     const result = applyRedactions(text, candidates, existing, defaultTokenGenerator);
     return { redactedText: result.redactedText, newEntries: result.newEntries };
+  }
+
+  private filterAllowlisted(candidates: RedactionCandidate[]): RedactionCandidate[] {
+    if (this._userAllowlist.size === 0) {
+      return candidates;
+    }
+    return candidates.filter((candidate) => !this.isCandidateAllowlisted(candidate));
+  }
+
+  private isCandidateAllowlisted(candidate: RedactionCandidate): boolean {
+    for (const entry of this._userAllowlist.values()) {
+      if (entry.type === candidate.type && entry.normalized === candidate.normalized) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // ensureProjectKeyPair returns a project's redaction keypair, creating it on

@@ -421,6 +421,13 @@ interface RedactionPreviewGroup {
                           />
                           {{ t('chat.composer.redaction.redact') }}
                         </label>
+                        <button
+                          type="button"
+                          class="message-form__redaction-remove"
+                          (click)="neverRedact(item)"
+                        >
+                          {{ t('chat.composer.redaction.neverRedact') }}
+                        </button>
                       </li>
                     }
                   }
@@ -1831,13 +1838,13 @@ export class MessageFormComponent {
     { initialValue: '' },
   );
 
-  // Detected Tier 1 candidates for the current draft (empty when the user has
-  // turned redaction off in settings).
-  readonly redactionCandidates = computed(() =>
-    this._redactionService.enabled()
-      ? this._redactionService.detect(this._redactionDraft() ?? '')
-      : [],
-  );
+  private _redactionRequestSeq = 0;
+
+  // Detected candidates for the current draft. This is seeded synchronously with
+  // structured detectors, then replaced by the worker's NLP-inclusive result in
+  // better mode when it arrives.
+  readonly redactionCandidates = signal<RedactionCandidate[]>([]);
+  private readonly _redactionCandidatesContent = signal('');
 
   readonly redactionPreviewGroups = computed<RedactionPreviewGroup[]>(() => {
     const groups = new Map<RedactionSeverity, RedactionCandidate[]>();
@@ -2040,6 +2047,32 @@ export class MessageFormComponent {
     effect(() => {
       this.modelService.selectedModel();
       untracked(() => this.attachmentNotice.set(null));
+    });
+
+    effect(() => {
+      const draft = this._redactionDraft() ?? '';
+      this._redactionService.revision();
+      if (!this._redactionService.enabled() || !draft) {
+        this.redactionCandidates.set([]);
+        this._redactionCandidatesContent.set(draft);
+        return;
+      }
+      const seq = ++this._redactionRequestSeq;
+      const fallback = this._redactionService.detect(draft);
+      this.redactionCandidates.set(fallback);
+      this._redactionCandidatesContent.set(draft);
+      const detectForPreview = this._redactionService.detectForPreview?.bind(
+        this._redactionService,
+      );
+      if (!detectForPreview) {
+        return;
+      }
+      void detectForPreview(draft).then((candidates) => {
+        if (seq === this._redactionRequestSeq && draft === this._redactionDraft()) {
+          this.redactionCandidates.set(candidates);
+          this._redactionCandidatesContent.set(draft);
+        }
+      });
     });
   }
 
@@ -2336,6 +2369,8 @@ export class MessageFormComponent {
       requestId: self.crypto.randomUUID(),
       redactionDeselected: Array.from(this._redactionDeselected()),
       redactionCustom: this._customRedactions(),
+      redactionCandidatesContent: this._redactionCandidatesContent(),
+      redactionCandidates: this.redactionCandidates(),
       imageGeneration: this.composerTools.imageGenerationEnabled(),
       attachmentIds: attachmentInputs.attachmentIds.length
         ? attachmentInputs.attachmentIds
@@ -2443,6 +2478,23 @@ export class MessageFormComponent {
         next.add(key);
       }
       return next;
+    });
+  }
+
+  neverRedact(candidate: RedactionCandidate): void {
+    this._redactionService.allowlistCandidate?.(candidate).subscribe({
+      next: () => {
+        this._redactionDeselected.update((set) => {
+          const next = new Set(set);
+          next.delete(candidateKey(candidate));
+          return next;
+        });
+      },
+      error: () =>
+        this._toast.notify({
+          title: this._transloco.translate('chat.composer.redaction.allowlistError'),
+          tone: 'danger',
+        }),
     });
   }
 

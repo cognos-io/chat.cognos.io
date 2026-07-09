@@ -1667,6 +1667,13 @@ export class CognosApiService {
     );
   }
 
+  deleteUserRedactionEntry(token: string): Observable<void> {
+    return this._http.delete<void>(
+      `${this._baseUrl}/api/v1/user-redaction-entries/${encodeURIComponent(token)}`,
+      { headers: this.authHeaders() },
+    );
+  }
+
   getProjectRedactionKey(projectId: string): Observable<ApiRedactionKeyResponse> {
     return this._http.get<ApiRedactionKeyResponse>(
       `${this._baseUrl}/api/v1/projects/${projectId}/redaction-key`,

@@ -168,7 +168,15 @@
       "delete": "Limpar a memória",
       "deleting": "A limpar…",
       "deleted": "Memória limpa",
-      "deleteError": "Não foi possível limpar a tua memória. Tenta novamente."
+      "deleteError": "Não foi possível limpar a tua memória. Tenta novamente.",
+      "allowlist": {
+        "title": "Valores nunca ocultados",
+        "subtitle": "Estes valores ficam visíveis em mensagens futuras. Se removeres um, volta a ser ocultado a partir daí.",
+        "empty": "Não há valores excluídos da ocultação.",
+        "redactAgain": "Ocultar novamente",
+        "deleted": "O valor voltará a ser ocultado",
+        "deleteError": "Não foi possível atualizar a lista de ocultação. Tenta novamente."
+      }
     },
     "retention": {
       "title": "Eliminar conversas automaticamente",
@@ -543,6 +551,8 @@
         "redactAction": "Ocultar",
         "remembered": "Memorizado",
         "remove": "Remover",
+        "neverRedact": "Nunca ocultar isto",
+        "allowlistError": "Não foi possível adicionar isto às tuas exceções de ocultação.",
         "types": {
           "iban": "IBAN",
           "custom": "Personalizado",

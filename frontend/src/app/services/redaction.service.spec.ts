@@ -27,6 +27,7 @@ import { VaultService } from './vault.service';
 class FakeApi {
   key: ApiRedactionKeyResponse | null = null;
   entries: ApiRedactionEntry[] = [];
+  userEntries: ApiRedactionEntry[] = [];
 
   getRedactionKey(): Observable<ApiRedactionKeyResponse> {
     return this.key ? of(this.key) : throwError(() => ({ status: 404 }));
@@ -62,6 +63,30 @@ class FakeApi {
   ): Observable<ApiCreateRedactionEntriesResponse> {
     this.entries.push(...req.entries);
     return of({ created: req.entries.map((e) => e.token) });
+  }
+
+  listUserRedactionEntries(): Observable<ApiListRedactionEntriesResponse> {
+    return of({
+      items: this.userEntries.map((e) => ({
+        token: e.token,
+        data: e.data,
+        key_version: 1,
+        source_kind: e.source_kind,
+        source_id: e.source_id ?? '',
+      })),
+    });
+  }
+
+  createUserRedactionEntries(req: {
+    entries: ApiRedactionEntry[];
+  }): Observable<ApiCreateRedactionEntriesResponse> {
+    this.userEntries.push(...req.entries);
+    return of({ created: req.entries.map((e) => e.token) });
+  }
+
+  deleteUserRedactionEntry(token: string): Observable<void> {
+    this.userEntries = this.userEntries.filter((entry) => entry.token !== token);
+    return of(undefined);
   }
 }
 
@@ -260,6 +285,26 @@ describe('RedactionService', () => {
     );
     expect(redactedText).toBe('the quick brown fox');
     expect(newEntries).toHaveLength(0);
+  });
+
+  it('stores allowlisted values sealed to the user key and filters future detections', async () => {
+    const [candidate] = service.detect('mail jane@example.com');
+
+    await firstValue(service.allowlistCandidate(candidate));
+    expect(api.userEntries).toHaveLength(1);
+    expect(api.userEntries[0].data).not.toContain('jane@example.com');
+    expect(service.detect('mail jane@example.com')).toEqual([]);
+    expect(service.allowlistedValues()).toEqual([
+      expect.objectContaining({
+        type: 'email',
+        value: 'jane@example.com',
+        normalized: 'jane@example.com',
+      }),
+    ]);
+
+    const [item] = service.allowlistedValues();
+    await firstValue(service.removeAllowlistedValue(item.token));
+    expect(service.detect('mail jane@example.com')).toHaveLength(1);
   });
 });
 

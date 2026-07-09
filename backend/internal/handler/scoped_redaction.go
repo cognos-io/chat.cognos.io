@@ -75,6 +75,34 @@ func UserRedactionEntriesCreate(app core.App) func(e *core.RequestEvent) error {
 	}
 }
 
+// UserRedactionEntryDelete removes one caller-owned user-scoped redaction entry
+// by token. The token is not sensitive: it is already stored plaintext for
+// redaction lookup, while the original value remains sealed in data.
+func UserRedactionEntryDelete(app core.App) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		user := auth.ExtractUser(e)
+		if user == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+		token := strings.TrimSpace(e.Request.PathValue("token"))
+		if token == "" {
+			return apis.NewBadRequestError("token is required", nil)
+		}
+		record, err := app.FindFirstRecordByFilter(
+			userRedactionEntriesCollection,
+			"user = {:owner} && token = {:token}",
+			dbx.Params{"owner": user.ID, "token": token},
+		)
+		if err != nil || record == nil {
+			return apis.NewNotFoundError("Redaction entry not found", nil)
+		}
+		if err := app.Delete(record); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to delete redaction entry", err)
+		}
+		return e.NoContent(http.StatusNoContent)
+	}
+}
+
 // --- Project redaction keypair (wrapped per active member) ---
 
 func projectKeyVersion(record *core.Record) int {

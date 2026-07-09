@@ -168,7 +168,15 @@
       "delete": "Cancella la memoria",
       "deleting": "Cancellazione…",
       "deleted": "Memoria cancellata",
-      "deleteError": "Impossibile cancellare la tua memoria. Riprova."
+      "deleteError": "Impossibile cancellare la tua memoria. Riprova.",
+      "allowlist": {
+        "title": "Valori mai oscurati",
+        "subtitle": "Questi valori restano visibili nei messaggi futuri. Se ne rimuovi uno, verrà di nuovo oscurato da quel momento.",
+        "empty": "Nessun valore è escluso dall'oscuramento.",
+        "redactAgain": "Oscura di nuovo",
+        "deleted": "Il valore verrà di nuovo oscurato",
+        "deleteError": "Non è stato possibile aggiornare l'elenco di oscuramento. Riprova."
+      }
     },
     "retention": {
       "title": "Eliminazione automatica delle chat",
@@ -543,6 +551,8 @@
         "redactAction": "Oscura",
         "remembered": "Memorizzato",
         "remove": "Rimuovi",
+        "neverRedact": "Non oscurare mai",
+        "allowlistError": "Non è stato possibile aggiungerlo alle tue eccezioni di oscuramento.",
         "types": {
           "iban": "IBAN",
           "custom": "Personalizzato",

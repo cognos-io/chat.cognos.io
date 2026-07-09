@@ -58,6 +58,7 @@ import {
   generateConversationSystemPrompt,
 } from '@app/interfaces/persona';
 import {
+  RedactionCandidate,
   RedactionEntry,
   buildCustomCandidates,
   candidateKey,
@@ -195,6 +196,11 @@ export type MessageRequest = {
   redactionDeselected?: string[];
   // Exact substrings the user manually selected to redact in the composer.
   redactionCustom?: string[];
+  // NLP-inclusive preview candidates for this exact draft. MessageService
+  // revalidates ranges before use and falls back to synchronous detection if
+  // the draft changed after the preview was computed.
+  redactionCandidatesContent?: string;
+  redactionCandidates?: RedactionCandidate[];
   redactionEntries?: RedactionEntry[];
   // When true, the request generates an image instead of a text completion.
   // Routed to the conversation image endpoint rather than /complete.
@@ -964,7 +970,7 @@ export class MessageService {
     // Redact BEFORE the optimistic message is added and the context is built,
     // so neither the displayed turn nor the completion request ever holds the
     // raw value. Hydration restores it on render for the owner.
-    map((req) => this.redactRequest(req as MessageRequest)),
+    concatMap((req) => from(this.redactRequest(req as MessageRequest))),
   );
   private readonly _isNewConversation$ = new Subject<boolean>();
 
@@ -1515,9 +1521,10 @@ export class MessageService {
 
   // redactRequest swaps detected sensitive values in the draft for stable
   // placeholder tokens, carrying the new mappings on the request so they can be
-  // persisted once the conversation exists. Pure + synchronous so the optimistic
-  // message and completion context are redacted from the very first frame.
-  private redactRequest(req: MessageRequest): MessageRequest {
+  // persisted once the conversation exists. Better mode awaits the same
+  // NLP-inclusive worker detection used by the preview before any provider
+  // payload is built.
+  private async redactRequest(req: MessageRequest): Promise<MessageRequest> {
     // Redaction is opt-out: when the user has disabled it, send as typed.
     if (!this._redactionService.enabled()) {
       return { ...req, redactionEntries: [] };
@@ -1526,9 +1533,10 @@ export class MessageService {
     // Re-detect on the final (already-trimmed) content and drop only what the
     // user explicitly deselected, so offsets always match the text being sent.
     const deselected = new Set(req.redactionDeselected ?? []);
-    const auto = this._redactionService
-      .detect(req.content)
-      .filter((candidate) => !deselected.has(candidateKey(candidate)));
+    const detected = await this.detectForSend(req);
+    const auto = detected.filter(
+      (candidate) => !deselected.has(candidateKey(candidate)),
+    );
     // Manual selections for this message, plus values manually redacted earlier
     // in this conversation (so they keep getting redacted automatically).
     const customValues = [
@@ -1561,6 +1569,40 @@ export class MessageService {
       content: redactedText,
       redactionEntries: carried,
     };
+  }
+
+  private async detectForSend(req: MessageRequest): Promise<RedactionCandidate[]> {
+    const mode = this._redactionService.mode();
+    if (mode === 'better' || mode === 'comprehensive') {
+      return this._redactionService.detectForPreview(req.content);
+    }
+    if (
+      this.validPreviewCandidates(
+        req.content,
+        req.redactionCandidatesContent,
+        req.redactionCandidates,
+      )
+    ) {
+      return req.redactionCandidates;
+    }
+    return this._redactionService.detect(req.content);
+  }
+
+  private validPreviewCandidates(
+    content: string,
+    candidateContent: string | undefined,
+    candidates: readonly RedactionCandidate[] | undefined,
+  ): candidates is RedactionCandidate[] {
+    if (!candidates || candidateContent !== content) {
+      return false;
+    }
+    return candidates.every(
+      (candidate) =>
+        candidate.start >= 0 &&
+        candidate.end <= content.length &&
+        candidate.start < candidate.end &&
+        content.slice(candidate.start, candidate.end) === candidate.value,
+    );
   }
 
   // persistRedaction seals and stores the mappings minted for a request. The

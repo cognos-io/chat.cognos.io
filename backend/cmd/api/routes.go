@@ -989,6 +989,8 @@ func addPocketBaseRoutes(
 		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
 	e.Router.POST("/api/v1/user-redaction-entries", handler.UserRedactionEntriesCreate(app)).
 		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
+	e.Router.DELETE("/api/v1/user-redaction-entries/{token}", handler.UserRedactionEntryDelete(app)).
+		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))
 
 	e.Router.GET("/api/v1/projects/{projectID}/redaction-key", handler.ProjectRedactionKeyGet(app)).
 		Bind(apis.RequireAuth(), rateLimiterMiddleware(app))

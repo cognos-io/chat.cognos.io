@@ -45,12 +45,12 @@ every sensitive value is caught.
 
 Users choose the detection depth in account settings:
 
-| Mode                | What happens                                                                            |
-| ------------------- | --------------------------------------------------------------------------------------- |
-| **Off**             | No automatic detection. New prompts can leave the browser with sensitive values intact. |
-| **Simple (fast)**   | Fast local detector set. Good for common high-confidence values. Default.               |
-| **Better (slower)** | Adds local context, health, DOB, passport, driving-licence and account-style detectors. |
-| **Comprehensive**   | Disabled for now. Labelled as sending data to Cognos servers; not implemented.          |
+| Mode                | What happens                                                                                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Off**             | No automatic detection. New prompts can leave the browser with sensitive values intact.                                                                    |
+| **Simple (fast)**   | Fast local detector set. Good for common high-confidence values. Default.                                                                                  |
+| **Better (slower)** | Adds local context, health, DOB, passport, driving-licence, account-style detectors, and local `compromise` name/organisation/place hints in a Web Worker. |
+| **Comprehensive**   | Disabled for now. Labelled as sending data to Cognos servers; not implemented.                                                                             |
 
 Important: `better` is still **local-only**. It does not send message text to Cognos servers.
 
@@ -59,6 +59,8 @@ Important: `better` is still **local-only**. It does not send message text to Co
 - The composer groups detections by severity: `critical`, `high`, `medium`, `low`.
 - Higher severity appears first.
 - The user can still deselect an item.
+- The user can choose "Never redact this" on a detected value; the sealed user-scoped exception is
+  managed from `/account/memory` and only affects future messages.
 - If they send with a deselected detected value, the warning names the highest severity.
 - If everything stays selected, sending is not interrupted.
 

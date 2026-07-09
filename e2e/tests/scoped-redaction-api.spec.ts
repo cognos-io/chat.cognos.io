@@ -30,6 +30,20 @@ test.describe('user redaction entries API', () => {
         await other.api.get('/api/v1/user-redaction-entries')
       ).json()) as EntriesList;
       expect(otherList.items.map((i) => i.token)).not.toContain(TOKEN);
+
+      const otherDelete = await other.api.delete(
+        `/api/v1/user-redaction-entries/${encodeURIComponent(TOKEN)}`,
+      );
+      expect(otherDelete.status()).toBe(404);
+
+      const deleted = await owner.api.delete(
+        `/api/v1/user-redaction-entries/${encodeURIComponent(TOKEN)}`,
+      );
+      expect(deleted.status()).toBe(204);
+      const afterDelete = (await (
+        await owner.api.get('/api/v1/user-redaction-entries')
+      ).json()) as EntriesList;
+      expect(afterDelete.items.map((i) => i.token)).not.toContain(TOKEN);
     } finally {
       await owner.api.dispose();
       await other.api.dispose();
