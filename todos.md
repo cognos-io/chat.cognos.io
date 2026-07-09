@@ -6,7 +6,7 @@
 - [x] Web search (pending launch gates — see docs/specs/web-search.md §11/§14)
 - [x] Share modal
 - [x] Bookmark messages or highlight text go to separate place for easy finding
-- [ ] property based testing
+- [x] property based testing
 - [ ] move conversations between projects
 - [ ] project collaboration (how do we do pricing? people need an account and messages come out of
       their own account?)
