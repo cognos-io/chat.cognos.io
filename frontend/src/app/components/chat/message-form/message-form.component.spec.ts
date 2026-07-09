@@ -390,6 +390,70 @@ describe('MessageFormComponent', () => {
     expect(messageService.sendMessage$.next).toHaveBeenCalledTimes(1);
   });
 
+  it('combines repeated detected values in the preview controls', () => {
+    component.redactionCandidates.set([
+      {
+        type: 'person',
+        detector: 'nlp:person',
+        start: 11,
+        end: 15,
+        value: 'Lily',
+        normalized: 'lily',
+        confidence: 'medium',
+      },
+      {
+        type: 'person',
+        detector: 'nlp:person',
+        start: 32,
+        end: 36,
+        value: 'Lily',
+        normalized: 'lily',
+        confidence: 'medium',
+      },
+      {
+        type: 'person',
+        detector: 'nlp:person',
+        start: 47,
+        end: 51,
+        value: 'Lara',
+        normalized: 'lara',
+        confidence: 'medium',
+      },
+    ]);
+
+    const mediumGroup = component
+      .redactionPreviewGroups()
+      .find((group) => group.severity === 'medium');
+
+    expect(component.redactionActiveCount()).toBe(2);
+    expect(mediumGroup?.items.map((item) => item.value)).toEqual(['Lily', 'Lara']);
+  });
+
+  it('highlights redaction candidates already shown in the preview', () => {
+    const content = 'My name is John Doe';
+    component.messageForm.controls.content.setValue(content);
+    component.redactionCandidates.set([
+      {
+        type: 'person',
+        detector: 'nlp:person',
+        start: 11,
+        end: 19,
+        value: 'John Doe',
+        normalized: 'john doe',
+        confidence: 'medium',
+      },
+    ]);
+    (
+      component as unknown as {
+        _redactionCandidatesContent: { set(value: string): void };
+      }
+    )._redactionCandidatesContent.set(content);
+
+    component.highlightRedactions.set(true);
+
+    expect(component.redactionHighlightHtml()).toContain('<mark>John Doe</mark>');
+  });
+
   it('sends an image request when the tool is on for a capable model', () => {
     composerTools.setImageGeneration(true);
     selectedModelUnsupported.set(false);

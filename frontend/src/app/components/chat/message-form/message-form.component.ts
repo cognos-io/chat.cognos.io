@@ -89,6 +89,20 @@ function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function uniqueRedactionCandidates(
+  candidates: readonly RedactionCandidate[],
+): RedactionCandidate[] {
+  const byValue = new Map<string, RedactionCandidate>();
+  for (const candidate of candidates) {
+    const key = candidateKey(candidate);
+    const existing = byValue.get(key);
+    if (!existing || candidate.start < existing.start) {
+      byValue.set(key, candidate);
+    }
+  }
+  return Array.from(byValue.values()).sort((a, b) => a.start - b.start);
+}
+
 interface RedactionPreviewGroup {
   severity: RedactionSeverity;
   items: RedactionCandidate[];
@@ -402,7 +416,7 @@ interface RedactionPreviewGroup {
                     </li>
                     @for (item of group.items; track redactionKeyOf(item)) {
                       <li
-                        class="message-form__redaction-item"
+                        class="message-form__redaction-item message-form__redaction-item--detected"
                         [class.message-form__redaction-item--off]="!isRedacted(item)"
                       >
                         <cog-redacted-text
@@ -1278,6 +1292,12 @@ interface RedactionPreviewGroup {
       flex-wrap: wrap;
     }
 
+    .message-form__redaction-item--detected {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 8rem max-content;
+      column-gap: var(--cog-space-200);
+    }
+
     .message-form__redaction-group {
       margin-top: var(--cog-space-050);
       color: var(--cog-text-subtle);
@@ -1298,6 +1318,7 @@ interface RedactionPreviewGroup {
       display: inline-flex;
       align-items: center;
       gap: var(--cog-space-050);
+      justify-self: start;
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-caption);
       cursor: pointer;
@@ -1313,6 +1334,7 @@ interface RedactionPreviewGroup {
       font-size: var(--cog-fs-caption);
       text-decoration: underline;
       cursor: pointer;
+      justify-self: end;
       white-space: nowrap;
     }
 
@@ -1848,7 +1870,7 @@ export class MessageFormComponent {
 
   readonly redactionPreviewGroups = computed<RedactionPreviewGroup[]>(() => {
     const groups = new Map<RedactionSeverity, RedactionCandidate[]>();
-    for (const candidate of this.redactionCandidates()) {
+    for (const candidate of uniqueRedactionCandidates(this.redactionCandidates())) {
       const severity = redactionSeverity(candidate.type);
       const items = groups.get(severity) ?? [];
       items.push(candidate);
@@ -1897,9 +1919,13 @@ export class MessageFormComponent {
     }
     const text = this._liveDraft() ?? '';
     const deselected = this._redactionDeselected();
-    const auto = this._redactionService
-      .detect(text)
-      .filter((candidate) => !deselected.has(candidateKey(candidate)));
+    const detected =
+      this._redactionCandidatesContent() === text
+        ? this.redactionCandidates()
+        : this._redactionService.detect(text);
+    const auto = detected.filter(
+      (candidate) => !deselected.has(candidateKey(candidate)),
+    );
     const custom = buildCustomCandidates(text, [
       ...this._customRedactions(),
       ...this._rememberedCustomValues(),
@@ -1965,8 +1991,10 @@ export class MessageFormComponent {
   // How many values (detected-and-selected + manual + remembered) get redacted.
   readonly redactionActiveCount = computed(
     () =>
-      this.redactionCandidates().filter(
-        (candidate) => !this._redactionDeselected().has(candidateKey(candidate)),
+      uniqueRedactionCandidates(
+        this.redactionCandidates().filter(
+          (candidate) => !this._redactionDeselected().has(candidateKey(candidate)),
+        ),
       ).length +
       this.activeCustomRedactions().length +
       this.rememberedCustomRedactions().length,
@@ -2335,9 +2363,11 @@ export class MessageFormComponent {
     if (deselected.size === 0) {
       return [];
     }
-    return this._redactionService
-      .detect(content)
-      .filter((candidate) => deselected.has(candidateKey(candidate)));
+    return uniqueRedactionCandidates(
+      this._redactionService
+        .detect(content)
+        .filter((candidate) => deselected.has(candidateKey(candidate))),
+    );
   }
 
   // The three confirm actions. "Redact & send" re-enables redaction for every

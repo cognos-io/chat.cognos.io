@@ -30,4 +30,22 @@ describe('detectNlpEntities', () => {
       ]),
     );
   });
+
+  it('filters weak lowercase compromise false positives', async () => {
+    await expect(detectNlpEntities('den')).resolves.toEqual([]);
+    await expect(detectNlpEntities('gen und')).resolves.toEqual([]);
+    await expect(detectNlpEntities('nur')).resolves.toEqual([]);
+    await expect(detectNlpEntities('darin')).resolves.toEqual([]);
+    await expect(detectNlpEntities('co-')).resolves.toEqual([]);
+    await expect(detectNlpEntities('ernst nehmen')).resolves.toEqual([]);
+
+    await expect(detectNlpEntities('Jane Doe')).resolves.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'person',
+          value: 'Jane Doe',
+        }),
+      ]),
+    );
+  });
 });
