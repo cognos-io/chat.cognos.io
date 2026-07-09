@@ -1890,6 +1890,7 @@ export class MessageService {
         prompt: messageRequest.content,
         modelId,
         messages,
+        promptParentMessageId: messageRequest.parentMessageId,
         requestId: messageRequest.requestId,
       })
       .pipe(

@@ -201,6 +201,99 @@ func TestConversationImageRegenerateParentsToExistingMessage(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestConversationImageGenerationParentsPromptToActiveLeaf(t *testing.T) {
+	t.Parallel()
+
+	gatewayClient := &gateway.MockClient{
+		GenerateImageFunc: func(_ context.Context, _ gateway.ImageRequest) (gateway.ImageResponse, error) {
+			return gateway.ImageResponse{
+				Images: []gateway.GeneratedImage{{Bytes: fakeImageBytes, MimeType: "image/png"}},
+				Usage:  gateway.Usage{InputTokens: 7, OutputTokens: 1303, TotalTokens: 1310},
+			}, nil
+		},
+	}
+
+	conversationID := "convimgparent01"
+	priorAssistantID := "priorassistant1"
+	var conversationPublicKey [32]byte
+
+	scenario := tests.ApiScenario{
+		Name:   "image generation parents the new prompt to the active text leaf",
+		Method: http.MethodPost,
+		URL:    "/api/v1/conversations/" + conversationID + "/image",
+		Body: strings.NewReader(`{
+			"model_id":"gemini-2-5-flash-image",
+			"prompt":"go for it",
+			"prompt_parent_message_id":"` + priorAssistantID + `"
+		}`),
+		ExpectedStatus: http.StatusOK,
+		ExpectedContent: []string{
+			`"user_message_id":"`,
+			`"parent_message_id":"`,
+			`"kind":"generated_image"`,
+		},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				BillingService: billing.NewService(),
+				ConversationRepo: stubConversationRepo{
+					byID: func(id string) (chat.Conversation, error) {
+						return chat.Conversation{ID: id, PublicKey: conversationPublicKey}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			conversationPublicKey = seedConversationRecord(t, app, conversationID)
+			seedMessage(t, app, priorAssistantID, conversationID, false)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			records, err := app.FindRecordsByFilter(
+				"messages",
+				"conversation={:conversation}",
+				"",
+				10,
+				0,
+				dbx.Params{"conversation": conversationID},
+			)
+			if err != nil {
+				t.Fatalf("FindRecordsByFilter(messages) error = %v", err)
+			}
+			if len(records) != 3 {
+				t.Fatalf("persisted %d messages, want 3 (prior assistant + image prompt + image)", len(records))
+			}
+
+			var prompt *core.Record
+			for _, record := range records {
+				if record.Id != priorAssistantID && record.GetString("parent_message") == priorAssistantID {
+					prompt = record
+					break
+				}
+			}
+			if prompt == nil {
+				t.Fatalf("no image prompt was parented to prior assistant %q", priorAssistantID)
+			}
+
+			var image *core.Record
+			for _, record := range records {
+				if record.GetString("parent_message") == prompt.Id {
+					image = record
+					break
+				}
+			}
+			if image == nil {
+				t.Fatalf("no generated image was parented to prompt %q", prompt.Id)
+			}
+			if image.GetString("attachment") == "" {
+				t.Fatal("generated image message has no encrypted attachment")
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
 func TestConversationImageGenerationPersistsEncryptedAttachment(t *testing.T) {
 	t.Parallel()
 

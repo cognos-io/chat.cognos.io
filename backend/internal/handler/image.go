@@ -82,7 +82,11 @@ type generateImageRequest struct {
 	// meaningful on the conversation-scoped endpoint; ignored by the stateless
 	// (temporary-chat) endpoint, which persists nothing.
 	ParentMessageID string `json:"parent_message_id,omitempty"`
-	RequestID       string `json:"request_id,omitempty"`
+	// PromptParentMessageID, when set on a fresh generation, parents the newly
+	// persisted user prompt to the current active-branch leaf. This keeps a
+	// text conversation followed by image generation in one reloadable thread.
+	PromptParentMessageID string `json:"prompt_parent_message_id,omitempty"`
+	RequestID             string `json:"request_id,omitempty"`
 }
 
 const maxImagePromptChars = 4000
@@ -167,6 +171,7 @@ func resolveImageRequest(
 	req.ModelID = strings.TrimSpace(req.ModelID)
 	req.RequestID = strings.TrimSpace(req.RequestID)
 	req.ParentMessageID = strings.TrimSpace(req.ParentMessageID)
+	req.PromptParentMessageID = strings.TrimSpace(req.PromptParentMessageID)
 
 	if req.ModelID == "" {
 		return imageRequestContext{}, apis.NewBadRequestError("Model ID is required", nil)
@@ -393,6 +398,10 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 
 		// Regenerate mode: parent the new image to an existing prompt message
 		// instead of creating a fresh one (mirrors the text regenerate path).
+		if req.ParentMessageID != "" && req.PromptParentMessageID != "" {
+			return apis.NewBadRequestError("Use either parent_message_id or prompt_parent_message_id, not both", nil)
+		}
+
 		regenerate := req.ParentMessageID != ""
 		var userMessageRecord *core.Record
 		assistantParentID := req.ParentMessageID
@@ -403,11 +412,17 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 				return apis.NewNotFoundError("Parent message not found or unable to load", nil)
 			}
 		} else {
+			if req.PromptParentMessageID != "" {
+				parentRecord, err := e.App.FindRecordById("messages", req.PromptParentMessageID)
+				if err != nil || parentRecord.GetString("conversation") != conversationID {
+					return apis.NewNotFoundError("Prompt parent message not found or unable to load", nil)
+				}
+			}
 			// Persist the user's prompt as a user message first, so the prompt and
 			// its generated image stay together in the conversation thread.
 			persistErr, record := params.MessageRepo.EncryptAndPersistMessage(
 				conversation,
-				"",
+				req.PromptParentMessageID,
 				chat.MessageRecordData{
 					OwnerID:   owner.ID,
 					Content:   req.Prompt,

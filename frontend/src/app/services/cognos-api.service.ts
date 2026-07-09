@@ -148,6 +148,9 @@ export interface GenerateImageRequest {
   // When set, regenerates: the new image is parented to this existing message
   // instead of creating a fresh user prompt message.
   parentMessageId?: string;
+  // When creating a fresh image prompt, parent that prompt to the current
+  // active-branch leaf so reload reconstructs the same text + image thread.
+  promptParentMessageId?: string;
   requestId?: string;
 }
 
@@ -465,6 +468,15 @@ interface ApiUserKeyPairCreateRequest {
   unlock_scheme?: string;
 }
 
+interface ApiGenerateImageRequest {
+  prompt: string;
+  model_id: string;
+  messages?: CompletionMessageRequest[];
+  parent_message_id?: string;
+  prompt_parent_message_id?: string;
+  request_id?: string;
+}
+
 interface ApiUserKeyPairUpdateRequest {
   record_mac: string;
 }
@@ -697,6 +709,17 @@ export const mapCompleteRequest = (request: CompleteRequest): ApiCompleteRequest
     file_name: context.fileName,
     file_mime_type: context.fileMimeType,
   })),
+});
+
+export const mapGenerateImageRequest = (
+  request: GenerateImageRequest,
+): ApiGenerateImageRequest => ({
+  prompt: request.prompt,
+  model_id: request.modelId,
+  messages: request.messages,
+  parent_message_id: request.parentMessageId,
+  prompt_parent_message_id: request.promptParentMessageId,
+  request_id: request.requestId,
 });
 
 export const mapCompleteResponse = (
@@ -1345,13 +1368,7 @@ export class CognosApiService {
   ): Observable<GenerateImageResponse> {
     return this._http.post<GenerateImageResponse>(
       `${this._baseUrl}/api/v1/conversations/${conversationId}/image`,
-      {
-        prompt: request.prompt,
-        model_id: request.modelId,
-        messages: request.messages,
-        parent_message_id: request.parentMessageId,
-        request_id: request.requestId,
-      },
+      mapGenerateImageRequest(request),
       { headers: this.authHeaders() },
     );
   }
@@ -1363,12 +1380,7 @@ export class CognosApiService {
   generateImage(request: GenerateImageRequest): Observable<GenerateImageResponse> {
     return this._http.post<GenerateImageResponse>(
       `${this._baseUrl}/api/v1/images`,
-      {
-        prompt: request.prompt,
-        model_id: request.modelId,
-        messages: request.messages,
-        request_id: request.requestId,
-      },
+      mapGenerateImageRequest(request),
       { headers: this.authHeaders() },
     );
   }

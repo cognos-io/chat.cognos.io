@@ -278,25 +278,29 @@ both fields. Manual operator changes remain possible through the catalogue colle
 
 ### 7.2 Request shape
 
-The existing completion endpoint can be extended rather than adding a separate endpoint for the MVP.
-The request must include an explicit image generation flag/mode, for example:
+Persisted image generation uses `POST /api/v1/conversations/{conversationID}/image`. The request
+must target an image-capable model explicitly, for example:
 
 ```json
 {
-  "messages": [{ "role": "user", "content": "A watercolor fox in a library" }],
-  "model_id": "vertex-gemini-2-5-flash-image-europe-west4",
-  "image_generation": true,
-  "persona_id": "default",
-  "system_prompt": ""
+  "prompt": "A watercolour fox in a library",
+  "model_id": "gemini-2-5-flash-image",
+  "messages": [{ "role": "user", "content": "Earlier context" }],
+  "prompt_parent_message_id": "msg_previous_assistant",
+  "request_id": "req_..."
 }
 ```
 
-The exact field name can be chosen during implementation, but it must be explicit and testable. The
-backend must not infer image generation from prompt text alone.
+`prompt_parent_message_id` is optional and applies only to fresh image prompts. When present, the
+backend persists the new Account-holder prompt as a child of that active-branch leaf, then parents
+the generated image to the prompt. This keeps a text conversation followed by image generation in
+one reloadable thread. `parent_message_id` is reserved for image regeneration: it creates a sibling
+image under an existing prompt and does not persist a new Account-holder message. The two fields are
+mutually exclusive.
 
-The client sends only the boolean flag and the `model_id`; the backend resolves which transport to
-use (§7.1, §7.7) from the catalogue. The transport is never client-supplied — a client cannot ask
-to route a model differently.
+The client sends only the `model_id`; the backend resolves which transport to use (§7.1, §7.7) from
+the catalogue. The transport is never client-supplied — a client cannot ask to route a model
+differently.
 
 ### 7.3 Response and message payload shape
 

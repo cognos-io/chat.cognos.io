@@ -14,6 +14,7 @@ import {
   CompleteStreamEvent,
   mapCompleteRequest,
   mapCompleteResponse,
+  mapGenerateImageRequest,
   parseCompleteStreamData,
 } from './cognos-api.service';
 
@@ -239,6 +240,46 @@ describe('mapCompleteRequest', () => {
     });
 
     expect(wire.web_search).toBe(false);
+  });
+});
+
+describe('mapGenerateImageRequest', () => {
+  it('carries the prompt parent separately from regeneration parent', () => {
+    const wire = mapGenerateImageRequest({
+      prompt: 'go for it',
+      modelId: 'gemini-2-5-flash-image',
+      messages: [
+        { role: 'user', content: 'start a text conversation' },
+        { role: 'assistant', content: 'ready' },
+        { role: 'user', content: 'go for it' },
+      ],
+      promptParentMessageId: 'assistant-text-1',
+      requestId: 'img-req-1',
+    });
+
+    expect(wire).toEqual({
+      prompt: 'go for it',
+      model_id: 'gemini-2-5-flash-image',
+      messages: [
+        { role: 'user', content: 'start a text conversation' },
+        { role: 'assistant', content: 'ready' },
+        { role: 'user', content: 'go for it' },
+      ],
+      parent_message_id: undefined,
+      prompt_parent_message_id: 'assistant-text-1',
+      request_id: 'img-req-1',
+    });
+  });
+
+  it('keeps parent_message_id for regenerating an existing image', () => {
+    const wire = mapGenerateImageRequest({
+      prompt: 'go for it',
+      modelId: 'gemini-2-5-flash-image',
+      parentMessageId: 'prompt-1',
+    });
+
+    expect(wire.parent_message_id).toBe('prompt-1');
+    expect(wire.prompt_parent_message_id).toBeUndefined();
   });
 });
 
