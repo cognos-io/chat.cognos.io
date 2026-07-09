@@ -16,8 +16,8 @@ export const autoDeleteValue = (effectiveDays: number, t: TranslateFn): string =
     ? t('chat.privacy.autoDelete.off')
     : t('chat.privacy.autoDelete.days', { count: effectiveDays });
 
-// The one compact line rendered under each assistant answer. Kept as a single
-// interpolated string so translators control word order in each locale.
+// The compact privacy stats line shown in each assistant answer's shield popover.
+// Kept as a single interpolated string so translators control word order in each locale.
 export const privacyReceiptLine = (
   served: ServedModelInfo,
   effectiveDays: number,

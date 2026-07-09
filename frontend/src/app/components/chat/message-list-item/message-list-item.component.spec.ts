@@ -20,6 +20,7 @@ import { ConversationService } from '@app/services/conversation.service';
 import { MessageService } from '@app/services/message.service';
 import { ModelService } from '@app/services/model.service';
 import { PersonaService } from '@app/services/persona.service';
+import { PrivacyPanelService } from '@app/services/privacy-panel.service';
 import { RedactionService } from '@app/services/redaction.service';
 import { ScopedMemoryService } from '@app/services/scoped-memory.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
@@ -420,5 +421,165 @@ describe('MessageListItemComponent - document segment rendering', () => {
     expect(markdown[0].citationAnchors).toEqual([]);
 
     expect(documentCardStubs().length).toBe(1);
+  });
+});
+
+describe('MessageListItemComponent - privacy shield action', () => {
+  let fixture: ComponentFixture<MessageListItemComponent>;
+  let component: MessageListItemComponent;
+  let privacyPanel: PrivacyPanelService;
+
+  const testModel = {
+    id: 'model-1',
+    name: 'Nemotron 3 Nano Omni',
+    displayName: 'Nemotron 3 Nano Omni',
+    slug: 'nemotron',
+    providerId: 'provider-1',
+    providerName: 'NVIDIA',
+    description: '',
+    privacyTier: 'eu' as const,
+    inputContextLength: 8192,
+    pricing: { inputUsdPerMillionTokens: 0, outputUsdPerMillionTokens: 0 },
+  };
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MessageListItemComponent],
+      providers: [
+        { provide: ModelService, useValue: { getModel: () => testModel } },
+        { provide: PersonaService, useValue: { getPersona: vi.fn() } },
+        {
+          provide: MessageService,
+          useValue: {
+            branchInfo: vi.fn(() => undefined),
+            branchPointCount: vi.fn(() => 0),
+            resolveAttachmentChips: vi.fn(() => of([])),
+            decryptMessageImages: vi.fn(() => of([])),
+          },
+        },
+        {
+          provide: ConversationService,
+          useValue: {
+            conversation: () => undefined,
+            isTemporaryConversation: () => true,
+          },
+        },
+        { provide: AuthService, useValue: { defaultRetentionDays: () => 0 } },
+        { provide: UserPreferencesService, useValue: { memoryEnabled: () => false } },
+        {
+          provide: RedactionService,
+          useValue: {
+            hydrate: vi.fn((_id: unknown, content: string) => content),
+            revision: () => 0,
+            enabled: () => false,
+            valuesHidden: () => false,
+            combinedEntriesFor: () => new Map(),
+          },
+        },
+        { provide: CompactionService, useValue: { addManualFact: vi.fn() } },
+        {
+          provide: ScopedMemoryService,
+          useValue: { addUserFact: vi.fn(), addProjectFact: vi.fn() },
+        },
+        {
+          provide: BookmarkService,
+          useValue: { forMessage: () => [], create: vi.fn() },
+        },
+        { provide: CognosToastService, useValue: { notify: vi.fn() } },
+        { provide: Dialog, useValue: { open: vi.fn(() => ({ closed: of(false) })) } },
+        { provide: DocumentExportService, useValue: { downloadMessageAs: vi.fn() } },
+      ],
+    })
+      .overrideComponent(MessageListItemComponent, {
+        remove: { imports: [RedactedMarkdownComponent, DocumentCardComponent] },
+        add: { imports: [StubRedactedMarkdownComponent, StubDocumentCardComponent] },
+      })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(MessageListItemComponent);
+    component = fixture.componentInstance;
+    privacyPanel = TestBed.inject(PrivacyPanelService);
+  });
+
+  function privacyButton(): HTMLButtonElement | null {
+    return fixture.nativeElement.querySelector(
+      '.message-list-item__privacy-wrap button',
+    );
+  }
+
+  it('hides the inline privacy receipt line', () => {
+    component.message = assistantMessage({
+      decryptedData: {
+        content: 'Answer',
+        model_id: 'model-1',
+        served_model_name: 'Nemotron 3 Nano Omni',
+        served_privacy_tier: 'eu',
+      },
+    });
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('.message-list-item__receipt'),
+    ).toBeNull();
+  });
+
+  it('shows a shield action for a completed assistant message', () => {
+    component.message = assistantMessage({
+      decryptedData: {
+        content: 'Answer',
+        model_id: 'model-1',
+        served_model_name: 'Nemotron 3 Nano Omni',
+        served_privacy_tier: 'eu',
+      },
+    });
+    fixture.detectChanges();
+
+    expect(privacyButton()).not.toBeNull();
+  });
+
+  it('opens a popover with security stats when the shield is pressed', () => {
+    component.message = assistantMessage({
+      decryptedData: {
+        content: 'Answer',
+        model_id: 'model-1',
+        served_model_name: 'Nemotron 3 Nano Omni',
+        served_privacy_tier: 'eu',
+      },
+    });
+    fixture.detectChanges();
+
+    privacyButton()?.click();
+    fixture.detectChanges();
+
+    const popover = fixture.nativeElement.querySelector(
+      '.message-list-item__privacy-pop',
+    );
+    expect(popover).not.toBeNull();
+    expect(popover.textContent).toContain('Nemotron 3 Nano Omni');
+    expect(popover.textContent).toContain('stored encrypted');
+  });
+
+  it('opens the privacy panel from the popover details link', () => {
+    component.message = assistantMessage({
+      decryptedData: {
+        content: 'Answer',
+        model_id: 'model-1',
+        served_model_name: 'Nemotron 3 Nano Omni',
+        served_privacy_tier: 'eu',
+      },
+    });
+    fixture.detectChanges();
+
+    privacyButton()?.click();
+    fixture.detectChanges();
+
+    const details = fixture.nativeElement.querySelector(
+      '.message-list-item__privacy-details',
+    ) as HTMLButtonElement;
+    details.click();
+    fixture.detectChanges();
+
+    expect(privacyPanel.isOpen()).toBe(true);
+    expect(component.privacyPopoverOpen()).toBe(false);
   });
 });

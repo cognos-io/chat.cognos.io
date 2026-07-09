@@ -207,6 +207,32 @@ import {
             />
           }
 
+          @if (
+            !isMessageFromUser(message.decryptedData) && privacyReceipt();
+            as receipt
+          ) {
+            <span class="message-list-item__privacy-wrap">
+              <cog-icon-button
+                name="shield-check"
+                [title]="t('chat.privacy.seeDetails')"
+                [selected]="privacyPopoverOpen()"
+                (click)="togglePrivacyPopover($event)"
+              />
+              @if (privacyPopoverOpen()) {
+                <div class="message-list-item__privacy-pop" cogAnchoredPopover>
+                  <p class="message-list-item__privacy-text">{{ receipt }}</p>
+                  <button
+                    type="button"
+                    class="message-list-item__privacy-details"
+                    (click)="openPrivacyPanelFromPopover()"
+                  >
+                    {{ t('chat.privacy.seeDetails') }}
+                  </button>
+                </div>
+              }
+            </span>
+          }
+
           @if (message.record_id && !message.decryptedData.deleted) {
             <cog-icon-button
               name="x"
@@ -461,20 +487,6 @@ import {
                 </p>
               }
 
-              @if (privacyReceipt(); as receipt) {
-                <!-- Per-answer privacy receipt: a quiet muted line that is also
-                     the entry point into the full per-chat privacy panel. -->
-                <button
-                  type="button"
-                  class="message-list-item__receipt"
-                  [title]="t('chat.privacy.seeDetails')"
-                  (click)="openPrivacyPanel()"
-                >
-                  <cog-icon name="shield-check" [size]="12" tone="text-subtlest" />
-                  <span class="message-list-item__receipt-text">{{ receipt }}</span>
-                </button>
-              }
-
               @if (message.decryptedData.content || message.record_id) {
                 <div cogMessageActions class="message-list-item__actions">
                   <ng-container *ngTemplateOutlet="messageActions"></ng-container>
@@ -634,39 +646,52 @@ import {
       z-index: 60;
     }
 
+    .message-list-item__privacy-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .message-list-item__privacy-pop {
+      position: fixed;
+      z-index: 60;
+      display: grid;
+      gap: var(--cog-space-100);
+      max-width: min(22rem, calc(100vw - var(--cog-space-400)));
+      border: 1px solid var(--cog-border-subtle);
+      border-radius: var(--cog-radius-md);
+      background: var(--cog-surface-raised);
+      padding: var(--cog-space-150);
+      box-shadow: var(--cog-shadow-md);
+    }
+
+    .message-list-item__privacy-text {
+      margin: 0;
+      color: var(--cog-text-subtle);
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+    }
+
+    .message-list-item__privacy-details {
+      justify-self: start;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      color: var(--cog-link);
+      font: inherit;
+      font-size: var(--cog-fs-caption);
+      line-height: var(--cog-lh-caption);
+      cursor: pointer;
+    }
+
+    .message-list-item__privacy-details:hover {
+      text-decoration: underline;
+    }
+
     .message-list-item__empty,
     .message-list-item__deleted {
       margin: 0;
       color: var(--cog-text-subtlest);
       font-style: italic;
-    }
-
-    /* Per-answer privacy receipt: intentionally quiet — a muted, small line that
-       reveals its full detail in the privacy panel on click. */
-    .message-list-item__receipt {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--cog-space-050);
-      max-width: 100%;
-      border: 0;
-      background: transparent;
-      padding: var(--cog-space-025) 0;
-      color: var(--cog-text-subtlest);
-      font: inherit;
-      font-size: var(--cog-fs-caption);
-      line-height: var(--cog-lh-caption);
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .message-list-item__receipt:hover .message-list-item__receipt-text,
-    .message-list-item__receipt:focus-visible .message-list-item__receipt-text {
-      color: var(--cog-text-subtle);
-      text-decoration: underline;
-    }
-
-    .message-list-item__receipt-text {
-      min-width: 0;
     }
 
     .message-list-item__typing {
@@ -882,6 +907,7 @@ export class MessageListItemComponent implements OnChanges {
 
   // Copy-options menu (only offered for messages containing redactions).
   readonly copyMenuOpen = signal(false);
+  readonly privacyPopoverOpen = signal(false);
 
   // Reasoning disclosure: null means "follow the default" (open while the
   // response streams so the user sees thinking live, collapsed once complete);
@@ -1166,13 +1192,18 @@ export class MessageListItemComponent implements OnChanges {
   // Close the copy/download menus when clicking anywhere outside this message item.
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (!this.copyMenuOpen() && !this.downloadMenuOpen()) {
+    if (
+      !this.copyMenuOpen() &&
+      !this.downloadMenuOpen() &&
+      !this.privacyPopoverOpen()
+    ) {
       return;
     }
     const target = event.target;
     if (target instanceof Node && !this._elementRef.nativeElement.contains(target)) {
       this.copyMenuOpen.set(false);
       this.downloadMenuOpen.set(false);
+      this.privacyPopoverOpen.set(false);
     }
   }
 
@@ -1615,9 +1646,9 @@ export class MessageListItemComponent implements OnChanges {
     return this.persona?.name ?? this.model?.name ?? 'Cognos';
   }
 
-  // The per-answer privacy receipt line, or null when it shouldn't show (no
-  // message, still streaming, deleted, or nothing to attribute it to). Prefers
-  // the served_* snapshot; falls back to the live catalogue via `this.model`.
+  // Per-answer privacy stats line for the hover shield popover, or null when it
+  // shouldn't show (no message, still streaming, deleted, or nothing to attribute).
+  // Prefers the served_* snapshot; falls back to the live catalogue via `this.model`.
   privacyReceipt(): string | null {
     const message = this.message;
     if (!message || message.isStreaming || message.decryptedData.deleted) {
@@ -1636,8 +1667,15 @@ export class MessageListItemComponent implements OnChanges {
     );
   }
 
+  togglePrivacyPopover(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.privacyPopoverOpen.update((open) => !open);
+  }
+
   // Open the full per-chat privacy panel (rendered once, in the chat header).
-  openPrivacyPanel(): void {
+  openPrivacyPanelFromPopover(): void {
+    this.privacyPopoverOpen.set(false);
     this._privacyPanel.open();
   }
 
