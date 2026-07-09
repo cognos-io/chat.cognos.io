@@ -1,7 +1,17 @@
 import { Injectable, Signal, computed, inject } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 
-import { EMPTY, Observable, catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  catchError,
+  forkJoin,
+  map,
+  of,
+  switchMap,
+  tap,
+  throwError,
+} from 'rxjs';
 
 import { Base64 } from 'js-base64';
 
@@ -17,6 +27,7 @@ import { CognosApiService } from './cognos-api.service';
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 import { ProjectService } from './project.service';
+import { VaultService } from './vault.service';
 
 /**
  * ProjectConversationService owns the conversations that live inside a project.
@@ -37,6 +48,7 @@ export class ProjectConversationService {
   private readonly _api = inject(CognosApiService);
   private readonly _conversations = inject(ConversationService);
   private readonly _projects = inject(ProjectService);
+  private readonly _vault = inject(VaultService);
 
   // Driven by ProjectService: whenever the decrypted projects change we
   // (re)load their conversations and merge them into ConversationService, so
@@ -69,7 +81,8 @@ export class ProjectConversationService {
   // counts without each consumer rebuilding the grouping.
   readonly byProject = computed(() => {
     const grouped = new Map<string, Conversation[]>();
-    for (const conversation of this._loaded()) {
+    this._loaded();
+    for (const conversation of this._conversations.allConversations()) {
       const projectId = conversation.record.project;
       if (!projectId) continue;
       const list = grouped.get(projectId) ?? [];
@@ -118,6 +131,73 @@ export class ProjectConversationService {
           };
           this._conversations.upsertConversations([conversation]);
           return conversation;
+        }),
+      );
+  }
+
+  moveToProject(
+    conversation: Conversation,
+    project: Project,
+  ): Observable<Conversation> {
+    const wrappedSecretKey = this._crypto.secretBox(
+      conversation.keyPair.secretKey,
+      project.contentKey,
+    );
+
+    return this._api
+      .updateConversationProject(conversation.record.id, {
+        project_id: project.record.id,
+        wrapped_conversation_secret_key: Base64.fromUint8Array(wrappedSecretKey),
+      })
+      .pipe(
+        map((record) => {
+          const moved: Conversation = {
+            record: {
+              ...conversation.record,
+              ...record,
+              project: project.record.id,
+            },
+            decryptedData: conversation.decryptedData,
+            keyPair: conversation.keyPair,
+          };
+          this._conversations.upsertConversations([moved]);
+          return moved;
+        }),
+      );
+  }
+
+  removeFromProject(conversation: Conversation): Observable<Conversation> {
+    const userSecretKey = this._vault.keyPair()?.secretKey;
+    if (!userSecretKey) {
+      return throwError(() => new Error('User key pair not found'));
+    }
+    const sharedKey = this._crypto.sharedKey(
+      conversation.keyPair.publicKey,
+      userSecretKey,
+    );
+    const wrappedSecretKey = this._crypto.box(
+      conversation.keyPair.secretKey,
+      sharedKey,
+    );
+
+    return this._api
+      .updateConversationProject(conversation.record.id, {
+        project_id: '',
+        wrapped_secret_key: Base64.fromUint8Array(wrappedSecretKey),
+      })
+      .pipe(
+        map((record) => {
+          const moved: Conversation = {
+            record: {
+              ...conversation.record,
+              ...record,
+              project: undefined,
+            },
+            decryptedData: conversation.decryptedData,
+            keyPair: conversation.keyPair,
+          };
+          this._conversations.upsertConversations([moved]);
+          return moved;
         }),
       );
   }

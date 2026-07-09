@@ -744,6 +744,20 @@
         "thirtyDays": "30 días"
       }
     },
+    "projectActions": {
+      "moveToProject": "Mover a un proyecto…",
+      "removeFromProject": "Quitar del proyecto",
+      "moveDialogTitle": "Mover a un proyecto",
+      "moveDialogIntro": "Elige adónde mover \"{{ title }}\". La conversación seguirá cifrada; solo los administradores del proyecto pueden moverla.",
+      "searchProjects": "Buscar proyectos",
+      "noProjectsTitle": "No hay proyectos disponibles",
+      "noProjectsMessage": "Necesitas acceso de administrador a otro proyecto para poder mover esta conversación.",
+      "move": "Mover",
+      "movedToast": "Conversación movida al proyecto",
+      "removedToast": "Conversación quitada del proyecto",
+      "moveError": "No se pudo mover la conversación",
+      "removeError": "No se pudo quitar la conversación del proyecto"
+    },
     "icebreakers": {
       "items": {
         "dinnerParty": {

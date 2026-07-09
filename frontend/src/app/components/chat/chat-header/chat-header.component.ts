@@ -40,6 +40,7 @@ import { isMessageFromUser } from '@app/interfaces/message';
 import { AuthService } from '@app/services/auth.service';
 import { CompactionService } from '@app/services/compaction.service';
 import { ConversationDuplicateService } from '@app/services/conversation-duplicate.service';
+import { ConversationProjectActionsService } from '@app/services/conversation-project-actions.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
 import { ExportService } from '@app/services/export.service';
@@ -68,6 +69,8 @@ type HeaderMenuAction =
   | 'rename'
   | 'export'
   | 'duplicate'
+  | 'move-to-project'
+  | 'remove-from-project'
   | 'memory'
   | 'toggle-conversation-memory'
   | 'toggle-redaction-visibility'
@@ -111,6 +114,7 @@ export class ChatHeaderComponent {
   private readonly _export = inject(ExportService);
   private readonly _toast = inject(CognosToastService);
   private readonly _duplicate = inject(ConversationDuplicateService);
+  private readonly _projectActions = inject(ConversationProjectActionsService);
   private readonly _userPreferences = inject(UserPreferencesService);
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _models = inject(ModelService);
@@ -317,6 +321,7 @@ export class ChatHeaderComponent {
     const hasConversation = this._conversationId() !== null;
 
     if (hasConversation) {
+      const conversation = this.conversationService.conversation();
       // The dedicated Share button is hidden on mobile, so surface sharing in
       // the overflow menu there instead.
       if (this._device.isMobile()) {
@@ -353,6 +358,22 @@ export class ChatHeaderComponent {
           disabled: conversationId
             ? this._duplicate.isDuplicatingSource(conversationId)
             : false,
+        });
+      }
+
+      if (conversation && this._projectActions.canMoveToProject(conversation)) {
+        entries.push({
+          action: 'move-to-project',
+          title: this._transloco.translate('chat.projectActions.moveToProject'),
+          icon: 'folder',
+        });
+      }
+
+      if (conversation && this._projectActions.canRemoveFromProject(conversation)) {
+        entries.push({
+          action: 'remove-from-project',
+          title: this._transloco.translate('chat.projectActions.removeFromProject'),
+          icon: 'x',
         });
       }
 
@@ -477,6 +498,12 @@ export class ChatHeaderComponent {
       case 'duplicate':
         this.onDuplicate();
         break;
+      case 'move-to-project':
+        this.onMoveToProject();
+        break;
+      case 'remove-from-project':
+        this.onRemoveFromProject();
+        break;
       case 'memory':
         this.onMemory();
         break;
@@ -561,6 +588,20 @@ export class ChatHeaderComponent {
     }
     // The service owns the blocking dialog, toasts, and navigation to the copy.
     void this._duplicate.duplicate(conversation);
+  }
+
+  private onMoveToProject() {
+    const conversation = this.conversationService.conversation();
+    if (conversation) {
+      this._projectActions.openMoveDialog(conversation);
+    }
+  }
+
+  private onRemoveFromProject() {
+    const conversation = this.conversationService.conversation();
+    if (conversation) {
+      this._projectActions.removeFromProject(conversation);
+    }
   }
 
   openSecurity() {

@@ -744,6 +744,20 @@
         "thirtyDays": "30 giorni"
       }
     },
+    "projectActions": {
+      "moveToProject": "Sposta in un progetto…",
+      "removeFromProject": "Rimuovi dal progetto",
+      "moveDialogTitle": "Sposta in un progetto",
+      "moveDialogIntro": "Scegli dove spostare \"{{ title }}\". La conversazione resta cifrata; solo gli amministratori del progetto possono spostarla.",
+      "searchProjects": "Cerca progetti",
+      "noProjectsTitle": "Nessun progetto disponibile",
+      "noProjectsMessage": "Ti serve l'accesso da amministratore a un altro progetto prima di poter spostare questa conversazione.",
+      "move": "Sposta",
+      "movedToast": "Conversazione spostata nel progetto",
+      "removedToast": "Conversazione rimossa dal progetto",
+      "moveError": "Impossibile spostare la conversazione",
+      "removeError": "Impossibile rimuovere la conversazione dal progetto"
+    },
     "icebreakers": {
       "items": {
         "dinnerParty": {

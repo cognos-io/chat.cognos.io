@@ -444,6 +444,12 @@ interface ApiProjectConversationCreateRequest {
   wrapped_conversation_secret_key: string;
 }
 
+interface ApiConversationProjectUpdateRequest {
+  project_id: string;
+  wrapped_conversation_secret_key?: string;
+  wrapped_secret_key?: string;
+}
+
 interface ApiMessageUpdateRequest {
   clear_expires?: boolean;
   // Replacement encrypted blob, used to soft-delete by overwriting content
@@ -1067,6 +1073,19 @@ export class CognosApiService {
   ): Observable<ProjectConversationRecord> {
     return this._http.post<ProjectConversationRecord>(
       `${this._baseUrl}/api/v1/projects/${projectId}/conversations`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  updateConversationProject(
+    conversationId: string,
+    request: ApiConversationProjectUpdateRequest,
+  ): Observable<ConversationRecord> {
+    return this._http.patch<ConversationRecord>(
+      `${this._baseUrl}/api/v1/conversations/${conversationId}/project`,
       request,
       {
         headers: this.authHeaders(),

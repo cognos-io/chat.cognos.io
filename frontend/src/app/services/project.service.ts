@@ -119,6 +119,10 @@ export class ProjectService {
     ],
     selectors: (state) => ({
       orderedProjects: () => sortProjectsByUpdated(state.projects()),
+      adminProjects: () =>
+        sortProjectsByUpdated(
+          state.projects().filter((project) => project.record.caller_role === 'Admin'),
+        ),
       selectedProject: () =>
         state
           .projects()
@@ -142,8 +146,16 @@ export class ProjectService {
   // public, read-only signals
   readonly projects = this.state.projects;
   readonly orderedProjects = this.state.orderedProjects;
+  readonly adminProjects = this.state.adminProjects;
   readonly selectedProject = this.state.selectedProject;
   readonly selectedProjectId = this.state.selectedProjectId;
+
+  canAdminProject(projectId: string): boolean {
+    return this.projects().some(
+      (project) =>
+        project.record.id === projectId && project.record.caller_role === 'Admin',
+    );
+  }
 
   select(projectId: string): void {
     this.state.selectProject(projectId);

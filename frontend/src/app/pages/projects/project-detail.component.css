@@ -207,20 +207,35 @@
 .project-detail__chat {
   display: flex;
   align-items: center;
-  gap: var(--cog-space-150);
+  justify-content: space-between;
+  gap: var(--cog-space-100);
   inline-size: 100%;
-  text-align: start;
-  padding: var(--cog-space-150) var(--cog-space-150);
-  border: 0;
-  background: transparent;
-  font: inherit;
-  color: var(--cog-text);
-  cursor: pointer;
+  padding: var(--cog-space-075) var(--cog-space-100);
   transition: background-color var(--cog-dur-fast) var(--cog-ease-standard);
 }
 
 .project-detail__chat:hover {
   background: var(--cog-surface-hover);
+}
+
+.project-detail__chat-open {
+  display: flex;
+  align-items: center;
+  gap: var(--cog-space-150);
+  flex: 1;
+  min-inline-size: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cog-text);
+  cursor: pointer;
+  font: inherit;
+  padding: var(--cog-space-075) var(--cog-space-050);
+  text-align: start;
+}
+
+.project-detail__chat-open:focus-visible {
+  outline: var(--cog-border-width-strong) solid var(--cog-brand);
+  outline-offset: var(--cog-border-width-strong);
 }
 
 .project-detail__chat-icon {
@@ -246,6 +261,25 @@
   color: var(--cog-text-subtlest);
   font-size: var(--cog-fs-caption);
   line-height: var(--cog-lh-caption);
+}
+
+.project-detail__chat-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cog-space-075);
+  flex: none;
+}
+
+.project-detail__chat-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.project-detail__chat-menu {
+  position: absolute;
+  top: calc(100% + var(--cog-space-050));
+  right: 0;
+  z-index: 10;
 }
 
 /* Danger zone — mirrors the account-settings delete card (red surface, red

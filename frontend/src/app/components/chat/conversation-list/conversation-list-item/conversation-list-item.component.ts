@@ -24,9 +24,20 @@ import { ConfirmationDialogComponent } from '@app/components/confirmation-dialog
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 import { Conversation } from '@app/interfaces/conversation';
 import { ConversationDuplicateService } from '@app/services/conversation-duplicate.service';
+import { ConversationProjectActionsService } from '@app/services/conversation-project-actions.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
+
+type ConversationMenuAction =
+  | 'pin'
+  | 'edit'
+  | 'duplicate'
+  | 'move-to-project'
+  | 'remove-from-project'
+  | 'delete';
+
+type ConversationMenuEntry = CognosMenuItem & { action: ConversationMenuAction };
 
 @Component({
   selector: 'app-conversation-list-item',
@@ -171,37 +182,69 @@ export class ConversationListItemComponent {
   private readonly _preferencesService = inject(UserPreferencesService);
   private readonly _conversationService = inject(ConversationService);
   private readonly _duplicateService = inject(ConversationDuplicateService);
+  private readonly _projectActions = inject(ConversationProjectActionsService);
   private readonly _transloco = inject(TranslocoService);
 
   readonly menuOpen = signal(false);
   readonly router = inject(Router);
 
-  readonly menuItems = computed<CognosMenuItem[]>(() => {
+  private readonly _menuEntries = computed<ConversationMenuEntry[]>(() => {
     const conversationId = this.conversation.record.id;
     const isPinned = this.isConversationPinned(conversationId);
-
-    return [
+    const entries: ConversationMenuEntry[] = [
       {
+        action: 'pin',
         title: isPinned
           ? this._transloco.translate('chat.list.unpin')
           : this._transloco.translate('chat.list.pin'),
         icon: 'pin',
       },
       {
+        action: 'edit',
         title: this._transloco.translate('chat.list.edit'),
         icon: 'pencil',
       },
       {
+        action: 'duplicate',
         title: this._transloco.translate('chat.list.duplicate'),
         icon: 'copy',
         disabled: this._duplicateService.isDuplicatingSource(conversationId),
       },
-      {
-        title: this._transloco.translate('chat.list.delete'),
-        icon: 'x',
-      },
     ];
+
+    if (this._projectActions.canMoveToProject(this.conversation)) {
+      entries.push({
+        action: 'move-to-project',
+        title: this._transloco.translate('chat.projectActions.moveToProject'),
+        icon: 'folder',
+      });
+    }
+
+    if (this._projectActions.canRemoveFromProject(this.conversation)) {
+      entries.push({
+        action: 'remove-from-project',
+        title: this._transloco.translate('chat.projectActions.removeFromProject'),
+        icon: 'x',
+      });
+    }
+
+    entries.push({
+      action: 'delete',
+      title: this._transloco.translate('chat.list.delete'),
+      icon: 'x',
+    });
+
+    return entries;
   });
+
+  readonly menuItems = computed<CognosMenuItem[]>(() =>
+    this._menuEntries().map((entry) => ({
+      title: entry.title,
+      icon: entry.icon,
+      disabled: entry.disabled,
+      trailing: entry.trailing,
+    })),
+  );
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
@@ -223,19 +266,30 @@ export class ConversationListItemComponent {
   }
 
   onMenuSelect(index: number) {
+    const entry = this._menuEntries()[index];
     this.menuOpen.set(false);
 
-    switch (index) {
-      case 0:
+    if (!entry) {
+      return;
+    }
+
+    switch (entry.action) {
+      case 'pin':
         this.onPinUnpinConversation(this.conversation.record.id);
         break;
-      case 1:
+      case 'edit':
         this.onEditConversation(this.conversation.record.id);
         break;
-      case 2:
+      case 'duplicate':
         this.onDuplicateConversation();
         break;
-      case 3:
+      case 'move-to-project':
+        this._projectActions.openMoveDialog(this.conversation);
+        break;
+      case 'remove-from-project':
+        this._projectActions.removeFromProject(this.conversation);
+        break;
+      case 'delete':
         this.onDeleteConversation(this.conversation.record.id);
         break;
     }

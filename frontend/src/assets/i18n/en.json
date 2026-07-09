@@ -744,6 +744,20 @@
         "thirtyDays": "30 days"
       }
     },
+    "projectActions": {
+      "moveToProject": "Move to project…",
+      "removeFromProject": "Remove from project",
+      "moveDialogTitle": "Move to project",
+      "moveDialogIntro": "Choose where to move \"{{ title }}\". The conversation stays encrypted; only project admins can move it.",
+      "searchProjects": "Search projects",
+      "noProjectsTitle": "No projects available",
+      "noProjectsMessage": "You need admin access to another project before you can move this conversation.",
+      "move": "Move",
+      "movedToast": "Conversation moved to project",
+      "removedToast": "Conversation removed from project",
+      "moveError": "Couldn't move conversation",
+      "removeError": "Couldn't remove conversation from project"
+    },
     "icebreakers": {
       "items": {
         "dinnerParty": {

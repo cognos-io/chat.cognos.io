@@ -97,7 +97,10 @@ export interface ProjectRecord {
   wrapped_project_key?: string;
   key_version: number;
   archived_at?: string;
+  caller_role?: ProjectRole;
 }
+
+export type ProjectRole = 'Admin' | 'Editor' | 'Viewer';
 
 /**
  * parseProjectData - decodes a decrypted JSON blob into a ProjectData object.

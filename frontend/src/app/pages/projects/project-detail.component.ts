@@ -2,6 +2,8 @@ import { Dialog } from '@angular/cdk/dialog';
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  HostListener,
   computed,
   effect,
   inject,
@@ -16,7 +18,10 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import {
   CognosBreadcrumbsComponent,
   CognosButtonComponent,
+  CognosIconButtonComponent,
   CognosIconComponent,
+  CognosMenuComponent,
+  CognosMenuItem,
 } from '@cognos/ui-angular';
 
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
@@ -25,6 +30,7 @@ import {
   Conversation,
   partitionConversationsByPinned,
 } from '@app/interfaces/conversation';
+import { ConversationProjectActionsService } from '@app/services/conversation-project-actions.service';
 import { NEW_PROJECT_CHAT_TITLE } from '@app/services/message.service';
 import { ProjectConversationService } from '@app/services/project-conversation.service';
 import { ProjectService } from '@app/services/project.service';
@@ -41,7 +47,9 @@ import { relativeDate } from '@app/utils/relative-date';
     TranslocoModule,
     CognosBreadcrumbsComponent,
     CognosButtonComponent,
+    CognosIconButtonComponent,
     CognosIconComponent,
+    CognosMenuComponent,
     PersonaAvatarComponent,
   ],
   templateUrl: './project-detail.component.html',
@@ -55,6 +63,8 @@ export class ProjectDetailComponent {
   private readonly _transloco = inject(TranslocoService);
   private readonly _router = inject(Router);
   private readonly _dialog = inject(Dialog);
+  private readonly _elementRef = inject(ElementRef<HTMLElement>);
+  private readonly _projectActions = inject(ConversationProjectActionsService);
 
   // Bound from the `:projectId` route param via withComponentInputBinding().
   readonly projectId = input.required<string>();
@@ -104,6 +114,7 @@ export class ProjectDetailComponent {
   protected readonly savingInstructions = signal(false);
 
   protected readonly creatingChat = signal(false);
+  protected readonly openMenuConversationId = signal<string | null>(null);
 
   constructor() {
     // Keep the service's "selected project" in sync with the routed id so
@@ -179,6 +190,64 @@ export class ProjectDetailComponent {
 
   protected openConversation(conversationId: string): void {
     this._router.navigate(['/', 'c', conversationId]);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target;
+    if (target instanceof Node && !this._elementRef.nativeElement.contains(target)) {
+      this.openMenuConversationId.set(null);
+    }
+  }
+
+  protected toggleConversationMenu(conversationId: string, event: Event): void {
+    event.stopPropagation();
+    this.openMenuConversationId.update((openId) =>
+      openId === conversationId ? null : conversationId,
+    );
+  }
+
+  protected conversationMenuItems(conversation: Conversation): CognosMenuItem[] {
+    return this.conversationMenuEntries(conversation).map((entry) => ({
+      title: entry.title,
+      icon: entry.icon,
+    }));
+  }
+
+  protected onConversationMenuSelect(index: number, conversation: Conversation): void {
+    const entry = this.conversationMenuEntries(conversation)[index];
+    this.openMenuConversationId.set(null);
+    if (!entry) {
+      return;
+    }
+    if (entry.action === 'move-to-project') {
+      this._projectActions.openMoveDialog(conversation);
+    } else {
+      this._projectActions.removeFromProject(conversation);
+    }
+  }
+
+  private conversationMenuEntries(
+    conversation: Conversation,
+  ): Array<CognosMenuItem & { action: 'move-to-project' | 'remove-from-project' }> {
+    const entries: Array<
+      CognosMenuItem & { action: 'move-to-project' | 'remove-from-project' }
+    > = [];
+    if (this._projectActions.canMoveToProject(conversation)) {
+      entries.push({
+        action: 'move-to-project',
+        title: this._transloco.translate('chat.projectActions.moveToProject'),
+        icon: 'folder',
+      });
+    }
+    if (this._projectActions.canRemoveFromProject(conversation)) {
+      entries.push({
+        action: 'remove-from-project',
+        title: this._transloco.translate('chat.projectActions.removeFromProject'),
+        icon: 'x',
+      });
+    }
+    return entries;
   }
 
   protected startChat(): void {

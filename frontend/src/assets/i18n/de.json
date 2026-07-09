@@ -744,6 +744,20 @@
         "thirtyDays": "30 Tage"
       }
     },
+    "projectActions": {
+      "moveToProject": "In Projekt verschieben…",
+      "removeFromProject": "Aus Projekt entfernen",
+      "moveDialogTitle": "In Projekt verschieben",
+      "moveDialogIntro": "Wähle, wohin \"{{ title }}\" verschoben wird. Die Konversation bleibt verschlüsselt; nur Projektadmins können sie verschieben.",
+      "searchProjects": "Projekte suchen",
+      "noProjectsTitle": "Keine Projekte verfügbar",
+      "noProjectsMessage": "Du brauchst Adminzugriff auf ein anderes Projekt, bevor du diese Konversation verschieben kannst.",
+      "move": "Verschieben",
+      "movedToast": "Konversation in Projekt verschoben",
+      "removedToast": "Konversation aus Projekt entfernt",
+      "moveError": "Konversation konnte nicht verschoben werden",
+      "removeError": "Konversation konnte nicht aus dem Projekt entfernt werden"
+    },
     "icebreakers": {
       "items": {
         "dinnerParty": {

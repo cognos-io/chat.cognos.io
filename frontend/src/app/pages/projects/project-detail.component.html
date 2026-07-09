@@ -129,32 +129,55 @@
         <ul class="project-detail__chat-list" data-testid="project-conversations">
           @for (conversation of conversations(); track conversation.record.id) {
             <li>
-              <button
-                type="button"
-                class="project-detail__chat"
-                (click)="openConversation(conversation.record.id)"
-                data-testid="project-conversation"
-              >
-                <cog-icon
-                  class="project-detail__chat-icon"
-                  name="message-square"
-                  [size]="20"
-                  tone="text-subtle"
-                />
-                <span class="project-detail__chat-main">
-                  <span class="project-detail__chat-title">{{
-                    conversation.decryptedData.title
-                  }}</span>
-                  <span class="project-detail__chat-meta">{{
-                    lastActivityLabel(conversation)
-                  }}</span>
-                </span>
-                @if (isPinned(conversation.record.id)) {
-                  <cog-icon name="pin" [size]="14" tone="text-subtlest" />
-                }
-                <cog-icon name="lock" [size]="14" tone="text-subtlest" />
-                <cog-icon name="chevron-right" [size]="16" tone="text-subtlest" />
-              </button>
+              <div class="project-detail__chat" data-testid="project-conversation">
+                <button
+                  type="button"
+                  class="project-detail__chat-open"
+                  (click)="openConversation(conversation.record.id)"
+                >
+                  <cog-icon
+                    class="project-detail__chat-icon"
+                    name="message-square"
+                    [size]="20"
+                    tone="text-subtle"
+                  />
+                  <span class="project-detail__chat-main">
+                    <span class="project-detail__chat-title">{{
+                      conversation.decryptedData.title
+                    }}</span>
+                    <span class="project-detail__chat-meta">{{
+                      lastActivityLabel(conversation)
+                    }}</span>
+                  </span>
+                </button>
+                <div class="project-detail__chat-actions">
+                  @if (isPinned(conversation.record.id)) {
+                    <cog-icon name="pin" [size]="14" tone="text-subtlest" />
+                  }
+                  <cog-icon name="lock" [size]="14" tone="text-subtlest" />
+                  @if (conversationMenuItems(conversation).length > 0) {
+                    <span class="project-detail__chat-menu-wrap">
+                      <cog-icon-button
+                        name="more-horizontal"
+                        [title]="t('chat.list.openMenu')"
+                        [selected]="openMenuConversationId() === conversation.record.id"
+                        (click)="toggleConversationMenu(conversation.record.id, $event)"
+                      />
+                      @if (openMenuConversationId() === conversation.record.id) {
+                        <span class="project-detail__chat-menu">
+                          <cog-menu
+                            [items]="conversationMenuItems(conversation)"
+                            (itemSelect)="
+                              onConversationMenuSelect($event, conversation)
+                            "
+                          />
+                        </span>
+                      }
+                    </span>
+                  }
+                  <cog-icon name="chevron-right" [size]="16" tone="text-subtlest" />
+                </div>
+              </div>
             </li>
           }
         </ul>
