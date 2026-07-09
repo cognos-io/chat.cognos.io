@@ -9,6 +9,7 @@ body {
   background: var(--cog-app-bg);
   color: var(--cog-text);
   font-family: var(--cog-font);
+  font-size: var(--cog-fs-body);
 }
 
 @media (prefers-reduced-motion: reduce) {
