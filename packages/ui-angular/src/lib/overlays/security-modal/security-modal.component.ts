@@ -348,7 +348,7 @@ export const DEFAULT_SECURITY_MODAL_CONTENT: SecurityModalContent = {
       }
 
       .cog-security-modal__step-flag {
-        font-size: 22px;
+        font-size: var(--cog-fs-h-lg);
         line-height: 1;
       }
 

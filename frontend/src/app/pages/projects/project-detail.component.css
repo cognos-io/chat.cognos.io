@@ -246,7 +246,7 @@
   flex: 1;
   min-inline-size: 0;
   display: grid;
-  gap: 1px;
+  gap: var(--cog-border-width);
 }
 
 .project-detail__chat-title {

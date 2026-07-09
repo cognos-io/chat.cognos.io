@@ -43,7 +43,7 @@
   // Match the 32px height of the sibling header buttons (cog-button /
   // cog-icon-button). border-box keeps the 1px border inside that height.
   box-sizing: border-box;
-  min-height: 32px;
+  min-height: var(--cog-space-400);
   padding: 0 var(--cog-space-150);
   border: var(--cog-border-width) solid #f59e0b;
   border-radius: var(--cog-radius-sm);

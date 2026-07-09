@@ -72,7 +72,7 @@ import { CognosProgressComponent } from '../progress/progress.component';
         border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface);
-        padding: 10px var(--cog-space-150);
+        padding: var(--cog-space-100) var(--cog-space-150);
       }
 
       .cog-upload-row__copy {
@@ -91,7 +91,7 @@ import { CognosProgressComponent } from '../progress/progress.component';
         flex: 1;
         overflow: hidden;
         color: var(--cog-text);
-        font-size: 13px;
+        font-size: var(--cog-fs-body-sm);
         font-weight: var(--cog-fw-medium);
         line-height: 1.4;
         text-overflow: ellipsis;
@@ -101,7 +101,7 @@ import { CognosProgressComponent } from '../progress/progress.component';
       .cog-upload-row__status {
         color: var(--cog-text-subtlest);
         font-family: var(--cog-font-mono);
-        font-size: 11px;
+        font-size: var(--cog-fs-overline);
         line-height: 1.4;
       }
 
@@ -112,10 +112,10 @@ import { CognosProgressComponent } from '../progress/progress.component';
       .cog-upload-row__meta {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
-        margin-top: 5px;
+        gap: var(--cog-space-050);
+        margin-top: var(--cog-space-050);
         color: var(--cog-text-subtlest);
-        font-size: 11px;
+        font-size: var(--cog-fs-overline);
         line-height: 1.4;
       }
 

@@ -54,7 +54,7 @@ import { CognosImageThumbComponent } from '../image-thumb/image-thumb.component'
         width: min(100%, 320px);
         max-width: 100%;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 3px;
+        gap: var(--cog-space-050);
       }
 
       .cog-image-grid__cell--span {
@@ -91,13 +91,13 @@ import { CognosImageThumbComponent } from '../image-thumb/image-thumb.component'
         inset-block-end: 8px;
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: var(--cog-space-050);
         min-height: 22px;
         border-radius: var(--cog-radius-pill);
         background: rgba(9, 30, 66, 0.62);
         padding: 0 var(--cog-space-100);
         color: #fff;
-        font-size: 11px;
+        font-size: var(--cog-fs-overline);
         font-weight: var(--cog-fw-semibold);
         line-height: 1.4;
       }

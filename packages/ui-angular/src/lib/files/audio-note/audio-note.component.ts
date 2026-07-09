@@ -71,7 +71,8 @@ const AUDIO_BARS = [
         border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
-        padding: 9px var(--cog-space-150) 9px 9px;
+        padding: var(--cog-space-100) var(--cog-space-150) var(--cog-space-100)
+          var(--cog-space-100);
       }
 
       .cog-audio-note__toggle {
@@ -118,13 +119,13 @@ const AUDIO_BARS = [
         display: flex;
         flex-direction: column;
         align-items: flex-end;
-        gap: 3px;
+        gap: var(--cog-space-050);
       }
 
       .cog-audio-note__duration {
         color: var(--cog-text-subtle);
         font-family: var(--cog-font-mono);
-        font-size: 12px;
+        font-size: var(--cog-fs-caption);
         line-height: 1.4;
       }
     `,

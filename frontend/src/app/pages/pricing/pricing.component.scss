@@ -89,7 +89,7 @@
   border: var(--cog-border-width) solid var(--cog-border);
   border-radius: var(--cog-radius-md);
   background: var(--cog-surface-sunken);
-  padding: 3px;
+  padding: var(--cog-radius-xs);
 }
 
 .pricing__interval-option {
@@ -233,8 +233,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: var(--cog-space-500);
+  height: var(--cog-space-500);
   flex: none;
   border-radius: var(--cog-radius-pill);
   background: var(--cog-surface);

@@ -57,7 +57,7 @@ export type CognosAttachChipState = 'sealed' | 'encrypting';
         border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface);
-        padding: 0 var(--cog-space-075) 0 7px;
+        padding: 0 var(--cog-space-075);
         min-height: 34px;
       }
 
@@ -65,7 +65,7 @@ export type CognosAttachChipState = 'sealed' | 'encrypting';
         min-width: 0;
         overflow: hidden;
         color: var(--cog-text);
-        font-size: 12.5px;
+        font-size: var(--cog-fs-caption);
         line-height: 1.4;
         text-overflow: ellipsis;
         white-space: nowrap;

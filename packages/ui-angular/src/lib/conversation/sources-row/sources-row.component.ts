@@ -80,7 +80,7 @@ export type CognosSource = {
         display: inline-flex;
         align-items: center;
         gap: var(--cog-space-075);
-        font-size: 13px;
+        font-size: var(--cog-fs-body-sm);
         line-height: 1.4;
       }
 

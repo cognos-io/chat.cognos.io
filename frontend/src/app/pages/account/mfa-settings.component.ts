@@ -364,7 +364,7 @@ type View =
     .security__badge {
       flex: none;
       border-radius: var(--cog-radius-pill);
-      padding: var(--cog-space-025) 10px;
+      padding: var(--cog-space-025) var(--cog-space-100);
       font-size: var(--cog-fs-body-sm);
       background: var(--cog-neutral-bg);
       color: var(--cog-text-subtle);
@@ -384,7 +384,7 @@ type View =
       color: var(--cog-text);
     }
     .security__input {
-      min-height: 44px;
+      min-height: calc(var(--cog-space-500) + var(--cog-space-050));
       border: var(--cog-border-width-strong) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-input-bg);

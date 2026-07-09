@@ -113,7 +113,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
         place-items: center;
         background: rgba(9, 30, 66, 0.58);
         color: #fff;
-        font-size: 22px;
+        font-size: var(--cog-fs-h-lg);
         font-weight: var(--cog-fw-semibold);
         line-height: 1;
       }

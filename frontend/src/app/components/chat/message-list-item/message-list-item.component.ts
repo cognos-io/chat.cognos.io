@@ -574,7 +574,7 @@ import {
     }
 
     .message-list-item__memory-pop-label {
-      padding: 2px var(--cog-space-100);
+      padding: var(--cog-space-025) var(--cog-space-100);
       color: var(--cog-text-subtle);
       font-weight: var(--cog-fw-semibold);
     }
@@ -657,11 +657,11 @@ import {
       display: grid;
       gap: var(--cog-space-100);
       max-width: min(22rem, calc(100vw - var(--cog-space-400)));
-      border: 1px solid var(--cog-border-subtle);
+      border: 1px solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface-raised);
       padding: var(--cog-space-150);
-      box-shadow: var(--cog-shadow-md);
+      box-shadow: var(--cog-shadow-overlay);
     }
 
     .message-list-item__privacy-text {
@@ -703,8 +703,8 @@ import {
     }
 
     .message-list-item__typing-dot {
-      width: 6px;
-      height: 6px;
+      width: var(--cog-space-075);
+      height: var(--cog-space-075);
       border-radius: var(--cog-radius-pill);
       background: var(--cog-text-subtlest);
       animation: message-typing 1.2s ease-in-out infinite;
@@ -858,7 +858,7 @@ import {
     .message-list-item__edit-input {
       width: 100%;
       box-sizing: border-box;
-      min-height: 64px;
+      min-height: var(--cog-space-800);
       resize: vertical;
       border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-xs);

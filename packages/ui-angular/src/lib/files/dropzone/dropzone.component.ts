@@ -79,7 +79,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
           border-color 120ms var(--cog-ease-standard);
 
         &.cog-dropzone--compact {
-          padding: var(--cog-space-250) 18px;
+          padding: var(--cog-space-250);
         }
 
         &.cog-dropzone--dragging {
@@ -135,9 +135,9 @@ import { CognosIconComponent } from '../../icon/icon.component';
         display: inline-flex;
         align-items: center;
         gap: var(--cog-space-075);
-        margin-top: 14px;
+        margin-top: var(--cog-space-200);
         color: var(--cog-text-subtlest);
-        font-size: 11.5px;
+        font-size: var(--cog-fs-caption);
         line-height: 1.4;
       }
     `,

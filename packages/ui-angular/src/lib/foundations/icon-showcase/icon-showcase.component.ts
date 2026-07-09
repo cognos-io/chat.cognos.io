@@ -117,7 +117,7 @@ const toneSamples = [
           align-items: center;
           gap: var(--cog-space-100);
           min-width: 120px;
-          padding: 10px var(--cog-space-150);
+          padding: var(--cog-space-100) var(--cog-space-150);
         }
 
         & .icon-showcase__tone-label {

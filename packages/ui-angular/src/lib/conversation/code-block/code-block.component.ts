@@ -52,13 +52,13 @@ import { CognosButtonComponent } from '../../button/button.component';
         gap: var(--cog-space-150);
         border-bottom: var(--cog-border-width) solid var(--cog-border);
         background: var(--cog-surface);
-        padding: 10px var(--cog-space-150);
+        padding: var(--cog-space-100) var(--cog-space-150);
       }
 
       .cog-code-block__lang {
         color: var(--cog-text-subtle);
         font-family: var(--cog-font-mono);
-        font-size: 12px;
+        font-size: var(--cog-fs-caption);
         line-height: 1.4;
         text-transform: lowercase;
       }
@@ -66,10 +66,10 @@ import { CognosButtonComponent } from '../../button/button.component';
       .cog-code-block__body {
         overflow-x: auto;
         margin: 0;
-        padding: 13px 14px;
+        padding: var(--cog-space-150) var(--cog-space-200);
         color: var(--cog-text);
         font-family: var(--cog-font-mono);
-        font-size: 12.5px;
+        font-size: var(--cog-fs-caption);
         line-height: 1.65;
         white-space: pre;
       }

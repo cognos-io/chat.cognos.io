@@ -43,7 +43,7 @@ export type CognosSectionMessageTone = 'info' | 'success';
         align-items: flex-start;
         gap: var(--cog-space-150);
         border-radius: var(--cog-radius-sm);
-        padding: 14px;
+        padding: var(--cog-space-200);
 
         &.cog-section-message--info {
           background: var(--cog-info-bg);
@@ -61,7 +61,7 @@ export type CognosSectionMessageTone = 'info' | 'success';
         flex: none;
         align-items: flex-start;
         justify-content: center;
-        padding-top: 1px;
+        padding-top: var(--cog-space-025);
       }
 
       .cog-section-message__copy {

@@ -82,8 +82,8 @@ import type { CognosVaultFile } from '../vault.types';
       .cog-vault-list-row {
         display: flex;
         align-items: center;
-        gap: 13px;
-        padding: 11px 13px;
+        gap: var(--cog-space-150);
+        padding: var(--cog-space-150);
         cursor: pointer;
 
         &:hover {
@@ -131,7 +131,7 @@ import type { CognosVaultFile } from '../vault.types';
       }
 
       .cog-vault-list-row__details {
-        margin-top: 1px;
+        margin-top: var(--cog-space-025);
         overflow: hidden;
         color: var(--cog-text-subtlest);
         font-size: var(--cog-fs-body-sm);
@@ -143,7 +143,7 @@ import type { CognosVaultFile } from '../vault.types';
       .cog-vault-list-row__refs {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: var(--cog-space-050);
         color: var(--cog-text-subtlest);
         font-size: var(--cog-fs-body-sm);
         line-height: var(--cog-lh-body-sm);

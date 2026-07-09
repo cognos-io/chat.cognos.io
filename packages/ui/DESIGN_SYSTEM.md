@@ -23,32 +23,32 @@ accent.
   changes; never hard-code a family in a component.
 - **Type scale** (`font.scale` in tokens.json):
 
-  | Token        | Size / Line / Weight            | Where                              |
-  | ------------ | ------------------------------- | ---------------------------------- |
-  | `display`    | 24 / 1.2 / 600                  | empty-state hero                   |
-  | `heading.lg` | 24 / 1.25 / 600                 | project title                      |
-  | `heading.md` | 20 / 1.3 / 600                  | page & dialog titles               |
-  | `heading.sm` | 16 / 1.35 / 600                 | card / nav header                  |
-  | `body.lg`    | 15 / 1.6 / 400                  | chat message body                  |
-  | `body`       | 14 / 1.45 / 400                 | default UI text                    |
-  | `body.sm`    | 13 / 1.45 / 400                 | supporting text                    |
-  | `caption`    | 12 / 1.4 / 400                  | meta, timestamps, key fingerprints |
-  | `label`      | 14 / 1.0 / 500                  | button labels                      |
-  | `overline`   | 11 / 1.4 / 700 · 0.04em · UPPER | section headers                    |
-  | `lozenge`    | 11 / 1.4 / 700 · 0.02em · UPPER | lozenge/tag text                   |
+  | Token        | Size / Line / Weight                   | Where                              |
+  | ------------ | -------------------------------------- | ---------------------------------- |
+  | `display`    | 1.5rem / 1.2 / 600                     | empty-state hero                   |
+  | `heading.lg` | 1.5rem / 1.25 / 600                    | project title                      |
+  | `heading.md` | 1.25rem / 1.3 / 600                    | page & dialog titles               |
+  | `heading.sm` | 1rem / 1.35 / 600                      | card / nav header                  |
+  | `body.lg`    | 0.9375rem / 1.6 / 400                  | chat message body                  |
+  | `body`       | 0.875rem / 1.45 / 400                  | default UI text                    |
+  | `body.sm`    | 0.8125rem / 1.45 / 400                 | supporting text                    |
+  | `caption`    | 0.75rem / 1.4 / 400                    | meta, timestamps, key fingerprints |
+  | `label`      | 0.875rem / 1.0 / 500                   | button labels                      |
+  | `overline`   | 0.6875rem / 1.4 / 700 · 0.04em · UPPER | section headers                    |
+  | `lozenge`    | 0.6875rem / 1.4 / 700 · 0.02em · UPPER | lozenge/tag text                   |
 
 ### 1.2 Spacing
 
-8px grid with a 2px base step (`--cog-space-*`): **2, 4, 6, 8, 12, 16, 20, 24,
-32, 40, 48, 64**. Content gutters: **16** (mobile), **24–28** (desktop).
-Vertical stack rhythm: 8 / 12 / 16 / 24. Touch targets ≥ **44px** on mobile,
-≥ 32px on desktop.
+0.5rem grid with a 0.125rem base step (`--cog-space-*`): **0.125, 0.25, 0.375,
+0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 4rem**. Content gutters: **1rem**
+(mobile), **1.5–1.75rem** (desktop). Vertical stack rhythm: 0.5 / 0.75 / 1 /
+1.5rem. Touch targets ≥ **44px** on mobile, ≥ 32px on desktop.
 
 ### 1.3 Radius
 
-`xs 3` (buttons, controls, lozenges) · `sm 4` (fields, menus, inner cards) ·
-`md 8` (cards, dialogs, message bubbles) · `lg 16` (bottom-sheet top corners) ·
-`pill 9999` (avatars, toggles).
+`xs 0.1875rem` (buttons, controls, lozenges) · `sm 0.25rem` (fields, menus,
+inner cards) · `md 0.5rem` (cards, dialogs, message bubbles) · `lg 1rem`
+(bottom-sheet top corners) · `pill 9999px` (avatars, toggles).
 
 ### 1.4 Elevation
 

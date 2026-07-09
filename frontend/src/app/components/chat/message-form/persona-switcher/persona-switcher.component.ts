@@ -119,7 +119,7 @@ import { PersonaService } from '@app/services/persona.service';
 
     .persona-switcher__body {
       display: grid;
-      gap: 1px;
+      gap: var(--cog-border-width);
       min-width: 0;
     }
 

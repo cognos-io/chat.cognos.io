@@ -293,8 +293,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 40px;
-  height: 28px;
+  min-width: var(--cog-space-500);
+  height: calc(var(--cog-space-300) + var(--cog-space-050));
   padding: 0 var(--cog-space-075);
   border-radius: var(--cog-radius-sm);
   background: var(--cog-text);

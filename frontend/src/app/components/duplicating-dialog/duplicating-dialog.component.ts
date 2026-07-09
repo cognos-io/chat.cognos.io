@@ -39,8 +39,8 @@ import { TranslocoModule } from '@jsverse/transloco';
     }
 
     .duplicating-dialog__spinner {
-      width: 2rem;
-      height: 2rem;
+      width: var(--cog-space-400);
+      height: var(--cog-space-400);
       border-radius: 50%;
       border: 3px solid var(--cog-border);
       border-top-color: var(--cog-brand);

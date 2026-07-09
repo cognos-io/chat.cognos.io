@@ -99,11 +99,11 @@ import type { CognosVaultFile } from '../vault.types';
         display: flex;
         min-height: 124px;
         flex-direction: column;
-        gap: 11px;
+        gap: var(--cog-space-150);
         border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
-        padding: 13px;
+        padding: var(--cog-space-150);
         transition:
           border-color var(--cog-dur-fast) var(--cog-ease-standard),
           box-shadow var(--cog-dur-fast) var(--cog-ease-standard);
@@ -185,7 +185,7 @@ import type { CognosVaultFile } from '../vault.types';
       }
 
       .cog-vault-card__details {
-        margin-top: 3px;
+        margin-top: var(--cog-space-025);
         color: var(--cog-text-subtlest);
         font-size: var(--cog-fs-body-sm);
         line-height: var(--cog-lh-body-sm);
@@ -194,7 +194,7 @@ import type { CognosVaultFile } from '../vault.types';
       .cog-vault-card__footer {
         align-items: center;
         border-top: var(--cog-border-width) solid var(--cog-border);
-        padding-top: 9px;
+        padding-top: var(--cog-space-100);
       }
 
       .cog-vault-card--selected .cog-vault-card__footer {
@@ -205,7 +205,7 @@ import type { CognosVaultFile } from '../vault.types';
         display: inline-flex;
         min-width: 0;
         align-items: center;
-        gap: 5px;
+        gap: var(--cog-space-050);
         color: var(--cog-text-subtlest);
         font-size: var(--cog-fs-body-sm);
         line-height: var(--cog-lh-body-sm);

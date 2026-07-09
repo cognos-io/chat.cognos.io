@@ -949,7 +949,7 @@ interface RedactionPreviewGroup {
       border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-md);
       background: var(--cog-surface-sunken);
-      font-size: 0.8125rem;
+      font-size: var(--cog-fs-body-sm);
     }
 
     .message-form__chip--failed {
@@ -971,7 +971,7 @@ interface RedactionPreviewGroup {
     .message-form__chip-truncated {
       display: inline-flex;
       align-items: center;
-      gap: var(--cog-space-50);
+      gap: var(--cog-space-050);
       color: var(--cog-text-subtle);
       font-size: var(--cog-fs-caption);
       flex-shrink: 0;
@@ -1351,7 +1351,7 @@ interface RedactionPreviewGroup {
     .message-form__redact-pop {
       position: fixed;
       z-index: 60;
-      transform: translate(-50%, calc(-100% - 8px));
+      transform: translate(-50%, calc(-100% - var(--cog-space-100)));
       display: inline-flex;
       align-items: center;
       gap: var(--cog-space-050);
@@ -1359,7 +1359,7 @@ interface RedactionPreviewGroup {
       border-radius: var(--cog-radius-pill);
       background: var(--cog-surface);
       box-shadow: var(--cog-shadow-overlay);
-      padding: var(--cog-space-050) 10px;
+      padding: var(--cog-space-050) var(--cog-space-100);
       color: var(--cog-text);
       font: inherit;
       font-size: var(--cog-fs-caption);
@@ -1381,7 +1381,7 @@ interface RedactionPreviewGroup {
       box-sizing: border-box;
       align-items: center;
       gap: var(--cog-space-075);
-      min-height: 32px;
+      min-height: var(--cog-space-400);
       padding: 0 var(--cog-space-150);
       border: 0;
       border-radius: var(--cog-radius-xs);

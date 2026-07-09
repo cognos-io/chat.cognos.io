@@ -95,7 +95,7 @@ import type { CognosVaultFile } from '../vault.types';
       .cog-confirm-shred__text {
         margin: 0;
         color: var(--cog-text-subtle);
-        font-size: 13.5px;
+        font-size: var(--cog-fs-body-sm);
         line-height: 1.55;
       }
 

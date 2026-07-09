@@ -162,13 +162,13 @@ import type {
       .cog-vault-page__header {
         border-bottom: var(--cog-border-width) solid var(--cog-border);
         background: var(--cog-surface);
-        padding: 14px var(--cog-space-250) var(--cog-space-200);
+        padding: var(--cog-space-200) var(--cog-space-250) var(--cog-space-200);
       }
 
       .cog-vault-page__title-row {
         display: flex;
         align-items: flex-start;
-        gap: 14px;
+        gap: var(--cog-space-200);
         margin-top: var(--cog-space-075);
       }
 
@@ -203,9 +203,9 @@ import type {
         display: flex;
         align-items: center;
         gap: var(--cog-space-100);
-        margin-top: 3px;
+        margin-top: var(--cog-space-025);
         color: var(--cog-text-subtle);
-        font-size: 13px;
+        font-size: var(--cog-fs-body-sm);
         line-height: 1.4;
       }
 
@@ -213,7 +213,7 @@ import type {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 10px;
+        gap: var(--cog-space-100);
         padding: var(--cog-space-200) var(--cog-space-250) 0;
       }
 
@@ -229,19 +229,19 @@ import type {
       }
 
       .cog-vault-page__storage {
-        padding: 14px var(--cog-space-250) 0;
+        padding: var(--cog-space-200) var(--cog-space-250) 0;
       }
 
       .cog-vault-page__grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
         gap: var(--cog-space-150);
-        padding: 14px var(--cog-space-250) var(--cog-space-300);
+        padding: var(--cog-space-200) var(--cog-space-250) var(--cog-space-300);
       }
 
       .cog-vault-page__list {
         overflow: hidden;
-        margin: 14px var(--cog-space-250) var(--cog-space-300);
+        margin: var(--cog-space-200) var(--cog-space-250) var(--cog-space-300);
         border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
@@ -250,14 +250,14 @@ import type {
       .cog-vault-page__empty {
         max-width: 520px;
         margin: 0 auto;
-        padding: var(--cog-space-500) 28px var(--cog-space-600);
+        padding: var(--cog-space-500) var(--cog-space-400) var(--cog-space-600);
         text-align: center;
       }
 
       .cog-vault-page__empty-tile {
         width: 56px;
         height: 56px;
-        margin-bottom: 18px;
+        margin-bottom: var(--cog-space-250);
         border-radius: var(--cog-radius-md);
       }
 
@@ -271,9 +271,9 @@ import type {
 
       .cog-vault-page__empty-copy {
         max-width: 420px;
-        margin: var(--cog-space-100) auto 22px;
+        margin: var(--cog-space-100) auto var(--cog-space-300);
         color: var(--cog-text-subtle);
-        font-size: 14px;
+        font-size: var(--cog-fs-body);
         line-height: 1.55;
       }
     `,

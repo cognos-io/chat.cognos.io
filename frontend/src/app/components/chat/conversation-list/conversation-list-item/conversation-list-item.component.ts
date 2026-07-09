@@ -97,7 +97,7 @@ type ConversationMenuEntry = CognosMenuItem & { action: ConversationMenuAction }
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
       gap: var(--cog-space-075);
-      min-height: 40px;
+      min-height: var(--cog-space-500);
     }
 
     .conversation-list-item__link {

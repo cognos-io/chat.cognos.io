@@ -20,7 +20,7 @@ const meta: Meta = {
         <div style="display:grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
           <section data-theme="light" data-accent="emerald" style="display:grid; gap: 16px; padding: 20px; border-radius: var(--cog-radius-md); background: var(--cog-app-bg); color: var(--cog-text); border: var(--cog-border-width) solid var(--cog-border);">
             <h2 style="margin: 0; font-family: var(--cog-font); font-size: var(--cog-fs-h-sm); line-height: var(--cog-lh-h-sm); font-weight: var(--cog-fw-h-sm);">Light / Emerald</h2>
-            <div style="display:grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr));">
+            <div style="display:grid; gap: var(--cog-space-100); grid-template-columns: repeat(2, minmax(0, 1fr));">
               <div style="padding: 12px; border-radius: var(--cog-radius-sm); background: var(--cog-surface); border: var(--cog-border-width) solid var(--cog-border);">surface</div>
               <div style="padding: 12px; border-radius: var(--cog-radius-sm); background: var(--cog-surface-hover); border: var(--cog-border-width) solid var(--cog-border);">surface-hover</div>
               <div style="padding: 12px; border-radius: var(--cog-radius-sm); background: var(--cog-selected-bg); color: var(--cog-selected-text); border: var(--cog-border-width) solid var(--cog-selected-border);">selected</div>
@@ -39,7 +39,7 @@ const meta: Meta = {
 
           <section data-theme="dark" data-accent="blue" style="display:grid; gap: 16px; padding: 20px; border-radius: var(--cog-radius-md); background: var(--cog-app-bg); color: var(--cog-text); border: var(--cog-border-width) solid var(--cog-border);">
             <h2 style="margin: 0; font-family: var(--cog-font); font-size: var(--cog-fs-h-sm); line-height: var(--cog-lh-h-sm); font-weight: var(--cog-fw-h-sm);">Dark / Blue</h2>
-            <div style="display:grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr));">
+            <div style="display:grid; gap: var(--cog-space-100); grid-template-columns: repeat(2, minmax(0, 1fr));">
               <div style="padding: 12px; border-radius: var(--cog-radius-sm); background: var(--cog-surface); border: var(--cog-border-width) solid var(--cog-border);">surface</div>
               <div style="padding: 12px; border-radius: var(--cog-radius-sm); background: var(--cog-surface-hover); border: var(--cog-border-width) solid var(--cog-border);">surface-hover</div>
               <div style="padding: 12px; border-radius: var(--cog-radius-sm); background: var(--cog-selected-bg); color: var(--cog-selected-text); border: var(--cog-border-width) solid var(--cog-selected-border);">selected</div>

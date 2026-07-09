@@ -178,7 +178,7 @@ import { CognosMobileShellComponent } from '../mobile-shell.component';
 
       .cog-mobile-shell-showcase__section {
         display: grid;
-        gap: 10px;
+        gap: var(--cog-space-100);
       }
 
       .cog-mobile-shell-showcase__section--grow {

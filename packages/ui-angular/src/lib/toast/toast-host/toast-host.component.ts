@@ -59,7 +59,7 @@ import { CognosToastService } from '../toast.service';
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 10px;
+        gap: var(--cog-space-100);
       }
 
       .cog-toast {
@@ -73,7 +73,8 @@ import { CognosToastService } from '../toast.service';
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         box-shadow: var(--cog-shadow-overlay);
-        padding: var(--cog-space-150) var(--cog-space-150) var(--cog-space-150) 14px;
+        padding: var(--cog-space-150) var(--cog-space-150) var(--cog-space-150)
+          var(--cog-space-200);
         animation: cog-toast-enter 180ms var(--cog-ease-standard);
       }
 
@@ -102,12 +103,12 @@ import { CognosToastService } from '../toast.service';
       .cog-toast__copy {
         min-width: 0;
         flex: 1;
-        padding-top: 1px;
+        padding-top: var(--cog-space-025);
       }
 
       .cog-toast__title {
         color: var(--cog-text);
-        font-size: 13.5px;
+        font-size: var(--cog-fs-body-sm);
         font-weight: var(--cog-fw-semibold);
         line-height: 1.4;
       }
@@ -115,17 +116,17 @@ import { CognosToastService } from '../toast.service';
       .cog-toast__msg {
         margin-top: var(--cog-space-025);
         color: var(--cog-text-subtle);
-        font-size: 12.5px;
+        font-size: var(--cog-fs-caption);
         line-height: 1.45;
       }
 
       .cog-toast__action {
-        margin-top: 7px;
+        margin-top: var(--cog-space-075);
         border: 0;
         background: transparent;
         padding: 0;
         color: var(--cog-link);
-        font-size: 12.5px;
+        font-size: var(--cog-fs-caption);
         font-weight: var(--cog-fw-semibold);
         cursor: pointer;
       }

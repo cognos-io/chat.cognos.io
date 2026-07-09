@@ -172,7 +172,7 @@ interface SettingsNavItem {
 
     .settings__logo {
       display: block;
-      height: 24px;
+      height: var(--cog-space-300);
     }
 
     .settings__nav {

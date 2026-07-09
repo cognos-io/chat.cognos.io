@@ -76,9 +76,9 @@ export interface MessageAttachmentChip {
       .message-attachment-chip--muted {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: var(--cog-space-100);
         max-width: 100%;
-        padding: 0.5rem 0.75rem;
+        padding: var(--cog-space-100) var(--cog-space-150);
         border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface-sunken);
@@ -88,8 +88,8 @@ export interface MessageAttachmentChip {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 2rem;
-        height: 2rem;
+        width: var(--cog-space-400);
+        height: var(--cog-space-400);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface-sunken);
         flex: none;

@@ -264,7 +264,7 @@ import { VaultService } from '@app/services/vault.service';
       justify-content: space-between;
       gap: var(--cog-space-150);
       padding-block: var(--cog-space-075);
-      border-block-start: var(--cog-border-width) solid var(--cog-border-subtle);
+      border-block-start: var(--cog-border-width) solid var(--cog-border);
     }
 
     .memory-page__allowlist-item span {

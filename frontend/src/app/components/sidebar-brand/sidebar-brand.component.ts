@@ -35,7 +35,7 @@ import { BillingService } from '@app/services/billing.service';
 
     .sidebar-brand__logo {
       display: block;
-      height: 24px;
+      height: var(--cog-space-300);
     }
   `,
 })

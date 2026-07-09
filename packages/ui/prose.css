@@ -11,6 +11,22 @@
    the application shell, alongside tokens.css.
    ========================================================================= */
 
+.cog-prose {
+  min-width: 0;
+}
+
+.cog-prose :is(markdown, app-redacted-markdown) {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ngx-markdown clipboard wrapper — unclassed div with position: relative */
+.cog-prose :where(:has(> pre)) {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .cog-prose :where(p, ul, ol, pre, blockquote, table, hr, dl, .markdown-alert) {
   margin: 0 0 var(--cog-space-150);
 }
@@ -125,8 +141,28 @@
 
 /* Code block */
 .cog-prose :where(pre) {
-  overflow: auto;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
   border-radius: var(--cog-radius-sm);
+  font-family: var(--cog-font-mono);
+  font-size: var(--cog-fs-body);
+  line-height: var(--cog-lh-body-lg);
+}
+
+/* prism-okaidia sets `font-size: 1em` on code/pre[class*="language-"] with
+   higher specificity than :where(pre code) — :where() zeroes element weight,
+   and the theme loads after prose.css. Match its selector and add .cog-prose. */
+.cog-prose pre[class*='language-'],
+.cog-prose pre code[class*='language-'] {
+  font-family: var(--cog-font-mono);
+  font-size: var(--cog-fs-body);
+  line-height: var(--cog-lh-body-lg);
+}
+
+.cog-prose pre[class*='language-'] {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 /* Tables */

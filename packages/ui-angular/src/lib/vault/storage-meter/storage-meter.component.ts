@@ -58,21 +58,21 @@ import type { CognosStorageSegment } from '../vault.types';
         border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
-        padding: 14px var(--cog-space-200);
+        padding: var(--cog-space-200);
       }
 
       .cog-storage-meter__header {
         display: flex;
         align-items: baseline;
         justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 10px;
+        gap: var(--cog-space-100);
+        margin-bottom: var(--cog-space-100);
       }
 
       .cog-storage-meter__eyebrow {
         display: inline-flex;
         align-items: center;
-        gap: 7px;
+        gap: var(--cog-space-075);
         color: var(--cog-text-subtlest);
         font-size: var(--cog-fs-overline);
         font-weight: var(--cog-fw-overline);
@@ -83,7 +83,7 @@ import type { CognosStorageSegment } from '../vault.types';
 
       .cog-storage-meter__summary {
         color: var(--cog-text-subtle);
-        font-size: 12.5px;
+        font-size: var(--cog-fs-caption);
         line-height: 1.4;
       }
 
@@ -128,7 +128,7 @@ import type { CognosStorageSegment } from '../vault.types';
         display: flex;
         flex-wrap: wrap;
         gap: var(--cog-space-100) var(--cog-space-200);
-        margin-top: 11px;
+        margin-top: var(--cog-space-150);
       }
 
       .cog-storage-meter__legend-item,
@@ -137,20 +137,20 @@ import type { CognosStorageSegment } from '../vault.types';
         align-items: center;
         gap: var(--cog-space-075);
         color: var(--cog-text-subtle);
-        font-size: 12px;
+        font-size: var(--cog-fs-caption);
         line-height: 1.4;
       }
 
       .cog-storage-meter__legend-swatch {
         width: 9px;
         height: 9px;
-        border-radius: 2px;
+        border-radius: var(--cog-radius-xs);
       }
 
       .cog-storage-meter__note {
         margin-inline-start: auto;
         color: var(--cog-text-subtlest);
-        font-size: 11.5px;
+        font-size: var(--cog-fs-caption);
       }
     `,
   ],

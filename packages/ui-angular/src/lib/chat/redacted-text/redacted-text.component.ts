@@ -173,7 +173,7 @@ export const COGNOS_REDACTED_TEXT_DEFAULT_LABELS: CognosRedactedTextLabels = {
           var(--cog-loz-purple-fg);
         color: var(--cog-loz-purple-fg);
         cursor: pointer;
-        padding: 1px var(--cog-space-075);
+        padding: var(--cog-space-025) var(--cog-space-075);
         font: inherit;
         line-height: 1.3;
         vertical-align: baseline;

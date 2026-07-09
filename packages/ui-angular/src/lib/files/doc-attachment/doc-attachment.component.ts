@@ -94,13 +94,13 @@ export type CognosDocAttachmentState = 'sealed' | 'encrypting' | 'error';
         width: min(100%, 280px);
         max-width: 100%;
         align-items: center;
-        gap: 11px;
+        gap: var(--cog-space-150);
         box-sizing: border-box;
         overflow: hidden;
         border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface);
-        padding: 10px 11px;
+        padding: var(--cog-space-100) var(--cog-space-150);
         transition:
           border-color var(--cog-dur-fast) var(--cog-ease-standard),
           box-shadow var(--cog-dur-fast) var(--cog-ease-standard);
@@ -131,7 +131,7 @@ export type CognosDocAttachmentState = 'sealed' | 'encrypting' | 'error';
       .cog-doc-attachment__name {
         overflow: hidden;
         color: var(--cog-text);
-        font-size: 14px;
+        font-size: var(--cog-fs-body);
         font-weight: var(--cog-fw-medium);
         line-height: var(--cog-lh-body);
         text-overflow: ellipsis;
@@ -152,14 +152,14 @@ export type CognosDocAttachmentState = 'sealed' | 'encrypting' | 'error';
       .cog-doc-attachment__meta {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: var(--cog-space-050);
         min-width: 0;
-        font-size: 11.5px;
+        font-size: var(--cog-fs-caption);
         line-height: 1.4;
       }
 
       .cog-doc-attachment__meta--subtle {
-        margin-top: 5px;
+        margin-top: var(--cog-space-050);
         color: var(--cog-text-subtlest);
       }
 

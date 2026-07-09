@@ -64,7 +64,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
         border-radius: var(--cog-radius-md) var(--cog-radius-md) var(--cog-radius-xs)
           var(--cog-radius-md);
         background: var(--cog-selected-bg);
-        padding: 14px;
+        padding: var(--cog-space-200);
         color: var(--cog-text);
       }
 

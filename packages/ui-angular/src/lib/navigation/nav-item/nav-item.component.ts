@@ -91,7 +91,7 @@ import { CognosIconComponent } from '../../icon/icon.component';
         width: 100%;
         min-height: 36px;
         align-items: center;
-        gap: 10px;
+        gap: var(--cog-space-100);
         border: 0;
         border-radius: var(--cog-radius-sm);
         background: transparent;

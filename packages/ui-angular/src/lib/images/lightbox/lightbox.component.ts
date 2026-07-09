@@ -83,7 +83,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
         align-items: center;
         justify-content: space-between;
         gap: var(--cog-space-150);
-        padding: 14px 18px;
+        padding: var(--cog-space-200) var(--cog-space-250);
         color: #fff;
       }
 
@@ -98,7 +98,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: 14px;
+        font-size: var(--cog-fs-body);
         font-weight: var(--cog-fw-medium);
         line-height: var(--cog-lh-body);
       }
@@ -137,7 +137,7 @@ import { CognosLozengeComponent } from '../../primitives/lozenge/lozenge.compone
         flex: 1;
         align-items: center;
         justify-content: center;
-        padding: 0 var(--cog-space-300) 28px;
+        padding: 0 var(--cog-space-300) var(--cog-space-400);
       }
 
       .cog-lightbox__image {

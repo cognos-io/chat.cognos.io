@@ -123,7 +123,7 @@ import type { CognosVaultFile } from '../vault.types';
 
       .cog-vault-picker__intro {
         color: var(--cog-text-subtle);
-        font-size: 13.5px;
+        font-size: var(--cog-fs-body-sm);
         line-height: 1.5;
       }
 
@@ -143,7 +143,7 @@ import type { CognosVaultFile } from '../vault.types';
         border-bottom: 0;
         border-left: 0;
         background: transparent;
-        padding: 10px 13px;
+        padding: var(--cog-space-100) var(--cog-space-150);
         text-align: left;
         cursor: pointer;
       }
@@ -197,7 +197,7 @@ import type { CognosVaultFile } from '../vault.types';
       .cog-vault-picker__name {
         overflow: hidden;
         color: var(--cog-text);
-        font-size: 13.5px;
+        font-size: var(--cog-fs-body-sm);
         font-weight: var(--cog-fw-medium);
         line-height: 1.4;
         text-overflow: ellipsis;
@@ -205,9 +205,9 @@ import type { CognosVaultFile } from '../vault.types';
       }
 
       .cog-vault-picker__details {
-        margin-top: 1px;
+        margin-top: var(--cog-space-025);
         color: var(--cog-text-subtlest);
-        font-size: 12px;
+        font-size: var(--cog-fs-caption);
         line-height: 1.4;
       }
 
@@ -220,7 +220,7 @@ import type { CognosVaultFile } from '../vault.types';
 
       .cog-vault-picker__count {
         color: var(--cog-text-subtle);
-        font-size: 13px;
+        font-size: var(--cog-fs-body-sm);
         line-height: 1.4;
       }
 

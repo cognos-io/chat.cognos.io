@@ -72,8 +72,8 @@ export interface CognosSegmentedOption {
 
       .cog-segmented {
         display: flex;
-        gap: 2px;
-        padding: 2px;
+        gap: var(--cog-space-025);
+        padding: var(--cog-space-025);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface-sunken);
       }

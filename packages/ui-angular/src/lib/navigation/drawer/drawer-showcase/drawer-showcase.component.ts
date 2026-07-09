@@ -125,7 +125,7 @@ import { CognosDrawerComponent } from '../drawer.component';
 
       .cog-drawer-showcase__section {
         display: grid;
-        gap: 10px;
+        gap: var(--cog-space-100);
       }
 
       .cog-drawer-showcase__section--grow {

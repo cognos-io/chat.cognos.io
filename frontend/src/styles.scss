@@ -221,7 +221,7 @@ a {
 }
 
 .cog-dialog-panel {
-  max-width: min(640px, calc(100vw - 32px));
+  max-width: min(640px, calc(100vw - var(--cog-space-400)));
 }
 
 .cog-dialog-panel .cdk-dialog-container {
@@ -287,7 +287,7 @@ a {
 
 .backdrop {
   position: absolute;
-  inset: -1rem 0;
+  inset: calc(-1 * var(--cog-space-200)) 0;
   width: 100%;
   z-index: 1;
   opacity: 1;

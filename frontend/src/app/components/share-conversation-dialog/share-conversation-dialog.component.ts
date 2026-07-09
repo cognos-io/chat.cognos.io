@@ -252,8 +252,8 @@ type ShareState = 'checking' | 'idle' | 'shared';
     }
 
     .share-dialog__live-dot {
-      width: 8px;
-      height: 8px;
+      width: var(--cog-space-100);
+      height: var(--cog-space-100);
       border-radius: var(--cog-radius-pill);
       background: var(--cog-success);
     }
@@ -288,7 +288,7 @@ type ShareState = 'checking' | 'idle' | 'shared';
       min-width: 0;
       align-items: center;
       gap: var(--cog-space-075);
-      min-height: 40px;
+      min-height: var(--cog-space-500);
       border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-input-bg);

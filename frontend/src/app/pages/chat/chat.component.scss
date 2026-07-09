@@ -20,7 +20,7 @@
    lives in the shared app-sidebar-brand component. */
 .chat-shell__logo {
   display: block;
-  height: 24px;
+  height: var(--cog-space-300);
 }
 
 .chat-shell__search {
@@ -126,10 +126,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 24px;
+  inline-size: var(--cog-space-300);
   // Match the project row height so the chevron aligns with the entry; it stays
   // background-free on hover (only the project entry highlights).
-  block-size: 40px;
+  block-size: var(--cog-space-500);
   border: 0;
   border-radius: var(--cog-radius-sm);
   background: transparent;
@@ -148,7 +148,7 @@
   gap: var(--cog-space-075);
   min-width: 0;
   // Match the conversation list item height so project and chat rows align.
-  min-height: 40px;
+  min-height: var(--cog-space-500);
   // No left padding — the avatar chip's own padding gives enough inset.
   padding: var(--cog-space-050) var(--cog-space-150) var(--cog-space-050) 0;
   border-radius: var(--cog-radius-sm);

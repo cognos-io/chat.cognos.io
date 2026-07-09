@@ -69,7 +69,8 @@ import { PersonaService } from '@app/services/persona.service';
       display: inline-flex;
       align-items: center;
       gap: var(--cog-space-050);
-      padding: var(--cog-space-050) 10px var(--cog-space-050) var(--cog-space-075);
+      padding: var(--cog-space-050) var(--cog-space-100) var(--cog-space-050)
+        var(--cog-space-075);
       border: var(--cog-border-width) solid var(--cog-border);
       border-radius: var(--cog-radius-pill);
       background: var(--cog-surface);
@@ -91,13 +92,13 @@ import { PersonaService } from '@app/services/persona.service';
       background: var(--cog-success-bg);
       color: var(--cog-success-text);
       font-weight: var(--cog-fw-semibold);
-      padding-left: 10px;
+      padding-left: var(--cog-space-100);
     }
 
     .persona-chips__chip--all {
       border-style: dashed;
       color: var(--cog-text-subtle);
-      padding-left: 10px;
+      padding-left: var(--cog-space-100);
     }
 
     .persona-chips__name {

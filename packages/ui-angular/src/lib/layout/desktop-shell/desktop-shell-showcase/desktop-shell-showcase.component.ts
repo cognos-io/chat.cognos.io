@@ -258,7 +258,7 @@ import { CognosDesktopShellComponent } from '../desktop-shell.component';
         height: 28px;
         align-items: center;
         justify-content: center;
-        border-radius: 6px;
+        border-radius: var(--cog-radius-md);
         background: var(--cog-brand);
         color: var(--cog-on-brand);
       }
@@ -286,7 +286,7 @@ import { CognosDesktopShellComponent } from '../desktop-shell.component';
 
       .cog-desktop-shell-showcase__section {
         display: grid;
-        gap: 10px;
+        gap: var(--cog-space-100);
       }
 
       .cog-desktop-shell-showcase__section--grow {
@@ -362,13 +362,13 @@ import { CognosDesktopShellComponent } from '../desktop-shell.component';
 
       .cog-desktop-shell-showcase__messages {
         display: grid;
-        gap: 28px;
+        gap: var(--cog-space-400);
         padding-top: var(--cog-space-100);
       }
 
       .cog-desktop-shell-showcase__assistant-copy {
         display: grid;
-        gap: 14px;
+        gap: var(--cog-space-200);
       }
 
       .cog-desktop-shell-showcase__assistant-copy p {
@@ -377,7 +377,7 @@ import { CognosDesktopShellComponent } from '../desktop-shell.component';
 
       .cog-desktop-shell-showcase__composer-wrap {
         max-width: 820px;
-        margin-left: 96px;
+        margin-left: calc(6 * var(--cog-space-200));
       }
     `,
   ],

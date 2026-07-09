@@ -91,7 +91,7 @@ import { CognosIconButtonComponent } from '../../primitives/icon-button/icon-but
         background: transparent;
         color: var(--cog-text);
         font: inherit;
-        font-size: 16px;
+        font-size: var(--cog-fs-h-sm);
         line-height: var(--cog-lh-body-lg);
         outline: 0;
       }

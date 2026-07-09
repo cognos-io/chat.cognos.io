@@ -277,7 +277,7 @@ const validateUnlockForm = (
   styles: `
     :host {
       display: block;
-      inline-size: min(640px, calc(100vw - 32px));
+      inline-size: min(640px, calc(100vw - var(--cog-space-400)));
     }
 
     .vault-password-dialog,
@@ -308,8 +308,8 @@ const validateUnlockForm = (
 
     .vault-password-dialog__status-badge {
       display: inline-flex;
-      width: 32px;
-      height: 32px;
+      width: var(--cog-space-400);
+      height: var(--cog-space-400);
       align-items: center;
       justify-content: center;
       border-radius: var(--cog-radius-pill);
@@ -397,7 +397,7 @@ const validateUnlockForm = (
     }
 
     .vault-password-dialog__input {
-      min-height: 40px;
+      min-height: var(--cog-space-500);
       border: var(--cog-border-width-strong) solid var(--cog-border);
       border-radius: var(--cog-radius-sm);
       background: var(--cog-input-bg);

@@ -43,7 +43,7 @@ export const DEFAULT_FILTER_OPTIONS: CognosFilterChipOption[] = [
       .cog-filter-chips {
         display: flex;
         flex-wrap: wrap;
-        gap: 7px;
+        gap: var(--cog-space-075);
       }
 
       .cog-filter-chips__chip {
@@ -53,7 +53,7 @@ export const DEFAULT_FILTER_OPTIONS: CognosFilterChipOption[] = [
         background: var(--cog-surface);
         padding: 0 var(--cog-space-150);
         color: var(--cog-text-subtle);
-        font-size: 13px;
+        font-size: var(--cog-fs-body-sm);
         line-height: 1.4;
         cursor: pointer;
 

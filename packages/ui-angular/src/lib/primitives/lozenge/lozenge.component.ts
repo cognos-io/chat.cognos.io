@@ -1,19 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-export type CognosLozengeTone =
-  | "neutral"
-  | "blue"
-  | "green"
-  | "purple"
-  | "red";
+export type CognosLozengeTone = 'neutral' | 'blue' | 'green' | 'purple' | 'red';
 
 @Component({
-  selector: "cog-lozenge",
+  selector: 'cog-lozenge',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -32,7 +22,7 @@ export type CognosLozengeTone =
         min-height: 18px;
         align-items: center;
         border-radius: var(--cog-radius-xs);
-        padding: 1px 5px;
+        padding: var(--cog-space-025) var(--cog-space-050);
         font-size: var(--cog-fs-lozenge);
         font-weight: var(--cog-fw-lozenge);
         line-height: var(--cog-lh-lozenge);
@@ -69,7 +59,7 @@ export type CognosLozengeTone =
   ],
 })
 export class CognosLozengeComponent {
-  readonly tone = input<CognosLozengeTone>("neutral");
+  readonly tone = input<CognosLozengeTone>('neutral');
 
   protected readonly lozengeClass = computed(
     () => `cog-lozenge cog-lozenge--${this.tone()}`,

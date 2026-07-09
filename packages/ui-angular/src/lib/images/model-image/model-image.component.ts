@@ -132,7 +132,7 @@ export type CognosModelImageState = 'done' | 'generating';
         position: relative;
         text-align: center;
         color: var(--cog-text-subtle);
-        font-size: 13px;
+        font-size: var(--cog-fs-body-sm);
         line-height: 1.45;
       }
 
@@ -140,19 +140,19 @@ export type CognosModelImageState = 'done' | 'generating';
         display: block;
         margin-bottom: var(--cog-space-100);
         color: var(--cog-link);
-        font-size: 22px;
+        font-size: var(--cog-fs-h-lg);
       }
 
       .cog-model-image__meta {
         display: flex;
         align-items: center;
         gap: var(--cog-space-100);
-        margin-top: 10px;
+        margin-top: var(--cog-space-100);
       }
 
       .cog-model-image__caption {
         color: var(--cog-text-subtlest);
-        font-size: 12px;
+        font-size: var(--cog-fs-caption);
         line-height: 1.4;
       }
 
@@ -161,9 +161,9 @@ export type CognosModelImageState = 'done' | 'generating';
         border: var(--cog-border-width) solid var(--cog-border);
         border-radius: var(--cog-radius-sm);
         background: var(--cog-surface-hover);
-        padding: var(--cog-space-100) 11px;
+        padding: var(--cog-space-100) var(--cog-space-150);
         color: var(--cog-text-subtle);
-        font-size: 12.5px;
+        font-size: var(--cog-fs-caption);
         line-height: 1.45;
       }
 

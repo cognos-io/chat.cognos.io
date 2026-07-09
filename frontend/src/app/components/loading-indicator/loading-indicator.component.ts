@@ -25,8 +25,8 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     }
 
     .loading-indicator span {
-      width: 8px;
-      height: 8px;
+      width: var(--cog-space-100);
+      height: var(--cog-space-100);
       border-radius: var(--cog-radius-pill);
       background: currentColor;
       animation: loading-indicator-bounce 1s infinite var(--cog-ease-standard);
@@ -50,7 +50,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 
       40% {
         opacity: 1;
-        transform: translateY(-2px);
+        transform: translateY(calc(-1 * var(--cog-space-025)));
       }
     }
   `,

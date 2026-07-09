@@ -88,7 +88,7 @@ import type { CognosVaultFile } from '../../vault/vault.types';
         align-items: center;
         gap: var(--cog-space-075);
         border-radius: var(--cog-radius-pill);
-        padding: 0 10px;
+        padding: 0 var(--cog-space-100);
         cursor: pointer;
       }
 
@@ -107,7 +107,7 @@ import type { CognosVaultFile } from '../../vault/vault.types';
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: 13px;
+        font-size: var(--cog-fs-body-sm);
         line-height: 1.4;
       }
 
@@ -134,7 +134,7 @@ import type { CognosVaultFile } from '../../vault/vault.types';
         border-radius: var(--cog-radius-md);
         background: var(--cog-surface);
         box-shadow: var(--cog-shadow-overlay);
-        padding: 10px;
+        padding: var(--cog-space-100);
       }
 
       .cog-vault-ref-chip__item {
@@ -148,7 +148,7 @@ import type { CognosVaultFile } from '../../vault/vault.types';
         flex: 1;
         overflow: hidden;
         color: var(--cog-text);
-        font-size: 12.5px;
+        font-size: var(--cog-fs-caption);
         line-height: 1.4;
         text-overflow: ellipsis;
         white-space: nowrap;
