@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Cognos — AI you can tell anything",
-    "description": "Most AI keeps what you type and trains on it. Cognos doesn't. We keep no copy of your chats we can read, your personal details are hidden before your message is sent, and the AI forgets your chat the moment it answers. Handled in Switzerland or Europe."
+    "description": "Private AI chat with encrypted saved history. Cognos hides detected personal details before sending and uses approved AI providers for live answers in your chosen region."
   },
   "nav": {
     "toggle": "Toggle navigation",
@@ -19,7 +19,7 @@
     "titleBefore": "The AI you can finally",
     "titleEm": "tell everything.",
     "titleAfter": "",
-    "lead": "Every other AI keeps what you type — and uses it to train its next model. Your health. Your money. Your worries. All sitting on someone else's computer. Cognos works the other way round. We keep no copy of your chats we can read. Your personal details are hidden before anything is sent. And the AI forgets your chat the moment it answers.",
+    "lead": "AI can be useful for your health, money and worries — exactly the things you may not want sitting in a readable history. Cognos saves your chats in a form we can't read. Before a live request goes to an approved AI provider, Cognos hides the personal details it detects.",
     "ctaPrimary": "Get started",
     "ctaSecondary": "See how it works",
     "finehint": "Try it first — free starter credit, no card needed · From CHF 15/month · 60-day money-back guarantee",
@@ -81,8 +81,8 @@
         "body": "Things like your email, bank details and ID are swapped for placeholders — before your message ever leaves your screen."
       },
       {
-        "title": "2 · The AI answers, then forgets",
-        "body": "Your message goes to a trusted AI in Switzerland or Europe. It replies, and keeps nothing."
+        "title": "2 · An approved AI answers",
+        "body": "Your message is readable while an approved AI provider processes the live request in your chosen region. Provider retention is disabled and checked before approval."
       },
       {
         "title": "3 · Your chat gets locked away",
@@ -97,7 +97,7 @@
   "redaction": {
     "eyebrow": "Hiding your details",
     "title": "Your details are hidden before the AI ever sees them.",
-    "lead": "Type or paste anything. Cognos spots things like emails, phone numbers, bank details and ID numbers and swaps them for placeholders — before your message leaves your screen. The AI answers using the placeholders, and only you ever see the real values put back.",
+    "lead": "Type or paste anything. Cognos looks for things like emails, phone numbers, bank details and ID numbers and swaps detected values for placeholders before sending. Check the preview: detection is best-effort and may not find every sensitive value. The AI answers using the placeholders, and Cognos restores the real values for authorised viewers.",
     "you": "What you see",
     "ai": "What the AI sees",
     "docName": "note-to-accountant.txt",
@@ -144,7 +144,7 @@
     ],
     "flow": {
       "eyebrow": "The round trip",
-      "title": "The AI does the work. It never learns who you are.",
+      "title": "The AI does the work with fewer personal details.",
       "lead": "Watch one message make the round trip: your details are hidden on the way out, and restored just for you on the way back.",
       "toggle": "Hiding details",
       "model": "Claude",
@@ -187,11 +187,11 @@
     "items": [
       {
         "title": "Nothing readable is kept",
-        "body": "We save your chats in a form we can't read — so there's nothing to leak, sell, or hand over."
+        "body": "We save chat content in a form we can't read. Account, billing and operational details are kept separately where needed to run the service."
       },
       {
         "title": "Your details, hidden automatically",
-        "body": "Emails, bank details, ID numbers and passwords are hidden before your message is sent. On by default."
+        "body": "Cognos hides detected emails, bank details, ID numbers and passwords before sending. Check the preview because detection may not find everything."
       },
       {
         "title": "You pick where it's handled",
@@ -228,7 +228,7 @@
         "Every chat gets the <b>full privacy treatment</b>",
         "Self-deleting messages & incognito included",
         "Switzerland or Europe, with dozens of AI models",
-        "Spend nothing in months you don't use it"
+        "CHF 15 minimum each billing month; usage above it is billed automatically"
       ],
       "cta": "Start pay as you go"
     },
@@ -320,7 +320,7 @@
       "title": "Privacy Policy",
       "lead": "How we handle your information — in plain language, privacy first.",
       "effectiveLabel": "Last updated",
-      "effectiveDate": "2 July 2026",
+      "effectiveDate": "10 July 2026",
       "facts": [
         {
           "label": "Controller",
@@ -1642,7 +1642,7 @@
               "ul": [
                 "<b>Your device</b> holds the keys. Your chats are unlocked and read here, and nowhere else.",
                 "<b>Our servers</b> store your chats locked, pass your message to the AI, and lock the answer away again. They never keep a copy we can read.",
-                "<b>The AI provider</b> receives your message only while it answers, then keeps nothing."
+                "<b>The approved AI provider</b> receives your message while it answers. We disable Provider retention and verify that setting before approval."
               ]
             }
           ]

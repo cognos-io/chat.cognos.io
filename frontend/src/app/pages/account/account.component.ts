@@ -334,6 +334,27 @@ import {
                     [value]="deleteAccountConfirmText()"
                     (valueChange)="deleteAccountConfirmText.set($event)"
                   />
+                  <cog-field [label]="t('account.danger.passwordLabel')">
+                    <cog-text-field
+                      [ariaLabel]="t('account.danger.passwordLabel')"
+                      type="password"
+                      autocomplete="current-password"
+                      [value]="deleteAccountPassword()"
+                      (valueChange)="deleteAccountPassword.set($event)"
+                    />
+                  </cog-field>
+                  <cog-field
+                    [label]="t('account.danger.totpLabel')"
+                    [hint]="t('account.danger.stepUpHint')"
+                  >
+                    <cog-text-field
+                      [ariaLabel]="t('account.danger.totpLabel')"
+                      inputmode="numeric"
+                      autocomplete="one-time-code"
+                      [value]="deleteAccountTOTP()"
+                      (valueChange)="deleteAccountTOTP.set($event)"
+                    />
+                  </cog-field>
                 </div>
               }
             </div>
@@ -635,8 +656,12 @@ export class AccountComponent {
   protected readonly confirmingDeleteAccount = signal(false);
   protected readonly deletingAccount = signal(false);
   protected readonly deleteAccountConfirmText = signal('');
+  protected readonly deleteAccountPassword = signal('');
+  protected readonly deleteAccountTOTP = signal('');
   protected readonly canDeleteAccount = computed(
-    () => this.deleteAccountConfirmText().trim().toUpperCase() === 'DELETE',
+    () =>
+      this.deleteAccountConfirmText().trim().toUpperCase() === 'DELETE' &&
+      this.deleteAccountPassword().length > 0,
   );
 
   protected readonly dirty = computed(
@@ -773,6 +798,8 @@ export class AccountComponent {
   cancelDeleteAccount(): void {
     this.confirmingDeleteAccount.set(false);
     this.deleteAccountConfirmText.set('');
+    this.deleteAccountPassword.set('');
+    this.deleteAccountTOTP.set('');
   }
 
   deleteAccount(): void {
@@ -781,25 +808,30 @@ export class AccountComponent {
     }
 
     this.deletingAccount.set(true);
-    this._api.deleteAccount().subscribe({
-      next: async () => {
-        // The account is gone — clear the session and send them to login.
-        await this._auth.logout();
-        this._toast.notify({
-          title: this._transloco.translate('account.toasts.accountDeleted'),
-        });
-        await this._router.navigate(['/', 'auth', 'login']);
-      },
-      error: (error: unknown) => {
-        this.deletingAccount.set(false);
-        const conflict = (error as { status?: number })?.status === 409;
-        this._toast.notify({
-          title: conflict
-            ? this._transloco.translate('account.toasts.deleteAccountConflict')
-            : this._transloco.translate('account.toasts.deleteAccountError'),
-          tone: 'danger',
-        });
-      },
-    });
+    this._api
+      .deleteAccount(this.deleteAccountPassword(), this.deleteAccountTOTP().trim())
+      .subscribe({
+        next: async () => {
+          // The account is gone — clear the session and send them to login.
+          await this._auth.logout();
+          this._toast.notify({
+            title: this._transloco.translate('account.toasts.accountDeleted'),
+          });
+          await this._router.navigate(['/', 'auth', 'login']);
+        },
+        error: (error: unknown) => {
+          this.deletingAccount.set(false);
+          const status = (error as { status?: number })?.status;
+          this._toast.notify({
+            title:
+              status === 409
+                ? this._transloco.translate('account.toasts.deleteAccountConflict')
+                : status === 400
+                  ? this._transloco.translate('account.toasts.deleteAccountStepUpError')
+                  : this._transloco.translate('account.toasts.deleteAccountError'),
+            tone: 'danger',
+          });
+        },
+      });
   }
 }

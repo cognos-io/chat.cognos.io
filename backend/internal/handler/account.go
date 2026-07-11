@@ -24,14 +24,44 @@ import (
 // Deletion is refused while a paid plan is active: removing the account would
 // orphan the Paddle subscription and keep billing a user who no longer exists.
 // The user must cancel first. Trial, inactive, or no billing row are all fine.
-func AccountDelete(app core.App) func(e *core.RequestEvent) error {
+type accountDeleteRequest struct {
+	Password string `json:"password"`
+	TOTPCode string `json:"totpCode"`
+}
+
+func AccountDelete(params MFAParams) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		user := auth.ExtractUser(e)
 		if user == nil {
 			return apis.NewUnauthorizedError("User not authenticated", nil)
 		}
+		userRecord, err := params.App.FindRecordById("users", user.ID)
+		if err != nil {
+			return apis.NewNotFoundError("User not found", err)
+		}
 
-		repo := billing.NewPocketBaseRepo(app)
+		var req accountDeleteRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Failed to read request data", err)
+		}
+		if !userRecord.ValidatePassword(req.Password) {
+			return apis.NewBadRequestError("Incorrect password", nil)
+		}
+		if userRecord.GetBool("mfa_enabled") {
+			totp, err := params.Store.GetTOTP(user.ID)
+			if err != nil || params.Cipher == nil {
+				return apis.NewApiError(http.StatusServiceUnavailable, "MFA is not configured", nil)
+			}
+			ok, _, err := verifyTOTPRecord(params, totp, req.TOTPCode)
+			if err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to verify code", err)
+			}
+			if !ok {
+				return apis.NewBadRequestError("Incorrect code", nil)
+			}
+		}
+
+		repo := billing.NewPocketBaseRepo(params.App)
 		state, err := repo.StateForUser(user.ID)
 		if err != nil && !errors.Is(err, billing.ErrStateNotFound) {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to load billing state", err)
@@ -45,12 +75,7 @@ func AccountDelete(app core.App) func(e *core.RequestEvent) error {
 			)
 		}
 
-		userRecord, err := app.FindRecordById("users", user.ID)
-		if err != nil {
-			return apis.NewNotFoundError("User not found", err)
-		}
-
-		if err := app.RunInTransaction(func(txApp core.App) error {
+		if err := params.App.RunInTransaction(func(txApp core.App) error {
 			conversations, err := txApp.FindAllRecords(
 				"conversations",
 				dbx.HashExp{"creator": user.ID},

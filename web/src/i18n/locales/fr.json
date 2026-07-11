@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Cognos — l'IA à qui vous pouvez tout confier",
-    "description": "La plupart des IA gardent ce que vous écrivez et s'en servent pour apprendre. Pas Cognos. Nous n'en gardons aucune copie lisible, vos informations personnelles sont masquées avant l'envoi de votre message, et l'IA oublie votre conversation dès qu'elle a répondu. Tout se passe en Suisse ou en Europe."
+    "description": "Chat IA privé avec historique enregistré sous une forme illisible pour nous. Cognos masque les informations personnelles détectées avant l'envoi et utilise des fournisseurs d'IA approuvés pour les réponses en direct dans la région choisie."
   },
   "nav": {
     "how": "Comment ça marche",
@@ -18,7 +18,7 @@
     "titleBefore": "L'IA à qui vous pouvez enfin",
     "titleEm": "tout confier.",
     "titleAfter": "",
-    "lead": "Toutes les autres IA gardent ce que vous écrivez — et s'en servent pour entraîner leur prochain modèle. Votre santé. Votre argent. Vos soucis. Tout cela sur l'ordinateur de quelqu'un d'autre. Cognos fonctionne à l'envers. Nous n'en gardons aucune copie lisible. Vos informations personnelles sont masquées avant le moindre envoi. Et l'IA oublie votre conversation dès qu'elle a répondu.",
+    "lead": "L'IA peut vous aider avec votre santé, votre argent et vos soucis — précisément ce que vous ne voulez peut-être pas conserver dans un historique lisible. Cognos enregistre vos conversations sous une forme que nous ne pouvons pas lire. Avant une demande en direct à un fournisseur d'IA approuvé, Cognos masque les informations personnelles qu'il détecte.",
     "ctaPrimary": "Commencer",
     "ctaSecondary": "Voir comment ça marche",
     "finehint": "Essayez d'abord — crédit de départ offert, sans carte · À partir de CHF 15/mois · Satisfait ou remboursé 60 jours",
@@ -80,8 +80,8 @@
         "body": "Des choses comme votre e-mail, vos coordonnées bancaires et votre pièce d'identité sont remplacées par des repères — avant même que votre message ne quitte votre écran."
       },
       {
-        "title": "2 · L'IA répond, puis oublie",
-        "body": "Votre message part vers une IA de confiance en Suisse ou en Europe. Elle répond, et ne garde rien."
+        "title": "2 · Une IA approuvée répond",
+        "body": "Votre message est lisible pendant qu'un fournisseur d'IA approuvé traite la demande en direct dans la région choisie. La conservation chez le fournisseur est désactivée et vérifiée avant son approbation."
       },
       {
         "title": "3 · Votre conversation est mise sous clé",
@@ -96,7 +96,7 @@
   "redaction": {
     "eyebrow": "Vos informations, masquées",
     "title": "Vos informations sont masquées avant même que l’IA ne les voie.",
-    "lead": "Écrivez ou collez ce que vous voulez. Cognos repère les e-mails, numéros de téléphone, coordonnées bancaires et numéros d’identité et les remplace par des espaces réservés — avant que votre message ne quitte votre écran. L’IA répond avec les espaces réservés, et vous seul revoyez les vraies valeurs.",
+    "lead": "Écrivez ou collez ce que vous voulez. Cognos recherche les e-mails, numéros de téléphone, coordonnées bancaires et numéros d'identité, puis remplace les valeurs détectées avant l'envoi. Vérifiez l'aperçu : la détection fait de son mieux, mais peut manquer des informations sensibles. L'IA répond avec les repères et Cognos restaure les vraies valeurs pour les personnes autorisées.",
     "you": "Ce que vous voyez",
     "ai": "Ce que l’IA voit",
     "docName": "note-au-fiduciaire.txt",
@@ -143,7 +143,7 @@
     ],
     "flow": {
       "eyebrow": "L’aller-retour",
-      "title": "L’IA fait le travail. Elle ne sait jamais qui vous êtes.",
+      "title": "L'IA fait le travail avec moins d'informations personnelles.",
       "lead": "Suivez un message dans son aller-retour : vos informations sont masquées à l’envoi, et restaurées pour vous seul au retour.",
       "toggle": "Masquage activé",
       "model": "Claude",
@@ -186,11 +186,11 @@
     "items": [
       {
         "title": "Rien de lisible n'est gardé",
-        "body": "Nous enregistrons vos conversations sous une forme que nous ne pouvons pas lire — donc il n'y a rien à divulguer, à vendre ou à transmettre."
+        "body": "Nous enregistrons le contenu de vos conversations sous une forme que nous ne pouvons pas lire. Les informations de compte, de facturation et de fonctionnement nécessaires sont conservées séparément."
       },
       {
         "title": "Vos informations, masquées automatiquement",
-        "body": "E-mails, coordonnées bancaires, numéros de pièce d'identité et mots de passe sont masqués avant l'envoi de votre message. Activé par défaut."
+        "body": "Cognos masque les e-mails, coordonnées bancaires, numéros d'identité et mots de passe détectés avant l'envoi. Vérifiez l'aperçu, car la détection peut ne pas tout trouver."
       },
       {
         "title": "Vous choisissez où tout se passe",
@@ -227,7 +227,7 @@
         "Chaque conversation reçoit <b>toute la protection</b>",
         "Messages qui s'effacent et mode incognito inclus",
         "Suisse ou Europe, avec des dizaines de modèles d'IA",
-        "Ne payez rien les mois où vous ne l'utilisez pas"
+        "Minimum de CHF 15 par mois facturé ; tout dépassement est facturé automatiquement"
       ],
       "cta": "Commencer à l'usage"
     },
@@ -333,7 +333,7 @@
       "title": "Sous-traitants",
       "lead": "La courte liste des prestataires de confiance derrière Cognos — ce que fait chacun, ce qu’il peut traiter et où.",
       "effectiveLabel": "Dernière mise à jour",
-      "effectiveDate": "2 juillet 2026",
+      "effectiveDate": "10 juillet 2026",
       "facts": [
         {
           "label": "Responsable",
@@ -503,7 +503,7 @@
               "ul": [
                 "<b>Votre appareil</b> détient les clés. Vos conversations sont déverrouillées et lues ici, et nulle part ailleurs.",
                 "<b>Nos serveurs</b> stockent vos conversations verrouillées, transmettent votre message à l’IA, puis reverrouillent la réponse. Ils ne conservent jamais une copie que nous pouvons lire.",
-                "<b>Le fournisseur d’IA</b> reçoit votre message uniquement pendant qu’il répond, puis ne conserve rien."
+                "<b>Le fournisseur d’IA approuvé</b> reçoit votre message pendant qu’il répond. Nous désactivons la conservation chez le fournisseur et la vérifions avant son approbation."
               ]
             }
           ]

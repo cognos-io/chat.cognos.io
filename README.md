@@ -54,26 +54,27 @@ Notes:
 
 ## Deployment
 
-1. SSH into Hetzner VPS via Tailscale with the `cognos` user:
-   - `ssh cognos@api-cognos-io`
-1. Go to the Cognos installation directory:
-   - `cd /home/cognos/chat.cognos.io`
-1. Pull down the latest changes using Git over SSH with a read-only deploy key:
-   - `git pull`
-1. Ensure production runtime secrets exist on the host:
-   - `backend/.env` with non-secret backend settings such as `COGNOS_INFOMANIAK_PRODUCT_ID`
-   - `backend/secrets/infomaniak_api_key`
-   - `backup/secrets/borg_passphrase`
-   - `backup/secrets/borg_ssh_key`
-   - `backup/secrets/borg_known_hosts`
-1. Force a backup to Borgbase:
-   - `docker compose run backup borgmatic create --verbosity 1 --list --stats`
-1. Verify the Caddyfile:
-   - `docker compose run web caddy validate --config /etc/caddy/Caddyfile`
-1. If valid, deploy the latest containers:
-   - `docker compose up --build --detach`
+Production deployment is owned by the private Cognos deployment repository. This application
+repository defines its build, configuration, secret, edge-security, data, health, backup, smoke-test
+and rollback contract in [`docs/deployment-interface.md`](./docs/deployment-interface.md). Operators
+must maintain the canonical private-repository URL in the restricted production runbook.
 
-### Initial setup
+Do not deploy by pulling this repository onto a host or by rebuilding images there. The canonical
+backend container is built from the repository root with
+`container/backend/Containerfile`; production promotes reviewed immutable image digests.
+
+Repository-side operator controls:
+
+- [restore drill and evidence record](./docs/operations/restore-drill.md)
+- [incident response and rollback](./docs/operations/incident-response.md)
+- [release evidence bundle](./docs/operations/release-evidence.md)
+- [analytics dashboard verification](./docs/operations/analytics-dashboard.md)
+
+### Historical infrastructure notes
+
+The notes below record early planning only. They are not deployment instructions or an inventory of
+the current production system; the private deployment repository and the interface above supersede
+them.
 
 Documenting the initial setup here and
 [in issue #86](https://github.com/cognos-io/chat.cognos.io/issues/86) of the infrastructure and
@@ -97,6 +98,8 @@ steps to going live for posterity.
     - Store the Borg passphrase, dedicated backup SSH key, and known_hosts entry as host secrets
       under `backup/secrets/` rather than mounting the full `/home/cognos/.ssh` directory into the
       container
+    - A backup is not proven recoverable until the isolated
+      [restore drill](./docs/operations/restore-drill.md) passes and its dated record is reviewed
 - PocketBase authentication:
     - Create or migrate users in the `users` auth collection
     - Use built-in PocketBase email/password auth for app login
@@ -127,8 +130,7 @@ steps to going live for posterity.
             - Automatic security updates
             - `ufw` enabled and configured
             - PSAD intrusion detection
-        - Install Docker and Docker compose plugin
-            - Add `cognos` user to docker group to be able to run docker commands as non-root user
+        - Install the rootless container runtime selected in the private deployment repository
     - Monitoring:
         - Setup Grafana Alloy to monitor server and alert on high usage
     - Pocketbase application:
@@ -136,10 +138,9 @@ steps to going live for posterity.
           `cognos/chat.cognos.io` repo:
             - `git clone git@github.com:cognos-io/chat.cognos.io.git`
         - Create `backend/.env` from `backend/.env.template`
-        - Place the Infomaniak API key in `backend/secrets/infomaniak_api_key`
-        - Place BorgBase backup secrets in `backup/secrets/`
-        - Bring up the docker compose infrastructure (Caddy + Pocketbase + Backups)
-            - `docker compose up --build --detach`
+        - Supply application configuration and mounted secrets according to the deployment
+          interface
+        - Promote the reviewed image digest through the private deployment repository
 - Frontend:
     - Angular app (`frontend/`) built and served from the Hetzner host, fronted by Bunny CDN.
 - DNS on Bunny.net:

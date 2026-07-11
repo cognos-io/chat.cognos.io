@@ -125,6 +125,11 @@ the funnel.
 network and server cases; focus/live-region behaviour; rainy-path unit tests; browser coverage for
 failure, retry and success.
 
+**Remediation — repository work completed:** registration and password-reset requests now map
+validation, duplicate-account, rate-limit, network and server failures to actionable copy in all six
+locales. Errors use `role="alert"`, receive focus, clear on retry, and retain enumeration-safe reset
+success behaviour. Focused component tests and Playwright rainy/retry/success coverage were added.
+
 ### P0.2 — Establish one price and one honest billing explanation
 
 The app and marketing advertise Unlimited at CHF 150/month and CHF 1,500/year
@@ -137,6 +142,12 @@ operations runbook instructs CHF 100/month and CHF 1,000/year
 all six locales and the operator checklist; a plain example invoice; explicit minimum charge,
 overage, tax/VAT, renewal, cancellation and guarantee wording; a checkout E2E that asserts displayed
 and returned product/price identity.
+
+**Remediation — repository work completed:** CHF 15 PAYG minimum, CHF 150 monthly Unlimited and CHF
+1,500 annual Unlimited are now consistent across the app, all marketing locales and the Paddle
+runbook. The runbook includes VAT, renewal, cancellation, guarantee and example-invoice wording. A
+marketing contract test now fails when catalogue prices, app prices or the runbook drift. The
+production Paddle product IDs still require operator verification against these canonical amounts.
 
 ### P0.3 — Align every privacy claim to the implemented trust boundary
 
@@ -152,6 +163,12 @@ live processing, name no-retention processing only where contractually confirmed
 universal competitor claims. Redaction copy must say it reduces exposure and is best-effort, not
 imply every sensitive value is detected. Review all six locales together.
 
+**Remediation — repository work completed:** all six marketing catalogues now describe Cognos rather
+than making universal competitor claims, distinguish live plaintext processing from encrypted
+stored history, qualify no-retention as an approved-Provider requirement, and describe Redaction as
+best-effort. The contract test pins the highest-risk English claims and locale structure; Provider
+contracts remain an external approval dependency under P0.4.
+
 ### P0.4 — Complete legal and subprocessor material
 
 The checked-in privacy material still contains unresolved EU/UK representative language, Providers
@@ -166,6 +183,15 @@ vendor-safeguards table, and incomplete retention periods (`docs/legal/privacy.m
 **Exit criteria:** counsel-approved terms/privacy/subprocessor and retention text; firm EU/UK scope;
 working, separate localised Terms and Privacy links at registration and login; DPA/security-contact
 path for professional buyers. This checkpoint is not legal advice.
+
+**Remediation — repository work completed; external approval required:** auth pages now link
+separately to Terms and Privacy pages in the active locale and use correct login wording. The
+canonical privacy source has been cleaned of drafting placeholders and unsupported certainty.
+[`docs/legal/launch-approval-checklist.md`](../legal/launch-approval-checklist.md) records the
+evidence counsel and the operator must approve. This gate is **not closed** until qualified counsel
+signs it, current Provider contracts and transfer safeguards are verified, representative/DPO
+obligations are determined, and the English legal body plus the non-English fallback/translation
+approach receive legal and translation approval.
 
 ### P0.5 — Publish and test one deployment/configuration interface
 
@@ -207,6 +233,16 @@ names the external deployment repo as authoritative and specifies:
 Update or remove the stale Compose/CI paths so this repo does not present a second, broken source of
 truth.
 
+**Remediation — repository work completed; deployment validation required:**
+[`docs/deployment-interface.md`](../deployment-interface.md) is now the application/deployment
+contract and explicitly makes the private Cognos deployment repository authoritative. It covers the
+topology boundary, canonical root-context Containerfile build, digest promotion/rollback, full
+runtime/build-time config and secret matrix, Provider constraints, edge headers/proxy trust,
+single-instance rate-limit constraint, health, data, restore and smoke checks. Broken Compose files
+and duplicate Dockerfiles were removed, README now points to the contract, and CI builds the
+canonical image with Podman. The deployment owner must still record the private repository URL,
+verify its implementation against the checklist and confirm immutable base-image digests.
+
 ### P0.6 — Require step-up authentication for Account deletion
 
 The deletion route only requires a bearer token and then irreversibly deletes Account-owned data
@@ -216,6 +252,15 @@ the auth token is stored browser-side, session theft can become irreversible des
 **Exit criteria:** require recent password verification and TOTP when enabled, use a short-lived
 step-up grant, confirm the destructive scope in translated UI, and test wrong password,
 missing/wrong TOTP, replay/expiry, cross-Account denial and successful deletion.
+
+**Remediation — implemented; pinned CI confirmation required:** Account deletion now verifies the
+current Account password and, when MFA is enabled, a current TOTP in the destructive request itself.
+Direct same-request verification avoids creating a replayable step-up grant. The translated settings
+UI collects both factors and keeps the confirmation disabled without a password. Backend tests cover
+wrong password, missing MFA and successful two-factor deletion; Playwright pins the request shape
+and UI gate. A focused review run passed after correcting PocketBase record/request-fixture issues,
+but a repeat run hit the workstation's mismatched 1.26.4/1.26.5 standard-library installation. The
+complete pinned release suite remains required under P0.8.
 
 ### P0.7 — Prove restore and incident readiness
 
@@ -228,6 +273,13 @@ also says incident response is still being finalised.
 Provider outage, account/billing incident and personal-data-breach paths; specify severity,
 notification, owner/on-call, customer/status communication and support escalation. Either staff the
 one-business-day support/continuous-monitoring promise or soften it.
+
+**Remediation — process implemented; real exercise required:** the restore-drill and incident
+runbooks now define unproven beta targets of 24-hour RPO and four-hour RTO, an isolated restore
+procedure and evidence record, severity/roles, Provider/backup/account/billing/breach paths,
+forward-only rollback, communications and support escalation. This gate is **not closed** until the
+operator completes and signs a restore drill and incident tabletop, then confirms staffing for the
+published support response.
 
 ### P0.8 — Retain a green, pinned release evidence bundle
 
@@ -244,6 +296,13 @@ vet, govulncheck, staticcheck/gosec, frontend and shared-library unit tests, bui
 suites, marketing accessibility tests, dependency audit, container scan and SBOM. Pin scanner/tool
 versions and image bases/digests so the result is reproducible.
 
+**Remediation — automation completed; release evidence required:** CI now supports manual/tagged
+release runs, pins govulncheck, staticcheck and gosec, adds vet, dependency audit, marketing
+accessibility testing, canonical Podman image export, image scanning and a 90-day SBOM artifact.
+[`docs/operations/release-evidence.md`](../operations/release-evidence.md) defines the evidence
+bundle and acceptance record. This gate is **not closed** until a tagged candidate completes green
+and its artifacts are archived; immutable base-image digests also remain an operator confirmation.
+
 ### P0.9 — Turn on the measurement loop before traffic
 
 The analytics implementation and event discipline are good, but Plausible production sites, goals
@@ -254,6 +313,14 @@ removed.
 **Exit criteria:** provision both sites, configure documented goals/funnels, validate events in
 production without content/identifiers, remove stale semantics, and record baseline conversion for
 the first 2–4 weeks.
+
+**Remediation — repository work completed; production provisioning required:** stale `idle_logout`
+analytics semantics were replaced with `relocked`, with unit coverage for event
+semantics/deduplication.
+[`docs/operations/analytics-dashboard.md`](../operations/analytics-dashboard.md) provides the
+content-free Plausible site, goal, funnel and production-verification checklist. This gate is
+**not closed** until both production sites and goals are provisioned, events are verified, and the
+first 2–4 week baseline is recorded.
 
 ## Highest-leverage adoption work
 

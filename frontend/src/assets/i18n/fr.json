@@ -29,7 +29,10 @@
       "deleteChatsSubtitle": "Supprimez définitivement chaque conversation et ses messages. Cette action est irréversible.",
       "deleteChatsTitle": "Supprimer toutes les conversations",
       "deleting": "Suppression…",
+      "passwordLabel": "Mot de passe actuel",
+      "stepUpHint": "Si l’authentification à deux facteurs est activée, saisissez également le code actuel à six chiffres.",
       "title": "Zone de danger",
+      "totpLabel": "Code d’authentification (si activé)",
       "typeToConfirm": "Saisissez {{ word }} pour confirmer."
     },
     "data": {
@@ -140,6 +143,7 @@
       "accountDeleted": "Votre compte a été supprimé",
       "deleteAccountConflict": "Résiliez votre abonnement avant de supprimer votre compte",
       "deleteAccountError": "Impossible de supprimer votre compte",
+      "deleteAccountStepUpError": "Vérifiez votre mot de passe et votre code d’authentification, puis réessayez",
       "deleteChatsError": "Impossible de supprimer les conversations",
       "deletedManyChats": "{{ count }} conversations supprimées",
       "deletedOneChat": "1 conversation supprimée",
@@ -208,13 +212,20 @@
       "sent": "Si un compte existe pour {{ email }}, nous avons envoyé un lien de réinitialisation. Consultez votre boîte de réception et suivez le lien pour choisir un nouveau mot de passe.",
       "sentNote": "Votre mot de passe sert uniquement à vous connecter — il ne déverrouille jamais vos conversations chiffrées. Le réinitialiser est donc sans risque et laisse votre historique intact.",
       "submit": "Envoyer le lien",
-      "title": "Réinitialiser votre mot de passe"
+      "title": "Réinitialiser votre mot de passe",
+      "errors": {
+        "duplicate": "Le lien n’a pas pu être envoyé. Vérifiez l’adresse e-mail et réessayez.",
+        "validation": "Vérifiez l’adresse e-mail et réessayez.",
+        "rateLimit": "Trop de demandes. Attendez quelques minutes, puis réessayez.",
+        "network": "Cognos est inaccessible. Vérifiez votre connexion et réessayez.",
+        "server": "Le lien ne peut pas être envoyé pour le moment. Veuillez réessayer sous peu."
+      }
     },
     "login": {
       "error": "Connexion impossible. Vérifiez votre e-mail et votre mot de passe, puis réessayez.",
       "forgot": "Mot de passe oublié ?",
       "lead": "Discutez avec les derniers modèles sans renoncer au contrôle de vos données. Les nouveaux appareils peuvent également demander votre clé de compte.",
-      "legalPrefix": "En vous inscrivant, vous acceptez notre",
+      "legalPrefix": "En continuant, vous acceptez nos",
       "needAccount": "Besoin d'un compte ?",
       "register": "S'inscrire",
       "signingIn": "Connexion…",
@@ -235,6 +246,13 @@
         "emailInvalid": "Saisissez une adresse e-mail valide.",
         "passwordLength": "Utilisez au moins 12 caractères.",
         "passwordOk": "La longueur du mot de passe est correcte."
+      },
+      "errors": {
+        "duplicate": "Un compte utilise déjà cette adresse e-mail. Connectez-vous ou réinitialisez votre mot de passe.",
+        "validation": "Le compte n’a pas pu être créé. Vérifiez vos informations et réessayez.",
+        "rateLimit": "Trop de tentatives d’inscription. Attendez quelques minutes, puis réessayez.",
+        "network": "Cognos est inaccessible. Vérifiez votre connexion et réessayez.",
+        "server": "Votre compte ne peut pas être créé pour le moment. Veuillez réessayer sous peu."
       }
     },
     "reset": {
@@ -1141,13 +1159,30 @@
       "saveError": "Impossible d'enregistrer le signet. Veuillez réessayer."
     }
   },
+  "a11y": {
+    "skipToContent": "Aller au contenu principal",
+    "dismiss": "Fermer",
+    "openNavigation": "Ouvrir la navigation",
+    "breadcrumbs": "Fil d’Ariane",
+    "branchSwitch": "Changer de réponse",
+    "previousBranch": "Réponse précédente",
+    "nextBranch": "Réponse suivante",
+    "assistantTyping": "L’assistant écrit",
+    "branchVersions": "{{ count }} versions",
+    "removeAttachment": "Supprimer la pièce jointe",
+    "encryptingOnDevice": "Chiffrement sur cet appareil",
+    "encryptRetry": "Échec du chiffrement — appuyez pour réessayer"
+  },
   "common": {
     "cancel": "Annuler",
     "email": "E-mail",
     "emailPlaceholder": "vous@exemple.com",
     "password": "Mot de passe",
     "passwordPlaceholder": "••••••••",
+    "and": "et notre",
+    "privacyPolicy": "Politique de confidentialité",
     "privacyTerms": "Politique de confidentialité et conditions",
+    "terms": "Conditions",
     "relativeDate": {
       "today": "Aujourd’hui",
       "yesterday": "Hier",
@@ -1499,6 +1534,7 @@
       "continue": "Continuer",
       "cancel": "Annuler",
       "scanInstruction": "Scannez ce QR code avec votre application d'authentification, ou saisissez la clé de configuration manuellement.",
+      "qrAlt": "QR code pour configurer l’authentification à deux facteurs",
       "manualKeyLabel": "Clé de configuration",
       "confirmInstruction": "Saisissez le code à 6 chiffres de votre application pour terminer l'activation.",
       "codeLabel": "Code d'authentification",

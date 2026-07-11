@@ -2,11 +2,81 @@ package main
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 )
+
+func TestAccountDeleteRequiresCurrentPassword(t *testing.T) {
+	t.Parallel()
+
+	scenario := tests.ApiScenario{
+		Name:            "account delete rejects an incorrect password",
+		Method:          http.MethodDelete,
+		URL:             "/api/v1/account",
+		Body:            strings.NewReader(`{"password":"incorrect-password"}`),
+		ExpectedStatus:  http.StatusBadRequest,
+		ExpectedContent: []string{`"message":"Incorrect password.`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc:  withRecordAuth("users", testUserEmail),
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			if _, err := app.FindAuthRecordByEmail("users", testUserEmail); err != nil {
+				t.Fatalf("FindAuthRecordByEmail(users, %q) error = %v, want user retained", testUserEmail, err)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestAccountDeleteRequiresTOTPWhenMFAEnabled(t *testing.T) {
+	t.Parallel()
+
+	scenario := tests.ApiScenario{
+		Name:            "account delete rejects a missing MFA code",
+		Method:          http.MethodDelete,
+		URL:             "/api/v1/account",
+		Body:            strings.NewReader(`{"password":"` + testUserPassword + `"}`),
+		ExpectedStatus:  http.StatusBadRequest,
+		ExpectedContent: []string{`"message":"Incorrect code.`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			enrollVerifiedTOTP(t.(*testing.T), app)
+			withRecordAuth("users", testUserEmail)(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			if _, err := app.FindAuthRecordByEmail("users", testUserEmail); err != nil {
+				t.Fatalf("FindAuthRecordByEmail(users, %q) error = %v, want user retained", testUserEmail, err)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestAccountDeleteAcceptsPasswordAndTOTP(t *testing.T) {
+	t.Parallel()
+
+	const secret = "JBSWY3DPEHPK3PXP"
+	code := totpCodeNow(t, secret)
+	scenario := tests.ApiScenario{
+		Name:           "account delete accepts both factors when MFA is enabled",
+		Method:         http.MethodDelete,
+		URL:            "/api/v1/account",
+		ExpectedStatus: http.StatusNoContent,
+		TestAppFactory: setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			enrollVerifiedTOTPSecret(t.(*testing.T), app, secret)
+			withRecordAuth("users", testUserEmail)(t, app, e)
+		},
+		Headers: map[string]string{"Content-Type": "application/json"},
+		Body:    strings.NewReader(`{"password":"` + testUserPassword + `","totpCode":"` + code + `"}`),
+	}
+
+	scenario.Test(t)
+}
 
 func TestAccountDeleteRequiresAuth(t *testing.T) {
 	t.Parallel()
@@ -32,6 +102,7 @@ func TestAccountDeleteErasesUserAndOwnChats(t *testing.T) {
 		Name:           "deleting the account removes the user and their conversations",
 		Method:         http.MethodDelete,
 		URL:            "/api/v1/account",
+		Body:           strings.NewReader(`{"password":"` + testUserPassword + `"}`),
 		ExpectedStatus: http.StatusNoContent,
 		TestAppFactory: setupTestApp,
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
@@ -58,6 +129,7 @@ func TestAccountDeleteBlockedWhileOnPaidPlan(t *testing.T) {
 		Name:            "account delete is refused while a paid plan is active",
 		Method:          http.MethodDelete,
 		URL:             "/api/v1/account",
+		Body:            strings.NewReader(`{"password":"` + testUserPassword + `"}`),
 		ExpectedStatus:  http.StatusConflict,
 		ExpectedContent: []string{`Cancel your plan before deleting your account`},
 		TestAppFactory:  setupTestApp,
@@ -83,6 +155,7 @@ func TestAccountDeleteRetainsFinancialRecords(t *testing.T) {
 		Name:           "deleting the account retains (detaches) billing records",
 		Method:         http.MethodDelete,
 		URL:            "/api/v1/account",
+		Body:           strings.NewReader(`{"password":"` + testUserPassword + `"}`),
 		ExpectedStatus: http.StatusNoContent,
 		TestAppFactory: setupTestApp,
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {

@@ -51,6 +51,51 @@ test.describe('auth + account key flow', () => {
     await expect(page.getByRole('button', { name: /create account/i })).toBeEnabled();
   });
 
+  test('registration explains a server failure and succeeds when retried', async ({
+    page,
+  }) => {
+    const account = makeTestAccount();
+    const registrationUrl = '**/api/collections/users/records';
+    await page.route(registrationUrl, async (route) => {
+      await route.fulfill({ status: 503, json: { message: 'Unavailable' } });
+    });
+
+    await gotoRegister(page);
+    await fillRegisterForm(page, account);
+    await submitRegister(page, account);
+    await expect(page.getByRole('alert')).toContainText(
+      "We couldn't create your account right now",
+    );
+
+    await page.unroute(registrationUrl);
+    await submitRegister(page, account);
+    await expectAccountKeyDialogForNewUser(page);
+  });
+
+  test('password recovery explains a failure and confirms a successful retry', async ({
+    page,
+  }) => {
+    const resetUrl = '**/api/collections/users/request-password-reset';
+    await page.route(resetUrl, async (route) => {
+      await route.fulfill({ status: 429, json: { message: 'Too many requests' } });
+    });
+
+    await gotoLogin(page);
+    await page.getByRole('link', { name: /forgot your password/i }).click();
+    await page.getByLabel('Email').fill('person@example.com');
+    await page.getByRole('button', { name: /send reset link/i }).click();
+    await expect(page.getByRole('alert')).toContainText('Too many reset requests');
+
+    await page.unroute(resetUrl);
+    await page.route(resetUrl, async (route) => {
+      await route.fulfill({ status: 204 });
+    });
+    await page.getByRole('button', { name: /send reset link/i }).click();
+    await expect(
+      page.getByText(/if an account exists for person@example.com/i),
+    ).toBeVisible();
+  });
+
   test('register → copy Account Key → acknowledge → logout → login → unlock', async ({
     page,
   }) => {

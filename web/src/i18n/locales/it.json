@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Cognos — l'IA a cui puoi dire tutto",
-    "description": "Quasi tutte le IA conservano quello che scrivi e lo usano per addestrarsi. Cognos no. Non teniamo nessuna copia leggibile delle tue chat, i tuoi dati personali vengono nascosti prima che il messaggio parta, e l'IA dimentica la conversazione nel momento in cui risponde. Tutto gestito in Svizzera o in Europa."
+    "description": "Chat IA privata con cronologia salvata in una forma che non possiamo leggere. Cognos nasconde i dati personali rilevati prima dell'invio e usa fornitori di IA approvati per le risposte in diretta nella regione che scegli."
   },
   "nav": {
     "how": "Come funziona",
@@ -18,7 +18,7 @@
     "titleBefore": "L'IA a cui puoi finalmente",
     "titleEm": "dire tutto.",
     "titleAfter": "",
-    "lead": "Ogni altra IA conserva quello che scrivi e lo usa per addestrare il suo prossimo modello. La tua salute. I tuoi soldi. Le tue preoccupazioni. Tutto sul computer di qualcun altro. Cognos funziona al contrario. Non teniamo nessuna copia leggibile delle tue chat. I tuoi dati personali vengono nascosti prima che parta qualsiasi cosa. E l'IA dimentica la conversazione nel momento in cui risponde.",
+    "lead": "L'IA può aiutarti con salute, soldi e preoccupazioni — proprio ciò che potresti non volere in una cronologia leggibile. Cognos salva le tue chat in una forma che non possiamo leggere. Prima di una richiesta in diretta a un fornitore di IA approvato, Cognos nasconde i dati personali che rileva.",
     "ctaPrimary": "Inizia ora",
     "ctaSecondary": "Guarda come funziona",
     "finehint": "Provalo prima — credito iniziale in regalo, senza carta · Da CHF 15/mese · Soddisfatti o rimborsati entro 60 giorni",
@@ -80,8 +80,8 @@
         "body": "Cose come la tua email, i dati bancari e il documento vengono sostituiti con segnaposti — prima che il messaggio lasci il tuo schermo."
       },
       {
-        "title": "2 · L'IA risponde, poi dimentica",
-        "body": "Il tuo messaggio va a un'IA affidabile in Svizzera o in Europa. Risponde, e non tiene nulla."
+        "title": "2 · Risponde un'IA approvata",
+        "body": "Il tuo messaggio è leggibile mentre un fornitore di IA approvato elabora la richiesta in diretta nella regione che scegli. La conservazione da parte del fornitore viene disattivata e verificata prima dell'approvazione."
       },
       {
         "title": "3 · La tua chat viene messa sotto chiave",
@@ -96,7 +96,7 @@
   "redaction": {
     "eyebrow": "I tuoi dati, nascosti",
     "title": "I tuoi dati sono nascosti prima ancora che l’IA li veda.",
-    "lead": "Scrivi o incolla quello che vuoi. Cognos individua e-mail, numeri di telefono, dati bancari e numeri identificativi e li sostituisce con segnaposto — prima che il tuo messaggio lasci lo schermo. L’IA risponde usando i segnaposto e solo tu rivedi i valori reali.",
+    "lead": "Scrivi o incolla quello che vuoi. Cognos cerca e-mail, numeri di telefono, dati bancari e numeri identificativi e sostituisce i valori rilevati prima dell'invio. Controlla l'anteprima: il rilevamento fa del suo meglio, ma potrebbe non trovare tutti i dati sensibili. L'IA risponde con segnaposto e Cognos ripristina i valori reali per le persone autorizzate.",
     "you": "Quello che vedi tu",
     "ai": "Quello che vede l’IA",
     "docName": "nota-al-commercialista.txt",
@@ -143,7 +143,7 @@
     ],
     "flow": {
       "eyebrow": "Andata e ritorno",
-      "title": "L’IA fa il lavoro. Non sa mai chi sei.",
+      "title": "L'IA fa il lavoro con meno dati personali.",
       "lead": "Segui un messaggio nel suo andata e ritorno: i tuoi dati vengono nascosti in uscita e ripristinati solo per te al ritorno.",
       "toggle": "Dati nascosti",
       "model": "Claude",
@@ -186,11 +186,11 @@
     "items": [
       {
         "title": "Non si tiene niente di leggibile",
-        "body": "Salviamo le tue chat in una forma che non possiamo leggere — così non c'è niente da far trapelare, vendere o consegnare."
+        "body": "Salviamo il contenuto delle chat in una forma che non possiamo leggere. I dati necessari per account, fatturazione e funzionamento vengono conservati separatamente."
       },
       {
         "title": "I tuoi dati, nascosti in automatico",
-        "body": "Email, dati bancari, numeri di documento e password vengono nascosti prima che il messaggio parta. Attivo di default."
+        "body": "Cognos nasconde e-mail, dati bancari, numeri identificativi e password rilevati prima dell'invio. Controlla l'anteprima, perché il rilevamento potrebbe non trovare tutto."
       },
       {
         "title": "Scegli tu dove viene gestita",
@@ -227,7 +227,7 @@
         "Ogni chat riceve <b>la privacy completa</b>",
         "Messaggi che si cancellano da soli e incognito inclusi",
         "Svizzera o Europa, con decine di modelli di IA",
-        "Non paghi nulla nei mesi in cui non lo usi"
+        "Minimo di CHF 15 per ogni mese fatturato; l'uso aggiuntivo viene addebitato automaticamente"
       ],
       "cta": "Inizia a consumo"
     },
@@ -333,7 +333,7 @@
       "title": "Subincaricati",
       "lead": "La breve lista di fornitori affidabili dietro Cognos — cosa fa ciascuno, cosa può trattare e dove.",
       "effectiveLabel": "Ultimo aggiornamento",
-      "effectiveDate": "2 luglio 2026",
+      "effectiveDate": "10 luglio 2026",
       "facts": [
         {
           "label": "Titolare",
@@ -503,7 +503,7 @@
               "ul": [
                 "<b>Il tuo dispositivo</b> custodisce le chiavi. Le tue chat vengono sbloccate e lette qui, e da nessun’altra parte.",
                 "<b>I nostri server</b> archiviano le tue chat bloccate, passano il tuo messaggio all’IA e ribloccano la risposta. Non conservano mai una copia che possiamo leggere.",
-                "<b>Il fornitore di IA</b> riceve il tuo messaggio solo mentre risponde, poi non conserva nulla."
+                "<b>Il fornitore di IA approvato</b> riceve il tuo messaggio mentre risponde. Disattiviamo la conservazione del fornitore e la verifichiamo prima dell’approvazione."
               ]
             }
           ]

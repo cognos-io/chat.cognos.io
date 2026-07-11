@@ -175,11 +175,13 @@ import { AuthService } from '@services/auth.service';
 
         <p class="auth-page__legal">
           {{ t('auth.login.legalPrefix') }}
-          <a
-            href="https://cognos.io/privacy-policy-and-terms/"
-            rel="noopener noreferrer"
-            target="_blank"
-            >{{ t('common.privacyTerms') }}</a
+          <a [href]="legalUrl('terms')" rel="noopener noreferrer" target="_blank">{{
+            t('common.terms')
+          }}</a>
+          {{ t('common.and') }}
+          <a [href]="legalUrl('privacy')" rel="noopener noreferrer" target="_blank">{{
+            t('common.privacyPolicy')
+          }}</a
           >.
         </p>
       </ng-container>
@@ -269,5 +271,11 @@ export class LoginComponent {
     this.mfaForm.reset({ code: '', rememberDevice: false });
     this.loginForm.controls.password.reset('');
     this.authService.resetMfaChallenge();
+  }
+
+  legalUrl(page: 'terms' | 'privacy'): string {
+    const language = this._transloco.getActiveLang();
+    const prefix = language && language !== 'en' ? `/${language}` : '';
+    return `https://cognos.io${prefix}/${page}`;
   }
 }

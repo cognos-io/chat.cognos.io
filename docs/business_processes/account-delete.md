@@ -12,9 +12,16 @@ Deletion is intentionally blocked while the Account has an active paid Plan. The
 Account holder must cancel or resolve billing first, so subscription ownership
 and payment obligations are not orphaned.
 
+Deletion is a step-up operation. The request body must contain the current
+Account password. When authenticator-app MFA is enabled, it must also contain a
+current six-digit code. The server verifies both immediately before checking
+billing state and deleting data; a bearer token alone is insufficient.
+
 ```mermaid
 flowchart LR
-  A[DELETE /api/v1/account] --> B{paid plan active?}
+  A[DELETE /api/v1/account] --> S{password and MFA valid?}
+  S -- no --> R[400 deletion refused]
+  S -- yes --> B{paid plan active?}
   B -- yes --> C[409 billing must be resolved]
   B -- no --> D[delete Account-owned product data]
   D --> E[detach retained financial records]

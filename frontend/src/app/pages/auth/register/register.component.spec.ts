@@ -77,17 +77,43 @@ describe('RegisterComponent', () => {
     expect(component.loading()).toBe(false);
   });
 
-  it('clears the loading state when registration fails', () => {
-    registerSpy.mockReturnValue(throwError(() => new Error('boom')));
-    component.registerForm.setValue({
-      email: 'person@example.com',
-      password: 'correct horse battery staple',
-    });
+  it.each([
+    [
+      { status: 400, response: { data: { email: { code: 'validation_not_unique' } } } },
+      'already uses this email',
+    ],
+    [{ status: 400 }, "couldn't create the account"],
+    [{ status: 429 }, 'Too many signup attempts'],
+    [{ status: 0 }, "couldn't reach Cognos"],
+    [{ status: 503 }, "couldn't create your account right now"],
+  ])(
+    'shows and focuses an actionable error when registration fails',
+    async (error, message) => {
+      registerSpy.mockReturnValue(throwError(() => error));
+      component.registerForm.setValue({
+        email: 'person@example.com',
+        password: 'correct horse battery staple',
+      });
 
-    component.onSubmit();
+      component.onSubmit();
 
-    expect(registerSpy).toHaveBeenCalledTimes(1);
-    expect(component.loading()).toBe(false);
+      expect(registerSpy).toHaveBeenCalledTimes(1);
+      expect(component.loading()).toBe(false);
+      fixture.detectChanges();
+      await new Promise<void>((resolve) => setTimeout(resolve));
+      const alert = fixture.nativeElement.querySelector('[role="alert"]');
+      expect(alert.textContent).toContain(message);
+      expect(document.activeElement).toBe(alert);
+    },
+  );
+
+  it('links separately to the localised Terms and Privacy pages', () => {
+    const links = Array.from(
+      fixture.nativeElement.querySelectorAll('.auth-page__legal a'),
+      (link: HTMLAnchorElement) => link.href,
+    );
+
+    expect(links).toEqual(['https://cognos.io/terms', 'https://cognos.io/privacy']);
   });
 
   it('navigates home after a user is emitted', () => {

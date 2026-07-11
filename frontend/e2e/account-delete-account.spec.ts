@@ -46,6 +46,10 @@ test('delete account requires typing DELETE then logs out', async ({ page }) => 
 
   let deleteCalled = false;
   await page.route(`${API}/api/v1/account`, async (route) => {
+    expect(route.request().postDataJSON()).toEqual({
+      password: 'current-password',
+      totpCode: '',
+    });
     deleteCalled = true;
     await route.fulfill({ status: 204, body: '' });
   });
@@ -58,10 +62,12 @@ test('delete account requires typing DELETE then logs out', async ({ page }) => 
 
   await page.getByRole('button', { name: 'Delete account' }).click();
 
-  // The confirm button stays disabled until the user types DELETE.
+  // Both the explicit phrase and current password are required.
   const confirm = page.getByRole('button', { name: 'Delete my account' });
   await expect(confirm).toBeDisabled();
   await page.getByLabel('Type DELETE to confirm').fill('DELETE');
+  await expect(confirm).toBeDisabled();
+  await page.getByLabel('Current password').fill('current-password');
   await expect(confirm).toBeEnabled();
   await confirm.click();
 
@@ -88,6 +94,7 @@ test('delete account surfaces the active-plan block', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Delete account' }).click();
   await page.getByLabel('Type DELETE to confirm').fill('DELETE');
+  await page.getByLabel('Current password').fill('current-password');
   await page.getByRole('button', { name: 'Delete my account' }).click();
 
   await expect(

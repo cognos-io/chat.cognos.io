@@ -1,11 +1,18 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
 
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { filterNil } from 'ngxtension/filter-nil';
 
 import {
@@ -19,6 +26,8 @@ import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loa
 
 import { Analytics, signupSource } from '@services/analytics/analytics';
 import { AuthService } from '@services/auth.service';
+
+import { authRequestErrorKind } from '../auth-request-error';
 
 @Component({
   selector: 'app-register',
@@ -134,15 +143,23 @@ import { AuthService } from '@services/auth.service';
               {{ t('auth.register.submit') }}
             }
           </cog-button>
+
+          @if (submitErrorKey()) {
+            <p #submitError class="auth-page__hint" role="alert" tabindex="-1">
+              {{ t(submitErrorKey()) }}
+            </p>
+          }
         </form>
 
         <p class="auth-page__legal">
           {{ t('auth.register.legalPrefix') }}
-          <a
-            href="https://cognos.io/privacy-policy-and-terms/"
-            rel="noopener noreferrer"
-            target="_blank"
-            >{{ t('common.privacyTerms') }}</a
+          <a [href]="legalUrl('terms')" rel="noopener noreferrer" target="_blank">{{
+            t('common.terms')
+          }}</a>
+          {{ t('common.and') }}
+          <a [href]="legalUrl('privacy')" rel="noopener noreferrer" target="_blank">{{
+            t('common.privacyPolicy')
+          }}</a
           >.
         </p>
 
@@ -178,6 +195,8 @@ export class RegisterComponent {
   private readonly _fb = inject(FormBuilder);
   private readonly _router = inject(Router);
   private readonly _analytics = inject(Analytics);
+  private readonly _transloco = inject(TranslocoService);
+  private readonly _submitError = viewChild<ElementRef<HTMLElement>>('submitError');
 
   // Marketing attribution (docs/specs/product-analytics.md §6.5): the site's
   // CTAs append ?ref=<location>. Read once, kept in component memory only —
@@ -188,6 +207,7 @@ export class RegisterComponent {
   );
 
   readonly loading = signal(false);
+  readonly submitErrorKey = signal('');
 
   readonly registerForm = this._fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -218,13 +238,18 @@ export class RegisterComponent {
     }
 
     const { email, password } = this.registerForm.getRawValue();
+    this.submitErrorKey.set('');
     this.loading.set(true);
 
     this.authService
       .register(email, password)
       .pipe(
-        catchError(() => {
+        catchError((error: unknown) => {
           this.loading.set(false);
+          this.submitErrorKey.set(
+            `auth.register.errors.${authRequestErrorKind(error)}`,
+          );
+          setTimeout(() => this._submitError()?.nativeElement.focus());
           return EMPTY;
         }),
       )
@@ -232,5 +257,11 @@ export class RegisterComponent {
         this._analytics.track('signup_completed', { source: this._signupSource });
         this.loading.set(false);
       });
+  }
+
+  legalUrl(page: 'terms' | 'privacy'): string {
+    const language = this._transloco.getActiveLang();
+    const prefix = language && language !== 'en' ? `/${language}` : '';
+    return `https://cognos.io${prefix}/${page}`;
   }
 }

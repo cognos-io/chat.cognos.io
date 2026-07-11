@@ -4,6 +4,7 @@ import { NEVER, Subject, of, throwError } from 'rxjs';
 
 import { Base64 } from 'js-base64';
 
+import { Analytics } from './analytics/analytics';
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
@@ -49,6 +50,7 @@ describe('VaultService', () => {
     mac: ReturnType<typeof vi.fn>;
     openSecretBox: ReturnType<typeof vi.fn>;
   };
+  let analytics: { track: ReturnType<typeof vi.fn>; page: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     cryptoService = {
@@ -56,10 +58,12 @@ describe('VaultService', () => {
       mac: vi.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
       openSecretBox: vi.fn().mockReturnValue(new Uint8Array([4, 5, 6])),
     };
+    analytics = { track: vi.fn(), page: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [
         VaultService,
+        { provide: Analytics, useValue: analytics },
         {
           provide: CognosApiService,
           useValue: {
@@ -112,6 +116,25 @@ describe('VaultService', () => {
       service.unpackKeyPairRecord(keyPairRecord as never, new Uint8Array([9, 9, 9])),
     ).toThrowError('User key pair integrity metadata missing');
     expect(cryptoService.openSecretBox).not.toHaveBeenCalled();
+  });
+
+  it('reports unlock prompts with current session semantics and dedupes each locked period', () => {
+    service.notifyUnlockPrompted();
+    service.notifyUnlockPrompted();
+
+    expect(analytics.track).toHaveBeenCalledTimes(1);
+    expect(analytics.track).toHaveBeenLastCalledWith('vault_unlock_prompted', {
+      trigger: 'new_session',
+    });
+
+    // Pin the state transition without performing expensive key derivation in this unit test.
+    (service as unknown as { _markUnlocked(): void })._markUnlocked();
+    service.notifyUnlockPrompted();
+
+    expect(analytics.track).toHaveBeenCalledTimes(2);
+    expect(analytics.track).toHaveBeenLastCalledWith('vault_unlock_prompted', {
+      trigger: 'relocked',
+    });
   });
 
   it('rejects user key pair records when the record mac does not match', () => {

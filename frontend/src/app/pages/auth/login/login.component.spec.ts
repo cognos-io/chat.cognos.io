@@ -71,6 +71,18 @@ describe('LoginComponent', () => {
     );
   });
 
+  it('uses login wording and separate working legal links', () => {
+    const legal = fixture.nativeElement.querySelector('.auth-page__legal');
+    const links = Array.from(
+      legal.querySelectorAll('a'),
+      (link: HTMLAnchorElement) => link.href,
+    );
+
+    expect(legal.textContent).toContain('By continuing');
+    expect(legal.textContent).not.toContain('By signing up');
+    expect(links).toEqual(['https://cognos.io/terms', 'https://cognos.io/privacy']);
+  });
+
   it('submits login credentials when the form is valid', () => {
     component.loginForm.setValue({
       email: 'person@example.com',

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -12,6 +19,8 @@ import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.com
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 
 import { AuthService } from '@services/auth.service';
+
+import { authRequestErrorKind } from '../auth-request-error';
 
 @Component({
   selector: 'app-forgot-password',
@@ -76,6 +85,12 @@ import { AuthService } from '@services/auth.service';
                 {{ t('auth.forgot.submit') }}
               }
             </cog-button>
+
+            @if (submitErrorKey()) {
+              <p #submitError class="auth-page__hint" role="alert" tabindex="-1">
+                {{ t(submitErrorKey()) }}
+              </p>
+            }
           </form>
 
           <p class="auth-page__switch">
@@ -89,10 +104,12 @@ import { AuthService } from '@services/auth.service';
 export class ForgotPasswordComponent {
   private readonly _authService = inject(AuthService);
   private readonly _fb = inject(FormBuilder);
+  private readonly _submitError = viewChild<ElementRef<HTMLElement>>('submitError');
 
   readonly sending = signal(false);
   readonly sent = signal(false);
   readonly submittedEmail = signal('');
+  readonly submitErrorKey = signal('');
 
   readonly forgotForm = this._fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -104,13 +121,17 @@ export class ForgotPasswordComponent {
     }
 
     const { email } = this.forgotForm.getRawValue();
+    this.submitErrorKey.set('');
     this.sending.set(true);
 
     this._authService
       .requestPasswordReset(email)
       .pipe(
-        catchError(() => {
+        catchError((error: unknown) => {
           this.sending.set(false);
+          const kind = authRequestErrorKind(error);
+          this.submitErrorKey.set(`auth.forgot.errors.${kind}`);
+          setTimeout(() => this._submitError()?.nativeElement.focus());
           return EMPTY;
         }),
       )

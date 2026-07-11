@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Cognos — a IA a quem podes contar tudo",
-    "description": "A maioria das IAs guarda o que escreves e usa isso para treinar. A Cognos não. Não guardamos nenhuma cópia das tuas conversas que consigamos ler, os teus dados pessoais ficam escondidos antes de a mensagem sair, e a IA esquece a tua conversa assim que responde. Tudo tratado na Suíça ou na Europa."
+    "description": "Conversa de IA privada com histórico guardado de uma forma que não conseguimos ler. O Cognos esconde os dados pessoais detetados antes do envio e usa fornecedores de IA aprovados para respostas em direto na região que escolheres."
   },
   "nav": {
     "how": "Como funciona",
@@ -18,7 +18,7 @@
     "titleBefore": "A IA a quem podes finalmente",
     "titleEm": "contar tudo.",
     "titleAfter": "",
-    "lead": "Todas as outras IAs guardam o que escreves — e usam isso para treinar o próximo modelo. A tua saúde. O teu dinheiro. As tuas preocupações. Tudo parado no computador de outra pessoa. A Cognos funciona ao contrário. Não guardamos nenhuma cópia das tuas conversas que consigamos ler. Os teus dados pessoais ficam escondidos antes de qualquer coisa sair. E a IA esquece a tua conversa assim que responde.",
+    "lead": "A IA pode ajudar com a tua saúde, o teu dinheiro e as tuas preocupações — precisamente o que talvez não queiras num histórico legível. O Cognos guarda as tuas conversas de uma forma que não conseguimos ler. Antes de um pedido em direto a um fornecedor de IA aprovado, o Cognos esconde os dados pessoais que deteta.",
     "ctaPrimary": "Começar",
     "ctaSecondary": "Ver como funciona",
     "finehint": "Experimenta primeiro — saldo inicial grátis, sem cartão · A partir de CHF 15/mês · Garantia de reembolso de 60 dias",
@@ -80,8 +80,8 @@
         "body": "Coisas como o teu e-mail, os teus dados bancários e o teu documento são trocados por marcadores — antes de a tua mensagem sair do teu ecrã."
       },
       {
-        "title": "2 · A IA responde e depois esquece",
-        "body": "A tua mensagem vai para uma IA de confiança na Suíça ou na Europa. Ela responde e não guarda nada."
+        "title": "2 · Uma IA aprovada responde",
+        "body": "A tua mensagem é legível enquanto um fornecedor de IA aprovado processa o pedido em direto na região que escolheres. A retenção pelo fornecedor é desativada e verificada antes da aprovação."
       },
       {
         "title": "3 · A tua conversa fica trancada",
@@ -96,7 +96,7 @@
   "redaction": {
     "eyebrow": "Os teus dados, ocultos",
     "title": "Os teus dados são ocultados antes de a IA os ver.",
-    "lead": "Escreve ou cola o que quiseres. O Cognos deteta e-mails, números de telefone, dados bancários e números de identificação e substitui-os por marcadores — antes de a tua mensagem sair do ecrã. A IA responde com os marcadores e só tu voltas a ver os valores reais.",
+    "lead": "Escreve ou cola o que quiseres. O Cognos procura e-mails, números de telefone, dados bancários e números de identificação e substitui os valores detetados antes do envio. Confirma a pré-visualização: a deteção faz o possível, mas pode não encontrar todos os dados sensíveis. A IA responde com marcadores e o Cognos repõe os valores reais para pessoas autorizadas.",
     "you": "O que vês",
     "ai": "O que a IA vê",
     "docName": "nota-ao-contabilista.txt",
@@ -143,7 +143,7 @@
     ],
     "flow": {
       "eyebrow": "A ida e volta",
-      "title": "A IA faz o trabalho. Nunca sabe quem tu és.",
+      "title": "A IA faz o trabalho com menos dados pessoais.",
       "lead": "Segue uma mensagem na ida e volta: os teus dados são ocultados à saída e restaurados só para ti no regresso.",
       "toggle": "A ocultar dados",
       "model": "Claude",
@@ -186,11 +186,11 @@
     "items": [
       {
         "title": "Nada legível fica guardado",
-        "body": "Guardamos as tuas conversas de uma forma que não conseguimos ler — por isso não há nada para vazar, vender ou entregar."
+        "body": "Guardamos o conteúdo das tuas conversas de uma forma que não conseguimos ler. Os dados necessários da Conta, faturação e funcionamento são guardados separadamente."
       },
       {
         "title": "Os teus dados, escondidos automaticamente",
-        "body": "E-mails, dados bancários, números de documento e palavras-passe ficam escondidos antes de a tua mensagem sair. Ativado por predefinição."
+        "body": "O Cognos esconde os e-mails, dados bancários, números de identificação e palavras-passe que deteta antes do envio. Confirma a pré-visualização, pois a deteção pode não encontrar tudo."
       },
       {
         "title": "Escolhes onde é tratado",
@@ -227,7 +227,7 @@
         "Toda a conversa recebe <b>a proteção completa</b>",
         "Mensagens que se apagam sozinhas e modo anónimo incluídos",
         "Suíça ou Europa, com dezenas de modelos de IA",
-        "Não pagas nada nos meses em que não o usas"
+        "Mínimo de CHF 15 em cada mês faturado; o uso adicional é cobrado automaticamente"
       ],
       "cta": "Começar conforme usas"
     },
@@ -333,7 +333,7 @@
       "title": "Subcontratantes",
       "lead": "A curta lista de fornecedores de confiança por trás do Cognos — o que cada um faz, o que pode tratar e onde.",
       "effectiveLabel": "Última atualização",
-      "effectiveDate": "2 de julho de 2026",
+      "effectiveDate": "10 de julho de 2026",
       "facts": [
         {
           "label": "Responsável",
@@ -509,7 +509,7 @@
               "ul": [
                 "<b>O teu dispositivo</b> guarda as chaves. As tuas conversas são desbloqueadas e lidas aqui, e em mais lado nenhum.",
                 "<b>Os nossos servidores</b> guardam as tuas conversas bloqueadas, passam a tua mensagem à IA e voltam a bloquear a resposta. Nunca guardam uma cópia que consigamos ler.",
-                "<b>O fornecedor de IA</b> recebe a tua mensagem apenas enquanto responde e depois não guarda nada."
+                "<b>O fornecedor de IA aprovado</b> recebe a tua mensagem enquanto responde. Desativamos a retenção pelo fornecedor e verificamo-la antes da aprovação."
               ]
             }
           ]

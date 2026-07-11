@@ -29,7 +29,10 @@
       "deleteChatsSubtitle": "Lösche dauerhaft jede Konversation und ihre Nachrichten. Dies kann nicht rückgängig gemacht werden.",
       "deleteChatsTitle": "Alle Chats löschen",
       "deleting": "Wird gelöscht…",
+      "passwordLabel": "Aktuelles Passwort",
+      "stepUpHint": "Wenn die Zwei-Faktor-Authentifizierung aktiviert ist, gib auch den aktuellen sechsstelligen Code ein.",
       "title": "Gefahrenzone",
+      "totpLabel": "Authenticator-Code (falls aktiviert)",
       "typeToConfirm": "Gib zur Bestätigung {{ word }} ein."
     },
     "data": {
@@ -140,6 +143,7 @@
       "accountDeleted": "Dein Konto wurde gelöscht",
       "deleteAccountConflict": "Kündige deinen Tarif, bevor du dein Konto löschst",
       "deleteAccountError": "Dein Konto konnte nicht gelöscht werden",
+      "deleteAccountStepUpError": "Prüfe dein Passwort und den Authenticator-Code und versuche es erneut",
       "deleteChatsError": "Chats konnten nicht gelöscht werden",
       "deletedManyChats": "{{ count }} Chats gelöscht",
       "deletedOneChat": "1 Chat gelöscht",
@@ -208,13 +212,20 @@
       "sent": "Falls ein Konto für {{ email }} existiert, haben wir einen Link zum Zurücksetzen des Passworts gesendet. Prüfe deinen Posteingang und folge dem Link, um ein neues Passwort zu wählen.",
       "sentNote": "Dein Passwort dient nur zur Anmeldung — es entschlüsselt niemals deine verschlüsselten Chats. Das Zurücksetzen ist daher sicher und lässt deinen Verlauf unberührt.",
       "submit": "Link zum Zurücksetzen senden",
-      "title": "Passwort zurücksetzen"
+      "title": "Passwort zurücksetzen",
+      "errors": {
+        "duplicate": "Der Link konnte nicht gesendet werden. Prüfe die E-Mail-Adresse und versuche es erneut.",
+        "validation": "Prüfe die E-Mail-Adresse und versuche es erneut.",
+        "rateLimit": "Zu viele Anfragen. Warte einige Minuten und versuche es erneut.",
+        "network": "Cognos ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
+        "server": "Der Link kann gerade nicht gesendet werden. Bitte versuche es in Kürze erneut."
+      }
     },
     "login": {
       "error": "Anmeldung fehlgeschlagen. Bitte prüfe E-Mail und Passwort und versuche es erneut.",
       "forgot": "Passwort vergessen?",
       "lead": "Chatte mit den neuesten Modellen, ohne die Kontrolle über deine Daten aufzugeben. Auf neuen Geräten kann zusätzlich dein Account-Schlüssel abgefragt werden.",
-      "legalPrefix": "Mit der Registrierung akzeptierst du unsere",
+      "legalPrefix": "Wenn du fortfährst, akzeptierst du unsere",
       "needAccount": "Noch kein Konto?",
       "register": "Registrieren",
       "signingIn": "Anmeldung läuft…",
@@ -235,6 +246,13 @@
         "emailInvalid": "Gib eine gültige E-Mail-Adresse ein.",
         "passwordLength": "Verwende mindestens 12 Zeichen.",
         "passwordOk": "Die Passwortlänge sieht gut aus."
+      },
+      "errors": {
+        "duplicate": "Für diese E-Mail besteht bereits ein Konto. Melde dich an oder setze dein Passwort zurück.",
+        "validation": "Das Konto konnte nicht erstellt werden. Prüfe deine Angaben und versuche es erneut.",
+        "rateLimit": "Zu viele Registrierungsversuche. Warte einige Minuten und versuche es erneut.",
+        "network": "Cognos ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
+        "server": "Dein Konto kann gerade nicht erstellt werden. Bitte versuche es in Kürze erneut."
       }
     },
     "reset": {
@@ -1141,13 +1159,30 @@
       "saveError": "Das Lesezeichen konnte nicht gespeichert werden. Bitte versuch es erneut."
     }
   },
+  "a11y": {
+    "skipToContent": "Zum Hauptinhalt springen",
+    "dismiss": "Schliessen",
+    "openNavigation": "Navigation öffnen",
+    "breadcrumbs": "Brotkrümelnavigation",
+    "branchSwitch": "Antwort wechseln",
+    "previousBranch": "Vorherige Antwort",
+    "nextBranch": "Nächste Antwort",
+    "assistantTyping": "Der Assistent schreibt",
+    "branchVersions": "{{ count }} Versionen",
+    "removeAttachment": "Anhang entfernen",
+    "encryptingOnDevice": "Wird auf diesem Gerät verschlüsselt",
+    "encryptRetry": "Verschlüsselung fehlgeschlagen — tippe, um es erneut zu versuchen"
+  },
   "common": {
     "cancel": "Abbrechen",
     "email": "E-Mail",
     "emailPlaceholder": "du@beispiel.com",
     "password": "Passwort",
     "passwordPlaceholder": "••••••••",
+    "and": "und",
+    "privacyPolicy": "Datenschutzerklärung",
     "privacyTerms": "Datenschutz und AGB",
+    "terms": "AGB",
     "relativeDate": {
       "today": "Heute",
       "yesterday": "Gestern",
@@ -1499,6 +1534,7 @@
       "continue": "Weiter",
       "cancel": "Abbrechen",
       "scanInstruction": "Scanne diesen QR-Code mit deiner Authenticator-App oder gib den Einrichtungsschlüssel manuell ein.",
+      "qrAlt": "QR-Code zum Einrichten der Zwei-Faktor-Authentifizierung",
       "manualKeyLabel": "Einrichtungsschlüssel",
       "confirmInstruction": "Gib den 6-stelligen Code aus deiner App ein, um die Aktivierung abzuschliessen.",
       "codeLabel": "Authentifizierungscode",

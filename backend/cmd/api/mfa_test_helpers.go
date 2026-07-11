@@ -38,16 +38,21 @@ func testMFACipher(t *testing.T) *mfa.SeedCipher {
 func enrollVerifiedTOTP(t *testing.T, app *tests.TestApp) (userID, secret string) {
 	t.Helper()
 
-	user, err := app.FindAuthRecordByEmail("users", testUserEmail)
-	if err != nil {
-		t.Fatalf("find user: %v", err)
-	}
-
 	key, err := mfa.GenerateSecret("Cognos", testUserEmail)
 	if err != nil {
 		t.Fatalf("generate secret: %v", err)
 	}
 	secret = key.Secret()
+	return enrollVerifiedTOTPSecret(t, app, secret), secret
+}
+
+func enrollVerifiedTOTPSecret(t *testing.T, app *tests.TestApp, secret string) string {
+	t.Helper()
+
+	user, err := app.FindAuthRecordByEmail("users", testUserEmail)
+	if err != nil {
+		t.Fatalf("find user: %v", err)
+	}
 
 	cipher := testMFACipher(t)
 	ct, nonce, err := cipher.Seal([]byte(secret))
@@ -78,7 +83,7 @@ func enrollVerifiedTOTP(t *testing.T, app *tests.TestApp) (userID, secret string
 		t.Fatalf("enable mfa: %v", err)
 	}
 
-	return user.Id, secret
+	return user.Id
 }
 
 // enrollPendingTOTP seeds an UNVERIFIED TOTP credential (as MFAEnrolTOTP would)

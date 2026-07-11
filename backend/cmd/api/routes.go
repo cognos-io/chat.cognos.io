@@ -350,7 +350,7 @@ func addPocketBaseRoutes(
 
 	e.Router.DELETE(
 		"/api/v1/account",
-		handler.AccountDelete(app),
+		handler.AccountDelete(mfaParams),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),

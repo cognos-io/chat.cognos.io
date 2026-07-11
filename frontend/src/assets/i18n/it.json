@@ -29,7 +29,10 @@
       "deleteChatsSubtitle": "Elimina definitivamente ogni conversazione e i suoi messaggi. Questa azione non può essere annullata.",
       "deleteChatsTitle": "Elimina tutte le chat",
       "deleting": "Eliminazione…",
+      "passwordLabel": "Password attuale",
+      "stepUpHint": "Se l’autenticazione a due fattori è attiva, inserisci anche il codice attuale di sei cifre.",
       "title": "Zona pericolosa",
+      "totpLabel": "Codice dell’app di autenticazione (se attivo)",
       "typeToConfirm": "Digita {{ word }} per confermare."
     },
     "data": {
@@ -140,6 +143,7 @@
       "accountDeleted": "Il tuo account è stato eliminato",
       "deleteAccountConflict": "Annulla il tuo piano prima di eliminare il tuo account",
       "deleteAccountError": "Impossibile eliminare il tuo account",
+      "deleteAccountStepUpError": "Controlla la password e il codice dell’app di autenticazione, quindi riprova",
       "deleteChatsError": "Impossibile eliminare le chat",
       "deletedManyChats": "{{ count }} chat eliminate",
       "deletedOneChat": "1 chat eliminata",
@@ -208,13 +212,20 @@
       "sent": "Se esiste un account per {{ email }}, abbiamo inviato un link per reimpostare la password. Controlla la tua casella di posta e segui il link per scegliere una nuova password.",
       "sentNote": "La tua password serve solo per accedere — non sblocca mai le tue chat crittografate, quindi reimpostarla è sicuro e lascia intatta la tua cronologia.",
       "submit": "Invia link di reimpostazione",
-      "title": "Reimposta la password"
+      "title": "Reimposta la password",
+      "errors": {
+        "duplicate": "Non è stato possibile inviare il link. Controlla l’e-mail e riprova.",
+        "validation": "Controlla l’e-mail e riprova.",
+        "rateLimit": "Troppe richieste. Attendi qualche minuto e riprova.",
+        "network": "Cognos non è raggiungibile. Controlla la connessione e riprova.",
+        "server": "Al momento non è possibile inviare il link. Riprova tra poco."
+      }
     },
     "login": {
       "error": "Impossibile accedere. Controlla la tua e-mail e la password e riprova.",
       "forgot": "Hai dimenticato la password?",
       "lead": "Chatta con i modelli più recenti senza rinunciare al controllo dei tuoi dati. I nuovi dispositivi potrebbero anche richiedere la tua Chiave dell'account.",
-      "legalPrefix": "Registrandoti accetti la nostra",
+      "legalPrefix": "Continuando, accetti i nostri",
       "needAccount": "Ti serve un account?",
       "register": "Registrati",
       "signingIn": "Accesso in corso…",
@@ -235,6 +246,13 @@
         "emailInvalid": "Inserisci un indirizzo e-mail valido.",
         "passwordLength": "Usa almeno 12 caratteri.",
         "passwordOk": "La lunghezza della password è adeguata."
+      },
+      "errors": {
+        "duplicate": "Esiste già un account con questa e-mail. Accedi o reimposta la password.",
+        "validation": "Non è stato possibile creare l’account. Controlla i dati e riprova.",
+        "rateLimit": "Troppi tentativi di registrazione. Attendi qualche minuto e riprova.",
+        "network": "Cognos non è raggiungibile. Controlla la connessione e riprova.",
+        "server": "Al momento non è possibile creare il tuo account. Riprova tra poco."
       }
     },
     "reset": {
@@ -1141,13 +1159,30 @@
       "saveError": "Impossibile salvare il segnalibro. Riprova."
     }
   },
+  "a11y": {
+    "skipToContent": "Vai al contenuto principale",
+    "dismiss": "Chiudi",
+    "openNavigation": "Apri navigazione",
+    "breadcrumbs": "Percorso di navigazione",
+    "branchSwitch": "Cambia risposta",
+    "previousBranch": "Risposta precedente",
+    "nextBranch": "Risposta successiva",
+    "assistantTyping": "L’assistente sta scrivendo",
+    "branchVersions": "{{ count }} versioni",
+    "removeAttachment": "Rimuovi allegato",
+    "encryptingOnDevice": "Crittografia su questo dispositivo",
+    "encryptRetry": "Crittografia non riuscita — tocca per riprovare"
+  },
   "common": {
     "cancel": "Annulla",
     "email": "E-mail",
     "emailPlaceholder": "tu@esempio.com",
     "password": "Password",
     "passwordPlaceholder": "••••••••",
+    "and": "e la nostra",
+    "privacyPolicy": "Informativa sulla privacy",
     "privacyTerms": "Informativa sulla privacy e termini",
+    "terms": "Termini",
     "relativeDate": {
       "today": "Oggi",
       "yesterday": "Ieri",
@@ -1499,6 +1534,7 @@
       "continue": "Continua",
       "cancel": "Annulla",
       "scanInstruction": "Scansiona questo codice QR con la tua app di autenticazione, oppure inserisci la chiave di configurazione manualmente.",
+      "qrAlt": "Codice QR per configurare l’autenticazione a due fattori",
       "manualKeyLabel": "Chiave di configurazione",
       "confirmInstruction": "Inserisci il codice a 6 cifre dalla tua app per completare l'attivazione.",
       "codeLabel": "Codice di autenticazione",

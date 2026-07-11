@@ -4,6 +4,11 @@ Updated 2026-06-06. Re-verified against HEAD on `feat/security-fixes`.
 Closed items have been removed; this doc only tracks what still needs work.
 Status: 🟡 Partially fixed · ❌ Not fixed · 🆕 New.
 
+> **Historical review:** deployment references in this document describe the retired in-repository
+> Compose/Caddy prototype. [`deployment-interface.md`](./deployment-interface.md) is authoritative
+> for the current application/deployment boundary; deployment-repository controls still require
+> verification there.
+
 ## 0. Summary
 
 Open items cluster into four themes:

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Cognos — la IA a la que puedes contarle cualquier cosa",
-    "description": "Casi toda la IA guarda lo que escribes y lo usa para entrenarse. Cognos no. No guardamos ninguna copia de tus chats que podamos leer, tus datos personales se ocultan antes de enviar tu mensaje, y la IA olvida tu chat en cuanto responde. Todo se gestiona en Suiza o en Europa."
+    "description": "Chat de IA privado con historial guardado de forma que no podemos leerlo. Cognos oculta los datos personales detectados antes del envío y usa proveedores de IA aprobados para responder en directo en la región que elijas."
   },
   "nav": {
     "how": "Cómo funciona",
@@ -18,7 +18,7 @@
     "titleBefore": "La IA a la que por fin puedes",
     "titleEm": "contarlo todo.",
     "titleAfter": "",
-    "lead": "Las demás IA guardan lo que escribes y lo usan para entrenar su próximo modelo. Tu salud. Tu dinero. Tus preocupaciones. Todo en el ordenador de otra persona. Cognos funciona al revés. No guardamos ninguna copia de tus chats que podamos leer. Tus datos personales se ocultan antes de enviar nada. Y la IA olvida tu chat en cuanto responde.",
+    "lead": "La IA puede ayudarte con tu salud, tu dinero y tus preocupaciones, justo lo que quizá no quieras guardar en un historial legible. Cognos guarda tus chats de una forma que no podemos leer. Antes de una petición en directo a un proveedor de IA aprobado, Cognos oculta los datos personales que detecta.",
     "ctaPrimary": "Empezar",
     "ctaSecondary": "Ver cómo funciona",
     "finehint": "Pruébalo primero: saldo inicial gratis, sin tarjeta · Desde CHF 15/mes · 60 días para recuperar tu dinero",
@@ -80,8 +80,8 @@
         "body": "Cosas como tu correo, tus datos bancarios y tu documento de identidad se cambian por marcadores, antes de que tu mensaje salga de tu pantalla."
       },
       {
-        "title": "2 · La IA responde y luego olvida",
-        "body": "Tu mensaje va a una IA de confianza en Suiza o en Europa. Responde y no guarda nada."
+        "title": "2 · Responde una IA aprobada",
+        "body": "Tu mensaje es legible mientras un proveedor de IA aprobado procesa la petición en directo en la región que elijas. La conservación del proveedor se desactiva y se comprueba antes de aprobarlo."
       },
       {
         "title": "3 · Tu chat queda bajo llave",
@@ -96,7 +96,7 @@
   "redaction": {
     "eyebrow": "Tus datos, ocultos",
     "title": "Tus datos se ocultan antes de que la IA los vea.",
-    "lead": "Escribe o pega lo que quieras. Cognos detecta correos, números de teléfono, datos bancarios y números de identidad y los sustituye por marcadores — antes de que tu mensaje salga de tu pantalla. La IA responde con los marcadores y solo tú vuelves a ver los valores reales.",
+    "lead": "Escribe o pega lo que quieras. Cognos busca correos, teléfonos, datos bancarios y números de identidad, y sustituye los valores detectados antes del envío. Revisa la vista previa: la detección hace lo posible, pero puede no encontrar todos los datos sensibles. La IA responde con marcadores y Cognos restaura los valores reales para las personas autorizadas.",
     "you": "Lo que ves tú",
     "ai": "Lo que ve la IA",
     "docName": "nota-a-la-gestora.txt",
@@ -143,7 +143,7 @@
     ],
     "flow": {
       "eyebrow": "La ida y la vuelta",
-      "title": "La IA hace el trabajo. Nunca sabe quién eres.",
+      "title": "La IA hace el trabajo con menos datos personales.",
       "lead": "Observa un mensaje en su ida y vuelta: tus datos se ocultan al salir y se restauran solo para ti al volver.",
       "toggle": "Ocultando datos",
       "model": "Claude",
@@ -186,11 +186,11 @@
     "items": [
       {
         "title": "No se guarda nada legible",
-        "body": "Guardamos tus chats de una forma que no podemos leer, así que no hay nada que filtrar, vender ni entregar."
+        "body": "Guardamos el contenido de tus chats de una forma que no podemos leer. Los datos de cuenta, facturación y funcionamiento necesarios se guardan por separado."
       },
       {
         "title": "Tus datos, ocultos solos",
-        "body": "Correos, datos bancarios, documentos de identidad y contraseñas se ocultan antes de enviar tu mensaje. Activado de serie."
+        "body": "Cognos oculta los correos, datos bancarios, números de identidad y contraseñas que detecta antes del envío. Revisa la vista previa, porque puede que la detección no lo encuentre todo."
       },
       {
         "title": "Tú eliges dónde se gestiona",
@@ -227,7 +227,7 @@
         "Cada chat recibe <b>toda la protección</b>",
         "Mensajes que se borran solos e incógnito incluidos",
         "Suiza o Europa, con decenas de modelos de IA",
-        "No pagas nada los meses que no lo usas"
+        "Mínimo de CHF 15 cada mes facturado; el uso adicional se cobra automáticamente"
       ],
       "cta": "Empezar según lo que uses"
     },
@@ -333,7 +333,7 @@
       "title": "Subencargados",
       "lead": "La breve lista de proveedores de confianza detrás de Cognos — qué hace cada uno, qué puede tratar y dónde.",
       "effectiveLabel": "Última actualización",
-      "effectiveDate": "2 de julio de 2026",
+      "effectiveDate": "10 de julio de 2026",
       "facts": [
         {
           "label": "Responsable",
@@ -509,7 +509,7 @@
               "ul": [
                 "<b>Tu dispositivo</b> guarda las claves. Tus chats se desbloquean y se leen aquí, y en ningún otro sitio.",
                 "<b>Nuestros servidores</b> almacenan tus chats bloqueados, pasan tu mensaje a la IA y vuelven a bloquear la respuesta. Nunca guardan una copia que podamos leer.",
-                "<b>El proveedor de IA</b> recibe tu mensaje solo mientras responde, y luego no guarda nada."
+                "<b>El proveedor de IA aprobado</b> recibe tu mensaje mientras responde. Desactivamos la conservación del proveedor y la comprobamos antes de aprobarlo."
               ]
             }
           ]

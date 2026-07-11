@@ -138,7 +138,7 @@ export class VaultService {
 
   // Whether the vault has been unlocked at any point during this JS session
   // (module lifetime only — never stored). Distinguishes a fresh session's
-  // unlock prompt from a re-lock (e.g. the 30-min idle logout) for the
+  // unlock prompt from a later re-lock for the
   // vault_unlock_prompted trigger prop.
   private _hasUnlockedThisSession = false;
   // Dedupe: the prompt event fires once per locked period, not on every
@@ -374,8 +374,8 @@ export class VaultService {
   /**
    * Called by VaultUnlockGateDirective whenever it opens the unlock prompt.
    * Emits vault_unlock_prompted with a coarse trigger: 'new_session' when the
-   * vault has not been unlocked in this JS session yet, 'idle_logout' when it
-   * was unlocked earlier and re-locked (e.g. the idle auto-logout). Deduped per
+   * vault has not been unlocked in this JS session yet, 'relocked' when it was
+   * unlocked earlier and then locked again. Deduped per
    * locked period, and skipped entirely for the create-backup onboarding dialog
    * (that is not an unlock prompt).
    */
@@ -385,7 +385,7 @@ export class VaultService {
     }
     this._unlockPromptTracked = true;
     this._analytics.track('vault_unlock_prompted', {
-      trigger: this._hasUnlockedThisSession ? 'idle_logout' : 'new_session',
+      trigger: this._hasUnlockedThisSession ? 'relocked' : 'new_session',
     });
   }
 

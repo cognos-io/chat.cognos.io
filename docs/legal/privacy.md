@@ -1,6 +1,6 @@
 # Cognos Privacy Policy
 
-**Last updated:** 2 July 2026
+**Last updated:** 10 July 2026
 
 Cognos is an encrypted AI chat application by **Climacrux GmbH**, St. Niklausenstrasse 96, 6047
 Kastanienbaum, Switzerland.
@@ -39,13 +39,14 @@ Switzerland
 
 Email: **[privacy@cognos.io](mailto:privacy@cognos.io)**
 
-We have not appointed a Data Protection Officer. We have not confirmed an EU or UK representative.
-This section may be updated after legal review.
+Privacy enquiries and data-rights requests are handled through the contact above. Cognos publishes
+any legally required additional representative or privacy contact before offering the service in a
+country where one is required.
 
 ## Who can use Cognos?
 
-Cognos is intended for users aged **16 or older**, unless a different age applies under local law or
-after legal review.
+Cognos is intended for users aged **16 or older**. Do not use Cognos if you are below the minimum
+age required to enter into this service in your country.
 
 Cognos is available worldwide, with a primary focus on Switzerland, the UK, Germany, France, Spain,
 Portugal, and Italy.
@@ -66,8 +67,7 @@ We collect the information needed to create, secure, and manage your account, su
 - account settings and preferences
 - billing status and subscription references
 
-Current sign-in is email/password. Google and Apple login may be added later. Authenticator-app MFA
-is supported. Passkeys are planned.
+Current sign-in is email/password. Authenticator-app MFA is supported.
 
 ### Chat data
 
@@ -99,8 +99,9 @@ message.
 
 We do not use uploaded files to train models.
 
-We have not found current use of third-party OCR, transcription, malware scanning, or audio upload
-vendors. If this changes, this policy will be updated.
+Cognos does not send uploads to a separate OCR, transcription, malware-scanning, or audio-upload
+provider. The current subprocessor list is published on the Cognos website and is updated before a
+new provider begins processing personal data.
 
 ### Billing data
 
@@ -269,7 +270,8 @@ Cognos staff should not be able to read stored chat content from the database. S
 production systems is restricted. Staff are not permitted to inspect plaintext live request flows
 except where strictly necessary and authorised for security or operational reasons.
 
-Further incident response and access-control details are being finalised.
+Operational incident response and production-access procedures are maintained separately from this
+public policy and are reviewed before production access is granted.
 
 ## What we do not do
 
@@ -289,7 +291,7 @@ We do not:
 We use service providers to run Cognos. These vendors may process personal data only as needed to
 provide their services.
 
-Current or planned service providers include:
+Repository-supported service integrations include:
 
 - Hetzner, for app/backend hosting
 - Bunny.net, for CDN/DNS
@@ -301,12 +303,10 @@ Current or planned service providers include:
 - Ghost, for marketing site infrastructure
 - GitHub, for development infrastructure
 - Grafana Alloy or related tooling, for server monitoring
-- Plausible, if launched, for cookieless analytics
+- Plausible, when enabled in the deployed environment, for cookieless aggregate analytics
 
 Some providers may process data outside Switzerland, the EU, or the EEA. Where required, we use
 appropriate safeguards such as data processing agreements and standard contractual clauses.
-
-**Confirmed vendor countries, roles, and safeguards:** [INSERT TABLE AFTER CONTRACT REVIEW]
 
 ## International transfers
 
@@ -367,8 +367,10 @@ Current retention approach:
 - backups follow a rotation of hourly, daily, weekly, monthly, and yearly snapshots
 - yearly backups may be kept for up to 10 years
 
-Exact retention periods for operational logs, support messages, abuse/security records, and some
-billing records are still being finalised.
+Operational logs exclude prompts, completions, message content, and encryption keys. Support,
+security, billing, tax, and accounting records are retained only for their operational or legal
+purpose, then deleted or anonymised. The production retention settings and deletion jobs must match
+the published policy before launch and after every retention change.
 
 ## Account deletion
 
@@ -417,8 +419,8 @@ We send transactional emails such as:
 - billing and subscription messages
 - support replies
 
-Marketing emails or newsletters are not currently confirmed. If we send marketing emails, you will
-be able to opt out.
+Any marketing email requires an applicable lawful basis and includes a way to opt out. Transactional
+account, security, and billing messages are not marketing emails.
 
 ## Law enforcement and legal requests
 

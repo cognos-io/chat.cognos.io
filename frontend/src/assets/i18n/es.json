@@ -29,7 +29,10 @@
       "deleteChatsSubtitle": "Elimina permanentemente cada conversación y sus mensajes. Esto no se puede deshacer.",
       "deleteChatsTitle": "Eliminar todos los chats",
       "deleting": "Eliminando…",
+      "passwordLabel": "Contraseña actual",
+      "stepUpHint": "Si tienes activada la autenticación de dos factores, introduce también el código actual de seis dígitos.",
       "title": "Zona de peligro",
+      "totpLabel": "Código del autenticador (si está activado)",
       "typeToConfirm": "Escribe {{ word }} para confirmar."
     },
     "data": {
@@ -140,6 +143,7 @@
       "accountDeleted": "Tu cuenta ha sido eliminada",
       "deleteAccountConflict": "Cancela tu plan antes de eliminar tu cuenta",
       "deleteAccountError": "No se pudo eliminar tu cuenta",
+      "deleteAccountStepUpError": "Comprueba tu contraseña y el código del autenticador e inténtalo de nuevo",
       "deleteChatsError": "No se pudieron eliminar los chats",
       "deletedManyChats": "{{ count }} chats eliminados",
       "deletedOneChat": "1 chat eliminado",
@@ -208,13 +212,20 @@
       "sent": "Si existe una cuenta para {{ email }}, hemos enviado un enlace para restablecer la contraseña. Revisa tu bandeja de entrada y sigue el enlace para elegir una nueva contraseña.",
       "sentNote": "Tu contraseña solo sirve para iniciar sesión — nunca desbloquea tus chats cifrados, así que restablecerla es seguro y deja tu historial intacto.",
       "submit": "Enviar enlace de restablecimiento",
-      "title": "Restablecer tu contraseña"
+      "title": "Restablecer tu contraseña",
+      "errors": {
+        "duplicate": "No hemos podido enviar el enlace. Comprueba el correo y vuelve a intentarlo.",
+        "validation": "Comprueba el correo y vuelve a intentarlo.",
+        "rateLimit": "Hay demasiadas solicitudes. Espera unos minutos y vuelve a intentarlo.",
+        "network": "No podemos conectar con Cognos. Comprueba tu conexión y vuelve a intentarlo.",
+        "server": "No podemos enviar el enlace ahora. Vuelve a intentarlo en unos instantes."
+      }
     },
     "login": {
       "error": "No pudimos iniciar tu sesión. Comprueba tu correo y contraseña e inténtalo de nuevo.",
       "forgot": "¿Olvidaste tu contraseña?",
       "lead": "Chatea con los modelos más recientes sin renunciar al control de tus datos. Los dispositivos nuevos también pueden pedir tu Clave de cuenta.",
-      "legalPrefix": "Al registrarte aceptas nuestra",
+      "legalPrefix": "Al continuar aceptas nuestros",
       "needAccount": "¿Necesitas una cuenta?",
       "register": "Registrarse",
       "signingIn": "Iniciando sesión…",
@@ -235,6 +246,13 @@
         "emailInvalid": "Introduce una dirección de correo válida.",
         "passwordLength": "Usa al menos 12 caracteres.",
         "passwordOk": "La longitud de la contraseña es correcta."
+      },
+      "errors": {
+        "duplicate": "Ya existe una cuenta con este correo. Inicia sesión o restablece tu contraseña.",
+        "validation": "No hemos podido crear la cuenta. Comprueba tus datos y vuelve a intentarlo.",
+        "rateLimit": "Hay demasiados intentos de registro. Espera unos minutos y vuelve a intentarlo.",
+        "network": "No podemos conectar con Cognos. Comprueba tu conexión y vuelve a intentarlo.",
+        "server": "No podemos crear tu cuenta ahora. Vuelve a intentarlo en unos instantes."
       }
     },
     "reset": {
@@ -1141,13 +1159,30 @@
       "saveError": "No se ha podido guardar el marcador. Inténtalo de nuevo."
     }
   },
+  "a11y": {
+    "skipToContent": "Ir al contenido principal",
+    "dismiss": "Cerrar",
+    "openNavigation": "Abrir navegación",
+    "breadcrumbs": "Migas de pan",
+    "branchSwitch": "Cambiar respuesta",
+    "previousBranch": "Respuesta anterior",
+    "nextBranch": "Respuesta siguiente",
+    "assistantTyping": "El asistente está escribiendo",
+    "branchVersions": "{{ count }} versiones",
+    "removeAttachment": "Quitar archivo adjunto",
+    "encryptingOnDevice": "Cifrando en este dispositivo",
+    "encryptRetry": "No se pudo cifrar — toca para volver a intentarlo"
+  },
   "common": {
     "cancel": "Cancelar",
     "email": "Correo electrónico",
     "emailPlaceholder": "tu@ejemplo.com",
     "password": "Contraseña",
     "passwordPlaceholder": "••••••••",
+    "and": "y nuestra",
+    "privacyPolicy": "Política de privacidad",
     "privacyTerms": "Política de privacidad y términos",
+    "terms": "Términos",
     "relativeDate": {
       "today": "Hoy",
       "yesterday": "Ayer",
@@ -1499,6 +1534,7 @@
       "continue": "Continuar",
       "cancel": "Cancelar",
       "scanInstruction": "Escanea este código QR con tu aplicación de autenticación, o introduce la clave de configuración manualmente.",
+      "qrAlt": "Código QR para configurar la autenticación de dos factores",
       "manualKeyLabel": "Clave de configuración",
       "confirmInstruction": "Introduce el código de 6 dígitos de tu aplicación para terminar de activarla.",
       "codeLabel": "Código de autenticación",

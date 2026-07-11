@@ -1131,9 +1131,10 @@ export class CognosApiService {
   // Erases the user's account: their chats, keys, personas and preferences are
   // deleted server-side (financial records are retained, detached). Refused
   // with 409 while a paid plan is active.
-  deleteAccount(): Observable<void> {
+  deleteAccount(password: string, totpCode: string): Observable<void> {
     return this._http.delete<void>(`${this._baseUrl}/api/v1/account`, {
       headers: this.authHeaders(),
+      body: { password, totpCode },
     });
   }
 

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Cognos — Die KI, der du alles erzählen kannst",
-    "description": "Die meisten KIs behalten, was du schreibst, und lernen daraus. Cognos nicht. Wir bewahren keine lesbare Kopie deiner Chats auf, deine persönlichen Angaben werden versteckt, bevor deine Nachricht rausgeht, und die KI vergisst deinen Chat, sobald sie geantwortet hat. In der Schweiz oder in Europa."
+    "description": "Privater KI-Chat mit verschlüsselt gespeichertem Verlauf. Cognos versteckt erkannte persönliche Angaben vor dem Senden und nutzt geprüfte KI-Anbieter für Live-Antworten in deiner gewählten Region."
   },
   "nav": {
     "how": "So funktioniert's",
@@ -18,7 +18,7 @@
     "titleBefore": "Die KI, der du endlich",
     "titleEm": "alles erzählen kannst.",
     "titleAfter": "",
-    "lead": "Jede andere KI behält, was du schreibst — und nutzt es, um ihr nächstes Modell zu trainieren. Deine Gesundheit. Dein Geld. Deine Sorgen. Alles liegt auf dem Computer von jemand anderem. Cognos macht es andersherum. Wir bewahren keine lesbare Kopie deiner Chats auf. Deine persönlichen Angaben werden versteckt, bevor irgendetwas rausgeht. Und die KI vergisst deinen Chat, sobald sie geantwortet hat.",
+    "lead": "KI kann bei Gesundheit, Geld und Sorgen helfen — genau bei den Dingen, die du vielleicht nicht in einem lesbaren Verlauf willst. Cognos speichert deine Chats in einer Form, die wir nicht lesen können. Vor einer Live-Anfrage an einen geprüften KI-Anbieter versteckt Cognos die persönlichen Angaben, die es erkennt.",
     "ctaPrimary": "Loslegen",
     "ctaSecondary": "So funktioniert's",
     "finehint": "Probier es zuerst aus — Startguthaben geschenkt, keine Karte nötig · Ab CHF 15/Monat · 60 Tage Geld-zurück-Garantie",
@@ -80,8 +80,8 @@
         "body": "Dinge wie deine E-Mail, Bankdaten und Ausweisnummer werden durch Platzhalter ersetzt — bevor deine Nachricht deinen Bildschirm verlässt."
       },
       {
-        "title": "2 · Die KI antwortet und vergisst dann",
-        "body": "Deine Nachricht geht an eine vertrauenswürdige KI in der Schweiz oder in Europa. Sie antwortet und behält nichts."
+        "title": "2 · Eine geprüfte KI antwortet",
+        "body": "Deine Nachricht ist lesbar, während ein geprüfter KI-Anbieter die Live-Anfrage in deiner gewählten Region verarbeitet. Die Speicherung beim Anbieter ist deaktiviert und wird vor der Freigabe geprüft."
       },
       {
         "title": "3 · Dein Chat wird weggeschlossen",
@@ -96,7 +96,7 @@
   "redaction": {
     "eyebrow": "Deine Daten bleiben verborgen",
     "title": "Deine Daten sind verborgen, bevor die KI sie je sieht.",
-    "lead": "Schreib oder füg etwas ein. Cognos erkennt Dinge wie E-Mail-Adressen, Telefonnummern, Bankdaten und Ausweisnummern und ersetzt sie durch Platzhalter – bevor deine Nachricht deinen Bildschirm verlässt. Die KI antwortet mit den Platzhaltern, und nur du siehst die echten Werte wieder eingesetzt.",
+    "lead": "Schreib oder füg etwas ein. Cognos sucht nach E-Mail-Adressen, Telefonnummern, Bankdaten und Ausweisnummern und ersetzt erkannte Werte vor dem Senden durch Platzhalter. Prüfe die Vorschau: Die Erkennung ist bestmöglich, findet aber vielleicht nicht jeden sensiblen Wert. Die KI antwortet mit Platzhaltern; Cognos stellt die echten Werte für berechtigte Personen wieder her.",
     "you": "Was du siehst",
     "ai": "Was die KI sieht",
     "docName": "notiz-an-treuhaenderin.txt",
@@ -143,7 +143,7 @@
     ],
     "flow": {
       "eyebrow": "Hin und zurück",
-      "title": "Die KI macht die Arbeit. Wer du bist, erfährt sie nie.",
+      "title": "Die KI macht die Arbeit mit weniger persönlichen Angaben.",
       "lead": "Sieh einer Nachricht beim Hin und Zurück zu: Deine Daten werden auf dem Hinweg verborgen und nur für dich auf dem Rückweg wiederhergestellt.",
       "toggle": "Daten verbergen",
       "model": "Claude",
@@ -186,11 +186,11 @@
     "items": [
       {
         "title": "Nichts Lesbares bleibt zurück",
-        "body": "Wir speichern deine Chats in einer Form, die wir nicht lesen können — es gibt also nichts zu verlieren, zu verkaufen oder herauszugeben."
+        "body": "Wir speichern Chat-Inhalte in einer Form, die wir nicht lesen können. Konto-, Abrechnungs- und Betriebsdaten werden getrennt aufbewahrt, soweit sie für den Dienst nötig sind."
       },
       {
         "title": "Deine Angaben, automatisch versteckt",
-        "body": "E-Mails, Bankdaten, Ausweisnummern und Passwörter werden versteckt, bevor deine Nachricht rausgeht. Standardmässig an."
+        "body": "Cognos versteckt erkannte E-Mails, Bankdaten, Ausweisnummern und Passwörter vor dem Senden. Prüfe die Vorschau, denn die Erkennung findet vielleicht nicht alles."
       },
       {
         "title": "Du wählst, wo alles läuft",
@@ -227,7 +227,7 @@
         "Jeder Chat bekommt den <b>vollen Schutz</b>",
         "Selbstlöschende Nachrichten & Inkognito inklusive",
         "Schweiz oder Europa, mit Dutzenden KI-Modellen",
-        "Zahl nichts in Monaten, in denen du es nicht nutzt"
+        "Mindestens CHF 15 pro Abrechnungsmonat; Mehrverbrauch wird automatisch abgerechnet"
       ],
       "cta": "Nach Verbrauch starten"
     },
@@ -333,7 +333,7 @@
       "title": "Unterauftragsverarbeiter",
       "lead": "Die kurze Liste vertrauenswürdiger Anbieter hinter Cognos — was jeder tut, was er verarbeiten kann und wo.",
       "effectiveLabel": "Zuletzt aktualisiert",
-      "effectiveDate": "2. Juli 2026",
+      "effectiveDate": "10. Juli 2026",
       "facts": [
         {
           "label": "Verantwortlicher",
@@ -503,7 +503,7 @@
               "ul": [
                 "<b>Dein Gerät</b> hält die Schlüssel. Deine Chats werden hier entschlüsselt und gelesen, nirgendwo sonst.",
                 "<b>Unsere Server</b> speichern deine Chats verschlüsselt, geben deine Nachricht an die KI weiter und verschlüsseln die Antwort wieder. Sie behalten nie eine für uns lesbare Kopie.",
-                "<b>Der KI-Anbieter</b> erhält deine Nachricht nur, während er antwortet, und behält danach nichts."
+                "<b>Der geprüfte KI-Anbieter</b> erhält deine Nachricht, während er antwortet. Wir deaktivieren die Speicherung beim Anbieter und prüfen dies vor der Freigabe."
               ]
             }
           ]

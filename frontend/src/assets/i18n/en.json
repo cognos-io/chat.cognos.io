@@ -29,7 +29,10 @@
       "deleteChatsSubtitle": "Permanently delete every conversation and its messages. This can’t be undone.",
       "deleteChatsTitle": "Delete all chats",
       "deleting": "Deleting…",
+      "passwordLabel": "Current password",
+      "stepUpHint": "If two-factor authentication is enabled, enter the current six-digit code too.",
       "title": "Danger zone",
+      "totpLabel": "Authenticator code (if enabled)",
       "typeToConfirm": "Type {{ word }} to confirm."
     },
     "data": {
@@ -140,6 +143,7 @@
       "accountDeleted": "Your account has been deleted",
       "deleteAccountConflict": "Cancel your plan before deleting your account",
       "deleteAccountError": "Could not delete your account",
+      "deleteAccountStepUpError": "Check your password and authenticator code, then try again",
       "deleteChatsError": "Could not delete chats",
       "deletedManyChats": "Deleted {{ count }} chats",
       "deletedOneChat": "Deleted 1 chat",
@@ -208,13 +212,20 @@
       "sent": "If an account exists for {{ email }}, we've sent a password reset link. Check your inbox and follow the link to choose a new password.",
       "sentNote": "Your password only signs you in — it never unlocks your encrypted chats, so resetting it is safe and leaves your history untouched.",
       "submit": "Send reset link",
-      "title": "Reset your password"
+      "title": "Reset your password",
+      "errors": {
+        "duplicate": "We couldn't send the reset link. Check the email address and try again.",
+        "validation": "Check the email address and try again.",
+        "rateLimit": "Too many reset requests. Wait a few minutes, then try again.",
+        "network": "We couldn't reach Cognos. Check your connection and try again.",
+        "server": "We couldn't send the reset link right now. Please try again shortly."
+      }
     },
     "login": {
       "error": "We couldn't sign you in. Check your email and password and try again.",
       "forgot": "Forgot your password?",
       "lead": "Chat with the latest models without giving up control of your data. New devices may also ask for your Account Key.",
-      "legalPrefix": "By signing up you agree to our",
+      "legalPrefix": "By continuing you agree to our",
       "needAccount": "Need an account?",
       "register": "Register",
       "signingIn": "Signing in…",
@@ -235,6 +246,13 @@
         "emailInvalid": "Enter a valid email address.",
         "passwordLength": "Use at least 12 characters.",
         "passwordOk": "Password length looks good."
+      },
+      "errors": {
+        "duplicate": "An account already uses this email. Log in or reset your password instead.",
+        "validation": "We couldn't create the account. Check your details and try again.",
+        "rateLimit": "Too many signup attempts. Wait a few minutes, then try again.",
+        "network": "We couldn't reach Cognos. Check your connection and try again.",
+        "server": "We couldn't create your account right now. Please try again shortly."
       }
     },
     "reset": {
@@ -1161,7 +1179,10 @@
     "emailPlaceholder": "you@example.com",
     "password": "Password",
     "passwordPlaceholder": "••••••••",
+    "and": "and",
+    "privacyPolicy": "Privacy Policy",
     "privacyTerms": "Privacy Policy and Terms",
+    "terms": "Terms",
     "relativeDate": {
       "today": "Today",
       "yesterday": "Yesterday",

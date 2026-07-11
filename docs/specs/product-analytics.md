@@ -313,13 +313,13 @@ All props are closed enums or booleans (§3.2).
 
 Acquisition & onboarding
 
-| Event                       | Props                                           | Decision it informs                                                         |
-| --------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------- |
-| `signup_completed`          | `source` (§6.5)                                 | Marketing attribution; visit→signup conversion                              |
-| `onboarding_step_completed` | `step`: `email_verified` \| `account_key_saved` | Where onboarding loses people; whether the Account Key step needs UX work   |
-| `login_completed`           | `mfa` (bool)                                    | MFA adoption; login friction                                                |
-| `mfa_enrolled`              | —                                               | Security feature adoption                                                   |
-| `vault_unlock_prompted`     | `trigger`: `new_session` \| `idle_logout`       | Quantifies the known Account-Key-re-entry pain; tune the 30-min idle logout |
+| Event                       | Props                                           | Decision it informs                                                          |
+| --------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
+| `signup_completed`          | `source` (§6.5)                                 | Marketing attribution; visit→signup conversion                               |
+| `onboarding_step_completed` | `step`: `email_verified` \| `account_key_saved` | Where onboarding loses people; whether the Account Key step needs UX work    |
+| `login_completed`           | `mfa` (bool)                                    | MFA adoption; login friction                                                 |
+| `mfa_enrolled`              | —                                               | Security feature adoption                                                    |
+| `vault_unlock_prompted`     | `trigger`: `new_session` \| `relocked`          | Quantifies Account-Key re-entry pain without implying an idle timeout exists |
 
 Core usage (activation & retention)
 
@@ -351,11 +351,11 @@ components — `message.service.ts` (`message_sent`/`message_failed`),
 `conversation-duplicate.service.ts`, `vault.service.ts`. One `inject(Analytics)` + one
 `track()` call per site keeps instrumentation reviewable.
 
-**Note on `vault_unlock_prompted.trigger`:** no explicit idle-logout signal exists in
-the app today, so the trigger is derived: a prompt before any unlock in the current JS
-session reports `new_session`; a prompt after the vault was unlocked earlier in the
-session and re-locked reports `idle_logout`. Deduped per locked period, and the
-create-backup onboarding dialog (a new key pair, not an unlock) is excluded.
+**Note on `vault_unlock_prompted.trigger`:** idle logout is not implemented. A prompt before any
+unlock in the current JS session reports `new_session`; a prompt after the vault was locked again in
+that session reports `relocked`. The event is deduped per locked period, and the create-backup
+onboarding dialog (a new key pair, not an unlock) is excluded. Add a new closed-enum trigger only
+when the corresponding product behaviour exists.
 
 **Explicitly not tracked:** message content/length, conversation titles, search queries,
 persona contents, redaction hits, error payloads, anything on the public share page beyond
@@ -449,9 +449,10 @@ Per repo convention: red/green, tables, e2e for behaviour.
 
 ## 11. Rollout checklist
 
-- [ ] Create Plausible sites `cognos.io` and `app.cognos.io`; define the goals + three
-      funnels listed at the end of §9.3 (dashboard access required — the only manual step
-      left; see also the README deployment note)
+- [ ] Create Plausible sites `cognos.io` and `app.cognos.io`; define and verify the goals + three
+      funnels listed at the end of §9.3 using the
+      [dashboard verification checklist](../operations/analytics-dashboard.md). This requires
+      external dashboard access and is not complete merely because this repository is configured.
 - [x] `web/`: `src/lib/analytics.ts`, prod-only script tag in `BaseLayout.astro`, delegated listener
 - [x] `web/`: `data-track` attributes on all CTAs (§5.3) + `signUpUrl(location)` helper in
       `config.ts`

@@ -29,7 +29,10 @@
       "deleteChatsSubtitle": "Elimina permanentemente cada conversa e as suas mensagens. Isto não pode ser anulado.",
       "deleteChatsTitle": "Eliminar todas as conversas",
       "deleting": "A eliminar…",
+      "passwordLabel": "Palavra-passe atual",
+      "stepUpHint": "Se a autenticação de dois fatores estiver ativa, introduz também o código atual de seis dígitos.",
       "title": "Zona de perigo",
+      "totpLabel": "Código do autenticador (se estiver ativo)",
       "typeToConfirm": "Escreve {{ word }} para confirmar."
     },
     "data": {
@@ -140,6 +143,7 @@
       "accountDeleted": "A tua conta foi eliminada",
       "deleteAccountConflict": "Cancela o teu plano antes de eliminares a tua conta",
       "deleteAccountError": "Não foi possível eliminar a tua conta",
+      "deleteAccountStepUpError": "Verifica a palavra-passe e o código do autenticador e tenta novamente",
       "deleteChatsError": "Não foi possível eliminar as conversas",
       "deletedManyChats": "{{ count }} conversas eliminadas",
       "deletedOneChat": "1 conversa eliminada",
@@ -208,13 +212,20 @@
       "sent": "Se existir uma conta para {{ email }}, enviámos um link para repor a palavra-passe. Verifica a tua caixa de entrada e segue o link para escolheres uma nova palavra-passe.",
       "sentNote": "A tua palavra-passe serve apenas para iniciar sessão — nunca desbloqueia as tuas conversas encriptadas, por isso repô-la é seguro e mantém o teu histórico intacto.",
       "submit": "Enviar link de reposição",
-      "title": "Repor a tua palavra-passe"
+      "title": "Repor a tua palavra-passe",
+      "errors": {
+        "duplicate": "Não foi possível enviar a ligação. Verifica o e-mail e tenta novamente.",
+        "validation": "Verifica o e-mail e tenta novamente.",
+        "rateLimit": "Demasiados pedidos. Aguarda alguns minutos e tenta novamente.",
+        "network": "Não foi possível contactar o Cognos. Verifica a ligação e tenta novamente.",
+        "server": "Não é possível enviar a ligação agora. Tenta novamente dentro de instantes."
+      }
     },
     "login": {
       "error": "Não foi possível iniciar a tua sessão. Verifica o teu e-mail e palavra-passe e tenta novamente.",
       "forgot": "Esqueceste-te da palavra-passe?",
       "lead": "Conversa com os modelos mais recentes sem abdicares do controlo dos teus dados. Novos dispositivos também podem pedir a tua Chave de Conta.",
-      "legalPrefix": "Ao registares-te, aceitas a nossa",
+      "legalPrefix": "Ao continuares, aceitas os nossos",
       "needAccount": "Precisas de uma conta?",
       "register": "Registar",
       "signingIn": "A iniciar sessão…",
@@ -235,6 +246,13 @@
         "emailInvalid": "Introduz um endereço de e-mail válido.",
         "passwordLength": "Usa pelo menos 12 caracteres.",
         "passwordOk": "O comprimento da palavra-passe está bom."
+      },
+      "errors": {
+        "duplicate": "Já existe uma conta com este e-mail. Inicia sessão ou redefine a palavra-passe.",
+        "validation": "Não foi possível criar a conta. Verifica os dados e tenta novamente.",
+        "rateLimit": "Demasiadas tentativas de registo. Aguarda alguns minutos e tenta novamente.",
+        "network": "Não foi possível contactar o Cognos. Verifica a ligação e tenta novamente.",
+        "server": "Não é possível criar a tua conta agora. Tenta novamente dentro de instantes."
       }
     },
     "reset": {
@@ -1141,13 +1159,30 @@
       "saveError": "Não foi possível guardar o marcador. Tenta novamente."
     }
   },
+  "a11y": {
+    "skipToContent": "Saltar para o conteúdo principal",
+    "dismiss": "Fechar",
+    "openNavigation": "Abrir navegação",
+    "breadcrumbs": "Navegação estrutural",
+    "branchSwitch": "Mudar de resposta",
+    "previousBranch": "Resposta anterior",
+    "nextBranch": "Resposta seguinte",
+    "assistantTyping": "O assistente está a escrever",
+    "branchVersions": "{{ count }} versões",
+    "removeAttachment": "Remover anexo",
+    "encryptingOnDevice": "A encriptar neste dispositivo",
+    "encryptRetry": "Não foi possível encriptar — toca para tentar novamente"
+  },
   "common": {
     "cancel": "Cancelar",
     "email": "E-mail",
     "emailPlaceholder": "tu@exemplo.pt",
     "password": "Palavra-passe",
     "passwordPlaceholder": "••••••••",
+    "and": "e a nossa",
+    "privacyPolicy": "Política de Privacidade",
     "privacyTerms": "Política de Privacidade e Termos",
+    "terms": "Termos",
     "relativeDate": {
       "today": "Hoje",
       "yesterday": "Ontem",
@@ -1499,6 +1534,7 @@
       "continue": "Continuar",
       "cancel": "Cancelar",
       "scanInstruction": "Lê este código QR com a tua aplicação de autenticação, ou introduz a chave de configuração manualmente.",
+      "qrAlt": "Código QR para configurar a autenticação de dois fatores",
       "manualKeyLabel": "Chave de configuração",
       "confirmInstruction": "Introduz o código de 6 dígitos da tua aplicação para concluíres a ativação.",
       "codeLabel": "Código de autenticação",

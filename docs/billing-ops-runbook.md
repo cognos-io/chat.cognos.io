@@ -5,6 +5,25 @@ Behaviour reference is `docs/specs/billing.md`; the build status is in
 `docs/billing-launch-plan.md`. This doc is the go-live checklist + the
 "something looks wrong, what do I do" guide.
 
+## Canonical customer prices
+
+The production Paddle catalogue and every customer-facing surface must use these values:
+
+| Plan              | Price                                 |
+| ----------------- | ------------------------------------- |
+| Pay as you go     | CHF 15 monthly minimum, plus overage  |
+| Unlimited monthly | CHF 150 per month                     |
+| Unlimited annual  | CHF 1'500 per year (two months free)  |
+
+Prices exclude applicable tax/VAT, which Paddle calculates at checkout. Subscriptions renew for
+the same billing period until cancelled. Cancellation stops the next renewal; access continues to
+the end of the paid period. The advertised 60-day money-back guarantee is limited to one refund per
+Account lifetime; follow the refund procedure in §4.
+
+**Example PAYG invoice:** an Account uses CHF 22.40 of AI in a monthly cycle. Paddle has already
+charged the CHF 15 minimum at renewal, so Cognos posts CHF 7.40 as overage for that closed cycle. If
+usage is CHF 8.00, there is no overage and the charge remains CHF 15, plus applicable tax/VAT.
+
 ## 1. Production wiring checklist
 
 ### 1.1 Paddle dashboard (live account)
@@ -13,8 +32,9 @@ Behaviour reference is `docs/specs/billing.md`; the build status is in
     - `cognos-payg` — recurring monthly, **CHF 15.00** (the minimum commit).
     - `cognos-payg-overage` — **one-time**, **CHF 0.01** unit (overage is billed
       as `quantity = overage in Rappen` of this price).
-    - `cognos-unlimited-m` — recurring monthly, **CHF 100.00**.
-    - `cognos-unlimited-y` — recurring annual, **CHF 1000.00**.
+    - `cognos-unlimited-m` — recurring monthly, **CHF 150.00**.
+    - `cognos-unlimited-y` — recurring annual, **CHF 1500.00** (two months free compared with
+      monthly billing).
 - Create a **notification destination** → `https://<prod-host>/webhooks/paddle`,
   and subscribe exactly these events:
     - `subscription.created`, `subscription.activated`, `subscription.updated`,
