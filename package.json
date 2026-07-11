@@ -11,6 +11,8 @@
     "frontend:start": "pnpm --filter @cognos/chat start",
     "frontend:test": "pnpm --filter @cognos/chat test",
     "frontend:lint": "pnpm --filter @cognos/chat lint",
+    "frontend:storybook": "pnpm --filter @cognos/chat storybook",
+    "frontend:build-storybook": "pnpm --filter @cognos/chat build-storybook",
     "ui-angular:storybook": "pnpm --filter @cognos/ui-angular storybook",
     "ui-angular:build-storybook": "pnpm --filter @cognos/ui-angular build-storybook",
     "e2e": "pnpm --filter @cognos/e2e test",

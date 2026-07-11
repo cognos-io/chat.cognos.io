@@ -135,6 +135,12 @@
                 }
               ]
             },
+            "storybook": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": false,
+              "subresourceIntegrity": false
+            },
             "e2e": {
               "sourceMap": false,
               "outputHashing": "all",
@@ -185,6 +191,28 @@
           "builder": "@angular-eslint/builder:lint",
           "options": {
             "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
+          }
+        },
+        "storybook": {
+          "builder": "@storybook/angular:start-storybook",
+          "options": {
+            "browserTarget": "frontend:build:storybook",
+            "configDir": ".storybook",
+            "compodoc": false,
+            "port": 6008,
+            "preserveSymlinks": true,
+            "tsConfig": "tsconfig.storybook.json"
+          }
+        },
+        "build-storybook": {
+          "builder": "@storybook/angular:build-storybook",
+          "options": {
+            "browserTarget": "frontend:build:storybook",
+            "compodoc": false,
+            "configDir": ".storybook",
+            "outputDir": "storybook-static",
+            "preserveSymlinks": true,
+            "tsConfig": "tsconfig.storybook.json"
           }
         }
       }

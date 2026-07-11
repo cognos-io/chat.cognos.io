@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "dom"],
+    "target": "ES2022",
+    "types": ["@angular/localize"]
+  },
+  "files": [
+    "src/storybook-main.ts",
+    "src/app/documents/renderers/pdfmake-shims.d.ts",
+    "../packages/ui-angular/src/public-api.ts"
+  ],
+  "include": ["src/**/*.stories.ts", "src/**/*.d.ts", ".storybook/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "src/main.ts"]
+}
