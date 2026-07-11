@@ -1,8 +1,8 @@
-# Persona: Luca Ferretti
+# Account-holder profile: Luca Ferretti
 
-> **Quick Summary:** Luca is a freelance UX consultant with ~400 Claude Project threads he
-> references for client positioning work; he will not switch until those threads live in Cognos
-> without the raw export ever leaving his MacBook.
+> **Quick Summary:** Luca is an **Account holder** and freelance UX consultant with ~400 Claude
+> **Conversations** he still references; he will not switch until import encrypts them client-side
+> and the raw export never uploads to Cognos.
 
 ---
 
@@ -11,6 +11,7 @@
 - **ID:** `PER-003`
 - **Name:** Luca Ferretti
 - **Type:** Human
+- **Domain role:** Account holder _(UX research profile — not a Cognos **Persona** instruction set)_
 - **Primary Interface:** Web UI (import wizard: source selector → local file → preview → confirm)
 - **Technical Proficiency:** Intermediate
 
@@ -18,23 +19,23 @@
 
 ## 🎯 Core Objectives
 
-- **Primary Goal:** Import Claude text exports — roughly 18 months of client research threads —
-  encrypted client-side, then open three active client Conversations and continue them the same
-  week.
-- **Secondary Goal:** See exactly what did not import (PDFs, images, tool traces) before he
-  confirms; accept split branches when Claude’s export is ambiguous rather than guess wrong parent
-  links.
+- **Primary Goal:** Import Claude text exports — roughly 18 months of client research
+  **Conversations** — with parse and encrypt in-browser only, then resume three active
+  **Conversations** via normal **Completions** the same week.
+- **Secondary Goal:** See unsupported counts (**Attachments**, images, tool records) before confirm;
+  accept sibling **Message graph** branches split into labelled **Conversations** rather than wrong
+  `parent_message` links.
 
 ---
 
 ## 🛑 Critical Friction Points
 
-- **Friction 1:** Anthropic changes export JSON — parser fails after 12 minutes “processing” with no
-  schema version in the error.
-- **Friction 2:** Assumes 40 attachment-heavy threads came across; learns weeks later the PDFs were
-  never in Cognos.
-- **Friction 3:** 180 MB export freezes Safari tab once; he will not retry until he sees
-  compressed-size limits before file pick.
+- **Friction 1:** Anthropic changes export JSON — import fails after 12 minutes with no schema
+  version in the error.
+- **Friction 2:** Assumes 40 **Attachment**-heavy **Conversations** imported fully; learns weeks
+  later PDFs were excluded by design.
+- **Friction 3:** 180 MB export freezes Safari once; he will not retry until compressed-size limits
+  appear before file pick.
 
 ---
 
@@ -43,25 +44,25 @@
 ### 👤 Human-to-System Needs
 
 - **Information Density:** Medium — Claude-specific export steps, preview table (date, local title,
-  message count, warnings column); counts only, no telemetry on filenames.
-- **Communication Style:** Saturday morning, coffee, one sitting; progress bar required; cancel must
-  feel safe — he will not import if plaintext might sit in IndexedDB.
+  **Message** count, warnings); counts only, no telemetry on filenames.
+- **Communication Style:** Saturday morning, one sitting; progress bar required; cancel must clear
+  plaintext from memory — he will not import if export plaintext might persist in IndexedDB.
 
 ### 🤖 AI Agent Context (Prompt Injection Guardrails)
 
 - **Input Style:** Status enums only (`validated`, `parsed`, `encrypted`, `failed` + reason code);
-  no Conversation titles or Message snippets in agent handoffs.
-- **Ambiguity Tolerance:** Low — unknown ZIP entry or branch parent → split into labelled
-  Conversations or fail; never merge sibling branches by inference.
-- **Handling Errors:** Roll back partial writes; show “export not supported” with Anthropic help
-  link — not a stack trace or JSON dump.
+  no **Conversation** titles or **Message** snippets in agent handoffs.
+- **Ambiguity Tolerance:** Low — unknown ZIP entry or ambiguous **active branch** → split into
+  labelled **Conversations** or fail; never merge sibling branches by inference.
+- **Handling Errors:** Roll back partial writes; show export-not-supported with source help link —
+  not a stack trace or JSON dump.
 
 ---
 
 ## ⚡ Quick-Reference Matrix
 
-| Action/Trigger      | Default Response / Preferred Behavior                                   |
-| :------------------ | :---------------------------------------------------------------------- |
-| **System Error**    | Halt worker; show size/schema error; clear selected file from memory    |
-| **Task Delegation** | Luca picks file → **Helix** parses locally → Luca confirms preview only |
-| **Success State**   | Selected threads decrypt in UI; he sends first follow-up Message Monday |
+| Action/Trigger      | Default Response / Preferred Behavior                                                   |
+| :------------------ | :-------------------------------------------------------------------------------------- |
+| **System Error**    | Halt worker; show size/schema error; clear selected file from memory                    |
+| **Task Delegation** | **Account holder** picks file → **Helix** parses locally → confirms preview only        |
+| **Success State**   | Selected **Conversations** decrypt after **Unlock**; first follow-up **Message** Monday |

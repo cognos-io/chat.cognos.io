@@ -1,7 +1,7 @@
-# Persona: [Name or Archetype Role]
+# Account-holder profile: [Name]
 
-> **Quick Summary:** A single sentence defining who this persona is, their primary driver, and their
-> relationship to the system.
+> **Quick Summary:** A single sentence defining who this **Account holder** is, their primary
+> driver, and their relationship to Cognos. Use **CONTEXT.md** domain terms.
 
 ---
 
@@ -10,6 +10,8 @@
 - **ID:** `PER-00X`
 - **Name:** [Human name, or codename for an AI Agent]
 - **Type:** [Human | AI Agent]
+- **Domain role:** [Account holder | automation actor]
+  _(UX/agent profile — not a Cognos **Persona** instruction set)_
 - **Primary Interface:** [e.g., CLI, Web UI, API, Slackbot]
 - **Technical Proficiency:** [Expert | Intermediate | Non-Technical]
 
@@ -17,7 +19,8 @@
 
 ## 🎯 Core Objectives
 
-_What does success look like for this persona? Keep this to 2–3 items maximum._
+_What does success look like? Keep this to 2–3 items maximum. Prefer **Conversation**, **Message**,
+**Completion**, **Account holder**, **privacy tier**, **Redaction**, **Placeholder**, **Vault**._
 
 - **Primary Goal:** [Clear, actionable outcome they want to achieve]
 - **Secondary Goal:** [Supporting preference, e.g., speed, data density, low cognitive load]
@@ -35,7 +38,7 @@ _What triggers failure, frustration, or workflow abandonment?_
 
 ## 🧠 Collaboration Profile
 
-_How this persona interacts with other entities in the system._
+_How this profile interacts with other entities in the system._
 
 ### 👤 Human-to-System Needs
 
