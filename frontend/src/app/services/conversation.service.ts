@@ -38,6 +38,7 @@ import { Analytics } from './analytics/analytics';
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
+import { FirstValueJourney } from './first-value-journey';
 import { UserPreferencesService } from './user-preferences.service';
 import { VaultService } from './vault.service';
 
@@ -70,6 +71,7 @@ export class ConversationService {
   private readonly _router = inject(Router);
   private readonly _userPreferencesService = inject(UserPreferencesService);
   private readonly _analytics = inject(Analytics);
+  private readonly _firstValueJourney = inject(FirstValueJourney);
 
   // sources
   readonly selectConversation$ = new Subject<string>(); // conversationId
@@ -440,6 +442,7 @@ export class ConversationService {
             map(() => {
               // Engagement baseline — no props, no identifiers.
               this._analytics.track('conversation_created');
+              this._firstValueJourney.recordConversationCreated();
               return {
                 record,
                 decryptedData: data,

@@ -1,0 +1,96 @@
+.early-habit {
+  display: grid;
+  gap: var(--cog-space-125);
+  border-radius: var(--cog-radius-md);
+  background: var(--cog-surface-raised);
+  padding: var(--cog-space-150);
+  box-shadow: var(--cog-shadow-sm);
+}
+
+.early-habit__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cog-space-100);
+}
+
+.early-habit__heading h2,
+.early-habit__heading p {
+  margin: 0;
+}
+
+.early-habit__heading h2 {
+  color: var(--cog-text);
+  font-size: var(--cog-fs-body);
+  line-height: var(--cog-lh-body);
+}
+
+.early-habit__heading p {
+  margin-top: var(--cog-space-025);
+  color: var(--cog-text-subtle);
+  font-size: var(--cog-fs-caption);
+  line-height: var(--cog-lh-caption);
+}
+
+.early-habit__dismiss {
+  display: inline-flex;
+  width: var(--cog-space-500);
+  height: var(--cog-space-500);
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--cog-radius-pill);
+  background: transparent;
+  color: var(--cog-text-subtle);
+  cursor: pointer;
+}
+
+.early-habit__dismiss:hover {
+  background: var(--cog-surface-hover);
+  color: var(--cog-text);
+}
+
+.early-habit__dismiss:focus-visible,
+.early-habit__step button:focus-visible {
+  outline: var(--cog-border-width-strong) solid var(--cog-brand);
+  outline-offset: var(--cog-space-025);
+}
+
+.early-habit__steps {
+  display: grid;
+  gap: var(--cog-space-075);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.early-habit__step {
+  display: grid;
+  min-height: var(--cog-space-400);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--cog-space-075);
+  color: var(--cog-text-subtle);
+  font-size: var(--cog-fs-body-sm);
+}
+
+.early-habit__step--complete {
+  color: var(--cog-text);
+}
+
+.early-habit__step button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--cog-link);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.early-habit__status {
+  color: var(--cog-success);
+  font-size: var(--cog-fs-caption);
+  font-weight: var(--cog-fw-semibold);
+}

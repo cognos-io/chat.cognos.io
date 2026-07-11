@@ -63,6 +63,29 @@ test.describe('high-level user journeys', () => {
     expect(apiPaths).not.toContain('/api/collections/user_key_pairs/records');
   });
 
+  test('a first-value starter fills the composer without sending', async ({ page }) => {
+    const apiPaths = recordApiPaths(page);
+
+    await provisionUnlockedAccount(page);
+
+    await expect(
+      page.getByRole('heading', { name: 'What would you like to do first?' }),
+    ).toBeVisible();
+
+    await page
+      .getByRole('button', { name: /think through something privately/i })
+      .click();
+
+    await expect(
+      page.getByLabel(
+        'Message Cognos — stored encrypted; sent to your provider to reply',
+      ),
+    ).toHaveValue(
+      'Help me think through a decision. Ask me one question at a time, and do not assume details I have not shared.',
+    );
+    expect(apiPaths).not.toContain('/api/v1/completions');
+  });
+
   test('unlocking and sending a first message creates conversation key records through first-party apis', async ({
     page,
   }) => {

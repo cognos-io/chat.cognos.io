@@ -1,0 +1,135 @@
+<main class="conversation-import" *transloco="let t">
+  <cog-page-header
+    [title]="t('adoption.import.title')"
+    [subtitle]="t('adoption.import.subtitle')"
+  >
+    <a page-header-actions routerLink="/">{{ t('adoption.import.back') }}</a>
+  </cog-page-header>
+
+  <cog-callout tone="info">
+    <strong>{{ t('adoption.import.trustTitle') }}</strong>
+    {{ t('adoption.import.trustBody') }}
+  </cog-callout>
+
+  <cog-card
+    [heading]="t('adoption.import.sourceTitle')"
+    [subtitle]="t('adoption.import.sourceBody')"
+  >
+    <div
+      class="conversation-import__sources"
+      role="group"
+      [attr.aria-label]="t('adoption.import.sourceTitle')"
+    >
+      <cog-button
+        [appearance]="source() === 'chatgpt' ? 'primary' : 'default'"
+        [attr.aria-pressed]="source() === 'chatgpt'"
+        type="button"
+        (click)="chooseSource('chatgpt')"
+        >ChatGPT</cog-button
+      >
+      <cog-button
+        [appearance]="source() === 'claude' ? 'primary' : 'default'"
+        [attr.aria-pressed]="source() === 'claude'"
+        type="button"
+        (click)="chooseSource('claude')"
+        >Claude</cog-button
+      >
+    </div>
+  </cog-card>
+
+  @if (source(); as selectedSource) {
+  <cog-card
+    [heading]="t('adoption.import.instructions.' + selectedSource + '.title')"
+    [subtitle]="t('adoption.import.instructions.' + selectedSource + '.body')"
+  >
+    <ol class="conversation-import__instructions">
+      <li>{{ t('adoption.import.instructions.' + selectedSource + '.step1') }}</li>
+      <li>{{ t('adoption.import.instructions.' + selectedSource + '.step2') }}</li>
+      <li>{{ t('adoption.import.instructions.' + selectedSource + '.step3') }}</li>
+    </ol>
+    <a
+      class="conversation-import__help-link"
+      [href]="sourceHelpUrl(selectedSource)"
+      target="_blank"
+      rel="noopener noreferrer"
+      >{{ t('adoption.import.officialHelp') }}</a
+    >
+    <p class="conversation-import__limit">{{ t('adoption.import.limit') }}</p>
+    <label class="conversation-import__file">
+      <span>{{ t('adoption.import.chooseFile') }}</span>
+      <input
+        type="file"
+        accept=".zip,.json,application/zip,application/json"
+        [disabled]="busy()"
+        (change)="onFileSelected($event)"
+      />
+    </label>
+  </cog-card>
+  } @if (busy()) {
+  <div class="conversation-import__progress" role="status" aria-live="polite">
+    <p>{{ t('adoption.import.progress.' + stage()) }}</p>
+    <cog-progress [indeterminate]="true" />
+    @if (stage() !== 'encrypting') {
+    <cog-button appearance="subtle" type="button" (click)="cancel()">
+      {{ t('adoption.import.cancel') }}
+    </cog-button>
+    }
+  </div>
+  } @if (error()) {
+  <cog-callout tone="danger">
+    <strong>{{ t('adoption.import.errors.title') }}</strong> {{ errorText() }}
+  </cog-callout>
+  } @if (preview(); as result) {
+  <cog-card
+    [heading]="t('adoption.import.preview.title')"
+    [subtitle]="t('adoption.import.preview.summary', { conversations: result.conversations.length, messages: result.totals.messages })"
+  >
+    @if (result.totals.attachments + result.totals.images + result.totals.tools +
+    result.totals.unsupported > 0) {
+    <cog-callout tone="warning">
+      {{ t('adoption.import.preview.unsupported', { attachments:
+      result.totals.attachments, images: result.totals.images, tools:
+      result.totals.tools, other: result.totals.unsupported }) }}
+    </cog-callout>
+    }
+    <ul class="conversation-import__preview-list">
+      @for (conversation of result.conversations; track conversation.sourceId; let index
+      = $index) {
+      <li>
+        <label>
+          <input
+            type="checkbox"
+            [checked]="selected().has(index)"
+            (change)="toggleConversation(index, $any($event.target).checked)"
+          />
+          <span>
+            <strong>{{ conversation.title }}</strong>
+            <small
+              >{{ t('adoption.import.preview.messageCount', { count:
+              conversation.messages.length }) }}</small
+            >
+          </span>
+        </label>
+      </li>
+      }
+    </ul>
+    <p class="conversation-import__pending">
+      {{ t('adoption.import.preview.persistencePending') }}
+    </p>
+    <cog-button
+      card-actions
+      appearance="primary"
+      type="button"
+      [disabled]="selected().size === 0 || busy()"
+      (click)="importSelected()"
+    >
+      {{ t('adoption.import.preview.importSelected', { count: selected().size }) }}
+    </cog-button>
+  </cog-card>
+  } @if (stage() === 'encrypting') {
+  <div class="conversation-import__progress" role="status" aria-live="polite">
+    <p>{{ t('adoption.import.progress.encrypting') }}</p>
+    <cog-progress [indeterminate]="true" />
+  </div>
+  }
+</main>

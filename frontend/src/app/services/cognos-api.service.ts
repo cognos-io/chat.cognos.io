@@ -625,6 +625,19 @@ export interface ApiCopyConversationResponse {
   message_count: number;
 }
 
+export interface ApiImportMessageInput {
+  id: string;
+  parent_message?: string;
+  data: string;
+}
+
+export interface ApiConversationImportRequest {
+  import_id: string;
+  source: 'chatgpt' | 'claude';
+  conversation: ApiCopyConversationInput;
+  messages: ApiImportMessageInput[];
+}
+
 export interface ApiPublicConversationResponse {
   conversation_id: string;
   data: string;
@@ -981,6 +994,16 @@ export class CognosApiService {
       {
         headers: this.authHeaders(),
       },
+    );
+  }
+
+  importConversation(
+    request: ApiConversationImportRequest,
+  ): Observable<ApiCopyConversationResponse> {
+    return this._http.post<ApiCopyConversationResponse>(
+      `${this._baseUrl}/api/v1/conversation-imports`,
+      request,
+      { headers: this.authHeaders() },
     );
   }
 

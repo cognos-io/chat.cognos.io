@@ -103,7 +103,8 @@
               "node_modules/prismjs/components/prism-swift.min.js",
               "node_modules/prismjs/components/prism-r.min.js",
               "node_modules/prismjs/components/prism-matlab.min.js"
-            ]
+            ],
+            "webWorkerTsConfig": "tsconfig.worker.json"
           },
           "configurations": {
             "production": {

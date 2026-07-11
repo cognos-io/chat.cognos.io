@@ -15,11 +15,7 @@ import { EMPTY, catchError } from 'rxjs';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { filterNil } from 'ngxtension/filter-nil';
 
-import {
-  CognosAuthPageComponent,
-  CognosButtonComponent,
-  CognosLozengeComponent,
-} from '@cognos/ui-angular';
+import { CognosAuthPageComponent, CognosButtonComponent } from '@cognos/ui-angular';
 
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
@@ -38,7 +34,6 @@ import { authRequestErrorKind } from '../auth-request-error';
     RouterLink,
     TranslocoModule,
     CognosButtonComponent,
-    CognosLozengeComponent,
     CognosLogoComponent,
     LoadingIndicatorComponent,
   ],
@@ -47,9 +42,6 @@ import { authRequestErrorKind } from '../auth-request-error';
     <cog-auth-page>
       <ng-container *transloco="let t">
         <app-cognos-logo class="auth-page__logo"></app-cognos-logo>
-        <div class="auth-page__eyebrow">
-          <cog-lozenge tone="green">{{ t('auth.register.beta') }}</cog-lozenge>
-        </div>
         <h1 class="auth-page__title">{{ t('auth.register.title') }}</h1>
         <p class="auth-page__lead">{{ t('auth.register.lead') }}</p>
 

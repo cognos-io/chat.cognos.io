@@ -233,7 +233,6 @@
       "title": "Get started with privacy-first AI"
     },
     "register": {
-      "beta": "Private beta",
       "creating": "Creating account…",
       "haveAccount": "Already have an account?",
       "lead": "Start with your email and password. Right after signup, Cognos will generate an Account Key for encrypted backup unlock on new devices.",
@@ -724,8 +723,8 @@
     "empty": {
       "disappearingMessages": "Disappearing messages:",
       "disappearingOff": "Off",
-      "incognitoBody": "Your messages will not be saved. If you leave this conversation or clear it, you will not be able to recover them.",
-      "incognitoTitle": "Incognito mode enabled",
+      "incognitoBody": "Messages stay in this browser and are not saved as a Conversation. Cognos and your selected Provider still process them in readable form while generating each reply.",
+      "incognitoTitle": "Temporary conversation",
       "secureBody": "Get started by sending a message using the composer below.",
       "secureTitle": "Secure AI messaging",
       "temporaryChat": "Temporary chat"
@@ -1624,6 +1623,101 @@
       "qwen3-32b": "Alibaba's open model, strong at multilingual chat and tools.",
       "qwen3-next-80b-a3b-thinking": "Alibaba's open reasoning model with extended thinking.",
       "swiss-ai-apertus-70b-instruct-2509-infomaniak": "Switzerland's fully open, transparent model for multilingual tasks."
+    }
+  },
+  "adoption": {
+    "welcome": {
+      "eyebrow": "Start privately",
+      "title": "What would you like to do first?",
+      "body": "Choose a starting point, or skip this and write your own message.",
+      "import": "Bring existing Conversations",
+      "privacy": "Review privacy controls",
+      "skip": "Skip for now"
+    },
+    "starters": {
+      "think": {
+        "title": "Think through something privately",
+        "description": "Work through a decision one question at a time.",
+        "prompt": "Help me think through a decision. Ask me one question at a time, and do not assume details I have not shared."
+      },
+      "draft": {
+        "title": "Draft or improve something",
+        "description": "Shape a clear piece of writing for its audience.",
+        "prompt": "Help me draft or improve a piece of writing. Ask who it is for, what it needs to achieve and the tone I want."
+      },
+      "plan": {
+        "title": "Plan my next steps",
+        "description": "Turn a goal into a practical, realistic plan.",
+        "prompt": "Help me turn a goal into practical next steps. Ask about my deadline and constraints first."
+      }
+    },
+    "trust": {
+      "title": "Before you send:",
+      "persisted": "Your Conversation is stored encrypted. To generate a reply, Cognos and your selected Provider process the Messages in readable form during the request.",
+      "learnMore": "How this works",
+      "detail": "After the reply is generated, Message content is encrypted for storage. Use Redaction before sending when you want detected sensitive values replaced on this device."
+    },
+    "a11y": {
+      "starterAdded": "Starter added to the message box. Review it before sending."
+    },
+    "habit": {
+      "title": "Your first week with Cognos",
+      "body": "A few gentle suggestions. Your Message content is never used to measure progress.",
+      "firstMessage": "Send your first Message",
+      "anotherConversation": "Try another Conversation",
+      "returnRecent": "Come back to a recent Conversation next week",
+      "completed": "Completed",
+      "dismiss": "Hide these suggestions"
+    },
+    "import": {
+      "title": "Bring your Conversations to Cognos",
+      "subtitle": "Review and select supported history before it is encrypted and saved.",
+      "back": "Back to chat",
+      "trustTitle": "Your raw export stays on this device.",
+      "trustBody": "It is read locally and is not uploaded to Cognos. Imported history is sent to a Provider only if you later continue that Conversation.",
+      "sourceTitle": "Where are your Conversations from?",
+      "sourceBody": "Choose a source to see the right export instructions.",
+      "instructions": {
+        "chatgpt": {
+          "title": "Export from ChatGPT",
+          "body": "ChatGPT provides a ZIP containing conversations.json.",
+          "step1": "In ChatGPT, open Settings, then Data controls.",
+          "step2": "Choose Export data and confirm the request.",
+          "step3": "Download the ZIP from the email when it is ready, then select it below."
+        },
+        "claude": {
+          "title": "Export from Claude",
+          "body": "Claude provides an account data export containing your chat history.",
+          "step1": "On the Claude web or desktop app, open Settings, then Privacy.",
+          "step2": "Choose Export data.",
+          "step3": "Download the export from the email when it is ready, then select it below."
+        }
+      },
+      "officialHelp": "Open the official export guide",
+      "limit": "ZIP or JSON, up to 250 MB. Attachments, images and tool records are reported but not imported in this version.",
+      "chooseFile": "Choose your export file",
+      "cancel": "Cancel import",
+      "progress": {
+        "reading": "Reading the export on this device…",
+        "validated": "The archive is safe to open. Reading Conversations…",
+        "encrypting": "Encrypting and saving the selected Conversations…"
+      },
+      "errors": {
+        "title": "We could not complete this import.",
+        "invalid_json": "The JSON is malformed. Request a new export and try again.",
+        "unsupported_schema": "This export format is not supported. Request a current export from the selected source.",
+        "too_large": "This export exceeds the safe import limit.",
+        "too_deep": "This export is nested too deeply to process safely.",
+        "persistence_failed": "The encrypted import could not be saved. Nothing from the current Conversation was stored; please try again."
+      },
+      "preview": {
+        "title": "Review before importing",
+        "summary": "{{ conversations }} Conversations and {{ messages }} Messages are ready to review.",
+        "unsupported": "Not imported: {{ attachments }} attachments, {{ images }} images, {{ tools }} tool records and {{ other }} other items.",
+        "messageCount": "{{ count }} Messages",
+        "persistencePending": "Nothing is uploaded until you confirm. Cognos receives only encrypted Conversation data.",
+        "importSelected": "Encrypt and import {{ count }}"
+      }
     }
   },
   "vault": {

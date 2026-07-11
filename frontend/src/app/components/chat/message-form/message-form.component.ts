@@ -66,6 +66,7 @@ import { BillingService } from '@app/services/billing.service';
 import { ComposerToolsService } from '@app/services/composer-tools.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { DeviceService } from '@app/services/device.service';
+import { FirstValueJourney } from '@app/services/first-value-journey';
 import {
   MessageRequest,
   MessageService,
@@ -333,6 +334,7 @@ interface RedactionPreviewGroup {
             }
 
             <textarea
+              #composerInput
               cdkTextareaAutosize
               cdkAutosizeMaxRows="8"
               cdkAutosizeMinRows="2"
@@ -352,6 +354,9 @@ interface RedactionPreviewGroup {
               (scroll)="onComposerScroll($event)"
             ></textarea>
           </div>
+          <p class="message-form__starter-status" aria-live="polite">
+            {{ starterAnnouncement() }}
+          </p>
 
           <!-- Selection action: redact the highlighted text manually. Anchored
                to the pointer; clears when the selection or draft changes. -->
@@ -1076,6 +1081,18 @@ interface RedactionPreviewGroup {
       border: 0;
     }
 
+    .message-form__starter-status {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     .message-form__textarea {
       width: 100%;
       box-sizing: border-box;
@@ -1569,6 +1586,10 @@ export class MessageFormComponent {
   private readonly _deviceService = inject(DeviceService);
   private readonly _router = inject(Router);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _firstValueJourney = inject(FirstValueJourney);
+  private readonly _composerInput =
+    viewChild<ElementRef<HTMLTextAreaElement>>('composerInput');
+  readonly starterAnnouncement = signal('');
 
   private _previousMessage = '';
 
@@ -1839,6 +1860,21 @@ export class MessageFormComponent {
       nonNullable: true,
       validators: [Validators.required],
     }),
+  });
+
+  private readonly _starterPrefillEffect = effect(() => {
+    const starter = this._firstValueJourney.starterRevision();
+    if (!starter) {
+      return;
+    }
+    this._firstValueJourney.takeStarter();
+    this.messageForm.controls.content.setValue(
+      this._transloco.translate(`adoption.starters.${starter}.prompt`),
+    );
+    this.starterAnnouncement.set(
+      this._transloco.translate('adoption.a11y.starterAdded'),
+    );
+    queueMicrotask(() => this._composerInput()?.nativeElement.focus());
   });
 
   private readonly _redactionService = inject(RedactionService);

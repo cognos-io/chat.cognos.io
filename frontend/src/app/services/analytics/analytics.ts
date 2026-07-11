@@ -20,6 +20,9 @@ export type AppAnalyticsEvent =
   | 'login_completed'
   | 'mfa_enrolled'
   | 'vault_unlock_prompted'
+  | 'adoption_milestone'
+  | 'import_previewed'
+  | 'import_completed'
   // Core usage
   | 'conversation_created'
   | 'message_sent'

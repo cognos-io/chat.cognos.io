@@ -1,0 +1,114 @@
+.conversation-import {
+  display: grid;
+  width: min(100% - 2 * var(--cog-space-300), 58rem);
+  gap: var(--cog-space-250);
+  margin-inline: auto;
+  padding-bottom: var(--cog-space-600);
+}
+
+.conversation-import__sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cog-space-100);
+}
+
+.conversation-import__instructions {
+  display: grid;
+  gap: var(--cog-space-075);
+  margin: 0;
+  padding-inline-start: var(--cog-space-250);
+  color: var(--cog-text);
+  line-height: var(--cog-lh-body);
+}
+
+.conversation-import__limit,
+.conversation-import__pending {
+  margin: 0;
+  color: var(--cog-text-subtle);
+  font-size: var(--cog-fs-body-sm);
+  line-height: var(--cog-lh-body-sm);
+}
+
+.conversation-import__help-link {
+  width: fit-content;
+  color: var(--cog-link);
+  font-weight: var(--cog-fw-semibold);
+}
+
+.conversation-import__help-link:focus-visible {
+  outline: var(--cog-border-width-strong) solid var(--cog-brand);
+  outline-offset: var(--cog-space-025);
+}
+
+.conversation-import__file {
+  display: grid;
+  gap: var(--cog-space-075);
+  color: var(--cog-text);
+  font-weight: var(--cog-fw-semibold);
+}
+
+.conversation-import__file input {
+  min-height: var(--cog-space-500);
+  border: var(--cog-border-width) solid var(--cog-border);
+  border-radius: var(--cog-radius-sm);
+  background: var(--cog-input-bg);
+  padding: var(--cog-space-100);
+  color: var(--cog-text);
+}
+
+.conversation-import__file input:focus-visible {
+  outline: var(--cog-border-width-strong) solid var(--cog-brand);
+  outline-offset: var(--cog-space-025);
+}
+
+.conversation-import__progress {
+  display: grid;
+  gap: var(--cog-space-075);
+}
+
+.conversation-import__progress p {
+  margin: 0;
+  color: var(--cog-text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.conversation-import__preview-list {
+  display: grid;
+  gap: var(--cog-space-075);
+  max-height: 28rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.conversation-import__preview-list label {
+  display: grid;
+  min-height: var(--cog-space-500);
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--cog-space-100);
+  border-radius: var(--cog-radius-sm);
+  padding: var(--cog-space-075);
+  cursor: pointer;
+}
+
+.conversation-import__preview-list label:hover {
+  background: var(--cog-surface-hover);
+}
+
+.conversation-import__preview-list span {
+  display: grid;
+  min-width: 0;
+}
+
+.conversation-import__preview-list strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversation-import__preview-list small {
+  color: var(--cog-text-subtle);
+  font-variant-numeric: tabular-nums;
+}

@@ -313,13 +313,16 @@ All props are closed enums or booleans (§3.2).
 
 Acquisition & onboarding
 
-| Event                       | Props                                           | Decision it informs                                                          |
-| --------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
-| `signup_completed`          | `source` (§6.5)                                 | Marketing attribution; visit→signup conversion                               |
-| `onboarding_step_completed` | `step`: `email_verified` \| `account_key_saved` | Where onboarding loses people; whether the Account Key step needs UX work    |
-| `login_completed`           | `mfa` (bool)                                    | MFA adoption; login friction                                                 |
-| `mfa_enrolled`              | —                                               | Security feature adoption                                                    |
-| `vault_unlock_prompted`     | `trigger`: `new_session` \| `relocked`          | Quantifies Account-Key re-entry pain without implying an idle timeout exists |
+| Event                       | Props                                                                           | Decision it informs                                                          |
+| --------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `signup_completed`          | `source` (§6.5)                                                                 | Marketing attribution; visit→signup conversion                               |
+| `onboarding_step_completed` | `step`: `email_verified` \| `account_key_saved`                                 | Where onboarding loses people; whether the Account Key step needs UX work    |
+| `login_completed`           | `mfa` (bool)                                                                    | MFA adoption; login friction                                                 |
+| `mfa_enrolled`              | —                                                                               | Security feature adoption                                                    |
+| `vault_unlock_prompted`     | `trigger`: `new_session` \| `relocked`                                          | Quantifies Account-Key re-entry pain without implying an idle timeout exists |
+| `adoption_milestone`        | `milestone`: `first_message_24h` \| `three_conversations_7d` \| `week_2_return` | Directional beta adoption without identifiers or cross-device profiles       |
+| `import_previewed`          | `source`: `chatgpt` \| `claude`                                                 | Whether valid local previews reach the selection step                        |
+| `import_completed`          | `source`: `chatgpt` \| `claude`                                                 | Aggregate preview-to-encrypted-import completion                             |
 
 Core usage (activation & retention)
 
@@ -360,6 +363,11 @@ when the corresponding product behaviour exists.
 **Explicitly not tracked:** message content/length, conversation titles, search queries,
 persona contents, redaction hits, error payloads, anything on the public share page beyond
 the sanitised pageview.
+
+`adoption_milestone` is computed from Account-scoped browser state containing only a signup date,
+integer counters and emitted booleans. The Account id is used only in the local storage key and is
+never included in the event. Each milestone fires at most once per browser profile. These are
+directional aggregate count ratios, not exact identity-linked cohorts or cross-device retention.
 
 ## 8. Funnel & Paddle — aggregate linking only
 

@@ -36,6 +36,14 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'import',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/conversation-import/conversation-import').then(
+        (m) => m.ConversationImport,
+      ),
+  },
+  {
     // Standalone pricing / plan-picker ("Keep going, privately"). Reached from
     // the locked-chat surfaces and the dashboard's switch/choose actions.
     path: 'pricing',

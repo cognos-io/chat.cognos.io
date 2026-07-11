@@ -1,0 +1,47 @@
+<section class="first-value" *transloco="let t" aria-labelledby="first-value-title">
+  <div class="first-value__intro">
+    <p class="first-value__eyebrow">{{ t('adoption.welcome.eyebrow') }}</p>
+    <h1 id="first-value-title" class="first-value__title">
+      {{ t('adoption.welcome.title') }}
+    </h1>
+    <p class="first-value__body">{{ t('adoption.welcome.body') }}</p>
+  </div>
+
+  <div class="first-value__starters">
+    @for (starter of starters; track starter) {
+    <button type="button" class="first-value__starter" (click)="choose(starter)">
+      <span class="first-value__starter-icon" aria-hidden="true">
+        <cog-icon name="sparkles" [size]="18" tone="brand" />
+      </span>
+      <span class="first-value__starter-copy">
+        <span class="first-value__starter-title">
+          {{ t('adoption.starters.' + starter + '.title') }}
+        </span>
+        <span class="first-value__starter-description">
+          {{ t('adoption.starters.' + starter + '.description') }}
+        </span>
+      </span>
+      <cog-icon name="chevron-right" [size]="18" tone="text-subtle" />
+    </button>
+    }
+  </div>
+
+  <cog-callout tone="info">
+    <strong>{{ t('adoption.trust.title') }}</strong>
+    {{ t('adoption.trust.persisted') }}
+    <details class="first-value__details">
+      <summary>{{ t('adoption.trust.learnMore') }}</summary>
+      <p>{{ t('adoption.trust.detail') }}</p>
+    </details>
+  </cog-callout>
+
+  <div class="first-value__actions">
+    <a routerLink="/import">{{ t('adoption.welcome.import') }}</a>
+    <a routerLink="/account" fragment="data-processing-heading">
+      {{ t('adoption.welcome.privacy') }}
+    </a>
+    <button type="button" class="first-value__skip" (click)="journey.dismiss()">
+      {{ t('adoption.welcome.skip') }}
+    </button>
+  </div>
+</section>

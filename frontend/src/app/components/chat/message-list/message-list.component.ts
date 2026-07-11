@@ -27,8 +27,10 @@ import {
 
 import { EditConversationDialogComponent } from '@app/components/edit-conversation-dialog/edit-conversation-dialog.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
+import { FirstValue } from '@app/components/onboarding/first-value/first-value';
 import { Message } from '@app/interfaces/message';
 import { ConversationService } from '@app/services/conversation.service';
+import { FirstValueJourney } from '@app/services/first-value-journey';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 import { scrollMessageIntoView } from '@app/utils/scroll-to-message';
 
@@ -48,6 +50,7 @@ import {
     CognosToggleComponent,
     CognosButtonComponent,
     CognosSectionMessageComponent,
+    FirstValue,
     TranslocoModule,
   ],
   template: `
@@ -72,7 +75,12 @@ import {
           <div class="message-list__circle message-list__circle--three"></div>
 
           <div class="message-list__empty">
-            @if (conversationService.isTemporaryConversation()) {
+            @if (
+              firstValueJourney.visible() &&
+              !conversationService.isTemporaryConversation()
+            ) {
+              <app-first-value />
+            } @else if (conversationService.isTemporaryConversation()) {
               <cog-section-message
                 [title]="t('chat.empty.incognitoTitle')"
                 tone="success"
@@ -265,6 +273,7 @@ export class MessageListComponent implements AfterViewInit, OnDestroy {
   private destroyed$: ReplaySubject<boolean> = new ReplaySubject(1);
 
   readonly conversationService = inject(ConversationService);
+  readonly firstValueJourney = inject(FirstValueJourney);
 
   // The translation key for the active disappearing-message duration
   // ('off' | 'hours24' | …), resolved against chat.temporary.durations.*.

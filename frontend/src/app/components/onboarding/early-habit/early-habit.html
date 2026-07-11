@@ -1,0 +1,57 @@
+<aside
+  class="early-habit"
+  *transloco="let t"
+  [attr.aria-label]="t('adoption.habit.title')"
+>
+  <div class="early-habit__heading">
+    <div>
+      <h2>{{ t('adoption.habit.title') }}</h2>
+      <p>{{ t('adoption.habit.body') }}</p>
+    </div>
+    <button
+      type="button"
+      class="early-habit__dismiss"
+      [attr.aria-label]="t('adoption.habit.dismiss')"
+      (click)="journey.dismissHabit()"
+    >
+      <cog-icon name="x" [size]="16" />
+    </button>
+  </div>
+  <ol class="early-habit__steps">
+    <li class="early-habit__step early-habit__step--complete">
+      <cog-icon name="check" [size]="16" tone="success" />
+      <span>{{ t('adoption.habit.firstMessage') }}</span>
+      <span class="early-habit__status">{{ t('adoption.habit.completed') }}</span>
+    </li>
+    <li
+      class="early-habit__step"
+      [class.early-habit__step--complete]="journey.conversationsUsed() >= 2"
+    >
+      <cog-icon
+        [name]="journey.conversationsUsed() >= 2 ? 'check' : 'plus'"
+        [size]="16"
+        [tone]="journey.conversationsUsed() >= 2 ? 'success' : 'text-subtle'"
+      />
+      <button type="button" (click)="startAnotherConversation()">
+        {{ t('adoption.habit.anotherConversation') }}
+      </button>
+      @if (journey.conversationsUsed() >= 2) {
+      <span class="early-habit__status">{{ t('adoption.habit.completed') }}</span>
+      }
+    </li>
+    <li
+      class="early-habit__step"
+      [class.early-habit__step--complete]="journey.returnedInWeekTwo()"
+    >
+      <cog-icon
+        [name]="journey.returnedInWeekTwo() ? 'check' : 'rotate-cw'"
+        [size]="16"
+        [tone]="journey.returnedInWeekTwo() ? 'success' : 'text-subtle'"
+      />
+      <span>{{ t('adoption.habit.returnRecent') }}</span>
+      @if (journey.returnedInWeekTwo()) {
+      <span class="early-habit__status">{{ t('adoption.habit.completed') }}</span>
+      }
+    </li>
+  </ol>
+</aside>

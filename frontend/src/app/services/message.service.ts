@@ -94,6 +94,7 @@ import { ComposerToolsService } from './composer-tools.service';
 import { ConversationService } from './conversation.service';
 import { CryptoService } from './crypto.service';
 import { ErrorService } from './error.service';
+import { FirstValueJourney } from './first-value-journey';
 import { ModelService } from './model.service';
 import { PersonaService } from './persona.service';
 import { ProjectService } from './project.service';
@@ -940,6 +941,7 @@ export class MessageService {
   private readonly _userPreferences = inject(UserPreferencesService);
   private readonly _transloco = inject(TranslocoService);
   private readonly _analytics = inject(Analytics);
+  private readonly _firstValueJourney = inject(FirstValueJourney);
 
   // Retry-after-failure state. On a retryable mid-stream failure we keep the
   // user's message in the thread and remember the (already-redacted) request so
@@ -1768,6 +1770,7 @@ export class MessageService {
               attachments: (messageRequest.attachmentIds?.length ?? 0) > 0,
               reasoning: reasoningEffortProp(request.reasoningEffort),
             });
+            this._firstValueJourney.recordMessageSent();
             return {
               status: MessageStatus.Success,
               messages: applyCompletionStreamResponse(
@@ -1897,7 +1900,7 @@ export class MessageService {
         // Image generations count as sent messages for activation/model mix.
         // They carry no user uploads and take no reasoning parameter.
         tap(() =>
-          this._analytics.track('message_sent', {
+          this.trackSuccessfulMessage({
             model: modelProp(modelId),
             attachments: false,
             reasoning: 'none',
@@ -1940,7 +1943,7 @@ export class MessageService {
       })
       .pipe(
         tap(() =>
-          this._analytics.track('message_sent', {
+          this.trackSuccessfulMessage({
             model: modelProp(modelId),
             attachments: false,
             reasoning: 'none',
@@ -3059,5 +3062,14 @@ export class MessageService {
         };
       }),
     );
+  }
+
+  private trackSuccessfulMessage(props: {
+    model: string;
+    attachments: boolean;
+    reasoning: 'none' | 'low' | 'medium' | 'high';
+  }): void {
+    this._analytics.track('message_sent', props);
+    this._firstValueJourney.recordMessageSent();
   }
 }

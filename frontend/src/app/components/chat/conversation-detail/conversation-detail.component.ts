@@ -20,8 +20,10 @@ import {
 } from '@cognos/ui-angular';
 
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
+import { EarlyHabit } from '@app/components/onboarding/early-habit/early-habit';
 import { BookmarkService } from '@app/services/bookmark.service';
 import { ConversationService } from '@app/services/conversation.service';
+import { FirstValueJourney } from '@app/services/first-value-journey';
 import { MessageService, MessageStatus } from '@app/services/message.service';
 import { VaultService } from '@app/services/vault.service';
 
@@ -38,6 +40,7 @@ import { MessageListComponent } from '../message-list/message-list.component';
     MessageListComponent,
     ConversationMinimapComponent,
     LoadingIndicatorComponent,
+    EarlyHabit,
     CognosButtonComponent,
     CognosIconButtonComponent,
     CognosIconComponent,
@@ -73,6 +76,10 @@ import { MessageListComponent } from '../message-list/message-list.component';
             </div>
           }
         </div>
+
+        @if (firstValueJourney.habitVisible()) {
+          <app-early-habit class="conversation-detail__habit" />
+        }
 
         @if (messageService.sendFailed()) {
           <div class="conversation-detail__retry" role="alert">
@@ -150,6 +157,12 @@ import { MessageListComponent } from '../message-list/message-list.component';
       background: var(--cog-danger-bg);
     }
 
+    .conversation-detail__habit {
+      width: calc(100% - 2 * var(--cog-space-400));
+      max-width: var(--chat-container-width);
+      margin: var(--cog-space-100) auto 0;
+    }
+
     .conversation-detail__retry-copy {
       flex: 1;
       min-width: 0;
@@ -210,6 +223,7 @@ export class ConversationDetailComponent {
   readonly messageListEl = viewChild(MessageListComponent);
 
   readonly messageService = inject(MessageService);
+  readonly firstValueJourney = inject(FirstValueJourney);
   readonly isFetching = computed(
     () => this.messageService.status() === MessageStatus.Fetching,
   );

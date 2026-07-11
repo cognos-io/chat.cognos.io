@@ -233,7 +233,6 @@
       "title": "Começa com uma IA que dá prioridade à privacidade"
     },
     "register": {
-      "beta": "Beta privada",
       "creating": "A criar conta…",
       "haveAccount": "Já tens uma conta?",
       "lead": "Começa com o teu e-mail e palavra-passe. Logo após o registo, a Cognos irá gerar uma Chave de Conta para o desbloqueio encriptado em novos dispositivos.",
@@ -724,8 +723,8 @@
     "empty": {
       "disappearingMessages": "Mensagens temporárias:",
       "disappearingOff": "Desativado",
-      "incognitoBody": "As tuas mensagens não serão guardadas. Se saíres desta conversa ou a limpares, não conseguirás recuperá-las.",
-      "incognitoTitle": "Modo anónimo ativado",
+      "incognitoBody": "As mensagens ficam neste navegador e não são guardadas como conversa. A Cognos e o fornecedor selecionado continuam a processá-las de forma legível ao gerar cada resposta.",
+      "incognitoTitle": "Conversa temporária",
       "secureBody": "Começa por enviar uma mensagem através do campo abaixo.",
       "secureTitle": "Mensagens de IA seguras",
       "temporaryChat": "Conversa temporária"
@@ -1624,6 +1623,101 @@
       "qwen3-32b": "Modelo aberto da Alibaba, forte em chat multilingue e ferramentas.",
       "qwen3-next-80b-a3b-thinking": "Modelo de raciocínio aberto da Alibaba com pensamento estendido.",
       "swiss-ai-apertus-70b-instruct-2509-infomaniak": "O modelo suíço totalmente aberto e transparente para tarefas multilingues."
+    }
+  },
+  "adoption": {
+    "welcome": {
+      "eyebrow": "Começa em privado",
+      "title": "O que gostarias de fazer primeiro?",
+      "body": "Escolhe um ponto de partida ou ignora este passo e escreve a tua própria mensagem.",
+      "import": "Trazer conversas existentes",
+      "privacy": "Rever os controlos de privacidade",
+      "skip": "Ignorar por agora"
+    },
+    "starters": {
+      "think": {
+        "title": "Pensar em algo em privado",
+        "description": "Analisa uma decisão, uma pergunta de cada vez.",
+        "prompt": "Ajuda-me a pensar numa decisão. Faz uma pergunta de cada vez e não pressuponhas detalhes que eu não tenha partilhado."
+      },
+      "draft": {
+        "title": "Redigir ou melhorar algo",
+        "description": "Cria um texto claro para o respetivo público.",
+        "prompt": "Ajuda-me a redigir ou melhorar um texto. Pergunta para quem é, o que precisa de alcançar e que tom pretendo."
+      },
+      "plan": {
+        "title": "Planear os meus próximos passos",
+        "description": "Transforma um objetivo num plano prático e realista.",
+        "prompt": "Ajuda-me a transformar um objetivo em próximos passos práticos. Pergunta primeiro pelo meu prazo e pelas minhas limitações."
+      }
+    },
+    "trust": {
+      "title": "Antes de enviares:",
+      "persisted": "A tua Conversation é guardada cifrada. Para gerar uma resposta, a Cognos e o Provider selecionado processam as Messages de forma legível durante o pedido.",
+      "learnMore": "Como funciona",
+      "detail": "Depois de a resposta ser gerada, o conteúdo das Messages é cifrado para ser guardado. Usa Redaction antes de enviar se quiseres substituir neste dispositivo os valores sensíveis detetados."
+    },
+    "a11y": {
+      "starterAdded": "O texto inicial foi adicionado ao campo de mensagem. Revê-o antes de enviares."
+    },
+    "habit": {
+      "title": "A tua primeira semana com a Cognos",
+      "body": "Algumas sugestões simples. O conteúdo das tuas mensagens nunca é usado para medir o progresso.",
+      "firstMessage": "Envia a tua primeira mensagem",
+      "anotherConversation": "Experimenta outra conversa",
+      "returnRecent": "Volta a uma conversa recente na próxima semana",
+      "completed": "Concluído",
+      "dismiss": "Ocultar estas sugestões"
+    },
+    "import": {
+      "title": "Traz as tuas conversas para a Cognos",
+      "subtitle": "Revê e seleciona o histórico suportado antes de ser cifrado e guardado.",
+      "back": "Voltar ao chat",
+      "trustTitle": "A exportação original fica neste dispositivo.",
+      "trustBody": "É lida localmente e não é carregada para a Cognos. O histórico importado só chega a um fornecedor se continuares essa conversa mais tarde.",
+      "sourceTitle": "De onde vêm as tuas conversas?",
+      "sourceBody": "Escolhe uma fonte para veres as instruções certas.",
+      "instructions": {
+        "chatgpt": {
+          "title": "Exportar do ChatGPT",
+          "body": "O ChatGPT fornece um ZIP com conversations.json.",
+          "step1": "No ChatGPT, abre Definições e depois Controlos de dados.",
+          "step2": "Escolhe Exportar dados e confirma.",
+          "step3": "Descarrega o ZIP do e-mail e seleciona-o abaixo."
+        },
+        "claude": {
+          "title": "Exportar do Claude",
+          "body": "O Claude fornece uma exportação da conta com o teu histórico.",
+          "step1": "No Claude web ou desktop, abre Definições e depois Privacidade.",
+          "step2": "Escolhe Exportar dados.",
+          "step3": "Descarrega a exportação do e-mail e seleciona-a abaixo."
+        }
+      },
+      "officialHelp": "Abrir o guia oficial de exportação",
+      "limit": "ZIP ou JSON, até 250 MB. Anexos, imagens e ferramentas são indicados, mas não importados nesta versão.",
+      "chooseFile": "Escolher ficheiro de exportação",
+      "cancel": "Cancelar importação",
+      "progress": {
+        "reading": "A ler a exportação neste dispositivo…",
+        "validated": "O arquivo é seguro. A ler conversas…",
+        "encrypting": "A cifrar e guardar as conversas selecionadas…"
+      },
+      "errors": {
+        "title": "Não foi possível concluir a importação.",
+        "invalid_json": "O JSON está danificado. Pede uma nova exportação.",
+        "unsupported_schema": "Este formato não é suportado. Pede uma exportação atual da fonte escolhida.",
+        "too_large": "A exportação ultrapassa o limite seguro.",
+        "too_deep": "A exportação está demasiado aninhada para ser processada em segurança.",
+        "persistence_failed": "Não foi possível guardar a importação cifrada. Nada da conversa atual foi guardado; tenta novamente."
+      },
+      "preview": {
+        "title": "Rever antes de importar",
+        "summary": "Há {{ conversations }} conversas e {{ messages }} mensagens para rever.",
+        "unsupported": "Não importados: {{ attachments }} anexos, {{ images }} imagens, {{ tools }} ferramentas e {{ other }} outros elementos.",
+        "messageCount": "{{ count }} mensagens",
+        "persistencePending": "Nada é carregado até confirmares. A Cognos recebe apenas dados cifrados.",
+        "importSelected": "Cifrar e importar {{ count }}"
+      }
     }
   },
   "vault": {

@@ -29,6 +29,7 @@ import { Analytics } from './analytics/analytics';
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
+import { FirstValueJourney } from './first-value-journey';
 import { TrustedUnlockService } from './trusted-unlock.service';
 
 interface VaultState {
@@ -135,6 +136,7 @@ export class VaultService {
   private readonly _trustedUnlockService = inject(TrustedUnlockService);
   private readonly _transloco = inject(TranslocoService);
   private readonly _analytics = inject(Analytics);
+  private readonly _firstValueJourney = inject(FirstValueJourney);
 
   // Whether the vault has been unlocked at any point during this JS session
   // (module lifetime only — never stored). Distinguishes a fresh session's
@@ -169,6 +171,7 @@ export class VaultService {
                   this._analytics.track('onboarding_step_completed', {
                     step: 'account_key_saved',
                   });
+                  this._firstValueJourney.markEligible();
                 }),
                 map(({ keyPair, keyPairRecord: createdKeyPairRecord }) => ({
                   keyPair,
