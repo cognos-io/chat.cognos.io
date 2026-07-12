@@ -118,7 +118,7 @@ test('exports a conversation with a generated image as a zip', async ({ page }) 
   const archive = unzipSync(new Uint8Array(readFileSync(path)));
 
   // The JSON references the image by its archive path.
-  const manifest = JSON.parse(new TextDecoder().decode(archive['conversation.json']));
+  const manifest = JSON.parse(new TextDecoder().decode(archive['export.json']));
   const message = manifest.conversations[0].messages[0];
   const expectedPath = `images/${MESSAGE_ID}-0.png`;
   expect(message.attachments).toEqual([

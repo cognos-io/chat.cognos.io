@@ -61,8 +61,8 @@ test('the Account page lets a user pick an avatar icon and colour', async ({
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/account');
 
-  await page.getByRole('button', { name: 'Icon message-square' }).click();
-  await page.getByRole('button', { name: 'Colour blue' }).click();
+  await page.getByRole('radio', { name: 'message-square' }).click();
+  await page.getByRole('radio', { name: 'blue' }).click();
   await page.getByRole('button', { name: 'Save profile' }).click();
 
   await expect.poll(() => patched?.['avatar_icon']).toBe('message-square');
@@ -88,8 +88,8 @@ test('the Account page offers a transparent avatar colour', async ({ page }) => 
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/account');
 
-  await page.getByRole('button', { name: 'Icon shield' }).click();
-  await page.getByRole('button', { name: 'Colour transparent' }).click();
+  await page.getByRole('radio', { name: 'shield' }).click();
+  await page.getByRole('radio', { name: 'transparent' }).click();
   await page.getByRole('button', { name: 'Save profile' }).click();
 
   await expect.poll(() => patched?.['avatar_color']).toBe('transparent');

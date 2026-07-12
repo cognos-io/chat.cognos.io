@@ -117,8 +117,9 @@ test('browses, searches, activates and pins personas on the personas page', asyn
   const researcher = officialSection.locator('.persona-card', {
     hasText: 'Researcher',
   });
-  await researcher.click();
-  await expect(researcher).toHaveAttribute('aria-pressed', 'true');
+  const researcherButton = researcher.getByRole('button', { name: /Researcher/ });
+  await researcherButton.click();
+  await expect(researcherButton).toHaveAttribute('aria-pressed', 'true');
   await expect(researcher.getByText('Active')).toBeVisible();
 
   // Pinning a persona moves it into the Pinned section.

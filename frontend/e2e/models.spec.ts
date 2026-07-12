@@ -239,8 +239,7 @@ test('authenticated user loads models from the backend catalogue', async ({ page
 
   await expect(page.getByRole('listbox', { name: 'Pick your AI model' })).toBeVisible();
   await expect(page.getByRole('option', { name: /EU Model/ })).toBeEnabled();
-  await expect(page.getByRole('option', { name: /Global Model/ })).toBeDisabled();
   await expect(
-    page.getByText('model privacy tier exceeds user privacy tier'),
-  ).toBeVisible();
+    page.getByRole('option', { name: /Global Model.*Needs Global processing/ }),
+  ).toBeDisabled();
 });

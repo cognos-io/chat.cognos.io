@@ -25,6 +25,12 @@ test('views and edits user memory, persisting re-encrypted ciphertext', async ({
 
   let patchedData: string | undefined;
   let redactionEntries: unknown;
+  let preferencesData: string | undefined;
+  const preferencesRecord = () => ({
+    id: 'up_memory_e2e',
+    user: userFixture.authState.model.id,
+    data: preferencesData,
+  });
 
   await seedAuthenticatedUnlockState(page, userFixture);
   await page.route(`${PB}/api/v1/user-key-pair`, (r) =>
@@ -33,9 +39,19 @@ test('views and edits user memory, persisting re-encrypted ciphertext', async ({
   await page.route(`${PB}/api/v1/vault-session`, (r) =>
     r.fulfill({ json: userFixture.vaultSession }),
   );
-  await page.route(`${PB}/api/v1/user-preferences`, (r) =>
-    r.fulfill({ status: 404, contentType: 'application/json', body: '{}' }),
-  );
+  await page.route(`${PB}/api/v1/user-preferences`, (r) => {
+    if (r.request().method() === 'POST') {
+      preferencesData = (r.request().postDataJSON() as { data: string }).data;
+      return r.fulfill({ json: preferencesRecord() });
+    }
+    return preferencesData
+      ? r.fulfill({ json: preferencesRecord() })
+      : r.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+  });
+  await page.route(`${PB}/api/v1/user-preferences/up_memory_e2e`, (r) => {
+    preferencesData = (r.request().postDataJSON() as { data: string }).data;
+    return r.fulfill({ json: preferencesRecord() });
+  });
   await page.route(`${PB}/api/v1/billing`, (r) =>
     r.fulfill({
       json: { plan_type: 'trial', status: 'trial', balance_chf: 2, trial_seed_chf: 2 },
@@ -73,6 +89,8 @@ test('views and edits user memory, persisting re-encrypted ciphertext', async ({
   // The settings nav surfaces the Memory entry.
   await page.goto('/account');
   await expect(page.getByRole('link', { name: 'Memory' })).toBeVisible();
+  await page.getByRole('switch', { name: 'Use personal memory' }).click();
+  await expect(page.getByText(/Memory is on/)).toBeVisible();
 
   await page.goto('/account/memory');
   await expect(page.getByRole('heading', { name: 'Your memory' })).toBeVisible();

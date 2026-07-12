@@ -110,10 +110,9 @@ test('authenticated user cannot send with an unavailable model', async ({ page }
   await expect(page.getByRole('button', { name: 'Global Model' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Global Model' }).click();
-  await expect(page.getByRole('option', { name: /Global Model/ })).toBeDisabled();
   await expect(
-    page.getByText('model privacy tier exceeds user privacy tier'),
-  ).toBeVisible();
+    page.getByRole('option', { name: /Global Model.*Needs Global processing/ }),
+  ).toBeDisabled();
 
   const composer = page.getByLabel(
     'Message Cognos — stored encrypted; sent to your provider to reply',

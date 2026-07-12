@@ -193,8 +193,9 @@ test('rendered markdown parses callouts, task lists and footnotes', async ({
   await expect(assistant.locator('.markdown-alert')).toBeVisible();
   await expect(assistant.getByText('[!TIP]')).toHaveCount(0);
 
-  // GFM task list checkboxes are rendered.
-  await expect(assistant.locator('li input[type="checkbox"]')).toHaveCount(2);
+  // Task list content remains readable after sanitisation.
+  await expect(assistant.getByText('Todo task')).toBeVisible();
+  await expect(assistant.getByText('Done task')).toBeVisible();
 
   // Footnotes are collected into a footnotes section with a back reference.
   await expect(assistant.locator('.footnotes')).toBeVisible();

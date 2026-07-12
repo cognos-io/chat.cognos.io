@@ -70,8 +70,8 @@ test('the pricing page presents both plans, the guarantee and a working interval
 
   // Guarantee + assurances + footer.
   await expect(page.getByText('60-day money-back guarantee')).toBeVisible();
-  await expect(page.getByText('Trial chats stay readable')).toBeVisible();
-  await expect(page.getByText(/Prices in CHF, incl\. VAT/)).toBeVisible();
+  await expect(page.getByText('Your chats stay readable')).toBeVisible();
+  await expect(page.getByText(/Prices in CHF, VAT added at checkout/)).toBeVisible();
 
   // Switching to yearly re-prices the Unlimited plan.
   await page.getByRole('button', { name: /Yearly/ }).click();

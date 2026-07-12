@@ -10,7 +10,7 @@ import {
 // Selecting text in a message and choosing "Add to memory" pins the snippet to
 // the conversation's manual memory (a no-LLM ciphertext POST), and it is then
 // injected as context_summary on the next send.
-test('selecting message text adds it to memory and injects it on the next send', async ({
+test('selecting message text adds it to conversation memory and injects it on the next send', async ({
   page,
 }) => {
   const userFixture = buildVaultFixture('user_e2e_add', 'add@example.com');
@@ -192,12 +192,12 @@ test('selecting message text adds it to memory and injects it on the next send',
   await snippet.selectText();
   await snippet.dispatchEvent('mouseup');
 
-  // A non-project conversation offers Conversation + User, but not Project.
+  // With personal memory off, a non-project conversation offers Conversation only.
   const menu = page.locator('.message-list-item__memory-pop');
   await expect(
     menu.getByRole('button', { name: 'Conversation', exact: true }),
   ).toBeVisible();
-  await expect(menu.getByRole('button', { name: 'User', exact: true })).toBeVisible();
+  await expect(menu.getByRole('button', { name: 'User', exact: true })).toHaveCount(0);
   await expect(menu.getByRole('button', { name: 'Project', exact: true })).toHaveCount(
     0,
   );
@@ -215,11 +215,4 @@ test('selecting message text adds it to memory and injects it on the next send',
   await composer.fill('Remind me what I like');
   await page.getByRole('button', { name: 'Send' }).click();
   await expect.poll(() => completeBody?.context_summary ?? '').toContain(SNIPPET);
-
-  // Pinning the same selection to User memory writes a ciphertext-only POST.
-  await snippet.selectText();
-  await snippet.dispatchEvent('mouseup');
-  await menu.getByRole('button', { name: 'User', exact: true }).click();
-  await expect.poll(() => userData).toBeTruthy();
-  expect(userData).not.toContain('dark theme');
 });

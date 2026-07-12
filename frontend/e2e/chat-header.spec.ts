@@ -133,11 +133,13 @@ test('persisted conversation header exposes the title, menu, share and security'
 
   // The overflow menu offers rename, a disabled export and delete.
   await page.getByRole('button', { name: 'Conversation menu', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Rename' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Rename' })).toBeVisible();
   // Export is enabled at rest (it only disables mid-export).
-  await expect(page.getByRole('button', { name: /Export/ })).toBeEnabled();
-  await expect(page.getByRole('button', { name: 'Duplicate chat' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: /Export/ })).toBeEnabled();
+  await expect(page.getByRole('menuitem', { name: 'Duplicate chat' })).toBeVisible();
+  await expect(
+    page.getByRole('menuitem', { name: 'Delete', exact: true }),
+  ).toBeVisible();
 
   // Dismiss the menu before opening the modal.
   await page.keyboard.press('Escape');
@@ -158,7 +160,9 @@ test('security modal shows the real device key fingerprint', async ({ page }) =>
   await page.getByRole('button', { name: 'Security & keys' }).click();
 
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('heading', { name: 'Security & keys' })).toBeVisible();
+  await expect(
+    dialog.getByRole('heading', { name: 'Privacy & security' }),
+  ).toBeVisible();
   await expect(dialog.getByText('Encrypted on this device')).toBeVisible();
   await expect(dialog.getByText('Device key')).toBeVisible();
   await expect(
@@ -166,8 +170,8 @@ test('security modal shows the real device key fingerprint', async ({ page }) =>
   ).toBeVisible();
   await expect(dialog.getByText('Verified')).toBeVisible();
 
-  await dialog.getByRole('button', { name: 'Got it' }).click();
-  await expect(page.getByRole('heading', { name: 'Security & keys' })).toBeHidden();
+  await dialog.getByRole('button', { name: 'Close' }).first().click();
+  await expect(dialog).toBeHidden();
 });
 
 test('the security modal body scrolls when its content is taller than the viewport', async ({

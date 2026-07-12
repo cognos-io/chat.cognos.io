@@ -124,7 +124,7 @@ test('disabling redaction in settings turns it off for future messages', async (
   // Turn it off in settings.
   await page.goto('/account');
   await expect(page.getByRole('heading', { name: 'PII redaction' })).toBeVisible();
-  await page.getByRole('switch', { name: 'Redact sensitive values' }).click();
+  await page.getByRole('combobox', { name: 'Detection' }).selectOption('off');
   await expect(page.getByText(/Redaction is off/)).toBeVisible();
 
   // Future messages: detection no longer runs.

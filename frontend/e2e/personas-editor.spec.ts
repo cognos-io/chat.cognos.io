@@ -110,8 +110,8 @@ test('creates an encrypted custom persona through the editor', async ({ page }) 
   await page.getByRole('button', { name: 'New persona' }).first().click();
   await expect(page.getByRole('heading', { name: 'Create your own' })).toBeVisible();
 
-  await page.getByLabel('Icon pencil').click();
-  await page.getByLabel('Colour teal').click();
+  await page.getByRole('radio', { name: 'pencil' }).click();
+  await page.getByRole('radio', { name: 'teal' }).click();
   await page.getByLabel('Name').fill('Private coach');
   await page.getByLabel('Description').fill('Sensitive description');
   await page.getByLabel('Instructions').fill('Sensitive private prompt');
@@ -121,7 +121,10 @@ test('creates an encrypted custom persona through the editor', async ({ page }) 
   // was just used, Recently used), and becomes active.
   const newCard = page.locator('.persona-card', { hasText: 'Private coach' }).first();
   await expect(newCard).toBeVisible();
-  await expect(newCard).toHaveAttribute('aria-pressed', 'true');
+  await expect(newCard.getByRole('button', { name: /Private coach/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
 
   // The POST body carries only the opaque ciphertext, never the plaintext.
   expect(createBody?.data).toBeTruthy();

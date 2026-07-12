@@ -61,9 +61,7 @@ test('the unlock dialog localises when the language is switched', async ({ page 
   // Both the title and the body re-localise without closing the dialog.
   await expect(page.getByRole('heading', { name: 'Backup entsperren' })).toBeVisible();
   await expect(
-    page.getByText(
-      'Geben Sie Ihren Account-Schlüssel ein, um dieses Gerät zu entsperren.',
-    ),
+    page.getByText('Gib deinen Account-Schlüssel ein, um dieses Gerät zu entsperren.'),
   ).toBeVisible();
 
   // The choice is remembered locally (it cannot be encrypted before unlock).

@@ -204,7 +204,7 @@ test('project settings dialog offers a transparent icon colour', async ({ page }
   ).toBeVisible();
 
   await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByRole('button', { name: 'Colour transparent' }).click();
+  await page.getByRole('radio', { name: 'transparent' }).click();
   await page.getByTestId('project-settings-save').click();
 
   // The saved transparent colour is reflected on the header avatar chip.

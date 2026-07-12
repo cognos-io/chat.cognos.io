@@ -174,9 +174,8 @@ test('shows the download menu on the assistant message only, with the three form
   await expect(downloadButton).toBeVisible();
   await downloadButton.click();
 
-  const menu = page.getByRole('menu');
-  await expect(menu).toBeVisible();
-  await expect(menu.getByRole('menuitem')).toHaveText([
+  const menuItems = page.getByRole('menuitem');
+  await expect(menuItems).toHaveText([
     'Word document (.docx)',
     'PDF (.pdf)',
     'Markdown (.md)',
@@ -184,7 +183,7 @@ test('shows the download menu on the assistant message only, with the three form
 
   // Clicking outside the message closes the menu.
   await page.mouse.click(5, 5);
-  await expect(menu).toHaveCount(0);
+  await expect(menuItems).toHaveCount(0);
 });
 
 test('downloads Markdown named after the sanitised conversation title', async ({

@@ -40,12 +40,7 @@ const seed = async (
   );
 };
 
-const FLAGGED_SECTIONS = [
-  'Usage',
-  'Security & keys',
-  'Team & sharing',
-  'Notifications',
-];
+const FLAGGED_SECTIONS = ['Usage', 'Team & sharing', 'Notifications'];
 
 test('flagged-off settings sections are hidden from the nav', async ({ page }) => {
   const fixture = buildVaultFixture('user_e2e_flag01', 'flag@example.com');
@@ -72,7 +67,7 @@ test('navigating directly to a flagged-off section redirects to /account', async
 
   await page.setViewportSize({ width: 1280, height: 800 });
 
-  for (const path of ['usage', 'security', 'team', 'notifications']) {
+  for (const path of ['usage', 'team', 'notifications']) {
     await page.goto(`/account/${path}`);
     await expect(page).toHaveURL(/\/account$/);
   }

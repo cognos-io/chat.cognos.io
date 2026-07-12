@@ -152,14 +152,25 @@ test('composer reasoning-effort selector defaults, switches, and is sent with th
   ).toBeVisible();
 
   // The selector shows the model's default tier.
-  const effortButton = page.locator('.message-form__reasoning');
+  const effortButton = page.getByRole('button', {
+    name: 'Reasoning effort',
+    exact: true,
+  });
   await expect(effortButton).toBeVisible();
-  await expect(effortButton).toContainText('Medium');
+  await effortButton.click();
+  await expect(page.getByRole('menuitemradio', { name: 'Medium' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
 
   // Switch to High.
-  await effortButton.click();
   await page.getByRole('menuitemradio', { name: 'High' }).click();
-  await expect(effortButton).toContainText('High');
+  await effortButton.click();
+  await expect(page.getByRole('menuitemradio', { name: 'High' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await page.keyboard.press('Escape');
 
   // Send and confirm the chosen effort travelled with the completion request.
   const composer = page.getByLabel(
