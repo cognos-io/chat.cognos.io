@@ -66,10 +66,8 @@ func (r *PocketBaseConversationRepo) ByID(id string) (Conversation, error) {
 
 	conversation.ID = record.Id
 
-	duration, err := time.ParseDuration(record.GetString("expiry_duration"))
-	if err != nil {
-		// Explicitly ignore the error as by default there will be no expiry duration
-	}
+	// An empty or legacy invalid value means that the conversation does not expire.
+	duration, _ := time.ParseDuration(record.GetString("expiry_duration"))
 	conversation.ExpiryDuration = duration
 
 	// Get the public key for the conversation

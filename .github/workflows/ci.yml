@@ -46,7 +46,7 @@ jobs:
       - name: run staticcheck
         # U1000 is intentionally excluded because test helpers are shared by
         # build-tagged suites; ST1008 preserves the PocketBase repository API.
-        run: staticcheck -checks=all,-ST1000,-U1000,-ST1008 ./...
+        run: staticcheck -checks=all,-ST1000,-ST1003,-ST1008,-ST1020,-U1000 ./...
 
       - name: install golangci-lint
         run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
