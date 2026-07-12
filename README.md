@@ -70,6 +70,31 @@ Repository-side operator controls:
 - [release evidence bundle](./docs/operations/release-evidence.md)
 - [analytics dashboard verification](./docs/operations/analytics-dashboard.md)
 
+### Deployment tooling
+
+Pushes to `main` run [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml), which builds
+the backend image and publishes both `sha-<commit>` and convenience `main` tags. Production is
+always promoted using the immutable `sha256:` image digest, never a floating tag.
+
+[`backend/cmd/promote-deployment`](./backend/cmd/promote-deployment) implements the GitOps hand-off.
+It targets GitHub initially and includes a Forgejo provider for a future migration. After an image
+is published, the workflow runs this Go command to:
+
+1. clone the private infrastructure repository;
+1. replace the Cognos image tag and digest in its application playbook;
+1. commit and push the bot-owned `deploy/cognos-backend` branch; and
+1. create or refresh the deployment promotion pull request.
+
+Merging that pull request authorises deployment. Re-running promotion for the same digest is a
+no-op. The required repository variables and narrowly scoped automation token are documented in
+[`docs/deployment-interface.md`](./docs/deployment-interface.md#build-promotion-and-rollback).
+See the [promotion command README](./backend/cmd/promote-deployment/README.md) for both provider
+configurations and local usage.
+
+The same workflow builds and uploads the Angular application and marketing site with
+[`backend/cmd/bunny-deploy`](./backend/cmd/bunny-deploy). See its
+[command README](./backend/cmd/bunny-deploy/README.md) for configuration and local usage.
+
 ### Historical infrastructure notes
 
 The notes below record early planning only. They are not deployment instructions or an inventory of

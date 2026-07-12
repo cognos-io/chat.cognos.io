@@ -49,6 +49,29 @@ migrations run on API startup and are forward-only in operational terms: do not 
 back across an incompatible migration. Use expand/contract changes, or restore the pre-deploy
 volume snapshot only under the restore runbook after stopping the writer.
 
+Pushes to `main` publish the backend to `ghcr.io/<owner>/cognos-backend` with immutable
+`sha-<commit>` and convenience `main` tags. Deploy and roll back by digest; the `main` tag is not a
+promotion reference. The workflow attaches BuildKit SBOM/provenance and a GitHub artefact
+attestation to the published digest. After publishing, it updates the private deployment
+repository's Cognos image tag and digest on a bot-owned branch and opens or refreshes a promotion
+pull request. GitHub is the initial infrastructure host; set `INFRASTRUCTURE_PROVIDER=forgejo` to
+use the retained Forgejo implementation later. Configure these GitHub Actions repository values:
+
+| Kind   | Name                               | Meaning                                       |
+| ------ | ---------------------------------- | --------------------------------------------- |
+| Secret | `GH_INFRASTRUCTURE_TOKEN`          | Contents and pull-request write access only   |
+| Var    | `GH_INFRASTRUCTURE_REPOSITORY_URL` | HTTPS Git clone URL for the deployment repo   |
+| Var    | `GH_INFRASTRUCTURE_REPOSITORY`     | GitHub repository in `owner/repository` form  |
+| Var    | `GH_INFRASTRUCTURE_API_URL`        | Optional GitHub API URL for GitHub Enterprise |
+| Var    | `INFRASTRUCTURE_PROVIDER`          | Optional provider; defaults to `github`       |
+
+For the future Forgejo switch, configure `FORGEJO_INFRASTRUCTURE_TOKEN` and the corresponding
+`FORGEJO_INFRASTRUCTURE_REPOSITORY_URL`, `FORGEJO_INFRASTRUCTURE_REPOSITORY` and
+`FORGEJO_INFRASTRUCTURE_API_URL` values, then set `INFRASTRUCTURE_PROVIDER=forgejo`.
+
+The token must belong to a dedicated automation identity with access only to the deployment
+repository. Merging the generated pull request remains the deployment authorisation boundary.
+
 The frontend is built with `pnpm --dir frontend build`; production values are currently compiled
 from `frontend/src/environments/environment.ts`. A release review must verify:
 
@@ -60,6 +83,30 @@ from `frontend/src/environments/environment.ts`. A release review must verify:
 
 The marketing site is built with `pnpm --filter @cognos/web build`. Its canonical application links
 come from `web/src/config.ts`.
+
+Pushes to `main` upload both static builds to separate Bunny Storage zones. Hash-named assets are
+uploaded before other files and `index.html` entry points are uploaded last; each upload includes a
+SHA-256 checksum. The associated pull zone is purged only after its complete upload succeeds.
+Previous hash-named assets are retained so an older HTML release can be restored safely; apply a
+deliberate age-based Storage lifecycle policy rather than deleting them during deployment.
+
+Configure the GitHub `production` environment with these Actions values:
+
+| Kind   | Name                           | Meaning                                      |
+| ------ | ------------------------------ | -------------------------------------------- |
+| Secret | `BUNNY_API_KEY`                | Bunny account API key used only for purging  |
+| Secret | `BUNNY_APP_STORAGE_KEY`        | App Storage zone password                    |
+| Secret | `BUNNY_WEB_STORAGE_KEY`        | Marketing Storage zone password              |
+| Var    | `BUNNY_APP_STORAGE_ZONE`       | App Storage zone name                        |
+| Var    | `BUNNY_WEB_STORAGE_ZONE`       | Marketing Storage zone name                  |
+| Var    | `BUNNY_APP_PULL_ZONE_ID`       | App Pull Zone numeric ID                     |
+| Var    | `BUNNY_WEB_PULL_ZONE_ID`       | Marketing Pull Zone numeric ID               |
+| Var    | `BUNNY_APP_STORAGE_ENDPOINT`   | App regional Storage API endpoint (optional) |
+| Var    | `BUNNY_WEB_STORAGE_ENDPOINT`   | Web regional Storage API endpoint (optional) |
+
+If an endpoint variable is omitted, the Frankfurt endpoint
+`https://storage.bunnycdn.com` is used. Storage zone passwords and the account API key are distinct
+credentials and must not be interchanged.
 
 ## Runtime configuration
 

@@ -1,0 +1,139 @@
+name: deploy artefacts
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/cognos-backend
+  INFRASTRUCTURE_PROVIDER: ${{ vars.INFRASTRUCTURE_PROVIDER || 'github' }}
+  GITHUB_INFRASTRUCTURE_REPOSITORY_URL: ${{ vars.GH_INFRASTRUCTURE_REPOSITORY_URL }}
+  GITHUB_INFRASTRUCTURE_API_URL: ${{ vars.GH_INFRASTRUCTURE_API_URL }}
+  GITHUB_INFRASTRUCTURE_REPOSITORY: ${{ vars.GH_INFRASTRUCTURE_REPOSITORY }}
+  FORGEJO_INFRASTRUCTURE_REPOSITORY_URL: ${{ vars.FORGEJO_INFRASTRUCTURE_REPOSITORY_URL }}
+  FORGEJO_INFRASTRUCTURE_API_URL: ${{ vars.FORGEJO_INFRASTRUCTURE_API_URL }}
+  FORGEJO_INFRASTRUCTURE_REPOSITORY: ${{ vars.FORGEJO_INFRASTRUCTURE_REPOSITORY }}
+  INFRASTRUCTURE_BRANCH: deploy/cognos-backend
+
+jobs:
+  backend-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: log in to GitHub Container Registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: build and push backend image
+        id: push
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: .
+          file: container/backend/Containerfile
+          push: true
+          provenance: mode=max
+          sbom: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      - name: attest backend image provenance
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: open infrastructure promotion pull request
+        working-directory: backend
+        env:
+          GITHUB_INFRASTRUCTURE_TOKEN: ${{ secrets.GH_INFRASTRUCTURE_TOKEN }}
+          FORGEJO_INFRASTRUCTURE_TOKEN: ${{ secrets.FORGEJO_INFRASTRUCTURE_TOKEN }}
+          IMAGE_DIGEST: ${{ steps.push.outputs.digest }}
+          IMAGE_TAG: sha-${{ github.sha }}
+        run: |
+          go test ./cmd/promote-deployment
+          go run ./cmd/promote-deployment
+
+  static-sites:
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: test deployment uploader
+        working-directory: backend
+        run: go test ./cmd/bunny-deploy
+
+      - name: build frontend
+        run: pnpm --dir frontend build
+
+      - name: build marketing site
+        run: pnpm --filter @cognos/web build
+
+      - name: deploy frontend to Bunny
+        working-directory: backend
+        run: go run ./cmd/bunny-deploy ../frontend/dist/browser
+        env:
+          BUNNY_STORAGE_ENDPOINT: ${{ vars.BUNNY_APP_STORAGE_ENDPOINT }}
+          BUNNY_STORAGE_ZONE: ${{ vars.BUNNY_APP_STORAGE_ZONE }}
+          BUNNY_STORAGE_KEY: ${{ secrets.BUNNY_APP_STORAGE_KEY }}
+          BUNNY_PULL_ZONE_ID: ${{ vars.BUNNY_APP_PULL_ZONE_ID }}
+          BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}
+
+      - name: deploy marketing site to Bunny
+        working-directory: backend
+        run: go run ./cmd/bunny-deploy ../web/dist
+        env:
+          BUNNY_STORAGE_ENDPOINT: ${{ vars.BUNNY_WEB_STORAGE_ENDPOINT }}
+          BUNNY_STORAGE_ZONE: ${{ vars.BUNNY_WEB_STORAGE_ZONE }}
+          BUNNY_STORAGE_KEY: ${{ secrets.BUNNY_WEB_STORAGE_KEY }}
+          BUNNY_PULL_ZONE_ID: ${{ vars.BUNNY_WEB_PULL_ZONE_ID }}
+          BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}

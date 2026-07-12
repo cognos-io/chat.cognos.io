@@ -2,8 +2,13 @@ words = [
     "CHF",
     "COGNOS",
     "Cloudflare",
+    "Containerfile",
     "DEEPINFRA",
+    "FORGEJO",
     "Infomaniak",
     "LLM",
     "OPENAI",
+    "artefacts",
+    "opencontainers",
+    "pnpm",
 ]
