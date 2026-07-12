@@ -52,6 +52,7 @@ func run(ctx context.Context, getenv func(string) string, client *http.Client, s
 		return err
 	}
 	playbook := filepath.Join(directory, "playbooks", "app_servers.yml")
+	// #nosec G304 -- playbook is a fixed path inside the freshly cloned repository.
 	contents, err := os.ReadFile(playbook)
 	if err != nil {
 		return fmt.Errorf("read application playbook: %w", err)
@@ -64,6 +65,7 @@ func run(ctx context.Context, getenv func(string) string, client *http.Client, s
 		fmt.Fprintln(stdout, "infrastructure repository already references this image")
 		return nil
 	}
+	// #nosec G306,G703 -- fixed tracked file inside the freshly cloned repository.
 	if err := os.WriteFile(playbook, updated, 0o644); err != nil {
 		return fmt.Errorf("write application playbook: %w", err)
 	}

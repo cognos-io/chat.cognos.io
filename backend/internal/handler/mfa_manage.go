@@ -340,7 +340,8 @@ func verifyTOTPRecord(params MFAParams, totp *core.Record, code string) (bool, u
 		return false, 0, err
 	}
 	if ok {
-		if last := uint64(totp.GetInt("last_accepted_step")); step <= last {
+		lastAcceptedStep := totp.GetInt("last_accepted_step")
+		if lastAcceptedStep < 0 || step <= uint64(lastAcceptedStep) {
 			return false, 0, nil
 		}
 	}

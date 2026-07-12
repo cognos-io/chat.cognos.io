@@ -142,6 +142,7 @@ func runGit(ctx context.Context, directory string, arguments ...string) error {
 	if len(arguments) == 0 {
 		return errors.New("git command requires arguments")
 	}
+	// #nosec G204 -- arguments are assembled internally by the deployment command.
 	command := exec.CommandContext(ctx, "git", arguments...)
 	command.Dir = directory
 	output, err := command.CombinedOutput()

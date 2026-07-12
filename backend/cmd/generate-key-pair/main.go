@@ -88,7 +88,7 @@ func generateAccountKey() (string, error) {
 	}
 
 	parts := make([]string, 0, len(buf)/2)
-	for i := 0; i < len(buf); i += 2 {
+	for i := 0; i+1 < len(buf); i += 2 {
 		parts = append(parts, fmt.Sprintf("%02X%02X", buf[i], buf[i+1]))
 	}
 

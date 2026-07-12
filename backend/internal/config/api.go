@@ -26,6 +26,7 @@ func pathExists(path string) bool {
 }
 
 func readSecretFile(path string) (string, error) {
+	// #nosec G304,G703 -- the path comes from an operator-controlled *_FILE setting.
 	contents, err := os.ReadFile(path)
 	if err != nil {
 		return "", err

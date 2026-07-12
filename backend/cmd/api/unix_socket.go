@@ -56,6 +56,7 @@ func bindUnixSocket(app core.App, config unixSocketConfig) {
 }
 
 func listenUnixSocket(config unixSocketConfig) (net.Listener, error) {
+	// #nosec G301 -- the reverse proxy must be able to traverse the socket directory.
 	if err := os.MkdirAll(filepath.Dir(config.path), 0o755); err != nil {
 		return nil, fmt.Errorf("create Unix socket directory: %w", err)
 	}

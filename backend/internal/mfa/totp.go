@@ -75,15 +75,21 @@ func GenerateSecret(issuer, accountName string) (*otp.Key, error) {
 // We don't use totp.ValidateCustom directly because it doesn't surface which
 // step matched, and we need that for replay protection.
 func Verify(params TOTPParams, code string, t time.Time) (ok bool, step uint64, err error) {
-	period := params.period()
+	periodSeconds := params.Period
+	if periodSeconds <= 0 {
+		periodSeconds = DefaultPeriod
+	}
+	if t.Unix() < 0 {
+		return false, 0, nil
+	}
 	opts := totp.ValidateOpts{
-		Period:    period,
+		Period:    uint(periodSeconds),
 		Skew:      0, // we walk the window ourselves to learn the matched step
 		Digits:    params.digits(),
 		Algorithm: params.algorithm(),
 	}
 
-	base := uint64(t.Unix()) / uint64(period)
+	base := t.Unix() / int64(periodSeconds)
 
 	// Walk earliest→latest so a code valid in overlapping windows resolves to the
 	// lowest matching step; combined with the strict last_accepted_step check this
@@ -93,7 +99,7 @@ func Verify(params TOTPParams, code string, t time.Time) (ok bool, step uint64, 
 		if candidateStep < 0 {
 			continue
 		}
-		stepTime := time.Unix(candidateStep*int64(period), 0)
+		stepTime := time.Unix(candidateStep*int64(periodSeconds), 0)
 
 		expected, genErr := totp.GenerateCodeCustom(params.Secret, stepTime, opts)
 		if genErr != nil {

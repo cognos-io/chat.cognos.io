@@ -103,6 +103,7 @@ func (e *BufferedEmitter) Emit(event UsageEvent) error {
 	e.mu.Unlock()
 
 	if shouldFlush {
+		// #nosec G104 -- automatic flush failures are logged; Emit remains non-blocking.
 		e.flush()
 	}
 	return nil

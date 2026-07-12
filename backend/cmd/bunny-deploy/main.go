@@ -176,9 +176,12 @@ func requestWithRetry(ctx context.Context, client *http.Client, method, endpoint
 		response, err := client.Do(req)
 		if err == nil {
 			detail, readErr := io.ReadAll(io.LimitReader(response.Body, 8<<10))
-			response.Body.Close()
+			closeErr := response.Body.Close()
 			if readErr != nil {
 				return fmt.Errorf("read %s response: %w", method, readErr)
+			}
+			if closeErr != nil {
+				return fmt.Errorf("close %s response: %w", method, closeErr)
 			}
 			if response.StatusCode == expectedStatus {
 				return nil

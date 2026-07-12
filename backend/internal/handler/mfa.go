@@ -83,7 +83,8 @@ func MFACompleteTOTP(params MFAParams) func(e *core.RequestEvent) error {
 		// Replay protection: a code from the same or an earlier timestep must not
 		// be accepted twice (last_accepted_step starts at 0).
 		if ok {
-			if last := uint64(totp.GetInt("last_accepted_step")); step <= last {
+			lastAcceptedStep := totp.GetInt("last_accepted_step")
+			if lastAcceptedStep < 0 || step <= uint64(lastAcceptedStep) {
 				ok = false
 			}
 		}
