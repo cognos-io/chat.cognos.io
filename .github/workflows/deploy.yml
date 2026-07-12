@@ -2,7 +2,11 @@ name: deploy artefacts
 
 on:
   workflow_dispatch:
-  push:
+  workflow_run:
+    workflows:
+      - ci
+    types:
+      - completed
     branches:
       - main
 
@@ -21,10 +25,13 @@ env:
   FORGEJO_INFRASTRUCTURE_API_URL: ${{ vars.FORGEJO_INFRASTRUCTURE_API_URL }}
   FORGEJO_INFRASTRUCTURE_REPOSITORY: ${{ vars.FORGEJO_INFRASTRUCTURE_REPOSITORY }}
   INFRASTRUCTURE_BRANCH: deploy/cognos-backend
+  ARTIFACT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
   backend-image:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
       packages: write
@@ -33,6 +40,8 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ARTIFACT_SHA }}
 
       - name: setup Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
@@ -54,10 +63,10 @@ jobs:
           provenance: mode=max
           sbom: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ env.ARTIFACT_SHA }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
           labels: |
-            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.revision=${{ env.ARTIFACT_SHA }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
 
       - name: attest backend image provenance
@@ -79,12 +88,13 @@ jobs:
           GITHUB_INFRASTRUCTURE_TOKEN: ${{ secrets.GH_INFRASTRUCTURE_TOKEN }}
           FORGEJO_INFRASTRUCTURE_TOKEN: ${{ secrets.FORGEJO_INFRASTRUCTURE_TOKEN }}
           IMAGE_DIGEST: ${{ steps.push.outputs.digest }}
-          IMAGE_TAG: sha-${{ github.sha }}
+          IMAGE_TAG: sha-${{ env.ARTIFACT_SHA }}
         run: |
           go test ./cmd/promote-deployment
           go run ./cmd/promote-deployment
 
   static-sites:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     environment: production
     permissions:
@@ -92,6 +102,8 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ARTIFACT_SHA }}
 
       - name: setup pnpm
         uses: pnpm/action-setup@v4
