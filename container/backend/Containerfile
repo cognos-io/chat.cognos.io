@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.26.5-alpine3.22 AS builder
+FROM golang:1.26.5-alpine3.23 AS builder
 
 WORKDIR /src/backend
 
@@ -10,7 +10,7 @@ RUN go mod download
 COPY backend ./
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/cognos-api ./cmd/api
 
-FROM alpine:3.22.1
+FROM alpine:3.23.5
 
 RUN apk add --no-cache ca-certificates tzdata && \
     addgroup -g 1001 -S cognos && \
