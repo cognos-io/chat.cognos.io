@@ -115,7 +115,7 @@ func enumerateRegisteredAPIv1Routes(t *testing.T) []string {
 			}
 
 			method := ""
-			pathArg := -1
+			var pathArg int
 			if httpMethod, ok := routerHTTPMethods[sel.Sel.Name]; ok && len(call.Args) >= 1 {
 				method = httpMethod
 				pathArg = 0
