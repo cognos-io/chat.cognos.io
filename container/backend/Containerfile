@@ -12,7 +12,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/cognos-
 
 FROM alpine:3.22.1
 
-RUN apk add --no-cache ca-certificates socat tzdata && \
+RUN apk add --no-cache ca-certificates tzdata && \
     addgroup -g 1001 -S cognos && \
     adduser -u 1001 -S -D -H -G cognos -h /app cognos && \
     mkdir -p /app/db /app/configs /app/pb_data /run/cognos /tmp && \

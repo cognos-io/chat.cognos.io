@@ -115,33 +115,33 @@ them in an image, general environment file, command line, deployment diff or log
 take precedence over direct values. Optional secret-file variables must be omitted when their file
 is not mounted; pointing at a missing file intentionally fails startup.
 
-| Setting                                          | Requirement                                          | Secret | Purpose                                    |
-| ------------------------------------------------ | ---------------------------------------------------- | ------ | ------------------------------------------ |
-| `COGNOS_BIFROST_LOG_LEVEL`                       | Optional; production must be `error`                 | No     | Content-safe gateway logging               |
-| `COGNOS_INFOMANIAK_API_KEY_FILE`                 | Required if any Infomaniak model is enabled          | Yes    | Mounted provider credential                |
-| `COGNOS_INFOMANIAK_PRODUCT_ID`                   | Required for Infomaniak unless URL is explicitly set | No     | Provider tenant                            |
-| `COGNOS_INFOMANIAK_URL`                          | Optional                                             | No     | Approved provider endpoint override        |
-| `COGNOS_REQUESTY_API_KEY_FILE`                   | Required if any Requesty model is enabled            | Yes    | Mounted provider credential                |
-| `COGNOS_REQUESTY_URL`                            | Optional; defaults to the EU router                  | No     | Approved Requesty endpoint override        |
-| `COGNOS_REQUESTY_FORCE_DISABLE_ABSENT`           | Optional; normally `false`                           | No     | Catalogue-sync emergency override          |
-| `COGNOS_GATEWAY_GROUNDING_REDIRECT_PREFIX`       | Optional                                             | No     | Approved grounding redirect service        |
-| `COGNOS_BILLING_TRIAL_SEED_RAPPEN`               | Required commercial decision                         | No     | Trial credit                               |
-| `COGNOS_BILLING_PAYG_MIN_COMMIT_RAPPEN`          | Required when PAYG is sold                           | No     | Minimum PAYG commitment                    |
-| `COGNOS_BILLING_UNLIMITED_FAIR_USE_ALERT_RAPPEN` | Required when Unlimited is sold                      | No     | Fair-use alert threshold                   |
-| `COGNOS_BILLING_MARGIN_BPS`                      | Required when paid AI is enabled                     | No     | Provider-cost markup                       |
-| `COGNOS_BILLING_WEB_SEARCH_FLOOR_MICRO_RAPPEN`   | Required when web search is enabled                  | No     | Per-search floor                           |
-| `BILLING_FX_RATE_FALLBACK_USD_CHF`               | Required commercial decision                         | No     | Exchange-rate fallback                     |
-| `COGNOS_PADDLE_API_BASE`                         | Required when billing is enabled                     | No     | Production Paddle API origin               |
-| `COGNOS_PADDLE_API_KEY_FILE`                     | Required when billing is enabled                     | Yes    | Mounted Paddle server credential           |
-| `COGNOS_PADDLE_WEBHOOK_SECRET_FILE`              | Required when billing is enabled                     | Yes    | Mounted webhook verifier secret            |
-| `COGNOS_PADDLE_PRICE_PAYG`                       | Required when PAYG is offered                        | No     | Canonical Paddle price ID                  |
-| `COGNOS_PADDLE_PRICE_PAYG_OVERAGE`               | Required when PAYG overage is offered                | No     | Canonical overage price ID                 |
-| `COGNOS_PADDLE_PRICE_UNLIMITED_MONTHLY`          | Required when monthly Unlimited is offered           | No     | Canonical price ID                         |
-| `COGNOS_PADDLE_PRICE_UNLIMITED_ANNUAL`           | Required when annual Unlimited is offered            | No     | Canonical price ID                         |
-| `COGNOS_MFA_TOTP_ENCRYPTION_KEY_FILE`            | Required when TOTP is enabled                        | Yes    | Base64-encoded 32-byte seed-encryption key |
-| `COGNOS_BACKEND_HTTP_ADDR`                       | Optional; defaults to `0.0.0.0:8090`                 | No     | Container listen address                   |
-| `COGNOS_BACKEND_UNIX_SOCKET`                     | Optional                                             | No     | Shared reverse-proxy socket path           |
-| `COGNOS_BACKEND_UNIX_SOCKET_MODE`                | Optional; defaults to `660`                          | No     | Socket permission mode                     |
+| Setting                                          | Requirement                                          | Secret | Purpose                                                  |
+| ------------------------------------------------ | ---------------------------------------------------- | ------ | -------------------------------------------------------- |
+| `COGNOS_BIFROST_LOG_LEVEL`                       | Optional; production must be `error`                 | No     | Content-safe gateway logging                             |
+| `COGNOS_INFOMANIAK_API_KEY_FILE`                 | Required if any Infomaniak model is enabled          | Yes    | Mounted provider credential                              |
+| `COGNOS_INFOMANIAK_PRODUCT_ID`                   | Required for Infomaniak unless URL is explicitly set | No     | Provider tenant                                          |
+| `COGNOS_INFOMANIAK_URL`                          | Optional                                             | No     | Approved provider endpoint override                      |
+| `COGNOS_REQUESTY_API_KEY_FILE`                   | Required if any Requesty model is enabled            | Yes    | Mounted provider credential                              |
+| `COGNOS_REQUESTY_URL`                            | Optional; defaults to the EU router                  | No     | Approved Requesty endpoint override                      |
+| `COGNOS_REQUESTY_FORCE_DISABLE_ABSENT`           | Optional; normally `false`                           | No     | Catalogue-sync emergency override                        |
+| `COGNOS_GATEWAY_GROUNDING_REDIRECT_PREFIX`       | Optional                                             | No     | Approved grounding redirect service                      |
+| `COGNOS_BILLING_TRIAL_SEED_RAPPEN`               | Required commercial decision                         | No     | Trial credit                                             |
+| `COGNOS_BILLING_PAYG_MIN_COMMIT_RAPPEN`          | Required when PAYG is sold                           | No     | Minimum PAYG commitment                                  |
+| `COGNOS_BILLING_UNLIMITED_FAIR_USE_ALERT_RAPPEN` | Required when Unlimited is sold                      | No     | Fair-use alert threshold                                 |
+| `COGNOS_BILLING_MARGIN_BPS`                      | Required when paid AI is enabled                     | No     | Provider-cost markup                                     |
+| `COGNOS_BILLING_WEB_SEARCH_FLOOR_MICRO_RAPPEN`   | Required when web search is enabled                  | No     | Per-search floor                                         |
+| `BILLING_FX_RATE_FALLBACK_USD_CHF`               | Required commercial decision                         | No     | Exchange-rate fallback                                   |
+| `COGNOS_PADDLE_API_BASE`                         | Required when billing is enabled                     | No     | Production Paddle API origin                             |
+| `COGNOS_PADDLE_API_KEY_FILE`                     | Required when billing is enabled                     | Yes    | Mounted Paddle server credential                         |
+| `COGNOS_PADDLE_WEBHOOK_SECRET_FILE`              | Required when billing is enabled                     | Yes    | Mounted webhook verifier secret                          |
+| `COGNOS_PADDLE_PRICE_PAYG`                       | Required when PAYG is offered                        | No     | Canonical Paddle price ID                                |
+| `COGNOS_PADDLE_PRICE_PAYG_OVERAGE`               | Required when PAYG overage is offered                | No     | Canonical overage price ID                               |
+| `COGNOS_PADDLE_PRICE_UNLIMITED_MONTHLY`          | Required when monthly Unlimited is offered           | No     | Canonical price ID                                       |
+| `COGNOS_PADDLE_PRICE_UNLIMITED_ANNUAL`           | Required when annual Unlimited is offered            | No     | Canonical price ID                                       |
+| `COGNOS_MFA_TOTP_ENCRYPTION_KEY_FILE`            | Required when TOTP is enabled                        | Yes    | Base64-encoded 32-byte seed-encryption key               |
+| `COGNOS_BACKEND_HTTP_ADDR`                       | Optional; defaults to `0.0.0.0:8090`                 | No     | Container TCP listen address when no Unix socket is set  |
+| `COGNOS_BACKEND_UNIX_SOCKET`                     | Optional                                             | No     | Direct API listener and shared reverse-proxy socket path |
+| `COGNOS_BACKEND_UNIX_SOCKET_MODE`                | Optional; defaults to `660`                          | No     | Socket permission mode                                   |
 
 Direct `*_API_KEY`, `COGNOS_PADDLE_WEBHOOK_SECRET` and
 `COGNOS_MFA_TOTP_ENCRYPTION_KEY` variables exist for local development only. Production uses their

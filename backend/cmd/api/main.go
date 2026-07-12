@@ -628,7 +628,7 @@ func logBifrostProviderConfig(logger *slog.Logger, account bifrostschemas.Accoun
 	)
 }
 
-func run(ctx context.Context, w io.Writer, args []string) error {
+func run(ctx context.Context, w io.Writer, args []string, getenv func(string) string) error {
 	_, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
@@ -644,6 +644,13 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	}
 
 	app := NewServer()
+	unixSocket, unixSocketSet, err := loadUnixSocketConfig(getenv)
+	if err != nil {
+		return err
+	}
+	if unixSocketSet {
+		bindUnixSocket(app, unixSocket)
+	}
 
 	bindAppHooks(appHookParams{
 		App:           app,
@@ -658,7 +665,7 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 
 func main() {
 	ctx := context.Background()
-	if err := run(ctx, os.Stdout, os.Args); err != nil {
+	if err := run(ctx, os.Stdout, os.Args, os.Getenv); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
