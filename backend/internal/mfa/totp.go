@@ -75,6 +75,7 @@ func GenerateSecret(issuer, accountName string) (*otp.Key, error) {
 // We don't use totp.ValidateCustom directly because it doesn't surface which
 // step matched, and we need that for replay protection.
 func Verify(params TOTPParams, code string, t time.Time) (ok bool, step uint64, err error) {
+	period := params.period()
 	periodSeconds := params.Period
 	if periodSeconds <= 0 {
 		periodSeconds = DefaultPeriod
@@ -83,7 +84,7 @@ func Verify(params TOTPParams, code string, t time.Time) (ok bool, step uint64, 
 		return false, 0, nil
 	}
 	opts := totp.ValidateOpts{
-		Period:    uint(periodSeconds),
+		Period:    period,
 		Skew:      0, // we walk the window ourselves to learn the matched step
 		Digits:    params.digits(),
 		Algorithm: params.algorithm(),
