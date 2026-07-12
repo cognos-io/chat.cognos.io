@@ -164,6 +164,10 @@ func (s *Service) CalculateCost(
 	userCostUSD := s.applyMargin(providerCostUSD)
 	costCHF := userCostUSD * usdToCHFRate
 	providerCostCHF := providerCostUSD * usdToCHFRate
+	// Round the usage-derived cost before adding the already-integral search
+	// fee. Combining both as floats before rounding can shift the fee by one
+	// micro-rappen at a rounding boundary.
+	baseCostMicroRappen := int64(math.Round(costCHF * 100 * MicroRappenPerRappen))
 
 	// Web-search floor fee: added whenever the completion counted any search
 	// invocations, REGARDLESS of whether a provider-reported total was
@@ -198,9 +202,9 @@ func (s *Service) CalculateCost(
 		CostUSD:                  userCostUSD,
 		CostCHF:                  costCHF,
 		CostRappen:               int64(math.Round(costCHF * 100)),
-		// 1 CHF = 100 rappen = 100 * MicroRappenPerRappen micro-rappen, so
-		// CHF * 1e8 yields micro-rappen.
-		CostMicroRappen:         int64(math.Round(costCHF * 100 * MicroRappenPerRappen)),
+		// Add the integral search fee after rounding the usage-derived CHF cost
+		// so the configured per-search amount remains exactly additive.
+		CostMicroRappen:         baseCostMicroRappen + searchFloorMicroRappen,
 		ProviderCostMicroRappen: int64(math.Round(providerCostCHF * 100 * MicroRappenPerRappen)),
 		UsedProviderCost:        usage.ProviderCostUSD != nil,
 		SearchCount:             usage.SearchCount,
