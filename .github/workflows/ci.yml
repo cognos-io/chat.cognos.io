@@ -163,6 +163,9 @@ jobs:
 
       - name: run e2e tests
         run: pnpm --filter @cognos/e2e test
+        env:
+          E2E_BASE_URL: https://127.0.0.1:8095
+          E2E_POCKETBASE_URL: https://127.0.0.1:8095
 
       - name: upload playwright report
         if: ${{ !cancelled() }}
@@ -229,7 +232,7 @@ jobs:
         run: podman build --file container/backend/Containerfile --tag cognos-backend:ci .
 
       - name: export backend image for scanning
-        run: podman save --format oci-archive --output backend-image.tar cognos-backend:ci
+        run: podman save --format docker-archive --output backend-image.tar cognos-backend:ci
 
       - name: scan backend image
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
