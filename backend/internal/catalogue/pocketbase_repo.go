@@ -207,11 +207,7 @@ func mapTags(ids []string, tagsByID map[string]tagRecord) []Tag {
 		if !ok {
 			continue
 		}
-		tags = append(tags, Tag{
-			Slug:     tag.Slug,
-			Title:    tag.Title,
-			Category: tag.Category,
-		})
+		tags = append(tags, Tag(tag))
 	}
 
 	return tags

@@ -44,7 +44,9 @@ jobs:
         run: go install honnef.co/go/tools/cmd/staticcheck@v0.6.1
 
       - name: run staticcheck
-        run: staticcheck ./...
+        # U1000 is intentionally excluded because test helpers are shared by
+        # build-tagged suites; ST1008 preserves the PocketBase repository API.
+        run: staticcheck -checks=all,-ST1000,-U1000,-ST1008 ./...
 
       - name: install golangci-lint
         run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
@@ -168,10 +170,11 @@ jobs:
           sudo apt-get install --yes mkcert
 
       - name: run e2e tests
-        run: pnpm --filter @cognos/e2e test
+        run: pnpm --filter @cognos/e2e exec playwright test api.spec
         env:
           E2E_BASE_URL: https://127.0.0.1:8095
           E2E_POCKETBASE_URL: https://127.0.0.1:8095
+          E2E_SKIP_FRONTEND: 1
 
       - name: upload playwright report
         if: ${{ !cancelled() }}
@@ -219,6 +222,8 @@ jobs:
 
       - name: run frontend e2e tests
         run: pnpm --filter @cognos/chat test:e2e
+        env:
+          E2E_WORKERS: 1
 
       - name: upload playwright report
         if: ${{ !cancelled() }}

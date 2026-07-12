@@ -36,6 +36,7 @@ func TestEvaluateAccessProperties(t *testing.T) {
 		case PlanTypeInactive:
 			if got == nil {
 				t.Fatalf("EvaluateAccess(inactive, %d) = nil, want restriction", estimatedMicro)
+				return
 			}
 			if got.Error != "INACTIVE" || got.NextStep != "subscribe" {
 				t.Fatalf("inactive restriction = %#v, want INACTIVE/subscribe", got)
@@ -54,6 +55,7 @@ func TestEvaluateAccessProperties(t *testing.T) {
 			}
 			if got == nil {
 				t.Fatalf("EvaluateAccess(trial, unaffordable) = nil, want restriction")
+				return
 			}
 			if got.Error != "TRIAL_EXHAUSTED" || got.NextStep != "subscribe" {
 				t.Fatalf("trial restriction = %#v, want TRIAL_EXHAUSTED/subscribe", got)

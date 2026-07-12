@@ -63,7 +63,7 @@ func listenUnixSocket(config unixSocketConfig) (net.Listener, error) {
 	info, err := os.Lstat(config.path)
 	if err == nil {
 		if info.Mode()&os.ModeSocket == 0 {
-			return nil, fmt.Errorf("Unix socket path %q exists and is not a socket", config.path)
+			return nil, fmt.Errorf("unix socket path %q exists and is not a socket", config.path)
 		}
 		if err := os.Remove(config.path); err != nil {
 			return nil, fmt.Errorf("remove stale Unix socket: %w", err)
