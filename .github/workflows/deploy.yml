@@ -127,6 +127,12 @@ jobs:
         working-directory: backend
         run: go test ./cmd/bunny-deploy
 
+      - name: lint frontend
+        run: pnpm --dir frontend lint
+
+      - name: test frontend
+        run: pnpm --dir frontend exec ng test --watch=false
+
       - name: build frontend
         run: pnpm --dir frontend build
 
