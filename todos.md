@@ -13,5 +13,8 @@
 - [ ] power user mode - e.g. show token counts on message. Where is the current context. Surface any
       compactions to the user
 - [x] Subresource integrity for javascript files
-- [ ] Continuous delivery to bunny.net cdn (frontend & web files)
+- [x] Continuous delivery to bunny.net cdn (frontend & web files)
 - [ ] Continuous building of container image (backend)
+- [ ] Use your own models. Set up a custom endpoint (e.g. ollama or a server over tailscale) and use
+      to run your own models. responses are streamed back, encrypted and then posted to the backend
+      so the application behaves as normal.
