@@ -1,0 +1,41 @@
+---
+# Application Manifests are the production source of truth. Keep this as one readable registry
+# until its size, rather than the number of products, makes splitting it materially clearer.
+braw_applications:
+  - description: Encrypted AI chat application.
+    name: cognos
+    release_image:
+      reference: >-
+        ghcr.io/cognos-io/cognos-backend:sha-5034c046f53f7735b2cee8c7c42ce0516789e512@sha256:987be61a5a06be0711185fd4ffcea5537e89298bee931993bb248933b069d5e5
+    resources:
+      memory: 512M
+      cpu_quota: 50%
+    health_checks:
+      upstream:
+        path: /health
+      endpoint:
+        path: /health
+    env_files:
+      - name: shared
+        variables:
+          COGNOS_BACKEND_HTTP_ADDR: 127.0.0.1:8090
+      - name: web
+        variables:
+          COGNOS_BACKEND_UNIX_SOCKET: /run/braw/applications/cognos/web.sock
+    upstreams:
+      - name: web
+        type: unix_socket
+    endpoints:
+      - host: cognos.braw.dev
+        upstream: web
+      - host: api.cognos.io
+        upstream: web
+    persistent_storage:
+      - name: pb_data
+        mount_path: /app/pb_data
+    runtime_units:
+      - name: web
+        upstream: web
+        env_files:
+          - shared
+          - web

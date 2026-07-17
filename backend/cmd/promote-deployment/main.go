@@ -11,13 +11,18 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"go.yaml.in/yaml/v3"
 )
 
 var (
 	imageTagPattern    = regexp.MustCompile(`^sha-[0-9a-f]{40}$`)
 	imageDigestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
-	tagLinePattern     = regexp.MustCompile(`(?m)^    cognos_release_image_tag:.*$`)
-	digestLinePattern  = regexp.MustCompile(`(?m)^    cognos_release_image_digest:.*$`)
+)
+
+const (
+	applicationName = "cognos"
+	imageRepository = "ghcr.io/cognos-io/cognos-backend"
 )
 
 type config struct {
@@ -51,11 +56,11 @@ func run(ctx context.Context, getenv func(string) string, client *http.Client, s
 	if err := cfg.provider.Clone(ctx, directory); err != nil {
 		return err
 	}
-	playbook := filepath.Join(directory, "playbooks", "app_servers.yml")
-	// #nosec G304 -- playbook is a fixed path inside the freshly cloned repository.
-	contents, err := os.ReadFile(playbook)
+	manifest := filepath.Join(directory, "applications.yml")
+	// #nosec G304 -- manifest is a fixed path inside the freshly cloned repository.
+	contents, err := os.ReadFile(manifest)
 	if err != nil {
-		return fmt.Errorf("read application playbook: %w", err)
+		return fmt.Errorf("read application manifest: %w", err)
 	}
 	updated, err := updateReleaseImage(contents, cfg.imageTag, cfg.imageDigest)
 	if err != nil {
@@ -66,8 +71,8 @@ func run(ctx context.Context, getenv func(string) string, client *http.Client, s
 		return nil
 	}
 	// #nosec G306,G703 -- fixed tracked file inside the freshly cloned repository.
-	if err := os.WriteFile(playbook, updated, 0o644); err != nil {
-		return fmt.Errorf("write application playbook: %w", err)
+	if err := os.WriteFile(manifest, updated, 0o644); err != nil {
+		return fmt.Errorf("write application manifest: %w", err)
 	}
 
 	shortSHA := cfg.sourceSHA[:12]
@@ -76,7 +81,7 @@ func run(ctx context.Context, getenv func(string) string, client *http.Client, s
 		{"config", "user.name", "cognos deployment bot"},
 		{"config", "user.email", "deployment-bot@cognos.io"},
 		{"switch", "--create", cfg.branch},
-		{"add", "playbooks/app_servers.yml"},
+		{"add", "applications.yml"},
 		{"commit", "-m", "chore(cognos): promote backend " + shortSHA},
 	}
 	for _, arguments := range commands {
@@ -166,13 +171,69 @@ func loadConfig(getenv func(string) string, client *http.Client) (config, error)
 }
 
 func updateReleaseImage(contents []byte, tag, digest string) ([]byte, error) {
-	if matches := tagLinePattern.FindAll(contents, -1); len(matches) != 1 {
-		return nil, fmt.Errorf("application playbook contains %d Cognos image tag variables, want 1", len(matches))
+	var document yaml.Node
+	if err := yaml.Unmarshal(contents, &document); err != nil {
+		return nil, fmt.Errorf("parse application manifest: %w", err)
 	}
-	if matches := digestLinePattern.FindAll(contents, -1); len(matches) != 1 {
-		return nil, fmt.Errorf("application playbook contains %d Cognos image digest variables, want 1", len(matches))
+	if len(document.Content) != 1 {
+		return nil, errors.New("application manifest must contain one YAML document")
 	}
-	updated := tagLinePattern.ReplaceAll(contents, []byte("    cognos_release_image_tag: "+tag))
-	updated = digestLinePattern.ReplaceAll(updated, []byte("    cognos_release_image_digest: "+digest))
-	return updated, nil
+
+	applications, err := mappingValue(document.Content[0], "braw_applications")
+	if err != nil {
+		return nil, err
+	}
+	if applications.Kind != yaml.SequenceNode {
+		return nil, errors.New("braw_applications must be a sequence")
+	}
+
+	matches := make([]*yaml.Node, 0, 1)
+	for _, candidate := range applications.Content {
+		name, lookupErr := mappingValue(candidate, "name")
+		if lookupErr == nil && name.Value == applicationName {
+			matches = append(matches, candidate)
+		}
+	}
+	if len(matches) != 1 {
+		return nil, fmt.Errorf("application manifest contains %d %s applications, want 1", len(matches), applicationName)
+	}
+
+	releaseImage, err := mappingValue(matches[0], "release_image")
+	if err != nil {
+		return nil, err
+	}
+	reference, err := mappingValue(releaseImage, "reference")
+	if err != nil {
+		return nil, err
+	}
+	if reference.Kind != yaml.ScalarNode {
+		return nil, errors.New("release_image.reference must be a scalar")
+	}
+	reference.Value = imageRepository + ":" + tag + "@" + digest
+
+	var updated bytes.Buffer
+	if bytes.HasPrefix(contents, []byte("---\n")) {
+		updated.WriteString("---\n")
+	}
+	encoder := yaml.NewEncoder(&updated)
+	encoder.SetIndent(2)
+	if err := encoder.Encode(&document); err != nil {
+		return nil, fmt.Errorf("encode application manifest: %w", err)
+	}
+	if err := encoder.Close(); err != nil {
+		return nil, fmt.Errorf("close application manifest encoder: %w", err)
+	}
+	return updated.Bytes(), nil
+}
+
+func mappingValue(mapping *yaml.Node, key string) (*yaml.Node, error) {
+	if mapping.Kind != yaml.MappingNode {
+		return nil, fmt.Errorf("%s parent must be a mapping", key)
+	}
+	for index := 0; index < len(mapping.Content); index += 2 {
+		if mapping.Content[index].Value == key {
+			return mapping.Content[index+1], nil
+		}
+	}
+	return nil, fmt.Errorf("application manifest is missing %s", key)
 }

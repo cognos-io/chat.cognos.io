@@ -1,44 +1,73 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
 
-func TestUpdateReleaseImage(t *testing.T) {
+func TestUpdateReleaseImageFromInfrastructureManifest(t *testing.T) {
 	t.Parallel()
 
-	input := `vars:
-    cognos_release_image: ghcr.io/cognos-io/cognos-backend
-    cognos_release_image_tag: placeholder
-    cognos_release_image_digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
-`
-	want := `vars:
-    cognos_release_image: ghcr.io/cognos-io/cognos-backend
-    cognos_release_image_tag: sha-0123456789012345678901234567890123456789
-    cognos_release_image_digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-`
+	input, err := os.ReadFile("testdata/applications.yml")
+	if err != nil {
+		t.Fatalf("ReadFile(testdata/applications.yml) error = %v", err)
+	}
+	currentReference := []byte("ghcr.io/cognos-io/cognos-backend:sha-5034c046f53f7735b2cee8c7c42ce0516789e512@sha256:987be61a5a06be0711185fd4ffcea5537e89298bee931993bb248933b069d5e5")
+	wantReference := []byte("ghcr.io/cognos-io/cognos-backend:sha-0123456789012345678901234567890123456789@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	if occurrences := bytes.Count(input, currentReference); occurrences != 1 {
+		t.Fatalf("fixture contains %d current image references, want 1", occurrences)
+	}
+	want := bytes.Replace(input, currentReference, wantReference, 1)
+
 	got, err := updateReleaseImage(
-		[]byte(input),
+		input,
 		"sha-0123456789012345678901234567890123456789",
 		"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 	)
 	if err != nil {
 		t.Fatalf("updateReleaseImage() error = %v", err)
 	}
-	if string(got) != want {
+	if !bytes.Equal(got, want) {
 		t.Errorf("updateReleaseImage() = %q, want %q", got, want)
 	}
 }
 
-func TestUpdateReleaseImageRejectsMissingVariables(t *testing.T) {
+func TestUpdateReleaseImageRejectsMissingCognosApplication(t *testing.T) {
 	t.Parallel()
 
-	_, err := updateReleaseImage([]byte("vars: {}\n"), "sha-0123456789012345678901234567890123456789", "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	_, err := updateReleaseImage([]byte("braw_applications: []\n"), "sha-0123456789012345678901234567890123456789", "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	if err == nil {
+		t.Error("updateReleaseImage() error = nil, want an error")
+	}
+}
+
+func TestUpdateReleaseImageRejectsMalformedManifest(t *testing.T) {
+	t.Parallel()
+
+	_, err := updateReleaseImage([]byte("braw_applications: [\n"), "sha-0123456789012345678901234567890123456789", "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	if err == nil {
+		t.Error("updateReleaseImage() error = nil, want an error")
+	}
+}
+
+func TestUpdateReleaseImageRejectsDuplicateCognosApplications(t *testing.T) {
+	t.Parallel()
+
+	input := `braw_applications:
+  - name: cognos
+    release_image:
+      reference: ghcr.io/cognos-io/cognos-backend:old@sha256:0000000000000000000000000000000000000000000000000000000000000000
+  - name: cognos
+    release_image:
+      reference: ghcr.io/cognos-io/cognos-backend:old@sha256:0000000000000000000000000000000000000000000000000000000000000000
+`
+	_, err := updateReleaseImage([]byte(input), "sha-0123456789012345678901234567890123456789", "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 	if err == nil {
 		t.Error("updateReleaseImage() error = nil, want an error")
 	}

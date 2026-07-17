@@ -1,9 +1,10 @@
 # Deployment promotion
 
 `promote-deployment` hands a newly published Cognos backend image to the infrastructure repository
-without deploying it directly. It updates the image tag and immutable digest, pushes the bot-owned
-`deploy/cognos-backend` branch, and creates or refreshes a promotion pull request. Merging that pull
-request is the deployment authorisation boundary.
+without deploying it directly. It updates the Cognos `release_image.reference` in
+`applications.yml` with the image tag and immutable digest, pushes the bot-owned
+`deploy/cognos-backend` branch, and creates or refreshes a promotion pull request. Merging that
+pull request is the deployment authorisation boundary.
 
 The command is run by [the deployment workflow](../../../.github/workflows/deploy.yml), but is not
 coupled to GitHub Actions.
@@ -74,6 +75,6 @@ Run its focused tests with:
 mise exec -- go test ./cmd/promote-deployment
 ```
 
-Re-running the command for an image already present in the infrastructure playbook is a no-op. A
+Re-running the command for an image already present in the application manifest is a no-op. A
 newer promotion force-updates only the dedicated bot branch; it does not modify the infrastructure
 repository's default branch or merge the pull request.
