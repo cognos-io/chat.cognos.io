@@ -247,8 +247,8 @@
       ],
       "cta": "Go Unlimited"
     },
-    "roadmap": "Need it for a team? Single sign-on and admin controls are on the way — ",
-    "roadmapLink": "get in touch",
+    "roadmap": "Teams: CHF 15 per person per month + usage, one invoice — coming soon. ",
+    "roadmapLink": "Get in touch",
     "roadmapAfter": "."
   },
   "security": {
@@ -1878,7 +1878,20 @@
       },
       "pricing": {
         "title": "Simple per-person pricing",
-        "body": "Unlimited is CHF 150 per person / month, plus VAT added at checkout — unlimited chats across every AI model we offer. Or pay as you go from CHF 15/month. Single sign-on and admin controls are on the way."
+        "body": "Unlimited is CHF 150 per person / month, plus VAT added at checkout — unlimited chats across every AI model we offer. Or pay as you go from CHF 15/month."
+      },
+      "team": {
+        "eyebrow": "For teams",
+        "title": "One organisation, one invoice — coming soon",
+        "lead": "We're building a straightforward team offer. Here's what it will include:",
+        "points": [
+          "<b>One organisation, one invoice</b> — CHF 15 per person per month minimum, plus whatever your team actually uses, pooled together",
+          "<b>Invite and remove people yourself</b> — no IT project needed",
+          "<b>Admins see usage and costs</b> — never anyone's conversations",
+          "<b>Work stays with the firm</b> — projects belong to the organisation, personal chats stay personal",
+          "<b>Leaving is clean</b> — access ends straight away, and the person's own account is untouched"
+        ],
+        "footnote": "Single sign-on and admin policies follow after that. This is early access — tell us about your team below and we'll bring you on as we roll it out."
       },
       "form": {
         "heading": "Ask us anything",

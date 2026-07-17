@@ -26,6 +26,8 @@ const whyBody = t.raw<string[]>(`${base}.why.body`);
 // Light inline <b> emphasis; trusted, static, author-controlled strings
 // rendered with set:html (same as Audience.astro).
 const whyPoints = t.raw<string[]>(`${base}.why.points`);
+// Upcoming team offer — not shipped yet, see docs/specs/organisations.md.
+const teamPoints = t.raw<string[]>(`${base}.team.points`);
 const sizes = t.raw<string[]>(`${base}.form.sizes`);
 ---
 
@@ -68,6 +70,28 @@ const sizes = t.raw<string[]>(`${base}.form.sizes`);
               </div>
             ))
           }
+        </div>
+      </div>
+    </section>
+
+    <section class="sec-pad">
+      <div class="wrap">
+        <div class="sec-head reveal">
+          <span class="eyebrow text-brand">{t(`${base}.team.eyebrow`)}</span>
+          <h2 class="sec-h">{t(`${base}.team.title`)}</h2>
+          <p>{t(`${base}.team.lead`)}</p>
+        </div>
+        <div class="sec-narrow reveal">
+          <ul class="price-list">
+            {
+              teamPoints.map((item) => (
+                <li>
+                  <Icon name="Check" size={18} /> <span set:html={item} />
+                </li>
+              ))
+            }
+          </ul>
+          <p class="price-vat">{t(`${base}.team.footnote`)}</p>
         </div>
       </div>
     </section>

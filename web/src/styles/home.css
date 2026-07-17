@@ -191,6 +191,15 @@ h2.sec-h {
   line-height: var(--cog-lh-body-lg);
   margin: var(--cog-space-150) auto 0;
 }
+/* Narrow centred column for content that follows a .sec-head, e.g. a short
+   feature list, without the flex-based grid layouts used elsewhere. */
+.sec-narrow {
+  max-width: 640px;
+  margin-inline: auto;
+}
+.sec-narrow .price-vat {
+  text-align: center;
+}
 
 /* ============================ TYPE HELPERS ============================= */
 .eyebrow {

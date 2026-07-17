@@ -246,8 +246,8 @@
       ],
       "cta": "Passer à l'illimité"
     },
-    "roadmap": "Besoin pour une équipe ? La connexion unique et les contrôles d'administration arrivent bientôt — ",
-    "roadmapLink": "écrivez-nous",
+    "roadmap": "Équipes : CHF 15 par personne et par mois + usage, une facture — bientôt disponible. ",
+    "roadmapLink": "Écrivez-nous",
     "roadmapAfter": "."
   },
   "security": {
@@ -739,7 +739,20 @@
       },
       "pricing": {
         "title": "Un prix simple par personne",
-        "body": "L'offre Illimité est à CHF 150 par personne / mois, TVA ajoutée au paiement — conversations illimitées sur tous les modèles d'IA que nous proposons. Ou payez à l'usage à partir de CHF 15/mois. La connexion unique et les contrôles d'administration arrivent bientôt."
+        "body": "L'offre Illimité est à CHF 150 par personne / mois, TVA ajoutée au paiement — conversations illimitées sur tous les modèles d'IA que nous proposons. Ou payez à l'usage à partir de CHF 15/mois."
+      },
+      "team": {
+        "eyebrow": "Pour les équipes",
+        "title": "Une organisation, une facture — bientôt disponible",
+        "lead": "Nous préparons une offre simple pour les équipes. Voici ce qui est prévu :",
+        "points": [
+          "<b>Une organisation, une facture</b> — CHF 15 par personne et par mois minimum, plus ce que votre équipe utilise réellement, mutualisé",
+          "<b>Invitez et retirez des personnes vous-même</b> — sans projet informatique",
+          "<b>Les administrateurs voient l'usage et les coûts</b> — jamais les conversations de qui que ce soit",
+          "<b>Le travail reste à l'entreprise</b> — les projets appartiennent à l'organisation, les conversations personnelles restent personnelles",
+          "<b>Un départ propre</b> — l'accès est coupé immédiatement, et le compte personnel de la personne reste intact"
+        ],
+        "footnote": "La connexion unique et les politiques d'administration arrivent ensuite. C'est un accès anticipé — parlez-nous de votre équipe ci-dessous et nous vous intégrerons au fur et à mesure du déploiement."
       },
       "form": {
         "heading": "Posez-nous vos questions",

@@ -246,8 +246,8 @@
       ],
       "cta": "Passa a Illimitato"
     },
-    "roadmap": "Ti serve per un team? Accesso unico e controlli di amministrazione stanno arrivando — ",
-    "roadmapLink": "scrivici",
+    "roadmap": "Team: CHF 15 per persona al mese + uso, una fattura — in arrivo. ",
+    "roadmapLink": "Scrivici",
     "roadmapAfter": "."
   },
   "security": {
@@ -739,7 +739,20 @@
       },
       "pricing": {
         "title": "Prezzo semplice per persona",
-        "body": "Il piano Illimitato costa CHF 150 per persona / mese, IVA aggiunta al pagamento — chat illimitate su tutti i modelli di IA che offriamo. Oppure paghi quanto usi, da CHF 15/mese. L'accesso unico per i team e i controlli di amministrazione sono in arrivo."
+        "body": "Il piano Illimitato costa CHF 150 per persona / mese, IVA aggiunta al pagamento — chat illimitate su tutti i modelli di IA che offriamo. Oppure paghi quanto usi, da CHF 15/mese."
+      },
+      "team": {
+        "eyebrow": "Per i team",
+        "title": "Un'organizzazione, una fattura — in arrivo",
+        "lead": "Stiamo preparando un'offerta semplice per i team. Ecco cosa includerà:",
+        "points": [
+          "<b>Un'organizzazione, una fattura</b> — CHF 15 per persona al mese come minimo, più quello che il tuo team usa davvero, tutto insieme",
+          "<b>Invita e rimuovi le persone quando vuoi</b> — senza bisogno di un progetto IT",
+          "<b>Gli amministratori vedono l'uso e i costi</b> — mai le chat di nessuno",
+          "<b>Il lavoro resta all'azienda</b> — i progetti appartengono all'organizzazione, le chat personali restano personali",
+          "<b>Un'uscita pulita</b> — l'accesso termina subito, e l'account personale di quella persona resta intatto"
+        ],
+        "footnote": "L'accesso unico e le politiche di amministrazione arrivano dopo. Questo è in accesso anticipato — raccontaci del tuo team qui sotto e ti porteremo a bordo man mano che lo lanciamo."
       },
       "form": {
         "heading": "Chiedici quello che vuoi",
