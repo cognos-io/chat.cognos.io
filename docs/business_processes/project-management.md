@@ -34,5 +34,7 @@ Project memory uses the same at-rest rule as Account memory: encrypted data in
 storage, plaintext only in the active Completion request after client decrypt,
 and Redaction before provider dispatch.
 
-Until team sharing ships, avoid marketing Projects as collaborative workspaces.
-Use "organise related Conversations" rather than "invite your team".
+Team sharing is specified in `docs/specs/organisations.md` and remains
+unmarketable until Teams v1 ships. Until then, avoid marketing Projects as
+collaborative workspaces — use "organise related Conversations" rather than
+"invite your team".
