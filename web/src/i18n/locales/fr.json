@@ -743,7 +743,7 @@
       },
       "form": {
         "heading": "Posez-nous vos questions",
-        "note": "Parlez-nous un peu de votre équipe — nous répondons sous un jour ouvré. Ce formulaire ouvre votre propre application d'e-mail — rien ne transite par ce site ni n'y est conservé.",
+        "note": "Parlez-nous un peu de votre équipe — nous répondons dans un délai d’une semaine ouvrée. Ce formulaire ouvre votre propre application d'e-mail — rien ne transite par ce site ni n'y est conservé.",
         "name": "Nom",
         "email": "E-mail professionnel",
         "company": "Entreprise",
@@ -763,7 +763,7 @@
       "channels": [
         {
           "title": "Support général",
-          "body": "Questions de compte, de facturation ou d'application. Nous répondons sous un jour ouvré."
+          "body": "Questions de compte, de facturation ou d'application. Nous répondons dans un délai d’une semaine ouvrée."
         },
         {
           "title": "Business & entreprises",

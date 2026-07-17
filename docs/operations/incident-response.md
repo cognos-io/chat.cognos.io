@@ -17,7 +17,8 @@ One person may hold several roles during beta, but every incident must name them
 | SEV-3    | Limited failure with a workaround and no credible confidentiality or data-loss risk                                               | 1 business day | At meaningful changes |
 
 Targets are only promises after the deployment repository names an on-call owner and alert route.
-Until then, do not advertise continuous monitoring or a one-business-day support guarantee.
+Until then, do not advertise continuous monitoring. The standard support response target is one
+working week; incident acknowledgement targets apply only after the named alert route is staffed.
 
 ## Common first actions
 

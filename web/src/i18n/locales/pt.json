@@ -749,7 +749,7 @@
       },
       "form": {
         "heading": "Pergunta-nos o que quiseres",
-        "note": "Conta-nos um pouco sobre a tua equipa e respondemos dentro de um dia útil. Este formulário abre a tua própria aplicação de e-mail — nada passa por este site nem fica aqui guardado.",
+        "note": "Conta-nos um pouco sobre a tua equipa e respondemos no prazo de uma semana útil. Este formulário abre a tua própria aplicação de e-mail — nada passa por este site nem fica aqui guardado.",
         "name": "Nome",
         "email": "Email de trabalho",
         "company": "Empresa",
@@ -769,7 +769,7 @@
       "channels": [
         {
           "title": "Suporte geral",
-          "body": "Questões de conta, faturação ou da aplicação. Respondemos no prazo de um dia útil."
+          "body": "Questões de conta, faturação ou da aplicação. Respondemos no prazo de uma semana útil."
         },
         {
           "title": "Empresas",

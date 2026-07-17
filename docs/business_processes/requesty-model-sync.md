@@ -1,32 +1,38 @@
 ---
-description: How curated Requesty models are kept current (reasoning, pricing, context) without overwriting curation or compliance
+description: How Requesty's available Models are mirrored without overwriting local operator controls
 name: requesty-model-sync
 ---
 
 # Requesty Model Sync
 
-Models change often — prices move, context windows grow, reasoning support
-appears. Rather than re-curate by hand, the backend **enriches** the curated
-catalogue from Requesty's model API. It is deliberately **enrich-only**: it
-refreshes derived metadata on models we already curate, and never decides which
-models exist or where they run.
+Models change often: new ones appear, old ones retire, prices move and context
+windows grow. The backend mirrors the Models exposed by Requesty's authenticated
+model API and refreshes Provider-owned metadata without overwriting local
+operator intent.
 
-## What it does — and never does
+## Ownership and precedence
 
-| Refreshes (derived)                                  | Never touches (curated / compliance)                |
+| Requesty-owned and synchronised                      | Local/operator-owned and preserved                  |
 | ---------------------------------------------------- | --------------------------------------------------- |
-| `reasoning_efforts` + `default_reasoning_effort`     | `enabled`, `whitelisted`                            |
-| `input/output_usd_per_million_tokens`                | `privacy_tier`, `hosting_country`, `hosting_region` |
-| `input_context_tokens`, `max_output_tokens`          | which models exist, name, slug, tags                |
-| capability flags incl. `supports_web_search`         |                                                     |
+| `provider_available`                                 | `enabled`, `whitelisted`                            |
+| pricing, context and maximum output                  | existing name, description, display name and tags   |
+| vision, tool, computer-use and web-search capability | existing privacy tier and hosting fields            |
+| initial description and release date for new Models  | corrected release dates and reasoning overrides     |
 
-Requesty's `geolocation` never _moves_ a model — **residency stays curated**, so
-the sync can never silently relocate a model or re-enable one you disabled. It
-is used in exactly one fail-safe direction: `supports_web_search` survives the
-sync **only when `geolocation == "eu"`** (exact string match — never an
-id-suffix regex, which would assert EU residency more strongly than Requesty
-itself does). Any other value forces the flag off, so a mislabelled model loses
-web search rather than gaining it. See [web-search](./web-search.md).
+A Model is exposed only when `enabled`, `whitelisted`, and
+`provider_available` are all true. Therefore:
+
+- disabling a Model locally always wins, even while Requesty exposes it;
+- removing or disabling it in Requesty makes it unavailable without erasing
+  the local `enabled` value;
+- re-enabling it in Requesty restores availability only when the local controls
+  still permit it.
+
+New Models start enabled and whitelisted. Requesty `geolocation == "eu"` gives
+them the `eu` privacy tier; every other or missing value defaults to `global`.
+Existing residency remains curated and is never rewritten by the sync.
+`supports_web_search` remains stricter: it survives only when geolocation is
+exactly `eu`. See [web-search](./web-search.md).
 
 ## How it runs
 
@@ -40,9 +46,11 @@ sequenceDiagram
   J->>R: GET /v1/models (Bearer key)
   R-->>J: models + supports_reasoning, prices, context
   J->>DB: load ai_models where provider = requesty
-  loop each curated model matched by id (region ignored)
-    J->>J: compute derived updates
-    J->>DB: save IF changed (skip curation fields)
+  loop each upstream Model
+    J->>DB: create if unknown; otherwise refresh synced fields
+  end
+  loop each local Requesty Model
+    J->>DB: update provider_available from upstream presence
   end
 ```
 
@@ -59,12 +67,14 @@ sequenceDiagram
 
 ## Invariants
 
-1. **Enrich-only.** Curation and compliance fields are never written. A Model
-   appears, stays enabled, and keeps its privacy tier/region only by curation.
-2. **No clobbering overrides.** `reasoning_efforts` is set only when empty, so a
-   hand-tuned per-model tier list always wins.
-3. **Safe to run anytime.** Idempotent (writes only on change), tolerant of a
-   missing Requesty provider or a down API, and harmless across instances.
+1. **Separate intent from availability.** Requesty updates
+   `provider_available`; operators own `enabled` and `whitelisted`.
+2. **Conservative discovery.** Unknown residency becomes `global`, and Models
+   without a valid context window are not created.
+3. **No clobbering corrections.** Existing curation, release dates and
+   reasoning-effort overrides win.
+4. **Safe to run anytime.** The sync is idempotent, tolerant of a missing
+   Requesty Provider or unavailable API, and guards large absence responses.
 
 See [reasoning-visibility](./reasoning-visibility.md) for how the synced effort
 tiers surface in the composer.

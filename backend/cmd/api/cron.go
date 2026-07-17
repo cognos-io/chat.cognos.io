@@ -96,9 +96,10 @@ func retryPaygOverageJob(
 	)
 }
 
-// fairUseReportJob is the nightly fair-use monitor (spec §8): it flags Unlimited
-// accounts whose rolling 30-day user-cost exceeds the threshold and logs them
-// for operator review. Read-only — it never throttles or blocks anyone.
+// fairUseReportJob is the nightly commercial-risk monitor. It reports
+// content-free Provider-cost percentiles and PAYG ledger contribution margin by
+// Model, then flags Unlimited Accounts that need fair-use review. Read-only: it
+// alerts operators but never silently throttles or blocks an Account.
 func fairUseReportJob(
 	scheduler gocron.Scheduler,
 	logger *slog.Logger,
@@ -112,6 +113,33 @@ func fairUseReportJob(
 		),
 		gocron.NewTask(func() {
 			since := time.Now().UTC().Add(-billing.DefaultFairUseWindow)
+			report, err := repo.CostRiskSince(since)
+			if err != nil {
+				logger.Error("cost-risk report failed", "err", err)
+				return
+			}
+			logger.Info("cost-risk account Provider-cost percentiles",
+				"window_days", int(billing.DefaultFairUseWindow/(24*time.Hour)),
+				"p50_rappen", report.AccountProviderCost.P50Rappen,
+				"p90_rappen", report.AccountProviderCost.P90Rappen,
+				"p95_rappen", report.AccountProviderCost.P95Rappen,
+				"p99_rappen", report.AccountProviderCost.P99Rappen)
+			for _, model := range report.Models {
+				if model.ProviderCostRappen < billing.DefaultModelCostAlertRappen {
+					continue
+				}
+				logger.Warn("cost-risk Model over Provider-cost threshold",
+					"model_id", model.ModelID,
+					"request_count", model.RequestCount,
+					"provider_cost_rappen", model.ProviderCostRappen,
+					"threshold_rappen", billing.DefaultModelCostAlertRappen,
+					"payg_revenue_rappen", model.PAYGRevenueRappen,
+					"payg_gross_profit_rappen", model.PAYGGrossProfitRappen,
+					"payg_gross_margin_bps", model.PAYGGrossMarginBPS,
+					"account_p95_rappen", model.AccountProviderCost.P95Rappen,
+					"account_p99_rappen", model.AccountProviderCost.P99Rappen)
+			}
+
 			flags, err := repo.FlagFairUseOutliers(since, thresholdRappen)
 			if err != nil {
 				logger.Error("fair-use report failed", "err", err)
@@ -123,10 +151,21 @@ func fairUseReportJob(
 			logger.Warn("fair-use: Unlimited accounts over threshold",
 				"count", len(flags), "threshold_rappen", thresholdRappen)
 			for _, flag := range flags {
-				logger.Warn("fair-use outlier",
+				risk := billing.ClassifyCostRisk(
+					flag.RollingCostRappen,
+					thresholdRappen,
+					billing.DefaultFairUseShutdownReviewRappen,
+				)
+				log := logger.Warn
+				if risk == billing.CostRiskShutdownReview {
+					log = logger.Error
+				}
+				log("fair-use outlier",
 					"user_id", flag.UserID,
 					"rolling_cost_rappen", flag.RollingCostRappen,
-					"request_count", flag.RequestCount)
+					"request_count", flag.RequestCount,
+					"risk", risk,
+					"shutdown_review_rappen", billing.DefaultFairUseShutdownReviewRappen)
 			}
 		}),
 	)
@@ -159,11 +198,11 @@ func cleanUpIdleVaultSessionsJob(
 	)
 }
 
-// syncRequestyModelsJob keeps the curated Requesty models current: it runs once
-// shortly after boot and every ~6h thereafter, enriching matched models with
-// fresh reasoning/pricing/context metadata from Requesty's API. It runs in the
-// background, so a slow or unavailable Requesty never blocks startup or
-// requests, and it only writes derived fields (never curation/compliance).
+// syncRequestyModelsJob mirrors Requesty's available Models: it runs once
+// shortly after boot and every ~6h thereafter, discovering new Models,
+// refreshing Provider-owned metadata, and updating Provider availability. It
+// runs in the background, so Requesty never blocks startup or requests. Local
+// curation and compliance overrides remain operator-owned.
 func syncRequestyModelsJob(
 	scheduler gocron.Scheduler,
 	app core.App,

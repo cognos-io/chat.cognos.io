@@ -78,10 +78,10 @@ type APIConfig struct {
 	// Requesty (OpenAI-compatible EU gateway)
 	RequestyAPIKey string `koanf:"requesty.api_key"`
 	RequestyAPIURL string `koanf:"requesty.url"`
-	// RequestyForceDisableAbsent makes the scheduled sync disable models missing
-	// from the Requesty fetch even when the absent share trips the health guard
-	// (COGNOS_REQUESTY_FORCE_DISABLE_ABSENT=true). Off by default; the CLI has a
-	// per-run --force-disable-absent flag for one-off cleanups.
+	// RequestyForceDisableAbsent makes the scheduled sync mark Models missing
+	// from Requesty unavailable even when the absent share trips the health
+	// guard (COGNOS_REQUESTY_FORCE_DISABLE_ABSENT=true). Off by default; the CLI
+	// has a per-run --force-disable-absent flag for one-off cleanups.
 	RequestyForceDisableAbsent bool `koanf:"requesty.force_disable_absent"`
 	// GatewayGroundingRedirectPrefix is the URL prefix whose citations are
 	// resolved to their destination per completion (Vertex/Gemini grounding

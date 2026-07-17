@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
@@ -18,31 +19,33 @@ type ModelsFetcher interface {
 // Summary reports what a sync run changed, for logging.
 type Summary struct {
 	Fetched          int
+	Discovered       int
 	Matched          int
 	Updated          int
 	ReasoningEnabled int
-	// Disabled counts models disabled because they vanished from Requesty.
-	Disabled int
-	// DisableSkipped is true when the disable pass was skipped because the fetch
-	// looked unhealthy (too many models absent) and force was not set.
+	// Unavailable counts models marked unavailable because they vanished from
+	// Requesty. Their operator-owned enabled flag is preserved.
+	Unavailable int
+	// DisableSkipped is true when the legacy-named absent-model pass was skipped
+	// because the fetch looked unhealthy and force was not set.
 	DisableSkipped bool
 }
 
 // SyncOptions tunes a sync run.
 type SyncOptions struct {
-	// ForceDisableAbsent disables every enabled Requesty model missing from the
-	// fetch, bypassing the health-threshold guard. Used for a manual cleanup
-	// after intentionally removing models. An empty fetch is still never treated
-	// as a removal signal, even when forced.
+	// ForceDisableAbsent marks every available Requesty model missing from the
+	// fetch unavailable, bypassing the health-threshold guard. Used for a manual
+	// cleanup after intentionally removing models. An empty fetch is still never
+	// treated as a removal signal, even when forced.
 	ForceDisableAbsent bool
 }
 
-// maxDisableAbsentFraction guards against a partial Requesty response disabling
-// a large slice of the catalogue: if more than this share of enabled Requesty
-// models is absent from the fetch, the disable pass is skipped unless forced.
+// maxDisableAbsentFraction guards against a partial Requesty response marking
+// a large slice of the catalogue unavailable: if more than this share of
+// available Requesty models is absent, the pass is skipped unless forced.
 const maxDisableAbsentFraction = 0.25
 
-// Service enriches curated Requesty-provider models with fresh metadata.
+// Service mirrors Requesty's available model set and enriches model metadata.
 type Service struct {
 	app     core.App
 	fetcher ModelsFetcher
@@ -53,13 +56,16 @@ func NewService(app core.App, fetcher ModelsFetcher, logger *slog.Logger) *Servi
 	return &Service{app: app, fetcher: fetcher, logger: logger}
 }
 
-// Run fetches the Requesty catalogue and updates matched ai_models records.
-// It refreshes derived fields (reasoning efforts, pricing, context, capability
-// flags) and disables models that have vanished from Requesty (they stop
-// working once removed). It never deletes records and never touches the other
-// curation/compliance fields (whitelisted, privacy_tier, hosting_*, display
-// name). Reasoning efforts are set only when absent, so manual overrides win.
-// The disable pass is guarded against a partial/empty fetch (see
+// Run fetches the Requesty catalogue, creates newly exposed models, and updates
+// matched ai_models records. New models are enabled and whitelisted but receive
+// a conservative privacy tier derived from Requesty's geolocation (unknown and
+// non-EU locations are global). Existing operator-owned curation/compliance
+// fields (enabled, whitelisted, privacy_tier, hosting_*, display name) are never
+// overwritten. Provider availability is stored separately, so disappearance
+// from Requesty cannot erase a local enabled override and reappearance cannot
+// undo a local disable. Reasoning efforts and release date are only backfilled
+// when absent, so manual corrections win.
+// The availability pass is guarded against a partial/empty fetch (see
 // maxDisableAbsentFraction) unless opts.ForceDisableAbsent is set. Idempotent
 // and safe to run repeatedly.
 func (s *Service) Run(ctx context.Context, opts SyncOptions) (Summary, error) {
@@ -86,26 +92,51 @@ func (s *Service) Run(ctx context.Context, opts SyncOptions) (Summary, error) {
 		return summary, fmt.Errorf("load requesty models: %w", err)
 	}
 
-	var absentEnabled []*core.Record
-	enabledCount := 0
+	recordsByID := make(map[string]*core.Record, len(records))
 	for _, record := range records {
-		isEnabled := record.GetBool("enabled")
-		if isEnabled {
-			enabledCount++
+		recordsByID[NormalizeID(record.GetString("provider_model_id"))] = record
+	}
+	for normalizedID, model := range byID {
+		if _, exists := recordsByID[normalizedID]; exists {
+			continue
+		}
+		record, createErr := s.createDiscoveredModel(provider, model)
+		if createErr != nil {
+			if s.logger != nil {
+				s.logger.Error("requesty sync: failed to create discovered model",
+					"provider_model_id", model.ID, "err", createErr)
+			}
+			continue
+		}
+		records = append(records, record)
+		recordsByID[normalizedID] = record
+		summary.Discovered++
+	}
+
+	var absentAvailable []*core.Record
+	availableCount := 0
+	for _, record := range records {
+		isAvailable := record.GetBool("provider_available")
+		if isAvailable {
+			availableCount++
 		}
 
 		model, ok := byID[NormalizeID(record.GetString("provider_model_id"))]
 		if !ok {
-			// Present in our catalogue but gone from Requesty — a disable
+			// Present locally but gone from Requesty — an availability update
 			// candidate (handled after the loop, behind the health guard).
-			if isEnabled {
-				absentEnabled = append(absentEnabled, record)
+			if isAvailable {
+				absentAvailable = append(absentAvailable, record)
 			}
 			continue
 		}
 		summary.Matched++
 
 		changed := false
+		if !isAvailable {
+			record.Set("provider_available", true)
+			changed = true
+		}
 
 		// Pricing and context refresh on every run — these drift.
 		if input := perMillion(model.InputPrice); input > 0 &&
@@ -186,33 +217,34 @@ func (s *Service) Run(ctx context.Context, opts SyncOptions) (Summary, error) {
 		summary.Updated++
 	}
 
-	// Disable pass: models removed from Requesty stop working, so disable (never
-	// delete) them. Guard against a partial/empty fetch wiping the catalogue —
-	// skip unless the absent share is small or the caller forces it. An empty
-	// fetch is never a valid removal signal, even when forced.
-	if len(absentEnabled) > 0 {
+	// Availability pass: models removed from Requesty stop working, so mark them
+	// unavailable (never delete them or overwrite local enabled). Guard against a
+	// partial/empty fetch hiding the catalogue — skip unless the absent share is
+	// small or the caller forces it. An empty fetch is never a valid removal
+	// signal, even when forced.
+	if len(absentAvailable) > 0 {
 		absentFraction := 1.0
-		if enabledCount > 0 {
-			absentFraction = float64(len(absentEnabled)) / float64(enabledCount)
+		if availableCount > 0 {
+			absentFraction = float64(len(absentAvailable)) / float64(availableCount)
 		}
 		healthyFetch := summary.Fetched > 0
 		if healthyFetch && (opts.ForceDisableAbsent || absentFraction <= maxDisableAbsentFraction) {
-			for _, record := range absentEnabled {
-				record.Set("enabled", false)
+			for _, record := range absentAvailable {
+				record.Set("provider_available", false)
 				if err := s.app.Save(record); err != nil {
 					if s.logger != nil {
-						s.logger.Error("requesty sync: failed to disable absent model",
+						s.logger.Error("requesty sync: failed to mark absent model unavailable",
 							"model_id", record.GetString("model_id"), "err", err)
 					}
 					continue
 				}
-				summary.Disabled++
+				summary.Unavailable++
 			}
 		} else {
 			summary.DisableSkipped = true
 			if s.logger != nil {
-				s.logger.Warn("requesty sync: skipped disabling absent models",
-					"absent", len(absentEnabled), "enabled", enabledCount,
+				s.logger.Warn("requesty sync: skipped marking absent models unavailable",
+					"absent", len(absentAvailable), "available", availableCount,
 					"absent_fraction", absentFraction, "fetched", summary.Fetched,
 					"forced", opts.ForceDisableAbsent,
 					"hint", "re-run with force to override the health guard")
@@ -222,9 +254,65 @@ func (s *Service) Run(ctx context.Context, opts SyncOptions) (Summary, error) {
 
 	if s.logger != nil {
 		s.logger.Info("requesty model sync complete",
-			"fetched", summary.Fetched, "matched", summary.Matched,
+			"fetched", summary.Fetched, "discovered", summary.Discovered,
+			"matched", summary.Matched,
 			"updated", summary.Updated, "reasoning_enabled", summary.ReasoningEnabled,
-			"disabled", summary.Disabled, "disable_skipped", summary.DisableSkipped)
+			"unavailable", summary.Unavailable, "disable_skipped", summary.DisableSkipped)
 	}
 	return summary, nil
+}
+
+func (s *Service) createDiscoveredModel(provider *core.Record, model RequestyModel) (*core.Record, error) {
+	if strings.TrimSpace(model.ID) == "" {
+		return nil, fmt.Errorf("provider model id is empty")
+	}
+	if model.ContextWindow <= 0 {
+		return nil, fmt.Errorf("model %q has no valid context window", model.ID)
+	}
+
+	collection, err := s.app.FindCollectionByNameOrId("ai_models")
+	if err != nil {
+		return nil, fmt.Errorf("load ai_models collection: %w", err)
+	}
+	record := core.NewRecord(collection)
+	modelID := discoveredModelID(model.ID)
+	name := discoveredModelName(model.ID)
+	privacyTier, hostingCountry, hostingRegion := discoveredResidency(model.Geolocation)
+	record.Load(map[string]any{
+		"model_id":                      modelID,
+		"provider":                      provider.Id,
+		"provider_model_id":             strings.TrimSpace(model.ID),
+		"name":                          name,
+		"display_name":                  name,
+		"slug":                          modelID,
+		"description":                   strings.TrimSpace(model.Description),
+		"enabled":                       true,
+		"whitelisted":                   true,
+		"provider_available":            true,
+		"privacy_tier":                  privacyTier,
+		"hosting_country":               hostingCountry,
+		"hosting_region":                hostingRegion,
+		"no_retention":                  true,
+		"is_open_source":                false,
+		"input_context_tokens":          model.ContextWindow,
+		"max_output_tokens":             model.MaxOutputTokens,
+		"input_usd_per_million_tokens":  perMillion(model.InputPrice),
+		"output_usd_per_million_tokens": perMillion(model.OutputPrice),
+		"supports_text_completion":      supportsTextCompletionFor(model),
+		"supports_vision":               model.SupportsVision,
+		"supports_tool_calling":         model.SupportsToolCalling,
+		"supports_web_search":           supportsWebSearchFor(model),
+		"supports_computer_use":         model.SupportsComputerUse,
+	})
+	if released, ok := releasedAtBackfill(model.Created, true); ok {
+		record.Set("released_at", released)
+	}
+	if efforts, def := reasoningEffortsFor(model); efforts != nil {
+		record.Set("reasoning_efforts", efforts)
+		record.Set("default_reasoning_effort", def)
+	}
+	if err := s.app.Save(record); err != nil {
+		return nil, fmt.Errorf("save discovered model %q: %w", model.ID, err)
+	}
+	return record, nil
 }

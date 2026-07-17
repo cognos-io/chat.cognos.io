@@ -54,22 +54,22 @@ sealed each row. See `docs/specs/mfa-and-passkeys.md`.
 
 ## Requesty model sync
 
-The AI model catalogue (`ai_models`) is curated by us, but a sync keeps Requesty-provided models
-fresh. It runs **automatically in-app**: a background job on boot and roughly every 6 hours. You
-normally don't need to do anything.
+The AI model catalogue (`ai_models`) mirrors Models enabled for the configured Requesty Account.
+It runs **automatically in-app** on boot and roughly every 6 hours.
 
 What the sync does for `provider = requesty` models (Infomaniak models are never touched):
 
-- **Refreshes** derived fields — pricing, context window, max output, capability flags
+- **Discovers** newly enabled Requesty Models, including their description and release date.
+- **Refreshes** Provider-owned fields — pricing, context window, max output, capability flags
   (`supports_vision`, `supports_tool_calling`, …) — and sets `reasoning_efforts` only when unset
   (so manual overrides win).
-- **Disables** (never deletes) enabled models that have **vanished** from the Requesty API — a
-  removed model stops working, so it's switched off (`enabled = false`). The record and all curation
-  (`display_name`, `privacy_tier`, `hosting_*`, `whitelisted`, `supports_file_input`) are preserved.
+- Marks Models that vanish from Requesty unavailable (`provider_available = false`) without deleting
+  them or changing the local `enabled` value.
 
-It never overwrites `enabled`, `whitelisted`, `privacy_tier`, `hosting_*` or `display_name` — those
-stay hand-curated. (Hand-editing pricing / context / the four synced capability flags will be
-overwritten on the next run.)
+Effective visibility requires `enabled && whitelisted && provider_available`. Local disables always
+win. Existing `privacy_tier`, `hosting_*`, release dates, descriptions and display names are
+preserved; pricing, context and synced capability flags are refreshed on the next run. New Models
+receive `eu` only for an explicit Requesty `geolocation: eu`; otherwise they default to `global`.
 
 ### Run it manually
 
@@ -85,15 +85,13 @@ Or the raw subcommand:
 cd backend && go run ./cmd/api sync-requesty-models
 ```
 
-### Disabling removed models (safety guard)
+### Marking absent Models unavailable (safety guard)
 
-The disable pass is guarded so a partial or empty Requesty response can't switch off a big chunk of
-the catalogue: if **more than 25%** of enabled Requesty models are absent from the fetch, the
-disable pass is **skipped** and logged. An **empty fetch never disables anything** (even when
-forced).
+The availability pass is guarded so a partial response cannot hide a large part of the catalogue:
+if **more than 25%** of available Requesty Models are absent, the pass is **skipped** and logged. An
+**empty fetch never changes availability**, even when forced.
 
-If you intentionally remove several models and want them disabled now — even past the 25% guard —
-force it:
+If you intentionally remove several Models and want them unavailable now, force the pass:
 
 ```sh
 # one-off manual cleanup (CLI flag)

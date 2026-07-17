@@ -6,10 +6,9 @@ import (
 	"github.com/pocketbase/dbx"
 )
 
-// DefaultFairUseAlertRappen is the rolling-30-day user-cost above which an
-// Unlimited account is flagged for operator review (spec §4.4,
-// BILLING_UNLIMITED_FAIR_USE_ALERT_CHF = CHF 200.00 = 2× the monthly price).
-// Monitoring only — never an automated block (spec §8.1).
+// DefaultFairUseAlertRappen is the rolling-30-day user-cost at which an
+// Unlimited Account is flagged for operator review. Monitoring never silently
+// blocks an Account; the response procedure defines the human decision.
 const DefaultFairUseAlertRappen = 20000
 
 // DefaultFairUseWindow is the rolling window the rollup sums over.
@@ -46,7 +45,7 @@ func (r *PocketBaseRepo) FlagFairUseOutliers(since time.Time, thresholdRappen in
 			  AND plan_type = {:plan}
 			  AND occurred_at >= {:since}
 			GROUP BY user_id
-			HAVING SUM(user_cost_microrappen) > {:threshold}
+			HAVING SUM(user_cost_microrappen) >= {:threshold}
 			ORDER BY cost DESC
 		`).
 		Bind(dbx.Params{

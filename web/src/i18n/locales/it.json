@@ -743,7 +743,7 @@
       },
       "form": {
         "heading": "Chiedici quello che vuoi",
-        "note": "Raccontaci qualcosa del tuo team e ti rispondiamo entro un giorno lavorativo. Questo modulo apre la tua app di posta — nulla passa da questo sito né vi viene salvato.",
+        "note": "Raccontaci qualcosa del tuo team e ti rispondiamo entro una settimana lavorativa. Questo modulo apre la tua app di posta — nulla passa da questo sito né vi viene salvato.",
         "name": "Nome",
         "email": "Email di lavoro",
         "company": "Azienda",
@@ -763,7 +763,7 @@
       "channels": [
         {
           "title": "Supporto generale",
-          "body": "Domande su account, fatturazione o app. Rispondiamo entro un giorno lavorativo."
+          "body": "Domande su account, fatturazione o app. Rispondiamo entro una settimana lavorativa."
         },
         {
           "title": "Business e aziende",

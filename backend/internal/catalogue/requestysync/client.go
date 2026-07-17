@@ -1,9 +1,7 @@
-// Package requestysync enriches curated ai_models records with fresh metadata
-// from Requesty's model API. It is deliberately enrich-only: it updates derived
-// fields (reasoning support, pricing, context window) on models we already
-// curate, and never touches curation/compliance fields (enabled, whitelisted,
-// privacy_tier, hosting_*). Models change often, so this keeps the catalogue
-// current without re-curating by hand.
+// Package requestysync mirrors the Models exposed by Requesty's model API and
+// refreshes their Provider-owned metadata. Newly discovered Models are added
+// conservatively; existing operator-owned curation and compliance overrides
+// are preserved.
 package requestysync
 
 import (
@@ -23,6 +21,8 @@ const DefaultBaseURL = "https://router.eu.requesty.ai"
 // are per-token USD (e.g. 0.0000011 == $1.10 / 1M tokens).
 type RequestyModel struct {
 	ID                      string  `json:"id"`
+	API                     string  `json:"api"`
+	Description             string  `json:"description"`
 	SupportsReasoning       bool    `json:"supports_reasoning"`
 	SupportsVision          bool    `json:"supports_vision"`
 	SupportsToolCalling     bool    `json:"supports_tool_calling"`

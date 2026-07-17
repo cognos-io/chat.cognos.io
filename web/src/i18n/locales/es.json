@@ -749,7 +749,7 @@
       },
       "form": {
         "heading": "Pregúntanos lo que quieras",
-        "note": "Cuéntanos un poco sobre tu equipo y te responderemos en un día laborable. Este formulario abre tu propia aplicación de correo: nada pasa por esta web ni se guarda en ella.",
+        "note": "Cuéntanos un poco sobre tu equipo y te responderemos en el plazo de una semana laborable. Este formulario abre tu propia aplicación de correo: nada pasa por esta web ni se guarda en ella.",
         "name": "Nombre",
         "email": "Correo de trabajo",
         "company": "Empresa",
@@ -769,7 +769,7 @@
       "channels": [
         {
           "title": "Soporte general",
-          "body": "Dudas sobre la cuenta, la facturación o la aplicación. Respondemos en un día laborable."
+          "body": "Dudas sobre la cuenta, la facturación o la aplicación. Respondemos en el plazo de una semana laborable."
         },
         {
           "title": "Empresas",

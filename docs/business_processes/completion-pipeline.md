@@ -41,7 +41,7 @@ sequenceDiagram
     alt persisting
       H->>DB: encrypt + INSERT assistant message
     end
-    H->>H: CalculateCost (provider × 1.20 × FX → rappen)
+    H->>H: CalculateCost (Provider × 1.22 × FX → Rappen)
     H->>L: RecordUsage (balance_transactions row)
     H->>A: Emit usage event (buffered)
     H-->>FE: 200 with content + usage

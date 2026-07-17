@@ -1,6 +1,14 @@
 import { readFile } from 'node:fs/promises';
 
 const locales = ['en', 'de', 'fr', 'es', 'pt', 'it'];
+const supportResponsePhrases = {
+  en: 'one working week',
+  de: 'einer Arbeitswoche',
+  fr: 'une semaine ouvrée',
+  es: 'una semana laborable',
+  pt: 'uma semana útil',
+  it: 'una settimana lavorativa',
+};
 const localeDirectory = new URL('../src/i18n/locales/', import.meta.url);
 const pricingSource = await readFile(
   new URL('../../frontend/src/app/billing/pricing.ts', import.meta.url),
@@ -41,6 +49,13 @@ for (const locale of locales) {
   if (!payg.items.at(-1)?.includes('CHF 15')) {
     throw new Error(`${locale}: PAYG must not imply that an unused billing month is free`);
   }
+
+  const supportCopy = [catalogue.pages.business.form.note, catalogue.pages.contact.channels[0].body];
+  for (const copy of supportCopy) {
+    if (!copy.includes(supportResponsePhrases[locale])) {
+      throw new Error(`${locale}: support response target must be one working week`);
+    }
+  }
 }
 
-console.log('Marketing pricing contract checks passed.');
+console.log('Marketing pricing and support contract checks passed.');

@@ -103,6 +103,7 @@ func seedAIModel(t testing.TB, app *tests.TestApp, seed modelSeed) string {
 	record.Set("description", seed.Description)
 	record.Set("enabled", seed.Enabled)
 	record.Set("whitelisted", seed.Whitelisted)
+	record.Set("provider_available", true)
 	record.Set("privacy_tier", seed.PrivacyTier)
 	record.Set("hosting_country", seed.HostingCountry)
 	record.Set("hosting_region", seed.HostingRegion)

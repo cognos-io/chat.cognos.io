@@ -97,9 +97,10 @@ instead) — set it.
   adjustments API). The resulting `adjustment.created` writes a `refunds` row,
   sets `users.refund_used` (one per lifetime), and — for a chargeback — drops the
   user to `inactive`. The dashboard then shows the invoice as REFUNDED.
-- **Fair-use**: a nightly job logs (WARN) any Unlimited account whose rolling
-  30-day user-cost exceeds CHF 200. Monitor-only — it never throttles. Review the
-  logs and reach out / discuss Enterprise per spec §8.1.
+- **Commercial risk**: a nightly job reports rolling Provider-cost percentiles by Account and Model,
+  and PAYG ledger contribution margin by Model. It warns when one Model reaches CHF 50 Provider COGS
+  in 30 days or an Unlimited Account reaches CHF 200 Account-facing cost. CHF 450 escalates to an
+  immediate shutdown review. Alerts never silently change access.
 
 ## 3. Triage — when something looks wrong
 
@@ -147,3 +148,102 @@ only the safe lower bound (`billed ≥ expected`). After the first real PAYG cyc
 with overage in production, confirm which transaction the overage lands on and
 tighten the `reconciled` check + add a drift alert (`billing-launch-plan.md`
 Phase 4 open item).
+
+## 6. Model gross margin and cost percentiles
+
+The nightly `cost-risk` logs are an early warning, not the final accounts. They report:
+
+- Provider COGS by Model over the rolling 30-day window;
+- p50, p90, p95 and p99 Provider COGS per Account, overall and for each Model;
+- PAYG ledger revenue, gross profit and contribution-margin basis points by Model.
+
+PAYG ledger revenue includes the 22% markup but excludes the CHF 15 minimum, Paddle fees, refunds,
+tax and FX settlement differences. Trial cost is not revenue. Unlimited `user_cost` is a shadow
+price and is never counted as revenue. A 22% markup on COGS is an 18.03% contribution margin before
+those other effects.
+
+For the monthly commercial review, export Paddle's net-of-tax settled revenue, fees, refunds and
+chargebacks and join it to the content-free ledger period:
+
+```text
+net revenue = settled Paddle revenue - refunds - chargebacks - Paddle fees
+gross profit = net revenue - Provider COGS
+gross margin = gross profit / net revenue
+```
+
+Allocate PAYG minimum revenue and Unlimited subscription revenue to Models in proportion to each
+Account's `user_cost_microrappen`. Report gross margin by Model and Plan, plus Account-level p50,
+p90, p95 and p99 Provider COGS. Keep Account identifiers in the restricted billing system; the
+review record contains aggregates only.
+
+Initial beta alerts:
+
+| Signal                         | Threshold                                              | Response                                                          |
+| ------------------------------ | ------------------------------------------------------ | ----------------------------------------------------------------- |
+| Model rolling Provider COGS    | CHF 50 / 30 days                                       | Check price sync, routing and margin by Plan                      |
+| Actual Model gross margin      | Below 15% for two reviews with at least CHF 50 revenue | Stop promoting that Model; adjust price/routing                   |
+| Actual Model gross margin      | Below 5% or negative for one review                    | Disable for new paid use pending owner approval                   |
+| Account rolling Unlimited cost | CHF 200 / 30 days                                      | Start the fair-use review below                                   |
+| Account rolling Unlimited cost | CHF 450 / 30 days                                      | Immediate shutdown review; decision required the same working day |
+
+These are initial beta kill switches, not public Plan limits. Re-baseline them after four weeks of
+real cost data; never raise a threshold merely to silence an alert.
+
+## 7. Fair-use response procedure
+
+1. Confirm the ledger rows are real, idempotent and use current Provider prices and FX. Do not read
+   Message content.
+2. Check for a compromised Account, automated traffic, retry loop, image-generation burst or model
+   routing error. Treat credible compromise or billing-integrity failure as an incident.
+3. At CHF 200–449.99 rolling cost, contact the Account holder, explain that usage is outside the
+   expected human conversational pattern, and offer PAYG or a separately priced agreement. Record a
+   response deadline of one working week.
+4. At CHF 450 or for clear automation/compromise, make an immediate documented decision to continue,
+   limit or pause new Completions. Do not delete history or prevent export. Give notice unless doing
+   so would prolong an active security or billing incident.
+5. Record the signal, evidence, decision, owner, notice and review date without prompts, Message
+   content, filenames or other customer data.
+
+Only an operator may suspend access for fair use. Automated alerts do not make contractual or fraud
+decisions.
+
+## 8. Refund-abuse controls
+
+Before issuing a discretionary guarantee refund:
+
+1. Verify the Paddle transaction belongs to the authenticated Account and is inside the advertised
+   window. Check the lifetime `refund_used` flag and prior adjustments/chargebacks.
+2. Compare settled revenue, Provider COGS and usage percentiles. Do not inspect Message content.
+3. Require owner approval when Provider COGS is at least CHF 15, usage is above the Plan's p95,
+   there is a prior chargeback, or linked payment evidence suggests repeated guarantee use.
+4. Escalate for a deny/partial-refund decision when Provider COGS equals or exceeds the refundable
+   amount, there is clear automation or fraud, or the lifetime guarantee was already used. Record
+   the terms/legal basis; mandatory consumer rights always override this internal policy.
+5. Issue the adjustment in Paddle, verify the idempotent webhook result, set `refund_used`, and
+   cancel the Subscription if service should end. Never promise that clicking “Request a refund”
+   issues it automatically.
+
+Pause refund processing—not customer data access—if adjustment webhooks, transaction identity or
+Paddle totals cannot be reconciled. Resume only after the billing owner signs off.
+
+## 9. System shutdown thresholds
+
+Pause new paid Completions globally and open an incident when any of these is true:
+
+- Provider cost cannot be measured reliably and catalogue fallback prices cannot be confirmed;
+- Paddle/ledger reconciliation differs by more than 5% or CHF 5, whichever is greater, across a
+  closed cycle and the difference is unexplained;
+- duplicate charges, cross-Account billing, leaked billing credentials or non-idempotent webhooks
+  are credible;
+- daily Provider COGS exceeds CHF 300 without matching paid activity; or
+- a Provider price/routing change would make a currently promoted Model loss-making.
+
+Model-only failures disable that Model first. Account-only fair-use signals follow §7. Preserve
+read/export access and use the incident runbook for communication and recovery.
+
+## 10. First real PAYG overage-cycle gate
+
+Broad paid promotion remains blocked until one real, low-value PAYG cycle with usage above CHF 15
+passes the record in
+[`operations/payg-overage-validation.md`](operations/payg-overage-validation.md). Use a
+company-owned synthetic Account and retain Paddle evidence outside this repository.

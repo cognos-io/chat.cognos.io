@@ -312,7 +312,7 @@ This checklist is the living execution tracker for the rework.
 - [ ] `backend/internal/billing/service.go`
     - [x] plan types
     - [x] affordability check
-    - [x] 20% margin on Account holder-facing cost
+    - [x] 22% markup on Account holder-facing cost
     - [x] upper-bound preflight estimate for trial gate
     - [x] plan-aware usage ledger entry builder
     - [x] persistence-backed deduction/record logic

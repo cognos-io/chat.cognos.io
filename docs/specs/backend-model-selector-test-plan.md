@@ -46,7 +46,7 @@ These baseline failures were fixed in Phase 1 so new regressions are easier to t
 - the first legacy proxy → internal gateway bridge is in place for completions
 - completion usage payloads now preserve cache-token metadata and provider-reported cost
 - billing service unit coverage now includes plan access policy for trial, inactive, PAYG, and
-  unlimited states, plus 20% margin application and upper-bound preflight estimates
+  unlimited states, plus 22% markup application and upper-bound preflight estimates
 - billing FX-rate unit coverage now includes fallback/static USD→CHF provider behaviour
 - analytics unit coverage now includes usage-event field mapping, privacy exclusions, and emitter
   append behaviour
@@ -600,7 +600,7 @@ Add guarded real-adapter tests for:
 | Threading         | `parent_message_id` preserved                                        |
 | Expiry            | `expires_at` preserved                                               |
 | Billing           | trial/inactive gate blocks before provider call (integration)        |
-| Billing           | 20% margin applied to user-facing completion costs                   |
+| Billing           | 22% markup applied to Account-facing Completion costs                |
 | Billing           | trial preflight uses catalogue upper-bound estimate with margin      |
 | Billing           | PAYG/unlimited/trial usage recording follows the billing contract    |
 | Usage             | input/output/cache/provider-cost captured when available             |

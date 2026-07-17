@@ -1882,7 +1882,7 @@
       },
       "form": {
         "heading": "Ask us anything",
-        "note": "Tell us a little about your team and we'll reply within one business day. This form opens your own email app — nothing is sent through or stored on this website.",
+        "note": "Tell us a little about your team and we'll reply within one working week. This form opens your own email app — nothing is sent through or stored on this website.",
         "name": "Name",
         "email": "Work email",
         "company": "Company",
@@ -1902,7 +1902,7 @@
       "channels": [
         {
           "title": "General support",
-          "body": "Account, billing, or app questions. We reply within one business day."
+          "body": "Account, billing, or app questions. We reply within one working week."
         },
         {
           "title": "Business & enterprise",

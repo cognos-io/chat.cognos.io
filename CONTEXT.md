@@ -177,8 +177,10 @@ _Avoid:_ security level, data zone, hosting preference
 
 ### Model
 
-A curated catalogue entry an Account selects for Completions — identified by `model_id`, with a
-display name, privacy tier, pricing, and capabilities. Defined in code, not user-created.
+A backend catalogue entry an Account selects for Completions — identified by `model_id`, with a
+display name, privacy tier, pricing, and capabilities. Models may be seeded in code or discovered
+from an approved Provider; they are never Account-created, and local operator controls still decide
+whether they are available to Accounts.
 
 _Avoid:_ LLM (implementation jargon in domain docs)
 

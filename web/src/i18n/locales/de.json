@@ -743,7 +743,7 @@
       },
       "form": {
         "heading": "Frag uns alles",
-        "note": "Erzähl uns kurz von deinem Team — wir antworten innerhalb eines Werktags. Dieses Formular öffnet deine eigene E-Mail-App — nichts läuft über diese Website oder wird hier gespeichert.",
+        "note": "Erzähl uns kurz von deinem Team — wir antworten innerhalb einer Arbeitswoche. Dieses Formular öffnet deine eigene E-Mail-App — nichts läuft über diese Website oder wird hier gespeichert.",
         "name": "Name",
         "email": "Geschäftliche E-Mail",
         "company": "Unternehmen",
@@ -763,7 +763,7 @@
       "channels": [
         {
           "title": "Allgemeiner Support",
-          "body": "Fragen zu Konto, Abrechnung oder App. Wir antworten innerhalb eines Werktags."
+          "body": "Fragen zu Konto, Abrechnung oder App. Wir antworten innerhalb einer Arbeitswoche."
         },
         {
           "title": "Business & Enterprise",

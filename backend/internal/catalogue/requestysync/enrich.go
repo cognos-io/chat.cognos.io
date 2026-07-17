@@ -1,8 +1,11 @@
 package requestysync
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // standardReasoningEfforts is the uniform tier set Requesty normalises across
@@ -21,6 +24,73 @@ func NormalizeID(id string) string {
 		id = id[:at]
 	}
 	return id
+}
+
+// discoveredModelID returns a stable, globally unique Cognos model id for an
+// upstream model that has never been curated locally. The readable portion is
+// useful to operators; the hash prevents distinct Requesty ids whose
+// punctuation normalises alike from colliding.
+func discoveredModelID(providerModelID string) string {
+	normalized := NormalizeID(providerModelID)
+	var slug strings.Builder
+	lastWasHyphen := false
+	for _, r := range normalized {
+		if r >= 'a' && r <= 'z' || r >= '0' && r <= '9' {
+			slug.WriteRune(r)
+			lastWasHyphen = false
+			continue
+		}
+		if slug.Len() > 0 && !lastWasHyphen {
+			slug.WriteByte('-')
+			lastWasHyphen = true
+		}
+	}
+	readable := strings.Trim(slug.String(), "-")
+	if readable == "" {
+		readable = "model"
+	}
+	digest := sha256.Sum256([]byte(normalized))
+	return fmt.Sprintf("requesty-%s-%x", readable, digest[:4])
+}
+
+func discoveredModelName(providerModelID string) string {
+	name := NormalizeID(providerModelID)
+	if slash := strings.LastIndexByte(name, '/'); slash >= 0 {
+		name = name[slash+1:]
+	}
+	parts := strings.FieldsFunc(name, func(r rune) bool {
+		return r == '-' || r == '_' || r == '.'
+	})
+	for i, part := range parts {
+		runes := []rune(part)
+		if len(runes) == 0 {
+			continue
+		}
+		runes[0] = unicode.ToUpper(runes[0])
+		parts[i] = string(runes)
+	}
+	if joined := strings.TrimSpace(strings.Join(parts, " ")); joined != "" {
+		return joined
+	}
+	return strings.TrimSpace(providerModelID)
+}
+
+func discoveredResidency(geolocation string) (privacyTier, hostingCountry, hostingRegion string) {
+	if strings.EqualFold(strings.TrimSpace(geolocation), "eu") {
+		return "eu", "EU", "eu"
+	}
+	// Unknown, country-specific and explicitly global locations all receive the
+	// broadest tier. We never infer a stronger privacy claim from an unknown.
+	return "global", "", "global"
+}
+
+func supportsTextCompletionFor(model RequestyModel) bool {
+	switch strings.ToLower(strings.TrimSpace(model.API)) {
+	case "", "chat", "responses":
+		return true
+	default:
+		return false
+	}
 }
 
 // index builds a lookup of Requesty models by normalised id. On duplicate base

@@ -403,6 +403,28 @@ func TestModelsGetReturnsCuratedMetadataAndSkipsDisabledOrUnwhitelistedModels(t 
 				InputUSDPerMillionTokens:  1,
 				OutputUSDPerMillionTokens: 2,
 			})
+			unavailableID := seedAIModel(t, app, modelSeed{
+				ModelID:                   "provider-unavailable-model",
+				ProviderRecordID:          providerID,
+				ProviderModelID:           "openai/provider-unavailable",
+				Name:                      "Provider Unavailable",
+				Slug:                      "provider-unavailable-model",
+				Description:               "Should not leak",
+				Enabled:                   true,
+				Whitelisted:               true,
+				PrivacyTier:               "eu",
+				InputContextTokens:        32000,
+				InputUSDPerMillionTokens:  1,
+				OutputUSDPerMillionTokens: 2,
+			})
+			unavailable, err := app.FindRecordById("ai_models", unavailableID)
+			if err != nil {
+				t.Fatalf("FindRecordById(provider-unavailable-model) error = %v", err)
+			}
+			unavailable.Set("provider_available", false)
+			if err := app.Save(unavailable); err != nil {
+				t.Fatalf("Save(provider-unavailable-model) error = %v", err)
+			}
 		},
 		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, res *http.Response) {
 			bodyBytes, err := io.ReadAll(res.Body)
@@ -410,7 +432,7 @@ func TestModelsGetReturnsCuratedMetadataAndSkipsDisabledOrUnwhitelistedModels(t 
 				t.Fatalf("read response: %v", err)
 			}
 			body := string(bodyBytes)
-			for _, banned := range []string{"not-whitelisted", "provider-disabled-model"} {
+			for _, banned := range []string{"not-whitelisted", "provider-disabled-model", "provider-unavailable-model"} {
 				if strings.Contains(body, banned) {
 					t.Fatalf("models response leaked %q: %s", banned, body)
 				}

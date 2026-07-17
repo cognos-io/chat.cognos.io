@@ -16,6 +16,16 @@ import (
 func seedPlanUsage(
 	t testing.TB, app *tests.TestApp, id, userID, planType string, costRappen int64, occurredAt time.Time,
 ) {
+	seedModelPlanUsage(t, app, id, userID, "m", planType, costRappen, costRappen, occurredAt)
+}
+
+func seedModelPlanUsage(
+	t testing.TB,
+	app *tests.TestApp,
+	id, userID, modelID, planType string,
+	providerCostRappen, userCostRappen int64,
+	occurredAt time.Time,
+) {
 	t.Helper()
 	collection, err := app.FindCollectionByNameOrId("balance_transactions")
 	if err != nil {
@@ -27,13 +37,46 @@ func seedPlanUsage(
 	record.Set("event_id", "evt_"+id)
 	record.Set("type", "usage")
 	record.Set("plan_type", planType)
-	record.Set("model_id", "m")
+	record.Set("model_id", modelID)
 	record.Set("amount_rappen", 0)
-	record.Set("user_cost_rappen", costRappen)
-	record.Set("user_cost_microrappen", costRappen*billing.MicroRappenPerRappen)
+	record.Set("provider_cost_rappen", providerCostRappen)
+	record.Set("provider_cost_microrappen", providerCostRappen*billing.MicroRappenPerRappen)
+	record.Set("user_cost_rappen", userCostRappen)
+	record.Set("user_cost_microrappen", userCostRappen*billing.MicroRappenPerRappen)
 	record.Set("occurred_at", occurredAt.UTC())
 	if err := app.Save(record); err != nil {
 		t.Fatalf("seed usage %q: %v", id, err)
+	}
+}
+
+func TestCostRiskSince(t *testing.T) {
+	app := setupBillingApp(t, nil)
+	repo := billing.NewPocketBaseRepo(app)
+
+	otherUser, err := app.FindFirstRecordByData("users", "email", "test2@example.com")
+	if err != nil {
+		t.Fatalf("find test2 user: %v", err)
+	}
+	now := time.Now().UTC()
+	seedModelPlanUsage(t, app, "costrisk0000001", testUserID, "model-fast", "payg", 1000, 1220, now.Add(-time.Hour))
+	seedModelPlanUsage(t, app, "costrisk0000002", otherUser.Id, "model-deep", "unlimited", 3000, 3660, now.Add(-time.Hour))
+	seedModelPlanUsage(t, app, "costrisk0000003", testUserID, "model-old", "payg", 9000, 10980, now.Add(-40*24*time.Hour))
+
+	report, err := repo.CostRiskSince(now.Add(-billing.DefaultFairUseWindow))
+	if err != nil {
+		t.Fatalf("CostRiskSince: %v", err)
+	}
+	if report.AccountProviderCost.P50Rappen != 1000 || report.AccountProviderCost.P95Rappen != 3000 {
+		t.Errorf("account percentiles = %+v, want p50=1000 p95=3000", report.AccountProviderCost)
+	}
+	if len(report.Models) != 2 {
+		t.Fatalf("models = %d (%+v), want two in-window Models", len(report.Models), report.Models)
+	}
+	if report.Models[0].ModelID != "model-deep" || report.Models[1].ModelID != "model-fast" {
+		t.Fatalf("model order = %q, %q, want model-deep, model-fast", report.Models[0].ModelID, report.Models[1].ModelID)
+	}
+	if got := report.Models[1].PAYGGrossMarginBPS; got != 1803 {
+		t.Errorf("model-fast PAYG gross margin = %d bps, want 1803", got)
 	}
 }
 
@@ -97,5 +140,20 @@ func TestFlagFairUseOutliersNoneUnderThreshold(t *testing.T) {
 	}
 	if len(flags) != 0 {
 		t.Errorf("flags = %d, want 0 (CHF 90 is under the CHF 200 threshold)", len(flags))
+	}
+}
+
+func TestFlagFairUseOutliersIncludesExactThreshold(t *testing.T) {
+	app := setupBillingApp(t, nil)
+	repo := billing.NewPocketBaseRepo(app)
+	now := time.Now().UTC()
+	seedPlanUsage(t, app, "fairuseexact001", testUserID, "unlimited", billing.DefaultFairUseAlertRappen, now.Add(-time.Hour))
+
+	flags, err := repo.FlagFairUseOutliers(now.Add(-billing.DefaultFairUseWindow), billing.DefaultFairUseAlertRappen)
+	if err != nil {
+		t.Fatalf("FlagFairUseOutliers: %v", err)
+	}
+	if len(flags) != 1 || flags[0].RollingCostRappen != billing.DefaultFairUseAlertRappen {
+		t.Fatalf("flags = %+v, want exact-threshold Account", flags)
 	}
 }

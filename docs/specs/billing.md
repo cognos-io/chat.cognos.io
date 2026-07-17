@@ -41,7 +41,7 @@ refunded later at our discretion, with provider usage optionally deducted (see S
 1. Charge Account holders in CHF using Paddle as the only payment surface.
 2. Support two plans — **Pay-As-You-Go** and **Unlimited (with fair usage)** — plus a small free
    trial on signup that converts into a read-only state after exhaustion.
-3. Apply a **20% margin** to provider COGS on PAYG, transparently to the Account holder (they see
+3. Apply a **22% markup** to provider COGS on PAYG, transparently to the Account holder (they see
    Cognos prices, not provider prices).
 4. Bill PAYG via a **Paddle subscription with a CHF 15/month minimum commit**. Paddle has no
    usage-metering API, so usage accrues in our own `balance_transactions` ledger (the source of
@@ -108,7 +108,7 @@ holder is in **exactly one** at any moment.
   the signup hook). Marketing / sales can pre-stage a larger seed for invited Account holders
   without changing the global default. See Section 9.2.
 - Lives in `user_billing.balance_rappen` with `plan_type = "trial"`.
-- Usage deducts from the seed balance using the same PAYG cost formula (provider cost × 1.20 → CHF).
+- Usage deducts from the seed balance using the same PAYG cost formula (provider cost × 1.22 → CHF).
   Margin is applied even on trial so behaviour is identical post-conversion.
 - When balance would go below 0, the `/complete` request is rejected with `402` and the plan
   transitions to `inactive`. The current completion is not partially served.
@@ -204,7 +204,7 @@ flowchart LR
     B -- yes --> C["provider_cost_usd ← gateway"]
     B -- no  --> D["provider_cost_usd ←<br/>catalogue.price × tokens"]
     C --> E
-    D --> E["user_cost_usd =<br/>provider_cost_usd × 1.20"]
+    D --> E["user_cost_usd =<br/>provider_cost_usd × 1.22"]
     E --> F["fx_rate_usd_chf<br/>(daily ECB/SNB cache)"]
     F --> G["user_cost_chf =<br/>user_cost_usd × fx_rate"]
     G --> H["user_cost_rappen =<br/>round(user_cost_chf × 100)"]
@@ -219,7 +219,7 @@ flowchart LR
 
 ```text
 1.  provider_cost_usd       <- gateway response (if reported) OR catalogue * tokens
-2.  user_cost_usd           <- provider_cost_usd * (1 + MARGIN)         # MARGIN = 0.20
+2.  user_cost_usd           <- provider_cost_usd * (1 + MARKUP)         # MARKUP = 0.22
 3.  fx_rate_usd_chf         <- FX cache (refreshed daily, see 4.3)
 4.  user_cost_chf           <- user_cost_usd * fx_rate_usd_chf
 5.  user_cost_rappen        <- round(user_cost_chf * 100)               # integer
@@ -228,8 +228,9 @@ flowchart LR
 
 Why USD-first markup, then FX?
 
-- The 20% is margin on **cost of goods sold**, which is incurred in USD. Compounding it in the
-  cost denomination keeps the margin a stable percentage relative to provider invoices regardless
+- The 22% is a **markup on cost of goods sold**, which is incurred in USD. It produces an 18.03%
+  contribution margin before the PAYG minimum, Paddle fees, refunds and FX slippage. Applying it in
+  the cost denomination keeps the markup stable relative to provider invoices regardless
   of FX swings.
 - We store three values (`provider_cost_usd`, `user_cost_usd`, `user_cost_chf`) plus the FX rate
   at request time — every figure on the ledger is independently auditable from the others.
@@ -258,7 +259,7 @@ Why USD-first markup, then FX?
 
 | Config                                 | Default                | Notes                                                                            |
 | -------------------------------------- | ---------------------- | -------------------------------------------------------------------------------- |
-| `BILLING_MARGIN_BPS`                   | `2000` (= 20.00%)      | Basis points; allows fine adjustment without code change.                        |
+| `BILLING_MARGIN_BPS`                   | `2200` (= 22.00%)      | Basis-point markup; allows fine adjustment without code change.                  |
 | `BILLING_PAYG_MIN_COMMIT_RAPPEN`       | `1500` (CHF 15.00)     | Minimum commit per PAYG cycle = the Paddle subscription base price. Shown in UI. |
 | `BILLING_PAYG_SOFT_ALERT_RAPPEN`       | `5000` (CHF 50.00)     | Per-user in-cycle alert threshold (Section 14.11).                               |
 | `BILLING_UNLIMITED_MONTHLY_RAPPEN`     | `15000` (CHF 150.00)   | Paddle subscription price (excl. tax).                                           |
@@ -472,7 +473,7 @@ An Account holder's state and Paddle state must reconcile every cycle (Section 1
   for 60 days.
 - **Usage deduction**: at operator discretion, we may deduct the actual Account holder-facing cost
   of usage consumed in the refund period from the refund amount. The deducted figure uses the same
-  PAYG formula (provider cost × 1.20, converted to CHF at the snapshot FX rate).
+  PAYG formula (provider cost × 1.22, converted to CHF at the snapshot FX rate).
 - **One-time per customer**: each `users.id` is eligible for the refund exactly once in their
   lifetime, even if they later sign up for a different plan.
 
@@ -548,10 +549,10 @@ is **not** a license for industrial-scale automation.
 
 ### 8.1 Enforcement model
 
-**Monitor only. No automated Account holder-facing block.** A nightly DuckDB query against the
-analytics parquet files identifies any `unlimited` Account holder whose 30-day rolling Account
-holder-facing cost exceeds `BILLING_UNLIMITED_FAIR_USE_ALERT_CHF` (default CHF 200/mo — i.e. 2× the
-monthly price).
+**Alert first. No silent automated Account-facing block.** A nightly ledger query identifies any
+`unlimited` Account whose 30-day rolling Account-facing cost reaches the CHF 200 review threshold.
+At CHF 450 (3× the monthly price), the alert escalates to an immediate shutdown review; a human must
+record whether to continue, limit or pause new Completions under the fair-use response procedure.
 
 ```sql
 SELECT
@@ -563,16 +564,18 @@ WHERE
     plan_type = 'unlimited'
     AND occurred_at >= NOW() - INTERVAL 30 DAY
 GROUP BY billing_user_id
-HAVING SUM(user_cost_chf) > 200.0
+HAVING SUM(user_cost_chf) >= 200.0
 ORDER BY rolling_30d_cost_chf DESC;
 ```
 
-Result is delivered to an internal email/Slack channel. Operator decides per-case action:
+The application emits structured logs for the alert channel. The operator follows
+`docs/billing-ops-runbook.md` and decides per case:
 
 - Reach out, ask about use case.
 - Suggest a custom Enterprise contract.
-- In egregious abuse cases (>10× monthly price, clear automation), apply a manual rate limit or
-  request migration to PAYG with notice.
+- At CHF 450 rolling cost, or sooner for clear automation, compromised credentials or a pricing
+  fault, make and record the shutdown decision immediately. Never describe the alert itself as an
+  automatic fair-use suspension.
 
 ### 8.2 Marketing copy
 
@@ -1212,7 +1215,7 @@ optimistic-locked rows (we think active, Paddle canceled).
 
 - For **trial** Account holders, the completion handler's `CanAfford` check uses an estimated upper
   bound: `max_input_tokens × input_price + max_output_tokens × output_price`, both at catalogue
-  rates times the 1.20 margin times the current FX rate. If estimated > `balance_rappen`, return
+  rates times the 1.22 markup times the current FX rate. If estimated > `balance_rappen`, return
   402.
 - For **PAYG** Account holders no upfront estimate is needed — usage just accrues to the cycle
   invoice.

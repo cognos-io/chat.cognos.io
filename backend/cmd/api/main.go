@@ -101,11 +101,11 @@ func NewServer() *pocketbase.PocketBase {
 		Automigrate: true,
 	})
 
-	// Manual entrypoint for the Requesty model enrichment that the background
-	// job also runs — handy for CI/ops and the scripts/ wrapper.
+	// Manual entrypoint for the Requesty catalogue sync that the background job
+	// also runs — handy for CI/ops and the scripts/ wrapper.
 	syncCmd := &cobra.Command{
 		Use:   "sync-requesty-models",
-		Short: "Enrich curated Requesty models with fresh metadata from Requesty",
+		Short: "Mirror available Requesty models and refresh their metadata",
 		Run: func(cmd *cobra.Command, _ []string) {
 			cfg := config.MustLoadAPIConfig(app.Logger())
 			force, _ := cmd.Flags().GetBool("force-disable-absent")
@@ -122,10 +122,10 @@ func NewServer() *pocketbase.PocketBase {
 			}
 		},
 	}
-	// Bypass the health guard and disable every model absent from the fetch — for
-	// a manual cleanup after intentionally removing models from Requesty.
+	// Bypass the health guard and mark every absent model unavailable — for a
+	// manual cleanup after intentionally removing models from Requesty.
 	syncCmd.Flags().Bool("force-disable-absent", false,
-		"disable models missing from Requesty even if many are absent (manual cleanup)")
+		"mark models missing from Requesty unavailable even if many are absent")
 	app.RootCmd.AddCommand(syncCmd)
 
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
@@ -470,7 +470,7 @@ func bindAppHooks(
 				return err
 			}
 
-			// Keep curated Requesty models current (reasoning/pricing/context).
+			// Mirror Requesty's available Models and keep metadata current.
 			if params.Config != nil && params.Config.RequestyAPIKey != "" {
 				if _, err = syncRequestyModelsJob(
 					params.CronScheduler,

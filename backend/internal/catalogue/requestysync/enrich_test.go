@@ -32,6 +32,46 @@ func TestNormalizeIDMatchesAcrossRegions(t *testing.T) {
 	}
 }
 
+func TestDiscoveredResidencyUsesEUOnlyWhenExplicit(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		geolocation string
+		wantTier    string
+		wantCountry string
+		wantRegion  string
+	}{
+		{geolocation: "eu", wantTier: "eu", wantCountry: "EU", wantRegion: "eu"},
+		{geolocation: " EU ", wantTier: "eu", wantCountry: "EU", wantRegion: "eu"},
+		{geolocation: "global", wantTier: "global", wantRegion: "global"},
+		{geolocation: "us", wantTier: "global", wantRegion: "global"},
+		{geolocation: "", wantTier: "global", wantRegion: "global"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.geolocation, func(t *testing.T) {
+			t.Parallel()
+			gotTier, gotCountry, gotRegion := discoveredResidency(tt.geolocation)
+			if gotTier != tt.wantTier || gotCountry != tt.wantCountry || gotRegion != tt.wantRegion {
+				t.Errorf("discoveredResidency(%q) = (%q, %q, %q), want (%q, %q, %q)",
+					tt.geolocation, gotTier, gotCountry, gotRegion,
+					tt.wantTier, tt.wantCountry, tt.wantRegion)
+			}
+		})
+	}
+}
+
+func TestDiscoveredModelIDIsStableAndCollisionResistant(t *testing.T) {
+	t.Parallel()
+
+	first := discoveredModelID("moonshotai/kimi-k3@us-east-1")
+	if second := discoveredModelID("moonshotai/kimi-k3@eu-west-1"); second != first {
+		t.Errorf("discoveredModelID(region variant) = %q, want %q", second, first)
+	}
+	if collision := discoveredModelID("moonshotai/kimi.k3"); collision == first {
+		t.Errorf("discoveredModelID(punctuation variant) = %q, want distinct from %q", collision, first)
+	}
+}
+
 func TestReasoningEffortsForOnlyWhenSupported(t *testing.T) {
 	t.Parallel()
 

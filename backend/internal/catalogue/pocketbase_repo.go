@@ -51,8 +51,9 @@ func (r *PocketBaseRepo) ActiveModels(_ context.Context) ([]Model, error) {
 	records, err := r.app.FindAllRecords(
 		"ai_models",
 		dbx.HashExp{
-			"enabled":     true,
-			"whitelisted": true,
+			"enabled":            true,
+			"whitelisted":        true,
+			"provider_available": true,
 		},
 	)
 	if err != nil {
