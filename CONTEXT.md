@@ -246,10 +246,58 @@ _Avoid:_ upload (the action), file (too generic)
 
 ### Project
 
-A shared encrypted workspace that groups Conversations, Attachments, and memory for multiple
-Accounts. The collaboration boundary above a single Conversation. _(Planned — not yet shipped.)_
+An encrypted grouping of Conversations, Attachments, and memory — the collaboration boundary above
+a single Conversation. Shipped today for a single Account; team sharing and Organisation ownership
+are planned (see `docs/specs/organisations.md`).
 
 _Avoid:_ workspace, folder, team
+
+### Organisation
+
+A billing and administration boundary that groups Accounts through **Org memberships** and owns
+**org-owned Projects**. Pays for its members' work in those Projects through a single Subscription
+with one **Seat** per member. Organisation admins see Usage metadata only — never content.
+_(Planned — see `docs/specs/organisations.md`.)_
+
+_Avoid:_ team (marketing/UI informal only), company, tenant, workspace
+
+### Org membership
+
+An Account's relationship to an Organisation, carrying an **Org role**. Soft-revoked at
+offboarding: the person loses org-owned Project access, while their Account and personal data are
+untouched.
+
+_Avoid:_ member (alone — ambiguous with Participant), employee, user
+
+### Org role
+
+The role on an Org membership — **Owner** (billing, dissolution), **Admin** (members, Seats,
+policies, metadata dashboard), or **Member** (works in org-owned Projects). Distinct from
+Participant roles on Conversations and Projects; org Admins act as Project Admins on org-owned
+Projects.
+
+### Seat
+
+A billed slot on an Organisation's Subscription — every active Org membership occupies one, at the
+Pay-As-You-Go floor per month. The Organisation's pooled Usage above the combined floor is billed
+as overage at cycle close.
+
+_Avoid:_ licence, user slot
+
+### org-owned Project
+
+A Project whose owner is an Organisation rather than an Account. Completions inside it accrue Usage
+against the Organisation's billing (never the member's personal Plan), and every Participant must
+be an active member of that Organisation. If the Organisation's billing lapses, its Projects become
+read-only.
+
+### Workspace
+
+The client-side context selector — Personal or one Organisation — that determines which Projects
+are visible and which billing subject pays for new work. Switching Workspace never changes
+identity, Vault, or Account Key.
+
+_Avoid:_ using workspace as a synonym for Project
 
 ### Plan
 
@@ -341,7 +389,10 @@ right column is what to use in new specs and copy.
 | `user personas`                        | **custom Personas**                                                                        |
 | `provider` and `model` interchangeably | **Model** = catalogue choice; **Provider** = who processed the Completion                  |
 | `tier` alone                           | **Privacy tier** (data residency) vs **Plan** (billing) — always qualify                   |
-| `member`, `collaborator`               | **Participant** (Conversation) or **project participant** (Project, when shipped)          |
+| `member`, `collaborator`               | **Participant** (Conversation/Project) or **Org membership** (Organisation) — qualify      |
+| `team`, `org`, `company`               | **Organisation** (entity); "team" acceptable in marketing/UI copy only                     |
+| `workspace`                            | **Workspace** (client context switcher) — never a synonym for **Project**                  |
+| `seat`, `license`, `licence`           | **Seat** (billed slot on an Organisation's Subscription)                                   |
 | `public link`                          | **Public share** (domain); "link" fine in UI                                               |
 | `key rotation` alone                   | Qualify scope (**Conversation** / **Project** / **Redaction**); not **Account Key change** |
 
