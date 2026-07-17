@@ -47,14 +47,16 @@ goes through the custom routes below, which apply their own checks.
 
 ## Scope rules
 
-| Scope            | Meaning                                              | Enforced by                                                                         |
-| ---------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `owner`          | The record's `user`/`owner` field equals the caller  | `auth.ExtractUser` + field compare (`ownedAttachment`, `ownedUserKeyPairRecord`, …) |
-| `participant`    | An active row in `participants` for the conversation | `conversationAccessibleByID` / `ownedConversationRecord`                            |
-| `admin`          | A participant whose role is admin                    | conversation/project admin check                                                    |
-| `project member` | An active row in `project_participants`              | `projectMemberOr404` / `accessibleProjectRecord`                                    |
-| `public token`   | A valid `conversation_public_shares` token (no auth) | `publicShareByToken`                                                                |
-| `superuser`      | PocketBase superuser only                            | `RequireSuperuserAuth`                                                              |
+| Scope            | Meaning                                                           | Enforced by                                                                         |
+| ---------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `owner`          | The record's `user`/`owner` field equals the caller               | `auth.ExtractUser` + field compare (`ownedAttachment`, `ownedUserKeyPairRecord`, …) |
+| `participant`    | An active row in `participants` for the conversation              | `conversationAccessibleByID` / `ownedConversationRecord`                            |
+| `admin`          | A participant whose role is admin                                 | conversation/project admin check                                                    |
+| `project member` | An active row in `project_participants`                           | `projectMemberOr404` / `accessibleProjectRecord`                                    |
+| `org member`     | An active row in `org_memberships` (soft revoke via `removed_at`) | `memberOrganisationOr404` / `organisations.Repo.ActiveRole`                         |
+| `org admin`      | An org member whose role is `owner` or `admin`                    | `organisations.Role.CanManage`                                                      |
+| `public token`   | A valid `conversation_public_shares` token (no auth)              | `publicShareByToken`                                                                |
+| `superuser`      | PocketBase superuser only                                         | `RequireSuperuserAuth`                                                              |
 
 ## Public (unauthenticated) routes
 
@@ -101,6 +103,9 @@ authorization (cross-user) coverage.
 | Projects                 | `GET/POST /projects`, `GET/PATCH/DELETE /projects/{id}`                                                                       | member (creator→admin)                                                      | `projects_api_test.go`                                                                                 |
 | Project conversations    | `GET /projects/{id}/conversations`, `POST` (not viewer)                                                                       | member / role                                                               | `project_conversations_api_test.go`                                                                    |
 | Project redaction        | `GET/POST /projects/{id}/redaction-key`, `…/redaction-entries`                                                                | member                                                                      | `redaction_api_test.go`                                                                                |
+| Organisations            | `GET /orgs` (mine + my role), `POST /orgs` (creator becomes owner member), `GET /orgs/{id}`                                   | any authed Account (create/list); org member (get)                          | `organisations_api_test.go`                                                                            |
+| Organisation admin       | `PATCH /orgs/{id}` (name)                                                                                                     | org admin (owner/admin role; plain member gets 403)                         | `organisations_api_test.go`                                                                            |
+| Organisation members     | `GET /orgs/{id}/members` (member ids + roles, metadata only — never content)                                                  | org member                                                                  | `organisations_api_test.go`                                                                            |
 | User memory              | `POST/GET /user-memory`, `PATCH/DELETE /user-memory/{id}`                                                                     | owner                                                                       | `scoped_memory_api_test.go`                                                                            |
 | Project memory           | `POST/GET /projects/{id}/memory`, `PATCH/DELETE /project-memory/{id}`                                                         | member                                                                      | `scoped_memory_api_test.go`                                                                            |
 | Bookmarks                | `POST/GET /bookmarks`, `DELETE /bookmarks/{id}`                                                                               | owner (create also needs conversation access)                               | `bookmarks_api_test.go`                                                                                |

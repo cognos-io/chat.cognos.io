@@ -456,6 +456,50 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	// Organisations (B2B workspaces): membership/role metadata only — the
+	// handlers never touch message content. Reads require an active org
+	// membership; updates require the owner/admin role. See
+	// docs/api-permissions.md.
+	e.Router.GET(
+		"/api/v1/orgs",
+		handler.OrganisationsList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/orgs",
+		handler.OrganisationsCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}",
+		handler.OrganisationsGet(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.PATCH(
+		"/api/v1/orgs/{orgID}",
+		handler.OrganisationsUpdate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/members",
+		handler.OrganisationMembersList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.GET(
 		"/api/v1/projects/{projectID}/conversations",
 		handler.ProjectConversationsList(app),
