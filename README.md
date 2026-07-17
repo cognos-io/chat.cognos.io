@@ -77,8 +77,8 @@ the backend image and publishes both `sha-<commit>` and convenience `main` tags.
 always promoted using the immutable `sha256:` image digest, never a floating tag.
 
 [`backend/cmd/promote-deployment`](./backend/cmd/promote-deployment) implements the GitOps hand-off.
-It targets GitHub initially and includes a Forgejo provider for a future migration. After an image
-is published, the workflow runs this Go command to:
+It targets the private Forgejo instance over Tailscale, with GitHub retained as a fallback provider.
+After an image is published, the workflow runs this Go command to:
 
 1. clone the private infrastructure repository;
 1. replace the Cognos image tag and digest in its application playbook;

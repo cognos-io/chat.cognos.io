@@ -17,7 +17,7 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/cognos-backend
-  INFRASTRUCTURE_PROVIDER: ${{ vars.INFRASTRUCTURE_PROVIDER || 'github' }}
+  INFRASTRUCTURE_PROVIDER: ${{ vars.INFRASTRUCTURE_PROVIDER || 'forgejo' }}
   GITHUB_INFRASTRUCTURE_REPOSITORY_URL: ${{ vars.GH_INFRASTRUCTURE_REPOSITORY_URL }}
   GITHUB_INFRASTRUCTURE_API_URL: ${{ vars.GH_INFRASTRUCTURE_API_URL }}
   GITHUB_INFRASTRUCTURE_REPOSITORY: ${{ vars.GH_INFRASTRUCTURE_REPOSITORY }}
@@ -81,6 +81,15 @@ jobs:
         with:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
+
+      - name: connect to Tailscale
+        if: ${{ env.INFRASTRUCTURE_PROVIDER == 'forgejo' }}
+        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:cognos-deploy
+          ping: ${{ vars.FORGEJO_TAILSCALE_HOST }}
 
       - name: open infrastructure promotion pull request
         working-directory: backend

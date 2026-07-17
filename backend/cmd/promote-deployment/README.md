@@ -16,10 +16,11 @@ The promotion workflow depends on a small repository-provider interface:
 - push the promotion branch; and
 - create or update its pull request.
 
-GitHub and Forgejo implement this interface separately. GitHub is the default provider today. The
-Forgejo implementation remains tested and can be selected without changing promotion logic.
+GitHub and Forgejo implement this interface separately. The deployment workflow defaults to Forgejo
+and reaches it through Tailscale; GitHub remains a tested fallback provider.
 
-Set `INFRASTRUCTURE_PROVIDER` to `github` or `forgejo`. If omitted, it defaults to `github`.
+Set `INFRASTRUCTURE_PROVIDER` to `github` or `forgejo`. The command itself defaults to `github` when
+run independently; the deployment workflow defaults it to `forgejo`.
 
 ### GitHub
 
