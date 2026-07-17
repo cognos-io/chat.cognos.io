@@ -21,6 +21,9 @@
         <h1 class="project-detail__title" data-testid="project-name">
           {{ project.decryptedData.name }}
         </h1>
+        @if (billedOrgName(); as orgName) {
+          <app-workspace-context-badge [orgName]="orgName" />
+        }
       </div>
       <div class="project-detail__header-actions">
         <cog-button appearance="default" icon="settings" (click)="openSettings()">

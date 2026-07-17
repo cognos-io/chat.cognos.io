@@ -24,6 +24,7 @@ import {
   CognosMenuItem,
 } from '@cognos/ui-angular';
 
+import { WorkspaceContextBadgeComponent } from '@app/components/chat/workspace-context-badge/workspace-context-badge.component';
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import { ProjectSettingsDialogComponent } from '@app/components/projects/project-settings-dialog/project-settings-dialog.component';
 import {
@@ -32,6 +33,7 @@ import {
 } from '@app/interfaces/conversation';
 import { ConversationProjectActionsService } from '@app/services/conversation-project-actions.service';
 import { NEW_PROJECT_CHAT_TITLE } from '@app/services/message.service';
+import { OrganisationService } from '@app/services/organisation.service';
 import { ProjectConversationService } from '@app/services/project-conversation.service';
 import { ProjectService } from '@app/services/project.service';
 import { UserPreferencesService } from '@app/services/user-preferences.service';
@@ -51,6 +53,7 @@ import { relativeDate } from '@app/utils/relative-date';
     CognosIconComponent,
     CognosMenuComponent,
     PersonaAvatarComponent,
+    WorkspaceContextBadgeComponent,
   ],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.css',
@@ -71,6 +74,14 @@ export class ProjectDetailComponent {
 
   protected readonly project = computed(() =>
     this._projects.projects().find((project) => project.record.id === this.projectId()),
+  );
+
+  private readonly _workspaces = inject(OrganisationService);
+
+  // "Billed to <org>" label for org-owned Projects; null (no badge) for
+  // personal Projects, so individual accounts see zero change (spec §5.2).
+  protected readonly billedOrgName = computed(() =>
+    this._workspaces.orgName(this.project()?.record.organisation),
   );
 
   // Pinned chats first (in pin order), then the rest by last activity — the

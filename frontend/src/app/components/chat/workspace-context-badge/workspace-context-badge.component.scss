@@ -1,0 +1,20 @@
+// Subtle billing-context cue — informative, never shouty. Tokens only.
+.workspace-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cog-space-050);
+  margin: 0;
+  border: var(--cog-border-width) solid var(--cog-border);
+  border-radius: var(--cog-radius-pill);
+  background: var(--cog-surface-sunken);
+  color: var(--cog-text-subtle);
+  padding: var(--cog-space-025) var(--cog-space-100);
+  font-size: var(--cog-fs-caption);
+  line-height: var(--cog-lh-caption);
+}
+
+.workspace-badge--org {
+  border-color: var(--cog-selected-border);
+  background: var(--cog-selected-bg);
+  color: var(--cog-text);
+}

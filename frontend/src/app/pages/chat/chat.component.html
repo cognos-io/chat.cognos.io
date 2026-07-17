@@ -1,42 +1,46 @@
 <ng-container *transloco="let t">
   <ng-template #navConversations>
-    <div class="chat-shell__conversation-sections">
-      @if (conversationService.hasPinnedConversations()) {
-        <section class="chat-shell__section">
-          <header class="chat-shell__section-heading">
-            {{ t('chat.list.pinned') }}
-          </header>
-          <div class="chat-shell__conversation-list">
-            @for (
-              conversation of conversationService.pinnedConversations();
-              track conversation.record.id
-            ) {
-              <app-conversation-list-item
-                [conversation]="conversation"
-              ></app-conversation-list-item>
-            }
-          </div>
-        </section>
-      }
+    <!-- Conversations outside Projects are always personal, so inside an org
+         Workspace these sections hide entirely (spec §5.2). -->
+    @if (showPersonalConversations()) {
+      <div class="chat-shell__conversation-sections">
+        @if (conversationService.hasPinnedConversations()) {
+          <section class="chat-shell__section">
+            <header class="chat-shell__section-heading">
+              {{ t('chat.list.pinned') }}
+            </header>
+            <div class="chat-shell__conversation-list">
+              @for (
+                conversation of conversationService.pinnedConversations();
+                track conversation.record.id
+              ) {
+                <app-conversation-list-item
+                  [conversation]="conversation"
+                ></app-conversation-list-item>
+              }
+            </div>
+          </section>
+        }
 
-      @if (conversationService.hasNonPinnedConversations()) {
-        <section class="chat-shell__section">
-          <header class="chat-shell__section-heading">
-            {{ t('chat.list.recent') }}
-          </header>
-          <div class="chat-shell__conversation-list">
-            @for (
-              conversation of conversationService.nonPinnedConversations();
-              track conversation.record.id
-            ) {
-              <app-conversation-list-item
-                [conversation]="conversation"
-              ></app-conversation-list-item>
-            }
-          </div>
-        </section>
-      }
-    </div>
+        @if (conversationService.hasNonPinnedConversations()) {
+          <section class="chat-shell__section">
+            <header class="chat-shell__section-heading">
+              {{ t('chat.list.recent') }}
+            </header>
+            <div class="chat-shell__conversation-list">
+              @for (
+                conversation of conversationService.nonPinnedConversations();
+                track conversation.record.id
+              ) {
+                <app-conversation-list-item
+                  [conversation]="conversation"
+                ></app-conversation-list-item>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    }
   </ng-template>
 
   <ng-template #navSearchResults>
@@ -143,6 +147,10 @@
           }
         </div>
       </section>
+    } @else if (projectsEnabled && workspaces.isOrgWorkspace()) {
+      <!-- An org Workspace with no visible Projects yet: say so rather than
+           presenting a silently empty sidebar. -->
+      <p class="chat-shell__workspace-empty">{{ t('workspace.emptyOrg') }}</p>
     }
   </ng-template>
 
@@ -192,6 +200,8 @@
   <ng-template #chatNav>
     <div class="chat-shell__nav">
       <app-sidebar-brand />
+
+      <app-workspace-switcher />
 
       <ng-container *ngTemplateOutlet="navNewChat"></ng-container>
       <ng-container *ngTemplateOutlet="navSearch"></ng-container>
@@ -259,6 +269,7 @@
       </div>
 
       <div cogMobileDrawer class="chat-shell__drawer-body">
+        <app-workspace-switcher />
         <div class="chat-shell__scroll">
           @if (search.isActive()) {
             <ng-container *ngTemplateOutlet="navSearchResults"></ng-container>

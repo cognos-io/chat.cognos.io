@@ -1725,5 +1725,15 @@
       "createBackup": "Algo salió mal al crear tu copia de seguridad cifrada. Inténtalo de nuevo.",
       "unlock": "Esa clave de cuenta no coincide, así que no pudimos desbloquear tus datos. Compruébala e inténtalo de nuevo."
     }
+  },
+  "workspace": {
+    "label": "Espacio de trabajo",
+    "personal": "Personal",
+    "switcherAria": "Cambiar de espacio de trabajo. Espacio actual: {{ name }}",
+    "menuLabel": "Espacios de trabajo",
+    "billedToYou": "Se factura a tu cuenta",
+    "billedToOrg": "Se factura a {{ name }}",
+    "personalCue": "Personal: se factura a tu cuenta",
+    "emptyOrg": "Aún no hay proyectos en esta organización"
   }
 }

@@ -21,6 +21,7 @@ import { DeviceService } from '../../services/device.service';
 import { ExportService } from '../../services/export.service';
 import { MessageService } from '../../services/message.service';
 import { ModelService } from '../../services/model.service';
+import { OrganisationService } from '../../services/organisation.service';
 import { ProjectConversationService } from '../../services/project-conversation.service';
 import { ProjectService } from '../../services/project.service';
 import { PublicShareService } from '../../services/public-share.service';
@@ -138,6 +139,18 @@ describe('ChatComponent', () => {
           useValue: { isDuplicatingSource: () => false, duplicate: vi.fn() },
         },
         { provide: ProjectService, useValue: { orderedProjects: signal([]) } },
+        {
+          // Personal-only account: switcher hidden, no workspace scoping.
+          provide: OrganisationService,
+          useValue: {
+            memberships: signal([]),
+            activeWorkspace: signal('personal'),
+            hasMemberships: () => false,
+            isOrgWorkspace: () => false,
+            activeOrg: () => null,
+            visibleProjects: (projects: unknown[]) => projects,
+          },
+        },
         { provide: ProjectConversationService, useValue: {} },
         { provide: DeviceService, useValue: { isMobile: signal(false) } },
         { provide: MessageService, useValue: messageService },

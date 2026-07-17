@@ -19,6 +19,7 @@ import {
 import { CompactionDurableMemory } from '@app/interfaces/compaction';
 import { ConversationRecord } from '@app/interfaces/conversation';
 import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/model';
+import { OrgMemberRecord, OrganisationRecord } from '@app/interfaces/organisation';
 import { ProjectConversationRecord, ProjectRecord } from '@app/interfaces/project';
 import {
   ConversationPublicKeysResponse,
@@ -1058,6 +1059,50 @@ export class CognosApiService {
   deleteConversation(conversationId: string): Observable<void> {
     return this._http.delete<void>(
       `${this._baseUrl}/api/v1/conversations/${conversationId}`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // --- Organisations (docs/specs/organisations.md) -------------------------
+  // The caller only ever sees Organisations they hold an active Membership in.
+
+  listOrgs(): Observable<OrganisationRecord[]> {
+    return this._http.get<OrganisationRecord[]>(`${this._baseUrl}/api/v1/orgs`, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  getOrg(orgId: string): Observable<OrganisationRecord> {
+    return this._http.get<OrganisationRecord>(`${this._baseUrl}/api/v1/orgs/${orgId}`, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  createOrg(request: { name: string }): Observable<OrganisationRecord> {
+    return this._http.post<OrganisationRecord>(
+      `${this._baseUrl}/api/v1/orgs`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  updateOrg(orgId: string, request: { name: string }): Observable<OrganisationRecord> {
+    return this._http.patch<OrganisationRecord>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  listOrgMembers(orgId: string): Observable<OrgMemberRecord[]> {
+    return this._http.get<OrgMemberRecord[]>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/members`,
       {
         headers: this.authHeaders(),
       },

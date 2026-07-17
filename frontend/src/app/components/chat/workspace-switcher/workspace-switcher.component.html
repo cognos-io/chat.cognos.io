@@ -1,0 +1,45 @@
+<ng-container *transloco="let t">
+  @if (workspaces.hasMemberships()) {
+    <div class="workspace-switcher">
+      <button
+        #trigger
+        type="button"
+        class="workspace-switcher__trigger"
+        [attr.aria-haspopup]="'menu'"
+        [attr.aria-expanded]="menuOpen()"
+        [attr.aria-label]="t('workspace.switcherAria', { name: activeLabel() })"
+        [title]="t('workspace.label')"
+        (click)="toggleMenu($event)"
+        data-testid="workspace-switcher-trigger"
+      >
+        <span class="workspace-switcher__icon" aria-hidden="true">
+          <cog-icon
+            [name]="workspaces.isOrgWorkspace() ? 'users' : 'shield'"
+            [size]="16"
+            tone="current"
+          />
+        </span>
+        <span class="workspace-switcher__copy">
+          <span class="workspace-switcher__overline">{{ t('workspace.label') }}</span>
+          <span class="workspace-switcher__name">{{ activeLabel() }}</span>
+        </span>
+        <cog-icon
+          class="workspace-switcher__chevron"
+          [name]="menuOpen() ? 'chevron-down' : 'chevron-right'"
+          [size]="16"
+          tone="text-subtlest"
+        />
+      </button>
+
+      @if (menuOpen()) {
+        <div #menuHost class="workspace-switcher__menu">
+          <cog-menu
+            [label]="t('workspace.menuLabel')"
+            [items]="menuItems()"
+            (itemSelect)="onMenuSelect($event)"
+          />
+        </div>
+      }
+    </div>
+  }
+</ng-container>

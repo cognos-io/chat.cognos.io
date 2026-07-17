@@ -1725,5 +1725,15 @@
       "createBackup": "Si è verificato un problema durante la creazione del tuo backup cifrato. Riprova.",
       "unlock": "Quella chiave dell'account non corrisponde, quindi non è stato possibile sbloccare i tuoi dati. Controllala e riprova."
     }
+  },
+  "workspace": {
+    "label": "Spazio di lavoro",
+    "personal": "Personale",
+    "switcherAria": "Cambia spazio di lavoro. Spazio attuale: {{ name }}",
+    "menuLabel": "Spazi di lavoro",
+    "billedToYou": "Addebitato sul tuo account",
+    "billedToOrg": "Addebitato a {{ name }}",
+    "personalCue": "Personale — addebitato sul tuo account",
+    "emptyOrg": "Ancora nessun progetto in questa organizzazione"
   }
 }

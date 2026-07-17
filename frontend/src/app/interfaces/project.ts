@@ -98,6 +98,11 @@ export interface ProjectRecord {
   key_version: number;
   archived_at?: string;
   caller_role?: ProjectRole;
+  // Optional Organisation relation (docs/specs/organisations.md §5.4): set on
+  // org-owned Projects (billed to org_billing, visible in that Organisation's
+  // Workspace); absent/empty on personal Projects. Plaintext metadata — never
+  // part of the encrypted blob, so billing attribution works server-side.
+  organisation?: string;
 }
 
 export type ProjectRole = 'Admin' | 'Editor' | 'Viewer';

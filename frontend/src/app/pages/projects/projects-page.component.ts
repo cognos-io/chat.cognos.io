@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -8,6 +14,7 @@ import { CognosBreadcrumbsComponent, CognosButtonComponent } from '@cognos/ui-an
 
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
 import { defaultProjectColor, defaultProjectIcon } from '@app/interfaces/project';
+import { OrganisationService } from '@app/services/organisation.service';
 import { ProjectService } from '@app/services/project.service';
 
 @Component({
@@ -28,8 +35,13 @@ import { ProjectService } from '@app/services/project.service';
 export class ProjectsPageComponent {
   private readonly _projects = inject(ProjectService);
   private readonly _router = inject(Router);
+  private readonly _workspaces = inject(OrganisationService);
 
-  protected readonly projects = this._projects.orderedProjects;
+  // Scoped to the active Workspace (personal Projects, or the active
+  // Organisation's) — same filter as the sidebar (spec §5.2).
+  protected readonly projects = computed(() =>
+    this._workspaces.visibleProjects(this._projects.orderedProjects()),
+  );
 
   // Routes for the breadcrumb crumbs, in order. The last crumb (Projects) is
   // the current page and has no route.

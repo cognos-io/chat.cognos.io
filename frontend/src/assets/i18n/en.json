@@ -1725,5 +1725,15 @@
       "createBackup": "Something went wrong creating your encrypted backup. Please try again.",
       "unlock": "That Account Key didn't match, so we couldn't unlock your data. Check it and try again."
     }
+  },
+  "workspace": {
+    "label": "Workspace",
+    "personal": "Personal",
+    "switcherAria": "Switch workspace. Current workspace: {{ name }}",
+    "menuLabel": "Workspaces",
+    "billedToYou": "Billed to you",
+    "billedToOrg": "Billed to {{ name }}",
+    "personalCue": "Personal — billed to you",
+    "emptyOrg": "No projects in this organisation yet"
   }
 }

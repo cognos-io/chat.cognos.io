@@ -19,12 +19,15 @@ import {
   CognosIconComponent,
 } from '@cognos/ui-angular';
 
+import { WorkspaceContextBadgeComponent } from '@app/components/chat/workspace-context-badge/workspace-context-badge.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { EarlyHabit } from '@app/components/onboarding/early-habit/early-habit';
 import { BookmarkService } from '@app/services/bookmark.service';
 import { ConversationService } from '@app/services/conversation.service';
 import { FirstValueJourney } from '@app/services/first-value-journey';
 import { MessageService, MessageStatus } from '@app/services/message.service';
+import { OrganisationService } from '@app/services/organisation.service';
+import { ProjectService } from '@app/services/project.service';
 import { VaultService } from '@app/services/vault.service';
 
 import { ConversationMinimapComponent } from '../conversation-minimap/conversation-minimap.component';
@@ -44,6 +47,7 @@ import { MessageListComponent } from '../message-list/message-list.component';
     CognosButtonComponent,
     CognosIconButtonComponent,
     CognosIconComponent,
+    WorkspaceContextBadgeComponent,
     TranslocoModule,
   ],
   template: `
@@ -101,6 +105,11 @@ import { MessageListComponent } from '../message-list/message-list.component';
         }
 
         <div class="conversation-detail__composer">
+          @if (showWorkspaceCue()) {
+            <div class="conversation-detail__workspace-cue">
+              <app-workspace-context-badge [orgName]="billedOrgName()" />
+            </div>
+          }
           <app-message-form></app-message-form>
           <p class="conversation-detail__disclaimer">
             {{ t('chat.accuracyDisclaimer') }}
@@ -190,6 +199,14 @@ import { MessageListComponent } from '../message-list/message-list.component';
       padding-inline: var(--cog-space-200);
     }
 
+    /* Billing-context cue above the composer — persistent while the account
+       holds Org memberships, so the billed context is never ambiguous. */
+    .conversation-detail__workspace-cue {
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: var(--cog-space-075);
+    }
+
     /* Persistent, unobtrusive accuracy disclaimer under the composer — the
        standard "AI can make mistakes" affordance. */
     .conversation-detail__disclaimer {
@@ -216,6 +233,8 @@ export class ConversationDetailComponent {
   private readonly _vault = inject(VaultService);
   private readonly _route = inject(ActivatedRoute);
   private readonly _router = inject(Router);
+  private readonly _workspaces = inject(OrganisationService);
+  private readonly _projectService = inject(ProjectService);
 
   // Guards repeated loads: bookmarks are (re)loaded once per active conversation.
   private _bookmarksLoadedFor?: string;
@@ -235,6 +254,30 @@ export class ConversationDetailComponent {
   );
 
   readonly messagesAtBottom = signal(false);
+
+  // The Organisation this conversation bills to, or null when personal.
+  // Attribution follows Project scope (an org-owned Project bills the org),
+  // NEVER the last-viewed Workspace (spec §5.2).
+  readonly billedOrgName = computed(() => {
+    const projectId = this._conversationService.conversation()?.record.project;
+    if (!projectId) {
+      return null;
+    }
+    const project = this._projectService
+      .projects()
+      .find((candidate) => candidate.record.id === projectId);
+    return this._workspaces.orgName(project?.record.organisation);
+  });
+
+  // The cue only earns its place once it disambiguates something: the account
+  // holds Org memberships AND either this chat bills an org, or the user is
+  // sitting in an org Workspace while composing a personally-billed chat
+  // (Nils's friction #1 — a client memo drafted on his own plan by mistake).
+  readonly showWorkspaceCue = computed(
+    () =>
+      this._workspaces.hasMemberships() &&
+      (this.billedOrgName() !== null || this._workspaces.isOrgWorkspace()),
+  );
 
   @Input()
   set conversationId(conversationId: string) {

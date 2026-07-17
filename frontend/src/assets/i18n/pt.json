@@ -1725,5 +1725,15 @@
       "createBackup": "Algo correu mal ao criar a tua cópia de segurança encriptada. Tenta novamente.",
       "unlock": "Essa Chave de Conta não correspondeu, por isso não conseguimos desbloquear os teus dados. Verifica-a e tenta novamente."
     }
+  },
+  "workspace": {
+    "label": "Espaço de trabalho",
+    "personal": "Pessoal",
+    "switcherAria": "Mudar de espaço de trabalho. Espaço atual: {{ name }}",
+    "menuLabel": "Espaços de trabalho",
+    "billedToYou": "Faturado na tua conta",
+    "billedToOrg": "Faturado a {{ name }}",
+    "personalCue": "Pessoal — faturado na tua conta",
+    "emptyOrg": "Ainda não há projetos nesta organização"
   }
 }

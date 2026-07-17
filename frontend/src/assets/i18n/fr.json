@@ -1725,5 +1725,15 @@
       "createBackup": "Un problème est survenu lors de la création de votre sauvegarde chiffrée. Veuillez réessayer.",
       "unlock": "Cette clé de compte ne correspond pas, nous n'avons donc pas pu déverrouiller vos données. Vérifiez-la et réessayez."
     }
+  },
+  "workspace": {
+    "label": "Espace de travail",
+    "personal": "Personnel",
+    "switcherAria": "Changer d'espace de travail. Espace actuel : {{ name }}",
+    "menuLabel": "Espaces de travail",
+    "billedToYou": "Facturé sur votre compte",
+    "billedToOrg": "Facturé à {{ name }}",
+    "personalCue": "Personnel — facturé sur votre compte",
+    "emptyOrg": "Aucun projet dans cette organisation pour le moment"
   }
 }

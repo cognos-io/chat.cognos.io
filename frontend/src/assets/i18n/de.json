@@ -1725,5 +1725,15 @@
       "createBackup": "Beim Erstellen deiner verschlüsselten Sicherung ist etwas schiefgelaufen. Bitte versuche es erneut.",
       "unlock": "Dieser Account-Schlüssel stimmte nicht, daher konnten wir deine Daten nicht entsperren. Prüfe ihn und versuche es erneut."
     }
+  },
+  "workspace": {
+    "label": "Arbeitsbereich",
+    "personal": "Persönlich",
+    "switcherAria": "Arbeitsbereich wechseln. Aktueller Arbeitsbereich: {{ name }}",
+    "menuLabel": "Arbeitsbereiche",
+    "billedToYou": "Wird dir verrechnet",
+    "billedToOrg": "Wird {{ name }} verrechnet",
+    "personalCue": "Persönlich – wird dir verrechnet",
+    "emptyOrg": "Noch keine Projekte in dieser Organisation"
   }
 }

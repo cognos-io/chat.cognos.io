@@ -1,0 +1,20 @@
+<ng-container *transloco="let t">
+  <p
+    class="workspace-badge"
+    [class.workspace-badge--org]="orgName() !== null"
+    data-testid="workspace-context-badge"
+  >
+    <cog-icon
+      [name]="orgName() !== null ? 'users' : 'shield'"
+      [size]="13"
+      tone="current"
+    />
+    <span>
+      @if (orgName() !== null) {
+        {{ t('workspace.billedToOrg', { name: orgName() }) }}
+      } @else {
+        {{ t('workspace.personalCue') }}
+      }
+    </span>
+  </p>
+</ng-container>
