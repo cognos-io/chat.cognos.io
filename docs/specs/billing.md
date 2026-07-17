@@ -70,9 +70,9 @@ This document **supersedes** the billing portions of
 | Topic              | Old (`backend-model-selector.md`)  | New (this spec)                                                                                                   |
 | ------------------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | PAYG mechanism     | CHF 5 base fee (mechanism unclear) | **CHF 15/mo min commit + cycle-end overage charge via Paddle**: accrue usage locally → bill `max(sum, CHF 15)`/mo |
-| Unlimited price    | CHF 35/mo                          | **CHF 100/mo** or **CHF 1000/yr** (2 months free)                                                                 |
+| Unlimited price    | CHF 35/mo                          | **CHF 150/mo** or **CHF 1500/yr** (2 months free)                                                                 |
 | Plan enum value    | `flat_rate`                        | `unlimited` (rename — `flat_rate` kept as a temporary alias if needed)                                            |
-| Margin             | Not defined                        | **+20%** on provider USD cost, then convert to CHF                                                                |
+| Margin             | Not defined                        | **+22%** on provider USD cost, then convert to CHF                                                                |
 | Payment processor  | Not defined ("manual for now")     | **Paddle** (Merchant of Record, handles tax)                                                                      |
 | Free state         | Not defined                        | CHF 2 signup credit (per-user override via DB) → read-only after exhaustion                                       |
 | Refund policy      | Not defined                        | 60-day money-back, optional usage deduction, one refund per Account holder lifetime                               |
@@ -97,7 +97,7 @@ holder is in **exactly one** at any moment.
 | ---------------- | --------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Trial            | `trial`         | Free, capped to seed credit (default CHF 2.00; per-user override) | Usage deducts from `balance_rappen` (internal credit). After exhaustion → `inactive`.                                                                                    |
 | Pay-As-You-Go    | `payg`          | `max(sum(usage), CHF 15)` per cycle                               | CHF 15/mo min commit billed by Paddle **in advance**; each completion writes a local `usage` ledger row; any overage is charged once at cycle end (on the next invoice). |
-| Unlimited        | `unlimited`     | CHF 100/mo **or** CHF 1000/yr (≈ 2 months free)                   | Usage recorded for analytics + fair-use monitoring; no billing impact per request.                                                                                       |
+| Unlimited        | `unlimited`     | CHF 150/mo **or** CHF 1500/yr (≈ 2 months free)                   | Usage recorded for analytics + fair-use monitoring; no billing impact per request.                                                                                       |
 | (transient) None | `inactive`      | n/a                                                               | `/complete` returns 402. Read-only access to history/settings retained.                                                                                                  |
 
 ### 3.1 Trial
@@ -129,7 +129,7 @@ resulting amount. We never push per-completion events to Paddle.
   commit is added as a **one-time charge** at cycle end (see below). Net effect:
     - Usage ≤ CHF 15 in the cycle → customer is billed CHF 15.00 (the commit, no overage charge).
     - Usage > CHF 15 in the cycle → customer is billed CHF 15.00 + `(usage − CHF 15.00)` = `usage`.
-  This achieves `max(usage, CHF 15)` per cycle.
+    This achieves `max(usage, CHF 15)` per cycle.
 - **Billing timeline — the commit is charged _in advance_.** Paddle bills recurring prices at the
   _start_ of each period, so the CHF 15.00 minimum is collected **up front**: once at checkout for
   the first cycle, then on every renewal for the upcoming cycle. Any overage from a cycle is added
@@ -169,8 +169,8 @@ resulting amount. We never push per-completion events to Paddle.
 
 ### 3.3 Unlimited
 
-- Two Paddle products: **`unlimited_monthly`** (CHF 100/mo) and **`unlimited_annual`** (CHF
-  1000/yr).
+- Two Paddle products: **`unlimited_monthly`** (CHF 150/mo) and **`unlimited_annual`** (CHF
+  1500/yr).
 - Annual is a single Paddle subscription product; the CHF 200/yr discount is encoded directly in the
   product price (no coupon code required).
 - Renewal is automatic via Paddle. Cancellation = no auto-renew at next cycle boundary.
@@ -261,8 +261,8 @@ Why USD-first markup, then FX?
 | `BILLING_MARGIN_BPS`                   | `2000` (= 20.00%)      | Basis points; allows fine adjustment without code change.                        |
 | `BILLING_PAYG_MIN_COMMIT_RAPPEN`       | `1500` (CHF 15.00)     | Minimum commit per PAYG cycle = the Paddle subscription base price. Shown in UI. |
 | `BILLING_PAYG_SOFT_ALERT_RAPPEN`       | `5000` (CHF 50.00)     | Per-user in-cycle alert threshold (Section 14.11).                               |
-| `BILLING_UNLIMITED_MONTHLY_RAPPEN`     | `10000` (CHF 100.00)   | Paddle subscription price (excl. tax).                                           |
-| `BILLING_UNLIMITED_ANNUAL_RAPPEN`      | `100000` (CHF 1000.00) | Paddle subscription price (excl. tax).                                           |
+| `BILLING_UNLIMITED_MONTHLY_RAPPEN`     | `15000` (CHF 150.00)   | Paddle subscription price (excl. tax).                                           |
+| `BILLING_UNLIMITED_ANNUAL_RAPPEN`      | `150000` (CHF 1500.00) | Paddle subscription price (excl. tax).                                           |
 | `BILLING_TRIAL_SEED_RAPPEN`            | `200` (CHF 2.00)       | Granted once on signup, unless per-user override is staged.                      |
 | `BILLING_REFUND_GUARANTEE_DAYS`        | `60`                   | Money-back window.                                                               |
 | `BILLING_UNLIMITED_FAIR_USE_ALERT_CHF` | `200.0`                | Nightly alert threshold (user-cost CHF). 2× monthly price.                       |
@@ -280,8 +280,8 @@ non-recurring price used for PAYG overage charges:
 | ----------------------------- | -------------------------------- | ----------------------------------------- | ------------------------------ |
 | `cognos-payg` (price)         | Recurring (monthly)              | CHF 15.00 — the minimum commit per cycle  | PAYG subscription base.        |
 | `cognos-payg-overage` (price) | One-time (`billing_cycle: null`) | CHF — amount set per charge (the overage) | PAYG cycle-end overage charge. |
-| `cognos-unlimited-m` (price)  | Recurring (monthly)              | CHF 100.00                                | Unlimited monthly.             |
-| `cognos-unlimited-y` (price)  | Recurring (annual)               | CHF 1000.00 (≈ 2 months free vs monthly)  | Unlimited annual.              |
+| `cognos-unlimited-m` (price)  | Recurring (monthly)              | CHF 150.00                                | Unlimited monthly.             |
+| `cognos-unlimited-y` (price)  | Recurring (annual)               | CHF 1500.00 (≈ 2 months free vs monthly)  | Unlimited annual.              |
 
 > **How `max(usage, CHF 15)` is achieved without a meter.** Paddle has no usage-metering /
 > event-ingestion API; the only primitive for a variable amount is a **one-time charge** added to
@@ -468,7 +468,7 @@ An Account holder's state and Paddle state must reconcile every cycle (Section 1
 - **Trigger**: Account holder emails support / clicks a "request refund" button. Initial
   implementation is email-driven; an in-app self-serve refund flow can come later.
 - **Scope**: applies to the first paid period only (the initial monthly or annual payment). For
-  annual Account holders, this is potentially significant — a full CHF 1000 refund is on the table
+  annual Account holders, this is potentially significant — a full CHF 1500 refund is on the table
   for 60 days.
 - **Usage deduction**: at operator discretion, we may deduct the actual Account holder-facing cost
   of usage consumed in the refund period from the refund amount. The deducted figure uses the same
@@ -478,14 +478,14 @@ An Account holder's state and Paddle state must reconcile every cycle (Section 1
 
 ### 7.2 Refund cases — examples
 
-| Case                                            | Refund                                                       |
-| ----------------------------------------------- | ------------------------------------------------------------ |
-| Unlimited annual @ day 5, ~zero usage           | Full CHF 1000.                                               |
-| Unlimited annual @ day 40, CHF 50 of usage      | Full CHF 1000 OR CHF 950 (operator chooses).                 |
-| Unlimited annual @ day 90                       | No refund (outside window). Goodwill case only.              |
-| PAYG @ day 30, CHF 12 billed, complaint         | Refund CHF 12 (last cycle). Usage deduction at op discretion.|
-| Unlimited monthly @ day 5                       | Full CHF 100.                                                |
-| Unlimited monthly @ day 35, on month 2          | Last month's CHF 100 only (still in 60d window).             |
+| Case                                       | Refund                                                        |
+| ------------------------------------------ | ------------------------------------------------------------- |
+| Unlimited annual @ day 5, ~zero usage      | Full CHF 1500.                                                |
+| Unlimited annual @ day 40, CHF 50 of usage | Full CHF 1500 OR CHF 950 (operator chooses).                  |
+| Unlimited annual @ day 90                  | No refund (outside window). Goodwill case only.               |
+| PAYG @ day 30, CHF 12 billed, complaint    | Refund CHF 12 (last cycle). Usage deduction at op discretion. |
+| Unlimited monthly @ day 5                  | Full CHF 150.                                                 |
+| Unlimited monthly @ day 35, on month 2     | Last month's CHF 150 only (still in 60d window).              |
 
 ### 7.3 Process
 
@@ -797,7 +797,7 @@ flowchart TD
 Each handler must be safe to run multiple times. Specifically:
 
 - `subscription.created`: `UPSERT user_billing SET plan_type, paddle_subscription_id, cycle bounds
-  WHERE user_id = ?` — keyed on `paddle_subscription_id` uniqueness.
+WHERE user_id = ?` — keyed on `paddle_subscription_id` uniqueness.
 - `subscription.updated`: detect cycle rollover by comparing the event's `current_period_start`
   to the stored `paddle_cycle_start_at`. On rollover, close the prior cycle (write
   `payg_cycle_summaries` row) and update cycle bounds. Both writes are keyed so re-delivery is a
@@ -807,7 +807,7 @@ Each handler must be safe to run multiple times. Specifically:
   deterministic idempotency key (`overage_<payg_cycle_summaries.id>`), so a re-delivered rollover
   never double-charges. Record the resulting `paddle_overage_txn_id` on the cycle summary.
 - `transaction.completed`: keyed on `paddle_transaction_id` — `UPDATE payg_cycle_summaries SET
-  paddle_transaction_id, paddle_billed_rappen WHERE cycle_end_at = ?` for the matching cycle. No
+paddle_transaction_id, paddle_billed_rappen WHERE cycle_end_at = ?` for the matching cycle. No
   ledger row written.
 - `adjustment.created` (refund): keyed on `paddle_adjustment_id` — refuse to double-insert a
   `refund` row.
@@ -944,12 +944,12 @@ All endpoints prefixed `/api/v1/`. Authenticated via the existing session.
   "plan_type": "payg",
   "paddle_subscription_id": "sub_xxx",
   "cycle_start_at": "2026-06-01T00:00:00Z",
-  "cycle_end_at":   "2026-07-01T00:00:00Z",
+  "cycle_end_at": "2026-07-01T00:00:00Z",
   "in_cycle_usage_chf": 3.42,
-  "min_commit_chf": 15.00,
+  "min_commit_chf": 15.0,
   "min_commit_paid_upfront": true,
-  "predicted_overage_chf": 0.00,
-  "predicted_cycle_total_chf": 15.00,
+  "predicted_overage_chf": 0.0,
+  "predicted_cycle_total_chf": 15.0,
   "predicted_bill_explanation": "You pre-paid the CHF 15.00 minimum for this cycle. You're CHF 3.42 into it — no extra is due unless your usage passes CHF 15.00, in which case the overage is added to your next invoice.",
   "refund_eligible_until_at": "2026-08-01T00:00:00Z",
   "manage_url": "https://paddle.com/customer-portal/...?token=..."
@@ -975,7 +975,7 @@ For `trial`:
 {
   "plan_type": "trial",
   "balance_chf": 0.32,
-  "trial_seed_chf": 0.50
+  "trial_seed_chf": 0.5
 }
 ```
 
@@ -1049,7 +1049,12 @@ refund flow is post-MVP.
 Body:
 
 ```json
-{ "user_id": "...", "deduct_usage": false, "reason_text": "...", "force_outside_window": false }
+{
+  "user_id": "...",
+  "deduct_usage": false,
+  "reason_text": "...",
+  "force_outside_window": false
+}
 ```
 
 Authenticated via admin session. Drives Section 7.3.
@@ -1094,8 +1099,8 @@ text:
 - On the next `/complete` that would deduct below 0, server returns 402 with
   `code = "TRIAL_EXHAUSTED"`.
 - The chat UI shows a modal: "Your free trial is used up. Pick a plan to keep chatting."
-    - Two buttons: **Pay-As-You-Go (CHF 15/mo + usage)** and **Unlimited (CHF 100/mo)**.
-    - Annual offer surfaced beneath: **"Save CHF 200 with Unlimited Annual (CHF 1000/yr)"**.
+    - Two buttons: **Pay-As-You-Go (CHF 15/mo + usage)** and **Unlimited (CHF 150/mo)**.
+    - Annual offer surfaced beneath: **"Save CHF 300 with Unlimited Annual (CHF 1500/yr)"**.
 - The PAYG option must state the up-front charge **before** the Account holder commits — both on the
   button's supporting line and on the final checkout confirmation. Required wording (or equivalent):
   **"CHF 15.00 is charged now for this month's minimum. If your usage goes above CHF 15.00, the
@@ -1126,9 +1131,9 @@ A single page at `/account/billing` showing:
 - **PAYG:** make the up-front floor explicit, then show in-cycle usage with a running total:
     - A fixed line at the top: **"CHF 15.00 monthly minimum — paid in advance on {cycle_start}."**
     - The running total below it: ("CHF 3.42 used this cycle — covered by your CHF 15.00 minimum;
-      nothing extra due yet" or "CHF 12.18 used this cycle — CHF 2.18 overage will be added to your
-      invoice on {next_renewal}"). A progress bar against the CHF 15.00 minimum helps Account
-      holders who want to "get their money's worth" of the floor.
+    nothing extra due yet" or "CHF 12.18 used this cycle — CHF 2.18 overage will be added to your
+    invoice on {next_renewal}"). A progress bar against the CHF 15.00 minimum helps Account
+    holders who want to "get their money's worth" of the floor.
 - Current cycle usage breakdown (model × cost) with a per-row drill-down.
 - Recent transactions (latest 50). PAYG rows show `usage` only; Unlimited the same. Paddle invoice
   amounts surfaced from the matching `payg_cycle_summaries.paddle_billed_rappen`, with each invoice
