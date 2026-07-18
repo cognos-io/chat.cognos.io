@@ -1,5 +1,10 @@
 # Paddle webhook org-subject refactor plan (second-model analysis, 2026-07-18)
 
+**Status: implemented and covered.** The subject-discriminated webhook, Seat updates, pooled cycle
+close, lapse behavior, per-user fallback pins, and Organisation billing endpoints landed in
+`a148091e`, `ab7a7aaf`, and later red/green hardening commits. This file remains the detailed test
+design and historical rationale, not an open implementation queue.
+
 Companion to [2026-07-18-organisations-teams-v1.md](./2026-07-18-organisations-teams-v1.md) §2.
 Line refs are from before commit 224c8131; treat as orientation, not gospel.
 

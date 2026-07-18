@@ -605,12 +605,11 @@ The scope of this spec's P0 features:
 
 ## 15. Implementation Evidence
 
-To be ticked with links to migrations, handlers, and tests as Phase 1 lands. All unchecked at
-draft time.
+Release evidence for Phase 1 and the production-readiness pass.
 
-- [ ] `organisations` collection + migration; API rules `nil`; schema test
-- [ ] `org_memberships` collection with role enum + soft revoke; unique (organisation, user)
-- [ ] `org_invites` collection with hashed token, expiry, accept/revoke lifecycle
+- [x] `organisations` collection + migration; API rules `nil`; schema test
+- [x] `org_memberships` collection with role enum + soft revoke; unique (organisation, user)
+- [x] `org_invites` collection with hashed token, expiry, accept/revoke lifecycle
 - [x] `org_billing` collection (payg-only, Paddle ids, cycle bounds, past_due) — deliberately
   **balance-free** (orgs have no trial or prepaid credit; a missing/inactive row fails the gate
   closed): `backend/db/migrations/1760000075_created_org_billing_collections.go`,
@@ -618,25 +617,30 @@ draft time.
 - [x] `balance_transactions` org attribution field (settlement/cycle close lands with the webhook
   slice): `backend/db/migrations/1760000076_balance_transactions_organisation.go`,
   `TestOrgCompletionRecordsOrgAttributedUsage` in `backend/cmd/api/org_billing_gate_test.go`
-- [ ] `projects.organisation` relation + personal/org billing attribution
-- [ ] Participant-must-be-member validation on org Project participant add + denial test
-- [ ] Org Admins auto-Project-Admin enforced in the auth layer + test
-- [ ] Paddle org checkout (quantity 1, `custom_data.org_id`) + webhook subject discriminator
-- [ ] Seat add with native proration; Seat remove as next-cycle decrement (no mid-cycle refund)
-- [ ] Pooled cycle close: `max(0, usage − N × 15)` one-time charge, idempotent per cycle
-- [ ] `org_cycle_summaries` rows + reconciliation for org subjects
-- [ ] `StateForContext` resolver; fail-closed 402 test proving no personal-balance fallback
-- [ ] Lapse → read-only gate on org Projects + reactivation test
-- [ ] Rate-limited client-facing public-key endpoint + enumeration-safety test
-- [ ] Invite mint/deliver/accept endpoints; uniform-response (enumeration) test
-- [ ] Direct-wrap flow on accept (project content key sealed to invitee's public key)
-- [ ] Offboarding: membership revoke → participant revoke → forward-only rotation → seat decrement
-- [ ] Organisation dissolution: Owner-only, Project-deletion confirmation, subscription cancel,
+- [x] `projects.organisation` relation + personal/org billing attribution
+- [x] Participant-must-be-member validation on org Project participant add + denial test
+- [x] Org Admins auto-Project-Admin enforced in the auth layer + test
+- [x] Paddle org checkout (quantity 1, `custom_data.org_id`) + webhook subject discriminator
+- [x] Seat add with native proration; Seat remove as next-cycle decrement (no mid-cycle refund)
+- [x] Pooled cycle close: `max(0, usage − N × 15)` one-time charge, idempotent per cycle
+- [x] `org_cycle_summaries` rows + reconciliation for org subjects
+- [x] `StateForContext` resolver; fail-closed 402 test proving no personal-balance fallback
+- [x] Lapse → read-only gate on all org Project content writes + reactivation and personal-workspace
+  tests
+- [x] Rate-limited client-facing public-key endpoint + enumeration-safety test
+- [x] Invite mint/deliver/accept endpoints; uniform-response (enumeration) test
+- [x] Invite acceptance grants membership only; Project access and key wrapping are a separate,
+  explicit Admin action (settled §4 decision)
+- [x] Offboarding: membership revoke → participant revoke → forward-only rotation → seat decrement
+- [x] Organisation dissolution: Owner-only, Project-deletion confirmation, subscription cancel,
   membership soft-revoke
-- [ ] Workspace switcher (no re-login/re-unlock), six locales, accessible
-- [ ] Org creation + member management + invite UI in frontend
-- [ ] Admin metadata dashboard (Seats, per-member cost, model mix, cycle spend) — content-free
-- [ ] Cross-org denial coverage registered in `docs/api-permissions.md`
-- [ ] Browser e2e: create org → invite → accept → work in org Project → offboard
-- [ ] API e2e: billing flows (checkout, proration, decrement, overage, 402, lapse)
-- [ ] Copy pass: "admins see usage and costs, never conversations" in all six locales
+- [x] Workspace switcher (no re-login/re-unlock), six locales, accessible
+- [x] Org creation + member management + invite UI in frontend
+- [x] Admin metadata dashboard and Activity log — content-free Seats, cost, model mix, cycle spend,
+  and administration events
+- [x] Cross-org denial coverage registered in `docs/api-permissions.md`
+- [x] Browser e2e: Sophie Owner and Nils Member persona journeys cover create, checkout, invite,
+  accept, work, lapse, offboard, audit, dissolution, and Personal safety
+- [x] API flow coverage: Playwright covers checkout, authorisation, 402/lapse, dissolution and
+  compaction attribution; Go API integration covers proration, decrement, overage and webhooks
+- [x] Copy pass: "admins see usage and costs, never conversations" in all six locales

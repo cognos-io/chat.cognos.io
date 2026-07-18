@@ -1,7 +1,7 @@
 # Checkpoint: Organisations / Teams v1 (B2B) — branch `feat/b2b-positioning`
 
-**Date:** 2026-07-18 · **Status:** in progress · **Maintainer:** update this file at every slice
-commit — it is the handoff document if another agent finishes the implementation.
+**Date:** 2026-07-18 · **Status:** production-ready · **Maintainer:** update this file
+at every slice commit — it is the handoff document if another agent finishes the implementation.
 
 The single source of truth for the design is
 [`docs/specs/organisations.md`](../specs/organisations.md) (§4 Decisions are founder-settled — do
@@ -35,29 +35,38 @@ Later commits (same order of work):
   CheckoutRequest gains OrgID/Quantity; role-gate + aggregation tests; api-permissions rows.
 - (frontend admin pages committed earlier as `feat(frontend): organisation admin pages`.)
 
-## In flight
+## Release-candidate state
 
-**Teams v1 is feature-complete** (backend + frontend + API e2e all committed and green). Later
-commits beyond the table above: org invites/offboarding/public-key (`feat(backend): org invites,
-offboarding and gated public-key lookup`), project sharing + rotation routes (`feat(backend):
-project sharing routes and forward-only key rotation`), org lifecycle e2e + client org-project
-creation (`feat: org lifecycle API e2e and client org-project creation`, 144 e2e green), and the
-final frontend slice (`feat(frontend): invite accept, org billing banners and project sharing`,
-1526 vitest green).
+**Teams v1 is feature-complete.** The persona-driven red/green loop now covers Sophie (Owner) and
+Nils (Member) in the browser, plus organisation lifecycle, authorization, lapse, dissolution, and
+compaction accounting through Playwright API tests. Screenshots were captured and reviewed at each
+critical state: create/checkout, billing, invite, members, offboarding, Workspace context, lapse,
+Activity log, destructive dissolution, and the resulting Personal Workspace.
 
-P2 is COMPLETE: enforced org policies (privacy-tier ceiling ORG_PRIVACY_TIER, retention default
-with shorter-wins, ORG_MFA_REQUIRED gates) + policies admin tab ×6 locales; content-free
-org_audit_events + CSV export + admin session revocation (token-key rotation, personal sessions
-included by design). P3 is spec-only by decision (spec §11 Phase 3); DNS-TXT implementation
-deferred behind the walkthrough gate. The `team` flag is ON in development/e2e, OFF in production
-until the persona walkthroughs pass.
+The review found and fixed: clipboard failure handling; member identity/context ambiguity; Seat
+addition sync; draft loss on 402; incomplete key rotation; unrecoverable last-Admin offboarding;
+missing Activity log and dissolution UI; direct-write lapse bypasses; and provider-backed
+compaction incorrectly charging the acting member instead of the Organisation. The implementation
+evidence checklist in `docs/specs/organisations.md` is current.
 
-Currently in flight: persona walkthrough gate round 1 — persona-sophie/persona-nils browser specs
-being authored and run; issue list lands in the scratchpad, fixes batched, then repeat.
+P2 is COMPLETE: enforced org policies (privacy-tier ceiling `ORG_PRIVACY_TIER`, retention default
+with shorter-wins, `ORG_MFA_REQUIRED` gates), six-locale policies UI, content-free Activity log +
+CSV export, and admin session revocation. P3 remains spec-only by founder decision (spec §11 Phase
+3); DNS-TXT, SSO and SCIM are not Phase 1 launch dependencies.
 
-Known deferred items: authGuard drops ?token= deep links for signed-out invitees (manual paste
-covers it — pre-existing TODO); org dissolution flow (spec §8.3) unimplemented; browser e2e folded
-into the persona-walkthrough gate; `team` feature flag still FALSE everywhere.
+The signed-out invite `?token=` deep link is fixed (`3873e470`). Organisation dissolution is
+implemented across API and frontend (`e480548f`, `5695fd7d`). The final broad suites passed and the
+`team` flag is ON in production, development, and e2e.
+
+Final validation evidence: backend `go test ./...`; frontend lint and 139 files / 1,630 tests;
+production Angular build; 49-page Astro build; Playwright organisation API 4/4; compaction API 8/8;
+and the final Sophie + Nils browser pass 2/2. The regenerated lapse, Activity log, dissolution, and
+Personal-safety screenshots were visually reviewed with no open launch-blocking UX TODOs.
+
+Known v1 operational constraint: Paddle cancellation and the local PocketBase dissolution
+transaction cannot be atomic. Cancellation runs first, and any Paddle failure leaves local state
+unchanged and retryable. A persisted reconciliation saga is a future hardening option if operations
+show the narrow inverse failure window (Paddle accepted cancellation, local transaction failed).
 
 ## To do (ordered; each = one vertical slice, one conventional commit)
 
@@ -144,20 +153,20 @@ revocation. Spec §11 Phase 2.
 
 ## Gotchas for whoever continues
 
-- **Org monthly Claude spend limit is hit** — Claude subagents die mid-flight; the main loop may
-  too. omp + `livemap/kimi-k2.6` is the workhorse: read-only drafting to stdout, orchestrator
-  applies (the permission classifier blocks `--auto-approve` omp with write tools; don't fight it).
-  The omp skill's wrapper script is broken with omp v17 — invoke `omp` directly.
+- `omp` + `livemap/kimi-k2.6` was used as an independent adversarial reviewer. Its findings must be
+  verified against executable paths: the useful finding in this pass was org compaction billing
+  attribution; alleged import and Project-cascade blockers were disproved by the request contract
+  and existing cascade tests.
 - Two Playwright suites exist; only root `e2e/` is CI-gated.
 - Isolated `vitest run <file>` false-fails (CdkPortal JIT) — always full `CI=true pnpm test`.
-- Migration numbering: next free is `1760000077`.
-- `team` feature flag stays FALSE in prod until Teams v1 passes the persona walkthroughs.
+- Migration numbering: next free is `1760000082`.
+- `team` feature flag is ON in production after the final browser/API and broad-suite gates passed.
 - Frontend uses Transloco; admin UI keys live under `team.*`; workspace keys under `workspace.*`.
 - Roles are lowercase `owner|admin|member` in org collections (project_participants stays
   capitalised — deliberate).
 - PocketBase empty dates are `''` not NULL (`removed_at = ''` is the active filter).
-- Org create currently allows creation without billing; gate on org projects enforces billing —
-  checkout wiring (slice 2/3) closes the loop. Dissolution flow (spec §8.3) is NOT implemented.
+- Org creation intentionally precedes checkout. Missing/inactive billing fails closed across all
+  org Project content writes; admin, read, delete, and key-rotation recovery paths remain usable.
 - The full Paddle webhook refactor plan + test tables were produced by a second model; if the
   scratchpad copy is gone, regenerate by re-running the analysis prompt in this doc's git history
   or follow §2 above — the essentials are all listed there.
