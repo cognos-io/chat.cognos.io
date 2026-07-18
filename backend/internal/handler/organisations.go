@@ -196,6 +196,16 @@ type OrganisationUsageParams struct {
 	App    core.App
 }
 
+type OrganisationDissolveParams struct {
+	Logger *slog.Logger
+	Client paddle.Client
+	App    core.App
+}
+
+type dissolveOrganisationRequest struct {
+	DeleteProjects bool `json:"delete_projects"`
+}
+
 type orgBillingResponse struct {
 	PlanType               billing.PlanType `json:"plan_type"`
 	PastDue                bool             `json:"past_due"`
@@ -222,6 +232,135 @@ type orgUsageResponse struct {
 	TotalRappen  int64            `json:"total_rappen"`
 	Members      []orgUsageMember `json:"members"`
 }
+
+// OrganisationDissolve schedules the Organisation subscription to end with
+// its current billing cycle, then atomically deletes explicitly-confirmed
+// Organisation Projects, soft-revokes every membership and stamps the
+// Organisation as dissolved. Billing, ledger and audit rows are retained.
+func OrganisationDissolve(params OrganisationDissolveParams) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		org, role, err := memberOrganisationOr404(params.App, e)
+		if err != nil {
+			return err
+		}
+		if role != organisations.RoleOwner {
+			return apis.NewForbiddenError("Only the organisation owner can dissolve the organisation", nil)
+		}
+
+		var req dissolveOrganisationRequest
+		if err := e.BindBody(&req); err != nil {
+			return apis.NewBadRequestError("Invalid request body", err)
+		}
+
+		repo := organisations.NewPocketBaseRepo(params.App)
+		projectIDs, err := repo.OrgProjectIDs(org.ID)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to inspect Organisation Projects", err)
+		}
+		if len(projectIDs) > 0 && !req.DeleteProjects {
+			return apis.NewApiError(
+				http.StatusConflict,
+				"Confirm deletion of every Organisation Project before dissolving",
+				nil,
+			)
+		}
+
+		billingRecords, err := params.App.FindRecordsByFilter(
+			"org_billing",
+			"organisation = {:organisation}",
+			"",
+			1,
+			0,
+			dbx.Params{"organisation": org.ID},
+		)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to inspect Organisation billing", err)
+		}
+		if len(billingRecords) == 1 {
+			billingRecord := billingRecords[0]
+			if subscriptionID := billingRecord.GetString("paddle_subscription_id"); subscriptionID != "" {
+				if params.Client == nil {
+					return apis.NewApiError(http.StatusServiceUnavailable, "Billing is not configured", nil)
+				}
+				if err := params.Client.CancelSubscription(e.Request.Context(), subscriptionID); err != nil {
+					if params.Logger != nil {
+						params.Logger.Error("paddle org cancellation failed", "err", err, "org_id", org.ID)
+					}
+					return apis.NewApiError(http.StatusBadGateway, "Failed to cancel Organisation subscription", nil)
+				}
+			}
+		}
+
+		dissolvedAt := time.Now().UTC()
+		if err := params.App.RunInTransaction(func(txApp core.App) error {
+			// Re-read inside the write transaction so every Project that belongs
+			// to the Organisation at commit time follows the same explicit
+			// confirmation rule. txApp.Delete uses the same PocketBase cascade
+			// hooks as DELETE /projects/{id}.
+			projects, err := txApp.FindRecordsByFilter(
+				"projects",
+				"organisation = {:organisation}",
+				"",
+				0,
+				0,
+				dbx.Params{"organisation": org.ID},
+			)
+			if err != nil {
+				return err
+			}
+			if len(projects) > 0 && !req.DeleteProjects {
+				return errOrgProjectDeletionConfirmationRequired
+			}
+			for _, project := range projects {
+				if err := txApp.Delete(project); err != nil {
+					return err
+				}
+			}
+
+			memberships, err := txApp.FindRecordsByFilter(
+				organisations.MembershipsCollectionName,
+				"organisation = {:organisation}",
+				"",
+				0,
+				0,
+				dbx.Params{"organisation": org.ID},
+			)
+			if err != nil {
+				return err
+			}
+			for _, membership := range memberships {
+				if membership.GetDateTime("removed_at").IsZero() {
+					membership.Set("removed_at", dissolvedAt)
+					if err := txApp.Save(membership); err != nil {
+						return err
+					}
+				}
+			}
+
+			organisationRecord, err := txApp.FindRecordById(organisations.CollectionName, org.ID)
+			if err != nil {
+				return err
+			}
+			organisationRecord.Set("dissolved_at", dissolvedAt)
+			return txApp.Save(organisationRecord)
+		}); err != nil {
+			if errors.Is(err, errOrgProjectDeletionConfirmationRequired) {
+				return apis.NewApiError(
+					http.StatusConflict,
+					"Confirm deletion of every Organisation Project before dissolving",
+					nil,
+				)
+			}
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to dissolve organisation", err)
+		}
+
+		user := auth.ExtractUser(e)
+		organisations.RecordAudit(params.App, org.ID, user.ID, organisations.AuditOrganisationDissolved, org.ID)
+		return e.NoContent(http.StatusNoContent)
+	}
+}
+
+var errOrgProjectDeletionConfirmationRequired = errors.New("organisation Project deletion confirmation required")
 
 // OrganisationBillingCheckout creates a Paddle hosted checkout for every
 // currently-active Organisation Seat. custom_data carries org_id so the

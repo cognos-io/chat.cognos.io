@@ -21,15 +21,17 @@ import (
 // ---------------------------------------------------------------------------
 
 type fakeOrgPaddleClient struct {
-	mu                 sync.Mutex
-	checkoutURL        string
-	portalURL          string
-	checkoutRequest    paddle.CheckoutRequest
-	seatSubscriptionID string
-	seatPriceID        string
-	seatQuantity       int
-	seatMode           string
-	seatError          error
+	mu                      sync.Mutex
+	checkoutURL             string
+	portalURL               string
+	checkoutRequest         paddle.CheckoutRequest
+	seatSubscriptionID      string
+	seatPriceID             string
+	seatQuantity            int
+	seatMode                string
+	seatError               error
+	cancelledSubscriptionID string
+	cancelError             error
 }
 
 func (f *fakeOrgPaddleClient) CreateCheckout(_ context.Context, req paddle.CheckoutRequest) (paddle.CheckoutResult, error) {
@@ -43,7 +45,12 @@ func (f *fakeOrgPaddleClient) CreateCheckout(_ context.Context, req paddle.Check
 	}, nil
 }
 
-func (f *fakeOrgPaddleClient) CancelSubscription(_ context.Context, _ string) error { return nil }
+func (f *fakeOrgPaddleClient) CancelSubscription(_ context.Context, subscriptionID string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.cancelledSubscriptionID = subscriptionID
+	return f.cancelError
+}
 func (f *fakeOrgPaddleClient) ResumeSubscription(_ context.Context, _ string) error { return nil }
 
 func (f *fakeOrgPaddleClient) CreatePortalSession(_ context.Context, _ string, _ []string) (paddle.PortalSession, error) {

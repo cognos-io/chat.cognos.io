@@ -23,6 +23,7 @@ const (
 	AuditProjectParticipantAdded   = "org.project.participant_added"
 	AuditProjectParticipantRevoked = "org.project.participant_revoked"
 	AuditProjectRotated            = "org.project.rotated"
+	AuditOrganisationDissolved     = "org.dissolved"
 )
 
 // RecordAudit appends one content-free audit event. target must be an OPAQUE

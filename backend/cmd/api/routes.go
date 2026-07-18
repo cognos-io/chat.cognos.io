@@ -561,6 +561,20 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	// Organisation dissolution — owner only; existing Projects require an
+	// explicit delete confirmation in the request body.
+	e.Router.DELETE(
+		"/api/v1/orgs/{orgID}",
+		handler.OrganisationDissolve(handler.OrganisationDissolveParams{
+			Logger: logger,
+			Client: paddleClient,
+			App:    app,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	// Organisation invites — owner/admin only.
 	e.Router.POST(
 		"/api/v1/orgs/{orgID}/invites",
