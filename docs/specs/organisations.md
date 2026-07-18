@@ -611,8 +611,13 @@ draft time.
 - [ ] `organisations` collection + migration; API rules `nil`; schema test
 - [ ] `org_memberships` collection with role enum + soft revoke; unique (organisation, user)
 - [ ] `org_invites` collection with hashed token, expiry, accept/revoke lifecycle
-- [ ] `org_billing` collection (payg-only, micro-rappen, Paddle ids, cycle bounds, past_due)
-- [ ] `balance_transactions` org attribution field + settlement at org level
+- [x] `org_billing` collection (payg-only, Paddle ids, cycle bounds, past_due) — deliberately
+  **balance-free** (orgs have no trial or prepaid credit; a missing/inactive row fails the gate
+  closed): `backend/db/migrations/1760000075_created_org_billing_collections.go`,
+  `backend/db/migrations/org_billing_schema_test.go`
+- [x] `balance_transactions` org attribution field (settlement/cycle close lands with the webhook
+  slice): `backend/db/migrations/1760000076_balance_transactions_organisation.go`,
+  `TestOrgCompletionRecordsOrgAttributedUsage` in `backend/cmd/api/org_billing_gate_test.go`
 - [ ] `projects.organisation` relation + personal/org billing attribution
 - [ ] Participant-must-be-member validation on org Project participant add + denial test
 - [ ] Org Admins auto-Project-Admin enforced in the auth layer + test

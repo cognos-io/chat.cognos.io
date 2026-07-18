@@ -2,6 +2,7 @@ package billing
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"time"
 
@@ -85,7 +86,24 @@ type AccessRestriction struct {
 	BalanceRappen       *int64
 	EstimatedCostRappen *int64
 	NextStep            string
+
+	// Org-gate fields, set only for ORG_* restrictions. Message stays the
+	// neutral member-facing copy (a lapsed org is never the member's fault);
+	// AdminMessage carries the one actionable step for org Owners/Admins and
+	// the client picks which to show based on the viewer's role.
+	OrganisationID   string
+	OrganisationName string
+	AdminMessage     string
 }
+
+// ORG_* error codes returned when an org-billed request fails closed (spec
+// docs/specs/organisations.md §7.5): a missing org_billing row resolves to
+// inactive, so both "never subscribed" and "canceled" surface as
+// ORG_BILLING_INACTIVE.
+const (
+	OrgBillingInactiveError = "ORG_BILLING_INACTIVE"
+	OrgBillingPastDueError  = "ORG_BILLING_PAST_DUE"
+)
 
 type Usage struct {
 	InputTokens              int64
@@ -247,6 +265,60 @@ func (s *Service) EvaluateAccess(state State, estimatedCostMicroRappen int64) *A
 				EstimatedCostRappen: int64Ptr(CeilRappenFromMicro(estimatedCostMicroRappen)),
 				NextStep:            "subscribe",
 			}
+		}
+	}
+
+	return nil
+}
+
+// EvaluateOrgAccess is the fail-closed gate for org subjects, run BEFORE the
+// generic EvaluateAccess and before any provider call. Only an active payg
+// org passes; everything else (inactive, past_due, and any state that is not
+// payg — orgs have no trial) blocks with an ORG_* 402 and must NEVER fall
+// back to the member's personal balance. Personal subjects always pass
+// through untouched so the caller can gate them with EvaluateAccess as
+// before.
+func (s *Service) EvaluateOrgAccess(resolved ResolvedState) *AccessRestriction {
+	if resolved.Subject.Kind != SubjectOrg {
+		return nil
+	}
+
+	name := resolved.OrganisationName
+	if name == "" {
+		name = "your organisation"
+	}
+
+	if resolved.State.PlanType != PlanTypePayG {
+		return &AccessRestriction{
+			Error: OrgBillingInactiveError,
+			Message: fmt.Sprintf(
+				"New messages in %s are paused while its billing is set up. Your personal workspace still works.",
+				name,
+			),
+			AdminMessage: fmt.Sprintf(
+				"Reactivate the subscription for %s to restore access.",
+				name,
+			),
+			NextStep:         "org_subscribe",
+			OrganisationID:   resolved.Subject.ID,
+			OrganisationName: resolved.OrganisationName,
+		}
+	}
+
+	if resolved.State.PastDue {
+		return &AccessRestriction{
+			Error: OrgBillingPastDueError,
+			Message: fmt.Sprintf(
+				"New messages in %s are paused while a payment is retried. Your personal workspace still works.",
+				name,
+			),
+			AdminMessage: fmt.Sprintf(
+				"Update the payment method for %s to restore access.",
+				name,
+			),
+			NextStep:         "org_update_payment",
+			OrganisationID:   resolved.Subject.ID,
+			OrganisationName: resolved.OrganisationName,
 		}
 	}
 

@@ -126,6 +126,14 @@ type CompleteBillingRestriction struct {
 	BalanceCHF       *float64 `json:"balance_chf,omitempty"`
 	EstimatedCostCHF *float64 `json:"estimated_cost_chf,omitempty"`
 	NextStep         string   `json:"next_step,omitempty"`
+
+	// Org-gate fields, present only on ORG_* restrictions. `message` stays
+	// the neutral member-facing copy; `admin_message` carries the one
+	// actionable step for org Owners/Admins and the client shows it based on
+	// the viewer's role.
+	OrganisationID   string `json:"organisation_id,omitempty"`
+	OrganisationName string `json:"organisation_name,omitempty"`
+	AdminMessage     string `json:"admin_message,omitempty"`
 }
 
 type CompleteBillingGateFunc func(
@@ -475,6 +483,14 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 			shouldPersist = *req.Persist && conversationID != ""
 		}
 
+		// billingConversationID is the conversation the billing subject is
+		// resolved from (conversation → project → organisation). It is only
+		// set once the caller's access to the conversation has been verified,
+		// so an unverified conversation id can never route a charge to an
+		// Organisation; every other path bills the caller personally, exactly
+		// as before organisations existed.
+		billingConversationID := ""
+
 		var conversation chat.Conversation
 		if shouldPersist {
 			if params.App != nil {
@@ -492,6 +508,7 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 				if !active {
 					return apis.NewNotFoundError("Conversation not found or unable to load", nil)
 				}
+				billingConversationID = conversationID
 			}
 
 			conversation, err = params.ConversationRepo.ByID(conversationID)
@@ -510,6 +527,11 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		}
 
 		var billingState *billing.State
+		// billingSubject is who the request settles against: the caller
+		// personally, or — when the conversation lives in an org-owned
+		// Project — the Organisation. Post-completion usage recording
+		// attributes to this subject.
+		billingSubject := billing.UserSubject(owner.ID)
 
 		if params.CompleteBillingGate != nil {
 			restriction, err := params.CompleteBillingGate(owner, model, req)
@@ -521,13 +543,22 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 				return e.JSON(http.StatusPaymentRequired, restriction)
 			}
 		} else if params.BillingStateRepo != nil && params.BillingService != nil {
-			state, err := params.BillingStateRepo.StateForUser(owner.ID)
+			resolved, err := billing.ResolveState(params.BillingStateRepo, owner.ID, billingConversationID)
 			if err != nil {
 				if !errors.Is(err, billing.ErrStateNotFound) {
 					params.Logger.Error("billing state lookup failed", "err", err)
 					return apis.NewApiError(http.StatusInternalServerError, "Failed to evaluate billing access", err)
 				}
 			} else {
+				billingSubject = resolved.Subject
+				// Org subjects fail closed BEFORE any provider work: a
+				// missing/inactive/past-due org subscription 402s and never
+				// falls back to the member's personal balance (spec
+				// docs/specs/organisations.md §7.5).
+				if restriction := params.BillingService.EvaluateOrgAccess(resolved); restriction != nil {
+					return e.JSON(http.StatusPaymentRequired, completeBillingRestrictionResponse(*restriction, 0))
+				}
+				state := resolved.State
 				// Refine the output ceiling to the user's actual plan before gating
 				// and before it is enforced on the provider request below.
 				effectiveMaxOutput, reasoningBudget = reasoningOutputPlan(req.MaxOutputTokens, model, state.PlanType, req.ReasoningEffort)
@@ -731,14 +762,17 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 		if billingState != nil {
 			if params.BillingLedgerRepo != nil {
 				usageRecord := params.BillingService.BuildUsageRecord(*billingState, billing.BuildUsageRecordInput{
-					UserID:       owner.ID,
-					EventID:      eventID,
-					ModelID:      model.ID,
-					Cost:         costBreakdown,
-					FXRateUSDCHF: usdToCHFRate,
-					InputTokens:  gatewayResp.Usage.InputTokens,
-					OutputTokens: gatewayResp.Usage.OutputTokens,
-					SearchCount:  int64(gatewayResp.Usage.SearchCount),
+					UserID: owner.ID,
+					// Org-owned Project scope settles against the org's
+					// pooled cycle; UserID above stays the acting Account.
+					OrganisationID: billingSubject.OrganisationID(),
+					EventID:        eventID,
+					ModelID:        model.ID,
+					Cost:           costBreakdown,
+					FXRateUSDCHF:   usdToCHFRate,
+					InputTokens:    gatewayResp.Usage.InputTokens,
+					OutputTokens:   gatewayResp.Usage.OutputTokens,
+					SearchCount:    int64(gatewayResp.Usage.SearchCount),
 				})
 				if err := params.BillingLedgerRepo.RecordUsage(usageRecord); err != nil {
 					params.Logger.Error("failed to record billing usage", "err", err)
@@ -1225,5 +1259,8 @@ func completeBillingRestrictionResponse(
 	} else if estimatedCostCHF > 0 {
 		response.EstimatedCostCHF = &estimatedCostCHF
 	}
+	response.OrganisationID = restriction.OrganisationID
+	response.OrganisationName = restriction.OrganisationName
+	response.AdminMessage = restriction.AdminMessage
 	return response
 }

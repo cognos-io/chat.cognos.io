@@ -10,6 +10,7 @@ import (
 
 const (
 	userBillingCollectionName         = "user_billing"
+	orgBillingCollectionName          = "org_billing"
 	balanceTransactionsCollectionName = "balance_transactions"
 )
 
@@ -62,6 +63,105 @@ func (r *PocketBaseRepo) StateForUser(userID string) (State, error) {
 	}, nil
 }
 
+// StateForOrg loads the Organisation's billing state. It FAILS CLOSED: a
+// missing org_billing row (checkout never completed, or the subscription was
+// torn down) reads as PlanTypeInactive rather than an error, so the gate
+// 402s instead of accidentally proceeding ungated — the personal
+// ErrStateNotFound escape hatch (trial not yet bootstrapped) must never apply
+// to an org (spec docs/specs/organisations.md §7.5).
+func (r *PocketBaseRepo) StateForOrg(orgID string) (State, error) {
+	records, err := r.app.FindRecordsByFilter(
+		orgBillingCollectionName,
+		"organisation = {:organisation}",
+		"",
+		2,
+		0,
+		dbx.Params{"organisation": orgID},
+	)
+	if err != nil {
+		return State{}, err
+	}
+	if len(records) == 0 {
+		return State{PlanType: PlanTypeInactive}, nil
+	}
+	if len(records) > 1 {
+		return State{}, fmt.Errorf("multiple billing states found for organisation %q", orgID)
+	}
+
+	record := records[0]
+	planType, err := ParsePlanType(record.GetString("plan_type"))
+	if err != nil {
+		return State{}, err
+	}
+
+	return State{
+		PlanType: planType,
+		// Orgs are balance-free: pooled PAYG only, nothing to deplete.
+		BillingUserID: record.Id,
+		PaddlePriceID: record.GetString("paddle_price_id"),
+		CycleStartAt:  record.GetDateTime("paddle_cycle_start_at").Time().UTC(),
+		CycleEndAt:    record.GetDateTime("paddle_cycle_end_at").Time().UTC(),
+		PastDue:       record.GetBool("past_due"),
+	}, nil
+}
+
+// StateForContext resolves the billing subject for a completion from the
+// conversation's scope — conversation → project → organisation, a fixed
+// chain of at most four primary-key lookups (never per-row fan-out):
+//
+//   - no conversation, standalone conversation, or personal Project →
+//     the caller's personal state (StateForUser), Subject user.
+//   - org-owned Project → the Organisation's state (StateForOrg), Subject
+//     org — REGARDLESS of who is typing. A missing org_billing row resolves
+//     to inactive; the resolver NEVER falls back to the member's personal
+//     balance (spec docs/specs/organisations.md §7.5).
+//
+// Callers must have already authorised the caller against the conversation;
+// this resolver only decides who pays.
+func (r *PocketBaseRepo) StateForContext(userID, conversationID string) (ResolvedState, error) {
+	personal := func() (ResolvedState, error) {
+		state, err := r.StateForUser(userID)
+		return ResolvedState{Subject: UserSubject(userID), State: state}, err
+	}
+
+	if conversationID == "" {
+		return personal()
+	}
+
+	conversation, err := r.app.FindRecordById("conversations", conversationID)
+	if err != nil {
+		// Unknown conversation: the handler treats the request as stateless,
+		// so billing follows the caller personally, as before orgs existed.
+		return personal()
+	}
+	projectID := conversation.GetString("project")
+	if projectID == "" {
+		return personal()
+	}
+
+	project, err := r.app.FindRecordById("projects", projectID)
+	if err != nil {
+		return personal()
+	}
+	orgID := project.GetString("organisation")
+	if orgID == "" {
+		return personal()
+	}
+
+	state, err := r.StateForOrg(orgID)
+	if err != nil {
+		return ResolvedState{Subject: OrgSubject(orgID)}, err
+	}
+
+	resolved := ResolvedState{Subject: OrgSubject(orgID), State: state}
+	// The name is operational metadata for restriction copy; a dangling
+	// organisation relation still fails closed with the state above.
+	if organisation, err := r.app.FindRecordById("organisations", orgID); err == nil {
+		resolved.OrganisationName = organisation.GetString("name")
+	}
+	return resolved, nil
+}
+
 func (r *PocketBaseRepo) EnsureTrialState(userID string, seedRappen int64) error {
 	return r.app.RunInTransaction(func(txApp core.App) error {
 		records, err := r.billingRecordsForUser(txApp, userID, 1)
@@ -91,7 +191,12 @@ func (r *PocketBaseRepo) EnsureTrialState(userID string, seedRappen int64) error
 
 func (r *PocketBaseRepo) RecordUsage(record UsageRecord) error {
 	return r.app.RunInTransaction(func(txApp core.App) error {
-		if record.PlanType == PlanTypeTrial && record.BalanceAfterMicroRappen != nil {
+		// Org-attributed usage never mutates any balance: orgs are pure
+		// pooled PAYG (no trial, no prepaid credit) and the acting member's
+		// personal balance must stay untouched. The OrganisationID guard is
+		// belt and braces — an org record's PlanType is always payg.
+		if record.OrganisationID == "" &&
+			record.PlanType == PlanTypeTrial && record.BalanceAfterMicroRappen != nil {
 			billingRecord, err := txApp.FindFirstRecordByData(userBillingCollectionName, "user_id", record.UserID)
 			if err != nil {
 				return err
@@ -133,6 +238,9 @@ func (r *PocketBaseRepo) RecordUsage(record UsageRecord) error {
 
 		transactionRecord := core.NewRecord(collection)
 		transactionRecord.Set("user_id", record.UserID)
+		if record.OrganisationID != "" {
+			transactionRecord.Set("organisation", record.OrganisationID)
+		}
 		transactionRecord.Set("occurred_at", time.Now().UTC())
 		transactionRecord.Set("type", record.Type)
 		transactionRecord.Set("amount_rappen", record.AmountRappen)

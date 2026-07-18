@@ -206,25 +206,31 @@ func resolveImageRequest(
 	return imageRequestContext{owner: owner, req: req, model: model, userTier: userTier}, nil
 }
 
-// imageBillingGate loads the caller's billing state and blocks before any paid
-// provider request when they cannot afford the upper-bound cost. It returns a
-// nil state (charge nothing, but proceed) when billing is not configured or the
-// user has no billing state yet, mirroring the completion pipeline. When the
-// caller is out of funds it returns a non-nil restriction the handler must send
-// as a 402 — already mapped to the same wire shape the completion endpoint uses
-// so clients parse one 402 contract. A non-nil error is a real failure to
-// return directly.
+// imageBillingGate resolves the billing subject for the request (personal, or
+// the Organisation when the conversation lives in an org-owned Project) and
+// blocks before any paid provider request when the subject cannot pay. It
+// returns a nil resolved state (charge nothing, but proceed) when billing is
+// not configured or the user has no billing state yet, mirroring the
+// completion pipeline. When the subject is blocked it returns a non-nil
+// restriction the handler must send as a 402 — already mapped to the same
+// wire shape the completion endpoint uses so clients parse one 402 contract.
+// A non-nil error is a real failure to return directly.
+//
+// conversationID must be a conversation the caller's access to which has
+// already been verified — the stateless path passes "" and always bills
+// personally.
 func imageBillingGate(
 	params CompleteHandlerParams,
 	ownerID string,
+	conversationID string,
 	model catalogue.Model,
 	usdToCHFRate float64,
-) (*billing.State, *CompleteBillingRestriction, error) {
+) (*billing.ResolvedState, *CompleteBillingRestriction, error) {
 	if params.BillingStateRepo == nil || params.BillingService == nil {
 		return nil, nil, nil
 	}
 
-	state, err := params.BillingStateRepo.StateForUser(ownerID)
+	resolved, err := billing.ResolveState(params.BillingStateRepo, ownerID, conversationID)
 	if err != nil {
 		if errors.Is(err, billing.ErrStateNotFound) {
 			return nil, nil, nil
@@ -233,13 +239,21 @@ func imageBillingGate(
 		return nil, nil, apis.NewApiError(http.StatusInternalServerError, "Failed to evaluate billing access", err)
 	}
 
+	// Org subjects fail closed BEFORE any provider work — a lapsed org never
+	// falls back to the member's personal balance (spec
+	// docs/specs/organisations.md §7.5).
+	if restriction := params.BillingService.EvaluateOrgAccess(resolved); restriction != nil {
+		response := completeBillingRestrictionResponse(*restriction, 0)
+		return nil, &response, nil
+	}
+
 	estimatedCost := params.BillingService.EstimateUpperBoundCost(model, 0, usdToCHFRate)
-	if restriction := params.BillingService.EvaluateAccess(state, estimatedCost.CostMicroRappen); restriction != nil {
+	if restriction := params.BillingService.EvaluateAccess(resolved.State, estimatedCost.CostMicroRappen); restriction != nil {
 		response := completeBillingRestrictionResponse(*restriction, estimatedCost.CostCHF)
 		return nil, &response, nil
 	}
 
-	return &state, nil, nil
+	return &resolved, nil, nil
 }
 
 // callImageGateway issues the provider image request for a resolved model.
@@ -262,7 +276,7 @@ func callImageGateway(
 // recordImageUsageInput carries everything recordImageUsage needs to price and
 // record a completed image request.
 type recordImageUsageInput struct {
-	billingState        *billing.State
+	billingResolved     *billing.ResolvedState
 	ownerID             string
 	model               catalogue.Model
 	userTier            catalogue.PrivacyTier
@@ -291,14 +305,17 @@ func recordImageUsage(params CompleteHandlerParams, in recordImageUsageInput) bi
 		ProviderCostUSD: in.usage.ProviderCostUSD,
 	}, in.usdToCHFRate)
 
-	if in.billingState == nil {
+	if in.billingResolved == nil {
 		return costBreakdown
 	}
 
 	eventID := uuid.NewString()
 	if params.BillingLedgerRepo != nil {
-		usageRecord := params.BillingService.BuildUsageRecord(*in.billingState, billing.BuildUsageRecordInput{
-			UserID:              in.ownerID,
+		usageRecord := params.BillingService.BuildUsageRecord(in.billingResolved.State, billing.BuildUsageRecordInput{
+			UserID: in.ownerID,
+			// Org-owned Project scope settles against the org's pooled
+			// cycle; UserID above stays the acting Account.
+			OrganisationID:      in.billingResolved.Subject.OrganisationID(),
 			EventID:             eventID,
 			ModelID:             in.model.ID,
 			Cost:                costBreakdown,
@@ -314,7 +331,7 @@ func recordImageUsage(params CompleteHandlerParams, in recordImageUsageInput) bi
 	}
 
 	if params.UsageEmitter != nil {
-		billingUserID := in.billingState.BillingUserID
+		billingUserID := in.billingResolved.State.BillingUserID
 		if billingUserID == "" {
 			billingUserID = in.ownerID
 		}
@@ -322,7 +339,7 @@ func recordImageUsage(params CompleteHandlerParams, in recordImageUsageInput) bi
 			EventID:       eventID,
 			OccurredAt:    time.Now().UTC(),
 			BillingUserID: billingUserID,
-			PlanType:      in.billingState.PlanType,
+			PlanType:      in.billingResolved.State.PlanType,
 			Model:         in.model,
 			PrivacyTier:   in.userTier,
 			Cost:          costBreakdown,
@@ -387,8 +404,10 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 
 		usdToCHFRate := completionUSDToCHFRate(params)
 
-		// Billing gate: block before any paid provider request.
-		billingState, restriction, err := imageBillingGate(params, owner.ID, model, usdToCHFRate)
+		// Billing gate: block before any paid provider request. The
+		// conversation's access was verified above, so it may resolve the
+		// billing subject (an org-owned Project bills the Organisation).
+		billingResolved, restriction, err := imageBillingGate(params, owner.ID, conversationID, model, usdToCHFRate)
 		if err != nil {
 			return err
 		}
@@ -478,7 +497,7 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 				ownerID:           owner.ID,
 				requestID:         req.RequestID,
 				usdToCHFRate:      usdToCHFRate,
-				billingState:      billingState,
+				billingResolved:   billingResolved,
 				userTier:          userTier,
 				gatewayStartedAt:  gatewayStartedAt,
 				cleanup:           cleanupPromptMessage,
@@ -521,7 +540,7 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 		// count of 1 (GeneratedImageCount is reconciliation metadata, not a cost
 		// multiplier — cost comes from provider/token pricing).
 		costBreakdown := recordImageUsage(params, recordImageUsageInput{
-			billingState:        billingState,
+			billingResolved:     billingResolved,
 			ownerID:             owner.ID,
 			model:               model,
 			userTier:            userTier,
@@ -582,8 +601,9 @@ func GenerateImage(params CompleteHandlerParams) func(e *core.RequestEvent) erro
 
 		// Billing gate: block before any paid provider request. Charging is
 		// independent of persistence — a temporary chat persists nothing but is
-		// still billed for the provider call.
-		billingState, restriction, err := imageBillingGate(params, owner.ID, model, usdToCHFRate)
+		// still billed for the provider call. There is no conversation, so the
+		// subject is always the caller personally.
+		billingResolved, restriction, err := imageBillingGate(params, owner.ID, "", model, usdToCHFRate)
 		if err != nil {
 			return err
 		}
@@ -610,7 +630,7 @@ func GenerateImage(params CompleteHandlerParams) func(e *core.RequestEvent) erro
 				return apis.NewApiError(http.StatusServiceUnavailable, "Failed to generate image", nil)
 			}
 			costBreakdown := recordImageUsage(params, recordImageUsageInput{
-				billingState:     billingState,
+				billingResolved:  billingResolved,
 				ownerID:          owner.ID,
 				model:            model,
 				userTier:         userTier,
@@ -633,7 +653,7 @@ func GenerateImage(params CompleteHandlerParams) func(e *core.RequestEvent) erro
 		image := imageResp.Images[0]
 
 		costBreakdown := recordImageUsage(params, recordImageUsageInput{
-			billingState:        billingState,
+			billingResolved:     billingResolved,
 			ownerID:             owner.ID,
 			model:               model,
 			userTier:            userTier,
@@ -693,7 +713,7 @@ type imageTextFallback struct {
 	ownerID           string
 	requestID         string
 	usdToCHFRate      float64
-	billingState      *billing.State
+	billingResolved   *billing.ResolvedState
 	userTier          catalogue.PrivacyTier
 	gatewayStartedAt  time.Time
 	cleanup           func()
@@ -729,7 +749,7 @@ func respondImageTextFallback(e *core.RequestEvent, f imageTextFallback) error {
 	// A text reply is billed as a text turn, not an image (no image was
 	// produced), so GeneratedImageCount stays 0.
 	costBreakdown := recordImageUsage(params, recordImageUsageInput{
-		billingState:     f.billingState,
+		billingResolved:  f.billingResolved,
 		ownerID:          f.ownerID,
 		model:            f.model,
 		userTier:         f.userTier,
