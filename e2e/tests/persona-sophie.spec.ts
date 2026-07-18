@@ -28,6 +28,7 @@ test.describe('persona walkthrough: Sophie — team lead / org Owner', () => {
     test.setTimeout(300_000);
     const shot = makeShooter(page, 'sophie');
     const ORG_NAME = 'Vuille Tax Advisory';
+    let orgProjectId = '';
 
     // ------------------------------------------------------------------
     const { account } = await test.step('signup + vault setup', async () => {
@@ -382,6 +383,7 @@ test.describe('persona walkthrough: Sophie — team lead / org Owner', () => {
         // The service navigates to the new project's detail page on success.
         await expect(page).toHaveURL(/\/account\/projects\/.+/, { timeout: 15_000 });
         const projectId = page.url().split('/').pop()!;
+        orgProjectId = projectId;
         await shot('project-created-in-org-workspace');
 
         // The project created while the ORG workspace is active must be
@@ -410,26 +412,86 @@ test.describe('persona walkthrough: Sophie — team lead / org Owner', () => {
 
       // ------------------------------------------------------------------
       await test.step('audit surface', async () => {
-        // Backend org_audit_events shipped, but team settings exposes no
-        // audit tab yet — recorded as a skip note, not a failure.
         await page.goto('/account/team');
-        const tabsVisible = await adminTabs
-          .waitFor({ state: 'visible', timeout: 5_000 })
-          .then(
-            () => true,
-            () => false,
-          );
-        const hasAuditTab = tabsVisible
-          ? await adminTabs.getByRole('button', { name: /audit/i }).count()
-          : 0;
-        test.info().annotations.push({
-          type: 'note',
-          description:
-            hasAuditTab === 0
-              ? 'No audit UI in team settings — backend org_audit_events exists; UI skipped.'
-              : 'Audit tab present — extend walkthrough to cover it.',
+        await adminTabs.getByRole('button', { name: 'Activity log' }).click();
+        await expect(
+          page.getByRole('heading', { name: 'Activity log', exact: true }),
+        ).toBeVisible();
+        await expect(
+          page.getByText(
+            'Administrative metadata only — never conversation or Project content.',
+          ),
+        ).toBeVisible();
+        await expect(
+          page.getByRole('button', {
+            name: `Export the complete activity log for ${ORG_NAME} as CSV`,
+          }),
+        ).toBeVisible();
+        await expect(
+          page.getByRole('cell', { name: 'Policies updated' }),
+        ).toBeVisible();
+        await expect(
+          page.getByRole('cell', { name: 'Invite created' }).first(),
+        ).toBeVisible();
+        await expect(page.getByRole('cell', { name: 'Member removed' })).toBeVisible();
+        await expectNoRawI18nKeys(page, 'activity log');
+        await shot('activity-log');
+      });
+
+      // ------------------------------------------------------------------
+      await test.step('owner dissolves the Organisation with explicit Project deletion', async () => {
+        await adminTabs.getByRole('button', { name: 'Settings' }).click();
+        const dissolveButton = page.getByRole('button', {
+          name: 'Dissolve Organisation',
         });
-        await shot('team-settings-final');
+        await expect(dissolveButton).toBeEnabled();
+        await dissolveButton.click();
+
+        const dialog = page.getByRole('dialog');
+        await expect(dialog).toBeVisible();
+        await expect(
+          dialog.getByRole('heading', { name: `Dissolve ${ORG_NAME}?` }),
+        ).toBeVisible();
+        await expect(
+          dialog.getByText(
+            'This permanently deletes every Organisation Project and removes every member.',
+          ),
+        ).toBeVisible();
+        await expect(
+          dialog.getByText(
+            'The subscription will end at the end of the current billing cycle.',
+          ),
+        ).toBeVisible();
+        await expect(
+          dialog.getByText('Your personal account and personal chats are untouched.'),
+        ).toBeVisible();
+
+        const confirmation = dialog.getByRole('checkbox', {
+          name: 'I understand that all Organisation Projects will be permanently deleted.',
+        });
+        const confirmButton = dialog.getByRole('button', {
+          name: 'Dissolve Organisation',
+        });
+        await expect(confirmButton).toBeDisabled();
+        await confirmation.check();
+        await expect(confirmButton).toBeEnabled();
+        await expectNoRawI18nKeys(page, 'dissolve Organisation dialog');
+        await shot('dissolve-organisation-dialog');
+        await confirmButton.click();
+
+        await expect(
+          page.getByRole('heading', { name: 'Create an Organisation' }),
+        ).toBeVisible();
+        await expect(page.getByTestId('workspace-switcher-trigger')).toHaveCount(0);
+        await expect(await (await sophieApi.api.get('/api/v1/orgs')).json()).toEqual(
+          [],
+        );
+        await expect(
+          (await sophieApi.api.get(`/api/v1/projects/${orgProjectId}`)).status(),
+        ).toBe(404);
+        await page.goto('/');
+        await expect(page.getByRole('main')).toBeVisible();
+        await shot('dissolved-personal-workspace-intact');
       });
     } finally {
       await sophieApi.api.dispose();
