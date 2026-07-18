@@ -18,6 +18,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/projectparticipants"
 )
 
 // ---------------------------------------------------------------------------
@@ -371,8 +372,37 @@ func OrgMembersOffboard(app core.App, orgRepo organisations.Repo) func(e *core.R
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to resolve projects.", err)
 		}
-
 		affectedProjectIDs := make([]string, 0, len(projectIDs))
+		projectRepo := projectparticipants.NewPocketBaseRepo(app)
+		for _, projectID := range projectIDs {
+			participants, err := projectRepo.ListActive(projectID)
+			if err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to resolve Project access.", err)
+			}
+			targetHasAccess := false
+			remainingAdmin := false
+			for _, participant := range participants {
+				if participant.UserID == targetUserID {
+					targetHasAccess = true
+					continue
+				}
+				if participant.Role == projectparticipants.RoleAdmin {
+					remainingAdmin = true
+				}
+			}
+			if !targetHasAccess {
+				continue
+			}
+			if !remainingAdmin {
+				return apis.NewApiError(
+					http.StatusConflict,
+					"Assign another Project Admin before offboarding this member",
+					nil,
+				)
+			}
+			affectedProjectIDs = append(affectedProjectIDs, projectID)
+		}
+
 		if err := app.RunInTransaction(func(txApp core.App) error {
 			membership, err := txApp.FindFirstRecordByFilter(
 				"org_memberships",
@@ -387,7 +417,7 @@ func OrgMembersOffboard(app core.App, orgRepo organisations.Repo) func(e *core.R
 				return err
 			}
 
-			for _, pid := range projectIDs {
+			for _, pid := range affectedProjectIDs {
 				participant, err := txApp.FindFirstRecordByFilter(
 					"project_participants",
 					"project = {:project} && user = {:user} && removed_at = ''",
@@ -406,7 +436,6 @@ func OrgMembersOffboard(app core.App, orgRepo organisations.Repo) func(e *core.R
 					if err := txApp.Save(project); err != nil {
 						return err
 					}
-					affectedProjectIDs = append(affectedProjectIDs, pid)
 				}
 			}
 

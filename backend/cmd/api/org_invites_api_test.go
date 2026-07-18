@@ -927,12 +927,12 @@ func TestOrgMembersOffboardHappyPath(t *testing.T) {
 	t.Parallel()
 
 	scenario := tests.ApiScenario{
-		Name:           "offboard revokes membership and project access",
-		Method:         http.MethodDelete,
-		URL:            "/api/v1/orgs/orginvite000023/members/xq9ndvc2kbrvrng",
+		Name:            "offboard revokes membership and project access",
+		Method:          http.MethodDelete,
+		URL:             "/api/v1/orgs/orginvite000023/members/xq9ndvc2kbrvrng",
 		ExpectedStatus:  http.StatusOK,
 		ExpectedContent: []string{`"rotation_project_ids":["orgproj00000001"]`},
-		TestAppFactory: setupTestApp,
+		TestAppFactory:  setupTestApp,
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			seedOrganisation(t, app, "orginvite000023", "Acme GmbH", "test1@example.com")
 			seedOrgMembership(t, app, "orginvite000023", "test2@example.com", "member", false)
@@ -994,6 +994,44 @@ func TestOrgMembersOffboardHappyPath(t *testing.T) {
 			// User personal record untouched
 			if _, err := app.FindAuthRecordByEmail("users", "test2@example.com"); err != nil {
 				t.Fatalf("user record was touched: %v", err)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestOrgMembersOffboardRejectsLastProjectAdmin(t *testing.T) {
+	t.Parallel()
+
+	scenario := tests.ApiScenario{
+		Name:            "offboard refuses to strand a Project without an Admin",
+		Method:          http.MethodDelete,
+		URL:             "/api/v1/orgs/orginvite000026/members/xq9ndvc2kbrvrng",
+		ExpectedStatus:  http.StatusConflict,
+		ExpectedContent: []string{`"message":"Assign another Project Admin before offboarding this member."`},
+		TestAppFactory:  setupTestApp,
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			seedOrganisation(t, app, "orginvite000026", "Acme GmbH", "test1@example.com")
+			seedOrgMembership(t, app, "orginvite000026", "test2@example.com", "member", false)
+			seedOrgOwnedProject(t, app, "orgproj00000002", "orginvite000026", "test2@example.com")
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			membership, err := app.FindFirstRecordByFilter(
+				"org_memberships",
+				"organisation = {:org} && user = {:user} && removed_at = ''",
+				dbx.Params{"org": "orginvite000026", "user": "xq9ndvc2kbrvrng"},
+			)
+			if err != nil || membership == nil {
+				t.Fatalf("active membership changed on rejected offboard: err=%v", err)
+			}
+			project, err := app.FindRecordById("projects", "orgproj00000002")
+			if err != nil {
+				t.Fatalf("FindRecordById(projects) error = %v", err)
+			}
+			if project.GetBool("rotation_pending") {
+				t.Fatal("rotation_pending changed on rejected offboard")
 			}
 		},
 	}
