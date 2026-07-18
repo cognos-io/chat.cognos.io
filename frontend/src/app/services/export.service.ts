@@ -275,7 +275,7 @@ export class ExportService {
     const messages: ExportedMessage[] = [];
 
     let page = 1;
-    let totalPages = 1;
+    let totalPages: number;
     do {
       const response = await firstValueFrom(
         this._api.listConversationMessages(

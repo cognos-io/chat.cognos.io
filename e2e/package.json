@@ -11,10 +11,10 @@
     "codegen": "playwright codegen https://cognos.local:8095"
   },
   "devDependencies": {
-    "@playwright/test": "^1.49.0",
-    "@types/node": "^22.10.0",
+    "@playwright/test": "^1.61.1",
+    "@types/node": "catalog:",
     "blakejs": "^1.2.1",
     "tweetnacl": "^1.0.3",
-    "typescript": "~5.9.3"
+    "typescript": "catalog:"
   }
 }

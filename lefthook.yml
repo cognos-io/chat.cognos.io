@@ -29,6 +29,8 @@ pre-commit:
     ui-eslint:
       root: "packages/ui/"
       glob: "*.js"
+      exclude:
+        - "packages/ui-angular/**"
       run: pnpm exec eslint --cache --fix {staged_files}
       stage_fixed: true
     ui-angular-eslint:
