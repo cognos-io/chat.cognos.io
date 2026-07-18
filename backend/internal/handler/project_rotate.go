@@ -162,6 +162,7 @@ func ProjectKeyRotate(app core.App) func(e *core.RequestEvent) error {
 		if err := app.RunInTransaction(func(txApp core.App) error {
 			// Bump the project's key version.
 			project.Set("key_version", req.NewVersion)
+			project.Set("rotation_pending", false)
 			if err := txApp.Save(project); err != nil {
 				return err
 			}

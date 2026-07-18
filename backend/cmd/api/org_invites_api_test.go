@@ -930,7 +930,8 @@ func TestOrgMembersOffboardHappyPath(t *testing.T) {
 		Name:           "offboard revokes membership and project access",
 		Method:         http.MethodDelete,
 		URL:            "/api/v1/orgs/orginvite000023/members/xq9ndvc2kbrvrng",
-		ExpectedStatus: http.StatusNoContent,
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"rotation_project_ids":["orgproj00000001"]`},
 		TestAppFactory: setupTestApp,
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			seedOrganisation(t, app, "orginvite000023", "Acme GmbH", "test1@example.com")
@@ -968,6 +969,13 @@ func TestOrgMembersOffboardHappyPath(t *testing.T) {
 			}
 			if participant.GetDateTime("removed_at").IsZero() {
 				t.Fatal("project participant removed_at is zero, expected set")
+			}
+			project, err := app.FindRecordById("projects", "orgproj00000001")
+			if err != nil {
+				t.Fatalf("FindRecordById(projects) error = %v", err)
+			}
+			if !project.GetBool("rotation_pending") {
+				t.Fatal("projects.rotation_pending = false, want true after offboard")
 			}
 
 			// pending_seat_quantity decremented by one (floor 1)

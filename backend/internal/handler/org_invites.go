@@ -328,6 +328,10 @@ func OrgInvitesAccept(
 // Offboard member
 // ---------------------------------------------------------------------------
 
+type orgMemberOffboardResponse struct {
+	RotationProjectIDs []string `json:"rotation_project_ids"`
+}
+
 func OrgMembersOffboard(app core.App, orgRepo organisations.Repo) func(e *core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		caller := auth.ExtractUser(e)
@@ -368,6 +372,7 @@ func OrgMembersOffboard(app core.App, orgRepo organisations.Repo) func(e *core.R
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to resolve projects.", err)
 		}
 
+		affectedProjectIDs := make([]string, 0, len(projectIDs))
 		if err := app.RunInTransaction(func(txApp core.App) error {
 			membership, err := txApp.FindFirstRecordByFilter(
 				"org_memberships",
@@ -390,7 +395,18 @@ func OrgMembersOffboard(app core.App, orgRepo organisations.Repo) func(e *core.R
 				)
 				if err == nil && participant != nil {
 					participant.Set("removed_at", time.Now().UTC())
-					_ = txApp.Save(participant)
+					if err := txApp.Save(participant); err != nil {
+						return err
+					}
+					project, err := txApp.FindRecordById("projects", pid)
+					if err != nil {
+						return err
+					}
+					project.Set("rotation_pending", true)
+					if err := txApp.Save(project); err != nil {
+						return err
+					}
+					affectedProjectIDs = append(affectedProjectIDs, pid)
 				}
 			}
 
@@ -416,7 +432,9 @@ func OrgMembersOffboard(app core.App, orgRepo organisations.Repo) func(e *core.R
 
 		organisations.RecordAudit(app, org.ID, caller.ID, organisations.AuditMemberOffboarded, targetUserID)
 
-		return e.NoContent(http.StatusNoContent)
+		return e.JSON(http.StatusOK, orgMemberOffboardResponse{
+			RotationProjectIDs: affectedProjectIDs,
+		})
 	}
 }
 

@@ -318,6 +318,62 @@ func TestOrgCompletionFailsClosedWithoutFallingBackToPersonalBalance(t *testing.
 	scenario.Test(t)
 }
 
+func TestOrgCompletionBlockedWhileProjectKeyRotationPending(t *testing.T) {
+	t.Parallel()
+
+	conversationID := "orgrotationcv01"
+	var conversationPublicKey [32]byte
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(context.Context, gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			t.Fatal("Complete() must not be called while Project key rotation is pending")
+			return gateway.CompleteResponse{}, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "org project completion fails closed while key rotation is pending",
+		Method: http.MethodPost,
+		URL:    "/api/v1/conversations/" + conversationID + "/complete",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"persona_id":"cognos:simple-assistant",
+			"system_prompt":"test persona prompt",
+			"messages":[{"role":"user","content":"hello there"}]
+		}`),
+		ExpectedStatus:  http.StatusLocked,
+		ExpectedContent: []string{`"message":"Project key rotation must finish before new content can be written."`},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				BillingService: billing.NewService(),
+				ConversationRepo: stubConversationRepo{
+					byID: func(id string) (chat.Conversation, error) {
+						return chat.Conversation{ID: id, PublicKey: conversationPublicKey}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			conversationPublicKey = seedOrgConversationFixture(
+				t, app,
+				"orgrotation0001", "Rotate GmbH", "orgrotationpj01", conversationID,
+				"test1@example.com",
+			)
+			project, err := app.FindRecordById("projects", "orgrotationpj01")
+			if err != nil {
+				t.Fatalf("FindRecordById(projects) error = %v", err)
+			}
+			project.Set("rotation_pending", true)
+			if err := app.Save(project); err != nil {
+				t.Fatalf("Save(project) error = %v", err)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
 // Past-due org: still plan_type payg, but dunning failed — the gate must
 // block with the org past-due code before any provider call (§7.6 read-only).
 func TestOrgCompletionPastDueFailsClosed(t *testing.T) {

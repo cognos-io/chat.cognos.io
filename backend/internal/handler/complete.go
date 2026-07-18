@@ -508,6 +508,13 @@ func complete(params CompleteHandlerParams, useConversationPath bool, regenerate
 				if !active {
 					return apis.NewNotFoundError("Conversation not found or unable to load", nil)
 				}
+				conversationRecord, err := params.App.FindRecordById("conversations", conversationID)
+				if err != nil {
+					return apis.NewNotFoundError("Conversation not found or unable to load", nil)
+				}
+				if err := requireConversationWritable(params.App, conversationRecord); err != nil {
+					return err
+				}
 				billingConversationID = conversationID
 			}
 

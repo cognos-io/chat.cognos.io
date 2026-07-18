@@ -395,6 +395,9 @@ func GenerateConversationImage(params CompleteHandlerParams) func(e *core.Reques
 			if !active {
 				return apis.NewNotFoundError("Conversation not found or unable to load", nil)
 			}
+			if err := requireConversationWritableByID(params.App, conversationID); err != nil {
+				return err
+			}
 		}
 
 		conversation, err := params.ConversationRepo.ByID(conversationID)

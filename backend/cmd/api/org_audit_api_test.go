@@ -489,11 +489,12 @@ func TestOrgAuditEventRecordedOnOffboard(t *testing.T) {
 	t.Parallel()
 
 	scenario := tests.ApiScenario{
-		Name:           "member offboard records org.member.offboarded",
-		Method:         http.MethodDelete,
-		URL:            "/api/v1/orgs/orgaudit0000013/members/" + auditTestUser2ID,
-		ExpectedStatus: http.StatusNoContent,
-		TestAppFactory: setupTestApp,
+		Name:            "member offboard records org.member.offboarded",
+		Method:          http.MethodDelete,
+		URL:             "/api/v1/orgs/orgaudit0000013/members/" + auditTestUser2ID,
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"rotation_project_ids":[]`},
+		TestAppFactory:  setupTestApp,
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			seedOrganisation(t, app, "orgaudit0000013", "Acme GmbH", "test1@example.com")
 			seedOrgMembership(t, app, "orgaudit0000013", "test2@example.com", "member", false)

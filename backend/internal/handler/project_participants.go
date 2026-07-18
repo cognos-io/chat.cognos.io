@@ -96,7 +96,6 @@ func ProjectParticipantsList(app core.App) func(e *core.RequestEvent) error {
 				return apis.NewNotFoundError("Project not found", nil)
 			}
 		}
-
 		repo := projectparticipants.NewPocketBaseRepo(app)
 		members, err := repo.ListActive(projectID)
 		if err != nil {
@@ -144,6 +143,9 @@ func ProjectParticipantsAdd(app core.App) func(e *core.RequestEvent) error {
 			// Only Admins can add participants. Anyone else gets the same
 			// 403 as a flat-out unauthorized caller.
 			return apis.NewForbiddenError("Only project admins can add participants", nil)
+		}
+		if err := requireProjectWritable(project); err != nil {
+			return err
 		}
 
 		var req createProjectParticipantRequest
@@ -289,8 +291,22 @@ func ProjectParticipantsRevoke(app core.App) func(e *core.RequestEvent) error {
 			return apis.NewBadRequestError("Cannot revoke the project creator", nil)
 		}
 
-		repo := projectparticipants.NewPocketBaseRepo(app)
-		if err := repo.Revoke(projectID, targetUserID); err != nil {
+		if err := app.RunInTransaction(func(txApp core.App) error {
+			participant, err := txApp.FindFirstRecordByFilter(
+				projectparticipants.CollectionName,
+				"project = {:project} && user = {:user} && removed_at = ''",
+				dbx.Params{"project": projectID, "user": targetUserID},
+			)
+			if err != nil || participant == nil {
+				return projectparticipants.ErrParticipantNotFound
+			}
+			participant.Set("removed_at", time.Now().UTC())
+			if err := txApp.Save(participant); err != nil {
+				return err
+			}
+			project.Set("rotation_pending", true)
+			return txApp.Save(project)
+		}); err != nil {
 			if err == projectparticipants.ErrParticipantNotFound {
 				return apis.NewNotFoundError("Participant not found", nil)
 			}

@@ -35,6 +35,7 @@ type projectRecordResponse struct {
 	// returning it to that same authenticated caller leaks nothing.
 	WrappedProjectKey string `json:"wrapped_project_key,omitempty"`
 	KeyVersion        int    `json:"key_version"`
+	RotationPending   bool   `json:"rotation_pending"`
 	ArchivedAt        string `json:"archived_at,omitempty"`
 	CallerRole        string `json:"caller_role,omitempty"`
 }
@@ -287,7 +288,46 @@ func accessibleProjectRecord(app core.App, e *core.RequestEvent, projectID strin
 			return nil, err
 		}
 	}
+	if e.Request.Method != http.MethodGet && e.Request.Method != http.MethodDelete {
+		if err := requireProjectWritable(record); err != nil {
+			return nil, err
+		}
+	}
 	return record, nil
+}
+
+func requireProjectWritable(project *core.Record) error {
+	if project != nil && project.GetBool("rotation_pending") {
+		return apis.NewApiError(
+			http.StatusLocked,
+			"Project key rotation must finish before new content can be written",
+			nil,
+		)
+	}
+	return nil
+}
+
+func requireConversationWritable(app core.App, conversation *core.Record) error {
+	if conversation == nil {
+		return nil
+	}
+	projectID := conversation.GetString("project")
+	if projectID == "" {
+		return nil
+	}
+	project, err := app.FindRecordById("projects", projectID)
+	if err != nil {
+		return apis.NewNotFoundError("Project not found", err)
+	}
+	return requireProjectWritable(project)
+}
+
+func requireConversationWritableByID(app core.App, conversationID string) error {
+	conversation, err := app.FindRecordById("conversations", conversationID)
+	if err != nil {
+		return apis.NewNotFoundError("Conversation not found", err)
+	}
+	return requireConversationWritable(app, conversation)
 }
 
 // activeParticipantProjectIDs returns the project IDs the user can currently
@@ -341,13 +381,14 @@ func projectRecordToResponse(record *core.Record) projectRecordResponse {
 		version = 1
 	}
 	return projectRecordResponse{
-		ID:           record.Id,
-		Created:      record.GetString("created"),
-		Updated:      record.GetString("updated"),
-		Data:         record.GetString("data"),
-		Creator:      record.GetString("creator"),
-		Organisation: record.GetString("organisation"),
-		KeyVersion:   version,
-		ArchivedAt:   record.GetString("archived_at"),
+		ID:              record.Id,
+		Created:         record.GetString("created"),
+		Updated:         record.GetString("updated"),
+		Data:            record.GetString("data"),
+		Creator:         record.GetString("creator"),
+		Organisation:    record.GetString("organisation"),
+		KeyVersion:      version,
+		RotationPending: record.GetBool("rotation_pending"),
+		ArchivedAt:      record.GetString("archived_at"),
 	}
 }

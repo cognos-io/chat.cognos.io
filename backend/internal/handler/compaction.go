@@ -121,6 +121,9 @@ func CompactionCreate(params CompactionHandlerParams) func(e *core.RequestEvent)
 		if !active {
 			return apis.NewNotFoundError("Conversation not found", nil)
 		}
+		if err := requireConversationWritableByID(params.App, conversationID); err != nil {
+			return err
+		}
 
 		var req createCompactionRequest
 		if err := e.BindBody(&req); err != nil {
@@ -402,7 +405,6 @@ func CompactionList(params CompactionHandlerParams) func(e *core.RequestEvent) e
 		if !active {
 			return apis.NewNotFoundError("Conversation not found", nil)
 		}
-
 		records, err := params.CompactionRepo.ListByConversation(conversationID)
 		if err != nil {
 			params.Logger.Error("failed to list compactions", "err", err)
@@ -441,6 +443,9 @@ func CompactionCreateManual(params CompactionHandlerParams) func(e *core.Request
 		}
 		if !active {
 			return apis.NewNotFoundError("Conversation not found", nil)
+		}
+		if err := requireConversationWritableByID(params.App, conversationID); err != nil {
+			return err
 		}
 
 		var req updateCompactionRequest
@@ -484,6 +489,9 @@ func CompactionUpdate(params CompactionHandlerParams) func(e *core.RequestEvent)
 		}
 		if !active {
 			return apis.NewNotFoundError("Compaction not found", nil)
+		}
+		if err := requireConversationWritableByID(params.App, record.GetString("conversation")); err != nil {
+			return err
 		}
 
 		var req updateCompactionRequest

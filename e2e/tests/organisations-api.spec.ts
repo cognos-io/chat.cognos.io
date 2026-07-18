@@ -402,11 +402,12 @@ test.describe('organisations API lifecycle', () => {
       // ---------------------------------------------------------------------
       // 6. Offboard: A removes B → B loses access, personal account untouched
       // ---------------------------------------------------------------------
-      await test.step('A offboards B → 204', async () => {
+      await test.step('A offboards B and receives the Projects requiring rotation', async () => {
         const res = await userA.api.delete(
           `/api/v1/orgs/${orgId}/members/${userB.userId}`,
         );
-        expect(res.status()).toBe(204);
+        expect(res.status()).toBe(200);
+        expect(await res.json()).toEqual({ rotation_project_ids: [] });
       });
 
       await test.step("B's org list is empty after offboard", async () => {
@@ -479,7 +480,7 @@ test.describe('organisations API lifecycle', () => {
           const res = await userA.api.delete(
             `/api/v1/orgs/${orgId}/members/${userC.userId}`,
           );
-          expect(res.status()).toBe(204);
+          expect(res.status()).toBe(200);
         });
 
         await test.step('A GET /users/{C}/public-key → 404 after offboard', async () => {

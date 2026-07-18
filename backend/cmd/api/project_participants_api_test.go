@@ -469,6 +469,13 @@ func TestProjectParticipantsRevokeHappyPath(t *testing.T) {
 			if row.GetString("removed_at") == "" {
 				t.Fatalf("removed_at not stamped after revoke")
 			}
+			project, err := app.FindRecordById("projects", projectID)
+			if err != nil {
+				t.Fatalf("FindRecordById(projects) error = %v", err)
+			}
+			if !project.GetBool("rotation_pending") {
+				t.Fatal("projects.rotation_pending = false, want true after participant revoke")
+			}
 		},
 	}
 
@@ -505,6 +512,14 @@ func TestProjectKeyRotateBumpsVersionAndPersistsNewKeys(t *testing.T) {
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			seedOrganisation(t, app, orgID, "Rotate Org", "test1@example.com")
 			seedOrgOwnedProject(t, app, projectID, orgID, "test1@example.com")
+			project, err := app.FindRecordById("projects", projectID)
+			if err != nil {
+				t.Fatalf("FindRecordById(projects) error = %v", err)
+			}
+			project.Set("rotation_pending", true)
+			if err := app.Save(project); err != nil {
+				t.Fatalf("Save(project) error = %v", err)
+			}
 			withRecordAuth("users", "test1@example.com")(t, app, e)
 		},
 		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
@@ -514,6 +529,9 @@ func TestProjectKeyRotateBumpsVersionAndPersistsNewKeys(t *testing.T) {
 			}
 			if got := project.GetInt("key_version"); got != 2 {
 				t.Fatalf("projects.key_version = %d, want 2", got)
+			}
+			if project.GetBool("rotation_pending") {
+				t.Fatal("projects.rotation_pending = true, want false after rotation")
 			}
 
 			// New wrapping at v2 for the admin.
