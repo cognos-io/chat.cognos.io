@@ -189,6 +189,15 @@
       }
     </section>
 
+    <!-- Members: org-owned Projects only (sharing is org-only in v1).
+         Personal Projects render nothing here, so individual accounts see
+         zero change. -->
+    @if (project.record.organisation) {
+      <div class="project-detail__card">
+        <app-project-members [project]="project" />
+      </div>
+    }
+
     <section
       class="project-detail__card project-detail__danger"
       aria-labelledby="project-danger-heading"

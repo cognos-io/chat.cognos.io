@@ -36,6 +36,18 @@ export const routes: Routes = [
     ],
   },
   {
+    // Organisation invite landing page (?token=… deep link or manual paste).
+    // Auth first: accepting binds the invite to the signed-in Account — the
+    // SAME account, no new identity (docs/specs/organisations.md §8.1).
+    path: 'invite',
+    canActivate: [authGuard, featureFlagGuard],
+    data: { featureFlag: 'team' },
+    loadComponent: () =>
+      import('./pages/invite/invite-accept.component').then(
+        (m) => m.InviteAcceptComponent,
+      ),
+  },
+  {
     path: 'import',
     canActivate: [authGuard],
     loadComponent: () =>

@@ -503,6 +503,17 @@
       "genericError": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
       "refundError": "Deine Rückerstattungsanfrage konnte nicht gesendet werden. Bitte versuche es erneut.",
       "switchError": "Dein Tarif konnte nicht gewechselt werden. Bitte versuche es erneut."
+    },
+    "orgLock": {
+      "titleInactive": "Die Abrechnung von {{ org }} ist pausiert",
+      "titlePastDue": "{{ org }} hat ein Zahlungsproblem",
+      "bodyInactive": "Dieser Chat gehört zu einem Projekt, das {{ org }} verrechnet wird — und {{ org }} hat gerade keine aktive Abrechnung. Das Senden ist für alle in der Organisation pausiert. Deine Nachricht bleibt erhalten, nichts geht verloren.",
+      "bodyPastDue": "Eine Zahlung von {{ org }} ist fehlgeschlagen. Projekte, die {{ org }} verrechnet werden, sind für alle pausiert, bis die Abrechnung aktualisiert ist. Deine Nachricht bleibt erhalten, nichts geht verloren.",
+      "personalUnaffected": "Dein persönlicher Arbeitsbereich funktioniert ganz normal weiter.",
+      "memberNext": "Bitte einen Owner oder Admin von {{ org }}, die Abrechnung wiederherzustellen — du hast nichts falsch gemacht.",
+      "adminNextInactive": "Hinterlege eine Zahlungsmethode, um {{ org }} zu reaktivieren.",
+      "adminNextPastDue": "Aktualisiere die Zahlungsmethode von {{ org }}, um die Pause aufzuheben.",
+      "openTeamBilling": "Team-Abrechnung öffnen"
     }
   },
   "chat": {
@@ -1485,6 +1496,42 @@
       "title": "Gefahrenzone",
       "deleteTitle": "Dieses Projekt löschen",
       "deleteSubtitle": "Das Löschen eines Projekts kann nicht rückgängig gemacht werden."
+    },
+    "members": {
+      "heading": "Mitglieder",
+      "loadError": "Die Mitglieder dieses Projekts konnten nicht geladen werden. Bitte versuche es erneut.",
+      "add": "Mitglied hinzufügen",
+      "addTitle": "Mitglied zu {{ project }} hinzufügen",
+      "addIntro": "Wer hinzugefügt wird, kann die Chats dieses Projekts lesen. Nur aktive Mitglieder von {{ org }} können hinzugefügt werden.",
+      "candidateLabel": "Mitglied auswählen",
+      "candidatesEmpty": "Alle in {{ org }} haben bereits Zugriff auf dieses Projekt.",
+      "roleLabel": "Projektrolle",
+      "roleHint": "Viewer lesen, Editoren schreiben, Admins verwalten zusätzlich die Mitglieder.",
+      "roles": {
+        "viewer": "Viewer",
+        "editor": "Editor",
+        "admin": "Admin"
+      },
+      "addSubmit": "Mitglied hinzufügen",
+      "addedToast": "{{ name }} hat jetzt Zugriff.",
+      "addError": "Das Mitglied konnte nicht hinzugefügt werden. Bitte versuche es erneut.",
+      "creatorBadge": "Ersteller",
+      "you": "(du)",
+      "remove": "Entfernen",
+      "removeSuffix": " {{ name }}",
+      "revokeTitle": "{{ name }} entfernen?",
+      "revokeBody": "{{ name }} verliert sofort den Zugriff auf Neues in {{ project }}.",
+      "revokeForwardOnly": "Das Entfernen wirkt nur nach vorn: Bereits Gesehenes lässt sich nicht zurückholen. Zum Schutz künftiger Inhalte wird der Projektschlüssel direkt danach rotiert.",
+      "revokeNote": "Das persönliche Konto und die persönlichen Chats von {{ name }} bleiben unberührt.",
+      "revokeConfirm": "Entfernen und Schlüssel rotieren",
+      "revokeError": "Das Mitglied konnte nicht entfernt werden. Bitte versuche es erneut.",
+      "rotatePreparing": "Neuer Projektschlüssel wird vorbereitet…",
+      "rotateApplying": "Neuer Schlüssel wird angewendet…",
+      "rotateFinalising": "Projektdetails werden neu verschlüsselt…",
+      "rotateDone": "Projektschlüssel rotiert. Künftige Inhalte verwenden den neuen Schlüssel.",
+      "rotateFailedOldValid": "Die Schlüsselrotation wurde nicht abgeschlossen — das Projekt verwendet weiterhin den bisherigen Schlüssel, nichts ging verloren. Bitte versuche es erneut.",
+      "rotateFinaliseFailed": "Der neue Schlüssel ist aktiv, aber das Neuverschlüsseln der Projektdetails wurde nicht abgeschlossen. Versuche es erneut, um es fertigzustellen.",
+      "rotateRetry": "Rotation erneut versuchen"
     }
   },
   "public": {
@@ -1871,6 +1918,24 @@
       "seat": "Der Platz wird bis zum Ende des aktuellen Zyklus abgerechnet.",
       "cancel": "Abbrechen",
       "confirm": "Entfernen"
+    },
+    "accept": {
+      "title": "Einer Organisation beitreten",
+      "intro": "Füge das erhaltene Einladungstoken ein oder öffne den Einladungslink aus deiner E-Mail.",
+      "tokenLabel": "Einladungstoken",
+      "tokenPlaceholder": "Einladungstoken einfügen",
+      "submit": "Beitreten",
+      "accepting": "Beitritt läuft…",
+      "error": "Diese Einladung hat nicht funktioniert. Sie ist möglicherweise abgelaufen oder wurde bereits verwendet — prüfe den Link oder füge das Token unten erneut ein.",
+      "retry": "Erneut versuchen",
+      "welcomeTitle": "Willkommen bei {{ org }}",
+      "welcomeRole": "Du bist beigetreten als",
+      "sameAccount": "Du bist mit deinem bestehenden Cognos-Konto beigetreten — gleiche Anmeldung, gleicher Account-Schlüssel, kein neues Notfall-Kit.",
+      "billingNote": "Arbeit in Projekten von {{ org }} wird der Organisation verrechnet. Deine persönlichen Chats bleiben deine und werden weiterhin dir verrechnet.",
+      "switchHint": "Öffne {{ org }} über den Arbeitsbereich-Wechsler in der Seitenleiste.",
+      "startWorking": "Loslegen",
+      "genericOrg": "deiner Organisation",
+      "backToChat": "Zurück zu deinen Chats"
     }
   }
 }

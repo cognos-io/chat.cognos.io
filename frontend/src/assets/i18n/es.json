@@ -503,6 +503,17 @@
       "genericError": "Algo salió mal. Inténtalo de nuevo.",
       "refundError": "No se pudo enviar tu solicitud de reembolso. Inténtalo de nuevo.",
       "switchError": "No se pudo cambiar tu plan. Inténtalo de nuevo."
+    },
+    "orgLock": {
+      "titleInactive": "La facturación de {{ org }} está en pausa",
+      "titlePastDue": "{{ org }} tiene un problema de pago",
+      "bodyInactive": "Este chat pertenece a un proyecto que se factura a {{ org }}, y {{ org }} no tiene facturación activa ahora mismo. El envío está en pausa para toda la organización: tu mensaje se conserva y no se pierde nada.",
+      "bodyPastDue": "Un pago de {{ org }} no se ha completado. Los proyectos que se facturan a {{ org }} están en pausa para todos hasta que se actualice la facturación. Tu mensaje se conserva y no se pierde nada.",
+      "personalUnaffected": "Tu espacio de trabajo personal sigue funcionando con normalidad.",
+      "memberNext": "Pide a un propietario o administrador de {{ org }} que restablezca la facturación; no es nada que hayas hecho tú.",
+      "adminNextInactive": "Añade un método de pago para reactivar {{ org }}.",
+      "adminNextPastDue": "Actualiza el método de pago de {{ org }} para levantar la pausa.",
+      "openTeamBilling": "Abrir facturación del equipo"
     }
   },
   "chat": {
@@ -1485,6 +1496,42 @@
       "title": "Zona de peligro",
       "deleteTitle": "Eliminar este proyecto",
       "deleteSubtitle": "Eliminar un proyecto no se puede deshacer."
+    },
+    "members": {
+      "heading": "Miembros",
+      "loadError": "No se han podido cargar los miembros de este proyecto. Vuelve a intentarlo.",
+      "add": "Añadir miembro",
+      "addTitle": "Añadir un miembro a {{ project }}",
+      "addIntro": "Cualquier persona que añadas podrá leer los chats de este proyecto. Solo se pueden añadir miembros activos de {{ org }}.",
+      "candidateLabel": "Elige un miembro",
+      "candidatesEmpty": "Todos en {{ org }} ya tienen acceso a este proyecto.",
+      "roleLabel": "Rol en el proyecto",
+      "roleHint": "Los lectores leen, los editores escriben y los administradores además gestionan miembros.",
+      "roles": {
+        "viewer": "Lector",
+        "editor": "Editor",
+        "admin": "Administrador"
+      },
+      "addSubmit": "Añadir miembro",
+      "addedToast": "{{ name }} ya tiene acceso.",
+      "addError": "No se ha podido añadir al miembro. Vuelve a intentarlo.",
+      "creatorBadge": "Creador",
+      "you": "(tú)",
+      "remove": "Eliminar",
+      "removeSuffix": " a {{ name }}",
+      "revokeTitle": "¿Eliminar a {{ name }}?",
+      "revokeBody": "{{ name }} perderá de inmediato el acceso a lo nuevo en {{ project }}.",
+      "revokeForwardOnly": "La eliminación solo actúa hacia delante: no puede retirar lo que ya vio. Para proteger el contenido futuro, la clave del proyecto se rota justo después.",
+      "revokeNote": "La cuenta personal y los chats personales de {{ name }} no se ven afectados.",
+      "revokeConfirm": "Eliminar y rotar la clave",
+      "revokeError": "No se ha podido eliminar al miembro. Vuelve a intentarlo.",
+      "rotatePreparing": "Preparando una nueva clave del proyecto…",
+      "rotateApplying": "Aplicando la nueva clave…",
+      "rotateFinalising": "Volviendo a cifrar los detalles del proyecto…",
+      "rotateDone": "Clave del proyecto rotada. El contenido futuro usa la nueva clave.",
+      "rotateFailedOldValid": "La rotación de la clave no se ha completado: el proyecto sigue usando su clave actual y no se ha perdido nada. Vuelve a intentarlo.",
+      "rotateFinaliseFailed": "La nueva clave está activa, pero no se ha terminado de volver a cifrar los detalles del proyecto. Reintenta para completarlo.",
+      "rotateRetry": "Reintentar rotación"
     }
   },
   "public": {
@@ -1871,6 +1918,24 @@
       "seat": "La plaza sigue facturándose hasta el final del ciclo actual.",
       "cancel": "Cancelar",
       "confirm": "Eliminar"
+    },
+    "accept": {
+      "title": "Unirse a una organización",
+      "intro": "Pega el token de invitación que has recibido o abre el enlace de invitación de tu correo.",
+      "tokenLabel": "Token de invitación",
+      "tokenPlaceholder": "Pega tu token de invitación",
+      "submit": "Unirme",
+      "accepting": "Uniéndote…",
+      "error": "Esa invitación no ha funcionado. Puede haber caducado o haberse usado ya: comprueba el enlace o vuelve a pegar el token abajo.",
+      "retry": "Volver a intentarlo",
+      "welcomeTitle": "Te damos la bienvenida a {{ org }}",
+      "welcomeRole": "Te has unido como",
+      "sameAccount": "Te has unido con tu cuenta de Cognos de siempre: mismo inicio de sesión, misma clave de cuenta y sin un nuevo kit de emergencia.",
+      "billingNote": "El trabajo en los proyectos de {{ org }} se factura a la organización. Tus chats personales siguen siendo tuyos y se siguen facturando a tu cuenta.",
+      "switchHint": "Usa el selector de espacio de trabajo en la barra lateral para abrir {{ org }}.",
+      "startWorking": "Empezar a trabajar",
+      "genericOrg": "tu organización",
+      "backToChat": "Volver a tus chats"
     }
   }
 }

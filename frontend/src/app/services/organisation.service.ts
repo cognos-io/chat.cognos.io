@@ -1,7 +1,16 @@
 import { Injectable, InjectionToken, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { EMPTY, catchError, distinctUntilChanged, map, switchMap } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  catchError,
+  distinctUntilChanged,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 import {
   OrganisationRecord,
@@ -134,6 +143,32 @@ export class OrganisationService {
     }
     this._activeWorkspace.set(workspace);
     this.persistWorkspace(workspace);
+  }
+
+  /**
+   * refreshMemberships re-fetches the Org memberships for the signed-in user
+   * without waiting for a login event — used right after accepting an invite
+   * so the new Organisation becomes switchable immediately. A stale active
+   * Workspace (e.g. a revoked org) is dropped back to Personal, same as on
+   * login. Errors propagate to the caller; local state is left untouched.
+   */
+  refreshMemberships(): Observable<OrganisationRecord[]> {
+    const userId = this._userId;
+    if (!userId || !this.enabled) {
+      return of([]);
+    }
+    return this._api.listOrgs().pipe(
+      tap((memberships) => {
+        // Ignore a late response for a user who already signed out.
+        if (this._userId !== userId) {
+          return;
+        }
+        this._memberships.set(memberships);
+        if (!this.isKnownWorkspace(this._activeWorkspace())) {
+          this._activeWorkspace.set(PERSONAL_WORKSPACE);
+        }
+      }),
+    );
   }
 
   /** The Organisation's display name, or null when unknown/not a member. */

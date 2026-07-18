@@ -295,4 +295,87 @@ describe('OrganisationService', () => {
       expect(service.orgName(undefined)).toBeNull();
     });
   });
+
+  describe('refreshMemberships', () => {
+    // Sunny (invite accept): the fresh membership becomes switchable without
+    // waiting for a re-login.
+    it('picks up a new membership so it can be activated immediately', async () => {
+      const service = setup({ memberships: [acme] });
+      user$.next(userAlice);
+      await flush();
+      expect(service.memberships()).toEqual([acme]);
+
+      listOrgs.mockImplementation(() => {
+        const result$ = new Subject<OrganisationRecord[]>();
+        queueMicrotask(() => {
+          result$.next([acme, globex]);
+          result$.complete();
+        });
+        return result$;
+      });
+
+      await new Promise((resolve, reject) =>
+        service
+          .refreshMemberships()
+          .subscribe({ complete: () => resolve(undefined), error: reject }),
+      );
+
+      expect(service.memberships()).toEqual([acme, globex]);
+      service.setActiveWorkspace('org_globex');
+      expect(service.activeWorkspace()).toBe('org_globex');
+    });
+
+    // Rainy: a revoked org that was the active workspace drops to personal.
+    it('drops a stale active workspace back to personal', async () => {
+      const service = setup({ memberships: [acme, globex] });
+      user$.next(userAlice);
+      await flush();
+      service.setActiveWorkspace('org_globex');
+
+      listOrgs.mockImplementation(() => {
+        const result$ = new Subject<OrganisationRecord[]>();
+        queueMicrotask(() => {
+          result$.next([acme]);
+          result$.complete();
+        });
+        return result$;
+      });
+      await new Promise((resolve, reject) =>
+        service
+          .refreshMemberships()
+          .subscribe({ complete: () => resolve(undefined), error: reject }),
+      );
+
+      expect(service.memberships()).toEqual([acme]);
+      expect(service.activeWorkspace()).toBe('personal');
+    });
+
+    // Gating: signed out or flag off, it resolves empty without an API call.
+    it('resolves empty without calling the API when signed out', async () => {
+      const service = setup({ memberships: [acme] });
+
+      const result = await new Promise((resolve, reject) =>
+        service.refreshMemberships().subscribe({ next: resolve, error: reject }),
+      );
+
+      expect(result).toEqual([]);
+      expect(listOrgs).not.toHaveBeenCalled();
+    });
+
+    // Rainy: an API failure propagates and leaves current state untouched.
+    it('propagates errors and keeps the existing memberships', async () => {
+      const service = setup({ memberships: [acme] });
+      user$.next(userAlice);
+      await flush();
+
+      listOrgs.mockImplementation(() => throwError(() => new Error('boom')));
+      await expect(
+        new Promise((resolve, reject) =>
+          service.refreshMemberships().subscribe({ next: resolve, error: reject }),
+        ),
+      ).rejects.toThrow('boom');
+
+      expect(service.memberships()).toEqual([acme]);
+    });
+  });
 });

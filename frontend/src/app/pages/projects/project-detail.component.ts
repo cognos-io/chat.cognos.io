@@ -26,6 +26,7 @@ import {
 
 import { WorkspaceContextBadgeComponent } from '@app/components/chat/workspace-context-badge/workspace-context-badge.component';
 import { PersonaAvatarComponent } from '@app/components/personas/persona-avatar/persona-avatar.component';
+import { ProjectMembersComponent } from '@app/components/projects/project-members/project-members.component';
 import { ProjectSettingsDialogComponent } from '@app/components/projects/project-settings-dialog/project-settings-dialog.component';
 import {
   Conversation,
@@ -53,6 +54,7 @@ import { relativeDate } from '@app/utils/relative-date';
     CognosIconComponent,
     CognosMenuComponent,
     PersonaAvatarComponent,
+    ProjectMembersComponent,
     WorkspaceContextBadgeComponent,
   ],
   templateUrl: './project-detail.component.html',

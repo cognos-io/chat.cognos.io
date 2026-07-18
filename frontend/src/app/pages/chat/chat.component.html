@@ -238,6 +238,11 @@
 
         @if (billing.isSendingLocked()) {
           <app-billing-lock-banner class="chat-page__lock-banner" />
+        } @else if (orgBillingBlock(); as orgBlock) {
+          <!-- Org billing pause: explains the block where the member hits it,
+               reads as the Organisation's issue (never the member's), and the
+               personal workspace stays fully usable. -->
+          <app-org-billing-banner class="chat-page__lock-banner" [block]="orgBlock" />
         } @else if (billing.isPastDue()) {
           <app-billing-past-due-banner class="chat-page__lock-banner" />
         }

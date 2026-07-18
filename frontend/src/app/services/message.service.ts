@@ -43,7 +43,10 @@ import { AttachmentUploadService } from '@app/attachments/attachment-upload.serv
 import { AttachmentManifestV1 } from '@app/attachments/attachment.types';
 import { MessageAttachmentChip } from '@app/components/chat/message-attachment-chip/message-attachment-chip.component';
 import { COG_DOC_INSTRUCTION } from '@app/documents/cog-doc/cog-doc-instruction';
-import { CompletionBillingRestriction } from '@app/interfaces/billing';
+import {
+  CompletionBillingRestriction,
+  OrgCompletionBillingRestriction,
+} from '@app/interfaces/billing';
 import { Conversation } from '@app/interfaces/conversation';
 import {
   Message,
@@ -855,6 +858,37 @@ export const parseCompletionBillingRestriction = (
   };
 };
 
+// parseOrgCompletionBillingRestriction recognises the structured 402 for a
+// completion blocked by the owning Organisation's billing (fail closed —
+// docs/specs/organisations.md §5.8). Kept separate from the personal parser:
+// an org pause must never be treated as (or mutate) the member's own plan
+// state, and never suggests the member's personal balance could cover it.
+export const parseOrgCompletionBillingRestriction = (
+  error: unknown,
+): OrgCompletionBillingRestriction | null => {
+  if (!(error instanceof HttpErrorResponse) || error.status !== 402) {
+    return null;
+  }
+  const body = error.error as {
+    error?: string;
+    organisation_id?: string;
+    organisation_name?: string;
+    message?: string;
+    admin_message?: string;
+  } | null;
+  const code = body?.error;
+  if (code !== 'ORG_BILLING_INACTIVE' && code !== 'ORG_BILLING_PAST_DUE') {
+    return null;
+  }
+  return {
+    code,
+    organisationId: body?.organisation_id ?? '',
+    organisationName: body?.organisation_name ?? '',
+    message: body?.message ?? '',
+    adminMessage: body?.admin_message ?? '',
+  };
+};
+
 export const resolveCompletionFailureMessage = (
   error: unknown,
 ): CompletionErrorCopy => {
@@ -875,7 +909,10 @@ export const resolveCompletionFailureMessage = (
 export const completionFailureReason = (
   error: unknown,
 ): 'rate_limited' | 'provider_error' | 'balance' | 'other' => {
-  if (parseCompletionBillingRestriction(error)) {
+  if (
+    parseCompletionBillingRestriction(error) ||
+    parseOrgCompletionBillingRestriction(error)
+  ) {
     return 'balance';
   }
   if (error instanceof HttpErrorResponse) {
@@ -1763,6 +1800,7 @@ export class MessageService {
             };
           case 'complete':
             completed = true;
+            this.clearOrgBillingBlockOnSuccess(conversation);
             // Fire-and-forget: model mix / attachments / reasoning demand.
             // Enum + boolean props only — never message content.
             this._analytics.track('message_sent', {
@@ -2397,6 +2435,7 @@ export class MessageService {
             };
           case 'complete': {
             completed = true;
+            this.clearOrgBillingBlockOnSuccess(conversation);
             const newAssistantId =
               event.response.assistantMessage.id ??
               streamingAssistantMessageId(requestId);
@@ -2527,7 +2566,36 @@ export class MessageService {
   // an EMAIL_NOT_VERIFIED 403 (the verify-email composer state carries the
   // recovery path) — both suppress the toast. Returns false for a retryable
   // failure so the caller keeps the user's message and shows an inline retry.
+  // clearOrgBillingBlockOnSuccess drops the org billing banner once a
+  // completion in one of that Organisation's Projects succeeds again — the
+  // authoritative signal that billing was restored. Scoped to the owning org
+  // so a successful personal (or other-org) send never hides an active block.
+  private clearOrgBillingBlockOnSuccess(
+    conversation: Conversation | null | undefined,
+  ): void {
+    const projectId = conversation?.record.project;
+    if (!projectId) {
+      return;
+    }
+    const organisationId = this._projectService
+      .projects()
+      .find((project) => project.record.id === projectId)?.record.organisation;
+    if (organisationId) {
+      this._billingService.clearOrgSendingBlocked(organisationId);
+    }
+  }
+
   private reportCompletionError(err: unknown): boolean {
+    const orgRestriction = parseOrgCompletionBillingRestriction(err);
+    if (orgRestriction) {
+      // Org billing pause (fail closed): surface the org banner, but return
+      // FALSE so the send path keeps the user's message in the thread with the
+      // inline Retry — the block is the Organisation's to fix, and the member's
+      // draft must never be lost to it (persona PER-006). The personal plan
+      // state and personal composer stay untouched.
+      this._billingService.markOrgSendingBlocked(orgRestriction);
+      return false;
+    }
     const restriction = parseCompletionBillingRestriction(err);
     if (restriction) {
       // Lock the composer + surface the in-chat billing banners. No toast — the

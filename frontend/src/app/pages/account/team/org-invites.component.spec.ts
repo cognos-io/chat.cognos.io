@@ -73,8 +73,11 @@ describe('OrgInvitesComponent', () => {
     errorAlert = vi.fn();
     writeText = vi.fn(() => Promise.resolve());
 
+    // Keep userAgent (and friends): a bare { clipboard } object leaks into
+    // other spec files sharing this environment and crashes Angular's
+    // DefaultValueAccessor, which reads navigator.userAgent.
     Object.defineProperty(globalThis, 'navigator', {
-      value: { clipboard: { writeText } },
+      value: { userAgent: 'vitest', clipboard: { writeText } },
       writable: true,
       configurable: true,
     });

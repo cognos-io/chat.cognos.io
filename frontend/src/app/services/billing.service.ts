@@ -15,6 +15,7 @@ import {
   CheckoutPlan,
   CheckoutResponse,
   CompletionBillingRestriction,
+  OrgCompletionBillingRestriction,
 } from '@app/interfaces/billing';
 import { Analytics } from '@app/services/analytics/analytics';
 import { AuthService } from '@app/services/auth.service';
@@ -80,6 +81,15 @@ export class BillingService {
   // exactly zero) balance, so the server 402 is the most reliable "you can no
   // longer send" signal mid-session.
   private readonly _sendBlocked = signal(false);
+
+  // Set when a /complete call in an org-owned Project is rejected because the
+  // owning Organisation's billing is inactive or past due (fail closed, spec
+  // §5.8). Deliberately SEPARATE from the personal plan state: an org pause
+  // never locks the personal workspace and never reads as the member's fault.
+  private readonly _orgSendBlock = signal<OrgCompletionBillingRestriction | null>(null);
+
+  /** The active org billing block, or null. Scoped to one Organisation. */
+  readonly orgSendBlock = this._orgSendBlock.asReadonly();
 
   readonly state = this._state.asReadonly();
   readonly planType = computed(() => this._state()?.planType ?? null);
@@ -411,5 +421,28 @@ export class BillingService {
         trialSeedChf: current?.trialSeedChf ?? 0,
       });
     }
+  }
+
+  // markOrgSendingBlocked records an org billing 402 from /complete so the
+  // in-conversation banner appears for that Organisation's Projects. It NEVER
+  // touches the personal plan state or the personal send lock — the personal
+  // workspace keeps working (persona PER-006 friction #2).
+  markOrgSendingBlocked(restriction: OrgCompletionBillingRestriction): void {
+    this._orgSendBlock.set(restriction);
+  }
+
+  // clearOrgSendingBlocked drops the org billing block once a completion for
+  // that Organisation succeeds again (billing was restored). Passing an org id
+  // only clears a block belonging to that Organisation, so a successful send
+  // in another context never hides a still-active block.
+  clearOrgSendingBlocked(organisationId?: string): void {
+    const current = this._orgSendBlock();
+    if (!current) {
+      return;
+    }
+    if (organisationId !== undefined && current.organisationId !== organisationId) {
+      return;
+    }
+    this._orgSendBlock.set(null);
   }
 }

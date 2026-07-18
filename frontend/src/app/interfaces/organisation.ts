@@ -111,6 +111,25 @@ export interface OrgInviteCreatedRecord extends OrgInviteRecord {
   token: string;
 }
 
+/**
+ * POST /api/v1/org-invites/accept response: the joined Organisation's id and
+ * the role granted. Idempotent for an already-active member (returns their
+ * current role); unknown/expired/consumed tokens get a neutral 404 instead.
+ */
+export interface OrgInviteAcceptResponse {
+  organisation: string;
+  role: OrgRole;
+}
+
+/**
+ * GET /api/v1/users/{userId}/public-key response. Relationship-gated: only
+ * resolvable for yourself, or by an Owner/Admin of an Organisation the target
+ * is an active member of (the project-sharing wrap step, spec §8.1/§9).
+ */
+export interface UserPublicKeyResponse {
+  public_key: string;
+}
+
 /** POST /api/v1/orgs/{id}/billing/checkout response. */
 export interface OrgCheckoutResponse {
   checkout_url: string;

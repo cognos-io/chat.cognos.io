@@ -22,6 +22,7 @@ import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/mod
 import {
   OrgBillingRecord,
   OrgCheckoutResponse,
+  OrgInviteAcceptResponse,
   OrgInviteCreatedRecord,
   OrgInviteRecord,
   OrgInviteRole,
@@ -29,8 +30,14 @@ import {
   OrgPortalResponse,
   OrgUsageRecord,
   OrganisationRecord,
+  UserPublicKeyResponse,
 } from '@app/interfaces/organisation';
-import { ProjectConversationRecord, ProjectRecord } from '@app/interfaces/project';
+import {
+  ProjectConversationRecord,
+  ProjectParticipantRecord,
+  ProjectRecord,
+  ProjectRole,
+} from '@app/interfaces/project';
 import {
   ConversationPublicKeysResponse,
   ConversationSecretKeysResponse,
@@ -449,6 +456,43 @@ interface ApiProjectCreateRequest {
 interface ApiProjectUpdateRequest {
   data: string;
   archived_at?: string;
+}
+
+interface ApiProjectParticipantCreateRequest {
+  user_id: string;
+  role: ProjectRole;
+  /** The project content key sealed to the target user's public key (base64). */
+  wrapped_project_key: string;
+}
+
+interface ApiProjectParticipantsListResponse {
+  participants: ProjectParticipantRecord[];
+}
+
+export interface ApiRotateProjectKeyEntry {
+  user_id: string;
+  wrapped_project_key: string;
+}
+
+export interface ApiRotateProjectConversationKeyEntry {
+  conversation_id: string;
+  wrapped_secret_key: string;
+}
+
+export interface ApiRotateProjectKeyRequest {
+  /** Must be exactly the project's current key_version + 1. */
+  new_key_version: number;
+  /** One fresh wrapping for EVERY remaining active participant. */
+  wrapped_project_keys: ApiRotateProjectKeyEntry[];
+  /** The secret key of EVERY project conversation, rewrapped under the new key. */
+  rewrapped_conversation_keys: ApiRotateProjectConversationKeyEntry[];
+}
+
+export interface ApiRotateProjectKeyResponse {
+  project_id: string;
+  key_version: number;
+  wrapped_project_keys: ApiRotateProjectKeyEntry[];
+  rewrapped_conversation_keys: ApiRotateProjectConversationKeyEntry[];
 }
 
 interface ApiProjectConversationCreateRequest {
@@ -1199,6 +1243,84 @@ export class CognosApiService {
   revokeOrgInvite(orgId: string, inviteId: string): Observable<void> {
     return this._http.delete<void>(
       `${this._baseUrl}/api/v1/orgs/${orgId}/invites/${inviteId}`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // acceptOrgInvite redeems a single-use invite token for the signed-in
+  // Account — the SAME Account, no new identity, no second Emergency Kit
+  // (spec §8.1). Idempotent for an already-active member; unknown, expired
+  // and consumed tokens all return the same neutral 404.
+  acceptOrgInvite(request: { token: string }): Observable<OrgInviteAcceptResponse> {
+    return this._http.post<OrgInviteAcceptResponse>(
+      `${this._baseUrl}/api/v1/org-invites/accept`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // getUserPublicKey resolves another Account's public key for the sharing
+  // wrap step. Relationship-gated server-side (self, or Owner/Admin of an
+  // Organisation the target belongs to); misses return a neutral 404.
+  getUserPublicKey(userId: string): Observable<UserPublicKeyResponse> {
+    return this._http.get<UserPublicKeyResponse>(
+      `${this._baseUrl}/api/v1/users/${userId}/public-key`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // --- Project participants & key rotation (org-owned Projects only) -------
+
+  listProjectParticipants(projectId: string): Observable<ProjectParticipantRecord[]> {
+    return this._http
+      .get<ApiProjectParticipantsListResponse>(
+        `${this._baseUrl}/api/v1/projects/${projectId}/participants`,
+        {
+          headers: this.authHeaders(),
+        },
+      )
+      .pipe(map((response) => response.participants));
+  }
+
+  addProjectParticipant(
+    projectId: string,
+    request: ApiProjectParticipantCreateRequest,
+  ): Observable<ProjectParticipantRecord> {
+    return this._http.post<ProjectParticipantRecord>(
+      `${this._baseUrl}/api/v1/projects/${projectId}/participants`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  removeProjectParticipant(projectId: string, userId: string): Observable<void> {
+    return this._http.delete<void>(
+      `${this._baseUrl}/api/v1/projects/${projectId}/participants/${userId}`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // rotateProjectKey applies a client-computed forward-only key rotation. The
+  // server rejects any payload that does not cover EVERY remaining active
+  // participant and EVERY project conversation, so a rotation can never leave
+  // data inaccessible (all-or-nothing, single transaction server-side).
+  rotateProjectKey(
+    projectId: string,
+    request: ApiRotateProjectKeyRequest,
+  ): Observable<ApiRotateProjectKeyResponse> {
+    return this._http.post<ApiRotateProjectKeyResponse>(
+      `${this._baseUrl}/api/v1/projects/${projectId}/rotate`,
+      request,
       {
         headers: this.authHeaders(),
       },

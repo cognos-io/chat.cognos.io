@@ -129,6 +129,7 @@ describe('ChatComponent', () => {
             isSendingLocked: signal(false),
             isTrialUsedUp: signal(false),
             isPastDue: signal(false),
+            orgSendBlock: signal(null),
           },
         },
         { provide: ConversationService, useValue: conversationService },

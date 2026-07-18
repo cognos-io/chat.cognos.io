@@ -503,6 +503,17 @@
       "genericError": "Something went wrong. Please try again.",
       "refundError": "Could not send your refund request. Please try again.",
       "switchError": "Could not switch your plan. Please try again."
+    },
+    "orgLock": {
+      "titleInactive": "{{ org }} billing is paused",
+      "titlePastDue": "{{ org }} has a payment issue",
+      "bodyInactive": "This chat is in a Project billed to {{ org }}, which has no active billing right now. Sending is paused for everyone in the organisation — your message is kept, and nothing is lost.",
+      "bodyPastDue": "A payment for {{ org }} didn't go through, so Projects billed to {{ org }} are paused for everyone until billing is updated. Your message is kept, and nothing is lost.",
+      "personalUnaffected": "Your personal workspace keeps working as usual.",
+      "memberNext": "Ask an owner or admin of {{ org }} to restore billing — this isn't something you did.",
+      "adminNextInactive": "Add a payment method to reactivate {{ org }}.",
+      "adminNextPastDue": "Update the payment method for {{ org }} to lift the pause.",
+      "openTeamBilling": "Open team billing"
     }
   },
   "chat": {
@@ -1485,6 +1496,42 @@
       "title": "Danger zone",
       "deleteTitle": "Delete this project",
       "deleteSubtitle": "Deleting a project can’t be undone."
+    },
+    "members": {
+      "heading": "Members",
+      "loadError": "Could not load this Project's members. Please try again.",
+      "add": "Add member",
+      "addTitle": "Add a member to {{ project }}",
+      "addIntro": "Anyone you add can read this Project's chats. Only active members of {{ org }} can be added.",
+      "candidateLabel": "Choose a member",
+      "candidatesEmpty": "Everyone in {{ org }} already has access to this Project.",
+      "roleLabel": "Project role",
+      "roleHint": "Viewers read, Editors write, Admins also manage members.",
+      "roles": {
+        "viewer": "Viewer",
+        "editor": "Editor",
+        "admin": "Admin"
+      },
+      "addSubmit": "Add member",
+      "addedToast": "{{ name }} now has access.",
+      "addError": "Could not add the member. Please try again.",
+      "creatorBadge": "Creator",
+      "you": "(you)",
+      "remove": "Remove",
+      "removeSuffix": " {{ name }}",
+      "revokeTitle": "Remove {{ name }}?",
+      "revokeBody": "{{ name }} will lose access to new work in {{ project }} right away.",
+      "revokeForwardOnly": "Removal is forward-only: it can't take back what they already saw. To protect future content, the Project key is rotated immediately after.",
+      "revokeNote": "{{ name }}'s personal account and personal chats are not affected.",
+      "revokeConfirm": "Remove and rotate key",
+      "revokeError": "Could not remove the member. Please try again.",
+      "rotatePreparing": "Preparing a fresh Project key…",
+      "rotateApplying": "Applying the new key…",
+      "rotateFinalising": "Re-encrypting Project details…",
+      "rotateDone": "Project key rotated. Future content uses the new key.",
+      "rotateFailedOldValid": "Key rotation didn't complete — the Project keeps using its current key and nothing was lost. Please retry.",
+      "rotateFinaliseFailed": "The new key is active, but re-encrypting the Project details didn't finish. Retry to complete it.",
+      "rotateRetry": "Retry rotation"
     }
   },
   "public": {
@@ -1871,6 +1918,24 @@
       "seat": "The seat stays billed until the end of the current cycle.",
       "cancel": "Cancel",
       "confirm": "Remove"
+    },
+    "accept": {
+      "title": "Join an Organisation",
+      "intro": "Paste the invite token you received, or open the invite link from your email.",
+      "tokenLabel": "Invite token",
+      "tokenPlaceholder": "Paste your invite token",
+      "submit": "Join",
+      "accepting": "Joining…",
+      "error": "That invite didn't work. It may have expired or already been used — check the link, or paste the token again below.",
+      "retry": "Try again",
+      "welcomeTitle": "Welcome to {{ org }}",
+      "welcomeRole": "You joined as",
+      "sameAccount": "You joined with the Cognos account you already have — same sign-in, same Account Key, no new Emergency Kit.",
+      "billingNote": "Work in {{ org }} Projects is billed to the organisation. Your personal chats stay yours and stay billed to you.",
+      "switchHint": "Use the workspace switcher in the sidebar to open {{ org }}.",
+      "startWorking": "Start working",
+      "genericOrg": "your organisation",
+      "backToChat": "Back to your chats"
     }
   }
 }

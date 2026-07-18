@@ -17,6 +17,7 @@ import {
 
 import { BillingLockBannerComponent } from '@app/components/billing/billing-lock-banner/billing-lock-banner.component';
 import { BillingPastDueBannerComponent } from '@app/components/billing/billing-past-due-banner/billing-past-due-banner.component';
+import { OrgBillingBannerComponent } from '@app/components/billing/org-billing-banner/org-billing-banner.component';
 import { ChatHeaderComponent } from '@app/components/chat/chat-header/chat-header.component';
 import { ConversationListItemComponent } from '@app/components/chat/conversation-list/conversation-list-item/conversation-list-item.component';
 import { PaygUsageCardComponent } from '@app/components/chat/payg-usage-card/payg-usage-card.component';
@@ -64,6 +65,7 @@ import { ConversationService } from '../../services/conversation.service';
     PaygUsageCardComponent,
     BillingLockBannerComponent,
     BillingPastDueBannerComponent,
+    OrgBillingBannerComponent,
     SidebarAccountActionsComponent,
     SidebarBrandComponent,
     WorkspaceSwitcherComponent,
@@ -98,6 +100,23 @@ export class ChatComponent {
   readonly projects = computed(() =>
     this.workspaces.visibleProjects(this._projectService.orderedProjects()),
   );
+  // The org billing block for the conversation on screen: shown only when the
+  // active conversation lives in a Project owned by the blocked Organisation,
+  // so personal chats (and other orgs' Projects) never carry the banner.
+  readonly orgBillingBlock = computed(() => {
+    const block = this.billing.orgSendBlock();
+    if (!block) {
+      return null;
+    }
+    const projectId = this.conversationService.conversation()?.record.project;
+    if (!projectId) {
+      return null;
+    }
+    const organisationId = this._projectService
+      .projects()
+      .find((project) => project.record.id === projectId)?.record.organisation;
+    return organisationId === block.organisationId ? block : null;
+  });
   readonly showPersonalConversations = computed(
     () => !this.workspaces.isOrgWorkspace(),
   );

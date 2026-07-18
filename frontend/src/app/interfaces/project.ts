@@ -132,6 +132,20 @@ export interface Project {
   contentKey: Uint8Array;
 }
 
+/**
+ * ProjectParticipantRecord is one row of
+ * GET /api/v1/projects/{id}/participants — an active participant and their
+ * project role. Sharing is org-only in v1: every participant of an org-owned
+ * Project must be an active member of the owning Organisation.
+ */
+export interface ProjectParticipantRecord {
+  id: string;
+  project?: string;
+  user_id: string;
+  role: ProjectRole;
+  added_at?: string;
+}
+
 // ProjectConversationRecord is the API shape for a conversation inside a
 // project. The conversation secret key is wrapped by the project content key
 // (not per-participant); the client unwraps it to reconstruct the conversation

@@ -140,3 +140,23 @@ export interface CompletionBillingRestriction {
   estimatedCostChf?: number;
   nextStep?: string;
 }
+
+// The two organisation billing gates a completion in an org-owned Project can
+// hit (fail closed, docs/specs/organisations.md §5.8). Both mean the whole
+// Organisation is paused — never the member's fault, and never falls back to
+// the member's personal balance.
+export type OrgBillingRestrictionCode = 'ORG_BILLING_INACTIVE' | 'ORG_BILLING_PAST_DUE';
+
+/**
+ * OrgCompletionBillingRestriction is the structured 402 body for a completion
+ * blocked by the owning Organisation's billing. `message` is the neutral
+ * member copy; `adminMessage` is the one actionable step for Owners/Admins.
+ * The viewer's role decides which the UI leads with.
+ */
+export interface OrgCompletionBillingRestriction {
+  code: OrgBillingRestrictionCode;
+  organisationId: string;
+  organisationName: string;
+  message: string;
+  adminMessage: string;
+}

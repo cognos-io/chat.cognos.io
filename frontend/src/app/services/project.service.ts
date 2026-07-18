@@ -162,6 +162,28 @@ export class ProjectService {
   }
 
   /**
+   * applyKeyRotation - swaps the in-memory content key (and server record)
+   * for a project after a successful forward-only key rotation, keeping the
+   * already-decrypted metadata. Called by ProjectSharingService once the
+   * rotation + metadata re-encryption round-trips complete.
+   */
+  applyKeyRotation(
+    projectId: string,
+    contentKey: Uint8Array,
+    record: ProjectRecord,
+  ): void {
+    const existing = this.projects().find((project) => project.record.id === projectId);
+    if (!existing) {
+      return;
+    }
+    this.state.replaceProject({
+      record,
+      decryptedData: existing.decryptedData,
+      contentKey,
+    });
+  }
+
+  /**
    * updateProject - re-encrypts the project metadata under the project's
    * existing content key and persists it. Returns the updated Project.
    */

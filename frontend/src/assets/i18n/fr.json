@@ -503,6 +503,17 @@
       "genericError": "Une erreur est survenue. Veuillez réessayer.",
       "refundError": "Impossible d'envoyer votre demande de remboursement. Veuillez réessayer.",
       "switchError": "Impossible de changer votre offre. Veuillez réessayer."
+    },
+    "orgLock": {
+      "titleInactive": "La facturation de {{ org }} est en pause",
+      "titlePastDue": "{{ org }} a un problème de paiement",
+      "bodyInactive": "Cette discussion fait partie d'un projet facturé à {{ org }}, qui n'a pas de facturation active pour le moment. L'envoi est en pause pour toute l'organisation — votre message est conservé, rien n'est perdu.",
+      "bodyPastDue": "Un paiement de {{ org }} n'a pas abouti. Les projets facturés à {{ org }} sont en pause pour tout le monde jusqu'à la mise à jour de la facturation. Votre message est conservé, rien n'est perdu.",
+      "personalUnaffected": "Votre espace de travail personnel continue de fonctionner normalement.",
+      "memberNext": "Demandez à un propriétaire ou à un administrateur de {{ org }} de rétablir la facturation — vous n'y êtes pour rien.",
+      "adminNextInactive": "Ajoutez un moyen de paiement pour réactiver {{ org }}.",
+      "adminNextPastDue": "Mettez à jour le moyen de paiement de {{ org }} pour lever la pause.",
+      "openTeamBilling": "Ouvrir la facturation de l'équipe"
     }
   },
   "chat": {
@@ -1485,6 +1496,42 @@
       "title": "Zone de danger",
       "deleteTitle": "Supprimer ce projet",
       "deleteSubtitle": "La suppression d’un projet est irréversible."
+    },
+    "members": {
+      "heading": "Membres",
+      "loadError": "Impossible de charger les membres de ce projet. Veuillez réessayer.",
+      "add": "Ajouter un membre",
+      "addTitle": "Ajouter un membre à {{ project }}",
+      "addIntro": "Toute personne ajoutée peut lire les discussions de ce projet. Seuls les membres actifs de {{ org }} peuvent être ajoutés.",
+      "candidateLabel": "Choisir un membre",
+      "candidatesEmpty": "Tout le monde dans {{ org }} a déjà accès à ce projet.",
+      "roleLabel": "Rôle dans le projet",
+      "roleHint": "Les lecteurs lisent, les éditeurs écrivent, les administrateurs gèrent aussi les membres.",
+      "roles": {
+        "viewer": "Lecteur",
+        "editor": "Éditeur",
+        "admin": "Administrateur"
+      },
+      "addSubmit": "Ajouter le membre",
+      "addedToast": "{{ name }} a maintenant accès.",
+      "addError": "Impossible d'ajouter le membre. Veuillez réessayer.",
+      "creatorBadge": "Créateur",
+      "you": "(vous)",
+      "remove": "Retirer",
+      "removeSuffix": " {{ name }}",
+      "revokeTitle": "Retirer {{ name }} ?",
+      "revokeBody": "{{ name }} perdra immédiatement l'accès aux nouveaux contenus de {{ project }}.",
+      "revokeForwardOnly": "Le retrait ne vaut que pour l'avenir : ce qui a déjà été vu ne peut pas être repris. Pour protéger les contenus futurs, la clé du projet est renouvelée immédiatement après.",
+      "revokeNote": "Le compte personnel et les conversations personnelles de {{ name }} ne sont pas affectés.",
+      "revokeConfirm": "Retirer et renouveler la clé",
+      "revokeError": "Impossible de retirer le membre. Veuillez réessayer.",
+      "rotatePreparing": "Préparation d'une nouvelle clé de projet…",
+      "rotateApplying": "Application de la nouvelle clé…",
+      "rotateFinalising": "Rechiffrement des détails du projet…",
+      "rotateDone": "Clé du projet renouvelée. Les contenus futurs utilisent la nouvelle clé.",
+      "rotateFailedOldValid": "Le renouvellement de la clé n'a pas abouti — le projet continue d'utiliser sa clé actuelle, rien n'est perdu. Veuillez réessayer.",
+      "rotateFinaliseFailed": "La nouvelle clé est active, mais le rechiffrement des détails du projet n'est pas terminé. Réessayez pour finaliser.",
+      "rotateRetry": "Réessayer le renouvellement"
     }
   },
   "public": {
@@ -1871,6 +1918,24 @@
       "seat": "Le siège reste facturé jusqu'à la fin du cycle en cours.",
       "cancel": "Annuler",
       "confirm": "Retirer"
+    },
+    "accept": {
+      "title": "Rejoindre une organisation",
+      "intro": "Collez le jeton d'invitation reçu, ou ouvrez le lien d'invitation depuis votre e-mail.",
+      "tokenLabel": "Jeton d'invitation",
+      "tokenPlaceholder": "Collez votre jeton d'invitation",
+      "submit": "Rejoindre",
+      "accepting": "Adhésion en cours…",
+      "error": "Cette invitation n'a pas fonctionné. Elle a peut-être expiré ou déjà été utilisée — vérifiez le lien, ou collez à nouveau le jeton ci-dessous.",
+      "retry": "Réessayer",
+      "welcomeTitle": "Bienvenue chez {{ org }}",
+      "welcomeRole": "Vous avez rejoint en tant que",
+      "sameAccount": "Vous avez rejoint avec votre compte Cognos existant — même connexion, même clé de compte, pas de nouveau kit d'urgence.",
+      "billingNote": "Le travail dans les projets de {{ org }} est facturé à l'organisation. Vos conversations personnelles restent les vôtres et restent facturées sur votre compte.",
+      "switchHint": "Utilisez le sélecteur d'espace de travail dans la barre latérale pour ouvrir {{ org }}.",
+      "startWorking": "Commencer à travailler",
+      "genericOrg": "votre organisation",
+      "backToChat": "Retour à vos discussions"
     }
   }
 }
