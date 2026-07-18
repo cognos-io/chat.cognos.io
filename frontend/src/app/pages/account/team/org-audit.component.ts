@@ -249,7 +249,7 @@ export class OrgAuditComponent {
 
   constructor() {
     effect(() => {
-      this.org().id;
+      void this.org().id;
       this.loadPage(1);
     });
   }

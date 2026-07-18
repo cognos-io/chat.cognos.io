@@ -1,1 +1,1 @@
-export interface UserCredentials {}
+export type UserCredentials = Record<string, never>;

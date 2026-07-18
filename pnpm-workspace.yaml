@@ -3,3 +3,31 @@ packages:
   - web
   - e2e
   - packages/*
+
+allowBuilds:
+  '@parcel/watcher': true
+  better-sqlite3: true
+  esbuild: true
+  lmdb: true
+  msgpackr-extract: true
+  nx: true
+  sharp: true
+  tesseract.js: true
+  unrs-resolver: true
+
+catalog:
+  '@eslint/js': ^10.0.1
+  '@types/node': ^26.1.1
+  eslint: ^9.28.0
+  eslint-config-prettier: ^10.1.8
+  globals: ^16.0.0
+  typescript: ~5.9.3
+  typescript-eslint: ^8.64.0
+
+pnpm:
+  overrides:
+    minimatch@<9.0.7: '>=9.0.7'
+    form-data@<4.0.6: '>=4.0.6'
+    js-yaml@<4.2.0: 4.2.0
+    node-gyp>undici: 6.27.0
+    sockjs>uuid: 11.1.1

@@ -42,10 +42,12 @@
   "dependencies": {
     "@fontsource-variable/noto-sans": "^5.2.10",
     "@fontsource-variable/reddit-mono": "^5.2.8",
-    "lucide": "^1.17.0"
+    "lucide": "^1.25.0"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^9.1.0"
+    "@eslint/js": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "globals": "catalog:"
   }
 }
