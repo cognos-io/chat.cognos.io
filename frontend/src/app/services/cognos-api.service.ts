@@ -19,7 +19,17 @@ import {
 import { CompactionDurableMemory } from '@app/interfaces/compaction';
 import { ConversationRecord } from '@app/interfaces/conversation';
 import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/model';
-import { OrgMemberRecord, OrganisationRecord } from '@app/interfaces/organisation';
+import {
+  OrgBillingRecord,
+  OrgCheckoutResponse,
+  OrgInviteCreatedRecord,
+  OrgInviteRecord,
+  OrgInviteRole,
+  OrgMemberRecord,
+  OrgPortalResponse,
+  OrgUsageRecord,
+  OrganisationRecord,
+} from '@app/interfaces/organisation';
 import { ProjectConversationRecord, ProjectRecord } from '@app/interfaces/project';
 import {
   ConversationPublicKeysResponse,
@@ -1103,6 +1113,92 @@ export class CognosApiService {
   listOrgMembers(orgId: string): Observable<OrgMemberRecord[]> {
     return this._http.get<OrgMemberRecord[]>(
       `${this._baseUrl}/api/v1/orgs/${orgId}/members`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // removeOrgMember offboards a member (Owner/Admin). Server-side this revokes
+  // the membership + org Project participation and queues a next-cycle seat
+  // decrement; the person's personal Account is untouched (spec §8.2).
+  removeOrgMember(orgId: string, userId: string): Observable<void> {
+    return this._http.delete<void>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/members/${userId}`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // createOrgCheckout opens Paddle checkout for a fresh Organisation at
+  // quantity 1 — the Owner is the first Seat (Owner only, spec §7.1).
+  createOrgCheckout(orgId: string): Observable<OrgCheckoutResponse> {
+    return this._http.post<OrgCheckoutResponse>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/billing/checkout`,
+      {},
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  getOrgBilling(orgId: string): Observable<OrgBillingRecord> {
+    return this._http.get<OrgBillingRecord>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/billing`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  getOrgBillingPortal(orgId: string): Observable<OrgPortalResponse> {
+    return this._http.get<OrgPortalResponse>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/billing/portal`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // getOrgUsage returns per-member cost/completions/model-mix metadata for the
+  // current cycle. Metadata only — never conversation content (spec §5.6).
+  getOrgUsage(orgId: string): Observable<OrgUsageRecord> {
+    return this._http.get<OrgUsageRecord>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/usage`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // createOrgInvite mints a single-use invite token. The token is returned
+  // exactly once in this response; the server keeps only a hash (spec §8.1).
+  createOrgInvite(
+    orgId: string,
+    request: { email?: string; role: OrgInviteRole; project_ids?: string[] },
+  ): Observable<OrgInviteCreatedRecord> {
+    return this._http.post<OrgInviteCreatedRecord>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/invites`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  listOrgInvites(orgId: string): Observable<OrgInviteRecord[]> {
+    return this._http.get<OrgInviteRecord[]>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/invites`,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  revokeOrgInvite(orgId: string, inviteId: string): Observable<void> {
+    return this._http.delete<void>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/invites/${inviteId}`,
       {
         headers: this.authHeaders(),
       },

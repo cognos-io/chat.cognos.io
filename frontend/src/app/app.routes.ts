@@ -143,12 +143,15 @@ export const routes: Routes = [
           ),
       },
       {
+        // Organisation admin: create org, members, invites, billing & usage
+        // (docs/specs/organisations.md). Gated behind the `team` flag until
+        // Teams v1 ships end-to-end.
         path: 'team',
         canActivate: [featureFlagGuard],
         data: { title: 'Team & sharing', featureFlag: 'team' },
         loadComponent: () =>
-          import('./pages/account/settings-placeholder.component').then(
-            (m) => m.SettingsPlaceholderComponent,
+          import('./pages/account/team/team-settings.component').then(
+            (m) => m.TeamSettingsComponent,
           ),
       },
       {
