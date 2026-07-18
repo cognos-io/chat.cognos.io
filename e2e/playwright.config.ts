@@ -49,6 +49,12 @@ const BACKEND_ENV = [
   // works offline (the mock serves both transports).
   'COGNOS_REQUESTY_API_KEY=e2e-dummy-key',
   `COGNOS_REQUESTY_URL=${AI_MOCK_URL}`,
+  // Never inherit a developer's sandbox/production Paddle credentials. The
+  // local mock accepts subscription quantity updates so Organisation invite
+  // flows exercise the real billing call without leaving the E2E process.
+  'COGNOS_PADDLE_API_KEY=e2e-dummy-key',
+  `COGNOS_PADDLE_API_BASE=${AI_MOCK_URL}`,
+  'COGNOS_PADDLE_PRICE_ORG_SEAT=pri_e2e_org_seat',
   // Point the grounding-redirect resolver at the mock's own origin so its
   // Vertex-shaped fixture proxy URLs resolve offline (never to real Google).
   `COGNOS_GATEWAY_GROUNDING_REDIRECT_PREFIX=${AI_MOCK_URL}/grounding-redirect/`,
