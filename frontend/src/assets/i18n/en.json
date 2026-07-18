@@ -1532,6 +1532,7 @@
       "rotateFinalising": "Re-encrypting Project details…",
       "rotateDone": "Project key rotated. Future content uses the new key.",
       "rotateFailedOldValid": "Key rotation didn't complete — the Project keeps using its current key and nothing was lost. Please retry.",
+      "rotatePending": "This Project is locked for new work until an Admin finishes the key rotation.",
       "rotateFinaliseFailed": "The new key is active, but re-encrypting the Project details didn't finish. Retry to complete it.",
       "rotateRetry": "Retry rotation"
     }
@@ -1839,6 +1840,7 @@
       "ownerLocked": "The Owner cannot be removed here.",
       "selfLocked": "You cannot remove yourself here.",
       "removedToast": "{{ name }} has been removed.",
+      "removedRotationPending": "Access was removed. {{ count }} Projects remain locked until an Admin finishes the security update.",
       "removeError": "Could not remove the member. Please try again."
     },
     "invites": {
@@ -1946,6 +1948,7 @@
       "dangerCta": "Dissolve Organisation"
     },
     "offboard": {
+      "rotating": "Removing access and updating Project keys…",
       "title": "Remove {{ name }}?",
       "immediate": "They will immediately lose access to everything in {{ org }}.",
       "personalUntouched": "Their personal account and personal chats are untouched.",

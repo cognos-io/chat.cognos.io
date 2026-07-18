@@ -1532,6 +1532,7 @@
       "rotateFinalising": "Rechiffrement des détails du projet…",
       "rotateDone": "Clé du projet renouvelée. Les contenus futurs utilisent la nouvelle clé.",
       "rotateFailedOldValid": "Le renouvellement de la clé n'a pas abouti — le projet continue d'utiliser sa clé actuelle, rien n'est perdu. Veuillez réessayer.",
+      "rotatePending": "Ce projet est verrouillé pour tout nouveau travail jusqu’à ce qu’un administrateur termine le renouvellement de la clé.",
       "rotateFinaliseFailed": "La nouvelle clé est active, mais le rechiffrement des détails du projet n'est pas terminé. Réessayez pour finaliser.",
       "rotateRetry": "Réessayer le renouvellement"
     }
@@ -1839,6 +1840,7 @@
       "ownerLocked": "Le propriétaire ne peut pas être retiré ici.",
       "selfLocked": "Vous ne pouvez pas vous retirer vous-même ici.",
       "removedToast": "{{ name }} a été retiré.",
+      "removedRotationPending": "L’accès a été supprimé. {{ count }} projets restent verrouillés jusqu’à ce qu’un administrateur termine la mise à jour de sécurité.",
       "removeError": "Impossible de retirer le membre. Veuillez réessayer."
     },
     "invites": {
@@ -1946,6 +1948,7 @@
       "dangerCta": "Dissoudre l'organisation"
     },
     "offboard": {
+      "rotating": "Suppression de l’accès et mise à jour des clés des projets…",
       "title": "Retirer {{ name }} ?",
       "immediate": "L'accès à tout le contenu de {{ org }} sera immédiatement révoqué.",
       "personalUntouched": "Son compte personnel et ses conversations personnelles restent intacts.",

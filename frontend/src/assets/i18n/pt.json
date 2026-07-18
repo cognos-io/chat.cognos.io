@@ -1532,6 +1532,7 @@
       "rotateFinalising": "A cifrar novamente os detalhes do projeto…",
       "rotateDone": "Chave do projeto rodada. O conteúdo futuro usa a nova chave.",
       "rotateFailedOldValid": "A rotação da chave não foi concluída — o projeto continua a usar a chave atual e nada se perdeu. Tenta novamente.",
+      "rotatePending": "Este projeto está bloqueado para novos trabalhos até um administrador concluir a rotação da chave.",
       "rotateFinaliseFailed": "A nova chave está ativa, mas a nova cifragem dos detalhes do projeto não terminou. Tenta novamente para concluir.",
       "rotateRetry": "Repetir rotação"
     }
@@ -1839,6 +1840,7 @@
       "ownerLocked": "O proprietário não pode ser removido aqui.",
       "selfLocked": "Não te podes remover a ti próprio aqui.",
       "removedToast": "{{ name }} foi removido.",
+      "removedRotationPending": "O acesso foi removido. {{ count }} projetos permanecem bloqueados até um administrador concluir a atualização de segurança.",
       "removeError": "Não foi possível remover o membro. Tenta novamente."
     },
     "invites": {
@@ -1946,6 +1948,7 @@
       "dangerCta": "Dissolver organização"
     },
     "offboard": {
+      "rotating": "A remover o acesso e a atualizar as chaves dos projetos…",
       "title": "Remover {{ name }}?",
       "immediate": "Perderá imediatamente o acesso a tudo em {{ org }}.",
       "personalUntouched": "A conta pessoal e os chats pessoais ficam intactos.",

@@ -4,6 +4,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  Injector,
   computed,
   effect,
   inject,
@@ -12,7 +13,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom, forkJoin, last, map, of, switchMap } from 'rxjs';
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
@@ -34,6 +35,8 @@ import {
 import { AuthService } from '@app/services/auth.service';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ErrorService } from '@app/services/error.service';
+import { ProjectSharingService } from '@app/services/project-sharing.service';
+import { ProjectService } from '@app/services/project.service';
 import { cognosDialogOptions } from '@app/utils/dialog-options';
 
 import {
@@ -66,6 +69,11 @@ import {
       [heading]="t('team.members.heading')"
       [subtitle]="t('team.members.subtitle')"
     >
+      @if (rotationPending()) {
+        <cog-callout tone="info" icon="refresh-cw" role="status">
+          {{ t('team.offboard.rotating') }}
+        </cog-callout>
+      }
       @if (loading()) {
         <p class="org-members__state" role="status">{{ t('team.loading') }}</p>
       } @else if (error()) {
@@ -240,6 +248,7 @@ export class OrgMembersComponent {
   private readonly _dialog = inject(Dialog);
   private readonly _toast = inject(CognosToastService);
   private readonly _errors = inject(ErrorService);
+  private readonly _injector = inject(Injector);
   private readonly _transloco = inject(TranslocoService);
   private readonly _destroyRef = inject(DestroyRef);
 
@@ -250,6 +259,7 @@ export class OrgMembersComponent {
   protected readonly loading = signal(true);
   protected readonly error = signal(false);
   protected readonly removePending = signal(false);
+  protected readonly rotationPending = signal(false);
 
   private readonly _myUserId = computed(
     () => (this._auth.user()?.['id'] as string | undefined) ?? '',
@@ -336,21 +346,54 @@ export class OrgMembersComponent {
     this.removePending.set(true);
     this._api
       .removeOrgMember(this.org().id, member.user_id)
-      .pipe(takeUntilDestroyed(this._destroyRef))
+      .pipe(
+        switchMap((response) => {
+          if (response.rotation_project_ids.length === 0) {
+            return of(0);
+          }
+          this.rotationPending.set(true);
+          const projectsService = this._injector.get(ProjectService);
+          const sharingService = this._injector.get(ProjectSharingService);
+          const rotations = response.rotation_project_ids.map((projectId) => {
+            const project = projectsService
+              .projects()
+              .find((candidate) => candidate.record.id === projectId);
+            if (!project) {
+              return of(false);
+            }
+            return sharingService.rotateKey(project).pipe(
+              last(),
+              map(() => true),
+              catchError(() => of(false)),
+            );
+          });
+          return forkJoin(rotations).pipe(
+            map((results) => results.filter((rotated) => !rotated).length),
+          );
+        }),
+        takeUntilDestroyed(this._destroyRef),
+      )
       .subscribe({
-        next: () => {
+        next: (unresolvedRotations) => {
           this.removePending.set(false);
+          this.rotationPending.set(false);
           // The toast host is an aria-live status region, so this announces.
           this._toast.notify({
-            title: this._transloco.translate('team.members.removedToast', {
-              name: data.memberName,
-            }),
-            tone: 'success',
+            title:
+              unresolvedRotations > 0
+                ? this._transloco.translate('team.members.removedRotationPending', {
+                    count: unresolvedRotations,
+                  })
+                : this._transloco.translate('team.members.removedToast', {
+                    name: data.memberName,
+                  }),
+            tone: unresolvedRotations > 0 ? 'danger' : 'success',
           });
           this.reload();
         },
         error: () => {
           this.removePending.set(false);
+          this.rotationPending.set(false);
           this._errors.alert(this._transloco.translate('team.members.removeError'));
         },
       });

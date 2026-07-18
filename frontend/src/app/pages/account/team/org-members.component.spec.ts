@@ -1,5 +1,5 @@
 import { Dialog } from '@angular/cdk/dialog';
-import { signal } from '@angular/core';
+import { WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { NEVER, of, throwError } from 'rxjs';
@@ -9,9 +9,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CognosToastService } from '@cognos/ui-angular';
 
 import { OrgMemberRecord, OrganisationRecord } from '@app/interfaces/organisation';
+import { Project } from '@app/interfaces/project';
 import { AuthService } from '@app/services/auth.service';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ErrorService } from '@app/services/error.service';
+import { ProjectSharingService } from '@app/services/project-sharing.service';
+import { ProjectService } from '@app/services/project.service';
 
 import { OrgMembersComponent } from './org-members.component';
 
@@ -46,6 +49,8 @@ describe('OrgMembersComponent', () => {
   let dialogConfirm: boolean;
   let toastNotify: ReturnType<typeof vi.fn>;
   let errorAlert: ReturnType<typeof vi.fn>;
+  let projects: WritableSignal<Project[]>;
+  let rotateKey: ReturnType<typeof vi.fn>;
 
   const authUser = signal<unknown>({ id: 'user_me' });
 
@@ -67,6 +72,8 @@ describe('OrgMembersComponent', () => {
         },
         { provide: CognosToastService, useValue: { notify: toastNotify } },
         { provide: ErrorService, useValue: { alert: errorAlert } },
+        { provide: ProjectService, useValue: { projects } },
+        { provide: ProjectSharingService, useValue: { rotateKey } },
       ],
     }).compileComponents();
 
@@ -82,10 +89,12 @@ describe('OrgMembersComponent', () => {
     vi.clearAllMocks();
     authUser.set({ id: 'user_me' });
     listOrgMembers = vi.fn(() => of([]));
-    removeOrgMember = vi.fn(() => of(undefined));
+    removeOrgMember = vi.fn(() => of({ rotation_project_ids: [] }));
     dialogConfirm = true;
     toastNotify = vi.fn();
     errorAlert = vi.fn();
+    projects = signal([]);
+    rotateKey = vi.fn(() => of('done'));
   });
 
   // ---- Loading / error / empty ----------------------------------------------
@@ -210,6 +219,39 @@ describe('OrgMembersComponent', () => {
     expect(listOrgMembers).toHaveBeenCalledTimes(2);
   });
 
+  it('rotates every affected loaded Project before reporting offboarding complete', async () => {
+    const member = makeMember({ user_id: 'user_x', role: 'member' });
+    const project = {
+      record: { id: 'project_1', rotation_pending: true },
+      decryptedData: { name: 'Client work' },
+      contentKey: new Uint8Array(32),
+    } as Project;
+    projects.set([project]);
+    removeOrgMember = vi.fn(() => of({ rotation_project_ids: ['project_1'] }));
+    listOrgMembers = vi.fn(() => of([member]));
+    await render(makeOrg('owner'));
+
+    await component['offboard'](member);
+
+    expect(rotateKey).toHaveBeenCalledWith(project);
+    expect(toastNotify).toHaveBeenCalledWith(
+      expect.objectContaining({ tone: 'success' }),
+    );
+  });
+
+  it('warns when an affected Project cannot be rotated by this client', async () => {
+    const member = makeMember({ user_id: 'user_x', role: 'member' });
+    removeOrgMember = vi.fn(() => of({ rotation_project_ids: ['project_not_loaded'] }));
+    listOrgMembers = vi.fn(() => of([member]));
+    await render(makeOrg('owner'));
+
+    await component['offboard'](member);
+
+    expect(toastNotify).toHaveBeenCalledWith(
+      expect.objectContaining({ tone: 'danger' }),
+    );
+  });
+
   it('shows error alert when removeOrgMember fails', async () => {
     TestBed.resetTestingModule();
     removeOrgMember = vi.fn(() => throwError(() => new Error('boom')));
@@ -233,6 +275,8 @@ describe('OrgMembersComponent', () => {
         },
         { provide: CognosToastService, useValue: { notify: toastNotify } },
         { provide: ErrorService, useValue: { alert: errorAlert } },
+        { provide: ProjectService, useValue: { projects } },
+        { provide: ProjectSharingService, useValue: { rotateKey } },
       ],
     }).compileComponents();
 

@@ -1532,6 +1532,7 @@
       "rotateFinalising": "Projektdetails werden neu verschlüsselt…",
       "rotateDone": "Projektschlüssel rotiert. Künftige Inhalte verwenden den neuen Schlüssel.",
       "rotateFailedOldValid": "Die Schlüsselrotation wurde nicht abgeschlossen — das Projekt verwendet weiterhin den bisherigen Schlüssel, nichts ging verloren. Bitte versuche es erneut.",
+      "rotatePending": "Dieses Projekt ist für neue Arbeit gesperrt, bis ein Admin die Schlüsselrotation abschliesst.",
       "rotateFinaliseFailed": "Der neue Schlüssel ist aktiv, aber das Neuverschlüsseln der Projektdetails wurde nicht abgeschlossen. Versuche es erneut, um es fertigzustellen.",
       "rotateRetry": "Rotation erneut versuchen"
     }
@@ -1839,6 +1840,7 @@
       "ownerLocked": "Der Owner kann hier nicht entfernt werden.",
       "selfLocked": "Du kannst dich hier nicht selbst entfernen.",
       "removedToast": "{{ name }} wurde entfernt.",
+      "removedRotationPending": "Der Zugriff wurde entfernt. {{ count }} Projekte bleiben gesperrt, bis ein Admin die Sicherheitsaktualisierung abschliesst.",
       "removeError": "Das Mitglied konnte nicht entfernt werden. Bitte versuche es erneut."
     },
     "invites": {
@@ -1946,6 +1948,7 @@
       "dangerCta": "Organisation auflösen"
     },
     "offboard": {
+      "rotating": "Zugriff wird entfernt und Projektschlüssel werden aktualisiert…",
       "title": "{{ name }} entfernen?",
       "immediate": "Der Zugriff auf alles in {{ org }} wird sofort entzogen.",
       "personalUntouched": "Persönliches Konto und persönliche Chats bleiben unberührt.",

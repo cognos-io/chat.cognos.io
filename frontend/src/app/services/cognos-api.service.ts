@@ -26,6 +26,7 @@ import {
   OrgInviteCreatedRecord,
   OrgInviteRecord,
   OrgInviteRole,
+  OrgMemberOffboardResponse,
   OrgMemberRecord,
   OrgPolicyUpdateRequest,
   OrgPortalResponse,
@@ -1218,8 +1219,11 @@ export class CognosApiService {
   // removeOrgMember offboards a member (Owner/Admin). Server-side this revokes
   // the membership + org Project participation and queues a next-cycle seat
   // decrement; the person's personal Account is untouched (spec §8.2).
-  removeOrgMember(orgId: string, userId: string): Observable<void> {
-    return this._http.delete<void>(
+  removeOrgMember(
+    orgId: string,
+    userId: string,
+  ): Observable<OrgMemberOffboardResponse> {
+    return this._http.delete<OrgMemberOffboardResponse>(
       `${this._baseUrl}/api/v1/orgs/${orgId}/members/${userId}`,
       {
         headers: this.authHeaders(),

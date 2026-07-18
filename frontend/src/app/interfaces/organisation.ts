@@ -57,6 +57,11 @@ export interface OrgMemberRecord {
   added_at: string;
 }
 
+/** Result of offboarding: affected Projects stay write-locked until rotated. */
+export interface OrgMemberOffboardResponse {
+  rotation_project_ids: string[];
+}
+
 /**
  * The active Workspace: the caller's personal context, or one Organisation
  * they belong to. Switching Workspace changes billing context, visible

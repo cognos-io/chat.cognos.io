@@ -38,7 +38,10 @@ describe('ProjectMembersComponent', () => {
     contentKey: new Uint8Array(32),
   } as unknown as Project;
 
-  async function setup(user: Record<string, unknown>): Promise<void> {
+  async function setup(
+    user: Record<string, unknown>,
+    projectInput: Project = project,
+  ): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [ProjectMembersComponent],
       providers: [
@@ -68,7 +71,7 @@ describe('ProjectMembersComponent', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProjectMembersComponent);
-    fixture.componentRef.setInput('project', project);
+    fixture.componentRef.setInput('project', projectInput);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -104,5 +107,23 @@ describe('ProjectMembersComponent', () => {
     await setup({ id: 'someone_else', email: 'other@example.com' });
 
     expect(nameCell()?.textContent).toContain(myUserId);
+  });
+
+  it('shows the recoverable security lock after an interrupted rotation', async () => {
+    const pendingProject = {
+      ...project,
+      record: { ...project.record, rotation_pending: true },
+    } as Project;
+
+    await setup({ id: myUserId, email: 'nils@example.com' }, pendingProject);
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'locked for new work until an Admin finishes the key rotation',
+    );
+    expect(
+      fixture.nativeElement.querySelector(
+        '[data-testid="project-members-rotate-retry"]',
+      ),
+    ).not.toBeNull();
   });
 });

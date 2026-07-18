@@ -172,6 +172,20 @@ type RotationStatus =
         <cog-callout tone="success" icon="key-round" role="status">
           {{ t('projects.members.rotateDone') }}
         </cog-callout>
+      } @else if (project().record.rotation_pending) {
+        <cog-callout tone="danger" icon="triangle-alert" role="alert">
+          {{ t('projects.members.rotatePending') }}
+        </cog-callout>
+        <div class="project-members__retry">
+          <cog-button
+            appearance="default"
+            [disabled]="busy()"
+            (click)="retryRotation()"
+            data-testid="project-members-rotate-retry"
+          >
+            {{ t('projects.members.rotateRetry') }}
+          </cog-button>
+        </div>
       } @else if (rotation().state === 'failed') {
         <cog-callout tone="danger" icon="triangle-alert" role="alert">
           {{ rotationFailureLabel() }}

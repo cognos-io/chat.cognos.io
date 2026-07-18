@@ -96,6 +96,8 @@ export interface ProjectRecord {
   // can decrypt `data` without a second request.
   wrapped_project_key?: string;
   key_version: number;
+  /** True while an Admin must rotate keys after Participant revocation. */
+  rotation_pending?: boolean;
   archived_at?: string;
   caller_role?: ProjectRole;
   // Optional Organisation relation (docs/specs/organisations.md §5.4): set on
