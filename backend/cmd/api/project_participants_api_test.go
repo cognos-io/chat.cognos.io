@@ -795,6 +795,7 @@ func TestProjectsCreateWithOrganisation(t *testing.T) {
 			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 				seedOrganisation(t, app, orgID, "Proj Create Org", "test1@example.com")
 				seedOrgMembership(t, app, orgID, "test2@example.com", "member", false)
+				seedOrgBilling(t, app, orgID, "payg", false, 2)
 			},
 			wantStatus:  http.StatusCreated,
 			wantContent: []string{`"organisation":"` + orgID + `"`},
