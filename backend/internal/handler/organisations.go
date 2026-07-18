@@ -45,9 +45,11 @@ type organisationResponse struct {
 }
 
 type orgMemberResponse struct {
-	UserID  string `json:"user"`
-	Role    string `json:"role"`
-	AddedAt string `json:"added_at"`
+	UserID      string `json:"user_id"`
+	DisplayName string `json:"display_name"`
+	Email       string `json:"email"`
+	Role        string `json:"role"`
+	AddedAt     string `json:"added_at"`
 }
 
 type upsertOrganisationRequest struct {
@@ -150,10 +152,16 @@ func OrganisationMembersList(app core.App) func(e *core.RequestEvent) error {
 
 		response := make([]orgMemberResponse, 0, len(members))
 		for _, member := range members {
+			account, err := app.FindRecordById("users", member.UserID)
+			if err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to resolve organisation member", err)
+			}
 			response = append(response, orgMemberResponse{
-				UserID:  member.UserID,
-				Role:    string(member.Role),
-				AddedAt: member.AddedAt,
+				UserID:      member.UserID,
+				DisplayName: strings.TrimSpace(account.GetString("display_name")),
+				Email:       account.Email(),
+				Role:        string(member.Role),
+				AddedAt:     member.AddedAt,
 			})
 		}
 		return e.JSON(http.StatusOK, response)

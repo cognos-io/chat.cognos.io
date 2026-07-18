@@ -21,7 +21,9 @@ type OrgListResponse = Array<{
 }>;
 
 interface OrgMember {
-  user: string;
+  user_id: string;
+  display_name: string;
+  email: string;
   role: string;
 }
 
@@ -204,8 +206,9 @@ test.describe('organisations API lifecycle', () => {
         expect(res.ok()).toBe(true);
 
         const body = (await res.json()) as OrgMembersResponse;
-        const bMember = body.find((m) => m.user === userB.userId);
+        const bMember = body.find((m) => m.user_id === userB.userId);
         expect(bMember).toBeTruthy();
+        expect(bMember!.email).toBe(userB.account.email);
         expect(bMember!.role).toBe('member');
       });
 

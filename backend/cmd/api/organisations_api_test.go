@@ -449,9 +449,11 @@ func TestOrganisationMembersList(t *testing.T) {
 		URL:            "/api/v1/orgs/orgacme00000013/members",
 		ExpectedStatus: http.StatusOK,
 		ExpectedContent: []string{
-			`"user":"uvi8zmr78j9y5hz"`,
+			`"user_id":"uvi8zmr78j9y5hz"`,
+			`"email":"test1@example.com"`,
 			`"role":"owner"`,
-			`"user":"xq9ndvc2kbrvrng"`,
+			`"user_id":"xq9ndvc2kbrvrng"`,
+			`"email":"test2@example.com"`,
 			`"role":"member"`,
 		},
 		TestAppFactory: setupTestApp,
@@ -474,7 +476,7 @@ func TestOrganisationMembersListExcludesRevoked(t *testing.T) {
 		URL:            "/api/v1/orgs/orgacme00000014/members",
 		ExpectedStatus: http.StatusOK,
 		ExpectedContent: []string{
-			`"user":"uvi8zmr78j9y5hz"`,
+			`"user_id":"uvi8zmr78j9y5hz"`,
 		},
 		TestAppFactory: setupTestApp,
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
@@ -487,7 +489,7 @@ func TestOrganisationMembersListExcludesRevoked(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ReadAll(response.Body) error = %v", err)
 			}
-			if strings.Contains(string(bodyBytes), `"user":"xq9ndvc2kbrvrng"`) {
+			if strings.Contains(string(bodyBytes), `"user_id":"xq9ndvc2kbrvrng"`) {
 				t.Fatalf("response body contains revoked member: %s", string(bodyBytes))
 			}
 		},
