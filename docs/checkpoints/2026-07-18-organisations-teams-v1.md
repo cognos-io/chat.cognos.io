@@ -45,7 +45,15 @@ creation (`feat: org lifecycle API e2e and client org-project creation`, 144 e2e
 final frontend slice (`feat(frontend): invite accept, org billing banners and project sharing`,
 1526 vitest green).
 
-Currently in flight: P2 org policies (migration 1760000079 + red tests being drafted).
+P2 is COMPLETE: enforced org policies (privacy-tier ceiling ORG_PRIVACY_TIER, retention default
+with shorter-wins, ORG_MFA_REQUIRED gates) + policies admin tab ×6 locales; content-free
+org_audit_events + CSV export + admin session revocation (token-key rotation, personal sessions
+included by design). P3 is spec-only by decision (spec §11 Phase 3); DNS-TXT implementation
+deferred behind the walkthrough gate. The `team` flag is ON in development/e2e, OFF in production
+until the persona walkthroughs pass.
+
+Currently in flight: persona walkthrough gate round 1 — persona-sophie/persona-nils browser specs
+being authored and run; issue list lands in the scratchpad, fixes batched, then repeat.
 
 Known deferred items: authGuard drops ?token= deep links for signed-out invitees (manual paste
 covers it — pre-existing TODO); org dissolution flow (spec §8.3) unimplemented; browser e2e folded
