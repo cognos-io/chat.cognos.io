@@ -63,6 +63,10 @@ describe('TeamSettingsComponent', () => {
             getOrgUsage: vi.fn(() => of({})),
             getOrgBillingPortal: vi.fn(() => of({ portal_url: '' })),
             renameOrg: vi.fn(() => of({})),
+            listOrgAudit: vi.fn(() =>
+              of({ page: 1, perPage: 25, totalItems: 0, totalPages: 0, items: [] }),
+            ),
+            exportOrgAudit: vi.fn(() => of(new Blob())),
           },
         },
         { provide: ModelService, useValue: { modelList: vi.fn(() => []) } },
@@ -276,6 +280,7 @@ describe('TeamSettingsComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Invites');
     expect(fixture.nativeElement.textContent).toContain('Billing & usage');
     expect(fixture.nativeElement.textContent).toContain('Policies');
+    expect(fixture.nativeElement.textContent).toContain('Activity log');
     expect(fixture.nativeElement.textContent).toContain('Settings');
   });
 
@@ -290,6 +295,20 @@ describe('TeamSettingsComponent', () => {
     expect(component['tab']()).toBe('policies');
     expect(fixture.nativeElement.querySelector('app-org-policies')).not.toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Save policies');
+  });
+
+  it('renders the content-free audit surface on the activity tab', async () => {
+    listOrgs = vi.fn(() => of([makeOrg({ role: 'owner' })]));
+    await render();
+
+    component['selectTab']('audit');
+    fixture.detectChanges();
+
+    expect(component['tab']()).toBe('audit');
+    expect(fixture.nativeElement.querySelector('app-org-audit')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain(
+      'Administrative metadata only — never conversation or Project content.',
+    );
   });
 
   it('defaults to members tab', async () => {

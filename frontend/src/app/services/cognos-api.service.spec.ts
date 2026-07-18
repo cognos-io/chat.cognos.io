@@ -266,6 +266,50 @@ describe('organisation caller_role wire mapping (issue B1)', () => {
       expect(role).toBe(call.expected);
     }
   });
+
+  it('lists paginated content-free organisation audit metadata', () => {
+    const { service, http } = setup();
+    const response = {
+      page: 2,
+      perPage: 25,
+      totalItems: 26,
+      totalPages: 2,
+      items: [
+        {
+          id: 'event_1',
+          action: 'org.policies.updated',
+          actor: 'user_1',
+          created: '2026-07-18T12:00:00Z',
+        },
+      ],
+    };
+    let result: typeof response | undefined;
+
+    service.listOrgAudit('org_1', 2, 25).subscribe((value) => (result = value));
+
+    const request = http.expectOne(
+      'http://localhost:8090/api/v1/orgs/org_1/audit?page=2&page_size=25',
+    );
+    expect(request.request.headers.get('Authorization')).toBe('Bearer test-token');
+    request.flush(response);
+    expect(result).toEqual(response);
+  });
+
+  it('downloads the complete organisation audit export as a blob', () => {
+    const { service, http } = setup();
+    const csv = new Blob(['created,action,actor,target'], { type: 'text/csv' });
+    let result: Blob | undefined;
+
+    service.exportOrgAudit('org_1').subscribe((value) => (result = value));
+
+    const request = http.expectOne(
+      'http://localhost:8090/api/v1/orgs/org_1/audit/export',
+    );
+    expect(request.request.responseType).toBe('blob');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer test-token');
+    request.flush(csv);
+    expect(result).toBe(csv);
+  });
 });
 
 describe('mapOrganisationRecord', () => {

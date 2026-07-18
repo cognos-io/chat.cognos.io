@@ -307,6 +307,7 @@
     },
     "plan": {
       "actions": {
+        "org.dissolved": "Organização dissolvida",
         "cancelPlan": "Cancelar plano",
         "choosePlan": "Escolher um plano",
         "resumePlan": "Retomar plano",
@@ -1818,6 +1819,7 @@
       "invites": "Convites",
       "billing": "Faturação e utilização",
       "policies": "Políticas",
+      "audit": "Registo de atividade",
       "settings": "Definições"
     },
     "roles": {
@@ -1936,6 +1938,39 @@
       "save": "Guardar políticas",
       "saved": "Políticas atualizadas",
       "saveError": "Não foi possível guardar as políticas. Tenta novamente."
+    },
+    "audit": {
+      "heading": "Registo de atividade",
+      "subtitle": "Consulta as alterações de segurança e administração desta Organização.",
+      "metadataOnly": "Apenas metadados administrativos — nunca conteúdo de conversas ou Projetos.",
+      "loadError": "Não foi possível carregar a atividade administrativa. Tenta novamente.",
+      "empty": "Ainda não existe atividade administrativa.",
+      "tableCaption": "Atividade administrativa de {{ org }}",
+      "colWhen": "Data",
+      "colActivity": "Atividade",
+      "colActor": "ID do autor",
+      "colTarget": "ID do alvo",
+      "noTarget": "Sem alvo",
+      "export": "Exportar CSV",
+      "exporting": "A exportar…",
+      "exportAria": "Exportar o registo de atividade completo de {{ org }} como CSV",
+      "exportError": "Não foi possível exportar o registo de atividade. Tenta novamente.",
+      "pagination": "Páginas do registo de atividade",
+      "previous": "Anterior",
+      "next": "Seguinte",
+      "page": "Página {{ page }} de {{ total }}",
+      "actions": {
+        "org.billing.checkout_started": "Pagamento iniciado",
+        "org.invite.accepted": "Convite aceite",
+        "org.invite.created": "Convite criado",
+        "org.invite.revoked": "Convite revogado",
+        "org.member.offboarded": "Membro removido",
+        "org.member.sessions_revoked": "Sessões do membro revogadas",
+        "org.policies.updated": "Políticas atualizadas",
+        "org.project.participant_added": "Participante do Projeto adicionado",
+        "org.project.participant_revoked": "Participante do Projeto removido",
+        "org.project.rotated": "Chave do Projeto atualizada"
+      }
     },
     "settings": {
       "heading": "Definições",

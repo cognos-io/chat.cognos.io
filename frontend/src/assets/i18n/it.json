@@ -307,6 +307,7 @@
     },
     "plan": {
       "actions": {
+        "org.dissolved": "Organizzazione sciolta",
         "cancelPlan": "Disdici piano",
         "choosePlan": "Scegli un piano",
         "resumePlan": "Riprendi piano",
@@ -1818,6 +1819,7 @@
       "invites": "Inviti",
       "billing": "Fatturazione e utilizzo",
       "policies": "Regole",
+      "audit": "Registro attività",
       "settings": "Impostazioni"
     },
     "roles": {
@@ -1936,6 +1938,39 @@
       "save": "Salva le regole",
       "saved": "Regole aggiornate",
       "saveError": "Impossibile salvare le regole. Riprova."
+    },
+    "audit": {
+      "heading": "Registro attività",
+      "subtitle": "Consulta le modifiche di sicurezza e amministrazione di questa Organizzazione.",
+      "metadataOnly": "Solo metadati amministrativi — mai contenuti di conversazioni o Progetti.",
+      "loadError": "Impossibile caricare l’attività amministrativa. Riprova.",
+      "empty": "Non sono ancora presenti attività amministrative.",
+      "tableCaption": "Attività amministrativa di {{ org }}",
+      "colWhen": "Data",
+      "colActivity": "Attività",
+      "colActor": "ID autore",
+      "colTarget": "ID obiettivo",
+      "noTarget": "Nessun obiettivo",
+      "export": "Esporta CSV",
+      "exporting": "Esportazione…",
+      "exportAria": "Esporta il registro attività completo di {{ org }} come CSV",
+      "exportError": "Impossibile esportare il registro attività. Riprova.",
+      "pagination": "Pagine del registro attività",
+      "previous": "Precedente",
+      "next": "Successiva",
+      "page": "Pagina {{ page }} di {{ total }}",
+      "actions": {
+        "org.billing.checkout_started": "Pagamento avviato",
+        "org.invite.accepted": "Invito accettato",
+        "org.invite.created": "Invito creato",
+        "org.invite.revoked": "Invito revocato",
+        "org.member.offboarded": "Membro rimosso",
+        "org.member.sessions_revoked": "Sessioni del membro revocate",
+        "org.policies.updated": "Regole aggiornate",
+        "org.project.participant_added": "Partecipante al Progetto aggiunto",
+        "org.project.participant_revoked": "Partecipante al Progetto rimosso",
+        "org.project.rotated": "Chiave del Progetto aggiornata"
+      }
     },
     "settings": {
       "heading": "Impostazioni",

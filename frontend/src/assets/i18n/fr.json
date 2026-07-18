@@ -307,6 +307,7 @@
     },
     "plan": {
       "actions": {
+        "org.dissolved": "Organisation dissoute",
         "cancelPlan": "Annuler l'offre",
         "choosePlan": "Choisir une offre",
         "resumePlan": "Reprendre l'offre",
@@ -1818,6 +1819,7 @@
       "invites": "Invitations",
       "billing": "Facturation et utilisation",
       "policies": "Politiques",
+      "audit": "Journal d’activité",
       "settings": "Paramètres"
     },
     "roles": {
@@ -1936,6 +1938,39 @@
       "save": "Enregistrer les politiques",
       "saved": "Politiques mises à jour",
       "saveError": "Impossible d'enregistrer les politiques. Veuillez réessayer."
+    },
+    "audit": {
+      "heading": "Journal d’activité",
+      "subtitle": "Consultez les changements de sécurité et d’administration de cette Organisation.",
+      "metadataOnly": "Uniquement des métadonnées administratives — jamais le contenu des conversations ou des Projets.",
+      "loadError": "Impossible de charger l’activité administrative. Veuillez réessayer.",
+      "empty": "Aucune activité administrative pour le moment.",
+      "tableCaption": "Activité administrative de {{ org }}",
+      "colWhen": "Date",
+      "colActivity": "Activité",
+      "colActor": "ID de l’auteur",
+      "colTarget": "ID de la cible",
+      "noTarget": "Aucune cible",
+      "export": "Exporter en CSV",
+      "exporting": "Exportation…",
+      "exportAria": "Exporter le journal d’activité complet de {{ org }} au format CSV",
+      "exportError": "Impossible d’exporter le journal d’activité. Veuillez réessayer.",
+      "pagination": "Pages du journal d’activité",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "page": "Page {{ page }} sur {{ total }}",
+      "actions": {
+        "org.billing.checkout_started": "Paiement commencé",
+        "org.invite.accepted": "Invitation acceptée",
+        "org.invite.created": "Invitation créée",
+        "org.invite.revoked": "Invitation révoquée",
+        "org.member.offboarded": "Membre supprimé",
+        "org.member.sessions_revoked": "Sessions du membre révoquées",
+        "org.policies.updated": "Politiques mises à jour",
+        "org.project.participant_added": "Participant au Projet ajouté",
+        "org.project.participant_revoked": "Participant au Projet supprimé",
+        "org.project.rotated": "Clé du Projet mise à jour"
+      }
     },
     "settings": {
       "heading": "Paramètres",

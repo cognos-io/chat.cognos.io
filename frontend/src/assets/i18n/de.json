@@ -307,6 +307,7 @@
     },
     "plan": {
       "actions": {
+        "org.dissolved": "Organisation aufgelöst",
         "cancelPlan": "Tarif kündigen",
         "choosePlan": "Tarif wählen",
         "resumePlan": "Tarif fortsetzen",
@@ -1818,6 +1819,7 @@
       "invites": "Einladungen",
       "billing": "Abrechnung & Nutzung",
       "policies": "Richtlinien",
+      "audit": "Aktivitätsprotokoll",
       "settings": "Einstellungen"
     },
     "roles": {
@@ -1936,6 +1938,39 @@
       "save": "Richtlinien speichern",
       "saved": "Richtlinien aktualisiert",
       "saveError": "Die Richtlinien konnten nicht gespeichert werden. Bitte versuche es erneut."
+    },
+    "audit": {
+      "heading": "Aktivitätsprotokoll",
+      "subtitle": "Prüfe Sicherheits- und Verwaltungsänderungen für diese Organisation.",
+      "metadataOnly": "Nur Verwaltungsmetadaten – niemals Inhalte von Unterhaltungen oder Projekten.",
+      "loadError": "Die Verwaltungsaktivitäten konnten nicht geladen werden. Versuche es erneut.",
+      "empty": "Noch keine Verwaltungsaktivitäten.",
+      "tableCaption": "Verwaltungsaktivitäten für {{ org }}",
+      "colWhen": "Zeitpunkt",
+      "colActivity": "Aktivität",
+      "colActor": "Akteur-ID",
+      "colTarget": "Ziel-ID",
+      "noTarget": "Kein Ziel",
+      "export": "CSV exportieren",
+      "exporting": "Wird exportiert…",
+      "exportAria": "Vollständiges Aktivitätsprotokoll für {{ org }} als CSV exportieren",
+      "exportError": "Das Aktivitätsprotokoll konnte nicht exportiert werden. Versuche es erneut.",
+      "pagination": "Seiten des Aktivitätsprotokolls",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "page": "Seite {{ page }} von {{ total }}",
+      "actions": {
+        "org.billing.checkout_started": "Zahlungsvorgang gestartet",
+        "org.invite.accepted": "Einladung angenommen",
+        "org.invite.created": "Einladung erstellt",
+        "org.invite.revoked": "Einladung widerrufen",
+        "org.member.offboarded": "Mitglied entfernt",
+        "org.member.sessions_revoked": "Sitzungen des Mitglieds widerrufen",
+        "org.policies.updated": "Richtlinien aktualisiert",
+        "org.project.participant_added": "Projektmitglied hinzugefügt",
+        "org.project.participant_revoked": "Projektmitglied entfernt",
+        "org.project.rotated": "Projektschlüssel aktualisiert"
+      }
     },
     "settings": {
       "heading": "Einstellungen",

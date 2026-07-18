@@ -119,6 +119,26 @@ export interface OrgUsageRecord {
   total_rappen: number;
 }
 
+// --- Content-free audit log (spec §12) --------------------------------------
+
+/** Administrative metadata only. Actor and target are opaque record ids. */
+export interface OrgAuditEventRecord {
+  id: string;
+  action: string;
+  actor: string;
+  target?: string;
+  created: string;
+}
+
+/** Paginated GET /api/v1/orgs/{id}/audit response. */
+export interface OrgAuditResponse {
+  page: number;
+  perPage: number;
+  totalItems: number;
+  totalPages: number;
+  items: OrgAuditEventRecord[];
+}
+
 // --- Invites (spec §5.5, §8.1) ----------------------------------------------
 
 /** Roles an invite can grant — Ownership is never granted by invite. */

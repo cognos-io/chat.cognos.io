@@ -307,6 +307,7 @@
     },
     "plan": {
       "actions": {
+        "org.dissolved": "Organización disuelta",
         "cancelPlan": "Cancelar plan",
         "choosePlan": "Elegir un plan",
         "resumePlan": "Reanudar plan",
@@ -1818,6 +1819,7 @@
       "invites": "Invitaciones",
       "billing": "Facturación y uso",
       "policies": "Políticas",
+      "audit": "Registro de actividad",
       "settings": "Configuración"
     },
     "roles": {
@@ -1936,6 +1938,39 @@
       "save": "Guardar políticas",
       "saved": "Políticas actualizadas",
       "saveError": "No se han podido guardar las políticas. Inténtalo de nuevo."
+    },
+    "audit": {
+      "heading": "Registro de actividad",
+      "subtitle": "Revisa los cambios de seguridad y administración de esta Organización.",
+      "metadataOnly": "Solo metadatos administrativos; nunca contenido de conversaciones o Proyectos.",
+      "loadError": "No se ha podido cargar la actividad administrativa. Inténtalo de nuevo.",
+      "empty": "Todavía no hay actividad administrativa.",
+      "tableCaption": "Actividad administrativa de {{ org }}",
+      "colWhen": "Fecha",
+      "colActivity": "Actividad",
+      "colActor": "ID del autor",
+      "colTarget": "ID del objetivo",
+      "noTarget": "Sin objetivo",
+      "export": "Exportar CSV",
+      "exporting": "Exportando…",
+      "exportAria": "Exportar el registro de actividad completo de {{ org }} como CSV",
+      "exportError": "No se ha podido exportar el registro de actividad. Inténtalo de nuevo.",
+      "pagination": "Páginas del registro de actividad",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "page": "Página {{ page }} de {{ total }}",
+      "actions": {
+        "org.billing.checkout_started": "Pago iniciado",
+        "org.invite.accepted": "Invitación aceptada",
+        "org.invite.created": "Invitación creada",
+        "org.invite.revoked": "Invitación revocada",
+        "org.member.offboarded": "Miembro eliminado",
+        "org.member.sessions_revoked": "Sesiones del miembro revocadas",
+        "org.policies.updated": "Políticas actualizadas",
+        "org.project.participant_added": "Participante del Proyecto añadido",
+        "org.project.participant_revoked": "Participante del Proyecto eliminado",
+        "org.project.rotated": "Clave del Proyecto actualizada"
+      }
     },
     "settings": {
       "heading": "Configuración",

@@ -20,6 +20,7 @@ import { CompactionDurableMemory } from '@app/interfaces/compaction';
 import { ConversationRecord } from '@app/interfaces/conversation';
 import { Model, ModelsCatalogueResponse, PrivacyTier } from '@app/interfaces/model';
 import {
+  OrgAuditResponse,
   OrgBillingRecord,
   OrgCheckoutResponse,
   OrgInviteAcceptResponse,
@@ -1270,6 +1271,27 @@ export class CognosApiService {
         headers: this.authHeaders(),
       },
     );
+  }
+
+  // listOrgAudit returns content-free administrative metadata only. The
+  // backend role-gates this to Organisation Owners/Admins.
+  listOrgAudit(
+    orgId: string,
+    page: number,
+    pageSize: number,
+  ): Observable<OrgAuditResponse> {
+    return this._http.get<OrgAuditResponse>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/audit?page=${page}&page_size=${pageSize}`,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  /** Download the complete content-free Organisation audit log as CSV. */
+  exportOrgAudit(orgId: string): Observable<Blob> {
+    return this._http.get(`${this._baseUrl}/api/v1/orgs/${orgId}/audit/export`, {
+      headers: this.authHeaders(),
+      responseType: 'blob',
+    });
   }
 
   // createOrgInvite mints a single-use invite token. The token is returned

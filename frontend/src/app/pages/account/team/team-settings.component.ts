@@ -30,13 +30,14 @@ import { CognosApiService } from '@app/services/cognos-api.service';
 import { ErrorService } from '@app/services/error.service';
 import { OrganisationService } from '@app/services/organisation.service';
 
+import { OrgAuditComponent } from './org-audit.component';
 import { OrgBillingComponent } from './org-billing.component';
 import { OrgGeneralComponent } from './org-general.component';
 import { OrgInvitesComponent } from './org-invites.component';
 import { OrgMembersComponent } from './org-members.component';
 import { OrgPoliciesComponent } from './org-policies.component';
 
-type AdminTab = 'members' | 'invites' | 'billing' | 'policies' | 'settings';
+type AdminTab = 'members' | 'invites' | 'billing' | 'policies' | 'audit' | 'settings';
 
 // TeamSettingsComponent is the /account/team page (behind the `team` feature
 // flag). Three shapes, by what the signed-in Account holds:
@@ -45,7 +46,7 @@ type AdminTab = 'members' | 'invites' | 'billing' | 'policies' | 'settings';
 // - only Member-role Organisations → a read-only list (Members have no
 //   administrative surface, spec §5.3) plus the create flow;
 // - Owner/Admin Organisations → the admin view: Members, Invites, Billing &
-//   usage, Settings.
+//   usage, Policies, Activity log, Settings.
 // Designed so Sophie finishes creation and her first invite in one sitting —
 // no SSO, no IT step, nothing before Seat 1 (persona PER-005).
 @Component({
@@ -61,6 +62,7 @@ type AdminTab = 'members' | 'invites' | 'billing' | 'policies' | 'settings';
     CognosSegmentedControlComponent,
     CognosTextFieldComponent,
     OrgBillingComponent,
+    OrgAuditComponent,
     OrgGeneralComponent,
     OrgInvitesComponent,
     OrgMembersComponent,
@@ -132,6 +134,9 @@ type AdminTab = 'members' | 'invites' | 'billing' | 'policies' | 'settings';
             }
             @case ('policies') {
               <app-org-policies [org]="org" (updated)="onOrgUpdated($event)" />
+            }
+            @case ('audit') {
+              <app-org-audit [org]="org" />
             }
             @case ('settings') {
               <app-org-general [org]="org" (renamed)="onRenamed($event)" />
@@ -310,6 +315,7 @@ export class TeamSettingsComponent {
       { value: 'invites', label: t('team.tabs.invites') },
       { value: 'billing', label: t('team.tabs.billing') },
       { value: 'policies', label: t('team.tabs.policies') },
+      { value: 'audit', label: t('team.tabs.audit') },
       { value: 'settings', label: t('team.tabs.settings') },
     ];
   }
@@ -320,6 +326,7 @@ export class TeamSettingsComponent {
       value === 'invites' ||
       value === 'billing' ||
       value === 'policies' ||
+      value === 'audit' ||
       value === 'settings'
     ) {
       this.tab.set(value);

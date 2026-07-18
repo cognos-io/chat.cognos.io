@@ -307,6 +307,7 @@
     },
     "plan": {
       "actions": {
+        "org.dissolved": "Organisation dissolved",
         "cancelPlan": "Cancel plan",
         "choosePlan": "Choose a plan",
         "resumePlan": "Resume plan",
@@ -1818,6 +1819,7 @@
       "invites": "Invites",
       "billing": "Billing & usage",
       "policies": "Policies",
+      "audit": "Activity log",
       "settings": "Settings"
     },
     "roles": {
@@ -1936,6 +1938,39 @@
       "save": "Save policies",
       "saved": "Policies updated",
       "saveError": "Could not save the policies. Please try again."
+    },
+    "audit": {
+      "heading": "Activity log",
+      "subtitle": "Review security and administration changes for this Organisation.",
+      "metadataOnly": "Administrative metadata only — never conversation or Project content.",
+      "loadError": "Could not load administrative activity. Please try again.",
+      "empty": "No administrative activity yet.",
+      "tableCaption": "Administrative activity for {{ org }}",
+      "colWhen": "When",
+      "colActivity": "Activity",
+      "colActor": "Actor ID",
+      "colTarget": "Target ID",
+      "noTarget": "No target",
+      "export": "Export CSV",
+      "exporting": "Exporting…",
+      "exportAria": "Export the complete activity log for {{ org }} as CSV",
+      "exportError": "Could not export the activity log. Please try again.",
+      "pagination": "Activity log pages",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {{ page }} of {{ total }}",
+      "actions": {
+        "org.billing.checkout_started": "Billing checkout started",
+        "org.invite.accepted": "Invite accepted",
+        "org.invite.created": "Invite created",
+        "org.invite.revoked": "Invite revoked",
+        "org.member.offboarded": "Member removed",
+        "org.member.sessions_revoked": "Member sessions revoked",
+        "org.policies.updated": "Policies updated",
+        "org.project.participant_added": "Project participant added",
+        "org.project.participant_revoked": "Project participant removed",
+        "org.project.rotated": "Project key updated"
+      }
     },
     "settings": {
       "heading": "Settings",
