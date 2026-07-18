@@ -27,13 +27,15 @@ org-owned Project, Workspace). Personas [`PER-005`](../personas/05-team-lead-org
 Org admin UI (frontend, task: replace `team` placeholder settings section) — components EXIST and
 build+suite are green, but the authoring agent died at the org spend limit; remaining gaps:
 
-1. **~117 `team.*` i18n keys missing from ALL six catalogs** (parity spec passes because they are
-   missing everywhere). A kimi draft of all six locales is being produced; review against language
-   rules (de-CH ss/du, fr vous, es-ES, pt-PT tu, it tu) before writing into
-   `frontend/src/assets/i18n/*.json`.
-2. **Component specs missing** for team-settings / org-members / org-invites / org-billing /
-   offboard-member-dialog (only `org-overage.spec.ts` exists). Brief prepared at scratchpad
-   `kimi-specs-brief.md` (kimi outputs spec files read-only; orchestrator applies).
+1. ~~117 `team.*` i18n keys~~ DONE: merged into all six catalogs (117 keys, identical structure,
+   language tripwires verified: de no-ß/du, fr vous, pt-PT tu no-você, es tú, it tu).
+2. **Component specs iterating**: five spec files exist for team-settings / org-members /
+   org-invites / org-billing / offboard-member-dialog; they compile (protected members accessed via
+   bracket notation; `redirect` mock typed) but ~34 tests still fail — assertions are being
+   corrected against the real rendered English copy (catalog merged mid-iteration). Failure log at
+   scratchpad `team-spec-failures2.txt`; if iteration with the second model doesn't converge, fix
+   by hand against the log — the failures are assertion/selector mismatches, not component bugs
+   found so far.
 3. Files: `frontend/src/app/pages/account/team/*`, `app.routes.ts` (placeholder already swapped to
    `TeamSettingsComponent`), `billing/pricing.ts`, `interfaces/organisation.ts`,
    `cognos-api.service.ts` (org billing/invite/usage methods), `utils/currency.{ts,spec.ts}`.
