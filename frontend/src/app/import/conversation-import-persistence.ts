@@ -48,7 +48,7 @@ export class ConversationImportPersistence {
         version: '1',
         content: message.text,
         conversation_id: conversationId,
-        parent_message_id: parentMessage,
+        ...(parentMessage ? { parent_message_id: parentMessage } : {}),
         created_at: message.createdAt,
         ...(message.role === 'user' ? { owner_id: ownerId } : {}),
       };

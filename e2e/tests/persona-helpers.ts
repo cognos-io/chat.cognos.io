@@ -148,6 +148,40 @@ export async function upsertOrgBilling(
   await su.dispose();
 }
 
+/**
+ * Set a user's trial/PAYG balance (micro-rappen) via the e2e superuser. Used to
+ * simulate trial exhaustion mid-journey without burning through real completions.
+ *
+ * Both `balance_microrappen` and `balance_rappen` must be updated: StateForUser
+ * re-derives micro from rappen when micro is zero but rappen is positive.
+ */
+export async function setUserBillingBalance(
+  userId: string,
+  balanceMicroRappen: number,
+): Promise<void> {
+  const balanceRappen = Math.floor(balanceMicroRappen / 1_000_000);
+  const su = await superuserApi();
+  const listed = await su.get('/api/collections/user_billing/records', {
+    params: { filter: `(user_id='${userId}')`, perPage: 1 },
+  });
+  expect(listed.ok(), `list user_billing: ${listed.status()}`).toBe(true);
+  const body = (await listed.json()) as { items: { id: string }[] };
+  expect(body.items.length, `user_billing row for ${userId}`).toBe(1);
+  const patched = await su.patch(
+    `/api/collections/user_billing/records/${body.items[0].id}`,
+    {
+      data: {
+        balance_microrappen: balanceMicroRappen,
+        balance_rappen: balanceRappen,
+      },
+    },
+  );
+  expect(patched.ok(), `set balance: ${patched.status()} ${await patched.text()}`).toBe(
+    true,
+  );
+  await su.dispose();
+}
+
 /** Flip only the past_due flag (simulates a Paddle past_due webhook). */
 export async function setOrgPastDue(orgId: string, pastDue: boolean): Promise<void> {
   const su = await superuserApi();

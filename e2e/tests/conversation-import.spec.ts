@@ -1,6 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 
 import { makeTestAccount } from './fixtures';
 import {
@@ -13,27 +11,10 @@ import {
   gotoRegister,
   submitRegister,
 } from './helpers';
+import { pinWorkerHasNoNetworkConsoleOrPersistence } from './import-worker-pins';
 
 test('import worker has no network, console or persistence capability', async () => {
-  const source = await readFile(
-    resolve('../frontend/src/app/import/conversation-import.worker.ts'),
-    'utf8',
-  );
-  for (const forbidden of [
-    'fetch(',
-    'XMLHttpRequest',
-    'WebSocket',
-    'EventSource',
-    'console.',
-    'localStorage',
-    'sessionStorage',
-    'indexedDB',
-    'importScripts',
-  ]) {
-    expect(source, `worker source must not contain ${forbidden}`).not.toContain(
-      forbidden,
-    );
-  }
+  await pinWorkerHasNoNetworkConsoleOrPersistence();
 });
 
 test('imports a Claude export locally and sends only ciphertext to Cognos', async ({
