@@ -605,6 +605,40 @@ func addPocketBaseRoutes(
 		rateLimiterMiddleware(app),
 	)
 
+	// Project participants and key rotation (org-owned projects only;
+	// personal-project sharing is rejected in v1).
+	e.Router.GET(
+		"/api/v1/projects/{projectID}/participants",
+		handler.ProjectParticipantsList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/projects/{projectID}/participants",
+		handler.ProjectParticipantsAdd(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.DELETE(
+		"/api/v1/projects/{projectID}/participants/{userID}",
+		handler.ProjectParticipantsRevoke(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.POST(
+		"/api/v1/projects/{projectID}/rotate",
+		handler.ProjectKeyRotate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
 	e.Router.GET(
 		"/api/v1/projects/{projectID}/conversations",
 		handler.ProjectConversationsList(app),

@@ -33,13 +33,15 @@ func (f *fakeOrgPaddleClient) CreateCheckout(_ context.Context, _ paddle.Checkou
 }
 
 func (f *fakeOrgPaddleClient) CancelSubscription(_ context.Context, _ string) error { return nil }
-func (f *fakeOrgPaddleClient) ResumeSubscription(_ context.Context, _ string) error  { return nil }
+func (f *fakeOrgPaddleClient) ResumeSubscription(_ context.Context, _ string) error { return nil }
 
 func (f *fakeOrgPaddleClient) CreatePortalSession(_ context.Context, _ string, _ []string) (paddle.PortalSession, error) {
 	return paddle.PortalSession{OverviewURL: f.portalURL}, nil
 }
 
-func (f *fakeOrgPaddleClient) GetCard(_ context.Context, _ string) (*paddle.Card, error) { return nil, nil }
+func (f *fakeOrgPaddleClient) GetCard(_ context.Context, _ string) (*paddle.Card, error) {
+	return nil, nil
+}
 
 func (f *fakeOrgPaddleClient) ListInvoices(_ context.Context, _ string) ([]paddle.Invoice, error) {
 	return nil, nil
@@ -49,7 +51,9 @@ func (f *fakeOrgPaddleClient) GetTransactionCustomerID(_ context.Context, _ stri
 	return "", nil
 }
 
-func (f *fakeOrgPaddleClient) GetInvoicePDFURL(_ context.Context, _ string) (string, error) { return "", nil }
+func (f *fakeOrgPaddleClient) GetInvoicePDFURL(_ context.Context, _ string) (string, error) {
+	return "", nil
+}
 
 func (f *fakeOrgPaddleClient) ChangeSubscriptionPrice(_ context.Context, _, _, _ string) error {
 	return nil
@@ -136,15 +140,17 @@ func TestOrgBillingCheckoutRoleGates(t *testing.T) {
 		wantBody   string
 	}{
 		{
-			name:       "owner can checkout",
-			orgID:      "orgbill00000001",
-			seed:       func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) { seedOrganisation(t, app, "orgbill00000001", "Acme GmbH", "test1@example.com") },
+			name:  "owner can checkout",
+			orgID: "orgbill00000001",
+			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+				seedOrganisation(t, app, "orgbill00000001", "Acme GmbH", "test1@example.com")
+			},
 			authEmail:  "test1@example.com",
 			wantStatus: http.StatusOK,
 			wantBody:   `"checkout_url":"https://checkout.paddle.com/fake"`,
 		},
 		{
-			name: "admin cannot checkout",
+			name:  "admin cannot checkout",
 			orgID: "orgbill00000002",
 			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 				seedOrganisation(t, app, "orgbill00000002", "Acme GmbH", "test1@example.com")
@@ -154,7 +160,7 @@ func TestOrgBillingCheckoutRoleGates(t *testing.T) {
 			wantStatus: http.StatusForbidden,
 		},
 		{
-			name: "member cannot checkout",
+			name:  "member cannot checkout",
 			orgID: "orgbill00000003",
 			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 				seedOrganisation(t, app, "orgbill00000003", "Acme GmbH", "test1@example.com")
@@ -164,9 +170,11 @@ func TestOrgBillingCheckoutRoleGates(t *testing.T) {
 			wantStatus: http.StatusForbidden,
 		},
 		{
-			name:       "non-member cannot checkout",
-			orgID:      "orgbill00000004",
-			seed:       func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) { seedOrganisation(t, app, "orgbill00000004", "Acme GmbH", "test1@example.com") },
+			name:  "non-member cannot checkout",
+			orgID: "orgbill00000004",
+			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+				seedOrganisation(t, app, "orgbill00000004", "Acme GmbH", "test1@example.com")
+			},
 			authEmail:  "test2@example.com",
 			wantStatus: http.StatusNotFound,
 		},
@@ -207,15 +215,17 @@ func TestOrgBillingGetRoleGates(t *testing.T) {
 		wantBody   string
 	}{
 		{
-			name:       "owner can get billing",
-			orgID:      "orgbill00000021",
-			seed:       func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) { seedOrganisation(t, app, "orgbill00000021", "Acme GmbH", "test1@example.com") },
+			name:  "owner can get billing",
+			orgID: "orgbill00000021",
+			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+				seedOrganisation(t, app, "orgbill00000021", "Acme GmbH", "test1@example.com")
+			},
 			authEmail:  "test1@example.com",
 			wantStatus: http.StatusOK,
 			wantBody:   `"plan_type":"inactive"`,
 		},
 		{
-			name: "admin can get billing",
+			name:  "admin can get billing",
 			orgID: "orgbill00000022",
 			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 				seedOrganisation(t, app, "orgbill00000022", "Acme GmbH", "test1@example.com")
@@ -226,7 +236,7 @@ func TestOrgBillingGetRoleGates(t *testing.T) {
 			wantBody:   `"plan_type":"inactive"`,
 		},
 		{
-			name: "member cannot get billing",
+			name:  "member cannot get billing",
 			orgID: "orgbill00000023",
 			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 				seedOrganisation(t, app, "orgbill00000023", "Acme GmbH", "test1@example.com")
@@ -236,9 +246,11 @@ func TestOrgBillingGetRoleGates(t *testing.T) {
 			wantStatus: http.StatusForbidden,
 		},
 		{
-			name:       "non-member cannot get billing",
-			orgID:      "orgbill00000024",
-			seed:       func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) { seedOrganisation(t, app, "orgbill00000024", "Acme GmbH", "test1@example.com") },
+			name:  "non-member cannot get billing",
+			orgID: "orgbill00000024",
+			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+				seedOrganisation(t, app, "orgbill00000024", "Acme GmbH", "test1@example.com")
+			},
 			authEmail:  "test2@example.com",
 			wantStatus: http.StatusNotFound,
 		},
@@ -279,15 +291,17 @@ func TestOrgBillingPortalRoleGates(t *testing.T) {
 		wantBody   string
 	}{
 		{
-			name:       "owner can open portal",
-			orgID:      "orgbill00000031",
-			seed:       func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) { seedOrganisation(t, app, "orgbill00000031", "Acme GmbH", "test1@example.com") },
+			name:  "owner can open portal",
+			orgID: "orgbill00000031",
+			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+				seedOrganisation(t, app, "orgbill00000031", "Acme GmbH", "test1@example.com")
+			},
 			authEmail:  "test1@example.com",
 			wantStatus: http.StatusOK,
 			wantBody:   `"portal_url":"https://portal.paddle.com/fake"`,
 		},
 		{
-			name: "admin cannot open portal",
+			name:  "admin cannot open portal",
 			orgID: "orgbill00000032",
 			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 				seedOrganisation(t, app, "orgbill00000032", "Acme GmbH", "test1@example.com")
@@ -297,7 +311,7 @@ func TestOrgBillingPortalRoleGates(t *testing.T) {
 			wantStatus: http.StatusForbidden,
 		},
 		{
-			name: "member cannot open portal",
+			name:  "member cannot open portal",
 			orgID: "orgbill00000033",
 			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 				seedOrganisation(t, app, "orgbill00000033", "Acme GmbH", "test1@example.com")
@@ -307,9 +321,11 @@ func TestOrgBillingPortalRoleGates(t *testing.T) {
 			wantStatus: http.StatusForbidden,
 		},
 		{
-			name:       "non-member cannot open portal",
-			orgID:      "orgbill00000034",
-			seed:       func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) { seedOrganisation(t, app, "orgbill00000034", "Acme GmbH", "test1@example.com") },
+			name:  "non-member cannot open portal",
+			orgID: "orgbill00000034",
+			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+				seedOrganisation(t, app, "orgbill00000034", "Acme GmbH", "test1@example.com")
+			},
 			authEmail:  "test2@example.com",
 			wantStatus: http.StatusNotFound,
 		},
@@ -358,15 +374,17 @@ func TestOrgUsageRoleGates(t *testing.T) {
 		wantBody   string
 	}{
 		{
-			name:       "owner can view usage",
-			orgID:      "orgbill00000041",
-			seed:       func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) { seedOrganisation(t, app, "orgbill00000041", "Acme GmbH", "test1@example.com") },
+			name:  "owner can view usage",
+			orgID: "orgbill00000041",
+			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+				seedOrganisation(t, app, "orgbill00000041", "Acme GmbH", "test1@example.com")
+			},
 			authEmail:  "test1@example.com",
 			wantStatus: http.StatusOK,
 			wantBody:   `"total_rappen":0`,
 		},
 		{
-			name: "admin can view usage",
+			name:  "admin can view usage",
 			orgID: "orgbill00000042",
 			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 				seedOrganisation(t, app, "orgbill00000042", "Acme GmbH", "test1@example.com")
@@ -377,7 +395,7 @@ func TestOrgUsageRoleGates(t *testing.T) {
 			wantBody:   `"total_rappen":0`,
 		},
 		{
-			name: "member cannot view usage",
+			name:  "member cannot view usage",
 			orgID: "orgbill00000043",
 			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 				seedOrganisation(t, app, "orgbill00000043", "Acme GmbH", "test1@example.com")
@@ -387,9 +405,11 @@ func TestOrgUsageRoleGates(t *testing.T) {
 			wantStatus: http.StatusForbidden,
 		},
 		{
-			name:       "non-member cannot view usage",
-			orgID:      "orgbill00000044",
-			seed:       func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) { seedOrganisation(t, app, "orgbill00000044", "Acme GmbH", "test1@example.com") },
+			name:  "non-member cannot view usage",
+			orgID: "orgbill00000044",
+			seed: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+				seedOrganisation(t, app, "orgbill00000044", "Acme GmbH", "test1@example.com")
+			},
 			authEmail:  "test2@example.com",
 			wantStatus: http.StatusNotFound,
 		},

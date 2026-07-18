@@ -237,10 +237,10 @@ func extractCustomData(raw json.RawMessage) struct{ UserID, OrgID string } {
 }
 
 // resolveWebhookSubject maps a Paddle event to a Cognos billing subject:
-//   1. custom_data.org_id
-//   2. custom_data.user_id
-//   3. paddle_subscription_id lookup in org_billing, then user_billing
-//   4. paddle_customer_id lookup on users, then organisations
+//  1. custom_data.org_id
+//  2. custom_data.user_id
+//  3. paddle_subscription_id lookup in org_billing, then user_billing
+//  4. paddle_customer_id lookup on users, then organisations
 func resolveWebhookSubject(app core.App, customDataUserID, customDataOrgID, customerID, subscriptionID string) billing.Subject {
 	if customDataOrgID != "" {
 		if _, err := app.FindRecordById("organisations", customDataOrgID); err == nil {

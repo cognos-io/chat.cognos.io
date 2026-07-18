@@ -24,6 +24,9 @@ type projectRecordResponse struct {
 	Updated string `json:"updated"`
 	Data    string `json:"data"`
 	Creator string `json:"creator,omitempty"`
+	// Organisation is plaintext operational metadata: set when the Project is
+	// org-owned, empty for personal Projects. The client scopes Workspaces on it.
+	Organisation string `json:"organisation,omitempty"`
 	// WrappedProjectKey is the symmetric project content key sealed to the
 	// requesting caller's public key, at the project's current key_version.
 	// It is embedded in the response so the client can decrypt `data` in a
@@ -311,12 +314,13 @@ func projectRecordToResponse(record *core.Record) projectRecordResponse {
 		version = 1
 	}
 	return projectRecordResponse{
-		ID:         record.Id,
-		Created:    record.GetString("created"),
-		Updated:    record.GetString("updated"),
-		Data:       record.GetString("data"),
-		Creator:    record.GetString("creator"),
-		KeyVersion: version,
-		ArchivedAt: record.GetString("archived_at"),
+		ID:           record.Id,
+		Created:      record.GetString("created"),
+		Updated:      record.GetString("updated"),
+		Data:         record.GetString("data"),
+		Creator:      record.GetString("creator"),
+		Organisation: record.GetString("organisation"),
+		KeyVersion:   version,
+		ArchivedAt:   record.GetString("archived_at"),
 	}
 }
