@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { NEVER, of, throwError } from 'rxjs';
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CognosToastService } from '@cognos/ui-angular';
 
@@ -45,6 +45,7 @@ describe('OrgInvitesComponent', () => {
   let toastNotify: ReturnType<typeof vi.fn>;
   let errorAlert: ReturnType<typeof vi.fn>;
   let writeText: ReturnType<typeof vi.fn>;
+  let originalClipboardDescriptor: PropertyDescriptor | undefined;
 
   async function render() {
     await TestBed.configureTestingModule({
@@ -81,14 +82,26 @@ describe('OrgInvitesComponent', () => {
     errorAlert = vi.fn();
     writeText = vi.fn(() => Promise.resolve());
 
-    // Keep userAgent (and friends): a bare { clipboard } object leaks into
-    // other spec files sharing this environment and crashes Angular's
-    // DefaultValueAccessor, which reads navigator.userAgent.
-    Object.defineProperty(globalThis, 'navigator', {
-      value: { userAgent: 'vitest', clipboard: { writeText } },
-      writable: true,
+    originalClipboardDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis.navigator,
+      'clipboard',
+    );
+    Object.defineProperty(globalThis.navigator, 'clipboard', {
       configurable: true,
+      value: { writeText },
     });
+  });
+
+  afterEach(() => {
+    if (originalClipboardDescriptor) {
+      Object.defineProperty(
+        globalThis.navigator,
+        'clipboard',
+        originalClipboardDescriptor,
+      );
+    } else {
+      Reflect.deleteProperty(globalThis.navigator, 'clipboard');
+    }
   });
 
   // ---- Loading / error / empty ----------------------------------------------
@@ -181,6 +194,19 @@ describe('OrgInvitesComponent', () => {
 
     expect(writeText).toHaveBeenCalledWith('tok_abc123');
     expect(toastNotify).toHaveBeenCalled();
+  });
+
+  it('shows an actionable error when the clipboard write fails', async () => {
+    writeText.mockRejectedValueOnce(new Error('clipboard denied'));
+    await render();
+
+    component['email'].set('x@y');
+    component['create']();
+    await component['copyToken']();
+
+    expect(errorAlert).toHaveBeenCalledWith(
+      'Could not copy the invite token. Select it and copy it manually.',
+    );
   });
 
   it('shows error alert when createOrgInvite fails', async () => {

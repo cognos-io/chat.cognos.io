@@ -1857,6 +1857,7 @@
       "submit": "Create invite",
       "createError": "Could not create the invite. Please try again.",
       "copiedToast": "Token copied to clipboard",
+      "copyError": "Could not copy the invite token. Select it and copy it manually.",
       "pendingHeading": "Pending invites",
       "loadError": "Could not load invites. Please try again.",
       "empty": "No pending invites.",

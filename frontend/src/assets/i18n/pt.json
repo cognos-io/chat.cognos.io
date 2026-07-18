@@ -1857,6 +1857,7 @@
       "submit": "Criar convite",
       "createError": "Não foi possível criar o convite. Tenta novamente.",
       "copiedToast": "Token copiado para a área de transferência",
+      "copyError": "Não foi possível copiar o token de convite. Seleciona-o e copia-o manualmente.",
       "pendingHeading": "Convites pendentes",
       "loadError": "Não foi possível carregar os convites. Tenta novamente.",
       "empty": "Não há convites pendentes.",

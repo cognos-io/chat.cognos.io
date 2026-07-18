@@ -1857,6 +1857,7 @@
       "submit": "Créer l'invitation",
       "createError": "Impossible de créer l'invitation. Veuillez réessayer.",
       "copiedToast": "Jeton copié dans le presse-papiers",
+      "copyError": "Impossible de copier le jeton d'invitation. Sélectionnez-le et copiez-le manuellement.",
       "pendingHeading": "Invitations en attente",
       "loadError": "Impossible de charger les invitations. Veuillez réessayer.",
       "empty": "Aucune invitation en attente.",

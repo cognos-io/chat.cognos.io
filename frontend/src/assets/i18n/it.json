@@ -1857,6 +1857,7 @@
       "submit": "Crea invito",
       "createError": "Impossibile creare l'invito. Riprova.",
       "copiedToast": "Token copiato negli appunti",
+      "copyError": "Impossibile copiare il token di invito. Selezionalo e copialo manualmente.",
       "pendingHeading": "Inviti in sospeso",
       "loadError": "Impossibile caricare gli inviti. Riprova.",
       "empty": "Nessun invito in sospeso.",

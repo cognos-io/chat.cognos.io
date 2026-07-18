@@ -380,7 +380,11 @@ export class OrgInvitesComponent {
 
   protected async copyToken(): Promise<void> {
     const token = this.createdInvite()?.token;
-    if (!token || typeof navigator === 'undefined' || !navigator.clipboard) {
+    if (!token) {
+      return;
+    }
+    if (typeof navigator === 'undefined' || !navigator.clipboard) {
+      this.showCopyError();
       return;
     }
     try {
@@ -391,8 +395,12 @@ export class OrgInvitesComponent {
         icon: 'copy',
       });
     } catch {
-      // Clipboard unavailable — the code stays visible for manual copying.
+      this.showCopyError();
     }
+  }
+
+  private showCopyError(): void {
+    this._errors.alert(this._transloco.translate('team.invites.copyError'));
   }
 
   /** Dismiss the shown-once panel. The token is gone for good after this. */

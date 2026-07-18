@@ -1857,6 +1857,7 @@
       "submit": "Einladung erstellen",
       "createError": "Die Einladung konnte nicht erstellt werden. Bitte versuche es erneut.",
       "copiedToast": "Token in die Zwischenablage kopiert",
+      "copyError": "Der Einladungstoken konnte nicht kopiert werden. Wähle ihn aus und kopiere ihn manuell.",
       "pendingHeading": "Ausstehende Einladungen",
       "loadError": "Einladungen konnten nicht geladen werden. Bitte versuche es erneut.",
       "empty": "Keine ausstehenden Einladungen.",

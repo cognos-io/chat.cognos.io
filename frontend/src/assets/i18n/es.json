@@ -1857,6 +1857,7 @@
       "submit": "Crear invitación",
       "createError": "No se ha podido crear la invitación. Inténtalo de nuevo.",
       "copiedToast": "Token copiado al portapapeles",
+      "copyError": "No se ha podido copiar el token de invitación. Selecciónalo y cópialo manualmente.",
       "pendingHeading": "Invitaciones pendientes",
       "loadError": "No se han podido cargar las invitaciones. Inténtalo de nuevo.",
       "empty": "No hay invitaciones pendientes.",
