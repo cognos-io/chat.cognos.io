@@ -893,9 +893,10 @@ export const parseOrgCompletionBillingRestriction = (
 // - 'locked': a personal billing 402 or unverified email. The locked-composer
 //   UI carries the recovery path, so the optimistic turn is removed entirely.
 // - 'org_blocked': an ORG_BILLING_* 402. The org billing banner is the single
-//   explanation and next step; the member keeps their message in the thread
-//   but the generic retry card must never stack on top of the banner — a
-//   retry is guaranteed to fail until the Organisation's billing is fixed.
+//   explanation and next step; the draft stays in the composer, while the
+//   optimistic transcript turn is removed so it never looks delivered. The
+//   generic retry card must not stack on top of the banner — a retry is
+//   guaranteed to fail until the Organisation's billing is fixed.
 // - 'retryable': everything else. Keep the user's message and show the inline
 //   retry card.
 export type CompletionFailureHandling = 'locked' | 'org_blocked' | 'retryable';
@@ -1876,13 +1877,13 @@ export class MessageService {
           // Org billing pause: the org banner is the single explanation and
           // owns the next step, so suppress (and clear any stale) generic
           // retry card — a retry is guaranteed to fail until the Organisation
-          // restores billing. The user's message stays in the thread so
-          // nothing is lost (persona PER-006).
+          // restores billing. The composer restores the draft, so remove the
+          // optimistic transcript turn to avoid implying it was delivered.
           this._failedRequest = null;
           this._sendFailed.set(false);
           return of({
             status: MessageStatus.ErrorSending,
-            messages: removeStreamingAssistantMessage(
+            messages: removeStreamingCompletionMessages(
               this.state().messages,
               messageRequest.requestId,
             ),
@@ -2603,7 +2604,7 @@ export class MessageService {
   // reportCompletionError routes a failed completion to the right surface and
   // returns how the caller should handle it (see classifyCompletionFailure):
   // 'locked' removes the optimistic turn (the locked-composer UI carries the
-  // recovery path), 'org_blocked' keeps the user's message but leaves the org
+  // recovery path), 'org_blocked' restores the composer draft and leaves the
   // billing banner as the single explanation (no generic retry card), and
   // 'retryable' keeps the message and shows the inline retry.
   // clearOrgBillingBlockOnSuccess drops the org billing banner once a
@@ -2629,12 +2630,10 @@ export class MessageService {
     const handling = classifyCompletionFailure(err);
     switch (handling) {
       case 'org_blocked': {
-        // Org billing pause (fail closed): surface the org banner and keep the
-        // user's message in the thread — the block is the Organisation's to
-        // fix, and the member's draft must never be lost to it (persona
-        // PER-006). The banner owns the explanation and next step, so the
-        // caller must NOT show the generic retry card alongside it. The
-        // personal plan state and personal composer stay untouched.
+        // Org billing pause (fail closed): surface the org banner and preserve
+        // the member's composer draft (persona PER-006). The banner owns the
+        // explanation and next step, so the caller must NOT show the generic
+        // retry card alongside it. The personal plan state stays untouched.
         const orgRestriction = parseOrgCompletionBillingRestriction(err);
         if (orgRestriction) {
           this._billingService.markOrgSendingBlocked(orgRestriction);

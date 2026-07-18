@@ -212,9 +212,9 @@ describe('classifyCompletionFailure', () => {
     new HttpErrorResponse({ status: 402, error: body });
 
   // Pin: an org billing 402 must be the org banner's alone — the send path
-  // keeps the member's message but must NOT raise the generic retry card on
-  // top of the banner (a retry is guaranteed to fail until the org's billing
-  // is fixed), and must never lock the personal composer.
+  // restores the member's composer draft but must NOT raise the generic retry
+  // card on top of the banner (a retry is guaranteed to fail until the org's
+  // billing is fixed), and must never lock the personal composer.
   it.each([['ORG_BILLING_INACTIVE'], ['ORG_BILLING_PAST_DUE']])(
     'classifies an %s 402 as org_blocked (banner owns it, no retry card)',
     (code) => {
