@@ -84,11 +84,28 @@ func routes(logger *slog.Logger) http.Handler {
 	mux.HandleFunc("POST /transactions", paddleTransactionHandler(logger))
 	mux.HandleFunc("POST /customers/{customerID}/portal-sessions", paddlePortalSessionHandler(logger))
 	mux.HandleFunc("PATCH /subscriptions/{subscriptionID}", paddleSubscriptionHandler(logger))
+	mux.HandleFunc("POST /subscriptions/{subscriptionID}/cancel", paddleSubscriptionCancelHandler(logger))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("not found", "method", r.Method, "path", r.URL.Path)
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 	})
 	return mux
+}
+
+func paddleSubscriptionCancelHandler(logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			EffectiveFrom string `json:"effective_from"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.EffectiveFrom != "next_billing_period" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid subscription cancellation"})
+			return
+		}
+		logger.Info("mock paddle subscription cancelled", "subscription_id", r.PathValue("subscriptionID"))
+		writeJSON(w, http.StatusOK, map[string]any{
+			"data": map[string]string{"id": r.PathValue("subscriptionID")},
+		})
+	}
 }
 
 type paddleTransactionCreate struct {

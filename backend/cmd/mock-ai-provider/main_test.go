@@ -505,6 +505,20 @@ func TestRoutesHealthAndCompletionsContract(t *testing.T) {
 		}
 	})
 
+	t.Run("POST subscription cancel schedules the next billing period", func(t *testing.T) {
+		req := httptest.NewRequest(
+			http.MethodPost,
+			"/subscriptions/sub_e2e_org/cancel",
+			strings.NewReader(`{"effective_from":"next_billing_period"}`),
+		)
+		rec := httptest.NewRecorder()
+		routes(slog.New(slog.NewTextHandler(io.Discard, nil))).ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d, want 200; body=%s", rec.Code, rec.Body.String())
+		}
+	})
+
 	t.Run("POST /v1/chat/completions returns the OpenAI shape", func(t *testing.T) {
 		t.Parallel()
 		req := httptest.NewRequest(

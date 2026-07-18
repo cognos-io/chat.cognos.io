@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { randomBytes } from 'node:crypto';
 
 import { newAnonymousApi, provisionApiUser } from './api-helpers';
+import { setOrgPastDue, upsertOrgBilling } from './persona-helpers';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -77,6 +78,115 @@ function makeUserKeyPairBody(): UserKeyPairBody {
 // ---------------------------------------------------------------------------
 
 test.describe('organisations API lifecycle', () => {
+  test('lapsed Organisation is read-only across direct content writes', async () => {
+    const owner = await provisionApiUser();
+    try {
+      const orgRes = await owner.api.post('/api/v1/orgs', {
+        data: { name: 'Read-only E2E AG' },
+      });
+      expect(orgRes.status()).toBe(201);
+      const { id: orgId } = (await orgRes.json()) as { id: string };
+      await upsertOrgBilling(orgId, { planType: 'payg', seats: 1 });
+
+      const projectRes = await owner.api.post('/api/v1/projects', {
+        data: {
+          data: randomBase64(48),
+          wrapped_project_key: randomBase64(48),
+          organisation: orgId,
+        },
+      });
+      expect(projectRes.status()).toBe(201);
+      const { id: projectId } = (await projectRes.json()) as { id: string };
+
+      expect(
+        (
+          await owner.api.patch(`/api/v1/projects/${projectId}`, {
+            data: { data: randomBase64(48) },
+          })
+        ).status(),
+      ).toBe(200);
+
+      await setOrgPastDue(orgId, true);
+
+      for (const response of [
+        await owner.api.patch(`/api/v1/projects/${projectId}`, {
+          data: { data: randomBase64(48) },
+        }),
+        await owner.api.post(`/api/v1/projects/${projectId}/conversations`, {
+          data: {
+            data: randomBase64(48),
+            public_key: randomBase64(32),
+            wrapped_conversation_secret_key: randomBase64(48),
+          },
+        }),
+      ]) {
+        expect(response.status()).toBe(402);
+        expect(await response.json()).toMatchObject({
+          data: {
+            error: 'ORG_BILLING_PAST_DUE',
+            organisation_id: orgId,
+          },
+        });
+      }
+
+      const personalRes = await owner.api.post('/api/v1/projects', {
+        data: { data: randomBase64(48), wrapped_project_key: randomBase64(48) },
+      });
+      expect(personalRes.status()).toBe(201);
+      const { id: personalId } = (await personalRes.json()) as { id: string };
+      expect(
+        (
+          await owner.api.patch(`/api/v1/projects/${personalId}`, {
+            data: { data: randomBase64(48) },
+          })
+        ).status(),
+      ).toBe(200);
+    } finally {
+      await owner.api.dispose();
+    }
+  });
+
+  test('Owner dissolution requires explicit Project deletion and preserves personal access', async () => {
+    const owner = await provisionApiUser();
+    const outsider = await provisionApiUser();
+    try {
+      const orgRes = await owner.api.post('/api/v1/orgs', {
+        data: { name: 'Dissolution E2E AG' },
+      });
+      expect(orgRes.status()).toBe(201);
+      const { id: orgId } = (await orgRes.json()) as { id: string };
+      await upsertOrgBilling(orgId, { planType: 'payg', seats: 1 });
+
+      const projectRes = await owner.api.post('/api/v1/projects', {
+        data: {
+          data: randomBase64(48),
+          wrapped_project_key: randomBase64(48),
+          organisation: orgId,
+        },
+      });
+      expect(projectRes.status()).toBe(201);
+      const { id: projectId } = (await projectRes.json()) as { id: string };
+
+      expect((await owner.api.delete(`/api/v1/orgs/${orgId}`)).status()).toBe(409);
+      expect((await outsider.api.delete(`/api/v1/orgs/${orgId}`)).status()).toBe(404);
+
+      const dissolved = await owner.api.delete(`/api/v1/orgs/${orgId}`, {
+        data: JSON.stringify({ delete_projects: true }),
+        headers: { 'content-type': 'application/json' },
+      });
+      expect(
+        dissolved.status(),
+        `dissolve: ${dissolved.status()} ${await dissolved.text()}`,
+      ).toBe(204);
+      expect(await (await owner.api.get('/api/v1/orgs')).json()).toEqual([]);
+      expect((await owner.api.get(`/api/v1/projects/${projectId}`)).status()).toBe(404);
+      expect((await owner.api.get('/api/v1/billing')).status()).toBe(200);
+    } finally {
+      await owner.api.dispose();
+      await outsider.api.dispose();
+    }
+  });
+
   test('full org lifecycle: create, invite, accept, billing gate, offboard, public-key access', async () => {
     // -----------------------------------------------------------------------
     // 1. Create two fresh users
@@ -316,6 +426,10 @@ test.describe('organisations API lifecycle', () => {
       });
 
       await test.step('org project completion without billing → 402', async () => {
+        // The security gate also blocks creating new org Projects while
+        // billing is inactive, so create this fixture while active and then
+        // lapse it before the completion attempt.
+        await upsertOrgBilling(orgId, { planType: 'payg', seats: 1 });
         // Create an org-owned project via the projects API.
         const projectRes = await userA.api.post('/api/v1/projects', {
           data: {
@@ -382,6 +496,8 @@ test.describe('organisations API lifecycle', () => {
           true,
         );
 
+        await upsertOrgBilling(orgId, { planType: 'inactive', seats: 1 });
+
         // Attempt completion — should 402 because org has no billing.
         const completeRes = await userA.api.post(
           `/api/v1/conversations/${conversationId}/complete`,
@@ -395,8 +511,10 @@ test.describe('organisations API lifecycle', () => {
           },
         );
         expect(completeRes.status()).toBe(402);
-        const completeBody = (await completeRes.json()) as Record<string, unknown>;
-        expect(completeBody.error).toMatch(/ORG_BILLING/);
+        const completeBody = (await completeRes.json()) as {
+          data?: { error?: string };
+        };
+        expect(completeBody.data?.error).toMatch(/ORG_BILLING/);
       });
 
       // ---------------------------------------------------------------------
@@ -521,6 +639,10 @@ test.describe('organisations API lifecycle', () => {
             })
           ).status(),
         ).toBe(401);
+      });
+
+      await test.step('DELETE /orgs/anyid → 401', async () => {
+        expect((await anon.delete('/api/v1/orgs/org000000000001')).status()).toBe(401);
       });
 
       await test.step('GET /orgs/anyid/members → 401', async () => {
