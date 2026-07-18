@@ -24,6 +24,18 @@
   font-size: var(--cog-fs-body-sm);
 }
 
+/* Keep the pill-shaped workspace badge from stretching across the grid row. */
+.projects-page__header app-workspace-context-badge {
+  justify-self: start;
+}
+
+/* Billing-context line on the create card — same quiet tone as the subtitle. */
+.projects-page__billing-hint {
+  margin: var(--cog-space-050) 0 0;
+  color: var(--cog-text-subtle);
+  font-size: var(--cog-fs-body-sm);
+}
+
 .projects-page__card {
   display: grid;
   gap: var(--cog-space-100);

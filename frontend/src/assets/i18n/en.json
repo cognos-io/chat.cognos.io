@@ -1475,6 +1475,8 @@
     "subtitle": "Group related chats into an encrypted workspace.",
     "title": "Projects",
     "yourProjects": "Your projects",
+    "createBilledToOrg": "This project will be billed to {{ org }}",
+    "createBilledToYou": "This project is personal — billed to you",
     "instructions": {
       "heading": "Project instructions",
       "edit": "Edit instructions",
@@ -1558,7 +1560,7 @@
       "notifications": "Notifications",
       "projects": "Projects",
       "security": "Security & keys",
-      "team": "Team & sharing",
+      "team": "Team",
       "usage": "Usage",
       "memory": "Memory",
       "library": "Library",
@@ -1781,7 +1783,8 @@
     "billedToYou": "Billed to you",
     "billedToOrg": "Billed to {{ name }}",
     "personalCue": "Personal — billed to you",
-    "emptyOrg": "No projects in this organisation yet"
+    "emptyOrg": "No projects in this organisation yet",
+    "emptyOrgCreateProject": "Create a project"
   },
   "team": {
     "title": "Team",

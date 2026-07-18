@@ -1,7 +1,7 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { EMPTY, catchError } from 'rxjs';
 
@@ -13,6 +13,7 @@ import { CognosAuthPageComponent, CognosButtonComponent } from '@cognos/ui-angul
 import { CognosLogoComponent } from '@app/components/cognos-logo/cognos-logo.component';
 import { LoadingIndicatorComponent } from '@app/components/loading-indicator/loading-indicator.component';
 import { ErrorService } from '@app/services/error.service';
+import { safeInternalUrl } from '@app/utils/safe-redirect';
 
 import { AuthService } from '@services/auth.service';
 
@@ -169,7 +170,10 @@ import { AuthService } from '@services/auth.service';
           </p>
           <p class="auth-page__switch">
             {{ t('auth.login.needAccount') }}
-            <a routerLink="/auth/register">{{ t('auth.login.register') }}</a>
+            <!-- Keep the ?next deep-link target when switching to sign-up. -->
+            <a routerLink="/auth/register" queryParamsHandling="preserve">{{
+              t('auth.login.register')
+            }}</a>
           </p>
         }
 
@@ -193,6 +197,7 @@ export class LoginComponent {
   private readonly _errorService: ErrorService = inject(ErrorService);
   private readonly _fb = inject(FormBuilder);
   private readonly _router: Router = inject(Router);
+  private readonly _route = inject(ActivatedRoute);
   private readonly _transloco = inject(TranslocoService);
   private readonly _destroyRef = inject(DestroyRef);
 
@@ -224,7 +229,13 @@ export class LoginComponent {
       )
       .subscribe((user) => {
         if (user) {
-          this._router.navigate(['/']);
+          // Return to the guarded URL the user originally asked for (set by
+          // authGuard as ?next=…, e.g. an /invite?token=… deep link). Only
+          // app-internal targets are honoured — anything else falls back to
+          // the home page so `next` can never redirect off-site.
+          this._router.navigateByUrl(
+            safeInternalUrl(this._route.snapshot.queryParamMap.get('next')) ?? '/',
+          );
         }
       });
   }

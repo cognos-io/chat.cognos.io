@@ -29,6 +29,7 @@ import {
   OrgMemberRecord,
   OrgPolicyUpdateRequest,
   OrgPortalResponse,
+  OrgRole,
   OrgUsageRecord,
   OrganisationRecord,
   UserPublicKeyResponse,
@@ -452,6 +453,12 @@ interface ApiConversationRequest {
 interface ApiProjectCreateRequest {
   data: string;
   wrapped_project_key: string;
+  /**
+   * Owning Organisation id — set when the project is created in an org
+   * Workspace so it's billed to (and scoped under) that Organisation.
+   * Omitted for personal projects.
+   */
+  organisation?: string;
 }
 
 interface ApiProjectUpdateRequest {
@@ -779,6 +786,32 @@ export const mapCompleteRequest = (request: CompleteRequest): ApiCompleteRequest
     file_mime_type: context.fileMimeType,
   })),
 });
+
+/**
+ * Wire shape of an Organisation record. The backend embeds the caller's own
+ * role as `caller_role` (backend/internal/handler/organisations.go, pinned by
+ * e2e/tests/organisations-api.spec.ts) on every org-record response: create,
+ * list, get, rename and the policies PATCH. The app-side OrganisationRecord
+ * exposes it as `role`, so every org-record-returning method must map through
+ * mapOrganisationRecord — consumers only ever read `.role`.
+ */
+export interface OrganisationRecordWire extends Omit<OrganisationRecord, 'role'> {
+  caller_role?: OrgRole;
+}
+
+// Exported as a pure helper so the caller_role → role contract can be pinned
+// by unit tests: without it, a wire rename would silently leave `role`
+// undefined and every Owner/Admin surface would degrade to the member view.
+export const mapOrganisationRecord = (
+  wire: OrganisationRecordWire,
+): OrganisationRecord => {
+  const { caller_role, ...record } = wire;
+  // caller_role is present on every current response (json omitempty only
+  // elides an empty role, which the backend never sends). If a future
+  // response ever omits it, fail towards least privilege — 'member' — so a
+  // mapping gap can never grant an admin surface by accident.
+  return { ...record, role: caller_role ?? 'member' };
+};
 
 export const mapGenerateImageRequest = (
   request: GenerateImageRequest,
@@ -1124,35 +1157,35 @@ export class CognosApiService {
   // The caller only ever sees Organisations they hold an active Membership in.
 
   listOrgs(): Observable<OrganisationRecord[]> {
-    return this._http.get<OrganisationRecord[]>(`${this._baseUrl}/api/v1/orgs`, {
-      headers: this.authHeaders(),
-    });
+    return this._http
+      .get<OrganisationRecordWire[]>(`${this._baseUrl}/api/v1/orgs`, {
+        headers: this.authHeaders(),
+      })
+      .pipe(map((orgs) => orgs.map(mapOrganisationRecord)));
   }
 
   getOrg(orgId: string): Observable<OrganisationRecord> {
-    return this._http.get<OrganisationRecord>(`${this._baseUrl}/api/v1/orgs/${orgId}`, {
-      headers: this.authHeaders(),
-    });
+    return this._http
+      .get<OrganisationRecordWire>(`${this._baseUrl}/api/v1/orgs/${orgId}`, {
+        headers: this.authHeaders(),
+      })
+      .pipe(map(mapOrganisationRecord));
   }
 
   createOrg(request: { name: string }): Observable<OrganisationRecord> {
-    return this._http.post<OrganisationRecord>(
-      `${this._baseUrl}/api/v1/orgs`,
-      request,
-      {
+    return this._http
+      .post<OrganisationRecordWire>(`${this._baseUrl}/api/v1/orgs`, request, {
         headers: this.authHeaders(),
-      },
-    );
+      })
+      .pipe(map(mapOrganisationRecord));
   }
 
   updateOrg(orgId: string, request: { name: string }): Observable<OrganisationRecord> {
-    return this._http.patch<OrganisationRecord>(
-      `${this._baseUrl}/api/v1/orgs/${orgId}`,
-      request,
-      {
+    return this._http
+      .patch<OrganisationRecordWire>(`${this._baseUrl}/api/v1/orgs/${orgId}`, request, {
         headers: this.authHeaders(),
-      },
-    );
+      })
+      .pipe(map(mapOrganisationRecord));
   }
 
   // updateOrgPolicies changes the Organisation's enforced policies (privacy
@@ -1162,13 +1195,15 @@ export class CognosApiService {
     orgId: string,
     request: OrgPolicyUpdateRequest,
   ): Observable<OrganisationRecord> {
-    return this._http.patch<OrganisationRecord>(
-      `${this._baseUrl}/api/v1/orgs/${orgId}/policies`,
-      request,
-      {
-        headers: this.authHeaders(),
-      },
-    );
+    return this._http
+      .patch<OrganisationRecordWire>(
+        `${this._baseUrl}/api/v1/orgs/${orgId}/policies`,
+        request,
+        {
+          headers: this.authHeaders(),
+        },
+      )
+      .pipe(map(mapOrganisationRecord));
   }
 
   listOrgMembers(orgId: string): Observable<OrgMemberRecord[]> {

@@ -1475,6 +1475,8 @@
     "subtitle": "Regroupez des conversations liées dans un espace de travail chiffré.",
     "title": "Projets",
     "yourProjects": "Vos projets",
+    "createBilledToOrg": "Ce projet sera facturé à {{ org }}",
+    "createBilledToYou": "Ce projet est personnel — facturé sur votre compte",
     "instructions": {
       "heading": "Instructions du projet",
       "edit": "Modifier les instructions",
@@ -1558,7 +1560,7 @@
       "notifications": "Notifications",
       "projects": "Projets",
       "security": "Sécurité et clés",
-      "team": "Équipe et partage",
+      "team": "Équipe",
       "usage": "Utilisation",
       "memory": "Mémoire",
       "library": "Bibliothèque",
@@ -1781,7 +1783,8 @@
     "billedToYou": "Facturé sur votre compte",
     "billedToOrg": "Facturé à {{ name }}",
     "personalCue": "Personnel — facturé sur votre compte",
-    "emptyOrg": "Aucun projet dans cette organisation pour le moment"
+    "emptyOrg": "Aucun projet dans cette organisation pour le moment",
+    "emptyOrgCreateProject": "Créer un projet"
   },
   "team": {
     "title": "Équipe",

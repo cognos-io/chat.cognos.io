@@ -14,6 +14,7 @@ import { AuthService } from '@app/services/auth.service';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ErrorService } from '@app/services/error.service';
 import { ModelService } from '@app/services/model.service';
+import { OrganisationService } from '@app/services/organisation.service';
 
 import { TeamSettingsComponent } from './team-settings.component';
 
@@ -36,6 +37,7 @@ describe('TeamSettingsComponent', () => {
   let listOrgs: ReturnType<typeof vi.fn>;
   let createOrg: ReturnType<typeof vi.fn>;
   let createOrgCheckout: ReturnType<typeof vi.fn>;
+  let refreshMemberships: ReturnType<typeof vi.fn>;
   let errorAlert: ReturnType<typeof vi.fn>;
   let redirect: ReturnType<typeof vi.fn<(url: string) => void>>;
 
@@ -65,6 +67,7 @@ describe('TeamSettingsComponent', () => {
         },
         { provide: ModelService, useValue: { modelList: vi.fn(() => []) } },
         { provide: AuthService, useValue: { user: authUser } },
+        { provide: OrganisationService, useValue: { refreshMemberships } },
         { provide: Dialog, useValue: { open: () => ({ closed: of(true) }) } },
         { provide: CognosToastService, useValue: { notify: vi.fn() } },
         { provide: ErrorService, useValue: { alert: errorAlert } },
@@ -85,6 +88,7 @@ describe('TeamSettingsComponent', () => {
     listOrgs = vi.fn(() => of<OrganisationRecord[]>([]));
     createOrg = vi.fn(() => of(makeOrg()));
     createOrgCheckout = vi.fn(() => of({ checkout_url: 'https://checkout' }));
+    refreshMemberships = vi.fn(() => of<OrganisationRecord[]>([]));
     errorAlert = vi.fn();
     redirect = vi.fn<(url: string) => void>();
   });
@@ -138,6 +142,34 @@ describe('TeamSettingsComponent', () => {
     expect(component['createdOrg']()).not.toBeNull();
   });
 
+  // Pin (issue M3): the sidebar Workspace switcher reads OrganisationService
+  // memberships, which only refresh on login or invite-accept. Without this
+  // refresh a freshly created Organisation stays invisible in the switcher
+  // until the next full reload.
+  it('refreshes workspace memberships after a successful create', async () => {
+    await render();
+    fixture.detectChanges();
+
+    component['name'].set('New Co');
+    component['create']();
+
+    expect(refreshMemberships).toHaveBeenCalledTimes(1);
+  });
+
+  it('still shows the checkout CTA when the membership refresh fails', async () => {
+    refreshMemberships = vi.fn(() => throwError(() => new Error('boom')));
+    await render();
+    fixture.detectChanges();
+
+    component['name'].set('New Co');
+    component['create']();
+
+    // Best-effort refresh: the create → checkout flow is never blocked — the
+    // org exists server-side and reappears on the next boot.
+    expect(component['createdOrg']()).not.toBeNull();
+    expect(errorAlert).not.toHaveBeenCalled();
+  });
+
   it('starts checkout and redirects on success', async () => {
     await render();
     fixture.detectChanges();
@@ -178,6 +210,7 @@ describe('TeamSettingsComponent', () => {
         },
         { provide: ModelService, useValue: { modelList: vi.fn(() => []) } },
         { provide: AuthService, useValue: { user: authUser } },
+        { provide: OrganisationService, useValue: { refreshMemberships } },
         { provide: Dialog, useValue: { open: () => ({ closed: of(true) }) } },
         { provide: CognosToastService, useValue: { notify: vi.fn() } },
         { provide: ErrorService, useValue: { alert: errorAlert } },
@@ -193,6 +226,8 @@ describe('TeamSettingsComponent', () => {
     component['create']();
 
     expect(errorAlert).toHaveBeenCalled();
+    // A failed create never refreshes memberships — nothing was created.
+    expect(refreshMemberships).not.toHaveBeenCalled();
   });
 
   // ---- Member-only orgs -----------------------------------------------------

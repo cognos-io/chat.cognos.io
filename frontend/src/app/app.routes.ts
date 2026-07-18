@@ -160,7 +160,7 @@ export const routes: Routes = [
         // Teams v1 ships end-to-end.
         path: 'team',
         canActivate: [featureFlagGuard],
-        data: { title: 'Team & sharing', featureFlag: 'team' },
+        data: { title: 'Team', featureFlag: 'team' },
         loadComponent: () =>
           import('./pages/account/team/team-settings.component').then(
             (m) => m.TeamSettingsComponent,

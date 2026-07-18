@@ -30,6 +30,7 @@ import {
 import { AuthService } from './auth.service';
 import { CognosApiService } from './cognos-api.service';
 import { CryptoService } from './crypto.service';
+import { OrganisationService } from './organisation.service';
 import { VaultService } from './vault.service';
 
 export const UserKeyPairNotFoundError = new Error('User key pair not found');
@@ -53,6 +54,9 @@ export class ProjectService {
   private readonly _auth = inject(AuthService);
   private readonly _api = inject(CognosApiService);
   private readonly _router = inject(Router);
+  // One-way dependency: OrganisationService never injects ProjectService
+  // (visibleProjects takes the list as an argument), so no DI cycle.
+  private readonly _workspaces = inject(OrganisationService);
 
   // sources
   readonly newProject$ = new Subject<ProjectData>();
@@ -217,6 +221,12 @@ export class ProjectService {
    * createProject - generates a fresh project content key, encrypts the
    * metadata under it, seals the key to the creator's own public key, and
    * persists all three to the backend (the server writes them transactionally).
+   *
+   * The project lands in the active Workspace: in an org Workspace it is
+   * created as that Organisation's project (billed to the org, visible in the
+   * org Workspace only); in Personal it stays a personal project. Owning this
+   * rule here means EVERY create path inherits it. Crypto is identical either
+   * way — the content key is still sealed to the creator alone.
    */
   private createProject(data: ProjectData): Observable<Project> {
     const userKeyPair = this._vaultService.keyPair();
@@ -234,10 +244,15 @@ export class ProjectService {
       userKeyPair.publicKey,
     );
 
+    const organisation = this._workspaces.isOrgWorkspace()
+      ? this._workspaces.activeWorkspace()
+      : undefined;
+
     return this._api
       .createProject({
         data: Base64.fromUint8Array(encryptedData),
         wrapped_project_key: Base64.fromUint8Array(wrappedKey),
+        ...(organisation ? { organisation } : {}),
       })
       .pipe(
         map((record) => ({

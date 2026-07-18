@@ -889,6 +889,29 @@ export const parseOrgCompletionBillingRestriction = (
   };
 };
 
+// classifyCompletionFailure decides which surface owns a failed completion:
+// - 'locked': a personal billing 402 or unverified email. The locked-composer
+//   UI carries the recovery path, so the optimistic turn is removed entirely.
+// - 'org_blocked': an ORG_BILLING_* 402. The org billing banner is the single
+//   explanation and next step; the member keeps their message in the thread
+//   but the generic retry card must never stack on top of the banner — a
+//   retry is guaranteed to fail until the Organisation's billing is fixed.
+// - 'retryable': everything else. Keep the user's message and show the inline
+//   retry card.
+export type CompletionFailureHandling = 'locked' | 'org_blocked' | 'retryable';
+
+export const classifyCompletionFailure = (
+  error: unknown,
+): CompletionFailureHandling => {
+  if (parseOrgCompletionBillingRestriction(error)) {
+    return 'org_blocked';
+  }
+  if (parseCompletionBillingRestriction(error) || isEmailNotVerifiedError(error)) {
+    return 'locked';
+  }
+  return 'retryable';
+};
+
 export const resolveCompletionFailureMessage = (
   error: unknown,
 ): CompletionErrorCopy => {
@@ -1827,7 +1850,7 @@ export class MessageService {
         }
 
         console.error('Error sending message');
-        const handled = this.reportCompletionError(err);
+        const handling = this.reportCompletionError(err);
         // Reason is a closed enum; the error payload never leaves the app.
         this._analytics.track('message_failed', {
           reason: completionFailureReason(err),
@@ -1837,12 +1860,29 @@ export class MessageService {
           return EMPTY;
         }
 
-        if (handled) {
+        if (handling === 'locked') {
           // Billing lock / email-not-verified: the locked-composer surface
           // carries the recovery path, so clear the optimistic turn entirely.
           return of({
             status: MessageStatus.ErrorSending,
             messages: removeStreamingCompletionMessages(
+              this.state().messages,
+              messageRequest.requestId,
+            ),
+          });
+        }
+
+        if (handling === 'org_blocked') {
+          // Org billing pause: the org banner is the single explanation and
+          // owns the next step, so suppress (and clear any stale) generic
+          // retry card — a retry is guaranteed to fail until the Organisation
+          // restores billing. The user's message stays in the thread so
+          // nothing is lost (persona PER-006).
+          this._failedRequest = null;
+          this._sendFailed.set(false);
+          return of({
+            status: MessageStatus.ErrorSending,
+            messages: removeStreamingAssistantMessage(
               this.state().messages,
               messageRequest.requestId,
             ),
@@ -2561,11 +2601,11 @@ export class MessageService {
   }
 
   // reportCompletionError routes a failed completion to the right surface and
-  // reports whether it "handled" the error with a locked-composer state.
-  // Returns true for a billing 402 (opens the plan gate + syncs plan state) or
-  // an EMAIL_NOT_VERIFIED 403 (the verify-email composer state carries the
-  // recovery path) — both suppress the toast. Returns false for a retryable
-  // failure so the caller keeps the user's message and shows an inline retry.
+  // returns how the caller should handle it (see classifyCompletionFailure):
+  // 'locked' removes the optimistic turn (the locked-composer UI carries the
+  // recovery path), 'org_blocked' keeps the user's message but leaves the org
+  // billing banner as the single explanation (no generic retry card), and
+  // 'retryable' keeps the message and shows the inline retry.
   // clearOrgBillingBlockOnSuccess drops the org billing banner once a
   // completion in one of that Organisation's Projects succeeds again — the
   // authoritative signal that billing was restored. Scoped to the owning org
@@ -2585,30 +2625,36 @@ export class MessageService {
     }
   }
 
-  private reportCompletionError(err: unknown): boolean {
-    const orgRestriction = parseOrgCompletionBillingRestriction(err);
-    if (orgRestriction) {
-      // Org billing pause (fail closed): surface the org banner, but return
-      // FALSE so the send path keeps the user's message in the thread with the
-      // inline Retry — the block is the Organisation's to fix, and the member's
-      // draft must never be lost to it (persona PER-006). The personal plan
-      // state and personal composer stay untouched.
-      this._billingService.markOrgSendingBlocked(orgRestriction);
-      return false;
+  private reportCompletionError(err: unknown): CompletionFailureHandling {
+    const handling = classifyCompletionFailure(err);
+    switch (handling) {
+      case 'org_blocked': {
+        // Org billing pause (fail closed): surface the org banner and keep the
+        // user's message in the thread — the block is the Organisation's to
+        // fix, and the member's draft must never be lost to it (persona
+        // PER-006). The banner owns the explanation and next step, so the
+        // caller must NOT show the generic retry card alongside it. The
+        // personal plan state and personal composer stay untouched.
+        const orgRestriction = parseOrgCompletionBillingRestriction(err);
+        if (orgRestriction) {
+          this._billingService.markOrgSendingBlocked(orgRestriction);
+        }
+        break;
+      }
+      case 'locked': {
+        // Personal billing 402: lock the composer + surface the in-chat
+        // billing banners. No toast — the locked-chat UI and the pricing page
+        // carry the recovery path. An EMAIL_NOT_VERIFIED 403 classifies as
+        // 'locked' too: the verify-email composer state (driven by the user's
+        // verified flag) already tells the user what to do.
+        const restriction = parseCompletionBillingRestriction(err);
+        if (restriction) {
+          this._billingService.markSendingBlocked(restriction);
+        }
+        break;
+      }
     }
-    const restriction = parseCompletionBillingRestriction(err);
-    if (restriction) {
-      // Lock the composer + surface the in-chat billing banners. No toast — the
-      // locked-chat UI and the pricing page carry the recovery path.
-      this._billingService.markSendingBlocked(restriction);
-      return true;
-    }
-    if (isEmailNotVerifiedError(err)) {
-      // The verify-email composer state (driven by the user's verified flag)
-      // already tells the user what to do — no toast, and no retry affordance.
-      return true;
-    }
-    return false;
+    return handling;
   }
 
   // translateCompletionError resolves a CompletionErrorCopy into a display

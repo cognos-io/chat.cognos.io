@@ -1475,6 +1475,8 @@
     "subtitle": "Raggruppa le chat correlate in uno spazio di lavoro crittografato.",
     "title": "Progetti",
     "yourProjects": "I tuoi progetti",
+    "createBilledToOrg": "Questo progetto sarà addebitato a {{ org }}",
+    "createBilledToYou": "Questo progetto è personale — addebitato sul tuo account",
     "instructions": {
       "heading": "Istruzioni del progetto",
       "edit": "Modifica istruzioni",
@@ -1558,7 +1560,7 @@
       "notifications": "Notifiche",
       "projects": "Progetti",
       "security": "Sicurezza e chiavi",
-      "team": "Team e condivisione",
+      "team": "Team",
       "usage": "Utilizzo",
       "memory": "Memoria",
       "library": "Libreria",
@@ -1781,7 +1783,8 @@
     "billedToYou": "Addebitato sul tuo account",
     "billedToOrg": "Addebitato a {{ name }}",
     "personalCue": "Personale — addebitato sul tuo account",
-    "emptyOrg": "Ancora nessun progetto in questa organizzazione"
+    "emptyOrg": "Ancora nessun progetto in questa organizzazione",
+    "emptyOrgCreateProject": "Crea un progetto"
   },
   "team": {
     "title": "Team",

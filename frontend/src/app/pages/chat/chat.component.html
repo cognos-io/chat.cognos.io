@@ -149,8 +149,19 @@
       </section>
     } @else if (projectsEnabled && workspaces.isOrgWorkspace()) {
       <!-- An org Workspace with no visible Projects yet: say so rather than
-           presenting a silently empty sidebar. -->
-      <p class="chat-shell__workspace-empty">{{ t('workspace.emptyOrg') }}</p>
+           presenting a silently empty sidebar, and offer the next step. Any
+           active org member may create org Projects (backend allows it), so
+           the affordance shows for everyone, not only owners/admins. -->
+      <div class="chat-shell__workspace-empty">
+        <p class="chat-shell__workspace-empty-text">{{ t('workspace.emptyOrg') }}</p>
+        <a
+          class="chat-shell__workspace-empty-action"
+          [routerLink]="['/account/projects']"
+        >
+          <cog-icon name="plus" [size]="16" tone="current" />
+          <span>{{ t('workspace.emptyOrgCreateProject') }}</span>
+        </a>
+      </div>
     }
   </ng-template>
 
@@ -218,10 +229,15 @@
 
   <ng-template #chatFooter>
     <ng-container *ngTemplateOutlet="navActions"></ng-container>
-    @if (billing.isTrial()) {
-      <app-trial-credit-card></app-trial-credit-card>
-    } @else if (billing.isPayg()) {
-      <app-payg-usage-card></app-payg-usage-card>
+    <!-- Personal plan cards (trial credit / PAYG usage) only make sense in the
+         personal Workspace. Inside an org Workspace the org pays, so nudging a
+         member towards a personal purchase for firm work would mislead. -->
+    @if (!workspaces.isOrgWorkspace()) {
+      @if (billing.isTrial()) {
+        <app-trial-credit-card></app-trial-credit-card>
+      } @else if (billing.isPayg()) {
+        <app-payg-usage-card></app-payg-usage-card>
+      }
     }
     <app-sidebar-profile></app-sidebar-profile>
   </ng-template>

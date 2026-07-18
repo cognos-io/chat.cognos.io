@@ -18,8 +18,10 @@ describe('ConversationService', () => {
   let api: {
     getConversationPublicKey: ReturnType<typeof vi.fn>;
     getConversationSecretKey: ReturnType<typeof vi.fn>;
+    updateConversation: ReturnType<typeof vi.fn>;
   };
   let cryptoService: {
+    box: ReturnType<typeof vi.fn>;
     equalBytes: ReturnType<typeof vi.fn>;
     mac: ReturnType<typeof vi.fn>;
     openBox: ReturnType<typeof vi.fn>;
@@ -30,9 +32,11 @@ describe('ConversationService', () => {
     api = {
       getConversationPublicKey: vi.fn(),
       getConversationSecretKey: vi.fn(),
+      updateConversation: vi.fn(),
     };
 
     cryptoService = {
+      box: vi.fn().mockReturnValue(new Uint8Array([6])),
       equalBytes: vi.fn().mockReturnValue(true),
       mac: vi.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
       openBox: vi.fn().mockReturnValue(new Uint8Array([4])),
@@ -247,6 +251,60 @@ describe('ConversationService', () => {
 
     expect(api.getConversationPublicKey).toHaveBeenCalledWith('conv-nokeys');
     expect(api.getConversationSecretKey).toHaveBeenCalledWith('conv-nokeys');
+  });
+
+  // Pin (project-chat auto-title): reflecting a conversation update must reuse
+  // the key pair already in the store. A PATCH response carries no embedded
+  // key material, and the per-conversation key endpoints only exist for
+  // standalone conversations — a PROJECT conversation's secret key is wrapped
+  // under the project key, so the old re-fetch path failed silently and left
+  // the freshly generated title stale ("New chat") in the header and sidebar.
+  it('reflects an edit on a project conversation without key-endpoint round trips', async () => {
+    const keyPair = {
+      publicKey: new Uint8Array([1]),
+      secretKey: new Uint8Array([2]),
+    };
+    api.updateConversation.mockReturnValue(
+      of({
+        id: 'conv-proj',
+        created: '2026-01-01T00:00:00.000Z',
+        updated: '2026-01-02T00:00:00.000Z',
+        data: Base64.fromUint8Array(new Uint8Array([9])),
+        project: 'proj-1',
+      }),
+    );
+    cryptoService.box.mockReturnValue(new Uint8Array([9]));
+    cryptoService.openBox.mockReturnValue(
+      new TextEncoder().encode(JSON.stringify({ title: 'Generated title' })),
+    );
+
+    service.upsertConversations([
+      {
+        record: {
+          id: 'conv-proj',
+          created: '2026-01-01T00:00:00.000Z',
+          updated: '2026-01-01T00:00:00.000Z',
+          data: 'b2xk',
+          project: 'proj-1',
+        },
+        decryptedData: { title: 'New chat' },
+        keyPair,
+      },
+    ]);
+
+    await firstValueFrom(
+      service.editConversation('conv-proj', '', { title: 'Generated title' }),
+    );
+    // Let the updateConversationRecord action source apply the store update.
+    await Promise.resolve();
+
+    expect(service.getConversation('conv-proj')()?.decryptedData.title).toBe(
+      'Generated title',
+    );
+    // The stored key pair was reused — no per-conversation key fetches, which
+    // do not exist for project conversations and would drop the update.
+    expect(api.getConversationPublicKey).not.toHaveBeenCalled();
+    expect(api.getConversationSecretKey).not.toHaveBeenCalled();
   });
 
   it('derives a dedicated mac key for conversation public key signatures', () => {

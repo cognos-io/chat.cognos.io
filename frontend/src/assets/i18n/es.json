@@ -1475,6 +1475,8 @@
     "subtitle": "Agrupa chats relacionados en un espacio de trabajo cifrado.",
     "title": "Proyectos",
     "yourProjects": "Tus proyectos",
+    "createBilledToOrg": "Este proyecto se facturará a {{ org }}",
+    "createBilledToYou": "Este proyecto es personal: se factura a tu cuenta",
     "instructions": {
       "heading": "Instrucciones del proyecto",
       "edit": "Editar instrucciones",
@@ -1558,7 +1560,7 @@
       "notifications": "Notificaciones",
       "projects": "Proyectos",
       "security": "Seguridad y claves",
-      "team": "Equipo y uso compartido",
+      "team": "Equipo",
       "usage": "Uso",
       "memory": "Memoria",
       "library": "Biblioteca",
@@ -1781,7 +1783,8 @@
     "billedToYou": "Se factura a tu cuenta",
     "billedToOrg": "Se factura a {{ name }}",
     "personalCue": "Personal: se factura a tu cuenta",
-    "emptyOrg": "Aún no hay proyectos en esta organización"
+    "emptyOrg": "Aún no hay proyectos en esta organización",
+    "emptyOrgCreateProject": "Crear un proyecto"
   },
   "team": {
     "title": "Equipo",

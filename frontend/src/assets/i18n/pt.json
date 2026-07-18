@@ -1475,6 +1475,8 @@
     "subtitle": "Agrupa conversas relacionadas num espaço de trabalho encriptado.",
     "title": "Projetos",
     "yourProjects": "Os teus projetos",
+    "createBilledToOrg": "Este projeto será faturado a {{ org }}",
+    "createBilledToYou": "Este projeto é pessoal — faturado na tua conta",
     "instructions": {
       "heading": "Instruções do projeto",
       "edit": "Editar instruções",
@@ -1558,7 +1560,7 @@
       "notifications": "Notificações",
       "projects": "Projetos",
       "security": "Segurança e chaves",
-      "team": "Equipa e partilha",
+      "team": "Equipa",
       "usage": "Utilização",
       "memory": "Memória",
       "library": "Biblioteca",
@@ -1781,11 +1783,12 @@
     "billedToYou": "Faturado na tua conta",
     "billedToOrg": "Faturado a {{ name }}",
     "personalCue": "Pessoal — faturado na tua conta",
-    "emptyOrg": "Ainda não há projetos nesta organização"
+    "emptyOrg": "Ainda não há projetos nesta organização",
+    "emptyOrgCreateProject": "Criar um projeto"
   },
   "team": {
     "title": "Equipa",
-    "subtitle": "Gerencia a tua organização, convites, membros e faturação.",
+    "subtitle": "Gere a tua organização, convites, membros e faturação.",
     "loading": "A carregar…",
     "loadError": "Não foi possível carregar as tuas organizações. Tenta novamente.",
     "retry": "Tentar novamente",

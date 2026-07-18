@@ -1475,6 +1475,8 @@
     "subtitle": "Gruppiere zusammengehörige Chats in einem verschlüsselten Arbeitsbereich.",
     "title": "Projekte",
     "yourProjects": "Deine Projekte",
+    "createBilledToOrg": "Dieses Projekt wird {{ org }} verrechnet",
+    "createBilledToYou": "Dieses Projekt ist persönlich – es wird dir verrechnet",
     "instructions": {
       "heading": "Projektanweisungen",
       "edit": "Anweisungen bearbeiten",
@@ -1558,7 +1560,7 @@
       "notifications": "Benachrichtigungen",
       "projects": "Projekte",
       "security": "Sicherheit & Schlüssel",
-      "team": "Team & Freigabe",
+      "team": "Team",
       "usage": "Nutzung",
       "memory": "Gedächtnis",
       "library": "Bibliothek",
@@ -1781,7 +1783,8 @@
     "billedToYou": "Wird dir verrechnet",
     "billedToOrg": "Wird {{ name }} verrechnet",
     "personalCue": "Persönlich – wird dir verrechnet",
-    "emptyOrg": "Noch keine Projekte in dieser Organisation"
+    "emptyOrg": "Noch keine Projekte in dieser Organisation",
+    "emptyOrgCreateProject": "Projekt erstellen"
   },
   "team": {
     "title": "Team",

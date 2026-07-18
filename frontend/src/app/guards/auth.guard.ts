@@ -5,7 +5,7 @@ import { map } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = (_route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
@@ -14,9 +14,15 @@ export const authGuard: CanActivateFn = () => {
       if (user) {
         return true;
       }
-      // TODO(ewan): Add the 'next' query parameter to the login URL
-      // to redirect user back to where they were going
-      return router.parseUrl(`auth/login`);
+      // Preserve the full attempted URL (path + query, e.g. an
+      // /invite?token=… deep link) so the login page can return the user
+      // there after signing in. '/' is the post-login default anyway, so it
+      // needs no `next`.
+      const next = state.url && state.url !== '/' ? state.url : null;
+      return router.createUrlTree(
+        ['/auth/login'],
+        next ? { queryParams: { next } } : undefined,
+      );
     }),
   );
 };

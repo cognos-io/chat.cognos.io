@@ -39,6 +39,7 @@ import { OrganisationService } from '@app/services/organisation.service';
 import { ProjectConversationService } from '@app/services/project-conversation.service';
 import { ProjectService } from '@app/services/project.service';
 import { VaultService } from '@app/services/vault.service';
+import { orgBlockAppliesToConversation } from '@app/utils/org-billing-block';
 
 import { environment } from '@environments/environment';
 
@@ -103,19 +104,18 @@ export class ChatComponent {
   // The org billing block for the conversation on screen: shown only when the
   // active conversation lives in a Project owned by the blocked Organisation,
   // so personal chats (and other orgs' Projects) never carry the banner.
+  // Shares its scoping with ConversationDetailComponent.sendBlocked (which
+  // collapses the onboarding card) so the two surfaces always agree.
   readonly orgBillingBlock = computed(() => {
     const block = this.billing.orgSendBlock();
-    if (!block) {
-      return null;
-    }
-    const projectId = this.conversationService.conversation()?.record.project;
-    if (!projectId) {
-      return null;
-    }
-    const organisationId = this._projectService
-      .projects()
-      .find((project) => project.record.id === projectId)?.record.organisation;
-    return organisationId === block.organisationId ? block : null;
+    return block !== null &&
+      orgBlockAppliesToConversation(
+        block,
+        this.conversationService.conversation()?.record.project,
+        this._projectService.projects(),
+      )
+      ? block
+      : null;
   });
   readonly showPersonalConversations = computed(
     () => !this.workspaces.isOrgWorkspace(),

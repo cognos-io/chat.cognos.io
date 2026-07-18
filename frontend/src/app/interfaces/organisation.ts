@@ -17,11 +17,13 @@ export type OrgRole = 'owner' | 'admin' | 'member';
 export type OrgPrivacyTierCeiling = '' | 'ch_only' | 'eu' | 'global';
 
 /**
- * OrganisationRecord is the API shape of GET /api/v1/orgs list items and
+ * OrganisationRecord is the app-side shape of GET /api/v1/orgs list items and
  * GET /api/v1/orgs/{id}: an Organisation the caller is an active member of,
- * with the caller's own role embedded. Policy fields are visible to every
- * member (read-only for role 'member'; editable via PATCH
- * /orgs/{id}/policies for Owner/Admin).
+ * with the caller's own role embedded. NOTE the wire sends the role as
+ * `caller_role`; CognosApiService maps it onto `role` at the client boundary
+ * (mapOrganisationRecord) so consumers only ever read `.role`. Policy fields
+ * are visible to every member (read-only for role 'member'; editable via
+ * PATCH /orgs/{id}/policies for Owner/Admin).
  */
 export interface OrganisationRecord {
   id: string;

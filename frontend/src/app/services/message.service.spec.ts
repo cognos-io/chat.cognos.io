@@ -24,6 +24,7 @@ import {
   buildCompletionMessages,
   buildDeletedMessageData,
   buildTitleGenerationUserMessage,
+  classifyCompletionFailure,
   completionFailureReason,
   composeSystemPromptSections,
   isCompletionAbortError,
@@ -203,6 +204,54 @@ describe('parseOrgCompletionBillingRestriction', () => {
     ).toBeNull();
     expect(parseOrgCompletionBillingRestriction(billing402(null))).toBeNull();
     expect(parseOrgCompletionBillingRestriction(new Error('boom'))).toBeNull();
+  });
+});
+
+describe('classifyCompletionFailure', () => {
+  const billing402 = (body: unknown): HttpErrorResponse =>
+    new HttpErrorResponse({ status: 402, error: body });
+
+  // Pin: an org billing 402 must be the org banner's alone — the send path
+  // keeps the member's message but must NOT raise the generic retry card on
+  // top of the banner (a retry is guaranteed to fail until the org's billing
+  // is fixed), and must never lock the personal composer.
+  it.each([['ORG_BILLING_INACTIVE'], ['ORG_BILLING_PAST_DUE']])(
+    'classifies an %s 402 as org_blocked (banner owns it, no retry card)',
+    (code) => {
+      expect(
+        classifyCompletionFailure(billing402({ error: code, organisation_id: 'o1' })),
+      ).toBe('org_blocked');
+    },
+  );
+
+  it('classifies personal billing 402s and unverified email as locked', () => {
+    expect(classifyCompletionFailure(billing402({ error: 'TRIAL_EXHAUSTED' }))).toBe(
+      'locked',
+    );
+    expect(classifyCompletionFailure(billing402({ error: 'INACTIVE' }))).toBe('locked');
+    expect(
+      classifyCompletionFailure(
+        new HttpErrorResponse({
+          status: 403,
+          error: { error: 'EMAIL_NOT_VERIFIED' },
+        }),
+      ),
+    ).toBe('locked');
+  });
+
+  // Pin: any other failure stays retryable so the inline retry card still
+  // shows for genuine transient errors (org suppression must not eat these).
+  it('classifies everything else as retryable (generic retry card shows)', () => {
+    expect(classifyCompletionFailure(new HttpErrorResponse({ status: 500 }))).toBe(
+      'retryable',
+    );
+    expect(classifyCompletionFailure(new HttpErrorResponse({ status: 429 }))).toBe(
+      'retryable',
+    );
+    expect(classifyCompletionFailure(billing402({ error: 'SOMETHING_ELSE' }))).toBe(
+      'retryable',
+    );
+    expect(classifyCompletionFailure(new Error('boom'))).toBe('retryable');
   });
 });
 

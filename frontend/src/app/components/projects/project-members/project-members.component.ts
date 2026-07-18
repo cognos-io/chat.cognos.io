@@ -207,7 +207,7 @@ type RotationStatus =
       margin: 0;
       display: flex;
       align-items: center;
-      gap: var(--cog-space-75);
+      gap: var(--cog-space-075);
       color: var(--cog-text);
       font-size: var(--cog-fs-body);
       font-weight: 600;
@@ -285,7 +285,7 @@ type RotationStatus =
     .project-members__meta {
       display: flex;
       align-items: center;
-      gap: var(--cog-space-75);
+      gap: var(--cog-space-075);
       flex-shrink: 0;
     }
 
@@ -388,14 +388,42 @@ export class ProjectMembersComponent {
     return this.orgMembers().find((member) => member.user_id === userId);
   }
 
+  // The org member list needs org Owner/Admin rights server-side, so plain
+  // members (and thus most "you" rows) can't resolve names through it. The
+  // signed-in account's own record is always available — use it so the
+  // current user never renders as a raw record id.
+  private selfName(): { name: string; email: string } {
+    const me = this._auth.user();
+    return {
+      name: (me?.['display_name'] as string | undefined) ?? '',
+      email: (me?.['email'] as string | undefined) ?? '',
+    };
+  }
+
   protected participantName(participant: ProjectParticipantRecord): string {
     const member = this.orgMemberFor(participant.user_id);
-    return member?.display_name || member?.email || participant.user_id;
+    if (member?.display_name || member?.email) {
+      return member.display_name || member.email;
+    }
+    if (participant.user_id === this.myUserId()) {
+      const self = this.selfName();
+      if (self.name || self.email) {
+        return self.name || self.email;
+      }
+    }
+    return participant.user_id;
   }
 
   protected participantEmail(participant: ProjectParticipantRecord): string {
     const member = this.orgMemberFor(participant.user_id);
-    return member?.display_name ? (member.email ?? '') : '';
+    if (member) {
+      return member.display_name ? (member.email ?? '') : '';
+    }
+    if (participant.user_id === this.myUserId()) {
+      const self = this.selfName();
+      return self.name ? self.email : '';
+    }
+    return '';
   }
 
   protected isCreator(participant: ProjectParticipantRecord): boolean {

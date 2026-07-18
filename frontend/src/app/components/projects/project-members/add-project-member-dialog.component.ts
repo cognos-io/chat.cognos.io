@@ -161,7 +161,7 @@ export interface AddProjectMemberSelection {
       display: flex;
       align-items: center;
       gap: var(--cog-space-100);
-      padding: var(--cog-space-75) var(--cog-space-50);
+      padding: var(--cog-space-075) var(--cog-space-50);
       border-radius: var(--cog-radius-100);
       cursor: pointer;
     }

@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 
 import { Subject } from 'rxjs';
 
@@ -111,8 +112,79 @@ describe('LoginComponent', () => {
   });
 
   it('navigates home after a user is emitted', () => {
+    // Deliberate pin update: post-auth navigation now goes through
+    // navigateByUrl so a guard-provided ?next=… deep link can be honoured;
+    // with no next present it still lands on home.
+    const navigateByUrl = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
     user$.next({ id: 'user-1', email: 'person@example.com' });
 
-    expect(router.navigate).toHaveBeenCalledWith(['/']);
+    expect(navigateByUrl).toHaveBeenCalledWith('/');
+  });
+});
+
+// Pins the second half of the deep-link contract (authGuard supplies ?next=…):
+// after signing in the user must land on the guarded URL they originally
+// asked for — and an off-site `next` must be ignored, never followed.
+describe('LoginComponent post-auth next handling', () => {
+  let user$: Subject<unknown>;
+  let navigateByUrl: ReturnType<typeof vi.fn>;
+
+  async function setup(loginUrl: string): Promise<void> {
+    user$ = new Subject<unknown>();
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([{ path: 'auth/login', component: LoginComponent }]),
+        {
+          provide: AuthService,
+          useValue: {
+            status: signal<LoginStatus>('pending'),
+            user$,
+            login$: { next: vi.fn() },
+          },
+        },
+        { provide: ErrorService, useValue: { alert: vi.fn() } },
+      ],
+    });
+
+    await RouterTestingHarness.create(loginUrl);
+
+    // Record post-auth navigation without actually routing — the redirect
+    // targets are not registered in this harness.
+    navigateByUrl = vi.fn().mockResolvedValue(true);
+    TestBed.inject(Router).navigateByUrl =
+      navigateByUrl as unknown as Router['navigateByUrl'];
+  }
+
+  afterEach(() => {
+    user$.complete();
+  });
+
+  it('returns to a safe internal next target after sign-in', async () => {
+    await setup('/auth/login?next=%2Finvite%3Ftoken%3Dabc');
+
+    user$.next({ id: 'user-1' });
+
+    expect(navigateByUrl).toHaveBeenCalledTimes(1);
+    expect(navigateByUrl).toHaveBeenCalledWith('/invite?token=abc');
+  });
+
+  it('ignores an external next target and lands on home', async () => {
+    await setup('/auth/login?next=https:%2F%2Fevil.example%2Fphish');
+
+    user$.next({ id: 'user-1' });
+
+    expect(navigateByUrl).toHaveBeenCalledTimes(1);
+    expect(navigateByUrl).toHaveBeenCalledWith('/');
+  });
+
+  it('ignores a scheme-relative next target', async () => {
+    await setup('/auth/login?next=%2F%2Fevil.example');
+
+    user$.next({ id: 'user-1' });
+
+    expect(navigateByUrl).toHaveBeenCalledTimes(1);
+    expect(navigateByUrl).toHaveBeenCalledWith('/');
   });
 });

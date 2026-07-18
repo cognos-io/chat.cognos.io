@@ -8,6 +8,8 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+import { EMPTY, catchError } from 'rxjs';
+
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import {
@@ -26,6 +28,7 @@ import { SettingsPageComponent } from '@app/components/settings/settings-page.co
 import { OrganisationRecord } from '@app/interfaces/organisation';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ErrorService } from '@app/services/error.service';
+import { OrganisationService } from '@app/services/organisation.service';
 
 import { OrgBillingComponent } from './org-billing.component';
 import { OrgGeneralComponent } from './org-general.component';
@@ -239,6 +242,7 @@ type AdminTab = 'members' | 'invites' | 'billing' | 'policies' | 'settings';
 export class TeamSettingsComponent {
   private readonly _api = inject(CognosApiService);
   private readonly _errors = inject(ErrorService);
+  private readonly _workspaces = inject(OrganisationService);
   private readonly _transloco = inject(TranslocoService);
   private readonly _destroyRef = inject(DestroyRef);
 
@@ -360,6 +364,18 @@ export class TeamSettingsComponent {
           this.createPending.set(false);
           this.name.set('');
           this.createdOrg.set(org);
+          // Make the new Organisation switchable immediately — the sidebar
+          // Workspace switcher reads OrganisationService memberships, which
+          // otherwise only refresh on the next full reload. Best-effort: a
+          // refresh failure never blocks the create → checkout flow (the org
+          // exists server-side and reappears on next boot).
+          this._workspaces
+            .refreshMemberships()
+            .pipe(
+              catchError(() => EMPTY),
+              takeUntilDestroyed(this._destroyRef),
+            )
+            .subscribe();
         },
         error: () => {
           this.createPending.set(false);
