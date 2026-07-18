@@ -45,6 +45,54 @@ async function superuserToken(setup: APIRequestContext): Promise<string> {
   return ((await superAuthed.json()) as { token: string }).token;
 }
 
+export interface OrgCompactionAccountingSnapshot {
+  personalBalanceMicroRappen: number;
+  ledgerRows: { id: string; organisation: string; user_id: string }[];
+}
+
+/**
+ * Read only the two fields needed to verify org compaction attribution. This
+ * stays superuser-only because neither billing balances nor the raw ledger are
+ * part of the product API surface.
+ */
+export async function readOrgCompactionAccounting(
+  organisationId: string,
+  actorUserId: string,
+): Promise<OrgCompactionAccountingSnapshot> {
+  const setup = await request.newContext(API_CONTEXT_OPTIONS);
+  const token = await superuserToken(setup);
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const [billingRes, ledgerRes] = await Promise.all([
+    setup.get('/api/collections/user_billing/records', {
+      params: { filter: `user_id='${actorUserId}'`, perPage: 1 },
+      headers,
+    }),
+    setup.get('/api/collections/balance_transactions/records', {
+      params: {
+        filter: `organisation='${organisationId}' && user_id='${actorUserId}'`,
+        perPage: 50,
+      },
+      headers,
+    }),
+  ]);
+  expect(billingRes.ok(), `read personal billing: ${billingRes.status()}`).toBe(true);
+  expect(ledgerRes.ok(), `read org ledger: ${ledgerRes.status()}`).toBe(true);
+
+  const billing = (await billingRes.json()) as {
+    items: { balance_microrappen: number }[];
+  };
+  const ledger = (await ledgerRes.json()) as {
+    items: { id: string; organisation: string; user_id: string }[];
+  };
+  expect(billing.items.length, `billing row for ${actorUserId}`).toBe(1);
+  await setup.dispose();
+  return {
+    personalBalanceMicroRappen: billing.items[0].balance_microrappen,
+    ledgerRows: ledger.items,
+  };
+}
+
 /**
  * Mark an existing user's email as verified via the e2e superuser. Exposed so
  * specs can verify a user mid-test (simulating the user clicking the

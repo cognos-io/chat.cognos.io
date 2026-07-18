@@ -486,6 +486,142 @@ func TestOrgCompletionFailsClosedWithoutFallingBackToPersonalBalance(t *testing.
 	scenario.Test(t)
 }
 
+func TestOrgCompactionAttributesUsageWithoutDebitingPersonalBalance(t *testing.T) {
+	t.Parallel()
+
+	const (
+		orgID          = "orgcompactbill1"
+		projectID      = "orgcompactprj01"
+		conversationID = "orgcompactcnv01"
+		anchorID       = "orgcompactmsg01"
+		seedBalance    = int64(500)
+	)
+	var conversationPublicKey [32]byte
+	providerCostUSD := 0.10
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(context.Context, gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			return gateway.CompleteResponse{
+				Message: gateway.Message{Role: "assistant", Content: `{"durable_memory":{"items":[]},"rolling_narrative":"summary","citations":[]}`},
+				Usage:   gateway.Usage{InputTokens: 8, OutputTokens: 4, TotalTokens: 12, ProviderCostUSD: &providerCostUSD},
+			}, nil
+		},
+	}
+
+	scenario := tests.ApiScenario{
+		Name:   "org Project compaction accrues to org while retaining acting Account attribution",
+		Method: http.MethodPost,
+		URL:    "/api/v1/conversations/" + conversationID + "/compactions",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"anchor_message_id":"` + anchorID + `",
+			"messages":[{"message_id":"` + anchorID + `","alias":"M1","role":"user","content":"hello"}]
+		}`),
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"rolling_narrative":"summary"`},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				BillingService: billing.NewService(),
+				ConversationRepo: stubConversationRepo{
+					byID: func(id string) (chat.Conversation, error) {
+						return chat.Conversation{ID: id, PublicKey: conversationPublicKey}, nil
+					},
+				},
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			seedUserBillingBalance(t, app, "test1@example.com", "trial", seedBalance)
+			conversationPublicKey = seedOrgConversationFixture(
+				t, app, orgID, "Compact AG", projectID, conversationID, "test1@example.com",
+			)
+			seedOrgBilling(t, app, orgID, "payg", false, 1)
+			seedMessage(t, app, anchorID, conversationID, false)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			if got := personalBalanceMicroRappen(t, app, "test1@example.com"); got != seedBalance*billing.MicroRappenPerRappen {
+				t.Errorf("personal balance_microrappen = %d, want untouched %d", got, seedBalance*billing.MicroRappenPerRappen)
+			}
+			rows, err := app.FindRecordsByFilter("balance_transactions", "organisation = {:org}", "", 10, 0, dbx.Params{"org": orgID})
+			if err != nil {
+				t.Fatalf("FindRecordsByFilter(balance_transactions, organisation=%q) error = %v", orgID, err)
+			}
+			if len(rows) != 1 {
+				t.Fatalf("org compaction ledger rows = %d, want 1", len(rows))
+			}
+			actor, err := app.FindAuthRecordByEmail("users", "test1@example.com")
+			if err != nil {
+				t.Fatalf("FindAuthRecordByEmail(test1) error = %v", err)
+			}
+			if got := rows[0].GetString("user_id"); got != actor.Id {
+				t.Errorf("balance_transactions.user_id = %q, want acting Account %q", got, actor.Id)
+			}
+		},
+	}
+
+	scenario.Test(t)
+}
+
+func TestPersonalCompactionStillDebitsPersonalBalance(t *testing.T) {
+	t.Parallel()
+
+	const (
+		conversationID = "personalcmpcnv1"
+		anchorID       = "personalcmpmsg1"
+		seedBalance    = int64(500)
+	)
+	var conversationPublicKey [32]byte
+	providerCostUSD := 0.10
+	gatewayClient := &gateway.MockClient{
+		CompleteFunc: func(context.Context, gateway.CompleteRequest) (gateway.CompleteResponse, error) {
+			return gateway.CompleteResponse{
+				Message: gateway.Message{Role: "assistant", Content: `{"durable_memory":{"items":[]},"rolling_narrative":"summary","citations":[]}`},
+				Usage:   gateway.Usage{InputTokens: 8, OutputTokens: 4, TotalTokens: 12, ProviderCostUSD: &providerCostUSD},
+			}, nil
+		},
+	}
+	scenario := tests.ApiScenario{
+		Name:   "standalone compaction retains personal billing semantics",
+		Method: http.MethodPost,
+		URL:    "/api/v1/conversations/" + conversationID + "/compactions",
+		Body: strings.NewReader(`{
+			"model_id":"llama-3-3-infomaniak",
+			"anchor_message_id":"` + anchorID + `",
+			"messages":[{"message_id":"` + anchorID + `","alias":"M1","role":"user","content":"hello"}]
+		}`),
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"rolling_narrative":"summary"`},
+		TestAppFactory: func(t testing.TB) *tests.TestApp {
+			return setupTestAppWithHookParams(t, appHookParams{
+				GatewayClient:  gatewayClient,
+				BillingService: billing.NewService(),
+				ConversationRepo: stubConversationRepo{byID: func(id string) (chat.Conversation, error) {
+					return chat.Conversation{ID: id, PublicKey: conversationPublicKey}, nil
+				}},
+			})
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			withRecordAuth("users", "test1@example.com")(t, app, e)
+			seedUserBillingBalance(t, app, "test1@example.com", "trial", seedBalance)
+			conversationPublicKey = seedConversationRecord(t, app, conversationID)
+			seedMessage(t, app, anchorID, conversationID, false)
+		},
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			if got := personalBalanceMicroRappen(t, app, "test1@example.com"); got >= seedBalance*billing.MicroRappenPerRappen {
+				t.Errorf("personal balance_microrappen = %d, want less than %d after personal compaction", got, seedBalance*billing.MicroRappenPerRappen)
+			}
+			rows, err := app.FindAllRecords("balance_transactions")
+			if err != nil || len(rows) != 1 {
+				t.Fatalf("personal compaction ledger rows = %d, err = %v, want 1", len(rows), err)
+			}
+			if got := rows[0].GetString("organisation"); got != "" {
+				t.Errorf("balance_transactions.organisation = %q, want empty for personal compaction", got)
+			}
+		},
+	}
+	scenario.Test(t)
+}
+
 func TestOrgCompletionBlockedWhileProjectKeyRotationPending(t *testing.T) {
 	t.Parallel()
 
