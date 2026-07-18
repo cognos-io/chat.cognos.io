@@ -2,14 +2,20 @@ package handler
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
-	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
-	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+
+	"github.com/cognos-io/chat.cognos.io/backend/internal/auth"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/billing"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 // Organisation handlers (/api/v1/orgs). Access model, per
@@ -147,6 +153,351 @@ func OrganisationMembersList(app core.App) func(e *core.RequestEvent) error {
 		}
 		return e.JSON(http.StatusOK, response)
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Org billing (checkout, status, portal, usage)
+// ---------------------------------------------------------------------------
+
+type OrganisationBillingCheckoutParams struct {
+	Logger  *slog.Logger
+	Client  paddle.Client
+	PriceID string
+	App     core.App
+}
+
+type OrganisationBillingGetParams struct {
+	Logger          *slog.Logger
+	MinCommitRappen int64
+	App             core.App
+}
+
+type OrganisationBillingPortalParams struct {
+	Logger *slog.Logger
+	Client paddle.Client
+	App    core.App
+}
+
+type OrganisationUsageParams struct {
+	Logger *slog.Logger
+	App    core.App
+}
+
+type orgBillingResponse struct {
+	PlanType               billing.PlanType `json:"plan_type"`
+	PastDue                bool             `json:"past_due"`
+	SeatQuantity           int64            `json:"seat_quantity"`
+	PendingSeatQuantity    int64            `json:"pending_seat_quantity"`
+	CycleStartAt           string           `json:"cycle_start_at,omitempty"`
+	CycleEndAt             string           `json:"cycle_end_at,omitempty"`
+	FloorRappen            int64            `json:"floor_rappen"`
+	PooledUsageRappen      int64            `json:"pooled_usage_rappen"`
+	ProjectedOverageRappen int64            `json:"projected_overage_rappen"`
+}
+
+type orgUsageMember struct {
+	User        string   `json:"user"`
+	DisplayName string   `json:"display_name"`
+	CostRappen  int64    `json:"cost_rappen"`
+	Completions int64    `json:"completions"`
+	TopModels   []string `json:"top_models"`
+}
+
+type orgUsageResponse struct {
+	CycleStartAt string           `json:"cycle_start_at"`
+	CycleEndAt   string           `json:"cycle_end_at"`
+	TotalRappen  int64            `json:"total_rappen"`
+	Members      []orgUsageMember `json:"members"`
+}
+
+// OrganisationBillingCheckout creates a Paddle hosted checkout for a single
+// org seat. Quantity is always 1; custom_data carries org_id so the webhook
+// can route the subscription to the correct Organisation.
+func OrganisationBillingCheckout(params OrganisationBillingCheckoutParams) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		org, role, err := memberOrganisationOr404(params.App, e)
+		if err != nil {
+			return err
+		}
+		if role != organisations.RoleOwner {
+			return apis.NewForbiddenError("Only the organisation owner can manage billing", nil)
+		}
+
+		if params.Client == nil || params.PriceID == "" {
+			return apis.NewApiError(http.StatusServiceUnavailable, "Billing is not configured", nil)
+		}
+
+		user := auth.ExtractUser(e)
+		if user == nil {
+			return apis.NewUnauthorizedError("User not authenticated", nil)
+		}
+
+		customerID := orgCustomerID(params.App, org.ID)
+
+		result, err := params.Client.CreateCheckout(e.Request.Context(), paddle.CheckoutRequest{
+			PriceID:    params.PriceID,
+			UserID:     user.ID,
+			CustomerID: customerID,
+			OrgID:      org.ID,
+			Quantity:   1,
+		})
+		if err != nil {
+			if params.Logger != nil {
+				params.Logger.Error("paddle org checkout failed", "err", err, "org_id", org.ID)
+			}
+			return apis.NewApiError(http.StatusBadGateway, "Failed to start checkout", nil)
+		}
+
+		if result.CustomerID != "" {
+			if orgRec, err := params.App.FindRecordById("organisations", org.ID); err == nil && orgRec != nil {
+				if orgRec.GetString("paddle_customer_id") != result.CustomerID {
+					orgRec.Set("paddle_customer_id", result.CustomerID)
+					if err := params.App.Save(orgRec); err != nil && params.Logger != nil {
+						params.Logger.Error("failed to persist paddle_customer_id on org", "err", err)
+					}
+				}
+			}
+		}
+
+		return e.JSON(http.StatusOK, map[string]string{
+			"checkout_url": result.CheckoutURL,
+		})
+	}
+}
+
+// OrganisationBillingGet returns the Organisation's current billing snapshot:
+// plan, seat count, cycle window, and pooled PAYG usage so far. All amounts
+// are in whole rappen — the internal micro-rappen precision is never leaked.
+func OrganisationBillingGet(params OrganisationBillingGetParams) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		org, role, err := memberOrganisationOr404(params.App, e)
+		if err != nil {
+			return err
+		}
+		if !role.CanManage() {
+			return apis.NewForbiddenError("Only organisation owners and admins can view billing", nil)
+		}
+
+		record, err := params.App.FindFirstRecordByData("org_billing", "organisation", org.ID)
+		if err != nil || record == nil {
+			return e.JSON(http.StatusOK, orgBillingResponse{
+				PlanType: billing.PlanTypeInactive,
+			})
+		}
+
+		planType := billing.PlanType(record.GetString("plan_type"))
+		seatQty := int64(record.GetInt("seat_quantity"))
+		pendingQty := int64(record.GetInt("pending_seat_quantity"))
+		pastDue := record.GetBool("past_due")
+
+		cycleStart := record.GetDateTime("paddle_cycle_start_at").Time().UTC()
+		cycleEnd := record.GetDateTime("paddle_cycle_end_at").Time().UTC()
+
+		commit := params.MinCommitRappen
+		if commit <= 0 {
+			commit = billing.DefaultPAYGMinCommitRappen
+		}
+
+		var pooledUsageRappen int64
+		if !cycleStart.IsZero() && !cycleEnd.IsZero() {
+			usageMicro, err := sumOrgPAYGUsageMicro(params.App, org.ID, cycleStart, cycleEnd)
+			if err != nil {
+				if params.Logger != nil {
+					params.Logger.Error("org usage lookup failed", "err", err, "org_id", org.ID)
+				}
+				return apis.NewApiError(http.StatusInternalServerError, "Failed to load usage", err)
+			}
+			pooledUsageRappen = billing.CeilRappenFromMicro(usageMicro)
+		}
+
+		summary := billing.ComputeOrgCycleSummary(pooledUsageRappen, seatQty, commit)
+
+		return e.JSON(http.StatusOK, orgBillingResponse{
+			PlanType:               planType,
+			PastDue:                pastDue,
+			SeatQuantity:           seatQty,
+			PendingSeatQuantity:    pendingQty,
+			CycleStartAt:           formatBillingTime(cycleStart),
+			CycleEndAt:             formatBillingTime(cycleEnd),
+			FloorRappen:            summary.SeatQuantity * commit,
+			PooledUsageRappen:      summary.PooledUsageRappen,
+			ProjectedOverageRappen: summary.OverageChargeRappen,
+		})
+	}
+}
+
+// OrganisationBillingPortal mints an authenticated Paddle customer-portal link
+// for the Organisation's owner.
+func OrganisationBillingPortal(params OrganisationBillingPortalParams) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		org, role, err := memberOrganisationOr404(params.App, e)
+		if err != nil {
+			return err
+		}
+		if role != organisations.RoleOwner {
+			return apis.NewForbiddenError("Only the organisation owner can manage billing", nil)
+		}
+
+		if params.Client == nil {
+			return apis.NewApiError(http.StatusServiceUnavailable, "Billing is not configured", nil)
+		}
+
+		customerID := orgCustomerID(params.App, org.ID)
+		if customerID == "" {
+			return apis.NewApiError(http.StatusConflict, "No billing account yet", nil)
+		}
+
+		var subscriptionIDs []string
+		if rec, err := params.App.FindFirstRecordByData("org_billing", "organisation", org.ID); err == nil && rec != nil {
+			if subID := rec.GetString("paddle_subscription_id"); subID != "" {
+				subscriptionIDs = []string{subID}
+			}
+		}
+
+		session, err := params.Client.CreatePortalSession(
+			e.Request.Context(), customerID, subscriptionIDs,
+		)
+		if err != nil {
+			if params.Logger != nil {
+				params.Logger.Error("paddle org portal session failed", "err", err, "org_id", org.ID)
+			}
+			return apis.NewApiError(http.StatusBadGateway, "Failed to open billing portal", nil)
+		}
+
+		return e.JSON(http.StatusOK, map[string]string{
+			"portal_url": session.OverviewURL,
+		})
+	}
+}
+
+// OrganisationUsage returns per-member usage metadata for the current billing
+// cycle. It aggregates only ledger metadata (model ids, counts, cost) — never
+// conversation content — so it is safe despite end-to-end encryption.
+func OrganisationUsage(params OrganisationUsageParams) func(e *core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		org, role, err := memberOrganisationOr404(params.App, e)
+		if err != nil {
+			return err
+		}
+		if !role.CanManage() {
+			return apis.NewForbiddenError("Only organisation owners and admins can view usage", nil)
+		}
+
+		record, err := params.App.FindFirstRecordByData("org_billing", "organisation", org.ID)
+		if err != nil || record == nil {
+			return e.JSON(http.StatusOK, orgUsageResponse{})
+		}
+
+		cycleStart := record.GetDateTime("paddle_cycle_start_at").Time().UTC()
+		cycleEnd := record.GetDateTime("paddle_cycle_end_at").Time().UTC()
+		if cycleStart.IsZero() || cycleEnd.IsZero() {
+			return e.JSON(http.StatusOK, orgUsageResponse{})
+		}
+
+		members, totalRappen, err := orgUsageSince(params.App, org.ID, cycleStart, cycleEnd)
+		if err != nil {
+			if params.Logger != nil {
+				params.Logger.Error("org usage aggregation failed", "err", err, "org_id", org.ID)
+			}
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to load usage", err)
+		}
+
+		return e.JSON(http.StatusOK, orgUsageResponse{
+			CycleStartAt: cycleStart.Format(time.RFC3339),
+			CycleEndAt:   cycleEnd.Format(time.RFC3339),
+			TotalRappen:  totalRappen,
+			Members:      members,
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+// orgCustomerID resolves the organisation's Paddle customer id. It prefers the
+// id persisted on the organisations record, falling back to the org_billing row.
+func orgCustomerID(app core.App, orgID string) string {
+	if org, err := app.FindRecordById("organisations", orgID); err == nil && org != nil {
+		if id := org.GetString("paddle_customer_id"); id != "" {
+			return id
+		}
+	}
+	if rec, err := app.FindFirstRecordByData("org_billing", "organisation", orgID); err == nil && rec != nil {
+		if id := rec.GetString("paddle_customer_id"); id != "" {
+			return id
+		}
+	}
+	return ""
+}
+
+// orgUsageSince aggregates per-member usage metadata from org-attributed ledger
+// rows in the half-open cycle window [start, end). top_models contains up to
+// three model ids ordered by spend desc.
+func orgUsageSince(app core.App, orgID string, start, end time.Time) ([]orgUsageMember, int64, error) {
+	type row struct {
+		UserID      string `db:"user_id"`
+		DisplayName string `db:"display_name"`
+		ModelID     string `db:"model_id"`
+		CostMicro   int64  `db:"cost_micro"`
+		Completions int64  `db:"completions"`
+	}
+
+	var rows []row
+	err := app.DB().NewQuery(`
+		SELECT
+			t.user_id,
+			COALESCE(u.display_name, '') AS display_name,
+			t.model_id,
+			COALESCE(SUM(t.user_cost_microrappen), 0) AS cost_micro,
+			COUNT(*) AS completions
+		FROM ` + balanceTransactionsColl + ` t
+		LEFT JOIN users u ON u.id = t.user_id
+		WHERE t.organisation = {:org_id}
+		  AND t.type = {:type}
+		  AND t.occurred_at >= {:start}
+		  AND t.occurred_at < {:end}
+		GROUP BY t.user_id, t.model_id
+		ORDER BY t.user_id, cost_micro DESC
+	`).Bind(dbx.Params{
+		"org_id": orgID,
+		"type":   billing.UsageTransactionType,
+		"start":  start.UTC().Format(webhookPBDateLayout),
+		"end":    end.UTC().Format(webhookPBDateLayout),
+	}).All(&rows)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	byUser := make(map[string]*orgUsageMember)
+	userCostMicro := make(map[string]int64)
+	var order []string
+	for _, r := range rows {
+		m, ok := byUser[r.UserID]
+		if !ok {
+			m = &orgUsageMember{
+				User:        r.UserID,
+				DisplayName: r.DisplayName,
+			}
+			byUser[r.UserID] = m
+			order = append(order, r.UserID)
+		}
+		userCostMicro[r.UserID] += r.CostMicro
+		m.Completions += r.Completions
+		if len(m.TopModels) < 3 {
+			m.TopModels = append(m.TopModels, r.ModelID)
+		}
+	}
+
+	members := make([]orgUsageMember, 0, len(order))
+	var total int64
+	for _, uid := range order {
+		m := *byUser[uid]
+		m.CostRappen = billing.CeilRappenFromMicro(userCostMicro[uid])
+		members = append(members, m)
+		total += m.CostRappen
+	}
+	return members, total, nil
 }
 
 // memberOrganisationOr404 loads the organisation from the {orgID} path value

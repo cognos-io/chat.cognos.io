@@ -108,6 +108,9 @@ type APIConfig struct {
 	PaddlePricePAYGOverage      string `koanf:"paddle.price_payg_overage"`
 	PaddlePriceUnlimitedMonthly string `koanf:"paddle.price_unlimited_monthly"`
 	PaddlePriceUnlimitedAnnual  string `koanf:"paddle.price_unlimited_annual"`
+	// PaddlePriceOrgSeat is the per-Seat price (CHF 15/seat/month) an
+	// Organisation subscription carries with quantity = active Seats.
+	PaddlePriceOrgSeat string `koanf:"paddle.price_org_seat"`
 	// MFA. MFATOTPEncryptionKey is a server-held key (base64-encoded 32 bytes)
 	// used to encrypt TOTP seeds at rest. Without it, TOTP enrolment is disabled
 	// (we never store seeds in plaintext). Rotate by issuing a new key and

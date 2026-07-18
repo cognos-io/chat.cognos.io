@@ -129,6 +129,7 @@ func addPocketBaseRoutes(
 	attachmentMaxFileBytes int64,
 	attachmentStorageCapBytes int64,
 	mfaCipher *mfa.SeedCipher,
+	paddlePriceOrgSeat string,
 ) {
 	// Shared MFA dependencies for the auth-completion and management endpoints.
 	mfaStore := mfa.NewStore(app)
@@ -495,6 +496,57 @@ func addPocketBaseRoutes(
 	e.Router.GET(
 		"/api/v1/orgs/{orgID}/members",
 		handler.OrganisationMembersList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Organisation billing: checkout, status, portal, usage.
+	// All gated by active membership; checkout and portal are owner-only,
+	// billing and usage are owner/admin.
+	e.Router.POST(
+		"/api/v1/orgs/{orgID}/billing/checkout",
+		handler.OrganisationBillingCheckout(handler.OrganisationBillingCheckoutParams{
+			Logger:  logger,
+			Client:  paddleClient,
+			PriceID: paddlePriceOrgSeat,
+			App:     app,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/billing",
+		handler.OrganisationBillingGet(handler.OrganisationBillingGetParams{
+			Logger:          logger,
+			MinCommitRappen: paddleMinCommitRappen,
+			App:             app,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/billing/portal",
+		handler.OrganisationBillingPortal(handler.OrganisationBillingPortalParams{
+			Logger: logger,
+			Client: paddleClient,
+			App:    app,
+		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/usage",
+		handler.OrganisationUsage(handler.OrganisationUsageParams{
+			Logger: logger,
+			App:    app,
+		}),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),
