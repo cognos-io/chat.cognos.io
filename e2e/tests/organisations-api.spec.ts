@@ -98,6 +98,19 @@ test.describe('organisations API lifecycle', () => {
       expect(projectRes.status()).toBe(201);
       const { id: projectId } = (await projectRes.json()) as { id: string };
 
+      const conversationRes = await owner.api.post(
+        `/api/v1/projects/${projectId}/conversations`,
+        {
+          data: {
+            data: randomBase64(48),
+            public_key: randomBase64(32),
+            wrapped_conversation_secret_key: randomBase64(48),
+          },
+        },
+      );
+      expect(conversationRes.status()).toBe(201);
+      const { id: conversationId } = (await conversationRes.json()) as { id: string };
+
       expect(
         (
           await owner.api.patch(`/api/v1/projects/${projectId}`, {
@@ -117,6 +130,14 @@ test.describe('organisations API lifecycle', () => {
             data: randomBase64(48),
             public_key: randomBase64(32),
             wrapped_conversation_secret_key: randomBase64(48),
+          },
+        }),
+        await owner.api.post(`/api/v1/conversations/${conversationId}/complete`, {
+          data: {
+            model_id: 'llama-3-3-infomaniak',
+            persona_id: 'cognos:simple-assistant',
+            system_prompt: 'Test persona prompt',
+            messages: [{ role: 'user', content: 'hello there' }],
           },
         }),
       ]) {

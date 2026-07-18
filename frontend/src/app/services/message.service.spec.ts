@@ -181,6 +181,31 @@ describe('parseOrgCompletionBillingRestriction', () => {
     });
   });
 
+  it('parses the PocketBase API error envelope used by the central org write gate', () => {
+    const restriction = parseOrgCompletionBillingRestriction(
+      billing402({
+        status: 402,
+        message:
+          'New messages in Acme are paused while a payment is retried. Your personal workspace still works.',
+        data: {
+          error: 'ORG_BILLING_PAST_DUE',
+          organisation_id: 'org_1',
+          organisation_name: 'Acme',
+          admin_message: 'Update the payment method.',
+        },
+      }),
+    );
+
+    expect(restriction).toEqual({
+      code: 'ORG_BILLING_PAST_DUE',
+      organisationId: 'org_1',
+      organisationName: 'Acme',
+      message:
+        'New messages in Acme are paused while a payment is retried. Your personal workspace still works.',
+      adminMessage: 'Update the payment method.',
+    });
+  });
+
   it('returns null for personal billing codes', () => {
     expect(
       parseOrgCompletionBillingRestriction(billing402({ error: 'TRIAL_EXHAUSTED' })),

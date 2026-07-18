@@ -869,13 +869,21 @@ export const parseOrgCompletionBillingRestriction = (
   if (!(error instanceof HttpErrorResponse) || error.status !== 402) {
     return null;
   }
-  const body = error.error as {
+  type OrgRestrictionBody = {
     error?: string;
     organisation_id?: string;
     organisation_name?: string;
     message?: string;
     admin_message?: string;
-  } | null;
+  };
+  const response = error.error as
+    | (OrgRestrictionBody & { data?: OrgRestrictionBody })
+    | null;
+  // Completion billing can be rejected by either the completion handler
+  // (direct JSON) or the central content-write gate (PocketBase ApiError,
+  // whose structured fields live under `data`). Both are the same public 402
+  // contract and must drive the same calm, draft-preserving banner.
+  const body = response?.data ?? response;
   const code = body?.error;
   if (code !== 'ORG_BILLING_INACTIVE' && code !== 'ORG_BILLING_PAST_DUE') {
     return null;
@@ -884,7 +892,7 @@ export const parseOrgCompletionBillingRestriction = (
     code,
     organisationId: body?.organisation_id ?? '',
     organisationName: body?.organisation_name ?? '',
-    message: body?.message ?? '',
+    message: body?.message ?? response?.message ?? '',
     adminMessage: body?.admin_message ?? '',
   };
 };
