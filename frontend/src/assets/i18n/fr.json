@@ -1980,8 +1980,19 @@
       "saveError": "Impossible d'enregistrer le nom. Veuillez réessayer.",
       "dangerHeading": "Dissoudre l'organisation",
       "dangerBody": "Dissoudre définitivement cette organisation, retirer tous les membres et supprimer tous les projets de l'organisation.",
-      "dangerHint": "Cette action n'est pas encore disponible.",
+      "dangerHint": "Seul le propriétaire peut le faire. Cette action est irréversible.",
       "dangerCta": "Dissoudre l'organisation"
+    },
+    "dissolve": {
+      "title": "Dissoudre {{ org }} ?",
+      "projectsAndMembers": "Cette action supprime définitivement tous les Projets de l'organisation et retire tous les membres.",
+      "subscription": "L'abonnement prendra fin à la fin du cycle de facturation en cours.",
+      "personalUntouched": "Votre compte personnel et vos conversations personnelles restent intacts.",
+      "acknowledgement": "Je comprends que tous les Projets de l'organisation seront définitivement supprimés.",
+      "cancel": "Annuler",
+      "confirm": "Dissoudre l'organisation",
+      "success": "Organisation dissoute",
+      "error": "Impossible de dissoudre l'organisation. Rien n'a été modifié. Veuillez réessayer."
     },
     "offboard": {
       "rotating": "Suppression de l’accès et mise à jour des clés des projets…",

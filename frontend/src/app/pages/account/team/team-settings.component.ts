@@ -139,7 +139,11 @@ type AdminTab = 'members' | 'invites' | 'billing' | 'policies' | 'audit' | 'sett
               <app-org-audit [org]="org" />
             }
             @case ('settings') {
-              <app-org-general [org]="org" (renamed)="onRenamed($event)" />
+              <app-org-general
+                [org]="org"
+                (renamed)="onRenamed($event)"
+                (dissolved)="onDissolved($event)"
+              />
             }
             @default {
               <app-org-members [org]="org" />
@@ -343,6 +347,21 @@ export class TeamSettingsComponent {
     this.orgs.update((orgs) =>
       orgs.map((org) => (org.id === record.id ? { ...org, name: record.name } : org)),
     );
+  }
+
+  protected onDissolved(orgId: string): void {
+    // The server has committed the dissolution. Reconcile both page-local and
+    // global Workspace state immediately so the deleted org cannot remain
+    // selectable while the best-effort network refresh is in flight.
+    this.orgs.update((orgs) => orgs.filter((org) => org.id !== orgId));
+    this._workspaces.forgetMembership(orgId);
+    this._workspaces
+      .refreshMemberships()
+      .pipe(
+        catchError(() => EMPTY),
+        takeUntilDestroyed(this._destroyRef),
+      )
+      .subscribe();
   }
 
   /** Merge a policy-updated record back into the list (role stays ours). */

@@ -1,3 +1,4 @@
+import { Dialog } from '@angular/cdk/dialog';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,6 +10,8 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+import { firstValueFrom } from 'rxjs';
 
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
@@ -23,11 +26,15 @@ import {
 import { OrganisationRecord } from '@app/interfaces/organisation';
 import { CognosApiService } from '@app/services/cognos-api.service';
 import { ErrorService } from '@app/services/error.service';
+import { cognosDialogOptions } from '@app/utils/dialog-options';
 
-// OrgGeneralComponent holds organisation-level settings: rename now,
-// dissolution later (spec §8.3 — deliberately not built in this slice; the
-// disabled control plus hint copy keeps the eventual location discoverable
-// without pretending it works).
+import {
+  DissolveOrganisationDialogComponent,
+  DissolveOrganisationDialogData,
+} from './dissolve-organisation-dialog.component';
+
+// OrgGeneralComponent holds organisation-level settings: Owner/Admin rename,
+// and the Owner-only destructive dissolution flow (spec §8.3).
 @Component({
   selector: 'app-org-general',
   standalone: true,
@@ -61,17 +68,20 @@ import { ErrorService } from '@app/services/error.service';
         </form>
       </cog-card>
 
-      <cog-card tone="danger" [heading]="t('team.settings.dangerHeading')">
-        <p class="org-general__danger-body">{{ t('team.settings.dangerBody') }}</p>
-        <p class="org-general__danger-hint">{{ t('team.settings.dangerHint') }}</p>
-        <cog-button
-          card-actions
-          appearance="danger"
-          [disabled]="true"
-          [title]="t('team.settings.dangerHint')"
-          >{{ t('team.settings.dangerCta') }}</cog-button
-        >
-      </cog-card>
+      @if (org().role === 'owner') {
+        <cog-card tone="danger" [heading]="t('team.settings.dangerHeading')">
+          <p class="org-general__danger-body">{{ t('team.settings.dangerBody') }}</p>
+          <p class="org-general__danger-hint">{{ t('team.settings.dangerHint') }}</p>
+          <cog-button
+            card-actions
+            appearance="danger"
+            type="button"
+            [disabled]="dissolvePending()"
+            (click)="dissolve()"
+            >{{ t('team.settings.dangerCta') }}</cog-button
+          >
+        </cog-card>
+      }
     </ng-container>
   `,
   styles: `
@@ -97,6 +107,7 @@ import { ErrorService } from '@app/services/error.service';
 })
 export class OrgGeneralComponent {
   private readonly _api = inject(CognosApiService);
+  private readonly _dialog = inject(Dialog);
   private readonly _toast = inject(CognosToastService);
   private readonly _errors = inject(ErrorService);
   private readonly _transloco = inject(TranslocoService);
@@ -108,9 +119,13 @@ export class OrgGeneralComponent {
   /** Emits the updated record after a successful rename. */
   readonly renamed = output<OrganisationRecord>();
 
+  /** Emits only after the server confirms Owner-only dissolution. */
+  readonly dissolved = output<string>();
+
   // Editable copy of the name; resets whenever the managed org changes.
   protected readonly name = linkedSignal(() => this.org().name);
   protected readonly savePending = signal(false);
+  protected readonly dissolvePending = signal(false);
 
   protected canSave(): boolean {
     const name = this.name().trim();
@@ -139,6 +154,44 @@ export class OrgGeneralComponent {
         error: () => {
           this.savePending.set(false);
           this._errors.alert(this._transloco.translate('team.settings.saveError'));
+        },
+      });
+  }
+
+  protected async dissolve(): Promise<void> {
+    if (this.org().role !== 'owner' || this.dissolvePending()) {
+      return;
+    }
+    const data: DissolveOrganisationDialogData = { orgName: this.org().name };
+    const confirmed = await firstValueFrom(
+      this._dialog.open<boolean>(DissolveOrganisationDialogComponent, {
+        ...cognosDialogOptions(
+          this._transloco.translate('team.dissolve.title', { org: data.orgName }),
+        ),
+        data,
+      }).closed,
+    );
+    if (!confirmed || this.dissolvePending()) {
+      return;
+    }
+
+    const orgId = this.org().id;
+    this.dissolvePending.set(true);
+    this._api
+      .dissolveOrg(orgId)
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe({
+        next: () => {
+          this.dissolvePending.set(false);
+          this._toast.notify({
+            title: this._transloco.translate('team.dissolve.success'),
+            tone: 'success',
+          });
+          this.dissolved.emit(orgId);
+        },
+        error: () => {
+          this.dissolvePending.set(false);
+          this._errors.alert(this._transloco.translate('team.dissolve.error'));
         },
       });
   }

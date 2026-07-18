@@ -58,6 +58,7 @@ function projectOf(id: string, organisation?: string): Project {
 describe('OrganisationService', () => {
   let user$: Subject<AuthUser>;
   let listOrgs: ReturnType<typeof vi.fn>;
+  let storage: Map<string, string>;
 
   function setup(options?: {
     enabled?: boolean;
@@ -92,12 +93,21 @@ describe('OrganisationService', () => {
   const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
   beforeEach(() => {
-    localStorage.clear();
+    // Pin storage semantics independently of Node's experimental
+    // `--localstorage-file` support used by the Angular test worker.
+    storage = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value),
+      removeItem: (key: string) => storage.delete(key),
+      clear: () => storage.clear(),
+    });
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
     localStorage.clear();
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
@@ -166,6 +176,32 @@ describe('OrganisationService', () => {
 
       expect(service.activeWorkspace()).toBe('personal');
       expect(localStorage.getItem('cognos:workspace:user_alice')).toBeNull();
+    });
+
+    it('forgets a dissolved active Organisation and falls back to Personal', async () => {
+      const service = setup({ memberships: [acme, globex] });
+      user$.next(userAlice);
+      await flush();
+      service.setActiveWorkspace('org_acme');
+
+      service.forgetMembership('org_acme');
+
+      expect(service.memberships()).toEqual([globex]);
+      expect(service.activeWorkspace()).toBe('personal');
+      expect(localStorage.getItem('cognos:workspace:user_alice')).toBeNull();
+    });
+
+    it('forgets an inactive Organisation without disturbing the active Workspace', async () => {
+      const service = setup({ memberships: [acme, globex] });
+      user$.next(userAlice);
+      await flush();
+      service.setActiveWorkspace('org_globex');
+
+      service.forgetMembership('org_acme');
+
+      expect(service.memberships()).toEqual([globex]);
+      expect(service.activeWorkspace()).toBe('org_globex');
+      expect(localStorage.getItem('cognos:workspace:user_alice')).toBe('org_globex');
     });
   });
 

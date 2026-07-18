@@ -38,6 +38,7 @@ describe('TeamSettingsComponent', () => {
   let createOrg: ReturnType<typeof vi.fn>;
   let createOrgCheckout: ReturnType<typeof vi.fn>;
   let refreshMemberships: ReturnType<typeof vi.fn>;
+  let forgetMembership: ReturnType<typeof vi.fn>;
   let errorAlert: ReturnType<typeof vi.fn>;
   let redirect: ReturnType<typeof vi.fn<(url: string) => void>>;
 
@@ -71,7 +72,10 @@ describe('TeamSettingsComponent', () => {
         },
         { provide: ModelService, useValue: { modelList: vi.fn(() => []) } },
         { provide: AuthService, useValue: { user: authUser } },
-        { provide: OrganisationService, useValue: { refreshMemberships } },
+        {
+          provide: OrganisationService,
+          useValue: { refreshMemberships, forgetMembership },
+        },
         { provide: Dialog, useValue: { open: () => ({ closed: of(true) }) } },
         { provide: CognosToastService, useValue: { notify: vi.fn() } },
         { provide: ErrorService, useValue: { alert: errorAlert } },
@@ -93,6 +97,7 @@ describe('TeamSettingsComponent', () => {
     createOrg = vi.fn(() => of(makeOrg()));
     createOrgCheckout = vi.fn(() => of({ checkout_url: 'https://checkout' }));
     refreshMemberships = vi.fn(() => of<OrganisationRecord[]>([]));
+    forgetMembership = vi.fn();
     errorAlert = vi.fn();
     redirect = vi.fn<(url: string) => void>();
   });
@@ -214,7 +219,10 @@ describe('TeamSettingsComponent', () => {
         },
         { provide: ModelService, useValue: { modelList: vi.fn(() => []) } },
         { provide: AuthService, useValue: { user: authUser } },
-        { provide: OrganisationService, useValue: { refreshMemberships } },
+        {
+          provide: OrganisationService,
+          useValue: { refreshMemberships, forgetMembership },
+        },
         { provide: Dialog, useValue: { open: () => ({ closed: of(true) }) } },
         { provide: CognosToastService, useValue: { notify: vi.fn() } },
         { provide: ErrorService, useValue: { alert: errorAlert } },
@@ -351,6 +359,36 @@ describe('TeamSettingsComponent', () => {
     component['onRenamed'](makeOrg({ id: 'o1', name: 'New', created: '' }));
 
     expect(component['orgs']()[0].name).toBe('New');
+  });
+
+  it('immediately removes a dissolved org from page and Workspace state', async () => {
+    listOrgs = vi.fn(() =>
+      of([
+        makeOrg({ id: 'o1', role: 'owner', name: 'A' }),
+        makeOrg({ id: 'o2', role: 'owner', name: 'B' }),
+      ]),
+    );
+    await render();
+    refreshMemberships.mockClear();
+
+    component['onDissolved']('o1');
+
+    expect(component['orgs']().map((org) => org.id)).toEqual(['o2']);
+    expect(component['selectedOrg']()?.id).toBe('o2');
+    expect(forgetMembership).toHaveBeenCalledWith('o1');
+    expect(refreshMemberships).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the successful local dissolution when membership refresh fails', async () => {
+    listOrgs = vi.fn(() => of([makeOrg({ id: 'o1', role: 'owner' })]));
+    refreshMemberships = vi.fn(() => throwError(() => new Error('offline')));
+    await render();
+
+    component['onDissolved']('o1');
+
+    expect(component['orgs']()).toEqual([]);
+    expect(forgetMembership).toHaveBeenCalledWith('o1');
+    expect(errorAlert).not.toHaveBeenCalled();
   });
 
   it('merges policy updates into the list and keeps the caller role', async () => {

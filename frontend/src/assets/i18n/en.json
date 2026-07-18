@@ -1980,8 +1980,19 @@
       "saveError": "Could not save the name. Please try again.",
       "dangerHeading": "Dissolve Organisation",
       "dangerBody": "Permanently dissolve this Organisation, remove all members and delete all Organisation Projects.",
-      "dangerHint": "This action is not available yet.",
+      "dangerHint": "Only the Owner can do this. It cannot be undone.",
       "dangerCta": "Dissolve Organisation"
+    },
+    "dissolve": {
+      "title": "Dissolve {{ org }}?",
+      "projectsAndMembers": "This permanently deletes every Organisation Project and removes every member.",
+      "subscription": "The subscription will end at the end of the current billing cycle.",
+      "personalUntouched": "Your personal account and personal chats are untouched.",
+      "acknowledgement": "I understand that all Organisation Projects will be permanently deleted.",
+      "cancel": "Cancel",
+      "confirm": "Dissolve Organisation",
+      "success": "Organisation dissolved",
+      "error": "Could not dissolve the Organisation. Nothing was changed. Please try again."
     },
     "offboard": {
       "rotating": "Removing access and updating Project keys…",

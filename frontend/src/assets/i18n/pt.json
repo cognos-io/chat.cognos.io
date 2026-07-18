@@ -1980,8 +1980,19 @@
       "saveError": "Não foi possível guardar o nome. Tenta novamente.",
       "dangerHeading": "Dissolver organização",
       "dangerBody": "Dissolver permanentemente esta organização, remover todos os membros e eliminar todos os projetos da organização.",
-      "dangerHint": "Esta ação ainda não está disponível.",
+      "dangerHint": "Apenas o proprietário pode fazê-lo. Esta ação não pode ser anulada.",
       "dangerCta": "Dissolver organização"
+    },
+    "dissolve": {
+      "title": "Dissolver {{ org }}?",
+      "projectsAndMembers": "Isto elimina permanentemente todos os Projetos da organização e remove todos os membros.",
+      "subscription": "A subscrição termina no fim do ciclo de faturação atual.",
+      "personalUntouched": "A tua conta pessoal e os teus chats pessoais ficam intactos.",
+      "acknowledgement": "Compreendo que todos os Projetos da organização serão eliminados permanentemente.",
+      "cancel": "Cancelar",
+      "confirm": "Dissolver organização",
+      "success": "Organização dissolvida",
+      "error": "Não foi possível dissolver a organização. Nada foi alterado. Tenta novamente."
     },
     "offboard": {
       "rotating": "A remover o acesso e a atualizar as chaves dos projetos…",

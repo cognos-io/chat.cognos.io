@@ -1190,6 +1190,17 @@ export class CognosApiService {
       .pipe(map(mapOrganisationRecord));
   }
 
+  // dissolveOrg permanently removes every Organisation Project, revokes all
+  // memberships and schedules the subscription to end. The explicit deletion
+  // acknowledgement is fixed at this boundary: the UI cannot accidentally
+  // invoke the destructive endpoint without confirming Project deletion.
+  dissolveOrg(orgId: string): Observable<void> {
+    return this._http.delete<void>(`${this._baseUrl}/api/v1/orgs/${orgId}`, {
+      headers: this.authHeaders(),
+      body: { delete_projects: true },
+    });
+  }
+
   // updateOrgPolicies changes the Organisation's enforced policies (privacy
   // tier ceiling, retention default, MFA requirement) — partial PATCH, only
   // the fields present change (Owner/Admin only, spec §6 Phase 2).

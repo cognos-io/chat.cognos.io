@@ -1980,8 +1980,19 @@
       "saveError": "Impossibile salvare il nome. Riprova.",
       "dangerHeading": "Sciogli organizzazione",
       "dangerBody": "Sciogli definitivamente questa organizzazione, rimuovi tutti i membri ed elimina tutti i progetti dell'organizzazione.",
-      "dangerHint": "Questa azione non è ancora disponibile.",
+      "dangerHint": "Solo il proprietario può farlo. Questa azione non può essere annullata.",
       "dangerCta": "Sciogli organizzazione"
+    },
+    "dissolve": {
+      "title": "Sciogliere {{ org }}?",
+      "projectsAndMembers": "Questa azione elimina definitivamente tutti i Progetti dell'organizzazione e rimuove tutti i membri.",
+      "subscription": "L'abbonamento terminerà alla fine del ciclo di fatturazione corrente.",
+      "personalUntouched": "Il tuo account personale e le tue chat personali restano intatti.",
+      "acknowledgement": "Ho compreso che tutti i Progetti dell'organizzazione saranno eliminati definitivamente.",
+      "cancel": "Annulla",
+      "confirm": "Sciogli organizzazione",
+      "success": "Organizzazione sciolta",
+      "error": "Impossibile sciogliere l'organizzazione. Non è stato modificato nulla. Riprova."
     },
     "offboard": {
       "rotating": "Rimozione dell’accesso e aggiornamento delle chiavi dei progetti…",

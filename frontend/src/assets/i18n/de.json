@@ -1980,8 +1980,19 @@
       "saveError": "Der Name konnte nicht gespeichert werden. Bitte versuche es erneut.",
       "dangerHeading": "Organisation auflösen",
       "dangerBody": "Diese Organisation dauerhaft auflösen, alle Mitglieder entfernen und alle Organisation-Projekte löschen.",
-      "dangerHint": "Diese Aktion ist noch nicht verfügbar.",
+      "dangerHint": "Nur der Eigentümer kann dies tun. Die Aktion kann nicht rückgängig gemacht werden.",
       "dangerCta": "Organisation auflösen"
+    },
+    "dissolve": {
+      "title": "{{ org }} auflösen?",
+      "projectsAndMembers": "Dadurch werden alle Organisationsprojekte dauerhaft gelöscht und alle Mitglieder entfernt.",
+      "subscription": "Das Abonnement endet am Ende des aktuellen Abrechnungszeitraums.",
+      "personalUntouched": "Dein persönliches Konto und deine persönlichen Chats bleiben unberührt.",
+      "acknowledgement": "Ich verstehe, dass alle Organisationsprojekte dauerhaft gelöscht werden.",
+      "cancel": "Abbrechen",
+      "confirm": "Organisation auflösen",
+      "success": "Organisation aufgelöst",
+      "error": "Die Organisation konnte nicht aufgelöst werden. Es wurde nichts geändert. Bitte versuche es erneut."
     },
     "offboard": {
       "rotating": "Zugriff wird entfernt und Projektschlüssel werden aktualisiert…",

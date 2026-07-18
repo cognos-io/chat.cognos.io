@@ -267,6 +267,18 @@ describe('organisation caller_role wire mapping (issue B1)', () => {
     }
   });
 
+  it('dissolves an Organisation only with explicit Project deletion', () => {
+    const { service, http } = setup();
+
+    service.dissolveOrg('org_1').subscribe();
+
+    const request = http.expectOne('http://localhost:8090/api/v1/orgs/org_1');
+    expect(request.request.method).toBe('DELETE');
+    expect(request.request.body).toEqual({ delete_projects: true });
+    expect(request.request.headers.get('Authorization')).toBe('Bearer test-token');
+    request.flush(null);
+  });
+
   it('lists paginated content-free organisation audit metadata', () => {
     const { service, http } = setup();
     const response = {

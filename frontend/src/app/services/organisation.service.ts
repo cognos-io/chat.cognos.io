@@ -171,6 +171,22 @@ export class OrganisationService {
     );
   }
 
+  /**
+   * Immediately forget a membership after the server confirms dissolution.
+   * This keeps the Workspace switcher honest even if the subsequent network
+   * refresh fails. If the dissolved Organisation was active, Personal becomes
+   * active and its stale persisted selection is cleared.
+   */
+  forgetMembership(orgId: string): void {
+    this._memberships.update((memberships) =>
+      memberships.filter((membership) => membership.id !== orgId),
+    );
+    if (this._activeWorkspace() === orgId) {
+      this._activeWorkspace.set(PERSONAL_WORKSPACE);
+      this.persistWorkspace(PERSONAL_WORKSPACE);
+    }
+  }
+
   /** The Organisation's display name, or null when unknown/not a member. */
   orgName(orgId: string | undefined): string | null {
     if (!orgId) {
