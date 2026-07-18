@@ -31,8 +31,9 @@ import { OrgBillingComponent } from './org-billing.component';
 import { OrgGeneralComponent } from './org-general.component';
 import { OrgInvitesComponent } from './org-invites.component';
 import { OrgMembersComponent } from './org-members.component';
+import { OrgPoliciesComponent } from './org-policies.component';
 
-type AdminTab = 'members' | 'invites' | 'billing' | 'settings';
+type AdminTab = 'members' | 'invites' | 'billing' | 'policies' | 'settings';
 
 // TeamSettingsComponent is the /account/team page (behind the `team` feature
 // flag). Three shapes, by what the signed-in Account holds:
@@ -60,6 +61,7 @@ type AdminTab = 'members' | 'invites' | 'billing' | 'settings';
     OrgGeneralComponent,
     OrgInvitesComponent,
     OrgMembersComponent,
+    OrgPoliciesComponent,
     SettingsPageComponent,
     TranslocoModule,
   ],
@@ -125,6 +127,9 @@ type AdminTab = 'members' | 'invites' | 'billing' | 'settings';
             @case ('billing') {
               <app-org-billing [org]="org" />
             }
+            @case ('policies') {
+              <app-org-policies [org]="org" (updated)="onOrgUpdated($event)" />
+            }
             @case ('settings') {
               <app-org-general [org]="org" (renamed)="onRenamed($event)" />
             }
@@ -142,10 +147,15 @@ type AdminTab = 'members' | 'invites' | 'billing' | 'settings';
             <ul class="team-settings__member-orgs">
               @for (org of memberOrgs(); track org.id) {
                 <li class="team-settings__member-org">
-                  <span>{{ org.name }}</span>
-                  <cog-lozenge tone="neutral">{{
-                    t('team.roles.' + org.role)
-                  }}</cog-lozenge>
+                  <div class="team-settings__member-org-head">
+                    <span>{{ org.name }}</span>
+                    <cog-lozenge tone="neutral">{{
+                      t('team.roles.' + org.role)
+                    }}</cog-lozenge>
+                  </div>
+                  <!-- The org's policies, read-only: the rules that apply to
+                       the member's work in its Projects (spec §6). -->
+                  <app-org-policies [org]="org" />
                 </li>
               }
             </ul>
@@ -206,17 +216,23 @@ type AdminTab = 'members' | 'invites' | 'billing' | 'settings';
       flex-direction: column;
       margin: 0;
       padding: 0;
-      gap: var(--cog-space-100);
+      gap: var(--cog-space-200);
       list-style: none;
     }
 
     .team-settings__member-org {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
+      flex-direction: column;
       gap: var(--cog-space-100);
       color: var(--cog-text);
       font-size: var(--cog-fs-body);
+    }
+
+    .team-settings__member-org-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--cog-space-100);
     }
   `,
 })
@@ -289,6 +305,7 @@ export class TeamSettingsComponent {
       { value: 'members', label: t('team.tabs.members') },
       { value: 'invites', label: t('team.tabs.invites') },
       { value: 'billing', label: t('team.tabs.billing') },
+      { value: 'policies', label: t('team.tabs.policies') },
       { value: 'settings', label: t('team.tabs.settings') },
     ];
   }
@@ -298,6 +315,7 @@ export class TeamSettingsComponent {
       value === 'members' ||
       value === 'invites' ||
       value === 'billing' ||
+      value === 'policies' ||
       value === 'settings'
     ) {
       this.tab.set(value);
@@ -313,6 +331,15 @@ export class TeamSettingsComponent {
   protected onRenamed(record: OrganisationRecord): void {
     this.orgs.update((orgs) =>
       orgs.map((org) => (org.id === record.id ? { ...org, name: record.name } : org)),
+    );
+  }
+
+  /** Merge a policy-updated record back into the list (role stays ours). */
+  protected onOrgUpdated(record: OrganisationRecord): void {
+    this.orgs.update((orgs) =>
+      orgs.map((org) =>
+        org.id === record.id ? { ...org, ...record, role: org.role } : org,
+      ),
     );
   }
 

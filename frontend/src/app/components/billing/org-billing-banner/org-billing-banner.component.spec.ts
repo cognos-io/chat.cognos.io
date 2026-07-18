@@ -31,7 +31,17 @@ describe('OrgBillingBannerComponent', () => {
     block = restriction(),
   ): Promise<void> {
     const memberships: OrganisationRecord[] = viewerRole
-      ? [{ id: 'org_1', name: 'Acme Legal', role: viewerRole, created: '' }]
+      ? [
+          {
+            id: 'org_1',
+            name: 'Acme Legal',
+            role: viewerRole,
+            created: '',
+            policy_privacy_tier: '' as const,
+            policy_retention_days: 0,
+            policy_mfa_required: false,
+          },
+        ]
       : [];
     await TestBed.configureTestingModule({
       imports: [OrgBillingBannerComponent],

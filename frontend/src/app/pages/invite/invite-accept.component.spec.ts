@@ -16,6 +16,9 @@ const acme: OrganisationRecord = {
   name: 'Acme Legal',
   role: 'member',
   created: '2026-01-01T00:00:00Z',
+  policy_privacy_tier: '',
+  policy_retention_days: 0,
+  policy_mfa_required: false,
 };
 
 describe('InviteAcceptComponent', () => {

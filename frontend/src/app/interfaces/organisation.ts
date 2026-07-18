@@ -9,15 +9,41 @@
 export type OrgRole = 'owner' | 'admin' | 'member';
 
 /**
+ * The privacy-tier ceiling an Organisation may impose on its Projects:
+ * '' means no ceiling. When set, it caps which Models members can use in
+ * org Projects — the stricter of the member's own tier and the ceiling
+ * wins (spec §6, Phase 2 policies).
+ */
+export type OrgPrivacyTierCeiling = '' | 'ch_only' | 'eu' | 'global';
+
+/**
  * OrganisationRecord is the API shape of GET /api/v1/orgs list items and
  * GET /api/v1/orgs/{id}: an Organisation the caller is an active member of,
- * with the caller's own role embedded.
+ * with the caller's own role embedded. Policy fields are visible to every
+ * member (read-only for role 'member'; editable via PATCH
+ * /orgs/{id}/policies for Owner/Admin).
  */
 export interface OrganisationRecord {
   id: string;
   name: string;
   role: OrgRole;
   created: string;
+  /** Privacy-tier ceiling for org Projects; '' = no ceiling. */
+  policy_privacy_tier: OrgPrivacyTierCeiling;
+  /** Default auto-delete for new Conversations in org Projects; 0 = none. */
+  policy_retention_days: number;
+  /** When true, members without MFA are blocked from org Projects. */
+  policy_mfa_required: boolean;
+}
+
+/**
+ * OrgPolicyUpdateRequest is the PATCH /api/v1/orgs/{id}/policies body —
+ * partial: only the fields present are changed (Owner/Admin only).
+ */
+export interface OrgPolicyUpdateRequest {
+  policy_privacy_tier?: OrgPrivacyTierCeiling;
+  policy_retention_days?: number;
+  policy_mfa_required?: boolean;
 }
 
 /** OrgMemberRecord is one row of GET /api/v1/orgs/{id}/members. */

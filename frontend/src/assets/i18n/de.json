@@ -1813,6 +1813,7 @@
       "members": "Mitglieder",
       "invites": "Einladungen",
       "billing": "Abrechnung & Nutzung",
+      "policies": "Richtlinien",
       "settings": "Einstellungen"
     },
     "roles": {
@@ -1899,6 +1900,35 @@
       "colCompletions": "Completions",
       "colModels": "Modelle",
       "portalError": "Das Abrechnungsportal konnte nicht geöffnet werden. Bitte versuche es erneut."
+    },
+    "policies": {
+      "heading": "Richtlinien",
+      "subtitle": "Regeln für alle, die in den Projekten dieser Organisation arbeiten.",
+      "privacyLabel": "Weiteste Verarbeitungsregion",
+      "privacyHint": "Begrenzt, welche Modelle Mitglieder in den Projekten dieser Organisation nutzen können. Ist die eigene Regionseinstellung eines Mitglieds enger, gilt die engere.",
+      "privacyNone": "Keine Obergrenze",
+      "tiers": {
+        "ch_only": "Nur Schweiz",
+        "eu": "Europa + Schweiz + UK",
+        "global": "Global"
+      },
+      "retentionLabel": "Standard für automatisches Löschen (Tage)",
+      "retentionHint": "Neue Konversationen in den Projekten dieser Organisation werden nach so vielen Tagen endgültig gelöscht. Gib 0 ein für kein automatisches Löschen. Hat eine Konversation eine kürzere eigene Frist, gilt die kürzere.",
+      "retentionError": "Gib eine ganze Zahl von Tagen ein (0 oder mehr).",
+      "retentionNone": "Kein automatisches Löschen",
+      "retentionDaysOne": "1 Tag",
+      "retentionDaysMany": "{{ count }} Tage",
+      "mfaLabel": "Zwei-Faktor-Authentifizierung verlangen",
+      "mfaHint": "Mitglieder ohne Zwei-Faktor-Authentifizierung haben keinen Zugriff auf die Projekte dieser Organisation, bis sie sie in ihren Sicherheitseinstellungen aktivieren.",
+      "mfaWarning": "Gilt sofort nach dem Speichern: Mitglieder ohne Zwei-Faktor-Authentifizierung verlieren umgehend den Zugriff auf die Projekte dieser Organisation, bis sie sie aktivieren. Informiere dein Team, bevor du das einschaltest.",
+      "mfaRequired": "Erforderlich",
+      "mfaNotRequired": "Nicht erforderlich",
+      "summaryPrivacy": "Verarbeitungsregion",
+      "summaryRetention": "Automatisches Löschen",
+      "summaryMfa": "Zwei-Faktor-Authentifizierung",
+      "save": "Richtlinien speichern",
+      "saved": "Richtlinien aktualisiert",
+      "saveError": "Die Richtlinien konnten nicht gespeichert werden. Bitte versuche es erneut."
     },
     "settings": {
       "heading": "Einstellungen",

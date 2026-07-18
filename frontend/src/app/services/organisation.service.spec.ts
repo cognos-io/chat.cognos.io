@@ -14,6 +14,9 @@ const acme: OrganisationRecord = {
   name: 'Acme Legal',
   role: 'member',
   created: '2026-07-01 00:00:00.000Z',
+  policy_privacy_tier: '',
+  policy_retention_days: 0,
+  policy_mfa_required: false,
 };
 
 const globex: OrganisationRecord = {
@@ -21,6 +24,9 @@ const globex: OrganisationRecord = {
   name: 'Globex',
   role: 'admin',
   created: '2026-07-02 00:00:00.000Z',
+  policy_privacy_tier: '',
+  policy_retention_days: 0,
+  policy_mfa_required: false,
 };
 
 const userAlice: AuthUser = { id: 'user_alice' } as unknown as AuthUser;

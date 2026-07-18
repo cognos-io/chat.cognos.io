@@ -12,6 +12,9 @@ const acme: OrganisationRecord = {
   name: 'Acme Legal',
   role: 'member',
   created: '2026-07-01 00:00:00.000Z',
+  policy_privacy_tier: '',
+  policy_retention_days: 0,
+  policy_mfa_required: false,
 };
 
 describe('WorkspaceSwitcherComponent', () => {

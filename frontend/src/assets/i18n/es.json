@@ -1813,6 +1813,7 @@
       "members": "Miembros",
       "invites": "Invitaciones",
       "billing": "Facturación y uso",
+      "policies": "Políticas",
       "settings": "Configuración"
     },
     "roles": {
@@ -1899,6 +1900,35 @@
       "colCompletions": "Completions",
       "colModels": "Modelos",
       "portalError": "No se ha podido abrir el portal de facturación. Inténtalo de nuevo."
+    },
+    "policies": {
+      "heading": "Políticas",
+      "subtitle": "Reglas que se aplican a todas las personas que trabajan en los proyectos de esta organización.",
+      "privacyLabel": "Región de procesamiento más amplia",
+      "privacyHint": "Limita qué modelos pueden usar los miembros en los proyectos de esta organización. Si la configuración de región de un miembro es más estricta, se aplica la más estricta.",
+      "privacyNone": "Sin límite",
+      "tiers": {
+        "ch_only": "Solo Suiza",
+        "eu": "Europa + Suiza + Reino Unido",
+        "global": "Global"
+      },
+      "retentionLabel": "Borrado automático por defecto (días)",
+      "retentionHint": "Los chats nuevos en los proyectos de esta organización se eliminan definitivamente pasado ese número de días. Introduce 0 para desactivar el borrado automático. Si un chat tiene su propio plazo más corto, se aplica el más corto.",
+      "retentionError": "Introduce un número entero de días (0 o más).",
+      "retentionNone": "Sin borrado automático",
+      "retentionDaysOne": "1 día",
+      "retentionDaysMany": "{{ count }} días",
+      "mfaLabel": "Exigir autenticación de dos factores",
+      "mfaHint": "Los miembros sin autenticación de dos factores no pueden acceder a los proyectos de esta organización hasta que la activen en su configuración de seguridad.",
+      "mfaWarning": "Se aplica en cuanto guardes: los miembros sin autenticación de dos factores pierden inmediatamente el acceso a los proyectos de esta organización hasta que la activen. Avisa a tu equipo antes de activarlo.",
+      "mfaRequired": "Obligatoria",
+      "mfaNotRequired": "No obligatoria",
+      "summaryPrivacy": "Región de procesamiento",
+      "summaryRetention": "Borrado automático",
+      "summaryMfa": "Autenticación de dos factores",
+      "save": "Guardar políticas",
+      "saved": "Políticas actualizadas",
+      "saveError": "No se han podido guardar las políticas. Inténtalo de nuevo."
     },
     "settings": {
       "heading": "Configuración",

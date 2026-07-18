@@ -14,7 +14,15 @@ import { ErrorService } from '@app/services/error.service';
 import { OrgInvitesComponent } from './org-invites.component';
 
 function makeOrg(): OrganisationRecord {
-  return { id: 'org_1', name: 'Acme', role: 'owner', created: '2026-01-01T00:00:00Z' };
+  return {
+    id: 'org_1',
+    name: 'Acme',
+    role: 'owner',
+    created: '2026-01-01T00:00:00Z',
+    policy_privacy_tier: '',
+    policy_retention_days: 0,
+    policy_mfa_required: false,
+  };
 }
 
 function makeInvite(overrides: Partial<OrgInviteRecord> = {}): OrgInviteRecord {

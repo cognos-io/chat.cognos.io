@@ -17,7 +17,15 @@ import { ModelService } from '@app/services/model.service';
 import { OrgBillingComponent } from './org-billing.component';
 
 function makeOrg(role: OrganisationRecord['role']): OrganisationRecord {
-  return { id: 'org_1', name: 'Acme', role, created: '2026-01-01T00:00:00Z' };
+  return {
+    id: 'org_1',
+    name: 'Acme',
+    role,
+    created: '2026-01-01T00:00:00Z',
+    policy_privacy_tier: '',
+    policy_retention_days: 0,
+    policy_mfa_required: false,
+  };
 }
 
 function makeBilling(overrides: Partial<OrgBillingRecord> = {}): OrgBillingRecord {

@@ -1813,6 +1813,7 @@
       "members": "Membres",
       "invites": "Invitations",
       "billing": "Facturation et utilisation",
+      "policies": "Politiques",
       "settings": "Paramètres"
     },
     "roles": {
@@ -1899,6 +1900,35 @@
       "colCompletions": "Completions",
       "colModels": "Modèles",
       "portalError": "Impossible d'ouvrir le portail de facturation. Veuillez réessayer."
+    },
+    "policies": {
+      "heading": "Politiques",
+      "subtitle": "Règles qui s'appliquent à toutes les personnes travaillant dans les projets de cette organisation.",
+      "privacyLabel": "Région de traitement la plus large",
+      "privacyHint": "Limite les modèles que les membres peuvent utiliser dans les projets de cette organisation. Si le réglage de région d'un membre est plus strict, c'est le plus strict qui s'applique.",
+      "privacyNone": "Aucun plafond",
+      "tiers": {
+        "ch_only": "Suisse uniquement",
+        "eu": "Europe + Suisse + Royaume-Uni",
+        "global": "Mondial"
+      },
+      "retentionLabel": "Suppression automatique par défaut (jours)",
+      "retentionHint": "Les nouvelles conversations dans les projets de cette organisation sont supprimées définitivement après ce nombre de jours. Saisissez 0 pour désactiver la suppression automatique. Si une conversation a son propre délai plus court, c'est le plus court qui s'applique.",
+      "retentionError": "Saisissez un nombre entier de jours (0 ou plus).",
+      "retentionNone": "Aucune suppression automatique",
+      "retentionDaysOne": "1 jour",
+      "retentionDaysMany": "{{ count }} jours",
+      "mfaLabel": "Exiger l'authentification à deux facteurs",
+      "mfaHint": "Les membres sans authentification à deux facteurs n'ont pas accès aux projets de cette organisation tant qu'ils ne l'ont pas activée dans leurs paramètres de sécurité.",
+      "mfaWarning": "Prend effet dès l'enregistrement : les membres sans authentification à deux facteurs perdent immédiatement l'accès aux projets de cette organisation jusqu'à ce qu'ils l'activent. Prévenez votre équipe avant de l'activer.",
+      "mfaRequired": "Requise",
+      "mfaNotRequired": "Non requise",
+      "summaryPrivacy": "Région de traitement",
+      "summaryRetention": "Suppression automatique",
+      "summaryMfa": "Authentification à deux facteurs",
+      "save": "Enregistrer les politiques",
+      "saved": "Politiques mises à jour",
+      "saveError": "Impossible d'enregistrer les politiques. Veuillez réessayer."
     },
     "settings": {
       "heading": "Paramètres",

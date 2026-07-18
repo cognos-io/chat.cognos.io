@@ -1813,6 +1813,7 @@
       "members": "Membri",
       "invites": "Inviti",
       "billing": "Fatturazione e utilizzo",
+      "policies": "Regole",
       "settings": "Impostazioni"
     },
     "roles": {
@@ -1899,6 +1900,35 @@
       "colCompletions": "Completions",
       "colModels": "Modelli",
       "portalError": "Impossibile aprire il portale di fatturazione. Riprova."
+    },
+    "policies": {
+      "heading": "Regole",
+      "subtitle": "Regole valide per tutte le persone che lavorano nei progetti di questa organizzazione.",
+      "privacyLabel": "Regione di elaborazione più ampia",
+      "privacyHint": "Limita quali modelli i membri possono usare nei progetti di questa organizzazione. Se l'impostazione di regione di un membro è più restrittiva, vale la più restrittiva.",
+      "privacyNone": "Nessun limite",
+      "tiers": {
+        "ch_only": "Solo Svizzera",
+        "eu": "Europa + Svizzera + Regno Unito",
+        "global": "Globale"
+      },
+      "retentionLabel": "Eliminazione automatica predefinita (giorni)",
+      "retentionHint": "Le nuove chat nei progetti di questa organizzazione vengono eliminate definitivamente dopo questo numero di giorni. Inserisci 0 per disattivare l'eliminazione automatica. Se una chat ha un proprio termine più breve, vale il più breve.",
+      "retentionError": "Inserisci un numero intero di giorni (0 o più).",
+      "retentionNone": "Nessuna eliminazione automatica",
+      "retentionDaysOne": "1 giorno",
+      "retentionDaysMany": "{{ count }} giorni",
+      "mfaLabel": "Richiedi l'autenticazione a due fattori",
+      "mfaHint": "I membri senza autenticazione a due fattori non possono accedere ai progetti di questa organizzazione finché non la attivano nelle impostazioni di sicurezza.",
+      "mfaWarning": "Vale subito dopo il salvataggio: i membri senza autenticazione a due fattori perdono immediatamente l'accesso ai progetti di questa organizzazione finché non la attivano. Avvisa il tuo team prima di attivarla.",
+      "mfaRequired": "Richiesta",
+      "mfaNotRequired": "Non richiesta",
+      "summaryPrivacy": "Regione di elaborazione",
+      "summaryRetention": "Eliminazione automatica",
+      "summaryMfa": "Autenticazione a due fattori",
+      "save": "Salva le regole",
+      "saved": "Regole aggiornate",
+      "saveError": "Impossibile salvare le regole. Riprova."
     },
     "settings": {
       "heading": "Impostazioni",

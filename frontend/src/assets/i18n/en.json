@@ -1813,6 +1813,7 @@
       "members": "Members",
       "invites": "Invites",
       "billing": "Billing & usage",
+      "policies": "Policies",
       "settings": "Settings"
     },
     "roles": {
@@ -1899,6 +1900,35 @@
       "colCompletions": "Completions",
       "colModels": "Models",
       "portalError": "Could not open the billing portal. Please try again."
+    },
+    "policies": {
+      "heading": "Policies",
+      "subtitle": "Rules that apply to everyone working in this Organisation's Projects.",
+      "privacyLabel": "Widest processing region",
+      "privacyHint": "Caps which models members can use in this Organisation's Projects. If a member's own region setting is narrower, the narrower one applies.",
+      "privacyNone": "No ceiling",
+      "tiers": {
+        "ch_only": "Switzerland only",
+        "eu": "Europe + Switzerland + UK",
+        "global": "Global"
+      },
+      "retentionLabel": "Auto-delete default (days)",
+      "retentionHint": "New conversations in this Organisation's Projects are deleted permanently after this many days. Enter 0 for no automatic deletion. If a conversation has a shorter auto-delete of its own, the shorter one applies.",
+      "retentionError": "Enter a whole number of days (0 or more).",
+      "retentionNone": "No automatic deletion",
+      "retentionDaysOne": "1 day",
+      "retentionDaysMany": "{{ count }} days",
+      "mfaLabel": "Require two-factor authentication",
+      "mfaHint": "Members without two-factor authentication are blocked from this Organisation's Projects until they enable it in their security settings.",
+      "mfaWarning": "This takes effect as soon as you save: members without two-factor authentication immediately lose access to this Organisation's Projects until they enable it. Let your team know before switching this on.",
+      "mfaRequired": "Required",
+      "mfaNotRequired": "Not required",
+      "summaryPrivacy": "Processing region",
+      "summaryRetention": "Auto-delete",
+      "summaryMfa": "Two-factor authentication",
+      "save": "Save policies",
+      "saved": "Policies updated",
+      "saveError": "Could not save the policies. Please try again."
     },
     "settings": {
       "heading": "Settings",

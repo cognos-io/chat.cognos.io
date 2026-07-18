@@ -23,6 +23,9 @@ function makeOrg(overrides: Partial<OrganisationRecord> = {}): OrganisationRecor
     name: 'Acme',
     role: 'owner',
     created: '2026-01-01T00:00:00Z',
+    policy_privacy_tier: '',
+    policy_retention_days: 0,
+    policy_mfa_required: false,
     ...overrides,
   };
 }
@@ -204,6 +207,29 @@ describe('TeamSettingsComponent', () => {
     expect(fixture.nativeElement.querySelector('form')).not.toBeNull();
   });
 
+  it("shows a read-only policy summary for a member's org — no save control", async () => {
+    listOrgs = vi.fn(() =>
+      of([
+        makeOrg({
+          role: 'member',
+          name: 'Globex',
+          policy_privacy_tier: 'ch_only',
+          policy_retention_days: 30,
+          policy_mfa_required: true,
+        }),
+      ]),
+    );
+    await render();
+    fixture.detectChanges();
+
+    const summary = fixture.nativeElement.querySelector('app-org-policies dl');
+    expect(summary).not.toBeNull();
+    expect(summary.textContent).toContain('Switzerland only');
+    expect(summary.textContent).toContain('30 days');
+    expect(summary.textContent).toContain('Required');
+    expect(fixture.nativeElement.textContent).not.toContain('Save policies');
+  });
+
   // ---- Admin orgs: tabs + child components ----------------------------------
 
   it('shows admin tabs when user owns an org', async () => {
@@ -214,7 +240,21 @@ describe('TeamSettingsComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Members');
     expect(fixture.nativeElement.textContent).toContain('Invites');
     expect(fixture.nativeElement.textContent).toContain('Billing & usage');
+    expect(fixture.nativeElement.textContent).toContain('Policies');
     expect(fixture.nativeElement.textContent).toContain('Settings');
+  });
+
+  it('renders the editable policies form on the policies tab', async () => {
+    listOrgs = vi.fn(() => of([makeOrg({ role: 'owner' })]));
+    await render();
+    fixture.detectChanges();
+
+    component['selectTab']('policies');
+    fixture.detectChanges();
+
+    expect(component['tab']()).toBe('policies');
+    expect(fixture.nativeElement.querySelector('app-org-policies')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Save policies');
   });
 
   it('defaults to members tab', async () => {
@@ -254,9 +294,32 @@ describe('TeamSettingsComponent', () => {
     listOrgs = vi.fn(() => of([makeOrg({ id: 'o1', name: 'Old' })]));
     await render();
 
-    component['onRenamed']({ id: 'o1', name: 'New', role: 'owner', created: '' });
+    component['onRenamed'](makeOrg({ id: 'o1', name: 'New', created: '' }));
 
     expect(component['orgs']()[0].name).toBe('New');
+  });
+
+  it('merges policy updates into the list and keeps the caller role', async () => {
+    listOrgs = vi.fn(() => of([makeOrg({ id: 'o1', role: 'admin' })]));
+    await render();
+
+    component['onOrgUpdated'](
+      makeOrg({
+        id: 'o1',
+        // The server never echoes the caller's role back incorrectly, but the
+        // merge must keep ours regardless (pin: role is the caller's own).
+        role: 'member',
+        policy_privacy_tier: 'eu',
+        policy_retention_days: 30,
+        policy_mfa_required: true,
+      }),
+    );
+
+    const org = component['orgs']()[0];
+    expect(org.role).toBe('admin');
+    expect(org.policy_privacy_tier).toBe('eu');
+    expect(org.policy_retention_days).toBe(30);
+    expect(org.policy_mfa_required).toBe(true);
   });
 
   it('does not switch to an invalid tab value', async () => {

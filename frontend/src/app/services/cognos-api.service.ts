@@ -27,6 +27,7 @@ import {
   OrgInviteRecord,
   OrgInviteRole,
   OrgMemberRecord,
+  OrgPolicyUpdateRequest,
   OrgPortalResponse,
   OrgUsageRecord,
   OrganisationRecord,
@@ -1147,6 +1148,22 @@ export class CognosApiService {
   updateOrg(orgId: string, request: { name: string }): Observable<OrganisationRecord> {
     return this._http.patch<OrganisationRecord>(
       `${this._baseUrl}/api/v1/orgs/${orgId}`,
+      request,
+      {
+        headers: this.authHeaders(),
+      },
+    );
+  }
+
+  // updateOrgPolicies changes the Organisation's enforced policies (privacy
+  // tier ceiling, retention default, MFA requirement) — partial PATCH, only
+  // the fields present change (Owner/Admin only, spec §6 Phase 2).
+  updateOrgPolicies(
+    orgId: string,
+    request: OrgPolicyUpdateRequest,
+  ): Observable<OrganisationRecord> {
+    return this._http.patch<OrganisationRecord>(
+      `${this._baseUrl}/api/v1/orgs/${orgId}/policies`,
       request,
       {
         headers: this.authHeaders(),
