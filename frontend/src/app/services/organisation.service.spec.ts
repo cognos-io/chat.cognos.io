@@ -58,7 +58,6 @@ function projectOf(id: string, organisation?: string): Project {
 describe('OrganisationService', () => {
   let user$: Subject<AuthUser>;
   let listOrgs: ReturnType<typeof vi.fn>;
-  let storage: Map<string, string>;
 
   function setup(options?: {
     enabled?: boolean;
@@ -93,21 +92,12 @@ describe('OrganisationService', () => {
   const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
   beforeEach(() => {
-    // Pin storage semantics independently of Node's experimental
-    // `--localstorage-file` support used by the Angular test worker.
-    storage = new Map<string, string>();
-    vi.stubGlobal('localStorage', {
-      getItem: (key: string) => storage.get(key) ?? null,
-      setItem: (key: string, value: string) => storage.set(key, value),
-      removeItem: (key: string) => storage.delete(key),
-      clear: () => storage.clear(),
-    });
+    localStorage.clear();
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
     localStorage.clear();
-    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
