@@ -18,6 +18,8 @@
 - [x] Cover Owner and Member journeys in Playwright browser tests plus organisation, authorisation,
       lapse, dissolution, and compaction accounting in Playwright API tests
 - [x] Complete six-locale, accessibility, design-token, lint, build, and screenshot review gates
+- [ ] Replace synchronous Organisation dissolution with the persisted reconciliation state machine
+      in `docs/billing-ops-runbook.md` §6
 
 ## General
 

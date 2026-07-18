@@ -30,7 +30,8 @@ Later commits (same order of work):
   charge, lapse on past_due/cancel/chargeback, refunds.organisation + organisations
   .paddle_customer_id (migration 1760000077), 13 org webhook tests + 3 per-user fallback pins.
 - `ab7a7aaf` backend: org billing endpoints per contract — owner-only checkout
-  (custom_data.org_id, quantity 1, config `paddle.price_org_seat` / PADDLE_PRICE_ORG_SEAT) and
+  (`custom_data.org_id`, active Seat quantity, config `paddle.price_org_seat` /
+  `COGNOS_PADDLE_PRICE_ORG_SEAT`) and
   portal; owner/admin billing state (floor/pooled/projected overage) and per-member usage metadata;
   CheckoutRequest gains OrgID/Quantity; role-gate + aggregation tests; api-permissions rows.
 - (frontend admin pages committed earlier as `feat(frontend): organisation admin pages`.)
@@ -66,7 +67,9 @@ Personal-safety screenshots were visually reviewed with no open launch-blocking 
 Known v1 operational constraint: Paddle cancellation and the local PocketBase dissolution
 transaction cannot be atomic. Cancellation runs first, and any Paddle failure leaves local state
 unchanged and retryable. A persisted reconciliation saga is a future hardening option if operations
-show the narrow inverse failure window (Paddle accepted cancellation, local transaction failed).
+show the narrow inverse failure window (Paddle accepted cancellation, local transaction failed). The
+state machine and interim operator procedure are specified in
+[`docs/billing-ops-runbook.md` §6](../billing-ops-runbook.md#6-organisation-dissolution-reconciliation).
 
 ## To do (ordered; each = one vertical slice, one conventional commit)
 
@@ -86,9 +89,9 @@ subject-discriminated webhook. Key points:
   custom_data.org_id → org, custom_data.user_id → user, then paddle_subscription_id lookup in
   org_billing/user_billing, then paddle_customer_id) — `billing.Subject` already exists from
   commit `224c8131`.
-- Org checkout: `POST /api/v1/orgs/{id}/billing/checkout` (owner only) → Paddle checkout
-  quantity=1, `custom_data.org_id`; env `PADDLE_PRICE_ORG_SEAT` (CHF 15/seat/month) — mirror
-  `PaddleWebhookParams.PriceToPlan` wiring.
+- Org checkout: `POST /api/v1/orgs/{id}/billing/checkout` (owner only) → Paddle checkout using the
+  active Seat quantity and `custom_data.org_id`; env `COGNOS_PADDLE_PRICE_ORG_SEAT`
+  (CHF 15/Seat/month) — mirror `PaddleWebhookParams.PriceToPlan` wiring.
 - Seat sync: `subscription.updated` items[0].quantity → `org_billing.seat_quantity`; seat ADD =
   update Paddle quantity (native proration); seat REMOVE = write `pending_seat_quantity`, applied
   at cycle rollover (never mid-cycle).
