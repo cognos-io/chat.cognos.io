@@ -15,6 +15,7 @@ import (
 	"github.com/cognos-io/chat.cognos.io/backend/internal/gateway"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/handler"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/mfa"
+	"github.com/cognos-io/chat.cognos.io/backend/internal/organisations"
 	"github.com/cognos-io/chat.cognos.io/backend/internal/paddle"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -547,6 +548,58 @@ func addPocketBaseRoutes(
 			Logger: logger,
 			App:    app,
 		}),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Organisation invites — owner/admin only.
+	e.Router.POST(
+		"/api/v1/orgs/{orgID}/invites",
+		handler.OrgInvitesCreate(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.GET(
+		"/api/v1/orgs/{orgID}/invites",
+		handler.OrgInvitesList(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	e.Router.DELETE(
+		"/api/v1/orgs/{orgID}/invites/{inviteID}",
+		handler.OrgInvitesRevoke(app),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Invite acceptance (any authenticated user with the token).
+	e.Router.POST(
+		"/api/v1/org-invites/accept",
+		handler.OrgInvitesAccept(app, organisations.NewPocketBaseRepo(app)),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Offboard member — owner/admin only.
+	e.Router.DELETE(
+		"/api/v1/orgs/{orgID}/members/{userID}",
+		handler.OrgMembersOffboard(app, organisations.NewPocketBaseRepo(app)),
+	).Bind(
+		apis.RequireAuth(),
+		rateLimiterMiddleware(app),
+	)
+
+	// Public key resolution (relationship-gated).
+	e.Router.GET(
+		"/api/v1/users/{userID}/public-key",
+		handler.UserPublicKey(app, auth.NewPocketBaseKeyPairRepo(app), organisations.NewPocketBaseRepo(app)),
 	).Bind(
 		apis.RequireAuth(),
 		rateLimiterMiddleware(app),

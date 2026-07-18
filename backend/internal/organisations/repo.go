@@ -99,6 +99,15 @@ type Repo interface {
 	// (removed_at is empty), ordered by added_at ascending so the owner
 	// comes first.
 	ListMembers(orgID string) ([]Membership, error)
+
+	// ReactivateOrCreateMembership clears removed_at on an existing revoked
+	// row, or inserts a new active membership. It returns the role of the
+	// resulting row (the original role is preserved on reactivation so a
+	// re-invite cannot escalate privileges).
+	ReactivateOrCreateMembership(orgID, userID string) (Role, error)
+
+	// OrgProjectIDs returns the IDs of projects owned by the organisation.
+	OrgProjectIDs(orgID string) ([]string, error)
 }
 
 // PocketBaseRepo is the production implementation backed by the PocketBase app.
@@ -277,6 +286,66 @@ func (r *PocketBaseRepo) ListMembers(orgID string) ([]Membership, error) {
 		})
 	}
 	return members, nil
+}
+
+// ReactivateOrCreateMembership reactivates an existing revoked membership
+// row (clearing removed_at) or creates a new one. The original role is
+// preserved on reactivation so a re-invite cannot escalate privileges.
+func (r *PocketBaseRepo) ReactivateOrCreateMembership(orgID, userID string) (Role, error) {
+	if orgID == "" || userID == "" {
+		return "", errors.New("organisations: orgID and userID are required")
+	}
+
+	existing, err := r.app.FindFirstRecordByFilter(
+		MembershipsCollectionName,
+		"organisation = {:organisation} && user = {:user}",
+		dbx.Params{"organisation": orgID, "user": userID},
+	)
+	if err == nil && existing != nil {
+		existing.Set("removed_at", "")
+		if err := r.app.Save(existing); err != nil {
+			return "", err
+		}
+		return Role(existing.GetString("role")), nil
+	}
+
+	membershipCollection, err := r.app.FindCollectionByNameOrId(MembershipsCollectionName)
+	if err != nil {
+		return "", err
+	}
+
+	record := core.NewRecord(membershipCollection)
+	record.Set("organisation", orgID)
+	record.Set("user", userID)
+	record.Set("role", string(RoleMember))
+	record.Set("added_at", time.Now().UTC())
+	if err := r.app.Save(record); err != nil {
+		return "", err
+	}
+	return RoleMember, nil
+}
+
+// OrgProjectIDs returns project IDs that belong to the organisation.
+func (r *PocketBaseRepo) OrgProjectIDs(orgID string) ([]string, error) {
+	if orgID == "" {
+		return nil, errors.New("organisations: orgID is required")
+	}
+
+	records, err := r.app.FindRecordsByFilter(
+		"projects",
+		"organisation = {:organisation}",
+		"", 0, 0,
+		dbx.Params{"organisation": orgID},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]string, 0, len(records))
+	for _, rec := range records {
+		ids = append(ids, rec.Id)
+	}
+	return ids, nil
 }
 
 func (r *PocketBaseRepo) activeMembershipRecord(orgID, userID string) (*core.Record, error) {
